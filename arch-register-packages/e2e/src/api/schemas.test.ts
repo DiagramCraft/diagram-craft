@@ -82,25 +82,40 @@ test.describe('schema routes', () => {
     });
   });
 
-  test('categories round-trip, normalize, version, clear, and appear in audit changes for both schema kinds', async ({
+  test('categories round-trip, version, clear, and appear in audit changes for both schema kinds', async ({
     orpc,
     server
   }) => {
+    const architectureCategory = await orpc.categories.create({
+      params: { workspace: 'default' },
+      body: { name: 'Architecture QA' }
+    });
+    const connectivityCategory = await orpc.categories.create({
+      params: { workspace: 'default' },
+      body: { name: 'Connectivity QA' }
+    });
+
     const entitySchema = await orpc.schemas.create({
       params: { workspace: 'default' },
-      body: { name: 'Categorized entity schema', category: '  Architecture  ' }
+      body: { name: 'Categorized entity schema', category_id: architectureCategory.id }
     });
-    expect(entitySchema.category).toBe('Architecture');
+    expect(entitySchema.category).toEqual({
+      id: architectureCategory.id,
+      name: 'Architecture QA'
+    });
 
     const preservedEntitySchema = await orpc.schemas.update({
       params: { workspace: 'default', id: entitySchema.id },
       body: { name: entitySchema.name }
     });
-    expect(preservedEntitySchema.category).toBe('Architecture');
+    expect(preservedEntitySchema.category).toEqual({
+      id: architectureCategory.id,
+      name: 'Architecture QA'
+    });
 
     const clearedEntitySchema = await orpc.schemas.update({
       params: { workspace: 'default', id: entitySchema.id },
-      body: { name: entitySchema.name, category: '   ' }
+      body: { name: entitySchema.name, category_id: null }
     });
     expect(clearedEntitySchema.category).toBeNull();
     await expect(
@@ -112,26 +127,29 @@ test.describe('schema routes', () => {
     });
     expect(entityVersions.slice(0, 3).map(version => version.category)).toEqual([
       null,
-      'Architecture',
-      'Architecture'
+      'Architecture QA',
+      'Architecture QA'
     ]);
 
     const relationSchema = await orpc.relationSchemas.create({
       params: { workspace: 'default' },
       body: {
         name: 'Categorized relation schema',
-        category: '  Connectivity  ',
+        category_id: connectivityCategory.id,
         in: { schemaIds: [apiSchemaId] },
         out: { schemaIds: [apiSchemaId] }
       }
     });
-    expect(relationSchema.category).toBe('Connectivity');
+    expect(relationSchema.category).toEqual({
+      id: connectivityCategory.id,
+      name: 'Connectivity QA'
+    });
 
     const clearedRelationSchema = await orpc.relationSchemas.update({
       params: { workspace: 'default', id: relationSchema.id },
       body: {
         name: relationSchema.name,
-        category: null,
+        category_id: null,
         in: relationSchema.in,
         out: relationSchema.out
       }
@@ -142,7 +160,7 @@ test.describe('schema routes', () => {
     });
     expect(relationVersions.slice(0, 2).map(version => version.category)).toEqual([
       null,
-      'Connectivity'
+      'Connectivity QA'
     ]);
 
     const auditLogs = await server.db.audit.listAuditLogs(seedIds.workspace.default);
@@ -151,7 +169,7 @@ test.describe('schema routes', () => {
         log =>
           log.entity_id === entitySchema.id &&
           log.operation === 'update' &&
-          log.changes.new?.['category'] === null
+          log.changes.new?.['category_id'] === null
       )
     ).toBeDefined();
     expect(
@@ -159,7 +177,7 @@ test.describe('schema routes', () => {
         log =>
           log.entity_id === relationSchema.id &&
           log.operation === 'update' &&
-          log.changes.new?.['category'] === null
+          log.changes.new?.['category_id'] === null
       )
     ).toBeDefined();
   });

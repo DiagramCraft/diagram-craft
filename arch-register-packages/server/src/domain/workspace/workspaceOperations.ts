@@ -541,6 +541,18 @@ export const createWorkspace = async (
           const documentTypeMap = new Map<string, string>();
           if (includeSet.has('schemas')) {
             for (const schema of srcSchemas) schemaMap.set(schema.id, randomUUID());
+            const srcCategories = await db.catalog.listCategories(replicate_from);
+            const categoryMap = new Map<string, string>();
+            for (const category of srcCategories) categoryMap.set(category.id, randomUUID());
+            for (const category of srcCategories) {
+              await db.catalog.createCategory({
+                id: categoryMap.get(category.id)!,
+                workspace: row.id,
+                name: category.name,
+                created_at: timestamp,
+                updated_at: timestamp
+              });
+            }
             const sharedFieldGroupMap = new Map<string, string>();
             for (const group of srcSharedFieldGroups)
               sharedFieldGroupMap.set(group.id, randomUUID());
@@ -549,6 +561,7 @@ export const createWorkspace = async (
                 ...group,
                 id: sharedFieldGroupMap.get(group.id)!,
                 workspace: row.id,
+                category_id: resolveMappedIdOrNull(categoryMap, group.category_id ?? null),
                 created_at: timestamp,
                 updated_at: timestamp
               });
@@ -606,7 +619,7 @@ export const createWorkspace = async (
                 id: schemaMap.get(schema.id)!,
                 workspace: row.id,
                 name: schema.name,
-                category: schema.category ?? null,
+                category_id: resolveMappedIdOrNull(categoryMap, schema.category_id ?? null),
                 description: schema.description,
                 key_prefix: keyPrefix,
                 color: schema.color,
@@ -915,6 +928,9 @@ export const createWorkspace = async (
             (cross_cutting_templates?.length ?? 0) > 0
           ) {
             const definitions = templateDefinitions!;
+            for (const category of definitions.categories) {
+              await db.catalog.createCategory(category);
+            }
             for (const enumeration of definitions.enums) {
               await db.catalog.createEnum(enumeration);
             }

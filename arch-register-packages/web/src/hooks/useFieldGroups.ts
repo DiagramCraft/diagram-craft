@@ -15,7 +15,7 @@ export const useCreateFieldGroup = (workspaceSlug: string) => {
   return useMutation({
     mutationFn: (body: {
       name: string;
-      category?: string | null;
+      category_id?: string | null;
       description?: string;
       fields?: SchemaField[];
     }) => orpcClient.fieldGroups.create({ params: { workspace: workspaceSlug }, body }),
@@ -33,7 +33,7 @@ export const useUpdateFieldGroup = (workspaceSlug: string) => {
       fieldGroupId: string;
       data: {
         name: string;
-        category?: string | null;
+        category_id?: string | null;
         description?: string;
         fields: SchemaField[];
         fieldMigrations?: Record<

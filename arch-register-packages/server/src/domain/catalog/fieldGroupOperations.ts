@@ -11,6 +11,7 @@ import {
   isSharedFieldGroupReferencedBySchemas
 } from './fieldGroupHelpers';
 import { toApiSharedFieldGroup, toFieldMigrationFields } from './schemaHelpers';
+import { assertCategoryExists, buildCategoryLookup } from './categoryOperations';
 import {
   buildFieldChangeSummary,
   describeHardBlockedChange,
@@ -43,7 +44,11 @@ const apiGroup = async (
   group: Awaited<ReturnType<DatabaseAdapter['catalog']['getSharedFieldGroup']>>
 ) => {
   httpAssert.present(group, { status: 404, message: 'Shared fieldgroup not found' });
-  return toApiSharedFieldGroup(group, await db.catalog.listEnums(workspace));
+  const [enums, categories] = await Promise.all([
+    db.catalog.listEnums(workspace),
+    buildCategoryLookup(db, workspace)
+  ]);
+  return toApiSharedFieldGroup(group, enums, categories);
 };
 
 export const listWorkspaceSharedFieldGroups = async (
@@ -59,11 +64,12 @@ export const listWorkspaceSharedFieldGroups = async (
     dbErrorMessages,
     operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'ws.view');
-      const [groups, enums] = await Promise.all([
+      const [groups, enums, categories] = await Promise.all([
         db.catalog.listSharedFieldGroups(ws),
-        db.catalog.listEnums(ws)
+        db.catalog.listEnums(ws),
+        buildCategoryLookup(db, ws)
       ]);
-      return groups.map(group => toApiSharedFieldGroup(group, enums));
+      return groups.map(group => toApiSharedFieldGroup(group, enums, categories));
     }
   });
 
@@ -99,9 +105,9 @@ export const createWorkspaceSharedFieldGroup = async (
     dbErrorMessages,
     operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'schema.edit');
-      const row = await db.catalog.createSharedFieldGroup(
-        buildCreateSharedFieldGroupInput(ws, body, new Date())
-      );
+      const input = buildCreateSharedFieldGroupInput(ws, body, new Date());
+      await assertCategoryExists(db, ws, input.category_id);
+      const row = await db.catalog.createSharedFieldGroup(input);
       return apiGroup(db, ws, row);
     }
   });
@@ -124,11 +130,14 @@ export const updateWorkspaceSharedFieldGroup = async (
       const oldGroup = await db.catalog.getSharedFieldGroup(ws, id);
       httpAssert.present(oldGroup, { status: 404, message: `Shared fieldgroup '${id}' not found` });
       const next = buildUpdateSharedFieldGroupInput(body, oldGroup, new Date());
+      await assertCategoryExists(db, ws, next.category_id);
       const fieldMigrations = body.fieldMigrations;
-      const [schemas, groups] = await Promise.all([
+      const [schemas, groups, categories] = await Promise.all([
         db.catalog.listSchemas(ws),
-        db.catalog.listSharedFieldGroups(ws)
+        db.catalog.listSharedFieldGroups(ws),
+        db.catalog.listCategories(ws)
       ]);
+      const categoryNamesById = new Map(categories.map(category => [category.id, category.name]));
       const nextGroups = groups.map(group => (group.id === id ? { ...group, ...next } : group));
       const changesBySchema = new Map<
         string,
@@ -273,7 +282,7 @@ export const updateWorkspaceSharedFieldGroup = async (
             schema_id: schemaId,
             version: row.version ?? 1,
             name: row.name,
-            category: row.category ?? null,
+            category: (row.category_id && categoryNamesById.get(row.category_id)) ?? null,
             description: row.description,
             fields: row.fields,
             templates: row.templates ?? [],

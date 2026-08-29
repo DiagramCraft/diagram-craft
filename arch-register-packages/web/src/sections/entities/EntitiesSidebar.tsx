@@ -119,8 +119,8 @@ export const EntitiesSidebar = ({
   const { entityId: routeEntityId } = useParams({ strict: false });
   const { pathname } = useLocation();
   const onRelationsRoute = pathname.includes('/entities/relations');
-  const schemaGroups = useMemo(() => groupSchemasByCategory(schemas), [schemas]);
   const { permissions } = useWorkspaceContext();
+  const schemaGroups = useMemo(() => groupSchemasByCategory(schemas), [schemas]);
   const search = useSearch({ strict: false });
   const sidebarTab = search.sidebarTab ?? 'home';
 

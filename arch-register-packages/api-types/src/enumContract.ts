@@ -1,6 +1,7 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
 import { ws, wsAndUUID } from '@arch-register/api-types/common';
+import { categoryRefSchema } from '@arch-register/api-types/categoryContract';
 
 const enumOptionInputSchema = z.object({
   value: z.string().describe('Internal option value used in data storage'),
@@ -28,10 +29,9 @@ const workspaceEnumSchema = z.object({
   id: z.string().describe('Unique enumeration identifier (UUID)'),
   workspace: z.string().describe('Parent workspace identifier'),
   name: z.string().describe('Enumeration name (must be unique within workspace)'),
-  category: z
-    .string()
+  category: categoryRefSchema
     .nullable()
-    .describe('Optional free-text presentation category for organizing enumerations'),
+    .describe('Workspace category used to group this enumeration'),
   options: z.array(enumOptionSchema).describe('Available enumeration options'),
   sort_order: z.number().int().min(0).describe('Display order (0-based)'),
   created_at: z.string().describe('ISO 8601 creation timestamp'),
@@ -40,11 +40,11 @@ const workspaceEnumSchema = z.object({
 
 const createEnumBodySchema = z.object({
   name: z.string().describe('Enumeration name (must be unique within workspace)'),
-  category: z
+  category_id: z
     .string()
     .nullable()
     .optional()
-    .describe('Optional free-text presentation category for organizing enumerations'),
+    .describe('Workspace category id used to group this enumeration'),
   options: z.preprocess(
     value => (Array.isArray(value) ? value : undefined),
     z.array(enumOptionInputSchema).optional().describe('Initial enumeration options (can be empty)')

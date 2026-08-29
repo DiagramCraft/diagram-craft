@@ -276,11 +276,13 @@ const exportConfig = async (db: DatabaseAdapter, workspace: string): Promise<Exp
 };
 
 const exportSchemas = async (db: DatabaseAdapter, workspace: string): Promise<ExportSchema[]> => {
-  const [schemas, policiesBySchema, governanceRows] = await Promise.all([
+  const [schemas, policiesBySchema, governanceRows, categories] = await Promise.all([
     db.catalog.listSchemas(workspace),
     getSchemaGovernancePoliciesBySchema(db, workspace),
-    db.governanceCaseConfig?.listCaseConfig(workspace) ?? Promise.resolve([])
+    db.governanceCaseConfig?.listCaseConfig(workspace) ?? Promise.resolve([]),
+    db.catalog.listCategories(workspace)
   ]);
+  const categoryNamesById = new Map(categories.map(category => [category.id, category.name]));
   const sharedGroups = await db.catalog.listSharedFieldGroups(workspace);
   const sharedGroupsById = new Map(sharedGroups.map(group => [group.id, group]));
   const governanceRowsBySchema = new Map<string, ExportSchema['governance_configs']>();
@@ -304,7 +306,7 @@ const exportSchemas = async (db: DatabaseAdapter, workspace: string): Promise<Ex
   return schemas.map(schema => ({
     id: schema.id,
     name: schema.name,
-    category: schema.category ?? null,
+    category: (schema.category_id && categoryNamesById.get(schema.category_id)) ?? null,
     fields: schema.fields,
     groups: schema.groups ?? [],
     shared_field_group_links: schema.shared_field_group_links ?? [],
@@ -327,16 +329,18 @@ const exportRelationSchemas = async (
   db: DatabaseAdapter,
   workspace: string
 ): Promise<ExportRelationSchema[]> => {
-  const [schemas, sharedGroups] = await Promise.all([
+  const [schemas, sharedGroups, categories] = await Promise.all([
     db.relation.listRelationSchemas(workspace),
-    db.catalog.listSharedFieldGroups(workspace)
+    db.catalog.listSharedFieldGroups(workspace),
+    db.catalog.listCategories(workspace)
   ]);
   const sharedGroupsById = new Map(sharedGroups.map(group => [group.id, group]));
+  const categoryNamesById = new Map(categories.map(category => [category.id, category.name]));
 
   return schemas.map(schema => ({
     id: schema.id,
     name: schema.name,
-    category: schema.category ?? null,
+    category: (schema.category_id && categoryNamesById.get(schema.category_id)) ?? null,
     description: schema.description,
     in_schema_ids: schema.in_schema_ids,
     out_schema_ids: schema.out_schema_ids,

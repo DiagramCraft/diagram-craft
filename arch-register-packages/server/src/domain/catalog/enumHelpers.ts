@@ -90,22 +90,21 @@ const mergeUpdatedOptions = (
 const toSortOrder = (value: unknown, fallback: number) =>
   typeof value === 'number' ? value : fallback;
 
-const toCategory = (value: unknown): string | null =>
-  typeof value === 'string' && value.trim() !== '' ? value.trim() : null;
+const toCategoryId = (value: unknown): string | null => (typeof value === 'string' ? value : null);
 
 export const buildCreateEnumInput = (
   workspace: string,
   body: Record<string, unknown>,
   timestamp: Date
 ): WorkspaceEnumDbCreate => {
-  const { name, category, options, sort_order } = body;
+  const { name, category_id, options, sort_order } = body;
   httpAssert.string(name, { message: 'name is required and must be a string' });
 
   return {
     id: randomUUID(),
     workspace,
     name,
-    category: toCategory(category),
+    category_id: toCategoryId(category_id),
     options: toEnumOptions(options, []),
     sort_order: toSortOrder(sort_order, 0),
     created_at: timestamp,
@@ -119,13 +118,13 @@ export const buildUpdateEnumInput = (
   updatedAt: Date,
   usedOptionValues?: ReadonlySet<string>
 ): WorkspaceEnumDbUpdate => {
-  const { name, category, options, sort_order } = body;
+  const { name, category_id, options, sort_order } = body;
   httpAssert.string(name, { message: 'name is required and must be a string' });
 
   const requestedOptions = toEnumOptions(options, existing.options);
   return {
     name,
-    category: category === undefined ? existing.category : toCategory(category),
+    category_id: category_id === undefined ? existing.category_id : toCategoryId(category_id),
     options: mergeUpdatedOptions(requestedOptions, existing.options, usedOptionValues),
     sort_order: toSortOrder(sort_order, existing.sort_order),
     updated_at: updatedAt

@@ -93,7 +93,8 @@ const makeDb = () =>
     catalog: {
       listSchemas: vi.fn(async () => [schemaWithRestrictedGroup]),
       listSharedFieldGroups: vi.fn(async () => []),
-      listEntities: vi.fn(async () => [makeEntity()])
+      listEntities: vi.fn(async () => [makeEntity()]),
+      listCategories: vi.fn(async () => [])
     }
   }) as any;
 

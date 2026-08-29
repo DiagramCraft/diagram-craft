@@ -272,6 +272,7 @@ export const seedTemplateDefinitions: InstantiatedTemplateComposition = {
   relationSchemas: orderedRelationSchemas
 };
 
+export const seedTemplateCategoryDefinitions = seedTemplateDefinitions.categories;
 export const seedTemplateSchemaDefinitions: SchemaDbResult[] = seedTemplateDefinitions.schemas;
 export const seedTemplateEnumDefinitions: WorkspaceEnumDbResult[] = seedTemplateDefinitions.enums;
 export const seedTemplateFieldGroupDefinitions: SharedFieldGroupDbResult[] =

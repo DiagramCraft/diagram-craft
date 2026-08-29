@@ -29,7 +29,7 @@ import type { DashboardWidget } from '@arch-register/api-types/dashboardContract
 import type { BrowserView } from '@arch-register/api-types/viewContract';
 import type { EntityQuery, PathStep, QueryNode } from '@arch-register/api-types/entityQueryIR';
 import type { RelationSchemaDbCreate } from './db/relationDatabase';
-import type { SavedViewDbCreate } from './db/catalogDatabase';
+import type { SavedViewDbCreate, CategoryDbCreate } from './db/catalogDatabase';
 import { normalizePublicIdPrefix } from '../../utils/publicIds';
 
 export type TemplateDependencyKind =
@@ -3385,6 +3385,10 @@ export const resolveTemplateSavedViews = (
   }));
 
 export type InstantiatedTemplate = {
+  /** Categories referenced by schemas/enums/fieldGroups/relationSchemas below, keyed by a
+   * deterministic (workspace, name) id so the same category name always resolves to the same
+   * row whichever template fragment first introduces it — must be persisted before those. */
+  categories: CategoryDbCreate[];
   schemas: SchemaDbCreate[];
   enums: WorkspaceEnumDbCreate[];
   fieldGroups: SharedFieldGroupDbCreate[];
@@ -3424,6 +3428,7 @@ export type InstantiatedTemplateComposition = InstantiatedTemplate & {
 };
 
 const emptyInstantiatedTemplate = (): InstantiatedTemplate => ({
+  categories: [],
   schemas: [],
   enums: [],
   fieldGroups: [],
@@ -3523,6 +3528,16 @@ const createTemplateFragments = (
     }
   }
   return fragments;
+};
+
+// Deterministic per-(workspace, name) id: template category names ("Architecture", "Governance",
+// ...) must resolve to the same workspace_category row wherever they're introduced, across
+// independently-materialized template fragments, without a cross-fragment remapping pass.
+const deterministicCategoryId = (workspaceId: string, name: string): string => {
+  const hash = createHash('sha256')
+    .update(`${workspaceId}:category:${name.toLowerCase()}`)
+    .digest('hex');
+  return `${hash.slice(0, 8)}-${hash.slice(8, 12)}-${hash.slice(12, 16)}-${hash.slice(16, 20)}-${hash.slice(20, 32)}`;
 };
 
 const materializeTemplateFragments = (
@@ -3855,12 +3870,32 @@ const materializeTemplateFragments = (
     const relationSchemaIds = ownerMap('relationSchema', fragment.ownerId);
     const documentTypeIds = ownerMap('documentType', fragment.ownerId);
 
+    const categoryIdByName = new Map<string, string>();
+    const categories: CategoryDbCreate[] = [];
+    const resolveCategoryId = (name: string | null | undefined): string | null => {
+      const trimmed = name?.trim();
+      if (!trimmed) return null;
+      const key = trimmed.toLowerCase();
+      const existingId = categoryIdByName.get(key);
+      if (existingId) return existingId;
+      const id = deterministicCategoryId(workspaceId, trimmed);
+      categoryIdByName.set(key, id);
+      categories.push({
+        id,
+        workspace: workspaceId,
+        name: trimmed,
+        created_at: now,
+        updated_at: now
+      });
+      return id;
+    };
+
     const fieldGroups: SharedFieldGroupDbCreate[] = (fragment.template.fieldGroups ?? []).map(
       (fieldGroup, index) => ({
         id: ownerMap('fieldGroup', fragment.ownerId).get(fieldGroup.id)!,
         workspace: workspaceId,
         name: fieldGroup.name,
-        category: fieldGroup.category ?? null,
+        category_id: resolveCategoryId(fieldGroup.category),
         description: fieldGroup.description ?? null,
         fields: fieldGroup.fields.map(field => resolveField(fragment.ownerId, field)),
         sort_order: index,
@@ -3879,7 +3914,7 @@ const materializeTemplateFragments = (
         id: schemaIds.get(schema.symId)!,
         workspace: workspaceId,
         name: source.name,
-        category: source.category,
+        category_id: resolveCategoryId(source.category),
         description: source.description,
         key_prefix: keyPrefix,
         color: source.color,
@@ -3906,7 +3941,7 @@ const materializeTemplateFragments = (
         id: relationSchemaIds.get(relationSchema.symId)!,
         workspace: workspaceId,
         name: relationSchema.name,
-        category: relationSchema.category,
+        category_id: resolveCategoryId(relationSchema.category),
         description: relationSchema.description,
         in_schema_ids: resolveEndpointSchemaIds(relationSchema.inSymSchemaIds),
         out_schema_ids: resolveEndpointSchemaIds(relationSchema.outSymSchemaIds),
@@ -3931,7 +3966,7 @@ const materializeTemplateFragments = (
       id: ownerMap('enum', fragment.ownerId).get(enumeration.id)!,
       workspace: workspaceId,
       name: enumeration.name,
-      category: enumeration.category ?? null,
+      category_id: resolveCategoryId(enumeration.category),
       options: enumeration.options,
       sort_order: index,
       created_at: now,
@@ -4003,6 +4038,7 @@ const materializeTemplateFragments = (
     return {
       ownerId: fragment.ownerId,
       template: fragment.template,
+      categories,
       schemas,
       enums,
       fieldGroups,
@@ -4121,6 +4157,10 @@ export const instantiateTemplateComposition = (
     options
   );
   for (const module of modules) {
+    for (const category of module.categories) {
+      if (!emitOnce('category', category.id)) continue;
+      result.categories.push(category);
+    }
     for (const enumeration of module.enums) {
       if (!emitOnce('enum', enumeration.id)) continue;
       result.enums.push({

@@ -54,13 +54,27 @@
                       "category": {
                         "anyOf": [
                           {
-                            "type": "string"
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "description": "Category identifier"
+                              },
+                              "name": {
+                                "type": "string",
+                                "description": "Category name"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name"
+                            ]
                           },
                           {
                             "type": "null"
                           }
                         ],
-                        "description": "Optional free-text presentation category for organizing schemas"
+                        "description": "Workspace category used to group this schema"
                       },
                       "description": {
                         "type": "string",
@@ -1677,7 +1691,7 @@
                     "type": "string",
                     "description": "Schema name"
                   },
-                  "category": {
+                  "category_id": {
                     "anyOf": [
                       {
                         "type": "string"
@@ -1686,7 +1700,7 @@
                         "type": "null"
                       }
                     ],
-                    "description": "Optional free-text presentation category; blank values are stored as null"
+                    "description": "Workspace category id used to group this schema"
                   },
                   "key_prefix": {
                     "type": "string",
@@ -3182,13 +3196,27 @@
                     "category": {
                       "anyOf": [
                         {
-                          "type": "string"
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "description": "Category identifier"
+                            },
+                            "name": {
+                              "type": "string",
+                              "description": "Category name"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name"
+                          ]
                         },
                         {
                           "type": "null"
                         }
                       ],
-                      "description": "Optional free-text presentation category for organizing schemas"
+                      "description": "Workspace category used to group this schema"
                     },
                     "description": {
                       "type": "string",
@@ -4827,13 +4855,27 @@
                     "category": {
                       "anyOf": [
                         {
-                          "type": "string"
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "description": "Category identifier"
+                            },
+                            "name": {
+                              "type": "string",
+                              "description": "Category name"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name"
+                          ]
                         },
                         {
                           "type": "null"
                         }
                       ],
-                      "description": "Optional free-text presentation category for organizing schemas"
+                      "description": "Workspace category used to group this schema"
                     },
                     "description": {
                       "type": "string",
@@ -6458,7 +6500,7 @@
                     "type": "string",
                     "description": "Schema name"
                   },
-                  "category": {
+                  "category_id": {
                     "anyOf": [
                       {
                         "type": "string"
@@ -6467,7 +6509,7 @@
                         "type": "null"
                       }
                     ],
-                    "description": "Optional free-text presentation category; blank values are stored as null"
+                    "description": "Workspace category id used to group this schema"
                   },
                   "key_prefix": {
                     "type": "string",
@@ -7992,13 +8034,27 @@
                     "category": {
                       "anyOf": [
                         {
-                          "type": "string"
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "description": "Category identifier"
+                            },
+                            "name": {
+                              "type": "string",
+                              "description": "Category name"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name"
+                          ]
                         },
                         {
                           "type": "null"
                         }
                       ],
-                      "description": "Optional free-text presentation category for organizing schemas"
+                      "description": "Workspace category used to group this schema"
                     },
                     "description": {
                       "type": "string",
@@ -11345,13 +11401,27 @@
                       "category": {
                         "anyOf": [
                           {
-                            "type": "string"
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "description": "Category identifier"
+                              },
+                              "name": {
+                                "type": "string",
+                                "description": "Category name"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name"
+                            ]
                           },
                           {
                             "type": "null"
                           }
                         ],
-                        "description": "Optional free-text presentation category for organizing relation schemas"
+                        "description": "Workspace category used to group this relation schema"
                       },
                       "description": {
                         "type": "string",
@@ -12303,7 +12373,7 @@
                     "type": "string",
                     "description": "Relation schema name"
                   },
-                  "category": {
+                  "category_id": {
                     "anyOf": [
                       {
                         "type": "string"
@@ -12312,7 +12382,7 @@
                         "type": "null"
                       }
                     ],
-                    "description": "Optional free-text presentation category; blank values are stored as null"
+                    "description": "Workspace category id used to group this relation schema"
                   },
                   "description": {
                     "type": "string",
@@ -13142,13 +13212,27 @@
                     "category": {
                       "anyOf": [
                         {
-                          "type": "string"
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "description": "Category identifier"
+                            },
+                            "name": {
+                              "type": "string",
+                              "description": "Category name"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name"
+                          ]
                         },
                         {
                           "type": "null"
                         }
                       ],
-                      "description": "Optional free-text presentation category for organizing relation schemas"
+                      "description": "Workspace category used to group this relation schema"
                     },
                     "description": {
                       "type": "string",
@@ -14122,13 +14206,27 @@
                     "category": {
                       "anyOf": [
                         {
-                          "type": "string"
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "description": "Category identifier"
+                            },
+                            "name": {
+                              "type": "string",
+                              "description": "Category name"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name"
+                          ]
                         },
                         {
                           "type": "null"
                         }
                       ],
-                      "description": "Optional free-text presentation category for organizing relation schemas"
+                      "description": "Workspace category used to group this relation schema"
                     },
                     "description": {
                       "type": "string",
@@ -15088,7 +15186,7 @@
                     "type": "string",
                     "description": "Relation schema name"
                   },
-                  "category": {
+                  "category_id": {
                     "anyOf": [
                       {
                         "type": "string"
@@ -15097,7 +15195,7 @@
                         "type": "null"
                       }
                     ],
-                    "description": "Optional free-text presentation category; blank values are stored as null"
+                    "description": "Workspace category id used to group this relation schema"
                   },
                   "description": {
                     "type": "string",
@@ -15956,13 +16054,27 @@
                     "category": {
                       "anyOf": [
                         {
-                          "type": "string"
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "description": "Category identifier"
+                            },
+                            "name": {
+                              "type": "string",
+                              "description": "Category name"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name"
+                          ]
                         },
                         {
                           "type": "null"
                         }
                       ],
-                      "description": "Optional free-text presentation category for organizing relation schemas"
+                      "description": "Workspace category used to group this relation schema"
                     },
                     "description": {
                       "type": "string",
@@ -76049,13 +76161,27 @@
                       "category": {
                         "anyOf": [
                           {
-                            "type": "string"
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "description": "Category identifier"
+                              },
+                              "name": {
+                                "type": "string",
+                                "description": "Category name"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name"
+                            ]
                           },
                           {
                             "type": "null"
                           }
                         ],
-                        "description": "Optional free-text presentation category for organizing enumerations"
+                        "description": "Workspace category used to group this enumeration"
                       },
                       "options": {
                         "type": "array",
@@ -76161,7 +76287,7 @@
                     "type": "string",
                     "description": "Enumeration name (must be unique within workspace)"
                   },
-                  "category": {
+                  "category_id": {
                     "anyOf": [
                       {
                         "type": "string"
@@ -76170,7 +76296,7 @@
                         "type": "null"
                       }
                     ],
-                    "description": "Optional free-text presentation category for organizing enumerations"
+                    "description": "Workspace category id used to group this enumeration"
                   },
                   "options": {
                     "type": "array",
@@ -76249,13 +76375,27 @@
                     "category": {
                       "anyOf": [
                         {
-                          "type": "string"
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "description": "Category identifier"
+                            },
+                            "name": {
+                              "type": "string",
+                              "description": "Category name"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name"
+                          ]
                         },
                         {
                           "type": "null"
                         }
                       ],
-                      "description": "Optional free-text presentation category for organizing enumerations"
+                      "description": "Workspace category used to group this enumeration"
                     },
                     "options": {
                       "type": "array",
@@ -76383,13 +76523,27 @@
                     "category": {
                       "anyOf": [
                         {
-                          "type": "string"
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "description": "Category identifier"
+                            },
+                            "name": {
+                              "type": "string",
+                              "description": "Category name"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name"
+                          ]
                         },
                         {
                           "type": "null"
                         }
                       ],
-                      "description": "Optional free-text presentation category for organizing enumerations"
+                      "description": "Workspace category used to group this enumeration"
                     },
                     "options": {
                       "type": "array",
@@ -76503,7 +76657,7 @@
                     "type": "string",
                     "description": "Enumeration name (must be unique within workspace)"
                   },
-                  "category": {
+                  "category_id": {
                     "anyOf": [
                       {
                         "type": "string"
@@ -76512,7 +76666,7 @@
                         "type": "null"
                       }
                     ],
-                    "description": "Optional free-text presentation category for organizing enumerations"
+                    "description": "Workspace category id used to group this enumeration"
                   },
                   "options": {
                     "type": "array",
@@ -76591,13 +76745,27 @@
                     "category": {
                       "anyOf": [
                         {
-                          "type": "string"
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "description": "Category identifier"
+                            },
+                            "name": {
+                              "type": "string",
+                              "description": "Category name"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name"
+                          ]
                         },
                         {
                           "type": "null"
                         }
                       ],
-                      "description": "Optional free-text presentation category for organizing enumerations"
+                      "description": "Workspace category used to group this enumeration"
                     },
                     "options": {
                       "type": "array",
@@ -76771,13 +76939,27 @@
                       "category": {
                         "anyOf": [
                           {
-                            "type": "string"
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "description": "Category identifier"
+                              },
+                              "name": {
+                                "type": "string",
+                                "description": "Category name"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name"
+                            ]
                           },
                           {
                             "type": "null"
                           }
                         ],
-                        "description": "Optional free-text presentation category for organizing fieldgroups"
+                        "description": "Workspace category used to group this fieldgroup"
                       },
                       "description": {
                         "type": "string",
@@ -77954,7 +78136,7 @@
                     "type": "string",
                     "description": "Fieldgroup name (unique within workspace)"
                   },
-                  "category": {
+                  "category_id": {
                     "anyOf": [
                       {
                         "type": "string"
@@ -77963,7 +78145,7 @@
                         "type": "null"
                       }
                     ],
-                    "description": "Optional free-text presentation category for organizing fieldgroups"
+                    "description": "Workspace category id used to group this fieldgroup"
                   },
                   "description": {
                     "type": "string",
@@ -79036,13 +79218,27 @@
                     "category": {
                       "anyOf": [
                         {
-                          "type": "string"
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "description": "Category identifier"
+                            },
+                            "name": {
+                              "type": "string",
+                              "description": "Category name"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name"
+                          ]
                         },
                         {
                           "type": "null"
                         }
                       ],
-                      "description": "Optional free-text presentation category for organizing fieldgroups"
+                      "description": "Workspace category used to group this fieldgroup"
                     },
                     "description": {
                       "type": "string",
@@ -80241,13 +80437,27 @@
                     "category": {
                       "anyOf": [
                         {
-                          "type": "string"
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "description": "Category identifier"
+                            },
+                            "name": {
+                              "type": "string",
+                              "description": "Category name"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name"
+                          ]
                         },
                         {
                           "type": "null"
                         }
                       ],
-                      "description": "Optional free-text presentation category for organizing fieldgroups"
+                      "description": "Workspace category used to group this fieldgroup"
                     },
                     "description": {
                       "type": "string",
@@ -81432,7 +81642,7 @@
                     "type": "string",
                     "description": "Fieldgroup name (unique within workspace)"
                   },
-                  "category": {
+                  "category_id": {
                     "anyOf": [
                       {
                         "type": "string"
@@ -81441,7 +81651,7 @@
                         "type": "null"
                       }
                     ],
-                    "description": "Optional free-text presentation category for organizing fieldgroups"
+                    "description": "Workspace category id used to group this fieldgroup"
                   },
                   "description": {
                     "type": "string",
@@ -82543,13 +82753,27 @@
                     "category": {
                       "anyOf": [
                         {
-                          "type": "string"
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "description": "Category identifier"
+                            },
+                            "name": {
+                              "type": "string",
+                              "description": "Category name"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name"
+                          ]
                         },
                         {
                           "type": "null"
                         }
                       ],
-                      "description": "Optional free-text presentation category for organizing fieldgroups"
+                      "description": "Workspace category used to group this fieldgroup"
                     },
                     "description": {
                       "type": "string",
@@ -83736,6 +83960,292 @@
                     },
                     "message": {
                       "type": "string"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{workspace}/categories": {
+      "get": {
+        "operationId": "categories.list",
+        "summary": "List categories",
+        "description": "Lists the workspace categories used to group schemas, relation types, enums, and field groups.",
+        "tags": [
+          "Categories",
+          "Categories"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "description": "Unique category identifier"
+                      },
+                      "workspaceId": {
+                        "type": "string",
+                        "description": "Parent workspace identifier"
+                      },
+                      "name": {
+                        "type": "string",
+                        "description": "Category name"
+                      },
+                      "createdAt": {
+                        "type": "string",
+                        "description": "ISO 8601 creation timestamp"
+                      },
+                      "updatedAt": {
+                        "type": "string",
+                        "description": "ISO 8601 last update timestamp"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "workspaceId",
+                      "name",
+                      "createdAt",
+                      "updatedAt"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "categories.create",
+        "summary": "Create category",
+        "tags": [
+          "Categories",
+          "Categories"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Category name"
+                  }
+                },
+                "required": [
+                  "name"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "Unique category identifier"
+                    },
+                    "workspaceId": {
+                      "type": "string",
+                      "description": "Parent workspace identifier"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "Category name"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "description": "ISO 8601 creation timestamp"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "description": "ISO 8601 last update timestamp"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "workspaceId",
+                    "name",
+                    "createdAt",
+                    "updatedAt"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{workspace}/categories/{id}": {
+      "patch": {
+        "operationId": "categories.update",
+        "summary": "Rename category",
+        "tags": [
+          "Categories",
+          "Categories"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Category name"
+                  }
+                },
+                "required": [
+                  "name"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "Unique category identifier"
+                    },
+                    "workspaceId": {
+                      "type": "string",
+                      "description": "Parent workspace identifier"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "Category name"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "description": "ISO 8601 creation timestamp"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "description": "ISO 8601 last update timestamp"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "workspaceId",
+                    "name",
+                    "createdAt",
+                    "updatedAt"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "categories.remove",
+        "summary": "Delete category",
+        "description": "Deletes a category; fails if any schema, relation type, enum, or field group still uses it.",
+        "tags": [
+          "Categories",
+          "Categories"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "description": "Whether the operation succeeded"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Status message"
                     }
                   },
                   "required": [

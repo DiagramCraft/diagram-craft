@@ -18,7 +18,7 @@ import styles from './SchemaSettingsScreen.module.css';
 export const SchemaEditorForm = ({
   name,
   keyPrefix,
-  category,
+  categoryId,
   description,
   color,
   icon,
@@ -73,7 +73,7 @@ export const SchemaEditorForm = ({
 }: {
   name: string;
   keyPrefix: string;
-  category: string;
+  categoryId: string | null;
   description: string;
   color: string | null;
   icon: string | null;
@@ -96,7 +96,7 @@ export const SchemaEditorForm = ({
   validationPreviewMessage: string | null;
   onNameChange: (value: string) => void;
   onKeyPrefixChange: (value: string) => void;
-  onCategoryChange: (value: string) => void;
+  onCategoryChange: (value: string | null) => void;
   onDescriptionChange: (value: string) => void;
   onColorChange: (value: string) => void;
   onIconChange: (value: string) => void;
@@ -128,7 +128,7 @@ export const SchemaEditorForm = ({
 }) => (
   <SchemaEditorFormShell
     name={name}
-    category={category}
+    categoryId={categoryId}
     description={description}
     color={color}
     icon={icon}

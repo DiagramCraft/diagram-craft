@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { UserDbCreate } from '../../domain/auth/db/authDatabase';
 import type {
+  CategoryDbCreate,
   EntityDbCreate,
   EntityGrantDbCretae,
   SchemaDbCreate
@@ -30,6 +31,26 @@ export const createFixtureWorkspace = async (
     description: '',
     ...overrides,
     id,
+    created_at: createdAt,
+    updated_at: overrides.updated_at ?? createdAt
+  });
+  return id;
+};
+
+export type FixtureCategoryOverrides = Partial<Omit<CategoryDbCreate, 'workspace'>>;
+
+export const createFixtureCategory = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  overrides: FixtureCategoryOverrides = {}
+): Promise<string> => {
+  const id = overrides.id ?? randomUUID();
+  const createdAt = overrides.created_at ?? new Date();
+  await db.catalog.createCategory({
+    name: `Category ${id}`,
+    ...overrides,
+    id,
+    workspace,
     created_at: createdAt,
     updated_at: overrides.updated_at ?? createdAt
   });

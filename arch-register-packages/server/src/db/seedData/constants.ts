@@ -617,6 +617,10 @@ export const SEED_SCHEMA_IDS = {
   service: '00000000-0000-0000-0000-000000000012'
 } as const;
 
+export const SEED_CATEGORY_IDS = {
+  architecture: '00000000-0000-0000-0000-c00000000001'
+} as const;
+
 export const SEED_ENUM_IDS = {
   apiType: '00000000-0000-0000-0000-e00000000001',
   platform: '00000000-0000-0000-0000-e00000000002',

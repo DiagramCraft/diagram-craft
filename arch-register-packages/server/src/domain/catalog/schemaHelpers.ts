@@ -16,6 +16,7 @@ import {
   isTypedRelationField
 } from '@arch-register/api-types/schemaContract';
 import { WorkspaceEnum } from '@arch-register/api-types/enumContract';
+import type { CategoryRef } from '@arch-register/api-types/categoryContract';
 import { normalizeWorkspaceEnumOptions } from './enumOptions';
 import { normalizePublicIdPrefix, validatePublicIdPrefix } from '../../utils/publicIds';
 import { buildDerivedPlan } from '../derived/derivedFields';
@@ -34,7 +35,7 @@ import {
 import type { SchemaGovernancePolicies } from '../governance/schemaGovernancePolicy';
 type SchemaMutationPayload = {
   name: string;
-  category: string | null;
+  category_id: string | null;
   key_prefix: string;
   description: string;
   fields: InternalEntitySchema['fields'];
@@ -64,6 +65,23 @@ export const normalizeSchemaCategory = (value: unknown): string | null => {
   if (typeof value !== 'string') return null;
   const normalized = value.trim();
   return normalized.length > 0 ? normalized : null;
+};
+
+/** category_id is a workspace_category reference, not free text — only type-narrow it here;
+ * existence is validated against the workspace's categories by the caller (has db access). */
+export const normalizeCategoryId = (value: unknown): string | null =>
+  typeof value === 'string' ? value : null;
+
+/** Workspace category id -> name, used to embed a `{id, name}` category ref in API responses. */
+export type CategoryLookup = ReadonlyMap<string, string>;
+
+export const resolveCategoryRef = (
+  categoryId: string | null | undefined,
+  categories: CategoryLookup
+): CategoryRef | null => {
+  if (!categoryId) return null;
+  const name = categories.get(categoryId);
+  return name ? { id: categoryId, name } : null;
 };
 
 export const normalizeSchemaFields = (fields: unknown): InternalEntitySchema['fields'] => {
@@ -455,7 +473,7 @@ export const buildCreateSchemaInput = (
 ) => {
   const {
     name,
-    category,
+    category_id,
     key_prefix,
     description = '',
     fields = [],
@@ -479,7 +497,7 @@ export const buildCreateSchemaInput = (
     id: idFactory(),
     workspace,
     name,
-    category: normalizeSchemaCategory(category),
+    category_id: normalizeCategoryId(category_id),
     key_prefix:
       key_prefix !== undefined
         ? validatePublicIdPrefix(key_prefix, 'key_prefix')!
@@ -507,7 +525,7 @@ export const buildUpdateSchemaInput = (
 ): SchemaMutationPayload & { updated_at: Date } => {
   const {
     name,
-    category,
+    category_id,
     key_prefix,
     description,
     fields,
@@ -535,8 +553,8 @@ export const buildUpdateSchemaInput = (
 
   return {
     name,
-    category:
-      category !== undefined ? normalizeSchemaCategory(category) : (current.category ?? null),
+    category_id:
+      category_id !== undefined ? normalizeCategoryId(category_id) : (current.category_id ?? null),
     key_prefix:
       key_prefix !== undefined
         ? validatePublicIdPrefix(key_prefix, 'key_prefix')!
@@ -581,11 +599,11 @@ export const toFieldMigrationFields = (fields: readonly SchemaField[]): FieldMig
     isArchived: field => field.archived === true
   });
 
-export const toApiEnum = (e: InternalWorkspaceEnum): WorkspaceEnum => ({
+export const toApiEnum = (e: InternalWorkspaceEnum, categories: CategoryLookup): WorkspaceEnum => ({
   id: e.id,
   workspace: e.workspace,
   name: e.name,
-  category: e.category ?? null,
+  category: resolveCategoryRef(e.category_id, categories),
   options: normalizeWorkspaceEnumOptions(e.options),
   sort_order: e.sort_order,
   created_at: e.created_at.toISOString(),
@@ -636,19 +654,20 @@ export const toApiSharedFieldGroup = (
     id: string;
     workspace: string;
     name: string;
-    category?: string | null;
+    category_id?: string | null;
     description: string | null;
     fields: SchemaField[];
     sort_order: number;
     created_at: Date;
     updated_at: Date;
   },
-  enums: InternalWorkspaceEnum[]
+  enums: InternalWorkspaceEnum[],
+  categories: CategoryLookup
 ) => ({
   id: group.id,
   workspace: group.workspace,
   name: group.name,
-  category: group.category ?? null,
+  category: resolveCategoryRef(group.category_id, categories),
   ...(group.description ? { description: group.description } : {}),
   fields: resolveSelectFieldOptions(group.fields, enums),
   sort_order: group.sort_order,
@@ -660,6 +679,7 @@ export const toApiSchema = (
   schema: InternalEntitySchema,
   entityCount: number,
   enums: InternalWorkspaceEnum[],
+  categories: CategoryLookup,
   policies: SchemaGovernancePolicies = {
     entity_approval_policy: 'disabled',
     deprecation_policy: 'disabled'
@@ -670,7 +690,7 @@ export const toApiSchema = (
     id: schema.id,
     workspace: schema.workspace,
     name: schema.name,
-    category: schema.category ?? null,
+    category: resolveCategoryRef(schema.category_id, categories),
     description: schema.description,
     key_prefix: schema.key_prefix,
     fields,

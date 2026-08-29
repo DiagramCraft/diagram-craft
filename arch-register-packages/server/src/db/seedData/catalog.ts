@@ -1,16 +1,40 @@
 import { AR_COLOR_CYAN, AR_COLOR_TEAL } from '@arch-register/api-types/colors';
 import type {
+  CategoryDbResult,
   SchemaDbResult,
   SharedFieldGroupDbResult,
   WorkspaceEnumDbResult
 } from '../../domain/catalog/db/catalogDatabase';
 import type { SupportedCurrencyDbResult } from '../../domain/workspace/db/workspaceDatabase';
-import { SEED_ENUM_IDS, SEED_SCHEMA_IDS, WORKSPACE2_ID, WORKSPACE_ID, now } from './constants';
 import {
+  SEED_CATEGORY_IDS,
+  SEED_ENUM_IDS,
+  SEED_SCHEMA_IDS,
+  WORKSPACE2_ID,
+  WORKSPACE_ID,
+  now
+} from './constants';
+import {
+  seedTemplateCategoryDefinitions,
   seedTemplateEnumDefinitions,
   seedTemplateFieldGroupDefinitions,
   seedTemplateSchemaDefinitions
 } from './templateDefinitions';
+
+const secondWorkspaceCategories: CategoryDbResult[] = [
+  {
+    id: SEED_CATEGORY_IDS.architecture,
+    workspace: WORKSPACE2_ID,
+    name: 'Architecture',
+    created_at: now,
+    updated_at: now
+  }
+];
+
+export const seedCategories: CategoryDbResult[] = [
+  ...seedTemplateCategoryDefinitions,
+  ...secondWorkspaceCategories
+];
 
 // The default workspace catalog is a deterministic materialization of the same template
 // composition used by workspace creation. The second workspace intentionally remains a small
@@ -20,7 +44,7 @@ const secondWorkspaceEnums: WorkspaceEnumDbResult[] = [
     id: SEED_ENUM_IDS.platform,
     workspace: WORKSPACE2_ID,
     name: 'Platform',
-    category: 'Architecture',
+    category_id: SEED_CATEGORY_IDS.architecture,
     options: [
       { value: 'ios', label: 'iOS' },
       { value: 'android', label: 'Android' },
@@ -55,7 +79,7 @@ const secondWorkspaceSchemas: SchemaDbResult[] = [
     id: SEED_SCHEMA_IDS.application,
     workspace: WORKSPACE2_ID,
     name: 'Application',
-    category: 'Architecture',
+    category_id: SEED_CATEGORY_IDS.architecture,
     description: 'A mobile or web application delivered to end users.',
     fields: [
       {
@@ -76,7 +100,7 @@ const secondWorkspaceSchemas: SchemaDbResult[] = [
     id: SEED_SCHEMA_IDS.service,
     workspace: WORKSPACE2_ID,
     name: 'Service',
-    category: 'Architecture',
+    category_id: SEED_CATEGORY_IDS.architecture,
     description: 'A backend service or microservice.',
     fields: [{ id: 'technology', name: 'Technology', type: 'text' }],
     color: AR_COLOR_CYAN,

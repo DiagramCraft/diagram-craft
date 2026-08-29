@@ -34,7 +34,7 @@ export type RelationSchemaDbResult = {
   id: string;
   workspace: string;
   name: string;
-  category?: string | null;
+  category_id?: string | null;
   description: string;
   in_schema_ids: string[] | 'any';
   out_schema_ids: string[] | 'any';
@@ -185,7 +185,7 @@ export const relationMappers = {
     id: String(row['id']),
     workspace: String(row['workspace']),
     name: String(row['name']),
-    category: row['category'] == null ? null : String(row['category']),
+    category_id: row['category_id'] == null ? null : String(row['category_id']),
     description: String(row['description'] ?? ''),
     in_schema_ids: parseRelationSchemaIds(row['in_schema_ids'], 'relation_schema.in_schema_ids'),
     out_schema_ids: parseRelationSchemaIds(row['out_schema_ids'], 'relation_schema.out_schema_ids'),

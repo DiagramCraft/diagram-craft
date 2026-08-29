@@ -1,20 +1,35 @@
 import { useState } from 'react';
 import { getRouteApi } from '@tanstack/react-router';
-import { TbDatabase, TbTable, TbLayoutGrid, TbPlus, TbShare2 } from 'react-icons/tb';
+import {
+  TbDatabase,
+  TbTable,
+  TbLayoutGrid,
+  TbPlus,
+  TbShare2,
+  TbPencil,
+  TbTrash
+} from 'react-icons/tb';
 import { MenuButton } from '@diagram-craft/app-components/MenuButton';
 import { Menu } from '@diagram-craft/app-components/Menu';
+import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
+import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import {
   compareSchemaCategories,
   groupSchemasByCategory,
-  resolveSchemaColor
+  resolveSchemaColor,
+  UNCATEGORIZED_SCHEMA_CATEGORY
 } from '../../lib/schemaPresentation';
 import { TreeRow } from '../../components/TreeRow';
 import { TypeBadge } from '../../components/TypeBadge';
+import { RenameDialog } from '../../components/RenameDialog';
+import { AddCategoryDialog } from './AddCategoryDialog';
 import styles from '../../shell/SidePanel.module.css';
 import { EntitySchema } from '@arch-register/api-types/schemaContract';
 import { WorkspaceEnum } from '@arch-register/api-types/enumContract';
+import type { Category } from '@arch-register/api-types/categoryContract';
 import { SidebarGroupLabel, SidebarTitleHeader } from '../../components/sidebar/SidebarPrimitives';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
+import { useCreateCategory, useDeleteCategory, useUpdateCategory } from '../../hooks/useCategories';
 import { NEW_SCHEMA_ID } from './SchemaSettingsScreen';
 import { NEW_RELATION_SCHEMA_ID } from './RelationSchemaSettingsScreen';
 import { NEW_ENUM_ID } from './EnumEditorScreen';
@@ -23,6 +38,10 @@ import { NEW_FIELD_GROUP_ID } from './FieldGroupEditorScreen';
 const routeApi = getRouteApi('/authenticated/$workspaceSlug/settings/schemas');
 
 const categoryLabelStyle = { color: 'var(--base-fg)' };
+
+// A row for the sidebar's category headers: `id: null` is the synthetic Uncategorized bucket,
+// never a real workspace_category row, so it can't be renamed or deleted.
+type CategoryRow = { id: string | null; name: string };
 
 export const SchemaSettingsSidebar = ({
   schemas,
@@ -35,7 +54,10 @@ export const SchemaSettingsSidebar = ({
 }) => {
   const navigate = routeApi.useNavigate();
   const search = routeApi.useSearch();
-  const { fieldGroups = [], relationSchemas, permissions } = useWorkspaceContext();
+  const { fieldGroups = [], relationSchemas, permissions, categories } = useWorkspaceContext();
+  const createCategoryMutation = useCreateCategory(workspaceSlug);
+  const updateCategoryMutation = useUpdateCategory(workspaceSlug);
+  const deleteCategoryMutation = useDeleteCategory(workspaceSlug);
 
   const schemaId = search.schema ?? null;
   const enumId = search.enumId ?? null;
@@ -47,27 +69,41 @@ export const SchemaSettingsSidebar = ({
   const enumGroups = groupSchemasByCategory(enums);
   const fieldGroupGroups = groupSchemasByCategory(fieldGroups);
 
-  const categories = [
-    ...new Set([
-      ...schemaGroups.map(g => g.category),
-      ...enumGroups.map(g => g.category),
-      ...fieldGroupGroups.map(g => g.category),
-      ...relationSchemaGroups.map(g => g.category)
-    ])
-  ].sort(compareSchemaCategories);
+  const hasUncategorizedItems = [
+    ...schemaGroups,
+    ...relationSchemaGroups,
+    ...enumGroups,
+    ...fieldGroupGroups
+  ].some(group => group.categoryId === null);
+
+  const categoryRows: CategoryRow[] = [
+    ...[...categories]
+      .sort((left, right) => compareSchemaCategories(left.name, right.name))
+      .map(category => ({ id: category.id, name: category.name })),
+    ...(hasUncategorizedItems ? [{ id: null, name: UNCATEGORIZED_SCHEMA_CATEGORY }] : [])
+  ];
 
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
-  const toggleCategory = (category: string) => {
+  const toggleCategory = (categoryKey: string) => {
     setCollapsed(prev => {
       const next = new Set(prev);
-      if (next.has(category)) {
-        next.delete(category);
+      if (next.has(categoryKey)) {
+        next.delete(categoryKey);
       } else {
-        next.add(category);
+        next.add(categoryKey);
       }
       return next;
     });
   };
+
+  const [addCategoryOpen, setAddCategoryOpen] = useState(false);
+  const [categoryMenu, setCategoryMenu] = useState<{
+    x: number;
+    y: number;
+    category: Category;
+  } | null>(null);
+  const [renameCategoryTarget, setRenameCategoryTarget] = useState<Category | null>(null);
+  const [deleteCategoryTarget, setDeleteCategoryTarget] = useState<Category | null>(null);
 
   const createSchema = () =>
     navigate({
@@ -130,24 +166,34 @@ export const SchemaSettingsSidebar = ({
                 <Menu.Item leftSlot={<TbLayoutGrid size={13} />} onClick={createFieldGroup}>
                   Add field group
                 </Menu.Item>
+                <Menu.Separator />
+                <Menu.Item leftSlot={<TbPlus size={13} />} onClick={() => setAddCategoryOpen(true)}>
+                  Add category
+                </Menu.Item>
               </MenuButton.Menu>
             </MenuButton.Root>
           ) : undefined
         }
       />
       <div className={styles.scroll}>
-        {isEmpty && <div className={`${styles.emptyState} dim`}>No schemas defined.</div>}
-        {categories.map(category => {
-          const entityItems = schemaGroups.find(g => g.category === category)?.items ?? [];
-          const enumItems = enumGroups.find(g => g.category === category)?.items ?? [];
-          const fieldGroupItems = fieldGroupGroups.find(g => g.category === category)?.items ?? [];
+        {isEmpty && categoryRows.length === 0 && (
+          <div className={`${styles.emptyState} dim`}>No schemas defined.</div>
+        )}
+        {categoryRows.map(category => {
+          const entityItems = schemaGroups.find(g => g.categoryId === category.id)?.items ?? [];
+          const enumItems = enumGroups.find(g => g.categoryId === category.id)?.items ?? [];
+          const fieldGroupItems =
+            fieldGroupGroups.find(g => g.categoryId === category.id)?.items ?? [];
           const relationItems =
-            relationSchemaGroups.find(g => g.category === category)?.items ?? [];
-          const expanded = !collapsed.has(category);
+            relationSchemaGroups.find(g => g.categoryId === category.id)?.items ?? [];
+          const itemCount =
+            entityItems.length + enumItems.length + fieldGroupItems.length + relationItems.length;
+          const categoryKey = category.id ?? '';
+          const expanded = !collapsed.has(categoryKey);
 
           return (
             <div
-              key={category}
+              key={categoryKey}
               style={{
                 borderBottom: '1px solid var(--panel-border)',
                 paddingBottom: '0.25rem',
@@ -155,14 +201,22 @@ export const SchemaSettingsSidebar = ({
               }}
             >
               <TreeRow
-                label={category}
+                label={category.name}
                 expandable
                 expanded={expanded}
                 chevronPosition="end"
                 hideIconSlot
                 labelStyle={categoryLabelStyle}
-                onExpand={() => toggleCategory(category)}
-                onClick={() => toggleCategory(category)}
+                onExpand={() => toggleCategory(categoryKey)}
+                onClick={() => toggleCategory(categoryKey)}
+                onContextMenu={event => {
+                  if (!permissions.canEditSchemas || category.id === null) return;
+                  event.preventDefault();
+                  event.stopPropagation();
+                  const fullCategory = categories.find(c => c.id === category.id);
+                  if (!fullCategory) return;
+                  setCategoryMenu({ x: event.clientX, y: event.clientY, category: fullCategory });
+                }}
               />
               {expanded && (
                 <div>
@@ -272,12 +326,92 @@ export const SchemaSettingsSidebar = ({
                       ))}
                     </>
                   )}
+                  {itemCount === 0 && (
+                    <div className={`${styles.emptyState} dim`} style={{ paddingLeft: '1.5rem' }}>
+                      Empty
+                    </div>
+                  )}
                 </div>
               )}
             </div>
           );
         })}
       </div>
+
+      <AddCategoryDialog
+        open={addCategoryOpen}
+        onAdd={name => {
+          createCategoryMutation.mutate(name);
+          setAddCategoryOpen(false);
+        }}
+        onCancel={() => setAddCategoryOpen(false)}
+      />
+
+      {categoryMenu && (
+        <ContextMenu.Imperative
+          x={categoryMenu.x}
+          y={categoryMenu.y}
+          onClose={() => setCategoryMenu(null)}
+        >
+          <Menu.Item
+            leftSlot={<TbPencil size={13} />}
+            onClick={() => setRenameCategoryTarget(categoryMenu.category)}
+          >
+            Rename
+          </Menu.Item>
+          <Menu.Separator />
+          <Menu.Item
+            type="danger"
+            disabled={
+              (schemaGroups.find(g => g.categoryId === categoryMenu.category.id)?.items.length ??
+                0) +
+                (enumGroups.find(g => g.categoryId === categoryMenu.category.id)?.items.length ??
+                  0) +
+                (fieldGroupGroups.find(g => g.categoryId === categoryMenu.category.id)?.items
+                  .length ?? 0) +
+                (relationSchemaGroups.find(g => g.categoryId === categoryMenu.category.id)?.items
+                  .length ?? 0) >
+              0
+            }
+            leftSlot={<TbTrash size={13} />}
+            onClick={() => setDeleteCategoryTarget(categoryMenu.category)}
+          >
+            Delete
+          </Menu.Item>
+        </ContextMenu.Imperative>
+      )}
+
+      {renameCategoryTarget && (
+        <RenameDialog
+          open={true}
+          currentName={renameCategoryTarget.name}
+          entityType="category"
+          onRename={name => {
+            updateCategoryMutation.mutate({ id: renameCategoryTarget.id, name });
+            setRenameCategoryTarget(null);
+          }}
+          onCancel={() => setRenameCategoryTarget(null)}
+        />
+      )}
+
+      <DeleteConfirmationDialog
+        open={!!deleteCategoryTarget}
+        title="Delete category?"
+        message={
+          <>
+            The category <b>{deleteCategoryTarget?.name}</b> will be permanently deleted.
+          </>
+        }
+        detail="This can't be undone."
+        confirmLabel="Delete category"
+        onConfirm={() => {
+          if (deleteCategoryTarget) {
+            deleteCategoryMutation.mutate(deleteCategoryTarget.id);
+            setDeleteCategoryTarget(null);
+          }
+        }}
+        onCancel={() => setDeleteCategoryTarget(null)}
+      />
     </>
   );
 };

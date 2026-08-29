@@ -10,6 +10,7 @@ import {
   fieldMigrationsSchema
 } from '@arch-register/api-types/common';
 import type { PendingFieldChange } from '@arch-register/api-types/common';
+import { categoryRefSchema } from '@arch-register/api-types/categoryContract';
 
 const requirementLevelSchema = z
   .enum(['required', 'expected', 'optional'])
@@ -439,10 +440,7 @@ const entitySchemaSchema = z.object({
   id: z.string().describe('Unique schema identifier'),
   workspace: z.string().describe('Parent workspace identifier'),
   name: z.string().describe('Schema name'),
-  category: z
-    .string()
-    .nullable()
-    .describe('Optional free-text presentation category for organizing schemas'),
+  category: categoryRefSchema.nullable().describe('Workspace category used to group this schema'),
   description: z.string().describe('Schema description'),
   key_prefix: z.string().describe('Prefix for entity public IDs (e.g., "APP" for APP-001)'),
   fields: z.array(schemaFieldResponseSchema).describe('Schema field definitions'),
@@ -504,11 +502,11 @@ const schemaVersionSchema = z.object({
 
 const createSchemaBodySchema = z.object({
   name: z.string().describe('Schema name'),
-  category: z
+  category_id: z
     .string()
     .nullable()
     .optional()
-    .describe('Optional free-text presentation category; blank values are stored as null'),
+    .describe('Workspace category id used to group this schema'),
   key_prefix: z
     .string()
     .optional()

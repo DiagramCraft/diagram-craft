@@ -9,7 +9,8 @@ import {
   isEnumReferencedBySchemas
 } from './enumHelpers';
 import { listUsedEnumOptionValues } from './enumUsage';
-import { toApiEnum } from './schemaHelpers';
+import { toApiEnum, type CategoryLookup } from './schemaHelpers';
+import { assertCategoryExists, buildCategoryLookup } from './categoryOperations';
 import { computeChanges, logAudit } from '../audit/db/auditLogging';
 import {
   CreateEnumRequest,
@@ -35,8 +36,11 @@ export const listWorkspaceEnums = async (
     dbErrorMessages,
     operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'ws.view');
-      const enums = await db.catalog.listEnums(ws);
-      return enums.map(toApiEnum);
+      const [enums, categories] = await Promise.all([
+        db.catalog.listEnums(ws),
+        buildCategoryLookup(db, ws)
+      ]);
+      return enums.map(e => toApiEnum(e, categories));
     }
   });
 };
@@ -55,9 +59,12 @@ export const getWorkspaceEnum = async (
     dbErrorMessages,
     operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'ws.view');
-      const row = await db.catalog.getEnum(ws, id);
+      const [row, categories] = await Promise.all([
+        db.catalog.getEnum(ws, id),
+        buildCategoryLookup(db, ws)
+      ]);
       httpAssert.present(row, { status: 404, message: `Enum '${id}' not found` });
-      return toApiEnum(row);
+      return toApiEnum(row, categories);
     }
   });
 };
@@ -77,7 +84,9 @@ export const createWorkspaceEnum = async (
     operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'schema.edit');
       const timestamp = new Date();
-      const row = await db.catalog.createEnum(buildCreateEnumInput(ws, body, timestamp));
+      const input = buildCreateEnumInput(ws, body, timestamp);
+      const categoryName = await assertCategoryExists(db, ws, input.category_id);
+      const row = await db.catalog.createEnum(input);
       await logAudit(db, {
         userId: authCtx.userId,
         workspace: ws,
@@ -88,7 +97,9 @@ export const createWorkspaceEnum = async (
         changes: { new: row },
         metadata: { optionCount: row.options.length }
       });
-      return toApiEnum(row);
+      const categories: CategoryLookup =
+        row.category_id && categoryName ? new Map([[row.category_id, categoryName]]) : new Map();
+      return toApiEnum(row, categories);
     }
   });
 };
@@ -121,11 +132,9 @@ export const updateWorkspaceEnum = async (
         ? await listUsedEnumOptionValues(db, ws, id)
         : undefined;
 
-      const row = await db.catalog.updateEnum(
-        ws,
-        id,
-        buildUpdateEnumInput(body, oldRow, new Date(), usedOptionValues)
-      );
+      const updateInput = buildUpdateEnumInput(body, oldRow, new Date(), usedOptionValues);
+      const categoryName = await assertCategoryExists(db, ws, updateInput.category_id);
+      const row = await db.catalog.updateEnum(ws, id, updateInput);
       httpAssert.present(row, { status: 404, message: `Enum '${id}' not found` });
       await logAudit(db, {
         userId: authCtx.userId,
@@ -137,7 +146,9 @@ export const updateWorkspaceEnum = async (
         changes: computeChanges(oldRow, row),
         metadata: { optionCount: row.options.length }
       });
-      return toApiEnum(row);
+      const categories: CategoryLookup =
+        row.category_id && categoryName ? new Map([[row.category_id, categoryName]]) : new Map();
+      return toApiEnum(row, categories);
     }
   });
 };

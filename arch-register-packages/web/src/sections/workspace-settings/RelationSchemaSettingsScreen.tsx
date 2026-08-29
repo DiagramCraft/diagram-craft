@@ -37,7 +37,7 @@ const isValidEndpoint = (endpoint: RelationEndpoint): boolean =>
   endpoint.schemaIds === 'any' || endpoint.schemaIds.length > 0;
 
 type RelationEditorExtra = {
-  category: string;
+  categoryId: string | null;
   inEndpoint: RelationEndpoint;
   outEndpoint: RelationEndpoint;
 };
@@ -89,7 +89,7 @@ export const RelationSchemaSettingsScreen = () => {
         schema
           ? {
               name: schema.name,
-              category: schema.category ?? '',
+              categoryId: schema.category?.id ?? null,
               description: schema.description,
               inEndpoint: schema.in,
               outEndpoint: schema.out,
@@ -102,7 +102,7 @@ export const RelationSchemaSettingsScreen = () => {
             }
           : {
               name: '',
-              category: '',
+              categoryId: null,
               description: '',
               inEndpoint: EMPTY_ENDPOINT,
               outEndpoint: EMPTY_ENDPOINT,
@@ -119,7 +119,7 @@ export const RelationSchemaSettingsScreen = () => {
         createRelationFieldForType(field, newType, firstEnumId),
       hasChanges: (draft, schema) =>
         draft.name !== schema.name ||
-        draft.category !== (schema.category ?? '') ||
+        draft.categoryId !== (schema.category?.id ?? null) ||
         draft.description !== schema.description ||
         JSON.stringify(draft.inEndpoint) !== JSON.stringify(schema.in) ||
         JSON.stringify(draft.outEndpoint) !== JSON.stringify(schema.out) ||
@@ -135,7 +135,7 @@ export const RelationSchemaSettingsScreen = () => {
           relationSchemaId: schema.id,
           data: {
             name: draft.name,
-            category: draft.category,
+            category_id: draft.categoryId,
             description: draft.description,
             in: draft.inEndpoint,
             out: draft.outEndpoint,
@@ -152,7 +152,7 @@ export const RelationSchemaSettingsScreen = () => {
       create: draft =>
         createRelationSchemaMutation.mutateAsync({
           name: draft.name,
-          category: draft.category,
+          category_id: draft.categoryId,
           description: draft.description,
           in: draft.inEndpoint,
           out: draft.outEndpoint,
@@ -251,7 +251,7 @@ export const RelationSchemaSettingsScreen = () => {
         (selected || isNew) && draft ? (
           <RelationEditorForm
             name={draft.name}
-            category={draft.category}
+            categoryId={draft.categoryId}
             description={draft.description}
             inEndpoint={draft.inEndpoint}
             outEndpoint={draft.outEndpoint}
@@ -273,7 +273,7 @@ export const RelationSchemaSettingsScreen = () => {
             validationRules={draft.validationRules}
             onNameChange={value => editor.updateDraft(current => ({ ...current, name: value }))}
             onCategoryChange={value =>
-              editor.updateDraft(current => ({ ...current, category: value }))
+              editor.updateDraft(current => ({ ...current, categoryId: value }))
             }
             onDescriptionChange={value =>
               editor.updateDraft(current => ({ ...current, description: value }))

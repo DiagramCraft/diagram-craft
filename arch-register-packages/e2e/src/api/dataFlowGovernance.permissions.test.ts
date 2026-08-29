@@ -24,7 +24,7 @@ const restrictedDataFlowGovernanceTest = test.extend<{ restrictedDataFlowGoverna
 
       await server.db.relation.updateRelationSchema(resources.workspaceId, schema.id, {
         name: schema.name,
-        category: schema.category,
+        category_id: schema.category_id,
         description: schema.description,
         in_schema_ids: schema.in_schema_ids,
         out_schema_ids: schema.out_schema_ids,

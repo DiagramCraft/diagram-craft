@@ -44,7 +44,7 @@ export const useCreateSchema = (workspaceId: string) => {
     mutationFn: (body: {
       name: string;
       key_prefix: string;
-      category?: string | null;
+      category_id?: string | null;
       description?: string;
       fields: SchemaField[];
       templates?: EntityTemplate[];
@@ -74,7 +74,7 @@ export const useUpdateSchema = (workspaceId: string) => {
       data: {
         name: string;
         key_prefix: string;
-        category?: string | null;
+        category_id?: string | null;
         description?: string;
         fields: SchemaField[];
         templates?: EntityTemplate[];

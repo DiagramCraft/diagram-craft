@@ -9,6 +9,7 @@ import { authProtectedContract, authPublicContract } from './authContract';
 import { automationRuleContract } from './automationRuleContract';
 import { baselineContract } from './baselineContract';
 import { changeCaseContract } from './changeCaseContract';
+import { workspaceCategoryContract } from './categoryContract';
 import { workspaceCollectionContract } from './collectionContract';
 import { conformanceContract } from './conformanceContract';
 import {
@@ -136,6 +137,7 @@ const applicationEntries = [
   { id: 'aiContract', contract: aiContract },
   { id: 'workspaceEnumContract', contract: workspaceEnumContract },
   { id: 'workspaceFieldGroupContract', contract: workspaceFieldGroupContract },
+  { id: 'workspaceCategoryContract', contract: workspaceCategoryContract },
   { id: 'workspaceViewContract', contract: workspaceViewContract },
   { id: 'workspaceDashboardContract', contract: workspaceDashboardContract },
   { id: 'personalDashboardContract', contract: personalDashboardContract },

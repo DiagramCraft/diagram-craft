@@ -9,6 +9,7 @@ import {
 } from './domain/auth/authOrpc';
 import { createWorkspaceEnumORPCHandler } from './domain/catalog/enumOrpc';
 import { createWorkspaceFieldGroupORPCHandler } from './domain/catalog/fieldGroupOrpc';
+import { createWorkspaceCategoryORPCHandler } from './domain/catalog/categoryOrpc';
 import { createWorkspaceSchemaORPCHandler } from './domain/catalog/schemaOrpc';
 import { createWorkspaceRelationSchemaORPCHandler } from './domain/catalog/relationSchemaOrpc';
 import {
@@ -198,6 +199,15 @@ const protectedRouteDefinitions = [
     prefix: API_PREFIXES.application,
     surfaces: [API_PREFIXES.application],
     create: ({ db }) => createWorkspaceFieldGroupORPCHandler(db)
+  },
+  {
+    id: 'workspace-categories',
+    auth: 'protected',
+    kind: 'orpc',
+    dependencies: ['db'],
+    prefix: API_PREFIXES.application,
+    surfaces: [API_PREFIXES.application],
+    create: ({ db }) => createWorkspaceCategoryORPCHandler(db)
   },
   {
     id: 'workspace-schemas',

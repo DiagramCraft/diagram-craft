@@ -88,7 +88,7 @@ export type SchemaDbResult = {
   id: string;
   workspace: string;
   name: string;
-  category?: string | null;
+  category_id?: string | null;
   description: string;
   fields: SchemaField[];
   templates?: EntityTemplate[];
@@ -146,7 +146,7 @@ export type WorkspaceEnumDbResult = {
   id: string;
   workspace: string;
   name: string;
-  category?: string | null;
+  category_id?: string | null;
   options: Array<{
     value: string;
     label: string;
@@ -167,7 +167,7 @@ export type SharedFieldGroupDbResult = {
   id: string;
   workspace: string;
   name: string;
-  category?: string | null;
+  category_id?: string | null;
   description: string | null;
   fields: SchemaField[];
   sort_order: number;
@@ -180,6 +180,19 @@ export type SharedFieldGroupDbUpdate = Omit<
   SharedFieldGroupDbResult,
   'id' | 'workspace' | 'created_at'
 >;
+
+// -- Workspace Category
+
+export type CategoryDbResult = {
+  id: string;
+  workspace: string;
+  name: string;
+  created_at: Date;
+  updated_at: Date;
+};
+
+export type CategoryDbCreate = CategoryDbResult;
+export type CategoryDbUpdate = { name: string; updated_at: Date };
 
 // -- Entity Grant
 
@@ -465,7 +478,7 @@ export const catalogMappers = {
     id: String(row['id']),
     workspace: String(row['workspace']),
     name: String(row['name']),
-    category: row['category'] == null ? null : String(row['category']),
+    category_id: row['category_id'] == null ? null : String(row['category_id']),
     description: String(row['description'] ?? ''),
     fields: parseDatabaseJson(row['fields'], [], 'entity_schema.fields'),
     templates: parseDatabaseJson(row['templates'], [], 'entity_schema.templates'),
@@ -530,7 +543,7 @@ export const catalogMappers = {
     id: String(row['id']),
     workspace: String(row['workspace']),
     name: String(row['name']),
-    category: row['category'] == null ? null : String(row['category']),
+    category_id: row['category_id'] == null ? null : String(row['category_id']),
     options: normalizeWorkspaceEnumOptions(
       parseDatabaseJson(row['options'], [], 'workspace_enum.options')
     ),
@@ -542,7 +555,7 @@ export const catalogMappers = {
     id: String(row['id']),
     workspace: String(row['workspace']),
     name: String(row['name']),
-    category: row['category'] == null ? null : String(row['category']),
+    category_id: row['category_id'] == null ? null : String(row['category_id']),
     description: row['description'] == null ? null : String(row['description']),
     fields: parseDatabaseJson(row['fields'], [], 'workspace_field_group.fields'),
     sort_order: Number(row['sort_order'] ?? 0),
@@ -558,6 +571,13 @@ export const catalogMappers = {
     role: String(row['role']) as EntityGrantDbResult['role'],
     applies_to: String(row['applies_to']) as EntityGrantDbResult['applies_to'],
     created_at: databaseDate(row['created_at'])
+  }),
+  category: (row: DatabaseRow): CategoryDbResult => ({
+    id: String(row['id']),
+    workspace: String(row['workspace']),
+    name: String(row['name']),
+    created_at: databaseDate(row['created_at']),
+    updated_at: databaseDate(row['updated_at'])
   }),
   collection: (row: DatabaseRow): CollectionDbResult => ({
     id: String(row['id']),
@@ -639,6 +659,15 @@ export type CatalogDatabase = {
     input: SharedFieldGroupDbUpdate
   ): Promise<SharedFieldGroupDbResult | null>;
   deleteSharedFieldGroup(ws: string, id: string): Promise<SharedFieldGroupDbResult | null>;
+
+  listCategories(ws: string): Promise<CategoryDbResult[]>;
+  getCategory(ws: string, id: string): Promise<CategoryDbResult | null>;
+  getCategoryByName(ws: string, name: string): Promise<CategoryDbResult | null>;
+  createCategory(input: CategoryDbCreate): Promise<CategoryDbResult>;
+  updateCategory(ws: string, id: string, input: CategoryDbUpdate): Promise<CategoryDbResult | null>;
+  deleteCategory(ws: string, id: string): Promise<CategoryDbResult | null>;
+  /** Count of entity_schema/relation_schema/workspace_enum/workspace_field_group rows referencing this category. */
+  countCategoryUsage(ws: string, id: string): Promise<number>;
 
   listEntitiesPaginated(
     ws: string,

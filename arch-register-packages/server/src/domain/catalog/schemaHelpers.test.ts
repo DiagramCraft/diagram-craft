@@ -15,6 +15,8 @@ import { DetailLayoutConfig, SchemaField } from '@arch-register/api-types/schema
 
 const now = new Date('2025-06-01T12:00:00.000Z');
 const nowIso = '2025-06-01T12:00:00.000Z';
+const categories = new Map([['category-architecture', 'Architecture']]);
+const noCategories = new Map<string, string>();
 
 // ── toApiEnum ─────────────────────────────────────────────────
 
@@ -29,7 +31,7 @@ describe('toApiEnum', () => {
       created_at: now,
       updated_at: now
     };
-    const result = toApiEnum(e);
+    const result = toApiEnum(e, noCategories);
     expect(result.id).toBe('enum-1');
     expect(result.options).toEqual([
       { value: 'active', label: 'Active', description: null, retired: false, restricted: false }
@@ -56,7 +58,7 @@ describe('toApiSchema', () => {
     id: 'schema-1',
     workspace: 'ws-1',
     name: 'Application',
-    category: 'Architecture',
+    category_id: 'category-architecture',
     description: 'desc',
     fields: [
       { id: 'env', name: 'Env', type: 'select', enumId: 'enum-env' },
@@ -76,32 +78,32 @@ describe('toApiSchema', () => {
   };
 
   it('resolves options for select fields', () => {
-    const result = toApiSchema(schema, 5, [baseEnum]);
-    expect(result.category).toBe('Architecture');
+    const result = toApiSchema(schema, 5, [baseEnum], categories);
+    expect(result.category).toEqual({ id: 'category-architecture', name: 'Architecture' });
     const envField = result.fields.find(f => f.id === 'env') as Record<string, unknown>;
     expect(envField?.options).toEqual([{ value: 'prod', label: 'Production' }]);
   });
 
   it('falls back to empty options when enum is missing', () => {
-    const result = toApiSchema(schema, 5, []);
+    const result = toApiSchema(schema, 5, [], categories);
     const envField = result.fields.find(f => f.id === 'env') as Record<string, unknown>;
     expect(envField?.options).toEqual([]);
   });
 
   it('leaves non-select fields unchanged', () => {
-    const result = toApiSchema(schema, 5, []);
+    const result = toApiSchema(schema, 5, [], categories);
     const notesField = result.fields.find(f => f.id === 'notes');
     expect(notesField).toEqual({ id: 'notes', name: 'Notes', type: 'text' });
   });
 
   it('passes through date fields unchanged', () => {
-    const result = toApiSchema(schema, 5, []);
+    const result = toApiSchema(schema, 5, [], categories);
     const dateField = result.fields.find(f => f.id === 'go_live');
     expect(dateField).toEqual({ id: 'go_live', name: 'Go Live', type: 'date' });
   });
 
   it('passes through number fields unchanged', () => {
-    const result = toApiSchema(schema, 5, []);
+    const result = toApiSchema(schema, 5, [], categories);
     const numberField = result.fields.find(f => f.id === 'headcount');
     expect(numberField).toEqual({
       id: 'headcount',
@@ -113,19 +115,19 @@ describe('toApiSchema', () => {
   });
 
   it('includes entity count and serializes dates', () => {
-    const result = toApiSchema(schema, 42, []);
+    const result = toApiSchema(schema, 42, [], categories);
     expect(result.entity_count).toBe(42);
     expect(result.created_at).toBe(nowIso);
   });
 
   it('passes through groups', () => {
-    const result = toApiSchema(schema, 5, []);
+    const result = toApiSchema(schema, 5, [], categories);
     expect(result.groups).toEqual([{ id: 'g1', name: 'Basics' }]);
   });
 
   it('defaults groups to an empty array when missing from the row', () => {
     const { groups: _groups, ...schemaWithoutGroups } = schema;
-    const result = toApiSchema(schemaWithoutGroups as SchemaDbResult, 5, []);
+    const result = toApiSchema(schemaWithoutGroups as SchemaDbResult, 5, [], categories);
     expect(result.groups).toEqual([]);
   });
 });
@@ -133,21 +135,21 @@ describe('toApiSchema', () => {
 // ── buildCreateSchemaInput (number field validation) ────────────
 
 describe('buildCreateSchemaInput', () => {
-  it('trims category values and normalizes blank or omitted values to null', () => {
+  it('passes through a category_id and normalizes a non-string or omitted value to null', () => {
     expect(
       buildCreateSchemaInput(
         'ws-1',
-        { name: 'Application', category: '  Architecture  ' },
+        { name: 'Application', category_id: 'category-architecture' },
         new Set(),
         now
-      ).category
-    ).toBe('Architecture');
+      ).category_id
+    ).toBe('category-architecture');
     expect(
-      buildCreateSchemaInput('ws-1', { name: 'Application', category: '  ' }, new Set(), now)
-        .category
+      buildCreateSchemaInput('ws-1', { name: 'Application', category_id: null }, new Set(), now)
+        .category_id
     ).toBeNull();
     expect(
-      buildCreateSchemaInput('ws-1', { name: 'Application' }, new Set(), now).category
+      buildCreateSchemaInput('ws-1', { name: 'Application' }, new Set(), now).category_id
     ).toBeNull();
   });
 
@@ -302,7 +304,7 @@ describe('buildUpdateSchemaInput', () => {
     id: 'schema-1',
     workspace: 'ws-1',
     name: 'Application',
-    category: 'Architecture',
+    category_id: 'category-architecture',
     description: '',
     fields: [{ id: 'notes', name: 'Notes', type: 'text', groupId: 'g1' }],
     templates: [],
@@ -316,24 +318,24 @@ describe('buildUpdateSchemaInput', () => {
     updated_at: now
   };
 
-  it('falls back to the current groups when omitted', () => {
+  it('falls back to the current category_id when omitted', () => {
     const result = buildUpdateSchemaInput({ name: 'Application' }, current, new Set(), now);
     expect(result.groups).toEqual([{ id: 'g1', name: 'Basics' }]);
-    expect(result.category).toBe('Architecture');
+    expect(result.category_id).toBe('category-architecture');
   });
 
-  it('trims a changed category and clears whitespace-only values', () => {
+  it('replaces category_id when changed, and clears it to null when explicitly nulled', () => {
     expect(
       buildUpdateSchemaInput(
-        { name: 'Application', category: '  Portfolio  ' },
+        { name: 'Application', category_id: 'category-portfolio' },
         current,
         new Set(),
         now
-      ).category
-    ).toBe('Portfolio');
+      ).category_id
+    ).toBe('category-portfolio');
     expect(
-      buildUpdateSchemaInput({ name: 'Application', category: '   ' }, current, new Set(), now)
-        .category
+      buildUpdateSchemaInput({ name: 'Application', category_id: null }, current, new Set(), now)
+        .category_id
     ).toBeNull();
   });
 

@@ -13,15 +13,23 @@ test.describe('definition import', () => {
     const target = await orpc.workspaces.create({
       body: { name: `Categorized definitions target ${suffix}`, badge: 'CIT' }
     });
+    const architectureCategory = await orpc.categories.create({
+      params: { workspace: source.url_slug },
+      body: { name: 'Architecture' }
+    });
+    const connectivityCategory = await orpc.categories.create({
+      params: { workspace: source.url_slug },
+      body: { name: 'Connectivity' }
+    });
     const entitySchema = await orpc.schemas.create({
       params: { workspace: source.url_slug },
-      body: { name: `Categorized entity ${suffix}`, category: 'Architecture' }
+      body: { name: `Categorized entity ${suffix}`, category_id: architectureCategory.id }
     });
     const relationSchema = await orpc.relationSchemas.create({
       params: { workspace: source.url_slug },
       body: {
         name: `Categorized relation ${suffix}`,
-        category: 'Connectivity',
+        category_id: connectivityCategory.id,
         in: { schemaIds: [entitySchema.id] },
         out: { schemaIds: [entitySchema.id] }
       }
@@ -60,15 +68,27 @@ test.describe('definition import', () => {
       }
     });
 
+    const targetCategoryNamesById = new Map(
+      (await server.db.catalog.listCategories(target.id)).map(category => [
+        category.id,
+        category.name
+      ])
+    );
+    const importedEntitySchema = (await server.db.catalog.listSchemas(target.id)).find(
+      schema => schema.name === entitySchema.name
+    );
     expect(
-      (await server.db.catalog.listSchemas(target.id)).find(
-        schema => schema.name === entitySchema.name
-      )?.category
+      importedEntitySchema?.category_id
+        ? targetCategoryNamesById.get(importedEntitySchema.category_id)
+        : undefined
     ).toBe('Architecture');
+    const importedRelationSchema = (await server.db.relation.listRelationSchemas(target.id)).find(
+      schema => schema.name === relationSchema.name
+    );
     expect(
-      (await server.db.relation.listRelationSchemas(target.id)).find(
-        schema => schema.name === relationSchema.name
-      )?.category
+      importedRelationSchema?.category_id
+        ? targetCategoryNamesById.get(importedRelationSchema.category_id)
+        : undefined
     ).toBe('Connectivity');
   });
 

@@ -355,7 +355,7 @@ const createTechnologyEolJob = async (
       });
       const updatedSchema = await tx.catalog.updateSchema(ws, targetSchema.id, {
         name: targetSchema.name,
-        category: targetSchema.category ?? null,
+        category_id: targetSchema.category_id ?? null,
         key_prefix: targetSchema.key_prefix,
         description: targetSchema.description,
         fields: nextFields,
@@ -369,13 +369,16 @@ const createTechnologyEolJob = async (
       });
       httpAssert.present(updatedSchema, { status: 404, message: 'Target schema not found' });
 
+      const categoryName = updatedSchema.category_id
+        ? ((await tx.catalog.getCategory(ws, updatedSchema.category_id))?.name ?? null)
+        : null;
       await tx.catalog.createSchemaVersion({
         id: randomUUID(),
         workspace: ws,
         schema_id: targetSchema.id,
         version: updatedSchema.version ?? 1,
         name: updatedSchema.name,
-        category: updatedSchema.category ?? null,
+        category: categoryName,
         description: updatedSchema.description,
         fields: updatedSchema.fields,
         templates: updatedSchema.templates ?? [],

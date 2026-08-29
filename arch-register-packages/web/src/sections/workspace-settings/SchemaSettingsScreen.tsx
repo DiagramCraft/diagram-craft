@@ -50,7 +50,7 @@ const deriveKeyPrefix = (value: string) =>
 
 type EntityEditorExtra = {
   keyPrefix: string;
-  category: string;
+  categoryId: string | null;
   templates: EntityTemplate[];
   detailLayoutEnabled: boolean;
   // Retains the last-edited custom layout even while disabled, so re-enabling doesn't lose work.
@@ -106,7 +106,7 @@ export const SchemaSettingsScreen = () => {
           ? {
               name: schema.name,
               keyPrefix: schema.key_prefix,
-              category: schema.category ?? '',
+              categoryId: schema.category?.id ?? null,
               description: schema.description,
               fields: schema.fields,
               templates: schema.templates,
@@ -121,7 +121,7 @@ export const SchemaSettingsScreen = () => {
           : {
               name: '',
               keyPrefix: '',
-              category: '',
+              categoryId: null,
               description: '',
               fields: [],
               templates: [],
@@ -152,7 +152,7 @@ export const SchemaSettingsScreen = () => {
       hasChanges: (draft, schema) =>
         draft.keyPrefix !== schema.key_prefix ||
         draft.name !== schema.name ||
-        draft.category !== (schema.category ?? '') ||
+        draft.categoryId !== (schema.category?.id ?? null) ||
         draft.description !== schema.description ||
         JSON.stringify(draft.fields) !== JSON.stringify(schema.fields) ||
         JSON.stringify(draft.templates) !== JSON.stringify(schema.templates) ||
@@ -170,7 +170,7 @@ export const SchemaSettingsScreen = () => {
           data: {
             name: draft.name,
             key_prefix: draft.keyPrefix,
-            category: draft.category,
+            category_id: draft.categoryId,
             description: draft.description,
             fields: draft.fields,
             templates: draft.templates,
@@ -188,7 +188,7 @@ export const SchemaSettingsScreen = () => {
         createSchemaMutation.mutateAsync({
           name: draft.name,
           key_prefix: draft.keyPrefix,
-          category: draft.category,
+          category_id: draft.categoryId,
           description: draft.description,
           fields: draft.fields,
           templates: draft.templates,
@@ -321,7 +321,7 @@ export const SchemaSettingsScreen = () => {
           <SchemaEditorForm
             name={draft.name}
             keyPrefix={draft.keyPrefix}
-            category={draft.category}
+            categoryId={draft.categoryId}
             description={draft.description}
             color={draft.color}
             icon={draft.icon}
@@ -356,7 +356,7 @@ export const SchemaSettingsScreen = () => {
               editor.updateDraft(current => ({ ...current, keyPrefix: value.toUpperCase() }))
             }
             onCategoryChange={value =>
-              editor.updateDraft(current => ({ ...current, category: value }))
+              editor.updateDraft(current => ({ ...current, categoryId: value }))
             }
             onDescriptionChange={value =>
               editor.updateDraft(current => ({ ...current, description: value }))

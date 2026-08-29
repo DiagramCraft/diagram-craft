@@ -13,6 +13,8 @@ import {
   toApiRelationSchemaVersion,
   toFieldMigrationFields
 } from './relationSchemaHelpers';
+import { assertCategoryExists, buildCategoryLookup } from './categoryOperations';
+import type { CategoryLookup } from './schemaHelpers';
 import { encodeCaseSubkind } from '../governance/governanceCaseSubkind';
 import {
   buildFieldChangeSummary,
@@ -47,14 +49,15 @@ export const listWorkspaceRelationSchemas = async (
     dbErrorMessages,
     operation: async ({ ws, authCtx }) => {
       requireSchemaRead(authCtx);
-      const [schemas, enums] = await Promise.all([
+      const [schemas, enums, categories] = await Promise.all([
         db.relation.listRelationSchemas(ws),
-        db.catalog.listEnums(ws)
+        db.catalog.listEnums(ws),
+        buildCategoryLookup(db, ws)
       ]);
       const counts = await Promise.all(
         schemas.map(schema => db.relation.countRelationsForSchema(ws, schema.id))
       );
-      return schemas.map((schema, i) => toApiRelationSchema(schema, counts[i]!, enums));
+      return schemas.map((schema, i) => toApiRelationSchema(schema, counts[i]!, enums, categories));
     }
   });
 };
@@ -73,13 +76,14 @@ export const getWorkspaceRelationSchema = async (
     dbErrorMessages,
     operation: async ({ ws, authCtx }) => {
       requireSchemaRead(authCtx);
-      const [row, enums] = await Promise.all([
+      const [row, enums, categories] = await Promise.all([
         db.relation.getRelationSchema(ws, id),
-        db.catalog.listEnums(ws)
+        db.catalog.listEnums(ws),
+        buildCategoryLookup(db, ws)
       ]);
       httpAssert.present(row, { status: 404, message: `Relation schema '${id}' not found` });
       const relationCount = await db.relation.countRelationsForSchema(ws, id);
-      return toApiRelationSchema(row, relationCount, enums);
+      return toApiRelationSchema(row, relationCount, enums, categories);
     }
   });
 };
@@ -105,6 +109,7 @@ export const createWorkspaceRelationSchema = async (
       ]);
       const knownEntitySchemaIds = new Set(entitySchemas.map(schema => schema.id));
       const requested = buildCreateRelationSchemaInput(ws, body, knownEntitySchemaIds, timestamp);
+      const categoryName = await assertCategoryExists(db, ws, requested.category_id);
       const compiled = compileRelationSchemaWithSharedGroups(requested, sharedGroups);
       validateDerivedFieldGroupAccess(compiled.fields, compiled.groups ?? [], 'relation');
       const row = await db.relation.createRelationSchema(compiled);
@@ -115,7 +120,7 @@ export const createWorkspaceRelationSchema = async (
         schema_id: row.id,
         version: row.version ?? 1,
         name: row.name,
-        category: row.category ?? null,
+        category: categoryName,
         description: row.description,
         in_schema_ids: row.in_schema_ids,
         out_schema_ids: row.out_schema_ids,
@@ -142,7 +147,9 @@ export const createWorkspaceRelationSchema = async (
       });
 
       const enums = await db.catalog.listEnums(ws);
-      return toApiRelationSchema(row, 0, enums);
+      const categories: CategoryLookup =
+        row.category_id && categoryName ? new Map([[row.category_id, categoryName]]) : new Map();
+      return toApiRelationSchema(row, 0, enums, categories);
     }
   });
 };
@@ -171,6 +178,7 @@ export const updateWorkspaceRelationSchema = async (
       ]);
       const knownEntitySchemaIds = new Set(entitySchemas.map(schema => schema.id));
       const next = buildUpdateRelationSchemaInput(body, oldRow, knownEntitySchemaIds, new Date());
+      const categoryName = await assertCategoryExists(db, ws, next.category_id);
       const compiledNext = compileRelationSchemaWithSharedGroups(
         { ...oldRow, ...next, shared_field_group_links: next.shared_field_group_links },
         sharedGroups
@@ -252,7 +260,7 @@ export const updateWorkspaceRelationSchema = async (
 
         const updated = await tx.relation.updateRelationSchema(ws, id, {
           name: next.name,
-          category: next.category,
+          category_id: next.category_id,
           description: next.description,
           in_schema_ids: next.in_schema_ids,
           out_schema_ids: next.out_schema_ids,
@@ -274,7 +282,7 @@ export const updateWorkspaceRelationSchema = async (
           schema_id: id,
           version: updated.version ?? 1,
           name: updated.name,
-          category: updated.category ?? null,
+          category: categoryName,
           description: updated.description,
           in_schema_ids: updated.in_schema_ids,
           out_schema_ids: updated.out_schema_ids,
@@ -316,7 +324,9 @@ export const updateWorkspaceRelationSchema = async (
       });
 
       const enums = await db.catalog.listEnums(ws);
-      return toApiRelationSchema(row, relationCount, enums);
+      const categories: CategoryLookup =
+        row.category_id && categoryName ? new Map([[row.category_id, categoryName]]) : new Map();
+      return toApiRelationSchema(row, relationCount, enums, categories);
     }
   });
 };

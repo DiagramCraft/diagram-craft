@@ -21,6 +21,7 @@ const expectedPrimaryContractIds = [
   'aiContract',
   'workspaceEnumContract',
   'workspaceFieldGroupContract',
+  'workspaceCategoryContract',
   'workspaceViewContract',
   'workspaceDashboardContract',
   'personalDashboardContract',

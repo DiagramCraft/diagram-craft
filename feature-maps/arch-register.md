@@ -168,8 +168,13 @@
             approval/deprecation policy).
             The model overview visualizes entity schemas and typed relation schemas as graph nodes, showing generic
             references, relation endpoints, and relation-owned entity links; relation nodes and typed edges link to
-            their definitions. The schema settings sidebar groups every tab's list (entity types, relation types,
-            enums, and shared fieldgroups) by category, with uncategorized items shown in a final Uncategorized group.
+            their definitions. Categories are a managed, workspace-scoped list (not free text): administrators add a
+            category from the schema settings sidebar's "+" menu, and rename or delete one via a context menu on its
+            sidebar header — delete is only available once the category has no entity types, relation types, enums,
+            or shared fieldgroups assigned to it. Each of those four kinds is assigned an optional category from a
+            dropdown when edited. The schema settings sidebar groups every tab's list (entity types, relation types,
+            enums, and shared fieldgroups) by category, with uncategorized items shown in a final Uncategorized group
+            that is not itself an editable category.
 
             - @id:ar.workspace.configuration.document-types Administrators can define document types, templates, fields,
               versions, validation rules, and AI actions for structured content, including marking a field as externally

@@ -21,6 +21,7 @@ const expectedRouteIds = [
   'workspace-management',
   'workspace-enums',
   'workspace-field-groups',
+  'workspace-categories',
   'workspace-schemas',
   'workspace-relation-schemas',
   'workspace-relations',

@@ -19,6 +19,7 @@ import { FIELD_TYPES, type FieldType } from '../../lib/schemaPresentation';
 import { toFieldId } from '../../utils/fieldId';
 import { FieldConfigList } from '../../components/FieldConfigList';
 import { moveInArray } from '../../utils/arrayReorder';
+import { CategorySelect } from './CategorySelect';
 import styles from './SchemaSettingsScreen.module.css';
 
 const FIELDS_LIST_ID = 'shared-fieldgroup-fields';
@@ -270,13 +271,14 @@ export const FieldGroupEditorScreen = () => {
     schemas,
     relationSchemas,
     enums,
-    permissions
+    permissions,
+    categories
   } = useWorkspaceContext();
   const selected = fieldGroups.find(group => group.id === search.fieldGroupId) ?? null;
   const isNew = search.fieldGroupId === NEW_FIELD_GROUP_ID;
   const canEdit = permissions.canEditSchemas;
   const [name, setName] = useState('');
-  const [category, setCategory] = useState('');
+  const [categoryId, setCategoryId] = useState<string | null>(null);
   const [description, setDescription] = useState('');
   const [fields, setFields] = useState<SchemaField[]>([]);
   const [dirty, setDirty] = useState(false);
@@ -288,13 +290,13 @@ export const FieldGroupEditorScreen = () => {
   useEffect(() => {
     if (selected) {
       setName(selected.name);
-      setCategory(selected.category ?? '');
+      setCategoryId(selected.category?.id ?? null);
       setDescription(selected.description ?? '');
       setFields(selected.fields as SchemaField[]);
       setDirty(false);
     } else if (isNew) {
       setName('');
-      setCategory('');
+      setCategoryId(null);
       setDescription('');
       setFields([]);
       setDirty(true);
@@ -320,7 +322,7 @@ export const FieldGroupEditorScreen = () => {
       if (isNew) {
         const group = await createMutation.mutateAsync({
           name,
-          category: category.trim() === '' ? null : category,
+          category_id: categoryId,
           description,
           fields
         });
@@ -328,7 +330,7 @@ export const FieldGroupEditorScreen = () => {
       } else if (selected) {
         await updateMutation.mutateAsync({
           fieldGroupId: selected.id,
-          data: { name, category: category.trim() === '' ? null : category, description, fields }
+          data: { name, category_id: categoryId, description, fields }
         });
         setDirty(false);
       }
@@ -449,15 +451,14 @@ export const FieldGroupEditorScreen = () => {
           <div className={styles.formRow}>
             <div>
               <div className={styles.formLabel}>Category</div>
-              <TextInput
-                value={category}
-                readOnly={!canEdit}
-                placeholder="Optional presentation category"
+              <CategorySelect
+                value={categoryId}
+                categories={categories}
+                disabled={!canEdit}
                 onChange={value => {
-                  setCategory(value ?? '');
+                  setCategoryId(value);
                   setDirty(true);
                 }}
-                style={{ width: '100%' }}
               />
             </div>
           </div>

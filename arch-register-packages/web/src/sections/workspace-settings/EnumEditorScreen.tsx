@@ -13,6 +13,7 @@ import { FieldConfigList } from '../../components/FieldConfigList';
 import { moveInArray } from '../../utils/arrayReorder';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { useCreateEnum, useUpdateEnum, useDeleteEnum } from '../../hooks/useEnums';
+import { CategorySelect } from './CategorySelect';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { ErrorDialog } from '@diagram-craft/app-components/ErrorDialog';
 import { EmptyState } from '../../components/EmptyState';
@@ -46,13 +47,13 @@ export const EnumEditorScreen = () => {
   const navigate = routeApi.useNavigate();
   const search = routeApi.useSearch();
   const selectedEnumId = search.enumId ?? null;
-  const { workspaceSlug, enums, permissions } = useWorkspaceContext();
+  const { workspaceSlug, enums, permissions, categories } = useWorkspaceContext();
   const canEdit = permissions.canEditSchemas;
 
   const isNew = selectedEnumId === NEW_ENUM_ID;
 
   const [name, setName] = useState('');
-  const [category, setCategory] = useState('');
+  const [categoryId, setCategoryId] = useState<string | null>(null);
   const [options, setOptions] = useState<EditableOption[]>([]);
   const [dirty, setDirty] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -67,12 +68,12 @@ export const EnumEditorScreen = () => {
   useEffect(() => {
     if (selected) {
       setName(selected.name);
-      setCategory(selected.category ?? '');
+      setCategoryId(selected.category?.id ?? null);
       setOptions(selected.options.map(toEditableOption));
       setDirty(false);
     } else if (isNew) {
       setName('');
-      setCategory('');
+      setCategoryId(null);
       setOptions([]);
       setDirty(true);
     }
@@ -97,7 +98,7 @@ export const EnumEditorScreen = () => {
       if (isNew) {
         const created = await createEnumMutation.mutateAsync({
           name,
-          category: category.trim() === '' ? null : category,
+          category_id: categoryId,
           options: parsedOptions
         });
         navigate({
@@ -108,7 +109,7 @@ export const EnumEditorScreen = () => {
       } else if (selected) {
         await updateEnumMutation.mutateAsync({
           enumId: selected.id,
-          data: { name, category: category.trim() === '' ? null : category, options: parsedOptions }
+          data: { name, category_id: categoryId, options: parsedOptions }
         });
         setDirty(false);
       }
@@ -124,7 +125,7 @@ export const EnumEditorScreen = () => {
     navigate,
     workspaceSlug,
     name,
-    category,
+    categoryId,
     options
   ]);
 
@@ -219,15 +220,14 @@ export const EnumEditorScreen = () => {
             <div className={styles.formRow}>
               <div>
                 <div className={styles.formLabel}>Category</div>
-                <TextInput
-                  value={category}
-                  readOnly={!canEdit}
-                  placeholder="Optional presentation category"
+                <CategorySelect
+                  value={categoryId}
+                  categories={categories}
+                  disabled={!canEdit}
                   onChange={value => {
-                    setCategory(value ?? '');
+                    setCategoryId(value);
                     setDirty(true);
                   }}
-                  style={{ width: '100%' }}
                 />
               </div>
             </div>

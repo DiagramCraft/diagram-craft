@@ -11,25 +11,25 @@ const baseBody = {
 };
 
 describe('buildCreateRelationSchemaInput — endpoint schemaIds normalization', () => {
-  it('trims category values and normalizes blank or omitted values to null', () => {
+  it('passes through a category_id and normalizes a non-string or omitted value to null', () => {
     expect(
       buildCreateRelationSchemaInput(
         'workspace-1',
-        { ...baseBody, category: '  Connectivity  ' },
+        { ...baseBody, category_id: 'category-connectivity' },
         knownEntitySchemaIds,
         now
-      ).category
-    ).toBe('Connectivity');
+      ).category_id
+    ).toBe('category-connectivity');
     expect(
       buildCreateRelationSchemaInput(
         'workspace-1',
-        { ...baseBody, category: '   ' },
+        { ...baseBody, category_id: null },
         knownEntitySchemaIds,
         now
-      ).category
+      ).category_id
     ).toBeNull();
     expect(
-      buildCreateRelationSchemaInput('workspace-1', baseBody, knownEntitySchemaIds, now).category
+      buildCreateRelationSchemaInput('workspace-1', baseBody, knownEntitySchemaIds, now).category_id
     ).toBeNull();
   });
 
