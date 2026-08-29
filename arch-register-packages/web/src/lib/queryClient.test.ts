@@ -3,6 +3,29 @@ import { describe, expect, it, vi } from 'vitest';
 import { ApiError } from './http';
 import { createQueryClient } from './queryClient';
 
+describe('query client defaults', () => {
+  it('keeps cache, retry, and refetch behavior stable', () => {
+    const queries = createQueryClient().getDefaultOptions().queries;
+
+    expect(queries).toMatchObject({
+      staleTime: 5 * 60 * 1000,
+      gcTime: 10 * 60 * 1000,
+      refetchOnWindowFocus: true,
+      refetchOnMount: false,
+      refetchOnReconnect: false
+    });
+
+    expect(typeof queries?.retryDelay).toBe('function');
+    if (typeof queries?.retryDelay !== 'function') {
+      throw new Error('Expected a query retry delay function');
+    }
+
+    expect(queries.retryDelay(0, new Error('first attempt'))).toBe(1000);
+    expect(queries.retryDelay(1, new Error('second attempt'))).toBe(2000);
+    expect(queries.retryDelay(5, new Error('later attempt'))).toBe(30000);
+  });
+});
+
 describe('query client retries', () => {
   it('does not retry mutations by default', async () => {
     const client = createQueryClient();
