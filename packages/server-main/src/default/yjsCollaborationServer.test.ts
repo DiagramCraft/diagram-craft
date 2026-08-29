@@ -16,10 +16,7 @@ const backends: YJSWebSocketCollaborationBackend[] = [];
 const documents: Y.Doc[] = [];
 const tempDirs: string[] = [];
 
-const waitForStatus = (
-  provider: WebsocketProvider,
-  expected: 'connected' | 'disconnected'
-) =>
+const waitForStatus = (provider: WebsocketProvider, expected: 'connected' | 'disconnected') =>
   new Promise<void>((resolve, reject) => {
     const timeout = setTimeout(() => {
       provider.off('status', onStatus);
@@ -129,7 +126,9 @@ describe('Yjs collaboration server', () => {
 
     backend.awareness.updateUser({ name: 'Alice', color: '#2563eb' });
     await vi.waitFor(() => {
-      const users = Array.from(provider.awareness.getStates().values()).map(state => state?.user?.name);
+      const users = Array.from(provider.awareness.getStates().values()).map(
+        state => state?.user?.name
+      );
       expect(users).toContain('Alice');
     });
 
@@ -142,16 +141,11 @@ describe('Yjs collaboration server', () => {
 
     const recoveredDocument = new Y.Doc();
     documents.push(recoveredDocument);
-    const recoveredProvider = new WebsocketProvider(
-      server.wsUrl,
-      roomName,
-      recoveredDocument,
-      {
-        WebSocketPolyfill: WebSocket as unknown as typeof globalThis.WebSocket,
-        disableBc: true,
-        maxBackoffTime: 25
-      }
-    );
+    const recoveredProvider = new WebsocketProvider(server.wsUrl, roomName, recoveredDocument, {
+      WebSocketPolyfill: WebSocket as unknown as typeof globalThis.WebSocket,
+      disableBc: true,
+      maxBackoffTime: 25
+    });
     providers.push(recoveredProvider);
     await waitForSync(recoveredProvider);
 
