@@ -3534,7 +3534,9 @@ const createTemplateFragments = (
 // ...) must resolve to the same workspace_category row wherever they're introduced, across
 // independently-materialized template fragments, without a cross-fragment remapping pass.
 const deterministicCategoryId = (workspaceId: string, name: string): string => {
-  const hash = createHash('sha256').update(`${workspaceId}:category:${name.toLowerCase()}`).digest('hex');
+  const hash = createHash('sha256')
+    .update(`${workspaceId}:category:${name.toLowerCase()}`)
+    .digest('hex');
   return `${hash.slice(0, 8)}-${hash.slice(8, 12)}-${hash.slice(12, 16)}-${hash.slice(16, 20)}-${hash.slice(20, 32)}`;
 };
 
@@ -3878,7 +3880,13 @@ const materializeTemplateFragments = (
       if (existingId) return existingId;
       const id = deterministicCategoryId(workspaceId, trimmed);
       categoryIdByName.set(key, id);
-      categories.push({ id, workspace: workspaceId, name: trimmed, created_at: now, updated_at: now });
+      categories.push({
+        id,
+        workspace: workspaceId,
+        name: trimmed,
+        created_at: now,
+        updated_at: now
+      });
       return id;
     };
 

@@ -57,7 +57,10 @@ export const createCategory = async (
       const normalizedName = name.trim();
       httpAssert.true(normalizedName, { status: 400, message: 'Category name is required' });
       const existing = await db.catalog.getCategoryByName(ws, normalizedName);
-      httpAssert.true(!existing, { status: 409, message: 'A category with this name already exists' });
+      httpAssert.true(!existing, {
+        status: 409,
+        message: 'A category with this name already exists'
+      });
       const now = new Date();
       const category = await db.catalog.createCategory({
         id: randomUUID(),

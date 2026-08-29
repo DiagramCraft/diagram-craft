@@ -60,9 +60,7 @@ export type SchemaCategoryGroup<T> = {
 
 // Items with no embedded category fall back to a synthetic "Uncategorized" bucket rather than a
 // real category row — see [[project_category_table]].
-export const groupSchemasByCategory = <
-  T extends { category?: NamedCategory | null; name: string }
->(
+export const groupSchemasByCategory = <T extends { category?: NamedCategory | null; name: string }>(
   schemas: readonly T[]
 ): SchemaCategoryGroup<T>[] => {
   const groups = new Map<

@@ -54,13 +54,27 @@
                       "category": {
                         "anyOf": [
                           {
-                            "type": "string"
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "description": "Category identifier"
+                              },
+                              "name": {
+                                "type": "string",
+                                "description": "Category name"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name"
+                            ]
                           },
                           {
                             "type": "null"
                           }
                         ],
-                        "description": "Optional free-text presentation category for organizing schemas"
+                        "description": "Workspace category used to group this schema"
                       },
                       "description": {
                         "type": "string",
@@ -1693,13 +1707,27 @@
                       "category": {
                         "anyOf": [
                           {
-                            "type": "string"
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "description": "Category identifier"
+                              },
+                              "name": {
+                                "type": "string",
+                                "description": "Category name"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name"
+                            ]
                           },
                           {
                             "type": "null"
                           }
                         ],
-                        "description": "Optional free-text presentation category for organizing relation schemas"
+                        "description": "Workspace category used to group this relation schema"
                       },
                       "description": {
                         "type": "string",
@@ -2673,13 +2701,27 @@
                     "category": {
                       "anyOf": [
                         {
-                          "type": "string"
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "description": "Category identifier"
+                            },
+                            "name": {
+                              "type": "string",
+                              "description": "Category name"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name"
+                          ]
                         },
                         {
                           "type": "null"
                         }
                       ],
-                      "description": "Optional free-text presentation category for organizing relation schemas"
+                      "description": "Workspace category used to group this relation schema"
                     },
                     "description": {
                       "type": "string",

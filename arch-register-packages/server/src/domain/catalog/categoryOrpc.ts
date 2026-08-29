@@ -4,7 +4,12 @@ import type { AuthenticatedEvent } from '../../middleware/auth';
 import { createOrpcHandler } from '../../utils/orpcHandler';
 import { orpcErrorMiddleware } from '../../utils/orpcErrors';
 import { workspaceCategoryContract } from '@arch-register/api-types/categoryContract';
-import { createCategory, deleteCategory, listCategories, updateCategory } from './categoryOperations';
+import {
+  createCategory,
+  deleteCategory,
+  listCategories,
+  updateCategory
+} from './categoryOperations';
 
 type ORPCContext = { db: DatabaseAdapter; event: AuthenticatedEvent };
 

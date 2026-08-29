@@ -340,12 +340,10 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
   }
 
   async updateCategory(workspace: string, id: string, input: CategoryDbUpdate) {
-    this.run('UPDATE workspace_category SET name = ?, updated_at = ? WHERE workspace = ? AND id = ?', [
-      input.name,
-      input.updated_at.toISOString(),
-      workspace,
-      id
-    ]);
+    this.run(
+      'UPDATE workspace_category SET name = ?, updated_at = ? WHERE workspace = ? AND id = ?',
+      [input.name, input.updated_at.toISOString(), workspace, id]
+    );
     return await this.getCategory(workspace, id);
   }
 

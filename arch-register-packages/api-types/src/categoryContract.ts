@@ -65,7 +65,8 @@ export const workspaceCategoryContract = oc.tag('Categories').router({
         path: '/{workspace}/categories/{id}',
         inputStructure: 'detailed',
         summary: 'Delete category',
-        description: 'Deletes a category; fails if any schema, relation type, enum, or field group still uses it.',
+        description:
+          'Deletes a category; fails if any schema, relation type, enum, or field group still uses it.',
         tags: ['Categories']
       })
       .input(z.object({ params: wsAndUUID }))

@@ -29,11 +29,7 @@ import { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 import type { Category } from '@arch-register/api-types/categoryContract';
 import { SidebarGroupLabel, SidebarTitleHeader } from '../../components/sidebar/SidebarPrimitives';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
-import {
-  useCreateCategory,
-  useDeleteCategory,
-  useUpdateCategory
-} from '../../hooks/useCategories';
+import { useCreateCategory, useDeleteCategory, useUpdateCategory } from '../../hooks/useCategories';
 import { NEW_SCHEMA_ID } from './SchemaSettingsScreen';
 import { NEW_RELATION_SCHEMA_ID } from './RelationSchemaSettingsScreen';
 import { NEW_ENUM_ID } from './EnumEditorScreen';

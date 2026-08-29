@@ -27,16 +27,14 @@ describe('schema presentation categories', () => {
     expect(
       categoryNameOf(seedSchemas.find(schema => schema.name === 'Data Entity')?.category_id)
     ).toBe('Data');
+    expect(categoryNameOf(seedSchemas.find(schema => schema.name === 'Risk')?.category_id)).toBe(
+      'Governance'
+    );
+    expect(categoryNameOf(seedSchemas.find(schema => schema.name === 'Term')?.category_id)).toBe(
+      'Glossary'
+    );
     expect(
-      categoryNameOf(seedSchemas.find(schema => schema.name === 'Risk')?.category_id)
-    ).toBe('Governance');
-    expect(
-      categoryNameOf(seedSchemas.find(schema => schema.name === 'Term')?.category_id)
-    ).toBe('Glossary');
-    expect(
-      categoryNameOf(
-        seedSchemas.find(schema => schema.name === 'Business Capability')?.category_id
-      )
+      categoryNameOf(seedSchemas.find(schema => schema.name === 'Business Capability')?.category_id)
     ).toBe('Strategy');
   });
 });

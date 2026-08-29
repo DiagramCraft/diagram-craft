@@ -29,8 +29,7 @@ describe('buildCreateRelationSchemaInput — endpoint schemaIds normalization', 
       ).category_id
     ).toBeNull();
     expect(
-      buildCreateRelationSchemaInput('workspace-1', baseBody, knownEntitySchemaIds, now)
-        .category_id
+      buildCreateRelationSchemaInput('workspace-1', baseBody, knownEntitySchemaIds, now).category_id
     ).toBeNull();
   });
 

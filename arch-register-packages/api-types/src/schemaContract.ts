@@ -440,9 +440,7 @@ const entitySchemaSchema = z.object({
   id: z.string().describe('Unique schema identifier'),
   workspace: z.string().describe('Parent workspace identifier'),
   name: z.string().describe('Schema name'),
-  category: categoryRefSchema
-    .nullable()
-    .describe('Workspace category used to group this schema'),
+  category: categoryRefSchema.nullable().describe('Workspace category used to group this schema'),
   description: z.string().describe('Schema description'),
   key_prefix: z.string().describe('Prefix for entity public IDs (e.g., "APP" for APP-001)'),
   fields: z.array(schemaFieldResponseSchema).describe('Schema field definitions'),
