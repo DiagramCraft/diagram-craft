@@ -1140,6 +1140,14 @@
                                   "type": "string",
                                   "description": "Workspace enumeration for a derived select result"
                                 },
+                                "recalc_interval": {
+                                  "enum": [
+                                    "hourly",
+                                    "daily"
+                                  ],
+                                  "type": "string",
+                                  "description": "Cadence at which the recurring derived-field scan job recomputes this value; only valid when the expression reads `<root>.now`"
+                                },
                                 "options": {
                                   "type": "array",
                                   "items": {
@@ -2724,6 +2732,14 @@
                             "enumId": {
                               "type": "string",
                               "description": "Workspace enumeration for a derived select result"
+                            },
+                            "recalc_interval": {
+                              "enum": [
+                                "hourly",
+                                "daily"
+                              ],
+                              "type": "string",
+                              "description": "Cadence at which the recurring derived-field scan job recomputes this value; only valid when the expression reads `<root>.now`"
                             }
                           },
                           "required": [
@@ -4281,6 +4297,14 @@
                               "enumId": {
                                 "type": "string",
                                 "description": "Workspace enumeration for a derived select result"
+                              },
+                              "recalc_interval": {
+                                "enum": [
+                                  "hourly",
+                                  "daily"
+                                ],
+                                "type": "string",
+                                "description": "Cadence at which the recurring derived-field scan job recomputes this value; only valid when the expression reads `<root>.now`"
                               },
                               "options": {
                                 "type": "array",
@@ -5941,6 +5965,14 @@
                                 "type": "string",
                                 "description": "Workspace enumeration for a derived select result"
                               },
+                              "recalc_interval": {
+                                "enum": [
+                                  "hourly",
+                                  "daily"
+                                ],
+                                "type": "string",
+                                "description": "Cadence at which the recurring derived-field scan job recomputes this value; only valid when the expression reads `<root>.now`"
+                              },
                               "options": {
                                 "type": "array",
                                 "items": {
@@ -7533,6 +7565,14 @@
                             "enumId": {
                               "type": "string",
                               "description": "Workspace enumeration for a derived select result"
+                            },
+                            "recalc_interval": {
+                              "enum": [
+                                "hourly",
+                                "daily"
+                              ],
+                              "type": "string",
+                              "description": "Cadence at which the recurring derived-field scan job recomputes this value; only valid when the expression reads `<root>.now`"
                             }
                           },
                           "required": [
@@ -9119,6 +9159,14 @@
                               "enumId": {
                                 "type": "string",
                                 "description": "Workspace enumeration for a derived select result"
+                              },
+                              "recalc_interval": {
+                                "enum": [
+                                  "hourly",
+                                  "daily"
+                                ],
+                                "type": "string",
+                                "description": "Cadence at which the recurring derived-field scan job recomputes this value; only valid when the expression reads `<root>.now`"
                               },
                               "options": {
                                 "type": "array",
@@ -10973,6 +11021,14 @@
                                 "enumId": {
                                   "type": "string",
                                   "description": "Workspace enumeration for a derived select result"
+                                },
+                                "recalc_interval": {
+                                  "enum": [
+                                    "hourly",
+                                    "daily"
+                                  ],
+                                  "type": "string",
+                                  "description": "Cadence at which the recurring derived-field scan job recomputes this value; only valid when the expression reads `<root>.now`"
                                 },
                                 "options": {
                                   "type": "array",
@@ -78021,6 +78077,14 @@
                                   "type": "string",
                                   "description": "Workspace enumeration for a derived select result"
                                 },
+                                "recalc_interval": {
+                                  "enum": [
+                                    "hourly",
+                                    "daily"
+                                  ],
+                                  "type": "string",
+                                  "description": "Cadence at which the recurring derived-field scan job recomputes this value; only valid when the expression reads `<root>.now`"
+                                },
                                 "options": {
                                   "type": "array",
                                   "items": {
@@ -79165,6 +79229,14 @@
                             "enumId": {
                               "type": "string",
                               "description": "Workspace enumeration for a derived select result"
+                            },
+                            "recalc_interval": {
+                              "enum": [
+                                "hourly",
+                                "daily"
+                              ],
+                              "type": "string",
+                              "description": "Cadence at which the recurring derived-field scan job recomputes this value; only valid when the expression reads `<root>.now`"
                             }
                           },
                           "required": [
@@ -80299,6 +80371,14 @@
                               "enumId": {
                                 "type": "string",
                                 "description": "Workspace enumeration for a derived select result"
+                              },
+                              "recalc_interval": {
+                                "enum": [
+                                  "hourly",
+                                  "daily"
+                                ],
+                                "type": "string",
+                                "description": "Cadence at which the recurring derived-field scan job recomputes this value; only valid when the expression reads `<root>.now`"
                               },
                               "options": {
                                 "type": "array",
@@ -81519,6 +81599,14 @@
                                 "type": "string",
                                 "description": "Workspace enumeration for a derived select result"
                               },
+                              "recalc_interval": {
+                                "enum": [
+                                  "hourly",
+                                  "daily"
+                                ],
+                                "type": "string",
+                                "description": "Cadence at which the recurring derived-field scan job recomputes this value; only valid when the expression reads `<root>.now`"
+                              },
                               "options": {
                                 "type": "array",
                                 "items": {
@@ -82671,6 +82759,14 @@
                             "enumId": {
                               "type": "string",
                               "description": "Workspace enumeration for a derived select result"
+                            },
+                            "recalc_interval": {
+                              "enum": [
+                                "hourly",
+                                "daily"
+                              ],
+                              "type": "string",
+                              "description": "Cadence at which the recurring derived-field scan job recomputes this value; only valid when the expression reads `<root>.now`"
                             }
                           },
                           "required": [
@@ -83834,6 +83930,14 @@
                               "enumId": {
                                 "type": "string",
                                 "description": "Workspace enumeration for a derived select result"
+                              },
+                              "recalc_interval": {
+                                "enum": [
+                                  "hourly",
+                                  "daily"
+                                ],
+                                "type": "string",
+                                "description": "Cadence at which the recurring derived-field scan job recomputes this value; only valid when the expression reads `<root>.now`"
                               },
                               "options": {
                                 "type": "array",

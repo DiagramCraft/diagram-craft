@@ -391,9 +391,7 @@ describe('time-aware derived fields', () => {
   it('rejects recalc_interval on a field that does not reference now', () => {
     expect(() =>
       buildDerivedPlan(
-        [
-          { ...derivedSchemaText('label', "'x'"), recalc_interval: 'hourly' } as SchemaField
-        ],
+        [{ ...derivedSchemaText('label', "'x'"), recalc_interval: 'hourly' } as SchemaField],
         'entity'
       )
     ).toThrow(/recalc_interval/);

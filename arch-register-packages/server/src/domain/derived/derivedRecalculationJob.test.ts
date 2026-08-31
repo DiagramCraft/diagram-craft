@@ -103,7 +103,11 @@ describe('ensureDerivedRecalculationScheduleExists', () => {
   it('creates a daily schedule for a daily recalc_interval field', async () => {
     const { db, schedules } = scheduleDb([
       schema('data-entity', [
-        { id: 'review_date', name: 'Review Date', type: 'date' } as SchemaDbResult['fields'][number],
+        {
+          id: 'review_date',
+          name: 'Review Date',
+          type: 'date'
+        } as SchemaDbResult['fields'][number],
         reviewStatusField
       ])
     ]);
@@ -124,10 +128,7 @@ describe('ensureDerivedRecalculationScheduleExists', () => {
 
     await ensureDerivedRecalculationScheduleExists(db, 'workspace-1', now);
 
-    schemas[0]!.fields = [
-      dateField,
-      { ...reviewStatusField, recalc_interval: 'hourly' as const }
-    ];
+    schemas[0]!.fields = [dateField, { ...reviewStatusField, recalc_interval: 'hourly' as const }];
     await ensureDerivedRecalculationScheduleExists(db, 'workspace-1', now);
     expect(schedules).toHaveLength(1);
     expect(schedules[0]!.recurrence).toEqual({ type: 'hours', intervalHours: 1, startsAt: now });
@@ -144,7 +145,11 @@ describe('derived recalculation with elapsed time', () => {
     const dataEntity = entity('asset-1', 'data-entity', { review_date: '2026-03-10' });
     const schemas = [
       schema('data-entity', [
-        { id: 'review_date', name: 'Review Date', type: 'date' } as SchemaDbResult['fields'][number],
+        {
+          id: 'review_date',
+          name: 'Review Date',
+          type: 'date'
+        } as SchemaDbResult['fields'][number],
         reviewStatusField
       ])
     ];

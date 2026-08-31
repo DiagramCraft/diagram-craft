@@ -1428,7 +1428,7 @@ const informationAssetFieldGroup: SymbolicFieldGroup = {
       // built-in field (not reachable from derived expressions) and is already queryable via
       // _owner, so it is intentionally excluded here.
       expression:
-        "isBlank(entity.steward) || isBlank(entity.custodian) || isBlank(entity.review_date) " +
+        'isBlank(entity.steward) || isBlank(entity.custodian) || isBlank(entity.review_date) ' +
         "? 'incomplete' : 'complete'",
       resultType: 'text'
     }

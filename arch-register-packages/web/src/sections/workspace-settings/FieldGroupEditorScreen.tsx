@@ -182,8 +182,9 @@ const SharedFieldRow = ({
               disabled={!canEdit}
               onChange={value => {
                 const expression = value ?? '';
-                const stillTimeDependent =
-                  /\b(?:entity|relation|assessment)\.now\b/.test(expression);
+                const stillTimeDependent = /\b(?:entity|relation|assessment)\.now\b/.test(
+                  expression
+                );
                 onUpdate({
                   expression,
                   ...(field.recalc_interval && !stillTimeDependent

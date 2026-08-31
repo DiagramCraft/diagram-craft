@@ -86,7 +86,10 @@ const engine = bonsai<EvaluationContext>({ timeout: 50, maxDepth: 50 })
   })
   // `null` / `undefined` / empty-string / empty-array test — a missing context key reads as
   // `undefined`, which bonsai's `== null` does not always catch.
-  .addFunction('isBlank', value => value == null || value === '' || (Array.isArray(value) && value.length === 0));
+  .addFunction(
+    'isBlank',
+    value => value == null || value === '' || (Array.isArray(value) && value.length === 0)
+  );
 
 const derivedField = (field: DerivableField): DerivedFieldDefinition | null =>
   field.type === 'derived'
