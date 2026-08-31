@@ -19,7 +19,10 @@ import {
   getBatchEntityDependents,
   getEntityDependents
 } from '../../domain/catalog/entityRelationshipOperations';
-import { getEntityProjects, getEntityDiagramFiles } from '../../domain/project/projectEntityOperations';
+import {
+  getEntityProjects,
+  getEntityDiagramFiles
+} from '../../domain/project/projectEntityOperations';
 import { listRelatedContent } from '../../domain/project/markdownListingOperations';
 import { runAuthorizedOperation } from '../../domain/operation';
 import { projectDbErrorMessages } from '../../domain/project/projectOperationHelpers';

@@ -1,5 +1,9 @@
 import { AR_COLOR_PURPLE } from '@arch-register/api-types/colors';
-import type { SymbolicDocumentTemplate, SymbolicDocumentType, SymbolicEnum } from './schemaTemplates';
+import type {
+  SymbolicDocumentTemplate,
+  SymbolicDocumentType,
+  SymbolicEnum
+} from './schemaTemplates';
 
 /**
  * Small, dependency-free building blocks shared by every schema template pack (the built-in
