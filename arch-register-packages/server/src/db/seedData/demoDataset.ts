@@ -20,7 +20,10 @@ import {
   demoRiskEntities
 } from './demoGovernanceEntities';
 import { demoGovernanceRelations } from './demoGovernanceRelations';
-import { demoTermCategoryEntities, demoTermEntities } from './demoGlossaryEntities';
+import {
+  demoTermCategoryEntities,
+  demoTermEntities
+} from '../../app/business-glossary/demoGlossaryEntities';
 import {
   demoResourceEntities,
   demoTechnologyEntities,

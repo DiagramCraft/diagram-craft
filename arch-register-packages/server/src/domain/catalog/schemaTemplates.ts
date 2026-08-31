@@ -31,6 +31,8 @@ import type { EntityQuery, PathStep, QueryNode } from '@arch-register/api-types/
 import type { RelationSchemaDbCreate } from './db/relationDatabase';
 import type { SavedViewDbCreate, CategoryDbCreate } from './db/catalogDatabase';
 import { normalizePublicIdPrefix } from '../../utils/publicIds';
+import { commonDocumentTemplates, commonDocumentTypes, enumDefinition } from './schemaTemplateBase';
+import { glossarySchemaTemplate } from '../../app/business-glossary/glossarySchemaTemplate';
 
 export type TemplateDependencyKind =
   | 'schema'
@@ -440,14 +442,6 @@ const apiParticipationField = (
   requirementLevel: null
 });
 
-const enumDefinition = (
-  id: string,
-  name: string,
-  options: SymbolicEnum['options'],
-  category: string,
-  sharedId?: string
-): SymbolicEnum => ({ id, name, category, options, ...(sharedId ? { sharedId } : {}) });
-
 const piiClassificationEnum = enumDefinition(
   'pii-classification',
   'PII Classification',
@@ -510,67 +504,6 @@ const piiClassificationFieldGroup: SymbolicFieldGroup = {
     { id: 'pii_scope', name: 'PII Scope', type: 'text' }
   ]
 };
-
-export const ADR_DOCUMENT_TYPE_NAME = 'Architecture Decision Record';
-export const ADR_DOCUMENT_TEMPLATE_NAME = 'Architecture Decision Record';
-
-export const ADR_DOCUMENT_TYPE_DEFINITION: SymbolicDocumentType = {
-  id: 'architecture-decision-record',
-  name: ADR_DOCUMENT_TYPE_NAME,
-  description: 'A structured record of an architecture decision.',
-  color: AR_COLOR_PURPLE,
-  icon: 'clipboard',
-  fields: [
-    {
-      id: 'status',
-      name: 'Status',
-      type: 'enum',
-      requirement: 'required',
-      enumOptions: [
-        { value: 'Proposed', label: 'Proposed' },
-        { value: 'Accepted', label: 'Accepted' },
-        { value: 'Superseded', label: 'Superseded' },
-        { value: 'Deprecated', label: 'Deprecated' }
-      ],
-      retired: false
-    },
-    {
-      id: 'decision_date',
-      name: 'Decision date',
-      type: 'date',
-      requirement: 'expected',
-      retired: false
-    },
-    {
-      id: 'affected_entities',
-      name: 'Affected entities',
-      type: 'entity_link',
-      requirement: 'optional',
-      minCardinality: 0,
-      retired: false
-    },
-    {
-      id: 'supersedes',
-      name: 'Supersedes',
-      type: 'document_link',
-      requirement: 'optional',
-      minCardinality: 0,
-      inverseName: 'Superseded by',
-      retired: false
-    }
-  ]
-};
-
-export const ADR_DOCUMENT_TEMPLATE_DEFINITION: SymbolicDocumentTemplate = {
-  id: 'architecture-decision-record-template',
-  name: ADR_DOCUMENT_TEMPLATE_NAME,
-  body: '# {{title}}\n\n## Context\n\n## Decision drivers\n\n## Considered options\n\n## Decision\n\n## Consequences\n',
-  documentTypeId: ADR_DOCUMENT_TYPE_DEFINITION.id,
-  metadataDefaults: { status: 'Proposed' }
-};
-
-const commonDocumentTypes = [ADR_DOCUMENT_TYPE_DEFINITION];
-const commonDocumentTemplates = [ADR_DOCUMENT_TEMPLATE_DEFINITION];
 
 const generateTemplateSchemaKeyPrefix = (workspaceId: string, schemaId: string) => {
   const bytes = createHash('sha1').update(`${workspaceId}:${schemaId}`).digest();
@@ -875,63 +808,8 @@ const technologyReleaseReference = (): SymbolicField => ({
   maxCount: -1
 });
 
-const glossaryStatusEnum = enumDefinition(
-  'glossary-status',
-  'Glossary Status',
-  [
-    { value: 'draft', label: 'Draft' },
-    { value: 'proposed', label: 'Proposed' },
-    { value: 'approved', label: 'Approved' }
-  ],
-  'Glossary'
-);
-
-const businessGlossarySchemas: TemplateSchema[] = [
-  {
-    symId: 'term',
-    name: 'Term',
-    description: 'A governed business term with a definition, aliases, and category membership.',
-    category: 'Glossary',
-    color: AR_COLOR_BLUE,
-    icon: 'book',
-    fields: [
-      { id: 'definition', name: 'Definition', type: 'longtext' },
-      {
-        id: 'synonyms',
-        name: 'Synonyms',
-        type: 'text',
-        minCardinality: 0,
-        maxCardinality: -1
-      },
-      {
-        id: 'abbreviations',
-        name: 'Abbreviations',
-        type: 'text',
-        minCardinality: 0,
-        maxCardinality: -1
-      },
-      {
-        id: 'categories',
-        name: 'Categories',
-        predicate: 'categorized as',
-        type: 'reference',
-        symSchemaId: 'term_category',
-        minCount: 0,
-        maxCount: -1
-      },
-      { id: 'status', name: 'Status', type: 'select', enumId: 'glossary-status' }
-    ]
-  },
-  {
-    symId: 'term_category',
-    name: 'Term Category',
-    description: 'A flat category used to organize business terms.',
-    category: 'Glossary',
-    color: AR_COLOR_PURPLE,
-    icon: 'tags',
-    fields: []
-  }
-];
+// Business Glossary's schema template pack lives in ../../app/business-glossary/glossarySchemaTemplate.ts
+// and is spread into SCHEMA_TEMPLATES below, alongside the other cross-cutting concern packs.
 
 const strategyStatusEnum = enumDefinition(
   'strategy-status',
@@ -1574,25 +1452,7 @@ const dataFlowRelationSchema: SymbolicRelationSchema = {
 };
 
 export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
-  {
-    id: 'glossary',
-    category: 'cross-cutting',
-    name: 'Business Glossary',
-    description: 'Business terms, aliases, categories, and governance-ready definitions.',
-    schemas: businessGlossarySchemas,
-    enums: [glossaryStatusEnum],
-    documentTypes: commonDocumentTypes,
-    documentTemplates: commonDocumentTemplates,
-    capabilityConfigurations: [
-      {
-        type: 'business-glossary',
-        bindings: {
-          term: { target: { kind: 'entity_schema', symId: 'term' } },
-          category: { target: { kind: 'entity_schema', symId: 'term_category' } }
-        }
-      }
-    ]
-  },
+  glossarySchemaTemplate,
   {
     id: 'information-governance',
     category: 'cross-cutting',

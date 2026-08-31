@@ -1,8 +1,8 @@
+import { instantiateTemplateDocuments } from '../catalog/schemaTemplates';
 import {
   ADR_DOCUMENT_TEMPLATE_NAME as CATALOG_ADR_DOCUMENT_TEMPLATE_NAME,
-  ADR_DOCUMENT_TYPE_NAME as CATALOG_ADR_DOCUMENT_TYPE_NAME,
-  instantiateTemplateDocuments
-} from '../catalog/schemaTemplates';
+  ADR_DOCUMENT_TYPE_NAME as CATALOG_ADR_DOCUMENT_TYPE_NAME
+} from '../catalog/schemaTemplateBase';
 
 export const ADR_DOCUMENT_TYPE_NAME = CATALOG_ADR_DOCUMENT_TYPE_NAME;
 export const ADR_DOCUMENT_TEMPLATE_NAME = CATALOG_ADR_DOCUMENT_TEMPLATE_NAME;

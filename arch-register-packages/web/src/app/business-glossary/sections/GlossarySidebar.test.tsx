@@ -14,12 +14,12 @@ vi.mock('@tanstack/react-query', () => ({
   useQuery: (options: { queryKey: unknown[] }) => useQueryMock(options)
 }));
 
-vi.mock('../../queries/glossary', () => ({
+vi.mock('../glossaryQueries', () => ({
   glossaryConfigQuery: () => ({ queryKey: ['glossary', 'config'] }),
   glossaryTermsQuery: () => ({ queryKey: ['glossary', 'terms'] })
 }));
 
-vi.mock('../../queries/entities', () => ({
+vi.mock('../../../queries/entities', () => ({
   entitiesQuery: () => ({ queryKey: ['entities', 'list'] })
 }));
 

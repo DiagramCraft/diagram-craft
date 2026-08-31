@@ -61,7 +61,7 @@ import { createEntityDeprecationORPCHandler } from './domain/catalog/entityDepre
 import { createArtifactORPCHandler } from './domain/artifact/artifactOrpc';
 import { createBaselineORPCHandler } from './domain/baseline/baselineOrpc';
 import { createConformanceORPCHandler } from './domain/conformance/conformanceOrpc';
-import { createGlossaryORPCHandler } from './domain/glossary/glossaryOrpc';
+import { createGlossaryORPCHandler } from './app/business-glossary/glossaryOrpc';
 import {
   createPublicCatalogConfigORPCHandler,
   createPublicCatalogORPCHandler

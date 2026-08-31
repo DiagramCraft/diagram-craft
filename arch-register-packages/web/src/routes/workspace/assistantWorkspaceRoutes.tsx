@@ -1,6 +1,6 @@
 import { createRoute, type AnyRoute } from '@tanstack/react-router';
 import { validateAssistantSearch } from '../searchParams';
-import { buildHomeBreadcrumbs } from '../../layouts/workspaceShellDescriptors';
+import { buildHomeBreadcrumbs } from '../../shell/breadcrumbBuilders';
 import { withWorkspaceShell } from './workspaceShellRoute';
 import { LazyAssistantScreen, LazyExtractScreen } from './lazyWorkspaceScreens';
 

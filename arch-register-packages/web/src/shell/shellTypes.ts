@@ -1,3 +1,5 @@
+import type { AppRailItemId } from './appShellRegistry';
+
 export type BreadcrumbItem = {
   label: string;
   icon?: React.ReactNode;
@@ -9,7 +11,7 @@ export type WorkspaceRailItemId =
   | 'content'
   | 'projects'
   | 'entities'
-  | 'glossary'
+  | AppRailItemId
   | 'search'
   | 'governance'
   | 'assistant'

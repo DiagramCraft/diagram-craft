@@ -1,7 +1,7 @@
-import { createApiTest, createTestORPCClient, expect } from '../helpers/fixtures';
+import { createApiTest, createTestORPCClient, expect } from '../../helpers/fixtures';
 import { seededUsers } from '@arch-register/server/db/seedFixtures';
 import { createFixtureUser } from '@arch-register/server/db/testSupport/fixtures';
-import { makeAuthHeader } from '../helpers/seedHelper';
+import { makeAuthHeader } from '../../helpers/seedHelper';
 
 const test = createApiTest();
 const bootstrapTest = createApiTest({ seed: 'bootstrap' }).extend<{ auth: string }>({

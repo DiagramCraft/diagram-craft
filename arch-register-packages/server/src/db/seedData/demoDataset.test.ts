@@ -13,7 +13,10 @@ import {
   demoRetentionPolicyEntities,
   demoRiskEntities
 } from './demoGovernanceEntities';
-import { demoTermCategoryEntities, demoTermEntities } from './demoGlossaryEntities';
+import {
+  demoTermCategoryEntities,
+  demoTermEntities
+} from '../../app/business-glossary/demoGlossaryEntities';
 import {
   demoResourceEntities,
   demoTechnologyEntities,

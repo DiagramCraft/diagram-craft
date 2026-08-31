@@ -2,7 +2,7 @@ import type { AuthorizationContext } from '@arch-register/permissions';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { httpAssert } from '../../utils/httpAssert';
-import { getWorkspaceCapabilityConfiguration } from '../workspace/workspaceCapabilityOperations';
+import { getWorkspaceCapabilityConfiguration } from '../../domain/workspace/workspaceCapabilityOperations';
 import {
   getWorkspaceCapabilityDefinition,
   resolveCapabilityFieldId,
@@ -13,17 +13,17 @@ import type {
   GlossaryTerm,
   GlossaryUsage,
   GlossaryUsagePage
-} from '@arch-register/api-types/glossaryContract';
-import { listEntitiesWithCount, getEntity } from '../catalog/entityQueryOperations';
+} from '@arch-register/api-types/app/business-glossary/glossaryContract';
+import { listEntitiesWithCount, getEntity } from '../../domain/catalog/entityQueryOperations';
 import {
   getBatchEntityDependents,
   getEntityDependents
-} from '../catalog/entityRelationshipOperations';
-import { getEntityProjects, getEntityDiagramFiles } from '../project/projectEntityOperations';
-import { listRelatedContent } from '../project/markdownListingOperations';
-import { runAuthorizedOperation } from '../operation';
-import { projectDbErrorMessages } from '../project/projectOperationHelpers';
-import { requireWorkspaceCapability } from '../auth/authorization';
+} from '../../domain/catalog/entityRelationshipOperations';
+import { getEntityProjects, getEntityDiagramFiles } from '../../domain/project/projectEntityOperations';
+import { listRelatedContent } from '../../domain/project/markdownListingOperations';
+import { runAuthorizedOperation } from '../../domain/operation';
+import { projectDbErrorMessages } from '../../domain/project/projectOperationHelpers';
+import { requireWorkspaceCapability } from '../../domain/auth/authorization';
 
 type GlossaryResolution = {
   config: GlossaryConfig;

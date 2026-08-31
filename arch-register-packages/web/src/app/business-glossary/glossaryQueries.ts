@@ -1,5 +1,5 @@
 import { queryOptions } from '@tanstack/react-query';
-import { orpcClient } from '../lib/orpcClient';
+import { orpcClient } from '../../lib/orpcClient';
 
 export const glossaryKeys = {
   all: ['glossary'] as const,

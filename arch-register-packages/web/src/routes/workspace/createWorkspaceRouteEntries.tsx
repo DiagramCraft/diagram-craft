@@ -7,7 +7,7 @@ import { createSearchWorkspaceRoute } from './searchWorkspaceRoute';
 import { createSettingsWorkspaceRoutes } from './settingsWorkspaceRoutes';
 import { createAssistantWorkspaceRoutes } from './assistantWorkspaceRoutes';
 import { createGovernanceWorkspaceRoute } from './governanceWorkspaceRoute';
-import { createGlossaryWorkspaceRoutes } from './glossaryWorkspaceRoute';
+import { createGlossaryWorkspaceRoutes } from '../../app/business-glossary/glossaryWorkspaceRoute';
 
 export const createWorkspaceRouteEntries = <TParentRoute extends AnyRoute>(
   workspaceRoute: TParentRoute

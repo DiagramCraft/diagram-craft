@@ -1,13 +1,7 @@
-import {
-  TbBook,
-  TbDatabase,
-  TbFiles,
-  TbFolders,
-  TbHome,
-  TbSearch,
-  TbSettings
-} from 'react-icons/tb';
+import { TbDatabase, TbFiles, TbFolders, TbSearch, TbSettings } from 'react-icons/tb';
 import type { BreadcrumbItem, WorkspaceRailItemId } from '../shell/shellTypes';
+import { buildHomeBreadcrumbs } from '../shell/breadcrumbBuilders';
+import { APP_RAIL_ROUTES } from '../shell/appShellRegistry';
 import type { Workspace } from '@arch-register/api-types/workspaceContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
@@ -77,15 +71,6 @@ export const getProjectSidebarTab = (project: Project | undefined): 'projects' |
 export const getAllParams = (matches: MatchLike[]) =>
   Object.assign({}, ...matches.map(match => match.params)) as Record<string, string>;
 
-export const buildHomeBreadcrumbs = (ctx: WorkspaceShellContext): BreadcrumbItem[] => [
-  {
-    label: 'Home',
-    icon: <TbHome size={12} />,
-    onClick: () =>
-      ctx.navigate({ to: '/$workspaceSlug', params: { workspaceSlug: ctx.workspaceSlug } })
-  }
-];
-
 export const buildProjectBreadcrumbs = (ctx: WorkspaceShellContext): BreadcrumbItem[] => {
   const params = getAllParams(ctx.matches);
   const project = ctx.projects.find(item => item.id === params.projectId);
@@ -117,23 +102,6 @@ export const buildEntityBreadcrumbs = (
       ctx.navigate({ to: '/$workspaceSlug/entities', params: { workspaceSlug: ctx.workspaceSlug } })
   },
   ...(detail ? [{ label: 'Detail', onClick: () => {} }] : [])
-];
-
-export const buildGlossaryBreadcrumbs = (
-  ctx: WorkspaceShellContext,
-  detail = false
-): BreadcrumbItem[] => [
-  ...buildHomeBreadcrumbs(ctx),
-  {
-    label: 'Glossary',
-    icon: <TbBook size={12} />,
-    onClick: () =>
-      ctx.navigate({
-        to: '/$workspaceSlug/glossary',
-        params: { workspaceSlug: ctx.workspaceSlug }
-      })
-  },
-  ...(detail ? [{ label: 'Term', onClick: () => {} }] : [])
 ];
 
 export const buildWorkspaceContentBreadcrumbs = (ctx: WorkspaceShellContext): BreadcrumbItem[] => [
@@ -193,11 +161,11 @@ export const navigateFromRailItem = (
     content: '/$workspaceSlug/content',
     projects: '/$workspaceSlug/projects',
     entities: '/$workspaceSlug/entities',
-    glossary: '/$workspaceSlug/glossary',
     search: '/$workspaceSlug/search',
     governance: '/$workspaceSlug/governance',
     assistant: '/$workspaceSlug/assistant',
-    extract: '/$workspaceSlug/extract'
+    extract: '/$workspaceSlug/extract',
+    ...APP_RAIL_ROUTES
   };
 
   ctx.navigate({

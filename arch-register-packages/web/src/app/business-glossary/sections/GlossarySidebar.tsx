@@ -2,13 +2,13 @@ import { useMemo, type ReactNode } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
 import { TbTag, TbEyeOff, TbAlertTriangle, TbHistory, TbUserOff } from 'react-icons/tb';
-import { TreeRow } from '../../components/TreeRow';
-import { SidebarGroupLabel, SidebarTitleHeader } from '../../components/sidebar/SidebarPrimitives';
-import { schemaColor } from '../../lib/schemaPresentation';
-import { glossaryConfigQuery, glossaryTermsQuery } from '../../queries/glossary';
-import { entitiesQuery } from '../../queries/entities';
-import type { GlossarySearchParams } from '../../routes/searchParams';
-import styles from '../../shell/SidePanel.module.css';
+import { TreeRow } from '../../../components/TreeRow';
+import { SidebarGroupLabel, SidebarTitleHeader } from '../../../components/sidebar/SidebarPrimitives';
+import { schemaColor } from '../../../lib/schemaPresentation';
+import { glossaryConfigQuery, glossaryTermsQuery } from '../glossaryQueries';
+import { entitiesQuery } from '../../../queries/entities';
+import type { GlossarySearchParams } from '../../../routes/searchParams';
+import styles from '../../../shell/SidePanel.module.css';
 
 type GlossaryQualityKind = 'unused' | 'conflicting' | 'deprecated' | 'ownerless';
 
