@@ -32,6 +32,7 @@ import {
   seedTemplateDefinitions
 } from './seedData/templateDefinitions';
 import { WORKSPACE_ID, now } from './seedData/constants';
+import { seedGovernanceCaseConfigs } from './seedData/governanceCaseConfigs';
 import { seedSavedViews } from './seedData/views';
 import { seededTestPassword } from './seedFixtures';
 import { hashPassword } from '../utils/password';
@@ -228,6 +229,10 @@ export const seedCatalogDefinitions = async (
     }
 
     await seedTemplateCapabilityConfigurations(db);
+
+    for (const config of seedGovernanceCaseConfigs) {
+      await db.governanceCaseConfig.upsertCaseConfig(config);
+    }
   }
 };
 
