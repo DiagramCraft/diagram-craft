@@ -101,7 +101,10 @@ export const WorkflowsSubSection = ({
               <Table.Row key={row.id}>
                 <Table.Cell>
                   <div className={styles.cardTitle}>{row.name}</div>
-                  <div className={styles.cardSub} title={row.description ?? row.case_kind_description}>
+                  <div
+                    className={styles.cardSub}
+                    title={row.description ?? row.case_kind_description}
+                  >
                     {row.description ?? row.case_kind_description}
                   </div>
                 </Table.Cell>

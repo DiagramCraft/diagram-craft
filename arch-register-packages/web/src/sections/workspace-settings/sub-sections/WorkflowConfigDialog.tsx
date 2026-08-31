@@ -149,10 +149,7 @@ export const WorkflowConfigDialog = ({
         </label>
       </div>
       <div className={styles.formGrid}>
-        <FormElement
-          label="Name"
-          hint="Label shown in the Workflows list."
-        >
+        <FormElement label="Name" hint="Label shown in the Workflows list.">
           <TextInput
             value={name}
             maxLength={200}

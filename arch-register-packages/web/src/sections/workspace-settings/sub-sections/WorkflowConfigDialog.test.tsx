@@ -140,13 +140,7 @@ vi.mock('@diagram-craft/app-components/TextInput', () => ({
 }));
 
 vi.mock('@diagram-craft/app-components/TextArea', () => ({
-  TextArea: ({
-    value,
-    onChange
-  }: {
-    value?: string;
-    onChange: (value: string) => void;
-  }) => (
+  TextArea: ({ value, onChange }: { value?: string; onChange: (value: string) => void }) => (
     <textarea
       data-testid="workflow-description"
       value={value ?? ''}
@@ -360,7 +354,9 @@ describe('WorkflowConfigDialog', () => {
     });
     root = rendered.root;
 
-    const descriptionInput = rendered.container.querySelector('[data-testid="workflow-description"]');
+    const descriptionInput = rendered.container.querySelector(
+      '[data-testid="workflow-description"]'
+    );
     if (!(descriptionInput instanceof HTMLTextAreaElement))
       throw new Error('Missing description input');
 

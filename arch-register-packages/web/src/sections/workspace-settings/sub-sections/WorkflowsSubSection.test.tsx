@@ -262,9 +262,7 @@ describe('WorkflowsSubSection', () => {
     const customDescription = [...rendered.container.querySelectorAll('div')].find(
       item => item.textContent === 'Review changes to workspace entities.'
     );
-    expect(customDescription?.getAttribute('title')).toBe(
-      'Review changes to workspace entities.'
-    );
+    expect(customDescription?.getAttribute('title')).toBe('Review changes to workspace entities.');
 
     workflowData = { case_kinds: [simpleKind], configs: [{ ...existingRow, description: null }] };
     act(() => {
@@ -281,9 +279,7 @@ describe('WorkflowsSubSection', () => {
     const fallbackDescription = [...rendered.container.querySelectorAll('div')].find(
       item => item.textContent === 'Review entity changes.'
     );
-    expect(fallbackDescription?.getAttribute('title')).toBe(
-      'Review entity changes.'
-    );
+    expect(fallbackDescription?.getAttribute('title')).toBe('Review entity changes.');
   });
 
   it('creates a new workflow from the add dialog using the case-kind defaults', () => {
