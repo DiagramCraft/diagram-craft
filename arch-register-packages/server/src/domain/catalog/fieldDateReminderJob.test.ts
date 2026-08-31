@@ -314,7 +314,13 @@ describe('field-date-reminder routing', () => {
     const { db, createdAssignments } = makeStewardshipDb(
       {
         reminders: { enabled: true, approachingDays: [3], overdueDays: [1] },
-        extensions: { routing: { principalFieldId: 'steward' } }
+        approvals: {
+          requiredApprovals: 1,
+          strategy: 'entity-principal-field',
+          strategyConfig: { fieldId: 'steward' },
+          fallbackUserIds: [],
+          fallbackTeamIds: []
+        }
       },
       { principal_type: 'user', principal_id: 'user-9' }
     );
@@ -332,7 +338,13 @@ describe('field-date-reminder routing', () => {
     const { db, createdAssignments } = makeStewardshipDb(
       {
         reminders: { enabled: true, approachingDays: [3], overdueDays: [1] },
-        extensions: { routing: { principalFieldId: 'steward' } }
+        approvals: {
+          requiredApprovals: 1,
+          strategy: 'entity-principal-field',
+          strategyConfig: { fieldId: 'steward' },
+          fallbackUserIds: [],
+          fallbackTeamIds: []
+        }
       },
       null
     );

@@ -136,7 +136,9 @@ export const WorkflowConfigDialog = ({
       <Tabs.Root value={tab} onValueChange={setTab}>
         <Tabs.List aria-label="Workflow configuration sections">
           {caseKind.supportsApprovals !== false && (
-            <Tabs.Trigger value="approvals">Approvals</Tabs.Trigger>
+            <Tabs.Trigger value="approvals">
+              {isFieldDateReminder ? 'Routing' : 'Approvals'}
+            </Tabs.Trigger>
           )}
           {caseKind.supportsReminders !== false && (
             <Tabs.Trigger value="reminders">Reminders</Tabs.Trigger>
@@ -159,6 +161,7 @@ export const WorkflowConfigDialog = ({
               caseKind={caseKind}
               approvals={config.approvals}
               fields={targetFields}
+              variant={isFieldDateReminder ? 'routing' : 'approval'}
               onChange={approvals => update({ approvals })}
             />
           </Tabs.Content>
@@ -195,12 +198,10 @@ export const WorkflowConfigDialog = ({
           <Tabs.Content value="recurrence" style={{ height: 'auto' }}>
             <WorkflowDateReminderEditor
               extension={dateReminderExtension}
-              principalFields={entityPrincipalFields}
               onChange={extension =>
                 update({
                   extensions: {
                     ...config.extensions,
-                    routing: extension.routing,
                     completionAdvance: extension.completionAdvance
                   }
                 })

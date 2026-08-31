@@ -17,6 +17,13 @@ export const seedGovernanceCaseConfigs: GovernanceCaseConfigDbUpsert[] = [
     enabled: true,
     config: {
       reminders: { enabled: true, approachingDays: [7, 1], overdueDays: [1, 7, 30] },
+      approvals: {
+        requiredApprovals: 1,
+        strategy: 'entity-principal-field',
+        strategyConfig: { fieldId: 'steward' },
+        fallbackUserIds: [],
+        fallbackTeamIds: []
+      },
       escalation: {
         enabled: true,
         overdueDays: 14,
@@ -26,7 +33,6 @@ export const seedGovernanceCaseConfigs: GovernanceCaseConfigDbUpsert[] = [
         fallbackTeamIds: []
       },
       extensions: {
-        routing: { principalFieldId: 'steward', fallbackUserIds: [], fallbackTeamIds: [] },
         completionAdvance: { amount: 1, unit: 'years' }
       }
     },

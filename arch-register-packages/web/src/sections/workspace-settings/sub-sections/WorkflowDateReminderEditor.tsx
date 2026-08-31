@@ -7,7 +7,6 @@ import styles from './WorkflowsSubSection.module.css';
 
 export type WorkflowDateReminderEditorProps = {
   extension: FieldDateReminderExtension;
-  principalFields: Array<{ id: string; name: string }>;
   onChange: (extension: FieldDateReminderExtension) => void;
 };
 
@@ -15,34 +14,11 @@ const UNITS = ['days', 'months', 'years'] as const;
 
 export const WorkflowDateReminderEditor = ({
   extension,
-  principalFields,
   onChange
 }: WorkflowDateReminderEditorProps) => {
   const advance = extension.completionAdvance;
   return (
     <>
-      <FormElement label="Route reminder to field">
-        <Select.Root
-          value={extension.routing?.principalFieldId}
-          onChange={value =>
-            onChange({
-              ...extension,
-              routing: {
-                fallbackUserIds: extension.routing?.fallbackUserIds ?? [],
-                fallbackTeamIds: extension.routing?.fallbackTeamIds ?? [],
-                principalFieldId: value
-              }
-            })
-          }
-          placeholder="Owning team (default)"
-        >
-          {principalFields.map(field => (
-            <Select.Item key={field.id} value={field.id}>
-              {field.name}
-            </Select.Item>
-          ))}
-        </Select.Root>
-      </FormElement>
       <label className={styles.check}>
         <Checkbox
           value={advance != null}

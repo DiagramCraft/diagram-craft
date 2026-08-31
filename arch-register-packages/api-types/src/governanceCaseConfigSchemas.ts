@@ -47,21 +47,12 @@ export const documentStatusExtensionSchema = z.object({
 export type DocumentStatusExtension = z.infer<typeof documentStatusExtensionSchema>;
 
 /**
- * Typed `extensions` payload for the `field-date-reminder` case kind.
- * - `routing.principalFieldId` names a `principal` field on the subject entity's schema; the
- *   reminder assignment is directed at that user/team, falling back to the configured ids and
- *   then the owning team.
- * - `completionAdvance` advances the triggering date field by the given interval when the case
- *   is acknowledged, so the review recurs. Absent means a one-shot reminder.
+ * Typed `extensions` payload for the `field-date-reminder` case kind. `completionAdvance`
+ * advances the triggering date field by the given interval when the case is acknowledged, so the
+ * review recurs. Absent means a one-shot reminder. Assignment routing reuses the standard
+ * `approvals` block.
  */
 export const fieldDateReminderExtensionSchema = z.object({
-  routing: z
-    .object({
-      principalFieldId: z.string().min(1).optional(),
-      fallbackUserIds: idListSchema,
-      fallbackTeamIds: idListSchema
-    })
-    .optional(),
   completionAdvance: z
     .object({
       amount: z.number().int().positive(),

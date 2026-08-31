@@ -75,12 +75,19 @@ const payloadFor = (
 
 const dedupeKeyFor = (entityId: string, fieldId: string) => `${entityId}:${fieldId}`;
 
+export const ENTITY_OWNER_STRATEGY = 'entity-owner';
+
 type ReminderRouting = {
   principalFieldId?: string;
   fallbackUserIds: string[];
   fallbackTeamIds: string[];
 };
 
+/**
+ * Normalizes the standard `approvals` block into reminder routing. `entity-principal-field`
+ * routes to a principal field on the record; `entity-owner` (or no config) routes to the owning
+ * team. Configured fallback users/teams always apply, and the owning team is the final fallback.
+ */
 const routingFor = (
   configs: Map<string, { enabled: boolean; config: Record<string, unknown> }>,
   schemaId: string,
@@ -88,14 +95,17 @@ const routingFor = (
 ): ReminderRouting | null => {
   const row = configs.get(encodeCaseSubkind(schemaId, fieldId));
   if (!row?.enabled) return null;
-  const parsed = fieldDateReminderExtensionSchema.safeParse(
-    parseGovernanceWorkflowConfig(row.config, row.enabled).extensions ?? {}
-  );
-  if (!parsed.success || !parsed.data.routing) return null;
+  const approvals = parseGovernanceWorkflowConfig(row.config, row.enabled).approvals;
+  if (!approvals) return null;
+  const configuredFieldId = approvals.strategyConfig['fieldId'];
   return {
-    principalFieldId: parsed.data.routing.principalFieldId,
-    fallbackUserIds: parsed.data.routing.fallbackUserIds,
-    fallbackTeamIds: parsed.data.routing.fallbackTeamIds
+    principalFieldId:
+      approvals.strategy === ENTITY_PRINCIPAL_FIELD_STRATEGY &&
+      typeof configuredFieldId === 'string'
+        ? configuredFieldId
+        : undefined,
+    fallbackUserIds: approvals.fallbackUserIds,
+    fallbackTeamIds: approvals.fallbackTeamIds
   };
 };
 
@@ -426,15 +436,16 @@ export const syncFieldDateReminderCases = async (
   return { created, refreshed, cancelled };
 };
 
-const validateEntityPrincipalFieldStrategy = async (
+const validateFieldReminderStrategy = async (
   db: DatabaseAdapter,
   workspace: string,
   subkind: string | null,
   strategy: string,
   strategyConfig: Record<string, unknown>
 ) => {
+  if (strategy === ENTITY_OWNER_STRATEGY) return null;
   if (strategy !== ENTITY_PRINCIPAL_FIELD_STRATEGY) {
-    return `Unsupported escalation strategy '${strategy}'`;
+    return `Unsupported strategy '${strategy}'`;
   }
   const fieldId = strategyConfig['fieldId'];
   if (typeof fieldId !== 'string' || fieldId.length === 0) {
@@ -561,19 +572,30 @@ export const createFieldDateReminderGovernanceRegistry = (): GovernanceRegistry 
         workflowConfig: {
           supportsSubkind: true,
           supportsWorkspaceScope: false,
-          supportsApprovals: false,
+          supportsApprovals: true,
           supportsReminders: true,
           supportsEscalation: true,
           supportsInitiationFields: false,
+          approvalStrategies: [
+            {
+              id: ENTITY_PRINCIPAL_FIELD_STRATEGY,
+              label: 'Record user/team field',
+              configType: 'document-field' as const
+            },
+            { id: ENTITY_OWNER_STRATEGY, label: 'Owning team', configType: 'none' as const }
+          ],
           escalationStrategies: [
             {
               id: ENTITY_PRINCIPAL_FIELD_STRATEGY,
-              label: 'Entity user/team field',
+              label: 'Record user/team field',
               configType: 'document-field' as const
-            }
+            },
+            { id: ENTITY_OWNER_STRATEGY, label: 'Owning team', configType: 'none' as const }
           ],
+          validateApprovalStrategy: async (db, workspace, subkind, strategy, strategyConfig) =>
+            validateFieldReminderStrategy(db, workspace, subkind, strategy, strategyConfig),
           validateEscalationStrategy: async (db, workspace, subkind, strategy, strategyConfig) =>
-            validateEntityPrincipalFieldStrategy(db, workspace, subkind, strategy, strategyConfig),
+            validateFieldReminderStrategy(db, workspace, subkind, strategy, strategyConfig),
           validateConfig: config => {
             fieldDateReminderExtensionSchema.parse(config.extensions ?? {});
           },
@@ -583,10 +605,17 @@ export const createFieldDateReminderGovernanceRegistry = (): GovernanceRegistry 
               approachingDays: [3],
               overdueDays: [1, 3]
             },
+            approvals: {
+              requiredApprovals: 1,
+              strategy: ENTITY_OWNER_STRATEGY,
+              strategyConfig: {},
+              fallbackUserIds: [],
+              fallbackTeamIds: []
+            },
             escalation: {
               enabled: false,
               overdueDays: 14,
-              strategy: ENTITY_PRINCIPAL_FIELD_STRATEGY,
+              strategy: ENTITY_OWNER_STRATEGY,
               strategyConfig: {},
               fallbackUserIds: [],
               fallbackTeamIds: []
