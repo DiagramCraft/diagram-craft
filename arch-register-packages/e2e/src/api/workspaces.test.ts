@@ -272,7 +272,9 @@ test.describe('workspace routes', () => {
       'review_date',
       'regulatory_tags',
       'processing_purposes',
-      'permitted_residency_regions'
+      'permitted_residency_regions',
+      'review_status',
+      'stewardship_status'
     ]);
     expect(enums.map(enumeration => enumeration.name)).toEqual(
       expect.arrayContaining([

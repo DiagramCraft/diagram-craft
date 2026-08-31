@@ -621,7 +621,9 @@ export const updateEntityWithPayload = async (
         enumDefinitions,
         previousFields: oldRow.data
       });
-      assertNoDerivedFieldWrites(schema.fields, normalizedFields);
+      // Check only what the client submitted — `normalizedFields` also carries any derived value
+      // materialized onto `oldRow.data`, which is not a write attempt (it is re-derived below).
+      assertNoDerivedFieldWrites(schema.fields, payload.fields);
       if (authCtx) {
         const changedFieldIds = Object.keys(normalizedFields).filter(
           fieldId => !equalEntityValue(oldRow.data[fieldId], normalizedFields[fieldId])
