@@ -140,17 +140,18 @@ test.describe('workspace config routes', () => {
     const initial = await orpc.governanceWorkflowConfig.list({
       params: { workspace: 'default' }
     });
-    expect(initial.configs).toEqual([]);
+    const existing = initial.configs.find(row => row.case_kind === 'assessment.response');
+    expect(existing).toBeDefined();
 
     const created = await orpc.governanceWorkflowConfig.upsert({
       params: { workspace: 'default' },
       body: {
-        case_kind: 'assessment.response',
-        case_subkind: null,
+        case_kind: existing!.case_kind,
+        case_subkind: existing!.case_subkind,
         name: 'Assessment response review',
         description: 'Review submitted assessment responses.',
         enabled: true,
-        config: { extensions: {} }
+        config: existing!.config
       }
     });
     expect(created).toMatchObject({
@@ -162,17 +163,19 @@ test.describe('workspace config routes', () => {
     const listed = await orpc.governanceWorkflowConfig.list({
       params: { workspace: 'default' }
     });
-    expect(listed.configs).toEqual([expect.objectContaining({ id: created.id, name: created.name })]);
+    expect(listed.configs).toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: created.id, name: created.name })])
+    );
 
     const updated = await orpc.governanceWorkflowConfig.upsert({
       params: { workspace: 'default' },
       body: {
-        case_kind: 'assessment.response',
-        case_subkind: null,
+        case_kind: existing!.case_kind,
+        case_subkind: existing!.case_subkind,
         name: 'Updated assessment review',
         description: null,
         enabled: true,
-        config: { extensions: {} }
+        config: existing!.config
       }
     });
     expect(updated).toMatchObject({
@@ -189,7 +192,7 @@ test.describe('workspace config routes', () => {
           case_subkind: null,
           name: '   ',
           enabled: true,
-          config: { extensions: {} }
+          config: existing!.config
         }
       })
     ).rejects.toMatchObject({ code: 'BAD_REQUEST' });

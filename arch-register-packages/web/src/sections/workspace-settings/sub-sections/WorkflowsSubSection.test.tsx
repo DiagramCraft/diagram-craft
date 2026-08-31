@@ -259,7 +259,10 @@ describe('WorkflowsSubSection', () => {
 
     expect(rendered.container.textContent).toContain('Workspace entity review');
     expect(rendered.container.textContent).toContain('Review changes to workspace entities.');
-    expect(rendered.container.querySelector('.cardSub')?.getAttribute('title')).toBe(
+    const customDescription = [...rendered.container.querySelectorAll('div')].find(
+      item => item.textContent === 'Review changes to workspace entities.'
+    );
+    expect(customDescription?.getAttribute('title')).toBe(
       'Review changes to workspace entities.'
     );
 
@@ -275,7 +278,10 @@ describe('WorkflowsSubSection', () => {
     });
 
     expect(rendered.container.textContent).toContain('Review entity changes.');
-    expect(rendered.container.querySelector('.cardSub')?.getAttribute('title')).toBe(
+    const fallbackDescription = [...rendered.container.querySelectorAll('div')].find(
+      item => item.textContent === 'Review entity changes.'
+    );
+    expect(fallbackDescription?.getAttribute('title')).toBe(
       'Review entity changes.'
     );
   });

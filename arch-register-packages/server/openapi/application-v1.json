@@ -124519,6 +124519,21 @@
                               }
                             ]
                           },
+                          "name": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 200
+                          },
+                          "description": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
                           "enabled": {
                             "type": "boolean"
                           },
@@ -124799,6 +124814,8 @@
                           "case_kind_description",
                           "case_subkind",
                           "case_subkind_label",
+                          "name",
+                          "description",
                           "enabled",
                           "config",
                           "updated_at",
@@ -124850,6 +124867,22 @@
                       {
                         "type": "string",
                         "minLength": 1
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "description": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 2000
                       },
                       {
                         "type": "null"
@@ -125119,6 +125152,7 @@
                 "required": [
                   "case_kind",
                   "case_subkind",
+                  "name",
                   "config"
                 ]
               }
@@ -125157,6 +125191,21 @@
                       ]
                     },
                     "case_subkind_label": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "name": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 200
+                    },
+                    "description": {
                       "anyOf": [
                         {
                           "type": "string"
@@ -125446,6 +125495,8 @@
                     "case_kind_description",
                     "case_subkind",
                     "case_subkind_label",
+                    "name",
+                    "description",
                     "enabled",
                     "config",
                     "updated_at",

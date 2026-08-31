@@ -49,7 +49,10 @@ const governanceWorkflowConfigUpsertSchema = z.object({
   case_kind: z.string().min(1),
   case_subkind: z.string().min(1).nullable(),
   name: z.string().trim().min(1).max(200),
-  description: z.string().trim().max(2000).nullable().optional(),
+  description: z.preprocess(
+    value => (typeof value === 'string' && value.trim() === '' ? null : value),
+    z.string().trim().max(2000).nullable().optional()
+  ),
   enabled: z.boolean().optional(),
   config: governanceWorkflowConfigSchema
 });
