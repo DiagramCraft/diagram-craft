@@ -2,8 +2,39 @@ import type {
   GovernanceApprovalConfig,
   GovernanceEscalationConfig
 } from '@arch-register/api-types/governanceCaseConfigSchemas';
+import type { PrincipalValue } from '@arch-register/api-types/schemaContract';
 import type { DatabaseAdapter } from '../../db/database';
 import type { GovernanceAssignmentTarget } from './governanceOperations';
+
+/** Maps a stored `principal` field value onto a governance assignment target. */
+export const principalValueToGovernanceTarget = (
+  value: PrincipalValue
+): GovernanceAssignmentTarget =>
+  value.principal_type === 'user'
+    ? { type: 'user', userId: value.principal_id }
+    : { type: 'team', teamId: value.principal_id };
+
+/** Reads a raw entity field value (single or multi-valued) as a list of governance targets. */
+export const principalFieldValueToGovernanceTargets = (
+  raw: unknown
+): GovernanceAssignmentTarget[] => {
+  const values = Array.isArray(raw) ? raw : raw == null ? [] : [raw];
+  const targets: GovernanceAssignmentTarget[] = [];
+  for (const value of values) {
+    if (
+      value != null &&
+      typeof value === 'object' &&
+      'principal_type' in value &&
+      'principal_id' in value &&
+      typeof (value as PrincipalValue).principal_id === 'string' &&
+      ((value as PrincipalValue).principal_type === 'user' ||
+        (value as PrincipalValue).principal_type === 'team')
+    ) {
+      targets.push(principalValueToGovernanceTarget(value as PrincipalValue));
+    }
+  }
+  return targets;
+};
 
 const targetKey = (target: GovernanceAssignmentTarget) => JSON.stringify(target);
 

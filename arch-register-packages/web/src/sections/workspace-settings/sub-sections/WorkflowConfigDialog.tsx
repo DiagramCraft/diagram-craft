@@ -8,9 +8,12 @@ import type {
   GovernanceWorkflowCaseKind
 } from '@arch-register/api-types/governanceWorkflowConfigContract';
 import type { GovernanceWorkflowConfig } from '@arch-register/api-types/governanceCaseConfigSchemas';
+import { fieldDateReminderExtensionSchema } from '@arch-register/api-types/governanceCaseConfigSchemas';
 import { useDocumentTypes } from '../../../hooks/useDocuments';
+import { useSchemas } from '../../../hooks/useSchemas';
 import { WorkflowApprovalEditor } from './WorkflowApprovalEditor';
 import { documentStatusExtension, defaultWorkflowConfig } from './WorkflowConfigHelpers';
+import { WorkflowDateReminderEditor } from './WorkflowDateReminderEditor';
 import { WorkflowEscalationEditor } from './WorkflowEscalationEditor';
 import { WorkflowInitiationFieldsEditor } from './WorkflowInitiationFieldsEditor';
 import { WorkflowReminderEditor } from './WorkflowReminderEditor';
@@ -55,12 +58,27 @@ export const WorkflowConfigDialog = ({
   const enumField = documentTypes
     .find(type => type.id === documentTypeId)
     ?.fields.find(field => field.id === fieldId && field.type === 'enum');
-  const documentTargetFields =
-    documentTypes
-      .find(type => type.id === documentTypeId)
-      ?.fields.filter(
-        field => (field.type === 'user_link' || field.type === 'team_link') && !field.retired
-      ) ?? [];
+
+  const isFieldDateReminder = caseKind.case_kind === 'field-date-reminder';
+  const { data: schemas = [] } = useSchemas(workspaceSlug, isFieldDateReminder);
+  const entityPrincipalFields = isFieldDateReminder
+    ? (schemas
+        .find(schema => schema.id === documentTypeId)
+        ?.fields.filter(field => field.type === 'principal' && !field.archived) ?? [])
+    : [];
+
+  const targetFields =
+    (isFieldDateReminder
+      ? entityPrincipalFields
+      : documentTypes
+          .find(type => type.id === documentTypeId)
+          ?.fields.filter(
+            field => (field.type === 'user_link' || field.type === 'team_link') && !field.retired
+          )) ?? [];
+
+  const dateReminderExtension = isFieldDateReminder
+    ? (fieldDateReminderExtensionSchema.safeParse(config.extensions ?? {}).data ?? {})
+    : {};
 
   useEffect(() => {
     setConfig(row?.config ?? defaultWorkflowConfig(caseKind));
@@ -132,6 +150,7 @@ export const WorkflowConfigDialog = ({
           {caseKind.case_kind === 'document.status' && (
             <Tabs.Trigger value="values">Status values</Tabs.Trigger>
           )}
+          {isFieldDateReminder && <Tabs.Trigger value="recurrence">Recurrence</Tabs.Trigger>}
         </Tabs.List>
         {caseKind.supportsApprovals !== false && (
           <Tabs.Content value="approvals" style={{ height: 'auto' }}>
@@ -139,7 +158,7 @@ export const WorkflowConfigDialog = ({
               workspaceSlug={workspaceSlug}
               caseKind={caseKind}
               approvals={config.approvals}
-              fields={documentTargetFields}
+              fields={targetFields}
               onChange={approvals => update({ approvals })}
             />
           </Tabs.Content>
@@ -158,7 +177,7 @@ export const WorkflowConfigDialog = ({
               workspaceSlug={workspaceSlug}
               caseKind={caseKind}
               escalation={config.escalation}
-              fields={documentTargetFields}
+              fields={targetFields}
               onChange={escalation => update({ escalation })}
             />
           </Tabs.Content>
@@ -169,6 +188,23 @@ export const WorkflowConfigDialog = ({
               workspaceSlug={workspaceSlug}
               fields={config.initiationFields ?? []}
               onChange={initiationFields => update({ initiationFields })}
+            />
+          </Tabs.Content>
+        )}
+        {isFieldDateReminder && (
+          <Tabs.Content value="recurrence" style={{ height: 'auto' }}>
+            <WorkflowDateReminderEditor
+              extension={dateReminderExtension}
+              principalFields={entityPrincipalFields}
+              onChange={extension =>
+                update({
+                  extensions: {
+                    ...config.extensions,
+                    routing: extension.routing,
+                    completionAdvance: extension.completionAdvance
+                  }
+                })
+              }
             />
           </Tabs.Content>
         )}

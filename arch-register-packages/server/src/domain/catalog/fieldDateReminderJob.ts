@@ -1,4 +1,6 @@
 import { randomUUID } from 'node:crypto';
+import { fieldDateReminderExtensionSchema } from '@arch-register/api-types/governanceCaseConfigSchemas';
+import type { GovernanceEscalationConfig } from '@arch-register/api-types/governanceCaseConfigSchemas';
 import type { DatabaseAdapter } from '../../db/database';
 import { DatabaseError } from '../../db/databaseError';
 import type { EntityDbResult, SchemaDbResult } from './db/catalogDatabase';
@@ -10,10 +12,19 @@ import {
   resolveAssignmentNotifications,
   resolveCaseNotifications
 } from '../governance/governanceOperations';
+import type { GovernanceAssignmentTarget } from '../governance/governanceOperations';
+import { principalFieldValueToGovernanceTargets } from '../governance/governanceTargetResolution';
 import type { GovernanceCaseDbResult } from '../governance/db/governanceDatabase';
 import type { GovernanceRegistry } from '../governance/governanceRegistry';
 import { encodeCaseSubkind } from '../governance/governanceCaseSubkind';
 import { parseGovernanceWorkflowConfig } from '../governance/governanceWorkflowConfig';
+import { updateEntityWithAudit } from './entityMutations';
+import { normalizeEntityScalarFields } from './entityScalarValues';
+import { getWorkspaceEnumDefinitions } from './enumOptions';
+import { computeEntityCompleteness } from '../../utils/completeness';
+import { addRetentionDuration, parseIsoDate, toIsoDate } from '../../utils/retentionDate';
+
+export const ENTITY_PRINCIPAL_FIELD_STRATEGY = 'entity-principal-field';
 
 export const FIELD_DATE_REMINDER_CASE_KIND = 'field-date-reminder';
 export const FIELD_DATE_REMINDER_SYSTEM_IDENTITY = 'field-date-reminder';
@@ -64,28 +75,96 @@ const payloadFor = (
 
 const dedupeKeyFor = (entityId: string, fieldId: string) => `${entityId}:${fieldId}`;
 
-const assignmentsFor = (entity: EntityDbResult, teamIds: Set<string>) =>
+type ReminderRouting = {
+  principalFieldId?: string;
+  fallbackUserIds: string[];
+  fallbackTeamIds: string[];
+};
+
+const routingFor = (
+  configs: Map<string, { enabled: boolean; config: Record<string, unknown> }>,
+  schemaId: string,
+  fieldId: string
+): ReminderRouting | null => {
+  const row = configs.get(encodeCaseSubkind(schemaId, fieldId));
+  if (!row?.enabled) return null;
+  const parsed = fieldDateReminderExtensionSchema.safeParse(
+    parseGovernanceWorkflowConfig(row.config, row.enabled).extensions ?? {}
+  );
+  if (!parsed.success || !parsed.data.routing) return null;
+  return {
+    principalFieldId: parsed.data.routing.principalFieldId,
+    fallbackUserIds: parsed.data.routing.fallbackUserIds,
+    fallbackTeamIds: parsed.data.routing.fallbackTeamIds
+  };
+};
+
+const completionAdvanceFor = (
+  configs: Map<string, { enabled: boolean; config: Record<string, unknown> }>,
+  schemaId: string,
+  fieldId: string
+): { amount: number; unit: 'days' | 'months' | 'years' } | null => {
+  const row = configs.get(encodeCaseSubkind(schemaId, fieldId));
+  if (!row?.enabled) return null;
+  const parsed = fieldDateReminderExtensionSchema.safeParse(
+    parseGovernanceWorkflowConfig(row.config, row.enabled).extensions ?? {}
+  );
+  return parsed.success ? (parsed.data.completionAdvance ?? null) : null;
+};
+
+type ReminderAssignmentTarget =
+  | { type: 'team_role'; teamId: string; teamRole: 'team_admin' }
+  | { type: 'capability'; capability: 'ent.approve' }
+  | { type: 'user'; userId: string }
+  | { type: 'team'; teamId: string };
+
+type ReminderAssignment = { action: 'acknowledge'; target: ReminderAssignmentTarget };
+
+const ownerFallbackAssignments = (
+  entity: EntityDbResult,
+  teamIds: Set<string>
+): ReminderAssignment[] =>
   entity.owner && teamIds.has(entity.owner)
     ? [
         {
-          action: 'acknowledge' as const,
-          target: {
-            type: 'team_role' as const,
-            teamId: entity.owner,
-            teamRole: 'team_admin' as const
-          }
+          action: 'acknowledge',
+          target: { type: 'team_role', teamId: entity.owner, teamRole: 'team_admin' }
         }
       ]
-    : [
-        {
-          action: 'acknowledge' as const,
-          target: { type: 'capability' as const, capability: 'ent.approve' as const }
-        }
-      ];
+    : [{ action: 'acknowledge', target: { type: 'capability', capability: 'ent.approve' } }];
+
+const assignmentsFor = (
+  entity: EntityDbResult,
+  teamIds: Set<string>,
+  routing: ReminderRouting | null
+): ReminderAssignment[] => {
+  if (!routing) return ownerFallbackAssignments(entity, teamIds);
+
+  const candidates: GovernanceAssignmentTarget[] = [
+    ...(routing.principalFieldId
+      ? principalFieldValueToGovernanceTargets(entity.data[routing.principalFieldId])
+      : []),
+    ...routing.fallbackUserIds.map(userId => ({ type: 'user' as const, userId })),
+    ...routing.fallbackTeamIds.map(teamId => ({ type: 'team' as const, teamId }))
+  ].filter(target => target.type !== 'team' || teamIds.has(target.teamId));
+
+  const seen = new Set<string>();
+  const deduped = candidates.filter(target => {
+    const key = JSON.stringify(target);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  if (deduped.length === 0) return ownerFallbackAssignments(entity, teamIds);
+  return deduped.map(target => ({
+    action: 'acknowledge',
+    target: target as ReminderAssignmentTarget
+  }));
+};
 
 const sameAssignment = (
   current: Awaited<ReturnType<DatabaseAdapter['governance']['listAssignmentsForCase']>>[number],
-  desired: ReturnType<typeof assignmentsFor>[number]
+  desired: ReminderAssignment
 ) =>
   current.status === 'open' &&
   current.action === desired.action &&
@@ -95,7 +174,13 @@ const sameAssignment = (
     current.target_team_role === desired.target.teamRole) ||
     (desired.target.type === 'capability' &&
       current.target_type === 'capability' &&
-      current.target_capability === desired.target.capability));
+      current.target_capability === desired.target.capability) ||
+    (desired.target.type === 'user' &&
+      current.target_type === 'user' &&
+      current.target_user_id === desired.target.userId) ||
+    (desired.target.type === 'team' &&
+      current.target_type === 'team' &&
+      current.target_team_id === desired.target.teamId));
 
 const cancelAutomaticCase = async (
   db: DatabaseAdapter,
@@ -132,10 +217,11 @@ const refreshAutomaticCase = async (
   dueAt: Date,
   entity: EntityDbResult,
   teamIds: Set<string>,
+  routing: ReminderRouting | null,
   now: Date
 ) => {
   const payload = payloadFor(schema, fieldId, dateValue, entity);
-  const desiredAssignments = assignmentsFor(entity, teamIds);
+  const desiredAssignments = assignmentsFor(entity, teamIds, routing);
   const currentAssignments = await db.governance.listAssignmentsForCase(current.id);
   const dateChanged = current.payload['dateValue'] !== dateValue;
   const payloadChanged =
@@ -167,8 +253,11 @@ const refreshAutomaticCase = async (
           workspace: fresh.workspace,
           action: assignment.action,
           target_type: assignment.target.type,
-          target_user_id: null,
-          target_team_id: assignment.target.type === 'team_role' ? assignment.target.teamId : null,
+          target_user_id: assignment.target.type === 'user' ? assignment.target.userId : null,
+          target_team_id:
+            assignment.target.type === 'team_role' || assignment.target.type === 'team'
+              ? assignment.target.teamId
+              : null,
           target_team_role:
             assignment.target.type === 'team_role' ? assignment.target.teamRole : null,
           target_capability:
@@ -202,6 +291,7 @@ const createAutomaticCase = async (
   dueAt: Date,
   entity: EntityDbResult,
   teamIds: Set<string>,
+  routing: ReminderRouting | null,
   now: Date
 ) => {
   try {
@@ -220,7 +310,7 @@ const createAutomaticCase = async (
           dueAt,
           payload: payloadFor(schema, fieldId, dateValue, entity),
           skipInitiationFields: true,
-          assignments: assignmentsFor(entity, teamIds)
+          assignments: assignmentsFor(entity, teamIds, routing)
         },
         now
       );
@@ -273,6 +363,7 @@ export const syncFieldDateReminderCases = async (
       const date = parseDateValue(entity.data[field.id]);
       if (!date) continue;
       seenKeys.add(key);
+      const routing = routingFor(configsBySubkind, schema.id, field.id);
       const existing = await db.governance.getCaseByDedupeKey(
         workspace,
         FIELD_DATE_REMINDER_CASE_KIND,
@@ -289,6 +380,7 @@ export const syncFieldDateReminderCases = async (
           date.dueAt,
           entity,
           teamIds,
+          routing,
           now
         );
         if (before !== date.value) refreshed++;
@@ -307,6 +399,7 @@ export const syncFieldDateReminderCases = async (
           date.dueAt,
           entity,
           teamIds,
+          routing,
           now
         )
       ) {
@@ -333,6 +426,133 @@ export const syncFieldDateReminderCases = async (
   return { created, refreshed, cancelled };
 };
 
+const validateEntityPrincipalFieldStrategy = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  subkind: string | null,
+  strategy: string,
+  strategyConfig: Record<string, unknown>
+) => {
+  if (strategy !== ENTITY_PRINCIPAL_FIELD_STRATEGY) {
+    return `Unsupported escalation strategy '${strategy}'`;
+  }
+  const fieldId = strategyConfig['fieldId'];
+  if (typeof fieldId !== 'string' || fieldId.length === 0) {
+    return 'Entity field strategies require a principal field';
+  }
+  const schemaId = subkind?.split(':')[0];
+  if (!schemaId) return 'Entity field strategies require a schema';
+  const schema = await db.catalog.getSchema(workspace, schemaId);
+  const field = schema?.fields.find(item => item.id === fieldId);
+  if (!field || field.archived || field.type !== 'principal') {
+    return `Field '${fieldId}' must be an active principal field`;
+  }
+  return null;
+};
+
+/**
+ * On acknowledgement of a recurring reminder, advance the triggering date field by the
+ * configured interval so the next scan opens a fresh case for the new date.
+ */
+const advanceTriggeringDateField = async (tx: DatabaseAdapter, caseRow: GovernanceCaseDbResult) => {
+  const schemaId = caseRow.payload['schemaId'];
+  const fieldId = caseRow.payload['fieldId'];
+  const currentValue = caseRow.payload['dateValue'];
+  if (
+    typeof schemaId !== 'string' ||
+    typeof fieldId !== 'string' ||
+    typeof currentValue !== 'string'
+  ) {
+    return;
+  }
+
+  const configRow = await tx.governanceCaseConfig.getCaseConfig(
+    caseRow.workspace,
+    FIELD_DATE_REMINDER_CASE_KIND,
+    encodeCaseSubkind(schemaId, fieldId)
+  );
+  const advance = configRow
+    ? completionAdvanceFor(new Map([[configRow.case_subkind ?? '', configRow]]), schemaId, fieldId)
+    : null;
+  if (!advance) return;
+
+  const start = parseIsoDate(currentValue);
+  if (!start) return;
+  const nextIso = toIsoDate(addRetentionDuration(start, advance.amount, advance.unit));
+  if (nextIso === currentValue) return;
+
+  const entity = await tx.catalog.getEntity(caseRow.workspace, caseRow.subject_id);
+  if (!entity) return;
+  const schema = await tx.catalog.getSchema(caseRow.workspace, entity.schema_id);
+  const field = schema?.fields.find(item => item.id === fieldId);
+  if (!schema || !field || field.type !== 'date' || field.archived) return;
+  if (entity.data[fieldId] !== currentValue) return;
+
+  const nextData = normalizeEntityScalarFields({
+    schemaFields: schema.fields,
+    fields: { ...entity.data, [fieldId]: nextIso },
+    validateMissing: false,
+    enumDefinitions: await getWorkspaceEnumDefinitions(tx, caseRow.workspace),
+    previousFields: entity.data
+  });
+
+  await updateEntityWithAudit(tx, {
+    workspace: caseRow.workspace,
+    entityId: entity.id,
+    previous: entity,
+    actor: { id: FIELD_DATE_REMINDER_SYSTEM_USER_ID, displayName: 'Field date reminder' },
+    auditMetadata: {
+      governanceCaseId: caseRow.id,
+      fieldId,
+      previousValue: currentValue,
+      nextValue: nextIso
+    },
+    versionKind: 'case_applied',
+    next: {
+      slug: entity.slug,
+      namespace: entity.namespace,
+      name: entity.name,
+      description: entity.description,
+      owner: entity.owner,
+      lifecycle: entity.lifecycle,
+      target_lifecycle: entity.target_lifecycle,
+      target_lifecycle_date: entity.target_lifecycle_date,
+      tags: entity.tags,
+      links: entity.links,
+      schema_id: entity.schema_id,
+      project_id: entity.project_id,
+      data: nextData,
+      updated_at: new Date(),
+      completeness: computeEntityCompleteness(
+        {
+          description: entity.description,
+          owner: entity.owner,
+          lifecycle: entity.lifecycle,
+          data: nextData
+        },
+        schema
+      )
+    }
+  });
+};
+
+const escalationTargetFor = async (
+  db: DatabaseAdapter,
+  caseRow: GovernanceCaseDbResult,
+  config?: GovernanceEscalationConfig
+): Promise<GovernanceAssignmentTarget[] | GovernanceAssignmentTarget | null> => {
+  const entity = await db.catalog.getEntity(caseRow.workspace, caseRow.subject_id);
+  if (!entity) return null;
+  const ownerFallback: GovernanceAssignmentTarget | null = entity.owner
+    ? { type: 'team_role', teamId: entity.owner, teamRole: 'team_admin' }
+    : null;
+  if (config?.strategy !== ENTITY_PRINCIPAL_FIELD_STRATEGY) return ownerFallback;
+  const fieldId = config.strategyConfig['fieldId'];
+  const targets =
+    typeof fieldId === 'string' ? principalFieldValueToGovernanceTargets(entity.data[fieldId]) : [];
+  return targets.length > 0 ? targets : ownerFallback;
+};
+
 export const createFieldDateReminderGovernanceRegistry = (): GovernanceRegistry =>
   new Map([
     [
@@ -343,13 +563,33 @@ export const createFieldDateReminderGovernanceRegistry = (): GovernanceRegistry 
           supportsWorkspaceScope: false,
           supportsApprovals: false,
           supportsReminders: true,
-          supportsEscalation: false,
+          supportsEscalation: true,
           supportsInitiationFields: false,
+          escalationStrategies: [
+            {
+              id: ENTITY_PRINCIPAL_FIELD_STRATEGY,
+              label: 'Entity user/team field',
+              configType: 'document-field' as const
+            }
+          ],
+          validateEscalationStrategy: async (db, workspace, subkind, strategy, strategyConfig) =>
+            validateEntityPrincipalFieldStrategy(db, workspace, subkind, strategy, strategyConfig),
+          validateConfig: config => {
+            fieldDateReminderExtensionSchema.parse(config.extensions ?? {});
+          },
           defaultConfig: {
             reminders: {
               enabled: true,
               approachingDays: [3],
               overdueDays: [1, 3]
+            },
+            escalation: {
+              enabled: false,
+              overdueDays: 14,
+              strategy: ENTITY_PRINCIPAL_FIELD_STRATEGY,
+              strategyConfig: {},
+              fallbackUserIds: [],
+              fallbackTeamIds: []
             },
             extensions: {}
           },
@@ -389,7 +629,14 @@ export const createFieldDateReminderGovernanceRegistry = (): GovernanceRegistry 
             fieldId
           );
         },
-        workspaceReminderOverrides: false
+        workspaceReminderOverrides: false,
+        escalation: {
+          overdueDays: 14,
+          target: escalationTargetFor
+        },
+        applyDomainEffect: async (tx, { case: caseRow }) => {
+          await advanceTriggeringDateField(tx, caseRow);
+        }
       }
     ]
   ]);

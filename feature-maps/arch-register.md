@@ -132,6 +132,9 @@
             ordered multi-valued scalar fields (text, long text, boolean, date, number, currency, and select) with
             minimum/maximum cardinality,
             date fields that can generate schema-field-scoped approaching and overdue governance reminders,
+            which can be routed to a principal field on the record (e.g. its steward), escalated when overdue,
+            and configured to advance the date field by a fixed interval each time the reminder is acknowledged
+            so the review recurs; the bundled Data Entity review date is enabled this way out of the box,
             the built-in Vendor/Contract model where Contract records contain exactly one Vendor,
             read-only derived fields calculated using a sandboxed expression over sibling fields and a bounded
             one-hop JSON context — on entity schemas the `entity` root (direct references, containment, and
