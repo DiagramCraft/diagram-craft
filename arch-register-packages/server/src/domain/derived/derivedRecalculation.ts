@@ -107,7 +107,10 @@ const affectedEntityIds = (
 export const recalculateEntityDerivedFields = async (
   db: DatabaseAdapter,
   workspace: string,
-  changedEntityIds?: string[]
+  changedEntityIds?: string[],
+  // Threaded into derived evaluation so time-dependent fields (`<root>.now`) resolve against a
+  // caller-controlled instant; the recurring scan job passes the real current time.
+  now: Date = new Date()
 ) => {
   // Small unit-test adapters often exercise the low-level mutation helpers without providing the
   // complete catalog/relation surface. Production adapters always provide these methods.
@@ -177,7 +180,8 @@ export const recalculateEntityDerivedFields = async (
         entity.data,
         { objectType: 'entity', objectId: entity.id },
         schema.groups ?? [],
-        projection ?? entity.data
+        projection ?? entity.data,
+        now
       );
       if (valuesEqual(entity.data, nextData)) continue;
       entity.data = nextData;
@@ -220,7 +224,8 @@ export const recalculateEntityDerivedFields = async (
     entities: [...workingEntities.values()],
     schemas,
     affected,
-    fullScan: !changedEntityIds || changedEntityIds.length === 0
+    fullScan: !changedEntityIds || changedEntityIds.length === 0,
+    now
   });
 
   return true;
@@ -240,7 +245,8 @@ const recalculateRelationDerivedFields = async ({
   entities,
   schemas,
   affected,
-  fullScan
+  fullScan,
+  now
 }: {
   db: DatabaseAdapter;
   workspace: string;
@@ -250,6 +256,7 @@ const recalculateRelationDerivedFields = async ({
   schemas: SchemaDbResult[];
   affected: Set<string>;
   fullScan: boolean;
+  now: Date;
 }) => {
   if (typeof db.relation.updateRelationDerivedFields !== 'function') return;
 
@@ -288,7 +295,8 @@ const recalculateRelationDerivedFields = async ({
       relation.data,
       { objectType: 'relation', objectId: relation.id },
       schema.groups ?? [],
-      projection
+      projection,
+      now
     );
     if (valuesEqual(relation.data, nextData)) continue;
     relation.data = nextData;

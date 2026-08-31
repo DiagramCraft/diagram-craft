@@ -162,7 +162,13 @@ const derivedFieldInputSchema = derivedFieldBaseSchema
     requirementLevel: z.literal('optional').describe('Derived fields are never required'),
     expression: z.string().min(1).describe('Sandboxed expression used to calculate the value'),
     resultType: derivedResultTypeSchema.describe('Underlying type of the calculated value'),
-    enumId: z.string().optional().describe('Workspace enumeration for a derived select result')
+    enumId: z.string().optional().describe('Workspace enumeration for a derived select result'),
+    recalc_interval: z
+      .enum(['hourly', 'daily'])
+      .optional()
+      .describe(
+        'Cadence at which the recurring derived-field scan job recomputes this value; only valid when the expression reads `<root>.now`'
+      )
   })
   .superRefine((field, ctx) => {
     if (field.resultType === 'select' && !field.enumId) {

@@ -38,6 +38,7 @@ import {
   validateDerivedFieldGroupAccess
 } from '../derived/derivedFields';
 import { recalculateEntityDerivedFields } from '../derived/derivedRecalculation';
+import { ensureDerivedRecalculationScheduleExists } from '../derived/derivedRecalculationJob';
 import { previewEntityValidation } from './entityValidationRules';
 import { normalizeEntityScalarFields } from './entityScalarValues';
 import { remapWorkspaceCapabilityFieldMappings } from '../workspace/workspaceCapabilityOperations';
@@ -236,6 +237,8 @@ export const createWorkspaceSchema = async (
         entityName: row.name,
         changes: { new: extractEntityFields(row) }
       });
+
+      await ensureDerivedRecalculationScheduleExists(db, ws, timestamp);
 
       const enums = await db.catalog.listEnums(ws);
       const categories: CategoryLookup =
@@ -523,6 +526,8 @@ export const updateWorkspaceSchema = async (
 
         return updated;
       });
+
+      await ensureDerivedRecalculationScheduleExists(db, ws, next.updated_at);
 
       if (entityCount > 0 && completenessRelevantFieldsChanged(oldRow.fields, row.fields)) {
         await ensureEntityCompletenessScanScheduleExists(db, ws, next.updated_at);

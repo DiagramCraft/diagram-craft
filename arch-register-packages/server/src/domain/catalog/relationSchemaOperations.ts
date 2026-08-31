@@ -30,6 +30,7 @@ import type {
 } from '@arch-register/api-types/relationSchemaContract';
 import { validateDerivedFieldGroupAccess } from '../derived/derivedFields';
 import { recalculateEntityDerivedFields } from '../derived/derivedRecalculation';
+import { ensureDerivedRecalculationScheduleExists } from '../derived/derivedRecalculationJob';
 
 const dbErrorMessages = {
   unique: 'A relation schema with that name already exists in this workspace',
@@ -145,6 +146,8 @@ export const createWorkspaceRelationSchema = async (
         entityName: row.name,
         changes: { new: extractEntityFields(row) }
       });
+
+      await ensureDerivedRecalculationScheduleExists(db, ws, new Date());
 
       const enums = await db.catalog.listEnums(ws);
       const categories: CategoryLookup =
@@ -309,6 +312,7 @@ export const updateWorkspaceRelationSchema = async (
       if (relationCount > 0 && derivedFieldsTouched) {
         await recalculateEntityDerivedFields(db, ws);
       }
+      await ensureDerivedRecalculationScheduleExists(db, ws, next.updated_at);
 
       const changes = computeChanges(extractEntityFields(oldRow), extractEntityFields(row));
 

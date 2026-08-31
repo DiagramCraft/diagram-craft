@@ -45,6 +45,38 @@ The available result types are:
 Derived fields are always optional and cannot be written directly by entity or assessment
 mutations. The server recalculates them from the submitted source values.
 
+## Time-aware derived fields
+
+Expressions can read `<root>.now` — the current date as an ISO `YYYY-MM-DD` string (`entity.now`,
+`relation.now`, `assessment.now`). Combined with the `daysBetween(from, to)` function (signed
+whole-day difference between two ISO date strings, `null` when either is unparseable) this lets a
+derived value bucket a date field against the present:
+
+```text
+entity.review_date == null || entity.review_date == '' ? 'incomplete'
+  : daysBetween(entity.now, entity.review_date) < 0 ? 'overdue'
+  : daysBetween(entity.now, entity.review_date) <= 30 ? 'approaching'
+  : 'current'
+```
+
+A value that depends on `now` does not change when its source fields do — it drifts with the
+calendar. Set `recalc_interval` (`hourly` | `daily`) on such a field so the recurring
+`derived-fields.recalculate-scan` job recomputes it on that cadence:
+
+```json
+{
+  "id": "review_status", "name": "Review Status", "type": "derived",
+  "expression": "daysBetween(entity.now, entity.review_date) < 0 ? 'overdue' : 'current'",
+  "resultType": "text",
+  "recalc_interval": "daily"
+}
+```
+
+`recalc_interval` is only valid on an expression that references `now`; a `now`-referencing field
+without one defaults to `daily`. The scan schedule for a workspace self-heals from the schema /
+field-group write paths, using the finest cadence any of its schemas declares (hourly beats
+daily), and is disabled when no time-dependent derived field remains.
+
 ## Expressions
 
 Entity expressions receive an `entity` JSON object. Current-entity fields are available at the top

@@ -334,3 +334,68 @@ describe('derived fields', () => {
     ).toThrow(/salary_label.*salary/);
   });
 });
+
+describe('time-aware derived fields', () => {
+  const reviewStatus: SchemaField = {
+    id: 'review_status',
+    name: 'Review Status',
+    type: 'derived',
+    requirementLevel: 'optional',
+    resultType: 'text',
+    recalc_interval: 'daily',
+    expression:
+      "daysBetween(entity.now, entity.review_date) == null ? 'incomplete' " +
+      ": daysBetween(entity.now, entity.review_date) < 0 ? 'overdue' " +
+      ": daysBetween(entity.now, entity.review_date) <= 30 ? 'approaching' : 'current'"
+  };
+  const fields: SchemaField[] = [
+    { id: 'review_date', name: 'Review Date', type: 'date' } as SchemaField,
+    reviewStatus
+  ];
+  const now = new Date('2026-03-01T00:00:00.000Z');
+
+  it.each([
+    ['2026-02-01', 'overdue'],
+    ['2026-03-20', 'approaching'],
+    ['2026-06-01', 'current'],
+    [undefined, 'incomplete']
+  ])('buckets review_date %s as %s against a fixed now', (reviewDate, expected) => {
+    const result = materializeDerivedFields(
+      fields,
+      reviewDate === undefined ? {} : { review_date: reviewDate },
+      entityContext,
+      [],
+      undefined,
+      now
+    );
+    expect(result['review_status']).toBe(expected);
+  });
+
+  it('flags review_status as time-dependent and keeps its cadence', () => {
+    const plan = buildDerivedPlan(fields, 'entity');
+    expect(plan.timeDependentFieldIds.has('review_status')).toBe(true);
+    expect(plan.fields.find(f => f.id === 'review_status')?.recalcInterval).toBe('daily');
+  });
+
+  it('defaults a now-referencing field without recalc_interval to daily', () => {
+    const plan = buildDerivedPlan(
+      [
+        { id: 'd', name: 'd', type: 'date' } as SchemaField,
+        derivedSchemaText('when_due', "daysBetween(entity.now, entity.d) < 0 ? 'past' : 'future'")
+      ],
+      'entity'
+    );
+    expect(plan.fields.find(f => f.id === 'when_due')?.recalcInterval).toBe('daily');
+  });
+
+  it('rejects recalc_interval on a field that does not reference now', () => {
+    expect(() =>
+      buildDerivedPlan(
+        [
+          { ...derivedSchemaText('label', "'x'"), recalc_interval: 'hourly' } as SchemaField
+        ],
+        'entity'
+      )
+    ).toThrow(/recalc_interval/);
+  });
+});

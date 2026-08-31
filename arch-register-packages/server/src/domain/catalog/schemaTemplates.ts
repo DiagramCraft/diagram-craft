@@ -119,6 +119,7 @@ export type SymbolicField =
       expression: string;
       resultType: 'text' | 'number' | 'currency' | 'select' | 'boolean' | 'rating';
       enumId?: SymbolicReference;
+      recalcInterval?: 'hourly' | 'daily';
     }
   | {
       id: string;
@@ -1404,6 +1405,32 @@ const informationAssetFieldGroup: SymbolicFieldGroup = {
       enumId: 'residency-regions',
       minCardinality: 0,
       maxCardinality: -1
+    },
+    {
+      id: 'review_status',
+      name: 'Review Status',
+      type: 'derived',
+      // 'incomplete' when no review date is set; otherwise bucketed against the current date
+      // (entity.now, injected by the derived-field engine) with a 30-day "approaching" window.
+      // Kept current between reviews by the derived-fields.recalculate-scan job.
+      expression:
+        "daysBetween(entity.now, entity.review_date) == null ? 'incomplete' " +
+        ": daysBetween(entity.now, entity.review_date) < 0 ? 'overdue' " +
+        ": daysBetween(entity.now, entity.review_date) <= 30 ? 'approaching' : 'current'",
+      resultType: 'text',
+      recalcInterval: 'daily'
+    },
+    {
+      id: 'stewardship_status',
+      name: 'Stewardship Status',
+      type: 'derived',
+      // 'complete' only when a steward, custodian and review date are all recorded. Owner is a
+      // built-in field (not reachable from derived expressions) and is already queryable via
+      // _owner, so it is intentionally excluded here.
+      expression:
+        "isBlank(entity.steward) || isBlank(entity.custodian) || isBlank(entity.review_date) " +
+        "? 'incomplete' : 'complete'",
+      resultType: 'text'
     }
   ]
 };
@@ -3871,7 +3898,8 @@ const materializeTemplateFragments = (
         enumId:
           field.resultType === 'select' && field.enumId !== undefined
             ? resolveDefinitionId('enum', ownerId, field.enumId)
-            : undefined
+            : undefined,
+        recalc_interval: field.recalcInterval
       };
     }
     return {

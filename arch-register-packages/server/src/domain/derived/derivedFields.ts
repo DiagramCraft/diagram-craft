@@ -11,11 +11,22 @@ import { currencyValueSchema } from '@arch-register/api-types/common';
 import { createLogger } from '../../utils/logger';
 import { httpAssert } from '../../utils/httpAssert';
 
+export type DerivedRecalcInterval = 'hourly' | 'daily';
+
 export type DerivedFieldDefinition = {
   id: string;
   expression: string;
   resultType: 'text' | 'number' | 'currency' | 'select' | 'boolean' | 'rating';
+  /**
+   * Cadence at which the recurring `derived-fields.recalculate-scan` job recomputes this value.
+   * Only meaningful for expressions that read `<root>.now`; `buildDerivedPlan` defaults such a
+   * field to `'daily'` and rejects the flag on a field that does not reference `now`.
+   */
+  recalcInterval?: DerivedRecalcInterval;
 };
+
+/** ISO `YYYY-MM-DD` in UTC — matches how `date`-typed fields are stored and projected. */
+const toIsoDay = (date: Date): string => date.toISOString().slice(0, 10);
 
 export type DerivedEntityContext = Record<string, unknown>;
 export type DerivedRoot = 'entity' | 'assessment' | 'relation';
@@ -43,6 +54,8 @@ type DerivedPlan = {
   dependencies: Map<string, string[]>;
   references: Map<string, string[]>;
   root: DerivedRoot;
+  /** Ids of derived fields whose expression reads `<root>.now` (kept fresh by the scan job). */
+  timeDependentFieldIds: Set<string>;
 };
 
 type EvaluationContext = {
@@ -62,14 +75,26 @@ const engine = bonsai<EvaluationContext>({ timeout: 50, maxDepth: 50 })
   .use(arrays)
   .use(math)
   .use(strings)
-  .use(types);
+  .use(types)
+  // Signed whole-day difference between two ISO date strings; `null` when either is unparseable
+  // (the surrounding expression then falls through to its "missing" branch). Enables
+  // approaching/overdue windows against the injected `<root>.now`.
+  .addFunction('daysBetween', (from, to) => {
+    const a = Date.parse(String(from));
+    const b = Date.parse(String(to));
+    return Number.isNaN(a) || Number.isNaN(b) ? null : Math.round((b - a) / 86_400_000);
+  })
+  // `null` / `undefined` / empty-string / empty-array test — a missing context key reads as
+  // `undefined`, which bonsai's `== null` does not always catch.
+  .addFunction('isBlank', value => value == null || value === '' || (Array.isArray(value) && value.length === 0));
 
 const derivedField = (field: DerivableField): DerivedFieldDefinition | null =>
   field.type === 'derived'
     ? {
         id: field.id,
         expression: field.expression,
-        resultType: field.resultType
+        resultType: field.resultType,
+        recalcInterval: (field as { recalc_interval?: DerivedRecalcInterval }).recalc_interval
       }
     : null;
 
@@ -86,7 +111,11 @@ const collectRootDependencies = (node: ASTNode, root: DerivedRoot, dependencies:
     member.object.name === root
   ) {
     const property = member.computed ? member.property?.value : member.property?.name;
-    if (typeof property === 'string' && property !== 'metadata') dependencies.push(property);
+    // `metadata` is a synthetic projection object, `now` is the injected current date — neither
+    // is a schema field, so neither is a recalculation dependency.
+    if (typeof property === 'string' && property !== 'metadata' && property !== 'now') {
+      dependencies.push(property);
+    }
   }
   for (const value of Object.values(node)) {
     if (Array.isArray(value)) {
@@ -128,6 +157,32 @@ const collectObjectLiteralKeys = (node: ASTNode, keys: Set<string>) => {
   }
 };
 
+/** True when the AST reads `<root>.now` anywhere (the injected current-date string). */
+const referencesRootNow = (node: ASTNode, root: DerivedRoot): boolean => {
+  const member = node as unknown as {
+    type?: string;
+    object?: { type?: string; name?: string };
+    property?: { name?: string; value?: string };
+    computed?: boolean;
+  };
+  if (
+    member.type === 'MemberExpression' &&
+    member.object?.type === 'Identifier' &&
+    member.object.name === root &&
+    (member.computed ? member.property?.value : member.property?.name) === 'now'
+  ) {
+    return true;
+  }
+  return Object.values(node).some(value =>
+    Array.isArray(value)
+      ? value.some(
+          item =>
+            !!item && typeof item === 'object' && 'type' in item && referencesRootNow(item, root)
+        )
+      : !!value && typeof value === 'object' && 'type' in value && referencesRootNow(value, root)
+  );
+};
+
 const inferRoot = (fields: DerivableField[]): DerivedRoot =>
   fields.some(field => 'name' in field) ? 'entity' : 'assessment';
 
@@ -147,6 +202,7 @@ export const buildDerivedPlan = (
   const compiled = new Map<string, CompiledExpression>();
   const dependencies = new Map<string, string[]>();
   const references = new Map<string, string[]>();
+  const timeDependentFieldIds = new Set<string>();
 
   for (const definition of definitions) {
     const validation = engine.validate(definition.expression);
@@ -184,6 +240,18 @@ export const buildDerivedPlan = (
     );
     references.set(definition.id, uniqueDependencies);
     compiled.set(definition.id, engine.compile(definition.expression));
+
+    const usesNow = referencesRootNow(validation.ast, root);
+    if (usesNow) {
+      timeDependentFieldIds.add(definition.id);
+      // A time-dependent value only advances when the recurring scan job recomputes it; default
+      // the cadence so an author can't silently ship a value that never refreshes.
+      if (!definition.recalcInterval) definition.recalcInterval = 'daily';
+    } else if (definition.recalcInterval) {
+      throw new Error(
+        `Derived field '${definition.id}' sets recalc_interval but its expression does not reference ${root}.now`
+      );
+    }
   }
 
   const visiting = new Set<string>();
@@ -201,7 +269,7 @@ export const buildDerivedPlan = (
   };
   definitions.forEach(field => visit(field.id));
 
-  return { fields: ordered, compiled, dependencies, references, root };
+  return { fields: ordered, compiled, dependencies, references, root, timeDependentFieldIds };
 };
 
 const groupAccessBoundary = (
@@ -365,10 +433,14 @@ export const evaluateDerivedFields = (
   inputValues: Record<string, unknown>,
   context: { objectType: DerivedRoot; objectId: string },
   unsafeDerivedFieldIds: ReadonlySet<string> = new Set(),
-  entityContext: DerivedEntityContext = inputValues
+  entityContext: DerivedEntityContext = inputValues,
+  now: Date = new Date()
 ): Record<string, unknown> => {
   const values = { ...inputValues };
-  const rootContext = { ...entityContext };
+  // `<root>.now` — the current date as an ISO day string, so expressions can compute
+  // approaching/overdue windows. Injected here (the one path every root funnels through) rather
+  // than in each projection builder.
+  const rootContext: Record<string, unknown> = { ...entityContext, now: toIsoDay(now) };
   const evaluationContext: EvaluationContext =
     plan.root === 'entity'
       ? { entity: rootContext }
@@ -416,7 +488,8 @@ export const materializeDerivedFields = (
   values: Record<string, unknown>,
   context: { objectType: DerivedRoot; objectId: string },
   groups?: ReadonlyArray<DerivedFieldGroup>,
-  entityContext?: DerivedEntityContext
+  entityContext?: DerivedEntityContext,
+  now: Date = new Date()
 ) => {
   const plan = buildDerivedPlan(fields, context.objectType);
   const unsafeDerivedFieldIds = groups
@@ -450,7 +523,8 @@ export const materializeDerivedFields = (
     values,
     context,
     deferredDerivedFieldIds,
-    entityContext ?? values
+    entityContext ?? values,
+    now
   );
 };
 
