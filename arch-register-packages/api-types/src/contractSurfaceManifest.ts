@@ -31,7 +31,7 @@ import { externalContentContract } from './externalContentContract';
 import { workspaceFieldGroupContract } from './fieldGroupContract';
 import { governanceContract } from './governanceContract';
 import { governanceWorkflowConfigContract } from './governanceWorkflowConfigContract';
-import { glossaryContract } from './glossaryContract';
+import { glossaryContract } from './app/business-glossary/glossaryContract';
 import { integrationGovernanceContract } from './integrationGovernanceContract';
 import { integrationRelationContract } from './integrationRelationContract';
 import { jobsContract } from './jobsContract';

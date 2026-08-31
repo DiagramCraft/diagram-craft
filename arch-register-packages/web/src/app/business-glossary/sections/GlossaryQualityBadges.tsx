@@ -1,5 +1,5 @@
 import { TbAlertTriangle, TbEyeOff, TbHistory, TbUserOff } from 'react-icons/tb';
-import type { GlossaryTerm } from '@arch-register/api-types/glossaryContract';
+import type { GlossaryTerm } from '@arch-register/api-types/app/business-glossary/glossaryContract';
 import styles from './GlossaryScreen.module.css';
 
 export const GlossaryQualityBadges = ({ quality }: { quality: GlossaryTerm['quality'] }) => {

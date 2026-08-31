@@ -1,4 +1,4 @@
-import type { SeedEntityInput } from './entities';
+import type { SeedEntityInput } from '../../db/seedData/entities';
 import {
   DEMO_GLOSSARY_IDS,
   GLOSSARY_IDS,
@@ -6,7 +6,7 @@ import {
   TEAM_IDS,
   WORKSPACE_ID,
   now
-} from './constants';
+} from '../../db/seedData/constants';
 
 // The demo bootstrap dataset's business glossary: 8 categories, 35 terms, themed around an online
 // retailer. Terms link to categories via the plain `categories` reference field (no relation-schema

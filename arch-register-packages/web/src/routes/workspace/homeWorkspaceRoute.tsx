@@ -1,7 +1,7 @@
 import { createRoute, type AnyRoute } from '@tanstack/react-router';
 import { HomeSidebar } from '../../sections/home/HomeSidebar';
 import { DashboardScreen } from '../../sections/dashboard/DashboardScreen';
-import { buildHomeBreadcrumbs } from '../../layouts/workspaceShellDescriptors';
+import { buildHomeBreadcrumbs } from '../../shell/breadcrumbBuilders';
 import { withWorkspaceShell } from './workspaceShellRoute';
 import { validateHomeSearch } from '../searchParams';
 

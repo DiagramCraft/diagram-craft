@@ -1,5 +1,5 @@
 import { implement } from '@orpc/server';
-import { glossaryContract } from '@arch-register/api-types/glossaryContract';
+import { glossaryContract } from '@arch-register/api-types/app/business-glossary/glossaryContract';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { createOrpcHandler } from '../../utils/orpcHandler';

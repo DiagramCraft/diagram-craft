@@ -10,14 +10,14 @@ import {
   TbSitemap
 } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
-import { Chip } from '../../components/Chip';
-import { Drawer } from '../../components/Drawer';
-import { StatusChip } from '../../components/StatusChip';
-import { useLifecycleStates } from '../../hooks/useWorkspaceConfig';
-import { glossaryConfigQuery, glossaryTermQuery, glossaryUsageQuery } from '../../queries/glossary';
-import { entitiesQuery } from '../../queries/entities';
-import { schemaColor } from '../../lib/schemaPresentation';
-import { asEntityPublicId, entityDetailRoute } from '../../routes/publicObjectRoutes';
+import { Chip } from '../../../components/Chip';
+import { Drawer } from '../../../components/Drawer';
+import { StatusChip } from '../../../components/StatusChip';
+import { useLifecycleStates } from '../../../hooks/useWorkspaceConfig';
+import { glossaryConfigQuery, glossaryTermQuery, glossaryUsageQuery } from '../glossaryQueries';
+import { entitiesQuery } from '../../../queries/entities';
+import { schemaColor } from '../../../lib/schemaPresentation';
+import { asEntityPublicId, entityDetailRoute } from '../../../routes/publicObjectRoutes';
 import { GlossaryQualityBadges } from './GlossaryQualityBadges';
 import styles from './GlossaryScreen.module.css';
 

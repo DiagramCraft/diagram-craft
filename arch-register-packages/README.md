@@ -58,6 +58,55 @@ See `permissions/PERMISSIONS.md` for details.
 - `mcp-server/` — MCP tools for querying/updating an Arch Register workspace
 - `webhook-test-server/` — small helper server for testing outgoing webhooks locally
 
+## 🧩 Apps: pluggable domain packs
+
+Arch Register's core — entities, relations, schemas, projects, assessments, governance workflow,
+and permissions — is domain-agnostic. **Apps** are optional packs that build on that core to support
+a specific domain, such as Business Glossary. An app owns a set of entity/relation schemas, the
+capability binding that lets other features discover them, and (optionally) its own API contract,
+server handlers, and web UI. It never gets special treatment from core: an app schema is an ordinary
+entity schema, and app code reaches core the same way any other domain module does, via
+`@arch-register/api-types` contracts and `server/src/domain/<area>/` handlers/operations.
+
+App code lives in a package-local `src/app/<app-name>/` directory, parallel to `src/domain/<area>/`:
+
+- `api-types/src/app/<app-name>/` — the app's own contract file(s), if it needs endpoints beyond
+  generic entity/relation CRUD
+- `server/src/app/<app-name>/` — oRPC handlers/operations for those endpoints, plus the app's schema
+  template pack and any demo/seed data
+- `web/src/app/<app-name>/` — screens, routes, and query hooks
+- `e2e/src/app/<app-name>/` — API/UI tests for the app
+
+`server/src/app/business-glossary/` is the current example: `glossaryOrpc.ts`/`glossaryOperations.ts`
+implement `glossaryContract.ts`'s endpoints, and `glossarySchemaTemplate.ts` exports the Term/Term
+Category schemas that get spread into `domain/catalog/schemaTemplates.ts`'s `SCHEMA_TEMPLATES` array
+(see `domain/catalog/schemaTemplateBase.ts` for the small, dependency-free helpers — `enumDefinition`,
+the shared ADR document type/template — that both core and app schema packs import, without an app
+pack ever importing back from `schemaTemplates.ts` at the value level, which would create a circular
+import). Most other cross-cutting concerns (Strategy Model, Security/Threat Model, Risk & Compliance,
+Retention) don't have dedicated app code yet — they exist only as data entries in
+`schemaTemplates.ts`/`integrationCatalog.ts` and are candidates for the same treatment over time.
+
+Two registries are the extension points an app plugs into, both composed by importing one factory per
+registrant rather than a central switch statement:
+
+- **Workspace capabilities** (`api-types/src/integrationCatalog.ts`'s `workspaceCapabilityDefinitions`)
+  bind an app's semantic roles (e.g. "term", "category") to concrete entity/relation schemas in a
+  workspace, so other features can discover them without knowing the app's schema ids. An app exports
+  its `WorkspaceCapabilityDefinition` from `api-types/src/app/<app-name>/` and `integrationCatalog.ts`
+  spreads it into the array — see `glossaryCapability.ts`.
+- **Governance case kinds** (`server/src/domain/governance/governanceRegistryFactory.ts`) let an app
+  register workflow behavior (approvals, reminders, escalation) for a case kind it owns, by exporting a
+  `createXGovernanceRegistry()` factory that gets spread into `createApplicationGovernanceRegistry()`.
+  No app currently owns a case kind, but this is the pattern to follow if one needs to.
+
+On the web client, an app that needs a workspace-rail entry (icon, route, breadcrumbs) registers it in
+`web/src/shell/appShellRegistry.ts` rather than hardcoding the id in `shell/shellTypes.ts` or
+`layouts/workspaceShellDescriptors.tsx` — see `app/business-glossary/glossaryShell.tsx`.
+
+This is a step toward a future plugin/extension framework, not a full plugin system yet — apps are
+still first-party code in this repo, registered by import rather than dynamically loaded.
+
 ## 🏗️ Architecture Decisions
 
 ### Contract-First API
@@ -100,6 +149,12 @@ Global Roles
 4. **Add db methods** to both the SQLite and PostgreSQL repositories in `domain/<area>/db/`, and cover them in the db contract tests
 5. **Cover the endpoint** with e2e API tests in `e2e/src/api/`
 6. **Update the web client** (`web/src/queries/`) to use the new endpoint
+
+This is the workflow for generic core endpoints. For an endpoint that belongs to an app (see
+[🧩 Apps](#-apps-pluggable-domain-packs) above), use the same steps but under
+`api-types/src/app/<app-name>/`, `server/src/app/<app-name>/`, `web/src/app/<app-name>/`, and
+`e2e/src/app/<app-name>/` instead — and add the test directory to `e2e/vitest.config.ts`'s `include`
+if the app doesn't have one yet.
 
 ### Running the Application
 
@@ -229,6 +284,7 @@ The UI test suite seeds the same bootstrap dataset as the server bootstrap scrip
 - `api-types/src/*Contract.ts` - oRPC API contracts
 - `server/src/app.ts` - Server app wiring (handlers, middleware, auth)
 - `server/src/domain/` - Domain-organized handlers, operations, and db repositories
+- `*/src/app/<app-name>/` - App-specific code (e.g. `business-glossary`); see 🧩 Apps above
 - `permissions/src/types.ts` - Permission type definitions
 - `web/src/lib/orpcClient.ts` - Typed API client
 

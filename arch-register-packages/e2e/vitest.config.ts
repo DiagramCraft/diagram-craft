@@ -21,7 +21,7 @@ export default defineConfig({
   plugins: [stubViteOnlyImports],
   test: {
     environment: 'node',
-    include: ['src/api/**/*.test.ts'],
+    include: ['src/api/**/*.test.ts', 'src/app/**/*.test.ts'],
     testTimeout: 15000,
     hookTimeout: 15000
   },

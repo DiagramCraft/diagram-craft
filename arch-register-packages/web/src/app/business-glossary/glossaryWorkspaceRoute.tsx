@@ -1,9 +1,9 @@
 import { createRoute, type AnyRoute } from '@tanstack/react-router';
-import { buildGlossaryBreadcrumbs } from '../../layouts/workspaceShellDescriptors';
-import { withWorkspaceShell } from './workspaceShellRoute';
-import { validateGlossarySearch } from '../searchParams';
-import { GlossarySidebar } from '../../sections/glossary/GlossarySidebar';
-import { LazyGlossaryScreen } from './lazyWorkspaceScreens';
+import { buildGlossaryBreadcrumbs } from './glossaryShell';
+import { withWorkspaceShell } from '../../routes/workspace/workspaceShellRoute';
+import { validateGlossarySearch } from '../../routes/searchParams';
+import { GlossarySidebar } from './sections/GlossarySidebar';
+import { LazyGlossaryScreen } from '../../routes/workspace/lazyWorkspaceScreens';
 
 export const createGlossaryWorkspaceRoutes = <TParentRoute extends AnyRoute>(
   workspaceRoute: TParentRoute

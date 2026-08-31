@@ -1,7 +1,7 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
-import { entityRecordSchema } from './entityContract';
-import { foreignKeySchema, ws, wsAndId } from './common';
+import { entityRecordSchema } from '../../entityContract';
+import { foreignKeySchema, ws, wsAndId } from '../../common';
 
 export const glossaryConfigSchema = z.object({
   termSchemaId: z.string().describe('Schema identifier used for glossary terms'),
