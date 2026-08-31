@@ -27,6 +27,7 @@ import type { StorageAdapter } from '../storage/storage.types';
 import { buildDefaultAdrDocuments } from '../domain/document/documentDefaults';
 import { randomUUID } from 'node:crypto';
 import { recalculateEntityDerivedFields } from '../domain/derived/derivedRecalculation';
+import { ensureDerivedRecalculationScheduleExists } from '../domain/derived/derivedRecalculationJob';
 import type { AiConfigInputDbUpsert } from '../domain/ai/db/aiDatabase';
 import type { DatabaseAdapter } from './database';
 import {
@@ -256,6 +257,7 @@ export const seedBootstrapData = async (
   }
   await seedTemplateRelationCapabilityConfigurations(db);
   await recalculateEntityDerivedFields(db, seededWorkspaces.default.id);
+  await ensureDerivedRecalculationScheduleExists(db, seededWorkspaces.default.id, new Date());
   for (const assessment of seedAssessments) {
     await db.project.createAssessment(assessment);
   }

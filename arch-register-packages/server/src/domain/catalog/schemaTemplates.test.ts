@@ -331,11 +331,17 @@ describe('instantiateTemplate', () => {
       'review_date',
       'regulatory_tags',
       'processing_purposes',
-      'permitted_residency_regions'
+      'permitted_residency_regions',
+      'review_status',
+      'stewardship_status'
     ]);
     expect(
       definitions.fieldGroups[0]!.fields.filter(field => field.type === 'principal').map(f => f.id)
     ).toEqual(['steward', 'custodian']);
+    const reviewStatusField = definitions.fieldGroups[0]!.fields.find(
+      field => field.id === 'review_status'
+    );
+    expect(reviewStatusField).toMatchObject({ type: 'derived', recalc_interval: 'daily' });
     expect(definitions.fieldGroups[1]!.fields.map(field => field.id)).toEqual([
       'regulatory_tags',
       'processing_purposes',

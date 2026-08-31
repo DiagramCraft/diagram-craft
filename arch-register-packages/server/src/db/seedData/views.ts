@@ -386,12 +386,11 @@ export const seedSavedViews: SavedViewDbResult[] = [
     filters: {
       schemaId: SEED_SCHEMA_IDS.dataEntity,
       root: {
-        kind: 'or',
-        children: [
-          { kind: 'predicate', path: [], fieldId: 'steward', op: 'empty', value: null },
-          { kind: 'predicate', path: [], fieldId: 'custodian', op: 'empty', value: null },
-          { kind: 'predicate', path: [], fieldId: 'review_date', op: 'empty', value: null }
-        ]
+        kind: 'predicate',
+        path: [],
+        fieldId: 'stewardship_status',
+        op: 'equals',
+        value: 'incomplete'
       }
     },
     config: null,
@@ -412,9 +411,32 @@ export const seedSavedViews: SavedViewDbResult[] = [
       root: {
         kind: 'predicate',
         path: [],
-        fieldId: 'review_date',
-        op: 'before',
-        value: { $now: true }
+        fieldId: 'review_status',
+        op: 'equals',
+        value: 'overdue'
+      }
+    },
+    config: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0020-000000000013',
+    workspace: WORKSPACE_ID,
+    project_id: null,
+    project_scope: null,
+    name: 'Review Approaching',
+    description: 'Data Entities whose stewardship review is due within 30 days.',
+    is_admin_view: true,
+    view_mode: 'table',
+    filters: {
+      schemaId: SEED_SCHEMA_IDS.dataEntity,
+      root: {
+        kind: 'predicate',
+        path: [],
+        fieldId: 'review_status',
+        op: 'equals',
+        value: 'approaching'
       }
     },
     config: null,

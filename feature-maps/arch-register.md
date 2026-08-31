@@ -60,11 +60,15 @@
           The same template also contributes a Data Entity schema and an "Information Asset Stewardship" shared
           field group carrying steward and custodian principal-reference fields, a review date, and multi-valued
           regulatory tags, processing purposes, and permitted residency regions, alongside the entity's existing
-          owner (reused as the data-owner team) and classification field; a governed Data Entity can be linked to a
+          owner (reused as the data-owner team) and classification field; the group also carries read-only
+          derived Review Status (incomplete / overdue / approaching / current, recomputed daily against the
+          current date) and Stewardship Status (complete / incomplete) fields, filterable like any field and
+          surfaced through the seeded "Review Overdue", "Review Approaching", and "Missing Stewardship" admin
+          views. A governed Data Entity can be linked to a
           retention policy through the same "Subject to Retention Policy" relation as any other entity. The bundled
           demo workspace composes this schema and field group from the same templates, with example Data Entities
-          showing the full spread of stewardship states (complete, partial, and missing) and review-date states
-          (approaching and overdue). When Information Governance is composed with any full architecture template, the
+          showing the full spread of stewardship completeness (fully staffed and partially staffed) and
+          review-date states (approaching and overdue). When Information Governance is composed with any full architecture template, the
           templates also provide a "Data Flow" relation (a first-class relation between mapped system schemas recording
           direction, protocol, and the Data Entity/Entities it carries) extended with transfer-specific governance metadata under a
           "Data Flow Governance" field group: flow-level classification, multi-valued regulatory tags and processing
@@ -133,7 +137,10 @@
             one-hop JSON context — on entity schemas the `entity` root (direct references, containment, and
             typed-relation targets); on relation schemas the `relation` root (the relation's own fields, its
             `_in`/`_out` endpoint entities, and `entityRelation` targets) — with a
-            declared text, number, currency, select, boolean, or rating result type,
+            declared text, number, currency, select, boolean, or rating result type;
+            derived expressions can read `<root>.now` (the current date) and use `daysBetween`, and a
+            time-dependent derived field can declare an hourly or daily recalculation cadence so a recurring
+            scan job keeps its value current as the calendar advances without any record edit,
             configure workspace-scoped integration capabilities from a dedicated integration catalog, with each capability
             binding semantic roles to entity schemas or typed relation schemas (document-type-targeted roles are
             reserved for future use) and declaring its available features and required fields; schema-level Bonsai validation rules with blocking errors or non-blocking warnings, field-specific messages,

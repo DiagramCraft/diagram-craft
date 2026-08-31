@@ -38,6 +38,10 @@ import {
   ENTITY_COMPLETENESS_JOB_TYPE,
   ENTITY_COMPLETENESS_SCAN_JOB_TYPE
 } from '@arch-register/server/domain/catalog/entityCompletenessJob';
+import {
+  createDerivedRecalculationJobHandler,
+  DERIVED_RECALC_SCAN_JOB_TYPE
+} from '@arch-register/server/domain/derived/derivedRecalculationJob';
 import { METADATA_GENERATION_SCAN_JOB_TYPE } from '@arch-register/server/domain/document/aiMetadataGenerationConstants';
 import {
   createEmailDeliveryConfigFromEnv,
@@ -118,6 +122,7 @@ const main = async () => {
   const entityCompletenessJobHandler = createEntityCompletenessJobHandler(db);
   handlers.set(ENTITY_COMPLETENESS_JOB_TYPE, entityCompletenessJobHandler);
   handlers.set(ENTITY_COMPLETENESS_SCAN_JOB_TYPE, entityCompletenessJobHandler);
+  handlers.set(DERIVED_RECALC_SCAN_JOB_TYPE, createDerivedRecalculationJobHandler(db));
   handlers.set(
     NOTIFICATION_DELIVERY_JOB_TYPE,
     createNotificationDeliveryJobHandler(db, createEmailDeliveryConfigFromEnv())

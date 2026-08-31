@@ -19,6 +19,7 @@ import { parseGovernanceWorkflowConfig } from '../governance/governanceWorkflowC
 import { formatPublicId, validatePublicIdPrefix } from '../../utils/publicIds';
 import { ensureNotificationDeliverySchedule } from '../notification/emailDelivery';
 import { ensureGovernanceDeadlineScanSchedule } from '../governance/governanceDeadlineScanJob';
+import { ensureDerivedRecalculationScheduleExists } from '../derived/derivedRecalculationJob';
 import { computeEntityCompleteness } from '../../utils/completeness';
 import { isReferenceOrContainmentField } from '@arch-register/api-types/schemaContract';
 import { normalizeEntityScalarFields } from '../catalog/entityScalarValues';
@@ -992,6 +993,10 @@ export const createWorkspace = async (
         }
 
         await db.ai.upsertAiConfig(row.id, { enabled: false });
+
+        // A template may ship a time-dependent derived field (e.g. Data Entity review status) —
+        // make sure the recurring recalculation schedule exists for the new workspace.
+        await ensureDerivedRecalculationScheduleExists(db, row.id, timestamp);
 
         await logAudit(db, {
           userId: authCtx.userId,

@@ -261,6 +261,7 @@ export const SchemaFieldRow = ({
       return <ScalarCardinalityControls field={field} onUpdate={onUpdate} disabled={!canEdit} />;
     }
     if (field.type === 'derived') {
+      const referencesNow = /\b(?:entity|relation|assessment)\.now\b/.test(field.expression);
       return (
         <>
           <FormElement label="Result type">
@@ -300,14 +301,47 @@ export const SchemaFieldRow = ({
               </Select.Root>
             </FormElement>
           )}
-          <FormElement label="Expression">
+          <FormElement label="Expression" style={{ width: 460, maxWidth: '100%' }}>
             <TextArea
               value={field.expression}
               disabled={!canEdit}
-              onChange={value => onUpdate({ expression: value ?? '' } as Partial<SchemaField>)}
-              rows={2}
+              onChange={value => {
+                const expression = value ?? '';
+                const stillTimeDependent = /\b(?:entity|relation|assessment)\.now\b/.test(
+                  expression
+                );
+                onUpdate({
+                  expression,
+                  ...(field.recalc_interval && !stillTimeDependent
+                    ? { recalc_interval: undefined }
+                    : {})
+                } as Partial<SchemaField>);
+              }}
+              rows={5}
               placeholder="entity.input_field"
+              style={{ position: 'relative', width: '100%' }}
             />
+          </FormElement>
+          <FormElement
+            label="Recalculation"
+            hint={
+              referencesNow
+                ? 'How often the scan job recomputes this time-dependent value'
+                : 'Only applies to expressions that use now'
+            }
+          >
+            <Select.Root
+              value={field.recalc_interval ?? 'daily'}
+              disabled={!canEdit || !referencesNow}
+              onChange={value =>
+                onUpdate({
+                  recalc_interval: (value ?? 'daily') as 'hourly' | 'daily'
+                } as Partial<SchemaField>)
+              }
+            >
+              <Select.Item value="daily">Daily</Select.Item>
+              <Select.Item value="hourly">Hourly</Select.Item>
+            </Select.Root>
           </FormElement>
         </>
       );
