@@ -48,18 +48,22 @@ export class SqliteGovernanceCaseConfigDatabase
   async upsertCaseConfig(input: GovernanceCaseConfigDbUpsert) {
     this.run(
       `INSERT INTO workspace_governance_case_config (
-        id, workspace, case_kind, case_subkind, enabled, config, updated_at, updated_by
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        id, workspace, case_kind, case_subkind, name, description, enabled, config, updated_at, updated_by
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(workspace, case_kind, COALESCE(case_subkind, '')) DO UPDATE SET
         enabled = excluded.enabled,
         config = excluded.config,
         updated_at = excluded.updated_at,
-        updated_by = excluded.updated_by`,
+        updated_by = excluded.updated_by,
+        name = excluded.name,
+        description = excluded.description`,
       [
         randomUUID(),
         input.workspace,
         input.case_kind,
         input.case_subkind,
+        input.name ?? null,
+        input.description ?? null,
         input.enabled ? 1 : 0,
         JSON.stringify(input.config),
         input.updated_at.toISOString(),

@@ -37,6 +37,8 @@ const governanceWorkflowConfigRowSchema = z.object({
   case_kind_description: z.string(),
   case_subkind: z.string().nullable(),
   case_subkind_label: z.string().nullable(),
+  name: z.string().trim().min(1).max(200),
+  description: z.string().nullable(),
   enabled: z.boolean(),
   config: governanceWorkflowConfigSchema,
   updated_at: z.string(),
@@ -46,6 +48,8 @@ const governanceWorkflowConfigRowSchema = z.object({
 const governanceWorkflowConfigUpsertSchema = z.object({
   case_kind: z.string().min(1),
   case_subkind: z.string().min(1).nullable(),
+  name: z.string().trim().min(1).max(200),
+  description: z.string().trim().max(2000).nullable().optional(),
   enabled: z.boolean().optional(),
   config: governanceWorkflowConfigSchema
 });

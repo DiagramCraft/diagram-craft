@@ -720,7 +720,8 @@
               - @id:ar.collaboration.governance-inbox.scheduled-reminders.workspace-config Workspace administrators
                 can configure all supported governance workflows from the central Workflows settings screen. Each
                 saved configuration can enable or disable reminders and define the approaching/overdue cadence for a
-                workspace-wide or supported case-subkind scope.
+                workspace-wide or supported case-subkind scope. Each configuration has an administrator-defined short
+                name and optional description, which are shown in the configuration list.
 
             - @id:ar.collaboration.governance-inbox.escalation For governance case kinds that support escalation
               (entity changes, entity deprecations, and document status approvals), a case left open past a

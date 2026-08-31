@@ -6,6 +6,8 @@ CREATE TABLE workspace_governance_case_config (
   workspace    TEXT NOT NULL,
   case_kind    TEXT NOT NULL,
   case_subkind TEXT,
+  name         TEXT NOT NULL,
+  description  TEXT,
   enabled      INTEGER NOT NULL DEFAULT 1,
   config       TEXT NOT NULL DEFAULT '{}',
   updated_at   TEXT NOT NULL,

@@ -12,12 +12,16 @@ runContractSuiteAgainstBothDrivers('GovernanceCaseConfigDatabase', getDb => {
         workspace,
         case_kind: 'entity.deprecation',
         case_subkind: null,
+        name: 'Entity deprecation review',
+        description: 'Review deprecation requests before archival.',
         enabled: true,
         config: { approaching_days: [7, 3], overdue_days: [1] },
         updated_at: new Date(),
         updated_by: null
       });
       expect(created.case_subkind).toBeNull();
+      expect(created.name).toBe('Entity deprecation review');
+      expect(created.description).toBe('Review deprecation requests before archival.');
       expect(created.config).toEqual({ approaching_days: [7, 3], overdue_days: [1] });
 
       const fetched = await db.governanceCaseConfig.getCaseConfig(
@@ -37,6 +41,8 @@ runContractSuiteAgainstBothDrivers('GovernanceCaseConfigDatabase', getDb => {
         workspace,
         case_kind: 'entity.deprecation',
         case_subkind: null,
+        name: 'Initial name',
+        description: 'Initial description',
         enabled: true,
         config: { approaching_days: [7] },
         updated_at: new Date(),
@@ -47,6 +53,8 @@ runContractSuiteAgainstBothDrivers('GovernanceCaseConfigDatabase', getDb => {
         workspace,
         case_kind: 'entity.deprecation',
         case_subkind: null,
+        name: 'Updated name',
+        description: 'Updated description',
         enabled: false,
         config: { approaching_days: [14] },
         updated_at: new Date(),
@@ -55,7 +63,23 @@ runContractSuiteAgainstBothDrivers('GovernanceCaseConfigDatabase', getDb => {
 
       expect(second.id).toBe(first.id);
       expect(second.enabled).toBe(false);
+      expect(second.name).toBe('Updated name');
+      expect(second.description).toBe('Updated description');
       expect(second.config).toEqual({ approaching_days: [14] });
+
+      const cleared = await db.governanceCaseConfig.upsertCaseConfig({
+        workspace,
+        case_kind: 'entity.deprecation',
+        case_subkind: null,
+        name: 'Final name',
+        description: null,
+        enabled: false,
+        config: { approaching_days: [28] },
+        updated_at: new Date(),
+        updated_by: null
+      });
+      expect(cleared.name).toBe('Final name');
+      expect(cleared.description).toBeNull();
 
       const rows = await db.governanceCaseConfig.listCaseConfigForKind(
         workspace,
@@ -74,6 +98,7 @@ runContractSuiteAgainstBothDrivers('GovernanceCaseConfigDatabase', getDb => {
         workspace,
         case_kind: 'field-date-reminder',
         case_subkind: null,
+        name: 'Workspace field reminders',
         enabled: true,
         config: { approaching_days: [7] },
         updated_at: new Date(),
@@ -83,6 +108,8 @@ runContractSuiteAgainstBothDrivers('GovernanceCaseConfigDatabase', getDb => {
         workspace,
         case_kind: 'field-date-reminder',
         case_subkind: 'Contract.end_date',
+        name: 'Contract review date',
+        description: 'Remind the contract owner before the review date.',
         enabled: true,
         config: { approaching_days: [30] },
         updated_at: new Date(),
@@ -101,6 +128,8 @@ runContractSuiteAgainstBothDrivers('GovernanceCaseConfigDatabase', getDb => {
         'Contract.end_date'
       );
       expect(scoped?.config).toEqual({ approaching_days: [30] });
+      expect(scoped?.name).toBe('Contract review date');
+      expect(scoped?.description).toBe('Remind the contract owner before the review date.');
 
       const workspaceWide = await db.governanceCaseConfig.getCaseConfig(
         workspace,
@@ -118,6 +147,7 @@ runContractSuiteAgainstBothDrivers('GovernanceCaseConfigDatabase', getDb => {
         workspace,
         case_kind: 'field-date-reminder',
         case_subkind: 'Contract.end_date',
+        name: 'Initial field reminder',
         enabled: true,
         config: { approaching_days: [30] },
         updated_at: new Date(),
@@ -127,6 +157,7 @@ runContractSuiteAgainstBothDrivers('GovernanceCaseConfigDatabase', getDb => {
         workspace,
         case_kind: 'field-date-reminder',
         case_subkind: 'Contract.end_date',
+        name: 'Updated field reminder',
         enabled: false,
         config: { approaching_days: [45] },
         updated_at: new Date(),
@@ -152,6 +183,7 @@ runContractSuiteAgainstBothDrivers('GovernanceCaseConfigDatabase', getDb => {
         workspace,
         case_kind: 'entity.deprecation',
         case_subkind: null,
+        name: 'Deprecation review',
         enabled: true,
         config: {},
         updated_at: new Date(),
@@ -161,6 +193,7 @@ runContractSuiteAgainstBothDrivers('GovernanceCaseConfigDatabase', getDb => {
         workspace,
         case_kind: 'relation.change-case',
         case_subkind: null,
+        name: 'Relation review',
         enabled: true,
         config: {},
         updated_at: new Date(),
@@ -183,6 +216,7 @@ runContractSuiteAgainstBothDrivers('GovernanceCaseConfigDatabase', getDb => {
         workspace: workspaceA,
         case_kind: 'entity.deprecation',
         case_subkind: null,
+        name: 'Workspace A deprecation',
         enabled: true,
         config: {},
         updated_at: new Date(),
@@ -206,6 +240,7 @@ runContractSuiteAgainstBothDrivers('GovernanceCaseConfigDatabase', getDb => {
         workspace,
         case_kind: 'entity.deprecation',
         case_subkind: schemaId,
+        name: 'Schema deprecation',
         enabled: true,
         config: {},
         updated_at: new Date(),
@@ -215,6 +250,7 @@ runContractSuiteAgainstBothDrivers('GovernanceCaseConfigDatabase', getDb => {
         workspace,
         case_kind: 'field-date-reminder',
         case_subkind: `${schemaId}:field-a`,
+        name: 'Field A reminder',
         enabled: true,
         config: {},
         updated_at: new Date(),
@@ -224,6 +260,7 @@ runContractSuiteAgainstBothDrivers('GovernanceCaseConfigDatabase', getDb => {
         workspace,
         case_kind: 'field-date-reminder',
         case_subkind: `${schemaId}:field-b`,
+        name: 'Field B reminder',
         enabled: true,
         config: {},
         updated_at: new Date(),
@@ -247,6 +284,7 @@ runContractSuiteAgainstBothDrivers('GovernanceCaseConfigDatabase', getDb => {
         workspace,
         case_kind: 'field-date-reminder',
         case_subkind: schemaId,
+        name: 'Schema reminder',
         enabled: true,
         config: {},
         updated_at: new Date(),
@@ -256,6 +294,7 @@ runContractSuiteAgainstBothDrivers('GovernanceCaseConfigDatabase', getDb => {
         workspace,
         case_kind: 'field-date-reminder',
         case_subkind: `${schemaId}:field-a`,
+        name: 'Field A reminder',
         enabled: true,
         config: {},
         updated_at: new Date(),
@@ -282,6 +321,7 @@ runContractSuiteAgainstBothDrivers('GovernanceCaseConfigDatabase', getDb => {
         workspace,
         case_kind: 'entity.deprecation',
         case_subkind: 'schema-1',
+        name: 'Schema 1 deprecation',
         enabled: true,
         config: {},
         updated_at: new Date(),
@@ -291,6 +331,7 @@ runContractSuiteAgainstBothDrivers('GovernanceCaseConfigDatabase', getDb => {
         workspace,
         case_kind: 'entity.deprecation',
         case_subkind: 'schema-2',
+        name: 'Schema 2 deprecation',
         enabled: true,
         config: {},
         updated_at: new Date(),
@@ -300,6 +341,7 @@ runContractSuiteAgainstBothDrivers('GovernanceCaseConfigDatabase', getDb => {
         workspace: otherWorkspace,
         case_kind: 'entity.deprecation',
         case_subkind: 'schema-1',
+        name: 'Other workspace deprecation',
         enabled: true,
         config: {},
         updated_at: new Date(),

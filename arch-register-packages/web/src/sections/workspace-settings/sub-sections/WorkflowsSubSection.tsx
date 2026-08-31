@@ -42,7 +42,7 @@ export const WorkflowsSubSection = ({
   const configs = useMemo(
     () =>
       [...(data?.configs ?? [])].sort((left, right) => {
-        const workflowOrder = left.case_kind_label.localeCompare(right.case_kind_label);
+        const workflowOrder = left.name.localeCompare(right.name);
         if (workflowOrder !== 0) return workflowOrder;
         return (left.case_subkind_label ?? '').localeCompare(right.case_subkind_label ?? '');
       }),
@@ -100,8 +100,10 @@ export const WorkflowsSubSection = ({
             {configs.map(row => (
               <Table.Row key={row.id}>
                 <Table.Cell>
-                  <div className={styles.cardTitle}>{row.case_kind_label}</div>
-                  <div className={styles.cardSub}>{row.case_kind_description}</div>
+                  <div className={styles.cardTitle}>{row.name}</div>
+                  <div className={styles.cardSub} title={row.description ?? row.case_kind_description}>
+                    {row.description ?? row.case_kind_description}
+                  </div>
                 </Table.Cell>
                 <Table.Cell>{row.case_subkind_label ?? 'Workspace-wide'}</Table.Cell>
                 <Table.Cell>
@@ -178,6 +180,8 @@ export const WorkflowsSubSection = ({
                 case_kind_description: addingKind.description,
                 case_subkind: addingKind.supportsSubkind ? newSubkind : null,
                 case_subkind_label: null,
+                name: addingKind.label,
+                description: null,
                 enabled: true,
                 config: defaultWorkflowConfig(addingKind),
                 updated_at: new Date().toISOString(),

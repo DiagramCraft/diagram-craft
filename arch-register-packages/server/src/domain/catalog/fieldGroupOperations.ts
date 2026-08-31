@@ -258,6 +258,8 @@ export const updateWorkspaceSharedFieldGroup = async (
                   workspace: ws,
                   case_kind: config.case_kind,
                   case_subkind: encodeCaseSubkind(schemaId, migration.newFieldId),
+                  name: config.name,
+                  description: config.description,
                   enabled: config.enabled,
                   config: config.config,
                   updated_at: now,

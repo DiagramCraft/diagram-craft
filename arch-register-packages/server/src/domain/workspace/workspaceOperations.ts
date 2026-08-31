@@ -663,6 +663,8 @@ export const createWorkspace = async (
                 workspace: row.id,
                 case_kind: config.case_kind,
                 case_subkind: caseSubkind,
+                name: config.name,
+                description: config.description,
                 enabled: config.enabled,
                 config: remapGovernanceConfigTeams(
                   parseGovernanceWorkflowConfig(config.config, config.enabled),
@@ -820,6 +822,8 @@ export const createWorkspace = async (
                     targetTypeId,
                     config.case_subkind!.slice(separator + 1)
                   ),
+                  name: config.name,
+                  description: config.description,
                   enabled: config.enabled,
                   config: remapGovernanceConfigTeams(
                     parseGovernanceWorkflowConfig(config.config, config.enabled),

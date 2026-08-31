@@ -42,16 +42,19 @@ export class PostgresGovernanceCaseConfigDatabase
     try {
       const [row] = await this.sql<DatabaseRow[]>`
         INSERT INTO workspace_governance_case_config (
-          id, workspace, case_kind, case_subkind, enabled, config, updated_at, updated_by
+          id, workspace, case_kind, case_subkind, name, description, enabled, config, updated_at, updated_by
         ) VALUES (
           ${randomUUID()}, ${input.workspace}, ${input.case_kind}, ${input.case_subkind},
-          ${input.enabled}, ${this.json(input.config)}, ${input.updated_at}, ${input.updated_by}
+          ${input.name}, ${input.description ?? null}, ${input.enabled},
+          ${this.json(input.config)}, ${input.updated_at}, ${input.updated_by}
         )
         ON CONFLICT (workspace, case_kind, COALESCE(case_subkind, '')) DO UPDATE
         SET enabled = ${input.enabled},
             config = ${this.json(input.config)},
             updated_at = ${input.updated_at},
-            updated_by = ${input.updated_by}
+            updated_by = ${input.updated_by},
+            name = excluded.name,
+            description = excluded.description
         RETURNING *
       `;
       return governanceCaseConfigMappers.config(row!);

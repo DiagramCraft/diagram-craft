@@ -559,6 +559,8 @@ describe('workspace export/import guards', () => {
         {
           case_kind: 'document.status',
           case_subkind: 'source-type:status',
+          name: 'Imported status review',
+          description: 'Imported workflow description.',
           enabled: true,
           config: {
             approvals: {
@@ -596,6 +598,8 @@ describe('workspace export/import guards', () => {
     expect(db.governanceCaseConfig.upsertCaseConfig).toHaveBeenCalledWith(
       expect.objectContaining({
         case_subkind: `${targetDocumentTypeId}:status`,
+        name: 'Imported status review',
+        description: 'Imported workflow description.',
         config: expect.objectContaining({
           approvals: expect.objectContaining({ fallbackTeamIds: ['target-team'] })
         })

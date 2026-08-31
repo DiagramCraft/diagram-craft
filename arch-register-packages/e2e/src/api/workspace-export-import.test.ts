@@ -4,6 +4,7 @@ import { NONEXISTENT_UUID } from '../helpers/testIds';
 import { createTestORPCClient } from '../helpers/fixtures';
 import { makeAuthHeader } from '../helpers/seedHelper';
 import { hashPassword } from '@arch-register/server/utils/password';
+import { encodeCaseSubkind } from '@arch-register/server/domain/governance/governanceCaseSubkind';
 
 const suggestedResolutions = (parseResult: {
   conflicts: Array<{
@@ -19,6 +20,112 @@ const suggestedResolutions = (parseResult: {
   );
 
 test.describe('workspace export/import', () => {
+  test('round-trips workflow names and descriptions for schemas and documents', async ({
+    orpc,
+    server
+  }) => {
+    const suffix = randomUUID();
+    const source = await orpc.workspaces.create({
+      body: { name: `Workflow metadata source ${suffix}`, badge: 'WMS' }
+    });
+    const schema = await orpc.schemas.create({
+      params: { workspace: source.url_slug },
+      body: { name: `Workflow metadata schema ${suffix}` }
+    });
+    await server.db.governanceCaseConfig.upsertCaseConfig({
+      workspace: source.id,
+      case_kind: 'entity.deprecation',
+      case_subkind: encodeCaseSubkind(schema.id),
+      name: 'Schema deprecation workflow',
+      description: 'Description carried through schema export and import.',
+      enabled: true,
+      config: { extensions: {} },
+      updated_at: new Date(),
+      updated_by: null
+    });
+    const documentType = await orpc.documents.documentTypes.create({
+      params: { workspace: source.url_slug },
+      body: {
+        name: `Workflow metadata document ${suffix}`,
+        description: '',
+        fields: []
+      }
+    });
+    await server.db.governanceCaseConfig.upsertCaseConfig({
+      workspace: source.id,
+      case_kind: 'document.status',
+      case_subkind: encodeCaseSubkind(documentType.id, 'status'),
+      name: 'Document status workflow',
+      description: 'Description carried through document export and import.',
+      enabled: true,
+      config: { extensions: {} },
+      updated_at: new Date(),
+      updated_by: null
+    });
+
+    const archive = await orpc.workspaces.export({
+      params: { workspace: source.url_slug },
+      body: { include: ['schemas', 'documents'], options: { include_content: false } }
+    });
+    const target = await orpc.workspaces.create({
+      body: { name: `Workflow metadata target ${suffix}`, badge: 'WMT' }
+    });
+    const parsed = await orpc.workspaces.importParse({
+      params: { workspace: target.url_slug },
+      body: {
+        file: new File([archive.body as Blob], 'workflow-metadata-export.zip', {
+          type: 'application/zip'
+        })
+      }
+    });
+    expect(parsed.valid).toBe(true);
+
+    const execute = await orpc.workspaces.importExecute({
+      params: { workspace: target.url_slug },
+      body: {
+        import_id: (parsed as any).import_id,
+        include: ['schemas', 'documents'],
+        conflict_resolutions: suggestedResolutions(parsed as any),
+        options: { preserve_ids: false, update_references: true }
+      }
+    });
+    expect(execute.success).toBe(true);
+
+    const targetSchema = (await server.db.catalog.listSchemas(target.id)).find(
+      item => item.name === schema.name
+    );
+    expect(targetSchema).toBeDefined();
+    await expect(
+      server.db.governanceCaseConfig.getCaseConfig(
+        target.id,
+        'entity.deprecation',
+        encodeCaseSubkind(targetSchema!.id)
+      )
+    ).resolves.toEqual(
+      expect.objectContaining({
+        name: 'Schema deprecation workflow',
+        description: 'Description carried through schema export and import.'
+      })
+    );
+
+    const targetDocumentType = (await server.db.document.listDocumentTypes(target.id, true)).find(
+      item => item.name === documentType.name
+    );
+    expect(targetDocumentType).toBeDefined();
+    await expect(
+      server.db.governanceCaseConfig.getCaseConfig(
+        target.id,
+        'document.status',
+        encodeCaseSubkind(targetDocumentType!.id, 'status')
+      )
+    ).resolves.toEqual(
+      expect.objectContaining({
+        name: 'Document status workflow',
+        description: 'Description carried through document export and import.'
+      })
+    );
+  });
+
   test('exports and imports workspace capability field mappings', async ({ orpc, server }) => {
     const suffix = randomUUID();
     const source = await orpc.workspaces.create({

@@ -133,6 +133,68 @@ test.describe('workspace config routes', () => {
     );
   });
 
+  test('configures workflow metadata through the list and upsert routes', async ({
+    orpc,
+    seededUsers: _
+  }) => {
+    const initial = await orpc.governanceWorkflowConfig.list({
+      params: { workspace: 'default' }
+    });
+    expect(initial.configs).toEqual([]);
+
+    const created = await orpc.governanceWorkflowConfig.upsert({
+      params: { workspace: 'default' },
+      body: {
+        case_kind: 'assessment.response',
+        case_subkind: null,
+        name: 'Assessment response review',
+        description: 'Review submitted assessment responses.',
+        enabled: true,
+        config: { extensions: {} }
+      }
+    });
+    expect(created).toMatchObject({
+      case_kind: 'assessment.response',
+      name: 'Assessment response review',
+      description: 'Review submitted assessment responses.'
+    });
+
+    const listed = await orpc.governanceWorkflowConfig.list({
+      params: { workspace: 'default' }
+    });
+    expect(listed.configs).toEqual([expect.objectContaining({ id: created.id, name: created.name })]);
+
+    const updated = await orpc.governanceWorkflowConfig.upsert({
+      params: { workspace: 'default' },
+      body: {
+        case_kind: 'assessment.response',
+        case_subkind: null,
+        name: 'Updated assessment review',
+        description: null,
+        enabled: true,
+        config: { extensions: {} }
+      }
+    });
+    expect(updated).toMatchObject({
+      id: created.id,
+      name: 'Updated assessment review',
+      description: null
+    });
+
+    await expect(
+      orpc.governanceWorkflowConfig.upsert({
+        params: { workspace: 'default' },
+        body: {
+          case_kind: 'assessment.response',
+          case_subkind: null,
+          name: '   ',
+          enabled: true,
+          config: { extensions: {} }
+        }
+      })
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+  });
+
   test('configures a workspace capability against a schema and reports invalid bindings', async ({
     orpc,
     seededUsers: _

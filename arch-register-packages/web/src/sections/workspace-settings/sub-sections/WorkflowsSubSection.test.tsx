@@ -120,6 +120,8 @@ vi.mock('./WorkflowConfigDialog', () => ({
           onSave({
             case_kind: 'document.status',
             case_subkind: null,
+            name: 'Document status review',
+            description: null,
             enabled: true,
             config: { extensions: {} }
           })
@@ -166,6 +168,8 @@ const existingRow: GovernanceWorkflowConfigRow = {
   case_kind_description: simpleKind.description,
   case_subkind: null,
   case_subkind_label: null,
+  name: 'Workspace entity review',
+  description: 'Review changes to workspace entities.',
   enabled: true,
   config: { extensions: {} },
   updated_at: '2026-08-10T00:00:00.000Z',
@@ -239,12 +243,41 @@ describe('WorkflowsSubSection', () => {
       {
         case_kind: 'document.status',
         case_subkind: null,
+        name: 'Document status review',
+        description: null,
         enabled: true,
         config: { extensions: {} }
       },
       expect.anything()
     );
     expect(rendered.container.querySelector('[data-testid="workflow-config-dialog"]')).toBeNull();
+  });
+
+  it('displays custom metadata and falls back to the derived description when absent', () => {
+    const rendered = renderCoordinator();
+    root = rendered.root;
+
+    expect(rendered.container.textContent).toContain('Workspace entity review');
+    expect(rendered.container.textContent).toContain('Review changes to workspace entities.');
+    expect(rendered.container.querySelector('.cardSub')?.getAttribute('title')).toBe(
+      'Review changes to workspace entities.'
+    );
+
+    workflowData = { case_kinds: [simpleKind], configs: [{ ...existingRow, description: null }] };
+    act(() => {
+      root?.render(
+        <WorkflowsSubSection
+          workspaceSlug="workspace-1"
+          addDialogOpen={false}
+          onCloseAddDialog={vi.fn()}
+        />
+      );
+    });
+
+    expect(rendered.container.textContent).toContain('Review entity changes.');
+    expect(rendered.container.querySelector('.cardSub')?.getAttribute('title')).toBe(
+      'Review entity changes.'
+    );
   });
 
   it('creates a new workflow from the add dialog using the case-kind defaults', () => {

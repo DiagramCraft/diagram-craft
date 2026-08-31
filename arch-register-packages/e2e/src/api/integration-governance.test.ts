@@ -15,6 +15,7 @@ test.describe('external governance integration surface', () => {
       workspace: seedIds.workspace.default,
       case_kind: 'assessment.response',
       case_subkind: null,
+      name: 'Assessment response integration policy',
       enabled: true,
       config: { external: true },
       updated_at: new Date(),

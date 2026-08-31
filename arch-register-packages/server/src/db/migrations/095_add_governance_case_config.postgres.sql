@@ -6,6 +6,8 @@ CREATE TABLE workspace_governance_case_config (
   workspace    UUID        NOT NULL,
   case_kind    TEXT        NOT NULL,
   case_subkind TEXT,
+  name         TEXT        NOT NULL,
+  description  TEXT,
   enabled      BOOLEAN     NOT NULL DEFAULT TRUE,
   config       JSONB       NOT NULL DEFAULT '{}',
   updated_at   TIMESTAMPTZ NOT NULL,

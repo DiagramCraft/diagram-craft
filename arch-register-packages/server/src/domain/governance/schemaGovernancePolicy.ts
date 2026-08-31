@@ -122,11 +122,25 @@ export const upsertSchemaGovernancePolicies = async (
   updatedBy: string | null
 ) => {
   if (!db.governanceCaseConfig) return;
+  const [entityChange, deprecation] = await Promise.all([
+    db.governanceCaseConfig.getCaseConfig(
+      workspace,
+      ENTITY_CHANGE_POLICY_CASE_KIND,
+      encodeCaseSubkind(schemaId)
+    ),
+    db.governanceCaseConfig.getCaseConfig(
+      workspace,
+      ENTITY_DEPRECATION_POLICY_CASE_KIND,
+      encodeCaseSubkind(schemaId)
+    )
+  ]);
   await Promise.all([
     db.governanceCaseConfig.upsertCaseConfig({
       workspace,
       case_kind: ENTITY_CHANGE_POLICY_CASE_KIND,
       case_subkind: encodeCaseSubkind(schemaId),
+      name: entityChange?.name ?? 'Entity change policy',
+      description: entityChange?.description,
       enabled: policies.entity_approval_policy === 'required',
       config: {},
       updated_at: updatedAt,
@@ -136,6 +150,8 @@ export const upsertSchemaGovernancePolicies = async (
       workspace,
       case_kind: ENTITY_DEPRECATION_POLICY_CASE_KIND,
       case_subkind: encodeCaseSubkind(schemaId),
+      name: deprecation?.name ?? 'Entity deprecation policy',
+      description: deprecation?.description,
       enabled: policies.deprecation_policy === 'required',
       config: {},
       updated_at: updatedAt,
