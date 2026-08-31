@@ -40,7 +40,14 @@ import {
 } from 'react-icons/tb';
 import { WorkspaceDetailLayout } from './WorkspaceDetailLayout';
 import { navigateFromRailItem, resolveWorkspaceShellDescriptor } from './workspaceShellDescriptors';
-import type { WorkspaceRailItemId } from '../shell/shellTypes';
+import {
+  APP_DEFINITIONS,
+  appAccentStyle,
+  getAppDefinition,
+  railItemToAppId
+} from '../shell/appShellRegistry';
+import type { AppId, WorkspaceRailItemId } from '../shell/shellTypes';
+import type { IconType } from 'react-icons';
 import { getWorkspaceShellBuilder } from '../routes/workspace/workspaceShellRoute';
 import { glossaryConfigQuery } from '../app/business-glossary/glossaryQueries';
 import { settingsSectionTarget } from '../routes/settingsNavigation';
@@ -51,17 +58,20 @@ import {
   projectDetailRoute
 } from '../routes/publicObjectRoutes';
 
-const ALL_RAIL_ITEMS: NavRailItem[] = [
-  { id: 'home', icon: TbHome, tooltip: 'Workspace overview' },
-  { id: 'content', icon: TbFiles, tooltip: 'Workspace content' },
-  { id: 'projects', icon: TbBriefcase2, tooltip: 'Projects' },
-  { id: 'entities', icon: TbDatabase, tooltip: 'Entities' },
-  { id: 'glossary', icon: TbBook, tooltip: 'Business glossary' },
-  { id: 'search', icon: TbSearch, tooltip: 'Search' },
-  { id: 'governance', icon: TbClipboardCheck, tooltip: 'My work' },
-  { id: 'assistant', icon: TbMessageCircleStar, tooltip: 'AI Assistant', separator: true },
-  { id: 'extract', icon: TbFileAi, tooltip: 'AI Extract' }
-];
+const RAIL_ITEM_META: Record<
+  WorkspaceRailItemId,
+  { icon: IconType; tooltip: string; separator?: boolean }
+> = {
+  home: { icon: TbHome, tooltip: 'Workspace overview' },
+  content: { icon: TbFiles, tooltip: 'Workspace content' },
+  projects: { icon: TbBriefcase2, tooltip: 'Projects' },
+  entities: { icon: TbDatabase, tooltip: 'Entities' },
+  glossary: { icon: TbBook, tooltip: 'Business glossary' },
+  search: { icon: TbSearch, tooltip: 'Search' },
+  governance: { icon: TbClipboardCheck, tooltip: 'My work' },
+  assistant: { icon: TbMessageCircleStar, tooltip: 'AI Assistant', separator: true },
+  extract: { icon: TbFileAi, tooltip: 'AI Extract' }
+};
 
 const routeApi = getRouteApi('/authenticated/$workspaceSlug');
 
@@ -168,6 +178,13 @@ export const WorkspaceLayout = () => {
     [navigate, projects, workspaceSlug]
   );
 
+  const handlePickApp = useCallback(
+    (id: AppId) => {
+      navigateFromRailItem(id, { navigate, workspaceSlug, projects });
+    },
+    [navigate, projects, workspaceSlug]
+  );
+
   const handlePickWs = useCallback(
     (wsId: string) => {
       const target = workspaces.find(w => w.id === wsId);
@@ -207,22 +224,15 @@ export const WorkspaceLayout = () => {
 
   const { data: governanceTaskCount } = useGovernanceTaskCount(workspaceSlug, !!workspaceSlug);
 
-  const visibleRailItems = useMemo(() => {
-    const aiEnabled = aiConfig?.enabled === true;
-    const count = governanceTaskCount?.count ?? 0;
-    return ALL_RAIL_ITEMS.filter(
-      item =>
-        (aiEnabled || (item.id !== 'assistant' && item.id !== 'extract')) &&
-        (item.id !== 'glossary' || glossaryConfig != null)
-    ).map(item =>
-      item.id === 'governance' && count > 0
-        ? {
-            ...item,
-            extra: <span className={styles.railBadge}>{count > 9 ? '9+' : count}</span>
-          }
-        : item
-    );
-  }, [aiConfig?.enabled, governanceTaskCount?.count, glossaryConfig]);
+  const enabledApps = useMemo(
+    () =>
+      APP_DEFINITIONS.filter(
+        app =>
+          app.enablement === 'always' ||
+          (app.enablement.capabilityType === 'business-glossary' && glossaryConfig != null)
+      ),
+    [glossaryConfig]
+  );
 
   const contextValue = useMemo(
     () => ({
@@ -309,10 +319,37 @@ export const WorkspaceLayout = () => {
     availableSettingsSections
   });
 
+  const activeRailItem =
+    shellDescriptor.variant === 'overlay' ? null : shellDescriptor.activeRailItem;
+  const activeApp = getAppDefinition(railItemToAppId(activeRailItem));
+
+  const visibleRailItems: NavRailItem[] = (() => {
+    const aiEnabled = aiConfig?.enabled === true;
+    const count = governanceTaskCount?.count ?? 0;
+    return activeApp.railItems
+      .filter(id => aiEnabled || (id !== 'assistant' && id !== 'extract'))
+      .map(id => {
+        const meta = RAIL_ITEM_META[id];
+        const item: NavRailItem = {
+          id,
+          icon: meta.icon,
+          tooltip: meta.tooltip,
+          ...(meta.separator ? { separator: true } : {})
+        };
+        if (id === 'governance' && count > 0) {
+          return {
+            ...item,
+            extra: <span className={styles.railBadge}>{count > 9 ? '9+' : count}</span>
+          };
+        }
+        return item;
+      });
+  })();
+
   const navRail = (
     <NavRail
       items={visibleRailItems}
-      value={shellDescriptor.variant === 'overlay' ? null : shellDescriptor.activeRailItem}
+      value={activeRailItem}
       onChange={id => {
         if (id !== null) handleRailPick(id as WorkspaceRailItemId);
       }}
@@ -370,12 +407,15 @@ export const WorkspaceLayout = () => {
         {shellDescriptor.variant === 'overlay' ? (
           routeContent
         ) : (
-          <div className={`ar-app ${styles.shell}`}>
+          <div className={`ar-app ${styles.shell}`} style={appAccentStyle(activeApp)}>
             <TopBar
               workspaces={workspaces}
               currentWs={ws?.id ?? ''}
               workspaceSlug={workspaceSlug}
               onPickWs={handlePickWs}
+              apps={enabledApps}
+              activeAppId={activeApp.id}
+              onPickApp={handlePickApp}
               trail={shellDescriptor.breadcrumbs}
               query={query}
               onQueryChange={setQuery}

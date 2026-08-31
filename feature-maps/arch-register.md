@@ -31,6 +31,14 @@
     - @id:ar.workspace Users can orient themselves in a workspace and administrators can configure its shared operating
       model.
 
+        - @id:ar.workspace.applications A workspace is organized into applications, switchable from a switcher in the
+          top bar next to the workspace switcher. "Home" is the always-available core register (overview, content,
+          projects, entities, search, my work, and AI) and Business Glossary is a separate application; selecting an
+          application scopes the left icon rail to only that application's sections and re-skins the shell with its
+          accent colour. An application appears in the switcher only when enabled, which is governed by its backing
+          workspace capability configuration (managed from workspace settings). Breadcrumbs are relative to the active
+          application, which the switcher represents.
+
         - @id:ar.workspace.home Users can use the workspace home to navigate to entities, projects, content, search,
           diagrams, and other primary work areas. The home screen shows a composable dashboard of widgets (stat metrics,
           saved-view embeds, entity tables, entity cards, entity graphs, entity changelogs, document browsers, entity
@@ -249,7 +257,8 @@
           refresh or completed source scan fails.
 
         - @id:ar.entities.business-glossary Workspaces can enable a permission-aware business glossary backed by
-          ordinary entity schemas. Users can browse and deep-link to terms, search canonical names, synonyms, and
+          ordinary entity schemas, surfaced as its own application (@id:ar.workspace.applications) with a
+          glossary-scoped left rail. Users can browse and deep-link to terms, search canonical names, synonyms, and
           abbreviations, organize terms across flat many-to-many categories, inspect explicit usage across entities,
           typed relations, Markdown, projects, and diagrams, and review unused, conflicting, deprecated, and ownerless
           quality reports. Term definitions, aliases, category changes, ownership, lifecycle, and status continue to
