@@ -297,6 +297,8 @@ const exportSchemas = async (db: DatabaseAdapter, workspace: string): Promise<Ex
     const rows = governanceRowsBySchema.get(row.case_subkind) ?? [];
     rows.push({
       case_kind: row.case_kind,
+      name: row.name,
+      description: row.description,
       enabled: row.enabled,
       config: parseGovernanceWorkflowConfig(row.config, row.enabled)
     });
@@ -643,6 +645,8 @@ const exportDocuments = async (
           {
             case_kind: row.case_kind,
             case_subkind: row.case_subkind,
+            name: row.name,
+            description: row.description,
             enabled: row.enabled,
             config: parseGovernanceWorkflowConfig(row.config, row.enabled)
           }

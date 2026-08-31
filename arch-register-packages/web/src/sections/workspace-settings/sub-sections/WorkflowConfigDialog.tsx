@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
+import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
+import { TextArea } from '@diagram-craft/app-components/TextArea';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
 import type {
   GovernanceWorkflowConfigRow,
   GovernanceWorkflowConfigUpsert,
@@ -38,6 +41,8 @@ export const WorkflowConfigDialog = ({
   const [config, setConfig] = useState<GovernanceWorkflowConfig>(
     () => row?.config ?? defaultWorkflowConfig(caseKind)
   );
+  const [name, setName] = useState(row?.name ?? caseKind.label);
+  const [description, setDescription] = useState(row?.description ?? '');
   const [enabled, setEnabled] = useState(row?.enabled ?? true);
   const [tab, setTab] = useState(
     caseKind.supportsApprovals !== false
@@ -82,6 +87,8 @@ export const WorkflowConfigDialog = ({
 
   useEffect(() => {
     setConfig(row?.config ?? defaultWorkflowConfig(caseKind));
+    setName(row?.name ?? caseKind.label);
+    setDescription(row?.description ?? '');
     setEnabled(row?.enabled ?? true);
     setTab(
       caseKind.supportsApprovals !== false
@@ -99,6 +106,11 @@ export const WorkflowConfigDialog = ({
       extensions: patch.extensions ?? current.extensions
     }));
 
+  const normalizedMetadata = (value: string) => {
+    const trimmed = value.trim();
+    return trimmed === '' ? null : trimmed;
+  };
+
   return (
     <Dialog
       open
@@ -110,10 +122,13 @@ export const WorkflowConfigDialog = ({
         {
           label: 'Save workflow',
           type: 'default',
+          disabled: name.trim() === '',
           onClick: () =>
             onSave({
               case_kind: caseKind.case_kind,
               case_subkind: row?.case_subkind ?? null,
+              name: name.trim(),
+              description: normalizedMetadata(description),
               enabled,
               config
             })
@@ -132,6 +147,30 @@ export const WorkflowConfigDialog = ({
           />
           External
         </label>
+      </div>
+      <div className={styles.formGrid}>
+        <FormElement label="Name" hint="Label shown in the Workflows list.">
+          <TextInput
+            value={name}
+            maxLength={200}
+            placeholder="e.g. Contract review"
+            onChange={value => setName(value ?? '')}
+          />
+        </FormElement>
+        <FormElement
+          label="Description"
+          required={false}
+          hint="Optional context shown below the workflow name."
+        >
+          <TextArea
+            value={description}
+            maxLength={2000}
+            rows={3}
+            allowMaximize={false}
+            placeholder="Describe what this configuration is for"
+            onChange={value => setDescription(value ?? '')}
+          />
+        </FormElement>
       </div>
       <Tabs.Root value={tab} onValueChange={setTab}>
         <Tabs.List aria-label="Workflow configuration sections">

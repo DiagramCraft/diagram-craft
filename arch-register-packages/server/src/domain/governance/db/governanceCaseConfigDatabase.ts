@@ -10,6 +10,8 @@ export type GovernanceCaseConfigDbResult = {
   workspace: string;
   case_kind: string;
   case_subkind: string | null;
+  name: string;
+  description: string | null;
   enabled: boolean;
   config: Record<string, unknown>;
   updated_at: Date;
@@ -20,6 +22,8 @@ export type GovernanceCaseConfigDbUpsert = {
   workspace: string;
   case_kind: string;
   case_subkind: string | null;
+  name: string;
+  description?: string | null;
   enabled: boolean;
   config: Record<string, unknown>;
   updated_at: Date;
@@ -32,6 +36,8 @@ export const governanceCaseConfigMappers = {
     workspace: String(row['workspace']),
     case_kind: String(row['case_kind']),
     case_subkind: row['case_subkind'] == null ? null : String(row['case_subkind']),
+    name: String(row['name']),
+    description: row['description'] == null ? null : String(row['description']),
     enabled: databaseBoolean(row['enabled']),
     config: parseDatabaseJson(row['config'], {}, 'workspace_governance_case_config.config'),
     updated_at: databaseDate(row['updated_at']),

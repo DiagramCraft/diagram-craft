@@ -104,6 +104,8 @@ const makeCaseConfigRow = (
   workspace: 'ws-1',
   case_kind: 'entity.change-case',
   case_subkind: null,
+  name: 'Workflow configuration',
+  description: null,
   enabled: true,
   config: {
     reminders: { enabled: true, approachingDays: [2], overdueDays: [1] },

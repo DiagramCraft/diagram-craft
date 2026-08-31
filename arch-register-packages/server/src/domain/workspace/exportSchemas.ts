@@ -144,7 +144,15 @@ const exportSchemaSchema = z
     entity_approval_policy: z.enum(['required', 'disabled']).optional(),
     deprecation_policy: z.enum(['required', 'disabled']).optional(),
     governance_configs: z
-      .array(z.object({ case_kind: z.string(), enabled: z.boolean(), config: z.unknown() }))
+      .array(
+        z.object({
+          case_kind: z.string(),
+          name: z.string().trim().min(1).max(200),
+          description: z.string().nullable().optional(),
+          enabled: z.boolean(),
+          config: z.unknown()
+        })
+      )
       .optional()
   })
   .passthrough();
@@ -249,7 +257,18 @@ const exportDocumentDataSchema = z
     templates: z.array(z.record(z.string(), z.unknown())),
     metadata: z.array(z.record(z.string(), z.unknown())),
     revisions: z.array(z.record(z.string(), z.unknown())),
-    workflow_configs: z.array(z.record(z.string(), z.unknown())).optional()
+    workflow_configs: z
+      .array(
+        z.object({
+          case_kind: z.string(),
+          case_subkind: z.string(),
+          name: z.string().trim().min(1).max(200),
+          description: z.string().nullable().optional(),
+          enabled: z.boolean(),
+          config: z.unknown()
+        })
+      )
+      .optional()
   })
   .passthrough();
 

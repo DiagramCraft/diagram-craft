@@ -1,4 +1,5 @@
 import { expect, test } from '../helpers/fixtures';
+import { encodeCaseSubkind } from '@arch-register/server/domain/governance/governanceCaseSubkind';
 
 test('workspace replication preserves field-group ACL metadata and restricted values', async ({
   orpc,
@@ -170,7 +171,8 @@ test('workspace replication strips owner and lifecycle references without settin
 });
 
 test('workspace copy preserves typed documents, links, templates, and entity content', async ({
-  orpc
+  orpc,
+  server
 }) => {
   const suffix = Date.now().toString();
   const source = await orpc.workspaces.create({
@@ -215,6 +217,28 @@ test('workspace copy preserves typed documents, links, templates, and entity con
       color: 'oklch(0.62 0.14 295)',
       icon: 'clipboard'
     }
+  });
+  await server.db.governanceCaseConfig.upsertCaseConfig({
+    workspace: sourceWorkspace,
+    case_kind: 'entity.deprecation',
+    case_subkind: encodeCaseSubkind(schema.id),
+    name: 'Replicated schema deprecation review',
+    description: 'Retain this description when cloning schema workflows.',
+    enabled: true,
+    config: { extensions: {} },
+    updated_at: new Date(),
+    updated_by: null
+  });
+  await server.db.governanceCaseConfig.upsertCaseConfig({
+    workspace: sourceWorkspace,
+    case_kind: 'document.status',
+    case_subkind: encodeCaseSubkind(documentType.id, 'status'),
+    name: 'Replicated document status review',
+    description: 'Retain this description when cloning document workflows.',
+    enabled: true,
+    config: { extensions: {} },
+    updated_at: new Date(),
+    updated_by: null
   });
   const sourceProject = await orpc.projects.create({
     params: { workspace: source.url_slug },
@@ -289,6 +313,20 @@ test('workspace copy preserves typed documents, links, templates, and entity con
     }
   });
 
+  const copiedSchemas = await server.db.catalog.listSchemas(copiedWorkspace.id);
+  const copiedSchema = copiedSchemas.find(item => item.name === schema.name);
+  const copiedSchemaWorkflow = await server.db.governanceCaseConfig.getCaseConfig(
+    copiedWorkspace.id,
+    'entity.deprecation',
+    encodeCaseSubkind(copiedSchema!.id)
+  );
+  expect(copiedSchemaWorkflow).toEqual(
+    expect.objectContaining({
+      name: 'Replicated schema deprecation review',
+      description: 'Retain this description when cloning schema workflows.'
+    })
+  );
+
   const copiedTypes = await orpc.documents.documentTypes.list({
     params: { workspace: copiedWorkspace.url_slug },
     query: { include_archived: false }
@@ -302,6 +340,17 @@ test('workspace copy preserves typed documents, links, templates, and entity con
     })
   );
   expect(copiedType?.id).not.toBe(documentType.id);
+  const copiedDocumentWorkflow = await server.db.governanceCaseConfig.getCaseConfig(
+    copiedWorkspace.id,
+    'document.status',
+    encodeCaseSubkind(copiedType!.id, 'status')
+  );
+  expect(copiedDocumentWorkflow).toEqual(
+    expect.objectContaining({
+      name: 'Replicated document status review',
+      description: 'Retain this description when cloning document workflows.'
+    })
+  );
 
   const copiedTemplates = await orpc.documents.documentTemplates.list({
     params: { workspace: copiedWorkspace.url_slug },

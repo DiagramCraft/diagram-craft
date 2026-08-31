@@ -24,6 +24,8 @@ export const seedGovernanceCaseConfigs: GovernanceCaseConfigDbUpsert[] = [
     workspace: WORKSPACE_ID,
     case_kind: ENTITY_CHANGE_CASE_KIND,
     case_subkind: encodeCaseSubkind(SEED_SCHEMA_IDS.contract),
+    name: 'Contract change review',
+    description: 'Review changes proposed to Contract entities.',
     enabled: true,
     config: {
       approvals: {
@@ -51,6 +53,8 @@ export const seedGovernanceCaseConfigs: GovernanceCaseConfigDbUpsert[] = [
     workspace: WORKSPACE_ID,
     case_kind: ENTITY_CHANGE_CASE_BULK_KIND,
     case_subkind: null,
+    name: 'Bulk entity change review',
+    description: 'Review bulk changes proposed across entities.',
     enabled: true,
     config: {
       approvals: {
@@ -78,6 +82,8 @@ export const seedGovernanceCaseConfigs: GovernanceCaseConfigDbUpsert[] = [
     workspace: WORKSPACE_ID,
     case_kind: ENTITY_DEPRECATION_CASE_KIND,
     case_subkind: encodeCaseSubkind(SEED_SCHEMA_IDS.technology),
+    name: 'Technology deprecation review',
+    description: 'Review technology entities proposed for deprecation.',
     enabled: true,
     config: {
       approvals: {
@@ -105,6 +111,8 @@ export const seedGovernanceCaseConfigs: GovernanceCaseConfigDbUpsert[] = [
     workspace: WORKSPACE_ID,
     case_kind: RELATION_CHANGE_CASE_KIND,
     case_subkind: null,
+    name: 'Relation change review',
+    description: 'Review proposed relation changes.',
     enabled: true,
     config: {
       reminders: { enabled: true, approachingDays: [7, 2], overdueDays: [1, 14] },
@@ -117,6 +125,8 @@ export const seedGovernanceCaseConfigs: GovernanceCaseConfigDbUpsert[] = [
     workspace: WORKSPACE_ID,
     case_kind: ASSESSMENT_RESPONSE_CASE_KIND,
     case_subkind: null,
+    name: 'Assessment response review',
+    description: 'Review submitted assessment responses.',
     enabled: true,
     config: {
       reminders: { enabled: true, approachingDays: [7, 2], overdueDays: [1, 7] },
@@ -129,6 +139,8 @@ export const seedGovernanceCaseConfigs: GovernanceCaseConfigDbUpsert[] = [
     workspace: WORKSPACE_ID,
     case_kind: CONFORMANCE_VIOLATION_CASE_KIND,
     case_subkind: null,
+    name: 'Conformance violation review',
+    description: 'Review violations raised by conformance checks.',
     enabled: true,
     config: {
       reminders: { enabled: true, approachingDays: [3, 1], overdueDays: [1, 3, 7] },
@@ -148,6 +160,8 @@ export const seedGovernanceCaseConfigs: GovernanceCaseConfigDbUpsert[] = [
     workspace: WORKSPACE_ID,
     case_kind: FIELD_DATE_REMINDER_CASE_KIND,
     case_subkind: encodeCaseSubkind(SEED_SCHEMA_IDS.dataEntity, 'review_date'),
+    name: 'Data Entity review date',
+    description: 'Recurring review reminder for the Data Entity review date.',
     enabled: true,
     config: {
       reminders: { enabled: true, approachingDays: [7, 1], overdueDays: [1, 7, 30] },

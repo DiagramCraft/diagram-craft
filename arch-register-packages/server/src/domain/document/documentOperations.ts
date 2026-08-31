@@ -307,6 +307,8 @@ export const updateDocumentType = async (
                 workspace: ws,
                 case_kind: config.case_kind,
                 case_subkind: encodeCaseSubkind(id, migration.newFieldId),
+                name: config.name,
+                description: config.description,
                 enabled: config.enabled,
                 config: config.config,
                 updated_at: now,

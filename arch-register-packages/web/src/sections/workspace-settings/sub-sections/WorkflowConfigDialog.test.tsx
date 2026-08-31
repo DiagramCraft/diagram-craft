@@ -139,6 +139,16 @@ vi.mock('@diagram-craft/app-components/TextInput', () => ({
   )
 }));
 
+vi.mock('@diagram-craft/app-components/TextArea', () => ({
+  TextArea: ({ value, onChange }: { value?: string; onChange: (value: string) => void }) => (
+    <textarea
+      data-testid="workflow-description"
+      value={value ?? ''}
+      onChange={event => onChange(event.currentTarget.value)}
+    />
+  )
+}));
+
 vi.mock('../../../components/Chip', () => ({
   Chip: ({ children }: { children: ReactNode }) => <span>{children}</span>
 }));
@@ -223,6 +233,8 @@ const row: GovernanceWorkflowConfigRow = {
   case_kind_description: caseKind.description,
   case_subkind: 'document-1:status',
   case_subkind_label: 'Change request · Status',
+  name: 'Document approval',
+  description: 'Review status transitions before publication.',
   enabled: true,
   config: { extensions: {} },
   updated_at: '2026-08-10T00:00:00.000Z',
@@ -309,6 +321,8 @@ describe('WorkflowConfigDialog', () => {
     expect(saved).toMatchObject({
       case_kind: 'document.status',
       case_subkind: 'document-1:status',
+      name: 'Document approval',
+      description: 'Review status transitions before publication.',
       enabled: true,
       config: {
         approvals: {
@@ -333,11 +347,47 @@ describe('WorkflowConfigDialog', () => {
     });
   });
 
+  it('clears the optional description when it is emptied', () => {
+    let saved: unknown;
+    const rendered = renderDialog(body => {
+      saved = body;
+    });
+    root = rendered.root;
+
+    const descriptionInput = rendered.container.querySelector(
+      '[data-testid="workflow-description"]'
+    );
+    if (!(descriptionInput instanceof HTMLTextAreaElement))
+      throw new Error('Missing description input');
+
+    act(() => {
+      const valueSetter = Object.getOwnPropertyDescriptor(
+        HTMLTextAreaElement.prototype,
+        'value'
+      )?.set;
+      valueSetter?.call(descriptionInput, '');
+      descriptionInput.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    act(() => {
+      [...rendered.container.querySelectorAll('button')]
+        .find(button => button.textContent === 'Save workflow')
+        ?.click();
+    });
+
+    expect(saved).toMatchObject({ name: 'Document approval', description: null });
+  });
+
   it('reinitializes draft state when editing a different workflow row', () => {
     const onSave = vi.fn();
     const rendered = renderDialog(onSave);
     root = rendered.root;
-    const changedRow = { ...row, id: 'workflow-2', enabled: false };
+    const changedRow = {
+      ...row,
+      id: 'workflow-2',
+      enabled: false,
+      name: 'Changed approval',
+      description: 'Changed description.'
+    };
 
     act(() => {
       root?.render(
@@ -357,7 +407,12 @@ describe('WorkflowConfigDialog', () => {
     });
 
     expect(onSave).toHaveBeenCalledWith(
-      expect.objectContaining({ enabled: false, case_subkind: 'document-1:status' })
+      expect.objectContaining({
+        enabled: false,
+        case_subkind: 'document-1:status',
+        name: 'Changed approval',
+        description: 'Changed description.'
+      })
     );
   });
 });

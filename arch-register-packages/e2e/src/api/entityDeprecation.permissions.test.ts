@@ -39,6 +39,7 @@ const test = createPermissionApiTest().extend<{ deprecationSeed: true }>({
         workspace: resources.workspaceId,
         case_kind: ENTITY_DEPRECATION_POLICY_CASE_KIND,
         case_subkind: encodeCaseSubkind(schema.id),
+        name: 'Component deprecation policy',
         enabled: true,
         config: {},
         updated_at: new Date('2026-08-05T00:00:00.000Z'),

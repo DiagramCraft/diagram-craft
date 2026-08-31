@@ -118,6 +118,8 @@ export type ExportSchema = {
   deprecation_policy?: 'required' | 'disabled';
   governance_configs?: Array<{
     case_kind: string;
+    name: string;
+    description?: string | null;
     enabled: boolean;
     config: GovernanceWorkflowConfig;
   }>;
@@ -264,6 +266,8 @@ export type ExportDocumentData = {
   workflow_configs?: Array<{
     case_kind: string;
     case_subkind: string;
+    name: string;
+    description?: string | null;
     enabled: boolean;
     config: GovernanceWorkflowConfig;
   }>;
