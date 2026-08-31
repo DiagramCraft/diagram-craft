@@ -1,4 +1,10 @@
-import { type KeyboardEvent as ReactKeyboardEvent, useState, useEffect, useRef } from 'react';
+import {
+  type CSSProperties,
+  type KeyboardEvent as ReactKeyboardEvent,
+  useState,
+  useEffect,
+  useRef
+} from 'react';
 import styles from './TopBar.module.css';
 import { TopBar as SharedTopBar } from '@diagram-craft/app-components/TopBar';
 import { HamburgerMenu } from '@diagram-craft/app-components/HamburgerMenu';
@@ -18,6 +24,7 @@ import {
   TbUser,
   TbBell,
   TbMessageCircle,
+  TbHome,
   TbX
 } from 'react-icons/tb';
 import { useNavigate } from '@tanstack/react-router';
@@ -39,7 +46,7 @@ import { formatRelativeTime } from '../utils/dateFormat';
 import { Workspace } from '@arch-register/api-types/workspaceContract';
 import { NotificationItem, WatchedEntity } from '@arch-register/api-types/watchContract';
 import type { DiscussionSummaryEntry } from '@arch-register/api-types/discussionContract';
-import type { BreadcrumbItem } from './shellTypes';
+import type { AppDefinition, AppId, BreadcrumbItem } from './shellTypes';
 import {
   asEntityPublicId,
   asProjectPublicId,
@@ -56,6 +63,9 @@ type TopBarProps = {
   currentWs: string;
   workspaceSlug: string;
   onPickWs: (id: string) => void;
+  apps: AppDefinition[];
+  activeAppId: AppId;
+  onPickApp: (id: AppId) => void;
   trail: BreadcrumbItem[];
   query: string;
   onQueryChange: (q: string) => void;
@@ -79,6 +89,9 @@ export const TopBar = ({
   currentWs,
   workspaceSlug,
   onPickWs,
+  apps,
+  activeAppId,
+  onPickApp,
   trail,
   query,
   onQueryChange,
@@ -142,10 +155,21 @@ export const TopBar = ({
             />
           </>
         )}
-        <div className={styles.sep} />
-        <Breadcrumbs trail={trail} />
+        {!hideWorkspaceSwitcher && apps.length > 0 && (
+          <>
+            <div className={styles.sep} />
+            <ApplicationSwitcher apps={apps} activeAppId={activeAppId} onPick={onPickApp} />
+          </>
+        )}
+        {trail.length > 0 && (
+          <>
+            <div className={styles.sep} />
+            <Breadcrumbs trail={trail} />
+          </>
+        )}
       </div>
-      <div className={styles.center}>
+      <div className={styles.center} />
+      <div className={styles.right}>
         {!hideSearch && (
           <SearchInput
             ref={searchRef}
@@ -159,8 +183,6 @@ export const TopBar = ({
             <span className={styles.kbd}>&#8984;K</span>
           </SearchInput>
         )}
-      </div>
-      <div className={styles.right}>
         <DiscussionsMenu workspaceSlug={workspaceSlug} />
         <NotificationMenu workspaceSlug={workspaceSlug} />
         <AccountMenu />
@@ -267,6 +289,86 @@ const WorkspaceSwitcher = ({
               </button>
             </>
           )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const ApplicationSwitcher = ({
+  apps,
+  activeAppId,
+  onPick
+}: {
+  apps: AppDefinition[];
+  activeAppId: AppId;
+  onPick: (id: AppId) => void;
+}) => {
+  const { open, setOpen, ref } = useDismissibleMenu<HTMLDivElement>();
+  const active = apps.find(app => app.id === activeAppId) ?? apps[0];
+  if (!active) return null;
+
+  const single = apps.length < 2;
+
+  return (
+    <div className={styles.appsw} ref={ref}>
+      <button
+        type="button"
+        className={`${styles.appswBtn} ${open ? styles.appswBtnOpen : ''} ${
+          single ? styles.appswBtnStatic : ''
+        }`}
+        aria-label={single ? active.name : 'Switch application'}
+        aria-haspopup={single ? undefined : 'menu'}
+        title={single ? active.name : 'Switch application'}
+        onClick={() => {
+          if (!single) setOpen(o => !o);
+        }}
+      >
+        {active.shortCode && (
+          <span
+            className={styles.appswBadge}
+            style={active.tint ? { background: active.tint } : undefined}
+          >
+            {active.shortCode}
+          </span>
+        )}
+        <span className={styles.appswName}>{active.name}</span>
+        {!single && <TbChevronDown size={12} />}
+      </button>
+      {open && (
+        <div className={styles.appswMenu}>
+          <div className={styles.menuLabel}>Applications</div>
+          <div className={styles.appswGrid}>
+            {apps.map(app => (
+              <button
+                type="button"
+                key={app.id}
+                className={`${styles.appswTile} ${
+                  app.id === active.id ? styles.appswTileActive : ''
+                }`}
+                style={{ '--tint': app.tint ?? 'var(--accent-chroma)' } as CSSProperties}
+                onClick={() => {
+                  setOpen(false);
+                  onPick(app.id);
+                }}
+              >
+                {app.shortCode ? (
+                  <span
+                    className={`${styles.appswBadge} ${styles.appswBadgeLg}`}
+                    style={app.tint ? { background: app.tint } : undefined}
+                  >
+                    {app.shortCode}
+                  </span>
+                ) : (
+                  <span className={styles.appswTileMark}>
+                    <TbHome size={13} />
+                  </span>
+                )}
+                <span className={styles.appswTileName}>{app.name}</span>
+                <span className={styles.appswTileSub}>{app.description}</span>
+              </button>
+            ))}
+          </div>
         </div>
       )}
     </div>

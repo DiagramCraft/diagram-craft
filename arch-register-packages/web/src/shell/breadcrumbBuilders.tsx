@@ -1,18 +1,12 @@
-import { TbHome } from 'react-icons/tb';
 import type { BreadcrumbItem } from './shellTypes';
 import type { WorkspaceShellContext } from '../layouts/workspaceShellDescriptors';
 
 /**
- * `buildHomeBreadcrumbs` is shared by every other breadcrumb builder, core and app-owned alike
- * (see `../app/business-glossary/glossaryShell.tsx`). Kept in its own leaf module — rather than in
- * `../layouts/workspaceShellDescriptors.tsx` alongside the rest — so an app can depend on it without
- * creating a circular import back through `../shell/appShellRegistry.ts`.
+ * Breadcrumb root, shared by every other breadcrumb builder, core and app-owned alike (see
+ * `../app/business-glossary/glossaryShell.tsx`). Now that the top bar has an application switcher
+ * that stands in for the workspace/app root, the trail is app-relative and this contributes no
+ * crumb — a builder that spreads it simply starts at its own first level. Kept as a function (and
+ * in its own leaf module) so callers stay unchanged and an app can depend on it without a circular
+ * import back through `../shell/appShellRegistry.ts`.
  */
-export const buildHomeBreadcrumbs = (ctx: WorkspaceShellContext): BreadcrumbItem[] => [
-  {
-    label: 'Home',
-    icon: <TbHome size={12} />,
-    onClick: () =>
-      ctx.navigate({ to: '/$workspaceSlug', params: { workspaceSlug: ctx.workspaceSlug } })
-  }
-];
+export const buildHomeBreadcrumbs = (_ctx: WorkspaceShellContext): BreadcrumbItem[] => [];

@@ -139,4 +139,20 @@ describe('navigateFromRailItem', () => {
       params: { workspaceSlug: 'ws-1' }
     });
   });
+
+  it('routes the glossary app (and the Home app) through its registered rail route', () => {
+    const navigate = vi.fn();
+
+    navigateFromRailItem('glossary', { navigate, workspaceSlug: 'ws-1', projects: [] });
+    expect(navigate).toHaveBeenCalledWith({
+      to: '/$workspaceSlug/glossary',
+      params: { workspaceSlug: 'ws-1' }
+    });
+
+    navigateFromRailItem('home', { navigate, workspaceSlug: 'ws-1', projects: [] });
+    expect(navigate).toHaveBeenCalledWith({
+      to: '/$workspaceSlug',
+      params: { workspaceSlug: 'ws-1' }
+    });
+  });
 });
