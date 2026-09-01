@@ -1,4 +1,4 @@
-import { TbArrowRight, TbX } from 'react-icons/tb';
+import { TbX } from 'react-icons/tb';
 import type { PathStep, QueryNode } from '@arch-register/api-types/entityQueryIR';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
 import {
@@ -134,29 +134,28 @@ export const QueryLeaf = ({ node, fields, leafCtx, onChange, onRemove }: QueryLe
     if (nextHopContext.options[0]) editPath([...path, nextHopContext.options[0].step]);
   };
 
-  // Flat predicate: the row exactly as `FilterBuilder` renders it, plus a "via a related record"
-  // link that converts it into a one-hop traversal predicate.
+  // Flat predicate: the row exactly as `FilterBuilder` renders it. A traversal condition is added
+  // from the group footer ("Add related condition"), not per-row, to keep the row uncluttered.
   if (node.kind === 'predicate' && path.length === 0) {
     const condition: FilterCondition = { fieldId: node.fieldId, op: node.op, value: node.value };
     return (
-      <div className={styles.leafFlat}>
+      <>
         <FilterRow
           condition={condition}
           fields={fields}
           onUpdate={updates => onChange({ ...node, ...updates })}
           onRemove={onRemove}
+          hideRemove
         />
-        {!atHopLimit && nextHopContext.options.length > 0 && (
-          <button
-            type="button"
-            className={styles.viaRelation}
-            title="Match a field on a related record instead"
-            onClick={addHop}
-          >
-            <TbArrowRight size={11} /> via a related record
-          </button>
-        )}
-      </div>
+        <button
+          type="button"
+          className={styles.removeBtn}
+          title="Remove condition"
+          onClick={onRemove}
+        >
+          <TbX size={11} />
+        </button>
+      </>
     );
   }
 
@@ -247,6 +246,7 @@ export const QueryLeaf = ({ node, fields, leafCtx, onChange, onRemove }: QueryLe
             fields={terminalFields}
             onUpdate={updates => onChange({ ...node, ...updates })}
             onRemove={onRemove}
+            hideRemove
           />
         ) : (
           <span className={styles.matchHint}>the related record only has to exist</span>

@@ -372,12 +372,16 @@ export const FilterRow = ({
   condition,
   fields,
   onUpdate,
-  onRemove
+  onRemove,
+  hideRemove = false
 }: {
   condition: FilterCondition;
   fields: FieldDef[];
   onUpdate: (updates: Partial<FilterCondition>) => void;
   onRemove: () => void;
+  // The visual query builder owns a single remove control per condition row (top-right), so it
+  // suppresses FilterRow's own trailing X to avoid two X buttons on the same row.
+  hideRemove?: boolean;
 }) => {
   const field = fields.find(f => f.id === condition.fieldId) ?? fields[0]!;
 
@@ -517,9 +521,11 @@ export const FilterRow = ({
         </div>
       )}
 
-      <button type="button" className={styles.removeBtn} onClick={onRemove} title="Remove filter">
-        <TbX size={11} />
-      </button>
+      {!hideRemove && (
+        <button type="button" className={styles.removeBtn} onClick={onRemove} title="Remove filter">
+          <TbX size={11} />
+        </button>
+      )}
     </div>
   );
 };

@@ -14,6 +14,7 @@ import {
 } from './queryBuilderState';
 import type { NodePath } from './queryBuilderState';
 import { QueryLeaf } from './QueryLeaf';
+import { firstHopPredicate } from './leafPath';
 import type { LeafContext } from './types';
 import styles from './queryBuilder.module.css';
 
@@ -64,6 +65,7 @@ export const QueryGroup = ({
 
   const isRoot = path.length === 0;
   const childCount = node.children.length;
+  const relatedSeed = leafCtx.atHopLimit ? null : firstHopPredicate(leafCtx);
   // The root stays chrome-free while it's a plain flat list; a nested group always shows its
   // header so the user can see they created a group and can set its operator / negation.
   const showHeader = !isRoot;
@@ -128,6 +130,15 @@ export const QueryGroup = ({
         >
           <TbPlus size={11} /> Add condition
         </button>
+        {relatedSeed && (
+          <button
+            type="button"
+            className={styles.addBtn}
+            onClick={() => onRootChange(addChild(root, path, relatedSeed))}
+          >
+            <TbPlus size={11} /> Add related condition
+          </button>
+        )}
         <button
           type="button"
           className={styles.addBtn}

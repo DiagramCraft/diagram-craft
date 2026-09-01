@@ -203,34 +203,6 @@
   color: var(--base-fg);
 }
 
-/* ── Flat leaf: FilterRow + "via a related record" ── */
-.leafFlat {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 6px 10px;
-  flex: 1;
-  min-width: 0;
-}
-
-.viaRelation {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  font: inherit;
-  font-size: 10.5px;
-  color: var(--cmp-fg-disabled);
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.viaRelation:hover {
-  color: var(--base-fg);
-}
-
 /* ── Traversal leaf: hop editor + terminal field / exists ── */
 .traversalLeaf {
   display: flex;
@@ -317,6 +289,11 @@
   display: flex;
   gap: 14px;
   padding: 8px 12px 10px;
+  border-top: 1px solid var(--panel-border);
+}
+
+.nestedGroup > .groupFooter {
+  border-top-color: color-mix(in srgb, var(--nest-accent) 20%, var(--panel-border));
 }
 
 .addBtn {

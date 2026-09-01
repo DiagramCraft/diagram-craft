@@ -2,7 +2,11 @@ import type { PathStep, QueryNode } from '@arch-register/api-types/entityQueryIR
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import type { FieldGroupAccess, FieldGroupAccessControl } from '@arch-register/permissions';
-import { pathStepContext, type PathSchemaScope } from '../pathBuilder/pathBuilderState';
+import {
+  pathStepContext,
+  pathStepContextWithFallbackDirection,
+  type PathSchemaScope
+} from '../pathBuilder/pathBuilderState';
 
 // Pure helpers for editing a single leaf's relation-traversal `path` and its terminal
 // field/exists choice (#2354, plan phase 5). The hop editor itself is `pathBuilder/`; this module
@@ -63,3 +67,20 @@ export const terminalSchemaScope = (path: PathStep[], args: ScopeArgs): PathSche
  *  to decide whether the terminal field picker can offer that schema's own fields. */
 export const singleTerminalSchemaId = (scope: PathSchemaScope): string | null =>
   scope !== 'any' && scope.length === 1 ? (scope[0] ?? null) : null;
+
+/** A fresh one-hop traversal predicate seeded with the first legal relation from the query root,
+ *  or `null` when the root has nothing to traverse - backs the group footer's "Add related
+ *  condition" action. */
+export const firstHopPredicate = (args: ScopeArgs): QueryNode | null => {
+  const context = pathStepContextWithFallbackDirection({
+    rootSchemaScope: args.rootSchemaScope,
+    steps: [],
+    depth: 0,
+    schemas: args.schemas,
+    relationSchemas: args.relationSchemas,
+    getFieldGroupAccess: args.getFieldGroupAccess
+  });
+  const option = context.options[0];
+  if (!option) return null;
+  return { kind: 'predicate', path: [option.step], fieldId: '_name', op: 'contains', value: '' };
+};

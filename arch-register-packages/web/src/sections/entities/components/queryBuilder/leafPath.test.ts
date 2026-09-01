@@ -4,6 +4,7 @@ import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import {
   asFieldPredicate,
   asRelationExists,
+  firstHopPredicate,
   leafPath,
   singleTerminalSchemaId,
   terminalSchemaScope,
@@ -106,6 +107,23 @@ const schemas: EntitySchema[] = [
     fields: [],
     templates: [],
     groups: []
+  },
+  {
+    id: 'isolated',
+    workspace: 't',
+    name: 'Isolated',
+    category: null,
+    description: '',
+    key_prefix: 'ISO',
+    icon: 'circle',
+    color: '#000',
+    entity_count: 0,
+    version: 1,
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2024-01-01T00:00:00Z',
+    fields: [],
+    templates: [],
+    groups: []
   }
 ];
 
@@ -118,6 +136,21 @@ describe('terminalSchemaScope', () => {
     });
     expect(scope).toEqual(['system']);
     expect(singleTerminalSchemaId(scope)).toBe('system');
+  });
+
+  it('seeds a first-hop predicate from the root, or null when nothing is traversable', () => {
+    expect(
+      firstHopPredicate({ rootSchemaScope: ['component'], schemas, relationSchemas: [] })
+    ).toEqual({
+      kind: 'predicate',
+      path: [{ kind: 'forward', fieldId: 'system' }],
+      fieldId: '_name',
+      op: 'contains',
+      value: ''
+    });
+    expect(
+      firstHopPredicate({ rootSchemaScope: ['isolated'], schemas, relationSchemas: [] })
+    ).toBeNull();
   });
 
   it('returns any / null for an unresolvable path', () => {
