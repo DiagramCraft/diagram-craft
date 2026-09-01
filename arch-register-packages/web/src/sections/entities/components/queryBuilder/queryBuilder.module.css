@@ -73,19 +73,19 @@
 
 /* Each nesting level gets its own accent colour so it's obvious which rows belong to which
    group, even several levels deep. Cycles after NEST_LEVELS. */
-.nestedGroup[data-nest='1'] {
+.nestedGroup[data-nest="1"] {
   --nest-accent: #3b82f6;
 }
-.nestedGroup[data-nest='2'] {
+.nestedGroup[data-nest="2"] {
   --nest-accent: #a855f7;
 }
-.nestedGroup[data-nest='3'] {
+.nestedGroup[data-nest="3"] {
   --nest-accent: #14b8a6;
 }
-.nestedGroup[data-nest='4'] {
+.nestedGroup[data-nest="4"] {
   --nest-accent: #f59e0b;
 }
-.nestedGroup[data-nest='5'] {
+.nestedGroup[data-nest="5"] {
   --nest-accent: #ec4899;
 }
 
@@ -384,7 +384,6 @@
   border-radius: var(--r);
   background: color-mix(in srgb, var(--base-fg) 4%, transparent);
 }
-
 
 /* ── Read-only advanced leaves ── */
 .advancedLeaf {

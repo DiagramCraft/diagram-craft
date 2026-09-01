@@ -228,8 +228,7 @@ const relationNodeIsVisuallyEditable = (node: QueryNode): boolean => {
       return relationNodeIsVisuallyEditable(node.child);
     case 'predicate':
       return (
-        node.path.length === 0 ||
-        (node.path.length === 1 && node.path[0]!.kind === 'endpoint')
+        node.path.length === 0 || (node.path.length === 1 && node.path[0]!.kind === 'endpoint')
       );
     case 'freeText':
       return true;

@@ -196,7 +196,11 @@ describe('isVisuallyEditable', () => {
       isVisuallyEditable(
         query({
           kind: 'and',
-          children: [predicate('a'), { kind: 'not', child: predicate('b') }, { kind: 'freeText', value: 'x' }]
+          children: [
+            predicate('a'),
+            { kind: 'not', child: predicate('b') },
+            { kind: 'freeText', value: 'x' }
+          ]
         })
       )
     ).toBe(true);
@@ -212,13 +216,22 @@ describe('isVisuallyEditable', () => {
               kind: 'predicate',
               path: [
                 { kind: 'forward', fieldId: 'system' },
-                { kind: 'typedRelation', fieldId: 'depends_on', relationSchemaId: 'r', direction: 'out', ownerSchemaIds: ['system'] }
+                {
+                  kind: 'typedRelation',
+                  fieldId: 'depends_on',
+                  relationSchemaId: 'r',
+                  direction: 'out',
+                  ownerSchemaIds: ['system']
+                }
               ],
               fieldId: '_name',
               op: 'equals',
               value: 'x'
             },
-            { kind: 'relationExists', path: [{ kind: 'backward', fieldId: 'component', ownerSchemaId: 'component' }] }
+            {
+              kind: 'relationExists',
+              path: [{ kind: 'backward', fieldId: 'component', ownerSchemaId: 'component' }]
+            }
           ]
         })
       )
@@ -237,7 +250,13 @@ describe('isVisuallyEditable', () => {
                 {
                   kind: 'forward',
                   fieldId: 'technology_releases',
-                  filter: { kind: 'predicate', path: [], fieldId: '_slug', op: 'equals', value: 'go' }
+                  filter: {
+                    kind: 'predicate',
+                    path: [],
+                    fieldId: '_slug',
+                    op: 'equals',
+                    value: 'go'
+                  }
                 }
               ]
             }

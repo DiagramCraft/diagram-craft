@@ -52,7 +52,9 @@ export const ProjectionEditor = ({ projections, onChange, leafCtx }: Props) => {
     <div className={styles.columns}>
       <div className={styles.columnsHeader}>
         <span className={styles.previewLabel}>Columns</span>
-        <span className={styles.matchHint}>traversed values, selectable as table columns under Manage fields</span>
+        <span className={styles.matchHint}>
+          traversed values, selectable as table columns under Manage fields
+        </span>
       </div>
 
       {projections.map((projection, index) => {
@@ -123,7 +125,11 @@ export const ProjectionEditor = ({ projections, onChange, leafCtx }: Props) => {
                           )
                         }
                         onToggleDirection={direction => {
-                          const ctx = pathStepContext({ ...hopArgs, steps: projection.path, depth });
+                          const ctx = pathStepContext({
+                            ...hopArgs,
+                            steps: projection.path,
+                            depth
+                          });
                           const options =
                             direction === ctx.direction
                               ? ctx.options

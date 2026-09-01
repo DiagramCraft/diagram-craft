@@ -399,7 +399,8 @@ export const FilterRow = ({
     onUpdate({
       // `rating` keeps its numeric value in the IR; text / number / free text stay strings, as
       // before this row switched from a raw <input> to the shared TextInput.
-      value: field.type === 'rating' && localTextValue !== '' ? Number(localTextValue) : localTextValue
+      value:
+        field.type === 'rating' && localTextValue !== '' ? Number(localTextValue) : localTextValue
     });
 
   const operators = React.useMemo(() => {

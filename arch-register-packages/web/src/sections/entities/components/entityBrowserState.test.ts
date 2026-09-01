@@ -788,9 +788,9 @@ describe('parseConditionsFromSearch', () => {
 
 describe('stripEmptyGroups', () => {
   it('turns a lone empty group into a match-everything empty and', () => {
-    expect(stripEmptyGroups({ root: { kind: 'and', children: [{ kind: 'or', children: [] }] } })).toEqual(
-      { root: { kind: 'and', children: [] } }
-    );
+    expect(
+      stripEmptyGroups({ root: { kind: 'and', children: [{ kind: 'or', children: [] }] } })
+    ).toEqual({ root: { kind: 'and', children: [] } });
   });
 
   it('drops empty groups but keeps real conditions and preserves top-level fields', () => {

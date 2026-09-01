@@ -15,12 +15,7 @@ import { getEntityFilterFieldDefs } from '../../../../components/FilterBuilder';
 import { getRelationFilterFieldDefs } from '../../../relations/relationFilterFields';
 import { SearchInput } from '../../../../components/SearchInput';
 import { addFreeTextQuery, getFreeTextQuery } from '../entityBrowserState';
-import {
-  countHops,
-  exceedsHopBudget,
-  MAX_PATH_HOPS,
-  toEditableRoot
-} from './queryBuilderState';
+import { countHops, exceedsHopBudget, MAX_PATH_HOPS, toEditableRoot } from './queryBuilderState';
 import { QueryGroup } from './QueryTree';
 import { ProjectionEditor } from './ProjectionEditor';
 import styles from './queryBuilder.module.css';
@@ -213,9 +208,7 @@ export const QueryBuilder = ({
       {!isRelation && (
         <ProjectionEditor
           projections={query.projections ?? []}
-          onChange={next =>
-            onChange({ ...query, projections: next.length > 0 ? next : undefined })
-          }
+          onChange={next => onChange({ ...query, projections: next.length > 0 ? next : undefined })}
           leafCtx={leafCtx}
         />
       )}

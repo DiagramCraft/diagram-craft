@@ -92,7 +92,10 @@ const mockSchemas: EntitySchema[] = [
     version: 1,
     created_at: '2024-01-01T00:00:00Z',
     updated_at: '2024-01-01T00:00:00Z',
-    fields: [{ id: 'portfolio', name: 'Portfolio', type: 'text' }, ref('parent', 'Parent', 'domain')],
+    fields: [
+      { id: 'portfolio', name: 'Portfolio', type: 'text' },
+      ref('parent', 'Parent', 'domain')
+    ],
     templates: [],
     groups: []
   },
@@ -291,10 +294,17 @@ const describe = (query: EntityQuery): string => {
     }
   };
   const scope =
-    query.root_kind === 'relation' ? 'relation ' : query.schemaId ? `schema:${query.schemaId} ` : '';
+    query.root_kind === 'relation'
+      ? 'relation '
+      : query.schemaId
+        ? `schema:${query.schemaId} `
+        : '';
   const cols = query.projections?.length
     ? `  ·  columns ${query.projections
-        .map(p => `${p.chain ? 'chain ' : ''}${pathStepSummary(p.path)}.${p.fieldId}${p.alias ? ` as ${p.alias}` : ''}`)
+        .map(
+          p =>
+            `${p.chain ? 'chain ' : ''}${pathStepSummary(p.path)}.${p.fieldId}${p.alias ? ` as ${p.alias}` : ''}`
+        )
         .join(', ')}`
     : '';
   return scope + node(query.root) + cols;
@@ -416,10 +426,7 @@ export const FreeTextInOrGroup = () => (
       schemaId: 'component',
       root: {
         kind: 'or',
-        children: [
-          { kind: 'freeText', value: 'gateway' },
-          p('_owner', 'equals', 'team-a')
-        ]
+        children: [{ kind: 'freeText', value: 'gateway' }, p('_owner', 'equals', 'team-a')]
       }
     }}
   />
@@ -450,10 +457,7 @@ export const NestedGroupWithNot = () => (
         children: [
           {
             kind: 'or',
-            children: [
-              p('radar_status', 'equals', 'hold'),
-              p('radar_status', 'equals', 'assess')
-            ]
+            children: [p('radar_status', 'equals', 'hold'), p('radar_status', 'equals', 'assess')]
           },
           { kind: 'not', child: p('_lifecycle', 'equals', 'retired') }
         ]
@@ -510,7 +514,10 @@ export const DeeplyNestedGroups = () => (
                         p('_lifecycle', 'equals', 'retired'),
                         {
                           kind: 'and',
-                          children: [p('is_critical', 'equals', 'true'), p('instance_count', 'lt', 2)]
+                          children: [
+                            p('is_critical', 'equals', 'true'),
+                            p('instance_count', 'lt', 2)
+                          ]
                         }
                       ]
                     }
@@ -549,7 +556,10 @@ export const TypeScoped = () => (
   <Harness
     initial={{
       schemaId: 'system',
-      root: { kind: 'and', children: [p('tier', 'equals', '1'), p('owner_email', 'ends_with', '@acme.com')] }
+      root: {
+        kind: 'and',
+        children: [p('tier', 'equals', '1'), p('owner_email', 'ends_with', '@acme.com')]
+      }
     }}
   />
 );
@@ -616,7 +626,10 @@ export const RelationExistsLeaf = () => (
   <Harness
     initial={{
       schemaId: 'component',
-      root: { kind: 'and', children: [{ kind: 'relationExists', path: [fwd('technology_releases')] }] }
+      root: {
+        kind: 'and',
+        children: [{ kind: 'relationExists', path: [fwd('technology_releases')] }]
+      }
     }}
   />
 );
