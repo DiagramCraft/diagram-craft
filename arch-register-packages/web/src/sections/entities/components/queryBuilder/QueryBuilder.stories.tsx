@@ -1,15 +1,29 @@
 import type { Meta } from '@storybook/react-vite';
 import { useState } from 'react';
-import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
+import type {
+  EntityQuery,
+  FilterOp,
+  PathStep,
+  QueryNode
+} from '@arch-register/api-types/entityQueryIR';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type {
   WorkspaceLifecycleState,
   WorkspaceOwnerOption
 } from '@arch-register/api-types/workspaceContract';
 import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
+import type { Assessment } from '@arch-register/api-types/assessmentContract';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
+import type { FieldGroupAccess, FieldGroupAccessControl } from '@arch-register/permissions';
 import { QueryBuilder } from './QueryBuilder';
 import { pathStepSummary } from './pathSummary';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Mock workspace catalog
+// ─────────────────────────────────────────────────────────────────────────────
+
+const ref = (id: string, name: string, schemaId: string, maxCount = 1) =>
+  ({ id, name, type: 'reference', schemaId, minCount: 0, maxCount, predicate: name }) as never;
 
 const mockSchemas: EntitySchema[] = [
   {
@@ -28,18 +42,21 @@ const mockSchemas: EntitySchema[] = [
     fields: [
       { id: 'release_cycle', name: 'Release cycle', type: 'text' },
       { id: 'radar_status', name: 'Radar status', type: 'select', enumId: 'radar', options: [] },
-      {
-        id: 'system',
-        name: 'System',
-        type: 'reference',
-        schemaId: 'system',
-        predicate: 'runs on',
-        minCount: 0,
-        maxCount: 1
-      }
+      { id: 'eol_date', name: 'EOL date', type: 'date' },
+      { id: 'instance_count', name: 'Instance count', type: 'number' },
+      { id: 'is_critical', name: 'Business critical', type: 'boolean' },
+      { id: 'internal_note', name: 'Internal note', type: 'text', groupId: 'restricted' },
+      ref('system', 'System', 'system'),
+      ref('technology_releases', 'Technology releases', 'technology_release', 50)
     ],
     templates: [],
-    groups: []
+    groups: [
+      {
+        id: 'restricted',
+        name: 'Restricted',
+        accessControl: { teamIds: ['secops'] }
+      } as never
+    ]
   },
   {
     id: 'system',
@@ -55,16 +72,9 @@ const mockSchemas: EntitySchema[] = [
     created_at: '2024-01-01T00:00:00Z',
     updated_at: '2024-01-01T00:00:00Z',
     fields: [
-      { id: 'tier', name: 'Tier', type: 'text' },
-      {
-        id: 'domain',
-        name: 'Domain',
-        type: 'reference',
-        schemaId: 'domain',
-        predicate: 'belongs to',
-        minCount: 0,
-        maxCount: 1
-      }
+      { id: 'tier', name: 'Tier', type: 'select', enumId: 'tier', options: [] },
+      { id: 'owner_email', name: 'Owner email', type: 'text' },
+      ref('domain', 'Domain', 'domain')
     ],
     templates: [],
     groups: []
@@ -82,7 +92,45 @@ const mockSchemas: EntitySchema[] = [
     version: 1,
     created_at: '2024-01-01T00:00:00Z',
     updated_at: '2024-01-01T00:00:00Z',
-    fields: [{ id: 'portfolio', name: 'Portfolio', type: 'text' }],
+    fields: [{ id: 'portfolio', name: 'Portfolio', type: 'text' }, ref('parent', 'Parent', 'domain')],
+    templates: [],
+    groups: []
+  },
+  {
+    id: 'technology_release',
+    workspace: 'test',
+    name: 'Technology Release',
+    category: null,
+    description: '',
+    key_prefix: 'TR',
+    icon: 'package',
+    color: '#f59e0b',
+    entity_count: 0,
+    version: 1,
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2024-01-01T00:00:00Z',
+    fields: [
+      { id: 'eol_date', name: 'EOL date', type: 'date' },
+      { id: 'release_cycle', name: 'Release cycle', type: 'number' },
+      ref('technology', 'Technology', 'technology')
+    ],
+    templates: [],
+    groups: []
+  },
+  {
+    id: 'technology',
+    workspace: 'test',
+    name: 'Technology',
+    category: null,
+    description: '',
+    key_prefix: 'TECH',
+    icon: 'cpu',
+    color: '#ec4899',
+    entity_count: 0,
+    version: 1,
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2024-01-01T00:00:00Z',
+    fields: [{ id: 'vendor', name: 'Vendor', type: 'text' }],
     templates: [],
     groups: []
   }
@@ -90,12 +138,14 @@ const mockSchemas: EntitySchema[] = [
 
 const mockLifecycleStates: WorkspaceLifecycleState[] = [
   { id: 'active', label: 'Active', color: '#22c55e', sort_order: 0 },
-  { id: 'retired', label: 'Retired', color: '#ef4444', sort_order: 1 }
+  { id: 'deprecated', label: 'Deprecated', color: '#f59e0b', sort_order: 1 },
+  { id: 'retired', label: 'Retired', color: '#ef4444', sort_order: 2 }
 ];
 
 const mockOwners: WorkspaceOwnerOption[] = [
   { id: 'team-a', name: 'Platform Engineering', sort_order: 0 },
-  { id: 'team-b', name: 'Payments', sort_order: 1 }
+  { id: 'team-b', name: 'Payments', sort_order: 1 },
+  { id: 'team-c', name: 'Data Platform', sort_order: 2 }
 ];
 
 const mockEnums: WorkspaceEnum[] = [
@@ -106,13 +156,149 @@ const mockEnums: WorkspaceEnum[] = [
     category: null,
     options: [
       { value: 'hold', label: 'Hold', description: null, retired: false, restricted: false },
-      { value: 'assess', label: 'Assess', description: null, retired: false, restricted: false }
+      { value: 'assess', label: 'Assess', description: null, retired: false, restricted: false },
+      { value: 'adopt', label: 'Adopt', description: null, retired: false, restricted: false }
     ],
     sort_order: 0,
     created_at: '2024-01-01T00:00:00Z',
     updated_at: '2024-01-01T00:00:00Z'
+  },
+  {
+    id: 'tier',
+    workspace: 'test',
+    name: 'Tier',
+    category: null,
+    options: [
+      { value: '1', label: 'Tier 1', description: null, retired: false, restricted: false },
+      { value: '2', label: 'Tier 2', description: null, retired: false, restricted: false },
+      { value: '3', label: 'Tier 3', description: null, retired: false, restricted: false }
+    ],
+    sort_order: 1,
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2024-01-01T00:00:00Z'
   }
 ];
+
+const mockRelationSchemas: RelationSchema[] = [
+  {
+    id: 'runs_on',
+    workspace: 'test',
+    name: 'Runs on',
+    category: null,
+    description: '',
+    in: { schemaIds: ['component'] },
+    out: { schemaIds: ['system'] },
+    fields: [{ id: 'criticality', name: 'Criticality', type: 'select', enumId: 'radar' } as never],
+    groups: [],
+    color: null,
+    icon: null,
+    relation_count: 0,
+    version: 1,
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2024-01-01T00:00:00Z'
+  } as RelationSchema
+];
+
+const mockAssessment = {
+  id: 'assessment-1',
+  name: 'Security Review',
+  fields: [
+    { id: 'risk', label: 'Risk score', type: 'rating' },
+    { id: 'posture', label: 'Security posture', type: 'enum', enumId: 'radar' }
+  ]
+} as unknown as Assessment;
+
+const denyRestricted = (accessControl: FieldGroupAccessControl | undefined): FieldGroupAccess =>
+  accessControl?.teamIds?.includes('secops') ? 'none' : 'edit';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Harness
+// ─────────────────────────────────────────────────────────────────────────────
+
+type HarnessProps = {
+  initial: EntityQuery;
+  rootKind?: 'entity' | 'relation';
+  showFreeText?: boolean;
+  joinedAssessment?: Assessment | null;
+  getFieldGroupAccess?: (accessControl: FieldGroupAccessControl | undefined) => FieldGroupAccess;
+};
+
+const Harness = ({
+  initial,
+  rootKind = 'entity',
+  showFreeText = rootKind === 'entity',
+  joinedAssessment,
+  getFieldGroupAccess
+}: HarnessProps) => {
+  const [query, setQuery] = useState<EntityQuery>(initial);
+  // Mirrors the real popover container: the builder renders inside `Popover.Content`
+  // (`.filterPopover`, padding zeroed), which is what `.container`'s own 520px width assumes.
+  return (
+    <div
+      style={{
+        border: '1px solid var(--panel-border, #d4d4d8)',
+        borderRadius: 8,
+        boxShadow: '0 4px 20px rgb(0 0 0 / 12%)',
+        overflow: 'hidden',
+        background: 'var(--panel-bg, #fff)'
+      }}
+    >
+      <QueryBuilder
+        rootKind={rootKind}
+        query={query}
+        onChange={setQuery}
+        schemas={mockSchemas}
+        relationSchemas={mockRelationSchemas}
+        lifecycleStates={mockLifecycleStates}
+        owners={mockOwners}
+        enums={mockEnums}
+        joinedAssessment={joinedAssessment}
+        getFieldGroupAccess={getFieldGroupAccess}
+        showFreeText={showFreeText}
+        textPreview={describe(query)}
+      />
+    </div>
+  );
+};
+
+// A stand-in for the real `printText` endpoint - enough for the preview line.
+const describe = (query: EntityQuery): string => {
+  const pathStr = (path: PathStep[]): string =>
+    path
+      .map(step => {
+        const base = pathStepSummary([step]);
+        return 'filter' in step && step.filter ? `${base}[${node(step.filter)}]` : base;
+      })
+      .join('.');
+  const node = (n: QueryNode): string => {
+    switch (n.kind) {
+      case 'and':
+        return n.children.map(node).join(' AND ') || 'ALL';
+      case 'or':
+        return `(${n.children.map(node).join(' OR ')})`;
+      case 'not':
+        return `NOT ${node(n.child)}`;
+      case 'freeText':
+        return `text:"${n.value}"`;
+      case 'relationExists':
+        return `${pathStr(n.path)} exists`;
+      case 'predicate': {
+        const prefix = n.path.length ? `${pathStr(n.path)}.` : '';
+        return `${prefix}${n.fieldId} ${n.op} ${JSON.stringify(n.value)}`;
+      }
+      default:
+        return '?';
+    }
+  };
+  const scope =
+    query.root_kind === 'relation' ? 'relation ' : query.schemaId ? `schema:${query.schemaId} ` : '';
+  const cols = query.projections?.length
+    ? `  ·  columns ${query.projections
+        .map(p => `${p.chain ? 'chain ' : ''}${pathStepSummary(p.path)}.${p.fieldId}${p.alias ? ` as ${p.alias}` : ''}`)
+        .join(', ')}`
+    : '';
+  return scope + node(query.root) + cols;
+};
 
 const meta = {
   title: 'Sections/Entities/QueryBuilder',
@@ -122,53 +308,30 @@ const meta = {
 
 export default meta;
 
-const Harness = ({ initial }: { initial: EntityQuery }) => {
-  const [query, setQuery] = useState<EntityQuery>(initial);
-  return (
-    <div style={{ width: 560, border: '1px solid var(--panel-border, #ddd)', borderRadius: 6 }}>
-      <QueryBuilder
-        query={query}
-        onChange={setQuery}
-        schemas={mockSchemas}
-        lifecycleStates={mockLifecycleStates}
-        owners={mockOwners}
-        enums={mockEnums}
-        textPreview={describe(query)}
-      />
-      <pre style={{ fontSize: 10, padding: 12, margin: 0, whiteSpace: 'pre-wrap' }}>
-        {JSON.stringify(query, null, 2)}
-      </pre>
-    </div>
-  );
-};
+// convenience builders
+const p = (fieldId: string, op: FilterOp, value: unknown): QueryNode => ({
+  kind: 'predicate',
+  path: [],
+  fieldId,
+  op,
+  value
+});
+const fwd = (fieldId: string): PathStep => ({ kind: 'forward', fieldId });
 
-// A stand-in for the real `printText` endpoint, good enough for the story's preview line.
-const describe = (query: EntityQuery): string => {
-  const node = (n: EntityQuery['root']): string => {
-    switch (n.kind) {
-      case 'and':
-        return n.children.map(node).join(' AND ');
-      case 'or':
-        return `(${n.children.map(node).join(' OR ')})`;
-      case 'not':
-        return `NOT ${node(n.child)}`;
-      case 'freeText':
-        return `text:"${n.value}"`;
-      case 'relationExists':
-        return pathStepSummary(n.path);
-      case 'predicate': {
-        const prefix = n.path.length ? `${pathStepSummary(n.path)}.` : '';
-        return `${prefix}${n.fieldId} ${n.op} ${JSON.stringify(n.value)}`;
-      }
-      default:
-        return '?';
-    }
-  };
-  const schema = query.schemaId ? `schema:${query.schemaId} ` : '';
-  return schema + node(query.root);
-};
+// ─────────────────────────────────────────────────────────────────────────────
+// Basics
+// ─────────────────────────────────────────────────────────────────────────────
 
 export const Empty = () => <Harness initial={{ root: { kind: 'and', children: [] } }} />;
+
+export const SingleCondition = () => (
+  <Harness
+    initial={{
+      schemaId: 'component',
+      root: { kind: 'and', children: [p('_name', 'contains', 'gateway')] }
+    }}
+  />
+);
 
 export const FlatConditions = () => (
   <Harness
@@ -177,9 +340,102 @@ export const FlatConditions = () => (
       root: {
         kind: 'and',
         children: [
-          { kind: 'predicate', path: [], fieldId: '_name', op: 'contains', value: 'api' },
-          { kind: 'predicate', path: [], fieldId: '_owner', op: 'equals', value: 'team-a' }
+          p('_name', 'contains', 'api'),
+          p('_owner', 'equals', 'team-a'),
+          p('_lifecycle', 'not_equals', 'retired')
         ]
+      }
+    }}
+  />
+);
+
+export const AllValueEditors = () => (
+  <Harness
+    joinedAssessment={mockAssessment}
+    initial={{
+      schemaId: 'component',
+      root: {
+        kind: 'and',
+        children: [
+          p('release_cycle', 'contains', '2.'),
+          p('radar_status', 'equals', 'hold'),
+          p('eol_date', 'before', '2026-06-30'),
+          p('eol_date', 'after', { $now: true, offsetDays: 30 }),
+          p('instance_count', 'gte', 3),
+          p('is_critical', 'equals', 'true'),
+          p('_assessment:risk', 'gte', 4),
+          p('_assessment', 'not_empty', null)
+        ]
+      }
+    }}
+  />
+);
+
+// `showFreeText` (default for entity root): the free-text clause is owned by the top-bar
+// "Search text…" box; the builder strips it from the boolean tree so it isn't shown twice.
+export const WithFreeText = () => (
+  <Harness
+    initial={{
+      schemaId: 'component',
+      root: {
+        kind: 'and',
+        children: [
+          { kind: 'freeText', value: 'payment gateway' },
+          p('radar_status', 'equals', 'hold')
+        ]
+      }
+    }}
+  />
+);
+
+// `showFreeText={false}` (how the entity browser embeds it — a separate live-search box owns `q`):
+// a `freeText` node in the query renders as a condition row whose field is "Free text"; every
+// condition row's field dropdown also offers "Free text" to convert into / out of one.
+export const FreeTextInTree = () => (
+  <Harness
+    showFreeText={false}
+    initial={{
+      schemaId: 'component',
+      root: {
+        kind: 'and',
+        children: [
+          { kind: 'freeText', value: 'payment gateway' },
+          p('radar_status', 'equals', 'hold')
+        ]
+      }
+    }}
+  />
+);
+
+// Free text combined with a field predicate under OR - only expressible in the tree, not via the
+// top-bar box (which is always root-level AND). "Free text" is in every row's field dropdown here
+// (root OR + nested groups); it's hidden only on a root AND that the top-bar box owns.
+export const FreeTextInOrGroup = () => (
+  <Harness
+    initial={{
+      schemaId: 'component',
+      root: {
+        kind: 'or',
+        children: [
+          { kind: 'freeText', value: 'gateway' },
+          p('_owner', 'equals', 'team-a')
+        ]
+      }
+    }}
+  />
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Boolean structure
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const AnyGroupAtRoot = () => (
+  <Harness
+    initial={{
+      schemaId: 'component',
+      root: {
+        kind: 'or',
+        children: [p('radar_status', 'equals', 'hold'), p('_lifecycle', 'equals', 'deprecated')]
       }
     }}
   />
@@ -195,24 +451,33 @@ export const NestedGroupWithNot = () => (
           {
             kind: 'or',
             children: [
-              { kind: 'predicate', path: [], fieldId: 'radar_status', op: 'equals', value: 'hold' },
-              {
-                kind: 'predicate',
-                path: [],
-                fieldId: 'radar_status',
-                op: 'equals',
-                value: 'assess'
-              }
+              p('radar_status', 'equals', 'hold'),
+              p('radar_status', 'equals', 'assess')
             ]
           },
+          { kind: 'not', child: p('_lifecycle', 'equals', 'retired') }
+        ]
+      }
+    }}
+  />
+);
+
+export const NegatedGroup = () => (
+  <Harness
+    initial={{
+      schemaId: 'component',
+      root: {
+        kind: 'and',
+        children: [
+          p('_owner', 'equals', 'team-a'),
           {
             kind: 'not',
             child: {
-              kind: 'predicate',
-              path: [],
-              fieldId: '_lifecycle',
-              op: 'equals',
-              value: 'retired'
+              kind: 'or',
+              children: [
+                p('_lifecycle', 'equals', 'retired'),
+                p('_lifecycle', 'equals', 'deprecated')
+              ]
             }
           }
         ]
@@ -228,32 +493,24 @@ export const DeeplyNestedGroups = () => (
       root: {
         kind: 'and',
         children: [
-          { kind: 'predicate', path: [], fieldId: '_name', op: 'contains', value: 'api' },
+          p('_name', 'contains', 'api'),
           {
             kind: 'or',
             children: [
-              { kind: 'predicate', path: [], fieldId: '_owner', op: 'equals', value: 'team-a' },
+              p('_owner', 'equals', 'team-a'),
               {
                 kind: 'and',
                 children: [
-                  {
-                    kind: 'predicate',
-                    path: [],
-                    fieldId: 'radar_status',
-                    op: 'equals',
-                    value: 'hold'
-                  },
+                  p('radar_status', 'equals', 'hold'),
                   {
                     kind: 'not',
                     child: {
                       kind: 'or',
                       children: [
+                        p('_lifecycle', 'equals', 'retired'),
                         {
-                          kind: 'predicate',
-                          path: [],
-                          fieldId: '_lifecycle',
-                          op: 'equals',
-                          value: 'retired'
+                          kind: 'and',
+                          children: [p('is_critical', 'equals', 'true'), p('instance_count', 'lt', 2)]
                         }
                       ]
                     }
@@ -268,7 +525,103 @@ export const DeeplyNestedGroups = () => (
   />
 );
 
-export const WithTraversalPredicate = () => (
+export const EmptyNestedGroup = () => (
+  <Harness
+    initial={{
+      schemaId: 'component',
+      root: {
+        kind: 'and',
+        children: [p('_name', 'contains', 'api'), { kind: 'or', children: [] }]
+      }
+    }}
+  />
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Type scope
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const AnyType = () => (
+  <Harness initial={{ root: { kind: 'and', children: [p('_name', 'contains', 'api')] } }} />
+);
+
+export const TypeScoped = () => (
+  <Harness
+    initial={{
+      schemaId: 'system',
+      root: { kind: 'and', children: [p('tier', 'equals', '1'), p('owner_email', 'ends_with', '@acme.com')] }
+    }}
+  />
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Relation traversal
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const SingleHopTraversal = () => (
+  <Harness
+    initial={{
+      schemaId: 'component',
+      root: {
+        kind: 'and',
+        children: [
+          { kind: 'predicate', path: [fwd('system')], fieldId: 'tier', op: 'equals', value: '1' }
+        ]
+      }
+    }}
+  />
+);
+
+export const MultiHopTraversal = () => (
+  <Harness
+    initial={{
+      schemaId: 'component',
+      root: {
+        kind: 'and',
+        children: [
+          {
+            kind: 'predicate',
+            path: [fwd('system'), fwd('domain')],
+            fieldId: '_name',
+            op: 'equals',
+            value: 'Payments'
+          }
+        ]
+      }
+    }}
+  />
+);
+
+export const DeepTraversal = () => (
+  <Harness
+    initial={{
+      schemaId: 'component',
+      root: {
+        kind: 'and',
+        children: [
+          {
+            kind: 'predicate',
+            path: [fwd('system'), fwd('domain'), fwd('parent'), fwd('parent')],
+            fieldId: 'portfolio',
+            op: 'equals',
+            value: 'Consumer'
+          }
+        ]
+      }
+    }}
+  />
+);
+
+export const RelationExistsLeaf = () => (
+  <Harness
+    initial={{
+      schemaId: 'component',
+      root: { kind: 'and', children: [{ kind: 'relationExists', path: [fwd('technology_releases')] }] }
+    }}
+  />
+);
+
+export const TraversalWithScopedFilter = () => (
   <Harness
     initial={{
       schemaId: 'component',
@@ -278,12 +631,27 @@ export const WithTraversalPredicate = () => (
           {
             kind: 'predicate',
             path: [
-              { kind: 'forward', fieldId: 'system' },
-              { kind: 'forward', fieldId: 'domain' }
+              {
+                kind: 'forward',
+                fieldId: 'technology_releases',
+                filter: {
+                  kind: 'and',
+                  children: [
+                    {
+                      kind: 'predicate',
+                      path: [fwd('technology')],
+                      fieldId: '_slug',
+                      op: 'equals',
+                      value: 'go'
+                    },
+                    p('release_cycle', 'lt', 2)
+                  ]
+                }
+              }
             ],
-            fieldId: '_name',
-            op: 'equals',
-            value: 'Platform Engineering'
+            fieldId: 'eol_date',
+            op: 'before',
+            value: '2026-06-30'
           }
         ]
       }
@@ -291,59 +659,127 @@ export const WithTraversalPredicate = () => (
   />
 );
 
-const mockRelationSchemas: RelationSchema[] = [
-  {
-    id: 'runs_on',
-    workspace: 'test',
-    name: 'Runs on',
-    category: null,
-    description: '',
-    in: { schemaIds: ['component'] },
-    out: { schemaIds: ['system'] },
-    fields: [
-      { id: 'criticality', name: 'Criticality', type: 'select', enumId: 'radar' } as never
-    ],
-    groups: [],
-    color: null,
-    icon: null,
-    relation_count: 0,
-    version: 1,
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z'
-  } as RelationSchema
-];
+// The layout case the "where" panels were reworked for: a 3-hop path with scoped
+// filters on the 1st and 3rd hops - each panel should read directly under its hop.
+export const MultipleScopedFilters = () => (
+  <Harness
+    initial={{
+      schemaId: 'component',
+      root: {
+        kind: 'and',
+        children: [
+          {
+            kind: 'predicate',
+            path: [
+              {
+                kind: 'forward',
+                fieldId: 'system',
+                filter: { kind: 'and', children: [p('tier', 'equals', '1')] }
+              },
+              fwd('domain'),
+              {
+                kind: 'forward',
+                fieldId: 'parent',
+                filter: { kind: 'and', children: [p('portfolio', 'contains', 'Core')] }
+              }
+            ],
+            fieldId: '_name',
+            op: 'contains',
+            value: 'Platform'
+          }
+        ]
+      }
+    }}
+  />
+);
 
-const RelationHarness = ({ initial }: { initial: EntityQuery }) => {
-  const [query, setQuery] = useState<EntityQuery>(initial);
-  return (
-    <div style={{ width: 560, border: '1px solid var(--panel-border, #ddd)', borderRadius: 6 }}>
-      <QueryBuilder
-        rootKind="relation"
-        query={query}
-        onChange={setQuery}
-        schemas={mockSchemas}
-        relationSchemas={mockRelationSchemas}
-        lifecycleStates={mockLifecycleStates}
-        owners={mockOwners}
-        enums={mockEnums}
-        showFreeText={false}
-        textPreview={describe(query)}
-      />
-      <pre style={{ fontSize: 10, padding: 12, margin: 0, whiteSpace: 'pre-wrap' }}>
-        {JSON.stringify(query, null, 2)}
-      </pre>
-    </div>
-  );
-};
+export const HopBudgetExceeded = () => (
+  <Harness
+    initial={{
+      schemaId: 'domain',
+      root: {
+        kind: 'and',
+        children: [
+          {
+            kind: 'predicate',
+            path: [
+              fwd('parent'),
+              fwd('parent'),
+              fwd('parent'),
+              fwd('parent'),
+              fwd('parent'),
+              fwd('parent'),
+              fwd('parent')
+            ],
+            fieldId: 'portfolio',
+            op: 'equals',
+            value: 'Top'
+          }
+        ]
+      }
+    }}
+  />
+);
+
+// A relation-context step at an entity root - not visually editable, renders read-only.
+export const ReadOnlyTraversal = () => (
+  <Harness
+    initial={{
+      schemaId: 'component',
+      root: {
+        kind: 'and',
+        children: [
+          {
+            kind: 'predicate',
+            path: [{ kind: 'endpoint', direction: 'out' }],
+            fieldId: '_name',
+            op: 'equals',
+            value: 'x'
+          }
+        ]
+      }
+    }}
+  />
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Projections
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const ProjectionColumns = () => (
+  <Harness
+    initial={{
+      schemaId: 'component',
+      root: { kind: 'and', children: [p('_name', 'contains', 'api')] },
+      projections: [
+        { path: [fwd('system')], fieldId: 'tier', alias: 'System tier' },
+        { path: [fwd('technology_releases')], fieldId: 'eol_date' },
+        { path: [fwd('system'), fwd('domain')], fieldId: '_id', chain: true },
+        {
+          path: [fwd('system')],
+          fieldId: 'criticality',
+          source: 'relation',
+          alias: 'Runs-on criticality'
+        }
+      ]
+    }}
+  />
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Relation-rooted
+// ─────────────────────────────────────────────────────────────────────────────
 
 export const RelationRooted = () => (
-  <RelationHarness
+  <Harness
+    rootKind="relation"
     initial={{
       root_kind: 'relation',
       root: {
         kind: 'and',
         children: [
-          { kind: 'predicate', path: [], fieldId: 'criticality', op: 'equals', value: 'hold' },
+          p('_schemaId', 'equals', 'runs_on'),
+          p('criticality', 'equals', 'hold'),
           {
             kind: 'predicate',
             path: [{ kind: 'endpoint', direction: 'out' }],
@@ -357,55 +793,113 @@ export const RelationRooted = () => (
   />
 );
 
-export const WithProjectionColumn = () => (
+export const RelationWithGroups = () => (
   <Harness
+    rootKind="relation"
     initial={{
-      schemaId: 'component',
+      root_kind: 'relation',
       root: {
         kind: 'and',
         children: [
-          { kind: 'predicate', path: [], fieldId: '_name', op: 'contains', value: 'api' }
-        ]
-      },
-      projections: [
-        { path: [{ kind: 'forward', fieldId: 'system' }], fieldId: 'tier', alias: 'System tier' },
-        {
-          path: [
-            { kind: 'forward', fieldId: 'system' },
-            { kind: 'forward', fieldId: 'domain' }
-          ],
-          fieldId: '_id',
-          chain: true
-        }
-      ]
-    }}
-  />
-);
-
-export const WithScopedHopFilter = () => (
-  <Harness
-    initial={{
-      schemaId: 'component',
-      root: {
-        kind: 'and',
-        children: [
+          p('_schemaId', 'equals', 'runs_on'),
           {
-            kind: 'relationExists',
-            path: [
+            kind: 'or',
+            children: [
+              p('criticality', 'equals', 'hold'),
               {
-                kind: 'forward',
-                fieldId: 'system',
-                filter: {
-                  kind: 'and',
-                  children: [
-                    { kind: 'predicate', path: [], fieldId: 'tier', op: 'equals', value: '1' }
-                  ]
-                }
+                kind: 'predicate',
+                path: [{ kind: 'endpoint', direction: 'in' }],
+                fieldId: 'is_critical',
+                op: 'equals',
+                value: 'true'
               }
             ]
           }
         ]
       }
+    }}
+  />
+);
+
+export const RelationReadOnlyTraversal = () => (
+  <Harness
+    rootKind="relation"
+    initial={{
+      root_kind: 'relation',
+      root: {
+        kind: 'and',
+        children: [
+          {
+            kind: 'predicate',
+            path: [{ kind: 'relationForward', fieldId: 'data_entities' }],
+            fieldId: 'classification',
+            op: 'in',
+            value: ['restricted']
+          }
+        ]
+      }
+    }}
+  />
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Permissions
+// ─────────────────────────────────────────────────────────────────────────────
+
+// `internal_note` is in the `restricted` field group; with this access resolver it's
+// dropped from every field picker.
+export const RestrictedFieldGroup = () => (
+  <Harness
+    getFieldGroupAccess={denyRestricted}
+    initial={{
+      schemaId: 'component',
+      root: { kind: 'and', children: [p('_name', 'contains', 'api')] }
+    }}
+  />
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Everything at once
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const KitchenSink = () => (
+  <Harness
+    joinedAssessment={mockAssessment}
+    initial={{
+      schemaId: 'component',
+      root: {
+        kind: 'and',
+        children: [
+          { kind: 'freeText', value: 'gateway' },
+          p('radar_status', 'equals', 'hold'),
+          {
+            kind: 'or',
+            children: [
+              p('_owner', 'equals', 'team-a'),
+              { kind: 'not', child: p('_lifecycle', 'equals', 'retired') }
+            ]
+          },
+          {
+            kind: 'predicate',
+            path: [
+              {
+                kind: 'forward',
+                fieldId: 'system',
+                filter: { kind: 'and', children: [p('tier', 'equals', '1')] }
+              },
+              fwd('domain')
+            ],
+            fieldId: '_name',
+            op: 'equals',
+            value: 'Payments'
+          },
+          { kind: 'relationExists', path: [fwd('technology_releases')] }
+        ]
+      },
+      projections: [
+        { path: [fwd('system')], fieldId: 'tier', alias: 'System tier' },
+        { path: [fwd('system'), fwd('domain')], fieldId: '_id', chain: true }
+      ]
     }}
   />
 );

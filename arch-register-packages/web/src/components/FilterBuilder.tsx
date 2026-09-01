@@ -80,7 +80,10 @@ const CONFORMANCE_STATUS_OPTIONS: { value: EntityConformanceStatusFilter; label:
 export type FieldDef = {
   id: string;
   name: string;
-  type: 'text' | 'date' | 'select' | 'boolean' | 'number' | 'rating' | 'presence';
+  // 'freetext' is not a real schema field - the visual query builder injects one synthetic
+  // 'freetext' entry so a condition row's field picker can also switch the row to a root
+  // free-text clause. It has no operator; the row collapses to a single text input.
+  type: 'text' | 'date' | 'select' | 'boolean' | 'number' | 'rating' | 'presence' | 'freetext';
   options?: { value: string; label: string }[];
 };
 
@@ -392,7 +395,12 @@ export const FilterRow = ({
     setLocalTextValue((condition.value as string) ?? '');
   }, [condition.fieldId, condition.value]);
 
-  const commitTextValue = () => onUpdate({ value: localTextValue });
+  const commitTextValue = () =>
+    onUpdate({
+      // `rating` keeps its numeric value in the IR; text / number / free text stay strings, as
+      // before this row switched from a raw <input> to the shared TextInput.
+      value: field.type === 'rating' && localTextValue !== '' ? Number(localTextValue) : localTextValue
+    });
 
   const operators = React.useMemo(() => {
     if (field.type === 'date') return DATE_OPERATORS;
@@ -403,13 +411,20 @@ export const FilterRow = ({
     return TEXT_OPERATORS;
   }, [field.type]);
 
-  const showValueInput = condition.op !== 'empty' && condition.op !== 'not_empty';
+  const isFreeText = field.type === 'freetext';
+  const showValueInput = isFreeText || (condition.op !== 'empty' && condition.op !== 'not_empty');
 
   return (
     <div
       className={styles.row}
       onBlur={e => {
-        if (field.type === 'text' && !e.currentTarget.contains(e.relatedTarget as Node)) {
+        if (
+          (field.type === 'text' ||
+            field.type === 'number' ||
+            field.type === 'rating' ||
+            isFreeText) &&
+          !e.currentTarget.contains(e.relatedTarget as Node)
+        ) {
           commitTextValue();
         }
       }}
@@ -424,18 +439,20 @@ export const FilterRow = ({
             ))}
           </Select.Root>
         </div>
-        <div className={styles.tokOp}>
-          <Select.Root
-            value={condition.op}
-            onChange={v => onUpdate({ op: v as FilterCondition['op'] })}
-          >
-            {operators.map(o => (
-              <Select.Item key={o.value} value={o.value}>
-                {o.label}
-              </Select.Item>
-            ))}
-          </Select.Root>
-        </div>
+        {!isFreeText && (
+          <div className={styles.tokOp}>
+            <Select.Root
+              value={condition.op}
+              onChange={v => onUpdate({ op: v as FilterCondition['op'] })}
+            >
+              {operators.map(o => (
+                <Select.Item key={o.value} value={o.value}>
+                  {o.label}
+                </Select.Item>
+              ))}
+            </Select.Root>
+          </div>
+        )}
       </div>
 
       {showValueInput && (
@@ -493,21 +510,16 @@ export const FilterRow = ({
                 </button>
               </div>
             )
-          ) : field.type === 'number' ? (
-            <input
+          ) : field.type === 'number' || field.type === 'rating' ? (
+            <TextInput
               type="number"
-              step="1"
-              value={(condition.value as string) ?? ''}
-              onChange={e => onUpdate({ value: e.target.value })}
-            />
-          ) : field.type === 'rating' ? (
-            <input
-              type="number"
-              step="1"
-              min={1}
-              max={5}
-              value={(condition.value as string) ?? ''}
-              onChange={e => onUpdate({ value: e.target.value ? Number(e.target.value) : '' })}
+              step={1}
+              {...(field.type === 'rating' ? { min: 1, max: 5 } : {})}
+              value={localTextValue}
+              onChange={v => setLocalTextValue(v ?? '')}
+              onKeyDown={(e: React.KeyboardEvent) => {
+                if (e.key === 'Enter') commitTextValue();
+              }}
             />
           ) : (
             <TextInput

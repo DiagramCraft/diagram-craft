@@ -213,7 +213,8 @@
   padding: 4px 0;
 }
 
-/* .traversalHead / .hop are still used by the horizontal HopSequence in ProjectionEditor. */
+/* .traversalHead / .hop / .projectionTerminal are used by the horizontal HopSequence editor in
+   ProjectionEditor (the Columns section still lays a projection's hop chain out left-to-right). */
 .traversalHead {
   display: flex;
   align-items: flex-start;
@@ -226,14 +227,31 @@
   gap: 4px;
 }
 
+.projectionTerminal {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  padding-left: 1.5rem;
+}
+
 /* Vertical hop chain for a traversal condition: one hop per row, its "where" filter nested
-   directly beneath it, all hanging off a left rail so a multi-hop / multi-filter path reads as
-   one connected unit. */
+   directly beneath it, all hanging off a left rail. The chain has three sections - hops, the
+   has-a-field/just-exists toggle, the terminal field - each its own rail segment, so the rail
+   line breaks (by the `.hopList` gap) between them while staying continuous within. */
 .hopList {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 8px;
   margin-left: 3px;
+  padding-left: 9px;
+}
+
+.railSegment {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-left: -9px;
   padding-left: 9px;
   border-left: 2px solid var(--panel-border);
 }
@@ -298,12 +316,15 @@
   color: var(--base-fg);
 }
 
-.traversalTerminal {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 6px 10px;
-  padding-left: 1.5rem;
+.terminalField {
+  flex: 1;
+  min-width: 0;
+}
+
+/* neutralise FilterRow's own row padding / divider so it lines up with the hop selects */
+.terminalField > div {
+  padding: 0;
+  border-bottom: none;
 }
 
 /* ── Per-hop same-instance [...] scoped filter (nested inside its .hopBranch) ── */
@@ -315,20 +336,6 @@
   background: color-mix(in srgb, var(--base-fg) 4%, transparent);
 }
 
-.scopedFilterHead {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 5px 10px;
-  font-size: 11px;
-  color: var(--base-fg-dim);
-  border-bottom: 1px solid var(--panel-border);
-}
-
-.scopedFilterHead > span {
-  flex: 1;
-  min-width: 0;
-}
 
 /* ── Read-only advanced leaves ── */
 .advancedLeaf {

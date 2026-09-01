@@ -164,7 +164,7 @@ export const ProjectionEditor = ({ projections, onChange, leafCtx }: Props) => {
               </button>
             </div>
 
-            <div className={styles.traversalTerminal}>
+            <div className={styles.projectionTerminal}>
               <label className={styles.projectionChain}>
                 <input
                   type="checkbox"

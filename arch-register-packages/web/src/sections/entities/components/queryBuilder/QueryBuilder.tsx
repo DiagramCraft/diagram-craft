@@ -77,6 +77,16 @@ export const QueryBuilder = ({
   const freeText = getFreeTextQuery(query);
   const isRelation = rootKind === 'relation';
 
+  // When the top-bar "Search text…" box is shown it owns the free-text clause, so strip the
+  // `freeText` node out of the tree the boolean editor renders - otherwise it shows up a second
+  // time as a non-editable row. `emit` re-attaches it. When there's no top-bar box (the entity
+  // browser passes `showFreeText={false}` and keeps free text in an external live-search box), the
+  // node stays in the tree and renders as an editable text row.
+  const editableTree = useMemo(
+    () => (showFreeText ? addFreeTextQuery(editable, '') : editable),
+    [editable, showFreeText]
+  );
+
   const leafCtx = useMemo(
     () => ({
       rootKind,
@@ -88,10 +98,14 @@ export const QueryBuilder = ({
       joinedAssessment,
       getFieldGroupAccess,
       rootSchemaScope: query.schemaId ? [query.schemaId] : ('any' as const),
-      atHopLimit: countHops(query) >= MAX_PATH_HOPS
+      atHopLimit: countHops(query) >= MAX_PATH_HOPS,
+      showFreeText: showFreeText && !isRelation,
+      inScopedFilter: false
     }),
     [
       rootKind,
+      isRelation,
+      showFreeText,
       schemas,
       relationSchemas,
       enums,
@@ -140,7 +154,10 @@ export const QueryBuilder = ({
   // emptied group is left in place (it renders with a "No conditions" placeholder and its own
   // remove button) rather than being auto-pruned, which previously cascade-deleted an outer group
   // whose only child was the group just removed.
-  const emit = (nextRoot: EntityQuery['root']) => onChange({ ...editable, root: nextRoot });
+  const emit = (nextRoot: EntityQuery['root']) => {
+    const base = { ...editable, root: nextRoot };
+    onChange(showFreeText && freeText ? addFreeTextQuery(base, freeText) : base);
+  };
 
   const overBudget = exceedsHopBudget(query);
 
@@ -183,7 +200,7 @@ export const QueryBuilder = ({
       )}
 
       <QueryGroup
-        root={editable.root}
+        root={editableTree.root}
         path={[]}
         onRootChange={emit}
         fields={fields}

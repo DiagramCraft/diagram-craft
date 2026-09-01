@@ -844,6 +844,39 @@ describe('stripEmptyGroups', () => {
       }
     });
   });
+
+  it('drops a blank free-text row but keeps a filled one', () => {
+    expect(
+      stripEmptyGroups({
+        root: {
+          kind: 'and',
+          children: [
+            { kind: 'freeText', value: '   ' },
+            {
+              kind: 'or',
+              children: [
+                { kind: 'freeText', value: 'gateway' },
+                { kind: 'predicate', path: [], fieldId: '_owner', op: 'equals', value: 'a' }
+              ]
+            }
+          ]
+        }
+      })
+    ).toEqual({
+      root: {
+        kind: 'and',
+        children: [
+          {
+            kind: 'or',
+            children: [
+              { kind: 'freeText', value: 'gateway' },
+              { kind: 'predicate', path: [], fieldId: '_owner', op: 'equals', value: 'a' }
+            ]
+          }
+        ]
+      }
+    });
+  });
 });
 
 describe('withLiveSearchText', () => {

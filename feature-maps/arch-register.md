@@ -534,7 +534,10 @@
           a Columns section for traversed projection values (a hop chain plus a terminal field or a whole-chain
           capture, with an optional column name; each becomes selectable as a table column under Manage fields),
           reading and writing the same structured query as the Advanced text field with no lossy conversion between
-          them; an empty group is treated as no filter rather than matching nothing. A query that uses relation-rooted
+          them; an empty group is treated as no filter rather than matching nothing, and a blank free-text row as no
+          filter rather than an error. A free-text clause is normally the dedicated search box, but a "Free text"
+          entry in any condition row's field dropdown places one inside the boolean tree for the "text OR a field
+          predicate" case the search box (always root-level AND) cannot express. A query that uses relation-rooted
           traversal, a relation-instance projection, or a same-instance scoped filter inside a projection opens with
           the Advanced text field shown until the corresponding visual editors are available. A field in a schema group the user cannot view is offered nowhere as a
           filter/sort option and is treated as unrecognized if referenced directly in an Advanced-mode query,

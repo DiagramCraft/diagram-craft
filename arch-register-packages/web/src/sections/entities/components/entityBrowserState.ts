@@ -103,15 +103,21 @@ const stripEmptyGroupsNode = (node: EntityQuery['root']): EntityQuery['root'] | 
     const child = stripEmptyGroupsNode(node.child);
     return child ? { ...node, child } : null;
   }
+  // An in-progress, still-empty free-text row (added via the builder's "Add text search") is
+  // dropped too - an empty `freeText` value is a validation error, not "match everything".
+  if (node.kind === 'freeText') {
+    return node.value.trim() === '' ? null : node;
+  }
   return node;
 };
 
 /**
- * Removes `and`/`or` groups that have no (surviving) children anywhere in the tree. The visual
- * builder deliberately keeps an emptied group on screen as an editing container, but an empty
- * group is not a no-op at execution - an empty `or` is vacuously false and would exclude
- * everything. Applied when a query is sent for execution or persisted to a saved view so an
- * in-progress empty group behaves as "no filter" rather than "match nothing". A tree that strips
+ * Removes in-progress-builder placeholders that aren't no-ops at execution: `and`/`or` groups with
+ * no surviving children anywhere in the tree (an empty `or` is vacuously false and would exclude
+ * everything), and `freeText` nodes with an empty value (a validation error). The visual builder
+ * deliberately keeps an emptied group / blank text row on screen as an editing container; this is
+ * applied when a query is sent for execution, persisted to a saved view, or shown in the text
+ * preview so those behave as "no filter" rather than "match nothing" / reject. A tree that strips
  * to nothing becomes an empty `and` (matches everything).
  */
 export const stripEmptyGroups = (query: EntityQuery): EntityQuery => ({

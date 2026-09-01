@@ -27,4 +27,11 @@ export type LeafContext = {
   rootSchemaScope: PathSchemaScope;
   /** True once the query already uses the full `MAX_PATH_HOPS` budget - leaves disable "Add hop". */
   atHopLimit: boolean;
+  /** Whether a top-bar "Search text…" box owns the root free-text clause. When true the root
+   *  group hides its "Add text search" action (the box is the way to add it there); nested groups
+   *  still offer it for the `text:"x" OR …` case. */
+  showFreeText: boolean;
+  /** True when this context is a hop's same-instance `[...]` scoped filter - free text is invalid
+   *  there (grammar §4.4), so "Add text search" is hidden. */
+  inScopedFilter: boolean;
 };

@@ -57,6 +57,29 @@ type SharedProps = {
   leafCtx: LeafContext;
 };
 
+// Synthetic field picked from a condition row's field dropdown to turn that row into a root
+// free-text clause (`{ kind: 'freeText' }`). Offered only where free text is grammatically valid
+// (entity root tree, not scoped `[...]` filters, not relations) and not on the root `AND` when a
+// top-bar search box already owns that clause.
+const FREE_TEXT_FIELD: FieldDef = { id: '__free_text__', name: 'Free text', type: 'freetext' };
+
+const defaultOpForField = (field: FieldDef | undefined): FilterCondition['op'] => {
+  switch (field?.type) {
+    case 'date':
+      return 'on';
+    case 'select':
+    case 'number':
+    case 'boolean':
+      return 'equals';
+    case 'rating':
+      return 'gte';
+    case 'presence':
+      return 'not_empty';
+    default:
+      return 'contains';
+  }
+};
+
 const NotToggle = ({ active, onClick }: { active: boolean; onClick: () => void }) => (
   <button
     type="button"
@@ -84,13 +107,19 @@ export const QueryGroup = ({
   depth = 0,
   negated = false,
   onToggleNegate,
-  onRemove
+  onRemove,
+  removeTitle = 'Remove group',
+  forceHeader = false
 }: SharedProps & {
   path: NodePath;
   depth?: number;
   negated?: boolean;
   onToggleNegate?: () => void;
   onRemove?: () => void;
+  removeTitle?: string;
+  /** Show the All/Any header even for the root group (used by the scoped-filter panel, where the
+   *  match mode is always relevant). */
+  forceHeader?: boolean;
 }) => {
   const node = getNode(root, path);
   if (!node || !isGroupNode(node)) return null;
@@ -99,12 +128,18 @@ export const QueryGroup = ({
   const childCount = node.children.length;
   const isRelation = leafCtx.rootKind === 'relation';
   const conditionSeed = isRelation ? emptyRelationPredicate(fields) : emptyPredicate();
+  // Whether this group's condition rows offer "Free text" in the field dropdown. Entity root tree
+  // only (not relations, not scoped `[...]` filters), and not on the root `AND` where a top-bar
+  // search box already owns that clause (`QueryBuilder` strips exactly that node for the box). A
+  // root `OR` or any nested group needs it - the `text:"x" OR <predicate>` case the box can't hold.
+  const topBarOwnsText = leafCtx.showFreeText && isRoot && node.kind === 'and';
+  const allowFreeTextField = !isRelation && !leafCtx.inScopedFilter && !topBarOwnsText;
   // Relation-rooted traversal (relationForward / relationBackward) isn't visually editable yet -
   // no "Add related condition" there.
   const relatedSeed = isRelation || leafCtx.atHopLimit ? null : firstHopPredicate(leafCtx);
-  // The root stays chrome-free while it's a plain flat list; a nested group always shows its
-  // header so the user can see they created a group and can set its operator / negation.
-  const showHeader = !isRoot;
+  // The root stays chrome-free while it's a plain flat list; a nested group (and a forced-header
+  // scoped-filter panel) always shows its header so the operator / negation is visible.
+  const showHeader = !isRoot || forceHeader;
 
   const body = (
     <>
@@ -130,11 +165,11 @@ export const QueryGroup = ({
           <span className={styles.matchHint}>
             {node.kind === 'and' ? 'of these must match' : 'of these may match'}
           </span>
-          {!isRoot && onRemove && (
+          {onRemove && (!isRoot || forceHeader) && (
             <button
               type="button"
               className={styles.removeBtn}
-              title="Remove group"
+              title={removeTitle}
               onClick={onRemove}
             >
               <TbX size={11} />
@@ -152,6 +187,7 @@ export const QueryGroup = ({
             slotPath={[...path, index]}
             onRootChange={onRootChange}
             fields={fields}
+            allowFreeTextField={allowFreeTextField}
             leafCtx={leafCtx}
             depth={depth}
           />
@@ -205,9 +241,10 @@ export const QueryNodeView = ({
   slotPath,
   onRootChange,
   fields,
+  allowFreeTextField = false,
   leafCtx,
   depth
-}: SharedProps & { slotPath: NodePath; depth: number }) => {
+}: SharedProps & { slotPath: NodePath; depth: number; allowFreeTextField?: boolean }) => {
   const slotNode = getNode(root, slotPath);
   if (!slotNode) return null;
 
@@ -239,6 +276,9 @@ export const QueryNodeView = ({
     );
   }
 
+  const leafFields =
+    allowFreeTextField || content.kind === 'freeText' ? [FREE_TEXT_FIELD, ...fields] : fields;
+
   return (
     <div className={styles.row}>
       <div className={styles.rowCtls}>
@@ -246,7 +286,7 @@ export const QueryNodeView = ({
       </div>
       <QueryLeaf
         node={content}
-        fields={fields}
+        fields={leafFields}
         leafCtx={leafCtx}
         onChange={next => onRootChange(updateNode(root, contentPath, () => next))}
         onRemove={remove}
@@ -264,17 +304,17 @@ const ScopedFilterEditor = ({
   filter,
   fields,
   leafCtx,
-  onChange
+  onChange,
+  onRemove
 }: {
   filter: QueryNode | undefined;
   fields: FieldDef[];
   leafCtx: LeafContext;
   onChange: (filter: QueryNode | undefined) => void;
+  onRemove: () => void;
 }) => {
   const editableRoot: QueryNode =
-    filter && isGroupNode(filter)
-      ? filter
-      : { kind: 'and', children: filter ? [filter] : [] };
+    filter && isGroupNode(filter) ? filter : { kind: 'and', children: filter ? [filter] : [] };
   return (
     <QueryGroup
       root={editableRoot}
@@ -283,7 +323,10 @@ const ScopedFilterEditor = ({
         onChange(isGroupNode(next) && next.children.length === 0 ? undefined : next)
       }
       fields={fields}
-      leafCtx={leafCtx}
+      leafCtx={{ ...leafCtx, inScopedFilter: true }}
+      forceHeader
+      onRemove={onRemove}
+      removeTitle="Remove this where-filter"
     />
   );
 };
@@ -325,14 +368,44 @@ export const QueryLeaf = ({
   // Hops whose scoped-filter panel is open even though the filter is still empty.
   const [openScopes, setOpenScopes] = useState<ReadonlySet<number>>(() => new Set());
 
+  // A `freeText` node renders as a `FilterRow` whose field is the synthetic "Free text" entry -
+  // one text input, no operator. Switching its field dropdown to a real field converts it back to
+  // an ordinary predicate; switching a predicate's field to "Free text" converts the other way
+  // (handled in the predicate branch below).
   if (node.kind === 'freeText') {
+    const freeTextFields = fields.some(f => f.id === FREE_TEXT_FIELD.id)
+      ? fields
+      : [FREE_TEXT_FIELD, ...fields];
     return (
-      <div className={styles.advancedLeaf}>
-        <span className={styles.advancedLeafText}>{`text contains "${node.value}"`}</span>
-        <button type="button" className={styles.removeBtn} title="Remove" onClick={onRemove}>
+      <>
+        <FilterRow
+          condition={{ fieldId: FREE_TEXT_FIELD.id, op: 'contains', value: node.value }}
+          fields={freeTextFields}
+          onUpdate={updates => {
+            if (updates.fieldId !== undefined && updates.fieldId !== FREE_TEXT_FIELD.id) {
+              onChange({
+                kind: 'predicate',
+                path: [],
+                fieldId: updates.fieldId,
+                op: defaultOpForField(fields.find(f => f.id === updates.fieldId)),
+                value: ''
+              });
+            } else if (updates.value !== undefined) {
+              onChange({ kind: 'freeText', value: String(updates.value ?? '') });
+            }
+          }}
+          onRemove={onRemove}
+          hideRemove
+        />
+        <button
+          type="button"
+          className={styles.removeBtn}
+          title="Remove condition"
+          onClick={onRemove}
+        >
           <TbX size={11} />
         </button>
-      </div>
+      </>
     );
   }
 
@@ -482,7 +555,14 @@ export const QueryLeaf = ({
         <FilterRow
           condition={condition}
           fields={fields}
-          onUpdate={updates => onChange({ ...node, ...updates })}
+          onUpdate={updates =>
+            updates.fieldId === FREE_TEXT_FIELD.id
+              ? onChange({
+                  kind: 'freeText',
+                  value: typeof node.value === 'string' ? node.value : ''
+                })
+              : onChange({ ...node, ...updates })
+          }
           onRemove={onRemove}
           hideRemove
         />
@@ -517,11 +597,6 @@ export const QueryLeaf = ({
       getFieldGroupAccess
     });
 
-  const scopeName = (scope: ReturnType<typeof scopeAfterHop>) => {
-    const id = singleTerminalSchemaId(scope);
-    return (id && schemas.find(schema => schema.id === id)?.name) || 'related record';
-  };
-
   const terminalScope = scopeAfterHop(path.length - 1);
   const terminalFields = fieldsForScope(terminalScope);
 
@@ -531,126 +606,123 @@ export const QueryLeaf = ({
           filter can render directly beneath the hop it belongs to rather than in a detached stack
           - the wiring the user has to follow stays local even for a 3-hop path with two filters. */}
       <div className={styles.hopList}>
-        {path.map((step, depth) => {
-          const stepContext = pathStepContext({
-            rootSchemaScope,
-            steps: path,
-            depth,
-            schemas,
-            relationSchemas,
-            getFieldGroupAccess
-          });
-          const scope = scopeAfterHop(depth);
-          const scopeOpen = openScopes.has(depth) || ('filter' in step && !!step.filter);
-          const isLast = depth === path.length - 1;
-          return (
-            <div key={depth} className={styles.hopBranch}>
-              <div className={styles.hopRow}>
-                <HopPicker
-                  step={step}
-                  stepContext={stepContext}
-                  ariaLabelDirection={`Direction for hop ${depth + 1}`}
-                  ariaLabelHop={`Relation for hop ${depth + 1}`}
-                  onChangeStep={next => changeStep(depth, next)}
-                  onToggleDirection={direction => toggleStepDirection(depth, direction)}
-                />
-                <button
-                  type="button"
-                  className={scopeOpen ? styles.rowCtlOn : styles.rowCtl}
-                  title="Filter the record this hop lands on"
-                  aria-pressed={scopeOpen}
-                  onClick={() => toggleScope(depth)}
-                >
-                  where
-                </button>
-                {isLast && (
+        <div className={styles.railSegment}>
+          {path.map((step, depth) => {
+            const stepContext = pathStepContext({
+              rootSchemaScope,
+              steps: path,
+              depth,
+              schemas,
+              relationSchemas,
+              getFieldGroupAccess
+            });
+            const scope = scopeAfterHop(depth);
+            const scopeOpen = openScopes.has(depth) || ('filter' in step && !!step.filter);
+            const isLast = depth === path.length - 1;
+            return (
+              <div key={depth} className={styles.hopBranch}>
+                <div className={styles.hopRow}>
+                  <HopPicker
+                    step={step}
+                    stepContext={stepContext}
+                    ariaLabelDirection={`Direction for hop ${depth + 1}`}
+                    ariaLabelHop={`Relation for hop ${depth + 1}`}
+                    onChangeStep={next => changeStep(depth, next)}
+                    onToggleDirection={direction => toggleStepDirection(depth, direction)}
+                  />
                   <button
                     type="button"
-                    className={styles.hopRm}
-                    title="Remove hop"
-                    onClick={() => {
-                      closeScope(depth);
-                      editPath(path.slice(0, -1));
-                    }}
+                    className={scopeOpen ? styles.rowCtlOn : styles.rowCtl}
+                    title="Filter the record this hop lands on"
+                    aria-pressed={scopeOpen}
+                    onClick={() => toggleScope(depth)}
                   >
-                    <TbX size={11} />
+                    where
                   </button>
-                )}
-              </div>
-
-              {scopeOpen && (
-                <div className={styles.scopedFilter}>
-                  <div className={styles.scopedFilterHead}>
-                    <span>where this {scopeName(scope)} matches</span>
+                  {isLast && (
                     <button
                       type="button"
                       className={styles.hopRm}
-                      title="Remove this where-filter"
+                      title="Remove hop"
                       onClick={() => {
-                        setStepFilter(depth, undefined);
                         closeScope(depth);
+                        editPath(path.slice(0, -1));
                       }}
                     >
                       <TbX size={11} />
                     </button>
-                  </div>
-                  <ScopedFilterEditor
-                    filter={'filter' in step ? step.filter : undefined}
-                    fields={fieldsForScope(scope)}
-                    leafCtx={{ ...leafCtx, rootSchemaScope: scope }}
-                    onChange={filter => setStepFilter(depth, filter)}
-                  />
+                  )}
                 </div>
-              )}
-            </div>
-          );
-        })}
 
-        {!atHopLimit && nextHopContext.options.length > 0 && (
-          <button type="button" className={styles.hopAdd} onClick={addHop}>
-            <TbPlus size={11} /> hop
-          </button>
-        )}
-      </div>
+                {scopeOpen && (
+                  <div className={styles.scopedFilter}>
+                    <ScopedFilterEditor
+                      filter={'filter' in step ? step.filter : undefined}
+                      fields={fieldsForScope(scope)}
+                      leafCtx={{ ...leafCtx, rootSchemaScope: scope }}
+                      onChange={filter => setStepFilter(depth, filter)}
+                      onRemove={() => {
+                        setStepFilter(depth, undefined);
+                        closeScope(depth);
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+            );
+          })}
 
-      <div className={styles.traversalTerminal}>
-        <div className={styles.matchToggle}>
-          <button
-            type="button"
-            className={node.kind === 'predicate' ? styles.matchOn : styles.matchOff}
-            onClick={() => onChange(asFieldPredicate(node))}
-          >
-            has a field
-          </button>
-          <button
-            type="button"
-            className={node.kind === 'relationExists' ? styles.matchOn : styles.matchOff}
-            onClick={() => onChange(asRelationExists(node))}
-          >
-            just exists
-          </button>
+          {!atHopLimit && nextHopContext.options.length > 0 && (
+            <button type="button" className={styles.hopAdd} onClick={addHop}>
+              <TbPlus size={11} /> hop
+            </button>
+          )}
         </div>
 
-        {node.kind === 'predicate' ? (
-          <FilterRow
-            condition={{ fieldId: node.fieldId, op: node.op, value: node.value }}
-            fields={terminalFields}
-            onUpdate={updates => onChange({ ...node, ...updates })}
-            onRemove={onRemove}
-            hideRemove
-          />
-        ) : (
-          <span className={styles.matchHint}>the related record only has to exist</span>
-        )}
+        <div className={styles.railSegment}>
+          <div className={styles.hopRow}>
+            <div className={styles.matchToggle}>
+              <button
+                type="button"
+                className={node.kind === 'predicate' ? styles.matchOn : styles.matchOff}
+                onClick={() => onChange(asFieldPredicate(node))}
+              >
+                has a field
+              </button>
+              <button
+                type="button"
+                className={node.kind === 'relationExists' ? styles.matchOn : styles.matchOff}
+                onClick={() => onChange(asRelationExists(node))}
+              >
+                just exists
+              </button>
+            </div>
+            <button
+              type="button"
+              className={styles.removeBtn}
+              title="Remove condition"
+              onClick={onRemove}
+            >
+              <TbX size={11} />
+            </button>
+          </div>
+        </div>
 
-        <button
-          type="button"
-          className={styles.removeBtn}
-          title="Remove condition"
-          onClick={onRemove}
-        >
-          <TbX size={11} />
-        </button>
+        {node.kind === 'predicate' && (
+          <div className={styles.railSegment}>
+            <div className={styles.hopRow}>
+              <div className={styles.terminalField}>
+                <FilterRow
+                  condition={{ fieldId: node.fieldId, op: node.op, value: node.value }}
+                  fields={terminalFields}
+                  onUpdate={updates => onChange({ ...node, ...updates })}
+                  onRemove={onRemove}
+                  hideRemove
+                />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
