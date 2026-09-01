@@ -343,6 +343,7 @@ const importParseResponseSchema = z.object({
           'checksum_mismatch',
           'duplicate_import_item',
           'missing_reference',
+          'filtered_field',
           'missing_content_file',
           'unresolved_conflict'
         ]),

@@ -151,13 +151,15 @@ export const exportWorkspace = async (
 
   // Export entities
   if (options.include.includes('entities')) {
-    data.entities = await exportEntities(
+    const result = await exportEntities(
       db,
       authCtx,
       workspace,
       options.entity_filters,
       options.include_grants ?? false
     );
+    data.entities = result.entities;
+    exportDiagnostics.push(...result.diagnostics);
     statistics.entity_count = data.entities.length;
   }
 
@@ -425,16 +427,25 @@ const exportRelations = async (
       continue;
     }
     const schema = relationSchemas?.find(item => item.id === row.schema_id);
+    const filteredData = filterRelationFieldData(
+      authCtx,
+      schema as Parameters<typeof filterRelationFieldData>[1],
+      row.data
+    );
+    if (Object.keys(filteredData).length !== Object.keys(row.data).length) {
+      diagnostics.push({
+        code: 'filtered_field',
+        item_type: 'relations',
+        item_id: row.id,
+        message: `Restricted relation field values were omitted from relation '${row.id}'`
+      });
+    }
     relations.push({
       id: row.id,
       schema_id: row.schema_id,
       in_entity_id: row.in_entity_id,
       out_entity_id: row.out_entity_id,
-      data: filterRelationFieldData(
-        authCtx,
-        schema as Parameters<typeof filterRelationFieldData>[1],
-        row.data
-      ),
+      data: filteredData,
       version: row.version,
       approval_policy_override: row.approval_policy_override,
       created_at: row.created_at.toISOString(),
@@ -456,7 +467,7 @@ const exportEntities = async (
     include_subtrees?: boolean;
   },
   includeGrants = false
-): Promise<ExportEntity[]> => {
+): Promise<{ entities: ExportEntity[]; diagnostics: ExportDiagnostic[] }> => {
   const schemas = await db.catalog.listSchemas(workspace);
   const schemaById = new Map(schemas.map(schema => [schema.id, schema]));
 
@@ -483,32 +494,51 @@ const exportEntities = async (
     );
   }
 
-  return entities.map(e => ({
-    id: e.id,
-    public_id: e.public_id,
-    schema_id: e.schema_id,
-    name: e.name,
-    slug: e.slug,
-    namespace: e.namespace,
-    description: e.description,
-    owner: e.owner,
-    lifecycle: e.lifecycle,
-    target_lifecycle: e.target_lifecycle,
-    target_lifecycle_date: e.target_lifecycle_date,
-    tags: e.tags,
-    links: e.links,
-    data: filterKnownRestrictedFieldGroups(authCtx, schemaById.get(e.schema_id) ?? null, e.data),
-    project_id: e.project_id,
-    ...(includeGrants && {
-      grants: (grantsMap.get(e.id) ?? []).map(g => ({
-        id: g.id,
-        principal_type: g.principal_type,
-        principal_id: g.principal_id,
-        role: g.role,
-        applies_to: g.applies_to
-      }))
-    })
-  }));
+  const diagnostics: ExportDiagnostic[] = [];
+  const exportedEntities = entities.map(e => {
+    const filteredData = filterKnownRestrictedFieldGroups(
+      authCtx,
+      schemaById.get(e.schema_id) ?? null,
+      e.data
+    );
+    if (Object.keys(filteredData).length !== Object.keys(e.data).length) {
+      diagnostics.push({
+        code: 'filtered_field',
+        item_type: 'entities',
+        item_id: e.id,
+        message: `Restricted entity field values were omitted from entity '${e.id}'`
+      });
+    }
+
+    return {
+      id: e.id,
+      public_id: e.public_id,
+      schema_id: e.schema_id,
+      name: e.name,
+      slug: e.slug,
+      namespace: e.namespace,
+      description: e.description,
+      owner: e.owner,
+      lifecycle: e.lifecycle,
+      target_lifecycle: e.target_lifecycle,
+      target_lifecycle_date: e.target_lifecycle_date,
+      tags: e.tags,
+      links: e.links,
+      data: filteredData,
+      project_id: e.project_id,
+      ...(includeGrants && {
+        grants: (grantsMap.get(e.id) ?? []).map(g => ({
+          id: g.id,
+          principal_type: g.principal_type,
+          principal_id: g.principal_id,
+          role: g.role,
+          applies_to: g.applies_to
+        }))
+      })
+    };
+  });
+
+  return { entities: exportedEntities, diagnostics };
 };
 
 const exportProjects = async (

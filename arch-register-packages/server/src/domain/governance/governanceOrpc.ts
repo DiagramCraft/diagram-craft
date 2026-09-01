@@ -83,14 +83,16 @@ export const createGovernanceORPCRouter = (registry: GovernanceRegistry) =>
             context.db,
             input.params.workspace,
             context.event,
-            input.query
+            input.query,
+            registry
           );
         }),
         count: governanceRouter.governance.assignments.count.handler(async ({ input, context }) => {
           return await countMyGovernanceAssignments(
             context.db,
             input.params.workspace,
-            context.event
+            context.event,
+            registry
           );
         }),
         decide: governanceRouter.governance.assignments.decide.handler(
@@ -112,7 +114,8 @@ export const createGovernanceORPCRouter = (registry: GovernanceRegistry) =>
             context.db,
             input.params.workspace,
             context.event,
-            input.query
+            input.query,
+            registry
           );
         })
       }

@@ -287,7 +287,7 @@ export type ExportOptions = {
 };
 
 export type ExportDiagnostic = {
-  code: 'missing_reference' | 'filtered_reference' | 'unsupported_data';
+  code: 'missing_reference' | 'filtered_reference' | 'filtered_field' | 'unsupported_data';
   item_type?: ExportDataType;
   item_id?: string;
   message: string;
@@ -315,6 +315,7 @@ export type ImportDiagnostic = {
     | 'checksum_mismatch'
     | 'duplicate_import_item'
     | 'missing_reference'
+    | 'filtered_field'
     | 'missing_content_file'
     | 'unresolved_conflict';
   item_type?: ExportDataType;

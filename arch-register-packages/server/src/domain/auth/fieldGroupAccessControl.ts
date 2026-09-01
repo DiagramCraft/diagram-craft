@@ -149,11 +149,14 @@ export const filterRestrictedFieldGroups = (
 export const filterKnownRestrictedFieldGroups = (
   authCtx: WorkspaceAuthorizationContext | null,
   schema: FieldGroupSchemaShape | null | undefined,
-  data: Record<string, unknown>
+  data: Record<string, unknown>,
+  schemaRoot: FieldGroupSchemaRoot = 'entity'
 ): Record<string, unknown> => {
   if (!schema) return {};
   const byField = authCtx ? groupAccessByFieldId(authCtx, schema) : new Map();
-  const unsafeDerivedIds = authCtx ? unresolvedDerivedFieldIds(schema) : new Set<string>();
+  const unsafeDerivedIds = authCtx
+    ? unresolvedDerivedFieldIds(schema, schemaRoot)
+    : new Set<string>();
   const knownFieldIds = new Set(schema.fields.map(field => field.id));
   const result: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(data)) {

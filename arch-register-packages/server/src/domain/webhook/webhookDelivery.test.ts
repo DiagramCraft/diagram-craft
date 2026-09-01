@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { DatabaseAdapter } from '../../db/database';
 import { RetryableJobError } from '../jobs/jobRetry';
 import type { FieldGroupSchemaShape } from '../auth/fieldGroupAccessControl';
+import type { GovernanceRegistry } from '../governance/governanceRegistry';
 import {
   auditLogToWebhookEvent,
   createWebhookDeliveryHandler,
@@ -119,6 +120,69 @@ describe('webhook delivery', () => {
         })
       })
     );
+  });
+
+  it('redacts governance event metadata before queuing an outbound webhook', async () => {
+    const enqueueOneOffRun = vi.fn(async input => ({ ...input }));
+    const governanceWebhook = {
+      ...webhook,
+      event_filter: { operations: ['governance.inbox_item.changes_requested' as const] }
+    };
+    const caseRow = {
+      id: 'case-1',
+      workspace: 'ws-1',
+      case_kind: 'test.redacted',
+      subject_type: 'entity',
+      subject_id: 'entity-1',
+      status: 'completed' as const,
+      outcome: 'request_changes',
+      case_subkind: null,
+      subject_version: null,
+      policy_version: null,
+      initiator_user_id: 'user-1',
+      parent_case_id: null,
+      self_approval_allowed: false,
+      payload: {},
+      created_at: new Date(),
+      due_at: null,
+      completed_at: new Date(),
+      cancelled_at: null,
+      reminder_windows_sent: [],
+      escalated_at: null
+    };
+    const governanceEvent = {
+      id: 'event-1',
+      case_id: 'case-1',
+      workspace: 'ws-1',
+      event_type: 'changes_requested' as const,
+      actor_user_id: 'user-2',
+      occurred_at: new Date('2026-07-15T10:00:00.000Z'),
+      previous_status: 'open',
+      resulting_status: 'completed',
+      reason: null,
+      metadata: { assignmentId: 'assignment-1', secret: 'must-not-leave' }
+    };
+    const registry: GovernanceRegistry = new Map([
+      [
+        'test.redacted',
+        {
+          redactEventMetadata: async ({ event }) => ({
+            assignmentId: event.metadata['assignmentId']
+          })
+        }
+      ]
+    ]);
+    const db = {
+      webhook: { listWebhooks: vi.fn(async () => [governanceWebhook]) },
+      jobs: { enqueueOneOffRun }
+    } as unknown as DatabaseAdapter;
+
+    await enqueueGovernanceWebhookDeliveries(db, caseRow, governanceEvent, true, registry);
+
+    const payload = enqueueOneOffRun.mock.calls[0]![0].payload as {
+      event: { governance: { event: { metadata: Record<string, unknown> } } };
+    };
+    expect(payload.event.governance.event.metadata).toEqual({ assignmentId: 'assignment-1' });
   });
 
   it('queues relation events only for explicitly enabled relation filters and redacts relation fields', async () => {

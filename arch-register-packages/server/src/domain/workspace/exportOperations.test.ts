@@ -122,6 +122,31 @@ describe('exportEntities field-group redaction', () => {
     expect(data.entities).toEqual([expect.objectContaining({ data: { name: 'x' } })]);
   });
 
+  it('reports omitted entity field values without naming the restricted fields', async () => {
+    const authCtx = buildAuthorizationContext({
+      userId: 'user-1',
+      globalRoles: [],
+      workspaceRole: null,
+      teamAssignments: [],
+      schemas: [],
+      entities: [],
+      grants: []
+    });
+
+    const { manifest } = await exportWorkspace(makeDb(), undefined, authCtx, 'workspace-1', {
+      include: ['entities']
+    });
+
+    expect(manifest.export_diagnostics).toEqual([
+      {
+        code: 'filtered_field',
+        item_type: 'entities',
+        item_id: 'entity-1',
+        message: "Restricted entity field values were omitted from entity 'entity-1'"
+      }
+    ]);
+  });
+
   it('keeps restricted fields for a caller with edit access to the field group', async () => {
     const authCtx = buildAuthorizationContext({
       userId: 'user-1',
@@ -389,6 +414,51 @@ describe('typed relation export', () => {
     ]);
   });
 
+  it('reports omitted relation field values without naming the restricted fields', async () => {
+    const db = makeRelationDb();
+    const restrictedRelationSchema = {
+      ...relationSchema,
+      fields: [
+        ...relationSchema.fields,
+        { id: 'secret', name: 'Secret', type: 'text', groupId: 'restricted' }
+      ],
+      groups: [{ id: 'restricted', name: 'Restricted', accessControl: { teamIds: ['team-1'] } }]
+    };
+    db.relation.listRelationSchemas.mockResolvedValue([restrictedRelationSchema]);
+    db.relation.listRelations
+      .mockReset()
+      .mockResolvedValueOnce({
+        items: [{ ...relation, data: { strength: 'strong', secret: 'hidden' } }],
+        total: 1
+      })
+      .mockResolvedValueOnce({ items: [], total: 1 });
+    const authCtx = buildAuthorizationContext({
+      userId: 'user-1',
+      globalRoles: [],
+      workspaceRole: 'editor',
+      teamAssignments: [],
+      schemas: [],
+      entities: [],
+      grants: []
+    });
+
+    const { manifest, data } = await exportWorkspace(db, undefined, authCtx, 'workspace-1', {
+      include: ['schemas', 'relation_schemas', 'entities', 'relations']
+    });
+
+    expect(data.relations).toEqual([expect.objectContaining({ data: { strength: 'strong' } })]);
+    expect(manifest.export_diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'filtered_field',
+          item_type: 'relations',
+          item_id: relation.id,
+          message: `Restricted relation field values were omitted from relation '${relation.id}'`
+        })
+      ])
+    );
+  });
+
   it('omits relations whose endpoints are filtered out and records a diagnostic', async () => {
     const authCtx = buildAuthorizationContext({
       userId: 'user-1',
@@ -474,9 +544,11 @@ describe('typed relation export', () => {
       include: ['schemas', 'relation_schemas', 'entities', 'relations']
     });
     expect(hidden.data.relations).toEqual([]);
-    expect(hidden.manifest.export_diagnostics).toEqual([
-      expect.objectContaining({ code: 'filtered_reference', item_id: relation.id })
-    ]);
+    expect(hidden.manifest.export_diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: 'filtered_reference', item_id: relation.id })
+      ])
+    );
 
     db.catalog.listSchemas.mockResolvedValue([
       {

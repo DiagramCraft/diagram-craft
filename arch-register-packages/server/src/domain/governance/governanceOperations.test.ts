@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
+import type { AuthorizationContext } from '@arch-register/permissions';
 import type {
   GovernanceAssignmentDbResult,
   GovernanceCaseDbResult,
@@ -11,20 +12,26 @@ import {
   decideGovernanceAssignment,
   listMyGovernanceAssignments,
   listMySubmittedGovernanceCases,
-  sendGovernanceCaseReminder
+  sendGovernanceCaseReminder,
+  toApiCaseForContext,
+  toApiEventForContext
 } from './governanceOperations';
 import type { GovernanceRegistry } from './governanceRegistry';
 
 const authCtxMock = {
   userId: 'user-1',
+  globalRoles: new Set(),
   globalPermissions: new Set(),
   workspaceRole: 'owner',
   workspaceRoles: new Map(),
+  teamIds: new Set(),
+  teamAssignments: [],
   teamRolesByTeam: new Map(),
+  teams: [],
   schemas: new Map(),
   entities: new Map(),
   grants: []
-};
+} as unknown as AuthorizationContext;
 
 vi.mock('../auth/authorization', () => ({
   buildApiAuthCtx: vi.fn(async () => authCtxMock),
@@ -252,6 +259,40 @@ const makeDb = (
       }
     }
   }) as unknown as DatabaseAdapter;
+
+describe('governance redaction serializers', () => {
+  it('applies case payload and event metadata redactors to API responses', async () => {
+    const caseRow = makeCase({ payload: { secret: 'must-not-leave' } });
+    const eventRow: GovernanceEventDbResult = {
+      id: 'event-1',
+      case_id: caseRow.id,
+      workspace: caseRow.workspace,
+      event_type: 'submitted',
+      actor_user_id: 'user-1',
+      occurred_at: now,
+      previous_status: null,
+      resulting_status: 'open',
+      reason: null,
+      metadata: { secret: 'must-not-leave' }
+    };
+    const registry: GovernanceRegistry = new Map([
+      [
+        'test.echo',
+        {
+          redactCasePayload: async () => ({ safe: true }),
+          redactEventMetadata: async () => ({ safe: true })
+        }
+      ]
+    ]);
+    const db = makeDb(makeGovernanceDouble(caseRow, makeAssignment()));
+
+    const apiCase = await toApiCaseForContext(db, caseRow, authCtxMock, registry);
+    const apiEvent = await toApiEventForContext(db, caseRow, eventRow, authCtxMock, registry);
+
+    expect(apiCase.payload).toEqual({ safe: true });
+    expect(apiEvent.metadata).toEqual({ safe: true });
+  });
+});
 
 describe('decideGovernanceAssignment', () => {
   it('denies self-approval by default', async () => {

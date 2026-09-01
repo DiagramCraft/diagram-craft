@@ -21,6 +21,10 @@ import type {
 } from './exportTypes';
 import { findUnresolvedFieldGroupReferences } from '../catalog/schemaHelpers';
 import { validateDerivedFieldGroupAccess } from '../derived/derivedFields';
+import {
+  filterKnownRestrictedFieldGroups,
+  type FieldGroupSchemaShape
+} from '../auth/fieldGroupAccessControl';
 
 const checker = new PermissionChecker();
 export const parseImport = async (
@@ -55,7 +59,7 @@ export const parseImport = async (
   for (const diagnostic of manifest.export_diagnostics ?? []) {
     const message = `Source export diagnostic: ${diagnostic.message}`;
     diagnostics.push({
-      code: 'missing_reference',
+      code: diagnostic.code === 'filtered_field' ? 'filtered_field' : 'missing_reference',
       item_type: diagnostic.item_type,
       item_id: diagnostic.item_id,
       message
@@ -134,7 +138,13 @@ export const parseImport = async (
     if (!hasEntityPermission) {
       errors.push('You do not have permission to import entities');
     } else {
-      const entityResult = await validateEntities(db, workspace, data.entities, data.schemas);
+      const entityResult = await validateEntities(
+        db,
+        authCtx,
+        workspace,
+        data.entities,
+        data.schemas
+      );
       summary.entities = {
         count: data.entities.length,
         conflicts: entityResult.conflicts.length
@@ -151,6 +161,7 @@ export const parseImport = async (
     } else {
       const relationResult = await validateRelations(
         db,
+        authCtx,
         workspace,
         data.relations,
         data.relation_schemas,
@@ -586,6 +597,7 @@ const validateRelationSchemas = async (
 
 const validateEntities = async (
   db: DatabaseAdapter,
+  authCtx: WorkspaceAuthorizationContext,
   workspace: string,
   entities: ExportEntity[],
   schemas?: ExportSchema[]
@@ -599,8 +611,17 @@ const validateEntities = async (
   ]);
   const sourceSchemaIds = new Set(schemas?.map(schema => schema.id) ?? []);
   const schemaIds = new Set(existingSchemas.map(schema => schema.id));
+  const schemaById = new Map<string, FieldGroupSchemaShape>();
+  for (const schema of existingSchemas) schemaById.set(schema.id, schema);
+  for (const schema of schemas ?? []) {
+    if (!schemaById.has(schema.id)) schemaById.set(schema.id, schema);
+  }
 
   for (const entity of entities) {
+    const importItem = {
+      ...entity,
+      data: filterKnownRestrictedFieldGroups(authCtx, schemaById.get(entity.schema_id), entity.data)
+    };
     const existing = existingEntities.find(
       candidate =>
         candidate.id === entity.id ||
@@ -617,7 +638,7 @@ const validateEntities = async (
             ? 'duplicate_slug'
             : 'duplicate_name',
         existing_item: { id: existing.id, name: existing.name, slug: existing.slug },
-        import_item: entity,
+        import_item: importItem,
         suggested_resolution: 'merge'
       });
     }
@@ -627,7 +648,7 @@ const validateEntities = async (
         item_id: entity.id,
         item_name: entity.name,
         conflict_reason: 'missing_dependency',
-        import_item: entity,
+        import_item: importItem,
         suggested_resolution: 'skip'
       });
     }
@@ -656,6 +677,7 @@ const listAllRelations = async (db: DatabaseAdapter, workspace: string) => {
 
 const validateRelations = async (
   db: DatabaseAdapter,
+  authCtx: WorkspaceAuthorizationContext,
   workspace: string,
   relations: ExportRelation[],
   relationSchemas?: ExportRelationSchema[],
@@ -675,6 +697,11 @@ const validateRelations = async (
   const sourceRelationSchemasById = new Map(
     (relationSchemas ?? []).map(schema => [schema.id, schema])
   );
+  const relationSchemaById = new Map<string, FieldGroupSchemaShape>();
+  for (const schema of existingRelationSchemas) relationSchemaById.set(schema.id, schema);
+  for (const schema of relationSchemas ?? []) {
+    if (!relationSchemaById.has(schema.id)) relationSchemaById.set(schema.id, schema);
+  }
   const sourceEntitiesById = new Map((entities ?? []).map(entity => [entity.id, entity]));
 
   for (const relation of relations) {
@@ -685,6 +712,15 @@ const validateRelations = async (
           sourceRelationSchemasById.get(relation.schema_id)?.name.toLowerCase()
     );
     const targetSchemaId = existingSchema?.id ?? relation.schema_id;
+    const importItem = {
+      ...relation,
+      data: filterKnownRestrictedFieldGroups(
+        authCtx,
+        relationSchemaById.get(relation.schema_id) ?? existingSchema,
+        relation.data,
+        'relation'
+      )
+    };
     const existing = existingRelations.find(
       candidate =>
         candidate.id === relation.id ||
@@ -704,7 +740,7 @@ const validateRelations = async (
           in_entity_id: existing.in_entity_id,
           out_entity_id: existing.out_entity_id
         },
-        import_item: relation,
+        import_item: importItem,
         suggested_resolution: 'overwrite'
       });
     }
@@ -715,7 +751,7 @@ const validateRelations = async (
         item_id: relation.id,
         item_name: `${relation.in_entity_id} → ${relation.out_entity_id}`,
         conflict_reason: 'missing_dependency',
-        import_item: relation,
+        import_item: importItem,
         suggested_resolution: 'skip'
       });
       warnings.push(
@@ -729,7 +765,7 @@ const validateRelations = async (
         item_id: relation.id,
         item_name: `${relation.in_entity_id} → ${relation.out_entity_id}`,
         conflict_reason: 'missing_dependency',
-        import_item: relation,
+        import_item: importItem,
         suggested_resolution: 'skip'
       });
       warnings.push(
@@ -752,7 +788,7 @@ const validateRelations = async (
         item_id: relation.id,
         item_name: `${relation.in_entity_id} → ${relation.out_entity_id}`,
         conflict_reason: 'schema_mismatch',
-        import_item: relation,
+        import_item: importItem,
         suggested_resolution: 'skip'
       });
     }

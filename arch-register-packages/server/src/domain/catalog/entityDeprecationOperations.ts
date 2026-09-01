@@ -38,7 +38,10 @@ import {
   resolveCaseNotifications
 } from '../governance/governanceOperations';
 import { isEligibleForAssignment } from '../governance/governanceEligibility';
-import type { GovernanceRegistry } from '../governance/governanceRegistry';
+import type {
+  GovernanceCaseRedactionContext,
+  GovernanceRegistry
+} from '../governance/governanceRegistry';
 import {
   PermissionChecker,
   type AuthorizationContext,
@@ -56,6 +59,11 @@ export const ENTITY_DEPRECATION_CASE_KIND = 'entity.deprecation';
 const DEPRECATION_POLICY_VERSION = 'entity.deprecation:v1';
 
 const permissionChecker = new PermissionChecker();
+
+const isEntityAuthorizationContext = (
+  authCtx: WorkspaceAuthorizationContext
+): authCtx is AuthorizationContext =>
+  'schemas' in authCtx && 'entities' in authCtx && 'grants' in authCtx;
 
 // ── Impact calculation ─────────────────────────────────────────
 
@@ -135,6 +143,21 @@ const filterImpactForCaller = async (
       !isFieldViewRestricted(authCtx, sourceSchema, matchingFields[0]!.id)
     );
   });
+};
+
+export const redactDeprecationCasePayload = async ({
+  db,
+  authCtx,
+  caseRow
+}: GovernanceCaseRedactionContext): Promise<Record<string, unknown>> => {
+  const storedBaselineImpact = Array.isArray(caseRow.payload['baselineImpact'])
+    ? (caseRow.payload['baselineImpact'] as DeprecationImpactEntry[])
+    : [];
+  const baselineImpact =
+    authCtx && isEntityAuthorizationContext(authCtx)
+      ? await filterImpactForCaller(db, caseRow.workspace, storedBaselineImpact, authCtx)
+      : [];
+  return { ...caseRow.payload, baselineImpact };
 };
 
 const groupByOwnerTeam = (
@@ -469,6 +492,7 @@ export const createDeprecationGovernanceRegistry = (
       ENTITY_DEPRECATION_CASE_KIND,
       {
         workflowConfig: schemaWorkflowConfig,
+        redactCasePayload: redactDeprecationCasePayload,
         subjectVisible: async (db, authCtx, workspace, subjectId) => {
           const entity = await db.catalog.getEntity(workspace, subjectId);
           return (

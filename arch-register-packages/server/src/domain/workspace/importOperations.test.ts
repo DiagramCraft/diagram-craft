@@ -986,6 +986,149 @@ describe('workspace entity import field-group authorization', () => {
   });
 });
 
+describe('workspace archive import conflict previews', () => {
+  it('redacts restricted entity and relation values from conflict items', async () => {
+    hasWorkspaceCapability.mockReturnValue(true);
+    const db = makeDb();
+    const entitySchema = {
+      id: 'schema-1',
+      workspace: 'workspace-1',
+      name: 'Restricted schema',
+      fields: [
+        { id: 'name_field', name: 'Name field', type: 'text' },
+        { id: 'secret', name: 'Secret', type: 'text', groupId: 'restricted' }
+      ],
+      groups: [{ id: 'restricted', name: 'Restricted', accessControl: { teamIds: ['team-1'] } }],
+      templates: [],
+      color: null,
+      icon: null,
+      default_owner: null,
+      key_prefix: 'RST',
+      created_at: new Date(),
+      updated_at: new Date()
+    };
+    const existingEntity = {
+      id: 'entity-1',
+      name: 'Existing entity',
+      slug: 'existing-entity',
+      schema_id: 'schema-1'
+    };
+    db.catalog.listSchemas.mockResolvedValue([entitySchema]);
+    db.catalog.listEntities.mockResolvedValue([
+      existingEntity,
+      { id: 'entity-2', name: 'Endpoint', slug: 'endpoint', schema_id: 'schema-1' }
+    ]);
+    const relationSchema = {
+      id: 'relation-schema-1',
+      workspace: 'workspace-1',
+      name: 'Depends on',
+      description: '',
+      in_schema_ids: 'any' as const,
+      out_schema_ids: 'any' as const,
+      fields: [{ id: 'secret', name: 'Secret', type: 'text', groupId: 'restricted' }],
+      groups: [{ id: 'restricted', name: 'Restricted', accessControl: { teamIds: ['team-1'] } }],
+      color: null,
+      icon: null,
+      relation_approval_policy: 'disabled' as const,
+      version: 1,
+      created_at: new Date(),
+      updated_at: new Date()
+    };
+    const existingRelation = {
+      id: 'relation-1',
+      schema_id: relationSchema.id,
+      in_entity_id: 'entity-1',
+      out_entity_id: 'entity-2',
+      data: { secret: 'stored' }
+    };
+    db.relation = {
+      listRelations: vi
+        .fn()
+        .mockResolvedValueOnce({ items: [existingRelation], total: 1 })
+        .mockResolvedValueOnce({ items: [], total: 1 }),
+      listRelationSchemas: vi.fn(async () => [relationSchema])
+    };
+    const authCtx = buildAuthorizationContext({
+      userId: 'user-1',
+      globalRoles: [],
+      workspaceRole: 'viewer',
+      teamAssignments: [],
+      schemas: [],
+      entities: [],
+      grants: []
+    });
+
+    const result = await parseImport(
+      db,
+      authCtx,
+      'workspace-1',
+      {
+        version: '1.0',
+        format: 'zip-multi-file',
+        exported_at: '2026-01-01T00:00:00.000Z',
+        exported_by: 'User',
+        source_workspace: { id: 'source', name: 'Source', url_slug: 'source' },
+        export_options: ['entities', 'relations'],
+        files: {},
+        statistics: {
+          entity_count: 1,
+          project_count: 0,
+          schema_count: 0,
+          relation_count: 1,
+          content_node_count: 0,
+          total_content_size_bytes: 0
+        },
+        checksums: {}
+      },
+      {
+        entities: [
+          {
+            id: 'entity-1',
+            public_id: null,
+            schema_id: 'schema-1',
+            name: 'Imported entity',
+            slug: 'imported-entity',
+            namespace: 'default',
+            description: '',
+            owner: null,
+            lifecycle: null,
+            target_lifecycle: null,
+            target_lifecycle_date: null,
+            tags: [],
+            links: [],
+            data: { name_field: 'safe', secret: 'must-not-preview' },
+            project_id: null
+          }
+        ],
+        relations: [
+          {
+            id: 'relation-1',
+            schema_id: relationSchema.id,
+            in_entity_id: 'entity-1',
+            out_entity_id: 'entity-2',
+            data: { secret: 'must-not-preview' },
+            version: 1,
+            approval_policy_override: null,
+            created_at: '2026-01-01T00:00:00.000Z',
+            updated_at: '2026-01-01T00:00:00.000Z'
+          }
+        ]
+      }
+    );
+
+    const entityConflict = result.conflicts.find(
+      conflict => conflict.type === 'entities' && conflict.item_id === 'entity-1'
+    );
+    const relationConflict = result.conflicts.find(
+      conflict => conflict.type === 'relations' && conflict.item_id === 'relation-1'
+    );
+    expect(entityConflict?.import_item).toMatchObject({ data: { name_field: 'safe' } });
+    expect(entityConflict?.import_item).not.toHaveProperty('data.secret');
+    expect(relationConflict?.import_item).toEqual(expect.objectContaining({ data: {} }));
+    expect(relationConflict?.import_item).not.toHaveProperty('data.secret');
+  });
+});
+
 describe('workspace relation import', () => {
   it('remaps both relation endpoints when entity IDs change', async () => {
     const db = makeDb();

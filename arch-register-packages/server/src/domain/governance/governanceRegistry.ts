@@ -1,5 +1,8 @@
 import type { DatabaseAdapter } from '../../db/database';
-import type { AuthorizationContext } from '@arch-register/permissions';
+import type {
+  AuthorizationContext,
+  WorkspaceAuthorizationContext
+} from '@arch-register/permissions';
 import type {
   GovernanceAssignmentAction,
   GovernanceCaseDbResult,
@@ -13,6 +16,19 @@ export type GovernanceWorkflowStrategy = {
   id: string;
   label: string;
   configType: 'none' | 'document-field';
+};
+
+export type GovernanceRedactionMode = 'api' | 'outbound';
+
+export type GovernanceCaseRedactionContext = {
+  db: DatabaseAdapter;
+  authCtx: WorkspaceAuthorizationContext | null;
+  caseRow: GovernanceCaseDbResult;
+  mode: GovernanceRedactionMode;
+};
+
+export type GovernanceEventRedactionContext = GovernanceCaseRedactionContext & {
+  event: GovernanceEventDbResult;
 };
 
 /**
@@ -70,6 +86,21 @@ export type GovernanceCaseKindConfig = {
     workspace: string,
     subjectId: string
   ) => Promise<boolean>;
+  /**
+   * Optional case-level visibility gate evaluated before initiator/assignment visibility. Use this
+   * when a case is only meaningful inside a more specific permission scope than its subject.
+   */
+  caseVisible?: (
+    db: DatabaseAdapter,
+    authCtx: WorkspaceAuthorizationContext,
+    caseRow: GovernanceCaseDbResult
+  ) => Promise<boolean>;
+  /** Redacts domain payload values for authenticated API and unattended outbound responses. */
+  redactCasePayload?: (context: GovernanceCaseRedactionContext) => Promise<Record<string, unknown>>;
+  /** Redacts event metadata for authenticated API and unattended outbound responses. */
+  redactEventMetadata?: (
+    context: GovernanceEventRedactionContext
+  ) => Promise<Record<string, unknown>>;
   /**
    * Applies the domain effect for a decision (e.g. "commit the approved entity revision").
    * Invoked inside the same transaction as the assignment/event write for synchronous effects —

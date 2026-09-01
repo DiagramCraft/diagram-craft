@@ -15,7 +15,11 @@ import {
 import type { GovernanceAssignmentTarget } from '../governance/governanceOperations';
 import { principalFieldValueToGovernanceTargets } from '../governance/governanceTargetResolution';
 import type { GovernanceCaseDbResult } from '../governance/db/governanceDatabase';
-import type { GovernanceRegistry } from '../governance/governanceRegistry';
+import type {
+  GovernanceCaseRedactionContext,
+  GovernanceEventRedactionContext,
+  GovernanceRegistry
+} from '../governance/governanceRegistry';
 import { encodeCaseSubkind } from '../governance/governanceCaseSubkind';
 import { parseGovernanceWorkflowConfig } from '../governance/governanceWorkflowConfig';
 import { updateEntityWithAudit } from './entityMutations';
@@ -23,6 +27,12 @@ import { normalizeEntityScalarFields } from './entityScalarValues';
 import { getWorkspaceEnumDefinitions } from './enumOptions';
 import { computeEntityCompleteness } from '../../utils/completeness';
 import { addRetentionDuration, parseIsoDate, toIsoDate } from '../../utils/retentionDate';
+import {
+  PermissionChecker,
+  type AuthorizationContext,
+  type WorkspaceAuthorizationContext
+} from '@arch-register/permissions';
+import { isFieldViewRestricted } from '../auth/fieldGroupAccessControl';
 
 export const ENTITY_PRINCIPAL_FIELD_STRATEGY = 'entity-principal-field';
 
@@ -30,6 +40,12 @@ export const FIELD_DATE_REMINDER_CASE_KIND = 'field-date-reminder';
 export const FIELD_DATE_REMINDER_SYSTEM_IDENTITY = 'field-date-reminder';
 
 const FIELD_DATE_REMINDER_SYSTEM_USER_ID = getSystemUserId('governance-deadline-scan-job');
+const permissionChecker = new PermissionChecker();
+
+const isEntityAuthorizationContext = (
+  authCtx: WorkspaceAuthorizationContext
+): authCtx is AuthorizationContext =>
+  'schemas' in authCtx && 'entities' in authCtx && 'grants' in authCtx;
 
 const parseDateValue = (value: unknown): { value: string; dueAt: Date } | null => {
   value = Array.isArray(value) ? value[0] : value;
@@ -72,6 +88,55 @@ const payloadFor = (
   dateValue,
   ownerTeamId: entity.owner
 });
+
+const resolveFieldDateSubject = async (db: DatabaseAdapter, caseRow: GovernanceCaseDbResult) => {
+  const schemaId = caseRow.payload['schemaId'];
+  const fieldId = caseRow.payload['fieldId'];
+  if (typeof schemaId !== 'string' || typeof fieldId !== 'string') return null;
+
+  const entity = await db.catalog.getEntity(caseRow.workspace, caseRow.subject_id);
+  if (!entity || entity.schema_id !== schemaId) return null;
+  const schema = await db.catalog.getSchema(caseRow.workspace, schemaId);
+  const field = schema?.fields.find(candidate => candidate.id === fieldId);
+  if (!schema || field?.type !== 'date') return null;
+  return { entity, schema, fieldId };
+};
+
+const canViewFieldDateSubject = async (
+  db: DatabaseAdapter,
+  authCtx: WorkspaceAuthorizationContext | null,
+  caseRow: GovernanceCaseDbResult
+) => {
+  if (!authCtx) return false;
+  const subject = await resolveFieldDateSubject(db, caseRow);
+  return (
+    subject != null &&
+    isEntityAuthorizationContext(authCtx) &&
+    permissionChecker.hasEntityPermission(authCtx, subject.entity, 'view_entity') &&
+    !isFieldViewRestricted(authCtx, subject.schema, subject.fieldId)
+  );
+};
+
+const redactFieldDateCasePayload = async ({
+  db,
+  authCtx,
+  caseRow
+}: GovernanceCaseRedactionContext): Promise<Record<string, unknown>> => {
+  if (await canViewFieldDateSubject(db, authCtx, caseRow)) return caseRow.payload;
+  const { dateValue: _dateValue, ...safePayload } = caseRow.payload;
+  return safePayload;
+};
+
+const redactFieldDateEventMetadata = async ({
+  db,
+  authCtx,
+  caseRow,
+  event
+}: GovernanceEventRedactionContext): Promise<Record<string, unknown>> => {
+  if (await canViewFieldDateSubject(db, authCtx, caseRow)) return event.metadata;
+  const { dateValue: _dateValue, ...safeMetadata } = event.metadata;
+  return safeMetadata;
+};
 
 const dedupeKeyFor = (entityId: string, fieldId: string) => `${entityId}:${fieldId}`;
 
@@ -197,7 +262,8 @@ const cancelAutomaticCase = async (
   workspace: string,
   caseId: string,
   reason: string,
-  now: Date
+  now: Date,
+  governanceRegistry: GovernanceRegistry
 ) =>
   db.core.transaction(async tx => {
     const current = await tx.governance.getCase(workspace, caseId);
@@ -207,14 +273,19 @@ const cancelAutomaticCase = async (
     const supersededIds = await tx.governance.supersedeAllOpenAssignmentsForCase(current.id, now);
     await resolveAssignmentNotifications(tx, supersededIds, now);
     await resolveCaseNotifications(tx, current.id, now);
-    await recordGovernanceEvent(tx, cancelled, {
-      eventType: 'cancelled',
-      actorUserId: FIELD_DATE_REMINDER_SYSTEM_USER_ID,
-      previousStatus: 'open',
-      resultingStatus: 'cancelled',
-      reason,
-      metadata: { trigger: 'scheduled' }
-    });
+    await recordGovernanceEvent(
+      tx,
+      cancelled,
+      {
+        eventType: 'cancelled',
+        actorUserId: FIELD_DATE_REMINDER_SYSTEM_USER_ID,
+        previousStatus: 'open',
+        resultingStatus: 'cancelled',
+        reason,
+        metadata: { trigger: 'scheduled' }
+      },
+      governanceRegistry
+    );
     return true;
   });
 
@@ -228,7 +299,8 @@ const refreshAutomaticCase = async (
   entity: EntityDbResult,
   teamIds: Set<string>,
   routing: ReminderRouting | null,
-  now: Date
+  now: Date,
+  governanceRegistry: GovernanceRegistry
 ) => {
   const payload = payloadFor(schema, fieldId, dateValue, entity);
   const desiredAssignments = assignmentsFor(entity, teamIds, routing);
@@ -276,19 +348,24 @@ const refreshAutomaticCase = async (
         });
       }
     }
-    await recordGovernanceEvent(tx, refreshed, {
-      eventType: 'scope_refreshed',
-      actorUserId: FIELD_DATE_REMINDER_SYSTEM_USER_ID,
-      previousStatus: fresh.status,
-      resultingStatus: fresh.status,
-      reason: null,
-      metadata: {
-        trigger: 'scheduled',
-        dateChanged,
-        routingChanged,
-        dateValue
-      }
-    });
+    await recordGovernanceEvent(
+      tx,
+      refreshed,
+      {
+        eventType: 'scope_refreshed',
+        actorUserId: FIELD_DATE_REMINDER_SYSTEM_USER_ID,
+        previousStatus: fresh.status,
+        resultingStatus: fresh.status,
+        reason: null,
+        metadata: {
+          trigger: 'scheduled',
+          dateChanged,
+          routingChanged,
+          dateValue
+        }
+      },
+      governanceRegistry
+    );
   });
 };
 
@@ -302,7 +379,8 @@ const createAutomaticCase = async (
   entity: EntityDbResult,
   teamIds: Set<string>,
   routing: ReminderRouting | null,
-  now: Date
+  now: Date,
+  governanceRegistry: GovernanceRegistry
 ) => {
   try {
     await db.core.transaction(async tx => {
@@ -320,7 +398,8 @@ const createAutomaticCase = async (
           dueAt,
           payload: payloadFor(schema, fieldId, dateValue, entity),
           skipInitiationFields: true,
-          assignments: assignmentsFor(entity, teamIds, routing)
+          assignments: assignmentsFor(entity, teamIds, routing),
+          governanceRegistry
         },
         now
       );
@@ -354,6 +433,7 @@ export const syncFieldDateReminderCases = async (
       .map(row => [row.case_subkind!, { enabled: row.enabled, config: row.config }])
   );
   const teamIds = new Set(teams.map(team => team.id));
+  const governanceRegistry = createFieldDateReminderGovernanceRegistry();
   const seenKeys = new Set<string>();
   let created = 0;
   let refreshed = 0;
@@ -391,7 +471,8 @@ export const syncFieldDateReminderCases = async (
           entity,
           teamIds,
           routing,
-          now
+          now,
+          governanceRegistry
         );
         if (before !== date.value) refreshed++;
         continue;
@@ -410,7 +491,8 @@ export const syncFieldDateReminderCases = async (
           entity,
           teamIds,
           routing,
-          now
+          now,
+          governanceRegistry
         )
       ) {
         created++;
@@ -426,7 +508,8 @@ export const syncFieldDateReminderCases = async (
         workspace,
         current.id,
         'The reminder field is no longer active or has no valid date value',
-        now
+        now,
+        governanceRegistry
       )
     ) {
       cancelled++;
@@ -641,8 +724,15 @@ export const createFieldDateReminderGovernanceRegistry = (): GovernanceRegistry 
             return schema && field ? `${schema.name} · ${field.name}` : subkind;
           }
         },
-        subjectVisible: async (db, _authCtx, workspace, subjectId) =>
-          (await db.catalog.getEntity(workspace, subjectId)) != null,
+        caseVisible: (db, authCtx, caseRow) => canViewFieldDateSubject(db, authCtx, caseRow),
+        subjectVisible: async (db, authCtx, workspace, subjectId) => {
+          const entity = await db.catalog.getEntity(workspace, subjectId);
+          return (
+            entity != null && permissionChecker.hasEntityPermission(authCtx, entity, 'view_entity')
+          );
+        },
+        redactCasePayload: redactFieldDateCasePayload,
+        redactEventMetadata: redactFieldDateEventMetadata,
         resolveReminderWindows: async (db, caseRow) => {
           const schemaId = caseRow.payload['schemaId'];
           const fieldId = caseRow.payload['fieldId'];

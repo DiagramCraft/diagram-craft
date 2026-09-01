@@ -15,6 +15,10 @@ import {
 } from '../auth/fieldGroupAccessControl';
 import { getEntitySchemaAt, getRelationSchemaAt } from '../catalog/schemaHistory';
 import type { RelationAuditContext } from '../catalog/relationHelpers';
+import {
+  createGovernanceRegistry,
+  type GovernanceRegistry
+} from '../governance/governanceRegistry';
 import { UnsafeOutboundHostError } from './webhookRequest';
 import { sendWebhookRequest } from './webhookRequest';
 
@@ -236,7 +240,8 @@ export const enqueueGovernanceWebhookDeliveries = async (
   db: DatabaseAdapter,
   caseRow: GovernanceCaseDbResult,
   event: GovernanceEventDbResult,
-  external: boolean
+  external: boolean,
+  registry: GovernanceRegistry = createGovernanceRegistry()
 ) => {
   const operation = governanceWebhookOperation(event.event_type);
   if (!operation) return 0;
@@ -248,6 +253,16 @@ export const enqueueGovernanceWebhookDeliveries = async (
 
   const assignmentId =
     typeof event.metadata['assignmentId'] === 'string' ? event.metadata['assignmentId'] : null;
+  const caseConfig = registry.get(caseRow.case_kind);
+  const eventMetadata = caseConfig?.redactEventMetadata
+    ? await caseConfig.redactEventMetadata({
+        db,
+        authCtx: null,
+        caseRow,
+        event,
+        mode: 'outbound'
+      })
+    : event.metadata;
   const webhookEvent: WebhookEvent = {
     version: '1',
     id: event.id,
@@ -275,7 +290,7 @@ export const enqueueGovernanceWebhookDeliveries = async (
         previous_status: event.previous_status,
         resulting_status: event.resulting_status,
         reason: event.reason,
-        metadata: event.metadata
+        metadata: eventMetadata
       },
       assignment_id: assignmentId
     }
