@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { TbPlus, TbX } from 'react-icons/tb';
+import { TbMinus, TbPlus, TbX } from 'react-icons/tb';
 import type { PathStep, QueryNode } from '@arch-register/api-types/entityQueryIR';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
 import {
@@ -187,12 +187,7 @@ export const QueryGroup = ({
           </button>
         </div>
         {onRemove && (!isRoot || forceHeader) && (
-          <button
-            type="button"
-            className={styles.removeBtn}
-            title={removeTitle}
-            onClick={onRemove}
-          >
+          <button type="button" className={styles.removeBtn} title={removeTitle} onClick={onRemove}>
             <TbX size={11} />
           </button>
         )}
@@ -271,8 +266,17 @@ export const QueryNodeView = ({
   const leafFields =
     allowFreeTextField || content.kind === 'freeText' ? [FREE_TEXT_FIELD, ...fields] : fields;
 
+  // A traversal leaf renders as a tall multi-row rail; keep the NOT toggle up by the first hop
+  // rather than centred against the whole block.
+  const isTallLeaf =
+    leafCtx.rootKind === 'entity' &&
+    !isGroupNode(content) &&
+    content.kind !== 'freeText' &&
+    leafPath(content).length > 0 &&
+    isPathVisuallyEditable(leafPath(content));
+
   return (
-    <div className={styles.row}>
+    <div className={isTallLeaf ? `${styles.row} ${styles.rowTall}` : styles.row}>
       <div className={styles.rowCtls}>
         <NotToggle active={negated} onClick={toggleNegate} />
       </div>
@@ -594,6 +598,14 @@ export const QueryLeaf = ({
 
   return (
     <div className={styles.traversalLeaf}>
+      <button
+        type="button"
+        className={styles.traversalRemove}
+        title="Remove condition"
+        onClick={onRemove}
+      >
+        <TbX size={11} />
+      </button>
       {/* The hop chain is a vertical list, not a "a › b › c" row, so each hop's optional "where"
           filter can render directly beneath the hop it belongs to rather than in a detached stack
           - the wiring the user has to follow stays local even for a 3-hop path with two filters. */}
@@ -610,7 +622,6 @@ export const QueryLeaf = ({
             });
             const scope = scopeAfterHop(depth);
             const scopeOpen = openScopes.has(depth) || ('filter' in step && !!step.filter);
-            const isLast = depth === path.length - 1;
             return (
               <div key={depth} className={styles.hopBranch}>
                 <div className={styles.hopRow}>
@@ -629,21 +640,8 @@ export const QueryLeaf = ({
                     aria-pressed={scopeOpen}
                     onClick={() => toggleScope(depth)}
                   >
-                    where
+                    [...]
                   </button>
-                  {isLast && (
-                    <button
-                      type="button"
-                      className={styles.hopRm}
-                      title="Remove hop"
-                      onClick={() => {
-                        closeScope(depth);
-                        editPath(path.slice(0, -1));
-                      }}
-                    >
-                      <TbX size={11} />
-                    </button>
-                  )}
                 </div>
 
                 {scopeOpen && (
@@ -664,11 +662,26 @@ export const QueryLeaf = ({
             );
           })}
 
-          {!atHopLimit && nextHopContext.options.length > 0 && (
-            <button type="button" className={styles.hopAdd} onClick={addHop}>
-              <TbPlus size={11} /> hop
-            </button>
-          )}
+          <div className={styles.hopAddRow}>
+            {!atHopLimit && nextHopContext.options.length > 0 && (
+              <button type="button" className={styles.hopAdd} onClick={addHop}>
+                <TbPlus size={11} /> hop
+              </button>
+            )}
+            {path.length > 0 && (
+              <button
+                type="button"
+                className={styles.hopAdd}
+                title="Remove the last hop"
+                onClick={() => {
+                  closeScope(path.length - 1);
+                  editPath(path.slice(0, -1));
+                }}
+              >
+                <TbMinus size={11} /> hop
+              </button>
+            )}
+          </div>
         </div>
 
         <div className={styles.railSegment}>
@@ -679,24 +692,16 @@ export const QueryLeaf = ({
                 className={node.kind === 'predicate' ? styles.matchOn : styles.matchOff}
                 onClick={() => onChange(asFieldPredicate(node))}
               >
-                has a field
+                Has a field valued
               </button>
               <button
                 type="button"
                 className={node.kind === 'relationExists' ? styles.matchOn : styles.matchOff}
                 onClick={() => onChange(asRelationExists(node))}
               >
-                just exists
+                Exists
               </button>
             </div>
-            <button
-              type="button"
-              className={styles.removeBtn}
-              title="Remove condition"
-              onClick={onRemove}
-            >
-              <TbX size={11} />
-            </button>
           </div>
         </div>
 

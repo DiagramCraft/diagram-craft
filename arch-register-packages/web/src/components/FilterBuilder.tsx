@@ -469,13 +469,13 @@ export const FilterRow = ({
             isNowDateLiteral(condition.value) ? (
               <div className={styles.relativeDateRow}>
                 <span>Today</span>
-                <input
+                <TextInput
                   type="number"
-                  step="1"
-                  className={styles.relativeDateOffset}
-                  value={condition.value.offsetDays ?? 0}
-                  onChange={e => {
-                    const offsetDays = Number(e.target.value);
+                  step={1}
+                  style={{ width: '4rem' }}
+                  value={String(condition.value.offsetDays ?? 0)}
+                  onChange={v => {
+                    const offsetDays = Number(v);
                     onUpdate({
                       value: {
                         $now: true,

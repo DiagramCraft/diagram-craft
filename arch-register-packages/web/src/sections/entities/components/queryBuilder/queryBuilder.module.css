@@ -3,7 +3,7 @@
 .container {
   display: flex;
   flex-direction: column;
-  width: 520px;
+  width: min(680px, 92vw);
   max-height: min(70vh, 620px);
   overflow-y: auto;
   font-family: var(--font-sans);
@@ -39,9 +39,24 @@
 }
 
 /* ── Groups ── */
+/* The root conditions get the same card treatment as a nested group, just neutral - a subtle
+   hairline border, no accent bar, no background wash - so a single flat query still reads as
+   "a group" and lines up with the nested-group cards. */
 .rootGroup {
   display: flex;
   flex-direction: column;
+  border: 1px solid var(--panel-border);
+  border-left: 3px solid var(--cmp-fg-disabled);
+  border-radius: var(--r);
+  margin: 8px 12px;
+}
+
+/* A scoped-filter panel already provides its own card (`.scopedFilter`), so the QueryGroup it
+   renders at `path: []` drops the wrapper. */
+.scopedFilter > .rootGroup {
+  border: none;
+  border-radius: 0;
+  margin: 0;
 }
 
 .nestedGroup {
@@ -85,7 +100,8 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 6px 8px;
-  padding: 6px 10px;
+  /* right padding matches .row so the header's remove-x lines up with the rows' remove-x */
+  padding: 6px 12px;
   border-bottom: 1px solid var(--panel-border);
 }
 
@@ -94,10 +110,6 @@
   display: flex;
   gap: 10px;
   margin-left: 2px;
-}
-
-.nestedGroup > .groupHeader {
-  border-bottom-color: color-mix(in srgb, var(--nest-accent) 20%, var(--panel-border));
 }
 
 .matchToggle {
@@ -152,6 +164,15 @@
 
 .row:last-child {
   border-bottom: none;
+}
+
+/* Traversal leaf: tall multi-row content - keep the NOT toggle near the first hop, not centred. */
+.rowTall {
+  align-items: flex-start;
+}
+
+.rowTall > .rowCtls {
+  padding-top: 6px;
 }
 
 /* A nested group is a floating card and carries no bottom divider of its own, so a row placed
@@ -218,12 +239,21 @@
 
 /* ── Traversal leaf: hop editor + terminal field / exists ── */
 .traversalLeaf {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 8px;
   flex: 1;
   min-width: 0;
   padding: 4px 0;
+}
+
+/* Remove-condition x, top-right - lines up with the flat rows' own remove x. */
+.traversalRemove {
+  composes: removeBtn;
+  position: absolute;
+  top: 2px;
+  right: 0;
 }
 
 /* .traversalHead / .hop / .projectionTerminal are used by the horizontal HopSequence editor in
@@ -258,6 +288,8 @@
   gap: 8px;
   margin-left: 3px;
   padding-left: 9px;
+  /* keep clear of the absolutely-positioned remove-condition x at the top-right */
+  padding-right: 22px;
 }
 
 .railSegment {
@@ -292,8 +324,12 @@
   background: var(--panel-border);
 }
 
+.hopAddRow {
+  display: flex;
+  gap: 14px;
+}
+
 .hopAdd {
-  align-self: flex-start;
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -402,6 +438,11 @@
 }
 
 /* ── Columns / projections ── */
+/* Section label above the boolean-tree card, matching the Type / Columns / Query labels. */
+.filtersHeader {
+  padding: 10px 12px 0;
+}
+
 .columns {
   display: flex;
   flex-direction: column;

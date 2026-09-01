@@ -199,6 +199,9 @@ export const QueryBuilder = ({
         </div>
       )}
 
+      <div className={styles.filtersHeader}>
+        <span className={styles.previewLabel}>Filters</span>
+      </div>
       <QueryGroup
         root={editableTree.root}
         path={[]}
