@@ -1,63 +1,257 @@
-import { TbX } from 'react-icons/tb';
-import type { QueryNode } from '@arch-register/api-types/entityQueryIR';
+import { TbArrowRight, TbX } from 'react-icons/tb';
+import type { PathStep, QueryNode } from '@arch-register/api-types/entityQueryIR';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
-import { FilterRow, type FieldDef } from '../../../../components/FilterBuilder';
-import { pathStepSummary } from './pathSummary';
+import {
+  FilterRow,
+  getEntityFilterFieldDefs,
+  type FieldDef
+} from '../../../../components/FilterBuilder';
+import { HopPicker } from '../pathBuilder/HopPicker';
+import { HopSequence } from '../pathBuilder/HopSequence';
+import {
+  pathStepContext,
+  pathStepContextWithFallbackDirection,
+  pathStepOptions,
+  pruneInvalidPathSteps
+} from '../pathBuilder/pathBuilderState';
+import {
+  asFieldPredicate,
+  asRelationExists,
+  leafPath,
+  singleTerminalSchemaId,
+  terminalSchemaScope,
+  withLeafPath
+} from './leafPath';
+import type { LeafContext } from './types';
 import styles from './queryBuilder.module.css';
 
 type LeafNode = Exclude<QueryNode, { kind: 'and' | 'or' | 'not' }>;
 
 type QueryLeafProps = {
   node: LeafNode;
+  /** Field defs for a flat (`path: []`) predicate on the root entity. */
   fields: FieldDef[];
+  leafCtx: LeafContext;
   onChange: (node: QueryNode) => void;
   onRemove: () => void;
 };
 
 /**
  * One terminal condition. A flat `predicate` (`path: []`) is the reused `FilterRow` from
- * `FilterBuilder`. Predicates that traverse relations, `relationExists`, and stray `freeText`
- * nodes render as a read-only summary for now - editing those visually lands with the traversal
- * phase (#2354, plan phase 5); until then they round-trip untouched and stay editable in Advanced
- * text mode.
+ * `FilterBuilder`, with an affordance to send it through a relation. A predicate with a traversal
+ * `path`, or a `relationExists`, renders the shared `pathBuilder` hop editor plus a terminal
+ * field / "just exists" choice (#2354, plan phase 5). Same-instance scoped filters (`[...]`) and
+ * relation-context step kinds are still text-only (phases 6-7) and render as a read-only summary.
  */
-export const QueryLeaf = ({ node, fields, onChange, onRemove }: QueryLeafProps) => {
-  if (node.kind === 'predicate' && node.path.length === 0) {
-    const condition: FilterCondition = { fieldId: node.fieldId, op: node.op, value: node.value };
+export const QueryLeaf = ({ node, fields, leafCtx, onChange, onRemove }: QueryLeafProps) => {
+  const { schemas, relationSchemas, enums, lifecycleStates, owners, joinedAssessment, atHopLimit } =
+    leafCtx;
+  const getFieldGroupAccess = leafCtx.getFieldGroupAccess;
+  const rootSchemaScope = leafCtx.rootSchemaScope;
+
+  if (node.kind === 'freeText') {
     return (
-      <FilterRow
-        condition={condition}
-        fields={fields}
-        onUpdate={updates => onChange({ ...node, ...updates })}
-        onRemove={onRemove}
-      />
+      <div className={styles.advancedLeaf}>
+        <span className={styles.advancedLeafText}>{`text contains "${node.value}"`}</span>
+        <button type="button" className={styles.removeBtn} title="Remove" onClick={onRemove}>
+          <TbX size={11} />
+        </button>
+      </div>
     );
   }
 
-  const summary =
-    node.kind === 'freeText'
-      ? `text contains "${node.value}"`
-      : node.kind === 'relationExists'
-        ? `${pathStepSummary(node.path)} exists`
-        : `${pathStepSummary(node.path)} · ${node.fieldId} ${node.op}${
-            node.op === 'empty' || node.op === 'not_empty' ? '' : ` ${formatValue(node.value)}`
-          }`;
+  const path = leafPath(node);
+
+  // A traversal step this editor doesn't own yet (scoped `[...]` filter, or a relation-context
+  // kind) - keep it read-only rather than dropping data the user can't see.
+  const pathIsEditable = path.every(
+    step =>
+      (step.kind === 'forward' ||
+        step.kind === 'backward' ||
+        step.kind === 'typedRelation' ||
+        step.kind === 'unboundTypedRelation') &&
+      !step.filter
+  );
+
+  if (path.length > 0 && !pathIsEditable) {
+    return (
+      <div className={styles.advancedLeaf}>
+        <span className={styles.advancedLeafText}>
+          {node.kind === 'relationExists' ? 'related record exists' : `related · ${node.fieldId}`}
+        </span>
+        <span className={styles.advancedLeafBadge}>text-only</span>
+        <button type="button" className={styles.removeBtn} title="Remove" onClick={onRemove}>
+          <TbX size={11} />
+        </button>
+      </div>
+    );
+  }
+
+  const editPath = (nextPath: PathStep[]) => {
+    const pruned = pruneInvalidPathSteps(nextPath, {
+      rootSchemaScope,
+      schemas,
+      relationSchemas,
+      getFieldGroupAccess
+    });
+    onChange(withLeafPath(node, pruned));
+  };
+
+  const changeStep = (depth: number, next: PathStep) =>
+    editPath(path.map((step, index) => (index === depth ? next : step)));
+
+  const toggleStepDirection = (depth: number, direction: 'in' | 'out') => {
+    const ctx = pathStepContext({
+      rootSchemaScope,
+      steps: path,
+      depth,
+      schemas,
+      relationSchemas,
+      getFieldGroupAccess
+    });
+    const options =
+      direction === ctx.direction
+        ? ctx.options
+        : pathStepOptions({
+            direction,
+            currentSchemaScope: ctx.currentSchemaScope,
+            schemas,
+            relationSchemas,
+            getFieldGroupAccess
+          });
+    if (options[0]) changeStep(depth, options[0].step);
+  };
+
+  const nextHopContext = pathStepContextWithFallbackDirection({
+    rootSchemaScope,
+    steps: path,
+    depth: path.length,
+    schemas,
+    relationSchemas,
+    getFieldGroupAccess
+  });
+  const addHop = () => {
+    if (nextHopContext.options[0]) editPath([...path, nextHopContext.options[0].step]);
+  };
+
+  // Flat predicate: the row exactly as `FilterBuilder` renders it, plus a "via a related record"
+  // link that converts it into a one-hop traversal predicate.
+  if (node.kind === 'predicate' && path.length === 0) {
+    const condition: FilterCondition = { fieldId: node.fieldId, op: node.op, value: node.value };
+    return (
+      <div className={styles.leafFlat}>
+        <FilterRow
+          condition={condition}
+          fields={fields}
+          onUpdate={updates => onChange({ ...node, ...updates })}
+          onRemove={onRemove}
+        />
+        {!atHopLimit && nextHopContext.options.length > 0 && (
+          <button
+            type="button"
+            className={styles.viaRelation}
+            title="Match a field on a related record instead"
+            onClick={addHop}
+          >
+            <TbArrowRight size={11} /> via a related record
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  const terminalScope = terminalSchemaScope(path, {
+    rootSchemaScope,
+    schemas,
+    relationSchemas,
+    getFieldGroupAccess
+  });
+  const terminalFields = getEntityFilterFieldDefs({
+    schemas,
+    lifecycleStates,
+    owners,
+    enums,
+    selectedSchemaId: singleTerminalSchemaId(terminalScope),
+    joinedAssessment,
+    getFieldGroupAccess
+  });
 
   return (
-    <div className={styles.advancedLeaf}>
-      <span className={styles.advancedLeafText} title={summary}>
-        {summary}
-      </span>
-      <span className={styles.advancedLeafBadge}>text-only</span>
-      <button type="button" className={styles.removeBtn} title="Remove" onClick={onRemove}>
-        <TbX size={11} />
-      </button>
+    <div className={styles.traversalLeaf}>
+      <div className={styles.traversalHead}>
+        <HopSequence
+          items={path}
+          getItemKey={(_step, depth) => depth}
+          onAdd={addHop}
+          addLabel="hop"
+          addDisabled={atHopLimit || nextHopContext.options.length === 0}
+          renderItem={(step, depth) => {
+            const stepContext = pathStepContext({
+              rootSchemaScope,
+              steps: path,
+              depth,
+              schemas,
+              relationSchemas,
+              getFieldGroupAccess
+            });
+            return (
+              <div className={styles.hop}>
+                <HopPicker
+                  step={step}
+                  stepContext={stepContext}
+                  ariaLabelDirection={`Direction for hop ${depth + 1}`}
+                  ariaLabelHop={`Relation for hop ${depth + 1}`}
+                  onChangeStep={next => changeStep(depth, next)}
+                  onToggleDirection={direction => toggleStepDirection(depth, direction)}
+                />
+                {depth === path.length - 1 && (
+                  <button
+                    type="button"
+                    className={styles.hopRm}
+                    title="Remove hop"
+                    onClick={() => editPath(path.slice(0, -1))}
+                  >
+                    <TbX size={11} />
+                  </button>
+                )}
+              </div>
+            );
+          }}
+        />
+        <button type="button" className={styles.removeBtn} title="Remove condition" onClick={onRemove}>
+          <TbX size={11} />
+        </button>
+      </div>
+
+      <div className={styles.traversalTerminal}>
+        <div className={styles.matchToggle}>
+          <button
+            type="button"
+            className={node.kind === 'predicate' ? styles.matchOn : styles.matchOff}
+            onClick={() => onChange(asFieldPredicate(node))}
+          >
+            has a field
+          </button>
+          <button
+            type="button"
+            className={node.kind === 'relationExists' ? styles.matchOn : styles.matchOff}
+            onClick={() => onChange(asRelationExists(node))}
+          >
+            just exists
+          </button>
+        </div>
+
+        {node.kind === 'predicate' ? (
+          <FilterRow
+            condition={{ fieldId: node.fieldId, op: node.op, value: node.value }}
+            fields={terminalFields}
+            onUpdate={updates => onChange({ ...node, ...updates })}
+            onRemove={onRemove}
+          />
+        ) : (
+          <span className={styles.matchHint}>the related record only has to exist</span>
+        )}
+      </div>
     </div>
   );
-};
-
-const formatValue = (value: unknown): string => {
-  if (value == null) return '';
-  if (typeof value === 'object') return JSON.stringify(value);
-  return String(value);
 };

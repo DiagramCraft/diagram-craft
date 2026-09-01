@@ -203,6 +203,83 @@
   color: var(--base-fg);
 }
 
+/* ── Flat leaf: FilterRow + "via a related record" ── */
+.leafFlat {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.viaRelation {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font: inherit;
+  font-size: 10.5px;
+  color: var(--cmp-fg-disabled);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.viaRelation:hover {
+  color: var(--base-fg);
+}
+
+/* ── Traversal leaf: hop editor + terminal field / exists ── */
+.traversalLeaf {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  padding: 4px 0;
+}
+
+.traversalHead {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.hop {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.hopRm {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--r);
+  border: none;
+  background: transparent;
+  color: var(--cmp-fg-disabled);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.hopRm:hover {
+  background: var(--cmp-bg-hover);
+  color: var(--base-fg);
+}
+
+.traversalTerminal {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  padding-left: 1.5rem;
+}
+
 /* ── Read-only advanced leaves ── */
 .advancedLeaf {
   display: flex;

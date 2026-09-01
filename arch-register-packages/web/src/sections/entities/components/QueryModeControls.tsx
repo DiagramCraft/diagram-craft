@@ -13,6 +13,7 @@ import type {
 import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 import type { Assessment } from '@arch-register/api-types/assessmentContract';
 import { useWorkspaceAuthorization } from '../../../auth/WorkspaceAuthorizationContext';
+import { useRelationSchemas } from '../../../hooks/useRelationSchemas';
 import { SearchInput } from '../../../components/SearchInput';
 import { FilterBuilder } from '../../../components/FilterBuilder';
 import { QueryBuilder } from './queryBuilder/QueryBuilder';
@@ -103,6 +104,7 @@ export const QueryModeControls = (props: QueryModeControlsProps) => {
   const parseText = useParseEntityQueryText(workspaceId);
   const printText = usePrintEntityQueryText(workspaceId);
   const { getFieldGroupAccess } = useWorkspaceAuthorization(workspaceId);
+  const { data: relationSchemas = [] } = useRelationSchemas(workspaceId, !!setEntityQuery);
 
   const printMutate = printText.mutateAsync;
 
@@ -258,6 +260,7 @@ export const QueryModeControls = (props: QueryModeControlsProps) => {
             query={canonical}
             onChange={setEntityQuery}
             schemas={schemas}
+            relationSchemas={relationSchemas}
             lifecycleStates={lifecycleStates}
             owners={owners}
             enums={enums}

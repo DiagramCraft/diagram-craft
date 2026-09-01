@@ -526,10 +526,12 @@
           browser views provide a progressive filter builder popover (available alongside the multi-select sidebar
           facets in both modes) plus a Simple/Advanced toggle that switches the adjacent input between a plain
           free-text search box and a single text query parsed against the entity query language. The filter builder
-          opens as a flat list of conditions and grows in place into Any/All groups and negation, reading and writing
-          the same structured query as the Advanced text field with no lossy conversion between them; an empty group
-          is treated as no filter rather than matching nothing. A query that uses relation traversal or projection
-          columns opens with the Advanced text field shown until the corresponding visual editors are available. A field in a schema group the user cannot view is offered nowhere as a
+          opens as a flat list of conditions and grows in place into Any/All groups, negation, and relation traversal
+          (a per-condition hop chain that ends either on a field of the related record or on a bare "the related record
+          exists" check), reading and writing the same structured query as the Advanced text field with no lossy
+          conversion between them; an empty group is treated as no filter rather than matching nothing. A query that
+          uses same-instance scoped relation filters, relation-rooted traversal, or projection columns opens with the
+          Advanced text field shown until the corresponding visual editors are available. A field in a schema group the user cannot view is offered nowhere as a
           filter/sort option and is treated as unrecognized if referenced directly in an Advanced-mode query,
           matching how the field is hidden elsewhere. Advanced queries can traverse typed relations and filter or
           project their scalar relation fields; entity-valued relation fields are deferred to follow-up issue #2670.

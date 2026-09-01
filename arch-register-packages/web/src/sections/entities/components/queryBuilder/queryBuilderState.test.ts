@@ -8,6 +8,7 @@ import {
   exceedsHopBudget,
   fromEditableRoot,
   getNode,
+  isVisuallyEditable,
   removeNode,
   setGroupKind,
   toEditableRoot,
@@ -186,6 +187,81 @@ describe('countHops / MAX_PATH_HOPS budget', () => {
       ]
     };
     expect(countHops(q)).toBe(2);
+  });
+});
+
+describe('isVisuallyEditable', () => {
+  it('accepts a flat boolean tree of predicates and free text', () => {
+    expect(
+      isVisuallyEditable(
+        query({
+          kind: 'and',
+          children: [predicate('a'), { kind: 'not', child: predicate('b') }, { kind: 'freeText', value: 'x' }]
+        })
+      )
+    ).toBe(true);
+  });
+
+  it('accepts entity-to-entity relation traversal and relationExists', () => {
+    expect(
+      isVisuallyEditable(
+        query({
+          kind: 'and',
+          children: [
+            {
+              kind: 'predicate',
+              path: [
+                { kind: 'forward', fieldId: 'system' },
+                { kind: 'typedRelation', fieldId: 'depends_on', relationSchemaId: 'r', direction: 'out', ownerSchemaIds: ['system'] }
+              ],
+              fieldId: '_name',
+              op: 'equals',
+              value: 'x'
+            },
+            { kind: 'relationExists', path: [{ kind: 'backward', fieldId: 'component', ownerSchemaId: 'component' }] }
+          ]
+        })
+      )
+    ).toBe(true);
+  });
+
+  it('rejects a scoped [...] filter on a hop (phase 6)', () => {
+    expect(
+      isVisuallyEditable(
+        query({
+          kind: 'and',
+          children: [
+            {
+              kind: 'relationExists',
+              path: [
+                {
+                  kind: 'forward',
+                  fieldId: 'technology_releases',
+                  filter: { kind: 'predicate', path: [], fieldId: '_slug', op: 'equals', value: 'go' }
+                }
+              ]
+            }
+          ]
+        })
+      )
+    ).toBe(false);
+  });
+
+  it('rejects relation-context step kinds and projections', () => {
+    expect(
+      isVisuallyEditable(
+        query({
+          kind: 'and',
+          children: [{ kind: 'relationExists', path: [{ kind: 'endpoint', direction: 'out' }] }]
+        })
+      )
+    ).toBe(false);
+    expect(
+      isVisuallyEditable({
+        root: emptyGroup('and'),
+        projections: [{ path: [{ kind: 'forward', fieldId: 'system' }], fieldId: '_name' }]
+      })
+    ).toBe(false);
   });
 });
 

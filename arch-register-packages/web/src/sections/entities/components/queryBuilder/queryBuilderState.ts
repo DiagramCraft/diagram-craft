@@ -179,6 +179,16 @@ export const countHops = (query: EntityQuery): number => {
 
 export const exceedsHopBudget = (query: EntityQuery): boolean => countHops(query) > MAX_PATH_HOPS;
 
+/** A hop the visual builder can edit in place: entity-to-entity kinds only, and no same-instance
+ *  scoped `[...]` filter yet (plan phase 6). Relation-context kinds (endpoint / relationForward /
+ *  relationBackward) and scoped filters keep their query in Advanced text mode. */
+const stepIsVisuallyEditable = (step: PathStep): boolean =>
+  (step.kind === 'forward' ||
+    step.kind === 'backward' ||
+    step.kind === 'typedRelation' ||
+    step.kind === 'unboundTypedRelation') &&
+  !step.filter;
+
 const nodeIsVisuallyEditable = (node: QueryNode): boolean => {
   switch (node.kind) {
     case 'and':
@@ -187,10 +197,9 @@ const nodeIsVisuallyEditable = (node: QueryNode): boolean => {
     case 'not':
       return nodeIsVisuallyEditable(node.child);
     case 'predicate':
-      // Traversal predicates are shown read-only until the traversal editor lands (plan phase 5).
-      return node.path.length === 0;
+      return node.path.every(stepIsVisuallyEditable);
     case 'relationExists':
-      return false;
+      return node.path.length > 0 && node.path.every(stepIsVisuallyEditable);
     case 'freeText':
       return true;
     default:

@@ -26,7 +26,16 @@ const mockSchemas: EntitySchema[] = [
     updated_at: '2024-01-01T00:00:00Z',
     fields: [
       { id: 'release_cycle', name: 'Release cycle', type: 'text' },
-      { id: 'radar_status', name: 'Radar status', type: 'select', enumId: 'radar', options: [] }
+      { id: 'radar_status', name: 'Radar status', type: 'select', enumId: 'radar', options: [] },
+      {
+        id: 'system',
+        name: 'System',
+        type: 'reference',
+        schemaId: 'system',
+        predicate: 'runs on',
+        minCount: 0,
+        maxCount: 1
+      }
     ],
     templates: [],
     groups: []
@@ -44,7 +53,35 @@ const mockSchemas: EntitySchema[] = [
     version: 1,
     created_at: '2024-01-01T00:00:00Z',
     updated_at: '2024-01-01T00:00:00Z',
-    fields: [{ id: 'tier', name: 'Tier', type: 'text' }],
+    fields: [
+      { id: 'tier', name: 'Tier', type: 'text' },
+      {
+        id: 'domain',
+        name: 'Domain',
+        type: 'reference',
+        schemaId: 'domain',
+        predicate: 'belongs to',
+        minCount: 0,
+        maxCount: 1
+      }
+    ],
+    templates: [],
+    groups: []
+  },
+  {
+    id: 'domain',
+    workspace: 'test',
+    name: 'Domain',
+    category: null,
+    description: 'Domain schema',
+    key_prefix: 'DOM',
+    icon: 'globe',
+    color: '#14b8a6',
+    entity_count: 0,
+    version: 1,
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2024-01-01T00:00:00Z',
+    fields: [{ id: 'portfolio', name: 'Portfolio', type: 'text' }],
     templates: [],
     groups: []
   }

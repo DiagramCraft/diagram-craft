@@ -3,6 +3,7 @@ import { TbAlertTriangle } from 'react-icons/tb';
 import { Select } from '@diagram-craft/app-components/Select';
 import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
+import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import type {
   WorkspaceLifecycleState,
   WorkspaceOwnerOption
@@ -31,6 +32,7 @@ export type QueryBuilderProps = {
    *  once relation-context path steps land (#2354, plan phase 7). */
   rootKind?: 'entity' | 'relation';
   schemas: EntitySchema[];
+  relationSchemas?: RelationSchema[];
   lifecycleStates: WorkspaceLifecycleState[];
   owners: WorkspaceOwnerOption[];
   enums: WorkspaceEnum[];
@@ -59,6 +61,7 @@ export const QueryBuilder = ({
   query,
   onChange,
   schemas,
+  relationSchemas = [],
   lifecycleStates,
   owners,
   enums,
@@ -69,6 +72,30 @@ export const QueryBuilder = ({
 }: QueryBuilderProps) => {
   const editable = useMemo(() => toEditableRoot(query), [query]);
   const freeText = getFreeTextQuery(query);
+
+  const leafCtx = useMemo(
+    () => ({
+      schemas,
+      relationSchemas,
+      enums,
+      lifecycleStates,
+      owners,
+      joinedAssessment,
+      getFieldGroupAccess,
+      rootSchemaScope: query.schemaId ? [query.schemaId] : ('any' as const),
+      atHopLimit: countHops(query) >= MAX_PATH_HOPS
+    }),
+    [
+      schemas,
+      relationSchemas,
+      enums,
+      lifecycleStates,
+      owners,
+      joinedAssessment,
+      getFieldGroupAccess,
+      query
+    ]
+  );
 
   const fields = useMemo(
     () =>
@@ -126,7 +153,13 @@ export const QueryBuilder = ({
         )}
       </div>
 
-      <QueryGroup root={editable.root} path={[]} onRootChange={emit} fields={fields} />
+      <QueryGroup
+        root={editable.root}
+        path={[]}
+        onRootChange={emit}
+        fields={fields}
+        leafCtx={leafCtx}
+      />
 
       {overBudget && (
         <div className={styles.warn}>

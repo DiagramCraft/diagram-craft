@@ -14,12 +14,14 @@ import {
 } from './queryBuilderState';
 import type { NodePath } from './queryBuilderState';
 import { QueryLeaf } from './QueryLeaf';
+import type { LeafContext } from './types';
 import styles from './queryBuilder.module.css';
 
 type SharedProps = {
   root: QueryNode;
   onRootChange: (root: QueryNode) => void;
   fields: FieldDef[];
+  leafCtx: LeafContext;
 };
 
 const NotToggle = ({ active, onClick }: { active: boolean; onClick: () => void }) => (
@@ -45,6 +47,7 @@ export const QueryGroup = ({
   path,
   onRootChange,
   fields,
+  leafCtx,
   depth = 0,
   negated = false,
   onToggleNegate,
@@ -111,6 +114,7 @@ export const QueryGroup = ({
             slotPath={[...path, index]}
             onRootChange={onRootChange}
             fields={fields}
+            leafCtx={leafCtx}
             depth={depth}
           />
         ))}
@@ -154,6 +158,7 @@ export const QueryNodeView = ({
   slotPath,
   onRootChange,
   fields,
+  leafCtx,
   depth
 }: SharedProps & { slotPath: NodePath; depth: number }) => {
   const slotNode = getNode(root, slotPath);
@@ -178,6 +183,7 @@ export const QueryNodeView = ({
         path={contentPath}
         onRootChange={onRootChange}
         fields={fields}
+        leafCtx={leafCtx}
         depth={depth + 1}
         negated={negated}
         onToggleNegate={toggleNegate}
@@ -194,6 +200,7 @@ export const QueryNodeView = ({
       <QueryLeaf
         node={content}
         fields={fields}
+        leafCtx={leafCtx}
         onChange={next => onRootChange(updateNode(root, contentPath, () => next))}
         onRemove={remove}
       />
