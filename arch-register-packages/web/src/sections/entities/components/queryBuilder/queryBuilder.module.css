@@ -213,6 +213,7 @@
   padding: 4px 0;
 }
 
+/* .traversalHead / .hop are still used by the horizontal HopSequence in ProjectionEditor. */
 .traversalHead {
   display: flex;
   align-items: flex-start;
@@ -223,6 +224,59 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
+}
+
+/* Vertical hop chain for a traversal condition: one hop per row, its "where" filter nested
+   directly beneath it, all hanging off a left rail so a multi-hop / multi-filter path reads as
+   one connected unit. */
+.hopList {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-left: 3px;
+  padding-left: 9px;
+  border-left: 2px solid var(--panel-border);
+}
+
+.hopBranch {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.hopRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  position: relative;
+}
+
+/* small tick joining each hop row to the rail */
+.hopRow::before {
+  content: "";
+  position: absolute;
+  left: -9px;
+  width: 6px;
+  height: 2px;
+  background: var(--panel-border);
+}
+
+.hopAdd {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font: inherit;
+  font-size: 11px;
+  color: var(--cmp-fg-disabled);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.hopAdd:hover {
+  color: var(--base-fg);
 }
 
 .hopRm {
@@ -252,9 +306,9 @@
   padding-left: 1.5rem;
 }
 
-/* ── Per-hop same-instance [...] scoped filter ── */
+/* ── Per-hop same-instance [...] scoped filter (nested inside its .hopBranch) ── */
 .scopedFilter {
-  margin-left: 1.5rem;
+  margin-left: 0.75rem;
   border: 1px solid var(--panel-border);
   border-left: 3px solid var(--cmp-fg-disabled);
   border-radius: var(--r);

@@ -8,7 +8,6 @@ import {
   type FieldDef
 } from '../../../../components/FilterBuilder';
 import { HopPicker } from '../pathBuilder/HopPicker';
-import { HopSequence } from '../pathBuilder/HopSequence';
 import {
   pathStepContext,
   pathStepContextWithFallbackDirection,
@@ -528,25 +527,25 @@ export const QueryLeaf = ({
 
   return (
     <div className={styles.traversalLeaf}>
-      <div className={styles.traversalHead}>
-        <HopSequence
-          items={path}
-          getItemKey={(_step, depth) => depth}
-          onAdd={addHop}
-          addLabel="hop"
-          addDisabled={atHopLimit || nextHopContext.options.length === 0}
-          renderItem={(step, depth) => {
-            const stepContext = pathStepContext({
-              rootSchemaScope,
-              steps: path,
-              depth,
-              schemas,
-              relationSchemas,
-              getFieldGroupAccess
-            });
-            const scopeOpen = openScopes.has(depth) || ('filter' in step && !!step.filter);
-            return (
-              <div className={styles.hop}>
+      {/* The hop chain is a vertical list, not a "a › b › c" row, so each hop's optional "where"
+          filter can render directly beneath the hop it belongs to rather than in a detached stack
+          - the wiring the user has to follow stays local even for a 3-hop path with two filters. */}
+      <div className={styles.hopList}>
+        {path.map((step, depth) => {
+          const stepContext = pathStepContext({
+            rootSchemaScope,
+            steps: path,
+            depth,
+            schemas,
+            relationSchemas,
+            getFieldGroupAccess
+          });
+          const scope = scopeAfterHop(depth);
+          const scopeOpen = openScopes.has(depth) || ('filter' in step && !!step.filter);
+          const isLast = depth === path.length - 1;
+          return (
+            <div key={depth} className={styles.hopBranch}>
+              <div className={styles.hopRow}>
                 <HopPicker
                   step={step}
                   stepContext={stepContext}
@@ -564,7 +563,7 @@ export const QueryLeaf = ({
                 >
                   where
                 </button>
-                {depth === path.length - 1 && (
+                {isLast && (
                   <button
                     type="button"
                     className={styles.hopRm}
@@ -578,48 +577,41 @@ export const QueryLeaf = ({
                   </button>
                 )}
               </div>
-            );
-          }}
-        />
-        <button
-          type="button"
-          className={styles.removeBtn}
-          title="Remove condition"
-          onClick={onRemove}
-        >
-          <TbX size={11} />
-        </button>
-      </div>
 
-      {path.map((step, depth) => {
-        const open = openScopes.has(depth) || ('filter' in step && !!step.filter);
-        if (!open) return null;
-        const scope = scopeAfterHop(depth);
-        return (
-          <div key={depth} className={styles.scopedFilter}>
-            <div className={styles.scopedFilterHead}>
-              <span>where the {scopeName(scope)} at hop {depth + 1} matches</span>
-              <button
-                type="button"
-                className={styles.hopRm}
-                title="Remove this where-filter"
-                onClick={() => {
-                  setStepFilter(depth, undefined);
-                  closeScope(depth);
-                }}
-              >
-                <TbX size={11} />
-              </button>
+              {scopeOpen && (
+                <div className={styles.scopedFilter}>
+                  <div className={styles.scopedFilterHead}>
+                    <span>where this {scopeName(scope)} matches</span>
+                    <button
+                      type="button"
+                      className={styles.hopRm}
+                      title="Remove this where-filter"
+                      onClick={() => {
+                        setStepFilter(depth, undefined);
+                        closeScope(depth);
+                      }}
+                    >
+                      <TbX size={11} />
+                    </button>
+                  </div>
+                  <ScopedFilterEditor
+                    filter={'filter' in step ? step.filter : undefined}
+                    fields={fieldsForScope(scope)}
+                    leafCtx={{ ...leafCtx, rootSchemaScope: scope }}
+                    onChange={filter => setStepFilter(depth, filter)}
+                  />
+                </div>
+              )}
             </div>
-            <ScopedFilterEditor
-              filter={'filter' in step ? step.filter : undefined}
-              fields={fieldsForScope(scope)}
-              leafCtx={{ ...leafCtx, rootSchemaScope: scope }}
-              onChange={filter => setStepFilter(depth, filter)}
-            />
-          </div>
-        );
-      })}
+          );
+        })}
+
+        {!atHopLimit && nextHopContext.options.length > 0 && (
+          <button type="button" className={styles.hopAdd} onClick={addHop}>
+            <TbPlus size={11} /> hop
+          </button>
+        )}
+      </div>
 
       <div className={styles.traversalTerminal}>
         <div className={styles.matchToggle}>
@@ -650,6 +642,15 @@ export const QueryLeaf = ({
         ) : (
           <span className={styles.matchHint}>the related record only has to exist</span>
         )}
+
+        <button
+          type="button"
+          className={styles.removeBtn}
+          title="Remove condition"
+          onClick={onRemove}
+        >
+          <TbX size={11} />
+        </button>
       </div>
     </div>
   );
