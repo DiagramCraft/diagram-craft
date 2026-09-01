@@ -217,13 +217,38 @@ function nodeIsVisuallyEditable(node: QueryNode): boolean {
 export const isPathVisuallyEditable = (path: PathStep[]): boolean =>
   path.every(stepIsVisuallyEditable);
 
-/** True when every node in `query` is one the visual builder can currently edit in place - a flat
- *  boolean tree of `path: []` predicates plus free-text, with no projections. A query with
- *  relation traversal, `relationExists`, or projection columns is still *displayed* by the builder
- *  (as read-only summaries), but the wiring layer keeps such a query in Advanced text mode so it
- *  stays fully editable. Relaxes as later phases add editors. */
-export const isVisuallyEditable = (query: EntityQuery): boolean =>
-  !query.projections?.length && nodeIsVisuallyEditable(query.root);
+/** A relation-rooted node the lean relation builder can edit: a boolean tree of predicates that
+ *  are either on the relation's own field (`path: []`) or one `endpoint` hop away. */
+const relationNodeIsVisuallyEditable = (node: QueryNode): boolean => {
+  switch (node.kind) {
+    case 'and':
+    case 'or':
+      return node.children.every(relationNodeIsVisuallyEditable);
+    case 'not':
+      return relationNodeIsVisuallyEditable(node.child);
+    case 'predicate':
+      return (
+        node.path.length === 0 ||
+        (node.path.length === 1 && node.path[0]!.kind === 'endpoint')
+      );
+    case 'freeText':
+      return true;
+    default:
+      return false;
+  }
+};
+
+/** True when every node in `query` is one the visual builder can currently edit in place. An
+ *  entity query qualifies with a boolean tree of `path: []` / relation-traversal predicates plus
+ *  free-text; a relation query qualifies with relation-field / single-`endpoint` predicates. A
+ *  query with projection columns, or a shape a later phase still owns, is still *displayed* by the
+ *  builder (read-only summaries) but the wiring layer keeps it in Advanced text mode. */
+export const isVisuallyEditable = (query: EntityQuery): boolean => {
+  if (query.projections?.length) return false;
+  return (query.root_kind ?? 'entity') === 'relation'
+    ? relationNodeIsVisuallyEditable(query.root)
+    : nodeIsVisuallyEditable(query.root);
+};
 
 const countNodeConditions = (node: QueryNode): number => {
   switch (node.kind) {

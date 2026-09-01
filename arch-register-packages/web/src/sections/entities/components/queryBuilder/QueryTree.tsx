@@ -37,6 +37,12 @@ import {
   terminalSchemaScope,
   withLeafPath
 } from './leafPath';
+import {
+  applyRelationLeafUpdate,
+  emptyRelationPredicate,
+  isFlatRelationLeaf,
+  relationLeafCondition
+} from './relationLeaf';
 import type { LeafContext } from './types';
 import styles from './queryBuilder.module.css';
 
@@ -92,7 +98,11 @@ export const QueryGroup = ({
 
   const isRoot = path.length === 0;
   const childCount = node.children.length;
-  const relatedSeed = leafCtx.atHopLimit ? null : firstHopPredicate(leafCtx);
+  const isRelation = leafCtx.rootKind === 'relation';
+  const conditionSeed = isRelation ? emptyRelationPredicate(fields) : emptyPredicate();
+  // Relation-rooted traversal (relationForward / relationBackward) isn't visually editable yet -
+  // no "Add related condition" there.
+  const relatedSeed = isRelation || leafCtx.atHopLimit ? null : firstHopPredicate(leafCtx);
   // The root stays chrome-free while it's a plain flat list; a nested group always shows its
   // header so the user can see they created a group and can set its operator / negation.
   const showHeader = !isRoot;
@@ -153,7 +163,7 @@ export const QueryGroup = ({
         <button
           type="button"
           className={styles.addBtn}
-          onClick={() => onRootChange(addChild(root, path, emptyPredicate()))}
+          onClick={() => onRootChange(addChild(root, path, conditionSeed))}
         >
           <TbPlus size={11} /> Add condition
         </button>
@@ -170,7 +180,7 @@ export const QueryGroup = ({
           type="button"
           className={styles.addBtn}
           onClick={() =>
-            onRootChange(addChild(root, path, { ...emptyGroup('or'), children: [emptyPredicate()] }))
+            onRootChange(addChild(root, path, { ...emptyGroup('or'), children: [conditionSeed] }))
           }
         >
           <TbPlus size={11} /> Add group
@@ -320,6 +330,43 @@ export const QueryLeaf = ({
     return (
       <div className={styles.advancedLeaf}>
         <span className={styles.advancedLeafText}>{`text contains "${node.value}"`}</span>
+        <button type="button" className={styles.removeBtn} title="Remove" onClick={onRemove}>
+          <TbX size={11} />
+        </button>
+      </div>
+    );
+  }
+
+  // Relation-rooted: a flat FilterRow over the relation field list (own + In/Out endpoint) for the
+  // two shapes the lean builder edits; anything deeper stays text-only.
+  if (leafCtx.rootKind === 'relation') {
+    if (node.kind === 'predicate' && isFlatRelationLeaf(node)) {
+      return (
+        <>
+          <FilterRow
+            condition={relationLeafCondition(node)}
+            fields={fields}
+            onUpdate={updates => onChange(applyRelationLeafUpdate(node, updates, fields))}
+            onRemove={onRemove}
+            hideRemove
+          />
+          <button
+            type="button"
+            className={styles.removeBtn}
+            title="Remove condition"
+            onClick={onRemove}
+          >
+            <TbX size={11} />
+          </button>
+        </>
+      );
+    }
+    return (
+      <div className={styles.advancedLeaf}>
+        <span className={styles.advancedLeafText}>
+          {node.kind === 'relationExists' ? 'related record exists' : `traversal · ${node.fieldId}`}
+        </span>
+        <span className={styles.advancedLeafBadge}>text-only</span>
         <button type="button" className={styles.removeBtn} title="Remove" onClick={onRemove}>
           <TbX size={11} />
         </button>

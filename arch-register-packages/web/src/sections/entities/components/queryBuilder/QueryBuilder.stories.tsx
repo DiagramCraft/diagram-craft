@@ -7,6 +7,7 @@ import type {
   WorkspaceOwnerOption
 } from '@arch-register/api-types/workspaceContract';
 import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
+import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import { QueryBuilder } from './QueryBuilder';
 import { pathStepSummary } from './pathSummary';
 
@@ -283,6 +284,72 @@ export const WithTraversalPredicate = () => (
             fieldId: '_name',
             op: 'equals',
             value: 'Platform Engineering'
+          }
+        ]
+      }
+    }}
+  />
+);
+
+const mockRelationSchemas: RelationSchema[] = [
+  {
+    id: 'runs_on',
+    workspace: 'test',
+    name: 'Runs on',
+    category: null,
+    description: '',
+    in: { schemaIds: ['component'] },
+    out: { schemaIds: ['system'] },
+    fields: [
+      { id: 'criticality', name: 'Criticality', type: 'select', enumId: 'radar' } as never
+    ],
+    groups: [],
+    color: null,
+    icon: null,
+    relation_count: 0,
+    version: 1,
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2024-01-01T00:00:00Z'
+  } as RelationSchema
+];
+
+const RelationHarness = ({ initial }: { initial: EntityQuery }) => {
+  const [query, setQuery] = useState<EntityQuery>(initial);
+  return (
+    <div style={{ width: 560, border: '1px solid var(--panel-border, #ddd)', borderRadius: 6 }}>
+      <QueryBuilder
+        rootKind="relation"
+        query={query}
+        onChange={setQuery}
+        schemas={mockSchemas}
+        relationSchemas={mockRelationSchemas}
+        lifecycleStates={mockLifecycleStates}
+        owners={mockOwners}
+        enums={mockEnums}
+        showFreeText={false}
+        textPreview={describe(query)}
+      />
+      <pre style={{ fontSize: 10, padding: 12, margin: 0, whiteSpace: 'pre-wrap' }}>
+        {JSON.stringify(query, null, 2)}
+      </pre>
+    </div>
+  );
+};
+
+export const RelationRooted = () => (
+  <RelationHarness
+    initial={{
+      root_kind: 'relation',
+      root: {
+        kind: 'and',
+        children: [
+          { kind: 'predicate', path: [], fieldId: 'criticality', op: 'equals', value: 'hold' },
+          {
+            kind: 'predicate',
+            path: [{ kind: 'endpoint', direction: 'out' }],
+            fieldId: 'tier',
+            op: 'equals',
+            value: '1'
           }
         ]
       }

@@ -12,6 +12,7 @@ import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 import type { Assessment } from '@arch-register/api-types/assessmentContract';
 import type { FieldGroupAccess, FieldGroupAccessControl } from '@arch-register/permissions';
 import { getEntityFilterFieldDefs } from '../../../../components/FilterBuilder';
+import { getRelationFilterFieldDefs } from '../../../relations/RelationFilterBuilder';
 import { SearchInput } from '../../../../components/SearchInput';
 import { addFreeTextQuery, getFreeTextQuery } from '../entityBrowserState';
 import {
@@ -60,6 +61,7 @@ export type QueryBuilderProps = {
 export const QueryBuilder = ({
   query,
   onChange,
+  rootKind = 'entity',
   schemas,
   relationSchemas = [],
   lifecycleStates,
@@ -72,9 +74,11 @@ export const QueryBuilder = ({
 }: QueryBuilderProps) => {
   const editable = useMemo(() => toEditableRoot(query), [query]);
   const freeText = getFreeTextQuery(query);
+  const isRelation = rootKind === 'relation';
 
   const leafCtx = useMemo(
     () => ({
+      rootKind,
       schemas,
       relationSchemas,
       enums,
@@ -86,6 +90,7 @@ export const QueryBuilder = ({
       atHopLimit: countHops(query) >= MAX_PATH_HOPS
     }),
     [
+      rootKind,
       schemas,
       relationSchemas,
       enums,
@@ -99,16 +104,35 @@ export const QueryBuilder = ({
 
   const fields = useMemo(
     () =>
-      getEntityFilterFieldDefs({
-        schemas,
-        lifecycleStates,
-        owners,
-        enums,
-        selectedSchemaId: query.schemaId ?? null,
-        joinedAssessment,
-        getFieldGroupAccess
-      }),
-    [schemas, lifecycleStates, owners, enums, query.schemaId, joinedAssessment, getFieldGroupAccess]
+      isRelation
+        ? getRelationFilterFieldDefs({
+            relationSchemas,
+            entitySchemas: schemas,
+            enums,
+            owners,
+            lifecycleStates,
+            getFieldGroupAccess
+          })
+        : getEntityFilterFieldDefs({
+            schemas,
+            lifecycleStates,
+            owners,
+            enums,
+            selectedSchemaId: query.schemaId ?? null,
+            joinedAssessment,
+            getFieldGroupAccess
+          }),
+    [
+      isRelation,
+      schemas,
+      relationSchemas,
+      lifecycleStates,
+      owners,
+      enums,
+      query.schemaId,
+      joinedAssessment,
+      getFieldGroupAccess
+    ]
   );
 
   // Structural edits are applied exactly as issued - removing a node removes only that node. An
@@ -121,37 +145,41 @@ export const QueryBuilder = ({
 
   return (
     <div className={styles.container}>
-      <div className={styles.topBar}>
-        <label className={styles.typeLabel}>
-          Type
-          <div className={styles.typeSelect}>
-            <Select.Root
-              value={query.schemaId ?? ANY_TYPE}
-              placeholder="Any type"
-              onChange={value =>
-                onChange({ ...query, schemaId: !value || value === ANY_TYPE ? undefined : value })
-              }
-            >
-              <Select.Item value={ANY_TYPE}>Any type</Select.Item>
-              {schemas.map(schema => (
-                <Select.Item key={schema.id} value={schema.id}>
-                  {schema.name}
-                </Select.Item>
-              ))}
-            </Select.Root>
-          </div>
-        </label>
-        {showFreeText && (
-          <SearchInput
-            size="sm"
-            className={styles.freeText}
-            placeholder="Search text…"
-            value={freeText}
-            onChange={value => onChange(addFreeTextQuery(query, value))}
-            onClear={() => onChange(addFreeTextQuery(query, ''))}
-          />
-        )}
-      </div>
+      {/* The Relations browser has no schema picker (Type is just a `_schemaId` condition) and no
+          free-text-searchable fields, so its builder skips the whole top bar. */}
+      {!isRelation && (
+        <div className={styles.topBar}>
+          <label className={styles.typeLabel}>
+            Type
+            <div className={styles.typeSelect}>
+              <Select.Root
+                value={query.schemaId ?? ANY_TYPE}
+                placeholder="Any type"
+                onChange={value =>
+                  onChange({ ...query, schemaId: !value || value === ANY_TYPE ? undefined : value })
+                }
+              >
+                <Select.Item value={ANY_TYPE}>Any type</Select.Item>
+                {schemas.map(schema => (
+                  <Select.Item key={schema.id} value={schema.id}>
+                    {schema.name}
+                  </Select.Item>
+                ))}
+              </Select.Root>
+            </div>
+          </label>
+          {showFreeText && (
+            <SearchInput
+              size="sm"
+              className={styles.freeText}
+              placeholder="Search text…"
+              value={freeText}
+              onChange={value => onChange(addFreeTextQuery(query, value))}
+              onClear={() => onChange(addFreeTextQuery(query, ''))}
+            />
+          )}
+        </div>
+      )}
 
       <QueryGroup
         root={editable.root}

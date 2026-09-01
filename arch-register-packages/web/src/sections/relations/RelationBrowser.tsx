@@ -78,10 +78,8 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
     entitySchemas,
     enums,
     conditions,
-    setConditions,
     relationQuery,
     setRelationQuery,
-    representable,
     activeSchema,
     relations,
     total,
@@ -351,11 +349,8 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
       <div className={filterStyles.toolbar}>
         <RelationQueryModeControls
           workspaceId={workspaceId}
-          conditions={conditions}
-          setConditions={setConditions}
           relationQuery={relationQuery}
           setRelationQuery={setRelationQuery}
-          representable={representable}
           relationSchemas={relationSchemas}
           entitySchemas={entitySchemas}
           enums={enums}

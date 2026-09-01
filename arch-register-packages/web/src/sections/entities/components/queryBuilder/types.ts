@@ -12,6 +12,10 @@ import type { PathSchemaScope } from '../pathBuilder/pathBuilderState';
 /** Everything a leaf row needs to edit a relation-traversal path and its terminal field, threaded
  *  unchanged from `QueryBuilder` through the group tree (#2354, plan phase 5). */
 export type LeafContext = {
+  /** Whether the query is rooted at an entity or a relation row. Relation-rooted leaves render as
+   *  a flat `FilterRow` over the relation field list (own + In/Out endpoint fields); traversal
+   *  beyond a single endpoint hop is text-only for now (plan phase 7). */
+  rootKind: 'entity' | 'relation';
   schemas: EntitySchema[];
   relationSchemas: RelationSchema[];
   enums: WorkspaceEnum[];

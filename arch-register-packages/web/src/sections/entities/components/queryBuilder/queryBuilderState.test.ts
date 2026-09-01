@@ -272,6 +272,50 @@ describe('isVisuallyEditable', () => {
     ).toBe(false);
   });
 
+  it('accepts a relation-rooted tree of own-field and single-endpoint predicates', () => {
+    expect(
+      isVisuallyEditable({
+        root_kind: 'relation',
+        root: {
+          kind: 'or',
+          children: [
+            { kind: 'predicate', path: [], fieldId: 'classification', op: 'equals', value: 'x' },
+            {
+              kind: 'predicate',
+              path: [{ kind: 'endpoint', direction: 'out' }],
+              fieldId: 'tier',
+              op: 'equals',
+              value: '1'
+            }
+          ]
+        }
+      })
+    ).toBe(true);
+  });
+
+  it('rejects a relation-rooted query with deeper endpoint traversal', () => {
+    expect(
+      isVisuallyEditable({
+        root_kind: 'relation',
+        root: {
+          kind: 'and',
+          children: [
+            {
+              kind: 'predicate',
+              path: [
+                { kind: 'endpoint', direction: 'out' },
+                { kind: 'forward', fieldId: 'domain' }
+              ],
+              fieldId: '_name',
+              op: 'equals',
+              value: 'x'
+            }
+          ]
+        }
+      })
+    ).toBe(false);
+  });
+
   it('rejects relation-context step kinds and projections', () => {
     expect(
       isVisuallyEditable(

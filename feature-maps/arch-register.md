@@ -334,10 +334,12 @@
           becomes its own node, fan-connected to its endpoint entities and to whatever entities its entityRelation
           fields reference (e.g. a Data Flow relation's carried Data Entities), instead of one direct
           endpoint-to-endpoint edge per relation. An entity the viewer cannot see is omitted from the graph rather
-          than rendered blank, in either node style. The Relations browser's Basic (flat condition-row) and Advanced
-          (text-query) filter modes mirror the entity browser's, letting a query use grouping or a relationForward
-          traversal through an entityRelation field when Basic mode's flat conditions can't express it; a saved view
-          built around either opens directly in Advanced mode.
+          than rendered blank, in either node style. The Relations browser's filter controls mirror the entity
+          browser's: the same progressive builder popover (flat relation-field and In/Out endpoint conditions growing
+          in place into Any/All groups and negation) plus a Simple/Advanced toggle whose Advanced side is a text
+          field bound to the same relation-rooted query, full-fidelity in both directions. A query that traverses
+          past a single endpoint hop (a relationForward through an entityRelation field, or a multi-hop endpoint
+          path) or carries projection columns opens in Advanced mode until those visual editors land.
           A set of built-in, workspace-pinned canonical views cover information-governance analysis:
           restricted-data-flow exposure (flagging either the flow's own classification or a carried Data Entity's
           classification, shown as separate columns so a result can explain which one triggered it), missing or
