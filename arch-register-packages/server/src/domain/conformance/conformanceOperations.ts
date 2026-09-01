@@ -393,10 +393,25 @@ export const listConformanceViolations = async (
 ) => {
   const authCtx = await buildApiEntityAuthCtx(db, workspace, event);
   requireWorkspaceCapability(authCtx, 'ws.view');
+
+  // Entity routes may address a record by its public ID (for example, API-2),
+  // while conformance tables store the internal UUID. Resolve the filter before
+  // passing it to a database adapter so PostgreSQL never has to compare a public
+  // ID with a UUID column.
+  const entity = query.entityId ? await db.catalog.getEntity(workspace, query.entityId) : null;
+  if (query.entityId && !entity) {
+    return {
+      items: [],
+      total: 0,
+      limit: query.limit,
+      offset: query.offset
+    };
+  }
+
   const [result, schemas] = await Promise.all([
     db.conformance.listViolations(workspace, {
       check_id: query.checkId,
-      entity_id: query.entityId,
+      entity_id: entity?.id,
       schema_id: query.schemaId,
       owner_id: query.ownerId,
       status: query.status,

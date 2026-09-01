@@ -19,7 +19,8 @@ import { entityRequiresApproval } from './entityChangeOperations';
 import { computeEntityCompleteness } from '../../utils/completeness';
 import {
   requireNoRestrictedFieldWrites,
-  filterKnownRestrictedFieldGroups
+  filterKnownRestrictedFieldGroups,
+  isFieldEditRestricted
 } from '../auth/fieldGroupAccessControl';
 import { equalEntityValue } from './entityDiff';
 import { isReferenceOrContainmentField } from '@arch-register/api-types/schemaContract';
@@ -155,10 +156,18 @@ export const importParse = async (
       }
     }
 
+    const parsedEntity = csvRowToEntity(row.data, schema.fields);
+    const hasRestrictedFieldWrite = Object.keys(parsedEntity).some(fieldId =>
+      isFieldEditRestricted(authCtx, schema, fieldId)
+    );
+    const errors = hasRestrictedFieldWrite
+      ? [...row.errors, 'You do not have permission to set one or more restricted fields']
+      : row.errors;
+
     return {
       rowNumber: row.rowNumber,
-      errors: row.errors,
-      entity: row.errors.length === 0 ? csvRowToEntity(row.data, schema.fields) : null,
+      errors,
+      entity: errors.length === 0 ? parsedEntity : null,
       isUpdate,
       matchType,
       nameMatches:

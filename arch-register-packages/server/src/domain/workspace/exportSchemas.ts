@@ -25,7 +25,7 @@ const exportDataTypeSchema = z.enum([
 
 const exportDiagnosticSchema = z
   .object({
-    code: z.enum(['missing_reference', 'filtered_reference', 'unsupported_data']),
+    code: z.enum(['missing_reference', 'filtered_reference', 'filtered_field', 'unsupported_data']),
     item_type: exportDataTypeSchema.optional(),
     item_id: z.string().optional(),
     message: z.string()

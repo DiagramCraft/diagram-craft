@@ -21,7 +21,11 @@ import type {
   GovernanceEventType
 } from './db/governanceDatabase';
 import { isEligibleForAssignment, resolveAssignmentEligibility } from './governanceEligibility';
-import { createGovernanceRegistry, type GovernanceRegistry } from './governanceRegistry';
+import {
+  createGovernanceRegistry,
+  type GovernanceRedactionMode,
+  type GovernanceRegistry
+} from './governanceRegistry';
 import { createGovernanceInAppNotifications } from './governanceNotifications';
 import { enqueueGovernanceWebhookDeliveries } from '../webhook/webhookDelivery';
 import { resolveGovernanceWorkflowConfig } from './governanceWorkflowConfig';
@@ -104,6 +108,7 @@ export type CreateGovernanceCaseInput = {
   createAssignmentsInExternalMode?: boolean;
   initiationFieldValues?: Record<string, unknown>;
   skipInitiationFields?: boolean;
+  governanceRegistry?: GovernanceRegistry;
 };
 
 export type DecideGovernanceAssignmentInput = {
@@ -116,7 +121,10 @@ export type GovernanceDecisionOptions = {
   externalIntegration?: boolean;
 };
 
-export const toApiCase = (row: GovernanceCaseDbResult): GovernanceCase => ({
+export const toApiCase = (
+  row: GovernanceCaseDbResult,
+  payload: Record<string, unknown> = row.payload
+): GovernanceCase => ({
   id: row.id,
   workspace: row.workspace,
   caseKind: row.case_kind,
@@ -129,7 +137,7 @@ export const toApiCase = (row: GovernanceCaseDbResult): GovernanceCase => ({
   initiatorUserId: row.initiator_user_id,
   parentCaseId: row.parent_case_id,
   selfApprovalAllowed: row.self_approval_allowed,
-  payload: row.payload,
+  payload,
   createdAt: row.created_at.toISOString(),
   dueAt: row.due_at?.toISOString() ?? null,
   completedAt: row.completed_at?.toISOString() ?? null,
@@ -137,6 +145,20 @@ export const toApiCase = (row: GovernanceCaseDbResult): GovernanceCase => ({
   escalatedAt: row.escalated_at?.toISOString() ?? null,
   initiationFields: row.initiation_fields ?? []
 });
+
+export const toApiCaseForContext = async (
+  db: DatabaseAdapter,
+  row: GovernanceCaseDbResult,
+  authCtx: WorkspaceAuthorizationContext | null,
+  registry: GovernanceRegistry,
+  mode: GovernanceRedactionMode = 'api'
+): Promise<GovernanceCase> => {
+  const config = registry.get(row.case_kind);
+  const payload = config?.redactCasePayload
+    ? await config.redactCasePayload({ db, authCtx, caseRow: row, mode })
+    : row.payload;
+  return toApiCase(row, payload);
+};
 
 export const toApiAssignment = (row: GovernanceAssignmentDbResult): GovernanceAssignment => ({
   id: row.id,
@@ -152,7 +174,10 @@ export const toApiAssignment = (row: GovernanceAssignmentDbResult): GovernanceAs
   resolvedAt: row.resolved_at?.toISOString() ?? null
 });
 
-export const toApiEvent = (row: GovernanceEventDbResult): GovernanceEvent => ({
+export const toApiEvent = (
+  row: GovernanceEventDbResult,
+  metadata: Record<string, unknown> = row.metadata
+): GovernanceEvent => ({
   id: row.id,
   caseId: row.case_id,
   eventType: row.event_type,
@@ -161,8 +186,23 @@ export const toApiEvent = (row: GovernanceEventDbResult): GovernanceEvent => ({
   previousStatus: row.previous_status,
   resultingStatus: row.resulting_status,
   reason: row.reason,
-  metadata: row.metadata
+  metadata
 });
+
+export const toApiEventForContext = async (
+  db: DatabaseAdapter,
+  caseRow: GovernanceCaseDbResult,
+  row: GovernanceEventDbResult,
+  authCtx: WorkspaceAuthorizationContext | null,
+  registry: GovernanceRegistry,
+  mode: GovernanceRedactionMode = 'api'
+): Promise<GovernanceEvent> => {
+  const config = registry.get(caseRow.case_kind);
+  const metadata = config?.redactEventMetadata
+    ? await config.redactEventMetadata({ db, authCtx, caseRow, event: row, mode })
+    : row.metadata;
+  return toApiEvent(row, metadata);
+};
 
 const toAssignmentCreate = (
   caseId: string,
@@ -197,7 +237,8 @@ export const recordGovernanceEvent = async (
     resultingStatus: string | null;
     reason: string | null;
     metadata: Record<string, unknown>;
-  }
+  },
+  registry: GovernanceRegistry = createGovernanceRegistry()
 ): Promise<GovernanceEventDbResult> => {
   const event = await tx.governance.appendEvent({
     id: randomUUID(),
@@ -228,7 +269,7 @@ export const recordGovernanceEvent = async (
 
   const webhookAdapter = (tx as unknown as { webhook?: { listWebhooks?: unknown } }).webhook;
   if (typeof webhookAdapter?.listWebhooks === 'function') {
-    await enqueueGovernanceWebhookDeliveries(tx, caseRow, event, external);
+    await enqueueGovernanceWebhookDeliveries(tx, caseRow, event, external, registry);
   }
 
   return event;
@@ -275,11 +316,12 @@ export const isGovernanceCaseVisible = async (
   assignments: GovernanceAssignmentDbResult[],
   registry: GovernanceRegistry
 ): Promise<boolean> => {
+  const config = registry.get(caseRow.case_kind);
+  if (config?.caseVisible && !(await config.caseVisible(db, authCtx, caseRow))) return false;
   if (caseRow.initiator_user_id === userId) return true;
   if (assignments.some(assignment => isEligibleForAssignment(authCtx, userId, assignment))) {
     return true;
   }
-  const config = registry.get(caseRow.case_kind);
   if (config?.subjectVisible) {
     return config.subjectVisible(db, authCtx, caseRow.workspace, caseRow.subject_id);
   }
@@ -312,7 +354,12 @@ export const createGovernanceCase = async (
         createGovernanceCaseInTransaction(tx, ws, userId, input, now, caseId)
       );
 
-      return toApiCase(created);
+      return toApiCaseForContext(
+        db,
+        created,
+        authCtx,
+        input.governanceRegistry ?? createGovernanceRegistry()
+      );
     }
   });
 };
@@ -382,14 +429,19 @@ export const createGovernanceCaseInTransaction = async (
     await tx.governance.createAssignment(toAssignmentCreate(caseId, workspace, now, spec));
   }
 
-  await recordGovernanceEvent(tx, createdCase, {
-    eventType: 'submitted',
-    actorUserId: initiatorUserId,
-    previousStatus: null,
-    resultingStatus: 'open',
-    reason: null,
-    metadata: {}
-  });
+  await recordGovernanceEvent(
+    tx,
+    createdCase,
+    {
+      eventType: 'submitted',
+      actorUserId: initiatorUserId,
+      previousStatus: null,
+      resultingStatus: 'open',
+      reason: null,
+      metadata: {}
+    },
+    input.governanceRegistry
+  );
 
   return createdCase;
 };
@@ -420,7 +472,7 @@ const getGovernanceCaseForContext = async (
   );
   httpAssert.true(visible, notFound);
 
-  return toApiCase(caseRow);
+  return toApiCaseForContext(db, caseRow, authCtx, registry);
 };
 
 export const getGovernanceCase = async (
@@ -465,7 +517,11 @@ const listGovernanceCasesForContext = async (
     })
   );
 
-  return visible.filter((row): row is GovernanceCaseDbResult => row != null).map(toApiCase);
+  return Promise.all(
+    visible
+      .filter((row): row is GovernanceCaseDbResult => row != null)
+      .map(row => toApiCaseForContext(db, row, authCtx, registry))
+  );
 };
 
 export const listGovernanceCases = async (
@@ -494,7 +550,8 @@ const listMySubmittedGovernanceCasesForContext = async (
   ws: string,
   event: AuthenticatedEvent,
   authCtx: WorkspaceAuthorizationContext,
-  query: ListGovernanceSubmissionsQuery
+  query: ListGovernanceSubmissionsQuery,
+  registry: GovernanceRegistry = createGovernanceRegistry()
 ): Promise<GovernanceSubmission[]> => {
   requireWorkspaceCapability(authCtx, 'ws.view');
 
@@ -510,7 +567,7 @@ const listMySubmittedGovernanceCasesForContext = async (
     cases.map(async caseRow => {
       const assignments = await db.governance.listAssignmentsForCase(caseRow.id);
       return {
-        case: toApiCase(caseRow),
+        case: await toApiCaseForContext(db, caseRow, authCtx, registry),
         openAssignments: assignments
           .filter(assignment => assignment.status === 'open')
           .map(toApiAssignment)
@@ -525,14 +582,15 @@ export const listMySubmittedGovernanceCases = async (
   db: DatabaseAdapter,
   workspace: string,
   event: AuthenticatedEvent,
-  query: ListGovernanceSubmissionsQuery
+  query: ListGovernanceSubmissionsQuery,
+  registry: GovernanceRegistry = createGovernanceRegistry()
 ): Promise<GovernanceSubmission[]> =>
   runAuthorizedOperation({
     db,
     event,
     scope: { kind: 'workspace', workspace },
     operation: ({ ws, authCtx }) =>
-      listMySubmittedGovernanceCasesForContext(db, ws, event, authCtx, query)
+      listMySubmittedGovernanceCasesForContext(db, ws, event, authCtx, query, registry)
   });
 
 const listGovernanceCaseEventsForContext = async (
@@ -562,7 +620,9 @@ const listGovernanceCaseEventsForContext = async (
   httpAssert.true(visible, notFound);
 
   const events = await db.governance.listEvents(caseRow.id);
-  return events.map(toApiEvent);
+  return Promise.all(
+    events.map(eventRow => toApiEventForContext(db, caseRow, eventRow, authCtx, registry))
+  );
 };
 
 export const listGovernanceCaseEvents = async (
@@ -642,7 +702,7 @@ const listMyGovernanceAssignmentsForContext = async (
 
       return {
         assignment: toApiAssignment(assignment),
-        case: toApiCase(caseRow),
+        case: await toApiCaseForContext(db, caseRow, authCtx, registry),
         requiresAction: state === 'open' && currentlyEligible,
         dedupeKey: isIndependentAssignment
           ? `assignment:${assignment.id}`
@@ -688,9 +748,16 @@ export const listMyGovernanceAssignments = async (
 export const countMyGovernanceAssignments = async (
   db: DatabaseAdapter,
   workspace: string,
-  event: AuthenticatedEvent
+  event: AuthenticatedEvent,
+  registry: GovernanceRegistry = createGovernanceRegistry()
 ) => {
-  const tasks = await listMyGovernanceAssignments(db, workspace, event, { state: 'open' });
+  const tasks = await listMyGovernanceAssignments(
+    db,
+    workspace,
+    event,
+    { state: 'open' },
+    registry
+  );
   return { count: tasks.length };
 };
 
@@ -738,18 +805,23 @@ const cancelGovernanceCaseForContext = async (
     const supersededIds = await tx.governance.supersedeAllOpenAssignmentsForCase(caseRow.id, now);
     await resolveAssignmentNotifications(tx, supersededIds, now);
     await resolveCaseNotifications(tx, updated.id, now);
-    await recordGovernanceEvent(tx, updated, {
-      eventType: 'cancelled',
-      actorUserId: userId,
-      previousStatus: 'open',
-      resultingStatus: 'cancelled',
-      reason: input.reason ?? null,
-      metadata: {}
-    });
+    await recordGovernanceEvent(
+      tx,
+      updated,
+      {
+        eventType: 'cancelled',
+        actorUserId: userId,
+        previousStatus: 'open',
+        resultingStatus: 'cancelled',
+        reason: input.reason ?? null,
+        metadata: {}
+      },
+      registry
+    );
     return updated;
   });
 
-  return toApiCase(cancelled);
+  return toApiCaseForContext(db, cancelled, authCtx, registry);
 };
 
 export const cancelGovernanceCase = async (
@@ -831,17 +903,25 @@ const sendGovernanceCaseReminderForContext = async (
   }
 
   const reminderEvent = await db.core.transaction(async tx =>
-    recordGovernanceEvent(tx, caseRow, {
-      eventType: 'reminder_sent',
-      actorUserId: userId,
-      previousStatus: caseRow.status,
-      resultingStatus: caseRow.status,
-      reason: null,
-      metadata: { trigger: 'manual', actor_user_id: userId }
-    })
+    recordGovernanceEvent(
+      tx,
+      caseRow,
+      {
+        eventType: 'reminder_sent',
+        actorUserId: userId,
+        previousStatus: caseRow.status,
+        resultingStatus: caseRow.status,
+        reason: null,
+        metadata: { trigger: 'manual', actor_user_id: userId }
+      },
+      registry
+    )
   );
 
-  return { case: toApiCase(caseRow), event: toApiEvent(reminderEvent) };
+  return {
+    case: await toApiCaseForContext(db, caseRow, authCtx, registry),
+    event: await toApiEventForContext(db, caseRow, reminderEvent, authCtx, registry)
+  };
 };
 
 export const sendGovernanceCaseReminder = async (
@@ -953,14 +1033,19 @@ export const decideGovernanceAssignmentWithContext = async (
         );
         await resolveAssignmentNotifications(tx, staleSupersededIds, now);
         await resolveCaseNotifications(tx, cancelledCase.id, now);
-        const staleEvent = await recordGovernanceEvent(tx, cancelledCase, {
-          eventType: 'proposal_stale',
-          actorUserId: userId,
-          previousStatus: 'open',
-          resultingStatus: 'cancelled',
-          reason: input.reason ?? null,
-          metadata: { assignmentId: assignment.id }
-        });
+        const staleEvent = await recordGovernanceEvent(
+          tx,
+          cancelledCase,
+          {
+            eventType: 'proposal_stale',
+            actorUserId: userId,
+            previousStatus: 'open',
+            resultingStatus: 'cancelled',
+            reason: input.reason ?? null,
+            metadata: { assignmentId: assignment.id }
+          },
+          registry
+        );
         await tx.governance.recordDecisionRequest(
           assignment.id,
           input.idempotencyKey,
@@ -1020,14 +1105,19 @@ export const decideGovernanceAssignmentWithContext = async (
       resultingCase = completedCase;
     }
 
-    const decisionEvent = await recordGovernanceEvent(tx, resultingCase, {
-      eventType: DECISION_EVENT_TYPES[input.decision],
-      actorUserId: userId,
-      previousStatus: caseRow.status,
-      resultingStatus: resultingCase.status,
-      reason: input.reason ?? null,
-      metadata: { assignmentId: assignment.id, authorizationPath: eligibility.authorizationPath }
-    });
+    const decisionEvent = await recordGovernanceEvent(
+      tx,
+      resultingCase,
+      {
+        eventType: DECISION_EVENT_TYPES[input.decision],
+        actorUserId: userId,
+        previousStatus: caseRow.status,
+        resultingStatus: resultingCase.status,
+        reason: input.reason ?? null,
+        metadata: { assignmentId: assignment.id, authorizationPath: eligibility.authorizationPath }
+      },
+      registry
+    );
 
     await tx.governance.recordDecisionRequest(
       assignment.id,
@@ -1058,7 +1148,10 @@ export const decideGovernanceAssignmentWithContext = async (
     return { case: resultingCase, event: decisionEvent };
   });
 
-  return { case: toApiCase(result.case), event: toApiEvent(result.event) };
+  return {
+    case: await toApiCaseForContext(db, result.case, authCtx, registry),
+    event: await toApiEventForContext(db, result.case, result.event, authCtx, registry)
+  };
 };
 
 export const decideGovernanceAssignment = async (

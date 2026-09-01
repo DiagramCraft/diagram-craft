@@ -1,7 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { DatabaseAdapter } from '../../db/database';
+import { buildAuthorizationContext } from '@arch-register/permissions';
 import type { EntityDbResult, SchemaDbResult } from './db/catalogDatabase';
-import type { GovernanceCaseDbResult } from '../governance/db/governanceDatabase';
+import type {
+  GovernanceCaseDbResult,
+  GovernanceEventDbResult
+} from '../governance/db/governanceDatabase';
 import {
   FIELD_DATE_REMINDER_CASE_KIND,
   createFieldDateReminderGovernanceRegistry,
@@ -432,5 +436,67 @@ describe('field-date-reminder completion advance', () => {
     });
 
     expect(updateEntityWithAudit).not.toHaveBeenCalled();
+  });
+});
+
+describe('field-date-reminder governance redaction', () => {
+  it('redacts the date value when the caller cannot view the configured field', async () => {
+    const restrictedSchema: SchemaDbResult = {
+      ...schema,
+      fields: [{ ...schema.fields[0]!, groupId: 'restricted' }],
+      groups: [{ id: 'restricted', name: 'Restricted', accessControl: { teamIds: ['team-owner'] } }]
+    };
+    const db = {
+      catalog: {
+        getEntity: vi.fn(async () => entity),
+        getSchema: vi.fn(async () => restrictedSchema)
+      }
+    } as unknown as DatabaseAdapter;
+    const authCtx = buildAuthorizationContext({
+      userId: 'user-1',
+      globalRoles: [],
+      workspaceRole: 'editor',
+      teamAssignments: [],
+      schemas: [],
+      entities: [],
+      grants: []
+    });
+    const caseRow = {
+      id: 'case-1',
+      workspace: 'ws-1',
+      case_kind: FIELD_DATE_REMINDER_CASE_KIND,
+      subject_id: entity.id,
+      payload: {
+        schemaId: schema.id,
+        fieldId: 'eol_date',
+        fieldName: 'EOL date',
+        dateValue: '2026-08-10',
+        ownerTeamId: entity.owner,
+        opaquePayload: { preserved: true }
+      }
+    } as unknown as GovernanceCaseDbResult;
+    const eventRow = {
+      id: 'event-1',
+      case_id: caseRow.id,
+      metadata: { assignmentId: 'assignment-1', dateValue: '2026-08-10' }
+    } as unknown as GovernanceEventDbResult;
+    const kind = createFieldDateReminderGovernanceRegistry().get(FIELD_DATE_REMINDER_CASE_KIND)!;
+
+    await expect(kind.redactCasePayload!({ db, authCtx, caseRow, mode: 'api' })).resolves.toEqual({
+      schemaId: schema.id,
+      fieldId: 'eol_date',
+      fieldName: 'EOL date',
+      ownerTeamId: entity.owner,
+      opaquePayload: { preserved: true }
+    });
+    await expect(
+      kind.redactEventMetadata!({
+        db,
+        authCtx: null,
+        caseRow,
+        event: eventRow,
+        mode: 'outbound'
+      })
+    ).resolves.toEqual({ assignmentId: 'assignment-1' });
   });
 });

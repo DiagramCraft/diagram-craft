@@ -805,12 +805,14 @@
           including supported content, workspace capability configuration, typed relation schemas, and typed relation instances. Exported
           entity and relation data is scrubbed of access-restricted field groups per exporting user, mirroring the
           redaction applied when viewing those records directly. Filtered exports omit relations whose endpoint
-          entities are not included and record the omission in archive diagnostics.
+          entities are not included, report safe diagnostics when field values are omitted, and record those
+          omissions in archive diagnostics.
 
         - @id:ar.import-export.workspace-import Authorized users can validate, preview, and execute supported workspace
           imports. Entity and relation schema groups, field-group access controls, reusable shared fieldgroups, workspace
           capability bindings, and their links are preserved with remapped references; relation endpoints follow remapped entity IDs; imports
-          reject restricted values the importing caller cannot edit and report missing relation dependencies.
+          reject restricted values the importing caller cannot edit, redact restricted values from conflict previews, and report missing
+          relation dependencies.
 
         - @id:ar.import-export.workspace-replication Workspace copies preserve schema field groups, shared fieldgroup
           links, field-group access-control semantics, and workspace capability bindings while remapping

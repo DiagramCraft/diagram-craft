@@ -11,6 +11,10 @@ export class DataModelPage extends WorkspacePage {
   schemaTypeRow = (name: string) => this.page.getByTestId(`schema-type-${name}`);
   editorTitle = () => this.page.getByTestId('schema-editor-title');
 
+  nameInput = () => this.page.getByText('Name', { exact: true }).locator('..').locator('input');
+  keyPrefixInput = () =>
+    this.page.getByText('Key Prefix', { exact: true }).locator('..').locator('input');
+
   expectLoaded = async () => {
     await this.workspaceShell.expectMainVisible();
     await expect(this.anySchemaTypeRow()).toBeVisible();
@@ -29,13 +33,25 @@ export class DataModelPage extends WorkspacePage {
   };
 
   createNewEntityType = async () => {
+    const name = `E2E Entity Type ${Date.now()}`;
+
     await this.page.getByRole('button', { name: 'New entity type' }).click();
-    await expect(this.editorTitle()).toHaveText('New type');
+
+    await this.nameInput().fill(name);
+    await this.keyPrefixInput().fill('UIT');
+    await this.page.getByRole('button', { name: 'Save', exact: true }).click();
+    await expect(this.schemaTypeRow(name)).toBeVisible();
+    await expect(this.editorTitle()).toHaveText(name);
+
+    return name;
   };
 
   deleteSelectedEntityType = async () => {
+    const deleteButton = this.page.getByRole('button', { name: 'Delete type' });
+    if ((await deleteButton.count()) === 0) return;
+
     const deletedName = await this.editorTitle().textContent();
-    await this.page.getByRole('button', { name: 'Delete type' }).click();
+    await deleteButton.click();
     await this.page.getByRole('alertdialog').getByRole('button', { name: 'Delete type' }).click();
     if (deletedName) {
       await expect(this.schemaTypeRow(deletedName)).toHaveCount(0);

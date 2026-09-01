@@ -138,14 +138,19 @@ export const createGovernanceDeadlineScanJobHandler =
             if (fresh?.status !== 'open' || fresh.reminder_windows_sent.includes(window)) {
               return;
             }
-            await recordGovernanceEvent(tx, fresh, {
-              eventType: 'reminder_sent',
-              actorUserId: GOVERNANCE_DEADLINE_SCAN_SYSTEM_USER_ID,
-              previousStatus: fresh.status,
-              resultingStatus: fresh.status,
-              reason: null,
-              metadata: { trigger: 'scheduled', window }
-            });
+            await recordGovernanceEvent(
+              tx,
+              fresh,
+              {
+                eventType: 'reminder_sent',
+                actorUserId: GOVERNANCE_DEADLINE_SCAN_SYSTEM_USER_ID,
+                previousStatus: fresh.status,
+                resultingStatus: fresh.status,
+                reason: null,
+                metadata: { trigger: 'scheduled', window }
+              },
+              registry
+            );
             await tx.governance.addReminderWindowSent(fresh.id, window);
           });
           remindersSent += 1;
@@ -176,14 +181,19 @@ export const createGovernanceDeadlineScanJobHandler =
               escalationConfig
             );
             if (targets.length === 0) return;
-            await recordGovernanceEvent(tx, fresh, {
-              eventType: 'escalated',
-              actorUserId: GOVERNANCE_DEADLINE_SCAN_SYSTEM_USER_ID,
-              previousStatus: fresh.status,
-              resultingStatus: fresh.status,
-              reason: null,
-              metadata: { trigger: 'scheduled', targets }
-            });
+            await recordGovernanceEvent(
+              tx,
+              fresh,
+              {
+                eventType: 'escalated',
+                actorUserId: GOVERNANCE_DEADLINE_SCAN_SYSTEM_USER_ID,
+                previousStatus: fresh.status,
+                resultingStatus: fresh.status,
+                reason: null,
+                metadata: { trigger: 'scheduled', targets }
+              },
+              registry
+            );
             await tx.governance.markEscalated(fresh.id, scanNow);
           });
           escalationsSent += 1;

@@ -1,5 +1,5 @@
 import { createRoute, useNavigate, useSearch, type AnyRoute } from '@tanstack/react-router';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { WorkspaceSettingsSidebar } from '../../sections/workspace-settings/WorkspaceSettingsSidebar';
 import { SchemaSettingsSidebar } from '../../sections/workspace-settings/SchemaSettingsSidebar';
 import { DocumentSettingsSidebar } from '../../sections/workspace-settings/DocumentSettingsSidebar';
@@ -38,12 +38,16 @@ const SettingsRedirect = () => {
     analyticsView?: 'stale';
   };
   const ctx = useWorkspaceContext();
+  const hasRedirected = useRef(false);
 
   useEffect(() => {
+    if (hasRedirected.current || !ctx.workspace) return;
+
     const { section, ...rest } = search;
     const target = ctx.availableSettingsSections.includes(section ?? '')
       ? section!
       : (ctx.defaultSettingsSection ?? 'general');
+    hasRedirected.current = true;
     navigate({
       ...settingsSectionTarget(ctx.workspaceSlug, target),
       search: rest,

@@ -178,6 +178,22 @@ describe('importCommit — restricted field group writes', () => {
 describe('importParse — restricted field group reads', () => {
   const csvContent = 'ID,Name,Name field\nentity-1,My Entity,x\n';
 
+  it('rejects a CSV row that attempts to write a restricted field', async () => {
+    const db = makeDb();
+    const authCtx = authCtxWithTeamRole(null);
+
+    const result = await importParse(db, authCtx, {
+      workspace: 'ws-1',
+      schemaId: 'schema-1',
+      csvContent: 'Name,Name field,Secret\nNew Entity,x,sneaked\n'
+    });
+
+    expect(result.entities[0]?.errors).toContain(
+      'You do not have permission to set one or more restricted fields'
+    );
+    expect(result.entities[0]?.entity).toBeNull();
+  });
+
   it('omits a restricted field from the preview when the caller cannot view it', async () => {
     const db = makeDb();
     const authCtx = authCtxWithTeamRole(null);
