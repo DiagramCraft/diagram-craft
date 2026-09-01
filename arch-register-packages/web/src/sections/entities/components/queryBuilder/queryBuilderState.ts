@@ -179,17 +179,21 @@ export const countHops = (query: EntityQuery): number => {
 
 export const exceedsHopBudget = (query: EntityQuery): boolean => countHops(query) > MAX_PATH_HOPS;
 
-/** A hop the visual builder can edit in place: entity-to-entity kinds only, and no same-instance
- *  scoped `[...]` filter yet (plan phase 6). Relation-context kinds (endpoint / relationForward /
- *  relationBackward) and scoped filters keep their query in Advanced text mode. */
-const stepIsVisuallyEditable = (step: PathStep): boolean =>
-  (step.kind === 'forward' ||
-    step.kind === 'backward' ||
-    step.kind === 'typedRelation' ||
-    step.kind === 'unboundTypedRelation') &&
-  !step.filter;
+/** A hop the visual builder can edit in place: entity-to-entity kinds only. A same-instance scoped
+ *  `[...]` filter is fine as long as its own subtree is visually editable (recursive). Relation-
+ *  context kinds (endpoint / relationForward / relationBackward) keep the query in Advanced text
+ *  mode. Declared as `function`s so the step ⇄ node mutual recursion can hoist. */
+function stepIsVisuallyEditable(step: PathStep): boolean {
+  return (
+    (step.kind === 'forward' ||
+      step.kind === 'backward' ||
+      step.kind === 'typedRelation' ||
+      step.kind === 'unboundTypedRelation') &&
+    (!step.filter || nodeIsVisuallyEditable(step.filter))
+  );
+}
 
-const nodeIsVisuallyEditable = (node: QueryNode): boolean => {
+function nodeIsVisuallyEditable(node: QueryNode): boolean {
   switch (node.kind) {
     case 'and':
     case 'or':
@@ -205,7 +209,13 @@ const nodeIsVisuallyEditable = (node: QueryNode): boolean => {
     default:
       return true;
   }
-};
+}
+
+/** True when every step of `path` is one the visual leaf editor can render (entity-to-entity hop
+ *  kinds, with any scoped filter itself editable) - the leaf falls back to a read-only summary
+ *  otherwise. */
+export const isPathVisuallyEditable = (path: PathStep[]): boolean =>
+  path.every(stepIsVisuallyEditable);
 
 /** True when every node in `query` is one the visual builder can currently edit in place - a flat
  *  boolean tree of `path: []` predicates plus free-text, with no projections. A query with

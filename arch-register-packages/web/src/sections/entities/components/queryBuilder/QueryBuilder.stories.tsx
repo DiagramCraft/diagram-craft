@@ -289,3 +289,31 @@ export const WithTraversalPredicate = () => (
     }}
   />
 );
+
+export const WithScopedHopFilter = () => (
+  <Harness
+    initial={{
+      schemaId: 'component',
+      root: {
+        kind: 'and',
+        children: [
+          {
+            kind: 'relationExists',
+            path: [
+              {
+                kind: 'forward',
+                fieldId: 'system',
+                filter: {
+                  kind: 'and',
+                  children: [
+                    { kind: 'predicate', path: [], fieldId: 'tier', op: 'equals', value: '1' }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }}
+  />
+);

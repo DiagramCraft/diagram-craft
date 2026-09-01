@@ -225,7 +225,7 @@ describe('isVisuallyEditable', () => {
     ).toBe(true);
   });
 
-  it('rejects a scoped [...] filter on a hop (phase 6)', () => {
+  it('accepts a scoped [...] filter whose own subtree is editable', () => {
     expect(
       isVisuallyEditable(
         query({
@@ -238,6 +238,31 @@ describe('isVisuallyEditable', () => {
                   kind: 'forward',
                   fieldId: 'technology_releases',
                   filter: { kind: 'predicate', path: [], fieldId: '_slug', op: 'equals', value: 'go' }
+                }
+              ]
+            }
+          ]
+        })
+      )
+    ).toBe(true);
+  });
+
+  it('rejects a scoped [...] filter that itself uses a relation-context step', () => {
+    expect(
+      isVisuallyEditable(
+        query({
+          kind: 'and',
+          children: [
+            {
+              kind: 'relationExists',
+              path: [
+                {
+                  kind: 'forward',
+                  fieldId: 'technology_releases',
+                  filter: {
+                    kind: 'relationExists',
+                    path: [{ kind: 'endpoint', direction: 'out' }]
+                  }
                 }
               ]
             }
