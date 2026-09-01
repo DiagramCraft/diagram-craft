@@ -289,6 +289,11 @@ const freeTextFromEntityQuery = (query: EntityQuery): string | undefined => {
   return node ? freeTextValueFromNode(node) : undefined;
 };
 
+/** The query's current free-text clause (`freeText` node, or the legacy `_name`/`_slug`/
+ *  `_description` contains-OR), or `''` when it has none. */
+export const getFreeTextQuery = (query: EntityQuery): string =>
+  freeTextFromEntityQuery(query) ?? '';
+
 /**
  * `printEntityQueryText` (specs/QUERY_LANGUAGE.md §4.4) only ever renders `query.root` — the
  * top-level `EntityQuery.schemaId` field is deliberately out of scope for the text grammar,

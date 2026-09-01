@@ -523,10 +523,12 @@
           content.
 
         - @id:ar.search.filters Users can combine search terms and structured filters to narrow results. Entity
-          browser views offer Basic (free-text search plus a visual filter popover and multi-select sidebar facets) and Advanced (a single text
-          query parsed against the entity query language) modes, switchable without losing the underlying query;
-          switching from Advanced to Basic warns first if the query uses grouping, negation, or relation traversal
-          that Basic mode can't represent. A field in a schema group the user cannot view is offered nowhere as a
+          browser views offer Visual (free-text search plus a progressive filter builder popover and multi-select
+          sidebar facets) and Advanced (a single text query parsed against the entity query language) modes,
+          switchable without losing the underlying query. The Visual builder opens as a flat list of conditions and
+          grows in place into Any/All groups and negation, reading and writing the same structured query as Advanced
+          mode with no lossy conversion between them; a query that uses relation traversal or projection columns opens
+          in Advanced mode until the corresponding visual editors are available. A field in a schema group the user cannot view is offered nowhere as a
           filter/sort option and is treated as unrecognized if referenced directly in an Advanced-mode query,
           matching how the field is hidden elsewhere. Advanced queries can traverse typed relations and filter or
           project their scalar relation fields; entity-valued relation fields are deferred to follow-up issue #2670.

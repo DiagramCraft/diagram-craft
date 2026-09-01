@@ -1,7 +1,6 @@
-import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { TbAlertTriangle, TbFilter } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
-import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { Popover, type PopoverActions } from '@diagram-craft/app-components/Popover';
 import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import type { EntityQueryParseError } from '@arch-register/api-types/entityContract';
@@ -13,22 +12,18 @@ import type {
 } from '@arch-register/api-types/workspaceContract';
 import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 import type { Assessment } from '@arch-register/api-types/assessmentContract';
-import { FilterBuilder } from '../../../components/FilterBuilder';
 import { useWorkspaceAuthorization } from '../../../auth/WorkspaceAuthorizationContext';
 import { SearchInput } from '../../../components/SearchInput';
-import {
-  buildEntityQueryFromBrowserFilters,
-  entityQueryToBrowserFilters,
-  isBasicRepresentable,
-  withSchemaIdAsPredicate
-} from './entityBrowserState';
+import { QueryBuilder } from './queryBuilder/QueryBuilder';
+import { countConditions, isVisuallyEditable } from './queryBuilder/queryBuilderState';
+import { buildEntityQueryFromBrowserFilters, withSchemaIdAsPredicate } from './entityBrowserState';
 import {
   useParseEntityQueryText,
   usePrintEntityQueryText
 } from '../../../hooks/useEntityQueryText';
 import styles from './EntityBrowser.module.css';
 
-type Mode = 'basic' | 'advanced';
+type Mode = 'visual' | 'advanced';
 
 type QueryModeControlsProps = {
   workspaceId: string;
@@ -36,9 +31,9 @@ type QueryModeControlsProps = {
   setQ: (q: string) => void;
   conditions: FilterCondition[];
   setConditions: (conditions: FilterCondition[]) => void;
-  // Advanced mode needs somewhere to persist the canonical EntityQuery it parses to — surfaces
-  // that don't track one yet (e.g. the markdown entity-browser embed, still flat-conditions-only)
-  // omit `setEntityQuery` and get Basic mode only, no toggle.
+  // The Visual and Advanced modes both edit the same canonical EntityQuery. Surfaces that don't
+  // track one yet (the markdown entity-browser embed, still flat-conditions-only) omit
+  // `setEntityQuery` and fall back to a plain search box.
   entityQuery?: EntityQuery | null;
   setEntityQuery?: (query: EntityQuery | null) => void;
   typeFilter: string | null;
@@ -50,20 +45,17 @@ type QueryModeControlsProps = {
   joinedAssessment?: Assessment | null;
 };
 
-// The Basic ⇄ Advanced toggle over the entity browser's search/filter controls. Basic mode is
-// unchanged (free-text box + FilterBuilder popover); Advanced mode is a single text field that
-// parses directly to/from EntityQuery (specs/QUERY_LANGUAGE.md §4) via the entityQueryText
-// endpoints. The underlying query — whichever mode produced it — always lives in the same
-// `entityQuery`/`conditions`+`q` browser state, so switching modes never loses the live result
-// set; only Advanced → Basic can be lossy (grouping, NOT, traversal, relationExists,
-// projections aren't representable flatly), which is why that direction confirms first.
+// The entity browser's Visual ⇄ Advanced query controls. Visual mode is the progressive
+// `QueryBuilder` (flat conditions → Any/All groups → NOT → traversal), inside the filter popover.
+// Advanced mode is the single text field parsing to/from the same `EntityQuery` IR. Both are
+// full-fidelity with the IR, so switching between them never loses anything; the live search box
+// stays outside both, feeding `q` (merged at execution via `withLiveSearchText`).
 export const QueryModeControls = (props: QueryModeControlsProps) => {
   const {
     workspaceId,
     q,
     setQ,
     conditions,
-    setConditions,
     entityQuery,
     setEntityQuery,
     typeFilter,
@@ -76,57 +68,66 @@ export const QueryModeControls = (props: QueryModeControlsProps) => {
   } = props;
 
   const filterPopoverRef = useRef<PopoverActions | null>(null);
-  const [mode, setMode] = useState<Mode>(() =>
-    entityQuery && !isBasicRepresentable(entityQuery) ? 'advanced' : 'basic'
+  // The query both modes edit: an explicit `entityQuery` when one is set, otherwise derived from
+  // the legacy `conditions`/`type` browser state (back-compat for old links and saved views). The
+  // live search box's `q` stays out of it - it's merged in at execution via `withLiveSearchText`.
+  const canonical = useMemo(
+    (): EntityQuery =>
+      entityQuery ??
+      buildEntityQueryFromBrowserFilters({ typeFilter, conditions, joinAssessmentId, q: '' }),
+    [entityQuery, typeFilter, conditions, joinAssessmentId]
   );
-  // The mount-time initializer above only fires once — this keeps the mode in sync when a new,
-  // non-representable query arrives later (e.g. selecting a saved view built around grouping,
-  // NOT, or relation traversal while a previously-selected representable view left mode at
-  // 'basic'), so its filter isn't silently under-displayed by a Basic mode that can't express it.
-  // Never forces the reverse: once representable, the user's own Basic/Advanced choice persists.
+
+  const [mode, setMode] = useState<Mode>(() =>
+    entityQuery && !isVisuallyEditable(entityQuery) ? 'advanced' : 'visual'
+  );
+  // Keep a query the visual builder can't fully edit yet (relation traversal, relationExists,
+  // projections) in Advanced mode so it stays editable - mirrors the pre-existing "force advanced
+  // for non-representable" behaviour, just with a wider "editable" bar. Never forces the reverse.
   useEffect(() => {
-    if (entityQuery && !isBasicRepresentable(entityQuery)) setMode('advanced');
+    if (entityQuery && !isVisuallyEditable(entityQuery)) setMode('advanced');
   }, [entityQuery]);
+
   const [advancedText, setAdvancedText] = useState('');
   const [advancedErrors, setAdvancedErrors] = useState<EntityQueryParseError[]>([]);
-  const [pendingSwitch, setPendingSwitch] = useState(false);
+  const [textPreview, setTextPreview] = useState('');
 
   const parseText = useParseEntityQueryText(workspaceId);
   const printText = usePrintEntityQueryText(workspaceId);
   const { getFieldGroupAccess } = useWorkspaceAuthorization(workspaceId);
 
-  const canonicalQuery = (): EntityQuery =>
-    entityQuery ??
-    buildEntityQueryFromBrowserFilters({ typeFilter, conditions, joinAssessmentId, q });
+  const printMutate = printText.mutateAsync;
 
-  // Re-seed the Advanced text field whenever we (re)enter Advanced mode, or whatever
-  // `canonicalQuery()` would resolve to changes out from under it — e.g. the user picks a
-  // different saved/predefined view, or a sidebar type/status/owner facet (which resets
-  // `entityQuery` to null and re-derives from `typeFilter`/`conditions` instead — a second facet
-  // click keeps `entityQuery` at that same null, so `entityQuery` alone isn't enough to notice the
-  // change; every input the fallback reads has to be a dependency too, spelled out inline below
-  // rather than behind the `canonicalQuery()` closure so the exhaustive-deps check can see them).
-  // Safe to depend on all of these (unlike a plain keystroke-driven update, which would fight the
-  // user's typing): Advanced mode only writes `entityQuery` on Enter/Clear now, never per
-  // keystroke, and `typeFilter`/`conditions`/`q` don't change from Advanced-mode typing at all —
-  // only from outside navigation.
+  // Re-seed the Advanced text field whenever we (re)enter Advanced mode, or the canonical query
+  // changes out from under it (a different saved/predefined view, a sidebar facet click). Advanced
+  // mode only writes `entityQuery` on Enter/Clear, so this never fights the user's typing.
   useEffect(() => {
     if (mode !== 'advanced') return;
     let cancelled = false;
-    const query =
-      entityQuery ??
-      buildEntityQueryFromBrowserFilters({ typeFilter, conditions, joinAssessmentId, q });
-    printText.mutateAsync(withSchemaIdAsPredicate(query)).then(res => {
+    printMutate(withSchemaIdAsPredicate(canonical)).then(res => {
       if (!cancelled) setAdvancedText(res.text);
     });
     return () => {
       cancelled = true;
     };
-  }, [mode, entityQuery, typeFilter, conditions, q, joinAssessmentId, printText.mutateAsync]);
+  }, [mode, canonical, printMutate]);
 
-  // Advanced mode only re-runs the search on Enter (or Clear), not per keystroke — parsing hits
-  // the server, and re-parsing/re-filtering on every character would be both wasteful and jumpy
-  // to read while still typing a multi-clause query.
+  // Debounced text preview for Visual mode - a read-only "here's the query as text" line so the
+  // grammar stays discoverable.
+  useEffect(() => {
+    if (mode !== 'visual') return;
+    let cancelled = false;
+    const handle = setTimeout(() => {
+      printMutate(withSchemaIdAsPredicate(canonical)).then(res => {
+        if (!cancelled) setTextPreview(res.text);
+      });
+    }, 250);
+    return () => {
+      cancelled = true;
+      clearTimeout(handle);
+    };
+  }, [mode, canonical, printMutate]);
+
   const submitAdvancedText = async (text: string) => {
     if (!text.trim()) {
       setAdvancedErrors([]);
@@ -152,28 +153,11 @@ export const QueryModeControls = (props: QueryModeControlsProps) => {
     submitAdvancedText('');
   };
 
-  const applyBasicConversion = (query: EntityQuery) => {
-    const converted = entityQueryToBrowserFilters(query);
-    setConditions(converted.conditions);
-    setQ(converted.q);
-    setMode('basic');
-    setAdvancedErrors([]);
-  };
-
-  const switchToAdvanced = () => {
-    setEntityQuery?.(canonicalQuery());
-    setMode('advanced');
-  };
-
-  const switchToBasic = () => {
-    const query = canonicalQuery();
-    if (isBasicRepresentable(query)) applyBasicConversion(query);
-    else setPendingSwitch(true);
-  };
+  const conditionCount = countConditions(canonical);
 
   return (
     <>
-      {mode === 'basic' ? (
+      {mode === 'visual' ? (
         <>
           <SearchInput
             size="sm"
@@ -188,13 +172,13 @@ export const QueryModeControls = (props: QueryModeControlsProps) => {
               element={
                 <Button
                   size="sm"
-                  variant={conditions.length > 0 ? 'primary' : 'secondary'}
+                  variant={conditionCount > 0 ? 'primary' : 'secondary'}
                   icon={<TbFilter size={12} />}
                   aria-label="Filter"
                   title="Filter"
                 >
-                  {conditions.length > 0 && (
-                    <span className={styles.filterCount}>{conditions.length}</span>
+                  {conditionCount > 0 && (
+                    <span className={styles.filterCount}>{conditionCount}</span>
                   )}
                 </Button>
               }
@@ -206,18 +190,21 @@ export const QueryModeControls = (props: QueryModeControlsProps) => {
               closeButton={false}
               className={styles.filterPopover}
             >
-              <FilterBuilder
-                conditions={conditions}
-                onChange={setConditions}
-                onClose={() => filterPopoverRef.current?.close()}
-                schemas={schemas}
-                lifecycleStates={lifecycleStates}
-                owners={owners}
-                enums={enums}
-                selectedSchemaId={typeFilter}
-                joinedAssessment={joinedAssessment}
-                getFieldGroupAccess={getFieldGroupAccess}
-              />
+              {setEntityQuery ? (
+                <QueryBuilder
+                  query={canonical}
+                  onChange={setEntityQuery}
+                  schemas={schemas}
+                  lifecycleStates={lifecycleStates}
+                  owners={owners}
+                  enums={enums}
+                  joinedAssessment={joinedAssessment}
+                  getFieldGroupAccess={getFieldGroupAccess}
+                  textPreview={textPreview}
+                  showFreeText={false}
+                  onClose={() => filterPopoverRef.current?.close()}
+                />
+              ) : null}
             </Popover.Content>
           </Popover.Root>
         </>
@@ -244,34 +231,17 @@ export const QueryModeControls = (props: QueryModeControlsProps) => {
         <Button
           size="sm"
           variant="secondary"
-          onClick={mode === 'basic' ? switchToAdvanced : switchToBasic}
-          title={mode === 'basic' ? 'Switch to advanced query mode' : 'Switch to basic query mode'}
+          onClick={() => {
+            if (mode === 'visual') setEntityQuery(canonical);
+            setMode(mode === 'visual' ? 'advanced' : 'visual');
+          }}
+          title={
+            mode === 'visual' ? 'Switch to advanced query mode' : 'Switch to visual query mode'
+          }
         >
-          {mode === 'basic' ? 'Advanced' : 'Basic'}
+          {mode === 'visual' ? 'Advanced' : 'Visual'}
         </Button>
       )}
-
-      <Dialog
-        open={pendingSwitch}
-        onClose={() => setPendingSwitch(false)}
-        title="Switch to Basic mode?"
-        buttons={[
-          { label: 'Cancel', type: 'cancel', onClick: () => setPendingSwitch(false) },
-          {
-            label: 'Switch to Basic',
-            type: 'default',
-            onClick: () => {
-              applyBasicConversion(canonicalQuery());
-              setPendingSwitch(false);
-            }
-          }
-        ]}
-      >
-        <p>
-          This query uses grouping, NOT, or relation traversal that Basic mode can&apos;t represent.
-          Switching will keep only the parts Basic mode supports and drop the rest.
-        </p>
-      </Dialog>
     </>
   );
 };

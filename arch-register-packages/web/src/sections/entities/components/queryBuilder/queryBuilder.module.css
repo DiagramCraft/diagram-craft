@@ -1,0 +1,299 @@
+/* Rendered inside Popover.Content (padding zeroed on the popover). Font set explicitly because the
+   portal renders outside .ar-app. */
+.container {
+  display: flex;
+  flex-direction: column;
+  width: 520px;
+  max-height: min(70vh, 620px);
+  overflow-y: auto;
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+}
+
+/* ── Top bar: type scope + free text ── */
+.topBar {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.typeLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--base-fg-dim);
+}
+
+.typeSelect {
+  width: 150px;
+}
+
+.freeText {
+  flex: 1;
+}
+
+/* ── Groups ── */
+.rootGroup {
+  display: flex;
+  flex-direction: column;
+}
+
+.nestedGroup {
+  --nest-accent: var(--blue-9, #2f6feb);
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--panel-border);
+  border-left: 3px solid var(--nest-accent);
+  border-radius: var(--r);
+  margin: 8px 10px 8px 16px;
+  background: var(--panel-bg, var(--base-bg, #fff));
+  box-shadow: 0 1px 2px rgb(0 0 0 / 8%);
+}
+
+/* Each nesting level gets its own accent colour so it's obvious which rows belong to which
+   group, even several levels deep. Cycles after NEST_LEVELS. */
+.nestedGroup[data-nest='1'] {
+  --nest-accent: #3b82f6;
+}
+.nestedGroup[data-nest='2'] {
+  --nest-accent: #a855f7;
+}
+.nestedGroup[data-nest='3'] {
+  --nest-accent: #14b8a6;
+}
+.nestedGroup[data-nest='4'] {
+  --nest-accent: #f59e0b;
+}
+.nestedGroup[data-nest='5'] {
+  --nest-accent: #ec4899;
+}
+
+/* Nested content sits on a faint wash of the level's accent so the whole group reads as one block. */
+.nestedGroup > .children,
+.nestedGroup > .groupHeader,
+.nestedGroup > .groupFooter {
+  background: color-mix(in srgb, var(--nest-accent) 6%, transparent);
+}
+
+.groupHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.nestedGroup > .groupHeader {
+  border-bottom-color: color-mix(in srgb, var(--nest-accent) 20%, var(--panel-border));
+}
+
+.matchToggle {
+  display: inline-flex;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r);
+  overflow: hidden;
+}
+
+.matchOn,
+.matchOff {
+  font: inherit;
+  font-size: 11px;
+  padding: 2px 9px;
+  border: none;
+  cursor: pointer;
+}
+
+.matchOn {
+  background: var(--accent-bg, var(--blue-9, #2f6feb));
+  color: var(--accent-fg, #fff);
+}
+
+.matchOff {
+  background: transparent;
+  color: var(--base-fg-dim);
+}
+
+.matchHint {
+  font-size: 11px;
+  color: var(--cmp-fg-disabled);
+}
+
+/* ── Rows ── */
+.children {
+  display: flex;
+  flex-direction: column;
+}
+
+.empty {
+  padding: 10px 12px;
+  color: var(--cmp-fg-disabled);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.rowCtls {
+  display: inline-flex;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.rowCtl {
+  font: inherit;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  padding: 2px 5px;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r);
+  background: transparent;
+  color: var(--base-fg-dim);
+  cursor: pointer;
+}
+
+.rowCtl:hover {
+  background: var(--cmp-bg-hover);
+  color: var(--base-fg);
+}
+
+.rowCtlOn {
+  composes: rowCtl;
+  background: var(--accent-bg, var(--blue-9, #2f6feb));
+  border-color: transparent;
+  color: var(--accent-fg, #fff);
+}
+
+.rowCtlOn:hover {
+  background: var(--accent-bg, var(--blue-9, #2f6feb));
+  color: var(--accent-fg, #fff);
+}
+
+.removeBtn {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--r);
+  border: none;
+  background: transparent;
+  color: var(--cmp-fg-disabled);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.removeBtn:hover {
+  background: var(--cmp-bg-hover);
+  color: var(--base-fg);
+}
+
+/* ── Read-only advanced leaves ── */
+.advancedLeaf {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.advancedLeafText {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono, monospace);
+  font-size: 11.5px;
+  color: var(--base-fg-dim);
+}
+
+.advancedLeafBadge {
+  flex-shrink: 0;
+  font-size: 9.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  padding: 1px 5px;
+  border-radius: var(--r);
+  background: var(--cmp-bg-hover);
+  color: var(--cmp-fg-disabled);
+}
+
+/* ── Footer / add actions ── */
+.groupFooter {
+  display: flex;
+  gap: 14px;
+  padding: 8px 12px 10px;
+}
+
+.addBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font: inherit;
+  font-size: 12px;
+  color: var(--cmp-fg-disabled);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.addBtn:hover {
+  color: var(--base-fg);
+}
+
+/* ── Warnings / preview ── */
+.warn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  color: var(--red-11, #c4314b);
+  font-size: 11.5px;
+  border-top: 1px solid var(--panel-border);
+}
+
+.preview {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 8px 12px 10px;
+  border-top: 1px solid var(--panel-border);
+}
+
+.previewLabel {
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--base-fg-dim);
+}
+
+.previewText {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono, monospace);
+  font-size: 11.5px;
+  color: var(--base-fg);
+}

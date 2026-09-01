@@ -130,6 +130,106 @@ export const getSchemaFieldDefs = (
     });
 };
 
+export type EntityFilterFieldDefsParams = {
+  schemas: EntitySchema[];
+  lifecycleStates: WorkspaceLifecycleState[];
+  owners: WorkspaceOwnerOption[];
+  enums: WorkspaceEnum[];
+  selectedSchemaId?: string | null;
+  joinedAssessment?: Assessment | null;
+  getFieldGroupAccess?: (accessControl: FieldGroupAccessControl | undefined) => FieldGroupAccess;
+};
+
+/**
+ * The full `FieldDef` list for an entity-scoped filter row: entity built-ins (name/owner/status/…),
+ * the selected schema's own fields, and the joined assessment's fields when one is present. Shared
+ * by `FilterBuilder` and the visual query builder's leaf rows so both offer the identical field
+ * set. `selectedSchemaId` scopes the schema-field portion; pass the schema reached by a traversal
+ * path to get that schema's fields at depth.
+ */
+export const getEntityFilterFieldDefs = ({
+  schemas,
+  lifecycleStates,
+  owners,
+  enums,
+  selectedSchemaId,
+  joinedAssessment,
+  getFieldGroupAccess = () => 'edit'
+}: EntityFilterFieldDefsParams): FieldDef[] => {
+  const builtIn: FieldDef[] = [
+    { id: '_name', name: 'Name', type: 'text' },
+    { id: '_slug', name: 'Slug', type: 'text' },
+    {
+      id: '_owner',
+      name: 'Owner',
+      type: 'select',
+      options: owners.map(o => ({ value: o.id, label: o.name }))
+    },
+    {
+      id: '_lifecycle',
+      name: 'Status',
+      type: 'select',
+      options: lifecycleStates.map(s => ({ value: s.id, label: s.label }))
+    },
+    {
+      id: '_conformanceStatus',
+      name: 'Conformance status',
+      type: 'select',
+      options: CONFORMANCE_STATUS_OPTIONS
+    },
+    { id: '_description', name: 'Description', type: 'text' },
+    { id: '_namespace', name: 'Namespace', type: 'text' },
+    { id: '_tags', name: 'Tags', type: 'text' },
+    {
+      id: '_schemaId',
+      name: 'Type',
+      type: 'select',
+      options: schemas.map(s => ({ value: s.id, label: s.name }))
+    }
+  ];
+
+  const schemaFields = getSchemaFieldDefs(
+    selectedSchemaId ? schemas.find(s => s.id === selectedSchemaId) : undefined,
+    enums,
+    getFieldGroupAccess
+  );
+
+  const assessmentFields: FieldDef[] = joinedAssessment
+    ? [
+        { id: ASSESSMENT_PRESENCE_FIELD_ID, name: 'Assessment response', type: 'presence' },
+        ...joinedAssessment.fields.map((f): FieldDef => {
+          const id = `${ASSESSMENT_FIELD_PREFIX}${f.id}`;
+          if (f.type === 'rating') return { id, name: f.label, type: 'rating' };
+          if (f.type === 'enum') {
+            return {
+              id,
+              name: f.label,
+              type: 'select',
+              options: getAssessmentEnumOptions(f, enums)
+            };
+          }
+          if (f.type === 'derived') {
+            const type =
+              f.resultType === 'select'
+                ? 'select'
+                : f.resultType === 'rating'
+                  ? 'rating'
+                  : f.resultType;
+            return {
+              id,
+              name: f.label,
+              type,
+              options: type === 'select' ? getAssessmentEnumOptions(f, enums) : undefined
+            };
+          }
+          return { id, name: f.label, type: 'text' };
+        })
+      ]
+    : [];
+
+  return [...builtIn, ...schemaFields, ...assessmentFields];
+};
+
 type Props = {
   conditions: FilterCondition[];
   onChange: (conditions: FilterCondition[]) => void;
@@ -165,78 +265,15 @@ export const FilterBuilder = ({
   headerActions
 }: Props) => {
   const fields = React.useMemo(() => {
-    const builtIn: FieldDef[] = [
-      { id: '_name', name: 'Name', type: 'text' },
-      { id: '_slug', name: 'Slug', type: 'text' },
-      {
-        id: '_owner',
-        name: 'Owner',
-        type: 'select',
-        options: owners.map(o => ({ value: o.id, label: o.name }))
-      },
-      {
-        id: '_lifecycle',
-        name: 'Status',
-        type: 'select',
-        options: lifecycleStates.map(s => ({ value: s.id, label: s.label }))
-      },
-      {
-        id: '_conformanceStatus',
-        name: 'Conformance status',
-        type: 'select',
-        options: CONFORMANCE_STATUS_OPTIONS
-      },
-      { id: '_description', name: 'Description', type: 'text' },
-      { id: '_namespace', name: 'Namespace', type: 'text' },
-      { id: '_tags', name: 'Tags', type: 'text' },
-      {
-        id: '_schemaId',
-        name: 'Type',
-        type: 'select',
-        options: schemas.map(s => ({ value: s.id, label: s.name }))
-      }
-    ];
-
-    const schemaFields = getSchemaFieldDefs(
-      selectedSchemaId ? schemas.find(s => s.id === selectedSchemaId) : undefined,
+    return getEntityFilterFieldDefs({
+      schemas,
+      lifecycleStates,
+      owners,
       enums,
+      selectedSchemaId,
+      joinedAssessment,
       getFieldGroupAccess
-    );
-
-    const assessmentFields: FieldDef[] = joinedAssessment
-      ? [
-          { id: ASSESSMENT_PRESENCE_FIELD_ID, name: 'Assessment response', type: 'presence' },
-          ...joinedAssessment.fields.map((f): FieldDef => {
-            const id = `${ASSESSMENT_FIELD_PREFIX}${f.id}`;
-            if (f.type === 'rating') return { id, name: f.label, type: 'rating' };
-            if (f.type === 'enum') {
-              return {
-                id,
-                name: f.label,
-                type: 'select',
-                options: getAssessmentEnumOptions(f, enums)
-              };
-            }
-            if (f.type === 'derived') {
-              const type =
-                f.resultType === 'select'
-                  ? 'select'
-                  : f.resultType === 'rating'
-                    ? 'rating'
-                    : f.resultType;
-              return {
-                id,
-                name: f.label,
-                type,
-                options: type === 'select' ? getAssessmentEnumOptions(f, enums) : undefined
-              };
-            }
-            return { id, name: f.label, type: 'text' };
-          })
-        ]
-      : [];
-
-    return [...builtIn, ...schemaFields, ...assessmentFields];
+    });
   }, [
     schemas,
     lifecycleStates,
