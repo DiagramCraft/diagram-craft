@@ -1,3 +1,5 @@
+/* Matches the small bordered toggle buttons in the query builder (NOT / "where"): transparent
+   fill, dimmed glyph, subtle hover. */
 .hopDir {
   display: inline-flex;
   align-items: center;
@@ -6,16 +8,16 @@
   height: 22px;
   flex-shrink: 0;
   font-size: 12px;
-  color: var(--base-fg);
-  background: var(--panel-bg);
+  color: var(--base-fg-dim);
+  background: transparent;
   border: 1px solid var(--panel-border);
   border-radius: var(--r);
   cursor: pointer;
 }
 
 .hopDir:hover:not(:disabled) {
-  border-color: var(--accent-border);
-  color: var(--accent-fg);
+  background: var(--cmp-bg-hover);
+  color: var(--base-fg);
 }
 
 .hopDir:disabled {
@@ -23,17 +25,30 @@
   color: var(--base-fg-more-dim);
 }
 
+/* The relation <select> is a form control, so it follows the same tokens / sizing as the
+   app-components Select rather than the panel tokens, so a hop dropdown matches the condition
+   field / operator / enum dropdowns beside it. */
 .selectWrap {
   display: inline-flex;
   align-items: center;
   gap: 4px;
   position: relative;
-  background: var(--panel-bg);
-  border: 1px solid var(--panel-border);
-  border-radius: var(--r);
-  padding: 0 6px 0 8px;
-  height: 24px;
+  box-sizing: border-box;
+  background: var(--cmp-bg);
+  border: 1px solid var(--cmp-border);
+  border-radius: var(--cmp-radius);
+  padding: 0 5px 0 8px;
+  height: 25px;
   cursor: pointer;
+}
+
+.selectWrap:hover {
+  background: var(--cmp-bg-hover);
+}
+
+.selectWrap svg {
+  stroke: var(--base-fg-dim);
+  flex-shrink: 0;
 }
 
 .select {
@@ -41,8 +56,9 @@
   background: transparent;
   border: none;
   outline: none;
-  font-size: 11.5px;
-  color: var(--base-fg);
+  font-size: 11px;
+  line-height: 1;
+  color: var(--cmp-fg);
   cursor: pointer;
   padding: 0;
   font-family: inherit;

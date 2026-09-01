@@ -115,10 +115,6 @@
   gap: 6px;
 }
 
-.relativeDateOffset {
-  width: 48px;
-}
-
 .relativeDateToggle {
   display: inline-flex;
   align-items: center;

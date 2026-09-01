@@ -19,6 +19,7 @@ import {
   resetExploreRelationFilter,
   serializeSavedViewDefinitionForDebug,
   serializeViewConfigs,
+  stripEmptyGroups,
   toSavedViewConfig,
   toSavedViewSearch,
   withLiveSearchText,
@@ -782,6 +783,99 @@ describe('parseConditionsFromSearch', () => {
       { fieldId: '_schemaId', op: 'equals', value: 'data-entity' },
       { fieldId: '_lifecycle', op: 'equals', value: 'active' }
     ]);
+  });
+});
+
+describe('stripEmptyGroups', () => {
+  it('turns a lone empty group into a match-everything empty and', () => {
+    expect(
+      stripEmptyGroups({ root: { kind: 'and', children: [{ kind: 'or', children: [] }] } })
+    ).toEqual({ root: { kind: 'and', children: [] } });
+  });
+
+  it('drops empty groups but keeps real conditions and preserves top-level fields', () => {
+    const result = stripEmptyGroups({
+      schemaId: 'component',
+      root: {
+        kind: 'and',
+        children: [
+          { kind: 'predicate', path: [], fieldId: '_name', op: 'contains', value: 'api' },
+          { kind: 'or', children: [] },
+          {
+            kind: 'or',
+            children: [
+              { kind: 'predicate', path: [], fieldId: '_owner', op: 'equals', value: 'a' },
+              { kind: 'and', children: [] }
+            ]
+          }
+        ]
+      }
+    });
+    expect(result).toEqual({
+      schemaId: 'component',
+      root: {
+        kind: 'and',
+        children: [
+          { kind: 'predicate', path: [], fieldId: '_name', op: 'contains', value: 'api' },
+          {
+            kind: 'or',
+            children: [{ kind: 'predicate', path: [], fieldId: '_owner', op: 'equals', value: 'a' }]
+          }
+        ]
+      }
+    });
+  });
+
+  it('drops a not wrapping an empty group', () => {
+    expect(
+      stripEmptyGroups({
+        root: {
+          kind: 'and',
+          children: [
+            { kind: 'not', child: { kind: 'or', children: [] } },
+            { kind: 'predicate', path: [], fieldId: '_name', op: 'contains', value: 'x' }
+          ]
+        }
+      })
+    ).toEqual({
+      root: {
+        kind: 'and',
+        children: [{ kind: 'predicate', path: [], fieldId: '_name', op: 'contains', value: 'x' }]
+      }
+    });
+  });
+
+  it('drops a blank free-text row but keeps a filled one', () => {
+    expect(
+      stripEmptyGroups({
+        root: {
+          kind: 'and',
+          children: [
+            { kind: 'freeText', value: '   ' },
+            {
+              kind: 'or',
+              children: [
+                { kind: 'freeText', value: 'gateway' },
+                { kind: 'predicate', path: [], fieldId: '_owner', op: 'equals', value: 'a' }
+              ]
+            }
+          ]
+        }
+      })
+    ).toEqual({
+      root: {
+        kind: 'and',
+        children: [
+          {
+            kind: 'or',
+            children: [
+              { kind: 'freeText', value: 'gateway' },
+              { kind: 'predicate', path: [], fieldId: '_owner', op: 'equals', value: 'a' }
+            ]
+          }
+        ]
+      }
+    });
   });
 });
 

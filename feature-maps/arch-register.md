@@ -334,10 +334,12 @@
           becomes its own node, fan-connected to its endpoint entities and to whatever entities its entityRelation
           fields reference (e.g. a Data Flow relation's carried Data Entities), instead of one direct
           endpoint-to-endpoint edge per relation. An entity the viewer cannot see is omitted from the graph rather
-          than rendered blank, in either node style. The Relations browser's Basic (flat condition-row) and Advanced
-          (text-query) filter modes mirror the entity browser's, letting a query use grouping or a relationForward
-          traversal through an entityRelation field when Basic mode's flat conditions can't express it; a saved view
-          built around either opens directly in Advanced mode.
+          than rendered blank, in either node style. The Relations browser's filter controls mirror the entity
+          browser's: the same progressive builder popover (flat relation-field and In/Out endpoint conditions growing
+          in place into Any/All groups and negation) plus a Simple/Advanced toggle whose Advanced side is a text
+          field bound to the same relation-rooted query, full-fidelity in both directions. A query that traverses
+          past a single endpoint hop (a relationForward through an entityRelation field, or a multi-hop endpoint
+          path) or carries projection columns opens in Advanced mode until those visual editors land.
           A set of built-in, workspace-pinned canonical views cover information-governance analysis:
           restricted-data-flow exposure (flagging either the flow's own classification or a carried Data Entity's
           classification, shown as separate columns so a result can explain which one triggered it), missing or
@@ -523,10 +525,21 @@
           content.
 
         - @id:ar.search.filters Users can combine search terms and structured filters to narrow results. Entity
-          browser views offer Basic (free-text search plus a visual filter popover and multi-select sidebar facets) and Advanced (a single text
-          query parsed against the entity query language) modes, switchable without losing the underlying query;
-          switching from Advanced to Basic warns first if the query uses grouping, negation, or relation traversal
-          that Basic mode can't represent. A field in a schema group the user cannot view is offered nowhere as a
+          browser views provide a progressive filter builder popover (available alongside the multi-select sidebar
+          facets in both modes) plus a Simple/Advanced toggle that switches the adjacent input between a plain
+          free-text search box and a single text query parsed against the entity query language. The filter builder
+          opens as a flat list of conditions and grows in place into Any/All groups, negation, and relation traversal
+          (a per-condition hop chain that ends either on a field of the related record or on a bare "the related record
+          exists" check, with an optional per-hop same-instance "where" filter for the record that hop lands on), and
+          a Columns section for traversed projection values (a hop chain plus a terminal field or a whole-chain
+          capture, with an optional column name; each becomes selectable as a table column under Manage fields),
+          reading and writing the same structured query as the Advanced text field with no lossy conversion between
+          them; an empty group is treated as no filter rather than matching nothing, and a blank free-text row as no
+          filter rather than an error. A free-text clause is normally the dedicated search box, but a "Free text"
+          entry in any condition row's field dropdown places one inside the boolean tree for the "text OR a field
+          predicate" case the search box (always root-level AND) cannot express. A query that uses relation-rooted
+          traversal, a relation-instance projection, or a same-instance scoped filter inside a projection opens with
+          the Advanced text field shown until the corresponding visual editors are available. A field in a schema group the user cannot view is offered nowhere as a
           filter/sort option and is treated as unrecognized if referenced directly in an Advanced-mode query,
           matching how the field is hidden elsewhere. Advanced queries can traverse typed relations and filter or
           project their scalar relation fields; entity-valued relation fields are deferred to follow-up issue #2670.

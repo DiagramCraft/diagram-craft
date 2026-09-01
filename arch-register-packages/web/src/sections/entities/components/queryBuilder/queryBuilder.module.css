@@ -1,0 +1,534 @@
+/* Rendered inside Popover.Content (padding zeroed on the popover). Font set explicitly because the
+   portal renders outside .ar-app. */
+.container {
+  display: flex;
+  flex-direction: column;
+  width: min(680px, 92vw);
+  max-height: min(70vh, 620px);
+  overflow-y: auto;
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+}
+
+/* ── Top bar: type scope + free text ── */
+.topBar {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.typeLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--base-fg-dim);
+}
+
+.typeSelect {
+  width: 150px;
+}
+
+.freeText {
+  flex: 1;
+}
+
+/* ── Groups ── */
+/* The root conditions get the same card treatment as a nested group, just neutral - a subtle
+   hairline border, no accent bar, no background wash - so a single flat query still reads as
+   "a group" and lines up with the nested-group cards. */
+.rootGroup {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--panel-border);
+  border-left: 3px solid var(--cmp-fg-disabled);
+  border-radius: var(--r);
+  margin: 8px 12px;
+}
+
+/* A scoped-filter panel already provides its own card (`.scopedFilter`), so the QueryGroup it
+   renders at `path: []` drops the wrapper. */
+.scopedFilter > .rootGroup {
+  border: none;
+  border-radius: 0;
+  margin: 0;
+}
+
+.nestedGroup {
+  --nest-accent: var(--blue-9, #2f6feb);
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--panel-border);
+  border-left: 3px solid var(--nest-accent);
+  border-radius: var(--r);
+  margin: 8px 10px 8px 16px;
+  background: var(--panel-bg, var(--base-bg, #fff));
+  box-shadow: 0 1px 2px rgb(0 0 0 / 8%);
+}
+
+/* Each nesting level gets its own accent colour so it's obvious which rows belong to which
+   group, even several levels deep. Cycles after NEST_LEVELS. */
+.nestedGroup[data-nest="1"] {
+  --nest-accent: #3b82f6;
+}
+.nestedGroup[data-nest="2"] {
+  --nest-accent: #a855f7;
+}
+.nestedGroup[data-nest="3"] {
+  --nest-accent: #14b8a6;
+}
+.nestedGroup[data-nest="4"] {
+  --nest-accent: #f59e0b;
+}
+.nestedGroup[data-nest="5"] {
+  --nest-accent: #ec4899;
+}
+
+/* Nested content sits on a faint wash of the level's accent so the whole group reads as one block. */
+.nestedGroup > .children,
+.nestedGroup > .groupHeader {
+  background: color-mix(in srgb, var(--nest-accent) 6%, transparent);
+}
+
+.groupHeader {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+  /* right padding matches .row so the header's remove-x lines up with the rows' remove-x */
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+/* The +Condition / +Relation / +Group actions, right after the All/Any toggle. */
+.headerAdds {
+  display: flex;
+  gap: 10px;
+  margin-left: 2px;
+}
+
+.matchToggle {
+  display: inline-flex;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r);
+  overflow: hidden;
+}
+
+.matchOn,
+.matchOff {
+  font: inherit;
+  font-size: 11px;
+  padding: 2px 9px;
+  border: none;
+  cursor: pointer;
+}
+
+.matchOn {
+  background: var(--accent-bg, var(--blue-9, #2f6feb));
+  color: var(--accent-fg, #fff);
+}
+
+.matchOff {
+  background: transparent;
+  color: var(--base-fg-dim);
+}
+
+.matchHint {
+  font-size: 11px;
+  color: var(--cmp-fg-disabled);
+}
+
+/* ── Rows ── */
+.children {
+  display: flex;
+  flex-direction: column;
+}
+
+.empty {
+  padding: 10px 12px;
+  color: var(--cmp-fg-disabled);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+/* Traversal leaf: tall multi-row content - keep the NOT toggle near the first hop, not centred. */
+.rowTall {
+  align-items: flex-start;
+}
+
+.rowTall > .rowCtls {
+  padding-top: 6px;
+}
+
+/* A nested group is a floating card and carries no bottom divider of its own, so a row placed
+   after it would have no separating line above it - draw the divider on that row's top edge. */
+.children > .nestedGroup + .row {
+  border-top: 1px solid var(--panel-border);
+}
+
+.rowCtls {
+  display: inline-flex;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.rowCtl {
+  font: inherit;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  padding: 2px 5px;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r);
+  background: transparent;
+  color: var(--base-fg-dim);
+  cursor: pointer;
+}
+
+.rowCtl:hover {
+  background: var(--cmp-bg-hover);
+  color: var(--base-fg);
+}
+
+.rowCtlOn {
+  composes: rowCtl;
+  background: var(--accent-bg, var(--blue-9, #2f6feb));
+  border-color: transparent;
+  color: var(--accent-fg, #fff);
+}
+
+.rowCtlOn:hover {
+  background: var(--accent-bg, var(--blue-9, #2f6feb));
+  color: var(--accent-fg, #fff);
+}
+
+.removeBtn {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--r);
+  border: none;
+  background: transparent;
+  color: var(--cmp-fg-disabled);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.removeBtn:hover {
+  background: var(--cmp-bg-hover);
+  color: var(--base-fg);
+}
+
+/* ── Traversal leaf: hop editor + terminal field / exists ── */
+.traversalLeaf {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  padding: 4px 0;
+}
+
+/* Remove-condition x, top-right - lines up with the flat rows' own remove x. */
+.traversalRemove {
+  composes: removeBtn;
+  position: absolute;
+  top: 2px;
+  right: 0;
+}
+
+/* .traversalHead / .hop / .projectionTerminal are used by the horizontal HopSequence editor in
+   ProjectionEditor (the Columns section still lays a projection's hop chain out left-to-right). */
+.traversalHead {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.hop {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.projectionTerminal {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  padding-left: 1.5rem;
+}
+
+/* Vertical hop chain for a traversal condition: one hop per row, its "where" filter nested
+   directly beneath it, all hanging off a left rail. The chain has three sections - hops, the
+   has-a-field/just-exists toggle, the terminal field - each its own rail segment, so the rail
+   line breaks (by the `.hopList` gap) between them while staying continuous within. */
+.hopList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-left: 3px;
+  padding-left: 9px;
+  /* keep clear of the absolutely-positioned remove-condition x at the top-right */
+  padding-right: 22px;
+}
+
+.railSegment {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-left: -9px;
+  padding-left: 9px;
+  border-left: 2px solid var(--panel-border);
+}
+
+.hopBranch {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.hopRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  position: relative;
+}
+
+/* small tick joining each hop row to the rail */
+.hopRow::before {
+  content: "";
+  position: absolute;
+  left: -9px;
+  width: 6px;
+  height: 2px;
+  background: var(--panel-border);
+}
+
+.hopAddRow {
+  display: flex;
+  gap: 14px;
+}
+
+.hopAdd {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font: inherit;
+  font-size: 11px;
+  color: var(--cmp-fg-disabled);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.hopAdd:hover {
+  color: var(--base-fg);
+}
+
+.hopRm {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--r);
+  border: none;
+  background: transparent;
+  color: var(--cmp-fg-disabled);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.hopRm:hover {
+  background: var(--cmp-bg-hover);
+  color: var(--base-fg);
+}
+
+.terminalField {
+  flex: 1;
+  min-width: 0;
+}
+
+/* neutralise FilterRow's own row padding / divider so it lines up with the hop selects */
+.terminalField > div {
+  padding: 0;
+  border-bottom: none;
+}
+
+/* ── Per-hop same-instance [...] scoped filter (nested inside its .hopBranch) ── */
+.scopedFilter {
+  margin-left: 0.75rem;
+  border: 1px solid var(--panel-border);
+  border-left: 3px solid var(--cmp-fg-disabled);
+  border-radius: var(--r);
+  background: color-mix(in srgb, var(--base-fg) 4%, transparent);
+}
+
+/* ── Read-only advanced leaves ── */
+.advancedLeaf {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.advancedLeafText {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono, monospace);
+  font-size: 11.5px;
+  color: var(--base-fg-dim);
+}
+
+.advancedLeafBadge {
+  flex-shrink: 0;
+  font-size: 9.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  padding: 1px 5px;
+  border-radius: var(--r);
+  background: var(--cmp-bg-hover);
+  color: var(--cmp-fg-disabled);
+}
+
+/* ── Add actions (group header + Columns section) ── */
+.addBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font: inherit;
+  font-size: 11px;
+  color: var(--cmp-fg-disabled);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.addBtn:hover {
+  color: var(--base-fg);
+}
+
+/* ── Columns / projections ── */
+/* Section label above the boolean-tree card, matching the Type / Columns / Query labels. */
+.filtersHeader {
+  padding: 10px 12px 0;
+}
+
+.columns {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border-top: 1px solid var(--panel-border);
+}
+
+.columnsHeader {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.projectionRow {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.projectionRow:last-of-type {
+  border-bottom: none;
+}
+
+.projectionChain {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--base-fg-dim);
+  white-space: nowrap;
+}
+
+.projectionField {
+  min-width: 140px;
+}
+
+.projectionAlias {
+  flex: 1;
+  min-width: 100px;
+  height: 24px;
+  padding: 0 6px;
+  font: inherit;
+  font-size: 11.5px;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r);
+  background: var(--panel-bg);
+  color: var(--base-fg);
+}
+
+/* ── Warnings / preview ── */
+.warn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  color: var(--red-11, #c4314b);
+  font-size: 11.5px;
+  border-top: 1px solid var(--panel-border);
+}
+
+.preview {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 8px 12px 10px;
+  border-top: 1px solid var(--panel-border);
+}
+
+.previewLabel {
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--base-fg-dim);
+}
+
+.previewText {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono, monospace);
+  font-size: 11.5px;
+  color: var(--base-fg);
+}

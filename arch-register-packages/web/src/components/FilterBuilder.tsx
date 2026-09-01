@@ -80,7 +80,10 @@ const CONFORMANCE_STATUS_OPTIONS: { value: EntityConformanceStatusFilter; label:
 export type FieldDef = {
   id: string;
   name: string;
-  type: 'text' | 'date' | 'select' | 'boolean' | 'number' | 'rating' | 'presence';
+  // 'freetext' is not a real schema field - the visual query builder injects one synthetic
+  // 'freetext' entry so a condition row's field picker can also switch the row to a root
+  // free-text clause. It has no operator; the row collapses to a single text input.
+  type: 'text' | 'date' | 'select' | 'boolean' | 'number' | 'rating' | 'presence' | 'freetext';
   options?: { value: string; label: string }[];
 };
 
@@ -130,6 +133,106 @@ export const getSchemaFieldDefs = (
     });
 };
 
+export type EntityFilterFieldDefsParams = {
+  schemas: EntitySchema[];
+  lifecycleStates: WorkspaceLifecycleState[];
+  owners: WorkspaceOwnerOption[];
+  enums: WorkspaceEnum[];
+  selectedSchemaId?: string | null;
+  joinedAssessment?: Assessment | null;
+  getFieldGroupAccess?: (accessControl: FieldGroupAccessControl | undefined) => FieldGroupAccess;
+};
+
+/**
+ * The full `FieldDef` list for an entity-scoped filter row: entity built-ins (name/owner/status/…),
+ * the selected schema's own fields, and the joined assessment's fields when one is present. Shared
+ * by `FilterBuilder` and the visual query builder's leaf rows so both offer the identical field
+ * set. `selectedSchemaId` scopes the schema-field portion; pass the schema reached by a traversal
+ * path to get that schema's fields at depth.
+ */
+export const getEntityFilterFieldDefs = ({
+  schemas,
+  lifecycleStates,
+  owners,
+  enums,
+  selectedSchemaId,
+  joinedAssessment,
+  getFieldGroupAccess = () => 'edit'
+}: EntityFilterFieldDefsParams): FieldDef[] => {
+  const builtIn: FieldDef[] = [
+    { id: '_name', name: 'Name', type: 'text' },
+    { id: '_slug', name: 'Slug', type: 'text' },
+    {
+      id: '_owner',
+      name: 'Owner',
+      type: 'select',
+      options: owners.map(o => ({ value: o.id, label: o.name }))
+    },
+    {
+      id: '_lifecycle',
+      name: 'Status',
+      type: 'select',
+      options: lifecycleStates.map(s => ({ value: s.id, label: s.label }))
+    },
+    {
+      id: '_conformanceStatus',
+      name: 'Conformance status',
+      type: 'select',
+      options: CONFORMANCE_STATUS_OPTIONS
+    },
+    { id: '_description', name: 'Description', type: 'text' },
+    { id: '_namespace', name: 'Namespace', type: 'text' },
+    { id: '_tags', name: 'Tags', type: 'text' },
+    {
+      id: '_schemaId',
+      name: 'Type',
+      type: 'select',
+      options: schemas.map(s => ({ value: s.id, label: s.name }))
+    }
+  ];
+
+  const schemaFields = getSchemaFieldDefs(
+    selectedSchemaId ? schemas.find(s => s.id === selectedSchemaId) : undefined,
+    enums,
+    getFieldGroupAccess
+  );
+
+  const assessmentFields: FieldDef[] = joinedAssessment
+    ? [
+        { id: ASSESSMENT_PRESENCE_FIELD_ID, name: 'Assessment response', type: 'presence' },
+        ...joinedAssessment.fields.map((f): FieldDef => {
+          const id = `${ASSESSMENT_FIELD_PREFIX}${f.id}`;
+          if (f.type === 'rating') return { id, name: f.label, type: 'rating' };
+          if (f.type === 'enum') {
+            return {
+              id,
+              name: f.label,
+              type: 'select',
+              options: getAssessmentEnumOptions(f, enums)
+            };
+          }
+          if (f.type === 'derived') {
+            const type =
+              f.resultType === 'select'
+                ? 'select'
+                : f.resultType === 'rating'
+                  ? 'rating'
+                  : f.resultType;
+            return {
+              id,
+              name: f.label,
+              type,
+              options: type === 'select' ? getAssessmentEnumOptions(f, enums) : undefined
+            };
+          }
+          return { id, name: f.label, type: 'text' };
+        })
+      ]
+    : [];
+
+  return [...builtIn, ...schemaFields, ...assessmentFields];
+};
+
 type Props = {
   conditions: FilterCondition[];
   onChange: (conditions: FilterCondition[]) => void;
@@ -165,78 +268,15 @@ export const FilterBuilder = ({
   headerActions
 }: Props) => {
   const fields = React.useMemo(() => {
-    const builtIn: FieldDef[] = [
-      { id: '_name', name: 'Name', type: 'text' },
-      { id: '_slug', name: 'Slug', type: 'text' },
-      {
-        id: '_owner',
-        name: 'Owner',
-        type: 'select',
-        options: owners.map(o => ({ value: o.id, label: o.name }))
-      },
-      {
-        id: '_lifecycle',
-        name: 'Status',
-        type: 'select',
-        options: lifecycleStates.map(s => ({ value: s.id, label: s.label }))
-      },
-      {
-        id: '_conformanceStatus',
-        name: 'Conformance status',
-        type: 'select',
-        options: CONFORMANCE_STATUS_OPTIONS
-      },
-      { id: '_description', name: 'Description', type: 'text' },
-      { id: '_namespace', name: 'Namespace', type: 'text' },
-      { id: '_tags', name: 'Tags', type: 'text' },
-      {
-        id: '_schemaId',
-        name: 'Type',
-        type: 'select',
-        options: schemas.map(s => ({ value: s.id, label: s.name }))
-      }
-    ];
-
-    const schemaFields = getSchemaFieldDefs(
-      selectedSchemaId ? schemas.find(s => s.id === selectedSchemaId) : undefined,
+    return getEntityFilterFieldDefs({
+      schemas,
+      lifecycleStates,
+      owners,
       enums,
+      selectedSchemaId,
+      joinedAssessment,
       getFieldGroupAccess
-    );
-
-    const assessmentFields: FieldDef[] = joinedAssessment
-      ? [
-          { id: ASSESSMENT_PRESENCE_FIELD_ID, name: 'Assessment response', type: 'presence' },
-          ...joinedAssessment.fields.map((f): FieldDef => {
-            const id = `${ASSESSMENT_FIELD_PREFIX}${f.id}`;
-            if (f.type === 'rating') return { id, name: f.label, type: 'rating' };
-            if (f.type === 'enum') {
-              return {
-                id,
-                name: f.label,
-                type: 'select',
-                options: getAssessmentEnumOptions(f, enums)
-              };
-            }
-            if (f.type === 'derived') {
-              const type =
-                f.resultType === 'select'
-                  ? 'select'
-                  : f.resultType === 'rating'
-                    ? 'rating'
-                    : f.resultType;
-              return {
-                id,
-                name: f.label,
-                type,
-                options: type === 'select' ? getAssessmentEnumOptions(f, enums) : undefined
-              };
-            }
-            return { id, name: f.label, type: 'text' };
-          })
-        ]
-      : [];
-
-    return [...builtIn, ...schemaFields, ...assessmentFields];
+    });
   }, [
     schemas,
     lifecycleStates,
@@ -328,19 +368,23 @@ export const FilterBuilder = ({
   );
 };
 
-// Exported so relation-specific filter UIs (RelationFilterBuilder.tsx) can reuse the same
+// Exported so relation-specific filter UIs (relationFilterFields.ts) can reuse the same
 // field/operator/value row rendering without duplicating it — only the `fields` list construction
 // differs between entity and relation schemas.
 export const FilterRow = ({
   condition,
   fields,
   onUpdate,
-  onRemove
+  onRemove,
+  hideRemove = false
 }: {
   condition: FilterCondition;
   fields: FieldDef[];
   onUpdate: (updates: Partial<FilterCondition>) => void;
   onRemove: () => void;
+  // The visual query builder owns a single remove control per condition row (top-right), so it
+  // suppresses FilterRow's own trailing X to avoid two X buttons on the same row.
+  hideRemove?: boolean;
 }) => {
   const field = fields.find(f => f.id === condition.fieldId) ?? fields[0]!;
 
@@ -351,7 +395,13 @@ export const FilterRow = ({
     setLocalTextValue((condition.value as string) ?? '');
   }, [condition.fieldId, condition.value]);
 
-  const commitTextValue = () => onUpdate({ value: localTextValue });
+  const commitTextValue = () =>
+    onUpdate({
+      // `rating` keeps its numeric value in the IR; text / number / free text stay strings, as
+      // before this row switched from a raw <input> to the shared TextInput.
+      value:
+        field.type === 'rating' && localTextValue !== '' ? Number(localTextValue) : localTextValue
+    });
 
   const operators = React.useMemo(() => {
     if (field.type === 'date') return DATE_OPERATORS;
@@ -362,13 +412,20 @@ export const FilterRow = ({
     return TEXT_OPERATORS;
   }, [field.type]);
 
-  const showValueInput = condition.op !== 'empty' && condition.op !== 'not_empty';
+  const isFreeText = field.type === 'freetext';
+  const showValueInput = isFreeText || (condition.op !== 'empty' && condition.op !== 'not_empty');
 
   return (
     <div
       className={styles.row}
       onBlur={e => {
-        if (field.type === 'text' && !e.currentTarget.contains(e.relatedTarget as Node)) {
+        if (
+          (field.type === 'text' ||
+            field.type === 'number' ||
+            field.type === 'rating' ||
+            isFreeText) &&
+          !e.currentTarget.contains(e.relatedTarget as Node)
+        ) {
           commitTextValue();
         }
       }}
@@ -383,18 +440,20 @@ export const FilterRow = ({
             ))}
           </Select.Root>
         </div>
-        <div className={styles.tokOp}>
-          <Select.Root
-            value={condition.op}
-            onChange={v => onUpdate({ op: v as FilterCondition['op'] })}
-          >
-            {operators.map(o => (
-              <Select.Item key={o.value} value={o.value}>
-                {o.label}
-              </Select.Item>
-            ))}
-          </Select.Root>
-        </div>
+        {!isFreeText && (
+          <div className={styles.tokOp}>
+            <Select.Root
+              value={condition.op}
+              onChange={v => onUpdate({ op: v as FilterCondition['op'] })}
+            >
+              {operators.map(o => (
+                <Select.Item key={o.value} value={o.value}>
+                  {o.label}
+                </Select.Item>
+              ))}
+            </Select.Root>
+          </div>
+        )}
       </div>
 
       {showValueInput && (
@@ -411,13 +470,13 @@ export const FilterRow = ({
             isNowDateLiteral(condition.value) ? (
               <div className={styles.relativeDateRow}>
                 <span>Today</span>
-                <input
+                <TextInput
                   type="number"
-                  step="1"
-                  className={styles.relativeDateOffset}
-                  value={condition.value.offsetDays ?? 0}
-                  onChange={e => {
-                    const offsetDays = Number(e.target.value);
+                  step={1}
+                  style={{ width: '4rem' }}
+                  value={String(condition.value.offsetDays ?? 0)}
+                  onChange={v => {
+                    const offsetDays = Number(v);
                     onUpdate({
                       value: {
                         $now: true,
@@ -452,21 +511,16 @@ export const FilterRow = ({
                 </button>
               </div>
             )
-          ) : field.type === 'number' ? (
-            <input
+          ) : field.type === 'number' || field.type === 'rating' ? (
+            <TextInput
               type="number"
-              step="1"
-              value={(condition.value as string) ?? ''}
-              onChange={e => onUpdate({ value: e.target.value })}
-            />
-          ) : field.type === 'rating' ? (
-            <input
-              type="number"
-              step="1"
-              min={1}
-              max={5}
-              value={(condition.value as string) ?? ''}
-              onChange={e => onUpdate({ value: e.target.value ? Number(e.target.value) : '' })}
+              step={1}
+              {...(field.type === 'rating' ? { min: 1, max: 5 } : {})}
+              value={localTextValue}
+              onChange={v => setLocalTextValue(v ?? '')}
+              onKeyDown={(e: React.KeyboardEvent) => {
+                if (e.key === 'Enter') commitTextValue();
+              }}
             />
           ) : (
             <TextInput
@@ -480,9 +534,11 @@ export const FilterRow = ({
         </div>
       )}
 
-      <button type="button" className={styles.removeBtn} onClick={onRemove} title="Remove filter">
-        <TbX size={11} />
-      </button>
+      {!hideRemove && (
+        <button type="button" className={styles.removeBtn} onClick={onRemove} title="Remove filter">
+          <TbX size={11} />
+        </button>
+      )}
     </div>
   );
 };

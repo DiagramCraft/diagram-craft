@@ -92,6 +92,39 @@ export const parseEntityQueryFromSearch = (search: BrowserSearch): EntityQuery |
 const rootChildren = (query: EntityQuery): EntityQuery['root'][] =>
   query.root.kind === 'and' ? query.root.children : [query.root];
 
+const stripEmptyGroupsNode = (node: EntityQuery['root']): EntityQuery['root'] | null => {
+  if (node.kind === 'and' || node.kind === 'or') {
+    const children = node.children
+      .map(stripEmptyGroupsNode)
+      .filter((child): child is EntityQuery['root'] => child !== null);
+    return children.length === 0 ? null : { ...node, children };
+  }
+  if (node.kind === 'not') {
+    const child = stripEmptyGroupsNode(node.child);
+    return child ? { ...node, child } : null;
+  }
+  // An in-progress, still-empty free-text row (added via the builder's "Add text search") is
+  // dropped too - an empty `freeText` value is a validation error, not "match everything".
+  if (node.kind === 'freeText') {
+    return node.value.trim() === '' ? null : node;
+  }
+  return node;
+};
+
+/**
+ * Removes in-progress-builder placeholders that aren't no-ops at execution: `and`/`or` groups with
+ * no surviving children anywhere in the tree (an empty `or` is vacuously false and would exclude
+ * everything), and `freeText` nodes with an empty value (a validation error). The visual builder
+ * deliberately keeps an emptied group / blank text row on screen as an editing container; this is
+ * applied when a query is sent for execution, persisted to a saved view, or shown in the text
+ * preview so those behave as "no filter" rather than "match nothing" / reject. A tree that strips
+ * to nothing becomes an empty `and` (matches everything).
+ */
+export const stripEmptyGroups = (query: EntityQuery): EntityQuery => ({
+  ...query,
+  root: stripEmptyGroupsNode(query.root) ?? { kind: 'and', children: [] }
+});
+
 export type EntityFacetSelection = {
   schemaIds: string[];
   lifecycleValues: Array<string | null>;
@@ -288,6 +321,11 @@ const freeTextFromEntityQuery = (query: EntityQuery): string | undefined => {
   const node = rootChildren(query).find(child => isFreeTextQueryNode(child));
   return node ? freeTextValueFromNode(node) : undefined;
 };
+
+/** The query's current free-text clause (`freeText` node, or the legacy `_name`/`_slug`/
+ *  `_description` contains-OR), or `''` when it has none. */
+export const getFreeTextQuery = (query: EntityQuery): string =>
+  freeTextFromEntityQuery(query) ?? '';
 
 /**
  * `printEntityQueryText` (specs/QUERY_LANGUAGE.md §4.4) only ever renders `query.root` — the
@@ -656,7 +694,7 @@ export const buildSavedViewPayload = ({
   const resolvedEntityQuery =
     entityQuery ??
     buildEntityQueryFromBrowserFilters({ typeFilter, conditions, joinAssessmentId, q });
-  const canonicalEntityQuery = addFreeTextQuery(resolvedEntityQuery, q);
+  const canonicalEntityQuery = stripEmptyGroups(addFreeTextQuery(resolvedEntityQuery, q));
 
   return {
     scope,
