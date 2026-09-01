@@ -12,7 +12,7 @@ import { applyTheme, migrateTheme } from './hooks/useTheme';
   }
 })();
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom/client';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { RouterProvider } from '@tanstack/react-router';
@@ -27,16 +27,17 @@ import { DevTools } from './dev/DevTools';
 
 const InnerApp = () => {
   const { isAuthenticated, isLoading } = useAuth();
+  const previousAuthState = useRef<boolean | null>(null);
 
-  // Update router context when auth state changes
+  // Re-run route guards when auth state changes. The context is also passed to
+  // RouterProvider below so the initial route load sees the current auth state
+  // before any beforeLoad hooks execute.
   useEffect(() => {
-    router.update({
-      context: {
-        ...router.options.context,
-        auth: { isAuthenticated, isLoading }
-      }
-    });
-    router.invalidate();
+    if (isLoading) return;
+    if (previousAuthState.current !== null && previousAuthState.current !== isAuthenticated) {
+      void router.invalidate();
+    }
+    previousAuthState.current = isAuthenticated;
   }, [isAuthenticated, isLoading]);
 
   if (isLoading) {
@@ -69,7 +70,7 @@ const InnerApp = () => {
 
   return (
     <>
-      <RouterProvider router={router} />
+      <RouterProvider router={router} context={{ auth: { isAuthenticated, isLoading } }} />
       <DevTools />
     </>
   );

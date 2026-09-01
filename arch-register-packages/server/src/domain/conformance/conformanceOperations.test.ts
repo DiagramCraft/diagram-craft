@@ -83,7 +83,7 @@ const makeEntity = (id: string, name: string): EntityDbResult => ({
   schema_name: schema.name
 });
 
-const visibleEntity = makeEntity('entity-visible', 'Visible');
+const visibleEntity = { ...makeEntity('entity-visible', 'Visible'), public_id: 'SRV-1' };
 const hiddenEntity = makeEntity('entity-hidden', 'Hidden');
 
 const makeViolation = (id: string, entity: EntityDbResult): ConformanceViolationDbResult => ({
@@ -138,7 +138,11 @@ const makeDatabase = (violations: ConformanceViolationDbResult[]) =>
   ({
     catalog: {
       getEntity: vi.fn(async (_workspace: string, id: string) =>
-        id === visibleEntity.id ? visibleEntity : id === hiddenEntity.id ? hiddenEntity : null
+        id === visibleEntity.id || id === visibleEntity.public_id
+          ? visibleEntity
+          : id === hiddenEntity.id
+            ? hiddenEntity
+            : null
       ),
       listSchemas: vi.fn(async () => [schema])
     },
@@ -149,6 +153,28 @@ const makeDatabase = (violations: ConformanceViolationDbResult[]) =>
   }) as unknown as DatabaseAdapter;
 
 describe('conformance violation visibility', () => {
+  it('resolves public entity IDs before querying violation storage', async () => {
+    const authCtx = makeAuthContext([]);
+    mocks.buildApiEntityAuthCtx.mockResolvedValue(authCtx);
+    const db = makeDatabase([makeViolation('violation-visible', visibleEntity)]);
+
+    await listConformanceViolations(
+      db,
+      'ws-1',
+      {
+        entityId: visibleEntity.public_id,
+        limit: 50,
+        offset: 0
+      },
+      event
+    );
+
+    expect(db.conformance.listViolations).toHaveBeenCalledWith(
+      'ws-1',
+      expect.objectContaining({ entity_id: visibleEntity.id })
+    );
+  });
+
   it('redacts restricted evidence and excludes hidden entities from results and summaries', async () => {
     const authCtx = makeAuthContext([]);
     mocks.buildApiEntityAuthCtx.mockResolvedValue(authCtx);

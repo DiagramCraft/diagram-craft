@@ -256,11 +256,18 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
     entry => entry.changeCase.status === 'planned'
   ).length;
 
-  const conformanceEntityId = entity?._uid ?? entityId;
+  // The route uses a public entity ID, while conformance storage is keyed by the
+  // internal UUID. Wait for the entity query before issuing the filtered request.
+  const conformanceEntityId = entity?._uid;
   const { data: conformanceViolations } = useConformanceViolations(
     workspaceId,
-    { entityId: conformanceEntityId, status: 'active', limit: 200, offset: 0 },
-    canViewConformance && !!conformanceEntityId
+    {
+      ...(conformanceEntityId ? { entityId: conformanceEntityId } : {}),
+      status: 'active',
+      limit: 200,
+      offset: 0
+    },
+    canViewConformance && conformanceEntityId != null
   );
   const activeViolationCount = conformanceViolations?.items.length ?? 0;
 
@@ -487,7 +494,7 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
           }}
           conformanceProps={{
             workspaceId,
-            entityId: conformanceEntityId,
+            entityId: entity._uid,
             canViewConformance
           }}
         />
