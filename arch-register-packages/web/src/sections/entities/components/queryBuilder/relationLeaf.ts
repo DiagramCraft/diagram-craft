@@ -6,8 +6,9 @@ import { endpointFieldId, parseEndpointFieldId } from '../../../relations/relati
 // Relation-rooted leaves (#2354, plan phase 7 "lean"). The visual builder edits a relation-rooted
 // leaf that is either a predicate on the relation's own field (`path: []`) or a predicate one
 // `endpoint` hop away on the In/Out entity - the same two shapes `isRelationBasicRepresentable`
-// classifies as Basic. It reuses the flat `FilterRow` with `RelationFilterBuilder`'s field list,
-// where a single `endpoint` hop is encoded into the field id via the `in:` / `out:` prefix.
+// classifies as Basic. It reuses the flat `FilterRow` with the relation field list
+// (`getRelationFilterFieldDefs`), where a single `endpoint` hop is encoded into the field id via
+// the `in:` / `out:` prefix.
 
 type PredicateNode = Extract<QueryNode, { kind: 'predicate' }>;
 
@@ -33,7 +34,7 @@ export const relationLeafCondition = (node: PredicateNode): FilterCondition => (
 });
 
 /** Apply a `FilterRow` update (whose `fieldId` may carry an `in:`/`out:` prefix) back onto a
- *  relation leaf, mirroring `RelationFilterBuilder`'s own op/value reset on field change. */
+ *  relation leaf, mirroring the relation filter UI's own op/value reset on field change. */
 export const applyRelationLeafUpdate = (
   node: PredicateNode,
   updates: Partial<FilterCondition>,

@@ -103,15 +103,21 @@ export const RelationQueryModeControls = ({
   }, [mode, relationQuery, printMutate]);
 
   const submitAdvancedText = async (text: string) => {
+    // Projection columns have no text-grammar syntax (specs/QUERY_LANGUAGE.md §10); carry them
+    // through so a Simple ⇄ Advanced round-trip never drops them.
+    const withProjections = (query: EntityQuery): EntityQuery =>
+      relationQuery.projections?.length
+        ? { ...query, projections: relationQuery.projections }
+        : query;
     if (!text.trim()) {
       setAdvancedErrors([]);
-      emit({ root_kind: 'relation', root: { kind: 'and', children: [] } });
+      emit(withProjections({ root_kind: 'relation', root: { kind: 'and', children: [] } }));
       return;
     }
     const result = await parseText.mutateAsync(text);
     if (result.ok) {
       setAdvancedErrors([]);
-      emit(result.query);
+      emit(withProjections(result.query));
     } else {
       setAdvancedErrors(result.errors);
     }

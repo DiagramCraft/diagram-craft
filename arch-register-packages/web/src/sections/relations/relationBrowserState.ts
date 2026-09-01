@@ -213,7 +213,7 @@ export const buildRelationSavedViewPayload = ({
 
 // The relation-rooted query IR's builtin field id for a relation's own schema (RELATION_BUILTIN_COLUMNS
 // in entityQueryIRCompiler.ts maps this to the `schema_id` column) — used both as a filterable "Type"
-// field in RelationFilterBuilder and to detect when the browser is narrowed to a single relation type.
+// field in the relation filter UI and to detect when the browser is narrowed to a single relation type.
 export const RELATION_TYPE_FIELD_ID = '_schemaId';
 
 // Resolves the single relation schema id the browser is narrowed to, if any — i.e. exactly one

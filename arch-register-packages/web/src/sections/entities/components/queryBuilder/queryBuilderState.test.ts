@@ -316,7 +316,7 @@ describe('isVisuallyEditable', () => {
     ).toBe(false);
   });
 
-  it('rejects relation-context step kinds and projections', () => {
+  it('rejects a relation-context step kind at the root', () => {
     expect(
       isVisuallyEditable(
         query({
@@ -325,10 +325,27 @@ describe('isVisuallyEditable', () => {
         })
       )
     ).toBe(false);
+  });
+
+  it('accepts an entity-to-entity projection, rejects a source:relation one', () => {
     expect(
       isVisuallyEditable({
         root: emptyGroup('and'),
         projections: [{ path: [{ kind: 'forward', fieldId: 'system' }], fieldId: '_name' }]
+      })
+    ).toBe(true);
+    expect(
+      isVisuallyEditable({
+        root: emptyGroup('and'),
+        projections: [
+          { path: [{ kind: 'forward', fieldId: 'system' }], fieldId: '_name', source: 'relation' }
+        ]
+      })
+    ).toBe(false);
+    expect(
+      isVisuallyEditable({
+        root: emptyGroup('and'),
+        projections: [{ path: [{ kind: 'endpoint', direction: 'out' }], fieldId: '_name' }]
       })
     ).toBe(false);
   });

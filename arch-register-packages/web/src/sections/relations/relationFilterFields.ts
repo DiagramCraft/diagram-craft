@@ -1,6 +1,3 @@
-import React from 'react';
-import { TbPlus } from 'react-icons/tb';
-import type { FilterCondition } from '@arch-register/api-types/viewContract';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
@@ -9,35 +6,16 @@ import type {
   WorkspaceOwnerOption
 } from '@arch-register/api-types/workspaceContract';
 import type { FieldGroupAccess, FieldGroupAccessControl } from '@arch-register/permissions';
-import { FilterRow, type FieldDef } from '../../components/FilterBuilder';
-import { EmptyState } from '../../components/EmptyState';
+import type { FieldDef } from '../../components/FilterBuilder';
 import { endpointFieldId, RELATION_TYPE_FIELD_ID } from './relationBrowserState';
-import styles from '../../components/FilterBuilder.module.css';
 
-type Props = {
-  conditions: FilterCondition[];
-  onChange: (conditions: FilterCondition[]) => void;
-  onClose?: () => void;
-  // All relation schemas — the browser has no separate schema picker, so "type" is just another
-  // filter condition (see relationBrowserState.ts), and the field list below is built as the union
-  // of every relation schema's fields (deduped by field id), not just one — you can filter on any
-  // field before narrowing down by Type.
-  relationSchemas: RelationSchema[];
-  entitySchemas: EntitySchema[];
-  enums: WorkspaceEnum[];
-  // Owner/lifecycle options for the relation-level _owner/_lifecycle fields (#2708) — pass
-  // useTeams(workspaceId).data/useLifecycleStates(workspaceId).data, mirroring FilterBuilder.tsx's
-  // entity-level _owner/_lifecycle fields.
-  owners?: WorkspaceOwnerOption[];
-  lifecycleStates?: WorkspaceLifecycleState[];
-  // Resolves a field group's access for the current caller — pass
-  // `useWorkspaceAuthorization(workspaceId).getFieldGroupAccess`.
-  // Defaults to unrestricted, matching FilterBuilder.tsx's own no-context fallback.
-  getFieldGroupAccess?: (accessControl: FieldGroupAccessControl | undefined) => FieldGroupAccess;
-};
+// The relation-scoped `FieldDef` list, shared by the relation-browser filter UI (the visual
+// `QueryBuilder` with `rootKind="relation"`). Kept separate from any component so it can be reused
+// without pulling in React. The browser has no schema picker, so "type" is just another filter
+// condition and the field list is the union of every relation schema's fields (deduped by id).
 
-// Maps an entity schema field (a superset of relation field types — also has reference/containment/
-// derived) to a FieldDef, mirroring FilterBuilder.tsx's own entity-schemaFields mapping so endpoint
+// Maps an entity schema field (a superset of relation field types — also reference/containment/
+// derived) to a FieldDef, mirroring FilterBuilder.tsx's entity-schemaFields mapping so endpoint
 // entity fields behave identically whether filtered from the entity browser or here.
 const entityFieldToFieldDef = (
   f: EntitySchema['fields'][number],
@@ -95,8 +73,7 @@ export type RelationFilterFieldDefsParams = {
 /**
  * The full `FieldDef` list for a relation-scoped filter row: a `Type` select, relation-level
  * owner/lifecycle, the union of every relation schema's own fields, and the `In:`/`Out:` endpoint
- * entity fields (id-prefixed via `endpointFieldId`). Shared by `RelationFilterBuilder` and the
- * visual query builder's relation-rooted leaf rows so both offer the identical field set.
+ * entity fields (id-prefixed via `endpointFieldId`).
  */
 export const getRelationFilterFieldDefs = ({
   relationSchemas,
@@ -183,112 +160,4 @@ export const getRelationFilterFieldDefs = ({
     ...endpointFields('in'),
     ...endpointFields('out')
   ];
-};
-
-export const RelationFilterBuilder = ({
-  conditions,
-  onChange,
-  onClose,
-  relationSchemas,
-  entitySchemas,
-  enums,
-  owners = [],
-  lifecycleStates = [],
-  getFieldGroupAccess = () => 'edit'
-}: Props) => {
-  const fields = React.useMemo(
-    () =>
-      getRelationFilterFieldDefs({
-        relationSchemas,
-        entitySchemas,
-        enums,
-        owners,
-        lifecycleStates,
-        getFieldGroupAccess
-      }),
-    [relationSchemas, entitySchemas, enums, owners, lifecycleStates, getFieldGroupAccess]
-  );
-
-  const addCondition = () => {
-    const first = fields[0];
-    onChange([
-      ...conditions,
-      { fieldId: first?.id ?? '', op: first?.type === 'text' ? 'contains' : 'equals', value: '' }
-    ]);
-  };
-
-  const removeCondition = (index: number) => {
-    const next = [...conditions];
-    next.splice(index, 1);
-    onChange(next);
-    if (next.length === 0) onClose?.();
-  };
-
-  const clearAll = () => {
-    onChange([]);
-    onClose?.();
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key !== 'Enter') return;
-    if ((e.target as HTMLElement).closest('[role="listbox"]')) return;
-    onClose?.();
-  };
-
-  const updateCondition = (index: number, updates: Partial<FilterCondition>) => {
-    const next = [...conditions];
-    const updated = { ...next[index]!, ...updates };
-
-    if (updates.fieldId) {
-      const field = fields.find(f => f.id === updates.fieldId);
-      if (field) {
-        if (field.type === 'date') updated.op = 'on';
-        else if (field.type === 'select' || field.type === 'number' || field.type === 'boolean') {
-          updated.op = 'equals';
-        } else updated.op = 'contains';
-        updated.value = '';
-      }
-    }
-
-    next[index] = updated;
-    onChange(next);
-  };
-
-  return (
-    <div className={styles.container} onKeyDown={handleKeyDown}>
-      <div className={styles.header}>
-        <span className={styles.headerTitle}>Filters</span>
-        {conditions.length > 0 && (
-          <button type="button" className={styles.clearAll} onClick={clearAll}>
-            Clear all
-          </button>
-        )}
-      </div>
-
-      <div className={styles.rows}>
-        {conditions.length === 0 && <EmptyState compact title="No filters applied." />}
-        {conditions.map((c, i) => (
-          <FilterRow
-            key={i}
-            condition={c}
-            fields={fields}
-            onUpdate={u => updateCondition(i, u)}
-            onRemove={() => removeCondition(i)}
-          />
-        ))}
-      </div>
-
-      <div className={styles.footer}>
-        <button
-          type="button"
-          className={styles.addFilter}
-          onClick={addCondition}
-          disabled={fields.length === 0}
-        >
-          <TbPlus size={11} />
-          Add filter
-        </button>
-      </div>
-    </div>
-  );
 };

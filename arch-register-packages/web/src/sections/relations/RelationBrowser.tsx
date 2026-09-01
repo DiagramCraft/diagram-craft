@@ -52,7 +52,7 @@ import { RelationGraphView } from './RelationGraphView';
 // instances and their endpoint entities, with no further traversal.
 //
 // No separate schema picker (#2698): "type" is just another filter condition (see
-// RelationFilterBuilder.tsx/relationBrowserState.ts), so the browser shows relations across every
+// relationBrowserState.ts), so the browser shows relations across every
 // schema at once by default, and every relation schema's fields are filterable regardless of Type.
 // A "Type" column is always shown; per-schema field *columns* only make sense once the filters
 // narrow to exactly one schema (`activeSchema`), since which fields exist depends on which schema a

@@ -357,6 +357,31 @@ export const RelationRooted = () => (
   />
 );
 
+export const WithProjectionColumn = () => (
+  <Harness
+    initial={{
+      schemaId: 'component',
+      root: {
+        kind: 'and',
+        children: [
+          { kind: 'predicate', path: [], fieldId: '_name', op: 'contains', value: 'api' }
+        ]
+      },
+      projections: [
+        { path: [{ kind: 'forward', fieldId: 'system' }], fieldId: 'tier', alias: 'System tier' },
+        {
+          path: [
+            { kind: 'forward', fieldId: 'system' },
+            { kind: 'forward', fieldId: 'domain' }
+          ],
+          fieldId: '_id',
+          chain: true
+        }
+      ]
+    }}
+  />
+);
+
 export const WithScopedHopFilter = () => (
   <Harness
     initial={{

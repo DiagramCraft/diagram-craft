@@ -365,7 +365,7 @@ export const FilterBuilder = ({
   );
 };
 
-// Exported so relation-specific filter UIs (RelationFilterBuilder.tsx) can reuse the same
+// Exported so relation-specific filter UIs (relationFilterFields.ts) can reuse the same
 // field/operator/value row rendering without duplicating it — only the `fields` list construction
 // differs between entity and relation schemas.
 export const FilterRow = ({

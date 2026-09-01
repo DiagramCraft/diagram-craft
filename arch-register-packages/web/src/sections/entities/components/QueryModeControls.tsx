@@ -139,15 +139,21 @@ export const QueryModeControls = (props: QueryModeControlsProps) => {
   }, [mode, canonical, printMutate, setEntityQuery]);
 
   const submitAdvancedText = async (text: string) => {
+    // The text grammar only expresses "which entities match" - projection columns are a
+    // structured-IR / UI-only concern (specs/QUERY_LANGUAGE.md §4.6, §10), so `printText` omits
+    // them and `parseText` never returns any. Carry the current projections through unchanged so a
+    // Simple ⇄ Advanced round-trip on a query with a Columns section doesn't silently drop them.
+    const withProjections = (query: EntityQuery): EntityQuery =>
+      canonical.projections?.length ? { ...query, projections: canonical.projections } : query;
     if (!text.trim()) {
       setAdvancedErrors([]);
-      setEntityQuery?.({ root: { kind: 'and', children: [] } });
+      setEntityQuery?.(withProjections({ root: { kind: 'and', children: [] } }));
       return;
     }
     const result = await parseText.mutateAsync(text);
     if (result.ok) {
       setAdvancedErrors([]);
-      setEntityQuery?.(result.query);
+      setEntityQuery?.(withProjections(result.query));
     } else {
       setAdvancedErrors(result.errors);
     }

@@ -370,8 +370,8 @@ syntax would grow it well past "small, purpose-built" for a capability the ad ho
 (GitHub/Jira-style search boxes don't have projection syntax either — which columns show is a separate UI concern there
 too). Projection lives alongside a query as its own field, the natural generalization of today's `fieldIds: string[]` to
 paths instead of bare ids — reusing the parser/validator/bounding already built for filter paths (§4.1, §4.2, §7), not a
-new syntax to design from scratch. Whether the *text* grammar should express projection at all, vs. it being purely a
-structured-IR/UI (columns picker) concern, is an open question (§10).
+new syntax to design from scratch. The *text* grammar deliberately does not express projection at all: it stays a
+structured-IR / UI (columns picker) concern — resolved, see §10.
 
 **The behavior that actually motivates this section: reuse the join, don't repeat it.** A projected field's `path`
 is structurally the same shape as a filter predicate's `path` — a chain of `PathStep`s (§5). When a projection's path is
@@ -768,6 +768,10 @@ The v1 design described here is implemented in the repository:
   is not yet reconstructed; entity-valued relation fields are deferred to #2670.
 - The text compiler supports parsing and canonical printing, and is exposed through the entity-query API.
 - Entity list/count endpoints, saved views, and the Advanced query UI use the same `EntityQuery` representation.
+- A progressive visual builder (#2354) edits the same `EntityQuery` IR directly for both the entity and relation
+  browsers: boolean tree (`and`/`or`/`not`), relation traversal with same-instance `[...]` scoped filters, and
+  entity-rooted projection columns. It is full-fidelity with the text mode (no lossy conversion); shapes it can't yet
+  edit visually (relation-context path steps, relation-instance projections) render read-only and stay in text mode.
 
 This implementation subsumes the original use cases in #2300 and #2315. #2300 uses a linked Technology Release EOL
 predicate, while #2315 uses the identity-anchored forward-then-containment pattern described in §6. Neither issue
@@ -784,12 +788,18 @@ with a clear reason they're out of v1.
 - ~~Exact escaping rules for the text grammar, plus the `empty`/`not_empty`/`on` comparator gap~~ — resolved in §4.1:
   only `\"`/`\\` are valid escapes; `empty`/`not_empty` are bare keyword values under the existing `:`/`=`
   comparator; `on` is resolved from the terminal field's type, the same way `<`/`>` already resolve per field type.
-- UI round-trip fidelity: does every structured-IR tree the visual builder can produce have a canonical textual form, or
-  only a useful subset (analogous to how not every SQL query has a "nice" ORM equivalent)?
-- Whether projection (§4.6) needs any *text* grammar syntax at all, or stays a structured-IR/UI-only concern (the
-  generalization of today's `fieldIds: string[]` to paths). Leaning toward the latter — an ad hoc search box is
-  answering "which entities," not "which columns," and that's already a separate UI control today — but this hasn't been
-  decided, only proposed.
+- ~~UI round-trip fidelity: does every structured-IR tree the visual builder can produce have a canonical textual
+  form?~~ — resolved by the visual builder (#2354): the builder never *produces* an IR shape the text compiler can't
+  print. It edits the boolean tree, relation traversal, same-instance scoped filters, and (entity-rooted) projection
+  columns visually; any shape it can't fully edit yet (relation-context path steps, `source: 'relation'` projections)
+  it renders read-only and keeps in Advanced (text) mode, where the raw text is authoritative. So the set of
+  builder-authored queries is a subset of the text-representable ones, and no lossy "no exact text form" state is
+  needed. Projections are the one part carried across a Simple⇄Advanced toggle out-of-band (next point).
+- ~~Whether projection (§4.6) needs any *text* grammar syntax at all~~ — resolved toward **structured-IR/UI-only**.
+  The text grammar expresses "which entities/relations match"; projection columns are authored in a dedicated
+  "Columns" section of the visual builder and in saved-view config, never in query text. `printEntityQueryText` omits
+  `projections` and the parser never yields any; the query UI carries `projections` through a text round-trip
+  unchanged so switching Simple⇄Advanced doesn't drop a Columns section.
 - Exactly how a projection path gets bound to a specific witness when the same multi-valued relation is constrained by
   more than one independent existential in `root` (§4.6's "real subtlety") — v1's answer is "reject and require explicit
   disambiguation," but the disambiguation syntax itself isn't designed.

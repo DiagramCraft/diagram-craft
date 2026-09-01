@@ -12,7 +12,7 @@ import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 import type { Assessment } from '@arch-register/api-types/assessmentContract';
 import type { FieldGroupAccess, FieldGroupAccessControl } from '@arch-register/permissions';
 import { getEntityFilterFieldDefs } from '../../../../components/FilterBuilder';
-import { getRelationFilterFieldDefs } from '../../../relations/RelationFilterBuilder';
+import { getRelationFilterFieldDefs } from '../../../relations/relationFilterFields';
 import { SearchInput } from '../../../../components/SearchInput';
 import { addFreeTextQuery, getFreeTextQuery } from '../entityBrowserState';
 import {
@@ -22,6 +22,7 @@ import {
   toEditableRoot
 } from './queryBuilderState';
 import { QueryGroup } from './QueryTree';
+import { ProjectionEditor } from './ProjectionEditor';
 import styles from './queryBuilder.module.css';
 
 const ANY_TYPE = '__any_type__';
@@ -188,6 +189,16 @@ export const QueryBuilder = ({
         fields={fields}
         leafCtx={leafCtx}
       />
+
+      {!isRelation && (
+        <ProjectionEditor
+          projections={query.projections ?? []}
+          onChange={next =>
+            onChange({ ...query, projections: next.length > 0 ? next : undefined })
+          }
+          leafCtx={leafCtx}
+        />
+      )}
 
       {overBudget && (
         <div className={styles.warn}>

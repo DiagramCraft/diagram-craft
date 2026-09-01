@@ -244,10 +244,14 @@ const relationNodeIsVisuallyEditable = (node: QueryNode): boolean => {
  *  query with projection columns, or a shape a later phase still owns, is still *displayed* by the
  *  builder (read-only summaries) but the wiring layer keeps it in Advanced text mode. */
 export const isVisuallyEditable = (query: EntityQuery): boolean => {
-  if (query.projections?.length) return false;
-  return (query.root_kind ?? 'entity') === 'relation'
-    ? relationNodeIsVisuallyEditable(query.root)
-    : nodeIsVisuallyEditable(query.root);
+  if ((query.root_kind ?? 'entity') === 'relation') {
+    // The lean relation builder has no Columns editor yet.
+    return !query.projections?.length && relationNodeIsVisuallyEditable(query.root);
+  }
+  const projectionsEditable = (query.projections ?? []).every(
+    projection => projection.source !== 'relation' && isPathVisuallyEditable(projection.path)
+  );
+  return projectionsEditable && nodeIsVisuallyEditable(query.root);
 };
 
 const countNodeConditions = (node: QueryNode): number => {
