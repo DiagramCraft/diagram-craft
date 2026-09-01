@@ -92,6 +92,33 @@ export const parseEntityQueryFromSearch = (search: BrowserSearch): EntityQuery |
 const rootChildren = (query: EntityQuery): EntityQuery['root'][] =>
   query.root.kind === 'and' ? query.root.children : [query.root];
 
+const stripEmptyGroupsNode = (node: EntityQuery['root']): EntityQuery['root'] | null => {
+  if (node.kind === 'and' || node.kind === 'or') {
+    const children = node.children
+      .map(stripEmptyGroupsNode)
+      .filter((child): child is EntityQuery['root'] => child !== null);
+    return children.length === 0 ? null : { ...node, children };
+  }
+  if (node.kind === 'not') {
+    const child = stripEmptyGroupsNode(node.child);
+    return child ? { ...node, child } : null;
+  }
+  return node;
+};
+
+/**
+ * Removes `and`/`or` groups that have no (surviving) children anywhere in the tree. The visual
+ * builder deliberately keeps an emptied group on screen as an editing container, but an empty
+ * group is not a no-op at execution - an empty `or` is vacuously false and would exclude
+ * everything. Applied when a query is sent for execution or persisted to a saved view so an
+ * in-progress empty group behaves as "no filter" rather than "match nothing". A tree that strips
+ * to nothing becomes an empty `and` (matches everything).
+ */
+export const stripEmptyGroups = (query: EntityQuery): EntityQuery => ({
+  ...query,
+  root: stripEmptyGroupsNode(query.root) ?? { kind: 'and', children: [] }
+});
+
 export type EntityFacetSelection = {
   schemaIds: string[];
   lifecycleValues: Array<string | null>;
@@ -661,7 +688,7 @@ export const buildSavedViewPayload = ({
   const resolvedEntityQuery =
     entityQuery ??
     buildEntityQueryFromBrowserFilters({ typeFilter, conditions, joinAssessmentId, q });
-  const canonicalEntityQuery = addFreeTextQuery(resolvedEntityQuery, q);
+  const canonicalEntityQuery = stripEmptyGroups(addFreeTextQuery(resolvedEntityQuery, q));
 
   return {
     scope,

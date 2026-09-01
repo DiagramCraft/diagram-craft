@@ -523,12 +523,13 @@
           content.
 
         - @id:ar.search.filters Users can combine search terms and structured filters to narrow results. Entity
-          browser views offer Visual (free-text search plus a progressive filter builder popover and multi-select
-          sidebar facets) and Advanced (a single text query parsed against the entity query language) modes,
-          switchable without losing the underlying query. The Visual builder opens as a flat list of conditions and
-          grows in place into Any/All groups and negation, reading and writing the same structured query as Advanced
-          mode with no lossy conversion between them; a query that uses relation traversal or projection columns opens
-          in Advanced mode until the corresponding visual editors are available. A field in a schema group the user cannot view is offered nowhere as a
+          browser views provide a progressive filter builder popover (available alongside the multi-select sidebar
+          facets in both modes) plus a Simple/Advanced toggle that switches the adjacent input between a plain
+          free-text search box and a single text query parsed against the entity query language. The filter builder
+          opens as a flat list of conditions and grows in place into Any/All groups and negation, reading and writing
+          the same structured query as the Advanced text field with no lossy conversion between them; an empty group
+          is treated as no filter rather than matching nothing. A query that uses relation traversal or projection
+          columns opens with the Advanced text field shown until the corresponding visual editors are available. A field in a schema group the user cannot view is offered nowhere as a
           filter/sort option and is treated as unrecognized if referenced directly in an Advanced-mode query,
           matching how the field is hidden elsewhere. Advanced queries can traverse typed relations and filter or
           project their scalar relation fields; entity-valued relation fields are deferred to follow-up issue #2670.

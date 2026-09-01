@@ -64,7 +64,6 @@ export const QueryGroup = ({
   // The root stays chrome-free while it's a plain flat list; a nested group always shows its
   // header so the user can see they created a group and can set its operator / negation.
   const showHeader = !isRoot;
-  const showRowControls = childCount > 1 || !isRoot;
 
   const body = (
     <>
@@ -113,7 +112,6 @@ export const QueryGroup = ({
             onRootChange={onRootChange}
             fields={fields}
             depth={depth}
-            showRowControls={showRowControls}
           />
         ))}
       </div>
@@ -156,9 +154,8 @@ export const QueryNodeView = ({
   slotPath,
   onRootChange,
   fields,
-  depth,
-  showRowControls
-}: SharedProps & { slotPath: NodePath; depth: number; showRowControls: boolean }) => {
+  depth
+}: SharedProps & { slotPath: NodePath; depth: number }) => {
   const slotNode = getNode(root, slotPath);
   if (!slotNode) return null;
 
@@ -191,11 +188,9 @@ export const QueryNodeView = ({
 
   return (
     <div className={styles.row}>
-      {showRowControls && (
-        <div className={styles.rowCtls}>
-          <NotToggle active={negated} onClick={toggleNegate} />
-        </div>
-      )}
+      <div className={styles.rowCtls}>
+        <NotToggle active={negated} onClick={toggleNegate} />
+      </div>
       <QueryLeaf
         node={content}
         fields={fields}

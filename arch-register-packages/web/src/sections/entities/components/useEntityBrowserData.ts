@@ -4,7 +4,12 @@ import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { BrowserView, FilterCondition } from '@arch-register/api-types/viewContract';
 import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import type { BrowserEntityRecord } from './entityBrowserState';
-import { isTreeBasedView, parseDateValue, withLiveSearchText } from './entityBrowserState';
+import {
+  isTreeBasedView,
+  parseDateValue,
+  stripEmptyGroups,
+  withLiveSearchText
+} from './entityBrowserState';
 import { buildTraceabilityEntityQuery } from './traceabilityViewState';
 
 type UseEntityBrowserDataProps = {
@@ -65,7 +70,7 @@ export const useEntityBrowserData = ({
   const baseExecutionEntityQuery = entityQuery
     ? withLiveSearchText(
         {
-          ...entityQuery,
+          ...stripEmptyGroups(entityQuery),
           ...(projectId ? { projectId, projectScope: effectiveProjectScope } : {})
         },
         q

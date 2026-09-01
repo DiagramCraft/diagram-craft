@@ -14,16 +14,21 @@ import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 import type { Assessment } from '@arch-register/api-types/assessmentContract';
 import { useWorkspaceAuthorization } from '../../../auth/WorkspaceAuthorizationContext';
 import { SearchInput } from '../../../components/SearchInput';
+import { FilterBuilder } from '../../../components/FilterBuilder';
 import { QueryBuilder } from './queryBuilder/QueryBuilder';
 import { countConditions, isVisuallyEditable } from './queryBuilder/queryBuilderState';
-import { buildEntityQueryFromBrowserFilters, withSchemaIdAsPredicate } from './entityBrowserState';
+import {
+  buildEntityQueryFromBrowserFilters,
+  stripEmptyGroups,
+  withSchemaIdAsPredicate
+} from './entityBrowserState';
 import {
   useParseEntityQueryText,
   usePrintEntityQueryText
 } from '../../../hooks/useEntityQueryText';
 import styles from './EntityBrowser.module.css';
 
-type Mode = 'visual' | 'advanced';
+type Mode = 'simple' | 'advanced';
 
 type QueryModeControlsProps = {
   workspaceId: string;
@@ -45,17 +50,20 @@ type QueryModeControlsProps = {
   joinedAssessment?: Assessment | null;
 };
 
-// The entity browser's Visual ⇄ Advanced query controls. Visual mode is the progressive
-// `QueryBuilder` (flat conditions → Any/All groups → NOT → traversal), inside the filter popover.
-// Advanced mode is the single text field parsing to/from the same `EntityQuery` IR. Both are
-// full-fidelity with the IR, so switching between them never loses anything; the live search box
-// stays outside both, feeding `q` (merged at execution via `withLiveSearchText`).
+// The entity browser's query controls. The filter popover (the progressive `QueryBuilder`: flat
+// conditions → Any/All groups → NOT → traversal) is available in BOTH modes. The Simple/Advanced
+// toggle only changes the left-hand input: Simple shows the plain live search box (`q`, merged at
+// execution via `withLiveSearchText`); Advanced replaces it with a text field bound to the same
+// `EntityQuery` IR the builder edits. Both representations are full-fidelity, so nothing is lost
+// switching. Surfaces without `setEntityQuery` (the markdown embed) fall back to the legacy flat
+// `FilterBuilder` with no toggle.
 export const QueryModeControls = (props: QueryModeControlsProps) => {
   const {
     workspaceId,
     q,
     setQ,
     conditions,
+    setConditions,
     entityQuery,
     setEntityQuery,
     typeFilter,
@@ -79,7 +87,7 @@ export const QueryModeControls = (props: QueryModeControlsProps) => {
   );
 
   const [mode, setMode] = useState<Mode>(() =>
-    entityQuery && !isVisuallyEditable(entityQuery) ? 'advanced' : 'visual'
+    entityQuery && !isVisuallyEditable(entityQuery) ? 'advanced' : 'simple'
   );
   // Keep a query the visual builder can't fully edit yet (relation traversal, relationExists,
   // projections) in Advanced mode so it stays editable - mirrors the pre-existing "force advanced
@@ -104,7 +112,7 @@ export const QueryModeControls = (props: QueryModeControlsProps) => {
   useEffect(() => {
     if (mode !== 'advanced') return;
     let cancelled = false;
-    printMutate(withSchemaIdAsPredicate(canonical)).then(res => {
+    printMutate(withSchemaIdAsPredicate(stripEmptyGroups(canonical))).then(res => {
       if (!cancelled) setAdvancedText(res.text);
     });
     return () => {
@@ -115,10 +123,10 @@ export const QueryModeControls = (props: QueryModeControlsProps) => {
   // Debounced text preview for Visual mode - a read-only "here's the query as text" line so the
   // grammar stays discoverable.
   useEffect(() => {
-    if (mode !== 'visual') return;
+    if (mode !== 'simple' || !setEntityQuery) return;
     let cancelled = false;
     const handle = setTimeout(() => {
-      printMutate(withSchemaIdAsPredicate(canonical)).then(res => {
+      printMutate(withSchemaIdAsPredicate(stripEmptyGroups(canonical))).then(res => {
         if (!cancelled) setTextPreview(res.text);
       });
     }, 250);
@@ -126,7 +134,7 @@ export const QueryModeControls = (props: QueryModeControlsProps) => {
       cancelled = true;
       clearTimeout(handle);
     };
-  }, [mode, canonical, printMutate]);
+  }, [mode, canonical, printMutate, setEntityQuery]);
 
   const submitAdvancedText = async (text: string) => {
     if (!text.trim()) {
@@ -155,59 +163,69 @@ export const QueryModeControls = (props: QueryModeControlsProps) => {
 
   const conditionCount = countConditions(canonical);
 
+  const filterButton = (badgeCount: number) => (
+    <Button
+      size="sm"
+      variant={badgeCount > 0 ? 'primary' : 'secondary'}
+      icon={<TbFilter size={12} />}
+      aria-label="Filter"
+      title="Filter"
+    >
+      {badgeCount > 0 && <span className={styles.filterCount}>{badgeCount}</span>}
+    </Button>
+  );
+
+  // Legacy fallback for surfaces that don't track a structured query (the markdown embed): the
+  // flat FilterBuilder over `conditions`, no Simple/Advanced toggle.
+  if (!setEntityQuery) {
+    return (
+      <>
+        <SearchInput
+          size="sm"
+          className={styles.searchInline}
+          placeholder="Search by name, owner…"
+          value={q}
+          onChange={setQ}
+          onClear={() => setQ('')}
+        />
+        <Popover.Root actionsRef={filterPopoverRef}>
+          <Popover.Trigger element={filterButton(conditions.length)} />
+          <Popover.Content
+            sideOffset={4}
+            align="start"
+            arrow={false}
+            closeButton={false}
+            className={styles.filterPopover}
+          >
+            <FilterBuilder
+              conditions={conditions}
+              onChange={setConditions}
+              onClose={() => filterPopoverRef.current?.close()}
+              schemas={schemas}
+              lifecycleStates={lifecycleStates}
+              owners={owners}
+              enums={enums}
+              selectedSchemaId={typeFilter}
+              joinedAssessment={joinedAssessment}
+              getFieldGroupAccess={getFieldGroupAccess}
+            />
+          </Popover.Content>
+        </Popover.Root>
+      </>
+    );
+  }
+
   return (
     <>
-      {mode === 'visual' ? (
-        <>
-          <SearchInput
-            size="sm"
-            className={styles.searchInline}
-            placeholder="Search by name, owner…"
-            value={q}
-            onChange={setQ}
-            onClear={() => setQ('')}
-          />
-          <Popover.Root actionsRef={filterPopoverRef}>
-            <Popover.Trigger
-              element={
-                <Button
-                  size="sm"
-                  variant={conditionCount > 0 ? 'primary' : 'secondary'}
-                  icon={<TbFilter size={12} />}
-                  aria-label="Filter"
-                  title="Filter"
-                >
-                  {conditionCount > 0 && (
-                    <span className={styles.filterCount}>{conditionCount}</span>
-                  )}
-                </Button>
-              }
-            />
-            <Popover.Content
-              sideOffset={4}
-              align="start"
-              arrow={false}
-              closeButton={false}
-              className={styles.filterPopover}
-            >
-              {setEntityQuery ? (
-                <QueryBuilder
-                  query={canonical}
-                  onChange={setEntityQuery}
-                  schemas={schemas}
-                  lifecycleStates={lifecycleStates}
-                  owners={owners}
-                  enums={enums}
-                  joinedAssessment={joinedAssessment}
-                  getFieldGroupAccess={getFieldGroupAccess}
-                  textPreview={textPreview}
-                  showFreeText={false}
-                  onClose={() => filterPopoverRef.current?.close()}
-                />
-              ) : null}
-            </Popover.Content>
-          </Popover.Root>
-        </>
+      {mode === 'simple' ? (
+        <SearchInput
+          size="sm"
+          className={styles.searchInline}
+          placeholder="Search by name, owner…"
+          value={q}
+          onChange={setQ}
+          onClear={() => setQ('')}
+        />
       ) : (
         <div className={styles.advancedQuery}>
           <SearchInput
@@ -227,21 +245,42 @@ export const QueryModeControls = (props: QueryModeControlsProps) => {
         </div>
       )}
 
-      {setEntityQuery && (
-        <Button
-          size="sm"
-          variant="secondary"
-          onClick={() => {
-            if (mode === 'visual') setEntityQuery(canonical);
-            setMode(mode === 'visual' ? 'advanced' : 'visual');
-          }}
-          title={
-            mode === 'visual' ? 'Switch to advanced query mode' : 'Switch to visual query mode'
-          }
+      <Popover.Root actionsRef={filterPopoverRef}>
+        <Popover.Trigger element={filterButton(conditionCount)} />
+        <Popover.Content
+          sideOffset={4}
+          align="start"
+          arrow={false}
+          closeButton={false}
+          className={styles.filterPopover}
         >
-          {mode === 'visual' ? 'Advanced' : 'Visual'}
-        </Button>
-      )}
+          <QueryBuilder
+            query={canonical}
+            onChange={setEntityQuery}
+            schemas={schemas}
+            lifecycleStates={lifecycleStates}
+            owners={owners}
+            enums={enums}
+            joinedAssessment={joinedAssessment}
+            getFieldGroupAccess={getFieldGroupAccess}
+            textPreview={mode === 'simple' ? textPreview : undefined}
+            showFreeText={false}
+            onClose={() => filterPopoverRef.current?.close()}
+          />
+        </Popover.Content>
+      </Popover.Root>
+
+      <Button
+        size="sm"
+        variant="secondary"
+        onClick={() => {
+          if (mode === 'simple') setEntityQuery(canonical);
+          setMode(mode === 'simple' ? 'advanced' : 'simple');
+        }}
+        title={mode === 'simple' ? 'Switch to advanced query mode' : 'Switch to simple query mode'}
+      >
+        {mode === 'simple' ? 'Advanced' : 'Simple'}
+      </Button>
     </>
   );
 };
