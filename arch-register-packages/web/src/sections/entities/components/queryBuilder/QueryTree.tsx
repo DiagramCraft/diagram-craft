@@ -95,9 +95,10 @@ const NotToggle = ({ active, onClick }: { active: boolean; onClick: () => void }
 // How many nesting-accent colours to cycle through before repeating.
 const NEST_LEVELS = 5;
 
-/** One `and` / `or` group: an All/Any toggle (shown once there's more than one child), an optional
- *  NOT toggle, its children, and add-condition / add-related / add-group actions. The root group
- *  (`path === []`) renders without the surrounding card chrome and is never negatable. */
+/** One `and` / `or` group. The header is a toolbar: an optional NOT toggle, the All/Any match
+ *  toggle, `+ Condition` / `+ Relation` / `+ Group` actions, and (nested / scoped-filter panels) a
+ *  remove `×`. The root group (`path === []`) renders without the surrounding card chrome and is
+ *  never negatable. */
 export const QueryGroup = ({
   root,
   path,
@@ -137,46 +138,65 @@ export const QueryGroup = ({
   // Relation-rooted traversal (relationForward / relationBackward) isn't visually editable yet -
   // no "Add related condition" there.
   const relatedSeed = isRelation || leafCtx.atHopLimit ? null : firstHopPredicate(leafCtx);
-  // The root stays chrome-free while it's a plain flat list; a nested group (and a forced-header
-  // scoped-filter panel) always shows its header so the operator / negation is visible.
-  const showHeader = !isRoot || forceHeader;
 
   const body = (
     <>
-      {(showHeader || childCount > 1) && (
-        <div className={styles.groupHeader}>
-          {!isRoot && onToggleNegate && <NotToggle active={negated} onClick={onToggleNegate} />}
-          <div className={styles.matchToggle}>
+      <div className={styles.groupHeader}>
+        {!isRoot && onToggleNegate && <NotToggle active={negated} onClick={onToggleNegate} />}
+        <div className={styles.matchToggle}>
+          <button
+            type="button"
+            className={node.kind === 'and' ? styles.matchOn : styles.matchOff}
+            onClick={() => onRootChange(setGroupKind(root, path, 'and'))}
+          >
+            All
+          </button>
+          <button
+            type="button"
+            className={node.kind === 'or' ? styles.matchOn : styles.matchOff}
+            onClick={() => onRootChange(setGroupKind(root, path, 'or'))}
+          >
+            Any
+          </button>
+        </div>
+        <div className={styles.headerAdds}>
+          <button
+            type="button"
+            className={styles.addBtn}
+            onClick={() => onRootChange(addChild(root, path, conditionSeed))}
+          >
+            <TbPlus size={11} /> Condition
+          </button>
+          {relatedSeed && (
             <button
               type="button"
-              className={node.kind === 'and' ? styles.matchOn : styles.matchOff}
-              onClick={() => onRootChange(setGroupKind(root, path, 'and'))}
+              className={styles.addBtn}
+              onClick={() => onRootChange(addChild(root, path, relatedSeed))}
             >
-              All
-            </button>
-            <button
-              type="button"
-              className={node.kind === 'or' ? styles.matchOn : styles.matchOff}
-              onClick={() => onRootChange(setGroupKind(root, path, 'or'))}
-            >
-              Any
-            </button>
-          </div>
-          <span className={styles.matchHint}>
-            {node.kind === 'and' ? 'of these must match' : 'of these may match'}
-          </span>
-          {onRemove && (!isRoot || forceHeader) && (
-            <button
-              type="button"
-              className={styles.removeBtn}
-              title={removeTitle}
-              onClick={onRemove}
-            >
-              <TbX size={11} />
+              <TbPlus size={11} /> Relation
             </button>
           )}
+          <button
+            type="button"
+            className={styles.addBtn}
+            onClick={() =>
+              onRootChange(addChild(root, path, { ...emptyGroup('or'), children: [conditionSeed] }))
+            }
+          >
+            <TbPlus size={11} /> Group
+          </button>
         </div>
-      )}
+        {onRemove && (!isRoot || forceHeader) && (
+          <button
+            type="button"
+            className={styles.removeBtn}
+            title={removeTitle}
+            onClick={onRemove}
+          >
+            <TbX size={11} />
+          </button>
+        )}
+      </div>
 
       <div className={styles.children}>
         {childCount === 0 && <div className={styles.empty}>No conditions.</div>}
@@ -192,34 +212,6 @@ export const QueryGroup = ({
             depth={depth}
           />
         ))}
-      </div>
-
-      <div className={styles.groupFooter}>
-        <button
-          type="button"
-          className={styles.addBtn}
-          onClick={() => onRootChange(addChild(root, path, conditionSeed))}
-        >
-          <TbPlus size={11} /> Add condition
-        </button>
-        {relatedSeed && (
-          <button
-            type="button"
-            className={styles.addBtn}
-            onClick={() => onRootChange(addChild(root, path, relatedSeed))}
-          >
-            <TbPlus size={11} /> Add related condition
-          </button>
-        )}
-        <button
-          type="button"
-          className={styles.addBtn}
-          onClick={() =>
-            onRootChange(addChild(root, path, { ...emptyGroup('or'), children: [conditionSeed] }))
-          }
-        >
-          <TbPlus size={11} /> Add group
-        </button>
       </div>
     </>
   );

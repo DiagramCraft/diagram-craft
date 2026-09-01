@@ -76,17 +76,24 @@
 
 /* Nested content sits on a faint wash of the level's accent so the whole group reads as one block. */
 .nestedGroup > .children,
-.nestedGroup > .groupHeader,
-.nestedGroup > .groupFooter {
+.nestedGroup > .groupHeader {
   background: color-mix(in srgb, var(--nest-accent) 6%, transparent);
 }
 
 .groupHeader {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 7px 12px;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+  padding: 6px 10px;
   border-bottom: 1px solid var(--panel-border);
+}
+
+/* The +Condition / +Relation / +Group actions, right after the All/Any toggle. */
+.headerAdds {
+  display: flex;
+  gap: 10px;
+  margin-left: 2px;
 }
 
 .nestedGroup > .groupHeader {
@@ -145,6 +152,12 @@
 
 .row:last-child {
   border-bottom: none;
+}
+
+/* A nested group is a floating card and carries no bottom divider of its own, so a row placed
+   after it would have no separating line above it - draw the divider on that row's top edge. */
+.children > .nestedGroup + .row {
+  border-top: 1px solid var(--panel-border);
 }
 
 .rowCtls {
@@ -369,29 +382,19 @@
   color: var(--cmp-fg-disabled);
 }
 
-/* ── Footer / add actions ── */
-.groupFooter {
-  display: flex;
-  gap: 14px;
-  padding: 8px 12px 10px;
-  border-top: 1px solid var(--panel-border);
-}
-
-.nestedGroup > .groupFooter {
-  border-top-color: color-mix(in srgb, var(--nest-accent) 20%, var(--panel-border));
-}
-
+/* ── Add actions (group header + Columns section) ── */
 .addBtn {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 3px;
   font: inherit;
-  font-size: 12px;
+  font-size: 11px;
   color: var(--cmp-fg-disabled);
   background: none;
   border: none;
   padding: 0;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .addBtn:hover {
