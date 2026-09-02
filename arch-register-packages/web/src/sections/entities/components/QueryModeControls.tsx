@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
-import { TbAlertTriangle, TbFilter } from 'react-icons/tb';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { TbFilter } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Popover, type PopoverActions } from '@diagram-craft/app-components/Popover';
 import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
@@ -17,6 +17,7 @@ import { useRelationSchemas } from '../../../hooks/useRelationSchemas';
 import { SearchInput } from '../../../components/SearchInput';
 import { FilterBuilder } from '../../../components/FilterBuilder';
 import { QueryBuilder } from './queryBuilder/QueryBuilder';
+import { AdvancedQueryEditor } from './queryBuilder/AdvancedQueryEditor';
 import { countConditions, isVisuallyEditable } from './queryBuilder/queryBuilderState';
 import {
   buildEntityQueryFromBrowserFilters,
@@ -114,7 +115,10 @@ export const QueryModeControls = (props: QueryModeControlsProps) => {
   useEffect(() => {
     if (mode !== 'advanced') return;
     let cancelled = false;
-    printMutate(withSchemaIdAsPredicate(stripEmptyGroups(canonical))).then(res => {
+    printMutate({
+      query: withSchemaIdAsPredicate(stripEmptyGroups(canonical)),
+      pretty: true
+    }).then(res => {
       if (!cancelled) setAdvancedText(res.text);
     });
     return () => {
@@ -128,7 +132,10 @@ export const QueryModeControls = (props: QueryModeControlsProps) => {
     if (mode !== 'simple' || !setEntityQuery) return;
     let cancelled = false;
     const handle = setTimeout(() => {
-      printMutate(withSchemaIdAsPredicate(stripEmptyGroups(canonical))).then(res => {
+      printMutate({
+        query: withSchemaIdAsPredicate(stripEmptyGroups(canonical)),
+        pretty: true
+      }).then(res => {
         if (!cancelled) setTextPreview(res.text);
       });
     }, 250);
@@ -138,13 +145,32 @@ export const QueryModeControls = (props: QueryModeControlsProps) => {
     };
   }, [mode, canonical, printMutate, setEntityQuery]);
 
+  const withProjections = (query: EntityQuery): EntityQuery =>
+    canonical.projections?.length ? { ...query, projections: canonical.projections } : query;
+
+  const formatAdvancedText = async () => {
+    if (!advancedText.trim()) {
+      setAdvancedErrors([]);
+      return;
+    }
+    const result = await parseText.mutateAsync(advancedText);
+    if (!result.ok) {
+      setAdvancedErrors(result.errors);
+      return;
+    }
+    const formatted = await printMutate({
+      query: withProjections(result.query),
+      pretty: true
+    });
+    setAdvancedErrors([]);
+    setAdvancedText(formatted.text);
+  };
+
   const submitAdvancedText = async (text: string) => {
     // The text grammar only expresses "which entities match" - projection columns are a
     // structured-IR / UI-only concern (specs/QUERY_LANGUAGE.md §4.6, §10), so `printText` omits
     // them and `parseText` never returns any. Carry the current projections through unchanged so a
     // Simple ⇄ Advanced round-trip on a query with a Columns section doesn't silently drop them.
-    const withProjections = (query: EntityQuery): EntityQuery =>
-      canonical.projections?.length ? { ...query, projections: canonical.projections } : query;
     if (!text.trim()) {
       setAdvancedErrors([]);
       setEntityQuery?.(withProjections({ root: { kind: 'and', children: [] } }));
@@ -157,11 +183,6 @@ export const QueryModeControls = (props: QueryModeControlsProps) => {
     } else {
       setAdvancedErrors(result.errors);
     }
-  };
-
-  const handleAdvancedKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key !== 'Enter') return;
-    submitAdvancedText(advancedText);
   };
 
   const handleAdvancedClear = () => {
@@ -235,22 +256,18 @@ export const QueryModeControls = (props: QueryModeControlsProps) => {
           onClear={() => setQ('')}
         />
       ) : (
-        <div className={styles.advancedQuery}>
-          <SearchInput
-            size="sm"
-            className={styles.advancedSearchInput}
-            value={advancedText}
-            onChange={setAdvancedText}
-            onKeyDown={handleAdvancedKeyDown}
-            onClear={handleAdvancedClear}
-          />
-          {advancedErrors.length > 0 && (
-            <div className={styles.advancedQueryError}>
-              <TbAlertTriangle size={12} />
-              <span>{advancedErrors[0]!.message}</span>
-            </div>
-          )}
-        </div>
+        <AdvancedQueryEditor
+          value={advancedText}
+          onChange={value => {
+            setAdvancedText(value);
+            if (advancedErrors.length > 0) setAdvancedErrors([]);
+          }}
+          onSubmit={() => void submitAdvancedText(advancedText)}
+          onFormat={() => void formatAdvancedText()}
+          onClear={handleAdvancedClear}
+          error={advancedErrors[0]?.message}
+          formatPending={parseText.isPending || printText.isPending}
+        />
       )}
 
       <Popover.Root actionsRef={filterPopoverRef}>

@@ -331,7 +331,11 @@ const entityQueryTextHandlers = {
   printText: entityRouter.entityQueryText.printText.handler(async ({ input, context }) => {
     const { workspace } = context;
     const { schemas, relationSchemas } = await buildQueryCatalogs(context.db, workspace);
-    return { text: printEntityQueryText(input.body.query, schemas, relationSchemas) };
+    return {
+      text: printEntityQueryText(input.body.query, schemas, relationSchemas, {
+        pretty: input.body.pretty ?? false
+      })
+    };
   })
 };
 

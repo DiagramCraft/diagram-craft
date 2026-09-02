@@ -979,6 +979,53 @@ describe('printEntityQueryText', () => {
     expect(printed).toContain('<-Component.system');
     expect(parseOk(printed)).toEqual(query);
   });
+
+  it.each([
+    {
+      name: 'same-instance scoped filter',
+      source:
+        'schema:Component technology_releases[release_cycle < 2.0 AND technology._slug = "go"]',
+      expected: `schema:Component AND
+technology_releases[
+  release_cycle < 2 AND
+  technology._slug = "go"
+]`
+    },
+    {
+      name: 'saved-view OR/NOT grouping',
+      source:
+        'schema:Technology (radar_status = "hold" OR radar_status = enumLabel("Assess")) AND NOT category = "library"',
+      expected: `schema:Technology AND
+(
+  radar_status = "hold" OR
+  radar_status = "assess"
+) AND
+NOT category = "library"`
+    }
+  ])('$name has a readable golden format and round-trips', ({ source, expected }) => {
+    const query = parseOk(source);
+    const printed = printEntityQueryText(query, schemas, new Map(), { pretty: true });
+
+    expect(printed).toBe(expected);
+    expect(printed.endsWith('\n')).toBe(false);
+    expect(parseOk(printed)).toEqual(query);
+  });
+
+  it('wraps long flat expressions at the configured width', () => {
+    const query = parseOk(
+      'schema:Component technology_releases.eol_date < date("2026-06-30") AND technology_releases.technology._slug = "go"'
+    );
+
+    const printed = printEntityQueryText(query, schemas, new Map(), {
+      pretty: true,
+      maxLineLength: 60
+    });
+
+    expect(printed).toBe(`schema:Component AND
+technology_releases.eol_date < date("2026-06-30") AND
+technology_releases.technology._slug = "go"`);
+    expect(parseOk(printed)).toEqual(query);
+  });
 });
 
 describe('parseEntityQueryText field-group restriction', () => {
@@ -1167,6 +1214,42 @@ describe('relation-rooted queries — root-level schema: qualifier (#3066)', () 
     const printed = printEntityQueryText(relationRootedQuery, schemas, relationSchemas);
     const result = parseEntityQueryText(printed, schemas, enums, null, relationSchemas);
     expect(result).toEqual({ ok: true, query: relationRootedQuery });
+  });
+
+  it('pretty-prints nested relation-rooted boolean expressions', () => {
+    const query: EntityQuery = {
+      root_kind: 'relation',
+      root: {
+        kind: 'and',
+        children: [
+          {
+            kind: 'predicate',
+            path: [],
+            fieldId: '_schemaId',
+            op: 'equals',
+            value: DATA_FLOW.id
+          },
+          {
+            kind: 'or',
+            children: [
+              { kind: 'predicate', path: [], fieldId: 'status', op: 'equals', value: 'active' },
+              { kind: 'predicate', path: [], fieldId: 'status', op: 'equals', value: 'paused' }
+            ]
+          }
+        ]
+      }
+    };
+
+    const printed = printEntityQueryText(query, schemas, relationSchemas, { pretty: true });
+    expect(printed).toBe(`schema:"Data Flow" AND
+(
+  status = "active" OR
+  status = "paused"
+)`);
+    expect(parseEntityQueryText(printed, schemas, enums, null, relationSchemas)).toEqual({
+      ok: true,
+      query
+    });
   });
 
   it('still rejects schema: nested inside an already-scoped relation row', () => {

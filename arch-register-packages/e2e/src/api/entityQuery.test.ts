@@ -51,7 +51,60 @@ const identityAnchoredQuery: EntityQuery = {
   }
 };
 
+const prettyQuery: EntityQuery = {
+  root: {
+    kind: 'and',
+    children: [
+      { kind: 'predicate', path: [], fieldId: '_schemaId', op: 'equals', value: componentSchemaId },
+      {
+        kind: 'relationExists',
+        path: [
+          {
+            kind: 'forward',
+            fieldId: 'technology_releases',
+            filter: {
+              kind: 'and',
+              children: [
+                { kind: 'predicate', path: [], fieldId: 'release_cycle', op: 'lt', value: 2 },
+                {
+                  kind: 'predicate',
+                  path: [{ kind: 'forward', fieldId: 'technology' }],
+                  fieldId: '_slug',
+                  op: 'equals',
+                  value: 'go'
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  }
+};
+
 test.describe('EntityQuery HTTP routes', () => {
+  test('prints compact and pretty entity query text', async ({ orpc }) => {
+    const [compact, pretty] = await Promise.all([
+      orpc.entityQueryText.printText({
+        params: { workspace: 'default' },
+        body: { query: prettyQuery }
+      }),
+      orpc.entityQueryText.printText({
+        params: { workspace: 'default' },
+        body: { query: prettyQuery, pretty: true }
+      })
+    ]);
+
+    expect(compact.text).toBe(
+      'schema:Component AND technology_releases[release_cycle < 2 AND technology._slug = "go"]'
+    );
+    expect(pretty.text).toBe(`schema:Component AND
+technology_releases[
+  release_cycle < 2 AND
+  technology._slug = "go"
+]`);
+  });
+
   test('executes root free-text search through list and count', async ({ orpc }) => {
     const query: EntityQuery = {
       root: { kind: 'freeText', value: 'AUTH' }

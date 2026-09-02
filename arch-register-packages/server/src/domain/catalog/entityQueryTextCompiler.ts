@@ -3,7 +3,10 @@ import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import { TextCompileError, type EnumCatalog, type TextParseResult } from './entityQueryTextTypes';
 import { parseTextQuery } from './entityQueryTextParser';
 import { resolveTextQuery } from './entityQueryTextResolver';
-import { printEntityQueryText as printText } from './entityQueryTextPrinter';
+import {
+  printEntityQueryText as printText,
+  type EntityQueryTextPrintOptions
+} from './entityQueryTextPrinter';
 import { tokenize } from './entityQueryTextTokenizer';
 import type { RelationSchemaCatalog, SchemaCatalog } from './entityQueryIRResolution';
 
@@ -11,6 +14,7 @@ import type { RelationSchemaCatalog, SchemaCatalog } from './entityQueryIRResolu
 // sibling modules so tokenization, parsing, resolution, and printing can be tested independently.
 
 export type { EnumCatalog, TextParseError, TextParseResult } from './entityQueryTextTypes';
+export type { EntityQueryTextPrintOptions } from './entityQueryTextPrinter';
 
 export const parseEntityQueryText = (
   text: string,
@@ -34,5 +38,6 @@ export const parseEntityQueryText = (
 export const printEntityQueryText = (
   query: EntityQuery,
   schemas: SchemaCatalog,
-  relationSchemas: RelationSchemaCatalog = new Map()
-): string => printText(query, schemas, relationSchemas);
+  relationSchemas: RelationSchemaCatalog = new Map(),
+  options: EntityQueryTextPrintOptions = {}
+): string => printText(query, schemas, relationSchemas, options);
