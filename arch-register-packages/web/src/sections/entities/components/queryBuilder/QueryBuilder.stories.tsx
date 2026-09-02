@@ -136,6 +136,31 @@ const mockSchemas: EntitySchema[] = [
     fields: [{ id: 'vendor', name: 'Vendor', type: 'text' }],
     templates: [],
     groups: []
+  },
+  {
+    id: 'data_entity',
+    workspace: 'test',
+    name: 'Data Entity',
+    category: null,
+    description: '',
+    key_prefix: 'DE',
+    icon: 'database',
+    color: '#0ea5e9',
+    entity_count: 0,
+    version: 1,
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2024-01-01T00:00:00Z',
+    fields: [
+      {
+        id: 'classification',
+        name: 'Classification',
+        type: 'select',
+        enumId: 'classification',
+        options: []
+      }
+    ],
+    templates: [],
+    groups: []
   }
 ];
 
@@ -179,6 +204,25 @@ const mockEnums: WorkspaceEnum[] = [
     sort_order: 1,
     created_at: '2024-01-01T00:00:00Z',
     updated_at: '2024-01-01T00:00:00Z'
+  },
+  {
+    id: 'classification',
+    workspace: 'test',
+    name: 'Classification',
+    category: null,
+    options: [
+      { value: 'public', label: 'Public', description: null, retired: false, restricted: false },
+      {
+        value: 'sensitive',
+        label: 'Sensitive',
+        description: null,
+        retired: false,
+        restricted: false
+      }
+    ],
+    sort_order: 2,
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2024-01-01T00:00:00Z'
   }
 ];
 
@@ -192,6 +236,42 @@ const mockRelationSchemas: RelationSchema[] = [
     in: { schemaIds: ['component'] },
     out: { schemaIds: ['system'] },
     fields: [{ id: 'criticality', name: 'Criticality', type: 'select', enumId: 'radar' } as never],
+    groups: [],
+    color: null,
+    icon: null,
+    relation_count: 0,
+    version: 1,
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2024-01-01T00:00:00Z'
+  } as RelationSchema,
+  // Mirrors the seeded "Data Flow" relation schema (server/src/db/seedData/schemaTemplates.ts) - a
+  // Data Flow's own scalar field plus its `data_entities` entityRelation field (#2670), the shape
+  // #3120's relationForward stories below exercise.
+  {
+    id: 'data_flow',
+    workspace: 'test',
+    name: 'Data Flow',
+    category: null,
+    description: '',
+    in: { schemaIds: ['system'], label: 'Source' },
+    out: { schemaIds: ['system'], label: 'Destination' },
+    fields: [
+      {
+        id: 'data_classification',
+        name: 'Data classification',
+        type: 'select',
+        enumId: 'classification'
+      } as never,
+      {
+        id: 'data_entities',
+        name: 'Data',
+        type: 'entityRelation',
+        predicate: 'carries',
+        schemaId: 'data_entity',
+        minCount: 0,
+        maxCount: -1
+      } as never
+    ],
     groups: [],
     color: null,
     icon: null,
@@ -834,7 +914,46 @@ export const RelationWithGroups = () => (
   />
 );
 
-export const RelationReadOnlyTraversal = () => (
+// A relationForward hop through a relation's own entityRelation field (#3120) - editable, same as
+// the seeded "Restricted Data Flows" view's own OR-branch (server/src/db/seedData/views.ts).
+export const RelationForwardTraversal = () => (
+  <Harness
+    rootKind="relation"
+    initial={{
+      root_kind: 'relation',
+      root: {
+        kind: 'and',
+        children: [
+          p('_schemaId', 'equals', 'data_flow'),
+          {
+            kind: 'or',
+            children: [
+              p('data_classification', 'in', ['sensitive']),
+              {
+                kind: 'predicate',
+                path: [{ kind: 'relationForward', fieldId: 'data_entities' }],
+                fieldId: 'classification',
+                op: 'in',
+                value: ['sensitive']
+              }
+            ]
+          }
+        ]
+      },
+      projections: [
+        {
+          path: [{ kind: 'relationForward', fieldId: 'data_entities' }],
+          fieldId: 'classification',
+          alias: 'Carried entity classification'
+        }
+      ]
+    }}
+  />
+);
+
+// A relation's fixed In/Out endpoint, traversed past the single-hop case the flat FilterRow
+// handles - editable, chained into ordinary entity-side traversal.
+export const EndpointTraversal = () => (
   <Harness
     rootKind="relation"
     initial={{
@@ -844,10 +963,45 @@ export const RelationReadOnlyTraversal = () => (
         children: [
           {
             kind: 'predicate',
-            path: [{ kind: 'relationForward', fieldId: 'data_entities' }],
+            path: [{ kind: 'endpoint', direction: 'out' }, fwd('domain')],
+            fieldId: 'portfolio',
+            op: 'equals',
+            value: 'Platform'
+          }
+        ]
+      }
+    }}
+  />
+);
+
+// A scoped `[...]` "where" filter on a relation-context hop isn't visually editable yet (#3120) -
+// stays read-only, unlike the same hop with no filter (RelationForwardTraversal above).
+export const RelationForwardWithScopedFilterReadOnly = () => (
+  <Harness
+    rootKind="relation"
+    initial={{
+      root_kind: 'relation',
+      root: {
+        kind: 'and',
+        children: [
+          {
+            kind: 'predicate',
+            path: [
+              {
+                kind: 'relationForward',
+                fieldId: 'data_entities',
+                filter: {
+                  kind: 'predicate',
+                  path: [],
+                  fieldId: '_name',
+                  op: 'contains',
+                  value: 'x'
+                }
+              }
+            ],
             fieldId: 'classification',
             op: 'in',
-            value: ['restricted']
+            value: ['sensitive']
           }
         ]
       }

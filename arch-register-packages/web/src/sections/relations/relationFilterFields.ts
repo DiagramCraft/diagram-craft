@@ -7,6 +7,7 @@ import type {
 } from '@arch-register/api-types/workspaceContract';
 import type { FieldGroupAccess, FieldGroupAccessControl } from '@arch-register/permissions';
 import type { FieldDef } from '../../components/FilterBuilder';
+import type { PathSchemaScope } from '../entities/components/pathBuilder/pathBuilderState';
 import { endpointFieldId, RELATION_TYPE_FIELD_ID } from './relationBrowserState';
 
 // The relation-scoped `FieldDef` list, shared by the relation-browser filter UI (the visual
@@ -160,4 +161,39 @@ export const getRelationFilterFieldDefs = ({
     ...endpointFields('in'),
     ...endpointFields('out')
   ];
+};
+
+/**
+ * Terminal `FieldDef`s for a hop chain that has landed back on a relation row (`path: []` at a
+ * relation root, or the position right after a `relationBackward` step, #3120) - the union of every
+ * in-scope relation schema's own *scalar* fields, deduped by id. `entityRelation` fields are
+ * excluded: those are hops (`relationForward`), not terminal values.
+ */
+export const getRelationOwnFieldDefs = ({
+  relationSchemas,
+  relationScope = 'any',
+  enums,
+  getFieldGroupAccess = () => 'edit'
+}: {
+  relationSchemas: RelationSchema[];
+  relationScope?: PathSchemaScope;
+  enums: WorkspaceEnum[];
+  getFieldGroupAccess?: (accessControl: FieldGroupAccessControl | undefined) => FieldGroupAccess;
+}): FieldDef[] => {
+  const scoped =
+    relationScope === 'any'
+      ? relationSchemas
+      : relationSchemas.filter(schema => relationScope.includes(schema.id));
+  const seen = new Set<string>();
+  const result: FieldDef[] = [];
+  for (const schema of scoped) {
+    for (const field of schema.fields) {
+      if (field.type === 'entityRelation') continue;
+      if (seen.has(field.id)) continue;
+      if (!isRelationFieldViewable(schema, field, getFieldGroupAccess)) continue;
+      seen.add(field.id);
+      result.push(relationFieldToFieldDef(field, enums));
+    }
+  }
+  return result;
 };

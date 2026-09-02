@@ -5,6 +5,8 @@ import type { FieldGroupAccess, FieldGroupAccessControl } from '@arch-register/p
 import {
   pathStepContext,
   pathStepContextWithFallbackDirection,
+  positionStepContextWithFallbackDirection,
+  type PathPosition,
   type PathSchemaScope
 } from '../pathBuilder/pathBuilderState';
 
@@ -74,6 +76,30 @@ export const singleTerminalSchemaId = (scope: PathSchemaScope): string | null =>
 export const firstHopPredicate = (args: ScopeArgs): QueryNode | null => {
   const context = pathStepContextWithFallbackDirection({
     rootSchemaScope: args.rootSchemaScope,
+    steps: [],
+    depth: 0,
+    schemas: args.schemas,
+    relationSchemas: args.relationSchemas,
+    getFieldGroupAccess: args.getFieldGroupAccess
+  });
+  const option = context.options[0];
+  if (!option) return null;
+  return { kind: 'predicate', path: [option.step], fieldId: '_name', op: 'contains', value: '' };
+};
+
+type PositionScopeArgs = {
+  rootPosition: PathPosition;
+  schemas: EntitySchema[];
+  relationSchemas: RelationSchema[];
+  getFieldGroupAccess?: (accessControl: FieldGroupAccessControl | undefined) => FieldGroupAccess;
+};
+
+/** Position-aware counterpart of `firstHopPredicate` (#3120): seeds a fresh one-hop traversal
+ *  predicate from `rootPosition`, which may be an entity or a relation row - backs the Relations
+ *  browser's "Add related condition" the same way `firstHopPredicate` backs the entity browser's. */
+export const firstPositionedHopPredicate = (args: PositionScopeArgs): QueryNode | null => {
+  const context = positionStepContextWithFallbackDirection({
+    rootPosition: args.rootPosition,
     steps: [],
     depth: 0,
     schemas: args.schemas,

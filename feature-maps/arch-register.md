@@ -337,9 +337,14 @@
           than rendered blank, in either node style. The Relations browser's filter controls mirror the entity
           browser's: the same progressive builder popover (flat relation-field and In/Out endpoint conditions growing
           in place into Any/All groups and negation) plus a Simple/Advanced toggle whose Advanced side is a text
-          field bound to the same relation-rooted query, full-fidelity in both directions. A query that traverses
-          past a single endpoint hop (a relationForward through an entityRelation field, or a multi-hop endpoint
-          path) or carries projection columns opens in Advanced mode until those visual editors land.
+          field bound to the same relation-rooted query, full-fidelity in both directions. The builder can also
+          traverse a relation's own entityRelation fields (relationForward, e.g. a Data Flow's carried Data
+          Entities) and the fixed In/Out endpoints past a single hop, chained with further entity-side traversal
+          and, going the other way, an entity-rooted relationBackward hop onto a relation - and a Columns section
+          adds those traversed values (a relationForward-sourced field included) as table columns, the same way
+          the entity browser's does. A query with a scoped "where" filter on one of these relation-context hops,
+          or a column reading a value off the relation itself rather than the entity a hop lands on, still opens
+          in Advanced mode until those narrower cases get a visual editor.
           A set of built-in, workspace-pinned canonical views cover information-governance analysis:
           restricted-data-flow exposure (flagging either the flow's own classification or a carried Data Entity's
           classification, shown as separate columns so a result can explain which one triggered it), missing or

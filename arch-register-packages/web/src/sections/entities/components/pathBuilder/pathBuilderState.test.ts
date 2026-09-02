@@ -3,9 +3,14 @@ import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import {
   chainMatchesTarget,
+  nextPosition,
   pathStepContextWithFallbackDirection,
   pathStepOptions,
-  targetSchemaIdsForStep
+  positionStepContext,
+  prunePositionedPathSteps,
+  relationPositionOptions,
+  targetSchemaIdsForStep,
+  type PathPosition
 } from './pathBuilderState';
 
 const makeSchema = (id: string, name: string, fields: EntitySchema['fields'] = []) =>
@@ -192,5 +197,145 @@ describe('pathStepOptions unbound relation-schema field-group filtering (#3024)'
       'typedRelation',
       'unboundTypedRelation'
     ]);
+  });
+});
+
+describe('position-aware traversal: relationForward/endpoint/relationBackward (#3120)', () => {
+  const dataEntity = makeSchema('data-entity', 'Data Entity');
+  const system = makeSchema('system', 'System');
+  const dataFlow = {
+    ...makeRelation('data-flow', 'Data Flow', ['system'], ['system']),
+    fields: [
+      {
+        id: 'data_entities',
+        name: 'Data',
+        type: 'entityRelation',
+        predicate: 'carries',
+        schemaId: 'data-entity',
+        minCount: 0,
+        maxCount: -1
+      } as never,
+      { id: 'data_classification', name: 'Classification', type: 'text' } as never
+    ]
+  } as RelationSchema;
+
+  it('relationPositionOptions offers both endpoints and the entityRelation field, not the plain scalar field', () => {
+    const options = relationPositionOptions({
+      relationScope: ['data-flow'],
+      schemas: [dataEntity, system],
+      relationSchemas: [dataFlow]
+    });
+    expect(options.map(option => option.step)).toEqual([
+      { kind: 'endpoint', direction: 'in' },
+      { kind: 'endpoint', direction: 'out' },
+      { kind: 'relationForward', fieldId: 'data_entities' }
+    ]);
+    const relationForward = options.find(option => option.step.kind === 'relationForward');
+    expect(relationForward?.targetSchemaIds).toEqual(['data-entity']);
+  });
+
+  it('a field-group-restricted entityRelation field is excluded from relationPositionOptions', () => {
+    const restricted = {
+      ...dataFlow,
+      fields: [{ ...dataFlow.fields[0], groupId: 'restricted' } as never, dataFlow.fields[1]],
+      groups: [{ id: 'restricted', name: 'Restricted', accessControl: {} } as never]
+    } as RelationSchema;
+    const options = relationPositionOptions({
+      relationScope: ['data-flow'],
+      schemas: [dataEntity, system],
+      relationSchemas: [restricted],
+      getFieldGroupAccess: () => 'none'
+    });
+    expect(options.map(option => option.step.kind)).toEqual(['endpoint', 'endpoint']);
+  });
+
+  it("nextPosition resolves a relationForward step to the entityRelation field's target entity schema", () => {
+    const position = nextPosition(
+      { kind: 'relationForward', fieldId: 'data_entities' },
+      { kind: 'relation', relationScope: ['data-flow'] },
+      [dataEntity, system],
+      [dataFlow]
+    );
+    expect(position).toEqual({ kind: 'entity', schemaScope: ['data-entity'] });
+  });
+
+  it("nextPosition resolves an endpoint step to the relation's endpoint schema(s)", () => {
+    const position = nextPosition(
+      { kind: 'endpoint', direction: 'in' },
+      { kind: 'relation', relationScope: ['data-flow'] },
+      [dataEntity, system],
+      [dataFlow]
+    );
+    expect(position).toEqual({ kind: 'entity', schemaScope: ['system'] });
+  });
+
+  it('positionStepContext at a relation root has no direction toggle', () => {
+    const context = positionStepContext({
+      rootPosition: { kind: 'relation', relationScope: ['data-flow'] },
+      steps: [],
+      depth: 0,
+      schemas: [dataEntity, system],
+      relationSchemas: [dataFlow]
+    });
+    expect(context.hasDirectionToggle).toBe(false);
+    expect(context.options.map(option => option.step.kind)).toEqual([
+      'endpoint',
+      'endpoint',
+      'relationForward'
+    ]);
+  });
+
+  it('offers relationBackward from an entity position when a relation schema targets it via an entityRelation field, and walking it lands back on that relation', () => {
+    const entityPosition: PathPosition = { kind: 'entity', schemaScope: ['data-entity'] };
+    const backwardStep = {
+      kind: 'relationBackward' as const,
+      fieldId: 'data_entities',
+      relationSchemaId: 'data-flow'
+    };
+    // Seed depth 0 with an already-picked relationBackward step so `direction` resolves to 'out'
+    // (relationBackward's own direction bucket) instead of the no-step default of 'in'.
+    const context = positionStepContext({
+      rootPosition: entityPosition,
+      steps: [backwardStep],
+      depth: 0,
+      schemas: [dataEntity, system],
+      relationSchemas: [dataFlow]
+    });
+    expect(context.direction).toBe('out');
+    const backwardOption = context.options.find(option => option.step.kind === 'relationBackward');
+    expect(backwardOption?.step).toEqual({
+      kind: 'relationBackward',
+      fieldId: 'data_entities',
+      relationSchemaId: 'data-flow'
+    });
+
+    const nextPos = nextPosition(
+      backwardOption!.step,
+      entityPosition,
+      [dataEntity, system],
+      [dataFlow]
+    );
+    expect(nextPos).toEqual({ kind: 'relation', relationScope: ['data-flow'] });
+  });
+
+  it('prunePositionedPathSteps drops a relationForward step once its field becomes invisible', () => {
+    const steps = [{ kind: 'relationForward' as const, fieldId: 'data_entities' }];
+    const pruned = prunePositionedPathSteps(steps, {
+      rootPosition: { kind: 'relation', relationScope: ['data-flow'] },
+      schemas: [dataEntity, system],
+      relationSchemas: [dataFlow],
+      getFieldGroupAccess: () => 'none'
+    });
+    // No groupId on the field in this fixture, so field-group access doesn't restrict it - prune
+    // only kicks in when the option genuinely disappears (e.g. the relation schema no longer in
+    // scope), exercised via an empty relationSchemas list instead.
+    expect(pruned).toEqual(steps);
+
+    const prunedMissingRelation = prunePositionedPathSteps(steps, {
+      rootPosition: { kind: 'relation', relationScope: ['data-flow'] },
+      schemas: [dataEntity, system],
+      relationSchemas: []
+    });
+    expect(prunedMissingRelation).toEqual([]);
   });
 });

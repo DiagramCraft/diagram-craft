@@ -7,14 +7,16 @@ import type {
 import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 import type { Assessment } from '@arch-register/api-types/assessmentContract';
 import type { FieldGroupAccess, FieldGroupAccessControl } from '@arch-register/permissions';
-import type { PathSchemaScope } from '../pathBuilder/pathBuilderState';
+import type { PathPosition, PathSchemaScope } from '../pathBuilder/pathBuilderState';
 
 /** Everything a leaf row needs to edit a relation-traversal path and its terminal field, threaded
- *  unchanged from `QueryBuilder` through the group tree (#2354, plan phase 5). */
+ *  unchanged from `QueryBuilder` through the group tree (#2354, plan phase 5; relation-rooted
+ *  traversal added #3120). */
 export type LeafContext = {
-  /** Whether the query is rooted at an entity or a relation row. Relation-rooted leaves render as
-   *  a flat `FilterRow` over the relation field list (own + In/Out endpoint fields); traversal
-   *  beyond a single endpoint hop is text-only for now (plan phase 7). */
+  /** Whether the query is rooted at an entity or a relation row. Both root kinds now support
+   *  hop-chain traversal (entity-to-entity for `rootKind: 'entity'`; `endpoint`/`relationForward`/
+   *  `relationBackward` for `rootKind: 'relation'`, #3120) - a flat `FilterRow` is just the
+   *  `path: []` case of the same editor. */
   rootKind: 'entity' | 'relation';
   schemas: EntitySchema[];
   relationSchemas: RelationSchema[];
@@ -23,8 +25,14 @@ export type LeafContext = {
   owners: WorkspaceOwnerOption[];
   joinedAssessment?: Assessment | null;
   getFieldGroupAccess: (accessControl: FieldGroupAccessControl | undefined) => FieldGroupAccess;
-  /** Entity schema(s) the root of the query is scoped to (`EntityQuery.schemaId`), or `'any'`. */
+  /** Entity schema(s) the root of the query is scoped to (`EntityQuery.schemaId`), or `'any'`. Used
+   *  by the entity-only hop editor (`rootKind: 'entity'`) and by `leafPath.ts`'s scope helpers. */
   rootSchemaScope: PathSchemaScope;
+  /** Where the root of the query starts, position-aware (#3120): `{ kind: 'entity', schemaScope:
+   *  rootSchemaScope }` for an entity root, `{ kind: 'relation', relationScope }` for a relation
+   *  root (narrowed to a single relation schema when the browser's own Type filter narrows it,
+   *  `'any'` otherwise). Used by the relation-rooted hop editor. */
+  rootPosition: PathPosition;
   /** True once the query already uses the full `MAX_PATH_HOPS` budget - leaves disable "Add hop". */
   atHopLimit: boolean;
   /** Whether a top-bar "Search text…" box owns the root free-text clause. When true the root

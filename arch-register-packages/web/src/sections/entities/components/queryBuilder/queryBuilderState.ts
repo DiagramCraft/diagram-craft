@@ -2,6 +2,7 @@ import {
   MAX_PATH_HOPS,
   type EntityQuery,
   type PathStep,
+  type ProjectionField,
   type QueryNode
 } from '@arch-register/api-types/entityQueryIR';
 
@@ -217,35 +218,95 @@ function nodeIsVisuallyEditable(node: QueryNode): boolean {
 export const isPathVisuallyEditable = (path: PathStep[]): boolean =>
   path.every(stepIsVisuallyEditable);
 
-/** A relation-rooted node the lean relation builder can edit: a boolean tree of predicates that
- *  are either on the relation's own field (`path: []`) or one `endpoint` hop away. */
-const relationNodeIsVisuallyEditable = (node: QueryNode): boolean => {
+// --- Relation-rooted path/node legality (#3120) -----------------------------------------------
+//
+// A relation-rooted path can leave entity context (`relationBackward`, entity -> relation) and
+// come back (`endpoint`/`relationForward`, relation -> entity) - unlike the entity-only
+// `stepIsVisuallyEditable`/`nodeIsVisuallyEditable` above, legality here depends on *where* in the
+// path a step sits, not just its kind. Mirrors `entityQueryIRResolution.ts`'s `kindAfterStep`
+// closely enough to stay correct without importing server code.
+
+type PathPositionKind = 'entity' | 'relation';
+
+const kindAfterStep = (step: PathStep): PathPositionKind =>
+  step.kind === 'relationBackward' ? 'relation' : 'entity';
+
+const isRelationStepLegalAt = (step: PathStep, position: PathPositionKind): boolean =>
+  position === 'relation'
+    ? step.kind === 'endpoint' || step.kind === 'relationForward'
+    : step.kind === 'forward' ||
+      step.kind === 'backward' ||
+      step.kind === 'typedRelation' ||
+      step.kind === 'unboundTypedRelation' ||
+      step.kind === 'relationBackward';
+
+const isPositionedPathVisuallyEditable = (
+  path: PathStep[],
+  rootPosition: PathPositionKind
+): boolean => {
+  let position = rootPosition;
+  for (const step of path) {
+    if (!isRelationStepLegalAt(step, position)) return false;
+    if ('filter' in step && step.filter) {
+      // Scoped `[...]` filters on a relation-context hop (`endpoint` has no `filter` at all - see
+      // entityQueryIR.ts - so only `relationForward`/`relationBackward` reach here) aren't visually
+      // editable yet (#3120) - treat any present filter there as unrepresentable rather than
+      // rendering an editor for it. Entity-to-entity steps keep the existing recursive check.
+      if (step.kind === 'relationForward' || step.kind === 'relationBackward') return false;
+      if (!positionedNodeIsVisuallyEditable(step.filter, kindAfterStep(step))) return false;
+    }
+    position = kindAfterStep(step);
+  }
+  return true;
+};
+
+function positionedNodeIsVisuallyEditable(node: QueryNode, position: PathPositionKind): boolean {
   switch (node.kind) {
     case 'and':
     case 'or':
-      return node.children.every(relationNodeIsVisuallyEditable);
+      return node.children.every(child => positionedNodeIsVisuallyEditable(child, position));
     case 'not':
-      return relationNodeIsVisuallyEditable(node.child);
+      return positionedNodeIsVisuallyEditable(node.child, position);
     case 'predicate':
-      return (
-        node.path.length === 0 || (node.path.length === 1 && node.path[0]!.kind === 'endpoint')
-      );
+      return isPositionedPathVisuallyEditable(node.path, position);
+    case 'relationExists':
+      return node.path.length > 0 && isPositionedPathVisuallyEditable(node.path, position);
+    // freeText is root-entity-search only (entityQueryIR.ts) - never valid mid-path or at a
+    // relation position.
     case 'freeText':
-      return true;
+      return position === 'entity';
     default:
-      return false;
+      return true;
   }
-};
+}
+
+/** True when every step of a relation-rooted `path` is one the visual leaf editor can render
+ *  (relation's own field / `endpoint` / `relationForward` / `relationBackward`, in legal sequence,
+ *  with any scoped filter itself editable) - the leaf falls back to a read-only summary
+ *  otherwise. */
+export const isRelationPathVisuallyEditable = (path: PathStep[]): boolean =>
+  isPositionedPathVisuallyEditable(path, 'relation');
+
+/** A relation-rooted node the relation builder can edit: a boolean tree of predicates/`relationExists`
+ *  whose paths are `isRelationPathVisuallyEditable`. */
+const relationNodeIsVisuallyEditable = (node: QueryNode): boolean =>
+  positionedNodeIsVisuallyEditable(node, 'relation');
+
+const relationProjectionIsVisuallyEditable = (projection: ProjectionField): boolean =>
+  projection.source !== 'relation' && isRelationPathVisuallyEditable(projection.path);
 
 /** True when every node in `query` is one the visual builder can currently edit in place. An
  *  entity query qualifies with a boolean tree of `path: []` / relation-traversal predicates plus
- *  free-text; a relation query qualifies with relation-field / single-`endpoint` predicates. A
- *  query with projection columns, or a shape a later phase still owns, is still *displayed* by the
- *  builder (read-only summaries) but the wiring layer keeps it in Advanced text mode. */
+ *  free-text; a relation query qualifies with relation-field / `endpoint`/`relationForward`/
+ *  `relationBackward` predicates. A `source: 'relation'` projection, or a shape a later phase still
+ *  owns, is still *displayed* by the builder (read-only summaries) but the wiring layer keeps the
+ *  whole query in Advanced text mode. */
 export const isVisuallyEditable = (query: EntityQuery): boolean => {
   if ((query.root_kind ?? 'entity') === 'relation') {
-    // The lean relation builder has no Columns editor yet.
-    return !query.projections?.length && relationNodeIsVisuallyEditable(query.root);
+    const projectionsEditable = (query.projections ?? []).every(
+      relationProjectionIsVisuallyEditable
+    );
+    return projectionsEditable && relationNodeIsVisuallyEditable(query.root);
   }
   const projectionsEditable = (query.projections ?? []).every(
     projection => projection.source !== 'relation' && isPathVisuallyEditable(projection.path)
