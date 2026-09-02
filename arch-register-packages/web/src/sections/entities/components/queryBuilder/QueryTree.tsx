@@ -9,11 +9,14 @@ import {
 } from '../../../../components/FilterBuilder';
 import { HopPicker } from '../pathBuilder/HopPicker';
 import {
-  pathStepContext,
-  pathStepContextWithFallbackDirection,
   pathStepOptions,
-  pruneInvalidPathSteps
+  positionStepContext,
+  positionStepContextWithFallbackDirection,
+  prunePositionedPathSteps,
+  relationBackwardOptions,
+  terminalPosition
 } from '../pathBuilder/pathBuilderState';
+import { getRelationOwnFieldDefs } from '../../../relations/relationFilterFields';
 import {
   addChild,
   emptyGroup,
@@ -21,6 +24,7 @@ import {
   getNode,
   isGroupNode,
   isPathVisuallyEditable,
+  isRelationPathVisuallyEditable,
   removeNode,
   setGroupKind,
   toggleNot,
@@ -30,10 +34,9 @@ import type { NodePath } from './queryBuilderState';
 import {
   asFieldPredicate,
   asRelationExists,
-  firstHopPredicate,
+  firstPositionedHopPredicate,
   leafPath,
   singleTerminalSchemaId,
-  terminalSchemaScope,
   withLeafPath
 } from './leafPath';
 import {
@@ -135,9 +138,9 @@ export const QueryGroup = ({
   // root `OR` or any nested group needs it - the `text:"x" OR <predicate>` case the box can't hold.
   const topBarOwnsText = leafCtx.showFreeText && isRoot && node.kind === 'and';
   const allowFreeTextField = !isRelation && !leafCtx.inScopedFilter && !topBarOwnsText;
-  // Relation-rooted traversal (relationForward / relationBackward) isn't visually editable yet -
-  // no "Add related condition" there.
-  const relatedSeed = isRelation || leafCtx.atHopLimit ? null : firstHopPredicate(leafCtx);
+  // Position-aware (#3120): seeds a fresh hop from wherever this group's root sits, whether that's
+  // an entity or a relation row.
+  const relatedSeed = leafCtx.atHopLimit ? null : firstPositionedHopPredicate(leafCtx);
 
   const body = (
     <>
@@ -269,11 +272,12 @@ export const QueryNodeView = ({
   // A traversal leaf renders as a tall multi-row rail; keep the NOT toggle up by the first hop
   // rather than centred against the whole block.
   const isTallLeaf =
-    leafCtx.rootKind === 'entity' &&
     !isGroupNode(content) &&
     content.kind !== 'freeText' &&
     leafPath(content).length > 0 &&
-    isPathVisuallyEditable(leafPath(content));
+    (leafCtx.rootKind === 'relation'
+      ? isRelationPathVisuallyEditable(leafPath(content))
+      : isPathVisuallyEditable(leafPath(content)));
 
   return (
     <div className={isTallLeaf ? `${styles.row} ${styles.rowTall}` : styles.row}>
@@ -338,10 +342,12 @@ const stripStepFilter = (step: PathStep): PathStep => {
 
 /**
  * One terminal condition. A flat `predicate` (`path: []`) is the reused `FilterRow`. A predicate
- * with a traversal `path`, or a `relationExists`, renders the shared `pathBuilder` hop editor,
- * an optional per-hop "where…" scoped filter (`PathStep.filter`, the `[...]` grammar), and a
- * terminal field / "just exists" choice (#2354, plan phases 5-6). Relation-context step kinds
- * are still text-only (phase 7) and render as a read-only summary.
+ * with a traversal `path`, or a `relationExists`, renders the shared `pathBuilder` hop editor, an
+ * optional per-hop "where…" scoped filter (`PathStep.filter`, the `[...]` grammar), and a terminal
+ * field / "just exists" choice (#2354, plan phases 5-6). Position-aware (#3120): the same editor
+ * handles a relation-rooted path through `endpoint`/`relationForward`/`relationBackward` hops, not
+ * just an entity-rooted one - a step kind or scoped filter shape it doesn't own yet (see
+ * `isRelationPathVisuallyEditable`) still renders as a read-only summary.
  */
 export const QueryLeaf = ({
   node,
@@ -359,7 +365,7 @@ export const QueryLeaf = ({
   const { schemas, relationSchemas, enums, lifecycleStates, owners, joinedAssessment, atHopLimit } =
     leafCtx;
   const getFieldGroupAccess = leafCtx.getFieldGroupAccess;
-  const rootSchemaScope = leafCtx.rootSchemaScope;
+  const rootPosition = leafCtx.rootPosition;
 
   // Hops whose scoped-filter panel is open even though the filter is still empty.
   const [openScopes, setOpenScopes] = useState<ReadonlySet<number>>(() => new Set());
@@ -405,48 +411,41 @@ export const QueryLeaf = ({
     );
   }
 
-  // Relation-rooted: a flat FilterRow over the relation field list (own + In/Out endpoint) for the
-  // two shapes the lean builder edits; anything deeper stays text-only.
-  if (leafCtx.rootKind === 'relation') {
-    if (node.kind === 'predicate' && isFlatRelationLeaf(node)) {
-      return (
-        <>
-          <FilterRow
-            condition={relationLeafCondition(node)}
-            fields={fields}
-            onUpdate={updates => onChange(applyRelationLeafUpdate(node, updates, fields))}
-            onRemove={onRemove}
-            hideRemove
-          />
-          <button
-            type="button"
-            className={styles.removeBtn}
-            title="Remove condition"
-            onClick={onRemove}
-          >
-            <TbX size={11} />
-          </button>
-        </>
-      );
-    }
+  // Relation-rooted flat leaf: a `FilterRow` over the relation field list for the single-hop-or-
+  // less shape `isFlatRelationLeaf` recognizes. Anything deeper (relationForward/relationBackward,
+  // or an endpoint hop followed by further entity traversal) falls through to the position-aware
+  // traversal-leaf editor below, same as an entity-rooted leaf.
+  if (leafCtx.rootKind === 'relation' && node.kind === 'predicate' && isFlatRelationLeaf(node)) {
     return (
-      <div className={styles.advancedLeaf}>
-        <span className={styles.advancedLeafText}>
-          {node.kind === 'relationExists' ? 'related record exists' : `traversal · ${node.fieldId}`}
-        </span>
-        <span className={styles.advancedLeafBadge}>text-only</span>
-        <button type="button" className={styles.removeBtn} title="Remove" onClick={onRemove}>
+      <>
+        <FilterRow
+          condition={relationLeafCondition(node)}
+          fields={fields}
+          onUpdate={updates => onChange(applyRelationLeafUpdate(node, updates, fields))}
+          onRemove={onRemove}
+          hideRemove
+        />
+        <button
+          type="button"
+          className={styles.removeBtn}
+          title="Remove condition"
+          onClick={onRemove}
+        >
           <TbX size={11} />
         </button>
-      </div>
+      </>
     );
   }
 
   const path = leafPath(node);
+  const pathEditable =
+    leafCtx.rootKind === 'relation'
+      ? isRelationPathVisuallyEditable(path)
+      : isPathVisuallyEditable(path);
 
-  // A relation-context step kind this editor doesn't own yet - keep it read-only rather than
-  // dropping data the user can't see. (Scoped `[...]` filters are editable now.)
-  if (path.length > 0 && !isPathVisuallyEditable(path)) {
+  // A step kind / scoped-filter shape this editor doesn't own yet - keep it read-only rather than
+  // dropping data the user can't see.
+  if (path.length > 0 && !pathEditable) {
     return (
       <div className={styles.advancedLeaf}>
         <span className={styles.advancedLeafText}>
@@ -461,8 +460,8 @@ export const QueryLeaf = ({
   }
 
   const editPath = (nextPath: PathStep[]) => {
-    const pruned = pruneInvalidPathSteps(nextPath, {
-      rootSchemaScope,
+    const pruned = prunePositionedPathSteps(nextPath, {
+      rootPosition,
       schemas,
       relationSchemas,
       getFieldGroupAccess
@@ -508,29 +507,42 @@ export const QueryLeaf = ({
   };
 
   const toggleStepDirection = (depth: number, direction: 'in' | 'out') => {
-    const ctx = pathStepContext({
-      rootSchemaScope,
+    const ctx = positionStepContext({
+      rootPosition,
       steps: path,
       depth,
       schemas,
       relationSchemas,
       getFieldGroupAccess
     });
+    // No direction toggle at a relation position (see `hideDirectionToggle` below) - unreachable
+    // from the UI there, but stay a no-op rather than assuming an entity scope exists.
+    if (ctx.currentPosition.kind !== 'entity') return;
     const options =
       direction === ctx.direction
         ? ctx.options
-        : pathStepOptions({
-            direction,
-            currentSchemaScope: ctx.currentSchemaScope,
-            schemas,
-            relationSchemas,
-            getFieldGroupAccess
-          });
+        : [
+            ...pathStepOptions({
+              direction,
+              currentSchemaScope: ctx.currentPosition.schemaScope,
+              schemas,
+              relationSchemas,
+              getFieldGroupAccess
+            }),
+            ...(direction === 'out'
+              ? relationBackwardOptions({
+                  schemaScope: ctx.currentPosition.schemaScope,
+                  schemas,
+                  relationSchemas,
+                  getFieldGroupAccess
+                })
+              : [])
+          ];
     if (options[0]) changeStep(depth, options[0].step);
   };
 
-  const nextHopContext = pathStepContextWithFallbackDirection({
-    rootSchemaScope,
+  const nextHopContext = positionStepContextWithFallbackDirection({
+    rootPosition,
     steps: path,
     depth: path.length,
     schemas,
@@ -574,27 +586,28 @@ export const QueryLeaf = ({
     );
   }
 
-  const scopeAfterHop = (depth: number) =>
-    terminalSchemaScope(path.slice(0, depth + 1), {
-      rootSchemaScope,
-      schemas,
-      relationSchemas,
-      getFieldGroupAccess
-    });
+  const positionAfterHop = (depth: number) =>
+    terminalPosition(path.slice(0, depth + 1), { rootPosition, schemas, relationSchemas });
 
-  const fieldsForScope = (scope: ReturnType<typeof scopeAfterHop>) =>
-    getEntityFilterFieldDefs({
-      schemas,
-      lifecycleStates,
-      owners,
-      enums,
-      selectedSchemaId: singleTerminalSchemaId(scope),
-      joinedAssessment,
-      getFieldGroupAccess
-    });
+  const fieldsForPosition = (position: ReturnType<typeof positionAfterHop>): FieldDef[] =>
+    position.kind === 'relation'
+      ? getRelationOwnFieldDefs({
+          relationSchemas,
+          relationScope: position.relationScope,
+          enums,
+          getFieldGroupAccess
+        })
+      : getEntityFilterFieldDefs({
+          schemas,
+          lifecycleStates,
+          owners,
+          enums,
+          selectedSchemaId: singleTerminalSchemaId(position.schemaScope),
+          joinedAssessment,
+          getFieldGroupAccess
+        });
 
-  const terminalScope = scopeAfterHop(path.length - 1);
-  const terminalFields = fieldsForScope(terminalScope);
+  const terminalFields = fieldsForPosition(positionAfterHop(path.length - 1));
 
   return (
     <div className={styles.traversalLeaf}>
@@ -612,15 +625,22 @@ export const QueryLeaf = ({
       <div className={styles.hopList}>
         <div className={styles.railSegment}>
           {path.map((step, depth) => {
-            const stepContext = pathStepContext({
-              rootSchemaScope,
+            const stepContext = positionStepContext({
+              rootPosition,
               steps: path,
               depth,
               schemas,
               relationSchemas,
               getFieldGroupAccess
             });
-            const scope = scopeAfterHop(depth);
+            // Scoped `[...]` filters aren't offered on a relation-context hop yet (#3120) -
+            // `isRelationPathVisuallyEditable` already keeps a *stored* one read-only; this keeps
+            // the toggle from offering to create a new one this editor can't represent.
+            const scopeEditable =
+              step.kind !== 'endpoint' &&
+              step.kind !== 'relationForward' &&
+              step.kind !== 'relationBackward';
+            const position = positionAfterHop(depth);
             const scopeOpen = openScopes.has(depth) || ('filter' in step && !!step.filter);
             return (
               <div key={depth} className={styles.hopBranch}>
@@ -630,26 +650,34 @@ export const QueryLeaf = ({
                     stepContext={stepContext}
                     ariaLabelDirection={`Direction for hop ${depth + 1}`}
                     ariaLabelHop={`Relation for hop ${depth + 1}`}
+                    hideDirectionToggle={!stepContext.hasDirectionToggle}
                     onChangeStep={next => changeStep(depth, next)}
                     onToggleDirection={direction => toggleStepDirection(depth, direction)}
                   />
-                  <button
-                    type="button"
-                    className={scopeOpen ? styles.rowCtlOn : styles.rowCtl}
-                    title="Filter the record this hop lands on"
-                    aria-pressed={scopeOpen}
-                    onClick={() => toggleScope(depth)}
-                  >
-                    [...]
-                  </button>
+                  {scopeEditable && (
+                    <button
+                      type="button"
+                      className={scopeOpen ? styles.rowCtlOn : styles.rowCtl}
+                      title="Filter the record this hop lands on"
+                      aria-pressed={scopeOpen}
+                      onClick={() => toggleScope(depth)}
+                    >
+                      [...]
+                    </button>
+                  )}
                 </div>
 
-                {scopeOpen && (
+                {scopeEditable && scopeOpen && position.kind === 'entity' && (
                   <div className={styles.scopedFilter}>
                     <ScopedFilterEditor
                       filter={'filter' in step ? step.filter : undefined}
-                      fields={fieldsForScope(scope)}
-                      leafCtx={{ ...leafCtx, rootSchemaScope: scope }}
+                      fields={fieldsForPosition(position)}
+                      leafCtx={{
+                        ...leafCtx,
+                        rootKind: 'entity',
+                        rootPosition: position,
+                        rootSchemaScope: position.schemaScope
+                      }}
                       onChange={filter => setStepFilter(depth, filter)}
                       onRemove={() => {
                         setStepFilter(depth, undefined);

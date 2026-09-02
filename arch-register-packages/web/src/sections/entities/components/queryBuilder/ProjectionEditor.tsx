@@ -2,16 +2,20 @@ import { TbPlus, TbX } from 'react-icons/tb';
 import { Select } from '@diagram-craft/app-components/Select';
 import type { PathStep, ProjectionField } from '@arch-register/api-types/entityQueryIR';
 import { getEntityFilterFieldDefs } from '../../../../components/FilterBuilder';
+import type { FieldDef } from '../../../../components/FilterBuilder';
+import { getRelationOwnFieldDefs } from '../../../relations/relationFilterFields';
 import { HopPicker } from '../pathBuilder/HopPicker';
 import { HopSequence } from '../pathBuilder/HopSequence';
 import {
-  pathStepContext,
-  pathStepContextWithFallbackDirection,
   pathStepOptions,
-  pruneInvalidPathSteps
+  positionStepContext,
+  positionStepContextWithFallbackDirection,
+  prunePositionedPathSteps,
+  relationBackwardOptions,
+  terminalPosition
 } from '../pathBuilder/pathBuilderState';
-import { singleTerminalSchemaId, terminalSchemaScope } from './leafPath';
-import { isPathVisuallyEditable } from './queryBuilderState';
+import { singleTerminalSchemaId } from './leafPath';
+import { isPathVisuallyEditable, isRelationPathVisuallyEditable } from './queryBuilderState';
 import type { LeafContext } from './types';
 import styles from './queryBuilder.module.css';
 
@@ -30,20 +34,22 @@ type Props = {
  */
 export const ProjectionEditor = ({ projections, onChange, leafCtx }: Props) => {
   const { schemas, relationSchemas, enums, lifecycleStates, owners, atHopLimit } = leafCtx;
-  const { getFieldGroupAccess, rootSchemaScope } = leafCtx;
+  const { getFieldGroupAccess, rootKind, rootPosition } = leafCtx;
 
-  const hopArgs = { rootSchemaScope, schemas, relationSchemas, getFieldGroupAccess };
+  const hopArgs = { rootPosition, schemas, relationSchemas, getFieldGroupAccess };
+  const isPathEditable = (path: PathStep[]) =>
+    rootKind === 'relation' ? isRelationPathVisuallyEditable(path) : isPathVisuallyEditable(path);
 
   const update = (index: number, next: ProjectionField) =>
     onChange(projections.map((projection, i) => (i === index ? next : projection)));
 
   const editPath = (index: number, path: PathStep[]) => {
-    const pruned = pruneInvalidPathSteps(path, hopArgs);
+    const pruned = prunePositionedPathSteps(path, hopArgs);
     update(index, { ...projections[index]!, path: pruned });
   };
 
   const addProjection = () => {
-    const context = pathStepContextWithFallbackDirection({ ...hopArgs, steps: [], depth: 0 });
+    const context = positionStepContextWithFallbackDirection({ ...hopArgs, steps: [], depth: 0 });
     if (!context.options[0]) return;
     onChange([...projections, { path: [context.options[0].step], fieldId: '_name' }]);
   };
@@ -58,7 +64,7 @@ export const ProjectionEditor = ({ projections, onChange, leafCtx }: Props) => {
       </div>
 
       {projections.map((projection, index) => {
-        if (projection.source === 'relation' || !isPathVisuallyEditable(projection.path)) {
+        if (projection.source === 'relation' || !isPathEditable(projection.path)) {
           return (
             <div key={index} className={styles.advancedLeaf}>
               <span className={styles.advancedLeafText}>
@@ -77,16 +83,24 @@ export const ProjectionEditor = ({ projections, onChange, leafCtx }: Props) => {
           );
         }
 
-        const scope = terminalSchemaScope(projection.path, hopArgs);
-        const terminalFields = getEntityFilterFieldDefs({
-          schemas,
-          lifecycleStates,
-          owners,
-          enums,
-          selectedSchemaId: singleTerminalSchemaId(scope),
-          getFieldGroupAccess
-        });
-        const nextHop = pathStepContextWithFallbackDirection({
+        const terminal = terminalPosition(projection.path, hopArgs);
+        const terminalFields: FieldDef[] =
+          terminal.kind === 'relation'
+            ? getRelationOwnFieldDefs({
+                relationSchemas,
+                relationScope: terminal.relationScope,
+                enums,
+                getFieldGroupAccess
+              })
+            : getEntityFilterFieldDefs({
+                schemas,
+                lifecycleStates,
+                owners,
+                enums,
+                selectedSchemaId: singleTerminalSchemaId(terminal.schemaScope),
+                getFieldGroupAccess
+              });
+        const nextHop = positionStepContextWithFallbackDirection({
           ...hopArgs,
           steps: projection.path,
           depth: projection.path.length
@@ -106,7 +120,7 @@ export const ProjectionEditor = ({ projections, onChange, leafCtx }: Props) => {
                 addLabel="hop"
                 addDisabled={atHopLimit || nextHop.options.length === 0}
                 renderItem={(step, depth) => {
-                  const stepContext = pathStepContext({
+                  const stepContext = positionStepContext({
                     ...hopArgs,
                     steps: projection.path,
                     depth
@@ -118,6 +132,7 @@ export const ProjectionEditor = ({ projections, onChange, leafCtx }: Props) => {
                         stepContext={stepContext}
                         ariaLabelDirection={`Direction for column ${index + 1} hop ${depth + 1}`}
                         ariaLabelHop={`Relation for column ${index + 1} hop ${depth + 1}`}
+                        hideDirectionToggle={!stepContext.hasDirectionToggle}
                         onChangeStep={nextStep =>
                           editPath(
                             index,
@@ -125,19 +140,35 @@ export const ProjectionEditor = ({ projections, onChange, leafCtx }: Props) => {
                           )
                         }
                         onToggleDirection={direction => {
-                          const ctx = pathStepContext({
+                          const ctx = positionStepContext({
                             ...hopArgs,
                             steps: projection.path,
                             depth
                           });
+                          // No direction toggle at a relation position (see `hideDirectionToggle`
+                          // above) - the toggle button isn't rendered there, so this is unreachable,
+                          // but keep it a no-op rather than assuming an entity scope exists.
+                          if (ctx.currentPosition.kind !== 'entity') return;
                           const options =
                             direction === ctx.direction
                               ? ctx.options
-                              : pathStepOptions({
-                                  ...hopArgs,
-                                  direction,
-                                  currentSchemaScope: ctx.currentSchemaScope
-                                });
+                              : [
+                                  ...pathStepOptions({
+                                    direction,
+                                    currentSchemaScope: ctx.currentPosition.schemaScope,
+                                    schemas,
+                                    relationSchemas,
+                                    getFieldGroupAccess
+                                  }),
+                                  ...(direction === 'out'
+                                    ? relationBackwardOptions({
+                                        schemaScope: ctx.currentPosition.schemaScope,
+                                        schemas,
+                                        relationSchemas,
+                                        getFieldGroupAccess
+                                      })
+                                    : [])
+                                ];
                           if (options[0]) {
                             editPath(
                               index,
@@ -171,20 +202,26 @@ export const ProjectionEditor = ({ projections, onChange, leafCtx }: Props) => {
             </div>
 
             <div className={styles.projectionTerminal}>
-              <label className={styles.projectionChain}>
-                <input
-                  type="checkbox"
-                  checked={projection.chain === true}
-                  onChange={event =>
-                    update(index, {
-                      ...projection,
-                      chain: event.target.checked ? true : undefined,
-                      fieldId: event.target.checked ? '_id' : '_name'
-                    })
-                  }
-                />
-                whole chain
-              </label>
+              {/* `chain: true` only supports the four entity-to-entity hop kinds
+                  (entityQueryIR.ts's `ProjectionField.chain` doc) - a relation-rooted path always
+                  starts with a relation-context step (`endpoint`/`relationForward`), so it's never
+                  chain-eligible. */}
+              {rootKind === 'entity' && (
+                <label className={styles.projectionChain}>
+                  <input
+                    type="checkbox"
+                    checked={projection.chain === true}
+                    onChange={event =>
+                      update(index, {
+                        ...projection,
+                        chain: event.target.checked ? true : undefined,
+                        fieldId: event.target.checked ? '_id' : '_name'
+                      })
+                    }
+                  />
+                  whole chain
+                </label>
+              )}
 
               {projection.chain !== true && (
                 <div className={styles.projectionField}>

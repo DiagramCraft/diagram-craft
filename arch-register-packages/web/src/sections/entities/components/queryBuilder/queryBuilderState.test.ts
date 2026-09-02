@@ -312,7 +312,7 @@ describe('isVisuallyEditable', () => {
     ).toBe(true);
   });
 
-  it('rejects a relation-rooted query with deeper endpoint traversal', () => {
+  it('accepts a relation-rooted query traversing past an endpoint hop into entity context (#3120)', () => {
     expect(
       isVisuallyEditable({
         root_kind: 'relation',
@@ -324,6 +324,107 @@ describe('isVisuallyEditable', () => {
               path: [
                 { kind: 'endpoint', direction: 'out' },
                 { kind: 'forward', fieldId: 'domain' }
+              ],
+              fieldId: '_name',
+              op: 'equals',
+              value: 'x'
+            }
+          ]
+        }
+      })
+    ).toBe(true);
+  });
+
+  it('accepts a relation-rooted relationForward filter and rejects a relationForward field that would be illegal from an entity position', () => {
+    expect(
+      isVisuallyEditable({
+        root_kind: 'relation',
+        root: {
+          kind: 'and',
+          children: [
+            {
+              kind: 'predicate',
+              path: [{ kind: 'relationForward', fieldId: 'data_entities' }],
+              fieldId: 'classification',
+              op: 'in',
+              value: ['sensitive']
+            }
+          ]
+        }
+      })
+    ).toBe(true);
+    // relationForward is only legal at a relation position - two in a row is illegal (the first
+    // one already lands on an entity).
+    expect(
+      isVisuallyEditable({
+        root_kind: 'relation',
+        root: {
+          kind: 'and',
+          children: [
+            {
+              kind: 'predicate',
+              path: [
+                { kind: 'relationForward', fieldId: 'data_entities' },
+                { kind: 'relationForward', fieldId: 'other' }
+              ],
+              fieldId: 'classification',
+              op: 'equals',
+              value: 'x'
+            }
+          ]
+        }
+      })
+    ).toBe(false);
+  });
+
+  it('accepts endpoint -> relationBackward -> endpoint (relation -> entity -> relation -> entity)', () => {
+    expect(
+      isVisuallyEditable({
+        root_kind: 'relation',
+        root: {
+          kind: 'and',
+          children: [
+            {
+              kind: 'predicate',
+              path: [
+                { kind: 'endpoint', direction: 'out' },
+                {
+                  kind: 'relationBackward',
+                  fieldId: 'data_entities',
+                  relationSchemaId: 'data-flow'
+                },
+                { kind: 'endpoint', direction: 'in' }
+              ],
+              fieldId: '_name',
+              op: 'equals',
+              value: 'x'
+            }
+          ]
+        }
+      })
+    ).toBe(true);
+  });
+
+  it('rejects a relationBackward step directly off a relation root (relationBackward requires an entity position)', () => {
+    expect(
+      isVisuallyEditable({
+        root_kind: 'relation',
+        root: {
+          kind: 'and',
+          children: [
+            {
+              kind: 'predicate',
+              path: [
+                {
+                  kind: 'relationBackward',
+                  fieldId: 'data_entities',
+                  relationSchemaId: 'data-flow'
+                },
+                {
+                  kind: 'relationBackward',
+                  fieldId: 'other',
+                  relationSchemaId: 'other-relation'
+                }
               ],
               fieldId: '_name',
               op: 'equals',
@@ -367,6 +468,110 @@ describe('isVisuallyEditable', () => {
         projections: [{ path: [{ kind: 'endpoint', direction: 'out' }], fieldId: '_name' }]
       })
     ).toBe(false);
+  });
+
+  it('accepts a relationForward-sourced projection on a relation root, rejects a source:relation one (#3120)', () => {
+    expect(
+      isVisuallyEditable({
+        root_kind: 'relation',
+        root: emptyGroup('and'),
+        projections: [
+          {
+            path: [{ kind: 'relationForward', fieldId: 'data_entities' }],
+            fieldId: 'classification',
+            alias: 'carried_entity_classification'
+          }
+        ]
+      })
+    ).toBe(true);
+    expect(
+      isVisuallyEditable({
+        root_kind: 'relation',
+        root: emptyGroup('and'),
+        projections: [
+          {
+            path: [{ kind: 'relationForward', fieldId: 'data_entities' }],
+            fieldId: 'classification',
+            source: 'relation'
+          }
+        ]
+      })
+    ).toBe(false);
+  });
+
+  it('accepts the seeded "Restricted Data Flows" and "Residency-Invalid Transfers" governance views (#3120)', () => {
+    // Mirrors server/src/db/seedData/views.ts's `CARRIED_DATA_ENTITIES_PATH` / `dataFlowSchemaPredicate`.
+    const carriedDataEntitiesPath = [
+      { kind: 'relationForward' as const, fieldId: 'data_entities' }
+    ];
+    const dataFlowSchemaPredicate = {
+      kind: 'predicate' as const,
+      path: [],
+      fieldId: '_schemaId',
+      op: 'equals' as const,
+      value: 'data-flow-schema'
+    };
+    const restrictedDataFlows: EntityQuery = {
+      root_kind: 'relation',
+      root: {
+        kind: 'and',
+        children: [
+          dataFlowSchemaPredicate,
+          {
+            kind: 'or',
+            children: [
+              {
+                kind: 'predicate',
+                path: [],
+                fieldId: 'data_classification',
+                op: 'in',
+                value: ['sensitive', 'highly-sensitive']
+              },
+              {
+                kind: 'predicate',
+                path: carriedDataEntitiesPath,
+                fieldId: 'classification',
+                op: 'in',
+                value: ['sensitive', 'highly-sensitive']
+              }
+            ]
+          }
+        ]
+      },
+      projections: [
+        {
+          path: carriedDataEntitiesPath,
+          fieldId: 'classification',
+          alias: 'carried_entity_classification'
+        }
+      ]
+    };
+    expect(isVisuallyEditable(restrictedDataFlows)).toBe(true);
+
+    const residencyInvalidTransfers: EntityQuery = {
+      root_kind: 'relation',
+      root: {
+        kind: 'and',
+        children: [
+          dataFlowSchemaPredicate,
+          {
+            kind: 'predicate',
+            path: [],
+            fieldId: 'residency_invalid',
+            op: 'equals',
+            value: 'invalid'
+          }
+        ]
+      },
+      projections: [
+        {
+          path: carriedDataEntitiesPath,
+          fieldId: 'permitted_residency_regions',
+          alias: 'carried_entity_permitted_regions'
+        }
+      ]
+    };
+    expect(isVisuallyEditable(residencyInvalidTransfers)).toBe(true);
   });
 });
 

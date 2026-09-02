@@ -93,6 +93,16 @@ export const QueryBuilder = ({
       joinedAssessment,
       getFieldGroupAccess,
       rootSchemaScope: query.schemaId ? [query.schemaId] : ('any' as const),
+      // Relation-rooted traversal (#3120) starts from any relation schema - the Relations browser
+      // has no schema picker (a `_schemaId` condition narrows the result set, not the traversal
+      // options), so unlike the entity root, `relationScope` is always 'any' here rather than
+      // narrowed from `query`.
+      rootPosition: isRelation
+        ? { kind: 'relation' as const, relationScope: 'any' as const }
+        : {
+            kind: 'entity' as const,
+            schemaScope: query.schemaId ? [query.schemaId] : ('any' as const)
+          },
       atHopLimit: countHops(query) >= MAX_PATH_HOPS,
       showFreeText: showFreeText && !isRelation,
       inScopedFilter: false
@@ -205,13 +215,11 @@ export const QueryBuilder = ({
         leafCtx={leafCtx}
       />
 
-      {!isRelation && (
-        <ProjectionEditor
-          projections={query.projections ?? []}
-          onChange={next => onChange({ ...query, projections: next.length > 0 ? next : undefined })}
-          leafCtx={leafCtx}
-        />
-      )}
+      <ProjectionEditor
+        projections={query.projections ?? []}
+        onChange={next => onChange({ ...query, projections: next.length > 0 ? next : undefined })}
+        leafCtx={leafCtx}
+      />
 
       {overBudget && (
         <div className={styles.warn}>

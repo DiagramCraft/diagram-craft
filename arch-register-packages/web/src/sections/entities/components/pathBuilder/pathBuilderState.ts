@@ -1,14 +1,29 @@
 import type { EntityQuery, PathStep } from '@arch-register/api-types/entityQueryIR';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
+import { isEntityRelationField } from '@arch-register/api-types/relationSchemaContract';
 import type { FieldGroupAccess, FieldGroupAccessControl } from '@arch-register/permissions';
 
-// Shared hop/path-traversal logic behind Traceability's and Map's hop editors. Operates on the
-// full `PathStep` union (entityQueryIR.ts) - forward/backward/typedRelation/unboundTypedRelation
-// only; the relation-rooted kinds (endpoint/relationForward/relationBackward) are never offered
-// here since these editors always start on an entity, not a relation row.
+// Shared hop/path-traversal logic behind Traceability's and Map's hop editors, and (via the
+// position-aware `position*` exports below, #3120) the Relations Browser's relationForward filter
+// and projection editors. The original entity-only exports (`pathStepOptions`, `pathStepContext`,
+// `pathStepContextWithFallbackDirection`, `pruneInvalidPathSteps`, `targetSchemaIdsForStep`) operate
+// on the four entity-to-entity `PathStep` kinds only (forward/backward/typedRelation/
+// unboundTypedRelation) and keep their existing behavior unchanged - Traceability and Map always
+// start on an entity and never see a relation-rooted kind. The `position*` exports additionally
+// track whether the path is currently on an entity or a relation row, so they can offer
+// `endpoint`/`relationForward` (relation -> entity) and `relationBackward` (entity -> relation) too.
 
 export type PathSchemaScope = 'any' | readonly string[];
+
+/** Where a path currently is: on an entity (scoped to `schemaScope`, same shape as the legacy
+ *  entity-only API), or on a relation instance (scoped to `relationScope`, relation schema ids).
+ *  A relation-rooted query/`relationExists` path, or the position right after a `relationBackward`
+ *  step, is `'relation'`; everything else - including the very start of an entity-rooted path - is
+ *  `'entity'`. */
+export type PathPosition =
+  | { kind: 'entity'; schemaScope: PathSchemaScope }
+  | { kind: 'relation'; relationScope: PathSchemaScope };
 
 /** One matched chain is one full root-to-leaf hop sequence (e.g. Domain -> System -> Component) -
  *  kept as its own ordered node list so branches (a Domain with multiple Systems, each with their
@@ -170,9 +185,20 @@ export const targetSchemaIdsForStep = (
 const schemasInScope = (schemas: EntitySchema[], scope: PathSchemaScope): EntitySchema[] =>
   scope === 'any' ? schemas : schemas.filter(schema => scope.includes(schema.id));
 
+const relationsInScope = (
+  relationSchemas: RelationSchema[],
+  scope: PathSchemaScope
+): RelationSchema[] =>
+  scope === 'any'
+    ? relationSchemas
+    : relationSchemas.filter(relation => scope.includes(relation.id));
+
+/** Structural, not `EntitySchema`-specific, so the same check works for a `RelationSchema`/
+ *  `RelationField` pair too (both shapes carry `groups: { id, accessControl }[]` and an optional
+ *  `field.groupId`) - used by the relation-context option enumeration below as well. */
 const fieldGroupAllowed = (
-  schema: EntitySchema,
-  field: EntitySchema['fields'][number],
+  schema: { groups?: ReadonlyArray<{ id: string; accessControl?: FieldGroupAccessControl }> },
+  field: { groupId?: string },
   getFieldGroupAccess: (accessControl: FieldGroupAccessControl | undefined) => FieldGroupAccess
 ): boolean => {
   if (!field.groupId) return true;
@@ -193,8 +219,12 @@ export const pathStepKey = (step: PathStep): string => {
       return `typedRelation:${step.fieldId}:${step.relationSchemaId}:${step.direction}`;
     case 'unboundTypedRelation':
       return `unboundTypedRelation:${step.relationSchemaId}:${step.direction}`;
-    default:
-      return step.kind;
+    case 'endpoint':
+      return `endpoint:${step.direction}`;
+    case 'relationForward':
+      return `relationForward:${step.fieldId}`;
+    case 'relationBackward':
+      return `relationBackward:${step.fieldId}:${step.relationSchemaId}`;
   }
 };
 
@@ -210,6 +240,12 @@ const stepDirection = (step: PathStep): 'in' | 'out' => {
       return 'out';
     case 'typedRelation':
     case 'unboundTypedRelation':
+      return step.direction;
+    // Grouped alongside 'backward'/'unboundTypedRelation' in the entity-side 'out' bucket - a
+    // relationBackward field is owned by another schema (the relation), same as those two kinds.
+    case 'relationBackward':
+      return 'out';
+    case 'endpoint':
       return step.direction;
     default:
       return 'in';
@@ -541,6 +577,339 @@ export const pruneInvalidPathSteps = (
   for (let depth = 0; depth < steps.length; depth += 1) {
     const context = pathStepContext({
       rootSchemaScope,
+      steps,
+      depth,
+      schemas,
+      relationSchemas,
+      getFieldGroupAccess
+    });
+    if (context.invalid) {
+      validLength = depth;
+      break;
+    }
+  }
+  return validLength === steps.length ? steps : steps.slice(0, validLength);
+};
+
+// --- Position-aware traversal (#3120) --------------------------------------------------------
+//
+// Everything below extends the entity-only machinery above with the three relation-rooted
+// `PathStep` kinds (`endpoint`/`relationForward`/`relationBackward`, entityQueryIR.ts), for the
+// Relations Browser's filter-leaf and projection editors. Additive only: none of the exports above
+// change behavior, and these new exports are unused by Traceability/Map.
+
+/** Every legal next hop from a relation row: the relation's fixed `in`/`out` endpoints, and one
+ *  option per `entityRelation` field declared on a relation schema in `relationScope`
+ *  (field-group-gated the same way a `typedRelation` entity field is). Unlike entity-side
+ *  `pathStepOptions`, there's no in/out direction split - `endpoint`'s own direction is the option
+ *  itself, and `relationForward` names an arbitrary field, not a direction. */
+export const relationPositionOptions = ({
+  relationScope,
+  schemas,
+  relationSchemas,
+  getFieldGroupAccess = () => 'edit'
+}: {
+  relationScope: PathSchemaScope;
+  schemas: EntitySchema[];
+  relationSchemas: RelationSchema[];
+  getFieldGroupAccess?: (accessControl: FieldGroupAccessControl | undefined) => FieldGroupAccess;
+}): PathStepOption[] => {
+  const scopedRelations = relationsInScope(relationSchemas, relationScope);
+  const schemaNameById = new Map(schemas.map(schema => [schema.id, schema.name]));
+  const optionsByKey = new Map<string, PathStepOption>();
+
+  for (const relation of scopedRelations) {
+    for (const direction of ['in', 'out'] as const) {
+      const key = `endpoint:${direction}`;
+      const targetSchemaIds = resolveEndpointSchemaIds(relation, direction, schemas);
+      const existing = optionsByKey.get(key);
+      if (existing) {
+        existing.targetSchemaIds = [...new Set([...existing.targetSchemaIds, ...targetSchemaIds])];
+      } else {
+        optionsByKey.set(key, {
+          step: { kind: 'endpoint', direction },
+          label: relation[direction].label ?? (direction === 'in' ? 'In' : 'Out'),
+          targetSchemaIds,
+          group: 'Endpoint'
+        });
+      }
+    }
+
+    for (const field of relation.fields) {
+      if (!isEntityRelationField(field)) continue;
+      if (!fieldGroupAllowed(relation, field, getFieldGroupAccess)) continue;
+      const key = `relationForward:${field.id}`;
+      if (optionsByKey.has(key)) continue;
+      const targetName = schemaNameById.get(field.schemaId) ?? field.schemaId;
+      optionsByKey.set(key, {
+        step: { kind: 'relationForward', fieldId: field.id },
+        label: field.predicate ? `${relation.name} ${field.predicate} ${targetName}` : field.name,
+        targetSchemaIds: [field.schemaId],
+        group: 'Relation field'
+      });
+    }
+  }
+
+  return [...optionsByKey.values()].sort(
+    (a, b) =>
+      (a.group === b.group ? 0 : a.group === 'Endpoint' ? -1 : 1) || a.label.localeCompare(b.label)
+  );
+};
+
+/** Every legal `relationBackward` hop from an entity in `schemaScope`: one option per
+ *  `entityRelation` field, on any relation schema, whose target schema intersects `schemaScope`.
+ *  Bucketed under its own group so it appends after `pathStepOptions`' own groups without
+ *  reordering them (mirrors `unboundTypedRelation`'s "most generic hop kind" placement, one tier
+ *  more generic still since it leaves entity context entirely). */
+/** Every legal `relationBackward` hop from an entity in `schemaScope` - exported for callers that
+ *  need to compute entity-position 'out' options directly (e.g. a direction-toggle handler), in
+ *  addition to being folded into `positionStepContext`'s own 'out' bucket. */
+export const relationBackwardOptions = ({
+  schemaScope,
+  schemas,
+  relationSchemas,
+  getFieldGroupAccess = () => 'edit'
+}: {
+  schemaScope: PathSchemaScope;
+  schemas: EntitySchema[];
+  relationSchemas: RelationSchema[];
+  getFieldGroupAccess?: (accessControl: FieldGroupAccessControl | undefined) => FieldGroupAccess;
+}): PathStepOption[] => {
+  const scopedSchemas = schemasInScope(schemas, schemaScope);
+  const options: PathStepOption[] = [];
+  for (const relation of relationSchemas) {
+    for (const field of relation.fields) {
+      if (!isEntityRelationField(field)) continue;
+      const targetSchema = scopedSchemas.find(schema => schema.id === field.schemaId);
+      if (!targetSchema) continue;
+      if (!fieldGroupAllowed(relation, field, getFieldGroupAccess)) continue;
+      options.push({
+        step: { kind: 'relationBackward', fieldId: field.id, relationSchemaId: relation.id },
+        // Lands on a relation row, not an entity - there's no entity schema to report here.
+        targetSchemaIds: [],
+        label: field.predicate
+          ? `${relation.name} ${field.predicate} ${targetSchema.name}`
+          : `${relation.name} (${field.name})`,
+        group: 'Relation traversal'
+      });
+    }
+  }
+  return options.sort((a, b) => a.label.localeCompare(b.label));
+};
+
+/** Position-aware counterpart of `targetSchemaIdsForStep`/`nextSchemaScope`: where a path ends up
+ *  after taking `step` from `currentPosition`. `endpoint`/`relationForward` land on an entity
+ *  (target scope is the union across every relation schema in the current relation scope, since a
+ *  saved step doesn't itself carry which relation schema(s) granted it); `relationBackward` lands on
+ *  the one relation schema it names; the four entity-to-entity kinds behave exactly as
+ *  `nextSchemaScope` today and require an entity position. */
+export const nextPosition = (
+  step: PathStep,
+  currentPosition: PathPosition,
+  schemas: EntitySchema[],
+  relationSchemas: RelationSchema[]
+): PathPosition => {
+  if (step.kind === 'relationBackward') {
+    return { kind: 'relation', relationScope: [step.relationSchemaId] };
+  }
+  if (step.kind === 'endpoint' || step.kind === 'relationForward') {
+    if (currentPosition.kind !== 'relation') return { kind: 'entity', schemaScope: 'any' };
+    const scopedRelations = relationsInScope(relationSchemas, currentPosition.relationScope);
+    const targets =
+      step.kind === 'endpoint'
+        ? scopedRelations.flatMap(relation =>
+            resolveEndpointSchemaIds(relation, step.direction, schemas)
+          )
+        : scopedRelations.flatMap(relation => {
+            const field = relation.fields.find(candidate => candidate.id === step.fieldId);
+            return field && isEntityRelationField(field) ? [field.schemaId] : [];
+          });
+    return { kind: 'entity', schemaScope: targets.length > 0 ? [...new Set(targets)] : 'any' };
+  }
+  if (currentPosition.kind !== 'entity') return { kind: 'entity', schemaScope: 'any' };
+  return {
+    kind: 'entity',
+    schemaScope: nextSchemaScope(step, currentPosition.schemaScope, schemas, relationSchemas)
+  };
+};
+
+export type PositionedPathStepContext = {
+  currentPosition: PathPosition;
+  /** Meaningless (always `'out'`, ignored) at a relation position - see `hasDirectionToggle`. */
+  direction: 'in' | 'out';
+  options: PathStepOption[];
+  availableDirections: Array<'in' | 'out'>;
+  /** `false` at a relation position: `endpoint`/`relationForward` hops have no in/out toggle the
+   *  way entity-to-entity hops do (a fixed pair of options vs. an arbitrary named field), so the
+   *  hop editor should render a plain option list with no direction button. */
+  hasDirectionToggle: boolean;
+  invalid: boolean;
+};
+
+type PositionedContextArgs = {
+  rootPosition: PathPosition;
+  steps: PathStep[];
+  depth: number;
+  schemas: EntitySchema[];
+  relationSchemas: RelationSchema[];
+  getFieldGroupAccess?: (accessControl: FieldGroupAccessControl | undefined) => FieldGroupAccess;
+};
+
+/** Position-aware counterpart of `pathStepContext`: walks `rootPosition` forward through
+ *  `steps[0..depth)` via `nextPosition`, then enumerates legal options at that position - either
+ *  the four entity-to-entity kinds plus `relationBackward` (entity position), or
+ *  `endpoint`/`relationForward` (relation position). */
+export const positionStepContext = ({
+  rootPosition,
+  steps,
+  depth,
+  schemas,
+  relationSchemas,
+  getFieldGroupAccess
+}: PositionedContextArgs): PositionedPathStepContext => {
+  let currentPosition = rootPosition;
+  for (let index = 0; index < depth; index += 1) {
+    const priorStep = steps[index];
+    currentPosition = priorStep
+      ? nextPosition(priorStep, currentPosition, schemas, relationSchemas)
+      : { kind: 'entity', schemaScope: 'any' };
+  }
+
+  const step = steps[depth];
+  const stepKey = step ? pathStepKey(step) : undefined;
+
+  if (currentPosition.kind === 'relation') {
+    const options = relationPositionOptions({
+      relationScope: currentPosition.relationScope,
+      schemas,
+      relationSchemas,
+      getFieldGroupAccess
+    });
+    return {
+      currentPosition,
+      direction: 'out',
+      options,
+      availableDirections: ['out'],
+      hasDirectionToggle: false,
+      invalid: step != null && !options.some(option => pathStepKey(option.step) === stepKey)
+    };
+  }
+
+  const optionsByDirection = {
+    in: pathStepOptions({
+      direction: 'in',
+      currentSchemaScope: currentPosition.schemaScope,
+      schemas,
+      relationSchemas,
+      getFieldGroupAccess
+    }),
+    out: [
+      ...pathStepOptions({
+        direction: 'out',
+        currentSchemaScope: currentPosition.schemaScope,
+        schemas,
+        relationSchemas,
+        getFieldGroupAccess
+      }),
+      ...relationBackwardOptions({
+        schemaScope: currentPosition.schemaScope,
+        schemas,
+        relationSchemas,
+        getFieldGroupAccess
+      })
+    ]
+  };
+  const direction = step ? stepDirection(step) : 'in';
+  const availableDirections = (['in', 'out'] as const).filter(
+    candidate => optionsByDirection[candidate].length > 0
+  );
+  const options = optionsByDirection[direction];
+
+  return {
+    currentPosition,
+    direction,
+    options,
+    availableDirections,
+    hasDirectionToggle: true,
+    invalid: step != null && !options.some(option => pathStepKey(option.step) === stepKey)
+  };
+};
+
+/** Position-aware counterpart of `pathStepContextWithFallbackDirection`: falls back to whichever
+ *  direction actually has options when the default has none. Only meaningful at an entity position
+ *  (a relation position has no direction toggle at all, `hasDirectionToggle: false`) - a no-op
+ *  there. */
+export const positionStepContextWithFallbackDirection = (
+  args: PositionedContextArgs
+): PositionedPathStepContext => {
+  const context = positionStepContext(args);
+  if (!context.hasDirectionToggle) return context;
+  if (args.steps[args.depth] || context.options.length > 0) return context;
+  const altDirection = context.availableDirections.find(
+    direction => direction !== context.direction
+  );
+  if (!altDirection || context.currentPosition.kind !== 'entity') return context;
+  return {
+    ...context,
+    direction: altDirection,
+    options: [
+      ...pathStepOptions({
+        direction: altDirection,
+        currentSchemaScope: context.currentPosition.schemaScope,
+        schemas: args.schemas,
+        relationSchemas: args.relationSchemas,
+        getFieldGroupAccess: args.getFieldGroupAccess
+      }),
+      ...(altDirection === 'out'
+        ? relationBackwardOptions({
+            schemaScope: context.currentPosition.schemaScope,
+            schemas: args.schemas,
+            relationSchemas: args.relationSchemas,
+            getFieldGroupAccess: args.getFieldGroupAccess
+          })
+        : [])
+    ]
+  };
+};
+
+/** Where a full hop chain ends up, position-aware - the relation-context counterpart of
+ *  `terminalSchemaScope` (leafPath.ts), which only handles the four entity-to-entity kinds. */
+export const terminalPosition = (
+  steps: PathStep[],
+  {
+    rootPosition,
+    schemas,
+    relationSchemas
+  }: {
+    rootPosition: PathPosition;
+    schemas: EntitySchema[];
+    relationSchemas: RelationSchema[];
+  }
+): PathPosition =>
+  steps.reduce(
+    (position, step) => nextPosition(step, position, schemas, relationSchemas),
+    rootPosition
+  );
+
+/** Position-aware counterpart of `pruneInvalidPathSteps`. */
+export const prunePositionedPathSteps = (
+  steps: PathStep[],
+  {
+    rootPosition,
+    schemas,
+    relationSchemas,
+    getFieldGroupAccess
+  }: {
+    rootPosition: PathPosition;
+    schemas: EntitySchema[];
+    relationSchemas: RelationSchema[];
+    getFieldGroupAccess?: (accessControl: FieldGroupAccessControl | undefined) => FieldGroupAccess;
+  }
+): PathStep[] => {
+  let validLength = steps.length;
+  for (let depth = 0; depth < steps.length; depth += 1) {
+    const context = positionStepContext({
+      rootPosition,
       steps,
       depth,
       schemas,

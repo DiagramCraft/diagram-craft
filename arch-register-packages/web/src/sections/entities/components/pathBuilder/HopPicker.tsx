@@ -4,9 +4,14 @@ import type { PathStep } from '@arch-register/api-types/entityQueryIR';
 import { groupPathStepOptions, pathStepKey, type PathStepContext } from './pathBuilderState';
 import styles from './pathBuilder.module.css';
 
+/** The subset of `PathStepContext` (and its position-aware counterpart,
+ *  `PositionedPathStepContext`, #3120) `HopPicker` actually needs - structural, so either context
+ *  shape can be passed without a cast. */
+type HopPickerStepContext = Pick<PathStepContext, 'direction' | 'options' | 'availableDirections'>;
+
 type HopPickerProps = {
   step: PathStep;
-  stepContext: PathStepContext;
+  stepContext: HopPickerStepContext;
   ariaLabelDirection: string;
   ariaLabelHop: string;
   /** `targetSchemaIds` is the schema(s) the selected option resolves to (from the same
@@ -16,10 +21,15 @@ type HopPickerProps = {
    *  don't need it (Traceability) can ignore the second argument. */
   onChangeStep: (step: PathStep, targetSchemaIds?: string[]) => void;
   onToggleDirection: (direction: 'in' | 'out') => void;
+  /** Hides the direction-toggle button entirely - for a hop at a relation position
+   *  (`PositionedPathStepContext.hasDirectionToggle === false`, #3120), where `endpoint`/
+   *  `relationForward` options have no in/out sense to toggle between. Defaults to shown, matching
+   *  every existing entity-only caller. */
+  hideDirectionToggle?: boolean;
   /** Slot for per-hop controls a specific caller needs (e.g. Map's per-level visibility toggle),
    *  rendered after the hop select. Keeps `HopPicker` itself free of caller-specific chrome so it
    *  stays reusable across views/use-cases beyond Traceability and Map. */
-  renderExtra?: (ctx: { step: PathStep; stepContext: PathStepContext }) => ReactNode;
+  renderExtra?: (ctx: { step: PathStep; stepContext: HopPickerStepContext }) => ReactNode;
 };
 
 /** Renders one hop: a direction-toggle button plus a grouped `<select>` of legal next hops for the
@@ -31,6 +41,7 @@ export const HopPicker = ({
   ariaLabelHop,
   onChangeStep,
   onToggleDirection,
+  hideDirectionToggle = false,
   renderExtra
 }: HopPickerProps) => {
   const direction = stepContext.direction;
@@ -41,20 +52,22 @@ export const HopPicker = ({
 
   return (
     <>
-      <button
-        type="button"
-        className={styles.hopDir}
-        aria-label={ariaLabelDirection}
-        title={
-          canToggleDirection
-            ? `Traversing ${direction} — click to reverse`
-            : `Traversing ${direction}`
-        }
-        disabled={!canToggleDirection}
-        onClick={() => onToggleDirection(oppositeDirection)}
-      >
-        {direction === 'in' ? '→' : '←'}
-      </button>
+      {!hideDirectionToggle && (
+        <button
+          type="button"
+          className={styles.hopDir}
+          aria-label={ariaLabelDirection}
+          title={
+            canToggleDirection
+              ? `Traversing ${direction} — click to reverse`
+              : `Traversing ${direction}`
+          }
+          disabled={!canToggleDirection}
+          onClick={() => onToggleDirection(oppositeDirection)}
+        >
+          {direction === 'in' ? '→' : '←'}
+        </button>
+      )}
       <div className={styles.selectWrap}>
         <select
           className={styles.select}

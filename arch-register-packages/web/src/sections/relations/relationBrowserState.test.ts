@@ -166,7 +166,7 @@ describe('relation saved view display mode', () => {
         description: '',
         isAdminView: false,
         viewMode: 'graph',
-        conditions: [],
+        relationQuery: buildRelationQueryFromFilters([]),
         edgeLabelFieldId: 'status',
         edgeColorFieldId: 'priority'
       }).config
@@ -180,6 +180,44 @@ describe('relation saved view display mode', () => {
       { value: RELATION_GRAPH_TYPE_LABEL, label: 'Relation type' },
       { value: 'status', label: 'Status' }
     ]);
+  });
+
+  it('saves the full query, not a flattened one, so a relationForward filter/projection round-trips (#3120)', () => {
+    // A relationForward query isn't representable by `conditions` at all -
+    // `buildRelationSavedViewPayload` must save the actual `relationQuery`, not re-derive `filters`
+    // from a flattened condition list that would silently drop this.
+    const relationQuery = {
+      root_kind: 'relation' as const,
+      root: {
+        kind: 'and' as const,
+        children: [
+          {
+            kind: 'predicate' as const,
+            path: [{ kind: 'relationForward' as const, fieldId: 'data_entities' }],
+            fieldId: 'classification',
+            op: 'in' as const,
+            value: ['sensitive']
+          }
+        ]
+      },
+      projections: [
+        {
+          path: [{ kind: 'relationForward' as const, fieldId: 'data_entities' }],
+          fieldId: 'classification'
+        }
+      ]
+    };
+    expect(
+      buildRelationSavedViewPayload({
+        name: 'Restricted flows',
+        description: '',
+        isAdminView: false,
+        viewMode: 'table',
+        relationQuery,
+        edgeLabelFieldId: RELATION_GRAPH_TYPE_LABEL,
+        edgeColorFieldId: RELATION_GRAPH_TYPE_LABEL
+      }).filters
+    ).toEqual(relationQuery);
   });
 });
 

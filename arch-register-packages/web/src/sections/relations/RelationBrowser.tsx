@@ -34,7 +34,6 @@ import { RelationEditDialog } from '../../dialogs/RelationEditDialog';
 import { useRelationBrowserData } from './useRelationBrowserData';
 import { RelationQueryModeControls } from './RelationQueryModeControls';
 import {
-  buildRelationQueryFromFilters,
   buildRelationSavedViewPayload,
   formatFieldValue,
   parseRelationTableFieldIdsFromSearch,
@@ -77,7 +76,6 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
     relationSchemas,
     entitySchemas,
     enums,
-    conditions,
     relationQuery,
     setRelationQuery,
     activeSchema,
@@ -161,16 +159,16 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
 
   const handleExport = useCallback(async () => {
     try {
-      const blob = await exportRelationsToCSV(
-        workspaceId,
-        buildRelationQueryFromFilters(conditions)
-      );
+      // The full stored query, not `conditions` - a relationForward/relationBackward traversal or
+      // a projection column (#3120) round-trips through `conditions` lossily, so exporting from it
+      // would silently apply a different, incomplete filter.
+      const blob = await exportRelationsToCSV(workspaceId, relationQuery);
       downloadBlob(blob, `relations-${new Date().toISOString().split('T')[0]}.csv`);
     } catch (error) {
       console.error('Relation export failed:', error);
       alert('Failed to export relations. Please try again.');
     }
-  }, [conditions, workspaceId]);
+  }, [relationQuery, workspaceId]);
 
   const handleImport = useCallback(() => {
     navigate({
@@ -250,7 +248,7 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
           description,
           isAdminView,
           viewMode: view,
-          conditions,
+          relationQuery,
           edgeLabelFieldId,
           edgeColorFieldId
         })
@@ -267,7 +265,7 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
       description: activeSavedView.description ?? '',
       isAdminView: activeSavedView.isAdminView,
       viewMode: view,
-      conditions,
+      relationQuery,
       edgeLabelFieldId,
       edgeColorFieldId
     });

@@ -180,7 +180,7 @@ export const buildRelationSavedViewPayload = ({
   description,
   isAdminView,
   viewMode,
-  conditions,
+  relationQuery,
   edgeLabelFieldId,
   edgeColorFieldId
 }: {
@@ -188,7 +188,11 @@ export const buildRelationSavedViewPayload = ({
   description: string;
   isAdminView: boolean;
   viewMode: RelationBrowserView;
-  conditions: FilterCondition[];
+  // The full stored query (`useRelationBrowserData`'s `relationQuery`), not the flattened
+  // `conditions` list - a `relationForward`/`relationBackward` traversal or a projection column
+  // (#3120) round-trips through `conditions` lossily (`isRelationBasicRepresentable`), so saving
+  // from `conditions` would silently drop them from the saved view.
+  relationQuery: EntityQuery;
   edgeLabelFieldId: string;
   edgeColorFieldId: string;
 }): CreateSavedViewRequest => ({
@@ -199,7 +203,7 @@ export const buildRelationSavedViewPayload = ({
   description: description || null,
   isAdminView,
   viewMode,
-  filters: buildRelationQueryFromFilters(conditions),
+  filters: relationQuery,
   config:
     viewMode === 'graph'
       ? {

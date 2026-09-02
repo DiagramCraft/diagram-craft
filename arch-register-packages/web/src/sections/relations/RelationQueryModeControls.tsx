@@ -38,11 +38,12 @@ type RelationQueryModeControlsProps = {
 
 // The Relations browser's query controls, mirroring the entity browser's QueryModeControls: the
 // progressive `QueryBuilder` (rootKind="relation" - flat relation / In-Out endpoint conditions →
-// Any/All groups → NOT) is available in both modes. The Simple/Advanced toggle only swaps the
-// left-hand input: Simple has none (relations have no live free-text search), Advanced shows a
-// text field bound to the same relation-rooted `EntityQuery` IR the builder edits. Both are
-// full-fidelity, so nothing is lost switching. Relation-rooted traversal beyond one endpoint hop,
-// and projection columns, keep the query in Advanced mode until those editors land (plan phase 7+).
+// Any/All groups → NOT → relationForward/relationBackward traversal and projection columns, #3120)
+// is available in both modes. The Simple/Advanced toggle only swaps the left-hand input: Simple has
+// none (relations have no live free-text search), Advanced shows a text field bound to the same
+// relation-rooted `EntityQuery` IR the builder edits. Both are full-fidelity, so nothing is lost
+// switching. A scoped `[...]` filter on a relation-context hop, or a `source: 'relation'`
+// projection, still keeps the query in Advanced mode - those editors haven't landed yet.
 export const RelationQueryModeControls = ({
   workspaceId,
   relationQuery,
