@@ -31,7 +31,7 @@ export class SqliteRelationDatabase extends SqliteDatabaseBase implements Relati
 
   async createRelationSchema(input: RelationSchemaDbCreate) {
     this.run(
-      'INSERT INTO relation_schema (id, workspace, name, category_id, description, in_schema_ids, out_schema_ids, in_label, out_label, fields, groups, shared_field_group_links, validation_rules, color, icon, relation_approval_policy, version, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO relation_schema (id, workspace, name, category_id, description, in_schema_ids, out_schema_ids, in_label, out_label, fields, groups, shared_field_group_links, validation_rules, color, icon, relation_approval_policy, unique_endpoint_pair, version, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         input.id,
         input.workspace,
@@ -49,6 +49,7 @@ export class SqliteRelationDatabase extends SqliteDatabaseBase implements Relati
         input.color,
         input.icon,
         input.relation_approval_policy ?? 'disabled',
+        input.unique_endpoint_pair === true ? 1 : 0,
         input.version ?? 1,
         input.created_at.toISOString(),
         input.updated_at.toISOString()
@@ -59,7 +60,7 @@ export class SqliteRelationDatabase extends SqliteDatabaseBase implements Relati
 
   async updateRelationSchema(workspace: string, id: string, input: RelationSchemaDbUpdate) {
     this.run(
-      'UPDATE relation_schema SET name = ?, category_id = CASE WHEN ? THEN category_id ELSE ? END, description = ?, in_schema_ids = ?, out_schema_ids = ?, in_label = ?, out_label = ?, fields = ?, groups = ?, shared_field_group_links = ?, validation_rules = ?, color = ?, icon = ?, relation_approval_policy = COALESCE(?, relation_approval_policy), version = COALESCE(?, version), updated_at = ? WHERE workspace = ? AND id = ?',
+      'UPDATE relation_schema SET name = ?, category_id = CASE WHEN ? THEN category_id ELSE ? END, description = ?, in_schema_ids = ?, out_schema_ids = ?, in_label = ?, out_label = ?, fields = ?, groups = ?, shared_field_group_links = ?, validation_rules = ?, color = ?, icon = ?, relation_approval_policy = COALESCE(?, relation_approval_policy), unique_endpoint_pair = COALESCE(?, unique_endpoint_pair), version = COALESCE(?, version), updated_at = ? WHERE workspace = ? AND id = ?',
       [
         input.name,
         input.category_id === undefined ? 1 : 0,
@@ -76,6 +77,7 @@ export class SqliteRelationDatabase extends SqliteDatabaseBase implements Relati
         input.color,
         input.icon,
         input.relation_approval_policy ?? null,
+        input.unique_endpoint_pair === undefined ? null : input.unique_endpoint_pair ? 1 : 0,
         input.version ?? null,
         input.updated_at.toISOString(),
         workspace,
@@ -92,6 +94,97 @@ export class SqliteRelationDatabase extends SqliteDatabaseBase implements Relati
     return row;
   }
 
+  async lockRelationSchemaForConstraintMutation(_workspace: string, _id: string) {
+    // SQLite mutation transactions use BEGIN IMMEDIATE, which serializes all writers before
+    // this method is reached.
+  }
+
+  async lockEntitiesForConstraintMutation(_workspace: string, _entityIds: string[]) {
+    // SQLite mutation transactions use BEGIN IMMEDIATE, which serializes all writers before
+    // this method is reached.
+  }
+
+  async listDuplicateRelationEndpointPairs(workspace: string, schemaId: string) {
+    return this.all<{
+      in_entity_id: string;
+      out_entity_id: string;
+      relation_count: number;
+    }>(
+      `SELECT in_record_id AS in_entity_id,
+              out_record_id AS out_entity_id,
+              COUNT(*) AS relation_count
+       FROM catalog_record
+       WHERE workspace = ?
+         AND kind = 'relation'
+         AND deleted_at IS NULL
+         AND schema_id = ?
+       GROUP BY in_record_id, out_record_id
+       HAVING COUNT(*) > 1
+       ORDER BY in_record_id, out_record_id`,
+      [workspace, schemaId]
+    );
+  }
+
+  async reserveRelationEndpointPairKey(
+    workspace: string,
+    relation: Pick<RelationDbCreate, 'id' | 'schema_id' | 'in_entity_id' | 'out_entity_id'>
+  ) {
+    this.run(
+      `INSERT INTO relation_endpoint_pair_key
+         (workspace, schema_id, in_entity_id, out_entity_id, relation_id)
+       SELECT ?, ?, ?, ?, ?
+       WHERE EXISTS (
+         SELECT 1
+         FROM relation_schema
+         WHERE workspace = ?
+           AND id = ?
+           AND unique_endpoint_pair = 1
+       )`,
+      [
+        workspace,
+        relation.schema_id,
+        relation.in_entity_id,
+        relation.out_entity_id,
+        relation.id,
+        workspace,
+        relation.schema_id
+      ]
+    );
+  }
+
+  async releaseRelationEndpointPairKey(workspace: string, relationId: string) {
+    this.run('DELETE FROM relation_endpoint_pair_key WHERE workspace = ? AND relation_id = ?', [
+      workspace,
+      relationId
+    ]);
+  }
+
+  async setRelationEndpointPairKeys(workspace: string, schemaId: string, enabled: boolean) {
+    if (!enabled) {
+      this.run('DELETE FROM relation_endpoint_pair_key WHERE workspace = ? AND schema_id = ?', [
+        workspace,
+        schemaId
+      ]);
+      return;
+    }
+
+    this.run('DELETE FROM relation_endpoint_pair_key WHERE workspace = ? AND schema_id = ?', [
+      workspace,
+      schemaId
+    ]);
+    this.run(
+      `INSERT INTO relation_endpoint_pair_key
+         (workspace, schema_id, in_entity_id, out_entity_id, relation_id)
+       SELECT workspace, schema_id, in_record_id, out_record_id, id
+       FROM catalog_record
+       WHERE workspace = ?
+         AND kind = 'relation'
+         AND deleted_at IS NULL
+         AND schema_id = ?`,
+      [workspace, schemaId]
+    );
+  }
+
   async listRelationSchemaVersions(workspace: string, schemaId: string) {
     return this.all(
       'SELECT * FROM relation_schema_version WHERE workspace = ? AND schema_id = ? ORDER BY version DESC',
@@ -102,7 +195,7 @@ export class SqliteRelationDatabase extends SqliteDatabaseBase implements Relati
 
   async createRelationSchemaVersion(input: RelationSchemaVersionDbCreate) {
     this.run(
-      'INSERT INTO relation_schema_version (id, workspace, schema_id, version, name, category, description, in_schema_ids, out_schema_ids, in_label, out_label, fields, groups, validation_rules, color, icon, change_summary, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO relation_schema_version (id, workspace, schema_id, version, name, category, description, in_schema_ids, out_schema_ids, in_label, out_label, fields, groups, validation_rules, color, icon, unique_endpoint_pair, change_summary, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         input.id,
         input.workspace,
@@ -120,6 +213,7 @@ export class SqliteRelationDatabase extends SqliteDatabaseBase implements Relati
         JSON.stringify(input.validation_rules ?? []),
         input.color,
         input.icon,
+        input.unique_endpoint_pair === true ? 1 : 0,
         JSON.stringify(input.change_summary),
         input.created_by,
         input.created_at.toISOString()

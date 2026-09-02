@@ -141,6 +141,7 @@ export type ExportRelationSchema = {
   color: string | null;
   icon: string | null;
   relation_approval_policy?: 'required' | 'disabled';
+  unique_endpoint_pair?: boolean;
   version?: number;
 };
 

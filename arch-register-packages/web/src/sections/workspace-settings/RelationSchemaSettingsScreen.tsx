@@ -13,12 +13,14 @@ import type {
 } from '@arch-register/api-types/relationSchemaContract';
 import {
   getRelationSchemaMigrationRequired,
+  getRelationSchemaConstraintViolation,
   useCreateRelationSchema,
   useDeleteRelationSchema,
   useRelationSchemaVersions,
   useUpdateRelationSchema
 } from '../../hooks/useRelationSchemas';
 import { RelationEditorForm } from './RelationEditorForm';
+import { RelationConstraintDialog } from './RelationConstraintDialog';
 import { SchemaEditorDialogs } from './SchemaEditorDialogs';
 import { SchemaEditorScreenShell } from './SchemaEditorScreenShell';
 import { SchemaVersionHistorySubSection } from './sub-sections/SchemaVersionHistorySubSection';
@@ -40,6 +42,7 @@ type RelationEditorExtra = {
   categoryId: string | null;
   inEndpoint: RelationEndpoint;
   outEndpoint: RelationEndpoint;
+  uniqueEndpointPair: boolean;
 };
 
 export const RelationSchemaSettingsScreen = () => {
@@ -93,6 +96,7 @@ export const RelationSchemaSettingsScreen = () => {
               description: schema.description,
               inEndpoint: schema.in,
               outEndpoint: schema.out,
+              uniqueEndpointPair: schema.unique_endpoint_pair ?? false,
               fields: schema.fields,
               groups: schema.groups,
               sharedFieldGroupLinks: schema.shared_field_group_links ?? [],
@@ -106,6 +110,7 @@ export const RelationSchemaSettingsScreen = () => {
               description: '',
               inEndpoint: EMPTY_ENDPOINT,
               outEndpoint: EMPTY_ENDPOINT,
+              uniqueEndpointPair: false,
               fields: [],
               groups: [],
               sharedFieldGroupLinks: [],
@@ -123,6 +128,7 @@ export const RelationSchemaSettingsScreen = () => {
         draft.description !== schema.description ||
         JSON.stringify(draft.inEndpoint) !== JSON.stringify(schema.in) ||
         JSON.stringify(draft.outEndpoint) !== JSON.stringify(schema.out) ||
+        draft.uniqueEndpointPair !== (schema.unique_endpoint_pair ?? false) ||
         JSON.stringify(draft.fields) !== JSON.stringify(schema.fields) ||
         JSON.stringify(draft.groups) !== JSON.stringify(schema.groups) ||
         JSON.stringify(draft.sharedFieldGroupLinks) !==
@@ -139,6 +145,7 @@ export const RelationSchemaSettingsScreen = () => {
             description: draft.description,
             in: draft.inEndpoint,
             out: draft.outEndpoint,
+            unique_endpoint_pair: draft.uniqueEndpointPair,
             fields: draft.fields,
             groups: draft.groups,
             shared_field_group_links: draft.sharedFieldGroupLinks,
@@ -156,6 +163,7 @@ export const RelationSchemaSettingsScreen = () => {
           description: draft.description,
           in: draft.inEndpoint,
           out: draft.outEndpoint,
+          unique_endpoint_pair: draft.uniqueEndpointPair,
           fields: draft.fields,
           groups: draft.groups,
           shared_field_group_links: draft.sharedFieldGroupLinks,
@@ -169,6 +177,7 @@ export const RelationSchemaSettingsScreen = () => {
         isValidEndpoint(draft.outEndpoint),
       remove: schema => deleteRelationSchemaMutation.mutateAsync(schema.id).then(() => undefined),
       getMigrationRequired: getRelationSchemaMigrationRequired,
+      getConstraintViolation: getRelationSchemaConstraintViolation,
       validationRuleDefaults: () => ({
         id: `rule-${Date.now()}`,
         name: 'New rule',
@@ -255,6 +264,7 @@ export const RelationSchemaSettingsScreen = () => {
             description={draft.description}
             inEndpoint={draft.inEndpoint}
             outEndpoint={draft.outEndpoint}
+            uniqueEndpointPair={draft.uniqueEndpointPair}
             color={draft.color}
             icon={draft.icon}
             dirty={editor.dirty}
@@ -283,6 +293,9 @@ export const RelationSchemaSettingsScreen = () => {
             }
             onOutEndpointChange={endpoint =>
               editor.updateDraft(current => ({ ...current, outEndpoint: endpoint }))
+            }
+            onUniqueEndpointPairChange={value =>
+              editor.updateDraft(current => ({ ...current, uniqueEndpointPair: value }))
             }
             onColorChange={value => editor.updateDraft(current => ({ ...current, color: value }))}
             onIconChange={value => editor.updateDraft(current => ({ ...current, icon: value }))}
@@ -353,6 +366,12 @@ export const RelationSchemaSettingsScreen = () => {
           onAddSharedGroup={editor.addSharedFieldGroup}
           onCloseAccess={() => editor.setAccessDialogGroupId(null)}
           onSetGroupAccess={editor.setGroupAccess}
+          extraDialogs={
+            <RelationConstraintDialog
+              data={editor.constraintViolations}
+              onClose={() => editor.setConstraintViolations(null)}
+            />
+          }
         />
       }
     />

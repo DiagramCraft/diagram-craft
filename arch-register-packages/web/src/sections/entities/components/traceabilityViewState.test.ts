@@ -70,6 +70,7 @@ const makeRelation = (
     color: null,
     icon: null,
     relation_count: 0,
+    unique_endpoint_pair: false,
     version: 1,
     created_at: '',
     updated_at: ''

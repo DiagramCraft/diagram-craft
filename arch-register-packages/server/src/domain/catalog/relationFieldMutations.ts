@@ -10,6 +10,7 @@ import {
   toRedactedApiRelation,
   validateRelationEndpoints,
   assertTypedRelationCardinality,
+  assertRelationEndpointPairUniqueness,
   type TypedRelationCardinalityChange
 } from './relationHelpers';
 import { requireTypedRelationEdit, requireTypedRelationFieldEdit } from './relationAccessControl';
@@ -75,7 +76,8 @@ const resolveRelationFieldCardinalityChangesWithSchema = async (
       relationSchemaId: oldRow.schema_id,
       inEntityId: oldRow.in_entity_id,
       outEntityId: oldRow.out_entity_id,
-      delta: -1
+      delta: -1,
+      relationId: oldRow.id
     });
   }
 
@@ -145,18 +147,46 @@ export const applyRelationFieldDelta = async (
     message: `Relation schema '${field.relationSchemaId}' not found`
   });
 
+  const changes = await resolveRelationFieldCardinalityChangesWithSchema(
+    db,
+    { workspace, ownerEntityId, field, delta },
+    schema
+  );
   if (!skipTypedRelationCardinalityValidation) {
-    const changes = await resolveRelationFieldCardinalityChangesWithSchema(
-      db,
-      { workspace, ownerEntityId, field, delta },
-      schema
-    );
     await assertTypedRelationCardinality(db, workspace, changes);
   }
+  await assertRelationEndpointPairUniqueness(db, workspace, changes);
   // Only updates to an *existing* relation are gated on approval policy, mirroring the standalone
   // /relations endpoints (relationOperations.ts) — create/delete are never gated.
 
   const results: RelationRecord[] = [];
+
+  // Delete before create so a same-pair replacement in one field delta is valid under endpoint
+  // pair uniqueness. The preflight above accounts for both sides of the batch atomically.
+  for (const id of delta.delete ?? []) {
+    const oldRow = await db.relation.getRelation(workspace, id);
+    httpAssert.present(oldRow, { status: 404, message: `Relation '${id}' not found` });
+    httpAssert.true(oldRow.schema_id === field.relationSchemaId, {
+      status: 400,
+      message: `Relation '${id}' does not belong to relation schema '${field.relationSchemaId}'`
+    });
+    const ownerEndpointId = field.direction === 'in' ? oldRow.in_entity_id : oldRow.out_entity_id;
+    httpAssert.true(ownerEndpointId === ownerEntityId, {
+      status: 400,
+      message: `Relation '${id}' is not connected to this entity`
+    });
+
+    const existingVersions = await db.catalog.listEntityVersions(workspace, id);
+    const nextVersionNumber =
+      existingVersions.reduce((max, v) => Math.max(max, v.version_number), 0) + 1;
+    await deleteRelationWithAudit(db, {
+      workspace,
+      relation: oldRow,
+      actor,
+      versionNumber: nextVersionNumber,
+      skipTypedRelationCardinalityValidation: true
+    });
+  }
 
   for (const draft of delta.create ?? []) {
     const inEntityId = field.direction === 'in' ? ownerEntityId : draft.otherEntityId;
@@ -271,31 +301,6 @@ export const applyRelationFieldDelta = async (
     httpAssert.present(row, { status: 404, message: `Relation '${update.id}' not found` });
 
     results.push(toRedactedApiRelation(row, authCtx, schema));
-  }
-
-  for (const id of delta.delete ?? []) {
-    const oldRow = await db.relation.getRelation(workspace, id);
-    httpAssert.present(oldRow, { status: 404, message: `Relation '${id}' not found` });
-    httpAssert.true(oldRow.schema_id === field.relationSchemaId, {
-      status: 400,
-      message: `Relation '${id}' does not belong to relation schema '${field.relationSchemaId}'`
-    });
-    const ownerEndpointId = field.direction === 'in' ? oldRow.in_entity_id : oldRow.out_entity_id;
-    httpAssert.true(ownerEndpointId === ownerEntityId, {
-      status: 400,
-      message: `Relation '${id}' is not connected to this entity`
-    });
-
-    const existingVersions = await db.catalog.listEntityVersions(workspace, id);
-    const nextVersionNumber =
-      existingVersions.reduce((max, v) => Math.max(max, v.version_number), 0) + 1;
-    await deleteRelationWithAudit(db, {
-      workspace,
-      relation: oldRow,
-      actor,
-      versionNumber: nextVersionNumber,
-      skipTypedRelationCardinalityValidation: true
-    });
   }
 
   return results;

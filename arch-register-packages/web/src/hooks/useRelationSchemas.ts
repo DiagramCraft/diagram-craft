@@ -17,7 +17,8 @@ import type {
 import type {
   RelationField,
   RelationEndpoint,
-  RelationSchemaGroup
+  RelationSchemaGroup,
+  RelationConstraintErrorData
 } from '@arch-register/api-types/relationSchemaContract';
 import type { SharedFieldGroupLink, ValidationRule } from '@arch-register/api-types/schemaContract';
 import { orpcClient } from '../lib/orpcClient';
@@ -30,6 +31,17 @@ export const getRelationSchemaMigrationRequired = (
   const apiError = normalizeApiError(error);
   const data = apiError.data as { code?: string } | undefined;
   return data?.code === 'SCHEMA_MIGRATION_REQUIRED' ? (data as SchemaMigrationRequiredError) : null;
+};
+
+/** Extracts structured endpoint/cardinality diagnostics from a failed schema save. */
+export const getRelationSchemaConstraintViolation = (
+  error: unknown
+): RelationConstraintErrorData | null => {
+  const apiError = normalizeApiError(error);
+  const data = apiError.data as { code?: unknown } | undefined;
+  return data?.code === 'RELATION_CONSTRAINT_VIOLATION'
+    ? (data as RelationConstraintErrorData)
+    : null;
 };
 
 // Hook for fetching relation schemas
@@ -54,6 +66,7 @@ export const useCreateRelationSchema = (workspaceId: string) => {
       validation_rules?: ValidationRule[];
       color?: string | null;
       icon?: string | null;
+      unique_endpoint_pair?: boolean;
     }) => orpcClient.relationSchemas.create({ params: { workspace: workspaceId }, body }),
     onSuccess: async () => {
       await invalidateRelationSchemaCreate(queryClient, workspaceId);
@@ -83,6 +96,7 @@ export const useUpdateRelationSchema = (workspaceId: string) => {
         validation_rules?: ValidationRule[];
         color?: string | null;
         icon?: string | null;
+        unique_endpoint_pair?: boolean;
         fieldMigrations?: FieldMigrations;
       };
     }) =>

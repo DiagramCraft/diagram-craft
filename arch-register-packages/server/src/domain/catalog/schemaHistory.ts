@@ -111,7 +111,9 @@ export const resolveRelationSchemaCatalogAt = async (
           ? {
               ...schema,
               fields: historical.fields as RelationSchemaDbResult['fields'],
-              groups: historical.groups as RelationSchemaDbResult['groups']
+              groups: historical.groups as RelationSchemaDbResult['groups'],
+              unique_endpoint_pair:
+                (historical as RelationSchemaDbResult).unique_endpoint_pair ?? false
             }
           : null
       ] as const;

@@ -174,6 +174,7 @@ const exportRelationSchemaSchema = z
     color: z.string().nullable(),
     icon: z.string().nullable(),
     relation_approval_policy: z.enum(['required', 'disabled']).optional(),
+    unique_endpoint_pair: z.boolean().optional(),
     version: z.number().int().optional()
   })
   .passthrough();

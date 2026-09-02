@@ -292,6 +292,9 @@ export const relationSchemaSchema = z.object({
     .int()
     .min(0)
     .describe('Number of relation instances using this schema'),
+  unique_endpoint_pair: z
+    .boolean()
+    .describe('Whether active relation instances must have a unique ordered endpoint pair'),
   version: z.number().int().min(1).describe('Current schema version number'),
   relation_approval_policy: z
     .enum(['required', 'disabled'])
@@ -322,6 +325,11 @@ const relationSchemaVersionSchema = z.object({
     .describe('Bonsai validation rules at this version'),
   color: z.string().nullable().describe('Relation schema color at this version'),
   icon: z.string().nullable().describe('Relation schema icon at this version'),
+  unique_endpoint_pair: z
+    .boolean()
+    .describe(
+      'Whether active relation instances must have a unique ordered endpoint pair at this version'
+    ),
   changeSummary: z
     .record(z.string(), z.unknown())
     .describe('Summary of what changed relative to the previous version'),
@@ -366,6 +374,10 @@ const createRelationSchemaBodySchema = z.object({
     v => (v === undefined ? undefined : v === null || typeof v === 'string' ? v : null),
     z.string().nullable().optional().describe('Relation schema icon identifier')
   ),
+  unique_endpoint_pair: z
+    .boolean()
+    .optional()
+    .describe('Prevent duplicate active relations for the same ordered endpoint pair'),
   relation_approval_policy: z
     .enum(['required', 'disabled'])
     .optional()
@@ -494,3 +506,33 @@ export type UpdateRelationSchemaRequest = z.infer<typeof updateRelationSchemaBod
 
 export type RelationSchemaVersion = z.infer<typeof relationSchemaVersionSchema>;
 export type { FieldMigrationAction, FieldMigrations } from '@arch-register/api-types/common';
+
+// Mutation errors deliberately contain structural identifiers and counts only. Relation field
+// values and other restricted relation data must never be copied into this diagnostic payload.
+export type RelationConstraintViolation =
+  | {
+      kind: 'typed_relation_minimum' | 'typed_relation_maximum';
+      relation_schema_id: string;
+      field_id: string;
+      field_name: string;
+      direction: 'in' | 'out';
+      entity_id?: string;
+      projected_count: number;
+      limit: number;
+    }
+  | {
+      kind: 'endpoint_pair_unique';
+      relation_schema_id: string;
+      in_entity_id?: string;
+      out_entity_id?: string;
+      existing_count: number;
+      projected_count: number;
+    };
+
+export type RelationConstraintErrorData = {
+  code: 'RELATION_CONSTRAINT_VIOLATION';
+  violations: RelationConstraintViolation[];
+  total_violation_count: number;
+  hidden_violation_count: number;
+  truncated: boolean;
+};

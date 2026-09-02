@@ -83,6 +83,7 @@ export type RelationSchemaUpdateCacheInput = {
   validation_rules?: unknown;
   color?: string | null;
   icon?: string | null;
+  unique_endpoint_pair?: boolean;
 };
 
 export type RelationSchemaCacheContext = { previous?: RelationSchema[] };
@@ -118,7 +119,8 @@ export const optimisticallyUpdateRelationSchema = async (
                 (data.validation_rules as RelationSchema['validation_rules'] | undefined) ??
                 relationSchema.validation_rules,
               color: data.color ?? relationSchema.color,
-              icon: data.icon ?? relationSchema.icon
+              icon: data.icon ?? relationSchema.icon,
+              unique_endpoint_pair: data.unique_endpoint_pair ?? relationSchema.unique_endpoint_pair
             }
           : relationSchema
       ) ?? current

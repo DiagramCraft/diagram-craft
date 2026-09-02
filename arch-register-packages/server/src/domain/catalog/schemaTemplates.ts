@@ -221,6 +221,7 @@ export type SymbolicRelationSchema = {
   category: string;
   inLabel: string;
   outLabel: string;
+  uniqueEndpointPair?: boolean;
   inSymSchemaIds: SymbolicReference[] | 'any';
   outSymSchemaIds: SymbolicReference[] | 'any';
   fields: Array<
@@ -3899,6 +3900,7 @@ const materializeTemplateFragments = (
         out_schema_ids: resolveEndpointSchemaIds(relationSchema.outSymSchemaIds),
         in_label: relationSchema.inLabel,
         out_label: relationSchema.outLabel,
+        unique_endpoint_pair: relationSchema.uniqueEndpointPair ?? false,
         fields: relationSchema.fields.map(field => resolveRelationField(fragment.ownerId, field)),
         groups: [],
         shared_field_group_links: (relationSchema.sharedFieldGroupIds ?? []).flatMap(groupId =>
