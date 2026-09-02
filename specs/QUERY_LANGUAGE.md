@@ -85,7 +85,15 @@ predicate       := free_text
 free_text       := "text" ( ":" | "=" ) quoted_string       (* starting entity list only *)
 
 path            := segment ( "." segment )*
-segment         := step [ "[" or_expr "]" ]                  (* optional scoped sub-condition, see 4.3 *)
+segment         := step [ "[" scope_body "]" ]               (* optional scoped sub-condition, see 4.3 *)
+scope_body      := or_expr [ columns_clause ]                (* filter, optionally with projected columns *)
+                 | columns_clause                            (* capture-only bracket: an unfiltered traversal *)
+columns_clause  := "columns" capture ( "," capture )*        (* projected columns, see 4.6 — runs to the "]" *)
+capture         := [ "chain" ] capture_path [ "as" quoted_string ]
+capture_path    := capture_step ( "." capture_step )*        (* like `path`, but no "[...]" scopes *)
+capture_step    := field_id
+                 | "<-" [ schema_ref "." ] field_id
+                 | "->" relation_ref | "<-" relation_ref
 step            := field_id
                  | "<-" [ schema_ref "." ] field_id            (* reverse entity-field traversal *)
                  | "->" relation_ref                            (* outgoing typed relation *)
@@ -200,6 +208,18 @@ relation_ref    := identifier | quoted_string            (* typed relation schem
       common case stays terse; `enumLabel(...)` only needs to be written out when that's genuinely what's meant.
     - Only `equals`/`not_equals` make sense against either form — enum options aren't ordered, so `enumValue(...)`/
       `enumLabel(...)` combined with `<`/`>`/`<=`/`>=` has no defined meaning and should be rejected at compile time.
+- **`columns` sub-clause (projection, §4.6).** A segment's `[...]` scope may carry a `columns` clause — after its
+  `or_expr` filter, or instead of one (`releases[columns eol_date]`, a capture-only bracket on an unfiltered
+  traversal). Each `capture` reads a field off the record that segment traversed to and becomes an
+  `EntityQuery.projections` entry bound to *that* segment's existential witness, so a projected path is never
+  ambiguous the way a detached "select" clause matched back by path-equality would be (§4.6, §10). `columns`, `chain`,
+  and `as` are **positional contextual keywords**, resolved the same way as `date(` / `now(` / `schema:` / `text:`:
+  `columns` is the clause only when the next token begins a capture path; `[columns = "x"]` is still an ordinary
+  predicate on a field named `columns`. A capture path may not itself contain a `[...]` scope, and `columns` may not
+  co-occur with a trailing comparator on the same segment. `source: 'relation'` is *implied* — a bare scalar capture
+  in a `[...]` that scopes a relation instance (`->Rel[columns status]`) reads the relation row; every other capture
+  reads the entity. Projections that have no representable segment (and the not-yet-designed multi-witness
+  disambiguation) stay UI/IR-managed and are carried across a Simple⇄Advanced toggle out of band.
 
 ### 4.1.1 Scalar field cardinality
 
@@ -305,6 +325,11 @@ with a bracket and nothing past it — `technology_releases[release_cycle < 2.0 
 used as the whole predicate, no trailing `.field` — it compiles to a distinct IR shape (`relationExists`, §5), not to an
 ordinary field predicate, since there's no scalar field left to name.
 
+A `[...]` scope may also carry a `columns` clause (§4.1, §4.6) after its condition — or *instead* of one, as a
+capture-only bracket for a traversal the filter never constrains (`technology_releases.technology[columns radar_status]`,
+which still compiles the segment to `relationExists`). Columns authored this way are bound to that scope's existential
+witness.
+
 ### 4.4 Is `schema:` required?
 
 No. `schema:<name>` is an ordinary predicate, not a syntactic entry point — every worked example so far happens to lead
@@ -370,8 +395,17 @@ syntax would grow it well past "small, purpose-built" for a capability the ad ho
 (GitHub/Jira-style search boxes don't have projection syntax either — which columns show is a separate UI concern there
 too). Projection lives alongside a query as its own field, the natural generalization of today's `fieldIds: string[]` to
 paths instead of bare ids — reusing the parser/validator/bounding already built for filter paths (§4.1, §4.2, §7), not a
-new syntax to design from scratch. The *text* grammar deliberately does not express projection at all: it stays a
-structured-IR / UI (columns picker) concern — resolved, see §10.
+new syntax to design from scratch.
+
+**Text grammar (resolved, see §10).** A `SELECT`-style *trailing* clause is still deliberately avoided. Instead,
+projection is expressed by a `columns` sub-clause **inside a traversal segment's `[...]` scope** (§4.1):
+`technology_releases[eol_date < date("2026-06-30") columns eol_date as "TR EOL", latest_version]`, or a capture-only
+bracket `technology_releases.technology[columns radar_status]` for a path the filter never walks. Because the clause
+physically sits on one `[...]` scope, each projected path is bound to exactly that segment's existential witness — the
+"real subtlety" below does not arise for the in-bracket form. The parser yields `EntityQuery.projections` and the
+printer emits `columns` for every projection whose path it can anchor to a segment in `root`; a projection with no
+anchorable segment (or needing multi-witness disambiguation) stays IR/UI-managed and rides the Simple⇄Advanced
+round-trip out of band.
 
 **The behavior that actually motivates this section: reuse the join, don't repeat it.** A projected field's `path`
 is structurally the same shape as a filter predicate's `path` — a chain of `PathStep`s (§5). When a projection's path is
@@ -795,14 +829,16 @@ with a clear reason they're out of v1.
   it renders read-only and keeps in Advanced (text) mode, where the raw text is authoritative. So the set of
   builder-authored queries is a subset of the text-representable ones, and no lossy "no exact text form" state is
   needed. Projections are the one part carried across a Simple⇄Advanced toggle out-of-band (next point).
-- ~~Whether projection (§4.6) needs any *text* grammar syntax at all~~ — resolved toward **structured-IR/UI-only**.
-  The text grammar expresses "which entities/relations match"; projection columns are authored in a dedicated
-  "Columns" section of the visual builder and in saved-view config, never in query text. `printEntityQueryText` omits
-  `projections` and the parser never yields any; the query UI carries `projections` through a text round-trip
-  unchanged so switching Simple⇄Advanced doesn't drop a Columns section.
+- ~~Whether projection (§4.6) needs any *text* grammar syntax at all~~ — **resolved: yes.** Projection is expressed by
+  a `columns` sub-clause inside a segment's `[...]` scope (§4.1, §4.6), not a trailing clause. The parser yields
+  `EntityQuery.projections` and `printEntityQueryText` emits `columns` for every projection it can anchor to a segment
+  in `root`. The query UI's out-of-band `projections` carry-through across a Simple⇄Advanced toggle is now only a
+  fallback for projections with no representable segment (path-less projections; the multi-witness case below).
 - Exactly how a projection path gets bound to a specific witness when the same multi-valued relation is constrained by
-  more than one independent existential in `root` (§4.6's "real subtlety") — v1's answer is "reject and require explicit
-  disambiguation," but the disambiguation syntax itself isn't designed.
+  more than one independent existential in `root` (§4.6's "real subtlety"). For the **in-bracket `columns` form this is
+  now structural** — the clause sits on one specific `[...]` scope, so it binds that scope's witness. The open part is
+  only the detached case (a projection authored against a bare path that several existentials walk); v1's answer there
+  stays "reject and require the caller to move the `columns` into the intended `[...]` scope."
 
 ## 11. Potential v2 extensions
 

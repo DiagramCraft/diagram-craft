@@ -1371,3 +1371,128 @@ describe('relative-date literal — now()/now(N) (#3090, #3066)', () => {
     return printEntityQueryText(query, reviewSchemas);
   }
 });
+
+describe('columns projection sub-clause (specs/QUERY_LANGUAGE.md §4.6)', () => {
+  const parseRelOk = (text: string): EntityQuery => {
+    const result = parseEntityQueryText(text, schemas, enums, null, relationSchemas);
+    if (!result.ok) throw new Error(`expected ok, got: ${JSON.stringify(result.errors)}`);
+    return result.query;
+  };
+
+  it('binds a scoped columns capture to the segment witness and round-trips', () => {
+    const text =
+      'schema:Component technology_releases[eol_date < date("2026-06-30") columns eol_date as "TR EOL", latest_version]';
+    const query = parseOk(text);
+    expect(query.projections).toEqual([
+      {
+        path: [
+          {
+            kind: 'forward',
+            fieldId: 'technology_releases',
+            filter: {
+              kind: 'predicate',
+              path: [],
+              fieldId: 'eol_date',
+              op: 'before',
+              value: '2026-06-30'
+            }
+          }
+        ],
+        fieldId: 'eol_date',
+        alias: 'TR EOL'
+      },
+      {
+        path: [
+          {
+            kind: 'forward',
+            fieldId: 'technology_releases',
+            filter: {
+              kind: 'predicate',
+              path: [],
+              fieldId: 'eol_date',
+              op: 'before',
+              value: '2026-06-30'
+            }
+          }
+        ],
+        fieldId: 'latest_version'
+      }
+    ]);
+    const printed = printEntityQueryText(query, schemas);
+    expect(printed).toContain('columns eol_date as "TR EOL", latest_version');
+    expect(parseOk(printed)).toEqual(query);
+  });
+
+  it('supports a capture-only bracket on an unfiltered traversal', () => {
+    const text = 'schema:Component technology_releases.technology[columns radar_status]';
+    const query = parseOk(text);
+    expect(query.projections).toEqual([
+      {
+        path: [
+          { kind: 'forward', fieldId: 'technology_releases' },
+          { kind: 'forward', fieldId: 'technology' }
+        ],
+        fieldId: 'radar_status'
+      }
+    ]);
+    expect(query.root.kind).toBe('and');
+    expect(parseOk(printEntityQueryText(query, schemas))).toEqual(query);
+  });
+
+  it('round-trips a relation-rooted relationForward columns capture', () => {
+    const text = 'schema:"Data Flow" AND data[columns alias_name as "Carried alias"]';
+    const query = parseRelOk(text);
+    expect(query.projections).toEqual([
+      {
+        path: [{ kind: 'relationForward', fieldId: 'data' }],
+        fieldId: 'alias_name',
+        alias: 'Carried alias'
+      }
+    ]);
+    const printed = printEntityQueryText(query, schemas, relationSchemas);
+    expect(printed).toContain('columns alias_name as "Carried alias"');
+    const reparsed = parseEntityQueryText(printed, schemas, enums, null, relationSchemas);
+    expect(reparsed).toEqual({ ok: true, query });
+  });
+
+  it('rejects columns combined with a trailing comparator on the same segment', () => {
+    const errors = parseErr(
+      'schema:Component technology_releases[columns eol_date] < date("2026-06-30")'
+    );
+    expect(errors[0]!.message).toContain('cannot be combined with a trailing comparator');
+  });
+
+  it('rejects a capture that does not end on a scalar field', () => {
+    const errors = parseErr('schema:Component technology_releases[columns technology]');
+    expect(errors[0]!.message).toContain('must end on a scalar field');
+  });
+
+  it('treats `columns` before a comparator as an ordinary field name', () => {
+    const withField = makeSchema('with-columns-id', 'WithColumns', [
+      { id: 'columns', name: 'Columns', type: 'text' }
+    ]);
+    const s: SchemaCatalog = new Map([[withField.id, withField]]);
+    const result = parseEntityQueryText('schema:WithColumns columns = "x"', s, enums);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.query.projections).toBeUndefined();
+    }
+  });
+
+  it('round-trips a chain columns capture', () => {
+    const text = 'schema:Component technology_releases[columns chain technology as "Tech chain"]';
+    const query = parseOk(text);
+    expect(query.projections).toEqual([
+      {
+        path: [
+          { kind: 'forward', fieldId: 'technology_releases' },
+          { kind: 'forward', fieldId: 'technology' }
+        ],
+        fieldId: 'technology',
+        chain: true,
+        alias: 'Tech chain'
+      }
+    ]);
+    expect(parseOk(printEntityQueryText(query, schemas))).toEqual(query);
+  });
+});

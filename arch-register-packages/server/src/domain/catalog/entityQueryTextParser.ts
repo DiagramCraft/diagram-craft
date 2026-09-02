@@ -1,5 +1,6 @@
 import {
   TextCompileError,
+  type TextCapture,
   type TextComparator,
   type TextNameRef,
   type TextPathStep,
@@ -13,6 +14,9 @@ import {
 type ParserState = {
   tokens: Token[];
   pos: number;
+  // > 0 while parsing the `or_expr` of a `[...]` scope, so juxtaposition stops at a `columns`
+  // sub-clause instead of consuming it as a predicate on a field named `columns`.
+  scopeDepth: number;
 };
 
 const peek = (state: ParserState): Token => state.tokens[state.pos]!;
@@ -90,12 +94,94 @@ const parseValue = (state: ParserState): TextValue => {
   throw new TextCompileError(`Expected a value but found '${token.text || '<eof>'}'`, token.offset);
 };
 
-const parseFilter = (state: ParserState): TextQueryNode | undefined => {
+type Scope = { filter?: TextQueryNode; captures?: TextCapture[] };
+
+// `columns` / `chain` / `as` are contextual keywords: they only mean the clause / marker when the
+// next token begins a capture path (an identifier or a traversal arrow). `columns = "x"` inside a
+// bracket is still an ordinary predicate on a field literally named `columns`.
+const nextBeginsCaptureStep = (state: ParserState, lookahead = 1): boolean => {
+  const t = state.tokens[state.pos + lookahead];
+  return t !== undefined && (t.kind === 'IDENT' || t.kind === 'ARROW');
+};
+
+const atColumnsClause = (state: ParserState): boolean => {
+  const t = peek(state);
+  return t.kind === 'IDENT' && t.text === 'columns' && nextBeginsCaptureStep(state);
+};
+
+const parseStepNoScope = (state: ParserState): TextPathStep => {
+  const step = parseStep(state);
+  if (step.filter || step.captures) {
+    throw new TextCompileError(
+      "A 'columns' capture path cannot contain a '[...]' scope",
+      step.offset
+    );
+  }
+  return step;
+};
+
+const parseCapture = (state: ParserState): TextCapture => {
+  const start = peek(state);
+  let chain = false;
+  if (start.kind === 'IDENT' && start.text === 'chain' && nextBeginsCaptureStep(state)) {
+    advance(state);
+    chain = true;
+  }
+  const steps: TextPathStep[] = [parseStepNoScope(state)];
+  while (peek(state).kind === 'DOT') {
+    advance(state);
+    steps.push(parseStepNoScope(state));
+  }
+  let alias: string | undefined;
+  let aliasOffset: number | undefined;
+  if (peek(state).kind === 'IDENT' && peek(state).text === 'as') {
+    advance(state);
+    const aliasToken = expect(state, 'STRING');
+    alias = aliasToken.value as string;
+    aliasOffset = aliasToken.offset;
+  }
+  return {
+    chain,
+    steps,
+    ...(alias !== undefined ? { alias, aliasOffset } : {}),
+    offset: start.offset
+  };
+};
+
+const parseColumnsClause = (state: ParserState): TextCapture[] => {
+  advance(state); // 'columns'
+  const captures = [parseCapture(state)];
+  while (peek(state).kind === 'COMMA') {
+    advance(state);
+    captures.push(parseCapture(state));
+  }
+  return captures;
+};
+
+const parseScope = (state: ParserState): Scope | undefined => {
   if (peek(state).kind !== 'LBRACKET') return undefined;
   advance(state);
-  const filter = parseOrExpr(state);
+  let filter: TextQueryNode | undefined;
+  let captures: TextCapture[] | undefined;
+  if (atColumnsClause(state)) {
+    captures = parseColumnsClause(state);
+  } else {
+    state.scopeDepth += 1;
+    filter = parseOrExpr(state);
+    state.scopeDepth -= 1;
+    if (atColumnsClause(state)) captures = parseColumnsClause(state);
+  }
   expect(state, 'RBRACKET');
-  return filter;
+  return { filter, captures };
+};
+
+const applyScope = (step: TextPathStep, scope: Scope | undefined): TextPathStep => {
+  if (!scope || (!scope.filter && !scope.captures)) return step;
+  return {
+    ...step,
+    ...(scope.filter ? { filter: scope.filter } : {}),
+    ...(scope.captures ? { captures: scope.captures } : {})
+  };
 };
 
 const parseBackwardStep = (state: ParserState, arrow: Token): TextPathStep => {
@@ -103,23 +189,27 @@ const parseBackwardStep = (state: ParserState, arrow: Token): TextPathStep => {
   if (first.kind === 'STRING') {
     const schemaRef = nameRef(advance(state));
     if (peek(state).kind !== 'DOT') {
-      return {
-        kind: 'typedRelation',
-        direction: 'out',
-        relationRef: schemaRef,
-        filter: parseFilter(state),
-        offset: arrow.offset
-      };
+      return applyScope(
+        {
+          kind: 'typedRelation',
+          direction: 'out',
+          relationRef: schemaRef,
+          offset: arrow.offset
+        },
+        parseScope(state)
+      );
     }
     advance(state);
     const field = nameRef(expect(state, 'IDENT'));
-    return {
-      kind: 'backward',
-      schemaRef,
-      field,
-      filter: parseFilter(state),
-      offset: arrow.offset
-    };
+    return applyScope(
+      {
+        kind: 'backward',
+        schemaRef,
+        field,
+        offset: arrow.offset
+      },
+      parseScope(state)
+    );
   }
 
   const firstIdent = nameRef(expect(state, 'IDENT'));
@@ -128,22 +218,26 @@ const parseBackwardStep = (state: ParserState, arrow: Token): TextPathStep => {
     advance(state);
     if (peek(state).kind === 'IDENT') {
       const field = nameRef(advance(state));
-      return {
-        kind: 'backward',
-        schemaRef: firstIdent,
-        field,
-        filter: parseFilter(state),
-        offset: arrow.offset
-      };
+      return applyScope(
+        {
+          kind: 'backward',
+          schemaRef: firstIdent,
+          field,
+          offset: arrow.offset
+        },
+        parseScope(state)
+      );
     }
     state.pos = save;
   }
-  return {
-    kind: 'backward',
-    field: firstIdent,
-    filter: parseFilter(state),
-    offset: arrow.offset
-  };
+  return applyScope(
+    {
+      kind: 'backward',
+      field: firstIdent,
+      offset: arrow.offset
+    },
+    parseScope(state)
+  );
 };
 
 const parseStep = (state: ParserState): TextPathStep => {
@@ -156,17 +250,19 @@ const parseStep = (state: ParserState): TextPathStep => {
       throw new TextCompileError('Expected a relation schema after ->', relationToken.offset);
     }
     const relationRef = nameRef(advance(state));
-    return {
-      kind: 'typedRelation',
-      direction: 'in',
-      relationRef,
-      filter: parseFilter(state),
-      offset: arrow.offset
-    };
+    return applyScope(
+      {
+        kind: 'typedRelation',
+        direction: 'in',
+        relationRef,
+        offset: arrow.offset
+      },
+      parseScope(state)
+    );
   }
 
   const field = nameRef(expect(state, 'IDENT'));
-  return { kind: 'field', field, filter: parseFilter(state), offset: token.offset };
+  return applyScope({ kind: 'field', field, offset: token.offset }, parseScope(state));
 };
 
 const parsePathExpression = (state: ParserState): TextQueryNode => {
@@ -266,6 +362,7 @@ const parseAndExpr = (state: ParserState): TextQueryNode => {
       children.push(parseUnaryExpr(state));
       continue;
     }
+    if (state.scopeDepth > 0 && atColumnsClause(state)) break;
     if (startsUnaryExpr(peek(state))) {
       children.push(parseUnaryExpr(state));
       continue;
@@ -308,7 +405,7 @@ const collectTopLevelSchemaRefs = (tokens: Token[]): TextNameRef[] => {
 };
 
 export const parseTextQuery = (tokens: Token[]): TextQuerySyntax => {
-  const state: ParserState = { tokens, pos: 0 };
+  const state: ParserState = { tokens, pos: 0, scopeDepth: 0 };
   const root = parseOrExpr(state);
   if (peek(state).kind !== 'EOF') {
     throw new TextCompileError(

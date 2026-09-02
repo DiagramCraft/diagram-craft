@@ -347,7 +347,9 @@ describe('validateEntityQueryIR', () => {
         result.errors.some(error => error.message.includes('Duplicate projection alias'))
       ).toBe(true);
       expect(
-        result.errors.some(error => error.message.includes('Projection paths cannot contain'))
+        result.errors.some(error =>
+          error.message.includes('may only carry a scoped filter on their final')
+        )
       ).toBe(true);
       expect(result.errors.some(error => error.message.includes('MAX_PATH_HOPS'))).toBe(true);
     }
