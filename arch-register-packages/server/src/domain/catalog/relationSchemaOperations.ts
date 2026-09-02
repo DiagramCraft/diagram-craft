@@ -31,6 +31,28 @@ import type {
 import { validateDerivedFieldGroupAccess } from '../derived/derivedFields';
 import { recalculateEntityDerivedFields } from '../derived/derivedRecalculation';
 import { ensureDerivedRecalculationScheduleExists } from '../derived/derivedRecalculationJob';
+import { throwRelationConstraintError } from './relationConstraintErrors';
+import { listDuplicateRelationEndpointPairs } from './relationHelpers';
+
+const relationSchemaChangeSummary = (
+  oldFields: Parameters<typeof buildFieldChangeSummary>[0],
+  newFields: Parameters<typeof buildFieldChangeSummary>[1],
+  oldUniqueEndpointPair: boolean | undefined,
+  newUniqueEndpointPair: boolean | undefined,
+  fieldMigrations?: Parameters<typeof buildFieldChangeSummary>[2]
+) => {
+  const summary = buildFieldChangeSummary(oldFields, newFields, fieldMigrations);
+  const oldValue = oldUniqueEndpointPair ?? false;
+  const newValue = newUniqueEndpointPair ?? false;
+  return oldValue === newValue
+    ? summary
+    : {
+        ...summary,
+        constraints: {
+          unique_endpoint_pair: { from: oldValue, to: newValue }
+        }
+      };
+};
 
 const dbErrorMessages = {
   unique: 'A relation schema with that name already exists in this workspace',
@@ -132,7 +154,13 @@ export const createWorkspaceRelationSchema = async (
         validation_rules: row.validation_rules ?? [],
         color: row.color,
         icon: row.icon,
-        change_summary: buildFieldChangeSummary(null, toFieldMigrationFields(row.fields)),
+        unique_endpoint_pair: row.unique_endpoint_pair ?? false,
+        change_summary: {
+          ...buildFieldChangeSummary(null, toFieldMigrationFields(row.fields)),
+          ...(row.unique_endpoint_pair
+            ? { constraints: { unique_endpoint_pair: { from: false, to: true } } }
+            : {})
+        },
         created_by: authCtx.userId,
         created_at: timestamp
       });
@@ -237,13 +265,8 @@ export const updateWorkspaceRelationSchema = async (
 
       validateDerivedFieldGroupAccess(finalFields, compiledNext.groups ?? [], 'relation');
 
-      const changeSummary = buildFieldChangeSummary(
-        toFieldMigrationFields(oldRow.fields),
-        toFieldMigrationFields(finalFields),
-        fieldMigrations
-      );
-
       const row = await db.core.transaction(async tx => {
+        await tx.relation.lockRelationSchemaForConstraintMutation?.(ws, id);
         for (const migration of dataMigrations) {
           if (migration.action === 'rename') {
             await tx.relation.renameRelationDataField(
@@ -274,10 +297,32 @@ export const updateWorkspaceRelationSchema = async (
           color: next.color,
           icon: next.icon,
           relation_approval_policy: next.relation_approval_policy,
+          unique_endpoint_pair: next.unique_endpoint_pair,
           version: (oldRow.version ?? 1) + 1,
           updated_at: next.updated_at
         });
         httpAssert.present(updated, { status: 404, message: `Relation schema '${id}' not found` });
+
+        if (updated.unique_endpoint_pair) {
+          const duplicates = await listDuplicateRelationEndpointPairs(tx, ws, id);
+          if (duplicates.length > 0) {
+            throwRelationConstraintError(
+              duplicates.map(pair => ({
+                kind: 'endpoint_pair_unique' as const,
+                relation_schema_id: id,
+                in_entity_id: pair.in_entity_id,
+                out_entity_id: pair.out_entity_id,
+                existing_count: pair.relation_count,
+                projected_count: pair.relation_count
+              }))
+            );
+          }
+        }
+        await tx.relation.setRelationEndpointPairKeys?.(
+          ws,
+          id,
+          updated.unique_endpoint_pair === true
+        );
 
         await tx.relation.createRelationSchemaVersion({
           id: randomUUID(),
@@ -296,7 +341,14 @@ export const updateWorkspaceRelationSchema = async (
           validation_rules: updated.validation_rules ?? [],
           color: updated.color,
           icon: updated.icon,
-          change_summary: changeSummary,
+          unique_endpoint_pair: updated.unique_endpoint_pair ?? false,
+          change_summary: relationSchemaChangeSummary(
+            toFieldMigrationFields(oldRow.fields),
+            toFieldMigrationFields(finalFields),
+            oldRow.unique_endpoint_pair,
+            updated.unique_endpoint_pair,
+            fieldMigrations
+          ),
           created_by: authCtx.userId,
           created_at: next.updated_at
         });

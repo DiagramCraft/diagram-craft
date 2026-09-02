@@ -8,6 +8,7 @@ import type {
   RelationField,
   RelationSchemaGroup
 } from '@arch-register/api-types/relationSchemaContract';
+import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import type { RelationFieldType } from '../../lib/schemaPresentation';
 import { RelationEndpointEditor } from './RelationEndpointEditor';
 import { RelationFieldsEditor } from './RelationFieldsEditor';
@@ -21,6 +22,7 @@ export const RelationEditorForm = ({
   description,
   inEndpoint,
   outEndpoint,
+  uniqueEndpointPair,
   color,
   icon,
   dirty,
@@ -40,6 +42,7 @@ export const RelationEditorForm = ({
   onDescriptionChange,
   onInEndpointChange,
   onOutEndpointChange,
+  onUniqueEndpointPairChange,
   onColorChange,
   onIconChange,
   onAddField,
@@ -64,6 +67,7 @@ export const RelationEditorForm = ({
   description: string;
   inEndpoint: RelationEndpoint;
   outEndpoint: RelationEndpoint;
+  uniqueEndpointPair: boolean;
   color: string | null;
   icon: string | null;
   dirty: boolean;
@@ -83,6 +87,7 @@ export const RelationEditorForm = ({
   onDescriptionChange: (value: string) => void;
   onInEndpointChange: (endpoint: RelationEndpoint) => void;
   onOutEndpointChange: (endpoint: RelationEndpoint) => void;
+  onUniqueEndpointPairChange: (value: boolean) => void;
   onColorChange: (value: string) => void;
   onIconChange: (value: string) => void;
   onAddField: (groupId?: string) => void;
@@ -114,24 +119,34 @@ export const RelationEditorForm = ({
     saveBlocked={saveBlocked}
     descriptionPlaceholder="What does this relation type represent?"
     afterDescription={
-      <div className={styles.formRow}>
-        <RelationEndpointEditor
-          label="In endpoint"
-          hint="Entity types allowed at the 'in' end of this relation."
-          endpoint={inEndpoint}
-          schemas={schemas}
-          canEdit={canEdit}
-          onChange={onInEndpointChange}
-        />
-        <RelationEndpointEditor
-          label="Out endpoint"
-          hint="Entity types allowed at the 'out' end of this relation."
-          endpoint={outEndpoint}
-          schemas={schemas}
-          canEdit={canEdit}
-          onChange={onOutEndpointChange}
-        />
-      </div>
+      <>
+        <div className={styles.formRow}>
+          <RelationEndpointEditor
+            label="In endpoint"
+            hint="Entity types allowed at the 'in' end of this relation."
+            endpoint={inEndpoint}
+            schemas={schemas}
+            canEdit={canEdit}
+            onChange={onInEndpointChange}
+          />
+          <RelationEndpointEditor
+            label="Out endpoint"
+            hint="Entity types allowed at the 'out' end of this relation."
+            endpoint={outEndpoint}
+            schemas={schemas}
+            canEdit={canEdit}
+            onChange={onOutEndpointChange}
+          />
+        </div>
+        <div className={styles.formRow}>
+          <Checkbox
+            label="Allow only one relation per ordered endpoint pair"
+            value={uniqueEndpointPair}
+            disabled={!canEdit}
+            onChange={value => onUniqueEndpointPairChange(value ?? false)}
+          />
+        </div>
+      </>
     }
     onNameChange={onNameChange}
     onCategoryChange={onCategoryChange}

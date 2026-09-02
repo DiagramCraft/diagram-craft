@@ -2611,6 +2611,10 @@
                         "maximum": 9007199254740991,
                         "description": "Number of relation instances using this schema"
                       },
+                      "unique_endpoint_pair": {
+                        "type": "boolean",
+                        "description": "Whether active relation instances must have a unique ordered endpoint pair"
+                      },
                       "version": {
                         "type": "integer",
                         "minimum": 1,
@@ -2647,6 +2651,7 @@
                       "color",
                       "icon",
                       "relation_count",
+                      "unique_endpoint_pair",
                       "version",
                       "created_at",
                       "updated_at"
@@ -3605,6 +3610,10 @@
                       "maximum": 9007199254740991,
                       "description": "Number of relation instances using this schema"
                     },
+                    "unique_endpoint_pair": {
+                      "type": "boolean",
+                      "description": "Whether active relation instances must have a unique ordered endpoint pair"
+                    },
                     "version": {
                       "type": "integer",
                       "minimum": 1,
@@ -3641,6 +3650,7 @@
                     "color",
                     "icon",
                     "relation_count",
+                    "unique_endpoint_pair",
                     "version",
                     "created_at",
                     "updated_at"

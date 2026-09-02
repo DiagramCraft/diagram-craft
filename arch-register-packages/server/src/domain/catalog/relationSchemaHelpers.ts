@@ -111,7 +111,8 @@ export const buildCreateRelationSchemaInput = (
     validation_rules = [],
     color,
     icon,
-    relation_approval_policy
+    relation_approval_policy,
+    unique_endpoint_pair
   } = body;
   httpAssert.string(name, { message: 'name is required and must be a string' });
   httpAssert.true(relation_approval_policy !== 'required', {
@@ -144,6 +145,7 @@ export const buildCreateRelationSchemaInput = (
     color: typeof color === 'string' ? color : null,
     icon: typeof icon === 'string' ? icon : null,
     relation_approval_policy: 'disabled' as const,
+    unique_endpoint_pair: unique_endpoint_pair === true,
     created_at: timestamp,
     updated_at: timestamp
   };
@@ -167,7 +169,8 @@ export const buildUpdateRelationSchemaInput = (
     validation_rules,
     color,
     icon,
-    relation_approval_policy
+    relation_approval_policy,
+    unique_endpoint_pair
   } = body;
   httpAssert.string(name, { message: 'name is required and must be a string' });
   httpAssert.true(relation_approval_policy !== 'required', {
@@ -226,6 +229,10 @@ export const buildUpdateRelationSchemaInput = (
     relation_approval_policy: (current.relation_approval_policy ?? 'disabled') as
       | 'required'
       | 'disabled',
+    unique_endpoint_pair:
+      unique_endpoint_pair !== undefined
+        ? unique_endpoint_pair === true
+        : (current.unique_endpoint_pair ?? false),
     updated_at: timestamp
   };
 };
@@ -334,6 +341,7 @@ export const toApiRelationSchema = (
     color: schema.color,
     icon: schema.icon,
     relation_count: relationCount,
+    unique_endpoint_pair: schema.unique_endpoint_pair ?? false,
     version: schema.version ?? 1,
     relation_approval_policy: schema.relation_approval_policy ?? 'disabled',
     created_at: schema.created_at.toISOString(),
@@ -365,6 +373,7 @@ export const toApiRelationSchemaVersion = (
   ).shared_field_group_links,
   color: row.color,
   icon: row.icon,
+  unique_endpoint_pair: row.unique_endpoint_pair ?? false,
   changeSummary: row.change_summary,
   createdBy: row.created_by,
   createdAt: row.created_at.toISOString()

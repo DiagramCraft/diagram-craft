@@ -33,6 +33,8 @@ import { requireNoRestrictedFieldWrites } from '../auth/fieldGroupAccessControl'
 import { DOCUMENT_STATUS_CASE_KIND } from '../document/documentWorkflowOperations';
 import { encodeCaseSubkind } from '../governance/governanceCaseSubkind';
 import {
+  assertRelationEndpointPairUniqueness,
+  listDuplicateRelationEndpointPairs,
   assertTypedRelationCardinality,
   validateRelationEndpoints
 } from '../catalog/relationHelpers';
@@ -45,6 +47,7 @@ import {
 import { normalizeEntityScalarFields } from '../catalog/entityScalarValues';
 import { getWorkspaceEnumDefinitions } from '../catalog/enumOptions';
 import { validateDerivedFieldGroupAccess } from '../derived/derivedFields';
+import { throwRelationConstraintError } from '../catalog/relationConstraintErrors';
 import { coordinateContentWrite } from '../project/contentWriteCoordinator';
 import type { WorkspaceCapabilityBindings } from '@arch-register/api-types/workspaceCapabilityContract';
 import {
@@ -626,6 +629,7 @@ export const importRelationSchemas = async (
       color: source.color,
       icon: source.icon,
       relation_approval_policy: 'disabled' as const,
+      unique_endpoint_pair: source.unique_endpoint_pair ?? false,
       version: source.version ?? 1,
       created_at: existing?.created_at ?? now,
       updated_at: now
@@ -634,6 +638,22 @@ export const importRelationSchemas = async (
     assertResolvedFieldGroupReferences(input.fields, input.groups);
 
     if (existing) {
+      await db.relation.lockRelationSchemaForConstraintMutation?.(workspace, nextId);
+      if (input.unique_endpoint_pair && !existing.unique_endpoint_pair) {
+        const duplicatePairs = await listDuplicateRelationEndpointPairs(db, workspace, nextId);
+        if (duplicatePairs.length > 0) {
+          throwRelationConstraintError(
+            duplicatePairs.map(pair => ({
+              kind: 'endpoint_pair_unique' as const,
+              relation_schema_id: nextId,
+              in_entity_id: pair.in_entity_id,
+              out_entity_id: pair.out_entity_id,
+              existing_count: pair.relation_count,
+              projected_count: pair.relation_count
+            }))
+          );
+        }
+      }
       await db.relation.updateRelationSchema(workspace, nextId, {
         name: input.name,
         category_id: input.category_id,
@@ -648,9 +668,15 @@ export const importRelationSchemas = async (
         color: input.color,
         icon: input.icon,
         relation_approval_policy: input.relation_approval_policy,
+        unique_endpoint_pair: input.unique_endpoint_pair,
         version: input.version,
         updated_at: input.updated_at
       });
+      await db.relation.setRelationEndpointPairKeys?.(
+        workspace,
+        nextId,
+        input.unique_endpoint_pair === true
+      );
       updated++;
     } else {
       await db.relation.createRelationSchema(input);
@@ -954,7 +980,8 @@ export const importRelations = async (
           relationSchemaId: existing.schema_id,
           inEntityId: existing.in_entity_id,
           outEntityId: existing.out_entity_id,
-          delta: -1
+          delta: -1,
+          relationId: existing.id
         },
         {
           relationSchemaId: input.schema_id,
@@ -977,6 +1004,7 @@ export const importRelations = async (
     return [];
   });
   await assertTypedRelationCardinality(db, workspace, cardinalityChanges);
+  await assertRelationEndpointPairUniqueness(db, workspace, cardinalityChanges);
 
   for (const { existing, input } of preparedRelations) {
     if (existing) {
@@ -986,7 +1014,9 @@ export const importRelations = async (
         existing.out_entity_id !== input.out_entity_id
       ) {
         await db.relation.deleteRelation(workspace, existing.id);
+        await db.relation.releaseRelationEndpointPairKey?.(workspace, existing.id);
         await db.relation.createRelation(input);
+        await db.relation.reserveRelationEndpointPairKey?.(workspace, input);
       } else {
         await db.relation.updateRelation(workspace, existing.id, {
           data: input.data,
@@ -998,6 +1028,7 @@ export const importRelations = async (
       updated++;
     } else {
       await db.relation.createRelation(input);
+      await db.relation.reserveRelationEndpointPairKey?.(workspace, input);
       created++;
     }
     const stored: RelationIdentityRecord = {

@@ -12353,6 +12353,10 @@
                         "maximum": 9007199254740991,
                         "description": "Number of relation instances using this schema"
                       },
+                      "unique_endpoint_pair": {
+                        "type": "boolean",
+                        "description": "Whether active relation instances must have a unique ordered endpoint pair"
+                      },
                       "version": {
                         "type": "integer",
                         "minimum": 1,
@@ -12389,6 +12393,7 @@
                       "color",
                       "icon",
                       "relation_count",
+                      "unique_endpoint_pair",
                       "version",
                       "created_at",
                       "updated_at"
@@ -13226,6 +13231,10 @@
                       }
                     ],
                     "description": "Relation schema icon identifier"
+                  },
+                  "unique_endpoint_pair": {
+                    "type": "boolean",
+                    "description": "Prevent duplicate active relations for the same ordered endpoint pair"
                   },
                   "relation_approval_policy": {
                     "enum": [
@@ -14164,6 +14173,10 @@
                       "maximum": 9007199254740991,
                       "description": "Number of relation instances using this schema"
                     },
+                    "unique_endpoint_pair": {
+                      "type": "boolean",
+                      "description": "Whether active relation instances must have a unique ordered endpoint pair"
+                    },
                     "version": {
                       "type": "integer",
                       "minimum": 1,
@@ -14200,6 +14213,7 @@
                     "color",
                     "icon",
                     "relation_count",
+                    "unique_endpoint_pair",
                     "version",
                     "created_at",
                     "updated_at"
@@ -15158,6 +15172,10 @@
                       "maximum": 9007199254740991,
                       "description": "Number of relation instances using this schema"
                     },
+                    "unique_endpoint_pair": {
+                      "type": "boolean",
+                      "description": "Whether active relation instances must have a unique ordered endpoint pair"
+                    },
                     "version": {
                       "type": "integer",
                       "minimum": 1,
@@ -15194,6 +15212,7 @@
                     "color",
                     "icon",
                     "relation_count",
+                    "unique_endpoint_pair",
                     "version",
                     "created_at",
                     "updated_at"
@@ -16039,6 +16058,10 @@
                       }
                     ],
                     "description": "Relation schema icon identifier"
+                  },
+                  "unique_endpoint_pair": {
+                    "type": "boolean",
+                    "description": "Prevent duplicate active relations for the same ordered endpoint pair"
                   },
                   "relation_approval_policy": {
                     "enum": [
@@ -17006,6 +17029,10 @@
                       "maximum": 9007199254740991,
                       "description": "Number of relation instances using this schema"
                     },
+                    "unique_endpoint_pair": {
+                      "type": "boolean",
+                      "description": "Whether active relation instances must have a unique ordered endpoint pair"
+                    },
                     "version": {
                       "type": "integer",
                       "minimum": 1,
@@ -17042,6 +17069,7 @@
                     "color",
                     "icon",
                     "relation_count",
+                    "unique_endpoint_pair",
                     "version",
                     "created_at",
                     "updated_at"
@@ -18034,6 +18062,10 @@
                         ],
                         "description": "Relation schema icon at this version"
                       },
+                      "unique_endpoint_pair": {
+                        "type": "boolean",
+                        "description": "Whether active relation instances must have a unique ordered endpoint pair at this version"
+                      },
                       "changeSummary": {
                         "type": "object",
                         "propertyNames": {
@@ -18069,6 +18101,7 @@
                       "groups",
                       "color",
                       "icon",
+                      "unique_endpoint_pair",
                       "changeSummary",
                       "createdBy",
                       "createdAt"

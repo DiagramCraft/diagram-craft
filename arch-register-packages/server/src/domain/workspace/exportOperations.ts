@@ -360,6 +360,7 @@ const exportRelationSchemas = async (
     color: schema.color,
     icon: schema.icon,
     relation_approval_policy: schema.relation_approval_policy ?? 'disabled',
+    unique_endpoint_pair: schema.unique_endpoint_pair ?? false,
     version: schema.version ?? 1
   }));
 };

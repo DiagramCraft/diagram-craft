@@ -128,6 +128,7 @@ type ImportableRelationSchema = {
   color: string | null;
   icon: string | null;
   relation_approval_policy: 'required' | 'disabled';
+  unique_endpoint_pair?: boolean;
 };
 
 type ImportableFieldGroup = {
@@ -428,7 +429,8 @@ const sourceFromBuiltin = (template: SchemaTemplate): DefinitionSource => {
       shared_field_groups: sharedGroupsFor(sharedFieldGroupLinks),
       color: relationSchema.color,
       icon: relationSchema.icon,
-      relation_approval_policy: 'disabled' as const
+      relation_approval_policy: 'disabled' as const,
+      unique_endpoint_pair: relationSchema.uniqueEndpointPair ?? false
     } satisfies ImportableRelationSchema;
   };
   const extensionSources = (template.compositionExtensions ?? []).flatMap(extension => {
@@ -1909,6 +1911,7 @@ export const executeDefinitionImport = async (
             color: relationSchema.color,
             icon: relationSchema.icon,
             relation_approval_policy: relationSchema.relation_approval_policy,
+            unique_endpoint_pair: relationSchema.unique_endpoint_pair ?? false,
             created_at: now,
             updated_at: now
           };
@@ -1929,6 +1932,7 @@ export const executeDefinitionImport = async (
             groups,
             color: row.color,
             icon: row.icon,
+            unique_endpoint_pair: row.unique_endpoint_pair ?? false,
             change_summary: buildFieldChangeSummary(null, toRelationFieldMigrationFields(fields)),
             created_by: authCtx.userId,
             created_at: now

@@ -6,7 +6,8 @@ import {
   toApiRelation,
   toRedactedApiRelation,
   validateRelationEndpoints,
-  assertTypedRelationCardinality
+  assertTypedRelationCardinality,
+  assertRelationEndpointPairUniqueness
 } from './relationHelpers';
 import type { DatabaseAdapter } from '../../db/database';
 import type { RelationDbResult, RelationSchemaDbResult } from './db/relationDatabase';
@@ -408,6 +409,130 @@ describe('assertTypedRelationCardinality', () => {
         }
       ])
     ).rejects.toThrow('requires at least 1 relation');
+  });
+});
+
+describe('assertRelationEndpointPairUniqueness', () => {
+  const makePairDb = (rows: RelationDbResult[] = []): DatabaseAdapter =>
+    ({
+      relation: {
+        getRelationSchema: vi.fn(async () => ({ ...schema, unique_endpoint_pair: true })),
+        listRelations: vi.fn(async (_workspace, filters) => {
+          const items = rows.filter(
+            row =>
+              row.schema_id === filters.schemaId &&
+              row.in_entity_id === filters.inEntityId &&
+              row.out_entity_id === filters.outEntityId
+          );
+          return { items, total: items.length };
+        })
+      }
+    }) as unknown as DatabaseAdapter;
+
+  it('rejects duplicate ordered endpoint pairs with a structural diagnostic', async () => {
+    const db = makePairDb([relation]);
+
+    await expect(
+      assertRelationEndpointPairUniqueness(db, 'workspace-1', [
+        {
+          relationSchemaId: relation.schema_id,
+          inEntityId: relation.in_entity_id,
+          outEntityId: relation.out_entity_id,
+          delta: 1
+        }
+      ])
+    ).rejects.toMatchObject({
+      status: 409,
+      data: {
+        code: 'RELATION_CONSTRAINT_VIOLATION',
+        violations: [
+          {
+            kind: 'endpoint_pair_unique',
+            relation_schema_id: relation.schema_id,
+            in_entity_id: relation.in_entity_id,
+            out_entity_id: relation.out_entity_id,
+            existing_count: 1,
+            projected_count: 2
+          }
+        ],
+        total_violation_count: 1,
+        hidden_violation_count: 0,
+        truncated: false
+      }
+    });
+
+    await expect(
+      assertRelationEndpointPairUniqueness(db, 'workspace-1', [
+        {
+          relationSchemaId: relation.schema_id,
+          inEntityId: relation.in_entity_id,
+          outEntityId: relation.out_entity_id,
+          delta: 1
+        }
+      ])
+    ).rejects.not.toThrow('sensitive historical value');
+  });
+
+  it('treats the endpoint pair as ordered', async () => {
+    const db = makePairDb([relation]);
+
+    await expect(
+      assertRelationEndpointPairUniqueness(db, 'workspace-1', [
+        {
+          relationSchemaId: relation.schema_id,
+          inEntityId: relation.out_entity_id,
+          outEntityId: relation.in_entity_id,
+          delta: 1
+        }
+      ])
+    ).resolves.toBeUndefined();
+  });
+
+  it('allows a same-pair replacement when the existing relation is removed in the batch', async () => {
+    const db = makePairDb([relation]);
+
+    await expect(
+      assertRelationEndpointPairUniqueness(db, 'workspace-1', [
+        {
+          relationSchemaId: relation.schema_id,
+          inEntityId: relation.in_entity_id,
+          outEntityId: relation.out_entity_id,
+          delta: -1,
+          relationId: relation.id
+        },
+        {
+          relationSchemaId: relation.schema_id,
+          inEntityId: relation.in_entity_id,
+          outEntityId: relation.out_entity_id,
+          delta: 1
+        }
+      ])
+    ).resolves.toBeUndefined();
+  });
+
+  it('rejects duplicate additions in one batch even when no row exists yet', async () => {
+    const db = makePairDb();
+
+    await expect(
+      assertRelationEndpointPairUniqueness(db, 'workspace-1', [
+        {
+          relationSchemaId: relation.schema_id,
+          inEntityId: relation.in_entity_id,
+          outEntityId: relation.out_entity_id,
+          delta: 1
+        },
+        {
+          relationSchemaId: relation.schema_id,
+          inEntityId: relation.in_entity_id,
+          outEntityId: relation.out_entity_id,
+          delta: 1
+        }
+      ])
+    ).rejects.toMatchObject({
+      data: {
+        violations: [expect.objectContaining({ projected_count: 2 })]
+      }
+    });
   });
 });
 

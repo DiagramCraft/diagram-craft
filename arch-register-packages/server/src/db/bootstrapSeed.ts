@@ -247,6 +247,7 @@ export const seedBootstrapData = async (
       validation_rules: createdSchema.validation_rules ?? [],
       color: createdSchema.color,
       icon: createdSchema.icon,
+      unique_endpoint_pair: createdSchema.unique_endpoint_pair ?? false,
       change_summary: { added: createdSchema.fields.map(field => field.id) },
       created_by: null,
       created_at: createdSchema.created_at
@@ -254,6 +255,15 @@ export const seedBootstrapData = async (
   }
   for (const relation of relations) {
     await db.relation.createRelation(relation);
+  }
+  for (const relationSchema of seedRelationSchemas) {
+    if (relationSchema.unique_endpoint_pair) {
+      await db.relation.setRelationEndpointPairKeys?.(
+        relationSchema.workspace,
+        relationSchema.id,
+        true
+      );
+    }
   }
   await seedTemplateRelationCapabilityConfigurations(db);
   await recalculateEntityDerivedFields(db, seededWorkspaces.default.id);

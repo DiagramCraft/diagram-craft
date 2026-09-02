@@ -47,6 +47,8 @@ export type RelationSchemaDbResult = {
   color: string | null;
   icon: string | null;
   relation_approval_policy?: 'required' | 'disabled';
+  /** Whether active relations must have a unique ordered (in, out) endpoint pair. */
+  unique_endpoint_pair?: boolean;
   /** Defaults to 1 on create; omit on update to leave the current version unchanged. */
   version?: number;
   created_at: Date;
@@ -79,6 +81,8 @@ export type RelationSchemaVersionDbResult = {
   validation_rules?: ValidationRule[];
   color: string | null;
   icon: string | null;
+  /** Whether active relations must have a unique ordered (in, out) endpoint pair at this version. */
+  unique_endpoint_pair?: boolean;
   change_summary: Record<string, unknown>;
   created_by: string | null;
   created_at: Date;
@@ -208,6 +212,7 @@ export const relationMappers = {
     relation_approval_policy: String(
       row['relation_approval_policy'] ?? 'disabled'
     ) as RelationSchemaDbResult['relation_approval_policy'],
+    unique_endpoint_pair: Boolean(row['unique_endpoint_pair'] ?? false),
     version: Number(row['version'] ?? 1),
     created_at: databaseDate(row['created_at']),
     updated_at: databaseDate(row['updated_at'])
@@ -239,6 +244,7 @@ export const relationMappers = {
     ),
     color: row['color'] == null ? null : String(row['color']),
     icon: row['icon'] == null ? null : String(row['icon']),
+    unique_endpoint_pair: Boolean(row['unique_endpoint_pair'] ?? false),
     change_summary: parseDatabaseJson(
       row['change_summary'],
       {},
@@ -298,6 +304,38 @@ export type RelationDatabase = {
     input: RelationSchemaDbUpdate
   ): Promise<RelationSchemaDbResult | null>;
   deleteRelationSchema(ws: string, id: string): Promise<RelationSchemaDbResult | null>;
+
+  /**
+   * Locks the relation schema row for the duration of the surrounding mutation transaction.
+   * PostgreSQL uses FOR UPDATE; SQLite is already serialized by BEGIN IMMEDIATE.
+   */
+  lockRelationSchemaForConstraintMutation?(ws: string, id: string): Promise<void>;
+
+  /**
+   * Locks entity rows that participate in a relation constraint mutation. Implementations must
+   * acquire locks in a deterministic order to avoid deadlocks.
+   */
+  lockEntitiesForConstraintMutation?(ws: string, entityIds: string[]): Promise<void>;
+
+  /** Returns duplicate active endpoint pairs for a relation schema. */
+  listDuplicateRelationEndpointPairs?(
+    ws: string,
+    schemaId: string
+  ): Promise<
+    Array<{
+      in_entity_id: string;
+      out_entity_id: string;
+      relation_count: number;
+    }>
+  >;
+
+  /** Reserves or releases endpoint-pair keys for a relation schema. */
+  reserveRelationEndpointPairKey?(
+    ws: string,
+    relation: Pick<RelationDbCreate, 'id' | 'schema_id' | 'in_entity_id' | 'out_entity_id'>
+  ): Promise<void>;
+  releaseRelationEndpointPairKey?(ws: string, relationId: string): Promise<void>;
+  setRelationEndpointPairKeys?(ws: string, schemaId: string, enabled: boolean): Promise<void>;
 
   listRelationSchemaVersions(
     ws: string,
