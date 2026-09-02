@@ -173,6 +173,7 @@ const applyRelationSchemaVersion = (
     validation_rules: version.validation_rules,
     color: version.color,
     icon: version.icon,
+    unique_endpoint_pair: version.unique_endpoint_pair ?? false,
     version: version.version
   };
 };

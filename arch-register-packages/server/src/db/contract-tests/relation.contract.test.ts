@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import { runContractSuiteAgainstBothDrivers } from './harness';
-import type { DatabaseAdapter } from '../database';
+import { DatabaseError, type DatabaseAdapter } from '../database';
 import {
   createFixtureCategory,
   createFixtureSchema,
@@ -30,7 +30,8 @@ const createFixtureRelationSchema = async (
   workspace: string,
   inSchemaIds: string[],
   outSchemaIds: string[],
-  id = randomUUID()
+  id = randomUUID(),
+  uniqueEndpointPair = false
 ) => {
   const now = new Date();
   await db.relation.createRelationSchema({
@@ -46,6 +47,7 @@ const createFixtureRelationSchema = async (
     color: null,
     icon: null,
     relation_approval_policy: 'disabled',
+    unique_endpoint_pair: uniqueEndpointPair,
     created_at: now,
     updated_at: now
   });
@@ -66,6 +68,7 @@ runContractSuiteAgainstBothDrivers('RelationDatabase', getDb => {
       expect(fetched!.in_schema_ids).toEqual([appSchema]);
       expect(fetched!.out_schema_ids).toEqual([dbSchema]);
       expect(fetched!.version).toBe(1);
+      expect(fetched!.unique_endpoint_pair).toBe(false);
 
       const updated = await db.relation.updateRelationSchema(workspace, id, {
         name: 'renamed relation schema',
@@ -78,12 +81,14 @@ runContractSuiteAgainstBothDrivers('RelationDatabase', getDb => {
         shared_field_group_links: [],
         color: '#ff0000',
         icon: null,
+        unique_endpoint_pair: true,
         version: 2,
         updated_at: new Date()
       });
       expect(updated!.name).toBe('renamed relation schema');
       expect(updated!.category_id).toBe(categoryId);
       expect(updated!.version).toBe(2);
+      expect(updated!.unique_endpoint_pair).toBe(true);
 
       await db.relation.createRelationSchemaVersion({
         id: randomUUID(),
@@ -99,6 +104,7 @@ runContractSuiteAgainstBothDrivers('RelationDatabase', getDb => {
         groups: updated!.groups ?? [],
         color: updated!.color,
         icon: updated!.icon,
+        unique_endpoint_pair: true,
         change_summary: { renamed: true },
         created_by: null,
         created_at: new Date()
@@ -107,6 +113,7 @@ runContractSuiteAgainstBothDrivers('RelationDatabase', getDb => {
       expect(versions).toHaveLength(1);
       expect(versions[0]!.version).toBe(2);
       expect(versions[0]!.category).toBe('Connectivity');
+      expect(versions[0]!.unique_endpoint_pair).toBe(true);
 
       const deleted = await db.relation.deleteRelationSchema(workspace, id);
       expect(deleted!.id).toBe(id);
@@ -180,6 +187,99 @@ runContractSuiteAgainstBothDrivers('RelationDatabase', getDb => {
       expect(deleted!.id).toBe(relation.id);
       expect(await db.relation.getRelation(workspace, relation.id)).toBeNull();
       expect(await db.relation.countRelationsForSchema(workspace, relationSchemaId)).toBe(0);
+    });
+
+    it('arbitrates unique ordered endpoint pairs and rolls back losing writes', async () => {
+      const db = getDb();
+      const workspace = await createFixtureWorkspace(db);
+      const appSchemaId = await createFixtureSchema(db, workspace);
+      const dbSchemaId = await createFixtureSchema(db, workspace);
+      const relationSchemaId = await createFixtureRelationSchema(
+        db,
+        workspace,
+        [appSchemaId],
+        [dbSchemaId],
+        randomUUID(),
+        true
+      );
+      const app = await createFixtureEntity(db, workspace, appSchemaId);
+      const database = await createFixtureEntity(db, workspace, dbSchemaId);
+      const makeInput = (id: string) => ({
+        id,
+        workspace,
+        schema_id: relationSchemaId,
+        in_entity_id: app.id,
+        out_entity_id: database.id,
+        data: {},
+        created_at: new Date(),
+        updated_at: new Date()
+      });
+      const reservePairKey = async (tx: DatabaseAdapter, input: ReturnType<typeof makeInput>) => {
+        const reserve = tx.relation.reserveRelationEndpointPairKey;
+        if (!reserve) throw new Error('Relation driver does not support endpoint pair keys');
+        await reserve.call(tx.relation, workspace, input);
+      };
+
+      const first = makeInput(randomUUID());
+      await db.core.transaction(async tx => {
+        await tx.relation.createRelation(first);
+        await reservePairKey(tx, first);
+      });
+      await db.core.transaction(async tx => {
+        const setKeys = tx.relation.setRelationEndpointPairKeys;
+        if (!setKeys) throw new Error('Relation driver does not support endpoint pair keys');
+        await setKeys.call(tx.relation, workspace, relationSchemaId, true);
+      });
+
+      const second = makeInput(randomUUID());
+      await expect(
+        db.core.transaction(async tx => {
+          await tx.relation.createRelation(second);
+          await reservePairKey(tx, second);
+        })
+      ).rejects.toMatchObject({ code: 'unique' } satisfies Partial<DatabaseError>);
+      expect(await db.relation.countRelationsForSchema(workspace, relationSchemaId)).toBe(1);
+
+      await db.core.transaction(async tx => {
+        await tx.relation.deleteRelation(workspace, first.id);
+        await tx.relation.releaseRelationEndpointPairKey?.(workspace, first.id);
+      });
+      await db.core.transaction(async tx => {
+        await tx.relation.createRelation(second);
+        await reservePairKey(tx, second);
+      });
+      expect(await db.relation.countRelationsForSchema(workspace, relationSchemaId)).toBe(1);
+    });
+
+    it('lists duplicate active endpoint pairs for constraint activation', async () => {
+      const db = getDb();
+      const workspace = await createFixtureWorkspace(db);
+      const appSchemaId = await createFixtureSchema(db, workspace);
+      const dbSchemaId = await createFixtureSchema(db, workspace);
+      const relationSchemaId = await createFixtureRelationSchema(
+        db,
+        workspace,
+        [appSchemaId],
+        [dbSchemaId]
+      );
+      const app = await createFixtureEntity(db, workspace, appSchemaId);
+      const database = await createFixtureEntity(db, workspace, dbSchemaId);
+      for (const id of [randomUUID(), randomUUID()]) {
+        await db.relation.createRelation({
+          id,
+          workspace,
+          schema_id: relationSchemaId,
+          in_entity_id: app.id,
+          out_entity_id: database.id,
+          data: {},
+          created_at: new Date(),
+          updated_at: new Date()
+        });
+      }
+
+      await expect(
+        db.relation.listDuplicateRelationEndpointPairs?.(workspace, relationSchemaId)
+      ).resolves.toEqual([{ in_entity_id: app.id, out_entity_id: database.id, relation_count: 2 }]);
     });
 
     it('keeps provider and consumer API relations distinct on both endpoints', async () => {

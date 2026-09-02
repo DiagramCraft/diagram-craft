@@ -277,7 +277,12 @@
           dependent, and referenced records. Alongside generic reference/containment relations, workspace admins can
           define typed relation schemas with mandatory "in"/"out" endpoints (each constrained to a set of allowed
           entity schemas, or allowing any entity schema, and their own configurable fields, field groups, access
-          control, and validation rules;
+          control, validation rules, and an optional unique ordered endpoint-pair constraint. Typed-relation
+          projections can also declare minimum and maximum counts from either endpoint perspective (with `-1`
+          retaining unlimited cardinality); these constraints are enforced transactionally for every relation
+          write path. Enabling pair uniqueness is blocked when existing duplicate pairs are found and returns a
+          structural diagnostic preview, while constraint settings are retained in schema version history and
+          workspace export/import;
           relation instances are first-class, independently addressable, audited records rather than entity-data
           values. Saving an entity also validates affected typed relation instances, and relation create/update/delete
           mutations participate in the same atomic blocking-validation behavior. A typed relation

@@ -61,7 +61,10 @@ import {
   resolveTypedRelationFieldCardinalityChanges
 } from './relationFieldMutations';
 import { requireTypedRelationEdit, requireTypedRelationFieldEdit } from './relationAccessControl';
-import { assertTypedRelationCardinality } from './relationHelpers';
+import {
+  assertRelationEndpointPairUniqueness,
+  assertTypedRelationCardinality
+} from './relationHelpers';
 import { withCatalogMutationTransaction } from './mutationTransaction';
 import { recalculateEntityDerivedFields } from '../derived/derivedRecalculation';
 import { assertEntityGraphValid, validateEntityGraph } from './entityValidationRules';
@@ -786,19 +789,35 @@ export const updateEntityWithPayload = async (
           )
         ).flat();
         await assertTypedRelationCardinality(tx, workspace, cardinalityChanges);
+        await assertRelationEndpointPairUniqueness(tx, workspace, cardinalityChanges);
 
-        for (const { field, delta, unbound } of fieldDeltas) {
-          await applyRelationFieldDelta(tx, {
-            workspace,
-            ownerEntityId: oldRow.id,
-            ownerSchema: schema,
-            field,
-            delta,
-            authCtx,
-            actor,
-            unbound,
-            skipTypedRelationCardinalityValidation: true
-          });
+        // Apply every removal before any addition so a single entity mutation can replace a
+        // relation with another relation for the same unique endpoint pair.
+        for (const phase of ['delete', 'write'] as const) {
+          for (const { field, delta, unbound } of fieldDeltas) {
+            const phaseDelta =
+              phase === 'delete'
+                ? { ...delta, create: undefined, update: undefined }
+                : { ...delta, delete: undefined };
+            if (
+              (phaseDelta.create?.length ?? 0) === 0 &&
+              (phaseDelta.update?.length ?? 0) === 0 &&
+              (phaseDelta.delete?.length ?? 0) === 0
+            ) {
+              continue;
+            }
+            await applyRelationFieldDelta(tx, {
+              workspace,
+              ownerEntityId: oldRow.id,
+              ownerSchema: schema,
+              field,
+              delta: phaseDelta,
+              authCtx,
+              actor,
+              unbound,
+              skipTypedRelationCardinalityValidation: true
+            });
+          }
         }
       }
 

@@ -7,6 +7,7 @@ import type {
   SharedFieldGroupLink,
   ValidationRule
 } from '@arch-register/api-types/schemaContract';
+import type { RelationConstraintErrorData } from '@arch-register/api-types/relationSchemaContract';
 import type { SharedFieldGroup } from '@arch-register/api-types/fieldGroupContract';
 import type { FieldMigrationChoices } from '../../dialogs/FieldMigrationDialog';
 import { toFieldId } from '../../utils/fieldId';
@@ -78,6 +79,7 @@ export type SchemaEditorAdapter<
   isValid?: (draft: SchemaEditorDraft<Field, Group, Extra>) => boolean;
   remove: (selected: Selected) => Promise<void>;
   getMigrationRequired: (error: unknown) => { pendingChanges: PendingFieldChange[] } | null;
+  getConstraintViolation?: (error: unknown) => RelationConstraintErrorData | null;
   validationRuleDefaults: () => ValidationRule;
   selectAfterDelete: (items: Selected[], deletedId: string) => string;
   labels: {
@@ -113,12 +115,14 @@ export type SchemaEditorController<
   pendingFieldChanges: PendingFieldChange[] | null;
   confirmDelete: boolean;
   errorMessage: string | null;
+  constraintViolations: RelationConstraintErrorData | null;
   groupDialogOpen: boolean;
   editingGroup: Group | null;
   accessDialogGroupId: string | null;
   setAccessDialogGroupId: Dispatch<SetStateAction<string | null>>;
   setConfirmDelete: Dispatch<SetStateAction<boolean>>;
   setErrorMessage: Dispatch<SetStateAction<string | null>>;
+  setConstraintViolations: Dispatch<SetStateAction<RelationConstraintErrorData | null>>;
   setPendingFieldChanges: Dispatch<SetStateAction<PendingFieldChange[] | null>>;
   setGroupDialogOpen: Dispatch<SetStateAction<boolean>>;
   setEditingGroup: Dispatch<SetStateAction<Group | null>>;
@@ -201,6 +205,8 @@ export const useSchemaEditorController = <
   const [pendingFieldChanges, setPendingFieldChanges] = useState<PendingFieldChange[] | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [constraintViolations, setConstraintViolations] =
+    useState<RelationConstraintErrorData | null>(null);
   const [showHistory, setShowHistory] = useState(false);
   const [groupDialogOpen, setGroupDialogOpen] = useState(false);
   const [editingGroup, setEditingGroup] = useState<Group | null>(null);
@@ -218,6 +224,7 @@ export const useSchemaEditorController = <
     setPendingFieldChanges(null);
     setConfirmDelete(false);
     setErrorMessage(null);
+    setConstraintViolations(null);
     setShowHistory(false);
     setGroupDialogOpen(false);
     setEditingGroup(null);
@@ -486,6 +493,11 @@ export const useSchemaEditorController = <
           setPendingFieldChanges(migrationRequired.pendingChanges);
           return;
         }
+        const constraintViolation = adapterRef.current.getConstraintViolation?.(error);
+        if (constraintViolation) {
+          setConstraintViolations(constraintViolation);
+          return;
+        }
         setErrorMessage(
           error instanceof Error
             ? error.message
@@ -531,12 +543,14 @@ export const useSchemaEditorController = <
     pendingFieldChanges,
     confirmDelete,
     errorMessage,
+    constraintViolations,
     groupDialogOpen,
     editingGroup,
     accessDialogGroupId,
     setAccessDialogGroupId,
     setConfirmDelete,
     setErrorMessage,
+    setConstraintViolations,
     setPendingFieldChanges,
     setGroupDialogOpen,
     setEditingGroup,

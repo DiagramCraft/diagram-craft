@@ -10,12 +10,14 @@ import {
   isTypedRelationField,
   type TypedRelationField
 } from '@arch-register/api-types/schemaContract';
+import type { RelationConstraintViolation } from '@arch-register/api-types/relationSchemaContract';
 import { PermissionChecker, type WorkspaceAuthorizationContext } from '@arch-register/permissions';
 import type { DatabaseAdapter } from '../../db/database';
 import { httpAssert } from '../../utils/httpAssert';
 import { filterRestrictedFieldGroups } from '../auth/fieldGroupAccessControl';
 import { filterExternalMetadata } from '../externalMetadata/externalMetadataHelpers';
 import { requireTypedRelationEdit } from './relationAccessControl';
+import { throwRelationConstraintError } from './relationConstraintErrors';
 
 const checker = new PermissionChecker();
 
@@ -191,6 +193,7 @@ export type TypedRelationCardinalityChange = {
   inEntityId: string;
   outEntityId: string;
   delta: number;
+  relationId?: string;
 };
 
 type TypedRelationCardinalityEndpoint = {
@@ -226,6 +229,15 @@ export const assertTypedRelationCardinality = async (
     return;
   }
 
+  const relationSchemaIds = [...new Set(changes.map(change => change.relationSchemaId))].sort();
+  for (const relationSchemaId of relationSchemaIds) {
+    await db.relation.lockRelationSchemaForConstraintMutation?.(workspace, relationSchemaId);
+  }
+  await db.relation.lockEntitiesForConstraintMutation?.(
+    workspace,
+    [...new Set(changes.flatMap(change => [change.inEntityId, change.outEntityId]))].sort()
+  );
+
   const endpoints = new Map<string, TypedRelationCardinalityEndpoint>();
   const addEndpoint = (
     entityId: string,
@@ -247,6 +259,7 @@ export const assertTypedRelationCardinality = async (
     addEndpoint(change.outEntityId, change.relationSchemaId, 'out', change.delta);
   }
 
+  const violations: RelationConstraintViolation[] = [];
   await Promise.all(
     [...endpoints.values()].map(async endpoint => {
       const entity = await db.catalog.getEntity(workspace, endpoint.entityId);
@@ -281,20 +294,148 @@ export const assertTypedRelationCardinality = async (
         // move an entity toward a newly introduced minimum. Likewise, a maximum is enforced on
         // additions, while deletions are allowed to repair an existing over-limit state.
         if (endpoint.delta < 0) {
-          httpAssert.true(projectedCount >= field.minCount, {
-            status: 400,
-            message: `${field.name} requires at least ${field.minCount} relation(s)`
-          });
+          if (projectedCount < field.minCount) {
+            violations.push({
+              kind: 'typed_relation_minimum',
+              relation_schema_id: endpoint.relationSchemaId,
+              field_id: field.id,
+              field_name: field.name,
+              direction: endpoint.direction,
+              entity_id: endpoint.entityId,
+              projected_count: projectedCount,
+              limit: field.minCount
+            });
+          }
         }
         if (endpoint.delta > 0) {
-          httpAssert.true(field.maxCount === -1 || projectedCount <= field.maxCount, {
-            status: 400,
-            message: `${field.name} allows at most ${field.maxCount} relation(s)`
-          });
+          if (field.maxCount !== -1 && projectedCount > field.maxCount) {
+            violations.push({
+              kind: 'typed_relation_maximum',
+              relation_schema_id: endpoint.relationSchemaId,
+              field_id: field.id,
+              field_name: field.name,
+              direction: endpoint.direction,
+              entity_id: endpoint.entityId,
+              projected_count: projectedCount,
+              limit: field.maxCount
+            });
+          }
         }
       }
     })
   );
+  if (violations.length > 0) throwRelationConstraintError(violations);
+};
+
+/**
+ * Checks the ordered endpoint pair for relation schemas that opt into pair uniqueness. The
+ * database key is still the final authority for concurrent writes; this preflight supplies the
+ * same useful diagnostic for normal requests and import batches.
+ */
+export const assertRelationEndpointPairUniqueness = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  changes: readonly TypedRelationCardinalityChange[]
+) => {
+  if (changes.length === 0 || typeof db.relation.listRelations !== 'function') return;
+
+  const pairs = new Map<
+    string,
+    {
+      relationSchemaId: string;
+      inEntityId: string;
+      outEntityId: string;
+      additions: TypedRelationCardinalityChange[];
+      removals: Set<string>;
+    }
+  >();
+  for (const change of changes) {
+    const key = `${change.relationSchemaId}\u0000${change.inEntityId}\u0000${change.outEntityId}`;
+    const pair = pairs.get(key) ?? {
+      relationSchemaId: change.relationSchemaId,
+      inEntityId: change.inEntityId,
+      outEntityId: change.outEntityId,
+      additions: [],
+      removals: new Set<string>()
+    };
+    if (change.delta > 0) pair.additions.push(change);
+    if (change.delta < 0 && change.relationId) pair.removals.add(change.relationId);
+    pairs.set(key, pair);
+  }
+
+  const violations: RelationConstraintViolation[] = [];
+  for (const pair of pairs.values()) {
+    if (pair.additions.length === 0) continue;
+    const schema = await db.relation.getRelationSchema(workspace, pair.relationSchemaId);
+    if (!schema?.unique_endpoint_pair) continue;
+
+    const existing = (
+      await db.relation.listRelations(
+        workspace,
+        {
+          schemaId: pair.relationSchemaId,
+          inEntityId: pair.inEntityId,
+          outEntityId: pair.outEntityId
+        },
+        { limit: 100, offset: 0 }
+      )
+    ).items;
+    const existingIds = new Set(
+      existing.filter(relation => !pair.removals.has(relation.id)).map(relation => relation.id)
+    );
+    const projectedCount = existingIds.size + pair.additions.length;
+    if (projectedCount > 1) {
+      violations.push({
+        kind: 'endpoint_pair_unique',
+        relation_schema_id: pair.relationSchemaId,
+        in_entity_id: pair.inEntityId,
+        out_entity_id: pair.outEntityId,
+        existing_count: existingIds.size,
+        projected_count: projectedCount
+      });
+    }
+  }
+  if (violations.length > 0) throwRelationConstraintError(violations);
+};
+
+/** Lists all active duplicate ordered endpoint pairs for constraint activation/previews. */
+export const listDuplicateRelationEndpointPairs = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  schemaId: string
+) => {
+  if (db.relation.listDuplicateRelationEndpointPairs) {
+    return db.relation.listDuplicateRelationEndpointPairs(workspace, schemaId);
+  }
+
+  const counts = new Map<
+    string,
+    { in_entity_id: string; out_entity_id: string; relation_count: number }
+  >();
+  const pageSize = 1000;
+  let offset = 0;
+  while (true) {
+    const page = await db.relation.listRelations(
+      workspace,
+      { schemaId },
+      { limit: pageSize, offset }
+    );
+    for (const relation of page.items) {
+      const key = `${relation.in_entity_id}\u0000${relation.out_entity_id}`;
+      const current = counts.get(key);
+      if (current) current.relation_count++;
+      else {
+        counts.set(key, {
+          in_entity_id: relation.in_entity_id,
+          out_entity_id: relation.out_entity_id,
+          relation_count: 1
+        });
+      }
+    }
+    offset += page.items.length;
+    if (page.items.length === 0 || offset >= page.total) break;
+  }
+  return [...counts.values()].filter(pair => pair.relation_count > 1);
 };
 
 export const entityRelationFields = (schema: RelationSchemaDbResult) =>

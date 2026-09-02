@@ -2,13 +2,16 @@ import { toolDefinition } from '@tanstack/ai';
 import { randomUUID } from 'node:crypto';
 import { requireNoRestrictedFieldWrites } from '../auth/fieldGroupAccessControl';
 import { requireWorkspaceCapability } from '../auth/authorization';
-import { logAudit, computeChanges } from '../audit/db/auditLogging';
 import {
   assertRelationMutationsSupported,
-  assertTypedRelationCardinality,
-  flattenRelationAuditFields,
   validateRelationEndpoints
 } from '../catalog/relationHelpers';
+import {
+  createRelationWithAudit,
+  deleteRelationWithAudit,
+  updateRelationWithAudit
+} from '../catalog/relationMutations';
+import { withCatalogMutationTransaction } from '../catalog/mutationTransaction';
 import { canViewTypedRelation, requireTypedRelationEdit } from '../catalog/relationAccessControl';
 import {
   getRelationEndpointAccess,
@@ -222,35 +225,22 @@ const createCreateRelationTool = (context: AiChatToolContext) =>
     const fields = args.fields ?? {};
     if (context.authCtx)
       requireNoRestrictedFieldWrites(context.authCtx, schema, Object.keys(fields));
-    const now = new Date();
-    await assertTypedRelationCardinality(context.db, context.workspaceId, [
-      {
-        relationSchemaId: schema.id,
-        inEntityId: endpointAccess.inEntity!.id,
-        outEntityId: endpointAccess.outEntity!.id,
-        delta: 1
-      }
-    ]);
-    const row = await context.db.relation.createRelation({
-      id: randomUUID(),
-      workspace: context.workspaceId,
-      schema_id: schema.id,
-      in_entity_id: endpointAccess.inEntity!.id,
-      out_entity_id: endpointAccess.outEntity!.id,
-      data: fields,
-      created_at: now,
-      updated_at: now
-    });
-    await logAudit(context.db, {
-      userId: context.actor.id,
-      userDisplayName: context.actor.displayName,
-      workspace: context.workspaceId,
-      operation: 'create',
-      entityType: 'relation',
-      entityId: row.id,
-      entityName: `${row.in_entity_name} → ${row.out_entity_name}`,
-      schemaId: row.schema_id,
-      changes: { new: flattenRelationAuditFields(row) }
+    const row = await withCatalogMutationTransaction(context.db, tx => {
+      const now = new Date();
+      return createRelationWithAudit(tx, {
+        workspace: context.workspaceId,
+        relation: {
+          id: randomUUID(),
+          workspace: context.workspaceId,
+          schema_id: schema.id,
+          in_entity_id: endpointAccess.inEntity!.id,
+          out_entity_id: endpointAccess.outEntity!.id,
+          data: fields,
+          created_at: now,
+          updated_at: now
+        },
+        actor: { id: context.actor.id, displayName: context.actor.displayName }
+      });
     });
     return toAiRelation(row, context.authCtx, new Map([[schema.id, schema]]));
   });
@@ -279,25 +269,20 @@ const createUpdateRelationTool = (context: AiChatToolContext) =>
       key => JSON.stringify(oldRow.data[key] ?? null) !== JSON.stringify(args.fields[key] ?? null)
     );
     if (context.authCtx) requireNoRestrictedFieldWrites(context.authCtx, schema, changed);
-    const row = await context.db.relation.updateRelation(context.workspaceId, oldRow.id, {
-      data: { ...oldRow.data, ...args.fields },
-      version: oldRow.version + 1,
-      updated_at: new Date()
-    });
-    if (!row) throw new Error(`Relation '${args.relationId}' not found`);
-    await logAudit(context.db, {
-      userId: context.actor.id,
-      userDisplayName: context.actor.displayName,
-      workspace: context.workspaceId,
-      operation: 'update',
-      entityType: 'relation',
-      entityId: row.id,
-      entityName: `${row.in_entity_name} → ${row.out_entity_name}`,
-      schemaId: row.schema_id,
-      changes: computeChanges(flattenRelationAuditFields(oldRow), flattenRelationAuditFields(row), {
-        alwaysInclude: ['_inEntityId', '_outEntityId']
+    const row = await withCatalogMutationTransaction(context.db, tx =>
+      updateRelationWithAudit(tx, {
+        workspace: context.workspaceId,
+        relationId: oldRow.id,
+        previous: oldRow,
+        next: {
+          data: { ...oldRow.data, ...args.fields },
+          version: oldRow.version + 1,
+          updated_at: new Date()
+        },
+        actor: { id: context.actor.id, displayName: context.actor.displayName }
       })
-    });
+    );
+    if (!row) throw new Error(`Relation '${args.relationId}' not found`);
     return toAiRelation(row, context.authCtx, new Map([[schema.id, schema]]));
   });
 
@@ -317,26 +302,14 @@ const createDeleteRelationTool = (context: AiChatToolContext) =>
     );
     if (context.authCtx)
       requireTypedRelationEdit(context.authCtx, endpointAccess.endpoints, row.schema_id);
-    await assertTypedRelationCardinality(context.db, context.workspaceId, [
-      {
-        relationSchemaId: row.schema_id,
-        inEntityId: row.in_entity_id,
-        outEntityId: row.out_entity_id,
-        delta: -1
-      }
-    ]);
-    await context.db.relation.deleteRelation(context.workspaceId, row.id);
-    await logAudit(context.db, {
-      userId: context.actor.id,
-      userDisplayName: context.actor.displayName,
-      workspace: context.workspaceId,
-      operation: 'delete',
-      entityType: 'relation',
-      entityId: row.id,
-      entityName: `${row.in_entity_name} → ${row.out_entity_name}`,
-      schemaId: row.schema_id,
-      changes: { old: flattenRelationAuditFields(row) }
-    });
+    await withCatalogMutationTransaction(context.db, tx =>
+      deleteRelationWithAudit(tx, {
+        workspace: context.workspaceId,
+        relation: row,
+        actor: { id: context.actor.id, displayName: context.actor.displayName },
+        versionNumber: row.version + 1
+      })
+    );
     return { success: true };
   });
 

@@ -7,9 +7,12 @@ import {
   flattenRelationAuditFields,
   relationAuditContext,
   relationToBaseState,
-  assertTypedRelationCardinality
+  assertTypedRelationCardinality,
+  assertRelationEndpointPairUniqueness
 } from './relationHelpers';
 import { assertCatalogMutationTransaction } from './mutationTransaction';
+import { DatabaseError } from '../../db/database';
+import { throwRelationConstraintError } from './relationConstraintErrors';
 import { materializeDerivedFields } from '../derived/derivedFields';
 import { recalculateEntityDerivedFields } from '../derived/derivedRecalculation';
 import { assertEntityGraphValid, validateEntityGraph } from './entityValidationRules';
@@ -70,6 +73,15 @@ export const createRelationWithAudit = async (
       }
     ]);
   }
+  await assertRelationEndpointPairUniqueness(db, params.workspace, [
+    {
+      relationSchemaId: params.relation.schema_id,
+      inEntityId: params.relation.in_entity_id,
+      outEntityId: params.relation.out_entity_id,
+      delta: 1,
+      relationId: params.relation.id
+    }
+  ]);
   const createSchema =
     typeof db.relation.getRelationSchema === 'function'
       ? await db.relation.getRelationSchema(params.workspace, params.relation.schema_id)
@@ -86,6 +98,26 @@ export const createRelationWithAudit = async (
       }
     : params.relation;
   const row = await db.relation.createRelation(relationInput);
+  try {
+    await db.relation.reserveRelationEndpointPairKey?.(params.workspace, {
+      id: row.id,
+      schema_id: row.schema_id,
+      in_entity_id: row.in_entity_id,
+      out_entity_id: row.out_entity_id
+    });
+  } catch (error) {
+    if (!(error instanceof DatabaseError) || error.code !== 'unique') throw error;
+    throwRelationConstraintError([
+      {
+        kind: 'endpoint_pair_unique',
+        relation_schema_id: row.schema_id,
+        in_entity_id: row.in_entity_id,
+        out_entity_id: row.out_entity_id,
+        existing_count: 1,
+        projected_count: 2
+      }
+    ]);
+  }
 
   await logAudit(db, {
     userId: params.actor.id,
@@ -145,6 +177,7 @@ export const deleteRelationWithAudit = async (
   }
   const deleted = await db.relation.deleteRelation(params.workspace, params.relation.id);
   if (deleted == null) return null;
+  await db.relation.releaseRelationEndpointPairKey?.(params.workspace, params.relation.id);
 
   await db.catalog.createEntityVersion({
     id: randomUUID(),
