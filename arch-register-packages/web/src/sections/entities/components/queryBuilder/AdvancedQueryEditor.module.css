@@ -1,0 +1,48 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 320px;
+  max-width: 640px;
+}
+
+.input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 84px;
+  padding: 7px 9px;
+  resize: vertical;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r);
+  background: var(--panel-bg, var(--base-bg, #fff));
+  color: var(--base-fg);
+  font-family: var(--font-mono, monospace);
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+
+.input:focus {
+  outline: 2px solid var(--accent-bg, var(--blue-9, #2f6feb));
+  outline-offset: -1px;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hint {
+  margin-left: auto;
+  color: var(--base-fg-dim);
+  font-size: 10px;
+}
+
+.error {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--error-fg, #e05252);
+  font-size: 11px;
+}

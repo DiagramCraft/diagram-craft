@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
-import { TbAlertTriangle, TbFilter } from 'react-icons/tb';
+import { useEffect, useRef, useState } from 'react';
+import { TbFilter } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Popover, type PopoverActions } from '@diagram-craft/app-components/Popover';
 import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
@@ -12,8 +12,8 @@ import type {
 } from '@arch-register/api-types/workspaceContract';
 import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 import { useWorkspaceAuthorization } from '../../auth/WorkspaceAuthorizationContext';
-import { SearchInput } from '../../components/SearchInput';
 import { QueryBuilder } from '../entities/components/queryBuilder/QueryBuilder';
+import { AdvancedQueryEditor } from '../entities/components/queryBuilder/AdvancedQueryEditor';
 import {
   countConditions,
   isVisuallyEditable
@@ -80,7 +80,7 @@ export const RelationQueryModeControls = ({
   useEffect(() => {
     if (mode !== 'advanced') return;
     let cancelled = false;
-    printMutate(relationQuery).then(res => {
+    printMutate({ query: relationQuery, pretty: true }).then(res => {
       if (!cancelled) setAdvancedText(res.text);
     });
     return () => {
@@ -93,7 +93,7 @@ export const RelationQueryModeControls = ({
     if (mode !== 'simple') return;
     let cancelled = false;
     const handle = setTimeout(() => {
-      printMutate(relationQuery).then(res => {
+      printMutate({ query: relationQuery, pretty: true }).then(res => {
         if (!cancelled) setTextPreview(res.text);
       });
     }, 250);
@@ -103,13 +103,32 @@ export const RelationQueryModeControls = ({
     };
   }, [mode, relationQuery, printMutate]);
 
+  const withProjections = (query: EntityQuery): EntityQuery =>
+    relationQuery.projections?.length
+      ? { ...query, projections: relationQuery.projections }
+      : query;
+
+  const formatAdvancedText = async () => {
+    if (!advancedText.trim()) {
+      setAdvancedErrors([]);
+      return;
+    }
+    const result = await parseText.mutateAsync(advancedText);
+    if (!result.ok) {
+      setAdvancedErrors(result.errors);
+      return;
+    }
+    const formatted = await printMutate({
+      query: withProjections(result.query),
+      pretty: true
+    });
+    setAdvancedErrors([]);
+    setAdvancedText(formatted.text);
+  };
+
   const submitAdvancedText = async (text: string) => {
     // Projection columns have no text-grammar syntax (specs/QUERY_LANGUAGE.md §10); carry them
     // through so a Simple ⇄ Advanced round-trip never drops them.
-    const withProjections = (query: EntityQuery): EntityQuery =>
-      relationQuery.projections?.length
-        ? { ...query, projections: relationQuery.projections }
-        : query;
     if (!text.trim()) {
       setAdvancedErrors([]);
       emit(withProjections({ root_kind: 'relation', root: { kind: 'and', children: [] } }));
@@ -124,10 +143,6 @@ export const RelationQueryModeControls = ({
     }
   };
 
-  const handleAdvancedKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') submitAdvancedText(advancedText);
-  };
-
   const handleAdvancedClear = () => {
     setAdvancedText('');
     submitAdvancedText('');
@@ -138,22 +153,18 @@ export const RelationQueryModeControls = ({
   return (
     <>
       {mode === 'advanced' && (
-        <div className={filterStyles.advancedQuery}>
-          <SearchInput
-            size="sm"
-            className={filterStyles.advancedSearchInput}
-            value={advancedText}
-            onChange={setAdvancedText}
-            onKeyDown={handleAdvancedKeyDown}
-            onClear={handleAdvancedClear}
-          />
-          {advancedErrors.length > 0 && (
-            <div className={filterStyles.advancedQueryError}>
-              <TbAlertTriangle size={12} />
-              <span>{advancedErrors[0]!.message}</span>
-            </div>
-          )}
-        </div>
+        <AdvancedQueryEditor
+          value={advancedText}
+          onChange={value => {
+            setAdvancedText(value);
+            if (advancedErrors.length > 0) setAdvancedErrors([]);
+          }}
+          onSubmit={() => void submitAdvancedText(advancedText)}
+          onFormat={() => void formatAdvancedText()}
+          onClear={handleAdvancedClear}
+          error={advancedErrors[0]?.message}
+          formatPending={parseText.isPending || printText.isPending}
+        />
       )}
 
       <Popover.Root actionsRef={filterPopoverRef}>

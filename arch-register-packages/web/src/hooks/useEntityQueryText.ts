@@ -16,11 +16,12 @@ export const useParseEntityQueryText = (workspaceId: string) =>
 
 export const usePrintEntityQueryText = (workspaceId: string) =>
   useMutation({
-    mutationFn: (
-      query: Parameters<typeof orpcClient.entityQueryText.printText>[0]['body']['query']
-    ) =>
+    mutationFn: (variables: {
+      query: Parameters<typeof orpcClient.entityQueryText.printText>[0]['body']['query'];
+      pretty?: boolean;
+    }) =>
       orpcClient.entityQueryText.printText({
         params: { workspace: workspaceId },
-        body: { query }
+        body: variables
       })
   });

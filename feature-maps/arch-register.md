@@ -551,7 +551,9 @@
           traversal, a relation-instance projection, or a same-instance scoped filter inside a projection opens with
           the Advanced text field shown until the corresponding visual editors are available. A field in a schema group the user cannot view is offered nowhere as a
           filter/sort option and is treated as unrecognized if referenced directly in an Advanced-mode query,
-          matching how the field is hidden elsewhere. Advanced queries can traverse typed relations and filter or
+          matching how the field is hidden elsewhere. The builder shows an always-visible, copyable pretty-printed
+          query preview, and the Advanced editor supports multiline text, formatting without applying the draft, and
+          Ctrl/Cmd+Enter to apply it. Advanced queries can traverse typed relations and filter or
           project their scalar relation fields; entity-valued relation fields are deferred to follow-up issue #2670.
           A before/after/on date filter (on a scalar entity or relation date field) can be set relative to today
           instead of a fixed date, with an optional day offset, so a saved view re-evaluates against the current

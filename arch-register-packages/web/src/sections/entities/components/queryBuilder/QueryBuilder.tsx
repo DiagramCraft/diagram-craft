@@ -18,6 +18,7 @@ import { addFreeTextQuery, getFreeTextQuery } from '../entityBrowserState';
 import { countHops, exceedsHopBudget, MAX_PATH_HOPS, toEditableRoot } from './queryBuilderState';
 import { QueryGroup } from './QueryTree';
 import { ProjectionEditor } from './ProjectionEditor';
+import { QueryPreview } from './QueryPreview';
 import styles from './queryBuilder.module.css';
 
 const ANY_TYPE = '__any_type__';
@@ -230,12 +231,7 @@ export const QueryBuilder = ({
         </div>
       )}
 
-      {textPreview !== undefined && (
-        <div className={styles.preview} title={textPreview}>
-          <span className={styles.previewLabel}>Query</span>
-          <code className={styles.previewText}>{textPreview || '(empty)'}</code>
-        </div>
-      )}
+      {textPreview !== undefined && <QueryPreview text={textPreview} />}
     </div>
   );
 };

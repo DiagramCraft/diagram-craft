@@ -505,14 +505,6 @@
   border-top: 1px solid var(--panel-border);
 }
 
-.preview {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  padding: 8px 12px 10px;
-  border-top: 1px solid var(--panel-border);
-}
-
 .previewLabel {
   flex-shrink: 0;
   font-size: 10px;
@@ -520,15 +512,4 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
   color: var(--base-fg-dim);
-}
-
-.previewText {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-family: var(--font-mono, monospace);
-  font-size: 11.5px;
-  color: var(--base-fg);
 }

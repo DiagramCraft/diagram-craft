@@ -619,7 +619,18 @@ export const workspaceEntityContract = oc.tag('Entities').router({
         description: 'Renders a structured EntityQuery IR back into its canonical text-query form.',
         tags: ['Entities']
       })
-      .input(z.object({ params: ws, body: z.object({ query: entityQuerySchema }) }))
+      .input(
+        z.object({
+          params: ws,
+          body: z.object({
+            query: entityQuerySchema,
+            pretty: z
+              .boolean()
+              .optional()
+              .describe('Render nested query expressions as readable multiline text')
+          })
+        })
+      )
       .output(z.object({ text: z.string() }))
   },
   entities: {

@@ -28996,6 +28996,10 @@
                     "required": [
                       "root"
                     ]
+                  },
+                  "pretty": {
+                    "type": "boolean",
+                    "description": "Render nested query expressions as readable multiline text"
                   }
                 },
                 "required": [
