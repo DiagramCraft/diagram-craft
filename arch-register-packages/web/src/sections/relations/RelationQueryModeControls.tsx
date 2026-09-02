@@ -103,10 +103,12 @@ export const RelationQueryModeControls = ({
     };
   }, [mode, relationQuery, printMutate]);
 
+  // `parseText` returns `projections` for `columns` clauses in the text (specs/QUERY_LANGUAGE.md
+  // §4.6); trust those and only fall back to the pre-edit set when the text expressed none (§10).
   const withProjections = (query: EntityQuery): EntityQuery =>
-    relationQuery.projections?.length
-      ? { ...query, projections: relationQuery.projections }
-      : query;
+    query.projections?.length || !relationQuery.projections?.length
+      ? query
+      : { ...query, projections: relationQuery.projections };
 
   const formatAdvancedText = async () => {
     if (!advancedText.trim()) {
@@ -127,8 +129,8 @@ export const RelationQueryModeControls = ({
   };
 
   const submitAdvancedText = async (text: string) => {
-    // Projection columns have no text-grammar syntax (specs/QUERY_LANGUAGE.md §10); carry them
-    // through so a Simple ⇄ Advanced round-trip never drops them.
+    // `columns` clauses in the text round-trip through `parseText`; `withProjections` only
+    // re-applies the pre-edit projections when the text expressed none (specs/QUERY_LANGUAGE.md §10).
     if (!text.trim()) {
       setAdvancedErrors([]);
       emit(withProjections({ root_kind: 'relation', root: { kind: 'and', children: [] } }));

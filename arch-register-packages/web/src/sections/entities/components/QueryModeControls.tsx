@@ -145,8 +145,14 @@ export const QueryModeControls = (props: QueryModeControlsProps) => {
     };
   }, [mode, canonical, printMutate, setEntityQuery]);
 
+  // `parseText` now returns `projections` for any `columns` clauses in the text
+  // (specs/QUERY_LANGUAGE.md §4.6). Trust the parsed set; only carry the pre-edit projections
+  // through when the text expressed none — the fallback for a projection with no representable
+  // text form (§10).
   const withProjections = (query: EntityQuery): EntityQuery =>
-    canonical.projections?.length ? { ...query, projections: canonical.projections } : query;
+    query.projections?.length || !canonical.projections?.length
+      ? query
+      : { ...query, projections: canonical.projections };
 
   const formatAdvancedText = async () => {
     if (!advancedText.trim()) {
@@ -167,10 +173,10 @@ export const QueryModeControls = (props: QueryModeControlsProps) => {
   };
 
   const submitAdvancedText = async (text: string) => {
-    // The text grammar only expresses "which entities match" - projection columns are a
-    // structured-IR / UI-only concern (specs/QUERY_LANGUAGE.md §4.6, §10), so `printText` omits
-    // them and `parseText` never returns any. Carry the current projections through unchanged so a
-    // Simple ⇄ Advanced round-trip on a query with a Columns section doesn't silently drop them.
+    // Projections authored as `columns` clauses (specs/QUERY_LANGUAGE.md §4.6) come back from
+    // `parseText`; `withProjections` only re-applies the pre-edit Columns section when the text
+    // itself expressed none, so an edited `columns` clause wins and a projection with no text form
+    // still survives the round-trip.
     if (!text.trim()) {
       setAdvancedErrors([]);
       setEntityQuery?.(withProjections({ root: { kind: 'and', children: [] } }));
