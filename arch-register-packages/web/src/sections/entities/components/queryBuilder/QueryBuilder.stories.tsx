@@ -850,17 +850,33 @@ export const ProjectionColumns = () => (
       projections: [
         { path: [fwd('system')], fieldId: 'tier', alias: 'System tier' },
         { path: [fwd('technology_releases')], fieldId: 'eol_date' },
-        { path: [fwd('system'), fwd('domain')], fieldId: '_id', chain: true },
-        {
-          path: [fwd('system')],
-          fieldId: 'criticality',
-          source: 'relation',
-          alias: 'Runs-on criticality'
-        }
+        { path: [fwd('system'), fwd('domain')], fieldId: '_id', chain: true }
       ]
     }}
   />
 );
+
+// A column projected through a scoped filter leaf's `[...]` witness (#3162): it renders inline
+// beneath the `technology_releases[eol_date < …]` condition and its path carries that step's filter.
+export const ProjectionColumnsOnFilterLeaf = () => {
+  const scopedStep: PathStep = {
+    kind: 'forward',
+    fieldId: 'technology_releases',
+    filter: { kind: 'and', children: [p('eol_date', 'before', '2026-06-30')] }
+  };
+  return (
+    <Harness
+      initial={{
+        schemaId: 'component',
+        root: { kind: 'and', children: [{ kind: 'relationExists', path: [scopedStep] }] },
+        projections: [
+          { path: [scopedStep], fieldId: 'eol_date', alias: 'TR EOL' },
+          { path: [scopedStep, fwd('technology')], fieldId: 'category', alias: 'Tech category' }
+        ]
+      }}
+    />
+  );
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Relation-rooted

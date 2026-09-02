@@ -1,58 +1,54 @@
-import { TbPlus, TbX } from 'react-icons/tb';
-import { Select } from '@diagram-craft/app-components/Select';
-import type { PathStep, ProjectionField } from '@arch-register/api-types/entityQueryIR';
-import { getEntityFilterFieldDefs } from '../../../../components/FilterBuilder';
-import type { FieldDef } from '../../../../components/FilterBuilder';
-import { getRelationOwnFieldDefs } from '../../../relations/relationFilterFields';
-import { HopPicker } from '../pathBuilder/HopPicker';
-import { HopSequence } from '../pathBuilder/HopSequence';
-import {
-  pathStepOptions,
-  positionStepContext,
-  positionStepContextWithFallbackDirection,
-  prunePositionedPathSteps,
-  relationBackwardOptions,
-  terminalPosition
-} from '../pathBuilder/pathBuilderState';
-import { singleTerminalSchemaId } from './leafPath';
-import { isPathVisuallyEditable, isRelationPathVisuallyEditable } from './queryBuilderState';
+import { TbPlus } from 'react-icons/tb';
+import type { ProjectionField, QueryNode } from '@arch-register/api-types/entityQueryIR';
+import { positionStepContextWithFallbackDirection } from '../pathBuilder/pathBuilderState';
+import { collectLeafPaths, projectionOwningLeafPath } from './queryBuilderState';
+import { ProjectionRow } from './ProjectionRow';
 import type { LeafContext } from './types';
 import styles from './queryBuilder.module.css';
 
 type Props = {
   projections: ProjectionField[];
   onChange: (projections: ProjectionField[]) => void;
+  /** The query tree - columns anchored to a filter leaf are edited under that leaf in `QueryTree`,
+   *  so this section only shows the standalone (never-filtered / `path: []`) ones. */
+  root: QueryNode;
   leafCtx: LeafContext;
 };
 
 /**
- * The builder's "Columns" section (#2354, plan phase 8). Each projection is a `HopSequence` of
- * `HopPicker`s (reusing the leaf's traversal infra) ending on a terminal scalar field, plus an
- * optional alias and a "whole chain" toggle (`chain: true`). Same `MAX_PATH_HOPS` budget as
- * everything else - `countHops` already accounts for projection paths. A projection the editor
- * can't represent (a `source: 'relation'` read, or a relation-context step) renders read-only.
+ * The builder's standalone "Columns" section (#2354 phase 8): columns whose traversal isn't tied to
+ * a filter leaf. A column projected through a `[...]`-scoped hop is edited inline under that leaf
+ * (#3162); everything else - a never-filtered traversal, or a bare root-field read - lives here.
  */
-export const ProjectionEditor = ({ projections, onChange, leafCtx }: Props) => {
-  const { schemas, relationSchemas, enums, lifecycleStates, owners, atHopLimit } = leafCtx;
-  const { getFieldGroupAccess, rootKind, rootPosition } = leafCtx;
-
+export const ProjectionEditor = ({ projections, onChange, root, leafCtx }: Props) => {
+  const { schemas, relationSchemas, getFieldGroupAccess, rootPosition } = leafCtx;
   const hopArgs = { rootPosition, schemas, relationSchemas, getFieldGroupAccess };
-  const isPathEditable = (path: PathStep[]) =>
-    rootKind === 'relation' ? isRelationPathVisuallyEditable(path) : isPathVisuallyEditable(path);
+  const leafPaths = collectLeafPaths(root);
+  const isStandalone = (projection: ProjectionField) =>
+    projectionOwningLeafPath(projection.path, leafPaths) === undefined;
 
-  const update = (index: number, next: ProjectionField) =>
-    onChange(projections.map((projection, i) => (i === index ? next : projection)));
+  const standalone = projections.filter(isStandalone);
 
-  const editPath = (index: number, path: PathStep[]) => {
-    const pruned = prunePositionedPathSteps(path, hopArgs);
-    update(index, { ...projections[index]!, path: pruned });
-  };
+  const replace = (target: ProjectionField, next: ProjectionField) =>
+    onChange(projections.map(projection => (projection === target ? next : projection)));
+  const remove = (target: ProjectionField) =>
+    onChange(projections.filter(projection => projection !== target));
 
   const addProjection = () => {
     const context = positionStepContextWithFallbackDirection({ ...hopArgs, steps: [], depth: 0 });
     if (!context.options[0]) return;
     onChange([...projections, { path: [context.options[0].step], fieldId: '_name' }]);
   };
+
+  if (standalone.length === 0) {
+    return (
+      <div className={styles.columns}>
+        <button type="button" className={styles.addBtn} onClick={addProjection}>
+          <TbPlus size={11} /> Add column
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.columns}>
@@ -63,199 +59,16 @@ export const ProjectionEditor = ({ projections, onChange, leafCtx }: Props) => {
         </span>
       </div>
 
-      {projections.map((projection, index) => {
-        if (projection.source === 'relation' || !isPathEditable(projection.path)) {
-          return (
-            <div key={index} className={styles.advancedLeaf}>
-              <span className={styles.advancedLeafText}>
-                {projection.alias ?? projection.fieldId}
-              </span>
-              <span className={styles.advancedLeafBadge}>text-only</span>
-              <button
-                type="button"
-                className={styles.removeBtn}
-                title="Remove column"
-                onClick={() => onChange(projections.filter((_, i) => i !== index))}
-              >
-                <TbX size={11} />
-              </button>
-            </div>
-          );
-        }
-
-        const terminal = terminalPosition(projection.path, hopArgs);
-        const terminalFields: FieldDef[] =
-          terminal.kind === 'relation'
-            ? getRelationOwnFieldDefs({
-                relationSchemas,
-                relationScope: terminal.relationScope,
-                enums,
-                getFieldGroupAccess
-              })
-            : getEntityFilterFieldDefs({
-                schemas,
-                lifecycleStates,
-                owners,
-                enums,
-                selectedSchemaId: singleTerminalSchemaId(terminal.schemaScope),
-                getFieldGroupAccess
-              });
-        const nextHop = positionStepContextWithFallbackDirection({
-          ...hopArgs,
-          steps: projection.path,
-          depth: projection.path.length
-        });
-
-        return (
-          <div key={index} className={styles.projectionRow}>
-            <div className={styles.traversalHead}>
-              <HopSequence
-                items={projection.path}
-                getItemKey={(_step, depth) => depth}
-                onAdd={() => {
-                  if (nextHop.options[0]) {
-                    editPath(index, [...projection.path, nextHop.options[0].step]);
-                  }
-                }}
-                addLabel="hop"
-                addDisabled={atHopLimit || nextHop.options.length === 0}
-                renderItem={(step, depth) => {
-                  const stepContext = positionStepContext({
-                    ...hopArgs,
-                    steps: projection.path,
-                    depth
-                  });
-                  return (
-                    <div className={styles.hop}>
-                      <HopPicker
-                        step={step}
-                        stepContext={stepContext}
-                        ariaLabelDirection={`Direction for column ${index + 1} hop ${depth + 1}`}
-                        ariaLabelHop={`Relation for column ${index + 1} hop ${depth + 1}`}
-                        hideDirectionToggle={!stepContext.hasDirectionToggle}
-                        onChangeStep={nextStep =>
-                          editPath(
-                            index,
-                            projection.path.map((s, i) => (i === depth ? nextStep : s))
-                          )
-                        }
-                        onToggleDirection={direction => {
-                          const ctx = positionStepContext({
-                            ...hopArgs,
-                            steps: projection.path,
-                            depth
-                          });
-                          // No direction toggle at a relation position (see `hideDirectionToggle`
-                          // above) - the toggle button isn't rendered there, so this is unreachable,
-                          // but keep it a no-op rather than assuming an entity scope exists.
-                          if (ctx.currentPosition.kind !== 'entity') return;
-                          const options =
-                            direction === ctx.direction
-                              ? ctx.options
-                              : [
-                                  ...pathStepOptions({
-                                    direction,
-                                    currentSchemaScope: ctx.currentPosition.schemaScope,
-                                    schemas,
-                                    relationSchemas,
-                                    getFieldGroupAccess
-                                  }),
-                                  ...(direction === 'out'
-                                    ? relationBackwardOptions({
-                                        schemaScope: ctx.currentPosition.schemaScope,
-                                        schemas,
-                                        relationSchemas,
-                                        getFieldGroupAccess
-                                      })
-                                    : [])
-                                ];
-                          if (options[0]) {
-                            editPath(
-                              index,
-                              projection.path.map((s, i) => (i === depth ? options[0]!.step : s))
-                            );
-                          }
-                        }}
-                      />
-                      {depth === projection.path.length - 1 && (
-                        <button
-                          type="button"
-                          className={styles.hopRm}
-                          title="Remove hop"
-                          onClick={() => editPath(index, projection.path.slice(0, -1))}
-                        >
-                          <TbX size={11} />
-                        </button>
-                      )}
-                    </div>
-                  );
-                }}
-              />
-              <button
-                type="button"
-                className={styles.removeBtn}
-                title="Remove column"
-                onClick={() => onChange(projections.filter((_, i) => i !== index))}
-              >
-                <TbX size={11} />
-              </button>
-            </div>
-
-            <div className={styles.projectionTerminal}>
-              {/* `chain: true` only supports the four entity-to-entity hop kinds
-                  (entityQueryIR.ts's `ProjectionField.chain` doc) - a relation-rooted path always
-                  starts with a relation-context step (`endpoint`/`relationForward`), so it's never
-                  chain-eligible. */}
-              {rootKind === 'entity' && (
-                <label className={styles.projectionChain}>
-                  <input
-                    type="checkbox"
-                    checked={projection.chain === true}
-                    onChange={event =>
-                      update(index, {
-                        ...projection,
-                        chain: event.target.checked ? true : undefined,
-                        fieldId: event.target.checked ? '_id' : '_name'
-                      })
-                    }
-                  />
-                  whole chain
-                </label>
-              )}
-
-              {projection.chain !== true && (
-                <div className={styles.projectionField}>
-                  <Select.Root
-                    value={projection.fieldId}
-                    onChange={value =>
-                      update(index, { ...projection, fieldId: value ?? projection.fieldId })
-                    }
-                  >
-                    {terminalFields.map(field => (
-                      <Select.Item key={field.id} value={field.id}>
-                        {field.name}
-                      </Select.Item>
-                    ))}
-                  </Select.Root>
-                </div>
-              )}
-
-              <input
-                className={styles.projectionAlias}
-                type="text"
-                placeholder="column name (optional)"
-                value={projection.alias ?? ''}
-                onChange={event =>
-                  update(index, {
-                    ...projection,
-                    alias: event.target.value ? event.target.value : undefined
-                  })
-                }
-              />
-            </div>
-          </div>
-        );
-      })}
+      {standalone.map((projection, index) => (
+        <ProjectionRow
+          key={projections.indexOf(projection)}
+          projection={projection}
+          onChange={next => replace(projection, next)}
+          onRemove={() => remove(projection)}
+          leafCtx={leafCtx}
+          label={`column ${index + 1}`}
+        />
+      ))}
 
       <button type="button" className={styles.addBtn} onClick={addProjection}>
         <TbPlus size={11} /> Add column

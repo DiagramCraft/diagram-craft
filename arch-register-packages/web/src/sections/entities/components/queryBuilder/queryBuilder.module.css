@@ -385,6 +385,24 @@
   background: color-mix(in srgb, var(--base-fg) 4%, transparent);
 }
 
+/* ── Projection columns attached to a filter leaf (#3162) ── */
+.leafColumns {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+  margin-left: 0.75rem;
+  padding: 6px 8px;
+  border: 1px solid var(--panel-border);
+  border-left: 3px solid var(--cmp-fg-disabled);
+  border-radius: var(--r);
+  background: color-mix(in srgb, var(--base-fg) 4%, transparent);
+}
+.leafColumns > .projectionRow:last-of-type {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
 /* ── Read-only advanced leaves ── */
 .advancedLeaf {
   display: flex;

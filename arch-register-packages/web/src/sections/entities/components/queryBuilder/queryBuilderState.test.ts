@@ -2,15 +2,19 @@ import { describe, expect, it } from 'vitest';
 import type { EntityQuery, QueryNode } from '@arch-register/api-types/entityQueryIR';
 import {
   addChild,
+  collectLeafPaths,
   countHops,
   emptyGroup,
   emptyPredicate,
   exceedsHopBudget,
   fromEditableRoot,
   getNode,
+  isProjectionPathVisuallyEditable,
   isVisuallyEditable,
+  projectionOwningLeafPath,
   removeNode,
   setGroupKind,
+  syncProjectionsToTree,
   toEditableRoot,
   toggleNot,
   updateNode,
@@ -572,6 +576,146 @@ describe('isVisuallyEditable', () => {
       ]
     };
     expect(isVisuallyEditable(residencyInvalidTransfers)).toBe(true);
+  });
+});
+
+describe('isProjectionPathVisuallyEditable (#3162)', () => {
+  it('accepts an entity-to-entity path landing on an entity', () => {
+    expect(
+      isProjectionPathVisuallyEditable([{ kind: 'forward', fieldId: 'system' }], 'entity')
+    ).toBe(true);
+  });
+
+  it('accepts a relation-rooted relationForward path', () => {
+    expect(
+      isProjectionPathVisuallyEditable(
+        [{ kind: 'relationForward', fieldId: 'data_entities' }],
+        'relation'
+      )
+    ).toBe(true);
+  });
+
+  it('rejects a path that lands on a relation instance without source: relation', () => {
+    expect(
+      isProjectionPathVisuallyEditable(
+        [{ kind: 'relationBackward', fieldId: 'rel', relationSchemaId: 'r1' }],
+        'entity'
+      )
+    ).toBe(false);
+  });
+
+  it('accepts source: relation only when the path ends at a typed relation', () => {
+    expect(
+      isProjectionPathVisuallyEditable(
+        [
+          {
+            kind: 'typedRelation',
+            fieldId: 'deps',
+            relationSchemaId: 'r1',
+            direction: 'out',
+            ownerSchemaIds: ['s1']
+          }
+        ],
+        'entity',
+        'relation'
+      )
+    ).toBe(true);
+    expect(
+      isProjectionPathVisuallyEditable(
+        [{ kind: 'forward', fieldId: 'system' }],
+        'entity',
+        'relation'
+      )
+    ).toBe(false);
+  });
+
+  it('allows a witness filter on any step (the owning leaf renders it)', () => {
+    expect(
+      isProjectionPathVisuallyEditable(
+        [
+          {
+            kind: 'forward',
+            fieldId: 'system',
+            filter: { kind: 'predicate', path: [], fieldId: '_name', op: 'equals', value: 'x' }
+          },
+          { kind: 'forward', fieldId: 'domain' }
+        ],
+        'entity'
+      )
+    ).toBe(true);
+  });
+});
+
+describe('projection ↔ tree anchoring (#3162)', () => {
+  const scopedStep = {
+    kind: 'forward' as const,
+    fieldId: 'system',
+    filter: {
+      kind: 'predicate' as const,
+      path: [],
+      fieldId: '_name',
+      op: 'equals' as const,
+      value: 'A'
+    }
+  };
+
+  it('collectLeafPaths gathers traversal paths, skips flat predicates', () => {
+    const root: QueryNode = {
+      kind: 'and',
+      children: [
+        predicate('_name'),
+        { kind: 'relationExists', path: [scopedStep] },
+        {
+          kind: 'predicate',
+          path: [{ kind: 'forward', fieldId: 'system' }],
+          fieldId: 'tier',
+          op: 'equals',
+          value: 'gold'
+        }
+      ]
+    };
+    expect(collectLeafPaths(root)).toEqual([
+      [scopedStep],
+      [{ kind: 'forward', fieldId: 'system' }]
+    ]);
+  });
+
+  it('projectionOwningLeafPath picks the longest structural prefix', () => {
+    const leafPaths = [
+      [{ kind: 'forward' as const, fieldId: 'system' }],
+      [
+        { kind: 'forward' as const, fieldId: 'system' },
+        { kind: 'forward' as const, fieldId: 'owner' }
+      ]
+    ];
+    const owner = projectionOwningLeafPath(
+      [
+        { kind: 'forward', fieldId: 'system' },
+        { kind: 'forward', fieldId: 'owner' },
+        { kind: 'forward', fieldId: 'team' }
+      ],
+      leafPaths
+    );
+    expect(owner).toEqual(leafPaths[1]);
+  });
+
+  it('syncProjectionsToTree re-anchors a column to its leaf current steps', () => {
+    const stale = { kind: 'forward' as const, fieldId: 'system' };
+    const query: EntityQuery = {
+      root: { kind: 'relationExists', path: [scopedStep] },
+      projections: [{ path: [stale], fieldId: 'tier' }]
+    };
+    const synced = syncProjectionsToTree(query);
+    expect(synced.projections?.[0]!.path).toEqual([scopedStep]);
+  });
+
+  it('syncProjectionsToTree strips an orphaned column terminal filter', () => {
+    const query: EntityQuery = {
+      root: { kind: 'and', children: [] },
+      projections: [{ path: [scopedStep], fieldId: 'tier' }]
+    };
+    const synced = syncProjectionsToTree(query);
+    expect(synced.projections?.[0]!.path).toEqual([{ kind: 'forward', fieldId: 'system' }]);
   });
 });
 

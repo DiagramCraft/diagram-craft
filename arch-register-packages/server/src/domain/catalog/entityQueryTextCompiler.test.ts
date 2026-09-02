@@ -1495,4 +1495,69 @@ describe('columns projection sub-clause (specs/QUERY_LANGUAGE.md §4.6)', () => 
     ]);
     expect(parseOk(printEntityQueryText(query, schemas))).toEqual(query);
   });
+
+  it('round-trips a capture that traverses past a scoped segment', () => {
+    const text =
+      'schema:Component technology_releases[eol_date < date("2026-06-30") columns technology.category as "Tech category"]';
+    const query = parseOk(text);
+    expect(query.projections).toEqual([
+      {
+        path: [
+          {
+            kind: 'forward',
+            fieldId: 'technology_releases',
+            filter: {
+              kind: 'predicate',
+              path: [],
+              fieldId: 'eol_date',
+              op: 'before',
+              value: '2026-06-30'
+            }
+          },
+          { kind: 'forward', fieldId: 'technology' }
+        ],
+        fieldId: 'category',
+        alias: 'Tech category'
+      }
+    ]);
+    expect(parseOk(printEntityQueryText(query, schemas))).toEqual(query);
+  });
+
+  it('round-trips a source:relation capture off a typed relation link', () => {
+    const parseTypedOk = (text: string): EntityQuery => {
+      const result = parseEntityQueryText(text, typedSchemas, enums, null, relationSchemas);
+      if (!result.ok) throw new Error(`expected ok, got: ${JSON.stringify(result.errors)}`);
+      return result.query;
+    };
+    const text =
+      'schema:"Typed System" data_flows_out[status = "active" columns status as "Flow status"]';
+    const query = parseTypedOk(text);
+    expect(query.projections).toEqual([
+      {
+        path: [
+          {
+            kind: 'typedRelation',
+            fieldId: 'data_flows_out',
+            relationSchemaId: DATA_FLOW.id,
+            direction: 'out',
+            ownerSchemaIds: [TYPED_SYSTEM.id],
+            filter: {
+              kind: 'predicate',
+              path: [],
+              fieldId: 'status',
+              op: 'equals',
+              value: 'active'
+            }
+          }
+        ],
+        fieldId: 'status',
+        source: 'relation',
+        alias: 'Flow status'
+      }
+    ]);
+    const printed = printEntityQueryText(query, typedSchemas, relationSchemas);
+    expect(printed).toContain('columns status as "Flow status"');
+    const reparsed = parseEntityQueryText(printed, typedSchemas, enums, null, relationSchemas);
+    expect(reparsed).toEqual({ ok: true, query });
+  });
 });

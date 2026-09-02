@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { TbMinus, TbPlus, TbX } from 'react-icons/tb';
-import type { PathStep, QueryNode } from '@arch-register/api-types/entityQueryIR';
+import type { PathStep, ProjectionField, QueryNode } from '@arch-register/api-types/entityQueryIR';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
 import {
   FilterRow,
@@ -19,18 +19,21 @@ import {
 import { getRelationOwnFieldDefs } from '../../../relations/relationFilterFields';
 import {
   addChild,
+  collectLeafPaths,
   emptyGroup,
   emptyPredicate,
   getNode,
   isGroupNode,
   isPathVisuallyEditable,
   isRelationPathVisuallyEditable,
+  projectionOwningLeafPath,
   removeNode,
   setGroupKind,
   toggleNot,
   updateNode
 } from './queryBuilderState';
 import type { NodePath } from './queryBuilderState';
+import { ProjectionRow } from './ProjectionRow';
 import {
   asFieldPredicate,
   asRelationExists,
@@ -286,6 +289,7 @@ export const QueryNodeView = ({
       </div>
       <QueryLeaf
         node={content}
+        root={root}
         fields={leafFields}
         leafCtx={leafCtx}
         onChange={next => onRootChange(updateNode(root, contentPath, () => next))}
@@ -351,12 +355,14 @@ const stripStepFilter = (step: PathStep): PathStep => {
  */
 export const QueryLeaf = ({
   node,
+  root,
   fields,
   leafCtx,
   onChange,
   onRemove
 }: {
   node: LeafNode;
+  root: QueryNode;
   fields: FieldDef[];
   leafCtx: LeafContext;
   onChange: (node: QueryNode) => void;
@@ -609,6 +615,30 @@ export const QueryLeaf = ({
 
   const terminalFields = fieldsForPosition(positionAfterHop(path.length - 1));
 
+  // Projection columns projected *through* this leaf's `[...]` witness (#3162). A column is
+  // attached here when this leaf's path is the longest tree leaf path that structurally prefixes
+  // the column's path. Not offered inside a scoped `[...]` filter (its path is hop-relative, not
+  // absolute) or on surfaces that don't track projections.
+  const columnsEditable =
+    !leafCtx.inScopedFilter && !!leafCtx.onProjectionsChange && path.length > 0;
+  const allLeafPaths = columnsEditable ? collectLeafPaths(root) : [];
+  const inlineColumns: { projection: ProjectionField; index: number }[] = columnsEditable
+    ? (leafCtx.projections ?? [])
+        .map((projection, index) => ({ projection, index }))
+        .filter(({ projection }) => {
+          const owner = projectionOwningLeafPath(projection.path, allLeafPaths);
+          return owner !== undefined && owner.length === path.length;
+        })
+    : [];
+
+  const setColumns = (next: ProjectionField[]) => leafCtx.onProjectionsChange?.(next);
+  const replaceColumn = (index: number, next: ProjectionField) =>
+    setColumns((leafCtx.projections ?? []).map((p, i) => (i === index ? next : p)));
+  const removeColumn = (index: number) =>
+    setColumns((leafCtx.projections ?? []).filter((_, i) => i !== index));
+  const addColumn = () =>
+    setColumns([...(leafCtx.projections ?? []), { path: [...path], fieldId: '_name' }]);
+
   return (
     <div className={styles.traversalLeaf}>
       <button
@@ -749,6 +779,25 @@ export const QueryLeaf = ({
           </div>
         )}
       </div>
+
+      {columnsEditable && (
+        <div className={styles.leafColumns}>
+          {inlineColumns.map(({ projection, index }, position) => (
+            <ProjectionRow
+              key={index}
+              projection={projection}
+              onChange={next => replaceColumn(index, next)}
+              onRemove={() => removeColumn(index)}
+              leafCtx={leafCtx}
+              lockedPrefixLength={path.length}
+              label={`column ${position + 1}`}
+            />
+          ))}
+          <button type="button" className={styles.addBtn} onClick={addColumn}>
+            <TbPlus size={11} /> column
+          </button>
+        </div>
+      )}
     </div>
   );
 };

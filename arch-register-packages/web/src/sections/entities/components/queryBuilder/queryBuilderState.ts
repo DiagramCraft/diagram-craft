@@ -5,6 +5,7 @@ import {
   type ProjectionField,
   type QueryNode
 } from '@arch-register/api-types/entityQueryIR';
+import { pathStepKey } from '../pathBuilder/pathBuilderState';
 
 // Pure, framework-free helpers behind the visual query builder (#2354). Everything here operates on
 // the `EntityQuery` IR (entityQueryIR.ts) directly - the builder never invents a parallel model.
@@ -292,26 +293,144 @@ export const isRelationPathVisuallyEditable = (path: PathStep[]): boolean =>
 const relationNodeIsVisuallyEditable = (node: QueryNode): boolean =>
   positionedNodeIsVisuallyEditable(node, 'relation');
 
-const relationProjectionIsVisuallyEditable = (projection: ProjectionField): boolean =>
-  projection.source !== 'relation' && isRelationPathVisuallyEditable(projection.path);
+// --- Projection column path editability & tree anchoring (#3162) -----------------------------
+
+/** True when the visual builder can render an editor for a projection column's `path` (given the
+ *  query's root position). Like `isPositionedPathVisuallyEditable`, but for the projection shape:
+ *  a `[...]` filter is allowed on the **final** (witness-binding) step only - it belongs to the
+ *  owning filter leaf, which renders it, not the column row - and a `source: 'relation'` column
+ *  must end at a `typedRelation`/`unboundTypedRelation` step, while every other column must land on
+ *  an entity. Mirrors `entityQueryIRValidator.ts`'s projection rules. */
+export const isProjectionPathVisuallyEditable = (
+  path: PathStep[],
+  rootPosition: PathPositionKind,
+  source?: 'entity' | 'relation'
+): boolean => {
+  if (path.length === 0) return true;
+  let position = rootPosition;
+  for (let i = 0; i < path.length; i += 1) {
+    const step = path[i]!;
+    if (!isRelationStepLegalAt(step, position)) return false;
+    // A `[...]` filter on a step belongs to the owning filter leaf (which renders it); the column
+    // row treats those steps as a locked prefix. Witness-binding correctness is enforced by
+    // `syncProjectionsToTree` + the server validator, not here.
+    position = kindAfterStep(step);
+  }
+  if (source === 'relation') {
+    const last = path[path.length - 1]!;
+    return last.kind === 'typedRelation' || last.kind === 'unboundTypedRelation';
+  }
+  return position === 'entity';
+};
+
+const projectionIsVisuallyEditable = (
+  projection: ProjectionField,
+  rootPosition: PathPositionKind
+): boolean => isProjectionPathVisuallyEditable(projection.path, rootPosition, projection.source);
 
 /** True when every node in `query` is one the visual builder can currently edit in place. An
  *  entity query qualifies with a boolean tree of `path: []` / relation-traversal predicates plus
  *  free-text; a relation query qualifies with relation-field / `endpoint`/`relationForward`/
- *  `relationBackward` predicates. A `source: 'relation'` projection, or a shape a later phase still
- *  owns, is still *displayed* by the builder (read-only summaries) but the wiring layer keeps the
- *  whole query in Advanced text mode. */
+ *  `relationBackward` predicates. A projection shape a later phase still owns is still *displayed*
+ *  by the builder (read-only summaries) but the wiring layer keeps the whole query in Advanced
+ *  text mode. */
 export const isVisuallyEditable = (query: EntityQuery): boolean => {
-  if ((query.root_kind ?? 'entity') === 'relation') {
-    const projectionsEditable = (query.projections ?? []).every(
-      relationProjectionIsVisuallyEditable
-    );
-    return projectionsEditable && relationNodeIsVisuallyEditable(query.root);
-  }
-  const projectionsEditable = (query.projections ?? []).every(
-    projection => projection.source !== 'relation' && isPathVisuallyEditable(projection.path)
+  const rootPosition: PathPositionKind =
+    (query.root_kind ?? 'entity') === 'relation' ? 'relation' : 'entity';
+  const projectionsEditable = (query.projections ?? []).every(projection =>
+    projectionIsVisuallyEditable(projection, rootPosition)
   );
-  return projectionsEditable && nodeIsVisuallyEditable(query.root);
+  const nodeEditable =
+    rootPosition === 'relation'
+      ? relationNodeIsVisuallyEditable(query.root)
+      : nodeIsVisuallyEditable(query.root);
+  return projectionsEditable && nodeEditable;
+};
+
+/** Every traversal path (≥1 step) used by a `predicate`/`relationExists` leaf in the tree - the
+ *  client counterpart of the server's `collectRootPathOccurrences`. */
+export const collectLeafPaths = (root: QueryNode): PathStep[][] => {
+  const out: PathStep[][] = [];
+  const walk = (node: QueryNode): void => {
+    switch (node.kind) {
+      case 'and':
+      case 'or':
+        node.children.forEach(walk);
+        return;
+      case 'not':
+        walk(node.child);
+        return;
+      case 'predicate':
+      case 'relationExists':
+        if (node.path.length > 0) out.push(node.path);
+        return;
+      default:
+        return;
+    }
+  };
+  walk(root);
+  return out;
+};
+
+/** `prefix` matches the leading steps of `path` by kind/target (filter node ignored). */
+export const pathStructurallyStartsWith = (prefix: PathStep[], path: PathStep[]): boolean =>
+  prefix.length <= path.length &&
+  prefix.every((step, index) => pathStepKey(step) === pathStepKey(path[index]!));
+
+/** The tree leaf path a projection column is anchored to: the longest leaf path that structurally
+ *  prefixes the column's path (filter-insensitive). `undefined` for a standalone column. */
+export const projectionOwningLeafPath = (
+  projectionPath: PathStep[],
+  leafPaths: PathStep[][]
+): PathStep[] | undefined => {
+  let best: PathStep[] | undefined;
+  for (const leafPath of leafPaths) {
+    if (
+      leafPath.length > 0 &&
+      pathStructurallyStartsWith(leafPath, projectionPath) &&
+      (best === undefined || leafPath.length > best.length)
+    ) {
+      best = leafPath;
+    }
+  }
+  return best;
+};
+
+export const stripStepFilter = (step: PathStep): PathStep => {
+  if (!('filter' in step) || !step.filter) return step;
+  const copy = { ...step };
+  delete (copy as { filter?: unknown }).filter;
+  return copy;
+};
+
+/** Re-anchor every projection column to the current tree (pure): rewrite an anchored column's
+ *  leading steps to its owning leaf's current steps - carrying that leaf's `[...]` filter, for the
+ *  #3154 witness binding - and strip the terminal-step filter of a column that no longer matches
+ *  any leaf, so it can't fail the validator's "witness filter must match a root occurrence" rule.
+ *  Route every builder write through this. */
+export const syncProjectionsToTree = (query: EntityQuery): EntityQuery => {
+  const projections = query.projections;
+  if (!projections || projections.length === 0) return query;
+  const leafPaths = collectLeafPaths(query.root);
+  let changed = false;
+  const next = projections.map(projection => {
+    const owner = projectionOwningLeafPath(projection.path, leafPaths);
+    if (owner) {
+      const rebased = [...owner, ...projection.path.slice(owner.length)];
+      if (JSON.stringify(rebased) === JSON.stringify(projection.path)) return projection;
+      changed = true;
+      return { ...projection, path: rebased };
+    }
+    const last = projection.path[projection.path.length - 1];
+    if (last && 'filter' in last && last.filter) {
+      changed = true;
+      const cleaned = projection.path.slice();
+      cleaned[cleaned.length - 1] = stripStepFilter(last);
+      return { ...projection, path: cleaned };
+    }
+    return projection;
+  });
+  return changed ? { ...query, projections: next } : query;
 };
 
 const countNodeConditions = (node: QueryNode): number => {
