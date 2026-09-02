@@ -29,6 +29,19 @@ describe('entity query text tokenizer', () => {
     });
   });
 
+  it('tokenizes a comma (columns clause separator) and keeps `columns`/`chain`/`as` as idents', () => {
+    expect(tokenize('columns a, chain b as "x"').map(t => [t.kind, t.text])).toEqual([
+      ['IDENT', 'columns'],
+      ['IDENT', 'a'],
+      ['COMMA', ','],
+      ['IDENT', 'chain'],
+      ['IDENT', 'b'],
+      ['IDENT', 'as'],
+      ['STRING', '"x"'],
+      ['EOF', '']
+    ]);
+  });
+
   it('reports invalid escapes at the offending source position', () => {
     expect(() => tokenize('"bad\\n"')).toThrowError(/Invalid escape sequence/);
   });

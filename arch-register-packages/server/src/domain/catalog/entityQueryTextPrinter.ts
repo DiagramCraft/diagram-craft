@@ -2,6 +2,7 @@ import {
   type EntityQuery,
   type FilterOp,
   type PathStep,
+  type ProjectionField,
   type QueryNode
 } from '@arch-register/api-types/entityQueryIR';
 import {
@@ -15,6 +16,12 @@ import type { SchemaField } from '@arch-register/api-types/schemaContract';
 import type { RelationField } from '@arch-register/api-types/relationSchemaContract';
 import { isNowDateLiteral } from '@arch-register/api-types/nowDateLiteral';
 import { relationSchemaNameById, schemaNameById } from './entityQueryTextResolver';
+import { collectRootPathOccurrences, entityQueryPathStartsWith } from './entityQueryIRPlan';
+
+// Pre-rendered `columns` capture entries, keyed by the identity of the `PathStep` in `query.root`
+// that a projection binds to. Populated per `printEntityQueryText` call, read by `printScope`.
+type ColumnEntry = { chain: boolean; tail: string; alias?: string };
+let activeColumnsByStep: WeakMap<PathStep, ColumnEntry[]> | null = null;
 
 export type EntityQueryTextPrintOptions = {
   /** Render nested boolean expressions and scoped filters on multiple indented lines. */
@@ -154,8 +161,54 @@ type NodePrinter = (
   isRoot: boolean
 ) => string;
 
-const printFilter = (
-  filter: QueryNode,
+const stepName = (
+  step: PathStep,
+  schemas: SchemaCatalog,
+  relationSchemas: RelationSchemaCatalog
+): string => {
+  switch (step.kind) {
+    case 'forward':
+    case 'relationForward':
+    case 'typedRelation':
+      return step.fieldId;
+    case 'backward':
+      return `<-${printSchemaRef(schemaNameById(schemas, step.ownerSchemaId))}.${step.fieldId}`;
+    case 'relationBackward':
+      return `<-${printSchemaRef(relationSchemaNameById(relationSchemas, step.relationSchemaId))}.${step.fieldId}`;
+    case 'unboundTypedRelation':
+      return `${step.direction === 'in' ? '->' : '<-'}${printSchemaRef(
+        relationSchemaNameById(relationSchemas, step.relationSchemaId)
+      )}`;
+    case 'endpoint':
+      return step.direction === 'in' ? '_in' : '_out';
+  }
+};
+
+// Renders a `capture_path` (traversal + optional terminal field) as it appears inside `columns`.
+const renderCaptureTail = (
+  steps: PathStep[],
+  terminalFieldId: string | null,
+  schemas: SchemaCatalog,
+  relationSchemas: RelationSchemaCatalog
+): string => {
+  const parts = steps.map(step => stepName(step, schemas, relationSchemas));
+  if (terminalFieldId !== null) parts.push(terminalFieldId);
+  return parts.join('.');
+};
+
+const renderColumnsClause = (entries: ColumnEntry[]): string =>
+  `columns ${entries
+    .map(
+      entry =>
+        `${entry.chain ? 'chain ' : ''}${entry.tail}${
+          entry.alias !== undefined ? ` as ${quoteString(entry.alias)}` : ''
+        }`
+    )
+    .join(', ')}`;
+
+// Emit a segment's `[...]` scope: its `[filter]` predicate, its `columns` capture clause, or both.
+const printScope = (
+  step: PathStep,
   schemaId: string | undefined,
   schemas: SchemaCatalog,
   relationSchemas: RelationSchemaCatalog,
@@ -164,6 +217,12 @@ const printFilter = (
   options: NormalizedPrintOptions,
   level: number
 ): string => {
+  const columnEntries = step.kind === 'endpoint' ? undefined : activeColumnsByStep?.get(step);
+  const columnsText = columnEntries?.length ? renderColumnsClause(columnEntries) : undefined;
+  const filter = step.kind === 'endpoint' ? undefined : step.filter;
+  if (!filter && !columnsText) return '';
+  if (!filter) return `[${columnsText}]`;
+
   const filterText = nodePrinter(
     filter,
     schemaId,
@@ -174,12 +233,12 @@ const printFilter = (
     level,
     false
   );
-  const inlineFilterText = options.pretty
-    ? removeFirstLineIndent(filterText, options, level)
-    : filterText;
-  if (!options.pretty || !filterText.includes('\n')) return `[${inlineFilterText}]`;
+  if (!options.pretty || !filterText.includes('\n')) {
+    const inline = options.pretty ? removeFirstLineIndent(filterText, options, level) : filterText;
+    return `[${inline}${columnsText ? ` ${columnsText}` : ''}]`;
+  }
   return `[
-${filterText}
+${filterText}${columnsText ? `\n${indentAt(options, level)}${columnsText}` : ''}
 ${indentAt(options, level)}]`;
 };
 
@@ -200,36 +259,32 @@ const printPathSteps = (
       const field = schemaFieldById(schemas.get(schemaId ?? ''), step.fieldId);
       if (field && isReferenceOrContainmentField(field)) schemaId = field.schemaId;
       relationSchemaId = undefined;
-      const filterText = step.filter
-        ? printFilter(
-            step.filter,
-            schemaId,
-            schemas,
-            relationSchemas,
-            undefined,
-            nodePrinter,
-            options,
-            level
-          )
-        : '';
+      const filterText = printScope(
+        step,
+        schemaId,
+        schemas,
+        relationSchemas,
+        undefined,
+        nodePrinter,
+        options,
+        level
+      );
       return `${step.fieldId}${filterText}`;
     }
     if (step.kind === 'backward') {
       const ownerName = printSchemaRef(schemaNameById(schemas, step.ownerSchemaId));
       schemaId = step.ownerSchemaId;
       relationSchemaId = undefined;
-      const filterText = step.filter
-        ? printFilter(
-            step.filter,
-            schemaId,
-            schemas,
-            relationSchemas,
-            undefined,
-            nodePrinter,
-            options,
-            level
-          )
-        : '';
+      const filterText = printScope(
+        step,
+        schemaId,
+        schemas,
+        relationSchemas,
+        undefined,
+        nodePrinter,
+        options,
+        level
+      );
       return `<-${ownerName}.${step.fieldId}${filterText}`;
     }
     if (step.kind === 'endpoint') {
@@ -245,18 +300,16 @@ const printPathSteps = (
       const field = relationFieldById(relationSchema, step.fieldId);
       schemaId = field && field.type === 'entityRelation' ? field.schemaId : undefined;
       relationSchemaId = undefined;
-      const filterText = step.filter
-        ? printFilter(
-            step.filter,
-            schemaId,
-            schemas,
-            relationSchemas,
-            undefined,
-            nodePrinter,
-            options,
-            level
-          )
-        : '';
+      const filterText = printScope(
+        step,
+        schemaId,
+        schemas,
+        relationSchemas,
+        undefined,
+        nodePrinter,
+        options,
+        level
+      );
       return `${step.fieldId}${filterText}`;
     }
     if (step.kind === 'relationBackward') {
@@ -265,18 +318,16 @@ const printPathSteps = (
       );
       relationSchemaId = step.relationSchemaId;
       schemaId = undefined;
-      const filterText = step.filter
-        ? printFilter(
-            step.filter,
-            undefined,
-            schemas,
-            relationSchemas,
-            step.relationSchemaId,
-            nodePrinter,
-            options,
-            level
-          )
-        : '';
+      const filterText = printScope(
+        step,
+        undefined,
+        schemas,
+        relationSchemas,
+        step.relationSchemaId,
+        nodePrinter,
+        options,
+        level
+      );
       return `<-${relationName}.${step.fieldId}${filterText}`;
     }
     if (step.kind === 'unboundTypedRelation') {
@@ -291,18 +342,16 @@ const printPathSteps = (
           ? targetSchemaIds[0]
           : undefined;
       relationSchemaId = undefined;
-      const filterText = step.filter
-        ? printFilter(
-            step.filter,
-            undefined,
-            schemas,
-            relationSchemas,
-            step.relationSchemaId,
-            nodePrinter,
-            options,
-            level
-          )
-        : '';
+      const filterText = printScope(
+        step,
+        undefined,
+        schemas,
+        relationSchemas,
+        step.relationSchemaId,
+        nodePrinter,
+        options,
+        level
+      );
       return `${step.direction === 'in' ? '->' : '<-'}${relationName}${filterText}`;
     }
     const relationSchema = relationSchemas.get(step.relationSchemaId);
@@ -310,18 +359,16 @@ const printPathSteps = (
       step.direction === 'in' ? relationSchema?.out_schema_ids : relationSchema?.in_schema_ids;
     schemaId = targetSchemaIds?.length === 1 ? targetSchemaIds[0] : undefined;
     relationSchemaId = undefined;
-    const filterText = step.filter
-      ? printFilter(
-          step.filter,
-          undefined,
-          schemas,
-          relationSchemas,
-          step.relationSchemaId,
-          nodePrinter,
-          options,
-          level
-        )
-      : '';
+    const filterText = printScope(
+      step,
+      undefined,
+      schemas,
+      relationSchemas,
+      step.relationSchemaId,
+      nodePrinter,
+      options,
+      level
+    );
     return `${step.fieldId}${filterText}`;
   });
   return { text: parts.join('.'), endSchemaId: schemaId, endRelationSchemaId: relationSchemaId };
@@ -706,25 +753,98 @@ export const printEntityQueryText = (
   // resolve against the right schema catalog from the very first step.
   const schemaId = query.root_kind === 'relation' ? undefined : rootId;
   const relationSchemaId = query.root_kind === 'relation' ? rootId : undefined;
-  return printOptions.pretty
-    ? printPrettyNode(
-        query.root,
-        schemaId,
-        schemas,
-        relationSchemas,
-        relationSchemaId,
-        printOptions,
-        0,
-        true
-      )
-    : printCompactNode(
-        query.root,
-        schemaId,
-        schemas,
-        relationSchemas,
-        relationSchemaId,
-        COMPACT_PRINT_OPTIONS,
-        0,
-        true
-      );
+
+  const { byStep, synthesized } = planProjectionColumns(query, schemas, relationSchemas);
+  activeColumnsByStep = byStep;
+  try {
+    const rootText = printOptions.pretty
+      ? printPrettyNode(
+          query.root,
+          schemaId,
+          schemas,
+          relationSchemas,
+          relationSchemaId,
+          printOptions,
+          0,
+          true
+        )
+      : printCompactNode(
+          query.root,
+          schemaId,
+          schemas,
+          relationSchemas,
+          relationSchemaId,
+          COMPACT_PRINT_OPTIONS,
+          0,
+          true
+        );
+    if (synthesized.length === 0) return rootText;
+    const extra = synthesized.join(printOptions.pretty ? '\nAND ' : ' AND ');
+    return rootText ? `${rootText}${printOptions.pretty ? '\nAND ' : ' AND '}${extra}` : extra;
+  } finally {
+    activeColumnsByStep = null;
+  }
+};
+
+// Decide, for each `ProjectionField`, which `[...]` scope in `query.root` carries its `columns`
+// entry (bound by a longest-prefix match on the resolved path, filters included). A projection
+// whose path has no matching scope becomes a standalone capture-only bracket; one that cannot be
+// represented at all (e.g. a path-less projection) is omitted — the query UI carries it out of band.
+const planProjectionColumns = (
+  query: EntityQuery,
+  schemas: SchemaCatalog,
+  relationSchemas: RelationSchemaCatalog
+): { byStep: WeakMap<PathStep, ColumnEntry[]>; synthesized: string[] } => {
+  const byStep = new WeakMap<PathStep, ColumnEntry[]>();
+  const synthesized: string[] = [];
+  const projections = query.projections ?? [];
+  if (projections.length === 0) return { byStep, synthesized };
+
+  const occurrences: PathStep[][] = [];
+  collectRootPathOccurrences(query.root, occurrences);
+
+  for (const projection of projections) {
+    const anchor = pickAnchorOccurrence(occurrences, projection);
+    if (anchor && anchor.length > 0) {
+      const tailSteps = projection.path.slice(anchor.length);
+      const entry: ColumnEntry = {
+        chain: projection.chain === true,
+        tail: renderCaptureTail(
+          tailSteps,
+          projection.chain ? null : projection.fieldId,
+          schemas,
+          relationSchemas
+        ),
+        ...(projection.alias !== undefined ? { alias: projection.alias } : {})
+      };
+      const step = anchor[anchor.length - 1]!;
+      const list = byStep.get(step) ?? [];
+      list.push(entry);
+      byStep.set(step, list);
+    } else if (projection.path.length > 0 && !projection.chain) {
+      const pathText = projection.path
+        .map(step => stepName(step, schemas, relationSchemas))
+        .join('.');
+      const alias = projection.alias !== undefined ? ` as ${quoteString(projection.alias)}` : '';
+      synthesized.push(`${pathText}[columns ${projection.fieldId}${alias}]`);
+    }
+  }
+  return { byStep, synthesized };
+};
+
+const pickAnchorOccurrence = (
+  occurrences: PathStep[][],
+  projection: ProjectionField
+): PathStep[] | undefined => {
+  let best: PathStep[] | undefined;
+  for (const occurrence of occurrences) {
+    if (
+      occurrence.length <= projection.path.length &&
+      entityQueryPathStartsWith(projection.path, occurrence) &&
+      (!best || occurrence.length > best.length)
+    ) {
+      best = occurrence;
+    }
+  }
+  return best;
 };

@@ -3,6 +3,7 @@ import {
   type EntityQuery,
   type FilterOp,
   type PathStep,
+  type ProjectionField,
   type QueryNode
 } from '@arch-register/api-types/entityQueryIR';
 import {
@@ -27,6 +28,7 @@ import {
   TextCompileError,
   type EnumCatalog,
   type ResolvedComparator,
+  type TextCapture,
   type TextPathStep,
   type TextQueryNode,
   type TextQuerySyntax,
@@ -438,7 +440,12 @@ type ResolvedStep = {
   nextRelationSchemaId: string | undefined;
 };
 
-type ResolutionState = TextResolverContext & { hopsUsed: number };
+type ResolutionState = TextResolverContext & {
+  hopsUsed: number;
+  // Projections accumulated from `columns` sub-clauses across every `[...]` scope in the query,
+  // in source order; attached to `EntityQuery.projections` once at the end of resolution.
+  projections: ProjectionField[];
+};
 
 const relationTargetSchemaId = (
   relationSchemas: RelationSchemaCatalog,
@@ -462,7 +469,10 @@ function resolveStep(
   syntaxStep: TextPathStep,
   currentSchemaId: string | undefined,
   currentRelationSchemaId: string | undefined,
-  state: ResolutionState
+  state: ResolutionState,
+  // Absolute path prefix of already-resolved steps leading to this one, used to give any nested
+  // `columns` captures the correct witness-binding path (empty except inside a scoped filter).
+  pathPrefix: PathStep[] = []
 ): ResolvedStep {
   const { schemas, relationSchemas, authCtx } = state;
   if (currentRelationSchemaId) {
@@ -520,7 +530,7 @@ function resolveStep(
     );
     incrementHop(state, syntaxStep.offset);
     const filter = syntaxStep.filter
-      ? resolveNode(syntaxStep.filter, undefined, relationSchemaId, state, false)
+      ? resolveNode(syntaxStep.filter, undefined, relationSchemaId, state, false, pathPrefix)
       : undefined;
     return {
       step: {
@@ -554,7 +564,7 @@ function resolveStep(
     if (backwardResolution.kind === 'relationBackward') {
       const { relationSchemaId } = backwardResolution;
       const filter = syntaxStep.filter
-        ? resolveNode(syntaxStep.filter, undefined, relationSchemaId, state, false)
+        ? resolveNode(syntaxStep.filter, undefined, relationSchemaId, state, false, pathPrefix)
         : undefined;
       return {
         step: {
@@ -575,7 +585,7 @@ function resolveStep(
     }
     const { ownerSchemaId } = backwardResolution;
     const filter = syntaxStep.filter
-      ? resolveNode(syntaxStep.filter, ownerSchemaId, undefined, state, false)
+      ? resolveNode(syntaxStep.filter, ownerSchemaId, undefined, state, false, pathPrefix)
       : undefined;
     return {
       step: {
@@ -626,8 +636,15 @@ function resolveStep(
     }
     filter =
       resolution.kind === 'typedRelation'
-        ? resolveNode(syntaxStep.filter, undefined, resolution.relationSchemaId, state, false)
-        : resolveNode(syntaxStep.filter, nextSchemaId, undefined, state, false);
+        ? resolveNode(
+            syntaxStep.filter,
+            undefined,
+            resolution.relationSchemaId,
+            state,
+            false,
+            pathPrefix
+          )
+        : resolveNode(syntaxStep.filter, nextSchemaId, undefined, state, false, pathPrefix);
   }
 
   return {
@@ -656,21 +673,136 @@ const isRelationLike = (resolution: FieldResolution): boolean =>
   resolution.kind === 'relationEntityRelation' ||
   resolution.kind === 'endpointPseudo';
 
+const assertProjectionHopBudget = (path: PathStep[], offset: number): void => {
+  if (path.length > MAX_PATH_HOPS) {
+    throw new TextCompileError(`Projection path exceeds MAX_PATH_HOPS (${MAX_PATH_HOPS})`, offset);
+  }
+};
+
+// Resolve one `columns` capture against the record its enclosing segment traversed to, and push the
+// resulting `ProjectionField` onto `state.projections`. `segmentPrefix` is the absolute resolved
+// path up to and including that segment (with its `[...]` filter), so join reuse in the projection
+// planner binds the column to the same existential witness the filter matched.
+function emitCapture(
+  capture: TextCapture,
+  segment: ResolvedStep,
+  segmentPrefix: PathStep[],
+  state: ResolutionState
+): void {
+  const segStep = segment.step;
+  const scopesRelationInstance =
+    segStep.kind === 'typedRelation' || segStep.kind === 'unboundTypedRelation';
+  const relationSchemaId = scopesRelationInstance
+    ? (segStep as Extract<PathStep, { kind: 'typedRelation' } | { kind: 'unboundTypedRelation' }>)
+        .relationSchemaId
+    : segment.nextRelationSchemaId;
+
+  const savedHops = state.hopsUsed;
+  const captureSteps: ResolvedStep[] = [];
+  let sId = scopesRelationInstance ? undefined : segment.nextSchemaId;
+  let rId = scopesRelationInstance ? relationSchemaId : segment.nextRelationSchemaId;
+  for (const cs of capture.steps) {
+    const resolved = resolveStep(cs, sId, rId, state);
+    captureSteps.push(resolved);
+    sId = resolved.nextSchemaId;
+    rId = resolved.nextRelationSchemaId;
+  }
+  // A projection path is budgeted independently of the filter tree (§4.6 / §7).
+  state.hopsUsed = savedHops;
+
+  const terminal = captureSteps[captureSteps.length - 1]!;
+
+  if (capture.chain) {
+    const chainPath = [...segmentPrefix, ...captureSteps.map(s => s.step)];
+    const badStep = chainPath.find(
+      s =>
+        s.kind !== 'forward' &&
+        s.kind !== 'backward' &&
+        s.kind !== 'typedRelation' &&
+        s.kind !== 'unboundTypedRelation'
+    );
+    if (badStep) {
+      throw new TextCompileError(
+        `'chain' columns only traverse forward/backward/typedRelation hops, not '${badStep.kind}'`,
+        capture.offset
+      );
+    }
+    assertProjectionHopBudget(chainPath, capture.offset);
+    state.projections.push({
+      path: chainPath,
+      fieldId: terminal.fieldId,
+      chain: true,
+      ...(capture.alias !== undefined ? { alias: capture.alias } : {})
+    });
+    return;
+  }
+
+  if (isRelationLike(terminal.resolution)) {
+    throw new TextCompileError(
+      `A 'columns' capture must end on a scalar field, not '${terminal.fieldId}'`,
+      capture.offset
+    );
+  }
+
+  // A bare scalar read directly off the matched relation row (no further hop) is `source:'relation'`.
+  const terminalOffRelationRow =
+    scopesRelationInstance &&
+    captureSteps.length === 1 &&
+    terminal.resolution.kind === 'relationScalar';
+
+  const projectionPath = terminalOffRelationRow
+    ? [...segmentPrefix]
+    : [...segmentPrefix, ...captureSteps.slice(0, -1).map(s => s.step)];
+
+  assertProjectionHopBudget(projectionPath, capture.offset);
+  state.projections.push({
+    path: projectionPath,
+    fieldId: terminal.fieldId,
+    ...(terminalOffRelationRow ? { source: 'relation' as const } : {}),
+    ...(capture.alias !== undefined ? { alias: capture.alias } : {})
+  });
+}
+
 function resolvePathExpression(
   node: Extract<TextQueryNode, { kind: 'path' }>,
   currentSchemaId: string | undefined,
   currentRelationSchemaId: string | undefined,
-  state: ResolutionState
+  state: ResolutionState,
+  pathPrefix: PathStep[] = []
 ): QueryNode {
   const steps: ResolvedStep[] = [];
   let schemaIdCursor = currentSchemaId;
   let relationSchemaIdCursor = currentRelationSchemaId;
   for (const syntaxStep of node.steps) {
-    const resolved = resolveStep(syntaxStep, schemaIdCursor, relationSchemaIdCursor, state);
+    const prefixSoFar = [...pathPrefix, ...steps.map(s => s.step)];
+    const resolved = resolveStep(
+      syntaxStep,
+      schemaIdCursor,
+      relationSchemaIdCursor,
+      state,
+      prefixSoFar
+    );
     steps.push(resolved);
     schemaIdCursor = resolved.nextSchemaId;
     relationSchemaIdCursor = resolved.nextRelationSchemaId;
   }
+
+  // `columns` captures on any segment become `ProjectionField`s bound to that segment's witness:
+  // the projection path is the absolute prefix up to and including the segment (carrying its
+  // resolved `[...]` filter), plus the capture's own traversal.
+  node.steps.forEach((syntaxStep, index) => {
+    if (!syntaxStep.captures || syntaxStep.captures.length === 0) return;
+    if (node.comparator && index === node.steps.length - 1) {
+      throw new TextCompileError(
+        "'columns' cannot be combined with a trailing comparator on the same segment",
+        node.comparator.offset
+      );
+    }
+    const segmentPrefix = [...pathPrefix, ...steps.slice(0, index + 1).map(s => s.step)];
+    for (const capture of syntaxStep.captures) {
+      emitCapture(capture, steps[index]!, segmentPrefix, state);
+    }
+  });
 
   const last = steps[steps.length - 1]!;
   if (node.comparator) {
@@ -725,21 +857,36 @@ function resolveNode(
   currentSchemaId: string | undefined,
   currentRelationSchemaId: string | undefined,
   state: ResolutionState,
-  allowFreeText: boolean
+  allowFreeText: boolean,
+  pathPrefix: PathStep[] = []
 ): QueryNode {
   switch (node.kind) {
     case 'and':
       return {
         kind: 'and',
         children: node.children.map(child =>
-          resolveNode(child, currentSchemaId, currentRelationSchemaId, state, allowFreeText)
+          resolveNode(
+            child,
+            currentSchemaId,
+            currentRelationSchemaId,
+            state,
+            allowFreeText,
+            pathPrefix
+          )
         )
       };
     case 'or':
       return {
         kind: 'or',
         children: node.children.map(child =>
-          resolveNode(child, currentSchemaId, currentRelationSchemaId, state, allowFreeText)
+          resolveNode(
+            child,
+            currentSchemaId,
+            currentRelationSchemaId,
+            state,
+            allowFreeText,
+            pathPrefix
+          )
         )
       };
     case 'not':
@@ -750,7 +897,8 @@ function resolveNode(
           currentSchemaId,
           currentRelationSchemaId,
           state,
-          allowFreeText
+          allowFreeText,
+          pathPrefix
         )
       };
     case 'freeText':
@@ -806,7 +954,13 @@ function resolveNode(
       throw new TextCompileError(`Unknown schema '${node.schemaRef.value}'`, node.schemaRef.offset);
     }
     case 'path':
-      return resolvePathExpression(node, currentSchemaId, currentRelationSchemaId, state);
+      return resolvePathExpression(
+        node,
+        currentSchemaId,
+        currentRelationSchemaId,
+        state,
+        pathPrefix
+      );
   }
 }
 
@@ -841,19 +995,24 @@ export const resolveTextQuery = (
   syntax: TextQuerySyntax,
   context: TextResolverContext
 ): EntityQuery => {
-  const state: ResolutionState = { ...context, hopsUsed: 0 };
+  const state: ResolutionState = { ...context, hopsUsed: 0, projections: [] };
+  const withProjections = (query: EntityQuery): EntityQuery =>
+    state.projections.length > 0 ? { ...query, projections: state.projections } : query;
+
   const rootSchemaId = deriveRootSchemaId(syntax, context.schemas);
   if (rootSchemaId) {
-    return { root: resolveNode(syntax.root, rootSchemaId, undefined, state, true) };
+    return withProjections({
+      root: resolveNode(syntax.root, rootSchemaId, undefined, state, true)
+    });
   }
   const rootRelationSchemaId = deriveRootRelationSchemaId(syntax, context.relationSchemas);
   if (rootRelationSchemaId) {
-    return {
+    return withProjections({
       root_kind: 'relation',
       root: resolveNode(syntax.root, undefined, rootRelationSchemaId, state, true)
-    };
+    });
   }
-  return {
+  return withProjections({
     root: resolveNode(syntax.root, undefined, undefined, state, true)
-  };
+  });
 };

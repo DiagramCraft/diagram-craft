@@ -16,6 +16,7 @@ import {
 import { isNowDateLiteral } from '@arch-register/api-types/nowDateLiteral';
 import type { RelationField as RelationSchemaField } from '@arch-register/api-types/relationSchemaContract';
 import { isFieldViewRestricted } from '../auth/fieldGroupAccessControl';
+import { collectRootPathOccurrences, entityQueryPathStartsWith } from './entityQueryIRPlan';
 import { isMultiValuedScalarField } from './entityScalarValues';
 import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
 
@@ -795,6 +796,9 @@ export const validateEntityQueryIR = (
   }
   validateNode(query.root, schemas, relationSchemas, ['root'], 0, true, errors, authCtx, rootKind);
 
+  const rootPathOccurrences: PathStep[][] = [];
+  collectRootPathOccurrences(query.root, rootPathOccurrences);
+
   const aliases = new Set<string>();
   for (const [index, projection] of (query.projections ?? []).entries()) {
     const projectionPath = ['projections', index] as (string | number)[];
@@ -861,11 +865,28 @@ export const validateEntityQueryIR = (
       aliases.add(alias);
       continue;
     }
+    // A projection path may carry a `[...]` scoped filter only on its final step, and only when that
+    // exact step also occurs in `query.root` — i.e. it is a reference to an existing existential
+    // witness (§4.6), authored as a `columns` clause inside that segment's scope, not a fresh
+    // independent existential. `entityQueryPathStartsWith` compares steps by structure incl. filter.
     projection.path.forEach((step, stepIndex) => {
-      if (step.kind !== 'endpoint' && step.filter) {
+      if (step.kind === 'endpoint' || !step.filter) return;
+      const isFinalStep = stepIndex === projection.path.length - 1;
+      if (!isFinalStep) {
         errors.push({
           path: [...projectionPath, 'path', stepIndex, 'filter'],
-          message: 'Projection paths cannot contain scoped filters'
+          message:
+            'Projection paths may only carry a scoped filter on their final (witness-binding) step'
+        });
+      } else if (
+        !rootPathOccurrences.some(occurrence =>
+          entityQueryPathStartsWith(occurrence, projection.path)
+        )
+      ) {
+        errors.push({
+          path: [...projectionPath, 'path', stepIndex, 'filter'],
+          message:
+            "Projection's witness-binding '[...]' filter must match a scoped predicate present in the query"
         });
       }
     });

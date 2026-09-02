@@ -25,6 +25,7 @@ export type TokenKind =
   | 'LBRACKET'
   | 'RBRACKET'
   | 'DOT'
+  | 'COMMA'
   | 'ARROW'
   | 'AND'
   | 'OR'
@@ -64,11 +65,23 @@ export type TextComparator = {
   offset: number;
 };
 
+// One entry of a `columns` sub-clause inside a segment's `[...]` scope (§4.6). `steps` is a
+// `capture_path` — a dotted path with no scoped filters — evaluated relative to the record the
+// enclosing segment traversed to. `chain` projects the whole hop chain instead of a terminal scalar.
+export type TextCapture = {
+  chain: boolean;
+  steps: TextPathStep[];
+  alias?: string;
+  aliasOffset?: number;
+  offset: number;
+};
+
 export type TextPathStep =
   | {
       kind: 'field';
       field: TextNameRef;
       filter?: TextQueryNode;
+      captures?: TextCapture[];
       offset: number;
     }
   | {
@@ -76,6 +89,7 @@ export type TextPathStep =
       field: TextNameRef;
       schemaRef?: TextNameRef;
       filter?: TextQueryNode;
+      captures?: TextCapture[];
       offset: number;
     }
   | {
@@ -83,6 +97,7 @@ export type TextPathStep =
       direction: 'in' | 'out';
       relationRef: TextNameRef;
       filter?: TextQueryNode;
+      captures?: TextCapture[];
       offset: number;
     };
 
