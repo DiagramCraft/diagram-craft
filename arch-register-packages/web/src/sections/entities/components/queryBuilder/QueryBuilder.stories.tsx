@@ -244,6 +244,7 @@ const mockRelationSchemas: RelationSchema[] = [
     created_at: '2024-01-01T00:00:00Z',
     updated_at: '2024-01-01T00:00:00Z'
   } as RelationSchema,
+
   // Mirrors the seeded "Data Flow" relation schema (server/src/db/seedData/schemaTemplates.ts) - a
   // Data Flow's own scalar field plus its `data_entities` entityRelation field (#2670), the shape
   // #3120's relationForward stories below exercise.
