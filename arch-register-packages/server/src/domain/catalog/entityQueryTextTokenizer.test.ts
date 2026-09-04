@@ -42,6 +42,21 @@ describe('entity query text tokenizer', () => {
     ]);
   });
 
+  it('keeps contextual `in` as an ident and tokenizes its value-list delimiters', () => {
+    expect(
+      tokenize('classification in ("sensitive", "highly-sensitive")').map(t => [t.kind, t.text])
+    ).toEqual([
+      ['IDENT', 'classification'],
+      ['IDENT', 'in'],
+      ['LPAREN', '('],
+      ['STRING', '"sensitive"'],
+      ['COMMA', ','],
+      ['STRING', '"highly-sensitive"'],
+      ['RPAREN', ')'],
+      ['EOF', '']
+    ]);
+  });
+
   it('reports invalid escapes at the offending source position', () => {
     expect(() => tokenize('"bad\\n"')).toThrowError(/Invalid escape sequence/);
   });

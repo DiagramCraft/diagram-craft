@@ -15,9 +15,8 @@ export const filterOpSchema = z.enum([
   'lt',
   'gte',
   'lte',
-  // Matches when the field's value is one of `value` (expected to be an array). Internal/
-  // programmatic use only (e.g. batch-fetching entities by id) - deliberately not offered as a
-  // choice in any FilterBuilder UI.
+  // Matches when the field's value is one of `value` (expected to be an array). Supported by the
+  // entity-query text DSL, but deliberately not offered as a choice in any FilterBuilder UI.
   'in'
 ]);
 

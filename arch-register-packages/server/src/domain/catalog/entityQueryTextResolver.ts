@@ -432,6 +432,36 @@ const resolveOpAndValue = (
   return { op, value };
 };
 
+const resolveInValues = (
+  parsedValues: TextValue[],
+  resolution: FieldResolution,
+  enums: EnumCatalog,
+  offset: number
+): unknown[] => {
+  if (parsedValues.length === 0) {
+    throw new TextCompileError("The 'in' operator requires at least one value", offset);
+  }
+
+  return parsedValues.map(parsed => {
+    if (parsed.kind === 'empty' || parsed.kind === 'notEmpty') {
+      throw new TextCompileError(
+        `'${parsed.kind === 'empty' ? 'empty' : 'not_empty'}' cannot be used inside an 'in' list`,
+        parsed.offset
+      );
+    }
+    if (parsed.kind === 'now') {
+      throw new TextCompileError(
+        "'now(...)' can only be used with before/after/on date comparisons",
+        parsed.offset
+      );
+    }
+    // Resolve each member as an equality value so select enum labels/values and date(...) use
+    // exactly the same conversion and validation rules as scalar comparisons. The resulting
+    // operator is replaced with `in` by the caller after all members have been resolved.
+    return resolveOpAndValue('=', parsed, resolution, enums, offset).value;
+  });
+};
+
 type ResolvedStep = {
   step: PathStep;
   fieldId: string;
@@ -817,6 +847,20 @@ function resolvePathExpression(
         `'${last.fieldId}' is a relation field — compare a scalar field reached through it, or use '[...]' to scope a relationExists`,
         node.comparator.offset
       );
+    }
+    if (node.comparator.text === 'in') {
+      return {
+        kind: 'predicate',
+        path: steps.slice(0, -1).map(step => step.step),
+        fieldId: last.fieldId,
+        op: 'in',
+        value: resolveInValues(
+          node.values ?? [],
+          last.resolution,
+          state.enums,
+          node.comparator.offset
+        )
+      };
     }
     const resolved = resolveOpAndValue(
       node.comparator.text,

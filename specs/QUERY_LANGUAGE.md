@@ -79,6 +79,7 @@ unary_expr      := "NOT" unary_expr
                  | predicate
 
 predicate       := free_text
+                 | path "in" "(" value ( "," value )* ")"
                  | path comparator value
                  | path                                     (* shorthand for path:not_empty *)
 
@@ -112,6 +113,10 @@ field_id        := identifier                                (* schema field id,
 
 comparator      := ":" | "=" | "!=" | "~" | "^=" | "$="
                  | ">" | ">=" | "<" | "<="
+
+(* `in` is contextual: it is recognized in operator position only when immediately followed by `(`;
+   elsewhere it remains a field identifier. *)
+
 value           := quoted_string
                  | number
                  | "date" "(" quoted_string ")"
@@ -206,8 +211,13 @@ relation_ref    := identifier | quoted_string            (* typed relation schem
       useful than silently matching nothing).
     - A bare quoted string against a `select` field (`radar_status = "hold"`) is sugar for `enumValue("hold")` — the
       common case stays terse; `enumLabel(...)` only needs to be written out when that's genuinely what's meant.
-    - Only `equals`/`not_equals` make sense against either form — enum options aren't ordered, so `enumValue(...)`/
-      `enumLabel(...)` combined with `<`/`>`/`<=`/`>=` has no defined meaning and should be rejected at compile time.
+    - `equals`, `not_equals`, and `in` make sense against either form — enum options aren't ordered, so
+      `enumValue(...)`/`enumLabel(...)` combined with `<`/`>`/`<=`/`>=` has no defined meaning and should be rejected at
+      compile time.
+- **Membership lists.** `path in (value, ...)` produces an `in` predicate whose value is a non-empty list. Each member
+  uses the ordinary literal forms above, including enum/select and date literals, and is resolved independently.
+  `empty`, `not_empty`, and `now()` are not valid list members. `in` is deliberately not a standalone `not in` operator;
+  use `NOT (path in (...))` for negative membership tests.
 - **`columns` sub-clause (projection, §4.6).** A segment's `[...]` scope may carry a `columns` clause — after its
   `or_expr` filter, or instead of one (`releases[columns eol_date]`, a capture-only bracket on an unfiltered
   traversal). Each `capture` reads a field off the record that segment traversed to and becomes an
