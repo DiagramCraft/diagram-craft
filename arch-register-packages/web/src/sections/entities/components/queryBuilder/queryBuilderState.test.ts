@@ -3,6 +3,7 @@ import type { EntityQuery, QueryNode } from '@arch-register/api-types/entityQuer
 import {
   addChild,
   collectLeafPaths,
+  collectProjectionAnchorPaths,
   countHops,
   emptyGroup,
   emptyPredicate,
@@ -11,7 +12,7 @@ import {
   getNode,
   isProjectionPathVisuallyEditable,
   isVisuallyEditable,
-  projectionOwningLeafPath,
+  projectionAnchorPath,
   removeNode,
   setGroupKind,
   syncProjectionsToTree,
@@ -680,23 +681,48 @@ describe('projection ↔ tree anchoring (#3162)', () => {
     ]);
   });
 
-  it('projectionOwningLeafPath picks the longest structural prefix', () => {
-    const leafPaths = [
+  it('collectProjectionAnchorPaths expands every leaf path into its hop-prefixes', () => {
+    const root: QueryNode = {
+      kind: 'and',
+      children: [
+        {
+          kind: 'predicate',
+          path: [
+            { kind: 'forward', fieldId: 'system' },
+            { kind: 'forward', fieldId: 'owner' }
+          ],
+          fieldId: '_name',
+          op: 'equals',
+          value: 'x'
+        }
+      ]
+    };
+    expect(collectProjectionAnchorPaths(root)).toEqual([
+      [{ kind: 'forward', fieldId: 'system' }],
+      [
+        { kind: 'forward', fieldId: 'system' },
+        { kind: 'forward', fieldId: 'owner' }
+      ]
+    ]);
+  });
+
+  it('projectionAnchorPath picks the longest hop-prefix that structurally prefixes the column', () => {
+    const anchorPaths = [
       [{ kind: 'forward' as const, fieldId: 'system' }],
       [
         { kind: 'forward' as const, fieldId: 'system' },
         { kind: 'forward' as const, fieldId: 'owner' }
       ]
     ];
-    const owner = projectionOwningLeafPath(
+    const owner = projectionAnchorPath(
       [
         { kind: 'forward', fieldId: 'system' },
         { kind: 'forward', fieldId: 'owner' },
         { kind: 'forward', fieldId: 'team' }
       ],
-      leafPaths
+      anchorPaths
     );
-    expect(owner).toEqual(leafPaths[1]);
+    expect(owner).toEqual(anchorPaths[1]);
   });
 
   it('syncProjectionsToTree re-anchors a column to its leaf current steps', () => {
@@ -709,13 +735,25 @@ describe('projection ↔ tree anchoring (#3162)', () => {
     expect(synced.projections?.[0]!.path).toEqual([scopedStep]);
   });
 
-  it('syncProjectionsToTree strips an orphaned column terminal filter', () => {
+  it('syncProjectionsToTree drops a column whose hop is gone, keeps the ones still anchored', () => {
+    const query: EntityQuery = {
+      root: { kind: 'relationExists', path: [{ kind: 'forward', fieldId: 'domain' }] },
+      projections: [
+        { path: [{ kind: 'forward', fieldId: 'domain' }], fieldId: 'portfolio' },
+        { path: [{ kind: 'forward', fieldId: 'system' }], fieldId: 'tier' }
+      ]
+    };
+    expect(syncProjectionsToTree(query).projections).toEqual([
+      { path: [{ kind: 'forward', fieldId: 'domain' }], fieldId: 'portfolio' }
+    ]);
+  });
+
+  it('syncProjectionsToTree drops every column once the tree has no hops', () => {
     const query: EntityQuery = {
       root: { kind: 'and', children: [] },
       projections: [{ path: [scopedStep], fieldId: 'tier' }]
     };
-    const synced = syncProjectionsToTree(query);
-    expect(synced.projections?.[0]!.path).toEqual([{ kind: 'forward', fieldId: 'system' }]);
+    expect(syncProjectionsToTree(query).projections).toBeUndefined();
   });
 });
 

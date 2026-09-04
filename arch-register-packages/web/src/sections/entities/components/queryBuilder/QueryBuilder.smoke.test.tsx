@@ -31,24 +31,39 @@ describe('QueryBuilder render smoke', () => {
 
   const render = (element: React.ReactElement) => act(() => root.render(element));
 
-  it('renders a query with standalone projection columns', () => {
+  it('renders hop-attached projection columns (no standalone add-column section)', () => {
     render(<ProjectionColumns />);
-    expect(container.textContent).toContain('Columns');
-    expect(container.textContent).toContain('Add column');
+    expect(container.textContent).toContain('System tier');
+    expect(container.textContent).not.toContain('Add column');
+    expect(container.textContent).not.toContain('Other columns');
   });
 
-  it('renders a column inline under its scoped filter leaf and offers "+ column"', () => {
+  it('renders columns inside their hop panel and adds one via "+ column"', () => {
     render(<ProjectionColumnsOnFilterLeaf />);
     expect(container.textContent).toContain('TR EOL');
     expect(container.textContent).toContain('Tech category');
-    // The per-leaf add-column affordance.
-    expect(container.querySelectorAll('button')).not.toHaveLength(0);
-    expect(container.textContent).toMatch(/column/i);
+    // The hop [...] panel labels its two sections.
+    expect(container.textContent).toContain('Filter');
+    expect(container.textContent).toContain('Columns');
+
+    const aliasInputs = () =>
+      container.querySelectorAll('input[placeholder="column name (optional)"]').length;
+    const addColumn = [...container.querySelectorAll('button')].find(
+      b => b.textContent?.trim() === 'column'
+    );
+    expect(addColumn).toBeDefined();
+    const before = aliasInputs();
+    act(() => addColumn!.dispatchEvent(new MouseEvent('click', { bubbles: true })));
+    // A fresh column row adds its alias input.
+    expect(aliasInputs()).toBe(before + 1);
   });
 
   it('renders a scoped-filter traversal leaf with the "+ column" affordance', () => {
     render(<TraversalWithScopedFilter />);
-    expect(container.textContent).toContain('column');
+    const addColumn = [...container.querySelectorAll('button')].find(
+      b => b.textContent?.trim() === 'column'
+    );
+    expect(addColumn).toBeDefined();
   });
 
   it('renders a relation-rooted query with a relationForward projection', () => {

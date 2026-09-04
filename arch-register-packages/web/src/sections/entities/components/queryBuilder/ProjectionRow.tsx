@@ -47,8 +47,7 @@ const relationSchemaIdOfLastStep = (path: PathStep[]): string | undefined => {
  * ending on a terminal scalar field, plus alias and - depending on the path shape - a "whole chain"
  * (`chain: true`) or "read off the relation link" (`source: 'relation'`) toggle. Reuses the same
  * position-aware `pathBuilder` traversal infra as the filter-leaf editor. A path the editor can't
- * represent renders read-only. Extracted from `ProjectionEditor` (#2354 phase 8; leaf-attached
- * #3162).
+ * represent renders read-only (#2354 phase 8; hop-attached #3162).
  */
 export const ProjectionRow = ({
   projection,

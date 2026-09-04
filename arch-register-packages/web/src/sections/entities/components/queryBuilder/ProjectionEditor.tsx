@@ -1,7 +1,5 @@
-import { TbPlus } from 'react-icons/tb';
 import type { ProjectionField, QueryNode } from '@arch-register/api-types/entityQueryIR';
-import { positionStepContextWithFallbackDirection } from '../pathBuilder/pathBuilderState';
-import { collectLeafPaths, projectionOwningLeafPath } from './queryBuilderState';
+import { collectProjectionAnchorPaths, projectionAnchorPath } from './queryBuilderState';
 import { ProjectionRow } from './ProjectionRow';
 import type { LeafContext } from './types';
 import styles from './queryBuilder.module.css';
@@ -9,57 +7,39 @@ import styles from './queryBuilder.module.css';
 type Props = {
   projections: ProjectionField[];
   onChange: (projections: ProjectionField[]) => void;
-  /** The query tree - columns anchored to a filter leaf are edited under that leaf in `QueryTree`,
-   *  so this section only shows the standalone (never-filtered / `path: []`) ones. */
+  /** The query tree - columns are added and edited inline in the hop's `[...]` panel (#3162). This
+   *  section only *displays* columns that aren't anchored to any hop (e.g. a leaf they were
+   *  attached to was removed, or a `path: []` read from a saved view). */
   root: QueryNode;
   leafCtx: LeafContext;
 };
 
 /**
- * The builder's standalone "Columns" section (#2354 phase 8): columns whose traversal isn't tied to
- * a filter leaf. A column projected through a `[...]`-scoped hop is edited inline under that leaf
- * (#3162); everything else - a never-filtered traversal, or a bare root-field read - lives here.
+ * Read-out for projection columns that aren't tied to a hop in the tree - so they stay visible and
+ * removable rather than lingering invisibly on the query. New columns are added from a hop's
+ * `[...]` panel (`+ column`), never here.
  */
 export const ProjectionEditor = ({ projections, onChange, root, leafCtx }: Props) => {
-  const { schemas, relationSchemas, getFieldGroupAccess, rootPosition } = leafCtx;
-  const hopArgs = { rootPosition, schemas, relationSchemas, getFieldGroupAccess };
-  const leafPaths = collectLeafPaths(root);
-  const isStandalone = (projection: ProjectionField) =>
-    projectionOwningLeafPath(projection.path, leafPaths) === undefined;
+  const anchorPaths = collectProjectionAnchorPaths(root);
+  const unanchored = projections.filter(
+    projection => projectionAnchorPath(projection.path, anchorPaths) === undefined
+  );
 
-  const standalone = projections.filter(isStandalone);
+  if (unanchored.length === 0) return null;
 
   const replace = (target: ProjectionField, next: ProjectionField) =>
     onChange(projections.map(projection => (projection === target ? next : projection)));
   const remove = (target: ProjectionField) =>
     onChange(projections.filter(projection => projection !== target));
 
-  const addProjection = () => {
-    const context = positionStepContextWithFallbackDirection({ ...hopArgs, steps: [], depth: 0 });
-    if (!context.options[0]) return;
-    onChange([...projections, { path: [context.options[0].step], fieldId: '_name' }]);
-  };
-
-  if (standalone.length === 0) {
-    return (
-      <div className={styles.columns}>
-        <button type="button" className={styles.addBtn} onClick={addProjection}>
-          <TbPlus size={11} /> Add column
-        </button>
-      </div>
-    );
-  }
-
   return (
     <div className={styles.columns}>
       <div className={styles.columnsHeader}>
-        <span className={styles.previewLabel}>Columns</span>
-        <span className={styles.matchHint}>
-          traversed values, selectable as table columns under Manage fields
-        </span>
+        <span className={styles.previewLabel}>Other columns</span>
+        <span className={styles.matchHint}>not tied to a filter hop</span>
       </div>
 
-      {standalone.map((projection, index) => (
+      {unanchored.map((projection, index) => (
         <ProjectionRow
           key={projections.indexOf(projection)}
           projection={projection}
@@ -69,10 +49,6 @@ export const ProjectionEditor = ({ projections, onChange, root, leafCtx }: Props
           label={`column ${index + 1}`}
         />
       ))}
-
-      <button type="button" className={styles.addBtn} onClick={addProjection}>
-        <TbPlus size={11} /> Add column
-      </button>
     </div>
   );
 };

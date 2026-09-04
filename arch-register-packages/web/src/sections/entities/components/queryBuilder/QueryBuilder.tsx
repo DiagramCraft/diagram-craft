@@ -23,7 +23,6 @@ import {
   toEditableRoot
 } from './queryBuilderState';
 import { QueryGroup } from './QueryTree';
-import { ProjectionEditor } from './ProjectionEditor';
 import { QueryPreview } from './QueryPreview';
 import styles from './queryBuilder.module.css';
 
@@ -234,13 +233,6 @@ export const QueryBuilder = ({
         path={[]}
         onRootChange={emit}
         fields={fields}
-        leafCtx={leafCtx}
-      />
-
-      <ProjectionEditor
-        projections={query.projections ?? []}
-        onChange={setProjections}
-        root={query.root}
         leafCtx={leafCtx}
       />
 

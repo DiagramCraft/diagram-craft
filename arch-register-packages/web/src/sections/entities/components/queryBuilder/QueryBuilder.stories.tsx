@@ -842,14 +842,18 @@ export const ReadOnlyTraversal = () => (
 // Projections
 // ─────────────────────────────────────────────────────────────────────────────
 
+// Columns hang off the hop they're projected through (#3162) - `system` here carries two, seeded
+// from a bare relation condition.
 export const ProjectionColumns = () => (
   <Harness
     initial={{
       schemaId: 'component',
-      root: { kind: 'and', children: [p('_name', 'contains', 'api')] },
+      root: {
+        kind: 'and',
+        children: [p('_name', 'contains', 'api'), { kind: 'relationExists', path: [fwd('system')] }]
+      },
       projections: [
         { path: [fwd('system')], fieldId: 'tier', alias: 'System tier' },
-        { path: [fwd('technology_releases')], fieldId: 'eol_date' },
         { path: [fwd('system'), fwd('domain')], fieldId: '_id', chain: true }
       ]
     }}

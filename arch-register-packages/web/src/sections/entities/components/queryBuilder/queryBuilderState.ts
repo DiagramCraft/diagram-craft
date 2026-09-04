@@ -377,60 +377,70 @@ export const pathStructurallyStartsWith = (prefix: PathStep[], path: PathStep[])
   prefix.length <= path.length &&
   prefix.every((step, index) => pathStepKey(step) === pathStepKey(path[index]!));
 
-/** The tree leaf path a projection column is anchored to: the longest leaf path that structurally
+const pathKey = (path: PathStep[]): string => path.map(pathStepKey).join('>');
+
+/** Every distinct non-empty hop-prefix of every tree leaf path - one per hop a column can be
+ *  projected through. Mirrors the text form, where `columns` sits inside a specific segment's
+ *  `[...]` scope. Prefix elements are the live `PathStep` objects (filters included). */
+export const collectProjectionAnchorPaths = (root: QueryNode): PathStep[][] => {
+  const seen = new Map<string, PathStep[]>();
+  for (const leafPath of collectLeafPaths(root)) {
+    for (let hop = 1; hop <= leafPath.length; hop += 1) {
+      const prefix = leafPath.slice(0, hop);
+      const key = pathKey(prefix);
+      if (!seen.has(key)) seen.set(key, prefix);
+    }
+  }
+  return [...seen.values()];
+};
+
+/** The hop-prefix a projection column is anchored to: the longest anchor path that structurally
  *  prefixes the column's path (filter-insensitive). `undefined` for a standalone column. */
-export const projectionOwningLeafPath = (
+export const projectionAnchorPath = (
   projectionPath: PathStep[],
-  leafPaths: PathStep[][]
+  anchorPaths: PathStep[][]
 ): PathStep[] | undefined => {
   let best: PathStep[] | undefined;
-  for (const leafPath of leafPaths) {
+  for (const anchor of anchorPaths) {
     if (
-      leafPath.length > 0 &&
-      pathStructurallyStartsWith(leafPath, projectionPath) &&
-      (best === undefined || leafPath.length > best.length)
+      anchor.length > 0 &&
+      pathStructurallyStartsWith(anchor, projectionPath) &&
+      (best === undefined || anchor.length > best.length)
     ) {
-      best = leafPath;
+      best = anchor;
     }
   }
   return best;
 };
 
-export const stripStepFilter = (step: PathStep): PathStep => {
-  if (!('filter' in step) || !step.filter) return step;
-  const copy = { ...step };
-  delete (copy as { filter?: unknown }).filter;
-  return copy;
-};
-
-/** Re-anchor every projection column to the current tree (pure): rewrite an anchored column's
- *  leading steps to its owning leaf's current steps - carrying that leaf's `[...]` filter, for the
- *  #3154 witness binding - and strip the terminal-step filter of a column that no longer matches
- *  any leaf, so it can't fail the validator's "witness filter must match a root occurrence" rule.
+/** Reconcile projection columns with the current tree (pure). A column that still matches a hop
+ *  has its leading steps rewritten to that hop's current steps (carrying its `[...]` filter, for
+ *  the #3154 witness binding). A column that matches no hop - its filter row was removed or its hop
+ *  was changed - is **dropped**, so removing a `[...]` block takes its columns with it. Every
+ *  column the builder can produce is projected through a hop, so this can't strand a real one.
  *  Route every builder write through this. */
 export const syncProjectionsToTree = (query: EntityQuery): EntityQuery => {
   const projections = query.projections;
   if (!projections || projections.length === 0) return query;
-  const leafPaths = collectLeafPaths(query.root);
+  const anchorPaths = collectProjectionAnchorPaths(query.root);
   let changed = false;
-  const next = projections.map(projection => {
-    const owner = projectionOwningLeafPath(projection.path, leafPaths);
-    if (owner) {
-      const rebased = [...owner, ...projection.path.slice(owner.length)];
-      if (JSON.stringify(rebased) === JSON.stringify(projection.path)) return projection;
-      changed = true;
-      return { ...projection, path: rebased };
+  const next: ProjectionField[] = [];
+  for (const projection of projections) {
+    const owner = projectionAnchorPath(projection.path, anchorPaths);
+    if (!owner) {
+      changed = true; // column whose hop is gone - drop it
+      continue;
     }
-    const last = projection.path[projection.path.length - 1];
-    if (last && 'filter' in last && last.filter) {
+    const rebased = [...owner, ...projection.path.slice(owner.length)];
+    if (JSON.stringify(rebased) === JSON.stringify(projection.path)) {
+      next.push(projection);
+    } else {
       changed = true;
-      const cleaned = projection.path.slice();
-      cleaned[cleaned.length - 1] = stripStepFilter(last);
-      return { ...projection, path: cleaned };
+      next.push({ ...projection, path: rebased });
     }
-    return projection;
-  });
-  return changed ? { ...query, projections: next } : query;
+  }
+  if (!changed) return query;
+  return { ...query, projections: next.length > 0 ? next : undefined };
 };
 
 const countNodeConditions = (node: QueryNode): number => {

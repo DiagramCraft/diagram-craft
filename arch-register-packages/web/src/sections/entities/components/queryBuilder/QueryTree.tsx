@@ -19,14 +19,15 @@ import {
 import { getRelationOwnFieldDefs } from '../../../relations/relationFilterFields';
 import {
   addChild,
-  collectLeafPaths,
+  collectProjectionAnchorPaths,
   emptyGroup,
   emptyPredicate,
   getNode,
   isGroupNode,
   isPathVisuallyEditable,
   isRelationPathVisuallyEditable,
-  projectionOwningLeafPath,
+  pathStructurallyStartsWith,
+  projectionAnchorPath,
   removeNode,
   setGroupKind,
   toggleNot,
@@ -147,24 +148,29 @@ export const QueryGroup = ({
 
   const body = (
     <>
-      <div className={styles.groupHeader}>
+      <div
+        className={childCount > 0 ? `${styles.groupHeader} ${styles.divided}` : styles.groupHeader}
+      >
         {!isRoot && onToggleNegate && <NotToggle active={negated} onClick={onToggleNegate} />}
-        <div className={styles.matchToggle}>
-          <button
-            type="button"
-            className={node.kind === 'and' ? styles.matchOn : styles.matchOff}
-            onClick={() => onRootChange(setGroupKind(root, path, 'and'))}
-          >
-            All
-          </button>
-          <button
-            type="button"
-            className={node.kind === 'or' ? styles.matchOn : styles.matchOff}
-            onClick={() => onRootChange(setGroupKind(root, path, 'or'))}
-          >
-            Any
-          </button>
-        </div>
+        {/* All/Any is hidden only when the group is empty. */}
+        {childCount >= 1 && (
+          <div className={styles.matchToggle}>
+            <button
+              type="button"
+              className={node.kind === 'and' ? styles.matchOn : styles.matchOff}
+              onClick={() => onRootChange(setGroupKind(root, path, 'and'))}
+            >
+              All
+            </button>
+            <button
+              type="button"
+              className={node.kind === 'or' ? styles.matchOn : styles.matchOff}
+              onClick={() => onRootChange(setGroupKind(root, path, 'or'))}
+            >
+              Any
+            </button>
+          </div>
+        )}
         <div className={styles.headerAdds}>
           <button
             type="button"
@@ -200,7 +206,6 @@ export const QueryGroup = ({
       </div>
 
       <div className={styles.children}>
-        {childCount === 0 && <div className={styles.empty}>No conditions.</div>}
         {node.children.map((_child, index) => (
           <QueryNodeView
             key={index}
@@ -303,19 +308,18 @@ type LeafNode = Exclude<QueryNode, { kind: 'and' | 'or' | 'not' }>;
 
 /** The nested boolean tree for one hop's same-instance `[...]` scoped filter. Wraps a bare
  *  predicate in an `and` so `QueryGroup` always has a group to edit; emits `undefined` when the
- *  user empties it so the `filter` key is dropped from the step. */
+ *  user empties it so the `filter` key is dropped from the step. The panel's own remove control is
+ *  owned by the `[...]` panel in `QueryLeaf` (top-right corner), not this inner group. */
 const ScopedFilterEditor = ({
   filter,
   fields,
   leafCtx,
-  onChange,
-  onRemove
+  onChange
 }: {
   filter: QueryNode | undefined;
   fields: FieldDef[];
   leafCtx: LeafContext;
   onChange: (filter: QueryNode | undefined) => void;
-  onRemove: () => void;
 }) => {
   const editableRoot: QueryNode =
     filter && isGroupNode(filter) ? filter : { kind: 'and', children: filter ? [filter] : [] };
@@ -329,8 +333,6 @@ const ScopedFilterEditor = ({
       fields={fields}
       leafCtx={{ ...leafCtx, inScopedFilter: true }}
       forceHeader
-      onRemove={onRemove}
-      removeTitle="Remove this where-filter"
     />
   );
 };
@@ -615,29 +617,32 @@ export const QueryLeaf = ({
 
   const terminalFields = fieldsForPosition(positionAfterHop(path.length - 1));
 
-  // Projection columns projected *through* this leaf's `[...]` witness (#3162). A column is
-  // attached here when this leaf's path is the longest tree leaf path that structurally prefixes
-  // the column's path. Not offered inside a scoped `[...]` filter (its path is hop-relative, not
-  // absolute) or on surfaces that don't track projections.
-  const columnsEditable =
-    !leafCtx.inScopedFilter && !!leafCtx.onProjectionsChange && path.length > 0;
-  const allLeafPaths = columnsEditable ? collectLeafPaths(root) : [];
-  const inlineColumns: { projection: ProjectionField; index: number }[] = columnsEditable
-    ? (leafCtx.projections ?? [])
-        .map((projection, index) => ({ projection, index }))
-        .filter(({ projection }) => {
-          const owner = projectionOwningLeafPath(projection.path, allLeafPaths);
-          return owner !== undefined && owner.length === path.length;
-        })
-    : [];
-
+  // Projection columns projected *through* a specific hop's `[...]` witness (#3162), mirroring the
+  // text form where `columns` sits inside a segment's `[...]`. A column belongs to hop N when its
+  // longest anchor prefix is `path[0..N]`. Not offered inside a scoped `[...]` filter (its path is
+  // hop-relative, not absolute) or on surfaces that don't track projections.
+  const columnsEditable = !leafCtx.inScopedFilter && !!leafCtx.onProjectionsChange;
+  const anchorPaths = columnsEditable ? collectProjectionAnchorPaths(root) : [];
   const setColumns = (next: ProjectionField[]) => leafCtx.onProjectionsChange?.(next);
+  const columnsForHop = (depth: number): { projection: ProjectionField; index: number }[] => {
+    const hopPrefix = path.slice(0, depth + 1);
+    return (leafCtx.projections ?? [])
+      .map((projection, index) => ({ projection, index }))
+      .filter(
+        ({ projection }) =>
+          pathStructurallyStartsWith(hopPrefix, projection.path) &&
+          projectionAnchorPath(projection.path, anchorPaths)?.length === depth + 1
+      );
+  };
   const replaceColumn = (index: number, next: ProjectionField) =>
     setColumns((leafCtx.projections ?? []).map((p, i) => (i === index ? next : p)));
   const removeColumn = (index: number) =>
     setColumns((leafCtx.projections ?? []).filter((_, i) => i !== index));
-  const addColumn = () =>
-    setColumns([...(leafCtx.projections ?? []), { path: [...path], fieldId: '_name' }]);
+  const addColumnAtHop = (depth: number) =>
+    setColumns([
+      ...(leafCtx.projections ?? []),
+      { path: path.slice(0, depth + 1).map(step => ({ ...step })), fieldId: '_name' }
+    ]);
 
   return (
     <div className={styles.traversalLeaf}>
@@ -665,13 +670,18 @@ export const QueryLeaf = ({
             });
             // Scoped `[...]` filters aren't offered on a relation-context hop yet (#3120) -
             // `isRelationPathVisuallyEditable` already keeps a *stored* one read-only; this keeps
-            // the toggle from offering to create a new one this editor can't represent.
+            // the toggle from offering to create a new one this editor can't represent. Projected
+            // `columns` (#3162) can still hang off any hop, including those.
             const scopeEditable =
               step.kind !== 'endpoint' &&
               step.kind !== 'relationForward' &&
               step.kind !== 'relationBackward';
             const position = positionAfterHop(depth);
-            const scopeOpen = openScopes.has(depth) || ('filter' in step && !!step.filter);
+            const hopColumns = columnsEditable ? columnsForHop(depth) : [];
+            const panelToggleable = scopeEditable || columnsEditable;
+            const panelOpen =
+              openScopes.has(depth) || ('filter' in step && !!step.filter) || hopColumns.length > 0;
+            const showConditionEditor = scopeEditable && position.kind === 'entity';
             return (
               <div key={depth} className={styles.hopBranch}>
                 <div className={styles.hopRow}>
@@ -684,12 +694,16 @@ export const QueryLeaf = ({
                     onChangeStep={next => changeStep(depth, next)}
                     onToggleDirection={direction => toggleStepDirection(depth, direction)}
                   />
-                  {scopeEditable && (
+                  {panelToggleable && (
                     <button
                       type="button"
-                      className={scopeOpen ? styles.rowCtlOn : styles.rowCtl}
-                      title="Filter the record this hop lands on"
-                      aria-pressed={scopeOpen}
+                      className={panelOpen ? styles.rowCtlOn : styles.rowCtl}
+                      title={
+                        scopeEditable
+                          ? 'Filter or project the record this hop reaches'
+                          : 'Project a column from this hop'
+                      }
+                      aria-pressed={panelOpen}
                       onClick={() => toggleScope(depth)}
                     >
                       [...]
@@ -697,23 +711,68 @@ export const QueryLeaf = ({
                   )}
                 </div>
 
-                {scopeEditable && scopeOpen && position.kind === 'entity' && (
+                {panelToggleable && panelOpen && (
                   <div className={styles.scopedFilter}>
-                    <ScopedFilterEditor
-                      filter={'filter' in step ? step.filter : undefined}
-                      fields={fieldsForPosition(position)}
-                      leafCtx={{
-                        ...leafCtx,
-                        rootKind: 'entity',
-                        rootPosition: position,
-                        rootSchemaScope: position.schemaScope
-                      }}
-                      onChange={filter => setStepFilter(depth, filter)}
-                      onRemove={() => {
-                        setStepFilter(depth, undefined);
-                        closeScope(depth);
-                      }}
-                    />
+                    {showConditionEditor && (
+                      <button
+                        type="button"
+                        className={styles.scopedFilterRemove}
+                        title="Remove this hop's filter"
+                        onClick={() => {
+                          setStepFilter(depth, undefined);
+                          closeScope(depth);
+                        }}
+                      >
+                        <TbX size={11} />
+                      </button>
+                    )}
+                    {showConditionEditor && (
+                      <div className={styles.hopSection}>
+                        <span className={styles.previewLabel}>Filter</span>
+                        <ScopedFilterEditor
+                          filter={'filter' in step ? step.filter : undefined}
+                          fields={fieldsForPosition(position)}
+                          leafCtx={{
+                            ...leafCtx,
+                            rootKind: 'entity',
+                            rootPosition: position,
+                            rootSchemaScope: position.schemaScope
+                          }}
+                          onChange={filter => setStepFilter(depth, filter)}
+                        />
+                      </div>
+                    )}
+                    {columnsEditable && (
+                      <div className={styles.hopColumns}>
+                        <span className={styles.previewLabel}>Columns</span>
+                        <div
+                          className={
+                            hopColumns.length > 0
+                              ? `${styles.hopColumnsAdd} ${styles.divided}`
+                              : styles.hopColumnsAdd
+                          }
+                        >
+                          <button
+                            type="button"
+                            className={styles.addBtn}
+                            onClick={() => addColumnAtHop(depth)}
+                          >
+                            <TbPlus size={11} /> column
+                          </button>
+                        </div>
+                        {hopColumns.map(({ projection, index }, order) => (
+                          <ProjectionRow
+                            key={index}
+                            projection={projection}
+                            onChange={next => replaceColumn(index, next)}
+                            onRemove={() => removeColumn(index)}
+                            leafCtx={leafCtx}
+                            lockedPrefixLength={depth + 1}
+                            label={`hop ${depth + 1} column ${order + 1}`}
+                          />
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -779,25 +838,6 @@ export const QueryLeaf = ({
           </div>
         )}
       </div>
-
-      {columnsEditable && (
-        <div className={styles.leafColumns}>
-          {inlineColumns.map(({ projection, index }, position) => (
-            <ProjectionRow
-              key={index}
-              projection={projection}
-              onChange={next => replaceColumn(index, next)}
-              onRemove={() => removeColumn(index)}
-              leafCtx={leafCtx}
-              lockedPrefixLength={path.length}
-              label={`column ${position + 1}`}
-            />
-          ))}
-          <button type="button" className={styles.addBtn} onClick={addColumn}>
-            <TbPlus size={11} /> column
-          </button>
-        </div>
-      )}
     </div>
   );
 };
