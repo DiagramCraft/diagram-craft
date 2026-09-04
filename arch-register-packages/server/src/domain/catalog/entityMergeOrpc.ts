@@ -4,7 +4,7 @@ import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { createOrpcHandler } from '../../utils/orpcHandler';
 import { orpcErrorMiddleware } from '../../utils/orpcErrors';
-import { previewEntityMerge } from './entityMergeOperations';
+import { executeEntityMerge, previewEntityMerge } from './entityMergeOperations';
 
 type ORPCContext = { db: DatabaseAdapter; event: AuthenticatedEvent };
 
@@ -19,6 +19,15 @@ export const createEntityMergeORPCRouter = () =>
           input.params.workspace,
           input.params.id,
           input.body.targetId,
+          context.event
+        )
+      ),
+      execute: router.entityMerges.execute.handler(({ input, context }) =>
+        executeEntityMerge(
+          context.db,
+          input.params.workspace,
+          input.params.id,
+          input.body,
           context.event
         )
       )

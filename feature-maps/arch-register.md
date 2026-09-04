@@ -792,13 +792,13 @@
           acknowledgement, postpone or finalize on schedule, and cancel an in-flight deprecation; finalizing moves the
           entity to the workspace's designated deprecated lifecycle state.
 
-        - @id:ar.collaboration.entity-merge Workspace administrators with merge permission can preview a proposed
-          entity merge before committing it: a read-only, side-effect-free report of the conflicting field values,
-          the reverse references and typed relations that would be re-pointed to the surviving record, relation
-          instances that would become duplicates or self-references, affected side-table row counts, and hard
-          blockers (different schema, project-scope mismatch, an already-merged record, an open governance case, or a
-          restricted field the caller cannot write). Field values from access-restricted field groups are flagged
-          rather than disclosed.
+        - @id:ar.collaboration.entity-merge Workspace administrators with merge permission can preview and execute
+          same-schema, same-project entity merges. The preview is read-only and reports conflicting field values,
+          reverse references, typed relations, side-table collisions, affected row counts, and hard blockers; the
+          caller explicitly resolves every conflict, then one atomic operation rewrites supported references and
+          side tables, transfers record history, creates the retired-identifier alias, and removes the source record.
+          Preview versions and an opaque participant fingerprint prevent stale applies, while restricted field values
+          are flagged rather than disclosed and unsupported external identities remain blocked.
 
         - @id:ar.collaboration.audit Authorized users can inspect audit activity for workspace and domain changes.
           Field values from access-restricted field groups are scrubbed from an entry's recorded changes for viewers
