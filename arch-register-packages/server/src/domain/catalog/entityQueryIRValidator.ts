@@ -868,21 +868,15 @@ export const validateEntityQueryIR = (
     // A projection path may carry a `[...]` scoped filter only on its final step, and only when that
     // exact step also occurs in `query.root` — i.e. it is a reference to an existing existential
     // witness (§4.6), authored as a `columns` clause inside that segment's scope, not a fresh
-    // independent existential. `entityQueryPathStartsWith` compares steps by structure incl. filter.
+    // independent existential. Every scoped step's own prefix must therefore appear verbatim
+    // (structure incl. filter) as a prefix of some `query.root` predicate/relationExists path -
+    // that is what binds it to an existing witness rather than opening a new one. A capture with
+    // further hops past the scoped segment (`releases[f columns tech.name]`) leaves the filter
+    // mid-path, which is fine as long as that prefix is still witness-bound.
     projection.path.forEach((step, stepIndex) => {
       if (step.kind === 'endpoint' || !step.filter) return;
-      const isFinalStep = stepIndex === projection.path.length - 1;
-      if (!isFinalStep) {
-        errors.push({
-          path: [...projectionPath, 'path', stepIndex, 'filter'],
-          message:
-            'Projection paths may only carry a scoped filter on their final (witness-binding) step'
-        });
-      } else if (
-        !rootPathOccurrences.some(occurrence =>
-          entityQueryPathStartsWith(occurrence, projection.path)
-        )
-      ) {
+      const prefix = projection.path.slice(0, stepIndex + 1);
+      if (!rootPathOccurrences.some(occurrence => entityQueryPathStartsWith(occurrence, prefix))) {
         errors.push({
           path: [...projectionPath, 'path', stepIndex, 'filter'],
           message:

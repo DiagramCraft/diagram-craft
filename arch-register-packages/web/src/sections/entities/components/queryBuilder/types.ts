@@ -7,6 +7,7 @@ import type {
 import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 import type { Assessment } from '@arch-register/api-types/assessmentContract';
 import type { FieldGroupAccess, FieldGroupAccessControl } from '@arch-register/permissions';
+import type { ProjectionField } from '@arch-register/api-types/entityQueryIR';
 import type { PathPosition, PathSchemaScope } from '../pathBuilder/pathBuilderState';
 
 /** Everything a leaf row needs to edit a relation-traversal path and its terminal field, threaded
@@ -42,4 +43,9 @@ export type LeafContext = {
   /** True when this context is a hop's same-instance `[...]` scoped filter - free text is invalid
    *  there (grammar §4.4), so "Add text search" is hidden. */
   inScopedFilter: boolean;
+  /** All projection columns on the query, and a setter, so a filter leaf can add/edit the columns
+   *  projected through its `[...]` witness inline (#3162). Absent inside a scoped `[...]` filter and
+   *  on surfaces that don't track projections. */
+  projections?: ProjectionField[];
+  onProjectionsChange?: (projections: ProjectionField[]) => void;
 };

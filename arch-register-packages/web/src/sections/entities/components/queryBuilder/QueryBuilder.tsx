@@ -1,7 +1,7 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { TbAlertTriangle } from 'react-icons/tb';
 import { Select } from '@diagram-craft/app-components/Select';
-import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
+import type { EntityQuery, ProjectionField } from '@arch-register/api-types/entityQueryIR';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import type {
@@ -15,9 +15,14 @@ import { getEntityFilterFieldDefs } from '../../../../components/FilterBuilder';
 import { getRelationFilterFieldDefs } from '../../../relations/relationFilterFields';
 import { SearchInput } from '../../../../components/SearchInput';
 import { addFreeTextQuery, getFreeTextQuery } from '../entityBrowserState';
-import { countHops, exceedsHopBudget, MAX_PATH_HOPS, toEditableRoot } from './queryBuilderState';
+import {
+  countHops,
+  exceedsHopBudget,
+  MAX_PATH_HOPS,
+  syncProjectionsToTree,
+  toEditableRoot
+} from './queryBuilderState';
 import { QueryGroup } from './QueryTree';
-import { ProjectionEditor } from './ProjectionEditor';
 import { QueryPreview } from './QueryPreview';
 import styles from './queryBuilder.module.css';
 
@@ -73,6 +78,14 @@ export const QueryBuilder = ({
   const freeText = getFreeTextQuery(query);
   const isRelation = rootKind === 'relation';
 
+  const setProjections = useCallback(
+    (next: ProjectionField[]) =>
+      onChange(
+        syncProjectionsToTree({ ...query, projections: next.length > 0 ? next : undefined })
+      ),
+    [query, onChange]
+  );
+
   // When the top-bar "Search text…" box is shown it owns the free-text clause, so strip the
   // `freeText` node out of the tree the boolean editor renders - otherwise it shows up a second
   // time as a non-editable row. `emit` re-attaches it. When there's no top-bar box (the entity
@@ -106,7 +119,9 @@ export const QueryBuilder = ({
           },
       atHopLimit: countHops(query) >= MAX_PATH_HOPS,
       showFreeText: showFreeText && !isRelation,
-      inScopedFilter: false
+      inScopedFilter: false,
+      projections: query.projections ?? [],
+      onProjectionsChange: (next: EntityQuery['projections']) => setProjections(next ?? [])
     }),
     [
       rootKind,
@@ -119,7 +134,8 @@ export const QueryBuilder = ({
       owners,
       joinedAssessment,
       getFieldGroupAccess,
-      query
+      query,
+      setProjections
     ]
   );
 
@@ -160,9 +176,13 @@ export const QueryBuilder = ({
   // emptied group is left in place (it renders with a "No conditions" placeholder and its own
   // remove button) rather than being auto-pruned, which previously cascade-deleted an outer group
   // whose only child was the group just removed.
+  // Every builder write goes through `syncProjectionsToTree` so an anchored column's leading steps
+  // stay pinned to its owning filter leaf's current path (#3162 / #3154 witness binding).
   const emit = (nextRoot: EntityQuery['root']) => {
     const base = { ...editable, root: nextRoot };
-    onChange(showFreeText && freeText ? addFreeTextQuery(base, freeText) : base);
+    onChange(
+      syncProjectionsToTree(showFreeText && freeText ? addFreeTextQuery(base, freeText) : base)
+    );
   };
 
   const overBudget = exceedsHopBudget(query);
@@ -213,12 +233,6 @@ export const QueryBuilder = ({
         path={[]}
         onRootChange={emit}
         fields={fields}
-        leafCtx={leafCtx}
-      />
-
-      <ProjectionEditor
-        projections={query.projections ?? []}
-        onChange={next => onChange({ ...query, projections: next.length > 0 ? next : undefined })}
         leafCtx={leafCtx}
       />
 

@@ -28,6 +28,7 @@ const makeSchema = (id: string, fields: SchemaDbResult['fields'] = []): SchemaDb
 });
 
 const DOMAIN = makeSchema('domain-schema');
+
 const SYSTEM = makeSchema('system-schema', [
   {
     id: 'domain',
@@ -346,11 +347,7 @@ describe('validateEntityQueryIR', () => {
       expect(
         result.errors.some(error => error.message.includes('Duplicate projection alias'))
       ).toBe(true);
-      expect(
-        result.errors.some(error =>
-          error.message.includes('may only carry a scoped filter on their final')
-        )
-      ).toBe(true);
+      expect(result.errors.some(error => error.message.includes('witness-binding'))).toBe(true);
       expect(result.errors.some(error => error.message.includes('MAX_PATH_HOPS'))).toBe(true);
     }
   });
@@ -364,6 +361,56 @@ describe('validateEntityQueryIR', () => {
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.errors.some(error => error.path[0] === 'assessmentId')).toBe(true);
+    }
+  });
+
+  it('accepts a projection whose witness filter matches a scoped predicate, mid-path', () => {
+    const scopedStep = {
+      kind: 'forward' as const,
+      fieldId: 'domain',
+      filter: {
+        kind: 'predicate' as const,
+        path: [],
+        fieldId: '_name',
+        op: 'equals' as const,
+        value: 'D'
+      }
+    };
+    const query: EntityQuery = {
+      schemaId: SYSTEM.id,
+      root: { kind: 'relationExists', path: [scopedStep] },
+      projections: [{ path: [scopedStep], fieldId: '_slug' }]
+    };
+    expect(validateEntityQueryIR(query, schemas)).toEqual({ ok: true });
+  });
+
+  it('rejects a projection witness filter with no matching predicate in the query', () => {
+    const query: EntityQuery = {
+      schemaId: SYSTEM.id,
+      root: { kind: 'and', children: [] },
+      projections: [
+        {
+          path: [
+            {
+              kind: 'forward',
+              fieldId: 'domain',
+              filter: {
+                kind: 'predicate',
+                path: [],
+                fieldId: '_name',
+                op: 'equals',
+                value: 'D'
+              }
+            }
+          ],
+          fieldId: '_slug'
+        }
+      ]
+    };
+    const result = validateEntityQueryIR(query, schemas);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.errors.some(error => error.message.includes('witness-binding'))).toBe(true);
     }
   });
 });

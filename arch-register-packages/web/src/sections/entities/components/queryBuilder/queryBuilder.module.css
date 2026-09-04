@@ -53,7 +53,7 @@
 
 /* A scoped-filter panel already provides its own card (`.scopedFilter`), so the QueryGroup it
    renders at `path: []` drops the wrapper. */
-.scopedFilter > .rootGroup {
+.scopedFilter .rootGroup {
   border: none;
   border-radius: 0;
   margin: 0;
@@ -102,6 +102,10 @@
   gap: 6px 8px;
   /* right padding matches .row so the header's remove-x lines up with the rows' remove-x */
   padding: 6px 12px;
+}
+
+/* Divider only when there are conditions below it to divide from. */
+.groupHeader.divided {
   border-bottom: 1px solid var(--panel-border);
 }
 
@@ -138,20 +142,10 @@
   color: var(--base-fg-dim);
 }
 
-.matchHint {
-  font-size: 11px;
-  color: var(--cmp-fg-disabled);
-}
-
 /* ── Rows ── */
 .children {
   display: flex;
   flex-direction: column;
-}
-
-.empty {
-  padding: 10px 12px;
-  color: var(--cmp-fg-disabled);
 }
 
 .row {
@@ -376,13 +370,68 @@
   border-bottom: none;
 }
 
-/* ── Per-hop same-instance [...] scoped filter (nested inside its .hopBranch) ── */
+/* ── Per-hop same-instance [...] panel: filter + projected columns (nested inside its .hopBranch) ── */
 .scopedFilter {
+  position: relative;
   margin-left: 0.75rem;
   border: 1px solid var(--panel-border);
   border-left: 3px solid var(--cmp-fg-disabled);
   border-radius: var(--r);
   background: color-mix(in srgb, var(--base-fg) 4%, transparent);
+}
+
+/* Panel-level remove x, top-right corner of the whole [...] panel. */
+.scopedFilterRemove {
+  composes: removeBtn;
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  z-index: 1;
+}
+
+/* ── One hop's [...] panel: a "Filter" section and/or a "Columns" section (#3162) ── */
+.hopSection,
+.hopColumns {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px 8px;
+}
+/* "+ column" sits on its own row under the Columns label, above the column rows - mirroring the
+   Filter section's + Condition / + Group header row. */
+.hopColumnsAdd {
+  display: flex;
+}
+
+/* Divider only when there are columns below it to divide from. */
+.hopColumnsAdd.divided {
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--panel-border);
+}
+/* When the panel holds both, separate them. */
+.hopSection + .hopColumns {
+  border-top: 1px solid var(--panel-border);
+}
+.hopColumns > .projectionRow:last-of-type {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.hopSection > .rootGroup {
+  & > .groupHeader {
+    padding-left: 0;
+
+    .headerAdds {
+      margin: 0;
+    }
+
+    &:not(.matchToggle) {
+      padding: 0;
+    }
+  }
+  & > .children > .row {
+    padding-left: 0;
+  }
 }
 
 /* ── Read-only advanced leaves ── */
@@ -436,24 +485,10 @@
   color: var(--base-fg);
 }
 
-/* ── Columns / projections ── */
-/* Section label above the boolean-tree card, matching the Type / Columns / Query labels. */
+/* ── Projection columns (edited inside a hop's [...] panel, #3162) ── */
+/* Section label above the boolean-tree card, matching the Type / Query labels. */
 .filtersHeader {
   padding: 10px 12px 0;
-}
-
-.columns {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 10px 12px;
-  border-top: 1px solid var(--panel-border);
-}
-
-.columnsHeader {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
 }
 
 .projectionRow {
