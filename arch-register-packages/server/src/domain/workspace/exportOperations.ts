@@ -547,7 +547,7 @@ const exportProjects = async (
   workspace: string,
   projectIds?: string[]
 ): Promise<ExportProject[]> => {
-  let projects = await db.project.listProjects(workspace);
+  let projects = await db.project.projects.listProjects(workspace);
 
   // Filter by project IDs if specified
   if (projectIds && projectIds.length > 0) {
@@ -571,7 +571,7 @@ const exportContentNodes = async (
   projectIds?: string[],
   includeContent = true
 ): Promise<{ nodes: ExportContentNode[]; contentFiles: Map<string, Buffer> }> => {
-  let contentNodes = await db.project.listAllContentNodes(workspace);
+  let contentNodes = await db.project.contentNodes.listAllContentNodes(workspace);
 
   // Filter by project IDs if specified
   if (projectIds && projectIds.length > 0) {
@@ -632,7 +632,7 @@ const exportDocuments = async (
   workspace: string,
   projectIds?: string[]
 ): Promise<ExportDocumentData> => {
-  const nodes = await db.project.listAllContentNodes(workspace);
+  const nodes = await db.project.contentNodes.listAllContentNodes(workspace);
   const includedNodes = projectIds?.length
     ? nodes.filter(node => node.project_id != null && projectIds.includes(node.project_id))
     : nodes;
@@ -653,7 +653,10 @@ const exportDocuments = async (
           position: link.position
         }))
       });
-    for (const revision of await db.project.listMarkdownRevisions(workspace, node.id)) {
+    for (const revision of await db.project.markdownRevisions.listMarkdownRevisions(
+      workspace,
+      node.id
+    )) {
       revisions.push({
         id: revision.id,
         node_id: revision.node_id,

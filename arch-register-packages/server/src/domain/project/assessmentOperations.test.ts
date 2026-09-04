@@ -81,15 +81,21 @@ describe('listAssessments', () => {
   it('only returns assessments owned by projects the caller can access', async () => {
     const db = {
       project: {
-        listAssessments: vi.fn(async () => [
-          assessment('visible-assessment', 'project-visible'),
-          assessment('hidden-assessment', 'project-hidden')
-        ]),
-        listProjects: vi.fn(async () => [
-          { id: 'project-visible', name: 'Visible project', owner: 'allowed' },
-          { id: 'project-hidden', name: 'Hidden project', owner: 'denied' }
-        ]),
-        listAssessmentResponses: vi.fn(async () => [])
+        assessments: {
+          listAssessments: vi.fn(async () => [
+            assessment('visible-assessment', 'project-visible'),
+            assessment('hidden-assessment', 'project-hidden')
+          ])
+        },
+        projects: {
+          listProjects: vi.fn(async () => [
+            { id: 'project-visible', name: 'Visible project', owner: 'allowed' },
+            { id: 'project-hidden', name: 'Hidden project', owner: 'denied' }
+          ])
+        },
+        assessmentResponses: {
+          listAssessmentResponses: vi.fn(async () => [])
+        }
       },
       catalog: { listSchemas: vi.fn(async () => []) }
     } as unknown as DatabaseAdapter;
@@ -131,13 +137,21 @@ describe('updateAssessmentStatus', () => {
     };
     const db = {
       project: {
-        getAssessmentById: vi.fn(async () => row),
-        getProject: vi.fn(async () => project),
-        updateAssessment: vi.fn(async (_ws: string, _pid: string, _id: string, patch: unknown) => ({
-          ...updated,
-          ...(patch as Record<string, unknown>)
-        })),
-        listAssessmentResponses: vi.fn(async () => [])
+        assessments: {
+          getAssessmentById: vi.fn(async () => row),
+          updateAssessment: vi.fn(
+            async (_ws: string, _pid: string, _id: string, patch: unknown) => ({
+              ...updated,
+              ...(patch as Record<string, unknown>)
+            })
+          )
+        },
+        projects: {
+          getProject: vi.fn(async () => project)
+        },
+        assessmentResponses: {
+          listAssessmentResponses: vi.fn(async () => [])
+        }
       },
       catalog: { listSchemas: vi.fn(async () => []) },
       workspace: {
@@ -191,7 +205,7 @@ describe('updateAssessmentStatus', () => {
 
     await updateAssessmentStatus(db, 'ws-1', 'assessment-1', { status: 'open' }, event);
 
-    expect(db.project.updateAssessment).toHaveBeenCalledWith(
+    expect(db.project.assessments.updateAssessment).toHaveBeenCalledWith(
       'ws-1',
       'project-1',
       'assessment-1',
@@ -230,9 +244,15 @@ describe('getAssessment team_acknowledge_status', () => {
     const row = assessment('assessment-1', project.id);
     const db = {
       project: {
-        getAssessmentById: vi.fn(async () => row),
-        getProject: vi.fn(async () => project),
-        listAssessmentResponses: vi.fn(async () => [])
+        assessments: {
+          getAssessmentById: vi.fn(async () => row)
+        },
+        projects: {
+          getProject: vi.fn(async () => project)
+        },
+        assessmentResponses: {
+          listAssessmentResponses: vi.fn(async () => [])
+        }
       },
       catalog: { listSchemas: vi.fn(async () => []) },
       governance: { listCases: vi.fn(async () => []) },
@@ -252,9 +272,15 @@ describe('getAssessment team_acknowledge_status', () => {
     const resolvedAt = new Date('2026-06-02T00:00:00.000Z');
     const db = {
       project: {
-        getAssessmentById: vi.fn(async () => row),
-        getProject: vi.fn(async () => project),
-        listAssessmentResponses: vi.fn(async () => [])
+        assessments: {
+          getAssessmentById: vi.fn(async () => row)
+        },
+        projects: {
+          getProject: vi.fn(async () => project)
+        },
+        assessmentResponses: {
+          listAssessmentResponses: vi.fn(async () => [])
+        }
       },
       governance: {
         listCases: vi.fn(async () => [
@@ -307,22 +333,28 @@ describe('getAssessment team_acknowledge_status', () => {
     };
     const db = {
       project: {
-        getAssessmentById: vi.fn(async () => row),
-        getProject: vi.fn(async () => project),
-        listAssessmentResponses: vi.fn(async () => [
-          {
-            id: 'response-1',
-            workspace: 'ws-1',
-            assessment_id: row.id,
-            entity_id: 'entity-1',
-            occurrence: 1,
-            values: {},
-            created_at: now,
-            updated_at: now,
-            updated_by: null,
-            updated_by_name: null
-          }
-        ])
+        assessments: {
+          getAssessmentById: vi.fn(async () => row)
+        },
+        projects: {
+          getProject: vi.fn(async () => project)
+        },
+        assessmentResponses: {
+          listAssessmentResponses: vi.fn(async () => [
+            {
+              id: 'response-1',
+              workspace: 'ws-1',
+              assessment_id: row.id,
+              entity_id: 'entity-1',
+              occurrence: 1,
+              values: {},
+              created_at: now,
+              updated_at: now,
+              updated_by: null,
+              updated_by_name: null
+            }
+          ])
+        }
       },
       catalog: { listSchemas: vi.fn(async () => []) },
       governance: { listCases: vi.fn(async () => []) },

@@ -93,8 +93,10 @@ const resolveTarget = async (
     return { entity, node: null, project: null, title: entity?.name ?? input.objectId };
   }
 
-  const node = await db.project.getAnyContentNodeById(workspace, input.objectId);
-  const project = node?.project_id ? await db.project.getProject(workspace, node.project_id) : null;
+  const node = await db.project.contentNodes.getAnyContentNodeById(workspace, input.objectId);
+  const project = node?.project_id
+    ? await db.project.projects.getProject(workspace, node.project_id)
+    : null;
   const entity = node?.entity_id ? await db.catalog.getEntity(workspace, node.entity_id) : null;
   return { entity, node, project, title: node?.name ?? input.objectId };
 };
@@ -217,8 +219,10 @@ export const canAccessCommentNotification = async (
     });
   }
 
-  const node = await db.project.getAnyContentNodeById(workspace, objectId);
+  const node = await db.project.contentNodes.getAnyContentNodeById(workspace, objectId);
   if (!node) return false;
-  const project = node.project_id ? await db.project.getProject(workspace, node.project_id) : null;
+  const project = node.project_id
+    ? await db.project.projects.getProject(workspace, node.project_id)
+    : null;
   return canViewTarget(authCtx, { objectType, node, project });
 };

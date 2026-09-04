@@ -145,13 +145,17 @@ const makeDb = () => {
 
   const db = {
     project: {
-      getProject: vi.fn(async (_ws: string, id: string) =>
-        id === 'dest-project' ? makeProject(id, 'team-dest') : makeProject(id, 'team-source')
-      ),
-      getContentNodeByPath,
-      upsertContentNode,
-      updateContentNodeDerivedData: vi.fn(async () => {}),
-      deleteContentNodeByPath: vi.fn(async () => null)
+      projects: {
+        getProject: vi.fn(async (_ws: string, id: string) =>
+          id === 'dest-project' ? makeProject(id, 'team-dest') : makeProject(id, 'team-source')
+        )
+      },
+      contentNodes: {
+        getContentNodeByPath,
+        upsertContentNode,
+        updateContentNodeDerivedData: vi.fn(async () => {}),
+        deleteContentNodeByPath: vi.fn(async () => null)
+      }
     }
   } as unknown as DatabaseAdapter;
 
@@ -159,7 +163,9 @@ const makeDb = () => {
     db,
     getContentNodeByPath,
     upsertContentNode,
-    deleteContentNodeByPath: db.project.deleteContentNodeByPath as ReturnType<typeof vi.fn>
+    deleteContentNodeByPath: db.project.contentNodes.deleteContentNodeByPath as ReturnType<
+      typeof vi.fn
+    >
   };
 };
 
@@ -168,13 +174,17 @@ describe('createFromTemplate', () => {
     const getContentNodeByPath = vi.fn();
     const db = {
       project: {
-        getProject: vi.fn(async (_ws: string, id: string) =>
-          id === 'dest-project' ? makeProject(id, 'team-dest') : makeProject(id, 'team-source')
-        ),
-        getContentNodeByPath,
-        upsertContentNode: vi.fn(),
-        updateContentNodeDerivedData: vi.fn(),
-        deleteContentNodeByPath: vi.fn()
+        projects: {
+          getProject: vi.fn(async (_ws: string, id: string) =>
+            id === 'dest-project' ? makeProject(id, 'team-dest') : makeProject(id, 'team-source')
+          )
+        },
+        contentNodes: {
+          getContentNodeByPath,
+          upsertContentNode: vi.fn(),
+          updateContentNodeDerivedData: vi.fn(),
+          deleteContentNodeByPath: vi.fn()
+        }
       }
     } as unknown as DatabaseAdapter;
 
@@ -199,13 +209,17 @@ describe('createFromTemplate', () => {
     const storage = { read: vi.fn(), write: vi.fn() };
     const db = {
       project: {
-        getProject: vi.fn(async (_ws: string, id: string) =>
-          id === 'dest-project' ? makeProject(id, 'team-dest') : makeProject(id, 'team-source')
-        ),
-        getContentNodeByPath: vi.fn(async () => makeTemplateFile({ is_template: false })),
-        upsertContentNode: vi.fn(),
-        updateContentNodeDerivedData: vi.fn(),
-        deleteContentNodeByPath: vi.fn()
+        projects: {
+          getProject: vi.fn(async (_ws: string, id: string) =>
+            id === 'dest-project' ? makeProject(id, 'team-dest') : makeProject(id, 'team-source')
+          )
+        },
+        contentNodes: {
+          getContentNodeByPath: vi.fn(async () => makeTemplateFile({ is_template: false })),
+          upsertContentNode: vi.fn(),
+          updateContentNodeDerivedData: vi.fn(),
+          deleteContentNodeByPath: vi.fn()
+        }
       }
     } as unknown as DatabaseAdapter;
 

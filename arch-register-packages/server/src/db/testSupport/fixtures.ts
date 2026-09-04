@@ -126,7 +126,7 @@ export const createFixtureProject = async (
 ) => {
   const id = overrides.id ?? randomUUID();
   const createdAt = overrides.created_at ?? new Date();
-  return db.project.createProject({
+  return db.project.projects.createProject({
     name: `Project ${id}`,
     description: '',
     owner: null,

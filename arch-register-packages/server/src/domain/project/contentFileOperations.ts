@@ -110,7 +110,7 @@ const writeScopedDiagram = async (
       }
     ],
     writeDatabase: async tx => {
-      await tx.project.upsertContentNode({
+      await tx.project.contentNodes.upsertContentNode({
         id: nodeId,
         workspace: ws,
         ...contentNodeScopeFields(resolved),
@@ -137,7 +137,7 @@ const writeScopedDiagram = async (
           const preview =
             (await generateAccurateSvgPreview(doc)) ?? generateSvgPreview(doc) ?? null;
           if (resolved.kind === 'workspace') {
-            await db.project.updateWorkspaceContentNodeDerivedData(
+            await db.project.contentNodes.updateWorkspaceContentNodeDerivedData(
               ws,
               nodeId,
               content.length,
@@ -147,13 +147,19 @@ const writeScopedDiagram = async (
               timestamp
             );
           } else {
-            await db.project.updateContentNodePreview(ws, resolved.storageId, nodeId, preview);
+            await db.project.contentNodes.updateContentNodePreview(
+              ws,
+              resolved.storageId,
+              nodeId,
+              preview
+            );
           }
         }
       },
       {
         name: 'references',
-        run: () => db.project.syncDiagramEntityRefs(ws, nodeId, getDiagramEntityRefs(doc))
+        run: () =>
+          db.project.diagramEntityRefs.syncDiagramEntityRefs(ws, nodeId, getDiagramEntityRefs(doc))
       },
       {
         name: 'audit',
@@ -201,7 +207,7 @@ const resolveLegacyContentScope = async (
   ws: string,
   identifier: string
 ): Promise<ContentScopeResolver> => {
-  return (await db.project.getProject(ws, identifier)) ? PROJECT_SCOPE : ENTITY_SCOPE;
+  return (await db.project.projects.getProject(ws, identifier)) ? PROJECT_SCOPE : ENTITY_SCOPE;
 };
 
 type ContentScopeSelection =
@@ -402,7 +408,7 @@ export const cloneContentFile = async (
         nodeIds: [rootId, ...attachmentSources.map(node => idMap.get(node.id)!)],
         storageChanges,
         writeDatabase: async tx => {
-          saved = await tx.project.upsertContentNode({
+          saved = await tx.project.contentNodes.upsertContentNode({
             id: rootId,
             workspace: ws,
             ...contentNodeScopeFields(resolved),
@@ -424,7 +430,7 @@ export const cloneContentFile = async (
           const oldRoot = source.path.endsWith('.md') ? source.path.slice(0, -3) : source.path;
           const newRoot = clonePath.endsWith('.md') ? clonePath.slice(0, -3) : clonePath;
           for (const node of attachmentSources) {
-            await tx.project.upsertContentNode({
+            await tx.project.contentNodes.upsertContentNode({
               id: idMap.get(node.id)!,
               workspace: ws,
               ...contentNodeScopeFields(resolved),
@@ -461,7 +467,7 @@ export const cloneContentFile = async (
                     const preview =
                       (await generateAccurateSvgPreview(doc!)) ?? generateSvgPreview(doc!) ?? null;
                     if (resolved.kind === 'workspace') {
-                      await db.project.updateWorkspaceContentNodeDerivedData(
+                      await db.project.contentNodes.updateWorkspaceContentNodeDerivedData(
                         ws,
                         rootId,
                         rootContent.length,
@@ -471,7 +477,7 @@ export const cloneContentFile = async (
                         timestamp
                       );
                     } else {
-                      await db.project.updateContentNodePreview(
+                      await db.project.contentNodes.updateContentNodePreview(
                         ws,
                         resolved.storageId,
                         rootId,
@@ -487,7 +493,11 @@ export const cloneContentFile = async (
                 {
                   name: 'references' as const,
                   run: () =>
-                    db.project.syncDiagramEntityRefs(ws, rootId, getDiagramEntityRefs(doc!))
+                    db.project.diagramEntityRefs.syncDiagramEntityRefs(
+                      ws,
+                      rootId,
+                      getDiagramEntityRefs(doc!)
+                    )
                 }
               ]
             : []),
@@ -609,7 +619,7 @@ export const relocateContentFile = async (
           }))
         ],
         writeDatabase: async tx => {
-          saved = await tx.project.upsertContentNode({
+          saved = await tx.project.contentNodes.upsertContentNode({
             id: rootId,
             workspace: ws,
             ...contentNodeScopeFields(resolved),
@@ -631,7 +641,7 @@ export const relocateContentFile = async (
           const oldRoot = source.path.endsWith('.md') ? source.path.slice(0, -3) : source.path;
           const newRoot = newPath.endsWith('.md') ? newPath.slice(0, -3) : newPath;
           for (const node of attachmentSources) {
-            await tx.project.upsertContentNode({
+            await tx.project.contentNodes.upsertContentNode({
               id: idMap.get(node.id)!,
               workspace: ws,
               ...contentNodeScopeFields(resolved),
@@ -669,7 +679,7 @@ export const relocateContentFile = async (
                     const preview =
                       (await generateAccurateSvgPreview(doc!)) ?? generateSvgPreview(doc!) ?? null;
                     if (resolved.kind === 'workspace') {
-                      await db.project.updateWorkspaceContentNodeDerivedData(
+                      await db.project.contentNodes.updateWorkspaceContentNodeDerivedData(
                         ws,
                         rootId,
                         rootContent.length,
@@ -679,7 +689,7 @@ export const relocateContentFile = async (
                         timestamp
                       );
                     } else {
-                      await db.project.updateContentNodePreview(
+                      await db.project.contentNodes.updateContentNodePreview(
                         ws,
                         resolved.storageId,
                         rootId,
@@ -695,7 +705,11 @@ export const relocateContentFile = async (
                 {
                   name: 'references' as const,
                   run: () =>
-                    db.project.syncDiagramEntityRefs(ws, rootId, getDiagramEntityRefs(doc!))
+                    db.project.diagramEntityRefs.syncDiagramEntityRefs(
+                      ws,
+                      rootId,
+                      getDiagramEntityRefs(doc!)
+                    )
                 }
               ]
             : []),
@@ -784,7 +798,7 @@ export const getProjectFile = async (
     fallback: 'Failed to retrieve file',
     dbErrorMessages: projectDbErrorMessages,
     operation: async ({ ws, authCtx }) => {
-      const node = await db.project.getAnyContentNodeById(ws, fileId);
+      const node = await db.project.contentNodes.getAnyContentNodeById(ws, fileId);
       httpAssert.present(node, { status: 404, message: `File '${fileId}' not found` });
       const resolved = await resolveContentScopeForNode(db, ws, authCtx, node, 'read');
       if (resolved.kind === 'project') node.project_public_id = resolved.projectPublicId;
@@ -807,7 +821,7 @@ export const getFileContentById = async (
     fallback: 'Failed to retrieve file content',
     dbErrorMessages: projectDbErrorMessages,
     operation: async ({ ws, authCtx }) => {
-      const node = await db.project.getAnyContentNodeById(ws, fileId);
+      const node = await db.project.contentNodes.getAnyContentNodeById(ws, fileId);
       httpAssert.present(node, { status: 404, message: `File '${fileId}' not found` });
       const resolved = await resolveContentScopeForNode(db, ws, authCtx, node, 'read');
       const content = await storage.read(ws, resolved.storageId, node.id);

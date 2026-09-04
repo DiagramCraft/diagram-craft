@@ -72,7 +72,9 @@ const makeDb = (entities: EntityDbResult[]) => {
       listEntities: vi.fn(async () => entities)
     },
     project: {
-      listProjectEntities: vi.fn(async () => [])
+      projectEntities: {
+        listProjectEntities: vi.fn(async () => [])
+      }
     },
     view: {
       listCollectionEntityIds: vi.fn(async () => [])
@@ -282,8 +284,10 @@ describe('listEntities with asOf', () => {
         listEntitiesPaginated: vi.fn(async () => [])
       },
       project: {
-        listProjectEntities: vi.fn(async () => []),
-        listProjectEntityLinks: vi.fn(async () => projectLinks)
+        projectEntities: {
+          listProjectEntities: vi.fn(async () => []),
+          listProjectEntityLinks: vi.fn(async () => projectLinks)
+        }
       },
       workspace: {
         listTeams: vi.fn(async () => []),
@@ -396,12 +400,20 @@ describe('listEntities / countEntities with joined assessment', () => {
         listEntities: vi.fn(async () => entities)
       },
       project: {
-        listProjectEntities: vi.fn(async () => []),
-        getAssessmentById: vi.fn(async () =>
-          options.assessment === undefined ? assessment : options.assessment
-        ),
-        getProject: vi.fn(async () => ({ id: 'proj-1', workspace: 'ws-1', owner: 'team-1' })),
-        listAssessmentResponses
+        projectEntities: {
+          listProjectEntities: vi.fn(async () => [])
+        },
+        assessments: {
+          getAssessmentById: vi.fn(async () =>
+            options.assessment === undefined ? assessment : options.assessment
+          )
+        },
+        projects: {
+          getProject: vi.fn(async () => ({ id: 'proj-1', workspace: 'ws-1', owner: 'team-1' }))
+        },
+        assessmentResponses: {
+          listAssessmentResponses
+        }
       },
       relation: {
         listRelationSchemas: vi.fn(async () => [])
@@ -429,7 +441,7 @@ describe('listEntities / countEntities with joined assessment', () => {
     const result = await listEntities(db, 'ws-1', null, { assessmentId: 'assessment-1' });
 
     expect(result).toHaveLength(2);
-    expect(db.project.listAssessmentResponses).not.toHaveBeenCalled();
+    expect(db.project.assessmentResponses.listAssessmentResponses).not.toHaveBeenCalled();
   });
 
   it('matches presence has/has-not conditions', async () => {
@@ -462,7 +474,7 @@ describe('listEntities / countEntities with joined assessment', () => {
     });
     expect(hasNot.map(r => r._uid)).toEqual(['entity-2']);
 
-    expect(db.project.listAssessmentResponses).toHaveBeenCalledTimes(2);
+    expect(db.project.assessmentResponses.listAssessmentResponses).toHaveBeenCalledTimes(2);
   });
 
   it('matches rating conditions with inclusive gte/lte bounds and fails entities without a response', async () => {
@@ -538,8 +550,8 @@ describe('listEntities / countEntities with joined assessment', () => {
 
     expect(list).toHaveLength(5);
     expect(total).toBe(5);
-    expect(listDb.project.listAssessmentResponses).toHaveBeenCalledTimes(1);
-    expect(countDb.project.listAssessmentResponses).toHaveBeenCalledTimes(1);
+    expect(listDb.project.assessmentResponses.listAssessmentResponses).toHaveBeenCalledTimes(1);
+    expect(countDb.project.assessmentResponses.listAssessmentResponses).toHaveBeenCalledTimes(1);
   });
 
   it('rejects assessment conditions without an assessmentId', async () => {

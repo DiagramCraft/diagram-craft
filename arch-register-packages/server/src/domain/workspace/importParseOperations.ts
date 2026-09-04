@@ -817,7 +817,7 @@ const validateProjects = async (
   const conflicts: ImportConflict[] = [];
   const warnings: string[] = [];
 
-  const existingProjects = await db.project.listProjects(workspace);
+  const existingProjects = await db.project.projects.listProjects(workspace);
 
   for (const project of projects) {
     const existing = existingProjects.find(
@@ -848,7 +848,7 @@ const validateContentNodes = async (
 ): Promise<{ conflicts: ImportConflict[]; warnings: string[] }> => {
   const conflicts: ImportConflict[] = [];
   const warnings: string[] = [];
-  const existing = await db.project.listAllContentNodes(workspace);
+  const existing = await db.project.contentNodes.listAllContentNodes(workspace);
   const sourceIds = new Set(contentNodes.map(node => node.id));
   const sourceProjects = new Set(projects?.map(project => project.id) ?? []);
   const sourceEntities = new Set(entities?.map(entity => entity.id) ?? []);
@@ -929,7 +929,7 @@ const validateDocuments = async (
   const [existingTypes, existingTemplates, existingProjects] = await Promise.all([
     db.document.listDocumentTypes(workspace, true),
     db.document.listDocumentTemplates(workspace, undefined, true),
-    db.project.listProjects(workspace)
+    db.project.projects.listProjects(workspace)
   ]);
 
   for (const type of documents.types) {

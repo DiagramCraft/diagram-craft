@@ -28,7 +28,7 @@ export const createAutoSaveWriter = (
       return;
     }
 
-    const node = await db.project.getAnyContentNodeById(workspace, parsed.fileId);
+    const node = await db.project.contentNodes.getAnyContentNodeById(workspace, parsed.fileId);
     if (!node) {
       logger.warn(`Ignored collaboration save for unknown content node ${parsed.fileId}`);
       return;
@@ -67,7 +67,7 @@ export const createAutoSaveWriter = (
       ],
       writeDatabase: async tx => {
         if (node.project_id || node.entity_id) {
-          await tx.project.updateContentNodeDerivedData(
+          await tx.project.contentNodes.updateContentNodeDerivedData(
             workspace,
             scope,
             node.id,
@@ -78,7 +78,7 @@ export const createAutoSaveWriter = (
             updatedAt
           );
         } else {
-          await tx.project.updateWorkspaceContentNodeDerivedData(
+          await tx.project.contentNodes.updateWorkspaceContentNodeDerivedData(
             workspace,
             node.id,
             buf.length,

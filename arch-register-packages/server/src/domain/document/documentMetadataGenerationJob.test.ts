@@ -328,9 +328,13 @@ describe('createDocumentMetadataGenerationScanJobHandler', () => {
         upsertPendingMetadataGeneration
       },
       project: {
-        getAnyContentNodeById: vi.fn(async () => node),
-        getNextMarkdownRevisionNumber: vi.fn(async () => 6),
-        createMarkdownRevision
+        contentNodes: {
+          getAnyContentNodeById: vi.fn(async () => node)
+        },
+        markdownRevisions: {
+          getNextMarkdownRevisionNumber: vi.fn(async () => 6),
+          createMarkdownRevision
+        }
       },
       auth: { getUser: vi.fn(async () => user) },
       audit: { createAuditLog: vi.fn(async () => ({})) },
@@ -392,9 +396,13 @@ describe('createDocumentMetadataGenerationScanJobHandler', () => {
         upsertPendingMetadataGeneration: vi.fn()
       },
       project: {
-        getAnyContentNodeById: vi.fn(async () => node),
-        getNextMarkdownRevisionNumber: vi.fn(async () => 6),
-        createMarkdownRevision: vi.fn()
+        contentNodes: {
+          getAnyContentNodeById: vi.fn(async () => node)
+        },
+        markdownRevisions: {
+          getNextMarkdownRevisionNumber: vi.fn(async () => 6),
+          createMarkdownRevision: vi.fn()
+        }
       },
       auth: { getUser: vi.fn(async () => user) },
       audit: { createAuditLog: vi.fn(async () => ({})) },
@@ -443,9 +451,13 @@ describe('createDocumentMetadataGenerationScanJobHandler', () => {
         upsertPendingMetadataGeneration
       },
       project: {
-        getAnyContentNodeById: vi.fn(async () => node),
-        getNextMarkdownRevisionNumber: vi.fn(async () => 6),
-        createMarkdownRevision: vi.fn()
+        contentNodes: {
+          getAnyContentNodeById: vi.fn(async () => node)
+        },
+        markdownRevisions: {
+          getNextMarkdownRevisionNumber: vi.fn(async () => 6),
+          createMarkdownRevision: vi.fn()
+        }
       },
       auth: { getUser: vi.fn(async () => user) },
       audit: { createAuditLog: vi.fn(async () => ({})) },
@@ -486,10 +498,14 @@ describe('createDocumentMetadataGenerationScanJobHandler', () => {
         upsertPendingMetadataGeneration: vi.fn()
       },
       project: {
-        getAnyContentNodeById: vi.fn(async () => node),
-        // Current revision (7 - 1 = 6) no longer matches the row's source_revision (5).
-        getNextMarkdownRevisionNumber: vi.fn(async () => 7),
-        createMarkdownRevision: vi.fn()
+        contentNodes: {
+          getAnyContentNodeById: vi.fn(async () => node)
+        },
+        markdownRevisions: {
+          // Current revision (7 - 1 = 6) no longer matches the row's source_revision (5).
+          getNextMarkdownRevisionNumber: vi.fn(async () => 7),
+          createMarkdownRevision: vi.fn()
+        }
       },
       auth: { getUser: vi.fn(async () => user) },
       audit: { createAuditLog: vi.fn(async () => ({})) },
@@ -530,9 +546,13 @@ describe('createDocumentMetadataGenerationScanJobHandler', () => {
         upsertPendingMetadataGeneration
       },
       project: {
-        getAnyContentNodeById: vi.fn(async () => node),
-        getNextMarkdownRevisionNumber: vi.fn(async () => 6),
-        createMarkdownRevision: vi.fn()
+        contentNodes: {
+          getAnyContentNodeById: vi.fn(async () => node)
+        },
+        markdownRevisions: {
+          getNextMarkdownRevisionNumber: vi.fn(async () => 6),
+          createMarkdownRevision: vi.fn()
+        }
       },
       auth: { getUser: vi.fn(async () => user) },
       audit: { createAuditLog: vi.fn(async () => ({})) },
@@ -576,9 +596,13 @@ describe('createDocumentMetadataGenerationScanJobHandler', () => {
         upsertPendingMetadataGeneration
       },
       project: {
-        getAnyContentNodeById: vi.fn(async () => node),
-        getNextMarkdownRevisionNumber: vi.fn(async () => 6),
-        createMarkdownRevision: vi.fn()
+        contentNodes: {
+          getAnyContentNodeById: vi.fn(async () => node)
+        },
+        markdownRevisions: {
+          getNextMarkdownRevisionNumber: vi.fn(async () => 6),
+          createMarkdownRevision: vi.fn()
+        }
       },
       auth: { getUser: vi.fn(async () => user) },
       audit: { createAuditLog: vi.fn(async () => ({})) },
@@ -624,7 +648,11 @@ describe('createDocumentMetadataGenerationScanJobHandler', () => {
         upsertDocumentMetadata: vi.fn(),
         upsertPendingMetadataGeneration: vi.fn()
       },
-      project: { getAnyContentNodeById: vi.fn(async () => node) },
+      project: {
+        contentNodes: {
+          getAnyContentNodeById: vi.fn(async () => node)
+        }
+      },
       auth: { getUser: vi.fn(async () => user) },
       audit: { createAuditLog: vi.fn(async () => ({})) },
       core: { transaction: vi.fn(async (cb: (tx: DatabaseAdapter) => unknown) => cb(db as never)) }
@@ -654,7 +682,11 @@ describe('createDocumentMetadataGenerationScanJobHandler', () => {
         }),
         upsertPendingMetadataGeneration
       },
-      project: { getAnyContentNodeById: vi.fn(async () => node) },
+      project: {
+        contentNodes: {
+          getAnyContentNodeById: vi.fn(async () => node)
+        }
+      },
       core: { transaction: vi.fn(async (cb: (tx: DatabaseAdapter) => unknown) => cb(db as never)) }
     } as unknown as DatabaseAdapter;
 

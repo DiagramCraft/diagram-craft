@@ -148,7 +148,7 @@ const validateConfig = async (
     'Public pages must reference unique content nodes'
   );
   for (const page of input.pages) {
-    const node = await db.project.getAnyContentNodeById(workspace, page.nodeId);
+    const node = await db.project.contentNodes.getAnyContentNodeById(workspace, page.nodeId);
     httpAssert.present(node, {
       status: 400,
       message: `Public catalog page node '${page.nodeId}' was not found`
@@ -279,7 +279,7 @@ export const getPublicCatalogSelectorOptions = async (db: DatabaseAdapter, works
   const [schemas, entities, workspaceNodes] = await Promise.all([
     db.catalog.listSchemas(workspace),
     db.catalog.listEntities(workspace),
-    db.project.listWorkspaceContentNodes(workspace)
+    db.project.contentNodes.listWorkspaceContentNodes(workspace)
   ]);
   const schemasById = new Map(schemas.map(schema => [schema.id, schema]));
 
@@ -335,7 +335,7 @@ export const getPublicCatalogSelectorOptions = async (db: DatabaseAdapter, works
   const entityPages = (
     await Promise.all(
       entities.map(async entity => {
-        const nodes = await db.project.listEntityContentNodes(workspace, entity.id);
+        const nodes = await db.project.contentNodes.listEntityContentNodes(workspace, entity.id);
         const projectOnly = entity.project_id != null;
         return nodes
           .filter(
@@ -1106,7 +1106,7 @@ const listPublicPages = async (
   for (const page of [...config.pages].sort(
     (a, b) => a.order - b.order || a.publicPath.localeCompare(b.publicPath)
   )) {
-    const node = await db.project.getAnyContentNodeById(workspace, page.nodeId);
+    const node = await db.project.contentNodes.getAnyContentNodeById(workspace, page.nodeId);
     if (!node || !isMarkdownNode(node)) continue;
     const entity = node.entity_id ? (publishedById.get(node.entity_id) ?? null) : null;
     const scopedEntity =
@@ -1134,7 +1134,7 @@ export const getPublicCatalogWikiPage = async (
   const wantedPath = normalizedPath(publicPath);
   const page = config.pages.find(item => normalizedPath(item.publicPath) === wantedPath);
   httpAssert.present(page, { status: 404, message: 'Published wiki page not found' });
-  const node = await db.project.getAnyContentNodeById(workspace, page.nodeId);
+  const node = await db.project.contentNodes.getAnyContentNodeById(workspace, page.nodeId);
   httpAssert.present(node, { status: 404, message: 'Published wiki page not found' });
   httpAssert.true(isMarkdownNode(node) && node.project_id == null, {
     status: 404,

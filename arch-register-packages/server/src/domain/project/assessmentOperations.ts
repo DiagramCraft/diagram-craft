@@ -90,7 +90,7 @@ const getAssessmentStats = async (
   entities?: EntityDbResult[]
 ) => {
   const [responses, scopedEntities, team_acknowledge_status] = await Promise.all([
-    db.project.listAssessmentResponses(ws, row.id, row.current_occurrence),
+    db.project.assessmentResponses.listAssessmentResponses(ws, row.id, row.current_occurrence),
     entities ? Promise.resolve(entities) : listAllCatalogEntities(db, ws),
     getTeamAcknowledgeStatus(db, ws, row)
   ]);
@@ -109,7 +109,7 @@ const getAssessmentStats = async (
 };
 
 const getProjectOrThrow = async (db: DatabaseAdapter, ws: string, projectId: string) => {
-  const project = await db.project.getProject(ws, projectId);
+  const project = await db.project.projects.getProject(ws, projectId);
   httpAssert.present(project, { status: 404, message: `Project '${projectId}' not found` });
   return project;
 };
@@ -142,8 +142,8 @@ export const listAssessments = async (
     },
     operation: async ({ ws, authCtx }) => {
       const [rows, projects, entities, schemas] = await Promise.all([
-        db.project.listAssessments(ws),
-        db.project.listProjects(ws),
+        db.project.assessments.listAssessments(ws),
+        db.project.projects.listProjects(ws),
         listAllCatalogEntities(db, ws),
         db.catalog.listSchemas(ws)
       ]);
@@ -184,7 +184,7 @@ export const getAssessment = async (
       unique: 'An assessment with that name already exists in this project'
     },
     operation: async ({ ws, authCtx }) => {
-      const row = await db.project.getAssessmentById(ws, id);
+      const row = await db.project.assessments.getAssessmentById(ws, id);
       httpAssert.present(row, { status: 404, message: `Assessment '${id}' not found` });
       const project = await getProjectOrThrow(db, ws, row.project_id);
       requireProjectAccess(authCtx, project.owner);
@@ -230,7 +230,7 @@ export const createAssessment = async (
       await assertAssessmentType(db, ws, body.assessment_type_id);
 
       const timestamp = new Date();
-      const row = await db.project.createAssessment(
+      const row = await db.project.assessments.createAssessment(
         buildCreateAssessmentInput(ws, { ...body, project_id: project.id }, timestamp)
       );
 
@@ -271,7 +271,7 @@ export const updateAssessment = async (
       unique: 'An assessment with that name already exists in this project'
     },
     operation: async ({ ws, authCtx }) => {
-      const existing = await db.project.getAssessmentById(ws, id);
+      const existing = await db.project.assessments.getAssessmentById(ws, id);
       httpAssert.present(existing, { status: 404, message: `Assessment '${id}' not found` });
       const project = await getProjectOrThrow(db, ws, existing.project_id);
       const requestedProject = await getProjectOrThrow(db, ws, body.project_id);
@@ -302,7 +302,7 @@ export const updateAssessment = async (
         : undefined;
 
       const row = await db.core.transaction(async tx => {
-        const updated = await tx.project.updateAssessment(
+        const updated = await tx.project.assessments.updateAssessment(
           ws,
           project.id,
           id,
@@ -313,14 +313,14 @@ export const updateAssessment = async (
           )
         );
         if (updated) {
-          const responses = await tx.project.listAllAssessmentResponses(ws, id);
+          const responses = await tx.project.assessmentResponses.listAllAssessmentResponses(ws, id);
           const previousDerivedIds = new Set(
             existing.fields.filter(field => field.type === 'derived').map(field => field.id)
           );
           for (const response of responses) {
             const responseValues = { ...response.values };
             previousDerivedIds.forEach(fieldId => delete responseValues[fieldId]);
-            await tx.project.updateAssessmentResponseDerivedFields(
+            await tx.project.assessmentResponses.updateAssessmentResponseDerivedFields(
               ws,
               id,
               response.entity_id,
@@ -374,7 +374,7 @@ export const updateAssessmentStatus = async (
       unique: 'An assessment with that name already exists in this project'
     },
     operation: async ({ ws, authCtx }) => {
-      const oldRow = await db.project.getAssessmentById(ws, id);
+      const oldRow = await db.project.assessments.getAssessmentById(ws, id);
       httpAssert.present(oldRow, { status: 404, message: `Assessment '${id}' not found` });
       const project = await getProjectOrThrow(db, ws, oldRow.project_id);
       requireProjectAction(
@@ -388,7 +388,7 @@ export const updateAssessmentStatus = async (
 
       const row = await db.core.transaction(async tx => {
         const now = new Date();
-        let updated = await tx.project.updateAssessment(ws, project.id, id, {
+        let updated = await tx.project.assessments.updateAssessment(ws, project.id, id, {
           name: oldRow.name,
           description: oldRow.description,
           status: body.status,
@@ -455,7 +455,7 @@ export const deleteAssessment = async (
       unique: 'An assessment with that name already exists in this project'
     },
     operation: async ({ ws, authCtx }) => {
-      const row = await db.project.getAssessmentById(ws, id);
+      const row = await db.project.assessments.getAssessmentById(ws, id);
       httpAssert.present(row, { status: 404, message: `Assessment '${id}' not found` });
       const project = await getProjectOrThrow(db, ws, row.project_id);
       requireProjectAction(
@@ -465,7 +465,7 @@ export const deleteAssessment = async (
         'You do not have permission to delete assessments in this project'
       );
 
-      await db.project.deleteAssessment(ws, project.id, id);
+      await db.project.assessments.deleteAssessment(ws, project.id, id);
 
       await logAudit(db, {
         userId: authCtx.userId,

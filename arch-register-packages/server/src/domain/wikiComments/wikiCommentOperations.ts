@@ -26,11 +26,11 @@ const resolveNodeContext = async (
   authCtx: WorkspaceAuthorizationContext,
   nodeId: string
 ) => {
-  const node = await db.project.getAnyContentNodeById(ws, nodeId);
+  const node = await db.project.contentNodes.getAnyContentNodeById(ws, nodeId);
   httpAssert.present(node, { status: 404, message: `Content node '${nodeId}' not found` });
 
   if (node.project_id) {
-    const project = await db.project.getProject(ws, node.project_id);
+    const project = await db.project.projects.getProject(ws, node.project_id);
     httpAssert.present(project, {
       status: 404,
       message: `Project '${node.project_id}' not found`

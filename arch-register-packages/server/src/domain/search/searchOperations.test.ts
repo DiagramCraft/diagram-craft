@@ -99,90 +99,94 @@ const makeDb = (): DatabaseAdapter =>
       resolveWorkspaceSlug: vi.fn(async () => 'ws-1')
     },
     project: {
-      listProjects: vi.fn(async () => [
-        {
-          id: 'visible-project',
-          public_id: 'PRJ-1',
-          name: 'Visible Project',
-          description: '',
-          owner: 'visible-team'
-        },
-        {
-          id: 'hidden-project',
-          name: 'Hidden Project',
-          description: '',
-          owner: 'hidden-team'
-        }
-      ]),
-      listContentNodes: vi.fn(async (_ws: string, projectId: string) =>
-        projectId === 'visible-project'
-          ? [
-              {
-                id: 'visible-file',
-                project_id: 'visible-project',
-                path: 'diagrams/customer-portal.dgc',
-                name: 'Customer Portal',
-                comment_count: 0,
-                unresolved_comment_count: 0,
-                metadata_title: 'Customer experience blueprint',
-                metadata_description: 'Portal onboarding and navigation flow',
-                metadata_company: null,
-                metadata_category: 'Experience',
-                metadata_keywords: ['journey', 'onboarding']
-              }
-            ]
-          : [
-              {
-                id: 'hidden-file',
-                project_id: 'hidden-project',
-                path: 'diagrams/auth-hardening.dgc',
-                name: 'Auth Hardening',
-                comment_count: 0,
-                unresolved_comment_count: 0,
-                metadata_title: 'Zero trust login flow',
-                metadata_description: 'Restricted sign-in hardening review',
-                metadata_company: null,
-                metadata_category: 'Security',
-                metadata_keywords: ['boundary-review']
-              }
-            ]
-      ),
-      listEntityContentNodes: vi.fn(async (_ws: string, entityId: string) =>
-        entityId === 'visible-entity'
-          ? [
-              {
-                id: 'entity-file',
-                entity_id: 'visible-entity',
-                project_id: null,
-                path: 'overview/platform-map.dgc',
-                name: 'Platform Map',
-                comment_count: 0,
-                unresolved_comment_count: 0,
-                metadata_title: 'Magnus platform map',
-                metadata_description: 'Entity-owned overview diagram',
-                metadata_company: null,
-                metadata_category: 'Architecture',
-                metadata_keywords: ['entity-owned']
-              }
-            ]
-          : []
-      ),
-      listWorkspaceContentNodes: vi.fn(async () => [
-        {
-          id: 'workspace-file',
-          entity_id: null,
-          project_id: null,
-          path: 'shared/magnus-overview.dgc',
-          name: 'Shared Overview',
-          comment_count: 0,
-          unresolved_comment_count: 0,
-          metadata_title: 'Workspace Magnus overview',
-          metadata_description: 'Workspace-level architecture overview',
-          metadata_company: null,
-          metadata_category: 'Reference',
-          metadata_keywords: ['workspace-shared']
-        }
-      ])
+      projects: {
+        listProjects: vi.fn(async () => [
+          {
+            id: 'visible-project',
+            public_id: 'PRJ-1',
+            name: 'Visible Project',
+            description: '',
+            owner: 'visible-team'
+          },
+          {
+            id: 'hidden-project',
+            name: 'Hidden Project',
+            description: '',
+            owner: 'hidden-team'
+          }
+        ])
+      },
+      contentNodes: {
+        listContentNodes: vi.fn(async (_ws: string, projectId: string) =>
+          projectId === 'visible-project'
+            ? [
+                {
+                  id: 'visible-file',
+                  project_id: 'visible-project',
+                  path: 'diagrams/customer-portal.dgc',
+                  name: 'Customer Portal',
+                  comment_count: 0,
+                  unresolved_comment_count: 0,
+                  metadata_title: 'Customer experience blueprint',
+                  metadata_description: 'Portal onboarding and navigation flow',
+                  metadata_company: null,
+                  metadata_category: 'Experience',
+                  metadata_keywords: ['journey', 'onboarding']
+                }
+              ]
+            : [
+                {
+                  id: 'hidden-file',
+                  project_id: 'hidden-project',
+                  path: 'diagrams/auth-hardening.dgc',
+                  name: 'Auth Hardening',
+                  comment_count: 0,
+                  unresolved_comment_count: 0,
+                  metadata_title: 'Zero trust login flow',
+                  metadata_description: 'Restricted sign-in hardening review',
+                  metadata_company: null,
+                  metadata_category: 'Security',
+                  metadata_keywords: ['boundary-review']
+                }
+              ]
+        ),
+        listEntityContentNodes: vi.fn(async (_ws: string, entityId: string) =>
+          entityId === 'visible-entity'
+            ? [
+                {
+                  id: 'entity-file',
+                  entity_id: 'visible-entity',
+                  project_id: null,
+                  path: 'overview/platform-map.dgc',
+                  name: 'Platform Map',
+                  comment_count: 0,
+                  unresolved_comment_count: 0,
+                  metadata_title: 'Magnus platform map',
+                  metadata_description: 'Entity-owned overview diagram',
+                  metadata_company: null,
+                  metadata_category: 'Architecture',
+                  metadata_keywords: ['entity-owned']
+                }
+              ]
+            : []
+        ),
+        listWorkspaceContentNodes: vi.fn(async () => [
+          {
+            id: 'workspace-file',
+            entity_id: null,
+            project_id: null,
+            path: 'shared/magnus-overview.dgc',
+            name: 'Shared Overview',
+            comment_count: 0,
+            unresolved_comment_count: 0,
+            metadata_title: 'Workspace Magnus overview',
+            metadata_description: 'Workspace-level architecture overview',
+            metadata_company: null,
+            metadata_category: 'Reference',
+            metadata_keywords: ['workspace-shared']
+          }
+        ])
+      }
     }
   }) as unknown as DatabaseAdapter;
 
@@ -333,10 +337,14 @@ describe('searchWorkspace entity field-group redaction', () => {
         resolveWorkspaceSlug: vi.fn(async () => 'ws-1')
       },
       project: {
-        listProjects: vi.fn(async () => []),
-        listContentNodes: vi.fn(async () => []),
-        listEntityContentNodes: vi.fn(async () => []),
-        listWorkspaceContentNodes: vi.fn(async () => [])
+        projects: {
+          listProjects: vi.fn(async () => [])
+        },
+        contentNodes: {
+          listContentNodes: vi.fn(async () => []),
+          listEntityContentNodes: vi.fn(async () => []),
+          listWorkspaceContentNodes: vi.fn(async () => [])
+        }
       }
     }) as unknown as DatabaseAdapter;
 
@@ -499,10 +507,14 @@ describe('searchWorkspace relations', () => {
         )
       },
       project: {
-        listProjects: vi.fn(async () => []),
-        listContentNodes: vi.fn(async () => []),
-        listEntityContentNodes: vi.fn(async () => []),
-        listWorkspaceContentNodes: vi.fn(async () => [])
+        projects: {
+          listProjects: vi.fn(async () => [])
+        },
+        contentNodes: {
+          listContentNodes: vi.fn(async () => []),
+          listEntityContentNodes: vi.fn(async () => []),
+          listWorkspaceContentNodes: vi.fn(async () => [])
+        }
       },
       relation: {
         listRelationSchemas: vi.fn(async () => [{ ...relationSchema, name: relationSchemaName }]),

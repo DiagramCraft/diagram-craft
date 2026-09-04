@@ -68,12 +68,16 @@ const cases: ScopeCase[] = [
     makeDb: file =>
       ({
         project: {
-          getProject: vi.fn(async () => ({
-            id: 'project-1',
-            public_id: 'project-public',
-            owner: null
-          })),
-          getContentNodeByPath: vi.fn(async () => file)
+          projects: {
+            getProject: vi.fn(async () => ({
+              id: 'project-1',
+              public_id: 'project-public',
+              owner: null
+            }))
+          },
+          contentNodes: {
+            getContentNodeByPath: vi.fn(async () => file)
+          }
         }
       }) as unknown as DatabaseAdapter
   },
@@ -85,7 +89,11 @@ const cases: ScopeCase[] = [
     makeDb: file =>
       ({
         catalog: { getEntity: vi.fn(async () => ({ id: 'entity-1' })) },
-        project: { listEntityContentNodes: vi.fn(async () => [file]) }
+        project: {
+          contentNodes: {
+            listEntityContentNodes: vi.fn(async () => [file])
+          }
+        }
       }) as unknown as DatabaseAdapter
   },
   {
@@ -95,7 +103,11 @@ const cases: ScopeCase[] = [
     storageId: 'ws-1',
     makeDb: file =>
       ({
-        project: { listWorkspaceContentNodes: vi.fn(async () => [file]) }
+        project: {
+          contentNodes: {
+            listWorkspaceContentNodes: vi.fn(async () => [file])
+          }
+        }
       }) as unknown as DatabaseAdapter
   }
 ];

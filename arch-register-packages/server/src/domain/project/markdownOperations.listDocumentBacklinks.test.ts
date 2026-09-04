@@ -94,8 +94,12 @@ const makeDb = (
 ) =>
   ({
     project: {
-      getAnyContentNodeById: vi.fn(async (_ws: string, id: string) => nodesById[id] ?? null),
-      getProject: vi.fn(async (_ws: string, id: string) => projectsById[id] ?? null)
+      contentNodes: {
+        getAnyContentNodeById: vi.fn(async (_ws: string, id: string) => nodesById[id] ?? null)
+      },
+      projects: {
+        getProject: vi.fn(async (_ws: string, id: string) => projectsById[id] ?? null)
+      }
     },
     document: {
       listDocumentsLinkingDocument: vi.fn(async (_ws: string, documentId: string) =>

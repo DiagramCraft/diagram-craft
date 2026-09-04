@@ -123,7 +123,7 @@ const searchWorkspaceForContext = async (
 
   const [projects, schemas, entities, relations, relationSchemas] = await Promise.all([
     types.includes('projects') || types.includes('files')
-      ? db.project.listProjects(ws)
+      ? db.project.projects.listProjects(ws)
       : Promise.resolve([]),
     types.includes('schemas') || types.includes('entities') || types.includes('relations')
       ? db.catalog.listSchemas(ws)
@@ -202,16 +202,16 @@ const searchWorkspaceForContext = async (
     const projectFiles = await Promise.all(
       visibleProjects.map(async project => ({
         project,
-        files: await db.project.listContentNodes(ws, project.id)
+        files: await db.project.contentNodes.listContentNodes(ws, project.id)
       }))
     );
     const entityFiles = await Promise.all(
       visibleEntities.map(async entity => ({
         entity,
-        files: await db.project.listEntityContentNodes(ws, entity.id)
+        files: await db.project.contentNodes.listEntityContentNodes(ws, entity.id)
       }))
     );
-    const workspaceFiles = await db.project.listWorkspaceContentNodes(ws);
+    const workspaceFiles = await db.project.contentNodes.listWorkspaceContentNodes(ws);
 
     for (const { project, files } of projectFiles) {
       for (const file of files) {

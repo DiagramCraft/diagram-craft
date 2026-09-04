@@ -89,18 +89,24 @@ const makeDb = (existing = makeAssessment()) => {
   const project = { id: 'project-1', owner: 'team-project' };
   const db = {
     project: {
-      getProject: vi.fn(async () => project),
-      getAssessmentById: vi.fn(async () => existing),
-      createAssessment: vi.fn(async (input: AssessmentDbResult) => input),
-      updateAssessment: vi.fn(
-        async (_ws: string, _projectId: string, _id: string, input: AssessmentDbResult) => ({
-          ...existing,
-          ...input
-        })
-      ),
-      listAllAssessmentResponses: vi.fn(async () => []),
-      updateAssessmentResponseDerivedFields: vi.fn(async () => undefined),
-      listAssessmentResponses: vi.fn(async () => [])
+      projects: {
+        getProject: vi.fn(async () => project)
+      },
+      assessments: {
+        getAssessmentById: vi.fn(async () => existing),
+        createAssessment: vi.fn(async (input: AssessmentDbResult) => input),
+        updateAssessment: vi.fn(
+          async (_ws: string, _projectId: string, _id: string, input: AssessmentDbResult) => ({
+            ...existing,
+            ...input
+          })
+        )
+      },
+      assessmentResponses: {
+        listAllAssessmentResponses: vi.fn(async () => []),
+        updateAssessmentResponseDerivedFields: vi.fn(async () => undefined),
+        listAssessmentResponses: vi.fn(async () => [])
+      }
     },
     catalog: {
       listSchemas: vi.fn(async () => [schema]),
@@ -149,7 +155,7 @@ describe('assessment scope condition operations', () => {
 
     if (allowed) await expect(result).resolves.toMatchObject({ scope_conditions: [condition] });
     else await expect(result).rejects.toMatchObject({ status: 403 });
-    expect(db.project.createAssessment).toHaveBeenCalledTimes(allowed ? 1 : 0);
+    expect(db.project.assessments.createAssessment).toHaveBeenCalledTimes(allowed ? 1 : 0);
   });
 
   it.each([
@@ -165,7 +171,7 @@ describe('assessment scope condition operations', () => {
 
     if (allowed) await expect(result).resolves.toMatchObject({ scope_conditions: [condition] });
     else await expect(result).rejects.toMatchObject({ status: 403 });
-    expect(db.project.updateAssessment).toHaveBeenCalledTimes(allowed ? 1 : 0);
+    expect(db.project.assessments.updateAssessment).toHaveBeenCalledTimes(allowed ? 1 : 0);
   });
 
   it('rejects unknown condition fields on create and update', async () => {
@@ -184,7 +190,7 @@ describe('assessment scope condition operations', () => {
         event
       )
     ).rejects.toMatchObject({ status: 403 });
-    expect(db.project.createAssessment).not.toHaveBeenCalled();
-    expect(db.project.updateAssessment).not.toHaveBeenCalled();
+    expect(db.project.assessments.createAssessment).not.toHaveBeenCalled();
+    expect(db.project.assessments.updateAssessment).not.toHaveBeenCalled();
   });
 });

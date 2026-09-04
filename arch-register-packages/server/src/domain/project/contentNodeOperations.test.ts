@@ -92,13 +92,17 @@ const cases: ScopeCase[] = [
     makeDb: (nodes, created) =>
       ({
         project: {
-          getProject: vi.fn(async () => ({
-            id: 'project-1',
-            public_id: 'project-public',
-            owner: null
-          })),
-          listContentNodes: vi.fn(async () => nodes),
-          createContentNodeIfAbsent: vi.fn(async () => created)
+          projects: {
+            getProject: vi.fn(async () => ({
+              id: 'project-1',
+              public_id: 'project-public',
+              owner: null
+            }))
+          },
+          contentNodes: {
+            listContentNodes: vi.fn(async () => nodes),
+            createContentNodeIfAbsent: vi.fn(async () => created)
+          }
         }
       }) as unknown as DatabaseAdapter,
     expectedFields: { project_id: 'project-1', entity_id: null },
@@ -113,8 +117,10 @@ const cases: ScopeCase[] = [
       ({
         catalog: { getEntity: vi.fn(async () => ({ id: 'entity-1' })) },
         project: {
-          listEntityContentNodes: vi.fn(async () => nodes),
-          createContentNodeIfAbsent: vi.fn(async () => created)
+          contentNodes: {
+            listEntityContentNodes: vi.fn(async () => nodes),
+            createContentNodeIfAbsent: vi.fn(async () => created)
+          }
         }
       }) as unknown as DatabaseAdapter,
     expectedFields: { project_id: null, entity_id: 'entity-1' },
@@ -128,8 +134,10 @@ const cases: ScopeCase[] = [
     makeDb: (nodes, created) =>
       ({
         project: {
-          listWorkspaceContentNodes: vi.fn(async () => nodes),
-          createContentNodeIfAbsent: vi.fn(async () => created)
+          contentNodes: {
+            listWorkspaceContentNodes: vi.fn(async () => nodes),
+            createContentNodeIfAbsent: vi.fn(async () => created)
+          }
         }
       }) as unknown as DatabaseAdapter,
     expectedFields: { project_id: null, entity_id: null },
@@ -166,7 +174,9 @@ describe.each(cases)('scope-neutral content node operations ($name)', scopeCase 
       expect.objectContaining({ path: 'docs', files: [expect.objectContaining({ id: 'file-1' })] })
     ]);
     expect(
-      (db.project as unknown as Record<string, ReturnType<typeof vi.fn>>)[scopeCase.listMethod]
+      (db.project.contentNodes as unknown as Record<string, ReturnType<typeof vi.fn>>)[
+        scopeCase.listMethod
+      ]
     ).toHaveBeenCalled();
   });
 
@@ -193,7 +203,7 @@ describe.each(cases)('scope-neutral content node operations ($name)', scopeCase 
     );
 
     expect(result).toMatchObject({ success: true, path: 'docs/reviews' });
-    expect(db.project.createContentNodeIfAbsent).toHaveBeenCalledWith(
+    expect(db.project.contentNodes.createContentNodeIfAbsent).toHaveBeenCalledWith(
       expect.objectContaining({
         workspace: 'ws-1',
         ...scopeCase.expectedFields,
@@ -226,8 +236,10 @@ describe('createScopedFolder mounted content protection', () => {
     const createContentNodeIfAbsent = vi.fn();
     const db = {
       project: {
-        listWorkspaceContentNodes: vi.fn(async () => nodes),
-        createContentNodeIfAbsent
+        contentNodes: {
+          listWorkspaceContentNodes: vi.fn(async () => nodes),
+          createContentNodeIfAbsent
+        }
       }
     } as unknown as DatabaseAdapter;
 

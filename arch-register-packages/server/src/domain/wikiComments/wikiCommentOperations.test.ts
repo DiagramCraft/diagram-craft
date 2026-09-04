@@ -66,15 +66,19 @@ const makeComment = (overrides: Partial<WikiCommentDbResult> = {}): WikiCommentD
 const makeDb = (overrides: Record<string, unknown> = {}): DatabaseAdapter =>
   ({
     project: {
-      getAnyContentNodeById: vi.fn(async () => ({
-        id: 'node-1',
-        workspace: 'ws-1',
-        name: 'Runbook',
-        project_id: 'proj-1',
-        project_public_id: 'proj-1-public',
-        entity_id: null
-      })),
-      getProject: vi.fn(async () => ({ id: 'proj-1', owner: null, public_id: 'proj-1-public' }))
+      contentNodes: {
+        getAnyContentNodeById: vi.fn(async () => ({
+          id: 'node-1',
+          workspace: 'ws-1',
+          name: 'Runbook',
+          project_id: 'proj-1',
+          project_public_id: 'proj-1-public',
+          entity_id: null
+        }))
+      },
+      projects: {
+        getProject: vi.fn(async () => ({ id: 'proj-1', owner: null, public_id: 'proj-1-public' }))
+      }
     },
     auth: {
       listUsers: vi.fn(async () => [{ id: 'user-1', display_name: 'User One' }])
@@ -114,14 +118,16 @@ describe('listWikiComments', () => {
   it('checks content.view for pages with no owning project', async () => {
     const db = makeDb({
       project: {
-        getAnyContentNodeById: vi.fn(async () => ({
-          id: 'node-2',
-          workspace: 'ws-1',
-          name: 'Workspace page',
-          project_id: null,
-          project_public_id: null,
-          entity_id: null
-        }))
+        contentNodes: {
+          getAnyContentNodeById: vi.fn(async () => ({
+            id: 'node-2',
+            workspace: 'ws-1',
+            name: 'Workspace page',
+            project_id: null,
+            project_public_id: null,
+            entity_id: null
+          }))
+        }
       }
     });
     await listWikiComments(db, 'ws-1', 'node-2', event);
@@ -134,7 +140,11 @@ describe('listWikiComments', () => {
 
   it('throws 404 when the page does not exist', async () => {
     const db = makeDb({
-      project: { getAnyContentNodeById: vi.fn(async () => null) }
+      project: {
+        contentNodes: {
+          getAnyContentNodeById: vi.fn(async () => null)
+        }
+      }
     });
 
     await expect(listWikiComments(db, 'ws-1', 'missing', event)).rejects.toMatchObject({

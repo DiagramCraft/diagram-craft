@@ -57,7 +57,7 @@ export const scheduleNextAssessmentOccurrence = async (
     nextOccurrenceAt
   );
 
-  const updated = await tx.project.updateAssessment(
+  const updated = await tx.project.assessments.updateAssessment(
     workspace,
     row.project_id,
     row.id,
@@ -79,7 +79,7 @@ export const cancelPendingAssessmentOccurrence = async (
 
   await tx.jobs.cancelQueuedRun(workspace, row.pending_occurrence_job_run_id, now);
 
-  const updated = await tx.project.updateAssessment(
+  const updated = await tx.project.assessments.updateAssessment(
     workspace,
     row.project_id,
     row.id,
@@ -106,7 +106,7 @@ export const createAssessmentRecurrenceJobHandler =
     const { assessmentId } = context.payload;
 
     return db.core.transaction(async tx => {
-      const row = await tx.project.getAssessmentById(context.workspace, assessmentId);
+      const row = await tx.project.assessments.getAssessmentById(context.workspace, assessmentId);
       if (row?.status !== 'open' || row.recurrence.type === 'none') {
         return { skipped: true };
       }
@@ -114,7 +114,7 @@ export const createAssessmentRecurrenceJobHandler =
       const now = new Date();
       await closeAssessmentGovernanceCase(tx, context.workspace, row.id);
 
-      const reopened = await tx.project.updateAssessment(
+      const reopened = await tx.project.assessments.updateAssessment(
         context.workspace,
         row.project_id,
         row.id,

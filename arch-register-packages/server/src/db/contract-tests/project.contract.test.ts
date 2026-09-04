@@ -22,7 +22,7 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
       expect(created.target_date).toBeNull();
       expect(created.color).toBeNull();
 
-      const fetched = await db.project.getProject(workspace, created.id);
+      const fetched = await db.project.projects.getProject(workspace, created.id);
       expect(fetched).not.toBeNull();
       expect(fetched!.id).toBe(created.id);
       expect(fetched!.created_at).toBeInstanceOf(Date);
@@ -33,7 +33,7 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
       const workspace = await createFixtureWorkspace(db);
       const created = await createFixtureProject(db, workspace);
 
-      const updated = await db.project.updateProject(workspace, created.id, {
+      const updated = await db.project.projects.updateProject(workspace, created.id, {
         name: created.name,
         description: 'updated description',
         owner: null,
@@ -57,9 +57,9 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
       const workspace = await createFixtureWorkspace(db);
       const created = await createFixtureProject(db, workspace);
 
-      await db.project.deleteProject(workspace, created.id);
+      await db.project.projects.deleteProject(workspace, created.id);
 
-      expect(await db.project.getProject(workspace, created.id)).toBeNull();
+      expect(await db.project.projects.getProject(workspace, created.id)).toBeNull();
     });
 
     it('normalizes a duplicate-id insert to a unique DatabaseError', async () => {
@@ -68,7 +68,7 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
       const created = await createFixtureProject(db, workspace);
 
       await expect(
-        db.project.createProject({
+        db.project.projects.createProject({
           id: created.id,
           workspace,
           name: 'a different name',
@@ -92,7 +92,7 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
       const { workspace, project } = await createFullFixtureSet(db);
       const now = new Date();
 
-      const node = await db.project.upsertContentNode({
+      const node = await db.project.contentNodes.upsertContentNode({
         workspace,
         project_id: project,
         path: '/diagram.dgrm',
@@ -116,7 +116,7 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
       const { workspace, project } = await createFullFixtureSet(db);
       const now = new Date();
 
-      await db.project.upsertContentNode({
+      await db.project.contentNodes.upsertContentNode({
         workspace,
         project_id: project,
         path: '/doc.md',
@@ -128,7 +128,7 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
         updated_at: now,
         created_atIfNew: now
       });
-      await db.project.upsertContentNode({
+      await db.project.contentNodes.upsertContentNode({
         workspace,
         project_id: project,
         path: '/doc.md',
@@ -141,7 +141,7 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
         created_atIfNew: now
       });
 
-      const nodes = await db.project.listContentNodes(workspace, project);
+      const nodes = await db.project.contentNodes.listContentNodes(workspace, project);
       expect(nodes.filter(n => n.path === '/doc.md')).toHaveLength(1);
       expect(nodes.find(n => n.path === '/doc.md')!.size_bytes).toBe(20);
     });
@@ -163,8 +163,8 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
         created_atIfNew: now
       };
 
-      const first = await db.project.createContentNodeIfAbsent(input);
-      const second = await db.project.createContentNodeIfAbsent(input);
+      const first = await db.project.contentNodes.createContentNodeIfAbsent(input);
+      const second = await db.project.contentNodes.createContentNodeIfAbsent(input);
 
       expect(first).not.toBeNull();
       expect(second).toBeNull();
@@ -175,7 +175,7 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
       const { workspace, project } = await createFullFixtureSet(db);
       const now = new Date();
 
-      const folder = await db.project.upsertContentNode({
+      const folder = await db.project.contentNodes.upsertContentNode({
         workspace,
         project_id: project,
         path: '/folder',
@@ -187,7 +187,7 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
         updated_at: now,
         created_atIfNew: now
       });
-      await db.project.upsertContentNode({
+      await db.project.contentNodes.upsertContentNode({
         workspace,
         project_id: project,
         parent_id: folder.id,
@@ -201,11 +201,19 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
         created_atIfNew: now
       });
 
-      await db.project.renameContentNodeFolder(workspace, project, '/folder', '/renamed', now);
+      await db.project.contentNodes.renameContentNodeFolder(
+        workspace,
+        project,
+        '/folder',
+        '/renamed',
+        now
+      );
 
-      expect(await db.project.getContentNodeByPath(workspace, project, '/folder')).toBeNull();
       expect(
-        await db.project.getContentNodeByPath(workspace, project, '/renamed/child.md')
+        await db.project.contentNodes.getContentNodeByPath(workspace, project, '/folder')
+      ).toBeNull();
+      expect(
+        await db.project.contentNodes.getContentNodeByPath(workspace, project, '/renamed/child.md')
       ).not.toBeNull();
     });
 
@@ -214,7 +222,7 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
       const { workspace, project } = await createFullFixtureSet(db);
       const now = new Date();
 
-      const folder = await db.project.upsertContentNode({
+      const folder = await db.project.contentNodes.upsertContentNode({
         workspace,
         project_id: project,
         path: '/todelete',
@@ -226,7 +234,7 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
         updated_at: now,
         created_atIfNew: now
       });
-      await db.project.upsertContentNode({
+      await db.project.contentNodes.upsertContentNode({
         workspace,
         project_id: project,
         parent_id: folder.id,
@@ -240,10 +248,14 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
         created_atIfNew: now
       });
 
-      const deleted = await db.project.deleteContentNodeFolder(workspace, project, '/todelete');
+      const deleted = await db.project.contentNodes.deleteContentNodeFolder(
+        workspace,
+        project,
+        '/todelete'
+      );
       expect(deleted.length).toBeGreaterThanOrEqual(2);
 
-      const remaining = await db.project.listContentNodes(workspace, project);
+      const remaining = await db.project.contentNodes.listContentNodes(workspace, project);
       expect(remaining.some(n => n.path.startsWith('/todelete'))).toBe(false);
     });
   });
@@ -253,7 +265,7 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
       const db = getDb();
       const { workspace, project } = await createFullFixtureSet(db);
       const now = new Date();
-      const node = await db.project.upsertContentNode({
+      const node = await db.project.contentNodes.upsertContentNode({
         workspace,
         project_id: project,
         path: '/notes.md',
@@ -266,8 +278,11 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
         created_atIfNew: now
       });
 
-      const first = await db.project.getNextMarkdownRevisionNumber(workspace, node.id);
-      await db.project.createMarkdownRevision({
+      const first = await db.project.markdownRevisions.getNextMarkdownRevisionNumber(
+        workspace,
+        node.id
+      );
+      await db.project.markdownRevisions.createMarkdownRevision({
         workspace,
         node_id: node.id,
         revision_number: first,
@@ -276,11 +291,17 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
         created_at: now,
         created_by: null
       });
-      const second = await db.project.getNextMarkdownRevisionNumber(workspace, node.id);
+      const second = await db.project.markdownRevisions.getNextMarkdownRevisionNumber(
+        workspace,
+        node.id
+      );
 
       expect(second).toBe(first + 1);
 
-      const revisions = await db.project.listMarkdownRevisions(workspace, node.id);
+      const revisions = await db.project.markdownRevisions.listMarkdownRevisions(
+        workspace,
+        node.id
+      );
       expect(revisions.map(r => r.revision_number)).toEqual([first]);
     });
   });
@@ -290,7 +311,7 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
       const db = getDb();
       const { workspace, project } = await createFullFixtureSet(db);
       const now = new Date();
-      const node = await db.project.upsertContentNode({
+      const node = await db.project.contentNodes.upsertContentNode({
         workspace,
         project_id: project,
         path: '/withmeta.md',
@@ -303,7 +324,7 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
         created_atIfNew: now
       });
 
-      await db.project.upsertContentMetadata({
+      await db.project.contentNodes.upsertContentMetadata({
         workspace,
         node_id: node.id,
         title: 'Title',
@@ -314,11 +335,15 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
         updated_at: now
       });
 
-      const withMeta = await db.project.getContentNodeById(workspace, project, node.id);
+      const withMeta = await db.project.contentNodes.getContentNodeById(
+        workspace,
+        project,
+        node.id
+      );
       expect(withMeta!.metadata_keywords).toEqual(['alpha', 'beta']);
 
-      await db.project.deleteContentMetadata(workspace, node.id);
-      const cleared = await db.project.getContentNodeById(workspace, project, node.id);
+      await db.project.contentNodes.deleteContentMetadata(workspace, node.id);
+      const cleared = await db.project.contentNodes.getContentNodeById(workspace, project, node.id);
       expect(cleared!.metadata_keywords ?? []).toEqual([]);
     });
   });
@@ -329,7 +354,7 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
       const { workspace, project, entity } = await createFullFixtureSet(db);
       const now = new Date();
 
-      const created = await db.project.addProjectEntity({
+      const created = await db.project.projectEntities.addProjectEntity({
         workspace,
         project_id: project,
         entity_id: entity,
@@ -339,14 +364,20 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
       });
       expect(created.is_done).toBe(false);
 
-      const updated = await db.project.updateProjectEntity(workspace, project, entity, null, true);
+      const updated = await db.project.projectEntities.updateProjectEntity(
+        workspace,
+        project,
+        entity,
+        null,
+        true
+      );
       expect(updated!.is_done).toBe(true);
     });
 
     it('lists projects containing an entity with project metadata in one projection', async () => {
       const db = getDb();
       const { workspace, project, entity } = await createFullFixtureSet(db);
-      await db.project.addProjectEntity({
+      await db.project.projectEntities.addProjectEntity({
         workspace,
         project_id: project,
         entity_id: entity,
@@ -354,7 +385,7 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
         created_at: new Date()
       });
 
-      const rows = await db.project.getEntityProjects(workspace, entity);
+      const rows = await db.project.projectEntities.getEntityProjects(workspace, entity);
 
       expect(rows).toHaveLength(1);
       expect(rows[0]).toMatchObject({
@@ -370,7 +401,7 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
       const { workspace, project, entity } = await createFullFixtureSet(db);
       const now = new Date();
 
-      await db.project.addProjectEntity({
+      await db.project.projectEntities.addProjectEntity({
         workspace,
         project_id: project,
         entity_id: entity,
@@ -380,7 +411,7 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
       });
 
       await expect(
-        db.project.addProjectEntity({
+        db.project.projectEntities.addProjectEntity({
           workspace,
           project_id: project,
           entity_id: entity,
@@ -396,7 +427,7 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
       const { workspace, project, entity } = await createFullFixtureSet(db);
 
       await expect(
-        db.project.removeProjectEntity(workspace, project, entity)
+        db.project.projectEntities.removeProjectEntity(workspace, project, entity)
       ).resolves.not.toThrow();
     });
   });
@@ -407,7 +438,7 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
       const { workspace, project, schema } = await createFullFixtureSet(db);
       const now = new Date();
 
-      const diagramFile = await db.project.upsertContentNode({
+      const diagramFile = await db.project.contentNodes.upsertContentNode({
         workspace,
         project_id: project,
         path: '/refs.dgrm',
@@ -423,13 +454,23 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
       const entityA = await createFixtureEntity(db, workspace, schema);
       const entityB = await createFixtureEntity(db, workspace, schema);
 
-      await db.project.syncDiagramEntityRefs(workspace, diagramFile.id, [entityA.id]);
-      let filesForA = await db.project.getEntityDiagramFiles(workspace, entityA.id);
+      await db.project.diagramEntityRefs.syncDiagramEntityRefs(workspace, diagramFile.id, [
+        entityA.id
+      ]);
+      let filesForA = await db.project.diagramEntityRefs.getEntityDiagramFiles(
+        workspace,
+        entityA.id
+      );
       expect(filesForA.map(f => f.file_id)).toEqual([diagramFile.id]);
 
-      await db.project.syncDiagramEntityRefs(workspace, diagramFile.id, [entityB.id]);
-      filesForA = await db.project.getEntityDiagramFiles(workspace, entityA.id);
-      const filesForB = await db.project.getEntityDiagramFiles(workspace, entityB.id);
+      await db.project.diagramEntityRefs.syncDiagramEntityRefs(workspace, diagramFile.id, [
+        entityB.id
+      ]);
+      filesForA = await db.project.diagramEntityRefs.getEntityDiagramFiles(workspace, entityA.id);
+      const filesForB = await db.project.diagramEntityRefs.getEntityDiagramFiles(
+        workspace,
+        entityB.id
+      );
       expect(filesForA).toEqual([]);
       expect(filesForB.map(f => f.file_id)).toEqual([diagramFile.id]);
     });
@@ -452,7 +493,7 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
         }
       ]);
 
-      const created = await db.project.createAssessment({
+      const created = await db.project.assessments.createAssessment({
         id: randomUUID(),
         workspace,
         project_id: project,
@@ -481,7 +522,7 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
       expect(created.scope_conditions).toEqual([]);
       expect(created.fields).toEqual([]);
 
-      const fetched = await db.project.getAssessmentById(workspace, created.id);
+      const fetched = await db.project.assessments.getAssessmentById(workspace, created.id);
       expect(fetched!.scope).toEqual(['entity-1', 'entity-2']);
       expect(fetched!.assessment_type_id).toBe(assessmentTypeId);
     });
@@ -491,7 +532,7 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
       const { workspace, project } = await createFullFixtureSet(db);
       const now = new Date();
 
-      const created = await db.project.createAssessment({
+      const created = await db.project.assessments.createAssessment({
         id: randomUUID(),
         workspace,
         project_id: project,
@@ -516,7 +557,7 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
 
       expect(created.mode).toBe('confirm');
 
-      const fetched = await db.project.getAssessmentById(workspace, created.id);
+      const fetched = await db.project.assessments.getAssessmentById(workspace, created.id);
       expect(fetched!.mode).toBe('confirm');
     });
   });
@@ -527,7 +568,7 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
       const { workspace, project } = await createFullFixtureSet(db);
       const now = new Date();
 
-      const created = await db.project.createMilestone({
+      const created = await db.project.milestones.createMilestone({
         id: randomUUID(),
         workspace,
         project_id: project,
@@ -542,7 +583,7 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
       expect(created.status).toBe('planned');
       expect(created.target_date).toBe('2030-07-01');
 
-      const updated = await db.project.updateMilestone(workspace, project, created.id, {
+      const updated = await db.project.milestones.updateMilestone(workspace, project, created.id, {
         name: 'Q3 platform migration',
         target_date: '2030-08-01',
         status: 'active',
@@ -553,9 +594,9 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
       expect(updated!.target_date).toBe('2030-08-01');
       expect(updated!.sort_order).toBe(1);
 
-      const deleted = await db.project.deleteMilestone(workspace, project, created.id);
+      const deleted = await db.project.milestones.deleteMilestone(workspace, project, created.id);
       expect(deleted!.id).toBe(created.id);
-      expect(await db.project.getMilestone(workspace, project, created.id)).toBeNull();
+      expect(await db.project.milestones.getMilestone(workspace, project, created.id)).toBeNull();
     });
 
     it('rejects a duplicate milestone name within the same project as a unique DatabaseError', async () => {
@@ -563,7 +604,7 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
       const { workspace, project } = await createFullFixtureSet(db);
       const now = new Date();
 
-      await db.project.createMilestone({
+      await db.project.milestones.createMilestone({
         id: randomUUID(),
         workspace,
         project_id: project,
@@ -576,7 +617,7 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
       });
 
       await expect(
-        db.project.createMilestone({
+        db.project.milestones.createMilestone({
           id: randomUUID(),
           workspace,
           project_id: project,
@@ -594,9 +635,11 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
       const db = getDb();
       const { workspace, project, entity } = await createFullFixtureSet(db);
 
-      expect(await db.project.isEntityLinkedToProject(workspace, project, entity)).toBe(false);
+      expect(
+        await db.project.projectEntities.isEntityLinkedToProject(workspace, project, entity)
+      ).toBe(false);
 
-      await db.project.addProjectEntity({
+      await db.project.projectEntities.addProjectEntity({
         workspace,
         project_id: project,
         entity_id: entity,
@@ -605,7 +648,9 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
         created_at: new Date()
       });
 
-      expect(await db.project.isEntityLinkedToProject(workspace, project, entity)).toBe(true);
+      expect(
+        await db.project.projectEntities.isEntityLinkedToProject(workspace, project, entity)
+      ).toBe(true);
     });
   });
 
@@ -615,7 +660,7 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
       const { workspace, project, entity } = await createFullFixtureSet(db);
       const now = new Date();
 
-      const assessment = await db.project.createAssessment({
+      const assessment = await db.project.assessments.createAssessment({
         id: randomUUID(),
         workspace,
         project_id: project,
@@ -638,7 +683,7 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
         updated_at: now
       });
 
-      await db.project.upsertAssessmentResponse({
+      await db.project.assessmentResponses.upsertAssessmentResponse({
         workspace,
         assessment_id: assessment.id,
         entity_id: entity,
@@ -646,7 +691,7 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
         values: { q1: 'yes' },
         updated_by: null
       });
-      await db.project.upsertAssessmentResponse({
+      await db.project.assessmentResponses.upsertAssessmentResponse({
         workspace,
         assessment_id: assessment.id,
         entity_id: entity,
@@ -655,15 +700,51 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
         updated_by: null
       });
 
-      const count = await db.project.countAssessmentResponses(workspace, assessment.id);
+      const count = await db.project.assessmentResponses.countAssessmentResponses(
+        workspace,
+        assessment.id
+      );
       expect(count).toBe(1);
 
-      const response = await db.project.getAssessmentResponse(workspace, assessment.id, entity, 1);
+      const response = await db.project.assessmentResponses.getAssessmentResponse(
+        workspace,
+        assessment.id,
+        entity,
+        1
+      );
       expect(response!.values).toEqual({ q1: 'no' });
     });
   });
 
   describe('transactions', () => {
+    it('shares the transaction boundary across focused repositories', async () => {
+      const db = getDb();
+      const workspace = await createFixtureWorkspace(db);
+      const projectId = randomUUID();
+      const milestoneId = randomUUID();
+      const now = new Date();
+
+      await db.core.transaction(async tx => {
+        await createFixtureProject(tx, workspace, { id: projectId });
+        await tx.project.milestones.createMilestone({
+          id: milestoneId,
+          workspace,
+          project_id: projectId,
+          name: 'First milestone',
+          target_date: '2030-01-01',
+          status: 'planned',
+          sort_order: 0,
+          created_at: now,
+          updated_at: now
+        });
+      });
+
+      expect(await db.project.projects.getProject(workspace, projectId)).not.toBeNull();
+      expect(
+        await db.project.milestones.getMilestone(workspace, projectId, milestoneId)
+      ).not.toBeNull();
+    });
+
     it('commits all writes made inside a successful transaction', async () => {
       const db = getDb();
       const workspace = await createFixtureWorkspace(db);
@@ -675,25 +756,41 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
         await createFixtureProject(tx, workspace, { id: idB });
       });
 
-      expect(await db.project.getProject(workspace, idA)).not.toBeNull();
-      expect(await db.project.getProject(workspace, idB)).not.toBeNull();
+      expect(await db.project.projects.getProject(workspace, idA)).not.toBeNull();
+      expect(await db.project.projects.getProject(workspace, idB)).not.toBeNull();
     });
 
     it('rolls back all writes when the transaction callback throws', async () => {
       const db = getDb();
       const workspace = await createFixtureWorkspace(db);
       const survivingId = randomUUID();
+      const milestoneId = randomUUID();
+      const now = new Date();
 
       await expect(
         db.core.transaction(async tx => {
           await createFixtureProject(tx, workspace, { id: survivingId });
+          await tx.project.milestones.createMilestone({
+            id: milestoneId,
+            workspace,
+            project_id: survivingId,
+            name: 'Rolled back milestone',
+            target_date: '2030-01-01',
+            status: 'planned',
+            sort_order: 0,
+            created_at: now,
+            updated_at: now
+          });
           // Duplicate id triggers a unique-constraint violation, which should roll back
           // the entire transaction, including the first (otherwise-valid) insert above.
           await createFixtureProject(tx, workspace, { id: survivingId });
         })
       ).rejects.toThrow();
 
-      expect(await db.project.getProject(workspace, survivingId)).toBeNull();
+      expect(await db.project.projects.getProject(workspace, survivingId)).toBeNull();
+      expect(
+        await db.project.milestones.getMilestone(workspace, survivingId, milestoneId)
+      ).toBeNull();
     });
   });
 
@@ -704,7 +801,7 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
       const now = new Date();
 
       await expect(
-        db.project.upsertContentNode({
+        db.project.contentNodes.upsertContentNode({
           workspace,
           project_id: randomUUID(),
           path: '/orphan.md',

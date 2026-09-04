@@ -50,11 +50,11 @@ export const listProjects = async (
     fallback: 'Failed to retrieve projects',
     dbErrorMessages: projectDbErrorMessages,
     operation: async ({ ws, authCtx }) => {
-      const projects = await db.project.listProjects(ws);
+      const projects = await db.project.projects.listProjects(ws);
       const visibleProjects = projects.filter(project => canAccessProject(authCtx, project.owner));
       const fileCounts = new Map<string, number>();
       const projectFiles = await Promise.all(
-        visibleProjects.map(project => db.project.listContentNodes(ws, project.id))
+        visibleProjects.map(project => db.project.contentNodes.listContentNodes(ws, project.id))
       );
       for (const files of projectFiles) {
         for (const file of files) {
@@ -88,10 +88,10 @@ export const getProject = async (
     fallback: 'Failed to retrieve project',
     dbErrorMessages: projectDbErrorMessages,
     operation: async ({ ws, authCtx }) => {
-      const project = await db.project.getProject(ws, id);
+      const project = await db.project.projects.getProject(ws, id);
       httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
       requireProjectAccess(authCtx, project.owner);
-      const files = await db.project.listContentNodes(ws, project.id);
+      const files = await db.project.contentNodes.listContentNodes(ws, project.id);
       return toApiProjectDetail(project, buildFileTree(files), authCtx);
     }
   });
@@ -153,7 +153,7 @@ export const createProject = async (
         'You do not have permission to create a project for this owner team'
       );
 
-      const row = await db.project.createProject(createInput);
+      const row = await db.project.projects.createProject(createInput);
 
       await logAudit(db, {
         userId: authCtx?.userId,
@@ -193,7 +193,7 @@ export const updateProject = async (
     fallback: 'Failed to update project',
     dbErrorMessages: projectDbErrorMessages,
     operation: async ({ ws, authCtx }) => {
-      const oldRow = await db.project.getProject(ws, id);
+      const oldRow = await db.project.projects.getProject(ws, id);
       httpAssert.present(oldRow, { status: 404, message: `Project '${id}' not found` });
       const teamIds = new Set((await db.workspace.listTeams(ws)).map(row => row.id));
 
@@ -250,7 +250,7 @@ export const updateProject = async (
         );
       }
 
-      const row = await db.project.updateProject(ws, oldRow.id, updateInput);
+      const row = await db.project.projects.updateProject(ws, oldRow.id, updateInput);
       httpAssert.present(row, { status: 404, message: `Project '${id}' not found` });
 
       const changes = computeChanges(extractEntityFields(oldRow), extractEntityFields(row));
@@ -264,7 +264,7 @@ export const updateProject = async (
         changes
       });
 
-      const fileCount = (await db.project.listContentNodes(ws, oldRow.id)).length;
+      const fileCount = (await db.project.contentNodes.listContentNodes(ws, oldRow.id)).length;
       return toApiProject(row, fileCount, authCtx);
     }
   });
@@ -284,7 +284,7 @@ export const deleteProject = async (
     fallback: 'Failed to delete project',
     dbErrorMessages: projectDbErrorMessages,
     operation: async ({ ws, authCtx }) => {
-      const project = await db.project.getProject(ws, id);
+      const project = await db.project.projects.getProject(ws, id);
       httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
 
       requireProjectAction(
@@ -294,7 +294,7 @@ export const deleteProject = async (
         'You do not have permission to delete this project'
       );
 
-      await db.project.deleteProject(ws, project.id);
+      await db.project.projects.deleteProject(ws, project.id);
 
       await logAudit(db, {
         userId: authCtx.userId,

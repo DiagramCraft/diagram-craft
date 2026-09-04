@@ -79,7 +79,7 @@ export const resolveScopeAwareEscalationTarget = async (
   projectId: string | null
 ): Promise<GovernanceAssignmentTarget> => {
   if (projectId) {
-    const project = await db.project.getProject(workspace, projectId);
+    const project = await db.project.projects.getProject(workspace, projectId);
     if (project?.owner) {
       return { type: 'team_role', teamId: project.owner, teamRole: 'team_admin' };
     }

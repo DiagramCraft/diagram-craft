@@ -188,7 +188,7 @@ const resolveAuditPublicIds = async (
   }
 
   if (entry.entity_type === 'project') {
-    const project = await db.project.getProject(workspace, entry.entity_id);
+    const project = await db.project.projects.getProject(workspace, entry.entity_id);
     return {
       ...entry,
       public_id: project?.public_id ?? null
@@ -199,7 +199,7 @@ const resolveAuditPublicIds = async (
     const projectId =
       typeof entry.metadata['project_id'] === 'string' ? entry.metadata['project_id'] : null;
     if (!projectId) return entry;
-    const project = await db.project.getProject(workspace, projectId);
+    const project = await db.project.projects.getProject(workspace, projectId);
     return {
       ...entry,
       metadata: {

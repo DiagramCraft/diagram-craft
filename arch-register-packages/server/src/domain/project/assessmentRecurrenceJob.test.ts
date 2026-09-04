@@ -71,13 +71,15 @@ const makeDb = (row: AssessmentDbResult) => {
   };
   const db = {
     project: {
-      getAssessmentById: vi.fn(async () => stored),
-      updateAssessment: vi.fn(
-        async (_ws: string, _pid: string, _id: string, patch: Partial<AssessmentDbResult>) => {
-          stored = { ...stored, ...patch };
-          return stored;
-        }
-      )
+      assessments: {
+        getAssessmentById: vi.fn(async () => stored),
+        updateAssessment: vi.fn(
+          async (_ws: string, _pid: string, _id: string, patch: Partial<AssessmentDbResult>) => {
+            stored = { ...stored, ...patch };
+            return stored;
+          }
+        )
+      }
     },
     governance,
     notification: {

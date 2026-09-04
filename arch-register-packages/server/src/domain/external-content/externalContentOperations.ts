@@ -150,7 +150,7 @@ const validateScope = async (
   scope: { type: 'workspace' | 'project' | 'entity'; id?: string }
 ) => {
   if (scope.type === 'project') {
-    const project = await db.project.getProject(workspace, scope.id!);
+    const project = await db.project.projects.getProject(workspace, scope.id!);
     httpAssert.present(project, { status: 404, message: `Project '${scope.id}' not found` });
     return { type: 'project' as const, id: project.id };
   }
@@ -168,16 +168,16 @@ const scopeNodes = async (
   scope: { type: 'workspace' | 'project' | 'entity'; id?: string }
 ) => {
   if (scope.type === 'project') {
-    const project = await db.project.getProject(workspace, scope.id!);
+    const project = await db.project.projects.getProject(workspace, scope.id!);
     httpAssert.present(project, { status: 404, message: `Project '${scope.id}' not found` });
-    return db.project.listContentNodes(workspace, project.id);
+    return db.project.contentNodes.listContentNodes(workspace, project.id);
   }
   if (scope.type === 'entity') {
     const entity = await db.catalog.getEntity(workspace, scope.id!);
     httpAssert.present(entity, { status: 404, message: `Entity '${scope.id}' not found` });
-    return db.project.listEntityContentNodes(workspace, entity.id);
+    return db.project.contentNodes.listEntityContentNodes(workspace, entity.id);
   }
-  return db.project.listWorkspaceContentNodes(workspace);
+  return db.project.contentNodes.listWorkspaceContentNodes(workspace);
 };
 
 export const listExternalContentMounts = async (
@@ -399,7 +399,7 @@ export const removeExternalContentMount = async (
     const mount = await db.externalContent.getMount(ws, mountId);
     httpAssert.present(mount, { status: 404, message: 'Content mount not found' });
     const source = await db.externalContent.getSource(ws, mount.source_id);
-    const nodes = await db.project.listContentNodesByMount(ws, mount.id);
+    const nodes = await db.project.contentNodes.listContentNodesByMount(ws, mount.id);
     for (const node of nodes) {
       if (node.type !== 'folder') {
         await storage
@@ -408,7 +408,7 @@ export const removeExternalContentMount = async (
       }
     }
     await db.core.transaction(async tx => {
-      await tx.project.deleteContentNodesByIds(
+      await tx.project.contentNodes.deleteContentNodesByIds(
         ws,
         nodes.map(node => node.id)
       );

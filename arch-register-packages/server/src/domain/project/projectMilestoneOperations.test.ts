@@ -52,11 +52,15 @@ const event = { context: { user: { id: 'user-1' } } } as unknown as Authenticate
 const makeDb = (milestone: ProjectMilestoneDbResult): DatabaseAdapter =>
   ({
     project: {
-      getProject: vi.fn(async () => ({ id: 'proj-1', owner: null })),
-      getMilestone: vi.fn(async () => milestone),
-      getMilestoneById: vi.fn(async () => milestone),
-      createMilestone: vi.fn(async () => milestone),
-      deleteMilestone: vi.fn(async () => milestone)
+      projects: {
+        getProject: vi.fn(async () => ({ id: 'proj-1', owner: null }))
+      },
+      milestones: {
+        getMilestone: vi.fn(async () => milestone),
+        getMilestoneById: vi.fn(async () => milestone),
+        createMilestone: vi.fn(async () => milestone),
+        deleteMilestone: vi.fn(async () => milestone)
+      }
     },
     catalog: {
       reassignSnapshotsFromMilestone: vi.fn(async () => {})
@@ -76,7 +80,7 @@ describe('createMilestone', () => {
     );
 
     expect(result.id).toBe('ms-1');
-    expect(db.project.createMilestone).toHaveBeenCalledTimes(1);
+    expect(db.project.milestones.createMilestone).toHaveBeenCalledTimes(1);
     expect(logAudit).toHaveBeenCalledWith(
       db,
       expect.objectContaining({ operation: 'create', entityType: 'project_milestone' })
@@ -97,12 +101,12 @@ describe('deleteMilestone', () => {
       'ms-1',
       '2030-07-01'
     );
-    expect(db.project.deleteMilestone).toHaveBeenCalledWith('ws-1', 'proj-1', 'ms-1');
+    expect(db.project.milestones.deleteMilestone).toHaveBeenCalledWith('ws-1', 'proj-1', 'ms-1');
 
     // Backfill must run before the milestone row itself is removed.
     const reassignOrder = (db.catalog.reassignSnapshotsFromMilestone as ReturnType<typeof vi.fn>)
       .mock.invocationCallOrder[0]!;
-    const deleteOrder = (db.project.deleteMilestone as ReturnType<typeof vi.fn>).mock
+    const deleteOrder = (db.project.milestones.deleteMilestone as ReturnType<typeof vi.fn>).mock
       .invocationCallOrder[0]!;
     expect(reassignOrder).toBeLessThan(deleteOrder);
 
@@ -114,12 +118,12 @@ describe('deleteMilestone', () => {
 
   it('throws a 404 when the milestone does not exist', async () => {
     const db = makeDb(makeMilestone());
-    db.project.getMilestoneById = vi.fn(async () => null);
+    db.project.milestones.getMilestoneById = vi.fn(async () => null);
 
     await expect(deleteMilestone(db, 'ws-1', 'missing', event)).rejects.toMatchObject({
       status: 404
     });
     expect(db.catalog.reassignSnapshotsFromMilestone).not.toHaveBeenCalled();
-    expect(db.project.deleteMilestone).not.toHaveBeenCalled();
+    expect(db.project.milestones.deleteMilestone).not.toHaveBeenCalled();
   });
 });

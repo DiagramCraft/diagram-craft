@@ -84,7 +84,7 @@ runContractSuiteAgainstBothDrivers('DocumentDatabase', getDb => {
     );
 
     const nodeId = randomUUID();
-    await db.project.upsertContentNode({
+    await db.project.contentNodes.upsertContentNode({
       id: nodeId,
       workspace,
       project_id: project.id,
@@ -149,7 +149,7 @@ runContractSuiteAgainstBothDrivers('DocumentDatabase', getDb => {
     await db.document.deleteDocumentMetadata(workspace, nodeId);
     expect(await db.document.listDocumentsLinkingEntity(workspace, entity.id)).toEqual([]);
 
-    const revision = await db.project.createMarkdownRevision({
+    const revision = await db.project.markdownRevisions.createMarkdownRevision({
       id: randomUUID(),
       workspace,
       node_id: nodeId,
@@ -328,7 +328,7 @@ runContractSuiteAgainstBothDrivers('DocumentDatabase', getDb => {
       [olderNodeId, 'ADR-1'],
       [newerNodeId, 'ADR-2']
     ] as const) {
-      await db.project.upsertContentNode({
+      await db.project.contentNodes.upsertContentNode({
         id: nodeId,
         workspace,
         project_id: project.id,
@@ -449,7 +449,7 @@ runContractSuiteAgainstBothDrivers('DocumentDatabase', getDb => {
 
     const makeNode = async (path: string) => {
       const nodeId = randomUUID();
-      await db.project.upsertContentNode({
+      await db.project.contentNodes.upsertContentNode({
         id: nodeId,
         workspace,
         project_id: project.id,
@@ -539,7 +539,7 @@ runContractSuiteAgainstBothDrivers('DocumentDatabase', getDb => {
     const now = new Date();
 
     const nodeId = randomUUID();
-    await db.project.upsertContentNode({
+    await db.project.contentNodes.upsertContentNode({
       id: nodeId,
       workspace,
       project_id: project.id,

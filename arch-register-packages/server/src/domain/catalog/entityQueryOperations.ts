@@ -167,20 +167,20 @@ export const resolveJoinedAssessment = async (
     status: 400,
     message: 'Assessment filter conditions require assessmentId'
   });
-  const assessment = await db.project.getAssessmentById(workspace, assessmentId);
+  const assessment = await db.project.assessments.getAssessmentById(workspace, assessmentId);
   httpAssert.present(assessment, {
     status: 404,
     message: `Assessment '${assessmentId}' not found`
   });
   if (authCtx) {
-    const project = await db.project.getProject(workspace, assessment.project_id);
+    const project = await db.project.projects.getProject(workspace, assessment.project_id);
     httpAssert.present(project, {
       status: 404,
       message: `Project '${assessment.project_id}' not found`
     });
     requireProjectAccess(authCtx, project.owner);
   }
-  const responses = await db.project.listAssessmentResponses(
+  const responses = await db.project.assessmentResponses.listAssessmentResponses(
     workspace,
     assessmentId,
     assessment.current_occurrence
@@ -307,7 +307,9 @@ const mapEntityQueryRows = (
   options: NormalizedEntityQueryOptions,
   schemaCatalog: SchemaCatalog,
   historicalSchemas: EntityQueryCompilation['historicalSchemas'],
-  projectEntities: Awaited<ReturnType<DatabaseAdapter['project']['listProjectEntities']>>
+  projectEntities: Awaited<
+    ReturnType<DatabaseAdapter['project']['projectEntities']['listProjectEntities']>
+  >
 ): CollectedEntity[] => {
   const projectEntityMap = new Map(projectEntities.map(entity => [entity.entity_id, entity]));
   return rows.map((row: EntityQueryDbResult) => {
@@ -348,7 +350,9 @@ export const collectEntitiesFromIR = async (
   authCtx: AuthorizationContext | null,
   options: NormalizedEntityQueryOptions,
   schemas: SchemaDbResult[],
-  projectEntities: Awaited<ReturnType<DatabaseAdapter['project']['listProjectEntities']>>,
+  projectEntities: Awaited<
+    ReturnType<DatabaseAdapter['project']['projectEntities']['listProjectEntities']>
+  >,
   collectionEntityIds: string[] | null,
   relationSchemas: RelationSchemaDbResult[] = []
 ): Promise<CollectedEntity[]> => {
@@ -389,7 +393,7 @@ export const listEntitiesWithCount = async (
         db.catalog.listSchemas(workspace),
         db.relation.listRelationSchemas(workspace),
         normalized.projectId
-          ? db.project.listProjectEntities(workspace, normalized.projectId)
+          ? db.project.projectEntities.listProjectEntities(workspace, normalized.projectId)
           : Promise.resolve([]),
         normalized.collectionId && authCtx
           ? db.view.listCollectionEntityIds(authCtx.userId, workspace, normalized.collectionId)
@@ -508,7 +512,9 @@ const collectEntities = async (
     await Promise.all([
       db.catalog.listSchemas(workspace),
       db.relation.listRelationSchemas(workspace),
-      projectId ? db.project.listProjectEntities(workspace, projectId) : Promise.resolve([]),
+      projectId
+        ? db.project.projectEntities.listProjectEntities(workspace, projectId)
+        : Promise.resolve([]),
       resolveJoinedAssessment(
         db,
         workspace,
@@ -638,7 +644,7 @@ const collectEntities = async (
     let projectLinkIds = new Set<string>();
     let candidateEntityIds: string[] | undefined;
     if (projectId && projectScope === 'project') {
-      const links = await db.project.listProjectEntityLinks(workspace, projectId);
+      const links = await db.project.projectEntities.listProjectEntityLinks(workspace, projectId);
       projectLinkIds = new Set(
         links.filter(link => link.created_at <= asOf).map(link => link.entity_id)
       );
@@ -838,7 +844,9 @@ export const getEntityTree = async (
           projectScope,
           permissionScope: buildEntityViewPermissionScope(authCtx)
         }),
-        projectId ? db.project.listProjectEntities(workspace, projectId) : Promise.resolve([]),
+        projectId
+          ? db.project.projectEntities.listProjectEntities(workspace, projectId)
+          : Promise.resolve([]),
         resolveJoinedAssessment(
           db,
           workspace,

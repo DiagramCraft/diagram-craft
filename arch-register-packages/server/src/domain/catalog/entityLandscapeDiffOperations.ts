@@ -67,7 +67,9 @@ type ProjectScope = {
   projectId: string;
   projectScope: 'project' | 'all';
   candidateEntityIds?: string[];
-  links: Awaited<ReturnType<DatabaseAdapter['project']['listProjectEntityLinks']>>;
+  links: Awaited<
+    ReturnType<DatabaseAdapter['project']['projectEntities']['listProjectEntityLinks']>
+  >;
 };
 
 const resolveProjectScope = async (
@@ -79,7 +81,7 @@ const resolveProjectScope = async (
 ): Promise<ProjectScope | null> => {
   if (!projectId) return null;
 
-  const project = await db.project.getProject(workspace, projectId);
+  const project = await db.project.projects.getProject(workspace, projectId);
   httpAssert.present(project, {
     status: 404,
     message: `Project '${projectId}' not found`
@@ -88,7 +90,7 @@ const resolveProjectScope = async (
 
   const [scopedEntities, links] = await Promise.all([
     listAllCatalogEntities(db, workspace, { projectId, projectScope: 'project' }),
-    db.project.listProjectEntityLinks(workspace, projectId)
+    db.project.projectEntities.listProjectEntityLinks(workspace, projectId)
   ]);
   const candidateEntityIds = [
     ...new Set([...scopedEntities.map(entity => entity.id), ...links.map(link => link.entity_id)])

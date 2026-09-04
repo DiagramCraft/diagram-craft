@@ -38,7 +38,7 @@ export const workspaceViewORPCRouter = viewRouter.router({
       const includeWorkspace = input.query?.includeWorkspace ?? false;
 
       if (projectId != null) {
-        const project = await context.db.project.getProject(workspace, projectId);
+        const project = await context.db.project.projects.getProject(workspace, projectId);
         httpAssert.present(project, { status: 404, message: `Project '${projectId}' not found` });
         requireProjectAccess(authCtx, project.owner);
         return await listSavedViews(context.db, workspace, {
@@ -58,7 +58,10 @@ export const workspaceViewORPCRouter = viewRouter.router({
           status: 400,
           message: 'projectId is required for project-scoped views'
         });
-        const project = await context.db.project.getProject(workspace, input.body.projectId);
+        const project = await context.db.project.projects.getProject(
+          workspace,
+          input.body.projectId
+        );
         httpAssert.present(project, {
           status: 404,
           message: `Project '${input.body.projectId}' not found`
@@ -96,7 +99,10 @@ export const workspaceViewORPCRouter = viewRouter.router({
       } else if (existing.project_id == null) {
         requireWorkspaceCapability(authCtx, 'ws.manage_views');
       } else {
-        const project = await context.db.project.getProject(workspace, existing.project_id);
+        const project = await context.db.project.projects.getProject(
+          workspace,
+          existing.project_id
+        );
         httpAssert.present(project, {
           status: 404,
           message: `Project '${existing.project_id}' not found`
@@ -128,7 +134,10 @@ export const workspaceViewORPCRouter = viewRouter.router({
       } else if (existing.project_id == null) {
         requireWorkspaceCapability(authCtx, 'ws.manage_views');
       } else {
-        const project = await context.db.project.getProject(workspace, existing.project_id);
+        const project = await context.db.project.projects.getProject(
+          workspace,
+          existing.project_id
+        );
         httpAssert.present(project, {
           status: 404,
           message: `Project '${existing.project_id}' not found`

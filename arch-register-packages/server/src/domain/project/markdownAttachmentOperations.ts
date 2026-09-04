@@ -43,7 +43,7 @@ export const uploadMarkdownAttachment = async (
     dbErrorMessages: projectDbErrorMessages,
     operation: async ({ ws, authCtx }) => {
       const fileName = fileNameFromPath(filePath) ?? originalFilename;
-      const markdownNode = await db.project.getAnyContentNodeById(ws, nodeId);
+      const markdownNode = await db.project.contentNodes.getAnyContentNodeById(ws, nodeId);
       httpAssert.present(markdownNode, {
         status: 404,
         message: `Markdown document '${nodeId}' not found`
@@ -93,7 +93,7 @@ export const uploadMarkdownAttachment = async (
           }
         ],
         writeDatabase: async tx => {
-          row = await tx.project.upsertContentNode({
+          row = await tx.project.contentNodes.upsertContentNode({
             id: attachmentId,
             workspace: ws,
             ...contentNodeScopeFields(resolved),
@@ -157,7 +157,7 @@ export const createMarkdownDiagramAttachment = async (
     fallback: 'Failed to create diagram attachment',
     dbErrorMessages: projectDbErrorMessages,
     operation: async ({ ws, authCtx }) => {
-      const markdownNode = await db.project.getAnyContentNodeById(ws, nodeId);
+      const markdownNode = await db.project.contentNodes.getAnyContentNodeById(ws, nodeId);
       httpAssert.present(markdownNode, {
         status: 404,
         message: `Markdown document '${nodeId}' not found`
@@ -213,7 +213,7 @@ export const createMarkdownDiagramAttachment = async (
           }
         ],
         writeDatabase: async tx => {
-          row = await tx.project.upsertContentNode({
+          row = await tx.project.contentNodes.upsertContentNode({
             id: attachmentId,
             workspace: ws,
             ...contentNodeScopeFields(resolved),

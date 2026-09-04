@@ -79,11 +79,15 @@ const makeDb = (
 ) =>
   ({
     project: {
-      listAllContentNodes: vi.fn(async () => nodes),
-      getProject: vi.fn(async (_ws: string, id: string) => {
-        const project = projectsById[id];
-        return project ? { ...project, id: project.id ?? id } : null;
-      })
+      contentNodes: {
+        listAllContentNodes: vi.fn(async () => nodes)
+      },
+      projects: {
+        getProject: vi.fn(async (_ws: string, id: string) => {
+          const project = projectsById[id];
+          return project ? { ...project, id: project.id ?? id } : null;
+        })
+      }
     },
     catalog: {
       getEntity: vi.fn(async (_ws: string, id: string) => entitiesById[id] ?? null)

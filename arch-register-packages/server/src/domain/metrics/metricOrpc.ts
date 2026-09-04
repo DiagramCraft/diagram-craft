@@ -25,7 +25,7 @@ export const workspaceMetricORPCRouter = metricRouter.router({
       const { body } = input;
 
       if (body.projectId) {
-        const project = await context.db.project.getProject(workspace, body.projectId);
+        const project = await context.db.project.projects.getProject(workspace, body.projectId);
         httpAssert.present(project, {
           status: 404,
           message: `Project '${body.projectId}' not found`

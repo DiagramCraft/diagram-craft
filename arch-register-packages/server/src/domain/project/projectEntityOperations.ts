@@ -29,10 +29,10 @@ export const listProjectEntities = async (
     fallback: 'Failed to retrieve project entities',
     dbErrorMessages: projectDbErrorMessages,
     operation: async ({ ws, authCtx }) => {
-      const project = await db.project.getProject(ws, projectId);
+      const project = await db.project.projects.getProject(ws, projectId);
       httpAssert.present(project, { status: 404, message: `Project '${projectId}' not found` });
       requireProjectAccess(authCtx, project.owner);
-      const rows = await db.project.listProjectEntities(ws, project.id);
+      const rows = await db.project.projectEntities.listProjectEntities(ws, project.id);
       return rows.map(toApiProjectEntity);
     }
   });
@@ -52,7 +52,7 @@ export const addProjectEntity = async (
     fallback: 'Failed to add entity to project',
     dbErrorMessages: projectDbErrorMessages,
     operation: async ({ ws, authCtx }) => {
-      const project = await db.project.getProject(ws, projectId);
+      const project = await db.project.projects.getProject(ws, projectId);
       httpAssert.present(project, { status: 404, message: `Project '${projectId}' not found` });
       requireProjectAction(
         authCtx,
@@ -60,7 +60,7 @@ export const addProjectEntity = async (
         'edit_project',
         'You do not have permission to edit this project'
       );
-      const row = await db.project.addProjectEntity({
+      const row = await db.project.projectEntities.addProjectEntity({
         workspace: ws,
         project_id: project.id,
         entity_id: input.entity_id,
@@ -88,7 +88,7 @@ export const updateProjectEntity = async (
     fallback: 'Failed to update project entity',
     dbErrorMessages: projectDbErrorMessages,
     operation: async ({ ws, authCtx }) => {
-      const project = await db.project.getProject(ws, projectId);
+      const project = await db.project.projects.getProject(ws, projectId);
       httpAssert.present(project, { status: 404, message: `Project '${projectId}' not found` });
       requireProjectAction(
         authCtx,
@@ -96,14 +96,14 @@ export const updateProjectEntity = async (
         'edit_project',
         'You do not have permission to edit this project'
       );
-      const existing = (await db.project.listProjectEntities(ws, project.id)).find(
+      const existing = (await db.project.projectEntities.listProjectEntities(ws, project.id)).find(
         e => e.entity_id === entityId
       );
       httpAssert.present(existing, {
         status: 404,
         message: `Entity '${entityId}' not found in project`
       });
-      const row = await db.project.updateProjectEntity(
+      const row = await db.project.projectEntities.updateProjectEntity(
         ws,
         project.id,
         entityId,
@@ -133,7 +133,7 @@ export const removeProjectEntity = async (
     fallback: 'Failed to remove entity from project',
     dbErrorMessages: projectDbErrorMessages,
     operation: async ({ ws, authCtx }) => {
-      const project = await db.project.getProject(ws, projectId);
+      const project = await db.project.projects.getProject(ws, projectId);
       httpAssert.present(project, { status: 404, message: `Project '${projectId}' not found` });
       requireProjectAction(
         authCtx,
@@ -141,7 +141,7 @@ export const removeProjectEntity = async (
         'edit_project',
         'You do not have permission to edit this project'
       );
-      await db.project.removeProjectEntity(ws, project.id, entityId);
+      await db.project.projectEntities.removeProjectEntity(ws, project.id, entityId);
       return { success: true };
     }
   });
@@ -168,7 +168,7 @@ export const getEntityProjects = async (
         'view_entity',
         'You do not have access to view this entity'
       );
-      const rows = await db.project.getEntityProjects(ws, entity.id);
+      const rows = await db.project.projectEntities.getEntityProjects(ws, entity.id);
       return rows
         .filter(row => canAccessProject(authCtx, row.project.owner))
         .map(row => ({
@@ -202,13 +202,13 @@ export const getEntityDiagramFiles = async (
         'view_entity',
         'You do not have access to view this entity'
       );
-      const rows = await db.project.getEntityDiagramFiles(ws, entity.id);
+      const rows = await db.project.diagramEntityRefs.getEntityDiagramFiles(ws, entity.id);
       const projectOwners = new Map(
         (
           await Promise.all(
             [...new Set(rows.map(row => row.project_id))].map(async projectId => [
               projectId,
-              (await db.project.getProject(ws, projectId))?.owner ?? null
+              (await db.project.projects.getProject(ws, projectId))?.owner ?? null
             ])
           )
         ).filter((entry): entry is [string, string] => entry[1] !== null)

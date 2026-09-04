@@ -64,20 +64,26 @@ const event = { context: { user: { id: 'user-1' } } } as unknown as Authenticate
 const makeDb = (assessment: AssessmentDbResult): DatabaseAdapter =>
   ({
     project: {
-      getProject: vi.fn(async () => ({ id: 'proj-1', owner: null })),
-      getAssessmentById: vi.fn(async () => assessment),
-      getAssessmentResponse: vi.fn(async () => null),
-      upsertAssessmentResponse: vi.fn(async () => ({
-        id: 'resp-1',
-        workspace: 'ws-1',
-        assessment_id: 'asmnt-1',
-        entity_id: 'entity-1',
-        values: { f1: 5 },
-        created_at: now,
-        updated_at: now,
-        updated_by: 'user-1',
-        updated_by_name: 'User One'
-      }))
+      projects: {
+        getProject: vi.fn(async () => ({ id: 'proj-1', owner: null }))
+      },
+      assessments: {
+        getAssessmentById: vi.fn(async () => assessment)
+      },
+      assessmentResponses: {
+        getAssessmentResponse: vi.fn(async () => null),
+        upsertAssessmentResponse: vi.fn(async () => ({
+          id: 'resp-1',
+          workspace: 'ws-1',
+          assessment_id: 'asmnt-1',
+          entity_id: 'entity-1',
+          values: { f1: 5 },
+          created_at: now,
+          updated_at: now,
+          updated_by: 'user-1',
+          updated_by_name: 'User One'
+        }))
+      }
     },
     catalog: {
       touchEntityAttestation: vi.fn(async () => {})
@@ -94,7 +100,7 @@ describe('upsertAssessmentResponse', () => {
         upsertAssessmentResponse(db, 'ws-1', 'asmnt-1', 'entity-1', { values: { f1: 5 } }, event)
       ).rejects.toMatchObject({ status: 409 });
 
-      expect(db.project.upsertAssessmentResponse).not.toHaveBeenCalled();
+      expect(db.project.assessmentResponses.upsertAssessmentResponse).not.toHaveBeenCalled();
     }
   );
 
@@ -114,7 +120,7 @@ describe('upsertAssessmentResponse', () => {
     expect(result.id).toBe('resp-1');
     expect(result.updated_by).toBe('user-1');
     expect(result.updated_by_name).toBe('User One');
-    expect(db.project.upsertAssessmentResponse).toHaveBeenCalledTimes(1);
+    expect(db.project.assessmentResponses.upsertAssessmentResponse).toHaveBeenCalledTimes(1);
     expect(logAudit).toHaveBeenCalledWith(
       db,
       expect.objectContaining({
@@ -144,7 +150,7 @@ describe('upsertAssessmentResponse', () => {
 
     await upsertAssessmentResponse(db, 'ws-1', 'asmnt-1', 'entity-1', { values: { f1: 5 } }, event);
 
-    expect(db.project.upsertAssessmentResponse).toHaveBeenCalledWith(
+    expect(db.project.assessmentResponses.upsertAssessmentResponse).toHaveBeenCalledWith(
       expect.objectContaining({ values: { f1: 5, f2: 10 } })
     );
   });
@@ -169,7 +175,7 @@ describe('upsertAssessmentResponse', () => {
     await expect(
       upsertAssessmentResponse(db, 'ws-1', 'asmnt-1', 'entity-1', { values: { f2: 10 } }, event)
     ).rejects.toMatchObject({ status: 400 });
-    expect(db.project.upsertAssessmentResponse).not.toHaveBeenCalled();
+    expect(db.project.assessmentResponses.upsertAssessmentResponse).not.toHaveBeenCalled();
   });
 
   it('rejects field values for a confirm-only assessment', async () => {
@@ -179,7 +185,7 @@ describe('upsertAssessmentResponse', () => {
       upsertAssessmentResponse(db, 'ws-1', 'asmnt-1', 'entity-1', { values: { f1: 5 } }, event)
     ).rejects.toMatchObject({ status: 400 });
 
-    expect(db.project.upsertAssessmentResponse).not.toHaveBeenCalled();
+    expect(db.project.assessmentResponses.upsertAssessmentResponse).not.toHaveBeenCalled();
   });
 
   it('records a confirm action for a confirm-only assessment', async () => {
@@ -195,7 +201,7 @@ describe('upsertAssessmentResponse', () => {
     );
 
     expect(result.entity_id).toBe('entity-1');
-    expect(db.project.upsertAssessmentResponse).toHaveBeenCalledTimes(1);
+    expect(db.project.assessmentResponses.upsertAssessmentResponse).toHaveBeenCalledTimes(1);
     expect(db.catalog.touchEntityAttestation).toHaveBeenCalledWith(
       'ws-1',
       'entity-1',
@@ -210,27 +216,33 @@ describe('upsertAssessmentResponse', () => {
     });
     const db = {
       project: {
-        getProject: vi.fn(async () => ({ id: 'proj-1', owner: null })),
-        getAssessmentById: vi.fn(async () => assessment),
-        listAssessmentResponses: vi.fn(async () => [
-          {
-            id: 'resp-1',
-            workspace: 'ws-1',
-            assessment_id: 'asmnt-1',
-            entity_id: 'entity-1',
-            occurrence: 1,
-            values: {},
-            created_at: now,
-            updated_at: now,
-            updated_by: null,
-            updated_by_name: null
-          }
-        ])
+        projects: {
+          getProject: vi.fn(async () => ({ id: 'proj-1', owner: null }))
+        },
+        assessments: {
+          getAssessmentById: vi.fn(async () => assessment)
+        },
+        assessmentResponses: {
+          listAssessmentResponses: vi.fn(async () => [
+            {
+              id: 'resp-1',
+              workspace: 'ws-1',
+              assessment_id: 'asmnt-1',
+              entity_id: 'entity-1',
+              occurrence: 1,
+              values: {},
+              created_at: now,
+              updated_at: now,
+              updated_by: null,
+              updated_by_name: null
+            }
+          ])
+        }
       },
       catalog: { listSchemas: vi.fn(async () => []) }
     } as unknown as DatabaseAdapter;
 
     await expect(listAssessmentResponses(db, 'ws-1', 'asmnt-1', event)).resolves.toEqual([]);
-    expect(db.project.listAssessmentResponses).not.toHaveBeenCalled();
+    expect(db.project.assessmentResponses.listAssessmentResponses).not.toHaveBeenCalled();
   });
 });

@@ -58,10 +58,12 @@ describe('getTimelineViewData', () => {
         ])
       },
       project: {
-        listProjects: vi.fn(async () => [
-          { id: 'visible-project', owner: 'visible-team' },
-          { id: 'hidden-project', owner: 'hidden-team' }
-        ])
+        projects: {
+          listProjects: vi.fn(async () => [
+            { id: 'visible-project', owner: 'visible-team' },
+            { id: 'hidden-project', owner: 'hidden-team' }
+          ])
+        }
       }
     } as unknown as DatabaseAdapter;
 

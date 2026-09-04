@@ -70,8 +70,11 @@ export const createContentNodeRevision = async (
   metadata?: DocumentMetadata,
   revisionDb: DatabaseAdapter = db
 ) => {
-  const revisionNumber = await revisionDb.project.getNextMarkdownRevisionNumber(ws, nodeId);
-  return await revisionDb.project.createMarkdownRevision({
+  const revisionNumber = await revisionDb.project.markdownRevisions.getNextMarkdownRevisionNumber(
+    ws,
+    nodeId
+  );
+  return await revisionDb.project.markdownRevisions.createMarkdownRevision({
     workspace: ws,
     node_id: nodeId,
     revision_number: revisionNumber,
@@ -160,7 +163,7 @@ export const resolveDocumentMetadata = async (
           });
           return entity.id;
         }
-        const target = await db.project.getAnyContentNodeById(ws, targetId);
+        const target = await db.project.contentNodes.getAnyContentNodeById(ws, targetId);
         httpAssert.present(target, {
           status,
           message: `Linked document '${targetId}' was not found`
@@ -194,7 +197,7 @@ export const ensureMarkdownAttachmentContainer = async (
   if (existingContainer) return existingContainer;
 
   const containerPath = getAttachmentContainerPath(markdownNode.path);
-  const createdContainer = await db.project.createContentNodeIfAbsent({
+  const createdContainer = await db.project.contentNodes.createContentNodeIfAbsent({
     workspace: ws,
     ...contentNodeScopeFields(resolved),
     parent_id: markdownNode.id,

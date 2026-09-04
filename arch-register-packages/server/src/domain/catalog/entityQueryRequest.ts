@@ -19,7 +19,7 @@ export type PrepareEntityQueryRequestOptions = {
 export type PreparedEntityQueryRequest = {
   query: ParsedEntityQuery;
   collection: Awaited<ReturnType<DatabaseAdapter['view']['getCollection']>>;
-  project: Awaited<ReturnType<DatabaseAdapter['project']['getProject']>>;
+  project: Awaited<ReturnType<DatabaseAdapter['project']['projects']['getProject']>>;
 };
 
 const assertCompatibleEntityQueryRequest = (query: EntityListQueryParams) => {
@@ -59,7 +59,7 @@ export const prepareEntityQueryRequest = async (
 
   let project: PreparedEntityQueryRequest['project'] = null;
   if (query.projectId) {
-    project = await db.project.getProject(workspace, query.projectId);
+    project = await db.project.projects.getProject(workspace, query.projectId);
     httpAssert.present(project, {
       status: 404,
       message: `Project '${query.projectId}' not found`

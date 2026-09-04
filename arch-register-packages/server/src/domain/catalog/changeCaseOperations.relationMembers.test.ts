@@ -159,7 +159,9 @@ const makeDb = (options: { relation?: RelationDbResult; members?: ChangeCaseMemb
 
   const db = {
     project: {
-      getProject: vi.fn(async () => project)
+      projects: {
+        getProject: vi.fn(async () => project)
+      }
     },
     changeCase: {
       getCase: vi.fn(async () => changeCase),

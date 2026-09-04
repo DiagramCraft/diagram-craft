@@ -88,7 +88,7 @@ export const createScopedFolder = async (
       assertContentPathWritable(nodes, folderPath);
 
       const timestamp = new Date();
-      const row = await db.project.createContentNodeIfAbsent({
+      const row = await db.project.contentNodes.createContentNodeIfAbsent({
         workspace: ws,
         ...contentNodeScopeFields(resolved),
         parent_id: contentParentId(nodes, folderPath),
@@ -182,7 +182,7 @@ export const updateTemplateStatus = async (
     fallback: 'Failed to update template status',
     dbErrorMessages: projectDbErrorMessages,
     operation: async ({ ws, authCtx }) => {
-      const project = await db.project.getProject(ws, projectId);
+      const project = await db.project.projects.getProject(ws, projectId);
       httpAssert.present(project, { status: 404, message: `Project '${projectId}' not found` });
       const projectUuid = project.id;
 
@@ -192,10 +192,10 @@ export const updateTemplateStatus = async (
         requireProjectAccess(authCtx, project.owner);
       }
 
-      const file = await db.project.getContentNodeByPath(ws, projectUuid, filePath);
+      const file = await db.project.contentNodes.getContentNodeByPath(ws, projectUuid, filePath);
       httpAssert.present(file, { status: 404, message: `File '${filePath}' not found` });
 
-      await db.project.updateContentNodeTemplateStatus(
+      await db.project.contentNodes.updateContentNodeTemplateStatus(
         ws,
         projectUuid,
         file.id,
@@ -204,7 +204,11 @@ export const updateTemplateStatus = async (
         new Date()
       );
 
-      const updatedFile = await db.project.getContentNodeByPath(ws, projectUuid, filePath);
+      const updatedFile = await db.project.contentNodes.getContentNodeByPath(
+        ws,
+        projectUuid,
+        filePath
+      );
       return toApiProjectFile(updatedFile!);
     }
   });

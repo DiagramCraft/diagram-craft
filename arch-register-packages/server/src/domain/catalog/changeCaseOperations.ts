@@ -58,7 +58,7 @@ import { canViewTypedRelation } from './relationAccessControl';
 import { logAudit, computeChanges } from '../audit/db/auditLogging';
 
 const getProjectOrThrow = async (db: DatabaseAdapter, ws: string, projectId: string) => {
-  const project = await db.project.getProject(ws, projectId);
+  const project = await db.project.projects.getProject(ws, projectId);
   httpAssert.present(project, { status: 404, message: `Project '${projectId}' not found` });
   return project;
 };
@@ -70,7 +70,7 @@ const assertEntityBelongsToProject = async (
   entity: Entity
 ) => {
   if (entity.project_id === projectId) return;
-  const linked = await db.project.isEntityLinkedToProject(ws, projectId, entity.id);
+  const linked = await db.project.projectEntities.isEntityLinkedToProject(ws, projectId, entity.id);
   httpAssert.true(linked, {
     status: 400,
     message: `Entity '${entity.id}' is not part of this project`
@@ -144,7 +144,7 @@ const resolveEffectiveDate = async (
   milestoneId: string | null | undefined
 ): Promise<{ effectiveDate: string | null; milestoneId: string | null }> => {
   if (milestoneId == null) return { effectiveDate: targetDate ?? null, milestoneId: null };
-  const milestone = await db.project.getMilestone(ws, projectId, milestoneId);
+  const milestone = await db.project.milestones.getMilestone(ws, projectId, milestoneId);
   httpAssert.present(milestone, { status: 404, message: 'Milestone not found' });
   return { effectiveDate: milestone.target_date, milestoneId: milestone.id };
 };
@@ -571,7 +571,7 @@ const createProjectScopedDraftEntities = async (
     entity.completeness = computeEntityCompleteness(entity, schema);
     const created = await createEntityWithAudit(tx, { workspace, entity, actor });
     draftEntities.set(draftId, created);
-    await tx.project.addProjectEntity({
+    await tx.project.projectEntities.addProjectEntity({
       workspace,
       project_id: projectId,
       entity_id: created.id,

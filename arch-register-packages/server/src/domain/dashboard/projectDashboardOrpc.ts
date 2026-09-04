@@ -22,7 +22,10 @@ export const projectDashboardORPCRouter = projectDashboardRouter.router({
   projectDashboard: {
     get: projectDashboardRouter.projectDashboard.get.handler(async ({ input, context }) => {
       const { workspace, authCtx } = context;
-      const project = await context.db.project.getProject(workspace, input.params.projectId);
+      const project = await context.db.project.projects.getProject(
+        workspace,
+        input.params.projectId
+      );
       httpAssert.present(project, {
         status: 404,
         message: `Project '${input.params.projectId}' not found`
@@ -32,7 +35,10 @@ export const projectDashboardORPCRouter = projectDashboardRouter.router({
     }),
     update: projectDashboardRouter.projectDashboard.update.handler(async ({ input, context }) => {
       const { workspace, authCtx } = context;
-      const project = await context.db.project.getProject(workspace, input.params.projectId);
+      const project = await context.db.project.projects.getProject(
+        workspace,
+        input.params.projectId
+      );
       httpAssert.present(project, {
         status: 404,
         message: `Project '${input.params.projectId}' not found`

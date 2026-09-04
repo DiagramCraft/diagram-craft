@@ -72,12 +72,12 @@ export const createRoomAuthorizer = (db: DatabaseAdapter): RoomAuthorizer => {
     const workspace = await db.catalog.resolveWorkspaceSlug(parsed.workspaceSlug);
     if (!workspace) return forbidden();
 
-    const node = await db.project.getAnyContentNodeById(workspace, parsed.fileId);
+    const node = await db.project.contentNodes.getAnyContentNodeById(workspace, parsed.fileId);
     if (!node) return forbidden();
 
     const authCtx = await buildContext(db, workspace, user.id);
     if (node.project_id) {
-      const project = await db.project.getProject(workspace, node.project_id);
+      const project = await db.project.projects.getProject(workspace, node.project_id);
       if (!project || !canAccessProject(authCtx, project.owner)) return forbidden();
     } else if (!canAccessNonProjectContent(authCtx, 'read')) {
       return forbidden();

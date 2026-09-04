@@ -63,7 +63,7 @@ export const listRelatedContent = async (
       }> = [];
       const seen = new Set<string>();
       for (const link of links) {
-        const node = await db.project.getAnyContentNodeById(ws, link.node_id);
+        const node = await db.project.contentNodes.getAnyContentNodeById(ws, link.node_id);
         if (!node || !isMarkdownNode(node)) continue;
         try {
           await requireMarkdownNodeAccess(db, ws, authCtx, node, 'read');
@@ -108,7 +108,7 @@ export const listDocumentBacklinks = async (
     fallback: 'Failed to retrieve document backlinks',
     dbErrorMessages: projectDbErrorMessages,
     operation: async ({ ws, authCtx }) => {
-      const targetNode = await db.project.getAnyContentNodeById(ws, nodeId);
+      const targetNode = await db.project.contentNodes.getAnyContentNodeById(ws, nodeId);
       httpAssert.present(targetNode, {
         status: 404,
         message: `Markdown document '${nodeId}' not found`
@@ -133,7 +133,7 @@ export const listDocumentBacklinks = async (
       }> = [];
       const seen = new Set<string>();
       for (const link of links) {
-        const node = await db.project.getAnyContentNodeById(ws, link.node_id);
+        const node = await db.project.contentNodes.getAnyContentNodeById(ws, link.node_id);
         if (!node || !isMarkdownNode(node)) continue;
         try {
           await requireMarkdownNodeAccess(db, ws, authCtx, node, 'read');
@@ -185,7 +185,7 @@ export const listDocuments = async (
     dbErrorMessages: projectDbErrorMessages,
     operation: async ({ ws, authCtx }) => {
       const resolvedProject = options.projectId
-        ? await db.project.getProject(ws, options.projectId)
+        ? await db.project.projects.getProject(ws, options.projectId)
         : null;
       if (options.projectId && !resolvedProject) return [];
 
@@ -196,7 +196,7 @@ export const listDocuments = async (
 
       const projectId = resolvedProject?.id ?? options.projectId;
       const entityId = resolvedEntity?.id ?? options.entityId;
-      const nodes = await db.project.listAllContentNodes(ws);
+      const nodes = await db.project.contentNodes.listAllContentNodes(ws);
       const candidates: Array<{
         node: ContentNodeDbResult;
         scope: 'workspace' | 'project' | 'entity';

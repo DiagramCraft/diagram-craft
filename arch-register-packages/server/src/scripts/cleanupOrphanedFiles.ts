@@ -116,7 +116,7 @@ async function main() {
   const referencedKeys = new Set<string>();
   const workspaces = await db.workspace.listWorkspaces();
   for (const workspace of workspaces) {
-    const nodes = await db.project.listAllContentNodes(workspace.id);
+    const nodes = await db.project.contentNodes.listAllContentNodes(workspace.id);
     for (const key of collectReferencedKeys(workspace.id, nodes)) {
       referencedKeys.add(key);
     }

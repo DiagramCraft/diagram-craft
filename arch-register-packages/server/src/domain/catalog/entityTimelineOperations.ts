@@ -43,7 +43,7 @@ export const getTimelineViewData = async (
       const [versions, changes, projects] = await Promise.all([
         db.catalog.listEntityVersionsByIds(ws, entityIds),
         db.changeCase.listTimelineMembersByEntities(ws, entityIds),
-        db.project.listProjects(ws)
+        db.project.projects.listProjects(ws)
       ]);
       const visibleProjectIds = new Set(
         projects

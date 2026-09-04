@@ -223,7 +223,7 @@ export const seedBootstrapData = async (
   await seedCatalogDefinitions(db);
   await seedAiConfiguration(db, options.aiConfig);
   for (const project of seedProjects) {
-    await db.project.createProject(project);
+    await db.project.projects.createProject(project);
   }
   await seedCatalogEntities(db, entities);
   const categoryNamesById = new Map(seedCategories.map(category => [category.id, category.name]));
@@ -269,13 +269,13 @@ export const seedBootstrapData = async (
   await recalculateEntityDerivedFields(db, seededWorkspaces.default.id);
   await ensureDerivedRecalculationScheduleExists(db, seededWorkspaces.default.id, new Date());
   for (const assessment of seedAssessments) {
-    await db.project.createAssessment(assessment);
+    await db.project.assessments.createAssessment(assessment);
   }
   for (const milestone of seedMilestones) {
-    await db.project.createMilestone(milestone);
+    await db.project.milestones.createMilestone(milestone);
   }
   for (const link of projectEntities) {
-    await db.project.addProjectEntity(link);
+    await db.project.projectEntities.addProjectEntity(link);
   }
 
   await seedPublicIdCounters(db, [...seedProjects, ...entities], syncTimestamp);
@@ -294,7 +294,7 @@ export const seedBootstrapData = async (
     });
   }
   for (const file of seedProjectFiles) {
-    await db.project.upsertContentNode({
+    await db.project.contentNodes.upsertContentNode({
       id: file.id,
       workspace: file.workspace,
       project_id: file.project_id,
@@ -328,7 +328,7 @@ export const seedBootstrapData = async (
   const exampleNodeId = randomUUID();
   const exampleBody =
     '# Initial architecture decision\n\n## Context\n\nThis is a typed ADR seeded for development.\n\n## Decision drivers\n\n## Considered options\n\n## Decision\n\n## Consequences\n';
-  await db.project.upsertContentNode({
+  await db.project.contentNodes.upsertContentNode({
     id: exampleNodeId,
     workspace: seededWorkspaces.default.id,
     project_id: null,
@@ -350,7 +350,7 @@ export const seedBootstrapData = async (
     values: { status: 'Proposed' },
     updated_at: syncTimestamp
   });
-  await db.project.createMarkdownRevision({
+  await db.project.markdownRevisions.createMarkdownRevision({
     workspace: seededWorkspaces.default.id,
     node_id: exampleNodeId,
     revision_number: 1,
@@ -384,7 +384,7 @@ export const seedBootstrapData = async (
       values: metadata,
       updated_at: syncTimestamp
     });
-    await db.project.createMarkdownRevision({
+    await db.project.markdownRevisions.createMarkdownRevision({
       workspace: seededWorkspaces.default.id,
       node_id: file.id,
       revision_number: 1,

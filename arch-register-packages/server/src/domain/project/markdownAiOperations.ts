@@ -50,7 +50,7 @@ export const runDocumentAiAction = async (
     fallback: 'Failed to run AI action',
     dbErrorMessages: projectDbErrorMessages,
     operation: async ({ ws, authCtx }) => {
-      const node = await db.project.getAnyContentNodeById(ws, nodeId);
+      const node = await db.project.contentNodes.getAnyContentNodeById(ws, nodeId);
       httpAssert.present(node, { status: 404, message: `Markdown document '${nodeId}' not found` });
       httpAssert.true(isMarkdownNode(node), {
         status: 400,
@@ -152,7 +152,7 @@ export const testDocumentAiAction = async (
     operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'ws.settings');
 
-      const node = await db.project.getAnyContentNodeById(ws, nodeId);
+      const node = await db.project.contentNodes.getAnyContentNodeById(ws, nodeId);
       httpAssert.present(node, { status: 404, message: `Markdown document '${nodeId}' not found` });
       httpAssert.true(isMarkdownNode(node), {
         status: 400,

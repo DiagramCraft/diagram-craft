@@ -9,7 +9,7 @@ const test = baseTest.extend<{ seeded: true }>({
     async ({ server }, use) => {
       await seedCatalogEntities(server.db);
 
-      await server.db.project.createProject({
+      await server.db.project.projects.createProject({
         id: SEARCH_PROJ_ALPHA_ID,
         workspace: seedIds.workspace.default,
         name: 'Alpha Search Project',
@@ -24,7 +24,7 @@ const test = baseTest.extend<{ seeded: true }>({
         updated_at: now
       });
 
-      await server.db.project.createProject({
+      await server.db.project.projects.createProject({
         id: SEARCH_PROJ_BETA_ID,
         workspace: seedIds.workspace.default,
         name: 'Beta Search Project',
@@ -39,7 +39,7 @@ const test = baseTest.extend<{ seeded: true }>({
         updated_at: now
       });
 
-      const portalDiagram = await server.db.project.upsertContentNode({
+      const portalDiagram = await server.db.project.contentNodes.upsertContentNode({
         workspace: seedIds.workspace.default,
         project_id: SEARCH_PROJ_ALPHA_ID,
         path: 'wireframes/portal-diagram.dgc',
@@ -51,7 +51,7 @@ const test = baseTest.extend<{ seeded: true }>({
         created_atIfNew: now
       });
 
-      const authDiagram = await server.db.project.upsertContentNode({
+      const authDiagram = await server.db.project.contentNodes.upsertContentNode({
         workspace: seedIds.workspace.default,
         project_id: SEARCH_PROJ_BETA_ID,
         path: 'flows/auth-diagram.dgc',
@@ -63,7 +63,7 @@ const test = baseTest.extend<{ seeded: true }>({
         created_atIfNew: now
       });
 
-      await server.db.project.upsertContentMetadata({
+      await server.db.project.contentNodes.upsertContentMetadata({
         workspace: seedIds.workspace.default,
         node_id: portalDiagram.id,
         title: 'Customer experience blueprint',
@@ -74,7 +74,7 @@ const test = baseTest.extend<{ seeded: true }>({
         updated_at: now
       });
 
-      await server.db.project.upsertContentMetadata({
+      await server.db.project.contentNodes.upsertContentMetadata({
         workspace: seedIds.workspace.default,
         node_id: authDiagram.id,
         title: 'Identity boundary overview',

@@ -162,11 +162,15 @@ const makeDb = (
       )
     },
     project: {
-      getProject: vi.fn(
-        async (_workspace: string, id: string) => projects.find(p => p.id === id) ?? null
-      ),
-      listProjects: vi.fn(async () => projects),
-      listMilestones: vi.fn(async () => milestones)
+      projects: {
+        getProject: vi.fn(
+          async (_workspace: string, id: string) => projects.find(p => p.id === id) ?? null
+        ),
+        listProjects: vi.fn(async () => projects)
+      },
+      milestones: {
+        listMilestones: vi.fn(async () => milestones)
+      }
     },
     workspace: {
       listTeams: vi.fn(async () => [{ id: 'owner-1', name: 'Team A' }]),

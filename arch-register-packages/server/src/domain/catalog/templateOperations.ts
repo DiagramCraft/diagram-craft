@@ -107,12 +107,12 @@ export const listAllTemplates = async (
     fallback: 'Failed to retrieve templates',
     dbErrorMessages,
     operation: async ({ ws, authCtx }) => {
-      const projects = await db.project.listProjects(ws);
+      const projects = await db.project.projects.listProjects(ws);
       const projectsWithFiles: ProjectWithFiles[] = [];
 
       for (const project of projects) {
         if (!canAccessProject(authCtx, project.owner)) continue;
-        const files = await db.project.listContentNodes(ws, project.id);
+        const files = await db.project.contentNodes.listContentNodes(ws, project.id);
         projectsWithFiles.push({ project, files });
       }
 
@@ -134,16 +134,16 @@ export const listProjectTemplates = async (
     fallback: 'Failed to retrieve project templates',
     dbErrorMessages,
     operation: async ({ ws, authCtx }) => {
-      const project = await db.project.getProject(ws, projectId);
+      const project = await db.project.projects.getProject(ws, projectId);
       httpAssert.present(project, { status: 404, message: `Project '${projectId}' not found` });
       requireProjectAccess(authCtx, project.owner);
 
-      const projects = await db.project.listProjects(ws);
+      const projects = await db.project.projects.listProjects(ws);
       const projectsWithFiles: ProjectWithFiles[] = [];
 
       for (const proj of projects) {
         if (!canAccessProject(authCtx, proj.owner)) continue;
-        const files = await db.project.listContentNodes(ws, proj.id);
+        const files = await db.project.contentNodes.listContentNodes(ws, proj.id);
         projectsWithFiles.push({ project: proj, files });
       }
 
@@ -168,7 +168,7 @@ export const toggleTemplateStatus = async (
     fallback: 'Failed to update template status',
     dbErrorMessages,
     operation: async ({ ws, authCtx }) => {
-      const project = await db.project.getProject(ws, projectId);
+      const project = await db.project.projects.getProject(ws, projectId);
       httpAssert.present(project, { status: 404, message: `Project '${projectId}' not found` });
 
       if (is_workspace_template) {
@@ -177,10 +177,10 @@ export const toggleTemplateStatus = async (
         requireProjectAccess(authCtx, project.owner);
       }
 
-      const file = await db.project.getContentNodeByPath(ws, projectId, filePath);
+      const file = await db.project.contentNodes.getContentNodeByPath(ws, projectId, filePath);
       httpAssert.present(file, { status: 404, message: `File '${filePath}' not found` });
 
-      await db.project.updateContentNodeTemplateStatus(
+      await db.project.contentNodes.updateContentNodeTemplateStatus(
         ws,
         projectId,
         file.id,
@@ -189,7 +189,11 @@ export const toggleTemplateStatus = async (
         new Date()
       );
 
-      const updatedFile = await db.project.getContentNodeByPath(ws, projectId, filePath);
+      const updatedFile = await db.project.contentNodes.getContentNodeByPath(
+        ws,
+        projectId,
+        filePath
+      );
       const { toApiProjectFile } = await import('../project/projectHelpers');
       return toApiProjectFile(updatedFile!);
     }
@@ -215,7 +219,7 @@ export const createFromTemplate = async (
     fallback: 'Failed to create from template',
     dbErrorMessages,
     operation: async ({ ws, authCtx }) => {
-      const project = await db.project.getProject(ws, projectId);
+      const project = await db.project.projects.getProject(ws, projectId);
       httpAssert.present(project, { status: 404, message: `Project '${projectId}' not found` });
 
       requireProjectAction(
@@ -225,7 +229,7 @@ export const createFromTemplate = async (
         'You do not have permission to modify this project'
       );
 
-      const templateProject = await db.project.getProject(ws, templateProjectId);
+      const templateProject = await db.project.projects.getProject(ws, templateProjectId);
       httpAssert.present(templateProject, {
         status: 404,
         message: `Template project '${templateProjectId}' not found`
@@ -236,7 +240,7 @@ export const createFromTemplate = async (
         'You do not have permission to view the source template project'
       );
 
-      const templateFile = await db.project.getContentNodeByPath(
+      const templateFile = await db.project.contentNodes.getContentNodeByPath(
         ws,
         templateProjectId,
         templatePath
@@ -263,7 +267,11 @@ export const createFromTemplate = async (
 
       const newPath = folder ? `${folder}/${name}.json` : `${name}.json`;
 
-      const existingFile = await db.project.getContentNodeByPath(ws, projectId, newPath);
+      const existingFile = await db.project.contentNodes.getContentNodeByPath(
+        ws,
+        projectId,
+        newPath
+      );
       httpAssert.true(!existingFile, {
         status: 409,
         message: `A file already exists at '${newPath}'`
@@ -277,7 +285,9 @@ export const createFromTemplate = async (
       const commentCounts = getDiagramCommentCounts(doc);
       const nodeId = randomUUID();
 
-      let row!: Awaited<ReturnType<DatabaseAdapter['project']['upsertContentNode']>>;
+      let row!: Awaited<
+        ReturnType<DatabaseAdapter['project']['contentNodes']['upsertContentNode']>
+      >;
       await coordinateContentWrite({
         db,
         storage,
@@ -294,7 +304,7 @@ export const createFromTemplate = async (
           }
         ],
         writeDatabase: async tx => {
-          row = await tx.project.upsertContentNode({
+          row = await tx.project.contentNodes.upsertContentNode({
             workspace: ws,
             id: nodeId,
             project_id: projectId,
@@ -316,7 +326,7 @@ export const createFromTemplate = async (
               );
               const { generateSvgPreview } = await import('../diagram/svgPreviewGenerator');
               const previewSvg = (await generateAccurateSvgPreview(doc)) ?? generateSvgPreview(doc);
-              await db.project.updateContentNodeDerivedData(
+              await db.project.contentNodes.updateContentNodeDerivedData(
                 ws,
                 projectId,
                 row.id,
