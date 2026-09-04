@@ -40,6 +40,7 @@ const expectedPrimaryContractIds = [
   'relationVersionContract',
   'relationChangeContract',
   'entityDeprecationContract',
+  'entityMergeContract',
   'assessmentContract',
   'assessmentResponseContract',
   'milestoneContract',

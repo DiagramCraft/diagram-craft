@@ -722,6 +722,7 @@ export type WorkspaceRoleCapability =
   | 'ent.propose'
   | 'ent.approve'
   | 'ent.override'
+  | 'ent.merge'
   | 'ent.external_update'
   | 'governance.external'
   | 'comments'

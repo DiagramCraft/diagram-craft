@@ -68416,6 +68416,7 @@
                             "ent.propose",
                             "ent.approve",
                             "ent.override",
+                            "ent.merge",
                             "ent.external_update",
                             "governance.external",
                             "comments",
@@ -68510,6 +68511,7 @@
                         "ent.propose",
                         "ent.approve",
                         "ent.override",
+                        "ent.merge",
                         "ent.external_update",
                         "governance.external",
                         "comments",
@@ -68586,6 +68588,7 @@
                           "ent.propose",
                           "ent.approve",
                           "ent.override",
+                          "ent.merge",
                           "ent.external_update",
                           "governance.external",
                           "comments",
@@ -68691,6 +68694,7 @@
                         "ent.propose",
                         "ent.approve",
                         "ent.override",
+                        "ent.merge",
                         "ent.external_update",
                         "governance.external",
                         "comments",
@@ -68767,6 +68771,7 @@
                           "ent.propose",
                           "ent.approve",
                           "ent.override",
+                          "ent.merge",
                           "ent.external_update",
                           "governance.external",
                           "comments",
@@ -68883,6 +68888,7 @@
                           "ent.propose",
                           "ent.approve",
                           "ent.override",
+                          "ent.merge",
                           "ent.external_update",
                           "governance.external",
                           "comments",
@@ -69314,6 +69320,7 @@
                             "ent.propose",
                             "ent.approve",
                             "ent.override",
+                            "ent.merge",
                             "ent.external_update",
                             "governance.external",
                             "comments",
@@ -69418,6 +69425,7 @@
                         "ent.propose",
                         "ent.approve",
                         "ent.override",
+                        "ent.merge",
                         "ent.external_update",
                         "governance.external",
                         "comments",
@@ -69494,6 +69502,7 @@
                           "ent.propose",
                           "ent.approve",
                           "ent.override",
+                          "ent.merge",
                           "ent.external_update",
                           "governance.external",
                           "comments",
@@ -69622,6 +69631,7 @@
                           "ent.propose",
                           "ent.approve",
                           "ent.override",
+                          "ent.merge",
                           "ent.external_update",
                           "governance.external",
                           "comments",
@@ -132622,6 +132632,279 @@
                     "createdAt",
                     "approveAssignmentIds",
                     "acks"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{workspace}/data/{id}/merge/preview": {
+      "post": {
+        "operationId": "entityMerges.preview",
+        "summary": "Preview what a proposed entity merge would touch",
+        "tags": [
+          "Entity merge",
+          "Entity merge"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "targetId": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "targetId"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "sourceId": {
+                      "type": "string"
+                    },
+                    "targetId": {
+                      "type": "string"
+                    },
+                    "fieldConflicts": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "fieldName": {
+                            "type": "string"
+                          },
+                          "kind": {
+                            "enum": [
+                              "core",
+                              "data"
+                            ],
+                            "type": "string"
+                          },
+                          "source": {},
+                          "target": {},
+                          "restricted": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "fieldName",
+                          "kind",
+                          "restricted"
+                        ]
+                      }
+                    },
+                    "dependentImpact": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "entityId": {
+                            "type": "string"
+                          },
+                          "entityName": {
+                            "type": "string"
+                          },
+                          "entitySlug": {
+                            "type": "string"
+                          },
+                          "entitySchemaId": {
+                            "type": "string"
+                          },
+                          "schemaName": {
+                            "type": "string"
+                          },
+                          "ownerTeamId": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "fieldName": {
+                            "type": "string"
+                          },
+                          "kind": {
+                            "enum": [
+                              "reference",
+                              "containment",
+                              "typed"
+                            ],
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "entityId",
+                          "entityName",
+                          "entitySlug",
+                          "entitySchemaId",
+                          "schemaName",
+                          "ownerTeamId",
+                          "fieldName",
+                          "kind"
+                        ]
+                      }
+                    },
+                    "relationConflicts": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "relationId": {
+                            "type": "string"
+                          },
+                          "relationSchemaId": {
+                            "type": "string"
+                          },
+                          "relationSchemaName": {
+                            "type": "string"
+                          },
+                          "direction": {
+                            "enum": [
+                              "in",
+                              "out"
+                            ],
+                            "type": "string"
+                          },
+                          "otherRecordId": {
+                            "type": "string"
+                          },
+                          "otherRecordName": {
+                            "type": "string"
+                          },
+                          "note": {
+                            "enum": [
+                              "duplicate",
+                              "self"
+                            ],
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "relationId",
+                          "relationSchemaId",
+                          "relationSchemaName",
+                          "direction",
+                          "otherRecordId",
+                          "otherRecordName",
+                          "note"
+                        ]
+                      }
+                    },
+                    "sideTableCounts": {
+                      "type": "object",
+                      "properties": {
+                        "entityVersions": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "openChangeApprovals": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "openGovernanceCases": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "incomingRelations": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "outgoingRelations": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        }
+                      },
+                      "required": [
+                        "entityVersions",
+                        "openChangeApprovals",
+                        "openGovernanceCases",
+                        "incomingRelations",
+                        "outgoingRelations"
+                      ]
+                    },
+                    "blockers": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "code": {
+                            "enum": [
+                              "not_found",
+                              "same_entity",
+                              "source_is_alias",
+                              "target_is_alias",
+                              "different_schema",
+                              "project_scope_mismatch",
+                              "restricted_field_write",
+                              "open_governance_case"
+                            ],
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "code",
+                          "message"
+                        ]
+                      }
+                    },
+                    "truncated": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "sourceId",
+                    "targetId",
+                    "fieldConflicts",
+                    "dependentImpact",
+                    "relationConflicts",
+                    "sideTableCounts",
+                    "blockers",
+                    "truncated"
                   ]
                 }
               }
