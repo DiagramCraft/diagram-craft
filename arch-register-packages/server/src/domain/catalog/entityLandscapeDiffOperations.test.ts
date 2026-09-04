@@ -165,8 +165,12 @@ const unrestrictedSecretSchema = {
 
 const db = {
   project: {
-    getProject: vi.fn(async () => null),
-    listProjectEntityLinks: vi.fn(async () => [])
+    projects: {
+      getProject: vi.fn(async () => null)
+    },
+    projectEntities: {
+      listProjectEntityLinks: vi.fn(async () => [])
+    }
   },
   catalog: {
     listEntitiesPaginated: vi.fn(async () => []),
@@ -190,8 +194,8 @@ const db = {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  vi.mocked(db.project.getProject).mockResolvedValue(null as never);
-  vi.mocked(db.project.listProjectEntityLinks).mockResolvedValue([] as never);
+  vi.mocked(db.project.projects.getProject).mockResolvedValue(null as never);
+  vi.mocked(db.project.projectEntities.listProjectEntityLinks).mockResolvedValue([] as never);
   vi.mocked(db.catalog.listEntitiesPaginated).mockResolvedValue([] as never);
   vi.mocked(db.catalog.listSchemas).mockResolvedValue([] as never);
   vi.mocked(db.catalog.listSchemaVersions).mockResolvedValue([] as never);
@@ -227,8 +231,8 @@ describe('diffEntityLandscapes', () => {
 
   it('uses a shared project scope and passes the project filter to reconstruction', async () => {
     const project = { id: 'project-1', owner: 'team-1' };
-    vi.mocked(db.project.getProject).mockResolvedValue(project as never);
-    vi.mocked(db.project.listProjectEntityLinks).mockResolvedValue([
+    vi.mocked(db.project.projects.getProject).mockResolvedValue(project as never);
+    vi.mocked(db.project.projectEntities.listProjectEntityLinks).mockResolvedValue([
       { entity_id: 'linked-1', created_at: now }
     ] as never);
     vi.mocked(db.catalog.listEntitiesPaginated)
@@ -306,10 +310,10 @@ describe('diffEntityLandscapes', () => {
   it('compares two projects as independent workspace-wide scenarios', async () => {
     const projectA = { id: 'project-a', owner: 'team-a' };
     const projectB = { id: 'project-b', owner: 'team-b' };
-    vi.mocked(db.project.getProject)
+    vi.mocked(db.project.projects.getProject)
       .mockResolvedValueOnce(projectA as never)
       .mockResolvedValueOnce(projectB as never);
-    vi.mocked(db.project.listProjectEntityLinks)
+    vi.mocked(db.project.projectEntities.listProjectEntityLinks)
       .mockResolvedValueOnce([] as never)
       .mockResolvedValueOnce([] as never);
 
@@ -711,10 +715,10 @@ describe('diffEntityLandscapes', () => {
     it('redacts the merged current value in scenario comparisons', async () => {
       const projectA = { id: 'project-a', owner: 'team-a' };
       const projectB = { id: 'project-b', owner: 'team-b' };
-      vi.mocked(db.project.getProject)
+      vi.mocked(db.project.projects.getProject)
         .mockResolvedValueOnce(projectA as never)
         .mockResolvedValueOnce(projectB as never);
-      vi.mocked(db.project.listProjectEntityLinks)
+      vi.mocked(db.project.projectEntities.listProjectEntityLinks)
         .mockResolvedValueOnce([] as never)
         .mockResolvedValueOnce([] as never);
 

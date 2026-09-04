@@ -59,11 +59,11 @@ export const syncDiagramContentMetadata = async (
 ) => {
   const metadata = extractContentMetadataFromDiagram(doc);
   if (!hasContentMetadata(metadata)) {
-    await db.project.deleteContentMetadata(workspace, nodeId);
+    await db.project.contentNodes.deleteContentMetadata(workspace, nodeId);
     return;
   }
 
-  await db.project.upsertContentMetadata({
+  await db.project.contentNodes.upsertContentMetadata({
     workspace,
     node_id: nodeId,
     title: metadata.title,
@@ -76,7 +76,7 @@ export const syncDiagramContentMetadata = async (
 };
 
 export const reloadContentNode = async (db: DatabaseAdapter, workspace: string, nodeId: string) => {
-  const row = await db.project.getAnyContentNodeById(workspace, nodeId);
+  const row = await db.project.contentNodes.getAnyContentNodeById(workspace, nodeId);
   httpAssert.present(row, { status: 404, message: `Content node '${nodeId}' not found` });
   return row;
 };
@@ -86,9 +86,10 @@ export const listSiblingNodes = async (
   ws: string,
   node: Pick<ContentNodeDbResult, 'project_id' | 'entity_id'>
 ) => {
-  if (node.project_id) return await db.project.listContentNodes(ws, node.project_id);
-  if (node.entity_id) return await db.project.listEntityContentNodes(ws, node.entity_id);
-  return await db.project.listWorkspaceContentNodes(ws);
+  if (node.project_id) return await db.project.contentNodes.listContentNodes(ws, node.project_id);
+  if (node.entity_id)
+    return await db.project.contentNodes.listEntityContentNodes(ws, node.entity_id);
+  return await db.project.contentNodes.listWorkspaceContentNodes(ws);
 };
 
 export const storageScope = (

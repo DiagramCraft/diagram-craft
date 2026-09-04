@@ -33,7 +33,11 @@ const makeDb = (options?: { collection?: unknown; project?: unknown }) => {
   const getProject = vi.fn().mockResolvedValue(options?.project ?? null);
   const db = {
     view: { getCollection },
-    project: { getProject }
+    project: {
+      projects: {
+        getProject
+      }
+    }
   } as unknown as DatabaseAdapter;
   return { db, getCollection, getProject };
 };

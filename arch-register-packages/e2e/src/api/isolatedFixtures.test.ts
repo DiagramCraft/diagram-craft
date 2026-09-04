@@ -64,9 +64,9 @@ test('empty seed profiles contain no unrelated non-system fixture rows', async (
   expect((await server.db.catalog.listEntities(fixtureIds.workspace)).map(row => row.id)).toEqual([
     fixtureIds.entity
   ]);
-  expect((await server.db.project.listProjects(fixtureIds.workspace)).map(row => row.id)).toEqual([
-    fixtureIds.project
-  ]);
+  expect(
+    (await server.db.project.projects.listProjects(fixtureIds.workspace)).map(row => row.id)
+  ).toEqual([fixtureIds.project]);
   expect(
     (await server.db.auth.listUsers()).filter(row => !row.is_system_actor).map(row => row.id)
   ).toEqual([fixtureIds.user]);

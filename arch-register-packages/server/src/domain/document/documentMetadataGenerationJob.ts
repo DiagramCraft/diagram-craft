@@ -189,7 +189,7 @@ const writeGenerationOutcome = async (
   await db.core.transaction(async tx => {
     const current = await tx.document.getDocumentMetadata(workspace, nodeId);
     if (!current) return;
-    const node = await tx.project.getAnyContentNodeById(workspace, nodeId);
+    const node = await tx.project.contentNodes.getAnyContentNodeById(workspace, nodeId);
 
     const envelope: ExternalUpdateEnvelope = {
       fieldId: outcome.fieldId,
@@ -252,8 +252,11 @@ const writeGenerationOutcome = async (
       updated_at: outcome.now
     });
 
-    const revisionNumber = await tx.project.getNextMarkdownRevisionNumber(workspace, nodeId);
-    await tx.project.createMarkdownRevision({
+    const revisionNumber = await tx.project.markdownRevisions.getNextMarkdownRevisionNumber(
+      workspace,
+      nodeId
+    );
+    await tx.project.markdownRevisions.createMarkdownRevision({
       workspace,
       node_id: nodeId,
       revision_number: revisionNumber,
@@ -335,7 +338,7 @@ const processGenerationRow = async (
     return 'skipped' as const;
   };
 
-  const node = await db.project.getAnyContentNodeById(row.workspace, row.node_id);
+  const node = await db.project.contentNodes.getAnyContentNodeById(row.workspace, row.node_id);
   if (!node) return skip('document no longer exists');
 
   const metadataRow = await db.document.getDocumentMetadata(row.workspace, node.id);
@@ -469,7 +472,7 @@ const processGenerationRow = async (
   // already upserted a fresh pending row for this (workspace, node, action) with its own
   // debounce window, so there is nothing further to schedule here.
   const currentRevisionNumber =
-    (await db.project.getNextMarkdownRevisionNumber(row.workspace, node.id)) - 1;
+    (await db.project.markdownRevisions.getNextMarkdownRevisionNumber(row.workspace, node.id)) - 1;
   if (currentRevisionNumber !== row.source_revision) {
     logger.info(
       `Discarding result for node ${node.id}, action ${action.id}: document changed during generation ` +

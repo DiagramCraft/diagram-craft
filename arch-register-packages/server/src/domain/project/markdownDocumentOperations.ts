@@ -96,7 +96,7 @@ const createScopedMarkdownDoc = async (
       }
     ],
     writeDatabase: async tx => {
-      row = await tx.project.upsertContentNode({
+      row = await tx.project.contentNodes.upsertContentNode({
         id: nodeId,
         workspace: ws,
         ...contentNodeScopeFields(resolved),
@@ -214,7 +214,7 @@ export const saveNewMarkdownContent = async (
           { type: 'write', workspace: ws, storageId: resolved.storageId, nodeId, content }
         ],
         writeDatabase: async tx => {
-          row = await tx.project.upsertContentNode({
+          row = await tx.project.contentNodes.upsertContentNode({
             id: nodeId,
             workspace: ws,
             ...contentNodeScopeFields(resolved),
@@ -360,7 +360,7 @@ export const getMarkdownContent = async (
     fallback: 'Failed to retrieve markdown content',
     dbErrorMessages: projectDbErrorMessages,
     operation: async ({ ws, authCtx }) => {
-      const node = await db.project.getAnyContentNodeById(ws, nodeId);
+      const node = await db.project.contentNodes.getAnyContentNodeById(ws, nodeId);
       httpAssert.present(node, { status: 404, message: `Markdown document '${nodeId}' not found` });
       httpAssert.true(isMarkdownNode(node), {
         status: 400,
@@ -425,7 +425,7 @@ export const saveMarkdownContent = async (
     fallback: 'Failed to save markdown content',
     dbErrorMessages: projectDbErrorMessages,
     operation: async ({ ws, authCtx }) => {
-      const node = await db.project.getAnyContentNodeById(ws, nodeId);
+      const node = await db.project.contentNodes.getAnyContentNodeById(ws, nodeId);
       httpAssert.present(node, { status: 404, message: `Markdown document '${nodeId}' not found` });
       httpAssert.true(isMarkdownNode(node), {
         status: 400,
@@ -531,7 +531,7 @@ export const saveMarkdownContent = async (
             ]
           : [],
         writeDatabase: async tx => {
-          row = await tx.project.upsertContentNode({
+          row = await tx.project.contentNodes.upsertContentNode({
             id: node.id,
             workspace: ws,
             ...contentNodeScopeFields(resolved),
@@ -676,14 +676,14 @@ export const listMarkdownRevisions = async (
     fallback: 'Failed to retrieve markdown revisions',
     dbErrorMessages: projectDbErrorMessages,
     operation: async ({ ws, authCtx }) => {
-      const node = await db.project.getAnyContentNodeById(ws, nodeId);
+      const node = await db.project.contentNodes.getAnyContentNodeById(ws, nodeId);
       httpAssert.present(node, { status: 404, message: `Markdown document '${nodeId}' not found` });
       httpAssert.true(isMarkdownNode(node), {
         status: 400,
         message: 'Node is not a markdown document'
       });
       await resolveMarkdownNodeScope(db, ws, authCtx, node, 'read');
-      const revisions = await db.project.listMarkdownRevisions(ws, node.id);
+      const revisions = await db.project.markdownRevisions.listMarkdownRevisions(ws, node.id);
       return revisions.map(toApiMarkdownRevisionSummary);
     }
   });
@@ -702,7 +702,7 @@ export const listMarkdownWorkflowHistory = async (
     fallback: 'Failed to retrieve document workflow history',
     dbErrorMessages: projectDbErrorMessages,
     operation: async ({ ws, authCtx }) => {
-      const node = await db.project.getAnyContentNodeById(ws, nodeId);
+      const node = await db.project.contentNodes.getAnyContentNodeById(ws, nodeId);
       httpAssert.present(node, { status: 404, message: `Markdown document '${nodeId}' not found` });
       httpAssert.true(isMarkdownNode(node), {
         status: 400,
@@ -729,14 +729,18 @@ export const getMarkdownRevision = async (
     fallback: 'Failed to retrieve markdown revision',
     dbErrorMessages: projectDbErrorMessages,
     operation: async ({ ws, authCtx }) => {
-      const node = await db.project.getAnyContentNodeById(ws, nodeId);
+      const node = await db.project.contentNodes.getAnyContentNodeById(ws, nodeId);
       httpAssert.present(node, { status: 404, message: `Markdown document '${nodeId}' not found` });
       httpAssert.true(isMarkdownNode(node), {
         status: 400,
         message: 'Node is not a markdown document'
       });
       await resolveMarkdownNodeScope(db, ws, authCtx, node, 'read');
-      const revision = await db.project.getMarkdownRevision(ws, node.id, revisionId);
+      const revision = await db.project.markdownRevisions.getMarkdownRevision(
+        ws,
+        node.id,
+        revisionId
+      );
       httpAssert.present(revision, { status: 404, message: `Revision '${revisionId}' not found` });
       return toApiMarkdownRevisionDetail(revision);
     }
@@ -760,14 +764,18 @@ export const restoreMarkdownRevision = async (
     fallback: 'Failed to restore markdown revision',
     dbErrorMessages: projectDbErrorMessages,
     operation: async ({ ws, authCtx }) => {
-      const node = await db.project.getAnyContentNodeById(ws, nodeId);
+      const node = await db.project.contentNodes.getAnyContentNodeById(ws, nodeId);
       httpAssert.present(node, { status: 404, message: `Markdown document '${nodeId}' not found` });
       httpAssert.true(isMarkdownNode(node), {
         status: 400,
         message: 'Node is not a markdown document'
       });
       const resolved = await resolveMarkdownNodeScope(db, ws, authCtx, node, 'edit');
-      const revision = await db.project.getMarkdownRevision(ws, node.id, revisionId);
+      const revision = await db.project.markdownRevisions.getMarkdownRevision(
+        ws,
+        node.id,
+        revisionId
+      );
       httpAssert.present(revision, { status: 404, message: `Revision '${revisionId}' not found` });
       const currentDocument = await getDocumentState(db, ws, node);
       const restoredType = revision.document_type_id
@@ -812,7 +820,7 @@ export const restoreMarkdownRevision = async (
           }
         ],
         writeDatabase: async tx => {
-          row = await tx.project.upsertContentNode({
+          row = await tx.project.contentNodes.upsertContentNode({
             id: node.id,
             workspace: ws,
             ...contentNodeScopeFields(resolved),

@@ -114,12 +114,12 @@ const syncMount = async (
   signal?: AbortSignal
 ) => {
   throwIfAborted(signal);
-  const existing = await db.project.listContentNodesByMount(mount.workspace, mount.id);
+  const existing = await db.project.contentNodes.listContentNodesByMount(mount.workspace, mount.id);
   const allNodes = mount.project_id
-    ? await db.project.listContentNodes(mount.workspace, mount.project_id)
+    ? await db.project.contentNodes.listContentNodes(mount.workspace, mount.project_id)
     : mount.entity_id
-      ? await db.project.listEntityContentNodes(mount.workspace, mount.entity_id)
-      : await db.project.listWorkspaceContentNodes(mount.workspace);
+      ? await db.project.contentNodes.listEntityContentNodes(mount.workspace, mount.entity_id)
+      : await db.project.contentNodes.listWorkspaceContentNodes(mount.workspace);
   const byPath = new Map(existing.map(node => [node.path, node]));
   const allByPath = new Map(allNodes.map(node => [node.path, node]));
   const desired = buildDesiredNodes(mount, snapshot.files);
@@ -195,7 +195,7 @@ const syncMount = async (
         throwIfAborted(signal);
         const existingNode = byPath.get(item.path);
         const type = item.type;
-        await tx.project.upsertContentNode({
+        await tx.project.contentNodes.upsertContentNode({
           id: nodeIds.get(item.path),
           workspace: mount.workspace,
           project_id: scope.project_id,
@@ -237,8 +237,8 @@ const syncMount = async (
       }
       for (const node of stale) {
         throwIfAborted(signal);
-        await tx.project.deleteContentNodesByIds(mount.workspace, [node.id]);
-        await tx.project.deleteContentMetadata(mount.workspace, node.id);
+        await tx.project.contentNodes.deleteContentNodesByIds(mount.workspace, [node.id]);
+        await tx.project.contentNodes.deleteContentMetadata(mount.workspace, node.id);
       }
       await tx.externalContent.updateMount(mount.id, {
         status: 'succeeded',

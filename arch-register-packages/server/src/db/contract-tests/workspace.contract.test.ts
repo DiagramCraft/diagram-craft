@@ -199,7 +199,7 @@ runContractSuiteAgainstBothDrivers('WorkspaceDatabase', getDb => {
         }
       ]);
 
-      const assessment = await db.project.createAssessment({
+      const assessment = await db.project.assessments.createAssessment({
         id: randomUUID(),
         workspace,
         project_id: project.id,
@@ -235,7 +235,8 @@ runContractSuiteAgainstBothDrivers('WorkspaceDatabase', getDb => {
       ]);
 
       expect(
-        (await db.project.getAssessmentById(workspace, assessment.id))?.assessment_type_id
+        (await db.project.assessments.getAssessmentById(workspace, assessment.id))
+          ?.assessment_type_id
       ).toBe(null);
     });
   });

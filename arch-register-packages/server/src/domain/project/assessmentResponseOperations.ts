@@ -18,13 +18,13 @@ import { assertNoDerivedFieldWrites, materializeDerivedFields } from '../derived
 import { assessmentScopeHasRestrictedConditions } from './assessmentScopeAccess';
 
 const getProjectOrThrow = async (db: DatabaseAdapter, ws: string, projectId: string) => {
-  const project = await db.project.getProject(ws, projectId);
+  const project = await db.project.projects.getProject(ws, projectId);
   httpAssert.present(project, { status: 404, message: `Project '${projectId}' not found` });
   return project;
 };
 
 const getAssessmentOrThrow = async (db: DatabaseAdapter, ws: string, assessmentId: string) => {
-  const assessment = await db.project.getAssessmentById(ws, assessmentId);
+  const assessment = await db.project.assessments.getAssessmentById(ws, assessmentId);
   httpAssert.present(assessment, {
     status: 404,
     message: `Assessment '${assessmentId}' not found`
@@ -49,7 +49,7 @@ export const listAssessmentResponses = async (
       requireProjectAccess(authCtx, project.owner);
       const schemas = await db.catalog.listSchemas(ws);
       if (assessmentScopeHasRestrictedConditions(assessment, schemas, authCtx)) return [];
-      const rows = await db.project.listAssessmentResponses(
+      const rows = await db.project.assessmentResponses.listAssessmentResponses(
         ws,
         assessmentId,
         assessment.current_occurrence
@@ -98,7 +98,7 @@ export const upsertAssessmentResponse = async (
           message: error instanceof Error ? error.message : String(error)
         });
       }
-      const existing = await db.project.getAssessmentResponse(
+      const existing = await db.project.assessmentResponses.getAssessmentResponse(
         ws,
         assessmentId,
         entityId,
@@ -117,7 +117,7 @@ export const upsertAssessmentResponse = async (
         objectId: entityId
       }) as Record<string, string | number | boolean>;
 
-      const row = await db.project.upsertAssessmentResponse({
+      const row = await db.project.assessmentResponses.upsertAssessmentResponse({
         workspace: ws,
         assessment_id: assessmentId,
         entity_id: entityId,
@@ -165,7 +165,11 @@ export const exportAssessmentResponsesCsv = async (
       requireProjectAccess(authCtx, project.owner);
       const [allEntities, responses, enums, schemas] = await Promise.all([
         listAllCatalogEntities(db, ws),
-        db.project.listAssessmentResponses(ws, assessmentId, assessment.current_occurrence),
+        db.project.assessmentResponses.listAssessmentResponses(
+          ws,
+          assessmentId,
+          assessment.current_occurrence
+        ),
         db.catalog.listEnums(ws),
         db.catalog.listSchemas(ws)
       ]);

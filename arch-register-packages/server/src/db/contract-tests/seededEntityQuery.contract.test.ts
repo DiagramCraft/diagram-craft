@@ -47,7 +47,7 @@ runContractSuiteAgainstBothDrivers('seededEntityQuery', getDb => {
         seedEntities.filter(entity => entity.workspace === workspace).map(entity => entity.id)
       )
     );
-    expect(new Set((await db.project.listProjects(workspace)).map(row => row.id))).toEqual(
+    expect(new Set((await db.project.projects.listProjects(workspace)).map(row => row.id))).toEqual(
       new Set(
         seedProjects.filter(project => project.workspace === workspace).map(project => project.id)
       )

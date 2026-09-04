@@ -119,13 +119,15 @@ const resolvedProjectScope = (
   projectPublicId,
   entityId: null,
   auditMetadata: { project_id: projectId },
-  listNodes: (db, ws) => db.project.listContentNodes(ws, projectId),
-  findNodeByPath: (db, ws, path) => db.project.getContentNodeByPath(ws, projectId, path),
-  deleteNodeByPath: (db, ws, path) => db.project.deleteContentNodeByPath(ws, projectId, path),
+  listNodes: (db, ws) => db.project.contentNodes.listContentNodes(ws, projectId),
+  findNodeByPath: (db, ws, path) =>
+    db.project.contentNodes.getContentNodeByPath(ws, projectId, path),
+  deleteNodeByPath: (db, ws, path) =>
+    db.project.contentNodes.deleteContentNodeByPath(ws, projectId, path),
   deleteNodeFolder: (db, ws, folderPath) =>
-    db.project.deleteContentNodeFolder(ws, projectId, folderPath),
+    db.project.contentNodes.deleteContentNodeFolder(ws, projectId, folderPath),
   renameNodeFolder: (db, ws, oldPath, newPath, updatedAt) =>
-    db.project.renameContentNodeFolder(ws, projectId, oldPath, newPath, updatedAt)
+    db.project.contentNodes.renameContentNodeFolder(ws, projectId, oldPath, newPath, updatedAt)
 });
 
 const resolvedEntityScope = (entityId: string): ResolvedContentScope => ({
@@ -134,16 +136,17 @@ const resolvedEntityScope = (entityId: string): ResolvedContentScope => ({
   projectId: null,
   entityId,
   auditMetadata: { entity_id: entityId },
-  listNodes: (db, ws) => db.project.listEntityContentNodes(ws, entityId),
+  listNodes: (db, ws) => db.project.contentNodes.listEntityContentNodes(ws, entityId),
   findNodeByPath: async (db, ws, path) => {
-    const nodes = await db.project.listEntityContentNodes(ws, entityId);
+    const nodes = await db.project.contentNodes.listEntityContentNodes(ws, entityId);
     return nodes.find(n => n.path === path) ?? null;
   },
-  deleteNodeByPath: (db, ws, path) => db.project.deleteEntityContentNodeByPath(ws, entityId, path),
+  deleteNodeByPath: (db, ws, path) =>
+    db.project.contentNodes.deleteEntityContentNodeByPath(ws, entityId, path),
   deleteNodeFolder: (db, ws, folderPath) =>
-    db.project.deleteEntityContentNodeFolder(ws, entityId, folderPath),
+    db.project.contentNodes.deleteEntityContentNodeFolder(ws, entityId, folderPath),
   renameNodeFolder: (db, ws, oldPath, newPath, updatedAt) =>
-    db.project.renameEntityContentNodeFolder(ws, entityId, oldPath, newPath, updatedAt)
+    db.project.contentNodes.renameEntityContentNodeFolder(ws, entityId, oldPath, newPath, updatedAt)
 });
 
 const resolvedWorkspaceScope = (workspace: string): ResolvedContentScope => ({
@@ -152,16 +155,17 @@ const resolvedWorkspaceScope = (workspace: string): ResolvedContentScope => ({
   projectId: null,
   entityId: null,
   auditMetadata: {},
-  listNodes: (db, ws) => db.project.listWorkspaceContentNodes(ws),
+  listNodes: (db, ws) => db.project.contentNodes.listWorkspaceContentNodes(ws),
   findNodeByPath: async (db, ws, path) => {
-    const nodes = await db.project.listWorkspaceContentNodes(ws);
+    const nodes = await db.project.contentNodes.listWorkspaceContentNodes(ws);
     return nodes.find(n => n.path === path) ?? null;
   },
-  deleteNodeByPath: (db, ws, path) => db.project.deleteWorkspaceContentNodeByPath(ws, path),
+  deleteNodeByPath: (db, ws, path) =>
+    db.project.contentNodes.deleteWorkspaceContentNodeByPath(ws, path),
   deleteNodeFolder: (db, ws, folderPath) =>
-    db.project.deleteWorkspaceContentNodeFolder(ws, folderPath),
+    db.project.contentNodes.deleteWorkspaceContentNodeFolder(ws, folderPath),
   renameNodeFolder: (db, ws, oldPath, newPath, updatedAt) =>
-    db.project.renameWorkspaceContentNodeFolder(ws, oldPath, newPath, updatedAt)
+    db.project.contentNodes.renameWorkspaceContentNodeFolder(ws, oldPath, newPath, updatedAt)
 });
 
 /** Resolves and authorizes the scope owning an already-loaded content node. */
@@ -186,7 +190,7 @@ export const resolveContentScopeForNode = async (
 export const PROJECT_SCOPE: ContentScopeResolver = {
   kind: 'project',
   resolve: async (db, ws, identifier, authCtx, action, authorize = true) => {
-    const project = await db.project.getProject(ws, identifier!);
+    const project = await db.project.projects.getProject(ws, identifier!);
     httpAssert.present(project, { status: 404, message: `Project '${identifier}' not found` });
 
     if (!authorize) return resolvedProjectScope(project.id, project.public_id);

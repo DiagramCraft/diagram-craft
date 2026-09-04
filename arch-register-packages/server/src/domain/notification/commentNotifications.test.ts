@@ -65,8 +65,12 @@ const makeDb = (overrides: Record<string, unknown> = {}) =>
       getEntity: vi.fn(async () => makeEntity())
     },
     project: {
-      getAnyContentNodeById: vi.fn(async () => null),
-      getProject: vi.fn(async () => null)
+      contentNodes: {
+        getAnyContentNodeById: vi.fn(async () => null)
+      },
+      projects: {
+        getProject: vi.fn(async () => null)
+      }
     },
     notificationPreference: {
       listOverrides: vi.fn(async () => [])
@@ -108,15 +112,19 @@ describe('createCommentNotifications', () => {
   it('deduplicates a content author who is also an entity-owner recipient', async () => {
     const db = makeDb({
       project: {
-        getAnyContentNodeById: vi.fn(async () => ({
-          id: 'node-1',
-          workspace: 'ws-1',
-          project_id: null,
-          entity_id: 'entity-1',
-          name: 'Runbook',
-          created_by: 'recipient-1'
-        })),
-        getProject: vi.fn(async () => null)
+        contentNodes: {
+          getAnyContentNodeById: vi.fn(async () => ({
+            id: 'node-1',
+            workspace: 'ws-1',
+            project_id: null,
+            entity_id: 'entity-1',
+            name: 'Runbook',
+            created_by: 'recipient-1'
+          }))
+        },
+        projects: {
+          getProject: vi.fn(async () => null)
+        }
       }
     });
 

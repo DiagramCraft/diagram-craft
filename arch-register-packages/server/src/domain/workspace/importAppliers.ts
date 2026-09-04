@@ -1059,7 +1059,7 @@ export const importProjects = async (
   const workspaceRow = await db.workspace.getWorkspace(workspace);
   httpAssert.present(workspaceRow, { status: 404, message: `Workspace '${workspace}' not found` });
   const existingProjects = new Map(
-    (await db.project.listProjects(workspace)).map(project => [project.id, project])
+    (await db.project.projects.listProjects(workspace)).map(project => [project.id, project])
   );
   const mappedProjects = projects.flatMap(project => {
     if (hasSkipResolution(resolutions, project.id) || resolutions[project.id]?.action === 'merge')
@@ -1079,7 +1079,7 @@ export const importProjects = async (
     const owner = resolveMappedId(idMapping.teams, project.owner);
 
     if (existing) {
-      await db.project.updateProject(workspace, nextId, {
+      await db.project.projects.updateProject(workspace, nextId, {
         name: project.name,
         description: project.description,
         owner,
@@ -1092,7 +1092,7 @@ export const importProjects = async (
       });
       updated++;
     } else {
-      await db.project.createProject({
+      await db.project.projects.createProject({
         id: nextId,
         workspace,
         public_id: formatPublicId(
@@ -1130,7 +1130,7 @@ export const importContentNodes = async (
 ): Promise<{ created: number; updated: number }> => {
   const now = new Date();
   const existingNodes = new Map(
-    (await db.project.listAllContentNodes(workspace)).map(node => [node.id, node])
+    (await db.project.contentNodes.listAllContentNodes(workspace)).map(node => [node.id, node])
   );
   const mappedNodes = contentNodes.flatMap(node => {
     if (hasSkipResolution(resolutions, node.id) || resolutions[node.id]?.action === 'merge')
@@ -1165,7 +1165,7 @@ export const importContentNodes = async (
         : undefined;
     const previewBuffer = node.preview_file ? contentFiles?.get(node.preview_file) : undefined;
     const previewSvg = previewBuffer ? previewBuffer.toString('utf8') : null;
-    let row!: Awaited<ReturnType<DatabaseAdapter['project']['upsertContentNode']>>;
+    let row!: Awaited<ReturnType<DatabaseAdapter['project']['contentNodes']['upsertContentNode']>>;
     await coordinateContentWrite({
       db,
       storage,
@@ -1185,7 +1185,7 @@ export const importContentNodes = async (
             ]
           : undefined,
       writeDatabase: async tx => {
-        row = await tx.project.upsertContentNode({
+        row = await tx.project.contentNodes.upsertContentNode({
           id: nextId,
           workspace,
           project_id: projectId,
@@ -1204,7 +1204,7 @@ export const importContentNodes = async (
         } satisfies ContentNodeDbUpsert);
         if (node.type !== 'folder') {
           if (projectId) {
-            await tx.project.updateContentNodeDerivedData(
+            await tx.project.contentNodes.updateContentNodeDerivedData(
               workspace,
               storageProjectId,
               row.id,
@@ -1214,7 +1214,7 @@ export const importContentNodes = async (
               previewSvg,
               now
             );
-            await tx.project.updateContentNodeTemplateStatus(
+            await tx.project.contentNodes.updateContentNodeTemplateStatus(
               workspace,
               storageProjectId,
               row.id,
@@ -1223,7 +1223,7 @@ export const importContentNodes = async (
               now
             );
           } else if (entityId) {
-            await tx.project.updateContentNodeDerivedData(
+            await tx.project.contentNodes.updateContentNodeDerivedData(
               workspace,
               storageProjectId,
               row.id,
@@ -1234,7 +1234,7 @@ export const importContentNodes = async (
               now
             );
           } else {
-            await tx.project.updateWorkspaceContentNodeDerivedData(
+            await tx.project.contentNodes.updateWorkspaceContentNodeDerivedData(
               workspace,
               row.id,
               node.size_bytes,
@@ -1429,7 +1429,7 @@ export const importDocuments = async (
     const documentTypeId = resolveMappedIdOrNull(typeMapping, revision.document_type_id);
     if (revision.document_type_id && !documentTypeId) continue;
     revisionMapping.set(revision.id, id);
-    await db.project.createMarkdownRevision({
+    await db.project.markdownRevisions.createMarkdownRevision({
       id,
       workspace,
       node_id: nodeId,

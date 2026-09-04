@@ -15,7 +15,7 @@ const test = createPermissionApiTest().extend<{ restrictedSeed: true }>({
         throw new Error('Expected seeded customer portal entity to exist');
       }
 
-      const hiddenDiagram = await server.db.project.upsertContentNode({
+      const hiddenDiagram = await server.db.project.contentNodes.upsertContentNode({
         workspace: resources.workspaceId,
         project_id: resources.projectIds.authMigration,
         path: 'flows/login-sequence.dgc',
@@ -45,7 +45,7 @@ const test = createPermissionApiTest().extend<{ restrictedSeed: true }>({
         completeness: customerPortal.completeness
       });
 
-      await server.db.project.upsertContentMetadata({
+      await server.db.project.contentNodes.upsertContentMetadata({
         workspace: resources.workspaceId,
         node_id: hiddenDiagram.id,
         title: 'Zero trust login flow',

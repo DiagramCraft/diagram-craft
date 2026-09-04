@@ -34,7 +34,13 @@ describe('entity/workspace content authorization', () => {
 
   it('requires content.view before listing workspace content', async () => {
     const listNodes = vi.fn(async () => []);
-    const db = { project: { listWorkspaceContentNodes: listNodes } } as unknown as DatabaseAdapter;
+    const db = {
+      project: {
+        contentNodes: {
+          listWorkspaceContentNodes: listNodes
+        }
+      }
+    } as unknown as DatabaseAdapter;
     requireWorkspaceCapability.mockImplementation(() => {
       throw new Error('forbidden');
     });
@@ -85,7 +91,11 @@ describe('entity/workspace content authorization', () => {
     };
     const read = vi.fn();
     const db = {
-      project: { getAnyContentNodeById: vi.fn(async () => node) }
+      project: {
+        contentNodes: {
+          getAnyContentNodeById: vi.fn(async () => node)
+        }
+      }
     } as unknown as DatabaseAdapter;
     const storage = { read } as unknown as StorageAdapter;
     requireWorkspaceCapability.mockImplementation(() => {
@@ -110,8 +120,10 @@ describe('entity/workspace content authorization', () => {
     };
     const db = {
       project: {
-        getAnyContentNodeById: vi.fn(async () => node),
-        listWorkspaceContentNodes: vi.fn(async () => [node])
+        contentNodes: {
+          getAnyContentNodeById: vi.fn(async () => node),
+          listWorkspaceContentNodes: vi.fn(async () => [node])
+        }
       }
     } as unknown as DatabaseAdapter;
     const storage = {

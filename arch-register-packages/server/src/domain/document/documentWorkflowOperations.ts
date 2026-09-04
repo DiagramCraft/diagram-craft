@@ -494,7 +494,7 @@ export const listDocumentWorkflowHistory = async (
     event,
     scope: { kind: 'workspace', workspace },
     operation: async ({ ws, authCtx }) => {
-      const node = await db.project.getAnyContentNodeById(ws, nodeId);
+      const node = await db.project.contentNodes.getAnyContentNodeById(ws, nodeId);
       httpAssert.present(node, { status: 404, message: `Markdown document '${nodeId}' not found` });
       await requireMarkdownNodeAccess(db, ws, authCtx, node, 'read');
       const fieldNames = new Map(documentType.fields.map(field => [field.id, field.name]));
@@ -545,7 +545,7 @@ export const overrideDocumentWorkflow = async (
         'ent.override',
         'You do not have permission to override document workflows'
       );
-      const node = await db.project.getAnyContentNodeById(ws, nodeId);
+      const node = await db.project.contentNodes.getAnyContentNodeById(ws, nodeId);
       httpAssert.present(node, { status: 404, message: `Markdown document '${nodeId}' not found` });
       await requireMarkdownNodeAccess(db, ws, authCtx, node, 'edit');
       const document = await db.document.getDocumentMetadata(ws, nodeId);
@@ -703,7 +703,7 @@ export const createDocumentGovernanceRegistry = (): GovernanceRegistry =>
           }
         },
         subjectVisible: async (db, authCtx, workspace, subjectId) => {
-          const node = await db.project.getAnyContentNodeById(workspace, subjectId);
+          const node = await db.project.contentNodes.getAnyContentNodeById(workspace, subjectId);
           if (!node) return false;
           try {
             await requireMarkdownNodeAccess(db, workspace, authCtx, node, 'read');

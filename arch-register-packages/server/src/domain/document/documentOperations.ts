@@ -68,7 +68,7 @@ const requireProjectTemplateAccess = async (
   authCtx: Parameters<typeof requireProjectAccess>[0],
   edit: boolean
 ) => {
-  const project = await db.project.getProject(ws, projectId);
+  const project = await db.project.projects.getProject(ws, projectId);
   httpAssert.present(project, { status: 404, message: `Project '${projectId}' not found` });
   if (edit)
     requireProjectAction(
@@ -214,7 +214,7 @@ export const updateDocumentType = async (
 
       const usedFieldIds = new Set<string>();
       const currentFieldDataCounts = new Map<string, number>();
-      for (const node of await db.project.listAllContentNodes(ws)) {
+      for (const node of await db.project.contentNodes.listAllContentNodes(ws)) {
         const metadata = await db.document.getDocumentMetadata(ws, node.id);
         if (metadata?.document_type_id === id) {
           for (const field of current.fields) {
@@ -224,7 +224,10 @@ export const updateDocumentType = async (
             }
           }
         }
-        for (const revision of await db.project.listMarkdownRevisions(ws, node.id)) {
+        for (const revision of await db.project.markdownRevisions.listMarkdownRevisions(
+          ws,
+          node.id
+        )) {
           if (revision.document_type_id !== id) continue;
           for (const field of current.fields)
             if (revision.metadata[field.id] !== undefined) usedFieldIds.add(field.id);
@@ -435,7 +438,7 @@ export const deleteDocumentType = async (
       requireWorkspaceCapability(authCtx, 'ws.settings');
       const current = await db.document.getDocumentType(ws, id);
       httpAssert.present(current, { status: 404, message: `Document type '${id}' not found` });
-      for (const node of await db.project.listAllContentNodes(ws)) {
+      for (const node of await db.project.contentNodes.listAllContentNodes(ws)) {
         const metadata = await db.document.getDocumentMetadata(ws, node.id);
         if (metadata?.document_type_id === id) {
           httpAssert.true(false, {
@@ -444,7 +447,7 @@ export const deleteDocumentType = async (
           });
         }
         if (
-          (await db.project.listMarkdownRevisions(ws, node.id)).some(
+          (await db.project.markdownRevisions.listMarkdownRevisions(ws, node.id)).some(
             revision => revision.document_type_id === id
           )
         ) {

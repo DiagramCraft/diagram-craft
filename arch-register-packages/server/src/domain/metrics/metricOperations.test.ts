@@ -1176,10 +1176,18 @@ describe('getBoxMetrics', () => {
         listLifecycleStates: vi.fn(async () => lifecycleStates)
       },
       project: {
-        listProjectEntities: vi.fn(async () => []),
-        getAssessmentById: vi.fn(async () => options.assessment ?? null),
-        getProject: vi.fn(async () => ({ id: 'proj-1', workspace: 'ws-1', owner: 'team-1' })),
-        listAssessmentResponses: vi.fn(async () => options.responses ?? [])
+        projectEntities: {
+          listProjectEntities: vi.fn(async () => [])
+        },
+        assessments: {
+          getAssessmentById: vi.fn(async () => options.assessment ?? null)
+        },
+        projects: {
+          getProject: vi.fn(async () => ({ id: 'proj-1', workspace: 'ws-1', owner: 'team-1' }))
+        },
+        assessmentResponses: {
+          listAssessmentResponses: vi.fn(async () => options.responses ?? [])
+        }
       }
     } as unknown as DatabaseAdapter;
   };

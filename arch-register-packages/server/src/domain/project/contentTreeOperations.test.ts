@@ -64,12 +64,17 @@ const cases: ScopeCase[] = [
     makeDb: () =>
       ({
         project: {
-          getProject: vi.fn(async () => ({ id: 'project-1', owner: null })),
-          listContentNodes: vi.fn(async () => nodes),
-          deleteContentNodeFolder: vi.fn(async () => nodes)
+          projects: {
+            getProject: vi.fn(async () => ({ id: 'project-1', owner: null }))
+          },
+          contentNodes: {
+            listContentNodes: vi.fn(async () => nodes),
+            deleteContentNodeFolder: vi.fn(async () => nodes)
+          }
         }
       }) as unknown as DatabaseAdapter,
-    deleteFolderMock: db => db.project.deleteContentNodeFolder as ReturnType<typeof vi.fn>,
+    deleteFolderMock: db =>
+      db.project.contentNodes.deleteContentNodeFolder as ReturnType<typeof vi.fn>,
     expectedDeleteFolderArgs: ['ws-1', 'project-1', '/docs']
   },
   {
@@ -82,11 +87,14 @@ const cases: ScopeCase[] = [
           getEntity: vi.fn(async () => ({ id: 'entity-1' }))
         },
         project: {
-          deleteEntityContentNodeFolder: vi.fn(async () => nodes),
-          listEntityContentNodes: vi.fn(async () => nodes)
+          contentNodes: {
+            deleteEntityContentNodeFolder: vi.fn(async () => nodes),
+            listEntityContentNodes: vi.fn(async () => nodes)
+          }
         }
       }) as unknown as DatabaseAdapter,
-    deleteFolderMock: db => db.project.deleteEntityContentNodeFolder as ReturnType<typeof vi.fn>,
+    deleteFolderMock: db =>
+      db.project.contentNodes.deleteEntityContentNodeFolder as ReturnType<typeof vi.fn>,
     expectedDeleteFolderArgs: ['ws-1', 'entity-1', '/docs']
   },
   {
@@ -96,11 +104,14 @@ const cases: ScopeCase[] = [
     makeDb: () =>
       ({
         project: {
-          listWorkspaceContentNodes: vi.fn(async () => nodes),
-          deleteWorkspaceContentNodeFolder: vi.fn(async () => nodes)
+          contentNodes: {
+            listWorkspaceContentNodes: vi.fn(async () => nodes),
+            deleteWorkspaceContentNodeFolder: vi.fn(async () => nodes)
+          }
         }
       }) as unknown as DatabaseAdapter,
-    deleteFolderMock: db => db.project.deleteWorkspaceContentNodeFolder as ReturnType<typeof vi.fn>,
+    deleteFolderMock: db =>
+      db.project.contentNodes.deleteWorkspaceContentNodeFolder as ReturnType<typeof vi.fn>,
     expectedDeleteFolderArgs: ['ws-1', '/docs']
   }
 ];
@@ -174,12 +185,17 @@ const renameCases: RenameScopeCase[] = [
     makeDb: () =>
       ({
         project: {
-          getProject: vi.fn(async () => ({ id: 'project-1', owner: null })),
-          listContentNodes: vi.fn(async () => nodes),
-          renameContentNodeFolder: vi.fn(async () => ['a', 'b'])
+          projects: {
+            getProject: vi.fn(async () => ({ id: 'project-1', owner: null }))
+          },
+          contentNodes: {
+            listContentNodes: vi.fn(async () => nodes),
+            renameContentNodeFolder: vi.fn(async () => ['a', 'b'])
+          }
         }
       }) as unknown as DatabaseAdapter,
-    renameFolderMock: db => db.project.renameContentNodeFolder as ReturnType<typeof vi.fn>,
+    renameFolderMock: db =>
+      db.project.contentNodes.renameContentNodeFolder as ReturnType<typeof vi.fn>,
     expectedRenameFolderArgs: ['ws-1', 'project-1', '/old', '/new']
   },
   {
@@ -192,11 +208,14 @@ const renameCases: RenameScopeCase[] = [
           getEntity: vi.fn(async () => ({ id: 'entity-1' }))
         },
         project: {
-          listEntityContentNodes: vi.fn(async () => nodes),
-          renameEntityContentNodeFolder: vi.fn(async () => ['a', 'b'])
+          contentNodes: {
+            listEntityContentNodes: vi.fn(async () => nodes),
+            renameEntityContentNodeFolder: vi.fn(async () => ['a', 'b'])
+          }
         }
       }) as unknown as DatabaseAdapter,
-    renameFolderMock: db => db.project.renameEntityContentNodeFolder as ReturnType<typeof vi.fn>,
+    renameFolderMock: db =>
+      db.project.contentNodes.renameEntityContentNodeFolder as ReturnType<typeof vi.fn>,
     expectedRenameFolderArgs: ['ws-1', 'entity-1', '/old', '/new']
   },
   {
@@ -206,11 +225,14 @@ const renameCases: RenameScopeCase[] = [
     makeDb: () =>
       ({
         project: {
-          listWorkspaceContentNodes: vi.fn(async () => nodes),
-          renameWorkspaceContentNodeFolder: vi.fn(async () => ['a', 'b'])
+          contentNodes: {
+            listWorkspaceContentNodes: vi.fn(async () => nodes),
+            renameWorkspaceContentNodeFolder: vi.fn(async () => ['a', 'b'])
+          }
         }
       }) as unknown as DatabaseAdapter,
-    renameFolderMock: db => db.project.renameWorkspaceContentNodeFolder as ReturnType<typeof vi.fn>,
+    renameFolderMock: db =>
+      db.project.contentNodes.renameWorkspaceContentNodeFolder as ReturnType<typeof vi.fn>,
     expectedRenameFolderArgs: ['ws-1', '/old', '/new']
   }
 ];

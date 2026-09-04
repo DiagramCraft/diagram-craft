@@ -164,7 +164,7 @@ test('workspace replication strips owner and lifecycle references without settin
       ]
     })
   );
-  const copiedProject = (await server.db.project.listProjects(copied.id)).find(
+  const copiedProject = (await server.db.project.projects.listProjects(copied.id)).find(
     item => item.name === `Settings opt-out project ${suffix}`
   );
   expect(copiedProject).toEqual(expect.objectContaining({ owner: null }));

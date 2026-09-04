@@ -109,7 +109,7 @@ runContractSuiteAgainstBothDrivers('External content sync', getDb => {
         'succeeded'
       );
       expect(
-        (await db.project.listWorkspaceContentNodes(workspace)).some(
+        (await db.project.contentNodes.listWorkspaceContentNodes(workspace)).some(
           node => node.path === 'docs/readme.md'
         )
       ).toBe(true);
@@ -132,7 +132,7 @@ runContractSuiteAgainstBothDrivers('External content sync', getDb => {
     process.env['EXTERNAL_CONTENT_CACHE_DIR'] = cache;
     try {
       const now = new Date();
-      const existing = await db.project.createContentNodeIfAbsent({
+      const existing = await db.project.contentNodes.createContentNodeIfAbsent({
         workspace,
         project_id: null,
         entity_id: null,
@@ -161,7 +161,7 @@ runContractSuiteAgainstBothDrivers('External content sync', getDb => {
 
       expect((await db.externalContent.getMount(workspace, mount.id))?.status).toBe('failed');
       expect(
-        (await db.project.listWorkspaceContentNodes(workspace)).find(
+        (await db.project.contentNodes.listWorkspaceContentNodes(workspace)).find(
           node => node.id === existing?.id
         )?.mount_id
       ).toBeNull();
@@ -188,7 +188,7 @@ runContractSuiteAgainstBothDrivers('External content sync', getDb => {
       await syncExternalContentSource(db, new FilesystemStorage(storageRoot), workspace, source.id);
 
       expect(
-        (await db.project.listWorkspaceContentNodes(workspace)).find(
+        (await db.project.contentNodes.listWorkspaceContentNodes(workspace)).find(
           node => node.path === 'repo/data.json'
         )?.type
       ).toBe('file');
@@ -213,7 +213,7 @@ runContractSuiteAgainstBothDrivers('External content sync', getDb => {
       const { source, mount } = await createSourceAndMount(db, workspace, repository, 'repo', '');
       const storage = new FilesystemStorage(storageRoot);
       const now = new Date();
-      await db.project.upsertContentNode({
+      await db.project.contentNodes.upsertContentNode({
         id: randomUUID(),
         workspace,
         path: 'repo/docs/guide.mdx',
@@ -230,7 +230,7 @@ runContractSuiteAgainstBothDrivers('External content sync', getDb => {
 
       await syncExternalContentSource(db, storage, workspace, source.id);
 
-      const node = (await db.project.listWorkspaceContentNodes(workspace)).find(
+      const node = (await db.project.contentNodes.listWorkspaceContentNodes(workspace)).find(
         contentNode => contentNode.path === 'repo/docs/guide.mdx'
       );
       expect(node).toMatchObject({

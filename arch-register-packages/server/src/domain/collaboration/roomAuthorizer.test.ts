@@ -30,8 +30,12 @@ const makeDb = (node: any = null) =>
     auth: { getUser: vi.fn(async () => ({ id: 'user-1', is_active: true })) },
     catalog: { resolveWorkspaceSlug: vi.fn(async () => 'workspace-1') },
     project: {
-      getAnyContentNodeById: vi.fn(async () => node),
-      getProject: vi.fn(async () => ({ owner: 'team-1' }))
+      contentNodes: {
+        getAnyContentNodeById: vi.fn(async () => node)
+      },
+      projects: {
+        getProject: vi.fn(async () => ({ owner: 'team-1' }))
+      }
     }
   }) as unknown as DatabaseAdapter;
 

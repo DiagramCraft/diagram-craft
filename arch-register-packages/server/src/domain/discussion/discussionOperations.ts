@@ -40,11 +40,11 @@ const resolveObjectContext = async (
   objectId: string
 ): Promise<DiscussionObjectContext> => {
   if (objectType === 'content_node') {
-    const node = await db.project.getAnyContentNodeById(ws, objectId);
+    const node = await db.project.contentNodes.getAnyContentNodeById(ws, objectId);
     httpAssert.present(node, { status: 404, message: `Content node '${objectId}' not found` });
 
     if (node.project_id) {
-      const project = await db.project.getProject(ws, node.project_id);
+      const project = await db.project.projects.getProject(ws, node.project_id);
       httpAssert.present(project, {
         status: 404,
         message: `Project '${node.project_id}' not found`
@@ -70,9 +70,9 @@ const resolveObjectContext = async (
   }
 
   if (objectType === 'assessment') {
-    const assessment = await db.project.getAssessmentById(ws, objectId);
+    const assessment = await db.project.assessments.getAssessmentById(ws, objectId);
     httpAssert.present(assessment, { status: 404, message: `Assessment '${objectId}' not found` });
-    const project = await db.project.getProject(ws, assessment.project_id);
+    const project = await db.project.projects.getProject(ws, assessment.project_id);
     httpAssert.present(project, {
       status: 404,
       message: `Project '${assessment.project_id}' not found`

@@ -118,45 +118,51 @@ const makeDb = () =>
       replaceDocumentLinks: vi.fn(async () => {})
     },
     project: {
-      listProjects: vi.fn(async () => []),
-      listAllContentNodes: vi.fn(async () => []),
-      createProject: vi.fn(async input => input),
-      createMarkdownRevision: vi.fn(async input => input),
-      updateProject: vi.fn(async (_ws, _id, input) => ({
-        id: _id,
-        workspace: _ws,
-        public_id: _id,
-        owner_name: null,
-        created_at: new Date(),
-        updated_at: new Date(),
-        ...input
-      })),
-      upsertContentNode: vi.fn(async input => ({
-        id: input.id ?? 'generated-id',
-        workspace: input.workspace,
-        project_id: input.project_id ?? null,
-        entity_id: input.entity_id ?? null,
-        parent_id: input.parent_id ?? null,
-        path: input.path,
-        name: input.name,
-        role: input.role ?? null,
-        type: input.type ?? 'diagram',
-        size_bytes: input.size_bytes,
-        comment_count: input.comment_count,
-        unresolved_comment_count: input.unresolved_comment_count,
-        is_template: false,
-        is_workspace_template: false,
-        preview_svg: null,
-        created_at: new Date(),
-        updated_at: new Date(),
-        created_by: null,
-        updated_by: null,
-        mime_type: null,
-        original_filename: null
-      })),
-      updateContentNodeDerivedData: vi.fn(async () => {}),
-      updateWorkspaceContentNodeDerivedData: vi.fn(async () => {}),
-      updateContentNodeTemplateStatus: vi.fn(async () => {})
+      projects: {
+        listProjects: vi.fn(async () => []),
+        createProject: vi.fn(async input => input),
+        updateProject: vi.fn(async (_ws, _id, input) => ({
+          id: _id,
+          workspace: _ws,
+          public_id: _id,
+          owner_name: null,
+          created_at: new Date(),
+          updated_at: new Date(),
+          ...input
+        }))
+      },
+      contentNodes: {
+        listAllContentNodes: vi.fn(async () => []),
+        upsertContentNode: vi.fn(async input => ({
+          id: input.id ?? 'generated-id',
+          workspace: input.workspace,
+          project_id: input.project_id ?? null,
+          entity_id: input.entity_id ?? null,
+          parent_id: input.parent_id ?? null,
+          path: input.path,
+          name: input.name,
+          role: input.role ?? null,
+          type: input.type ?? 'diagram',
+          size_bytes: input.size_bytes,
+          comment_count: input.comment_count,
+          unresolved_comment_count: input.unresolved_comment_count,
+          is_template: false,
+          is_workspace_template: false,
+          preview_svg: null,
+          created_at: new Date(),
+          updated_at: new Date(),
+          created_by: null,
+          updated_by: null,
+          mime_type: null,
+          original_filename: null
+        })),
+        updateContentNodeDerivedData: vi.fn(async () => {}),
+        updateWorkspaceContentNodeDerivedData: vi.fn(async () => {}),
+        updateContentNodeTemplateStatus: vi.fn(async () => {})
+      },
+      markdownRevisions: {
+        createMarkdownRevision: vi.fn(async input => input)
+      }
     },
     governanceCaseConfig: {
       listCaseConfig: vi.fn(async () => []),
@@ -399,7 +405,7 @@ describe('workspace export/import guards', () => {
     expect(result.success).toBe(true);
     expect(result.imported.projects).toEqual({ created: 1, updated: 0 });
     expect(result.imported.content_nodes).toEqual({ created: 1, updated: 0 });
-    expect(db.project.createProject).toHaveBeenCalledTimes(1);
+    expect(db.project.projects.createProject).toHaveBeenCalledTimes(1);
     expect(storage.write).toHaveBeenCalledTimes(1);
   });
 
@@ -863,7 +869,7 @@ describe('workspace export/import guards', () => {
     expect(result.failure?.compensation).toBe('completed');
     expect(staged.commit).toHaveBeenCalledOnce();
     expect(staged.rollback).toHaveBeenCalledOnce();
-    expect(db.project.createProject).not.toHaveBeenCalled();
+    expect(db.project.projects.createProject).not.toHaveBeenCalled();
   });
 });
 

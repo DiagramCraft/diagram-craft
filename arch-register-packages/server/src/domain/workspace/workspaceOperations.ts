@@ -228,7 +228,7 @@ const copyTypedWorkspaceDocuments = async (
     sourceEntityIdByIdentifier.set(entity.id, entity.id);
     if (entity.public_id) sourceEntityIdByIdentifier.set(entity.public_id, entity.id);
   }
-  const sourceNodes = (await db.project.listAllContentNodes(sourceWorkspace)).filter(
+  const sourceNodes = (await db.project.contentNodes.listAllContentNodes(sourceWorkspace)).filter(
     node =>
       (node.project_id == null || projectMap.has(node.project_id)) &&
       (node.entity_id == null || entityMap.has(node.entity_id))
@@ -240,13 +240,16 @@ const copyTypedWorkspaceDocuments = async (
   >();
   const sourceRevisions = new Map<
     string,
-    Awaited<ReturnType<DatabaseAdapter['project']['listMarkdownRevisions']>>
+    Awaited<ReturnType<DatabaseAdapter['project']['markdownRevisions']['listMarkdownRevisions']>>
   >();
   const typedNodeIds = new Set<string>();
 
   for (const node of sourceNodes.filter(item => item.type === 'markdown')) {
     const state = await db.document.getDocumentMetadata(sourceWorkspace, node.id);
-    const revisions = await db.project.listMarkdownRevisions(sourceWorkspace, node.id);
+    const revisions = await db.project.markdownRevisions.listMarkdownRevisions(
+      sourceWorkspace,
+      node.id
+    );
     sourceStates.set(node.id, state);
     sourceRevisions.set(node.id, revisions);
     if (state?.document_type_id || revisions.some(revision => revision.document_type_id))
@@ -301,7 +304,7 @@ const copyTypedWorkspaceDocuments = async (
             ]
           : undefined,
       writeDatabase: async tx => {
-        await tx.project.upsertContentNode({
+        await tx.project.contentNodes.upsertContentNode({
           id: nodeId,
           workspace: targetWorkspace,
           project_id: projectId,
@@ -372,7 +375,7 @@ const copyTypedWorkspaceDocuments = async (
       const revisionValues = revisionType
         ? remapDocumentMetadataValues(revisionType.fields, revision.metadata, documentReferenceMaps)
         : revision.metadata;
-      await db.project.createMarkdownRevision({
+      await db.project.markdownRevisions.createMarkdownRevision({
         id: revisionId,
         workspace: targetWorkspace,
         node_id: targetNodeId,
@@ -682,14 +685,14 @@ export const createWorkspace = async (
           ) {
             const projectMap = new Map<string, string>();
             if (includeSet.has('projects')) {
-              for (const project of await db.project.listProjects(replicate_from)) {
+              for (const project of await db.project.projects.listProjects(replicate_from)) {
                 const id = randomUUID();
                 projectMap.set(project.id, id);
                 const publicId = formatPublicId(
                   row.short_code,
                   await db.workspace.allocatePublicId(row.short_code, timestamp)
                 );
-                await db.project.createProject({
+                await db.project.projects.createProject({
                   id,
                   workspace: row.id,
                   public_id: publicId,

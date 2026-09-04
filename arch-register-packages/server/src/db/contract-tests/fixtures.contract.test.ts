@@ -76,7 +76,7 @@ runContractSuiteAgainstBothDrivers('shared typed database fixtures', getDb => {
     expect(new Set((await db.catalog.listEntities(workspace)).map(row => row.id))).toEqual(
       new Set([entity.id])
     );
-    expect(new Set((await db.project.listProjects(workspace)).map(row => row.id))).toEqual(
+    expect(new Set((await db.project.projects.listProjects(workspace)).map(row => row.id))).toEqual(
       new Set([project.id])
     );
     expect(

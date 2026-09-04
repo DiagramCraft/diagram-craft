@@ -1046,7 +1046,7 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
     const highRisk = await createFixtureEntity(db, workspace, schema.id);
     const lowRisk = await createFixtureEntity(db, workspace, schema.id);
 
-    const assessment = await db.project.createAssessment({
+    const assessment = await db.project.assessments.createAssessment({
       id: randomUUID(),
       workspace,
       project_id: project.id,
@@ -1071,7 +1071,7 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
       updated_at: new Date()
     });
 
-    await db.project.upsertAssessmentResponse({
+    await db.project.assessmentResponses.upsertAssessmentResponse({
       workspace,
       assessment_id: assessment.id,
       entity_id: highRisk.id,
@@ -1079,7 +1079,7 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
       values: { riskLevel: 4 },
       updated_by: null
     });
-    await db.project.upsertAssessmentResponse({
+    await db.project.assessmentResponses.upsertAssessmentResponse({
       workspace,
       assessment_id: assessment.id,
       entity_id: lowRisk.id,
@@ -1112,7 +1112,7 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
     const lowRisk = await createFixtureEntity(db, workspace, schema.id);
     const noResponse = await createFixtureEntity(db, workspace, schema.id);
 
-    const assessment = await db.project.createAssessment({
+    const assessment = await db.project.assessments.createAssessment({
       id: randomUUID(),
       workspace,
       project_id: project.id,
@@ -1137,7 +1137,7 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
       updated_at: new Date()
     });
 
-    await db.project.upsertAssessmentResponse({
+    await db.project.assessmentResponses.upsertAssessmentResponse({
       workspace,
       assessment_id: assessment.id,
       entity_id: highRisk.id,
@@ -1145,7 +1145,7 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
       values: { riskLevel: 4 },
       updated_by: null
     });
-    await db.project.upsertAssessmentResponse({
+    await db.project.assessmentResponses.upsertAssessmentResponse({
       workspace,
       assessment_id: assessment.id,
       entity_id: lowRisk.id,
@@ -1190,7 +1190,7 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
       project_id: project.id
     });
     const linkedEntity = await createFixtureEntity(db, workspace, schema.id);
-    await db.project.addProjectEntity({
+    await db.project.projectEntities.addProjectEntity({
       workspace,
       project_id: project.id,
       entity_id: linkedEntity.id,
@@ -1354,7 +1354,7 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
         }
       ]
     });
-    await db.project.addProjectEntity({
+    await db.project.projectEntities.addProjectEntity({
       workspace,
       project_id: project.id,
       entity_id: entity.id,

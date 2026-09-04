@@ -26,12 +26,16 @@ describe('PROJECT_SCOPE.resolve', () => {
   const makeDb = (project: { id: string; owner: string | null } | null) =>
     ({
       project: {
-        getProject: vi.fn(async () => project),
-        listContentNodes: vi.fn(async () => []),
-        getContentNodeByPath: vi.fn(async () => null),
-        deleteContentNodeByPath: vi.fn(async () => null),
-        deleteContentNodeFolder: vi.fn(async () => []),
-        renameContentNodeFolder: vi.fn(async () => [])
+        projects: {
+          getProject: vi.fn(async () => project)
+        },
+        contentNodes: {
+          listContentNodes: vi.fn(async () => []),
+          getContentNodeByPath: vi.fn(async () => null),
+          deleteContentNodeByPath: vi.fn(async () => null),
+          deleteContentNodeFolder: vi.fn(async () => []),
+          renameContentNodeFolder: vi.fn(async () => [])
+        }
       }
     }) as unknown as DatabaseAdapter;
 
@@ -76,20 +80,32 @@ describe('PROJECT_SCOPE.resolve', () => {
     const scope = await PROJECT_SCOPE.resolve(db, 'ws-1', 'project-1', allowedAuthCtx, 'edit');
 
     await scope.listNodes(db, 'ws-1');
-    expect(db.project.listContentNodes).toHaveBeenCalledWith('ws-1', 'project-1');
+    expect(db.project.contentNodes.listContentNodes).toHaveBeenCalledWith('ws-1', 'project-1');
 
     await scope.findNodeByPath(db, 'ws-1', '/a.md');
-    expect(db.project.getContentNodeByPath).toHaveBeenCalledWith('ws-1', 'project-1', '/a.md');
+    expect(db.project.contentNodes.getContentNodeByPath).toHaveBeenCalledWith(
+      'ws-1',
+      'project-1',
+      '/a.md'
+    );
 
     await scope.deleteNodeByPath(db, 'ws-1', '/a.md');
-    expect(db.project.deleteContentNodeByPath).toHaveBeenCalledWith('ws-1', 'project-1', '/a.md');
+    expect(db.project.contentNodes.deleteContentNodeByPath).toHaveBeenCalledWith(
+      'ws-1',
+      'project-1',
+      '/a.md'
+    );
 
     await scope.deleteNodeFolder(db, 'ws-1', '/folder');
-    expect(db.project.deleteContentNodeFolder).toHaveBeenCalledWith('ws-1', 'project-1', '/folder');
+    expect(db.project.contentNodes.deleteContentNodeFolder).toHaveBeenCalledWith(
+      'ws-1',
+      'project-1',
+      '/folder'
+    );
 
     const updatedAt = new Date('2026-07-04T00:00:00.000Z');
     await scope.renameNodeFolder(db, 'ws-1', '/old', '/new', updatedAt);
-    expect(db.project.renameContentNodeFolder).toHaveBeenCalledWith(
+    expect(db.project.contentNodes.renameContentNodeFolder).toHaveBeenCalledWith(
       'ws-1',
       'project-1',
       '/old',
@@ -106,10 +122,12 @@ describe('ENTITY_SCOPE.resolve', () => {
         getEntity: vi.fn(async () => entity)
       },
       project: {
-        listEntityContentNodes: vi.fn(async () => nodes),
-        deleteEntityContentNodeByPath: vi.fn(async () => null),
-        deleteEntityContentNodeFolder: vi.fn(async () => []),
-        renameEntityContentNodeFolder: vi.fn(async () => [])
+        contentNodes: {
+          listEntityContentNodes: vi.fn(async () => nodes),
+          deleteEntityContentNodeByPath: vi.fn(async () => null),
+          deleteEntityContentNodeFolder: vi.fn(async () => []),
+          renameEntityContentNodeFolder: vi.fn(async () => [])
+        }
       }
     }) as unknown as DatabaseAdapter;
 
@@ -154,7 +172,7 @@ describe('ENTITY_SCOPE.resolve', () => {
 
     const found = await scope.findNodeByPath(db, 'ws-1', '/b.md');
     expect(found).toEqual({ path: '/b.md' });
-    expect(db.project.listEntityContentNodes).toHaveBeenCalledWith('ws-1', 'entity-1');
+    expect(db.project.contentNodes.listEntityContentNodes).toHaveBeenCalledWith('ws-1', 'entity-1');
 
     const missing = await scope.findNodeByPath(db, 'ws-1', '/missing.md');
     expect(missing).toBeNull();
@@ -165,14 +183,14 @@ describe('ENTITY_SCOPE.resolve', () => {
     const scope = await ENTITY_SCOPE.resolve(db, 'ws-1', 'entity-1', allowedAuthCtx, 'edit');
 
     await scope.deleteNodeByPath(db, 'ws-1', '/a.md');
-    expect(db.project.deleteEntityContentNodeByPath).toHaveBeenCalledWith(
+    expect(db.project.contentNodes.deleteEntityContentNodeByPath).toHaveBeenCalledWith(
       'ws-1',
       'entity-1',
       '/a.md'
     );
 
     await scope.deleteNodeFolder(db, 'ws-1', '/folder');
-    expect(db.project.deleteEntityContentNodeFolder).toHaveBeenCalledWith(
+    expect(db.project.contentNodes.deleteEntityContentNodeFolder).toHaveBeenCalledWith(
       'ws-1',
       'entity-1',
       '/folder'
@@ -180,7 +198,7 @@ describe('ENTITY_SCOPE.resolve', () => {
 
     const updatedAt = new Date('2026-07-04T00:00:00.000Z');
     await scope.renameNodeFolder(db, 'ws-1', '/old', '/new', updatedAt);
-    expect(db.project.renameEntityContentNodeFolder).toHaveBeenCalledWith(
+    expect(db.project.contentNodes.renameEntityContentNodeFolder).toHaveBeenCalledWith(
       'ws-1',
       'entity-1',
       '/old',
@@ -194,10 +212,12 @@ describe('WORKSPACE_SCOPE.resolve', () => {
   const makeDb = (nodes: { path: string }[] = []) =>
     ({
       project: {
-        listWorkspaceContentNodes: vi.fn(async () => nodes),
-        deleteWorkspaceContentNodeByPath: vi.fn(async () => null),
-        deleteWorkspaceContentNodeFolder: vi.fn(async () => []),
-        renameWorkspaceContentNodeFolder: vi.fn(async () => [])
+        contentNodes: {
+          listWorkspaceContentNodes: vi.fn(async () => nodes),
+          deleteWorkspaceContentNodeByPath: vi.fn(async () => null),
+          deleteWorkspaceContentNodeFolder: vi.fn(async () => []),
+          renameWorkspaceContentNodeFolder: vi.fn(async () => [])
+        }
       }
     }) as unknown as DatabaseAdapter;
 
@@ -235,7 +255,7 @@ describe('WORKSPACE_SCOPE.resolve', () => {
 
     const found = await scope.findNodeByPath(db, 'ws-1', '/a.md');
     expect(found).toEqual({ path: '/a.md' });
-    expect(db.project.listWorkspaceContentNodes).toHaveBeenCalledWith('ws-1');
+    expect(db.project.contentNodes.listWorkspaceContentNodes).toHaveBeenCalledWith('ws-1');
   });
 
   it('delegates delete/rename operations to the workspace-scoped DB methods', async () => {
@@ -243,14 +263,20 @@ describe('WORKSPACE_SCOPE.resolve', () => {
     const scope = await WORKSPACE_SCOPE.resolve(db, 'ws-1', undefined, allowedAuthCtx, 'edit');
 
     await scope.deleteNodeByPath(db, 'ws-1', '/a.md');
-    expect(db.project.deleteWorkspaceContentNodeByPath).toHaveBeenCalledWith('ws-1', '/a.md');
+    expect(db.project.contentNodes.deleteWorkspaceContentNodeByPath).toHaveBeenCalledWith(
+      'ws-1',
+      '/a.md'
+    );
 
     await scope.deleteNodeFolder(db, 'ws-1', '/folder');
-    expect(db.project.deleteWorkspaceContentNodeFolder).toHaveBeenCalledWith('ws-1', '/folder');
+    expect(db.project.contentNodes.deleteWorkspaceContentNodeFolder).toHaveBeenCalledWith(
+      'ws-1',
+      '/folder'
+    );
 
     const updatedAt = new Date('2026-07-04T00:00:00.000Z');
     await scope.renameNodeFolder(db, 'ws-1', '/old', '/new', updatedAt);
-    expect(db.project.renameWorkspaceContentNodeFolder).toHaveBeenCalledWith(
+    expect(db.project.contentNodes.renameWorkspaceContentNodeFolder).toHaveBeenCalledWith(
       'ws-1',
       '/old',
       '/new',

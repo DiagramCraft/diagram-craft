@@ -603,7 +603,7 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
         name: 'Other project entity',
         project_id: otherProject
       });
-      await db.project.addProjectEntity({
+      await db.project.projectEntities.addProjectEntity({
         workspace,
         project_id: project,
         entity_id: linkedEntity.id,
@@ -828,7 +828,7 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
       const entity = await createFixtureEntity(db, workspace, schema);
       const project = await createFixtureProject(db, workspace);
       const user = await createFixtureUser(db);
-      const milestone = await db.project.createMilestone({
+      const milestone = await db.project.milestones.createMilestone({
         id: randomUUID(),
         workspace,
         project_id: project.id,
@@ -1237,7 +1237,7 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
       const user = await createFixtureUser(db);
       const now = new Date();
 
-      const milestone = await db.project.createMilestone({
+      const milestone = await db.project.milestones.createMilestone({
         id: randomUUID(),
         workspace,
         project_id: project.id,

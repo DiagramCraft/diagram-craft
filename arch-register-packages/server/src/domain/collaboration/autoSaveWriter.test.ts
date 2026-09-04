@@ -25,9 +25,11 @@ const makeDb = (node: any) =>
   ({
     catalog: { resolveWorkspaceSlug: vi.fn(async () => 'workspace-1') },
     project: {
-      getAnyContentNodeById: vi.fn(async () => node),
-      updateContentNodeDerivedData: vi.fn(async () => undefined),
-      updateWorkspaceContentNodeDerivedData: vi.fn(async () => undefined)
+      contentNodes: {
+        getAnyContentNodeById: vi.fn(async () => node),
+        updateContentNodeDerivedData: vi.fn(async () => undefined),
+        updateWorkspaceContentNodeDerivedData: vi.fn(async () => undefined)
+      }
     }
   }) as unknown as DatabaseAdapter;
 
@@ -52,7 +54,7 @@ describe('createAutoSaveWriter', () => {
       'file-1',
       expect.any(Buffer)
     );
-    expect(db.project.updateContentNodeDerivedData).toHaveBeenCalledWith(
+    expect(db.project.contentNodes.updateContentNodeDerivedData).toHaveBeenCalledWith(
       'workspace-1',
       'true-project',
       'file-1',
@@ -82,7 +84,7 @@ describe('createAutoSaveWriter', () => {
       'file-1',
       expect.any(Buffer)
     );
-    expect(entityDb.project.updateContentNodeDerivedData).toHaveBeenCalled();
+    expect(entityDb.project.contentNodes.updateContentNodeDerivedData).toHaveBeenCalled();
 
     const workspaceDb = makeDb({ id: 'file-1', project_id: null, entity_id: null, mount_id: null });
     const workspaceStorage = makeStorage();
@@ -96,7 +98,9 @@ describe('createAutoSaveWriter', () => {
       'file-1',
       expect.any(Buffer)
     );
-    expect(workspaceDb.project.updateWorkspaceContentNodeDerivedData).toHaveBeenCalled();
+    expect(
+      workspaceDb.project.contentNodes.updateWorkspaceContentNodeDerivedData
+    ).toHaveBeenCalled();
   });
 
   it('does not write unknown or mounted nodes', async () => {

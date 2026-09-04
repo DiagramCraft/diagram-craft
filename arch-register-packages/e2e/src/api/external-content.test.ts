@@ -75,7 +75,7 @@ test('opens an external MDX file through the Markdown API as read-only content',
       created_at: now,
       updated_at: now
     });
-    const legacyNode = await server.db.project.upsertContentNode({
+    const legacyNode = await server.db.project.contentNodes.upsertContentNode({
       id: randomUUID(),
       workspace,
       path: 'external-docs/docs/architecture.mdx',

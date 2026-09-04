@@ -418,7 +418,7 @@ export const proposeEntityDeprecation = async (
         });
       }
       if (body.projectId) {
-        const project = await db.project.getProject(workspace, body.projectId);
+        const project = await db.project.projects.getProject(workspace, body.projectId);
         httpAssert.present(project, { status: 400, message: 'The related project does not exist' });
       }
 

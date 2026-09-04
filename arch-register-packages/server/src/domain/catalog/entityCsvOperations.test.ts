@@ -102,7 +102,9 @@ const makeDb = (entities: EntityDbResult[]) => {
       runCompiledEntityCountQuery: vi.fn(async () => entities.length)
     },
     project: {
-      listProjectEntities: vi.fn(async () => [])
+      projectEntities: {
+        listProjectEntities: vi.fn(async () => [])
+      }
     },
     view: {
       listCollectionEntityIds: vi.fn(async () => [])

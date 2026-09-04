@@ -219,7 +219,7 @@ const ensureScopeAccess = async (
 ) => {
   requireWorkspaceView(authCtx);
   if (scope.kind === 'project') {
-    const project = await db.project.getProject(workspace, scope.projectId);
+    const project = await db.project.projects.getProject(workspace, scope.projectId);
     httpAssert.present(project, {
       status: 404,
       message: `Project '${scope.projectId}' not found`
@@ -231,7 +231,7 @@ const ensureScopeAccess = async (
     const view = await db.view.getSavedView(workspace, scope.viewId);
     httpAssert.present(view, { status: 404, message: 'Saved view not found' });
     if (view.project_id != null) {
-      const project = await db.project.getProject(workspace, view.project_id);
+      const project = await db.project.projects.getProject(workspace, view.project_id);
       httpAssert.present(project, { status: 404, message: 'Saved view project not found' });
       requireProjectAccess(authCtx, project.owner);
       return project;
@@ -249,7 +249,7 @@ const resolveProjectCandidates = async (
   if (projectScope === 'all') return undefined;
   const [projectEntities, links] = await Promise.all([
     listAllCatalogEntities(db, workspace, { projectId, projectScope: 'project' }),
-    db.project.listProjectEntityLinks(workspace, projectId)
+    db.project.projectEntities.listProjectEntityLinks(workspace, projectId)
   ]);
   return [
     ...new Set([...projectEntities.map(entity => entity.id), ...links.map(link => link.entity_id)])
@@ -296,10 +296,10 @@ const materialize = async (
 ): Promise<Snapshot> => {
   const project =
     spec.scope.kind === 'project'
-      ? await db.project.getProject(workspace, spec.scope.projectId)
+      ? await db.project.projects.getProject(workspace, spec.scope.projectId)
       : spec.scope.kind === 'saved_view'
         ? (await db.view.getSavedView(workspace, spec.scope.viewId))?.project_id
-          ? await db.project.getProject(
+          ? await db.project.projects.getProject(
               workspace,
               (await db.view.getSavedView(workspace, spec.scope.viewId))!.project_id!
             )
@@ -348,7 +348,7 @@ const materialize = async (
 
   const links =
     spec.scope.kind === 'project'
-      ? await db.project.listProjectEntityLinks(workspace, spec.scope.projectId)
+      ? await db.project.projectEntities.listProjectEntityLinks(workspace, spec.scope.projectId)
       : [];
   const linkIds = new Set(links.map(link => link.entity_id));
   const scopedEntities = reconstructed.filter(entity => {
@@ -630,15 +630,15 @@ const validateLinkTarget = async (
   targetId: string
 ) => {
   if (targetType === 'project') {
-    const project = await db.project.getProject(workspace, targetId);
+    const project = await db.project.projects.getProject(workspace, targetId);
     httpAssert.present(project, { status: 404, message: 'Project not found' });
     requireProjectAccess(authCtx, project.owner);
     return;
   }
   if (targetType === 'milestone') {
-    const milestone = await db.project.getMilestoneById(workspace, targetId);
+    const milestone = await db.project.milestones.getMilestoneById(workspace, targetId);
     httpAssert.present(milestone, { status: 404, message: 'Milestone not found' });
-    const project = await db.project.getProject(workspace, milestone.project_id);
+    const project = await db.project.projects.getProject(workspace, milestone.project_id);
     httpAssert.present(project, { status: 404, message: 'Milestone project not found' });
     requireProjectAccess(authCtx, project.owner);
     return;
@@ -647,17 +647,17 @@ const validateLinkTarget = async (
     const changeCase = await db.changeCase.getCase(workspace, targetId);
     httpAssert.present(changeCase, { status: 404, message: 'Planned change not found' });
     if (changeCase.project_id != null) {
-      const project = await db.project.getProject(workspace, changeCase.project_id);
+      const project = await db.project.projects.getProject(workspace, changeCase.project_id);
       httpAssert.present(project, { status: 404, message: 'Planned change project not found' });
       requireProjectAccess(authCtx, project.owner);
     }
     return;
   }
   if (targetType === 'document') {
-    const document = await db.project.getAnyContentNodeById(workspace, targetId);
+    const document = await db.project.contentNodes.getAnyContentNodeById(workspace, targetId);
     httpAssert.present(document, { status: 404, message: 'Document not found' });
     if (document.project_id != null) {
-      const project = await db.project.getProject(workspace, document.project_id);
+      const project = await db.project.projects.getProject(workspace, document.project_id);
       httpAssert.present(project, { status: 404, message: 'Document project not found' });
       requireProjectAccess(authCtx, project.owner);
     } else {

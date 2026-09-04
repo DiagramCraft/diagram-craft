@@ -74,21 +74,27 @@ const makeDb = (overrides: Record<string, unknown> = {}): DatabaseAdapter =>
       }))
     },
     project: {
-      getAnyContentNodeById: vi.fn(async () => ({
-        id: 'node-1',
-        workspace: 'ws-1',
-        name: 'Runbook',
-        project_id: 'proj-1',
-        project_public_id: 'proj-1-public',
-        entity_id: null
-      })),
-      getAssessmentById: vi.fn(async () => ({
-        id: 'asmnt-1',
-        workspace: 'ws-1',
-        project_id: 'proj-1',
-        name: 'Security Readiness'
-      })),
-      getProject: vi.fn(async () => ({ id: 'proj-1', owner: null, public_id: 'proj-1-public' }))
+      contentNodes: {
+        getAnyContentNodeById: vi.fn(async () => ({
+          id: 'node-1',
+          workspace: 'ws-1',
+          name: 'Runbook',
+          project_id: 'proj-1',
+          project_public_id: 'proj-1-public',
+          entity_id: null
+        }))
+      },
+      assessments: {
+        getAssessmentById: vi.fn(async () => ({
+          id: 'asmnt-1',
+          workspace: 'ws-1',
+          project_id: 'proj-1',
+          name: 'Security Readiness'
+        }))
+      },
+      projects: {
+        getProject: vi.fn(async () => ({ id: 'proj-1', owner: null, public_id: 'proj-1-public' }))
+      }
     },
     auth: {
       listUsers: vi.fn(async () => [{ id: 'user-1', display_name: 'User One' }])
@@ -126,14 +132,16 @@ describe('listDiscussionPosts', () => {
   it('checks content.view for content_node objects with no owning project', async () => {
     const db = makeDb({
       project: {
-        getAnyContentNodeById: vi.fn(async () => ({
-          id: 'node-2',
-          workspace: 'ws-1',
-          name: 'Workspace page',
-          project_id: null,
-          project_public_id: null,
-          entity_id: null
-        }))
+        contentNodes: {
+          getAnyContentNodeById: vi.fn(async () => ({
+            id: 'node-2',
+            workspace: 'ws-1',
+            name: 'Workspace page',
+            project_id: null,
+            project_public_id: null,
+            entity_id: null
+          }))
+        }
       }
     });
     await listDiscussionPosts(db, 'ws-1', 'content_node', 'node-2', event);

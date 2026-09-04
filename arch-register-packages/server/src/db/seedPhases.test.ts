@@ -87,7 +87,7 @@ describe('composable seed phases', () => {
       );
       expect(await provisioned.db.catalog.listSharedFieldGroups(defaultWorkspace)).toEqual([]);
       expect(await provisioned.db.catalog.listEntities(defaultWorkspace)).toEqual([]);
-      expect(await provisioned.db.project.listProjects(defaultWorkspace)).toEqual([]);
+      expect(await provisioned.db.project.projects.listProjects(defaultWorkspace)).toEqual([]);
       expect(await provisioned.db.relation.listRelationSchemas(defaultWorkspace)).toEqual([]);
       const users = await provisioned.db.auth.listUsers();
       expect(users.filter(user => !user.is_system_actor)).toHaveLength(1);

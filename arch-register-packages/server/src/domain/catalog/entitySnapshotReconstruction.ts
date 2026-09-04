@@ -116,7 +116,7 @@ export const resolveFutureUpdatesByRecord = async (
       ? futureUpdateProjectIds
       : futureUpdateProjectIds.length === 0
         ? []
-        : (await db.project.listProjects(workspace))
+        : (await db.project.projects.listProjects(workspace))
             .filter(
               project =>
                 futureUpdateProjectIdSet.has(project.id) && canAccessProject(authCtx, project.owner)
@@ -138,7 +138,7 @@ export const resolveFutureUpdatesByRecord = async (
   const milestoneTargetDates = new Map(
     milestoneIds.length === 0
       ? []
-      : (await db.project.listMilestones(workspace))
+      : (await db.project.milestones.listMilestones(workspace))
           .filter(m => milestoneIdSet.has(m.id))
           .map(m => [m.id, m.target_date] as const)
   );

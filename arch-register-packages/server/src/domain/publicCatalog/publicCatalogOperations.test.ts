@@ -88,9 +88,11 @@ const makeDb = (storedConfig: Record<string, unknown> | null = publicConfig) =>
       getSchema: vi.fn(async () => schema)
     },
     project: {
-      getAnyContentNodeById: vi.fn(async () => null),
-      listWorkspaceContentNodes: vi.fn(async () => []),
-      listEntityContentNodes: vi.fn(async () => [])
+      contentNodes: {
+        getAnyContentNodeById: vi.fn(async () => null),
+        listWorkspaceContentNodes: vi.fn(async () => []),
+        listEntityContentNodes: vi.fn(async () => [])
+      }
     },
     artifact: {
       getArtifact: vi.fn(async () => null),
@@ -139,8 +141,8 @@ describe('public catalog publication', () => {
     };
     const db = makeDb();
     db.catalog.listEntities = vi.fn(async () => [entity, projectEntity]) as never;
-    db.project.listWorkspaceContentNodes = vi.fn(async () => [workspacePage]) as never;
-    db.project.listEntityContentNodes = vi.fn(async (_workspace, entityId) =>
+    db.project.contentNodes.listWorkspaceContentNodes = vi.fn(async () => [workspacePage]) as never;
+    db.project.contentNodes.listEntityContentNodes = vi.fn(async (_workspace, entityId) =>
       entityId === entity.id ? [entityPage] : []
     ) as never;
 
@@ -483,7 +485,7 @@ describe('public catalog publication', () => {
         }
       ]
     });
-    db.project.getAnyContentNodeById = vi.fn(async () => ({
+    db.project.contentNodes.getAnyContentNodeById = vi.fn(async () => ({
       id: 'node-1',
       workspace: 'workspace-1',
       project_id: null,
@@ -508,7 +510,7 @@ describe('public catalog publication', () => {
       ...publicConfig,
       pages: [{ nodeId: 'node-1', scope: 'workspace', publicPath: 'guide', order: 0 }]
     });
-    db.project.getAnyContentNodeById = vi.fn(async () => ({
+    db.project.contentNodes.getAnyContentNodeById = vi.fn(async () => ({
       id: 'node-1',
       workspace: 'workspace-1',
       project_id: null,

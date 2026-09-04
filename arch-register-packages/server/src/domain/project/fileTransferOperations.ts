@@ -66,7 +66,7 @@ export const uploadContentFile = async (
           }
         ],
         writeDatabase: async tx => {
-          row = await tx.project.upsertContentNode({
+          row = await tx.project.contentNodes.upsertContentNode({
             id: nodeId,
             workspace: ws,
             ...contentNodeScopeFields(resolved),

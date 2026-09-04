@@ -122,7 +122,9 @@ const documentType = {
 const makeDb = (options: { withDocumentType?: boolean } = {}) =>
   ({
     project: {
-      getAnyContentNodeById: vi.fn(async () => node)
+      contentNodes: {
+        getAnyContentNodeById: vi.fn(async () => node)
+      }
     },
     document: {
       getDocumentMetadata: vi.fn(async () => ({
