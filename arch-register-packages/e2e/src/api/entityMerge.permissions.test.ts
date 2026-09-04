@@ -53,5 +53,53 @@ test.describe('entity merge preview permissions', () => {
         body: { targetId }
       })
     ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+
+    const targetBeforeMerge = await server.db.catalog.getEntity(resources.workspaceId, targetId);
+    const executeBody = {
+      targetId,
+      expectedSourceVersion: preview.sourceVersion,
+      expectedTargetVersion: preview.targetVersion,
+      previewFingerprint: preview.previewFingerprint,
+      fieldResolutions: Object.fromEntries(
+        preview.fieldConflicts.map(conflict => [conflict.fieldKey, 'target'])
+      ) as Record<string, 'source' | 'target'>,
+      relationResolutions: Object.fromEntries(
+        preview.relationConflicts.map(conflict => [
+          conflict.relationId,
+          conflict.note === 'self' ? 'drop_source' : 'keep_target'
+        ])
+      ) as Record<string, 'keep_source' | 'keep_target' | 'drop_source'>,
+      sideTableResolutions: Object.fromEntries(
+        preview.sideTableConflicts.map(conflict => [conflict.conflictId, 'keep_target'])
+      ) as Record<string, 'keep_source' | 'keep_target' | 'drop_source'>
+    };
+
+    await expect(
+      personas.globalAdmin.orpc.entityMerges.execute({
+        params: { workspace: 'default', id: sourceId },
+        body: { ...executeBody, previewFingerprint: `stale-${preview.previewFingerprint}` }
+      })
+    ).rejects.toMatchObject({ status: 409 });
+
+    const executed = await personas.globalAdmin.orpc.entityMerges.execute({
+      params: { workspace: 'default', id: sourceId },
+      body: executeBody
+    });
+    expect(executed.sourceId).toBe(sourceId);
+    expect(executed.targetId).toBe(targetId);
+    expect(executed.entity._uid).toBe(targetId);
+
+    const targetAfterMerge = await server.db.catalog.getEntity(resources.workspaceId, targetId);
+    expect(targetAfterMerge?.version).toBe((targetBeforeMerge?.version ?? 1) + 1);
+    const retiredLookup = await server.db.catalog.getEntity(resources.workspaceId, sourceId);
+    expect(retiredLookup?.id).toBe(targetId);
+    expect(retiredLookup?.redirect?.from).toBe(sourceId);
+    expect(
+      await server.db.catalog.resolveCatalogRecordMerge(resources.workspaceId, {
+        kind: 'id',
+        value: sourceId
+      })
+    ).toMatchObject({ canonical_record_id: targetId, merged_record_id: sourceId });
+    expect(await server.db.catalog.listEntityVersions(resources.workspaceId, sourceId)).toEqual([]);
   });
 });

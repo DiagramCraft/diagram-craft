@@ -49,6 +49,7 @@ import { recordSqlSpan } from '../dev/devTrace';
 import { isDevTracingEnabled } from '../domain/dev/devMode';
 import { PostgresPublicCatalogDatabase } from '../domain/publicCatalog/db/postgresPublicCatalog';
 import { PostgresConformanceDatabase } from '../domain/conformance/db/postgresConformance';
+import { PostgresEntityMergeDatabase } from '../domain/catalog/db/postgresEntityMerge';
 
 const PGCRYPTO_EXISTS_NOTICE = 'extension "pgcrypto" already exists, skipping';
 const logger = createLogger('postgres');
@@ -100,6 +101,7 @@ export class PostgresDatabase implements DatabaseAdapter {
   readonly baseline: PostgresBaselineDatabase;
   readonly publicCatalog: PostgresPublicCatalogDatabase;
   readonly conformance: PostgresConformanceDatabase;
+  readonly entityMerge: PostgresEntityMergeDatabase;
   readonly core;
 
   private adapterFor(sql: PostgresQueryClient): DatabaseAdapter {
@@ -141,7 +143,8 @@ export class PostgresDatabase implements DatabaseAdapter {
       artifactProcessors: createArtifactProcessorRegistry([apiSpecificationArtifactProcessor]),
       baseline: new PostgresBaselineDatabase(sql),
       conformance: new PostgresConformanceDatabase(sql),
-      publicCatalog: new PostgresPublicCatalogDatabase(sql)
+      publicCatalog: new PostgresPublicCatalogDatabase(sql),
+      entityMerge: new PostgresEntityMergeDatabase(sql)
     };
     let bound!: DatabaseAdapter;
     bound = {
@@ -226,6 +229,7 @@ export class PostgresDatabase implements DatabaseAdapter {
     this.artifactProcessors = createArtifactProcessorRegistry([apiSpecificationArtifactProcessor]);
     this.publicCatalog = new PostgresPublicCatalogDatabase(this.sql);
     this.conformance = new PostgresConformanceDatabase(this.sql);
+    this.entityMerge = new PostgresEntityMergeDatabase(this.sql);
 
     this.core = {
       driver: 'postgres' as const,

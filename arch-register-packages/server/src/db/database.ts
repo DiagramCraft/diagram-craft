@@ -33,6 +33,7 @@ import type { ArtifactProcessorRegistry } from '../domain/artifact/artifactProce
 import type { BaselineDatabase } from '../domain/baseline/db/baselineDatabase';
 import type { PublicCatalogDatabase } from '../domain/publicCatalog/db/publicCatalogDatabase';
 import type { ConformanceDatabase } from '../domain/conformance/db/conformanceDatabase';
+import type { EntityMergeDatabase } from '../domain/catalog/db/entityMergeDatabase';
 // Keep the existing import path stable for database consumers.
 // biome-ignore lint/performance/noBarrelFile: compatibility re-export for database errors
 export { DatabaseError, type NormalizedDbErrorCode } from './databaseError';
@@ -89,6 +90,7 @@ export type DatabaseAdapter = {
   baseline: BaselineDatabase;
   publicCatalog: PublicCatalogDatabase;
   conformance: ConformanceDatabase;
+  entityMerge: EntityMergeDatabase;
 };
 
 // Re-export domain types for convenience if needed, or just let consumers import from domain
@@ -258,6 +260,12 @@ export type {
   BaselineRecordDbCreate,
   BaselineRecordDbResult
 } from '../domain/baseline/db/baselineDatabase';
+export type {
+  EntityMergeDatabase,
+  EntityMergeSideTableSnapshot,
+  MergeExternalIdentityRow,
+  MergeSideTableRow
+} from '../domain/catalog/db/entityMergeDatabase';
 export type {
   PublicCatalogDatabase,
   PublicCatalogConfigDbResult,

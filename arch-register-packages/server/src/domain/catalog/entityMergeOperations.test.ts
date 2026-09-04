@@ -3,6 +3,11 @@ import { buildAuthorizationContext } from '@arch-register/permissions';
 import type { Entity, SchemaDbResult } from './db/catalogDatabase';
 import type { RelationDbResult } from './db/relationDatabase';
 import { buildFieldConflicts, buildRelationConflicts } from './entityMergeOperations';
+import {
+  buildMergeSideTableAutoDedupeRowIds,
+  buildMergeSideTableConflicts,
+  type MergeSideTableRow
+} from './db/entityMergeDatabase';
 
 const now = new Date('2026-09-04T12:00:00.000Z');
 
@@ -67,6 +72,7 @@ describe('buildFieldConflicts', () => {
     const conflicts = buildFieldConflicts(source, target, schema, schema, authCtx(true));
 
     expect(conflicts).toContainEqual({
+      fieldKey: 'core:name',
       fieldName: 'name',
       kind: 'core',
       source: 'New name',
@@ -74,6 +80,7 @@ describe('buildFieldConflicts', () => {
       restricted: false
     });
     expect(conflicts).toContainEqual({
+      fieldKey: 'data:tier',
       fieldName: 'Tier',
       kind: 'data',
       source: 'gold',
@@ -88,9 +95,15 @@ describe('buildFieldConflicts', () => {
 
     const conflicts = buildFieldConflicts(source, target, schema, schema, authCtx(false));
 
-    expect(conflicts).toEqual([
-      { fieldName: 'Secret', kind: 'data', source: null, target: null, restricted: true }
-    ]);
+    expect(conflicts).toHaveLength(1);
+    expect(conflicts[0]).toMatchObject({
+      fieldName: 'Secret',
+      kind: 'data',
+      source: null,
+      target: null,
+      restricted: true
+    });
+    expect(conflicts[0]?.fieldKey).toMatch(/^data:[a-f0-9]{64}$/);
     expect(JSON.stringify(conflicts)).not.toContain('secret');
   });
 
@@ -102,6 +115,7 @@ describe('buildFieldConflicts', () => {
 
     expect(conflicts).toEqual([
       {
+        fieldKey: 'data:secret',
         fieldName: 'Secret',
         kind: 'data',
         source: 'source-secret',
@@ -153,6 +167,7 @@ describe('buildRelationConflicts', () => {
         direction: 'in',
         otherRecordId: 'target',
         otherRecordName: 'Other',
+        duplicateRelationId: null,
         note: 'self'
       }
     ]);
@@ -175,6 +190,7 @@ describe('buildRelationConflicts', () => {
         direction: 'in',
         otherRecordId: 'other',
         otherRecordName: 'Other',
+        duplicateRelationId: 'r2',
         note: 'duplicate'
       }
     ]);
@@ -183,5 +199,38 @@ describe('buildRelationConflicts', () => {
   it('does not flag a relation with no matching target relation', () => {
     const sourceRel = makeRelation({ id: 'r1', in_entity_id: 'source', out_entity_id: 'other' });
     expect(buildRelationConflicts('source', 'target', [sourceRel], relationSchemas)).toEqual([]);
+  });
+});
+
+describe('buildMergeSideTableConflicts', () => {
+  const rows = (sourceDedupeKey: string, targetDedupeKey: string): MergeSideTableRow[] => [
+    {
+      table: 'project_entity',
+      rowId: '{"entity_id":"source"}',
+      entityId: 'source',
+      uniqueKey: '{"project_id":"project"}',
+      dedupeKey: sourceDedupeKey
+    },
+    {
+      table: 'project_entity',
+      rowId: '{"entity_id":"target"}',
+      entityId: 'target',
+      uniqueKey: '{"project_id":"project"}',
+      dedupeKey: targetDedupeKey
+    }
+  ];
+
+  it('auto-deduplicates identical side-table rows', () => {
+    const snapshot = rows('same', 'same');
+    expect(buildMergeSideTableConflicts(snapshot, 'source', 'target')).toEqual([]);
+    expect(buildMergeSideTableAutoDedupeRowIds(snapshot, 'source', 'target')).toEqual([
+      '{"entity_id":"source"}'
+    ]);
+  });
+
+  it('surfaces non-identical side-table collisions for explicit resolution', () => {
+    const snapshot = rows('source-row', 'target-row');
+    expect(buildMergeSideTableConflicts(snapshot, 'source', 'target')).toHaveLength(1);
+    expect(buildMergeSideTableAutoDedupeRowIds(snapshot, 'source', 'target')).toEqual([]);
   });
 });
