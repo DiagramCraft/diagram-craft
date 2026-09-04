@@ -96,7 +96,7 @@ const parseValue = (state: ParserState): TextValue => {
 
 type Scope = { filter?: TextQueryNode; captures?: TextCapture[] };
 
-// `columns` / `chain` / `as` are contextual keywords: they only mean the clause / marker when the
+// `columns` / `path` / `as` are contextual keywords: they only mean the clause / marker when the
 // next token begins a capture path (an identifier or a traversal arrow). `columns = "x"` inside a
 // bracket is still an ordinary predicate on a field literally named `columns`.
 const nextBeginsCaptureStep = (state: ParserState, lookahead = 1): boolean => {
@@ -122,10 +122,10 @@ const parseStepNoScope = (state: ParserState): TextPathStep => {
 
 const parseCapture = (state: ParserState): TextCapture => {
   const start = peek(state);
-  let chain = false;
-  if (start.kind === 'IDENT' && start.text === 'chain' && nextBeginsCaptureStep(state)) {
+  let includePath = false;
+  if (start.kind === 'IDENT' && start.text === 'path' && nextBeginsCaptureStep(state)) {
     advance(state);
-    chain = true;
+    includePath = true;
   }
   const steps: TextPathStep[] = [parseStepNoScope(state)];
   while (peek(state).kind === 'DOT') {
@@ -141,7 +141,7 @@ const parseCapture = (state: ParserState): TextCapture => {
     aliasOffset = aliasToken.offset;
   }
   return {
-    chain,
+    includePath,
     steps,
     ...(alias !== undefined ? { alias, aliasOffset } : {}),
     offset: start.offset

@@ -104,7 +104,7 @@ export const tokenize = (input: string): Token[] => {
       continue;
     }
     if (isIdentStart(ch)) {
-      // `columns`, `chain`, and `as` are contextual keywords — the parser recognises them purely by
+      // `columns`, `path`, and `as` are contextual keywords — the parser recognises them purely by
       // position (inside a `[...]` scope), the same way `date(` / `now(` / `schema:` / `text:` are.
       let j = i + 1;
       while (j < input.length && isIdentChar(input[j]!)) j += 1;

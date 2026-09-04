@@ -20,7 +20,7 @@ import { collectRootPathOccurrences, entityQueryPathStartsWith } from './entityQ
 
 // Pre-rendered `columns` capture entries, keyed by the identity of the `PathStep` in `query.root`
 // that a projection binds to. Populated per `printEntityQueryText` call, read by `printScope`.
-type ColumnEntry = { chain: boolean; tail: string; alias?: string };
+type ColumnEntry = { includePath: boolean; tail: string; alias?: string };
 let activeColumnsByStep: WeakMap<PathStep, ColumnEntry[]> | null = null;
 
 export type EntityQueryTextPrintOptions = {
@@ -200,7 +200,7 @@ const renderColumnsClause = (entries: ColumnEntry[]): string =>
   `columns ${entries
     .map(
       entry =>
-        `${entry.chain ? 'chain ' : ''}${entry.tail}${
+        `${entry.includePath ? 'path ' : ''}${entry.tail}${
           entry.alias !== undefined ? ` as ${quoteString(entry.alias)}` : ''
         }`
     )
@@ -808,10 +808,10 @@ const planProjectionColumns = (
     if (anchor && anchor.length > 0) {
       const tailSteps = projection.path.slice(anchor.length);
       const entry: ColumnEntry = {
-        chain: projection.chain === true,
+        includePath: projection.includePath === true,
         tail: renderCaptureTail(
           tailSteps,
-          projection.chain ? null : projection.fieldId,
+          projection.includePath ? null : projection.fieldId,
           schemas,
           relationSchemas
         ),
@@ -821,7 +821,7 @@ const planProjectionColumns = (
       const list = byStep.get(step) ?? [];
       list.push(entry);
       byStep.set(step, list);
-    } else if (projection.path.length > 0 && !projection.chain) {
+    } else if (projection.path.length > 0 && !projection.includePath) {
       const pathText = projection.path
         .map(step => stepName(step, schemas, relationSchemas))
         .join('.');

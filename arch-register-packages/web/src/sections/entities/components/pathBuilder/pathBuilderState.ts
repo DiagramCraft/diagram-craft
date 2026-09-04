@@ -25,18 +25,20 @@ export type PathPosition =
   | { kind: 'entity'; schemaScope: PathSchemaScope }
   | { kind: 'relation'; relationScope: PathSchemaScope };
 
-/** One matched chain is one full root-to-leaf hop sequence (e.g. Domain -> System -> Component) -
+/** One included path is one full root-to-leaf hop sequence (e.g. Domain -> System -> Component) -
  *  kept as its own ordered node list so branches (a Domain with multiple Systems, each with their
  *  own Components) render as separate lines/subtrees instead of being pooled into one flat,
- *  uncorrelated bag of nodes. Produced by a `chain: true` projection (entityQueryIR.ts). */
-export type PathChain = Array<{ id: string; name: string; schemaId: string }>;
+ *  uncorrelated bag of nodes. Produced by an `includePath: true` projection (entityQueryIR.ts). */
+export type IncludedPath = Array<{ id: string; name: string; schemaId: string }>;
 
-const isChainNode = (value: unknown): value is { id: string; name: unknown; schemaId: unknown } =>
+const isIncludedPathNode = (
+  value: unknown
+): value is { id: string; name: unknown; schemaId: unknown } =>
   value != null && typeof value === 'object' && typeof (value as { id?: unknown }).id === 'string';
 
-// The chain aggregate has no defined order (no ORDER BY inside json_agg/json_group_array), so
-// display order is sorted client-side rather than left to incidental DB row order.
-const compareChains = (left: PathChain, right: PathChain): number => {
+// The included-path aggregate has no defined order (no ORDER BY inside json_agg/json_group_array),
+// so display order is sorted client-side rather than left to incidental DB row order.
+const compareIncludedPaths = (left: IncludedPath, right: IncludedPath): number => {
   const length = Math.max(left.length, right.length);
   for (let index = 0; index < length; index += 1) {
     const cmp = (left[index]?.name ?? '').localeCompare(right[index]?.name ?? '');
@@ -45,30 +47,30 @@ const compareChains = (left: PathChain, right: PathChain): number => {
   return 0;
 };
 
-/** Decodes a `chain: true` projection value: an array of matched chains, each an array of
+/** Decodes an `includePath: true` projection value: an array of matched paths, each an array of
  *  per-hop `{ id, name, schemaId }` nodes in hop order, sorted hop-by-hop for a stable display
- *  order. Malformed/short chains are dropped defensively rather than partially rendered. */
-export const decodeChainProjection = (value: unknown): PathChain[] => {
+ *  order. Malformed/short paths are dropped defensively rather than partially rendered. */
+export const decodeIncludePathProjection = (value: unknown): IncludedPath[] => {
   if (!Array.isArray(value)) return [];
   return value
-    .filter((chain): chain is unknown[] => Array.isArray(chain) && chain.length > 0)
-    .map(chain =>
-      chain.filter(isChainNode).map(node => ({
+    .filter((path): path is unknown[] => Array.isArray(path) && path.length > 0)
+    .map(path =>
+      path.filter(isIncludedPathNode).map(node => ({
         id: node.id,
         name: typeof node.name === 'string' ? node.name : node.id,
         schemaId: typeof node.schemaId === 'string' ? node.schemaId : ''
       }))
     )
-    .filter(chain => chain.length > 0)
-    .sort(compareChains);
+    .filter(path => path.length > 0)
+    .sort(compareIncludedPaths);
 };
 
-/** Adds a single correlated `chain: true` projection for `path` (aliased `alias`) onto `query`'s
- *  root scope, unless a projection with that alias already exists - shared by Map's
- *  `buildMapChainQuery` and Traceability's `buildTraceabilityEntityQuery` so the two ways of
- *  attaching a chain to a query can't drift apart. An empty `path` adds no projection, since
- *  `chain: true` requires a non-empty path. */
-export const addChainProjection = (
+/** Adds a single correlated `includePath: true` projection for `path` (aliased `alias`) onto
+ *  `query`'s root scope, unless a projection with that alias already exists - shared by Map's
+ *  `buildIncludePathMapQuery` and Traceability's `buildTraceabilityEntityQuery` so the two ways of
+ *  attaching an included path to a query can't drift apart. An empty `path` adds no projection,
+ *  since `includePath: true` requires a non-empty path. */
+export const addIncludePathProjection = (
   query: EntityQuery | null | undefined,
   path: PathStep[],
   alias: string
@@ -78,20 +80,23 @@ export const addChainProjection = (
   if ((baseQuery.projections ?? []).some(p => p.alias === alias)) return baseQuery;
   return {
     ...baseQuery,
-    projections: [...(baseQuery.projections ?? []), { path, fieldId: '_id', alias, chain: true }]
+    projections: [
+      ...(baseQuery.projections ?? []),
+      { path, fieldId: '_id', alias, includePath: true }
+    ]
   };
 };
 
-/** Whether `chain`'s leaf (last) node matches `targetSchemaIds` - `'any'` always matches. A
- *  target restricts which matched chains are kept, based on the leaf hop's schema, not just which
+/** Whether `path`'s leaf (last) node matches `targetSchemaIds` - `'any'` always matches. A
+ *  target restricts which matched paths are kept, based on the leaf hop's schema, not just which
  *  candidate entities are checked elsewhere (e.g. Traceability's orphan detection). Shared by
  *  Traceability's per-path target filter and Map's last-level target filter (#3040-map). */
-export const chainMatchesTarget = (
-  chain: PathChain,
+export const includePathMatchesTarget = (
+  path: IncludedPath,
   targetSchemaIds: 'any' | string[]
 ): boolean => {
   if (targetSchemaIds === 'any') return true;
-  const leaf = chain[chain.length - 1];
+  const leaf = path[path.length - 1];
   return leaf != null && targetSchemaIds.includes(leaf.schemaId);
 };
 

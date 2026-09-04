@@ -343,7 +343,7 @@
   font-size: 12px;
 }
 
-.pathChain {
+.pathEntry {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;

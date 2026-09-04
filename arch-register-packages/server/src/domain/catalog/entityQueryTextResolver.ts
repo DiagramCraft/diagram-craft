@@ -712,9 +712,9 @@ function emitCapture(
 
   const terminal = captureSteps[captureSteps.length - 1]!;
 
-  if (capture.chain) {
-    const chainPath = [...segmentPrefix, ...captureSteps.map(s => s.step)];
-    const badStep = chainPath.find(
+  if (capture.includePath) {
+    const includePathHops = [...segmentPrefix, ...captureSteps.map(s => s.step)];
+    const badStep = includePathHops.find(
       s =>
         s.kind !== 'forward' &&
         s.kind !== 'backward' &&
@@ -723,15 +723,15 @@ function emitCapture(
     );
     if (badStep) {
       throw new TextCompileError(
-        `'chain' columns only traverse forward/backward/typedRelation hops, not '${badStep.kind}'`,
+        `'path' columns only traverse forward/backward/typedRelation hops, not '${badStep.kind}'`,
         capture.offset
       );
     }
-    assertProjectionHopBudget(chainPath, capture.offset);
+    assertProjectionHopBudget(includePathHops, capture.offset);
     state.projections.push({
-      path: chainPath,
+      path: includePathHops,
       fieldId: terminal.fieldId,
-      chain: true,
+      includePath: true,
       ...(capture.alias !== undefined ? { alias: capture.alias } : {})
     });
     return;

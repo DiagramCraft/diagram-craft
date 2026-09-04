@@ -386,7 +386,7 @@ const describe = (query: EntityQuery): string => {
     ? `  ·  columns ${query.projections
         .map(
           p =>
-            `${p.chain ? 'chain ' : ''}${pathStepSummary(p.path)}.${p.fieldId}${p.alias ? ` as ${p.alias}` : ''}`
+            `${p.includePath ? 'path ' : ''}${pathStepSummary(p.path)}.${p.fieldId}${p.alias ? ` as ${p.alias}` : ''}`
         )
         .join(', ')}`
     : '';
@@ -854,7 +854,7 @@ export const ProjectionColumns = () => (
       },
       projections: [
         { path: [fwd('system')], fieldId: 'tier', alias: 'System tier' },
-        { path: [fwd('system'), fwd('domain')], fieldId: '_id', chain: true }
+        { path: [fwd('system'), fwd('domain')], fieldId: '_id', includePath: true }
       ]
     }}
   />
@@ -1088,7 +1088,7 @@ export const KitchenSink = () => (
       },
       projections: [
         { path: [fwd('system')], fieldId: 'tier', alias: 'System tier' },
-        { path: [fwd('system'), fwd('domain')], fieldId: '_id', chain: true }
+        { path: [fwd('system'), fwd('domain')], fieldId: '_id', includePath: true }
       ]
     }}
   />

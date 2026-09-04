@@ -44,10 +44,10 @@ const relationSchemaIdOfLastStep = (path: PathStep[]): string | undefined => {
 
 /**
  * One projection column: a `HopSequence` of capture hops past the (optional) locked leaf prefix,
- * ending on a terminal scalar field, plus alias and - depending on the path shape - a "whole chain"
- * (`chain: true`) or "read off the relation link" (`source: 'relation'`) toggle. Reuses the same
- * position-aware `pathBuilder` traversal infra as the filter-leaf editor. A path the editor can't
- * represent renders read-only (#2354 phase 8; hop-attached #3162).
+ * ending on a terminal scalar field, plus alias and - depending on the path shape - a "whole path"
+ * (`includePath: true`) or "read off the relation link" (`source: 'relation'`) toggle. Reuses the
+ * same position-aware `pathBuilder` traversal infra as the filter-leaf editor. A path the editor
+ * can't represent renders read-only (#2354 phase 8; hop-attached #3162).
  */
 export const ProjectionRow = ({
   projection,
@@ -134,7 +134,7 @@ export const ProjectionRow = ({
 
   const visibleSteps = projection.path.slice(lockedPrefixLength);
   const canRemoveHop = projection.path.length > lockedPrefixLength;
-  const showChainToggle = rootKind === 'entity' && !relationSource;
+  const showIncludePathToggle = rootKind === 'entity' && !relationSource;
   const canReadRelationRow =
     lastStepKind(projection.path) === 'typedRelation' ||
     lastStepKind(projection.path) === 'unboundTypedRelation';
@@ -210,25 +210,25 @@ export const ProjectionRow = ({
       </div>
 
       <div className={styles.projectionTerminal}>
-        {showChainToggle && (
-          <label className={styles.projectionChain}>
+        {showIncludePathToggle && (
+          <label className={styles.projectionToggle}>
             <input
               type="checkbox"
-              checked={projection.chain === true}
+              checked={projection.includePath === true}
               onChange={event =>
                 onChange({
                   ...projection,
-                  chain: event.target.checked ? true : undefined,
+                  includePath: event.target.checked ? true : undefined,
                   fieldId: event.target.checked ? '_id' : '_name'
                 })
               }
             />
-            whole chain
+            whole path
           </label>
         )}
 
-        {canReadRelationRow && projection.chain !== true && (
-          <label className={styles.projectionChain}>
+        {canReadRelationRow && projection.includePath !== true && (
+          <label className={styles.projectionToggle}>
             <input
               type="checkbox"
               checked={relationSource}
@@ -244,7 +244,7 @@ export const ProjectionRow = ({
           </label>
         )}
 
-        {projection.chain !== true && (
+        {projection.includePath !== true && (
           <div className={styles.projectionField}>
             <Select.Root
               value={projection.fieldId}

@@ -24,9 +24,9 @@ import {
   resolveMapTraversalPath
 } from './mapViewState';
 import {
-  chainMatchesTarget,
+  includePathMatchesTarget,
   targetSchemaIdsForStep,
-  type PathChain,
+  type IncludedPath,
   type PathSchemaScope
 } from './pathBuilder/pathBuilderState';
 import {
@@ -49,10 +49,10 @@ import { MapLegend } from './MapLegend';
 import { MapConfigControls } from './MapConfigControls';
 import { MapTreeContent } from './MapTreeContent';
 import {
-  buildMapChainQuery,
-  buildTreeFromChains,
-  collectMapChainNodeIds,
-  decodeMapChainsByRoot,
+  buildIncludePathMapQuery,
+  buildTreeFromIncludedPaths,
+  collectIncludedPathNodeIds,
+  decodeMapIncludedPathsByRoot,
   isRelationMapNode,
   toTreeNode,
   useMapTraversal,
@@ -89,28 +89,28 @@ type MapViewProps = {
   onCountChange?: (count: number) => void;
 };
 
-// Under chain traversal, the terminal schema comes from the last hop's resolved candidates (or,
+// Under include-path traversal, the terminal schema comes from the last hop's resolved candidates (or,
 // for a single-level map with no hops at all, the root scope) rather than the level's own
 // possibly-arbitrary `schemaId` - when that resolves to more than one schema and no explicit
 // target was picked, there's no single schema to read fields from, so the metric falls back to
 // schema-agnostic fields only (#3040-map).
 const resolveMetricTerminalSchemaId = (args: {
-  useChainTraversal: boolean;
-  fullHopChain: PathStep[] | null;
+  useIncludePathTraversal: boolean;
+  fullHopPath: PathStep[] | null;
   lastHopCandidateSchemaIds: string[];
   lastLevelTargetSchemaId: string | null;
   rootSchemaScope: PathSchemaScope;
   legacyTerminalSchemaId: string | null;
 }): string | null => {
   const {
-    useChainTraversal,
-    fullHopChain,
+    useIncludePathTraversal,
+    fullHopPath,
     lastHopCandidateSchemaIds,
     lastLevelTargetSchemaId,
     rootSchemaScope
   } = args;
-  if (!useChainTraversal) return args.legacyTerminalSchemaId;
-  if (fullHopChain && fullHopChain.length > 0) {
+  if (!useIncludePathTraversal) return args.legacyTerminalSchemaId;
+  if (fullHopPath && fullHopPath.length > 0) {
     return lastHopCandidateSchemaIds.length <= 1
       ? (lastHopCandidateSchemaIds[0] ?? null)
       : lastLevelTargetSchemaId;
@@ -169,51 +169,51 @@ export const MapView = ({
 
   // The same root-schema-scope concept Traceability uses for its path-builder: not one pinned
   // schema, just whatever the current filter narrows the browser to (or every schema, if nothing
-  // narrows it). Threaded into the hop editor and hop-chain resolution below exactly like
+  // narrows it). Threaded into the hop editor and hop-path resolution below exactly like
   // Traceability threads `rootSchemaScope` through `traceabilityPathStepContext` - Map's levels
-  // are the same kind of PathStep chain, just rendered as stacked boxes instead of inline chips.
+  // are the same kind of PathStep path, just rendered as stacked boxes instead of inline chips.
   const rootSchemaScope: PathSchemaScope = useMemo(
     () => (rootSchemaIds.length > 0 ? rootSchemaIds : 'any'),
     [rootSchemaIds]
   );
 
-  // A map whose whole level chain is expressible as PathSteps (no "relation shown as its own
-  // level" entry anywhere) fetches via a correlated chain projection instead of the legacy
+  // A map whose whole level path is expressible as PathSteps (no "relation shown as its own
+  // level" entry anywhere) fetches via a correlated included-path projection instead of the legacy
   // flat-schema-fetch + client-side containment reassembly. This is what lets a level traverse any
   // relation kind, not just containment/reference, and lets Level 1 stand for "every entity
   // matching the current filter" rather than one pinned schema.
-  const useChainTraversal = useMemo(
+  const useIncludePathTraversal = useMemo(
     () =>
       cfg.levelConfigs.every(
         level => level.schemaId == null || schemas.some(schema => schema.id === level.schemaId)
       ),
     [cfg.levelConfigs, schemas]
   );
-  // The chain of hops actually saved so far (levels beyond the first) - stops at the first level
+  // The path of hops actually saved so far (levels beyond the first) - stops at the first level
   // that hasn't had its hop resolved yet (a just-added blank level, before the hop editor's own
   // auto-pick-and-persist effect catches up one render later), rather than guessing a default here
   // too - that duplicate guessing is exactly what previously drifted out of sync with what the hop
   // editor displayed (#3040-map).
-  const fullHopChain = useMemo(() => {
-    if (!useChainTraversal) return null;
+  const fullHopPath = useMemo(() => {
+    if (!useIncludePathTraversal) return null;
     const steps: PathStep[] = [];
     for (const level of cfg.levelConfigs.slice(1)) {
       if (!level.step) break;
       steps.push(level.step);
     }
     return steps;
-  }, [cfg.levelConfigs, useChainTraversal]);
+  }, [cfg.levelConfigs, useIncludePathTraversal]);
 
   // The last hop's own candidate target schemas (e.g. an 'any'-endpoint relation resolves to
   // several) - when there's more than one, the last level's `targetSchemaId` (set via the hop
   // editor's target-schema dropdown, mirroring Traceability's per-path target) both filters
-  // matched chains down to that schema and picks which schema's fields the metric can use.
+  // matched paths down to that schema and picks which schema's fields the metric can use.
   // Left unset ("any"), results keep every candidate schema and the metric only offers
   // schema-agnostic fields (lifecycle, assessment) - there's no single schema to read from.
   const lastHopCandidateSchemaIds = useMemo(() => {
-    const lastStep = fullHopChain?.at(-1);
+    const lastStep = fullHopPath?.at(-1);
     return lastStep ? targetSchemaIdsForStep(lastStep, schemas, relationSchemas) : [];
-  }, [fullHopChain, schemas, relationSchemas]);
+  }, [fullHopPath, schemas, relationSchemas]);
   const lastLevelTargetSchemaId = cfg.levelConfigs.at(-1)?.targetSchemaId ?? null;
   const lastHopTargetFilter: 'any' | string[] =
     lastHopCandidateSchemaIds.length > 1 && lastLevelTargetSchemaId
@@ -232,24 +232,24 @@ export const MapView = ({
     schemaIds,
     treeExpansion: 'both',
     treeDepth: Math.max(0, cfg.levelConfigs.length - 1),
-    enabled: !useChainTraversal
+    enabled: !useIncludePathTraversal
   });
   const legacyNodeIds = useMemo(
-    () => (useChainTraversal ? [] : legacyNodes.map(node => node._uid)),
-    [legacyNodes, useChainTraversal]
+    () => (useIncludePathTraversal ? [] : legacyNodes.map(node => node._uid)),
+    [legacyNodes, useIncludePathTraversal]
   );
   const legacyEntityRelations = useMultipleEntityRelations(workspaceId, legacyNodeIds);
 
-  // MAP_CHAIN_ROOT_LIMIT: the flat entity-list endpoint paginates (default page size 200); the
+  // MAP_INCLUDE_PATH_ROOT_LIMIT: the flat entity-list endpoint paginates (default page size 200); the
   // legacy tree endpoint above doesn't, so this is set generously higher to avoid silently
   // truncating a large map's roots.
-  const MAP_CHAIN_ROOT_LIMIT = 2000;
+  const MAP_INCLUDE_PATH_ROOT_LIMIT = 2000;
   // Whenever an `entityQuery` is present on the request, the server compiles that query
   // exclusively and ignores the simple `schemaId`/`owner`/`lifecycle`/`q` options entirely (see
-  // `listEntitiesWithCount`) - so since the chain projection can only live inside an `entityQuery`,
+  // `listEntitiesWithCount`) - so since the included-path projection can only live inside an `entityQuery`,
   // every active simple filter has to be folded into it here, or it's silently dropped rather than
   // narrowing the roots.
-  const chainRootEntityQuery = useMemo((): EntityQuery => {
+  const includePathRootEntityQuery = useMemo((): EntityQuery => {
     if (entityQuery) return entityQuery;
     const built = buildEntityQueryFromBrowserFilters({
       typeFilter,
@@ -280,43 +280,48 @@ export const MapView = ({
       ? built
       : { ...built, root: { kind: 'and', children: [built.root, ...extra] } };
   }, [entityQuery, typeFilter, conditions, joinAssessmentId, q, ownerFilter, statusFilter]);
-  const chainQuery = useMemo(
-    () => buildMapChainQuery(chainRootEntityQuery, fullHopChain ?? []),
-    [chainRootEntityQuery, fullHopChain]
+  const includePathQuery = useMemo(
+    () => buildIncludePathMapQuery(includePathRootEntityQuery, fullHopPath ?? []),
+    [includePathRootEntityQuery, fullHopPath]
   );
-  const chainRoots = useEntities(
+  const includePathRoots = useEntities(
     workspaceId,
     {
       view: 'full',
-      entityQuery: chainQuery.query,
-      assessmentId: chainQuery.query.assessmentId ?? joinAssessmentId,
+      entityQuery: includePathQuery.query,
+      assessmentId: includePathQuery.query.assessmentId ?? joinAssessmentId,
       projectId,
       projectScope: projectId ? projectScope : undefined,
-      limit: MAP_CHAIN_ROOT_LIMIT
+      limit: MAP_INCLUDE_PATH_ROOT_LIMIT
     },
-    { enabled: useChainTraversal }
+    { enabled: useIncludePathTraversal }
   );
-  const chainsByRootId = useMemo(() => {
-    const decoded = decodeMapChainsByRoot(chainRoots.data);
+  const includedPathsByRootId = useMemo(() => {
+    const decoded = decodeMapIncludedPathsByRoot(includePathRoots.data);
     if (lastHopTargetFilter === 'any') return decoded;
-    const filtered = new Map<string, PathChain[]>();
-    for (const [rootId, chains] of decoded) {
+    const filtered = new Map<string, IncludedPath[]>();
+    for (const [rootId, paths] of decoded) {
       filtered.set(
         rootId,
-        chains.filter(chain => chainMatchesTarget(chain, lastHopTargetFilter))
+        paths.filter(path => includePathMatchesTarget(path, lastHopTargetFilter))
       );
     }
     return filtered;
-  }, [chainRoots.data, lastHopTargetFilter]);
-  const chainNodeIds = useMemo(() => collectMapChainNodeIds(chainsByRootId), [chainsByRootId]);
-  const chainNodeById = useEntitiesByIdSet(workspaceId, chainNodeIds, {
-    enabled: useChainTraversal
+  }, [includePathRoots.data, lastHopTargetFilter]);
+  const includedPathNodeIds = useMemo(
+    () => collectIncludedPathNodeIds(includedPathsByRootId),
+    [includedPathsByRootId]
+  );
+  const includedPathNodeById = useEntitiesByIdSet(workspaceId, includedPathNodeIds, {
+    enabled: useIncludePathTraversal
   });
 
-  const nodes = useChainTraversal ? chainRoots.data : legacyNodes;
+  const nodes = useIncludePathTraversal ? includePathRoots.data : legacyNodes;
   useEffect(() => {
-    onCountChange?.(useChainTraversal ? nodes.length : nodes.filter(node => node._isMatch).length);
-  }, [nodes, onCountChange, useChainTraversal]);
+    onCountChange?.(
+      useIncludePathTraversal ? nodes.length : nodes.filter(node => node._isMatch).length
+    );
+  }, [nodes, onCountChange, useIncludePathTraversal]);
   const linkedEntityIdSet = useMemo(() => new Set(linkedEntityIds ?? []), [linkedEntityIds]);
 
   const selectedDisplayFields = getDisplayFieldIds('map', cfg).map(
@@ -364,19 +369,21 @@ export const MapView = ({
     entityRelations: legacyEntityRelations,
     cfg
   });
-  const chainRenderTree = useMemo(
+  const includePathRenderTree = useMemo(
     () =>
-      useChainTraversal
-        ? buildTreeFromChains(chainRoots.data, chainsByRootId, id => chainNodeById.get(id))
+      useIncludePathTraversal
+        ? buildTreeFromIncludedPaths(includePathRoots.data, includedPathsByRootId, id =>
+            includedPathNodeById.get(id)
+          )
         : [],
-    [chainNodeById, chainRoots.data, chainsByRootId, useChainTraversal]
+    [includedPathNodeById, includePathRoots.data, includedPathsByRootId, useIncludePathTraversal]
   );
-  const level1Items = useChainTraversal
-    ? [...chainRoots.data]
+  const level1Items = useIncludePathTraversal
+    ? [...includePathRoots.data]
         .map(toTreeNode)
         .sort((a, b) => (a._name ?? a._slug).localeCompare(b._name ?? b._slug))
     : legacyTraversal.level1Items;
-  const renderTree = useChainTraversal ? chainRenderTree : legacyTraversal.renderTree;
+  const renderTree = useIncludePathTraversal ? includePathRenderTree : legacyTraversal.renderTree;
 
   const schemaMap = useMemo(() => {
     const m = new Map<string, { schema: EntitySchema; index: number }>();
@@ -403,9 +410,9 @@ export const MapView = ({
   );
   const mapTraversal = useMemo(
     () =>
-      useChainTraversal
+      useIncludePathTraversal
         ? {
-            path: (fullHopChain ?? [])
+            path: (fullHopPath ?? [])
               .map(pathStepToMetricTraversalStep)
               .filter((step): step is MetricTraversalStep => step != null)
           }
@@ -417,20 +424,20 @@ export const MapView = ({
             mapLevelSteps
           ),
     [
-      fullHopChain,
+      fullHopPath,
       getFieldGroupAccess,
       mapLevelSchemaIds,
       mapLevelSteps,
       relationSchemas,
       schemas,
-      useChainTraversal
+      useIncludePathTraversal
     ]
   );
   const mapTraversalPath = mapTraversal.path;
   const mapTraversalError = 'error' in mapTraversal ? mapTraversal.error : undefined;
   const metricTerminalSchemaId = resolveMetricTerminalSchemaId({
-    useChainTraversal,
-    fullHopChain,
+    useIncludePathTraversal,
+    fullHopPath,
     lastHopCandidateSchemaIds,
     lastLevelTargetSchemaId,
     rootSchemaScope,
@@ -633,10 +640,10 @@ export const MapView = ({
     [onEntityClick]
   );
 
-  // Level 1 no longer requires a pinned schema once the whole level chain can traverse via
-  // PathSteps (chain traversal) - it stands for "every entity matching the current filter".
+  // Level 1 no longer requires a pinned schema once the whole level path can traverse via
+  // PathSteps (include-path traversal) - it stands for "every entity matching the current filter".
   // Only the legacy relation-as-level path still requires an explicit Level 1 schema.
-  const isUnconfigured = !useChainTraversal && !rootSchemaId;
+  const isUnconfigured = !useIncludePathTraversal && !rootSchemaId;
 
   return (
     <div className={styles.wrap}>
@@ -646,7 +653,7 @@ export const MapView = ({
         schemas={schemas}
         relationSchemas={relationSchemas}
         rootSchemaScope={rootSchemaScope}
-        useChainTraversal={useChainTraversal}
+        useIncludePathTraversal={useIncludePathTraversal}
         levelSchemaOptions={levelSchemaOptions}
         notify={notify}
         metricTerminalSchema={metricTerminalSchema}

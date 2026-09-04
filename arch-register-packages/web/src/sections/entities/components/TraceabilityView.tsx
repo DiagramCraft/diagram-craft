@@ -62,7 +62,7 @@ const emptyConfig = (): Omit<TraceabilityViewConfig, 'paths'> & {
   showOrphanProjects: true
 });
 
-const CELL_VISIBLE_CHAINS = 3;
+const CELL_VISIBLE_PATHS = 3;
 
 export const TraceabilityView = ({
   rows,
@@ -640,22 +640,23 @@ export const TraceabilityView = ({
                     {row.paths.map(path => {
                       const cellKey = `${row.root._uid}|${path.pathId}`;
                       const expanded =
-                        expandedCells.has(cellKey) || path.chains.length <= CELL_VISIBLE_CHAINS;
+                        expandedCells.has(cellKey) ||
+                        path.includedPaths.length <= CELL_VISIBLE_PATHS;
                       const shown = expanded
-                        ? path.chains
-                        : path.chains.slice(0, CELL_VISIBLE_CHAINS);
+                        ? path.includedPaths
+                        : path.includedPaths.slice(0, CELL_VISIBLE_PATHS);
                       return (
                         <td key={path.pathId}>
-                          {path.chains.length === 0 ? (
+                          {path.includedPaths.length === 0 ? (
                             <span className={styles.cellEmpty}>No linked entities</span>
                           ) : (
                             <div className={styles.cell}>
-                              {shown.map((chain, chainIndex) => (
+                              {shown.map((includedPath, pathIndex) => (
                                 <div
-                                  key={`${path.pathId}-${chainIndex}`}
-                                  className={styles.pathChain}
+                                  key={`${path.pathId}-${pathIndex}`}
+                                  className={styles.pathEntry}
                                 >
-                                  {chain.map(node => (
+                                  {includedPath.map(node => (
                                     <span key={node.id} className={styles.pathStep}>
                                       <span className={styles.pathArrow}>→</span>
                                       <button
@@ -679,7 +680,7 @@ export const TraceabilityView = ({
                                   className={styles.pathMore}
                                   onClick={() => toggleCell(cellKey)}
                                 >
-                                  +{path.chains.length - shown.length} more
+                                  +{path.includedPaths.length - shown.length} more
                                 </button>
                               )}
                             </div>

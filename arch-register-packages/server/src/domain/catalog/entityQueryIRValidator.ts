@@ -812,11 +812,11 @@ export const validateEntityQueryIR = (
       authCtx,
       rootKind
     );
-    if (projection.chain) {
+    if (projection.includePath) {
       if (projection.path.length === 0) {
         errors.push({
-          path: [...projectionPath, 'chain'],
-          message: 'Chain projections require a non-empty path'
+          path: [...projectionPath, 'includePath'],
+          message: 'Path projections require a non-empty path'
         });
       }
       const unsupportedStep = projection.path.find(
@@ -829,13 +829,13 @@ export const validateEntityQueryIR = (
       if (unsupportedStep) {
         errors.push({
           path: [...projectionPath, 'path'],
-          message: `Chain projections only support forward/backward/typedRelation/unboundTypedRelation hops, got '${unsupportedStep.kind}'`
+          message: `Path projections only support forward/backward/typedRelation/unboundTypedRelation hops, got '${unsupportedStep.kind}'`
         });
       }
       if (projection.source === 'relation') {
         errors.push({
           path: [...projectionPath, 'source'],
-          message: "Chain projections cannot use source: 'relation'"
+          message: "Path projections cannot use source: 'relation'"
         });
       }
       const alias = projectionAlias(projection);

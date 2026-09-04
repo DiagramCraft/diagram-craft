@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import {
-  chainMatchesTarget,
+  includePathMatchesTarget,
   nextPosition,
   pathStepContextWithFallbackDirection,
   pathStepOptions,
@@ -99,15 +99,15 @@ describe('pathBuilderState direction fallback and target-schema derivation (#304
     ).toEqual(['domain']);
   });
 
-  it('chainMatchesTarget matches on the chain leaf, and "any" always matches (#3040-map)', () => {
-    const chain = [
+  it('includePathMatchesTarget matches on the path leaf, and "any" always matches (#3040-map)', () => {
+    const path = [
       { id: 'domain-1', name: 'Domain One', schemaId: 'domain' },
       { id: 'system-1', name: 'System One', schemaId: 'system' }
     ];
-    expect(chainMatchesTarget(chain, 'any')).toBe(true);
-    expect(chainMatchesTarget(chain, ['system'])).toBe(true);
-    expect(chainMatchesTarget(chain, ['domain'])).toBe(false);
-    expect(chainMatchesTarget([], ['system'])).toBe(false);
+    expect(includePathMatchesTarget(path, 'any')).toBe(true);
+    expect(includePathMatchesTarget(path, ['system'])).toBe(true);
+    expect(includePathMatchesTarget(path, ['domain'])).toBe(false);
+    expect(includePathMatchesTarget([], ['system'])).toBe(false);
   });
 });
 

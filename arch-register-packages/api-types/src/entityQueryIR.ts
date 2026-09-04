@@ -127,15 +127,16 @@ export type ProjectionField = {
   /** Defaults to the entity at the end of `path`; `relation` reads the matching relation row. */
   source?: 'entity' | 'relation';
   alias?: string;
+
   /**
-   * Project the whole hop chain instead of one terminal field. Ignores `fieldId`/`source`; the
-   * value is an array of matched chains, each an ordered array of `{ id, name }` for every hop in
-   * `path` (so callers can correlate which intermediate entity led to which leaf, unlike two
+   * Project the whole traversed path instead of one terminal field. Ignores `fieldId`/`source`;
+   * the value is an array of matched paths, each an ordered array of `{ id, name }` for every hop
+   * in `path` (so callers can correlate which intermediate entity led to which leaf, unlike two
    * independent per-depth projections which would return uncorrelated arrays). `path` must be
    * non-empty and every step must be `forward`/`backward`/`typedRelation`/`unboundTypedRelation` -
-   * chains never land on a relation row.
+   * included paths never land on a relation row.
    */
-  chain?: boolean;
+  includePath?: boolean;
 };
 
 export const projectionFieldSchema = z.object({
@@ -143,7 +144,7 @@ export const projectionFieldSchema = z.object({
   fieldId: z.string(),
   source: z.enum(['entity', 'relation']).optional(),
   alias: z.string().min(1).optional(),
-  chain: z.boolean().optional()
+  includePath: z.boolean().optional()
 });
 
 export const queryNodeSchema: z.ZodType<QueryNode> = z.lazy(() =>

@@ -29,12 +29,12 @@ describe('entity query text tokenizer', () => {
     });
   });
 
-  it('tokenizes a comma (columns clause separator) and keeps `columns`/`chain`/`as` as idents', () => {
-    expect(tokenize('columns a, chain b as "x"').map(t => [t.kind, t.text])).toEqual([
+  it('tokenizes a comma (columns clause separator) and keeps `columns`/`path`/`as` as idents', () => {
+    expect(tokenize('columns a, path b as "x"').map(t => [t.kind, t.text])).toEqual([
       ['IDENT', 'columns'],
       ['IDENT', 'a'],
       ['COMMA', ','],
-      ['IDENT', 'chain'],
+      ['IDENT', 'path'],
       ['IDENT', 'b'],
       ['IDENT', 'as'],
       ['STRING', '"x"'],
