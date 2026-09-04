@@ -460,8 +460,8 @@
           editors offer arrow-first (`->`/`<-`) controls with each hop's dropdown populated by every schema-compatible
           option for that direction — plain reference/containment fields, typed-relation fields bound to a specific
           projection field, and unbound relation-schema traversals alike — filtered by field-group access, while
-          preserving invalid saved paths for repair. Multi-hop paths render one line per matched root-to-leaf chain
-          (not a flattened, uncorrelated bag of every entity touched at each hop), capped at 3 visible chains per
+          preserving invalid saved paths for repair. Multi-hop paths render one line per matched root-to-leaf path
+          (not a flattened, uncorrelated bag of every entity touched at each hop), capped at 3 visible paths per
           cell with a "+N more" expander. Each row also reports a completion roll-up — the share of aligned projects
           with `complete` status — so a root entity (e.g. a strategy Objective reached via its Initiatives) shows
           delivery progress alongside its coverage/gap status, without exposing project detail the viewer can't
@@ -541,13 +541,14 @@
           opens as a flat list of conditions and grows in place into Any/All groups, negation, and relation traversal
           (a per-condition hop chain that ends either on a field of the related record or on a bare "the related record
           exists" check, with an optional per-hop same-instance "where" filter for the record that hop lands on), and
-          a Columns section for traversed projection values (a hop chain plus a terminal field or a whole-chain
+          a Columns section for traversed projection values (a hop chain plus a terminal field or a whole-path
           capture, with an optional column name; each becomes selectable as a table column under Manage fields),
           reading and writing the same structured query as the Advanced text field with no lossy conversion between
           them. The Advanced text field expresses projected columns as a `columns` sub-clause inside a traversal
           segment's `[...]` scope — `technology_releases[eol_date < date("2026-06-30") columns eol_date as "TR EOL"]`,
           or a capture-only bracket for an unfiltered traversal — covering entity- and relation-rooted queries,
-          `relationForward` hops, and whole-chain (`chain`) captures; each column binds to that scope's match witness. an empty group is treated as no filter rather than matching nothing, and a blank free-text row as no
+          `relationForward` hops, and whole-path (`path`, `includePath` in the IR) captures; each column binds to
+          that scope's match witness. an empty group is treated as no filter rather than matching nothing, and a blank free-text row as no
           filter rather than an error. A free-text clause is normally the dedicated search box, but a "Free text"
           entry in any condition row's field dropdown places one inside the boolean tree for the "text OR a field
           predicate" case the search box (always root-level AND) cannot express. A query that uses relation-rooted

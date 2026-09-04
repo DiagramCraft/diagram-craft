@@ -530,29 +530,29 @@ describe('traceabilityViewState', () => {
     expect(unchanged).toBe(config);
   });
 
-  it('adds a single correlated chain projection per path', () => {
+  it('adds a single correlated path projection per path', () => {
     const query: EntityQuery = { root: { kind: 'and', children: [] } };
     const result = buildTraceabilityEntityQuery(query, config);
 
     expect(result.aliases).toEqual([
-      { pathId: 'supports', alias: '__traceability__supports:chain' }
+      { pathId: 'supports', alias: '__traceability__supports:path' }
     ]);
     expect(result.query?.projections).toEqual([
       expect.objectContaining({
         fieldId: '_id',
-        alias: '__traceability__supports:chain',
-        chain: true,
+        alias: '__traceability__supports:path',
+        includePath: true,
         path: config.paths[0]!.path
       })
     ]);
   });
 
-  it('keeps multi-hop chains grouped by branch instead of pooling them into one flat list (#3040)', () => {
+  it('keeps multi-hop paths grouped by branch instead of pooling them into one flat list (#3040)', () => {
     const queryResult = buildTraceabilityEntityQuery(null, config);
     const roots = buildTraceabilityRoots(
       [
         makeRoot('domain-1', {
-          '__traceability__supports:chain': [
+          '__traceability__supports:path': [
             [
               { id: 'system-a', name: 'API Gateway', schemaId: 'system' },
               { id: 'component-a', name: 'Gateway Router', schemaId: 'component' }
@@ -568,7 +568,7 @@ describe('traceabilityViewState', () => {
       config
     );
 
-    expect(roots[0]!.paths[0]!.chains).toEqual([
+    expect(roots[0]!.paths[0]!.includedPaths).toEqual([
       [
         { id: 'system-a', name: 'API Gateway', schemaId: 'system' },
         { id: 'component-a', name: 'Gateway Router', schemaId: 'component' }
@@ -583,7 +583,7 @@ describe('traceabilityViewState', () => {
     );
   });
 
-  it("filters matched chains by the path's target schema, keyed off the leaf hop (#3040)", () => {
+  it("filters matched paths by the path's target schema, keyed off the leaf hop (#3040)", () => {
     const targetedConfig: TraceabilityViewConfig = {
       ...config,
       paths: [{ ...config.paths[0]!, targetSchemaIds: ['component'] }]
@@ -592,12 +592,12 @@ describe('traceabilityViewState', () => {
     const roots = buildTraceabilityRoots(
       [
         makeRoot('domain-1', {
-          '__traceability__supports:chain': [
+          '__traceability__supports:path': [
             [
               { id: 'system-a', name: 'API Gateway', schemaId: 'system' },
               { id: 'component-a', name: 'Gateway Router', schemaId: 'component' }
             ],
-            // A single-hop chain landing on a System, not a Component - excluded since it doesn't
+            // A single-hop path landing on a System, not a Component - excluded since it doesn't
             // reach the configured target schema, even though it's otherwise a valid match.
             [{ id: 'system-b', name: 'Feature Flag Service', schemaId: 'system' }]
           ]
@@ -607,7 +607,7 @@ describe('traceabilityViewState', () => {
       targetedConfig
     );
 
-    expect(roots[0]!.paths[0]!.chains).toEqual([
+    expect(roots[0]!.paths[0]!.includedPaths).toEqual([
       [
         { id: 'system-a', name: 'API Gateway', schemaId: 'system' },
         { id: 'component-a', name: 'Gateway Router', schemaId: 'component' }
@@ -616,15 +616,15 @@ describe('traceabilityViewState', () => {
     expect(roots[0]!.graphNodeIds).toEqual(new Set(['domain-1', 'system-a', 'component-a']));
   });
 
-  it('sorts chains hop-by-hop so branches sharing an early hop stay adjacent (#3040)', () => {
+  it('sorts paths hop-by-hop so branches sharing an early hop stay adjacent (#3040)', () => {
     const queryResult = buildTraceabilityEntityQuery(null, config);
     // DB aggregate order is unspecified - shuffled here to prove sorting isn't relying on
-    // incidental row order, and 'Customer Portal' appears as the first hop of several chains to
+    // incidental row order, and 'Customer Portal' appears as the first hop of several paths to
     // reproduce the reported symptom (same System scattered across unrelated rows in the cell).
     const roots = buildTraceabilityRoots(
       [
         makeRoot('domain-1', {
-          '__traceability__supports:chain': [
+          '__traceability__supports:path': [
             [
               { id: 'sys-cp', name: 'Customer Portal' },
               { id: 'c4', name: 'Rate Limiter' }
@@ -652,7 +652,7 @@ describe('traceabilityViewState', () => {
       config
     );
 
-    expect(roots[0]!.paths[0]!.chains.map(chain => chain.map(node => node.name))).toEqual([
+    expect(roots[0]!.paths[0]!.includedPaths.map(path => path.map(node => node.name))).toEqual([
       ['Customer Portal', 'API Gateway'],
       ['Customer Portal', 'Feature Flag Service'],
       ['Customer Portal', 'Rate Limiter'],
@@ -666,7 +666,7 @@ describe('traceabilityViewState', () => {
     const roots = buildTraceabilityRoots(
       [
         makeRoot('objective-1', {
-          '__traceability__supports:chain': [[{ id: 'capability-1', name: 'Capability 1' }]]
+          '__traceability__supports:path': [[{ id: 'capability-1', name: 'Capability 1' }]]
         }),
         makeRoot('objective-2')
       ],
@@ -697,7 +697,7 @@ describe('traceabilityViewState', () => {
     const roots = buildTraceabilityRoots(
       [
         makeRoot('objective-1', {
-          '__traceability__supports:chain': [[{ id: 'capability-1', name: 'Capability 1' }]]
+          '__traceability__supports:path': [[{ id: 'capability-1', name: 'Capability 1' }]]
         })
       ],
       queryResult.aliases,
@@ -723,7 +723,7 @@ describe('traceabilityViewState', () => {
     const roots = buildTraceabilityRoots(
       [
         makeRoot('objective-1', {
-          '__traceability__supports:chain': [[{ id: 'capability-1', name: 'Capability 1' }]]
+          '__traceability__supports:path': [[{ id: 'capability-1', name: 'Capability 1' }]]
         })
       ],
       queryResult.aliases,
@@ -747,7 +747,7 @@ describe('traceabilityViewState', () => {
     const roots = buildTraceabilityRoots(
       [
         makeRoot('objective-1', {
-          '__traceability__supports:chain': [[{ id: 'capability-1', name: 'Capability 1' }]]
+          '__traceability__supports:path': [[{ id: 'capability-1', name: 'Capability 1' }]]
         })
       ],
       queryResult.aliases,
@@ -771,10 +771,10 @@ describe('traceabilityViewState', () => {
     const roots = buildTraceabilityRoots(
       [
         makeRoot('objective-1', {
-          '__traceability__supports:chain': [[{ id: 'capability-1', name: 'Capability 1' }]]
+          '__traceability__supports:path': [[{ id: 'capability-1', name: 'Capability 1' }]]
         }),
         makeRoot('objective-2', {
-          '__traceability__supports:chain': [[{ id: 'capability-2', name: 'Capability 2' }]]
+          '__traceability__supports:path': [[{ id: 'capability-2', name: 'Capability 2' }]]
         }),
         makeRoot('objective-3')
       ],

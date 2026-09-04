@@ -1479,8 +1479,8 @@ describe('columns projection sub-clause (specs/QUERY_LANGUAGE.md §4.6)', () => 
     }
   });
 
-  it('round-trips a chain columns capture', () => {
-    const text = 'schema:Component technology_releases[columns chain technology as "Tech chain"]';
+  it('round-trips a path columns capture', () => {
+    const text = 'schema:Component technology_releases[columns path technology as "Tech path"]';
     const query = parseOk(text);
     expect(query.projections).toEqual([
       {
@@ -1489,8 +1489,8 @@ describe('columns projection sub-clause (specs/QUERY_LANGUAGE.md §4.6)', () => 
           { kind: 'forward', fieldId: 'technology' }
         ],
         fieldId: 'technology',
-        chain: true,
-        alias: 'Tech chain'
+        includePath: true,
+        alias: 'Tech path'
       }
     ]);
     expect(parseOk(printEntityQueryText(query, schemas))).toEqual(query);

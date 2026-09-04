@@ -320,25 +320,25 @@ const projectionValue = (
     };
   }
 
-  if (projection.chain) {
-    const chainBindingAlias = `pv_${binding.name}`;
+  if (projection.includePath) {
+    const includePathBindingAlias = `pv_${binding.name}`;
     const hopObject = (hopIndex: number) =>
       state.dialectAdapter.jsonObject([
         "'id'",
-        `${chainBindingAlias}.hop_${hopIndex}_id`,
+        `${includePathBindingAlias}.hop_${hopIndex}_id`,
         "'name'",
-        `${chainBindingAlias}.hop_${hopIndex}_name`,
+        `${includePathBindingAlias}.hop_${hopIndex}_name`,
         "'schemaId'",
-        `${chainBindingAlias}.hop_${hopIndex}_schema_id`
+        `${includePathBindingAlias}.hop_${hopIndex}_schema_id`
       ]);
-    const chainArrayEntries = Array.from({ length: projection.path.length }, (_, index) =>
+    const includePathArrayEntries = Array.from({ length: projection.path.length }, (_, index) =>
       hopObject(index + 1)
     );
-    const chainArray = state.dialectAdapter.jsonArray(chainArrayEntries);
+    const includePathArray = state.dialectAdapter.jsonArray(includePathArrayEntries);
     const aggregate = state.dialectAdapter.orderedJsonAggregate(
-      chainArray,
-      `FROM ${binding.name} ${chainBindingAlias} WHERE ${chainBindingAlias}.root_id = ${ROOT_ALIAS}.id`,
-      projectionBindingOrderBy(binding, chainBindingAlias),
+      includePathArray,
+      `FROM ${binding.name} ${includePathBindingAlias} WHERE ${includePathBindingAlias}.root_id = ${ROOT_ALIAS}.id`,
+      projectionBindingOrderBy(binding, includePathBindingAlias),
       true
     );
     return {

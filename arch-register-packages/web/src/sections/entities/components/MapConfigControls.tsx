@@ -38,13 +38,13 @@ type MapConfigControlsProps = {
   relationSchemas: RelationSchema[];
   /** Live root schema scope - the same concept Traceability threads through
    *  `traceabilityPathStepContext` as `rootSchemaScope`, derived from the current view filter, NOT
-   *  from any persisted level config (Level 1 has no schema of its own to read once chain
+   *  from any persisted level config (Level 1 has no schema of its own to read once include-path
    *  traversal is active, #3040-map). */
   rootSchemaScope: PathSchemaScope;
-  /** Whether the whole level chain traverses via correlated PathStep chains - when true, Level 1
+  /** Whether the whole level path traverses via correlated PathStep paths - when true, Level 1
    *  has no schema select (it's every entity matching the current filter), matching
    *  Traceability's root scope. */
-  useChainTraversal: boolean;
+  useIncludePathTraversal: boolean;
   levelSchemaOptions: Array<Array<{ id: string; name: string }>>;
   notify: (patch: Partial<MapConfig>) => void;
   metricTerminalSchema: EntitySchema | RelationSchema | undefined;
@@ -260,7 +260,7 @@ export const MapConfigControls = ({
   schemas,
   relationSchemas,
   rootSchemaScope,
-  useChainTraversal,
+  useIncludePathTraversal,
   levelSchemaOptions,
   notify,
   metricTerminalSchema,
@@ -325,7 +325,7 @@ export const MapConfigControls = ({
                 addDisabled={
                   !(
                     cfg.levelConfigs.at(-1)?.schemaId != null ||
-                    (useChainTraversal && cfg.levelConfigs.length === 1)
+                    (useIncludePathTraversal && cfg.levelConfigs.length === 1)
                   )
                 }
                 renderItem={(level, index) => {
@@ -333,7 +333,7 @@ export const MapConfigControls = ({
 
                   return (
                     <div className={styles.levelControl}>
-                      {index === 0 && useChainTraversal ? (
+                      {index === 0 && useIncludePathTraversal ? (
                         <div className={styles.axisPill}>
                           <span className={styles.pathSummary}>Root</span>
                         </div>

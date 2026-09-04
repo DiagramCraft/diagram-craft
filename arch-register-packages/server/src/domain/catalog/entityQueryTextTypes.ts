@@ -67,9 +67,10 @@ export type TextComparator = {
 
 // One entry of a `columns` sub-clause inside a segment's `[...]` scope (§4.6). `steps` is a
 // `capture_path` — a dotted path with no scoped filters — evaluated relative to the record the
-// enclosing segment traversed to. `chain` projects the whole hop chain instead of a terminal scalar.
+// enclosing segment traversed to. `includePath` projects the whole traversed path instead of a
+// terminal scalar.
 export type TextCapture = {
-  chain: boolean;
+  includePath: boolean;
   steps: TextPathStep[];
   alias?: string;
   aliasOffset?: number;

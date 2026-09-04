@@ -491,7 +491,7 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
     expect(new Set(projected)).toEqual(new Set([firstSystem.id, secondSystem.id]));
   });
 
-  it('correlates a multi-hop chain projection, unlike independent per-depth projections (#3040)', async () => {
+  it('correlates a multi-hop path projection, unlike independent per-depth projections (#3040)', async () => {
     const db = getDb();
     const workspace = await createFixtureWorkspace(db);
 
@@ -559,18 +559,18 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
             { kind: 'backward', fieldId: 'system', ownerSchemaId: componentSchema.id }
           ],
           fieldId: '_id',
-          alias: 'chain',
-          chain: true
+          alias: 'path',
+          includePath: true
         }
       ]
     };
 
     const matches = await runQuery(db, driver, workspace, schemas, query);
     expect(matches).toHaveLength(1);
-    const chains = matches[0]!.projections!.chain as Array<
+    const paths = matches[0]!.projections!.path as Array<
       Array<{ id: string; name: string; schemaId: string }>
     >;
-    const bySystem = new Map(chains.map(chain => [chain[0]!.id, chain[1]!]));
+    const bySystem = new Map(paths.map(path => [path[0]!.id, path[1]!]));
     expect(bySystem.get(systemA.id)).toEqual({
       id: componentA.id,
       name: 'Gateway Router',
@@ -581,15 +581,15 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
       name: 'Flag Evaluator',
       schemaId: componentSchema.id
     });
-    expect(chains.every(chain => chain[0]!.schemaId === systemSchema.id)).toBe(true);
+    expect(paths.every(path => path[0]!.schemaId === systemSchema.id)).toBe(true);
     expect(
-      chains.every(
-        chain => chain[0]!.name === 'API Gateway' || chain[0]!.name === 'Feature Flag Service'
+      paths.every(
+        path => path[0]!.name === 'API Gateway' || path[0]!.name === 'Feature Flag Service'
       )
     ).toBe(true);
   });
 
-  it('returns a single-hop backward chain projection across every root, not just a filtered one (#3040-map)', async () => {
+  it('returns a single-hop backward path projection across every root, not just a filtered one (#3040-map)', async () => {
     const db = getDb();
     const workspace = await createFixtureWorkspace(db);
 
@@ -637,32 +637,32 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
         {
           path: [{ kind: 'backward', fieldId: 'domain', ownerSchemaId: systemSchema.id }],
           fieldId: '_id',
-          alias: 'chain',
-          chain: true
+          alias: 'path',
+          includePath: true
         }
       ]
     };
 
     const matches = await runQuery(db, driver, workspace, schemas, query);
     expect(matches).toHaveLength(2);
-    const chainsByDomainName = new Map(
+    const pathsByDomainName = new Map(
       matches.map(match => [
         match.name,
-        match.projections!.chain as Array<Array<{ id: string; name: string; schemaId: string }>>
+        match.projections!.path as Array<Array<{ id: string; name: string; schemaId: string }>>
       ])
     );
-    expect(chainsByDomainName.get('Identity Platform')?.map(chain => chain[0]!.name)).toEqual([
+    expect(pathsByDomainName.get('Identity Platform')?.map(path => path[0]!.name)).toEqual([
       'API Gateway'
     ]);
-    expect(chainsByDomainName.get('Payments')?.map(chain => chain[0]!.name)).toEqual([
+    expect(pathsByDomainName.get('Payments')?.map(path => path[0]!.name)).toEqual([
       'Ledger Service'
     ]);
   });
 
-  // #3024: a chain projection's hop is validated through the same `validatePathSteps` machinery
+  // #3024: a path projection's hop is validated through the same `validatePathSteps` machinery
   // as any other path (predicate/relationExists), so a field-group-restricted hop field is
-  // treated as unknown for a chain query too, not just for filters.
-  it('rejects a chain projection whose hop field is field-group-restricted (#3024)', async () => {
+  // treated as unknown for a path query too, not just for filters.
+  it('rejects a path projection whose hop field is field-group-restricted (#3024)', async () => {
     const db = getDb();
     const workspace = await createFixtureWorkspace(db);
     const user = await createFixtureUser(db);
@@ -715,8 +715,8 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
         {
           path: [{ kind: 'backward', fieldId: 'domain', ownerSchemaId: systemSchema.id }],
           fieldId: '_id',
-          alias: 'chain',
-          chain: true
+          alias: 'path',
+          includePath: true
         }
       ]
     };
@@ -737,10 +737,10 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
     expect(viewerValidation.ok, JSON.stringify(viewerValidation)).toBe(true);
   });
 
-  // #3024: a chain hop's target entity that the caller has no view grant for must never surface
-  // in the chain's node list - the SCOPE_CTE join every hop is compiled against must exclude it,
-  // the same as it would for a non-chain list/detail query.
-  it('excludes an entity-level-restricted hop target from a chain projection (#3024)', async () => {
+  // #3024: a path hop's target entity that the caller has no view grant for must never surface
+  // in the path's node list - the SCOPE_CTE join every hop is compiled against must exclude it,
+  // the same as it would for a non-path list/detail query.
+  it('excludes an entity-level-restricted hop target from a path projection (#3024)', async () => {
     const db = getDb();
     const workspace = await createFixtureWorkspace(db);
     const user = await createFixtureUser(db);
@@ -785,7 +785,7 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
         }
       ]);
     // Grants the root (domain) and the one system that should be reachable, but not the other
-    // system - so a leak here can only come from the chain hop join itself, not from the root
+    // system - so a leak here can only come from the path hop join itself, not from the root
     // query being unscoped too.
     const grants = [...(await grantFor(domain.id)), ...(await grantFor(allowed.id))];
     const authCtx = buildAuthorizationContext({
@@ -808,8 +808,8 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
         {
           path: [{ kind: 'backward', fieldId: 'domain', ownerSchemaId: systemSchema.id }],
           fieldId: '_id',
-          alias: 'chain',
-          chain: true
+          alias: 'path',
+          includePath: true
         }
       ]
     };
@@ -827,11 +827,11 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
     });
 
     expect(page.items).toHaveLength(1);
-    const chains = page.items[0]!._projections!.chain as Array<
+    const paths = page.items[0]!._projections!.path as Array<
       Array<{ id: string; name: string; schemaId: string }>
     >;
-    expect(chains.map(chain => chain[0]!.id)).toEqual([allowed.id]);
-    expect(chains.map(chain => chain[0]!.id)).not.toContain(denied.id);
+    expect(paths.map(path => path[0]!.id)).toEqual([allowed.id]);
+    expect(paths.map(path => path[0]!.id)).not.toContain(denied.id);
   });
 
   it('scopes a bracketed filter to the same existential witness (§4.3)', async () => {

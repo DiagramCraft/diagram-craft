@@ -89,7 +89,7 @@ segment         := step [ "[" scope_body "]" ]               (* optional scoped 
 scope_body      := or_expr [ columns_clause ]                (* filter, optionally with projected columns *)
                  | columns_clause                            (* capture-only bracket: an unfiltered traversal *)
 columns_clause  := "columns" capture ( "," capture )*        (* projected columns, see 4.6 — runs to the "]" *)
-capture         := [ "chain" ] capture_path [ "as" quoted_string ]
+capture         := [ "path" ] capture_path [ "as" quoted_string ]
 capture_path    := capture_step ( "." capture_step )*        (* like `path`, but no "[...]" scopes *)
 capture_step    := field_id
                  | "<-" [ schema_ref "." ] field_id
@@ -212,7 +212,7 @@ relation_ref    := identifier | quoted_string            (* typed relation schem
   `or_expr` filter, or instead of one (`releases[columns eol_date]`, a capture-only bracket on an unfiltered
   traversal). Each `capture` reads a field off the record that segment traversed to and becomes an
   `EntityQuery.projections` entry bound to *that* segment's existential witness, so a projected path is never
-  ambiguous the way a detached "select" clause matched back by path-equality would be (§4.6, §10). `columns`, `chain`,
+  ambiguous the way a detached "select" clause matched back by path-equality would be (§4.6, §10). `columns`, `path`,
   and `as` are **positional contextual keywords**, resolved the same way as `date(` / `now(` / `schema:` / `text:`:
   `columns` is the clause only when the next token begins a capture path; `[columns = "x"]` is still an ordinary
   predicate on a field named `columns`. A capture path may not itself contain a `[...]` scope, and `columns` may not

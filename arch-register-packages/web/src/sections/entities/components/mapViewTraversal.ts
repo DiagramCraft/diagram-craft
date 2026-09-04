@@ -15,9 +15,9 @@ import {
   type ContainmentTreeIndex
 } from './mapViewState';
 import {
-  addChainProjection,
-  decodeChainProjection,
-  type PathChain
+  addIncludePathProjection,
+  decodeIncludePathProjection,
+  type IncludedPath
 } from './pathBuilder/pathBuilderState';
 import type { MapConfig } from './mapViewConfig';
 
@@ -60,57 +60,60 @@ export type RenderTreeNode = {
   children: RenderTreeNode[];
 };
 
-export const MAP_CHAIN_PROJECTION_ALIAS = '__map__:chain';
+export const MAP_INCLUDE_PATH_PROJECTION_ALIAS = '__map__:path';
 
-/** Adds a single correlated `chain: true` projection for `hopChain` (the resolved `PathStep`
- *  connecting levels 1..N) onto `entityQuery`'s root scope, mirroring
- *  `buildTraceabilityEntityQuery`. An empty `hopChain` (a single-level map) adds no projection -
- *  `chain: true` requires a non-empty path. */
-export const buildMapChainQuery = (
+/** Adds a single correlated `includePath: true` projection for `hopPath` (the resolved
+ *  `PathStep`s connecting levels 1..N) onto `entityQuery`'s root scope, mirroring
+ *  `buildTraceabilityEntityQuery`. An empty `hopPath` (a single-level map) adds no projection -
+ *  `includePath: true` requires a non-empty path. */
+export const buildIncludePathMapQuery = (
   entityQuery: EntityQuery | null | undefined,
-  hopChain: PathStep[]
+  hopPath: PathStep[]
 ): { query: EntityQuery; alias: string } => ({
-  query: addChainProjection(entityQuery, hopChain, MAP_CHAIN_PROJECTION_ALIAS),
-  alias: MAP_CHAIN_PROJECTION_ALIAS
+  query: addIncludePathProjection(entityQuery, hopPath, MAP_INCLUDE_PATH_PROJECTION_ALIAS),
+  alias: MAP_INCLUDE_PATH_PROJECTION_ALIAS
 });
 
 export const toTreeNode = (entity: EntityRecord): TreeNode =>
   ({ ...entity, _isMatch: true }) as TreeNode;
 
-/** Decodes every root's chain projection value into `{ rootId -> PathChain[] }`, ready for
- *  `buildTreeFromChains`/`collectMapChainNodeIds`. */
-export const decodeMapChainsByRoot = (
+/** Decodes every root's included-path projection value into `{ rootId -> IncludedPath[] }`, ready
+ *  for `buildTreeFromIncludedPaths`/`collectIncludedPathNodeIds`. */
+export const decodeMapIncludedPathsByRoot = (
   roots: Array<{ _uid: string; _projections?: Record<string, unknown> }>
-): Map<string, PathChain[]> =>
+): Map<string, IncludedPath[]> =>
   new Map(
     roots.map(root => [
       root._uid,
-      decodeChainProjection(root._projections?.[MAP_CHAIN_PROJECTION_ALIAS])
+      decodeIncludePathProjection(root._projections?.[MAP_INCLUDE_PATH_PROJECTION_ALIAS])
     ])
   );
 
-/** Every id referenced anywhere in `chainsByRootId`'s chains - the set of entities that need
- *  hydrating (via a batch id fetch) into full records before a render tree can be built, since a
- *  chain projection only carries `{id, name, schemaId}` per hop. */
-export const collectMapChainNodeIds = (chainsByRootId: Map<string, PathChain[]>): string[] => [
+/** Every id referenced anywhere in `includedPathsByRootId`'s paths - the set of entities that need
+ *  hydrating (via a batch id fetch) into full records before a render tree can be built, since an
+ *  included-path projection only carries `{id, name, schemaId}` per hop. */
+export const collectIncludedPathNodeIds = (
+  includedPathsByRootId: Map<string, IncludedPath[]>
+): string[] => [
   ...new Set(
-    [...chainsByRootId.values()].flatMap(chains =>
-      chains.flatMap(chain => chain.map(node => node.id))
+    [...includedPathsByRootId.values()].flatMap(paths =>
+      paths.flatMap(path => path.map(node => node.id))
     )
   )
 ];
 
-/** Builds the map's render tree directly from correlated relation chains, replacing the
+/** Builds the map's render tree directly from correlated relation paths, replacing the
  *  client-side containment-only reassembly (`buildMapChildren`/`getContainmentChildren`) for maps
- *  whose whole level chain is expressible as `PathStep`s (see `MapView.tsx`'s `useChainTraversal`). Chain nodes
- *  sharing a prefix (e.g. the same System reached via two different Component chains under one
- *  Domain) are merged into a single tree node rather than duplicated, by matching on id at each
- *  depth. `hydrate` resolves a chain node's id to its full entity record (from a batch id fetch);
- *  a node that fails to hydrate (e.g. became inaccessible between the chain query and the hydrate
- *  fetch) is dropped along with its descendants rather than rendered incomplete. */
-export const buildTreeFromChains = (
+ *  whose whole level path is expressible as `PathStep`s (see `MapView.tsx`'s
+ *  `useIncludePathTraversal`). Path nodes sharing a prefix (e.g. the same System reached via two
+ *  different Component paths under one Domain) are merged into a single tree node rather than
+ *  duplicated, by matching on id at each depth. `hydrate` resolves a path node's id to its full
+ *  entity record (from a batch id fetch); a node that fails to hydrate (e.g. became inaccessible
+ *  between the path query and the hydrate fetch) is dropped along with its descendants rather than
+ *  rendered incomplete. */
+export const buildTreeFromIncludedPaths = (
   roots: EntityRecord[],
-  chainsByRootId: Map<string, PathChain[]>,
+  includedPathsByRootId: Map<string, IncludedPath[]>,
   hydrate: (id: string) => EntityRecord | undefined
 ): RenderTreeNode[] => {
   const sortByName = (nodes: RenderTreeNode[]) =>
@@ -118,24 +121,24 @@ export const buildTreeFromChains = (
 
   const tree = roots.map(root => {
     const rootNode: RenderTreeNode = { node: toTreeNode(root), levelIndex: 0, children: [] };
-    // Tracks each tree node's children-by-chain-id lookup, so chains sharing a prefix (the same
-    // System reached via two different Component chains) merge onto the same node instead of
+    // Tracks each tree node's children-by-path-id lookup, so paths sharing a prefix (the same
+    // System reached via two different Component paths) merge onto the same node instead of
     // duplicating it.
     const childrenById = new WeakMap<RenderTreeNode, Map<string, RenderTreeNode>>();
     childrenById.set(rootNode, new Map());
 
-    for (const chain of chainsByRootId.get(root._uid) ?? []) {
+    for (const includedPath of includedPathsByRootId.get(root._uid) ?? []) {
       let parent = rootNode;
-      for (let depth = 0; depth < chain.length; depth += 1) {
-        const chainNode = chain[depth]!;
+      for (let depth = 0; depth < includedPath.length; depth += 1) {
+        const pathNode = includedPath[depth]!;
         const parentChildren = childrenById.get(parent)!;
-        let entry = parentChildren.get(chainNode.id);
+        let entry = parentChildren.get(pathNode.id);
         if (!entry) {
-          const hydrated = hydrate(chainNode.id);
+          const hydrated = hydrate(pathNode.id);
           if (!hydrated) break;
           entry = { node: toTreeNode(hydrated), levelIndex: depth + 1, children: [] };
           parent.children.push(entry);
-          parentChildren.set(chainNode.id, entry);
+          parentChildren.set(pathNode.id, entry);
           childrenById.set(entry, new Map());
         }
         parent = entry;

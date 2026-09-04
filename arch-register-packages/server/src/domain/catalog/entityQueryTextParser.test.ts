@@ -41,26 +41,31 @@ describe('entity query text parser', () => {
           filter: { kind: 'path', steps: [{ kind: 'field', field: { value: 'eol_date' } }] },
           captures: [
             {
-              chain: false,
+              includePath: false,
               steps: [{ kind: 'field', field: { value: 'eol_date' } }],
               alias: 'EOL'
             },
-            { chain: false, steps: [{ kind: 'field', field: { value: 'latest_version' } }] }
+            {
+              includePath: false,
+              steps: [{ kind: 'field', field: { value: 'latest_version' } }]
+            }
           ]
         }
       ]
     });
   });
 
-  it('parses a capture-only bracket and a chain marker', () => {
-    const syntax = parseTextQuery(tokenize('releases[columns chain technology as "Chain"]'));
+  it('parses a capture-only bracket and a path marker', () => {
+    const syntax = parseTextQuery(tokenize('releases[columns path technology as "Path"]'));
     expect(syntax.root).toMatchObject({
       kind: 'path',
       steps: [
         {
           kind: 'field',
           field: { value: 'releases' },
-          captures: [{ chain: true, steps: [{ kind: 'field', field: { value: 'technology' } }] }]
+          captures: [
+            { includePath: true, steps: [{ kind: 'field', field: { value: 'technology' } }] }
+          ]
         }
       ]
     });

@@ -10,9 +10,9 @@ import type { RelationSchema } from '@arch-register/api-types/relationSchemaCont
 import type { FieldGroupAccess, FieldGroupAccessControl } from '@arch-register/permissions';
 import type { BrowserEntityRecord } from './entityBrowserState';
 import {
-  addChainProjection,
-  chainMatchesTarget,
-  decodeChainProjection,
+  addIncludePathProjection,
+  includePathMatchesTarget,
+  decodeIncludePathProjection,
   groupPathStepOptions,
   pathCompatibleRelations,
   pathRelationDirections,
@@ -20,7 +20,7 @@ import {
   pathStepKey as pathStepKeyImpl,
   pathStepOptions,
   pruneInvalidPathSteps,
-  type PathChain,
+  type IncludedPath,
   type PathSchemaScope,
   type PathStepContext,
   type PathStepOption
@@ -36,12 +36,12 @@ export type TraceabilityProjectionAliases = {
   alias: string;
 };
 
-export type TraceabilityChain = PathChain;
+export type TraceabilityPath = IncludedPath;
 
 export type TraceabilityPathResult = {
   pathId: string;
   label: string;
-  chains: TraceabilityChain[];
+  includedPaths: TraceabilityPath[];
 };
 
 export type TraceabilityRoot = {
@@ -74,9 +74,10 @@ export type TraceabilityCoverage = {
   coveredEntityIds: Set<string>;
 };
 
-const toChains = decodeChainProjection;
+const toIncludedPaths = decodeIncludePathProjection;
 
-const chainProjectionAlias = (pathId: string) => `${TRACEABILITY_PROJECTION_PREFIX}${pathId}:chain`;
+const includePathProjectionAlias = (pathId: string) =>
+  `${TRACEABILITY_PROJECTION_PREFIX}${pathId}:path`;
 
 export const parseTraceabilityConfig = (config: unknown): TraceabilityViewConfig | null => {
   const result = traceabilityViewConfigSchema.safeParse(config);
@@ -155,13 +156,13 @@ export const buildTraceabilityEntityQuery = (
 
   const aliases = parsed.paths
     .filter(path => path.path.length > 0)
-    .map(path => ({ pathId: path.id, alias: chainProjectionAlias(path.id) }));
+    .map(path => ({ pathId: path.id, alias: includePathProjectionAlias(path.id) }));
   const baseQuery: EntityQuery = query ?? {
     root: { kind: 'and', children: [] }
   };
   const resultQuery = aliases.reduce((acc, entry) => {
     const path = parsed.paths.find(candidate => candidate.id === entry.pathId)?.path ?? [];
-    return addChainProjection(acc, path, entry.alias);
+    return addIncludePathProjection(acc, path, entry.alias);
   }, baseQuery);
 
   return { query: resultQuery, aliases };
@@ -181,11 +182,13 @@ export const buildTraceabilityRoots = (
     const graphNodeIds = new Set([root._uid]);
     const paths = parsed.paths.map(path => {
       const alias = aliasByPath.get(path.id);
-      const chains = (alias ? toChains(root._projections?.[alias]) : []).filter(chain =>
-        chainMatchesTarget(chain, path.targetSchemaIds)
+      const includedPaths = (alias ? toIncludedPaths(root._projections?.[alias]) : []).filter(
+        includedPath => includePathMatchesTarget(includedPath, path.targetSchemaIds)
       );
-      chains.forEach(chain => chain.forEach(node => graphNodeIds.add(node.id)));
-      return { pathId: path.id, label: path.label, chains };
+      includedPaths.forEach(includedPath =>
+        includedPath.forEach(node => graphNodeIds.add(node.id))
+      );
+      return { pathId: path.id, label: path.label, includedPaths };
     });
     return { root, graphNodeIds, paths };
   });
@@ -214,7 +217,7 @@ export const buildTraceabilityCoverage = ({
           alignedProjects.length;
     return {
       ...root,
-      architectureCovered: root.paths.some(path => path.chains.length > 0),
+      architectureCovered: root.paths.some(path => path.includedPaths.length > 0),
       alignedProjects,
       deliveringProjects,
       deliveryCovered: deliveringProjects.length > 0,
