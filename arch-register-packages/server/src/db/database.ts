@@ -124,6 +124,10 @@ export type {
   EntityDbCreate,
   EntityDbUpdate,
   EntityGrantDbCretae,
+  CatalogRecordMergeDbCreate,
+  CatalogRecordMergeDbResult,
+  CatalogRecordMergeIdentifier,
+  EntityRedirect,
   SavedViewDbCreate,
   SavedViewDbUpdate,
   PinnedEntityDbCreate

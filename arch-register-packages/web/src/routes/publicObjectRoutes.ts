@@ -187,6 +187,47 @@ export const entityDiagramRoute = <TSearch = undefined>(
     search
   );
 
+export const publicCatalogEntityRoute = <TSearch = undefined>(
+  workspaceSlug: string,
+  entityPublicId: string,
+  search?: TSearch
+) =>
+  withSearch(
+    {
+      to: '/public/$workspaceSlug/entities/$entityPublicId' as const,
+      params: { workspaceSlug, entityPublicId }
+    },
+    search
+  );
+
+export const publicCatalogTopologyRoute = <TSearch = undefined>(
+  workspaceSlug: string,
+  entityPublicId: string,
+  search?: TSearch
+) =>
+  withSearch(
+    {
+      to: '/public/$workspaceSlug/topology/$entityPublicId' as const,
+      params: { workspaceSlug, entityPublicId }
+    },
+    search
+  );
+
+export const publicCatalogApiRoute = <TSearch = undefined>(
+  workspaceSlug: string,
+  entityPublicId: string,
+  artifactId: string,
+  revisionId: string,
+  search?: TSearch
+) =>
+  withSearch(
+    {
+      to: '/public/$workspaceSlug/api/$entityPublicId/$artifactId/$revisionId' as const,
+      params: { workspaceSlug, entityPublicId, artifactId, revisionId }
+    },
+    search
+  );
+
 export const projectDiagramHref = (
   workspaceSlug: string,
   projectId: ProjectPublicId,

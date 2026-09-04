@@ -1,5 +1,8 @@
 import type {
   CatalogDatabase,
+  CatalogRecordMergeDbCreate,
+  CatalogRecordMergeDbResult,
+  CatalogRecordMergeIdentifier,
   EntityGrantDbCretae,
   EntityDbCreate,
   EntityListDbFilters,
@@ -21,6 +24,7 @@ import type {
 } from './catalogDatabase';
 import { ENTITY_SELECT_SQL, catalogMappers, resolveEntityListPagination } from './catalogDatabase';
 import { compileEntityViewPermissionScope } from './entityPermissionScope';
+import { DatabaseError } from '../../../db/database';
 import {
   normalizePostgresError,
   PostgresDatabaseBase,
@@ -480,12 +484,35 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
   }
 
   async getEntity(workspace: string, identifier: string) {
-    if (!isUuidLike(identifier)) {
-      return this.getEntityByPublicId(workspace, identifier);
+    const direct = isUuidLike(identifier)
+      ? ((await this.getEntityById(workspace, identifier)) ??
+        (await this.getEntityByPublicId(workspace, identifier)))
+      : await this.getEntityByPublicId(workspace, identifier);
+    if (direct) return direct;
+
+    const identifiers: CatalogRecordMergeIdentifier[] = isUuidLike(identifier)
+      ? [
+          { kind: 'id', value: identifier },
+          { kind: 'public_id', value: identifier }
+        ]
+      : [{ kind: 'public_id', value: identifier }];
+    for (const mergeIdentifier of identifiers) {
+      const merge = await this.resolveCatalogRecordMerge(workspace, mergeIdentifier);
+      if (!merge) continue;
+      const canonical = await this.getEntityById(workspace, merge.canonical_record_id);
+      if (!canonical) return null;
+      return {
+        ...canonical,
+        redirect: { from: identifier, to: canonical.public_id }
+      };
     }
+    return null;
+  }
+
+  private async getEntityById(workspace: string, id: string) {
     const rows = await this.sql.unsafe<DatabaseRow[]>(
       `${ENTITY_SELECT_SQL} WHERE e.workspace = $1 AND e.id = $2 AND e.deleted_at IS NULL`,
-      [workspace, identifier]
+      [workspace, id]
     );
     return rows[0] ? catalogMappers.enrichedEntity(rows[0]) : null;
   }
@@ -498,7 +525,123 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
     return rows[0] ? catalogMappers.enrichedEntity(rows[0]) : null;
   }
 
+  private async getCatalogRecordMergeById(workspace: string, id: string) {
+    const [row] = await this.sql<DatabaseRow[]>`
+      SELECT * FROM catalog_record_merge
+      WHERE workspace = ${workspace} AND merged_record_id = ${id}
+    `;
+    return row ? catalogMappers.catalogRecordMerge(row) : null;
+  }
+
+  private async getCatalogRecordMergeByPublicId(workspace: string, publicId: string) {
+    const [row] = await this.sql<DatabaseRow[]>`
+      SELECT * FROM catalog_record_merge
+      WHERE workspace = ${workspace} AND merged_public_id = ${publicId}
+    `;
+    return row ? catalogMappers.catalogRecordMerge(row) : null;
+  }
+
+  async resolveCatalogRecordMerge(
+    workspace: string,
+    identifier: CatalogRecordMergeIdentifier
+  ): Promise<CatalogRecordMergeDbResult | null> {
+    const initial =
+      identifier.kind === 'id'
+        ? await this.getCatalogRecordMergeById(workspace, identifier.value)
+        : await this.getCatalogRecordMergeByPublicId(workspace, identifier.value);
+    if (!initial) return null;
+
+    const visited = new Set<string>([initial.merged_record_id]);
+    let canonicalRecordId = initial.canonical_record_id;
+    while (true) {
+      if (visited.has(canonicalRecordId)) {
+        throw new DatabaseError('check', 'Catalog record merge alias cycle detected');
+      }
+      const next = await this.getCatalogRecordMergeById(workspace, canonicalRecordId);
+      if (!next) {
+        return { ...initial, canonical_record_id: canonicalRecordId };
+      }
+      visited.add(canonicalRecordId);
+      canonicalRecordId = next.canonical_record_id;
+    }
+  }
+
+  async createCatalogRecordMerge(input: CatalogRecordMergeDbCreate) {
+    const source = await this.getEntityById(input.workspace, input.merged_record_id);
+    if (!source) {
+      throw new DatabaseError('foreign', 'Merged catalog record does not exist');
+    }
+
+    const targetMerge = await this.resolveCatalogRecordMerge(input.workspace, {
+      kind: 'id',
+      value: input.canonical_record_id
+    });
+    const canonicalRecordId = targetMerge?.canonical_record_id ?? input.canonical_record_id;
+    const canonical = await this.getEntityById(input.workspace, canonicalRecordId);
+    if (!canonical) {
+      throw new DatabaseError('foreign', 'Canonical catalog record does not exist');
+    }
+    if (source.id === canonical.id) {
+      throw new DatabaseError('check', 'A catalog record cannot merge into itself');
+    }
+
+    try {
+      await this.sql`
+        INSERT INTO catalog_record_merge
+          (merged_record_id, workspace, canonical_record_id, merged_public_id, merged_slug,
+           merged_namespace, merged_schema_id, merged_at, merged_by, merge_id)
+        VALUES
+          (${input.merged_record_id}, ${input.workspace}, ${canonical.id}, ${input.merged_public_id},
+           ${input.merged_slug}, ${input.merged_namespace}, ${input.merged_schema_id},
+           ${input.merged_at}, ${input.merged_by}, ${input.merge_id})
+      `;
+      return (await this.getCatalogRecordMergeById(input.workspace, input.merged_record_id))!;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async repointCatalogRecordMerges(
+    workspace: string,
+    fromCanonicalRecordId: string,
+    toCanonicalRecordId: string
+  ) {
+    const targetMerge = await this.resolveCatalogRecordMerge(workspace, {
+      kind: 'id',
+      value: toCanonicalRecordId
+    });
+    const canonicalRecordId = targetMerge?.canonical_record_id ?? toCanonicalRecordId;
+    const canonical = await this.getEntityById(workspace, canonicalRecordId);
+    if (!canonical) {
+      throw new DatabaseError('foreign', 'Canonical catalog record does not exist');
+    }
+    if (fromCanonicalRecordId === canonical.id) {
+      throw new DatabaseError('check', 'A catalog record cannot be repointed to itself');
+    }
+    try {
+      const result = await this.sql`
+        UPDATE catalog_record_merge
+        SET canonical_record_id = ${canonical.id}
+        WHERE workspace = ${workspace} AND canonical_record_id = ${fromCanonicalRecordId}
+      `;
+      return result.count;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
   async createEntity(input: EntityDbCreate) {
+    const retiredId = await this.resolveCatalogRecordMerge(input.workspace, {
+      kind: 'id',
+      value: input.id
+    });
+    const retiredPublicId = await this.resolveCatalogRecordMerge(input.workspace, {
+      kind: 'public_id',
+      value: input.public_id
+    });
+    if (retiredId ?? retiredPublicId) {
+      throw new DatabaseError('unique', 'Entity identifier has been retired by a merge');
+    }
     try {
       await this.sql`
         INSERT INTO catalog_record (id, workspace, kind, public_id, slug, namespace, name, description, owner, lifecycle, target_lifecycle, target_lifecycle_date, tags, links, schema_id, data, generated_metadata, project_id, version, approval_policy_override, completeness, created_at, updated_at)

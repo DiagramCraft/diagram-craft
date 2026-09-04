@@ -323,6 +323,97 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
       expect(await db.catalog.getEntity(workspace, created.id)).toBeNull();
     });
 
+    it('resolves merged ids and public ids transitively after the source rows are retired', async () => {
+      const db = getDb();
+      const workspace = await createFixtureWorkspace(db);
+      const schema = await createFixtureSchema(db, workspace);
+      const source = await createFixtureEntity(db, workspace, schema, {
+        public_id: 'PUB-MERGED-SOURCE'
+      });
+      const middle = await createFixtureEntity(db, workspace, schema, {
+        public_id: 'PUB-MERGED-MIDDLE'
+      });
+      const canonical = await createFixtureEntity(db, workspace, schema, {
+        public_id: 'PUB-MERGED-CANONICAL'
+      });
+
+      const sourceMerge = await db.catalog.createCatalogRecordMerge({
+        merged_record_id: source.id,
+        workspace,
+        canonical_record_id: middle.id,
+        merged_public_id: source.public_id,
+        merged_slug: source.slug,
+        merged_namespace: source.namespace,
+        merged_schema_id: source.schema_id,
+        merged_at: new Date('2026-01-01T00:00:00.000Z'),
+        merged_by: null,
+        merge_id: randomUUID()
+      });
+      await db.catalog.deleteEntity(workspace, source.id);
+
+      const middleMerge = await db.catalog.createCatalogRecordMerge({
+        merged_record_id: middle.id,
+        workspace,
+        canonical_record_id: canonical.id,
+        merged_public_id: middle.public_id,
+        merged_slug: middle.slug,
+        merged_namespace: middle.namespace,
+        merged_schema_id: middle.schema_id,
+        merged_at: new Date('2026-01-02T00:00:00.000Z'),
+        merged_by: null,
+        merge_id: randomUUID()
+      });
+      await db.catalog.deleteEntity(workspace, middle.id);
+
+      expect(sourceMerge.canonical_record_id).toBe(middle.id);
+      expect(middleMerge.canonical_record_id).toBe(canonical.id);
+      expect(
+        await db.catalog.resolveCatalogRecordMerge(workspace, { kind: 'id', value: source.id })
+      ).toMatchObject({
+        merged_record_id: source.id,
+        canonical_record_id: canonical.id
+      });
+      expect(
+        await db.catalog.resolveCatalogRecordMerge(workspace, {
+          kind: 'public_id',
+          value: source.public_id
+        })
+      ).toMatchObject({
+        merged_public_id: source.public_id,
+        canonical_record_id: canonical.id
+      });
+
+      expect(await db.catalog.getEntity(workspace, source.id)).toMatchObject({
+        id: canonical.id,
+        public_id: canonical.public_id,
+        redirect: { from: source.id, to: canonical.public_id }
+      });
+      expect(await db.catalog.getEntity(workspace, source.public_id)).toMatchObject({
+        id: canonical.id,
+        public_id: canonical.public_id,
+        redirect: { from: source.public_id, to: canonical.public_id }
+      });
+
+      expect(await db.catalog.repointCatalogRecordMerges(workspace, middle.id, canonical.id)).toBe(
+        1
+      );
+      expect(
+        await db.catalog.resolveCatalogRecordMerge(workspace, { kind: 'id', value: source.id })
+      ).toMatchObject({ canonical_record_id: canonical.id });
+
+      await expect(
+        createFixtureEntity(db, workspace, schema, {
+          id: source.id,
+          public_id: 'PUB-NEW-ID'
+        })
+      ).rejects.toMatchObject({ code: 'unique' } satisfies Partial<DatabaseError>);
+      await expect(
+        createFixtureEntity(db, workspace, schema, {
+          public_id: source.public_id
+        })
+      ).rejects.toMatchObject({ code: 'unique' } satisfies Partial<DatabaseError>);
+    });
+
     it('paginates entities with limit/offset and filters by schema', async () => {
       const db = getDb();
       const workspace = await createFixtureWorkspace(db);

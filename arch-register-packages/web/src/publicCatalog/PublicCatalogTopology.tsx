@@ -1,4 +1,4 @@
-import { useMemo, useCallback, useState } from 'react';
+import { useMemo, useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import type {
   PublicCatalogTopology as PublicCatalogTopologyData,
@@ -8,6 +8,7 @@ import type {
 import { DependencyGraph } from '../components/DependencyGraph';
 import type { DependencyGraphEdge, DependencyGraphNode } from '../components/DependencyGraph';
 import { usePublicCatalogEntities, usePublicCatalogTopology } from '../hooks/usePublicCatalog';
+import { publicCatalogEntityRoute, publicCatalogTopologyRoute } from '../routes/publicObjectRoutes';
 import styles from './publicCatalog.module.css';
 
 type TopologyDirection = 'both' | 'incoming' | 'outgoing';
@@ -29,15 +30,13 @@ const routeParams = () =>
 const topologySearch = () => useSearch({ strict: false }) as TopologySearch;
 
 const topologyRoute = (workspaceSlug: string, entityPublicId: string, search: TopologySearch) => ({
-  to: '/public/$workspaceSlug/topology/$entityPublicId' as const,
-  params: { workspaceSlug, entityPublicId },
-  search: {
+  ...publicCatalogTopologyRoute(workspaceSlug, entityPublicId, {
     depth: search.depth === 2 ? undefined : search.depth,
     direction: search.direction === 'both' ? undefined : search.direction,
     q: search.q === '' ? undefined : search.q,
     schema: search.schema === '' ? undefined : search.schema,
     relation: search.relation === '' ? undefined : search.relation
-  }
+  })
 });
 
 const formatCount = (value: number, singular: string, plural = `${singular}s`) =>
@@ -113,6 +112,14 @@ export const PublicCatalogTopology = () => {
     depth,
     direction
   });
+  const redirectTo = data?.redirect?.to;
+  useEffect(() => {
+    if (!redirectTo || redirectTo === entityPublicId) return;
+    void navigate({
+      ...topologyRoute(workspaceSlug, redirectTo, search),
+      replace: true
+    });
+  }, [entityPublicId, navigate, redirectTo, search, workspaceSlug]);
 
   const updateSearch = useCallback(
     (changes: Partial<TopologySearch>) => {
@@ -124,6 +131,8 @@ export const PublicCatalogTopology = () => {
   if (isLoading) return <div className={styles.state}>Loading topology…</div>;
   if (isError || !data)
     return <div className={styles.state}>This published topology is not available.</div>;
+  if (redirectTo && redirectTo !== entityPublicId)
+    return <div className={styles.state}>Redirecting…</div>;
 
   return (
     <TopologyContent
@@ -228,8 +237,7 @@ const TopologyContent = ({
         </div>
         <Link
           className={styles.apiLink}
-          to="/public/$workspaceSlug/entities/$entityPublicId"
-          params={{ workspaceSlug, entityPublicId: data.rootPublicId }}
+          {...publicCatalogEntityRoute(workspaceSlug, data.rootPublicId)}
         >
           View entity
         </Link>

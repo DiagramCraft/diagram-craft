@@ -1,4 +1,4 @@
-import { useMemo, useCallback, useState } from 'react';
+import { useMemo, useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import styles from './EntityDetailScreen.module.css';
 import { Button } from '@diagram-craft/app-components/Button';
@@ -98,6 +98,17 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
   }, [navigate, workspaceSlug]);
   // Query hooks
   const { data: entity, isLoading: loading } = useEntity(workspaceId, entityId);
+  const redirectTo = entity?._redirect?.to;
+  useEffect(() => {
+    if (!redirectTo || redirectTo === entityId) return;
+    const canonicalRoute = folder
+      ? entityContentFolderRoute(workspaceSlug, asEntityPublicId(redirectTo), folder)
+      : entityDetailRoute(workspaceSlug, asEntityPublicId(redirectTo));
+    void navigate({
+      ...canonicalRoute,
+      replace: true
+    });
+  }, [entityId, folder, navigate, redirectTo, workspaceSlug]);
   const [viewJsonOpen, setViewJsonOpen] = useState(false);
   const { data: entityJson, isLoading: entityJsonLoading } = useEntityJson(
     workspaceId,
@@ -323,6 +334,10 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
 
   if (loading) {
     return <LoadingState text="Loading..." />;
+  }
+
+  if (redirectTo && redirectTo !== entityId) {
+    return <LoadingState text="Redirecting..." />;
   }
 
   if (!entity) {

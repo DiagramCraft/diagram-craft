@@ -468,6 +468,23 @@
                                 "rawAvailable"
                               ]
                             }
+                          },
+                          "redirect": {
+                            "type": "object",
+                            "properties": {
+                              "from": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "to": {
+                                "type": "string",
+                                "minLength": 1
+                              }
+                            },
+                            "required": [
+                              "from",
+                              "to"
+                            ]
                           }
                         },
                         "required": [
@@ -692,6 +709,23 @@
                           "rawAvailable"
                         ]
                       }
+                    },
+                    "redirect": {
+                      "type": "object",
+                      "properties": {
+                        "from": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "to": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "from",
+                        "to"
+                      ]
                     }
                   },
                   "required": [
@@ -892,6 +926,23 @@
                       "required": [
                         "nodes",
                         "edges"
+                      ]
+                    },
+                    "redirect": {
+                      "type": "object",
+                      "properties": {
+                        "from": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "to": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "from",
+                        "to"
                       ]
                     }
                   },
@@ -1843,6 +1894,23 @@
                       "type": "integer",
                       "minimum": 0,
                       "maximum": 9007199254740991
+                    },
+                    "redirect": {
+                      "type": "object",
+                      "properties": {
+                        "from": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "to": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "from",
+                        "to"
+                      ]
                     }
                   },
                   "required": [
@@ -1957,6 +2025,23 @@
                     "content": {
                       "type": "string",
                       "description": "Raw artifact content; only returned by the explicit content endpoint"
+                    },
+                    "redirect": {
+                      "type": "object",
+                      "properties": {
+                        "from": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "to": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "from",
+                        "to"
+                      ]
                     }
                   },
                   "required": [

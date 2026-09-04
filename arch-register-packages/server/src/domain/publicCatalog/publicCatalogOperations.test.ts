@@ -174,6 +174,30 @@ describe('public catalog publication', () => {
     expect(result.fields).not.toHaveProperty('secret');
   });
 
+  it('returns the canonical public entity and redirect marker for an old public id', async () => {
+    const canonical = {
+      ...entity,
+      id: 'entity-canonical',
+      public_id: 'SVC-002',
+      name: 'Canonical API'
+    };
+    const db = makeDb();
+    db.catalog.getEntity = vi.fn(async (_workspace, identifier) =>
+      identifier === 'SVC-001'
+        ? { ...canonical, redirect: { from: 'SVC-001', to: 'SVC-002' } }
+        : canonical
+    ) as never;
+    db.catalog.listEntities = vi.fn(async () => [canonical]) as never;
+
+    const result = await getPublicCatalogEntity(db, 'workspace-slug', 'SVC-001');
+
+    expect(result).toMatchObject({
+      publicId: 'SVC-002',
+      name: 'Canonical API',
+      redirect: { from: 'SVC-001', to: 'SVC-002' }
+    });
+  });
+
   it('uses public entity names for reference values and returns field labels', async () => {
     const source = {
       ...entity,
@@ -326,6 +350,12 @@ describe('public catalog publication', () => {
       ]
     });
     db.catalog.listEntities = vi.fn(async () => [source, target, hiddenTarget]) as never;
+    db.catalog.getEntity = vi.fn(
+      async (_workspace, identifier) =>
+        [source, target, hiddenTarget].find(
+          candidate => candidate.id === identifier || candidate.public_id === identifier
+        ) ?? null
+    ) as never;
     db.catalog.getSchema = vi.fn(async (_workspace, schemaId) => {
       if (schemaId === 'schema-source') return sourceSchema;
       if (schemaId === 'schema-target') return targetSchema;
@@ -413,6 +443,32 @@ describe('public catalog publication', () => {
         'workspace-slug'
       )
     ).rejects.toMatchObject({ status: 404 });
+  });
+
+  it('returns a canonical topology and redirect marker for an old public id', async () => {
+    const canonical = {
+      ...entity,
+      id: 'entity-canonical',
+      public_id: 'SVC-002',
+      name: 'Canonical API'
+    };
+    const db = makeDb();
+    db.catalog.listEntities = vi.fn(async () => [canonical]) as never;
+    db.catalog.getEntity = vi.fn(async (_workspace, identifier) =>
+      identifier === 'SVC-001'
+        ? { ...canonical, redirect: { from: 'SVC-001', to: 'SVC-002' } }
+        : canonical
+    ) as never;
+
+    const result = await getPublicCatalogTopology(db, 'workspace-slug', 'SVC-001', {
+      depth: 1,
+      direction: 'both'
+    });
+
+    expect(result).toMatchObject({
+      rootPublicId: 'SVC-002',
+      redirect: { from: 'SVC-001', to: 'SVC-002' }
+    });
   });
 
   it('only serves configured non-project Markdown and strips unsafe markup', async () => {

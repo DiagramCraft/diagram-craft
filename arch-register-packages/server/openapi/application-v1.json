@@ -31561,6 +31561,24 @@
                             "type": "boolean",
                             "description": "Whether conformance coverage is incomplete, old, or predates the entity update"
                           },
+                          "_redirect": {
+                            "type": "object",
+                            "properties": {
+                              "from": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "to": {
+                                "type": "string",
+                                "minLength": 1
+                              }
+                            },
+                            "required": [
+                              "from",
+                              "to"
+                            ],
+                            "description": "Present when the requested entity identifier resolves to a canonical entity"
+                          },
                           "_projections": {
                             "type": "object",
                             "propertyNames": {
@@ -32482,6 +32500,24 @@
                     "_conformanceStale": {
                       "type": "boolean",
                       "description": "Whether conformance coverage is incomplete, old, or predates the entity update"
+                    },
+                    "_redirect": {
+                      "type": "object",
+                      "properties": {
+                        "from": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "to": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "from",
+                        "to"
+                      ],
+                      "description": "Present when the requested entity identifier resolves to a canonical entity"
                     },
                     "_projections": {
                       "type": "object",
@@ -35248,6 +35284,24 @@
                             "type": "boolean",
                             "description": "Whether conformance coverage is incomplete, old, or predates the entity update"
                           },
+                          "_redirect": {
+                            "type": "object",
+                            "properties": {
+                              "from": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "to": {
+                                "type": "string",
+                                "minLength": 1
+                              }
+                            },
+                            "required": [
+                              "from",
+                              "to"
+                            ],
+                            "description": "Present when the requested entity identifier resolves to a canonical entity"
+                          },
                           "_projections": {
                             "type": "object",
                             "propertyNames": {
@@ -35805,6 +35859,24 @@
                           "_conformanceStale": {
                             "type": "boolean",
                             "description": "Whether conformance coverage is incomplete, old, or predates the entity update"
+                          },
+                          "_redirect": {
+                            "type": "object",
+                            "properties": {
+                              "from": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "to": {
+                                "type": "string",
+                                "minLength": 1
+                              }
+                            },
+                            "required": [
+                              "from",
+                              "to"
+                            ],
+                            "description": "Present when the requested entity identifier resolves to a canonical entity"
                           },
                           "_projections": {
                             "type": "object",
@@ -36366,6 +36438,24 @@
                               "_conformanceStale": {
                                 "type": "boolean",
                                 "description": "Whether conformance coverage is incomplete, old, or predates the entity update"
+                              },
+                              "_redirect": {
+                                "type": "object",
+                                "properties": {
+                                  "from": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  },
+                                  "to": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  }
+                                },
+                                "required": [
+                                  "from",
+                                  "to"
+                                ],
+                                "description": "Present when the requested entity identifier resolves to a canonical entity"
                               },
                               "_projections": {
                                 "type": "object",
@@ -40722,6 +40812,24 @@
                             "type": "boolean",
                             "description": "Whether conformance coverage is incomplete, old, or predates the entity update"
                           },
+                          "_redirect": {
+                            "type": "object",
+                            "properties": {
+                              "from": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "to": {
+                                "type": "string",
+                                "minLength": 1
+                              }
+                            },
+                            "required": [
+                              "from",
+                              "to"
+                            ],
+                            "description": "Present when the requested entity identifier resolves to a canonical entity"
+                          },
                           "_projections": {
                             "type": "object",
                             "propertyNames": {
@@ -41346,6 +41454,24 @@
                     "_conformanceStale": {
                       "type": "boolean",
                       "description": "Whether conformance coverage is incomplete, old, or predates the entity update"
+                    },
+                    "_redirect": {
+                      "type": "object",
+                      "properties": {
+                        "from": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "to": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "from",
+                        "to"
+                      ],
+                      "description": "Present when the requested entity identifier resolves to a canonical entity"
                     },
                     "_projections": {
                       "type": "object",
@@ -42262,6 +42388,24 @@
                     "_conformanceStale": {
                       "type": "boolean",
                       "description": "Whether conformance coverage is incomplete, old, or predates the entity update"
+                    },
+                    "_redirect": {
+                      "type": "object",
+                      "properties": {
+                        "from": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "to": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "from",
+                        "to"
+                      ],
+                      "description": "Present when the requested entity identifier resolves to a canonical entity"
                     },
                     "_projections": {
                       "type": "object",
@@ -43997,6 +44141,24 @@
                         "type": "boolean",
                         "description": "Whether conformance coverage is incomplete, old, or predates the entity update"
                       },
+                      "_redirect": {
+                        "type": "object",
+                        "properties": {
+                          "from": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "to": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "required": [
+                          "from",
+                          "to"
+                        ],
+                        "description": "Present when the requested entity identifier resolves to a canonical entity"
+                      },
                       "_projections": {
                         "type": "object",
                         "propertyNames": {
@@ -44589,6 +44751,24 @@
                     "_conformanceStale": {
                       "type": "boolean",
                       "description": "Whether conformance coverage is incomplete, old, or predates the entity update"
+                    },
+                    "_redirect": {
+                      "type": "object",
+                      "properties": {
+                        "from": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "to": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "from",
+                        "to"
+                      ],
+                      "description": "Present when the requested entity identifier resolves to a canonical entity"
                     },
                     "_projections": {
                       "type": "object",
@@ -70744,6 +70924,24 @@
                                 "type": "boolean",
                                 "description": "Whether conformance coverage is incomplete, old, or predates the entity update"
                               },
+                              "_redirect": {
+                                "type": "object",
+                                "properties": {
+                                  "from": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  },
+                                  "to": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  }
+                                },
+                                "required": [
+                                  "from",
+                                  "to"
+                                ],
+                                "description": "Present when the requested entity identifier resolves to a canonical entity"
+                              },
                               "_projections": {
                                 "type": "object",
                                 "propertyNames": {
@@ -71447,6 +71645,24 @@
                         "_conformanceStale": {
                           "type": "boolean",
                           "description": "Whether conformance coverage is incomplete, old, or predates the entity update"
+                        },
+                        "_redirect": {
+                          "type": "object",
+                          "properties": {
+                            "from": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "to": {
+                              "type": "string",
+                              "minLength": 1
+                            }
+                          },
+                          "required": [
+                            "from",
+                            "to"
+                          ],
+                          "description": "Present when the requested entity identifier resolves to a canonical entity"
                         },
                         "_projections": {
                           "type": "object",
@@ -72293,6 +72509,24 @@
                               "_conformanceStale": {
                                 "type": "boolean",
                                 "description": "Whether conformance coverage is incomplete, old, or predates the entity update"
+                              },
+                              "_redirect": {
+                                "type": "object",
+                                "properties": {
+                                  "from": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  },
+                                  "to": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  }
+                                },
+                                "required": [
+                                  "from",
+                                  "to"
+                                ],
+                                "description": "Present when the requested entity identifier resolves to a canonical entity"
                               },
                               "_projections": {
                                 "type": "object",
@@ -153189,6 +153423,24 @@
                           "type": "boolean",
                           "description": "Whether conformance coverage is incomplete, old, or predates the entity update"
                         },
+                        "_redirect": {
+                          "type": "object",
+                          "properties": {
+                            "from": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "to": {
+                              "type": "string",
+                              "minLength": 1
+                            }
+                          },
+                          "required": [
+                            "from",
+                            "to"
+                          ],
+                          "description": "Present when the requested entity identifier resolves to a canonical entity"
+                        },
                         "_projections": {
                           "type": "object",
                           "propertyNames": {
@@ -163931,6 +164183,24 @@
                             "type": "boolean",
                             "description": "Whether conformance coverage is incomplete, old, or predates the entity update"
                           },
+                          "_redirect": {
+                            "type": "object",
+                            "properties": {
+                              "from": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "to": {
+                                "type": "string",
+                                "minLength": 1
+                              }
+                            },
+                            "required": [
+                              "from",
+                              "to"
+                            ],
+                            "description": "Present when the requested entity identifier resolves to a canonical entity"
+                          },
                           "_projections": {
                             "type": "object",
                             "propertyNames": {
@@ -167321,6 +167591,24 @@
                             "type": "boolean",
                             "description": "Whether conformance coverage is incomplete, old, or predates the entity update"
                           },
+                          "_redirect": {
+                            "type": "object",
+                            "properties": {
+                              "from": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "to": {
+                                "type": "string",
+                                "minLength": 1
+                              }
+                            },
+                            "required": [
+                              "from",
+                              "to"
+                            ],
+                            "description": "Present when the requested entity identifier resolves to a canonical entity"
+                          },
                           "_projections": {
                             "type": "object",
                             "propertyNames": {
@@ -167877,6 +168165,24 @@
                           "_conformanceStale": {
                             "type": "boolean",
                             "description": "Whether conformance coverage is incomplete, old, or predates the entity update"
+                          },
+                          "_redirect": {
+                            "type": "object",
+                            "properties": {
+                              "from": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "to": {
+                                "type": "string",
+                                "minLength": 1
+                              }
+                            },
+                            "required": [
+                              "from",
+                              "to"
+                            ],
+                            "description": "Present when the requested entity identifier resolves to a canonical entity"
                           },
                           "_projections": {
                             "type": "object",
@@ -168437,6 +168743,24 @@
                               "_conformanceStale": {
                                 "type": "boolean",
                                 "description": "Whether conformance coverage is incomplete, old, or predates the entity update"
+                              },
+                              "_redirect": {
+                                "type": "object",
+                                "properties": {
+                                  "from": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  },
+                                  "to": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  }
+                                },
+                                "required": [
+                                  "from",
+                                  "to"
+                                ],
+                                "description": "Present when the requested entity identifier resolves to a canonical entity"
                               },
                               "_projections": {
                                 "type": "object",
@@ -174780,6 +175104,24 @@
                           "_conformanceStale": {
                             "type": "boolean",
                             "description": "Whether conformance coverage is incomplete, old, or predates the entity update"
+                          },
+                          "_redirect": {
+                            "type": "object",
+                            "properties": {
+                              "from": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "to": {
+                                "type": "string",
+                                "minLength": 1
+                              }
+                            },
+                            "required": [
+                              "from",
+                              "to"
+                            ],
+                            "description": "Present when the requested entity identifier resolves to a canonical entity"
                           },
                           "_projections": {
                             "type": "object",

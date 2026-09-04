@@ -265,6 +265,30 @@ export type Entity = {
   last_attested_at?: Date | null;
 };
 
+export type EntityRedirect = {
+  from: string;
+  to: string;
+};
+
+export type CatalogRecordMergeIdentifier =
+  | { kind: 'id'; value: string }
+  | { kind: 'public_id'; value: string };
+
+export type CatalogRecordMergeDbResult = {
+  merged_record_id: string;
+  workspace: string;
+  canonical_record_id: string;
+  merged_public_id: string | null;
+  merged_slug: string;
+  merged_namespace: string;
+  merged_schema_id: string;
+  merged_at: Date;
+  merged_by: string | null;
+  merge_id: string;
+};
+
+export type CatalogRecordMergeDbCreate = CatalogRecordMergeDbResult;
+
 // Entity enriched with resolved names from joined tables (owner, lifecycle, schema).
 // Returned by listEntities / getEntity; used by helpers that build API responses.
 export type EntityDbResult = Entity & {
@@ -272,6 +296,7 @@ export type EntityDbResult = Entity & {
   lifecycle_label: string | null;
   target_lifecycle_label: string | null;
   schema_name: string;
+  redirect?: EntityRedirect;
 };
 
 export type EntityQueryDbResult = EntityDbResult & {
@@ -418,6 +443,18 @@ export const catalogMappers = {
       {},
       'entity_query.projections'
     )
+  }),
+  catalogRecordMerge: (row: DatabaseRow): CatalogRecordMergeDbResult => ({
+    merged_record_id: String(row['merged_record_id']),
+    workspace: String(row['workspace']),
+    canonical_record_id: String(row['canonical_record_id']),
+    merged_public_id: row['merged_public_id'] == null ? null : String(row['merged_public_id']),
+    merged_slug: String(row['merged_slug']),
+    merged_namespace: String(row['merged_namespace']),
+    merged_schema_id: String(row['merged_schema_id']),
+    merged_at: databaseDate(row['merged_at']),
+    merged_by: row['merged_by'] == null ? null : String(row['merged_by']),
+    merge_id: String(row['merge_id'])
   }),
   plannedEntityChange: (row: DatabaseRow): PlannedEntityChangeDbResult => ({
     id: String(row['id']),
@@ -682,6 +719,16 @@ export type CatalogDatabase = {
   runCompiledEntityCountQuery(sql: string, params: unknown[]): Promise<number>;
   listEntities(ws: string): Promise<EntityDbResult[]>;
   getEntity(ws: string, identifier: string): Promise<EntityDbResult | null>;
+  createCatalogRecordMerge(input: CatalogRecordMergeDbCreate): Promise<CatalogRecordMergeDbResult>;
+  resolveCatalogRecordMerge(
+    ws: string,
+    identifier: CatalogRecordMergeIdentifier
+  ): Promise<CatalogRecordMergeDbResult | null>;
+  repointCatalogRecordMerges(
+    ws: string,
+    fromCanonicalRecordId: string,
+    toCanonicalRecordId: string
+  ): Promise<number>;
   createEntity(input: EntityDbCreate): Promise<EntityDbResult>;
   updateEntity(ws: string, id: string, input: EntityDbUpdate): Promise<EntityDbResult | null>;
   updateEntityIfVersion(
