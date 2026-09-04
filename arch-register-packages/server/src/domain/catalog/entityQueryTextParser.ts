@@ -94,11 +94,24 @@ const parseValue = (state: ParserState): TextValue => {
   throw new TextCompileError(`Expected a value but found '${token.text || '<eof>'}'`, token.offset);
 };
 
+const parseValueList = (state: ParserState): TextValue[] => {
+  expect(state, 'LPAREN');
+  const values = [parseValue(state)];
+  while (peek(state).kind === 'COMMA') {
+    advance(state);
+    values.push(parseValue(state));
+  }
+  expect(state, 'RPAREN');
+  return values;
+};
+
 type Scope = { filter?: TextQueryNode; captures?: TextCapture[] };
 
 // `columns` / `path` / `as` are contextual keywords: they only mean the clause / marker when the
 // next token begins a capture path (an identifier or a traversal arrow). `columns = "x"` inside a
-// bracket is still an ordinary predicate on a field literally named `columns`.
+// bracket is still an ordinary predicate on a field literally named `columns`. `in` is contextual
+// in the same spirit: it is the membership operator only when followed by `(` in comparator position;
+// otherwise it remains an ordinary field identifier.
 const nextBeginsCaptureStep = (state: ParserState, lookahead = 1): boolean => {
   const t = state.tokens[state.pos + lookahead];
   return t !== undefined && (t.kind === 'IDENT' || t.kind === 'ARROW');
@@ -274,10 +287,19 @@ const parsePathExpression = (state: ParserState): TextQueryNode => {
 
   let comparator: TextComparator | undefined;
   let value: TextValue | undefined;
+  let values: TextValue[] | undefined;
   if (peek(state).kind === 'COMPARATOR') {
     const comparatorToken = advance(state);
     comparator = { text: comparatorToken.text, offset: comparatorToken.offset };
     value = parseValue(state);
+  } else if (
+    peek(state).kind === 'IDENT' &&
+    peek(state).text === 'in' &&
+    state.tokens[state.pos + 1]?.kind === 'LPAREN'
+  ) {
+    const operatorToken = advance(state);
+    comparator = { text: operatorToken.text, offset: operatorToken.offset };
+    values = parseValueList(state);
   }
 
   return {
@@ -285,6 +307,7 @@ const parsePathExpression = (state: ParserState): TextQueryNode => {
     steps,
     ...(comparator ? { comparator } : {}),
     ...(value ? { value } : {}),
+    ...(values ? { values } : {}),
     endOffset: peek(state).offset
   };
 };

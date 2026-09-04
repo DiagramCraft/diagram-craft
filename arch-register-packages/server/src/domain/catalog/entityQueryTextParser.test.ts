@@ -90,6 +90,32 @@ describe('entity query text parser', () => {
     });
   });
 
+  it('parses a contextual `in` value list and keeps `in` available as a field name', () => {
+    const syntax = parseTextQuery(
+      tokenize(
+        'classification in ("sensitive", 2, date("2026-01-01"), enumValue("hold"), enumLabel("Assess"))'
+      )
+    );
+    expect(syntax.root).toMatchObject({
+      kind: 'path',
+      comparator: { text: 'in' },
+      values: [
+        { kind: 'literal', value: 'sensitive' },
+        { kind: 'literal', value: 2 },
+        { kind: 'date', value: '2026-01-01' },
+        { kind: 'enumValue', value: 'hold' },
+        { kind: 'enumLabel', value: 'Assess' }
+      ]
+    });
+
+    expect(parseTextQuery(tokenize('in = "literal"')).root).toMatchObject({
+      kind: 'path',
+      steps: [{ kind: 'field', field: { value: 'in' } }],
+      comparator: { text: '=' },
+      value: { kind: 'literal', value: 'literal' }
+    });
+  });
+
   it('parses nested relation filters without needing catalog metadata', () => {
     const syntax = parseTextQuery(tokenize('links[status = "open"].name'));
     expect(syntax.root).toMatchObject({

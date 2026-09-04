@@ -57,9 +57,16 @@ const SYSTEM = makeSchema('system-id', 'System', [
   }
 ]);
 const TECHNOLOGY_RADAR_STATUS_ENUM = 'radar-status-enum';
+const RESTRICTED_CLASSIFICATION_ENUM = 'restricted-classification-enum';
 const TECHNOLOGY = makeSchema('technology-id', 'Technology', [
   { id: 'category', name: 'Category', type: 'text' },
-  { id: 'radar_status', name: 'Radar Status', type: 'select', enumId: TECHNOLOGY_RADAR_STATUS_ENUM }
+  {
+    id: 'radar_status',
+    name: 'Radar Status',
+    type: 'select',
+    enumId: TECHNOLOGY_RADAR_STATUS_ENUM
+  },
+  { id: 'priority', name: 'Priority', type: 'number' }
 ]);
 const TECHNOLOGY_RELEASE = makeSchema('technology-release-id', 'Technology Release', [
   { id: 'eol_date', name: 'EOL Date', type: 'date' },
@@ -104,7 +111,21 @@ const RESOURCE = makeSchema('resource-id', 'Resource', [
 ]);
 
 const DATA_ENTITY = makeSchema('data-entity-id', 'Data Entity', [
-  { id: 'alias_name', name: 'Alias', type: 'text' }
+  { id: 'alias_name', name: 'Alias', type: 'text' },
+  {
+    id: 'classification',
+    name: 'Classification',
+    type: 'select',
+    enumId: RESTRICTED_CLASSIFICATION_ENUM
+  },
+  {
+    id: 'permitted_residency_regions',
+    name: 'Permitted residency regions',
+    type: 'select',
+    enumId: RESTRICTED_CLASSIFICATION_ENUM,
+    minCardinality: 0,
+    maxCardinality: -1
+  }
 ]);
 
 const schemas: SchemaCatalog = new Map(
@@ -121,6 +142,13 @@ const enums: EnumCatalog = new Map([
       { value: 'hold', label: 'Hold' },
       { value: 'assess', label: 'Assess' }
     ])
+  ],
+  [
+    RESTRICTED_CLASSIFICATION_ENUM,
+    makeEnum(RESTRICTED_CLASSIFICATION_ENUM, 'Restricted Classification', [
+      { value: 'sensitive', label: 'Sensitive' },
+      { value: 'highly-sensitive', label: 'Highly sensitive' }
+    ])
   ]
 ]);
 
@@ -134,8 +162,24 @@ const DATA_FLOW: RelationSchemaDbResult = {
   fields: [
     { id: 'status', name: 'Status', type: 'text' },
     {
+      id: 'data_classification',
+      name: 'Data classification',
+      type: 'select',
+      enumId: RESTRICTED_CLASSIFICATION_ENUM
+    },
+    { id: 'residency_invalid', name: 'Residency invalid', type: 'text' },
+    {
       id: 'data',
       name: 'Data',
+      type: 'entityRelation',
+      requirementLevel: 'optional',
+      schemaId: DATA_ENTITY.id,
+      minCount: 0,
+      maxCount: -1
+    },
+    {
+      id: 'data_entities',
+      name: 'Data entities',
       type: 'entityRelation',
       requirementLevel: 'optional',
       schemaId: DATA_ENTITY.id,
@@ -482,6 +526,46 @@ describe('parseEntityQueryText — typed scalar relation fields', () => {
     }
   });
 
+  it('parses and prints an `in` list inside a typed relation scope', () => {
+    const text = 'schema:"Typed System" data_flows_out[status in ("active", "paused")]._name = "B"';
+    const result = parseEntityQueryText(text, typedSchemas, enums, null, relationSchemas);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.query.root).toEqual(
+        expect.objectContaining({
+          kind: 'and',
+          children: expect.arrayContaining([
+            expect.objectContaining({
+              kind: 'predicate',
+              path: expect.arrayContaining([
+                expect.objectContaining({
+                  kind: 'typedRelation',
+                  fieldId: 'data_flows_out',
+                  filter: expect.objectContaining({
+                    kind: 'predicate',
+                    fieldId: 'status',
+                    op: 'in',
+                    value: ['active', 'paused']
+                  })
+                })
+              ]),
+              fieldId: '_name'
+            })
+          ])
+        })
+      );
+      expect(
+        parseEntityQueryText(
+          printEntityQueryText(result.query, typedSchemas, relationSchemas),
+          typedSchemas,
+          enums,
+          null,
+          relationSchemas
+        )
+      ).toEqual(result);
+    }
+  });
+
   it('uses a bare typed relation hop as relationExists', () => {
     const result = parseEntityQueryText(
       'data_flows_out',
@@ -820,6 +904,71 @@ describe('parseEntityQueryText — date/enum/empty resolution', () => {
     });
   });
 
+  it('resolves numeric `in` lists without changing their order', () => {
+    expect(parseOk('schema:Technology priority in (1, 2.5, 1)')).toEqual({
+      root: {
+        kind: 'and',
+        children: [
+          { kind: 'predicate', path: [], fieldId: '_schemaId', op: 'equals', value: TECHNOLOGY.id },
+          { kind: 'predicate', path: [], fieldId: 'priority', op: 'in', value: [1, 2.5, 1] }
+        ]
+      }
+    });
+  });
+
+  it('resolves date and enum forms independently inside an `in` list', () => {
+    expect(
+      parseOk(
+        'schema:Component technology_releases.eol_date in (date("2026-01-01"), date("2026-06-30"))'
+      )
+    ).toEqual({
+      root: {
+        kind: 'and',
+        children: [
+          { kind: 'predicate', path: [], fieldId: '_schemaId', op: 'equals', value: COMPONENT.id },
+          {
+            kind: 'predicate',
+            path: [{ kind: 'forward', fieldId: 'technology_releases' }],
+            fieldId: 'eol_date',
+            op: 'in',
+            value: ['2026-01-01', '2026-06-30']
+          }
+        ]
+      }
+    });
+
+    expect(
+      parseOk('schema:Technology radar_status in (enumValue("hold"), enumLabel("Assess"))')
+    ).toEqual({
+      root: {
+        kind: 'and',
+        children: [
+          { kind: 'predicate', path: [], fieldId: '_schemaId', op: 'equals', value: TECHNOLOGY.id },
+          {
+            kind: 'predicate',
+            path: [],
+            fieldId: 'radar_status',
+            op: 'in',
+            value: ['hold', 'assess']
+          }
+        ]
+      }
+    });
+  });
+
+  it('rejects empty, trailing-comma, and unsupported special values in an `in` list', () => {
+    expect(parseErr('schema:Technology priority in ()')[0]?.message).toContain('Expected a value');
+    expect(parseErr('schema:Technology priority in (1,)')[0]?.message).toContain(
+      'Expected a value'
+    );
+    expect(parseErr('schema:Technology priority in (empty)')[0]?.message).toContain(
+      "cannot be used inside an 'in' list"
+    );
+    expect(parseErr('schema:Technology priority in (now())')[0]?.message).toContain(
+      'before/after/on'
+    );
+  });
+
   it('rejects an unrecognized enumLabel', () => {
     const errors = parseErr('schema:Technology radar_status = enumLabel("Nope")');
     expect(errors.some(e => e.message.includes('Unrecognized enum label'))).toBe(true);
@@ -931,6 +1080,30 @@ describe('printEntityQueryText', () => {
     const query = parseOk(text);
     const printed = printEntityQueryText(query, schemas);
     expect(printed).toContain('date("2026-06-30")');
+    expect(parseOk(printed)).toEqual(query);
+  });
+
+  it('round-trips canonical `in (...)` output for date and select fields', () => {
+    const dateQuery = parseOk(
+      'schema:Component technology_releases.eol_date in (date("2026-01-01"), date("2026-06-30"))'
+    );
+    expect(printEntityQueryText(dateQuery, schemas)).toBe(
+      'schema:Component AND technology_releases.eol_date in (date("2026-01-01"), date("2026-06-30"))'
+    );
+    expect(parseOk(printEntityQueryText(dateQuery, schemas))).toEqual(dateQuery);
+
+    const enumQuery = parseOk('schema:Technology radar_status in ("hold", "assess")');
+    expect(printEntityQueryText(enumQuery, schemas)).toBe(
+      'schema:Technology AND radar_status in ("hold", "assess")'
+    );
+    expect(parseOk(printEntityQueryText(enumQuery, schemas))).toEqual(enumQuery);
+  });
+
+  it('round-trips negative membership through the existing NOT expression', () => {
+    const query = parseOk('schema:Technology NOT (radar_status in ("hold", "assess"))');
+    const printed = printEntityQueryText(query, schemas);
+    expect(printed).toContain('NOT radar_status in ("hold", "assess")');
+    expect(printed).not.toContain('not in');
     expect(parseOk(printed)).toEqual(query);
   });
 
@@ -1559,5 +1732,58 @@ describe('columns projection sub-clause (specs/QUERY_LANGUAGE.md §4.6)', () => 
     expect(printed).toContain('columns status as "Flow status"');
     const reparsed = parseEntityQueryText(printed, typedSchemas, enums, null, relationSchemas);
     expect(reparsed).toEqual({ ok: true, query });
+  });
+
+  it('round-trips the seeded relation-rooted restricted-data-flow query with `in` lists', () => {
+    const text =
+      'schema:"Data Flow" AND (data_classification in ("sensitive", "highly-sensitive") OR data_entities.classification in ("sensitive", "highly-sensitive"))';
+    const query = parseRelOk(text);
+    const withProjection: EntityQuery = {
+      ...query,
+      projections: [
+        {
+          path: [{ kind: 'relationForward', fieldId: 'data_entities' }],
+          fieldId: 'classification',
+          alias: 'carried_entity_classification'
+        }
+      ]
+    };
+    const printed = printEntityQueryText(withProjection, schemas, relationSchemas);
+
+    expect(printed).toContain('data_classification in ("sensitive", "highly-sensitive")');
+    expect(printed).toContain(
+      'data_entities[columns classification as "carried_entity_classification"]'
+    );
+    expect(parseRelOk(printed)).toEqual(withProjection);
+  });
+
+  it('parses the seeded relation-rooted residency-invalid projection fallback', () => {
+    const query: EntityQuery = {
+      ...parseRelOk('schema:"Data Flow" AND residency_invalid = "invalid"'),
+      projections: [
+        {
+          path: [{ kind: 'relationForward', fieldId: 'data_entities' }],
+          fieldId: 'permitted_residency_regions',
+          alias: 'carried_entity_permitted_regions'
+        }
+      ]
+    };
+    const printed = printEntityQueryText(query, schemas, relationSchemas);
+
+    expect(printed).toContain(
+      'columns permitted_residency_regions as "carried_entity_permitted_regions"'
+    );
+    const reparsed = parseRelOk(printed);
+    expect(reparsed.projections).toEqual(query.projections);
+    expect(reparsed.root_kind).toBe('relation');
+    expect(reparsed.root).toMatchObject({
+      kind: 'and',
+      children: expect.arrayContaining([
+        expect.objectContaining({
+          kind: 'relationExists',
+          path: [{ kind: 'relationForward', fieldId: 'data_entities' }]
+        })
+      ])
+    });
   });
 });

@@ -113,6 +113,9 @@ export type TextQueryNode =
       steps: TextPathStep[];
       comparator?: TextComparator;
       value?: TextValue;
+      // The contextual `in (...)` operator carries a list of parsed values instead of the
+      // singular `value` used by ordinary scalar comparisons.
+      values?: TextValue[];
       endOffset: number;
     };
 
