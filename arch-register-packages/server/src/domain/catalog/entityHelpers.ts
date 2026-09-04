@@ -64,7 +64,8 @@ export const toApiEntity = (
   _completeness: completeness,
   _externalMetadata: filterExternalMetadata(authCtx, schema, entity.generated_metadata),
   ...getEntityCapabilities(authCtx, entity),
-  ...filterLiveFieldGroups(authCtx, schema, entity.data)
+  ...filterLiveFieldGroups(authCtx, schema, entity.data),
+  ...(entity.redirect ? { _redirect: entity.redirect } : {})
 });
 
 export const toApiEntitySummary = (
@@ -99,7 +100,8 @@ export const toApiEntitySummary = (
   _projectId: entity.project_id,
   _completeness: completeness,
   _externalMetadata: filterExternalMetadata(authCtx, schema, entity.generated_metadata),
-  ...getEntityCapabilities(authCtx, entity)
+  ...getEntityCapabilities(authCtx, entity),
+  ...(entity.redirect ? { _redirect: entity.redirect } : {})
 });
 
 const redactHistoricalEntity = (

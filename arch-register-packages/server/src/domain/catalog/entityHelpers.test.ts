@@ -69,6 +69,23 @@ describe('toApiEntity', () => {
     expect(result.custom).toBe('value');
   });
 
+  it('keeps the redirect marker separate from dynamic entity fields', () => {
+    const result = toApiEntity(
+      {
+        ...baseEntity,
+        data: { _redirect: 'field value' },
+        redirect: { from: 'OLD-1', to: 'ENT-1' }
+      },
+      null,
+      {
+        fields: [{ id: '_redirect', name: 'Redirect field', type: 'text' }],
+        groups: []
+      }
+    );
+
+    expect(result._redirect).toEqual({ from: 'OLD-1', to: 'ENT-1' });
+  });
+
   it('fails closed for missing schemas and stale field keys', () => {
     const missingSchema = toApiEntity(
       { ...baseEntity, data: { custom: 'value', stale: 'secret' } },

@@ -74,7 +74,10 @@ const assertUnique = (values: string[], message: string) => {
 const isConfiguredPublicEntity = (input: PublicCatalogConfig, entity: EntityDbResult) => {
   if (entity.project_id != null) return false;
   const override = input.entityOverrides.find(
-    item => item.entityId === entity.id || item.entityId === entity.public_id
+    item =>
+      item.entityId === entity.id ||
+      item.entityId === entity.public_id ||
+      item.entityId === entity.redirect?.from
   );
   if (override?.mode === 'exclude') return false;
   return (
@@ -491,7 +494,10 @@ const PUBLIC_TOPOLOGY_EDGE_LIMIT = 500;
 
 const findOverride = (config: PublicCatalogConfig, entity: EntityDbResult) =>
   config.entityOverrides.find(
-    item => item.entityId === entity.id || item.entityId === entity.public_id
+    item =>
+      item.entityId === entity.id ||
+      item.entityId === entity.public_id ||
+      item.entityId === entity.redirect?.from
   );
 
 const getPublishedEntity = async (
@@ -688,7 +694,8 @@ const toPublicEntity = async (
       fields: selectedFields.map(field => ({ id: field.id, name: field.name, type: field.type }))
     },
     fields,
-    apiArtifacts
+    apiArtifacts,
+    ...(entity.redirect ? { redirect: entity.redirect } : {})
   };
 };
 
@@ -735,7 +742,8 @@ const publicTopologyRelationLabel = (field: SchemaDbResult['fields'][number]) =>
 const buildPublicTopologyEdges = async (
   db: DatabaseAdapter,
   workspace: string,
-  published: PublishedEntity[]
+  published: PublishedEntity[],
+  config: PublicCatalogConfig
 ) => {
   const publishedByIdentifier = publishedEntityLookup(published);
   const publishedById = new Map(published.map(item => [item.entity.id, item]));
@@ -753,7 +761,13 @@ const buildPublicTopologyEdges = async (
       if (!source.fieldIds.includes(field.id)) continue;
       if (isReferenceOrContainmentField(field)) {
         for (const identifier of decodeRefs(source.entity.data[field.id])) {
-          const targetEntity = publishedByIdentifier.get(identifier);
+          const targetEntity = await resolvePublishedTarget(
+            db,
+            workspace,
+            config,
+            identifier,
+            publishedByIdentifier
+          );
           const target = targetEntity ? publishedById.get(targetEntity.id) : undefined;
           if (!target) continue;
           candidates.push({
@@ -782,7 +796,14 @@ const buildPublicTopologyEdges = async (
         const ownerId = field.direction === 'out' ? relation.out_entity_id : relation.in_entity_id;
         if (ownerId !== source.entity.id) continue;
         const targetId = field.direction === 'out' ? relation.in_entity_id : relation.out_entity_id;
-        const target = publishedById.get(targetId);
+        const targetEntity = await resolvePublishedTarget(
+          db,
+          workspace,
+          config,
+          targetId,
+          publishedByIdentifier
+        );
+        const target = targetEntity ? publishedById.get(targetEntity.id) : undefined;
         if (!target) continue;
         candidates.push({
           from: source,
@@ -837,10 +858,12 @@ export const getPublicCatalogTopology = async (
 ): Promise<PublicCatalogTopology> => {
   const { workspace, config } = await requirePublicCatalog(db, workspaceSlug);
   const published = await listPublishedEntities(db, workspace, config);
-  const root = published.find(item => item.entity.public_id === entityPublicId);
+  const requestedRoot = await db.catalog.getEntity(workspace, entityPublicId);
+  httpAssert.present(requestedRoot, { status: 404, message: 'Published entity not found' });
+  const root = published.find(item => item.entity.id === requestedRoot.id);
   httpAssert.present(root, { status: 404, message: 'Published entity not found' });
 
-  const edges = await buildPublicTopologyEdges(db, workspace, published);
+  const edges = await buildPublicTopologyEdges(db, workspace, published, config);
   const outgoing = new Map<string, PublicTopologyCandidateEdge[]>();
   const incoming = new Map<string, PublicTopologyCandidateEdge[]>();
   for (const edge of edges) {
@@ -912,7 +935,8 @@ export const getPublicCatalogTopology = async (
     limits: {
       nodes: PUBLIC_TOPOLOGY_NODE_LIMIT,
       edges: PUBLIC_TOPOLOGY_EDGE_LIMIT
-    }
+    },
+    ...(requestedRoot.redirect ? { redirect: requestedRoot.redirect } : {})
   };
 };
 
@@ -1049,10 +1073,6 @@ export const getPublicCatalogEntity = async (
   const { workspace, config } = await requirePublicCatalog(db, workspaceSlug);
   const entity = await db.catalog.getEntity(workspace, entityPublicId);
   httpAssert.present(entity, { status: 404, message: 'Published entity not found' });
-  httpAssert.true(entity.public_id === entityPublicId, {
-    status: 404,
-    message: 'Published entity not found'
-  });
   const published = await getPublishedEntity(db, workspace, config, entity);
   httpAssert.present(published, { status: 404, message: 'Published entity not found' });
   return await toPublicEntity(db, workspace, config, published, publishedEntityLookup([published]));
@@ -1068,7 +1088,9 @@ const pageMatchesScope = (
     node.project_id == null &&
     entity != null &&
     page.entityId != null &&
-    (page.entityId === entity.id || page.entityId === entity.public_id) &&
+    (page.entityId === entity.id ||
+      page.entityId === entity.public_id ||
+      page.entityId === entity.redirect?.from) &&
     node.entity_id === entity.id
   );
 };
@@ -1087,7 +1109,11 @@ const listPublicPages = async (
     const node = await db.project.getAnyContentNodeById(workspace, page.nodeId);
     if (!node || !isMarkdownNode(node)) continue;
     const entity = node.entity_id ? (publishedById.get(node.entity_id) ?? null) : null;
-    if (!pageMatchesScope(page, node, entity)) continue;
+    const scopedEntity =
+      page.scope === 'entity' && page.entityId != null
+        ? await db.catalog.getEntity(workspace, page.entityId)
+        : entity;
+    if (!pageMatchesScope(page, node, scopedEntity)) continue;
     pages.push({
       path: normalizedPath(page.publicPath),
       label: page.label?.trim() || node.name,
@@ -1148,7 +1174,7 @@ const getPublishedArtifact = async (
   httpAssert.present(publication, { status: 404, message: 'Published API artifact not found' });
   const entity = await db.catalog.getEntity(workspace, entityPublicId);
   httpAssert.present(entity, { status: 404, message: 'Published API artifact not found' });
-  httpAssert.true(entity.public_id === entityPublicId && entity.project_id == null, {
+  httpAssert.true(entity.project_id == null, {
     status: 404,
     message: 'Published API artifact not found'
   });
@@ -1163,7 +1189,7 @@ const getPublishedArtifact = async (
       message: 'Published API artifact not found'
     }
   );
-  return { publication, artifact };
+  return { publication, artifact, redirect: entity.redirect };
 };
 
 const getPublicRevisionProjection = async (
@@ -1243,7 +1269,7 @@ export const listPublicApiSpecification = async (
   }
 ) => {
   const { workspace, config } = await requirePublicCatalog(db, workspaceSlug);
-  const { publication, artifact } = await getPublishedArtifact(
+  const { publication, artifact, redirect } = await getPublishedArtifact(
     db,
     workspace,
     config,
@@ -1272,7 +1298,8 @@ export const listPublicApiSpecification = async (
     items: page.items.map(toApiSpecificationItem),
     total: page.total,
     limit: query.limit,
-    offset: query.offset
+    offset: query.offset,
+    ...(redirect ? { redirect } : {})
   };
 };
 
@@ -1284,7 +1311,7 @@ export const getPublicApiSpecificationRaw = async (
   revisionId: string
 ) => {
   const { workspace, config } = await requirePublicCatalog(db, workspaceSlug);
-  const { publication, artifact } = await getPublishedArtifact(
+  const { publication, artifact, redirect } = await getPublishedArtifact(
     db,
     workspace,
     config,
@@ -1297,7 +1324,11 @@ export const getPublicApiSpecificationRaw = async (
   });
   assertPublishedRevision(revisionId, publication.revisionId);
   const { revision } = await getPublicRevisionProjection(db, workspace, artifact.id, revisionId);
-  return { ...toRevision(revision), content: revision.content };
+  return {
+    ...toRevision(revision),
+    content: revision.content,
+    ...(redirect ? { redirect } : {})
+  };
 };
 
 export const listPublicApiArtifactSummaries = async (

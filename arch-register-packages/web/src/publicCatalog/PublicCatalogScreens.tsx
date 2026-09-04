@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import type {
   PublicCatalogApiSpecificationPage,
@@ -13,6 +13,7 @@ import {
   usePublicCatalogWikiPage
 } from '../hooks/usePublicCatalog';
 import { publicCatalogRequest } from '../lib/orpcClient';
+import { publicCatalogApiRoute, publicCatalogEntityRoute } from '../routes/publicObjectRoutes';
 import styles from './publicCatalog.module.css';
 import { useQuery } from '@tanstack/react-query';
 
@@ -91,11 +92,7 @@ const EntityCard = ({
   entity: PublicCatalogEntity;
   workspaceSlug: string;
 }) => (
-  <Link
-    className={styles.entityCard}
-    to="/public/$workspaceSlug/entities/$entityPublicId"
-    params={{ workspaceSlug, entityPublicId: entity.publicId }}
-  >
+  <Link className={styles.entityCard} {...publicCatalogEntityRoute(workspaceSlug, entity.publicId)}>
     <span className={styles.cardKicker}>{entity.schema.name}</span>
     <strong>{entity.name}</strong>
     <span>{entity.publicId}</span>
@@ -140,9 +137,20 @@ export const PublicCatalogEntities = () => {
 
 export const PublicCatalogEntityPage = () => {
   const { workspaceSlug = '', entityPublicId = '' } = routeParams();
+  const navigate = useNavigate();
   const { data, isLoading, isError } = usePublicCatalogEntity(workspaceSlug, entityPublicId);
+  const redirectTo = data?.redirect?.to;
+  useEffect(() => {
+    if (!redirectTo || redirectTo === entityPublicId) return;
+    void navigate({
+      ...publicCatalogEntityRoute(workspaceSlug, redirectTo),
+      replace: true
+    });
+  }, [entityPublicId, navigate, redirectTo, workspaceSlug]);
+
   if (isLoading) return <ErrorState message="Loading entity…" />;
   if (isError || !data) return <ErrorState message="This published entity is not available." />;
+  if (redirectTo && redirectTo !== entityPublicId) return <ErrorState message="Redirecting…" />;
   const fieldDefinitions = new Map(data.schema.fields.map(field => [field.id, field]));
   return (
     <section>
@@ -187,13 +195,12 @@ export const PublicCatalogEntityPage = () => {
               <Link
                 className={styles.card}
                 key={api.artifactId}
-                to="/public/$workspaceSlug/api/$entityPublicId/$artifactId/$revisionId"
-                params={{
+                {...publicCatalogApiRoute(
                   workspaceSlug,
-                  entityPublicId: data.publicId,
-                  artifactId: api.artifactId,
-                  revisionId: api.currentRevisionId
-                }}
+                  data.publicId,
+                  api.artifactId,
+                  api.currentRevisionId
+                )}
               >
                 <strong>{api.title ?? 'API specification'}</strong>
                 <span>
@@ -248,8 +255,7 @@ export const PublicCatalogWikiPage = () => {
         }}
         onEntityLink={entityId => {
           void navigate({
-            to: '/public/$workspaceSlug/entities/$entityPublicId',
-            params: { workspaceSlug, entityPublicId: entityId }
+            ...publicCatalogEntityRoute(workspaceSlug, entityId)
           });
         }}
       />
@@ -264,6 +270,7 @@ export const PublicCatalogApiPage = () => {
     artifactId = '',
     revisionId = ''
   } = routeParams();
+  const navigate = useNavigate();
   const query = useQuery({
     queryKey: ['public-catalog-api', workspaceSlug, entityPublicId, artifactId, revisionId],
     queryFn: () =>
@@ -273,17 +280,23 @@ export const PublicCatalogApiPage = () => {
     enabled: Boolean(workspaceSlug && entityPublicId && artifactId && revisionId),
     staleTime: 60_000
   });
+  const redirectTo = query.data?.redirect?.to;
+  useEffect(() => {
+    if (!redirectTo || redirectTo === entityPublicId) return;
+    void navigate({
+      ...publicCatalogApiRoute(workspaceSlug, redirectTo, artifactId, revisionId),
+      replace: true
+    });
+  }, [artifactId, entityPublicId, navigate, redirectTo, revisionId, workspaceSlug]);
+
   if (query.isLoading) return <ErrorState message="Loading API specification…" />;
   if (query.isError || !query.data)
     return <ErrorState message="This API specification is not available." />;
+  if (redirectTo && redirectTo !== entityPublicId) return <ErrorState message="Redirecting…" />;
   const { revision, items } = query.data;
   return (
     <section>
-      <Link
-        className={styles.back}
-        to="/public/$workspaceSlug/entities/$entityPublicId"
-        params={{ workspaceSlug, entityPublicId }}
-      >
+      <Link className={styles.back} {...publicCatalogEntityRoute(workspaceSlug, entityPublicId)}>
         ← Entity
       </Link>
       <p className={styles.eyebrow}>{revision.protocol ?? 'API'} specification</p>

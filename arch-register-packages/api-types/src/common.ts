@@ -29,6 +29,13 @@ export const foreignKeySchema = z.object({
   name: z.string()
 });
 
+export const identifierRedirectSchema = z.object({
+  from: z.string().min(1),
+  to: z.string().min(1)
+});
+
+export type IdentifierRedirect = z.infer<typeof identifierRedirectSchema>;
+
 export const currencyCodeSchema = z
   .string()
   .regex(/^[A-Z]{3}$/, 'Currency codes must be three uppercase letters');

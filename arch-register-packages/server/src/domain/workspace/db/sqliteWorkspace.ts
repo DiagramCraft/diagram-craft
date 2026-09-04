@@ -106,6 +106,7 @@ export class SqliteWorkspaceDatabase extends SqliteDatabaseBase implements Works
       this.run('DELETE FROM content_node WHERE workspace = ?', [workspaceId]);
       this.run('DELETE FROM project WHERE workspace = ?', [workspaceId]);
       this.run('DELETE FROM entity_grant WHERE workspace = ?', [workspaceId]);
+      this.run('DELETE FROM catalog_record_merge WHERE workspace = ?', [workspaceId]);
       this.run('DELETE FROM catalog_record WHERE workspace = ?', [workspaceId]);
       this.run('DELETE FROM entity_schema WHERE workspace = ?', [workspaceId]);
       this.run('DELETE FROM workspace_member WHERE workspace = ?', [workspaceId]);

@@ -103,6 +103,7 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
         await tx`DELETE FROM content_node WHERE workspace = ${id}`;
         await tx`DELETE FROM project WHERE workspace = ${id}`;
         await tx`DELETE FROM entity_grant WHERE workspace = ${id}`;
+        await tx`DELETE FROM catalog_record_merge WHERE workspace = ${id}`;
         await tx`DELETE FROM catalog_record WHERE workspace = ${id}`;
         await tx`DELETE FROM entity_schema WHERE workspace = ${id}`;
         await tx`DELETE FROM workspace_member WHERE workspace = ${id}`;

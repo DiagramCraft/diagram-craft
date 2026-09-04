@@ -1,6 +1,6 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
-import { ws } from '@arch-register/api-types/common';
+import { identifierRedirectSchema, ws } from '@arch-register/api-types/common';
 import {
   apiSpecificationItemSchema,
   apiSpecificationRevisionSchema,
@@ -188,7 +188,8 @@ export const publicCatalogEntitySchema = z.object({
     fields: z.array(publicCatalogFieldSchema)
   }),
   fields: z.record(z.string(), z.unknown()),
-  apiArtifacts: z.array(publicCatalogApiArtifactSummarySchema)
+  apiArtifacts: z.array(publicCatalogApiArtifactSummarySchema),
+  redirect: identifierRedirectSchema.optional()
 });
 
 export const publicCatalogEntityListSchema = z.object({
@@ -225,7 +226,8 @@ export const publicCatalogTopologySchema = z.object({
   limits: z.object({
     nodes: z.number().int().positive(),
     edges: z.number().int().positive()
-  })
+  }),
+  redirect: identifierRedirectSchema.optional()
 });
 
 export const publicCatalogWikiPageSchema = z.object({
@@ -242,7 +244,12 @@ export const publicCatalogApiSpecificationPageSchema = z.object({
   items: z.array(apiSpecificationItemSchema),
   total: z.number().int().min(0),
   limit: z.number().int().min(0),
-  offset: z.number().int().min(0)
+  offset: z.number().int().min(0),
+  redirect: identifierRedirectSchema.optional()
+});
+
+export const publicCatalogArtifactRevisionContentSchema = artifactRevisionContentSchema.extend({
+  redirect: identifierRedirectSchema.optional()
 });
 
 const publicCatalogEntityParamsSchema = z.object({
@@ -397,7 +404,7 @@ export const publicCatalogContract = oc.tag('Public Catalog').router({
         tags: ['Public Catalog']
       })
       .input(z.object({ params: publicCatalogRevisionParamsSchema }))
-      .output(artifactRevisionContentSchema)
+      .output(publicCatalogArtifactRevisionContentSchema)
   }
 });
 

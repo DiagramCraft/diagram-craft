@@ -4,6 +4,7 @@ import {
   ws,
   wsAndId,
   foreignKeySchema,
+  identifierRedirectSchema,
   externalMetadataSchema,
   externalUpdateEnvelopeSchema
 } from '@arch-register/api-types/common';
@@ -124,6 +125,9 @@ const entitySummarySchema = entityCapabilitiesSchema.extend({
     .boolean()
     .optional()
     .describe('Whether conformance coverage is incomplete, old, or predates the entity update'),
+  _redirect: identifierRedirectSchema
+    .optional()
+    .describe('Present when the requested entity identifier resolves to a canonical entity'),
   _projections: z
     .record(z.string(), z.unknown())
     .optional()
