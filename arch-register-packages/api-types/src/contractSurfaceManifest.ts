@@ -24,6 +24,7 @@ import { documentContract } from './documentContract';
 import { entityChangeContract } from './entityChangeContract';
 import { workspaceEntityContract } from './entityContract';
 import { entityDeprecationContract } from './entityDeprecationContract';
+import { entityMergeContract } from './entityMergeContract';
 import { entitySyncContract } from './entitySyncContract';
 import { entityVersionContract } from './entityVersionContract';
 import { workspaceEnumContract } from './enumContract';
@@ -156,6 +157,7 @@ const applicationEntries = [
   { id: 'relationVersionContract', contract: relationVersionContract },
   { id: 'relationChangeContract', contract: relationChangeContract },
   { id: 'entityDeprecationContract', contract: entityDeprecationContract },
+  { id: 'entityMergeContract', contract: entityMergeContract },
   { id: 'assessmentContract', contract: assessmentContract },
   { id: 'assessmentResponseContract', contract: assessmentResponseContract },
   { id: 'milestoneContract', contract: milestoneContract },

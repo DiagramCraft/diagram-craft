@@ -58,6 +58,7 @@ import { createWebhookORPCHandler } from './domain/webhook/webhookOrpc';
 import { createAutomationRuleORPCHandler } from './domain/automation/automationRuleOrpc';
 import { createDocumentORPCHandler } from './domain/document/documentOrpc';
 import { createEntityDeprecationORPCHandler } from './domain/catalog/entityDeprecationOrpc';
+import { createEntityMergeORPCHandler } from './domain/catalog/entityMergeOrpc';
 import { createArtifactORPCHandler } from './domain/artifact/artifactOrpc';
 import { createBaselineORPCHandler } from './domain/baseline/baselineOrpc';
 import { createConformanceORPCHandler } from './domain/conformance/conformanceOrpc';
@@ -343,6 +344,15 @@ const protectedRouteDefinitions = [
     prefix: API_PREFIXES.application,
     surfaces: [API_PREFIXES.application],
     create: ({ db }) => createEntityDeprecationORPCHandler(db)
+  },
+  {
+    id: 'entity-merge',
+    auth: 'protected',
+    kind: 'orpc',
+    dependencies: ['db'],
+    prefix: API_PREFIXES.application,
+    surfaces: [API_PREFIXES.application],
+    create: ({ db }) => createEntityMergeORPCHandler(db)
   },
   {
     id: 'artifacts',
