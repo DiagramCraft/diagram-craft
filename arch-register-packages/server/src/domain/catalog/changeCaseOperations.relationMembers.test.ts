@@ -4,7 +4,8 @@ import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import type { RelationDbResult, RelationSchemaDbResult } from './db/relationDatabase';
 import type { ChangeCaseDbResult, ChangeCaseMemberDbResult } from './db/changeCaseDatabase';
-import { addRelationToChangeCase, applyChangeCase } from './changeCaseOperations';
+import { addRelationToChangeCase } from './changeCaseOperations';
+import { applyChangeCase } from './changeCaseApplyOperations';
 
 const authorizationMocks = vi.hoisted(() => ({
   buildApiEntityAuthCtx: vi.fn()

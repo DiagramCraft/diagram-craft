@@ -26,7 +26,7 @@ const checker = new PermissionChecker();
  * OR-across-endpoints permission model. Shared by every surface that needs to authorize editing
  * an *existing* relation instance without already having its owner schemas to hand (relationOperations.ts
  * has its own copy fetched inline where it already has other schema lookups in flight; this one is
- * for callers — changeCaseOperations.ts, relationChangeOperations.ts — that don't).
+ * for callers in the change-case and relation-change workflow modules that don't).
  *
  * A temporal caller can provide the endpoint schema catalog that was resolved for its
  * point-in-time read. When omitted, the live catalog is used as before.
@@ -56,8 +56,8 @@ export const getRelationOwnerSchemas = async (
  * to re-point a relation. Both change-case surfaces (the single-relation approval workflow in
  * relationChangeOperations.ts and the multi-record planned-change workflow in
  * changeCaseOperations.ts) build their proposed state from an arbitrary caller-supplied
- * `proposedState` object, so both need this same guard — otherwise an endpoint change is either
- * silently dropped or silently applied depending on which surface reads it.
+ * `proposedState` object, so both workflow surfaces need this same guard — otherwise an endpoint
+ * change is either silently dropped or silently applied depending on which surface reads it.
  */
 export const assertRelationProposalEndpointsUnchanged = (
   relation: { in_entity_id: string; out_entity_id: string },
