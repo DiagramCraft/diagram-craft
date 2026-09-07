@@ -81,3 +81,24 @@ describe('compound traversal round trip', () => {
     expect(queryNodeSchema.safeParse(query).success).toBe(true);
   });
 });
+
+describe('membership predicate values', () => {
+  const predicate = (value: unknown) => ({
+    kind: 'predicate' as const,
+    path: [],
+    fieldId: '_name',
+    op: 'in' as const,
+    value
+  });
+
+  it('accepts an empty list for intentional always-false structured IR', () => {
+    expect(queryNodeSchema.safeParse(predicate([])).success).toBe(true);
+  });
+
+  it('rejects scalar and oversized membership values', () => {
+    expect(queryNodeSchema.safeParse(predicate('one')).success).toBe(false);
+    expect(
+      queryNodeSchema.safeParse(predicate(Array.from({ length: 501 }, (_, index) => index))).success
+    ).toBe(false);
+  });
+});

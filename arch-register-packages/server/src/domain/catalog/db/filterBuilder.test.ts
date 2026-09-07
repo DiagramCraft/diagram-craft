@@ -175,6 +175,33 @@ describe('filterBuilder', () => {
       }
     });
 
+    it('builds scalar membership and preserves empty-list false semantics', () => {
+      expect(
+        buildConditionClause(
+          'e.name',
+          { fieldId: '_name', op: 'in', value: ['one', 'two'] },
+          mockAddParam,
+          'postgres'
+        )
+      ).toBe('e.name IN ($one, $two)');
+      expect(
+        buildConditionClause(
+          'e.name',
+          { fieldId: '_name', op: 'in', value: [] },
+          mockAddParam,
+          'sqlite'
+        )
+      ).toBe('1=0');
+      expect(
+        buildConditionClause(
+          'e.name',
+          { fieldId: '_name', op: 'in', value: 'one' as never },
+          mockAddParam,
+          'sqlite'
+        )
+      ).toBe('1=0');
+    });
+
     it('should return null for unsupported operators', () => {
       const result = buildConditionClause(
         'e.name',
@@ -222,6 +249,20 @@ describe('filterBuilder', () => {
         );
         expect(result).toBe(
           "EXISTS (SELECT 1 FROM jsonb_array_elements_text(CASE WHEN jsonb_typeof(e.tags) = 'array' THEN e.tags ELSE '[]'::jsonb END) t WHERE t ILIKE $%rea%)"
+        );
+      });
+
+      it('should build membership with EXISTS for array columns', () => {
+        expect(
+          buildConditionClause(
+            'e.tags',
+            { fieldId: '_tags', op: 'in', value: ['react', 'vue'] },
+            mockAddParam,
+            'postgres',
+            'array'
+          )
+        ).toBe(
+          "EXISTS (SELECT 1 FROM jsonb_array_elements_text(CASE WHEN jsonb_typeof(e.tags) = 'array' THEN e.tags ELSE '[]'::jsonb END) t WHERE t IN ($react, $vue))"
         );
       });
 

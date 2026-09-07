@@ -3,6 +3,7 @@ import {
   bubbleViewConfigSchema,
   graphViewConfigSchema,
   exploreViewConfigSchema,
+  filterConditionSchema,
   savedViewQuerySchema,
   traceabilityViewConfigSchema
 } from './viewContract';
@@ -87,6 +88,29 @@ describe('saved view filters', () => {
       savedViewQuerySchema.safeParse({
         conditions: [],
         root: { kind: 'and', children: [] }
+      }).success
+    ).toBe(false);
+  });
+
+  it('requires membership values to be arrays within the shared bound', () => {
+    expect(
+      filterConditionSchema.safeParse({ fieldId: 'status', op: 'in', value: [] }).success
+    ).toBe(true);
+    expect(
+      filterConditionSchema.safeParse({
+        fieldId: 'status',
+        op: 'in',
+        value: Array.from({ length: 500 }, (_, index) => index)
+      }).success
+    ).toBe(true);
+    expect(
+      filterConditionSchema.safeParse({ fieldId: 'status', op: 'in', value: 'open' }).success
+    ).toBe(false);
+    expect(
+      filterConditionSchema.safeParse({
+        fieldId: 'status',
+        op: 'in',
+        value: Array.from({ length: 501 }, (_, index) => index)
       }).success
     ).toBe(false);
   });

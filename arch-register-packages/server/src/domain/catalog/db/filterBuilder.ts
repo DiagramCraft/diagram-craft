@@ -1,4 +1,5 @@
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
+import { isValidFilterInValue } from '@arch-register/api-types/filterOp';
 import { isNowDateLiteral } from '@arch-register/api-types/nowDateLiteral';
 import { createEntityQueryDialectAdapter } from '../entityQueryIRDialect';
 
@@ -99,6 +100,15 @@ const buildArrayConditionClause = (
       return exists(`${element} > ${addParam(String(cond.value ?? ''))}`);
     case 'on':
       return exists(`${element} = ${addParam(String(cond.value ?? ''))}`);
+    case 'in': {
+      const values = cond.value;
+      // Empty membership is intentional IR and matches no rows. Invalid or oversized values are
+      // fail-closed here as a second line of defence for internal callers that bypass Zod.
+      if (!isValidFilterInValue(values) || values.length === 0) return '1=0';
+      return exists(
+        `${element} IN (${values.map(value => addParam(String(value ?? ''))).join(', ')})`
+      );
+    }
     default:
       return null;
   }
@@ -172,10 +182,12 @@ export const buildConditionClause = (
     case 'lte':
       return `CAST(${col} AS NUMERIC) <= CAST(${addParam(cond.value ?? 0)} AS NUMERIC)`;
     case 'in': {
-      const values = Array.isArray(cond.value) ? cond.value : [cond.value];
+      const values = cond.value;
       // An empty list matches nothing, rather than every row (which an empty `IN ()` would be a
-      // SQL syntax error for anyway).
-      return values.length === 0 ? '1=0' : `${col} IN (${values.map(v => addParam(v)).join(', ')})`;
+      // SQL syntax error for anyway). Invalid or oversized values fail closed for internal
+      // callers that bypass the shared contract validation.
+      if (!isValidFilterInValue(values) || values.length === 0) return '1=0';
+      return `${col} IN (${values.map(value => addParam(value)).join(', ')})`;
     }
     default:
       return null;

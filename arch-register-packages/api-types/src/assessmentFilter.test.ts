@@ -85,6 +85,45 @@ describe('matchesAssessmentConditions', () => {
     expect(matchesAssessmentConditions(undefined, conditions, fields)).toBe(false);
   });
 
+  it('matches membership across rating, enum, text, and derived select fields', () => {
+    expect(
+      matchesAssessmentConditions(
+        { rating1: 3, enum1: 'a', text1: 'Hello', quadrant1: 'invest' },
+        [
+          { fieldId: '_assessment:rating1', op: 'in', value: [1, 3] },
+          { fieldId: '_assessment:enum1', op: 'in', value: ['b', 'a'] },
+          { fieldId: '_assessment:text1', op: 'in', value: ['Hello', 'World'] },
+          { fieldId: '_assessment:quadrant1', op: 'in', value: ['tolerate', 'invest'] }
+        ],
+        fields
+      )
+    ).toBe(true);
+    expect(
+      matchesAssessmentConditions(
+        { enum1: 'c' },
+        [{ fieldId: '_assessment:enum1', op: 'in', value: ['a', 'b'] }],
+        fields
+      )
+    ).toBe(false);
+  });
+
+  it('does not treat presence membership or invalid membership values as a no-op', () => {
+    expect(
+      matchesAssessmentConditions(
+        { enum1: 'a' },
+        [{ fieldId: ASSESSMENT_PRESENCE_FIELD_ID, op: 'in', value: ['x'] }],
+        fields
+      )
+    ).toBe(false);
+    expect(
+      matchesAssessmentConditions(
+        { enum1: 'a' },
+        [{ fieldId: '_assessment:enum1', op: 'in', value: 'a' as never }],
+        fields
+      )
+    ).toBe(false);
+  });
+
   it('matches enum equals/not_equals/empty', () => {
     expect(
       matchesAssessmentConditions(

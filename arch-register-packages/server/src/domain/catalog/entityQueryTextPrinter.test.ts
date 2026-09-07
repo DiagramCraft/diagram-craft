@@ -44,6 +44,35 @@ const componentSchema: SchemaDbResult = {
 };
 
 describe('entity query text printer', () => {
+  it('prints bounded membership lists', () => {
+    const query: EntityQuery = {
+      root: {
+        kind: 'predicate',
+        path: [],
+        fieldId: '_name',
+        op: 'in',
+        value: ['one', 'two']
+      }
+    };
+
+    expect(printEntityQueryText(query, new Map([[schema.id, schema]]))).toBe(
+      '_name in ("one", "two")'
+    );
+  });
+
+  it('does not emit an invalid text form for empty or malformed IR membership', () => {
+    const query = (value: unknown): EntityQuery => ({
+      root: { kind: 'predicate', path: [], fieldId: '_name', op: 'in', value }
+    });
+
+    expect(() => printEntityQueryText(query([]), new Map([[schema.id, schema]]))).toThrow(
+      'structured IR'
+    );
+    expect(() => printEntityQueryText(query('one'), new Map([[schema.id, schema]]))).toThrow(
+      'not an array'
+    );
+  });
+
   it('prints IR directly using schema context and canonical date syntax', () => {
     const query: EntityQuery = {
       root: {

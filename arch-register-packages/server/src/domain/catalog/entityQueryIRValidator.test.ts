@@ -259,6 +259,66 @@ describe('validateEntityQueryIR', () => {
     expect(result.ok).toBe(false);
   });
 
+  it('rejects malformed and oversized membership values before execution', () => {
+    const scalarQuery = {
+      root: {
+        kind: 'predicate' as const,
+        path: [],
+        fieldId: '_name',
+        op: 'in' as const,
+        value: 'one'
+      }
+    } as unknown as EntityQuery;
+    const scalarResult = validateEntityQueryIR(scalarQuery, schemas);
+    expect(scalarResult.ok).toBe(false);
+    if (!scalarResult.ok) {
+      expect(scalarResult.errors.some(error => error.message.includes('requires an array'))).toBe(
+        true
+      );
+    }
+
+    const oversizedResult = validateEntityQueryIR(
+      {
+        root: {
+          kind: 'predicate',
+          path: [],
+          fieldId: '_name',
+          op: 'in',
+          value: Array.from({ length: 501 }, (_, index) => index)
+        }
+      } as EntityQuery,
+      schemas
+    );
+    expect(oversizedResult.ok).toBe(false);
+    if (!oversizedResult.ok) {
+      expect(oversizedResult.errors.some(error => error.message.includes('at most 500'))).toBe(
+        true
+      );
+    }
+  });
+
+  it('rejects membership on the assessment presence pseudo-field', () => {
+    const result = validateEntityQueryIR(
+      {
+        assessmentId: 'assessment-1',
+        root: {
+          kind: 'predicate',
+          path: [],
+          fieldId: '_assessment',
+          op: 'in',
+          value: ['present']
+        }
+      },
+      schemas
+    );
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.errors.some(error => error.message.includes('not supported for the'))).toBe(
+        true
+      );
+    }
+  });
+
   it('rejects an _assessment predicate when assessmentId is not set', () => {
     const query: EntityQuery = {
       root: {

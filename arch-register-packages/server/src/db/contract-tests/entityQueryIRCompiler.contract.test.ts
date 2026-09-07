@@ -1866,6 +1866,38 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
     expect(empty.total).toBe(0);
   });
 
+  it('matches `in` against multi-valued scalar fields on both SQL drivers', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const schema = await createSchema(db, workspace, {
+      name: 'Data Entity',
+      fields: [
+        {
+          id: 'regions',
+          name: 'Regions',
+          type: 'select',
+          enumId: 'regions',
+          minCardinality: 0,
+          maxCardinality: -1
+        }
+      ]
+    });
+    const eu = await createFixtureEntity(db, workspace, schema.id, {
+      data: { regions: ['eu', 'us'] }
+    });
+    await createFixtureEntity(db, workspace, schema.id, {
+      data: { regions: ['apac'] }
+    });
+
+    const query: EntityQuery = {
+      schemaId: schema.id,
+      root: { kind: 'predicate', path: [], fieldId: 'regions', op: 'in', value: ['us', 'eu'] }
+    };
+    const matches = await runQuery(db, driver, workspace, new Map([[schema.id, schema]]), query);
+
+    expect(matches.map(entity => entity.id)).toEqual([eu.id]);
+  });
+
   it('preserves project scope and pagination through the IR list/count path', async () => {
     const db = getDb();
     const workspace = await createFixtureWorkspace(db);

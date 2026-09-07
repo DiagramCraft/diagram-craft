@@ -1,4 +1,5 @@
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
+import { isValidFilterInValue } from '@arch-register/api-types/filterOp';
 import { isMultiValuedScalarField } from './entityScalarValues';
 import type { PathStep, QueryNode } from '@arch-register/api-types/entityQueryIR';
 import {
@@ -50,8 +51,12 @@ const buildConformanceStatusConditionClause = (
     return `(${column} != ${addParameter('violating')} AND ${column} != ${addParameter('acknowledged')} OR ${column} IS NULL)`;
   }
 
-  if (op === 'in' && Array.isArray(value) && value.includes('unresolved')) {
-    const expandedValues = value.flatMap(item =>
+  if (op === 'in') {
+    const values = isValidFilterInValue(value) ? value : null;
+    if (values == null) return '1=0';
+    if (!values.includes('unresolved')) return null;
+
+    const expandedValues = values.flatMap(item =>
       item === 'unresolved' ? ['violating', 'acknowledged'] : [item]
     );
     return expandedValues.length === 0
@@ -190,6 +195,11 @@ const compileAssessmentPresence = (
   requireAssessmentId(state);
   if (op === 'not_empty') return `${alias}.assessment_values IS NOT NULL`;
   if (op === 'empty') return `${alias}.assessment_values IS NULL`;
+  if (op === 'in') {
+    throw new UnsupportedEntityQueryIRError(
+      "The 'in' operator is not supported for the '_assessment' presence field"
+    );
+  }
   return '1=1';
 };
 
