@@ -29,8 +29,8 @@ export const MergeTargetPicker = ({
   return (
     <div className={styles.section}>
       <div className={styles.sourceSummary}>
-        Merging <b>{sourceEntityName}</b> ({sourceSchemaName}) into another {sourceSchemaName}.
-        The source will be retired; the target keeps the merged data.
+        Merging <b>{sourceEntityName}</b> ({sourceSchemaName}) into another {sourceSchemaName}. The
+        source will be retired; the target keeps the merged data.
       </div>
       <div className={styles.sectionTitle}>Target entity</div>
       <EntityPicker

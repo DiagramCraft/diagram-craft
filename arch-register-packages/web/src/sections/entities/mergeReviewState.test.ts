@@ -106,7 +106,9 @@ describe('isMergeBlockedHard', () => {
   });
 
   it('is true for any non-acknowledgeable blocker regardless of acknowledgement', () => {
-    const blockers = [{ code: 'different_schema' as const, message: 'nope', acknowledgeable: false }];
+    const blockers = [
+      { code: 'different_schema' as const, message: 'nope', acknowledgeable: false }
+    ];
     expect(isMergeBlockedHard(blockers, new Set(['different_schema']))).toBe(true);
   });
 
@@ -122,7 +124,11 @@ describe('isMergeBlockedHard', () => {
 describe('buildMergeExecuteBody', () => {
   it('replays preview versions and fingerprint verbatim alongside the resolution maps', () => {
     const resolutions = buildDefaultResolutions(basePreview);
-    const body = buildMergeExecuteBody(basePreview, resolutions, new Set(['project_scope_relocated']));
+    const body = buildMergeExecuteBody(
+      basePreview,
+      resolutions,
+      new Set(['project_scope_relocated'])
+    );
     expect(body).toEqual({
       targetId: 'target-1',
       expectedSourceVersion: 3,

@@ -195,7 +195,9 @@ const CountsStrip = ({ counts }: { counts: MergePreview['sideTableCounts'] }) =>
     <span>{counts.outgoingRelations} outgoing relations</span>
     <span>{counts.externalIdentitiesTransferring} external identities transferring</span>
     {counts.externalIdentitiesColliding > 0 && (
-      <span>{counts.externalIdentitiesColliding} external identities dropped (already on target)</span>
+      <span>
+        {counts.externalIdentitiesColliding} external identities dropped (already on target)
+      </span>
     )}
   </div>
 );

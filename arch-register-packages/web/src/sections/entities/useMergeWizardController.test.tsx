@@ -188,9 +188,7 @@ describe('useMergeWizardController', () => {
       targetId: 'target-1',
       entity: { _publicId: 'TGT-1', _name: 'Target' }
     });
-    act(() =>
-      root.render(<Harness stateRef={stateRef} queuedSourceIds={['source-2']} />)
-    );
+    act(() => root.render(<Harness stateRef={stateRef} queuedSourceIds={['source-2']} />));
     const state = () => stateRef.current!;
 
     act(() => state().setTargetEntityId('target-1'));

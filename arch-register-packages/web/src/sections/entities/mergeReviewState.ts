@@ -143,7 +143,9 @@ export const formatMergeFieldValue = (value: unknown): string => {
   if (value === null || value === undefined || value === '') return '—';
   if (Array.isArray(value)) {
     return value
-      .map(item => (typeof item === 'object' && item !== null ? JSON.stringify(item) : String(item)))
+      .map(item =>
+        typeof item === 'object' && item !== null ? JSON.stringify(item) : String(item)
+      )
       .join(', ');
   }
   if (typeof value === 'object') return JSON.stringify(value);

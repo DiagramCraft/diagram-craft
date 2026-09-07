@@ -23,7 +23,8 @@ const STEPS = [
 type WizardPhase = (typeof STEPS)[number]['key'] | 'loading-preview' | 'executing';
 
 const Stepper = ({ phase }: { phase: WizardPhase }) => {
-  const normalized = phase === 'loading-preview' ? 'pick-target' : phase === 'executing' ? 'confirm' : phase;
+  const normalized =
+    phase === 'loading-preview' ? 'pick-target' : phase === 'executing' ? 'confirm' : phase;
   const phaseIdx = STEPS.findIndex(s => s.key === normalized);
   return (
     <div className={styles.stepper}>

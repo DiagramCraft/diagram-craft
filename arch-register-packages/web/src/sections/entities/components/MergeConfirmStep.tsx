@@ -31,8 +31,7 @@ export const MergeConfirmStep = ({
     <div className={styles.section}>
       <p>
         <b>{sourceEntityName}</b> will be merged into <b>{targetEntityName}</b> and retired. Old
-        links to {sourceEntityName} will keep resolving to {targetEntityName}. This can't be
-        undone.
+        links to {sourceEntityName} will keep resolving to {targetEntityName}. This can't be undone.
       </p>
       <ul className={styles.fixedNote}>
         <li>{fieldChangeCount} field conflict(s) resolved</li>

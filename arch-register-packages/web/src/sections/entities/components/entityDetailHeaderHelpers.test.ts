@@ -23,14 +23,7 @@ describe('getEntityDetailMenuActions', () => {
         canDelete: true,
         deprecationPolicyRequired: true
       })
-    ).toEqual([
-      'viewJson',
-      'collections',
-      'proposeDeprecation',
-      'clone',
-      'mergeInto',
-      'delete'
-    ]);
+    ).toEqual(['viewJson', 'collections', 'proposeDeprecation', 'clone', 'mergeInto', 'delete']);
 
     expect(
       getEntityDetailMenuActions({
