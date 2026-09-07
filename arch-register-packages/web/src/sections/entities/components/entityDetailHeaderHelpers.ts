@@ -3,6 +3,7 @@ export type EntityDetailMenuAction =
   | 'collections'
   | 'proposeDeprecation'
   | 'clone'
+  | 'mergeInto'
   | 'delete';
 
 export type EntityDetailMenuState = {
@@ -26,5 +27,7 @@ export const getEntityDetailMenuActions = ({
     ? ['proposeDeprecation' as const]
     : []),
   ...(canCreateChild ? ['clone' as const] : []),
+  // Merge requires the same admin_entity permission as delete, so it's gated on the same flag.
+  ...(canDelete ? ['mergeInto' as const] : []),
   ...(canDelete ? ['delete' as const] : [])
 ];

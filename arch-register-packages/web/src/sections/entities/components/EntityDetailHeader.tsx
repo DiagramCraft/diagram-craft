@@ -2,7 +2,16 @@ import type { ReactNode } from 'react';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TypeBadge } from '../../../components/TypeBadge';
 import { StatusChip } from '../../../components/StatusChip';
-import { TbEdit, TbDots, TbTrash, TbCopy, TbBell, TbPinned, TbBookmark } from 'react-icons/tb';
+import {
+  TbEdit,
+  TbDots,
+  TbTrash,
+  TbCopy,
+  TbBell,
+  TbPinned,
+  TbBookmark,
+  TbGitMerge
+} from 'react-icons/tb';
 import { DropdownMenu, type MenuItem } from '../../../components/DropdownMenu';
 import type { EntityChangeApproval } from '@arch-register/api-types/entityChangeContract';
 import type { DeprecationCase } from '@arch-register/api-types/entityDeprecationContract';
@@ -41,6 +50,7 @@ type Props = {
   onOpenCollections: () => void;
   onProposeDeprecation: () => void;
   onClone: () => void;
+  onMergeInto: () => void;
 };
 
 export const EntityDetailHeader = ({
@@ -70,7 +80,8 @@ export const EntityDetailHeader = ({
   onViewJson,
   onOpenCollections,
   onProposeDeprecation,
-  onClone
+  onClone,
+  onMergeInto
 }: Props) => {
   const menuActions = getEntityDetailMenuActions({
     canEdit: entity.canEdit,
@@ -93,6 +104,8 @@ export const EntityDetailHeader = ({
         return { label: 'Propose deprecation…', onClick: onProposeDeprecation };
       case 'clone':
         return { label: 'Clone', icon: <TbCopy size={14} />, onClick: onClone };
+      case 'mergeInto':
+        return { label: 'Merge into…', icon: <TbGitMerge size={14} />, onClick: onMergeInto };
       case 'delete':
         return { label: 'Delete', icon: <TbTrash size={14} />, danger: true, onClick: onDelete };
     }

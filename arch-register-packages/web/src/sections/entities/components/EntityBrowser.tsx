@@ -40,6 +40,7 @@ import {
   withoutDisplayFieldIds
 } from './entityDisplayFields';
 import { CollectionPickerDialog } from './CollectionPickerDialog';
+import { MergeWizardDialog } from './MergeWizardDialog';
 import { useTimelineMarkers } from '../../../hooks/useEntities';
 
 type EntityBrowserProps = {
@@ -403,7 +404,10 @@ export const EntityBrowser = ({
     deleteTarget: hookDeleteTarget,
     handleCloneEntity,
     handleDeleteEntity,
-    setDeleteTarget: setHookDeleteTarget
+    setDeleteTarget: setHookDeleteTarget,
+    mergeSource,
+    handleMergeEntity,
+    setMergeSource
   } = useEntityBrowserEntityActions({
     workspaceId,
     onNavigateToEntity: navigateToEntity
@@ -581,6 +585,7 @@ export const EntityBrowser = ({
               setStep={setStep}
               onClear={clearSelection}
               onConfirm={handleConfirm}
+              onNavigateToEntity={navigateToEntity}
             />
           )}
           <div className={view === 'graph' ? styles.graphView : undefined}>
@@ -632,6 +637,7 @@ export const EntityBrowser = ({
                       onDelete: handleDeleteEntity,
                       onClone: handleCloneEntity,
                       onManageCollections: entity => setCollectionTarget(entity),
+                      onMerge: handleMergeEntity,
                       selectedIds,
                       onSelectAll: handleSelectAll,
                       onSelectRow: handleSelectRow
@@ -676,6 +682,15 @@ export const EntityBrowser = ({
           entityId={collectionTarget._uid}
           entityName={collectionTarget._name ?? collectionTarget._slug}
           onClose={() => setCollectionTarget(null)}
+        />
+      )}
+      {mergeSource && (
+        <MergeWizardDialog
+          open={true}
+          onClose={() => setMergeSource(null)}
+          workspaceId={workspaceId}
+          sourceEntityId={mergeSource._uid}
+          onNavigateToEntity={navigateToEntity}
         />
       )}
     </>

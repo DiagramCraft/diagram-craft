@@ -792,14 +792,21 @@
           acknowledgement, postpone or finalize on schedule, and cancel an in-flight deprecation; finalizing moves the
           entity to the workspace's designated deprecated lifecycle state.
 
-        - @id:ar.collaboration.entity-merge Workspace administrators with merge permission can preview and execute
-          same-schema, same-project entity merges. The preview is read-only and reports conflicting field values,
-          reverse references, typed relations, side-table collisions, affected row counts, and hard blockers; the
-          caller explicitly resolves every conflict, then one atomic operation rewrites supported references and
-          side tables, transfers record history, creates the retired-identifier alias, removes the source record, and
-          records a correlated audit trail for the retired source, canonical target, and rewritten dependents. Preview
-          versions and an opaque participant fingerprint prevent stale applies, while restricted field values are flagged
-          rather than disclosed and unsupported external identities remain blocked.
+        - @id:ar.collaboration.entity-merge Workspace administrators with merge permission can merge a duplicate
+          entity into a canonical one from a "Merge into…" action on the entity detail page or the entity browser
+          (single or multi-select), via a four-step wizard: pick a same-schema target entity, review every field,
+          relation, and side-table conflict plus repointed dependents and any blockers, type the source entity's name
+          to confirm, then view the merged result. Field-group-restricted conflicts are shown read-only with an
+          explanation rather than left for the user to resolve, and acknowledgeable blockers require an explicit
+          checkbox before the merge can proceed; merging several selected entities into the same target runs the
+          wizard once per source in sequence. Under the hood the wizard drives the preview/execute API: the preview is
+          read-only and reports conflicting field values, reverse references, typed relations, side-table collisions,
+          affected row counts, and hard blockers; the caller explicitly resolves every conflict, then one atomic
+          operation rewrites supported references and side tables, transfers record history, creates the
+          retired-identifier alias, removes the source record, and records a correlated audit trail for the retired
+          source, canonical target, and rewritten dependents. Preview versions and an opaque participant fingerprint
+          prevent stale applies, while restricted field values are flagged rather than disclosed and unsupported
+          external identities remain blocked.
 
         - @id:ar.collaboration.audit Authorized users can inspect audit activity for workspace and domain changes.
           Field values from access-restricted field groups are scrubbed from an entry's recorded changes for viewers

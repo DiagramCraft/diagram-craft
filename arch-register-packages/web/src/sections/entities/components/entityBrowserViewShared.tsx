@@ -1,4 +1,4 @@
-import { TbBookmark, TbCheck, TbCopy, TbTrash } from 'react-icons/tb';
+import { TbBookmark, TbCheck, TbCopy, TbGitMerge, TbTrash } from 'react-icons/tb';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
@@ -12,6 +12,7 @@ export type EntityBrowserBaseViewProps = {
   onDelete: (entity: EntityRecord) => void;
   onClone: (entity: EntityRecord) => void;
   onManageCollections?: (entity: EntityRecord) => void;
+  onMerge?: (entity: EntityRecord) => void;
   lifecycleStates: WorkspaceLifecycleState[];
   projectContext?: ProjectBrowserContext;
   readOnly?: boolean;
@@ -23,11 +24,27 @@ export const entityMenuItems = (
   entity: EntityRecord,
   onClone: (entity: EntityRecord) => void,
   onDelete: (entity: EntityRecord) => void,
-  onManageCollections?: (entity: EntityRecord) => void
+  onManageCollections?: (entity: EntityRecord) => void,
+  onMerge?: (entity: EntityRecord) => void
 ): MenuItem[] => {
   const items: MenuItem[] = [];
   if (entity.canCreateChild) {
     items.push({ label: 'Clone', icon: <TbCopy size={14} />, onClick: () => onClone(entity) });
+  }
+  if (onManageCollections) {
+    items.push({
+      label: 'Collections…',
+      icon: <TbBookmark size={14} />,
+      onClick: () => onManageCollections(entity)
+    });
+  }
+  // Merge requires the same admin_entity permission as delete, so it's gated on the same flag.
+  if (onMerge && entity.canDelete) {
+    items.push({
+      label: 'Merge into…',
+      icon: <TbGitMerge size={14} />,
+      onClick: () => onMerge(entity)
+    });
   }
   if (entity.canDelete) {
     items.push({
@@ -35,13 +52,6 @@ export const entityMenuItems = (
       icon: <TbTrash size={14} />,
       danger: true,
       onClick: () => onDelete(entity)
-    });
-  }
-  if (onManageCollections) {
-    items.push({
-      label: 'Collections…',
-      icon: <TbBookmark size={14} />,
-      onClick: () => onManageCollections(entity)
     });
   }
   return items;

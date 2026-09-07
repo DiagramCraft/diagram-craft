@@ -12,6 +12,7 @@ export const useEntityBrowserEntityActions = ({
   onNavigateToEntity
 }: UseEntityBrowserEntityActionsProps) => {
   const [deleteTarget, setDeleteTarget] = useState<EntityRecord | null>(null);
+  const [mergeSource, setMergeSource] = useState<EntityRecord | null>(null);
   const deleteMutation = useDeleteEntity(workspaceId);
   const cloneMutation = useCloneEntity(workspaceId);
 
@@ -41,11 +42,18 @@ export const useEntityBrowserEntityActions = ({
     [cloneMutation, onNavigateToEntity]
   );
 
+  const handleMergeEntity = useCallback((entity: EntityRecord) => {
+    setMergeSource(entity);
+  }, []);
+
   return {
     confirmDeleteEntity,
     deleteTarget,
     handleCloneEntity,
     handleDeleteEntity,
-    setDeleteTarget
+    setDeleteTarget,
+    mergeSource,
+    handleMergeEntity,
+    setMergeSource
   };
 };
