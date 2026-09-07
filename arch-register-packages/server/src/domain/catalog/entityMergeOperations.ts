@@ -27,6 +27,7 @@ import type {
 } from '@arch-register/api-types/entityMergeContract';
 import { computeEntityCompleteness } from '../../utils/completeness';
 import { toApiEntity } from './entityHelpers';
+import { flattenEntityAuditFields, logAudit } from '../audit/db/auditLogging';
 import { updateEntityWithAudit } from './entityMutations';
 import { withCatalogMutationTransaction } from './mutationTransaction';
 import { mergeFingerprint, type EntityMergeSideTableSnapshot } from './db/entityMergeDatabase';
@@ -673,6 +674,11 @@ export const executeEntityMerge = async (
           displayName: event.context.user.display_name
         };
         const mergeId = crypto.randomUUID();
+        const mergeMetadata = {
+          mergeId,
+          sourceId: plan.source.id,
+          targetId: plan.target.id
+        };
         const sourceIdentityResolution = ['core:slug', 'core:namespace'].some(
           fieldKey => body.fieldResolutions[fieldKey] === 'source'
         );
@@ -702,7 +708,7 @@ export const executeEntityMerge = async (
           previous: plan.target,
           next: targetUpdate,
           actor,
-          auditMetadata: { mergeId, sourceId: plan.source.id, targetId: plan.target.id }
+          auditMetadata: mergeMetadata
         });
         httpAssert.present(updatedTarget, {
           status: 409,
@@ -733,9 +739,7 @@ export const executeEntityMerge = async (
             next,
             actor,
             auditMetadata: {
-              mergeId,
-              sourceId: plan.source.id,
-              targetId: plan.target.id,
+              ...mergeMetadata,
               mergeDependent: true
             }
           });
@@ -781,6 +785,19 @@ export const executeEntityMerge = async (
         httpAssert.true(deleted, {
           status: 409,
           message: 'The source entity changed while the merge was being applied.'
+        });
+        await logAudit(tx, {
+          workspace: ws,
+          userId: actor.id,
+          userDisplayName: actor.displayName,
+          operation: 'delete',
+          entityType: 'entity',
+          entityId: plan.source.id,
+          entityName: plan.source.name,
+          entitySlug: plan.source.slug,
+          schemaId: plan.source.schema_id,
+          changes: { old: flattenEntityAuditFields(plan.source) },
+          metadata: mergeMetadata
         });
         const remainingReferences = await tx.entityMerge.countRemainingReferences(
           ws,
