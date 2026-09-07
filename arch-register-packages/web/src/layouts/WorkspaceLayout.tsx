@@ -210,8 +210,7 @@ export const WorkspaceLayout = () => {
         const enablement = app.enablement;
         if (enablement === 'always') return true;
         return capabilityConfigurations.some(
-          configuration =>
-            configuration.type === enablement.capabilityType && configuration.valid
+          configuration => configuration.type === enablement.capabilityType && configuration.valid
         );
       }),
     [capabilityConfigurations]

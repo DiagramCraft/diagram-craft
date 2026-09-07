@@ -33,7 +33,12 @@ export const HOME_APP: AppDefinition = {
   description: 'The register — entities, projects, model, and governance.',
   sections: [
     { id: 'home', icon: TbHome, tooltip: 'Workspace overview', route: '/$workspaceSlug' },
-    { id: 'content', icon: TbFiles, tooltip: 'Workspace content', route: '/$workspaceSlug/content' },
+    {
+      id: 'content',
+      icon: TbFiles,
+      tooltip: 'Workspace content',
+      route: '/$workspaceSlug/content'
+    },
     { id: 'projects', icon: TbBriefcase2, tooltip: 'Projects', route: '/$workspaceSlug/projects' },
     { id: 'entities', icon: TbDatabase, tooltip: 'Entities', route: '/$workspaceSlug/entities' },
     { id: 'search', icon: TbSearch, tooltip: 'Search', route: '/$workspaceSlug/search' },
@@ -101,7 +106,10 @@ export const RAIL_ROUTES: Record<WorkspaceRailItemId, string> = Object.fromEntri
  * so it doesn't hardcode individual app ids.
  */
 export const APP_RAIL_ROUTES: Record<AppRailItemId, string> = Object.fromEntries(
-  ALL_SECTIONS.filter(({ app }) => app.id !== 'home').map(({ section }) => [section.id, section.route])
+  ALL_SECTIONS.filter(({ app }) => app.id !== 'home').map(({ section }) => [
+    section.id,
+    section.route
+  ])
 ) as Record<AppRailItemId, string>;
 
 /** CSS custom-property overrides that re-skin the shell accent while `app` is active. */
