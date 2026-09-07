@@ -9,71 +9,75 @@ export type MarkdownEditorDialogsProps = {
   controller: MarkdownEditorController;
 };
 
-export const MarkdownEditorDialogs = ({ fileName, controller }: MarkdownEditorDialogsProps) => (
-  <>
-    <RenameDialog
-      open={controller.renameOpen}
-      currentName={fileName}
-      entityType="document"
-      onRename={controller.onRenameConfirm}
-      onCancel={controller.cancelRename}
-    />
+export const MarkdownEditorDialogs = ({ fileName, controller }: MarkdownEditorDialogsProps) => {
+  const { file, attachments, close, save } = controller;
 
-    <DeleteConfirmationDialog
-      open={controller.deleteOpen}
-      title="Delete document?"
-      message={
-        <>
-          The document <b>{fileName}</b> will be permanently deleted.
-        </>
-      }
-      detail="This can't be undone."
-      confirmLabel="Delete document"
-      onConfirm={controller.onDeleteConfirm}
-      onCancel={controller.cancelDelete}
-    />
+  return (
+    <>
+      <RenameDialog
+        open={file.renameOpen}
+        currentName={fileName}
+        entityType="document"
+        onRename={file.onRenameConfirm}
+        onCancel={file.cancelRename}
+      />
 
-    <DeleteConfirmationDialog
-      open={controller.attachmentDeleteTarget !== null}
-      title="Delete attachment?"
-      message={
-        <>
-          The attachment{' '}
-          <b>
-            {controller.attachmentDeleteTarget?.original_filename ??
-              controller.attachmentDeleteTarget?.name ??
-              ''}
-          </b>{' '}
-          will be permanently deleted.
-        </>
-      }
-      detail="This can't be undone."
-      confirmLabel="Delete attachment"
-      onConfirm={controller.onAttachmentDeleteConfirm}
-      onCancel={controller.cancelAttachmentDelete}
-    />
+      <DeleteConfirmationDialog
+        open={file.deleteOpen}
+        title="Delete document?"
+        message={
+          <>
+            The document <b>{fileName}</b> will be permanently deleted.
+          </>
+        }
+        detail="This can't be undone."
+        confirmLabel="Delete document"
+        onConfirm={file.onDeleteConfirm}
+        onCancel={file.cancelDelete}
+      />
 
-    <MarkdownCloseDialog
-      open={controller.closeDialogOpen}
-      summary={controller.closeSummary}
-      onCancel={controller.cancelClose}
-      onCloseWithSelection={diagramIds =>
-        void (diagramIds.length > 0
-          ? controller.revertEligibleDiagramChanges(diagramIds)
-          : controller.keepDiagramChanges())
-      }
-    />
+      <DeleteConfirmationDialog
+        open={attachments.attachmentDeleteTarget !== null}
+        title="Delete attachment?"
+        message={
+          <>
+            The attachment{' '}
+            <b>
+              {attachments.attachmentDeleteTarget?.original_filename ??
+                attachments.attachmentDeleteTarget?.name ??
+                ''}
+            </b>{' '}
+            will be permanently deleted.
+          </>
+        }
+        detail="This can't be undone."
+        confirmLabel="Delete attachment"
+        onConfirm={attachments.onDeleteConfirm}
+        onCancel={attachments.cancelDelete}
+      />
 
-    <MarkdownChangeImpactDialog
-      open={controller.pendingSaveIntent !== null}
-      intent={controller.pendingSaveIntent}
-      changeKind={controller.changeKind}
-      initiationFields={controller.documentInitiationFields}
-      initiationFieldValues={controller.initiationFieldValues}
-      onInitiationFieldValuesChange={controller.setInitiationFieldValues}
-      onChangeKind={controller.setChangeKind}
-      onCancel={controller.cancelChangeImpact}
-      onConfirm={() => void controller.confirmChangeImpact()}
-    />
-  </>
-);
+      <MarkdownCloseDialog
+        open={close.closeDialogOpen}
+        summary={close.closeSummary}
+        onCancel={close.cancelClose}
+        onCloseWithSelection={diagramIds =>
+          void (diagramIds.length > 0
+            ? close.revertEligibleDiagramChanges(diagramIds)
+            : close.keepDiagramChanges())
+        }
+      />
+
+      <MarkdownChangeImpactDialog
+        open={save.workflow.pendingSaveIntent !== null}
+        intent={save.workflow.pendingSaveIntent}
+        changeKind={save.workflow.changeKind}
+        initiationFields={save.workflow.initiationFields}
+        initiationFieldValues={save.workflow.initiationFieldValues}
+        onInitiationFieldValuesChange={save.workflow.setInitiationFieldValues}
+        onChangeKind={save.workflow.setChangeKind}
+        onCancel={save.workflow.cancel}
+        onConfirm={() => void save.workflow.confirm()}
+      />
+    </>
+  );
+};

@@ -7,7 +7,6 @@ import { MarkdownPropertiesPanel } from './MarkdownPropertiesPanel';
 import { AiActionResultPanel } from './AiActionResultPanel';
 import type { MarkdownEditorController } from './useMarkdownEditorController';
 import styles from './MarkdownEditorScreen.module.css';
-import type { CommentsDisplayMode } from '../wikiComments/commentsDisplayMode';
 import type { MarkdownRevisionSummary } from '@arch-register/api-types/projectMarkdownContract';
 
 export type MarkdownEditorContentProps = {
@@ -22,7 +21,6 @@ export type MarkdownEditorContentProps = {
   controller: MarkdownEditorController;
   hasWikiComments: boolean;
   openWikiCommentsCount: number;
-  commentsMode: CommentsDisplayMode;
   onNavigateBack: () => void;
   revisions: MarkdownRevisionSummary[];
   revisionsLoading: boolean;
@@ -45,7 +43,6 @@ export const MarkdownEditorContent = ({
   controller,
   hasWikiComments,
   openWikiCommentsCount,
-  commentsMode,
   onNavigateBack,
   revisions,
   revisionsLoading,
@@ -56,8 +53,17 @@ export const MarkdownEditorContent = ({
   dialogs
 }: MarkdownEditorContentProps) => {
   const {
-    screenState,
-    titleView,
+    document: documentState,
+    screen,
+    save,
+    close,
+    attachments: attachmentState,
+    file: fileActions,
+    ai,
+    history
+  } = controller;
+
+  const {
     selectedDocumentType,
     availableDocumentTypes,
     documentFields,
@@ -68,52 +74,19 @@ export const MarkdownEditorContent = ({
     documentTypeId,
     toc,
     readTime,
-    hasUnsavedChanges,
-    attachments,
-    fileInputRef,
-    onAttachmentInputChange,
-    onSelectPane,
-    onSave,
-    onSaveAndClose,
-    onDraftClose,
-    onClose,
-    onEnterEdit,
-    onOpenHistory,
-    onRequestRename,
-    onRequestDelete,
     onChange,
-    onAttachmentOpen,
-    onRequestAttachmentDelete,
     onDocumentTypeChange,
-    onMetadataChange,
-    aiActions,
-    runningAiActionId,
-    onRunAiAction,
-    isUploadingAttachment,
-    isDeletingAttachment,
-    draftSaveError,
-    aiActionPanelOpen,
-    aiActionResult,
-    aiActionStreamingText,
-    aiActionError,
-    closeAiActionPanel,
-    onContinueInConversation,
-    isRestoring,
-    onSelectRevision,
-    onViewVersion,
-    onEnterCompare,
-    onRestore,
-    attemptedSave
-  } = controller;
+    onMetadataChange
+  } = documentState;
 
   return (
     <div className={styles.screen}>
       <input
-        ref={fileInputRef}
+        ref={attachmentState.fileInputRef}
         type="file"
         multiple
         className={styles.hiddenInput}
-        onChange={onAttachmentInputChange}
+        onChange={attachmentState.onInputChange}
       />
 
       <MarkdownEditorHeader
@@ -121,47 +94,49 @@ export const MarkdownEditorContent = ({
         projectId={projectId}
         entityId={entityId}
         parentLabel={parentLabel}
-        resolvedTitle={controller.resolvedTitle}
+        resolvedTitle={documentState.resolvedTitle}
         description={
-          isDraft ? (selectedDocumentType?.name ?? 'New markdown document') : titleView.description
+          isDraft
+            ? (selectedDocumentType?.name ?? 'New markdown document')
+            : screen.titleView.description
         }
-        isViewMode={titleView.isViewMode && !isReadOnly}
+        isViewMode={screen.titleView.isViewMode && !isReadOnly}
         isDraft={isDraft}
-        attachDisabled={titleView.attachDisabled || isReadOnly}
-        isUploadingAttachment={isUploadingAttachment}
+        attachDisabled={screen.titleView.attachDisabled || isReadOnly}
+        isUploadingAttachment={attachmentState.isUploading}
         onNavigateBack={onNavigateBack}
         actions={{
           onAttachClick: () => {
-            if (!isReadOnly) fileInputRef.current?.click();
+            if (!isReadOnly) attachmentState.fileInputRef.current?.click();
           },
-          onEnterEdit,
-          onOpenHistory,
-          onRenameRequest: onRequestRename,
-          onDeleteRequest: onRequestDelete
+          onEnterEdit: screen.onEnterEdit,
+          onOpenHistory: history.onOpenHistory,
+          onRenameRequest: fileActions.onRequestRename,
+          onDeleteRequest: fileActions.onRequestDelete
         }}
         commentsToggle={
           hasWikiComments
             ? {
-                mode: commentsMode,
+                mode: screen.commentsMode,
                 openCount: openWikiCommentsCount,
-                onCycle: controller.cycleCommentsMode
+                onCycle: screen.cycleCommentsMode
               }
             : null
         }
       />
 
-      {(isDraft || (!isReadOnly && screenState.screenMode === 'edit')) && (
+      {(isDraft || (!isReadOnly && screen.screenState.screenMode === 'edit')) && (
         <MarkdownEditorToolbar
-          paneMode={screenState.paneMode}
-          hasUnsavedChanges={hasUnsavedChanges}
-          onSelectPane={onSelectPane}
-          onSave={onSave}
-          onSaveAndClose={onSaveAndClose}
-          onClose={isDraft ? onDraftClose : onClose}
+          paneMode={screen.screenState.paneMode}
+          hasUnsavedChanges={save.hasUnsavedChanges}
+          onSelectPane={screen.onSelectPane}
+          onSave={save.onSave}
+          onSaveAndClose={save.onSaveAndClose}
+          onClose={isDraft ? close.onDraftClose : close.onClose}
         />
       )}
 
-      {!isDraft && screenState.viewPanel === 'history' ? (
+      {!isDraft && screen.screenState.viewPanel === 'history' ? (
         <MarkdownHistoryPanel
           workspaceSlug={workspaceSlug}
           nodeId={nodeId}
@@ -173,17 +148,17 @@ export const MarkdownEditorContent = ({
           selectedRevisionId={selectedRevisionId}
           historyMode={historyMode}
           compareMode={compareMode}
-          isRestoring={isRestoring}
-          onSelectRevision={onSelectRevision}
-          onViewVersion={onViewVersion}
-          onEnterCompare={onEnterCompare}
-          onRestore={onRestore}
-          onClose={controller.onPreview}
+          isRestoring={history.isRestoring}
+          onSelectRevision={history.onSelectRevision}
+          onViewVersion={history.onViewVersion}
+          onEnterCompare={history.onEnterCompare}
+          onRestore={history.onRestore}
+          onClose={screen.onPreview}
         />
       ) : (
         <MarkdownEditorPane
-          screenMode={isReadOnly ? 'preview' : screenState.screenMode}
-          paneMode={isReadOnly ? 'preview' : screenState.paneMode}
+          screenMode={isReadOnly ? 'preview' : screen.screenState.screenMode}
+          paneMode={isReadOnly ? 'preview' : screen.screenState.paneMode}
           body={body}
           onChange={isReadOnly ? () => undefined : onChange}
           toc={toc}
@@ -194,15 +169,15 @@ export const MarkdownEditorContent = ({
           initialCommentId={commentId}
           showDiscussion={!isDraft}
           showBacklinks={!isDraft}
-          commentsMode={commentsMode}
-          aiActions={aiActions}
-          runningAiActionId={runningAiActionId}
-          onRunAiAction={onRunAiAction}
+          commentsMode={screen.commentsMode}
+          aiActions={ai.aiActions}
+          runningAiActionId={ai.runningAiActionId}
+          onRunAiAction={ai.onRunAiAction}
           attachments={{
-            items: attachments,
-            onOpen: onAttachmentOpen,
-            onDeleteRequest: onRequestAttachmentDelete,
-            isDeleting: isDeletingAttachment
+            items: attachmentState.items,
+            onOpen: attachmentState.onOpen,
+            onDeleteRequest: attachmentState.onRequestDelete,
+            isDeleting: attachmentState.isDeleting
           }}
           propertiesPanel={
             <MarkdownPropertiesPanel
@@ -213,8 +188,8 @@ export const MarkdownEditorContent = ({
               metadata={metadata}
               generatedMetadata={generatedMetadata}
               workflow={workflow}
-              readOnly={isReadOnly || screenState.screenMode !== 'edit'}
-              attemptedSave={attemptedSave}
+              readOnly={isReadOnly || screen.screenState.screenMode !== 'edit'}
+              attemptedSave={save.attemptedSave}
               onTypeChange={onDocumentTypeChange}
               onValueChange={onMetadataChange}
             />
@@ -222,20 +197,20 @@ export const MarkdownEditorContent = ({
         />
       )}
 
-      {draftSaveError && (
+      {save.draftSaveError && (
         <div role="alert" className={styles.loading}>
-          {draftSaveError}
+          {save.draftSaveError}
         </div>
       )}
 
       <AiActionResultPanel
-        open={aiActionPanelOpen}
-        result={aiActionResult}
-        streamingText={aiActionStreamingText}
-        loading={runningAiActionId !== null}
-        errorMessage={aiActionError}
-        onClose={closeAiActionPanel}
-        onContinueInConversation={result => void onContinueInConversation(result)}
+        open={ai.aiActionPanelOpen}
+        result={ai.aiActionResult}
+        streamingText={ai.aiActionStreamingText}
+        loading={ai.runningAiActionId !== null}
+        errorMessage={ai.aiActionError}
+        onClose={ai.closeAiActionPanel}
+        onContinueInConversation={result => void ai.onContinueInConversation(result)}
       />
 
       {dialogs}

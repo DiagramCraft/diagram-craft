@@ -9,6 +9,11 @@ let latest!: ReturnType<typeof useMarkdownCloseFlow>;
 let root: Root | undefined;
 let container: HTMLDivElement | undefined;
 const onExit = vi.fn();
+const clearDiagramSessionState = vi.fn();
+const onFinalize = vi.fn(() => {
+  clearDiagramSessionState();
+  onExit();
+});
 
 const Harness = () => {
   latest = useMarkdownCloseFlow({
@@ -20,15 +25,17 @@ const Harness = () => {
     loadDiagramContentByPath: vi.fn(async () => ({})),
     saveDiagramContentByPath: vi.fn(async () => undefined),
     refreshDiagramPreviewCaches: vi.fn(async () => undefined),
-    clearDiagramSessionState: vi.fn(),
     deleteAttachment: vi.fn(async () => undefined),
-    onExit
+    transitionKey: 'close-flow-transition',
+    onFinalize
   });
   return null;
 };
 
 beforeEach(() => {
   onExit.mockClear();
+  clearDiagramSessionState.mockClear();
+  onFinalize.mockClear();
   createdDiagramsRef.current = [];
   sessionStorage.clear();
   container = document.createElement('div');
@@ -60,5 +67,20 @@ describe('useMarkdownCloseFlow', () => {
     });
 
     expect(onExit).toHaveBeenCalledOnce();
+    expect(clearDiagramSessionState).toHaveBeenCalledOnce();
+  });
+
+  it('finalizes a close transition only once when the close action is repeated', async () => {
+    await act(async () => {
+      await latest.handleClose();
+    });
+
+    await act(async () => {
+      await Promise.all([latest.handleKeepDiagramChanges(), latest.handleKeepDiagramChanges()]);
+    });
+
+    expect(onFinalize).toHaveBeenCalledOnce();
+    expect(onExit).toHaveBeenCalledOnce();
+    expect(clearDiagramSessionState).toHaveBeenCalledOnce();
   });
 });
