@@ -132944,6 +132944,16 @@
                           "type": "integer",
                           "minimum": -9007199254740991,
                           "maximum": 9007199254740991
+                        },
+                        "externalIdentitiesTransferring": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "externalIdentitiesColliding": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
                         }
                       },
                       "required": [
@@ -132951,7 +132961,9 @@
                         "openChangeApprovals",
                         "openGovernanceCases",
                         "incomingRelations",
-                        "outgoingRelations"
+                        "outgoingRelations",
+                        "externalIdentitiesTransferring",
+                        "externalIdentitiesColliding"
                       ]
                     },
                     "blockers": {
@@ -132967,6 +132979,8 @@
                               "target_is_alias",
                               "different_schema",
                               "project_scope_mismatch",
+                              "source_project_scope_dropped",
+                              "project_scope_relocated",
                               "restricted_field_write",
                               "open_governance_case",
                               "external_identity",
@@ -132976,11 +132990,15 @@
                           },
                           "message": {
                             "type": "string"
+                          },
+                          "acknowledgeable": {
+                            "type": "boolean"
                           }
                         },
                         "required": [
                           "code",
-                          "message"
+                          "message",
+                          "acknowledgeable"
                         ]
                       }
                     },
@@ -133107,6 +133125,14 @@
                     },
                     "default": {},
                     "description": "Resolved side-table collisions keyed by preview conflict id"
+                  },
+                  "acknowledgedBlockers": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "default": [],
+                    "description": "Codes of acknowledgeable preview blockers the caller has explicitly accepted"
                   }
                 },
                 "required": [
