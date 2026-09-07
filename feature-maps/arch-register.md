@@ -22,7 +22,8 @@
 
         - @id:ar.access.public-catalog Workspace administrators can publish an allow-listed, read-only catalog for
           unauthenticated external readers, including entities, Markdown pages, and API specifications; readers can
-          browse the catalog in an accessible light or dark presentation.
+          browse the catalog in an accessible light or dark presentation. Identifiers retired by an
+          @id:ar.collaboration.entity-merge redirect to the canonical record so external links stay valid.
 
         - @id:ar.access.dev-switcher @status:experimental Development-mode deployments can optionally expose a
           user-switcher toolbar that instantly assumes the identity of any user in the database, bypassing login, for
@@ -799,12 +800,17 @@
           to confirm, then view the merged result. Field-group-restricted conflicts are shown read-only with an
           explanation rather than left for the user to resolve, and acknowledgeable blockers require an explicit
           checkbox before the merge can proceed; merging several selected entities into the same target runs the
-          wizard once per source in sequence. Under the hood the wizard drives the preview/execute API: the preview is
+          wizard once per source in sequence. Source and target must share project scope: a cross-project pair is a
+          hard blocker, an open governance case on the source is a hard blocker, and a merge that would drop a source's
+          project confinement or move the canonical record into a project proceeds only on an acknowledged warning.
+          Under the hood the wizard drives the preview/execute API: the preview is
           read-only and reports conflicting field values, reverse references, typed relations, side-table collisions,
           affected row counts, and hard blockers; the caller explicitly resolves every conflict, then one atomic
           operation rewrites supported references and side tables, transfers record history, creates the
           retired-identifier alias, removes the source record, and records a correlated audit trail for the retired
-          source, canonical target, and rewritten dependents. Preview versions and an opaque participant fingerprint
+          source, canonical target, and rewritten dependents. The alias keeps the retired entity's id and public id
+          resolving to the canonical record with a redirect marker, for both authenticated lookups and the
+          @id:ar.access.public-catalog. Preview versions and an opaque participant fingerprint
           prevent stale applies, while restricted field values are flagged rather than disclosed and unsupported
           external identities remain blocked.
 
