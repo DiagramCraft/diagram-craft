@@ -273,7 +273,9 @@
           while Business Capability Supports Entity connects capabilities to systems and other architecture entities;
           Objective Affects Entity remains a wildcard relation for architecture impact links. Relation endpoint
           constraints are authoritative and typed-relation fields provide projections on capability and objective
-          schemas, so the hierarchy and strategic links can be browsed, edited, and queried.
+          schemas, so the hierarchy and strategic links can be browsed, edited, and queried. Business Capabilities
+          also carry explicit maturity, maturity target, annual investment, and 1–5 risk ratings, while Measures
+          carry baseline, current, target, and direction values for strategy roll-ups.
 
         - @id:ar.entities.relations Users can create and inspect relationships between entities and navigate related,
           dependent, and referenced records. Alongside generic reference/containment relations, workspace admins can
@@ -300,7 +302,7 @@
           permission surfaces as other typed relations. Endpoint labels are contextual to the entity at each side,
           so inverse relation views remain understandable without relying on the relation schema name.
           The built-in Risk & Compliance template provides a `Risk Affects` relation from each Risk to any entity
-          schema, with an inline `Affects` field on Risk, and a matching `Control Protection` relation from each
+          schema, including Business Capabilities, with an inline `Affects` field on Risk, and a matching `Control Protection` relation from each
           Control to any entity schema, with an inline `Protects` field on Control; the bundled demo composes that
           template and seeds example relations. Together these let an information asset (Data Entity) be traced to
           the Risks that affect it and the Controls that protect it — and back — reusing the same typed-relation

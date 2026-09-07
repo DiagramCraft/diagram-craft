@@ -2,6 +2,7 @@ import type { RelationDbCreate } from '../../domain/catalog/db/relationDatabase'
 import {
   CONTROL_AFFECTS_RELATION_SCHEMA_ID,
   CONTROL_REQUIREMENT_SCHEMA_ID,
+  DEMO_BUSINESS_CAPABILITY_IDS,
   DEMO_RETENTION_IDS,
   DEMO_RISK_COMPLIANCE_IDS,
   DEMO_TECHNOLOGY_IDS,
@@ -15,8 +16,8 @@ import {
 
 // Relations wiring the demo governance content (demoGovernanceEntities.ts) together: Risk
 // -risk-control-> Control -control-requirement-> Compliance Requirement, Risk -risk-affects->
-// architecture entity, and entity -retention-assignment-> Retention Policy. Replaces the relations
-// for the test dataset's risk/control/framework/complianceRequirement/retentionPolicy content
+// any entity, and entity -retention-assignment-> Retention Policy. Replaces the relations for the
+// test dataset's risk/control/framework/complianceRequirement/retentionPolicy content
 // (relations.ts:149-315,382-418).
 export const demoGovernanceRelations: RelationDbCreate[] = [
   // Risk Mitigation (risk -> control)
@@ -203,7 +204,7 @@ export const demoGovernanceRelations: RelationDbCreate[] = [
     updated_at: now
   },
 
-  // Risk Affects (risk -> architecture entity)
+  // Risk Affects (risk -> any entity)
   {
     id: '00000000-0000-0000-0015-000000000201',
     workspace: WORKSPACE_ID,
@@ -343,6 +344,94 @@ export const demoGovernanceRelations: RelationDbCreate[] = [
     // Non-Compliant Data Subject Erasure Requests -> Customer Portal.
     in_entity_id: DEMO_RISK_COMPLIANCE_IDS.risks.nonCompliantErasureRequests,
     out_entity_id: '00000000-0000-0000-0002-000000000001',
+    data: {},
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0015-00000000020e',
+    workspace: WORKSPACE_ID,
+    schema_id: RISK_AFFECTS_RELATION_SCHEMA_ID,
+    // Customer Account Takeover -> Account Management capability.
+    in_entity_id: DEMO_RISK_COMPLIANCE_IDS.risks.customerAccountTakeover,
+    out_entity_id: DEMO_BUSINESS_CAPABILITY_IDS.accountManagement,
+    data: {},
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0015-00000000020f',
+    workspace: WORKSPACE_ID,
+    schema_id: RISK_AFFECTS_RELATION_SCHEMA_ID,
+    // Undetected Data Exfiltration -> Data & Analytics Platform capability.
+    in_entity_id: DEMO_RISK_COMPLIANCE_IDS.risks.undetectedDataExfiltration,
+    out_entity_id: DEMO_BUSINESS_CAPABILITY_IDS.dataAnalyticsPlatform,
+    data: {},
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0015-000000000210',
+    workspace: WORKSPACE_ID,
+    schema_id: RISK_AFFECTS_RELATION_SCHEMA_ID,
+    // Plaintext Customer PII at Rest -> Customer Engagement capability.
+    in_entity_id: DEMO_RISK_COMPLIANCE_IDS.risks.plaintextCustomerPiiAtRest,
+    out_entity_id: DEMO_BUSINESS_CAPABILITY_IDS.customerEngagement,
+    data: {},
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0015-000000000211',
+    workspace: WORKSPACE_ID,
+    schema_id: RISK_AFFECTS_RELATION_SCHEMA_ID,
+    // Third-Party Vendor Data Breach -> Supplier Management capability.
+    in_entity_id: DEMO_RISK_COMPLIANCE_IDS.risks.thirdPartyVendorDataBreach,
+    out_entity_id: DEMO_BUSINESS_CAPABILITY_IDS.supplierManagement,
+    data: {},
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0015-000000000212',
+    workspace: WORKSPACE_ID,
+    schema_id: RISK_AFFECTS_RELATION_SCHEMA_ID,
+    // Payment Card Data Breach -> Payments Management capability.
+    in_entity_id: DEMO_RISK_COMPLIANCE_IDS.risks.paymentCardDataBreach,
+    out_entity_id: DEMO_BUSINESS_CAPABILITY_IDS.paymentsManagement,
+    data: {},
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0015-000000000213',
+    workspace: WORKSPACE_ID,
+    schema_id: RISK_AFFECTS_RELATION_SCHEMA_ID,
+    // Unauthorized Access to Payment Transaction Logs -> Financial Operations capability.
+    in_entity_id: DEMO_RISK_COMPLIANCE_IDS.risks.unauthorizedAccessToPaymentLogs,
+    out_entity_id: DEMO_BUSINESS_CAPABILITY_IDS.financialOperations,
+    data: {},
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0015-000000000214',
+    workspace: WORKSPACE_ID,
+    schema_id: RISK_AFFECTS_RELATION_SCHEMA_ID,
+    // Unauthorized Internal Access to Customer PII -> Customer Engagement capability.
+    in_entity_id: DEMO_RISK_COMPLIANCE_IDS.risks.unauthorizedInternalPiiAccess,
+    out_entity_id: DEMO_BUSINESS_CAPABILITY_IDS.customerEngagement,
+    data: {},
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0015-000000000215',
+    workspace: WORKSPACE_ID,
+    schema_id: RISK_AFFECTS_RELATION_SCHEMA_ID,
+    // Non-Compliant Data Subject Erasure Requests -> Self-Service Management capability.
+    in_entity_id: DEMO_RISK_COMPLIANCE_IDS.risks.nonCompliantErasureRequests,
+    out_entity_id: DEMO_BUSINESS_CAPABILITY_IDS.selfServiceManagement,
     data: {},
     created_at: now,
     updated_at: now

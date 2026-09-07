@@ -9,6 +9,106 @@ import {
   now
 } from './constants';
 
+type DemoCapabilityMetrics = {
+  maturity: number;
+  maturity_target: number;
+  annual_investment: { amount: number; currency: string };
+  risk: number;
+};
+
+const demoCapabilityMetrics: Partial<Record<string, DemoCapabilityMetrics>> = {
+  [DEMO_BUSINESS_CAPABILITY_IDS.merchandisingAssortment]: {
+    maturity: 3,
+    maturity_target: 4,
+    annual_investment: { amount: 2500000, currency: 'USD' },
+    risk: 3
+  },
+  [DEMO_BUSINESS_CAPABILITY_IDS.salesCommerceExperience]: {
+    maturity: 3,
+    maturity_target: 5,
+    annual_investment: { amount: 4000000, currency: 'USD' },
+    risk: 4
+  },
+  [DEMO_BUSINESS_CAPABILITY_IDS.orderFulfillmentLogistics]: {
+    maturity: 4,
+    maturity_target: 5,
+    annual_investment: { amount: 3500000, currency: 'USD' },
+    risk: 3
+  },
+  [DEMO_BUSINESS_CAPABILITY_IDS.customerServiceSupport]: {
+    maturity: 3,
+    maturity_target: 4,
+    annual_investment: { amount: 1800000, currency: 'USD' },
+    risk: 2
+  },
+  [DEMO_BUSINESS_CAPABILITY_IDS.financePayments]: {
+    maturity: 4,
+    maturity_target: 5,
+    annual_investment: { amount: 5000000, currency: 'USD' },
+    risk: 5
+  },
+  [DEMO_BUSINESS_CAPABILITY_IDS.platformReliabilityOperations]: {
+    maturity: 4,
+    maturity_target: 5,
+    annual_investment: { amount: 4500000, currency: 'USD' },
+    risk: 4
+  },
+  [DEMO_BUSINESS_CAPABILITY_IDS.productCatalogManagement]: {
+    maturity: 3,
+    maturity_target: 4,
+    annual_investment: { amount: 1200000, currency: 'USD' },
+    risk: 2
+  },
+  [DEMO_BUSINESS_CAPABILITY_IDS.cartCheckout]: {
+    maturity: 3,
+    maturity_target: 5,
+    annual_investment: { amount: 2200000, currency: 'USD' },
+    risk: 4
+  },
+  [DEMO_BUSINESS_CAPABILITY_IDS.orderManagement]: {
+    maturity: 4,
+    maturity_target: 5,
+    annual_investment: { amount: 2000000, currency: 'USD' },
+    risk: 3
+  },
+  [DEMO_BUSINESS_CAPABILITY_IDS.paymentsManagement]: {
+    maturity: 4,
+    maturity_target: 5,
+    annual_investment: { amount: 2600000, currency: 'USD' },
+    risk: 5
+  },
+  [DEMO_BUSINESS_CAPABILITY_IDS.accountManagement]: {
+    maturity: 3,
+    maturity_target: 4,
+    annual_investment: { amount: 900000, currency: 'USD' },
+    risk: 4
+  },
+  [DEMO_BUSINESS_CAPABILITY_IDS.platformReliability]: {
+    maturity: 3,
+    maturity_target: 5,
+    annual_investment: { amount: 2800000, currency: 'USD' },
+    risk: 4
+  },
+  [DEMO_BUSINESS_CAPABILITY_IDS.dataAnalyticsPlatform]: {
+    maturity: 2,
+    maturity_target: 4,
+    annual_investment: { amount: 3200000, currency: 'USD' },
+    risk: 4
+  },
+  [DEMO_BUSINESS_CAPABILITY_IDS.fraudRiskManagement]: {
+    maturity: 2,
+    maturity_target: 5,
+    annual_investment: { amount: 1700000, currency: 'USD' },
+    risk: 5
+  },
+  [DEMO_BUSINESS_CAPABILITY_IDS.dataPlatformManagement]: {
+    maturity: 3,
+    maturity_target: 4,
+    annual_investment: { amount: 1900000, currency: 'USD' },
+    risk: 3
+  }
+};
+
 // The "demo" bootstrap dataset's Business Capability tree: a three-level capability map for an
 // online retailer / e-commerce business (see #3020 follow-up). Loaded only when `pnpm bootstrap`
 // is run with `--dataset demo` (the default) - the original 5-capability tree in
@@ -1229,7 +1329,10 @@ export const demoBusinessCapabilityEntities: SeedEntityInput[] = [
     created_at: now,
     updated_at: now
   }
-];
+].map(entity => {
+  const metrics = demoCapabilityMetrics[entity.id];
+  return metrics ? { ...entity, data: { ...entity.data, ...metrics } } : entity;
+});
 
 // The demo dataset's Objective -> Outcome -> Initiative -> Measure chains, each supporting one
 // demo Business Capability (wired via the objective-supports-business-capability relation in
@@ -1695,7 +1798,10 @@ export const demoMeasureEntities: SeedEntityInput[] = [
     data: {
       description: 'Tracked from the product catalog service.',
       unit: 'SKUs',
+      baseline: 180000,
+      current: 220000,
       target_value: 250000,
+      direction: 'up-is-better',
       outcomes: [DEMO_STRATEGY_GOAL_IDS.outcomes.increaseCatalogBreadth]
     },
     project_id: null,
@@ -1720,7 +1826,10 @@ export const demoMeasureEntities: SeedEntityInput[] = [
     data: {
       description: 'Tracked monthly from account creation events.',
       unit: 'signups',
+      baseline: 30000,
+      current: 42000,
       target_value: 50000,
+      direction: 'up-is-better',
       outcomes: [DEMO_STRATEGY_GOAL_IDS.outcomes.increaseNewCustomerSignups]
     },
     project_id: null,
@@ -1745,7 +1854,10 @@ export const demoMeasureEntities: SeedEntityInput[] = [
     data: {
       description: 'Tracked from checkout funnel analytics.',
       unit: '%',
+      baseline: 72,
+      current: 64,
       target_value: 60,
+      direction: 'down-is-better',
       outcomes: [DEMO_STRATEGY_GOAL_IDS.outcomes.reduceCartAbandonmentRate]
     },
     project_id: null,
@@ -1770,7 +1882,10 @@ export const demoMeasureEntities: SeedEntityInput[] = [
     data: {
       description: 'Tracked from order and shipment timestamps.',
       unit: 'days',
+      baseline: 5.1,
+      current: 3.4,
       target_value: 2,
+      direction: 'down-is-better',
       outcomes: [DEMO_STRATEGY_GOAL_IDS.outcomes.shortenAverageDeliveryWindow]
     },
     project_id: null,
@@ -1795,7 +1910,10 @@ export const demoMeasureEntities: SeedEntityInput[] = [
     data: {
       description: 'Tracked from supplier purchase order receipt data.',
       unit: '%',
+      baseline: 88,
+      current: 92,
       target_value: 95,
+      direction: 'up-is-better',
       outcomes: [DEMO_STRATEGY_GOAL_IDS.outcomes.increaseSupplierOnTimeRate]
     },
     project_id: null,
@@ -1820,7 +1938,10 @@ export const demoMeasureEntities: SeedEntityInput[] = [
     data: {
       description: 'Tracked from confirmed chargebacks and fraud claims.',
       unit: '%',
+      baseline: 0.25,
+      current: 0.14,
       target_value: 0.1,
+      direction: 'down-is-better',
       outcomes: [DEMO_STRATEGY_GOAL_IDS.outcomes.lowerFraudLossRate]
     },
     project_id: null,

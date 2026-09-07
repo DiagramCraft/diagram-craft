@@ -72,6 +72,25 @@ describe('demo bootstrap dataset: strategy entities', () => {
       for (const id of measure.data['outcomes'] as string[]) expect(outcomeIds.has(id)).toBe(true);
     }
 
+    expect(
+      demoBusinessCapabilityEntities.find(
+        capability => capability.name === 'Merchandising & Assortment'
+      )?.data
+    ).toMatchObject({
+      maturity: 3,
+      maturity_target: 4,
+      annual_investment: { amount: 2500000, currency: 'USD' },
+      risk: 3
+    });
+    expect(
+      demoMeasureEntities.find(measure => measure.name === 'Active SKU Count')?.data
+    ).toMatchObject({
+      baseline: 180000,
+      current: 220000,
+      target_value: 250000,
+      direction: 'up-is-better'
+    });
+
     for (const relation of demoSeedRelations) {
       if (relation.schema_id !== OBJECTIVE_SUPPORTS_BUSINESS_CAPABILITY_RELATION_SCHEMA_ID)
         continue;
@@ -97,7 +116,10 @@ describe('demo bootstrap dataset: governance entities', () => {
     const controlIds = new Set(demoControlEntities.map(entity => entity.id));
     const requirementIds = new Set(demoComplianceRequirementEntities.map(entity => entity.id));
     const riskIds = new Set(demoRiskEntities.map(entity => entity.id));
+    const capabilityIds = new Set(demoBusinessCapabilityEntities.map(entity => entity.id));
     const policyIds = new Set(demoRetentionPolicyEntities.map(entity => entity.id));
+    const allEntityIds = new Set(demoSeedEntitiesRaw.map(entity => entity.id));
+    let riskAffectsCapabilityCount = 0;
 
     for (const requirement of demoComplianceRequirementEntities) {
       for (const id of requirement.data['framework'] as string[])
@@ -113,8 +135,14 @@ describe('demo bootstrap dataset: governance entities', () => {
         expect(requirementIds.has(relation.out_entity_id)).toBe(true);
       } else if (relation.schema_id === RETENTION_IDS.assignmentRelationSchema) {
         expect(policyIds.has(relation.out_entity_id)).toBe(true);
+      } else if (relation.schema_id === SEED_RELATION_SCHEMA_IDS.riskAffects) {
+        expect(riskIds.has(relation.in_entity_id)).toBe(true);
+        expect(allEntityIds.has(relation.out_entity_id)).toBe(true);
+        if (capabilityIds.has(relation.out_entity_id)) riskAffectsCapabilityCount += 1;
       }
     }
+
+    expect(riskAffectsCapabilityCount).toBeGreaterThan(0);
   });
 });
 
