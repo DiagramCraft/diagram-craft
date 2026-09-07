@@ -1,7 +1,12 @@
 import { TbDatabase, TbFiles, TbFolders, TbSearch, TbSettings } from 'react-icons/tb';
-import type { BreadcrumbItem, WorkspaceRailItemId } from '../shell/shellTypes';
+import type { AppId, BreadcrumbItem, WorkspaceRailItemId } from '../shell/shellTypes';
 import { buildHomeBreadcrumbs } from '../shell/breadcrumbBuilders';
-import { APP_RAIL_ROUTES } from '../shell/appShellRegistry';
+import {
+  appRootRoute,
+  getAppDefinition,
+  getRailSection,
+  RAIL_ROUTES
+} from '../shell/appShellRegistry';
 import type { Workspace } from '@arch-register/api-types/workspaceContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
@@ -156,21 +161,39 @@ export const navigateFromRailItem = (
   id: WorkspaceRailItemId,
   ctx: Pick<WorkspaceShellContext, 'navigate' | 'workspaceSlug' | 'projects'>
 ) => {
-  const routeByRail: Record<WorkspaceRailItemId, string> = {
-    home: '/$workspaceSlug',
-    content: '/$workspaceSlug/content',
-    projects: '/$workspaceSlug/projects',
-    entities: '/$workspaceSlug/entities',
-    search: '/$workspaceSlug/search',
-    governance: '/$workspaceSlug/governance',
-    assistant: '/$workspaceSlug/assistant',
-    extract: '/$workspaceSlug/extract',
-    ...APP_RAIL_ROUTES
-  };
-
   ctx.navigate({
-    to: routeByRail[id],
+    to: RAIL_ROUTES[id],
     params: { workspaceSlug: ctx.workspaceSlug }
   });
   return 'navigated' as const;
 };
+
+/** Navigate to another application, landing on its first rail section. */
+export const navigateToApp = (
+  appId: AppId,
+  ctx: Pick<WorkspaceShellContext, 'navigate' | 'workspaceSlug'>
+) => {
+  ctx.navigate({
+    to: appRootRoute(getAppDefinition(appId)),
+    params: { workspaceSlug: ctx.workspaceSlug }
+  });
+  return 'navigated' as const;
+};
+
+/**
+ * Build a `standard` shell descriptor for an app rail section, pulling the section's declared
+ * `primarySidebar` from the registry. Routes pass `overrides` (breadcrumbs, a different sidebar,
+ * `variant`, …); anything omitted falls back to the section definition.
+ */
+export const railSectionShell = (
+  ctx: WorkspaceShellContext,
+  id: WorkspaceRailItemId,
+  overrides: Partial<Extract<WorkspaceShellDescriptor, { variant: 'standard' | 'full-bleed' }>> & {
+    breadcrumbs: BreadcrumbItem[];
+  }
+): WorkspaceShellDescriptor => ({
+  variant: 'standard',
+  activeRailItem: id,
+  primarySidebar: getRailSection(id)?.primarySidebar?.(ctx),
+  ...overrides
+});

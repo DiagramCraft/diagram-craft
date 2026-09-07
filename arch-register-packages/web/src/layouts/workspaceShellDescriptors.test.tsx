@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   navigateFromRailItem,
+  navigateToApp,
   resolveWorkspaceShellDescriptor,
   type WorkspaceShellContext
 } from './workspaceShellDescriptors';
@@ -150,6 +151,24 @@ describe('navigateFromRailItem', () => {
     });
 
     navigateFromRailItem('home', { navigate, workspaceSlug: 'ws-1', projects: [] });
+    expect(navigate).toHaveBeenCalledWith({
+      to: '/$workspaceSlug',
+      params: { workspaceSlug: 'ws-1' }
+    });
+  });
+});
+
+describe('navigateToApp', () => {
+  it('lands on the target application first rail section', () => {
+    const navigate = vi.fn();
+
+    navigateToApp('glossary', { navigate, workspaceSlug: 'ws-1' });
+    expect(navigate).toHaveBeenCalledWith({
+      to: '/$workspaceSlug/glossary',
+      params: { workspaceSlug: 'ws-1' }
+    });
+
+    navigateToApp('home', { navigate, workspaceSlug: 'ws-1' });
     expect(navigate).toHaveBeenCalledWith({
       to: '/$workspaceSlug',
       params: { workspaceSlug: 'ws-1' }

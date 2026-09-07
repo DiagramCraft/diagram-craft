@@ -1,8 +1,8 @@
 import { createRoute, type AnyRoute } from '@tanstack/react-router';
-import { buildGlossaryBreadcrumbs } from './glossaryShell';
+import { buildGlossaryBreadcrumbs, GLOSSARY_RAIL_ITEM_ID } from './glossaryShell';
 import { withWorkspaceShell } from '../../routes/workspace/workspaceShellRoute';
+import { railSectionShell } from '../../layouts/workspaceShellDescriptors';
 import { validateGlossarySearch } from '../../routes/searchParams';
-import { GlossarySidebar } from './sections/GlossarySidebar';
 import { LazyGlossaryScreen } from '../../routes/workspace/lazyWorkspaceScreens';
 
 export const createGlossaryWorkspaceRoutes = <TParentRoute extends AnyRoute>(
@@ -15,12 +15,10 @@ export const createGlossaryWorkspaceRoutes = <TParentRoute extends AnyRoute>(
       validateSearch: validateGlossarySearch,
       component: LazyGlossaryScreen
     }),
-    ctx => ({
-      variant: 'standard',
-      activeRailItem: 'glossary',
-      breadcrumbs: buildGlossaryBreadcrumbs(ctx),
-      primarySidebar: <GlossarySidebar workspaceSlug={ctx.workspaceSlug} />
-    })
+    ctx =>
+      railSectionShell(ctx, GLOSSARY_RAIL_ITEM_ID, {
+        breadcrumbs: buildGlossaryBreadcrumbs(ctx)
+      })
   );
   const glossaryTermRoute = withWorkspaceShell(
     createRoute({
@@ -32,12 +30,10 @@ export const createGlossaryWorkspaceRoutes = <TParentRoute extends AnyRoute>(
       // matching the Claude Design mockup's drawer interaction.
       component: LazyGlossaryScreen
     }),
-    ctx => ({
-      variant: 'standard',
-      activeRailItem: 'glossary',
-      breadcrumbs: buildGlossaryBreadcrumbs(ctx, true),
-      primarySidebar: <GlossarySidebar workspaceSlug={ctx.workspaceSlug} />
-    })
+    ctx =>
+      railSectionShell(ctx, GLOSSARY_RAIL_ITEM_ID, {
+        breadcrumbs: buildGlossaryBreadcrumbs(ctx, true)
+      })
   );
   return [glossaryRoute, glossaryTermRoute] as const;
 };
