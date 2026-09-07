@@ -6,6 +6,7 @@ import {
   type ProjectionField,
   type QueryNode
 } from '@arch-register/api-types/entityQueryIR';
+import { MAX_FILTER_IN_VALUES } from '@arch-register/api-types/filterOp';
 import {
   isReferenceOrContainmentField,
   type SchemaField,
@@ -440,6 +441,12 @@ const resolveInValues = (
 ): unknown[] => {
   if (parsedValues.length === 0) {
     throw new TextCompileError("The 'in' operator requires at least one value", offset);
+  }
+  if (parsedValues.length > MAX_FILTER_IN_VALUES) {
+    throw new TextCompileError(
+      `The 'in' operator accepts at most ${MAX_FILTER_IN_VALUES} values`,
+      offset
+    );
   }
 
   return parsedValues.map(parsed => {

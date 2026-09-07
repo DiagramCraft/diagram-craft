@@ -20,6 +20,7 @@ import {
 import { filterRelationFieldData } from './relationHelpers';
 import { canViewTypedRelationFromEndpoint, canViewTypedRelation } from './relationAccessControl';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
+import { isValidFilterInValue } from '@arch-register/api-types/filterOp';
 import { isNowDateLiteral } from '@arch-register/api-types/nowDateLiteral';
 import {
   externalUpdateEnvelopeSchema,
@@ -110,6 +111,13 @@ const matchesScalarFilterCondition = (value: unknown, condition: FilterCondition
       const expectedTime = resolveExpectedDate(expected).getTime();
       return !Number.isNaN(valueTime) && !Number.isNaN(expectedTime) && valueTime === expectedTime;
     }
+    case 'in': {
+      const values = condition.value;
+      return (
+        isValidFilterInValue(values) &&
+        values.some(candidate => String(comparable) === String(candidate))
+      );
+    }
     default:
       return true;
   }
@@ -136,6 +144,13 @@ export const matchesFilterCondition = (
     const tags = entity.tags;
     if (condition.op === 'empty') return tags.length === 0;
     if (condition.op === 'not_empty') return tags.length > 0;
+    if (condition.op === 'in') {
+      const values = condition.value;
+      return (
+        isValidFilterInValue(values) &&
+        tags.some(tag => values.some(candidate => tag === String(candidate)))
+      );
+    }
     const expected = String(condition.value ?? '');
     switch (condition.op) {
       case 'equals':

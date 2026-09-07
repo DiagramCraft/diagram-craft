@@ -103,3 +103,50 @@ describe('matchesFilterCondition with $now', () => {
     expect(matched).toBe(true);
   });
 });
+
+describe('matchesFilterCondition with membership', () => {
+  it('matches scalar, array, and tag values existentially', () => {
+    const entity = {
+      ...baseEntity({ status: 'active', regions: ['eu', 'us'] }),
+      tags: ['critical']
+    };
+    expect(
+      matchesFilterCondition(
+        entity,
+        { fieldId: 'status', op: 'in', value: ['paused', 'active'] },
+        null
+      )
+    ).toBe(true);
+    expect(
+      matchesFilterCondition(entity, { fieldId: 'regions', op: 'in', value: ['apac', 'eu'] }, null)
+    ).toBe(true);
+    expect(
+      matchesFilterCondition(
+        entity,
+        { fieldId: '_tags', op: 'in', value: ['important', 'critical'] },
+        null
+      )
+    ).toBe(true);
+  });
+
+  it('treats empty, malformed, and oversized membership values as no match', () => {
+    const entity = baseEntity({ status: 'active' });
+    expect(matchesFilterCondition(entity, { fieldId: 'status', op: 'in', value: [] }, null)).toBe(
+      false
+    );
+    expect(
+      matchesFilterCondition(
+        entity,
+        { fieldId: 'status', op: 'in', value: 'active' as never },
+        null
+      )
+    ).toBe(false);
+    expect(
+      matchesFilterCondition(
+        entity,
+        { fieldId: 'status', op: 'in', value: Array.from({ length: 501 }, () => 'active') },
+        null
+      )
+    ).toBe(false);
+  });
+});

@@ -5,6 +5,7 @@ import {
   type ProjectionField,
   type QueryNode
 } from '@arch-register/api-types/entityQueryIR';
+import { MAX_FILTER_IN_VALUES } from '@arch-register/api-types/filterOp';
 import {
   isReferenceOrContainmentField,
   relationFieldById,
@@ -137,10 +138,22 @@ const printComparatorAndValue = (
       return '= empty';
     case 'not_empty':
       return '= not_empty';
-    case 'in':
-      return `in (${(Array.isArray(value) ? value : [value])
-        .map(v => printValueLiteral(v, fieldType))
-        .join(', ')})`;
+    case 'in': {
+      if (!Array.isArray(value)) {
+        throw new Error("Cannot print an 'in' predicate whose value is not an array");
+      }
+      if (value.length === 0) {
+        throw new Error(
+          "An empty 'in' predicate is valid only in structured IR and has no text-query form"
+        );
+      }
+      if (value.length > MAX_FILTER_IN_VALUES) {
+        throw new Error(
+          `Cannot print an 'in' predicate with more than ${MAX_FILTER_IN_VALUES} values`
+        );
+      }
+      return `in (${value.map(v => printValueLiteral(v, fieldType)).join(', ')})`;
+    }
   }
 };
 

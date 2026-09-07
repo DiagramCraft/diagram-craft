@@ -1,5 +1,6 @@
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
 import type { DocumentMetadata } from '@arch-register/api-types/documentContract';
+import { isValidFilterInValue } from '@arch-register/api-types/filterOp';
 
 export type DocumentListCandidate = {
   title: string;
@@ -32,6 +33,14 @@ export const matchesDocumentCondition = (
   if (value == null) return false;
 
   const expected = condition.value;
+  if (condition.op === 'in') {
+    if (!isValidFilterInValue(expected)) return false;
+    const actualValues = Array.isArray(value) ? value : [value];
+    return actualValues.some(actual =>
+      expected.some(candidate => String(actual) === String(candidate))
+    );
+  }
+
   switch (condition.op) {
     case 'equals':
       return String(value) === String(expected);

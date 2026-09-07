@@ -214,10 +214,11 @@ relation_ref    := identifier | quoted_string            (* typed relation schem
     - `equals`, `not_equals`, and `in` make sense against either form — enum options aren't ordered, so
       `enumValue(...)`/`enumLabel(...)` combined with `<`/`>`/`<=`/`>=` has no defined meaning and should be rejected at
       compile time.
-- **Membership lists.** `path in (value, ...)` produces an `in` predicate whose value is a non-empty list. Each member
-  uses the ordinary literal forms above, including enum/select and date literals, and is resolved independently.
-  `empty`, `not_empty`, and `now()` are not valid list members. `in` is deliberately not a standalone `not in` operator;
-  use `NOT (path in (...))` for negative membership tests.
+- **Membership lists.** `path in (value, ...)` produces an `in` predicate whose value is a non-empty list of at most
+  500 values. Each member uses the ordinary literal forms above, including enum/select and date literals, and is
+  resolved independently. `empty`, `not_empty`, and `now()` are not valid list members. `in` is deliberately not a
+  standalone `not in` operator; use `NOT (path in (...))` for negative membership tests. Structured IR may also carry
+  `value: []` intentionally; that predicate matches no rows and has no text-query spelling.
 - **`columns` sub-clause (projection, §4.6).** A segment's `[...]` scope may carry a `columns` clause — after its
   `or_expr` filter, or instead of one (`releases[columns eol_date]`, a capture-only bracket on an unfiltered
   traversal). Each `capture` reads a field off the record that segment traversed to and becomes an

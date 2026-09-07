@@ -1,11 +1,15 @@
 import { z } from 'zod';
-import { filterOpSchema, type FilterOp } from '@arch-register/api-types/filterOp';
+import {
+  filterInValueSchema,
+  nonInFilterOpSchema,
+  type FilterOp
+} from '@arch-register/api-types/filterOp';
 
 export type { FilterOp } from '@arch-register/api-types/filterOp';
 
 // Structured intermediate representation for the entity query language (specs/QUERY_LANGUAGE.md, §5).
-// The text grammar (not implemented yet) compiles to/from this shape; today's flat `FilterCondition[]`
-// is the degenerate case (see entityQueryIRMapping.ts in the server package).
+// The text grammar compiles to/from this shape; today's flat `FilterCondition[]` is the degenerate
+// case (see entityQueryIRMapping.ts in the server package).
 
 // Cap on PathStep chain length (specs/QUERY_LANGUAGE.md §7), counted cumulatively including hops
 // nested inside a PathStep.filter's own paths. Bounds join fan-out; there's no recursion to bound.
@@ -70,6 +74,8 @@ export type QueryNode =
   // Root-entity free-text search. This is intentionally not a field predicate: it may only
   // appear in the root query tree, never inside a relation path's scoped filter.
   | { kind: 'freeText'; value: string }
+  // The runtime schema below narrows `in` to an array and bounds its length. Keep this public IR
+  // shape assignment-compatible with legacy callers that construct predicates before parsing.
   | { kind: 'predicate'; path: PathStep[]; fieldId: string; op: FilterOp; value: unknown }
   | { kind: 'relationExists'; path: PathStep[] };
 
@@ -148,7 +154,7 @@ export const projectionFieldSchema = z.object({
 });
 
 export const queryNodeSchema: z.ZodType<QueryNode> = z.lazy(() =>
-  z.discriminatedUnion('kind', [
+  z.union([
     z.object({ kind: z.literal('and'), children: z.array(queryNodeSchema) }),
     z.object({ kind: z.literal('or'), children: z.array(queryNodeSchema) }),
     z.object({ kind: z.literal('not'), child: queryNodeSchema }),
@@ -157,7 +163,14 @@ export const queryNodeSchema: z.ZodType<QueryNode> = z.lazy(() =>
       kind: z.literal('predicate'),
       path: z.array(pathStepSchema),
       fieldId: z.string(),
-      op: filterOpSchema,
+      op: z.literal('in'),
+      value: filterInValueSchema
+    }),
+    z.object({
+      kind: z.literal('predicate'),
+      path: z.array(pathStepSchema),
+      fieldId: z.string(),
+      op: nonInFilterOpSchema,
       value: z.unknown()
     }),
     z.object({ kind: z.literal('relationExists'), path: z.array(pathStepSchema) })

@@ -6,7 +6,12 @@ import {
   MAX_PATH_HOPS,
   pathStepSchema
 } from '@arch-register/api-types/entityQueryIR';
-import { filterOpSchema } from '@arch-register/api-types/filterOp';
+import {
+  MAX_FILTER_IN_VALUES,
+  filterInValueSchema,
+  filterOpSchema,
+  nonInFilterOpSchema
+} from '@arch-register/api-types/filterOp';
 
 // ── Shared sub-schemas ────────────────────────────────────────
 
@@ -28,11 +33,46 @@ export const browserViewSchema = z
   ])
   .describe('Available view modes for displaying entities');
 
-export const filterConditionSchema = z.object({
-  fieldId: z.string().describe('Field identifier to filter on'),
-  op: filterOpSchema.describe('Filter operation'),
+const filterConditionFields = {
+  fieldId: z.string().describe('Field identifier to filter on')
+};
+
+/** Capability-specific condition schemas for consumers that want a statically narrow contract. */
+export const filterInConditionSchema = z.object({
+  ...filterConditionFields,
+  op: z.literal('in').describe('Membership filter operation'),
+  value: filterInValueSchema.describe('Values accepted by the membership filter')
+});
+export type FilterInCondition = z.infer<typeof filterInConditionSchema>;
+
+export const nonInFilterConditionSchema = z.object({
+  ...filterConditionFields,
+  op: nonInFilterOpSchema.describe('Filter operation'),
   value: z.unknown().describe('Filter value (type depends on field and operation)')
 });
+export type NonInFilterCondition = z.infer<typeof nonInFilterConditionSchema>;
+
+/**
+ * Shared input contract. The refinement keeps the inferred type assignment-compatible with
+ * existing callers while rejecting scalar and oversized `in` values at the boundary.
+ */
+export const filterConditionSchema = z
+  .object({
+    ...filterConditionFields,
+    op: filterOpSchema.describe('Filter operation'),
+    value: z.unknown().describe('Filter value (type depends on field and operation)')
+  })
+  .superRefine((condition, ctx) => {
+    if (condition.op !== 'in') return;
+    const result = filterInValueSchema.safeParse(condition.value);
+    if (!result.success) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['value'],
+        message: `The 'in' operator requires an array of at most ${MAX_FILTER_IN_VALUES} values`
+      });
+    }
+  });
 
 export const conditionsQuerySchema = z.preprocess(value => {
   if (Array.isArray(value)) return value;

@@ -969,6 +969,13 @@ describe('parseEntityQueryText — date/enum/empty resolution', () => {
     );
   });
 
+  it('rejects an `in` list larger than the shared bound', () => {
+    const errors = parseErr(
+      `schema:Technology priority in (${Array.from({ length: 501 }, (_, index) => index).join(', ')})`
+    );
+    expect(errors.some(error => error.message.includes('at most 500'))).toBe(true);
+  });
+
   it('rejects an unrecognized enumLabel', () => {
     const errors = parseErr('schema:Technology radar_status = enumLabel("Nope")');
     expect(errors.some(e => e.message.includes('Unrecognized enum label'))).toBe(true);

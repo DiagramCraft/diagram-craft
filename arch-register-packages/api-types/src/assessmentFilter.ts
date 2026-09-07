@@ -1,4 +1,5 @@
 import type { AssessmentField } from '@arch-register/api-types/assessmentContract';
+import { isValidFilterInValue } from '@arch-register/api-types/filterOp';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
 
 export const ASSESSMENT_PRESENCE_FIELD_ID = '_assessment';
@@ -13,6 +14,9 @@ export const assessmentFieldIdOf = (condition: FilterCondition): string =>
 
 export const isAssessmentFieldId = (fieldId: string): boolean =>
   fieldId.startsWith(ASSESSMENT_FIELD_PREFIX);
+
+const matchesIn = (value: unknown, expected: unknown): boolean =>
+  isValidFilterInValue(expected) && expected.some(candidate => String(value) === String(candidate));
 
 /**
  * Resolves the raw assessment value for a display/axis field id (e.g. `_assessment:riskLevel`)
@@ -50,6 +54,7 @@ export const matchesAssessmentConditions = (
       const hasResponse = values !== undefined;
       if (condition.op === 'not_empty') return hasResponse;
       if (condition.op === 'empty') return !hasResponse;
+      if (condition.op === 'in') return false;
       return true;
     }
 
@@ -61,6 +66,7 @@ export const matchesAssessmentConditions = (
       if (typeof value !== 'number') return false;
       if (condition.op === 'gte') return value >= Number(condition.value);
       if (condition.op === 'lte') return value <= Number(condition.value);
+      if (condition.op === 'in') return matchesIn(value, condition.value);
       return true;
     }
 
@@ -69,6 +75,7 @@ export const matchesAssessmentConditions = (
       if (value === undefined) return false;
       if (condition.op === 'equals') return String(value) === condition.value;
       if (condition.op === 'not_equals') return String(value) !== condition.value;
+      if (condition.op === 'in') return matchesIn(value, condition.value);
       return true;
     }
 
@@ -78,6 +85,7 @@ export const matchesAssessmentConditions = (
       if (condition.op === 'not_empty') return str !== '';
       if (condition.op === 'contains')
         return str.toLowerCase().includes(String(condition.value ?? '').toLowerCase());
+      if (condition.op === 'in') return value !== undefined && matchesIn(value, condition.value);
       return true;
     }
 
@@ -86,6 +94,7 @@ export const matchesAssessmentConditions = (
         if (typeof value !== 'number') return false;
         if (condition.op === 'gte') return value >= Number(condition.value);
         if (condition.op === 'lte') return value <= Number(condition.value);
+        if (condition.op === 'in') return matchesIn(value, condition.value);
         return true;
       }
 
@@ -94,6 +103,7 @@ export const matchesAssessmentConditions = (
         if (value === undefined) return false;
         if (condition.op === 'equals') return String(value) === condition.value;
         if (condition.op === 'not_equals') return String(value) !== condition.value;
+        if (condition.op === 'in') return matchesIn(value, condition.value);
         return true;
       }
 
@@ -102,8 +112,10 @@ export const matchesAssessmentConditions = (
       if (condition.op === 'not_empty') return str !== '';
       if (condition.op === 'contains')
         return str.toLowerCase().includes(String(condition.value ?? '').toLowerCase());
+      if (condition.op === 'in') return value !== undefined && matchesIn(value, condition.value);
       return true;
     }
 
+    if (condition.op === 'in') return false;
     return true;
   });

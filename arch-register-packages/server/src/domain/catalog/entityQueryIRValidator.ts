@@ -4,6 +4,7 @@ import {
   type PathStep,
   type QueryNode
 } from '@arch-register/api-types/entityQueryIR';
+import { MAX_FILTER_IN_VALUES } from '@arch-register/api-types/filterOp';
 import {
   isReferenceOrContainmentField,
   type ReferenceField,
@@ -149,6 +150,36 @@ const validateNowDateLiteralUsage = (
   }
 };
 
+const validateInOperation = (
+  node: Extract<QueryNode, { kind: 'predicate' }>,
+  path: (string | number)[],
+  errors: ValidationError[]
+): void => {
+  if (node.op !== 'in') return;
+
+  // Keep the runtime check even though the public IR type narrows this to an array: callers can
+  // reach validation with deserialized or legacy values before a schema parser has run.
+  const value: unknown = node.value;
+  if (!Array.isArray(value)) {
+    errors.push({
+      path: [...path, 'value'],
+      message: "The 'in' operator requires an array of values"
+    });
+  } else if (value.length > MAX_FILTER_IN_VALUES) {
+    errors.push({
+      path: [...path, 'value'],
+      message: `The 'in' operator accepts at most ${MAX_FILTER_IN_VALUES} values`
+    });
+  }
+
+  if (node.fieldId === ASSESSMENT_PRESENCE_FIELD_ID) {
+    errors.push({
+      path: [...path, 'op'],
+      message: "The 'in' operator is not supported for the '_assessment' presence field"
+    });
+  }
+};
+
 /**
  * Validates a query node scoped to a relation instance — either the root of a relation-rooted
  * query, or the `filter` of a `typedRelation`/`relationBackward` path step. A bare `predicate`/
@@ -232,6 +263,7 @@ const validateRelationNode = (
       );
     }
     case 'predicate': {
+      validateInOperation(node, path, errors);
       if (node.path.length > 0) {
         const first = node.path[0]!;
         if (first.kind !== 'endpoint' && first.kind !== 'relationForward') {
@@ -614,6 +646,7 @@ const validateNode = (
       }
       return hopsUsedBefore;
     case 'predicate': {
+      validateInOperation(node, path, errors);
       const pathStartKind: 'entity' | 'relation' = allowEndpointFirst ? 'relation' : 'entity';
       const hopsAfterPath = validatePathSteps(
         node.path,
