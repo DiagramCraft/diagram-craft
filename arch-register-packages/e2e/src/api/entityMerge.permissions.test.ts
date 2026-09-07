@@ -1,4 +1,5 @@
 import { createPermissionApiTest, expect } from '../helpers/permissionFixtures';
+import { flattenEntityAuditFields } from '@arch-register/server/domain/audit/db/auditLogging';
 
 const test = createPermissionApiTest();
 
@@ -10,8 +11,43 @@ test.describe('entity merge preview permissions', () => {
   }) => {
     const sourceId = resources.entityIds.frontendApp;
     const targetId = resources.entityIds.authService;
+    const dependentId = resources.entityIds.apiGateway;
+
+    const dependentSeed = await server.db.catalog.getEntity(resources.workspaceId, dependentId);
+    if (!dependentSeed) throw new Error('Expected API Gateway entity to exist');
+    const dependsOn = Array.isArray(dependentSeed.data.depends_on)
+      ? dependentSeed.data.depends_on.filter((id): id is string => typeof id === 'string')
+      : [];
+    const seededDependent = await server.db.catalog.updateEntity(
+      resources.workspaceId,
+      dependentId,
+      {
+        slug: dependentSeed.slug,
+        namespace: dependentSeed.namespace,
+        name: dependentSeed.name,
+        description: dependentSeed.description,
+        owner: dependentSeed.owner,
+        lifecycle: dependentSeed.lifecycle,
+        target_lifecycle: dependentSeed.target_lifecycle,
+        target_lifecycle_date: dependentSeed.target_lifecycle_date,
+        tags: dependentSeed.tags,
+        links: dependentSeed.links,
+        schema_id: dependentSeed.schema_id,
+        data: { ...dependentSeed.data, depends_on: [...new Set([...dependsOn, sourceId])] },
+        project_id: dependentSeed.project_id,
+        updated_at: new Date(),
+        completeness: dependentSeed.completeness
+      }
+    );
+    if (!seededDependent) throw new Error('Expected API Gateway fixture update to succeed');
+    const dependentBeforeMerge = await server.db.catalog.getEntity(
+      resources.workspaceId,
+      dependentId
+    );
+    if (!dependentBeforeMerge) throw new Error('Expected API Gateway entity after fixture update');
 
     const before = await server.db.catalog.getEntity(resources.workspaceId, sourceId);
+    if (!before) throw new Error('Expected source entity to exist');
     const versionsBefore = await server.db.catalog.listEntityVersions(
       resources.workspaceId,
       sourceId
@@ -27,7 +63,9 @@ test.describe('entity merge preview permissions', () => {
     // Same-schema seeded components — no blockers expected.
     expect(preview.blockers).toEqual([]);
     expect(Array.isArray(preview.fieldConflicts)).toBe(true);
-    expect(Array.isArray(preview.dependentImpact)).toBe(true);
+    expect(preview.dependentImpact).toEqual(
+      expect.arrayContaining([expect.objectContaining({ entityId: dependentId })])
+    );
     expect(Array.isArray(preview.relationConflicts)).toBe(true);
 
     // The preview must not mutate anything.
@@ -101,5 +139,59 @@ test.describe('entity merge preview permissions', () => {
       })
     ).toMatchObject({ canonical_record_id: targetId, merged_record_id: sourceId });
     expect(await server.db.catalog.listEntityVersions(resources.workspaceId, sourceId)).toEqual([]);
+
+    const mergeAuditRows = (await server.db.audit.listAuditLogs(resources.workspaceId)).filter(
+      row => row.metadata['mergeId'] === executed.mergeId
+    );
+    const mergeMetadata = {
+      mergeId: executed.mergeId,
+      sourceId,
+      targetId
+    };
+    expect(mergeAuditRows).toHaveLength(3);
+    expect(mergeAuditRows).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          operation: 'delete',
+          entity_type: 'entity',
+          entity_id: sourceId,
+          metadata: mergeMetadata
+        }),
+        expect.objectContaining({
+          operation: 'update',
+          entity_type: 'entity',
+          entity_id: targetId,
+          metadata: mergeMetadata
+        }),
+        expect.objectContaining({
+          operation: 'update',
+          entity_type: 'entity',
+          entity_id: dependentId,
+          metadata: expect.objectContaining({ ...mergeMetadata, mergeDependent: true })
+        })
+      ])
+    );
+
+    const sourceAudit = mergeAuditRows.find(row => row.entity_id === sourceId);
+    expect(sourceAudit?.changes).toEqual({ old: flattenEntityAuditFields(before) });
+
+    const dependentAudit = mergeAuditRows.find(row => row.entity_id === dependentId);
+    expect(dependentAudit?.changes.old?.['depends_on']).toEqual(expect.arrayContaining([sourceId]));
+    expect(dependentAudit?.changes.new?.['depends_on']).toEqual(expect.arrayContaining([targetId]));
+    expect(dependentAudit?.changes.new?.['depends_on']).not.toContain(sourceId);
+
+    const sourceAuditEntries = await personas.globalAdmin.orpc.audit.list({
+      params: { workspace: 'default' },
+      query: { entityId: sourceId }
+    });
+    expect(sourceAuditEntries).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          entity_id: sourceId,
+          operation: 'delete',
+          metadata: expect.objectContaining(mergeMetadata)
+        })
+      ])
+    );
   });
 });
