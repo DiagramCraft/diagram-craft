@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import { buildAuthorizationContext } from '@arch-register/permissions';
 import type { DatabaseAdapter } from '../../db/database';
-import { toApiMember } from './changeCaseOperations';
-import { requireNoRestrictedCaseMemberWrites } from './changeCaseOperations';
+import { toApiMember } from './changeCaseReadOperations';
+import { requireNoRestrictedCaseMemberWrites } from './changeCaseMutationAuthorization';
 import type { FieldGroupSchemaShape } from '../auth/fieldGroupAccessControl';
 import type { SchemaDbResult } from './db/catalogDatabase';
 import type { ChangeCaseMemberDbResult } from './db/changeCaseDatabase';

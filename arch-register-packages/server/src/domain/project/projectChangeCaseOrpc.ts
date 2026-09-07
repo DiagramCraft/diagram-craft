@@ -4,21 +4,22 @@ import type { AuthenticatedEvent } from '../../middleware/auth';
 import { createOrpcHandler } from '../../utils/orpcHandler';
 import { orpcErrorMiddleware } from '../../utils/orpcErrors';
 import {
-  listChangeCasesByProject,
-  listChangeCasesByEntity,
-  getChangeCase,
-  createChangeCase,
   addEntityToChangeCase,
   addRelationToChangeCase,
   removeEntityFromChangeCase,
   updateChangeCaseMemberProposedState,
   updateChangeCaseFields,
-  saveChangeCaseDraft,
-  checkChangeCaseApplyConflicts,
-  applyChangeCase,
   withdrawChangeCase,
   deleteChangeCase
 } from '../catalog/changeCaseOperations';
+import {
+  listChangeCasesByProject,
+  listChangeCasesByEntity,
+  getChangeCase
+} from '../catalog/changeCaseReadOperations';
+import { createChangeCase, saveChangeCaseDraft } from '../catalog/changeCaseDraftOperations';
+import { checkChangeCaseApplyConflicts } from '../catalog/changeCaseConflictOperations';
+import { applyChangeCase } from '../catalog/changeCaseApplyOperations';
 import { changeCaseContract } from '@arch-register/api-types/changeCaseContract';
 
 type ORPCContext = {
