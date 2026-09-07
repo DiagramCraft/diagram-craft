@@ -237,43 +237,54 @@ export const MarkdownEditorScreen = () => {
   );
 
   const controller = useMarkdownEditorController({
-    workspaceSlug,
-    nodeId,
-    projectId,
-    entityId,
-    isDraft,
-    isReadOnly,
-    data,
-    file,
-    documentTitle: isDraft ? draftName : (file?.name ?? 'Markdown document'),
-    draftName,
-    draftFolder,
-    draftType,
-    draftTemplate,
-    draftTemplates,
-    draftTemplatesLoading,
-    documentTypes,
-    documentTypesLoading,
-    governanceWorkflowConfig,
-    workspaceEnums,
-    contentScope,
-    requestedMode,
-    requestedPanel,
-    diagramSessionId: search.diagramSessionId,
-    historyMode,
-    compareMode,
-    selectedRevisionId,
-    revisions,
-    updatedLabel,
-    onNavigateBack: handleNavigateBack,
-    onNavigateToSavedDraft: navigateToSavedDraft,
-    onExit: exitMarkdownEditor,
-    onNavigateToConversation: navigateToConversation,
-    onOpenAttachment: openAttachment,
-    onDownloadAttachment: downloadAttachment,
-    renameFile,
-    deleteFile,
-    updateSearch,
+    context: {
+      workspaceSlug,
+      nodeId,
+      isDraft,
+      isReadOnly,
+      data,
+      file,
+      documentTitle: isDraft ? draftName : (file?.name ?? 'Markdown document'),
+      contentScope
+    },
+    draft: {
+      name: draftName,
+      folder: draftFolder,
+      type: draftType,
+      template: draftTemplate,
+      templates: draftTemplates,
+      templatesLoading: draftTemplatesLoading
+    },
+    config: {
+      documentTypes,
+      documentTypesLoading,
+      governanceWorkflowConfig,
+      workspaceEnums
+    },
+    navigation: {
+      requestedMode,
+      requestedPanel,
+      diagramSessionId: search.diagramSessionId,
+      historyMode,
+      compareMode,
+      selectedRevisionId,
+      revisions,
+      revisionsLoading,
+      updatedLabel,
+      updateSearch,
+      onNavigateBack: handleNavigateBack,
+      onNavigateToSavedDraft: navigateToSavedDraft,
+      onExit: exitMarkdownEditor,
+      onNavigateToConversation: navigateToConversation
+    },
+    attachments: {
+      onOpenAttachment: openAttachment,
+      onDownloadAttachment: downloadAttachment
+    },
+    file: {
+      renameFile,
+      deleteFile
+    },
     diagram
   });
 
@@ -312,7 +323,6 @@ export const MarkdownEditorScreen = () => {
           controller={controller}
           hasWikiComments={hasWikiComments}
           openWikiCommentsCount={openWikiCommentsCount}
-          commentsMode={controller.commentsMode}
           onNavigateBack={handleNavigateBack}
           revisions={revisions}
           revisionsLoading={revisionsLoading}

@@ -106,45 +106,73 @@ const makeDiagram = (): MarkdownEditorControllerOptions['diagram'] => ({
   refreshDiagramPreviewCaches: vi.fn(async () => undefined)
 });
 
+type MarkdownEditorControllerTestOverrides = {
+  context?: Partial<MarkdownEditorControllerOptions['context']>;
+  draft?: Partial<MarkdownEditorControllerOptions['draft']>;
+  config?: Partial<MarkdownEditorControllerOptions['config']>;
+  navigation?: Partial<MarkdownEditorControllerOptions['navigation']>;
+  attachments?: Partial<MarkdownEditorControllerOptions['attachments']>;
+  file?: Partial<MarkdownEditorControllerOptions['file']>;
+  diagram?: Partial<MarkdownEditorControllerOptions['diagram']>;
+};
+
 const makeOptions = (
-  overrides: Partial<MarkdownEditorControllerOptions> = {}
+  overrides: MarkdownEditorControllerTestOverrides = {}
 ): MarkdownEditorControllerOptions => ({
-  workspaceSlug: 'workspace',
-  nodeId: 'node-1',
-  isDraft: false,
-  isReadOnly: false,
-  data: makeContent(),
-  file: makeFile(),
-  documentTitle: 'Document',
-  draftName: 'Draft document',
-  draftType: null,
-  draftTemplate: null,
-  draftTemplates: [],
-  draftTemplatesLoading: false,
-  documentTypes: [makeDocumentType()],
-  documentTypesLoading: false,
-  governanceWorkflowConfig: undefined,
-  workspaceEnums: [],
-  contentScope: { kind: 'workspace', workspaceId: 'workspace' },
-  requestedMode: 'edit',
-  requestedPanel: 'preview',
-  diagramSessionId: 'session-1',
-  historyMode: 'preview',
-  compareMode: 'to-current',
-  selectedRevisionId: undefined,
-  revisions: [],
-  updatedLabel: null,
-  onNavigateBack: vi.fn(),
-  onNavigateToSavedDraft: vi.fn(),
-  onExit: vi.fn(),
-  onNavigateToConversation: vi.fn(),
-  onOpenAttachment: vi.fn(),
-  onDownloadAttachment: vi.fn(),
-  renameFile: vi.fn(async () => undefined),
-  deleteFile: vi.fn(async () => undefined),
-  updateSearch: vi.fn(),
-  diagram: makeDiagram(),
-  ...overrides
+  context: {
+    workspaceSlug: 'workspace',
+    nodeId: 'node-1',
+    isDraft: false,
+    isReadOnly: false,
+    data: makeContent(),
+    file: makeFile(),
+    documentTitle: 'Document',
+    contentScope: { kind: 'workspace', workspaceId: 'workspace' },
+    ...overrides.context
+  },
+  draft: {
+    name: 'Draft document',
+    type: null,
+    template: null,
+    templates: [],
+    templatesLoading: false,
+    ...overrides.draft
+  },
+  config: {
+    documentTypes: [makeDocumentType()],
+    documentTypesLoading: false,
+    governanceWorkflowConfig: undefined,
+    workspaceEnums: [],
+    ...overrides.config
+  },
+  navigation: {
+    requestedMode: 'edit',
+    requestedPanel: 'preview',
+    diagramSessionId: 'session-1',
+    historyMode: 'preview',
+    compareMode: 'to-current',
+    selectedRevisionId: undefined,
+    revisions: [],
+    revisionsLoading: false,
+    updatedLabel: null,
+    updateSearch: vi.fn(),
+    onNavigateBack: vi.fn(),
+    onNavigateToSavedDraft: vi.fn(),
+    onExit: vi.fn(),
+    onNavigateToConversation: vi.fn(),
+    ...overrides.navigation
+  },
+  attachments: {
+    onOpenAttachment: vi.fn(),
+    onDownloadAttachment: vi.fn(),
+    ...overrides.attachments
+  },
+  file: {
+    renameFile: vi.fn(async () => undefined),
+    deleteFile: vi.fn(async () => undefined),
+    ...overrides.file
+  },
+  diagram: { ...makeDiagram(), ...overrides.diagram }
 });
 
 let latest!: MarkdownEditorController;
@@ -194,19 +222,21 @@ afterEach(() => {
 describe('useMarkdownEditorController', () => {
   it('saves a draft using the resolved heading title and navigates to the saved file', async () => {
     const options = makeOptions({
-      isDraft: true,
-      nodeId: '',
-      data: undefined,
-      file: undefined,
-      documentTitle: 'Draft document'
+      context: {
+        isDraft: true,
+        nodeId: '',
+        data: undefined,
+        file: undefined,
+        documentTitle: 'Draft document'
+      }
     });
     renderController(options);
 
     act(() => {
-      latest.onChange('# Draft title\n\nBody');
+      latest.document.onChange('# Draft title\n\nBody');
     });
     await act(async () => {
-      await latest.onSave();
+      await latest.save.onSave();
     });
 
     expect(mocks.saveNew.mutateAsync).toHaveBeenCalledWith(
@@ -217,17 +247,17 @@ describe('useMarkdownEditorController', () => {
         metadata: {}
       })
     );
-    expect(options.onNavigateToSavedDraft).toHaveBeenCalledWith(makeFile());
+    expect(options.navigation.onNavigateToSavedDraft).toHaveBeenCalledWith(makeFile());
   });
 
   it('uses the normal save for an existing document and migration when its type changes', async () => {
     renderController(makeOptions());
 
     act(() => {
-      latest.onChange('# Updated');
+      latest.document.onChange('# Updated');
     });
     await act(async () => {
-      await latest.onSave();
+      await latest.save.onSave();
     });
 
     expect(mocks.save.mutateAsync).toHaveBeenCalledWith(
@@ -239,10 +269,10 @@ describe('useMarkdownEditorController', () => {
     );
 
     act(() => {
-      latest.onDocumentTypeChange('type-2');
+      latest.document.onDocumentTypeChange('type-2');
     });
     await act(async () => {
-      await latest.onSave();
+      await latest.save.onSave();
     });
 
     expect(mocks.migrate.mutateAsync).toHaveBeenCalledWith(
@@ -252,54 +282,54 @@ describe('useMarkdownEditorController', () => {
 
   it('keeps the originating save intent and selected impact for workflow documents', async () => {
     const options = makeOptions({
-      documentTypes: [makeDocumentType([{ isStatus: true, retired: false }])]
+      config: { documentTypes: [makeDocumentType([{ isStatus: true, retired: false }])] }
     });
     renderController(options);
 
     act(() => {
-      latest.onChange('# Workflow change');
+      latest.document.onChange('# Workflow change');
     });
     await act(async () => {
-      await latest.onSaveAndClose();
+      await latest.save.onSaveAndClose();
     });
 
-    expect(latest.pendingSaveIntent).toBe('save-and-close');
+    expect(latest.save.workflow.pendingSaveIntent).toBe('save-and-close');
     expect(mocks.save.mutateAsync).not.toHaveBeenCalled();
 
-    act(() => latest.setChangeKind('major'));
+    act(() => latest.save.workflow.setChangeKind('major'));
     await act(async () => {
-      await latest.confirmChangeImpact();
+      await latest.save.workflow.confirm();
     });
 
     expect(mocks.save.mutateAsync).toHaveBeenCalledWith(
       expect.objectContaining({ change_kind: 'major' })
     );
-    expect(options.onExit).toHaveBeenCalledOnce();
+    expect(options.navigation.onExit).toHaveBeenCalledOnce();
   });
 
   it('delegates rename, delete, and attachment deletion confirmations', async () => {
     const options = makeOptions();
     renderController(options);
 
-    act(() => latest.onRequestRename());
-    expect(latest.renameOpen).toBe(true);
+    act(() => latest.file.onRequestRename());
+    expect(latest.file.renameOpen).toBe(true);
     await act(async () => {
-      await latest.onRenameConfirm('Renamed document');
+      await latest.file.onRenameConfirm('Renamed document');
     });
-    expect(options.renameFile).toHaveBeenCalledWith('Renamed document');
-    expect(latest.renameOpen).toBe(false);
+    expect(options.file.renameFile).toHaveBeenCalledWith('Renamed document');
+    expect(latest.file.renameOpen).toBe(false);
 
-    act(() => latest.onRequestDelete());
+    act(() => latest.file.onRequestDelete());
     await act(async () => {
-      await latest.onDeleteConfirm();
+      await latest.file.onDeleteConfirm();
     });
-    expect(options.deleteFile).toHaveBeenCalledOnce();
-    expect(options.onNavigateBack).toHaveBeenCalledOnce();
+    expect(options.file.deleteFile).toHaveBeenCalledOnce();
+    expect(options.navigation.onNavigateBack).toHaveBeenCalledOnce();
 
     const attachment = makeFile('file');
-    act(() => latest.onRequestAttachmentDelete(attachment));
+    act(() => latest.attachments.onRequestDelete(attachment));
     await act(async () => {
-      await latest.onAttachmentDeleteConfirm();
+      await latest.attachments.onDeleteConfirm();
     });
     expect(mocks.deleteAttachment.mutateAsync).toHaveBeenCalledWith(attachment.path);
   });
@@ -311,11 +341,11 @@ describe('useMarkdownEditorController', () => {
     const fileAttachment = makeFile('file');
     const markdownAttachment = makeFile('markdown');
     act(() => {
-      latest.onAttachmentOpen(fileAttachment);
-      latest.onAttachmentOpen(markdownAttachment);
+      latest.attachments.onOpen(fileAttachment);
+      latest.attachments.onOpen(markdownAttachment);
     });
-    expect(options.onDownloadAttachment).toHaveBeenCalledWith(fileAttachment);
-    expect(options.onOpenAttachment).toHaveBeenCalledWith(markdownAttachment);
+    expect(options.attachments.onDownloadAttachment).toHaveBeenCalledWith(fileAttachment);
+    expect(options.attachments.onOpenAttachment).toHaveBeenCalledWith(markdownAttachment);
 
     const input = {
       target: {
@@ -324,14 +354,14 @@ describe('useMarkdownEditorController', () => {
       }
     } as unknown as ChangeEvent<HTMLInputElement>;
     await act(async () => {
-      await latest.onAttachmentInputChange(input);
+      await latest.attachments.onInputChange(input);
     });
     expect(mocks.uploadAttachment.mutateAsync).toHaveBeenCalledWith(input.target.files?.[0]);
     expect(input.target.value).toBe('');
 
     const action = { id: 'summarize', label: 'Summarize' } as unknown as DocumentAiAction;
     await act(async () => {
-      await latest.onRunAiAction(action);
+      await latest.ai.onRunAiAction(action);
     });
     expect(mocks.runAiAction).toHaveBeenCalledWith(
       'workspace',
@@ -339,24 +369,26 @@ describe('useMarkdownEditorController', () => {
       'summarize',
       expect.any(Function)
     );
-    expect(latest.aiActionResult?.answer).toBe('Summary');
+    expect(latest.ai.aiActionResult?.answer).toBe('Summary');
 
     await act(async () => {
-      await latest.onContinueInConversation(latest.aiActionResult!);
+      await latest.ai.onContinueInConversation(latest.ai.aiActionResult!);
     });
-    expect(options.onNavigateToConversation).toHaveBeenCalledWith('conversation-1');
+    expect(options.navigation.onNavigateToConversation).toHaveBeenCalledWith('conversation-1');
   });
 
   it('updates history search state and restores a revision', async () => {
     const options = makeOptions({
-      selectedRevisionId: 'revision-1',
-      historyMode: 'compare',
-      compareMode: 'to-current'
+      navigation: {
+        selectedRevisionId: 'revision-1',
+        historyMode: 'compare',
+        compareMode: 'to-current'
+      }
     });
     renderController(options);
 
-    act(() => latest.onSelectRevision('revision-2'));
-    expect(options.updateSearch).toHaveBeenCalledWith({
+    act(() => latest.history.onSelectRevision('revision-2'));
+    expect(options.navigation.updateSearch).toHaveBeenCalledWith({
       mode: 'preview',
       panel: 'history',
       revisionId: 'revision-2',
@@ -365,8 +397,8 @@ describe('useMarkdownEditorController', () => {
       diagramSessionId: undefined
     });
 
-    act(() => latest.onEnterCompare('changes-in-version'));
-    expect(options.updateSearch).toHaveBeenLastCalledWith({
+    act(() => latest.history.onEnterCompare('changes-in-version'));
+    expect(options.navigation.updateSearch).toHaveBeenLastCalledWith({
       mode: 'preview',
       panel: 'history',
       historyMode: 'compare',
@@ -375,8 +407,8 @@ describe('useMarkdownEditorController', () => {
       diagramSessionId: undefined
     });
 
-    act(() => latest.onViewVersion());
-    expect(options.updateSearch).toHaveBeenLastCalledWith({
+    act(() => latest.history.onViewVersion());
+    expect(options.navigation.updateSearch).toHaveBeenLastCalledWith({
       mode: 'preview',
       panel: 'history',
       revisionId: 'revision-1',
@@ -386,12 +418,12 @@ describe('useMarkdownEditorController', () => {
     });
 
     await act(async () => {
-      await latest.onRestore('revision-2');
+      await latest.history.onRestore('revision-2');
     });
     expect(mocks.restore.mutateAsync).toHaveBeenCalledWith({
       revisionId: 'revision-2',
       change_kind: 'major'
     });
-    expect(options.onExit).toHaveBeenCalledOnce();
+    expect(options.navigation.onExit).toHaveBeenCalledOnce();
   });
 });
