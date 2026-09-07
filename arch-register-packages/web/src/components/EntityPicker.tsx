@@ -14,18 +14,24 @@ export const EntityPicker = ({
   selectedEntityId,
   selectedEntity,
   onSelectEntity,
-  onClearEntity
+  onClearEntity,
+  schemaId,
+  excludeEntityId
 }: {
   selectedEntityId: string;
   selectedEntity?: { _name: string; _schema?: { name?: string } | null } | null;
   onSelectEntity: (entity: EntitySearchResult) => void;
   onClearEntity: () => void;
+  // Restrict search results to a single schema (e.g. merge targets must share the source's schema).
+  schemaId?: string | null;
+  // Keep a specific entity (e.g. the source of a merge) out of its own picker results.
+  excludeEntityId?: string;
 }) => {
   const { workspaceSlug } = useWorkspaceContext();
   const [query, setQuery] = useState('');
 
   const {
-    data: searchResults = [],
+    data: rawSearchResults = [],
     isLoading,
     isError
   } = useEntities(
@@ -33,10 +39,14 @@ export const EntityPicker = ({
     {
       q: query.trim() || undefined,
       view: 'summary',
-      limit: 8
+      limit: 8,
+      schemaId: schemaId ?? undefined
     },
     { enabled: !!query.trim() }
   );
+  const searchResults = excludeEntityId
+    ? rawSearchResults.filter(entity => entity._publicId !== excludeEntityId)
+    : rawSearchResults;
 
   return (
     <>

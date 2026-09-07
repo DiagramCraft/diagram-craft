@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { TbCheck, TbEraser, TbPlus, TbX } from 'react-icons/tb';
+import { TbCheck, TbEraser, TbGitMerge, TbPlus, TbX } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
@@ -20,6 +20,7 @@ import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import styles from './BulkEditToolbar.module.css';
 import { GovernanceInitiationFields } from '../../governance/GovernanceInitiationFields';
 import { useGovernanceInitiationFields } from '../../../hooks/useGovernanceInitiationFields';
+import { MergeWizardDialog } from './MergeWizardDialog';
 
 export type BulkEditToolbarProps = {
   workspaceId: string;
@@ -44,6 +45,7 @@ export type BulkEditToolbarProps = {
     dueAt?: string,
     initiationFields?: Record<string, unknown>
   ) => void;
+  onNavigateToEntity: (entityPublicId: string) => void;
 };
 
 export const BulkEditToolbar = ({
@@ -64,9 +66,11 @@ export const BulkEditToolbar = ({
   removeFieldRow,
   setStep,
   onClear,
-  onConfirm
+  onConfirm,
+  onNavigateToEntity
 }: BulkEditToolbarProps) => {
   const [approvalNoteOpen, setApprovalNoteOpen] = useState(false);
+  const [mergeWizardOpen, setMergeWizardOpen] = useState(false);
   const [approvalNote, setApprovalNote] = useState('');
   const [approvalDueDate, setApprovalDueDate] = useState('');
   const [initiationFieldValues, setInitiationFieldValues] = useState<Record<string, unknown>>({});
@@ -82,6 +86,14 @@ export const BulkEditToolbar = ({
   const isConfirm = step === 'confirm';
   const isDone = step === 'done';
   const hasPartial = isDone && result != null && result.skipped.length > 0;
+  // Merge is a single-source/single-target operation server-side, so a bulk merge only makes
+  // sense when every selected entity shares one schema (one common target picker) and the
+  // caller can merge each one (same admin_entity permission as delete).
+  const mergeSchemaId = selectedEntities[0]?._schema.id;
+  const canBulkMerge =
+    selectedEntities.length > 0 &&
+    selectedEntities.every(entity => entity._schema.id === mergeSchemaId && entity.canDelete);
+  const [firstMergeSource, ...queuedMergeSources] = selectedEntities;
 
   return (
     <div className={styles.bulkBar + (isConfirm || hasPartial ? ` ${styles.bulkBarConfirm}` : '')}>
@@ -159,6 +171,15 @@ export const BulkEditToolbar = ({
               Review changes
             </Button>
           )}
+          <Button
+            size="xs"
+            disabled={!canBulkMerge}
+            title={canBulkMerge ? undefined : 'Selected entities must share a schema to merge'}
+            onClick={() => setMergeWizardOpen(true)}
+          >
+            <TbGitMerge size={11} />
+            <span>Merge into…</span>
+          </Button>
           <Button size="xs" onClick={onClear}>
             <TbX size={11} />
             <span>Clear</span>
@@ -302,6 +323,17 @@ export const BulkEditToolbar = ({
           onChange={setInitiationFieldValues}
         />
       </Dialog>
+
+      {mergeWizardOpen && firstMergeSource && (
+        <MergeWizardDialog
+          open={true}
+          onClose={() => setMergeWizardOpen(false)}
+          workspaceId={workspaceId}
+          sourceEntityId={firstMergeSource._uid}
+          queuedSourceIds={queuedMergeSources.map(entity => entity._uid)}
+          onNavigateToEntity={onNavigateToEntity}
+        />
+      )}
     </div>
   );
 };

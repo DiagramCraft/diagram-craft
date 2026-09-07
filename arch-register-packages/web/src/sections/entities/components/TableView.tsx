@@ -39,6 +39,7 @@ export const TableView = ({
   onDelete,
   onClone,
   onManageCollections,
+  onMerge,
   projectContext,
   selectedIds,
   onSelectAll,
@@ -93,7 +94,7 @@ export const TableView = ({
           const menuItems = readOnly
             ? []
             : [
-                ...entityMenuItems(entity, onClone, onDelete, onManageCollections),
+                ...entityMenuItems(entity, onClone, onDelete, onManageCollections, onMerge),
                 ...projectEntityMenuItems(entity, projectContext)
               ];
 

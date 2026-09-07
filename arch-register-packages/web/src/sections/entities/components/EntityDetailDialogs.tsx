@@ -7,6 +7,7 @@ import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteCo
 import { GovernanceInitiationFields } from '../../governance/GovernanceInitiationFields';
 import { CollectionPickerDialog } from './CollectionPickerDialog';
 import { ProposeEntityDeprecationDialog } from './EntityDeprecationPanel';
+import { MergeWizardDialog } from './MergeWizardDialog';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import { LoadingState } from '../../../components/LoadingState';
 import { Banner } from '../../../components/Banner';
@@ -43,6 +44,9 @@ type Props = {
   setCollectionPickerOpen: (open: boolean) => void;
   proposeDeprecationOpen: boolean;
   setProposeDeprecationOpen: (open: boolean) => void;
+  mergeWizardOpen: boolean;
+  setMergeWizardOpen: (open: boolean) => void;
+  onNavigateToEntity: (entityPublicId: string) => void;
   entityInitiationFields: ComponentProps<typeof GovernanceInitiationFields>['fields'];
   initiationFieldValues: ComponentProps<typeof GovernanceInitiationFields>['values'];
   setInitiationFieldValues: ComponentProps<typeof GovernanceInitiationFields>['onChange'];
@@ -80,6 +84,9 @@ export const EntityDetailDialogs = ({
   setCollectionPickerOpen,
   proposeDeprecationOpen,
   setProposeDeprecationOpen,
+  mergeWizardOpen,
+  setMergeWizardOpen,
+  onNavigateToEntity,
   entityInitiationFields,
   initiationFieldValues,
   setInitiationFieldValues
@@ -202,5 +209,14 @@ export const EntityDetailDialogs = ({
       entityId={entityId}
       baseVersion={entity._version ?? 1}
     />
+    {mergeWizardOpen && (
+      <MergeWizardDialog
+        open={true}
+        onClose={() => setMergeWizardOpen(false)}
+        workspaceId={workspaceId}
+        sourceEntityId={entityId}
+        onNavigateToEntity={onNavigateToEntity}
+      />
+    )}
   </>
 );

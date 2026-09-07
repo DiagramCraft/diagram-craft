@@ -73,6 +73,7 @@ type EntityBrowserViewMode =
       onDelete: (entity: EntityRecord) => void;
       onClone: (entity: EntityRecord) => void;
       onManageCollections?: (entity: EntityRecord) => void;
+      onMerge?: (entity: EntityRecord) => void;
       selectedIds?: Set<string>;
       onSelectAll?: () => void;
       onSelectRow?: (uid: string) => void;
@@ -140,6 +141,7 @@ export const EntityBrowserView = ({
   const onDelete = mode.kind === 'interactive' ? mode.onDelete : noopEntityAction;
   const onClone = mode.kind === 'interactive' ? mode.onClone : noopEntityAction;
   const onManageCollections = mode.kind === 'interactive' ? mode.onManageCollections : undefined;
+  const onMerge = mode.kind === 'interactive' ? mode.onMerge : undefined;
   const selectedIds = mode.kind === 'interactive' ? mode.selectedIds : undefined;
   const onSelectAll = mode.kind === 'interactive' ? mode.onSelectAll : undefined;
   const onSelectRow = mode.kind === 'interactive' ? mode.onSelectRow : undefined;
@@ -341,6 +343,7 @@ export const EntityBrowserView = ({
           onDelete={onDelete}
           onClone={onClone}
           onManageCollections={onManageCollections}
+          onMerge={onMerge}
           lifecycleStates={lifecycleStates}
           projectContext={projectContext}
           readOnly={readOnly}
@@ -358,6 +361,7 @@ export const EntityBrowserView = ({
           onDelete={onDelete}
           onClone={onClone}
           onManageCollections={onManageCollections}
+          onMerge={onMerge}
           selectedIds={selectedIds}
           onSelectAll={onSelectAll}
           onSelectRow={onSelectRow}

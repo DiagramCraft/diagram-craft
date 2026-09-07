@@ -157,6 +157,7 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
   const isPinned = pinnedEntities.some(item => item.entity_public_id === entityId);
   const [collectionPickerOpen, setCollectionPickerOpen] = useState(false);
   const [proposeDeprecationOpen, setProposeDeprecationOpen] = useState(false);
+  const [mergeWizardOpen, setMergeWizardOpen] = useState(false);
   const [initiationFieldValues, setInitiationFieldValues] = useState<Record<string, unknown>>({});
 
   const schema = schemaEntry?.schema ?? null;
@@ -403,6 +404,7 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
           onOpenCollections={() => setCollectionPickerOpen(true)}
           onProposeDeprecation={() => setProposeDeprecationOpen(true)}
           onClone={handleClone}
+          onMergeInto={() => setMergeWizardOpen(true)}
         />
       )}
 
@@ -604,6 +606,9 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
         setCollectionPickerOpen={setCollectionPickerOpen}
         proposeDeprecationOpen={proposeDeprecationOpen}
         setProposeDeprecationOpen={setProposeDeprecationOpen}
+        mergeWizardOpen={mergeWizardOpen}
+        setMergeWizardOpen={setMergeWizardOpen}
+        onNavigateToEntity={navigateToEntity}
         entityInitiationFields={entityInitiationFields}
         initiationFieldValues={initiationFieldValues}
         setInitiationFieldValues={setInitiationFieldValues}
