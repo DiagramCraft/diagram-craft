@@ -1,7 +1,6 @@
 import { useState, useCallback, useMemo } from 'react';
 import { Outlet, getRouteApi, useNavigate, useMatches, useRouter } from '@tanstack/react-router';
 import { useQueryClient } from '@tanstack/react-query';
-import { useQuery } from '@tanstack/react-query';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import styles from './WorkspaceLayout.module.css';
@@ -27,29 +26,22 @@ import { useWorkspaceAuthorization } from '../auth/WorkspaceAuthorizationContext
 import { WorkspaceContext } from './WorkspaceContext';
 import { RouteContentBoundary } from '../routes/RouteContentBoundary';
 import { AppErrorState } from '../components/AppErrorState';
-import {
-  TbBriefcase2,
-  TbBook,
-  TbDatabase,
-  TbFileAi,
-  TbFiles,
-  TbHome,
-  TbMessageCircleStar,
-  TbSearch,
-  TbClipboardCheck
-} from 'react-icons/tb';
 import { WorkspaceDetailLayout } from './WorkspaceDetailLayout';
-import { navigateFromRailItem, resolveWorkspaceShellDescriptor } from './workspaceShellDescriptors';
+import {
+  navigateFromRailItem,
+  navigateToApp,
+  resolveWorkspaceShellDescriptor
+} from './workspaceShellDescriptors';
 import {
   APP_DEFINITIONS,
   appAccentStyle,
   getAppDefinition,
+  railItemMeta,
   railItemToAppId
 } from '../shell/appShellRegistry';
 import type { AppId, WorkspaceRailItemId } from '../shell/shellTypes';
-import type { IconType } from 'react-icons';
 import { getWorkspaceShellBuilder } from '../routes/workspace/workspaceShellRoute';
-import { glossaryConfigQuery } from '../app/business-glossary/glossaryQueries';
+import { useWorkspaceCapabilityConfigurations } from '../hooks/useWorkspaceConfig';
 import { settingsSectionTarget } from '../routes/settingsNavigation';
 import {
   asEntityPublicId,
@@ -57,21 +49,6 @@ import {
   entityDetailRoute,
   projectDetailRoute
 } from '../routes/publicObjectRoutes';
-
-const RAIL_ITEM_META: Record<
-  WorkspaceRailItemId,
-  { icon: IconType; tooltip: string; separator?: boolean }
-> = {
-  home: { icon: TbHome, tooltip: 'Workspace overview' },
-  content: { icon: TbFiles, tooltip: 'Workspace content' },
-  projects: { icon: TbBriefcase2, tooltip: 'Projects' },
-  entities: { icon: TbDatabase, tooltip: 'Entities' },
-  glossary: { icon: TbBook, tooltip: 'Business glossary' },
-  search: { icon: TbSearch, tooltip: 'Search' },
-  governance: { icon: TbClipboardCheck, tooltip: 'My work' },
-  assistant: { icon: TbMessageCircleStar, tooltip: 'AI Assistant', separator: true },
-  extract: { icon: TbFileAi, tooltip: 'AI Extract' }
-};
 
 const routeApi = getRouteApi('/authenticated/$workspaceSlug');
 
@@ -118,7 +95,10 @@ export const WorkspaceLayout = () => {
   const { lifecycleStates, teams, projectEntityTypes, assessmentTypes, currencies } =
     useWorkspaceConfig(workspaceSlug, !!workspaceSlug);
   const { data: aiConfig } = useAiConfig(workspaceSlug, !!workspaceSlug);
-  const { data: glossaryConfig } = useQuery(glossaryConfigQuery(workspaceSlug, !!workspaceSlug));
+  const { data: capabilityConfigurations = [] } = useWorkspaceCapabilityConfigurations(
+    workspaceSlug,
+    !!workspaceSlug
+  );
 
   const {
     canManageWorkspaces,
@@ -180,9 +160,9 @@ export const WorkspaceLayout = () => {
 
   const handlePickApp = useCallback(
     (id: AppId) => {
-      navigateFromRailItem(id, { navigate, workspaceSlug, projects });
+      navigateToApp(id, { navigate, workspaceSlug });
     },
-    [navigate, projects, workspaceSlug]
+    [navigate, workspaceSlug]
   );
 
   const handlePickWs = useCallback(
@@ -226,12 +206,15 @@ export const WorkspaceLayout = () => {
 
   const enabledApps = useMemo(
     () =>
-      APP_DEFINITIONS.filter(
-        app =>
-          app.enablement === 'always' ||
-          (app.enablement.capabilityType === 'business-glossary' && glossaryConfig != null)
-      ),
-    [glossaryConfig]
+      APP_DEFINITIONS.filter(app => {
+        const enablement = app.enablement;
+        if (enablement === 'always') return true;
+        return capabilityConfigurations.some(
+          configuration =>
+            configuration.type === enablement.capabilityType && configuration.valid
+        );
+      }),
+    [capabilityConfigurations]
   );
 
   const contextValue = useMemo(
@@ -326,10 +309,11 @@ export const WorkspaceLayout = () => {
   const visibleRailItems: NavRailItem[] = (() => {
     const aiEnabled = aiConfig?.enabled === true;
     const count = governanceTaskCount?.count ?? 0;
-    return activeApp.railItems
+    return activeApp.sections
+      .map(section => section.id)
       .filter(id => aiEnabled || (id !== 'assistant' && id !== 'extract'))
       .map(id => {
-        const meta = RAIL_ITEM_META[id];
+        const meta = railItemMeta(id);
         const item: NavRailItem = {
           id,
           icon: meta.icon,

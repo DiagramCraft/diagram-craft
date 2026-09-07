@@ -1,3 +1,4 @@
+import type { IconType } from 'react-icons';
 import type { AppRailItemId } from './appShellRegistry';
 
 export type BreadcrumbItem = {
@@ -6,23 +7,46 @@ export type BreadcrumbItem = {
   onClick: () => void;
 };
 
-export type WorkspaceRailItemId =
+/** Rail items owned by the always-on Home app (the core register). */
+export type WorkspaceCoreRailItemId =
   | 'home'
   | 'content'
   | 'projects'
   | 'entities'
-  | AppRailItemId
   | 'search'
   | 'governance'
   | 'assistant'
   | 'extract';
 
+export type WorkspaceRailItemId = WorkspaceCoreRailItemId | AppRailItemId;
+
 /** Application identifier: `'home'` is the always-on core register; the rest are opt-in apps. */
 export type AppId = 'home' | AppRailItemId;
 
+/** Context passed to a section's `primarySidebar` factory (a structural subset of the shell context). */
+export type AppRailSectionContext = {
+  workspaceSlug: string;
+};
+
+/**
+ * One left-rail section owned by an application: its rail-item id, icon and tooltip, the route
+ * the rail item navigates to, and an optional primary sidebar rendered while the section is active.
+ * An app may own several sections (e.g. a capability-modelling app with map / list / heatmap views).
+ */
+export type AppRailSection = {
+  id: WorkspaceRailItemId;
+  icon: IconType;
+  tooltip: string;
+  route: string;
+  /** Renders a rail divider before this item. */
+  separator?: boolean;
+  /** Primary sidebar shown while this section is active; resolved by the section's route. */
+  primarySidebar?: (ctx: AppRailSectionContext) => React.ReactNode;
+};
+
 /**
  * A workspace application — the layer above the left rail. Selecting an app in the switcher
- * scopes the rail to `railItems` and re-skins the shell with `tint`. `'home'` carries no
+ * scopes the rail to `sections` and re-skins the shell with `tint`. `'home'` carries no
  * `shortCode`/`tint` and is always enabled; other apps are enabled iff their backing workspace
  * capability has a valid configuration.
  */
@@ -34,7 +58,6 @@ export type AppDefinition = {
   /** oklch accent applied to the shell while the app is active; omitted for `'home'`. */
   tint?: string;
   description: string;
-  railItems: WorkspaceRailItemId[];
-  rootRoute: string;
+  sections: AppRailSection[];
   enablement: 'always' | { capabilityType: string };
 };

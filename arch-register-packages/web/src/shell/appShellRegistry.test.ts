@@ -4,25 +4,34 @@ import {
   APP_RAIL_ROUTES,
   appAccentStyle,
   getAppDefinition,
+  getRailSection,
+  RAIL_ROUTES,
+  railItemMeta,
   railItemToAppId
 } from './appShellRegistry';
 import { GLOSSARY_RAIL_ITEM_ID, GLOSSARY_RAIL_PATH } from '../app/business-glossary/glossaryShell';
 
+const railIds = (appId: Parameters<typeof getAppDefinition>[0]) =>
+  getAppDefinition(appId).sections.map(section => section.id);
+
 describe('appShellRegistry', () => {
-  it('always includes an always-on Home app that owns the core rail items', () => {
+  it('always includes an always-on Home app that owns the core rail sections', () => {
     const home = getAppDefinition('home');
     expect(home.id).toBe('home');
     expect(home.enablement).toBe('always');
-    expect(home.railItems).toContain('entities');
-    expect(home.railItems).not.toContain(GLOSSARY_RAIL_ITEM_ID);
+    expect(railIds('home')).toContain('entities');
+    expect(railIds('home')).not.toContain(GLOSSARY_RAIL_ITEM_ID);
     expect(home.tint).toBeUndefined();
   });
 
-  it('registers Business Glossary as a capability-gated app that owns only the glossary rail item', () => {
+  it('registers Business Glossary as a capability-gated app that owns only the glossary rail section', () => {
     const glossary = getAppDefinition(GLOSSARY_RAIL_ITEM_ID);
-    expect(glossary.railItems).toEqual([GLOSSARY_RAIL_ITEM_ID]);
+    expect(railIds(GLOSSARY_RAIL_ITEM_ID)).toEqual([GLOSSARY_RAIL_ITEM_ID]);
     expect(glossary.enablement).toEqual({ capabilityType: 'business-glossary' });
-    expect(glossary.rootRoute).toBe(GLOSSARY_RAIL_PATH);
+    const [section] = glossary.sections;
+    expect(section?.route).toBe(GLOSSARY_RAIL_PATH);
+    expect(section?.icon).toBeTypeOf('function');
+    expect(section?.tooltip).toBe('Business glossary');
   });
 
   it('maps rail items back to their owning app and falls back to home', () => {
@@ -31,8 +40,21 @@ describe('appShellRegistry', () => {
     expect(railItemToAppId(null)).toBe('home');
   });
 
+  it('derives rail-item metadata from the owning app section', () => {
+    expect(railItemMeta('entities').tooltip).toBe('Entities');
+    expect(railItemMeta('assistant').separator).toBe(true);
+    expect(railItemMeta(GLOSSARY_RAIL_ITEM_ID).tooltip).toBe('Business glossary');
+    expect(getRailSection(GLOSSARY_RAIL_ITEM_ID)?.route).toBe(GLOSSARY_RAIL_PATH);
+  });
+
   it('exposes non-home app routes under the stable APP_RAIL_ROUTES shape', () => {
     expect(APP_RAIL_ROUTES).toEqual({ [GLOSSARY_RAIL_ITEM_ID]: GLOSSARY_RAIL_PATH });
+  });
+
+  it('exposes every section route (home included) via RAIL_ROUTES', () => {
+    expect(RAIL_ROUTES.entities).toBe('/$workspaceSlug/entities');
+    expect(RAIL_ROUTES[GLOSSARY_RAIL_ITEM_ID]).toBe(GLOSSARY_RAIL_PATH);
+    expect(RAIL_ROUTES.home).toBe('/$workspaceSlug');
   });
 
   it('produces accent overrides only for apps that define a tint', () => {
@@ -41,8 +63,8 @@ describe('appShellRegistry', () => {
     expect(glossaryStyle).toHaveProperty('--accent-chroma');
   });
 
-  it('every rail item listed by an app has metadata coverage via unique ownership', () => {
-    const owned = APP_DEFINITIONS.flatMap(app => app.railItems);
+  it('every rail section listed by an app is uniquely owned', () => {
+    const owned = APP_DEFINITIONS.flatMap(app => app.sections.map(section => section.id));
     expect(new Set(owned).size).toBe(owned.length);
   });
 });

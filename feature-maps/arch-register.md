@@ -36,9 +36,10 @@
           top bar next to the workspace switcher. "Home" is the always-available core register (overview, content,
           projects, entities, search, my work, and AI) and Business Glossary is a separate application; selecting an
           application scopes the left icon rail to only that application's sections and re-skins the shell with its
-          accent colour. An application appears in the switcher only when enabled, which is governed by its backing
-          workspace capability configuration (managed from workspace settings). Breadcrumbs are relative to the active
-          application, which the switcher represents.
+          accent colour. An application may own several rail sections, each with its own icon, tooltip, route, and
+          optionally its own primary sidebar. An application appears in the switcher only when enabled, which is
+          governed by its backing workspace capability configuration (managed from workspace settings). Breadcrumbs
+          are relative to the active application, which the switcher represents.
 
         - @id:ar.workspace.home Users can use the workspace home to navigate to entities, projects, content, search,
           diagrams, and other primary work areas. The home screen shows a composable dashboard of widgets (stat metrics,

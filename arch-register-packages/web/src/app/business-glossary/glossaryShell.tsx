@@ -1,6 +1,8 @@
+import { TbBook } from 'react-icons/tb';
 import { buildHomeBreadcrumbs } from '../../shell/breadcrumbBuilders';
 import type { WorkspaceShellContext } from '../../layouts/workspaceShellDescriptors';
 import type { AppDefinition, BreadcrumbItem } from '../../shell/shellTypes';
+import { GlossarySidebar } from './sections/GlossarySidebar';
 
 /**
  * Business Glossary's workspace-rail identity: the rail item id, its route, and its breadcrumb
@@ -8,6 +10,7 @@ import type { AppDefinition, BreadcrumbItem } from '../../shell/shellTypes';
  * `governanceRegistryFactory.ts` composes case-kind registrations on the server.
  */
 export const GLOSSARY_RAIL_ITEM_ID = 'glossary' as const;
+export type GlossaryRailItemId = typeof GLOSSARY_RAIL_ITEM_ID;
 
 export const GLOSSARY_RAIL_PATH = '/$workspaceSlug/glossary';
 
@@ -18,8 +21,15 @@ export const glossaryAppDefinition: AppDefinition = {
   shortCode: 'BG',
   tint: 'oklch(0.62 0.14 295)',
   description: 'Managed business terms, aliases, categories, and quality reports.',
-  railItems: [GLOSSARY_RAIL_ITEM_ID],
-  rootRoute: GLOSSARY_RAIL_PATH,
+  sections: [
+    {
+      id: GLOSSARY_RAIL_ITEM_ID,
+      icon: TbBook,
+      tooltip: 'Business glossary',
+      route: GLOSSARY_RAIL_PATH,
+      primarySidebar: ctx => <GlossarySidebar workspaceSlug={ctx.workspaceSlug} />
+    }
+  ],
   enablement: { capabilityType: 'business-glossary' }
 };
 
