@@ -30,7 +30,11 @@ import { toApiEntity } from './entityHelpers';
 import { flattenEntityAuditFields, logAudit } from '../audit/db/auditLogging';
 import { updateEntityWithAudit } from './entityMutations';
 import { withCatalogMutationTransaction } from './mutationTransaction';
-import { mergeFingerprint, type EntityMergeSideTableSnapshot } from './db/entityMergeDatabase';
+import {
+  buildExternalIdentityPlan,
+  mergeFingerprint,
+  type EntityMergeSideTableSnapshot
+} from './db/entityMergeDatabase';
 
 const dedupeRelations = (rows: RelationDbResult[]): RelationDbResult[] => {
   const byId = new Map<string, RelationDbResult>();
@@ -266,35 +270,42 @@ const loadMergePlan = async (
   );
 
   const blockers: MergeBlocker[] = [];
+  const addBlocker = (code: MergeBlocker['code'], message: string, acknowledgeable = false) => {
+    blockers.push({ code, message, acknowledgeable });
+  };
   if (sourceEntity.redirect) {
-    blockers.push({
-      code: 'source_is_alias',
-      message: 'The source entity has already been merged into another record.'
-    });
+    addBlocker('source_is_alias', 'The source entity has already been merged into another record.');
   }
   if (targetEntity.redirect) {
-    blockers.push({
-      code: 'target_is_alias',
-      message: 'The target entity has already been merged into another record.'
-    });
+    addBlocker('target_is_alias', 'The target entity has already been merged into another record.');
   }
   if (sourceEntity.id === targetEntity.id) {
-    blockers.push({
-      code: 'same_entity',
-      message: 'Source and target resolve to the same entity.'
-    });
+    addBlocker('same_entity', 'Source and target resolve to the same entity.');
   }
   if (sourceEntity.schema_id !== targetEntity.schema_id) {
-    blockers.push({
-      code: 'different_schema',
-      message: 'Entities must share the same schema to be merged.'
-    });
+    addBlocker('different_schema', 'Entities must share the same schema to be merged.');
   }
-  if ((sourceEntity.project_id ?? null) !== (targetEntity.project_id ?? null)) {
-    blockers.push({
-      code: 'project_scope_mismatch',
-      message: 'Source and target belong to different projects.'
-    });
+  const sourceProject = sourceEntity.project_id ?? null;
+  const targetProject = targetEntity.project_id ?? null;
+  if (sourceProject !== targetProject) {
+    if (sourceProject !== null && targetProject !== null) {
+      addBlocker(
+        'project_scope_mismatch',
+        'Source and target belong to different projects and cannot be merged.'
+      );
+    } else if (sourceProject !== null) {
+      addBlocker(
+        'source_project_scope_dropped',
+        'The source is confined to a project; merging exposes its values workspace-wide.',
+        true
+      );
+    } else {
+      addBlocker(
+        'project_scope_relocated',
+        'The target is confined to a project; the merged record becomes project-scoped.',
+        true
+      );
+    }
   }
 
   const [
@@ -316,18 +327,16 @@ const loadMergePlan = async (
   ]);
 
   if (openCases.length > 0) {
-    blockers.push({
-      code: 'open_governance_case',
-      message: 'The source entity has an open governance case and cannot be merged.'
-    });
+    addBlocker(
+      'open_governance_case',
+      'The source entity has an open governance case and cannot be merged.'
+    );
   }
-  if (sideTableSnapshot.externalIdentityRows.some(row => row.recordId === sourceEntity.id)) {
-    blockers.push({
-      code: 'external_identity',
-      message:
-        'The source entity has an external identity; external identity transfer is not enabled yet.'
-    });
-  }
+  const externalIdentityPlan = buildExternalIdentityPlan(
+    sideTableSnapshot.externalIdentityRows,
+    sourceEntity.id,
+    targetEntity.id
+  );
 
   const schemaById = new Map(schemas.map(schema => [schema.id, schema]));
   const sourceSchema = schemaById.get(sourceEntity.schema_id);
@@ -335,10 +344,10 @@ const loadMergePlan = async (
   for (const field of sourceSchema?.fields ?? []) {
     if (!isFieldEditRestricted(authCtx, sourceSchema, field.id)) continue;
     if (equalEntityValue(sourceEntity.data[field.id], targetEntity.data[field.id])) continue;
-    blockers.push({
-      code: 'restricted_field_write',
-      message: `Merging would write the restricted field "${field.name}", which you cannot edit.`
-    });
+    addBlocker(
+      'restricted_field_write',
+      `Merging would write the restricted field "${field.name}", which you cannot edit.`
+    );
     break;
   }
 
@@ -394,10 +403,10 @@ const loadMergePlan = async (
   const rawDependentIds = [...new Set(referenceEdges.map(edge => edge.dependentId))].sort();
   const truncated = visibleDependents.truncated || allDependents.truncated;
   if (truncated) {
-    blockers.push({
-      code: 'truncated_dependents',
-      message: 'The dependent graph is too large to merge safely in one operation.'
-    });
+    addBlocker(
+      'truncated_dependents',
+      'The dependent graph is too large to merge safely in one operation.'
+    );
   }
 
   const sourceRelations = pairRelations.filter(
@@ -442,7 +451,9 @@ const loadMergePlan = async (
       openGovernanceCases: openCases.length,
       incomingRelations: sourceRelations.filter(row => row.out_entity_id === sourceEntity.id)
         .length,
-      outgoingRelations: sourceRelations.filter(row => row.in_entity_id === sourceEntity.id).length
+      outgoingRelations: sourceRelations.filter(row => row.in_entity_id === sourceEntity.id).length,
+      externalIdentitiesTransferring: externalIdentityPlan.transfer.length,
+      externalIdentitiesColliding: externalIdentityPlan.drop.length
     }
   };
 };
@@ -663,9 +674,13 @@ export const executeEntityMerge = async (
           status: 409,
           message: 'The merge participants changed after the preview; refresh and try again.'
         });
-        httpAssert.true(plan.blockers.length === 0, {
+        const acknowledged = new Set(body.acknowledgedBlockers);
+        const unresolvedBlockers = plan.blockers.filter(
+          blocker => !blocker.acknowledgeable || !acknowledged.has(blocker.code)
+        );
+        httpAssert.true(unresolvedBlockers.length === 0, {
           status: 409,
-          message: firstBlockerMessage(plan.blockers)
+          message: firstBlockerMessage(unresolvedBlockers)
         });
         validateExecuteResolutions(plan, body);
 
@@ -677,7 +692,10 @@ export const executeEntityMerge = async (
         const mergeMetadata = {
           mergeId,
           sourceId: plan.source.id,
-          targetId: plan.target.id
+          targetId: plan.target.id,
+          ...(body.acknowledgedBlockers.length > 0
+            ? { acknowledgedBlockers: [...acknowledged].sort() }
+            : {})
         };
         const sourceIdentityResolution = ['core:slug', 'core:namespace'].some(
           fieldKey => body.fieldResolutions[fieldKey] === 'source'
@@ -757,7 +775,7 @@ export const executeEntityMerge = async (
           plan.relationConflicts,
           body.relationResolutions
         );
-        await tx.entityMerge.applySideTableRewrites(
+        const { droppedExternalIdentities } = await tx.entityMerge.applySideTableRewrites(
           ws,
           plan.source.id,
           plan.target.id,
@@ -797,7 +815,17 @@ export const executeEntityMerge = async (
           entitySlug: plan.source.slug,
           schemaId: plan.source.schema_id,
           changes: { old: flattenEntityAuditFields(plan.source) },
-          metadata: mergeMetadata
+          metadata: {
+            ...mergeMetadata,
+            ...(droppedExternalIdentities.length > 0
+              ? {
+                  droppedExternalIdentities: droppedExternalIdentities.map(row => ({
+                    source: row.source,
+                    externalKey: row.externalKey
+                  }))
+                }
+              : {})
+          }
         });
         const remainingReferences = await tx.entityMerge.countRemainingReferences(
           ws,

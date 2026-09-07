@@ -4,8 +4,10 @@ import type { Entity, SchemaDbResult } from './db/catalogDatabase';
 import type { RelationDbResult } from './db/relationDatabase';
 import { buildFieldConflicts, buildRelationConflicts } from './entityMergeOperations';
 import {
+  buildExternalIdentityPlan,
   buildMergeSideTableAutoDedupeRowIds,
   buildMergeSideTableConflicts,
+  type MergeExternalIdentityRow,
   type MergeSideTableRow
 } from './db/entityMergeDatabase';
 
@@ -232,5 +234,38 @@ describe('buildMergeSideTableConflicts', () => {
     const snapshot = rows('source-row', 'target-row');
     expect(buildMergeSideTableConflicts(snapshot, 'source', 'target')).toHaveLength(1);
     expect(buildMergeSideTableAutoDedupeRowIds(snapshot, 'source', 'target')).toEqual([]);
+  });
+});
+
+describe('buildExternalIdentityPlan', () => {
+  const row = (
+    source: string,
+    externalKey: string,
+    recordId: string
+  ): MergeExternalIdentityRow => ({ source, externalKey, recordId });
+
+  it('transfers every source identity when the target holds none of the keys', () => {
+    const plan = buildExternalIdentityPlan(
+      [row('jira', 'KEY-1', 'source'), row('sn', 'SN-9', 'target')],
+      'source',
+      'target'
+    );
+    expect(plan.transfer).toEqual([row('jira', 'KEY-1', 'source')]);
+    expect(plan.drop).toEqual([]);
+  });
+
+  it('drops a source identity whose (source, external_key) the target already carries', () => {
+    const plan = buildExternalIdentityPlan(
+      [row('jira', 'KEY-1', 'source'), row('jira', 'KEY-1', 'target'), row('git', 'G-2', 'source')],
+      'source',
+      'target'
+    );
+    expect(plan.transfer).toEqual([row('git', 'G-2', 'source')]);
+    expect(plan.drop).toEqual([row('jira', 'KEY-1', 'source')]);
+  });
+
+  it('ignores rows that belong to neither participant', () => {
+    const plan = buildExternalIdentityPlan([row('jira', 'KEY-1', 'other')], 'source', 'target');
+    expect(plan).toEqual({ transfer: [], drop: [] });
   });
 });

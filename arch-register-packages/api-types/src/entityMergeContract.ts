@@ -76,12 +76,17 @@ const mergeBlockerSchema = z.object({
     'target_is_alias',
     'different_schema',
     'project_scope_mismatch',
+    'source_project_scope_dropped',
+    'project_scope_relocated',
     'restricted_field_write',
     'open_governance_case',
     'external_identity',
     'truncated_dependents'
   ]),
-  message: z.string()
+  message: z.string(),
+  // When true the merge can still proceed if the caller passes the blocker's `code` in
+  // `acknowledgedBlockers`; when false the blocker is a hard stop.
+  acknowledgeable: z.boolean()
 });
 
 const mergePreviewSchema = z.object({
@@ -99,7 +104,11 @@ const mergePreviewSchema = z.object({
     openChangeApprovals: z.number().int(),
     openGovernanceCases: z.number().int(),
     incomingRelations: z.number().int(),
-    outgoingRelations: z.number().int()
+    outgoingRelations: z.number().int(),
+    // Source external identities that move to the target on apply.
+    externalIdentitiesTransferring: z.number().int(),
+    // Source external identities dropped because the target already holds the same key.
+    externalIdentitiesColliding: z.number().int()
   }),
   blockers: z.array(mergeBlockerSchema),
   // True when the dependent-impact graph hit its traversal ceiling and the list is partial.
@@ -126,7 +135,11 @@ const mergeExecuteBodySchema = z.object({
   sideTableResolutions: z
     .record(z.string(), z.enum(['keep_source', 'keep_target', 'drop_source']))
     .default({})
-    .describe('Resolved side-table collisions keyed by preview conflict id')
+    .describe('Resolved side-table collisions keyed by preview conflict id'),
+  acknowledgedBlockers: z
+    .array(z.string())
+    .default([])
+    .describe('Codes of acknowledgeable preview blockers the caller has explicitly accepted')
 });
 
 const mergeExecuteResponseSchema = z.object({

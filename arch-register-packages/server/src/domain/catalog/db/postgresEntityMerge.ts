@@ -2,12 +2,14 @@ import type { MergeRelationConflict } from '@arch-register/api-types/entityMerge
 import type { RelationDbResult } from './relationDatabase';
 import { PostgresDatabaseBase } from '../../../db/postgresBase';
 import {
+  buildExternalIdentityPlan,
   buildMergeSideTableAutoDedupeRowIds,
   buildMergeSideTableConflicts,
   mergeRowId,
   mergeRowDedupeKey,
   type EntityMergeDatabase,
   type EntityMergeSideTableSnapshot,
+  type MergeExternalIdentityRow,
   type MergeRelationResolution,
   type MergeSideTableRow,
   type MergeTrackedTable
@@ -479,6 +481,33 @@ export class PostgresEntityMergeDatabase
       .sql`UPDATE discussion_post SET object_id = ${targetId} WHERE workspace = ${workspace} AND object_type = 'entity' AND object_id = ${sourceId}`;
     await this
       .sql`UPDATE governance_case SET subject_id = ${targetId} WHERE workspace = ${workspace} AND subject_type = 'entity' AND subject_id = ${sourceId}`;
+
+    const identityPlan = buildExternalIdentityPlan(
+      snapshot.externalIdentityRows,
+      sourceId,
+      targetId
+    );
+    for (const row of identityPlan.drop) {
+      await this.sql`
+        DELETE FROM catalog_record_external_identity
+        WHERE workspace = ${workspace} AND source = ${row.source}
+          AND external_key = ${row.externalKey} AND record_id = ${sourceId}
+      `;
+    }
+    for (const row of identityPlan.transfer) {
+      await this.sql`
+        UPDATE catalog_record_external_identity SET record_id = ${targetId}, updated_at = NOW()
+        WHERE workspace = ${workspace} AND source = ${row.source}
+          AND external_key = ${row.externalKey} AND record_id = ${sourceId}
+      `;
+    }
+
+    const droppedExternalIdentities: MergeExternalIdentityRow[] = identityPlan.drop.map(row => ({
+      source: row.source,
+      externalKey: row.externalKey,
+      recordId: targetId
+    }));
+    return { droppedExternalIdentities };
   }
 
   private async deleteRelation(workspace: string, relationId: string) {

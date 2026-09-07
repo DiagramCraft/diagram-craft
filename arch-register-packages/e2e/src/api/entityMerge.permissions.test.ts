@@ -1,7 +1,33 @@
 import { createPermissionApiTest, expect } from '../helpers/permissionFixtures';
 import { flattenEntityAuditFields } from '@arch-register/server/domain/audit/db/auditLogging';
+import { seededEntities } from '@arch-register/server/db/seedFixtures';
 
 const test = createPermissionApiTest();
+
+const buildExecuteBody = (preview: {
+  sourceVersion: number;
+  targetVersion: number;
+  previewFingerprint: string;
+  fieldConflicts: { fieldKey: string }[];
+  relationConflicts: { relationId: string; note: 'duplicate' | 'self' }[];
+  sideTableConflicts: { conflictId: string }[];
+}) => ({
+  expectedSourceVersion: preview.sourceVersion,
+  expectedTargetVersion: preview.targetVersion,
+  previewFingerprint: preview.previewFingerprint,
+  fieldResolutions: Object.fromEntries(
+    preview.fieldConflicts.map(conflict => [conflict.fieldKey, 'target'])
+  ) as Record<string, 'source' | 'target'>,
+  relationResolutions: Object.fromEntries(
+    preview.relationConflicts.map(conflict => [
+      conflict.relationId,
+      conflict.note === 'self' ? 'drop_source' : 'keep_target'
+    ])
+  ) as Record<string, 'keep_source' | 'keep_target' | 'drop_source'>,
+  sideTableResolutions: Object.fromEntries(
+    preview.sideTableConflicts.map(conflict => [conflict.conflictId, 'keep_target'])
+  ) as Record<string, 'keep_source' | 'keep_target' | 'drop_source'>
+});
 
 test.describe('entity merge preview permissions', () => {
   test('admins get a side-effect-free preview; non-admins are forbidden', async ({
@@ -193,5 +219,134 @@ test.describe('entity merge preview permissions', () => {
         })
       ])
     );
+  });
+});
+
+test.describe('entity merge external identity + project scope', () => {
+  test('transfers the source external identities to the target and clears the post-check', async ({
+    server,
+    personas,
+    resources
+  }) => {
+    const sourceId = seededEntities.default.customerApi.id;
+    const targetId = seededEntities.default.authApi.id;
+    const ws = resources.workspaceId;
+
+    // (workspace, source, external_key) is the table's primary key, so a source and target
+    // genuinely sharing a key cannot coexist — every source identity simply moves over.
+    await server.db.externalIdentity.create({
+      workspace: ws,
+      source: 'jira',
+      external_key: 'KEY-1',
+      record_id: sourceId
+    });
+    await server.db.externalIdentity.create({
+      workspace: ws,
+      source: 'git',
+      external_key: 'G-2',
+      record_id: sourceId
+    });
+    await server.db.externalIdentity.create({
+      workspace: ws,
+      source: 'servicenow',
+      external_key: 'SN-9',
+      record_id: targetId
+    });
+
+    const preview = await personas.globalAdmin.orpc.entityMerges.preview({
+      params: { workspace: 'default', id: sourceId },
+      body: { targetId }
+    });
+    expect(preview.blockers).toEqual([]);
+    expect(preview.sideTableCounts.externalIdentitiesTransferring).toBe(2);
+    expect(preview.sideTableCounts.externalIdentitiesColliding).toBe(0);
+
+    const executed = await personas.globalAdmin.orpc.entityMerges.execute({
+      params: { workspace: 'default', id: sourceId },
+      body: { targetId, ...buildExecuteBody(preview) }
+    });
+
+    expect(await server.db.externalIdentity.find(ws, 'jira', 'KEY-1')).toMatchObject({
+      record_id: targetId
+    });
+    expect(await server.db.externalIdentity.find(ws, 'git', 'G-2')).toMatchObject({
+      record_id: targetId
+    });
+    expect(await server.db.externalIdentity.find(ws, 'servicenow', 'SN-9')).toMatchObject({
+      record_id: targetId
+    });
+
+    const retiredLookup = await server.db.catalog.getEntity(ws, sourceId);
+    expect(retiredLookup?.id).toBe(targetId);
+
+    const sourceDelete = (await server.db.audit.listAuditLogs(ws)).find(
+      row => row.metadata['mergeId'] === executed.mergeId && row.entity_id === sourceId
+    );
+    expect(sourceDelete?.metadata['droppedExternalIdentities']).toBeUndefined();
+  });
+
+  test('project-confined source needs an explicit acknowledgement', async ({
+    server,
+    personas,
+    resources
+  }) => {
+    const sourceId = seededEntities.default.acmeContract.id;
+    const targetId = seededEntities.default.acmeSupportContract.id;
+    const ws = resources.workspaceId;
+
+    const source = await server.db.catalog.getEntity(ws, sourceId);
+    if (!source) throw new Error('Expected acmeContract fixture');
+    await server.db.catalog.updateEntity(ws, sourceId, {
+      slug: source.slug,
+      namespace: source.namespace,
+      name: source.name,
+      description: source.description,
+      owner: source.owner,
+      lifecycle: source.lifecycle,
+      target_lifecycle: source.target_lifecycle,
+      target_lifecycle_date: source.target_lifecycle_date,
+      tags: source.tags,
+      links: source.links,
+      schema_id: source.schema_id,
+      data: source.data,
+      project_id: resources.projectIds.portalRedesign,
+      updated_at: new Date(),
+      completeness: source.completeness
+    });
+
+    const preview = await personas.globalAdmin.orpc.entityMerges.preview({
+      params: { workspace: 'default', id: sourceId },
+      body: { targetId }
+    });
+    expect(preview.blockers).toEqual([
+      expect.objectContaining({ code: 'source_project_scope_dropped', acknowledgeable: true })
+    ]);
+
+    await expect(
+      personas.globalAdmin.orpc.entityMerges.execute({
+        params: { workspace: 'default', id: sourceId },
+        body: { targetId, ...buildExecuteBody(preview) }
+      })
+    ).rejects.toMatchObject({ status: 409 });
+
+    const executed = await personas.globalAdmin.orpc.entityMerges.execute({
+      params: { workspace: 'default', id: sourceId },
+      body: {
+        targetId,
+        ...buildExecuteBody(preview),
+        acknowledgedBlockers: ['source_project_scope_dropped']
+      }
+    });
+    expect(executed.targetId).toBe(targetId);
+
+    const targetAfter = await server.db.catalog.getEntity(ws, targetId);
+    expect(targetAfter?.project_id ?? null).toBeNull();
+
+    const sourceDelete = (await server.db.audit.listAuditLogs(ws)).find(
+      row => row.metadata['mergeId'] === executed.mergeId && row.entity_id === sourceId
+    );
+    expect(sourceDelete?.metadata['acknowledgedBlockers']).toEqual([
+      'source_project_scope_dropped'
+    ]);
   });
 });
