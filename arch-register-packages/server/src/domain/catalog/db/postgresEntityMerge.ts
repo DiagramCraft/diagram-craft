@@ -652,7 +652,7 @@ export class PostgresEntityMergeDatabase
         UNION ALL SELECT COUNT(*) FROM discussion_post WHERE workspace = ${workspace} AND object_type = 'entity' AND object_id = ${recordId}
         UNION ALL SELECT COUNT(*) FROM governance_case WHERE workspace = ${workspace} AND subject_type = 'entity' AND subject_id = ${recordId}
         UNION ALL SELECT COUNT(*) FROM catalog_record_external_identity WHERE workspace = ${workspace} AND record_id = ${recordId}
-      ) references
+      ) ref_counts
     `;
     return Number(row?.count ?? 0);
   }
