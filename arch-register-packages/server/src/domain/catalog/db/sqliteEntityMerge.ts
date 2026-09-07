@@ -2,12 +2,14 @@ import type { MergeRelationConflict } from '@arch-register/api-types/entityMerge
 import type { RelationDbResult } from './relationDatabase';
 import { SqliteDatabaseBase } from '../../../db/sqliteBase';
 import {
+  buildExternalIdentityPlan,
   buildMergeSideTableAutoDedupeRowIds,
   buildMergeSideTableConflicts,
   mergeRowId,
   mergeRowDedupeKey,
   type EntityMergeDatabase,
   type EntityMergeSideTableSnapshot,
+  type MergeExternalIdentityRow,
   type MergeRelationResolution,
   type MergeSideTableRow,
   type MergeTrackedTable
@@ -485,6 +487,31 @@ export class SqliteEntityMergeDatabase extends SqliteDatabaseBase implements Ent
       "UPDATE governance_case SET subject_id = ? WHERE workspace = ? AND subject_type = 'entity' AND subject_id = ?",
       [targetId, workspace, sourceId]
     );
+
+    const identityPlan = buildExternalIdentityPlan(
+      snapshot.externalIdentityRows,
+      sourceId,
+      targetId
+    );
+    for (const row of identityPlan.drop) {
+      this.run(
+        'DELETE FROM catalog_record_external_identity WHERE workspace = ? AND source = ? AND external_key = ? AND record_id = ?',
+        [workspace, row.source, row.externalKey, sourceId]
+      );
+    }
+    for (const row of identityPlan.transfer) {
+      this.run(
+        "UPDATE catalog_record_external_identity SET record_id = ?, updated_at = datetime('now') WHERE workspace = ? AND source = ? AND external_key = ? AND record_id = ?",
+        [targetId, workspace, row.source, row.externalKey, sourceId]
+      );
+    }
+
+    const droppedExternalIdentities: MergeExternalIdentityRow[] = identityPlan.drop.map(row => ({
+      source: row.source,
+      externalKey: row.externalKey,
+      recordId: targetId
+    }));
+    return { droppedExternalIdentities };
   }
 
   private deleteRelation(workspace: string, relationId: string) {
