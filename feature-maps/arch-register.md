@@ -221,12 +221,18 @@
           hierarchical grid and drill-down view, but can already deep-link to a capability's detail drawer at
           `strategy/map/$capabilityId`.
 
-        - @id:ar.strategy.capabilities The Capabilities section is scaffolded as a placeholder pending its list/detail
-          view over the Business Capability schema, but can already deep-link to a capability's detail drawer at
-          `strategy/capabilities/$capabilityId`. The drawer shows subtree roll-up stats (average maturity, maturity
-          target, maturity gap, and risk; summed annual investment; leaf count), attributes (type, level, owner,
-          direct child count), direct children, applications the capability directly supports ("Realized by"), and
-          linked objectives and initiatives, with a footer action to open the underlying record in Entities.
+        - @id:ar.strategy.capabilities The Capabilities section lists every Business Capability with subtree roll-up
+          columns (level, owner, a maturity-vs-target bar, gap, summed annual investment, risk, and a count of
+          directly supported applications), level and owner filters, and sortable columns. Rows deep-link to the
+          capability's detail drawer at `strategy/capabilities/$capabilityId` (see below) and carry a separate "Open
+          in Entities" action to the Home entity browser. The section's own primary sidebar swaps the app's usual
+          section nav list for a capability hierarchy tree (clicking a node filters the table to that subtree) plus
+          an owner facet with counts.
+
+          The drawer shows subtree roll-up stats (average maturity, maturity target, maturity gap, and risk; summed
+          annual investment; leaf count), attributes (type, level, owner, direct child count), direct children,
+          applications the capability directly supports ("Realized by"), and linked objectives and initiatives, with
+          a footer action to open the underlying record in Entities.
 
         - @id:ar.strategy.heatmaps The Heatmaps section is scaffolded as a placeholder pending maturity, investment,
           risk, and application-coverage overlay views.

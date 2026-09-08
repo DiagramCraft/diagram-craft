@@ -1,0 +1,24 @@
+.cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.track {
+  position: relative;
+  display: inline-block;
+  width: 72px;
+  height: 5px;
+  background: var(--cmp-bg);
+  border-radius: 3px;
+  overflow: visible;
+}
+
+.fill {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  transition:
+    width 300ms,
+    background 150ms;
+}

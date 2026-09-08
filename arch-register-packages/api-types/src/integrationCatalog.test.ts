@@ -111,6 +111,23 @@ describe('strategy model capability bindings', () => {
       ])
     });
   });
+
+  it('requires the objective/capability and capability/entity relation schemas for roll-ups', () => {
+    expect(getWorkspaceCapabilityDefinition('strategy-model')).toMatchObject({
+      bindingRoles: expect.arrayContaining([
+        expect.objectContaining({
+          id: 'objective_supports_business_capability',
+          required: true,
+          targetKind: 'relation_schema'
+        }),
+        expect.objectContaining({
+          id: 'business_capability_supports_entity',
+          required: true,
+          targetKind: 'relation_schema'
+        })
+      ])
+    });
+  });
 });
 
 describe('workspace capability definitions', () => {

@@ -154,7 +154,7 @@ describe('instantiateTemplate', () => {
           name: 'Maturity Gap',
           type: 'derived',
           expression:
-            'entity.maturity == null || entity.maturity_target == null ? null : entity.maturity_target - entity.maturity',
+            '(entity.maturity ?? null) == null || (entity.maturity_target ?? null) == null ? null : entity.maturity_target - entity.maturity',
           resultType: 'number'
         }),
         expect.objectContaining({
@@ -224,6 +224,12 @@ describe('instantiateTemplate', () => {
     expect(affectsRelation?.in_schema_ids).toEqual([objective?.id]);
     expect(affectsRelation?.out_schema_ids).toBe('any');
 
+    const objectiveSupportsCapability = definitions.relationSchemas.find(
+      schema => schema.name === 'Objective Supports Business Capability'
+    );
+    const capabilitySupportsEntity = definitions.relationSchemas.find(
+      schema => schema.name === 'Business Capability Supports Entity'
+    );
     expect(definitions.capabilityConfigurations).toEqual([
       expect.objectContaining({
         type: 'strategy-model',
@@ -234,6 +240,15 @@ describe('instantiateTemplate', () => {
           measure: { target: { kind: 'entity_schema', id: measure?.id } },
           business_capability: {
             target: { kind: 'entity_schema', id: businessCapability?.id }
+          },
+          // Real relation schema ids, not the template's own `symId` strings - see the roll-up
+          // hooks and `CapabilityDrawer` that query typed relations by this id (#3191 apps count,
+          // "Realized by"/"Linked objectives").
+          objective_supports_business_capability: {
+            target: { kind: 'relation_schema', id: objectiveSupportsCapability?.id }
+          },
+          business_capability_supports_entity: {
+            target: { kind: 'relation_schema', id: capabilitySupportsEntity?.id }
           }
         })
       })

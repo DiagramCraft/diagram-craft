@@ -146,6 +146,21 @@ export const seedWorkspaceConfiguration = async (
       );
       await db.workspace.replaceSupportedCurrencies(workspace.id, currencies, currencies[0]!.code);
     }
+    // Currency-sourced metric roll-ups (e.g. Business Capability `annual_investment`) require a
+    // rate snapshot even when every value already shares one currency (`computeBoxMetrics` in
+    // metricOperations.ts always resolves `currencyConversion` for a non-count currency metric) -
+    // without this, those roll-ups 503 with "Currency rates are not available yet" on a fresh
+    // seed, since the real snapshot only arrives via the scheduled `currency-rates` job fetching
+    // from an external provider. Rates are approximate and global (not workspace-scoped), just
+    // enough to unblock local/demo use before that job has ever run.
+    const seededAt = new Date();
+    await db.currencyRates.upsertSnapshot({
+      fetch_day: seededAt.toISOString().slice(0, 10),
+      rate_date: seededAt.toISOString().slice(0, 10),
+      base_currency: 'USD',
+      rates: { USD: 1, EUR: 0.92, GBP: 0.79, SEK: 10.5, NOK: 10.6, DKK: 6.9 },
+      fetched_at: seededAt
+    });
   }
 
   for (const workspace of seedWorkspaces) {

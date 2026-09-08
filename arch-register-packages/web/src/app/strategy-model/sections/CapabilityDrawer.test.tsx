@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
   entityGet: vi.fn(),
   entityList: vi.fn(),
+  entityTree: vi.fn(),
   relationsForEntity: vi.fn(),
   metricsRollup: vi.fn(),
   lifecycleStatesList: vi.fn()
@@ -23,7 +24,7 @@ vi.mock('@tanstack/react-router', () => ({
 
 vi.mock('../../../lib/orpcClient', () => ({
   orpcClient: {
-    entities: { get: mocks.entityGet, list: mocks.entityList },
+    entities: { get: mocks.entityGet, list: mocks.entityList, tree: mocks.entityTree },
     relations: { listForEntity: mocks.relationsForEntity },
     metrics: { rollup: mocks.metricsRollup },
     config: { lifecycleStates: { list: mocks.lifecycleStatesList } }
@@ -35,7 +36,9 @@ const strategyConfig: StrategyModelConfig = {
   outcomeSchemaId: 'outcome',
   initiativeSchemaId: 'initiative',
   measureSchemaId: 'measure',
-  businessCapabilitySchemaId: 'business_capability'
+  businessCapabilitySchemaId: 'business_capability',
+  objectiveSupportsBusinessCapabilityRelationSchemaId: 'objective-supports-business-capability-rel',
+  businessCapabilitySupportsEntityRelationSchemaId: 'business-capability-supports-entity-rel'
 };
 
 const emptyRollup: MetricRollupResponse = {
@@ -79,6 +82,7 @@ describe('CapabilityDrawer', () => {
       capability_level: 'L1'
     });
     mocks.entityList.mockResolvedValue({ items: [], total: 0 });
+    mocks.entityTree.mockResolvedValue({ nodes: [], edges: [] });
     mocks.relationsForEntity.mockResolvedValue({ outgoing: [], incoming: [] });
     mocks.metricsRollup.mockResolvedValue(emptyRollup);
     mocks.lifecycleStatesList.mockResolvedValue([]);
@@ -119,6 +123,58 @@ describe('CapabilityDrawer', () => {
     );
     expect(container.textContent).toContain('No linked objectives.');
     expect(container.textContent).toContain('No linked initiatives.');
+  });
+
+  it('lists direct children from the entity tree, resolved by uid rather than the route\'s public id', async () => {
+    // Regression test, two bugs at once:
+    // 1) Children used to come from an entities-query `parent equals capabilityId` filter, which
+    //    never matches (`parent` is a containment field stored as a ref array, and the filter
+    //    compiler only treats a field as array-shaped via `isMultiValuedScalarField`, which
+    //    excludes containment fields entirely) — children now come from `entities.tree`'s edges,
+    //    the same data the Capabilities sidebar's tree already relies on.
+    // 2) The drawer's `capabilityId` prop is the route's *public* id (`openCapability` passes
+    //    `entity._publicId`), but tree edges are keyed by internal uid — comparing edges against
+    //    the raw prop instead of the loaded entity's `_uid` matched nothing for every capability.
+    mocks.entityGet.mockResolvedValue({
+      _uid: 'uid-cap-1',
+      _publicId: 'CAP-001',
+      _name: 'Customer Management',
+      _schema: { id: 'business_capability', name: 'Business Capability' },
+      _owner: null,
+      _lifecycle: null,
+      capability_level: 'L1'
+    });
+    mocks.entityTree.mockResolvedValue({
+      nodes: [
+        { _uid: 'uid-cap-1', _name: 'Customer Management', _slug: 'customer-management' },
+        { _uid: 'uid-cap-2', _name: 'Account Management', _slug: 'account-management' }
+      ],
+      edges: [{ parentId: 'uid-cap-1', childId: 'uid-cap-2' }]
+    });
+
+    await act(async () => {
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <CapabilityDrawer
+            workspaceSlug="ws-1"
+            capabilityId="CAP-001"
+            strategyConfig={strategyConfig}
+            onClose={vi.fn()}
+            onOpenCapability={vi.fn()}
+          />
+        </QueryClientProvider>
+      );
+    });
+    const flush = () => act(async () => new Promise(resolve => setTimeout(resolve, 0)));
+    for (let i = 0; i < 5 && container.textContent?.includes('Loading capability'); i++) {
+      await flush();
+    }
+
+    expect(container.textContent).toContain('Account Management');
+    expect(container.textContent).not.toContain('No child capabilities.');
+    expect(mocks.metricsRollup).toHaveBeenCalledWith(
+      expect.objectContaining({ body: expect.objectContaining({ boxEntityIds: ['uid-cap-1'] }) })
+    );
   });
 
   it('navigates to the entity detail route when "Open record in Entities" is clicked', async () => {

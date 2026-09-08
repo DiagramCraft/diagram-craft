@@ -16,95 +16,166 @@ type DemoCapabilityMetrics = {
   risk: number;
 };
 
+// Only leaf (L3) capabilities carry direct metrics - L1/L2 capabilities are groupings that roll
+// up from their leaf descendants via the metrics engine's subtree average (`useCapabilityRollup`),
+// so giving them their own values too would double up with (and diverge from) that roll-up.
+// Values mirror the Claude Design reference's `BCM_CAPS` (`bcm-data.jsx`, per-leaf
+// maturity/target/invest($k)/risk), matched to these ids by capability name.
 const demoCapabilityMetrics: Partial<Record<string, DemoCapabilityMetrics>> = {
-  [DEMO_BUSINESS_CAPABILITY_IDS.merchandisingAssortment]: {
-    maturity: 3,
-    maturity_target: 4,
-    annual_investment: { amount: 2500000, currency: 'USD' },
-    risk: 3
-  },
-  [DEMO_BUSINESS_CAPABILITY_IDS.salesCommerceExperience]: {
-    maturity: 3,
-    maturity_target: 5,
-    annual_investment: { amount: 4000000, currency: 'USD' },
-    risk: 4
-  },
-  [DEMO_BUSINESS_CAPABILITY_IDS.orderFulfillmentLogistics]: {
+  [DEMO_BUSINESS_CAPABILITY_IDS.productInformationManagement]: {
     maturity: 4,
     maturity_target: 5,
-    annual_investment: { amount: 3500000, currency: 'USD' },
-    risk: 3
-  },
-  [DEMO_BUSINESS_CAPABILITY_IDS.customerServiceSupport]: {
-    maturity: 3,
-    maturity_target: 4,
-    annual_investment: { amount: 1800000, currency: 'USD' },
+    annual_investment: { amount: 560000, currency: 'USD' },
     risk: 2
   },
-  [DEMO_BUSINESS_CAPABILITY_IDS.financePayments]: {
-    maturity: 4,
-    maturity_target: 5,
-    annual_investment: { amount: 5000000, currency: 'USD' },
-    risk: 5
-  },
-  [DEMO_BUSINESS_CAPABILITY_IDS.platformReliabilityOperations]: {
-    maturity: 4,
-    maturity_target: 5,
-    annual_investment: { amount: 4500000, currency: 'USD' },
-    risk: 4
-  },
-  [DEMO_BUSINESS_CAPABILITY_IDS.productCatalogManagement]: {
-    maturity: 3,
-    maturity_target: 4,
-    annual_investment: { amount: 1200000, currency: 'USD' },
-    risk: 2
-  },
-  [DEMO_BUSINESS_CAPABILITY_IDS.cartCheckout]: {
-    maturity: 3,
-    maturity_target: 5,
-    annual_investment: { amount: 2200000, currency: 'USD' },
-    risk: 4
-  },
-  [DEMO_BUSINESS_CAPABILITY_IDS.orderManagement]: {
-    maturity: 4,
-    maturity_target: 5,
-    annual_investment: { amount: 2000000, currency: 'USD' },
+  [DEMO_BUSINESS_CAPABILITY_IDS.digitalAssetManagement]: {
+    maturity: 2,
+    maturity_target: 3,
+    annual_investment: { amount: 210000, currency: 'USD' },
     risk: 3
   },
-  [DEMO_BUSINESS_CAPABILITY_IDS.paymentsManagement]: {
-    maturity: 4,
+  [DEMO_BUSINESS_CAPABILITY_IDS.promotionDiscountManagement]: {
+    maturity: 3,
     maturity_target: 5,
-    annual_investment: { amount: 2600000, currency: 'USD' },
-    risk: 5
+    annual_investment: { amount: 470000, currency: 'USD' },
+    risk: 3
   },
-  [DEMO_BUSINESS_CAPABILITY_IDS.accountManagement]: {
+  [DEMO_BUSINESS_CAPABILITY_IDS.campaignManagement]: {
     maturity: 3,
     maturity_target: 4,
-    annual_investment: { amount: 900000, currency: 'USD' },
-    risk: 4
+    annual_investment: { amount: 410000, currency: 'USD' },
+    risk: 2
   },
-  [DEMO_BUSINESS_CAPABILITY_IDS.platformReliability]: {
+  [DEMO_BUSINESS_CAPABILITY_IDS.seoContentMarketing]: {
     maturity: 3,
-    maturity_target: 5,
-    annual_investment: { amount: 2800000, currency: 'USD' },
+    maturity_target: 3,
+    annual_investment: { amount: 190000, currency: 'USD' },
+    risk: 1
+  },
+  [DEMO_BUSINESS_CAPABILITY_IDS.loyaltyRewardsManagement]: {
+    maturity: 1,
+    maturity_target: 4,
+    annual_investment: { amount: 620000, currency: 'USD' },
     risk: 4
   },
-  [DEMO_BUSINESS_CAPABILITY_IDS.dataAnalyticsPlatform]: {
+  [DEMO_BUSINESS_CAPABILITY_IDS.personalizationRecommendations]: {
+    maturity: 2,
+    maturity_target: 5,
+    annual_investment: { amount: 700000, currency: 'USD' },
+    risk: 3
+  },
+  [DEMO_BUSINESS_CAPABILITY_IDS.siteMerchandising]: {
     maturity: 2,
     maturity_target: 4,
-    annual_investment: { amount: 3200000, currency: 'USD' },
+    annual_investment: { amount: 240000, currency: 'USD' },
+    risk: 3
+  },
+  [DEMO_BUSINESS_CAPABILITY_IDS.searchNavigation]: {
+    maturity: 3,
+    maturity_target: 5,
+    annual_investment: { amount: 510000, currency: 'USD' },
+    risk: 3
+  },
+  [DEMO_BUSINESS_CAPABILITY_IDS.checkoutOrchestration]: {
+    maturity: 4,
+    maturity_target: 5,
+    annual_investment: { amount: 690000, currency: 'USD' },
+    risk: 2
+  },
+  [DEMO_BUSINESS_CAPABILITY_IDS.orderOrchestration]: {
+    maturity: 4,
+    maturity_target: 5,
+    annual_investment: { amount: 780000, currency: 'USD' },
+    risk: 2
+  },
+  [DEMO_BUSINESS_CAPABILITY_IDS.returnsRefundsManagement]: {
+    maturity: 2,
+    maturity_target: 4,
+    annual_investment: { amount: 330000, currency: 'USD' },
     risk: 4
+  },
+  [DEMO_BUSINESS_CAPABILITY_IDS.inventoryWarehouseManagement]: {
+    maturity: 3,
+    maturity_target: 5,
+    annual_investment: { amount: 640000, currency: 'USD' },
+    risk: 3
+  },
+  [DEMO_BUSINESS_CAPABILITY_IDS.shippingLastMileDelivery]: {
+    maturity: 2,
+    maturity_target: 4,
+    annual_investment: { amount: 520000, currency: 'USD' },
+    risk: 4
+  },
+  [DEMO_BUSINESS_CAPABILITY_IDS.contactCenterManagement]: {
+    maturity: 2,
+    maturity_target: 4,
+    annual_investment: { amount: 480000, currency: 'USD' },
+    risk: 4
+  },
+  [DEMO_BUSINESS_CAPABILITY_IDS.accountManagement]: {
+    maturity: 4,
+    maturity_target: 4,
+    annual_investment: { amount: 320000, currency: 'USD' },
+    risk: 2
+  },
+  [DEMO_BUSINESS_CAPABILITY_IDS.orderTrackingSelfService]: {
+    maturity: 3,
+    maturity_target: 5,
+    annual_investment: { amount: 260000, currency: 'USD' },
+    risk: 3
+  },
+  [DEMO_BUSINESS_CAPABILITY_IDS.supplierOnboarding]: {
+    maturity: 1,
+    maturity_target: 3,
+    annual_investment: { amount: 150000, currency: 'USD' },
+    risk: 3
+  },
+  [DEMO_BUSINESS_CAPABILITY_IDS.supplierPerformanceManagement]: {
+    maturity: 2,
+    maturity_target: 4,
+    annual_investment: { amount: 220000, currency: 'USD' },
+    risk: 3
+  },
+  [DEMO_BUSINESS_CAPABILITY_IDS.purchaseOrderManagement]: {
+    maturity: 2,
+    maturity_target: 3,
+    annual_investment: { amount: 280000, currency: 'USD' },
+    risk: 4
+  },
+  [DEMO_BUSINESS_CAPABILITY_IDS.paymentProcessing]: {
+    maturity: 4,
+    maturity_target: 5,
+    annual_investment: { amount: 910000, currency: 'USD' },
+    risk: 2
   },
   [DEMO_BUSINESS_CAPABILITY_IDS.fraudRiskManagement]: {
     maturity: 2,
-    maturity_target: 5,
-    annual_investment: { amount: 1700000, currency: 'USD' },
+    maturity_target: 4,
+    annual_investment: { amount: 540000, currency: 'USD' },
     risk: 5
+  },
+  [DEMO_BUSINESS_CAPABILITY_IDS.billingInvoicing]: {
+    maturity: 3,
+    maturity_target: 3,
+    annual_investment: { amount: 300000, currency: 'USD' },
+    risk: 3
+  },
+  [DEMO_BUSINESS_CAPABILITY_IDS.observabilityManagement]: {
+    maturity: 3,
+    maturity_target: 5,
+    annual_investment: { amount: 420000, currency: 'USD' },
+    risk: 3
+  },
+  [DEMO_BUSINESS_CAPABILITY_IDS.incidentProblemManagement]: {
+    maturity: 4,
+    maturity_target: 5,
+    annual_investment: { amount: 360000, currency: 'USD' },
+    risk: 2
   },
   [DEMO_BUSINESS_CAPABILITY_IDS.dataPlatformManagement]: {
     maturity: 3,
-    maturity_target: 4,
-    annual_investment: { amount: 1900000, currency: 'USD' },
+    maturity_target: 5,
+    annual_investment: { amount: 880000, currency: 'USD' },
     risk: 3
   }
 };
