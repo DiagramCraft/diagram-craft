@@ -34,10 +34,36 @@ export const createStrategyWorkspaceRoutes = <TParentRoute extends AnyRoute>(
         breadcrumbs: buildStrategyBreadcrumbs(ctx, STRATEGY_CAPABILITY_MAP_ID)
       })
   );
+  // Renders the same StrategyCapabilityMapScreen with a capability opened as a slide-over drawer
+  // on top, rather than a separate page — keeps the deep-linkable /strategy/map/$id URL, mirroring
+  // `glossaryWorkspaceRoute.tsx`'s `glossaryTermRoute`.
+  const capabilityMapDetailRoute = withWorkspaceShell(
+    createRoute({
+      getParentRoute: () => workspaceRoute,
+      path: `${railPath(STRATEGY_RAIL_PATHS[STRATEGY_CAPABILITY_MAP_ID])}/$capabilityId`,
+      component: LazyStrategyCapabilityMapScreen
+    }),
+    ctx =>
+      railSectionShell(ctx, STRATEGY_CAPABILITY_MAP_ID, {
+        breadcrumbs: buildStrategyBreadcrumbs(ctx, STRATEGY_CAPABILITY_MAP_ID)
+      })
+  );
   const capabilitiesRoute = withWorkspaceShell(
     createRoute({
       getParentRoute: () => workspaceRoute,
       path: railPath(STRATEGY_RAIL_PATHS[STRATEGY_CAPABILITIES_ID]),
+      component: LazyStrategyCapabilitiesScreen
+    }),
+    ctx =>
+      railSectionShell(ctx, STRATEGY_CAPABILITIES_ID, {
+        breadcrumbs: buildStrategyBreadcrumbs(ctx, STRATEGY_CAPABILITIES_ID)
+      })
+  );
+  // See `capabilityMapDetailRoute` above — same pattern, deep-linkable from the list section too.
+  const capabilitiesDetailRoute = withWorkspaceShell(
+    createRoute({
+      getParentRoute: () => workspaceRoute,
+      path: `${railPath(STRATEGY_RAIL_PATHS[STRATEGY_CAPABILITIES_ID])}/$capabilityId`,
       component: LazyStrategyCapabilitiesScreen
     }),
     ctx =>
@@ -81,7 +107,9 @@ export const createStrategyWorkspaceRoutes = <TParentRoute extends AnyRoute>(
 
   return [
     capabilityMapRoute,
+    capabilityMapDetailRoute,
     capabilitiesRoute,
+    capabilitiesDetailRoute,
     heatmapsRoute,
     strategyRoute,
     traceabilityRoute

@@ -218,10 +218,15 @@
       capability-not-configured empty state instead of its content.
 
         - @id:ar.strategy.capability-map The Capability map section is scaffolded as a placeholder pending its
-          hierarchical grid and drill-down view.
+          hierarchical grid and drill-down view, but can already deep-link to a capability's detail drawer at
+          `strategy/map/$capabilityId`.
 
         - @id:ar.strategy.capabilities The Capabilities section is scaffolded as a placeholder pending its list/detail
-          view over the Business Capability schema.
+          view over the Business Capability schema, but can already deep-link to a capability's detail drawer at
+          `strategy/capabilities/$capabilityId`. The drawer shows subtree roll-up stats (average maturity, maturity
+          target, maturity gap, and risk; summed annual investment; leaf count), attributes (type, level, owner,
+          direct child count), direct children, applications the capability directly supports ("Realized by"), and
+          linked objectives and initiatives, with a footer action to open the underlying record in Entities.
 
         - @id:ar.strategy.heatmaps The Heatmaps section is scaffolded as a placeholder pending maturity, investment,
           risk, and application-coverage overlay views.
@@ -298,8 +303,11 @@
           relation for architecture impact links. Relation endpoint constraints are authoritative and typed-relation
           fields provide projections on capability and objective schemas, so the hierarchy and strategic links can
           be browsed, edited, and queried. Business Capabilities also carry explicit maturity, maturity target,
-          annual investment, and 1–5 risk ratings, while Measures carry baseline, current, target, and direction
-          values for strategy roll-ups.
+          annual investment, and 1–5 risk ratings, plus a derived maturity gap (target minus maturity), while
+          Measures carry baseline, current, target, and direction values for strategy roll-ups. A capability's
+          roll-up — average maturity, maturity target, gap, and risk; summed annual investment; and a leaf count —
+          is computed over its full recursive containment subtree using the generic metric roll-up engine
+          (@id:ar.entity-views.map).
 
         - @id:ar.entities.relations Users can create and inspect relationships between entities and navigate related,
           dependent, and referenced records. Alongside generic reference/containment relations, workspace admins can
@@ -508,9 +516,12 @@
 
         - @id:ar.entity-views.map Users can inspect containment hierarchies, including the built-in Vendor-to-Contract
           path, as a nested capability map, colouring boxes by a configurable metric rolled up from descendant entities
-          (numeric or currency fields, lifecycle state, or assessment fields), using dominant-option, worst, or
-          percentage aggregation. Percentage aggregation shows the share of descendants matching a configurable
-          numerator condition against the same field set as the entity browser's filters. Currency rollups convert
+          (numeric or currency fields, lifecycle state, or assessment fields), using count, leaf-count, sum, average,
+          minimum, maximum, dominant-option, worst, or percentage aggregation. Leaf-count counts only descendants
+          with no containment children of their own — used, for example, by the Strategy & Capability Modelling
+          application's capability roll-up (@id:ar.entities.strategy-model). Percentage aggregation shows the share
+          of descendants matching a configurable numerator condition against the same field set as the entity
+          browser's filters. Currency rollups convert
           amounts to the selected currency or workspace default using the latest
           daily exchange-rate snapshot, and show the conversion currency and rate date. For
           enum-sourced metrics, "worst" ranks options by the admin-configured top-to-bottom order of the enum's

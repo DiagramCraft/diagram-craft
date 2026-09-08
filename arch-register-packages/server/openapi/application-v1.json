@@ -156251,6 +156251,7 @@
                       "aggregation": {
                         "enum": [
                           "count",
+                          "leafCount",
                           "sum",
                           "average",
                           "minimum",
@@ -156259,7 +156260,7 @@
                           "percentage"
                         ],
                         "type": "string",
-                        "description": "Aggregation function applied across matching descendant entities"
+                        "description": "Aggregation function applied across matching descendant entities. \"leafCount\" counts only terminal entities that have no containment children of their own."
                       },
                       "numeratorCondition": {
                         "type": "object",

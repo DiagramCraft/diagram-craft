@@ -214,6 +214,8 @@ const aggregate = (
     }
     case 'count':
       return { value: values.length, lifecycleId: null };
+    case 'leafCount':
+      throw new Error('"leafCount" aggregation is computed in computeBoxMetrics, not aggregate()');
     case 'percentage':
       throw new Error('"percentage" aggregation is computed in computeBoxMetrics, not aggregate()');
   }
@@ -403,6 +405,26 @@ export const computeBoxMetrics = (
         distribution: [],
         sourceCount,
         populatedCount: sourceCount,
+        duplicateCount
+      };
+    }
+
+    if (metric.aggregation === 'leafCount') {
+      // `childrenOf` is the same containment-children index used to walk each box's descendant
+      // subtree above; reused here to test each terminal for containment children of its own.
+      const leafCount = sourceTerminals.filter(
+        terminal =>
+          terminal.kind === 'entity' && (childrenOf.get(terminal.entity.id) ?? []).length === 0
+      ).length;
+      return {
+        boxEntityId,
+        value: leafCount,
+        lifecycleId: null,
+        dominantValue: null,
+        dominantLabel: null,
+        distribution: [],
+        sourceCount,
+        populatedCount: leafCount,
         duplicateCount
       };
     }
@@ -607,10 +629,15 @@ export const getBoxMetrics = async (
     });
   }
   if (isEnumSourceKind(metric.source.kind)) {
-    httpAssert.true(metric.aggregation === 'count' || metric.aggregation === 'worst', {
-      status: 400,
-      message: 'Enum-sourced metrics only support "count" or "worst" aggregation'
-    });
+    httpAssert.true(
+      metric.aggregation === 'count' ||
+        metric.aggregation === 'leafCount' ||
+        metric.aggregation === 'worst',
+      {
+        status: 400,
+        message: 'Enum-sourced metrics only support "count", "leafCount" or "worst" aggregation'
+      }
+    );
   }
   if (metric.aggregation === 'percentage') {
     httpAssert.present(metric.numeratorCondition, {
@@ -693,7 +720,10 @@ export const getBoxMetrics = async (
   const currencySource = isCurrencyFieldSource(metric, sourceSchema);
   httpAssert.true(
     metric.targetCurrency == null ||
-      (currencySource && metric.aggregation !== 'count' && metric.aggregation !== 'percentage'),
+      (currencySource &&
+        metric.aggregation !== 'count' &&
+        metric.aggregation !== 'leafCount' &&
+        metric.aggregation !== 'percentage'),
     {
       status: 400,
       message: 'targetCurrency is only valid for non-count currency field metrics'
@@ -706,7 +736,12 @@ export const getBoxMetrics = async (
   const visibleEntities = filterVisibleEntities(authCtx, allEntities);
   const scopedEntities = visibleEntities;
   let currencyConversion: CurrencyConversion | null = null;
-  if (currencySource && metric.aggregation !== 'count' && metric.aggregation !== 'percentage') {
+  if (
+    currencySource &&
+    metric.aggregation !== 'count' &&
+    metric.aggregation !== 'leafCount' &&
+    metric.aggregation !== 'percentage'
+  ) {
     const currencyConfig = await db.workspace.getSupportedCurrencies(workspace);
     const targetCurrency = metric.targetCurrency ?? currencyConfig.default_currency;
     httpAssert.true(
