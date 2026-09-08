@@ -34,12 +34,13 @@
 
         - @id:ar.workspace.applications A workspace is organized into applications, switchable from a switcher in the
           top bar next to the workspace switcher. "Home" is the always-available core register (overview, content,
-          projects, entities, search, my work, and AI) and Business Glossary is a separate application; selecting an
-          application scopes the left icon rail to only that application's sections and re-skins the shell with its
-          accent colour. An application may own several rail sections, each with its own icon, tooltip, route, and
-          optionally its own primary sidebar. An application appears in the switcher only when enabled, which is
-          governed by its backing workspace capability configuration (managed from workspace settings). Breadcrumbs
-          are relative to the active application, which the switcher represents.
+          projects, entities, search, my work, and AI); Business Glossary and Strategy & Capability Modelling
+          (@id:ar.strategy) are separate applications; selecting an application scopes the left icon rail to only
+          that application's sections and re-skins the shell with its accent colour. An application may own several
+          rail sections, each with its own icon, tooltip, route, and optionally its own primary sidebar. An
+          application appears in the switcher only when enabled, which is governed by its backing workspace
+          capability configuration (managed from workspace settings). Breadcrumbs are relative to the active
+          application, which the switcher represents.
 
         - @id:ar.workspace.home Users can use the workspace home to navigate to entities, projects, content, search,
           diagrams, and other primary work areas. The home screen shows a composable dashboard of widgets (stat metrics,
@@ -209,6 +210,28 @@
         - @id:ar.workspace.analytics Administrators can inspect workspace-wide analytics and completeness-oriented
           views.
 
+    - @id:ar.strategy Workspaces can optionally enable Strategy & Capability Modelling
+      (@id:ar.entities.strategy-model) as its own workspace application, with a dedicated left rail scoped to five
+      sections. The application is enabled only once the workspace's `strategy-model` capability configuration is
+      valid (all five Business Capability, Objective, Outcome, Initiative, and Measure schema bindings resolved);
+      until then, or while a section's own capability lookup is still loading, each section shows a
+      capability-not-configured empty state instead of its content.
+
+        - @id:ar.strategy.capability-map The Capability map section is scaffolded as a placeholder pending its
+          hierarchical grid and drill-down view.
+
+        - @id:ar.strategy.capabilities The Capabilities section is scaffolded as a placeholder pending its list/detail
+          view over the Business Capability schema.
+
+        - @id:ar.strategy.heatmaps The Heatmaps section is scaffolded as a placeholder pending maturity, investment,
+          risk, and application-coverage overlay views.
+
+        - @id:ar.strategy.strategy The Strategy section is scaffolded as a placeholder pending objective, outcome,
+          initiative, and measure views.
+
+        - @id:ar.strategy.traceability The Traceability section is scaffolded as a placeholder pending its
+          strategy-to-capability-to-application/system traceability view.
+
     - @id:ar.entities Users can maintain a structured catalog of architectural entities and their relationships.
 
         - @id:ar.entities.create-edit Users can create, view, edit, move, organize, and delete entities subject to their
@@ -268,14 +291,15 @@
 
         - @id:ar.entities.strategy-model Workspaces can optionally enable a strategy model — nested Business
           Capability, Objective, Outcome, Initiative, and Measure entity schemas — bound to the workspace via a
-          `strategy-model` capability so other features (traceability views, roll-ups) can discover it. The
-          Objective Supports Business Capability relation connects objectives to the nested capability hierarchy,
-          while Business Capability Supports Entity connects capabilities to systems and other architecture entities;
-          Objective Affects Entity remains a wildcard relation for architecture impact links. Relation endpoint
-          constraints are authoritative and typed-relation fields provide projections on capability and objective
-          schemas, so the hierarchy and strategic links can be browsed, edited, and queried. Business Capabilities
-          also carry explicit maturity, maturity target, annual investment, and 1–5 risk ratings, while Measures
-          carry baseline, current, target, and direction values for strategy roll-ups.
+          `strategy-model` capability, surfaced as its own application (@id:ar.strategy) so other features
+          (traceability views, roll-ups) can discover it. The Objective Supports Business Capability relation
+          connects objectives to the nested capability hierarchy, while Business Capability Supports Entity connects
+          capabilities to systems and other architecture entities; Objective Affects Entity remains a wildcard
+          relation for architecture impact links. Relation endpoint constraints are authoritative and typed-relation
+          fields provide projections on capability and objective schemas, so the hierarchy and strategic links can
+          be browsed, edited, and queried. Business Capabilities also carry explicit maturity, maturity target,
+          annual investment, and 1–5 risk ratings, while Measures carry baseline, current, target, and direction
+          values for strategy roll-ups.
 
         - @id:ar.entities.relations Users can create and inspect relationships between entities and navigate related,
           dependent, and referenced records. Alongside generic reference/containment relations, workspace admins can

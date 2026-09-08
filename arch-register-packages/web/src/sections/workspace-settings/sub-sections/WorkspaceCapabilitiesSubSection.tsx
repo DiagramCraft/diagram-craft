@@ -23,9 +23,14 @@ import {
 } from '../../../hooks/useWorkspaceConfig';
 import styles from './LifecycleSubSection.module.css';
 
-type CapabilityType = 'api-specification' | 'business-glossary' | 'retention';
+type CapabilityType = 'api-specification' | 'business-glossary' | 'retention' | 'strategy-model';
 
-const capabilityTypes: CapabilityType[] = ['api-specification', 'business-glossary', 'retention'];
+const capabilityTypes: CapabilityType[] = [
+  'api-specification',
+  'business-glossary',
+  'retention',
+  'strategy-model'
+];
 
 /** A target-kind-agnostic view of the schemas a binding role can pick from and resolve fields on. */
 type BindingTarget = { id: string; name: string; fields: EntitySchema['fields'] };
