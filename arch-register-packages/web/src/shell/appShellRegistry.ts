@@ -13,6 +13,8 @@ import {
   glossaryAppDefinition,
   type GlossaryRailItemId
 } from '../app/business-glossary/glossaryShell';
+import { strategyAppDefinition } from '../app/strategy-model/strategyShell';
+import type { StrategyRailItemId } from '../app/strategy-model/strategySections';
 import type { AppDefinition, AppId, AppRailSection, WorkspaceRailItemId } from './shellTypes';
 
 /**
@@ -25,7 +27,7 @@ import type { AppDefinition, AppId, AppRailSection, WorkspaceRailItemId } from '
  * it, as `glossaryAppDefinition` does) — core shell files must not hardcode individual app ids.
  * Every rail-item id, icon, tooltip and route is derived from the apps' `sections`.
  */
-export type AppRailItemId = GlossaryRailItemId;
+export type AppRailItemId = GlossaryRailItemId | StrategyRailItemId;
 
 export const HOME_APP: AppDefinition = {
   id: 'home',
@@ -60,7 +62,11 @@ export const HOME_APP: AppDefinition = {
   enablement: 'always'
 };
 
-export const APP_DEFINITIONS: AppDefinition[] = [HOME_APP, glossaryAppDefinition];
+export const APP_DEFINITIONS: AppDefinition[] = [
+  HOME_APP,
+  glossaryAppDefinition,
+  strategyAppDefinition
+];
 
 export const getAppDefinition = (id: AppId): AppDefinition =>
   APP_DEFINITIONS.find(app => app.id === id) ?? HOME_APP;

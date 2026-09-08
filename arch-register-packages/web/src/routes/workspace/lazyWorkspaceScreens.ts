@@ -60,6 +60,26 @@ export const LazyGlossaryScreen = lazyRouteComponent(
   () => import('../../app/business-glossary/sections/GlossaryScreen'),
   'GlossaryScreen'
 );
+export const LazyStrategyCapabilityMapScreen = lazyRouteComponent(
+  () => import('../../app/strategy-model/sections/StrategyCapabilityMapScreen'),
+  'StrategyCapabilityMapScreen'
+);
+export const LazyStrategyCapabilitiesScreen = lazyRouteComponent(
+  () => import('../../app/strategy-model/sections/StrategyCapabilitiesScreen'),
+  'StrategyCapabilitiesScreen'
+);
+export const LazyStrategyHeatmapsScreen = lazyRouteComponent(
+  () => import('../../app/strategy-model/sections/StrategyHeatmapsScreen'),
+  'StrategyHeatmapsScreen'
+);
+export const LazyStrategyStrategyScreen = lazyRouteComponent(
+  () => import('../../app/strategy-model/sections/StrategyStrategyScreen'),
+  'StrategyStrategyScreen'
+);
+export const LazyStrategyTraceabilityScreen = lazyRouteComponent(
+  () => import('../../app/strategy-model/sections/StrategyTraceabilityScreen'),
+  'StrategyTraceabilityScreen'
+);
 export const LazyWorkspaceSettingsScreen = lazyRouteComponent(
   () => import('../../sections/workspace-settings/WorkspaceSettingsScreen'),
   'WorkspaceSettingsScreen'
