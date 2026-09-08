@@ -9,9 +9,11 @@ const test = createApiTest();
  * `glossary.*`) — its `strategy-model` capability configuration is generic and resolved
  * client-side (see `web/src/app/strategy-model/strategyQueries.ts`). This scaffold coverage
  * exercises the generic `config.capabilityConfigurations` endpoints against the capability's five
- * binding roles, mirroring `../business-glossary/glossary.test.ts`.
+ * entity-schema and two relation-schema binding roles, mirroring `../business-glossary/glossary.test.ts`.
  */
-test('configures the strategy-model capability against five entity schemas', async ({ orpc }) => {
+test('configures the strategy-model capability against five entity schemas and two relation schemas', async ({
+  orpc
+}) => {
   const schemaNames = [
     'Business Capability',
     'Objective',
@@ -27,6 +29,26 @@ test('configures the strategy-model capability against five entity schemas', asy
       })
     )
   );
+  const [objectiveSupportsCapability, capabilitySupportsEntity] = await Promise.all([
+    orpc.relationSchemas.create({
+      params: { workspace: 'default' },
+      body: {
+        name: `Objective Supports Business Capability ${crypto.randomUUID()}`,
+        in: { schemaIds: [objective!.id] },
+        out: { schemaIds: [businessCapability!.id] },
+        fields: []
+      }
+    }),
+    orpc.relationSchemas.create({
+      params: { workspace: 'default' },
+      body: {
+        name: `Business Capability Supports Entity ${crypto.randomUUID()}`,
+        in: { schemaIds: [businessCapability!.id] },
+        out: { schemaIds: 'any' },
+        fields: []
+      }
+    })
+  ]);
 
   const configured = await orpc.config.capabilityConfigurations.upsert({
     params: { workspace: 'default', type: 'strategy-model' },
@@ -36,7 +58,13 @@ test('configures the strategy-model capability against five entity schemas', asy
         objective: { target: { kind: 'entity_schema', id: objective!.id } },
         outcome: { target: { kind: 'entity_schema', id: outcome!.id } },
         initiative: { target: { kind: 'entity_schema', id: initiative!.id } },
-        measure: { target: { kind: 'entity_schema', id: measure!.id } }
+        measure: { target: { kind: 'entity_schema', id: measure!.id } },
+        objective_supports_business_capability: {
+          target: { kind: 'relation_schema', id: objectiveSupportsCapability!.id }
+        },
+        business_capability_supports_entity: {
+          target: { kind: 'relation_schema', id: capabilitySupportsEntity!.id }
+        }
       }
     }
   });
@@ -49,7 +77,13 @@ test('configures the strategy-model capability against five entity schemas', asy
       objective: { target: { kind: 'entity_schema', id: objective!.id } },
       outcome: { target: { kind: 'entity_schema', id: outcome!.id } },
       initiative: { target: { kind: 'entity_schema', id: initiative!.id } },
-      measure: { target: { kind: 'entity_schema', id: measure!.id } }
+      measure: { target: { kind: 'entity_schema', id: measure!.id } },
+      objective_supports_business_capability: {
+        target: { kind: 'relation_schema', id: objectiveSupportsCapability!.id }
+      },
+      business_capability_supports_entity: {
+        target: { kind: 'relation_schema', id: capabilitySupportsEntity!.id }
+      }
     }
   });
 

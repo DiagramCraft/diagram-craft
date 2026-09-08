@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { buildAuthorizationContext } from '@arch-register/permissions';
 import type { MetricConfig } from '@arch-register/api-types/metricContract';
 import type { DatabaseAdapter } from '../../db/database';
 import type { EntityDbResult, SchemaDbResult } from '../catalog/db/catalogDatabase';
@@ -238,6 +239,71 @@ describe('collectMetricTerminals', () => {
       kind: 'relation',
       relation: { id: 'r1' }
     });
+  });
+
+  it('aggregates typed relation instances as the terminal source with a single-step path starting at the box itself', async () => {
+    // Mirrors the Capabilities table's "Apps" count (#3191): a one-step `typedRelation` path with
+    // no leading containment hop, because the box entity (a System here, a Business Capability
+    // there) carries the typed-relation field directly, not one of its containment descendants.
+    const metric: MetricConfig = {
+      sourceSchemaId: relationSchema.id,
+      sourceContext: 'relation',
+      path: [path[1]!],
+      source: { kind: 'lifecycle' },
+      aggregation: 'count'
+    };
+    const results = await collectMetricTerminals({
+      db: makeDb(relations),
+      workspace: 'ws-1',
+      boxEntityIds: ['s1'],
+      metric,
+      entities,
+      schemas,
+      relationSchemas: [relationSchema],
+      authCtx: null
+    });
+
+    expect(results.get('s1')).toMatchObject({ duplicateCount: 0 });
+    expect(results.get('s1')?.terminals).toMatchObject([
+      { kind: 'relation', relation: { id: 'r1' } }
+    ]);
+  });
+
+  it('aggregates typed relation instances for a real (non-null) authorization context too', async () => {
+    // Same scenario as above, but with a real, non-permissive-by-null authCtx - Business Capability
+    // Supports Entity is a wildcard relation (`out_schema_ids: 'any'`), so its target entities
+    // never declare an inverse typed-relation field back. `canViewTypedRelation` only needs one of
+    // the two endpoints to grant view, and the box's own schema (with the typed-relation field)
+    // should be sufficient regardless of the target's lack of an inverse field.
+    const authCtx = buildAuthorizationContext({
+      userId: 'user-1',
+      globalRoles: ['global_admin'],
+      workspaceRole: null,
+      schemas: [],
+      entities: [],
+      grants: []
+    });
+    const metric: MetricConfig = {
+      sourceSchemaId: relationSchema.id,
+      sourceContext: 'relation',
+      path: [path[1]!],
+      source: { kind: 'lifecycle' },
+      aggregation: 'count'
+    };
+    const results = await collectMetricTerminals({
+      db: makeDb(relations),
+      workspace: 'ws-1',
+      boxEntityIds: ['s1'],
+      metric,
+      entities,
+      schemas,
+      relationSchemas: [relationSchema],
+      authCtx
+    });
+
+    expect(results.get('s1')?.terminals).toMatchObject([
+      { kind: 'relation', relation: { id: 'r1' } }
+    ]);
   });
 
   it('follows a field-less typed relation with endpoint constraints', async () => {

@@ -1,0 +1,98 @@
+.screen {
+  display: flex;
+  flex-direction: column;
+  padding: 20px 24px;
+  min-width: 0;
+}
+
+.header {
+  margin-bottom: 16px;
+}
+
+.count {
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.activeFilters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.activeChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--panel-border);
+  border-radius: 999px;
+  padding: 3px 6px 3px 10px;
+  font-size: 11px;
+  background: var(--cmp-bg);
+}
+
+.activeChipLabel {
+  color: var(--text-muted);
+}
+
+.activeChipRemove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 2px;
+}
+
+.activeChipRemove:hover {
+  color: var(--text-primary);
+}
+
+.ownerPopover {
+  padding: 10px 12px;
+  width: 280px;
+  max-height: min(360px, 60vh);
+  overflow: auto;
+}
+
+.pillGroupLabel {
+  color: var(--text-muted);
+  font-size: 11px;
+  margin: 8px 0 6px;
+}
+
+.pillGroupLabel:first-child {
+  margin-top: 0;
+}
+
+.pillRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.pill {
+  border: 1px solid var(--panel-border);
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 11px;
+  background: var(--cmp-bg);
+  cursor: pointer;
+  color: var(--text-primary);
+}
+
+.pillActive {
+  border-color: var(--accent-fg);
+  background: var(--accent-bg, var(--cmp-bg));
+  color: var(--accent-fg);
+}
+
+.empty {
+  padding: 32px;
+  text-align: center;
+  color: var(--text-muted);
+}

@@ -326,6 +326,21 @@ export type GlossarySearchParams = SearchParamsFromSchema<typeof glossarySearchS
 export const validateGlossarySearch = (raw: Record<string, unknown>): GlossarySearchParams =>
   parseSearchParams(glossarySearchSchema, raw);
 
+// Strategy capabilities params
+const capabilitiesSearchSchema = defineSearchParamSchema({
+  level: stringCodec, // e.g. 'L1', 'L2'
+  owner: stringCodec,
+  // Set by clicking a node in the sidebar's capability tree; filters the table to that
+  // capability's id plus its descendants.
+  subtreeOf: stringCodec
+});
+
+export type CapabilitiesSearchParams = SearchParamsFromSchema<typeof capabilitiesSearchSchema>;
+
+export const validateCapabilitiesSearch = (
+  raw: Record<string, unknown>
+): CapabilitiesSearchParams => parseSearchParams(capabilitiesSearchSchema, raw);
+
 // Home params
 const homeSearchSchema = defineSearchParamSchema({
   dashboard: stringCodec

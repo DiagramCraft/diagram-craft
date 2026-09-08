@@ -2,17 +2,20 @@ import { describe, expect, it } from 'vitest';
 import type { WorkspaceCapabilityConfiguration } from '@arch-register/api-types/workspaceCapabilityContract';
 import { resolveStrategyModelConfig } from './strategyQueries';
 
-const binding = (id: string) => ({ target: { kind: 'entity_schema' as const, id } });
+const entityBinding = (id: string) => ({ target: { kind: 'entity_schema' as const, id } });
+const relationBinding = (id: string) => ({ target: { kind: 'relation_schema' as const, id } });
 
 const validConfiguration = {
   type: 'strategy-model',
   valid: true,
   bindings: {
-    objective: binding('objective-schema'),
-    outcome: binding('outcome-schema'),
-    initiative: binding('initiative-schema'),
-    measure: binding('measure-schema'),
-    business_capability: binding('capability-schema')
+    objective: entityBinding('objective-schema'),
+    outcome: entityBinding('outcome-schema'),
+    initiative: entityBinding('initiative-schema'),
+    measure: entityBinding('measure-schema'),
+    business_capability: entityBinding('capability-schema'),
+    objective_supports_business_capability: relationBinding('objective-supports-capability-rel'),
+    business_capability_supports_entity: relationBinding('capability-supports-entity-rel')
   }
 } as unknown as WorkspaceCapabilityConfiguration;
 
@@ -23,7 +26,9 @@ describe('resolveStrategyModelConfig', () => {
       outcomeSchemaId: 'outcome-schema',
       initiativeSchemaId: 'initiative-schema',
       measureSchemaId: 'measure-schema',
-      businessCapabilitySchemaId: 'capability-schema'
+      businessCapabilitySchemaId: 'capability-schema',
+      objectiveSupportsBusinessCapabilityRelationSchemaId: 'objective-supports-capability-rel',
+      businessCapabilitySupportsEntityRelationSchemaId: 'capability-supports-entity-rel'
     });
   });
 
@@ -45,9 +50,19 @@ describe('resolveStrategyModelConfig', () => {
       resolveStrategyModelConfig([
         {
           ...validConfiguration,
-          bindings: { ...validConfiguration.bindings, measure: binding('') }
+          bindings: { ...validConfiguration.bindings, measure: entityBinding('') }
         }
       ])
+    ).toBeNull();
+  });
+
+  it('returns null when a relation-schema binding role is missing', () => {
+    const {
+      business_capability_supports_entity: _businessCapabilitySupportsEntity,
+      ...bindingsWithoutRelation
+    } = validConfiguration.bindings;
+    expect(
+      resolveStrategyModelConfig([{ ...validConfiguration, bindings: bindingsWithoutRelation }])
     ).toBeNull();
   });
 });

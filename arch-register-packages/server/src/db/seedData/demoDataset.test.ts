@@ -72,15 +72,22 @@ describe('demo bootstrap dataset: strategy entities', () => {
       for (const id of measure.data['outcomes'] as string[]) expect(outcomeIds.has(id)).toBe(true);
     }
 
+    // Only leaf (L3) capabilities carry direct metrics - L1/L2 groupings (like "Merchandising &
+    // Assortment") roll up from their leaf descendants instead, via the metrics engine.
     expect(
       demoBusinessCapabilityEntities.find(
         capability => capability.name === 'Merchandising & Assortment'
       )?.data
+    ).not.toMatchObject({ maturity: expect.anything() });
+    expect(
+      demoBusinessCapabilityEntities.find(
+        capability => capability.name === 'Product Information Management'
+      )?.data
     ).toMatchObject({
-      maturity: 3,
-      maturity_target: 4,
-      annual_investment: { amount: 2500000, currency: 'USD' },
-      risk: 3
+      maturity: 4,
+      maturity_target: 5,
+      annual_investment: { amount: 560000, currency: 'USD' },
+      risk: 2
     });
     expect(
       demoMeasureEntities.find(measure => measure.name === 'Active SKU Count')?.data

@@ -205,6 +205,23 @@ export const workspaceCapabilityDefinitions: WorkspaceCapabilityDefinition[] = [
         required: true,
         targetKind: 'entity_schema',
         fieldRoles: []
+      },
+      {
+        id: 'objective_supports_business_capability',
+        label: 'Objective supports Business Capability relation schema',
+        description: 'The relation schema linking objectives to the capabilities they support.',
+        required: true,
+        targetKind: 'relation_schema',
+        fieldRoles: []
+      },
+      {
+        id: 'business_capability_supports_entity',
+        label: 'Business Capability supports Entity relation schema',
+        description:
+          'The relation schema linking a capability to the applications/systems that realize it.',
+        required: true,
+        targetKind: 'relation_schema',
+        fieldRoles: []
       }
     ]
   },

@@ -146,6 +146,27 @@ export const seedWorkspaceConfiguration = async (
       );
       await db.workspace.replaceSupportedCurrencies(workspace.id, currencies, currencies[0]!.code);
     }
+    // Currency-sourced metric roll-ups (e.g. Business Capability `annual_investment`) require a
+    // rate snapshot even when every value already shares one currency (`computeBoxMetrics` in
+    // metricOperations.ts always resolves `currencyConversion` for a non-count currency metric) -
+    // without this, those roll-ups 503 with "Currency rates are not available yet" on a fresh
+    // seed, since the real snapshot only arrives via the scheduled `currency-rates` job fetching
+    // from an external provider. Rates are approximate and global (not workspace-scoped), just
+    // enough to unblock local/demo use before that job has ever run.
+    //
+    // Dated with the fixed seed-data `now` (2026-01-01), not the actual current wall-clock time:
+    // `getLatestSnapshot()` picks whichever snapshot has the newest `fetch_day`, and a caller that
+    // seeds its own controlled snapshot afterwards (e.g. `metrics.test.ts`'s `afterSeed`, dated
+    // 2026-08-07 with exact rates its assertions depend on) expects that one to win. Seeding this
+    // fallback with real "today" would always be newer than any such fixed-past-date fixture and
+    // silently clobber it.
+    await db.currencyRates.upsertSnapshot({
+      fetch_day: now.toISOString().slice(0, 10),
+      rate_date: now.toISOString().slice(0, 10),
+      base_currency: 'USD',
+      rates: { USD: 1, EUR: 0.92, GBP: 0.79, SEK: 10.5, NOK: 10.6, DKK: 6.9 },
+      fetched_at: now
+    });
   }
 
   for (const workspace of seedWorkspaces) {

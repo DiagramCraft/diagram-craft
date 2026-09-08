@@ -868,8 +868,13 @@ const strategySchemas: TemplateSchema[] = [
         id: 'gap',
         name: 'Maturity Gap',
         type: 'derived',
+        // `==` in this expression language is strict (`===`), so `entity.maturity == null` only
+        // catches an explicitly-stored `null` - a capability that simply never had `maturity` set
+        // (common for group-level capabilities with no metrics of their own) leaves it `undefined`,
+        // which the strict check misses and the subtraction below then turns into `NaN` (rejected
+        // by `resultType: 'number'`'s integer check). `?? null` normalizes both cases first.
         expression:
-          'entity.maturity == null || entity.maturity_target == null ? null : entity.maturity_target - entity.maturity',
+          '(entity.maturity ?? null) == null || (entity.maturity_target ?? null) == null ? null : entity.maturity_target - entity.maturity',
         resultType: 'number'
       },
       {
@@ -3038,6 +3043,17 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           measure: { target: { kind: 'entity_schema', symId: 'measure' } },
           business_capability: {
             target: { kind: 'entity_schema', symId: 'business_capability' }
+          },
+          // Real, per-workspace relation schema ids: consumers (the Capabilities table's "Apps"
+          // roll-up, `CapabilityDrawer`'s "Realized by"/"Linked objectives") need these to query
+          // typed relations by schema id — the schema template's own `symId` strings above
+          // ('objective-supports-business-capability', 'business-capability-supports-entity')
+          // are template-local identifiers, not the ids relation rows are actually stored under.
+          objective_supports_business_capability: {
+            target: { kind: 'relation_schema', symId: 'objective-supports-business-capability' }
+          },
+          business_capability_supports_entity: {
+            target: { kind: 'relation_schema', symId: 'business-capability-supports-entity' }
           }
         }
       }

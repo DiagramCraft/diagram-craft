@@ -108,6 +108,37 @@ describe('composable seed phases', () => {
     }
   });
 
+  it('seeds a currency-rate snapshot alongside supported currencies, so currency-sourced metric roll-ups do not 503 on a fresh seed', async () => {
+    const provisioned = await provisionSqliteDatabase();
+
+    try {
+      await seedWorkspaceBase(provisioned.db);
+      await seedWorkspaceConfiguration(provisioned.db);
+
+      const snapshot = await provisioned.db.currencyRates.getLatestSnapshot();
+      expect(snapshot).not.toBeNull();
+      expect(snapshot?.rates['USD']).toBe(1);
+      expect(Object.keys(snapshot?.rates ?? {})).toEqual(
+        expect.arrayContaining(['USD', 'EUR', 'GBP', 'SEK', 'NOK', 'DKK'])
+      );
+    } finally {
+      await provisioned.teardown();
+    }
+  });
+
+  it('skips the currency-rate snapshot when supportedCurrencies is disabled', async () => {
+    const provisioned = await provisionSqliteDatabase();
+
+    try {
+      await seedWorkspaceBase(provisioned.db);
+      await seedWorkspaceConfiguration(provisioned.db, { supportedCurrencies: false });
+
+      expect(await provisioned.db.currencyRates.getLatestSnapshot()).toBeNull();
+    } finally {
+      await provisioned.teardown();
+    }
+  });
+
   it('sets the next public-ID number from selected records', async () => {
     const provisioned = await provisionSqliteDatabase();
     const timestamp = new Date('2026-08-10T00:00:00.000Z');

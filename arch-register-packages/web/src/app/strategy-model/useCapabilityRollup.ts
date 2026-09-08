@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import type { MetricConfig } from '@arch-register/api-types/metricContract';
+import type { MetricConfig, MetricRollupResponse } from '@arch-register/api-types/metricContract';
 import { metricRollupQuery } from '../../queries/metrics';
+import { extractCapabilityOwnFields, type CapabilityOwnFields } from './capabilityOwnFields';
 
 export type CapabilityRollup = {
   /** Average `maturity` across the capability's full recursive containment subtree. */
@@ -24,7 +25,10 @@ export type CapabilityRollup = {
   error: Error | null;
 };
 
-const buildMetric = (
+// Exported for `useCapabilityRollups.ts` (the batched, table-wide sibling of this hook), which
+// builds the same field-sourced metrics over many `boxEntityIds` in one request per metric instead
+// of per capability.
+export const buildMetric = (
   businessCapabilitySchemaId: string | null,
   fieldId: string,
   aggregation: MetricConfig['aggregation']
@@ -42,18 +46,25 @@ const buildMetric = (
  * aggregates a single value), a capability roll-up needs several averages/sums/counts at once, so
  * this fires one `metrics.rollup` request per metric — each scoped to the single capability with
  * no traversal `path`, which defaults to walking the full recursive `parent` containment subtree —
- * and combines the results into one object. `gap` is read directly from the capability schema's
- * derived `gap` field rather than recomputed here. "Unioned supporting entities" is intentionally
- * not part of this roll-up (see `CapabilityDrawer`'s "Realized by" section and its follow-up
- * issue) — this hook aggregates numeric fields only.
+ * and combines the results into one object.
+ *
+ * The metrics engine's subtree walk deliberately excludes the box entity itself
+ * (`collectDescendantIds`'s "the box entity itself is excluded" — correct where a box groups
+ * differently-schemaed descendants, e.g. a map cell). A Business Capability with no children has
+ * no descendants at all, so without a fallback its own directly-set `maturity`/`gap`/etc. would
+ * roll up to "no data" instead of themselves. `ownFields` (the capability's own field values, from
+ * `extractCapabilityOwnFields` over the entity `CapabilityDrawer` already fetches) is that
+ * fallback, applied whenever a metric's `sourceCount` comes back 0 (no children).
  */
 export const useCapabilityRollup = (
   workspaceId: string,
   businessCapabilitySchemaId: string | null,
-  capabilityId: string | null
+  capabilityId: string | null,
+  ownFields?: CapabilityOwnFields
 ): CapabilityRollup => {
   const boxEntityIds = useMemo(() => (capabilityId ? [capabilityId] : []), [capabilityId]);
   const enabled = boxEntityIds.length > 0;
+  const own = ownFields ?? extractCapabilityOwnFields(null);
 
   const maturityQuery = useQuery(
     metricRollupQuery(
@@ -123,9 +134,12 @@ export const useCapabilityRollup = (
   const error =
     firstError instanceof Error ? firstError : firstError ? new Error(String(firstError)) : null;
 
-  const valueFor = (query: {
-    data?: { results: { boxEntityId: string; value: number | null }[] };
-  }) => query.data?.results.find(r => r.boxEntityId === capabilityId0)?.value ?? null;
+  const resultFor = (query: { data?: MetricRollupResponse }) =>
+    query.data?.results.find(r => r.boxEntityId === capabilityId0);
+  // No children => the metric had nothing to walk, regardless of which metric asked.
+  const isLeaf = (resultFor(maturityQuery)?.sourceCount ?? 0) === 0;
+  const valueFor = (query: { data?: MetricRollupResponse }, fallback: number | null) =>
+    isLeaf ? fallback : (resultFor(query)?.value ?? null);
 
   if (!capabilityId0) {
     return {
@@ -142,18 +156,21 @@ export const useCapabilityRollup = (
     };
   }
 
-  const investmentResult = investmentQuery.data?.results.find(r => r.boxEntityId === capabilityId0);
+  const investmentResult = resultFor(investmentQuery);
 
   return {
-    avgMaturity: valueFor(maturityQuery),
-    avgMaturityTarget: valueFor(maturityTargetQuery),
-    avgGap: valueFor(gapQuery),
-    avgRisk: valueFor(riskQuery),
-    sumAnnualInvestment: investmentResult?.value ?? null,
-    investmentCurrencyCode: investmentResult?.currencyCode ?? null,
-    leafCount: valueFor(leavesQuery),
-    sourceCount:
-      maturityQuery.data?.results.find(r => r.boxEntityId === capabilityId0)?.sourceCount ?? 0,
+    avgMaturity: valueFor(maturityQuery, own.maturity),
+    avgMaturityTarget: valueFor(maturityTargetQuery, own.maturityTarget),
+    avgGap: valueFor(gapQuery, own.gap),
+    avgRisk: valueFor(riskQuery, own.risk),
+    sumAnnualInvestment: isLeaf
+      ? (own.investment?.amount ?? null)
+      : (investmentResult?.value ?? null),
+    investmentCurrencyCode: isLeaf
+      ? (own.investment?.currency ?? null)
+      : (investmentResult?.currencyCode ?? null),
+    leafCount: isLeaf ? 1 : (resultFor(leavesQuery)?.value ?? null),
+    sourceCount: resultFor(maturityQuery)?.sourceCount ?? 0,
     isLoading,
     error
   };
