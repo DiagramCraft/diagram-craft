@@ -71,8 +71,11 @@ export const metricSourceSchema = z.discriminatedUnion('kind', [
 export const enumSourceKinds = ['enum', 'assessmentEnum'] as const;
 
 export const metricAggregationSchema = z
-  .enum(['count', 'sum', 'average', 'minimum', 'maximum', 'worst', 'percentage'])
-  .describe('Aggregation function applied across matching descendant entities');
+  .enum(['count', 'leafCount', 'sum', 'average', 'minimum', 'maximum', 'worst', 'percentage'])
+  .describe(
+    'Aggregation function applied across matching descendant entities. "leafCount" counts only ' +
+      'terminal entities that have no containment children of their own.'
+  );
 
 export const metricConfigSchema = z.object({
   sourceSchemaId: z

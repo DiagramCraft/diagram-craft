@@ -1,0 +1,78 @@
+.empty {
+  padding: 32px;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.sectionLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin: 16px 0 6px;
+}
+
+.sectionLabel:first-child {
+  margin-top: 0;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.statGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.stat {
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+
+.statLabel {
+  font-size: 10.5px;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+
+.statValue {
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+
+.attributeRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.attributeRow:last-of-type {
+  border-bottom: none;
+}
+
+.attributeLabel {
+  color: var(--text-muted);
+}
+
+.childChip {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--panel-border);
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 11px;
+  background: var(--cmp-bg);
+  cursor: pointer;
+  color: var(--text-primary);
+}
+
+.childChip:hover {
+  border-color: var(--accent-fg);
+  color: var(--accent-fg);
+}

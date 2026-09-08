@@ -260,6 +260,40 @@ describe('computeBoxMetrics', () => {
     expect(result.results[0]).toMatchObject({ value: 2, sourceCount: 2, populatedCount: 2 });
   });
 
+  it('leafCount aggregation counts only source entities with no containment children of their own', () => {
+    const taskSchema: SchemaDbResult = {
+      ...domainSchema,
+      id: 'task',
+      name: 'Task',
+      fields: [
+        {
+          id: 'parent',
+          name: 'Parent',
+          type: 'containment',
+          schemaId: 'service',
+          minCount: 0,
+          maxCount: 1,
+          requirementLevel: 'optional'
+        }
+      ]
+    };
+    const entities = [
+      makeDomain('d1'),
+      makeService('s1', 'd1', { data: { parent: 'd1' } }), // has a task child, not a leaf
+      makeService('s2', 'd1', { data: { parent: 'd1' } }), // no children, a leaf
+      { ...makeDomain('t1'), schema_id: 'task', data: { parent: 's1' } }
+    ];
+    const result = computeBoxMetrics(
+      ['d1'],
+      { ...numericMetric, aggregation: 'leafCount' },
+      entities,
+      [domainSchema, serviceSchema, taskSchema],
+      lifecycleStates,
+      null
+    );
+    expect(result.results[0]).toMatchObject({ value: 1, sourceCount: 2, populatedCount: 1 });
+  });
+
   it('percentage aggregation is the share of descendants matching the numerator condition', () => {
     const entities = [
       makeDomain('d1'),

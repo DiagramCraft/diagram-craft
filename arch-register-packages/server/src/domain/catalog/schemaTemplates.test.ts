@@ -150,6 +150,14 @@ describe('instantiateTemplate', () => {
           resultType: 'text'
         }),
         expect.objectContaining({
+          id: 'gap',
+          name: 'Maturity Gap',
+          type: 'derived',
+          expression:
+            'entity.maturity == null || entity.maturity_target == null ? null : entity.maturity_target - entity.maturity',
+          resultType: 'number'
+        }),
+        expect.objectContaining({
           id: 'supporting_objectives',
           name: 'Supported by Objectives',
           type: 'typedRelation',
