@@ -169,6 +169,7 @@ describe('business capability strategy seed data', () => {
   it('seeds a nested Business Capability schema and dedicated objective relation', () => {
     const businessCapability = seedSchemas.find(schema => schema.name === 'Business Capability');
     const objective = seedSchemas.find(schema => schema.id === STRATEGY_IDS.objectiveSchema);
+    const measure = seedSchemas.find(schema => schema.id === STRATEGY_IDS.measureSchema);
     const supportsCapability = seedRelationSchemas.find(
       schema => schema.name === 'Objective Supports Business Capability'
     );
@@ -182,6 +183,10 @@ describe('business capability strategy seed data', () => {
           minCount: 0,
           maxCount: 1
         }),
+        expect.objectContaining({ id: 'maturity', type: 'number', min: 1, max: 5 }),
+        expect.objectContaining({ id: 'maturity_target', type: 'number', min: 1, max: 5 }),
+        expect.objectContaining({ id: 'annual_investment', type: 'currency' }),
+        expect.objectContaining({ id: 'risk', type: 'number', min: 1, max: 5 }),
         expect.objectContaining({
           id: 'capability_level',
           type: 'derived',
@@ -209,6 +214,13 @@ describe('business capability strategy seed data', () => {
           type: 'typedRelation',
           direction: 'in'
         })
+      ])
+    );
+    expect(measure?.fields).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'baseline', type: 'number' }),
+        expect.objectContaining({ id: 'current', type: 'number' }),
+        expect.objectContaining({ id: 'direction', type: 'select' })
       ])
     );
     expect(supportsCapability).toMatchObject({

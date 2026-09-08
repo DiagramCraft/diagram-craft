@@ -137,6 +137,10 @@ describe('instantiateTemplate', () => {
           minCount: 0,
           maxCount: 1
         }),
+        expect.objectContaining({ id: 'maturity', type: 'number', min: 1, max: 5 }),
+        expect.objectContaining({ id: 'maturity_target', type: 'number', min: 1, max: 5 }),
+        expect.objectContaining({ id: 'annual_investment', type: 'currency' }),
+        expect.objectContaining({ id: 'risk', type: 'number', min: 1, max: 5 }),
         expect.objectContaining({
           id: 'capability_level',
           name: 'Capability Level',
@@ -159,6 +163,25 @@ describe('instantiateTemplate', () => {
         })
       ])
     );
+
+    expect(measure?.fields).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'baseline', type: 'number' }),
+        expect.objectContaining({ id: 'current', type: 'number' }),
+        expect.objectContaining({ id: 'target_value', type: 'number' }),
+        expect.objectContaining({
+          id: 'direction',
+          type: 'select',
+          enumId: expect.any(String)
+        })
+      ])
+    );
+    expect(
+      definitions.enums.find(enumeration => enumeration.name === 'Measure Direction')?.options
+    ).toEqual([
+      { value: 'up-is-better', label: 'Up is better' },
+      { value: 'down-is-better', label: 'Down is better' }
+    ]);
 
     const relationNames = definitions.relationSchemas.map(schema => schema.name);
     expect(relationNames).toContain('Objective Supports Business Capability');
@@ -769,6 +792,7 @@ describe('instantiateTemplate', () => {
     const riskControl = definitions.relationSchemas.find(
       schema => schema.name === 'Risk Mitigation'
     );
+    const riskAffects = definitions.relationSchemas.find(schema => schema.name === 'Risk Affects');
     const controlRequirement = definitions.relationSchemas.find(
       schema => schema.name === 'Control Compliance'
     );
@@ -781,6 +805,9 @@ describe('instantiateTemplate', () => {
     expect(controlRequirement?.out_schema_ids).toEqual([complianceRequirement?.id]);
     expect(controlRequirement?.in_label).toBe('Satisfies Compliance Requirements');
     expect(controlRequirement?.out_label).toBe('Satisfied by Control');
+    expect(riskAffects?.in_schema_ids).toEqual([risk?.id]);
+    expect(riskAffects?.out_schema_ids).toBe('any');
+    expect(riskAffects?.description).toBe('Associates a Risk with any entity affected by it.');
 
     expect(risk?.fields).toContainEqual(
       expect.objectContaining({

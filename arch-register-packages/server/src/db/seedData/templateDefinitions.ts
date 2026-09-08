@@ -94,6 +94,7 @@ const definitionId = (
     'enum:risk-compliance:framework-kind': SEED_ENUM_IDS.frameworkKind,
     'enum:risk-compliance:requirement-status': SEED_ENUM_IDS.requirementStatus,
     'enum:strategy:strategy-status': STRATEGY_IDS.statusEnum,
+    'enum:strategy:measure-direction': STRATEGY_IDS.measureDirectionEnum,
 
     'fieldGroup:information-governance:information-asset-stewardship': INFO_ASSET_FIELD_GROUP_ID,
     'fieldGroup:information-governance:data-flow-governance': DATA_FLOW_GOVERNANCE_FIELD_GROUP_ID,
@@ -225,6 +226,7 @@ const enumOrder = [
   SEED_ENUM_IDS.requirementStatus,
   SEED_ENUM_IDS.glossaryStatus,
   SEED_ENUM_IDS.strategyStatus,
+  SEED_ENUM_IDS.measureDirection,
   SEED_ENUM_IDS.retentionTimeUnit,
   SEED_ENUM_IDS.regulatoryTags,
   SEED_ENUM_IDS.processingPurposes,

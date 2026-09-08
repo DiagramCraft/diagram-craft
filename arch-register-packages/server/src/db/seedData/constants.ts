@@ -54,6 +54,7 @@ export const GLOSSARY_IDS = {
 
 export const STRATEGY_IDS = {
   statusEnum: '00000000-0000-0000-0000-e00000000010',
+  measureDirectionEnum: '00000000-0000-0000-0000-e00000000011',
   objectiveSchema: '00000000-0000-0000-0019-000000000001',
   outcomeSchema: '00000000-0000-0000-001a-000000000001',
   initiativeSchema: '00000000-0000-0000-001b-000000000001',
@@ -572,7 +573,8 @@ export const CONTENT_IDS = {
 export const DATA_FLOW_SCHEMA_ID = '00000000-0000-0000-0000-000000000030';
 export const DATA_FLOW_GOVERNANCE_FIELD_GROUP_ID = '00000000-0000-0000-0000-f00000000003';
 export const RISK_AFFECTS_RELATION_SCHEMA_ID = '00000000-0000-0000-0000-000000000036';
-// Domain, System, Component, API, Resource, Technology Release, Technology, Data Entity, Contract, Vendor.
+// Domain, System, Component, API, Resource, Technology Release, Technology, Data Entity, Contract,
+// Vendor, and Business Capability.
 export const RISK_AFFECTS_TARGET_SCHEMA_IDS = [
   '00000000-0000-0000-0000-000000000001',
   '00000000-0000-0000-0000-000000000002',
@@ -583,7 +585,8 @@ export const RISK_AFFECTS_TARGET_SCHEMA_IDS = [
   '00000000-0000-0000-0000-000000000007',
   '00000000-0000-0000-0000-000000000008',
   '00000000-0000-0000-0000-000000000009',
-  '00000000-0000-0000-0000-000000000010'
+  '00000000-0000-0000-0000-000000000010',
+  STRATEGY_IDS.businessCapabilitySchema
 ];
 export const RISK_CONTROL_SCHEMA_ID = '00000000-0000-0000-0000-000000000032';
 export const CONTROL_REQUIREMENT_SCHEMA_ID = '00000000-0000-0000-0000-000000000033';
@@ -639,6 +642,7 @@ export const SEED_ENUM_IDS = {
   requirementStatus: '00000000-0000-0000-0000-e0000000000e',
   glossaryStatus: GLOSSARY_IDS.statusEnum,
   strategyStatus: STRATEGY_IDS.statusEnum,
+  measureDirection: STRATEGY_IDS.measureDirectionEnum,
   regulatoryTags: INFO_ASSET_IDS.regulatoryTagsEnum,
   processingPurposes: INFO_ASSET_IDS.processingPurposesEnum,
   residencyRegions: INFO_ASSET_IDS.residencyRegionsEnum,

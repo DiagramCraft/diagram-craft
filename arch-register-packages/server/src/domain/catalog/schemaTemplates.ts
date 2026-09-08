@@ -824,6 +824,16 @@ const strategyStatusEnum = enumDefinition(
   'Strategy'
 );
 
+const strategyMeasureDirectionEnum = enumDefinition(
+  'measure-direction',
+  'Measure Direction',
+  [
+    { value: 'up-is-better', label: 'Up is better' },
+    { value: 'down-is-better', label: 'Down is better' }
+  ],
+  'Strategy'
+);
+
 const strategySchemas: TemplateSchema[] = [
   {
     symId: 'business_capability',
@@ -842,6 +852,10 @@ const strategySchemas: TemplateSchema[] = [
         maxCount: 1
       },
       { id: 'target_date', name: 'Target Date', type: 'date' },
+      { id: 'maturity', name: 'Maturity', type: 'number', min: 1, max: 5 },
+      { id: 'maturity_target', name: 'Maturity Target', type: 'number', min: 1, max: 5 },
+      { id: 'annual_investment', name: 'Annual Investment', type: 'currency' },
+      { id: 'risk', name: 'Risk', type: 'number', min: 1, max: 5 },
       {
         id: 'capability_level',
         name: 'Capability Level',
@@ -961,7 +975,15 @@ const strategySchemas: TemplateSchema[] = [
     fields: [
       { id: 'description', name: 'Description', type: 'longtext' },
       { id: 'unit', name: 'Unit', type: 'text' },
+      { id: 'baseline', name: 'Baseline', type: 'number' },
+      { id: 'current', name: 'Current', type: 'number' },
       { id: 'target_value', name: 'Target Value', type: 'number' },
+      {
+        id: 'direction',
+        name: 'Direction',
+        type: 'select',
+        enumId: 'measure-direction'
+      },
       {
         id: 'outcomes',
         name: 'Outcomes',
@@ -2809,7 +2831,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
       {
         symId: 'risk-affects',
         name: 'Risk Affects',
-        description: 'Associates a Risk with an architecture entity affected by it.',
+        description: 'Associates a Risk with any entity affected by it.',
         category: 'Governance',
         inLabel: 'Affects Entities',
         outLabel: 'Affected by Risk',
@@ -2994,7 +3016,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
     description:
       'Strategic objectives, outcomes, initiatives, measures, and Business Capabilities with nested hierarchy.',
     schemas: strategySchemas,
-    enums: [strategyStatusEnum],
+    enums: [strategyStatusEnum, strategyMeasureDirectionEnum],
     relationSchemas: strategyRelationSchemas,
     documentTypes: commonDocumentTypes,
     documentTemplates: commonDocumentTemplates,
