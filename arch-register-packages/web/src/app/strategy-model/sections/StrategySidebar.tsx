@@ -131,8 +131,7 @@ const CapabilitiesSidebarContent = ({ workspaceSlug }: { workspaceSlug: string }
   const selectSubtree = (id: string) =>
     patchSearch({ subtreeOf: search.subtreeOf === id ? undefined : id });
 
-  const toggleOwner = (id: string) =>
-    patchSearch({ owner: search.owner === id ? undefined : id });
+  const toggleOwner = (id: string) => patchSearch({ owner: search.owner === id ? undefined : id });
 
   return (
     <>
@@ -154,7 +153,9 @@ const CapabilitiesSidebarContent = ({ workspaceSlug }: { workspaceSlug: string }
           trailing={<span className="dim mono">{count}</span>}
         />
       ))}
-      {ownerCounts.size === 0 && <div className={`${styles.emptyState} dim`}>No owners assigned.</div>}
+      {ownerCounts.size === 0 && (
+        <div className={`${styles.emptyState} dim`}>No owners assigned.</div>
+      )}
       <SidebarGroupLabel>Hierarchy</SidebarGroupLabel>
       {tree.length === 0 ? (
         <div className={`${styles.emptyState} dim`}>No capabilities yet.</div>

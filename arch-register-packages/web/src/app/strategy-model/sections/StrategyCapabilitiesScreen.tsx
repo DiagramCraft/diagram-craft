@@ -40,11 +40,14 @@ const levelNumber = (capabilityLevel: string | null): number => {
 // Mirrors the design reference's Gap column (`BCMCapabilityList`, `bcm-views.jsx`): "on target" or
 // ahead of target (gap <= 0) reads as a plain dash rather than a signed number, and only a real
 // gap gets the "+X.X" treatment, colored by how large it is.
-const formatGap = (gap: number | null): { text: string; className?: string; style?: { color: string } } => {
+const formatGap = (
+  gap: number | null
+): { text: string; className?: string; style?: { color: string } } => {
   if (gap == null || gap <= 0) return { text: '—', className: 'dim' };
   // `--error-fg`/`--warning-fg` are the real severity tokens (`packages/main/src/tokens.css`) —
   // there's no dedicated "danger"/"success" token in this app, unlike the design reference.
-  if (gap >= 1.5) return { text: `+${gap.toFixed(1)}`, style: { color: 'var(--error-fg, #e05252)' } };
+  if (gap >= 1.5)
+    return { text: `+${gap.toFixed(1)}`, style: { color: 'var(--error-fg, #e05252)' } };
   if (gap >= 0.5) return { text: `+${gap.toFixed(1)}`, style: { color: 'var(--warning-fg)' } };
   return { text: `+${gap.toFixed(1)}` };
 };
@@ -152,7 +155,11 @@ export const StrategyCapabilitiesScreen = () => {
 
   const levels = useMemo(
     () =>
-      [...new Set(allItems.map(item => strOrNull(item.capability_level)).filter((v): v is string => !!v))].sort(),
+      [
+        ...new Set(
+          allItems.map(item => strOrNull(item.capability_level)).filter((v): v is string => !!v)
+        )
+      ].sort(),
     [allItems]
   );
 
@@ -169,7 +176,9 @@ export const StrategyCapabilitiesScreen = () => {
   // from their parent and make the Name column's indent (below) meaningless. Any other sort key
   // sorts flat and drops the indent instead of showing a tree order that doesn't match row order.
   const hierarchyIndex = useMemo(() => {
-    const order = flattenCapabilityTree(buildCapabilityTree(tree.data?.nodes ?? [], tree.data?.edges ?? []));
+    const order = flattenCapabilityTree(
+      buildCapabilityTree(tree.data?.nodes ?? [], tree.data?.edges ?? [])
+    );
     return new Map(order.map((id, index) => [id, index]));
   }, [tree.data]);
 
@@ -180,12 +189,17 @@ export const StrategyCapabilitiesScreen = () => {
       if (indexA != null && indexB != null && indexA !== indexB) return indexA - indexB;
       return a._name.localeCompare(b._name);
     },
-    level: (a, b) => compareNullableString(strOrNull(a.capability_level), strOrNull(b.capability_level)),
+    level: (a, b) =>
+      compareNullableString(strOrNull(a.capability_level), strOrNull(b.capability_level)),
     owner: (a, b) => compareNullableString(a._owner?.name ?? null, b._owner?.name ?? null),
-    maturity: (a, b) => compareNullableNumber(rollupFor(a._uid).avgMaturity, rollupFor(b._uid).avgMaturity),
+    maturity: (a, b) =>
+      compareNullableNumber(rollupFor(a._uid).avgMaturity, rollupFor(b._uid).avgMaturity),
     gap: (a, b) => compareNullableNumber(rollupFor(a._uid).avgGap, rollupFor(b._uid).avgGap),
     investment: (a, b) =>
-      compareNullableNumber(rollupFor(a._uid).sumAnnualInvestment, rollupFor(b._uid).sumAnnualInvestment),
+      compareNullableNumber(
+        rollupFor(a._uid).sumAnnualInvestment,
+        rollupFor(b._uid).sumAnnualInvestment
+      ),
     risk: (a, b) => compareNullableNumber(rollupFor(a._uid).avgRisk, rollupFor(b._uid).avgRisk),
     apps: (a, b) => compareNullableNumber(rollupFor(a._uid).appsCount, rollupFor(b._uid).appsCount)
   };
@@ -195,7 +209,10 @@ export const StrategyCapabilitiesScreen = () => {
   });
 
   const currentRoute = capabilityId
-    ? { to: `${STRATEGY_RAIL_PATHS[STRATEGY_CAPABILITIES_ID]}/$capabilityId`, params: { workspaceSlug, capabilityId } }
+    ? {
+        to: `${STRATEGY_RAIL_PATHS[STRATEGY_CAPABILITIES_ID]}/$capabilityId`,
+        params: { workspaceSlug, capabilityId }
+      }
     : { to: STRATEGY_RAIL_PATHS[STRATEGY_CAPABILITIES_ID], params: { workspaceSlug } };
 
   const patchSearch = (patch: Record<string, unknown>) =>
@@ -230,7 +247,12 @@ export const StrategyCapabilitiesScreen = () => {
 
   const chips: { key: string; label: string; value: string; onRemove: () => void }[] = [];
   if (search.level) {
-    chips.push({ key: 'level', label: 'Level', value: search.level, onRemove: () => patchSearch({ level: undefined }) });
+    chips.push({
+      key: 'level',
+      label: 'Level',
+      value: search.level,
+      onRemove: () => patchSearch({ level: undefined })
+    });
   }
   if (search.owner) {
     chips.push({
@@ -293,7 +315,9 @@ export const StrategyCapabilitiesScreen = () => {
                     key={level}
                     type="button"
                     className={`${styles.pill} ${search.level === level ? styles.pillActive : ''}`}
-                    onClick={() => patchSearch({ level: search.level === level ? undefined : level })}
+                    onClick={() =>
+                      patchSearch({ level: search.level === level ? undefined : level })
+                    }
                   >
                     {level}
                   </button>
@@ -393,7 +417,9 @@ export const StrategyCapabilitiesScreen = () => {
         <Table.Body>
           {sorted.length === 0 ? (
             <Table.EmptyRow colSpan={9}>
-              {capabilities.isLoading ? 'Loading capabilities…' : 'No capabilities match these filters.'}
+              {capabilities.isLoading
+                ? 'Loading capabilities…'
+                : 'No capabilities match these filters.'}
             </Table.EmptyRow>
           ) : (
             sorted.map(entity => {
@@ -404,9 +430,13 @@ export const StrategyCapabilitiesScreen = () => {
                   <Table.NameCell
                     title={entity._name}
                     subtitle={entity._publicId}
-                    indentLevel={showTreeIndent ? levelNumber(strOrNull(entity.capability_level)) - 1 : 0}
+                    indentLevel={
+                      showTreeIndent ? levelNumber(strOrNull(entity.capability_level)) - 1 : 0
+                    }
                   />
-                  <Table.Cell>{strOrNull(entity.capability_level) ?? <span className="dim">—</span>}</Table.Cell>
+                  <Table.Cell>
+                    {strOrNull(entity.capability_level) ?? <span className="dim">—</span>}
+                  </Table.Cell>
                   <Table.Cell>{entity._owner?.name ?? <span className="dim">—</span>}</Table.Cell>
                   <Table.Cell>
                     <CapabilityMaturityBar maturity={rollup.avgMaturity} />

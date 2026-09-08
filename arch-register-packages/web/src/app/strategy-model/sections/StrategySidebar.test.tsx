@@ -131,7 +131,9 @@ describe('StrategySidebar', () => {
     });
     for (let i = 0; i < 5; i++) await flush();
 
-    const row = [...container.querySelectorAll('[data-testid="strategy-capability-tree-cap-1"]')][0];
+    const row = [
+      ...container.querySelectorAll('[data-testid="strategy-capability-tree-cap-1"]')
+    ][0];
     expect(row).toBeDefined();
 
     await act(async () => {

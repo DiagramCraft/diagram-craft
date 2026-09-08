@@ -125,7 +125,7 @@ describe('CapabilityDrawer', () => {
     expect(container.textContent).toContain('No linked initiatives.');
   });
 
-  it('lists direct children from the entity tree, resolved by uid rather than the route\'s public id', async () => {
+  it("lists direct children from the entity tree, resolved by uid rather than the route's public id", async () => {
     // Regression test, two bugs at once:
     // 1) Children used to come from an entities-query `parent equals capabilityId` filter, which
     //    never matches (`parent` is a containment field stored as a ref array, and the filter

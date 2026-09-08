@@ -45,7 +45,9 @@ const resultsFor = (
   legend: emptyLegend
 });
 
-let latest: { byId: Map<string, CapabilityTableRollup>; isLoading: boolean; error: Error | null } | undefined;
+let latest:
+  | { byId: Map<string, CapabilityTableRollup>; isLoading: boolean; error: Error | null }
+  | undefined;
 
 const Harness = ({ capabilities }: { capabilities: EntityRecord[] }) => {
   latest = useCapabilityRollups(
@@ -86,11 +88,14 @@ describe('useCapabilityRollups', () => {
         if (body.metric.sourceContext === 'relation') {
           return Promise.resolve(resultsFor({ ...values, 'cap-1': 3, 'cap-2': 0 }));
         }
-        if (fieldId === 'maturity') return Promise.resolve(resultsFor({ ...values, 'cap-1': 3, 'cap-2': 2 }));
+        if (fieldId === 'maturity')
+          return Promise.resolve(resultsFor({ ...values, 'cap-1': 3, 'cap-2': 2 }));
         if (fieldId === 'maturity_target')
           return Promise.resolve(resultsFor({ ...values, 'cap-1': 4, 'cap-2': 4 }));
-        if (fieldId === 'gap') return Promise.resolve(resultsFor({ ...values, 'cap-1': 1, 'cap-2': 2 }));
-        if (fieldId === 'risk') return Promise.resolve(resultsFor({ ...values, 'cap-1': 2, 'cap-2': 1 }));
+        if (fieldId === 'gap')
+          return Promise.resolve(resultsFor({ ...values, 'cap-1': 1, 'cap-2': 2 }));
+        if (fieldId === 'risk')
+          return Promise.resolve(resultsFor({ ...values, 'cap-1': 2, 'cap-2': 1 }));
         if (fieldId === 'annual_investment') {
           return Promise.resolve(resultsFor({ ...values, 'cap-1': 150000, 'cap-2': 50000 }));
         }
@@ -152,13 +157,15 @@ describe('useCapabilityRollups', () => {
     const appsCall = mocks.rollup.mock.calls.find(
       call => call[0].body.metric.sourceContext === 'relation'
     );
-    expect(appsCall?.[0].body.metric.sourceSchemaId).toBe('business-capability-supports-entity-rel');
+    expect(appsCall?.[0].body.metric.sourceSchemaId).toBe(
+      'business-capability-supports-entity-rel'
+    );
     expect(appsCall?.[0].body.metric.path?.[0]?.relationSchemaId).toBe(
       'business-capability-supports-entity-rel'
     );
   });
 
-  it('falls back to a leaf capability\'s own field values when it has no children', async () => {
+  it("falls back to a leaf capability's own field values when it has no children", async () => {
     // sourceCount 0 mirrors the metrics engine excluding the box entity from its own subtree
     // walk — a capability with no children has zero matching descendants, so the roll-up should
     // fall back to the capability's own directly-set fields instead of showing "no data".
@@ -166,7 +173,10 @@ describe('useCapabilityRollups', () => {
       ({
         body
       }: {
-        body: { boxEntityIds: string[]; metric: { source: { fieldId: string }; sourceContext?: string } };
+        body: {
+          boxEntityIds: string[];
+          metric: { source: { fieldId: string }; sourceContext?: string };
+        };
       }) => {
         const nulls = Object.fromEntries(body.boxEntityIds.map(id => [id, null]));
         return Promise.resolve(resultsFor(nulls, 0));

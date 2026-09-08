@@ -191,7 +191,9 @@ export const useCapabilityRollups = (
         avgMaturityTarget: valueFor(maturityTargetQuery, own.maturityTarget),
         avgGap: valueFor(gapQuery, own.gap),
         avgRisk: valueFor(riskQuery, own.risk),
-        sumAnnualInvestment: isLeaf ? (own.investment?.amount ?? null) : (investmentResult?.value ?? null),
+        sumAnnualInvestment: isLeaf
+          ? (own.investment?.amount ?? null)
+          : (investmentResult?.value ?? null),
         investmentCurrencyCode: isLeaf
           ? (own.investment?.currency ?? null)
           : (investmentResult?.currencyCode ?? null),

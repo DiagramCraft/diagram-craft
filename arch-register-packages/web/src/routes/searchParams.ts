@@ -337,8 +337,9 @@ const capabilitiesSearchSchema = defineSearchParamSchema({
 
 export type CapabilitiesSearchParams = SearchParamsFromSchema<typeof capabilitiesSearchSchema>;
 
-export const validateCapabilitiesSearch = (raw: Record<string, unknown>): CapabilitiesSearchParams =>
-  parseSearchParams(capabilitiesSearchSchema, raw);
+export const validateCapabilitiesSearch = (
+  raw: Record<string, unknown>
+): CapabilitiesSearchParams => parseSearchParams(capabilitiesSearchSchema, raw);
 
 // Home params
 const homeSearchSchema = defineSearchParamSchema({

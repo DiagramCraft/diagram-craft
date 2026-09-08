@@ -23,7 +23,9 @@ const numberOrNull = (value: unknown): number | null => (typeof value === 'numbe
 export const extractCapabilityOwnFields = (
   entity: EntityRecord | null | undefined
 ): CapabilityOwnFields => {
-  const investment = entity?.annual_investment as { amount?: unknown; currency?: unknown } | undefined;
+  const investment = entity?.annual_investment as
+    | { amount?: unknown; currency?: unknown }
+    | undefined;
   return {
     maturity: numberOrNull(entity?.maturity),
     maturityTarget: numberOrNull(entity?.maturity_target),
