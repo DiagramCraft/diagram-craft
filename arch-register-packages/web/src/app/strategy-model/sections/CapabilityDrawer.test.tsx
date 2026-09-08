@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { MetricRollupResponse } from '@arch-register/api-types/metricContract';
 import { CapabilityDrawer } from './CapabilityDrawer';
 import type { StrategyModelConfig } from '../strategyQueries';
+import { asEntityPublicId, entityDetailRoute } from '../../../routes/publicObjectRoutes';
 
 const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
@@ -149,10 +150,7 @@ describe('CapabilityDrawer', () => {
     });
 
     expect(mocks.navigate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        to: '/$workspaceSlug/entities/$entityId',
-        params: { workspaceSlug: 'ws-1', entityId: 'CAP-001' }
-      })
+      entityDetailRoute('ws-1', asEntityPublicId('CAP-001'))
     );
   });
 });
