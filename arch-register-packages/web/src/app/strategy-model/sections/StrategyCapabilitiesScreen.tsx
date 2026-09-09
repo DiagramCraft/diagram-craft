@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import { type ReactNode, useMemo, useRef } from 'react';
 import { useParams, useNavigate, useSearch } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
 import { TbFilter } from 'react-icons/tb';
@@ -10,22 +10,20 @@ import { Table } from '../../../components/table/Table';
 import { useTableSort } from '../../../components/table/useTableSort';
 import { useTeams } from '../../../hooks/useWorkspaceConfig';
 import { useEntityTree } from '../../../hooks/useEntities';
+import { useSchemas } from '../../../hooks/useSchemas';
 import { entitiesQuery } from '../../../queries/entities';
-import { formatCurrencyValue } from '../../../utils/currencyFormat';
 import { CapabilityDrawer } from './CapabilityDrawer';
-import { CapabilityMaturityBar } from './CapabilityMaturityBar';
-import { formatGap } from './capabilityGap';
 import { useCapabilityRollups, type CapabilityTableRollup } from '../useCapabilityRollups';
 import { buildCapabilityTree, flattenCapabilityTree } from '../capabilityTree';
+import { capabilityFieldValue, fieldLabel } from '../capabilityFieldDisplay';
+import { CapabilityRollupValue, rollupIsNumeric } from './CapabilityRollupValue';
 import { workspaceCapabilityConfigurationsQuery } from '../../../queries/workspaceConfig';
-import { resolveStrategyModelConfig } from '../strategyQueries';
+import { resolveStrategyModelConfig, resolveStrategyViewConfig } from '../strategyQueries';
 import { STRATEGY_CAPABILITIES_ID, STRATEGY_RAIL_PATHS } from '../strategySections';
 import type { CapabilitiesSearchParams } from '../../../routes/searchParams';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import filterStyles from '../../../sections/entities/components/EntityBrowser.module.css';
 import styles from './StrategyCapabilitiesScreen.module.css';
-
-type SortKey = 'name' | 'level' | 'owner' | 'maturity' | 'gap' | 'investment' | 'risk' | 'apps';
 
 const strOrNull = (value: unknown): string | null => (typeof value === 'string' ? value : null);
 
@@ -77,15 +75,7 @@ const collectSubtreeIds = (
   return result;
 };
 
-const EMPTY_ROLLUP: CapabilityTableRollup = {
-  avgMaturity: null,
-  avgMaturityTarget: null,
-  avgGap: null,
-  avgRisk: null,
-  sumAnnualInvestment: null,
-  investmentCurrencyCode: null,
-  appsCount: null
-};
+const EMPTY_ROLLUP: CapabilityTableRollup = { values: {}, currency: {}, appsCount: null };
 
 export const StrategyCapabilitiesScreen = () => {
   const { workspaceSlug, capabilityId } = useParams({ strict: false }) as {
@@ -99,6 +89,22 @@ export const StrategyCapabilitiesScreen = () => {
   const configurations = useQuery(workspaceCapabilityConfigurationsQuery(workspaceSlug));
   const strategyConfig = resolveStrategyModelConfig(configurations.data);
   const businessCapabilitySchemaId = strategyConfig?.businessCapabilitySchemaId ?? null;
+  const schemas = useSchemas(workspaceSlug);
+  const businessCapabilitySchema = schemas.data?.find(
+    schema => schema.id === businessCapabilitySchemaId
+  );
+  const { config: viewConfig } = resolveStrategyViewConfig(
+    configurations.data,
+    businessCapabilitySchema
+  );
+  const columns = useMemo(
+    () => viewConfig.tableColumns.filter(column => column.visible),
+    [viewConfig.tableColumns]
+  );
+  const rollupByField = useMemo(
+    () => new Map(viewConfig.rollups.map(rollup => [rollup.fieldId, rollup])),
+    [viewConfig.rollups]
+  );
 
   const { data: owners = [] } = useTeams(workspaceSlug);
   // `view: 'full'`, not 'summary': the Level column reads `capability_level`, a schema-defined
@@ -154,6 +160,7 @@ export const StrategyCapabilitiesScreen = () => {
     businessCapabilitySchemaId,
     strategyConfig?.businessCapabilitySupportsEntityRelationSchemaId ?? null,
     items,
+    viewConfig.rollups,
     tree.data?.edges ?? []
   );
   const rollupFor = (id: string) => rollups.byId.get(id) ?? EMPTY_ROLLUP;
@@ -169,29 +176,45 @@ export const StrategyCapabilitiesScreen = () => {
     return new Map(order.map((id, index) => [id, index]));
   }, [tree.data]);
 
-  const comparators: Record<SortKey, (a: EntityRecord, b: EntityRecord) => number> = {
-    name: (a, b) => {
-      const indexA = hierarchyIndex.get(a._uid);
-      const indexB = hierarchyIndex.get(b._uid);
-      if (indexA != null && indexB != null && indexA !== indexB) return indexA - indexB;
-      return a._name.localeCompare(b._name);
-    },
-    level: (a, b) =>
-      compareNullableString(strOrNull(a.capability_level), strOrNull(b.capability_level)),
-    owner: (a, b) => compareNullableString(a._owner?.name ?? null, b._owner?.name ?? null),
-    maturity: (a, b) =>
-      compareNullableNumber(rollupFor(a._uid).avgMaturity, rollupFor(b._uid).avgMaturity),
-    gap: (a, b) => compareNullableNumber(rollupFor(a._uid).avgGap, rollupFor(b._uid).avgGap),
-    investment: (a, b) =>
-      compareNullableNumber(
-        rollupFor(a._uid).sumAnnualInvestment,
-        rollupFor(b._uid).sumAnnualInvestment
-      ),
-    risk: (a, b) => compareNullableNumber(rollupFor(a._uid).avgRisk, rollupFor(b._uid).avgRisk),
-    apps: (a, b) => compareNullableNumber(rollupFor(a._uid).appsCount, rollupFor(b._uid).appsCount)
-  };
-  const { sorted, sort, toggleSort } = useTableSort<EntityRecord, SortKey>(items, comparators, {
-    key: 'name',
+  const defaultSortKey = columns[0]?.fieldId ?? '_name';
+  const comparators = useMemo(() => {
+    const compareValue = (
+      entity: EntityRecord,
+      fieldId: string
+    ): { number: number | null } | { string: string | null } => {
+      if (fieldId === '_level') return { string: strOrNull(entity.capability_level) };
+      if (fieldId === '_owner') return { string: entity._owner?.name ?? null };
+      const rollup = rollups.byId.get(entity._uid) ?? EMPTY_ROLLUP;
+      if (fieldId === '_apps') return { number: rollup.appsCount };
+      if (rollupByField.has(fieldId)) return { number: rollup.values[fieldId] ?? null };
+      return { string: capabilityFieldValue(businessCapabilitySchema, entity, fieldId) };
+    };
+    const record: Record<string, (a: EntityRecord, b: EntityRecord) => number> = {
+      _name: (a, b) => {
+        const indexA = hierarchyIndex.get(a._uid);
+        const indexB = hierarchyIndex.get(b._uid);
+        if (indexA != null && indexB != null && indexA !== indexB) return indexA - indexB;
+        return a._name.localeCompare(b._name);
+      }
+    };
+    for (const column of columns) {
+      if (column.fieldId === '_name') continue;
+      record[column.fieldId] = (a, b) => {
+        const va = compareValue(a, column.fieldId);
+        const vb = compareValue(b, column.fieldId);
+        return 'number' in va && 'number' in vb
+          ? compareNullableNumber(va.number, vb.number)
+          : compareNullableString(
+              'string' in va ? va.string : null,
+              'string' in vb ? vb.string : null
+            );
+      };
+    }
+    return record;
+  }, [columns, hierarchyIndex, rollupByField, rollups.byId, businessCapabilitySchema]);
+
+  const { sorted, sort, toggleSort } = useTableSort<EntityRecord, string>(items, comparators, {
+    key: defaultSortKey,
     dir: 'asc'
   });
 
@@ -221,8 +244,48 @@ export const StrategyCapabilitiesScreen = () => {
       search: (previous: Record<string, unknown>) => previous
     });
 
-  // Default sort state is 'name', so no sort is treated the same as 'name' here.
-  const showTreeIndent = (sort?.key ?? 'name') === 'name';
+  // The Name column's tree indent only lines up with a hierarchical sort.
+  const showTreeIndent = (sort?.key ?? defaultSortKey) === '_name';
+
+  const columnLabel = (fieldId: string, label?: string): string =>
+    label ??
+    (fieldId === '_name'
+      ? 'Name'
+      : fieldId === '_level'
+        ? 'Level'
+        : fieldId === '_owner'
+          ? 'Owner'
+          : fieldId === '_apps'
+            ? 'Apps'
+            : (rollupByField.get(fieldId)?.label ?? fieldLabel(businessCapabilitySchema, fieldId)));
+
+  const isNumericColumn = (fieldId: string): boolean => {
+    if (fieldId === '_apps') return true;
+    const rollupField = rollupByField.get(fieldId);
+    if (rollupField) return rollupIsNumeric(rollupField);
+    const field = businessCapabilitySchema?.fields.find(f => f.id === fieldId);
+    return field?.type === 'number' || field?.type === 'currency';
+  };
+
+  const renderColumnValue = (entity: EntityRecord, fieldId: string): ReactNode => {
+    if (fieldId === '_level')
+      return strOrNull(entity.capability_level) ?? <span className="dim">—</span>;
+    if (fieldId === '_owner') return entity._owner?.name ?? <span className="dim">—</span>;
+    if (fieldId === '_apps') return rollupFor(entity._uid).appsCount ?? '—';
+    const rollupField = rollupByField.get(fieldId);
+    if (rollupField) {
+      const rollup = rollupFor(entity._uid);
+      return (
+        <CapabilityRollupValue
+          value={rollup.values[fieldId] ?? null}
+          currency={rollup.currency[fieldId] ?? null}
+          rollup={rollupField}
+          schema={businessCapabilitySchema}
+        />
+      );
+    }
+    return capabilityFieldValue(businessCapabilitySchema, entity, fieldId);
+  };
 
   const activeOwnerCount = search.owner ? 1 : 0;
   const clearAll = () => navigate({ ...currentRoute, search: () => ({}) });
@@ -333,18 +396,12 @@ export const StrategyCapabilitiesScreen = () => {
         <div style={{ marginLeft: 'auto' }}>
           <FilterDropdown
             label="Sort"
-            value={sort?.key ?? 'name'}
-            onChange={value => value !== sort?.key && toggleSort(value as SortKey)}
-            options={[
-              { value: 'name', label: 'Name' },
-              { value: 'level', label: 'Level' },
-              { value: 'owner', label: 'Owner' },
-              { value: 'maturity', label: 'Maturity' },
-              { value: 'gap', label: 'Gap' },
-              { value: 'investment', label: 'Investment' },
-              { value: 'risk', label: 'Risk' },
-              { value: 'apps', label: 'Apps' }
-            ]}
+            value={sort?.key ?? defaultSortKey}
+            onChange={value => value !== sort?.key && toggleSort(value)}
+            options={columns.map(column => ({
+              value: column.fieldId,
+              label: columnLabel(column.fieldId, column.label)
+            }))}
           />
         </div>
       </div>
@@ -374,79 +431,49 @@ export const StrategyCapabilitiesScreen = () => {
       <Table.Root scroll stickyHeader>
         <Table.Head>
           <Table.Row>
-            <Table.SortableHeaderCell sortKey="name" sort={sort} onSort={toggleSort}>
-              Name
-            </Table.SortableHeaderCell>
-            <Table.SortableHeaderCell sortKey="level" sort={sort} onSort={toggleSort}>
-              Level
-            </Table.SortableHeaderCell>
-            <Table.SortableHeaderCell sortKey="owner" sort={sort} onSort={toggleSort}>
-              Owner
-            </Table.SortableHeaderCell>
-            <Table.SortableHeaderCell sortKey="maturity" sort={sort} onSort={toggleSort}>
-              Maturity
-            </Table.SortableHeaderCell>
-            <Table.HeaderCell numeric>Target</Table.HeaderCell>
-            <Table.SortableHeaderCell sortKey="gap" sort={sort} onSort={toggleSort} numeric>
-              Gap
-            </Table.SortableHeaderCell>
-            <Table.SortableHeaderCell sortKey="investment" sort={sort} onSort={toggleSort} numeric>
-              Investment
-            </Table.SortableHeaderCell>
-            <Table.SortableHeaderCell sortKey="risk" sort={sort} onSort={toggleSort} numeric>
-              Risk
-            </Table.SortableHeaderCell>
-            <Table.SortableHeaderCell sortKey="apps" sort={sort} onSort={toggleSort} numeric>
-              Apps
-            </Table.SortableHeaderCell>
+            {columns.map(column => (
+              <Table.SortableHeaderCell
+                key={column.fieldId}
+                sortKey={column.fieldId}
+                sort={sort}
+                onSort={toggleSort}
+                numeric={column.fieldId !== '_name' && isNumericColumn(column.fieldId)}
+              >
+                {columnLabel(column.fieldId, column.label)}
+              </Table.SortableHeaderCell>
+            ))}
           </Table.Row>
         </Table.Head>
         <Table.Body>
           {sorted.length === 0 ? (
-            <Table.EmptyRow colSpan={9}>
+            <Table.EmptyRow colSpan={Math.max(1, columns.length)}>
               {capabilities.isLoading
                 ? 'Loading capabilities…'
                 : 'No capabilities match these filters.'}
             </Table.EmptyRow>
           ) : (
-            sorted.map(entity => {
-              const rollup = rollupFor(entity._uid);
-              const gap = formatGap(rollup.avgGap);
-              return (
-                <Table.Row key={entity._uid} onClick={() => openCapability(entity._publicId)}>
-                  <Table.NameCell
-                    title={entity._name}
-                    subtitle={entity._publicId}
-                    indentLevel={
-                      showTreeIndent ? levelNumber(strOrNull(entity.capability_level)) - 1 : 0
-                    }
-                  />
-                  <Table.Cell>
-                    {strOrNull(entity.capability_level) ?? <span className="dim">—</span>}
-                  </Table.Cell>
-                  <Table.Cell>{entity._owner?.name ?? <span className="dim">—</span>}</Table.Cell>
-                  <Table.Cell>
-                    <CapabilityMaturityBar maturity={rollup.avgMaturity} />
-                  </Table.Cell>
-                  <Table.Cell numeric className="dim">
-                    {rollup.avgMaturityTarget?.toFixed(1) ?? '—'}
-                  </Table.Cell>
-                  <Table.Cell numeric className={gap.className} style={gap.style}>
-                    {gap.text}
-                  </Table.Cell>
-                  <Table.Cell numeric>
-                    {rollup.sumAnnualInvestment == null
-                      ? '—'
-                      : formatCurrencyValue({
-                          amount: rollup.sumAnnualInvestment,
-                          currency: rollup.investmentCurrencyCode
-                        })}
-                  </Table.Cell>
-                  <Table.Cell numeric>{rollup.avgRisk?.toFixed(1) ?? '—'}</Table.Cell>
-                  <Table.Cell numeric>{rollup.appsCount ?? '—'}</Table.Cell>
-                </Table.Row>
-              );
-            })
+            sorted.map(entity => (
+              <Table.Row key={entity._uid} onClick={() => openCapability(entity._publicId)}>
+                {columns.map(column =>
+                  column.fieldId === '_name' ? (
+                    <Table.NameCell
+                      key={column.fieldId}
+                      title={entity._name}
+                      subtitle={entity._publicId}
+                      indentLevel={
+                        showTreeIndent
+                          ? levelNumber(strOrNull(entity.capability_level)) - 1
+                          : 0
+                      }
+                    />
+                  ) : (
+                    <Table.Cell key={column.fieldId} numeric={isNumericColumn(column.fieldId)}>
+                      {renderColumnValue(entity, column.fieldId)}
+                    </Table.Cell>
+                  )
+                )}
+              </Table.Row>
+            ))
           )}
         </Table.Body>
       </Table.Root>

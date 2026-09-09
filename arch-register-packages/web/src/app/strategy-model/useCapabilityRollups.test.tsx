@@ -5,7 +5,16 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { MetricRollupResponse } from '@arch-register/api-types/metricContract';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
+import type { RollupField } from '@arch-register/api-types/app/strategy-model/strategyModelViewConfig';
 import { useCapabilityRollups, type CapabilityTableRollup } from './useCapabilityRollups';
+
+const ROLLUPS: RollupField[] = [
+  { fieldId: 'maturity', aggregation: 'avg', format: 'decimal1', display: 'plain' },
+  { fieldId: 'maturity_target', aggregation: 'avg', format: 'decimal1', display: 'plain' },
+  { fieldId: 'gap', aggregation: 'avg', format: 'decimal1', display: 'plain' },
+  { fieldId: 'risk', aggregation: 'avg', format: 'decimal1', display: 'plain' },
+  { fieldId: 'annual_investment', aggregation: 'sum', format: 'currency', display: 'plain' }
+];
 
 const mocks = vi.hoisted(() => ({ rollup: vi.fn() }));
 
@@ -61,6 +70,7 @@ const Harness = ({
     'business_capability',
     'business-capability-supports-entity-rel',
     capabilities,
+    ROLLUPS,
     edges
   );
   return null;
@@ -132,20 +142,12 @@ describe('useCapabilityRollups', () => {
     }
 
     expect(latest?.byId.get('cap-1')).toMatchObject({
-      avgMaturity: 3,
-      avgMaturityTarget: 4,
-      avgGap: 1,
-      avgRisk: 2,
-      sumAnnualInvestment: 150000,
-      investmentCurrencyCode: 'USD',
+      values: { maturity: 3, maturity_target: 4, gap: 1, risk: 2, annual_investment: 150000 },
+      currency: { annual_investment: 'USD' },
       appsCount: 3
     });
     expect(latest?.byId.get('cap-2')).toMatchObject({
-      avgMaturity: 2,
-      avgMaturityTarget: 4,
-      avgGap: 2,
-      avgRisk: 1,
-      sumAnnualInvestment: 50000,
+      values: { maturity: 2, maturity_target: 4, gap: 2, risk: 1, annual_investment: 50000 },
       appsCount: 0
     });
     expect(latest?.isLoading).toBe(false);
@@ -211,12 +213,8 @@ describe('useCapabilityRollups', () => {
     }
 
     expect(latest?.byId.get('cap-3')).toMatchObject({
-      avgMaturity: 4,
-      avgMaturityTarget: 5,
-      avgGap: 1,
-      avgRisk: 2,
-      sumAnnualInvestment: 75000,
-      investmentCurrencyCode: 'EUR'
+      values: { maturity: 4, maturity_target: 5, gap: 1, risk: 2, annual_investment: 75000 },
+      currency: { annual_investment: 'EUR' }
     });
   });
 

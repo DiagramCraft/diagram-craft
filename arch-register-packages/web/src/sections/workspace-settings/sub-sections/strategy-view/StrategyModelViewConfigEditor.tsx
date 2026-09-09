@@ -199,7 +199,6 @@ export const StrategyModelViewConfigEditor = ({
           <Tabs.Trigger value="table">Table</Tabs.Trigger>
           <Tabs.Trigger value="rollups">Roll-ups</Tabs.Trigger>
           <Tabs.Trigger value="overlays">Map overlays</Tabs.Trigger>
-          <Tabs.Trigger value="heatmap">Heatmap</Tabs.Trigger>
           <Tabs.Trigger value="drawer">Detail drawer</Tabs.Trigger>
           <Tabs.Trigger value="overview">Overview</Tabs.Trigger>
         </Tabs.List>
@@ -227,15 +226,6 @@ export const StrategyModelViewConfigEditor = ({
             value={value}
             disabled={disabled}
             fieldChoices={numFields}
-            onChange={patch}
-          />
-        </Tabs.Content>
-        <Tabs.Content value="heatmap" style={{ height: 'auto' }}>
-          <HeatmapPanel
-            value={value}
-            disabled={disabled}
-            numFields={numFields}
-            selFields={selFields}
             onChange={patch}
           />
         </Tabs.Content>
@@ -409,6 +399,25 @@ const RollupsPanel = ({
               ))}
             </Select.Root>
           </Labeled>
+          <Labeled label="Table display">
+            <Select.Root
+              value={rollup.display}
+              disabled={disabled}
+              style={{ width: '8.5rem' }}
+              onChange={next =>
+                next &&
+                onChange({
+                  rollups: listOps.update(rollups, index, {
+                    display: next as RollupField['display']
+                  })
+                })
+              }
+            >
+              <Select.Item value="plain">Value</Select.Item>
+              <Select.Item value="bar">Bar</Select.Item>
+              <Select.Item value="delta">Signed delta</Select.Item>
+            </Select.Root>
+          </Labeled>
           <Labeled label="Label (optional)">
             <TextInput
               value={rollup.label ?? ''}
@@ -430,7 +439,8 @@ const RollupsPanel = ({
             rollups: listOps.add(rollups, {
               fieldId: choices[0]?.id ?? '',
               aggregation: 'avg',
-              format: 'decimal1'
+              format: 'decimal1',
+              display: 'plain'
             })
           })
         }
@@ -597,106 +607,6 @@ const OverlaysPanel = ({
           })
         }
       />
-    </div>
-  );
-};
-
-const HeatmapPanel = ({
-  value,
-  disabled,
-  numFields,
-  selFields,
-  onChange
-}: PanelProps & { numFields: FieldChoice[]; selFields: FieldChoice[] }) => {
-  const heatmap = value.heatmap;
-  const axisChoices = [...numFields, ...selFields.filter(f => !numFields.some(n => n.id === f.id))];
-  if (!heatmap) {
-    return (
-      <div className={styles.cardList}>
-        <div className={styles.empty}>No default heatmap configured.</div>
-        <AddButton
-          label="Configure default heatmap"
-          disabled={disabled || axisChoices.length < 2}
-          onClick={() =>
-            onChange({
-              heatmap: {
-                xFieldId: axisChoices[0]?.id ?? '',
-                yFieldId: axisChoices[1]?.id ?? axisChoices[0]?.id ?? '',
-                colorFieldId: null,
-                buckets: 5
-              }
-            })
-          }
-        />
-      </div>
-    );
-  }
-  return (
-    <div className={styles.cardList}>
-      <div className={styles.card}>
-        <div className={styles.cardBody}>
-          <Labeled label="X axis">
-            <FieldSelect
-              value={heatmap.xFieldId}
-              choices={axisChoices}
-              disabled={disabled}
-              onChange={xFieldId => onChange({ heatmap: { ...heatmap, xFieldId } })}
-            />
-          </Labeled>
-          <Labeled label="Y axis">
-            <FieldSelect
-              value={heatmap.yFieldId}
-              choices={axisChoices}
-              disabled={disabled}
-              onChange={yFieldId => onChange({ heatmap: { ...heatmap, yFieldId } })}
-            />
-          </Labeled>
-          <Labeled label="Colour by">
-            <Select.Root
-              value={heatmap.colorFieldId ?? ''}
-              disabled={disabled}
-              style={{ width: '14rem' }}
-              placeholder="Count of capabilities"
-              onChange={next =>
-                onChange({
-                  heatmap: { ...heatmap, colorFieldId: next && next.length > 0 ? next : null }
-                })
-              }
-            >
-              <Select.Item value="">Count of capabilities</Select.Item>
-              {numFields.map(field => (
-                <Select.Item key={field.id} value={field.id}>
-                  {field.label} · {field.id}
-                </Select.Item>
-              ))}
-            </Select.Root>
-          </Labeled>
-          <Labeled label="Buckets per axis">
-            <NumberInput
-              value={heatmap.buckets}
-              disabled={disabled}
-              style={{ width: '5rem' }}
-              onChange={buckets =>
-                buckets !== undefined &&
-                onChange({
-                  heatmap: { ...heatmap, buckets: Math.max(2, Math.min(6, Math.round(buckets))) }
-                })
-              }
-            />
-          </Labeled>
-        </div>
-        <div>
-          <Button
-            variant="ghost"
-            size="xs"
-            icon={<TbTrash size={13} />}
-            disabled={disabled}
-            onClick={() => onChange({ heatmap: null })}
-          >
-            Remove default heatmap
-          </Button>
-        </div>
-      </div>
     </div>
   );
 };

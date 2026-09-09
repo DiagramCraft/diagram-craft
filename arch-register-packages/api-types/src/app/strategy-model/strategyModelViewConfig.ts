@@ -21,12 +21,22 @@ export type NumberFormat = z.infer<typeof numberFormatSchema>;
 export const bandToneSchema = z.enum(['good', 'warn', 'bad']);
 export type BandTone = z.infer<typeof bandToneSchema>;
 
+/**
+ * How a roll-up value is drawn in a table cell:
+ * - `plain` — the formatted number.
+ * - `bar` — a red/amber/green filled track over the field's 0..max range, with the value beside it.
+ * - `delta` — a signed `+X.X` coloured by size; `≤ 0` (on or ahead of target) reads as a dash.
+ */
+export const rollupDisplaySchema = z.enum(['plain', 'bar', 'delta']);
+export type RollupDisplay = z.infer<typeof rollupDisplaySchema>;
+
 /** One roll-up metric: a numeric `business_capability` field aggregated over the containment subtree. */
 export const rollupFieldSchema = z.object({
   fieldId: z.string().min(1),
   aggregation: rollupAggregationSchema,
   label: z.string().min(1).optional(),
-  format: numberFormatSchema.default('decimal1')
+  format: numberFormatSchema.default('decimal1'),
+  display: rollupDisplaySchema.default('plain')
 });
 export type RollupField = z.infer<typeof rollupFieldSchema>;
 
@@ -63,14 +73,6 @@ export const tableColumnSchema = z.object({
 });
 export type TableColumn = z.infer<typeof tableColumnSchema>;
 
-export const heatmapConfigSchema = z.object({
-  xFieldId: z.string().min(1),
-  yFieldId: z.string().min(1),
-  colorFieldId: z.string().min(1).nullable().default(null),
-  buckets: z.number().int().min(2).max(6).default(4)
-});
-export type HeatmapConfig = z.infer<typeof heatmapConfigSchema>;
-
 export const overviewWidgetSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('countByLevel'), title: z.string().min(1) }),
   z.object({ kind: z.literal('countBySelect'), fieldId: z.string().min(1), title: z.string().min(1) }),
@@ -90,7 +92,6 @@ export const strategyModelViewConfigSchema = z
     tableColumns: z.array(tableColumnSchema).default([]),
     rollups: z.array(rollupFieldSchema).default([]),
     overlays: z.array(overlaySchema).default([]),
-    heatmap: heatmapConfigSchema.nullable().default(null),
     drawerFieldIds: z.array(z.string().min(1)).default([]),
     overviewWidgets: z.array(overviewWidgetSchema).default([])
   });
@@ -113,15 +114,22 @@ export const DEFAULT_STRATEGY_VIEW_CONFIG: StrategyModelViewConfig = {
     { fieldId: '_apps', label: 'Apps', visible: true }
   ],
   rollups: [
-    { fieldId: 'maturity', aggregation: 'avg', label: 'Avg maturity', format: 'decimal1' },
-    { fieldId: 'maturity_target', aggregation: 'avg', label: 'Avg target', format: 'decimal1' },
-    { fieldId: 'gap', aggregation: 'avg', label: 'Avg gap', format: 'decimal1' },
-    { fieldId: 'risk', aggregation: 'avg', label: 'Avg risk', format: 'decimal1' },
+    { fieldId: 'maturity', aggregation: 'avg', label: 'Maturity', format: 'decimal1', display: 'bar' },
+    {
+      fieldId: 'maturity_target',
+      aggregation: 'avg',
+      label: 'Target',
+      format: 'decimal1',
+      display: 'plain'
+    },
+    { fieldId: 'gap', aggregation: 'avg', label: 'Gap', format: 'decimal1', display: 'delta' },
+    { fieldId: 'risk', aggregation: 'avg', label: 'Risk', format: 'decimal1', display: 'plain' },
     {
       fieldId: 'annual_investment',
       aggregation: 'sum',
-      label: 'Annual investment',
-      format: 'currency'
+      label: 'Investment',
+      format: 'currency',
+      display: 'plain'
     }
   ],
   overlays: [
@@ -178,12 +186,6 @@ export const DEFAULT_STRATEGY_VIEW_CONFIG: StrategyModelViewConfig = {
       ]
     }
   ],
-  heatmap: {
-    xFieldId: 'criticality',
-    yFieldId: 'maturity',
-    colorFieldId: null,
-    buckets: 5
-  },
   drawerFieldIds: ['capability_type', 'value_stream', 'strategic_importance', 'investment_priority'],
   overviewWidgets: [
     { kind: 'countByLevel', title: 'Capabilities by level' },
@@ -198,7 +200,7 @@ export const DEFAULT_STRATEGY_VIEW_CONFIG: StrategyModelViewConfig = {
 export type ViewConfigSchemaField = { id: string; type: string; archived?: boolean };
 
 export type ViewConfigDiagnostic = {
-  surface: 'tableColumns' | 'rollups' | 'overlays' | 'heatmap' | 'drawerFieldIds' | 'overviewWidgets';
+  surface: 'tableColumns' | 'rollups' | 'overlays' | 'drawerFieldIds' | 'overviewWidgets';
   fieldId: string;
   message: string;
 };
@@ -264,22 +266,6 @@ export const resolveStrategyModelViewConfig = (
     return ok;
   });
 
-  let heatmap = base.heatmap;
-  if (heatmap) {
-    const missing = [heatmap.xFieldId, heatmap.yFieldId, heatmap.colorFieldId]
-      .filter((id): id is string => id != null)
-      .filter(id => !isUsableField(fields, id));
-    if (missing.length > 0) {
-      for (const fieldId of missing)
-        diagnostics.push({
-          surface: 'heatmap',
-          fieldId,
-          message: `Heatmap references missing field "${fieldId}".`
-        });
-      heatmap = null;
-    }
-  }
-
   const drawerFieldIds = base.drawerFieldIds.filter(fieldId => {
     const ok = isUsableField(fields, fieldId);
     if (!ok)
@@ -291,8 +277,10 @@ export const resolveStrategyModelViewConfig = (
     return ok;
   });
 
+  // Only `topGap` is validated against the capability schema — `countBySelect` typically targets a
+  // field on the objective schema, which is out of scope for this check.
   const overviewWidgets = base.overviewWidgets.filter(widget => {
-    if (widget.kind !== 'countBySelect' && widget.kind !== 'topGap') return true;
+    if (widget.kind !== 'topGap') return true;
     const ok = isUsableField(fields, widget.fieldId);
     if (!ok)
       diagnostics.push({
@@ -304,7 +292,7 @@ export const resolveStrategyModelViewConfig = (
   });
 
   return {
-    config: { tableColumns, rollups, overlays, heatmap, drawerFieldIds, overviewWidgets },
+    config: { tableColumns, rollups, overlays, drawerFieldIds, overviewWidgets },
     diagnostics
   };
 };

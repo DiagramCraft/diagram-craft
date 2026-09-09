@@ -1,67 +1,66 @@
 import { describe, expect, it } from 'vitest';
-import {
-  CAPABILITY_MAP_OVERLAYS,
-  overlayBand,
-  overlayColor,
-  overlayValue
-} from './capabilityMapOverlays';
+import type { Overlay } from '@arch-register/api-types/app/strategy-model/strategyModelViewConfig';
+import { overlayColor, overlayLegend, overlayTone, overlayValue } from './capabilityMapOverlays';
 import type { CapabilityTableRollup } from './useCapabilityRollups';
 
-const rollup = (over: Partial<CapabilityTableRollup> = {}): CapabilityTableRollup => ({
-  avgMaturity: null,
-  avgMaturityTarget: null,
-  avgGap: null,
-  avgRisk: null,
-  sumAnnualInvestment: null,
-  investmentCurrencyCode: null,
-  appsCount: null,
-  ...over
-});
+const rollup = (
+  values: Record<string, number | null> = {},
+  currency: Record<string, string | null> = {}
+): CapabilityTableRollup => ({ values, currency, appsCount: null });
+
+const maturityOverlay: Overlay = {
+  id: 'maturity',
+  label: 'Maturity',
+  source: 'rollup',
+  fieldId: 'maturity',
+  direction: 'higherBetter',
+  format: 'decimal1',
+  bands: [
+    { max: 2.5, tone: 'bad' },
+    { max: 3.5, tone: 'warn' },
+    { max: null, tone: 'good' }
+  ]
+};
+
+const investmentOverlay: Overlay = {
+  id: 'investment',
+  label: 'Investment',
+  source: 'rollup',
+  fieldId: 'annual_investment',
+  direction: 'lowerBetter',
+  format: 'currency',
+  bands: [
+    { max: 200_000, tone: 'good' },
+    { max: 600_000, tone: 'warn' },
+    { max: null, tone: 'bad' }
+  ]
+};
 
 describe('capabilityMapOverlays', () => {
-  it('exposes None plus the five roll-up dimensions', () => {
-    expect(CAPABILITY_MAP_OVERLAYS.map(o => o.id)).toEqual([
-      'none',
-      'maturity',
-      'gap',
-      'investment',
-      'risk',
-      'coverage'
+  it('bands a value low-to-high through its upper bounds', () => {
+    expect(overlayTone(maturityOverlay, rollup({ maturity: 1.5 }))).toBe('bad');
+    expect(overlayTone(maturityOverlay, rollup({ maturity: 3 }))).toBe('warn');
+    expect(overlayTone(maturityOverlay, rollup({ maturity: 4.2 }))).toBe('good');
+  });
+
+  it('returns null tone / undefined colour / dash value for missing data', () => {
+    expect(overlayTone(maturityOverlay, rollup())).toBeNull();
+    expect(overlayColor(maturityOverlay, rollup())).toBeUndefined();
+    expect(overlayValue(maturityOverlay, rollup())).toBeNull();
+  });
+
+  it('formats the tile value per the overlay format', () => {
+    expect(overlayValue(maturityOverlay, rollup({ maturity: 3.25 }))).toBe('3.3');
+    expect(
+      overlayValue(investmentOverlay, rollup({ annual_investment: 540_000 }))
+    ).toMatch(/540|541/);
+  });
+
+  it('builds a best-to-worst legend', () => {
+    expect(overlayLegend(maturityOverlay).map(entry => entry.color)).toEqual([
+      'var(--green)',
+      'var(--warning-fg)',
+      'var(--error-fg, #e05252)'
     ]);
-  });
-
-  it('bands maturity high-is-good', () => {
-    expect(overlayBand('maturity', rollup({ avgMaturity: 4.2 }))).toBe(0);
-    expect(overlayBand('maturity', rollup({ avgMaturity: 3 }))).toBe(1);
-    expect(overlayBand('maturity', rollup({ avgMaturity: 1.5 }))).toBe(2);
-  });
-
-  it('bands gap and risk high-is-bad', () => {
-    expect(overlayBand('gap', rollup({ avgGap: 0 }))).toBe(0);
-    expect(overlayBand('gap', rollup({ avgGap: 2 }))).toBe(2);
-    expect(overlayBand('risk', rollup({ avgRisk: 2 }))).toBe(0);
-    expect(overlayBand('risk', rollup({ avgRisk: 4 }))).toBe(2);
-  });
-
-  it('bands application coverage by count', () => {
-    expect(overlayBand('coverage', rollup({ appsCount: 0 }))).toBe(2);
-    expect(overlayBand('coverage', rollup({ appsCount: 2 }))).toBe(1);
-    expect(overlayBand('coverage', rollup({ appsCount: 5 }))).toBe(0);
-  });
-
-  it('returns null band / undefined color / null value for missing data', () => {
-    expect(overlayBand('maturity', rollup())).toBeNull();
-    expect(overlayColor('maturity', rollup())).toBeUndefined();
-    expect(overlayValue('maturity', rollup())).toBeNull();
-    expect(overlayColor('none', rollup({ avgMaturity: 4 }))).toBeUndefined();
-  });
-
-  it('formats the tile value per overlay', () => {
-    expect(overlayValue('maturity', rollup({ avgMaturity: 3.25 }))).toBe('3.3');
-    expect(overlayValue('gap', rollup({ avgGap: 1.2 }))).toBe('+1.2');
-    expect(overlayValue('gap', rollup({ avgGap: 0 }))).toBe('—');
-    expect(overlayValue('coverage', rollup({ appsCount: 3 }))).toBe('3');
-    expect(overlayValue('investment', rollup({ sumAnnualInvestment: 540_000 }))).toBe('$540k');
-    expect(overlayValue('investment', rollup({ sumAnnualInvestment: 1_800_000 }))).toBe('$1.8m');
   });
 });

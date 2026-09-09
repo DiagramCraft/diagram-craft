@@ -25,13 +25,13 @@ describe('strategyModelViewConfigSchema', () => {
   it('accepts an empty object and fills defaults', () => {
     const parsed = strategyModelViewConfigSchema.parse({});
     expect(parsed.tableColumns).toEqual([]);
-    expect(parsed.heatmap).toBeNull();
+    expect(parsed.overviewWidgets).toEqual([]);
   });
 
-  it('rejects an out-of-range bucket count', () => {
+  it('rejects an unknown roll-up aggregation', () => {
     expect(
       strategyModelViewConfigSchema.safeParse({
-        heatmap: { xFieldId: 'a', yFieldId: 'b', colorFieldId: null, buckets: 9 }
+        rollups: [{ fieldId: 'maturity', aggregation: 'median', format: 'number' }]
       }).success
     ).toBe(false);
   });
@@ -42,7 +42,7 @@ describe('resolveStrategyModelViewConfig', () => {
     const { config, diagnostics } = resolveStrategyModelViewConfig(null, seedFields);
     expect(diagnostics).toEqual([]);
     expect(config.rollups).toHaveLength(DEFAULT_STRATEGY_VIEW_CONFIG.rollups.length);
-    expect(config.heatmap).toEqual(DEFAULT_STRATEGY_VIEW_CONFIG.heatmap);
+    expect(config.overlays).toHaveLength(DEFAULT_STRATEGY_VIEW_CONFIG.overlays.length);
   });
 
   it('drops a roll-up whose field was archived and reports a diagnostic', () => {
@@ -58,15 +58,6 @@ describe('resolveStrategyModelViewConfig', () => {
     expect(config.rollups.map(r => r.fieldId)).toEqual(['maturity']);
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0]).toMatchObject({ surface: 'rollups', fieldId: 'retired_field' });
-  });
-
-  it('nulls the heatmap when an axis field is missing', () => {
-    const { config, diagnostics } = resolveStrategyModelViewConfig(
-      { heatmap: { xFieldId: 'criticality', yFieldId: 'gone', colorFieldId: null, buckets: 4 } },
-      seedFields
-    );
-    expect(config.heatmap).toBeNull();
-    expect(diagnostics.some(d => d.surface === 'heatmap' && d.fieldId === 'gone')).toBe(true);
   });
 
   it('keeps structural pseudo table columns', () => {

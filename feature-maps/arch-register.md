@@ -219,39 +219,54 @@
       until then, or while a section's own capability lookup is still loading, each section shows a
       capability-not-configured empty state instead of its content.
 
+        - @id:ar.strategy.view-config Alongside the schema bindings, workspace administrators configure how the
+          Business Capability attributes are presented across the application — from a "Capability views" editor on
+          the Capability Binding settings screen. Separate lists control the Capabilities table columns; the subtree
+          roll-up metrics (each a numeric field with an explicit average-or-sum aggregation, a number format, and a
+          table rendering — plain value, a red/amber/green bar, or a signed delta — driving the drawer stats, table
+          roll-up columns, and map overlays); the Capability map overlays (field or
+          roll-up source, direction, and colour-band thresholds); the extra detail-drawer attribute rows; and the
+          Overview tiles. Field pickers are populated from the bound
+          capability schema, so retiring a field in the schema editor drops it from every view (with an advisory
+          diagnostic); the configuration round-trips through workspace export/import. A workspace with no stored
+          configuration falls back to a built-in default that mirrors the seed schema fields.
+
         - @id:ar.strategy.overview The Overview section is the application's landing screen — where the app switcher
-          opens. It shows read-only summary tiles derived from the same entity and relation data as the other
-          sections: capability count broken down by level, objective count broken down by status, application
-          coverage (share of capabilities with at least one supporting application), an orphan-capability count
-          (capabilities no objective supports), and a short list of the largest maturity gaps. Each tile links into
-          the section behind it (Capabilities filtered by level, Strategy, Capability map, or Traceability's "No
-          strategy link" tab).
+          opens. It shows read-only summary tiles chosen by the workspace's view configuration
+          (@id:ar.strategy.view-config), derived from the same entity and relation data as the other sections:
+          capability count by level, objective count by a select field, application coverage (share of capabilities
+          with at least one supporting application), an orphan-capability count (capabilities no objective supports),
+          and top-N lists of the largest values of a capability field or roll-up. Each tile links into the section
+          behind it (Capabilities filtered by level, Strategy, Capability map, or Traceability's "No strategy link"
+          tab).
 
         - @id:ar.strategy.capability-map The Capability map section renders the Business Capability model as a
-          nested L1 → L2 → L3 grid over containment. A toolbar overlay selector colours the leaf tiles by one
-          rolled-up dimension (maturity, maturity gap, annual investment, risk, or application coverage) with a
-          legend; a search box dims tiles whose capability name does not match without removing them, and the
+          nested L1 → L2 → L3 grid over containment. A toolbar overlay selector colours the leaf tiles by one of the
+          workspace's configured overlays (@id:ar.strategy.view-config) — each a capability field or subtree roll-up
+          banded into heat colours — with a legend; a search box dims tiles whose capability name does not match
+          without removing them, and the
           sidebar's owner facet dims tiles the same way. Clicking a domain header (or a node in the sidebar's
           capability tree) focuses the grid on that subtree, with an "All domains" control to clear it (`focus`
           and `owner` are carried in the URL). Clicking a tile opens the capability's detail drawer at
           `strategy/map/$capabilityId`.
 
-        - @id:ar.strategy.capabilities The Capabilities section lists every Business Capability with subtree roll-up
-          columns (level, owner, a maturity-vs-target bar, gap, summed annual investment, risk, and a count of
-          directly supported applications), level and owner filters, and sortable columns. Rows deep-link to the
+        - @id:ar.strategy.capabilities The Capabilities section lists every Business Capability with columns chosen
+          by the workspace's view configuration (@id:ar.strategy.view-config) — capability fields, subtree roll-up
+          metrics, and structural columns such as level, owner, and supported-application count — plus level and
+          owner filters, and sortable columns. Rows deep-link to the
           capability's detail drawer at `strategy/capabilities/$capabilityId` (see below) and carry a separate "Open
           in Entities" action to the Home entity browser. The section's own primary sidebar swaps the app's usual
           section nav list for a capability hierarchy tree (clicking a node filters the table to that subtree) plus
           an owner facet with counts.
 
-          The drawer shows subtree roll-up stats (average maturity, maturity target, maturity gap, and risk; summed
-          annual investment; leaf count), attributes (type, level, owner, direct child count), direct children,
-          applications the capability directly supports ("Realized by"), and linked objectives and initiatives, with
-          a footer action to open the underlying record in Entities.
+          The drawer shows the configured subtree roll-up stats (@id:ar.strategy.view-config) plus a leaf count,
+          structural attributes (type, level, owner, direct child count) and any configured extra attribute rows,
+          direct children, applications the capability directly supports ("Realized by"), and linked objectives and
+          initiatives, with a footer action to open the underlying record in Entities.
 
         - @id:ar.strategy.heatmaps The Heatmaps section is deprioritized and not currently surfaced in the app rail
           or section nav; its route and placeholder screen are retained. The capability-map overlay control already
-          provides maturity, gap, investment, risk, and application-coverage heat colouring.
+          provides configurable heat colouring over any capability field or roll-up (@id:ar.strategy.view-config).
 
         - @id:ar.strategy.strategy The Strategy section is scoped to one objective at a time — chosen from the
           primary sidebar's objective list and shown in a header with its status, target date, owner, capability
@@ -342,10 +357,10 @@
           reference-model mapping (APQC PCF / BIAN / TM Forum eTOM) with a reference code — organised into
           presentation field groups (Maturity & Performance, Strategic Assessment, Investment & Risk, Lifecycle
           & Review, Reference Models) on the detail screen. Measures carry baseline, current, target, and
-          direction values for strategy roll-ups. A capability's
-          roll-up — average maturity, maturity target, gap, and risk; summed annual investment; and a leaf count —
-          is computed over its full recursive containment subtree using the generic metric roll-up engine
-          (@id:ar.entity-views.map).
+          direction values for strategy roll-ups. Which of these attributes each Strategy & Capability Modelling
+          surface shows, and how they are aggregated and coloured, is set per workspace (@id:ar.strategy.view-config);
+          the roll-up metrics it lists are computed over each capability's full recursive containment subtree using
+          the generic metric roll-up engine (@id:ar.entity-views.map).
 
         - @id:ar.entities.relations Users can create and inspect relationships between entities and navigate related,
           dependent, and referenced records. Alongside generic reference/containment relations, workspace admins can

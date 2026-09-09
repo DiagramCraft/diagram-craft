@@ -4,7 +4,16 @@ import { createRoot, type Root } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { MetricRollupResponse } from '@arch-register/api-types/metricContract';
+import type { RollupField } from '@arch-register/api-types/app/strategy-model/strategyModelViewConfig';
 import { useCapabilityRollup, type CapabilityRollup } from './useCapabilityRollup';
+
+const ROLLUPS: RollupField[] = [
+  { fieldId: 'maturity', aggregation: 'avg', format: 'decimal1', display: 'plain' },
+  { fieldId: 'maturity_target', aggregation: 'avg', format: 'decimal1', display: 'plain' },
+  { fieldId: 'gap', aggregation: 'avg', format: 'decimal1', display: 'plain' },
+  { fieldId: 'risk', aggregation: 'avg', format: 'decimal1', display: 'plain' },
+  { fieldId: 'annual_investment', aggregation: 'sum', format: 'currency', display: 'plain' }
+];
 
 const mocks = vi.hoisted(() => ({ rollup: vi.fn() }));
 
@@ -38,7 +47,7 @@ const resultFor = (
 let latest: CapabilityRollup | undefined;
 
 const Harness = ({ capabilityId }: { capabilityId: string | null }) => {
-  latest = useCapabilityRollup('ws-1', 'business_capability', capabilityId);
+  latest = useCapabilityRollup('ws-1', 'business_capability', capabilityId, ROLLUPS);
   return null;
 };
 
@@ -94,12 +103,8 @@ describe('useCapabilityRollup', () => {
     }
 
     expect(latest).toMatchObject({
-      avgMaturity: 3,
-      avgMaturityTarget: 4,
-      avgGap: 1,
-      avgRisk: 2,
-      sumAnnualInvestment: 150000,
-      investmentCurrencyCode: 'USD',
+      values: { maturity: 3, maturity_target: 4, gap: 1, risk: 2, annual_investment: 150000 },
+      currency: { annual_investment: 'USD' },
       leafCount: 2,
       sourceCount: 4,
       isLoading: false,
@@ -118,16 +123,7 @@ describe('useCapabilityRollup', () => {
       await Promise.resolve();
     });
 
-    expect(latest).toMatchObject({
-      avgMaturity: null,
-      avgMaturityTarget: null,
-      avgGap: null,
-      avgRisk: null,
-      sumAnnualInvestment: null,
-      investmentCurrencyCode: null,
-      leafCount: null,
-      sourceCount: 0
-    });
+    expect(latest).toMatchObject({ values: {}, currency: {}, leafCount: null, sourceCount: 0 });
     expect(mocks.rollup).not.toHaveBeenCalled();
   });
 });
