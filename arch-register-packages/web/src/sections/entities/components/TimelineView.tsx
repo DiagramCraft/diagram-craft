@@ -17,6 +17,7 @@ import { buildTimelineHorizonBands, collectTimelineEventDates } from './timeline
 import { useEntityBrowserTreeData } from './useEntityBrowserTreeData';
 import type { EntityRecord, TimelineViewData } from '@arch-register/api-types/entityContract';
 import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
+import type { FilterCondition } from '@arch-register/api-types/viewContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import type { Project } from '@arch-register/api-types/projectCrudContract';
@@ -54,6 +55,9 @@ type TimelineViewProps = EntityBrowserRowViewProps & {
   projectId?: string;
   projectScope: 'project' | 'all';
   q: string;
+  asOf?: string | null;
+  includePlannedChanges?: boolean | null;
+  conditions?: FilterCondition[];
   entityQuery?: EntityQuery | null;
   typeFilter: string | null;
   ownerFilter: string | null;
@@ -73,6 +77,9 @@ export const TimelineView = ({
   projectId,
   projectScope,
   q,
+  asOf,
+  includePlannedChanges,
+  conditions,
   entityQuery,
   typeFilter,
   ownerFilter,
@@ -147,6 +154,9 @@ export const TimelineView = ({
     projectId,
     projectScope,
     q,
+    conditions,
+    asOf,
+    includePlannedChanges,
     entityQuery,
     typeFilter,
     ownerFilter,

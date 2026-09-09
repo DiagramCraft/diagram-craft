@@ -116,6 +116,8 @@ const entityHandlers = {
       conditions: query.conditions,
       assessmentId: query.assessmentId,
       schemaIds: query.schemaIds,
+      asOf: query.asOf,
+      includePlannedChanges: query.includePlannedChanges,
       treeExpansion: input.query.treeExpansion,
       treeDepth: input.query.treeDepth
     });

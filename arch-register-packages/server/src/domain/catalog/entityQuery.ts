@@ -89,13 +89,29 @@ export const buildEntityQueryForExecution = (
   input: EntityListQueryParams,
   parsed: ParsedEntityQuery
 ): EntityQuery | null => {
-  const base: EntityQuery = input.entityQuery ?? {
-    ...filterConditionsToEntityQueryIR(parsed.schemaId, parsed.assessmentId, parsed.conditions),
-    ...(parsed.projectId ? { projectId: parsed.projectId } : {}),
-    ...(parsed.projectScope ? { projectScope: parsed.projectScope } : {}),
-    ...(parsed.asOf ? { asOf: parsed.asOf.toISOString() } : {}),
-    ...(parsed.asOf ? { includePlannedChanges: parsed.includePlannedChanges } : {})
-  };
+  const base: EntityQuery = input.entityQuery
+    ? {
+        ...input.entityQuery,
+        ...(parsed.projectId && input.entityQuery.projectId == null
+          ? { projectId: parsed.projectId }
+          : {}),
+        ...(input.projectScope != null && input.entityQuery.projectScope == null
+          ? { projectScope: parsed.projectScope }
+          : {}),
+        ...(parsed.asOf && input.entityQuery.asOf == null
+          ? { asOf: parsed.asOf.toISOString() }
+          : {}),
+        ...(parsed.asOf && input.entityQuery.includePlannedChanges == null
+          ? { includePlannedChanges: parsed.includePlannedChanges }
+          : {})
+      }
+    : {
+        ...filterConditionsToEntityQueryIR(parsed.schemaId, parsed.assessmentId, parsed.conditions),
+        ...(parsed.projectId ? { projectId: parsed.projectId } : {}),
+        ...(parsed.projectScope ? { projectScope: parsed.projectScope } : {}),
+        ...(parsed.asOf ? { asOf: parsed.asOf.toISOString() } : {}),
+        ...(parsed.asOf ? { includePlannedChanges: parsed.includePlannedChanges } : {})
+      };
 
   const extra: QueryNode[] = [];
   if (parsed.owner) {

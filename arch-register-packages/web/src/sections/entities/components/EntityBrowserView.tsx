@@ -42,6 +42,8 @@ type EntityBrowserViewData = {
   projectScope: 'project' | 'all';
   collectionId?: string | null;
   q: string;
+  asOf?: string;
+  includePlannedChanges?: boolean;
   typeFilter: string | null;
   ownerFilter: string | null;
   statusFilter: string | null;
@@ -110,6 +112,8 @@ export const EntityBrowserView = ({
   projectScope,
   collectionId,
   q,
+  asOf,
+  includePlannedChanges,
   typeFilter,
   ownerFilter,
   statusFilter,
@@ -189,6 +193,8 @@ export const EntityBrowserView = ({
           projectId={projectId}
           projectScope={projectScope}
           q={q}
+          asOf={asOf}
+          includePlannedChanges={includePlannedChanges}
           typeFilter={typeFilter}
           ownerFilter={ownerFilter}
           statusFilter={statusFilter}
@@ -265,10 +271,13 @@ export const EntityBrowserView = ({
           projectId={projectId}
           projectScope={projectScope}
           q={q}
+          asOf={asOf}
+          includePlannedChanges={includePlannedChanges}
           entityQuery={executionEntityQuery}
           typeFilter={typeFilter}
           ownerFilter={ownerFilter}
           statusFilter={statusFilter}
+          conditions={conditions}
           linkedEntityIds={linkedEntityIds}
           hideToolbar={hideToolbar}
         />
@@ -316,10 +325,13 @@ export const EntityBrowserView = ({
           projectId={projectId}
           projectScope={projectScope}
           q={q}
+          asOf={asOf}
+          includePlannedChanges={includePlannedChanges}
           entityQuery={executionEntityQuery}
           typeFilter={typeFilter}
           ownerFilter={ownerFilter}
           statusFilter={statusFilter}
+          conditions={conditions}
           schemaMap={schemaMap}
           onEntityClick={onEntityClick}
           onDelete={onDelete}

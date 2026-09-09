@@ -9,6 +9,7 @@ import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
+import type { FilterCondition } from '@arch-register/api-types/viewContract';
 import { entityMenuItems, projectEntityMenuItems } from './entityBrowserViewShared';
 import {
   isEntityInProject,
@@ -25,12 +26,16 @@ import {
 } from './entityDisplayFields';
 import { Table } from '../../../components/table/Table';
 import { EmptyState } from '../../../components/EmptyState';
+import { LoadingState } from '../../../components/LoadingState';
 
 export type TreeViewProps = {
   workspaceId: string;
   projectId?: string;
   projectScope: 'project' | 'all';
   q: string;
+  asOf?: string | null;
+  includePlannedChanges?: boolean | null;
+  conditions?: FilterCondition[];
   entityQuery?: EntityQuery | null;
   typeFilter: string | null;
   ownerFilter: string | null;
@@ -61,6 +66,9 @@ export const TreeView = ({
   projectId,
   projectScope,
   q,
+  asOf,
+  includePlannedChanges,
+  conditions,
   entityQuery,
   typeFilter,
   ownerFilter,
@@ -78,11 +86,19 @@ export const TreeView = ({
   responsesByEntity,
   onCountChange
 }: TreeViewProps) => {
-  const { treeNodes: nodes, treeEdges: edges } = useEntityBrowserTreeData({
+  const {
+    treeNodes: nodes,
+    treeEdges: edges,
+    isLoading,
+    isError
+  } = useEntityBrowserTreeData({
     workspaceId,
     projectId,
     projectScope,
     q,
+    conditions,
+    asOf,
+    includePlannedChanges,
     entityQuery,
     typeFilter,
     ownerFilter,
@@ -91,8 +107,9 @@ export const TreeView = ({
   });
 
   useEffect(() => {
+    if (isLoading || isError) return;
     onCountChange?.(nodes.filter(node => node._isMatch).length);
-  }, [nodes, onCountChange]);
+  }, [isError, isLoading, nodes, onCountChange]);
 
   const roots = useMemo(() => {
     const nodeMap = new Map<string, TreeItem>();
@@ -125,6 +142,19 @@ export const TreeView = ({
   const columns = getDisplayFieldIds('tree', config).map(
     id => displayFields.find(field => field.id === id) ?? { id, label: id, group: 'Fields' }
   );
+
+  if (isLoading) {
+    return <LoadingState text="Loading tree…" />;
+  }
+
+  if (isError) {
+    return (
+      <EmptyState
+        title="Tree data could not be loaded"
+        subtitle="Try again or adjust your search and filters."
+      />
+    );
+  }
 
   if (nodes.length === 0) {
     return (
