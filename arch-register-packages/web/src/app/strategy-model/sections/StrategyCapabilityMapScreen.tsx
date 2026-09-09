@@ -168,9 +168,7 @@ export const StrategyCapabilityMapScreen = () => {
       <div className={styles.header}>
         <Title
           title="Capability map"
-          chips={
-            !capabilities.isLoading && <span className={styles.count}>{items.length}</span>
-          }
+          chips={!capabilities.isLoading && <span className={styles.count}>{items.length}</span>}
           description="Business Capability model over its containment hierarchy. Records are edited on the entity."
         />
       </div>

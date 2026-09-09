@@ -238,8 +238,7 @@ const CapabilityMapSidebarContent = ({ workspaceSlug }: { workspaceSlug: string 
       search: (previous: Record<string, unknown>) => ({ ...previous, ...patch })
     });
 
-  const selectFocus = (id: string) =>
-    patchSearch({ focus: search.focus === id ? undefined : id });
+  const selectFocus = (id: string) => patchSearch({ focus: search.focus === id ? undefined : id });
   const toggleOwner = (id: string) => patchSearch({ owner: search.owner === id ? undefined : id });
 
   return (

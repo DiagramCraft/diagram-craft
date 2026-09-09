@@ -6,13 +6,7 @@ import type { CapabilityTableRollup } from './useCapabilityRollups';
  * overlay only decides which number to show on a tile and how to colour it. Mirrors the design
  * reference's `BCM_OVERLAYS` (`bcm-data.jsx`).
  */
-export type CapabilityMapOverlay =
-  | 'none'
-  | 'maturity'
-  | 'gap'
-  | 'investment'
-  | 'risk'
-  | 'coverage';
+export type CapabilityMapOverlay = 'none' | 'maturity' | 'gap' | 'investment' | 'risk' | 'coverage';
 
 export const CAPABILITY_MAP_OVERLAYS: {
   id: CapabilityMapOverlay;

@@ -34,7 +34,12 @@ vi.mock('../../../lib/orpcClient', () => ({
   }
 }));
 
-const capability = (uid: string, name: string, level: string, over: Record<string, unknown> = {}) => ({
+const capability = (
+  uid: string,
+  name: string,
+  level: string,
+  over: Record<string, unknown> = {}
+) => ({
   _uid: uid,
   _publicId: uid.toUpperCase(),
   _name: name,
@@ -119,7 +124,11 @@ describe('StrategyCapabilityMapScreen', () => {
       ]
     });
     mocks.metricsRollup.mockImplementation(
-      ({ body }: { body: { boxEntityIds: string[]; metric: { source: { fieldId?: string } } } }) => {
+      ({
+        body
+      }: {
+        body: { boxEntityIds: string[]; metric: { source: { fieldId?: string } } };
+      }) => {
         const fieldId = body.metric?.source?.fieldId;
         const value = fieldId === 'maturity' ? 4 : fieldId === 'risk' ? 2 : 1;
         return Promise.resolve({
@@ -187,8 +196,8 @@ describe('StrategyCapabilityMapScreen', () => {
     });
     await flush();
     const leafClass = (name: string) =>
-      [...container.querySelectorAll('button')].find(b => b.textContent?.includes(name))?.className ??
-      '';
+      [...container.querySelectorAll('button')].find(b => b.textContent?.includes(name))
+        ?.className ?? '';
     expect(leafClass('Contact Center')).not.toMatch(/leafDim/);
     expect(leafClass('Self Service')).toMatch(/leafDim/);
   });

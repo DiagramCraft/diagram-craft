@@ -181,7 +181,7 @@
   overflow: hidden;
 }
 
-.leaf[style*='--heat'] {
+.leaf[style*="--heat"] {
   background: color-mix(in srgb, var(--heat) 18%, var(--panel-bg));
   border-color: color-mix(in srgb, var(--heat) 34%, var(--panel-border));
 }
@@ -191,7 +191,7 @@
   background: var(--cmp-bg);
 }
 
-.leaf[style*='--heat']:hover {
+.leaf[style*="--heat"]:hover {
   background: color-mix(in srgb, var(--heat) 26%, var(--panel-bg));
 }
 
