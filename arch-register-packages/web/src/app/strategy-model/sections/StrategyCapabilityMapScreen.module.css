@@ -1,0 +1,213 @@
+.screen {
+  display: flex;
+  flex-direction: column;
+  padding: 20px 24px;
+  min-width: 0;
+}
+
+.header {
+  margin-bottom: 16px;
+}
+
+.count {
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.empty {
+  padding: 32px;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.search {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 240px;
+  padding: 3px 8px;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r);
+  background: var(--cmp-bg);
+  color: var(--text-muted);
+}
+
+.search input {
+  flex: 1;
+  border: none;
+  background: none;
+  outline: none;
+  color: var(--text-primary);
+  font-size: 12px;
+}
+
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 10.5px;
+  color: var(--text-muted);
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.legendSwatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+/* ---- Grid ---- */
+.map {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: 12px;
+  align-items: start;
+  padding-bottom: 24px;
+}
+
+.mapFocused {
+  grid-template-columns: 1fr;
+}
+
+/* Nesting reads by contrast, matching the design reference: L1 and L3 share the panel
+   background, L2 is recessed to the (darker) base background. */
+.domain {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r);
+  padding: 10px;
+}
+
+.domainHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 2px 10px;
+}
+
+.domainName {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.domainName:hover {
+  color: var(--accent-fg);
+}
+
+.domainMeta {
+  margin-left: auto;
+  font-size: 10.5px;
+  white-space: nowrap;
+  color: var(--text-muted);
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent-fg);
+  flex: none;
+}
+
+.dotSm {
+  width: 5px;
+  height: 5px;
+}
+
+.l2row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 8px;
+}
+
+.mapFocused .l2row {
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.l2 {
+  background: var(--base-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r);
+  padding: 8px;
+}
+
+.l2Head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  padding: 2px 2px 8px;
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.l2Name {
+  font-size: 12px;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.l3col {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.leaf {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  min-height: 30px;
+  padding: 6px 8px;
+  text-align: left;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-sm, 4px);
+  background: var(--panel-bg);
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.leaf[style*='--heat'] {
+  background: color-mix(in srgb, var(--heat) 18%, var(--panel-bg));
+  border-color: color-mix(in srgb, var(--heat) 34%, var(--panel-border));
+}
+
+.leaf:hover {
+  border-color: var(--accent-fg);
+  background: var(--cmp-bg);
+}
+
+.leaf[style*='--heat']:hover {
+  background: color-mix(in srgb, var(--heat) 26%, var(--panel-bg));
+}
+
+.leafDim {
+  opacity: 0.32;
+}
+
+.leafName {
+  font-size: 11.5px;
+  color: var(--text-primary);
+  line-height: 1.25;
+}
+
+.leafValue {
+  margin-left: auto;
+  font-size: 10.5px;
+  color: var(--text-primary);
+  white-space: nowrap;
+}

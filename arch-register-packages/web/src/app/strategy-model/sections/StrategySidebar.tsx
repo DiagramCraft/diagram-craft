@@ -13,11 +13,15 @@ import { resolveStrategyModelConfig } from '../strategyQueries';
 import { buildCapabilityTree, type CapabilityTreeItem } from '../capabilityTree';
 import {
   STRATEGY_CAPABILITIES_ID,
+  STRATEGY_CAPABILITY_MAP_ID,
   STRATEGY_RAIL_PATHS,
   STRATEGY_SECTIONS,
   type StrategyRailItemId
 } from '../strategySections';
-import type { CapabilitiesSearchParams } from '../../../routes/searchParams';
+import type {
+  CapabilitiesSearchParams,
+  CapabilityMapSearchParams
+} from '../../../routes/searchParams';
 import styles from '../../../shell/SidePanel.module.css';
 
 const CapabilityTreeRow = ({
@@ -177,6 +181,111 @@ const CapabilitiesSidebarContent = ({ workspaceSlug }: { workspaceSlug: string }
 };
 
 /**
+ * The Capability map section's own primary-sidebar content: an owner facet plus a capability
+ * hierarchy tree. Clicking a tree node focuses the grid on that capability's subtree (via the
+ * `focus` search param); selecting an owner dims non-matching tiles (via `owner`). Mirrors
+ * `CapabilitiesSidebarContent` above — the two sections drive their sidebars the same way.
+ */
+const CapabilityMapSidebarContent = ({ workspaceSlug }: { workspaceSlug: string }) => {
+  const navigate = useNavigate();
+  const search = useSearch({ strict: false }) as CapabilityMapSearchParams;
+  const { data: configurations } = useQuery(workspaceCapabilityConfigurationsQuery(workspaceSlug));
+  const strategyConfig = resolveStrategyModelConfig(configurations);
+  const businessCapabilitySchemaId = strategyConfig?.businessCapabilitySchemaId ?? null;
+
+  const { data: treeData } = useEntityTree(
+    workspaceSlug,
+    { schemaId: businessCapabilitySchemaId ?? undefined },
+    businessCapabilitySchemaId != null
+  );
+  const { data: capabilitiesData } = useQuery(
+    entitiesQuery(
+      workspaceSlug,
+      { schemaId: businessCapabilitySchemaId, view: 'summary', limit: 1000 },
+      businessCapabilitySchemaId != null
+    )
+  );
+
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const toggle = (id: string) =>
+    setExpandedIds(previous => {
+      const next = new Set(previous);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+
+  const tree = useMemo(
+    () => buildCapabilityTree(treeData?.nodes ?? [], treeData?.edges ?? []),
+    [treeData]
+  );
+
+  const capabilities = capabilitiesData?.items ?? [];
+  const ownerCounts = useMemo(() => {
+    const counts = new Map<string, { name: string; count: number }>();
+    for (const capability of capabilities) {
+      if (!capability._owner) continue;
+      const entry = counts.get(capability._owner.id) ?? { name: capability._owner.name, count: 0 };
+      entry.count++;
+      counts.set(capability._owner.id, entry);
+    }
+    return counts;
+  }, [capabilities]);
+
+  const patchSearch = (patch: Partial<CapabilityMapSearchParams>) =>
+    navigate({
+      to: STRATEGY_RAIL_PATHS[STRATEGY_CAPABILITY_MAP_ID],
+      params: { workspaceSlug },
+      search: (previous: Record<string, unknown>) => ({ ...previous, ...patch })
+    });
+
+  const selectFocus = (id: string) =>
+    patchSearch({ focus: search.focus === id ? undefined : id });
+  const toggleOwner = (id: string) => patchSearch({ owner: search.owner === id ? undefined : id });
+
+  return (
+    <>
+      <TreeRow
+        label="All domains"
+        testId="strategy-capability-map-all"
+        active={!search.focus}
+        onClick={() => patchSearch({ focus: undefined })}
+        trailing={<span className="dim mono">{capabilities.length}</span>}
+      />
+      <SidebarGroupLabel>Owner</SidebarGroupLabel>
+      {[...ownerCounts.entries()].map(([ownerId, { name, count }]) => (
+        <TreeRow
+          key={ownerId}
+          label={name}
+          testId={`strategy-capability-map-owner-${ownerId}`}
+          active={search.owner === ownerId}
+          onClick={() => toggleOwner(ownerId)}
+          trailing={<span className="dim mono">{count}</span>}
+        />
+      ))}
+      {ownerCounts.size === 0 && (
+        <div className={`${styles.emptyState} dim`}>No owners assigned.</div>
+      )}
+      <SidebarGroupLabel>Hierarchy</SidebarGroupLabel>
+      {tree.length === 0 ? (
+        <div className={`${styles.emptyState} dim`}>No capabilities yet.</div>
+      ) : (
+        tree.map(item => (
+          <CapabilityTreeRow
+            key={item._uid}
+            item={item}
+            depth={0}
+            activeId={search.focus ?? null}
+            expandedIds={expandedIds}
+            onToggle={toggle}
+            onSelect={selectFocus}
+          />
+        ))
+      )}
+    </>
+  );
+};
+
+/**
  * Section-dependent primary sidebar for the Strategy & Capability Modelling app: navigation
  * between the app's five rail sections, gated on the `strategy-model` capability configuration
  * (mirrors `../../business-glossary/sections/GlossarySidebar.tsx`'s `!enabled` empty state). The
@@ -202,6 +311,8 @@ export const StrategySidebar = ({
           <div className={`${styles.emptyState} dim`}>Strategy model is not enabled.</div>
         ) : activeSection === STRATEGY_CAPABILITIES_ID ? (
           <CapabilitiesSidebarContent workspaceSlug={workspaceSlug} />
+        ) : activeSection === STRATEGY_CAPABILITY_MAP_ID ? (
+          <CapabilityMapSidebarContent workspaceSlug={workspaceSlug} />
         ) : (
           <>
             <SidebarGroupLabel>Sections</SidebarGroupLabel>

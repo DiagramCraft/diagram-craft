@@ -4,7 +4,11 @@ import { createRoot, type Root } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { StrategySidebar } from './StrategySidebar';
-import { STRATEGY_CAPABILITIES_ID, STRATEGY_HEATMAPS_ID } from '../strategySections';
+import {
+  STRATEGY_CAPABILITIES_ID,
+  STRATEGY_CAPABILITY_MAP_ID,
+  STRATEGY_HEATMAPS_ID
+} from '../strategySections';
 
 const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
@@ -119,6 +123,49 @@ describe('StrategySidebar', () => {
     expect(container.textContent).toContain('Customer Management');
     expect(container.textContent).toContain('Team A');
     expect(container.textContent).not.toContain('Sections');
+  });
+
+  it('shows the owner facet and hierarchy for the Capability map section', async () => {
+    await act(async () => {
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <StrategySidebar workspaceSlug="ws-1" activeSection={STRATEGY_CAPABILITY_MAP_ID} />
+        </QueryClientProvider>
+      );
+    });
+    for (let i = 0; i < 5; i++) await flush();
+
+    expect(container.textContent).toContain('All domains');
+    expect(container.textContent).toContain('Hierarchy');
+    expect(container.textContent).toContain('Customer Management');
+    expect(container.textContent).not.toContain('Sections');
+  });
+
+  it('focuses the map on a capability when a map tree row is clicked', async () => {
+    await act(async () => {
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <StrategySidebar workspaceSlug="ws-1" activeSection={STRATEGY_CAPABILITY_MAP_ID} />
+        </QueryClientProvider>
+      );
+    });
+    for (let i = 0; i < 5; i++) await flush();
+
+    const row = [
+      ...container.querySelectorAll('[data-testid="strategy-capability-tree-cap-1"]')
+    ][0];
+    expect(row).toBeDefined();
+
+    await act(async () => {
+      row!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    expect(mocks.navigate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: '/$workspaceSlug/strategy/map',
+        params: { workspaceSlug: 'ws-1' }
+      })
+    );
   });
 
   it('filters to a capability subtree when a tree row is clicked', async () => {

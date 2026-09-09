@@ -219,8 +219,13 @@
       until then, or while a section's own capability lookup is still loading, each section shows a
       capability-not-configured empty state instead of its content.
 
-        - @id:ar.strategy.capability-map The Capability map section is scaffolded as a placeholder pending its
-          hierarchical grid and drill-down view, but can already deep-link to a capability's detail drawer at
+        - @id:ar.strategy.capability-map The Capability map section renders the Business Capability model as a
+          nested L1 → L2 → L3 grid over containment. A toolbar overlay selector colours the leaf tiles by one
+          rolled-up dimension (maturity, maturity gap, annual investment, risk, or application coverage) with a
+          legend; a search box dims tiles whose capability name does not match without removing them, and the
+          sidebar's owner facet dims tiles the same way. Clicking a domain header (or a node in the sidebar's
+          capability tree) focuses the grid on that subtree, with an "All domains" control to clear it (`focus`
+          and `owner` are carried in the URL). Clicking a tile opens the capability's detail drawer at
           `strategy/map/$capabilityId`.
 
         - @id:ar.strategy.capabilities The Capabilities section lists every Business Capability with subtree roll-up
