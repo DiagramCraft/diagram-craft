@@ -241,7 +241,12 @@ describe('business capability strategy seed data', () => {
     expect(
       capabilities.find(capability => capability.name === 'Account Management')?.data
     ).toMatchObject({
-      parent: [STRATEGY_IDS.businessCapabilities.selfServiceManagement]
+      parent: [STRATEGY_IDS.businessCapabilities.selfServiceManagement],
+      capability_type: 'supporting',
+      maturity: 3,
+      maturity_target: 4,
+      criticality: 3,
+      health: 'amber'
     });
     expect(seedRelations).toEqual(
       expect.arrayContaining([

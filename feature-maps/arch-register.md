@@ -335,8 +335,14 @@
           relation for architecture impact links. Relation endpoint constraints are authoritative and typed-relation
           fields provide projections on capability and objective schemas, so the hierarchy and strategic links can
           be browsed, edited, and queried. Business Capabilities also carry explicit maturity, maturity target,
-          annual investment, and 1–5 risk ratings, plus a derived maturity gap (target minus maturity), while
-          Measures carry baseline, current, target, and direction values for strategy roll-ups. A capability's
+          annual investment, and 1–5 risk ratings, plus a derived maturity gap (target minus maturity). They
+          additionally carry enterprise-architecture attributes for capability-based planning — capability type
+          (core / supporting / generic), value stream, stakeholders, business criticality (1–5), health (RAG),
+          strategic importance, investment priority (TIME), target state, last-assessed date, and an external
+          reference-model mapping (APQC PCF / BIAN / TM Forum eTOM) with a reference code — organised into
+          presentation field groups (Maturity & Performance, Strategic Assessment, Investment & Risk, Lifecycle
+          & Review, Reference Models) on the detail screen. Measures carry baseline, current, target, and
+          direction values for strategy roll-ups. A capability's
           roll-up — average maturity, maturity target, gap, and risk; summed annual investment; and a leaf count —
           is computed over its full recursive containment subtree using the generic metric roll-up engine
           (@id:ar.entity-views.map).
