@@ -172,6 +172,39 @@ describe('instantiateTemplate', () => {
       ])
     );
 
+    // High-value enterprise-architecture attributes added in #3202, each bound to a
+    // presentation-only field group.
+    expect(businessCapability?.fields).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'capability_type', type: 'select' }),
+        expect.objectContaining({ id: 'value_stream', type: 'text' }),
+        expect.objectContaining({ id: 'stakeholders', type: 'principal' }),
+        expect.objectContaining({
+          id: 'criticality',
+          type: 'number',
+          groupId: 'strategic-assessment'
+        }),
+        expect.objectContaining({ id: 'health', type: 'select', groupId: 'maturity-performance' }),
+        expect.objectContaining({ id: 'last_assessed', type: 'date', groupId: 'lifecycle-review' }),
+        expect.objectContaining({
+          id: 'reference_model',
+          type: 'select',
+          groupId: 'reference-models'
+        })
+      ])
+    );
+    expect(businessCapability?.groups).toEqual([
+      expect.objectContaining({ id: 'maturity-performance', name: 'Maturity & Performance' }),
+      expect.objectContaining({ id: 'strategic-assessment', name: 'Strategic Assessment' }),
+      expect.objectContaining({ id: 'investment-risk', name: 'Investment & Risk' }),
+      expect.objectContaining({ id: 'lifecycle-review', name: 'Lifecycle & Review' }),
+      expect.objectContaining({ id: 'reference-models', name: 'Reference Models' })
+    ]);
+    // Every field group is referenced by at least one field.
+    for (const group of businessCapability?.groups ?? []) {
+      expect(businessCapability?.fields.some(field => field.groupId === group.id)).toBe(true);
+    }
+
     expect(measure?.fields).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ id: 'baseline', type: 'number' }),

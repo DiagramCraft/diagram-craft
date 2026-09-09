@@ -912,7 +912,8 @@ const seedStrategyEntities: SeedEntityInput[] = [
     data: {
       description: 'Coordinate customer-facing capabilities that support retention and growth.',
       parent: [],
-      target_date: '2027-06-30'
+      target_date: '2027-06-30',
+      capability_type: 'core'
     },
     project_id: null,
     created_at: now,
@@ -936,7 +937,8 @@ const seedStrategyEntities: SeedEntityInput[] = [
     data: {
       description: 'Enable customers to resolve common needs without assisted support.',
       parent: [STRATEGY_IDS.businessCapabilities.customerEngagement],
-      target_date: '2027-03-31'
+      target_date: '2027-03-31',
+      capability_type: 'supporting'
     },
     project_id: null,
     created_at: now,
@@ -960,7 +962,15 @@ const seedStrategyEntities: SeedEntityInput[] = [
     data: {
       description: 'Support secure profile, subscription, and entitlement management.',
       parent: [STRATEGY_IDS.businessCapabilities.selfServiceManagement],
-      target_date: '2027-03-31'
+      target_date: '2027-03-31',
+      capability_type: 'supporting',
+      maturity: 3,
+      maturity_target: 4,
+      criticality: 3,
+      health: 'amber',
+      strategic_importance: 'medium',
+      investment_priority: 'invest',
+      last_assessed: '2026-06-30'
     },
     project_id: null,
     created_at: now,
@@ -984,7 +994,8 @@ const seedStrategyEntities: SeedEntityInput[] = [
     data: {
       description: 'Maintain dependable platform services through resilient operations.',
       parent: [],
-      target_date: '2026-12-31'
+      target_date: '2026-12-31',
+      capability_type: 'generic'
     },
     project_id: null,
     created_at: now,
@@ -1008,7 +1019,17 @@ const seedStrategyEntities: SeedEntityInput[] = [
     data: {
       description: 'Provide monitoring, alerting, and tracing for critical platform services.',
       parent: [STRATEGY_IDS.businessCapabilities.platformReliability],
-      target_date: '2026-09-30'
+      target_date: '2026-09-30',
+      capability_type: 'generic',
+      maturity: 2,
+      maturity_target: 4,
+      criticality: 4,
+      health: 'red',
+      strategic_importance: 'high',
+      investment_priority: 'invest',
+      last_assessed: '2026-06-30',
+      reference_model: 'apqc-pcf',
+      reference_code: '9.1.2'
     },
     project_id: null,
     created_at: now,

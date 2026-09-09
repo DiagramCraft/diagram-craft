@@ -87,7 +87,7 @@ export type TemplateDependencyDescriptor = SymbolicTemplateDependency & {
   }>;
 };
 
-export type SymbolicField =
+type SymbolicFieldVariant =
   | {
       id: string;
       name: string;
@@ -152,6 +152,18 @@ export type SymbolicField =
       requirementLevel?: 'required' | 'expected' | 'optional' | null;
     };
 
+// `groupId` (optional on every variant) names a schema-local, presentation-only field group
+// declared in `TemplateSchema.groups`. It is threaded straight onto the compiled `SchemaField`
+// and drives the default detail-screen layout (one panel per group); it never affects storage
+// or validation.
+export type SymbolicField = SymbolicFieldVariant & { groupId?: string };
+
+export type TemplateSchemaGroup = {
+  id: string;
+  name: string;
+  description?: string;
+};
+
 export type TemplateSchema = {
   symId: string;
   name: string;
@@ -160,6 +172,7 @@ export type TemplateSchema = {
   color: string;
   icon: string;
   fields: SymbolicField[];
+  groups?: TemplateSchemaGroup[];
   sharedFieldGroupIds?: SymbolicReference[];
   validationRules?: ValidationRule[];
 };
@@ -834,6 +847,88 @@ const strategyMeasureDirectionEnum = enumDefinition(
   'Strategy'
 );
 
+const capabilityTypeEnum = enumDefinition(
+  'capability-type',
+  'Capability Type',
+  [
+    { value: 'core', label: 'Core', description: 'Directly differentiates the business.' },
+    {
+      value: 'supporting',
+      label: 'Supporting',
+      description: 'Enables core capabilities but is not itself a differentiator.'
+    },
+    {
+      value: 'generic',
+      label: 'Generic / Enabling',
+      description: 'Commodity capability common to most organisations.'
+    }
+  ],
+  'Strategy'
+);
+
+const capabilityHealthEnum = enumDefinition(
+  'capability-health',
+  'Capability Health',
+  [
+    { value: 'green', label: 'Green', description: 'Performing to expectations.' },
+    { value: 'amber', label: 'Amber', description: 'Some concerns; watch closely.' },
+    { value: 'red', label: 'Red', description: 'Underperforming; needs intervention.' }
+  ],
+  'Strategy'
+);
+
+const strategicImportanceEnum = enumDefinition(
+  'strategic-importance',
+  'Strategic Importance',
+  [
+    { value: 'low', label: 'Low' },
+    { value: 'medium', label: 'Medium' },
+    { value: 'high', label: 'High' },
+    { value: 'critical', label: 'Critical' }
+  ],
+  'Strategy'
+);
+
+const investmentPriorityEnum = enumDefinition(
+  'investment-priority',
+  'Investment Priority',
+  [
+    { value: 'invest', label: 'Invest', description: 'Grow and improve the capability.' },
+    { value: 'tolerate', label: 'Tolerate', description: 'Keep running with minimal spend.' },
+    { value: 'migrate', label: 'Migrate', description: 'Re-platform or consolidate.' },
+    { value: 'eliminate', label: 'Eliminate', description: 'Retire or divest.' }
+  ],
+  'Strategy'
+);
+
+const capabilityReferenceModelEnum = enumDefinition(
+  'capability-reference-model',
+  'Capability Reference Model',
+  [
+    { value: 'apqc-pcf', label: 'APQC PCF' },
+    { value: 'bian', label: 'BIAN' },
+    { value: 'tm-forum-etom', label: 'TM Forum eTOM' },
+    { value: 'custom', label: 'Custom / Internal' }
+  ],
+  'Strategy'
+);
+
+// Business Capability carries the high-value enterprise-architecture attributes for
+// capability-based planning (issue #3202). Intent of the non-obvious ones:
+//   - capability_type    core / supporting / generic — differentiation, drives portfolio focus
+//   - value_stream       free text; the value stream or domain the capability serves
+//   - stakeholders       accountable/interested people beyond the owning team
+//   - maturity/…_target  current vs. desired maturity (1-5); `gap` is the derived delta
+//   - health             RAG performance rating, independent of maturity
+//   - criticality        1-5 business criticality; paired with maturity for heatmaps
+//   - strategic_importance / investment_priority  planning stance (investment_priority = TIME model)
+//   - target_state       narrative of the aspired end state
+//   - last_assessed      date the capability was last formally reviewed
+//   - reference_model/_code  mapping to an external framework (APQC PCF, BIAN, TM Forum eTOM)
+// Identity (name, code), description, owner, lifecycle, tags and change history come from
+// built-in entity metadata; supported applications/systems/data/etc. come from the existing
+// `supported_entities` (Business Capability Supports Entity) relation. Fields are organised
+// into presentation-only `groups` that the default detail layout renders as panels.
 const strategySchemas: TemplateSchema[] = [
   {
     symId: 'business_capability',
@@ -851,11 +946,14 @@ const strategySchemas: TemplateSchema[] = [
         minCount: 0,
         maxCount: 1
       },
-      { id: 'target_date', name: 'Target Date', type: 'date' },
-      { id: 'maturity', name: 'Maturity', type: 'number', min: 1, max: 5 },
-      { id: 'maturity_target', name: 'Maturity Target', type: 'number', min: 1, max: 5 },
-      { id: 'annual_investment', name: 'Annual Investment', type: 'currency' },
-      { id: 'risk', name: 'Risk', type: 'number', min: 1, max: 5 },
+      {
+        id: 'capability_type',
+        name: 'Capability Type',
+        type: 'select',
+        enumId: 'capability-type',
+        requirementLevel: 'optional'
+      },
+      { id: 'value_stream', name: 'Value Stream', type: 'text' },
       {
         id: 'capability_level',
         name: 'Capability Level',
@@ -865,9 +963,107 @@ const strategySchemas: TemplateSchema[] = [
         resultType: 'text'
       },
       {
+        id: 'stakeholders',
+        name: 'Stakeholders',
+        type: 'principal',
+        minCardinality: 0,
+        maxCardinality: -1,
+        requirementLevel: 'optional'
+      },
+      {
+        id: 'maturity',
+        name: 'Maturity',
+        type: 'number',
+        min: 1,
+        max: 5,
+        groupId: 'maturity-performance'
+      },
+      {
+        id: 'maturity_target',
+        name: 'Maturity Target',
+        type: 'number',
+        min: 1,
+        max: 5,
+        groupId: 'maturity-performance'
+      },
+      {
+        id: 'health',
+        name: 'Health',
+        type: 'select',
+        enumId: 'capability-health',
+        requirementLevel: 'optional',
+        groupId: 'maturity-performance'
+      },
+      {
+        id: 'criticality',
+        name: 'Business Criticality',
+        type: 'number',
+        min: 1,
+        max: 5,
+        groupId: 'strategic-assessment'
+      },
+      {
+        id: 'strategic_importance',
+        name: 'Strategic Importance',
+        type: 'select',
+        enumId: 'strategic-importance',
+        requirementLevel: 'optional',
+        groupId: 'strategic-assessment'
+      },
+      {
+        id: 'investment_priority',
+        name: 'Investment Priority',
+        type: 'select',
+        enumId: 'investment-priority',
+        requirementLevel: 'optional',
+        groupId: 'strategic-assessment'
+      },
+      {
+        id: 'target_state',
+        name: 'Target State',
+        type: 'longtext',
+        groupId: 'strategic-assessment'
+      },
+      {
+        id: 'annual_investment',
+        name: 'Annual Investment',
+        type: 'currency',
+        groupId: 'investment-risk'
+      },
+      {
+        id: 'risk',
+        name: 'Risk',
+        type: 'number',
+        min: 1,
+        max: 5,
+        groupId: 'investment-risk'
+      },
+      { id: 'target_date', name: 'Target Date', type: 'date', groupId: 'lifecycle-review' },
+      {
+        id: 'last_assessed',
+        name: 'Last Assessed',
+        type: 'date',
+        groupId: 'lifecycle-review'
+      },
+      {
+        id: 'reference_model',
+        name: 'Reference Model',
+        type: 'select',
+        enumId: 'capability-reference-model',
+        requirementLevel: 'optional',
+        groupId: 'reference-models'
+      },
+      {
+        id: 'reference_code',
+        name: 'Reference Code',
+        type: 'text',
+        groupId: 'reference-models'
+      },
+      {
         id: 'gap',
         name: 'Maturity Gap',
         type: 'derived',
+        groupId: 'maturity-performance',
         // `==` in this expression language is strict (`===`), so `entity.maturity == null` only
         // catches an explicitly-stored `null` - a capability that simply never had `maturity` set
         // (common for group-level capabilities with no metrics of their own) leaves it `undefined`,
@@ -894,6 +1090,25 @@ const strategySchemas: TemplateSchema[] = [
         direction: 'in',
         minCount: 0,
         maxCount: -1
+      }
+    ],
+    groups: [
+      {
+        id: 'maturity-performance',
+        name: 'Maturity & Performance',
+        description: 'How well the capability performs today versus its target.'
+      },
+      {
+        id: 'strategic-assessment',
+        name: 'Strategic Assessment',
+        description: 'Importance, criticality, investment stance, and target state.'
+      },
+      { id: 'investment-risk', name: 'Investment & Risk' },
+      { id: 'lifecycle-review', name: 'Lifecycle & Review' },
+      {
+        id: 'reference-models',
+        name: 'Reference Models',
+        description: 'Mapping to an external capability framework (APQC PCF, BIAN, TM Forum eTOM).'
       }
     ]
   },
@@ -3029,7 +3244,15 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
     description:
       'Strategic objectives, outcomes, initiatives, measures, and Business Capabilities with nested hierarchy.',
     schemas: strategySchemas,
-    enums: [strategyStatusEnum, strategyMeasureDirectionEnum],
+    enums: [
+      strategyStatusEnum,
+      strategyMeasureDirectionEnum,
+      capabilityTypeEnum,
+      capabilityHealthEnum,
+      strategicImportanceEnum,
+      investmentPriorityEnum,
+      capabilityReferenceModelEnum
+    ],
     relationSchemas: strategyRelationSchemas,
     documentTypes: commonDocumentTypes,
     documentTemplates: commonDocumentTemplates,
@@ -3736,6 +3959,11 @@ const materializeTemplateFragments = (
   }
 
   const resolveField = (ownerId: string, field: SymbolicField): SchemaField => {
+    const resolved = resolveFieldInner(ownerId, field);
+    return field.groupId ? { ...resolved, groupId: field.groupId } : resolved;
+  };
+
+  const resolveFieldInner = (ownerId: string, field: SymbolicField): SchemaField => {
     if (field.type === 'reference') {
       return {
         id: field.id,
@@ -3919,6 +4147,11 @@ const materializeTemplateFragments = (
         color: source.color,
         icon: source.icon,
         fields: source.fields.map(field => resolveField(fragment.ownerId, field)),
+        groups: (source.groups ?? []).map(group => ({
+          id: group.id,
+          name: group.name,
+          ...(group.description ? { description: group.description } : {})
+        })),
         shared_field_group_links: (source.sharedFieldGroupIds ?? []).flatMap(groupId =>
           resolveDefinitionIds('fieldGroup', fragment.ownerId, groupId).map(resolvedId => ({
             groupId: resolvedId

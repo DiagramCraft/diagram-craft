@@ -180,6 +180,20 @@ const demoCapabilityMetrics: Partial<Record<string, DemoCapabilityMetrics>> = {
   }
 };
 
+// Explicit capability-type overrides for the demo leaf capabilities; anything not listed here
+// defaults to "supporting" in the `.map` below.
+const demoCapabilityTypes: Partial<Record<string, 'core' | 'supporting' | 'generic'>> = {
+  [DEMO_BUSINESS_CAPABILITY_IDS.productInformationManagement]: 'core',
+  [DEMO_BUSINESS_CAPABILITY_IDS.personalizationRecommendations]: 'core',
+  [DEMO_BUSINESS_CAPABILITY_IDS.searchNavigation]: 'core',
+  [DEMO_BUSINESS_CAPABILITY_IDS.checkoutOrchestration]: 'core',
+  [DEMO_BUSINESS_CAPABILITY_IDS.orderOrchestration]: 'core',
+  [DEMO_BUSINESS_CAPABILITY_IDS.paymentProcessing]: 'core',
+  [DEMO_BUSINESS_CAPABILITY_IDS.billingInvoicing]: 'generic',
+  [DEMO_BUSINESS_CAPABILITY_IDS.observabilityManagement]: 'generic',
+  [DEMO_BUSINESS_CAPABILITY_IDS.incidentProblemManagement]: 'generic'
+};
+
 // The "demo" bootstrap dataset's Business Capability tree: a three-level capability map for an
 // online retailer / e-commerce business (see #3020 follow-up). Loaded only when `pnpm bootstrap`
 // is run with `--dataset demo` (the default) - the original 5-capability tree in
@@ -1402,7 +1416,32 @@ export const demoBusinessCapabilityEntities: SeedEntityInput[] = [
   }
 ].map(entity => {
   const metrics = demoCapabilityMetrics[entity.id];
-  return metrics ? { ...entity, data: { ...entity.data, ...metrics } } : entity;
+  if (!metrics) return entity;
+  // Representative maturity-vs-criticality pairing for the heatmap use cases: criticality is
+  // driven up by risk exposure and by the size of the annual investment the business is willing
+  // to make. Health buckets the maturity gap. `capability_type` defaults to "supporting" with a
+  // few explicit "core"/"generic" overrides.
+  const criticality =
+    metrics.risk >= 4
+      ? 5
+      : metrics.annual_investment.amount >= 600000
+        ? 4
+        : metrics.annual_investment.amount >= 350000
+          ? 3
+          : 2;
+  const gap = metrics.maturity_target - metrics.maturity;
+  const health = gap <= 0 ? 'green' : gap >= 3 ? 'red' : 'amber';
+  return {
+    ...entity,
+    data: {
+      ...entity.data,
+      ...metrics,
+      criticality,
+      health,
+      capability_type: demoCapabilityTypes[entity.id] ?? 'supporting',
+      last_assessed: '2026-06-30'
+    }
+  };
 });
 
 // The demo dataset's Objective -> Outcome -> Initiative -> Measure chains, each supporting one
