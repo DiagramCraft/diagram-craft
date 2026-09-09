@@ -213,11 +213,19 @@
           views.
 
     - @id:ar.strategy Workspaces can optionally enable Strategy & Capability Modelling
-      (@id:ar.entities.strategy-model) as its own workspace application, with a dedicated left rail scoped to five
-      sections. The application is enabled only once the workspace's `strategy-model` capability configuration is
+      (@id:ar.entities.strategy-model) as its own workspace application, with a dedicated left rail. The application
+      is enabled only once the workspace's `strategy-model` capability configuration is
       valid (all five Business Capability, Objective, Outcome, Initiative, and Measure schema bindings resolved);
       until then, or while a section's own capability lookup is still loading, each section shows a
       capability-not-configured empty state instead of its content.
+
+        - @id:ar.strategy.overview The Overview section is the application's landing screen — where the app switcher
+          opens. It shows read-only summary tiles derived from the same entity and relation data as the other
+          sections: capability count broken down by level, objective count broken down by status, application
+          coverage (share of capabilities with at least one supporting application), an orphan-capability count
+          (capabilities no objective supports), and a short list of the largest maturity gaps. Each tile links into
+          the section behind it (Capabilities filtered by level, Strategy, Capability map, or Traceability's "No
+          strategy link" tab).
 
         - @id:ar.strategy.capability-map The Capability map section renders the Business Capability model as a
           nested L1 → L2 → L3 grid over containment. A toolbar overlay selector colours the leaf tiles by one

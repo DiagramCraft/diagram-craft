@@ -55,11 +55,12 @@ describe('appShellRegistry', () => {
     expect(getRailSection(GLOSSARY_RAIL_ITEM_ID)?.route).toBe(GLOSSARY_RAIL_PATH);
   });
 
-  it('registers Strategy & Capability Modelling as a capability-gated app owning four rail sections', () => {
+  it('registers Strategy & Capability Modelling as a capability-gated app owning five rail sections', () => {
     const strategy = getAppDefinition(STRATEGY_CAPABILITY_MAP_ID);
     expect(strategy.applicationId).toBe('strategy-model');
-    // Heatmaps (#3193) is deprioritized — its route is retained but it is not a rail section.
-    expect(railIds(STRATEGY_CAPABILITY_MAP_ID)).toHaveLength(4);
+    // Overview, Capability map, Capabilities, Strategy, Traceability. Heatmaps (#3193) is
+    // deprioritized — its route is retained but it is not a rail section.
+    expect(railIds(STRATEGY_CAPABILITY_MAP_ID)).toHaveLength(5);
     expect(railIds(STRATEGY_CAPABILITY_MAP_ID)).not.toContain(STRATEGY_HEATMAPS_ID);
     expect(strategy.enablement).toEqual({ capabilityType: 'strategy-model' });
     expect(getRailSection(STRATEGY_TRACEABILITY_ID)?.route).toBe(

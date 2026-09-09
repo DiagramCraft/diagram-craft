@@ -1,9 +1,10 @@
-import { TbGridDots, TbListDetails, TbTargetArrow, TbRoute } from 'react-icons/tb';
+import { TbLayoutDashboard, TbGridDots, TbListDetails, TbTargetArrow, TbRoute } from 'react-icons/tb';
 import { buildHomeBreadcrumbs } from '../../shell/breadcrumbBuilders';
 import type { WorkspaceShellContext } from '../../layouts/workspaceShellDescriptors';
 import type { AppDefinition, BreadcrumbItem } from '../../shell/shellTypes';
 import { StrategySidebar } from './sections/StrategySidebar';
 import {
+  STRATEGY_OVERVIEW_ID,
   STRATEGY_CAPABILITY_MAP_ID,
   STRATEGY_CAPABILITIES_ID,
   STRATEGY_STRATEGY_ID,
@@ -19,7 +20,8 @@ import {
  * The Heatmaps section (#3193) is deprioritized — its id, route, and screen are retained but
  * it is not surfaced in the rail or the section nav list.
  * Registered into core via `../../shell/appShellRegistry.ts`, mirroring
- * `../business-glossary/glossaryShell.tsx`.
+ * `../business-glossary/glossaryShell.tsx`. The Overview section is `sections[0]`, so it is where
+ * the app switcher lands (`appRootRoute`).
  */
 export const strategyAppDefinition: AppDefinition = {
   id: STRATEGY_CAPABILITY_MAP_ID,
@@ -29,6 +31,15 @@ export const strategyAppDefinition: AppDefinition = {
   tint: 'oklch(0.64 0.13 200)',
   description: 'Capability maps, strategy roll-ups, and traceability.',
   sections: [
+    {
+      // No `primarySidebar`: the Overview is a self-contained dashboard and the app's sections are
+      // already switchable from the outer icon rail, so the shell renders it full-width (same as
+      // the Traceability section below).
+      id: STRATEGY_OVERVIEW_ID,
+      icon: TbLayoutDashboard,
+      tooltip: 'Overview',
+      route: STRATEGY_RAIL_PATHS[STRATEGY_OVERVIEW_ID]
+    },
     {
       id: STRATEGY_CAPABILITY_MAP_ID,
       icon: TbGridDots,
@@ -78,9 +89,8 @@ export const buildStrategyBreadcrumbs = (
   ctx: WorkspaceShellContext,
   section: StrategyRailItemId
 ): BreadcrumbItem[] => [
-  // The app switcher already stands in for "Strategy & Capability Modelling"; each of its five
-  // sections carries its own crumb since (unlike Business Glossary) there is no single landing
-  // page for the app.
+  // The app switcher already stands in for "Strategy & Capability Modelling"; each of its
+  // sections carries its own crumb after the home crumbs — including the Overview landing section.
   ...buildHomeBreadcrumbs(ctx),
   {
     label: STRATEGY_SECTION_LABELS[section],

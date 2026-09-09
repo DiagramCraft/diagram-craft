@@ -1,6 +1,7 @@
 import { createRoute, type AnyRoute } from '@tanstack/react-router';
 import { buildStrategyBreadcrumbs } from './strategyShell';
 import {
+  STRATEGY_OVERVIEW_ID,
   STRATEGY_CAPABILITY_MAP_ID,
   STRATEGY_CAPABILITIES_ID,
   STRATEGY_HEATMAPS_ID,
@@ -17,6 +18,7 @@ import {
   validateTraceabilitySearch
 } from '../../routes/searchParams';
 import {
+  LazyStrategyOverviewScreen,
   LazyStrategyCapabilityMapScreen,
   LazyStrategyCapabilitiesScreen,
   LazyStrategyHeatmapsScreen,
@@ -30,6 +32,25 @@ const railPath = (path: string) => path.replace('/$workspaceSlug/', '');
 export const createStrategyWorkspaceRoutes = <TParentRoute extends AnyRoute>(
   workspaceRoute: TParentRoute
 ) => {
+  // The app's landing route (`/$workspaceSlug/strategy`, exact) — a summary dashboard. It is
+  // `strategyAppDefinition.sections[0]`, so `appRootRoute` opens here from the app switcher.
+  const overviewRoute = withWorkspaceShell(
+    createRoute({
+      getParentRoute: () => workspaceRoute,
+      path: railPath(STRATEGY_RAIL_PATHS[STRATEGY_OVERVIEW_ID]),
+      beforeLoad: ({ context, params }) =>
+        ensureApplicationAccess(
+          context.queryClient,
+          (params as unknown as { workspaceSlug: string }).workspaceSlug,
+          'strategy-model'
+        ),
+      component: LazyStrategyOverviewScreen
+    }),
+    ctx =>
+      railSectionShell(ctx, STRATEGY_OVERVIEW_ID, {
+        breadcrumbs: buildStrategyBreadcrumbs(ctx, STRATEGY_OVERVIEW_ID)
+      })
+  );
   const capabilityMapRoute = withWorkspaceShell(
     createRoute({
       getParentRoute: () => workspaceRoute,
@@ -203,6 +224,7 @@ export const createStrategyWorkspaceRoutes = <TParentRoute extends AnyRoute>(
   );
 
   return [
+    overviewRoute,
     capabilityMapRoute,
     capabilityMapDetailRoute,
     capabilitiesRoute,
