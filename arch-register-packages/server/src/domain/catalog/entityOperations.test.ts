@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { DatabaseAdapter } from '../../db/database';
-import type { EntityDbResult, SchemaDbResult } from './db/catalogDatabase';
+import type {
+  EntityDbResult,
+  PlannedEntityChangeDbResult,
+  SchemaDbResult
+} from './db/catalogDatabase';
 import type { AssessmentDbResult, AssessmentResponseDbResult } from '../project/db/projectDatabase';
 import { buildAuthorizationContext, type TeamRole } from '@arch-register/permissions';
 import {
@@ -245,7 +249,8 @@ describe('listEntities with asOf', () => {
       created_at: Date;
       base_state: Record<string, unknown>;
     }>,
-    projectLinks: Array<{ entity_id: string; created_at: Date }> = []
+    projectLinks: Array<{ entity_id: string; created_at: Date }> = [],
+    plannedChanges: PlannedEntityChangeDbResult[] = []
   ) => {
     const listEntityVersionsAsOf = vi.fn(
       async (_workspace: string, asOf: Date, entityIds?: string[]) =>
@@ -278,12 +283,20 @@ describe('listEntities with asOf', () => {
         getSchema: vi.fn(async () => schema),
         listSchemaVersions: vi.fn(async () => []),
         listEntityVersionsAsOf,
-        listPlannedEntityChangesAsOf: vi.fn(async () => []),
+        listPlannedEntityChangesAsOf: vi.fn(async (_workspace: string, asOf: Date) =>
+          plannedChanges.filter(change => change.created_at <= asOf)
+        ),
         listEntityIdsWithVersionHistory: vi.fn(async () => []),
         getEntity: vi.fn(async () => null),
         listEntitiesPaginated: vi.fn(async () => [])
       },
       project: {
+        projects: {
+          listProjects: vi.fn(async () => [])
+        },
+        milestones: {
+          listMilestones: vi.fn(async () => [])
+        },
         projectEntities: {
           listProjectEntities: vi.fn(async () => []),
           listProjectEntityLinks: vi.fn(async () => projectLinks)
@@ -328,6 +341,92 @@ describe('listEntities with asOf', () => {
     });
 
     expect(result.map(r => r._uid)).toEqual(['entity-1']);
+  });
+
+  it('builds containment edges from the reconstructed state and honors planned changes', async () => {
+    const containmentSchema: SchemaDbResult = {
+      ...schema,
+      fields: [{ id: 'parent', name: 'Parent', type: 'containment' } as never]
+    };
+    const asOf = new Date('2026-07-01T00:00:00.000Z');
+    const state = (id: string, name: string, data: Record<string, unknown>) => ({
+      id,
+      public_id: id,
+      slug: id,
+      namespace: 'default',
+      name,
+      description: '',
+      owner: null,
+      lifecycle: null,
+      target_lifecycle: null,
+      target_lifecycle_date: null,
+      tags: [],
+      links: [],
+      schema_id: 'schema-1',
+      data,
+      project_id: null,
+      created_at: '2026-01-01T00:00:00.000Z',
+      updated_at: '2026-01-01T00:00:00.000Z'
+    });
+    const plannedChildRename: PlannedEntityChangeDbResult = {
+      id: 'change-1',
+      workspace: 'ws-1',
+      entity_id: 'entity-2',
+      case_id: 'case-1',
+      case_revision_id: 'revision-1',
+      revision_number: 1,
+      project_id: null,
+      target_date: '2026-07-01',
+      milestone_id: null,
+      commit_message: null,
+      created_at: new Date('2026-01-02T00:00:00.000Z'),
+      created_by: 'user-1',
+      created_by_name: 'User',
+      proposed_state: { name: 'Planned child' }
+    };
+    const db = makeAsOfDb(
+      [
+        {
+          entity_id: 'entity-1',
+          status: 'autosave',
+          created_at: new Date('2026-01-01T00:00:00.000Z'),
+          base_state: state('entity-1', 'Historical parent', {})
+        },
+        {
+          entity_id: 'entity-2',
+          status: 'autosave',
+          created_at: new Date('2026-01-01T00:00:00.000Z'),
+          base_state: state('entity-2', 'Historical child', { parent: ['entity-1'] })
+        }
+      ],
+      [],
+      [plannedChildRename]
+    );
+    vi.mocked(db.catalog.listSchemas).mockResolvedValue([containmentSchema]);
+    vi.mocked(db.catalog.getSchema).mockResolvedValue(containmentSchema);
+
+    const withoutPlanned = await getEntityTree(db, 'ws-1', null, {
+      asOf,
+      includePlannedChanges: false,
+      q: 'Historical child'
+    });
+    const withPlanned = await getEntityTree(db, 'ws-1', null, {
+      asOf,
+      includePlannedChanges: true
+    });
+
+    expect(withoutPlanned.nodes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ _uid: 'entity-2', _name: 'Historical child', _isMatch: true }),
+        expect.objectContaining({ _uid: 'entity-1', _isMatch: false })
+      ])
+    );
+    expect(withoutPlanned.edges).toEqual([{ childId: 'entity-2', parentId: 'entity-1' }]);
+    expect(withPlanned.nodes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ _uid: 'entity-2', _name: 'Planned child' })
+      ])
+    );
   });
 });
 
@@ -757,5 +856,22 @@ describe('tree relation access control', () => {
       { childId: 'entity-2', parentId: 'entity-1' },
       { childId: 'entity-3', parentId: 'entity-2' }
     ]);
+  });
+
+  it('applies arbitrary conditions when no structured entity query is supplied', async () => {
+    const customSchema: SchemaDbResult = {
+      ...schema,
+      fields: [{ id: 'tier', name: 'Tier', type: 'text' } as never]
+    };
+    const matching = { ...makeEntity(1), data: { tier: 'gold' } };
+    const nonMatching = { ...makeEntity(2), data: { tier: 'silver' } };
+    const db = makeDb([matching, nonMatching]);
+    vi.mocked(db.catalog.listSchemas).mockResolvedValue([customSchema]);
+
+    const result = await getEntityTree(db, 'ws-1', null, {
+      conditions: [{ fieldId: 'tier', op: 'equals', value: 'gold' }]
+    });
+
+    expect(result.nodes.map(node => [node._uid, node._isMatch])).toEqual([['entity-1', true]]);
   });
 });

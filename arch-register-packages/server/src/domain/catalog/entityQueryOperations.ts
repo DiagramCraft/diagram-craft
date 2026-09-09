@@ -721,6 +721,61 @@ const collectEntities = async (
   return rows;
 };
 
+const collectHistoricalTreeEntities = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  authCtx: AuthorizationContext | null,
+  asOf: Date,
+  includePlannedChanges: boolean,
+  projectId: string | null,
+  projectScope: 'project' | 'all'
+): Promise<EntityDbResult[]> => {
+  let projectLinkIds = new Set<string>();
+  let candidateEntityIds: string[] | undefined;
+
+  if (projectId && projectScope === 'project') {
+    const links = await db.project.projectEntities.listProjectEntityLinks(workspace, projectId);
+    projectLinkIds = new Set(
+      links.filter(link => link.created_at <= asOf).map(link => link.entity_id)
+    );
+    const scopedCandidates = await listAllCatalogEntities(db, workspace, {
+      projectId,
+      projectScope
+    });
+    candidateEntityIds = [
+      ...new Set([
+        ...scopedCandidates.map(entity => entity.id),
+        ...links.map(link => link.entity_id)
+      ])
+    ];
+  }
+
+  const reconstructed = await reconstructEntitiesAsOf(
+    db,
+    workspace,
+    asOf,
+    authCtx,
+    candidateEntityIds,
+    includePlannedChanges
+  );
+  const hasWorkspaceWideView = authCtx != null && checker.hasWorkspaceWideEntityView(authCtx);
+
+  return reconstructed.filter(entity => {
+    if (
+      authCtx &&
+      !hasWorkspaceWideView &&
+      !checker.hasEntityPermission(authCtx, entity, 'view_entity')
+    ) {
+      return false;
+    }
+    if (!projectId) return entity.project_id == null;
+    if (projectScope === 'project') {
+      return entity.project_id === projectId || projectLinkIds.has(entity.id);
+    }
+    return entity.project_id == null || entity.project_id === projectId;
+  });
+};
+
 export const getTimelineMarkers = async (db: DatabaseAdapter, workspace: string) => {
   try {
     return await db.catalog.listTimelineMarkers(workspace);
@@ -813,15 +868,41 @@ export const getEntityTree = async (
     conditions?: FilterCondition[];
     assessmentId?: string | null;
     schemaIds?: string[] | null;
+    asOf?: Date | null;
+    includePlannedChanges?: boolean;
     treeExpansion?: 'ancestors' | 'both';
     treeDepth?: number | null;
   }
 ): Promise<TreeResponse> => {
   const normalized = normalizeEntityQueryOptions(options);
+  const entityQueryAsOf = normalized.entityQuery?.asOf
+    ? new Date(normalized.entityQuery.asOf)
+    : null;
+  const asOf =
+    normalized.asOf ??
+    (entityQueryAsOf && !Number.isNaN(entityQueryAsOf.getTime()) ? entityQueryAsOf : null);
+  const includePlannedChanges =
+    options.includePlannedChanges ??
+    normalized.entityQuery?.includePlannedChanges ??
+    normalized.includePlannedChanges;
+  const executionEntityQuery =
+    normalized.entityQuery && asOf
+      ? {
+          ...normalized.entityQuery,
+          ...(normalized.entityQuery.asOf == null ? { asOf: asOf.toISOString() } : {}),
+          ...(normalized.entityQuery.includePlannedChanges == null ? { includePlannedChanges } : {})
+        }
+      : normalized.entityQuery;
+  const executionOptions: NormalizedEntityQueryOptions = {
+    ...normalized,
+    entityQuery: executionEntityQuery,
+    asOf,
+    includePlannedChanges
+  };
   const treeExpansion = options.treeExpansion ?? 'ancestors';
   const descendantDepth = Math.max(0, Math.min(options.treeDepth ?? 20, 20));
   const {
-    entityQuery,
+    entityQuery: query,
     schemaId,
     owner,
     lifecycle,
@@ -832,18 +913,20 @@ export const getEntityTree = async (
     assessmentId,
     collectionId,
     schemaIds
-  } = normalized;
+  } = executionOptions;
   try {
     const { assessmentConditions, otherConditions } = splitAssessmentConditions(conditions);
     const [schemas, relationSchemas, allEntitiesRaw, projectEntities, joinedAssessment] =
       await Promise.all([
         db.catalog.listSchemas(workspace),
         db.relation.listRelationSchemas(workspace),
-        listAllCatalogEntities(db, workspace, {
-          projectId,
-          projectScope,
-          permissionScope: buildEntityViewPermissionScope(authCtx)
-        }),
+        asOf
+          ? Promise.resolve([] as EntityDbResult[])
+          : listAllCatalogEntities(db, workspace, {
+              projectId,
+              projectScope,
+              permissionScope: buildEntityViewPermissionScope(authCtx)
+            }),
         projectId
           ? db.project.projectEntities.listProjectEntities(workspace, projectId)
           : Promise.resolve([]),
@@ -855,14 +938,14 @@ export const getEntityTree = async (
           assessmentConditions.length > 0
         )
       ]);
-    const structuredMatchIds = entityQuery
+    const structuredMatchIds = query
       ? new Set(
           (
             await collectEntitiesFromIR(
               db,
               workspace,
               authCtx,
-              normalized,
+              executionOptions,
               schemas,
               projectEntities,
               collectionId && authCtx
@@ -874,20 +957,35 @@ export const getEntityTree = async (
         )
       : null;
     const projectEntityMap = new Map(projectEntities.map(entity => [entity.entity_id, entity]));
-    const scopedEntities =
-      authCtx == null || checker.hasWorkspaceWideEntityView(authCtx)
+    const scopedEntities = asOf
+      ? await collectHistoricalTreeEntities(
+          db,
+          workspace,
+          authCtx,
+          asOf,
+          includePlannedChanges,
+          projectId,
+          projectScope
+        )
+      : authCtx == null || checker.hasWorkspaceWideEntityView(authCtx)
         ? allEntitiesRaw
         : allEntitiesRaw.filter(entity =>
             checker.hasEntityPermission(authCtx, entity, 'view_entity')
           );
 
     const schemaById = new Map(schemas.map(schema => [schema.id, schema]));
+    const historicalSchemas = asOf
+      ? await resolveEntitySchemaCatalogAt(db, workspace, schemas, asOf)
+      : null;
+    const responseSchemaById = historicalSchemas ?? schemaById;
     const containmentFieldsBySchema = new Map<string, string[]>();
     for (const schema of schemas) {
-      const cFields = schema.fields
+      const responseSchema = responseSchemaById.get(schema.id) ?? null;
+      if (!responseSchema) continue;
+      const cFields = responseSchema.fields
         .filter(
-          (f): f is Extract<(typeof schema.fields)[number], { type: 'containment' }> =>
-            f.type === 'containment' && !isFieldViewRestricted(authCtx, schema, f.id)
+          (f): f is Extract<(typeof responseSchema.fields)[number], { type: 'containment' }> =>
+            f.type === 'containment' && !isFieldViewRestricted(authCtx, responseSchema, f.id)
         )
         .map(f => f.id);
       if (cFields.length > 0) containmentFieldsBySchema.set(schema.id, cFields);
@@ -993,7 +1091,16 @@ export const getEntityTree = async (
     return {
       nodes: [...allIncluded.values()].map(row => ({
         ...attachProjectLink(
-          toApiEntity(row, authCtx, schemaById.get(row.schema_id) ?? null),
+          asOf
+            ? toApiHistoricalEntity(
+                row,
+                authCtx,
+                responseSchemaById.get(row.schema_id) ?? null,
+                responseSchemaById.get(row.schema_id)
+                  ? computeEntityCompleteness(row, responseSchemaById.get(row.schema_id)!, authCtx)
+                  : row.completeness
+              )
+            : toApiEntity(row, authCtx, schemaById.get(row.schema_id) ?? null),
           row.id,
           projectId,
           projectEntityMap

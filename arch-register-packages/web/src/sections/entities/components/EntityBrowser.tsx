@@ -293,6 +293,8 @@ export const EntityBrowser = ({
         })
       : null);
   const executionEntityQuery = baseEntityQuery ? withLiveSearchText(baseEntityQuery, q) : null;
+  const effectiveProjectScope = asOf && projectId ? 'project' : projectScope;
+  const effectiveIncludePlannedChanges = projectId ? true : includePlannedChanges;
 
   useEffect(() => {
     if (projectId && assessmentsReady && joinAssessmentId && !effectiveJoinAssessmentId) {
@@ -362,7 +364,7 @@ export const EntityBrowser = ({
     pageIndex,
     pageSize,
     asOf,
-    includePlannedChanges: projectId ? true : includePlannedChanges,
+    includePlannedChanges: effectiveIncludePlannedChanges,
     activeViewConfig,
     onCountChange
   });
@@ -600,8 +602,10 @@ export const EntityBrowser = ({
               projects={projects}
               workspaceId={workspaceId}
               projectId={projectId}
-              projectScope={projectScope}
+              projectScope={effectiveProjectScope}
               collectionId={collectionId}
+              asOf={asOf}
+              includePlannedChanges={effectiveIncludePlannedChanges}
               diffTargetDate={asOf}
               diffIncludePlannedChanges={includePlannedChanges}
               diffIncludeOverdueChanges={includeOverdueChanges}
