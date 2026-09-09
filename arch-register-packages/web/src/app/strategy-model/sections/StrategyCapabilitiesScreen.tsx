@@ -14,6 +14,7 @@ import { entitiesQuery } from '../../../queries/entities';
 import { formatCurrencyValue } from '../../../utils/currencyFormat';
 import { CapabilityDrawer } from './CapabilityDrawer';
 import { CapabilityMaturityBar } from './CapabilityMaturityBar';
+import { formatGap } from './capabilityGap';
 import { useCapabilityRollups, type CapabilityTableRollup } from '../useCapabilityRollups';
 import { buildCapabilityTree, flattenCapabilityTree } from '../capabilityTree';
 import { workspaceCapabilityConfigurationsQuery } from '../../../queries/workspaceConfig';
@@ -35,21 +36,6 @@ const strOrNull = (value: unknown): string | null => (typeof value === 'string' 
 const levelNumber = (capabilityLevel: string | null): number => {
   const match = capabilityLevel?.match(/\d+/);
   return match ? Number(match[0]) : 1;
-};
-
-// Mirrors the design reference's Gap column (`BCMCapabilityList`, `bcm-views.jsx`): "on target" or
-// ahead of target (gap <= 0) reads as a plain dash rather than a signed number, and only a real
-// gap gets the "+X.X" treatment, colored by how large it is.
-const formatGap = (
-  gap: number | null
-): { text: string; className?: string; style?: { color: string } } => {
-  if (gap == null || gap <= 0) return { text: '—', className: 'dim' };
-  // `--error-fg`/`--warning-fg` are the real severity tokens (`packages/main/src/tokens.css`) —
-  // there's no dedicated "danger"/"success" token in this app, unlike the design reference.
-  if (gap >= 1.5)
-    return { text: `+${gap.toFixed(1)}`, style: { color: 'var(--error-fg, #e05252)' } };
-  if (gap >= 0.5) return { text: `+${gap.toFixed(1)}`, style: { color: 'var(--warning-fg)' } };
-  return { text: `+${gap.toFixed(1)}` };
 };
 
 const compareNullableNumber = (a: number | null, b: number | null): number => {

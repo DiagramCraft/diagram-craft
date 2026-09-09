@@ -13,6 +13,7 @@ import { railSectionShell } from '../../layouts/workspaceShellDescriptors';
 import {
   validateCapabilitiesSearch,
   validateCapabilityMapSearch,
+  validateStrategySearch,
   validateTraceabilitySearch
 } from '../../routes/searchParams';
 import {
@@ -126,6 +127,28 @@ export const createStrategyWorkspaceRoutes = <TParentRoute extends AnyRoute>(
     createRoute({
       getParentRoute: () => workspaceRoute,
       path: railPath(STRATEGY_RAIL_PATHS[STRATEGY_STRATEGY_ID]),
+      validateSearch: validateStrategySearch,
+      beforeLoad: ({ context, params }) =>
+        ensureApplicationAccess(
+          context.queryClient,
+          (params as unknown as { workspaceSlug: string }).workspaceSlug,
+          'strategy-model'
+        ),
+      component: LazyStrategyStrategyScreen
+    }),
+    ctx =>
+      railSectionShell(ctx, STRATEGY_STRATEGY_ID, {
+        breadcrumbs: buildStrategyBreadcrumbs(ctx, STRATEGY_STRATEGY_ID)
+      })
+  );
+  // See `capabilityMapDetailRoute` — same pattern: keeps the deep-linkable
+  // /strategy/strategy/$capabilityId URL for opening a capability from the "Capabilities this
+  // objective depends on" table as a slide-over on top of the Strategy screen.
+  const strategyDetailRoute = withWorkspaceShell(
+    createRoute({
+      getParentRoute: () => workspaceRoute,
+      path: `${railPath(STRATEGY_RAIL_PATHS[STRATEGY_STRATEGY_ID])}/$capabilityId`,
+      validateSearch: validateStrategySearch,
       beforeLoad: ({ context, params }) =>
         ensureApplicationAccess(
           context.queryClient,
@@ -186,6 +209,7 @@ export const createStrategyWorkspaceRoutes = <TParentRoute extends AnyRoute>(
     capabilitiesDetailRoute,
     heatmapsRoute,
     strategyRoute,
+    strategyDetailRoute,
     traceabilityRoute,
     traceabilityDetailRoute
   ] as const;

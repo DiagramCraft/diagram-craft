@@ -42,7 +42,9 @@ import {
   TbCertificate,
   TbBolt,
   TbPalette,
-  TbMicroscope
+  TbMicroscope,
+  TbTarget,
+  TbFlag
 } from 'react-icons/tb';
 import type { SchemaIconId } from '../lib/schemaPresentation';
 
@@ -89,7 +91,10 @@ const ICON_MAP: Record<SchemaIconId, React.ComponentType<{ size: number }>> = {
   'certificate': TbCertificate,
   'bolt': TbBolt,
   'palette': TbPalette,
-  'microscope': TbMicroscope
+  'microscope': TbMicroscope,
+  'target': TbTarget,
+  'flag': TbFlag,
+  'chart-bar': TbChartBar
 };
 
 type TypeBadgeProps = {

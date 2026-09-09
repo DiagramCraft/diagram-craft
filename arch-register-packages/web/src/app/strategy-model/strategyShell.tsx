@@ -1,4 +1,4 @@
-import { TbGridDots, TbListDetails, TbTemperature, TbTargetArrow, TbRoute } from 'react-icons/tb';
+import { TbGridDots, TbListDetails, TbTargetArrow, TbRoute } from 'react-icons/tb';
 import { buildHomeBreadcrumbs } from '../../shell/breadcrumbBuilders';
 import type { WorkspaceShellContext } from '../../layouts/workspaceShellDescriptors';
 import type { AppDefinition, BreadcrumbItem } from '../../shell/shellTypes';
@@ -6,7 +6,6 @@ import { StrategySidebar } from './sections/StrategySidebar';
 import {
   STRATEGY_CAPABILITY_MAP_ID,
   STRATEGY_CAPABILITIES_ID,
-  STRATEGY_HEATMAPS_ID,
   STRATEGY_STRATEGY_ID,
   STRATEGY_TRACEABILITY_ID,
   STRATEGY_RAIL_PATHS,
@@ -15,8 +14,10 @@ import {
 } from './strategySections';
 
 /**
- * Strategy & Capability Modelling's workspace-rail identity: its five rail-item ids (defined in
+ * Strategy & Capability Modelling's workspace-rail identity: its rail-item ids (defined in
  * `./strategySections.ts`, alongside `strategyAppDefinition` and its breadcrumb builder).
+ * The Heatmaps section (#3193) is deprioritized — its id, route, and screen are retained but
+ * it is not surfaced in the rail or the section nav list.
  * Registered into core via `../../shell/appShellRegistry.ts`, mirroring
  * `../business-glossary/glossaryShell.tsx`.
  */
@@ -26,7 +27,7 @@ export const strategyAppDefinition: AppDefinition = {
   name: 'Strategy & Capability Modelling',
   shortCode: 'SC',
   tint: 'oklch(0.64 0.13 200)',
-  description: 'Capability maps, heatmaps, strategy roll-ups, and traceability.',
+  description: 'Capability maps, strategy roll-ups, and traceability.',
   sections: [
     {
       id: STRATEGY_CAPABILITY_MAP_ID,
@@ -50,15 +51,6 @@ export const strategyAppDefinition: AppDefinition = {
           workspaceSlug={ctx.workspaceSlug}
           activeSection={STRATEGY_CAPABILITIES_ID}
         />
-      )
-    },
-    {
-      id: STRATEGY_HEATMAPS_ID,
-      icon: TbTemperature,
-      tooltip: 'Heatmaps',
-      route: STRATEGY_RAIL_PATHS[STRATEGY_HEATMAPS_ID],
-      primarySidebar: ctx => (
-        <StrategySidebar workspaceSlug={ctx.workspaceSlug} activeSection={STRATEGY_HEATMAPS_ID} />
       )
     },
     {

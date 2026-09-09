@@ -33,10 +33,12 @@ export const STRATEGY_SECTION_LABELS: Record<StrategyRailItemId, string> = {
   [STRATEGY_TRACEABILITY_ID]: 'Traceability'
 };
 
+// `STRATEGY_HEATMAPS_ID` is intentionally omitted — the Heatmaps section (#3193) is
+// deprioritized, so it is kept out of the rail and the section nav list. Its id, route
+// path, and label are retained above so the route still resolves and it can be re-added.
 export const STRATEGY_SECTIONS: { id: StrategyRailItemId; label: string }[] = [
   STRATEGY_CAPABILITY_MAP_ID,
   STRATEGY_CAPABILITIES_ID,
-  STRATEGY_HEATMAPS_ID,
   STRATEGY_STRATEGY_ID,
   STRATEGY_TRACEABILITY_ID
 ].map(id => ({ id, label: STRATEGY_SECTION_LABELS[id] }));
