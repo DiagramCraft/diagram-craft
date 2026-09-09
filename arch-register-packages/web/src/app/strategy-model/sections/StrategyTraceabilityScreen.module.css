@@ -1,0 +1,196 @@
+.screen {
+  display: flex;
+  flex-direction: column;
+  padding: 20px 24px;
+  min-width: 0;
+}
+
+.header {
+  margin-bottom: 16px;
+}
+
+.empty {
+  padding: 32px;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.tabCount {
+  margin-left: 6px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Path summary of the current Objective → Capability → Application selection. */
+.path {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin: 14px 0;
+  padding: 7px 10px;
+  background: var(--cmp-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  font-size: 12px;
+}
+
+.pathNode {
+  color: var(--text-primary);
+}
+
+.pathArrow {
+  color: var(--text-muted);
+}
+
+/* Three-column hop walker, with connector columns between them — ported from the design
+   reference's `.bcm-trace*` rules (`bcm.css`). */
+.walker {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 76px minmax(0, 1fr) 76px minmax(0, 1fr);
+  align-items: start;
+}
+
+.column {
+  min-width: 0;
+  background: var(--cmp-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  padding: 8px;
+}
+
+.link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 34px 10px 0;
+}
+
+.linkLabel {
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.linkArrow {
+  position: relative;
+  width: 100%;
+  height: 1px;
+  background: var(--accent-fg);
+}
+
+.linkArrow::after {
+  content: "";
+  position: absolute;
+  right: -1px;
+  top: -3.5px;
+  border-left: 6px solid var(--accent-fg);
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+}
+
+.linkSub {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.columnHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px 8px;
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.columnHead:not(:first-child) {
+  margin-top: 12px;
+}
+
+.count {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  padding: 7px 8px;
+  border: none;
+  background: none;
+  border-radius: 6px;
+  text-align: left;
+  cursor: pointer;
+  color: var(--text-primary);
+}
+
+.row:hover {
+  background: var(--cmp-bg-hover, var(--panel-border));
+}
+
+.rowActive {
+  background: var(--accent-bg, var(--cmp-bg));
+  box-shadow: inset 0 0 0 1px var(--accent-fg);
+}
+
+.rowStatic {
+  cursor: default;
+}
+
+.rowStatic:hover {
+  background: none;
+}
+
+.name {
+  min-width: 0;
+  flex: 1;
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rowMeta {
+  margin-left: auto;
+  font-size: 10.5px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.columnEmpty {
+  padding: 8px;
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+/* Orphan tab */
+.orphanLabel {
+  margin: 14px 0 8px;
+  font-size: 12px;
+  color: var(--text-primary);
+}
+
+@media (max-width: 1100px) {
+  .walker {
+    grid-template-columns: 1fr;
+  }
+
+  .link {
+    flex-direction: row;
+    justify-content: center;
+    padding: 8px 0;
+  }
+
+  .linkArrow {
+    width: 40px;
+  }
+}

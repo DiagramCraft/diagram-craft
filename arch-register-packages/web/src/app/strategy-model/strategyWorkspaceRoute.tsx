@@ -10,7 +10,11 @@ import {
 } from './strategySections';
 import { withWorkspaceShell } from '../../routes/workspace/workspaceShellRoute';
 import { railSectionShell } from '../../layouts/workspaceShellDescriptors';
-import { validateCapabilitiesSearch, validateCapabilityMapSearch } from '../../routes/searchParams';
+import {
+  validateCapabilitiesSearch,
+  validateCapabilityMapSearch,
+  validateTraceabilitySearch
+} from '../../routes/searchParams';
 import {
   LazyStrategyCapabilityMapScreen,
   LazyStrategyCapabilitiesScreen,
@@ -139,6 +143,28 @@ export const createStrategyWorkspaceRoutes = <TParentRoute extends AnyRoute>(
     createRoute({
       getParentRoute: () => workspaceRoute,
       path: railPath(STRATEGY_RAIL_PATHS[STRATEGY_TRACEABILITY_ID]),
+      validateSearch: validateTraceabilitySearch,
+      beforeLoad: ({ context, params }) =>
+        ensureApplicationAccess(
+          context.queryClient,
+          (params as unknown as { workspaceSlug: string }).workspaceSlug,
+          'strategy-model'
+        ),
+      component: LazyStrategyTraceabilityScreen
+    }),
+    ctx =>
+      railSectionShell(ctx, STRATEGY_TRACEABILITY_ID, {
+        breadcrumbs: buildStrategyBreadcrumbs(ctx, STRATEGY_TRACEABILITY_ID)
+      })
+  );
+  // See `capabilityMapDetailRoute` — same pattern: keeps the deep-linkable
+  // /strategy/traceability/$capabilityId URL for opening a capability as a slide-over on top of
+  // the walker.
+  const traceabilityDetailRoute = withWorkspaceShell(
+    createRoute({
+      getParentRoute: () => workspaceRoute,
+      path: `${railPath(STRATEGY_RAIL_PATHS[STRATEGY_TRACEABILITY_ID])}/$capabilityId`,
+      validateSearch: validateTraceabilitySearch,
       beforeLoad: ({ context, params }) =>
         ensureApplicationAccess(
           context.queryClient,
@@ -160,6 +186,7 @@ export const createStrategyWorkspaceRoutes = <TParentRoute extends AnyRoute>(
     capabilitiesDetailRoute,
     heatmapsRoute,
     strategyRoute,
-    traceabilityRoute
+    traceabilityRoute,
+    traceabilityDetailRoute
   ] as const;
 };

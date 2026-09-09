@@ -247,8 +247,12 @@
         - @id:ar.strategy.strategy The Strategy section is scaffolded as a placeholder pending objective, outcome,
           initiative, and measure views.
 
-        - @id:ar.strategy.traceability The Traceability section is scaffolded as a placeholder pending its
-          strategy-to-capability-to-application/system traceability view.
+        - @id:ar.strategy.traceability The Traceability section has two tabs. **Trace chain** is a three-column
+          hop walker — Objective → Capability → Application — walked one hop at a time over the Objective Supports
+          Business Capability and Business Capability Supports Entity typed relations, with a path summary of the
+          current selection and an initiatives sub-list for the selected objective. **No strategy link** lists the
+          capabilities that no objective supports. Selecting a capability opens the shared capability drawer;
+          selecting an application opens its record in Entities.
 
     - @id:ar.entities Users can maintain a structured catalog of architectural entities and their relationships.
 

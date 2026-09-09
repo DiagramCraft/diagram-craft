@@ -358,6 +358,22 @@ export const validateCapabilityMapSearch = (
   raw: Record<string, unknown>
 ): CapabilityMapSearchParams => parseSearchParams(capabilityMapSearchSchema, raw);
 
+// Strategy traceability params — the hop walker's column selection lives in the URL so a walked
+// Objective → Capability → Application path is deep-linkable, mirroring `focus` on the capability
+// map.
+const traceabilitySearchSchema = defineSearchParamSchema({
+  // 'chain' (the hop walker, default) | 'orphans' (the "no strategy link" list).
+  tab: stringCodec,
+  objective: stringCodec,
+  capability: stringCodec
+});
+
+export type TraceabilitySearchParams = SearchParamsFromSchema<typeof traceabilitySearchSchema>;
+
+export const validateTraceabilitySearch = (
+  raw: Record<string, unknown>
+): TraceabilitySearchParams => parseSearchParams(traceabilitySearchSchema, raw);
+
 // Home params
 const homeSearchSchema = defineSearchParamSchema({
   dashboard: stringCodec
