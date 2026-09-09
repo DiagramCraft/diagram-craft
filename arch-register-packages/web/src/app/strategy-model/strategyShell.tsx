@@ -71,16 +71,12 @@ export const strategyAppDefinition: AppDefinition = {
       )
     },
     {
+      // No `primarySidebar`: the Traceability screen is self-contained (objective/capability
+      // selection lives in its own columns), so the shell renders it full-width.
       id: STRATEGY_TRACEABILITY_ID,
       icon: TbRoute,
       tooltip: 'Traceability',
-      route: STRATEGY_RAIL_PATHS[STRATEGY_TRACEABILITY_ID],
-      primarySidebar: ctx => (
-        <StrategySidebar
-          workspaceSlug={ctx.workspaceSlug}
-          activeSection={STRATEGY_TRACEABILITY_ID}
-        />
-      )
+      route: STRATEGY_RAIL_PATHS[STRATEGY_TRACEABILITY_ID]
     }
   ],
   enablement: { capabilityType: 'strategy-model' }
