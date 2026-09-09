@@ -1,6 +1,16 @@
 import type { WorkspaceCapabilityConfiguration } from '@arch-register/api-types/workspaceCapabilityContract';
+import type { EntitySchema } from '@arch-register/api-types/schemaContract';
+import {
+  DEFAULT_STRATEGY_VIEW_CONFIG,
+  resolveStrategyModelViewConfig,
+  type StrategyModelViewConfig,
+  type ViewConfigDiagnostic,
+  type ViewConfigSchemaField
+} from '@arch-register/api-types/app/strategy-model/strategyModelViewConfig';
 
 const STRATEGY_CAPABILITY = 'strategy-model';
+
+export type { StrategyModelViewConfig } from '@arch-register/api-types/app/strategy-model/strategyModelViewConfig';
 
 export type StrategyModelConfig = {
   objectiveSchemaId: string;
@@ -77,4 +87,27 @@ export const resolveStrategyModelConfig = (
     objectiveSupportsBusinessCapabilityRelationSchemaId,
     businessCapabilitySupportsEntityRelationSchemaId
   };
+};
+
+/**
+ * Resolve the `strategy-model` capability's admin-configured view config (#3203) against the live
+ * `business_capability` schema, dropping references to fields that have been archived/removed.
+ * Falls back to {@link DEFAULT_STRATEGY_VIEW_CONFIG} when the workspace has no stored config.
+ */
+export const resolveStrategyViewConfig = (
+  capabilityConfigurations: readonly WorkspaceCapabilityConfiguration[] | undefined,
+  businessCapabilitySchema: EntitySchema | undefined
+): { config: StrategyModelViewConfig; diagnostics: ViewConfigDiagnostic[] } => {
+  const configuration = capabilityConfigurations?.find(
+    candidate => candidate.type === STRATEGY_CAPABILITY
+  );
+  const fields: ViewConfigSchemaField[] = (businessCapabilitySchema?.fields ?? []).map(field => ({
+    id: field.id,
+    type: field.type,
+    archived: 'archived' in field ? field.archived : undefined
+  }));
+  if (!businessCapabilitySchema) {
+    return { config: DEFAULT_STRATEGY_VIEW_CONFIG, diagnostics: [] };
+  }
+  return resolveStrategyModelViewConfig(configuration?.view_config ?? null, fields);
 };

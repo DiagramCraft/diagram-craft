@@ -137,7 +137,7 @@ export class SqliteWorkspaceDatabase extends SqliteDatabaseBase implements Works
 
   async listWorkspaceCapabilityConfigurations(workspace: string) {
     return this.all(
-      `SELECT id, workspace, type, bindings, created_at, updated_at
+      `SELECT id, workspace, type, bindings, view_config, created_at, updated_at
        FROM workspace_capability_configuration
        WHERE workspace = ?
        ORDER BY type, id`,
@@ -148,7 +148,7 @@ export class SqliteWorkspaceDatabase extends SqliteDatabaseBase implements Works
 
   async getWorkspaceCapabilityConfiguration(workspace: string, type: string) {
     return this.get(
-      `SELECT id, workspace, type, bindings, created_at, updated_at
+      `SELECT id, workspace, type, bindings, view_config, created_at, updated_at
        FROM workspace_capability_configuration
        WHERE workspace = ? AND type = ?`,
       [workspace, type],
@@ -159,16 +159,18 @@ export class SqliteWorkspaceDatabase extends SqliteDatabaseBase implements Works
   async upsertWorkspaceCapabilityConfiguration(input: WorkspaceCapabilityConfigurationDbCreate) {
     this.run(
       `INSERT INTO workspace_capability_configuration
-         (id, workspace, type, bindings, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?)
+         (id, workspace, type, bindings, view_config, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT(workspace, type) DO UPDATE SET
          bindings = excluded.bindings,
+         view_config = excluded.view_config,
          updated_at = excluded.updated_at`,
       [
         input.id,
         input.workspace,
         input.type,
         JSON.stringify(input.bindings),
+        input.view_config == null ? null : JSON.stringify(input.view_config),
         input.created_at.toISOString(),
         input.updated_at.toISOString()
       ]

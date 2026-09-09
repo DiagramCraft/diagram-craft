@@ -1,0 +1,113 @@
+.editor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  border-top: 1px solid var(--cmp-border);
+  padding-top: 1rem;
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.title {
+  font-weight: 600;
+}
+
+.sub {
+  color: var(--cmp-fg-dim, var(--secondary-fg));
+  font-size: 0.85rem;
+}
+
+.cardList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  border: 1px solid var(--cmp-border);
+  border-radius: var(--cmp-radius, 4px);
+  padding: 0.6rem 0.75rem;
+  background: var(--cmp-bg-alt, var(--secondary-bg, transparent));
+}
+
+.cardHead {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.cardTitle {
+  flex: 1 1 auto;
+  font-weight: 600;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cardActions {
+  display: flex;
+  gap: 0.1rem;
+  flex: 0 0 auto;
+}
+
+.cardBody {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  align-items: flex-end;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.fieldLabel {
+  font-size: 0.75rem;
+  color: var(--cmp-fg-dim, var(--secondary-fg));
+}
+
+.bands {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  width: 100%;
+  padding-top: 0.2rem;
+  border-top: 1px dashed var(--cmp-border);
+}
+
+.bandRow {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.empty {
+  color: var(--cmp-fg-dim, var(--secondary-fg));
+  font-size: 0.85rem;
+  font-style: italic;
+  margin-top: 0.4rem;
+}
+
+.diagnostics {
+  color: var(--warning-fg, #b26a00);
+  font-size: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.addRow {
+  margin-top: 0.4rem;
+}

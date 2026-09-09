@@ -16,11 +16,14 @@ import type {
   WorkspaceCapabilityBindings,
   WorkspaceCapabilityTargetKind
 } from '@arch-register/api-types/workspaceCapabilityContract';
+import type { StrategyModelViewConfig } from '@arch-register/api-types/app/strategy-model/strategyModelViewConfig';
 import {
   useDeleteWorkspaceCapabilityConfiguration,
   useUpdateWorkspaceCapabilityConfiguration,
   useWorkspaceCapabilityConfigurations
 } from '../../../hooks/useWorkspaceConfig';
+import { StrategyModelViewConfigEditor } from './strategy-view/StrategyModelViewConfigEditor';
+import { toEditableConfig, viewConfigDirty } from './strategy-view/strategyViewConfigState';
 import styles from './LifecycleSubSection.module.css';
 
 type CapabilityType = 'api-specification' | 'business-glossary' | 'retention' | 'strategy-model';
@@ -64,6 +67,7 @@ export const WorkspaceCapabilitiesSubSection = ({
   const configuration = configurations.find(item => item.type === activeTab);
   const definition = getWorkspaceCapabilityDefinition(activeTab);
   const [bindings, setBindings] = useState<WorkspaceCapabilityBindings>({});
+  const [viewConfig, setViewConfig] = useState<StrategyModelViewConfig | null>(null);
   const mutation = useUpdateWorkspaceCapabilityConfiguration(workspaceSlug, activeTab);
   const deleteMutation = useDeleteWorkspaceCapabilityConfiguration(workspaceSlug, activeTab);
 
@@ -72,24 +76,32 @@ export const WorkspaceCapabilitiesSubSection = ({
     [configuration?.bindings]
   );
 
+  const isStrategyModel = activeTab === 'strategy-model';
+
   useEffect(() => {
     setEnabled(configuration != null);
     setBindings(configuredBindings);
-  }, [configuredBindings, configuration]);
+    setViewConfig(isStrategyModel ? toEditableConfig(configuration?.view_config) : null);
+  }, [configuredBindings, configuration, isStrategyModel]);
 
   const dirty =
     enabled !== (configuration != null) ||
-    JSON.stringify(bindings) !== JSON.stringify(configuredBindings);
+    JSON.stringify(bindings) !== JSON.stringify(configuredBindings) ||
+    (isStrategyModel && viewConfig != null && viewConfigDirty(viewConfig, configuration?.view_config));
 
   const save = useCallback(async () => {
     if (!enabled || !definition) return;
-    await mutation.mutateAsync({ bindings });
-  }, [bindings, definition, enabled, mutation.mutateAsync]);
+    await mutation.mutateAsync({
+      bindings,
+      ...(isStrategyModel && viewConfig ? { viewConfig } : {})
+    });
+  }, [bindings, definition, enabled, isStrategyModel, mutation.mutateAsync, viewConfig]);
 
   const resetDraft = useCallback(() => {
     setEnabled(configuration != null);
     setBindings(configuredBindings);
-  }, [configuredBindings, configuration]);
+    setViewConfig(isStrategyModel ? toEditableConfig(configuration?.view_config) : null);
+  }, [configuredBindings, configuration, isStrategyModel]);
 
   useEffect(() => {
     onActionsChange(
@@ -295,9 +307,25 @@ export const WorkspaceCapabilitiesSubSection = ({
                   </div>
                 );
               })}
+              {isStrategyModel && enabled && viewConfig && (
+                <StrategyModelViewConfigEditor
+                  schema={schemas.find(
+                    schema => schema.id === bindings['business_capability']?.target.id
+                  )}
+                  value={viewConfig}
+                  disabled={mutation.isPending || deleteMutation.isPending}
+                  diagnostics={(configuration?.diagnostics ?? [])
+                    .filter(diagnostic => diagnostic.code === 'stale_view_field')
+                    .map(diagnostic => diagnostic.message)}
+                  onChange={setViewConfig}
+                />
+              )}
               {configuration && !configuration.valid && (
                 <div className={styles.capabilityUnknownFields}>
-                  {configuration.diagnostics.map(diagnostic => diagnostic.message).join(' ')}
+                  {configuration.diagnostics
+                    .filter(diagnostic => diagnostic.code !== 'stale_view_field')
+                    .map(diagnostic => diagnostic.message)
+                    .join(' ')}
                 </div>
               )}
             </div>

@@ -90,11 +90,15 @@ export type WorkspaceCapabilityConfigurationDbResult = {
   workspace: string;
   type: string;
   bindings: WorkspaceCapabilityBindings;
+  view_config: unknown | null;
   created_at: Date;
   updated_at: Date;
 };
 
-export type WorkspaceCapabilityConfigurationDbCreate = WorkspaceCapabilityConfigurationDbResult;
+export type WorkspaceCapabilityConfigurationDbCreate = Omit<
+  WorkspaceCapabilityConfigurationDbResult,
+  'view_config'
+> & { view_config?: unknown | null };
 
 export type WorkspaceApplicationAccessPolicyDbResult = {
   workspace: string;
@@ -212,6 +216,14 @@ export const workspaceMappers = {
     workspace: String(row['workspace']),
     type: String(row['type']),
     bindings: parseDatabaseJson(row['bindings'], {}, 'workspace_capability_configuration.bindings'),
+    view_config:
+      row['view_config'] == null
+        ? null
+        : parseDatabaseJson(
+            row['view_config'],
+            null,
+            'workspace_capability_configuration.view_config'
+          ),
     created_at: databaseDate(row['created_at']),
     updated_at: databaseDate(row['updated_at'])
   }),

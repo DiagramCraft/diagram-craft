@@ -38,7 +38,8 @@ export const workspaceCapabilityDiagnosticSchema = z.object({
     'unknown_binding',
     'unknown_target',
     'wrong_target_kind',
-    'invalid_field_mapping'
+    'invalid_field_mapping',
+    'stale_view_field'
   ]),
   bindingId: z.string().optional(),
   message: z.string()
@@ -49,6 +50,12 @@ export const workspaceCapabilityConfigurationSchema = z.object({
   workspace: z.string().describe('Parent workspace identifier'),
   type: workspaceCapabilityTypeSchema.describe('Integration-backed capability identifier'),
   bindings: workspaceCapabilityBindingsSchema,
+  view_config: z
+    .unknown()
+    .nullable()
+    .describe(
+      'Capability-specific presentation config (raw passthrough). For strategy-model this is a StrategyModelViewConfig.'
+    ),
   valid: z.boolean().describe('Whether all configured targets and field mappings are valid'),
   diagnostics: z
     .array(workspaceCapabilityDiagnosticSchema)
@@ -58,7 +65,11 @@ export const workspaceCapabilityConfigurationSchema = z.object({
 });
 
 export const workspaceCapabilityConfigurationInputSchema = z.object({
-  bindings: workspaceCapabilityBindingsSchema
+  bindings: workspaceCapabilityBindingsSchema,
+  viewConfig: z
+    .unknown()
+    .optional()
+    .describe('Capability-specific presentation config; validated per capability type on upsert')
 });
 
 export type WorkspaceCapabilityTargetKind = z.infer<typeof workspaceCapabilityTargetKindSchema>;

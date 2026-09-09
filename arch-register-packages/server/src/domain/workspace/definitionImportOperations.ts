@@ -143,6 +143,7 @@ type ImportableCapabilityConfiguration = {
   id: string;
   type: string;
   bindings: WorkspaceCapabilityBindings;
+  view_config?: unknown | null;
 };
 
 type ImportableSchemaPatch = {
@@ -2086,6 +2087,7 @@ export const executeDefinitionImport = async (
             workspace: ws,
             type: configuration.type,
             bindings,
+            view_config: configuration.view_config ?? null,
             created_at: now,
             updated_at: now
           });

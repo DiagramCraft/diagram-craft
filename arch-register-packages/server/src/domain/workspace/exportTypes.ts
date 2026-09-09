@@ -98,6 +98,7 @@ export type ExportConfig = {
     id: string;
     type: string;
     bindings: WorkspaceCapabilityBindings;
+    view_config?: unknown | null;
   }>;
 };
 
