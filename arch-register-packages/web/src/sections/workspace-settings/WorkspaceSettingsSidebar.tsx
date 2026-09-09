@@ -19,7 +19,8 @@ import {
   TbBolt,
   TbKey,
   TbClipboardCheck,
-  TbWorld
+  TbWorld,
+  TbApps
 } from 'react-icons/tb';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { TreeRow } from '../../components/TreeRow';
@@ -74,6 +75,7 @@ const SETTINGS_SECTIONS: SettingsNavItem[] = [
     group: 'Model'
   },
   { id: 'members', label: 'Members', icon: <TbUsers size={12} />, group: 'People' },
+  { id: 'applications', label: 'Applications', icon: <TbApps size={12} />, group: 'People' },
   { id: 'lifecycle-owners', label: 'Lifecycle', icon: <TbTag size={12} />, group: 'Model' },
   { id: 'teams', label: 'Teams', icon: <TbUsers size={12} />, group: 'People' },
   { id: 'roles', label: 'Roles & permissions', icon: <TbShieldLock size={12} />, group: 'People' },

@@ -1,15 +1,20 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type {
+  ApplicationAccessPolicyInput,
   TeamAssignmentInfo,
   WorkspaceTeamInput,
   SupportedCurrency,
   AssessmentType
 } from '@arch-register/api-types/workspaceConfigContract';
+import type { WorkspaceApplicationId } from '@arch-register/api-types/workspaceConfigContract';
 import type { WorkspaceCapabilityConfigurationInput } from '@arch-register/api-types/workspaceCapabilityContract';
 import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import { orpcClient } from '../lib/orpcClient';
 import {
   assessmentTypesQuery,
+  accessibleApplicationsQuery,
+  applicationAccessConfigurationQuery,
+  applicationAccessKeys,
   currenciesQuery,
   invalidateWorkspaceAnalyticsAfterConfigChange,
   lifecycleStatesQuery,
@@ -124,6 +129,57 @@ export const useSupportedCurrencies = (workspaceSlug: string, enabled = true) =>
 
 export const useWorkspaceCapabilityConfigurations = (workspaceSlug: string, enabled = true) =>
   useQuery(workspaceCapabilityConfigurationsQuery(workspaceSlug, enabled));
+
+export const useAccessibleApplications = (workspaceSlug: string, enabled = true) =>
+  useQuery(accessibleApplicationsQuery(workspaceSlug, enabled));
+
+export const useApplicationAccessConfiguration = (workspaceSlug: string, enabled = true) =>
+  useQuery(applicationAccessConfigurationQuery(workspaceSlug, enabled));
+
+export const useUpdateApplicationAccessPolicy = (workspaceId: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      applicationId,
+      policy
+    }: {
+      applicationId: Exclude<WorkspaceApplicationId, 'home'>;
+      policy: ApplicationAccessPolicyInput;
+    }) =>
+      orpcClient.config.applicationAccess.update({
+        params: { workspace: workspaceId, applicationId },
+        body: policy
+      }),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: applicationAccessKeys.accessible(workspaceId) }),
+        queryClient.invalidateQueries({
+          queryKey: applicationAccessKeys.configuration(workspaceId)
+        })
+      ]);
+    }
+  });
+};
+
+export const useResetApplicationAccessPolicy = (workspaceId: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (applicationId: Exclude<WorkspaceApplicationId, 'home'>) =>
+      orpcClient.config.applicationAccess.reset({
+        params: { workspace: workspaceId, applicationId }
+      }),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: applicationAccessKeys.accessible(workspaceId) }),
+        queryClient.invalidateQueries({
+          queryKey: applicationAccessKeys.configuration(workspaceId)
+        })
+      ]);
+    }
+  });
+};
 
 export const useUpdateWorkspaceCapabilityConfiguration = (workspaceId: string, type: string) => {
   const queryClient = useQueryClient();

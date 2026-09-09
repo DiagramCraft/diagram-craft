@@ -21,6 +21,17 @@ export const getRouteErrorMessage = (error: unknown) => {
       };
     }
 
+    if (
+      error.status === 404 &&
+      error.message === 'This application is not configured for the workspace'
+    ) {
+      return {
+        title: 'Application not available',
+        message: 'This application is not configured for the current workspace.',
+        details: error.message
+      };
+    }
+
     if (error.status !== undefined && error.status >= 500) {
       return {
         title: 'The server could not complete this request',

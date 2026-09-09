@@ -53,6 +53,14 @@ export type WorkspaceCapability =
   | 'artifact.content.view'
   | 'artifact.manage';
 
+export type ApplicationAccessMode = 'all_members' | 'selected';
+
+export type ApplicationAccessPolicy = {
+  mode: ApplicationAccessMode;
+  userIds: readonly string[];
+  teamIds: readonly string[];
+};
+
 export type EntityRole = 'editor' | 'contributor' | 'entity_admin';
 
 export type CatalogRecordAction = 'view' | 'edit' | 'admin';

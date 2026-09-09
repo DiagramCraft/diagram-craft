@@ -39,8 +39,10 @@
           that application's sections and re-skins the shell with its accent colour. An application may own several
           rail sections, each with its own icon, tooltip, route, and optionally its own primary sidebar. An
           application appears in the switcher only when enabled, which is governed by its backing workspace
-          capability configuration (managed from workspace settings). Breadcrumbs are relative to the active
-          application, which the switcher represents.
+          capability configuration (managed from workspace settings). Workspace administrators can separately
+          control application access for ordinary members with an all-members or selected-people-and-teams policy;
+          missing policies deny ordinary members by default while global administrators and workspace role managers
+          retain access. Breadcrumbs are relative to the active application, which the switcher represents.
 
         - @id:ar.workspace.home Users can use the workspace home to navigate to entities, projects, content, search,
           diagrams, and other primary work areas. The home screen shows a composable dashboard of widgets (stat metrics,
@@ -876,6 +878,11 @@
 
         - @id:ar.authorization.teams Administrators can create teams, manage memberships, and use team assignments in
           authorization decisions.
+
+        - @id:ar.authorization.application-access Workspace administrators can control access to each installed
+          optional application independently from workspace roles, granting all workspace members or selected people
+          and teams. Ordinary members must still have workspace view access; global administrators and workspace role
+          managers retain access, and removing a policy returns the application to administrator-only access.
 
         - @id:ar.authorization.project-scope Entities can be scoped to a single project, which excludes them from
           global listings and search while keeping them visible within that project's context.

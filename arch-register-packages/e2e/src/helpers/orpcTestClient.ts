@@ -62,6 +62,7 @@ export const createTestORPCClient = (baseUrl: string, auth?: string) => {
     views: applicationClient.views,
     collections: applicationClient.collections,
     workspaces: applicationClient.workspaces,
+    applications: applicationClient.applications,
     config: applicationClient.config,
     glossary: applicationClient.glossary,
     publicCatalogConfig: applicationClient.publicCatalogConfig,

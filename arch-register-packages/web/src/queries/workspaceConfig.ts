@@ -31,6 +31,31 @@ export const workspaceConfigKeys = {
     [...workspaceConfigKeys.all, 'capability-configurations', workspaceId] as const
 };
 
+export const applicationAccessKeys = {
+  all: ['application-access'] as const,
+  accessible: (workspaceId: string) =>
+    [...applicationAccessKeys.all, 'accessible', workspaceId] as const,
+  configuration: (workspaceId: string) =>
+    [...applicationAccessKeys.all, 'configuration', workspaceId] as const
+};
+
+export const accessibleApplicationsQuery = (workspaceId: string, enabled = true) =>
+  queryOptions({
+    queryKey: applicationAccessKeys.accessible(workspaceId),
+    queryFn: () => orpcClient.applications.accessible({ params: { workspace: workspaceId } }),
+    enabled: enabled && !!workspaceId,
+    staleTime: 0,
+    refetchOnWindowFocus: true
+  });
+
+export const applicationAccessConfigurationQuery = (workspaceId: string, enabled = true) =>
+  queryOptions({
+    queryKey: applicationAccessKeys.configuration(workspaceId),
+    queryFn: () => orpcClient.config.applicationAccess.list({ params: { workspace: workspaceId } }),
+    enabled: enabled && !!workspaceId,
+    staleTime: 30 * 1000
+  });
+
 export const lifecycleStatesQuery = (workspaceId: string, enabled = true) =>
   queryOptions({
     queryKey: workspaceConfigKeys.lifecycleStates(workspaceId),

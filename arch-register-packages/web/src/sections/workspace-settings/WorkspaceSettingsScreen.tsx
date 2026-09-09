@@ -26,6 +26,7 @@ import { AssessmentTypesSubSection } from './sub-sections/AssessmentTypesSubSect
 import { PublicCatalogSubSection } from './sub-sections/PublicCatalogSubSection';
 import { WorkspaceCapabilitiesSubSection } from './sub-sections/WorkspaceCapabilitiesSubSection';
 import { ConformanceSubSection } from './sub-sections/ConformanceSubSection';
+import { ApplicationAccessSubSection } from './sub-sections/ApplicationAccessSubSection';
 
 const WorkspaceAnalyticsScreen = lazy(() =>
   import('./sub-sections/analytics/WorkspaceAnalyticsScreen').then(module => ({
@@ -74,6 +75,10 @@ const SECTION_META: Record<string, { title: string; sub: string }> = {
   'members': {
     title: 'Members',
     sub: 'Browse workspace members and the role assigned to each person.'
+  },
+  'applications': {
+    title: 'Applications',
+    sub: 'Control which workspace teams and people can use each installed application.'
   },
   'ai': {
     title: 'AI',
@@ -292,6 +297,7 @@ export const WorkspaceSettingsScreen = () => {
           onCloseAddDialog={() => setMembersAddDialogOpen(false)}
         />
       )}
+      {section === 'applications' && <ApplicationAccessSubSection workspaceSlug={workspaceSlug} />}
       {section === 'api-tokens' && (
         <WorkspaceApiTokensSubSection
           workspaceSlug={workspaceSlug}

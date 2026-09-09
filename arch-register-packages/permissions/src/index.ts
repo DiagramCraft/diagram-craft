@@ -7,6 +7,8 @@ export type {
   WorkspaceRoleDefinition,
   TeamRole,
   WorkspaceCapability,
+  ApplicationAccessMode,
+  ApplicationAccessPolicy,
   TeamAssignment,
   WorkspaceMember,
   EntityRole,

@@ -31,6 +31,7 @@ export type AppRailItemId = GlossaryRailItemId | StrategyRailItemId;
 
 export const HOME_APP: AppDefinition = {
   id: 'home',
+  applicationId: 'home',
   name: 'Home',
   description: 'The register — entities, projects, model, and governance.',
   sections: [

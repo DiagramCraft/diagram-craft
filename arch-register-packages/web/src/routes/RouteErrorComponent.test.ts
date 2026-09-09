@@ -10,6 +10,17 @@ describe('route error messages', () => {
     });
   });
 
+  it('uses application-specific copy when an app is not configured', () => {
+    expect(
+      getRouteErrorMessage(
+        new ApiError(404, 'This application is not configured for the workspace')
+      )
+    ).toMatchObject({
+      title: 'Application not available',
+      message: 'This application is not configured for the current workspace.'
+    });
+  });
+
   it('uses server-specific copy for 5xx responses', () => {
     expect(getRouteErrorMessage(new ApiError(503, 'Database unavailable'))).toMatchObject({
       title: 'The server could not complete this request',

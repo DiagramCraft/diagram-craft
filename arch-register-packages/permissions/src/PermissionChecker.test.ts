@@ -76,6 +76,102 @@ describe('PermissionChecker - Global Permissions', () => {
   });
 });
 
+describe('PermissionChecker - Application Access', () => {
+  const checker = new PermissionChecker();
+
+  const contextFor = (options: {
+    userId?: string;
+    globalRoles?: Array<'global_admin' | 'workspace_admin'>;
+    workspaceRole?: string | null;
+    teamIds?: string[];
+  }) =>
+    buildAuthorizationContext({
+      userId: options.userId ?? 'member-1',
+      globalRoles: options.globalRoles ?? [],
+      workspaceRole: options.workspaceRole === undefined ? 'viewer' : options.workspaceRole,
+      workspaceRoles: [
+        {
+          id: 'viewer',
+          name: 'Viewer',
+          description: '',
+          tone: 'blue',
+          builtin: true,
+          capabilities: ['ws.view']
+        },
+        {
+          id: 'role-manager',
+          name: 'Role manager',
+          description: '',
+          tone: 'blue',
+          builtin: false,
+          capabilities: ['ws.view', 'people.role']
+        }
+      ],
+      teamAssignments: (options.teamIds ?? []).map(teamId => ({
+        teamId,
+        role: 'team_reviewer' as const
+      })),
+      teams: [],
+      schemas: [],
+      entities: [],
+      grants: []
+    });
+
+  it('denies ordinary members when no policy exists', () => {
+    expect(checker.hasApplicationAccess(contextFor({}), null)).toBe(false);
+  });
+
+  it('allows all workspace members for an all-member policy', () => {
+    expect(
+      checker.hasApplicationAccess(contextFor({}), {
+        mode: 'all_members',
+        userIds: [],
+        teamIds: []
+      })
+    ).toBe(true);
+  });
+
+  it('matches selected users and teams additively', () => {
+    const context = contextFor({ teamIds: ['team-1'] });
+    expect(
+      checker.hasApplicationAccess(context, {
+        mode: 'selected',
+        userIds: ['member-1'],
+        teamIds: []
+      })
+    ).toBe(true);
+    expect(
+      checker.hasApplicationAccess(contextFor({ userId: 'member-2', teamIds: ['team-1'] }), {
+        mode: 'selected',
+        userIds: ['member-1'],
+        teamIds: ['team-1']
+      })
+    ).toBe(true);
+  });
+
+  it('requires workspace view for ordinary selected users', () => {
+    expect(
+      checker.hasApplicationAccess(contextFor({ workspaceRole: null, userId: 'member-1' }), {
+        mode: 'selected',
+        userIds: ['member-1'],
+        teamIds: []
+      })
+    ).toBe(false);
+  });
+
+  it('lets global administrators and role managers bypass the policy', () => {
+    expect(
+      checker.hasApplicationAccess(
+        contextFor({ globalRoles: ['global_admin'], workspaceRole: null }),
+        null
+      )
+    ).toBe(true);
+    expect(checker.hasApplicationAccess(contextFor({ workspaceRole: 'role-manager' }), null)).toBe(
+      true
+    );
+  });
+});
+
 describe('PermissionChecker - Project Permissions', () => {
   const checker = new PermissionChecker();
 
