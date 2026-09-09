@@ -179,8 +179,8 @@ describe('StrategyOverviewScreen', () => {
   it('navigates to the capabilities list filtered by level from a level legend entry', async () => {
     await renderScreen();
 
-    const levelButton = [...container.querySelectorAll('button')].find(
-      b => b.textContent?.trim().startsWith('L1')
+    const levelButton = [...container.querySelectorAll('button')].find(b =>
+      b.textContent?.trim().startsWith('L1')
     );
     expect(levelButton).toBeDefined();
     await act(async () => {

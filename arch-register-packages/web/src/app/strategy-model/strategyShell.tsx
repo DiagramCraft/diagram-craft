@@ -1,4 +1,10 @@
-import { TbLayoutDashboard, TbGridDots, TbListDetails, TbTargetArrow, TbRoute } from 'react-icons/tb';
+import {
+  TbLayoutDashboard,
+  TbGridDots,
+  TbListDetails,
+  TbTargetArrow,
+  TbRoute
+} from 'react-icons/tb';
 import { buildHomeBreadcrumbs } from '../../shell/breadcrumbBuilders';
 import type { WorkspaceShellContext } from '../../layouts/workspaceShellDescriptors';
 import type { AppDefinition, BreadcrumbItem } from '../../shell/shellTypes';

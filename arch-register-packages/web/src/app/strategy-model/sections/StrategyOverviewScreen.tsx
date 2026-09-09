@@ -176,7 +176,10 @@ export const StrategyOverviewScreen = () => {
   const largestGaps = useMemo(() => {
     return capabilityItems
       .map(item => ({ item, gap: rollups.byId.get(item._uid)?.avgGap ?? null }))
-      .filter((row): row is { item: (typeof capabilityItems)[number]; gap: number } => row.gap != null && row.gap > 0)
+      .filter(
+        (row): row is { item: (typeof capabilityItems)[number]; gap: number } =>
+          row.gap != null && row.gap > 0
+      )
       .sort((a, b) => b.gap - a.gap)
       .slice(0, GAP_TILE_LIMIT);
   }, [capabilityItems, rollups.byId]);
@@ -222,7 +225,9 @@ export const StrategyOverviewScreen = () => {
                 {bucket.label} {bucket.count}
               </button>
             ))}
-            {levelBuckets.length === 0 && <span className={styles.tileSub}>No capabilities yet.</span>}
+            {levelBuckets.length === 0 && (
+              <span className={styles.tileSub}>No capabilities yet.</span>
+            )}
           </div>
         </div>
 
@@ -242,7 +247,9 @@ export const StrategyOverviewScreen = () => {
                 {bucket.label} {bucket.count}
               </button>
             ))}
-            {statusBuckets.length === 0 && <span className={styles.tileSub}>No objectives yet.</span>}
+            {statusBuckets.length === 0 && (
+              <span className={styles.tileSub}>No objectives yet.</span>
+            )}
           </div>
         </div>
 
@@ -280,7 +287,10 @@ export const StrategyOverviewScreen = () => {
         </button>
       </div>
 
-      <Section title="Largest maturity gaps" sub="maturity target − maturity, rolled up over each capability's subtree">
+      <Section
+        title="Largest maturity gaps"
+        sub="maturity target − maturity, rolled up over each capability's subtree"
+      >
         <Table.Root bordered={false}>
           <Table.Head>
             <Table.Row>
