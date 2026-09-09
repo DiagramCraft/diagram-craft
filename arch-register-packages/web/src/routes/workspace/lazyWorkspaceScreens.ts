@@ -60,6 +60,10 @@ export const LazyGlossaryScreen = lazyRouteComponent(
   () => import('../../app/business-glossary/sections/GlossaryScreen'),
   'GlossaryScreen'
 );
+export const LazyStrategyOverviewScreen = lazyRouteComponent(
+  () => import('../../app/strategy-model/sections/StrategyOverviewScreen'),
+  'StrategyOverviewScreen'
+);
 export const LazyStrategyCapabilityMapScreen = lazyRouteComponent(
   () => import('../../app/strategy-model/sections/StrategyCapabilityMapScreen'),
   'StrategyCapabilityMapScreen'

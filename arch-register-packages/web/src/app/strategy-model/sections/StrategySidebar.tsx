@@ -3,6 +3,7 @@ import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
 import {
   TbGridDots,
+  TbLayoutDashboard,
   TbListDetails,
   TbRoute,
   TbTargetArrow,
@@ -22,6 +23,7 @@ import { workspaceCapabilityConfigurationsQuery } from '../../../queries/workspa
 import { resolveStrategyModelConfig } from '../strategyQueries';
 import { buildCapabilityTree, type CapabilityTreeItem } from '../capabilityTree';
 import {
+  STRATEGY_OVERVIEW_ID,
   STRATEGY_CAPABILITIES_ID,
   STRATEGY_CAPABILITY_MAP_ID,
   STRATEGY_HEATMAPS_ID,
@@ -41,6 +43,7 @@ import styles from '../../../shell/SidePanel.module.css';
 // Rail-section icons, matching `strategyShell.tsx`'s `AppDefinition.sections` — so the "Sections"
 // nav list carries the same glyphs as the outer icon rail.
 const SECTION_ICONS: Record<StrategyRailItemId, typeof TbGridDots> = {
+  [STRATEGY_OVERVIEW_ID]: TbLayoutDashboard,
   [STRATEGY_CAPABILITY_MAP_ID]: TbGridDots,
   [STRATEGY_CAPABILITIES_ID]: TbListDetails,
   [STRATEGY_HEATMAPS_ID]: TbTemperature,

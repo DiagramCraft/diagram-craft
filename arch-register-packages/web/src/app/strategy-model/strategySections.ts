@@ -4,6 +4,7 @@
  * module without an import cycle (the sidebar is rendered by `strategyShell.tsx`'s
  * `primarySidebar` factories, and also needs the ids/routes to navigate between sections).
  */
+export const STRATEGY_OVERVIEW_ID = 'strategy-overview' as const;
 export const STRATEGY_CAPABILITY_MAP_ID = 'strategy-capability-map' as const;
 export const STRATEGY_CAPABILITIES_ID = 'strategy-capabilities' as const;
 export const STRATEGY_HEATMAPS_ID = 'strategy-heatmaps' as const;
@@ -11,6 +12,7 @@ export const STRATEGY_STRATEGY_ID = 'strategy-strategy' as const;
 export const STRATEGY_TRACEABILITY_ID = 'strategy-traceability' as const;
 
 export type StrategyRailItemId =
+  | typeof STRATEGY_OVERVIEW_ID
   | typeof STRATEGY_CAPABILITY_MAP_ID
   | typeof STRATEGY_CAPABILITIES_ID
   | typeof STRATEGY_HEATMAPS_ID
@@ -18,6 +20,7 @@ export type StrategyRailItemId =
   | typeof STRATEGY_TRACEABILITY_ID;
 
 export const STRATEGY_RAIL_PATHS: Record<StrategyRailItemId, string> = {
+  [STRATEGY_OVERVIEW_ID]: '/$workspaceSlug/strategy',
   [STRATEGY_CAPABILITY_MAP_ID]: '/$workspaceSlug/strategy/map',
   [STRATEGY_CAPABILITIES_ID]: '/$workspaceSlug/strategy/capabilities',
   [STRATEGY_HEATMAPS_ID]: '/$workspaceSlug/strategy/heatmaps',
@@ -26,6 +29,7 @@ export const STRATEGY_RAIL_PATHS: Record<StrategyRailItemId, string> = {
 };
 
 export const STRATEGY_SECTION_LABELS: Record<StrategyRailItemId, string> = {
+  [STRATEGY_OVERVIEW_ID]: 'Overview',
   [STRATEGY_CAPABILITY_MAP_ID]: 'Capability map',
   [STRATEGY_CAPABILITIES_ID]: 'Capabilities',
   [STRATEGY_HEATMAPS_ID]: 'Heatmaps',
@@ -37,6 +41,7 @@ export const STRATEGY_SECTION_LABELS: Record<StrategyRailItemId, string> = {
 // deprioritized, so it is kept out of the rail and the section nav list. Its id, route
 // path, and label are retained above so the route still resolves and it can be re-added.
 export const STRATEGY_SECTIONS: { id: StrategyRailItemId; label: string }[] = [
+  STRATEGY_OVERVIEW_ID,
   STRATEGY_CAPABILITY_MAP_ID,
   STRATEGY_CAPABILITIES_ID,
   STRATEGY_STRATEGY_ID,
