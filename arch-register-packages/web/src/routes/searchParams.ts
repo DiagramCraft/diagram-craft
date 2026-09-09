@@ -341,6 +341,23 @@ export const validateCapabilitiesSearch = (
   raw: Record<string, unknown>
 ): CapabilitiesSearchParams => parseSearchParams(capabilitiesSearchSchema, raw);
 
+// Strategy capability map params
+const capabilityMapSearchSchema = defineSearchParamSchema({
+  // Set by clicking a node in the map sidebar's capability tree (or an L1 domain header in the
+  // grid); collapses the grid to that capability's subtree, with an "All domains" affordance to
+  // clear it.
+  focus: stringCodec,
+  // Team id; dims map tiles whose capability is not owned by that team (same "dim, don't remove"
+  // semantics as the grid's free-text search box).
+  owner: stringCodec
+});
+
+export type CapabilityMapSearchParams = SearchParamsFromSchema<typeof capabilityMapSearchSchema>;
+
+export const validateCapabilityMapSearch = (
+  raw: Record<string, unknown>
+): CapabilityMapSearchParams => parseSearchParams(capabilityMapSearchSchema, raw);
+
 // Home params
 const homeSearchSchema = defineSearchParamSchema({
   dashboard: stringCodec

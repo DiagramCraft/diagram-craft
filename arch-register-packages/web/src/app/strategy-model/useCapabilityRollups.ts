@@ -87,18 +87,34 @@ const buildAppsCountMetric = (
  * fallback rather than rolling up to "no data" (see that hook's docstring for the full
  * explanation). The screen already has these records in full (`view: 'full'`), so reading the
  * fallback off them costs no extra request.
+ *
+ * `treeEdges` (from the same `entities.tree` response the screens already fetch) is needed for
+ * `appsCount` only: unlike the field metrics, the apps-count metric is path-based
+ * (`supported_entities` typed relation) and the metrics engine walks a configured path from the
+ * box entity *without* first expanding it over its containment subtree — so the raw per-box value
+ * is a capability's *own directly linked* applications, and a non-leaf capability (which links
+ * nothing itself) always comes back 0. We roll it up here by summing the raw counts across each
+ * box's containment subtree.
  */
 export const useCapabilityRollups = (
   workspaceId: string,
   businessCapabilitySchemaId: string | null,
   businessCapabilitySupportsEntityRelationSchemaId: string | null,
-  capabilities: readonly EntityRecord[]
+  capabilities: readonly EntityRecord[],
+  treeEdges: readonly { parentId: string; childId: string }[] = []
 ): { byId: Map<string, CapabilityTableRollup>; isLoading: boolean; error: Error | null } => {
   const boxEntityIds = useMemo(() => capabilities.map(c => c._uid), [capabilities]);
   const ownFieldsById = useMemo(
     () => new Map(capabilities.map(c => [c._uid, extractCapabilityOwnFields(c)])),
     [capabilities]
   );
+  const childrenOf = useMemo(() => {
+    const map = new Map<string, string[]>();
+    for (const { parentId, childId } of treeEdges) {
+      map.set(parentId, [...(map.get(parentId) ?? []), childId]);
+    }
+    return map;
+  }, [treeEdges]);
   const enabled = boxEntityIds.length > 0 && !!businessCapabilitySchemaId;
 
   const maturityQuery = useQuery(
@@ -177,6 +193,21 @@ export const useCapabilityRollups = (
     const resultFor = (query: { data?: MetricRollupResponse }, id: string) =>
       query.data?.results.find(r => r.boxEntityId === id);
 
+    // Raw per-box apps counts, then summed over each box's containment subtree (see docstring).
+    const rawApps = new Map<string, number | null>(
+      boxEntityIds.map(id => [id, resultFor(appsQuery, id)?.value ?? null])
+    );
+    const subtreeApps = (id: string, seen = new Set<string>()): number | null => {
+      if (seen.has(id)) return null;
+      seen.add(id);
+      let total: number | null = rawApps.get(id) ?? null;
+      for (const childId of childrenOf.get(id) ?? []) {
+        const childTotal = subtreeApps(childId, seen);
+        if (childTotal != null) total = (total ?? 0) + childTotal;
+      }
+      return total;
+    };
+
     for (const id of boxEntityIds) {
       const own = ownFieldsById.get(id) ?? extractCapabilityOwnFields(null);
       // No children => the metric had nothing to walk, regardless of which metric asked.
@@ -197,13 +228,14 @@ export const useCapabilityRollups = (
         investmentCurrencyCode: isLeaf
           ? (own.investment?.currency ?? null)
           : (investmentResult?.currencyCode ?? null),
-        appsCount: resultFor(appsQuery, id)?.value ?? null
+        appsCount: subtreeApps(id)
       });
     }
     return map;
   }, [
     boxEntityIds,
     ownFieldsById,
+    childrenOf,
     maturityQuery,
     maturityTargetQuery,
     gapQuery,

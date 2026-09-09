@@ -49,12 +49,19 @@ let latest:
   | { byId: Map<string, CapabilityTableRollup>; isLoading: boolean; error: Error | null }
   | undefined;
 
-const Harness = ({ capabilities }: { capabilities: EntityRecord[] }) => {
+const Harness = ({
+  capabilities,
+  edges = []
+}: {
+  capabilities: EntityRecord[];
+  edges?: { parentId: string; childId: string }[];
+}) => {
   latest = useCapabilityRollups(
     'ws-1',
     'business_capability',
     'business-capability-supports-entity-rel',
-    capabilities
+    capabilities,
+    edges
   );
   return null;
 };
@@ -211,6 +218,41 @@ describe('useCapabilityRollups', () => {
       sumAnnualInvestment: 75000,
       investmentCurrencyCode: 'EUR'
     });
+  });
+
+  it('rolls appsCount up over the containment subtree (path metric is not subtree-expanded)', async () => {
+    mocks.rollup.mockImplementation(
+      ({ body }: { body: { boxEntityIds: string[]; metric: { sourceContext?: string } } }) => {
+        const values = Object.fromEntries(body.boxEntityIds.map(id => [id, 0]));
+        if (body.metric.sourceContext === 'relation') {
+          // Raw per-box counts: only the leaves link applications directly.
+          return Promise.resolve(resultsFor({ ...values, 'cap-2': 2, 'cap-3': 3 }));
+        }
+        return Promise.resolve(resultsFor(values));
+      }
+    );
+
+    await act(async () => {
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <Harness
+            capabilities={[capability('cap-1'), capability('cap-2'), capability('cap-3')]}
+            edges={[
+              { parentId: 'cap-1', childId: 'cap-2' },
+              { parentId: 'cap-2', childId: 'cap-3' }
+            ]}
+          />
+        </QueryClientProvider>
+      );
+    });
+    const flush = () => act(async () => new Promise(resolve => setTimeout(resolve, 0)));
+    for (let i = 0; i < 5 && latest?.isLoading !== false; i++) {
+      await flush();
+    }
+
+    expect(latest?.byId.get('cap-1')?.appsCount).toBe(5);
+    expect(latest?.byId.get('cap-2')?.appsCount).toBe(5);
+    expect(latest?.byId.get('cap-3')?.appsCount).toBe(3);
   });
 
   it('returns an empty map and skips requests when there are no capabilities', async () => {

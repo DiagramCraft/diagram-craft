@@ -10,7 +10,7 @@ import {
 } from './strategySections';
 import { withWorkspaceShell } from '../../routes/workspace/workspaceShellRoute';
 import { railSectionShell } from '../../layouts/workspaceShellDescriptors';
-import { validateCapabilitiesSearch } from '../../routes/searchParams';
+import { validateCapabilitiesSearch, validateCapabilityMapSearch } from '../../routes/searchParams';
 import {
   LazyStrategyCapabilityMapScreen,
   LazyStrategyCapabilitiesScreen,
@@ -29,6 +29,7 @@ export const createStrategyWorkspaceRoutes = <TParentRoute extends AnyRoute>(
     createRoute({
       getParentRoute: () => workspaceRoute,
       path: railPath(STRATEGY_RAIL_PATHS[STRATEGY_CAPABILITY_MAP_ID]),
+      validateSearch: validateCapabilityMapSearch,
       beforeLoad: ({ context, params }) =>
         ensureApplicationAccess(
           context.queryClient,
@@ -49,6 +50,7 @@ export const createStrategyWorkspaceRoutes = <TParentRoute extends AnyRoute>(
     createRoute({
       getParentRoute: () => workspaceRoute,
       path: `${railPath(STRATEGY_RAIL_PATHS[STRATEGY_CAPABILITY_MAP_ID])}/$capabilityId`,
+      validateSearch: validateCapabilityMapSearch,
       beforeLoad: ({ context, params }) =>
         ensureApplicationAccess(
           context.queryClient,
