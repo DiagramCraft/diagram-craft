@@ -17,6 +17,7 @@ export const GLOSSARY_RAIL_PATH = '/$workspaceSlug/glossary';
 /** Business Glossary as a standalone workspace application (see `../../shell/appShellRegistry.ts`). */
 export const glossaryAppDefinition: AppDefinition = {
   id: GLOSSARY_RAIL_ITEM_ID,
+  applicationId: 'business-glossary',
   name: 'Business Glossary',
   shortCode: 'BG',
   tint: 'oklch(0.62 0.14 295)',

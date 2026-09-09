@@ -19,6 +19,7 @@ The main layers are:
 - global permissions
 - workspace roles
 - team roles
+- application access policies
 
 ## Workspace Roles
 
@@ -48,6 +49,16 @@ attached directly to an entity follows the workspace role's `content.view` and `
 ## Global Permissions
 
 Global permissions sit outside one workspace and cover platform-wide administration such as global role assignment.
+
+## Application Access
+
+Application access is an independent workspace-level gate for optional applications such as Business Glossary and
+Strategy & Capability Modelling. Workspace administrators can allow all workspace members or select individual people
+and teams. Individual and team grants are additive, and application access does not replace the required workspace
+capabilities for the application's underlying data.
+
+If no policy exists, ordinary members cannot open the application. Global administrators and workspace role managers
+retain access, and Home is always available.
 
 ## Related Pages
 

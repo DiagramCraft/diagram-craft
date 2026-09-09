@@ -21,6 +21,33 @@ const timestampOutputSchema = z
   .union([z.string(), z.date()])
   .transform(value => (typeof value === 'string' ? value : value.toISOString()));
 
+export const workspaceApplicationIdSchema = z.enum(['home', 'business-glossary', 'strategy-model']);
+
+export const workspaceApplicationDefinitions = [
+  { id: 'home', capabilityType: null },
+  { id: 'business-glossary', capabilityType: 'business-glossary' },
+  { id: 'strategy-model', capabilityType: 'strategy-model' }
+] as const;
+
+export const applicationAccessModeSchema = z.enum(['all_members', 'selected']);
+
+export const applicationAccessPolicyInputSchema = z.object({
+  mode: applicationAccessModeSchema,
+  user_ids: z.array(z.string()),
+  team_ids: z.array(z.string())
+});
+
+export const applicationAccessPolicySchema = applicationAccessPolicyInputSchema.extend({
+  application_id: workspaceApplicationIdSchema,
+  created_at: timestampOutputSchema,
+  updated_at: timestampOutputSchema
+});
+
+export const accessibleApplicationsSchema = z.object({
+  installed_application_ids: z.array(workspaceApplicationIdSchema),
+  accessible_application_ids: z.array(workspaceApplicationIdSchema)
+});
+
 // ── Sub-schemas ───────────────────────────────────────────────
 
 export const projectEntityTypeSchema = z.object({
@@ -177,6 +204,12 @@ const userInfoSchema = z.object({
   color: z.string().nullable().optional().describe('Optional user color (hex format)')
 });
 
+export const applicationAccessConfigurationSchema = z.object({
+  policies: z.array(applicationAccessPolicySchema),
+  members: z.array(memberInfoSchema),
+  teams: z.array(teamSchema)
+});
+
 const pickerSearchQuerySchema = z.object({
   q: z.string().optional().describe('Case-insensitive search query'),
   limit: z
@@ -190,7 +223,64 @@ const pickerSearchQuerySchema = z.object({
 // ── Contract ──────────────────────────────────────────────────
 
 export const workspaceConfigContract = oc.tag('Workspace Config').router({
+  applications: {
+    accessible: oc
+      .route({
+        method: 'GET',
+        path: '/{workspace}/applications',
+        inputStructure: 'detailed',
+        summary: 'List accessible workspace applications',
+        description:
+          'Lists installed applications and the applications accessible to the authenticated user. Home is always included.',
+        tags: ['Workspace Config']
+      })
+      .input(z.object({ params: ws }))
+      .output(accessibleApplicationsSchema)
+  },
   config: {
+    applicationAccess: {
+      list: oc
+        .route({
+          method: 'GET',
+          path: '/{workspace}/config/application-access',
+          inputStructure: 'detailed',
+          summary: 'Get application access policies',
+          description:
+            'Lists application access policies and the workspace members and teams available as targets.',
+          tags: ['Workspace Config']
+        })
+        .input(z.object({ params: ws }))
+        .output(applicationAccessConfigurationSchema),
+      update: oc
+        .route({
+          method: 'PUT',
+          path: '/{workspace}/config/application-access/{applicationId}',
+          inputStructure: 'detailed',
+          summary: 'Update application access policy',
+          description:
+            'Replaces the access policy for one application. A selected policy grants access to matching users or team members.',
+          tags: ['Workspace Config']
+        })
+        .input(
+          z.object({
+            params: ws.extend({ applicationId: workspaceApplicationIdSchema }),
+            body: applicationAccessPolicyInputSchema
+          })
+        )
+        .output(applicationAccessPolicySchema),
+      reset: oc
+        .route({
+          method: 'DELETE',
+          path: '/{workspace}/config/application-access/{applicationId}',
+          inputStructure: 'detailed',
+          summary: 'Reset application access policy',
+          description:
+            'Removes the application access policy and restores deny-by-default access for ordinary members.',
+          tags: ['Workspace Config']
+        })
+        .input(z.object({ params: ws.extend({ applicationId: workspaceApplicationIdSchema }) }))
+        .output(applicationAccessPolicySchema.nullable())
+    },
     capabilityConfigurations: {
       list: oc
         .route({
@@ -625,6 +715,13 @@ export type WorkspaceMemberInfo = z.infer<typeof memberInfoSchema>;
 export type WorkspaceRoleCapability = z.infer<typeof workspaceCapabilitySchema>;
 export type WorkspaceTeam = z.infer<typeof teamSchema>;
 export type WorkspaceTeamInput = z.infer<typeof teamInputSchema>;
+export type WorkspaceApplicationId = z.infer<typeof workspaceApplicationIdSchema>;
+export type WorkspaceApplicationDefinition = (typeof workspaceApplicationDefinitions)[number];
+export type ApplicationAccessMode = z.infer<typeof applicationAccessModeSchema>;
+export type ApplicationAccessPolicyInput = z.infer<typeof applicationAccessPolicyInputSchema>;
+export type ApplicationAccessPolicy = z.infer<typeof applicationAccessPolicySchema>;
+export type AccessibleApplications = z.infer<typeof accessibleApplicationsSchema>;
+export type ApplicationAccessConfiguration = z.infer<typeof applicationAccessConfigurationSchema>;
 export type SupportedCurrency = z.infer<typeof supportedCurrencySchema>;
 export type AssessmentType = z.infer<typeof assessmentTypeSchema>;
 export type TeamAssignmentInfo = z.infer<typeof teamAssignmentSchema>;

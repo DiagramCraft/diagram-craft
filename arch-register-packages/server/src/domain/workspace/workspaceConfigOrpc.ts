@@ -31,6 +31,12 @@ import {
 } from './workspaceConfigOperations';
 import { workspaceConfigContract } from '@arch-register/api-types/workspaceConfigContract';
 import { createApiToken, listApiTokens, revokeApiToken } from '../auth/apiTokenOperations';
+import {
+  listAccessibleApplications,
+  listApplicationAccessConfiguration,
+  resetApplicationAccessPolicy,
+  updateApplicationAccessPolicy
+} from './applicationAccessOperations';
 
 type ORPCContext = {
   db: DatabaseAdapter;
@@ -42,7 +48,38 @@ const configRouter = implement(workspaceConfigContract)
   .use(orpcErrorMiddleware);
 
 export const workspaceConfigORPCRouter = configRouter.router({
+  applications: {
+    accessible: configRouter.applications.accessible.handler(async ({ input, context }) => {
+      return await listAccessibleApplications(context.db, input.params.workspace, context.event);
+    })
+  },
   config: {
+    applicationAccess: {
+      list: configRouter.config.applicationAccess.list.handler(async ({ input, context }) => {
+        return await listApplicationAccessConfiguration(
+          context.db,
+          input.params.workspace,
+          context.event
+        );
+      }),
+      update: configRouter.config.applicationAccess.update.handler(async ({ input, context }) => {
+        return await updateApplicationAccessPolicy(
+          context.db,
+          input.params.workspace,
+          input.params.applicationId,
+          input.body,
+          context.event
+        );
+      }),
+      reset: configRouter.config.applicationAccess.reset.handler(async ({ input, context }) => {
+        return await resetApplicationAccessPolicy(
+          context.db,
+          input.params.workspace,
+          input.params.applicationId,
+          context.event
+        );
+      })
+    },
     capabilityConfigurations: {
       list: configRouter.config.capabilityConfigurations.list.handler(
         async ({ input, context }) => {

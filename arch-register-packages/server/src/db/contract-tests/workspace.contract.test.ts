@@ -324,6 +324,126 @@ runContractSuiteAgainstBothDrivers('WorkspaceDatabase', getDb => {
     });
   });
 
+  describe('application access policies', () => {
+    it('replaces grants and cascades removed members and teams', async () => {
+      const db = getDb();
+      const workspace = await createFixtureWorkspace(db);
+      const user = await createFixtureUser(db);
+      const teamId = randomUUID();
+      const now = new Date();
+
+      await db.workspace.setWorkspaceMemberRole(workspace, user.id, 'viewer', now);
+      await db.workspace.replaceTeams(workspace, [
+        {
+          id: teamId,
+          workspace,
+          name: 'Application users',
+          sort_order: 0,
+          color: null,
+          description: '',
+          created_at: now
+        }
+      ]);
+
+      const saved = await db.workspace.upsertWorkspaceApplicationAccessPolicy({
+        workspace,
+        application_id: 'business-glossary',
+        mode: 'selected',
+        user_ids: [user.id],
+        team_ids: [teamId],
+        created_at: now,
+        updated_at: now
+      });
+      expect(saved).toEqual(
+        expect.objectContaining({
+          application_id: 'business-glossary',
+          mode: 'selected',
+          user_ids: [user.id],
+          team_ids: [teamId]
+        })
+      );
+
+      const replaced = await db.workspace.upsertWorkspaceApplicationAccessPolicy({
+        workspace,
+        application_id: 'business-glossary',
+        mode: 'all_members',
+        user_ids: [],
+        team_ids: [],
+        created_at: now,
+        updated_at: new Date(now.getTime() + 1)
+      });
+      expect(replaced.mode).toBe('all_members');
+      expect(replaced.user_ids).toEqual([]);
+      expect(replaced.team_ids).toEqual([]);
+
+      await db.workspace.upsertWorkspaceApplicationAccessPolicy({
+        workspace,
+        application_id: 'business-glossary',
+        mode: 'selected',
+        user_ids: [user.id],
+        team_ids: [teamId],
+        created_at: now,
+        updated_at: now
+      });
+      await db.workspace.removeWorkspaceMember(workspace, user.id);
+      await db.workspace.replaceTeams(workspace, []);
+
+      expect(
+        await db.workspace.getWorkspaceApplicationAccessPolicy(workspace, 'business-glossary')
+      ).toEqual(
+        expect.objectContaining({
+          user_ids: [],
+          team_ids: []
+        })
+      );
+    });
+
+    it('lists, deletes and cascades policies with their workspace', async () => {
+      const db = getDb();
+      const workspace = await createFixtureWorkspace(db);
+      const now = new Date();
+
+      await db.workspace.upsertWorkspaceApplicationAccessPolicy({
+        workspace,
+        application_id: 'strategy-model',
+        mode: 'all_members',
+        user_ids: [],
+        team_ids: [],
+        created_at: now,
+        updated_at: now
+      });
+
+      expect(
+        (await db.workspace.listWorkspaceApplicationAccessPolicies(workspace)).map(
+          policy => policy.application_id
+        )
+      ).toEqual(['strategy-model']);
+      expect(
+        await db.workspace.deleteWorkspaceApplicationAccessPolicy(workspace, 'strategy-model')
+      ).toEqual(
+        expect.objectContaining({
+          application_id: 'strategy-model',
+          mode: 'all_members'
+        })
+      );
+      expect(
+        await db.workspace.getWorkspaceApplicationAccessPolicy(workspace, 'strategy-model')
+      ).toBeNull();
+
+      await db.workspace.upsertWorkspaceApplicationAccessPolicy({
+        workspace,
+        application_id: 'strategy-model',
+        mode: 'all_members',
+        user_ids: [],
+        team_ids: [],
+        created_at: now,
+        updated_at: now
+      });
+      await db.workspace.deleteWorkspace(workspace);
+      expect(await db.workspace.listWorkspaceApplicationAccessPolicies(workspace)).toEqual([]);
+    });
+  });
+
   describe('workspace members and roles', () => {
     it('sets, reads and removes a workspace member role', async () => {
       const db = getDb();

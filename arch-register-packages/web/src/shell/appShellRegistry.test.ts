@@ -23,6 +23,7 @@ describe('appShellRegistry', () => {
   it('always includes an always-on Home app that owns the core rail sections', () => {
     const home = getAppDefinition('home');
     expect(home.id).toBe('home');
+    expect(home.applicationId).toBe('home');
     expect(home.enablement).toBe('always');
     expect(railIds('home')).toContain('entities');
     expect(railIds('home')).not.toContain(GLOSSARY_RAIL_ITEM_ID);
@@ -31,6 +32,7 @@ describe('appShellRegistry', () => {
 
   it('registers Business Glossary as a capability-gated app that owns only the glossary rail section', () => {
     const glossary = getAppDefinition(GLOSSARY_RAIL_ITEM_ID);
+    expect(glossary.applicationId).toBe('business-glossary');
     expect(railIds(GLOSSARY_RAIL_ITEM_ID)).toEqual([GLOSSARY_RAIL_ITEM_ID]);
     expect(glossary.enablement).toEqual({ capabilityType: 'business-glossary' });
     const [section] = glossary.sections;
@@ -54,6 +56,7 @@ describe('appShellRegistry', () => {
 
   it('registers Strategy & Capability Modelling as a capability-gated app owning five rail sections', () => {
     const strategy = getAppDefinition(STRATEGY_CAPABILITY_MAP_ID);
+    expect(strategy.applicationId).toBe('strategy-model');
     expect(railIds(STRATEGY_CAPABILITY_MAP_ID)).toHaveLength(5);
     expect(strategy.enablement).toEqual({ capabilityType: 'strategy-model' });
     expect(getRailSection(STRATEGY_TRACEABILITY_ID)?.route).toBe(

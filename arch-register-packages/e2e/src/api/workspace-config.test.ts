@@ -1,5 +1,5 @@
 import { test as baseTest, expect, createTestORPCClient } from '../helpers/fixtures';
-import { seedCatalogEntities, seedIds, TEST_ADMIN } from '../helpers/seedHelper';
+import { makeAuthHeader, seedCatalogEntities, seedIds, TEST_ADMIN } from '../helpers/seedHelper';
 import { CONFIG_USER_ID, CONFIG_REMOVE_USER_ID } from '../helpers/testIds';
 import type { TestORPCClient } from '../helpers/orpcTestClient';
 import type { WorkspaceRoleCapability } from '@arch-register/api-types/workspaceConfigContract';
@@ -701,6 +701,67 @@ test.describe('workspace config routes', () => {
       user_id: seededUsers.removeUserId,
       role: created.id
     });
+  });
+
+  test('filters applications by policy and protects direct application requests', async ({
+    server,
+    orpc,
+    seededUsers
+  }) => {
+    await orpc.config.members.updateRole({
+      params: { workspace: 'default', id: seededUsers.configUserId },
+      body: { roleId: 'viewer' }
+    });
+    await orpc.config.applicationAccess.reset({
+      params: { workspace: 'default', applicationId: 'business-glossary' }
+    });
+
+    const memberOrpc = createTestORPCClient(
+      server.baseUrl,
+      await makeAuthHeader(server.db, seededUsers.configUserId)
+    );
+    const initial = await memberOrpc.applications.accessible({
+      params: { workspace: 'default' }
+    });
+    expect(initial.installed_application_ids).toEqual(
+      expect.arrayContaining(['home', 'business-glossary'])
+    );
+    expect(initial.accessible_application_ids).toEqual(['home']);
+    await expect(
+      memberOrpc.glossary.config({ params: { workspace: 'default' } })
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+
+    await orpc.config.applicationAccess.update({
+      params: { workspace: 'default', applicationId: 'business-glossary' },
+      body: { mode: 'all_members', user_ids: [], team_ids: [] }
+    });
+    const allMembers = await memberOrpc.applications.accessible({
+      params: { workspace: 'default' }
+    });
+    expect(allMembers.accessible_application_ids).toContain('business-glossary');
+    await expect(
+      memberOrpc.glossary.config({ params: { workspace: 'default' } })
+    ).resolves.toMatchObject({
+      termSchemaId: expect.any(String),
+      categorySchemaId: expect.any(String)
+    });
+
+    await orpc.config.applicationAccess.update({
+      params: { workspace: 'default', applicationId: 'business-glossary' },
+      body: { mode: 'selected', user_ids: [seededUsers.configUserId], team_ids: [] }
+    });
+    const selected = await memberOrpc.applications.accessible({
+      params: { workspace: 'default' }
+    });
+    expect(selected.accessible_application_ids).toContain('business-glossary');
+
+    await orpc.config.applicationAccess.reset({
+      params: { workspace: 'default', applicationId: 'business-glossary' }
+    });
+    const reset = await memberOrpc.applications.accessible({
+      params: { workspace: 'default' }
+    });
+    expect(reset.accessible_application_ids).toEqual(['home']);
   });
 
   test('workspace config routes return 401 without auth and 404 for unknown workspaces', async ({

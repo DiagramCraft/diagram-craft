@@ -22,6 +22,7 @@ The implemented settings area includes:
 - entity types (schemas)
 - document types and templates
 - roles and permissions
+- application access
 - global permissions
 - teams
 - members
@@ -96,6 +97,16 @@ and membership:
 - **Job monitoring** shows scheduled jobs, job servers, and run history, with cancellation available for supported
   jobs.
 - **Danger zone** for irreversible operations.
+
+## Application Access
+
+Use **Applications** to control who can use each installed optional application. Application access is an
+independent policy from workspace roles and can grant access to all workspace members or selected people and teams.
+Team and individual grants are additive.
+
+Access is deny-by-default for ordinary members until a policy is configured. Users must also have workspace view
+access. Global administrators and workspace role managers always retain access. Removing a policy returns the
+application to administrator-only access; Home is always available.
 
 ## Related Pages
 

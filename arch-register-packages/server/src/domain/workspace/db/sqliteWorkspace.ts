@@ -13,6 +13,7 @@ import {
   SupportedCurrencyConfigDbResult,
   AssessmentTypeDbCreate,
   WorkspaceCapabilityConfigurationDbCreate,
+  WorkspaceApplicationAccessPolicyDbCreate,
   DEFAULT_SUPPORTED_CURRENCIES
 } from './workspaceDatabase';
 import { workspaceMappers } from './workspaceDatabase';
@@ -111,6 +112,7 @@ export class SqliteWorkspaceDatabase extends SqliteDatabaseBase implements Works
       this.run('DELETE FROM entity_schema WHERE workspace = ?', [workspaceId]);
       this.run('DELETE FROM workspace_member WHERE workspace = ?', [workspaceId]);
       this.run('DELETE FROM workspace_role WHERE workspace = ?', [workspaceId]);
+      this.run('DELETE FROM workspace_application_access WHERE workspace = ?', [workspaceId]);
       this.run('DELETE FROM workspace_capability_configuration WHERE workspace = ?', [workspaceId]);
       this.run('DELETE FROM team_membership WHERE workspace = ?', [workspaceId]);
       this.run('DELETE FROM workspace_lifecycle_state WHERE workspace = ?', [workspaceId]);
@@ -181,6 +183,119 @@ export class SqliteWorkspaceDatabase extends SqliteDatabaseBase implements Works
       workspace,
       type
     ]);
+    return existing;
+  }
+
+  async listWorkspaceApplicationAccessPolicies(workspace: string) {
+    const policies = this.all(
+      `SELECT workspace, application_id, mode, created_at, updated_at
+       FROM workspace_application_access
+       WHERE workspace = ?
+       ORDER BY application_id`,
+      [workspace],
+      workspaceMappers.applicationAccessPolicy
+    );
+
+    return policies.map(policy => ({
+      ...policy,
+      user_ids: this.all<{ user_id: string }>(
+        `SELECT user_id
+         FROM workspace_application_access_user
+         WHERE workspace = ? AND application_id = ?
+         ORDER BY user_id`,
+        [workspace, policy.application_id]
+      ).map(grant => grant.user_id),
+      team_ids: this.all<{ team_id: string }>(
+        `SELECT team_id
+         FROM workspace_application_access_team
+         WHERE workspace = ? AND application_id = ?
+         ORDER BY team_id`,
+        [workspace, policy.application_id]
+      ).map(grant => grant.team_id)
+    }));
+  }
+
+  async getWorkspaceApplicationAccessPolicy(workspace: string, applicationId: string) {
+    const policy = this.get(
+      `SELECT workspace, application_id, mode, created_at, updated_at
+       FROM workspace_application_access
+       WHERE workspace = ? AND application_id = ?`,
+      [workspace, applicationId],
+      workspaceMappers.applicationAccessPolicy
+    );
+    if (!policy) return null;
+
+    return {
+      ...policy,
+      user_ids: this.all<{ user_id: string }>(
+        `SELECT user_id
+         FROM workspace_application_access_user
+         WHERE workspace = ? AND application_id = ?
+         ORDER BY user_id`,
+        [workspace, applicationId]
+      ).map(grant => grant.user_id),
+      team_ids: this.all<{ team_id: string }>(
+        `SELECT team_id
+         FROM workspace_application_access_team
+         WHERE workspace = ? AND application_id = ?
+         ORDER BY team_id`,
+        [workspace, applicationId]
+      ).map(grant => grant.team_id)
+    };
+  }
+
+  async upsertWorkspaceApplicationAccessPolicy(input: WorkspaceApplicationAccessPolicyDbCreate) {
+    const tx = this.db.transaction(() => {
+      this.run(
+        `INSERT INTO workspace_application_access
+           (workspace, application_id, mode, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?)
+         ON CONFLICT(workspace, application_id) DO UPDATE SET
+           mode = excluded.mode,
+           updated_at = excluded.updated_at`,
+        [
+          input.workspace,
+          input.application_id,
+          input.mode,
+          input.created_at.toISOString(),
+          input.updated_at.toISOString()
+        ]
+      );
+      this.run(
+        'DELETE FROM workspace_application_access_user WHERE workspace = ? AND application_id = ?',
+        [input.workspace, input.application_id]
+      );
+      this.run(
+        'DELETE FROM workspace_application_access_team WHERE workspace = ? AND application_id = ?',
+        [input.workspace, input.application_id]
+      );
+      for (const userId of input.user_ids) {
+        this.run(
+          `INSERT INTO workspace_application_access_user (workspace, application_id, user_id)
+           VALUES (?, ?, ?)`,
+          [input.workspace, input.application_id, userId]
+        );
+      }
+      for (const teamId of input.team_ids) {
+        this.run(
+          `INSERT INTO workspace_application_access_team (workspace, application_id, team_id)
+           VALUES (?, ?, ?)`,
+          [input.workspace, input.application_id, teamId]
+        );
+      }
+    });
+
+    tx();
+    return (await this.getWorkspaceApplicationAccessPolicy(input.workspace, input.application_id))!;
+  }
+
+  async deleteWorkspaceApplicationAccessPolicy(workspace: string, applicationId: string) {
+    const existing = await this.getWorkspaceApplicationAccessPolicy(workspace, applicationId);
+    if (!existing) return null;
+    this.run(
+      'DELETE FROM workspace_application_access WHERE workspace = ? AND application_id = ?',
+      [workspace, applicationId]
+    );
     return existing;
   }
 

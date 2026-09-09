@@ -27,6 +27,7 @@ import { listRelatedContent } from '../../domain/project/markdownListingOperatio
 import { runAuthorizedOperation } from '../../domain/operation';
 import { projectDbErrorMessages } from '../../domain/project/projectOperationHelpers';
 import { requireWorkspaceCapability } from '../../domain/auth/authorization';
+import { requireApplicationAccess } from '../../domain/workspace/applicationAccessOperations';
 
 type GlossaryResolution = {
   config: GlossaryConfig;
@@ -467,6 +468,7 @@ export const getGlossaryConfig = async (
     fallback: 'Failed to retrieve glossary configuration',
     dbErrorMessages: projectDbErrorMessages,
     operation: async ({ ws, authCtx }) => {
+      await requireApplicationAccess(db, ws, 'business-glossary', authCtx, event);
       requireWorkspaceCapability(authCtx, 'ws.view');
       return (await resolveGlossary(db, ws))?.config ?? null;
     }
@@ -485,6 +487,7 @@ export const listGlossaryTerms = async (
     fallback: 'Failed to retrieve glossary terms',
     dbErrorMessages: projectDbErrorMessages,
     operation: async ({ ws, authCtx }) => {
+      await requireApplicationAccess(db, ws, 'business-glossary', authCtx, event);
       const resolution = await requireGlossary(db, ws);
       return buildTerms(db, ws, workspace, authCtx, event, resolution, query);
     }
@@ -503,6 +506,7 @@ export const getGlossaryTerm = async (
     fallback: 'Failed to retrieve glossary term',
     dbErrorMessages: projectDbErrorMessages,
     operation: async ({ ws, authCtx }) => {
+      await requireApplicationAccess(db, ws, 'business-glossary', authCtx, event);
       const resolution = await requireGlossary(db, ws);
       const entity = await getEntity(db, ws, id, authCtx);
       httpAssert.true(entity._schema.id === resolution.termSchemaId, {
@@ -541,6 +545,7 @@ export const getGlossaryTermUsage = async (
     fallback: 'Failed to retrieve glossary term usage',
     dbErrorMessages: projectDbErrorMessages,
     operation: async ({ ws, authCtx }) => {
+      await requireApplicationAccess(db, ws, 'business-glossary', authCtx, event);
       const resolution = await requireGlossary(db, ws);
       const entity = await getEntity(db, ws, id, authCtx);
       httpAssert.true(entity._schema.id === resolution.termSchemaId, {

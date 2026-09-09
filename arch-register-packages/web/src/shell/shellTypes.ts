@@ -1,4 +1,5 @@
 import type { IconType } from 'react-icons';
+import type { WorkspaceApplicationId } from '@arch-register/api-types/workspaceConfigContract';
 import type { AppRailItemId } from './appShellRegistry';
 
 export type BreadcrumbItem = {
@@ -52,6 +53,8 @@ export type AppRailSection = {
  */
 export type AppDefinition = {
   id: AppId;
+  /** Stable application identity used by the server-side access policy. */
+  applicationId: WorkspaceApplicationId;
   name: string;
   /** Short badge code shown in the switcher; omitted for `'home'` (renders a Home icon instead). */
   shortCode?: string;

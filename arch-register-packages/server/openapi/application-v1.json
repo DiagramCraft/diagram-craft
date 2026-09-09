@@ -70704,6 +70704,454 @@
         }
       }
     },
+    "/{workspace}/applications": {
+      "get": {
+        "operationId": "applications.accessible",
+        "summary": "List accessible workspace applications",
+        "description": "Lists installed applications and the applications accessible to the authenticated user. Home is always included.",
+        "tags": [
+          "Workspace Config",
+          "Workspace Config"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "installed_application_ids": {
+                      "type": "array",
+                      "items": {
+                        "enum": [
+                          "home",
+                          "business-glossary",
+                          "strategy-model"
+                        ],
+                        "type": "string"
+                      }
+                    },
+                    "accessible_application_ids": {
+                      "type": "array",
+                      "items": {
+                        "enum": [
+                          "home",
+                          "business-glossary",
+                          "strategy-model"
+                        ],
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": [
+                    "installed_application_ids",
+                    "accessible_application_ids"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{workspace}/config/application-access": {
+      "get": {
+        "operationId": "config.applicationAccess.list",
+        "summary": "Get application access policies",
+        "description": "Lists application access policies and the workspace members and teams available as targets.",
+        "tags": [
+          "Workspace Config",
+          "Workspace Config"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "policies": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "mode": {
+                            "enum": [
+                              "all_members",
+                              "selected"
+                            ],
+                            "type": "string"
+                          },
+                          "user_ids": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "team_ids": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "application_id": {
+                            "enum": [
+                              "home",
+                              "business-glossary",
+                              "strategy-model"
+                            ],
+                            "type": "string"
+                          },
+                          "created_at": {},
+                          "updated_at": {}
+                        },
+                        "required": [
+                          "mode",
+                          "user_ids",
+                          "team_ids",
+                          "application_id"
+                        ]
+                      }
+                    },
+                    "members": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "workspace": {
+                            "type": "string",
+                            "description": "Workspace identifier"
+                          },
+                          "user_id": {
+                            "type": "string",
+                            "description": "User identifier"
+                          },
+                          "role": {
+                            "type": "string",
+                            "description": "Assigned role identifier"
+                          },
+                          "display_name": {
+                            "type": "string",
+                            "description": "User display name"
+                          },
+                          "email": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "User email address (may be null)"
+                          },
+                          "created_at": {
+                            "description": "ISO 8601 membership creation timestamp"
+                          }
+                        },
+                        "required": [
+                          "workspace",
+                          "user_id",
+                          "role",
+                          "display_name",
+                          "email"
+                        ]
+                      }
+                    },
+                    "teams": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "description": "Unique team identifier"
+                          },
+                          "workspace": {
+                            "type": "string",
+                            "description": "Parent workspace identifier"
+                          },
+                          "name": {
+                            "type": "string",
+                            "description": "Team name"
+                          },
+                          "sort_order": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                            "description": "Display order (0-based)"
+                          },
+                          "color": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Optional team color (hex format)"
+                          },
+                          "description": {
+                            "type": "string",
+                            "description": "Team description"
+                          },
+                          "created_at": {
+                            "description": "ISO 8601 creation timestamp"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "workspace",
+                          "name",
+                          "sort_order",
+                          "color",
+                          "description"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "policies",
+                    "members",
+                    "teams"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{workspace}/config/application-access/{applicationId}": {
+      "put": {
+        "operationId": "config.applicationAccess.update",
+        "summary": "Update application access policy",
+        "description": "Replaces the access policy for one application. A selected policy grants access to matching users or team members.",
+        "tags": [
+          "Workspace Config",
+          "Workspace Config"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "applicationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "enum": [
+                "home",
+                "business-glossary",
+                "strategy-model"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "mode": {
+                    "enum": [
+                      "all_members",
+                      "selected"
+                    ],
+                    "type": "string"
+                  },
+                  "user_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "team_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "mode",
+                  "user_ids",
+                  "team_ids"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "mode": {
+                      "enum": [
+                        "all_members",
+                        "selected"
+                      ],
+                      "type": "string"
+                    },
+                    "user_ids": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "team_ids": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "application_id": {
+                      "enum": [
+                        "home",
+                        "business-glossary",
+                        "strategy-model"
+                      ],
+                      "type": "string"
+                    },
+                    "created_at": {},
+                    "updated_at": {}
+                  },
+                  "required": [
+                    "mode",
+                    "user_ids",
+                    "team_ids",
+                    "application_id"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "config.applicationAccess.reset",
+        "summary": "Reset application access policy",
+        "description": "Removes the application access policy and restores deny-by-default access for ordinary members.",
+        "tags": [
+          "Workspace Config",
+          "Workspace Config"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "applicationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "enum": [
+                "home",
+                "business-glossary",
+                "strategy-model"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "mode": {
+                          "enum": [
+                            "all_members",
+                            "selected"
+                          ],
+                          "type": "string"
+                        },
+                        "user_ids": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "team_ids": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "application_id": {
+                          "enum": [
+                            "home",
+                            "business-glossary",
+                            "strategy-model"
+                          ],
+                          "type": "string"
+                        },
+                        "created_at": {},
+                        "updated_at": {}
+                      },
+                      "required": [
+                        "mode",
+                        "user_ids",
+                        "team_ids",
+                        "application_id"
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/{workspace}/config/capability-configurations": {
       "get": {
         "operationId": "config.capabilityConfigurations.list",

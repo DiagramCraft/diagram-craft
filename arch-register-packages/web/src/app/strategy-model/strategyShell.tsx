@@ -22,6 +22,7 @@ import {
  */
 export const strategyAppDefinition: AppDefinition = {
   id: STRATEGY_CAPABILITY_MAP_ID,
+  applicationId: 'strategy-model',
   name: 'Strategy & Capability Modelling',
   shortCode: 'SC',
   tint: 'oklch(0.64 0.13 200)',

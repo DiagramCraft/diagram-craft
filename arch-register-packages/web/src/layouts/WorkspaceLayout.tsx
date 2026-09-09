@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { Outlet, getRouteApi, useNavigate, useMatches, useRouter } from '@tanstack/react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { DndProvider } from 'react-dnd';
@@ -41,7 +41,10 @@ import {
 } from '../shell/appShellRegistry';
 import type { AppId, WorkspaceRailItemId } from '../shell/shellTypes';
 import { getWorkspaceShellBuilder } from '../routes/workspace/workspaceShellRoute';
-import { useWorkspaceCapabilityConfigurations } from '../hooks/useWorkspaceConfig';
+import {
+  useAccessibleApplications,
+  useWorkspaceCapabilityConfigurations
+} from '../hooks/useWorkspaceConfig';
 import { settingsSectionTarget } from '../routes/settingsNavigation';
 import {
   asEntityPublicId,
@@ -99,6 +102,10 @@ export const WorkspaceLayout = () => {
     workspaceSlug,
     !!workspaceSlug
   );
+  const { data: applicationAccess, error: applicationAccessError } = useAccessibleApplications(
+    workspaceSlug,
+    !!workspaceSlug
+  );
 
   const {
     canManageWorkspaces,
@@ -133,7 +140,7 @@ export const WorkspaceLayout = () => {
       ...(canManageTeams ? ['lifecycle-owners', 'teams'] : []),
       ...(canViewSchemas ? ['model-overview', 'schemas', 'schema-validation', 'conformance'] : []),
       ...(canManageMembers ? ['roles', 'members'] : []),
-      ...(canAdministerWorkspace ? ['api-tokens'] : []),
+      ...(canAdministerWorkspace ? ['applications', 'api-tokens'] : []),
       ...(canManageWorkspaces ? ['ai', 'workflows', 'public-catalog'] : []),
       ...(canManageJobs ? ['webhooks', 'automation', 'jobs'] : []),
       ...(canViewAudit ? ['analytics', 'audit'] : [])
@@ -207,13 +214,17 @@ export const WorkspaceLayout = () => {
   const enabledApps = useMemo(
     () =>
       APP_DEFINITIONS.filter(app => {
+        const accessibleApplicationIds = new Set(
+          applicationAccess?.accessible_application_ids ?? ['home']
+        );
+        if (!accessibleApplicationIds.has(app.applicationId)) return false;
         const enablement = app.enablement;
         if (enablement === 'always') return true;
         return capabilityConfigurations.some(
           configuration => configuration.type === enablement.capabilityType && configuration.valid
         );
       }),
-    [capabilityConfigurations]
+    [applicationAccess?.accessible_application_ids, capabilityConfigurations]
   );
 
   const contextValue = useMemo(
@@ -305,6 +316,16 @@ export const WorkspaceLayout = () => {
     shellDescriptor.variant === 'overlay' ? null : shellDescriptor.activeRailItem;
   const activeApp = getAppDefinition(railItemToAppId(activeRailItem));
 
+  useEffect(() => {
+    if (!applicationAccess || activeApp.applicationId === 'home') return;
+    if (applicationAccess.accessible_application_ids.includes(activeApp.applicationId)) return;
+    void navigate({
+      to: '/$workspaceSlug',
+      params: { workspaceSlug },
+      replace: true
+    });
+  }, [activeApp.applicationId, applicationAccess, navigate, workspaceSlug]);
+
   const visibleRailItems: NavRailItem[] = (() => {
     const aiEnabled = aiConfig?.enabled === true;
     const count = governanceTaskCount?.count ?? 0;
@@ -352,7 +373,8 @@ export const WorkspaceLayout = () => {
     relationSchemasError ||
     enumsError ||
     fieldGroupsError ||
-    categoriesError
+    categoriesError ||
+    applicationAccessError
   ) {
     const error =
       workspacesError ??
@@ -361,7 +383,8 @@ export const WorkspaceLayout = () => {
       relationSchemasError ??
       enumsError ??
       fieldGroupsError ??
-      categoriesError;
+      categoriesError ??
+      applicationAccessError;
     return (
       <AppErrorState
         fullScreen

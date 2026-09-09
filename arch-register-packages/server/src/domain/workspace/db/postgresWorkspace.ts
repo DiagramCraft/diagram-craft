@@ -13,6 +13,7 @@ import {
   SupportedCurrencyConfigDbResult,
   AssessmentTypeDbCreate,
   WorkspaceCapabilityConfigurationDbCreate,
+  WorkspaceApplicationAccessPolicyDbCreate,
   DEFAULT_SUPPORTED_CURRENCIES
 } from './workspaceDatabase';
 import { workspaceMappers } from './workspaceDatabase';
@@ -108,6 +109,7 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
         await tx`DELETE FROM entity_schema WHERE workspace = ${id}`;
         await tx`DELETE FROM workspace_member WHERE workspace = ${id}`;
         await tx`DELETE FROM workspace_role WHERE workspace = ${id}`;
+        await tx`DELETE FROM workspace_application_access WHERE workspace = ${id}`;
         await tx`DELETE FROM workspace_capability_configuration WHERE workspace = ${id}`;
         await tx`DELETE FROM team_membership WHERE workspace = ${id}`;
         await tx`DELETE FROM workspace_lifecycle_state WHERE workspace = ${id}`;
@@ -179,6 +181,129 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
       RETURNING id, workspace, type, bindings, created_at, updated_at
     `;
     return row ? workspaceMappers.workspaceCapabilityConfiguration(row) : null;
+  }
+
+  async listWorkspaceApplicationAccessPolicies(workspace: string) {
+    const rows = await this.sql<DatabaseRow[]>`
+      SELECT workspace, application_id, mode, created_at, updated_at
+      FROM workspace_application_access
+      WHERE workspace = ${workspace}
+      ORDER BY application_id
+    `;
+    const policies = mapDatabaseRows(rows, workspaceMappers.applicationAccessPolicy);
+
+    return Promise.all(
+      policies.map(async policy => {
+        const [userRows, teamRows] = await Promise.all([
+          this.sql<{ user_id: string }[]>`
+            SELECT user_id
+            FROM workspace_application_access_user
+            WHERE workspace = ${workspace} AND application_id = ${policy.application_id}
+            ORDER BY user_id
+          `,
+          this.sql<{ team_id: string }[]>`
+            SELECT team_id
+            FROM workspace_application_access_team
+            WHERE workspace = ${workspace} AND application_id = ${policy.application_id}
+            ORDER BY team_id
+          `
+        ]);
+        return {
+          ...policy,
+          user_ids: userRows.map(grant => grant.user_id),
+          team_ids: teamRows.map(grant => grant.team_id)
+        };
+      })
+    );
+  }
+
+  async getWorkspaceApplicationAccessPolicy(workspace: string, applicationId: string) {
+    const [row] = await this.sql<DatabaseRow[]>`
+      SELECT workspace, application_id, mode, created_at, updated_at
+      FROM workspace_application_access
+      WHERE workspace = ${workspace} AND application_id = ${applicationId}
+    `;
+    if (!row) return null;
+
+    const policy = workspaceMappers.applicationAccessPolicy(row);
+    const [userRows, teamRows] = await Promise.all([
+      this.sql<{ user_id: string }[]>`
+        SELECT user_id
+        FROM workspace_application_access_user
+        WHERE workspace = ${workspace} AND application_id = ${applicationId}
+        ORDER BY user_id
+      `,
+      this.sql<{ team_id: string }[]>`
+        SELECT team_id
+        FROM workspace_application_access_team
+        WHERE workspace = ${workspace} AND application_id = ${applicationId}
+        ORDER BY team_id
+      `
+    ]);
+
+    return {
+      ...policy,
+      user_ids: userRows.map(grant => grant.user_id),
+      team_ids: teamRows.map(grant => grant.team_id)
+    };
+  }
+
+  async upsertWorkspaceApplicationAccessPolicy(input: WorkspaceApplicationAccessPolicyDbCreate) {
+    try {
+      await withPostgresTransaction(this.sql, async tx => {
+        await tx`
+          INSERT INTO workspace_application_access
+            (workspace, application_id, mode, created_at, updated_at)
+          VALUES (${input.workspace}, ${input.application_id}, ${input.mode}, ${input.created_at}, ${input.updated_at})
+          ON CONFLICT (workspace, application_id) DO UPDATE SET
+            mode = EXCLUDED.mode,
+            updated_at = EXCLUDED.updated_at
+        `;
+        await tx`
+          DELETE FROM workspace_application_access_user
+          WHERE workspace = ${input.workspace} AND application_id = ${input.application_id}
+        `;
+        await tx`
+          DELETE FROM workspace_application_access_team
+          WHERE workspace = ${input.workspace} AND application_id = ${input.application_id}
+        `;
+        for (const userId of input.user_ids) {
+          await tx`
+            INSERT INTO workspace_application_access_user (workspace, application_id, user_id)
+            VALUES (${input.workspace}, ${input.application_id}, ${userId})
+          `;
+        }
+        for (const teamId of input.team_ids) {
+          await tx`
+            INSERT INTO workspace_application_access_team (workspace, application_id, team_id)
+            VALUES (${input.workspace}, ${input.application_id}, ${teamId})
+          `;
+        }
+      });
+      return (await this.getWorkspaceApplicationAccessPolicy(
+        input.workspace,
+        input.application_id
+      ))!;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async deleteWorkspaceApplicationAccessPolicy(workspace: string, applicationId: string) {
+    const existing = await this.getWorkspaceApplicationAccessPolicy(workspace, applicationId);
+    if (!existing) return null;
+    const [row] = await this.sql<DatabaseRow[]>`
+      DELETE FROM workspace_application_access
+      WHERE workspace = ${workspace} AND application_id = ${applicationId}
+      RETURNING workspace, application_id, mode, created_at, updated_at
+    `;
+    return row
+      ? {
+          ...workspaceMappers.applicationAccessPolicy(row),
+          user_ids: existing.user_ids,
+          team_ids: existing.team_ids
+        }
+      : existing;
   }
 
   async replaceLifecycleStates(workspace: string, states: LifecycleStateDbCreate[]) {

@@ -18,6 +18,7 @@ import {
   LazyStrategyStrategyScreen,
   LazyStrategyTraceabilityScreen
 } from '../../routes/workspace/lazyWorkspaceScreens';
+import { ensureApplicationAccess } from '../../routes/applicationAccess';
 
 const railPath = (path: string) => path.replace('/$workspaceSlug/', '');
 
@@ -28,6 +29,12 @@ export const createStrategyWorkspaceRoutes = <TParentRoute extends AnyRoute>(
     createRoute({
       getParentRoute: () => workspaceRoute,
       path: railPath(STRATEGY_RAIL_PATHS[STRATEGY_CAPABILITY_MAP_ID]),
+      beforeLoad: ({ context, params }) =>
+        ensureApplicationAccess(
+          context.queryClient,
+          (params as unknown as { workspaceSlug: string }).workspaceSlug,
+          'strategy-model'
+        ),
       component: LazyStrategyCapabilityMapScreen
     }),
     ctx =>
@@ -42,6 +49,12 @@ export const createStrategyWorkspaceRoutes = <TParentRoute extends AnyRoute>(
     createRoute({
       getParentRoute: () => workspaceRoute,
       path: `${railPath(STRATEGY_RAIL_PATHS[STRATEGY_CAPABILITY_MAP_ID])}/$capabilityId`,
+      beforeLoad: ({ context, params }) =>
+        ensureApplicationAccess(
+          context.queryClient,
+          (params as unknown as { workspaceSlug: string }).workspaceSlug,
+          'strategy-model'
+        ),
       component: LazyStrategyCapabilityMapScreen
     }),
     ctx =>
@@ -54,6 +67,12 @@ export const createStrategyWorkspaceRoutes = <TParentRoute extends AnyRoute>(
       getParentRoute: () => workspaceRoute,
       path: railPath(STRATEGY_RAIL_PATHS[STRATEGY_CAPABILITIES_ID]),
       validateSearch: validateCapabilitiesSearch,
+      beforeLoad: ({ context, params }) =>
+        ensureApplicationAccess(
+          context.queryClient,
+          (params as unknown as { workspaceSlug: string }).workspaceSlug,
+          'strategy-model'
+        ),
       component: LazyStrategyCapabilitiesScreen
     }),
     ctx =>
@@ -67,6 +86,12 @@ export const createStrategyWorkspaceRoutes = <TParentRoute extends AnyRoute>(
       getParentRoute: () => workspaceRoute,
       path: `${railPath(STRATEGY_RAIL_PATHS[STRATEGY_CAPABILITIES_ID])}/$capabilityId`,
       validateSearch: validateCapabilitiesSearch,
+      beforeLoad: ({ context, params }) =>
+        ensureApplicationAccess(
+          context.queryClient,
+          (params as unknown as { workspaceSlug: string }).workspaceSlug,
+          'strategy-model'
+        ),
       component: LazyStrategyCapabilitiesScreen
     }),
     ctx =>
@@ -78,6 +103,12 @@ export const createStrategyWorkspaceRoutes = <TParentRoute extends AnyRoute>(
     createRoute({
       getParentRoute: () => workspaceRoute,
       path: railPath(STRATEGY_RAIL_PATHS[STRATEGY_HEATMAPS_ID]),
+      beforeLoad: ({ context, params }) =>
+        ensureApplicationAccess(
+          context.queryClient,
+          (params as unknown as { workspaceSlug: string }).workspaceSlug,
+          'strategy-model'
+        ),
       component: LazyStrategyHeatmapsScreen
     }),
     ctx =>
@@ -89,6 +120,12 @@ export const createStrategyWorkspaceRoutes = <TParentRoute extends AnyRoute>(
     createRoute({
       getParentRoute: () => workspaceRoute,
       path: railPath(STRATEGY_RAIL_PATHS[STRATEGY_STRATEGY_ID]),
+      beforeLoad: ({ context, params }) =>
+        ensureApplicationAccess(
+          context.queryClient,
+          (params as unknown as { workspaceSlug: string }).workspaceSlug,
+          'strategy-model'
+        ),
       component: LazyStrategyStrategyScreen
     }),
     ctx =>
@@ -100,6 +137,12 @@ export const createStrategyWorkspaceRoutes = <TParentRoute extends AnyRoute>(
     createRoute({
       getParentRoute: () => workspaceRoute,
       path: railPath(STRATEGY_RAIL_PATHS[STRATEGY_TRACEABILITY_ID]),
+      beforeLoad: ({ context, params }) =>
+        ensureApplicationAccess(
+          context.queryClient,
+          (params as unknown as { workspaceSlug: string }).workspaceSlug,
+          'strategy-model'
+        ),
       component: LazyStrategyTraceabilityScreen
     }),
     ctx =>

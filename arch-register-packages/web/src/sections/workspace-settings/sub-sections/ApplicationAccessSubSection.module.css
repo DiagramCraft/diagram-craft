@@ -1,0 +1,173 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 0 24px 24px;
+}
+
+.intro {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 12px 14px;
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  background: color-mix(in oklch, var(--accent-bg) 60%, var(--panel-bg));
+  color: var(--base-fg-dim);
+}
+
+.introTitle {
+  color: var(--base-fg);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.introText {
+  margin-top: 3px;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.cards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 14px;
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  background: var(--panel-bg);
+}
+
+.cardHeader,
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cardHeader {
+  justify-content: space-between;
+}
+
+.cardTitle {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+
+.appIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  background: var(--accent-bg-selected);
+  color: var(--accent-fg);
+}
+
+.card h3 {
+  margin: 0;
+  color: var(--base-fg);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.card p {
+  margin: 3px 0 0;
+  color: var(--base-fg-more-dim);
+  font-size: 11px;
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  padding: 3px 7px;
+  border: 1px solid var(--panel-border);
+  border-radius: 999px;
+  color: var(--base-fg-more-dim);
+  font-size: 10px;
+}
+
+.statusInstalled {
+  border-color: color-mix(in oklch, var(--ok) 35%, var(--panel-border));
+  color: var(--ok);
+}
+
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.targetGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  color: var(--base-fg-dim);
+  font-size: 11px;
+}
+
+.field > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--base-fg);
+  font-weight: 500;
+}
+
+.field select {
+  width: 100%;
+  min-height: 32px;
+  padding: 5px 7px;
+  border: 1px solid var(--cmp-border);
+  border-radius: 5px;
+  background: var(--base-bg);
+  color: var(--base-fg);
+  font: inherit;
+}
+
+.field select[multiple] {
+  min-height: 92px;
+}
+
+.field small,
+.hint {
+  color: var(--base-fg-more-dim);
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+.hint {
+  margin-left: auto;
+}
+
+@media (max-width: 720px) {
+  .targetGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .actions {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .hint {
+    margin-left: 0;
+  }
+}

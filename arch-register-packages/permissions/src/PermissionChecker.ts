@@ -5,6 +5,7 @@ import type {
   EntityGrant,
   EntitySchema,
   GlobalPermission,
+  ApplicationAccessPolicy,
   ProjectAction,
   Relation,
   RelationAction,
@@ -26,6 +27,37 @@ import { RELATION_ROLE_ACTIONS, ROLE_ACTIONS, TEAM_ROLE_PERMISSIONS } from './co
  * - Returns boolean indicating if permission is granted
  */
 export class PermissionChecker {
+  /**
+   * Check access to an application independently of the user's workspace role.
+   *
+   * Application access is an additional workspace gate: ordinary members must have
+   * `ws.view` and either match an all-member policy or one of its user/team grants.
+   * Workspace role managers and global administrators retain access regardless of
+   * the application policy.
+   */
+  hasApplicationAccess(
+    context: WorkspaceAuthorizationContext,
+    policy: ApplicationAccessPolicy | null
+  ): boolean {
+    if (this.hasApplicationAccessAdmin(context)) return true;
+    if (!this.hasWorkspaceCapability(context, 'ws.view')) return false;
+    if (policy == null) return false;
+    if (policy.mode === 'all_members') return true;
+
+    return (
+      policy.userIds.includes(context.userId) ||
+      policy.teamIds.some(teamId => context.teamIds.has(teamId))
+    );
+  }
+
+  /** Whether the context represents a global administrator or role manager. */
+  hasApplicationAccessAdmin(context: WorkspaceAuthorizationContext): boolean {
+    return (
+      context.globalPermissions.has('admin_platform') ||
+      this.hasWorkspaceCapability(context, 'people.role')
+    );
+  }
+
   /**
    * Check if user has a specific assigned permission on an entity.
    *

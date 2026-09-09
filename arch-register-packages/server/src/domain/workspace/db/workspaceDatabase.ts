@@ -1,5 +1,6 @@
 import {
   WORKSPACE_CAPABILITY_GROUPS,
+  type ApplicationAccessMode,
   type TeamRole,
   type WorkspaceCapability
 } from '@arch-register/permissions';
@@ -15,6 +16,7 @@ import {
 } from '../../../db/rowMappers';
 
 const TEAM_ROLES = ['team_admin', 'team_editor', 'team_reviewer'] as const;
+const APPLICATION_ACCESS_MODES = ['all_members', 'selected'] as const;
 const WORKSPACE_CAPABILITIES = WORKSPACE_CAPABILITY_GROUPS.flatMap(group =>
   group.caps.map(capability => capability.id)
 );
@@ -93,6 +95,18 @@ export type WorkspaceCapabilityConfigurationDbResult = {
 };
 
 export type WorkspaceCapabilityConfigurationDbCreate = WorkspaceCapabilityConfigurationDbResult;
+
+export type WorkspaceApplicationAccessPolicyDbResult = {
+  workspace: string;
+  application_id: string;
+  mode: ApplicationAccessMode;
+  user_ids: string[];
+  team_ids: string[];
+  created_at: Date;
+  updated_at: Date;
+};
+
+export type WorkspaceApplicationAccessPolicyDbCreate = WorkspaceApplicationAccessPolicyDbResult;
 
 export const DEFAULT_SUPPORTED_CURRENCIES = [
   { code: 'USD', label: 'US Dollar', sort_order: 0 },
@@ -201,6 +215,15 @@ export const workspaceMappers = {
     created_at: databaseDate(row['created_at']),
     updated_at: databaseDate(row['updated_at'])
   }),
+  applicationAccessPolicy: (row: DatabaseRow): WorkspaceApplicationAccessPolicyDbResult => ({
+    workspace: String(row['workspace']),
+    application_id: String(row['application_id']),
+    mode: databaseEnum(row['mode'], APPLICATION_ACCESS_MODES, 'workspace_application_access.mode'),
+    user_ids: [],
+    team_ids: [],
+    created_at: databaseDate(row['created_at']),
+    updated_at: databaseDate(row['updated_at'])
+  }),
   supportedCurrency: (row: DatabaseRow): SupportedCurrencyDbResult => ({
     workspace: String(row['workspace']),
     code: String(row['code']),
@@ -271,6 +294,21 @@ export type WorkspaceDatabase = {
     ws: string,
     type: string
   ): Promise<WorkspaceCapabilityConfigurationDbResult | null>;
+
+  listWorkspaceApplicationAccessPolicies(
+    ws: string
+  ): Promise<WorkspaceApplicationAccessPolicyDbResult[]>;
+  getWorkspaceApplicationAccessPolicy(
+    ws: string,
+    applicationId: string
+  ): Promise<WorkspaceApplicationAccessPolicyDbResult | null>;
+  upsertWorkspaceApplicationAccessPolicy(
+    input: WorkspaceApplicationAccessPolicyDbCreate
+  ): Promise<WorkspaceApplicationAccessPolicyDbResult>;
+  deleteWorkspaceApplicationAccessPolicy(
+    ws: string,
+    applicationId: string
+  ): Promise<WorkspaceApplicationAccessPolicyDbResult | null>;
 
   listLifecycleStates(ws: string): Promise<LifecycleStateDbResult[]>;
   replaceLifecycleStates(
