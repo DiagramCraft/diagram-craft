@@ -7,13 +7,15 @@ import { StrategySidebar } from './StrategySidebar';
 import {
   STRATEGY_CAPABILITIES_ID,
   STRATEGY_CAPABILITY_MAP_ID,
-  STRATEGY_HEATMAPS_ID
+  STRATEGY_HEATMAPS_ID,
+  STRATEGY_STRATEGY_ID
 } from '../strategySections';
 
 const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
   entityList: vi.fn(),
   entityTree: vi.fn(),
+  schemaList: vi.fn(),
   capabilityConfigurationsList: vi.fn()
 }));
 
@@ -25,6 +27,7 @@ vi.mock('@tanstack/react-router', () => ({
 vi.mock('../../../lib/orpcClient', () => ({
   orpcClient: {
     entities: { list: mocks.entityList, tree: mocks.entityTree },
+    schemas: { list: mocks.schemaList },
     config: { capabilityConfigurations: { list: mocks.capabilityConfigurationsList } }
   }
 }));
@@ -64,6 +67,10 @@ describe('StrategySidebar', () => {
     queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 
     mocks.capabilityConfigurationsList.mockResolvedValue(validConfig);
+    mocks.schemaList.mockResolvedValue([
+      { id: 'business_capability', name: 'Business Capability', icon: 'globe', color: null },
+      { id: 'objective', name: 'Objective', icon: 'target', color: null }
+    ]);
     mocks.entityList.mockResolvedValue({
       items: [
         {
@@ -166,6 +173,39 @@ describe('StrategySidebar', () => {
         params: { workspaceSlug: 'ws-1' }
       })
     );
+  });
+
+  it('lists objectives for the Strategy section and selects one on click', async () => {
+    mocks.entityList.mockImplementation(({ query }: { query: { _schemaId?: string } }) => {
+      if (query._schemaId === 'objective') {
+        return Promise.resolve({
+          items: [{ _uid: 'obj-1', _publicId: 'OBJ-1', _name: 'Grow Revenue' }],
+          total: 1
+        });
+      }
+      return Promise.resolve({ items: [], total: 0 });
+    });
+
+    await act(async () => {
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <StrategySidebar workspaceSlug="ws-1" activeSection={STRATEGY_STRATEGY_ID} />
+        </QueryClientProvider>
+      );
+    });
+    for (let i = 0; i < 5; i++) await flush();
+
+    expect(container.textContent).toContain('Objectives');
+    expect(container.textContent).toContain('Grow Revenue');
+    expect(container.textContent).not.toContain('Initiatives');
+    expect(container.textContent).not.toContain('Sections');
+
+    const objectiveRow = container.querySelector('[data-testid="strategy-objective-obj-1"]');
+    await act(async () => {
+      objectiveRow!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    const call = mocks.navigate.mock.calls.find(([arg]) => typeof arg?.search === 'function');
+    expect(call![0].search({})).toEqual(expect.objectContaining({ objective: 'obj-1' }));
   });
 
   it('filters to a capability subtree when a tree row is clicked', async () => {

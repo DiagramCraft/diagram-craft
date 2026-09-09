@@ -132,7 +132,10 @@ export const SCHEMA_ICONS = [
   'certificate',
   'bolt',
   'palette',
-  'microscope'
+  'microscope',
+  'target',
+  'flag',
+  'chart-bar'
 ] as const;
 
 export type SchemaIconId = (typeof SCHEMA_ICONS)[number];

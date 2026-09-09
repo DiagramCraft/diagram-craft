@@ -241,11 +241,18 @@
           applications the capability directly supports ("Realized by"), and linked objectives and initiatives, with
           a footer action to open the underlying record in Entities.
 
-        - @id:ar.strategy.heatmaps The Heatmaps section is scaffolded as a placeholder pending maturity, investment,
-          risk, and application-coverage overlay views.
+        - @id:ar.strategy.heatmaps The Heatmaps section is deprioritized and not currently surfaced in the app rail
+          or section nav; its route and placeholder screen are retained. The capability-map overlay control already
+          provides maturity, gap, investment, risk, and application-coverage heat colouring.
 
-        - @id:ar.strategy.strategy The Strategy section is scaffolded as a placeholder pending objective, outcome,
-          initiative, and measure views.
+        - @id:ar.strategy.strategy The Strategy section is scoped to one objective at a time — chosen from the
+          primary sidebar's objective list and shown in a header with its status, target date, owner, capability
+          count, and description. Below it are the
+          objective's Outcomes, Initiatives, and Measures panels plus a "Capabilities this objective depends on"
+          table with maturity, gap, investment, and application roll-ups over each capability's containment subtree.
+          Measures render a baseline → current → target progress bar from the Measure schema's measurement fields. A
+          "New objective" action opens the entity-create dialog pre-set to the Objective schema. Selecting a
+          capability opens the shared capability drawer at `strategy/strategy/$capabilityId`.
 
         - @id:ar.strategy.traceability The Traceability section has two tabs. **Trace chain** is a three-column
           hop walker — Objective → Capability → Application — walked one hop at a time over the Objective Supports

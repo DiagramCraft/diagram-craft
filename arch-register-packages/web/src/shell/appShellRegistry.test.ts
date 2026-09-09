@@ -12,6 +12,7 @@ import {
 import { GLOSSARY_RAIL_ITEM_ID, GLOSSARY_RAIL_PATH } from '../app/business-glossary/glossaryShell';
 import {
   STRATEGY_CAPABILITY_MAP_ID,
+  STRATEGY_HEATMAPS_ID,
   STRATEGY_TRACEABILITY_ID,
   STRATEGY_RAIL_PATHS
 } from '../app/strategy-model/strategySections';
@@ -54,10 +55,12 @@ describe('appShellRegistry', () => {
     expect(getRailSection(GLOSSARY_RAIL_ITEM_ID)?.route).toBe(GLOSSARY_RAIL_PATH);
   });
 
-  it('registers Strategy & Capability Modelling as a capability-gated app owning five rail sections', () => {
+  it('registers Strategy & Capability Modelling as a capability-gated app owning four rail sections', () => {
     const strategy = getAppDefinition(STRATEGY_CAPABILITY_MAP_ID);
     expect(strategy.applicationId).toBe('strategy-model');
-    expect(railIds(STRATEGY_CAPABILITY_MAP_ID)).toHaveLength(5);
+    // Heatmaps (#3193) is deprioritized — its route is retained but it is not a rail section.
+    expect(railIds(STRATEGY_CAPABILITY_MAP_ID)).toHaveLength(4);
+    expect(railIds(STRATEGY_CAPABILITY_MAP_ID)).not.toContain(STRATEGY_HEATMAPS_ID);
     expect(strategy.enablement).toEqual({ capabilityType: 'strategy-model' });
     expect(getRailSection(STRATEGY_TRACEABILITY_ID)?.route).toBe(
       STRATEGY_RAIL_PATHS[STRATEGY_TRACEABILITY_ID]
@@ -65,9 +68,13 @@ describe('appShellRegistry', () => {
   });
 
   it('exposes non-home app routes under the stable APP_RAIL_ROUTES shape', () => {
+    // Heatmaps is absent from the rail (see above), so its route is not in APP_RAIL_ROUTES.
+    const shellStrategyRoutes = Object.fromEntries(
+      Object.entries(STRATEGY_RAIL_PATHS).filter(([id]) => id !== STRATEGY_HEATMAPS_ID)
+    );
     expect(APP_RAIL_ROUTES).toEqual({
       [GLOSSARY_RAIL_ITEM_ID]: GLOSSARY_RAIL_PATH,
-      ...STRATEGY_RAIL_PATHS
+      ...shellStrategyRoutes
     });
   });
 
