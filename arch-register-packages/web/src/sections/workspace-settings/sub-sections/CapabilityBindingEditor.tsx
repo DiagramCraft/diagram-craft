@@ -3,7 +3,7 @@ import { Button } from '@diagram-craft/app-components/Button';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { Select } from '@diagram-craft/app-components/Select';
-import { Tabs } from '@diagram-craft/app-components/Tabs';
+import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import {
@@ -29,14 +29,7 @@ import {
 import { toEditableConfig, viewConfigDirty } from './strategy-view/strategyViewConfigState';
 import styles from './LifecycleSubSection.module.css';
 
-type CapabilityType = 'api-specification' | 'business-glossary' | 'retention' | 'strategy-model';
-
-const capabilityTypes: CapabilityType[] = [
-  'api-specification',
-  'business-glossary',
-  'retention',
-  'strategy-model'
-];
+export type CapabilityBindingSubTab = 'bindings' | 'fields' | 'dashboard';
 
 /** A target-kind-agnostic view of the schemas a binding role can pick from and resolve fields on. */
 type BindingTarget = { id: string; name: string; fields: EntitySchema['fields'] };
@@ -52,35 +45,47 @@ const targetsFor = (
   return [];
 };
 
-export const WorkspaceCapabilitiesSubSection = ({
+/**
+ * Per-capability binding editor: the "Enabled" toggle, schema/field role mappings, and — for
+ * `strategy-model` — the Fields / Dashboard view-config editors. Which panel renders is driven by
+ * the parent via `subTab`; the component stays mounted across sub-tab switches so unsaved edits
+ * survive. Save / Cancel are hoisted to the screen header via `onActionsChange`.
+ */
+export const CapabilityBindingEditor = ({
   workspaceSlug,
+  capabilityType,
   schemas,
   relationSchemas,
-  onActionsChange
+  subTab,
+  onActionsChange,
+  onEnabledControlChange
 }: {
   workspaceSlug: string;
+  capabilityType: string;
   schemas: EntitySchema[];
   relationSchemas: RelationSchema[];
+  subTab: CapabilityBindingSubTab;
   onActionsChange: (actions: ReactNode | undefined) => void;
+  /** Hoists the "Enabled" toggle above the tab strip on the screen. */
+  onEnabledControlChange: (control: ReactNode | undefined) => void;
 }) => {
-  const [activeTab, setActiveTab] = useState<CapabilityType>('api-specification');
-  const [strategyTab, setStrategyTab] = useState('bindings');
   const [enabled, setEnabled] = useState(false);
+  const [confirmDisableOpen, setConfirmDisableOpen] = useState(false);
   const { data: configurations = [], isLoading } =
     useWorkspaceCapabilityConfigurations(workspaceSlug);
-  const configuration = configurations.find(item => item.type === activeTab);
-  const definition = getWorkspaceCapabilityDefinition(activeTab);
+  const configuration = configurations.find(item => item.type === capabilityType);
+  const definition = getWorkspaceCapabilityDefinition(capabilityType);
   const [bindings, setBindings] = useState<WorkspaceCapabilityBindings>({});
   const [viewConfig, setViewConfig] = useState<StrategyModelViewConfig | null>(null);
-  const mutation = useUpdateWorkspaceCapabilityConfiguration(workspaceSlug, activeTab);
-  const deleteMutation = useDeleteWorkspaceCapabilityConfiguration(workspaceSlug, activeTab);
+  const mutation = useUpdateWorkspaceCapabilityConfiguration(workspaceSlug, capabilityType);
+  const deleteMutation = useDeleteWorkspaceCapabilityConfiguration(workspaceSlug, capabilityType);
 
   const configuredBindings = useMemo(
     () => configuration?.bindings ?? {},
     [configuration?.bindings]
   );
 
-  const isStrategyModel = activeTab === 'strategy-model';
+  const isStrategyModel = capabilityType === 'strategy-model';
 
   useEffect(() => {
     setEnabled(configuration != null);
@@ -108,6 +113,51 @@ export const WorkspaceCapabilitiesSubSection = ({
     setBindings(configuredBindings);
     setViewConfig(isStrategyModel ? toEditableConfig(configuration?.view_config) : null);
   }, [configuredBindings, configuration, isStrategyModel]);
+
+  const handleEnabledChange = useCallback(
+    (nextEnabled: boolean | undefined) => {
+      if (!definition) return;
+      if (nextEnabled) {
+        setEnabled(true);
+        setBindings(current =>
+          Object.keys(current).length > 0
+            ? current
+            : (Object.fromEntries(
+                definition.bindingRoles.map(role => [
+                  role.id,
+                  { target: { kind: role.targetKind, id: '' } }
+                ])
+              ) as WorkspaceCapabilityBindings)
+        );
+        return;
+      }
+      if (!configuration) {
+        setEnabled(false);
+        return;
+      }
+      setConfirmDisableOpen(true);
+    },
+    [configuration, definition]
+  );
+
+  const confirmDisable = useCallback(() => {
+    setConfirmDisableOpen(false);
+    setEnabled(false);
+    void deleteMutation.mutateAsync().catch(() => setEnabled(true));
+  }, [deleteMutation.mutateAsync]);
+
+  const toggleBusy = isLoading || mutation.isPending || deleteMutation.isPending;
+
+  useEffect(() => {
+    onEnabledControlChange(
+      <label className={styles.capabilityToggle}>
+        <Checkbox value={enabled} disabled={toggleBusy} onChange={handleEnabledChange} />
+        Enabled
+      </label>
+    );
+  }, [enabled, toggleBusy, handleEnabledChange, onEnabledControlChange]);
+
+  useEffect(() => () => onEnabledControlChange(undefined), [onEnabledControlChange]);
 
   useEffect(() => {
     onActionsChange(
@@ -140,30 +190,6 @@ export const WorkspaceCapabilitiesSubSection = ({
   useEffect(() => () => onActionsChange(undefined), [onActionsChange]);
 
   if (!definition) return null;
-
-  const handleEnabledChange = (nextEnabled: boolean | undefined) => {
-    if (nextEnabled) {
-      setEnabled(true);
-      if (Object.keys(bindings).length === 0) {
-        setBindings(
-          Object.fromEntries(
-            definition.bindingRoles.map(role => [
-              role.id,
-              { target: { kind: role.targetKind, id: '' } }
-            ])
-          ) as WorkspaceCapabilityBindings
-        );
-      }
-      return;
-    }
-    if (!configuration) {
-      setEnabled(false);
-      return;
-    }
-    if (!window.confirm(`Disable the ${definition.label} capability for this workspace?`)) return;
-    setEnabled(false);
-    void deleteMutation.mutateAsync().catch(() => setEnabled(true));
-  };
 
   const updateBinding = (bindingId: string, binding: WorkspaceCapabilityBinding) => {
     setBindings(current => ({ ...current, [bindingId]: binding }));
@@ -292,73 +318,50 @@ export const WorkspaceCapabilitiesSubSection = ({
     </>
   );
 
+  const strategyViewUnavailable = (
+    <div className={styles.sectionSub}>
+      Enable the capability and bind the Business Capability entity schema to configure this view.
+    </div>
+  );
+
   return (
-    <div className={styles.blockList}>
-      <Tabs.Root value={activeTab} onValueChange={value => setActiveTab(value as CapabilityType)}>
-        <Tabs.List aria-label="Capability binding types">
-          {capabilityTypes.map(type => {
-            const item = getWorkspaceCapabilityDefinition(type);
-            return item ? (
-              <Tabs.Trigger key={type} value={type}>
-                {item.label}
-              </Tabs.Trigger>
-            ) : null;
-          })}
-        </Tabs.List>
-        <Tabs.Content value={activeTab} style={{ height: 'auto' }}>
-          <div className={styles.section}>
-            <div className={styles.sectionHead}>
-              <div className={styles.capabilityHeader}>
-                <div>
-                  <div className={styles.sectionTitle}>{definition.label}</div>
-                  <div className={styles.sectionSub}>{definition.description}</div>
-                </div>
-                <label className={styles.capabilityToggle}>
-                  <Checkbox
-                    value={enabled}
-                    disabled={isLoading || mutation.isPending || deleteMutation.isPending}
-                    onChange={handleEnabledChange}
-                  />
-                  Enabled
-                </label>
-              </div>
-            </div>
-            <div className={styles.sectionBody}>
-              {isStrategyModel && enabled && viewConfig ? (
-                <Tabs.Root value={strategyTab} onValueChange={setStrategyTab}>
-                  <Tabs.List aria-label="Strategy model configuration">
-                    <Tabs.Trigger value="bindings">Bindings</Tabs.Trigger>
-                    <Tabs.Trigger value="fields">Fields</Tabs.Trigger>
-                    <Tabs.Trigger value="dashboard">Dashboard</Tabs.Trigger>
-                  </Tabs.List>
-                  <Tabs.Content value="bindings" style={{ height: 'auto' }}>
-                    {bindingRolesContent}
-                  </Tabs.Content>
-                  <Tabs.Content value="fields" style={{ height: 'auto' }}>
-                    <StrategyFieldsEditor
-                      schema={businessCapabilitySchema}
-                      value={viewConfig}
-                      disabled={controlsBusy}
-                      diagnostics={staleViewDiagnostics}
-                      onChange={setViewConfig}
-                    />
-                  </Tabs.Content>
-                  <Tabs.Content value="dashboard" style={{ height: 'auto' }}>
-                    <StrategyDashboardEditor
-                      schema={businessCapabilitySchema}
-                      value={viewConfig}
-                      disabled={controlsBusy}
-                      onChange={setViewConfig}
-                    />
-                  </Tabs.Content>
-                </Tabs.Root>
-              ) : (
-                bindingRolesContent
-              )}
-            </div>
-          </div>
-        </Tabs.Content>
-      </Tabs.Root>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', paddingTop: '1rem' }}>
+      {subTab === 'bindings' && bindingRolesContent}
+      {subTab === 'fields' &&
+        (isStrategyModel && enabled && viewConfig ? (
+          <StrategyFieldsEditor
+            schema={businessCapabilitySchema}
+            value={viewConfig}
+            disabled={controlsBusy}
+            diagnostics={staleViewDiagnostics}
+            onChange={setViewConfig}
+          />
+        ) : (
+          strategyViewUnavailable
+        ))}
+      {subTab === 'dashboard' &&
+        (isStrategyModel && enabled && viewConfig ? (
+          <StrategyDashboardEditor
+            schema={businessCapabilitySchema}
+            value={viewConfig}
+            disabled={controlsBusy}
+            onChange={setViewConfig}
+          />
+        ) : (
+          strategyViewUnavailable
+        ))}
+
+      {confirmDisableOpen && (
+        <DeleteConfirmationDialog
+          open
+          title="Disable capability"
+          message={`Disable the ${definition.label} capability for this workspace?`}
+          detail="The stored bindings and configuration are removed. You can re-enable it later, but you'll need to configure it again."
+          confirmLabel="Disable"
+          onConfirm={confirmDisable}
+          onCancel={() => setConfirmDisableOpen(false)}
+        />
+      )}
     </div>
   );
 };

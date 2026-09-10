@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'react';
 import { WorkspaceSettingsSidebar } from '../../sections/workspace-settings/WorkspaceSettingsSidebar';
 import { SchemaSettingsSidebar } from '../../sections/workspace-settings/SchemaSettingsSidebar';
 import { DocumentSettingsSidebar } from '../../sections/workspace-settings/DocumentSettingsSidebar';
+import { ApplicationsCapabilitiesSidebar } from '../../sections/workspace-settings/ApplicationsCapabilitiesSidebar';
 import { GlobalSettingsSidebar } from '../../sections/global-settings/GlobalSettingsSidebar';
 import { AccountSettingsSidebar } from '../../sections/account-settings/AccountSettingsSidebar';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
@@ -12,7 +13,8 @@ import {
   validateSettingsSearch,
   validateLegacySettingsSearch,
   validateSchemaSettingsSearch,
-  validateDocumentSettingsSearch
+  validateDocumentSettingsSearch,
+  validateApplicationsCapabilitiesSearch
 } from '../searchParams';
 import { buildSettingsBreadcrumbs } from '../../layouts/workspaceShellDescriptors';
 import { withWorkspaceShell } from './workspaceShellRoute';
@@ -24,7 +26,8 @@ import {
   LazySchemaGraphView,
   LazySchemaValidationScreen,
   LazySchemaSettingsScreen,
-  LazyWorkspaceSettingsScreen
+  LazyWorkspaceSettingsScreen,
+  LazyApplicationsCapabilitiesScreen
 } from './lazyWorkspaceScreens';
 
 const SettingsRedirect = () => {
@@ -227,6 +230,33 @@ export const createSettingsWorkspaceRoutes = <TParentRoute extends AnyRoute>(
     })
   );
 
+  const applicationsCapabilitiesRoute = withWorkspaceShell(
+    createRoute({
+      getParentRoute: () => workspaceRoute,
+      path: 'settings/applications-capabilities',
+      validateSearch: validateApplicationsCapabilitiesSearch,
+      component: LazyApplicationsCapabilitiesScreen
+    }),
+    ctx => ({
+      variant: 'detail',
+      activeRailItem: null,
+      breadcrumbs: buildSettingsBreadcrumbs(ctx, 'Settings', '/$workspaceSlug/settings'),
+      navigationLabel: 'Settings',
+      renderNavigation: controls => (
+        <WorkspaceSettingsSidebar
+          workspaceSlug={ctx.workspaceSlug}
+          workspace={ctx.workspace}
+          schemas={ctx.schemas}
+          projects={ctx.projects}
+          availableSections={ctx.availableSettingsSections}
+          onCollapse={controls.expanded ? controls.collapse : undefined}
+          onExpand={controls.expanded ? undefined : controls.expand}
+        />
+      ),
+      secondarySidebar: <ApplicationsCapabilitiesSidebar workspaceSlug={ctx.workspaceSlug} />
+    })
+  );
+
   const modelOverviewRoute = withWorkspaceShell(
     createRoute({
       getParentRoute: () => workspaceRoute,
@@ -305,6 +335,7 @@ export const createSettingsWorkspaceRoutes = <TParentRoute extends AnyRoute>(
     settingsSectionRoute,
     schemaSettingsRoute,
     documentSettingsRoute,
+    applicationsCapabilitiesRoute,
     modelOverviewRoute,
     schemaValidationRoute,
     globalSettingsRoute,

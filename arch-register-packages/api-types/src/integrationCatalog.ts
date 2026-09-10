@@ -161,7 +161,7 @@ export const workspaceCapabilityDefinitions: WorkspaceCapabilityDefinition[] = [
   },
   {
     type: 'strategy-model',
-    label: 'Strategy model',
+    label: 'Strategy & Capability Modelling',
     description:
       'Strategic objectives, outcomes, initiatives, and measures for traceability views.',
     features: ['traceability', 'roll-ups'],

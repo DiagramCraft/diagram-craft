@@ -1,0 +1,20 @@
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+  flex: none;
+}
+
+.on {
+  background: var(--green-9);
+}
+
+.warn {
+  background: var(--orange-9);
+}
+
+.off {
+  background: transparent;
+  border: 1px solid var(--base-fg-more-dim);
+}

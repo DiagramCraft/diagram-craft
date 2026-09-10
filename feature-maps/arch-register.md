@@ -39,8 +39,9 @@
           that application's sections and re-skins the shell with its accent colour. An application may own several
           rail sections, each with its own icon, tooltip, route, and optionally its own primary sidebar. An
           application appears in the switcher only when enabled, which is governed by its backing workspace
-          capability configuration (managed from workspace settings). Workspace administrators can separately
-          control application access for ordinary members with an all-members or selected-people-and-teams policy;
+          capability configuration (managed from the "Applications & Capabilities" workspace settings screen, which
+          pairs each application's schema binding with its access policy in one tabbed view). Workspace administrators
+          can separately control application access for ordinary members with an all-members or selected-people-and-teams policy;
           missing policies deny ordinary members by default while global administrators and workspace role managers
           retain access. Breadcrumbs are relative to the active application, which the switcher represents.
 
@@ -220,16 +221,20 @@
       capability-not-configured empty state instead of its content.
 
         - @id:ar.strategy.view-config Alongside the schema bindings, workspace administrators configure how the
-          Business Capability attributes are presented across the application. On the Capability Binding settings
-          screen the strategy-model capability splits into Bindings / Fields / Dashboard tabs. The Fields tab lists
+          Business Capability attributes are presented across the application. In the "Applications & Capabilities"
+          workspace settings screen — a secondary sidebar grouping the two applications (Business Glossary, Strategy
+          & Capability Modelling) and the remaining capabilities (API specification, Retention policy), each row
+          showing a dot for whether that capability is enabled — the Strategy & Capability Modelling entry splits
+          into Bindings / Fields / Dashboard / Access tabs. The Fields tab lists
           every capability field in one shared display order (no add or remove — the list follows the schema); each
           field independently opts into the
           Capabilities table (with an optional header override and a rendering — plain value, a red/amber/green bar,
           or a signed delta), the subtree roll-up (average or sum, plus a number format), the detail drawer, and a
           capability-map overlay (direction plus colour-band thresholds; a roll-up field colours by its subtree
           aggregate, otherwise by the capability's own value). The Capabilities table's Name, Level, Owner, and
-          Applications columns are fixed and always lead. The Dashboard tab configures the landing-screen tiles, and
-          the Bindings tab maps the capability roles to schemas as before. Retiring a field in the schema editor
+          Applications columns are fixed and always lead. The Dashboard tab configures the landing-screen tiles,
+          the Bindings tab maps the capability roles to schemas as before, and the Access tab carries the
+          application's access policy (@id:ar.authorization.application-access). Retiring a field in the schema editor
           drops it from every view (with an advisory diagnostic); the
           configuration round-trips through workspace export/import, and a workspace with no stored configuration
           falls back to a built-in default that mirrors the seed schema fields.
@@ -928,7 +933,8 @@
           authorization decisions.
 
         - @id:ar.authorization.application-access Workspace administrators can control access to each installed
-          optional application independently from workspace roles, granting all workspace members or selected people
+          optional application independently from workspace roles, from the Access tab of that application's entry in
+          the "Applications & Capabilities" settings screen, granting all workspace members or selected people
           and teams. Ordinary members must still have workspace view access; global administrators and workspace role
           managers retain access, and removing a policy returns the application to administrator-only access.
 
