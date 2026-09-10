@@ -33,7 +33,9 @@ const noopStorage: StorageAdapter = {
 runContractSuiteAgainstBothDrivers('seededEntityQuery', getDb => {
   it('executes the seeded #2300 and #2315 worked examples through list/count', async () => {
     const db = getDb();
-    await seedBootstrapData(db, noopStorage);
+    // Bootstrap performs many single-row writes; keep fixture setup in one transaction so the
+    // remote PostgreSQL contract run does not spend the test budget committing each row.
+    await db.core.transaction(seedDb => seedBootstrapData(seedDb, noopStorage));
     const workspace = seededWorkspaces.default.id;
 
     expect(new Set((await db.workspace.listWorkspaces()).map(row => row.id))).toEqual(
