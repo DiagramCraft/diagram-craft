@@ -41,6 +41,12 @@ type SettingsNavItem = {
 
 const SETTINGS_SECTIONS: SettingsNavItem[] = [
   { id: 'general', label: 'General', icon: <TbSettings size={12} />, group: 'Workspace' },
+  {
+    id: 'applications-capabilities',
+    label: 'Applications & Capabilities',
+    icon: <TbApps size={12} />,
+    group: 'Workspace'
+  },
   { id: 'currencies', label: 'Currencies', icon: <TbTag size={12} />, group: 'Workspace' },
   {
     id: 'assessment-types',
@@ -50,12 +56,6 @@ const SETTINGS_SECTIONS: SettingsNavItem[] = [
   },
   { id: 'model-overview', label: 'Overview', icon: <TbCode size={12} />, group: 'Model' },
   { id: 'schemas', label: 'Entity Schema', icon: <TbCode size={12} />, group: 'Model' },
-  {
-    id: 'capabilities',
-    label: 'Capability Binding',
-    icon: <TbBolt size={12} />,
-    group: 'Model'
-  },
   {
     id: 'schema-validation',
     label: 'Schema Validation',
@@ -75,7 +75,6 @@ const SETTINGS_SECTIONS: SettingsNavItem[] = [
     group: 'Model'
   },
   { id: 'members', label: 'Members', icon: <TbUsers size={12} />, group: 'People' },
-  { id: 'applications', label: 'Applications', icon: <TbApps size={12} />, group: 'People' },
   { id: 'lifecycle-owners', label: 'Lifecycle', icon: <TbTag size={12} />, group: 'Model' },
   { id: 'teams', label: 'Teams', icon: <TbUsers size={12} />, group: 'People' },
   { id: 'roles', label: 'Roles & permissions', icon: <TbShieldLock size={12} />, group: 'People' },

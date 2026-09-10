@@ -104,6 +104,10 @@ export const LazyDocumentSettingsScreen = lazyRouteComponent(
   () => import('../../sections/workspace-settings/DocumentSettingsScreen'),
   'DocumentSettingsScreen'
 );
+export const LazyApplicationsCapabilitiesScreen = lazyRouteComponent(
+  () => import('../../sections/workspace-settings/ApplicationsCapabilitiesScreen'),
+  'ApplicationsCapabilitiesScreen'
+);
 export const LazyGlobalSettingsScreen = lazyRouteComponent(
   () => import('../../sections/global-settings/GlobalSettingsScreen'),
   'GlobalSettingsScreen'

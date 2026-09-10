@@ -3,7 +3,7 @@ import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import type { GovernanceWorkflowCaseKind } from '@arch-register/api-types/governanceWorkflowConfigContract';
 import type { GovernanceApprovalConfig } from '@arch-register/api-types/governanceCaseConfigSchemas';
-import { WorkflowFallbackTargetPicker } from './WorkflowFallbackTargetPicker';
+import { PrincipalPicker } from '../../../components/PrincipalPicker';
 import { StrategyEditor, WorkflowBlock } from './WorkflowEditorPrimitives';
 import styles from './WorkflowsSubSection.module.css';
 
@@ -76,7 +76,7 @@ export const WorkflowApprovalEditor = ({
           </WorkflowBlock>
           <WorkflowBlock title={routing ? 'Fallback assignees' : 'Fallback approvers'}>
             <FormElement label="Fallback users">
-              <WorkflowFallbackTargetPicker
+              <PrincipalPicker
                 workspaceSlug={workspaceSlug}
                 kind="user"
                 values={approvals.fallbackUserIds}
@@ -84,7 +84,7 @@ export const WorkflowApprovalEditor = ({
               />
             </FormElement>
             <FormElement label="Fallback teams">
-              <WorkflowFallbackTargetPicker
+              <PrincipalPicker
                 workspaceSlug={workspaceSlug}
                 kind="team"
                 values={approvals.fallbackTeamIds}

@@ -3,7 +3,7 @@ import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import type { GovernanceWorkflowCaseKind } from '@arch-register/api-types/governanceWorkflowConfigContract';
 import type { GovernanceEscalationConfig } from '@arch-register/api-types/governanceCaseConfigSchemas';
-import { WorkflowFallbackTargetPicker } from './WorkflowFallbackTargetPicker';
+import { PrincipalPicker } from '../../../components/PrincipalPicker';
 import { StrategyEditor, WorkflowBlock } from './WorkflowEditorPrimitives';
 import styles from './WorkflowsSubSection.module.css';
 
@@ -66,7 +66,7 @@ export const WorkflowEscalationEditor = ({
         </WorkflowBlock>
         <WorkflowBlock title="Fallback escalation targets">
           <FormElement label="Fallback users">
-            <WorkflowFallbackTargetPicker
+            <PrincipalPicker
               workspaceSlug={workspaceSlug}
               kind="user"
               values={escalation.fallbackUserIds}
@@ -74,7 +74,7 @@ export const WorkflowEscalationEditor = ({
             />
           </FormElement>
           <FormElement label="Fallback teams">
-            <WorkflowFallbackTargetPicker
+            <PrincipalPicker
               workspaceSlug={workspaceSlug}
               kind="team"
               values={escalation.fallbackTeamIds}

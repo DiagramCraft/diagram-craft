@@ -1,0 +1,232 @@
+/* Applications & Capabilities — enabled toggle + binding table.
+   Ported from the Claude Design spec (apps-capabilities.css) onto arch-register tokens. */
+
+/* ---- Enabled / Disabled switch (rendered in the page title) ---- */
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 28px;
+  padding: 0 10px 0 8px;
+  border: 1px solid var(--cmp-border);
+  border-radius: var(--r);
+  background: var(--cmp-bg);
+  color: var(--base-fg-dim);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.toggle:hover:not(:disabled) {
+  border-color: var(--cmp-border-hover, var(--base-fg-more-dim));
+}
+
+.toggle:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.toggle.on {
+  color: var(--base-fg);
+}
+
+.switch {
+  width: 26px;
+  height: 14px;
+  border-radius: 8px;
+  background: var(--base-bg);
+  border: 1px solid var(--base-fg-more-dim);
+  position: relative;
+  flex: none;
+  transition:
+    background 120ms,
+    border-color 120ms;
+}
+
+.switch::after {
+  content: "";
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--base-fg-more-dim);
+  transition:
+    transform 120ms,
+    background 120ms;
+}
+
+.toggle.on .switch {
+  background: color-mix(in oklab, var(--accent-fg) 55%, var(--base-bg));
+  border-color: var(--accent-fg);
+}
+
+.toggle.on .switch::after {
+  transform: translateX(12px);
+  background: oklch(0.98 0 0);
+}
+
+/* ---- Binding table ---- */
+.mapIntro {
+  margin: 0 0 10px;
+  font-size: 11.5px;
+  color: var(--base-fg-more-dim);
+  text-wrap: pretty;
+}
+
+.map {
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  background: var(--panel-bg);
+}
+
+.mapHead {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  gap: 12px;
+  padding: 6px 12px;
+  background: var(--base-bg);
+  border-bottom: 1px solid var(--panel-border);
+  font-size: 10px;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--base-fg-more-dim);
+}
+
+.grp {
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.grp:last-child {
+  border-bottom: 0;
+}
+
+.grpHead {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  gap: 12px;
+  align-items: center;
+  padding: 9px 12px;
+  background: var(--cmp-bg);
+}
+
+.grpHead.unbound {
+  background: color-mix(in oklch, var(--warning-fg) 8%, var(--cmp-bg));
+}
+
+.grpL {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.grpIcon {
+  color: var(--base-fg-more-dim);
+  flex: none;
+}
+
+.grpName {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--base-fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.grpReq {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  color: var(--base-fg-more-dim);
+  flex: none;
+}
+
+.grpCell {
+  min-width: 0;
+}
+
+.grpRows {
+  background: var(--panel-bg);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  gap: 12px;
+  align-items: center;
+  padding: 5px 12px;
+  border-top: 1px solid var(--panel-border);
+}
+
+.row.missing {
+  background: color-mix(in oklch, var(--warning-fg) 6%, var(--panel-bg));
+}
+
+.rowRole {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding-left: 6px;
+}
+
+.rowTick {
+  width: 12px;
+  flex: none;
+  border-left: 1px solid var(--cmp-border);
+  border-bottom: 1px solid var(--cmp-border);
+  height: 9px;
+  margin-bottom: 8px;
+  border-bottom-left-radius: var(--r-sm);
+}
+
+.rowName {
+  font-size: 12px;
+  color: var(--base-fg-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.row.missing .rowName {
+  color: var(--base-fg);
+}
+
+.reqStar {
+  color: var(--warning-fg);
+  font-size: 11px;
+  flex: none;
+}
+
+.optional {
+  font-size: 10.5px;
+  color: var(--base-fg-more-dim);
+  flex: none;
+}
+
+.rowCell {
+  min-width: 0;
+}
+
+.note {
+  font-size: 11.5px;
+  color: var(--base-fg-more-dim);
+}
+
+.issues {
+  padding: 6px 12px;
+  border-top: 1px solid var(--panel-border);
+  font-size: 11px;
+  color: var(--warning-fg);
+}
+
+.tableIssues {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: var(--warning-fg);
+  font-size: 11px;
+}

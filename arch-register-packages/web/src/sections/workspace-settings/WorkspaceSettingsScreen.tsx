@@ -24,9 +24,7 @@ import { CreateJobDialog } from '../../components/jobs/CreateJobDialog';
 import { WorkspaceApiTokensSubSection } from './sub-sections/WorkspaceApiTokensSubSection';
 import { AssessmentTypesSubSection } from './sub-sections/AssessmentTypesSubSection';
 import { PublicCatalogSubSection } from './sub-sections/PublicCatalogSubSection';
-import { WorkspaceCapabilitiesSubSection } from './sub-sections/WorkspaceCapabilitiesSubSection';
 import { ConformanceSubSection } from './sub-sections/ConformanceSubSection';
-import { ApplicationAccessSubSection } from './sub-sections/ApplicationAccessSubSection';
 
 const WorkspaceAnalyticsScreen = lazy(() =>
   import('./sub-sections/analytics/WorkspaceAnalyticsScreen').then(module => ({
@@ -47,10 +45,6 @@ const SECTION_META: Record<string, { title: string; sub: string }> = {
   'assessment-types': {
     title: 'Assessment types',
     sub: 'Configure categories used to organize workspace assessments and dashboard views.'
-  },
-  'capabilities': {
-    title: 'Capability Binding',
-    sub: 'Bind capability roles to the schemas and fields used by this workspace.'
   },
   'model-overview': {
     title: 'Model Overview',
@@ -75,10 +69,6 @@ const SECTION_META: Record<string, { title: string; sub: string }> = {
   'members': {
     title: 'Members',
     sub: 'Browse workspace members and the role assigned to each person.'
-  },
-  'applications': {
-    title: 'Applications',
-    sub: 'Control which workspace teams and people can use each installed application.'
   },
   'ai': {
     title: 'AI',
@@ -145,7 +135,6 @@ export const WorkspaceSettingsScreen = () => {
   const [workflowAddDialogOpen, setWorkflowAddDialogOpen] = useState(false);
   const [jobAddDialogOpen, setJobAddDialogOpen] = useState(false);
   const [apiTokenAddDialogOpen, setApiTokenAddDialogOpen] = useState(false);
-  const [capabilityActions, setCapabilityActions] = useState<ReactNode>();
   const [conformanceActions, setConformanceActions] = useState<ReactNode>();
 
   useEffect(() => {
@@ -186,9 +175,7 @@ export const WorkspaceSettingsScreen = () => {
   }
 
   const sectionButton =
-    section === 'capabilities' ? (
-      capabilityActions
-    ) : section === 'conformance' ? (
+    section === 'conformance' ? (
       conformanceActions
     ) : section === 'members' ? (
       <Button
@@ -268,14 +255,6 @@ export const WorkspaceSettingsScreen = () => {
           assessmentTypes={ctx.assessmentTypes}
         />
       )}
-      {section === 'capabilities' && (
-        <WorkspaceCapabilitiesSubSection
-          workspaceSlug={workspaceSlug}
-          schemas={ctx.schemas}
-          relationSchemas={ctx.relationSchemas}
-          onActionsChange={setCapabilityActions}
-        />
-      )}
       {section === 'roles' && (
         <RolesPermissionsSubSection
           workspaceSlug={workspaceSlug}
@@ -297,7 +276,6 @@ export const WorkspaceSettingsScreen = () => {
           onCloseAddDialog={() => setMembersAddDialogOpen(false)}
         />
       )}
-      {section === 'applications' && <ApplicationAccessSubSection workspaceSlug={workspaceSlug} />}
       {section === 'api-tokens' && (
         <WorkspaceApiTokensSubSection
           workspaceSlug={workspaceSlug}

@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, createContext, useContext } from 'react';
+import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -81,29 +81,6 @@ vi.mock('@diagram-craft/app-components/Select', () => {
   return { Select: { Root, Item } };
 });
 
-vi.mock('@diagram-craft/app-components/Tabs', () => {
-  const TabsContext = createContext<(value: string) => void>(() => {});
-  const Root = ({
-    onValueChange,
-    children
-  }: {
-    value: string;
-    onValueChange: (value: string) => void;
-    children: ReactNode;
-  }) => <TabsContext.Provider value={onValueChange}>{children}</TabsContext.Provider>;
-  const List = ({ children }: { children: ReactNode }) => <div>{children}</div>;
-  const Trigger = ({ value, children }: { value: string; children: ReactNode }) => {
-    const onValueChange = useContext(TabsContext);
-    return (
-      <button type="button" data-tab={value} onClick={() => onValueChange(value)}>
-        {children}
-      </button>
-    );
-  };
-  const Content = ({ children }: { children: ReactNode }) => <div>{children}</div>;
-  return { Tabs: { Root, List, Trigger, Content } };
-});
-
 vi.mock('../../../hooks/useWorkspaceConfig', () => ({
   useWorkspaceCapabilityConfigurations: () => ({
     data: mocks.configurations,
@@ -119,7 +96,7 @@ vi.mock('../../../hooks/useWorkspaceConfig', () => ({
   })
 }));
 
-const { WorkspaceCapabilitiesSubSection } = await import('./WorkspaceCapabilitiesSubSection');
+const { CapabilityBindingEditor } = await import('./CapabilityBindingEditor');
 
 const entitySchemas: EntitySchema[] = [
   {
@@ -151,7 +128,7 @@ const relationSchemas: RelationSchema[] = [
   } as unknown as RelationSchema
 ];
 
-describe('WorkspaceCapabilitiesSubSection', () => {
+describe('CapabilityBindingEditor', () => {
   let container: HTMLDivElement | undefined;
   let root: Root | undefined;
 
@@ -171,26 +148,22 @@ describe('WorkspaceCapabilitiesSubSection', () => {
     return container;
   };
 
-  it('renders a relation-schema picker (not a disclaimer) for a relation_schema-targeted role', () => {
+  it('renders a relation-schema picker for a relation_schema-targeted role', () => {
     mocks.configurations = [];
     const el = render(
-      <WorkspaceCapabilitiesSubSection
+      <CapabilityBindingEditor
         workspaceSlug="workspace-1"
+        capabilityType="retention"
         schemas={entitySchemas}
         relationSchemas={relationSchemas}
+        subTab="bindings"
         onActionsChange={() => {}}
+        onEnabledControlChange={() => {}}
       />
     );
 
-    // Switch to the retention tab, which has a relation_schema-targeted 'assignment' role.
-    const retentionTab = Array.from(el.querySelectorAll('button')).find(
-      button => button.getAttribute('data-tab') === 'retention'
-    );
-    expect(retentionTab).toBeDefined();
-    act(() => retentionTab!.click());
-
     const optionTexts = Array.from(el.querySelectorAll('option')).map(option => option.textContent);
     expect(optionTexts).toContain('Subject to Retention Policy');
-    expect(el.textContent).not.toContain('Document and relation bindings are not used');
+    expect(el.textContent).not.toContain('Document bindings are not used by this capability.');
   });
 });

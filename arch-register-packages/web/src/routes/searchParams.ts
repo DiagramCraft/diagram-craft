@@ -274,6 +274,23 @@ export const validateDocumentSettingsSearch = (
   raw: Record<string, unknown>
 ): DocumentSettingsSearchParams => parseSearchParams(documentSettingsSearchSchema, raw);
 
+// Applications & Capabilities settings params (for settings/applications-capabilities route)
+const applicationsCapabilitiesSearchSchema = defineSearchParamSchema({
+  // Selected sidebar entry: a managed application id or a bare capability type.
+  item: stringCodec,
+  // Active tab within the selected entry: bindings | fields | dashboard | access.
+  tab: stringCodec
+});
+
+export type ApplicationsCapabilitiesSearchParams = SearchParamsFromSchema<
+  typeof applicationsCapabilitiesSearchSchema
+>;
+
+export const validateApplicationsCapabilitiesSearch = (
+  raw: Record<string, unknown>
+): ApplicationsCapabilitiesSearchParams =>
+  parseSearchParams(applicationsCapabilitiesSearchSchema, raw);
+
 const modelOverviewSearchSchema = defineSearchParamSchema({
   layout: omitDefaultCodec(
     enumCodec(['hierarchy', 'layered', 'force', 'tree'] as const),
