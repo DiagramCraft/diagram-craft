@@ -82,15 +82,12 @@ export const ApplicationsCapabilitiesScreen = () => {
           breadcrumb={breadcrumb}
           title={item.label}
           description={description}
+          toggleButtons={enabledControl}
           buttons={activeTab === 'access' ? accessActions : bindingActions}
         />
       </div>
 
       <div style={{ padding: '0 24px 24px' }}>
-        {enabledControl && (
-          <div style={{ padding: '0 0 12px' }}>{enabledControl}</div>
-        )}
-
         <Tabs.Root value={activeTab} onValueChange={selectTab}>
           <Tabs.List aria-label={`${item.label} configuration`}>
             {item.tabs.map(tab => (

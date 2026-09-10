@@ -5,7 +5,7 @@ import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { Banner } from '../../../components/Banner';
 import { LoadingState } from '../../../components/LoadingState';
 import { APP_DEFINITIONS } from '../../../shell/appShellRegistry';
-import { WorkflowFallbackTargetPicker } from './WorkflowFallbackTargetPicker';
+import { PrincipalPicker } from '../../../components/PrincipalPicker';
 import type {
   ApplicationAccessMode,
   ApplicationAccessPolicyInput,
@@ -13,7 +13,6 @@ import type {
 } from '@arch-register/api-types/workspaceConfigContract';
 import {
   useApplicationAccessConfiguration,
-  useResetApplicationAccessPolicy,
   useUpdateApplicationAccessPolicy,
   useWorkspaceCapabilityConfigurations
 } from '../../../hooks/useWorkspaceConfig';
@@ -59,7 +58,6 @@ export const ApplicationAccessCard = ({
   const { data: capabilityConfigurations = [] } =
     useWorkspaceCapabilityConfigurations(workspaceSlug);
   const updatePolicy = useUpdateApplicationAccessPolicy(workspaceSlug);
-  const resetPolicy = useResetApplicationAccessPolicy(workspaceSlug);
   const [draft, setDraftState] = useState<AccessDraft>(toDraft(undefined));
 
   const app = useMemo(
@@ -99,12 +97,7 @@ export const ApplicationAccessCard = ({
 
   const resetDraft = useCallback(() => setDraftState(savedDraft), [savedDraft]);
 
-  const reset = async () => {
-    await resetPolicy.mutateAsync(applicationId);
-    setDraftState({ allMembers: false, user_ids: [], team_ids: [] });
-  };
-
-  const busy = updatePolicy.isPending || resetPolicy.isPending;
+  const busy = updatePolicy.isPending;
 
   useEffect(() => {
     onActionsChange(
@@ -126,22 +119,35 @@ export const ApplicationAccessCard = ({
   if (!configuration || !app) return null;
 
   const saving = busy;
-  const hasPolicy = policy != null;
 
   return (
     <div
       style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem', paddingTop: '1rem' }}
     >
-      {(updatePolicy.error ?? resetPolicy.error) && (
+      {updatePolicy.error && (
         <Banner variant="error">
-          {(updatePolicy.error ?? resetPolicy.error) instanceof Error
-            ? (updatePolicy.error ?? resetPolicy.error)!.message
+          {updatePolicy.error instanceof Error
+            ? updatePolicy.error.message
             : 'Failed to save application access.'}
         </Banner>
       )}
 
+      <p
+        style={{
+          margin: 0,
+          fontSize: '11.5px',
+          color: 'var(--base-fg-more-dim)',
+          textWrap: 'pretty'
+        }}
+      >
+        Controls who can open {app.name}, independent of workspace roles and entity permissions.
+        Global administrators and workspace role managers always keep access.
+      </p>
+
       <div className={styles.controls}>
-        <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+        <label
+          style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '11px' }}
+        >
           <Checkbox
             value={draft.allMembers}
             disabled={saving}
@@ -156,7 +162,7 @@ export const ApplicationAccessCard = ({
               label="Teams"
               hint="Team membership grants access to every member of the team."
             >
-              <WorkflowFallbackTargetPicker
+              <PrincipalPicker
                 workspaceSlug={workspaceSlug}
                 kind="team"
                 values={draft.team_ids}
@@ -164,7 +170,7 @@ export const ApplicationAccessCard = ({
               />
             </FormElement>
             <FormElement label="People" hint="Selections are additive with team grants.">
-              <WorkflowFallbackTargetPicker
+              <PrincipalPicker
                 workspaceSlug={workspaceSlug}
                 kind="user"
                 values={draft.user_ids}
@@ -175,18 +181,11 @@ export const ApplicationAccessCard = ({
         )}
       </div>
 
-      <div className={styles.actions}>
-        {hasPolicy && (
-          <Button variant="ghost" size="sm" disabled={saving} onClick={() => void reset()}>
-            Reset to administrator-only
-          </Button>
-        )}
-        {!installed && (
-          <span className={styles.hint}>
-            Configure the app&apos;s capability binding before it can appear in the switcher.
-          </span>
-        )}
-      </div>
+      {!installed && (
+        <span className={styles.hint}>
+          Configure the app&apos;s capability binding before it can appear in the switcher.
+        </span>
+      )}
     </div>
   );
 };

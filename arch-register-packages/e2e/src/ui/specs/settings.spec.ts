@@ -34,7 +34,9 @@ test.describe('settings section', () => {
     await page.getByText('API specification', { exact: true }).click();
     // A capability detail view still renders a Tabs component even with a single tab.
     await expect(page.getByRole('tab', { name: 'Binding', exact: true })).toBeVisible();
-    await expect(page.getByRole('checkbox', { name: 'Enabled', exact: true })).toBeChecked();
+    await expect(
+      page.getByRole('button', { name: 'Enabled', exact: true })
+    ).toHaveAttribute('aria-pressed', 'true');
     await expect(page.getByText('API entity schema', { exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Cancel', exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Save changes', exact: true })).toBeVisible();

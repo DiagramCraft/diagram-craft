@@ -7,7 +7,7 @@ export type PrincipalValue = { principal_type?: string; principal_id?: string } 
 
 /**
  * Resolves a `principal` field value (`{ principal_type: 'user' | 'team', principal_id }`) to its
- * display name, using the same member/team lists `WorkflowFallbackTargetPicker` resolves ids
+ * display name, using the same member/team lists `PrincipalPicker` resolves ids
  * against. Falls back to the raw id when the member/team can't be found (e.g. still loading, or
  * removed from the workspace), so callers never show a blank label.
  */

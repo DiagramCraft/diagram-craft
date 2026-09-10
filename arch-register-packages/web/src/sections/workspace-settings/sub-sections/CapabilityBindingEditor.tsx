@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { TbAlertTriangle, TbBox } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
-import { Checkbox } from '@diagram-craft/app-components/Checkbox';
-import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { Select } from '@diagram-craft/app-components/Select';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
@@ -27,7 +26,7 @@ import {
   StrategyFieldsEditor
 } from './strategy-view/StrategyModelViewConfigEditor';
 import { toEditableConfig, viewConfigDirty } from './strategy-view/strategyViewConfigState';
-import styles from './LifecycleSubSection.module.css';
+import t from './CapabilityBindingEditor.module.css';
 
 export type CapabilityBindingSubTab = 'bindings' | 'fields' | 'dashboard';
 
@@ -150,10 +149,16 @@ export const CapabilityBindingEditor = ({
 
   useEffect(() => {
     onEnabledControlChange(
-      <label className={styles.capabilityToggle}>
-        <Checkbox value={enabled} disabled={toggleBusy} onChange={handleEnabledChange} />
-        Enabled
-      </label>
+      <button
+        type="button"
+        className={`${t.toggle} ${enabled ? t.on : ''}`}
+        disabled={toggleBusy}
+        aria-pressed={enabled}
+        onClick={() => handleEnabledChange(!enabled)}
+      >
+        <span className={t.switch} />
+        {enabled ? 'Enabled' : 'Disabled'}
+      </button>
     );
   }, [enabled, toggleBusy, handleEnabledChange, onEnabledControlChange]);
 
@@ -203,123 +208,169 @@ export const CapabilityBindingEditor = ({
     .filter(diagnostic => diagnostic.code === 'stale_view_field')
     .map(diagnostic => diagnostic.message);
 
+  const bindingCount = definition.bindingRoles.length;
+
   const bindingRolesContent = (
     <>
-      {definition.bindingRoles.map(role => {
-        const binding = bindings[role.id];
-        const targets = targetsFor(role.targetKind, schemas, relationSchemas);
-        const schemaId = binding?.target.kind === role.targetKind ? binding.target.id : '';
-        const schema = targets.find(item => item.id === schemaId);
-        const draftBinding: WorkspaceCapabilityBinding = {
-          target: { kind: role.targetKind, id: schemaId },
-          ...(binding?.fieldMappings ? { fieldMappings: binding.fieldMappings } : {})
-        };
-        const resolution =
-          schema && role.fieldRoles.length > 0
-            ? resolveCapabilityFieldMappings(draftBinding, role.fieldRoles, schema.fields)
-            : null;
-        return (
-          <div key={role.id} className={styles.field} style={{ gridTemplateColumns: '1fr' }}>
-            <FormElement label={role.label} required={role.required}>
-              {role.targetKind === 'document_type' ? (
-                <div className={styles.sectionSub}>
-                  Document bindings are not used by this capability.
-                </div>
-              ) : (
-                <Select.Root
-                  value={schemaId}
-                  disabled={!enabled || isLoading || controlsBusy}
-                  placeholder={
-                    role.targetKind === 'entity_schema'
-                      ? 'Select an entity schema...'
-                      : 'Select a relation schema...'
-                  }
-                  onChange={value =>
-                    updateBinding(role.id, {
-                      target: { kind: role.targetKind, id: value ?? '' }
-                    })
-                  }
-                >
-                  {targets.map(candidate => (
-                    <Select.Item key={candidate.id} value={candidate.id}>
-                      {candidate.name}
-                    </Select.Item>
-                  ))}
-                </Select.Root>
-              )}
-            </FormElement>
+      <p className={t.mapIntro}>
+        {definition.label} expects {bindingCount} schema binding{bindingCount === 1 ? '' : 's'}.
+        Bind each to a schema in this workspace, then map its fields.
+      </p>
+      <div className={t.map}>
+        <div className={t.mapHead}>
+          <span>Expected</span>
+          <span>Mapped to</span>
+        </div>
+        {definition.bindingRoles.map(role => {
+          const binding = bindings[role.id];
+          const targets = targetsFor(role.targetKind, schemas, relationSchemas);
+          const schemaId = binding?.target.kind === role.targetKind ? binding.target.id : '';
+          const schema = targets.find(item => item.id === schemaId);
+          const draftBinding: WorkspaceCapabilityBinding = {
+            target: { kind: role.targetKind, id: schemaId },
+            ...(binding?.fieldMappings ? { fieldMappings: binding.fieldMappings } : {})
+          };
+          const resolution =
+            schema && role.fieldRoles.length > 0
+              ? resolveCapabilityFieldMappings(draftBinding, role.fieldRoles, schema.fields)
+              : null;
+          const isDocument = role.targetKind === 'document_type';
+          const unbound = !isDocument && !schema;
+          const hasRows = role.fieldRoles.length > 0;
 
-            {schema && role.fieldRoles.length > 0 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <div>
-                  <div className={styles.sectionTitle}>Field mappings</div>
-                  <div className={styles.sectionSub}>
-                    Map the required roles to fields on this schema.
+          return (
+            <div className={t.grp} key={role.id}>
+              <div className={`${t.grpHead} ${unbound ? t.unbound : ''}`}>
+                <div className={t.grpL}>
+                  <TbBox size={13} className={t.grpIcon} />
+                  <span className={t.grpName}>{role.label}</span>
+                  <span className={t.grpReq}>{role.required ? 'required' : 'optional'}</span>
+                </div>
+                <div className={t.grpCell}>
+                  {isDocument ? (
+                    <span className={t.note}>
+                      Document bindings are not used by this capability.
+                    </span>
+                  ) : (
+                    <Select.Root
+                      value={schemaId}
+                      disabled={!enabled || isLoading || controlsBusy}
+                      style={{ width: '100%' }}
+                      placeholder={
+                        role.targetKind === 'entity_schema'
+                          ? 'Choose an entity schema…'
+                          : 'Choose a relation schema…'
+                      }
+                      onChange={value =>
+                        updateBinding(role.id, {
+                          target: { kind: role.targetKind, id: value ?? '' }
+                        })
+                      }
+                    >
+                      {targets.map(candidate => (
+                        <Select.Item key={candidate.id} value={candidate.id}>
+                          {candidate.name}
+                        </Select.Item>
+                      ))}
+                    </Select.Root>
+                  )}
+                </div>
+              </div>
+
+              {schema && hasRows && (
+                <div className={t.grpRows}>
+                  {role.fieldRoles.map(fieldRole => {
+                    const fieldId = resolveCapabilityFieldId(draftBinding, fieldRole);
+                    const validFields = schema.fields.filter(
+                      field =>
+                        !field.archived &&
+                        field.type !== 'derived' &&
+                        fieldRole.allowedTypes.includes(field.type as never)
+                    );
+                    const missing = fieldRole.required && !fieldId;
+                    return (
+                      <div
+                        className={`${t.row} ${missing ? t.missing : ''}`}
+                        key={fieldRole.id}
+                      >
+                        <div className={t.rowRole}>
+                          <span className={t.rowTick} />
+                          <span className={t.rowName}>{fieldRole.label}</span>
+                          {fieldRole.required ? (
+                            <span className={t.reqStar}>*</span>
+                          ) : (
+                            <span className={t.optional}>optional</span>
+                          )}
+                        </div>
+                        <div className={t.rowCell}>
+                          <Select.Root
+                            value={fieldId}
+                            disabled={!enabled || controlsBusy}
+                            style={{ width: '100%' }}
+                            placeholder="Choose field…"
+                            onChange={value => {
+                              if (!value) return;
+                              updateBinding(role.id, {
+                                target: { kind: role.targetKind, id: schemaId },
+                                fieldMappings: {
+                                  ...(binding?.fieldMappings ?? {}),
+                                  [fieldRole.id]: value
+                                }
+                              });
+                            }}
+                          >
+                            {!validFields.some(field => field.id === fieldId) && fieldId && (
+                              <Select.Item value={fieldId}>Missing field · {fieldId}</Select.Item>
+                            )}
+                            {validFields.map(field => (
+                              <Select.Item key={field.id} value={field.id}>
+                                {field.name} · {field.id}
+                              </Select.Item>
+                            ))}
+                          </Select.Root>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {unbound && hasRows && (
+                <div className={t.grpRows}>
+                  <div className={t.row} style={{ gridTemplateColumns: '1fr' }}>
+                    <span className={t.optional}>
+                      Bind a schema to map its {role.fieldRoles.length} expected fields.
+                    </span>
                   </div>
                 </div>
-                {role.fieldRoles.map(fieldRole => {
-                  const fieldId = resolveCapabilityFieldId(draftBinding, fieldRole);
-                  const validFields = schema.fields.filter(
-                    field =>
-                      !field.archived &&
-                      field.type !== 'derived' &&
-                      fieldRole.allowedTypes.includes(field.type as never)
-                  );
-                  return (
-                    <FormElement
-                      key={fieldRole.id}
-                      label={fieldRole.label}
-                      required={fieldRole.required}
-                    >
-                      <Select.Root
-                        value={fieldId}
-                        disabled={!enabled || controlsBusy}
-                        onChange={value => {
-                          if (!value) return;
-                          updateBinding(role.id, {
-                            target: { kind: role.targetKind, id: schemaId },
-                            fieldMappings: {
-                              ...(binding?.fieldMappings ?? {}),
-                              [fieldRole.id]: value
-                            }
-                          });
-                        }}
-                      >
-                        {!validFields.some(field => field.id === fieldId) && (
-                          <Select.Item value={fieldId}>Missing field · {fieldId}</Select.Item>
-                        )}
-                        {validFields.map(field => (
-                          <Select.Item key={field.id} value={field.id}>
-                            {field.name} · {field.id}
-                          </Select.Item>
-                        ))}
-                      </Select.Root>
-                    </FormElement>
-                  );
-                })}
-              </div>
-            )}
-            {resolution && resolution.issues.length > 0 && (
-              <div className={styles.capabilityUnknownFields}>
-                {resolution.issues.map(issue => issue.message).join(' ')}
-              </div>
-            )}
-          </div>
-        );
-      })}
+              )}
+
+              {resolution && resolution.issues.length > 0 && (
+                <div className={t.issues}>
+                  {resolution.issues.map(issue => issue.message).join(' ')}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
       {configuration && !configuration.valid && (
-        <div className={styles.capabilityUnknownFields}>
-          {configuration.diagnostics
-            .filter(diagnostic => diagnostic.code !== 'stale_view_field')
-            .map(diagnostic => diagnostic.message)
-            .join(' ')}
+        <div className={t.tableIssues}>
+          <TbAlertTriangle size={13} style={{ flex: 'none', marginTop: 1 }} />
+          <span>
+            {configuration.diagnostics
+              .filter(diagnostic => diagnostic.code !== 'stale_view_field')
+              .map(diagnostic => diagnostic.message)
+              .join(' ')}
+          </span>
         </div>
       )}
     </>
   );
 
   const strategyViewUnavailable = (
-    <div className={styles.sectionSub}>
+    <div className={t.note}>
       Enable the capability and bind the Business Capability entity schema to configure this view.
     </div>
   );
