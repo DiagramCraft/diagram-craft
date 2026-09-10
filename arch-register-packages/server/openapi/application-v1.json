@@ -71246,6 +71246,15 @@
                         },
                         "description": "Capability-specific semantic roles bound to workspace model objects"
                       },
+                      "view_config": {
+                        "anyOf": [
+                          {},
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Capability-specific presentation config (raw passthrough). For strategy-model this is a StrategyModelViewConfig."
+                      },
                       "valid": {
                         "type": "boolean",
                         "description": "Whether all configured targets and field mappings are valid"
@@ -71262,7 +71271,8 @@
                                 "unknown_binding",
                                 "unknown_target",
                                 "wrong_target_kind",
-                                "invalid_field_mapping"
+                                "invalid_field_mapping",
+                                "stale_view_field"
                               ],
                               "type": "string"
                             },
@@ -71410,6 +71420,15 @@
                       },
                       "description": "Capability-specific semantic roles bound to workspace model objects"
                     },
+                    "view_config": {
+                      "anyOf": [
+                        {},
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Capability-specific presentation config (raw passthrough). For strategy-model this is a StrategyModelViewConfig."
+                    },
                     "valid": {
                       "type": "boolean",
                       "description": "Whether all configured targets and field mappings are valid"
@@ -71426,7 +71445,8 @@
                               "unknown_binding",
                               "unknown_target",
                               "wrong_target_kind",
-                              "invalid_field_mapping"
+                              "invalid_field_mapping",
+                              "stale_view_field"
                             ],
                             "type": "string"
                           },
@@ -71555,6 +71575,9 @@
                       ]
                     },
                     "description": "Capability-specific semantic roles bound to workspace model objects"
+                  },
+                  "viewConfig": {
+                    "description": "Capability-specific presentation config; validated per capability type on upsert"
                   }
                 },
                 "required": [
@@ -71637,6 +71660,15 @@
                       },
                       "description": "Capability-specific semantic roles bound to workspace model objects"
                     },
+                    "view_config": {
+                      "anyOf": [
+                        {},
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Capability-specific presentation config (raw passthrough). For strategy-model this is a StrategyModelViewConfig."
+                    },
                     "valid": {
                       "type": "boolean",
                       "description": "Whether all configured targets and field mappings are valid"
@@ -71653,7 +71685,8 @@
                               "unknown_binding",
                               "unknown_target",
                               "wrong_target_kind",
-                              "invalid_field_mapping"
+                              "invalid_field_mapping",
+                              "stale_view_field"
                             ],
                             "type": "string"
                           },
@@ -71798,6 +71831,15 @@
                       },
                       "description": "Capability-specific semantic roles bound to workspace model objects"
                     },
+                    "view_config": {
+                      "anyOf": [
+                        {},
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Capability-specific presentation config (raw passthrough). For strategy-model this is a StrategyModelViewConfig."
+                    },
                     "valid": {
                       "type": "boolean",
                       "description": "Whether all configured targets and field mappings are valid"
@@ -71814,7 +71856,8 @@
                               "unknown_binding",
                               "unknown_target",
                               "wrong_target_kind",
-                              "invalid_field_mapping"
+                              "invalid_field_mapping",
+                              "stale_view_field"
                             ],
                             "type": "string"
                           },
