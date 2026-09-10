@@ -65,6 +65,11 @@ export const buildProjectionBindings = (
 
     state.compilingBinding = true;
     binding.path.forEach((step, stepIndex) => {
+      if (step.kind === 'containmentSubtree') {
+        throw new UnsupportedEntityQueryIRError(
+          "The 'containmentSubtree' path step is only supported by the entity traversal compiler"
+        );
+      }
       if (step.kind === 'endpoint') {
         const targetAlias = `pb_${binding.name}_${stepIndex + 1}`;
         const targetId =

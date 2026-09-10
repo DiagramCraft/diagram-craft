@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import type { BrowserView, FilterCondition } from '@arch-register/api-types/viewContract';
-import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
+import type { EntityQuery, PathStep } from '@arch-register/api-types/entityQueryIR';
 import { asProjectPublicId, projectDetailRoute } from '../../../routes/publicObjectRoutes';
 import type { BrowserSearch, BrowserViewConfigMap } from './entityBrowserState';
 import {
@@ -54,6 +54,14 @@ export const useEntityBrowserSearchState = ({
       : requestedView;
   const viewConfigs = useMemo(() => parseViewConfigs(search.viewConfigs), [search.viewConfigs]);
   const activeViewConfig = viewConfigs[view] ?? null;
+
+  // The path-walker view tracks its currently walked chain (one selected entity id per column)
+  // in the URL so a walked path is shareable/bookmarkable. The saved-view config only holds the
+  // path definition, never the selection.
+  const pathWalkSelection = useMemo<string[]>(
+    () => (search.pathWalk ? search.pathWalk.split(',').filter(Boolean) : []),
+    [search.pathWalk]
+  );
 
   const navigateBrowser = useCallback(
     (patch: Partial<BrowserSearch>, replace = false) => {
@@ -131,7 +139,8 @@ export const useEntityBrowserSearchState = ({
       if (collectionId && next !== 'table' && next !== 'cards') return;
       navigateBrowser({
         viewMode: next === 'table' ? undefined : next,
-        viewId: undefined
+        viewId: undefined,
+        pathWalk: undefined
       });
     },
     [collectionId, navigateBrowser]
@@ -149,6 +158,25 @@ export const useEntityBrowserSearchState = ({
       setViewConfigs(next);
     },
     [setViewConfigs, view, viewConfigs]
+  );
+  // The path-walker view discovers its path as you click, so the chosen hop sequence (config) and
+  // the selected entity per column (pathWalk) change together - write both in one navigation so
+  // they can't race. `hops` is persisted as the saved view's remembered chain.
+  const setPathWalk = useCallback(
+    (hops: PathStep[], selection: string[]) => {
+      const nextConfigs: BrowserViewConfigMap = { ...viewConfigs };
+      if (hops.length > 0) nextConfigs['path-walker'] = { hops };
+      else delete nextConfigs['path-walker'];
+      navigateBrowser(
+        {
+          viewConfigs: serializeViewConfigs(nextConfigs),
+          pathWalk: selection.length > 0 ? selection.join(',') : undefined,
+          viewId: undefined
+        },
+        true
+      );
+    },
+    [navigateBrowser, viewConfigs]
   );
 
   const setAsOf = useCallback(
@@ -202,6 +230,8 @@ export const useEntityBrowserSearchState = ({
     setQ,
     setSort,
     setView,
+    pathWalkSelection,
+    setPathWalk,
     sort,
     statusFilter: getSingleFacetValue(conditions, '_lifecycle'),
     typeFilter: entityQuery?.schemaId ?? getSingleFacetValue(conditions, '_schemaId'),

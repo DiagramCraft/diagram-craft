@@ -3426,6 +3426,14 @@ const resolvePathStepSchemaIds = (
           filter: resolveEntityQueryNodeSchemaIds(step.filter, idMap, relationSchemaIdMap)
         })
       };
+    case 'containmentSubtree':
+      return {
+        ...step,
+        ownerSchemaId: idMap.get(step.ownerSchemaId) ?? step.ownerSchemaId,
+        ...(step.filter && {
+          filter: resolveEntityQueryNodeSchemaIds(step.filter, idMap, relationSchemaIdMap)
+        })
+      };
     case 'endpoint':
       return step;
   }

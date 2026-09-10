@@ -564,6 +564,20 @@
           delivery progress alongside its coverage/gap status, without exposing project detail the viewer can't
           already see.
 
+        - @id:ar.entity-views.path-walker Users can walk a single relationship chain interactively, one column per hop,
+          with no path configured up front. Column 0 lists the entities matching the current browser filter; selecting
+          an entity reveals a dropdown on the connecting arrow listing every relation traversable from that entity —
+          incoming and outgoing typed relations, generic references, and containment, grouped and filtered by
+          field-group access. Choosing one populates the next column with the entities it links to; every intermediate
+          column preselects its first entity so a chain (e.g. a saved view's remembered hop sequence) reads end-to-end,
+          while the final column is left for the user to choose, and an explicit click always overrides. Selecting an
+          entity reveals the next arrow, and so on up to six hops. Once a column's outgoing relation is chosen, each of
+          its rows shows how many entities it leads to in the next column (a single batched lookup). A breadcrumb
+          summarises the current chain, a hop that resolves to nothing shows an explicit "chain breaks here" state, and
+          an "Open" action in each entity's hover card navigates to that entity. The walked chain (selected entity per column) is kept in the URL so it is shareable, and saving
+          the view remembers the chosen hop sequence so it reopens on the same chain. Coverage, orphan, and delivery
+          analysis stay in the traceability view.
+
         - @id:ar.entity-views.bubble Users can plot entities across configurable dimensions such as X, Y, size, and
           colour in a bubble view, with optional equally split axes and named quadrant labels persisted in saved views
           and wiki embeds.

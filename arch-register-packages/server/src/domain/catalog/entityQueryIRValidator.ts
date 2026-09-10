@@ -541,6 +541,32 @@ const validatePathSteps = (
           authCtx
         );
       }
+    } else if (step.kind === 'containmentSubtree') {
+      if (currentKind !== 'entity') {
+        errors.push({
+          path: stepPath,
+          message:
+            "'containmentSubtree' path step is only valid when the current path position is an entity"
+        });
+      }
+      const ownerSchema = schemas.get(step.ownerSchemaId);
+      if (!ownerSchema) {
+        errors.push({
+          path: [...stepPath, 'ownerSchemaId'],
+          message: `Unknown ownerSchemaId '${step.ownerSchemaId}'`
+        });
+      } else {
+        const field = schemaFieldById(ownerSchema, step.fieldId);
+        if (
+          field?.type !== 'containment' ||
+          isFieldViewRestricted(authCtx, ownerSchema, step.fieldId)
+        ) {
+          errors.push({
+            path: [...stepPath, 'fieldId'],
+            message: `Schema '${step.ownerSchemaId}' does not define a viewable containment field '${step.fieldId}'`
+          });
+        }
+      }
     } else {
       if (!isKnownFieldId(step.fieldId, schemas, authCtx)) {
         errors.push({
@@ -771,6 +797,8 @@ const projectionAlias = (projection: NonNullable<EntityQuery['projections']>[num
           return step.fieldId;
         case 'relationBackward':
           return `<-${step.relationSchemaId}.${step.fieldId}`;
+        case 'containmentSubtree':
+          return `subtree(${step.ownerSchemaId}.${step.fieldId})`;
       }
     })
     .join('.');

@@ -1,4 +1,4 @@
-import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
+import type { EntityQuery, PathStep } from '@arch-register/api-types/entityQueryIR';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { Project } from '@arch-register/api-types/projectCrudContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
@@ -20,6 +20,7 @@ import { TableView, type TableViewProps } from './TableView';
 import { TimelineView } from './TimelineView';
 import { TreeView } from './TreeView';
 import { TraceabilityView } from './TraceabilityView';
+import { PathWalkerView } from './PathWalkerView';
 import type { BrowserEntityRecord, ProjectBrowserContext } from './entityBrowserState';
 import type { EntityDisplayField } from './entityDisplayFields';
 import type { JoinedAssessmentContext } from './entityFieldSources';
@@ -65,6 +66,11 @@ type EntityBrowserViewData = {
   diffIncludePlannedChanges?: boolean;
   diffIncludeOverdueChanges?: boolean;
   isLoading?: boolean;
+  /** Path-walker view: the currently walked chain (one selected entity id per column) and a
+   *  callback that persists a new hop sequence + selection together. When omitted (e.g. published
+   *  embeds) the view keeps both in local state instead, seeded from `activeViewConfig`. */
+  pathWalkSelection?: string[];
+  onPathWalkChange?: (hops: PathStep[], selection: string[]) => void;
 };
 
 type EntityBrowserViewMode =
@@ -135,6 +141,8 @@ export const EntityBrowserView = ({
   diffIncludePlannedChanges,
   diffIncludeOverdueChanges,
   isLoading = false,
+  pathWalkSelection,
+  onPathWalkChange,
   mode
 }: EntityBrowserViewProps) => {
   const readOnly = mode.kind !== 'interactive';
@@ -255,6 +263,20 @@ export const EntityBrowserView = ({
           onEntityClick={onEntityClick}
           hideToolbar={hideToolbar}
           isLoading={isLoading}
+        />
+      );
+    case 'path-walker':
+      return (
+        <PathWalkerView
+          rows={rows}
+          schemas={schemas}
+          relationSchemas={relationSchemas}
+          workspaceId={workspaceId}
+          config={activeViewConfig}
+          onEntityClick={onEntityClick}
+          isLoading={isLoading}
+          selection={pathWalkSelection}
+          onWalkChange={onPathWalkChange}
         />
       );
     case 'timeline':

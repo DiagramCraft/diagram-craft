@@ -230,6 +230,8 @@ export const pathStepKey = (step: PathStep): string => {
       return `relationForward:${step.fieldId}`;
     case 'relationBackward':
       return `relationBackward:${step.fieldId}:${step.relationSchemaId}`;
+    case 'containmentSubtree':
+      return `containmentSubtree:${step.fieldId}:${step.ownerSchemaId}`;
   }
 };
 
