@@ -13,9 +13,7 @@ import {
   type ACItem
 } from './applicationsCapabilities';
 
-const routeApi = getRouteApi(
-  '/authenticated/$workspaceSlug/settings/applications-capabilities'
-);
+const routeApi = getRouteApi('/authenticated/$workspaceSlug/settings/applications-capabilities');
 
 type EnabledState = 'on' | 'warn' | 'off';
 

@@ -75,7 +75,8 @@ export const ApplicationAccessCard = ({
     setDraftState(toDraft(policy));
   }, [configuration, policy]);
 
-  const setDraft = (next: Partial<AccessDraft>) => setDraftState(current => ({ ...current, ...next }));
+  const setDraft = (next: Partial<AccessDraft>) =>
+    setDraftState(current => ({ ...current, ...next }));
 
   const savedDraft = useMemo(() => toDraft(policy), [policy]);
   const dirty = JSON.stringify(draft) !== JSON.stringify(savedDraft);
@@ -121,9 +122,7 @@ export const ApplicationAccessCard = ({
   const saving = busy;
 
   return (
-    <div
-      style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem', paddingTop: '1rem' }}
-    >
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem', paddingTop: '1rem' }}>
       {updatePolicy.error && (
         <Banner variant="error">
           {updatePolicy.error instanceof Error
@@ -145,9 +144,7 @@ export const ApplicationAccessCard = ({
       </p>
 
       <div className={styles.controls}>
-        <label
-          style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '11px' }}
-        >
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '11px' }}>
           <Checkbox
             value={draft.allMembers}
             disabled={saving}

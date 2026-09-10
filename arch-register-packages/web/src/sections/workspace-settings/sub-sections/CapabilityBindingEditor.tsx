@@ -289,10 +289,7 @@ export const CapabilityBindingEditor = ({
                     );
                     const missing = fieldRole.required && !fieldId;
                     return (
-                      <div
-                        className={`${t.row} ${missing ? t.missing : ''}`}
-                        key={fieldRole.id}
-                      >
+                      <div className={`${t.row} ${missing ? t.missing : ''}`} key={fieldRole.id}>
                         <div className={t.rowRole}>
                           <span className={t.rowTick} />
                           <span className={t.rowName}>{fieldRole.label}</span>

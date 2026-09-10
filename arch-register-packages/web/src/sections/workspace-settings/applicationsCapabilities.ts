@@ -86,5 +86,7 @@ export const findApplicationsCapabilitiesItem = (
 };
 
 /** Resolve the active tab for an item, falling back to its first tab. */
-export const resolveApplicationsCapabilitiesTab = (item: ACItem, tabId: string | undefined): string =>
-  item.tabs.find(tab => tab.id === tabId)?.id ?? item.tabs[0]?.id ?? 'bindings';
+export const resolveApplicationsCapabilitiesTab = (
+  item: ACItem,
+  tabId: string | undefined
+): string => item.tabs.find(tab => tab.id === tabId)?.id ?? item.tabs[0]?.id ?? 'bindings';
