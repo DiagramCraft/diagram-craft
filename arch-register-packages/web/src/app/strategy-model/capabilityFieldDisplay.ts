@@ -19,6 +19,22 @@ const optionLabel = (
   return value;
 };
 
+/** A `business_capability` entity's own numeric value for `fieldId` (currency → its amount). */
+export const capabilityNumericValue = (
+  entity: EntityRecord,
+  fieldId: string
+): { value: number | null; currency: string | null } => {
+  const raw = scalarValues(entity[fieldId])[0];
+  if (raw != null && typeof raw === 'object' && 'amount' in raw) {
+    const money = raw as { amount?: unknown; currency?: unknown };
+    return {
+      value: typeof money.amount === 'number' ? money.amount : null,
+      currency: typeof money.currency === 'string' ? money.currency : null
+    };
+  }
+  return { value: typeof raw === 'number' ? raw : null, currency: null };
+};
+
 /**
  * Render a `business_capability` entity's value for `fieldId` as a plain string, resolving select
  * options to their labels and currency values to a formatted amount. Returns `'—'` when empty.

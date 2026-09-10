@@ -2,7 +2,14 @@ import type { WorkspaceCapabilityConfiguration } from '@arch-register/api-types/
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import {
   DEFAULT_STRATEGY_VIEW_CONFIG,
+  deriveDrawerFieldIds,
+  deriveOverlays,
+  deriveRollups,
+  deriveTableColumns,
   resolveStrategyModelViewConfig,
+  type DerivedOverlay,
+  type DerivedRollup,
+  type DerivedTableColumn,
   type StrategyModelViewConfig,
   type ViewConfigDiagnostic,
   type ViewConfigSchemaField
@@ -89,15 +96,29 @@ export const resolveStrategyModelConfig = (
   };
 };
 
+export type ResolvedStrategyView = {
+  config: StrategyModelViewConfig;
+  /** Roll-up metrics for the roll-up hooks. */
+  rollups: DerivedRollup[];
+  /** Capabilities-table columns (fixed structural columns first, then configured fields). */
+  tableColumns: DerivedTableColumn[];
+  /** Capability field ids shown as extra rows in the detail drawer, in order. */
+  drawerFieldIds: string[];
+  /** Capability-map overlays. */
+  overlays: DerivedOverlay[];
+  diagnostics: ViewConfigDiagnostic[];
+};
+
 /**
  * Resolve the `strategy-model` capability's admin-configured view config (#3203) against the live
- * `business_capability` schema, dropping references to fields that have been archived/removed.
- * Falls back to {@link DEFAULT_STRATEGY_VIEW_CONFIG} when the workspace has no stored config.
+ * `business_capability` schema, dropping references to fields that have been archived/removed, and
+ * derive the per-surface views the screens consume. Falls back to
+ * {@link DEFAULT_STRATEGY_VIEW_CONFIG} when the workspace has no stored config.
  */
 export const resolveStrategyViewConfig = (
   capabilityConfigurations: readonly WorkspaceCapabilityConfiguration[] | undefined,
   businessCapabilitySchema: EntitySchema | undefined
-): { config: StrategyModelViewConfig; diagnostics: ViewConfigDiagnostic[] } => {
+): ResolvedStrategyView => {
   const configuration = capabilityConfigurations?.find(
     candidate => candidate.type === STRATEGY_CAPABILITY
   );
@@ -106,8 +127,16 @@ export const resolveStrategyViewConfig = (
     type: field.type,
     archived: 'archived' in field ? field.archived : undefined
   }));
-  if (!businessCapabilitySchema) {
-    return { config: DEFAULT_STRATEGY_VIEW_CONFIG, diagnostics: [] };
-  }
-  return resolveStrategyModelViewConfig(configuration?.view_config ?? null, fields);
+  const { config, diagnostics } = businessCapabilitySchema
+    ? resolveStrategyModelViewConfig(configuration?.view_config ?? null, fields)
+    : { config: DEFAULT_STRATEGY_VIEW_CONFIG, diagnostics: [] };
+
+  return {
+    config,
+    diagnostics,
+    rollups: deriveRollups(config),
+    tableColumns: deriveTableColumns(config),
+    drawerFieldIds: deriveDrawerFieldIds(config),
+    overlays: deriveOverlays(config)
+  };
 };

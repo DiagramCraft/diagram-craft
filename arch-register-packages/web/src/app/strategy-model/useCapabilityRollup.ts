@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useQueries } from '@tanstack/react-query';
 import type { MetricConfig, MetricRollupResponse } from '@arch-register/api-types/metricContract';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
-import type { RollupField } from '@arch-register/api-types/app/strategy-model/strategyModelViewConfig';
+import type { DerivedRollup, RollupAggregation } from '@arch-register/api-types/app/strategy-model/strategyModelViewConfig';
 import { metricRollupQuery } from '../../queries/metrics';
 import { extractCapabilityOwnFields } from './capabilityOwnFields';
 
@@ -23,7 +23,7 @@ export type CapabilityRollup = {
 };
 
 /** Roll-up aggregation ids (`avg`/`sum`) → metric-engine aggregation names. */
-export const METRIC_AGGREGATION: Record<RollupField['aggregation'], MetricConfig['aggregation']> = {
+export const METRIC_AGGREGATION: Record<RollupAggregation, MetricConfig['aggregation']> = {
   avg: 'average',
   sum: 'sum'
 };
@@ -65,7 +65,7 @@ export const useCapabilityRollup = (
   workspaceId: string,
   businessCapabilitySchemaId: string | null,
   capabilityId: string | null,
-  rollups: readonly RollupField[],
+  rollups: readonly DerivedRollup[],
   ownEntity?: EntityRecord | null
 ): CapabilityRollup => {
   const boxEntityIds = useMemo(() => (capabilityId ? [capabilityId] : []), [capabilityId]);

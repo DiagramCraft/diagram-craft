@@ -4,12 +4,16 @@ import { z } from 'zod';
  * Admin-configurable presentation model for the Strategy & Capability Modelling app (#3203).
  *
  * Attribute *definition* is handled by the generic entity-schema editor; this config only decides
- * *which* `business_capability` fields each strategy-app surface shows and how it aggregates,
- * buckets and colours them. It is persisted in `workspace_capability_configuration.view_config`
- * for the `strategy-model` capability and resolved client-side by `resolveStrategyModelViewConfig`.
+ * *which* `business_capability` fields each strategy-app surface shows and how it aggregates and
+ * colours them. It is persisted in `workspace_capability_configuration.view_config` for the
+ * `strategy-model` capability and resolved client-side by `resolveStrategyModelViewConfig`.
  *
- * When a workspace has no stored config, `DEFAULT_STRATEGY_VIEW_CONFIG` reproduces the behaviour
- * the screens previously hard-coded (referencing the #3202 seed field ids).
+ * The config is a single ordered list of per-field entries — a field can opt into the Capabilities
+ * table, the subtree roll-up, the detail drawer, and a capability-map overlay independently, and
+ * the list order is the shared display order for all of them. When a workspace has no stored
+ * config, `DEFAULT_STRATEGY_VIEW_CONFIG` reproduces the behaviour the screens previously hard-coded
+ * (referencing the #3202 seed field ids). The Overview screen is configured separately
+ * (`overviewWidgets`).
  */
 
 export const rollupAggregationSchema = z.enum(['avg', 'sum']);
@@ -21,57 +25,56 @@ export type NumberFormat = z.infer<typeof numberFormatSchema>;
 export const bandToneSchema = z.enum(['good', 'warn', 'bad']);
 export type BandTone = z.infer<typeof bandToneSchema>;
 
+export const overlayDirectionSchema = z.enum(['higherBetter', 'lowerBetter']);
+export type OverlayDirection = z.infer<typeof overlayDirectionSchema>;
+
 /**
- * How a roll-up value is drawn in a table cell:
- * - `plain` — the formatted number.
+ * How a value is drawn in a Capabilities-table cell:
+ * - `plain` — the formatted number (or the field's own formatted value when it has no roll-up).
  * - `bar` — a red/amber/green filled track over the field's 0..max range, with the value beside it.
- * - `delta` — a signed `+X.X` coloured by size; `≤ 0` (on or ahead of target) reads as a dash.
+ * - `delta` — a signed `+X.X` coloured by size; `≤ 0` reads as a dash. For gap-style fields.
  */
-export const rollupDisplaySchema = z.enum(['plain', 'bar', 'delta']);
-export type RollupDisplay = z.infer<typeof rollupDisplaySchema>;
+export const tableDisplaySchema = z.enum(['plain', 'bar', 'delta']);
+export type TableDisplay = z.infer<typeof tableDisplaySchema>;
 
-/** One roll-up metric: a numeric `business_capability` field aggregated over the containment subtree. */
-export const rollupFieldSchema = z.object({
-  fieldId: z.string().min(1),
-  aggregation: rollupAggregationSchema,
-  label: z.string().min(1).optional(),
-  format: numberFormatSchema.default('decimal1'),
-  display: rollupDisplaySchema.default('plain')
-});
-export type RollupField = z.infer<typeof rollupFieldSchema>;
-
-/** A colour band for a capability-map overlay, ordered best-to-worst. `max: null` = open top band. */
+/** A colour band for a capability-map overlay. `max: null` = open top band. Evaluated low-to-high. */
 export const colourBandSchema = z.object({
   max: z.number().nullable(),
   tone: bandToneSchema
 });
 export type ColourBand = z.infer<typeof colourBandSchema>;
 
-export const overlaySchema = z.object({
-  id: z.string().min(1),
-  label: z.string().min(1),
-  /** `field` reads the capability's own value; `rollup` reads the subtree aggregate of the same id. */
-  source: z.enum(['field', 'rollup']),
-  fieldId: z.string().min(1),
-  direction: z.enum(['higherBetter', 'lowerBetter']),
-  bands: z.array(colourBandSchema).default([]),
+/** Present when the field is shown as a Capabilities-table column. */
+export const tableCellSchema = z.object({
+  header: z.string().min(1).optional(),
+  display: tableDisplaySchema.default('plain')
+});
+
+/** Present when the field is aggregated over each capability's containment subtree. */
+export const rollupCellSchema = z.object({
+  aggregation: rollupAggregationSchema,
   format: numberFormatSchema.default('decimal1')
 });
-export type Overlay = z.infer<typeof overlaySchema>;
 
-/**
- * A Capabilities-table column. `fieldId` is either a `business_capability` field id or one of the
- * structural pseudo ids below.
- */
-export const TABLE_PSEUDO_FIELD_IDS = ['_name', '_level', '_owner', '_apps'] as const;
-export type TablePseudoFieldId = (typeof TABLE_PSEUDO_FIELD_IDS)[number];
-
-export const tableColumnSchema = z.object({
-  fieldId: z.string().min(1),
-  label: z.string().min(1).optional(),
-  visible: z.boolean().default(true)
+/** Present when the field is offered as a capability-map overlay. */
+export const overlayCellSchema = z.object({
+  direction: overlayDirectionSchema.default('higherBetter'),
+  format: numberFormatSchema.default('decimal1'),
+  bands: z.array(colourBandSchema).default([])
 });
-export type TableColumn = z.infer<typeof tableColumnSchema>;
+
+export const fieldViewSchema = z.object({
+  fieldId: z.string().min(1),
+  table: tableCellSchema.nullable().default(null),
+  rollup: rollupCellSchema.nullable().default(null),
+  drawer: z.boolean().default(false),
+  overlay: overlayCellSchema.nullable().default(null)
+});
+export type FieldView = z.infer<typeof fieldViewSchema>;
+
+/** The Capabilities table's fixed leading columns — not configurable, always shown, in this order. */
+export const STRUCTURAL_COLUMN_IDS = ['_name', '_level', '_owner', '_apps'] as const;
+export type StructuralColumnId = (typeof STRUCTURAL_COLUMN_IDS)[number];
 
 export const overviewWidgetSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('countByLevel'), title: z.string().min(1) }),
@@ -87,14 +90,10 @@ export const overviewWidgetSchema = z.discriminatedUnion('kind', [
 ]);
 export type OverviewWidget = z.infer<typeof overviewWidgetSchema>;
 
-export const strategyModelViewConfigSchema = z
-  .object({
-    tableColumns: z.array(tableColumnSchema).default([]),
-    rollups: z.array(rollupFieldSchema).default([]),
-    overlays: z.array(overlaySchema).default([]),
-    drawerFieldIds: z.array(z.string().min(1)).default([]),
-    overviewWidgets: z.array(overviewWidgetSchema).default([])
-  });
+export const strategyModelViewConfigSchema = z.object({
+  fields: z.array(fieldViewSchema).default([]),
+  overviewWidgets: z.array(overviewWidgetSchema).default([])
+});
 export type StrategyModelViewConfig = z.infer<typeof strategyModelViewConfigSchema>;
 
 /**
@@ -102,91 +101,79 @@ export type StrategyModelViewConfig = z.infer<typeof strategyModelViewConfigSche
  * on the `business_capability` template schema.
  */
 export const DEFAULT_STRATEGY_VIEW_CONFIG: StrategyModelViewConfig = {
-  tableColumns: [
-    { fieldId: '_name', visible: true },
-    { fieldId: '_level', label: 'Level', visible: true },
-    { fieldId: '_owner', label: 'Owner', visible: true },
-    { fieldId: 'maturity', label: 'Maturity', visible: true },
-    { fieldId: 'maturity_target', label: 'Target', visible: true },
-    { fieldId: 'gap', label: 'Gap', visible: true },
-    { fieldId: 'annual_investment', label: 'Investment', visible: true },
-    { fieldId: 'risk', label: 'Risk', visible: true },
-    { fieldId: '_apps', label: 'Apps', visible: true }
-  ],
-  rollups: [
-    { fieldId: 'maturity', aggregation: 'avg', label: 'Maturity', format: 'decimal1', display: 'bar' },
+  fields: [
+    {
+      fieldId: 'maturity',
+      table: { header: 'Maturity', display: 'bar' },
+      rollup: { aggregation: 'avg', format: 'decimal1' },
+      drawer: false,
+      overlay: {
+        direction: 'higherBetter',
+        format: 'decimal1',
+        bands: [
+          { max: 2.5, tone: 'bad' },
+          { max: 3.5, tone: 'warn' },
+          { max: null, tone: 'good' }
+        ]
+      }
+    },
     {
       fieldId: 'maturity_target',
-      aggregation: 'avg',
-      label: 'Target',
-      format: 'decimal1',
-      display: 'plain'
-    },
-    { fieldId: 'gap', aggregation: 'avg', label: 'Gap', format: 'decimal1', display: 'delta' },
-    { fieldId: 'risk', aggregation: 'avg', label: 'Risk', format: 'decimal1', display: 'plain' },
-    {
-      fieldId: 'annual_investment',
-      aggregation: 'sum',
-      label: 'Investment',
-      format: 'currency',
-      display: 'plain'
-    }
-  ],
-  overlays: [
-    {
-      id: 'maturity',
-      label: 'Maturity',
-      source: 'rollup',
-      fieldId: 'maturity',
-      direction: 'higherBetter',
-      format: 'decimal1',
-      bands: [
-        { max: 2.5, tone: 'bad' },
-        { max: 3.5, tone: 'warn' },
-        { max: null, tone: 'good' }
-      ]
+      table: { header: 'Target', display: 'plain' },
+      rollup: { aggregation: 'avg', format: 'decimal1' },
+      drawer: false,
+      overlay: null
     },
     {
-      id: 'gap',
-      label: 'Maturity gap',
-      source: 'rollup',
       fieldId: 'gap',
-      direction: 'lowerBetter',
-      format: 'decimal1',
-      bands: [
-        { max: 0, tone: 'good' },
-        { max: 1.5, tone: 'warn' },
-        { max: null, tone: 'bad' }
-      ]
+      table: { header: 'Gap', display: 'delta' },
+      rollup: { aggregation: 'avg', format: 'decimal1' },
+      drawer: false,
+      overlay: {
+        direction: 'lowerBetter',
+        format: 'decimal1',
+        bands: [
+          { max: 0, tone: 'good' },
+          { max: 1.5, tone: 'warn' },
+          { max: null, tone: 'bad' }
+        ]
+      }
     },
     {
-      id: 'risk',
-      label: 'Risk',
-      source: 'rollup',
-      fieldId: 'risk',
-      direction: 'lowerBetter',
-      format: 'decimal1',
-      bands: [
-        { max: 2.5, tone: 'good' },
-        { max: 3.5, tone: 'warn' },
-        { max: null, tone: 'bad' }
-      ]
-    },
-    {
-      id: 'investment',
-      label: 'Investment',
-      source: 'rollup',
       fieldId: 'annual_investment',
-      direction: 'lowerBetter',
-      format: 'currency',
-      bands: [
-        { max: 200_000, tone: 'good' },
-        { max: 600_000, tone: 'warn' },
-        { max: null, tone: 'bad' }
-      ]
-    }
+      table: { header: 'Investment', display: 'plain' },
+      rollup: { aggregation: 'sum', format: 'currency' },
+      drawer: false,
+      overlay: {
+        direction: 'lowerBetter',
+        format: 'currency',
+        bands: [
+          { max: 200_000, tone: 'good' },
+          { max: 600_000, tone: 'warn' },
+          { max: null, tone: 'bad' }
+        ]
+      }
+    },
+    {
+      fieldId: 'risk',
+      table: { header: 'Risk', display: 'plain' },
+      rollup: { aggregation: 'avg', format: 'decimal1' },
+      drawer: false,
+      overlay: {
+        direction: 'lowerBetter',
+        format: 'decimal1',
+        bands: [
+          { max: 2.5, tone: 'good' },
+          { max: 3.5, tone: 'warn' },
+          { max: null, tone: 'bad' }
+        ]
+      }
+    },
+    { fieldId: 'capability_type', table: null, rollup: null, drawer: true, overlay: null },
+    { fieldId: 'value_stream', table: null, rollup: null, drawer: true, overlay: null },
+    { fieldId: 'strategic_importance', table: null, rollup: null, drawer: true, overlay: null },
+    { fieldId: 'investment_priority', table: null, rollup: null, drawer: true, overlay: null }
   ],
-  drawerFieldIds: ['capability_type', 'value_stream', 'strategic_importance', 'investment_priority'],
   overviewWidgets: [
     { kind: 'countByLevel', title: 'Capabilities by level' },
     { kind: 'countBySelect', fieldId: 'status', title: 'Objectives by status' },
@@ -200,24 +187,22 @@ export const DEFAULT_STRATEGY_VIEW_CONFIG: StrategyModelViewConfig = {
 export type ViewConfigSchemaField = { id: string; type: string; archived?: boolean };
 
 export type ViewConfigDiagnostic = {
-  surface: 'tableColumns' | 'rollups' | 'overlays' | 'drawerFieldIds' | 'overviewWidgets';
+  surface: 'fields' | 'overviewWidgets';
   fieldId: string;
   message: string;
 };
 
 const isUsableField = (
   fields: readonly ViewConfigSchemaField[],
-  fieldId: string,
-  pseudo: readonly string[] = []
+  fieldId: string
 ): boolean => {
-  if (pseudo.includes(fieldId)) return true;
   const field = fields.find(candidate => candidate.id === fieldId);
   return field != null && field.archived !== true;
 };
 
 /**
- * Merge stored config over the default and drop entries whose `fieldId` no longer resolves to a
- * live (non-archived) field on the `business_capability` schema. Typed entity values are never
+ * Merge the stored config over the default and drop field entries whose `fieldId` no longer
+ * resolves to a live (non-archived) `business_capability` field. Typed entity values are never
  * touched — a retired field simply stops appearing. Returns the usable config plus diagnostics
  * describing what was dropped (surfaced in the admin editor).
  */
@@ -233,46 +218,13 @@ export const resolveStrategyModelViewConfig = (
   const base = parsed.success ? parsed.data : DEFAULT_STRATEGY_VIEW_CONFIG;
   const diagnostics: ViewConfigDiagnostic[] = [];
 
-  const tableColumns = base.tableColumns.filter(column => {
-    const ok = isUsableField(fields, column.fieldId, TABLE_PSEUDO_FIELD_IDS);
+  const usableFields = base.fields.filter(field => {
+    const ok = isUsableField(fields, field.fieldId);
     if (!ok)
       diagnostics.push({
-        surface: 'tableColumns',
-        fieldId: column.fieldId,
-        message: `Table column references missing field "${column.fieldId}".`
-      });
-    return ok;
-  });
-
-  const rollups = base.rollups.filter(rollup => {
-    const ok = isUsableField(fields, rollup.fieldId);
-    if (!ok)
-      diagnostics.push({
-        surface: 'rollups',
-        fieldId: rollup.fieldId,
-        message: `Roll-up references missing field "${rollup.fieldId}".`
-      });
-    return ok;
-  });
-
-  const overlays = base.overlays.filter(overlay => {
-    const ok = isUsableField(fields, overlay.fieldId);
-    if (!ok)
-      diagnostics.push({
-        surface: 'overlays',
-        fieldId: overlay.fieldId,
-        message: `Overlay "${overlay.label}" references missing field "${overlay.fieldId}".`
-      });
-    return ok;
-  });
-
-  const drawerFieldIds = base.drawerFieldIds.filter(fieldId => {
-    const ok = isUsableField(fields, fieldId);
-    if (!ok)
-      diagnostics.push({
-        surface: 'drawerFieldIds',
-        fieldId,
-        message: `Detail drawer references missing field "${fieldId}".`
+        surface: 'fields',
+        fieldId: field.fieldId,
+        message: `View config references missing field "${field.fieldId}".`
       });
     return ok;
   });
@@ -291,8 +243,77 @@ export const resolveStrategyModelViewConfig = (
     return ok;
   });
 
-  return {
-    config: { tableColumns, rollups, overlays, drawerFieldIds, overviewWidgets },
-    diagnostics
-  };
+  return { config: { fields: usableFields, overviewWidgets }, diagnostics };
 };
+
+// ── Derivations — the per-surface views the screens consume ───────────────────
+
+export type DerivedRollup = {
+  fieldId: string;
+  aggregation: RollupAggregation;
+  format: NumberFormat;
+};
+
+export type DerivedTableColumn =
+  | { kind: 'structural'; fieldId: StructuralColumnId }
+  | {
+      kind: 'field';
+      fieldId: string;
+      header: string | undefined;
+      display: TableDisplay;
+      /** True when the cell shows the subtree roll-up rather than the capability's own value. */
+      hasRollup: boolean;
+      /** Number format for the roll-up value (unused for a `plain` own-value cell). */
+      format: NumberFormat;
+    };
+
+export type DerivedOverlay = {
+  fieldId: string;
+  /** `rollup` when the field is also a roll-up (uses the subtree aggregate), else `field` (own value). */
+  source: 'rollup' | 'field';
+  direction: OverlayDirection;
+  format: NumberFormat;
+  bands: ColourBand[];
+};
+
+export const deriveRollups = (config: StrategyModelViewConfig): DerivedRollup[] =>
+  config.fields
+    .filter((field): field is FieldView & { rollup: NonNullable<FieldView['rollup']> } => field.rollup != null)
+    .map(field => ({
+      fieldId: field.fieldId,
+      aggregation: field.rollup.aggregation,
+      format: field.rollup.format
+    }));
+
+export const STRUCTURAL_TABLE_COLUMNS: DerivedTableColumn[] = STRUCTURAL_COLUMN_IDS.map(fieldId => ({
+  kind: 'structural',
+  fieldId
+}));
+
+export const deriveTableColumns = (config: StrategyModelViewConfig): DerivedTableColumn[] => [
+  ...STRUCTURAL_TABLE_COLUMNS,
+  ...config.fields
+    .filter((field): field is FieldView & { table: NonNullable<FieldView['table']> } => field.table != null)
+    .map(field => ({
+      kind: 'field' as const,
+      fieldId: field.fieldId,
+      header: field.table.header,
+      display: field.table.display,
+      hasRollup: field.rollup != null,
+      format: field.rollup?.format ?? 'decimal1'
+    }))
+];
+
+export const deriveDrawerFieldIds = (config: StrategyModelViewConfig): string[] =>
+  config.fields.filter(field => field.drawer).map(field => field.fieldId);
+
+export const deriveOverlays = (config: StrategyModelViewConfig): DerivedOverlay[] =>
+  config.fields
+    .filter((field): field is FieldView & { overlay: NonNullable<FieldView['overlay']> } => field.overlay != null)
+    .map(field => ({
+      fieldId: field.fieldId,
+      source: field.rollup != null ? 'rollup' : 'field',
+      direction: field.overlay.direction,
+      format: field.overlay.format,
+      bands: field.overlay.bands
+    }));

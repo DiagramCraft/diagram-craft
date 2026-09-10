@@ -1,24 +1,25 @@
-import { type ReactNode, useMemo, useState } from 'react';
+import { type ReactNode, useMemo } from 'react';
 import { TbArrowDown, TbArrowUp, TbPlus, TbTrash } from 'react-icons/tb';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type {
-  Overlay,
+  ColourBand,
+  FieldView,
+  NumberFormat,
   OverviewWidget,
-  RollupField,
-  StrategyModelViewConfig
+  StrategyModelViewConfig,
+  TableDisplay
 } from '@arch-register/api-types/app/strategy-model/strategyModelViewConfig';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { Select } from '@diagram-craft/app-components/Select';
-import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import {
+  isNumericFieldType,
   listOps,
+  materializeFieldViews,
   numericFieldChoices,
-  schemaFieldChoices,
   selectFieldChoices,
-  TABLE_PSEUDO_CHOICES,
   type FieldChoice
 } from './strategyViewConfigState';
 import styles from './StrategyModelViewConfigEditor.module.css';
@@ -39,618 +40,378 @@ const FORMAT_OPTIONS: { value: string; label: string }[] = [
   { value: 'percent', label: 'Percent' }
 ];
 
-const Labeled = ({
-  label,
-  children
-}: {
-  label: string;
-  children: ReactNode;
-}) => (
+const fieldName = (schema: EntitySchema | undefined, fieldId: string): string =>
+  schema?.fields.find(field => field.id === fieldId)?.name ?? fieldId;
+
+const Labeled = ({ label, children }: { label: string; children: ReactNode }) => (
   <div className={styles.field}>
     <span className={styles.fieldLabel}>{label}</span>
     {children}
   </div>
 );
 
-const Card = ({
-  title,
-  index,
-  count,
+const Toggle = ({
+  checked,
   disabled,
-  onMove,
-  onRemove,
+  label,
+  onChange,
   children
 }: {
-  title: string;
-  index: number;
-  count: number;
+  checked: boolean;
   disabled?: boolean;
-  onMove: (from: number, to: number) => void;
-  onRemove: (index: number) => void;
-  children: ReactNode;
-}) => (
-  <div className={styles.card}>
-    <div className={styles.cardHead}>
-      <span className={styles.cardTitle}>{title || 'Untitled'}</span>
-      <div className={styles.cardActions}>
-        <Button
-          variant="ghost"
-          size="xs"
-          icon={<TbArrowUp size={13} />}
-          disabled={disabled || index === 0}
-          onClick={() => onMove(index, index - 1)}
-        />
-        <Button
-          variant="ghost"
-          size="xs"
-          icon={<TbArrowDown size={13} />}
-          disabled={disabled || index === count - 1}
-          onClick={() => onMove(index, index + 1)}
-        />
-        <Button
-          variant="ghost"
-          size="xs"
-          icon={<TbTrash size={13} />}
-          disabled={disabled}
-          onClick={() => onRemove(index)}
-        />
-      </div>
-    </div>
-    <div className={styles.cardBody}>{children}</div>
-  </div>
-);
-
-const FieldSelect = ({
-  value,
-  choices,
-  disabled,
-  placeholder = 'Select a field…',
-  width = '14rem',
-  onChange
-}: {
-  value: string;
-  choices: FieldChoice[];
-  disabled?: boolean;
-  placeholder?: string;
-  width?: string;
-  onChange: (value: string) => void;
-}) => (
-  <Select.Root
-    value={value}
-    disabled={disabled}
-    placeholder={placeholder}
-    style={{ width }}
-    onChange={next => next && onChange(next)}
-  >
-    {!choices.some(choice => choice.id === value) && value.length > 0 && (
-      <Select.Item value={value}>Missing field · {value}</Select.Item>
-    )}
-    {choices.map(choice => (
-      <Select.Item key={choice.id} value={choice.id}>
-        {choice.label} · {choice.id}
-      </Select.Item>
-    ))}
-  </Select.Root>
-);
-
-const AddButton = ({
-  label,
-  disabled,
-  onClick
-}: {
   label: string;
-  disabled?: boolean;
-  onClick: () => void;
+  onChange: (checked: boolean) => void;
+  children?: ReactNode;
 }) => (
-  <div className={styles.addRow}>
-    <Button
-      variant="ghost"
-      size="xs"
-      icon={<TbPlus size={13} />}
-      disabled={disabled}
-      onClick={onClick}
-    >
+  <div className={styles.toggleRow}>
+    <label className={styles.toggle}>
+      <Checkbox value={checked} disabled={disabled} onChange={next => onChange(!!next)} />
       {label}
-    </Button>
+    </label>
+    {checked && <div className={styles.toggleBody}>{children}</div>}
   </div>
 );
 
-export const StrategyModelViewConfigEditor = ({
+/**
+ * The "Views" tab: how each Business Capability field is presented across the strategy app —
+ * table column, subtree roll-up, detail-drawer row, and capability-map overlay — in one shared
+ * display order.
+ */
+export const StrategyFieldsEditor = ({
   schema,
   value,
   onChange,
   disabled,
   diagnostics = []
-}: Props) => {
-  const [tab, setTab] = useState('table');
+}: Props) => (
+  <div className={styles.editor}>
+    <div className={styles.sub}>
+      Choose which Business Capability fields the strategy surfaces show and how they aggregate and
+      colour them. Fields come from the bound capability schema; the list order is the shared
+      display order.
+    </div>
+    {diagnostics.length > 0 && (
+      <div className={styles.diagnostics}>
+        {diagnostics.map(message => (
+          <span key={message}>{message}</span>
+        ))}
+      </div>
+    )}
+    <FieldsPanel schema={schema} value={value} disabled={disabled} onChange={onChange} />
+  </div>
+);
 
-  const allFields = useMemo(() => schemaFieldChoices(schema), [schema]);
+/** The "Dashboard" tab: the strategy-app Overview screen's summary tiles. */
+export const StrategyDashboardEditor = ({ schema, value, onChange, disabled }: Props) => {
   const numFields = useMemo(() => numericFieldChoices(schema), [schema]);
   const selFields = useMemo(() => selectFieldChoices(schema), [schema]);
-  const tableChoices = useMemo(() => [...TABLE_PSEUDO_CHOICES, ...allFields], [allFields]);
-  const labelFor = (fieldId: string) =>
-    allFields.find(choice => choice.id === fieldId)?.label ??
-    TABLE_PSEUDO_CHOICES.find(choice => choice.id === fieldId)?.label ??
-    fieldId;
-
-  const patch = (part: Partial<StrategyModelViewConfig>) => onChange({ ...value, ...part });
-
   return (
     <div className={styles.editor}>
-      <div className={styles.head}>
-        <div className={styles.title}>Capability views</div>
-        <div className={styles.sub}>
-          Choose which Business Capability fields each Strategy &amp; Capability Modelling surface
-          shows and how it aggregates them. Fields come from the bound capability schema; retire a
-          field in the schema editor and it drops out of every view here.
+      <div className={styles.sub}>Tiles shown on the strategy app&apos;s Overview screen.</div>
+      <OverviewPanel
+        value={value}
+        disabled={disabled}
+        numFields={numFields}
+        selFields={selFields}
+        onChange={onChange}
+      />
+    </div>
+  );
+};
+
+// ── Fields ──────────────────────────────────────────────────────────────────
+
+const FieldsPanel = ({
+  schema,
+  value,
+  disabled,
+  onChange
+}: {
+  schema: EntitySchema | undefined;
+  value: StrategyModelViewConfig;
+  disabled?: boolean;
+  onChange: (next: StrategyModelViewConfig) => void;
+}) => {
+  const fields = useMemo(() => materializeFieldViews(value, schema), [value, schema]);
+  const write = (next: FieldView[]) => onChange({ ...value, fields: next });
+  const update = (index: number, patch: Partial<FieldView>) =>
+    write(listOps.update(fields, index, patch));
+
+  if (fields.length === 0) {
+    return <div className={styles.empty}>The bound capability schema has no fields.</div>;
+  }
+
+  return (
+    <div className={styles.cardList}>
+      {fields.map((field, index) => (
+        <FieldCard
+          key={field.fieldId}
+          field={field}
+          name={fieldName(schema, field.fieldId)}
+          numeric={isNumericFieldType(schema, field.fieldId)}
+          disabled={disabled}
+          index={index}
+          count={fields.length}
+          onMove={(from, to) => write(listOps.move(fields, from, to))}
+          onChange={patch => update(index, patch)}
+        />
+      ))}
+    </div>
+  );
+};
+
+const DISPLAY_OPTIONS: { value: TableDisplay; label: string; numericOnly?: boolean }[] = [
+  { value: 'plain', label: 'Value' },
+  { value: 'bar', label: 'Bar', numericOnly: true },
+  { value: 'delta', label: 'Signed delta', numericOnly: true }
+];
+
+const FieldCard = ({
+  field,
+  name,
+  numeric,
+  disabled,
+  index,
+  count,
+  onMove,
+  onChange
+}: {
+  field: FieldView;
+  name: string;
+  numeric: boolean;
+  disabled?: boolean;
+  index: number;
+  count: number;
+  onMove: (from: number, to: number) => void;
+  onChange: (patch: Partial<FieldView>) => void;
+}) => {
+  const markers = [
+    field.table && { label: 'table', color: 'var(--blue-9)' },
+    field.rollup && { label: 'roll-up', color: 'var(--green-9)' },
+    field.drawer && { label: 'drawer', color: 'var(--orange-9)' },
+    field.overlay && { label: 'overlay', color: 'var(--crimson-9)' }
+  ].filter((marker): marker is { label: string; color: string } => Boolean(marker));
+
+  const tableCell = field.table ?? { display: 'plain' as const };
+  const rollupCell = field.rollup ?? { aggregation: 'avg' as const, format: 'decimal1' as const };
+  const overlayCell = field.overlay ?? {
+    direction: 'higherBetter' as const,
+    format: 'decimal1' as const,
+    bands: []
+  };
+
+  return (
+    <div className={styles.card}>
+      <div className={styles.cardHead}>
+        <span className={styles.cardTitle}>{name}</span>
+        <div className={styles.markers}>
+          {markers.map(marker => (
+            <span className={styles.marker} key={marker.label}>
+              <span className={styles.markerDot} style={{ background: marker.color }} />
+              {marker.label}
+            </span>
+          ))}
+        </div>
+        <div className={styles.cardActions}>
+          <Button
+            variant="ghost"
+            size="xs"
+            icon={<TbArrowUp size={13} />}
+            disabled={disabled || index === 0}
+            onClick={() => onMove(index, index - 1)}
+          />
+          <Button
+            variant="ghost"
+            size="xs"
+            icon={<TbArrowDown size={13} />}
+            disabled={disabled || index === count - 1}
+            onClick={() => onMove(index, index + 1)}
+          />
         </div>
       </div>
 
-      {diagnostics.length > 0 && (
-        <div className={styles.diagnostics}>
-          {diagnostics.map(message => (
-            <span key={message}>{message}</span>
-          ))}
-        </div>
-      )}
-
-      <Tabs.Root value={tab} onValueChange={setTab}>
-        <Tabs.List aria-label="Capability view surfaces">
-          <Tabs.Trigger value="table">Table</Tabs.Trigger>
-          <Tabs.Trigger value="rollups">Roll-ups</Tabs.Trigger>
-          <Tabs.Trigger value="overlays">Map overlays</Tabs.Trigger>
-          <Tabs.Trigger value="drawer">Detail drawer</Tabs.Trigger>
-          <Tabs.Trigger value="overview">Overview</Tabs.Trigger>
-        </Tabs.List>
-
-        <Tabs.Content value="table" style={{ height: 'auto' }}>
-          <TableColumnsPanel
-            value={value}
+      <Toggle
+        label="Show in Capabilities table"
+        checked={field.table != null}
+        disabled={disabled}
+        onChange={on => onChange({ table: on ? { display: 'plain' } : null })}
+      >
+        <Labeled label="Header (optional)">
+          <TextInput
+            value={field.table?.header ?? ''}
             disabled={disabled}
-            choices={tableChoices}
-            labelFor={labelFor}
-            onChange={patch}
+            style={{ width: '10rem' }}
+            placeholder={name}
+            onChange={header => onChange({ table: { ...tableCell, header: header || undefined } })}
           />
-        </Tabs.Content>
-        <Tabs.Content value="rollups" style={{ height: 'auto' }}>
-          <RollupsPanel
-            value={value}
+        </Labeled>
+        <Labeled label="Display">
+          <Select.Root
+            value={field.table?.display ?? 'plain'}
             disabled={disabled}
-            choices={numFields}
-            labelFor={labelFor}
-            onChange={patch}
-          />
-        </Tabs.Content>
-        <Tabs.Content value="overlays" style={{ height: 'auto' }}>
-          <OverlaysPanel
-            value={value}
-            disabled={disabled}
-            fieldChoices={numFields}
-            onChange={patch}
-          />
-        </Tabs.Content>
-        <Tabs.Content value="drawer" style={{ height: 'auto' }}>
-          <DrawerPanel
-            value={value}
-            disabled={disabled}
-            choices={allFields}
-            labelFor={labelFor}
-            onChange={patch}
-          />
-        </Tabs.Content>
-        <Tabs.Content value="overview" style={{ height: 'auto' }}>
-          <OverviewPanel
-            value={value}
-            disabled={disabled}
-            numFields={numFields}
-            selFields={selFields}
-            onChange={patch}
-          />
-        </Tabs.Content>
-      </Tabs.Root>
-    </div>
-  );
-};
-
-type PanelProps = {
-  value: StrategyModelViewConfig;
-  disabled?: boolean;
-  onChange: (part: Partial<StrategyModelViewConfig>) => void;
-};
-type LabelFor = { labelFor: (fieldId: string) => string };
-
-const TableColumnsPanel = ({
-  value,
-  disabled,
-  choices,
-  labelFor,
-  onChange
-}: PanelProps & LabelFor & { choices: FieldChoice[] }) => {
-  const columns = value.tableColumns;
-  return (
-    <div className={styles.cardList}>
-      {columns.length === 0 && (
-        <div className={styles.empty}>No columns — the Capabilities table shows nothing.</div>
-      )}
-      {columns.map((column, index) => (
-        <Card
-          key={`${column.fieldId}-${index}`}
-          title={column.label ?? labelFor(column.fieldId)}
-          index={index}
-          count={columns.length}
-          disabled={disabled}
-          onMove={(from, to) => onChange({ tableColumns: listOps.move(columns, from, to) })}
-          onRemove={i => onChange({ tableColumns: listOps.remove(columns, i) })}
-        >
-          <Labeled label="Field">
-            <FieldSelect
-              value={column.fieldId}
-              choices={choices}
-              disabled={disabled}
-              onChange={fieldId =>
-                onChange({ tableColumns: listOps.update(columns, index, { fieldId }) })
-              }
-            />
-          </Labeled>
-          <Labeled label="Header (optional)">
-            <TextInput
-              value={column.label ?? ''}
-              disabled={disabled}
-              style={{ width: '12rem' }}
-              placeholder={labelFor(column.fieldId)}
-              onChange={label =>
-                onChange({
-                  tableColumns: listOps.update(columns, index, { label: label || undefined })
-                })
-              }
-            />
-          </Labeled>
-          <Labeled label="Shown">
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', height: '1.6rem' }}>
-              <Checkbox
-                value={column.visible}
-                disabled={disabled}
-                onChange={visible =>
-                  onChange({ tableColumns: listOps.update(columns, index, { visible: !!visible }) })
-                }
-              />
-              Visible
-            </label>
-          </Labeled>
-        </Card>
-      ))}
-      <AddButton
-        label="Add column"
-        disabled={disabled || choices.length === 0}
-        onClick={() =>
-          onChange({
-            tableColumns: listOps.add(columns, { fieldId: choices[0]?.id ?? '', visible: true })
-          })
-        }
-      />
-    </div>
-  );
-};
-
-const RollupsPanel = ({
-  value,
-  disabled,
-  choices,
-  labelFor,
-  onChange
-}: PanelProps & LabelFor & { choices: FieldChoice[] }) => {
-  const rollups = value.rollups;
-  return (
-    <div className={styles.cardList}>
-      {rollups.map((rollup: RollupField, index) => (
-        <Card
-          key={`${rollup.fieldId}-${index}`}
-          title={rollup.label ?? labelFor(rollup.fieldId)}
-          index={index}
-          count={rollups.length}
-          disabled={disabled}
-          onMove={(from, to) => onChange({ rollups: listOps.move(rollups, from, to) })}
-          onRemove={i => onChange({ rollups: listOps.remove(rollups, i) })}
-        >
-          <Labeled label="Field">
-            <FieldSelect
-              value={rollup.fieldId}
-              choices={choices}
-              disabled={disabled}
-              onChange={fieldId =>
-                onChange({ rollups: listOps.update(rollups, index, { fieldId }) })
-              }
-            />
-          </Labeled>
-          <Labeled label="Aggregation">
-            <Select.Root
-              value={rollup.aggregation}
-              disabled={disabled}
-              style={{ width: '8rem' }}
-              onChange={next =>
-                next &&
-                onChange({
-                  rollups: listOps.update(rollups, index, {
-                    aggregation: next as RollupField['aggregation']
-                  })
-                })
-              }
-            >
-              <Select.Item value="avg">Average</Select.Item>
-              <Select.Item value="sum">Sum</Select.Item>
-            </Select.Root>
-          </Labeled>
-          <Labeled label="Format">
-            <Select.Root
-              value={rollup.format}
-              disabled={disabled}
-              style={{ width: '9rem' }}
-              onChange={next =>
-                next &&
-                onChange({
-                  rollups: listOps.update(rollups, index, { format: next as RollupField['format'] })
-                })
-              }
-            >
-              {FORMAT_OPTIONS.map(option => (
-                <Select.Item key={option.value} value={option.value}>
-                  {option.label}
-                </Select.Item>
-              ))}
-            </Select.Root>
-          </Labeled>
-          <Labeled label="Table display">
-            <Select.Root
-              value={rollup.display}
-              disabled={disabled}
-              style={{ width: '8.5rem' }}
-              onChange={next =>
-                next &&
-                onChange({
-                  rollups: listOps.update(rollups, index, {
-                    display: next as RollupField['display']
-                  })
-                })
-              }
-            >
-              <Select.Item value="plain">Value</Select.Item>
-              <Select.Item value="bar">Bar</Select.Item>
-              <Select.Item value="delta">Signed delta</Select.Item>
-            </Select.Root>
-          </Labeled>
-          <Labeled label="Label (optional)">
-            <TextInput
-              value={rollup.label ?? ''}
-              disabled={disabled}
-              style={{ width: '11rem' }}
-              placeholder={labelFor(rollup.fieldId)}
-              onChange={label =>
-                onChange({ rollups: listOps.update(rollups, index, { label: label || undefined }) })
-              }
-            />
-          </Labeled>
-        </Card>
-      ))}
-      <AddButton
-        label="Add roll-up"
-        disabled={disabled || choices.length === 0}
-        onClick={() =>
-          onChange({
-            rollups: listOps.add(rollups, {
-              fieldId: choices[0]?.id ?? '',
-              aggregation: 'avg',
-              format: 'decimal1',
-              display: 'plain'
-            })
-          })
-        }
-      />
-    </div>
-  );
-};
-
-const OverlaysPanel = ({
-  value,
-  disabled,
-  fieldChoices,
-  onChange
-}: PanelProps & { fieldChoices: FieldChoice[] }) => {
-  const overlays = value.overlays;
-  const updateOverlay = (index: number, part: Partial<Overlay>) =>
-    onChange({ overlays: listOps.update(overlays, index, part) });
-  return (
-    <div className={styles.cardList}>
-      {overlays.map((overlay, index) => (
-        <Card
-          key={`${overlay.id}-${index}`}
-          title={overlay.label}
-          index={index}
-          count={overlays.length}
-          disabled={disabled}
-          onMove={(from, to) => onChange({ overlays: listOps.move(overlays, from, to) })}
-          onRemove={i => onChange({ overlays: listOps.remove(overlays, i) })}
-        >
-          <Labeled label="Label">
-            <TextInput
-              value={overlay.label}
-              disabled={disabled}
-              style={{ width: '10rem' }}
-              placeholder="Overlay label"
-              onChange={label => updateOverlay(index, { label: label ?? '' })}
-            />
-          </Labeled>
-          <Labeled label="Field">
-            <FieldSelect
-              value={overlay.fieldId}
-              choices={fieldChoices}
-              disabled={disabled}
-              onChange={fieldId => updateOverlay(index, { fieldId })}
-            />
-          </Labeled>
-          <Labeled label="Source">
-            <Select.Root
-              value={overlay.source}
-              disabled={disabled}
-              style={{ width: '10rem' }}
-              onChange={next => next && updateOverlay(index, { source: next as Overlay['source'] })}
-            >
-              <Select.Item value="rollup">Subtree roll-up</Select.Item>
-              <Select.Item value="field">Own value</Select.Item>
-            </Select.Root>
-          </Labeled>
-          <Labeled label="Direction">
-            <Select.Root
-              value={overlay.direction}
-              disabled={disabled}
-              style={{ width: '10rem' }}
-              onChange={next =>
-                next && updateOverlay(index, { direction: next as Overlay['direction'] })
-              }
-            >
-              <Select.Item value="higherBetter">Higher is better</Select.Item>
-              <Select.Item value="lowerBetter">Lower is better</Select.Item>
-            </Select.Root>
-          </Labeled>
-          <Labeled label="Value format">
-            <Select.Root
-              value={overlay.format}
-              disabled={disabled}
-              style={{ width: '9rem' }}
-              onChange={next =>
-                next && updateOverlay(index, { format: next as Overlay['format'] })
-              }
-            >
-              {FORMAT_OPTIONS.map(option => (
-                <Select.Item key={option.value} value={option.value}>
-                  {option.label}
-                </Select.Item>
-              ))}
-            </Select.Root>
-          </Labeled>
-          <div className={styles.bands}>
-            <span className={styles.fieldLabel}>Colour bands (best to worst)</span>
-            {overlay.bands.map((band, bandIndex) => (
-              <div className={styles.bandRow} key={bandIndex}>
-                <span className={styles.sub}>≤</span>
-                <NumberInput
-                  value={band.max ?? ''}
-                  disabled={disabled}
-                  style={{ width: '6rem' }}
-                  onChange={max =>
-                    updateOverlay(index, {
-                      bands: listOps.update(overlay.bands, bandIndex, {
-                        max: max === undefined ? null : max
-                      })
-                    })
-                  }
-                />
-                <Select.Root
-                  value={band.tone}
-                  disabled={disabled}
-                  style={{ width: '9rem' }}
-                  onChange={next =>
-                    next &&
-                    updateOverlay(index, {
-                      bands: listOps.update(overlay.bands, bandIndex, {
-                        tone: next as Overlay['bands'][number]['tone']
-                      })
-                    })
-                  }
-                >
-                  <Select.Item value="good">Good (green)</Select.Item>
-                  <Select.Item value="warn">Warn (amber)</Select.Item>
-                  <Select.Item value="bad">Bad (red)</Select.Item>
-                </Select.Root>
-                <Button
-                  variant="ghost"
-                  size="xs"
-                  icon={<TbTrash size={12} />}
-                  disabled={disabled}
-                  onClick={() =>
-                    updateOverlay(index, { bands: listOps.remove(overlay.bands, bandIndex) })
-                  }
-                />
-              </div>
+            style={{ width: '9rem' }}
+            onChange={next =>
+              next && onChange({ table: { ...tableCell, display: next as TableDisplay } })
+            }
+          >
+            {DISPLAY_OPTIONS.filter(option => numeric || !option.numericOnly).map(option => (
+              <Select.Item key={option.value} value={option.value}>
+                {option.label}
+              </Select.Item>
             ))}
-            <div>
-              <Button
-                variant="ghost"
-                size="xs"
-                icon={<TbPlus size={12} />}
-                disabled={disabled}
-                onClick={() =>
-                  updateOverlay(index, {
-                    bands: listOps.add(overlay.bands, { max: null, tone: 'warn' })
-                  })
+          </Select.Root>
+        </Labeled>
+      </Toggle>
+
+      <Toggle
+        label={numeric ? 'Include in subtree roll-up' : 'Include in subtree roll-up (numeric only)'}
+        checked={field.rollup != null}
+        disabled={disabled || !numeric}
+        onChange={on =>
+          onChange({ rollup: on ? { aggregation: 'avg', format: 'decimal1' } : null })
+        }
+      >
+        <Labeled label="Aggregation">
+          <Select.Root
+            value={field.rollup?.aggregation ?? 'avg'}
+            disabled={disabled}
+            style={{ width: '8rem' }}
+            onChange={next =>
+              next &&
+              onChange({
+                rollup: { ...rollupCell, aggregation: next as 'avg' | 'sum' }
+              })
+            }
+          >
+            <Select.Item value="avg">Average</Select.Item>
+            <Select.Item value="sum">Sum</Select.Item>
+          </Select.Root>
+        </Labeled>
+        <Labeled label="Format">
+          <Select.Root
+            value={field.rollup?.format ?? 'decimal1'}
+            disabled={disabled}
+            style={{ width: '9rem' }}
+            onChange={next =>
+              next &&
+              onChange({
+                rollup: {
+                  aggregation: rollupCell.aggregation,
+                  format: next as NumberFormat
                 }
-              >
-                Add band
-              </Button>
-            </div>
-          </div>
-        </Card>
-      ))}
-      <AddButton
-        label="Add overlay"
-        disabled={disabled || fieldChoices.length === 0}
-        onClick={() =>
+              })
+            }
+          >
+            {FORMAT_OPTIONS.map(option => (
+              <Select.Item key={option.value} value={option.value}>
+                {option.label}
+              </Select.Item>
+            ))}
+          </Select.Root>
+        </Labeled>
+      </Toggle>
+
+      <Toggle
+        label="Show as a row in the detail drawer"
+        checked={field.drawer}
+        disabled={disabled}
+        onChange={on => onChange({ drawer: on })}
+      />
+
+      <Toggle
+        label={numeric ? 'Show as a capability-map overlay' : 'Show as an overlay (numeric only)'}
+        checked={field.overlay != null}
+        disabled={disabled || !numeric}
+        onChange={on =>
           onChange({
-            overlays: listOps.add(overlays, {
-              id: `overlay-${overlays.length + 1}`,
-              label: 'New overlay',
-              source: 'rollup',
-              fieldId: fieldChoices[0]?.id ?? '',
-              direction: 'higherBetter',
-              format: 'decimal1',
-              bands: []
-            })
+            overlay: on ? { direction: 'higherBetter', format: 'decimal1', bands: [] } : null
           })
         }
-      />
+      >
+        <Labeled label="Direction">
+          <Select.Root
+            value={field.overlay?.direction ?? 'higherBetter'}
+            disabled={disabled}
+            style={{ width: '10rem' }}
+            onChange={next =>
+              next &&
+              onChange({
+                overlay: { ...overlayCell, direction: next as 'higherBetter' | 'lowerBetter' }
+              })
+            }
+          >
+            <Select.Item value="higherBetter">Higher is better</Select.Item>
+            <Select.Item value="lowerBetter">Lower is better</Select.Item>
+          </Select.Root>
+        </Labeled>
+        <BandsEditor
+          bands={field.overlay?.bands ?? []}
+          disabled={disabled}
+          onChange={bands => onChange({ overlay: { ...overlayCell, bands } })}
+        />
+      </Toggle>
     </div>
   );
 };
 
-const DrawerPanel = ({
-  value,
+const BandsEditor = ({
+  bands,
   disabled,
-  choices,
-  labelFor,
   onChange
-}: PanelProps & LabelFor & { choices: FieldChoice[] }) => {
-  const ids = value.drawerFieldIds;
-  return (
-    <div className={styles.cardList}>
-      {ids.map((fieldId, index) => (
-        <Card
-          key={`${fieldId}-${index}`}
-          title={labelFor(fieldId)}
-          index={index}
-          count={ids.length}
+}: {
+  bands: ColourBand[];
+  disabled?: boolean;
+  onChange: (bands: ColourBand[]) => void;
+}) => (
+  <div className={styles.bands}>
+    <span className={styles.fieldLabel}>Colour bands (low to high; leave the last max empty)</span>
+    {bands.map((band, index) => (
+      <div className={styles.bandRow} key={index}>
+        <span className={styles.sub}>≤</span>
+        <NumberInput
+          value={band.max ?? ''}
           disabled={disabled}
-          onMove={(from, to) => onChange({ drawerFieldIds: listOps.move(ids, from, to) })}
-          onRemove={i => onChange({ drawerFieldIds: listOps.remove(ids, i) })}
+          style={{ width: '6rem' }}
+          onChange={max =>
+            onChange(listOps.update(bands, index, { max: max === undefined ? null : max }))
+          }
+        />
+        <Select.Root
+          value={band.tone}
+          disabled={disabled}
+          style={{ width: '9rem' }}
+          onChange={next =>
+            next && onChange(listOps.update(bands, index, { tone: next as ColourBand['tone'] }))
+          }
         >
-          <Labeled label="Field">
-            <FieldSelect
-              value={fieldId}
-              choices={choices}
-              disabled={disabled}
-              onChange={next =>
-                onChange({ drawerFieldIds: ids.map((id, i) => (i === index ? next : id)) })
-              }
-            />
-          </Labeled>
-        </Card>
-      ))}
-      <AddButton
-        label="Add attribute"
-        disabled={disabled || choices.length === 0}
-        onClick={() => onChange({ drawerFieldIds: listOps.add(ids, choices[0]?.id ?? '') })}
-      />
+          <Select.Item value="good">Good (green)</Select.Item>
+          <Select.Item value="warn">Warn (amber)</Select.Item>
+          <Select.Item value="bad">Bad (red)</Select.Item>
+        </Select.Root>
+        <Button
+          variant="ghost"
+          size="xs"
+          icon={<TbTrash size={12} />}
+          disabled={disabled}
+          onClick={() => onChange(listOps.remove(bands, index))}
+        />
+      </div>
+    ))}
+    <div>
+      <Button
+        variant="ghost"
+        size="xs"
+        icon={<TbPlus size={12} />}
+        disabled={disabled}
+        onClick={() => onChange(listOps.add(bands, { max: null, tone: 'warn' }))}
+      >
+        Add band
+      </Button>
     </div>
-  );
-};
+  </div>
+);
+
+// ── Overview ────────────────────────────────────────────────────────────────
 
 const WIDGET_KINDS: {
   value: OverviewWidget['kind'];
@@ -670,105 +431,147 @@ const OverviewPanel = ({
   numFields,
   selFields,
   onChange
-}: PanelProps & { numFields: FieldChoice[]; selFields: FieldChoice[] }) => {
+}: {
+  value: StrategyModelViewConfig;
+  disabled?: boolean;
+  numFields: FieldChoice[];
+  selFields: FieldChoice[];
+  onChange: (next: StrategyModelViewConfig) => void;
+}) => {
   const widgets = value.overviewWidgets;
-  const replaceWidget = (index: number, widget: OverviewWidget) =>
-    onChange({ overviewWidgets: widgets.map((w, i) => (i === index ? widget : w)) });
+  const write = (next: OverviewWidget[]) => onChange({ ...value, overviewWidgets: next });
+  const replace = (index: number, widget: OverviewWidget) =>
+    write(widgets.map((w, i) => (i === index ? widget : w)));
+
   return (
     <div className={styles.cardList}>
       {widgets.map((widget, index) => {
         const kind = WIDGET_KINDS.find(k => k.value === widget.kind);
         const fieldChoices = kind?.needsField === 'numeric' ? numFields : selFields;
         return (
-          <Card
-            key={`${widget.kind}-${index}`}
-            title={widget.title}
-            index={index}
-            count={widgets.length}
-            disabled={disabled}
-            onMove={(from, to) => onChange({ overviewWidgets: listOps.move(widgets, from, to) })}
-            onRemove={i => onChange({ overviewWidgets: listOps.remove(widgets, i) })}
-          >
-            <Labeled label="Title">
-              <TextInput
-                value={widget.title}
-                disabled={disabled}
-                style={{ width: '11rem' }}
-                placeholder="Tile title"
-                onChange={title => replaceWidget(index, { ...widget, title: title ?? '' })}
-              />
-            </Labeled>
-            <Labeled label="Tile type">
-              <Select.Root
-                value={widget.kind}
-                disabled={disabled}
-                style={{ width: '13rem' }}
-                onChange={next => {
-                  if (!next) return;
-                  const nextKind = WIDGET_KINDS.find(k => k.value === next);
-                  if (!nextKind) return;
-                  if (nextKind.needsField === 'select')
-                    replaceWidget(index, {
-                      kind: 'countBySelect',
-                      title: widget.title,
-                      fieldId: selFields[0]?.id ?? ''
-                    });
-                  else if (nextKind.needsField === 'numeric')
-                    replaceWidget(index, {
-                      kind: 'topGap',
-                      title: widget.title,
-                      fieldId: numFields[0]?.id ?? '',
-                      limit: 5
-                    });
-                  else
-                    replaceWidget(index, {
-                      kind: next as 'countByLevel' | 'coveragePercent' | 'orphanCount',
-                      title: widget.title
-                    });
-                }}
-              >
-                {WIDGET_KINDS.map(k => (
-                  <Select.Item key={k.value} value={k.value}>
-                    {k.label}
-                  </Select.Item>
-                ))}
-              </Select.Root>
-            </Labeled>
-            {(widget.kind === 'countBySelect' || widget.kind === 'topGap') && (
-              <Labeled label="Field">
-                <FieldSelect
-                  value={widget.fieldId}
-                  choices={fieldChoices}
+          <div className={styles.card} key={`${widget.kind}-${index}`}>
+            <div className={styles.cardHead}>
+              <span className={styles.cardTitle}>{widget.title || 'Tile'}</span>
+              <div className={styles.cardActions}>
+                <Button
+                  variant="ghost"
+                  size="xs"
+                  icon={<TbArrowUp size={13} />}
+                  disabled={disabled || index === 0}
+                  onClick={() => write(listOps.move(widgets, index, index - 1))}
+                />
+                <Button
+                  variant="ghost"
+                  size="xs"
+                  icon={<TbArrowDown size={13} />}
+                  disabled={disabled || index === widgets.length - 1}
+                  onClick={() => write(listOps.move(widgets, index, index + 1))}
+                />
+                <Button
+                  variant="ghost"
+                  size="xs"
+                  icon={<TbTrash size={13} />}
                   disabled={disabled}
-                  onChange={fieldId => replaceWidget(index, { ...widget, fieldId })}
+                  onClick={() => write(listOps.remove(widgets, index))}
+                />
+              </div>
+            </div>
+            <div className={styles.cardBody}>
+              <Labeled label="Title">
+                <TextInput
+                  value={widget.title}
+                  disabled={disabled}
+                  style={{ width: '11rem' }}
+                  placeholder="Tile title"
+                  onChange={title => replace(index, { ...widget, title: title ?? '' })}
                 />
               </Labeled>
-            )}
-            {widget.kind === 'topGap' && (
-              <Labeled label="How many">
-                <NumberInput
-                  value={widget.limit}
+              <Labeled label="Tile type">
+                <Select.Root
+                  value={widget.kind}
                   disabled={disabled}
-                  style={{ width: '4.5rem' }}
-                  onChange={limit =>
-                    limit !== undefined &&
-                    replaceWidget(index, { ...widget, limit: Math.max(1, Math.min(20, limit)) })
-                  }
-                />
+                  style={{ width: '13rem' }}
+                  onChange={next => {
+                    if (!next) return;
+                    const nextKind = WIDGET_KINDS.find(k => k.value === next);
+                    if (!nextKind) return;
+                    if (nextKind.needsField === 'select')
+                      replace(index, {
+                        kind: 'countBySelect',
+                        title: widget.title,
+                        fieldId: selFields[0]?.id ?? ''
+                      });
+                    else if (nextKind.needsField === 'numeric')
+                      replace(index, {
+                        kind: 'topGap',
+                        title: widget.title,
+                        fieldId: numFields[0]?.id ?? '',
+                        limit: 5
+                      });
+                    else
+                      replace(index, {
+                        kind: next as 'countByLevel' | 'coveragePercent' | 'orphanCount',
+                        title: widget.title
+                      });
+                  }}
+                >
+                  {WIDGET_KINDS.map(k => (
+                    <Select.Item key={k.value} value={k.value}>
+                      {k.label}
+                    </Select.Item>
+                  ))}
+                </Select.Root>
               </Labeled>
-            )}
-          </Card>
+              {(widget.kind === 'countBySelect' || widget.kind === 'topGap') && (
+                <Labeled label="Field">
+                  <Select.Root
+                    value={widget.fieldId}
+                    disabled={disabled}
+                    style={{ width: '13rem' }}
+                    onChange={fieldId => fieldId && replace(index, { ...widget, fieldId })}
+                  >
+                    {!fieldChoices.some(choice => choice.id === widget.fieldId) &&
+                      widget.fieldId.length > 0 && (
+                        <Select.Item value={widget.fieldId}>
+                          Missing field · {widget.fieldId}
+                        </Select.Item>
+                      )}
+                    {fieldChoices.map(choice => (
+                      <Select.Item key={choice.id} value={choice.id}>
+                        {choice.label} · {choice.id}
+                      </Select.Item>
+                    ))}
+                  </Select.Root>
+                </Labeled>
+              )}
+              {widget.kind === 'topGap' && (
+                <Labeled label="How many">
+                  <NumberInput
+                    value={widget.limit}
+                    disabled={disabled}
+                    style={{ width: '4.5rem' }}
+                    onChange={limit =>
+                      limit !== undefined &&
+                      replace(index, { ...widget, limit: Math.max(1, Math.min(20, limit)) })
+                    }
+                  />
+                </Labeled>
+              )}
+            </div>
+          </div>
         );
       })}
-      <AddButton
-        label="Add tile"
-        disabled={disabled}
-        onClick={() =>
-          onChange({
-            overviewWidgets: listOps.add(widgets, { kind: 'countByLevel', title: 'By level' })
-          })
-        }
-      />
+      <div className={styles.addRow}>
+        <Button
+          variant="ghost"
+          size="xs"
+          icon={<TbPlus size={13} />}
+          disabled={disabled}
+          onClick={() => write(listOps.add(widgets, { kind: 'countByLevel', title: 'By level' }))}
+        >
+          Add tile
+        </Button>
+      </div>
     </div>
   );
 };

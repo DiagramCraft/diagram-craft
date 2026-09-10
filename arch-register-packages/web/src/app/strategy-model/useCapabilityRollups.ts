@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useQueries } from '@tanstack/react-query';
 import type { MetricConfig, MetricRollupResponse } from '@arch-register/api-types/metricContract';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
-import type { RollupField } from '@arch-register/api-types/app/strategy-model/strategyModelViewConfig';
+import type { DerivedRollup } from '@arch-register/api-types/app/strategy-model/strategyModelViewConfig';
 import { metricRollupQuery } from '../../queries/metrics';
 import { buildMetric, METRIC_AGGREGATION } from './useCapabilityRollup';
 import { extractCapabilityOwnFields } from './capabilityOwnFields';
@@ -58,7 +58,7 @@ export const useCapabilityRollups = (
   businessCapabilitySchemaId: string | null,
   businessCapabilitySupportsEntityRelationSchemaId: string | null,
   capabilities: readonly EntityRecord[],
-  rollups: readonly RollupField[],
+  rollups: readonly DerivedRollup[],
   treeEdges: readonly { parentId: string; childId: string }[] = []
 ): { byId: Map<string, CapabilityTableRollup>; isLoading: boolean; error: Error | null } => {
   const boxEntityIds = useMemo(() => capabilities.map(c => c._uid), [capabilities]);

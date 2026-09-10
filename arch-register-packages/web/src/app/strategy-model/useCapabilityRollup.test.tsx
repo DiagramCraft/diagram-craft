@@ -4,15 +4,15 @@ import { createRoot, type Root } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { MetricRollupResponse } from '@arch-register/api-types/metricContract';
-import type { RollupField } from '@arch-register/api-types/app/strategy-model/strategyModelViewConfig';
+import type { DerivedRollup } from '@arch-register/api-types/app/strategy-model/strategyModelViewConfig';
 import { useCapabilityRollup, type CapabilityRollup } from './useCapabilityRollup';
 
-const ROLLUPS: RollupField[] = [
-  { fieldId: 'maturity', aggregation: 'avg', format: 'decimal1', display: 'plain' },
-  { fieldId: 'maturity_target', aggregation: 'avg', format: 'decimal1', display: 'plain' },
-  { fieldId: 'gap', aggregation: 'avg', format: 'decimal1', display: 'plain' },
-  { fieldId: 'risk', aggregation: 'avg', format: 'decimal1', display: 'plain' },
-  { fieldId: 'annual_investment', aggregation: 'sum', format: 'currency', display: 'plain' }
+const ROLLUPS: DerivedRollup[] = [
+  { fieldId: 'maturity', aggregation: 'avg', format: 'decimal1' },
+  { fieldId: 'maturity_target', aggregation: 'avg', format: 'decimal1' },
+  { fieldId: 'gap', aggregation: 'avg', format: 'decimal1' },
+  { fieldId: 'risk', aggregation: 'avg', format: 'decimal1' },
+  { fieldId: 'annual_investment', aggregation: 'sum', format: 'currency' }
 ];
 
 const mocks = vi.hoisted(() => ({ rollup: vi.fn() }));

@@ -57,15 +57,12 @@ export const CapabilityDrawer = ({
   const businessCapabilitySchema = schemas.data?.find(
     schema => schema.id === strategyConfig.businessCapabilitySchemaId
   );
-  const { config: viewConfig } = resolveStrategyViewConfig(
-    capabilityConfigurations.data,
-    businessCapabilitySchema
-  );
+  const view = resolveStrategyViewConfig(capabilityConfigurations.data, businessCapabilitySchema);
   const rollup = useCapabilityRollup(
     workspaceSlug,
     strategyConfig.businessCapabilitySchemaId,
     uid,
-    viewConfig.rollups,
+    view.rollups,
     capability.data
   );
   // Not a `conditions: [{ fieldId: 'parent', op: 'equals', value: uid }]` entities query: `parent`
@@ -170,14 +167,14 @@ export const CapabilityDrawer = ({
         </Button>
       }
     >
-      {viewConfig.rollups.length > 0 && (
+      {view.rollups.length > 0 && (
         <>
           <div className={styles.sectionLabel}>Roll-up</div>
           <div className={styles.statGrid}>
-            {viewConfig.rollups.map(rollupField => (
+            {view.rollups.map(rollupField => (
               <div className={styles.stat} key={rollupField.fieldId}>
                 <div className={styles.statLabel}>
-                  {rollupField.label ?? fieldLabel(businessCapabilitySchema, rollupField.fieldId)}
+                  {fieldLabel(businessCapabilitySchema, rollupField.fieldId)}
                 </div>
                 <div className={styles.statValue}>
                   {formatStrategyValue(
@@ -213,7 +210,7 @@ export const CapabilityDrawer = ({
         <span className={styles.attributeLabel}>Children</span>
         <span>{children.length}</span>
       </div>
-      {viewConfig.drawerFieldIds.map(fieldId => (
+      {view.drawerFieldIds.map(fieldId => (
         <div className={styles.attributeRow} key={fieldId}>
           <span className={styles.attributeLabel}>
             {fieldLabel(businessCapabilitySchema, fieldId)}

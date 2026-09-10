@@ -220,16 +220,19 @@
       capability-not-configured empty state instead of its content.
 
         - @id:ar.strategy.view-config Alongside the schema bindings, workspace administrators configure how the
-          Business Capability attributes are presented across the application — from a "Capability views" editor on
-          the Capability Binding settings screen. Separate lists control the Capabilities table columns; the subtree
-          roll-up metrics (each a numeric field with an explicit average-or-sum aggregation, a number format, and a
-          table rendering — plain value, a red/amber/green bar, or a signed delta — driving the drawer stats, table
-          roll-up columns, and map overlays); the Capability map overlays (field or
-          roll-up source, direction, and colour-band thresholds); the extra detail-drawer attribute rows; and the
-          Overview tiles. Field pickers are populated from the bound
-          capability schema, so retiring a field in the schema editor drops it from every view (with an advisory
-          diagnostic); the configuration round-trips through workspace export/import. A workspace with no stored
-          configuration falls back to a built-in default that mirrors the seed schema fields.
+          Business Capability attributes are presented across the application. On the Capability Binding settings
+          screen the strategy-model capability splits into Bindings / Views / Dashboard tabs. The Views tab lists
+          every capability field in one shared display order (no add or remove — the list follows the schema); each
+          field independently opts into the
+          Capabilities table (with an optional header override and a rendering — plain value, a red/amber/green bar,
+          or a signed delta), the subtree roll-up (average or sum, plus a number format), the detail drawer, and a
+          capability-map overlay (direction plus colour-band thresholds; a roll-up field colours by its subtree
+          aggregate, otherwise by the capability's own value). The Capabilities table's Name, Level, Owner, and
+          Applications columns are fixed and always lead. The Dashboard tab configures the landing-screen tiles, and
+          the Bindings tab maps the capability roles to schemas as before. Retiring a field in the schema editor
+          drops it from every view (with an advisory diagnostic); the
+          configuration round-trips through workspace export/import, and a workspace with no stored configuration
+          falls back to a built-in default that mirrors the seed schema fields.
 
         - @id:ar.strategy.overview The Overview section is the application's landing screen — where the app switcher
           opens. It shows read-only summary tiles chosen by the workspace's view configuration

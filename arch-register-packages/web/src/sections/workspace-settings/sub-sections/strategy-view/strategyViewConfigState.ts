@@ -2,34 +2,26 @@ import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import {
   DEFAULT_STRATEGY_VIEW_CONFIG,
   strategyModelViewConfigSchema,
-  TABLE_PSEUDO_FIELD_IDS,
+  type FieldView,
   type StrategyModelViewConfig
 } from '@arch-register/api-types/app/strategy-model/strategyModelViewConfig';
 
 export type FieldChoice = { id: string; label: string };
 
-/** Non-archived fields on the schema, as `{ id, label }` — for generic field pickers. */
-export const schemaFieldChoices = (schema: EntitySchema | undefined): FieldChoice[] =>
-  (schema?.fields ?? [])
-    .filter(field => !('archived' in field && field.archived))
-    .map(field => ({ id: field.id, label: field.name }));
+/** True for fields that can be aggregated / drawn as a bar / delta / overlay. */
+export const isNumericFieldType = (schema: EntitySchema | undefined, fieldId: string): boolean => {
+  const field = schema?.fields.find(candidate => candidate.id === fieldId);
+  if (!field) return false;
+  if (field.type === 'number' || field.type === 'currency') return true;
+  return (
+    field.type === 'derived' &&
+    (field.resultType === 'number' ||
+      field.resultType === 'rating' ||
+      field.resultType === 'currency')
+  );
+};
 
-/** Numeric fields (number, or derived number/rating) — roll-up and overlay candidates. */
-export const numericFieldChoices = (schema: EntitySchema | undefined): FieldChoice[] =>
-  (schema?.fields ?? [])
-    .filter(field => {
-      if ('archived' in field && field.archived) return false;
-      if (field.type === 'number' || field.type === 'currency') return true;
-      return (
-        field.type === 'derived' &&
-        (field.resultType === 'number' ||
-          field.resultType === 'rating' ||
-          field.resultType === 'currency')
-      );
-    })
-    .map(field => ({ id: field.id, label: field.name }));
-
-/** Select fields (select, or derived select) — categorical axis / widget candidates. */
+/** Select fields (select, or derived select) — for the Overview count-by-select widget. */
 export const selectFieldChoices = (schema: EntitySchema | undefined): FieldChoice[] =>
   (schema?.fields ?? [])
     .filter(field => {
@@ -38,15 +30,12 @@ export const selectFieldChoices = (schema: EntitySchema | undefined): FieldChoic
     })
     .map(field => ({ id: field.id, label: field.name }));
 
-export const TABLE_PSEUDO_CHOICES: FieldChoice[] = [
-  { id: '_name', label: 'Name' },
-  { id: '_level', label: 'Level' },
-  { id: '_owner', label: 'Owner' },
-  { id: '_apps', label: 'Applications' }
-];
-
-export const isTablePseudoField = (fieldId: string): boolean =>
-  (TABLE_PSEUDO_FIELD_IDS as readonly string[]).includes(fieldId);
+/** Numeric-field choices — for the Overview top-N widget. */
+export const numericFieldChoices = (schema: EntitySchema | undefined): FieldChoice[] =>
+  (schema?.fields ?? [])
+    .filter(field => !('archived' in field && field.archived))
+    .filter(field => isNumericFieldType(schema, field.id))
+    .map(field => ({ id: field.id, label: field.name }));
 
 /** Parse a stored `view_config` blob into a full config, falling back to the default. */
 export const toEditableConfig = (raw: unknown): StrategyModelViewConfig => {
@@ -61,7 +50,29 @@ export const toEditableConfig = (raw: unknown): StrategyModelViewConfig => {
 export const viewConfigDirty = (draft: StrategyModelViewConfig, stored: unknown): boolean =>
   JSON.stringify(draft) !== JSON.stringify(toEditableConfig(stored));
 
-/** Immutable list helpers shared by every row editor. */
+/**
+ * Materialize the config's `fields` list into one entry per live (non-archived) schema field, in
+ * display order (configured entries first, then any schema fields not yet in the config, all-off).
+ * The editor always writes back the full list, so ordering is stable.
+ */
+export const materializeFieldViews = (
+  config: StrategyModelViewConfig,
+  schema: EntitySchema | undefined
+): FieldView[] => {
+  const liveIds = new Set(
+    (schema?.fields ?? [])
+      .filter(field => !('archived' in field && field.archived))
+      .map(field => field.id)
+  );
+  const configured = config.fields.filter(field => liveIds.has(field.fieldId));
+  const seen = new Set(configured.map(field => field.fieldId));
+  const rest: FieldView[] = (schema?.fields ?? [])
+    .filter(field => liveIds.has(field.id) && !seen.has(field.id))
+    .map(field => ({ fieldId: field.id, table: null, rollup: null, drawer: false, overlay: null }));
+  return [...configured, ...rest];
+};
+
+/** Immutable list helpers shared by the row editors. */
 export const listOps = {
   update: <T>(list: T[], index: number, patch: Partial<T>): T[] =>
     list.map((item, i) => (i === index ? { ...item, ...patch } : item)),

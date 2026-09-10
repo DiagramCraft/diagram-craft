@@ -13,7 +13,7 @@ import { resolveStrategyModelConfig, resolveStrategyViewConfig } from '../strate
 import { useCapabilityRollups, type CapabilityTableRollup } from '../useCapabilityRollups';
 import { fieldLabel } from '../capabilityFieldDisplay';
 import { CapabilityDrawer } from './CapabilityDrawer';
-import { CapabilityRollupValue, rollupIsNumeric } from './CapabilityRollupValue';
+import { CapabilityRollupValue, displayIsNumeric } from './CapabilityRollupValue';
 import { MeasureProgressBar } from './MeasureProgressBar';
 import { STRATEGY_RAIL_PATHS, STRATEGY_STRATEGY_ID } from '../strategySections';
 import type { StrategySearchParams } from '../../../routes/searchParams';
@@ -94,11 +94,12 @@ export const StrategyStrategyScreen = () => {
   const businessCapabilitySchema = schemas.data?.find(
     schema => schema.id === strategyConfig?.businessCapabilitySchemaId
   );
-  const { config: viewConfig } = resolveStrategyViewConfig(
-    configurations.data,
-    businessCapabilitySchema
-  );
-  const dependsOnColumns = viewConfig.rollups.slice(0, 3);
+  const view = resolveStrategyViewConfig(configurations.data, businessCapabilitySchema);
+  // The depends-on table reuses the first few configured roll-up table columns, for consistency
+  // with the Capabilities table.
+  const dependsOnColumns = view.tableColumns.flatMap(column =>
+    column.kind === 'field' && column.hasRollup ? [column] : []
+  ).slice(0, 3);
 
   // `view: 'full'` (not 'summary') so the selected-objective header can show the objective's
   // `description` — a schema `longtext` field the summary projection omits.
@@ -243,7 +244,7 @@ export const StrategyStrategyScreen = () => {
     strategyConfig?.businessCapabilitySchemaId ?? null,
     strategyConfig?.businessCapabilitySupportsEntityRelationSchemaId ?? null,
     dependsOnCapabilities,
-    viewConfig.rollups,
+    view.rollups,
     tree.data?.edges ?? []
   );
   const rollupFor = (id: string) => rollups.byId.get(id) ?? EMPTY_ROLLUP;
@@ -431,8 +432,8 @@ export const StrategyStrategyScreen = () => {
               <Table.HeaderCell>Capability</Table.HeaderCell>
               <Table.HeaderCell>Domain</Table.HeaderCell>
               {dependsOnColumns.map(column => (
-                <Table.HeaderCell key={column.fieldId} numeric={rollupIsNumeric(column)}>
-                  {column.label ?? fieldLabel(businessCapabilitySchema, column.fieldId)}
+                <Table.HeaderCell key={column.fieldId} numeric={displayIsNumeric(column.display)}>
+                  {column.header ?? fieldLabel(businessCapabilitySchema, column.fieldId)}
                 </Table.HeaderCell>
               ))}
               <Table.HeaderCell>Applications</Table.HeaderCell>
@@ -459,11 +460,13 @@ export const StrategyStrategyScreen = () => {
                     />
                     <Table.Cell className="dim">{domainName(entity._uid)}</Table.Cell>
                     {dependsOnColumns.map(column => (
-                      <Table.Cell key={column.fieldId} numeric={rollupIsNumeric(column)}>
+                      <Table.Cell key={column.fieldId} numeric={displayIsNumeric(column.display)}>
                         <CapabilityRollupValue
                           value={rollup.values[column.fieldId] ?? null}
                           currency={rollup.currency[column.fieldId] ?? null}
-                          rollup={column}
+                          display={column.display}
+                          format={column.format}
+                          fieldId={column.fieldId}
                           schema={businessCapabilitySchema}
                         />
                       </Table.Cell>

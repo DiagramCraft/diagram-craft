@@ -15,13 +15,18 @@ import { entitiesQuery } from '../../../queries/entities';
 import { CapabilityDrawer } from './CapabilityDrawer';
 import { useCapabilityRollups, type CapabilityTableRollup } from '../useCapabilityRollups';
 import { buildCapabilityTree, flattenCapabilityTree } from '../capabilityTree';
-import { capabilityFieldValue, fieldLabel } from '../capabilityFieldDisplay';
-import { CapabilityRollupValue, rollupIsNumeric } from './CapabilityRollupValue';
+import {
+  capabilityFieldValue,
+  capabilityNumericValue,
+  fieldLabel
+} from '../capabilityFieldDisplay';
+import { CapabilityRollupValue, displayIsNumeric } from './CapabilityRollupValue';
 import { workspaceCapabilityConfigurationsQuery } from '../../../queries/workspaceConfig';
 import { resolveStrategyModelConfig, resolveStrategyViewConfig } from '../strategyQueries';
 import { STRATEGY_CAPABILITIES_ID, STRATEGY_RAIL_PATHS } from '../strategySections';
 import type { CapabilitiesSearchParams } from '../../../routes/searchParams';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
+import type { DerivedTableColumn } from '@arch-register/api-types/app/strategy-model/strategyModelViewConfig';
 import filterStyles from '../../../sections/entities/components/EntityBrowser.module.css';
 import styles from './StrategyCapabilitiesScreen.module.css';
 
@@ -93,18 +98,8 @@ export const StrategyCapabilitiesScreen = () => {
   const businessCapabilitySchema = schemas.data?.find(
     schema => schema.id === businessCapabilitySchemaId
   );
-  const { config: viewConfig } = resolveStrategyViewConfig(
-    configurations.data,
-    businessCapabilitySchema
-  );
-  const columns = useMemo(
-    () => viewConfig.tableColumns.filter(column => column.visible),
-    [viewConfig.tableColumns]
-  );
-  const rollupByField = useMemo(
-    () => new Map(viewConfig.rollups.map(rollup => [rollup.fieldId, rollup])),
-    [viewConfig.rollups]
-  );
+  const view = resolveStrategyViewConfig(configurations.data, businessCapabilitySchema);
+  const columns = view.tableColumns;
 
   const { data: owners = [] } = useTeams(workspaceSlug);
   // `view: 'full'`, not 'summary': the Level column reads `capability_level`, a schema-defined
@@ -160,7 +155,7 @@ export const StrategyCapabilitiesScreen = () => {
     businessCapabilitySchemaId,
     strategyConfig?.businessCapabilitySupportsEntityRelationSchemaId ?? null,
     items,
-    viewConfig.rollups,
+    view.rollups,
     tree.data?.edges ?? []
   );
   const rollupFor = (id: string) => rollups.byId.get(id) ?? EMPTY_ROLLUP;
@@ -176,18 +171,21 @@ export const StrategyCapabilitiesScreen = () => {
     return new Map(order.map((id, index) => [id, index]));
   }, [tree.data]);
 
-  const defaultSortKey = columns[0]?.fieldId ?? '_name';
   const comparators = useMemo(() => {
     const compareValue = (
       entity: EntityRecord,
-      fieldId: string
+      column: DerivedTableColumn
     ): { number: number | null } | { string: string | null } => {
-      if (fieldId === '_level') return { string: strOrNull(entity.capability_level) };
-      if (fieldId === '_owner') return { string: entity._owner?.name ?? null };
+      if (column.fieldId === '_level') return { string: strOrNull(entity.capability_level) };
+      if (column.fieldId === '_owner') return { string: entity._owner?.name ?? null };
       const rollup = rollups.byId.get(entity._uid) ?? EMPTY_ROLLUP;
-      if (fieldId === '_apps') return { number: rollup.appsCount };
-      if (rollupByField.has(fieldId)) return { number: rollup.values[fieldId] ?? null };
-      return { string: capabilityFieldValue(businessCapabilitySchema, entity, fieldId) };
+      if (column.fieldId === '_apps') return { number: rollup.appsCount };
+      if (column.kind === 'field' && column.hasRollup)
+        return { number: rollup.values[column.fieldId] ?? null };
+      const field = businessCapabilitySchema?.fields.find(f => f.id === column.fieldId);
+      if (field?.type === 'number' || field?.type === 'currency')
+        return { number: capabilityNumericValue(entity, column.fieldId).value };
+      return { string: capabilityFieldValue(businessCapabilitySchema, entity, column.fieldId) };
     };
     const record: Record<string, (a: EntityRecord, b: EntityRecord) => number> = {
       _name: (a, b) => {
@@ -200,8 +198,8 @@ export const StrategyCapabilitiesScreen = () => {
     for (const column of columns) {
       if (column.fieldId === '_name') continue;
       record[column.fieldId] = (a, b) => {
-        const va = compareValue(a, column.fieldId);
-        const vb = compareValue(b, column.fieldId);
+        const va = compareValue(a, column);
+        const vb = compareValue(b, column);
         return 'number' in va && 'number' in vb
           ? compareNullableNumber(va.number, vb.number)
           : compareNullableString(
@@ -211,10 +209,10 @@ export const StrategyCapabilitiesScreen = () => {
       };
     }
     return record;
-  }, [columns, hierarchyIndex, rollupByField, rollups.byId, businessCapabilitySchema]);
+  }, [columns, hierarchyIndex, rollups.byId, businessCapabilitySchema]);
 
   const { sorted, sort, toggleSort } = useTableSort<EntityRecord, string>(items, comparators, {
-    key: defaultSortKey,
+    key: '_name',
     dir: 'asc'
   });
 
@@ -245,46 +243,48 @@ export const StrategyCapabilitiesScreen = () => {
     });
 
   // The Name column's tree indent only lines up with a hierarchical sort.
-  const showTreeIndent = (sort?.key ?? defaultSortKey) === '_name';
+  const showTreeIndent = (sort?.key ?? '_name') === '_name';
 
-  const columnLabel = (fieldId: string, label?: string): string =>
-    label ??
-    (fieldId === '_name'
-      ? 'Name'
-      : fieldId === '_level'
-        ? 'Level'
-        : fieldId === '_owner'
-          ? 'Owner'
-          : fieldId === '_apps'
-            ? 'Apps'
-            : (rollupByField.get(fieldId)?.label ?? fieldLabel(businessCapabilitySchema, fieldId)));
+  const STRUCTURAL_LABELS: Record<string, string> = {
+    _name: 'Name',
+    _level: 'Level',
+    _owner: 'Owner',
+    _apps: 'Apps'
+  };
+  const columnLabel = (column: DerivedTableColumn): string =>
+    column.kind === 'structural'
+      ? (STRUCTURAL_LABELS[column.fieldId] ?? column.fieldId)
+      : (column.header ?? fieldLabel(businessCapabilitySchema, column.fieldId));
 
-  const isNumericColumn = (fieldId: string): boolean => {
-    if (fieldId === '_apps') return true;
-    const rollupField = rollupByField.get(fieldId);
-    if (rollupField) return rollupIsNumeric(rollupField);
-    const field = businessCapabilitySchema?.fields.find(f => f.id === fieldId);
+  const isNumericColumn = (column: DerivedTableColumn): boolean => {
+    if (column.fieldId === '_apps') return true;
+    if (column.kind !== 'field') return false;
+    if (!displayIsNumeric(column.display)) return false;
+    if (column.hasRollup) return true;
+    const field = businessCapabilitySchema?.fields.find(f => f.id === column.fieldId);
     return field?.type === 'number' || field?.type === 'currency';
   };
 
-  const renderColumnValue = (entity: EntityRecord, fieldId: string): ReactNode => {
-    if (fieldId === '_level')
+  const renderColumnValue = (entity: EntityRecord, column: DerivedTableColumn): ReactNode => {
+    if (column.fieldId === '_level')
       return strOrNull(entity.capability_level) ?? <span className="dim">—</span>;
-    if (fieldId === '_owner') return entity._owner?.name ?? <span className="dim">—</span>;
-    if (fieldId === '_apps') return rollupFor(entity._uid).appsCount ?? '—';
-    const rollupField = rollupByField.get(fieldId);
-    if (rollupField) {
-      const rollup = rollupFor(entity._uid);
-      return (
-        <CapabilityRollupValue
-          value={rollup.values[fieldId] ?? null}
-          currency={rollup.currency[fieldId] ?? null}
-          rollup={rollupField}
-          schema={businessCapabilitySchema}
-        />
-      );
-    }
-    return capabilityFieldValue(businessCapabilitySchema, entity, fieldId);
+    if (column.fieldId === '_owner') return entity._owner?.name ?? <span className="dim">—</span>;
+    if (column.fieldId === '_apps') return rollupFor(entity._uid).appsCount ?? '—';
+    if (column.kind !== 'field') return null;
+    if (column.display === 'plain' && !column.hasRollup)
+      return capabilityFieldValue(businessCapabilitySchema, entity, column.fieldId);
+    const rollup = rollupFor(entity._uid);
+    const own = capabilityNumericValue(entity, column.fieldId);
+    return (
+      <CapabilityRollupValue
+        value={column.hasRollup ? (rollup.values[column.fieldId] ?? null) : own.value}
+        currency={column.hasRollup ? (rollup.currency[column.fieldId] ?? null) : own.currency}
+        display={column.display}
+        format={column.format}
+        fieldId={column.fieldId}
+        schema={businessCapabilitySchema}
+      />
+    );
   };
 
   const activeOwnerCount = search.owner ? 1 : 0;
@@ -396,11 +396,11 @@ export const StrategyCapabilitiesScreen = () => {
         <div style={{ marginLeft: 'auto' }}>
           <FilterDropdown
             label="Sort"
-            value={sort?.key ?? defaultSortKey}
+            value={sort?.key ?? '_name'}
             onChange={value => value !== sort?.key && toggleSort(value)}
             options={columns.map(column => ({
               value: column.fieldId,
-              label: columnLabel(column.fieldId, column.label)
+              label: columnLabel(column)
             }))}
           />
         </div>
@@ -437,9 +437,9 @@ export const StrategyCapabilitiesScreen = () => {
                 sortKey={column.fieldId}
                 sort={sort}
                 onSort={toggleSort}
-                numeric={column.fieldId !== '_name' && isNumericColumn(column.fieldId)}
+                numeric={column.fieldId !== '_name' && isNumericColumn(column)}
               >
-                {columnLabel(column.fieldId, column.label)}
+                {columnLabel(column)}
               </Table.SortableHeaderCell>
             ))}
           </Table.Row>
@@ -467,8 +467,8 @@ export const StrategyCapabilitiesScreen = () => {
                       }
                     />
                   ) : (
-                    <Table.Cell key={column.fieldId} numeric={isNumericColumn(column.fieldId)}>
-                      {renderColumnValue(entity, column.fieldId)}
+                    <Table.Cell key={column.fieldId} numeric={isNumericColumn(column)}>
+                      {renderColumnValue(entity, column)}
                     </Table.Cell>
                   )
                 )}

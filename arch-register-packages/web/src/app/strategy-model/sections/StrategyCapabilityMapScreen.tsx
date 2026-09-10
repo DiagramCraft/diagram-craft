@@ -11,6 +11,7 @@ import { entitiesQuery } from '../../../queries/entities';
 import { workspaceCapabilityConfigurationsQuery } from '../../../queries/workspaceConfig';
 import { resolveStrategyModelConfig, resolveStrategyViewConfig } from '../strategyQueries';
 import { useCapabilityRollups, type CapabilityTableRollup } from '../useCapabilityRollups';
+import { capabilityNumericValue, fieldLabel } from '../capabilityFieldDisplay';
 import { overlayColor, overlayLegend, overlayValue } from '../capabilityMapOverlays';
 import { CapabilityDrawer } from './CapabilityDrawer';
 import { STRATEGY_CAPABILITY_MAP_ID, STRATEGY_RAIL_PATHS } from '../strategySections';
@@ -38,10 +39,11 @@ export const StrategyCapabilityMapScreen = () => {
   const businessCapabilitySchema = schemas.data?.find(
     schema => schema.id === businessCapabilitySchemaId
   );
-  const { config: viewConfig } = resolveStrategyViewConfig(
-    configurations.data,
-    businessCapabilitySchema
-  );
+  const view = resolveStrategyViewConfig(configurations.data, businessCapabilitySchema);
+  const overlayOptions = view.overlays.map(overlay => ({
+    ...overlay,
+    label: fieldLabel(businessCapabilitySchema, overlay.fieldId)
+  }));
 
   // `view: 'full'` — the grid reads the derived `capability_level` and the own maturity/investment/
   // risk fields (leaf fallback in `useCapabilityRollups`), which the 'summary' projection omits.
@@ -86,14 +88,14 @@ export const StrategyCapabilityMapScreen = () => {
     businessCapabilitySchemaId,
     strategyConfig?.businessCapabilitySupportsEntityRelationSchemaId ?? null,
     items,
-    viewConfig.rollups,
+    view.rollups,
     tree.data?.edges ?? []
   );
   const rollupFor = (uid: string) => rollups.byId.get(uid) ?? EMPTY_ROLLUP;
 
   const [query, setQuery] = useState('');
   const [overlayId, setOverlayId] = useState('none');
-  const activeOverlay = viewConfig.overlays.find(o => o.id === overlayId) ?? null;
+  const activeOverlay = overlayOptions.find(o => o.fieldId === overlayId) ?? null;
   const legend = activeOverlay ? overlayLegend(activeOverlay) : [];
 
   const q = query.trim().toLowerCase();
@@ -139,10 +141,29 @@ export const StrategyCapabilityMapScreen = () => {
     );
   }
 
+  // The overlay's resolved number for a capability: its subtree roll-up (`source: 'rollup'`) or its
+  // own field value (`source: 'field'`), with the currency for a currency-formatted overlay.
+  const overlayReading = (uid: string): { value: number | null; currency: string | null } => {
+    if (!activeOverlay) return { value: null, currency: null };
+    if (activeOverlay.source === 'field') {
+      const entity = byUid.get(uid);
+      return entity
+        ? capabilityNumericValue(entity, activeOverlay.fieldId)
+        : { value: null, currency: null };
+    }
+    const rollup = rollupFor(uid);
+    return {
+      value: rollup.values[activeOverlay.fieldId] ?? null,
+      currency: rollup.currency[activeOverlay.fieldId] ?? null
+    };
+  };
+
   const renderLeaf = (cap: EntityRecord) => {
-    const rollup = rollupFor(cap._uid);
-    const heat = activeOverlay ? overlayColor(activeOverlay, rollup) : undefined;
-    const value = activeOverlay ? overlayValue(activeOverlay, rollup) : null;
+    const reading = overlayReading(cap._uid);
+    const heat = activeOverlay ? overlayColor(activeOverlay, reading.value) : undefined;
+    const value = activeOverlay
+      ? overlayValue(activeOverlay, reading.value, reading.currency)
+      : null;
     return (
       <button
         key={cap._uid}
@@ -184,7 +205,7 @@ export const StrategyCapabilityMapScreen = () => {
           onChange={value => setOverlayId(value ?? 'none')}
           options={[
             { value: 'none', label: 'None' },
-            ...viewConfig.overlays.map(o => ({ value: o.id, label: o.label }))
+            ...overlayOptions.map(o => ({ value: o.fieldId, label: o.label }))
           ]}
         />
         {focusCap && (
@@ -213,14 +234,16 @@ export const StrategyCapabilityMapScreen = () => {
           </div>
         ) : (
           domains.map(domain => {
-            const roll = rollupFor(domain._uid);
             const l2s = childCaps(domain._uid);
-            // The domain header echoes the active overlay's rolled-up value and colour; with no
-            // overlay selected it shows just the capability name.
-            const overlaid = activeOverlay ? overlayValue(activeOverlay, roll) : null;
+            // The domain header echoes the active overlay's value and colour; with no overlay
+            // selected it shows just the capability name.
+            const reading = overlayReading(domain._uid);
+            const overlaid = activeOverlay
+              ? overlayValue(activeOverlay, reading.value, reading.currency)
+              : null;
             const meta =
               activeOverlay && overlaid != null ? `${activeOverlay.label} ${overlaid}` : null;
-            const metaColor = activeOverlay ? overlayColor(activeOverlay, roll) : undefined;
+            const metaColor = activeOverlay ? overlayColor(activeOverlay, reading.value) : undefined;
             return (
               <section key={domain._uid} className={styles.domain}>
                 <header className={styles.domainHead}>

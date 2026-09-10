@@ -63,10 +63,7 @@ export const StrategyOverviewScreen = () => {
   const businessCapabilitySchema = schemas.data?.find(
     schema => schema.id === strategyConfig?.businessCapabilitySchemaId
   );
-  const { config: viewConfig } = resolveStrategyViewConfig(
-    configurations.data,
-    businessCapabilitySchema
-  );
+  const view = resolveStrategyViewConfig(configurations.data, businessCapabilitySchema);
 
   // `view: 'full'` so `capability_level` / `status` (derived schema `data` fields the summary
   // projection omits) are readable — same reason the other sections fetch full.
@@ -114,7 +111,7 @@ export const StrategyOverviewScreen = () => {
     strategyConfig?.businessCapabilitySchemaId ?? null,
     strategyConfig?.businessCapabilitySupportsEntityRelationSchemaId ?? null,
     capabilityItems,
-    viewConfig.rollups,
+    view.rollups,
     tree.data?.edges ?? []
   );
 
@@ -225,8 +222,8 @@ export const StrategyOverviewScreen = () => {
     </div>
   );
 
-  const tileWidgets = viewConfig.overviewWidgets.filter(widget => widget.kind !== 'topGap');
-  const gapWidgets = viewConfig.overviewWidgets.filter(
+  const tileWidgets = view.config.overviewWidgets.filter(widget => widget.kind !== 'topGap');
+  const gapWidgets = view.config.overviewWidgets.filter(
     (widget): widget is Extract<typeof widget, { kind: 'topGap' }> => widget.kind === 'topGap'
   );
 
