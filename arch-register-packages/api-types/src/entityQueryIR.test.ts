@@ -54,6 +54,24 @@ describe('relationBackward PathStep', () => {
   });
 });
 
+describe('containmentSubtree PathStep', () => {
+  it('parses a recursive containment step with a nested filter', () => {
+    const step: PathStep = {
+      kind: 'containmentSubtree',
+      fieldId: 'parent',
+      ownerSchemaId: 'capability',
+      filter: { kind: 'predicate', path: [], fieldId: '_name', op: 'contains', value: 'Core' }
+    };
+    expect(pathStepSchema.safeParse(step).success).toBe(true);
+  });
+
+  it('rejects a recursive containment step missing its owner schema', () => {
+    expect(
+      pathStepSchema.safeParse({ kind: 'containmentSubtree', fieldId: 'parent' }).success
+    ).toBe(false);
+  });
+});
+
 describe('compound traversal round trip', () => {
   it('parses a typedRelation step whose filter traverses a relationForward hop', () => {
     const query = {

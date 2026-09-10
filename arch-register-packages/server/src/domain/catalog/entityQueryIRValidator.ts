@@ -341,7 +341,7 @@ const validateRelationNode = (
   }
 };
 
-const validatePathSteps = (
+export const validatePathSteps = (
   steps: PathStep[],
   schemas: SchemaCatalog,
   relationSchemas: RelationSchemaCatalog,

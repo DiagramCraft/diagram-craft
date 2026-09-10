@@ -248,6 +248,7 @@ test.describe('entities section', () => {
     await expect(page.getByRole('button', { name: 'Show horizon bands' })).toBeVisible();
 
     await page.reload();
+    await entitiesPage.expectLoaded();
     await expect(
       page.getByText('Group', { exact: true }).locator('..').locator('select')
     ).toHaveValue('capability');
