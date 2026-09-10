@@ -326,13 +326,13 @@ export const WorkspaceCapabilitiesSubSection = ({
                 <Tabs.Root value={strategyTab} onValueChange={setStrategyTab}>
                   <Tabs.List aria-label="Strategy model configuration">
                     <Tabs.Trigger value="bindings">Bindings</Tabs.Trigger>
-                    <Tabs.Trigger value="views">Views</Tabs.Trigger>
+                    <Tabs.Trigger value="fields">Fields</Tabs.Trigger>
                     <Tabs.Trigger value="dashboard">Dashboard</Tabs.Trigger>
                   </Tabs.List>
                   <Tabs.Content value="bindings" style={{ height: 'auto' }}>
                     {bindingRolesContent}
                   </Tabs.Content>
-                  <Tabs.Content value="views" style={{ height: 'auto' }}>
+                  <Tabs.Content value="fields" style={{ height: 'auto' }}>
                     <StrategyFieldsEditor
                       schema={businessCapabilitySchema}
                       value={viewConfig}

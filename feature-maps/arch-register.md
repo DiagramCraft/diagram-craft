@@ -221,7 +221,7 @@
 
         - @id:ar.strategy.view-config Alongside the schema bindings, workspace administrators configure how the
           Business Capability attributes are presented across the application. On the Capability Binding settings
-          screen the strategy-model capability splits into Bindings / Views / Dashboard tabs. The Views tab lists
+          screen the strategy-model capability splits into Bindings / Fields / Dashboard tabs. The Fields tab lists
           every capability field in one shared display order (no add or remove — the list follows the schema); each
           field independently opts into the
           Capabilities table (with an optional header override and a rendering — plain value, a red/amber/green bar,

@@ -33,10 +33,30 @@
   gap: 0.4rem;
 }
 
+.cardToggle {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.cardChevron {
+  flex: 0 0 auto;
+  color: var(--cmp-fg-dim, var(--secondary-fg));
+  display: inline-flex;
+}
+
 .cardTitle {
   font-weight: 600;
   font-size: 11px;
-  flex: 1 1 auto;
   min-width: 0;
   white-space: nowrap;
   overflow: hidden;

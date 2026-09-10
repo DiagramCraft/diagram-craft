@@ -1,5 +1,12 @@
-import { type ReactNode, useMemo } from 'react';
-import { TbArrowDown, TbArrowUp, TbPlus, TbTrash } from 'react-icons/tb';
+import { type ReactNode, useMemo, useState } from 'react';
+import {
+  TbArrowDown,
+  TbArrowUp,
+  TbChevronDown,
+  TbChevronRight,
+  TbPlus,
+  TbTrash
+} from 'react-icons/tb';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type {
   ColourBand,
@@ -192,6 +199,8 @@ const FieldCard = ({
     field.overlay && { label: 'overlay', color: 'var(--crimson-9)' }
   ].filter((marker): marker is { label: string; color: string } => Boolean(marker));
 
+  const [expanded, setExpanded] = useState(false);
+
   const tableCell = field.table ?? { display: 'plain' as const };
   const rollupCell = field.rollup ?? { aggregation: 'avg' as const, format: 'decimal1' as const };
   const overlayCell = field.overlay ?? {
@@ -203,7 +212,17 @@ const FieldCard = ({
   return (
     <div className={styles.card}>
       <div className={styles.cardHead}>
-        <span className={styles.cardTitle}>{name}</span>
+        <button
+          type="button"
+          className={styles.cardToggle}
+          aria-expanded={expanded}
+          onClick={() => setExpanded(prev => !prev)}
+        >
+          <span className={styles.cardChevron}>
+            {expanded ? <TbChevronDown size={13} /> : <TbChevronRight size={13} />}
+          </span>
+          <span className={styles.cardTitle}>{name}</span>
+        </button>
         <div className={styles.markers}>
           {markers.map(marker => (
             <span className={styles.marker} key={marker.label}>
@@ -230,126 +249,136 @@ const FieldCard = ({
         </div>
       </div>
 
-      <Toggle
-        label="Show in Capabilities table"
-        checked={field.table != null}
-        disabled={disabled}
-        onChange={on => onChange({ table: on ? { display: 'plain' } : null })}
-      >
-        <Labeled label="Header (optional)">
-          <TextInput
-            value={field.table?.header ?? ''}
+      {expanded && (
+        <>
+          <Toggle
+            label="Show in Capabilities table"
+            checked={field.table != null}
             disabled={disabled}
-            style={{ width: '10rem' }}
-            placeholder={name}
-            onChange={header => onChange({ table: { ...tableCell, header: header || undefined } })}
-          />
-        </Labeled>
-        <Labeled label="Display">
-          <Select.Root
-            value={field.table?.display ?? 'plain'}
-            disabled={disabled}
-            style={{ width: '9rem' }}
-            onChange={next =>
-              next && onChange({ table: { ...tableCell, display: next as TableDisplay } })
-            }
+            onChange={on => onChange({ table: on ? { display: 'plain' } : null })}
           >
-            {DISPLAY_OPTIONS.filter(option => numeric || !option.numericOnly).map(option => (
-              <Select.Item key={option.value} value={option.value}>
-                {option.label}
-              </Select.Item>
-            ))}
-          </Select.Root>
-        </Labeled>
-      </Toggle>
-
-      <Toggle
-        label={numeric ? 'Include in subtree roll-up' : 'Include in subtree roll-up (numeric only)'}
-        checked={field.rollup != null}
-        disabled={disabled || !numeric}
-        onChange={on =>
-          onChange({ rollup: on ? { aggregation: 'avg', format: 'decimal1' } : null })
-        }
-      >
-        <Labeled label="Aggregation">
-          <Select.Root
-            value={field.rollup?.aggregation ?? 'avg'}
-            disabled={disabled}
-            style={{ width: '8rem' }}
-            onChange={next =>
-              next &&
-              onChange({
-                rollup: { ...rollupCell, aggregation: next as 'avg' | 'sum' }
-              })
-            }
-          >
-            <Select.Item value="avg">Average</Select.Item>
-            <Select.Item value="sum">Sum</Select.Item>
-          </Select.Root>
-        </Labeled>
-        <Labeled label="Format">
-          <Select.Root
-            value={field.rollup?.format ?? 'decimal1'}
-            disabled={disabled}
-            style={{ width: '9rem' }}
-            onChange={next =>
-              next &&
-              onChange({
-                rollup: {
-                  aggregation: rollupCell.aggregation,
-                  format: next as NumberFormat
+            <Labeled label="Header (optional)">
+              <TextInput
+                value={field.table?.header ?? ''}
+                disabled={disabled}
+                style={{ width: '10rem' }}
+                placeholder={name}
+                onChange={header =>
+                  onChange({ table: { ...tableCell, header: header || undefined } })
                 }
-              })
+              />
+            </Labeled>
+            <Labeled label="Display">
+              <Select.Root
+                value={field.table?.display ?? 'plain'}
+                disabled={disabled}
+                style={{ width: '9rem' }}
+                onChange={next =>
+                  next && onChange({ table: { ...tableCell, display: next as TableDisplay } })
+                }
+              >
+                {DISPLAY_OPTIONS.filter(option => numeric || !option.numericOnly).map(option => (
+                  <Select.Item key={option.value} value={option.value}>
+                    {option.label}
+                  </Select.Item>
+                ))}
+              </Select.Root>
+            </Labeled>
+          </Toggle>
+
+          <Toggle
+            label={
+              numeric ? 'Include in subtree roll-up' : 'Include in subtree roll-up (numeric only)'
+            }
+            checked={field.rollup != null}
+            disabled={disabled || !numeric}
+            onChange={on =>
+              onChange({ rollup: on ? { aggregation: 'avg', format: 'decimal1' } : null })
             }
           >
-            {FORMAT_OPTIONS.map(option => (
-              <Select.Item key={option.value} value={option.value}>
-                {option.label}
-              </Select.Item>
-            ))}
-          </Select.Root>
-        </Labeled>
-      </Toggle>
+            <Labeled label="Aggregation">
+              <Select.Root
+                value={field.rollup?.aggregation ?? 'avg'}
+                disabled={disabled}
+                style={{ width: '8rem' }}
+                onChange={next =>
+                  next &&
+                  onChange({
+                    rollup: { ...rollupCell, aggregation: next as 'avg' | 'sum' }
+                  })
+                }
+              >
+                <Select.Item value="avg">Average</Select.Item>
+                <Select.Item value="sum">Sum</Select.Item>
+              </Select.Root>
+            </Labeled>
+            <Labeled label="Format">
+              <Select.Root
+                value={field.rollup?.format ?? 'decimal1'}
+                disabled={disabled}
+                style={{ width: '9rem' }}
+                onChange={next =>
+                  next &&
+                  onChange({
+                    rollup: {
+                      aggregation: rollupCell.aggregation,
+                      format: next as NumberFormat
+                    }
+                  })
+                }
+              >
+                {FORMAT_OPTIONS.map(option => (
+                  <Select.Item key={option.value} value={option.value}>
+                    {option.label}
+                  </Select.Item>
+                ))}
+              </Select.Root>
+            </Labeled>
+          </Toggle>
 
-      <Toggle
-        label="Show as a row in the detail drawer"
-        checked={field.drawer}
-        disabled={disabled}
-        onChange={on => onChange({ drawer: on })}
-      />
-
-      <Toggle
-        label={numeric ? 'Show as a capability-map overlay' : 'Show as an overlay (numeric only)'}
-        checked={field.overlay != null}
-        disabled={disabled || !numeric}
-        onChange={on =>
-          onChange({
-            overlay: on ? { direction: 'higherBetter', format: 'decimal1', bands: [] } : null
-          })
-        }
-      >
-        <Labeled label="Direction">
-          <Select.Root
-            value={field.overlay?.direction ?? 'higherBetter'}
+          <Toggle
+            label="Show as a row in the detail drawer"
+            checked={field.drawer}
             disabled={disabled}
-            style={{ width: '10rem' }}
-            onChange={next =>
-              next &&
+            onChange={on => onChange({ drawer: on })}
+          />
+
+          <Toggle
+            label={
+              numeric ? 'Show as a capability-map overlay' : 'Show as an overlay (numeric only)'
+            }
+            checked={field.overlay != null}
+            disabled={disabled || !numeric}
+            onChange={on =>
               onChange({
-                overlay: { ...overlayCell, direction: next as 'higherBetter' | 'lowerBetter' }
+                overlay: on ? { direction: 'higherBetter', format: 'decimal1', bands: [] } : null
               })
             }
           >
-            <Select.Item value="higherBetter">Higher is better</Select.Item>
-            <Select.Item value="lowerBetter">Lower is better</Select.Item>
-          </Select.Root>
-        </Labeled>
-        <BandsEditor
-          bands={field.overlay?.bands ?? []}
-          disabled={disabled}
-          onChange={bands => onChange({ overlay: { ...overlayCell, bands } })}
-        />
-      </Toggle>
+            <Labeled label="Direction">
+              <Select.Root
+                value={field.overlay?.direction ?? 'higherBetter'}
+                disabled={disabled}
+                style={{ width: '10rem' }}
+                onChange={next =>
+                  next &&
+                  onChange({
+                    overlay: { ...overlayCell, direction: next as 'higherBetter' | 'lowerBetter' }
+                  })
+                }
+              >
+                <Select.Item value="higherBetter">Higher is better</Select.Item>
+                <Select.Item value="lowerBetter">Lower is better</Select.Item>
+              </Select.Root>
+            </Labeled>
+            <BandsEditor
+              bands={field.overlay?.bands ?? []}
+              disabled={disabled}
+              onChange={bands => onChange({ overlay: { ...overlayCell, bands } })}
+            />
+          </Toggle>
+        </>
+      )}
     </div>
   );
 };
