@@ -94,7 +94,10 @@ export const useCapabilityRollups = (
       ),
       metricRollupQuery(
         workspaceId,
-        { boxEntityIds, metric: buildAppsCountMetric(businessCapabilitySupportsEntityRelationSchemaId) },
+        {
+          boxEntityIds,
+          metric: buildAppsCountMetric(businessCapabilitySupportsEntityRelationSchemaId)
+        },
         enabled
       )
     ]

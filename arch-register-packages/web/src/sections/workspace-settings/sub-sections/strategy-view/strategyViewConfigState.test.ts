@@ -47,7 +47,9 @@ describe('strategyViewConfigState', () => {
 
   it('materializeFieldViews lists every live schema field, configured first then the rest', () => {
     const config = {
-      fields: [{ fieldId: 'capability_type', table: null, rollup: null, drawer: true, overlay: null }],
+      fields: [
+        { fieldId: 'capability_type', table: null, rollup: null, drawer: true, overlay: null }
+      ],
       overviewWidgets: []
     };
     const views = materializeFieldViews(config, schema);

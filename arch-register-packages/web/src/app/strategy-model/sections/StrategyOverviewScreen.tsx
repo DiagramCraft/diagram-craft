@@ -199,7 +199,12 @@ export const StrategyOverviewScreen = () => {
     return <div className={styles.empty}>Strategy model is not enabled.</div>;
   }
 
-  const stackedBarTile = (title: string, count: number, buckets: BarBucket[], emptyLabel: string) => (
+  const stackedBarTile = (
+    title: string,
+    count: number,
+    buckets: BarBucket[],
+    emptyLabel: string
+  ) => (
     <div className={styles.tile} key={title}>
       <div className={styles.tileLabel}>{title}</div>
       <div className={styles.tileValue}>{count}</div>

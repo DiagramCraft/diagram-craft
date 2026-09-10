@@ -32,7 +32,13 @@ const toApiConfiguration = async (
   const viewDiagnostics =
     row.view_config == null
       ? []
-      : await strategyViewConfigDiagnostics(db, row.workspace, row.type, row.bindings, row.view_config);
+      : await strategyViewConfigDiagnostics(
+          db,
+          row.workspace,
+          row.type,
+          row.bindings,
+          row.view_config
+        );
 
   return {
     id: row.id,

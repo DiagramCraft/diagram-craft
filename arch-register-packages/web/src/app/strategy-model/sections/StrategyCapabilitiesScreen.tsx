@@ -461,9 +461,7 @@ export const StrategyCapabilitiesScreen = () => {
                       title={entity._name}
                       subtitle={entity._publicId}
                       indentLevel={
-                        showTreeIndent
-                          ? levelNumber(strOrNull(entity.capability_level)) - 1
-                          : 0
+                        showTreeIndent ? levelNumber(strOrNull(entity.capability_level)) - 1 : 0
                       }
                     />
                   ) : (

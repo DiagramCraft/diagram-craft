@@ -91,7 +91,9 @@ export const WorkspaceCapabilitiesSubSection = ({
   const dirty =
     enabled !== (configuration != null) ||
     JSON.stringify(bindings) !== JSON.stringify(configuredBindings) ||
-    (isStrategyModel && viewConfig != null && viewConfigDirty(viewConfig, configuration?.view_config));
+    (isStrategyModel &&
+      viewConfig != null &&
+      viewConfigDirty(viewConfig, configuration?.view_config));
 
   const save = useCallback(async () => {
     if (!enabled || !definition) return;

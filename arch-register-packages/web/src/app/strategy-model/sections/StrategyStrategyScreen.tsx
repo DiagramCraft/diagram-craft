@@ -97,9 +97,9 @@ export const StrategyStrategyScreen = () => {
   const view = resolveStrategyViewConfig(configurations.data, businessCapabilitySchema);
   // The depends-on table reuses the first few configured roll-up table columns, for consistency
   // with the Capabilities table.
-  const dependsOnColumns = view.tableColumns.flatMap(column =>
-    column.kind === 'field' && column.hasRollup ? [column] : []
-  ).slice(0, 3);
+  const dependsOnColumns = view.tableColumns
+    .flatMap(column => (column.kind === 'field' && column.hasRollup ? [column] : []))
+    .slice(0, 3);
 
   // `view: 'full'` (not 'summary') so the selected-objective header can show the objective's
   // `description` — a schema `longtext` field the summary projection omits.

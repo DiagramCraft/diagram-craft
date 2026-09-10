@@ -7,11 +7,7 @@ import { scalarValues } from '../../lib/scalarFieldValues';
 export const fieldLabel = (schema: EntitySchema | undefined, fieldId: string): string =>
   schema?.fields.find(field => field.id === fieldId)?.name ?? fieldId;
 
-const optionLabel = (
-  schema: EntitySchema | undefined,
-  fieldId: string,
-  value: string
-): string => {
+const optionLabel = (schema: EntitySchema | undefined, fieldId: string, value: string): string => {
   const field = schema?.fields.find(f => f.id === fieldId);
   if (field && (field.type === 'select' || field.type === 'derived') && 'options' in field) {
     return field.options?.find(option => option.value === value)?.label ?? value;

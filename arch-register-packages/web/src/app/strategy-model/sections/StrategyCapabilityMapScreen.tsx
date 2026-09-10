@@ -243,7 +243,9 @@ export const StrategyCapabilityMapScreen = () => {
               : null;
             const meta =
               activeOverlay && overlaid != null ? `${activeOverlay.label} ${overlaid}` : null;
-            const metaColor = activeOverlay ? overlayColor(activeOverlay, reading.value) : undefined;
+            const metaColor = activeOverlay
+              ? overlayColor(activeOverlay, reading.value)
+              : undefined;
             return (
               <section key={domain._uid} className={styles.domain}>
                 <header className={styles.domainHead}>

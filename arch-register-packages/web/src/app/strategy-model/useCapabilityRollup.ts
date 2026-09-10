@@ -2,7 +2,10 @@ import { useMemo } from 'react';
 import { useQueries } from '@tanstack/react-query';
 import type { MetricConfig, MetricRollupResponse } from '@arch-register/api-types/metricContract';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
-import type { DerivedRollup, RollupAggregation } from '@arch-register/api-types/app/strategy-model/strategyModelViewConfig';
+import type {
+  DerivedRollup,
+  RollupAggregation
+} from '@arch-register/api-types/app/strategy-model/strategyModelViewConfig';
 import { metricRollupQuery } from '../../queries/metrics';
 import { extractCapabilityOwnFields } from './capabilityOwnFields';
 
@@ -123,7 +126,9 @@ export const useCapabilityRollup = (
   const currency: Record<string, string | null> = {};
   rollups.forEach((rollup, index) => {
     const result = resultFor(rollupQueries[index]);
-    values[rollup.fieldId] = isLeaf ? (own[rollup.fieldId]?.value ?? null) : (result?.value ?? null);
+    values[rollup.fieldId] = isLeaf
+      ? (own[rollup.fieldId]?.value ?? null)
+      : (result?.value ?? null);
     currency[rollup.fieldId] = isLeaf
       ? (own[rollup.fieldId]?.currency ?? null)
       : (result?.currencyCode ?? null);

@@ -78,7 +78,11 @@ export type StructuralColumnId = (typeof STRUCTURAL_COLUMN_IDS)[number];
 
 export const overviewWidgetSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('countByLevel'), title: z.string().min(1) }),
-  z.object({ kind: z.literal('countBySelect'), fieldId: z.string().min(1), title: z.string().min(1) }),
+  z.object({
+    kind: z.literal('countBySelect'),
+    fieldId: z.string().min(1),
+    title: z.string().min(1)
+  }),
   z.object({ kind: z.literal('coveragePercent'), title: z.string().min(1) }),
   z.object({ kind: z.literal('orphanCount'), title: z.string().min(1) }),
   z.object({
@@ -192,10 +196,7 @@ export type ViewConfigDiagnostic = {
   message: string;
 };
 
-const isUsableField = (
-  fields: readonly ViewConfigSchemaField[],
-  fieldId: string
-): boolean => {
+const isUsableField = (fields: readonly ViewConfigSchemaField[], fieldId: string): boolean => {
   const field = fields.find(candidate => candidate.id === fieldId);
   return field != null && field.archived !== true;
 };
@@ -278,22 +279,30 @@ export type DerivedOverlay = {
 
 export const deriveRollups = (config: StrategyModelViewConfig): DerivedRollup[] =>
   config.fields
-    .filter((field): field is FieldView & { rollup: NonNullable<FieldView['rollup']> } => field.rollup != null)
+    .filter(
+      (field): field is FieldView & { rollup: NonNullable<FieldView['rollup']> } =>
+        field.rollup != null
+    )
     .map(field => ({
       fieldId: field.fieldId,
       aggregation: field.rollup.aggregation,
       format: field.rollup.format
     }));
 
-export const STRUCTURAL_TABLE_COLUMNS: DerivedTableColumn[] = STRUCTURAL_COLUMN_IDS.map(fieldId => ({
-  kind: 'structural',
-  fieldId
-}));
+export const STRUCTURAL_TABLE_COLUMNS: DerivedTableColumn[] = STRUCTURAL_COLUMN_IDS.map(
+  fieldId => ({
+    kind: 'structural',
+    fieldId
+  })
+);
 
 export const deriveTableColumns = (config: StrategyModelViewConfig): DerivedTableColumn[] => [
   ...STRUCTURAL_TABLE_COLUMNS,
   ...config.fields
-    .filter((field): field is FieldView & { table: NonNullable<FieldView['table']> } => field.table != null)
+    .filter(
+      (field): field is FieldView & { table: NonNullable<FieldView['table']> } =>
+        field.table != null
+    )
     .map(field => ({
       kind: 'field' as const,
       fieldId: field.fieldId,
@@ -309,7 +318,10 @@ export const deriveDrawerFieldIds = (config: StrategyModelViewConfig): string[] 
 
 export const deriveOverlays = (config: StrategyModelViewConfig): DerivedOverlay[] =>
   config.fields
-    .filter((field): field is FieldView & { overlay: NonNullable<FieldView['overlay']> } => field.overlay != null)
+    .filter(
+      (field): field is FieldView & { overlay: NonNullable<FieldView['overlay']> } =>
+        field.overlay != null
+    )
     .map(field => ({
       fieldId: field.fieldId,
       source: field.rollup != null ? 'rollup' : 'field',
