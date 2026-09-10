@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, type ReactNode } from 'react';
 import type { PathStep } from '@arch-register/api-types/entityQueryIR';
 import { useEntities, useEntitiesByIdSetQuery } from '../../../hooks/useEntities';
+import { useDelayedFlag } from '../../../hooks/useDelayedFlag';
 import { EntityHoverCard } from '../../../components/EntityHoverCard';
 import styles from './PathWalkerView.module.css';
 import {

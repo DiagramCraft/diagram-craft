@@ -5,6 +5,7 @@ import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import { useEntitiesByIdSetQuery } from '../../../hooks/useEntities';
 import { useWorkspaceAuthorization } from '../../../auth/WorkspaceAuthorizationContext';
+import { useDelayedFlag } from '../../../hooks/useDelayedFlag';
 import { EmptyState } from '../../../components/EmptyState';
 import { EntityHoverCard } from '../../../components/EntityHoverCard';
 import { TypeBadge } from '../../../components/TypeBadge';
@@ -63,6 +64,7 @@ export const PathWalkerView = ({
   );
 
   const { getFieldGroupAccess } = useWorkspaceAuthorization(workspaceId);
+  const showLoading = useDelayedFlag(isLoading, 300);
 
   const schemaById = useMemo(
     () => new Map(schemas.map((schema, index) => [schema.id, { schema, index }])),
@@ -136,7 +138,7 @@ export const PathWalkerView = ({
         <span className={styles.count}>{rows.length}</span>
       </div>
       {isLoading ? (
-        <div className={styles.columnEmpty}>Loading…</div>
+        showLoading ? <div className={styles.columnEmpty}>Loading…</div> : null
       ) : rows.length === 0 ? (
         <div className={styles.columnEmpty}>No entities match the current filter.</div>
       ) : (
