@@ -298,11 +298,10 @@ exports retain the complete ordered list (CSV uses a JSON array).
       `ownerSchemaId` is resolved once, at save/parse time, not re-resolved on every read) — but re-editing that view's
       text later would surface the new ambiguity.
 
-There is deliberately no recursive or depth-bounded traversal primitive (no `ancestors`/`descendants`, no generic
-undirected relation walk) in this version — every rollup this doc's worked examples need turns out to be a short,
-fixed-length chain of named forward/backward hops once written out (§6), given how shallow the seeded containment
-hierarchy actually is (2–3 levels, nowhere unbounded). Both were considered and dropped; see §11 for what they would
-have looked like and when they'd be worth reintroducing.
+There is deliberately no recursive or depth-bounded traversal primitive in the human-authored text syntax (no
+`ancestors`/`descendants`, no generic undirected relation walk). The server-only traversal API adds the narrower,
+structured `containmentSubtree` step for explicitly named, bounded rollups; it is not a text-language feature and is
+not accepted by legacy `includePath` projections. Fixed-length chains remain the right shape for the examples below.
 
 ### 4.3 Multiple values per relation, and scoping conditions to the same instance
 
@@ -513,12 +512,19 @@ type PathStep =
       relationSchemaId: string;
       direction: 'in' | 'out';
       filter?: QueryNode;
+    }
+  | {
+      // Server traversal only (not emitted by the text compiler or accepted by legacy includePath).
+      // The walk is root-inclusive and request-bounded.
+      kind: 'containmentSubtree';
+      fieldId: string;
+      ownerSchemaId: string;
+      filter?: QueryNode;
     };
 
-// No recursive step kind (no 'ancestors'/'descendants', no generic undirected walk) — every PathStep is a single
-// named hop, so a `path: PathStep[]` is a finite, statically-known-length chain of ordinary joins, never a
-// recursive CTE. See §4.2 and §11 for what a recursive kind would have looked like and why it's deferred, not
-// designed here.
+// The text compiler emits only fixed named hops. The server-only traversal compiler additionally accepts an
+// explicitly named, bounded `containmentSubtree` step; it has no human-authored syntax and is not a legacy projection
+// path. See §7 and §11.
 
 // `ownerSchemaId` is required, not optional: a valid IR never contains an unresolved backward step. The text
 // compiler resolves it at parse time — either from an explicit `<-Schema.field` qualifier, or, for the bare
@@ -734,10 +740,11 @@ value `"assess"` at compile time (§4.1) — both reach the same seeded entities
 
 ## 7. Bounding traversal
 
-The issue's DoS concern was "unbounded recursive CTEs" — with `ancestors`/`descendants`/`related` dropped (§4.2, §11),
-there's no recursion left to be unbounded. Every `PathStep` is a single named hop (§5), so a `path` compiles to a
-fixed-length chain of ordinary joins, known statically at compile time from the query text/IR alone — no
-`WITH RECURSIVE`, no question of whether the containment graph is acyclic, no visited-node tracking needed.
+The text query language still has no generic `ancestors`/`descendants`/`related` syntax. Its authored paths are
+fixed-length chains of named hops (§5), known statically at compile time from the query text/IR alone. The shared
+server-side traversal API introduced by #3223 is a separate structured execution surface: it adds an explicitly named
+`containmentSubtree` step for bounded, root-inclusive capability rollups, without making recursive traversal available
+through the human text syntax or the legacy `includePath` projection shape.
 
 What's still worth bounding, and why it's a much smaller concern than before:
 
@@ -752,6 +759,11 @@ What's still worth bounding, and why it's a much smaller concern than before:
 
 This is a compile-time constant shared between the text parser and the structured-IR validator, so a hand-built IR (from
 the visual filter builder) can't bypass a limit only enforced in the text parser.
+
+The traversal API applies separate request limits to recursive containment: `maxDepth` bounds containment edges from
+the starting entity and `maxNodes` bounds the number of reachable recursive occurrences for each root/path. The SQL
+compiler tracks visited entity ids per occurrence, reports cycles, and returns an explicit limit error when a matching
+child remains beyond either limit. It never silently returns a truncated subtree.
 
 ## 8. Tenant isolation and permissions
 
@@ -798,7 +810,8 @@ two directions the original draft proposed still apply, narrowed to just the own
 The "hidden intermediate entity" test coverage this section originally called for is still needed for the no-`content.view`
 case (a *filter* traversal path where some middle hop is invisible must terminate that branch; a *projection* path
 through a hidden hop must return absent/null, not error or leak data) — it's just no longer the *default* path every
-query takes.
+query takes. The #3223 traversal compiler uses the same permission-scoped entity and relation CTEs, so recursive
+containment and fixed hops apply the same visibility boundary to every candidate node.
 
 ## 9. Implementation status
 
@@ -812,6 +825,14 @@ The v1 design described here is implemented in the repository:
   persistence, and execution. Typed relation queries are not available with `asOf` because relation instance history
   is not yet reconstructed; entity-valued relation fields are deferred to #2670.
 - The text compiler supports parsing and canonical printing, and is exposed through the entity-query API.
+- The server exposes a shared `EntityTraversalPlan`/`EntityTraversalResult` contract for batched entity roots. Plans
+  can use explicit ids or an entity-rooted `EntityQuery`, fixed PathStep chains, and explicitly named recursive
+  containment. Results are grouped by root and path, preserve every root-to-terminal occurrence and its entity/relation
+  provenance, include terminal source values, and expose distinct terminal sets plus duplicate counts for metric
+  consumers. Root filters are applied only while selecting roots; path filters are evaluated at their matching hop.
+- Traversal execution is permission-scoped in SQL for both PostgreSQL and SQLite. Hidden entities or relations terminate
+  a branch, restricted source fields are redacted, recursive cycles are reported, and configured depth/node truncation
+  fails with an explicit limit error. This contract is the server foundation for the metrics integration in #3224.
 - Entity list/count endpoints, saved views, and the Advanced query UI use the same `EntityQuery` representation.
 - A progressive visual builder (#2354) edits the same `EntityQuery` IR directly for both the entity and relation
   browsers: boolean tree (`and`/`or`/`not`), relation traversal with same-instance `[...]` scoped filters, and
@@ -822,8 +843,8 @@ This implementation subsumes the original use cases in #2300 and #2315. #2300 us
 predicate, while #2315 uses the identity-anchored forward-then-containment pattern described in §6. Neither issue
 requires a separate endpoint or bespoke traversal implementation.
 
-Generic recursive `ancestors(...)`/`descendants(...)` traversal remains deliberately deferred as described in §11; v1
-uses bounded, explicitly named relation hops.
+Generic recursive `ancestors(...)`/`descendants(...)` text traversal remains deliberately deferred as described in §11;
+the server-only #3223 primitive is limited to an explicitly named containment field.
 
 ## 10. Open questions (carried over from the issue, not resolved here)
 
@@ -862,14 +883,11 @@ cost real complexity (see each item) for no driving case.
   reporting need directly, and picking the right reducer per field is a real design surface (does
   `min`/`max` need a defined ordering per field type, does `first` mean "first by what order") that doesn't need solving
   until a concrete report wants a scalar summary rather than a list.
-- **Recursive containment rollup (`ancestors(...)`/`descendants(...)`).** Walks the `containment` tree up/down, bounded
-  by either a stopping schema or a hop count, without the query needing to name every intermediate field. Dropped
-  because every worked example in §6 turned out to be a short, fixed-length chain of named forward/`<-`
-  hops once written out — the seeded containment hierarchy is only 2–3 levels deep everywhere, so there's no case today
-  where the hop count is genuinely unknown at query-write time. Dropping it also removed recursion from the traversal
-  layer entirely (§7, §8) — a real simplification, not just fewer keywords. Revisit if a schema gains a hierarchy whose
-  depth genuinely varies by branch (e.g. an optional intermediate level that exists for some entities and not others),
-  where naming every hop stops being practical.
+- **Generic recursive containment syntax (`ancestors(...)`/`descendants(...)`).** The server-only traversal API now
+  supports the narrower #3223 case: a root-inclusive walk of one explicitly named containment field with depth/node
+  limits and cycle reporting. A human-authored query still cannot request an arbitrary containment walk without naming
+  its field, stopping rules, and resource limits. Revisit generic syntax if a schema gains a hierarchy whose depth
+  genuinely varies by branch and needs a user-facing query surface.
 - **Generic undirected relation walk (`related(depth:n, fields:[...])`).** An N-hop walk over *any*
   `reference`-or-`containment` field, either direction, mirroring the already-shipped Explore view
   (`exploreViewConfigSchema`, `ExploreView.helpers.ts`'s `leftDepth`/`rightDepth`/`relationFieldNames` over
