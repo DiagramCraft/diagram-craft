@@ -192,7 +192,19 @@ export const useMultipleEntityRelations = (
 export const useEntitiesByIdSet = (
   workspaceId: string,
   ids: string[],
-  queryOptions?: { enabled?: boolean }
+  queryOptions?: EntityIdSetQueryOptions
+) => {
+  return useEntitiesByIdSetQuery(workspaceId, ids, queryOptions).data;
+};
+
+export type EntityIdSetQueryOptions = Pick<EntityListOptions, 'asOf' | 'includePlannedChanges'> & {
+  enabled?: boolean;
+};
+
+export const useEntitiesByIdSetQuery = (
+  workspaceId: string,
+  ids: string[],
+  queryOptions?: EntityIdSetQueryOptions
 ) => {
   const sortedIds = useMemo(() => dedupeAndSortIds(ids), [ids]);
   const enabled = (queryOptions?.enabled ?? true) && sortedIds.length > 0;
@@ -203,16 +215,20 @@ export const useEntitiesByIdSet = (
       entityQuery: {
         root: { kind: 'predicate', path: [], fieldId: '_id', op: 'in', value: sortedIds }
       },
-      limit: sortedIds.length
+      limit: sortedIds.length,
+      asOf: queryOptions?.asOf,
+      includePlannedChanges: queryOptions?.includePlannedChanges
     },
     { enabled }
   );
 
-  return useMemo(() => {
+  const data = useMemo(() => {
     const map = new Map<string, (typeof query.data)[number]>();
     for (const entity of query.data) map.set(entity._uid, entity);
     return map;
   }, [query.data]);
+
+  return { ...query, data };
 };
 
 // Hook for resolving a set of entity ids to their name/publicId (e.g. to render entityRelation

@@ -9,10 +9,11 @@ import type { FilterCondition } from '@arch-register/api-types/viewContract';
 import type { EntityQuery, PathStep, QueryNode } from '@arch-register/api-types/entityQueryIR';
 import { useEntityBrowserTreeData } from './useEntityBrowserTreeData';
 import { EmptyState } from '../../../components/EmptyState';
+import { LoadingState } from '../../../components/LoadingState';
 import { getDisplayFieldIds, type EntityDisplayField } from './entityDisplayFields';
 import {
   useEntities,
-  useEntitiesByIdSet,
+  useEntitiesByIdSetQuery,
   useMultipleEntityRelations
 } from '../../../hooks/useEntities';
 import { useRelationSchemas } from '../../../hooks/useRelationSchemas';
@@ -71,6 +72,8 @@ type MapViewProps = {
   projectId?: string;
   projectScope: 'project' | 'all';
   q: string;
+  asOf?: string | null;
+  includePlannedChanges?: boolean | null;
   typeFilter: string | null;
   ownerFilter: string | null;
   statusFilter: string | null;
@@ -124,6 +127,8 @@ export const MapView = ({
   projectId,
   projectScope,
   q,
+  asOf,
+  includePlannedChanges,
   typeFilter,
   ownerFilter,
   statusFilter,
@@ -220,11 +225,19 @@ export const MapView = ({
       ? [lastLevelTargetSchemaId]
       : 'any';
 
-  const { treeNodes: legacyNodes, treeEdges: legacyEdges } = useEntityBrowserTreeData({
+  const {
+    treeNodes: legacyNodes,
+    treeEdges: legacyEdges,
+    isLoading: isLegacyLoading,
+    isError: isLegacyError
+  } = useEntityBrowserTreeData({
     workspaceId,
     projectId,
     projectScope,
     q,
+    conditions,
+    asOf,
+    includePlannedChanges,
     entityQuery: mapEntityQuery,
     typeFilter,
     ownerFilter,
@@ -292,6 +305,8 @@ export const MapView = ({
       assessmentId: includePathQuery.query.assessmentId ?? joinAssessmentId,
       projectId,
       projectScope: projectId ? projectScope : undefined,
+      asOf: asOf ?? undefined,
+      includePlannedChanges: includePlannedChanges ?? undefined,
       limit: MAP_INCLUDE_PATH_ROOT_LIMIT
     },
     { enabled: useIncludePathTraversal }
@@ -312,16 +327,29 @@ export const MapView = ({
     () => collectIncludedPathNodeIds(includedPathsByRootId),
     [includedPathsByRootId]
   );
-  const includedPathNodeById = useEntitiesByIdSet(workspaceId, includedPathNodeIds, {
-    enabled: useIncludePathTraversal
+  const includedPathNodeQuery = useEntitiesByIdSetQuery(workspaceId, includedPathNodeIds, {
+    enabled: useIncludePathTraversal,
+    asOf,
+    includePlannedChanges
   });
+  const includedPathNodeById = includedPathNodeQuery.data;
 
   const nodes = useIncludePathTraversal ? includePathRoots.data : legacyNodes;
   useEffect(() => {
+    if (useIncludePathTraversal ? includePathRoots.isLoading : isLegacyLoading) return;
+    if (useIncludePathTraversal ? includePathRoots.isError : isLegacyError) return;
     onCountChange?.(
       useIncludePathTraversal ? nodes.length : nodes.filter(node => node._isMatch).length
     );
-  }, [nodes, onCountChange, useIncludePathTraversal]);
+  }, [
+    includePathRoots.isError,
+    includePathRoots.isLoading,
+    isLegacyError,
+    isLegacyLoading,
+    nodes,
+    onCountChange,
+    useIncludePathTraversal
+  ]);
   const linkedEntityIdSet = useMemo(() => new Set(linkedEntityIds ?? []), [linkedEntityIds]);
 
   const selectedDisplayFields = getDisplayFieldIds('map', cfg).map(
@@ -644,6 +672,12 @@ export const MapView = ({
   // PathSteps (include-path traversal) - it stands for "every entity matching the current filter".
   // Only the legacy relation-as-level path still requires an explicit Level 1 schema.
   const isUnconfigured = !useIncludePathTraversal && !rootSchemaId;
+  const isDataLoading = useIncludePathTraversal
+    ? includePathRoots.isLoading || includedPathNodeQuery.isLoading
+    : isLegacyLoading;
+  const isDataError = useIncludePathTraversal
+    ? includePathRoots.isError || includedPathNodeQuery.isError
+    : isLegacyError;
 
   return (
     <div className={styles.wrap}>
@@ -678,6 +712,13 @@ export const MapView = ({
         <EmptyState
           title="Select a schema for Level 1"
           subtitle="Use the controls above to choose which entity types to display at each level."
+        />
+      ) : isDataLoading ? (
+        <LoadingState text="Loading map…" />
+      ) : isDataError ? (
+        <EmptyState
+          title="Map data could not be loaded"
+          subtitle="Try again or adjust your search and filters."
         />
       ) : (
         <MapTreeContent

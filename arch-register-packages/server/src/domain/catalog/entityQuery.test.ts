@@ -151,6 +151,42 @@ describe('parseEntityQuery', () => {
     });
   });
 
+  it('merges request-level temporal state into an explicit entityQuery', () => {
+    const entityQuery = {
+      root: { kind: 'and' as const, children: [] }
+    };
+    const input = {
+      entityQuery,
+      asOf: '2026-07-05T12:00:00Z',
+      includePlannedChanges: false
+    };
+    const parsed = parseEntityQuery(input);
+
+    expect(buildEntityQueryForExecution(input, parsed)).toEqual({
+      root: { kind: 'and', children: [] },
+      asOf: '2026-07-05T12:00:00.000Z',
+      includePlannedChanges: false
+    });
+  });
+
+  it('merges request-level project scope into an explicit entityQuery', () => {
+    const entityQuery = {
+      root: { kind: 'and' as const, children: [] }
+    };
+    const input = {
+      entityQuery,
+      projectId: 'project-1',
+      projectScope: 'project' as const
+    };
+    const parsed = parseEntityQuery(input);
+
+    expect(buildEntityQueryForExecution(input, parsed)).toEqual({
+      root: { kind: 'and', children: [] },
+      projectId: 'project-1',
+      projectScope: 'project'
+    });
+  });
+
   it('leaves the structured execution root unchanged when owner/lifecycle/q are absent', () => {
     const input = { conditions: [] };
     const parsed = parseEntityQuery(input);

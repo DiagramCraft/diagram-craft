@@ -21,6 +21,7 @@ const apiId = '00000000-0000-0000-0004-000000000001';
 const componentId = '00000000-0000-0000-0003-000000000002';
 const componentSchemaId = '00000000-0000-0000-0000-000000000003';
 const apiSchemaId = '00000000-0000-0000-0000-000000000004';
+const technologySchemaId = '00000000-0000-0000-0000-000000000007';
 const consumesApiRelationSchemaId = '00000000-0000-0000-0000-000000000035';
 const contractSchemaId = '00000000-0000-0000-0000-000000000009';
 const defaultWorkspaceEntityCount = seedEntities.filter(
@@ -121,6 +122,53 @@ test.describe('data routes', () => {
     // apiId is a sibling under the same system, not a component and not an ancestor of one —
     // it must not be pulled in just because the tree is otherwise unscoped.
     expect(body.nodes.map(node => node._uid)).not.toContain(apiId);
+  });
+
+  test('GET /api/:workspace/data/tree preserves custom-field conditions', async ({
+    orpc,
+    seeded: _
+  }) => {
+    const query = {
+      _schemaId: technologySchemaId,
+      conditions: [{ fieldId: 'product', op: 'equals' as const, value: 'React' }]
+    };
+    const list = await orpc.entities.list({
+      params: { workspace: 'default' },
+      query: { ...query, view: 'full' }
+    });
+    const tree = await orpc.entities.tree({
+      params: { workspace: 'default' },
+      query
+    });
+
+    expect(list.items.map(entity => entity._uid)).toEqual([seedIds.technologies.react]);
+    expect(tree.nodes.filter(node => node._isMatch).map(node => node._uid)).toEqual([
+      seedIds.technologies.react
+    ]);
+  });
+
+  test('GET /api/:workspace/data/tree honors historical query state', async ({
+    orpc,
+    seeded: _
+  }) => {
+    const query = {
+      _schemaId: componentSchemaId,
+      q: 'frontend',
+      asOf: '2030-01-01T00:00:00.000Z',
+      includePlannedChanges: false
+    };
+    const list = await orpc.entities.list({
+      params: { workspace: 'default' },
+      query: { ...query, view: 'full' }
+    });
+    const tree = await orpc.entities.tree({
+      params: { workspace: 'default' },
+      query
+    });
+
+    expect(tree.nodes.filter(node => node._isMatch).map(node => node._uid)).toEqual(
+      list.items.map(entity => entity._uid)
+    );
   });
 
   test('GET /api/:workspace/data/tree traverses seeded Vendor to Contract containment', async ({
