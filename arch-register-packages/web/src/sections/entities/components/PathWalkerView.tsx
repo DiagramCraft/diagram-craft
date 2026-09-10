@@ -75,7 +75,11 @@ export const PathWalkerView = ({
     const entry = schemaById.get(schemaId);
     if (!entry) return null;
     return (
-      <TypeBadge color={resolveSchemaColor(entry.schema, entry.index)} icon={entry.schema.icon} size={15} />
+      <TypeBadge
+        color={resolveSchemaColor(entry.schema, entry.index)}
+        icon={entry.schema.icon}
+        size={15}
+      />
     );
   };
 
@@ -96,10 +100,7 @@ export const PathWalkerView = ({
     crumbNames.push(name);
   }
 
-  const selectRoot = useCallback(
-    (rootId: string) => commit(hops, [rootId]),
-    [commit, hops]
-  );
+  const selectRoot = useCallback((rootId: string) => commit(hops, [rootId]), [commit, hops]);
   const selectNode = useCallback(
     (depth: number, entityId: string) => commit(hops, [...selection.slice(0, depth), entityId]),
     [commit, hops, selection]
@@ -126,7 +127,9 @@ export const PathWalkerView = ({
     return 'Linked entities';
   };
   const rootLabel = useMemo(() => {
-    const names = [...new Set(rows.map(row => schemaById.get(row._schema.id)?.schema.name).filter(Boolean))];
+    const names = [
+      ...new Set(rows.map(row => schemaById.get(row._schema.id)?.schema.name).filter(Boolean))
+    ];
     return names.length === 1 ? (names[0] as string) : 'Root entities';
   }, [rows, schemaById]);
 
@@ -138,7 +141,9 @@ export const PathWalkerView = ({
         <span className={styles.count}>{rows.length}</span>
       </div>
       {isLoading ? (
-        showLoading ? <div className={styles.columnEmpty}>Loading…</div> : null
+        showLoading ? (
+          <div className={styles.columnEmpty}>Loading…</div>
+        ) : null
       ) : rows.length === 0 ? (
         <div className={styles.columnEmpty}>No entities match the current filter.</div>
       ) : (

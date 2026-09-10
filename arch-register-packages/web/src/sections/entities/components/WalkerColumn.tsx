@@ -75,7 +75,9 @@ export const WalkerColumn = ({
         <span className={styles.count}>{nodes.length}</span>
       </div>
       {isLoading ? (
-        showLoading ? <div className={styles.columnEmpty}>Loading…</div> : null
+        showLoading ? (
+          <div className={styles.columnEmpty}>Loading…</div>
+        ) : null
       ) : nodes.length === 0 ? (
         <div className={styles.columnEmpty}>No linked entities — the chain breaks here.</div>
       ) : (

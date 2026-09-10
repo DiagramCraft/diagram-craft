@@ -87,10 +87,7 @@ export const hopOptionsFrom = ({
 /** A lookup query that resolves one hop out from one or more source entities: filter roots to
  *  those ids, then attach a correlated single-step `includePath` projection so each result row
  *  carries the entities reachable from it by `hop`. Mirrors `buildTraceabilityEntityQuery`. */
-export const buildHopColumnQuery = (
-  fromEntityIds: string | string[],
-  hop: PathStep
-): EntityQuery =>
+export const buildHopColumnQuery = (fromEntityIds: string | string[], hop: PathStep): EntityQuery =>
   addIncludePathProjection(
     {
       root: {

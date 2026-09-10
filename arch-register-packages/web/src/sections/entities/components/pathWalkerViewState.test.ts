@@ -38,7 +38,12 @@ const makeRelation = (
   }) as RelationSchema;
 
 const relations = [
-  makeRelation('objective-supports-capability', 'Supports capability', ['objective'], ['capability']),
+  makeRelation(
+    'objective-supports-capability',
+    'Supports capability',
+    ['objective'],
+    ['capability']
+  ),
   makeRelation('capability-supports-app', 'Supports application', ['capability'], ['application'])
 ];
 const schemas = [
@@ -64,10 +69,18 @@ describe('parsePathWalkerConfig / pathWalkerHops', () => {
 
 describe('hopOptionsFrom', () => {
   it('lists both traversal directions available from an entity schema, de-duplicated', () => {
-    const fromObjective = hopOptionsFrom({ schemaId: 'objective', schemas, relationSchemas: relations });
+    const fromObjective = hopOptionsFrom({
+      schemaId: 'objective',
+      schemas,
+      relationSchemas: relations
+    });
     expect(fromObjective.map(o => o.label)).toContain('Supports capability');
 
-    const fromCapability = hopOptionsFrom({ schemaId: 'capability', schemas, relationSchemas: relations });
+    const fromCapability = hopOptionsFrom({
+      schemaId: 'capability',
+      schemas,
+      relationSchemas: relations
+    });
     // reachable both back to objectives and out to applications
     expect(fromCapability.map(o => o.label).sort()).toEqual(
       ['Supports application', 'Supports capability'].sort()
@@ -87,9 +100,20 @@ describe('hopDirectionGlyph', () => {
 describe('buildHopColumnQuery', () => {
   it('roots the query at a single entity and attaches a single-hop includePath projection', () => {
     const query = buildHopColumnQuery('objective-1', supportsHop);
-    expect(query.root).toEqual({ kind: 'predicate', path: [], fieldId: '_id', op: 'in', value: ['objective-1'] });
+    expect(query.root).toEqual({
+      kind: 'predicate',
+      path: [],
+      fieldId: '_id',
+      op: 'in',
+      value: ['objective-1']
+    });
     expect(query.projections).toEqual([
-      { path: [supportsHop], fieldId: '_id', alias: PATH_WALKER_PROJECTION_ALIAS, includePath: true }
+      {
+        path: [supportsHop],
+        fieldId: '_id',
+        alias: PATH_WALKER_PROJECTION_ALIAS,
+        includePath: true
+      }
     ]);
   });
 
