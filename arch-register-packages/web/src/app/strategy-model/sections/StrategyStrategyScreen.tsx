@@ -8,13 +8,13 @@ import { useEntityTree } from '../../../hooks/useEntities';
 import { useRelations } from '../../../hooks/useRelations';
 import { entitiesQuery } from '../../../queries/entities';
 import { workspaceCapabilityConfigurationsQuery } from '../../../queries/workspaceConfig';
-import { formatCurrencyValue } from '../../../utils/currencyFormat';
-import { resolveStrategyModelConfig } from '../strategyQueries';
+import { useSchemas } from '../../../hooks/useSchemas';
+import { resolveStrategyModelConfig, resolveStrategyViewConfig } from '../strategyQueries';
 import { useCapabilityRollups, type CapabilityTableRollup } from '../useCapabilityRollups';
+import { fieldLabel } from '../capabilityFieldDisplay';
 import { CapabilityDrawer } from './CapabilityDrawer';
-import { CapabilityMaturityBar } from './CapabilityMaturityBar';
+import { CapabilityRollupValue, displayIsNumeric } from './CapabilityRollupValue';
 import { MeasureProgressBar } from './MeasureProgressBar';
-import { formatGap } from './capabilityGap';
 import { STRATEGY_RAIL_PATHS, STRATEGY_STRATEGY_ID } from '../strategySections';
 import type { StrategySearchParams } from '../../../routes/searchParams';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
@@ -53,15 +53,7 @@ const STATUS_TONE: Record<string, string> = {
   draft: 'var(--text-muted)'
 };
 
-const EMPTY_ROLLUP: CapabilityTableRollup = {
-  avgMaturity: null,
-  avgMaturityTarget: null,
-  avgGap: null,
-  avgRisk: null,
-  sumAnnualInvestment: null,
-  investmentCurrencyCode: null,
-  appsCount: null
-};
+const EMPTY_ROLLUP: CapabilityTableRollup = { values: {}, currency: {}, appsCount: null };
 
 const StatusChip = ({ status }: { status: unknown }) => {
   const value = strOrNull(status);
@@ -98,6 +90,16 @@ export const StrategyStrategyScreen = () => {
   const configurations = useQuery(workspaceCapabilityConfigurationsQuery(workspaceSlug));
   const strategyConfig = resolveStrategyModelConfig(configurations.data);
   const enabled = strategyConfig != null;
+  const schemas = useSchemas(workspaceSlug);
+  const businessCapabilitySchema = schemas.data?.find(
+    schema => schema.id === strategyConfig?.businessCapabilitySchemaId
+  );
+  const view = resolveStrategyViewConfig(configurations.data, businessCapabilitySchema);
+  // The depends-on table reuses the first few configured roll-up table columns, for consistency
+  // with the Capabilities table.
+  const dependsOnColumns = view.tableColumns
+    .flatMap(column => (column.kind === 'field' && column.hasRollup ? [column] : []))
+    .slice(0, 3);
 
   // `view: 'full'` (not 'summary') so the selected-objective header can show the objective's
   // `description` — a schema `longtext` field the summary projection omits.
@@ -242,6 +244,7 @@ export const StrategyStrategyScreen = () => {
     strategyConfig?.businessCapabilitySchemaId ?? null,
     strategyConfig?.businessCapabilitySupportsEntityRelationSchemaId ?? null,
     dependsOnCapabilities,
+    view.rollups,
     tree.data?.edges ?? []
   );
   const rollupFor = (id: string) => rollups.byId.get(id) ?? EMPTY_ROLLUP;
@@ -428,15 +431,17 @@ export const StrategyStrategyScreen = () => {
             <Table.Row>
               <Table.HeaderCell>Capability</Table.HeaderCell>
               <Table.HeaderCell>Domain</Table.HeaderCell>
-              <Table.HeaderCell>Maturity</Table.HeaderCell>
-              <Table.HeaderCell numeric>Gap</Table.HeaderCell>
-              <Table.HeaderCell numeric>Investment</Table.HeaderCell>
+              {dependsOnColumns.map(column => (
+                <Table.HeaderCell key={column.fieldId} numeric={displayIsNumeric(column.display)}>
+                  {column.header ?? fieldLabel(businessCapabilitySchema, column.fieldId)}
+                </Table.HeaderCell>
+              ))}
               <Table.HeaderCell>Applications</Table.HeaderCell>
             </Table.Row>
           </Table.Head>
           <Table.Body>
             {selectedObjectiveId == null || dependsOnCapabilities.length === 0 ? (
-              <Table.EmptyRow colSpan={6}>
+              <Table.EmptyRow colSpan={3 + dependsOnColumns.length}>
                 {capabilities.isLoading || objectiveSupportsCapability.isLoading
                   ? 'Loading capabilities…'
                   : 'This objective supports no capability.'}
@@ -444,7 +449,6 @@ export const StrategyStrategyScreen = () => {
             ) : (
               dependsOnCapabilities.map((entity: EntityRecord) => {
                 const rollup = rollupFor(entity._uid);
-                const gap = formatGap(rollup.avgGap);
                 const apps = applicationsByCapability.get(entity._uid) ?? [];
                 return (
                   <Table.Row key={entity._uid} onClick={() => openCapability(entity._publicId)}>
@@ -455,20 +459,18 @@ export const StrategyStrategyScreen = () => {
                       subtitle={entity._publicId}
                     />
                     <Table.Cell className="dim">{domainName(entity._uid)}</Table.Cell>
-                    <Table.Cell>
-                      <CapabilityMaturityBar maturity={rollup.avgMaturity} />
-                    </Table.Cell>
-                    <Table.Cell numeric className={gap.className} style={gap.style}>
-                      {gap.text}
-                    </Table.Cell>
-                    <Table.Cell numeric>
-                      {rollup.sumAnnualInvestment == null
-                        ? '—'
-                        : formatCurrencyValue({
-                            amount: rollup.sumAnnualInvestment,
-                            currency: rollup.investmentCurrencyCode
-                          })}
-                    </Table.Cell>
+                    {dependsOnColumns.map(column => (
+                      <Table.Cell key={column.fieldId} numeric={displayIsNumeric(column.display)}>
+                        <CapabilityRollupValue
+                          value={rollup.values[column.fieldId] ?? null}
+                          currency={rollup.currency[column.fieldId] ?? null}
+                          display={column.display}
+                          format={column.format}
+                          fieldId={column.fieldId}
+                          schema={businessCapabilitySchema}
+                        />
+                      </Table.Cell>
+                    ))}
                     <Table.Cell className="dim">
                       {apps.length === 0 ? '—' : apps.map(app => app.name).join(', ')}
                     </Table.Cell>

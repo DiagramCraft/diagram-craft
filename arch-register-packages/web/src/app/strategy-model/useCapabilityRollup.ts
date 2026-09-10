@@ -1,33 +1,37 @@
 import { useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQueries } from '@tanstack/react-query';
 import type { MetricConfig, MetricRollupResponse } from '@arch-register/api-types/metricContract';
+import type { EntityRecord } from '@arch-register/api-types/entityContract';
+import type {
+  DerivedRollup,
+  RollupAggregation
+} from '@arch-register/api-types/app/strategy-model/strategyModelViewConfig';
 import { metricRollupQuery } from '../../queries/metrics';
-import { extractCapabilityOwnFields, type CapabilityOwnFields } from './capabilityOwnFields';
+import { extractCapabilityOwnFields } from './capabilityOwnFields';
 
+/**
+ * A capability roll-up, keyed by the `business_capability` field id of each configured roll-up
+ * (`StrategyModelViewConfig.rollups`). Values are the subtree aggregate (or the capability's own
+ * value when it has no children); `currency` carries the currency code for currency-typed fields.
+ */
 export type CapabilityRollup = {
-  /** Average `maturity` across the capability's full recursive containment subtree. */
-  avgMaturity: number | null;
-  /** Average `maturity_target` across the subtree. */
-  avgMaturityTarget: number | null;
-  /** Average `gap` (`maturity_target - maturity`) across the subtree. */
-  avgGap: number | null;
-  /** Average `risk` across the subtree. */
-  avgRisk: number | null;
-  /** Summed `annual_investment` across the subtree. */
-  sumAnnualInvestment: number | null;
-  /** Currency code of `sumAnnualInvestment`, when all populated values share one currency. */
-  investmentCurrencyCode: string | null;
+  values: Record<string, number | null>;
+  currency: Record<string, string | null>;
   /** Count of descendant capabilities with no containment children of their own. */
   leafCount: number | null;
-  /** Total descendant capabilities in the subtree (same for every metric above). */
+  /** Total descendant capabilities in the subtree (same for every roll-up metric). */
   sourceCount: number;
   isLoading: boolean;
   error: Error | null;
 };
 
-// Exported for `useCapabilityRollups.ts` (the batched, table-wide sibling of this hook), which
-// builds the same field-sourced metrics over many `boxEntityIds` in one request per metric instead
-// of per capability.
+/** Roll-up aggregation ids (`avg`/`sum`) → metric-engine aggregation names. */
+export const METRIC_AGGREGATION: Record<RollupAggregation, MetricConfig['aggregation']> = {
+  avg: 'average',
+  sum: 'sum'
+};
+
+// Exported for `useCapabilityRollups.ts` (the batched, table-wide sibling of this hook).
 export const buildMetric = (
   businessCapabilitySchemaId: string | null,
   fieldId: string,
@@ -41,136 +45,100 @@ export const buildMetric = (
       }
     : null;
 
+const EMPTY: CapabilityRollup = {
+  values: {},
+  currency: {},
+  leafCount: null,
+  sourceCount: 0,
+  isLoading: false,
+  error: null
+};
+
 /**
- * Thin roll-up hook over the `#2012` metric engine: rather than one `MetricConfig` (which
- * aggregates a single value), a capability roll-up needs several averages/sums/counts at once, so
- * this fires one `metrics.rollup` request per metric — each scoped to the single capability with
- * no traversal `path`, which defaults to walking the full recursive `parent` containment subtree —
- * and combines the results into one object.
+ * Roll-up hook over the `#2012` metric engine for a single capability (the drawer). Fires one
+ * `metrics.rollup` request per configured roll-up — each scoped to the capability with no
+ * traversal `path`, which defaults to walking the full recursive `parent` containment subtree —
+ * plus one `leafCount` request, and combines the results.
  *
- * The metrics engine's subtree walk deliberately excludes the box entity itself
- * (`collectDescendantIds`'s "the box entity itself is excluded" — correct where a box groups
- * differently-schemaed descendants, e.g. a map cell). A Business Capability with no children has
- * no descendants at all, so without a fallback its own directly-set `maturity`/`gap`/etc. would
- * roll up to "no data" instead of themselves. `ownFields` (the capability's own field values, from
- * `extractCapabilityOwnFields` over the entity `CapabilityDrawer` already fetches) is that
- * fallback, applied whenever a metric's `sourceCount` comes back 0 (no children).
+ * The metrics engine's subtree walk excludes the box entity itself, so a capability with no
+ * children rolls up to "no data" without a fallback; `ownEntity` supplies the capability's own
+ * field values, applied whenever `sourceCount` is 0.
  */
 export const useCapabilityRollup = (
   workspaceId: string,
   businessCapabilitySchemaId: string | null,
   capabilityId: string | null,
-  ownFields?: CapabilityOwnFields
+  rollups: readonly DerivedRollup[],
+  ownEntity?: EntityRecord | null
 ): CapabilityRollup => {
   const boxEntityIds = useMemo(() => (capabilityId ? [capabilityId] : []), [capabilityId]);
-  const enabled = boxEntityIds.length > 0;
-  const own = ownFields ?? extractCapabilityOwnFields(null);
-
-  const maturityQuery = useQuery(
-    metricRollupQuery(
-      workspaceId,
-      { boxEntityIds, metric: buildMetric(businessCapabilitySchemaId, 'maturity', 'average') },
-      enabled
-    )
-  );
-  const maturityTargetQuery = useQuery(
-    metricRollupQuery(
-      workspaceId,
-      {
-        boxEntityIds,
-        metric: buildMetric(businessCapabilitySchemaId, 'maturity_target', 'average')
-      },
-      enabled
-    )
-  );
-  const gapQuery = useQuery(
-    metricRollupQuery(
-      workspaceId,
-      { boxEntityIds, metric: buildMetric(businessCapabilitySchemaId, 'gap', 'average') },
-      enabled
-    )
-  );
-  const riskQuery = useQuery(
-    metricRollupQuery(
-      workspaceId,
-      { boxEntityIds, metric: buildMetric(businessCapabilitySchemaId, 'risk', 'average') },
-      enabled
-    )
-  );
-  const investmentQuery = useQuery(
-    metricRollupQuery(
-      workspaceId,
-      { boxEntityIds, metric: buildMetric(businessCapabilitySchemaId, 'annual_investment', 'sum') },
-      enabled
-    )
-  );
-  // `leafCount` requires a `source`, but doesn't use it — reuse the `maturity` field as a
-  // placeholder, matching the existing `'count'` aggregation convention.
-  const leavesQuery = useQuery(
-    metricRollupQuery(
-      workspaceId,
-      { boxEntityIds, metric: buildMetric(businessCapabilitySchemaId, 'maturity', 'leafCount') },
-      enabled
-    )
+  const enabled = boxEntityIds.length > 0 && !!businessCapabilitySchemaId;
+  const fieldIds = useMemo(() => rollups.map(rollup => rollup.fieldId), [rollups]);
+  const own = useMemo(
+    () => extractCapabilityOwnFields(ownEntity ?? null, fieldIds),
+    [ownEntity, fieldIds]
   );
 
-  const capabilityId0 = boxEntityIds[0];
-  const isLoading =
-    enabled &&
-    (maturityQuery.isLoading ||
-      maturityTargetQuery.isLoading ||
-      gapQuery.isLoading ||
-      riskQuery.isLoading ||
-      investmentQuery.isLoading ||
-      leavesQuery.isLoading);
-  const firstError =
-    maturityQuery.error ??
-    maturityTargetQuery.error ??
-    gapQuery.error ??
-    riskQuery.error ??
-    investmentQuery.error ??
-    leavesQuery.error ??
-    null;
+  const queries = useQueries({
+    queries: [
+      ...rollups.map(rollup =>
+        metricRollupQuery(
+          workspaceId,
+          {
+            boxEntityIds,
+            metric: buildMetric(
+              businessCapabilitySchemaId,
+              rollup.fieldId,
+              METRIC_AGGREGATION[rollup.aggregation]
+            )
+          },
+          enabled
+        )
+      ),
+      // `leafCount` requires a `source` it doesn't read — reuse the first roll-up field as a placeholder.
+      metricRollupQuery(
+        workspaceId,
+        {
+          boxEntityIds,
+          metric: buildMetric(businessCapabilitySchemaId, fieldIds[0] ?? 'maturity', 'leafCount')
+        },
+        enabled && rollups.length > 0
+      )
+    ]
+  });
+
+  const rollupQueries = queries.slice(0, rollups.length);
+  const leafQuery = queries[rollups.length];
+
+  const isLoading = enabled && queries.some(query => query.isLoading);
+  const firstError = queries.map(query => query.error).find(Boolean) ?? null;
   const error =
     firstError instanceof Error ? firstError : firstError ? new Error(String(firstError)) : null;
 
-  const resultFor = (query: { data?: MetricRollupResponse }) =>
-    query.data?.results.find(r => r.boxEntityId === capabilityId0);
-  // No children => the metric had nothing to walk, regardless of which metric asked.
-  const isLeaf = (resultFor(maturityQuery)?.sourceCount ?? 0) === 0;
-  const valueFor = (query: { data?: MetricRollupResponse }, fallback: number | null) =>
-    isLeaf ? fallback : (resultFor(query)?.value ?? null);
+  const id0 = boxEntityIds[0];
+  if (!id0) return { ...EMPTY, isLoading, error };
 
-  if (!capabilityId0) {
-    return {
-      avgMaturity: null,
-      avgMaturityTarget: null,
-      avgGap: null,
-      avgRisk: null,
-      sumAnnualInvestment: null,
-      investmentCurrencyCode: null,
-      leafCount: null,
-      sourceCount: 0,
-      isLoading,
-      error
-    };
-  }
+  const resultFor = (query: { data?: MetricRollupResponse } | undefined) =>
+    query?.data?.results.find(result => result.boxEntityId === id0);
+  const isLeaf = (resultFor(rollupQueries[0])?.sourceCount ?? 0) === 0;
 
-  const investmentResult = resultFor(investmentQuery);
+  const values: Record<string, number | null> = {};
+  const currency: Record<string, string | null> = {};
+  rollups.forEach((rollup, index) => {
+    const result = resultFor(rollupQueries[index]);
+    values[rollup.fieldId] = isLeaf
+      ? (own[rollup.fieldId]?.value ?? null)
+      : (result?.value ?? null);
+    currency[rollup.fieldId] = isLeaf
+      ? (own[rollup.fieldId]?.currency ?? null)
+      : (result?.currencyCode ?? null);
+  });
 
   return {
-    avgMaturity: valueFor(maturityQuery, own.maturity),
-    avgMaturityTarget: valueFor(maturityTargetQuery, own.maturityTarget),
-    avgGap: valueFor(gapQuery, own.gap),
-    avgRisk: valueFor(riskQuery, own.risk),
-    sumAnnualInvestment: isLeaf
-      ? (own.investment?.amount ?? null)
-      : (investmentResult?.value ?? null),
-    investmentCurrencyCode: isLeaf
-      ? (own.investment?.currency ?? null)
-      : (investmentResult?.currencyCode ?? null),
-    leafCount: isLeaf ? 1 : (resultFor(leavesQuery)?.value ?? null),
-    sourceCount: resultFor(maturityQuery)?.sourceCount ?? 0,
+    values,
+    currency,
+    leafCount: isLeaf ? 1 : (resultFor(leafQuery)?.value ?? null),
+    sourceCount: resultFor(rollupQueries[0])?.sourceCount ?? 0,
     isLoading,
     error
   };

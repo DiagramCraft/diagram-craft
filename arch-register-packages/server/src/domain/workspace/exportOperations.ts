@@ -271,7 +271,8 @@ const exportConfig = async (db: DatabaseAdapter, workspace: string): Promise<Exp
       capability_configurations: capabilityConfigurations.map(configuration => ({
         id: configuration.id,
         type: configuration.type,
-        bindings: configuration.bindings
+        bindings: configuration.bindings,
+        ...(configuration.view_config != null && { view_config: configuration.view_config })
       }))
     })
   };

@@ -6,17 +6,13 @@ import { Button } from '@diagram-craft/app-components/Button';
 import { Title } from '../../../components/Title';
 import { FilterDropdown } from '../../../components/FilterDropdown';
 import { useEntityTree } from '../../../hooks/useEntities';
+import { useSchemas } from '../../../hooks/useSchemas';
 import { entitiesQuery } from '../../../queries/entities';
-import { formatCurrencyValue } from '../../../utils/currencyFormat';
 import { workspaceCapabilityConfigurationsQuery } from '../../../queries/workspaceConfig';
-import { resolveStrategyModelConfig } from '../strategyQueries';
+import { resolveStrategyModelConfig, resolveStrategyViewConfig } from '../strategyQueries';
 import { useCapabilityRollups, type CapabilityTableRollup } from '../useCapabilityRollups';
-import {
-  CAPABILITY_MAP_OVERLAYS,
-  overlayColor,
-  overlayValue,
-  type CapabilityMapOverlay
-} from '../capabilityMapOverlays';
+import { capabilityNumericValue, fieldLabel } from '../capabilityFieldDisplay';
+import { overlayColor, overlayLegend, overlayValue } from '../capabilityMapOverlays';
 import { CapabilityDrawer } from './CapabilityDrawer';
 import { STRATEGY_CAPABILITY_MAP_ID, STRATEGY_RAIL_PATHS } from '../strategySections';
 import type { CapabilityMapSearchParams } from '../../../routes/searchParams';
@@ -24,15 +20,7 @@ import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import filterStyles from '../../../sections/entities/components/EntityBrowser.module.css';
 import styles from './StrategyCapabilityMapScreen.module.css';
 
-const EMPTY_ROLLUP: CapabilityTableRollup = {
-  avgMaturity: null,
-  avgMaturityTarget: null,
-  avgGap: null,
-  avgRisk: null,
-  sumAnnualInvestment: null,
-  investmentCurrencyCode: null,
-  appsCount: null
-};
+const EMPTY_ROLLUP: CapabilityTableRollup = { values: {}, currency: {}, appsCount: null };
 
 const MAP_ROUTE = STRATEGY_RAIL_PATHS[STRATEGY_CAPABILITY_MAP_ID];
 
@@ -47,6 +35,15 @@ export const StrategyCapabilityMapScreen = () => {
   const configurations = useQuery(workspaceCapabilityConfigurationsQuery(workspaceSlug));
   const strategyConfig = resolveStrategyModelConfig(configurations.data);
   const businessCapabilitySchemaId = strategyConfig?.businessCapabilitySchemaId ?? null;
+  const schemas = useSchemas(workspaceSlug);
+  const businessCapabilitySchema = schemas.data?.find(
+    schema => schema.id === businessCapabilitySchemaId
+  );
+  const view = resolveStrategyViewConfig(configurations.data, businessCapabilitySchema);
+  const overlayOptions = view.overlays.map(overlay => ({
+    ...overlay,
+    label: fieldLabel(businessCapabilitySchema, overlay.fieldId)
+  }));
 
   // `view: 'full'` — the grid reads the derived `capability_level` and the own maturity/investment/
   // risk fields (leaf fallback in `useCapabilityRollups`), which the 'summary' projection omits.
@@ -91,14 +88,15 @@ export const StrategyCapabilityMapScreen = () => {
     businessCapabilitySchemaId,
     strategyConfig?.businessCapabilitySupportsEntityRelationSchemaId ?? null,
     items,
+    view.rollups,
     tree.data?.edges ?? []
   );
   const rollupFor = (uid: string) => rollups.byId.get(uid) ?? EMPTY_ROLLUP;
 
   const [query, setQuery] = useState('');
-  const [overlay, setOverlay] = useState<CapabilityMapOverlay>('none');
-  const overlayDef = CAPABILITY_MAP_OVERLAYS.find(o => o.id === overlay);
-  const overlayLegend = overlayDef?.legend ?? [];
+  const [overlayId, setOverlayId] = useState('none');
+  const activeOverlay = overlayOptions.find(o => o.fieldId === overlayId) ?? null;
+  const legend = activeOverlay ? overlayLegend(activeOverlay) : [];
 
   const q = query.trim().toLowerCase();
   const owner = search.owner ?? null;
@@ -143,10 +141,29 @@ export const StrategyCapabilityMapScreen = () => {
     );
   }
 
+  // The overlay's resolved number for a capability: its subtree roll-up (`source: 'rollup'`) or its
+  // own field value (`source: 'field'`), with the currency for a currency-formatted overlay.
+  const overlayReading = (uid: string): { value: number | null; currency: string | null } => {
+    if (!activeOverlay) return { value: null, currency: null };
+    if (activeOverlay.source === 'field') {
+      const entity = byUid.get(uid);
+      return entity
+        ? capabilityNumericValue(entity, activeOverlay.fieldId)
+        : { value: null, currency: null };
+    }
+    const rollup = rollupFor(uid);
+    return {
+      value: rollup.values[activeOverlay.fieldId] ?? null,
+      currency: rollup.currency[activeOverlay.fieldId] ?? null
+    };
+  };
+
   const renderLeaf = (cap: EntityRecord) => {
-    const rollup = rollupFor(cap._uid);
-    const heat = overlay === 'none' ? undefined : overlayColor(overlay, rollup);
-    const value = overlay === 'none' ? null : overlayValue(overlay, rollup);
+    const reading = overlayReading(cap._uid);
+    const heat = activeOverlay ? overlayColor(activeOverlay, reading.value) : undefined;
+    const value = activeOverlay
+      ? overlayValue(activeOverlay, reading.value, reading.currency)
+      : null;
     return (
       <button
         key={cap._uid}
@@ -184,28 +201,24 @@ export const StrategyCapabilityMapScreen = () => {
         </div>
         <FilterDropdown
           label="Overlay"
-          value={overlay}
-          onChange={value => setOverlay(value as CapabilityMapOverlay)}
-          options={CAPABILITY_MAP_OVERLAYS.map(o => ({ value: o.id, label: o.label }))}
+          value={overlayId}
+          onChange={value => setOverlayId(value ?? 'none')}
+          options={[
+            { value: 'none', label: 'None' },
+            ...overlayOptions.map(o => ({ value: o.fieldId, label: o.label }))
+          ]}
         />
         {focusCap && (
           <Button size="sm" variant="ghost" onClick={() => patchSearch({ focus: undefined })}>
             ‹ All domains
           </Button>
         )}
-        {overlayLegend.length > 0 && (
+        {legend.length > 0 && (
           <div className={styles.legend} style={{ marginLeft: 'auto' }}>
-            {overlayLegend.map((label, band) => (
-              <span key={label} className={styles.legendItem}>
-                <span
-                  className={styles.legendSwatch}
-                  style={{
-                    background: ['var(--green)', 'var(--warning-fg)', 'var(--error-fg, #e05252)'][
-                      band
-                    ]
-                  }}
-                />
-                {label}
+            {legend.map(entry => (
+              <span key={entry.label} className={styles.legendItem}>
+                <span className={styles.legendSwatch} style={{ background: entry.color }} />
+                {entry.label}
               </span>
             ))}
           </div>
@@ -221,33 +234,18 @@ export const StrategyCapabilityMapScreen = () => {
           </div>
         ) : (
           domains.map(domain => {
-            const roll = rollupFor(domain._uid);
             const l2s = childCaps(domain._uid);
-            // With an overlay active the header echoes that dimension's rolled-up value (and
-            // colour); with no overlay it falls back to investment + maturity.
-            const overlaid = overlay !== 'none' ? overlayValue(overlay, roll) : null;
+            // The domain header echoes the active overlay's value and colour; with no overlay
+            // selected it shows just the capability name.
+            const reading = overlayReading(domain._uid);
+            const overlaid = activeOverlay
+              ? overlayValue(activeOverlay, reading.value, reading.currency)
+              : null;
             const meta =
-              overlay !== 'none'
-                ? overlaid == null
-                  ? null
-                  : `${overlayDef?.label ?? ''} ${overlaid}`
-                : roll.avgMaturity == null && roll.sumAnnualInvestment == null
-                  ? null
-                  : `${
-                      roll.sumAnnualInvestment == null
-                        ? '—'
-                        : formatCurrencyValue({
-                            amount: roll.sumAnnualInvestment,
-                            currency: roll.investmentCurrencyCode
-                          })
-                    }/yr · mat ${roll.avgMaturity?.toFixed(1) ?? '—'}`;
-            // Only the good/bad dimensions tint the header value; investment and coverage are
-            // counts with no "better" direction, so their header stays the neutral text colour
-            // (the tiles are still heat-banded — that's the overlay's job).
-            const metaColor =
-              overlay === 'maturity' || overlay === 'gap' || overlay === 'risk'
-                ? overlayColor(overlay, roll)
-                : undefined;
+              activeOverlay && overlaid != null ? `${activeOverlay.label} ${overlaid}` : null;
+            const metaColor = activeOverlay
+              ? overlayColor(activeOverlay, reading.value)
+              : undefined;
             return (
               <section key={domain._uid} className={styles.domain}>
                 <header className={styles.domainHead}>

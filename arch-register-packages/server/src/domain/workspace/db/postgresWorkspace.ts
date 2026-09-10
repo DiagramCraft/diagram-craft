@@ -140,7 +140,7 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
 
   async listWorkspaceCapabilityConfigurations(workspace: string) {
     const rows = await this.sql<DatabaseRow[]>`
-      SELECT id, workspace, type, bindings, created_at, updated_at
+      SELECT id, workspace, type, bindings, view_config, created_at, updated_at
       FROM workspace_capability_configuration
       WHERE workspace = ${workspace}
       ORDER BY type, id
@@ -150,7 +150,7 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
 
   async getWorkspaceCapabilityConfiguration(workspace: string, type: string) {
     const [row] = await this.sql<DatabaseRow[]>`
-      SELECT id, workspace, type, bindings, created_at, updated_at
+      SELECT id, workspace, type, bindings, view_config, created_at, updated_at
       FROM workspace_capability_configuration
       WHERE workspace = ${workspace} AND type = ${type}
     `;
@@ -161,12 +161,13 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
     try {
       const [row] = await this.sql<DatabaseRow[]>`
         INSERT INTO workspace_capability_configuration
-          (id, workspace, type, bindings, created_at, updated_at)
-        VALUES (${input.id}, ${input.workspace}, ${input.type}, ${this.json(input.bindings)}, ${input.created_at}, ${input.updated_at})
+          (id, workspace, type, bindings, view_config, created_at, updated_at)
+        VALUES (${input.id}, ${input.workspace}, ${input.type}, ${this.json(input.bindings)}, ${this.json(input.view_config ?? null)}, ${input.created_at}, ${input.updated_at})
         ON CONFLICT (workspace, type) DO UPDATE SET
           bindings = EXCLUDED.bindings,
+          view_config = EXCLUDED.view_config,
           updated_at = EXCLUDED.updated_at
-        RETURNING id, workspace, type, bindings, created_at, updated_at
+        RETURNING id, workspace, type, bindings, view_config, created_at, updated_at
       `;
       return workspaceMappers.workspaceCapabilityConfiguration(row!);
     } catch (error) {

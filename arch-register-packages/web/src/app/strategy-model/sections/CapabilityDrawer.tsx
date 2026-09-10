@@ -7,17 +7,17 @@ import { Drawer } from '../../../components/Drawer';
 import { StatusChip } from '../../../components/StatusChip';
 import { useLifecycleStates } from '../../../hooks/useWorkspaceConfig';
 import { useEntityTree } from '../../../hooks/useEntities';
+import { useSchemas } from '../../../hooks/useSchemas';
 import { entityDetailQuery, entitiesQuery } from '../../../queries/entities';
 import { entityTypedRelationsQuery } from '../../../queries/relations';
+import { workspaceCapabilityConfigurationsQuery } from '../../../queries/workspaceConfig';
 import { asEntityPublicId, entityDetailRoute } from '../../../routes/publicObjectRoutes';
-import { formatCurrencyValue } from '../../../utils/currencyFormat';
 import { useCapabilityRollup } from '../useCapabilityRollup';
-import { extractCapabilityOwnFields } from '../capabilityOwnFields';
+import { resolveStrategyViewConfig } from '../strategyQueries';
+import { formatStrategyValue } from '../strategyFormat';
+import { capabilityFieldValue, fieldLabel } from '../capabilityFieldDisplay';
 import type { StrategyModelConfig } from '../strategyQueries';
 import styles from './CapabilityDrawer.module.css';
-
-const formatNumber = (value: number | null, digits = 1) =>
-  value == null ? '—' : value.toFixed(digits);
 
 /**
  * Slide-over showing one Business Capability's roll-up stats, attributes, children, "Realized
@@ -52,11 +52,18 @@ export const CapabilityDrawer = ({
   const capability = useQuery(entityDetailQuery(workspaceSlug, capabilityId));
   const uid = capability.data?._uid ?? null;
   const { data: lifecycleStates = [] } = useLifecycleStates(workspaceSlug);
+  const capabilityConfigurations = useQuery(workspaceCapabilityConfigurationsQuery(workspaceSlug));
+  const schemas = useSchemas(workspaceSlug);
+  const businessCapabilitySchema = schemas.data?.find(
+    schema => schema.id === strategyConfig.businessCapabilitySchemaId
+  );
+  const view = resolveStrategyViewConfig(capabilityConfigurations.data, businessCapabilitySchema);
   const rollup = useCapabilityRollup(
     workspaceSlug,
     strategyConfig.businessCapabilitySchemaId,
     uid,
-    extractCapabilityOwnFields(capability.data)
+    view.rollups,
+    capability.data
   );
   // Not a `conditions: [{ fieldId: 'parent', op: 'equals', value: uid }]` entities query: `parent`
   // is a containment field, stored as a ref array even at `maxCount: 1`, and the entity-query
@@ -160,40 +167,31 @@ export const CapabilityDrawer = ({
         </Button>
       }
     >
-      <div className={styles.sectionLabel}>Roll-up</div>
-      <div className={styles.statGrid}>
-        <div className={styles.stat}>
-          <div className={styles.statLabel}>Avg maturity</div>
-          <div className={styles.statValue}>{formatNumber(rollup.avgMaturity)}</div>
-        </div>
-        <div className={styles.stat}>
-          <div className={styles.statLabel}>Avg target</div>
-          <div className={styles.statValue}>{formatNumber(rollup.avgMaturityTarget)}</div>
-        </div>
-        <div className={styles.stat}>
-          <div className={styles.statLabel}>Avg gap</div>
-          <div className={styles.statValue}>{formatNumber(rollup.avgGap)}</div>
-        </div>
-        <div className={styles.stat}>
-          <div className={styles.statLabel}>Avg risk</div>
-          <div className={styles.statValue}>{formatNumber(rollup.avgRisk)}</div>
-        </div>
-        <div className={styles.stat}>
-          <div className={styles.statLabel}>Annual investment</div>
-          <div className={styles.statValue}>
-            {rollup.sumAnnualInvestment == null
-              ? '—'
-              : formatCurrencyValue({
-                  amount: rollup.sumAnnualInvestment,
-                  currency: rollup.investmentCurrencyCode
-                })}
+      {view.rollups.length > 0 && (
+        <>
+          <div className={styles.sectionLabel}>Roll-up</div>
+          <div className={styles.statGrid}>
+            {view.rollups.map(rollupField => (
+              <div className={styles.stat} key={rollupField.fieldId}>
+                <div className={styles.statLabel}>
+                  {fieldLabel(businessCapabilitySchema, rollupField.fieldId)}
+                </div>
+                <div className={styles.statValue}>
+                  {formatStrategyValue(
+                    rollup.values[rollupField.fieldId],
+                    rollupField.format,
+                    rollup.currency[rollupField.fieldId]
+                  )}
+                </div>
+              </div>
+            ))}
+            <div className={styles.stat}>
+              <div className={styles.statLabel}>Leaf count</div>
+              <div className={styles.statValue}>{rollup.leafCount ?? '—'}</div>
+            </div>
           </div>
-        </div>
-        <div className={styles.stat}>
-          <div className={styles.statLabel}>Leaf count</div>
-          <div className={styles.statValue}>{rollup.leafCount ?? '—'}</div>
-        </div>
-      </div>
+        </>
+      )}
 
       <div className={styles.sectionLabel}>Attributes</div>
       <div className={styles.attributeRow}>
@@ -212,6 +210,14 @@ export const CapabilityDrawer = ({
         <span className={styles.attributeLabel}>Children</span>
         <span>{children.length}</span>
       </div>
+      {view.drawerFieldIds.map(fieldId => (
+        <div className={styles.attributeRow} key={fieldId}>
+          <span className={styles.attributeLabel}>
+            {fieldLabel(businessCapabilitySchema, fieldId)}
+          </span>
+          <span>{capabilityFieldValue(businessCapabilitySchema, entity, fieldId)}</span>
+        </div>
+      ))}
 
       <div className={styles.sectionLabel}>Children</div>
       {tree.isLoading ? (

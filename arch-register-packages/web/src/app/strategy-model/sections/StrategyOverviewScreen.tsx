@@ -5,11 +5,13 @@ import { Title } from '../../../components/Title';
 import { Table } from '../../../components/table/Table';
 import { useEntityTree } from '../../../hooks/useEntities';
 import { useRelations } from '../../../hooks/useRelations';
+import { useSchemas } from '../../../hooks/useSchemas';
 import { entitiesQuery } from '../../../queries/entities';
 import { workspaceCapabilityConfigurationsQuery } from '../../../queries/workspaceConfig';
-import { resolveStrategyModelConfig } from '../strategyQueries';
+import { resolveStrategyModelConfig, resolveStrategyViewConfig } from '../strategyQueries';
 import { useCapabilityRollups } from '../useCapabilityRollups';
 import { formatGap } from './capabilityGap';
+import { fieldLabel } from '../capabilityFieldDisplay';
 import {
   StackedBar,
   Section,
@@ -42,8 +44,6 @@ const STATUS_COLOR: Record<string, string> = {
 // capability map's overlay bands).
 const LEVEL_COLORS = ['var(--accent-fg)', 'var(--green)', 'var(--warning-fg)', 'var(--text-muted)'];
 
-const GAP_TILE_LIMIT = 5;
-
 /**
  * The Strategy & Capability Modelling app's landing screen (`sections[0]`, so the app switcher
  * opens here). A read-only dashboard of summary tiles — capability count by level, objectives by
@@ -59,6 +59,11 @@ export const StrategyOverviewScreen = () => {
   const configurations = useQuery(workspaceCapabilityConfigurationsQuery(workspaceSlug));
   const strategyConfig = resolveStrategyModelConfig(configurations.data);
   const enabled = strategyConfig != null;
+  const schemas = useSchemas(workspaceSlug);
+  const businessCapabilitySchema = schemas.data?.find(
+    schema => schema.id === strategyConfig?.businessCapabilitySchemaId
+  );
+  const view = resolveStrategyViewConfig(configurations.data, businessCapabilitySchema);
 
   // `view: 'full'` so `capability_level` / `status` (derived schema `data` fields the summary
   // projection omits) are readable — same reason the other sections fetch full.
@@ -106,6 +111,7 @@ export const StrategyOverviewScreen = () => {
     strategyConfig?.businessCapabilitySchemaId ?? null,
     strategyConfig?.businessCapabilitySupportsEntityRelationSchemaId ?? null,
     capabilityItems,
+    view.rollups,
     tree.data?.edges ?? []
   );
 
@@ -135,29 +141,25 @@ export const StrategyOverviewScreen = () => {
       }));
   }, [capabilityItems, navigate, workspaceSlug]);
 
-  const statusBuckets = useMemo<BarBucket[]>(() => {
+  const selectBucketsFor = (fieldId: string): BarBucket[] => {
     const counts = new Map<string, number>();
     for (const item of objectiveItems) {
-      const status = strOrNull(item.status) ?? 'draft';
-      counts.set(status, (counts.get(status) ?? 0) + 1);
+      const key = strOrNull(item[fieldId]) ?? '—';
+      counts.set(key, (counts.get(key) ?? 0) + 1);
     }
     const total = objectiveItems.length || 1;
-    const known = STATUS_ORDER.filter(status => counts.has(status));
-    const extra = [...counts.keys()].filter(
-      status => !STATUS_ORDER.includes(status as (typeof STATUS_ORDER)[number])
-    );
-    return [...known, ...extra].map(status => ({
-      label: status,
-      count: counts.get(status) ?? 0,
-      percent: ((counts.get(status) ?? 0) / total) * 100,
-      color: STATUS_COLOR[status] ?? 'var(--text-muted)',
+    const isStatus = fieldId === 'status';
+    const known = isStatus ? STATUS_ORDER.filter(status => counts.has(status)) : [];
+    const extra = [...counts.keys()].filter(key => !known.includes(key as never)).sort();
+    return [...known, ...extra].map((key, index) => ({
+      label: key,
+      count: counts.get(key) ?? 0,
+      percent: ((counts.get(key) ?? 0) / total) * 100,
+      color: (isStatus && STATUS_COLOR[key]) || LEVEL_COLORS[index % LEVEL_COLORS.length]!,
       onClick: () =>
-        navigate({
-          to: STRATEGY_RAIL_PATHS[STRATEGY_STRATEGY_ID],
-          params: { workspaceSlug }
-        })
+        navigate({ to: STRATEGY_RAIL_PATHS[STRATEGY_STRATEGY_ID], params: { workspaceSlug } })
     }));
-  }, [objectiveItems, navigate, workspaceSlug]);
+  };
 
   const coveredCapabilityIds = useMemo(
     () => new Set(capabilitySupportsEntity.data.map(relation => relation._in.id)),
@@ -173,16 +175,15 @@ export const StrategyOverviewScreen = () => {
   );
   const orphanCount = capabilityItems.filter(item => !linkedCapabilityIds.has(item._uid)).length;
 
-  const largestGaps = useMemo(() => {
-    return capabilityItems
-      .map(item => ({ item, gap: rollups.byId.get(item._uid)?.avgGap ?? null }))
+  const topGapRowsFor = (fieldId: string, limit: number) =>
+    capabilityItems
+      .map(item => ({ item, gap: rollups.byId.get(item._uid)?.values[fieldId] ?? null }))
       .filter(
         (row): row is { item: (typeof capabilityItems)[number]; gap: number } =>
           row.gap != null && row.gap > 0
       )
       .sort((a, b) => b.gap - a.gap)
-      .slice(0, GAP_TILE_LIMIT);
-  }, [capabilityItems, rollups.byId]);
+      .slice(0, limit);
 
   const openCapability = (publicId: string) =>
     navigate({
@@ -198,6 +199,39 @@ export const StrategyOverviewScreen = () => {
     return <div className={styles.empty}>Strategy model is not enabled.</div>;
   }
 
+  const stackedBarTile = (
+    title: string,
+    count: number,
+    buckets: BarBucket[],
+    emptyLabel: string
+  ) => (
+    <div className={styles.tile} key={title}>
+      <div className={styles.tileLabel}>{title}</div>
+      <div className={styles.tileValue}>{count}</div>
+      <StackedBar buckets={buckets} />
+      <div className={styles.legend}>
+        {buckets.map(bucket => (
+          <button
+            key={bucket.label}
+            type="button"
+            className={styles.legendItem}
+            onClick={bucket.onClick}
+            disabled={!bucket.onClick}
+          >
+            <span className={styles.swatch} style={{ background: bucket.color ?? undefined }} />
+            {bucket.label} {bucket.count}
+          </button>
+        ))}
+        {buckets.length === 0 && <span className={styles.tileSub}>{emptyLabel}</span>}
+      </div>
+    </div>
+  );
+
+  const tileWidgets = view.config.overviewWidgets.filter(widget => widget.kind !== 'topGap');
+  const gapWidgets = view.config.overviewWidgets.filter(
+    (widget): widget is Extract<typeof widget, { kind: 'topGap' }> => widget.kind === 'topGap'
+  );
+
   return (
     <main className={styles.screen}>
       <div className={styles.header}>
@@ -208,119 +242,104 @@ export const StrategyOverviewScreen = () => {
       </div>
 
       <div className={styles.tiles}>
-        <div className={styles.tile}>
-          <div className={styles.tileLabel}>Capabilities</div>
-          <div className={styles.tileValue}>{capabilityItems.length}</div>
-          <StackedBar buckets={levelBuckets} />
-          <div className={styles.legend}>
-            {levelBuckets.map(bucket => (
+        {tileWidgets.map((widget, index) => {
+          if (widget.kind === 'countByLevel')
+            return stackedBarTile(
+              widget.title,
+              capabilityItems.length,
+              levelBuckets,
+              'No capabilities yet.'
+            );
+          if (widget.kind === 'countBySelect')
+            return stackedBarTile(
+              widget.title,
+              objectiveItems.length,
+              selectBucketsFor(widget.fieldId),
+              'No objectives yet.'
+            );
+          if (widget.kind === 'coveragePercent')
+            return (
               <button
-                key={bucket.label}
+                key={`${widget.kind}-${index}`}
                 type="button"
-                className={styles.legendItem}
-                onClick={bucket.onClick}
-                disabled={!bucket.onClick}
+                className={styles.tile}
+                onClick={() =>
+                  navigate({
+                    to: STRATEGY_RAIL_PATHS[STRATEGY_CAPABILITY_MAP_ID],
+                    params: { workspaceSlug }
+                  })
+                }
               >
-                <span className={styles.swatch} style={{ background: bucket.color ?? undefined }} />
-                {bucket.label} {bucket.count}
+                <div className={styles.tileLabel}>{widget.title}</div>
+                <div className={styles.tileValue}>{formatPercent(coveragePercent)}</div>
+                <div className={styles.tileSub}>
+                  {coveredCount} of {capabilityItems.length} capabilities have ≥1 application
+                </div>
               </button>
-            ))}
-            {levelBuckets.length === 0 && (
-              <span className={styles.tileSub}>No capabilities yet.</span>
-            )}
-          </div>
-        </div>
-
-        <div className={styles.tile}>
-          <div className={styles.tileLabel}>Objectives</div>
-          <div className={styles.tileValue}>{objectiveItems.length}</div>
-          <StackedBar buckets={statusBuckets} />
-          <div className={styles.legend}>
-            {statusBuckets.map(bucket => (
-              <button
-                key={bucket.label}
-                type="button"
-                className={styles.legendItem}
-                onClick={bucket.onClick}
-              >
-                <span className={styles.swatch} style={{ background: bucket.color ?? undefined }} />
-                {bucket.label} {bucket.count}
-              </button>
-            ))}
-            {statusBuckets.length === 0 && (
-              <span className={styles.tileSub}>No objectives yet.</span>
-            )}
-          </div>
-        </div>
-
-        <button
-          type="button"
-          className={styles.tile}
-          onClick={() =>
-            navigate({
-              to: STRATEGY_RAIL_PATHS[STRATEGY_CAPABILITY_MAP_ID],
-              params: { workspaceSlug }
-            })
-          }
-        >
-          <div className={styles.tileLabel}>Application coverage</div>
-          <div className={styles.tileValue}>{formatPercent(coveragePercent)}</div>
-          <div className={styles.tileSub}>
-            {coveredCount} of {capabilityItems.length} capabilities have ≥1 application
-          </div>
-        </button>
-
-        <button
-          type="button"
-          className={styles.tile}
-          onClick={() =>
-            navigate({
-              to: STRATEGY_RAIL_PATHS[STRATEGY_TRACEABILITY_ID],
-              params: { workspaceSlug },
-              search: () => ({ tab: 'orphans' })
-            })
-          }
-        >
-          <div className={styles.tileLabel}>Orphan capabilities</div>
-          <div className={styles.tileValue}>{orphanCount}</div>
-          <div className={styles.tileSub}>no supporting objective</div>
-        </button>
+            );
+          return (
+            <button
+              key={`${widget.kind}-${index}`}
+              type="button"
+              className={styles.tile}
+              onClick={() =>
+                navigate({
+                  to: STRATEGY_RAIL_PATHS[STRATEGY_TRACEABILITY_ID],
+                  params: { workspaceSlug },
+                  search: () => ({ tab: 'orphans' })
+                })
+              }
+            >
+              <div className={styles.tileLabel}>{widget.title}</div>
+              <div className={styles.tileValue}>{orphanCount}</div>
+              <div className={styles.tileSub}>no supporting objective</div>
+            </button>
+          );
+        })}
       </div>
 
-      <Section
-        title="Largest maturity gaps"
-        sub="maturity target − maturity, rolled up over each capability's subtree"
-      >
-        <Table.Root bordered={false}>
-          <Table.Head>
-            <Table.Row>
-              <Table.HeaderCell>Capability</Table.HeaderCell>
-              <Table.HeaderCell numeric>Gap</Table.HeaderCell>
-            </Table.Row>
-          </Table.Head>
-          <Table.Body>
-            {largestGaps.length === 0 ? (
-              <Table.EmptyRow colSpan={2}>
-                {capabilities.isLoading || rollups.isLoading
-                  ? 'Loading roll-ups…'
-                  : 'Every capability is on or ahead of its maturity target.'}
-              </Table.EmptyRow>
-            ) : (
-              largestGaps.map(({ item, gap }) => {
-                const formatted = formatGap(gap);
-                return (
-                  <Table.Row key={item._uid} onClick={() => openCapability(item._publicId)}>
-                    <Table.NameCell title={item._name} subtitle={item._publicId} />
-                    <Table.Cell numeric className={formatted.className} style={formatted.style}>
-                      {formatted.text}
-                    </Table.Cell>
-                  </Table.Row>
-                );
-              })
-            )}
-          </Table.Body>
-        </Table.Root>
-      </Section>
+      {gapWidgets.map((widget, index) => {
+        const rows = topGapRowsFor(widget.fieldId, widget.limit);
+        return (
+          <Section
+            key={`topGap-${index}`}
+            title={widget.title}
+            sub={`largest ${fieldLabel(businessCapabilitySchema, widget.fieldId)}, rolled up over each capability's subtree`}
+          >
+            <Table.Root bordered={false}>
+              <Table.Head>
+                <Table.Row>
+                  <Table.HeaderCell>Capability</Table.HeaderCell>
+                  <Table.HeaderCell numeric>
+                    {fieldLabel(businessCapabilitySchema, widget.fieldId)}
+                  </Table.HeaderCell>
+                </Table.Row>
+              </Table.Head>
+              <Table.Body>
+                {rows.length === 0 ? (
+                  <Table.EmptyRow colSpan={2}>
+                    {capabilities.isLoading || rollups.isLoading
+                      ? 'Loading roll-ups…'
+                      : 'Nothing above zero.'}
+                  </Table.EmptyRow>
+                ) : (
+                  rows.map(({ item, gap }) => {
+                    const formatted = formatGap(gap);
+                    return (
+                      <Table.Row key={item._uid} onClick={() => openCapability(item._publicId)}>
+                        <Table.NameCell title={item._name} subtitle={item._publicId} />
+                        <Table.Cell numeric className={formatted.className} style={formatted.style}>
+                          {formatted.text}
+                        </Table.Cell>
+                      </Table.Row>
+                    );
+                  })
+                )}
+              </Table.Body>
+            </Table.Root>
+          </Section>
+        );
+      })}
     </main>
   );
 };

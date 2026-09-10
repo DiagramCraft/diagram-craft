@@ -1,39 +1,34 @@
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 
-export type CapabilityOwnFields = {
-  maturity: number | null;
-  maturityTarget: number | null;
-  risk: number | null;
-  gap: number | null;
-  investment: { amount: number; currency: string } | null;
+export type CapabilityOwnValue = { value: number | null; currency: string | null };
+export type CapabilityOwnFields = Record<string, CapabilityOwnValue>;
+
+const readOwnValue = (raw: unknown): CapabilityOwnValue => {
+  if (raw != null && typeof raw === 'object' && 'amount' in raw) {
+    const money = raw as { amount?: unknown; currency?: unknown };
+    return {
+      value: typeof money.amount === 'number' ? money.amount : null,
+      currency: typeof money.currency === 'string' ? money.currency : null
+    };
+  }
+  return { value: typeof raw === 'number' ? raw : null, currency: null };
 };
 
-const numberOrNull = (value: unknown): number | null => (typeof value === 'number' ? value : null);
-
 /**
- * Reads a Business Capability entity's own `maturity`/`maturity_target`/`risk`/`gap`/
- * `annual_investment` field values — the fallback source `useCapabilityRollup(s)` fall back to for
- * a capability with no children. The metrics engine's `boxEntityIds` rollup deliberately excludes
- * the box entity itself from its own aggregation (`collectDescendantIds` in
- * `metricDescendants.ts`, "the box entity itself is excluded" — correct for map boxes that group
- * differently-schemaed descendants, but a Business Capability leaf has no descendants at all, so
- * without this fallback its own directly-set values would roll up to "no data" instead of
- * themselves).
+ * Reads a Business Capability entity's own values for the given roll-up field ids — the fallback
+ * `useCapabilityRollup(s)` use for a capability with no children. The metrics engine's
+ * `boxEntityIds` roll-up deliberately excludes the box entity itself from its own aggregation
+ * (`collectDescendantIds` in `metricDescendants.ts`), which is correct for map boxes that group
+ * differently-schemaed descendants but leaves a childless Business Capability rolling up to
+ * "no data" instead of its own directly-set values.
  */
 export const extractCapabilityOwnFields = (
-  entity: EntityRecord | null | undefined
+  entity: EntityRecord | null | undefined,
+  fieldIds: readonly string[]
 ): CapabilityOwnFields => {
-  const investment = entity?.annual_investment as
-    | { amount?: unknown; currency?: unknown }
-    | undefined;
-  return {
-    maturity: numberOrNull(entity?.maturity),
-    maturityTarget: numberOrNull(entity?.maturity_target),
-    risk: numberOrNull(entity?.risk),
-    gap: numberOrNull(entity?.gap),
-    investment:
-      typeof investment?.amount === 'number' && typeof investment.currency === 'string'
-        ? { amount: investment.amount, currency: investment.currency }
-        : null
-  };
+  const result: CapabilityOwnFields = {};
+  for (const fieldId of fieldIds) {
+    result[fieldId] = readOwnValue(entity?.[fieldId]);
+  }
+  return result;
 };

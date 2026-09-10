@@ -11,6 +11,11 @@ import type {
   WorkspaceCapabilityDiagnostic,
   WorkspaceCapabilityTarget
 } from '@arch-register/api-types/workspaceCapabilityContract';
+import {
+  strategyModelViewConfigSchema,
+  resolveStrategyModelViewConfig,
+  type ViewConfigSchemaField
+} from '@arch-register/api-types/app/strategy-model/strategyModelViewConfig';
 import type { DatabaseAdapter } from '../../db/database';
 import type { WorkspaceCapabilityConfigurationDbResult } from './db/workspaceDatabase';
 import { httpAssert } from '../../utils/httpAssert';
@@ -22,14 +27,27 @@ const toApiConfiguration = async (
   const diagnostics = await validateWorkspaceCapabilityConfiguration(db, row.workspace, row.type, {
     bindings: row.bindings
   });
+  // View-config staleness is advisory — a retired field drops out of the view but must not
+  // invalidate the whole capability (which would disable the app).
+  const viewDiagnostics =
+    row.view_config == null
+      ? []
+      : await strategyViewConfigDiagnostics(
+          db,
+          row.workspace,
+          row.type,
+          row.bindings,
+          row.view_config
+        );
 
   return {
     id: row.id,
     workspace: row.workspace,
     type: row.type,
     bindings: row.bindings,
+    view_config: row.view_config ?? null,
     valid: diagnostics.length === 0,
-    diagnostics,
+    diagnostics: [...diagnostics, ...viewDiagnostics],
     created_at: row.created_at.toISOString(),
     updated_at: row.updated_at.toISOString()
   };
@@ -168,6 +186,48 @@ export const validateWorkspaceCapabilityConfiguration = async (
   return diagnostics;
 };
 
+/**
+ * Resolve the live `business_capability` schema fields a `strategy-model` view config is validated
+ * against. Returns `null` when the capability is not strategy-model or the binding is unusable.
+ */
+const strategyCapabilityFields = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  type: string,
+  bindings: WorkspaceCapabilityBindings
+): Promise<ViewConfigSchemaField[] | null> => {
+  if (type !== 'strategy-model') return null;
+  const binding = bindings['business_capability'];
+  if (binding?.target.kind !== 'entity_schema' || binding.target.id.length === 0) {
+    return null;
+  }
+  const target = await getTarget(db, workspace, binding.target);
+  if (!target || !('fields' in target)) return null;
+  return getTargetFields(target).map(field => ({
+    id: field.id,
+    type: field.type,
+    archived: field.archived
+  }));
+};
+
+/** Advisory `stale_view_field` diagnostics for a strategy-model view config. */
+const strategyViewConfigDiagnostics = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  type: string,
+  bindings: WorkspaceCapabilityBindings,
+  viewConfig: unknown
+): Promise<WorkspaceCapabilityDiagnostic[]> => {
+  const fields = await strategyCapabilityFields(db, workspace, type, bindings);
+  if (!fields) return [];
+  const { diagnostics } = resolveStrategyModelViewConfig(viewConfig, fields);
+  return diagnostics.map(diagnostic => ({
+    code: 'stale_view_field' as const,
+    bindingId: 'business_capability',
+    message: diagnostic.message
+  }));
+};
+
 export const listWorkspaceCapabilityConfigurations = async (
   db: DatabaseAdapter,
   workspace: string
@@ -197,6 +257,24 @@ export const upsertWorkspaceCapabilityConfiguration = async (
     message: diagnostics.map(diagnostic => diagnostic.message).join(' ')
   });
 
+  let viewConfig: unknown = null;
+  if (input.viewConfig != null) {
+    httpAssert.true(type === 'strategy-model', {
+      status: 400,
+      message: `Capability '${type}' does not support a view configuration.`
+    });
+    const parsed = strategyModelViewConfigSchema.safeParse(input.viewConfig);
+    httpAssert.true(parsed.success, {
+      status: 400,
+      message: parsed.success
+        ? ''
+        : `Invalid strategy-model view configuration: ${parsed.error.issues
+            .map(issue => `${issue.path.join('.')} ${issue.message}`)
+            .join('; ')}`
+    });
+    viewConfig = parsed.success ? parsed.data : null;
+  }
+
   const existing = await db.workspace.getWorkspaceCapabilityConfiguration(workspace, type);
   const now = new Date();
   const row = await db.workspace.upsertWorkspaceCapabilityConfiguration({
@@ -204,6 +282,7 @@ export const upsertWorkspaceCapabilityConfiguration = async (
     workspace,
     type,
     bindings: input.bindings,
+    view_config: viewConfig,
     created_at: existing?.created_at ?? now,
     updated_at: now
   });
