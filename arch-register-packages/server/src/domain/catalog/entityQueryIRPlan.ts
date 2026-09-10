@@ -207,6 +207,7 @@ export const relationPathIsMultiValued = (
     // the field's own maxCount says nothing about (maxCount bounds the forward direction: how many
     // targets one owner row can have). Mirrors relationBackward below - always potentially many.
     if (step.kind === 'relationBackward' || step.kind === 'backward') return true;
+    if (step.kind === 'containmentSubtree') return true;
     if (step.kind === 'relationForward') {
       const fields = [...relationSchemas.values()].map(schema =>
         relationFieldById(schema, step.fieldId)
@@ -300,6 +301,14 @@ export const resolveProjectionPathSchemaInfo = (
       currentEntitySchemaIds = [];
       currentKind = 'relation';
       entitySchemaIdsByStep.push([]);
+      continue;
+    }
+
+    if (step.kind === 'containmentSubtree') {
+      currentEntitySchemaIds = availableSchemaIds([step.ownerSchemaId], schemas);
+      currentRelationSchemaIds = [];
+      currentKind = 'entity';
+      entitySchemaIdsByStep.push(currentEntitySchemaIds);
       continue;
     }
 

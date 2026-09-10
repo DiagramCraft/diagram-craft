@@ -539,6 +539,11 @@ export const compilePathSteps = (
   if (index >= steps.length) return terminal(curAlias);
 
   const step = steps[index]!;
+  if (step.kind === 'containmentSubtree') {
+    throw new UnsupportedEntityQueryIRError(
+      "The 'containmentSubtree' path step is only supported by the entity traversal compiler"
+    );
+  }
   if (step.kind === 'endpoint') {
     const alias = nextAlias(state);
     const targetId =

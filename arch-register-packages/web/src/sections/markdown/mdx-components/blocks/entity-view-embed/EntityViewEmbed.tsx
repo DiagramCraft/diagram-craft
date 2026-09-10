@@ -59,7 +59,11 @@ export const EntityViewEmbed = ({ viewId }: Props) => {
       entityQuery: executionEntityQuery,
       view: 'full',
       limit:
-        savedView?.viewMode === 'graph' || savedView?.viewMode === 'traceability' ? undefined : 100
+        savedView?.viewMode === 'graph' ||
+        savedView?.viewMode === 'traceability' ||
+        savedView?.viewMode === 'path-walker'
+          ? undefined
+          : 100
     },
     { enabled: !!workspaceSlug && !!savedView && !isTreeBased }
   );

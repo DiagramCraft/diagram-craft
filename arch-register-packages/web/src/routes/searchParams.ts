@@ -51,11 +51,14 @@ const sharedEntityBrowserSearchSchema = defineSearchParamSchema({
     'map',
     'diff',
     'graph',
-    'traceability'
+    'traceability',
+    'path-walker'
   ] as const),
   sort: stringCodec,
   projectScope: enumCodec(['project', 'all'] as const),
   viewConfigs: stringCodec,
+  // Comma-separated entity ids, one per path-walker column, tracking the currently walked chain.
+  pathWalk: stringCodec,
   sidebarTab: entityBrowserSidebarCodec,
   baselineId: stringCodec,
   collectionId: stringCodec,

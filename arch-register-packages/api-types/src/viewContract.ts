@@ -29,7 +29,8 @@ export const browserViewSchema = z
     'map',
     'diff',
     'graph',
-    'traceability'
+    'traceability',
+    'path-walker'
   ])
   .describe('Available view modes for displaying entities');
 
@@ -154,6 +155,16 @@ export const traceabilityViewConfigSchema = z.object({
     .describe('Delivery record types that count towards delivery coverage'),
   showOrphanEntities: z.boolean().describe('Whether to show entities outside all configured paths'),
   showOrphanProjects: z.boolean().describe('Whether to show projects outside all configured paths')
+});
+
+export const pathWalkerViewConfigSchema = z.object({
+  hops: z
+    .array(pathStepSchema)
+    .max(MAX_PATH_HOPS)
+    .optional()
+    .describe(
+      'The remembered relationship chain: the hop chosen for each column boundary as the user walked it. Empty/absent for a fresh walk.'
+    )
 });
 
 export const bubbleViewConfigSchema = z.object({
@@ -364,7 +375,10 @@ const viewConfigSchema = z
       .describe('Configuration for entity and relation graph views'),
     traceability: traceabilityViewConfigSchema
       .optional()
-      .describe('Configuration for generic architecture traceability views')
+      .describe('Configuration for generic architecture traceability views'),
+    'path-walker': pathWalkerViewConfigSchema
+      .optional()
+      .describe('Configuration for the single-path hop walker view')
   })
   .nullable()
   .describe('View-specific configuration (only one view type should be configured)');
@@ -602,6 +616,7 @@ export type TimelineViewConfig = z.infer<typeof timelineViewConfigSchema>;
 export type MatrixViewConfig = z.infer<typeof matrixViewConfigSchema>;
 export type TraceabilityPathConfig = z.infer<typeof traceabilityPathConfigSchema>;
 export type TraceabilityViewConfig = z.infer<typeof traceabilityViewConfigSchema>;
+export type PathWalkerViewConfig = z.infer<typeof pathWalkerViewConfigSchema>;
 export type TableViewConfig = z.infer<typeof tableViewConfigSchema>;
 export type CardsViewConfig = z.infer<typeof cardsViewConfigSchema>;
 export type TreeViewConfig = z.infer<typeof treeViewConfigSchema>;

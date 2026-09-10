@@ -11,10 +11,13 @@ import { EntityHoverCardBody } from './EntityHoverCardBody';
  */
 export const EntityHoverCard = ({
   entityId,
-  children
+  children,
+  extra
 }: {
   entityId: string;
   children: ReactNode;
+  /** Extra content rendered at the foot of the card body (e.g. an "Open" action). */
+  extra?: ReactNode;
 }) => {
   const { workspaceSlug } = useWorkspaceContext();
   const { data: entity, isLoading, isError } = useEntity(workspaceSlug, entityId);
@@ -29,6 +32,7 @@ export const EntityHoverCard = ({
             description={entity._description}
             schemaName={entity._schema?.name}
             tags={entity._tags}
+            extra={extra}
           />
         ) : null
       }

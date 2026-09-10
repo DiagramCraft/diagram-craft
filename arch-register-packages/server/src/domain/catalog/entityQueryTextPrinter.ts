@@ -194,6 +194,10 @@ const stepName = (
       )}`;
     case 'endpoint':
       return step.direction === 'in' ? '_in' : '_out';
+    case 'containmentSubtree':
+      throw new Error(
+        "The structured 'containmentSubtree' path step has no text syntax yet; use the traversal API"
+      );
   }
 };
 
@@ -366,6 +370,11 @@ const printPathSteps = (
         level
       );
       return `${step.direction === 'in' ? '->' : '<-'}${relationName}${filterText}`;
+    }
+    if (step.kind === 'containmentSubtree') {
+      throw new Error(
+        "The structured 'containmentSubtree' path step has no text syntax yet; use the traversal API"
+      );
     }
     const relationSchema = relationSchemas.get(step.relationSchemaId);
     const targetSchemaIds =

@@ -44,6 +44,8 @@ export const effectiveProjectionAlias = (projection: ProjectionField): string =>
           return step.fieldId;
         case 'relationBackward':
           return `<-${step.relationSchemaId}.${step.fieldId}`;
+        case 'containmentSubtree':
+          return `subtree(${step.ownerSchemaId}.${step.fieldId})`;
       }
     })
     .join('.');

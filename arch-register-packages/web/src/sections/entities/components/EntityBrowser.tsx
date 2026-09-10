@@ -255,6 +255,8 @@ export const EntityBrowser = ({
     setQ,
     setSort,
     setView,
+    pathWalkSelection,
+    setPathWalk,
     sort,
     statusFilter,
     typeFilter,
@@ -627,6 +629,8 @@ export const EntityBrowser = ({
               responsesByEntity={responsesByEntity}
               onCountChange={onCountChange}
               isLoading={isLoading}
+              pathWalkSelection={pathWalkSelection}
+              onPathWalkChange={setPathWalk}
               mode={
                 readOnly
                   ? {

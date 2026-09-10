@@ -185,6 +185,8 @@ export const kindAfterStep = (step: PathStep, currentKind: QueryRootKind): Query
       return 'entity';
     case 'relationBackward':
       return 'relation';
+    case 'containmentSubtree':
+      return 'entity';
   }
 };
 

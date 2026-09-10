@@ -12,7 +12,8 @@ export type { FilterOp } from '@arch-register/api-types/filterOp';
 // case (see entityQueryIRMapping.ts in the server package).
 
 // Cap on PathStep chain length (specs/QUERY_LANGUAGE.md §7), counted cumulatively including hops
-// nested inside a PathStep.filter's own paths. Bounds join fan-out; there's no recursion to bound.
+// nested inside a PathStep.filter's own paths. Recursive containment is bounded separately by the
+// server-side EntityTraversalPlan limits.
 export const MAX_PATH_HOPS = 6;
 
 export type PathStep =
@@ -64,6 +65,15 @@ export type PathStep =
       kind: 'relationBackward';
       fieldId: string;
       relationSchemaId: string;
+      filter?: QueryNode;
+    }
+  | {
+      // Root-inclusive recursive traversal of an explicitly named containment/reference field.
+      // The field is declared on ownerSchemaId and points from each child to its parent. This
+      // step is part of the structured traversal IR; human text syntax is added separately.
+      kind: 'containmentSubtree';
+      fieldId: string;
+      ownerSchemaId: string;
       filter?: QueryNode;
     };
 
@@ -123,6 +133,12 @@ export const pathStepSchema: z.ZodType<PathStep> = z.lazy(() =>
       fieldId: z.string(),
       relationSchemaId: z.string(),
       filter: queryNodeSchema.optional()
+    }),
+    z.object({
+      kind: z.literal('containmentSubtree'),
+      fieldId: z.string(),
+      ownerSchemaId: z.string(),
+      filter: queryNodeSchema.optional()
     })
   ])
 );
@@ -140,7 +156,8 @@ export type ProjectionField = {
    * in `path` (so callers can correlate which intermediate entity led to which leaf, unlike two
    * independent per-depth projections which would return uncorrelated arrays). `path` must be
    * non-empty and every step must be `forward`/`backward`/`typedRelation`/`unboundTypedRelation` -
-   * included paths never land on a relation row.
+   * included paths never land on a relation row. Recursive containment steps are intentionally not
+   * accepted by this legacy projection shape; use EntityTraversalResult for variable-length paths.
    */
   includePath?: boolean;
 };
