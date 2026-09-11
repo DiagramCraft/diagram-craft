@@ -4,11 +4,7 @@ import type { RelationSchema } from '@arch-register/api-types/relationSchemaCont
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
 import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
-import type {
-  MetricAggregation,
-  MetricConfig,
-  MetricTraversalStep
-} from '@arch-register/api-types/metricContract';
+import type { MetricAggregation, MetricConfig } from '@arch-register/api-types/metricContract';
 import type { PathStep } from '@arch-register/api-types/entityQueryIR';
 import type { FieldGroupAccess, FieldGroupAccessControl } from '@arch-register/permissions';
 import { TbChevronDown, TbEyeOff, TbTrash } from 'react-icons/tb';
@@ -51,7 +47,7 @@ type MapConfigControlsProps = {
   metricTerminalSchemaId: string | null;
   metricTerminalEntitySchema: EntitySchema | undefined;
   metricTerminalContext: 'entity' | 'relation';
-  mapTraversalPath: MetricTraversalStep[];
+  mapTraversalPath: PathStep[];
   mapTraversalError?: string;
   metricConfig: MetricConfig | null;
   setMetricConfig: (next: MetricConfig | null) => void;
@@ -472,7 +468,8 @@ export const MapConfigControls = ({
                     }),
                     sourceSchemaId: metricTerminalSchemaId,
                     sourceContext: metricTerminalContext,
-                    path: mapTraversalPath.length > 0 ? mapTraversalPath : undefined,
+                    traversalPath: mapTraversalPath.length > 0 ? mapTraversalPath : undefined,
+                    traversalPathMode: 'suffixes',
                     source: option.source,
                     aggregation: nextIsEnum ? 'count' : (metricConfig?.aggregation ?? 'count'),
                     worstDirection: nextIsEnum ? undefined : metricConfig?.worstDirection,

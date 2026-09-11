@@ -3,7 +3,6 @@ import { useParams, useNavigate } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
 import { Title } from '../../../components/Title';
 import { Table } from '../../../components/table/Table';
-import { useEntityTree } from '../../../hooks/useEntities';
 import { useRelations } from '../../../hooks/useRelations';
 import { useSchemas } from '../../../hooks/useSchemas';
 import { entitiesQuery } from '../../../queries/entities';
@@ -81,12 +80,6 @@ export const StrategyOverviewScreen = () => {
       enabled
     )
   );
-  // Shared query-cache entry with the other sections' capability tree.
-  const tree = useEntityTree(
-    workspaceSlug,
-    { schemaId: strategyConfig?.businessCapabilitySchemaId ?? undefined },
-    enabled
-  );
   const objectiveSupportsCapability = useRelations(
     workspaceSlug,
     { schemaId: strategyConfig?.objectiveSupportsBusinessCapabilityRelationSchemaId },
@@ -111,8 +104,7 @@ export const StrategyOverviewScreen = () => {
     strategyConfig?.businessCapabilitySchemaId ?? null,
     strategyConfig?.businessCapabilitySupportsEntityRelationSchemaId ?? null,
     capabilityItems,
-    view.rollups,
-    tree.data?.edges ?? []
+    view.rollups
   );
 
   const levelBuckets = useMemo<BarBucket[]>(() => {

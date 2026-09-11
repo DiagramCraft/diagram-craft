@@ -104,6 +104,14 @@ export const buildProjectionBindings = (
           step.direction === 'in'
             ? `${relationAlias}.out_record_id`
             : `${relationAlias}.in_record_id`;
+        const ownerJoin =
+          step.direction === 'both'
+            ? `(${relationAlias}.in_record_id = ${currentAlias}.id OR ${relationAlias}.out_record_id = ${currentAlias}.id)`
+            : `${ownerId} = ${currentAlias}.id`;
+        const targetJoin =
+          step.direction === 'both'
+            ? `${targetAlias}.id = CASE WHEN ${relationAlias}.in_record_id = ${currentAlias}.id THEN ${relationAlias}.out_record_id ELSE ${relationAlias}.in_record_id END`
+            : `${targetAlias}.id = ${targetId}`;
         const relationSchema = addParam(state, step.relationSchemaId);
         const ownerSchemaClause =
           step.kind === 'typedRelation'
@@ -126,8 +134,8 @@ export const buildProjectionBindings = (
           `\n      JOIN ${RELATION_SCOPE_CTE} ${relationAlias} ON ${relationAlias}.workspace = ${currentAlias}.workspace` +
           ` AND ${relationAlias}.schema_id = ${relationSchema}` +
           ` AND ${ownerSchemaClause}` +
-          ` AND ${ownerId} = ${currentAlias}.id${filter}` +
-          `\n      JOIN ${SCOPE_CTE} ${targetAlias} ON ${targetAlias}.id = ${targetId}` +
+          ` AND ${ownerJoin}${filter}` +
+          `\n      JOIN ${SCOPE_CTE} ${targetAlias} ON ${targetJoin}` +
           (targetSchemaClause ? ` AND ${targetSchemaClause}` : '');
         selectParts.push(
           `${relationAlias}.id AS relation_${stepIndex + 1}_id`,

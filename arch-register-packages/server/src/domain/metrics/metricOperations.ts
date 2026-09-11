@@ -17,14 +17,15 @@ import { filterVisibleEntities } from '../auth/authorization';
 import { isFieldViewRestricted } from '../auth/fieldGroupAccessControl';
 import { resolveJoinedAssessment } from '../catalog/entityQueryOperations';
 import { parseEntityQuery } from '../catalog/entityQuery';
-import { listAllCatalogEntities } from '../catalog/entityLoader';
 import { matchesFilterCondition } from '../catalog/dataHelpers';
+import { listAllCatalogEntities } from '../catalog/entityLoader';
 import { buildContainmentChildrenIndex, collectDescendantIds } from './metricDescendants';
 import {
   collectMetricTerminals,
   type MetricTerminal,
   type MetricTraversalResult
 } from './metricTraversal';
+import { collectMetricTraversalResults } from './metricTraversalPlan';
 import type { CurrencyRateSnapshotDbResult } from '../currencyRates/db/currencyRatesDatabase';
 
 type MetricValue = { value: number; lifecycleId: string | null; currencyCode: string | null };
@@ -113,7 +114,7 @@ const extractValue = (
 
   const rawValue =
     source.kind === 'assessmentRating'
-      ? (responsesByEntity?.get(entity.id)?.[source.fieldId] ?? null)
+      ? (responsesByEntity?.get(entity.id)?.[source.fieldId] ?? entity.data[source.fieldId] ?? null)
       : (entity.data[source.fieldId] ?? null);
   const raw = Array.isArray(rawValue) ? (rawValue[0] ?? null) : rawValue;
   if (raw == null || raw === '') return null;
@@ -176,7 +177,7 @@ const extractEnumValue = (
 
   const rawValue =
     source.kind === 'assessmentEnum'
-      ? (responsesByEntity?.get(entity.id)?.[source.fieldId] ?? null)
+      ? (responsesByEntity?.get(entity.id)?.[source.fieldId] ?? entity.data[source.fieldId] ?? null)
       : (entity.data[source.fieldId] ?? null);
   const raw = Array.isArray(rawValue) ? (rawValue[0] ?? null) : rawValue;
   if (raw == null || raw === '') return null;
@@ -414,7 +415,8 @@ export const computeBoxMetrics = (
       // subtree above; reused here to test each terminal for containment children of its own.
       const leafCount = sourceTerminals.filter(
         terminal =>
-          terminal.kind === 'entity' && (childrenOf.get(terminal.entity.id) ?? []).length === 0
+          terminal.kind === 'entity' &&
+          (terminal.isLeaf ?? (childrenOf.get(terminal.entity.id) ?? []).length === 0)
       ).length;
       return {
         boxEntityId,
@@ -671,17 +673,16 @@ export const getBoxMetrics = async (
   const relationSchemasPromise = db.relation?.listRelationSchemas
     ? db.relation.listRelationSchemas(workspace)
     : Promise.resolve<RelationSchemaDbResult[]>([]);
-  const [schemas, relationSchemas, allEntities, lifecycleStates, joinedAssessment] =
-    await Promise.all([
-      db.catalog.listSchemas(workspace),
-      relationSchemasPromise,
-      listAllCatalogEntities(db, workspace, projectId ? { projectId, projectScope } : undefined),
-      db.workspace.listLifecycleStates(workspace),
-      resolveJoinedAssessment(db, workspace, authCtx, parsed.assessmentId, needsAssessment)
-    ]);
+  const [schemas, relationSchemas, lifecycleStates, joinedAssessment] = await Promise.all([
+    db.catalog.listSchemas(workspace),
+    relationSchemasPromise,
+    db.workspace.listLifecycleStates(workspace),
+    resolveJoinedAssessment(db, workspace, authCtx, parsed.assessmentId, needsAssessment)
+  ]);
 
   const relationSchemaIds = new Set(relationSchemas.map(schema => schema.id));
-  for (const step of metric.path ?? []) {
+  const relationPathSteps = [...(metric.path ?? []), ...(metric.traversalPath ?? [])];
+  for (const step of relationPathSteps) {
     if (
       (step.kind === 'typedRelation' || step.kind === 'unboundTypedRelation') &&
       !relationSchemaIds.has(step.relationSchemaId)
@@ -733,8 +734,9 @@ export const getBoxMetrics = async (
     ? await resolveEnumOptions(db, workspace, metric, schemas, relationSchemas, joinedAssessment)
     : null;
 
-  const visibleEntities = filterVisibleEntities(authCtx, allEntities);
-  const scopedEntities = visibleEntities;
+  // Traversal SQL projects only the fields needed by the metric. Keep this list empty so metric
+  // execution cannot accidentally fall back to loading and walking the workspace entity graph.
+  let scopedEntities: EntityDbResult[] = [];
   let currencyConversion: CurrencyConversion | null = null;
   if (
     currencySource &&
@@ -761,8 +763,31 @@ export const getBoxMetrics = async (
     };
   }
 
-  const traversalResults = sourceAvailable
-    ? await collectMetricTerminals({
+  let traversalResults = new Map<string, MetricTraversalResult>();
+  if (sourceAvailable) {
+    if (typeof db.catalog.runCompiledEntityQuery === 'function') {
+      traversalResults = await collectMetricTraversalResults({
+        db,
+        workspace,
+        boxEntityIds,
+        metric,
+        schemas,
+        relationSchemas,
+        authCtx,
+        assessmentId: parsed.assessmentId,
+        projectId,
+        projectScope
+      });
+    } else {
+      // Legacy test adapters do not expose the compiled-query runner; production adapters always
+      // use the shared traversal branch above.
+      const entities = await listAllCatalogEntities(
+        db,
+        workspace,
+        projectId ? { projectId, projectScope } : undefined
+      );
+      scopedEntities = filterVisibleEntities(authCtx, entities);
+      traversalResults = await collectMetricTerminals({
         db,
         workspace,
         boxEntityIds,
@@ -771,8 +796,9 @@ export const getBoxMetrics = async (
         schemas,
         relationSchemas,
         authCtx
-      })
-    : new Map<string, MetricTraversalResult>();
+      });
+    }
+  }
 
   return computeBoxMetrics(
     boxEntityIds,

@@ -3,9 +3,9 @@ import type {
   RelationEndpoint,
   RelationSchema
 } from '@arch-register/api-types/relationSchemaContract';
-import type { MetricTraversalStep } from '@arch-register/api-types/metricContract';
 import type { TreeEdge, TreeNode } from '@arch-register/api-types/entityContract';
 import type { PathStep } from '@arch-register/api-types/entityQueryIR';
+import type { MetricTraversalStep } from '@arch-register/api-types/metricContract';
 import type { FieldGroupAccessControl } from '@arch-register/permissions';
 import { targetSchemaIdsForStep } from './pathBuilder/pathBuilderState';
 
@@ -146,7 +146,7 @@ export const getChildLevelOptions = (
 };
 
 export type MapTraversalResolution = {
-  path: MetricTraversalStep[];
+  path: PathStep[];
   error?: string;
 };
 
@@ -305,9 +305,9 @@ const findTraversalStep = (
   childSchema: EntitySchema,
   relationSchemas: RelationSchema[],
   getFieldGroupAccess: FieldGroupAccessResolver
-): MetricTraversalStep | null => {
+): PathStep | null => {
   const step = resolveDefaultStep(parentSchema, childSchema, relationSchemas, getFieldGroupAccess);
-  return step ? pathStepToMetricTraversalStep(step) : null;
+  return step;
 };
 
 export const getMapTraversalPath = (
@@ -316,7 +316,9 @@ export const getMapTraversalPath = (
   relationSchemas: RelationSchema[],
   getFieldGroupAccess: FieldGroupAccessResolver = () => 'edit'
 ): MetricTraversalStep[] =>
-  resolveMapTraversalPath(schemaIds, schemas, relationSchemas, getFieldGroupAccess).path;
+  resolveMapTraversalPath(schemaIds, schemas, relationSchemas, getFieldGroupAccess)
+    .path.map(pathStepToMetricTraversalStep)
+    .filter((step): step is MetricTraversalStep => step != null);
 
 export const resolveMapTraversalPath = (
   schemaIds: string[],
@@ -332,7 +334,7 @@ export const resolveMapTraversalPath = (
 ): MapTraversalResolution => {
   const schemaById = new Map(schemas.map(schema => [schema.id, schema]));
   const relationSchemaById = new Map(relationSchemas.map(schema => [schema.id, schema]));
-  const path: MetricTraversalStep[] = [];
+  const path: PathStep[] = [];
   for (let index = 1; index < schemaIds.length; index += 1) {
     const childSchemaId = schemaIds[index]!;
     const parentSchemaId = schemaIds[index - 1]!;
@@ -373,7 +375,8 @@ export const resolveMapTraversalPath = (
           kind: 'typedRelation',
           fieldId: boundField.id,
           relationSchemaId: boundField.relationSchemaId,
-          direction: boundField.direction
+          direction: boundField.direction,
+          ownerSchemaIds: [parentSchema.id]
         });
       } else {
         path.push({
@@ -413,9 +416,9 @@ export const resolveMapTraversalPath = (
       };
     }
     const explicitStep = explicitSteps?.[index];
-    const step = explicitStep
-      ? pathStepToMetricTraversalStep(explicitStep)
-      : findTraversalStep(parentSchema, childSchema, relationSchemas, getFieldGroupAccess);
+    const step =
+      explicitStep ??
+      findTraversalStep(parentSchema, childSchema, relationSchemas, getFieldGroupAccess);
     if (!step) {
       const relationCandidate = relationSchemas.find(relationSchema =>
         relationDirectionsForEntity(parentSchema!, relationSchema, getFieldGroupAccess).some(

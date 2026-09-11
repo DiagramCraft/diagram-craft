@@ -1183,14 +1183,10 @@ describe('getBoxMetrics', () => {
       catalog: {
         listSchemas: vi.fn(async () => options.schemas ?? schemas),
         listEntitiesPaginated,
-        // Real filtering is exercised end-to-end by the contract-test suite
-        // (`entityQueryIRCompiler.contract.test.ts`/`seededEntityQuery.contract.test.ts`); here
-        // this stands in for the compiled-SQL result set, returning every entity by default and
-        // overridden per test (via `vi.mocked(db.catalog.runCompiledEntityQuery).mockResolvedValue`)
-        // wherever a test asserts on which entities the query actually matched.
-        runCompiledEntityQuery: vi.fn(async () =>
-          entities.map(entity => ({ ...entity, projections: {} }))
-        ),
+        // The unit fixture uses the compatibility path; compiled traversal behavior is covered by
+        // the database contract and API tests.
+        // This legacy unit adapter intentionally omits the shared traversal runner so the
+        // compatibility fallback below exercises the old pure aggregation fixtures.
         getEnum: vi.fn(async (_workspace: string, id: string) => {
           const enumOptions = options.enums?.[id];
           return enumOptions

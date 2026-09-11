@@ -164,12 +164,19 @@ export const typedRelationOwnerSchemaClause = (
 export const unboundTypedRelationOwnerSchemaClause = (
   alias: string,
   relationSchemaId: string,
-  direction: 'in' | 'out',
+  direction: 'in' | 'out' | 'both',
   state: EntityQuerySqlRenderState
 ): string => {
   const relationSchema = state.relationSchemas.get(relationSchemaId);
   const endpointSchemaIds =
-    direction === 'in' ? relationSchema?.in_schema_ids : relationSchema?.out_schema_ids;
+    direction === 'in'
+      ? relationSchema?.in_schema_ids
+      : direction === 'out'
+        ? relationSchema?.out_schema_ids
+        : [
+            ...resolveEndpointSchemaIds(relationSchema?.in_schema_ids, state.schemas),
+            ...resolveEndpointSchemaIds(relationSchema?.out_schema_ids, state.schemas)
+          ];
   const ownerSchemaIds = [...resolveEndpointSchemaIds(endpointSchemaIds, state.schemas)].filter(
     id => state.schemas.has(id)
   );
@@ -596,13 +603,21 @@ export const compilePathSteps = (
       ? ` AND ${compileRelationNode(step.filter, relationAlias, step.relationSchemaId, state)}`
       : '';
     const rest = compilePathSteps(steps, index + 1, targetAlias, state, terminal);
+    const endpointJoin =
+      step.direction === 'both'
+        ? `(${relationAlias}.in_record_id = ${curAlias}.id OR ${relationAlias}.out_record_id = ${curAlias}.id)`
+        : `${ownerId} = ${curAlias}.id`;
+    const targetJoin =
+      step.direction === 'both'
+        ? `${targetAlias}.id = CASE WHEN ${relationAlias}.in_record_id = ${curAlias}.id THEN ${relationAlias}.out_record_id ELSE ${relationAlias}.in_record_id END`
+        : `${targetAlias}.id = ${targetId}`;
     return (
       `EXISTS (SELECT 1 FROM ${RELATION_SCOPE_CTE} ${relationAlias} ` +
-      `JOIN ${SCOPE_CTE} ${targetAlias} ON ${targetAlias}.id = ${targetId} ` +
+      `JOIN ${SCOPE_CTE} ${targetAlias} ON ${targetJoin} ` +
       `WHERE ${relationAlias}.workspace = ${curAlias}.workspace ` +
       `AND ${relationAlias}.schema_id = ${relationSchemaParam} ` +
       `AND ${ownerSchemaClause} ` +
-      `AND ${ownerId} = ${curAlias}.id${filterClause} AND ${rest})`
+      `AND ${endpointJoin}${filterClause} AND ${rest})`
     );
   }
   const alias = nextAlias(state);

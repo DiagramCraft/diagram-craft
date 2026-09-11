@@ -4,7 +4,7 @@ import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import type { TreeNode } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
-import type { MetricConfig, MetricTraversalStep } from '@arch-register/api-types/metricContract';
+import type { MetricConfig } from '@arch-register/api-types/metricContract';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
 import type { EntityQuery, PathStep, QueryNode } from '@arch-register/api-types/entityQueryIR';
 import { useEntityBrowserTreeData } from './useEntityBrowserTreeData';
@@ -20,7 +20,6 @@ import { useRelationSchemas } from '../../../hooks/useRelationSchemas';
 import {
   getChildLevelOptions,
   getMapSchemaIds,
-  pathStepToMetricTraversalStep,
   repairMapLevelSchemaIds,
   resolveMapTraversalPath
 } from './mapViewState';
@@ -440,9 +439,7 @@ export const MapView = ({
     () =>
       useIncludePathTraversal
         ? {
-            path: (fullHopPath ?? [])
-              .map(pathStepToMetricTraversalStep)
-              .filter((step): step is MetricTraversalStep => step != null)
+            path: fullHopPath ?? []
           }
         : resolveMapTraversalPath(
             mapLevelSchemaIds,
@@ -488,7 +485,8 @@ export const MapView = ({
           ...storedMetricConfig,
           sourceSchemaId: metricTerminalSchemaId ?? storedMetricConfig.sourceSchemaId,
           sourceContext: metricTerminalContext,
-          path: mapTraversalPath.length > 0 ? mapTraversalPath : undefined
+          traversalPath: mapTraversalPath.length > 0 ? mapTraversalPath : undefined,
+          traversalPathMode: 'suffixes' as const
         }
       : null;
   const metricSourceSchema = metricTerminalSchema;

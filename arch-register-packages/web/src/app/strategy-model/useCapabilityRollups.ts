@@ -23,20 +23,28 @@ const EMPTY_ROLLUP: CapabilityTableRollup = { values: {}, currency: {}, appsCoun
 // `businessCapabilitySupportsEntityRelationSchemaId` must be the real, per-workspace relation
 // schema id (from `resolveStrategyModelConfig`'s `business_capability_supports_entity` binding).
 const buildAppsCountMetric = (
+  businessCapabilitySchemaId: string | null,
   businessCapabilitySupportsEntityRelationSchemaId: string | null
 ): MetricConfig | null =>
-  businessCapabilitySupportsEntityRelationSchemaId
+  businessCapabilitySupportsEntityRelationSchemaId && businessCapabilitySchemaId
     ? {
         sourceSchemaId: businessCapabilitySupportsEntityRelationSchemaId,
         sourceContext: 'relation',
-        path: [
+        traversalPath: [
+          {
+            kind: 'containmentSubtree',
+            fieldId: 'parent',
+            ownerSchemaId: businessCapabilitySchemaId
+          },
           {
             kind: 'typedRelation',
             fieldId: 'supported_entities',
             relationSchemaId: businessCapabilitySupportsEntityRelationSchemaId,
-            direction: 'in'
+            direction: 'in',
+            ownerSchemaIds: [businessCapabilitySchemaId]
           }
         ],
+        traversalPathMode: 'exact',
         source: { kind: 'lifecycle' },
         aggregation: 'count'
       }
@@ -49,17 +57,14 @@ const buildAppsCountMetric = (
  * capability id.
  *
  * `capabilities` are passed in full (not just ids) so a childless capability can fall back to its
- * own field values (the metrics engine's subtree walk excludes the box entity itself). `treeEdges`
- * is needed for `appsCount` only — the apps-count metric is path-based and returns a capability's
- * own directly-linked applications, so it is rolled up here by summing across the subtree.
+ * own field values (the metrics engine's subtree walk excludes the box entity itself).
  */
 export const useCapabilityRollups = (
   workspaceId: string,
   businessCapabilitySchemaId: string | null,
   businessCapabilitySupportsEntityRelationSchemaId: string | null,
   capabilities: readonly EntityRecord[],
-  rollups: readonly DerivedRollup[],
-  treeEdges: readonly { parentId: string; childId: string }[] = []
+  rollups: readonly DerivedRollup[]
 ): { byId: Map<string, CapabilityTableRollup>; isLoading: boolean; error: Error | null } => {
   const boxEntityIds = useMemo(() => capabilities.map(c => c._uid), [capabilities]);
   const fieldIds = useMemo(() => rollups.map(rollup => rollup.fieldId), [rollups]);
@@ -67,13 +72,6 @@ export const useCapabilityRollups = (
     () => new Map(capabilities.map(c => [c._uid, extractCapabilityOwnFields(c, fieldIds)])),
     [capabilities, fieldIds]
   );
-  const childrenOf = useMemo(() => {
-    const map = new Map<string, string[]>();
-    for (const { parentId, childId } of treeEdges) {
-      map.set(parentId, [...(map.get(parentId) ?? []), childId]);
-    }
-    return map;
-  }, [treeEdges]);
   const enabled = boxEntityIds.length > 0 && !!businessCapabilitySchemaId;
 
   const queries = useQueries({
@@ -96,7 +94,10 @@ export const useCapabilityRollups = (
         workspaceId,
         {
           boxEntityIds,
-          metric: buildAppsCountMetric(businessCapabilitySupportsEntityRelationSchemaId)
+          metric: buildAppsCountMetric(
+            businessCapabilitySchemaId,
+            businessCapabilitySupportsEntityRelationSchemaId
+          )
         },
         enabled
       )
@@ -116,20 +117,6 @@ export const useCapabilityRollups = (
     const resultFor = (query: { data?: MetricRollupResponse } | undefined, id: string) =>
       query?.data?.results.find(result => result.boxEntityId === id);
 
-    const rawApps = new Map<string, number | null>(
-      boxEntityIds.map(id => [id, resultFor(appsQuery, id)?.value ?? null])
-    );
-    const subtreeApps = (id: string, seen = new Set<string>()): number | null => {
-      if (seen.has(id)) return null;
-      seen.add(id);
-      let total: number | null = rawApps.get(id) ?? null;
-      for (const childId of childrenOf.get(id) ?? []) {
-        const childTotal = subtreeApps(childId, seen);
-        if (childTotal != null) total = (total ?? 0) + childTotal;
-      }
-      return total;
-    };
-
     for (const id of boxEntityIds) {
       const own = ownFieldsById.get(id) ?? {};
       const isLeaf = (resultFor(rollupQueries[0], id)?.sourceCount ?? 0) === 0;
@@ -144,10 +131,15 @@ export const useCapabilityRollups = (
           ? (own[rollup.fieldId]?.currency ?? null)
           : (result?.currencyCode ?? null);
       });
-      map.set(id, { ...EMPTY_ROLLUP, values, currency, appsCount: subtreeApps(id) });
+      map.set(id, {
+        ...EMPTY_ROLLUP,
+        values,
+        currency,
+        appsCount: resultFor(appsQuery, id)?.value ?? null
+      });
     }
     return map;
-  }, [boxEntityIds, ownFieldsById, childrenOf, rollups, rollupQueries, appsQuery]);
+  }, [boxEntityIds, ownFieldsById, rollups, rollupQueries, appsQuery]);
 
   return { byId, isLoading, error };
 };

@@ -2,7 +2,12 @@ import { oc } from '@orpc/contract';
 import { z } from 'zod';
 import { currencyCodeSchema, ws } from '@arch-register/api-types/common';
 import { filterConditionSchema } from '@arch-register/api-types/viewContract';
-import { entityQuerySchema } from '@arch-register/api-types/entityQueryIR';
+import {
+  MAX_PATH_HOPS,
+  entityQuerySchema,
+  pathStepSchema,
+  type PathStep
+} from '@arch-register/api-types/entityQueryIR';
 
 // ── Metric source & aggregation ──────────────────────────────────────────────
 
@@ -90,6 +95,15 @@ export const metricConfigSchema = z.object({
     .max(6)
     .optional()
     .describe('Ordered traversal path from each map box to terminal metric sources'),
+  traversalPath: z
+    .array(pathStepSchema)
+    .max(MAX_PATH_HOPS)
+    .optional()
+    .describe('Canonical EntityQuery traversal path from each map box to terminal sources'),
+  traversalPathMode: z
+    .enum(['exact', 'suffixes'])
+    .optional()
+    .describe('Whether traversalPath is evaluated exactly or once for every suffix'),
   source: metricSourceSchema.describe(
     'Value source for the metric; unused when aggregation is "percentage"'
   ),
@@ -252,6 +266,7 @@ export type MetricSource = z.infer<typeof metricSourceSchema>;
 export type MetricTraversalStep = z.infer<typeof metricTraversalStepSchema>;
 export type MetricAggregation = z.infer<typeof metricAggregationSchema>;
 export type MetricConfig = z.infer<typeof metricConfigSchema>;
+export type MetricTraversalPath = PathStep[];
 export type MetricRollupRequest = z.infer<typeof metricRollupRequestSchema>;
 export type MetricDistributionEntry = z.infer<typeof metricDistributionEntrySchema>;
 export type MetricResult = z.infer<typeof metricResultSchema>;

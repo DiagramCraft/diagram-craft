@@ -58,20 +58,13 @@ let latest:
   | { byId: Map<string, CapabilityTableRollup>; isLoading: boolean; error: Error | null }
   | undefined;
 
-const Harness = ({
-  capabilities,
-  edges = []
-}: {
-  capabilities: EntityRecord[];
-  edges?: { parentId: string; childId: string }[];
-}) => {
+const Harness = ({ capabilities }: { capabilities: EntityRecord[] }) => {
   latest = useCapabilityRollups(
     'ws-1',
     'business_capability',
     'business-capability-supports-entity-rel',
     capabilities,
-    ROLLUPS,
-    edges
+    ROLLUPS
   );
   return null;
 };
@@ -169,7 +162,7 @@ describe('useCapabilityRollups', () => {
     expect(appsCall?.[0].body.metric.sourceSchemaId).toBe(
       'business-capability-supports-entity-rel'
     );
-    expect(appsCall?.[0].body.metric.path?.[0]?.relationSchemaId).toBe(
+    expect(appsCall?.[0].body.metric.traversalPath?.[1]?.relationSchemaId).toBe(
       'business-capability-supports-entity-rel'
     );
   });
@@ -223,8 +216,8 @@ describe('useCapabilityRollups', () => {
       ({ body }: { body: { boxEntityIds: string[]; metric: { sourceContext?: string } } }) => {
         const values = Object.fromEntries(body.boxEntityIds.map(id => [id, 0]));
         if (body.metric.sourceContext === 'relation') {
-          // Raw per-box counts: only the leaves link applications directly.
-          return Promise.resolve(resultsFor({ ...values, 'cap-2': 2, 'cap-3': 3 }));
+          // The metrics endpoint now applies the containment + relation traversal server-side.
+          return Promise.resolve(resultsFor({ ...values, 'cap-1': 5, 'cap-2': 5, 'cap-3': 3 }));
         }
         return Promise.resolve(resultsFor(values));
       }
@@ -233,13 +226,7 @@ describe('useCapabilityRollups', () => {
     await act(async () => {
       root.render(
         <QueryClientProvider client={queryClient}>
-          <Harness
-            capabilities={[capability('cap-1'), capability('cap-2'), capability('cap-3')]}
-            edges={[
-              { parentId: 'cap-1', childId: 'cap-2' },
-              { parentId: 'cap-2', childId: 'cap-3' }
-            ]}
-          />
+          <Harness capabilities={[capability('cap-1'), capability('cap-2'), capability('cap-3')]} />
         </QueryClientProvider>
       );
     });

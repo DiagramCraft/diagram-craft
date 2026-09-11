@@ -14,7 +14,7 @@ import { buildContainmentChildrenIndex, collectDescendantIds } from './metricDes
 const MAX_TRAVERSAL_RESULTS = 5000;
 
 export type MetricTerminal =
-  | { kind: 'entity'; entity: EntityDbResult }
+  | { kind: 'entity'; entity: EntityDbResult; isLeaf?: boolean }
   | { kind: 'relation'; relation: RelationDbResult; schema: RelationSchemaDbResult };
 
 export type MetricTraversalResult = {

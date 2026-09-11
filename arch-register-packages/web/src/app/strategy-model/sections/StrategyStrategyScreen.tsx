@@ -244,8 +244,7 @@ export const StrategyStrategyScreen = () => {
     strategyConfig?.businessCapabilitySchemaId ?? null,
     strategyConfig?.businessCapabilitySupportsEntityRelationSchemaId ?? null,
     dependsOnCapabilities,
-    view.rollups,
-    tree.data?.edges ?? []
+    view.rollups
   );
   const rollupFor = (id: string) => rollups.byId.get(id) ?? EMPTY_ROLLUP;
 

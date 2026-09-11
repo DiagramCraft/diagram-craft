@@ -34,7 +34,7 @@ export type PathStep =
       // `direction` identifies the endpoint occupied by the current entity.
       kind: 'unboundTypedRelation';
       relationSchemaId: string;
-      direction: 'in' | 'out';
+      direction: 'in' | 'out' | 'both';
       filter?: QueryNode;
     }
   | {
@@ -116,7 +116,7 @@ export const pathStepSchema: z.ZodType<PathStep> = z.lazy(() =>
     z.object({
       kind: z.literal('unboundTypedRelation'),
       relationSchemaId: z.string(),
-      direction: z.enum(['in', 'out']),
+      direction: z.enum(['in', 'out', 'both']),
       filter: queryNodeSchema.optional()
     }),
     z.object({

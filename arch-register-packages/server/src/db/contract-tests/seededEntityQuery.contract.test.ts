@@ -1,4 +1,4 @@
-import { expect, it } from 'vitest';
+import { afterAll, expect, it, vi } from 'vitest';
 import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import { seedBootstrapData } from '../bootstrapSeed';
 import { seededEntities, seededProjects, seededWorkspaces } from '../seedFixtures';
@@ -12,6 +12,15 @@ import {
   listRelationsWithCount
 } from '../../domain/catalog/entityQueryOperations';
 import { getEntityJsonProjection } from '../../domain/catalog/entityProjectionOperations';
+
+// Seed entities materialize time-dependent derived fields while this module is imported. Keep
+// the worked-example statuses stable as the real calendar advances, without replacing real timers
+// used by the database drivers.
+vi.hoisted(() => {
+  vi.useFakeTimers({ now: new Date('2026-08-25T00:00:00.000Z'), toFake: ['Date'] });
+});
+
+afterAll(() => vi.useRealTimers());
 
 const noopStorage: StorageAdapter = {
   read: async () => Buffer.alloc(0),
