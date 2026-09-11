@@ -88,8 +88,7 @@ export const StrategyCapabilityMapScreen = () => {
     businessCapabilitySchemaId,
     strategyConfig?.businessCapabilitySupportsEntityRelationSchemaId ?? null,
     items,
-    view.rollups,
-    tree.data?.edges ?? []
+    view.rollups
   );
   const rollupFor = (uid: string) => rollups.byId.get(uid) ?? EMPTY_ROLLUP;
 

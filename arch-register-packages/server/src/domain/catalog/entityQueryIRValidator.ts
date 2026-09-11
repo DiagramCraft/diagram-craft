@@ -790,7 +790,7 @@ const projectionAlias = (projection: NonNullable<EntityQuery['projections']>[num
         case 'typedRelation':
           return `${step.fieldId}[${step.relationSchemaId}]`;
         case 'unboundTypedRelation':
-          return `${step.direction === 'in' ? '->' : '<-'}${step.relationSchemaId}`;
+          return `${step.direction === 'both' ? '<->' : step.direction === 'in' ? '->' : '<-'}${step.relationSchemaId}`;
         case 'endpoint':
           return `endpoint(${step.direction})`;
         case 'relationForward':

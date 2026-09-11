@@ -189,7 +189,7 @@ const stepName = (
     case 'relationBackward':
       return `<-${printSchemaRef(relationSchemaNameById(relationSchemas, step.relationSchemaId))}.${step.fieldId}`;
     case 'unboundTypedRelation':
-      return `${step.direction === 'in' ? '->' : '<-'}${printSchemaRef(
+      return `${step.direction === 'both' ? '<->' : step.direction === 'in' ? '->' : '<-'}${printSchemaRef(
         relationSchemaNameById(relationSchemas, step.relationSchemaId)
       )}`;
     case 'endpoint':
@@ -369,7 +369,7 @@ const printPathSteps = (
         options,
         level
       );
-      return `${step.direction === 'in' ? '->' : '<-'}${relationName}${filterText}`;
+      return `${step.direction === 'both' ? '<->' : step.direction === 'in' ? '->' : '<-'}${relationName}${filterText}`;
     }
     if (step.kind === 'containmentSubtree') {
       throw new Error(

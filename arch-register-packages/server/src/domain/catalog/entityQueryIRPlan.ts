@@ -77,6 +77,7 @@ const collectRelationSourceConstraintsFromPath = (
       constraints.set(JSON.stringify(constraint), constraint);
     }
     if (step.kind === 'unboundTypedRelation') {
+      if (step.direction === 'both') return;
       const constraint: RelationSourceConstraint = {
         relationSchemaId: step.relationSchemaId,
         ownerDirection: step.direction
@@ -266,7 +267,14 @@ export const resolveProjectionPathSchemaInfo = (
     if (step.kind === 'typedRelation' || step.kind === 'unboundTypedRelation') {
       const relationSchema = relationSchemas.get(step.relationSchemaId);
       const endpointSchemaIds =
-        step.direction === 'out' ? relationSchema?.in_schema_ids : relationSchema?.out_schema_ids;
+        step.direction === 'out'
+          ? relationSchema?.in_schema_ids
+          : step.direction === 'in'
+            ? relationSchema?.out_schema_ids
+            : [
+                ...resolveEndpointSchemaIds(relationSchema?.in_schema_ids, schemas),
+                ...resolveEndpointSchemaIds(relationSchema?.out_schema_ids, schemas)
+              ];
       const targetSchemaIds = [...resolveEndpointSchemaIds(endpointSchemaIds, schemas)];
       currentEntitySchemaIds = availableSchemaIds(targetSchemaIds, schemas);
       currentRelationSchemaIds = [];

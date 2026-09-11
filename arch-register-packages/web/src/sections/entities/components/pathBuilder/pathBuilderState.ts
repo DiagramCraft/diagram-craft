@@ -178,8 +178,17 @@ export const targetSchemaIdsForStep = (
     case 'typedRelation':
     case 'unboundTypedRelation': {
       const relation = relationSchemas.find(candidate => candidate.id === step.relationSchemaId);
+      const endpointDirection =
+        step.direction === 'both' ? undefined : oppositeEndpoint(step.direction);
       return relation
-        ? resolveEndpointSchemaIds(relation, oppositeEndpoint(step.direction), schemas)
+        ? endpointDirection == null
+          ? [
+              ...new Set([
+                ...resolveEndpointSchemaIds(relation, 'in', schemas),
+                ...resolveEndpointSchemaIds(relation, 'out', schemas)
+              ])
+            ]
+          : resolveEndpointSchemaIds(relation, endpointDirection, schemas)
         : [];
     }
     default:
@@ -247,7 +256,7 @@ const stepDirection = (step: PathStep): 'in' | 'out' => {
       return 'out';
     case 'typedRelation':
     case 'unboundTypedRelation':
-      return step.direction;
+      return step.direction === 'both' ? 'in' : step.direction;
     // Grouped alongside 'backward'/'unboundTypedRelation' in the entity-side 'out' bucket - a
     // relationBackward field is owned by another schema (the relation), same as those two kinds.
     case 'relationBackward':
@@ -462,8 +471,27 @@ const nextSchemaScope = (
     case 'typedRelation':
     case 'unboundTypedRelation': {
       const relation = relationSchemas.find(candidate => candidate.id === step.relationSchemaId);
+      if (step.kind === 'unboundTypedRelation' && step.direction === 'both') {
+        return relation
+          ? [
+              ...new Set([
+                ...resolveEndpointSchemaIds(relation, 'in', schemas),
+                ...resolveEndpointSchemaIds(relation, 'out', schemas)
+              ])
+            ]
+          : 'any';
+      }
+      const endpointDirection =
+        step.direction === 'both' ? undefined : oppositeEndpoint(step.direction);
       return relation
-        ? resolveEndpointSchemaIds(relation, oppositeEndpoint(step.direction), schemas)
+        ? endpointDirection == null
+          ? [
+              ...new Set([
+                ...resolveEndpointSchemaIds(relation, 'in', schemas),
+                ...resolveEndpointSchemaIds(relation, 'out', schemas)
+              ])
+            ]
+          : resolveEndpointSchemaIds(relation, endpointDirection, schemas)
         : 'any';
     }
     default:

@@ -39,7 +39,7 @@ export const effectiveProjectionAlias = (projection: ProjectionField): string =>
         case 'typedRelation':
           return step.fieldId;
         case 'unboundTypedRelation':
-          return `${step.direction === 'in' ? '->' : '<-'}${step.relationSchemaId}`;
+          return `${step.direction === 'both' ? '<->' : step.direction === 'in' ? '->' : '<-'}${step.relationSchemaId}`;
         case 'relationForward':
           return step.fieldId;
         case 'relationBackward':

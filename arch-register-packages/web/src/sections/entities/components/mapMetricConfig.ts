@@ -6,6 +6,7 @@ import type {
   MetricSource,
   MetricTraversalStep
 } from '@arch-register/api-types/metricContract';
+import type { PathStep } from '@arch-register/api-types/entityQueryIR';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
 import type { FieldGroupAccess, FieldGroupAccessControl } from '@arch-register/permissions';
 import type { JoinedAssessmentContext } from './entityFieldSources';
@@ -48,13 +49,14 @@ export const parseMetricConfig = (raw: unknown): MetricConfig | null => {
   const sourceSchemaId = candidate.sourceSchemaId;
   const sourceContext = candidate.sourceContext;
   const path = candidate.path;
+  const traversalPath = candidate.traversalPath;
   const aggregation = candidate.aggregation;
   const source = candidate.source as Record<string, unknown> | undefined;
   if (typeof sourceSchemaId !== 'string' || typeof aggregation !== 'string' || !source) {
     return null;
   }
   if (
-    !['count', 'sum', 'average', 'minimum', 'maximum', 'worst', 'percentage'].includes(
+    !['count', 'leafCount', 'sum', 'average', 'minimum', 'maximum', 'worst', 'percentage'].includes(
       aggregation
     ) ||
     typeof source.kind !== 'string' ||
@@ -89,12 +91,32 @@ export const parseMetricConfig = (raw: unknown): MetricConfig | null => {
         );
       }) as MetricTraversalStep[])
     : undefined;
+  const parsedTraversalPath = Array.isArray(traversalPath)
+    ? (traversalPath.filter(step => {
+        if (step == null || typeof step !== 'object') return false;
+        const candidateStep = step as Record<string, unknown>;
+        return [
+          'forward',
+          'backward',
+          'typedRelation',
+          'unboundTypedRelation',
+          'endpoint',
+          'relationForward',
+          'relationBackward',
+          'containmentSubtree'
+        ].includes(String(candidateStep.kind));
+      }) as PathStep[])
+    : undefined;
   return {
     sourceSchemaId,
     source: source as MetricSource,
     aggregation: aggregation as MetricAggregation,
     ...(sourceContext === 'entity' || sourceContext === 'relation' ? { sourceContext } : {}),
     ...(parsedPath ? { path: parsedPath } : {}),
+    ...(parsedTraversalPath ? { traversalPath: parsedTraversalPath } : {}),
+    ...(candidate.traversalPathMode === 'exact' || candidate.traversalPathMode === 'suffixes'
+      ? { traversalPathMode: candidate.traversalPathMode }
+      : {}),
     ...(worstDirection === 'low' || worstDirection === 'high' ? { worstDirection } : {}),
     ...(typeof targetCurrency === 'string' && /^[A-Z]{3}$/.test(targetCurrency)
       ? { targetCurrency }

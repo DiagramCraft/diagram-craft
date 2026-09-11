@@ -45,7 +45,15 @@ export const DEFAULT_ENTITY_TRAVERSAL_MAX_NODES = 5_000;
 export type EntityTraversalPathTerminal = 'entity' | 'relation';
 
 export type EntityTraversalRoot =
-  | { kind: 'ids'; entityIds: readonly string[] }
+  | {
+      kind: 'ids';
+      entityIds: readonly string[];
+      /** Optional query scope applied while selecting the explicit roots. */
+      scope?: Pick<
+        EntityQuery,
+        'assessmentId' | 'projectId' | 'projectScope' | 'asOf' | 'includePlannedChanges'
+      >;
+    }
   | { kind: 'entityQuery'; entityQuery: EntityQuery };
 
 export type EntityTraversalSourceField = {
@@ -62,6 +70,8 @@ export type EntityTraversalSourceField = {
 export type EntityTraversalPath = {
   id: string;
   steps: readonly PathStep[];
+  /** Override the context implied by the last step for source projection/metric terminals. */
+  terminalContext?: EntityTraversalPathTerminal;
   sourceFields?: readonly EntityTraversalSourceField[];
 };
 
@@ -143,8 +153,9 @@ export class EntityTraversalLimitError extends Error {
 
 type TraversalRow = EntityQueryDbResult;
 
-const emptyRootQuery = (): EntityQuery => ({
+const emptyRootQuery = (scope?: EntityTraversalRoot & { kind: 'ids' }): EntityQuery => ({
   root_kind: 'entity',
+  ...(scope?.scope ?? {}),
   root: { kind: 'and', children: [] }
 });
 
@@ -178,7 +189,12 @@ const entityFieldIsVisible = (
   schemas: SchemaCatalog,
   authCtx: WorkspaceAuthorizationContext | null
 ): boolean => {
-  if (ENTITY_PSEUDO_FIELD_IDS.has(fieldId) || fieldId.startsWith('_assessment:')) return true;
+  if (
+    ENTITY_PSEUDO_FIELD_IDS.has(fieldId) ||
+    fieldId.startsWith('_assessment:') ||
+    fieldId === '_isLeaf'
+  )
+    return true;
   return [...schemas.values()].some(
     schema =>
       schemaFieldById(schema, fieldId) != null && !isFieldViewRestricted(authCtx, schema, fieldId)
@@ -276,17 +292,45 @@ export const validateEntityTraversalPlan = (
     }
     pathIds.add(path.id);
 
-    validatePathSteps(
-      [...path.steps],
-      schemas,
-      relationSchemas,
-      ['paths', pathIndex, 'steps'],
-      0,
-      errors,
-      authCtx,
-      'entity'
+    const genericContainment = path.steps.some(
+      step =>
+        step.kind === 'containmentSubtree' && step.fieldId === '*' && step.ownerSchemaId === '*'
     );
-    const terminal = kindAfterPath([...path.steps], 'entity') as EntityTraversalPathTerminal;
+    if (genericContainment) {
+      if (path.steps.length !== 1) {
+        errors.push({
+          path: ['paths', pathIndex, 'steps'],
+          message: "Wildcard containment traversal must be the path's only step"
+        });
+      }
+    } else {
+      validatePathSteps(
+        [...path.steps],
+        schemas,
+        relationSchemas,
+        ['paths', pathIndex, 'steps'],
+        0,
+        errors,
+        authCtx,
+        'entity'
+      );
+    }
+    const impliedTerminal = kindAfterPath([...path.steps], 'entity') as EntityTraversalPathTerminal;
+    const terminal = path.terminalContext ?? impliedTerminal;
+    if (
+      path.terminalContext != null &&
+      path.terminalContext !== impliedTerminal &&
+      !(
+        path.terminalContext === 'relation' &&
+        (path.steps.at(-1)?.kind === 'typedRelation' ||
+          path.steps.at(-1)?.kind === 'unboundTypedRelation')
+      )
+    ) {
+      errors.push({
+        path: ['paths', pathIndex, 'terminalContext'],
+        message: `Terminal context '${path.terminalContext}' is incompatible with the traversal path`
+      });
+    }
     const aliases = new Set<string>();
     (path.sourceFields ?? []).forEach((source, sourceIndex) => {
       if (source.context !== terminal) {
@@ -407,6 +451,26 @@ const entitySourceValue = (
       return { expression: `${alias}.links`, isJson: true };
     case '_assessment':
       return { expression: `${alias}.assessment_values`, isJson: true };
+    case '_isLeaf': {
+      const childPredicates = [...state.schemas.values()].flatMap(schema =>
+        schema.fields
+          .filter(
+            field =>
+              field.type === 'containment' &&
+              !isFieldViewRestricted(state.authCtx, state.schemas.get(schema.id), field.id)
+          )
+          .map(
+            field =>
+              `( ${alias}_leaf_child.schema_id = ${state.parameters.add(schema.id)} AND ${referenceContainsId(`${alias}_leaf_child`, field.id, `${alias}.id`, state)} )`
+          )
+      );
+      if (childPredicates.length === 0)
+        return { expression: state.dialectAdapter.trueLiteral, isJson: false };
+      return {
+        expression: `(NOT EXISTS (SELECT 1 FROM scoped_entity ${alias}_leaf_child WHERE ${childPredicates.join(' OR ')}))`,
+        isJson: false
+      };
+    }
     default:
       if (fieldId.startsWith('_assessment:')) {
         return {
@@ -568,6 +632,8 @@ const fixedStepCte = (
   previousName: string,
   previousKind: EntityTraversalPathTerminal,
   step: Exclude<PathStep, { kind: 'containmentSubtree' }>,
+  terminalContext: EntityTraversalPathTerminal | undefined,
+  isTerminalStep: boolean,
   state: EntityQuerySqlRenderState
 ): { sql: string; nextKind: EntityTraversalPathTerminal } => {
   const previousAlias = `p_${cteName}`.replace(/[^a-zA-Z0-9_]/g, '_');
@@ -631,19 +697,39 @@ const fixedStepCte = (
             state
           );
     from += ` JOIN scoped_entity ${owner} ON ${owner}.id = ${previousAlias}.current_id`;
-    from += ` JOIN scoped_relation ${relation} ON ${relation}.workspace = ${owner}.workspace AND ${relation}.schema_id = ${relationSchema} AND ${ownerSchema} AND ${ownerId} = ${owner}.id`;
+    const ownerEndpointJoin =
+      step.direction === 'both'
+        ? `(${relation}.in_record_id = ${owner}.id OR ${relation}.out_record_id = ${owner}.id)`
+        : `${ownerId} = ${owner}.id`;
+    const targetEndpointId =
+      step.direction === 'both'
+        ? `CASE WHEN ${relation}.in_record_id = ${owner}.id THEN ${relation}.out_record_id ELSE ${relation}.in_record_id END`
+        : targetId;
+    from += ` JOIN scoped_relation ${relation} ON ${relation}.workspace = ${owner}.workspace AND ${relation}.schema_id = ${relationSchema} AND ${ownerSchema} AND ${ownerEndpointJoin}`;
     if (step.filter)
       from += ` AND ${compileRelationNode(step.filter, relation, step.relationSchemaId, state)}`;
-    from += ` JOIN scoped_entity ${target} ON ${target}.id = ${targetId}`;
-    projection = appendHop(
-      previousAlias,
-      'entity',
-      `${target}.id`,
-      `${target}.schema_id`,
-      `${target}.name`,
-      state
-    );
-    nextKind = 'entity';
+    from += ` JOIN scoped_entity ${target} ON ${target}.id = ${targetEndpointId}`;
+    if (isTerminalStep && terminalContext === 'relation') {
+      projection = appendHop(
+        previousAlias,
+        'relation',
+        `${relation}.id`,
+        `${relation}.schema_id`,
+        'NULL',
+        state
+      );
+      nextKind = 'relation';
+    } else {
+      projection = appendHop(
+        previousAlias,
+        'entity',
+        `${target}.id`,
+        `${target}.schema_id`,
+        `${target}.name`,
+        state
+      );
+      nextKind = 'entity';
+    }
   } else if (step.kind === 'endpoint') {
     if (previousKind !== 'relation')
       throw new Error("'endpoint' traversal step requires a relation");
@@ -812,6 +898,106 @@ const recursiveStepCte = (
   };
 };
 
+/** Recursive containment used by metric rollups. Unlike a named subtree step, this follows every
+ * visible containment field, allowing a heterogeneous hierarchy to change schema at each level. */
+const recursiveGenericContainmentCte = (
+  cteName: string,
+  previousName: string,
+  state: EntityQuerySqlRenderState,
+  schemas: SchemaCatalog,
+  maxDepth: number,
+  maxNodes: number
+): { sql: string; marker: RecursiveMarker } => {
+  const previousAlias = `p_${cteName}`.replace(/[^a-zA-Z0-9_]/g, '_');
+  const seedAlias = `${previousAlias}_seed`;
+  const childAlias = `${previousAlias}_child`;
+  const containmentFields = [...schemas.values()].flatMap(schema =>
+    schema.fields
+      .filter(
+        field =>
+          field.type === 'containment' && !isFieldViewRestricted(state.authCtx, schema, field.id)
+      )
+      .map(field => ({ schemaId: schema.id, fieldId: field.id }))
+  );
+  const childJoin =
+    containmentFields.length === 0
+      ? '1=0'
+      : containmentFields
+          .map(
+            ({ schemaId, fieldId }) =>
+              `( ${childAlias}.schema_id = ${state.parameters.add(schemaId)} AND ${referenceContainsId(childAlias, fieldId, `${previousAlias}.current_id`, state)} )`
+          )
+          .join(' OR ');
+  const seedColumns = [
+    `${previousAlias}.root_id AS root_id`,
+    `'entity' AS current_kind`,
+    `${seedAlias}.id AS current_id`,
+    `${seedAlias}.schema_id AS current_schema_id`,
+    `${seedAlias}.name AS current_name`,
+    `${previousAlias}.recursive_depth AS recursive_depth`,
+    `${previousAlias}.visited_ids AS visited_ids`,
+    `${previousAlias}.provenance_contexts AS provenance_contexts`,
+    `${previousAlias}.provenance_ids AS provenance_ids`,
+    `${previousAlias}.provenance_schema_ids AS provenance_schema_ids`,
+    `${previousAlias}.cycle_detected AS cycle_detected`
+  ];
+  const seed = `SELECT ${seedColumns.join(', ')} FROM ${previousName} ${previousAlias} JOIN scoped_entity ${seedAlias} ON ${seedAlias}.id = ${previousAlias}.current_id`;
+  const maxDepthParam = state.parameters.add(maxDepth);
+  const recursiveColumns = [
+    `${previousAlias}.root_id AS root_id`,
+    `'entity' AS current_kind`,
+    `${childAlias}.id AS current_id`,
+    `${childAlias}.schema_id AS current_schema_id`,
+    `${childAlias}.name AS current_name`,
+    `${previousAlias}.recursive_depth + 1 AS recursive_depth`,
+    `${listAppend(`${previousAlias}.visited_ids`, `${childAlias}.id`, state)} AS visited_ids`,
+    `${listAppendLiteral(`${previousAlias}.provenance_contexts`, 'entity')} AS provenance_contexts`,
+    `${listAppend(`${previousAlias}.provenance_ids`, `${childAlias}.id`, state)} AS provenance_ids`,
+    `${listAppend(`${previousAlias}.provenance_schema_ids`, `${childAlias}.schema_id`, state)} AS provenance_schema_ids`,
+    `${previousAlias}.cycle_detected AS cycle_detected`
+  ];
+  const recursive = `SELECT ${recursiveColumns.join(', ')} FROM ${cteName} ${previousAlias} JOIN scoped_entity ${childAlias} ON (${childJoin}) WHERE ${previousAlias}.recursive_depth < ${maxDepthParam} AND NOT ${listContains(`${previousAlias}.visited_ids`, `${childAlias}.id`, state)}`;
+  const markerName = `${cteName}_limits`;
+  const markerAlias = `m_${cteName.replace(/[^a-zA-Z0-9_]/g, '_')}`;
+  const markerChild = `${markerAlias}_child`;
+  const markerJoin =
+    containmentFields.length === 0
+      ? '1=0'
+      : containmentFields
+          .map(
+            ({ schemaId, fieldId }) =>
+              `( ${markerChild}.schema_id = ${state.parameters.add(schemaId)} AND ${referenceContainsId(markerChild, fieldId, `${markerAlias}.current_id`, state)} )`
+          )
+          .join(' OR ');
+  const cycleMarkerJoin =
+    containmentFields.length === 0
+      ? '1=0'
+      : containmentFields
+          .map(
+            ({ schemaId, fieldId }) =>
+              `( ${markerChild}.schema_id = ${state.parameters.add(schemaId)} AND ${referenceContainsId(markerChild, fieldId, `${markerAlias}.current_id`, state)} )`
+          )
+          .join(' OR ');
+  const nodeParam = state.parameters.add(maxNodes);
+  const markerDepthParam = state.parameters.add(maxDepth);
+  const marker = [
+    `${markerName} AS (SELECT ${markerAlias}.root_id AS root_id,`,
+    `CASE WHEN COUNT(*) > ${nodeParam} THEN 1 ELSE 0 END AS node_exceeded,`,
+    `CASE WHEN MAX(CASE WHEN ${markerAlias}.recursive_depth >= ${markerDepthParam} AND EXISTS (SELECT 1 FROM scoped_entity ${markerChild} WHERE (${markerJoin}) AND NOT ${listContains(`${markerAlias}.visited_ids`, `${markerChild}.id`, state)}) THEN 1 ELSE 0 END) = 1 THEN 1 ELSE 0 END AS depth_exceeded,`,
+    `CASE WHEN MAX(CASE WHEN EXISTS (SELECT 1 FROM scoped_entity ${markerChild} WHERE (${cycleMarkerJoin}) AND ${listContains(`${markerAlias}.visited_ids`, `${markerChild}.id`, state)}) THEN 1 ELSE 0 END) = 1 THEN 1 ELSE 0 END AS cycle_detected`,
+    `FROM ${cteName} ${markerAlias} GROUP BY ${markerAlias}.root_id)`
+  ].join(' ');
+  return {
+    sql: `${cteName} AS (${seed} UNION ALL ${recursive}), ${marker}`,
+    marker: {
+      name: markerName,
+      depthExceeded: 'depth_exceeded',
+      nodeExceeded: 'node_exceeded',
+      cycleDetected: 'cycle_detected'
+    }
+  };
+};
+
 const mappedColumns = (
   entityAlias: string,
   relationAlias: string,
@@ -912,7 +1098,8 @@ const compileTraversalSql = (
   authCtx: WorkspaceAuthorizationContext | null,
   collectionEntityIds: readonly string[] | undefined
 ): { sql: string; params: unknown[] } => {
-  const rootQuery = plan.root.kind === 'entityQuery' ? plan.root.entityQuery : emptyRootQuery();
+  const rootQuery =
+    plan.root.kind === 'entityQuery' ? plan.root.entityQuery : emptyRootQuery(plan.root);
   const fragments = buildQueryFragments(
     rootQuery,
     schemas,
@@ -965,19 +1152,37 @@ const compileTraversalSql = (
     path.steps.forEach((step, stepIndex) => {
       const cteName = `traversal_path_${pathIndex}_step_${stepIndex}`;
       if (step.kind === 'containmentSubtree') {
-        const recursive = recursiveStepCte(
-          cteName,
-          previousName,
-          step,
-          state,
-          plan.maxDepth ?? DEFAULT_ENTITY_TRAVERSAL_MAX_DEPTH,
-          plan.maxNodes ?? DEFAULT_ENTITY_TRAVERSAL_MAX_NODES
-        );
+        const recursive =
+          step.fieldId === '*' && step.ownerSchemaId === '*'
+            ? recursiveGenericContainmentCte(
+                cteName,
+                previousName,
+                state,
+                schemas,
+                plan.maxDepth ?? DEFAULT_ENTITY_TRAVERSAL_MAX_DEPTH,
+                plan.maxNodes ?? DEFAULT_ENTITY_TRAVERSAL_MAX_NODES
+              )
+            : recursiveStepCte(
+                cteName,
+                previousName,
+                step,
+                state,
+                plan.maxDepth ?? DEFAULT_ENTITY_TRAVERSAL_MAX_DEPTH,
+                plan.maxNodes ?? DEFAULT_ENTITY_TRAVERSAL_MAX_NODES
+              );
         ctes.push(recursive.sql);
         markers.push(recursive.marker);
         previousKind = 'entity';
       } else {
-        const fixed = fixedStepCte(cteName, previousName, previousKind, step, state);
+        const fixed = fixedStepCte(
+          cteName,
+          previousName,
+          previousKind,
+          step,
+          path.terminalContext,
+          stepIndex === path.steps.length - 1,
+          state
+        );
         ctes.push(fixed.sql);
         previousKind = fixed.nextKind;
       }
@@ -1198,7 +1403,9 @@ export const executeEntityTraversal = async (
 ): Promise<EntityTraversalResult> => {
   const [schemaRows, relationSchemaRows, collectionEntityIds] = await Promise.all([
     db.catalog.listSchemas(workspace),
-    db.relation.listRelationSchemas(workspace),
+    db.relation?.listRelationSchemas
+      ? db.relation.listRelationSchemas(workspace)
+      : Promise.resolve<RelationSchemaDbResult[]>([]),
     plan.root.kind === 'entityQuery' && plan.root.entityQuery.collectionId && authCtx
       ? db.view.listCollectionEntityIds(
           authCtx.userId,

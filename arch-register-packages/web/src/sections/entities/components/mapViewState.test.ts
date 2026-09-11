@@ -471,7 +471,8 @@ describe('map view state', () => {
         kind: 'typedRelation',
         fieldId: 'backup-contract',
         relationSchemaId: 'system-contract',
-        direction: 'in'
+        direction: 'in',
+        ownerSchemaIds: ['system']
       }
     ]);
   });

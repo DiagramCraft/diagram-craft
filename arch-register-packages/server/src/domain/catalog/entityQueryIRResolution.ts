@@ -53,7 +53,9 @@ export const RELATION_PSEUDO_FIELD_IDS = new Set([
   '_inEntityId',
   '_outEntityId',
   '_createdAt',
-  '_updatedAt'
+  '_updatedAt',
+  '_owner',
+  '_lifecycle'
 ]);
 
 /**
