@@ -195,9 +195,7 @@ const stepName = (
     case 'endpoint':
       return step.direction === 'in' ? '_in' : '_out';
     case 'containmentSubtree':
-      throw new Error(
-        "The structured 'containmentSubtree' path step has no text syntax yet; use the traversal API"
-      );
+      return `subtree(${step.fieldId})`;
   }
 };
 
@@ -372,9 +370,10 @@ const printPathSteps = (
       return `${step.direction === 'both' ? '<->' : step.direction === 'in' ? '->' : '<-'}${relationName}${filterText}`;
     }
     if (step.kind === 'containmentSubtree') {
-      throw new Error(
-        "The structured 'containmentSubtree' path step has no text syntax yet; use the traversal API"
-      );
+      const field = schemaFieldById(schemas.get(step.ownerSchemaId), step.fieldId);
+      schemaId = field && isReferenceOrContainmentField(field) ? field.schemaId : undefined;
+      relationSchemaId = undefined;
+      return `subtree(${step.fieldId})`;
     }
     const relationSchema = relationSchemas.get(step.relationSchemaId);
     const targetSchemaIds =
@@ -800,9 +799,33 @@ export const printEntityQueryText = (
           0,
           true
         );
-    if (synthesized.length === 0) return rootText;
+    const queryColumns = (query.projections ?? [])
+      .filter(
+        (projection): projection is Extract<ProjectionField, { kind: 'path' | 'aggregate' }> =>
+          'kind' in projection && (projection.kind === 'path' || projection.kind === 'aggregate')
+      )
+      .map(projection => {
+        const pathText = renderCaptureTail(projection.path, null, schemas, relationSchemas);
+        if (projection.kind === 'path') {
+          return `path ${pathText}${projection.alias !== undefined ? ` as ${quoteString(projection.alias)}` : ''}`;
+        }
+        const terminal = projection.terminal === 'relation' ? 'relation ' : '';
+        return `${projection.reducer}(${terminal}path ${pathText})${
+          projection.alias !== undefined ? ` as ${quoteString(projection.alias)}` : ''
+        }`;
+      });
+    const columnsText = queryColumns.length > 0 ? `columns ${queryColumns.join(', ')}` : '';
+    if (synthesized.length === 0 && columnsText.length === 0) return rootText;
     const extra = synthesized.join(printOptions.pretty ? '\nAND ' : ' AND ');
-    return rootText ? `${rootText}${printOptions.pretty ? '\nAND ' : ' AND '}${extra}` : extra;
+    const synthesizedText =
+      extra.length > 0
+        ? rootText
+          ? `${rootText}${printOptions.pretty ? '\nAND ' : ' AND '}${extra}`
+          : extra
+        : rootText;
+    return columnsText
+      ? `${synthesizedText}${synthesizedText ? (printOptions.pretty ? '\n' : ' ') : ''}${columnsText}`
+      : synthesizedText;
   } finally {
     activeColumnsByStep = null;
   }
@@ -826,6 +849,9 @@ const planProjectionColumns = (
   collectRootPathOccurrences(query.root, occurrences);
 
   for (const projection of projections) {
+    if ('kind' in projection && (projection.kind === 'path' || projection.kind === 'aggregate')) {
+      continue;
+    }
     const anchor = pickAnchorOccurrence(occurrences, projection);
     if (anchor && anchor.length > 0) {
       const tailSteps = projection.path.slice(anchor.length);

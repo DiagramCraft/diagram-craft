@@ -71,7 +71,7 @@ traversal and explicit boolean operators for grouping (unlike GitHub's implicit-
 ### 4.1 EBNF
 
 ```ebnf
-query           := or_expr
+query           := or_expr [ query_columns_clause ]
 or_expr         := and_expr ( "OR" and_expr )*
 and_expr        := unary_expr ( ["AND"] unary_expr )*      (* juxtaposition = implicit AND *)
 unary_expr      := "NOT" unary_expr
@@ -90,11 +90,16 @@ segment         := step [ "[" scope_body "]" ]               (* optional scoped 
 scope_body      := or_expr [ columns_clause ]                (* filter, optionally with projected columns *)
                  | columns_clause                            (* capture-only bracket: an unfiltered traversal *)
 columns_clause  := "columns" capture ( "," capture )*        (* projected columns, see 4.6 — runs to the "]" *)
+query_columns_clause := "columns" query_column ( "," query_column )*
+query_column    := [ "count" | "countDistinct" ] "(" [ ( "entity" | "relation" ) ] "path" capture_path ")" [ "as" quoted_string ]
+                 | "path" capture_path [ "as" quoted_string ]
+                 | capture
 capture         := [ "path" ] capture_path [ "as" quoted_string ]
 capture_path    := capture_step ( "." capture_step )*        (* like `path`, but no "[...]" scopes *)
 capture_step    := field_id
                  | "<-" [ schema_ref "." ] field_id
                  | "->" relation_ref | "<-" relation_ref
+                 | "subtree" "(" field_id ")"                  (* root-inclusive containment walk; query columns only *)
 step            := field_id
                  | "<-" [ schema_ref "." ] field_id            (* reverse entity-field traversal *)
                  | "->" relation_ref                            (* outgoing typed relation *)
@@ -298,10 +303,10 @@ exports retain the complete ordered list (CSV uses a JSON array).
       `ownerSchemaId` is resolved once, at save/parse time, not re-resolved on every read) — but re-editing that view's
       text later would surface the new ambiguity.
 
-There is deliberately no recursive or depth-bounded traversal primitive in the human-authored text syntax (no
-`ancestors`/`descendants`, no generic undirected relation walk). The server-only traversal API adds the narrower,
-structured `containmentSubtree` step for explicitly named, bounded rollups; it is not a text-language feature and is
-not accepted by legacy `includePath` projections. Fixed-length chains remain the right shape for the examples below.
+The query-level `columns` clause adds a deliberately narrow recursive form: `subtree(field_id)` is a root-inclusive
+walk of the named containment field. It is only valid in a query column, not in a filter predicate or a legacy scoped
+`columns` capture. The walk is executed through the shared traversal contract, with its depth/node limits and
+permission rules; fixed-length chains remain the right shape for ordinary filters and legacy projections.
 
 ### 4.3 Multiple values per relation, and scoping conditions to the same instance
 
@@ -407,15 +412,12 @@ too). Projection lives alongside a query as its own field, the natural generaliz
 paths instead of bare ids — reusing the parser/validator/bounding already built for filter paths (§4.1, §4.2, §7), not a
 new syntax to design from scratch.
 
-**Text grammar (resolved, see §10).** A `SELECT`-style *trailing* clause is still deliberately avoided. Instead,
-projection is expressed by a `columns` sub-clause **inside a traversal segment's `[...]` scope** (§4.1):
-`technology_releases[eol_date < date("2026-06-30") columns eol_date as "TR EOL", latest_version]`, or a capture-only
-bracket `technology_releases.technology[columns radar_status]` for a path the filter never walks. Because the clause
-physically sits on one `[...]` scope, each projected path is bound to exactly that segment's existential witness — the
-"real subtlety" below does not arise for the in-bracket form. The parser yields `EntityQuery.projections` and the
-printer emits `columns` for every projection whose path it can anchor to a segment in `root`; a projection with no
-anchorable segment (or needing multi-witness disambiguation) stays IR/UI-managed and rides the Simple⇄Advanced
-round-trip out of band.
+**Text grammar.** Existing witness-bound projections remain available by placing `columns` inside a traversal
+segment's `[...]` scope (§4.1). Query-level columns are additionally available after the filter expression for
+standalone paths and traversal metrics, for example:
+`schema:Capability columns countDistinct(path subtree(parent).supported_entities) as "Apps"`.
+Query-level columns are evaluated per matched root through the shared traversal contract, rather than being bound to a
+filter segment. The parser yields `EntityQuery.projections`, and the printer emits both forms canonically.
 
 **The behavior that actually motivates this section: reuse the join, don't repeat it.** A projected field's `path`
 is structurally the same shape as a filter predicate's `path` — a chain of `PathStep`s (§5). When a projection's path is
@@ -457,14 +459,34 @@ type ProjectionField = {
 };
 ```
 
+Query-level traversal columns use two additive variants:
+
+```ts
+type ProjectionField =
+  | LegacyScalarProjectionField
+  | { kind: 'path'; path: PathStep[]; alias?: string }
+  | {
+      kind: 'aggregate';
+      path: PathStep[];
+      reducer: 'count' | 'countDistinct';
+      terminal: 'entity' | 'relation';
+      alias?: string;
+    };
+```
+
+`path` preserves every matched root-to-terminal occurrence and its provenance. `count` counts occurrences, including
+repeated terminals reached through different branches; `countDistinct` deduplicates terminal identity by context and
+id. Aggregates reduce values per root without changing root matching. Aliases are optional, must be non-empty when
+supplied, and must be unique within a query.
+
 `EntityQuery.projections?: ProjectionField[]` sits alongside `root`, not inside it — orthogonal to matching, absent
 meaning "today's default field set" for whatever's rendering the result.
 
 **Multi-valued output shape.** When a projected path passes through a `maxCount > 1` relation, a matched root entity can
 have more than one value at that path. Aggregate into an array per root entity by default (`value: unknown[]`), rather
 than exploding into one result row per traversal branch — row-exploding would break the "one row per entity" assumption
-table/cards/CSV already rely on. A reducer (first/min/max/count — e.g.
-"earliest EOL date across all releases") is a real, useful follow-up but not designed here; see §11.
+table/cards/CSV already rely on. Query-level `count` and `countDistinct` are the intentionally supported reducers;
+ordering-sensitive and generic numeric reducers remain out of scope.
 
 Bounding (§7) and permission handling (§8) both need to account for projection paths, not just `root` — a wide-open
 dotted chain in a columns list is exactly as much a query-cost and visibility concern as one in a filter.
@@ -523,7 +545,7 @@ type PathStep =
     };
 
 // The text compiler emits only fixed named hops. The server-only traversal compiler additionally accepts an
-// explicitly named, bounded `containmentSubtree` step; it has no human-authored syntax and is not a legacy projection
+// explicitly named, bounded `containmentSubtree` step; text uses it only in query-level columns and not in legacy projections
 // path. See §7 and §11.
 
 // `ownerSchemaId` is required, not optional: a valid IR never contains an unresolved backward step. The text
@@ -740,22 +762,20 @@ value `"assess"` at compile time (§4.1) — both reach the same seeded entities
 
 ## 7. Bounding traversal
 
-The text query language still has no generic `ancestors`/`descendants`/`related` syntax. Its authored paths are
-fixed-length chains of named hops (§5), known statically at compile time from the query text/IR alone. The shared
-server-side traversal API introduced by #3223 is a separate structured execution surface: it adds an explicitly named
-`containmentSubtree` step for bounded, root-inclusive capability rollups, without making recursive traversal available
-through the human text syntax or the legacy `includePath` projection shape.
+The text query language still has no generic `ancestors`/`descendants`/`related` syntax. Its filter paths are
+fixed-length chains of named hops (§5). Query-level `columns` may use the explicitly named `subtree(field_id)` step,
+which compiles to the shared `containmentSubtree` traversal contract for bounded, root-inclusive rollups; legacy
+`includePath` captures and filter predicates remain fixed-length.
 
 What's still worth bounding, and why it's a much smaller concern than before:
 
-- **Hop count.** A path may contain at most `MAX_PATH_HOPS` segments (proposed: 6), enforced at compile time (reject
+- **Hop count.** A fixed path may contain at most `MAX_PATH_HOPS` segments (proposed: 6), enforced at compile time (reject
   before it reaches SQL). This isn't defending against runaway recursion anymore — it's capping query-plan size and join
   fan-out, since each hop through a `maxCount > 1` relation can widen the candidate set, and hops can nest inside
   `[...]` filters (§4.3), which themselves can contain further hops. A shallow, fixed cap is enough; there's no cyclic
   worst case to defend against the way a recursive primitive would have had. This cap applies to every
-  `ProjectionField.path` (§4.6) exactly as it does to a predicate's `path` — a columns list is just as capable of
-  requesting a deep, expensive join chain as a filter is, and join reuse between the two (§4.6)
-  doesn't change the cost of a path that isn't actually shared with anything in `root`.
+  `ProjectionField.path` (§4.6) exactly as it does to a predicate's `path`. Query-level recursive steps use the
+  traversal API's separate `maxDepth` and `maxNodes` limits rather than being flattened into fixed hops.
 
 This is a compile-time constant shared between the text parser and the structured-IR validator, so a hand-built IR (from
 the visual filter builder) can't bypass a limit only enforced in the text parser.
@@ -824,7 +844,9 @@ The v1 design described here is implemented in the repository:
   relation-field projections. Relation schemas and fields are permission-checked before parsing, validation, saved-view
   persistence, and execution. Typed relation queries are not available with `asOf` because relation instance history
   is not yet reconstructed; entity-valued relation fields are deferred to #2670.
-- The text compiler supports parsing and canonical printing, and is exposed through the entity-query API.
+- The text compiler supports parsing and canonical printing, including query-level `path`/`count`/`countDistinct`
+  columns and root-inclusive `subtree(field)` paths, and is exposed through the entity-query API. Recursive and
+  aggregate columns are advanced-only in the visual builder and are preserved as read-only expressions.
 - The server exposes a shared `EntityTraversalPlan`/`EntityTraversalResult` contract for batched entity roots. Plans
   can use explicit ids or an entity-rooted `EntityQuery`, fixed PathStep chains, and explicitly named recursive
   containment. Results are grouped by root and path, preserve every root-to-terminal occurrence and its entity/relation
@@ -844,7 +866,7 @@ predicate, while #2315 uses the identity-anchored forward-then-containment patte
 requires a separate endpoint or bespoke traversal implementation.
 
 Generic recursive `ancestors(...)`/`descendants(...)` text traversal remains deliberately deferred as described in §11;
-the server-only #3223 primitive is limited to an explicitly named containment field.
+the supported text form is limited to an explicitly named containment field in query-level columns.
 
 ## 10. Open questions (carried over from the issue, not resolved here)
 
@@ -861,11 +883,10 @@ with a clear reason they're out of v1.
   it renders read-only and keeps in Advanced (text) mode, where the raw text is authoritative. So the set of
   builder-authored queries is a subset of the text-representable ones, and no lossy "no exact text form" state is
   needed. Projections are the one part carried across a Simple⇄Advanced toggle out-of-band (next point).
-- ~~Whether projection (§4.6) needs any *text* grammar syntax at all~~ — **resolved: yes.** Projection is expressed by
-  a `columns` sub-clause inside a segment's `[...]` scope (§4.1, §4.6), not a trailing clause. The parser yields
-  `EntityQuery.projections` and `printEntityQueryText` emits `columns` for every projection it can anchor to a segment
-  in `root`. The query UI's out-of-band `projections` carry-through across a Simple⇄Advanced toggle is now only a
-  fallback for projections with no representable segment (path-less projections; the multi-witness case below).
+- ~~Whether projection (§4.6) needs any *text* grammar syntax at all~~ — **resolved: yes.** Legacy witness-bound
+  projection is expressed by a `columns` sub-clause inside a segment's `[...]` scope, while standalone path and
+  aggregate columns use the query-level `columns` clause. The parser yields `EntityQuery.projections` and the printer
+  emits both forms canonically. Recursive and aggregate columns remain Advanced-only in the visual builder.
 - Exactly how a projection path gets bound to a specific witness when the same multi-valued relation is constrained by
   more than one independent existential in `root` (§4.6's "real subtlety"). For the **in-bracket `columns` form this is
   now structural** — the clause sits on one specific `[...]` scope, so it binds that scope's witness. The open part is
@@ -878,11 +899,9 @@ Features considered during design and deliberately left out of v1, with enough d
 shows up — none of them are required by #2317, #2300, or #2315 as currently written, and adding them speculatively would
 cost real complexity (see each item) for no driving case.
 
-- **Reducers for multi-valued projected paths** (`first`, `min`, `max`, `count` — e.g. "earliest EOL date across all
-  releases" instead of the full array §4.6 returns by default). Deferred because the array default already answers the
-  reporting need directly, and picking the right reducer per field is a real design surface (does
-  `min`/`max` need a defined ordering per field type, does `first` mean "first by what order") that doesn't need solving
-  until a concrete report wants a scalar summary rather than a list.
+- **Additional reducers for multi-valued projected paths** (`first`, `min`, `max`, `sum`, `average`, and similar).
+  Query-level `count` and `countDistinct` are implemented for identity metrics; ordering-sensitive and numeric reducers
+  remain deferred until their field ordering and type semantics are defined.
 - **Generic recursive containment syntax (`ancestors(...)`/`descendants(...)`).** The server-only traversal API now
   supports the narrower #3223 case: a root-inclusive walk of one explicitly named containment field with depth/node
   limits and cycle reporting. A human-authored query still cannot request an arbitrary containment walk without naming

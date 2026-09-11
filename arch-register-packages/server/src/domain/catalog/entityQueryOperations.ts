@@ -48,6 +48,8 @@ import type { RelationRecord } from '@arch-register/api-types/relationContract';
 import { toRedactedApiRelation } from './relationHelpers';
 import { buildTypedRelationVisibilityPolicy } from './relationAccessControl';
 import { buildEntityViewPermissionScope } from './db/entityPermissionScope';
+import { executeEntityTraversal, type EntityTraversalPathResult } from './entityTraversal';
+import { effectiveProjectionAlias } from './entityQueryIRProjectionPlan';
 
 const checker = new PermissionChecker();
 
@@ -223,6 +225,62 @@ const withQueryConformance = (
         _conformanceStale: row.conformance_stale ?? false
       };
 
+const isTraversalProjection = (
+  projection: NonNullable<EntityQuery['projections']>[number]
+): projection is Extract<
+  NonNullable<EntityQuery['projections']>[number],
+  { kind: 'path' | 'aggregate' }
+> => 'kind' in projection && (projection.kind === 'path' || projection.kind === 'aggregate');
+
+const traversalProjections = (query: EntityQuery) =>
+  (query.projections ?? []).filter(isTraversalProjection);
+
+const addTraversalProjectionValues = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  authCtx: AuthorizationContext | null,
+  query: EntityQuery,
+  rows: EntityQueryDbResult[]
+): Promise<EntityQueryDbResult[]> => {
+  const projections = traversalProjections(query);
+  if (projections.length === 0 || rows.length === 0) return rows;
+
+  const result = await executeEntityTraversal(
+    db,
+    workspace,
+    authCtx as WorkspaceAuthorizationContext | null,
+    {
+      root: { kind: 'ids', entityIds: rows.map(row => row.id) },
+      paths: projections.map((projection, index) => ({
+        id: `projection_${index}`,
+        steps: projection.path,
+        ...(projection.kind === 'aggregate' ? { terminalContext: projection.terminal } : {})
+      }))
+    }
+  );
+  const resultByRoot = new Map(result.roots.map(root => [root.rootId, root]));
+
+  return rows.map(row => {
+    const root = resultByRoot.get(row.id);
+    const values: Record<string, unknown> = { ...(row.projections ?? {}) };
+    projections.forEach((projection, index) => {
+      const pathResult: EntityTraversalPathResult | undefined = root?.paths.find(
+        path => path.pathId === `projection_${index}`
+      );
+      if (projection.kind === 'path') {
+        values[effectiveProjectionAlias(projection)] =
+          pathResult?.occurrences.map(occurrence => occurrence.provenance) ?? [];
+      } else {
+        values[effectiveProjectionAlias(projection)] =
+          projection.reducer === 'count'
+            ? (pathResult?.occurrences.length ?? 0)
+            : (pathResult?.distinctTerminals.length ?? 0);
+      }
+    });
+    return { ...row, projections: values };
+  });
+};
+
 type EntityQueryCompilation = {
   rowQuery: EntityQueryCompilationPair['rowQuery'];
   countQuery: EntityQueryCompilationPair['countQuery'];
@@ -262,6 +320,12 @@ const compileEntityQueries = async (
       ? undefined
       : validation.errors.map(error => `${error.path.join('.')}: ${error.message}`).join('; ')
   });
+  if (query.asOf && traversalProjections(query).length > 0) {
+    httpAssert.true(false, {
+      status: 400,
+      message: 'Recursive and aggregate query columns are not available for temporal queries'
+    });
+  }
 
   if (query.assessmentId) {
     await resolveJoinedAssessment(db, workspace, authCtx, query.assessmentId, true);
@@ -278,9 +342,17 @@ const compileEntityQueries = async (
     permissionScope: query.asOf ? null : buildEntityViewPermissionScope(authCtx)
   };
 
+  const sqlProjections = query.projections?.filter(
+    projection => !isTraversalProjection(projection)
+  );
+  const queryForSql =
+    sqlProjections?.length === query.projections?.length
+      ? query
+      : { ...query, projections: sqlProjections?.length ? sqlProjections : undefined };
+
   try {
     const { rowQuery, countQuery } = compileEntityQueryPair(
-      query,
+      queryForSql,
       schemaCatalog,
       db.core.driver,
       workspace,
@@ -366,8 +438,15 @@ export const collectEntitiesFromIR = async (
     collectionEntityIds
   );
   const rows = await db.catalog.runCompiledEntityQuery(rowQuery.sql, rowQuery.params);
+  const rowsWithTraversalProjections = await addTraversalProjectionValues(
+    db,
+    workspace,
+    authCtx,
+    options.entityQuery!,
+    rows
+  );
   return mapEntityQueryRows(
-    rows,
+    rowsWithTraversalProjections,
     authCtx,
     options,
     schemaCatalog,
@@ -413,9 +492,16 @@ export const listEntitiesWithCount = async (
         db.catalog.runCompiledEntityQuery(rowQuery.sql, rowQuery.params),
         db.catalog.runCompiledEntityCountQuery(countQuery.sql, countQuery.params)
       ]);
+      const rowsWithTraversalProjections = await addTraversalProjectionValues(
+        db,
+        workspace,
+        authCtx,
+        normalized.entityQuery!,
+        rows
+      );
       return {
         items: mapEntityQueryRows(
-          rows,
+          rowsWithTraversalProjections,
           authCtx,
           normalized,
           schemaCatalog,

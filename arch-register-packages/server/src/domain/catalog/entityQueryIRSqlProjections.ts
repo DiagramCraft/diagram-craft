@@ -313,6 +313,11 @@ const projectionValue = (
   projection: ProjectionField,
   state: EntityQuerySqlRenderState
 ): { value: string; isArray: boolean } => {
+  if ('kind' in projection) {
+    throw new UnsupportedEntityQueryIRError(
+      `Query projection '${projection.kind}' requires traversal-backed execution`
+    );
+  }
   const isArray =
     state.semanticPlan.projectionPathCardinality.get(entityQueryPathKey(projection.path)) ?? false;
   const binding = projectionBindingFor(projection, state);

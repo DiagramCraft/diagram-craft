@@ -49,6 +49,10 @@ export const effectiveProjectionAlias = (projection: ProjectionField): string =>
       }
     })
     .join('.');
+  if ('kind' in projection && projection.kind === 'path') return path || 'path';
+  if ('kind' in projection && projection.kind === 'aggregate') {
+    return `${projection.reducer}(${projection.terminal} ${path || 'path'})`;
+  }
   return path ? `${path}.${projection.fieldId}` : projection.fieldId;
 };
 

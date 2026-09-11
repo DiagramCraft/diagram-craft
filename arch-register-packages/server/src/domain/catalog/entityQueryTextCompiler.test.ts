@@ -1659,6 +1659,62 @@ describe('columns projection sub-clause (specs/QUERY_LANGUAGE.md §4.6)', () => 
     }
   });
 
+  it('parses query-level recursive path columns and reducers', () => {
+    const query = parseOk(
+      'schema:System columns path subtree(domain) as "Domain path", countDistinct(path subtree(domain)) as "Domains"'
+    );
+    expect(query.projections).toEqual([
+      {
+        kind: 'path',
+        path: [{ kind: 'containmentSubtree', fieldId: 'domain', ownerSchemaId: SYSTEM.id }],
+        alias: 'Domain path'
+      },
+      {
+        kind: 'aggregate',
+        path: [{ kind: 'containmentSubtree', fieldId: 'domain', ownerSchemaId: SYSTEM.id }],
+        reducer: 'countDistinct',
+        terminal: 'entity',
+        alias: 'Domains'
+      }
+    ]);
+    expect(parseOk(printEntityQueryText(query, schemas))).toEqual(query);
+  });
+
+  it('supports an explicit relation aggregate terminal', () => {
+    const result = parseEntityQueryText(
+      'schema:"Typed System" columns countDistinct(relation path data_flows_out) as "Flows"',
+      typedSchemas,
+      enums,
+      null,
+      relationSchemas
+    );
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.query.projections).toEqual([
+        {
+          kind: 'aggregate',
+          path: [
+            {
+              kind: 'typedRelation',
+              fieldId: 'data_flows_out',
+              relationSchemaId: DATA_FLOW.id,
+              direction: 'out',
+              ownerSchemaIds: [TYPED_SYSTEM.id]
+            }
+          ],
+          reducer: 'countDistinct',
+          terminal: 'relation',
+          alias: 'Flows'
+        }
+      ]);
+    }
+  });
+
+  it('rejects recursive containment outside query-level columns', () => {
+    const errors = parseErr('schema:System subtree(domain)');
+    expect(errors[0]!.message).toContain('only valid in a query-level columns expression');
+  });
+
   it('round-trips a path columns capture', () => {
     const text = 'schema:Component technology_releases[columns path technology as "Tech path"]';
     const query = parseOk(text);

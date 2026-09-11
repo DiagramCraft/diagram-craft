@@ -802,6 +802,10 @@ const projectionAlias = (projection: NonNullable<EntityQuery['projections']>[num
       }
     })
     .join('.');
+  if ('kind' in projection && projection.kind === 'path') return path || 'path';
+  if ('kind' in projection && projection.kind === 'aggregate') {
+    return `${projection.reducer}(${projection.terminal} ${path || 'path'})`;
+  }
   return path ? `${path}.${projection.fieldId}` : projection.fieldId;
 };
 
@@ -832,7 +836,9 @@ export const validateEntityQueryIR = (
   const rootKind = rootResolution.rootKind;
   const rootUsesAssessmentField =
     nodeUsesAssessmentField(query.root) ||
-    (query.projections ?? []).some(p => projectionUsesAssessmentField(p.fieldId, p.path));
+    (query.projections ?? []).some(
+      p => !('kind' in p) && projectionUsesAssessmentField(p.fieldId, p.path)
+    );
   if (rootKind === 'relation' && (query.assessmentId || rootUsesAssessmentField)) {
     errors.push({
       path: ['assessmentId'],
@@ -873,6 +879,52 @@ export const validateEntityQueryIR = (
       authCtx,
       rootKind
     );
+    if ('kind' in projection && (projection.kind === 'path' || projection.kind === 'aggregate')) {
+      if (projection.path.length === 0) {
+        errors.push({
+          path: [...projectionPath, 'path'],
+          message: `${projection.kind === 'path' ? 'Path' : 'Aggregate'} columns require a non-empty path`
+        });
+      }
+      const landingKind = kindAfterPath(projection.path, rootKind);
+      if (projection.kind === 'path' && landingKind !== 'entity') {
+        errors.push({
+          path: [...projectionPath, 'path'],
+          message: 'Path columns must terminate on an entity'
+        });
+      }
+      if (projection.kind === 'aggregate') {
+        if (projection.terminal === 'entity' && landingKind !== 'entity') {
+          errors.push({
+            path: [...projectionPath, 'terminal'],
+            message: 'Entity aggregates must terminate on an entity'
+          });
+        }
+        if (
+          projection.terminal === 'relation' &&
+          !(
+            projection.path.at(-1)?.kind === 'typedRelation' ||
+            projection.path.at(-1)?.kind === 'unboundTypedRelation' ||
+            projection.path.at(-1)?.kind === 'relationBackward'
+          )
+        ) {
+          errors.push({
+            path: [...projectionPath, 'terminal'],
+            message:
+              'Relation aggregates must terminate at a typed relation or relation-backward path step'
+          });
+        }
+      }
+      const alias = projectionAlias(projection);
+      if (aliases.has(alias)) {
+        errors.push({
+          path: [...projectionPath, 'alias'],
+          message: `Duplicate projection alias '${alias}'`
+        });
+      }
+      aliases.add(alias);
+      continue;
+    }
     if (projection.includePath) {
       if (projection.path.length === 0) {
         errors.push({

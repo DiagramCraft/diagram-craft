@@ -384,9 +384,10 @@ const describe = (query: EntityQuery): string => {
         : '';
   const cols = query.projections?.length
     ? `  ·  columns ${query.projections
-        .map(
-          p =>
-            `${p.includePath ? 'path ' : ''}${pathStepSummary(p.path)}.${p.fieldId}${p.alias ? ` as ${p.alias}` : ''}`
+        .map(p =>
+          'kind' in p
+            ? `${p.kind}${p.alias ? ` as ${p.alias}` : ''}`
+            : `${p.includePath ? 'path ' : ''}${pathStepSummary(p.path)}.${p.fieldId}${p.alias ? ` as ${p.alias}` : ''}`
         )
         .join(', ')}`
     : '';

@@ -145,14 +145,21 @@ export const QueryModeControls = (props: QueryModeControlsProps) => {
     };
   }, [mode, canonical, printMutate, setEntityQuery]);
 
-  // `parseText` now returns `projections` for any `columns` clauses in the text
-  // (specs/QUERY_LANGUAGE.md §4.6). Trust the parsed set; only carry the pre-edit projections
-  // through when the text expressed none — the fallback for a projection with no representable
-  // text form (§10).
+  // `parseText` returns projections for every representable `columns` clause. Only retain the
+  // legacy projections that have no textual form (path-less columns); query-level path/aggregate
+  // columns are always printed and must be removable when the user deletes them in Advanced mode.
   const withProjections = (query: EntityQuery): EntityQuery =>
-    query.projections?.length || !canonical.projections?.length
+    query.projections?.length ||
+    !(canonical.projections ?? []).some(
+      projection => !('kind' in projection) && projection.path.length === 0
+    )
       ? query
-      : { ...query, projections: canonical.projections };
+      : {
+          ...query,
+          projections: canonical.projections?.filter(
+            projection => !('kind' in projection) && projection.path.length === 0
+          )
+        };
 
   const formatAdvancedText = async () => {
     if (!advancedText.trim()) {
@@ -173,10 +180,9 @@ export const QueryModeControls = (props: QueryModeControlsProps) => {
   };
 
   const submitAdvancedText = async (text: string) => {
-    // Projections authored as `columns` clauses (specs/QUERY_LANGUAGE.md §4.6) come back from
-    // `parseText`; `withProjections` only re-applies the pre-edit Columns section when the text
-    // itself expressed none, so an edited `columns` clause wins and a projection with no text form
-    // still survives the round-trip.
+    // Projections authored as `columns` clauses come back from `parseText`; `withProjections`
+    // only re-applies legacy projections with no text form, so an edited query-level columns
+    // clause wins and recursive/aggregate expressions can be removed normally.
     if (!text.trim()) {
       setAdvancedErrors([]);
       setEntityQuery?.(withProjections({ root: { kind: 'and', children: [] } }));

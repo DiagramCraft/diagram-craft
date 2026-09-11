@@ -31,6 +31,7 @@ import {
   type ResolvedComparator,
   type TextCapture,
   type TextPathStep,
+  type TextQueryColumn,
   type TextQueryNode,
   type TextQuerySyntax,
   type TextResolverContext,
@@ -479,6 +480,7 @@ type ResolvedStep = {
 
 type ResolutionState = TextResolverContext & {
   hopsUsed: number;
+  resolvingQueryColumn: boolean;
   // Projections accumulated from `columns` sub-clauses across every `[...]` scope in the query,
   // in source order; attached to `EntityQuery.projections` once at the end of resolution.
   projections: ProjectionField[];
@@ -513,6 +515,12 @@ function resolveStep(
 ): ResolvedStep {
   const { schemas, relationSchemas, authCtx } = state;
   if (currentRelationSchemaId) {
+    if (syntaxStep.kind === 'subtree') {
+      throw new TextCompileError(
+        "'subtree(...)' is only valid from an entity path position",
+        syntaxStep.offset
+      );
+    }
     const fieldId =
       syntaxStep.kind === 'typedRelation' ? syntaxStep.relationRef.value : syntaxStep.field.value;
     if (syntaxStep.kind === 'typedRelation') {
@@ -555,6 +563,44 @@ function resolveStep(
       fieldId,
       resolution,
       nextSchemaId: undefined,
+      nextRelationSchemaId: undefined
+    };
+  }
+
+  if (syntaxStep.kind === 'subtree') {
+    if (!state.resolvingQueryColumn) {
+      throw new TextCompileError(
+        "'subtree(...)' is only valid in a query-level columns expression",
+        syntaxStep.offset
+      );
+    }
+    if (!currentSchemaId) {
+      throw new TextCompileError(
+        "'subtree(...)' requires a schema-qualified entity query",
+        syntaxStep.offset
+      );
+    }
+    const ownerSchema = schemas.get(currentSchemaId);
+    const field = schemaFieldById(ownerSchema, syntaxStep.field.value);
+    if (
+      field?.type !== 'containment' ||
+      isFieldViewRestricted(authCtx, ownerSchema, syntaxStep.field.value)
+    ) {
+      throw new TextCompileError(
+        `Schema '${schemaNameById(schemas, currentSchemaId)}' does not define a viewable containment field '${syntaxStep.field.value}'`,
+        syntaxStep.field.offset
+      );
+    }
+    incrementHop(state, syntaxStep.offset);
+    return {
+      step: {
+        kind: 'containmentSubtree',
+        fieldId: syntaxStep.field.value,
+        ownerSchemaId: currentSchemaId
+      },
+      fieldId: syntaxStep.field.value,
+      resolution: { kind: 'relation', field },
+      nextSchemaId: field.schemaId,
       nextRelationSchemaId: undefined
     };
   }
@@ -800,6 +846,104 @@ function emitCapture(
   });
 }
 
+const resolveQueryColumn = (
+  column: TextQueryColumn,
+  currentSchemaId: string | undefined,
+  currentRelationSchemaId: string | undefined,
+  state: ResolutionState
+): void => {
+  const capture = column.kind === 'aggregate' ? column.capture : column.capture;
+  const savedHops = state.hopsUsed;
+  const resolvedSteps: ResolvedStep[] = [];
+  let schemaIdCursor = currentSchemaId;
+  let relationSchemaIdCursor = currentRelationSchemaId;
+  state.resolvingQueryColumn = true;
+  try {
+    for (const syntaxStep of capture.steps) {
+      const resolved = resolveStep(syntaxStep, schemaIdCursor, relationSchemaIdCursor, state);
+      resolvedSteps.push(resolved);
+      schemaIdCursor = resolved.nextSchemaId;
+      relationSchemaIdCursor = resolved.nextRelationSchemaId;
+    }
+  } finally {
+    state.resolvingQueryColumn = false;
+  }
+  state.hopsUsed = savedHops;
+  const path = resolvedSteps.map(step => step.step);
+  assertProjectionHopBudget(path, capture.offset);
+  const terminal = resolvedSteps.at(-1);
+  if (!terminal)
+    throw new TextCompileError('A query column path must not be empty', capture.offset);
+  if (
+    (column.kind === 'aggregate' || capture.includePath) &&
+    (terminal.resolution.kind === 'scalar' || terminal.resolution.kind === 'relationScalar')
+  ) {
+    throw new TextCompileError(
+      'Query path columns and aggregates must terminate on an entity or relation traversal',
+      capture.offset
+    );
+  }
+
+  if (column.kind === 'aggregate') {
+    const inferredTerminal =
+      terminal.step.kind === 'relationBackward' || terminal.nextRelationSchemaId
+        ? 'relation'
+        : 'entity';
+    const terminalContext = column.terminal ?? inferredTerminal;
+    if (
+      terminalContext === 'relation' &&
+      terminal.step.kind !== 'typedRelation' &&
+      terminal.step.kind !== 'unboundTypedRelation' &&
+      terminal.step.kind !== 'relationBackward'
+    ) {
+      throw new TextCompileError(
+        'A relation aggregate must terminate at a typed relation or relation-backward path step',
+        capture.offset
+      );
+    }
+    state.projections.push({
+      kind: 'aggregate',
+      path,
+      reducer: column.reducer,
+      terminal: terminalContext,
+      ...(capture.alias !== undefined ? { alias: capture.alias } : {})
+    });
+    return;
+  }
+
+  if (capture.includePath) {
+    if (terminal.step.kind === 'relationBackward') {
+      throw new TextCompileError(
+        "'path' columns cannot terminate on a relation row; add an endpoint or entity relation hop",
+        capture.offset
+      );
+    }
+    state.projections.push({
+      kind: 'path',
+      path,
+      ...(capture.alias !== undefined ? { alias: capture.alias } : {})
+    });
+    return;
+  }
+
+  if (isRelationLike(terminal.resolution)) {
+    throw new TextCompileError(
+      `A query column must end on a scalar field, not '${terminal.fieldId}'`,
+      capture.offset
+    );
+  }
+  const terminalOffRelationRow =
+    currentRelationSchemaId != null &&
+    resolvedSteps.length === 1 &&
+    terminal.resolution.kind === 'relationScalar';
+  state.projections.push({
+    path: terminalOffRelationRow ? [] : path.slice(0, -1),
+    fieldId: terminal.fieldId,
+    ...(terminalOffRelationRow ? { source: 'relation' as const } : {}),
+    ...(capture.alias !== undefined ? { alias: capture.alias } : {})
+  });
+};
+
 function resolvePathExpression(
   node: Extract<TextQueryNode, { kind: 'path' }>,
   currentSchemaId: string | undefined,
@@ -828,7 +972,8 @@ function resolvePathExpression(
   // the projection path is the absolute prefix up to and including the segment (carrying its
   // resolved `[...]` filter), plus the capture's own traversal.
   node.steps.forEach((syntaxStep, index) => {
-    if (!syntaxStep.captures || syntaxStep.captures.length === 0) return;
+    if (!('captures' in syntaxStep) || !syntaxStep.captures || syntaxStep.captures.length === 0)
+      return;
     if (node.comparator && index === node.steps.length - 1) {
       throw new TextCompileError(
         "'columns' cannot be combined with a trailing comparator on the same segment",
@@ -1046,9 +1191,33 @@ export const resolveTextQuery = (
   syntax: TextQuerySyntax,
   context: TextResolverContext
 ): EntityQuery => {
-  const state: ResolutionState = { ...context, hopsUsed: 0, projections: [] };
-  const withProjections = (query: EntityQuery): EntityQuery =>
-    state.projections.length > 0 ? { ...query, projections: state.projections } : query;
+  const state: ResolutionState = {
+    ...context,
+    hopsUsed: 0,
+    resolvingQueryColumn: false,
+    projections: []
+  };
+  const withProjections = (query: EntityQuery): EntityQuery => {
+    for (const column of syntax.columns ?? []) {
+      resolveQueryColumn(
+        column,
+        query.root_kind === 'relation' ? undefined : rootSchemaId,
+        query.root_kind === 'relation' ? rootRelationSchemaId : undefined,
+        state
+      );
+    }
+    const aliases = new Set<string>();
+    for (const projection of state.projections) {
+      if (projection.alias === '') {
+        throw new TextCompileError('Column aliases must not be empty', 0);
+      }
+      if (projection.alias && aliases.has(projection.alias)) {
+        throw new TextCompileError(`Duplicate column alias '${projection.alias}'`, 0);
+      }
+      if (projection.alias) aliases.add(projection.alias);
+    }
+    return state.projections.length > 0 ? { ...query, projections: state.projections } : query;
+  };
 
   const rootSchemaId = deriveRootSchemaId(syntax, context.schemas);
   if (rootSchemaId) {

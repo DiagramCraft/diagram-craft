@@ -673,6 +673,9 @@
           query preview, and the Advanced editor supports multiline text, formatting without applying the draft, and
           Ctrl/Cmd+Enter to apply it. Advanced queries can traverse typed relations and filter or
           project their scalar relation fields; entity-valued relation fields are deferred to follow-up issue #2670.
+          Query-level columns can preserve correlated path provenance, walk a named containment subtree, and reduce
+          matched entity/relation terminals with `count` or `countDistinct`; recursive and aggregate expressions remain
+          read-only in Advanced mode.
           A before/after/on date filter (on a scalar entity or relation date field) can be set relative to today
           instead of a fixed date, with an optional day offset, so a saved view re-evaluates against the current
           date each time it runs (e.g. "review date before today" for an overdue view); the filter popover offers a
