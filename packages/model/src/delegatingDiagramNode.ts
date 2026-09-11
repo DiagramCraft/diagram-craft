@@ -42,7 +42,7 @@ export type DelegatingDiagramNodeCRDT = DiagramElementCRDT & {
 };
 
 export class DelegatingDiagramNode extends DelegatingDiagramElement implements DiagramNode {
-  protected declare readonly delegate: DiagramNode;
+  declare protected readonly delegate: DiagramNode;
 
   readonly #localProps: CRDTObject<NodeProps>;
   readonly #localTexts: CRDTObject<NodeTexts>;
