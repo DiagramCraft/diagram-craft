@@ -19171,6 +19171,13 @@
                   "items": {
                     "type": "object",
                     "properties": {
+                      "kind": {
+                        "enum": [
+                          "path",
+                          "aggregate"
+                        ],
+                        "type": "string"
+                      },
                       "path": {
                         "type": "array",
                         "items": {
@@ -20409,11 +20416,24 @@
                       },
                       "includePath": {
                         "type": "boolean"
+                      },
+                      "reducer": {
+                        "enum": [
+                          "count",
+                          "countDistinct"
+                        ],
+                        "type": "string"
+                      },
+                      "terminal": {
+                        "enum": [
+                          "entity",
+                          "relation"
+                        ],
+                        "type": "string"
                       }
                     },
                     "required": [
-                      "path",
-                      "fieldId"
+                      "path"
                     ]
                   }
                 },
@@ -22076,6 +22096,13 @@
                   "items": {
                     "type": "object",
                     "properties": {
+                      "kind": {
+                        "enum": [
+                          "path",
+                          "aggregate"
+                        ],
+                        "type": "string"
+                      },
                       "path": {
                         "type": "array",
                         "items": {
@@ -23314,11 +23341,24 @@
                       },
                       "includePath": {
                         "type": "boolean"
+                      },
+                      "reducer": {
+                        "enum": [
+                          "count",
+                          "countDistinct"
+                        ],
+                        "type": "string"
+                      },
+                      "terminal": {
+                        "enum": [
+                          "entity",
+                          "relation"
+                        ],
+                        "type": "string"
                       }
                     },
                     "required": [
-                      "path",
-                      "fieldId"
+                      "path"
                     ]
                   }
                 },
@@ -26589,6 +26629,13 @@
                               "items": {
                                 "type": "object",
                                 "properties": {
+                                  "kind": {
+                                    "enum": [
+                                      "path",
+                                      "aggregate"
+                                    ],
+                                    "type": "string"
+                                  },
                                   "path": {
                                     "type": "array",
                                     "items": {
@@ -28121,11 +28168,24 @@
                                   },
                                   "includePath": {
                                     "type": "boolean"
+                                  },
+                                  "reducer": {
+                                    "enum": [
+                                      "count",
+                                      "countDistinct"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  "terminal": {
+                                    "enum": [
+                                      "entity",
+                                      "relation"
+                                    ],
+                                    "type": "string"
                                   }
                                 },
                                 "required": [
-                                  "path",
-                                  "fieldId"
+                                  "path"
                                 ]
                               }
                             },
@@ -29506,6 +29566,13 @@
                         "items": {
                           "type": "object",
                           "properties": {
+                            "kind": {
+                              "enum": [
+                                "path",
+                                "aggregate"
+                              ],
+                              "type": "string"
+                            },
                             "path": {
                               "type": "array",
                               "items": {
@@ -30744,11 +30811,24 @@
                             },
                             "includePath": {
                               "type": "boolean"
+                            },
+                            "reducer": {
+                              "enum": [
+                                "count",
+                                "countDistinct"
+                              ],
+                              "type": "string"
+                            },
+                            "terminal": {
+                              "enum": [
+                                "entity",
+                                "relation"
+                              ],
+                              "type": "string"
                             }
                           },
                           "required": [
-                            "path",
-                            "fieldId"
+                            "path"
                           ]
                         }
                       },
@@ -32081,6 +32161,13 @@
                   "items": {
                     "type": "object",
                     "properties": {
+                      "kind": {
+                        "enum": [
+                          "path",
+                          "aggregate"
+                        ],
+                        "type": "string"
+                      },
                       "path": {
                         "type": "array",
                         "items": {
@@ -33319,11 +33406,24 @@
                       },
                       "includePath": {
                         "type": "boolean"
+                      },
+                      "reducer": {
+                        "enum": [
+                          "count",
+                          "countDistinct"
+                        ],
+                        "type": "string"
+                      },
+                      "terminal": {
+                        "enum": [
+                          "entity",
+                          "relation"
+                        ],
+                        "type": "string"
                       }
                     },
                     "required": [
-                      "path",
-                      "fieldId"
+                      "path"
                     ]
                   }
                 },
@@ -36286,6 +36386,13 @@
                   "items": {
                     "type": "object",
                     "properties": {
+                      "kind": {
+                        "enum": [
+                          "path",
+                          "aggregate"
+                        ],
+                        "type": "string"
+                      },
                       "path": {
                         "type": "array",
                         "items": {
@@ -37524,11 +37631,24 @@
                       },
                       "includePath": {
                         "type": "boolean"
+                      },
+                      "reducer": {
+                        "enum": [
+                          "count",
+                          "countDistinct"
+                        ],
+                        "type": "string"
+                      },
+                      "terminal": {
+                        "enum": [
+                          "entity",
+                          "relation"
+                        ],
+                        "type": "string"
                       }
                     },
                     "required": [
-                      "path",
-                      "fieldId"
+                      "path"
                     ]
                   }
                 },
@@ -42725,6 +42845,13 @@
                   "items": {
                     "type": "object",
                     "properties": {
+                      "kind": {
+                        "enum": [
+                          "path",
+                          "aggregate"
+                        ],
+                        "type": "string"
+                      },
                       "path": {
                         "type": "array",
                         "items": {
@@ -43963,11 +44090,24 @@
                       },
                       "includePath": {
                         "type": "boolean"
+                      },
+                      "reducer": {
+                        "enum": [
+                          "count",
+                          "countDistinct"
+                        ],
+                        "type": "string"
+                      },
+                      "terminal": {
+                        "enum": [
+                          "entity",
+                          "relation"
+                        ],
+                        "type": "string"
                       }
                     },
                     "required": [
-                      "path",
-                      "fieldId"
+                      "path"
                     ]
                   }
                 },
@@ -50575,6 +50715,13 @@
                   "items": {
                     "type": "object",
                     "properties": {
+                      "kind": {
+                        "enum": [
+                          "path",
+                          "aggregate"
+                        ],
+                        "type": "string"
+                      },
                       "path": {
                         "type": "array",
                         "items": {
@@ -51813,11 +51960,24 @@
                       },
                       "includePath": {
                         "type": "boolean"
+                      },
+                      "reducer": {
+                        "enum": [
+                          "count",
+                          "countDistinct"
+                        ],
+                        "type": "string"
+                      },
+                      "terminal": {
+                        "enum": [
+                          "entity",
+                          "relation"
+                        ],
+                        "type": "string"
                       }
                     },
                     "required": [
-                      "path",
-                      "fieldId"
+                      "path"
                     ]
                   }
                 },
@@ -90899,6 +91059,13 @@
                             "items": {
                               "type": "object",
                               "properties": {
+                                "kind": {
+                                  "enum": [
+                                    "path",
+                                    "aggregate"
+                                  ],
+                                  "type": "string"
+                                },
                                 "path": {
                                   "type": "array",
                                   "items": {
@@ -92431,11 +92598,24 @@
                                 },
                                 "includePath": {
                                   "type": "boolean"
+                                },
+                                "reducer": {
+                                  "enum": [
+                                    "count",
+                                    "countDistinct"
+                                  ],
+                                  "type": "string"
+                                },
+                                "terminal": {
+                                  "enum": [
+                                    "entity",
+                                    "relation"
+                                  ],
+                                  "type": "string"
                                 }
                               },
                               "required": [
-                                "path",
-                                "fieldId"
+                                "path"
                               ]
                             }
                           },
@@ -98160,6 +98340,13 @@
                         "items": {
                           "type": "object",
                           "properties": {
+                            "kind": {
+                              "enum": [
+                                "path",
+                                "aggregate"
+                              ],
+                              "type": "string"
+                            },
                             "path": {
                               "type": "array",
                               "items": {
@@ -99398,11 +99585,24 @@
                             },
                             "includePath": {
                               "type": "boolean"
+                            },
+                            "reducer": {
+                              "enum": [
+                                "count",
+                                "countDistinct"
+                              ],
+                              "type": "string"
+                            },
+                            "terminal": {
+                              "enum": [
+                                "entity",
+                                "relation"
+                              ],
+                              "type": "string"
                             }
                           },
                           "required": [
-                            "path",
-                            "fieldId"
+                            "path"
                           ]
                         }
                       },
@@ -104376,6 +104576,13 @@
                           "items": {
                             "type": "object",
                             "properties": {
+                              "kind": {
+                                "enum": [
+                                  "path",
+                                  "aggregate"
+                                ],
+                                "type": "string"
+                              },
                               "path": {
                                 "type": "array",
                                 "items": {
@@ -105908,11 +106115,24 @@
                               },
                               "includePath": {
                                 "type": "boolean"
+                              },
+                              "reducer": {
+                                "enum": [
+                                  "count",
+                                  "countDistinct"
+                                ],
+                                "type": "string"
+                              },
+                              "terminal": {
+                                "enum": [
+                                  "entity",
+                                  "relation"
+                                ],
+                                "type": "string"
                               }
                             },
                             "required": [
-                              "path",
-                              "fieldId"
+                              "path"
                             ]
                           }
                         },
@@ -112559,6 +112779,13 @@
                         "items": {
                           "type": "object",
                           "properties": {
+                            "kind": {
+                              "enum": [
+                                "path",
+                                "aggregate"
+                              ],
+                              "type": "string"
+                            },
                             "path": {
                               "type": "array",
                               "items": {
@@ -113797,11 +114024,24 @@
                             },
                             "includePath": {
                               "type": "boolean"
+                            },
+                            "reducer": {
+                              "enum": [
+                                "count",
+                                "countDistinct"
+                              ],
+                              "type": "string"
+                            },
+                            "terminal": {
+                              "enum": [
+                                "entity",
+                                "relation"
+                              ],
+                              "type": "string"
                             }
                           },
                           "required": [
-                            "path",
-                            "fieldId"
+                            "path"
                           ]
                         }
                       },
@@ -118770,6 +119010,13 @@
                           "items": {
                             "type": "object",
                             "properties": {
+                              "kind": {
+                                "enum": [
+                                  "path",
+                                  "aggregate"
+                                ],
+                                "type": "string"
+                              },
                               "path": {
                                 "type": "array",
                                 "items": {
@@ -120302,11 +120549,24 @@
                               },
                               "includePath": {
                                 "type": "boolean"
+                              },
+                              "reducer": {
+                                "enum": [
+                                  "count",
+                                  "countDistinct"
+                                ],
+                                "type": "string"
+                              },
+                              "terminal": {
+                                "enum": [
+                                  "entity",
+                                  "relation"
+                                ],
+                                "type": "string"
                               }
                             },
                             "required": [
-                              "path",
-                              "fieldId"
+                              "path"
                             ]
                           }
                         },
@@ -129471,6 +129731,13 @@
                                     "items": {
                                       "type": "object",
                                       "properties": {
+                                        "kind": {
+                                          "enum": [
+                                            "path",
+                                            "aggregate"
+                                          ],
+                                          "type": "string"
+                                        },
                                         "path": {
                                           "type": "array",
                                           "items": {
@@ -129741,11 +130008,24 @@
                                         },
                                         "includePath": {
                                           "type": "boolean"
+                                        },
+                                        "reducer": {
+                                          "enum": [
+                                            "count",
+                                            "countDistinct"
+                                          ],
+                                          "type": "string"
+                                        },
+                                        "terminal": {
+                                          "enum": [
+                                            "entity",
+                                            "relation"
+                                          ],
+                                          "type": "string"
                                         }
                                       },
                                       "required": [
-                                        "path",
-                                        "fieldId"
+                                        "path"
                                       ]
                                     }
                                   },
@@ -131314,6 +131594,13 @@
                                 "items": {
                                   "type": "object",
                                   "properties": {
+                                    "kind": {
+                                      "enum": [
+                                        "path",
+                                        "aggregate"
+                                      ],
+                                      "type": "string"
+                                    },
                                     "path": {
                                       "type": "array",
                                       "items": {
@@ -131577,11 +131864,24 @@
                                     },
                                     "includePath": {
                                       "type": "boolean"
+                                    },
+                                    "reducer": {
+                                      "enum": [
+                                        "count",
+                                        "countDistinct"
+                                      ],
+                                      "type": "string"
+                                    },
+                                    "terminal": {
+                                      "enum": [
+                                        "entity",
+                                        "relation"
+                                      ],
+                                      "type": "string"
                                     }
                                   },
                                   "required": [
-                                    "path",
-                                    "fieldId"
+                                    "path"
                                   ]
                                 }
                               },
@@ -132954,6 +133254,13 @@
                                   "items": {
                                     "type": "object",
                                     "properties": {
+                                      "kind": {
+                                        "enum": [
+                                          "path",
+                                          "aggregate"
+                                        ],
+                                        "type": "string"
+                                      },
                                       "path": {
                                         "type": "array",
                                         "items": {
@@ -133555,11 +133862,24 @@
                                       },
                                       "includePath": {
                                         "type": "boolean"
+                                      },
+                                      "reducer": {
+                                        "enum": [
+                                          "count",
+                                          "countDistinct"
+                                        ],
+                                        "type": "string"
+                                      },
+                                      "terminal": {
+                                        "enum": [
+                                          "entity",
+                                          "relation"
+                                        ],
+                                        "type": "string"
                                       }
                                     },
                                     "required": [
-                                      "path",
-                                      "fieldId"
+                                      "path"
                                     ]
                                   }
                                 },
@@ -135122,6 +135442,13 @@
                                 "items": {
                                   "type": "object",
                                   "properties": {
+                                    "kind": {
+                                      "enum": [
+                                        "path",
+                                        "aggregate"
+                                      ],
+                                      "type": "string"
+                                    },
                                     "path": {
                                       "type": "array",
                                       "items": {
@@ -135385,11 +135712,24 @@
                                     },
                                     "includePath": {
                                       "type": "boolean"
+                                    },
+                                    "reducer": {
+                                      "enum": [
+                                        "count",
+                                        "countDistinct"
+                                      ],
+                                      "type": "string"
+                                    },
+                                    "terminal": {
+                                      "enum": [
+                                        "entity",
+                                        "relation"
+                                      ],
+                                      "type": "string"
                                     }
                                   },
                                   "required": [
-                                    "path",
-                                    "fieldId"
+                                    "path"
                                   ]
                                 }
                               },
@@ -136757,6 +137097,13 @@
                                   "items": {
                                     "type": "object",
                                     "properties": {
+                                      "kind": {
+                                        "enum": [
+                                          "path",
+                                          "aggregate"
+                                        ],
+                                        "type": "string"
+                                      },
                                       "path": {
                                         "type": "array",
                                         "items": {
@@ -137358,11 +137705,24 @@
                                       },
                                       "includePath": {
                                         "type": "boolean"
+                                      },
+                                      "reducer": {
+                                        "enum": [
+                                          "count",
+                                          "countDistinct"
+                                        ],
+                                        "type": "string"
+                                      },
+                                      "terminal": {
+                                        "enum": [
+                                          "entity",
+                                          "relation"
+                                        ],
+                                        "type": "string"
                                       }
                                     },
                                     "required": [
-                                      "path",
-                                      "fieldId"
+                                      "path"
                                     ]
                                   }
                                 },
@@ -170601,6 +170961,13 @@
                         "items": {
                           "type": "object",
                           "properties": {
+                            "kind": {
+                              "enum": [
+                                "path",
+                                "aggregate"
+                              ],
+                              "type": "string"
+                            },
                             "path": {
                               "type": "array",
                               "items": {
@@ -171839,11 +172206,24 @@
                             },
                             "includePath": {
                               "type": "boolean"
+                            },
+                            "reducer": {
+                              "enum": [
+                                "count",
+                                "countDistinct"
+                              ],
+                              "type": "string"
+                            },
+                            "terminal": {
+                              "enum": [
+                                "entity",
+                                "relation"
+                              ],
+                              "type": "string"
                             }
                           },
                           "required": [
-                            "path",
-                            "fieldId"
+                            "path"
                           ]
                         }
                       },
@@ -181589,6 +181969,13 @@
                                     "items": {
                                       "type": "object",
                                       "properties": {
+                                        "kind": {
+                                          "enum": [
+                                            "path",
+                                            "aggregate"
+                                          ],
+                                          "type": "string"
+                                        },
                                         "path": {
                                           "type": "array",
                                           "items": {
@@ -182190,11 +182577,24 @@
                                         },
                                         "includePath": {
                                           "type": "boolean"
+                                        },
+                                        "reducer": {
+                                          "enum": [
+                                            "count",
+                                            "countDistinct"
+                                          ],
+                                          "type": "string"
+                                        },
+                                        "terminal": {
+                                          "enum": [
+                                            "entity",
+                                            "relation"
+                                          ],
+                                          "type": "string"
                                         }
                                       },
                                       "required": [
-                                        "path",
-                                        "fieldId"
+                                        "path"
                                       ]
                                     }
                                   },
@@ -183716,6 +184116,13 @@
                             "items": {
                               "type": "object",
                               "properties": {
+                                "kind": {
+                                  "enum": [
+                                    "path",
+                                    "aggregate"
+                                  ],
+                                  "type": "string"
+                                },
                                 "path": {
                                   "type": "array",
                                   "items": {
@@ -184954,11 +185361,24 @@
                                 },
                                 "includePath": {
                                   "type": "boolean"
+                                },
+                                "reducer": {
+                                  "enum": [
+                                    "count",
+                                    "countDistinct"
+                                  ],
+                                  "type": "string"
+                                },
+                                "terminal": {
+                                  "enum": [
+                                    "entity",
+                                    "relation"
+                                  ],
+                                  "type": "string"
                                 }
                               },
                               "required": [
-                                "path",
-                                "fieldId"
+                                "path"
                               ]
                             }
                           },
@@ -186308,6 +186728,13 @@
                                   "items": {
                                     "type": "object",
                                     "properties": {
+                                      "kind": {
+                                        "enum": [
+                                          "path",
+                                          "aggregate"
+                                        ],
+                                        "type": "string"
+                                      },
                                       "path": {
                                         "type": "array",
                                         "items": {
@@ -187840,11 +188267,24 @@
                                       },
                                       "includePath": {
                                         "type": "boolean"
+                                      },
+                                      "reducer": {
+                                        "enum": [
+                                          "count",
+                                          "countDistinct"
+                                        ],
+                                        "type": "string"
+                                      },
+                                      "terminal": {
+                                        "enum": [
+                                          "entity",
+                                          "relation"
+                                        ],
+                                        "type": "string"
                                       }
                                     },
                                     "required": [
-                                      "path",
-                                      "fieldId"
+                                      "path"
                                     ]
                                   }
                                 },
@@ -189416,6 +189856,13 @@
                                   "items": {
                                     "type": "object",
                                     "properties": {
+                                      "kind": {
+                                        "enum": [
+                                          "path",
+                                          "aggregate"
+                                        ],
+                                        "type": "string"
+                                      },
                                       "path": {
                                         "type": "array",
                                         "items": {
@@ -190948,11 +191395,24 @@
                                       },
                                       "includePath": {
                                         "type": "boolean"
+                                      },
+                                      "reducer": {
+                                        "enum": [
+                                          "count",
+                                          "countDistinct"
+                                        ],
+                                        "type": "string"
+                                      },
+                                      "terminal": {
+                                        "enum": [
+                                          "entity",
+                                          "relation"
+                                        ],
+                                        "type": "string"
                                       }
                                     },
                                     "required": [
-                                      "path",
-                                      "fieldId"
+                                      "path"
                                     ]
                                   }
                                 },
@@ -193547,6 +194007,13 @@
                                   "items": {
                                     "type": "object",
                                     "properties": {
+                                      "kind": {
+                                        "enum": [
+                                          "path",
+                                          "aggregate"
+                                        ],
+                                        "type": "string"
+                                      },
                                       "path": {
                                         "type": "array",
                                         "items": {
@@ -195079,11 +195546,24 @@
                                       },
                                       "includePath": {
                                         "type": "boolean"
+                                      },
+                                      "reducer": {
+                                        "enum": [
+                                          "count",
+                                          "countDistinct"
+                                        ],
+                                        "type": "string"
+                                      },
+                                      "terminal": {
+                                        "enum": [
+                                          "entity",
+                                          "relation"
+                                        ],
+                                        "type": "string"
                                       }
                                     },
                                     "required": [
-                                      "path",
-                                      "fieldId"
+                                      "path"
                                     ]
                                   }
                                 },
@@ -199786,6 +200266,13 @@
                                   "items": {
                                     "type": "object",
                                     "properties": {
+                                      "kind": {
+                                        "enum": [
+                                          "path",
+                                          "aggregate"
+                                        ],
+                                        "type": "string"
+                                      },
                                       "path": {
                                         "type": "array",
                                         "items": {
@@ -201318,11 +201805,24 @@
                                       },
                                       "includePath": {
                                         "type": "boolean"
+                                      },
+                                      "reducer": {
+                                        "enum": [
+                                          "count",
+                                          "countDistinct"
+                                        ],
+                                        "type": "string"
+                                      },
+                                      "terminal": {
+                                        "enum": [
+                                          "entity",
+                                          "relation"
+                                        ],
+                                        "type": "string"
                                       }
                                     },
                                     "required": [
-                                      "path",
-                                      "fieldId"
+                                      "path"
                                     ]
                                   }
                                 },
@@ -202894,6 +203394,13 @@
                                   "items": {
                                     "type": "object",
                                     "properties": {
+                                      "kind": {
+                                        "enum": [
+                                          "path",
+                                          "aggregate"
+                                        ],
+                                        "type": "string"
+                                      },
                                       "path": {
                                         "type": "array",
                                         "items": {
@@ -204426,11 +204933,24 @@
                                       },
                                       "includePath": {
                                         "type": "boolean"
+                                      },
+                                      "reducer": {
+                                        "enum": [
+                                          "count",
+                                          "countDistinct"
+                                        ],
+                                        "type": "string"
+                                      },
+                                      "terminal": {
+                                        "enum": [
+                                          "entity",
+                                          "relation"
+                                        ],
+                                        "type": "string"
                                       }
                                     },
                                     "required": [
-                                      "path",
-                                      "fieldId"
+                                      "path"
                                     ]
                                   }
                                 },

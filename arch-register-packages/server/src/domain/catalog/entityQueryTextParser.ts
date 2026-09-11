@@ -4,6 +4,7 @@ import {
   type TextComparator,
   type TextNameRef,
   type TextPathStep,
+  type TextQueryColumn,
   type TextQueryNode,
   type TextQuerySyntax,
   type TextValue,
@@ -124,7 +125,7 @@ const atColumnsClause = (state: ParserState): boolean => {
 
 const parseStepNoScope = (state: ParserState): TextPathStep => {
   const step = parseStep(state);
-  if (step.filter || step.captures) {
+  if ('filter' in step && (step.filter || step.captures)) {
     throw new TextCompileError(
       "A 'columns' capture path cannot contain a '[...]' scope",
       step.offset
@@ -169,6 +170,64 @@ const parseColumnsClause = (state: ParserState): TextCapture[] => {
     captures.push(parseCapture(state));
   }
   return captures;
+};
+
+const parseQueryColumn = (state: ParserState): TextQueryColumn => {
+  const token = peek(state);
+  if (
+    token.kind === 'IDENT' &&
+    state.tokens[state.pos + 1]?.kind === 'LPAREN' &&
+    token.text !== 'count' &&
+    token.text !== 'countDistinct'
+  ) {
+    throw new TextCompileError(`Unsupported query column operation '${token.text}'`, token.offset);
+  }
+  if (
+    token.kind === 'IDENT' &&
+    (token.text === 'count' || token.text === 'countDistinct') &&
+    state.tokens[state.pos + 1]?.kind === 'LPAREN'
+  ) {
+    const reducer = advance(state).text as 'count' | 'countDistinct';
+    expect(state, 'LPAREN');
+    let terminal: 'entity' | 'relation' | undefined;
+    if (
+      peek(state).kind === 'IDENT' &&
+      (peek(state).text === 'entity' || peek(state).text === 'relation')
+    ) {
+      terminal = advance(state).text as 'entity' | 'relation';
+    }
+    if (!(peek(state).kind === 'IDENT' && peek(state).text === 'path')) {
+      throw new TextCompileError(`Expected 'path' inside ${reducer}(...)`, peek(state).offset);
+    }
+    const capture = parseCapture(state);
+    if (!capture.includePath) {
+      throw new TextCompileError(`Expected a path expression inside ${reducer}(...)`, token.offset);
+    }
+    expect(state, 'RPAREN');
+    let alias: string | undefined;
+    if (peek(state).kind === 'IDENT' && peek(state).text === 'as') {
+      advance(state);
+      alias = expect(state, 'STRING').value as string;
+    }
+    return {
+      kind: 'aggregate',
+      reducer,
+      ...(terminal ? { terminal } : {}),
+      capture: { ...capture, ...(alias !== undefined ? { alias } : {}) },
+      offset: token.offset
+    };
+  }
+  return { kind: 'capture', capture: parseCapture(state) };
+};
+
+const parseQueryColumnsClause = (state: ParserState): TextQueryColumn[] => {
+  advance(state); // 'columns'
+  const columns = [parseQueryColumn(state)];
+  while (peek(state).kind === 'COMMA') {
+    advance(state);
+    columns.push(parseQueryColumn(state));
+  }
+  return columns;
 };
 
 const parseScope = (state: ParserState): Scope | undefined => {
@@ -272,6 +331,18 @@ const parseStep = (state: ParserState): TextPathStep => {
       },
       parseScope(state)
     );
+  }
+
+  if (
+    token.kind === 'IDENT' &&
+    token.text === 'subtree' &&
+    state.tokens[state.pos + 1]?.kind === 'LPAREN'
+  ) {
+    advance(state);
+    expect(state, 'LPAREN');
+    const field = nameRef(expect(state, 'IDENT'));
+    expect(state, 'RPAREN');
+    return { kind: 'subtree', field, offset: token.offset };
   }
 
   const field = nameRef(expect(state, 'IDENT'));
@@ -385,7 +456,7 @@ const parseAndExpr = (state: ParserState): TextQueryNode => {
       children.push(parseUnaryExpr(state));
       continue;
     }
-    if (state.scopeDepth > 0 && atColumnsClause(state)) break;
+    if (atColumnsClause(state)) break;
     if (startsUnaryExpr(peek(state))) {
       children.push(parseUnaryExpr(state));
       continue;
@@ -430,11 +501,16 @@ const collectTopLevelSchemaRefs = (tokens: Token[]): TextNameRef[] => {
 export const parseTextQuery = (tokens: Token[]): TextQuerySyntax => {
   const state: ParserState = { tokens, pos: 0, scopeDepth: 0 };
   const root = parseOrExpr(state);
+  const columns = atColumnsClause(state) ? parseQueryColumnsClause(state) : undefined;
   if (peek(state).kind !== 'EOF') {
     throw new TextCompileError(
       `Unexpected trailing input '${peek(state).text}'`,
       peek(state).offset
     );
   }
-  return { root, topLevelSchemaRefs: collectTopLevelSchemaRefs(tokens) };
+  return {
+    root,
+    topLevelSchemaRefs: collectTopLevelSchemaRefs(tokens),
+    ...(columns ? { columns } : {})
+  };
 };

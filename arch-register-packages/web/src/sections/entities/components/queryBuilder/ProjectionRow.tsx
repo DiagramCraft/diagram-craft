@@ -60,17 +60,30 @@ export const ProjectionRow = ({
   const { schemas, relationSchemas, enums, lifecycleStates, owners, atHopLimit } = leafCtx;
   const { getFieldGroupAccess, rootKind, rootPosition } = leafCtx;
   const hopArgs = { rootPosition, schemas, relationSchemas, getFieldGroupAccess };
+  const removeButton = (
+    <button type="button" className={styles.removeBtn} title="Remove column" onClick={onRemove}>
+      <TbX size={11} />
+    </button>
+  );
+
+  if ('kind' in projection) {
+    const expression =
+      projection.kind === 'path'
+        ? `path (${projection.path.length} hops)`
+        : `${projection.reducer}(${projection.terminal}, ${projection.path.length} hops)`;
+    return (
+      <div className={styles.advancedLeaf}>
+        <span className={styles.advancedLeafText}>{projection.alias ?? expression}</span>
+        <span className={styles.advancedLeafBadge}>text-only</span>
+        {removeButton}
+      </div>
+    );
+  }
 
   const editable = isProjectionPathVisuallyEditable(
     projection.path,
     rootPosition.kind,
     projection.source
-  );
-
-  const removeButton = (
-    <button type="button" className={styles.removeBtn} title="Remove column" onClick={onRemove}>
-      <TbX size={11} />
-    </button>
   );
 
   if (!editable) {

@@ -122,6 +122,14 @@ export const buildEntityDisplayFields = (
     }
   }
   for (const projection of projections) {
+    if ('kind' in projection) {
+      const alias = projection.alias ?? `${projection.kind}(${projection.path.length} hops)`;
+      const id = `${PROJECTION_FIELD_PREFIX}${alias}`;
+      if (seen.has(id)) continue;
+      seen.add(id);
+      fields.push({ id, label: alias, group: 'Query projections' });
+      continue;
+    }
     const alias =
       projection.alias ??
       [

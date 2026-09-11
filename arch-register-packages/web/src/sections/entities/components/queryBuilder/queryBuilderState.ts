@@ -326,7 +326,10 @@ export const isProjectionPathVisuallyEditable = (
 const projectionIsVisuallyEditable = (
   projection: ProjectionField,
   rootPosition: PathPositionKind
-): boolean => isProjectionPathVisuallyEditable(projection.path, rootPosition, projection.source);
+): boolean =>
+  'kind' in projection
+    ? false
+    : isProjectionPathVisuallyEditable(projection.path, rootPosition, projection.source);
 
 /** True when every node in `query` is one the visual builder can currently edit in place. An
  *  entity query qualifies with a boolean tree of `path: []` / relation-traversal predicates plus
@@ -426,6 +429,10 @@ export const syncProjectionsToTree = (query: EntityQuery): EntityQuery => {
   let changed = false;
   const next: ProjectionField[] = [];
   for (const projection of projections) {
+    if ('kind' in projection) {
+      next.push(projection);
+      continue;
+    }
     const owner = projectionAnchorPath(projection.path, anchorPaths);
     if (!owner) {
       changed = true; // column whose hop is gone - drop it

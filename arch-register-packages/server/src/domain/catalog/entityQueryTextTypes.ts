@@ -77,6 +77,16 @@ export type TextCapture = {
   offset: number;
 };
 
+export type TextQueryColumn =
+  | { kind: 'capture'; capture: TextCapture }
+  | {
+      kind: 'aggregate';
+      reducer: 'count' | 'countDistinct';
+      terminal?: 'entity' | 'relation';
+      capture: TextCapture;
+      offset: number;
+    };
+
 export type TextPathStep =
   | {
       kind: 'field';
@@ -100,6 +110,11 @@ export type TextPathStep =
       filter?: TextQueryNode;
       captures?: TextCapture[];
       offset: number;
+    }
+  | {
+      kind: 'subtree';
+      field: TextNameRef;
+      offset: number;
     };
 
 export type TextQueryNode =
@@ -122,6 +137,7 @@ export type TextQueryNode =
 export type TextQuerySyntax = {
   root: TextQueryNode;
   topLevelSchemaRefs: TextNameRef[];
+  columns?: TextQueryColumn[];
 };
 
 export type TextResolverContext = {

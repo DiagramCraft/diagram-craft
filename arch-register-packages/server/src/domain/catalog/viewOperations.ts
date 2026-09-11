@@ -133,7 +133,7 @@ const pathUsesRestrictedField = (
     // is governed by ordinary entity view permissions, not schema field-group ACL.
     if (step.kind === 'endpoint') return false;
     const stepRestricted =
-      step.kind === 'backward'
+      step.kind === 'backward' || step.kind === 'containmentSubtree'
         ? fieldIsRestricted(step.fieldId, schemas, authCtx, step.ownerSchemaId)
         : fieldIsRestricted(step.fieldId, schemas, authCtx);
     return (
@@ -313,6 +313,9 @@ export const savedViewUsesRestrictedField = (
 ) =>
   nodeUsesRestrictedField(filters.root, schemas, authCtx, filters.schemaId, relationSchemas) ||
   (filters.projections ?? []).some(projection => {
+    if ('kind' in projection) {
+      return pathUsesRestrictedField(projection.path, schemas, authCtx, relationSchemas);
+    }
     if (projection.source === 'relation') {
       const step = [...projection.path]
         .reverse()

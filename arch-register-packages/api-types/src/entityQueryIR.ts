@@ -143,7 +143,7 @@ export const pathStepSchema: z.ZodType<PathStep> = z.lazy(() =>
   ])
 );
 
-export type ProjectionField = {
+export type ScalarProjectionField = {
   path: PathStep[];
   fieldId: string;
   /** Defaults to the entity at the end of `path`; `relation` reads the matching relation row. */
@@ -162,13 +162,86 @@ export type ProjectionField = {
   includePath?: boolean;
 };
 
-export const projectionFieldSchema = z.object({
-  path: z.array(pathStepSchema),
-  fieldId: z.string(),
-  source: z.enum(['entity', 'relation']).optional(),
-  alias: z.string().min(1).optional(),
-  includePath: z.boolean().optional()
-});
+export type PathProjectionField = {
+  kind: 'path';
+  path: PathStep[];
+  alias?: string;
+};
+
+export type AggregateProjectionField = {
+  kind: 'aggregate';
+  path: PathStep[];
+  reducer: 'count' | 'countDistinct';
+  terminal: 'entity' | 'relation';
+  alias?: string;
+};
+
+/** A query-level column. The legacy scalar shape remains assignment-compatible with saved views. */
+export type ProjectionField =
+  | ScalarProjectionField
+  | PathProjectionField
+  | AggregateProjectionField;
+
+/**
+ * Kept as one object schema so generated OpenAPI does not duplicate the recursive PathStep
+ * schema once per projection variant. The refinement provides the discriminated-union runtime
+ * guarantees while the exported TypeScript type remains precise for callers.
+ */
+export const projectionFieldSchema = z
+  .object({
+    kind: z.enum(['path', 'aggregate']).optional(),
+    path: z.array(pathStepSchema),
+    fieldId: z.string().optional(),
+    source: z.enum(['entity', 'relation']).optional(),
+    alias: z.string().min(1).optional(),
+    includePath: z.boolean().optional(),
+    reducer: z.enum(['count', 'countDistinct']).optional(),
+    terminal: z.enum(['entity', 'relation']).optional()
+  })
+  .superRefine((value, ctx) => {
+    if (value.kind == null && value.fieldId == null) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['fieldId'],
+        message: 'Required for scalar projections'
+      });
+    }
+    if (
+      value.kind === 'path' &&
+      (value.fieldId != null ||
+        value.source != null ||
+        value.includePath != null ||
+        value.reducer != null ||
+        value.terminal != null)
+    ) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['kind'],
+        message: 'Path projections cannot include scalar projection fields'
+      });
+    }
+    if (
+      value.kind === 'aggregate' &&
+      (value.fieldId != null ||
+        value.source != null ||
+        value.includePath != null ||
+        value.reducer == null ||
+        value.terminal == null)
+    ) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['reducer'],
+        message: 'Aggregate projections require reducer and terminal'
+      });
+    }
+    if (value.kind == null && (value.reducer != null || value.terminal != null)) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['kind'],
+        message: 'Reducer and terminal require an aggregate projection'
+      });
+    }
+  }) as unknown as z.ZodType<ProjectionField>;
 
 export const queryNodeSchema: z.ZodType<QueryNode> = z.lazy(() =>
   z.union([

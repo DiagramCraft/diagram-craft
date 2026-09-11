@@ -196,6 +196,22 @@ describe('countHops / MAX_PATH_HOPS budget', () => {
 });
 
 describe('isVisuallyEditable', () => {
+  it('keeps query-level traversal columns in Advanced mode', () => {
+    expect(
+      isVisuallyEditable({
+        root: emptyGroup('and'),
+        projections: [
+          {
+            kind: 'aggregate',
+            path: [{ kind: 'containmentSubtree', fieldId: 'parent', ownerSchemaId: 'capability' }],
+            reducer: 'countDistinct',
+            terminal: 'entity'
+          }
+        ]
+      })
+    ).toBe(false);
+  });
+
   it('accepts a flat boolean tree of predicates and free text', () => {
     expect(
       isVisuallyEditable(
@@ -754,6 +770,19 @@ describe('projection ↔ tree anchoring (#3162)', () => {
       projections: [{ path: [scopedStep], fieldId: 'tier' }]
     };
     expect(syncProjectionsToTree(query).projections).toBeUndefined();
+  });
+
+  it('preserves query-level traversal columns when the visual tree changes', () => {
+    const projection = {
+      kind: 'path' as const,
+      path: [
+        { kind: 'containmentSubtree' as const, fieldId: 'parent', ownerSchemaId: 'capability' }
+      ]
+    };
+    expect(syncProjectionsToTree({ root: emptyGroup('and'), projections: [projection] })).toEqual({
+      root: emptyGroup('and'),
+      projections: [projection]
+    });
   });
 });
 

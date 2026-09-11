@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { pathStepSchema, queryNodeSchema, type PathStep } from './entityQueryIR';
+import { entityQuerySchema, pathStepSchema, queryNodeSchema, type PathStep } from './entityQueryIR';
 
 describe('relationForward PathStep', () => {
   it('parses a bare relationForward step', () => {
@@ -97,6 +97,41 @@ describe('compound traversal round trip', () => {
       value: 'A'
     };
     expect(queryNodeSchema.safeParse(query).success).toBe(true);
+  });
+});
+
+describe('query-level projection variants', () => {
+  const subtree = {
+    kind: 'containmentSubtree' as const,
+    fieldId: 'parent',
+    ownerSchemaId: 'capability'
+  };
+
+  it('accepts path and aggregate columns', () => {
+    expect(
+      entityQuerySchema.safeParse({
+        root: { kind: 'and', children: [] },
+        projections: [
+          { kind: 'path', path: [subtree], alias: 'Provenance' },
+          {
+            kind: 'aggregate',
+            path: [subtree],
+            reducer: 'countDistinct',
+            terminal: 'entity',
+            alias: 'Count'
+          }
+        ]
+      }).success
+    ).toBe(true);
+  });
+
+  it('requires aggregate reducer and terminal', () => {
+    expect(
+      entityQuerySchema.safeParse({
+        root: { kind: 'and', children: [] },
+        projections: [{ kind: 'aggregate', path: [subtree] }]
+      }).success
+    ).toBe(false);
   });
 });
 
