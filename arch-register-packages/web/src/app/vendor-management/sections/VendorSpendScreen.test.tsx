@@ -8,10 +8,12 @@ import { VendorSpendScreen } from './VendorSpendScreen';
 const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
   entityList: vi.fn(),
+  entityTree: vi.fn(),
+  entityGet: vi.fn(),
   schemasList: vi.fn(),
   metricsRollup: vi.fn(),
   capabilityConfigurationsList: vi.fn(),
-  params: { workspaceSlug: 'ws-1' } as { workspaceSlug: string },
+  params: { workspaceSlug: 'ws-1' } as { workspaceSlug: string; vendorId?: string },
   search: {} as Record<string, unknown>
 }));
 
@@ -23,7 +25,7 @@ vi.mock('@tanstack/react-router', () => ({
 
 vi.mock('../../../lib/orpcClient', () => ({
   orpcClient: {
-    entities: { list: mocks.entityList },
+    entities: { list: mocks.entityList, tree: mocks.entityTree, get: mocks.entityGet },
     schemas: { list: mocks.schemasList },
     metrics: { rollup: mocks.metricsRollup },
     config: { capabilityConfigurations: { list: mocks.capabilityConfigurationsList } }
@@ -110,6 +112,38 @@ describe('VendorSpendScreen', () => {
       ],
       legend: { min: null, max: null }
     });
+    mocks.entityTree.mockResolvedValue({
+      nodes: [
+        { _uid: 'vnd-1', _publicId: 'VND-001', _name: 'Acme Corp' },
+        { _uid: 'vnd-2', _publicId: 'VND-002', _name: 'Beta Supplies' },
+        {
+          _uid: 'ctr-1',
+          _publicId: 'CTR-1',
+          _name: 'Acme Support',
+          annual_cost: { amount: 2000, currency: 'USD' },
+          auto_renew: true
+        },
+        {
+          _uid: 'ctr-2',
+          _publicId: 'CTR-2',
+          _name: 'Acme Licence',
+          annual_cost: { amount: 1000, currency: 'USD' },
+          auto_renew: false
+        },
+        {
+          _uid: 'ctr-3',
+          _publicId: 'CTR-3',
+          _name: 'Beta Services',
+          annual_cost: { amount: 1000, currency: 'USD' },
+          auto_renew: true
+        }
+      ],
+      edges: [
+        { parentId: 'vnd-1', childId: 'ctr-1' },
+        { parentId: 'vnd-1', childId: 'ctr-2' },
+        { parentId: 'vnd-2', childId: 'ctr-3' }
+      ]
+    });
   });
 
   afterEach(() => {
@@ -124,8 +158,8 @@ describe('VendorSpendScreen', () => {
     const rows = [...container.querySelectorAll('tbody tr')];
     expect(rows[0]?.textContent).toContain('Acme Corp');
     expect(rows[1]?.textContent).toContain('Beta Supplies');
-    expect(container.textContent).toContain('75%');
-    expect(container.textContent).toContain('25%');
+    expect(container.textContent).toContain('75.0%');
+    expect(container.textContent).toContain('25.0%');
   });
 
   it('shows the portfolio total in the header', async () => {
@@ -133,7 +167,7 @@ describe('VendorSpendScreen', () => {
     expect(container.textContent).toMatch(/4,000|4000/);
   });
 
-  it('opens the vendor drawer route on row click', async () => {
+  it('opens the vendor drawer in place (not the Vendors section) on row click', async () => {
     await renderScreen();
     const row = [...container.querySelectorAll('tr')].find(tr =>
       tr.textContent?.includes('Acme Corp')
@@ -145,10 +179,26 @@ describe('VendorSpendScreen', () => {
 
     expect(mocks.navigate).toHaveBeenCalledWith(
       expect.objectContaining({
-        to: '/$workspaceSlug/vendor-management/vendors/$vendorId',
+        to: '/$workspaceSlug/vendor-management/spend/$vendorId',
         params: { workspaceSlug: 'ws-1', vendorId: 'VND-001' }
       })
     );
+  });
+
+  it('renders the drawer in place when the route carries a vendorId param', async () => {
+    mocks.params = { workspaceSlug: 'ws-1', vendorId: 'VND-001' };
+    mocks.entityGet.mockResolvedValue({
+      _uid: 'vnd-1',
+      _publicId: 'VND-001',
+      _name: 'Acme Corp',
+      _schema: { id: 'vendor', name: 'Vendor' },
+      _owner: null,
+      _lifecycle: null
+    });
+    await renderScreen();
+    // Still on the Spend screen (its own toolbar), with the drawer rendered alongside it.
+    expect(container.textContent).toContain('Group by');
+    expect(container.textContent).toContain('Open record in Entities');
   });
 
   it('groups by cost centre when the group search param is set', async () => {
@@ -163,6 +213,33 @@ describe('VendorSpendScreen', () => {
     mocks.capabilityConfigurationsList.mockResolvedValue([]);
     await renderScreen();
     expect(container.textContent).toContain('Vendor management is not enabled.');
+  });
+
+  it('shows contract count and largest contract per vendor row', async () => {
+    await renderScreen();
+    const acmeRow = [...container.querySelectorAll('tbody tr')].find(tr =>
+      tr.textContent?.includes('Acme Corp')
+    );
+    expect(acmeRow?.textContent).toContain('2'); // contract count
+    expect(acmeRow?.textContent).toContain('Acme Support'); // largest of its two contracts
+  });
+
+  it('shows the header stats — total, fixed-term commitment, strategic tier, cost centres', async () => {
+    await renderScreen();
+    expect(container.textContent).toContain('Total annualised');
+    expect(container.textContent).toContain('Fixed-term commitment');
+    // ctr-2 ($1,000) is the only non-auto-renewing contract
+    expect(container.textContent).toMatch(/1,000|1000/);
+    expect(container.textContent).toContain('Strategic tier');
+    expect(container.textContent).toContain('Cost centres');
+    expect(container.textContent).toContain('2'); // two cost centres charged
+  });
+
+  it('shows an explanatory empty state when grouped by capability', async () => {
+    mocks.search = { group: 'capability' };
+    await renderScreen();
+    expect(container.textContent).toContain('Contract-to-capability schema link');
+    expect(container.querySelector('table')).toBeNull();
   });
 
   it('shows a no-contract-schema empty state when unbound', async () => {

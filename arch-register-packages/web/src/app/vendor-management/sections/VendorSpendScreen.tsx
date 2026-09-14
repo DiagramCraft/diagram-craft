@@ -10,13 +10,19 @@ import { workspaceCapabilityConfigurationsQuery } from '../../../queries/workspa
 import { useSchemas } from '../../../hooks/useSchemas';
 import { formatCurrencyValue } from '../../../utils/currencyFormat';
 import { resolveVendorManagementConfig } from '../vendorManagementQueries';
-import { VENDOR_RAIL_PATHS, VENDOR_VENDORS_ID } from '../vendorManagementSections';
+import { VENDOR_RAIL_PATHS, VENDOR_SPEND_ID } from '../vendorManagementSections';
 import { useVendorSpendRollups } from '../useVendorSpendRollups';
+import { useVendorContracts, type VendorContractRow } from '../useVendorContracts';
 import { computeVmTotalSpend, computeVmGroupSpend } from '../vendorSpendAggregates';
 import type { SpendSearchParams } from '../../../routes/searchParams';
-import { SpendShareBar } from './SpendShareBar';
+import { SpendShareBar, SpendShareStrip } from './SpendShareBar';
+import { VendorDrawer } from './VendorDrawer';
 import filterStyles from '../../../sections/entities/components/EntityBrowser.module.css';
-import styles from './VendorManagementPlaceholderScreen.module.css';
+import styles from './VendorSpendScreen.module.css';
+
+// Vendor's `tier` select field value for the "Strategic tier" stat — `schemaTemplates.ts`'s
+// `vendor-tier` enum (`strategic` / `tactical` / `commodity`).
+const STRATEGIC_TIER = 'strategic';
 
 type SpendRow = {
   key: string;
@@ -24,7 +30,21 @@ type SpendRow = {
   subtitle?: string;
   amount: number;
   vendorId?: string;
+  contractCount: number;
+  largestContractName: string | null;
 };
+
+const currencyAmount = (value: unknown): number | null =>
+  value != null && typeof value === 'object' && 'amount' in value
+    ? ((value as { amount: unknown }).amount as number)
+    : null;
+
+// `formatCurrencyValue` falls back to `String(value)` (rendering `[object Object]`) when it isn't
+// given a real currency code — which happens here whenever there's no spend data yet to read a
+// currency off of. Guarding on a known currency and showing a dash otherwise mirrors
+// `VendorVendorsScreen.tsx`'s `entitySpend?.vmSpend != null ? formatCurrencyValue(...) : '—'`.
+const fmtMoney = (amount: number, currency: string | null): string =>
+  currency != null ? formatCurrencyValue({ amount, currency }) : '—';
 
 const costCentreLabel = (vendorSchema: EntitySchema | undefined, value: string): string => {
   if (value === '—') return value;
@@ -35,26 +55,40 @@ const costCentreLabel = (vendorSchema: EntitySchema | undefined, value: string):
   return value;
 };
 
+const largestContract = (rows: readonly VendorContractRow[]): string | null => {
+  if (rows.length === 0) return null;
+  const sorted = [...rows].sort(
+    (a, b) =>
+      (currencyAmount(b.contract.annual_cost) ?? 0) - (currencyAmount(a.contract.annual_cost) ?? 0)
+  );
+  return sorted[0]!.contract._name;
+};
+
 /**
- * The Spend section: portfolio-wide spend roll-ups grouped either by vendor or by Vendor's
- * `cost_centre` field, each row shown with a `SpendShareBar` (its share of the portfolio total).
- * Grouping is controlled by the `group` search param, mirroring the Contracts screen's `view`
- * toggle. Vendor rows open the shared `VendorDrawer` via the Vendors section's own
- * `vendors/$vendorId` route rather than a Spend-local detail route — cost-centre rows aren't
- * clickable (no single entity to drill into).
+ * The Spend section: portfolio-wide spend roll-ups grouped by vendor or by Vendor's `cost_centre`
+ * field (a toolbar toggle), each shown as a table with a per-row magnitude bar, share of the
+ * portfolio total, contract count, and largest contract — plus a portfolio-wide share strip above
+ * the table. Four header stats (total, fixed-term commitment, strategic-tier share, cost centres
+ * charged) mirror the design reference's `VMStat` row.
  *
- * Only vendor/cost-centre grouping is supported today. The issue also calls for a capability
- * dimension, but no Contract→capability schema link exists yet (tracked separately) and
- * `VendorManagementConfig` has no `capabilitySchemaId` to resolve it — that grouping is deferred
- * until the schema link lands.
+ * A third "By capability" grouping is selectable (matching the design reference's three-way
+ * toggle) but shows an explanatory empty state instead of data: no Contract→capability schema link
+ * exists yet, and `VendorManagementConfig` has no `capabilitySchemaId` to resolve one.
  *
- * Roll-ups reuse `useVendorSpendRollups` (batched `metrics.rollup` over `annual_cost`) and the
- * pure client-side aggregations in `../vendorSpendAggregates.ts` (`computeVmTotalSpend`,
- * `computeVmGroupSpend`) — there's no server-side "group by field value" aggregation, see that
- * module's own comments.
+ * Spend figures reuse the shared roll-up model from `useVendorSpendRollups`/`vendorSpendAggregates`
+ * (`vmSpend`/`vmTotalSpend`/`vmGroupSpend`, also used by the vendor drawer); contract count and
+ * largest-contract are read from the raw Contract records via `useVendorContracts` (the shared
+ * model's batched `metrics.rollup` doesn't expose per-contract detail).
+ *
+ * Selecting a vendor (a row, or a share-strip segment) opens the shared `VendorDrawer` in place,
+ * deep-linkable at `vendor-management/spend/$vendorId` — its own detail route, rather than
+ * navigating to the Vendors section, so grouping/filter state on this screen survives.
  */
 export const VendorSpendScreen = () => {
-  const { workspaceSlug } = useParams({ strict: false }) as { workspaceSlug: string };
+  const { workspaceSlug, vendorId } = useParams({ strict: false }) as {
+    workspaceSlug: string;
+    vendorId?: string;
+  };
   const navigate = useNavigate();
   const search = useSearch({ strict: false }) as SpendSearchParams;
   const group = search.group ?? 'vendor';
@@ -79,6 +113,7 @@ export const VendorSpendScreen = () => {
     vendorConfig?.contractSchemaId ?? null,
     vendorIds
   );
+  const contracts = useVendorContracts(workspaceSlug, vendorConfig?.contractSchemaId ?? null);
 
   const totalSpend = useMemo(() => computeVmTotalSpend(spend.byId), [spend.byId]);
   const totalCurrency = useMemo(
@@ -86,37 +121,130 @@ export const VendorSpendScreen = () => {
     [spend.byId]
   );
 
+  const contractsByVendorUid = useMemo(() => {
+    const map = new Map<string, VendorContractRow[]>();
+    for (const row of contracts.items) {
+      if (!row.vendorId) continue;
+      const list = map.get(row.vendorId) ?? [];
+      list.push(row);
+      map.set(row.vendorId, list);
+    }
+    return map;
+  }, [contracts.items]);
+
+  const costCentreByVendorUid = useMemo(
+    () =>
+      new Map(
+        allVendors.map(entity => [
+          entity._uid,
+          typeof entity.cost_centre === 'string' && entity.cost_centre.length > 0
+            ? entity.cost_centre
+            : '—'
+        ])
+      ),
+    [allVendors]
+  );
+
+  // The sidebar's Cost Centre and Owner facets narrow the roll-up rows (not the header stats,
+  // which stay portfolio-wide — matching the design reference). A cost-centre filter is ignored
+  // once already grouped by cost centre, since it would just collapse the table to one row.
+  const ccFilter = group !== 'costCentre' ? (search.cc ?? null) : null;
+  const ownerFilter = search.owner ?? null;
+  const scopedVendors = useMemo(
+    () =>
+      allVendors.filter(entity => {
+        if (ccFilter && costCentreByVendorUid.get(entity._uid) !== ccFilter) return false;
+        if (ownerFilter && entity.relationship_owner !== ownerFilter) return false;
+        return true;
+      }),
+    [allVendors, ccFilter, ownerFilter, costCentreByVendorUid]
+  );
+
   const rows: SpendRow[] = useMemo(() => {
+    if (group === 'capability') return [];
     if (group === 'costCentre') {
-      const grouped = computeVmGroupSpend(allVendors, spend.byId, 'cost_centre');
+      const grouped = computeVmGroupSpend(scopedVendors, spend.byId, 'cost_centre');
       return [...grouped.entries()]
-        .map(([value, amount]) => ({
-          key: value,
-          label: costCentreLabel(vendorSchema, value),
-          amount
-        }))
+        .map(([value, amount]) => {
+          const groupContracts = contracts.items.filter(
+            row => row.vendorId && costCentreByVendorUid.get(row.vendorId) === value
+          );
+          return {
+            key: value,
+            label: costCentreLabel(vendorSchema, value),
+            amount,
+            contractCount: groupContracts.length,
+            largestContractName: largestContract(groupContracts)
+          };
+        })
         .sort((a, b) => b.amount - a.amount);
     }
-    return allVendors
-      .map(entity => ({
-        key: entity._uid,
-        label: entity._name,
-        subtitle: entity._publicId,
-        amount: spend.byId.get(entity._uid)?.vmSpend ?? 0,
-        vendorId: entity._publicId
-      }))
+    return scopedVendors
+      .map(entity => {
+        const vendorContracts = contractsByVendorUid.get(entity._uid) ?? [];
+        return {
+          key: entity._uid,
+          label: entity._name,
+          subtitle: entity._publicId,
+          amount: spend.byId.get(entity._uid)?.vmSpend ?? 0,
+          vendorId: entity._publicId,
+          contractCount: vendorContracts.length,
+          largestContractName: largestContract(vendorContracts)
+        };
+      })
       .sort((a, b) => b.amount - a.amount);
-  }, [group, allVendors, spend.byId, vendorSchema]);
+  }, [
+    group,
+    scopedVendors,
+    spend.byId,
+    contracts.items,
+    contractsByVendorUid,
+    costCentreByVendorUid,
+    vendorSchema
+  ]);
 
-  const openVendor = (vendorId: string) =>
+  const rowsTotal = useMemo(() => rows.reduce((sum, row) => sum + row.amount, 0), [rows]);
+  const maxRowAmount = useMemo(() => Math.max(...rows.map(row => row.amount), 1), [rows]);
+
+  const fixedTermCommitment = useMemo(
+    () =>
+      contracts.items.reduce(
+        (sum, row) =>
+          row.contract.auto_renew === true
+            ? sum
+            : sum + (currencyAmount(row.contract.annual_cost) ?? 0),
+        0
+      ),
+    [contracts.items]
+  );
+  const strategicSpend = useMemo(
+    () =>
+      allVendors
+        .filter(entity => entity.tier === STRATEGIC_TIER)
+        .reduce((sum, entity) => sum + (spend.byId.get(entity._uid)?.vmSpend ?? 0), 0),
+    [allVendors, spend.byId]
+  );
+  const strategicPct = totalSpend > 0 ? Math.round((strategicSpend / totalSpend) * 100) : 0;
+  const costCentresCharged = useMemo(() => {
+    const grouped = computeVmGroupSpend(allVendors, spend.byId, 'cost_centre');
+    return [...grouped.entries()].filter(([value, amount]) => value !== '—' && amount > 0).length;
+  }, [allVendors, spend.byId]);
+
+  const openVendor = (id: string) =>
     navigate({
-      to: `${VENDOR_RAIL_PATHS[VENDOR_VENDORS_ID]}/$vendorId`,
-      params: { workspaceSlug, vendorId },
+      to: `${VENDOR_RAIL_PATHS[VENDOR_SPEND_ID]}/$vendorId`,
+      params: { workspaceSlug, vendorId: id },
+      search: (previous: Record<string, unknown>) => previous
+    });
+  const closeVendor = () =>
+    navigate({
+      to: VENDOR_RAIL_PATHS[VENDOR_SPEND_ID],
+      params: { workspaceSlug },
       search: (previous: Record<string, unknown>) => previous
     });
   const patchSearch = (patch: Partial<SpendSearchParams>) =>
     navigate({
-      to: VENDOR_RAIL_PATHS[VENDOR_VENDORS_ID],
+      to: VENDOR_RAIL_PATHS[VENDOR_SPEND_ID],
       params: { workspaceSlug },
       search: (previous: Record<string, unknown>) => ({ ...previous, ...patch })
     });
@@ -141,65 +269,135 @@ export const VendorSpendScreen = () => {
     );
   }
 
+  const isLoading = vendors.isLoading || spend.isLoading || contracts.isLoading;
+
   return (
     <div className={styles.screen}>
       <Title
         title="Spend"
-        chips={
-          !spend.isLoading &&
-          totalSpend > 0 && (
-            <span>{formatCurrencyValue({ amount: totalSpend, currency: totalCurrency })}</span>
-          )
-        }
+        description="Annualised contract value rolled up by vendor or by cost centre. Grouping by capability
+          isn't available yet — no Contract-to-capability link exists in the schema."
       />
 
-      <div className={filterStyles.toolbar}>
-        <div style={{ marginLeft: 'auto' }}>
-          <FilterDropdown
-            label="Group by"
-            value={group}
-            onChange={value =>
-              patchSearch({ group: value === 'vendor' ? undefined : (value as 'costCentre') })
-            }
-            options={[
-              { value: 'vendor', label: 'Vendor' },
-              { value: 'costCentre', label: 'Cost centre' }
-            ]}
-          />
+      <div className={styles.tiles}>
+        <div className={styles.tile}>
+          <div className={styles.tileLabel}>Total annualised</div>
+          <div className={styles.tileValue}>{fmtMoney(totalSpend, totalCurrency)}</div>
+          <div className={styles.tileSub}>{contracts.items.length} contracts</div>
+        </div>
+        <div className={styles.tile}>
+          <div className={styles.tileLabel}>Fixed-term commitment</div>
+          <div className={styles.tileValue}>{fmtMoney(fixedTermCommitment, totalCurrency)}</div>
+          <div className={styles.tileSub}>not auto-renewing</div>
+        </div>
+        <div className={styles.tile}>
+          <div className={styles.tileLabel}>Strategic tier</div>
+          <div className={styles.tileValue}>{strategicPct}%</div>
+          <div className={styles.tileSub}>of total spend</div>
+        </div>
+        <div className={styles.tile}>
+          <div className={styles.tileLabel}>Cost centres</div>
+          <div className={styles.tileValue}>{costCentresCharged}</div>
+          <div className={styles.tileSub}>charged</div>
         </div>
       </div>
 
-      <Table.Root scroll stickyHeader>
-        <Table.Head>
-          <Table.Row>
-            <Table.HeaderCell>{group === 'costCentre' ? 'Cost centre' : 'Vendor'}</Table.HeaderCell>
-            <Table.HeaderCell>Share of spend</Table.HeaderCell>
-            <Table.HeaderCell numeric>Annual spend</Table.HeaderCell>
-          </Table.Row>
-        </Table.Head>
-        <Table.Body>
-          {rows.length === 0 ? (
-            <Table.EmptyRow colSpan={3}>
-              {vendors.isLoading || spend.isLoading ? 'Loading spend…' : 'No spend recorded yet.'}
-            </Table.EmptyRow>
-          ) : (
-            rows.map(row => (
-              <Table.Row
-                key={row.key}
-                onClick={row.vendorId ? () => openVendor(row.vendorId!) : undefined}
-              >
-                <Table.NameCell title={row.label} subtitle={row.subtitle} />
-                <Table.Cell>
-                  <SpendShareBar amount={row.amount} total={totalSpend} />
-                </Table.Cell>
-                <Table.Cell numeric>
-                  {formatCurrencyValue({ amount: row.amount, currency: totalCurrency })}
-                </Table.Cell>
-              </Table.Row>
-            ))
+      <div className={filterStyles.toolbar}>
+        <FilterDropdown
+          label="Group by"
+          value={group}
+          onChange={value =>
+            patchSearch({
+              group: value === 'vendor' ? undefined : (value as 'costCentre' | 'capability')
+            })
+          }
+          options={[
+            { value: 'vendor', label: 'By vendor' },
+            { value: 'costCentre', label: 'By cost centre' },
+            { value: 'capability', label: 'By capability' }
+          ]}
+        />
+        <div style={{ marginLeft: 'auto' }}>
+          {group !== 'capability' && !isLoading && (
+            <span className={`${styles.inView} mono tabular`}>
+              {fmtMoney(rowsTotal, totalCurrency)} in view
+            </span>
           )}
-        </Table.Body>
-      </Table.Root>
+        </div>
+      </div>
+
+      {group === 'capability' ? (
+        <div className={styles.capabilityEmpty}>
+          Capability roll-ups need a Contract-to-capability schema link, which doesn't exist yet.
+          Once that link is added, spend can be grouped by the capability each contract funds — use
+          vendor or cost centre grouping above until then.
+        </div>
+      ) : (
+        <>
+          <SpendShareStrip
+            segments={rows.slice(0, 12).map(row => ({
+              key: row.key,
+              label: row.label,
+              amount: row.amount,
+              onClick: row.vendorId ? () => openVendor(row.vendorId!) : undefined
+            }))}
+            total={rowsTotal}
+          />
+
+          <Table.Root scroll stickyHeader>
+            <Table.Head>
+              <Table.Row>
+                <Table.HeaderCell>
+                  {group === 'costCentre' ? 'Cost centre' : 'Vendor'}
+                </Table.HeaderCell>
+                <Table.HeaderCell width={160}>Share</Table.HeaderCell>
+                <Table.HeaderCell numeric>Spend / yr</Table.HeaderCell>
+                <Table.HeaderCell numeric>%</Table.HeaderCell>
+                <Table.HeaderCell numeric>Contracts</Table.HeaderCell>
+                <Table.HeaderCell>Largest contract</Table.HeaderCell>
+              </Table.Row>
+            </Table.Head>
+            <Table.Body>
+              {rows.length === 0 ? (
+                <Table.EmptyRow colSpan={6}>
+                  {isLoading ? 'Loading spend…' : 'No spend recorded yet.'}
+                </Table.EmptyRow>
+              ) : (
+                rows.map(row => (
+                  <Table.Row
+                    key={row.key}
+                    onClick={row.vendorId ? () => openVendor(row.vendorId!) : undefined}
+                  >
+                    <Table.NameCell title={row.label} subtitle={row.subtitle} />
+                    <Table.Cell>
+                      <SpendShareBar value={row.amount} max={maxRowAmount} />
+                    </Table.Cell>
+                    <Table.Cell numeric>{fmtMoney(row.amount, totalCurrency)}</Table.Cell>
+                    <Table.Cell numeric>
+                      <span className="dim mono tabular">
+                        {rowsTotal > 0 ? ((row.amount / rowsTotal) * 100).toFixed(1) : '0.0'}%
+                      </span>
+                    </Table.Cell>
+                    <Table.Cell numeric>{row.contractCount}</Table.Cell>
+                    <Table.Cell>
+                      {row.largestContractName ?? <span className="dim">—</span>}
+                    </Table.Cell>
+                  </Table.Row>
+                ))
+              )}
+            </Table.Body>
+          </Table.Root>
+        </>
+      )}
+
+      {vendorId && (
+        <VendorDrawer
+          workspaceSlug={workspaceSlug}
+          vendorId={vendorId}
+          vendorConfig={vendorConfig}
+          onClose={closeVendor}
+        />
+      )}
     </div>
   );
 };

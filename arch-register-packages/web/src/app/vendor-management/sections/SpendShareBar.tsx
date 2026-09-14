@@ -1,23 +1,63 @@
 import styles from './SpendShareBar.module.css';
 
-const pctOf = (amount: number, total: number) =>
-  total > 0 ? Math.min(100, Math.max(0, (amount / total) * 100)) : 0;
+const pctOf = (value: number, max: number) =>
+  max > 0 ? Math.min(100, Math.max(0, (value / max) * 100)) : 0;
 
 /**
- * Share-of-total bar for the Spend roll-up tables: a filled track for `amount`'s share of `total`,
- * with the percentage to its right — mirrors `../../strategy-model/sections/CapabilityMaturityBar.tsx`'s
- * track/fill shape, but unbanded (a single accent color) since spend share isn't a severity signal
- * the way capability maturity is. Local to this screen — no shared `ProgressBar` component exists
- * yet (see `CapabilityMaturityBar.tsx`'s own comment for the other, private, precedent).
+ * Per-row roll-up table bar: `value`'s magnitude relative to `max` (the largest group's spend in
+ * the current table, not a share of the portfolio total — the % column carries that). Mirrors
+ * `../../strategy-model/sections/CapabilityMaturityBar.tsx`'s track/fill shape, unbanded (a single
+ * accent color) since spend magnitude isn't a severity signal the way capability maturity is.
  */
-export const SpendShareBar = ({ amount, total }: { amount: number; total: number }) => {
-  const pct = pctOf(amount, total);
+export const SpendShareBar = ({ value, max }: { value: number; max: number }) => (
+  <span className={styles.track}>
+    <span className={styles.fill} style={{ width: `${pctOf(value, max)}%` }} />
+  </span>
+);
+
+export type SpendShareSegment = {
+  key: string;
+  label: string;
+  amount: number;
+  onClick?: () => void;
+};
+
+/**
+ * Portfolio-wide share-of-spend strip: one full-width bar with one segment per group (its share of
+ * `total`), each a darker tint of the accent color by rank so adjacent segments stay visually
+ * distinct without a fixed categorical palette (the number of groups is open-ended — vendors, cost
+ * centres — unlike the Strategy Overview's fixed `LEVEL_COLORS`). Mirrors the design reference's
+ * `.vm-share` strip.
+ */
+export const SpendShareStrip = ({
+  segments,
+  total
+}: {
+  segments: readonly SpendShareSegment[];
+  total: number;
+}) => {
+  if (total <= 0 || segments.length === 0) return null;
   return (
-    <span className={styles.cell}>
-      <span className={styles.track} title={`${pct.toFixed(1)}% of total spend`}>
-        <span className={styles.fill} style={{ width: `${pct}%` }} />
-      </span>
-      <span className={`${styles.pct} mono tabular dim`}>{pct.toFixed(0)}%</span>
-    </span>
+    <div className={styles.strip}>
+      {segments.map((segment, index) => {
+        const pct = pctOf(segment.amount, total);
+        if (pct <= 0) return null;
+        const color = `color-mix(in oklch, var(--accent-fg) ${Math.max(28, 90 - index * 7)}%, var(--cmp-bg))`;
+        const title = `${segment.label} · ${pct.toFixed(1)}%`;
+        const style = { width: `${pct}%`, background: color };
+        return segment.onClick ? (
+          <button
+            key={segment.key}
+            type="button"
+            className={styles.stripSeg}
+            style={style}
+            onClick={segment.onClick}
+            title={title}
+          />
+        ) : (
+          <span key={segment.key} className={styles.stripSeg} style={style} title={title} />
+        );
+      })}
+    </div>
   );
 };
