@@ -41,7 +41,9 @@ LINK_TARGETS=(
   ".claude"
   ".codex"
   ".local"
-  ".bob"
+  ".bob",
+  ".crabbox.yaml",
+  ".github/workflows/crabbox-hydrate.yaml",
   "AGENTS.md"
   "CLAUDE.md"
 )
