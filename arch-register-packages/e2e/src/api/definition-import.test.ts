@@ -176,20 +176,28 @@ test.describe('definition import', () => {
   });
 
   test('rejects execution when a preview becomes stale', async ({ orpc, server }) => {
+    const source = await orpc.workspaces.create({
+      body: { name: `Stale definition preview source ${randomUUID()}`, badge: 'SDS' }
+    });
     const target = await orpc.workspaces.create({
-      body: { name: `Stale definition preview target ${randomUUID()}` }
+      body: { name: `Stale definition preview target ${randomUUID()}`, badge: 'SDP' }
+    });
+    const sourceSchema = await orpc.schemas.create({
+      params: { workspace: source.url_slug },
+      body: { name: 'Stale source schema', key_prefix: 'STAL', fields: [] }
     });
     const sources = await orpc.workspaces.definitionImportSources({
       params: { workspace: target.url_slug }
     });
-    const builtin = sources.find(source => source.kind === 'builtin')!;
-    const selectedSchema = builtin.schemas[0]!;
+    const workspaceSource = sources.find(
+      item => item.kind === 'workspace' && item.id === source.url_slug
+    )!;
     const preview = await orpc.workspaces.definitionImportPreview({
       params: { workspace: target.url_slug },
       body: {
-        source: { kind: 'builtin', id: builtin.id },
+        source: { kind: 'workspace', id: source.url_slug },
         selection: {
-          schemas: [selectedSchema.id],
+          schemas: [sourceSchema.id],
           enums: [],
           documentTypes: [],
           relationSchemas: [],
@@ -198,14 +206,10 @@ test.describe('definition import', () => {
         }
       }
     });
-    const plannedSchema = preview.schemas.find(schema => schema.id === selectedSchema.id)!;
-    await orpc.schemas.create({
-      params: { workspace: target.url_slug },
-      body: {
-        name: `Prefix occupier ${randomUUID()}`,
-        key_prefix: String(plannedSchema.definition.key_prefix),
-        fields: []
-      }
+    expect(workspaceSource).toBeDefined();
+    await orpc.schemas.update({
+      params: { workspace: source.url_slug, id: sourceSchema.id },
+      body: { name: 'Changed source schema' }
     });
 
     await expect(
@@ -234,7 +238,7 @@ test.describe('definition import', () => {
 
     expect(
       (await server.db.catalog.listSchemas(target.id)).map(schema => schema.name)
-    ).not.toContain(selectedSchema.name);
+    ).not.toContain('Stale source schema');
   });
 
   test('blocks a case-insensitive name collision before persistence', async ({ orpc, server }) => {
