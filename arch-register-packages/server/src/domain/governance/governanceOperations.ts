@@ -224,8 +224,8 @@ const toAssignmentCreate = (
 });
 
 /**
- * Appends a governance event and creates its in-app notifications in the same transaction.
- * External notification channels are intentionally deferred to asynchronous delivery (#2211).
+ * Appends a governance event and records its notification and webhook work in the same
+ * transaction. Email sending itself remains asynchronous (#2211).
  */
 export const recordGovernanceEvent = async (
   tx: DatabaseAdapter,
@@ -253,24 +253,16 @@ export const recordGovernanceEvent = async (
     metadata: input.metadata
   });
 
-  const configAdapter = (
-    tx as unknown as {
-      governanceCaseConfig?: { listCaseConfigForKind?: unknown };
-    }
-  ).governanceCaseConfig;
-  const configRows =
-    typeof configAdapter?.listCaseConfigForKind === 'function'
-      ? await tx.governanceCaseConfig.listCaseConfigForKind(caseRow.workspace, caseRow.case_kind)
-      : [];
+  const configRows = await tx.governanceCaseConfig.listCaseConfigForKind(
+    caseRow.workspace,
+    caseRow.case_kind
+  );
   const external =
     resolveGovernanceWorkflowConfig(configRows, caseRow.case_subkind, { extensions: {} }, true)
       .config.external === true;
   if (!external) await createGovernanceInAppNotifications(tx, caseRow, event);
 
-  const webhookAdapter = (tx as unknown as { webhook?: { listWebhooks?: unknown } }).webhook;
-  if (typeof webhookAdapter?.listWebhooks === 'function') {
-    await enqueueGovernanceWebhookDeliveries(tx, caseRow, event, external, registry);
-  }
+  await enqueueGovernanceWebhookDeliveries(tx, caseRow, event, external, registry);
 
   return event;
 };
@@ -378,15 +370,7 @@ export const createGovernanceCaseInTransaction = async (
     message: 'A governance case requires at least one assignment'
   });
 
-  const configAdapter = (
-    tx as unknown as {
-      governanceCaseConfig?: { listCaseConfigForKind?: unknown };
-    }
-  ).governanceCaseConfig;
-  const configRows =
-    typeof configAdapter?.listCaseConfigForKind === 'function'
-      ? await tx.governanceCaseConfig.listCaseConfigForKind(workspace, input.caseKind)
-      : [];
+  const configRows = await tx.governanceCaseConfig.listCaseConfigForKind(workspace, input.caseKind);
   const external =
     resolveGovernanceWorkflowConfig(configRows, input.caseSubkind ?? null, { extensions: {} }, true)
       .config.external === true;

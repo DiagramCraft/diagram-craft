@@ -3,13 +3,16 @@ import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import type { AuthorizationContext } from '@arch-register/permissions';
 import type {
+  GovernanceAssignmentDbCreate,
   GovernanceAssignmentDbResult,
+  GovernanceCaseDbCreate,
   GovernanceCaseDbResult,
   GovernanceEventDbResult
 } from './db/governanceDatabase';
 import type { GovernanceCaseListFilter } from './db/governanceDatabase';
 import {
   decideGovernanceAssignment,
+  createGovernanceCaseInTransaction,
   listMyGovernanceAssignments,
   listMySubmittedGovernanceCases,
   sendGovernanceCaseReminder,
@@ -116,6 +119,30 @@ const makeGovernanceDouble = (
   const notifications: unknown[] = [];
 
   return {
+    createCase: vi.fn(async (input: GovernanceCaseDbCreate) => {
+      const created: GovernanceCaseDbResult = {
+        ...input,
+        case_subkind: input.case_subkind ?? null,
+        dedupe_key: input.dedupe_key ?? null,
+        status: 'open',
+        outcome: null,
+        reminder_windows_sent: [],
+        escalated_at: null,
+        completed_at: null,
+        cancelled_at: null
+      };
+      cases.set(created.id, created);
+      return created;
+    }),
+    createAssignment: vi.fn(async (input: GovernanceAssignmentDbCreate) => {
+      const created: GovernanceAssignmentDbResult = {
+        ...input,
+        status: 'open',
+        resolved_at: null
+      };
+      assignments.set(created.id, created);
+      return created;
+    }),
     getCase: vi.fn(async (_ws: string, id: string) => cases.get(id) ?? null),
     listCases: vi.fn(async (workspace: string, filter: GovernanceCaseListFilter = {}) =>
       [...cases.values()].filter(
@@ -216,7 +243,22 @@ const makeGovernanceDouble = (
 
 const makeDb = (
   governance: ReturnType<typeof makeGovernanceDouble>,
-  inAppOverrideUserIds: string[] = []
+  inAppOverrideUserIds: string[] = [],
+  configRows: Array<{
+    case_subkind: string | null;
+    enabled: boolean;
+    config: Record<string, unknown>;
+  }> = [],
+  webhooks: Array<{
+    id: string;
+    workspace: string;
+    url: string;
+    event_filter: { operations: string[]; schema_ids: string[] };
+    hmac_secret: string;
+    enabled: boolean;
+    created_at: Date;
+    updated_at: Date;
+  }> = []
 ): DatabaseAdapter =>
   ({
     catalog: {},
@@ -246,12 +288,24 @@ const makeDb = (
       markReadByAssignmentIds: vi.fn(async () => 0),
       markReadByCaseIds: vi.fn(async () => 0)
     },
+    notificationDelivery: {
+      createDelivery: vi.fn(async input => input)
+    },
+    governanceCaseConfig: {
+      listCaseConfigForKind: vi.fn(async () => configRows)
+    },
+    webhook: {
+      listWebhooks: vi.fn(async () => webhooks)
+    },
+    jobs: {
+      enqueueOneOffRun: vi.fn(async input => ({ ...input, id: 'job-1' }))
+    },
     core: {
       driver: 'sqlite' as const,
       transaction: async (callback: (db: DatabaseAdapter) => Promise<unknown>) => {
         const snapshot = governance._snapshot();
         try {
-          return await callback(makeDb(governance, inAppOverrideUserIds));
+          return await callback(makeDb(governance, inAppOverrideUserIds, configRows, webhooks));
         } catch (error) {
           governance._restore(snapshot);
           throw error;
@@ -291,6 +345,75 @@ describe('governance redaction serializers', () => {
 
     expect(apiCase.payload).toEqual({ safe: true });
     expect(apiEvent.metadata).toEqual({ safe: true });
+  });
+});
+
+describe('governance event dependencies', () => {
+  it('uses external workflow configuration and enqueues matching webhook deliveries', async () => {
+    const caseRow = makeCase();
+    const assignment = makeAssignment();
+    const governance = makeGovernanceDouble(caseRow, assignment);
+    const db = makeDb(
+      governance,
+      [],
+      [{ case_subkind: null, enabled: true, config: { external: true } }],
+      [
+        {
+          id: 'webhook-1',
+          workspace: 'ws-1',
+          url: 'https://example.com/governance',
+          event_filter: { operations: ['governance.workflow.started'], schema_ids: [] },
+          hmac_secret: 'whsec-test',
+          enabled: true,
+          created_at: now,
+          updated_at: now
+        }
+      ]
+    );
+
+    const created = await createGovernanceCaseInTransaction(db, 'ws-1', 'user-1', {
+      caseKind: 'test.echo',
+      subjectType: 'entity',
+      subjectId: 'entity-1',
+      assignments: [
+        {
+          action: 'approve',
+          target: { type: 'user', userId: 'approver-1' }
+        }
+      ]
+    });
+
+    expect(created.status).toBe('open');
+    expect(governance.createAssignment).not.toHaveBeenCalled();
+    expect(db.notification.createNotification).not.toHaveBeenCalled();
+    expect(db.jobs.enqueueOneOffRun).toHaveBeenCalledWith(
+      expect.objectContaining({
+        job_type: 'webhook.delivery',
+        payload: expect.objectContaining({
+          event: expect.objectContaining({
+            type: 'governance.workflow.started',
+            governance: expect.objectContaining({
+              case: expect.objectContaining({ external: true })
+            })
+          })
+        })
+      })
+    );
+  });
+
+  it('surfaces failures from required webhook dependencies', async () => {
+    const governance = makeGovernanceDouble(makeCase(), makeAssignment());
+    const db = makeDb(governance);
+    vi.mocked(db.webhook.listWebhooks).mockRejectedValueOnce(new Error('webhook unavailable'));
+
+    await expect(
+      createGovernanceCaseInTransaction(db, 'ws-1', 'user-1', {
+        caseKind: 'test.echo',
+        subjectType: 'entity',
+        subjectId: 'entity-1',
+        assignments: [{ action: 'approve', target: { type: 'user', userId: 'approver-1' } }]
+      })
+    ).rejects.toThrow('webhook unavailable');
   });
 });
 

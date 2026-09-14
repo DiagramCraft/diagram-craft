@@ -86,6 +86,12 @@ const makeDb = (row: AssessmentDbResult) => {
       markReadByAssignmentIds: vi.fn(async () => {}),
       markReadByCaseIds: vi.fn(async () => {})
     },
+    governanceCaseConfig: {
+      listCaseConfigForKind: vi.fn(async () => [])
+    },
+    webhook: {
+      listWebhooks: vi.fn(async () => [])
+    },
     jobs,
     core: {
       transaction: vi.fn((fn: (tx: DatabaseAdapter) => Promise<unknown>) =>

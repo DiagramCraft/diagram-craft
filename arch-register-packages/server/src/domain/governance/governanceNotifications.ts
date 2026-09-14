@@ -252,8 +252,7 @@ const createGovernanceNotification = async (
     delivery_key: `governance:${input.eventId}:user:${input.recipientUserId}:assignment:${input.assignmentId ?? 'none'}`,
     in_app_enabled: inAppEnabled
   });
-  const deliveryAdapter = (db as unknown as DatabaseAdapter).notificationDelivery;
-  if (emailEnabled && deliveryAdapter) {
+  if (emailEnabled) {
     await createEmailDelivery(db, notification, recipient!.email!);
   }
 };
@@ -331,9 +330,8 @@ const resolveGovernanceNotificationRecipients = async (
 };
 
 /**
- * Creates the in-app notifications for a governance event in the caller's transaction.
- * External channels intentionally remain outside this path and will be handled by the
- * asynchronous notification delivery work tracked in #2211.
+ * Creates the in-app notifications and asynchronous email delivery records for a governance
+ * event in the caller's transaction. Email sending is handled by the delivery worker (#2211).
  */
 export const createGovernanceInAppNotifications = async (
   db: DatabaseAdapter,

@@ -159,12 +159,16 @@ const makeDb = (
   };
 
   const governanceCaseConfig = {
-    listCaseConfig: vi.fn(async () => (caseConfig ? [caseConfig] : []))
+    listCaseConfig: vi.fn(async () => (caseConfig ? [caseConfig] : [])),
+    listCaseConfigForKind: vi.fn(async () => (caseConfig ? [caseConfig] : []))
   };
 
   const db = {
     governance,
     governanceCaseConfig,
+    webhook: {
+      listWebhooks: vi.fn(async () => [])
+    },
     core: {
       transaction: vi.fn(async (callback: (tx: DatabaseAdapter) => Promise<void>) => callback(db))
     }

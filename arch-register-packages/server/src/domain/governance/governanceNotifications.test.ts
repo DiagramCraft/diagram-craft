@@ -87,7 +87,8 @@ describe('governance notification delivery', () => {
         }))
       },
       notification: { createNotification },
-      notificationPreference: { listOverrides: vi.fn(async () => []) }
+      notificationPreference: { listOverrides: vi.fn(async () => []) },
+      notificationDelivery: { createDelivery: vi.fn(async input => input) }
     } as unknown as DatabaseAdapter;
 
     const result = await createGovernanceNotificationJobHandler(db)({
@@ -123,7 +124,8 @@ describe('governance notification delivery', () => {
         }))
       },
       notification: { createNotification },
-      notificationPreference: { listOverrides: vi.fn(async () => []) }
+      notificationPreference: { listOverrides: vi.fn(async () => []) },
+      notificationDelivery: { createDelivery: vi.fn(async input => input) }
     } as unknown as DatabaseAdapter;
 
     const result = await createGovernanceInAppNotifications(db, makeCase(), makeEvent());
@@ -141,6 +143,61 @@ describe('governance notification delivery', () => {
     );
   });
 
+  it('queues email delivery when email is enabled and in-app delivery is disabled', async () => {
+    const createNotification = vi.fn(async input => input);
+    const createDelivery = vi.fn(async input => input);
+    const db = {
+      governance: {
+        getCase: vi.fn(async () => makeCase()),
+        listEvents: vi.fn(async () => [makeEvent()]),
+        listAssignmentsForCase: vi.fn(async () => [makeAssignment()])
+      },
+      auth: {
+        getUser: vi.fn(async (id: string) => ({
+          id,
+          display_name: id,
+          email: id === 'approver-1' ? 'approver@example.com' : null,
+          is_active: true
+        }))
+      },
+      notification: { createNotification },
+      notificationPreference: {
+        listOverrides: vi.fn(async () => [
+          {
+            user_id: 'approver-1',
+            workspace: 'workspace-1',
+            notification_type: 'governance-task-assigned',
+            channel: 'in_app',
+            enabled: false,
+            updated_at: now
+          },
+          {
+            user_id: 'approver-1',
+            workspace: 'workspace-1',
+            notification_type: 'governance-task-assigned',
+            channel: 'email',
+            enabled: true,
+            updated_at: now
+          }
+        ])
+      },
+      notificationDelivery: { createDelivery }
+    } as unknown as DatabaseAdapter;
+
+    await createGovernanceInAppNotifications(db, makeCase(), makeEvent());
+
+    expect(createNotification).toHaveBeenCalledWith(
+      expect.objectContaining({ user_id: 'approver-1', in_app_enabled: false })
+    );
+    expect(createDelivery).toHaveBeenCalledWith(
+      expect.objectContaining({
+        notification_id: expect.any(String),
+        channel: 'email',
+        recipient_email: 'approver@example.com'
+      })
+    );
+  });
+
   it('keeps distinct task notifications for distinct assignments', async () => {
     const first = makeAssignment();
     const second = { ...first, id: randomUUID() };
@@ -153,7 +210,8 @@ describe('governance notification delivery', () => {
       },
       auth: { getUser: vi.fn(async (id: string) => ({ id, display_name: id, is_active: true })) },
       notification: { createNotification },
-      notificationPreference: { listOverrides: vi.fn(async () => []) }
+      notificationPreference: { listOverrides: vi.fn(async () => []) },
+      notificationDelivery: { createDelivery: vi.fn(async input => input) }
     } as unknown as DatabaseAdapter;
 
     await createGovernanceInAppNotifications(db, makeCase(), makeEvent());
@@ -191,7 +249,8 @@ describe('governance notification delivery', () => {
         }))
       },
       notification: { createNotification },
-      notificationPreference: { listOverrides }
+      notificationPreference: { listOverrides },
+      notificationDelivery: { createDelivery: vi.fn(async input => input) }
     } as unknown as DatabaseAdapter;
 
     await createGovernanceInAppNotifications(db, makeCase(), approvedEvent);
@@ -228,7 +287,8 @@ describe('governance notification delivery', () => {
         getUser: vi.fn(async (id: string) => ({ id, display_name: id, is_active: true }))
       },
       notification: { createNotification },
-      notificationPreference: { listOverrides: vi.fn(async () => []) }
+      notificationPreference: { listOverrides: vi.fn(async () => []) },
+      notificationDelivery: { createDelivery: vi.fn(async input => input) }
     } as unknown as DatabaseAdapter;
 
     const result = await createGovernanceNotificationJobHandler(db)({
@@ -286,7 +346,8 @@ describe('governance notification delivery', () => {
             updated_at: now
           }
         ])
-      }
+      },
+      notificationDelivery: { createDelivery: vi.fn(async input => input) }
     } as unknown as DatabaseAdapter;
 
     await createGovernanceInAppNotifications(db, makeCase(), escalatedEvent);
