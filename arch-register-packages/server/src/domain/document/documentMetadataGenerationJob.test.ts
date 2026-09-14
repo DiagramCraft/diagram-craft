@@ -705,4 +705,131 @@ describe('createDocumentMetadataGenerationScanJobHandler', () => {
       expect.objectContaining({ attempt_count: 1 })
     );
   });
+
+  it('does not claim work when execution is already aborted', async () => {
+    const controller = new AbortController();
+    controller.abort(new Error('execution timed out'));
+    const claimDueMetadataGenerations = vi.fn(async () => [scheduleRow()]);
+    const db = {
+      document: { claimDueMetadataGenerations }
+    } as unknown as DatabaseAdapter;
+
+    const handler = createDocumentMetadataGenerationScanJobHandler(db, makeStorage());
+
+    await expect(
+      handler({ jobId: 'job-1', workspace: 'ws-1', payload: {}, signal: controller.signal })
+    ).rejects.toThrow('execution timed out');
+    expect(claimDueMetadataGenerations).not.toHaveBeenCalled();
+  });
+
+  it('stops after a database operation resumes from cancellation without retrying the row', async () => {
+    const controller = new AbortController();
+    let releaseMetadataRead!: () => void;
+    const metadataRead = new Promise<void>(resolve => {
+      releaseMetadataRead = resolve;
+    });
+    const upsertPendingMetadataGeneration = vi.fn();
+    const db = {
+      document: {
+        claimDueMetadataGenerations: vi.fn(async () => [scheduleRow()]),
+        getDocumentMetadata: vi.fn(async () => {
+          await metadataRead;
+          return {
+            workspace: 'ws-1',
+            node_id: 'node-1',
+            document_type_id: 'type-1',
+            values: {},
+            generated_metadata: {},
+            updated_at: new Date()
+          };
+        }),
+        upsertPendingMetadataGeneration
+      },
+      project: {
+        contentNodes: { getAnyContentNodeById: vi.fn(async () => node) }
+      }
+    } as unknown as DatabaseAdapter;
+
+    const handler = createDocumentMetadataGenerationScanJobHandler(db, makeStorage());
+    const execution = handler({
+      jobId: 'job-1',
+      workspace: 'ws-1',
+      payload: {},
+      signal: controller.signal
+    });
+    await vi.waitFor(() => expect(db.document.getDocumentMetadata).toHaveBeenCalled());
+
+    controller.abort(new Error('lease lost'));
+    releaseMetadataRead();
+
+    await expect(execution).rejects.toThrow('lease lost');
+    expect(upsertPendingMetadataGeneration).not.toHaveBeenCalled();
+    expect(chat).not.toHaveBeenCalled();
+  });
+
+  it('cancels the provider request and does not enter metadata retry handling', async () => {
+    const controller = new AbortController();
+    const upsertDocumentMetadata = vi.fn();
+    const upsertPendingMetadataGeneration = vi.fn();
+    const createMarkdownRevision = vi.fn();
+    const audit = vi.fn();
+    let providerAbortController: AbortController | undefined;
+    chat.mockImplementation(
+      vi.fn(async (options: { abortController?: AbortController }) => {
+        providerAbortController = options.abortController;
+        await new Promise<never>((_resolve, reject) => {
+          options.abortController?.signal.addEventListener(
+            'abort',
+            () => reject(options.abortController?.signal.reason),
+            { once: true }
+          );
+        });
+        throw new Error('provider request did not abort');
+      })
+    );
+    const db = {
+      document: {
+        claimDueMetadataGenerations: vi.fn(async () => [scheduleRow()]),
+        getDocumentMetadata: vi.fn(async () => ({
+          workspace: 'ws-1',
+          node_id: 'node-1',
+          document_type_id: 'type-1',
+          values: {},
+          generated_metadata: {},
+          updated_at: new Date()
+        })),
+        getDocumentType: vi.fn(async () => documentType),
+        upsertDocumentMetadata,
+        upsertPendingMetadataGeneration
+      },
+      project: {
+        contentNodes: { getAnyContentNodeById: vi.fn(async () => node) },
+        markdownRevisions: {
+          getNextMarkdownRevisionNumber: vi.fn(async () => 6),
+          createMarkdownRevision
+        }
+      },
+      auth: { getUser: vi.fn(async () => user) },
+      core: { transaction: vi.fn(async (cb: (tx: DatabaseAdapter) => unknown) => cb(db as never)) },
+      audit: { createAuditLog: audit }
+    } as unknown as DatabaseAdapter;
+
+    const handler = createDocumentMetadataGenerationScanJobHandler(db, makeStorage());
+    const execution = handler({
+      jobId: 'job-1',
+      workspace: 'ws-1',
+      payload: {},
+      signal: controller.signal
+    });
+    await vi.waitFor(() => expect(providerAbortController).toBeDefined());
+
+    controller.abort(new Error('lease lost'));
+
+    await expect(execution).rejects.toThrow('lease lost');
+    expect(chat).toHaveBeenCalledTimes(1);
+    expect(upsertPendingMetadataGeneration).not.toHaveBeenCalled();
+    expect(upsertDocumentMetadata).not.toHaveBeenCalled();
+    expect(createMarkdownRevision).not.toHaveBeenCalled();
+    expect(audit).not.toHaveBeenCalled();
+  });
 });
