@@ -29,6 +29,23 @@ export class PostgresAssessmentDatabase extends PostgresDatabaseBase implements 
     return row ? assessmentMapper(row) : null;
   }
 
+  async consumePendingOccurrenceJobRun(workspace: string, id: string, expectedJobRunId: string) {
+    try {
+      const [row] = await this.sql<DatabaseRow[]>`
+        UPDATE assessment
+        SET pending_occurrence_job_run_id = NULL
+        WHERE workspace = ${workspace}
+          AND id = ${id}
+          AND status = 'open'
+          AND pending_occurrence_job_run_id = ${expectedJobRunId}
+        RETURNING *
+      `;
+      return row ? assessmentMapper(row) : null;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
   async createAssessment(input: AssessmentDbCreate) {
     try {
       const [row] = await this.sql<DatabaseRow[]>`

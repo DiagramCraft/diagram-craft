@@ -31,6 +31,17 @@ export class SqliteAssessmentDatabase extends SqliteDatabaseBase implements Asse
     );
   }
 
+  async consumePendingOccurrenceJobRun(workspace: string, id: string, expectedJobRunId: string) {
+    const result = this.run(
+      `UPDATE assessment
+       SET pending_occurrence_job_run_id = NULL
+       WHERE workspace = ? AND id = ? AND status = 'open' AND pending_occurrence_job_run_id = ?`,
+      [workspace, id, expectedJobRunId]
+    );
+    if (result.changes === 0) return null;
+    return await this.getAssessmentById(workspace, id);
+  }
+
   async createAssessment(input: AssessmentDbCreate) {
     this.run(
       `INSERT INTO assessment (id, workspace, project_id, name, description, status, mode, assessment_type_id, scope, scope_conditions, fields, groups, assigned_team_ids, due_at, recurrence, response_window_days, current_occurrence, pending_occurrence_job_run_id, next_occurrence_at, created_at, updated_at)

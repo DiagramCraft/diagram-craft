@@ -75,6 +75,11 @@ export type AssessmentDatabase = {
   listAssessments(ws: string): Promise<AssessmentDbResult[]>;
   getAssessment(ws: string, projectId: string, id: string): Promise<AssessmentDbResult | null>;
   getAssessmentById(ws: string, id: string): Promise<AssessmentDbResult | null>;
+  consumePendingOccurrenceJobRun(
+    ws: string,
+    id: string,
+    expectedJobRunId: string
+  ): Promise<AssessmentDbResult | null>;
   createAssessment(input: AssessmentDbCreate): Promise<AssessmentDbResult>;
   updateAssessment(
     ws: string,

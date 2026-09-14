@@ -69,16 +69,28 @@ const makeDb = (row: AssessmentDbResult) => {
     })),
     cancelQueuedRun: vi.fn(async () => null)
   };
+  const assessments = {
+    getAssessmentById: vi.fn(async () => stored),
+    consumePendingOccurrenceJobRun: vi.fn(
+      async (_workspace: string, _id: string, expectedJobRunId: string) => {
+        if (stored.status !== 'open' || stored.pending_occurrence_job_run_id !== expectedJobRunId) {
+          return null;
+        }
+        stored = { ...stored, pending_occurrence_job_run_id: null };
+        return stored;
+      }
+    ),
+    updateAssessment: vi.fn(
+      async (_ws: string, _pid: string, _id: string, patch: Partial<AssessmentDbResult>) => {
+        stored = { ...stored, ...patch };
+        return stored;
+      }
+    )
+  };
   const db = {
     project: {
       assessments: {
-        getAssessmentById: vi.fn(async () => stored),
-        updateAssessment: vi.fn(
-          async (_ws: string, _pid: string, _id: string, patch: Partial<AssessmentDbResult>) => {
-            stored = { ...stored, ...patch };
-            return stored;
-          }
-        )
+        ...assessments
       }
     },
     governance,
@@ -93,7 +105,13 @@ const makeDb = (row: AssessmentDbResult) => {
       )
     }
   };
-  return { db: db as unknown as DatabaseAdapter, jobs, governance, getStored: () => stored };
+  return {
+    db: db as unknown as DatabaseAdapter,
+    jobs,
+    governance,
+    assessments,
+    getStored: () => stored
+  };
 };
 
 describe('scheduleNextAssessmentOccurrence', () => {
@@ -174,13 +192,32 @@ describe('createAssessmentRecurrenceJobHandler', () => {
     expect(governance.createCase).not.toHaveBeenCalled();
   });
 
+  it('skips stale or replaced job runs without side effects', async () => {
+    const row = baseRow({ pending_occurrence_job_run_id: 'run-current' });
+    const { db, jobs, governance, assessments, getStored } = makeDb(row);
+    const handler = createAssessmentRecurrenceJobHandler(db);
+
+    const result = await handler({
+      jobId: 'run-stale',
+      workspace: 'ws-1',
+      payload: { assessmentId: 'assessment-1' },
+      signal: new AbortController().signal
+    });
+
+    expect(result).toEqual({ skipped: true });
+    expect(getStored()).toEqual(row);
+    expect(assessments.updateAssessment).not.toHaveBeenCalled();
+    expect(governance.createCase).not.toHaveBeenCalled();
+    expect(jobs.enqueueOneOffRun).not.toHaveBeenCalled();
+  });
+
   it('closes the current cycle, bumps the occurrence, reopens governance, and reschedules', async () => {
     const row = baseRow({ pending_occurrence_job_run_id: 'run-0' });
     const { db, governance, getStored } = makeDb(row);
     const handler = createAssessmentRecurrenceJobHandler(db);
 
     const result = await handler({
-      jobId: 'job-1',
+      jobId: 'run-0',
       workspace: 'ws-1',
       payload: { assessmentId: 'assessment-1' },
       signal: new AbortController().signal
@@ -194,6 +231,28 @@ describe('createAssessmentRecurrenceJobHandler', () => {
     expect(stored.due_at).not.toBeNull();
     expect(stored.pending_occurrence_job_run_id).toBe('run-1');
     expect(result).toMatchObject({ assessmentId: 'assessment-1', occurrence: 2 });
+  });
+
+  it('does not advance twice when a completed run is replayed', async () => {
+    const row = baseRow({ pending_occurrence_job_run_id: 'run-0' });
+    const { db, jobs, getStored } = makeDb(row);
+    const handler = createAssessmentRecurrenceJobHandler(db);
+
+    const context = {
+      jobId: 'run-0',
+      workspace: 'ws-1',
+      payload: { assessmentId: 'assessment-1' },
+      signal: new AbortController().signal
+    };
+
+    const first = await handler(context);
+    const replay = await handler(context);
+
+    expect(first).toMatchObject({ assessmentId: 'assessment-1', occurrence: 2 });
+    expect(replay).toEqual({ skipped: true });
+    expect(getStored().current_occurrence).toBe(2);
+    expect(getStored().pending_occurrence_job_run_id).toBe('run-1');
+    expect(jobs.enqueueOneOffRun).toHaveBeenCalledTimes(1);
   });
 
   it('throws for a payload missing assessmentId', async () => {
