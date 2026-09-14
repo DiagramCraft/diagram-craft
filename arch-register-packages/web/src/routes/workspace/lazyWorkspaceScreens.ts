@@ -84,6 +84,26 @@ export const LazyStrategyTraceabilityScreen = lazyRouteComponent(
   () => import('../../app/strategy-model/sections/StrategyTraceabilityScreen'),
   'StrategyTraceabilityScreen'
 );
+export const LazyVendorOverviewScreen = lazyRouteComponent(
+  () => import('../../app/vendor-management/sections/VendorOverviewScreen'),
+  'VendorOverviewScreen'
+);
+export const LazyVendorVendorsScreen = lazyRouteComponent(
+  () => import('../../app/vendor-management/sections/VendorVendorsScreen'),
+  'VendorVendorsScreen'
+);
+export const LazyVendorContractsScreen = lazyRouteComponent(
+  () => import('../../app/vendor-management/sections/VendorContractsScreen'),
+  'VendorContractsScreen'
+);
+export const LazyVendorSpendScreen = lazyRouteComponent(
+  () => import('../../app/vendor-management/sections/VendorSpendScreen'),
+  'VendorSpendScreen'
+);
+export const LazyVendorRiskScreen = lazyRouteComponent(
+  () => import('../../app/vendor-management/sections/VendorRiskScreen'),
+  'VendorRiskScreen'
+);
 export const LazyWorkspaceSettingsScreen = lazyRouteComponent(
   () => import('../../sections/workspace-settings/WorkspaceSettingsScreen'),
   'WorkspaceSettingsScreen'

@@ -16,6 +16,11 @@ import {
   STRATEGY_TRACEABILITY_ID,
   STRATEGY_RAIL_PATHS
 } from '../app/strategy-model/strategySections';
+import {
+  VENDOR_OVERVIEW_ID,
+  VENDOR_RISK_ID,
+  VENDOR_RAIL_PATHS
+} from '../app/vendor-management/vendorManagementSections';
 
 const railIds = (appId: Parameters<typeof getAppDefinition>[0]) =>
   getAppDefinition(appId).sections.map(section => section.id);
@@ -68,6 +73,14 @@ describe('appShellRegistry', () => {
     );
   });
 
+  it('registers Vendor Management as a capability-gated app owning five rail sections', () => {
+    const vendorManagement = getAppDefinition(VENDOR_OVERVIEW_ID);
+    expect(vendorManagement.applicationId).toBe('vendor-management');
+    expect(railIds(VENDOR_OVERVIEW_ID)).toHaveLength(5);
+    expect(vendorManagement.enablement).toEqual({ capabilityType: 'vendor-management' });
+    expect(getRailSection(VENDOR_RISK_ID)?.route).toBe(VENDOR_RAIL_PATHS[VENDOR_RISK_ID]);
+  });
+
   it('exposes non-home app routes under the stable APP_RAIL_ROUTES shape', () => {
     // Heatmaps is absent from the rail (see above), so its route is not in APP_RAIL_ROUTES.
     const shellStrategyRoutes = Object.fromEntries(
@@ -75,7 +88,8 @@ describe('appShellRegistry', () => {
     );
     expect(APP_RAIL_ROUTES).toEqual({
       [GLOSSARY_RAIL_ITEM_ID]: GLOSSARY_RAIL_PATH,
-      ...shellStrategyRoutes
+      ...shellStrategyRoutes,
+      ...VENDOR_RAIL_PATHS
     });
   });
 
@@ -85,6 +99,7 @@ describe('appShellRegistry', () => {
     expect(RAIL_ROUTES[STRATEGY_CAPABILITY_MAP_ID]).toBe(
       STRATEGY_RAIL_PATHS[STRATEGY_CAPABILITY_MAP_ID]
     );
+    expect(RAIL_ROUTES[VENDOR_OVERVIEW_ID]).toBe(VENDOR_RAIL_PATHS[VENDOR_OVERVIEW_ID]);
     expect(RAIL_ROUTES.home).toBe('/$workspaceSlug');
   });
 

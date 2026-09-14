@@ -6,6 +6,7 @@ import {
 } from './workspaceCapabilityContract';
 import { z } from 'zod';
 import { businessGlossaryCapabilityDefinition } from './app/business-glossary/glossaryCapability';
+import { vendorManagementCapabilityDefinition } from './app/vendor-management/vendorManagementCapability';
 
 const capabilityFieldTypeSchema = z.enum([
   'text',
@@ -241,7 +242,8 @@ export const workspaceCapabilityDefinitions: WorkspaceCapabilityDefinition[] = [
       }
     ]
   },
-  businessGlossaryCapabilityDefinition
+  businessGlossaryCapabilityDefinition,
+  vendorManagementCapabilityDefinition
 ];
 
 export const getWorkspaceCapabilityDefinition = (type: WorkspaceCapabilityType | string) =>
