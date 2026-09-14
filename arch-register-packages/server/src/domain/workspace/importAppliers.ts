@@ -11,6 +11,7 @@ import type {
   WorkspaceAuthorizationContext,
   WorkspaceCapability
 } from '@arch-register/permissions';
+import { workspaceCapabilitySchema } from '@arch-register/api-types/common';
 import { formatPublicId } from '../../utils/publicIds';
 import { httpAssert } from '../../utils/httpAssert';
 
@@ -62,42 +63,16 @@ import {
 
 type ImportResolution = { action: string; new_name?: string };
 
-const VALID_WORKSPACE_CAPABILITIES = new Set([
-  'ws.view',
-  'ws.settings',
-  'ws.delete',
-  'ws.audit',
-  'ws.manage_views',
-  'ws.manage_dashboard',
-  'people.invite',
-  'people.role',
-  'people.remove',
-  'people.teams',
-  'proj.create',
-  'proj.edit',
-  'proj.delete',
-  'content.view',
-  'content.edit',
-  'ent.edit',
-  'ent.propose',
-  'ent.approve',
-  'ent.override',
-  'ent.external_update',
-  'governance.external',
-  'comments',
-  'schema.edit',
-  'schema.publish'
-]);
-
 const toWorkspaceCapabilities = (capabilities: string[]): WorkspaceCapability[] => {
-  const parsed = capabilities.filter((capability): capability is WorkspaceCapability =>
-    VALID_WORKSPACE_CAPABILITIES.has(capability)
-  );
-  httpAssert.true(parsed.length === capabilities.length, {
-    status: 400,
-    message: 'Import contains an unknown workspace capability'
-  });
-  return parsed;
+  const parsed = workspaceCapabilitySchema.array().safeParse(capabilities);
+  if (!parsed.success) {
+    httpAssert.true(false, {
+      status: 400,
+      message: 'Import contains an unknown workspace capability'
+    });
+    throw new Error('Unreachable invalid workspace capability import');
+  }
+  return parsed.data;
 };
 
 const hasSkipResolution = (resolutions: Record<string, ImportResolution>, id: string) =>

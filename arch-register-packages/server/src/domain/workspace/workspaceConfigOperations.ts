@@ -1,11 +1,10 @@
 import { randomUUID } from 'node:crypto';
 import { AR_COLOR_BLUE } from '@arch-register/api-types/colors';
+import { workspaceCapabilitySchema } from '@arch-register/api-types/common';
 import {
   BUILTIN_WORKSPACE_ROLES,
-  WORKSPACE_CAPABILITY_GROUPS,
   resolveWorkspaceRoleDefinitions,
-  type TeamRole,
-  type WorkspaceCapability
+  type TeamRole
 } from '@arch-register/permissions';
 import type { DatabaseAdapter } from '../../db/database';
 import { requireWorkspaceCapability } from '../auth/authorization';
@@ -31,9 +30,6 @@ import {
 } from './workspaceCapabilityOperations';
 
 const VALID_TEAM_ROLES: TeamRole[] = ['team_admin', 'team_editor', 'team_reviewer'];
-const VALID_WORKSPACE_CAPABILITIES = WORKSPACE_CAPABILITY_GROUPS.flatMap(group =>
-  group.caps.map(cap => cap.id)
-);
 
 const sanitize = (text: string): string =>
   text
@@ -427,12 +423,14 @@ const parseRoleInput = (input: {
   tone?: string;
   capabilities: string[];
 }) => {
-  const capabilities = input.capabilities.map(cap => {
-    httpAssert.true(VALID_WORKSPACE_CAPABILITIES.includes(cap as WorkspaceCapability), {
+  const parsedCapabilities = workspaceCapabilitySchema.array().safeParse(input.capabilities);
+  if (!parsedCapabilities.success) {
+    httpAssert.true(false, {
       message: 'capabilities contains invalid values'
     });
-    return cap as WorkspaceCapability;
-  });
+    throw new Error('Unreachable invalid workspace role capability');
+  }
+  const capabilities = parsedCapabilities.data;
 
   const name = sanitize(input.name);
   const description = input.description !== undefined ? sanitize(input.description) : '';

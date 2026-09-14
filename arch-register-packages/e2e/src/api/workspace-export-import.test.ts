@@ -5,6 +5,7 @@ import { createTestORPCClient } from '../helpers/fixtures';
 import { makeAuthHeader } from '../helpers/seedHelper';
 import { hashPassword } from '@arch-register/server/utils/password';
 import { encodeCaseSubkind } from '@arch-register/server/domain/governance/governanceCaseSubkind';
+import { workspaceCapabilitySchema } from '@arch-register/api-types/common';
 
 const suggestedResolutions = (parseResult: {
   conflicts: Array<{
@@ -20,6 +21,56 @@ const suggestedResolutions = (parseResult: {
   );
 
 test.describe('workspace export/import', () => {
+  test('round-trips every supported custom role capability', async ({ orpc, server }) => {
+    const suffix = randomUUID();
+    const source = await orpc.workspaces.create({
+      body: { name: `Capability role source ${suffix}`, badge: 'CRS' }
+    });
+    const capabilities = [...workspaceCapabilitySchema.options];
+
+    await orpc.config.roles.create({
+      params: { workspace: source.url_slug },
+      body: {
+        name: `Complete capability role ${suffix}`,
+        description: 'All supported capabilities',
+        capabilities
+      }
+    });
+
+    const archive = await orpc.workspaces.export({
+      params: { workspace: source.url_slug },
+      body: { include: ['config'], options: { include_content: false } }
+    });
+    const target = await orpc.workspaces.create({
+      body: { name: `Capability role target ${suffix}`, badge: 'CRT' }
+    });
+    const parsed = await orpc.workspaces.importParse({
+      params: { workspace: target.url_slug },
+      body: {
+        file: new File([archive.body as Blob], 'capability-role-export.zip', {
+          type: 'application/zip'
+        })
+      }
+    });
+    expect(parsed.valid).toBe(true);
+
+    const execute = await orpc.workspaces.importExecute({
+      params: { workspace: target.url_slug },
+      body: {
+        import_id: (parsed as any).import_id,
+        include: ['config'],
+        conflict_resolutions: suggestedResolutions(parsed as any),
+        options: { preserve_ids: false, update_references: true }
+      }
+    });
+    expect(execute.success).toBe(true);
+
+    const importedRole = (await server.db.workspace.listCustomWorkspaceRoles(target.id)).find(
+      role => role.name === `Complete capability role ${suffix}`
+    );
+    expect(importedRole?.capabilities).toEqual(capabilities);
+  });
+
   test('round-trips workflow names and descriptions for schemas and documents', async ({
     orpc,
     server

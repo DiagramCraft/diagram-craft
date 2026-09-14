@@ -4,7 +4,8 @@ import {
   ws,
   wsAndUUID,
   teamRoleSchema,
-  workspaceCapabilitySchema
+  workspaceCapabilitySchema,
+  type WorkspaceCapability
 } from '@arch-register/api-types/common';
 import {
   apiTokenSchema,
@@ -712,7 +713,7 @@ export const workspaceConfigContract = oc.tag('Workspace Config').router({
 });
 
 export type WorkspaceMemberInfo = z.infer<typeof memberInfoSchema>;
-export type WorkspaceRoleCapability = z.infer<typeof workspaceCapabilitySchema>;
+export type WorkspaceRoleCapability = WorkspaceCapability;
 export type WorkspaceTeam = z.infer<typeof teamSchema>;
 export type WorkspaceTeamInput = z.infer<typeof teamInputSchema>;
 export type WorkspaceApplicationId = z.infer<typeof workspaceApplicationIdSchema>;

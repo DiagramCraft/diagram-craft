@@ -111,6 +111,8 @@ export const workspaceCapabilitySchema = z.enum([
   'artifact.manage'
 ]);
 
+export type WorkspaceCapability = z.infer<typeof workspaceCapabilitySchema>;
+
 // ── External / AI-generated field metadata (shared by entity schemas & document types) ──────
 
 // Presence of `external_kind` on a field definition is what makes a field "external" — there is

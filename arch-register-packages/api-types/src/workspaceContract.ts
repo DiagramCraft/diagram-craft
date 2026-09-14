@@ -1,6 +1,6 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
-import { ws } from '@arch-register/api-types/common';
+import { ws, type WorkspaceCapability } from '@arch-register/api-types/common';
 import { dashboardWidgetSchema } from '@arch-register/api-types/dashboardContract';
 
 // ── Shared sub-schemas ────────────────────────────────────────
@@ -702,34 +702,7 @@ export type WorkspaceOwnerOption = {
   description?: string;
 };
 
-export type WorkspaceRoleCapability =
-  | 'ws.view'
-  | 'ws.settings'
-  | 'ws.delete'
-  | 'ws.audit'
-  | 'ws.manage_views'
-  | 'ws.manage_dashboard'
-  | 'people.invite'
-  | 'people.role'
-  | 'people.remove'
-  | 'people.teams'
-  | 'proj.create'
-  | 'proj.edit'
-  | 'proj.delete'
-  | 'content.view'
-  | 'content.edit'
-  | 'ent.edit'
-  | 'ent.propose'
-  | 'ent.approve'
-  | 'ent.override'
-  | 'ent.merge'
-  | 'ent.external_update'
-  | 'governance.external'
-  | 'comments'
-  | 'schema.edit'
-  | 'schema.publish'
-  | 'artifact.content.view'
-  | 'artifact.manage';
+export type WorkspaceRoleCapability = WorkspaceCapability;
 
 export type WorkspaceRoleDefinition = {
   id: string;
