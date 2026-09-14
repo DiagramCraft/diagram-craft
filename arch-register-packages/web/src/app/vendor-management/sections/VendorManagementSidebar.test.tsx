@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { VendorManagementSidebar } from './VendorManagementSidebar';
 import {
   VENDOR_CONTRACTS_ID,
+  VENDOR_RISK_ID,
   VENDOR_SPEND_ID,
   VENDOR_VENDORS_ID
 } from '../vendorManagementSections';
@@ -15,6 +16,7 @@ const mocks = vi.hoisted(() => ({
   entityList: vi.fn(),
   entityTree: vi.fn(),
   schemaList: vi.fn(),
+  metricsRollup: vi.fn(),
   capabilityConfigurationsList: vi.fn(),
   search: {} as Record<string, unknown>
 }));
@@ -28,6 +30,7 @@ vi.mock('../../../lib/orpcClient', () => ({
   orpcClient: {
     entities: { list: mocks.entityList, tree: mocks.entityTree },
     schemas: { list: mocks.schemaList },
+    metrics: { rollup: mocks.metricsRollup },
     config: { capabilityConfigurations: { list: mocks.capabilityConfigurationsList } }
   }
 }));
@@ -82,6 +85,15 @@ describe('VendorManagementSidebar', () => {
             name: 'Category',
             type: 'select',
             options: [{ value: 'software', label: 'Software' }]
+          },
+          {
+            id: 'cost_centre',
+            name: 'Cost Centre',
+            type: 'select',
+            options: [
+              { value: 'cc-eng', label: 'Engineering' },
+              { value: 'cc-sales', label: 'Sales' }
+            ]
           }
         ]
       },
@@ -136,6 +148,13 @@ describe('VendorManagementSidebar', () => {
       ],
       edges: [{ parentId: 'vnd-1', childId: 'ctr-1' }]
     });
+    mocks.metricsRollup.mockResolvedValue({
+      results: [
+        { boxEntityId: 'vnd-1', value: 3000, currencyCode: 'USD', sourceCount: 1 },
+        { boxEntityId: 'vnd-2', value: 1000, currencyCode: 'USD', sourceCount: 1 }
+      ],
+      legend: { min: null, max: null }
+    });
   });
 
   afterEach(() => {
@@ -148,7 +167,22 @@ describe('VendorManagementSidebar', () => {
 
   const flush = () => act(async () => new Promise(resolve => setTimeout(resolve, 0)));
 
-  it('shows the section nav list for a non-Vendors, non-Contracts section', async () => {
+  it('shows the section nav list for a non-Vendors/Contracts/Spend section', async () => {
+    await act(async () => {
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <VendorManagementSidebar workspaceSlug="ws-1" activeSection={VENDOR_RISK_ID} />
+        </QueryClientProvider>
+      );
+    });
+    for (let i = 0; i < 5; i++) await flush();
+
+    expect(container.textContent).toContain('Sections');
+    expect(container.textContent).toContain('Vendors');
+    expect(container.textContent).not.toContain('Tier');
+  });
+
+  it('shows cost centre spend and owner facets for the Spend section', async () => {
     await act(async () => {
       root.render(
         <QueryClientProvider client={queryClient}>
@@ -158,9 +192,12 @@ describe('VendorManagementSidebar', () => {
     });
     for (let i = 0; i < 5; i++) await flush();
 
-    expect(container.textContent).toContain('Sections');
-    expect(container.textContent).toContain('Vendors');
-    expect(container.textContent).not.toContain('Tier');
+    expect(container.textContent).toContain('All cost centres');
+    expect(container.textContent).toContain('Engineering');
+    expect(container.textContent).toContain('Sales');
+    expect(container.textContent).toContain('Owner');
+    expect(container.textContent).toContain('Jane Doe');
+    expect(container.textContent).toMatch(/4,000|4000/); // total spend across both vendors
   });
 
   it('shows renewal window/type/vendor facets with counts for the Contracts section', async () => {

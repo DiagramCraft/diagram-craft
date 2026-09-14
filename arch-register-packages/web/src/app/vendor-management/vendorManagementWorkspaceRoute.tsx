@@ -18,7 +18,11 @@ import {
   LazyVendorRiskScreen
 } from '../../routes/workspace/lazyWorkspaceScreens';
 import { ensureApplicationAccess } from '../../routes/applicationAccess';
-import { validateVendorsSearch, validateContractsSearch } from '../../routes/searchParams';
+import {
+  validateVendorsSearch,
+  validateContractsSearch,
+  validateSpendSearch
+} from '../../routes/searchParams';
 
 const railPath = (path: string) => path.replace('/$workspaceSlug/', '');
 
@@ -127,6 +131,30 @@ export const createVendorManagementWorkspaceRoutes = <TParentRoute extends AnyRo
     createRoute({
       getParentRoute: () => workspaceRoute,
       path: railPath(VENDOR_RAIL_PATHS[VENDOR_SPEND_ID]),
+      validateSearch: validateSpendSearch,
+      beforeLoad: ({ context, params }) =>
+        ensureApplicationAccess(
+          context.queryClient,
+          (params as unknown as { workspaceSlug: string }).workspaceSlug,
+          'vendor-management'
+        ),
+      component: LazyVendorSpendScreen
+    }),
+    ctx =>
+      railSectionShell(ctx, VENDOR_SPEND_ID, {
+        breadcrumbs: buildVendorManagementBreadcrumbs(ctx, VENDOR_SPEND_ID)
+      })
+  );
+  // Deep-linkable vendor drawer, mirroring `vendorsDetailRoute`/`contractsDetailRoute` above — same
+  // `component` as the base Spend route, gated the same way, with the drawer rendered conditionally
+  // by `VendorSpendScreen` when the optional `vendorId` route param is present. Its own route (not
+  // a redirect to `vendorsDetailRoute`) so the Spend screen's grouping/filter search params survive
+  // opening the drawer.
+  const spendDetailRoute = withWorkspaceShell(
+    createRoute({
+      getParentRoute: () => workspaceRoute,
+      path: `${railPath(VENDOR_RAIL_PATHS[VENDOR_SPEND_ID])}/$vendorId`,
+      validateSearch: validateSpendSearch,
       beforeLoad: ({ context, params }) =>
         ensureApplicationAccess(
           context.queryClient,
@@ -165,6 +193,7 @@ export const createVendorManagementWorkspaceRoutes = <TParentRoute extends AnyRo
     contractsRoute,
     contractsDetailRoute,
     spendRoute,
+    spendDetailRoute,
     riskRoute
   ] as const;
 };
