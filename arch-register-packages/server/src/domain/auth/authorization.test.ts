@@ -7,6 +7,7 @@ import { ServerDataProvider } from './ServerAuthorizationDataProvider';
 import {
   buildApiAuthCtx,
   buildApiEntityAuthCtx,
+  buildUserWorkspaceAuthCtxs,
   filterVisibleEntities,
   GLOBAL_WS,
   requireFieldGroupAdminBypass,
@@ -314,5 +315,36 @@ describe('buildApiAuthCtx request cache', () => {
 
     expect(context.workspaceCapabilityCeiling).toEqual(new Set(['ws.view']));
     expect(provider.getEntities).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('buildUserWorkspaceAuthCtxs', () => {
+  it('shares workspace data without loading catalog authorization data', async () => {
+    const provider = mockDataProvider();
+    const listTeamAssignments = vi.fn(async () => [
+      { team_id: 'team-1', user_id: 'user-1', role: 'team_admin' as const },
+      { team_id: 'team-2', user_id: 'user-2', role: 'team_editor' as const }
+    ]);
+    const workspaceDb = {
+      workspace: { listTeamAssignments }
+    } as unknown as DatabaseAdapter;
+
+    const contexts = await buildUserWorkspaceAuthCtxs(workspaceDb, 'ws-1', [
+      'user-1',
+      'user-2',
+      'user-1'
+    ]);
+
+    expect(contexts.size).toBe(2);
+    expect(contexts.get('user-1')?.teamRolesByTeam.get('team-1')).toEqual(new Set(['team_admin']));
+    expect(contexts.get('user-2')?.teamRolesByTeam.get('team-2')).toEqual(new Set(['team_editor']));
+    expect(provider.getWorkspaceRoles).toHaveBeenCalledTimes(1);
+    expect(provider.getTeams).toHaveBeenCalledTimes(1);
+    expect(listTeamAssignments).toHaveBeenCalledTimes(1);
+    expect(provider.getGlobalRoles).toHaveBeenCalledTimes(2);
+    expect(provider.getWorkspaceRole).toHaveBeenCalledTimes(2);
+    expect(provider.getEntities).not.toHaveBeenCalled();
+    expect(provider.getSchemas).not.toHaveBeenCalled();
+    expect(provider.getEntityGrants).not.toHaveBeenCalled();
   });
 });
