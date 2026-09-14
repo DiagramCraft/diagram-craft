@@ -5,8 +5,18 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { VendorContractRow } from '../useVendorContracts';
 import { VendorContractsCalendar } from './VendorContractsCalendar';
 
-const row = (uid: string, name: string, contractEnd: string | null, vendorName: string): VendorContractRow => ({
-  contract: { _uid: uid, _publicId: uid.toUpperCase(), _name: name, contract_end: contractEnd } as never,
+const row = (
+  uid: string,
+  name: string,
+  contractEnd: string | null,
+  vendorName: string
+): VendorContractRow => ({
+  contract: {
+    _uid: uid,
+    _publicId: uid.toUpperCase(),
+    _name: name,
+    contract_end: contractEnd
+  } as never,
   vendorId: `vnd-${uid}`,
   vendorName
 });

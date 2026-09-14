@@ -45,14 +45,19 @@ export const VendorContractsCalendar = ({
     const currentKey = monthKey(currentMonthStart);
     const monthStarts: Date[] = [];
     for (let i = 0; i < 12; i++) {
-      monthStarts.push(new Date(currentMonthStart.getFullYear(), currentMonthStart.getMonth() + i, 1));
+      monthStarts.push(
+        new Date(currentMonthStart.getFullYear(), currentMonthStart.getMonth() + i, 1)
+      );
     }
     const lastKey = monthKey(monthStarts[monthStarts.length - 1]!);
 
     const buckets = new Map<string, MonthBucket>(
       monthStarts.map(start => {
         const key = monthKey(start);
-        return [key, { key, label: MONTH_LABEL.format(start), isCurrent: key === currentKey, rows: [] }];
+        return [
+          key,
+          { key, label: MONTH_LABEL.format(start), isCurrent: key === currentKey, rows: [] }
+        ];
       })
     );
 

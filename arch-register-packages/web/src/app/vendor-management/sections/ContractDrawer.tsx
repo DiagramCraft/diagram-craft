@@ -100,9 +100,7 @@ export const ContractDrawer = ({
       badges={
         <>
           {typeof entity.contract_type === 'string' && (
-            <Chip tone="ghost">
-              {vendorFieldValue(contractSchema, entity, 'contract_type')}
-            </Chip>
+            <Chip tone="ghost">{vendorFieldValue(contractSchema, entity, 'contract_type')}</Chip>
           )}
           <Chip dot={RENEWAL_WINDOW_COLOR[contractWindow]} tone="ghost">
             {RENEWAL_WINDOW_LABEL.get(contractWindow)}
@@ -132,7 +130,9 @@ export const ContractDrawer = ({
 
       <div className={styles.sectionLabel}>Terms</div>
       <div className={styles.attributeRow}>
-        <span className={styles.attributeLabel}>{fieldLabel(contractSchema, 'contract_start')}</span>
+        <span className={styles.attributeLabel}>
+          {fieldLabel(contractSchema, 'contract_start')}
+        </span>
         <span>{formatDate(entity.contract_start)}</span>
       </div>
       <div className={styles.attributeRow}>

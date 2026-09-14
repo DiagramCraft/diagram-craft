@@ -54,9 +54,7 @@ export const VendorContractsScreen = () => {
   const configurations = useQuery(workspaceCapabilityConfigurationsQuery(workspaceSlug));
   const vendorConfig = resolveVendorManagementConfig(configurations.data);
   const schemas = useSchemas(workspaceSlug);
-  const contractSchema = schemas.data?.find(
-    schema => schema.id === vendorConfig?.contractSchemaId
-  );
+  const contractSchema = schemas.data?.find(schema => schema.id === vendorConfig?.contractSchemaId);
 
   const contracts = useVendorContracts(workspaceSlug, vendorConfig?.contractSchemaId ?? null);
 
@@ -147,10 +145,7 @@ export const VendorContractsScreen = () => {
 
   return (
     <div className={styles.screen}>
-      <Title
-        title="Contracts"
-        chips={!contracts.isLoading && <span>{filtered.length}</span>}
-      />
+      <Title title="Contracts" chips={!contracts.isLoading && <span>{filtered.length}</span>} />
 
       <div className={filterStyles.toolbar}>
         <SearchInput
@@ -230,7 +225,9 @@ export const VendorContractsScreen = () => {
                     <Table.Cell numeric>
                       {vendorFieldValue(contractSchema, contract, 'annual_cost')}
                     </Table.Cell>
-                    <Table.Cell>{vendorFieldValue(contractSchema, contract, 'auto_renew')}</Table.Cell>
+                    <Table.Cell>
+                      {vendorFieldValue(contractSchema, contract, 'auto_renew')}
+                    </Table.Cell>
                     <Table.Cell>
                       <Chip dot={RENEWAL_WINDOW_COLOR[contractWindow]} tone="ghost">
                         {formatDate(contract.contract_end)}

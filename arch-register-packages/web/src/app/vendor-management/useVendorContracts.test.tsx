@@ -77,9 +77,7 @@ describe('useVendorContracts', () => {
 
     expect(latest?.items).toHaveLength(2);
     const acme = latest?.items.find(row => row.contract._uid === 'ctr-1');
-    expect(acme).toEqual(
-      expect.objectContaining({ vendorId: 'vnd-1', vendorName: 'Acme Corp' })
-    );
+    expect(acme).toEqual(expect.objectContaining({ vendorId: 'vnd-1', vendorName: 'Acme Corp' }));
     const beta = latest?.items.find(row => row.contract._uid === 'ctr-2');
     expect(beta).toEqual(
       expect.objectContaining({ vendorId: 'vnd-2', vendorName: 'Beta Supplies' })
