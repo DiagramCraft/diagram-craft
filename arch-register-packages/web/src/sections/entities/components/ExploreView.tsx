@@ -116,7 +116,7 @@ export const ExploreView = ({
   const previousCenterIdKey = useRef(centerIdKey);
 
   useEffect(() => {
-    setFetchIds(centerIds);
+    setFetchIds(previous => (previous.join('|') === centerIdKey ? previous : centerIds));
     if (previousCenterIdKey.current !== centerIdKey) {
       setExcludedEntityIds(new Set());
       previousCenterIdKey.current = centerIdKey;
@@ -215,9 +215,9 @@ export const ExploreView = ({
   }, [contextMenu, onFocusEntity]);
 
   useEffect(() => {
-    const nextIds = [...new Set([...centerIds, ...graph.visibleEntityIds])].sort();
+    const nextIds = [...new Set([...fetchIds, ...centerIds, ...graph.visibleEntityIds])].sort();
     setFetchIds(prev => (prev.join('|') === nextIds.join('|') ? prev : nextIds));
-  }, [centerIds, graph.visibleEntityIds]);
+  }, [centerIds, fetchIds, graph.visibleEntityIds]);
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLDivElement | null>(null);
@@ -309,7 +309,29 @@ export const ExploreView = ({
         });
       }
 
-      setConnectorLines(lines);
+      setConnectorLines(previous => {
+        if (
+          previous.length === lines.length &&
+          previous.every((line, index) => {
+            const next = lines[index];
+            return (
+              next != null &&
+              line.fromColumn === next.fromColumn &&
+              line.fromEntityId === next.fromEntityId &&
+              line.toColumn === next.toColumn &&
+              line.toEntityId === next.toEntityId &&
+              line.relationKey === next.relationKey &&
+              line.x1 === next.x1 &&
+              line.y1 === next.y1 &&
+              line.x2 === next.x2 &&
+              line.y2 === next.y2
+            );
+          })
+        ) {
+          return previous;
+        }
+        return lines;
+      });
     };
 
     const rafId = window.requestAnimationFrame(recompute);
