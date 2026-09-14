@@ -234,6 +234,251 @@ describe('VendorManagementSidebar', () => {
     expect(container.textContent).toContain('No technology end-of-life exposure found.');
   });
 
+  it('clicking a Technology EOL item filters instead of navigating to the vendor', async () => {
+    mocks.capabilityConfigurationsList.mockResolvedValue([
+      {
+        type: 'vendor-management',
+        valid: true,
+        bindings: {
+          vendor: { target: { kind: 'entity_schema', id: 'vendor' } },
+          contract: { target: { kind: 'entity_schema', id: 'contract' } },
+          technologyRelease: { target: { kind: 'entity_schema', id: 'technology_release' } }
+        }
+      }
+    ]);
+    mocks.schemaList.mockResolvedValue([
+      { id: 'vendor', name: 'Vendor', fields: [] },
+      {
+        id: 'contract',
+        name: 'Contract',
+        fields: [
+          {
+            id: 'system',
+            type: 'typedRelation',
+            relationSchemaId: 'system-contract',
+            direction: 'out'
+          }
+        ]
+      },
+      {
+        id: 'component',
+        name: 'Component',
+        fields: [
+          { id: 'system', type: 'containment', schemaId: 'system' },
+          { id: 'technology_releases', type: 'reference', schemaId: 'technology_release' }
+        ]
+      }
+    ]);
+
+    const hop = (id: string, schemaId: string) => ({ context: 'entity' as const, id, schemaId });
+    mocks.entityList.mockImplementation(async ({ query }: { query: { entityQuery?: string } }) => {
+      const entityQuery = query.entityQuery ? JSON.parse(query.entityQuery) : null;
+      if (entityQuery?.projections?.[0]?.alias === 'systems') {
+        return {
+          items: [
+            {
+              _uid: 'vnd-1',
+              _publicId: 'VND-1',
+              _name: 'Acme Corp',
+              _projections: { systems: [[hop('con-1', 'contract'), hop('sys-1', 'system')]] }
+            }
+          ],
+          total: 1
+        };
+      }
+      if (entityQuery?.projections?.[0]?.alias === 'tech0') {
+        return {
+          items: [
+            {
+              _uid: 'sys-1',
+              _projections: {
+                tech0: [[hop('cmp-1', 'component'), hop('tr-1', 'technology_release')]]
+              }
+            }
+          ],
+          total: 1
+        };
+      }
+      if (entityQuery) {
+        // The follow-up id-set lookup (no projections, root op 'in').
+        return {
+          items: [
+            { _uid: 'con-1', _name: 'Contract 1' },
+            { _uid: 'sys-1', _name: 'System 1' },
+            { _uid: 'tr-1', _name: 'Node 18', eol_date: '2020-01-01T00:00:00.000Z' }
+          ],
+          total: 3
+        };
+      }
+      // Plain vendor register list (no entityQuery) — used by RiskSidebarContent's own vendor
+      // fetch and by the Band facet counts.
+      return {
+        items: [{ _uid: 'vnd-1', _publicId: 'VND-1', _name: 'Acme Corp', criticality: 5 }],
+        total: 1
+      };
+    });
+
+    await act(async () => {
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <VendorManagementSidebar workspaceSlug="ws-1" activeSection={VENDOR_RISK_ID} />
+        </QueryClientProvider>
+      );
+    });
+    for (let i = 0; i < 8; i++) await flush();
+
+    expect(container.textContent).toContain('Node 18');
+    const item = [...container.querySelectorAll('[data-testid^="risk-facet-eol-"]')][0];
+    expect(item).toBeDefined();
+
+    await act(async () => {
+      item!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    expect(mocks.navigate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: '/$workspaceSlug/vendor-management/risk',
+        params: { workspaceSlug: 'ws-1' }
+      })
+    );
+    // Doesn't navigate to a vendor detail route — it patches the `technology` search param.
+    expect(mocks.navigate).not.toHaveBeenCalledWith(
+      expect.objectContaining({ to: '/$workspaceSlug/vendor-management/risk/$vendorId' })
+    );
+  });
+
+  it('lists Technology EOL once per technology (not per vendor), soonest-EOL-first', async () => {
+    mocks.capabilityConfigurationsList.mockResolvedValue([
+      {
+        type: 'vendor-management',
+        valid: true,
+        bindings: {
+          vendor: { target: { kind: 'entity_schema', id: 'vendor' } },
+          contract: { target: { kind: 'entity_schema', id: 'contract' } },
+          technologyRelease: { target: { kind: 'entity_schema', id: 'technology_release' } }
+        }
+      }
+    ]);
+    mocks.schemaList.mockResolvedValue([
+      { id: 'vendor', name: 'Vendor', fields: [] },
+      {
+        id: 'contract',
+        name: 'Contract',
+        fields: [
+          {
+            id: 'system',
+            type: 'typedRelation',
+            relationSchemaId: 'system-contract',
+            direction: 'out'
+          }
+        ]
+      },
+      {
+        id: 'component',
+        name: 'Component',
+        fields: [
+          { id: 'system', type: 'containment', schemaId: 'system' },
+          { id: 'technology_releases', type: 'reference', schemaId: 'technology_release' }
+        ]
+      }
+    ]);
+
+    const hop = (id: string, schemaId: string) => ({ context: 'entity' as const, id, schemaId });
+    mocks.entityList.mockImplementation(async ({ query }: { query: { entityQuery?: string } }) => {
+      const entityQuery = query.entityQuery ? JSON.parse(query.entityQuery) : null;
+      if (entityQuery?.projections?.[0]?.alias === 'systems') {
+        // vnd-1 -> sys-1 (via con-1) and sys-2 (via con-1); vnd-2 -> sys-3 (via con-2).
+        return {
+          items: [
+            {
+              _uid: 'vnd-1',
+              _publicId: 'VND-1',
+              _name: 'Acme Corp',
+              _projections: {
+                systems: [
+                  [hop('con-1', 'contract'), hop('sys-1', 'system')],
+                  [hop('con-1', 'contract'), hop('sys-2', 'system')]
+                ]
+              }
+            },
+            {
+              _uid: 'vnd-2',
+              _publicId: 'VND-2',
+              _name: 'Beta Inc',
+              _projections: { systems: [[hop('con-2', 'contract'), hop('sys-3', 'system')]] }
+            }
+          ],
+          total: 2
+        };
+      }
+      if (entityQuery?.projections?.[0]?.alias === 'tech0') {
+        // sys-1 and sys-3 (different vendors) both reach tr-1 — a technology exposed via two
+        // vendors. sys-2 reaches tr-2, whose EOL date is earlier.
+        return {
+          items: [
+            {
+              _uid: 'sys-1',
+              _projections: {
+                tech0: [[hop('cmp-1', 'component'), hop('tr-1', 'technology_release')]]
+              }
+            },
+            {
+              _uid: 'sys-2',
+              _projections: {
+                tech0: [[hop('cmp-2', 'component'), hop('tr-2', 'technology_release')]]
+              }
+            },
+            {
+              _uid: 'sys-3',
+              _projections: {
+                tech0: [[hop('cmp-3', 'component'), hop('tr-1', 'technology_release')]]
+              }
+            }
+          ],
+          total: 3
+        };
+      }
+      if (entityQuery) {
+        // The follow-up id-set lookup (no projections, root op 'in').
+        return {
+          items: [
+            { _uid: 'con-1', _name: 'Contract 1' },
+            { _uid: 'con-2', _name: 'Contract 2' },
+            { _uid: 'sys-1', _name: 'System 1' },
+            { _uid: 'sys-2', _name: 'System 2' },
+            { _uid: 'sys-3', _name: 'System 3' },
+            { _uid: 'tr-1', _name: 'Node 18', eol_date: '2030-01-01T00:00:00.000Z' },
+            { _uid: 'tr-2', _name: 'Java 11', eol_date: '2020-01-01T00:00:00.000Z' }
+          ],
+          total: 7
+        };
+      }
+      return {
+        items: [
+          { _uid: 'vnd-1', _publicId: 'VND-1', _name: 'Acme Corp', criticality: 5 },
+          { _uid: 'vnd-2', _publicId: 'VND-2', _name: 'Beta Inc', criticality: 3 }
+        ],
+        total: 2
+      };
+    });
+
+    await act(async () => {
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <VendorManagementSidebar workspaceSlug="ws-1" activeSection={VENDOR_RISK_ID} />
+        </QueryClientProvider>
+      );
+    });
+    for (let i = 0; i < 8; i++) await flush();
+
+    const items = [...container.querySelectorAll('[data-testid^="risk-facet-eol-"]')];
+    // tr-1 is reached via two vendors (Acme and Beta) but should appear only once.
+    expect(items).toHaveLength(2);
+    // Java 11 (2020) EOLs before Node 18 (2030), so it's listed first.
+    expect(items[0]?.textContent).toContain('Java 11');
+    expect(items[1]?.textContent).toContain('Node 18');
+  });
+
   it('shows cost centre spend and owner facets for the Spend section', async () => {
     await act(async () => {
       root.render(

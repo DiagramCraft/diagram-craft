@@ -37,10 +37,12 @@ export const VENDOR_RISK_BANDS: { band: VendorRiskBand; min: number }[] = [
   { band: 'high', min: 3.4 }
 ];
 
-/** Shared band → color mapping, used by the vendor drawer, Vendors table, and Risk section. */
+/** Shared band → color mapping, used by the vendor drawer, Vendors table, and Risk section
+ *  (chips and the `RiskMatrix`'s per-column tint) — red/amber/gray/green, gray rather than an
+ *  accent color for 'moderate' so it doesn't read as more alarming than 'low'. */
 export const VENDOR_RISK_BAND_COLOR: Record<VendorRiskBand, string> = {
   low: 'var(--cmp-fg-success, #22c55e)',
-  moderate: 'var(--cmp-fg-accent, #3b82f6)',
+  moderate: 'var(--cmp-fg-dim, #9ca3af)',
   elevated: 'var(--cmp-fg-warning, #eab308)',
   high: 'var(--cmp-fg-danger, #ef4444)'
 };

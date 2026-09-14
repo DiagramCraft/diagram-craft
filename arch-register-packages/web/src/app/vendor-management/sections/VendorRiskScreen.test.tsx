@@ -190,4 +190,22 @@ describe('VendorRiskScreen', () => {
     expect(container.textContent).not.toContain('Technology end-of-life');
     expect(container.textContent).not.toContain('Bind a Technology Release entity schema');
   });
+
+  it('filters the register and matrix to the band set by the sidebar', async () => {
+    mocks.search = { band: 'high' };
+    await renderScreen();
+
+    // Acme Corp (all-5s, criticality 5) bands 'high'; Beta Supplies (all-1s, criticality 1)
+    // bands 'low' — only Acme should remain in the register table and the matrix.
+    expect(container.textContent).toContain('Acme Corp');
+    expect(container.textContent).not.toContain('Beta Supplies');
+
+    const rows = [...container.querySelectorAll('tbody tr')];
+    expect(rows).toHaveLength(1);
+
+    const matrixTag = [...container.querySelectorAll('button')].find(
+      button => button.textContent === 'Beta Supplies'
+    );
+    expect(matrixTag).toBeUndefined();
+  });
 });

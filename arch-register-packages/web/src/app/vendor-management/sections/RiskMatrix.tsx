@@ -1,4 +1,9 @@
-import { VENDOR_RISK_BANDS, VENDOR_RISK_BAND_LABEL, type VendorRiskBand } from '../vendorRisk';
+import {
+  VENDOR_RISK_BAND_COLOR,
+  VENDOR_RISK_BANDS,
+  VENDOR_RISK_BAND_LABEL,
+  type VendorRiskBand
+} from '../vendorRisk';
 import styles from './RiskMatrix.module.css';
 
 const CRITICALITY_LEVELS = [5, 4, 3, 2] as const;
@@ -31,7 +36,9 @@ export const RiskMatrix = ({
 
   return (
     <div className={styles.matrix}>
-      <div className={styles.corner}>criticality ↓ / risk →</div>
+      <div className={styles.corner}>
+        <div>criticality ↓ / risk →</div>
+      </div>
       {VENDOR_RISK_BANDS.map(({ band }) => (
         <div key={band} className={styles.columnHeader}>
           {VENDOR_RISK_BAND_LABEL[band]}
@@ -47,6 +54,7 @@ export const RiskMatrix = ({
                 key={band}
                 className={styles.cell}
                 data-hot={isHot(criticality, band) || undefined}
+                style={{ '--cell-color': VENDOR_RISK_BAND_COLOR[band] } as React.CSSProperties}
               >
                 {vendors.map(vendor => (
                   <button

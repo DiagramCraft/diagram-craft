@@ -415,10 +415,13 @@ export const validateSpendSearch = (raw: Record<string, unknown>): SpendSearchPa
 
 // Vendor Management risk params
 const riskSearchSchema = defineSearchParamSchema({
-  // Vendor risk band, narrowing the risk register table — set by the sidebar's Band facet
-  // (`RiskSidebarContent` in `VendorManagementSidebar.tsx`). The `RiskMatrix` itself isn't
-  // filterable by cell — its vendor tags open the drawer directly, matching the design reference.
-  band: stringCodec
+  // Vendor risk band, narrowing the matrix, risk register, and EOL table to vendors in that band
+  // — set by the sidebar's Band facet (`RiskSidebarContent` in `VendorManagementSidebar.tsx`).
+  band: stringCodec,
+  // A `GroupedVendorTechnologyExposure.key` (`<vendorUid>:<technologyReleaseUid>`), narrowing the
+  // matrix, risk register, and EOL table down to that one vendor — set by the sidebar's
+  // Technology EOL facet. Combines (AND) with `band` rather than replacing it.
+  technology: stringCodec
 });
 
 export type RiskSearchParams = SearchParamsFromSchema<typeof riskSearchSchema>;

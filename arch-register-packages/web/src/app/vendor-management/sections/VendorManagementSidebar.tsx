@@ -518,7 +518,24 @@ const RiskSidebarContent = ({
     vendorConfig.technologyReleaseSchemaId,
     schemas
   );
-  const eolGroups = useMemo(() => groupVendorTechnologyExposure(exposure.items), [exposure.items]);
+  // One row per distinct Technology Release, not per (vendor, Technology Release) pair — the same
+  // technology can be exposed via more than one vendor, and the sidebar only needs to name it
+  // once. Sorted soonest-EOL-first (nulls last); the representative kept for a duplicate is
+  // arbitrary (whichever vendor's row groupVendorTechnologyExposure produced first) since its
+  // name/date are identical across vendors — only the filter's `vendorIds` set (computed in
+  // `VendorRiskScreen.tsx`) needs every vendor, not this list.
+  const eolByTechnology = useMemo(() => {
+    const groups = groupVendorTechnologyExposure(exposure.items);
+    const byTechnologyId = new Map<string, (typeof groups)[number]>();
+    for (const group of groups) {
+      if (!byTechnologyId.has(group.technologyRelease._uid)) {
+        byTechnologyId.set(group.technologyRelease._uid, group);
+      }
+    }
+    return [...byTechnologyId.values()].sort(
+      (a, b) => (a.exposure.daysUntilEol ?? Infinity) - (b.exposure.daysUntilEol ?? Infinity)
+    );
+  }, [exposure.items]);
 
   const patchSearch = (patch: Partial<RiskSearchParams>) =>
     navigate({
@@ -527,15 +544,11 @@ const RiskSidebarContent = ({
       search: (previous: Record<string, unknown>) => ({ ...previous, ...patch })
     });
 
-  const set = (band: VendorRiskBand) =>
+  const setBand = (band: VendorRiskBand) =>
     patchSearch({ band: search.band === band ? undefined : band });
 
-  const openVendor = (publicId: string) =>
-    navigate({
-      to: `${VENDOR_RAIL_PATHS[VENDOR_RISK_ID]}/$vendorId`,
-      params: { workspaceSlug, vendorId: publicId },
-      search: (previous: Record<string, unknown>) => previous
-    });
+  const setTechnology = (key: string) =>
+    patchSearch({ technology: search.technology === key ? undefined : key });
 
   return (
     <>
@@ -551,25 +564,28 @@ const RiskSidebarContent = ({
           label={VENDOR_RISK_BAND_LABEL[band]}
           testId={`risk-facet-band-${band}`}
           active={search.band === band}
-          onClick={() => set(band)}
+          onClick={() => setBand(band)}
           trailing={<span className="dim mono">{bandCounts.get(band) ?? 0}</span>}
         />
       ))}
-      {/* The design reference always renders this group label, even when `VM_EOL` is empty (its
-          mock data never exercises that case) — matched here rather than hiding the whole group,
-          so the facet's presence doesn't depend on there being exposure data yet. */}
+      {/* Always renders this group label, even with no exposure data yet, so the facet's
+          presence doesn't depend on there being data — its own row below explains why it's
+          empty instead of disappearing. Selecting an item filters the main area's matrix,
+          register, and EOL table down to that technology's vendor(s)
+          (`RiskSearchParams.technology`, a Technology Release uid), same as the Band facet above
+          — it doesn't navigate away, so the two facets combine. */}
       <SidebarGroupLabel>Technology EOL</SidebarGroupLabel>
-      {eolGroups.length === 0 ? (
+      {eolByTechnology.length === 0 ? (
         <div className={`${styles.emptyState} dim`}>No technology end-of-life exposure found.</div>
       ) : (
-        eolGroups.map(group => (
+        eolByTechnology.map(group => (
           <FacetRow
-            key={group.key}
+            key={group.technologyRelease._uid}
             icon={<TbShieldExclamation size={12} />}
             label={group.technologyRelease._name}
-            testId={`risk-facet-eol-${group.key}`}
-            active={false}
-            onClick={() => openVendor(group.vendor._publicId)}
+            testId={`risk-facet-eol-${group.technologyRelease._uid}`}
+            active={search.technology === group.technologyRelease._uid}
+            onClick={() => setTechnology(group.technologyRelease._uid)}
             trailing={
               <span className="dim mono">
                 {group.exposure.effectiveDate

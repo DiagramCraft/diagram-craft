@@ -1,6 +1,6 @@
 .matrix {
   display: grid;
-  grid-template-columns: 88px repeat(4, 1fr);
+  grid-template-columns: 64px repeat(4, 1fr);
   gap: 6px;
   padding: 12px 14px;
 }
@@ -11,6 +11,15 @@
   display: flex;
   align-items: flex-end;
   padding-bottom: 4px;
+  position: relative;
+  height: 40px;
+
+  & > div {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 200%;
+  }
 }
 
 .columnHeader {
@@ -37,7 +46,7 @@
 .cell {
   border: 1px solid var(--panel-border);
   border-radius: var(--r-sm);
-  background: var(--base-bg);
+  background: color-mix(in srgb, var(--cell-color) 10%, var(--base-bg));
   padding: 6px;
   min-height: 40px;
   display: flex;
@@ -46,14 +55,16 @@
   gap: 4px;
 }
 
+/* A highly critical vendor scoring elevated-or-worse risk gets a stronger tint and a matching
+   border, on top of its column's own color, as a visual callout. */
 .cell[data-hot] {
-  border-color: var(--cmp-fg-danger, #ef4444);
-  background: color-mix(in srgb, var(--cmp-fg-danger, #ef4444) 8%, var(--panel-bg));
+  border-color: var(--cell-color);
+  background: color-mix(in srgb, var(--cell-color) 20%, var(--base-bg));
 }
 
 .tag {
   border: 1px solid var(--panel-border);
-  border-radius: var(--r-full, 999px);
+  border-radius: var(--r-full, 10px);
   background: var(--panel-bg);
   color: var(--base-fg);
   font-size: 11px;
