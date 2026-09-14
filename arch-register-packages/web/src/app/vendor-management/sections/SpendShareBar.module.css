@@ -1,0 +1,31 @@
+.cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+}
+
+.track {
+  position: relative;
+  display: inline-block;
+  flex: 1 1 auto;
+  min-width: 40px;
+  height: 5px;
+  background: var(--cmp-bg);
+  border-radius: 3px;
+  overflow: visible;
+}
+
+.fill {
+  display: block;
+  height: 100%;
+  background: var(--accent-fg);
+  border-radius: 3px;
+  transition: width 300ms;
+}
+
+.pct {
+  flex: 0 0 auto;
+  width: 34px;
+  text-align: right;
+}

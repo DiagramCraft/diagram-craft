@@ -332,9 +332,12 @@
           the contract's vendor drawer, and Systems used), deep-linkable at
           `vendor-management/contracts/$contractId`, mirroring the Vendors section's own drawer.
 
-        - @id:ar.vendor-management.spend The Spend section is scaffolded as a placeholder pending spend roll-ups by
-          vendor, capability, and cost centre. The underlying roll-up model (`vmSpend`/`vmTotalSpend`/`vmGroupSpend`)
-          already exists, shared with the vendor drawer.
+        - @id:ar.vendor-management.spend The Spend section is a portfolio-wide spend roll-up table, grouped either
+          by vendor or by the Vendor schema's Cost Centre field (a toggle in the toolbar), each row shown with its
+          share of the portfolio total as a bar plus percentage, sorted by spend descending. The header shows the
+          portfolio total (`vmTotalSpend`). Selecting a vendor row (not available when grouped by cost centre)
+          opens the shared vendor drawer via the Vendors section's own route. Grouping by capability is not yet
+          available — no Contract-to-capability link exists yet.
 
         - @id:ar.vendor-management.risk The Risk section is scaffolded as a placeholder pending vendor-risk and
           linked-technology-EOL views. The underlying `vmRisk`/`vmRiskBand` model already exists, shared with the

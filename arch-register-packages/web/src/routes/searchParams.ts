@@ -393,6 +393,17 @@ export type ContractsSearchParams = SearchParamsFromSchema<typeof contractsSearc
 export const validateContractsSearch = (raw: Record<string, unknown>): ContractsSearchParams =>
   parseSearchParams(contractsSearchSchema, raw);
 
+// Vendor Management spend params
+const spendSearchSchema = defineSearchParamSchema({
+  // Toggles the roll-up table's grouping dimension; defaults to 'vendor'.
+  group: enumCodec(['vendor', 'costCentre'] as const)
+});
+
+export type SpendSearchParams = SearchParamsFromSchema<typeof spendSearchSchema>;
+
+export const validateSpendSearch = (raw: Record<string, unknown>): SpendSearchParams =>
+  parseSearchParams(spendSearchSchema, raw);
+
 // Strategy capability map params
 const capabilityMapSearchSchema = defineSearchParamSchema({
   // Set by clicking a node in the map sidebar's capability tree (or an L1 domain header in the
