@@ -69,6 +69,20 @@
   border-bottom: none;
 }
 
+/* `ContractDrawer.tsx`'s clickable Vendor row reuses `.attributeRow` on a native <button> instead
+   of a <div> — this resets the button's own chrome (background, border, font) back to matching
+   the div variant, while keeping the flex/border-bottom layout above. */
+button.attributeRow {
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--panel-border);
+  font: inherit;
+  color: inherit;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+
 .attributeLabel {
   color: var(--text-muted);
 }

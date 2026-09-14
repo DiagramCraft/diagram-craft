@@ -18,7 +18,7 @@ import {
   LazyVendorRiskScreen
 } from '../../routes/workspace/lazyWorkspaceScreens';
 import { ensureApplicationAccess } from '../../routes/applicationAccess';
-import { validateVendorsSearch } from '../../routes/searchParams';
+import { validateVendorsSearch, validateContractsSearch } from '../../routes/searchParams';
 
 const railPath = (path: string) => path.replace('/$workspaceSlug/', '');
 
@@ -88,6 +88,28 @@ export const createVendorManagementWorkspaceRoutes = <TParentRoute extends AnyRo
     createRoute({
       getParentRoute: () => workspaceRoute,
       path: railPath(VENDOR_RAIL_PATHS[VENDOR_CONTRACTS_ID]),
+      validateSearch: validateContractsSearch,
+      beforeLoad: ({ context, params }) =>
+        ensureApplicationAccess(
+          context.queryClient,
+          (params as unknown as { workspaceSlug: string }).workspaceSlug,
+          'vendor-management'
+        ),
+      component: LazyVendorContractsScreen
+    }),
+    ctx =>
+      railSectionShell(ctx, VENDOR_CONTRACTS_ID, {
+        breadcrumbs: buildVendorManagementBreadcrumbs(ctx, VENDOR_CONTRACTS_ID)
+      })
+  );
+  // Deep-linkable contract drawer, mirroring `vendorsDetailRoute` above — same `component` as the
+  // base Contracts route, gated the same way, with the drawer rendered conditionally by
+  // `VendorContractsScreen` when the optional `contractId` route param is present.
+  const contractsDetailRoute = withWorkspaceShell(
+    createRoute({
+      getParentRoute: () => workspaceRoute,
+      path: `${railPath(VENDOR_RAIL_PATHS[VENDOR_CONTRACTS_ID])}/$contractId`,
+      validateSearch: validateContractsSearch,
       beforeLoad: ({ context, params }) =>
         ensureApplicationAccess(
           context.queryClient,
@@ -141,6 +163,7 @@ export const createVendorManagementWorkspaceRoutes = <TParentRoute extends AnyRo
     vendorsRoute,
     vendorsDetailRoute,
     contractsRoute,
+    contractsDetailRoute,
     spendRoute,
     riskRoute
   ] as const;

@@ -1,0 +1,74 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+@media (max-width: 1100px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.cell {
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+  padding: 10px;
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.currentCell {
+  border-color: var(--cmp-fg-accent, var(--base-fg));
+  background: var(--base-bg-hover);
+}
+
+.cellHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.empty {
+  font-size: 12px;
+  padding: 4px 0;
+}
+
+.entries {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-y: auto;
+}
+
+.entry {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  background: none;
+  border: none;
+  padding: 2px 0;
+  text-align: left;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.entryVendor {
+  font-size: 11px;
+}
+
+.entryCost {
+  font-size: 11px;
+  margin-left: auto;
+}
+
+.caption {
+  margin-top: 8px;
+  font-size: 12px;
+}

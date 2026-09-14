@@ -319,8 +319,18 @@
           lifecycle view derived from those Systems' own lifecycle state. Capabilities funded is not yet
           available — no Contract-to-capability link exists yet.
 
-        - @id:ar.vendor-management.contracts The Contracts section is scaffolded as a placeholder pending its
-          contract list, renewal calendar, and timeline views.
+        - @id:ar.vendor-management.contracts The Contracts section offers a list view and a 12-month renewal
+          calendar (its timeline view is still pending). The list is a register of Contract entities: free-text
+          search by contract or vendor name, sort by name / vendor / annual cost / renewal date, and a sidebar of
+          Renewal window, Type, and Vendor facets (each showing a count). Renewal window is a computed bucket over
+          `Contract.contract_end` (overdue, next 30/90/365 days, beyond 12 months, or no end date), not a schema
+          field. The calendar shows the current month plus the next 11, one cell per month, with each contract's
+          renewal placed by the calendar month of its `contract_end`; an overdue contract is folded into the
+          current month's cell instead of dropping off the grid, and a contract renewing beyond 12 months out, or
+          with no end date, is excluded from the grid and counted in a caption below it (both remain visible in the
+          list). Selecting a contract, in either view, opens a contract detail drawer (terms, cost, a link back to
+          the contract's vendor drawer, and Systems used), deep-linkable at
+          `vendor-management/contracts/$contractId`, mirroring the Vendors section's own drawer.
 
         - @id:ar.vendor-management.spend The Spend section is scaffolded as a placeholder pending spend roll-ups by
           vendor, capability, and cost centre. The underlying roll-up model (`vmSpend`/`vmTotalSpend`/`vmGroupSpend`)

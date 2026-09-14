@@ -4,11 +4,16 @@ import { createRoot, type Root } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { VendorManagementSidebar } from './VendorManagementSidebar';
-import { VENDOR_CONTRACTS_ID, VENDOR_VENDORS_ID } from '../vendorManagementSections';
+import {
+  VENDOR_CONTRACTS_ID,
+  VENDOR_SPEND_ID,
+  VENDOR_VENDORS_ID
+} from '../vendorManagementSections';
 
 const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
   entityList: vi.fn(),
+  entityTree: vi.fn(),
   schemaList: vi.fn(),
   capabilityConfigurationsList: vi.fn(),
   search: {} as Record<string, unknown>
@@ -21,7 +26,7 @@ vi.mock('@tanstack/react-router', () => ({
 
 vi.mock('../../../lib/orpcClient', () => ({
   orpcClient: {
-    entities: { list: mocks.entityList },
+    entities: { list: mocks.entityList, tree: mocks.entityTree },
     schemas: { list: mocks.schemaList },
     config: { capabilityConfigurations: { list: mocks.capabilityConfigurationsList } }
   }
@@ -47,6 +52,8 @@ describe('VendorManagementSidebar', () => {
     (
       globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
     ).IS_REACT_ACT_ENVIRONMENT = true;
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    vi.setSystemTime(new Date('2026-09-14T00:00:00Z'));
     container = document.createElement('div');
     document.body.appendChild(container);
     root = createRoot(container);
@@ -77,6 +84,23 @@ describe('VendorManagementSidebar', () => {
             options: [{ value: 'software', label: 'Software' }]
           }
         ]
+      },
+      {
+        id: 'contract',
+        name: 'Contract',
+        icon: 'certificate',
+        color: null,
+        fields: [
+          {
+            id: 'contract_type',
+            name: 'Contract Type',
+            type: 'select',
+            options: [
+              { value: 'licence', label: 'Licence' },
+              { value: 'support', label: 'Support' }
+            ]
+          }
+        ]
       }
     ]);
     mocks.entityList.mockResolvedValue({
@@ -100,6 +124,18 @@ describe('VendorManagementSidebar', () => {
       ],
       total: 2
     });
+    mocks.entityTree.mockResolvedValue({
+      nodes: [
+        { _uid: 'vnd-1', _name: 'Acme Corp' },
+        {
+          _uid: 'ctr-1',
+          _name: 'Acme Support',
+          contract_type: 'licence',
+          contract_end: '2026-10-01'
+        }
+      ],
+      edges: [{ parentId: 'vnd-1', childId: 'ctr-1' }]
+    });
   });
 
   afterEach(() => {
@@ -107,11 +143,27 @@ describe('VendorManagementSidebar', () => {
     queryClient.clear();
     container.remove();
     vi.clearAllMocks();
+    vi.useRealTimers();
   });
 
   const flush = () => act(async () => new Promise(resolve => setTimeout(resolve, 0)));
 
-  it('shows the section nav list for a non-Vendors section', async () => {
+  it('shows the section nav list for a non-Vendors, non-Contracts section', async () => {
+    await act(async () => {
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <VendorManagementSidebar workspaceSlug="ws-1" activeSection={VENDOR_SPEND_ID} />
+        </QueryClientProvider>
+      );
+    });
+    for (let i = 0; i < 5; i++) await flush();
+
+    expect(container.textContent).toContain('Sections');
+    expect(container.textContent).toContain('Vendors');
+    expect(container.textContent).not.toContain('Tier');
+  });
+
+  it('shows renewal window/type/vendor facets with counts for the Contracts section', async () => {
     await act(async () => {
       root.render(
         <QueryClientProvider client={queryClient}>
@@ -121,9 +173,34 @@ describe('VendorManagementSidebar', () => {
     });
     for (let i = 0; i < 5; i++) await flush();
 
-    expect(container.textContent).toContain('Sections');
-    expect(container.textContent).toContain('Vendors');
-    expect(container.textContent).not.toContain('Tier');
+    expect(container.textContent).toContain('All contracts');
+    expect(container.textContent).toContain('Next 30 days');
+    expect(container.textContent).toContain('Licence');
+    expect(container.textContent).toContain('Acme Corp');
+    expect(container.textContent).not.toContain('Sections');
+
+    const row = container.querySelector('[data-testid="contract-facet-type-licence"]');
+    expect(row?.textContent).toContain('1');
+  });
+
+  it('toggles the contract type facet on click', async () => {
+    await act(async () => {
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <VendorManagementSidebar workspaceSlug="ws-1" activeSection={VENDOR_CONTRACTS_ID} />
+        </QueryClientProvider>
+      );
+    });
+    for (let i = 0; i < 5; i++) await flush();
+
+    const row = container.querySelector('[data-testid="contract-facet-type-licence"]');
+    expect(row).toBeDefined();
+    await act(async () => {
+      row!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    const call = mocks.navigate.mock.calls.find(([arg]) => typeof arg?.search === 'function');
+    expect(call![0].search({})).toEqual(expect.objectContaining({ type: 'licence' }));
   });
 
   it('shows tier/category/owner facets with counts for the Vendors section', async () => {
