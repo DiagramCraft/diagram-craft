@@ -152,10 +152,26 @@ describe('createJobServer', () => {
   it('aborts execution when the lease heartbeat is rejected', async () => {
     const db = makeDb(claim);
     (db.jobs.heartbeatRun as ReturnType<typeof vi.fn>).mockResolvedValue(false);
+    let releaseHandler!: () => void;
+    let resolvedAfterAbort = false;
+    let observeAbort!: () => void;
+    const abortObserved = new Promise<void>(resolve => {
+      observeAbort = resolve;
+    });
     const handler = vi.fn<JobHandler>(
       ({ signal }) =>
-        new Promise((_resolve, reject) => {
-          signal.addEventListener('abort', () => reject(signal.reason));
+        new Promise(resolve => {
+          signal.addEventListener(
+            'abort',
+            () => {
+              observeAbort();
+              releaseHandler = () => {
+                resolvedAfterAbort = true;
+                resolve();
+              };
+            },
+            { once: true }
+          );
         })
     );
     const worker = createJobServer({
@@ -176,8 +192,11 @@ describe('createJobServer', () => {
     const start = worker.start();
     await vi.waitFor(() => expect(handler).toHaveBeenCalledTimes(1));
     await vi.waitFor(() => expect(worker.activeRuns()).toBe(0));
+    await abortObserved;
     await worker.stop();
     await start;
+    releaseHandler();
+    await vi.waitFor(() => expect(resolvedAfterAbort).toBe(true));
 
     expect(db.jobs.completeRun).not.toHaveBeenCalled();
     expect(db.jobs.failRun).not.toHaveBeenCalled();
@@ -189,10 +208,26 @@ describe('createJobServer', () => {
     (db.jobs.heartbeatRun as ReturnType<typeof vi.fn>)
       .mockRejectedValueOnce(new Error('connection reset'))
       .mockRejectedValueOnce(new Error('connection reset'));
+    let releaseHandler!: () => void;
+    let resolvedAfterAbort = false;
+    let observeAbort!: () => void;
+    const abortObserved = new Promise<void>(resolve => {
+      observeAbort = resolve;
+    });
     const handler = vi.fn<JobHandler>(
       ({ signal }) =>
-        new Promise((_resolve, reject) => {
-          signal.addEventListener('abort', () => reject(signal.reason));
+        new Promise(resolve => {
+          signal.addEventListener(
+            'abort',
+            () => {
+              observeAbort();
+              releaseHandler = () => {
+                resolvedAfterAbort = true;
+                resolve();
+              };
+            },
+            { once: true }
+          );
         })
     );
     const worker = createJobServer({
@@ -213,8 +248,11 @@ describe('createJobServer', () => {
     const start = worker.start();
     await vi.waitFor(() => expect(handler).toHaveBeenCalledTimes(1));
     await vi.waitFor(() => expect(worker.activeRuns()).toBe(0));
+    await abortObserved;
     await worker.stop();
     await start;
+    releaseHandler();
+    await vi.waitFor(() => expect(resolvedAfterAbort).toBe(true));
 
     expect(db.jobs.completeRun).not.toHaveBeenCalled();
     expect(db.jobs.failRun).not.toHaveBeenCalled();
@@ -223,10 +261,26 @@ describe('createJobServer', () => {
 
   it('aborts timed-out execution and leaves the run for lease recovery', async () => {
     const db = makeDb(claim);
+    let releaseHandler!: () => void;
+    let resolvedAfterAbort = false;
+    let observeAbort!: () => void;
+    const abortObserved = new Promise<void>(resolve => {
+      observeAbort = resolve;
+    });
     const handler = vi.fn<JobHandler>(
       ({ signal }) =>
-        new Promise((_resolve, reject) => {
-          signal.addEventListener('abort', () => reject(signal.reason));
+        new Promise(resolve => {
+          signal.addEventListener(
+            'abort',
+            () => {
+              observeAbort();
+              releaseHandler = () => {
+                resolvedAfterAbort = true;
+                resolve();
+              };
+            },
+            { once: true }
+          );
         })
     );
     const worker = createJobServer({
@@ -247,8 +301,11 @@ describe('createJobServer', () => {
     const start = worker.start();
     await vi.waitFor(() => expect(handler).toHaveBeenCalledTimes(1));
     await vi.waitFor(() => expect(worker.activeRuns()).toBe(0));
+    await abortObserved;
     await worker.stop();
     await start;
+    releaseHandler();
+    await vi.waitFor(() => expect(resolvedAfterAbort).toBe(true));
 
     expect(db.jobs.completeRun).not.toHaveBeenCalled();
     expect(db.jobs.failRun).not.toHaveBeenCalled();

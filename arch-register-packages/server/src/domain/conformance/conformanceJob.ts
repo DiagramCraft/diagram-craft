@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../../db/database';
 import { createJobSchedule, updateJobSchedule } from '../jobs/jobOperations';
 import { executeConformanceRun } from './conformanceEvaluation';
+import { throwIfAborted } from '../../utils/jobCancellation';
 
 export const CONFORMANCE_SCAN_JOB_TYPE = 'conformance.scan';
 export const CONFORMANCE_SCAN_SYSTEM_IDENTITY = 'conformance';
@@ -63,6 +64,7 @@ export const createConformanceScanJobHandler =
     payload: Record<string, unknown>;
     signal?: AbortSignal;
   }) => {
+    throwIfAborted(context.signal);
     const runId = context.payload['evaluationRunId'];
     const checkId = context.payload['checkId'];
     const effectiveCheckId = typeof checkId === 'string' ? checkId : undefined;
@@ -84,5 +86,12 @@ export const createConformanceScanJobHandler =
               configuration: { scheduled: true }
             })
           ).id;
-    return executeConformanceRun(db, context.workspace, evaluationRunId, effectiveCheckId);
+    throwIfAborted(context.signal);
+    return executeConformanceRun(
+      db,
+      context.workspace,
+      evaluationRunId,
+      effectiveCheckId,
+      context.signal
+    );
   };

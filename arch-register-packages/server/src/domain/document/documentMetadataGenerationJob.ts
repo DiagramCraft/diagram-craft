@@ -36,6 +36,7 @@ import {
   METADATA_GENERATION_SCAN_JOB_TYPE,
   METADATA_GENERATION_SCAN_SYSTEM_IDENTITY
 } from './aiMetadataGenerationConstants';
+import { linkAbortSignal, throwIfAborted } from '../../utils/jobCancellation';
 
 const logger = createLogger('ai-metadata-generation');
 
@@ -184,12 +185,17 @@ const writeGenerationOutcome = async (
         sourceRevision: number;
         generatorVersion: number;
         now: Date;
-      }
+      },
+  signal?: AbortSignal
 ) => {
+  throwIfAborted(signal);
   await db.core.transaction(async tx => {
+    throwIfAborted(signal);
     const current = await tx.document.getDocumentMetadata(workspace, nodeId);
+    throwIfAborted(signal);
     if (!current) return;
     const node = await tx.project.contentNodes.getAnyContentNodeById(workspace, nodeId);
+    throwIfAborted(signal);
 
     const envelope: ExternalUpdateEnvelope = {
       fieldId: outcome.fieldId,
@@ -221,6 +227,7 @@ const writeGenerationOutcome = async (
     };
 
     if (outcome.status === 'failed') {
+      throwIfAborted(signal);
       await tx.document.upsertDocumentMetadata({
         workspace,
         node_id: nodeId,
@@ -229,6 +236,7 @@ const writeGenerationOutcome = async (
         generated_metadata: nextGenerated,
         updated_at: outcome.now
       });
+      throwIfAborted(signal);
       await writeAudit(tx, {
         workspace,
         userId: AI_SYSTEM_USER_ID,
@@ -239,10 +247,12 @@ const writeGenerationOutcome = async (
         changes: {},
         metadata: auditMetadata
       });
+      throwIfAborted(signal);
       return;
     }
 
     const nextValues = { ...current.values, [outcome.fieldId]: outcome.value };
+    throwIfAborted(signal);
     await tx.document.upsertDocumentMetadata({
       workspace,
       node_id: nodeId,
@@ -251,11 +261,13 @@ const writeGenerationOutcome = async (
       generated_metadata: nextGenerated,
       updated_at: outcome.now
     });
+    throwIfAborted(signal);
 
     const revisionNumber = await tx.project.markdownRevisions.getNextMarkdownRevisionNumber(
       workspace,
       nodeId
     );
+    throwIfAborted(signal);
     await tx.project.markdownRevisions.createMarkdownRevision({
       workspace,
       node_id: nodeId,
@@ -268,6 +280,7 @@ const writeGenerationOutcome = async (
       document_type_id: outcome.documentTypeId,
       metadata: nextValues
     });
+    throwIfAborted(signal);
 
     await writeAudit(tx, {
       workspace,
@@ -279,6 +292,7 @@ const writeGenerationOutcome = async (
       changes: { new: { [outcome.fieldId]: outcome.value } },
       metadata: auditMetadata
     });
+    throwIfAborted(signal);
   });
 };
 
@@ -293,8 +307,10 @@ const scheduleRetryOrFail = async (
   // unexpected error strikes before the generator's target field could even be resolved — this
   // keeps the failure durably logged, even though it won't surface against a specific field in
   // the properties panel (generatedMetadata is keyed by field id).
-  fieldId: string = row.action_id
+  fieldId: string = row.action_id,
+  signal?: AbortSignal
 ): Promise<'retrying' | 'failed'> => {
+  throwIfAborted(signal);
   if (row.attempt_count + 1 < METADATA_GENERATION_MAX_ATTEMPTS) {
     await db.document.upsertPendingMetadataGeneration({
       workspace: row.workspace,
@@ -307,19 +323,28 @@ const scheduleRetryOrFail = async (
       attempt_count: row.attempt_count + 1,
       updated_at: now
     });
+    throwIfAborted(signal);
     return 'retrying';
   }
-  await writeGenerationOutcome(db, row.workspace, row.node_id, {
-    status: 'failed',
-    actionId: row.action_id,
-    fieldId,
-    failureNotice,
-    explanation,
-    findings,
-    sourceRevision: row.source_revision,
-    generatorVersion: row.generator_version,
-    now
-  });
+  throwIfAborted(signal);
+  await writeGenerationOutcome(
+    db,
+    row.workspace,
+    row.node_id,
+    {
+      status: 'failed',
+      actionId: row.action_id,
+      fieldId,
+      failureNotice,
+      explanation,
+      findings,
+      sourceRevision: row.source_revision,
+      generatorVersion: row.generator_version,
+      now
+    },
+    signal
+  );
+  throwIfAborted(signal);
   return 'failed';
 };
 
@@ -329,8 +354,10 @@ const processGenerationRow = async (
   db: DatabaseAdapter,
   storage: StorageAdapter,
   row: DocumentMetadataGenerationScheduleDbResult,
-  now: Date
+  now: Date,
+  signal?: AbortSignal
 ): Promise<ProcessOutcome> => {
+  throwIfAborted(signal);
   const skip = (reason: string) => {
     logger.info(`Skipping node ${row.node_id}, action ${row.action_id}: ${reason}`, {
       workspace: row.workspace
@@ -339,41 +366,59 @@ const processGenerationRow = async (
   };
 
   const node = await db.project.contentNodes.getAnyContentNodeById(row.workspace, row.node_id);
+  throwIfAborted(signal);
   if (!node) return skip('document no longer exists');
 
   const metadataRow = await db.document.getDocumentMetadata(row.workspace, node.id);
+  throwIfAborted(signal);
   const documentType = metadataRow?.document_type_id
     ? await db.document.getDocumentType(row.workspace, metadataRow.document_type_id)
     : null;
+  throwIfAborted(signal);
   if (!documentType) return skip('document no longer has a document type');
   const action = documentType.aiActions.find(
     candidate =>
       candidate.id === row.action_id && candidate.enabled && candidate.kind === 'metadata_generator'
   );
+  throwIfAborted(signal);
   if (action?.kind !== 'metadata_generator')
     return skip('generator action is missing, disabled, or no longer a metadata generator');
 
   const outputField = documentType.fields.find(
     field => field.id === action.outputFieldId && !field.retired
   );
+  throwIfAborted(signal);
   if (!outputField) return skip(`target field '${action.outputFieldId}' is missing or retired`);
 
   const fail = (message: string, explanation: string | null = null, findings: string[] = []) => {
+    throwIfAborted(signal);
     logger.warn(`Generation failed for node ${row.node_id}, action ${row.action_id}: ${message}`, {
       workspace: row.workspace,
       attempt: row.attempt_count + 1
     });
-    return scheduleRetryOrFail(db, row, now, message, explanation, findings, outputField.id);
+    return scheduleRetryOrFail(
+      db,
+      row,
+      now,
+      message,
+      explanation,
+      findings,
+      outputField.id,
+      signal
+    );
   };
 
   const aiConfig = await resolveAiConfig(db, row.workspace);
+  throwIfAborted(signal);
   if (!aiConfig) return (await fail('AI is not configured for this workspace')) as ProcessOutcome;
 
   const scheduledByUser = await db.auth.getUser(row.scheduled_by_user_id);
+  throwIfAborted(signal);
   if (!scheduledByUser)
     return (await fail('The user who scheduled this run no longer exists')) as ProcessOutcome;
 
   const content = await storage.read(row.workspace, storageScope(row.workspace, node), node.id);
+  throwIfAborted(signal);
   const body = readBody(content);
 
   const prompt = buildDocumentActionPrompt({
@@ -409,8 +454,10 @@ const processGenerationRow = async (
   let findings: string[];
   let generatedResponse: Extract<ParsedDocumentAiResponse, { ok: true }>;
   const startedAt = Date.now();
+  const linkedAbort = linkAbortSignal(signal);
   try {
     const authCtx = await buildApiEntityAuthCtx(db, row.workspace, fakeEvent);
+    throwIfAborted(signal);
     const adapter = createAiTextAdapter(aiConfig);
     const tools = createAiChatTools(
       db,
@@ -425,13 +472,16 @@ const processGenerationRow = async (
         messages: [{ role: 'user', content: prompt }],
         tools,
         modelOptions: { temperature: aiConfig.temperature },
-        outputSchema: documentMetadataGenerationOutputSchema(outputField)
+        outputSchema: documentMetadataGenerationOutputSchema(outputField),
+        abortController: linkedAbort.controller
       });
+      throwIfAborted(signal);
       rawAnswer = JSON.stringify(structured);
       const parsedResponse = parseGeneratedResponse(outputField, rawAnswer);
       if (!parsedResponse.ok) throw new Error(parsedResponse.error);
       generatedResponse = parsedResponse;
     } catch (structuredError) {
+      throwIfAborted(signal);
       logger.warn(
         `Structured metadata output failed for action ${action.id}; trying legacy response parsing`,
         {
@@ -445,8 +495,10 @@ const processGenerationRow = async (
         messages: [{ role: 'user', content: prompt }],
         tools,
         modelOptions: { temperature: aiConfig.temperature },
-        stream: false
+        stream: false,
+        abortController: linkedAbort.controller
       });
+      throwIfAborted(signal);
       rawAnswer = legacyAnswer;
       const parsedResponse = parseGeneratedResponse(outputField, rawAnswer);
       if (!parsedResponse.ok) throw new Error(parsedResponse.error);
@@ -463,16 +515,21 @@ const processGenerationRow = async (
       }
     );
   } catch (error) {
+    if (signal?.aborted) throw error;
     return (await fail(
       `AI request failed: ${error instanceof Error ? error.message : String(error)}`
     )) as ProcessOutcome;
+  } finally {
+    linkedAbort.cleanup();
   }
 
+  throwIfAborted(signal);
   // Discard if the document changed while this generation was running: a newer save's hook
   // already upserted a fresh pending row for this (workspace, node, action) with its own
   // debounce window, so there is nothing further to schedule here.
   const currentRevisionNumber =
     (await db.project.markdownRevisions.getNextMarkdownRevisionNumber(row.workspace, node.id)) - 1;
+  throwIfAborted(signal);
   if (currentRevisionNumber !== row.source_revision) {
     logger.info(
       `Discarding result for node ${node.id}, action ${action.id}: document changed during generation ` +
@@ -492,20 +549,28 @@ const processGenerationRow = async (
     return (await fail(validation.errors.join('; '), explanation, findings)) as ProcessOutcome;
   }
 
-  await writeGenerationOutcome(db, row.workspace, node.id, {
-    status: 'success',
-    actionId: action.id,
-    fieldId: outputField.id,
-    value: generatedResponse.value,
-    explanation,
-    findings,
-    sourceRevision: row.source_revision,
-    generatorVersion: documentType.version ?? 1,
-    documentTypeId: documentType.id,
-    title: node.name,
-    body,
-    now
-  });
+  throwIfAborted(signal);
+  await writeGenerationOutcome(
+    db,
+    row.workspace,
+    node.id,
+    {
+      status: 'success',
+      actionId: action.id,
+      fieldId: outputField.id,
+      value: generatedResponse.value,
+      explanation,
+      findings,
+      sourceRevision: row.source_revision,
+      generatorVersion: documentType.version ?? 1,
+      documentTypeId: documentType.id,
+      title: node.name,
+      body,
+      now
+    },
+    signal
+  );
+  throwIfAborted(signal);
   logger.info(
     `Wrote generated value for node ${node.id}, field '${outputField.id}': ${JSON.stringify(generatedResponse.value)}`,
     { workspace: row.workspace }
@@ -521,8 +586,10 @@ export const createDocumentMetadataGenerationScanJobHandler =
     payload: Record<string, unknown>;
     signal?: AbortSignal;
   }) => {
+    throwIfAborted(context.signal);
     const now = new Date();
     const claimed = await db.document.claimDueMetadataGenerations(context.workspace, now);
+    throwIfAborted(context.signal);
     logger.debug(
       `Scan tick for workspace ${context.workspace}: ${claimed.length} generation(s) due`
     );
@@ -536,16 +603,27 @@ export const createDocumentMetadataGenerationScanJobHandler =
       skipped: 0
     };
     for (const row of claimed) {
+      throwIfAborted(context.signal);
       try {
-        const outcome = await processGenerationRow(db, storage, row, now);
+        const outcome = await processGenerationRow(db, storage, row, now, context.signal);
         summary[outcome] += 1;
       } catch (error) {
+        throwIfAborted(context.signal);
         const message = error instanceof Error ? error.message : String(error);
         logger.error(
           `Unexpected error generating node ${row.node_id}, action ${row.action_id}: ${message}`,
           error instanceof Error ? error : undefined
         );
-        const outcome = await scheduleRetryOrFail(db, row, now, message);
+        const outcome = await scheduleRetryOrFail(
+          db,
+          row,
+          now,
+          message,
+          null,
+          [],
+          row.action_id,
+          context.signal
+        );
         summary[outcome] += 1;
       }
     }

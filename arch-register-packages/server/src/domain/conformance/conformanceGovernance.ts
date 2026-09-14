@@ -11,6 +11,7 @@ import {
 import type { GovernanceRegistry } from '../governance/governanceRegistry';
 import { resolveScopeAwareEscalationTarget } from '../governance/governanceOperations';
 import { PermissionChecker } from '@arch-register/permissions';
+import { throwIfAborted } from '../../utils/jobCancellation';
 import type {
   ConformanceCheckDbResult,
   ConformanceViolationDbResult
@@ -101,46 +102,60 @@ export const ensureConformanceGovernanceCase = async (
   db: DatabaseAdapter,
   check: ConformanceCheckDbResult,
   violation: ConformanceViolationDbResult,
-  seenAt: Date
+  seenAt: Date,
+  signal?: AbortSignal
 ) => {
+  throwIfAborted(signal);
   if (check.definition.governance?.enabled !== true || violation.status === 'exempt') return;
   const existing = await db.governance.getCaseByDedupeKey(
     check.workspace,
     CONFORMANCE_VIOLATION_CASE_KIND,
     `conformance:${violation.id}`
   );
+  throwIfAborted(signal);
   if (existing) return;
-  await db.core.transaction(async tx =>
-    createGovernanceCaseInTransaction(
+  await db.core.transaction(async tx => {
+    throwIfAborted(signal);
+    await createGovernanceCaseInTransaction(
       tx,
       check.workspace,
       null,
       caseInputForViolation(check, violation, seenAt),
       seenAt,
       randomUUID()
-    )
-  );
+    );
+    throwIfAborted(signal);
+  });
 };
 
 export const closeConformanceGovernanceCases = async (
   db: DatabaseAdapter,
   workspace: string,
   violationId: string,
-  now: Date
+  now: Date,
+  signal?: AbortSignal
 ) => {
+  throwIfAborted(signal);
   const cases = await db.governance.listCases(workspace, {
     caseKind: CONFORMANCE_VIOLATION_CASE_KIND,
     subjectType: 'conformance_violation',
     subjectId: violationId,
     status: 'open'
   });
+  throwIfAborted(signal);
   for (const caseRow of cases) {
+    throwIfAborted(signal);
     await db.core.transaction(async tx => {
+      throwIfAborted(signal);
       const completed = await tx.governance.completeCaseIfOpen(caseRow.id, 'resolved', now);
+      throwIfAborted(signal);
       if (!completed) return;
       const supersededIds = await tx.governance.supersedeAllOpenAssignmentsForCase(caseRow.id, now);
+      throwIfAborted(signal);
       await resolveAssignmentNotifications(tx, supersededIds, now);
+      throwIfAborted(signal);
       await resolveCaseNotifications(tx, completed.id, now);
+      throwIfAborted(signal);
       await recordGovernanceEvent(tx, completed, {
         eventType: 'cancelled',
         actorUserId: null,
@@ -149,6 +164,7 @@ export const closeConformanceGovernanceCases = async (
         reason: 'Conformance violation resolved by evaluation',
         metadata: { violationId }
       });
+      throwIfAborted(signal);
     });
   }
 };

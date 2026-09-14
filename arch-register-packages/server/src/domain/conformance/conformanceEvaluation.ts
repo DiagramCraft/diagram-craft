@@ -20,6 +20,7 @@ import {
   closeConformanceGovernanceCases,
   ensureConformanceGovernanceCase
 } from './conformanceGovernance';
+import { linkAbortSignal, throwIfAborted } from '../../utils/jobCancellation';
 
 const aiResultSchema = z.object({ conformant: z.boolean() });
 
@@ -36,16 +37,24 @@ type EvaluationTotals = {
   evaluatedEntityIds: string[];
 };
 
-const loadDataset = async (db: DatabaseAdapter, workspace: string): Promise<Dataset> => {
+const loadDataset = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  signal?: AbortSignal
+): Promise<Dataset> => {
+  throwIfAborted(signal);
   const entities = await listAllCatalogEntities(db, workspace);
+  throwIfAborted(signal);
   const [schemas, relationSchemas] = await Promise.all([
     db.catalog.listSchemas(workspace),
     db.relation.listRelationSchemas(workspace)
   ]);
+  throwIfAborted(signal);
   const relations: RelationDbResult[] = [];
   let offset = 0;
   while (true) {
     const page = await db.relation.listRelations(workspace, {}, { limit: 1000, offset });
+    throwIfAborted(signal);
     relations.push(...page.items);
     if (page.items.length < 1000) break;
     offset += page.items.length;
@@ -62,9 +71,11 @@ const recordViolation = async (
   message: string,
   evidence: Record<string, unknown>,
   runId: string,
-  seenAt: Date
-) =>
-  db.conformance.upsertViolation({
+  seenAt: Date,
+  signal?: AbortSignal
+) => {
+  throwIfAborted(signal);
+  const violation = await db.conformance.upsertViolation({
     id: randomUUID(),
     workspace: check.workspace,
     check_id: check.id,
@@ -77,14 +88,19 @@ const recordViolation = async (
     run_id: runId,
     seen_at: seenAt
   });
+  throwIfAborted(signal);
+  return violation;
+};
 
 const resolveUnseen = async (
   db: DatabaseAdapter,
   check: ConformanceCheckDbResult,
   seenEntityIds: string[],
   runId: string,
-  resolvedAt: Date
+  resolvedAt: Date,
+  signal?: AbortSignal
 ) => {
+  throwIfAborted(signal);
   const resolvedViolationIds = await db.conformance.resolveUnseenViolations(
     check.workspace,
     check.id,
@@ -92,8 +108,11 @@ const resolveUnseen = async (
     resolvedAt,
     runId
   );
+  throwIfAborted(signal);
   for (const violationId of resolvedViolationIds) {
-    await closeConformanceGovernanceCases(db, check.workspace, violationId, resolvedAt);
+    throwIfAborted(signal);
+    await closeConformanceGovernanceCases(db, check.workspace, violationId, resolvedAt, signal);
+    throwIfAborted(signal);
   }
 };
 
@@ -103,8 +122,10 @@ const evaluateScheduledValidation = async (
   definition: Extract<ConformanceCheckDefinition, { type: 'scheduled_validation' }>,
   dataset: Dataset,
   runId: string,
-  seenAt: Date
+  seenAt: Date,
+  signal?: AbortSignal
 ): Promise<EvaluationTotals> => {
+  throwIfAborted(signal);
   const schema = dataset.schemas.find(candidate => candidate.id === definition.schemaId);
   if (!schema) throw new Error(`Schema '${definition.schemaId}' no longer exists`);
 
@@ -121,6 +142,7 @@ const evaluateScheduledValidation = async (
   const evaluatedEntityIds: string[] = [];
   let violationCount = 0;
   for (const entity of dataset.entities.filter(candidate => candidate.schema_id === schema.id)) {
+    throwIfAborted(signal);
     const projection = buildEntityProjection(
       entity.id,
       dataset.entities,
@@ -149,13 +171,16 @@ const evaluateScheduledValidation = async (
         schemaVersion: schema.version ?? 1
       },
       runId,
-      seenAt
+      seenAt,
+      signal
     );
-    await ensureConformanceGovernanceCase(db, check, violation, seenAt);
+    throwIfAborted(signal);
+    await ensureConformanceGovernanceCase(db, check, violation, seenAt, signal);
+    throwIfAborted(signal);
     seenEntityIds.push(entity.id);
     violationCount += 1;
   }
-  await resolveUnseen(db, check, seenEntityIds, runId, seenAt);
+  await resolveUnseen(db, check, seenEntityIds, runId, seenAt, signal);
   return {
     checkedCount: evaluatedEntityIds.length,
     violationCount,
@@ -166,25 +191,37 @@ const evaluateScheduledValidation = async (
 const queryPolicyPopulation = async (
   db: DatabaseAdapter,
   workspace: string,
-  definition: Extract<ConformanceCheckDefinition, { type: 'query_policy' }>
-): Promise<EntityDbResult[]> =>
-  listAllCatalogEntities(db, workspace, { schemaId: definition.query.schemaId ?? null });
+  definition: Extract<ConformanceCheckDefinition, { type: 'query_policy' }>,
+  signal?: AbortSignal
+): Promise<EntityDbResult[]> => {
+  throwIfAborted(signal);
+  const population = await listAllCatalogEntities(db, workspace, {
+    schemaId: definition.query.schemaId ?? null
+  });
+  throwIfAborted(signal);
+  return population;
+};
 
 const evaluateQueryPolicy = async (
   db: DatabaseAdapter,
   check: ConformanceCheckDbResult,
   definition: Extract<ConformanceCheckDefinition, { type: 'query_policy' }>,
   runId: string,
-  seenAt: Date
+  seenAt: Date,
+  signal?: AbortSignal
 ): Promise<EvaluationTotals> => {
+  throwIfAborted(signal);
   const result = await listEntitiesWithCount(db, check.workspace, null, {
     entityQuery: definition.query,
     view: 'full',
     limit: null,
     offset: 0
   });
-  const population = await queryPolicyPopulation(db, check.workspace, definition);
+  throwIfAborted(signal);
+  const population = await queryPolicyPopulation(db, check.workspace, definition, signal);
+  throwIfAborted(signal);
   for (const entity of result.items) {
+    throwIfAborted(signal);
     const violation = await db.conformance.upsertViolation({
       id: randomUUID(),
       workspace: check.workspace,
@@ -198,14 +235,17 @@ const evaluateQueryPolicy = async (
       run_id: runId,
       seen_at: seenAt
     });
-    await ensureConformanceGovernanceCase(db, check, violation, seenAt);
+    throwIfAborted(signal);
+    await ensureConformanceGovernanceCase(db, check, violation, seenAt, signal);
+    throwIfAborted(signal);
   }
   await resolveUnseen(
     db,
     check,
     result.items.map(entity => entity._uid),
     runId,
-    seenAt
+    seenAt,
+    signal
   );
   return {
     checkedCount: population.length,
@@ -235,16 +275,21 @@ const evaluateAiPrompt = async (
   definition: Extract<ConformanceCheckDefinition, { type: 'ai_prompt' }>,
   dataset: Dataset,
   runId: string,
-  seenAt: Date
+  seenAt: Date,
+  signal?: AbortSignal
 ): Promise<EvaluationTotals> => {
+  throwIfAborted(signal);
   const schema = dataset.schemas.find(candidate => candidate.id === definition.schemaId);
   if (!schema) throw new Error(`Schema '${definition.schemaId}' no longer exists`);
   const aiConfig = await resolveAiConfig(db, check.workspace);
+  throwIfAborted(signal);
   if (!aiConfig) throw new Error('AI is not configured for this workspace');
   if (!check.created_by) throw new Error(`AI check '${check.name}' has no creator`);
   const user = await db.auth.getUser(check.created_by);
+  throwIfAborted(signal);
   if (!user) throw new Error(`AI check creator '${check.created_by}' no longer exists`);
   const authCtx = await buildUserAuthCtx(db, check.workspace, user.id);
+  throwIfAborted(signal);
   for (const fieldId of definition.fieldIds) {
     if (isFieldViewRestricted(authCtx, schema, fieldId)) {
       throw new Error(`AI check creator cannot view field '${fieldId}' anymore`);
@@ -265,6 +310,7 @@ const evaluateAiPrompt = async (
   let violationCount = 0;
 
   for (const entity of entities) {
+    throwIfAborted(signal);
     evaluatedEntityIds.push(entity.id);
     const selectedFields = buildAiEntityInput(entity, schema, authCtx, definition.fieldIds);
     const prompt = [
@@ -276,13 +322,21 @@ const evaluateAiPrompt = async (
       `Selected entity fields: ${JSON.stringify(selectedFields)}`,
       `Conformance question: ${definition.prompt}`
     ].join('\n');
-    const result = await chat({
-      adapter,
-      messages: [{ role: 'user', content: prompt }],
-      tools,
-      modelOptions: { temperature: aiConfig.temperature },
-      outputSchema: aiResultSchema
-    });
+    const linkedAbort = linkAbortSignal(signal);
+    let result: { conformant: boolean };
+    try {
+      result = await chat({
+        adapter,
+        messages: [{ role: 'user', content: prompt }],
+        tools,
+        modelOptions: { temperature: aiConfig.temperature },
+        outputSchema: aiResultSchema,
+        abortController: linkedAbort.controller
+      });
+    } finally {
+      linkedAbort.cleanup();
+    }
+    throwIfAborted(signal);
     if (result.conformant === true) continue;
     const violation = await recordViolation(
       db,
@@ -296,13 +350,16 @@ const evaluateAiPrompt = async (
         model: aiConfig.model
       },
       runId,
-      seenAt
+      seenAt,
+      signal
     );
-    await ensureConformanceGovernanceCase(db, check, violation, seenAt);
+    throwIfAborted(signal);
+    await ensureConformanceGovernanceCase(db, check, violation, seenAt, signal);
+    throwIfAborted(signal);
     seenEntityIds.push(entity.id);
     violationCount += 1;
   }
-  await resolveUnseen(db, check, seenEntityIds, runId, seenAt);
+  await resolveUnseen(db, check, seenEntityIds, runId, seenAt, signal);
   return { checkedCount: evaluatedEntityIds.length, violationCount, evaluatedEntityIds };
 };
 
@@ -310,8 +367,10 @@ export const evaluateConformanceCheck = async (
   db: DatabaseAdapter,
   check: ConformanceCheckDbResult,
   runId: string,
-  seenAt = new Date()
+  seenAt = new Date(),
+  signal?: AbortSignal
 ): Promise<EvaluationTotals> => {
+  throwIfAborted(signal);
   const definition = check.definition;
   switch (definition.type) {
     case 'scheduled_validation':
@@ -319,20 +378,22 @@ export const evaluateConformanceCheck = async (
         db,
         check,
         definition,
-        await loadDataset(db, check.workspace),
+        await loadDataset(db, check.workspace, signal),
         runId,
-        seenAt
+        seenAt,
+        signal
       );
     case 'query_policy':
-      return evaluateQueryPolicy(db, check, definition, runId, seenAt);
+      return evaluateQueryPolicy(db, check, definition, runId, seenAt, signal);
     case 'ai_prompt':
       return evaluateAiPrompt(
         db,
         check,
         definition,
-        await loadDataset(db, check.workspace),
+        await loadDataset(db, check.workspace, signal),
         runId,
-        seenAt
+        seenAt,
+        signal
       );
   }
 };
@@ -341,9 +402,12 @@ export const executeConformanceRun = async (
   db: DatabaseAdapter,
   workspace: string,
   runId: string,
-  checkId?: string
+  checkId?: string,
+  signal?: AbortSignal
 ): Promise<ConformanceRunDbResult> => {
+  throwIfAborted(signal);
   const run = await db.conformance.getRun(workspace, runId);
+  throwIfAborted(signal);
   if (!run) throw new Error(`Conformance run '${runId}' not found`);
   const startedAt = new Date();
   let checkedCount = 0;
@@ -352,11 +416,14 @@ export const executeConformanceRun = async (
     const checks = checkId
       ? [await db.conformance.getCheck(workspace, checkId)]
       : await db.conformance.listChecks(workspace);
+    throwIfAborted(signal);
     const enabledChecks = checks.filter(
       (check): check is ConformanceCheckDbResult => check?.enabled === true
     );
     for (const check of enabledChecks) {
-      const totals = await evaluateConformanceCheck(db, check, run.id, startedAt);
+      throwIfAborted(signal);
+      const totals = await evaluateConformanceCheck(db, check, run.id, startedAt, signal);
+      throwIfAborted(signal);
       const evaluatedAt = new Date();
       await db.conformance.recordEntityEvaluations(
         totals.evaluatedEntityIds.map(entityId => ({
@@ -368,9 +435,11 @@ export const executeConformanceRun = async (
           evaluated_at: evaluatedAt
         }))
       );
+      throwIfAborted(signal);
       checkedCount += totals.checkedCount;
       violationCount += totals.violationCount;
     }
+    throwIfAborted(signal);
     return (await db.conformance.updateRun(workspace, runId, {
       status: 'succeeded',
       completed_at: new Date(),
@@ -379,6 +448,7 @@ export const executeConformanceRun = async (
       error: null
     }))!;
   } catch (error) {
+    if (signal?.aborted) throw error;
     const message = error instanceof Error ? error.message : String(error);
     await db.conformance.updateRun(workspace, runId, {
       status: 'failed',
