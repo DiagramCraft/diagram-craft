@@ -43,6 +43,14 @@ export const VENDOR_RISK_BANDS = [
 
 export type VendorRiskBand = (typeof VENDOR_RISK_BANDS)[number]['band'];
 
+/** Shared band → color mapping, used by both `VendorDrawer` and `VendorVendorsScreen`. */
+export const VENDOR_RISK_BAND_COLOR: Record<VendorRiskBand, string> = {
+  low: 'var(--cmp-fg-success, #22c55e)',
+  medium: 'var(--cmp-fg-warning, #eab308)',
+  high: 'var(--cmp-fg-danger, #ef4444)',
+  critical: 'var(--cmp-fg-danger, #ef4444)'
+};
+
 export type VendorRiskInput = {
   security_risk: number | null;
   concentration_risk: number | null;

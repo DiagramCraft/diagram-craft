@@ -14,12 +14,14 @@ const mocks = vi.hoisted(() => ({
   metricsRollup: vi.fn(),
   lifecycleStatesList: vi.fn(),
   capabilityConfigurationsList: vi.fn(),
-  params: { workspaceSlug: 'ws-1' } as { workspaceSlug: string; vendorId?: string }
+  params: { workspaceSlug: 'ws-1' } as { workspaceSlug: string; vendorId?: string },
+  search: {} as Record<string, unknown>
 }));
 
 vi.mock('@tanstack/react-router', () => ({
   useParams: () => mocks.params,
-  useNavigate: () => mocks.navigate
+  useNavigate: () => mocks.navigate,
+  useSearch: () => mocks.search
 }));
 
 vi.mock('../../../lib/orpcClient', () => ({
@@ -69,6 +71,7 @@ describe('VendorVendorsScreen', () => {
     root = createRoot(container);
     queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     mocks.params = { workspaceSlug: 'ws-1' };
+    mocks.search = {};
     mocks.capabilityConfigurationsList.mockResolvedValue([CONFIG]);
     mocks.entityList.mockResolvedValue({
       items: [
@@ -77,10 +80,31 @@ describe('VendorVendorsScreen', () => {
           _publicId: 'VND-001',
           _name: 'Acme Corp',
           tier: 'strategic',
-          status: 'active'
+          category: 'software',
+          status: 'active',
+          relationship_owner: 'Jane Doe',
+          security_risk: 4,
+          concentration_risk: 3,
+          financial_risk: 2,
+          compliance_risk: 3,
+          criticality: 4
+        },
+        {
+          _uid: 'vnd-2',
+          _publicId: 'VND-002',
+          _name: 'Beta Supplies',
+          tier: 'tactical',
+          category: 'hardware',
+          status: 'active',
+          relationship_owner: 'John Smith',
+          security_risk: null,
+          concentration_risk: null,
+          financial_risk: null,
+          compliance_risk: null,
+          criticality: null
         }
       ],
-      total: 1
+      total: 2
     });
     mocks.entityGet.mockResolvedValue({
       _uid: 'vnd-1',
@@ -149,5 +173,43 @@ describe('VendorVendorsScreen', () => {
     mocks.capabilityConfigurationsList.mockResolvedValue([]);
     await renderScreen();
     expect(container.textContent).toContain('Vendor management is not enabled.');
+  });
+
+  it('filters rows by the q search param', async () => {
+    mocks.search = { q: 'Beta' };
+    await renderScreen();
+    expect(container.textContent).toContain('Beta Supplies');
+    expect(container.textContent).not.toContain('Acme Corp');
+  });
+
+  it('filters rows by the tier facet search param', async () => {
+    mocks.search = { tier: 'tactical' };
+    await renderScreen();
+    expect(container.textContent).toContain('Beta Supplies');
+    expect(container.textContent).not.toContain('Acme Corp');
+  });
+
+  it('filters rows by the owner facet search param', async () => {
+    mocks.search = { owner: 'Jane Doe' };
+    await renderScreen();
+    expect(container.textContent).toContain('Acme Corp');
+    expect(container.textContent).not.toContain('Beta Supplies');
+  });
+
+  it('sorts by risk when the Risk header is clicked', async () => {
+    await renderScreen();
+
+    const riskHeader = [...container.querySelectorAll('th')].find(th =>
+      th.textContent?.includes('Risk')
+    );
+    expect(riskHeader).toBeDefined();
+    await act(async () => {
+      riskHeader!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    const rows = [...container.querySelectorAll('tbody tr')];
+    // Acme Corp has scored risk dimensions, Beta Supplies has none (`vmRisk` is null and sorts
+    // last) — descending risk puts Acme Corp first regardless of toggle direction.
+    expect(rows[0]?.textContent).toContain('Acme Corp');
   });
 });

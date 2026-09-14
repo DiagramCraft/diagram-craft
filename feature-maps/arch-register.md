@@ -307,9 +307,12 @@
         - @id:ar.vendor-management.overview The Overview section is scaffolded as a placeholder pending its
           renewals-due, spend, and vendor-risk summary dashboard.
 
-        - @id:ar.vendor-management.vendors The Vendors section lists Vendor entities; a minimal register view for
-          now (full filtering/sorting/columns are still pending). Selecting a vendor opens the shared vendor drawer,
-          deep-linkable at `vendor-management/vendors/$vendorId`: a composite risk score (`vmRisk`/`vmRiskBand`,
+        - @id:ar.vendor-management.vendors The Vendors section is a register of Vendor entities: free-text search by
+          name, sort by name / spend / risk / next renewal, and a sidebar of Tier, Category, and Relationship Owner
+          facets (each showing a count, driven off the Vendor schema's own field options and the fetched vendors'
+          values). Next renewal is the earliest upcoming `Contract.contract_end` across a vendor's own Contracts.
+          Selecting a vendor opens the shared vendor drawer, deep-linkable at
+          `vendor-management/vendors/$vendorId`: a composite risk score (`vmRisk`/`vmRiskBand`,
           weighted across the vendor's security, concentration, financial, and compliance risk fields and lifted by
           criticality), attributes, spend (`vmSpend`, summed across the vendor's own Contracts), the vendor's
           Contracts, the Systems its contracts serve ("Applications supplied"), and a best-effort technology
