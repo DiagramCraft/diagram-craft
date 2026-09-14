@@ -45,7 +45,7 @@ test.describe('workspace routes', () => {
         expect.objectContaining({ template_object_count: templateObjectCount(sourceTemplate) })
       );
     }
-    expect(templates.find(template => template.id === 'default')?.template_object_count).toBe(19);
+    expect(templates.find(template => template.id === 'default')?.template_object_count).toBe(24);
     expect(
       templates.find(template => template.id === 'information-governance')?.template_object_count
     ).toBe(12);

@@ -181,7 +181,7 @@ export const sourceFromBuiltin = (template: SchemaTemplate): DefinitionSource =>
         .slice(0, 5)
         .toUpperCase(),
       fields: schema.fields.map(field => toCanonicalField(field, ownerId, template.id)),
-      groups: [],
+      groups: schema.groups ?? [],
       shared_field_group_links: sharedFieldGroupLinks,
       shared_field_groups: sharedGroupsFor(sharedFieldGroupLinks),
       color: schema.color,

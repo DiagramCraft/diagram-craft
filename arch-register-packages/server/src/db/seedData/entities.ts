@@ -1358,7 +1358,18 @@ export const seedEntitiesRaw: SeedEntityInput[] = [
     tags: ['vendor'],
     links: [],
     schema_id: '00000000-0000-0000-0000-000000000010',
-    data: {},
+    data: {
+      category: 'cloud-hosting',
+      tier: 'strategic',
+      status: 'active',
+      relationship_owner: 'Head of Platform Engineering',
+      cost_centre: 'it-operations',
+      security_risk: 3,
+      concentration_risk: 3,
+      financial_risk: 2,
+      compliance_risk: 2,
+      criticality: 4
+    },
     project_id: null,
     created_at: now,
     updated_at: now
@@ -1378,7 +1389,18 @@ export const seedEntitiesRaw: SeedEntityInput[] = [
     tags: ['vendor'],
     links: [],
     schema_id: '00000000-0000-0000-0000-000000000010',
-    data: {},
+    data: {
+      category: 'software',
+      tier: 'tactical',
+      status: 'active',
+      relationship_owner: 'Head of Security',
+      cost_centre: 'it-operations',
+      security_risk: 3,
+      concentration_risk: 2,
+      financial_risk: 2,
+      compliance_risk: 3,
+      criticality: 3
+    },
     project_id: null,
     created_at: now,
     updated_at: now
@@ -1403,7 +1425,11 @@ export const seedEntitiesRaw: SeedEntityInput[] = [
       contract_start: '2026-01-01',
       contract_end: '2026-12-31',
       annual_cost: { amount: 125000, currency: 'USD' },
-      setup_fee: { amount: 15000, currency: 'USD' }
+      setup_fee: { amount: 15000, currency: 'USD' },
+      contract_type: 'licence',
+      auto_renew: true,
+      notice_period_days: 90,
+      contract_owner: 'Head of Platform Engineering'
     },
     project_id: null,
     created_at: now,
@@ -1429,7 +1455,11 @@ export const seedEntitiesRaw: SeedEntityInput[] = [
       contract_start: '2026-02-01',
       contract_end: '2027-01-31',
       annual_cost: { amount: 84000, currency: 'EUR' },
-      setup_fee: { amount: 0, currency: 'EUR' }
+      setup_fee: { amount: 0, currency: 'EUR' },
+      contract_type: 'support',
+      auto_renew: true,
+      notice_period_days: 30,
+      contract_owner: 'Head of Security'
     },
     project_id: null,
     created_at: now,
@@ -1455,7 +1485,11 @@ export const seedEntitiesRaw: SeedEntityInput[] = [
       contract_start: '2026-03-01',
       contract_end: '2027-02-28',
       annual_cost: { amount: 30000, currency: 'USD' },
-      setup_fee: { amount: 0, currency: 'USD' }
+      setup_fee: { amount: 0, currency: 'USD' },
+      contract_type: 'support',
+      auto_renew: false,
+      notice_period_days: 60,
+      contract_owner: 'Head of Platform Engineering'
     },
     project_id: null,
     created_at: now,
