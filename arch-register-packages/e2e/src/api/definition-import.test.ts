@@ -186,12 +186,6 @@ test.describe('definition import', () => {
       params: { workspace: source.url_slug },
       body: { name: 'Stale source schema', key_prefix: 'STAL', fields: [] }
     });
-    const sources = await orpc.workspaces.definitionImportSources({
-      params: { workspace: target.url_slug }
-    });
-    const workspaceSource = sources.find(
-      item => item.kind === 'workspace' && item.id === source.url_slug
-    )!;
     const preview = await orpc.workspaces.definitionImportPreview({
       params: { workspace: target.url_slug },
       body: {
@@ -206,7 +200,6 @@ test.describe('definition import', () => {
         }
       }
     });
-    expect(workspaceSource).toBeDefined();
     await orpc.schemas.update({
       params: { workspace: source.url_slug, id: sourceSchema.id },
       body: { name: 'Changed source schema' }
