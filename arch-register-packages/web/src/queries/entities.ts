@@ -51,7 +51,8 @@ export const entityKeys = {
 export const entityDetailQuery = (workspaceId: string, entityId: string) =>
   queryOptions({
     queryKey: entityKeys.detail(workspaceId, entityId),
-    queryFn: () => orpcClient.entities.get({ params: { workspace: workspaceId, id: entityId } }),
+    queryFn: ({ signal }) =>
+      orpcClient.entities.get({ params: { workspace: workspaceId, id: entityId } }, { signal }),
     enabled: !!workspaceId && !!entityId
   });
 
@@ -62,27 +63,33 @@ export const entitiesQuery = (
 ) =>
   queryOptions({
     queryKey: entityKeys.list(workspaceId, options),
-    queryFn: () =>
-      orpcClient.entities.list({
-        params: { workspace: workspaceId },
-        query: {
-          ...toEntityListQuery(options),
-          view: options.view,
-          limit: options.limit ?? undefined,
-          offset: options.offset ?? undefined
-        }
-      }),
+    queryFn: ({ signal }) =>
+      orpcClient.entities.list(
+        {
+          params: { workspace: workspaceId },
+          query: {
+            ...toEntityListQuery(options),
+            view: options.view,
+            limit: options.limit ?? undefined,
+            offset: options.offset ?? undefined
+          }
+        },
+        { signal }
+      ),
     enabled: enabled && !!workspaceId
   });
 
 export const entityJsonQuery = (workspaceId: string, entityId: string, enabled = true) =>
   queryOptions({
     queryKey: entityKeys.json(workspaceId, entityId, 1),
-    queryFn: () =>
-      orpcClient.entities.json({
-        params: { workspace: workspaceId, id: entityId },
-        query: { depth: 1 }
-      }),
+    queryFn: ({ signal }) =>
+      orpcClient.entities.json(
+        {
+          params: { workspace: workspaceId, id: entityId },
+          query: { depth: 1 }
+        },
+        { signal }
+      ),
     enabled: enabled && !!workspaceId && !!entityId
   });
 
@@ -94,25 +101,30 @@ export const entityLandscapeDiffQuery = (
 ) =>
   queryOptions({
     queryKey: entityKeys.landscapeDiff(workspaceId, from, to),
-    queryFn: () =>
-      orpcClient.entities.diff({
-        params: { workspace: workspaceId },
-        body: { from: from!, to: to! }
-      }),
+    queryFn: ({ signal }) =>
+      orpcClient.entities.diff(
+        {
+          params: { workspace: workspaceId },
+          body: { from: from!, to: to! }
+        },
+        { signal }
+      ),
     enabled: enabled && !!workspaceId && !!from && !!to
   });
 
 export const entityFacetsQuery = (workspaceId: string, enabled = true) =>
   queryOptions({
     queryKey: entityKeys.facets(workspaceId),
-    queryFn: () => orpcClient.entities.facets({ params: { workspace: workspaceId } }),
+    queryFn: ({ signal }) =>
+      orpcClient.entities.facets({ params: { workspace: workspaceId } }, { signal }),
     enabled: enabled && !!workspaceId
   });
 
 export const entityTimelineMarkersQuery = (workspaceId: string, enabled = true) =>
   queryOptions({
     queryKey: entityKeys.timelineMarkers(workspaceId),
-    queryFn: () => orpcClient.entities.timelineMarkers({ params: { workspace: workspaceId } }),
+    queryFn: ({ signal }) =>
+      orpcClient.entities.timelineMarkers({ params: { workspace: workspaceId } }, { signal }),
     enabled: enabled && !!workspaceId
   });
 
@@ -123,30 +135,39 @@ export const entityCountQuery = (
 ) =>
   queryOptions({
     queryKey: entityKeys.count(workspaceId, options),
-    queryFn: () =>
-      orpcClient.entities.count({
-        params: { workspace: workspaceId },
-        query: toEntityListQuery(options)
-      }),
+    queryFn: ({ signal }) =>
+      orpcClient.entities.count(
+        {
+          params: { workspace: workspaceId },
+          query: toEntityListQuery(options)
+        },
+        { signal }
+      ),
     enabled: enabled && !!workspaceId
   });
 
 export const entityRelationsQuery = (workspaceId: string, entityId: string) =>
   queryOptions({
     queryKey: entityKeys.relations(workspaceId, entityId),
-    queryFn: () =>
-      orpcClient.entities.relations({ params: { workspace: workspaceId, id: entityId } }),
+    queryFn: ({ signal }) =>
+      orpcClient.entities.relations(
+        { params: { workspace: workspaceId, id: entityId } },
+        { signal }
+      ),
     enabled: !!workspaceId && !!entityId
   });
 
 export const entityDependentsQuery = (workspaceId: string, entityId: string, transitive: boolean) =>
   queryOptions({
     queryKey: entityKeys.dependents(workspaceId, entityId, transitive),
-    queryFn: () =>
-      orpcClient.entities.dependents({
-        params: { workspace: workspaceId, id: entityId },
-        query: { transitive: transitive ? 'true' : 'false' }
-      }),
+    queryFn: ({ signal }) =>
+      orpcClient.entities.dependents(
+        {
+          params: { workspace: workspaceId, id: entityId },
+          query: { transitive: transitive ? 'true' : 'false' }
+        },
+        { signal }
+      ),
     enabled: !!workspaceId && !!entityId
   });
 
@@ -157,22 +178,28 @@ export const entityTreeQuery = (
 ) =>
   queryOptions({
     queryKey: entityKeys.tree(workspaceId, options),
-    queryFn: () =>
-      orpcClient.entities.tree({
-        params: { workspace: workspaceId },
-        query: toEntityListQuery(options)
-      }),
+    queryFn: ({ signal }) =>
+      orpcClient.entities.tree(
+        {
+          params: { workspace: workspaceId },
+          query: toEntityListQuery(options)
+        },
+        { signal }
+      ),
     enabled: enabled && !!workspaceId
   });
 
 export const entityBatchRelationsQuery = (workspaceId: string, ids: string[]) =>
   queryOptions({
     queryKey: entityKeys.batchRelations(workspaceId, ids),
-    queryFn: () =>
-      orpcClient.entities.batchRelations({
-        params: { workspace: workspaceId },
-        body: { ids }
-      }),
+    queryFn: ({ signal }) =>
+      orpcClient.entities.batchRelations(
+        {
+          params: { workspace: workspaceId },
+          body: { ids }
+        },
+        { signal }
+      ),
     enabled: !!workspaceId && ids.length > 0
   });
 
@@ -185,11 +212,14 @@ export const entitiesBySchemaQuery = (
 ) =>
   queryOptions({
     queryKey: entityKeys.list(workspaceId, { schemaId, view, conditions }),
-    queryFn: async () => {
-      const page = await orpcClient.entities.list({
-        params: { workspace: workspaceId },
-        query: { ...toEntityListQuery({ schemaId, conditions }), view }
-      });
+    queryFn: async ({ signal }) => {
+      const page = await orpcClient.entities.list(
+        {
+          params: { workspace: workspaceId },
+          query: { ...toEntityListQuery({ schemaId, conditions }), view }
+        },
+        { signal }
+      );
       return page.items;
     },
     enabled: enabled && !!workspaceId && !!schemaId
@@ -202,11 +232,14 @@ export const hydratedEntitiesBySchemaQuery = (
 ) =>
   queryOptions({
     queryKey: entityKeys.list(workspaceId, { schemaId, view: 'full' }),
-    queryFn: async () => {
-      const page = await orpcClient.entities.list({
-        params: { workspace: workspaceId },
-        query: { ...toEntityListQuery({ schemaId }), view: 'full' }
-      });
+    queryFn: async ({ signal }) => {
+      const page = await orpcClient.entities.list(
+        {
+          params: { workspace: workspaceId },
+          query: { ...toEntityListQuery({ schemaId }), view: 'full' }
+        },
+        { signal }
+      );
       return page.items;
     },
     enabled: enabled && !!workspaceId && !!schemaId
@@ -219,11 +252,14 @@ export const entityCountsBySchemaQuery = (
 ) =>
   queryOptions({
     queryKey: entityKeys.count(workspaceId, { schemaId, conditions }),
-    queryFn: () =>
-      orpcClient.entities.count({
-        params: { workspace: workspaceId },
-        query: toEntityListQuery({ schemaId, conditions })
-      }),
+    queryFn: ({ signal }) =>
+      orpcClient.entities.count(
+        {
+          params: { workspace: workspaceId },
+          query: toEntityListQuery({ schemaId, conditions })
+        },
+        { signal }
+      ),
     enabled: !!workspaceId && !!schemaId
   });
 
