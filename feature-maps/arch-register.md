@@ -34,9 +34,10 @@
 
         - @id:ar.workspace.applications A workspace is organized into applications, switchable from a switcher in the
           top bar next to the workspace switcher. "Home" is the always-available core register (overview, content,
-          projects, entities, search, my work, and AI); Business Glossary and Strategy & Capability Modelling
-          (@id:ar.strategy) are separate applications; selecting an application scopes the left icon rail to only
-          that application's sections and re-skins the shell with its accent colour. An application may own several
+          projects, entities, search, my work, and AI); Business Glossary, Strategy & Capability Modelling
+          (@id:ar.strategy), and Vendor Management (@id:ar.vendor-management) are separate applications; selecting
+          an application scopes the left icon rail to only that application's sections and re-skins the shell with
+          its accent colour. An application may own several
           rail sections, each with its own icon, tooltip, route, and optionally its own primary sidebar. An
           application appears in the switcher only when enabled, which is governed by its backing workspace
           capability configuration (managed from the "Applications & Capabilities" workspace settings screen, which
@@ -222,8 +223,9 @@
 
         - @id:ar.strategy.view-config Alongside the schema bindings, workspace administrators configure how the
           Business Capability attributes are presented across the application. In the "Applications & Capabilities"
-          workspace settings screen — a secondary sidebar grouping the two applications (Business Glossary, Strategy
-          & Capability Modelling) and the remaining capabilities (API specification, Retention policy), each row
+          workspace settings screen — a secondary sidebar grouping the applications (Business Glossary, Strategy
+          & Capability Modelling, Vendor Management) and the remaining capabilities (API specification, Retention
+          policy), each row
           showing a dot for whether that capability is enabled — the Strategy & Capability Modelling entry splits
           into Bindings / Fields / Dashboard / Access tabs. The Fields tab lists
           every capability field in one shared display order (no add or remove — the list follows the schema); each
@@ -294,6 +296,28 @@
           current selection and an initiatives sub-list for the selected objective. **No strategy link** lists the
           capabilities that no objective supports. Selecting a capability opens the shared capability drawer;
           selecting an application opens its record in Entities.
+
+    - @id:ar.vendor-management Workspaces can optionally enable Vendor Management as its own workspace application,
+      with a dedicated left rail scoped to five sections (Overview, Vendors, Contracts, Spend, Risk). The application
+      is enabled only once the workspace's `vendor-management` capability configuration is valid (the required Vendor
+      entity schema binding resolved; the Contract entity schema binding is optional); until then, or while a
+      section's own capability lookup is still loading, each section shows a capability-not-configured empty state
+      instead of its content.
+
+        - @id:ar.vendor-management.overview The Overview section is scaffolded as a placeholder pending its
+          renewals-due, spend, and vendor-risk summary dashboard.
+
+        - @id:ar.vendor-management.vendors The Vendors section is scaffolded as a placeholder pending its vendor
+          register list/detail view.
+
+        - @id:ar.vendor-management.contracts The Contracts section is scaffolded as a placeholder pending its
+          contract list, renewal calendar, and timeline views.
+
+        - @id:ar.vendor-management.spend The Spend section is scaffolded as a placeholder pending spend roll-ups by
+          vendor, capability, and cost centre.
+
+        - @id:ar.vendor-management.risk The Risk section is scaffolded as a placeholder pending vendor-risk and
+          linked-technology-EOL views.
 
     - @id:ar.entities Users can maintain a structured catalog of architectural entities and their relationships.
 

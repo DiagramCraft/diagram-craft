@@ -72803,7 +72803,8 @@
                         "enum": [
                           "home",
                           "business-glossary",
-                          "strategy-model"
+                          "strategy-model",
+                          "vendor-management"
                         ],
                         "type": "string"
                       }
@@ -72814,7 +72815,8 @@
                         "enum": [
                           "home",
                           "business-glossary",
-                          "strategy-model"
+                          "strategy-model",
+                          "vendor-management"
                         ],
                         "type": "string"
                       }
@@ -72886,7 +72888,8 @@
                             "enum": [
                               "home",
                               "business-glossary",
-                              "strategy-model"
+                              "strategy-model",
+                              "vendor-management"
                             ],
                             "type": "string"
                           },
@@ -73037,7 +73040,8 @@
               "enum": [
                 "home",
                 "business-glossary",
-                "strategy-model"
+                "strategy-model",
+                "vendor-management"
               ],
               "type": "string"
             }
@@ -73110,7 +73114,8 @@
                       "enum": [
                         "home",
                         "business-glossary",
-                        "strategy-model"
+                        "strategy-model",
+                        "vendor-management"
                       ],
                       "type": "string"
                     },
@@ -73154,7 +73159,8 @@
               "enum": [
                 "home",
                 "business-glossary",
-                "strategy-model"
+                "strategy-model",
+                "vendor-management"
               ],
               "type": "string"
             }
@@ -73193,7 +73199,8 @@
                           "enum": [
                             "home",
                             "business-glossary",
-                            "strategy-model"
+                            "strategy-model",
+                            "vendor-management"
                           ],
                           "type": "string"
                         },

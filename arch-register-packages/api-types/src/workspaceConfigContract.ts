@@ -22,12 +22,18 @@ const timestampOutputSchema = z
   .union([z.string(), z.date()])
   .transform(value => (typeof value === 'string' ? value : value.toISOString()));
 
-export const workspaceApplicationIdSchema = z.enum(['home', 'business-glossary', 'strategy-model']);
+export const workspaceApplicationIdSchema = z.enum([
+  'home',
+  'business-glossary',
+  'strategy-model',
+  'vendor-management'
+]);
 
 export const workspaceApplicationDefinitions = [
   { id: 'home', capabilityType: null },
   { id: 'business-glossary', capabilityType: 'business-glossary' },
-  { id: 'strategy-model', capabilityType: 'strategy-model' }
+  { id: 'strategy-model', capabilityType: 'strategy-model' },
+  { id: 'vendor-management', capabilityType: 'vendor-management' }
 ] as const;
 
 export const applicationAccessModeSchema = z.enum(['all_members', 'selected']);
