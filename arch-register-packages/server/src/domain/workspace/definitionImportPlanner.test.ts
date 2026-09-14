@@ -5,6 +5,7 @@ import type {
   DefinitionImportSelection
 } from '@arch-register/api-types/workspaceContract';
 import type { SchemaField } from '@arch-register/api-types/schemaContract';
+import type { SchemaDbResult } from '../catalog/db/catalogDatabase';
 import {
   buildDefinitionImportPlan,
   definitionImportFingerprint,
@@ -73,6 +74,15 @@ const relationSchema = (
   ...overrides
 });
 
+const existingSchema = (id: string, overrides: Partial<ImportableSchema> = {}): SchemaDbResult =>
+  ({
+    ...schema(id, overrides),
+    workspace: 'target',
+    default_owner: null,
+    created_at: new Date(),
+    updated_at: new Date()
+  }) as unknown as SchemaDbResult;
+
 const source = (overrides: Partial<DefinitionSource> = {}): DefinitionSource => ({
   kind: 'builtin',
   id: 'template',
@@ -136,7 +146,7 @@ describe('buildDefinitionImportPlan', () => {
   it('applies renames before detecting case-insensitive conflicts', async () => {
     const input = {
       sourceData: source({ schemas: [schema('schema-1', { name: 'Imported Schema' })] }),
-      target: target({ schemas: [schema('existing', { name: 'Imported Schema' })] }),
+      target: target({ schemas: [existingSchema('existing', { name: 'Imported Schema' })] }),
       source: { kind: 'builtin' as const, id: 'template' },
       selection: selection({ schemas: ['schema-1'] }),
       renames: [{ kind: 'schema' as const, id: 'schema-1', name: 'Renamed Schema' }],
@@ -152,7 +162,7 @@ describe('buildDefinitionImportPlan', () => {
   it('reports conflicts for existing and duplicate imported names', async () => {
     const plan = await buildDefinitionImportPlan({
       sourceData: source({ schemas: [schema('one', { name: 'Duplicate' }), schema('two', { name: 'duplicate' })] }),
-      target: target({ schemas: [schema('existing', { name: 'DUPLICATE' })] }),
+      target: target({ schemas: [existingSchema('existing', { name: 'DUPLICATE' })] }),
       source: { kind: 'builtin', id: 'template' },
       selection: selection({ schemas: ['one', 'two'] }),
       renames: [],
@@ -186,7 +196,7 @@ describe('buildDefinitionImportPlan', () => {
   });
 
   it('resolves mapped extension schema patches against destination schemas', async () => {
-    const existing = schema('destination-schema', { name: 'Destination' });
+    const existing = existingSchema('destination-schema', { name: 'Destination' });
     const plan = await buildDefinitionImportPlan({
       sourceData: source({
         relationSchemas: [relationSchema('extension-relation')],
