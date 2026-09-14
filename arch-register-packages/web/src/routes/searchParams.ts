@@ -413,6 +413,22 @@ export type SpendSearchParams = SearchParamsFromSchema<typeof spendSearchSchema>
 export const validateSpendSearch = (raw: Record<string, unknown>): SpendSearchParams =>
   parseSearchParams(spendSearchSchema, raw);
 
+// Vendor Management risk params
+const riskSearchSchema = defineSearchParamSchema({
+  // Vendor risk band, narrowing the matrix, risk register, and EOL table to vendors in that band
+  // — set by the sidebar's Band facet (`RiskSidebarContent` in `VendorManagementSidebar.tsx`).
+  band: stringCodec,
+  // A `GroupedVendorTechnologyExposure.key` (`<vendorUid>:<technologyReleaseUid>`), narrowing the
+  // matrix, risk register, and EOL table down to that one vendor — set by the sidebar's
+  // Technology EOL facet. Combines (AND) with `band` rather than replacing it.
+  technology: stringCodec
+});
+
+export type RiskSearchParams = SearchParamsFromSchema<typeof riskSearchSchema>;
+
+export const validateRiskSearch = (raw: Record<string, unknown>): RiskSearchParams =>
+  parseSearchParams(riskSearchSchema, raw);
+
 // Strategy capability map params
 const capabilityMapSearchSchema = defineSearchParamSchema({
   // Set by clicking a node in the map sidebar's capability tree (or an L1 domain header in the

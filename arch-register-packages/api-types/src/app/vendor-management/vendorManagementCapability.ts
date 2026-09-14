@@ -28,6 +28,16 @@ export const vendorManagementCapabilityDefinition: WorkspaceCapabilityDefinition
       required: false,
       targetKind: 'entity_schema',
       fieldRoles: []
+    },
+    {
+      id: 'technologyRelease',
+      label: 'Technology Release entity schema',
+      description:
+        'The entity schema used for technology release records, whose support/EOL dates drive the ' +
+        "Risk section's technology end-of-life exposure table.",
+      required: false,
+      targetKind: 'entity_schema',
+      fieldRoles: []
     }
   ]
 };

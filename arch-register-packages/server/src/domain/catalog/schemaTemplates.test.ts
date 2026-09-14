@@ -735,15 +735,28 @@ describe('instantiateTemplate', () => {
     );
   });
 
-  it('materializes the API capability as a workspace configuration', () => {
+  it('materializes the API and vendor-management capabilities as workspace configurations', () => {
     const definitions = instantiateTemplateDefinitions('ws-1', 'default');
     const api = definitions.schemas.find(schema => schema.name === 'API');
+    const vendor = definitions.schemas.find(schema => schema.name === 'Vendor');
+    const contract = definitions.schemas.find(schema => schema.name === 'Contract');
+    const technologyRelease = definitions.schemas.find(
+      schema => schema.name === 'Technology Release'
+    );
 
     expect(definitions.capabilityConfigurations).toEqual([
       {
         type: 'api-specification',
         bindings: {
           api: { target: { kind: 'entity_schema', id: api?.id } }
+        }
+      },
+      {
+        type: 'vendor-management',
+        bindings: {
+          vendor: { target: { kind: 'entity_schema', id: vendor?.id } },
+          contract: { target: { kind: 'entity_schema', id: contract?.id } },
+          technologyRelease: { target: { kind: 'entity_schema', id: technologyRelease?.id } }
         }
       }
     ]);

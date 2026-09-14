@@ -33,7 +33,8 @@ vi.mock('../../../lib/orpcClient', () => ({
 
 const vendorConfig: VendorManagementConfig = {
   vendorSchemaId: 'vendor',
-  contractSchemaId: 'contract'
+  contractSchemaId: 'contract',
+  technologyReleaseSchemaId: null
 };
 
 const emptyRollup: MetricRollupResponse = {
@@ -168,8 +169,9 @@ describe('VendorDrawer', () => {
     expect(container.textContent).toContain('No contracts.');
     expect(container.textContent).toContain('No linked applications, via any contract.');
     expect(container.textContent).toContain('Not yet available — no linked capability data yet.');
-    // All-3s risk profile -> vmRisk = (3-1)/4*100 * criticality-3 lift (1.1) = 55, banded medium.
-    expect(container.textContent).toContain('medium');
+    // All-3s risk profile, criticality 3 (no lift) -> vmRisk = 3 on its native 1-5 scale, banded
+    // elevated (>= 2.7, < 3.4).
+    expect(container.textContent).toContain('elevated');
   });
 
   it('lists a contract from the entity tree and its annual cost', async () => {

@@ -154,7 +154,7 @@ export const VendorDrawer = ({
         <div className={styles.stat}>
           <div className={styles.statLabel}>vmRisk</div>
           <div className={styles.statValue}>
-            {risk.vmRisk != null ? Math.round(risk.vmRisk) : '—'}
+            {risk.vmRisk != null ? risk.vmRisk.toFixed(1) : '—'}
           </div>
         </div>
       </div>
