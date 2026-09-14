@@ -50,7 +50,10 @@ export const vendorManagementAppDefinition: AppDefinition = {
       tooltip: 'Vendors',
       route: VENDOR_RAIL_PATHS[VENDOR_VENDORS_ID],
       primarySidebar: ctx => (
-        <VendorManagementSidebar workspaceSlug={ctx.workspaceSlug} activeSection={VENDOR_VENDORS_ID} />
+        <VendorManagementSidebar
+          workspaceSlug={ctx.workspaceSlug}
+          activeSection={VENDOR_VENDORS_ID}
+        />
       )
     },
     {
@@ -71,7 +74,10 @@ export const vendorManagementAppDefinition: AppDefinition = {
       tooltip: 'Spend',
       route: VENDOR_RAIL_PATHS[VENDOR_SPEND_ID],
       primarySidebar: ctx => (
-        <VendorManagementSidebar workspaceSlug={ctx.workspaceSlug} activeSection={VENDOR_SPEND_ID} />
+        <VendorManagementSidebar
+          workspaceSlug={ctx.workspaceSlug}
+          activeSection={VENDOR_SPEND_ID}
+        />
       )
     },
     {

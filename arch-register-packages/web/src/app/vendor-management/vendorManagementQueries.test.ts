@@ -24,9 +24,7 @@ describe('resolveVendorManagementConfig', () => {
   it('resolves with a null contract schema id when contract is unbound', () => {
     const { contract: _contract, ...bindingsWithoutContract } = validConfiguration.bindings;
     expect(
-      resolveVendorManagementConfig([
-        { ...validConfiguration, bindings: bindingsWithoutContract }
-      ])
+      resolveVendorManagementConfig([{ ...validConfiguration, bindings: bindingsWithoutContract }])
     ).toEqual({ vendorSchemaId: 'vendor-schema', contractSchemaId: null });
   });
 
