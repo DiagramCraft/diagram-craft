@@ -300,7 +300,8 @@
     - @id:ar.vendor-management Workspaces can optionally enable Vendor Management as its own workspace application,
       with a dedicated left rail scoped to five sections (Overview, Vendors, Contracts, Spend, Risk). The application
       is enabled only once the workspace's `vendor-management` capability configuration is valid (the required Vendor
-      entity schema binding resolved; the Contract entity schema binding is optional); until then, or while a
+      entity schema binding resolved; the Contract and Technology Release entity schema bindings are optional —
+      Technology Release only gates the Risk section's technology EOL exposure table); until then, or while a
       section's own capability lookup is still loading, each section shows a capability-not-configured empty state
       instead of its content.
 
@@ -343,9 +344,18 @@
           `vendor-management/spend/$vendorId`. Grouping by capability shows an explanatory empty state instead of
           data — no Contract-to-capability link exists yet.
 
-        - @id:ar.vendor-management.risk The Risk section is scaffolded as a placeholder pending vendor-risk and
-          linked-technology-EOL views. The underlying `vmRisk`/`vmRiskBand` model already exists, shared with the
-          vendor drawer.
+        - @id:ar.vendor-management.risk The Risk section has three views over the vendor register. A criticality
+          (1-5) × risk-band matrix shows a vendor count per cell, colour-coded by band, clickable to filter the
+          register table below to that cell. The risk register table (Name, Tier, Criticality, the four risk
+          dimensions, `vmRisk`/`vmRiskBand`) is sorted by `vmRisk` descending by default (nulls last), filterable by
+          free-text search and by the matrix/sidebar's band and criticality selections, and opens the shared vendor
+          drawer on row click, deep-linkable at `vendor-management/risk/$vendorId`. A technology end-of-life exposure
+          table cross-references the Systems a vendor's Contracts serve against those Systems' linked Technology
+          Release records (`eol_date`/`security_support_until`), banded past / within 6 months / within 12 months /
+          OK; it depends on the `vendor-management` capability's optional Technology Release entity schema binding
+          (configured in Applications & Capabilities) and on an entity schema — typically Component or Resource —
+          that links a System to that Technology Release schema, showing an explanatory empty state instead of data
+          when either is missing.
 
     - @id:ar.entities Users can maintain a structured catalog of architectural entities and their relationships.
 

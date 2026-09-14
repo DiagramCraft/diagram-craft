@@ -413,6 +413,21 @@ export type SpendSearchParams = SearchParamsFromSchema<typeof spendSearchSchema>
 export const validateSpendSearch = (raw: Record<string, unknown>): SpendSearchParams =>
   parseSearchParams(spendSearchSchema, raw);
 
+// Vendor Management risk params
+const riskSearchSchema = defineSearchParamSchema({
+  q: stringCodec,
+  // Vendor risk band and Criticality (1-5, kept as a string codec since it's used only for exact
+  // matching against the sidebar's facets / the matrix's cells) — set by the sidebar's facets
+  // (`RiskSidebarContent` in `VendorManagementSidebar.tsx`) or by clicking a `RiskMatrix` cell.
+  band: stringCodec,
+  criticality: stringCodec
+});
+
+export type RiskSearchParams = SearchParamsFromSchema<typeof riskSearchSchema>;
+
+export const validateRiskSearch = (raw: Record<string, unknown>): RiskSearchParams =>
+  parseSearchParams(riskSearchSchema, raw);
+
 // Strategy capability map params
 const capabilityMapSearchSchema = defineSearchParamSchema({
   // Set by clicking a node in the map sidebar's capability tree (or an L1 domain header in the

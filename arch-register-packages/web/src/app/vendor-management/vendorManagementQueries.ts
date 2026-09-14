@@ -6,6 +6,10 @@ export type VendorManagementConfig = {
   vendorSchemaId: string;
   /** Optional per the capability's `contract` binding role — `null` when unbound. */
   contractSchemaId: string | null;
+  /** Optional per the capability's `technologyRelease` binding role — `null` when unbound. Drives
+   *  the Risk section's technology EOL exposure table (`useVendorTechnologyExposure.ts`); every
+   *  other section ignores it. */
+  technologyReleaseSchemaId: string | null;
 };
 
 /**
@@ -32,5 +36,9 @@ export const resolveVendorManagementConfig = (
   const vendorSchemaId = schemaId('vendor');
   if (!vendorSchemaId) return null;
 
-  return { vendorSchemaId, contractSchemaId: schemaId('contract') };
+  return {
+    vendorSchemaId,
+    contractSchemaId: schemaId('contract'),
+    technologyReleaseSchemaId: schemaId('technologyRelease')
+  };
 };

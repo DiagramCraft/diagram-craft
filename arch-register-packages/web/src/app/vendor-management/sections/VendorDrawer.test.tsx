@@ -33,7 +33,8 @@ vi.mock('../../../lib/orpcClient', () => ({
 
 const vendorConfig: VendorManagementConfig = {
   vendorSchemaId: 'vendor',
-  contractSchemaId: 'contract'
+  contractSchemaId: 'contract',
+  technologyReleaseSchemaId: null
 };
 
 const emptyRollup: MetricRollupResponse = {

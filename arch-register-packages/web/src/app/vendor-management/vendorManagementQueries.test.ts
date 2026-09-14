@@ -9,23 +9,33 @@ const validConfiguration = {
   valid: true,
   bindings: {
     vendor: binding('vendor-schema'),
-    contract: binding('contract-schema')
+    contract: binding('contract-schema'),
+    technologyRelease: binding('technology-release-schema')
   }
 } as unknown as WorkspaceCapabilityConfiguration;
 
 describe('resolveVendorManagementConfig', () => {
-  it('resolves the vendor and contract bindings from a valid vendor-management configuration', () => {
+  it('resolves the vendor, contract, and technologyRelease bindings from a valid vendor-management configuration', () => {
     expect(resolveVendorManagementConfig([validConfiguration])).toEqual({
       vendorSchemaId: 'vendor-schema',
-      contractSchemaId: 'contract-schema'
+      contractSchemaId: 'contract-schema',
+      technologyReleaseSchemaId: 'technology-release-schema'
     });
   });
 
-  it('resolves with a null contract schema id when contract is unbound', () => {
-    const { contract: _contract, ...bindingsWithoutContract } = validConfiguration.bindings;
+  it('resolves with a null contract/technologyRelease schema id when unbound', () => {
+    const {
+      contract: _contract,
+      technologyRelease: _technologyRelease,
+      ...bindingsWithoutOptionals
+    } = validConfiguration.bindings;
     expect(
-      resolveVendorManagementConfig([{ ...validConfiguration, bindings: bindingsWithoutContract }])
-    ).toEqual({ vendorSchemaId: 'vendor-schema', contractSchemaId: null });
+      resolveVendorManagementConfig([{ ...validConfiguration, bindings: bindingsWithoutOptionals }])
+    ).toEqual({
+      vendorSchemaId: 'vendor-schema',
+      contractSchemaId: null,
+      technologyReleaseSchemaId: null
+    });
   });
 
   it('returns null when there is no vendor-management configuration', () => {

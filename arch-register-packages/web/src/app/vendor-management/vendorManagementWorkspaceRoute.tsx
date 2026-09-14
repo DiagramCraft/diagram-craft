@@ -21,7 +21,8 @@ import { ensureApplicationAccess } from '../../routes/applicationAccess';
 import {
   validateVendorsSearch,
   validateContractsSearch,
-  validateSpendSearch
+  validateSpendSearch,
+  validateRiskSearch
 } from '../../routes/searchParams';
 
 const railPath = (path: string) => path.replace('/$workspaceSlug/', '');
@@ -172,6 +173,30 @@ export const createVendorManagementWorkspaceRoutes = <TParentRoute extends AnyRo
     createRoute({
       getParentRoute: () => workspaceRoute,
       path: railPath(VENDOR_RAIL_PATHS[VENDOR_RISK_ID]),
+      validateSearch: validateRiskSearch,
+      beforeLoad: ({ context, params }) =>
+        ensureApplicationAccess(
+          context.queryClient,
+          (params as unknown as { workspaceSlug: string }).workspaceSlug,
+          'vendor-management'
+        ),
+      component: LazyVendorRiskScreen
+    }),
+    ctx =>
+      railSectionShell(ctx, VENDOR_RISK_ID, {
+        breadcrumbs: buildVendorManagementBreadcrumbs(ctx, VENDOR_RISK_ID)
+      })
+  );
+  // Deep-linkable vendor drawer, mirroring `vendorsDetailRoute`/`spendDetailRoute` above — same
+  // `component` as the base Risk route, gated the same way, with the drawer rendered conditionally
+  // by `VendorRiskScreen` when the optional `vendorId` route param is present. Its own route (not
+  // a redirect to `vendorsDetailRoute`) so the Risk screen's filter search params survive opening
+  // the drawer.
+  const riskDetailRoute = withWorkspaceShell(
+    createRoute({
+      getParentRoute: () => workspaceRoute,
+      path: `${railPath(VENDOR_RAIL_PATHS[VENDOR_RISK_ID])}/$vendorId`,
+      validateSearch: validateRiskSearch,
       beforeLoad: ({ context, params }) =>
         ensureApplicationAccess(
           context.queryClient,
@@ -194,6 +219,7 @@ export const createVendorManagementWorkspaceRoutes = <TParentRoute extends AnyRo
     contractsDetailRoute,
     spendRoute,
     spendDetailRoute,
-    riskRoute
+    riskRoute,
+    riskDetailRoute
   ] as const;
 };

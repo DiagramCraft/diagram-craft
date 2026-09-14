@@ -5,6 +5,7 @@ import {
   TbBuildingStore,
   TbCalendarDue,
   TbFileCertificate,
+  TbShieldExclamation,
   TbTag,
   TbUsers,
   TbWallet
@@ -23,16 +24,19 @@ import { useVendorContracts } from '../useVendorContracts';
 import { useVendorSpendRollups } from '../useVendorSpendRollups';
 import { computeVmGroupSpend, computeVmTotalSpend } from '../vendorSpendAggregates';
 import { renewalWindow, RENEWAL_WINDOWS } from '../contractRenewalWindow';
+import { computeVendorRisk, VENDOR_RISK_BANDS, type VendorRiskBand } from '../vendorRisk';
 import {
   VENDOR_RAIL_PATHS,
   VENDOR_SECTIONS,
   VENDOR_CONTRACTS_ID,
   VENDOR_SPEND_ID,
   VENDOR_VENDORS_ID,
+  VENDOR_RISK_ID,
   type VendorManagementRailItemId
 } from '../vendorManagementSections';
 import type {
   ContractsSearchParams,
+  RiskSearchParams,
   SpendSearchParams,
   VendorsSearchParams
 } from '../../../routes/searchParams';
@@ -433,11 +437,120 @@ const SpendSidebarContent = ({
 };
 
 /**
+ * The Risk section's own primary-sidebar content: risk-band and Criticality facets over the
+ * vendor register, mirroring `VendorsSidebarContent`/`SpendSidebarContent` above. Selecting a
+ * facet sets `VendorRiskScreen.tsx`'s `band`/`criticality` search params (the same params a
+ * `RiskMatrix` cell click sets), narrowing its risk register table.
+ */
+const RiskSidebarContent = ({
+  workspaceSlug,
+  vendorSchemaId
+}: {
+  workspaceSlug: string;
+  vendorSchemaId: string;
+}) => {
+  const navigate = useNavigate();
+  const search = useSearch({ strict: false }) as RiskSearchParams;
+
+  const { data: vendorsData } = useQuery(
+    entitiesQuery(workspaceSlug, { schemaId: vendorSchemaId, view: 'full', limit: 500 })
+  );
+  const vendors = vendorsData?.items ?? [];
+
+  const risks = useMemo(
+    () =>
+      vendors.map(vendor =>
+        computeVendorRisk({
+          security_risk: typeof vendor.security_risk === 'number' ? vendor.security_risk : null,
+          concentration_risk:
+            typeof vendor.concentration_risk === 'number' ? vendor.concentration_risk : null,
+          financial_risk: typeof vendor.financial_risk === 'number' ? vendor.financial_risk : null,
+          compliance_risk:
+            typeof vendor.compliance_risk === 'number' ? vendor.compliance_risk : null,
+          criticality: typeof vendor.criticality === 'number' ? vendor.criticality : null
+        })
+      ),
+    [vendors]
+  );
+
+  const bandCounts = useMemo(() => {
+    const counts = new Map<VendorRiskBand, number>();
+    for (const risk of risks) {
+      if (risk.vmRiskBand) counts.set(risk.vmRiskBand, (counts.get(risk.vmRiskBand) ?? 0) + 1);
+    }
+    return counts;
+  }, [risks]);
+
+  const criticalityCounts = useMemo(() => {
+    const counts = new Map<number, number>();
+    for (const vendor of vendors) {
+      if (typeof vendor.criticality === 'number') {
+        counts.set(vendor.criticality, (counts.get(vendor.criticality) ?? 0) + 1);
+      }
+    }
+    return counts;
+  }, [vendors]);
+
+  const patchSearch = (patch: Partial<RiskSearchParams>) =>
+    navigate({
+      to: VENDOR_RAIL_PATHS[VENDOR_RISK_ID],
+      params: { workspaceSlug },
+      search: (previous: Record<string, unknown>) => ({ ...previous, ...patch })
+    });
+
+  const hasAnySelection = !!search.band || !!search.criticality;
+  const clearAll = () => patchSearch({ band: undefined, criticality: undefined });
+
+  return (
+    <>
+      <TreeRow
+        icon={<TbShieldExclamation size={12} />}
+        label="All vendors"
+        testId="risk-facet-all"
+        active={!hasAnySelection}
+        onClick={clearAll}
+        trailing={<span className="dim mono">{vendors.length}</span>}
+      />
+      <SidebarGroupLabel>Risk band</SidebarGroupLabel>
+      {VENDOR_RISK_BANDS.map(({ band }) => (
+        <FacetRow
+          key={band}
+          icon={<TbTag size={12} />}
+          label={band}
+          testId={`risk-facet-band-${band}`}
+          active={search.band === band}
+          onClick={() => patchSearch({ band: search.band === band ? undefined : band })}
+          trailing={<span className="dim mono">{bandCounts.get(band) ?? 0}</span>}
+        />
+      ))}
+      <SidebarGroupLabel>Criticality</SidebarGroupLabel>
+      {[1, 2, 3, 4, 5].map(criticality => (
+        <FacetRow
+          key={criticality}
+          icon={<TbTag size={12} />}
+          label={String(criticality)}
+          testId={`risk-facet-criticality-${criticality}`}
+          active={search.criticality === String(criticality)}
+          onClick={() =>
+            patchSearch({
+              criticality:
+                search.criticality === String(criticality) ? undefined : String(criticality)
+            })
+          }
+          trailing={<span className="dim mono">{criticalityCounts.get(criticality) ?? 0}</span>}
+        />
+      ))}
+    </>
+  );
+};
+
+/**
  * Section-dependent primary sidebar for the Vendor Management app: navigation between the app's
  * five rail sections, gated on the `vendor-management` capability configuration (mirrors
  * `../../strategy-model/sections/StrategySidebar.tsx`'s `!enabled` empty state). The Vendors,
- * Contracts, and Spend sections replace this nav list with their own facet content (see
- * `VendorsSidebarContent`/`ContractsSidebarContent`/`SpendSidebarContent` above).
+ * Contracts, Spend, and Risk sections replace this nav list with their own facet content (see
+ * `VendorsSidebarContent`/`ContractsSidebarContent`/`SpendSidebarContent`/`RiskSidebarContent`
+ * above).
  */
 export const VendorManagementSidebar = ({
   workspaceSlug,
@@ -472,6 +585,11 @@ export const VendorManagementSidebar = ({
             workspaceSlug={workspaceSlug}
             vendorSchemaId={vendorConfig.vendorSchemaId}
             contractSchemaId={vendorConfig.contractSchemaId}
+          />
+        ) : activeSection === VENDOR_RISK_ID ? (
+          <RiskSidebarContent
+            workspaceSlug={workspaceSlug}
+            vendorSchemaId={vendorConfig.vendorSchemaId}
           />
         ) : (
           <>

@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { VendorManagementSidebar } from './VendorManagementSidebar';
 import {
   VENDOR_CONTRACTS_ID,
+  VENDOR_OVERVIEW_ID,
   VENDOR_RISK_ID,
   VENDOR_SPEND_ID,
   VENDOR_VENDORS_ID
@@ -167,7 +168,50 @@ describe('VendorManagementSidebar', () => {
 
   const flush = () => act(async () => new Promise(resolve => setTimeout(resolve, 0)));
 
-  it('shows the section nav list for a non-Vendors/Contracts/Spend section', async () => {
+  it('shows the section nav list for a non-Vendors/Contracts/Spend/Risk section', async () => {
+    await act(async () => {
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <VendorManagementSidebar workspaceSlug="ws-1" activeSection={VENDOR_OVERVIEW_ID} />
+        </QueryClientProvider>
+      );
+    });
+    for (let i = 0; i < 5; i++) await flush();
+
+    expect(container.textContent).toContain('Sections');
+    expect(container.textContent).toContain('Vendors');
+    expect(container.textContent).not.toContain('Tier');
+  });
+
+  it('shows risk band and criticality facets for the Risk section', async () => {
+    mocks.entityList.mockResolvedValue({
+      items: [
+        {
+          _uid: 'vnd-1',
+          _publicId: 'VND-1',
+          _name: 'Acme Corp',
+          tier: 'strategic',
+          criticality: 5,
+          security_risk: 5,
+          concentration_risk: 5,
+          financial_risk: 5,
+          compliance_risk: 5
+        },
+        {
+          _uid: 'vnd-2',
+          _publicId: 'VND-2',
+          _name: 'Beta Inc',
+          tier: 'tactical',
+          criticality: 2,
+          security_risk: 1,
+          concentration_risk: 1,
+          financial_risk: 1,
+          compliance_risk: 1
+        }
+      ],
+      total: 2
+    });
+
     await act(async () => {
       root.render(
         <QueryClientProvider client={queryClient}>
@@ -177,9 +221,10 @@ describe('VendorManagementSidebar', () => {
     });
     for (let i = 0; i < 5; i++) await flush();
 
-    expect(container.textContent).toContain('Sections');
-    expect(container.textContent).toContain('Vendors');
-    expect(container.textContent).not.toContain('Tier');
+    expect(container.textContent).toContain('Risk band');
+    expect(container.textContent).toContain('critical');
+    expect(container.textContent).toContain('low');
+    expect(container.textContent).toContain('Criticality');
   });
 
   it('shows cost centre spend and owner facets for the Spend section', async () => {
