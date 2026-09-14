@@ -7,7 +7,7 @@ import { join, relative } from 'node:path';
 //  - auditOperations.ts, which always redacts via `redactAuditEntryChanges` before returning
 //    (`listAuditLog`), or strips `changes` immediately via `stripAuditChanges` (`getAuditStats`)
 //  - workspaceAnalyticsOperations.ts, which strips `changes` immediately via `stripAuditChanges`
-//  - the DB contract test, which asserts raw DB-layer behavior
+//  - DB contract tests, which assert raw DB-layer behavior
 //
 // If this test fails because a new call site appeared, don't just add it to the allowlist: make
 // sure the new consumer either redacts via `redactAuditEntryChanges` or strips `changes` via
@@ -15,7 +15,8 @@ import { join, relative } from 'node:path';
 const ALLOWED_CALL_SITES = new Set([
   'domain/audit/auditOperations.ts',
   'domain/analytics/workspaceAnalyticsOperations.ts',
-  'db/contract-tests/audit.contract.test.ts'
+  'db/contract-tests/audit.contract.test.ts',
+  'db/contract-tests/assessmentRecurrence.contract.test.ts'
 ]);
 
 const SRC_ROOT = join(__dirname, '..', '..');
