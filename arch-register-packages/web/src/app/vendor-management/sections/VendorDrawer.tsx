@@ -12,7 +12,7 @@ import { formatCurrencyValue } from '../../../utils/currencyFormat';
 import { asEntityPublicId, entityDetailRoute } from '../../../routes/publicObjectRoutes';
 import { useVendorSpendRollup } from '../useVendorSpendRollup';
 import { useVendorAppsSupplied } from '../useVendorAppsSupplied';
-import { computeVendorRisk } from '../vendorRisk';
+import { computeVendorRisk, VENDOR_RISK_BAND_COLOR } from '../vendorRisk';
 import { fieldLabel, vendorFieldValue } from '../vendorFieldDisplay';
 import type { VendorManagementConfig } from '../vendorManagementQueries';
 import styles from './VendorDrawer.module.css';
@@ -32,13 +32,6 @@ const ATTRIBUTE_FIELDS = [
   'relationship_owner',
   'cost_centre'
 ] as const;
-
-const RISK_BAND_COLOR: Record<string, string> = {
-  low: 'var(--cmp-fg-success, #22c55e)',
-  medium: 'var(--cmp-fg-warning, #eab308)',
-  high: 'var(--cmp-fg-danger, #ef4444)',
-  critical: 'var(--cmp-fg-danger, #ef4444)'
-};
 
 /**
  * Slide-over showing one Vendor's risk profile, attributes, spend, contracts, applications
@@ -167,7 +160,7 @@ export const VendorDrawer = ({
       </div>
       {risk.vmRiskBand && (
         <div className={styles.riskBandRow}>
-          <Chip dot={RISK_BAND_COLOR[risk.vmRiskBand]} tone="ghost">
+          <Chip dot={VENDOR_RISK_BAND_COLOR[risk.vmRiskBand]} tone="ghost">
             {risk.vmRiskBand}
           </Chip>
         </div>

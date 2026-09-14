@@ -361,6 +361,21 @@ export const validateCapabilitiesSearch = (
   raw: Record<string, unknown>
 ): CapabilitiesSearchParams => parseSearchParams(capabilitiesSearchSchema, raw);
 
+// Vendor Management vendors params
+const vendorsSearchSchema = defineSearchParamSchema({
+  q: stringCodec,
+  // Vendor Tier / Category select-field values, and a Relationship Owner free-text value — set by
+  // the sidebar's facets (`VendorsSidebarContent`).
+  tier: stringCodec,
+  category: stringCodec,
+  owner: stringCodec
+});
+
+export type VendorsSearchParams = SearchParamsFromSchema<typeof vendorsSearchSchema>;
+
+export const validateVendorsSearch = (raw: Record<string, unknown>): VendorsSearchParams =>
+  parseSearchParams(vendorsSearchSchema, raw);
+
 // Strategy capability map params
 const capabilityMapSearchSchema = defineSearchParamSchema({
   // Set by clicking a node in the map sidebar's capability tree (or an L1 domain header in the
