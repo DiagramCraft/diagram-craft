@@ -93,8 +93,16 @@ describe('useVendorSpendRollups', () => {
     const [request] = mocks.rollup.mock.calls[0]!;
     expect(request.body.boxEntityIds).toEqual(['vnd-1', 'vnd-2']);
 
-    expect(latest?.byId.get('vnd-1')).toEqual({ vmSpend: 10000, currency: 'USD', contractCount: 2 });
-    expect(latest?.byId.get('vnd-2')).toEqual({ vmSpend: 25000, currency: 'USD', contractCount: 2 });
+    expect(latest?.byId.get('vnd-1')).toEqual({
+      vmSpend: 10000,
+      currency: 'USD',
+      contractCount: 2
+    });
+    expect(latest?.byId.get('vnd-2')).toEqual({
+      vmSpend: 25000,
+      currency: 'USD',
+      contractCount: 2
+    });
   });
 
   it('fills in a null entry for a vendor id missing from the response', async () => {
@@ -102,6 +110,10 @@ describe('useVendorSpendRollups', () => {
     render(['vnd-1', 'vnd-2']);
     await flush();
 
-    expect(latest?.byId.get('vnd-2')).toEqual({ vmSpend: null, currency: null, contractCount: null });
+    expect(latest?.byId.get('vnd-2')).toEqual({
+      vmSpend: null,
+      currency: null,
+      contractCount: null
+    });
   });
 });

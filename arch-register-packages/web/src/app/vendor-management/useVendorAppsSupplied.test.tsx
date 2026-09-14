@@ -45,7 +45,7 @@ describe('useVendorAppsSupplied', () => {
     }
   };
 
-  it('unions the systems reached via the vendor\'s contracts, with contract provenance', async () => {
+  it("unions the systems reached via the vendor's contracts, with contract provenance", async () => {
     mocks.entityList.mockImplementation(async ({ query }: { query: { entityQuery?: string } }) => {
       const entityQuery = query.entityQuery ? JSON.parse(query.entityQuery) : null;
       if (entityQuery?.root?.fieldId === '_id' && entityQuery.root.op === 'equals') {

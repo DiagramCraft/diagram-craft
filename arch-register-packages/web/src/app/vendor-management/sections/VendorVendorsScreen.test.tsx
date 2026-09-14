@@ -71,7 +71,15 @@ describe('VendorVendorsScreen', () => {
     mocks.params = { workspaceSlug: 'ws-1' };
     mocks.capabilityConfigurationsList.mockResolvedValue([CONFIG]);
     mocks.entityList.mockResolvedValue({
-      items: [{ _uid: 'vnd-1', _publicId: 'VND-001', _name: 'Acme Corp', tier: 'strategic', status: 'active' }],
+      items: [
+        {
+          _uid: 'vnd-1',
+          _publicId: 'VND-001',
+          _name: 'Acme Corp',
+          tier: 'strategic',
+          status: 'active'
+        }
+      ],
       total: 1
     });
     mocks.entityGet.mockResolvedValue({
@@ -115,7 +123,9 @@ describe('VendorVendorsScreen', () => {
     expect(container.textContent).toContain('Acme Corp');
     expect(container.textContent).toContain('VND-001');
 
-    const row = [...container.querySelectorAll('tr')].find(tr => tr.textContent?.includes('Acme Corp'));
+    const row = [...container.querySelectorAll('tr')].find(tr =>
+      tr.textContent?.includes('Acme Corp')
+    );
     expect(row).toBeDefined();
     await act(async () => {
       row!.dispatchEvent(new MouseEvent('click', { bubbles: true }));

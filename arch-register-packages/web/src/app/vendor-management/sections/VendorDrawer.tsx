@@ -25,7 +25,13 @@ const RISK_DIMENSION_FIELDS = [
   'criticality'
 ] as const;
 
-const ATTRIBUTE_FIELDS = ['category', 'tier', 'status', 'relationship_owner', 'cost_centre'] as const;
+const ATTRIBUTE_FIELDS = [
+  'category',
+  'tier',
+  'status',
+  'relationship_owner',
+  'cost_centre'
+] as const;
 
 const RISK_BAND_COLOR: Record<string, string> = {
   low: 'var(--cmp-fg-success, #22c55e)',
@@ -147,12 +153,16 @@ export const VendorDrawer = ({
         {RISK_DIMENSION_FIELDS.map(fieldId => (
           <div className={styles.stat} key={fieldId}>
             <div className={styles.statLabel}>{fieldLabel(vendorSchema, fieldId)}</div>
-            <div className={styles.statValue}>{vendorFieldValue(vendorSchema, entity, fieldId)}</div>
+            <div className={styles.statValue}>
+              {vendorFieldValue(vendorSchema, entity, fieldId)}
+            </div>
           </div>
         ))}
         <div className={styles.stat}>
           <div className={styles.statLabel}>vmRisk</div>
-          <div className={styles.statValue}>{risk.vmRisk != null ? Math.round(risk.vmRisk) : '—'}</div>
+          <div className={styles.statValue}>
+            {risk.vmRisk != null ? Math.round(risk.vmRisk) : '—'}
+          </div>
         </div>
       </div>
       {risk.vmRiskBand && (

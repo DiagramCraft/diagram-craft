@@ -91,7 +91,7 @@ describe('useVendorSpendRollup', () => {
     expect(mocks.rollup).not.toHaveBeenCalled();
   });
 
-  it('sums annual_cost across the vendor\'s contracts via a single-hop backward containment metric', async () => {
+  it("sums annual_cost across the vendor's contracts via a single-hop backward containment metric", async () => {
     mocks.rollup.mockResolvedValue(resultFor(45000));
     render('vnd-1');
     await flush();
