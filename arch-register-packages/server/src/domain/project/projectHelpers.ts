@@ -1,6 +1,6 @@
 import type { ProjectDbResult, ProjectEntityDbResult } from './db/projectDatabase';
 import type { ContentNodeDbResult as InternalProjectFile } from './db/projectDatabase';
-import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
+import { PermissionChecker, type WorkspaceAuthorizationContext } from '@arch-register/permissions';
 import { fileNameFromPath, isMarkdownPath, stripMarkdownExtension } from './contentFileHelpers';
 import {
   ContentMetadata,
@@ -10,24 +10,24 @@ import {
 import { Project, ProjectDetail } from '@arch-register/api-types/projectCrudContract';
 import { ProjectEntity } from '@arch-register/api-types/projectEntityContract';
 
+const checker = new PermissionChecker();
+
 const getProjectCapabilities = (
   context: WorkspaceAuthorizationContext | null,
-  _ownerTeamId: string | null
+  ownerTeamId: string | null
 ) => {
   if (!context) {
     return {
-      canEdit: true,
-      canDelete: true,
-      canManageFiles: true
+      canEdit: false,
+      canDelete: false,
+      canManageFiles: false
     };
   }
 
-  // TODO: Implement proper project permission checking using _ownerTeamId
-  // For now, use workspace-level permissions
   return {
-    canEdit: true,
-    canDelete: true,
-    canManageFiles: true
+    canEdit: checker.hasProjectPermission(context, ownerTeamId, 'edit_project'),
+    canDelete: checker.hasProjectPermission(context, ownerTeamId, 'delete_project'),
+    canManageFiles: checker.hasProjectPermission(context, ownerTeamId, 'manage_files')
   };
 };
 

@@ -151,4 +151,123 @@ test.describe('project permission routes', () => {
     );
     expect(forbiddenRead.status).toBe(403);
   });
+
+  test('capability flags match list and detail permissions for workspace and team roles', async ({
+    personas,
+    resources
+  }) => {
+    const cases = [
+      {
+        name: 'global administrator',
+        orpc: personas.globalAdmin.orpc,
+        expected: () => ({ canEdit: true, canDelete: true, canManageFiles: true })
+      },
+      {
+        name: 'workspace administrator',
+        orpc: personas.workspaceAdmin.orpc,
+        expected: () => ({ canEdit: true, canDelete: true, canManageFiles: true })
+      },
+      {
+        name: 'workspace owner',
+        orpc: personas.workspaceOwner.orpc,
+        expected: () => ({ canEdit: true, canDelete: true, canManageFiles: true })
+      },
+      {
+        name: 'workspace editor',
+        orpc: personas.workspaceEditor.orpc,
+        expected: () => ({ canEdit: true, canDelete: false, canManageFiles: true })
+      },
+      {
+        name: 'design owner-team administrator',
+        orpc: personas.designTeamAdmin.orpc,
+        expected: (project: { owner: { id: string } | null }) => ({
+          canEdit: true,
+          canDelete: project.owner?.id === resources.teamIds.design,
+          canManageFiles: true
+        })
+      },
+      {
+        name: 'design owner-team editor',
+        orpc: personas.workspaceReviewer.orpc,
+        expected: () => ({ canEdit: true, canDelete: false, canManageFiles: true })
+      },
+      {
+        name: 'workspace viewer',
+        orpc: personas.workspaceViewer.orpc,
+        expected: () => ({ canEdit: false, canDelete: false, canManageFiles: false })
+      }
+    ] as const;
+
+    for (const testCase of cases) {
+      const projects = await testCase.orpc.projects.list({
+        params: { workspace: 'default' }
+      });
+
+      if (testCase.name === 'workspace viewer') {
+        expect(projects, testCase.name).toHaveLength(0);
+      } else {
+        expect(projects, testCase.name).not.toHaveLength(0);
+      }
+      if (testCase.name === 'design owner-team editor') {
+        expect(projects.every(project => project.owner?.id === resources.teamIds.design)).toBe(
+          true
+        );
+      }
+      for (const project of projects) {
+        const expected = testCase.expected(project);
+        expect(project, `${testCase.name} list response`).toMatchObject(expected);
+
+        const detail = await testCase.orpc.projects.get({
+          params: { workspace: 'default', id: project.id }
+        });
+        expect(detail, `${testCase.name} detail response`).toMatchObject(expected);
+      }
+    }
+
+    await expect(
+      personas.workspaceReviewer.orpc.projects.get({
+        params: { workspace: 'default', id: resources.projectIds.authMigration }
+      })
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+  });
+
+  test('restricted API token reports only its effective project actions', async ({
+    personas,
+    server
+  }) => {
+    const created = await personas.globalAdmin.orpc.authProtected.apiTokens.create({
+      body: {
+        workspace: 'default',
+        name: 'Project edit token',
+        capabilities: ['proj.edit']
+      }
+    });
+    const tokenOrpc = createTestORPCClient(server.baseUrl, `Bearer ${created.token}`);
+
+    const projects = await tokenOrpc.projects.list({ params: { workspace: 'default' } });
+    expect(projects.map(project => project.name)).toEqual(
+      expect.arrayContaining(['Portal Redesign', 'Auth Migration', 'Checkout Revamp'])
+    );
+
+    for (const project of projects) {
+      expect(project).toMatchObject({
+        canEdit: true,
+        canDelete: false,
+        canManageFiles: true
+      });
+
+      const detail = await tokenOrpc.projects.get({
+        params: { workspace: 'default', id: project.id }
+      });
+      expect(detail).toMatchObject({
+        canEdit: true,
+        canDelete: false,
+        canManageFiles: true
+      });
+    }
+
+    await personas.globalAdmin.orpc.authProtected.apiTokens.revoke({
+      params: { id: created.id }
+    });
+  });
 });
