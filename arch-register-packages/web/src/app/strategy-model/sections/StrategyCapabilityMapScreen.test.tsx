@@ -163,7 +163,8 @@ describe('StrategyCapabilityMapScreen', () => {
     expect(container.textContent).toContain('Contact Center');
     expect(container.textContent).toContain('Finance');
     expect(mocks.entityList).toHaveBeenCalledWith(
-      expect.objectContaining({ query: expect.objectContaining({ view: 'full' }) })
+      expect.objectContaining({ query: expect.objectContaining({ view: 'full' }) }),
+      { signal: expect.any(AbortSignal) }
     );
   });
 

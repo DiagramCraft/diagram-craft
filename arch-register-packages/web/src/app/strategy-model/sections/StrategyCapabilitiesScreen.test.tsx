@@ -144,7 +144,8 @@ describe('StrategyCapabilitiesScreen', () => {
     // table showing "—" for Level while the drawer's own full-entity fetch showed it correctly.
     expect(container.textContent).toContain('L1');
     expect(mocks.entityList).toHaveBeenCalledWith(
-      expect.objectContaining({ query: expect.objectContaining({ view: 'full' }) })
+      expect.objectContaining({ query: expect.objectContaining({ view: 'full' }) }),
+      { signal: expect.any(AbortSignal) }
     );
   });
 
