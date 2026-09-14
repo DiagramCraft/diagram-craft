@@ -1,8 +1,8 @@
-import {
-  WORKSPACE_CAPABILITY_GROUPS,
-  type ApplicationAccessMode,
-  type TeamRole,
-  type WorkspaceCapability
+import { workspaceCapabilitySchema } from '@arch-register/api-types/common';
+import type {
+  ApplicationAccessMode,
+  TeamRole,
+  WorkspaceCapability
 } from '@arch-register/permissions';
 import type { ImportCacheEntry } from '../importCache';
 import type { WorkspaceCapabilityBindings } from '@arch-register/api-types/workspaceCapabilityContract';
@@ -17,12 +17,8 @@ import {
 
 const TEAM_ROLES = ['team_admin', 'team_editor', 'team_reviewer'] as const;
 const APPLICATION_ACCESS_MODES = ['all_members', 'selected'] as const;
-const WORKSPACE_CAPABILITIES = WORKSPACE_CAPABILITY_GROUPS.flatMap(group =>
-  group.caps.map(capability => capability.id)
-);
 const isWorkspaceCapabilities = (value: unknown): value is WorkspaceCapability[] =>
-  Array.isArray(value) &&
-  value.every(item => WORKSPACE_CAPABILITIES.some(capability => capability === item));
+  workspaceCapabilitySchema.array().safeParse(value).success;
 
 export type WorkspaceDbResult = {
   id: string;

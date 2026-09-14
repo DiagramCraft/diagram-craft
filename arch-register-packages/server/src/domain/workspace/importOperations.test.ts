@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { buildAuthorizationContext, type AuthorizationContext } from '@arch-register/permissions';
+import { workspaceCapabilitySchema } from '@arch-register/api-types/common';
 
 const hasWorkspaceCapability = vi.fn();
 
@@ -36,6 +37,7 @@ import {
   importContentNodes,
   importDocuments,
   importEntities,
+  importConfig,
   importRelations,
   importSchemas
 } from './importAppliers';
@@ -174,6 +176,88 @@ const makeDb = () =>
 describe('workspace export/import guards', () => {
   beforeEach(() => {
     hasWorkspaceCapability.mockReset();
+  });
+
+  it('imports every capability accepted by the canonical API schema', async () => {
+    const db = makeDb();
+    const capabilities = [...workspaceCapabilitySchema.options];
+
+    await importConfig(
+      db,
+      'workspace-1',
+      {
+        lifecycle_states: [],
+        teams: [],
+        roles: [
+          {
+            id: 'role-1',
+            name: 'Complete role',
+            description: '',
+            tone: '#123456',
+            capabilities
+          }
+        ]
+      },
+      true,
+      {},
+      {
+        schemas: new Map(),
+        shared_field_groups: new Map(),
+        relation_schemas: new Map(),
+        entities: new Map(),
+        relations: new Map(),
+        teams: new Map(),
+        lifecycle_states: new Map(),
+        projects: new Map(),
+        content_nodes: new Map()
+      }
+    );
+
+    expect(db.workspace.createCustomWorkspaceRole).toHaveBeenCalledWith(
+      expect.objectContaining({ capabilities })
+    );
+  });
+
+  it('rejects unknown capabilities during import before writing the role', async () => {
+    const db = makeDb();
+
+    await expect(
+      importConfig(
+        db,
+        'workspace-1',
+        {
+          lifecycle_states: [],
+          teams: [],
+          roles: [
+            {
+              id: 'role-1',
+              name: 'Invalid role',
+              description: '',
+              tone: '#123456',
+              capabilities: ['not-a-capability']
+            }
+          ]
+        },
+        true,
+        {},
+        {
+          schemas: new Map(),
+          shared_field_groups: new Map(),
+          relation_schemas: new Map(),
+          entities: new Map(),
+          relations: new Map(),
+          teams: new Map(),
+          lifecycle_states: new Map(),
+          projects: new Map(),
+          content_nodes: new Map()
+        }
+      )
+    ).rejects.toMatchObject({
+      status: 400,
+      message: 'Import contains an unknown workspace capability'
+    });
+
+    expect(db.workspace.createCustomWorkspaceRole).not.toHaveBeenCalled();
   });
 
   it('requires ws.settings for workspace export', async () => {
