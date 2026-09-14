@@ -2068,7 +2068,13 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             enumId: 'vendor-category',
             groupId: 'classification'
           },
-          { id: 'tier', name: 'Tier', type: 'select', enumId: 'vendor-tier', groupId: 'classification' },
+          {
+            id: 'tier',
+            name: 'Tier',
+            type: 'select',
+            enumId: 'vendor-tier',
+            groupId: 'classification'
+          },
           {
             id: 'status',
             name: 'Status',
@@ -2121,7 +2127,14 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             max: 5,
             groupId: 'risk'
           },
-          { id: 'criticality', name: 'Criticality', type: 'number', min: 1, max: 5, groupId: 'risk' }
+          {
+            id: 'criticality',
+            name: 'Criticality',
+            type: 'number',
+            min: 1,
+            max: 5,
+            groupId: 'risk'
+          }
         ],
         groups: [
           { id: 'classification', name: 'Classification' },
