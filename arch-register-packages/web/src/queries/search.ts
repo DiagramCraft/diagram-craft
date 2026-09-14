@@ -24,15 +24,18 @@ export const searchQuery = (
 ) =>
   queryOptions({
     queryKey: searchKeys.search(workspaceId, params.q, params),
-    queryFn: () =>
-      orpcClient.search.query({
-        params: { workspace: workspaceId },
-        query: {
-          q: params.q,
-          limitPerType: params.limitPerType ?? undefined,
-          types: params.types?.join(',') === '' ? undefined : params.types?.join(',')
-        }
-      }),
+    queryFn: ({ signal }) =>
+      orpcClient.search.query(
+        {
+          params: { workspace: workspaceId },
+          query: {
+            q: params.q,
+            limitPerType: params.limitPerType ?? undefined,
+            types: params.types?.join(',') === '' ? undefined : params.types?.join(',')
+          }
+        },
+        { signal }
+      ),
     enabled: enabled && !!workspaceId && !!params.q.trim(),
     staleTime: 2 * 60 * 1000
   });
@@ -40,11 +43,14 @@ export const searchQuery = (
 export const documentSearchQuery = (workspaceId: string, query: string) =>
   queryOptions({
     queryKey: searchKeys.documents(workspaceId, query),
-    queryFn: () =>
-      orpcClient.search.query({
-        params: { workspace: workspaceId },
-        query: { q: query, limitPerType: 8, types: 'files' }
-      }),
+    queryFn: ({ signal }) =>
+      orpcClient.search.query(
+        {
+          params: { workspace: workspaceId },
+          query: { q: query, limitPerType: 8, types: 'files' }
+        },
+        { signal }
+      ),
     enabled: !!workspaceId && !!query.trim(),
     staleTime: 2 * 60 * 1000,
     select: data => data.files.filter(file => file.type === 'markdown')
