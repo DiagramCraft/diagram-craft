@@ -1,7 +1,7 @@
 import { useMemo, type ReactNode } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
-import { TbBuildingStore, TbTag, TbUsers } from 'react-icons/tb';
+import { TbBuildingStore, TbCalendarDue, TbFileCertificate, TbTag, TbUsers } from 'react-icons/tb';
 import {
   SidebarGroupLabel,
   SidebarTitleHeader
@@ -11,13 +11,16 @@ import { entitiesQuery } from '../../../queries/entities';
 import { workspaceCapabilityConfigurationsQuery } from '../../../queries/workspaceConfig';
 import { useSchemas } from '../../../hooks/useSchemas';
 import { resolveVendorManagementConfig } from '../vendorManagementQueries';
+import { useVendorContracts } from '../useVendorContracts';
+import { renewalWindow, RENEWAL_WINDOWS } from '../contractRenewalWindow';
 import {
   VENDOR_RAIL_PATHS,
   VENDOR_SECTIONS,
+  VENDOR_CONTRACTS_ID,
   VENDOR_VENDORS_ID,
   type VendorManagementRailItemId
 } from '../vendorManagementSections';
-import type { VendorsSearchParams } from '../../../routes/searchParams';
+import type { ContractsSearchParams, VendorsSearchParams } from '../../../routes/searchParams';
 import styles from '../../../shell/SidePanel.module.css';
 
 const FacetRow = ({
@@ -169,10 +172,141 @@ const VendorsSidebarContent = ({
 };
 
 /**
+ * The Contracts section's own primary-sidebar content: Renewal window / Type / Vendor facets over
+ * the Contract register, mirroring `VendorsSidebarContent` above. Renewal window isn't a schema
+ * `select` field (it's a computed bucket, see `../contractRenewalWindow.ts`), so its facet options
+ * come from the fixed `RENEWAL_WINDOWS` list rather than `fieldOptions`; Type does come from
+ * Contract's own `contract_type` select field; Vendor is derived from the distinct vendors present
+ * among fetched contracts (via `useVendorContracts`'s tree join, since a flat fetch can't resolve
+ * vendor names — see that hook's own comment), same "derive facets from the fetched page" approach
+ * the Owner facet above uses, patched by vendor **uid** but displayed by vendor **name**.
+ */
+const ContractsSidebarContent = ({
+  workspaceSlug,
+  contractSchemaId
+}: {
+  workspaceSlug: string;
+  contractSchemaId: string;
+}) => {
+  const navigate = useNavigate();
+  const search = useSearch({ strict: false }) as ContractsSearchParams;
+  const { data: schemas } = useSchemas(workspaceSlug);
+  const contractSchema = schemas?.find(schema => schema.id === contractSchemaId);
+
+  const contracts = useVendorContracts(workspaceSlug, contractSchemaId);
+  const items = contracts.items;
+
+  const fieldOptions = (fieldId: string) => {
+    const field = contractSchema?.fields.find(candidate => candidate.id === fieldId);
+    return field && field.type === 'select' ? (field.options ?? []) : [];
+  };
+
+  const renewalWindowCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const { contract } of items) {
+      const key = renewalWindow(
+        typeof contract.contract_end === 'string' ? contract.contract_end : null
+      );
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+    return counts;
+  }, [items]);
+
+  const typeCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const { contract } of items) {
+      const value = contract.contract_type;
+      if (typeof value === 'string' && value) counts.set(value, (counts.get(value) ?? 0) + 1);
+    }
+    return counts;
+  }, [items]);
+
+  const vendorCounts = useMemo(() => {
+    const counts = new Map<string, { name: string; count: number }>();
+    for (const { vendorId, vendorName } of items) {
+      if (!vendorId || !vendorName) continue;
+      const existing = counts.get(vendorId);
+      counts.set(vendorId, { name: vendorName, count: (existing?.count ?? 0) + 1 });
+    }
+    return [...counts.entries()].sort((a, b) => b[1].count - a[1].count);
+  }, [items]);
+
+  const patchSearch = (patch: Partial<ContractsSearchParams>) =>
+    navigate({
+      to: VENDOR_RAIL_PATHS[VENDOR_CONTRACTS_ID],
+      params: { workspaceSlug },
+      search: (previous: Record<string, unknown>) => ({ ...previous, ...patch })
+    });
+
+  const hasAnySelection = !!search.type || !!search.vendor || !!search.renewalWindow;
+  const clearAll = () =>
+    patchSearch({ type: undefined, vendor: undefined, renewalWindow: undefined });
+
+  return (
+    <>
+      <TreeRow
+        icon={<TbFileCertificate size={12} />}
+        label="All contracts"
+        testId="contract-facet-all"
+        active={!hasAnySelection}
+        onClick={clearAll}
+        trailing={<span className="dim mono">{items.length}</span>}
+      />
+      <SidebarGroupLabel>Renewal window</SidebarGroupLabel>
+      {RENEWAL_WINDOWS.map(bucket => (
+        <FacetRow
+          key={bucket.id}
+          icon={<TbCalendarDue size={12} />}
+          label={bucket.label}
+          testId={`contract-facet-renewal-${bucket.id}`}
+          active={search.renewalWindow === bucket.id}
+          onClick={() =>
+            patchSearch({
+              renewalWindow: search.renewalWindow === bucket.id ? undefined : bucket.id
+            })
+          }
+          trailing={<span className="dim mono">{renewalWindowCounts.get(bucket.id) ?? 0}</span>}
+        />
+      ))}
+      <SidebarGroupLabel>Type</SidebarGroupLabel>
+      {fieldOptions('contract_type').map(option => (
+        <FacetRow
+          key={option.value}
+          icon={<TbTag size={12} />}
+          label={option.label}
+          testId={`contract-facet-type-${option.value}`}
+          active={search.type === option.value}
+          onClick={() =>
+            patchSearch({ type: search.type === option.value ? undefined : option.value })
+          }
+          trailing={<span className="dim mono">{typeCounts.get(option.value) ?? 0}</span>}
+        />
+      ))}
+      <SidebarGroupLabel>Vendor</SidebarGroupLabel>
+      {vendorCounts.length === 0 && (
+        <div className={`${styles.emptyState} dim`}>No vendors linked to any contract.</div>
+      )}
+      {vendorCounts.map(([vendorId, { name, count }]) => (
+        <FacetRow
+          key={vendorId}
+          icon={<TbBuildingStore size={12} />}
+          label={name}
+          testId={`contract-facet-vendor-${vendorId}`}
+          active={search.vendor === vendorId}
+          onClick={() => patchSearch({ vendor: search.vendor === vendorId ? undefined : vendorId })}
+          trailing={<span className="dim mono">{count}</span>}
+        />
+      ))}
+    </>
+  );
+};
+
+/**
  * Section-dependent primary sidebar for the Vendor Management app: navigation between the app's
  * five rail sections, gated on the `vendor-management` capability configuration (mirrors
- * `../../strategy-model/sections/StrategySidebar.tsx`'s `!enabled` empty state). The Vendors
- * section replaces this nav list with its own facet content (see `VendorsSidebarContent` above).
+ * `../../strategy-model/sections/StrategySidebar.tsx`'s `!enabled` empty state). The Vendors and
+ * Contracts sections replace this nav list with their own facet content (see
+ * `VendorsSidebarContent`/`ContractsSidebarContent` above).
  */
 export const VendorManagementSidebar = ({
   workspaceSlug,
@@ -196,6 +330,11 @@ export const VendorManagementSidebar = ({
           <VendorsSidebarContent
             workspaceSlug={workspaceSlug}
             vendorSchemaId={vendorConfig.vendorSchemaId}
+          />
+        ) : activeSection === VENDOR_CONTRACTS_ID && vendorConfig.contractSchemaId ? (
+          <ContractsSidebarContent
+            workspaceSlug={workspaceSlug}
+            contractSchemaId={vendorConfig.contractSchemaId}
           />
         ) : (
           <>

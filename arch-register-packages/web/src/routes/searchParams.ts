@@ -376,6 +376,23 @@ export type VendorsSearchParams = SearchParamsFromSchema<typeof vendorsSearchSch
 export const validateVendorsSearch = (raw: Record<string, unknown>): VendorsSearchParams =>
   parseSearchParams(vendorsSearchSchema, raw);
 
+// Vendor Management contracts params
+const contractsSearchSchema = defineSearchParamSchema({
+  q: stringCodec,
+  // Contract Type select-field value, a Vendor uid, and a RenewalWindow id — set by the sidebar's
+  // facets (`ContractsSidebarContent` in `VendorManagementSidebar.tsx`).
+  type: stringCodec,
+  vendor: stringCodec,
+  renewalWindow: stringCodec,
+  // Toggles the section between its list and 12-month renewal calendar; defaults to 'list'.
+  view: enumCodec(['list', 'calendar'] as const)
+});
+
+export type ContractsSearchParams = SearchParamsFromSchema<typeof contractsSearchSchema>;
+
+export const validateContractsSearch = (raw: Record<string, unknown>): ContractsSearchParams =>
+  parseSearchParams(contractsSearchSchema, raw);
+
 // Strategy capability map params
 const capabilityMapSearchSchema = defineSearchParamSchema({
   // Set by clicking a node in the map sidebar's capability tree (or an L1 domain header in the
