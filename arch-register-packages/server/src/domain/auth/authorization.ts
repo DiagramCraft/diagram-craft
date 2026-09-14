@@ -346,18 +346,17 @@ export const buildUserAuthCtx = async (
   return buildEntityAuthorizationContext(workspaceContext, entityData);
 };
 
-/** Builds authorization contexts for several users while sharing workspace-wide permission data. */
-export const buildUserAuthCtxs = async (
+/** Builds workspace-only authorization contexts for several users. */
+export const buildUserWorkspaceAuthCtxs = async (
   db: DatabaseAdapter,
   workspace: string,
   userIds: string[]
-): Promise<Map<string, AuthorizationContext>> => {
+): Promise<Map<string, WorkspaceAuthorizationContext>> => {
   if (userIds.length === 0) return new Map();
 
   const provider = new ServerDataProvider(db);
-  const [entityData, workspaceRoles, teams, memberships] = await Promise.all([
-    fetchEntityAuthorizationContextData(provider, workspace),
-    provider.getWorkspaceRoles?.(workspace) ?? Promise.resolve([]),
+  const [workspaceRoles, teams, memberships] = await Promise.all([
+    provider.getWorkspaceRoles(workspace),
     provider.getTeams(workspace),
     db.workspace.listTeamAssignments(workspace)
   ]);
@@ -377,8 +376,28 @@ export const buildUserAuthCtxs = async (
           .filter(membership => membership.user_id === userId)
           .map(membership => ({ teamId: membership.team_id, role: membership.role }))
       });
-      return [userId, buildEntityAuthorizationContext(workspaceContext, entityData)] as const;
+      return [userId, workspaceContext] as const;
     })
   );
   return new Map(contexts);
+};
+
+/** Builds full authorization contexts for several users while sharing workspace-wide permission data. */
+export const buildUserAuthCtxs = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  userIds: string[]
+): Promise<Map<string, AuthorizationContext>> => {
+  if (userIds.length === 0) return new Map();
+
+  const [workspaceContexts, entityData] = await Promise.all([
+    buildUserWorkspaceAuthCtxs(db, workspace, userIds),
+    fetchEntityAuthorizationContextData(new ServerDataProvider(db), workspace)
+  ]);
+  return new Map(
+    [...workspaceContexts].map(
+      ([userId, workspaceContext]) =>
+        [userId, buildEntityAuthorizationContext(workspaceContext, entityData)] as const
+    )
+  );
 };

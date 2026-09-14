@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import type { DatabaseAdapter } from '../../db/database';
-import { buildApiEntityAuthCtx, requireWorkspaceCapability } from '../auth/authorization';
+import { buildUserWorkspaceAuthCtxs, requireWorkspaceCapability } from '../auth/authorization';
 import { httpAssert } from '../../utils/httpAssert';
 import type {
   WorkspaceAuthorizationContext,
@@ -146,48 +146,30 @@ export type ApprovalGovernanceAdapter<TSubject> = {
 
 const permissionChecker = new PermissionChecker();
 
-const authorizationEventForUser = (userId: string) =>
-  ({ context: { user: { id: userId } } }) as unknown as AuthenticatedEvent;
-
 /** Shared approver resolution used by every single-record approval subject. */
 export const listEligibleApproverIds = async (
   db: DatabaseAdapter,
   workspace: string,
   ownerTeamId: string | null
 ) => {
-  const [users, teamAssignments] = await Promise.all([
-    db.auth.listUsers(),
-    db.workspace.listTeamAssignments(workspace)
-  ]);
-  const activeUserIds = new Set(users.filter(user => user.is_active).map(user => user.id));
-  const eligibleApproverIds = new Set(
-    teamAssignments
-      .filter(
-        assignment =>
-          ownerTeamId != null &&
-          assignment.team_id === ownerTeamId &&
-          assignment.role === 'team_admin' &&
-          activeUserIds.has(assignment.user_id)
-      )
-      .map(assignment => assignment.user_id)
+  const activeUsers = (await db.auth.listUsers()).filter(user => user.is_active);
+  const contexts = await buildUserWorkspaceAuthCtxs(
+    db,
+    workspace,
+    activeUsers.map(user => user.id)
   );
+  const eligibleApproverIds = new Set<string>();
 
-  await Promise.all(
-    users
-      .filter(user => user.is_active)
-      .map(async user => {
-        // Each candidate user needs a synthetic authorization context to evaluate that candidate's own
-        // capabilities; this is background target resolution, not route authorization.
-        const authCtx = await buildApiEntityAuthCtx(
-          db,
-          workspace,
-          authorizationEventForUser(user.id)
-        );
-        if (permissionChecker.hasWorkspaceCapability(authCtx, 'ent.approve')) {
-          eligibleApproverIds.add(user.id);
-        }
-      })
-  );
+  for (const user of activeUsers) {
+    const authCtx = contexts.get(user.id);
+    if (!authCtx) continue;
+
+    const isOwnerTeamAdmin =
+      ownerTeamId != null && authCtx.teamRolesByTeam.get(ownerTeamId)?.has('team_admin');
+    if (isOwnerTeamAdmin || permissionChecker.hasWorkspaceCapability(authCtx, 'ent.approve')) {
+      eligibleApproverIds.add(user.id);
+    }
+  }
 
   return eligibleApproverIds;
 };
