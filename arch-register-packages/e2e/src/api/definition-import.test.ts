@@ -232,9 +232,9 @@ test.describe('definition import', () => {
       message: 'The definition import preview is stale. Preview the import again.'
     });
 
-    expect((await server.db.catalog.listSchemas(target.id)).map(schema => schema.name)).not.toContain(
-      selectedSchema.name
-    );
+    expect(
+      (await server.db.catalog.listSchemas(target.id)).map(schema => schema.name)
+    ).not.toContain(selectedSchema.name);
   });
 
   test('blocks a case-insensitive name collision before persistence', async ({ orpc, server }) => {

@@ -4,14 +4,25 @@ import type {
   DefinitionImportSelection,
   DefinitionImportSource
 } from '@arch-register/api-types/workspaceContract';
-import type { SchemaField, SchemaGroup, SharedFieldGroupLink } from '@arch-register/api-types/schemaContract';
+import type {
+  SchemaField,
+  SchemaGroup,
+  SharedFieldGroupLink
+} from '@arch-register/api-types/schemaContract';
 import type { RelationField } from '@arch-register/api-types/relationSchemaContract';
 import type { DocumentAiAction, DocumentField } from '@arch-register/api-types/documentContract';
 import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
 import type { WorkspaceCapabilityBindings } from '@arch-register/api-types/workspaceCapabilityContract';
 import type { TemplateDependencyDescriptor } from '@arch-register/api-types/workspaceContract';
-import type { SchemaDbResult, SharedFieldGroupDbResult, WorkspaceEnumDbResult } from '../catalog/db/catalogDatabase';
-import type { RelationSchemaDbResult, RelationSchemaGroupDbShape } from '../catalog/db/relationDatabase';
+import type {
+  SchemaDbResult,
+  SharedFieldGroupDbResult,
+  WorkspaceEnumDbResult
+} from '../catalog/db/catalogDatabase';
+import type {
+  RelationSchemaDbResult,
+  RelationSchemaGroupDbShape
+} from '../catalog/db/relationDatabase';
 import type { DocumentTypeDbResult } from '../document/db/documentDatabase';
 
 export type ImportableSchema = {

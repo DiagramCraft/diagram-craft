@@ -176,7 +176,10 @@ export const sourceFromBuiltin = (template: SchemaTemplate): DefinitionSource =>
       name: schema.name,
       category: null,
       description: schema.description,
-      key_prefix: schema.symId.replace(/[^a-z]/gi, '').slice(0, 5).toUpperCase(),
+      key_prefix: schema.symId
+        .replace(/[^a-z]/gi, '')
+        .slice(0, 5)
+        .toUpperCase(),
       fields: schema.fields.map(field => toCanonicalField(field, ownerId, template.id)),
       groups: [],
       shared_field_group_links: sharedFieldGroupLinks,

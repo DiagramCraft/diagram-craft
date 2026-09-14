@@ -8,10 +8,7 @@ import type { WorkspaceCapabilityBindings } from '@arch-register/api-types/works
 import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
 import type { DatabaseAdapter } from '../../db/database';
 import { httpAssert } from '../../utils/httpAssert';
-import {
-  SCHEMA_TEMPLATES,
-  resolveTemplateDashboardWidgets
-} from '../catalog/schemaTemplates';
+import { SCHEMA_TEMPLATES, resolveTemplateDashboardWidgets } from '../catalog/schemaTemplates';
 import type {
   SchemaDbCreate,
   SharedFieldGroupDbCreate,
@@ -30,10 +27,7 @@ import {
   appendWorkspaceDashboardLayout,
   replaceDefaultWorkspaceDashboardLayout
 } from '../dashboard/dashboardOperations';
-import type {
-  DefinitionImportPlan,
-  ImportableFieldGroup
-} from './definitionImportTypes';
+import type { DefinitionImportPlan, ImportableFieldGroup } from './definitionImportTypes';
 
 const lower = (value: string) => value.toLocaleLowerCase();
 
@@ -59,9 +53,7 @@ export const applyDefinitionImport = async (
     for (const group of relationSchema.shared_field_groups) sharedGroupSources.set(group.id, group);
   }
   for (const group of plan.fieldGroups) sharedGroupSources.set(group.id, group);
-  const sharedFieldGroupMap = new Map(
-    [...sharedGroupSources.keys()].map(id => [id, randomUUID()])
-  );
+  const sharedFieldGroupMap = new Map([...sharedGroupSources.keys()].map(id => [id, randomUUID()]));
   const selectedFieldGroupIdsForAudit = new Set(plan.selection.fieldGroups);
   const targetTeams = await db.workspace.listTeams(workspace);
   const targetTeamByName = new Map(targetTeams.map(team => [lower(team.name), team.id]));
@@ -180,7 +172,9 @@ export const applyDefinitionImport = async (
           entityType: 'workspace_field_group',
           entityId: row.id,
           entityName: row.name,
-          changes: { new: { ...row, created_at: now.toISOString(), updated_at: now.toISOString() } },
+          changes: {
+            new: { ...row, created_at: now.toISOString(), updated_at: now.toISOString() }
+          },
           metadata: { importedFrom: plan.source }
         });
       }
@@ -215,7 +209,8 @@ export const applyDefinitionImport = async (
         color: schema.color,
         icon: schema.icon,
         default_owner: schema.default_owner_name
-          ? (targetTeams.find(team => lower(team.name) === lower(schema.default_owner_name!))?.id ?? null)
+          ? (targetTeams.find(team => lower(team.name) === lower(schema.default_owner_name!))?.id ??
+            null)
           : null,
         created_at: now,
         updated_at: now
@@ -268,8 +263,14 @@ export const applyDefinitionImport = async (
         name: relationSchema.name,
         category_id: await resolveCategoryId(relationSchema.category),
         description: relationSchema.description,
-        in_schema_ids: relationSchema.in_schema_ids === 'any' ? 'any' : relationSchema.in_schema_ids.map(id => schemaIdMap.get(id) ?? id),
-        out_schema_ids: relationSchema.out_schema_ids === 'any' ? 'any' : relationSchema.out_schema_ids.map(id => schemaIdMap.get(id) ?? id),
+        in_schema_ids:
+          relationSchema.in_schema_ids === 'any'
+            ? 'any'
+            : relationSchema.in_schema_ids.map(id => schemaIdMap.get(id) ?? id),
+        out_schema_ids:
+          relationSchema.out_schema_ids === 'any'
+            ? 'any'
+            : relationSchema.out_schema_ids.map(id => schemaIdMap.get(id) ?? id),
         in_label: relationSchema.in_label ?? null,
         out_label: relationSchema.out_label ?? null,
         fields,
@@ -329,8 +330,14 @@ export const applyDefinitionImport = async (
     }
     for (const [targetSchemaId, patches] of patchesByTarget) {
       const current = await tx.catalog.getSchema(workspace, targetSchemaId);
-      httpAssert.present(current, { status: 409, message: `Schema patch target '${targetSchemaId}' no longer exists` });
-      const fields = [...current.fields, ...patches.flatMap(patch => patch.fields.map(remapSchemaField))];
+      httpAssert.present(current, {
+        status: 409,
+        message: `Schema patch target '${targetSchemaId}' no longer exists`
+      });
+      const fields = [
+        ...current.fields,
+        ...patches.flatMap(patch => patch.fields.map(remapSchemaField))
+      ];
       const groups = current.groups ?? [];
       assertResolvedFieldGroupReferences(fields, groups);
       validateDerivedFieldGroupAccess(fields, groups);
@@ -351,7 +358,10 @@ export const applyDefinitionImport = async (
         version: (current.version ?? 1) + 1,
         updated_at: now
       });
-      httpAssert.present(updated, { status: 409, message: `Schema patch target '${targetSchemaId}' could not be updated` });
+      httpAssert.present(updated, {
+        status: 409,
+        message: `Schema patch target '${targetSchemaId}' could not be updated`
+      });
       const patchCategoryName = updated.category_id
         ? ((await tx.catalog.getCategory(workspace, updated.category_id))?.name ?? null)
         : null;
@@ -426,12 +436,16 @@ export const applyDefinitionImport = async (
     for (const configuration of plan.capabilityConfigurations) {
       const bindings = Object.fromEntries(
         Object.entries(configuration.bindings).map(([bindingId, binding]) => {
-          const targetId = binding.target.kind === 'entity_schema'
-            ? schemaIdMap.get(binding.target.id)
-            : binding.target.kind === 'relation_schema'
-              ? relationSchemaIdMap.get(binding.target.id)
-              : documentTypeIdMap.get(binding.target.id);
-          return [bindingId, { ...binding, target: { ...binding.target, id: targetId ?? binding.target.id } }];
+          const targetId =
+            binding.target.kind === 'entity_schema'
+              ? schemaIdMap.get(binding.target.id)
+              : binding.target.kind === 'relation_schema'
+                ? relationSchemaIdMap.get(binding.target.id)
+                : documentTypeIdMap.get(binding.target.id);
+          return [
+            bindingId,
+            { ...binding, target: { ...binding.target, id: targetId ?? binding.target.id } }
+          ];
         })
       ) as WorkspaceCapabilityBindings;
       await tx.workspace.upsertWorkspaceCapabilityConfiguration({
@@ -447,11 +461,18 @@ export const applyDefinitionImport = async (
 
     if (plan.dashboardWidgets.length > 0) {
       const widgets = resolveTemplateDashboardWidgets(plan.dashboardWidgets, schemaIdMap);
-      const builtinTemplate = plan.source.kind === 'builtin'
-        ? SCHEMA_TEMPLATES.find(template => template.id === plan.source.id)
-        : undefined;
+      const builtinTemplate =
+        plan.source.kind === 'builtin'
+          ? SCHEMA_TEMPLATES.find(template => template.id === plan.source.id)
+          : undefined;
       if (builtinTemplate?.category === 'cross-cutting') {
-        await appendWorkspaceDashboardLayout(tx, workspace, builtinTemplate.name, widgets, authCtx.userId);
+        await appendWorkspaceDashboardLayout(
+          tx,
+          workspace,
+          builtinTemplate.name,
+          widgets,
+          authCtx.userId
+        );
       } else {
         await replaceDefaultWorkspaceDashboardLayout(tx, workspace, widgets, authCtx.userId);
       }

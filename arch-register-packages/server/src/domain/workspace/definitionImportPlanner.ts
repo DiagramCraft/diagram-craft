@@ -278,7 +278,8 @@ export const buildDefinitionImportPlan = async ({
   const renameByKey = new Map<string, string>();
   for (const rename of renames) {
     const key = renameKey(rename.kind, rename.id);
-    if (renameByKey.has(key)) errors.push(`Multiple rename requests were provided for '${rename.id}'`);
+    if (renameByKey.has(key))
+      errors.push(`Multiple rename requests were provided for '${rename.id}'`);
     else renameByKey.set(key, rename.name.trim());
   }
   const selectedSchemaIds = new Set(selection.schemas);
@@ -308,7 +309,10 @@ export const buildDefinitionImportPlan = async ({
   const enumById = new Map(
     sourceData.enums.map(enumeration => [
       enumeration.id,
-      { ...enumeration, name: renameByKey.get(renameKey('enum', enumeration.id)) ?? enumeration.name }
+      {
+        ...enumeration,
+        name: renameByKey.get(renameKey('enum', enumeration.id)) ?? enumeration.name
+      }
     ])
   );
   const documentTypeById = new Map(
@@ -360,11 +364,15 @@ export const buildDefinitionImportPlan = async ({
             errors.push(`Schema '${schema.name}' references missing schema '${field.schemaId}'`);
           else if (!isDependencyReference(field.schemaId)) schemaQueue.push(field.schemaId);
         } else if (field.type === 'typedRelation') {
-          if (!isDependencyReference(field.relationSchemaId) && !relationSchemaById.has(field.relationSchemaId)) {
+          if (
+            !isDependencyReference(field.relationSchemaId) &&
+            !relationSchemaById.has(field.relationSchemaId)
+          ) {
             errors.push(
               `Schema '${schema.name}' references missing relation schema '${field.relationSchemaId}'`
             );
-          } else if (!isDependencyReference(field.relationSchemaId)) relationSchemaQueue.push(field.relationSchemaId);
+          } else if (!isDependencyReference(field.relationSchemaId))
+            relationSchemaQueue.push(field.relationSchemaId);
         } else if (field.type === 'select') {
           if (!isDependencyReference(field.enumId) && !enumById.has(field.enumId))
             errors.push(`Schema '${schema.name}' references missing enum '${field.enumId}'`);
@@ -386,17 +394,23 @@ export const buildDefinitionImportPlan = async ({
         ...(relationSchema.out_schema_ids === 'any' ? [] : relationSchema.out_schema_ids)
       ]) {
         if (!isDependencyReference(schemaId) && !schemaById.has(schemaId))
-          errors.push(`Relation schema '${relationSchema.name}' references missing schema '${schemaId}'`);
+          errors.push(
+            `Relation schema '${relationSchema.name}' references missing schema '${schemaId}'`
+          );
         else if (!isDependencyReference(schemaId)) schemaQueue.push(schemaId);
       }
       for (const field of relationSchema.fields) {
         if (isEntityRelationField(field)) {
           if (!isDependencyReference(field.schemaId) && !schemaById.has(field.schemaId))
-            errors.push(`Relation schema '${relationSchema.name}' references missing schema '${field.schemaId}'`);
+            errors.push(
+              `Relation schema '${relationSchema.name}' references missing schema '${field.schemaId}'`
+            );
           else if (!isDependencyReference(field.schemaId)) schemaQueue.push(field.schemaId);
         } else if (field.type === 'select') {
           if (!isDependencyReference(field.enumId) && !enumById.has(field.enumId))
-            errors.push(`Relation schema '${relationSchema.name}' references missing enum '${field.enumId}'`);
+            errors.push(
+              `Relation schema '${relationSchema.name}' references missing enum '${field.enumId}'`
+            );
           else if (!isDependencyReference(field.enumId)) resolvedEnumIds.add(field.enumId);
         }
       }
@@ -411,20 +425,30 @@ export const buildDefinitionImportPlan = async ({
       errors.push(`Active document type '${documentTypeId}' was not found in the source`);
   }
   for (const fieldGroupId of selectedFieldGroupIds) {
-    if (!fieldGroupById.has(fieldGroupId)) errors.push(`Field group '${fieldGroupId}' was not found in the source`);
+    if (!fieldGroupById.has(fieldGroupId))
+      errors.push(`Field group '${fieldGroupId}' was not found in the source`);
   }
 
   const schemas = [...schemaById.values()].filter(schema => resolvedSchemaIds.has(schema.id));
   const enums = [...enumById.values()].filter(enumeration => resolvedEnumIds.has(enumeration.id));
-  const documentTypes = [...documentTypeById.values()].filter(type => selectedDocumentTypeIds.has(type.id));
-  const relationSchemas = [...relationSchemaById.values()].filter(schema => resolvedRelationSchemaIds.has(schema.id));
-  const fieldGroups = [...fieldGroupById.values()].filter(group => selectedFieldGroupIds.has(group.id));
+  const documentTypes = [...documentTypeById.values()].filter(type =>
+    selectedDocumentTypeIds.has(type.id)
+  );
+  const relationSchemas = [...relationSchemaById.values()].filter(schema =>
+    resolvedRelationSchemaIds.has(schema.id)
+  );
+  const fieldGroups = [...fieldGroupById.values()].filter(group =>
+    selectedFieldGroupIds.has(group.id)
+  );
   const capabilityConfigurations = sourceData.capabilityConfigurations.filter(configuration =>
     Object.values(configuration.bindings).every(binding => {
       switch (binding.target.kind) {
-        case 'entity_schema': return resolvedSchemaIds.has(binding.target.id);
-        case 'relation_schema': return resolvedRelationSchemaIds.has(binding.target.id);
-        case 'document_type': return selectedDocumentTypeIds.has(binding.target.id);
+        case 'entity_schema':
+          return resolvedSchemaIds.has(binding.target.id);
+        case 'relation_schema':
+          return resolvedRelationSchemaIds.has(binding.target.id);
+        case 'document_type':
+          return selectedDocumentTypeIds.has(binding.target.id);
       }
     })
   );
@@ -432,42 +456,59 @@ export const buildDefinitionImportPlan = async ({
   for (const schema of schemas) {
     const unresolved = findUnresolvedFieldGroupReferences(schema.fields, schema.groups);
     if (unresolved.length > 0) {
-      errors.push(...unresolved.map(reference =>
-        `Schema '${schema.name}' field '${reference.fieldName}' references missing field group '${reference.groupId}'`
-      ));
+      errors.push(
+        ...unresolved.map(
+          reference =>
+            `Schema '${schema.name}' field '${reference.fieldName}' references missing field group '${reference.groupId}'`
+        )
+      );
       continue;
     }
     try {
       validateDerivedFieldGroupAccess(schema.fields, schema.groups);
     } catch (error) {
-      errors.push(error instanceof Error ? `Schema '${schema.name}': ${error.message}` : String(error));
+      errors.push(
+        error instanceof Error ? `Schema '${schema.name}': ${error.message}` : String(error)
+      );
     }
   }
   for (const relationSchema of relationSchemas) {
-    const unresolved = findUnresolvedFieldGroupReferences(relationSchema.fields, relationSchema.groups);
+    const unresolved = findUnresolvedFieldGroupReferences(
+      relationSchema.fields,
+      relationSchema.groups
+    );
     if (unresolved.length > 0) {
-      errors.push(...unresolved.map(reference =>
-        `Relation schema '${relationSchema.name}' field '${reference.fieldName}' references missing field group '${reference.groupId}'`
-      ));
+      errors.push(
+        ...unresolved.map(
+          reference =>
+            `Relation schema '${relationSchema.name}' field '${reference.fieldName}' references missing field group '${reference.groupId}'`
+        )
+      );
       continue;
     }
     try {
       validateDerivedFieldGroupAccess(relationSchema.fields, relationSchema.groups, 'relation');
     } catch (error) {
-      errors.push(error instanceof Error ? `Relation schema '${relationSchema.name}': ${error.message}` : String(error));
+      errors.push(
+        error instanceof Error
+          ? `Relation schema '${relationSchema.name}': ${error.message}`
+          : String(error)
+      );
     }
   }
 
   const activeDependencyIds = new Set<string>();
   const collectDependencyReference = (reference: string) => {
-    if (isDependencyReference(reference)) activeDependencyIds.add(dependencyIdFromReference(reference));
+    if (isDependencyReference(reference))
+      activeDependencyIds.add(dependencyIdFromReference(reference));
   };
   const collectSchemaFieldDependencies = (field: SchemaField) => {
     collectDependencyReference(field.groupId ?? '');
     if (isReferenceOrContainmentField(field)) collectDependencyReference(field.schemaId);
     else if (field.type === 'typedRelation') collectDependencyReference(field.relationSchemaId);
     else if (field.type === 'select') collectDependencyReference(field.enumId);
-    else if (field.type === 'derived' && field.enumId !== undefined) collectDependencyReference(field.enumId);
+    else if (field.type === 'derived' && field.enumId !== undefined)
+      collectDependencyReference(field.enumId);
   };
   const collectRelationFieldDependencies = (field: RelationField) => {
     collectDependencyReference(field.groupId ?? '');
@@ -482,9 +523,11 @@ export const buildDefinitionImportPlan = async ({
     for (const schemaId of [
       ...(relationSchema.in_schema_ids === 'any' ? [] : relationSchema.in_schema_ids),
       ...(relationSchema.out_schema_ids === 'any' ? [] : relationSchema.out_schema_ids)
-    ]) collectDependencyReference(schemaId);
+    ])
+      collectDependencyReference(schemaId);
     for (const field of relationSchema.fields) collectRelationFieldDependencies(field);
-    for (const link of relationSchema.shared_field_group_links) collectDependencyReference(link.groupId);
+    for (const link of relationSchema.shared_field_group_links)
+      collectDependencyReference(link.groupId);
   }
   for (const fieldGroup of fieldGroups) {
     for (const field of fieldGroup.fields) collectSchemaFieldDependencies(field);
@@ -500,7 +543,9 @@ export const buildDefinitionImportPlan = async ({
             ? selectedFieldGroupIds.has(definition.id)
             : selectedDocumentTypeIds.has(definition.id);
   const activeExtensionOwners = new Set(
-    sourceData.dependencies.filter(dependency => dependency.required_by.some(isSelectedDefinition)).map(dependency => dependency.owner_id)
+    sourceData.dependencies
+      .filter(dependency => dependency.required_by.some(isSelectedDefinition))
+      .map(dependency => dependency.owner_id)
   );
   for (const patch of sourceData.schemaPatches) {
     if (!activeExtensionOwners.has(patch.ownerId)) continue;
@@ -525,18 +570,52 @@ export const buildDefinitionImportPlan = async ({
 
   const mappedSchemas = schemas.map(schema => ({
     ...schema,
-    fields: schema.fields.map(field => resolveImportField(field, mappingsById, descriptors, errors)),
+    fields: schema.fields.map(field =>
+      resolveImportField(field, mappingsById, descriptors, errors)
+    ),
     shared_field_group_links: schema.shared_field_group_links.flatMap(link =>
-      resolveImportReferenceIds('fieldGroup', [link.groupId], mappingsById, descriptors, errors).map(groupId => ({ ...link, groupId }))
+      resolveImportReferenceIds(
+        'fieldGroup',
+        [link.groupId],
+        mappingsById,
+        descriptors,
+        errors
+      ).map(groupId => ({ ...link, groupId }))
     )
   }));
   const mappedRelationSchemas = relationSchemas.map(relationSchema => ({
     ...relationSchema,
-    in_schema_ids: relationSchema.in_schema_ids === 'any' ? ('any' as const) : resolveImportReferenceIds('schema', relationSchema.in_schema_ids, mappingsById, descriptors, errors),
-    out_schema_ids: relationSchema.out_schema_ids === 'any' ? ('any' as const) : resolveImportReferenceIds('schema', relationSchema.out_schema_ids, mappingsById, descriptors, errors),
-    fields: relationSchema.fields.map(field => resolveImportRelationField(field, mappingsById, descriptors, errors)),
+    in_schema_ids:
+      relationSchema.in_schema_ids === 'any'
+        ? ('any' as const)
+        : resolveImportReferenceIds(
+            'schema',
+            relationSchema.in_schema_ids,
+            mappingsById,
+            descriptors,
+            errors
+          ),
+    out_schema_ids:
+      relationSchema.out_schema_ids === 'any'
+        ? ('any' as const)
+        : resolveImportReferenceIds(
+            'schema',
+            relationSchema.out_schema_ids,
+            mappingsById,
+            descriptors,
+            errors
+          ),
+    fields: relationSchema.fields.map(field =>
+      resolveImportRelationField(field, mappingsById, descriptors, errors)
+    ),
     shared_field_group_links: relationSchema.shared_field_group_links.flatMap(link =>
-      resolveImportReferenceIds('fieldGroup', [link.groupId], mappingsById, descriptors, errors).map(groupId => ({ ...link, groupId }))
+      resolveImportReferenceIds(
+        'fieldGroup',
+        [link.groupId],
+        mappingsById,
+        descriptors,
+        errors
+      ).map(groupId => ({ ...link, groupId }))
     )
   }));
   const mappedFieldGroups = fieldGroups.map(group => ({
@@ -547,14 +626,28 @@ export const buildDefinitionImportPlan = async ({
     ...configuration,
     bindings: Object.fromEntries(
       Object.entries(configuration.bindings).map(([bindingId, binding]) => {
-        const kind = binding.target.kind === 'entity_schema' ? 'schema' : binding.target.kind === 'relation_schema' ? 'relationSchema' : 'documentType';
-        return [bindingId, {
-          ...binding,
-          target: {
-            ...binding.target,
-            id: resolveImportReferenceId(kind, binding.target.id, mappingsById, descriptors, errors)
+        const kind =
+          binding.target.kind === 'entity_schema'
+            ? 'schema'
+            : binding.target.kind === 'relation_schema'
+              ? 'relationSchema'
+              : 'documentType';
+        return [
+          bindingId,
+          {
+            ...binding,
+            target: {
+              ...binding.target,
+              id: resolveImportReferenceId(
+                kind,
+                binding.target.id,
+                mappingsById,
+                descriptors,
+                errors
+              )
+            }
           }
-        }];
+        ];
       })
     ) as WorkspaceCapabilityBindings
   }));
@@ -563,19 +656,35 @@ export const buildDefinitionImportPlan = async ({
   const schemaPatches: PlannedSchemaPatch[] = [];
   for (const patch of sourceData.schemaPatches) {
     if (!activeExtensionOwners.has(patch.ownerId)) continue;
-    const targetSchemaIds = resolveImportReferenceIds('schema', [patch.target], mappingsById, descriptors, errors);
+    const targetSchemaIds = resolveImportReferenceIds(
+      'schema',
+      [patch.target],
+      mappingsById,
+      descriptors,
+      errors
+    );
     for (const targetSchemaId of targetSchemaIds) {
-      const targetSchema = existingSchemaById.get(targetSchemaId) ?? mappedSchemas.find(schema => schema.id === targetSchemaId);
+      const targetSchema =
+        existingSchemaById.get(targetSchemaId) ??
+        mappedSchemas.find(schema => schema.id === targetSchemaId);
       if (!targetSchema) {
-        addUniqueError(errors, `Schema patch target '${targetSchemaId}' was not found in the source or destination`);
+        addUniqueError(
+          errors,
+          `Schema patch target '${targetSchemaId}' was not found in the source or destination`
+        );
         continue;
       }
-      const fields = patch.fields.map(field => resolveImportField(field, mappingsById, descriptors, errors));
+      const fields = patch.fields.map(field =>
+        resolveImportField(field, mappingsById, descriptors, errors)
+      );
       const existingFieldIds = new Set(targetSchema.fields.map(field => field.id));
       const patchFieldIds = new Set<string>();
       for (const field of fields) {
         if (existingFieldIds.has(field.id) || patchFieldIds.has(field.id))
-          addUniqueError(errors, `Schema patch '${targetSchema.name}' adds duplicate field '${field.id}'`);
+          addUniqueError(
+            errors,
+            `Schema patch '${targetSchema.name}' adds duplicate field '${field.id}'`
+          );
         patchFieldIds.add(field.id);
       }
       schemaPatches.push({ targetSchemaId, targetSchemaName: targetSchema.name, fields });
@@ -592,7 +701,8 @@ export const buildDefinitionImportPlan = async ({
     const seen = new Set<string>();
     for (const item of items) {
       const key = lower(item.name);
-      if (seen.has(key)) conflicts.push({ kind, id: item.id, name: item.name, existingName: item.name });
+      if (seen.has(key))
+        conflicts.push({ kind, id: item.id, name: item.name, existingName: item.name });
       const existingName = existingNames.get(key);
       if (existingName) conflicts.push({ kind, id: item.id, name: item.name, existingName });
       seen.add(key);
@@ -631,18 +741,46 @@ export const buildDefinitionImportPlan = async ({
     source,
     selection,
     renames,
-    schemas: resolvedSchemas.map(schema => ({ id: schema.id, name: schema.name, dependency: !selectedSchemaIds.has(schema.id), definition: schema })),
-    enums: enums.map(enumeration => ({ id: enumeration.id, name: enumeration.name, dependency: !selectedEnumIds.has(enumeration.id), definition: enumeration })),
-    documentTypes: documentTypes.map(documentType => ({ id: documentType.id, name: documentType.name, dependency: false, definition: documentType })),
-    relationSchemas: mappedRelationSchemas.map(schema => ({ id: schema.id, name: schema.name, dependency: !selectedRelationSchemaIds.has(schema.id), definition: schema })),
-    fieldGroups: mappedFieldGroups.map(group => ({ id: group.id, name: group.name, dependency: false, definition: group })),
+    schemas: resolvedSchemas.map(schema => ({
+      id: schema.id,
+      name: schema.name,
+      dependency: !selectedSchemaIds.has(schema.id),
+      definition: schema
+    })),
+    enums: enums.map(enumeration => ({
+      id: enumeration.id,
+      name: enumeration.name,
+      dependency: !selectedEnumIds.has(enumeration.id),
+      definition: enumeration
+    })),
+    documentTypes: documentTypes.map(documentType => ({
+      id: documentType.id,
+      name: documentType.name,
+      dependency: false,
+      definition: documentType
+    })),
+    relationSchemas: mappedRelationSchemas.map(schema => ({
+      id: schema.id,
+      name: schema.name,
+      dependency: !selectedRelationSchemaIds.has(schema.id),
+      definition: schema
+    })),
+    fieldGroups: mappedFieldGroups.map(group => ({
+      id: group.id,
+      name: group.name,
+      dependency: false,
+      definition: group
+    })),
     capabilityConfigurations: mappedCapabilityConfigurations,
     dependencyMappings,
     schemaPatches,
     schemaPatchTargets: schemaPatches.map(patch => ({
       targetSchemaId: patch.targetSchemaId,
       current: existingSchemaById.get(patch.targetSchemaId)
-        ? { version: existingSchemaById.get(patch.targetSchemaId)!.version, fields: existingSchemaById.get(patch.targetSchemaId)!.fields }
+        ? {
+            version: existingSchemaById.get(patch.targetSchemaId)!.version,
+            fields: existingSchemaById.get(patch.targetSchemaId)!.fields
+          }
         : null
     })),
     dashboardWidgets: selection.dashboard ? sourceData.dashboardWidgets : [],
@@ -672,15 +810,42 @@ export const buildDefinitionImportPlan = async ({
   };
 };
 
-export const definitionImportPlanToPreview = (plan: DefinitionImportPlan): DefinitionImportPreview => ({
+export const definitionImportPlanToPreview = (
+  plan: DefinitionImportPlan
+): DefinitionImportPreview => ({
   source: plan.source,
   selection: plan.selection,
   renames: plan.renames,
-  schemas: plan.schemas.map(schema => ({ id: schema.id, name: schema.name, dependency: !plan.selection.schemas.includes(schema.id), definition: schema })),
-  enums: plan.enums.map(enumeration => ({ id: enumeration.id, name: enumeration.name, dependency: !plan.selection.enums.includes(enumeration.id), definition: enumeration })),
-  documentTypes: plan.documentTypes.map(documentType => ({ id: documentType.id, name: documentType.name, dependency: false, definition: documentType })),
-  relationSchemas: plan.relationSchemas.map(schema => ({ id: schema.id, name: schema.name, dependency: !plan.selection.relationSchemas.includes(schema.id), definition: schema })),
-  fieldGroups: plan.fieldGroups.map(group => ({ id: group.id, name: group.name, dependency: false, definition: group })),
+  schemas: plan.schemas.map(schema => ({
+    id: schema.id,
+    name: schema.name,
+    dependency: !plan.selection.schemas.includes(schema.id),
+    definition: schema
+  })),
+  enums: plan.enums.map(enumeration => ({
+    id: enumeration.id,
+    name: enumeration.name,
+    dependency: !plan.selection.enums.includes(enumeration.id),
+    definition: enumeration
+  })),
+  documentTypes: plan.documentTypes.map(documentType => ({
+    id: documentType.id,
+    name: documentType.name,
+    dependency: false,
+    definition: documentType
+  })),
+  relationSchemas: plan.relationSchemas.map(schema => ({
+    id: schema.id,
+    name: schema.name,
+    dependency: !plan.selection.relationSchemas.includes(schema.id),
+    definition: schema
+  })),
+  fieldGroups: plan.fieldGroups.map(group => ({
+    id: group.id,
+    name: group.name,
+    dependency: false,
+    definition: group
+  })),
   dashboardWidgets: plan.dashboardWidgets,
   dependencyMappings: plan.dependencyMappings,
   schemaPatches: plan.schemaPatches,
