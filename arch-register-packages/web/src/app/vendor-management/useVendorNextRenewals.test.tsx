@@ -3,7 +3,11 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { nextRenewalDate, useVendorNextRenewals, type VendorNextRenewals } from './useVendorNextRenewals';
+import {
+  nextRenewalDate,
+  useVendorNextRenewals,
+  type VendorNextRenewals
+} from './useVendorNextRenewals';
 
 const mocks = vi.hoisted(() => ({ tree: vi.fn() }));
 
@@ -17,7 +21,11 @@ describe('nextRenewalDate', () => {
   it('picks the earliest contract_end on or after today', () => {
     expect(
       nextRenewalDate(
-        [{ contract_end: '2026-12-01' }, { contract_end: '2026-10-01' }, { contract_end: '2027-01-01' }],
+        [
+          { contract_end: '2026-12-01' },
+          { contract_end: '2026-10-01' },
+          { contract_end: '2027-01-01' }
+        ],
         today
       )
     ).toBe('2026-10-01');
@@ -85,7 +93,7 @@ describe('useVendorNextRenewals', () => {
     expect(mocks.tree).not.toHaveBeenCalled();
   });
 
-  it('groups contracts by their parent vendor and picks each one\'s earliest upcoming renewal', async () => {
+  it("groups contracts by their parent vendor and picks each one's earliest upcoming renewal", async () => {
     mocks.tree.mockResolvedValue({
       nodes: [
         { _uid: 'ctr-1', contract_end: '2099-12-01' },

@@ -77,7 +77,11 @@ export const VendorVendorsScreen = () => {
   }, [allItems, q, search.tier, search.category, search.owner]);
 
   const vendorIds = useMemo(() => filtered.map(entity => entity._uid), [filtered]);
-  const spend = useVendorSpendRollups(workspaceSlug, vendorConfig?.contractSchemaId ?? null, vendorIds);
+  const spend = useVendorSpendRollups(
+    workspaceSlug,
+    vendorConfig?.contractSchemaId ?? null,
+    vendorIds
+  );
   const renewals = useVendorNextRenewals(
     workspaceSlug,
     vendorConfig?.contractSchemaId ?? null,
@@ -111,15 +115,17 @@ export const VendorVendorsScreen = () => {
         spend.byId.get(b._uid)?.vmSpend ?? null
       ),
     risk: (a, b) =>
-      -compareNullable(riskByUid.get(a._uid)?.vmRisk ?? null, riskByUid.get(b._uid)?.vmRisk ?? null),
+      -compareNullable(
+        riskByUid.get(a._uid)?.vmRisk ?? null,
+        riskByUid.get(b._uid)?.vmRisk ?? null
+      ),
     renewal: (a, b) =>
       compareNullable(renewals.byId.get(a._uid) ?? null, renewals.byId.get(b._uid) ?? null)
   };
-  const { sorted, sort, toggleSort } = useTableSort<EntityRecord, SortKey>(
-    filtered,
-    comparators,
-    { key: 'name', dir: 'asc' }
-  );
+  const { sorted, sort, toggleSort } = useTableSort<EntityRecord, SortKey>(filtered, comparators, {
+    key: 'name',
+    dir: 'asc'
+  });
 
   const openVendor = (id: string) =>
     navigate({

@@ -44,9 +44,7 @@ export const useVendorNextRenewals = (
     const map = new Map<string, string | null>();
     if (!enabled) return map;
 
-    const nodeById = new Map(
-      (tree.data?.nodes ?? []).map((node: TreeNode) => [node._uid, node])
-    );
+    const nodeById = new Map((tree.data?.nodes ?? []).map((node: TreeNode) => [node._uid, node]));
     const contractsByParent = new Map<string, TreeNode[]>();
     for (const edge of (tree.data?.edges ?? []) as TreeEdge[]) {
       const contract = nodeById.get(edge.childId);

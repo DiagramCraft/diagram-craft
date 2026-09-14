@@ -129,7 +129,9 @@ const VendorsSidebarContent = ({
           label={option.label}
           testId={`vendor-facet-tier-${option.value}`}
           active={search.tier === option.value}
-          onClick={() => patchSearch({ tier: search.tier === option.value ? undefined : option.value })}
+          onClick={() =>
+            patchSearch({ tier: search.tier === option.value ? undefined : option.value })
+          }
           trailing={<span className="dim mono">{tierCounts.get(option.value) ?? 0}</span>}
         />
       ))}
