@@ -34,28 +34,34 @@ describe('applyDefinitionImport', () => {
         dashboard: false
       },
       renames: [],
-      schemas: [{
-        id: 'invalid-schema',
-        name: 'Invalid schema',
-        category: null,
-        description: '',
-        key_prefix: 'ATOMIC',
-        fields: [{ id: 'invalid-field', name: 'Invalid field', type: 'text', groupId: 'missing-group' }],
-        groups: [],
-        shared_field_group_links: [],
-        shared_field_groups: [],
-        color: null,
-        icon: null,
-        default_owner_name: null,
-        entity_approval_policy: 'disabled',
-        deprecation_policy: 'disabled'
-      }],
-      enums: [{
-        id: 'enum-1',
-        name: 'Atomic enum',
-        options: [{ value: 'one', label: 'One' }],
-        sort_order: 0
-      }],
+      schemas: [
+        {
+          id: 'invalid-schema',
+          name: 'Invalid schema',
+          category: null,
+          description: '',
+          key_prefix: 'ATOMIC',
+          fields: [
+            { id: 'invalid-field', name: 'Invalid field', type: 'text', groupId: 'missing-group' }
+          ],
+          groups: [],
+          shared_field_group_links: [],
+          shared_field_groups: [],
+          color: null,
+          icon: null,
+          default_owner_name: null,
+          entity_approval_policy: 'disabled',
+          deprecation_policy: 'disabled'
+        }
+      ],
+      enums: [
+        {
+          id: 'enum-1',
+          name: 'Atomic enum',
+          options: [{ value: 'one', label: 'One' }],
+          sort_order: 0
+        }
+      ],
       documentTypes: [],
       relationSchemas: [],
       fieldGroups: [],
