@@ -111,17 +111,24 @@ export const createAssessmentRecurrenceJobHandler =
         return { skipped: true };
       }
 
+      const consumed = await tx.project.assessments.consumePendingOccurrenceJobRun(
+        context.workspace,
+        row.id,
+        context.jobId
+      );
+      if (!consumed) return { skipped: true };
+
       const now = new Date();
-      await closeAssessmentGovernanceCase(tx, context.workspace, row.id);
+      await closeAssessmentGovernanceCase(tx, context.workspace, consumed.id);
 
       const reopened = await tx.project.assessments.updateAssessment(
         context.workspace,
-        row.project_id,
-        row.id,
-        toUpdateInput(row, {
-          current_occurrence: row.current_occurrence + 1,
-          due_at: row.response_window_days
-            ? new Date(now.getTime() + row.response_window_days * 24 * 60 * 60 * 1000)
+        consumed.project_id,
+        consumed.id,
+        toUpdateInput(consumed, {
+          current_occurrence: consumed.current_occurrence + 1,
+          due_at: consumed.response_window_days
+            ? new Date(now.getTime() + consumed.response_window_days * 24 * 60 * 60 * 1000)
             : null,
           updated_at: now
         })
@@ -142,7 +149,7 @@ export const createAssessmentRecurrenceJobHandler =
         entityType: 'assessment',
         entityId: reopened.id,
         entityName: reopened.name,
-        changes: computeChanges(extractEntityFields(row), extractEntityFields(reopened))
+        changes: computeChanges(extractEntityFields(consumed), extractEntityFields(reopened))
       });
 
       const scheduled = await scheduleNextAssessmentOccurrence(
