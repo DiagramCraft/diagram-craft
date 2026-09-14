@@ -2201,6 +2201,20 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             target: { kind: 'entity_schema', symId: 'api' }
           }
         }
+      },
+      {
+        // Mirrors the 'strategy-model' capability configuration below: auto-binds
+        // `vendorManagementCapabilityDefinition`'s roles
+        // (`../../app/vendor-management/vendorManagementCapability.ts`) to this template's own
+        // Vendor/Contract/Technology Release schemas by symId, so a workspace using the default
+        // catalog gets Vendor Management working without a manual Applications & Capabilities
+        // configuration step.
+        type: 'vendor-management',
+        bindings: {
+          vendor: { target: { kind: 'entity_schema', symId: 'vendor' } },
+          contract: { target: { kind: 'entity_schema', symId: 'contract' } },
+          technologyRelease: { target: { kind: 'entity_schema', symId: 'technology_release' } }
+        }
       }
     ]
   },

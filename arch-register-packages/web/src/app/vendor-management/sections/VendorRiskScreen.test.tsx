@@ -140,27 +140,30 @@ describe('VendorRiskScreen', () => {
     expect(rows[0]?.textContent).toContain('Acme Corp');
   });
 
-  it('renders the criticality × risk-band matrix with a count for the scored vendors', async () => {
+  it('renders the criticality × risk-band matrix with a vendor tag in the scored cell', async () => {
     await renderScreen();
-    const cell = [...container.querySelectorAll('button')].find(
-      button => button.getAttribute('aria-label') === 'Criticality 5, critical risk: 1 vendors'
+    // Acme Corp (all-5s, criticality 5) bands 'high' -> its tag sits in the matrix's
+    // criticality-5/high cell. Table.NameCell renders a <td>, not a <button>, so a <button> with
+    // this exact text is unique to the matrix.
+    const tag = [...container.querySelectorAll('button')].find(
+      button => button.textContent === 'Acme Corp'
     );
-    expect(cell).toBeDefined();
+    expect(tag).toBeDefined();
   });
 
-  it('clicking a matrix cell patches the band/criticality search params', async () => {
+  it('clicking a matrix vendor tag opens that vendor', async () => {
     await renderScreen();
-    const cell = [...container.querySelectorAll('button')].find(button =>
-      button.getAttribute('aria-label')?.startsWith('Criticality 5,')
+    const tag = [...container.querySelectorAll('button')].find(
+      button => button.textContent === 'Acme Corp'
     );
     await act(async () => {
-      cell!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      tag!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
 
     expect(mocks.navigate).toHaveBeenCalledWith(
       expect.objectContaining({
-        to: '/$workspaceSlug/vendor-management/risk',
-        params: { workspaceSlug: 'ws-1' }
+        to: '/$workspaceSlug/vendor-management/risk/$vendorId',
+        params: { workspaceSlug: 'ws-1', vendorId: 'VND-001' }
       })
     );
   });
@@ -182,8 +185,9 @@ describe('VendorRiskScreen', () => {
     );
   });
 
-  it('shows an explanatory empty state for the EOL table when no Technology Release schema is bound', async () => {
+  it('hides the EOL panel entirely when no Technology Release schema is bound', async () => {
     await renderScreen();
-    expect(container.textContent).toContain('Bind a Technology Release entity schema');
+    expect(container.textContent).not.toContain('Technology end-of-life');
+    expect(container.textContent).not.toContain('Bind a Technology Release entity schema');
   });
 });

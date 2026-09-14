@@ -183,7 +183,7 @@ describe('VendorManagementSidebar', () => {
     expect(container.textContent).not.toContain('Tier');
   });
 
-  it('shows risk band and criticality facets for the Risk section', async () => {
+  it('shows the Band facet and the always-present Technology EOL group for the Risk section', async () => {
     mocks.entityList.mockResolvedValue({
       items: [
         {
@@ -221,10 +221,17 @@ describe('VendorManagementSidebar', () => {
     });
     for (let i = 0; i < 5; i++) await flush();
 
-    expect(container.textContent).toContain('Risk band');
-    expect(container.textContent).toContain('critical');
-    expect(container.textContent).toContain('low');
-    expect(container.textContent).toContain('Criticality');
+    expect(container.textContent).toContain('Band');
+    // Acme Corp (all-5s, criticality 5) bands 'high'; Beta Inc (all-1s, criticality 2) bands
+    // 'low' — each should show a count of 1 next to its band label.
+    expect(container.textContent).toContain('High');
+    expect(container.textContent).toContain('Low');
+    expect(container.textContent).not.toContain('Criticality');
+    // The design reference always renders the "Technology EOL" group label, even with no
+    // exposure data (the `technologyRelease` capability binding isn't configured in this test) —
+    // it shouldn't disappear entirely, just show its own empty state.
+    expect(container.textContent).toContain('Technology EOL');
+    expect(container.textContent).toContain('No technology end-of-life exposure found.');
   });
 
   it('shows cost centre spend and owner facets for the Spend section', async () => {

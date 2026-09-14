@@ -236,7 +236,7 @@ export const VendorVendorsScreen = () => {
                   <Table.Cell>
                     {risk?.vmRisk != null ? (
                       <Chip dot={VENDOR_RISK_BAND_COLOR[risk.vmRiskBand!]} tone="ghost">
-                        {Math.round(risk.vmRisk)} · {risk.vmRiskBand}
+                        {risk.vmRiskBand} · {risk.vmRisk.toFixed(1)}
                       </Chip>
                     ) : (
                       <span className="dim">—</span>

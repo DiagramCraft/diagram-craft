@@ -74,14 +74,25 @@ describe('composable seed phases', () => {
       expect(await provisioned.db.catalog.listSchemas(defaultWorkspace)).toHaveLength(
         seedSchemas.filter(schema => schema.workspace === defaultWorkspace).length
       );
+      // Sorted by `type` before comparing — `listWorkspaceCapabilityConfigurations` doesn't
+      // guarantee the same order the source templates declare their capability configurations in
+      // (they're composed from multiple templates), and this assertion only cares that every
+      // expected configuration landed with the right bindings, not their relative order.
+      const byType = <T extends { type: string }>(rows: readonly T[]) =>
+        [...rows].sort((a, b) => a.type.localeCompare(b.type));
+
       expect(
-        (
-          await provisioned.db.workspace.listWorkspaceCapabilityConfigurations(defaultWorkspace)
-        ).map(configuration => ({ type: configuration.type, bindings: configuration.bindings }))
+        byType(
+          (
+            await provisioned.db.workspace.listWorkspaceCapabilityConfigurations(defaultWorkspace)
+          ).map(configuration => ({ type: configuration.type, bindings: configuration.bindings }))
+        )
       ).toEqual(
-        seedTemplateDefinitions.capabilityConfigurations.filter(configuration =>
-          Object.values(configuration.bindings).every(
-            binding => binding.target.kind !== 'relation_schema'
+        byType(
+          seedTemplateDefinitions.capabilityConfigurations.filter(configuration =>
+            Object.values(configuration.bindings).every(
+              binding => binding.target.kind !== 'relation_schema'
+            )
           )
         )
       );

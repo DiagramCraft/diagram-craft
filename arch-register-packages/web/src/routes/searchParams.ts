@@ -415,12 +415,10 @@ export const validateSpendSearch = (raw: Record<string, unknown>): SpendSearchPa
 
 // Vendor Management risk params
 const riskSearchSchema = defineSearchParamSchema({
-  q: stringCodec,
-  // Vendor risk band and Criticality (1-5, kept as a string codec since it's used only for exact
-  // matching against the sidebar's facets / the matrix's cells) — set by the sidebar's facets
-  // (`RiskSidebarContent` in `VendorManagementSidebar.tsx`) or by clicking a `RiskMatrix` cell.
-  band: stringCodec,
-  criticality: stringCodec
+  // Vendor risk band, narrowing the risk register table — set by the sidebar's Band facet
+  // (`RiskSidebarContent` in `VendorManagementSidebar.tsx`). The `RiskMatrix` itself isn't
+  // filterable by cell — its vendor tags open the drawer directly, matching the design reference.
+  band: stringCodec
 });
 
 export type RiskSearchParams = SearchParamsFromSchema<typeof riskSearchSchema>;

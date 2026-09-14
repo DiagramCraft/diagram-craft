@@ -4,9 +4,12 @@ import { createRoot, type Root } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
+import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import {
   useVendorTechnologyExposure,
-  type VendorTechnologyExposure
+  groupVendorTechnologyExposure,
+  type VendorTechnologyExposure,
+  type VendorTechnologyExposureRow
 } from './useVendorTechnologyExposure';
 
 const mocks = vi.hoisted(() => ({ entityList: vi.fn() }));
@@ -172,5 +175,69 @@ describe('useVendorTechnologyExposure', () => {
 
     expect(latest?.unavailable).toBe(true);
     expect(latest?.items).toHaveLength(0);
+  });
+});
+
+describe('groupVendorTechnologyExposure', () => {
+  const entity = (uid: string): EntityRecord =>
+    ({ _uid: uid, _name: uid, _publicId: uid }) as EntityRecord;
+  const exposure = { effectiveDate: null, daysUntilEol: null, band: null };
+
+  it('groups rows by (vendor, technology release), collecting distinct systems', () => {
+    const rows: VendorTechnologyExposureRow[] = [
+      {
+        vendor: entity('vnd-1'),
+        contract: entity('con-1'),
+        system: entity('sys-1'),
+        technologyRelease: entity('tr-1'),
+        exposure
+      },
+      {
+        vendor: entity('vnd-1'),
+        contract: entity('con-2'),
+        system: entity('sys-2'),
+        technologyRelease: entity('tr-1'),
+        exposure
+      },
+      {
+        vendor: entity('vnd-1'),
+        contract: entity('con-1'),
+        system: entity('sys-1'),
+        technologyRelease: entity('tr-2'),
+        exposure
+      }
+    ];
+
+    const grouped = groupVendorTechnologyExposure(rows);
+    expect(grouped).toHaveLength(2);
+
+    const tr1 = grouped.find(g => g.technologyRelease._uid === 'tr-1');
+    expect(tr1?.systems.map(s => s._uid).sort()).toEqual(['sys-1', 'sys-2']);
+
+    const tr2 = grouped.find(g => g.technologyRelease._uid === 'tr-2');
+    expect(tr2?.systems.map(s => s._uid)).toEqual(['sys-1']);
+  });
+
+  it('de-duplicates the same system reached twice for the same (vendor, technology release)', () => {
+    const rows: VendorTechnologyExposureRow[] = [
+      {
+        vendor: entity('vnd-1'),
+        contract: entity('con-1'),
+        system: entity('sys-1'),
+        technologyRelease: entity('tr-1'),
+        exposure
+      },
+      {
+        vendor: entity('vnd-1'),
+        contract: entity('con-2'),
+        system: entity('sys-1'),
+        technologyRelease: entity('tr-1'),
+        exposure
+      }
+    ];
+
+    const grouped = groupVendorTechnologyExposure(rows);
+    expect(grouped).toHaveLength(1);
+    expect(grouped[0]?.systems).toHaveLength(1);
   });
 });

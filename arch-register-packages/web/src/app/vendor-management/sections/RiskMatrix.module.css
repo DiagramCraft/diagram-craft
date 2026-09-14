@@ -1,18 +1,21 @@
 .matrix {
   display: grid;
-  grid-template-columns: 72px repeat(4, 1fr);
+  grid-template-columns: 88px repeat(4, 1fr);
   gap: 6px;
-  max-width: 640px;
+  padding: 12px 14px;
 }
 
 .corner {
-  /* Empty cell above the row headers. */
+  font-size: 10.5px;
+  color: var(--base-fg-more-dim);
+  display: flex;
+  align-items: flex-end;
+  padding-bottom: 4px;
 }
 
 .columnHeader {
   font-size: 11px;
   color: var(--base-fg-more-dim);
-  text-transform: capitalize;
   text-align: center;
   align-self: end;
   padding-bottom: 4px;
@@ -34,27 +37,32 @@
 .cell {
   border: 1px solid var(--panel-border);
   border-radius: var(--r-sm);
-  background: color-mix(in srgb, var(--cell-color) 22%, var(--panel-bg));
-  color: var(--base-fg);
-  font-size: 14px;
-  font-weight: 500;
+  background: var(--base-bg);
+  padding: 6px;
   min-height: 40px;
-  cursor: pointer;
-  transition: outline-color 0.1s ease;
-  outline: 2px solid transparent;
-  outline-offset: -2px;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 4px;
 }
 
-.cell:hover {
-  outline-color: var(--cell-color);
+.cell[data-hot] {
+  border-color: var(--cmp-fg-danger, #ef4444);
+  background: color-mix(in srgb, var(--cmp-fg-danger, #ef4444) 8%, var(--panel-bg));
 }
 
-.cell[data-active] {
-  outline-color: var(--cell-color);
-  outline-width: 2px;
-}
-
-.cell[data-empty] {
+.tag {
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-full, 999px);
   background: var(--panel-bg);
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg);
+  font-size: 11px;
+  line-height: 1;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+
+.tag:hover {
+  border-color: var(--accent-fg);
+  color: var(--accent-fg);
 }

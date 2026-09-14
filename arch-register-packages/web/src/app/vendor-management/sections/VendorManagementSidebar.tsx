@@ -19,12 +19,24 @@ import { entitiesQuery } from '../../../queries/entities';
 import { workspaceCapabilityConfigurationsQuery } from '../../../queries/workspaceConfig';
 import { useSchemas } from '../../../hooks/useSchemas';
 import { formatCurrencyValue } from '../../../utils/currencyFormat';
-import { resolveVendorManagementConfig } from '../vendorManagementQueries';
+import {
+  resolveVendorManagementConfig,
+  type VendorManagementConfig
+} from '../vendorManagementQueries';
 import { useVendorContracts } from '../useVendorContracts';
 import { useVendorSpendRollups } from '../useVendorSpendRollups';
 import { computeVmGroupSpend, computeVmTotalSpend } from '../vendorSpendAggregates';
 import { renewalWindow, RENEWAL_WINDOWS } from '../contractRenewalWindow';
-import { computeVendorRisk, VENDOR_RISK_BANDS, type VendorRiskBand } from '../vendorRisk';
+import {
+  computeVendorRisk,
+  VENDOR_RISK_BAND_COLOR,
+  VENDOR_RISK_BAND_LABEL,
+  type VendorRiskBand
+} from '../vendorRisk';
+import {
+  useVendorTechnologyExposure,
+  groupVendorTechnologyExposure
+} from '../useVendorTechnologyExposure';
 import {
   VENDOR_RAIL_PATHS,
   VENDOR_SECTIONS,
@@ -436,26 +448,42 @@ const SpendSidebarContent = ({
   );
 };
 
+// Design reference's sidebar lists the Band facet High-to-Low (the reverse of the matrix's own
+// low-to-high column order) — kept as its own constant rather than reversing
+// `VENDOR_RISK_BANDS` inline at every use.
+const RISK_BAND_FACET_ORDER: readonly VendorRiskBand[] = ['high', 'elevated', 'moderate', 'low'];
+
 /**
- * The Risk section's own primary-sidebar content: risk-band and Criticality facets over the
- * vendor register, mirroring `VendorsSidebarContent`/`SpendSidebarContent` above. Selecting a
- * facet sets `VendorRiskScreen.tsx`'s `band`/`criticality` search params (the same params a
- * `RiskMatrix` cell click sets), narrowing its risk register table.
+ * The Risk section's own primary-sidebar content: a risk-band facet over the vendor register,
+ * plus a "Technology EOL" list of every exposed technology (each opening its vendor directly) —
+ * mirrors the design reference's `vendor.jsx` `VMSidebar` `section === "risk"` branch exactly.
+ * There is no Criticality facet here (criticality is read straight off the `RiskMatrix` rows
+ * instead) and no free-text search, matching the design reference.
  */
 const RiskSidebarContent = ({
   workspaceSlug,
-  vendorSchemaId
+  vendorConfig
 }: {
   workspaceSlug: string;
-  vendorSchemaId: string;
+  vendorConfig: VendorManagementConfig;
 }) => {
   const navigate = useNavigate();
   const search = useSearch({ strict: false }) as RiskSearchParams;
+  const { data: schemas = [] } = useSchemas(workspaceSlug);
+  const contractSchema = schemas.find(schema => schema.id === vendorConfig.contractSchemaId);
+  const systemField = contractSchema?.fields.find(field => field.id === 'system');
+  const systemContractRelationSchemaId =
+    systemField?.type === 'typedRelation' ? systemField.relationSchemaId : null;
 
   const { data: vendorsData } = useQuery(
-    entitiesQuery(workspaceSlug, { schemaId: vendorSchemaId, view: 'full', limit: 500 })
+    entitiesQuery(workspaceSlug, {
+      schemaId: vendorConfig.vendorSchemaId,
+      view: 'full',
+      limit: 500
+    })
   );
   const vendors = vendorsData?.items ?? [];
+  const vendorIds = useMemo(() => vendors.map(vendor => vendor._uid), [vendors]);
 
   const risks = useMemo(
     () =>
@@ -481,15 +509,16 @@ const RiskSidebarContent = ({
     return counts;
   }, [risks]);
 
-  const criticalityCounts = useMemo(() => {
-    const counts = new Map<number, number>();
-    for (const vendor of vendors) {
-      if (typeof vendor.criticality === 'number') {
-        counts.set(vendor.criticality, (counts.get(vendor.criticality) ?? 0) + 1);
-      }
-    }
-    return counts;
-  }, [vendors]);
+  const exposure = useVendorTechnologyExposure(
+    workspaceSlug,
+    vendorConfig.vendorSchemaId,
+    vendorIds,
+    vendorConfig.contractSchemaId,
+    systemContractRelationSchemaId,
+    vendorConfig.technologyReleaseSchemaId,
+    schemas
+  );
+  const eolGroups = useMemo(() => groupVendorTechnologyExposure(exposure.items), [exposure.items]);
 
   const patchSearch = (patch: Partial<RiskSearchParams>) =>
     navigate({
@@ -498,48 +527,59 @@ const RiskSidebarContent = ({
       search: (previous: Record<string, unknown>) => ({ ...previous, ...patch })
     });
 
-  const hasAnySelection = !!search.band || !!search.criticality;
-  const clearAll = () => patchSearch({ band: undefined, criticality: undefined });
+  const set = (band: VendorRiskBand) =>
+    patchSearch({ band: search.band === band ? undefined : band });
+
+  const openVendor = (publicId: string) =>
+    navigate({
+      to: `${VENDOR_RAIL_PATHS[VENDOR_RISK_ID]}/$vendorId`,
+      params: { workspaceSlug, vendorId: publicId },
+      search: (previous: Record<string, unknown>) => previous
+    });
 
   return (
     <>
-      <TreeRow
-        icon={<TbShieldExclamation size={12} />}
-        label="All vendors"
-        testId="risk-facet-all"
-        active={!hasAnySelection}
-        onClick={clearAll}
-        trailing={<span className="dim mono">{vendors.length}</span>}
-      />
-      <SidebarGroupLabel>Risk band</SidebarGroupLabel>
-      {VENDOR_RISK_BANDS.map(({ band }) => (
+      <SidebarGroupLabel>Band</SidebarGroupLabel>
+      {RISK_BAND_FACET_ORDER.map(band => (
         <FacetRow
           key={band}
-          icon={<TbTag size={12} />}
-          label={band}
+          icon={
+            <span className="dim" style={{ color: VENDOR_RISK_BAND_COLOR[band] }}>
+              ●
+            </span>
+          }
+          label={VENDOR_RISK_BAND_LABEL[band]}
           testId={`risk-facet-band-${band}`}
           active={search.band === band}
-          onClick={() => patchSearch({ band: search.band === band ? undefined : band })}
+          onClick={() => set(band)}
           trailing={<span className="dim mono">{bandCounts.get(band) ?? 0}</span>}
         />
       ))}
-      <SidebarGroupLabel>Criticality</SidebarGroupLabel>
-      {[1, 2, 3, 4, 5].map(criticality => (
-        <FacetRow
-          key={criticality}
-          icon={<TbTag size={12} />}
-          label={String(criticality)}
-          testId={`risk-facet-criticality-${criticality}`}
-          active={search.criticality === String(criticality)}
-          onClick={() =>
-            patchSearch({
-              criticality:
-                search.criticality === String(criticality) ? undefined : String(criticality)
-            })
-          }
-          trailing={<span className="dim mono">{criticalityCounts.get(criticality) ?? 0}</span>}
-        />
-      ))}
+      {/* The design reference always renders this group label, even when `VM_EOL` is empty (its
+          mock data never exercises that case) — matched here rather than hiding the whole group,
+          so the facet's presence doesn't depend on there being exposure data yet. */}
+      <SidebarGroupLabel>Technology EOL</SidebarGroupLabel>
+      {eolGroups.length === 0 ? (
+        <div className={`${styles.emptyState} dim`}>No technology end-of-life exposure found.</div>
+      ) : (
+        eolGroups.map(group => (
+          <FacetRow
+            key={group.key}
+            icon={<TbShieldExclamation size={12} />}
+            label={group.technologyRelease._name}
+            testId={`risk-facet-eol-${group.key}`}
+            active={false}
+            onClick={() => openVendor(group.vendor._publicId)}
+            trailing={
+              <span className="dim mono">
+                {group.exposure.effectiveDate
+                  ? new Date(group.exposure.effectiveDate).getFullYear()
+                  : '—'}
+              </span>
+            }
+          />
+        ))
+      )}
     </>
   );
 };
@@ -587,10 +627,7 @@ export const VendorManagementSidebar = ({
             contractSchemaId={vendorConfig.contractSchemaId}
           />
         ) : activeSection === VENDOR_RISK_ID ? (
-          <RiskSidebarContent
-            workspaceSlug={workspaceSlug}
-            vendorSchemaId={vendorConfig.vendorSchemaId}
-          />
+          <RiskSidebarContent workspaceSlug={workspaceSlug} vendorConfig={vendorConfig} />
         ) : (
           <>
             <SidebarGroupLabel>Sections</SidebarGroupLabel>

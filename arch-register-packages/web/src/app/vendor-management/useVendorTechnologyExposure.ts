@@ -28,6 +28,46 @@ export type VendorTechnologyExposureRow = {
   exposure: TechnologyEolExposureResult;
 };
 
+/** One (Vendor, Technology Release) pair, with every System reached that carries it — the shape
+ *  the Risk section's EOL exposure table and its sidebar "Technology EOL" facet both render (one
+ *  row per technology-and-vendor, not per system), grouped from `VendorTechnologyExposureRow[]`
+ *  via `groupVendorTechnologyExposure`. */
+export type GroupedVendorTechnologyExposure = {
+  key: string;
+  vendor: EntityRecord;
+  technologyRelease: EntityRecord;
+  systems: EntityRecord[];
+  exposure: TechnologyEolExposureResult;
+};
+
+/** Groups `VendorTechnologyExposureRow[]` (one row per System) into one row per (Vendor,
+ *  Technology Release) pair, collecting every distinct System that reaches it — mirrors the
+ *  design reference's `VM_EOL` shape (one entry per technology-and-vendor, with an `apps` list),
+ *  adapted from the real per-System traversal `useVendorTechnologyExposure` performs. */
+export const groupVendorTechnologyExposure = (
+  rows: readonly VendorTechnologyExposureRow[]
+): GroupedVendorTechnologyExposure[] => {
+  const byKey = new Map<string, GroupedVendorTechnologyExposure>();
+  for (const row of rows) {
+    const key = `${row.vendor._uid}:${row.technologyRelease._uid}`;
+    const existing = byKey.get(key);
+    if (existing) {
+      if (!existing.systems.some(system => system._uid === row.system._uid)) {
+        existing.systems.push(row.system);
+      }
+    } else {
+      byKey.set(key, {
+        key,
+        vendor: row.vendor,
+        technologyRelease: row.technologyRelease,
+        systems: [row.system],
+        exposure: row.exposure
+      });
+    }
+  }
+  return [...byKey.values()];
+};
+
 export type VendorTechnologyExposure = {
   items: VendorTechnologyExposureRow[];
   isLoading: boolean;

@@ -1,65 +1,46 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
-import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Title } from '../../../components/Title';
-import { SearchInput } from '../../../components/SearchInput';
 import { Chip } from '../../../components/Chip';
 import { Table } from '../../../components/table/Table';
-import { useTableSort } from '../../../components/table/useTableSort';
 import { entitiesQuery } from '../../../queries/entities';
 import { workspaceCapabilityConfigurationsQuery } from '../../../queries/workspaceConfig';
 import { useSchemas } from '../../../hooks/useSchemas';
 import { formatDate } from '../../../utils/dateFormat';
 import { resolveVendorManagementConfig } from '../vendorManagementQueries';
 import { VENDOR_RAIL_PATHS, VENDOR_RISK_ID } from '../vendorManagementSections';
+import { computeVendorRisk, VENDOR_RISK_BAND_COLOR, type VendorRiskBand } from '../vendorRisk';
 import {
-  computeVendorRisk,
-  VENDOR_RISK_BAND_COLOR,
-  type VendorRiskBand,
-  type VendorRiskResult
-} from '../vendorRisk';
-import { vendorFieldValue } from '../vendorFieldDisplay';
-import { useVendorTechnologyExposure } from '../useVendorTechnologyExposure';
-import {
-  TECHNOLOGY_EOL_EXPOSURE_BAND_COLOR,
-  TECHNOLOGY_EOL_EXPOSURE_BAND_LABEL
-} from '../technologyEolExposure';
+  useVendorTechnologyExposure,
+  groupVendorTechnologyExposure
+} from '../useVendorTechnologyExposure';
 import type { RiskSearchParams } from '../../../routes/searchParams';
-import { RiskMatrix, type RiskMatrixCell } from './RiskMatrix';
+import { RiskMatrix, type RiskMatrixVendor } from './RiskMatrix';
 import { VendorDrawer } from './VendorDrawer';
-import filterStyles from '../../../sections/entities/components/EntityBrowser.module.css';
+import tileStyles from './VendorSpendScreen.module.css';
 import placeholderStyles from './VendorManagementPlaceholderScreen.module.css';
 import styles from './VendorRiskScreen.module.css';
 
-type SortKey = 'name' | 'criticality' | 'risk';
-
-/** Descending by value, nulls sorted last regardless of direction — used directly (not negated)
- *  so the default sort (`risk`, applied with no `useTableSort` reversal) reads highest-risk-first
- *  without an unscored vendor's null jumping ahead of scored ones. */
-const compareNullableDescending = (a: number | null, b: number | null): number => {
-  if (a == null && b == null) return 0;
-  if (a == null) return 1;
-  if (b == null) return -1;
-  return b - a;
-};
+const CONCENTRATION_ALERT_THRESHOLD = 4;
 
 /**
- * The Risk section: a criticality × risk-band matrix, a sortable/filterable vendor risk register
- * table, and a technology end-of-life (EOL) exposure table cross-referencing linked Systems'
- * Technology Releases — the three views scoped by #3263. Reuses the same composite `vmRisk`/
+ * The Risk section: a criticality × risk-band matrix, a vendor risk register, and a technology
+ * end-of-life (EOL) exposure view cross-referencing linked Systems' Technology Releases — the
+ * three views scoped by #3263. Layout, stats, and both tables mirror the Claude Design
+ * reference's `vendor-views.jsx` (`VMRisk`) closely: four header stats, a two-column
+ * matrix-plus-register row, and a full-width EOL table below it. Reuses the composite `vmRisk`/
  * `vmRiskBand` model (`vendorRisk.ts`) already shown in the Vendors table and vendor drawer.
  *
- * The matrix and table share the same `band`/`criticality` filters (`RiskSearchParams`), so
- * clicking a matrix cell narrows the table below it, and the sidebar's `RiskSidebarContent`
- * facets do the same. Selecting a vendor row opens the shared `VendorDrawer`, deep-linkable at
- * `vendor-management/risk/$vendorId`.
+ * The register is filtered by the sidebar's Band facet only (`RiskSearchParams.band`) — the
+ * matrix isn't itself a filter control, matching the design reference: its vendor tags open the
+ * `VendorDrawer` directly, deep-linkable at `vendor-management/risk/$vendorId`.
  *
- * The EOL exposure table depends on the `vendor-management` capability's optional
- * `technologyRelease` schema binding (see `useVendorTechnologyExposure.ts`) — when unbound, or
- * when no schema links a System to it, it shows an explanatory empty state instead of data,
- * mirroring `VendorSpendScreen.tsx`'s capability-grouping caveat.
+ * The EOL table depends on the `vendor-management` capability's optional `technologyRelease`
+ * schema binding (see `useVendorTechnologyExposure.ts`) — when unbound, or when no schema links a
+ * System to it, it shows an explanatory empty state instead of data, mirroring
+ * `VendorSpendScreen.tsx`'s capability-grouping caveat.
  */
 export const VendorRiskScreen = () => {
   const { workspaceSlug, vendorId } = useParams({ strict: false }) as {
@@ -68,12 +49,11 @@ export const VendorRiskScreen = () => {
   };
   const navigate = useNavigate();
   const search = useSearch({ strict: false }) as RiskSearchParams;
-  const q = search.q ?? '';
+  const bandFilter = (search.band as VendorRiskBand | undefined) ?? null;
 
   const configurations = useQuery(workspaceCapabilityConfigurationsQuery(workspaceSlug));
   const vendorConfig = resolveVendorManagementConfig(configurations.data);
   const schemas = useSchemas(workspaceSlug);
-  const vendorSchema = schemas.data?.find(schema => schema.id === vendorConfig?.vendorSchemaId);
   const contractSchema = schemas.data?.find(schema => schema.id === vendorConfig?.contractSchemaId);
   // `system-contract` isn't exposed by `resolveVendorManagementConfig` — read its real,
   // per-workspace relation schema id off Contract's `system` typedRelation field, same as
@@ -92,7 +72,7 @@ export const VendorRiskScreen = () => {
   const allVendors = vendors.data?.items ?? [];
 
   const riskByUid = useMemo(() => {
-    const map = new Map<string, VendorRiskResult>();
+    const map = new Map<string, ReturnType<typeof computeVendorRisk>>();
     for (const entity of allVendors) {
       map.set(
         entity._uid,
@@ -110,55 +90,29 @@ export const VendorRiskScreen = () => {
     return map;
   }, [allVendors]);
 
-  const matrixCells = useMemo<RiskMatrixCell[]>(() => {
-    const counts = new Map<string, number>();
+  const vendorsByCell = useMemo(() => {
+    const map = new Map<string, RiskMatrixVendor[]>();
     for (const entity of allVendors) {
       const risk = riskByUid.get(entity._uid);
       const criticality = typeof entity.criticality === 'number' ? entity.criticality : null;
       if (criticality == null || !risk?.vmRiskBand) continue;
       const key = `${criticality}:${risk.vmRiskBand}`;
-      counts.set(key, (counts.get(key) ?? 0) + 1);
+      const list = map.get(key) ?? [];
+      list.push({ id: entity._publicId, name: entity._name });
+      map.set(key, list);
     }
-    return [...counts.entries()].map(([key, count]) => {
-      const [criticality, band] = key.split(':');
-      return { criticality: Number(criticality), band: band as VendorRiskBand, count };
-    });
+    return map;
   }, [allVendors, riskByUid]);
 
-  const criticalityFilter = search.criticality ? Number(search.criticality) : null;
-  const bandFilter = (search.band as VendorRiskBand | undefined) ?? null;
-
-  const filtered = useMemo(() => {
-    const needle = q.trim().toLowerCase();
-    return allVendors.filter(entity => {
-      if (needle && !`${entity._name} ${entity._publicId}`.toLowerCase().includes(needle)) {
-        return false;
-      }
-      if (criticalityFilter != null && entity.criticality !== criticalityFilter) return false;
-      if (bandFilter && riskByUid.get(entity._uid)?.vmRiskBand !== bandFilter) return false;
-      return true;
-    });
-  }, [allVendors, q, criticalityFilter, bandFilter, riskByUid]);
-
-  const comparators: Record<SortKey, (a: EntityRecord, b: EntityRecord) => number> = {
-    name: (a, b) => a._name.localeCompare(b._name),
-    criticality: (a, b) =>
-      compareNullableDescending(
-        typeof a.criticality === 'number' ? a.criticality : null,
-        typeof b.criticality === 'number' ? b.criticality : null
-      ),
-    risk: (a, b) =>
-      compareNullableDescending(
-        riskByUid.get(a._uid)?.vmRisk ?? null,
-        riskByUid.get(b._uid)?.vmRisk ?? null
-      )
-  };
-  // Both comparators already sort highest-first with nulls last, so the default (`risk`, `dir:
-  // 'asc'`) reads correctly with no `useTableSort` reversal.
-  const { sorted, sort, toggleSort } = useTableSort<EntityRecord, SortKey>(filtered, comparators, {
-    key: 'risk',
-    dir: 'asc'
-  });
+  const registerRows = useMemo(
+    () =>
+      allVendors
+        .filter(entity => !bandFilter || riskByUid.get(entity._uid)?.vmRiskBand === bandFilter)
+        .sort(
+          (a, b) => (riskByUid.get(b._uid)?.vmRisk ?? 0) - (riskByUid.get(a._uid)?.vmRisk ?? 0)
+        ),
+    [allVendors, bandFilter, riskByUid]
+  );
 
   const vendorIds = useMemo(() => allVendors.map(entity => entity._uid), [allVendors]);
   const exposure = useVendorTechnologyExposure(
@@ -170,13 +124,29 @@ export const VendorRiskScreen = () => {
     vendorConfig?.technologyReleaseSchemaId ?? null,
     schemas.data ?? []
   );
-  const exposureRows = useMemo(
-    () =>
-      [...exposure.items].sort(
-        (a, b) => (a.exposure.daysUntilEol ?? Infinity) - (b.exposure.daysUntilEol ?? Infinity)
-      ),
-    [exposure.items]
-  );
+  const eolRows = useMemo(() => {
+    const grouped = groupVendorTechnologyExposure(exposure.items);
+    return [...grouped].sort(
+      (a, b) => (a.exposure.daysUntilEol ?? Infinity) - (b.exposure.daysUntilEol ?? Infinity)
+    );
+  }, [exposure.items]);
+  const exposedSystemCount = useMemo(() => {
+    const ids = new Set<string>();
+    for (const row of eolRows) for (const system of row.systems) ids.add(system._uid);
+    return ids.size;
+  }, [eolRows]);
+
+  const highRiskCount = allVendors.filter(
+    entity => riskByUid.get(entity._uid)?.vmRiskBand === 'high'
+  ).length;
+  const highConcentrationCount = allVendors.filter(
+    entity =>
+      typeof entity.concentration_risk === 'number' &&
+      entity.concentration_risk >= CONCENTRATION_ALERT_THRESHOLD
+  ).length;
+  const eolAtRiskCount = eolRows.filter(
+    row => row.exposure.band && row.exposure.band !== 'ok'
+  ).length;
 
   const openVendor = (id: string) =>
     navigate({
@@ -189,12 +159,6 @@ export const VendorRiskScreen = () => {
       to: VENDOR_RAIL_PATHS[VENDOR_RISK_ID],
       params: { workspaceSlug },
       search: (previous: Record<string, unknown>) => previous
-    });
-  const patchSearch = (patch: Partial<RiskSearchParams>) =>
-    navigate({
-      to: VENDOR_RAIL_PATHS[VENDOR_RISK_ID],
-      params: { workspaceSlug },
-      search: (previous: Record<string, unknown>) => ({ ...previous, ...patch })
     });
 
   if (configurations.isLoading) {
@@ -209,194 +173,214 @@ export const VendorRiskScreen = () => {
     );
   }
 
+  const isLoading = vendors.isLoading;
+
   return (
     <div className={styles.screen}>
       <Title
         title="Risk"
-        description="A criticality × risk-band view of the vendor register, plus technology end-of-life
-          exposure across the Systems your vendors' contracts serve."
+        description="Composite vendor risk against business criticality, plus the technology end-of-life
+          each vendor carries into the estate."
+        buttons={
+          <Button
+            variant="secondary"
+            onClick={() =>
+              navigate({
+                to: '/$workspaceSlug/entities',
+                params: { workspaceSlug },
+                search: (previous: Record<string, unknown>) => ({
+                  ...previous,
+                  viewMode: 'radar' as const
+                })
+              })
+            }
+          >
+            Technology radar
+          </Button>
+        }
       />
 
-      <div>
-        <div className={styles.sectionLabel}>Criticality × risk band</div>
-        <RiskMatrix
-          cells={matrixCells}
-          activeCriticality={criticalityFilter ?? undefined}
-          activeBand={bandFilter ?? undefined}
-          onCellClick={(criticality, band) =>
-            patchSearch({
-              criticality:
-                criticalityFilter === criticality && bandFilter === band
-                  ? undefined
-                  : String(criticality),
-              band: criticalityFilter === criticality && bandFilter === band ? undefined : band
-            })
-          }
-        />
+      <div className={tileStyles.tiles}>
+        <div className={tileStyles.tile}>
+          <div className={tileStyles.tileLabel}>High risk</div>
+          <div className={tileStyles.tileValue} style={{ color: VENDOR_RISK_BAND_COLOR.high }}>
+            {highRiskCount}
+          </div>
+          <div className={tileStyles.tileSub}>review required</div>
+        </div>
+        <div className={tileStyles.tile}>
+          <div className={tileStyles.tileLabel}>
+            Concentration ≥ {CONCENTRATION_ALERT_THRESHOLD}
+          </div>
+          <div className={tileStyles.tileValue} style={{ color: VENDOR_RISK_BAND_COLOR.elevated }}>
+            {highConcentrationCount}
+          </div>
+          <div className={tileStyles.tileSub}>single-source dependency</div>
+        </div>
+        <div className={tileStyles.tile}>
+          <div className={tileStyles.tileLabel}>Technologies near EOL</div>
+          <div className={tileStyles.tileValue}>{eolAtRiskCount}</div>
+          <div className={tileStyles.tileSub}>within 12 months, vendor-supported lifecycle</div>
+        </div>
+        <div className={tileStyles.tile}>
+          <div className={tileStyles.tileLabel}>Systems exposed</div>
+          <div className={tileStyles.tileValue} style={{ color: VENDOR_RISK_BAND_COLOR.elevated }}>
+            {exposedSystemCount}
+          </div>
+          <div className={tileStyles.tileSub}>linked to an EOL technology</div>
+        </div>
       </div>
 
-      <div>
-        <div className={styles.sectionLabel}>Risk register</div>
-        <div className={filterStyles.toolbar}>
-          <SearchInput
-            size="sm"
-            className={filterStyles.searchInline}
-            value={q}
-            placeholder="Search vendors by name…"
-            aria-label="Search vendors"
-            onChange={value => patchSearch({ q: value || undefined })}
-            onClear={() => patchSearch({ q: undefined })}
-          />
-          {(criticalityFilter != null || bandFilter) && (
-            <Button
-              variant="ghost"
-              onClick={() => patchSearch({ criticality: undefined, band: undefined })}
-            >
-              Clear filter
-            </Button>
-          )}
+      <div className={styles.two}>
+        <div className={styles.panel}>
+          <div className={styles.panelHeader}>
+            <span className={styles.panelTitle}>Criticality × risk</span>
+            <span className="dim mono">{allVendors.length} vendors</span>
+          </div>
+          <RiskMatrix vendorsByCell={vendorsByCell} onOpenVendor={openVendor} />
         </div>
 
-        <Table.Root scroll stickyHeader>
-          <Table.Head>
-            <Table.Row>
-              <Table.SortableHeaderCell sortKey="name" sort={sort} onSort={toggleSort}>
-                Name
-              </Table.SortableHeaderCell>
-              <Table.HeaderCell>Tier</Table.HeaderCell>
-              <Table.SortableHeaderCell
-                sortKey="criticality"
-                sort={sort}
-                onSort={toggleSort}
-                numeric
-              >
-                Criticality
-              </Table.SortableHeaderCell>
-              <Table.HeaderCell numeric>Security</Table.HeaderCell>
-              <Table.HeaderCell numeric>Concentration</Table.HeaderCell>
-              <Table.HeaderCell numeric>Financial</Table.HeaderCell>
-              <Table.HeaderCell numeric>Compliance</Table.HeaderCell>
-              <Table.SortableHeaderCell sortKey="risk" sort={sort} onSort={toggleSort}>
-                vmRisk
-              </Table.SortableHeaderCell>
-            </Table.Row>
-          </Table.Head>
-          <Table.Body>
-            {sorted.length === 0 ? (
-              <Table.EmptyRow colSpan={8}>
-                {vendors.isLoading ? 'Loading vendors…' : 'No vendors match these filters.'}
-              </Table.EmptyRow>
-            ) : (
-              sorted.map(entity => {
-                const risk = riskByUid.get(entity._uid);
-                return (
-                  <Table.Row key={entity._uid} onClick={() => openVendor(entity._publicId)}>
-                    <Table.NameCell title={entity._name} subtitle={entity._publicId} />
-                    <Table.Cell>{vendorFieldValue(vendorSchema, entity, 'tier')}</Table.Cell>
-                    <Table.Cell numeric>
-                      {typeof entity.criticality === 'number' ? entity.criticality : '—'}
-                    </Table.Cell>
-                    <Table.Cell numeric>
-                      {typeof entity.security_risk === 'number' ? entity.security_risk : '—'}
-                    </Table.Cell>
-                    <Table.Cell numeric>
-                      {typeof entity.concentration_risk === 'number'
-                        ? entity.concentration_risk
-                        : '—'}
-                    </Table.Cell>
-                    <Table.Cell numeric>
-                      {typeof entity.financial_risk === 'number' ? entity.financial_risk : '—'}
-                    </Table.Cell>
-                    <Table.Cell numeric>
-                      {typeof entity.compliance_risk === 'number' ? entity.compliance_risk : '—'}
-                    </Table.Cell>
-                    <Table.Cell>
-                      {risk?.vmRisk != null ? (
-                        <Chip dot={VENDOR_RISK_BAND_COLOR[risk.vmRiskBand!]} tone="ghost">
-                          {Math.round(risk.vmRisk)} · {risk.vmRiskBand}
-                        </Chip>
-                      ) : (
-                        <span className="dim">—</span>
-                      )}
-                    </Table.Cell>
-                  </Table.Row>
-                );
-              })
-            )}
-          </Table.Body>
-        </Table.Root>
-      </div>
-
-      <div>
-        <div className={styles.sectionLabel}>
-          Technology end-of-life exposure
-          <span className={styles.sectionCaption}>
-            Systems used by vendor contracts, cross-referenced against linked Technology Releases.
-          </span>
-        </div>
-        {!vendorConfig.technologyReleaseSchemaId ? (
-          <div className={styles.eolEmpty}>
-            Bind a Technology Release entity schema to the vendor-management capability's
-            "Technology Release entity schema" role in Applications & Capabilities workspace
-            settings to see EOL exposure here.
+        <div className={styles.panel}>
+          <div className={styles.panelHeader}>
+            <span className={styles.panelTitle}>Risk register</span>
+            {bandFilter && <span className="dim mono">{bandFilter}</span>}
           </div>
-        ) : exposure.unavailable ? (
-          <div className={styles.eolEmpty}>
-            No entity schema links a System to the bound Technology Release schema (typically a
-            Component or Resource schema, via a reference field). Check the linking schema's field
-            configuration.
-          </div>
-        ) : (
-          <Table.Root scroll stickyHeader>
+          <Table.Root scroll stickyHeader bordered={false}>
             <Table.Head>
               <Table.Row>
-                <Table.HeaderCell>System</Table.HeaderCell>
-                <Table.HeaderCell>Technology</Table.HeaderCell>
-                <Table.HeaderCell>EOL date</Table.HeaderCell>
-                <Table.HeaderCell>Exposure</Table.HeaderCell>
                 <Table.HeaderCell>Vendor</Table.HeaderCell>
-                <Table.HeaderCell>Contract</Table.HeaderCell>
+                <Table.HeaderCell numeric>Sec</Table.HeaderCell>
+                <Table.HeaderCell numeric>Conc</Table.HeaderCell>
+                <Table.HeaderCell numeric>Fin</Table.HeaderCell>
+                <Table.HeaderCell numeric>Comp</Table.HeaderCell>
+                <Table.HeaderCell>Score</Table.HeaderCell>
               </Table.Row>
             </Table.Head>
             <Table.Body>
-              {exposureRows.length === 0 ? (
+              {registerRows.length === 0 ? (
+                <Table.EmptyRow colSpan={6}>
+                  {isLoading ? 'Loading vendors…' : 'No vendors match this filter.'}
+                </Table.EmptyRow>
+              ) : (
+                registerRows.map(entity => {
+                  const risk = riskByUid.get(entity._uid);
+                  return (
+                    <Table.Row key={entity._uid} onClick={() => openVendor(entity._publicId)}>
+                      <Table.NameCell title={entity._name} />
+                      <Table.Cell numeric>
+                        {typeof entity.security_risk === 'number' ? entity.security_risk : '—'}
+                      </Table.Cell>
+                      <Table.Cell numeric>
+                        {typeof entity.concentration_risk === 'number'
+                          ? entity.concentration_risk
+                          : '—'}
+                      </Table.Cell>
+                      <Table.Cell numeric>
+                        {typeof entity.financial_risk === 'number' ? entity.financial_risk : '—'}
+                      </Table.Cell>
+                      <Table.Cell numeric>
+                        {typeof entity.compliance_risk === 'number' ? entity.compliance_risk : '—'}
+                      </Table.Cell>
+                      <Table.Cell>
+                        {risk?.vmRisk != null ? (
+                          <Chip dot={VENDOR_RISK_BAND_COLOR[risk.vmRiskBand!]} tone="ghost">
+                            {risk.vmRiskBand} · {risk.vmRisk.toFixed(1)}
+                          </Chip>
+                        ) : (
+                          <span className="dim">—</span>
+                        )}
+                      </Table.Cell>
+                    </Table.Row>
+                  );
+                })
+              )}
+            </Table.Body>
+          </Table.Root>
+        </div>
+      </div>
+
+      {/* Hidden entirely (not an empty state) when the feature isn't usable in this workspace —
+          no Technology Release schema bound, or bound but no schema links a System to it — rather
+          than showing a panel whose only content explains why it's empty. A genuinely empty
+          result (bound and linked, just no exposure yet) still renders the table with its own
+          empty row below. */}
+      {vendorConfig.technologyReleaseSchemaId && !exposure.unavailable && (
+        <div className={styles.panel}>
+          <div className={styles.panelHeader}>
+            <span className={styles.panelTitle}>Technology end-of-life — linked applications</span>
+            <span className="dim mono">{eolRows.length}</span>
+          </div>
+          <Table.Root scroll stickyHeader bordered={false}>
+            <Table.Head>
+              <Table.Row>
+                <Table.HeaderCell>Technology</Table.HeaderCell>
+                <Table.HeaderCell>Radar ring</Table.HeaderCell>
+                <Table.HeaderCell>Vendor</Table.HeaderCell>
+                <Table.HeaderCell>Support ends</Table.HeaderCell>
+                <Table.HeaderCell>Runway</Table.HeaderCell>
+                <Table.HeaderCell>Systems affected</Table.HeaderCell>
+              </Table.Row>
+            </Table.Head>
+            <Table.Body>
+              {eolRows.length === 0 ? (
                 <Table.EmptyRow colSpan={6}>
                   {exposure.isLoading
                     ? 'Loading technology exposure…'
                     : 'No linked Technology Releases found.'}
                 </Table.EmptyRow>
               ) : (
-                exposureRows.map(row => (
-                  <Table.Row
-                    key={`${row.system._uid}-${row.technologyRelease._uid}`}
-                    onClick={() => openVendor(row.vendor._publicId)}
-                  >
-                    <Table.NameCell title={row.system._name} />
-                    <Table.Cell>{row.technologyRelease._name}</Table.Cell>
-                    <Table.Cell>
-                      {row.exposure.effectiveDate ? formatDate(row.exposure.effectiveDate) : '—'}
-                    </Table.Cell>
-                    <Table.Cell>
-                      {row.exposure.band ? (
-                        <Chip
-                          dot={TECHNOLOGY_EOL_EXPOSURE_BAND_COLOR[row.exposure.band]}
-                          tone="ghost"
-                        >
-                          {TECHNOLOGY_EOL_EXPOSURE_BAND_LABEL[row.exposure.band]}
-                        </Chip>
-                      ) : (
-                        <span className="dim">—</span>
-                      )}
-                    </Table.Cell>
-                    <Table.Cell>{row.vendor._name}</Table.Cell>
-                    <Table.Cell>{row.contract._name}</Table.Cell>
-                  </Table.Row>
-                ))
+                eolRows.map(row => {
+                  const runwayMonths =
+                    row.exposure.daysUntilEol != null
+                      ? Math.round(row.exposure.daysUntilEol / 30)
+                      : null;
+                  const urgent =
+                    row.exposure.band === 'past' || row.exposure.band === 'within6Months';
+                  return (
+                    <Table.Row key={row.key} onClick={() => openVendor(row.vendor._publicId)}>
+                      <Table.NameCell title={row.technologyRelease._name} />
+                      <Table.Cell>
+                        <span className="dim">
+                          {typeof row.technologyRelease.radar_status === 'string'
+                            ? row.technologyRelease.radar_status
+                            : '—'}
+                        </span>
+                      </Table.Cell>
+                      <Table.Cell>{row.vendor._name}</Table.Cell>
+                      <Table.Cell>
+                        {row.exposure.effectiveDate ? formatDate(row.exposure.effectiveDate) : '—'}
+                      </Table.Cell>
+                      <Table.Cell
+                        numeric
+                        style={{
+                          color: urgent
+                            ? VENDOR_RISK_BAND_COLOR.high
+                            : VENDOR_RISK_BAND_COLOR.elevated
+                        }}
+                      >
+                        {runwayMonths != null ? `${runwayMonths} months` : '—'}
+                      </Table.Cell>
+                      <Table.Cell>
+                        {row.systems.length === 0 ? (
+                          <span className="dim">None linked</span>
+                        ) : (
+                          <span className="dim">
+                            {row.systems.map(system => system._name).join(', ')}
+                          </span>
+                        )}
+                      </Table.Cell>
+                    </Table.Row>
+                  );
+                })
               )}
             </Table.Body>
           </Table.Root>
-        )}
-      </div>
+          <div className={styles.note}>
+            Lifecycle position stays on the technology radar; this view only shows the vendor-side
+            support commitment and what it touches.
+          </div>
+        </div>
+      )}
 
       {vendorId && (
         <VendorDrawer

@@ -344,18 +344,25 @@
           `vendor-management/spend/$vendorId`. Grouping by capability shows an explanatory empty state instead of
           data — no Contract-to-capability link exists yet.
 
-        - @id:ar.vendor-management.risk The Risk section has three views over the vendor register. A criticality
-          (1-5) × risk-band matrix shows a vendor count per cell, colour-coded by band, clickable to filter the
-          register table below to that cell. The risk register table (Name, Tier, Criticality, the four risk
-          dimensions, `vmRisk`/`vmRiskBand`) is sorted by `vmRisk` descending by default (nulls last), filterable by
-          free-text search and by the matrix/sidebar's band and criticality selections, and opens the shared vendor
-          drawer on row click, deep-linkable at `vendor-management/risk/$vendorId`. A technology end-of-life exposure
-          table cross-references the Systems a vendor's Contracts serve against those Systems' linked Technology
-          Release records (`eol_date`/`security_support_until`), banded past / within 6 months / within 12 months /
-          OK; it depends on the `vendor-management` capability's optional Technology Release entity schema binding
-          (configured in Applications & Capabilities) and on an entity schema — typically Component or Resource —
-          that links a System to that Technology Release schema, showing an explanatory empty state instead of data
-          when either is missing.
+        - @id:ar.vendor-management.risk The Risk section has four header stats (High risk vendor count, vendors with
+          Concentration Risk ≥ 4, technologies nearing end-of-life, and Systems exposed to one), a two-column
+          criticality × risk-band matrix and risk register, and a technology end-of-life exposure table — layout and
+          composite scoring mirror the Claude Design reference (`vendor-data.jsx`/`vendor-views.jsx`) exactly. `vmRisk`
+          is a weighted average of a vendor's security/concentration/financial/compliance risk fields (weights 0.34 /
+          0.28 / 0.22 / 0.16) on their native 1-5 scale, linearly lifted by criticality (±6% per point off a
+          criticality of 3), clamped to [1, 5], and banded Low (< 2.0) / Moderate (< 2.7) / Elevated (< 3.4) / High.
+          The matrix (criticality 5 down to 2 × the four bands) lists each cell's vendors as clickable name tags
+          (not a count) that open the shared vendor drawer directly — it isn't itself a filter control. The risk
+          register (Vendor, Sec, Conc, Fin, Comp, Score) is sorted by score descending and filterable only by the
+          sidebar's Band facet. A technology end-of-life exposure table cross-references the Systems a vendor's
+          Contracts serve against those Systems' linked Technology Release records (Technology, Radar ring, Vendor,
+          Support ends, Runway in months, Systems affected), one row per vendor-and-technology pair; it depends on
+          the `vendor-management` capability's optional Technology Release entity schema binding (configured in
+          Applications & Capabilities, and auto-bound for a workspace using the default catalog) and on an entity
+          schema — typically Component or Resource — that links a System to that Technology Release schema; the
+          panel is hidden entirely, not shown with an explanatory empty state, when either is missing. The sidebar's
+          "Technology EOL" facet always shows its own group label (with its own empty-state message when there's no
+          exposure data) and lists the same exposed technologies, each opening its vendor.
 
     - @id:ar.entities Users can maintain a structured catalog of architectural entities and their relationships.
 
