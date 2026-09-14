@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { ProjectDbResult, ContentNodeDbResult } from './db/projectDatabase';
 import { toApiProject, toApiProjectDetail, toApiProjectFile } from './projectHelpers';
 import { FileTree, ProjectFile } from '@arch-register/api-types/projectContentContract';
+import { buildAuthorizationContext } from '@arch-register/permissions';
 
 const now = new Date('2025-06-01T12:00:00.000Z');
 const nowIso = '2025-06-01T12:00:00.000Z';
@@ -61,6 +62,92 @@ describe('toApiProject', () => {
     expect(result.created_at).toBe(nowIso);
     expect(result.updated_at).toBe(nowIso);
   });
+
+  it('returns no capabilities without an authorization context', () => {
+    const result = toApiProject({ ...baseProject, owner: 'team-1' }, 0, null);
+
+    expect(result).toMatchObject({
+      canEdit: false,
+      canDelete: false,
+      canManageFiles: false
+    });
+  });
+
+  it.each([
+    {
+      name: 'workspace editor',
+      context: buildAuthorizationContext({
+        userId: 'workspace-editor',
+        globalRoles: [],
+        workspaceRole: 'editor',
+        teamAssignments: [],
+        teams: [],
+        schemas: [],
+        entities: [],
+        grants: []
+      }),
+      expected: { canEdit: true, canDelete: false, canManageFiles: true }
+    },
+    {
+      name: 'owner-team admin',
+      context: buildAuthorizationContext({
+        userId: 'team-admin',
+        globalRoles: [],
+        workspaceRole: null,
+        teamAssignments: [{ teamId: 'team-1', role: 'team_admin' }],
+        teams: [],
+        schemas: [],
+        entities: [],
+        grants: []
+      }),
+      expected: { canEdit: true, canDelete: true, canManageFiles: true }
+    },
+    {
+      name: 'owner-team reviewer',
+      context: buildAuthorizationContext({
+        userId: 'team-reviewer',
+        globalRoles: [],
+        workspaceRole: null,
+        teamAssignments: [{ teamId: 'team-1', role: 'team_reviewer' }],
+        teams: [],
+        schemas: [],
+        entities: [],
+        grants: []
+      }),
+      expected: { canEdit: false, canDelete: false, canManageFiles: false }
+    },
+    {
+      name: 'global administrator',
+      context: buildAuthorizationContext({
+        userId: 'global-admin',
+        globalRoles: ['global_admin'],
+        workspaceRole: null,
+        teamAssignments: [],
+        teams: [],
+        schemas: [],
+        entities: [],
+        grants: []
+      }),
+      expected: { canEdit: true, canDelete: true, canManageFiles: true }
+    },
+    {
+      name: 'restricted API token',
+      context: buildAuthorizationContext({
+        userId: 'api-token',
+        globalRoles: [],
+        workspaceRole: null,
+        workspaceCapabilityCeiling: ['proj.edit'],
+        teamAssignments: [],
+        teams: [],
+        schemas: [],
+        entities: [],
+        grants: []
+      }),
+      expected: { canEdit: true, canDelete: false, canManageFiles: true }
+    }
+  ])('$name derives project capabilities', ({ context, expected }) => {
+    expect(toApiProject({ ...baseProject, owner: 'team-1' }, 0, context)).toMatchObject(expected);
+  });
 });
 
 // ── toApiProjectFile ──────────────────────────────────────────
@@ -94,6 +181,26 @@ describe('toApiProjectFile', () => {
 // ── toApiProjectDetail ────────────────────────────────────────
 
 describe('toApiProjectDetail', () => {
+  it('uses the same permission-derived capabilities as project list responses', () => {
+    const context = buildAuthorizationContext({
+      userId: 'team-editor',
+      globalRoles: [],
+      workspaceRole: null,
+      teamAssignments: [{ teamId: 'team-1', role: 'team_editor' }],
+      teams: [],
+      schemas: [],
+      entities: [],
+      grants: []
+    });
+    const files: FileTree = { folders: [], rootFiles: [] };
+
+    expect(toApiProjectDetail({ ...baseProject, owner: 'team-1' }, files, context)).toMatchObject({
+      canEdit: true,
+      canDelete: false,
+      canManageFiles: true
+    });
+  });
+
   it('counts root files', () => {
     const files: FileTree = {
       folders: [],
