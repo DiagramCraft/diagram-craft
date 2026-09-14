@@ -208,6 +208,9 @@ const makeDb = () => {
     notification: {
       markReadByAssignmentIds: vi.fn(async () => {}),
       markReadByCaseIds: vi.fn(async () => {})
+    },
+    webhook: {
+      listWebhooks: vi.fn(async () => [])
     }
   } as unknown as DatabaseAdapter;
   return { db, cases };
@@ -308,6 +311,9 @@ const makeStewardshipDb = (config: Record<string, unknown>, stewardValue: unknow
     notification: {
       markReadByAssignmentIds: vi.fn(async () => {}),
       markReadByCaseIds: vi.fn(async () => {})
+    },
+    webhook: {
+      listWebhooks: vi.fn(async () => [])
     }
   } as unknown as DatabaseAdapter;
   return { db, createdAssignments };

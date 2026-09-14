@@ -162,6 +162,12 @@ describe('updateAssessmentStatus', () => {
         markReadByAssignmentIds: vi.fn(async () => {}),
         markReadByCaseIds: vi.fn(async () => {})
       },
+      governanceCaseConfig: {
+        listCaseConfigForKind: vi.fn(async () => [])
+      },
+      webhook: {
+        listWebhooks: vi.fn(async () => [])
+      },
       core: {
         transaction: vi.fn((fn: (tx: DatabaseAdapter) => Promise<unknown>) =>
           fn(db as unknown as DatabaseAdapter)
