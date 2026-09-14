@@ -94,3 +94,4 @@ docs-site/.docusaurus
 .dispatchinclude
 .crabbox.yaml
 .crabbox
+.github/workflows/crabbox-hydrate.yaml

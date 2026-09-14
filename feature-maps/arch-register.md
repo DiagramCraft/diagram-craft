@@ -269,8 +269,11 @@
 
           The drawer shows the configured subtree roll-up stats (@id:ar.strategy.view-config) plus a leaf count,
           structural attributes (type, level, owner, direct child count) and any configured extra attribute rows,
-          direct children, applications the capability directly supports ("Realized by"), and linked objectives and
-          initiatives, with a footer action to open the underlying record in Entities.
+          direct children, and linked objectives and initiatives, with a footer action to open the underlying
+          record in Entities. "Realized by" unions applications the capability supports directly with ones
+          supported anywhere in its recursive containment subtree, so non-leaf capabilities also surface coverage
+          carried by their descendants; each entity reached through a descendant shows a "via" provenance label naming
+          the contributing capability.
 
         - @id:ar.strategy.heatmaps The Heatmaps section is deprioritized and not currently surfaced in the app rail
           or section nav; its route and placeholder screen are retained. The capability-map overlay control already

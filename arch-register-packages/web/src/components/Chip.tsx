@@ -6,11 +6,13 @@ type ChipProps = {
   tone?: 'default' | 'ghost' | 'accent';
   icon?: ReactNode;
   dot?: string;
+  title?: string;
 };
 
-export const Chip = ({ children, tone = 'default', icon, dot }: ChipProps) => (
+export const Chip = ({ children, tone = 'default', icon, dot, title }: ChipProps) => (
   <span
     className={`${styles.chip} ${tone === 'ghost' ? styles.ghost : ''} ${tone === 'accent' ? styles.accent : ''}`}
+    title={title}
   >
     {dot && <span className={styles.dot} style={{ background: dot }} />}
     {icon}

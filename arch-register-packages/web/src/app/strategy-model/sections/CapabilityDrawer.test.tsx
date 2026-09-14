@@ -113,13 +113,16 @@ describe('CapabilityDrawer', () => {
     for (let i = 0; i < 5 && container.textContent?.includes('Loading capability'); i++) {
       await flush();
     }
+    for (let i = 0; i < 5 && container.textContent?.includes('Realized byLoading…'); i++) {
+      await flush();
+    }
 
     expect(container.textContent).toContain('Customer Management');
     expect(container.textContent).toContain('CAP-001');
     expect(container.textContent).toContain('No owner assigned');
     expect(container.textContent).toContain('Business Capability');
     expect(container.textContent).toContain(
-      'No directly linked applications. Non-leaf capabilities may only show links carried by'
+      "No linked applications, directly or across this capability's descendants."
     );
     expect(container.textContent).toContain('No linked objectives.');
     expect(container.textContent).toContain('No linked initiatives.');
@@ -208,5 +211,76 @@ describe('CapabilityDrawer', () => {
     expect(mocks.navigate).toHaveBeenCalledWith(
       entityDetailRoute('ws-1', asEntityPublicId('CAP-001'))
     );
+  });
+
+  it('shows an application realized through a descendant capability, with provenance', async () => {
+    // #3205: a non-leaf capability's "Realized by" section unions the capability's own direct
+    // `business-capability-supports-entity` links with links carried anywhere in its recursive
+    // containment subtree. Here "cap-1" has no direct link of its own, but its descendant
+    // "cap-2" does, reached via `containmentSubtree(parent) -> typedRelation(..., in)`.
+    mocks.entityList.mockImplementation(async ({ query }: { query: { entityQuery?: string } }) => {
+      const entityQuery = query.entityQuery ? JSON.parse(query.entityQuery) : null;
+      if (entityQuery?.projections) {
+        return {
+          items: [
+            {
+              _uid: 'cap-1',
+              _projections: {
+                ownLinks: [],
+                subtreeLinks: [
+                  [
+                    { context: 'entity', id: 'cap-2', schemaId: 'business_capability' },
+                    { context: 'entity', id: 'app-1', schemaId: 'application' }
+                  ]
+                ]
+              }
+            }
+          ],
+          total: 1
+        };
+      }
+      return {
+        items: [
+          {
+            _uid: 'cap-2',
+            _publicId: 'CAP-002',
+            _name: 'Account Management',
+            _schema: { id: 'business_capability', name: 'Business Capability' },
+            _owner: null,
+            _lifecycle: null
+          },
+          {
+            _uid: 'app-1',
+            _publicId: 'APP-001',
+            _name: 'Billing System',
+            _schema: { id: 'application', name: 'Application' },
+            _owner: null,
+            _lifecycle: null
+          }
+        ],
+        total: 2
+      };
+    });
+
+    await act(async () => {
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <CapabilityDrawer
+            workspaceSlug="ws-1"
+            capabilityId="cap-1"
+            strategyConfig={strategyConfig}
+            onClose={vi.fn()}
+            onOpenCapability={vi.fn()}
+          />
+        </QueryClientProvider>
+      );
+    });
+    const flush = () => act(async () => new Promise(resolve => setTimeout(resolve, 0)));
+    for (let i = 0; i < 8 && !container.textContent?.includes('Billing System'); i++) {
+      await flush();
+    }
+
+    expect(container.textContent).toContain('Billing System');
+    expect(container.textContent).toContain('via Account Management');
   });
 });
