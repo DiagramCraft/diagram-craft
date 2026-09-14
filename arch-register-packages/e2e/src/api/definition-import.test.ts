@@ -175,6 +175,68 @@ test.describe('definition import', () => {
     }
   });
 
+  test('rejects execution when a preview becomes stale', async ({ orpc, server }) => {
+    const target = await orpc.workspaces.create({
+      body: { name: `Stale definition preview target ${randomUUID()}` }
+    });
+    const sources = await orpc.workspaces.definitionImportSources({
+      params: { workspace: target.url_slug }
+    });
+    const builtin = sources.find(source => source.kind === 'builtin')!;
+    const selectedSchema = builtin.schemas[0]!;
+    const preview = await orpc.workspaces.definitionImportPreview({
+      params: { workspace: target.url_slug },
+      body: {
+        source: { kind: 'builtin', id: builtin.id },
+        selection: {
+          schemas: [selectedSchema.id],
+          enums: [],
+          documentTypes: [],
+          relationSchemas: [],
+          fieldGroups: [],
+          dashboard: false
+        }
+      }
+    });
+    const plannedSchema = preview.schemas.find(schema => schema.id === selectedSchema.id)!;
+    await orpc.schemas.create({
+      params: { workspace: target.url_slug },
+      body: {
+        name: `Prefix occupier ${randomUUID()}`,
+        key_prefix: String(plannedSchema.definition.key_prefix),
+        fields: []
+      }
+    });
+
+    await expect(
+      orpc.workspaces.definitionImportExecute({
+        params: { workspace: target.url_slug },
+        body: {
+          source: preview.source,
+          selection: preview.selection,
+          schemas: preview.schemas,
+          enums: preview.enums,
+          documentTypes: preview.documentTypes,
+          relationSchemas: preview.relationSchemas,
+          fieldGroups: preview.fieldGroups,
+          dashboardWidgets: preview.dashboardWidgets,
+          dependencyMappings: preview.dependencyMappings,
+          schemaPatches: preview.schemaPatches,
+          keyPrefixRemaps: preview.keyPrefixRemaps,
+          fingerprint: preview.fingerprint,
+          confirmed: true
+        }
+      })
+    ).rejects.toMatchObject({
+      code: 'CONFLICT',
+      message: 'The definition import preview is stale. Preview the import again.'
+    });
+
+    expect((await server.db.catalog.listSchemas(target.id)).map(schema => schema.name)).not.toContain(
+      selectedSchema.name
+    );
+  });
+
   test('blocks a case-insensitive name collision before persistence', async ({ orpc, server }) => {
     const target = await orpc.workspaces.create({ body: { name: 'Definition Collision Target' } });
     const sources = await orpc.workspaces.definitionImportSources({
