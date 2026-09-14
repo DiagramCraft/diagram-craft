@@ -13,6 +13,7 @@ import { entityTypedRelationsQuery } from '../../../queries/relations';
 import { workspaceCapabilityConfigurationsQuery } from '../../../queries/workspaceConfig';
 import { asEntityPublicId, entityDetailRoute } from '../../../routes/publicObjectRoutes';
 import { useCapabilityRollup } from '../useCapabilityRollup';
+import { useCapabilityRealizedBy } from '../useCapabilityRealizedBy';
 import { resolveStrategyViewConfig } from '../strategyQueries';
 import { formatStrategyValue } from '../strategyFormat';
 import { capabilityFieldValue, fieldLabel } from '../capabilityFieldDisplay';
@@ -87,20 +88,21 @@ export const CapabilityDrawer = ({
   }, [tree.data, uid]);
   const relations = useQuery(entityTypedRelationsQuery(workspaceSlug, uid ?? ''));
 
-  // The capability is the "in" endpoint of `business-capability-supports-entity`, so its links
-  // surface in `outgoing`; it's the "out" endpoint of `objective-supports-business-capability`,
-  // so its links surface in `incoming`. See `entityTypedRelationsSchema` in relationContract.ts.
-  // Filtered by the *real*, per-workspace relation schema id (`strategyConfig`, resolved from the
-  // `strategy-model` capability configuration's `..._relation_schema` bindings) — the schema
-  // template's own symId strings ('business-capability-supports-entity', etc.) don't match
-  // `r._schema.id`, which is always a real id.
-  const realizedBy = useMemo(
-    () =>
-      (relations.data?.outgoing ?? []).filter(
-        r => r._schema.id === strategyConfig.businessCapabilitySupportsEntityRelationSchemaId
-      ),
-    [relations.data, strategyConfig.businessCapabilitySupportsEntityRelationSchemaId]
+  // "Realized by" unions the capability's own direct `business-capability-supports-entity` links
+  // with links carried anywhere in its recursive containment subtree (#3205), with per-entity
+  // provenance (which descendant capability contributed a subtree link) — see
+  // `useCapabilityRealizedBy.ts`. Filtered by the *real*, per-workspace relation schema id
+  // (`strategyConfig`, resolved from the `strategy-model` capability configuration's
+  // `..._relation_schema` bindings).
+  const realizedBy = useCapabilityRealizedBy(
+    workspaceSlug,
+    strategyConfig.businessCapabilitySchemaId,
+    uid,
+    strategyConfig.businessCapabilitySupportsEntityRelationSchemaId
   );
+
+  // The capability is the "out" endpoint of `objective-supports-business-capability`, so its
+  // links surface in `incoming`. See `entityTypedRelationsSchema` in relationContract.ts.
   const supportingObjectives = useMemo(
     () =>
       (relations.data?.incoming ?? []).filter(
@@ -240,18 +242,28 @@ export const CapabilityDrawer = ({
       )}
 
       <div className={styles.sectionLabel}>Realized by</div>
-      {realizedBy.length > 0 ? (
+      {realizedBy.isLoading ? (
+        <span className="dim">Loading…</span>
+      ) : realizedBy.items.length > 0 ? (
         <div className={styles.tags}>
-          {realizedBy.map(r => (
-            <Chip key={r._uid} tone="ghost">
-              {r._out.name}
+          {realizedBy.items.map(({ entity: realizedEntity, contributingCapability }) => (
+            <Chip
+              key={realizedEntity._uid}
+              tone="ghost"
+              title={
+                contributingCapability ? `Realized via ${contributingCapability._name}` : undefined
+              }
+            >
+              {realizedEntity._name}
+              {contributingCapability && (
+                <span className={styles.viaLabel}> · via {contributingCapability._name}</span>
+              )}
             </Chip>
           ))}
         </div>
       ) : (
         <span className="dim">
-          No directly linked applications. Non-leaf capabilities may only show links carried by
-          their descendants.
+          No linked applications, directly or across this capability's descendants.
         </span>
       )}
 

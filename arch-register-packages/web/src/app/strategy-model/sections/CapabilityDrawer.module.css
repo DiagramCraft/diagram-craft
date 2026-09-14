@@ -76,3 +76,7 @@
   border-color: var(--accent-fg);
   color: var(--accent-fg);
 }
+
+.viaLabel {
+  color: var(--text-muted);
+}
