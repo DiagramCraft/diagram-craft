@@ -209,7 +209,9 @@ test.describe('project permission routes', () => {
         expect(projects, testCase.name).not.toHaveLength(0);
       }
       if (testCase.name === 'design owner-team editor') {
-        expect(projects.every(project => project.owner?.id === resources.teamIds.design)).toBe(true);
+        expect(projects.every(project => project.owner?.id === resources.teamIds.design)).toBe(
+          true
+        );
       }
       for (const project of projects) {
         const expected = testCase.expected(project);
