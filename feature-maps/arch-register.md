@@ -307,17 +307,25 @@
         - @id:ar.vendor-management.overview The Overview section is scaffolded as a placeholder pending its
           renewals-due, spend, and vendor-risk summary dashboard.
 
-        - @id:ar.vendor-management.vendors The Vendors section is scaffolded as a placeholder pending its vendor
-          register list/detail view.
+        - @id:ar.vendor-management.vendors The Vendors section lists Vendor entities; a minimal register view for
+          now (full filtering/sorting/columns are still pending). Selecting a vendor opens the shared vendor drawer,
+          deep-linkable at `vendor-management/vendors/$vendorId`: a composite risk score (`vmRisk`/`vmRiskBand`,
+          weighted across the vendor's security, concentration, financial, and compliance risk fields and lifted by
+          criticality), attributes, spend (`vmSpend`, summed across the vendor's own Contracts), the vendor's
+          Contracts, the Systems its contracts serve ("Applications supplied"), and a best-effort technology
+          lifecycle view derived from those Systems' own lifecycle state. Capabilities funded is not yet
+          available — no Contract-to-capability link exists yet.
 
         - @id:ar.vendor-management.contracts The Contracts section is scaffolded as a placeholder pending its
           contract list, renewal calendar, and timeline views.
 
         - @id:ar.vendor-management.spend The Spend section is scaffolded as a placeholder pending spend roll-ups by
-          vendor, capability, and cost centre.
+          vendor, capability, and cost centre. The underlying roll-up model (`vmSpend`/`vmTotalSpend`/`vmGroupSpend`)
+          already exists, shared with the vendor drawer.
 
         - @id:ar.vendor-management.risk The Risk section is scaffolded as a placeholder pending vendor-risk and
-          linked-technology-EOL views.
+          linked-technology-EOL views. The underlying `vmRisk`/`vmRiskBand` model already exists, shared with the
+          vendor drawer.
 
     - @id:ar.entities Users can maintain a structured catalog of architectural entities and their relationships.
 

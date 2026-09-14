@@ -61,6 +61,26 @@ export const createVendorManagementWorkspaceRoutes = <TParentRoute extends AnyRo
         breadcrumbs: buildVendorManagementBreadcrumbs(ctx, VENDOR_VENDORS_ID)
       })
   );
+  // Deep-linkable vendor drawer, mirroring `strategyWorkspaceRoute.tsx`'s `capabilitiesDetailRoute`
+  // — same `component` as the base Vendors route, gated the same way, with the drawer rendered
+  // conditionally by `VendorVendorsScreen` when the optional `vendorId` route param is present.
+  const vendorsDetailRoute = withWorkspaceShell(
+    createRoute({
+      getParentRoute: () => workspaceRoute,
+      path: `${railPath(VENDOR_RAIL_PATHS[VENDOR_VENDORS_ID])}/$vendorId`,
+      beforeLoad: ({ context, params }) =>
+        ensureApplicationAccess(
+          context.queryClient,
+          (params as unknown as { workspaceSlug: string }).workspaceSlug,
+          'vendor-management'
+        ),
+      component: LazyVendorVendorsScreen
+    }),
+    ctx =>
+      railSectionShell(ctx, VENDOR_VENDORS_ID, {
+        breadcrumbs: buildVendorManagementBreadcrumbs(ctx, VENDOR_VENDORS_ID)
+      })
+  );
   const contractsRoute = withWorkspaceShell(
     createRoute({
       getParentRoute: () => workspaceRoute,
@@ -113,5 +133,12 @@ export const createVendorManagementWorkspaceRoutes = <TParentRoute extends AnyRo
       })
   );
 
-  return [overviewRoute, vendorsRoute, contractsRoute, spendRoute, riskRoute] as const;
+  return [
+    overviewRoute,
+    vendorsRoute,
+    vendorsDetailRoute,
+    contractsRoute,
+    spendRoute,
+    riskRoute
+  ] as const;
 };

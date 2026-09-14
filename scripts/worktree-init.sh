@@ -46,7 +46,6 @@ LINK_TARGETS=(
   ".github/workflows/crabbox-hydrate.yaml",
   "AGENTS.md"
   "CLAUDE.md"
-
 )
 
 for rel in "${LINK_TARGETS[@]}"; do
