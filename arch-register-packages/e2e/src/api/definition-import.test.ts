@@ -175,6 +175,65 @@ test.describe('definition import', () => {
     }
   });
 
+  test('rejects execution when a preview becomes stale', async ({ orpc, server }) => {
+    const source = await orpc.workspaces.create({
+      body: { name: `Stale definition preview source ${randomUUID()}`, badge: 'SDS' }
+    });
+    const target = await orpc.workspaces.create({
+      body: { name: `Stale definition preview target ${randomUUID()}`, badge: 'SDP' }
+    });
+    const sourceSchema = await orpc.schemas.create({
+      params: { workspace: source.url_slug },
+      body: { name: 'Stale source schema', key_prefix: 'STAL', fields: [] }
+    });
+    const preview = await orpc.workspaces.definitionImportPreview({
+      params: { workspace: target.url_slug },
+      body: {
+        source: { kind: 'workspace', id: source.url_slug },
+        selection: {
+          schemas: [sourceSchema.id],
+          enums: [],
+          documentTypes: [],
+          relationSchemas: [],
+          fieldGroups: [],
+          dashboard: false
+        }
+      }
+    });
+    await orpc.schemas.update({
+      params: { workspace: source.url_slug, id: sourceSchema.id },
+      body: { name: 'Changed source schema' }
+    });
+
+    await expect(
+      orpc.workspaces.definitionImportExecute({
+        params: { workspace: target.url_slug },
+        body: {
+          source: preview.source,
+          selection: preview.selection,
+          schemas: preview.schemas,
+          enums: preview.enums,
+          documentTypes: preview.documentTypes,
+          relationSchemas: preview.relationSchemas,
+          fieldGroups: preview.fieldGroups,
+          dashboardWidgets: preview.dashboardWidgets,
+          dependencyMappings: preview.dependencyMappings,
+          schemaPatches: preview.schemaPatches,
+          keyPrefixRemaps: preview.keyPrefixRemaps,
+          fingerprint: preview.fingerprint,
+          confirmed: true
+        }
+      })
+    ).rejects.toMatchObject({
+      code: 'CONFLICT',
+      message: 'The definition import preview is stale. Preview the import again.'
+    });
+
+    expect(
+      (await server.db.catalog.listSchemas(target.id)).map(schema => schema.name)
+    ).not.toContain('Stale source schema');
+  });
+
   test('blocks a case-insensitive name collision before persistence', async ({ orpc, server }) => {
     const target = await orpc.workspaces.create({ body: { name: 'Definition Collision Target' } });
     const sources = await orpc.workspaces.definitionImportSources({
