@@ -33,7 +33,18 @@ export const demoVendorEntities: SeedEntityInput[] = [
     tags: ['vendor', 'payments'],
     links: [],
     schema_id: SEED_SCHEMA_IDS.vendor,
-    data: {},
+    data: {
+      category: 'software',
+      tier: 'strategic',
+      status: 'active',
+      relationship_owner: 'Head of Payments Engineering',
+      cost_centre: 'engineering',
+      security_risk: 3,
+      concentration_risk: 4,
+      financial_risk: 2,
+      compliance_risk: 3,
+      criticality: 5
+    },
     project_id: null,
     created_at: now,
     updated_at: now
@@ -53,7 +64,18 @@ export const demoVendorEntities: SeedEntityInput[] = [
     tags: ['vendor', 'logistics'],
     links: [],
     schema_id: SEED_SCHEMA_IDS.vendor,
-    data: {},
+    data: {
+      category: 'software',
+      tier: 'tactical',
+      status: 'active',
+      relationship_owner: 'Head of Platform Engineering',
+      cost_centre: 'it-operations',
+      security_risk: 2,
+      concentration_risk: 3,
+      financial_risk: 2,
+      compliance_risk: 2,
+      criticality: 3
+    },
     project_id: null,
     created_at: now,
     updated_at: now
@@ -73,7 +95,18 @@ export const demoVendorEntities: SeedEntityInput[] = [
     tags: ['vendor', 'marketing'],
     links: [],
     schema_id: SEED_SCHEMA_IDS.vendor,
-    data: {},
+    data: {
+      category: 'software',
+      tier: 'commodity',
+      status: 'active',
+      relationship_owner: 'Head of Marketing',
+      cost_centre: 'sales-marketing',
+      security_risk: 2,
+      concentration_risk: 1,
+      financial_risk: 1,
+      compliance_risk: 2,
+      criticality: 2
+    },
     project_id: null,
     created_at: now,
     updated_at: now
@@ -93,7 +126,18 @@ export const demoVendorEntities: SeedEntityInput[] = [
     tags: ['vendor', 'data'],
     links: [],
     schema_id: SEED_SCHEMA_IDS.vendor,
-    data: {},
+    data: {
+      category: 'cloud-hosting',
+      tier: 'strategic',
+      status: 'active',
+      relationship_owner: 'Head of Data Platform',
+      cost_centre: 'engineering',
+      security_risk: 3,
+      concentration_risk: 4,
+      financial_risk: 3,
+      compliance_risk: 3,
+      criticality: 4
+    },
     project_id: null,
     created_at: now,
     updated_at: now
@@ -121,7 +165,11 @@ export const demoContractEntities: SeedEntityInput[] = [
       contract_start: '2025-01-01',
       contract_end: '2026-12-31',
       annual_cost: { amount: 96000, currency: 'USD' },
-      setup_fee: { amount: 8000, currency: 'USD' }
+      setup_fee: { amount: 8000, currency: 'USD' },
+      contract_type: 'licence',
+      auto_renew: true,
+      notice_period_days: 90,
+      contract_owner: 'Head of Payments Engineering'
     },
     project_id: null,
     created_at: now,
@@ -147,7 +195,11 @@ export const demoContractEntities: SeedEntityInput[] = [
       contract_start: '2025-01-01',
       contract_end: '2026-12-31',
       annual_cost: { amount: 24000, currency: 'USD' },
-      setup_fee: { amount: 0, currency: 'USD' }
+      setup_fee: { amount: 0, currency: 'USD' },
+      contract_type: 'support',
+      auto_renew: true,
+      notice_period_days: 30,
+      contract_owner: 'Head of Payments Engineering'
     },
     project_id: null,
     created_at: now,
@@ -173,7 +225,11 @@ export const demoContractEntities: SeedEntityInput[] = [
       contract_start: '2025-04-01',
       contract_end: '2027-03-31',
       annual_cost: { amount: 42000, currency: 'USD' },
-      setup_fee: { amount: 5000, currency: 'USD' }
+      setup_fee: { amount: 5000, currency: 'USD' },
+      contract_type: 'licence',
+      auto_renew: false,
+      notice_period_days: 60,
+      contract_owner: 'Head of Platform Engineering'
     },
     project_id: null,
     created_at: now,
@@ -199,7 +255,11 @@ export const demoContractEntities: SeedEntityInput[] = [
       contract_start: '2025-06-01',
       contract_end: '2026-05-31',
       annual_cost: { amount: 30000, currency: 'GBP' },
-      setup_fee: { amount: 2500, currency: 'GBP' }
+      setup_fee: { amount: 2500, currency: 'GBP' },
+      contract_type: 'subscription',
+      auto_renew: true,
+      notice_period_days: 30,
+      contract_owner: 'Head of Marketing'
     },
     project_id: null,
     created_at: now,
@@ -225,7 +285,11 @@ export const demoContractEntities: SeedEntityInput[] = [
       contract_start: '2025-09-01',
       contract_end: '2026-08-31',
       annual_cost: { amount: 68000, currency: 'USD' },
-      setup_fee: { amount: 0, currency: 'USD' }
+      setup_fee: { amount: 0, currency: 'USD' },
+      contract_type: 'subscription',
+      auto_renew: false,
+      notice_period_days: 45,
+      contract_owner: 'Head of Data Platform'
     },
     project_id: null,
     created_at: now,

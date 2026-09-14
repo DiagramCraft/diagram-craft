@@ -488,6 +488,67 @@ const contractPurposeEnum = enumDefinition(
   'Vendor'
 );
 
+const vendorCategoryEnum = enumDefinition(
+  'vendor-category',
+  'Vendor Category',
+  [
+    { value: 'software', label: 'Software' },
+    { value: 'hardware', label: 'Hardware' },
+    { value: 'cloud-hosting', label: 'Cloud / Hosting' },
+    { value: 'professional-services', label: 'Professional Services' },
+    { value: 'other', label: 'Other' }
+  ],
+  'Vendor'
+);
+
+const vendorTierEnum = enumDefinition(
+  'vendor-tier',
+  'Vendor Tier',
+  [
+    { value: 'strategic', label: 'Strategic' },
+    { value: 'tactical', label: 'Tactical' },
+    { value: 'commodity', label: 'Commodity' }
+  ],
+  'Vendor'
+);
+
+const vendorStatusEnum = enumDefinition(
+  'vendor-status',
+  'Vendor Status',
+  [
+    { value: 'onboarding', label: 'Onboarding' },
+    { value: 'active', label: 'Active' },
+    { value: 'offboarding', label: 'Offboarding' },
+    { value: 'inactive', label: 'Inactive' }
+  ],
+  'Vendor'
+);
+
+const vendorCostCentreEnum = enumDefinition(
+  'vendor-cost-centre',
+  'Cost Centre',
+  [
+    { value: 'engineering', label: 'Engineering' },
+    { value: 'it-operations', label: 'IT Operations' },
+    { value: 'sales-marketing', label: 'Sales & Marketing' },
+    { value: 'finance-admin', label: 'Finance & Admin' },
+    { value: 'other', label: 'Other' }
+  ],
+  'Vendor'
+);
+
+const contractTypeEnum = enumDefinition(
+  'contract-type',
+  'Contract Type',
+  [
+    { value: 'licence', label: 'Licence' },
+    { value: 'support', label: 'Support' },
+    { value: 'subscription', label: 'Subscription' },
+    { value: 'services', label: 'Services' }
+  ],
+  'Vendor'
+);
+
 const communicationProtocolEnum = enumDefinition(
   'communication-protocol',
   'Communication Protocol',
@@ -1958,7 +2019,27 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             minCount: 0,
             maxCount: -1,
             requirementLevel: null
-          }
+          },
+          {
+            id: 'contract_type',
+            name: 'Contract Type',
+            type: 'select',
+            enumId: 'contract-type',
+            groupId: 'terms'
+          },
+          { id: 'auto_renew', name: 'Auto-Renew', type: 'boolean', groupId: 'terms' },
+          {
+            id: 'notice_period_days',
+            name: 'Notice Period (Days)',
+            type: 'number',
+            min: 0,
+            groupId: 'terms'
+          },
+          { id: 'contract_owner', name: 'Contract Owner', type: 'text', groupId: 'ownership' }
+        ],
+        groups: [
+          { id: 'terms', name: 'Terms' },
+          { id: 'ownership', name: 'Ownership' }
         ],
         validationRules: [
           {
@@ -1979,7 +2060,74 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         category: 'Vendor',
         color: AR_COLOR_BLUE,
         icon: 'building',
-        fields: []
+        fields: [
+          {
+            id: 'category',
+            name: 'Category',
+            type: 'select',
+            enumId: 'vendor-category',
+            groupId: 'classification'
+          },
+          { id: 'tier', name: 'Tier', type: 'select', enumId: 'vendor-tier', groupId: 'classification' },
+          {
+            id: 'status',
+            name: 'Status',
+            type: 'select',
+            enumId: 'vendor-status',
+            groupId: 'classification'
+          },
+          {
+            id: 'relationship_owner',
+            name: 'Relationship Owner',
+            type: 'text',
+            groupId: 'ownership'
+          },
+          {
+            id: 'cost_centre',
+            name: 'Cost Centre',
+            type: 'select',
+            enumId: 'vendor-cost-centre',
+            groupId: 'ownership'
+          },
+          {
+            id: 'security_risk',
+            name: 'Security Risk',
+            type: 'number',
+            min: 1,
+            max: 5,
+            groupId: 'risk'
+          },
+          {
+            id: 'concentration_risk',
+            name: 'Concentration Risk',
+            type: 'number',
+            min: 1,
+            max: 5,
+            groupId: 'risk'
+          },
+          {
+            id: 'financial_risk',
+            name: 'Financial Risk',
+            type: 'number',
+            min: 1,
+            max: 5,
+            groupId: 'risk'
+          },
+          {
+            id: 'compliance_risk',
+            name: 'Compliance Risk',
+            type: 'number',
+            min: 1,
+            max: 5,
+            groupId: 'risk'
+          },
+          { id: 'criticality', name: 'Criticality', type: 'number', min: 1, max: 5, groupId: 'risk' }
+        ],
+        groups: [
+          { id: 'classification', name: 'Classification' },
+          { id: 'ownership', name: 'Ownership' },
+          { id: 'risk', name: 'Risk' }
+        ]
       },
       technologySchema,
       technologyReleaseSchema
@@ -1989,6 +2137,11 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
       communicationProtocolEnum,
       piiClassificationEnum,
       contractPurposeEnum,
+      vendorCategoryEnum,
+      vendorTierEnum,
+      vendorStatusEnum,
+      vendorCostCentreEnum,
+      contractTypeEnum,
       ...technologyEnums
     ],
     fieldGroups: [piiClassificationFieldGroup],

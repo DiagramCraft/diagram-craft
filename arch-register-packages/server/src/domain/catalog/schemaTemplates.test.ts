@@ -644,7 +644,18 @@ describe('instantiateTemplate', () => {
     const purpose = relation?.fields.find(field => field.id === 'purpose');
 
     expect(vendor).toBeDefined();
-    expect(vendor?.fields).toEqual([]);
+    expect(vendor?.fields.map(field => field.id)).toEqual([
+      'category',
+      'tier',
+      'status',
+      'relationship_owner',
+      'cost_centre',
+      'security_risk',
+      'concentration_risk',
+      'financial_risk',
+      'compliance_risk',
+      'criticality'
+    ]);
     expect(contract?.fields).toContainEqual({
       id: 'vendor',
       name: 'Vendor',
