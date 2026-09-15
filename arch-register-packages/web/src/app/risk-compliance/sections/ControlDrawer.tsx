@@ -65,8 +65,7 @@ export const ControlDrawer = ({
     relation => relation._schema.id === riskControlRelationSchemaId && relation._out.id === uid
   );
   const protectedEntities = all.filter(
-    relation =>
-      relation._schema.id === controlAffectsRelationSchemaId && relation._in.id === uid
+    relation => relation._schema.id === controlAffectsRelationSchemaId && relation._in.id === uid
   );
 
   if (control.isLoading) {

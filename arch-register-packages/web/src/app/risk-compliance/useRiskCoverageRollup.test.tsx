@@ -60,7 +60,10 @@ describe('useRiskCoverageRollup', () => {
     container.remove();
   });
 
-  const render = (riskId: string | null, relationSchemaId: string | null = 'risk-control-schema') => {
+  const render = (
+    riskId: string | null,
+    relationSchemaId: string | null = 'risk-control-schema'
+  ) => {
     act(() => {
       root.render(
         <QueryClientProvider client={queryClient}>
@@ -86,7 +89,6 @@ describe('useRiskCoverageRollup', () => {
       error: null
     });
     expect(mocks.listForEntity).not.toHaveBeenCalled();
-
   });
 
   it('returns no controls/coverage when riskId is set but the relation schema id is not yet resolved', async () => {

@@ -81,14 +81,14 @@ export const RiskComplianceRisksScreen = () => {
           ) : (
             items.map(entity => {
               const band = residualRiskBand(
-                typeof entity.residual_risk_score === 'number'
-                  ? entity.residual_risk_score
-                  : null
+                typeof entity.residual_risk_score === 'number' ? entity.residual_risk_score : null
               );
               return (
                 <Table.Row key={entity._uid} onClick={() => openRisk(entity._publicId)}>
                   <Table.NameCell title={entity._name} subtitle={entity._publicId} />
-                  <Table.Cell>{typeof entity.category === 'string' ? entity.category : '—'}</Table.Cell>
+                  <Table.Cell>
+                    {typeof entity.category === 'string' ? entity.category : '—'}
+                  </Table.Cell>
                   <Table.Cell>
                     {band ? (
                       <Chip dot={RESIDUAL_RISK_BAND_COLOR[band]} tone="ghost">

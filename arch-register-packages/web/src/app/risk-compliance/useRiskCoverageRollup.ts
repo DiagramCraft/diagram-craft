@@ -52,8 +52,7 @@ export const useRiskCoverageRollup = (
 
   const all = [...(query.data?.outgoing ?? []), ...(query.data?.incoming ?? [])];
   const mitigations = all.filter(
-    relation =>
-      relation._schema.id === riskControlRelationSchemaId && relation._in.id === riskId
+    relation => relation._schema.id === riskControlRelationSchemaId && relation._in.id === riskId
   );
 
   const controls: RiskMitigatingControl[] = mitigations.map(relation => ({
