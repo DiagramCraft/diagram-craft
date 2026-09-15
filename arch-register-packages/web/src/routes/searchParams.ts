@@ -465,9 +465,13 @@ const controlsSearchSchema = defineSearchParamSchema({
   type: stringCodec,
   effectiveness: stringCodec,
   framework: stringCodec,
-  // Toggles the section between its sortable library table and the coverage roll-up view
-  // (weakest-covered risks, coverage by information asset); defaults to 'library'.
-  view: enumCodec(['library', 'coverage'] as const)
+  // Toggles the section between its sortable library table, the coverage roll-up view
+  // (weakest-covered risks, coverage by information asset), and the control × risk/asset
+  // traceability matrix (#3282); defaults to 'library'.
+  view: enumCodec(['library', 'coverage', 'traceability'] as const),
+  // Toggles the traceability matrix's columns between risks and information assets — set by its
+  // own Risks/Assets toggle, independent of `view`; defaults to 'risks'.
+  dim: enumCodec(['risks', 'assets'] as const)
 });
 
 export type ControlsSearchParams = SearchParamsFromSchema<typeof controlsSearchSchema>;

@@ -425,8 +425,14 @@
           affects Systems, Vendors, and Technology resources directly, not only information assets. Because
           `risk-affects` can still surface non-Data-Entity assets, the coverage-by-asset table additionally filters
           to the resolved Data Entity schema id (the capability's optional `dataEntity` binding role) rather than
-          relying on the relation constraint alone. The traceability matrix (control × risk / control × asset) is
-          still pending. Selecting a control opens the shared Control drawer, deep-linkable at
+          relying on the relation constraint alone. A third, Traceability view is a dense grid: the library's
+          currently filtered Controls as rows, and — toggled by a Risks/Assets switch — either every live Risk or
+          the same Data-Entity-scoped assets as the Coverage view's asset table as columns, with a filled dot per
+          linked Control/Risk (`risk-control`) or Control/Asset (`control-affects`) pair, a per-row total (how many
+          columns that Control covers) and a per-column total that's highlighted when it's zero (an uncontrolled
+          Risk or asset). Both axes scroll with sticky row/column headers, since neither is bounded like the Risks
+          section's fixed 5×5 matrix. Clicking a row or column header opens the same Control/Risk/asset drawers as
+          the Library and Coverage views. Selecting a control opens the shared Control drawer, deep-linkable at
           `risk-compliance/controls/$controlId`: attributes, the Risks it mitigates (with the `coverage`/
           `effectiveness` it provides each one), and the Data Entities it protects (via `control-affects`).
 

@@ -1,0 +1,161 @@
+/* Mirrors the design reference's `.rc-trace*` rules (`rc.css`) — a real table, not a CSS grid,
+   with a sticky corner/header row and sticky first column. Both axes are open-ended (unlike the
+   fixed 5×5 RiskComplianceMatrix), so this scrolls in both directions. */
+.wrap {
+  overflow: auto;
+  max-height: 620px;
+}
+
+.empty {
+  padding: 32px;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.trace {
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 11px;
+}
+
+.trace th,
+.trace td {
+  border-bottom: 1px solid var(--panel-border);
+  border-right: 1px solid var(--panel-border);
+}
+
+.trace thead th {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: var(--panel-bg);
+  height: 110px;
+  vertical-align: bottom;
+  padding: 0;
+  font-weight: 400;
+}
+
+.hd0 {
+  position: sticky;
+  left: 0;
+  top: 0;
+  z-index: 4;
+  text-align: left;
+  padding: 0 10px 8px !important;
+  font-weight: 500;
+  color: var(--base-fg-more-dim);
+  vertical-align: bottom;
+  min-width: 230px;
+}
+
+.vert {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  padding: 8px 0 10px;
+  font-size: 10px;
+  color: var(--base-fg-more-dim);
+  white-space: nowrap;
+  max-height: 100px;
+  overflow: hidden;
+  margin: 0 auto;
+}
+
+.trace tbody th {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: var(--panel-bg);
+  text-align: left;
+  font-weight: 400;
+  padding: 6px 10px;
+  min-width: 230px;
+  max-width: 300px;
+}
+
+.rowHeaderCell {
+  cursor: pointer;
+}
+
+.trace tbody tr:hover th,
+.trace tbody tr:hover td {
+  background: var(--cmp-bg-hover, var(--cmp-bg));
+}
+
+.rowname {
+  color: var(--base-fg);
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.trace td {
+  width: 30px;
+  min-width: 30px;
+  text-align: center;
+  padding: 0;
+  height: 30px;
+}
+
+.mark {
+  width: 11px;
+  height: 11px;
+  border-radius: 3px;
+  display: inline-block;
+  background: var(--accent-fg);
+  opacity: 0.9;
+}
+
+.markWeak {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--base-fg-more-dim);
+}
+
+.markGap {
+  background: var(--cmp-fg-danger, #ef4444);
+}
+
+.tot {
+  font-size: 10px;
+  color: var(--base-fg-more-dim);
+  background: var(--panel-bg);
+}
+
+.totLabel {
+  font-size: 10px;
+  color: var(--base-fg-more-dim);
+}
+
+/* Legend above the table, mirroring the panel header's `.rc-legend`. */
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 10.5px;
+  color: var(--base-fg-more-dim);
+  flex-wrap: wrap;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.legendSwatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  display: inline-block;
+  background: var(--accent-fg);
+}
+
+.legendSwatchWeak {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--base-fg-more-dim);
+}
+
+.legendSwatchGap {
+  background: var(--cmp-fg-danger, #ef4444);
+}
