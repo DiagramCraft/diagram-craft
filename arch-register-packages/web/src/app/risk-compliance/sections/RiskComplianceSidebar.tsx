@@ -12,8 +12,6 @@ import { workspaceCapabilityConfigurationsQuery } from '../../../queries/workspa
 import { useSchemas } from '../../../hooks/useSchemas';
 import { resolveRiskComplianceConfig, type RiskComplianceConfig } from '../riskComplianceQueries';
 import { RESIDUAL_RISK_BAND_COLOR, residualRiskBand } from '../residualRiskBand';
-import { COVERAGE_BAND_COLOR } from '../riskCoverage';
-import { useControlCoverageRollups } from '../useControlCoverageRollups';
 import { useControlFrameworks } from '../useControlFrameworks';
 import {
   RISK_RAIL_PATHS,
@@ -240,9 +238,8 @@ const RisksSidebarContent = ({
  * `RiskComplianceControlsScreen.tsx`'s field-mapping comment). Framework counts come from
  * `useControlFrameworks.ts`'s two-hop join rather than a schema field.
  *
- * Also lists every control individually under a trailing "Controls" group, each opening the
- * shared `ControlDrawer` directly, coloured by its own coverage band — mirroring
- * `RisksSidebarContent`'s trailing "Risks" quick-jump list.
+ * Unlike `RisksSidebarContent`, this doesn't also list every Control individually — the library
+ * table is the place to browse controls one by one; the sidebar stays a pure facet/count panel.
  */
 const ControlsSidebarContent = ({
   workspaceSlug,
@@ -252,7 +249,6 @@ const ControlsSidebarContent = ({
   riskConfig: RiskComplianceConfig;
 }) => {
   const navigate = useNavigate();
-  const { controlId } = useParams({ strict: false }) as { controlId?: string };
   const search = useSearch({ strict: false }) as ControlsSearchParams;
   const { data: schemas } = useSchemas(workspaceSlug);
   const controlSchema = schemas?.find(schema => schema.id === riskConfig.controlSchemaId);
@@ -266,9 +262,6 @@ const ControlsSidebarContent = ({
   );
   const controls = controlsData?.items ?? [];
 
-  const mitigatedRisksField = controlSchema?.fields.find(field => field.id === 'mitigated_risks');
-  const riskControlRelationSchemaId =
-    mitigatedRisksField?.type === 'typedRelation' ? mitigatedRisksField.relationSchemaId : null;
   const satisfiedRequirementsField = controlSchema?.fields.find(
     field => field.id === 'satisfied_requirements'
   );
@@ -277,7 +270,6 @@ const ControlsSidebarContent = ({
       ? satisfiedRequirementsField.relationSchemaId
       : null;
 
-  const coverage = useControlCoverageRollups(workspaceSlug, riskControlRelationSchemaId);
   const frameworks = useControlFrameworks(
     workspaceSlug,
     controlRequirementRelationSchemaId,
@@ -309,12 +301,6 @@ const ControlsSidebarContent = ({
       to: RISK_RAIL_PATHS[RISK_CONTROLS_ID],
       params: { workspaceSlug },
       search: (previous: Record<string, unknown>) => ({ ...previous, ...patch })
-    });
-  const openControl = (id: string) =>
-    navigate({
-      to: `${RISK_RAIL_PATHS[RISK_CONTROLS_ID]}/$controlId`,
-      params: { workspaceSlug, controlId: id },
-      search: (previous: Record<string, unknown>) => previous
     });
 
   const hasAnySelection = !!search.type || !!search.effectiveness || !!search.framework;
@@ -384,27 +370,6 @@ const ControlsSidebarContent = ({
           trailing={<span className="dim mono">{option.controlCount}</span>}
         />
       ))}
-      <SidebarGroupLabel>Controls</SidebarGroupLabel>
-      {controls.map(control => {
-        const band = coverage.byId.get(control._uid)?.rcBand ?? null;
-        return (
-          <FacetRow
-            key={control._uid}
-            icon={
-              <span
-                className="dim"
-                style={{ color: band ? COVERAGE_BAND_COLOR[band] : 'var(--panel-border)' }}
-              >
-                ●
-              </span>
-            }
-            label={`${control._publicId} ${control._name}`}
-            testId={`control-facet-control-${control._uid}`}
-            active={controlId === control._publicId}
-            onClick={() => openControl(control._publicId)}
-          />
-        );
-      })}
     </>
   );
 };

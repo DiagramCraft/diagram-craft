@@ -3,10 +3,7 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  useControlCoverageRollups,
-  type ControlCoverageRollups
-} from './useControlCoverageRollups';
+import { useControlRiskCounts, type ControlRiskCounts } from './useControlRiskCounts';
 
 const mocks = vi.hoisted(() => ({ list: vi.fn() }));
 
@@ -14,10 +11,10 @@ vi.mock('../../lib/orpcClient', () => ({
   orpcClient: { relations: { list: mocks.list } }
 }));
 
-const relation = (controlId: string, overrides: Record<string, unknown> = {}) => ({
-  _uid: `rel-${controlId}-${Math.random()}`,
+const relation = (controlId: string, riskId: string) => ({
+  _uid: `rel-${controlId}-${riskId}`,
   _schema: { id: 'risk-control-schema', name: 'Risk Mitigation' },
-  _in: { id: 'risk-1', name: 'Risk 1', schemaId: 'risk-schema' },
+  _in: { id: riskId, name: `Risk ${riskId}`, schemaId: 'risk-schema' },
   _out: { id: controlId, name: `Control ${controlId}`, schemaId: 'control-schema' },
   _owner: null,
   _lifecycle: null,
@@ -27,18 +24,17 @@ const relation = (controlId: string, overrides: Record<string, unknown> = {}) =>
   canView: true,
   canEdit: true,
   effectiveness: 'full',
-  coverage: 100,
-  ...overrides
+  coverage: 100
 });
 
-let latest: ControlCoverageRollups | undefined;
+let latest: ControlRiskCounts | undefined;
 
 const Harness = ({ relationSchemaId }: { relationSchemaId: string | null }) => {
-  latest = useControlCoverageRollups('ws-1', relationSchemaId);
+  latest = useControlRiskCounts('ws-1', relationSchemaId);
   return null;
 };
 
-describe('useControlCoverageRollups', () => {
+describe('useControlRiskCounts', () => {
   let container: HTMLDivElement;
   let root: Root;
   let queryClient: QueryClient;
@@ -75,40 +71,32 @@ describe('useControlCoverageRollups', () => {
 
   it('returns empty result when disabled (no relation schema id)', () => {
     render(null);
-    expect(latest).toEqual({
-      byId: new Map(),
-      riskCountById: new Map(),
-      isLoading: false,
-      error: null
-    });
+    expect(latest).toEqual({ countById: new Map(), isLoading: false, error: null });
     expect(mocks.list).not.toHaveBeenCalled();
   });
 
-  it('groups relations by mitigating Control id and computes per-Control coverage', async () => {
+  it('counts risk-control relations per mitigating Control id', async () => {
     mocks.list.mockResolvedValue({
       items: [
-        relation('control-1', { coverage: 100, effectiveness: 'full' }),
-        relation('control-2', { coverage: 70, effectiveness: 'partial' })
+        relation('control-1', 'risk-1'),
+        relation('control-1', 'risk-2'),
+        relation('control-2', 'risk-1')
       ],
-      total: 2
+      total: 3
     });
     render('risk-control-schema');
     await flush();
 
-    expect(latest?.byId.get('control-1')).toEqual({ rcCoverage: 100, rcBand: 'strong' });
-    expect(latest?.riskCountById.get('control-1')).toBe(1);
-    expect(latest?.byId.get('control-2')).toEqual({ rcCoverage: 35, rcBand: 'partial' });
-    expect(latest?.byId.has('control-3')).toBe(false);
+    expect(latest?.countById.get('control-1')).toBe(2);
+    expect(latest?.countById.get('control-2')).toBe(1);
+    expect(latest?.countById.has('control-3')).toBe(false);
   });
 
-  it('counts multiple risk-control relations for the same Control', async () => {
-    mocks.list.mockResolvedValue({
-      items: [relation('control-1'), relation('control-1')],
-      total: 2
-    });
+  it('surfaces a query error', async () => {
+    mocks.list.mockRejectedValue(new Error('boom'));
     render('risk-control-schema');
     await flush();
 
-    expect(latest?.riskCountById.get('control-1')).toBe(2);
+    expect(latest?.error?.message).toBe('boom');
   });
 });

@@ -107,7 +107,13 @@ describe('useAssetCoverageRollups', () => {
     await flush();
 
     expect(latest?.items).toEqual([
-      { assetId: 'asset-1', assetName: 'Customer DB', riskCount: 2, controlCount: 1 }
+      {
+        assetId: 'asset-1',
+        assetName: 'Customer DB',
+        assetSchemaId: 'entity-schema',
+        riskCount: 2,
+        controlCount: 1
+      }
     ]);
   });
 
@@ -126,7 +132,42 @@ describe('useAssetCoverageRollups', () => {
     await flush();
 
     expect(latest?.items).toEqual([
-      { assetId: 'asset-2', assetName: 'Marketing List', riskCount: 1, controlCount: 0 }
+      {
+        assetId: 'asset-2',
+        assetName: 'Marketing List',
+        assetSchemaId: 'entity-schema',
+        riskCount: 1,
+        controlCount: 0
+      }
+    ]);
+  });
+
+  it('falls back to null when no relation endpoint carries a schema id', async () => {
+    mocks.list.mockImplementation(({ query }: { query: { schemaId?: string } }) =>
+      query.schemaId === 'risk-affects-schema'
+        ? Promise.resolve({
+            items: [
+              {
+                ...relation('risk-affects-schema', 'risk-1', 'asset-3', 'Deleted Asset'),
+                _out: { id: 'asset-3', name: 'Deleted Asset' }
+              }
+            ],
+            total: 1
+          })
+        : Promise.resolve({ items: [], total: 0 })
+    );
+
+    render('risk-affects-schema', 'control-affects-schema');
+    await flush();
+
+    expect(latest?.items).toEqual([
+      {
+        assetId: 'asset-3',
+        assetName: 'Deleted Asset',
+        assetSchemaId: null,
+        riskCount: 1,
+        controlCount: 0
+      }
     ]);
   });
 });

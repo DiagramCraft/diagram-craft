@@ -18,11 +18,13 @@ import { formatDate } from '../../../utils/dateFormat';
 import { asEntityPublicId, entityDetailRoute } from '../../../routes/publicObjectRoutes';
 import { resolveRiskComplianceConfig } from '../riskComplianceQueries';
 import { RISK_RAIL_PATHS, RISK_CONTROLS_ID } from '../riskComplianceSections';
-import { useControlCoverageRollups } from '../useControlCoverageRollups';
+import { useControlRiskCounts } from '../useControlRiskCounts';
+import { useControlAssetCounts } from '../useControlAssetCounts';
 import { useRiskCoverageRollups } from '../useRiskCoverageRollups';
 import { useAssetCoverageRollups } from '../useAssetCoverageRollups';
 import { useControlFrameworks } from '../useControlFrameworks';
 import { COVERAGE_BAND_COLOR } from '../riskCoverage';
+import { CONTROL_EFFECTIVENESS_COLOR } from '../controlEffectiveness';
 import { riskFieldValue } from '../riskFieldDisplay';
 import { Chip } from '../../../components/Chip';
 import type { ControlsSearchParams } from '../../../routes/searchParams';
@@ -91,7 +93,7 @@ const AssetDrawer = ({
   );
 };
 
-type SortKey = 'coverage' | 'risksMitigated' | 'lastVerified' | 'name';
+type SortKey = 'risksMitigated' | 'lastVerified' | 'name';
 
 const compareNullable = (a: number | string | null, b: number | string | null): number => {
   if (a == null && b == null) return 0;
@@ -101,25 +103,28 @@ const compareNullable = (a: number | string | null, b: number | string | null): 
 };
 
 /**
- * The Controls library: search, sort (coverage / risks mitigated / last verified / name), and
- * facets (type, effectiveness, framework) delivered by `RiskComplianceSidebar`'s
- * `ControlsSidebarContent`, plus a Coverage roll-up view — three stat tiles (Effective, Never
- * tested, Uncontrolled risks), a "coverage by risk" bar-list (weakest first), and a "coverage by
- * information asset" table — mirrors the design reference's `RCControls`/`RCCoverage`
- * (`rc-views.jsx`) and this codebase's own `RiskComplianceRisksScreen.tsx` register/matrix
- * toggle. Opens the shared `ControlDrawer` on row click, deep-linkable at
- * `risk-compliance/controls/$controlId`. The Coverage view's own rows (Risks, information
- * assets) open their drawers in-situ over this same page too, via local state rather than
- * navigation — see `openRiskId`/`openAssetId` below.
+ * The Controls library: search, sort (name / risks mitigated / last verified), and facets (type,
+ * effectiveness, framework) delivered by `RiskComplianceSidebar`'s `ControlsSidebarContent`, plus
+ * a Coverage roll-up view — three stat tiles (Effective, Never tested, Uncontrolled risks), a
+ * "coverage by risk" bar-list (weakest first), and a "coverage by information asset" table —
+ * mirrors the design reference's `RCControls`/`RCCoverage` (`rc-views.jsx`) and this codebase's
+ * own `RiskComplianceRisksScreen.tsx` register/matrix toggle. Opens the shared `ControlDrawer` on
+ * row click, deep-linkable at `risk-compliance/controls/$controlId`. The Coverage view's own rows
+ * (Risks, information assets) open their drawers in-situ over this same page too, via local
+ * state rather than navigation — see `openRiskId`/`openAssetId` below.
  *
  * The issue's design language ("family, type, automation, effectiveness, owner, frequency,
  * last/next test") doesn't fully match the shipped schema, which only gives Control
  * `control_type`/`design_effectiveness`/`operating_effectiveness`/`last_verified` — per #3279's
  * "adapt to the shipped schema rather than reworking it" decision (same one #3280 followed for
  * Risks' "next review"/"reference"), `control_type` stands in for both family and type, and
- * automation/owner/frequency/next-test have no analog and are simply not shown. Coverage and
- * Risks mitigated are synthesized (not in the shipped schema) from the `risk-control` relation,
- * the same way Risks' own Coverage column is.
+ * automation/owner/frequency/next-test have no analog and are simply not shown. Risks mitigated
+ * and Assets (`useControlRiskCounts.ts`/`useControlAssetCounts.ts`) are synthesized counts from
+ * the `risk-control`/`control-affects` relations, matching the design reference's `c.risks.length`
+ * / `c.assets.length`. The library table intentionally has no "coverage %" column — reusing the
+ * Risks screen's per-Risk `computeRiskCoverage` combination formula the other way round (across
+ * one Control's *different* Risks, rather than across the *different controls covering one*
+ * Risk) doesn't produce a meaningful number, see `useControlRiskCounts.ts`'s doc comment.
  */
 export const RiskComplianceControlsScreen = () => {
   const { workspaceSlug, controlId } = useParams({ strict: false }) as {
@@ -173,7 +178,8 @@ export const RiskComplianceControlsScreen = () => {
     )
   );
   const allItems = controls.data?.items ?? [];
-  const coverage = useControlCoverageRollups(workspaceSlug, riskControlRelationSchemaId);
+  const riskCounts = useControlRiskCounts(workspaceSlug, riskControlRelationSchemaId);
+  const assetCounts = useControlAssetCounts(workspaceSlug, controlAffectsRelationSchemaId);
   const frameworks = useControlFrameworks(
     workspaceSlug,
     controlRequirementRelationSchemaId,
@@ -206,15 +212,10 @@ export const RiskComplianceControlsScreen = () => {
   ]);
 
   const comparators: Record<SortKey, (a: EntityRecord, b: EntityRecord) => number> = {
-    coverage: (a, b) =>
-      compareNullable(
-        coverage.byId.get(a._uid)?.rcCoverage ?? null,
-        coverage.byId.get(b._uid)?.rcCoverage ?? null
-      ),
     risksMitigated: (a, b) =>
       -compareNullable(
-        coverage.riskCountById.get(a._uid) ?? 0,
-        coverage.riskCountById.get(b._uid) ?? 0
+        riskCounts.countById.get(a._uid) ?? 0,
+        riskCounts.countById.get(b._uid) ?? 0
       ),
     lastVerified: (a, b) =>
       compareNullable(
@@ -224,7 +225,7 @@ export const RiskComplianceControlsScreen = () => {
     name: (a, b) => a._name.localeCompare(b._name)
   };
   const { sorted, sort, toggleSort } = useTableSort<EntityRecord, SortKey>(filtered, comparators, {
-    key: 'coverage',
+    key: 'name',
     dir: 'asc'
   });
 
@@ -360,13 +361,12 @@ export const RiskComplianceControlsScreen = () => {
             <div style={{ marginLeft: 'auto' }}>
               <FilterDropdown
                 label="Sort"
-                value={sort?.key ?? 'coverage'}
+                value={sort?.key ?? 'name'}
                 onChange={value => value !== sort?.key && toggleSort(value as SortKey)}
                 options={[
-                  { value: 'coverage', label: 'Coverage' },
+                  { value: 'name', label: 'Name' },
                   { value: 'risksMitigated', label: 'Risks mitigated' },
-                  { value: 'lastVerified', label: 'Last verified' },
-                  { value: 'name', label: 'Name' }
+                  { value: 'lastVerified', label: 'Last verified' }
                 ]}
               />
             </div>
@@ -465,19 +465,26 @@ export const RiskComplianceControlsScreen = () => {
               <Table.Head>
                 <Table.Row>
                   <Table.HeaderCell>Asset</Table.HeaderCell>
+                  <Table.HeaderCell>Type</Table.HeaderCell>
                   <Table.HeaderCell align={'right'}>Risks</Table.HeaderCell>
                   <Table.HeaderCell align={'right'}>Controls</Table.HeaderCell>
                 </Table.Row>
               </Table.Head>
               <Table.Body>
                 {weakestAssets.length === 0 ? (
-                  <Table.EmptyRow colSpan={3}>
+                  <Table.EmptyRow colSpan={4}>
                     {assetCoverage.isLoading ? 'Loading assets…' : 'No affected assets linked.'}
                   </Table.EmptyRow>
                 ) : (
                   weakestAssets.map(asset => (
                     <Table.Row key={asset.assetId} onClick={() => setOpenAssetId(asset.assetId)}>
                       <Table.NameCell title={asset.assetName} />
+                      <Table.Cell>
+                        {asset.assetSchemaId
+                          ? (schemas.data?.find(schema => schema.id === asset.assetSchemaId)
+                              ?.name ?? '—')
+                          : '—'}
+                      </Table.Cell>
                       <Table.Cell numeric>{asset.riskCount}</Table.Cell>
                       <Table.Cell
                         numeric
@@ -501,12 +508,15 @@ export const RiskComplianceControlsScreen = () => {
               <Table.HeaderCell>Name</Table.HeaderCell>
               <Table.HeaderCell>Type</Table.HeaderCell>
               <Table.HeaderCell>Effectiveness</Table.HeaderCell>
-              <Table.SortableHeaderCell sortKey="coverage" sort={sort} onSort={toggleSort}>
-                Coverage
-              </Table.SortableHeaderCell>
-              <Table.SortableHeaderCell sortKey="risksMitigated" sort={sort} onSort={toggleSort}>
+              <Table.SortableHeaderCell
+                sortKey="risksMitigated"
+                sort={sort}
+                onSort={toggleSort}
+                align={'right'}
+              >
                 Risks mitigated
               </Table.SortableHeaderCell>
+              <Table.HeaderCell align={'right'}>Assets</Table.HeaderCell>
               <Table.SortableHeaderCell sortKey="lastVerified" sort={sort} onSort={toggleSort}>
                 Last verified
               </Table.SortableHeaderCell>
@@ -518,33 +528,31 @@ export const RiskComplianceControlsScreen = () => {
                 {controls.isLoading ? 'Loading controls…' : 'No controls match these filters.'}
               </Table.EmptyRow>
             ) : (
-              sorted.map(entity => {
-                const entityCoverage = coverage.byId.get(entity._uid);
-                return (
-                  <Table.Row key={entity._uid} onClick={() => openControl(entity._publicId)}>
-                    <Table.NameCell title={entity._name} subtitle={entity._publicId} />
-                    <Table.Cell>{riskFieldValue(controlSchema, entity, 'control_type')}</Table.Cell>
-                    <Table.Cell>
-                      {riskFieldValue(controlSchema, entity, 'operating_effectiveness')}
-                    </Table.Cell>
-                    <Table.Cell>
-                      {entityCoverage?.rcBand ? (
-                        <Chip dot={COVERAGE_BAND_COLOR[entityCoverage.rcBand]} tone="ghost">
-                          {entityCoverage.rcCoverage?.toFixed(0)}%
-                        </Chip>
-                      ) : (
-                        <span className="dim">—</span>
-                      )}
-                    </Table.Cell>
-                    <Table.Cell numeric>{coverage.riskCountById.get(entity._uid) ?? 0}</Table.Cell>
-                    <Table.Cell>
-                      {typeof entity.last_verified === 'string'
-                        ? formatDate(entity.last_verified)
-                        : '—'}
-                    </Table.Cell>
-                  </Table.Row>
-                );
-              })
+              sorted.map(entity => (
+                <Table.Row key={entity._uid} onClick={() => openControl(entity._publicId)}>
+                  <Table.NameCell title={entity._name} subtitle={entity._publicId} />
+                  <Table.Cell>{riskFieldValue(controlSchema, entity, 'control_type')}</Table.Cell>
+                  <Table.Cell>
+                    {typeof entity.operating_effectiveness === 'string' ? (
+                      <Chip
+                        tone="ghost"
+                        color={CONTROL_EFFECTIVENESS_COLOR[entity.operating_effectiveness]}
+                      >
+                        {riskFieldValue(controlSchema, entity, 'operating_effectiveness')}
+                      </Chip>
+                    ) : (
+                      <span className="dim">—</span>
+                    )}
+                  </Table.Cell>
+                  <Table.Cell numeric>{riskCounts.countById.get(entity._uid) ?? 0}</Table.Cell>
+                  <Table.Cell numeric>{assetCounts.countById.get(entity._uid) ?? 0}</Table.Cell>
+                  <Table.Cell>
+                    {typeof entity.last_verified === 'string'
+                      ? formatDate(entity.last_verified)
+                      : '—'}
+                  </Table.Cell>
+                </Table.Row>
+              ))
             )}
           </Table.Body>
         </Table.Root>

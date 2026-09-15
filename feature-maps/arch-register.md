@@ -403,16 +403,22 @@
           overlapping layers of defense rather than a plain average), the list of mitigating Controls, and the
           entities the risk affects (via `risk-affects`).
 
-        - @id:ar.risk-compliance.controls The Controls section has a sortable library table (search; sort by
-          coverage, risks mitigated, last verified, or name; sidebar facets for Type, Effectiveness, and Framework —
-          the last derived by joining each Control's satisfied Compliance Requirements to their parent Framework, not
-          a schema field) and a Coverage roll-up view. The Coverage view has three stat tiles scoped to the library's
+        - @id:ar.risk-compliance.controls The Controls section has a sortable library table (search; sort by name,
+          risks mitigated, or last verified; columns for Name, Type, Effectiveness — a colour-outlined pill — Risks
+          mitigated, Assets protected, and Last verified) and a Coverage roll-up view. The sidebar's facets (Type,
+          Effectiveness, Framework — the last derived by joining each Control's satisfied Compliance Requirements to
+          their parent Framework, not a schema field) are counts only; it doesn't also list every Control
+          individually, unlike the Risks section's sidebar. The library table has no per-Control coverage
+          percentage — that would require combining one Control's coverage/effectiveness values across its
+          different Risks, which isn't a meaningful number (unlike combining multiple Controls over one Risk, which
+          the Risks section's own Coverage column does); `operating_effectiveness` is the field that actually
+          measures a Control's effectiveness. The Coverage view has three stat tiles scoped to the library's
           current filters (Effective, Never tested, Uncontrolled risks), a "coverage by risk" bar-list of every live
           (non-closed) Risk sorted weakest-`rcCoverage`-first (each row: residual score, the names of its mitigating
           Controls or "no control", and a coverage bar/percentage), and a "coverage by information asset" table —
-          for each asset, the count of distinct Risks affecting it (`risk-affects`) and the count of distinct
-          Controls directly protecting it (`control-affects`, styled as "none" when zero), sorted fewest-controls-
-          first. The traceability matrix (control × risk / control × asset) is still pending. Selecting a control
+          asset name, its entity schema type, the count of distinct Risks affecting it (`risk-affects`), and the
+          count of distinct Controls directly protecting it (`control-affects`, styled as "none" when zero), sorted
+          fewest-controls-first. The traceability matrix (control × risk / control × asset) is still pending. Selecting a control
           opens the shared Control drawer, deep-linkable at `risk-compliance/controls/$controlId`: attributes, the
           Risks it mitigates (with the `coverage`/`effectiveness` it provides each one), and the entities it
           protects (via `control-affects`).

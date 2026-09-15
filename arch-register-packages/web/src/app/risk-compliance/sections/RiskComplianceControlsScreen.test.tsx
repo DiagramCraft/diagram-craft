@@ -107,6 +107,13 @@ describe('RiskComplianceControlsScreen', () => {
     expect(container.textContent).toContain('CTL-001');
     expect(container.textContent).toContain('preventive');
 
+    // Effectiveness renders as a colour-outlined pill (Chip's `color` prop), not plain text.
+    const effectivenessPill = [...container.querySelectorAll('span')].find(
+      span => span.textContent === 'effective'
+    );
+    expect(effectivenessPill?.style.borderColor).toBeTruthy();
+    expect(effectivenessPill?.style.color).toBeTruthy();
+
     const row = [...container.querySelectorAll('tr')].find(tr =>
       tr.textContent?.includes('MFA Enforcement')
     );
@@ -157,7 +164,8 @@ describe('RiskComplianceControlsScreen', () => {
             relationSchemaId: 'control-requirement'
           }
         ]
-      }
+      },
+      { id: 'data-store', name: 'Data Store', fields: [] }
     ]);
     mocks.entityList.mockImplementation(({ query }: { query: { _schemaId?: string } }) => {
       if (query._schemaId === 'risk') {
@@ -191,7 +199,7 @@ describe('RiskComplianceControlsScreen', () => {
               _uid: 'rel-2',
               _schema: { id: 'risk-affects', name: 'Risk Affects' },
               _in: { id: 'risk-1', name: 'Account Takeover' },
-              _out: { id: 'asset-1', name: 'Customer DB' }
+              _out: { id: 'asset-1', name: 'Customer DB', schemaId: 'data-store' }
             }
           ],
           total: 1
@@ -237,6 +245,7 @@ describe('RiskComplianceControlsScreen', () => {
     expect(container.textContent).toContain('MFA Enforcement');
     expect(container.textContent).toContain('Coverage by information asset');
     expect(container.textContent).toContain('Customer DB');
+    expect(container.textContent).toContain('Data Store');
     expect(container.textContent).toContain('none');
 
     // Clicking a "coverage by risk" row opens the shared RiskDrawer in-situ, not a route
