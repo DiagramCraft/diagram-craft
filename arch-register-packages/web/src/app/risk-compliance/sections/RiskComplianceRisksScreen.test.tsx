@@ -10,13 +10,16 @@ const mocks = vi.hoisted(() => ({
   entityList: vi.fn(),
   entityGet: vi.fn(),
   schemasList: vi.fn(),
+  relationsList: vi.fn(),
   relationsListForEntity: vi.fn(),
   capabilityConfigurationsList: vi.fn(),
-  params: { workspaceSlug: 'ws-1' } as { workspaceSlug: string; riskId?: string }
+  params: { workspaceSlug: 'ws-1' } as { workspaceSlug: string; riskId?: string },
+  search: {} as Record<string, unknown>
 }));
 
 vi.mock('@tanstack/react-router', () => ({
   useParams: () => mocks.params,
+  useSearch: () => mocks.search,
   useNavigate: () => mocks.navigate
 }));
 
@@ -24,7 +27,7 @@ vi.mock('../../../lib/orpcClient', () => ({
   orpcClient: {
     entities: { list: mocks.entityList, get: mocks.entityGet },
     schemas: { list: mocks.schemasList },
-    relations: { listForEntity: mocks.relationsListForEntity },
+    relations: { list: mocks.relationsList, listForEntity: mocks.relationsListForEntity },
     config: { capabilityConfigurations: { list: mocks.capabilityConfigurationsList } }
   }
 }));
@@ -64,6 +67,7 @@ describe('RiskComplianceRisksScreen', () => {
     root = createRoot(container);
     queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     mocks.params = { workspaceSlug: 'ws-1' };
+    mocks.search = {};
     mocks.capabilityConfigurationsList.mockResolvedValue([CONFIG]);
     mocks.entityList.mockResolvedValue({
       items: [
@@ -72,6 +76,9 @@ describe('RiskComplianceRisksScreen', () => {
           _publicId: 'RSK-001',
           _name: 'Customer Account Takeover',
           category: 'security',
+          likelihood: 3,
+          impact: 3,
+          inherent_risk_score: 9,
           residual_risk_score: 9
         }
       ],
@@ -85,7 +92,20 @@ describe('RiskComplianceRisksScreen', () => {
       _owner: null,
       _lifecycle: null
     });
-    mocks.schemasList.mockResolvedValue([]);
+    mocks.schemasList.mockResolvedValue([
+      {
+        id: 'risk',
+        name: 'Risk',
+        fields: [
+          {
+            id: 'mitigating_controls',
+            type: 'typedRelation',
+            relationSchemaId: 'risk-control'
+          }
+        ]
+      }
+    ]);
+    mocks.relationsList.mockResolvedValue({ items: [], total: 0 });
     mocks.relationsListForEntity.mockResolvedValue({ outgoing: [], incoming: [] });
   });
 

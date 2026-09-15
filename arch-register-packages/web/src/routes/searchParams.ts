@@ -430,6 +430,31 @@ export type RiskSearchParams = SearchParamsFromSchema<typeof riskSearchSchema>;
 export const validateRiskSearch = (raw: Record<string, unknown>): RiskSearchParams =>
   parseSearchParams(riskSearchSchema, raw);
 
+// Risk & Compliance risks params
+const risksSearchSchema = defineSearchParamSchema({
+  q: stringCodec,
+  // Risk Category / Status select-field values, and a Risk Owner free-text value — set by the
+  // sidebar's facets (`RisksSidebarContent`), mirroring `vendorsSearchSchema` above.
+  category: stringCodec,
+  status: stringCodec,
+  owner: stringCodec,
+  // Narrows to risks whose residual score bands as high/critical (no schema "risk appetite"
+  // field exists — see `residualRiskBand.ts`); '1' when set, absent otherwise.
+  outsideAppetite: enumCodec(['1'] as const),
+  // Toggles the matrix's likelihood/impact bucketing between the raw inherent score and the
+  // effectiveness-adjusted residual score; defaults to 'inherent'.
+  axis: enumCodec(['inherent', 'residual'] as const),
+  // Toggles the section between its sortable table and the 5×5 matrix (mutually exclusive, not
+  // shown side by side — mirrors the design reference's `RCRiskList` register/matrix toggle);
+  // defaults to 'register'.
+  view: enumCodec(['register', 'matrix'] as const)
+});
+
+export type RisksSearchParams = SearchParamsFromSchema<typeof risksSearchSchema>;
+
+export const validateRisksSearch = (raw: Record<string, unknown>): RisksSearchParams =>
+  parseSearchParams(risksSearchSchema, raw);
+
 // Strategy capability map params
 const capabilityMapSearchSchema = defineSearchParamSchema({
   // Set by clicking a node in the map sidebar's capability tree (or an L1 domain header in the
