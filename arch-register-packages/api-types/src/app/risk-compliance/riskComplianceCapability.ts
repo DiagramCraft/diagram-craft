@@ -44,6 +44,17 @@ export const riskComplianceCapabilityDefinition: WorkspaceCapabilityDefinition =
       required: false,
       targetKind: 'entity_schema',
       fieldRoles: []
+    },
+    {
+      id: 'dataEntity',
+      label: 'Data Entity schema',
+      description:
+        'The entity schema used for information assets — what a Control can protect via ' +
+        "Control Protection. Typically the `information-governance` template's own Data Entity " +
+        'schema, since `control-affects` is now scoped to it at the schema level.',
+      required: false,
+      targetKind: 'entity_schema',
+      fieldRoles: []
     }
   ]
 };

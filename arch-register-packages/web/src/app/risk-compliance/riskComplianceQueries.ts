@@ -11,6 +11,11 @@ export type RiskComplianceConfig = {
   frameworkSchemaId: string | null;
   /** Optional per the capability's `complianceRequirement` binding role — `null` when unbound. */
   complianceRequirementSchemaId: string | null;
+  /** Optional per the capability's `dataEntity` binding role — `null` when unbound. Resolves the
+   *  information-asset schema `control-affects` is scoped to at the schema level (Control
+   *  Protection only exists when the `information-governance` template's Data Entity schema is
+   *  available — see `schemaTemplates.ts`'s `control-protection` composition extension). */
+  dataEntitySchemaId: string | null;
 };
 
 /**
@@ -41,7 +46,8 @@ export const resolveRiskComplianceConfig = (
     riskSchemaId,
     controlSchemaId: schemaId('control'),
     frameworkSchemaId: schemaId('framework'),
-    complianceRequirementSchemaId: schemaId('complianceRequirement')
+    complianceRequirementSchemaId: schemaId('complianceRequirement'),
+    dataEntitySchemaId: schemaId('dataEntity')
   };
 };
 

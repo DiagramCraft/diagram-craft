@@ -392,8 +392,10 @@
       only a title and an empty state; that content lands in later sub-issues of the Risk & Compliance application
       epic.
 
-        - @id:ar.risk-compliance.risks The Risks section lists Risk entities; a minimal register view for now (the
-          register + 5×5 matrix are still pending). Selecting a risk opens the shared Risk drawer, deep-linkable at
+        - @id:ar.risk-compliance.risks The Risks section has a sortable register (search; sidebar facets for
+          Category, Status, Owner, and an "outside appetite" toggle for residual scores banding high/critical) and a
+          5×5 likelihood × impact matrix, toggled by an inherent/residual axis switch — mutually exclusive views, not
+          shown side by side. Selecting a risk opens the shared Risk drawer, deep-linkable at
           `risk-compliance/risks/$riskId`: likelihood/impact, the existing `inherent_risk_score` and
           `residual_risk_score` derived fields (the latter banded Low/Medium/High/Critical via the standard 5×5
           heat-map thresholds), attributes, a multi-control coverage roll-up (`rcCoverage`/`rcBand`, combining every
@@ -401,11 +403,32 @@
           overlapping layers of defense rather than a plain average), the list of mitigating Controls, and the
           entities the risk affects (via `risk-affects`).
 
-        - @id:ar.risk-compliance.controls The Controls section lists Control entities; a minimal library view for
-          now (the full coverage view and traceability matrix are still pending). Selecting a control opens the
-          shared Control drawer, deep-linkable at `risk-compliance/controls/$controlId`: attributes, the Risks it
-          mitigates (with the `coverage`/`effectiveness` it provides each one), and the entities it protects (via
-          `control-affects`).
+        - @id:ar.risk-compliance.controls The Controls section has a sortable library table (search; sort by name,
+          risks mitigated, or last verified; columns for Name, Type, Effectiveness — a colour-outlined pill — Risks
+          mitigated, Assets protected, and Last verified) and a Coverage roll-up view. The sidebar's facets (Type,
+          Effectiveness, Framework — the last derived by joining each Control's satisfied Compliance Requirements to
+          their parent Framework, not a schema field) are counts only; it doesn't also list every Control
+          individually, unlike the Risks section's sidebar. The library table has no per-Control coverage
+          percentage — that would require combining one Control's coverage/effectiveness values across its
+          different Risks, which isn't a meaningful number (unlike combining multiple Controls over one Risk, which
+          the Risks section's own Coverage column does); `operating_effectiveness` is the field that actually
+          measures a Control's effectiveness. The Coverage view has three stat tiles scoped to the library's
+          current filters (Effective, Never tested, Uncontrolled risks), a "coverage by risk" bar-list of every live
+          (non-closed) Risk sorted weakest-`rcCoverage`-first (each row: residual score, the names of its mitigating
+          Controls or "no control", and a coverage bar/percentage), and a "coverage by information asset" table,
+          scoped to Data Entities only — asset name, the count of distinct Risks affecting it (`risk-affects`), and
+          the count of distinct Controls directly protecting it (`control-affects`, styled as "none" when zero),
+          sorted fewest-controls-first. `control-affects` ("Control Protection") is schema-constrained to the
+          `information-governance` template's Data Entity schema (a `control-protection` composition extension on
+          the `risk-compliance` template, materializing only when `information-governance` is also selected in the
+          workspace) — unlike `risk-affects` ("Risk Affects"), which stays unrestricted, since a Risk legitimately
+          affects Systems, Vendors, and Technology resources directly, not only information assets. Because
+          `risk-affects` can still surface non-Data-Entity assets, the coverage-by-asset table additionally filters
+          to the resolved Data Entity schema id (the capability's optional `dataEntity` binding role) rather than
+          relying on the relation constraint alone. The traceability matrix (control × risk / control × asset) is
+          still pending. Selecting a control opens the shared Control drawer, deep-linkable at
+          `risk-compliance/controls/$controlId`: attributes, the Risks it mitigates (with the `coverage`/
+          `effectiveness` it provides each one), and the Data Entities it protects (via `control-affects`).
 
     - @id:ar.entities Users can maintain a structured catalog of architectural entities and their relationships.
 

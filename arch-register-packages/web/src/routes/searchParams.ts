@@ -455,6 +455,26 @@ export type RisksSearchParams = SearchParamsFromSchema<typeof risksSearchSchema>
 export const validateRisksSearch = (raw: Record<string, unknown>): RisksSearchParams =>
   parseSearchParams(risksSearchSchema, raw);
 
+// Risk & Compliance controls params
+const controlsSearchSchema = defineSearchParamSchema({
+  q: stringCodec,
+  // Control Type (`control_type`) / Operating Effectiveness select-field values, and a Framework
+  // name derived from `satisfied_requirements` → `compliance_requirement` → Framework — set by the
+  // sidebar's facets (`ControlsSidebarContent` in `RiskComplianceSidebar.tsx`), mirroring
+  // `risksSearchSchema` above.
+  type: stringCodec,
+  effectiveness: stringCodec,
+  framework: stringCodec,
+  // Toggles the section between its sortable library table and the coverage roll-up view
+  // (weakest-covered risks, coverage by information asset); defaults to 'library'.
+  view: enumCodec(['library', 'coverage'] as const)
+});
+
+export type ControlsSearchParams = SearchParamsFromSchema<typeof controlsSearchSchema>;
+
+export const validateControlsSearch = (raw: Record<string, unknown>): ControlsSearchParams =>
+  parseSearchParams(controlsSearchSchema, raw);
+
 // Strategy capability map params
 const capabilityMapSearchSchema = defineSearchParamSchema({
   // Set by clicking a node in the map sidebar's capability tree (or an L1 domain header in the

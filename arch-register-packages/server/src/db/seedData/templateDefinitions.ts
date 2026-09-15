@@ -119,7 +119,8 @@ const definitionId = (
     'relationSchema:risk-compliance:risk-control': RISK_CONTROL_SCHEMA_ID,
     'relationSchema:risk-compliance:control-requirement': CONTROL_REQUIREMENT_SCHEMA_ID,
     'relationSchema:risk-compliance:risk-affects': RISK_AFFECTS_RELATION_SCHEMA_ID,
-    'relationSchema:risk-compliance:control-affects': CONTROL_AFFECTS_RELATION_SCHEMA_ID,
+    'relationSchema:risk-compliance:control-protection:control-affects':
+      CONTROL_AFFECTS_RELATION_SCHEMA_ID,
     'relationSchema:strategy:business-capability-supports-entity':
       BUSINESS_CAPABILITY_SUPPORTS_ENTITY_RELATION_SCHEMA_ID,
     'relationSchema:strategy:objective-supports-business-capability':
@@ -176,6 +177,10 @@ const seedTemplateInstantiationOptions: TemplateInstantiationOptions = {
     {
       dependencyId: 'information-governance:data-flow:system',
       targets: [{ templateId: 'default', symId: 'system' }]
+    },
+    {
+      dependencyId: 'risk-compliance:control-protection:data-entity',
+      targets: [{ templateId: 'information-governance', symId: 'data-entity' }]
     }
   ]
 };

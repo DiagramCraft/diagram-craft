@@ -932,14 +932,56 @@ describe('instantiateTemplate', () => {
       })
     );
 
-    // #3069: Control -> any entity, mirroring risk-affects, so a Control can be linked to an
-    // information asset (Data Entity) without a parallel asset model.
+    // Control Protection only materializes via the 'control-protection' composition extension
+    // (requires 'information-governance') — see the next test — so composing 'risk-compliance'
+    // alone (`instantiateTemplateDefinitions`, which never includes extensions) has neither the
+    // relation nor the field.
+    expect(
+      definitions.relationSchemas.find(schema => schema.name === 'Control Protection')
+    ).toBeUndefined();
+    expect(control?.fields.some(field => field.id === 'protected_entities')).toBe(false);
+  });
+
+  it('materializes Control Protection only when information-governance is also selected, scoped to Data Entity', () => {
+    const riskComplianceOnly = instantiateTemplateComposition('ws-1', undefined, [
+      'risk-compliance'
+    ]);
+    expect(
+      riskComplianceOnly.relationSchemas.some(schema => schema.name === 'Control Protection')
+    ).toBe(false);
+
+    expect(() =>
+      instantiateTemplateComposition('ws-1', undefined, [
+        'information-governance',
+        'risk-compliance'
+      ])
+    ).toThrow(
+      "Template dependency 'risk-compliance:control-protection:data-entity' has no mapping"
+    );
+
+    const definitions = instantiateTemplateComposition(
+      'ws-1',
+      undefined,
+      ['information-governance', 'risk-compliance'],
+      new Date(),
+      {
+        dependencyMappings: [
+          {
+            dependencyId: 'risk-compliance:control-protection:data-entity',
+            targets: [{ templateId: 'information-governance', symId: 'data-entity' }]
+          }
+        ]
+      }
+    );
+    const control = definitions.schemas.find(schema => schema.name === 'Control');
+    const dataEntity = definitions.schemas.find(schema => schema.name === 'Data Entity');
     const controlAffects = definitions.relationSchemas.find(
       schema => schema.name === 'Control Protection'
     );
+
     expect(controlAffects?.in_schema_ids).toEqual([control?.id]);
-    expect(controlAffects?.out_schema_ids).toBe('any');
-    expect(controlAffects?.in_label).toBe('Protects Entities');
+    expect(controlAffects?.out_schema_ids).toEqual([dataEntity?.id]);
+    expect(controlAffects?.in_label).toBe('Protects Data Entity');
     expect(controlAffects?.out_label).toBe('Protected by Control');
     expect(control?.fields).toContainEqual(
       expect.objectContaining({

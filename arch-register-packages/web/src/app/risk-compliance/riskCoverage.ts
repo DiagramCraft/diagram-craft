@@ -58,7 +58,10 @@ export type RiskCoverageResult = {
 const isEffectiveness = (value: string | null): value is RiskMitigationEffectiveness =>
   value != null && value in EFFECTIVENESS_WEIGHT;
 
-const bandFor = (rcCoverage: number): CoverageBand => {
+/** Bands a raw 0-100 coverage score — exported so callers computing coverage outside a Risk's own
+ *  `risk-control` relations (e.g. `useControlCoverageRollups.ts`, `useAssetCoverageRollups.ts`)
+ *  can reuse the same thresholds without duplicating them. */
+export const coverageBandFor = (rcCoverage: number): CoverageBand => {
   let result: CoverageBand = 'uncovered';
   for (const { band, min } of COVERAGE_BANDS) {
     if (rcCoverage >= min) result = band;
@@ -85,5 +88,5 @@ export const computeRiskCoverage = (relations: RiskCoverageInput): RiskCoverageR
   }, 1);
 
   const rcCoverage = Math.round((1 - uncoveredFraction) * 100 * 100) / 100;
-  return { rcCoverage, rcBand: bandFor(rcCoverage) };
+  return { rcCoverage, rcBand: coverageBandFor(rcCoverage) };
 };
