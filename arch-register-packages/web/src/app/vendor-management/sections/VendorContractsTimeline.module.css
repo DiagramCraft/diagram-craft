@@ -1,0 +1,172 @@
+.body {
+  display: flex;
+  flex-direction: column;
+  margin-top: 12px;
+  padding-bottom: 24px;
+}
+
+.scroll {
+  overflow: auto;
+  min-width: 0;
+}
+
+.inner {
+  position: relative;
+}
+
+.head {
+  display: flex;
+  position: sticky;
+  top: 0;
+  z-index: 8;
+  height: 28px;
+  border-bottom: 1px solid var(--panel-border);
+  background: var(--panel-bg);
+}
+
+.corner {
+  position: sticky;
+  left: 0;
+  z-index: 10;
+  width: 220px;
+  flex-shrink: 0;
+  background: var(--panel-bg);
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  border-right: 1px solid var(--panel-border);
+}
+
+.cornerLabel {
+  font-size: 10px;
+  color: var(--cmp-fg-disabled, var(--text-muted));
+  font-family: var(--font-mono);
+}
+
+.cols {
+  display: flex;
+  align-items: stretch;
+  flex-shrink: 0;
+}
+
+.col {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  font-size: 10.5px;
+  color: var(--cmp-fg-disabled, var(--text-muted));
+  border-right: 1px solid var(--panel-border);
+  white-space: nowrap;
+}
+
+.colNow {
+  color: var(--accent-fg);
+  background: color-mix(in oklch, var(--accent-fg) 8%, transparent);
+  font-weight: 500;
+}
+
+.today {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--accent-fg);
+  opacity: 0.65;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.todayPip {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 9px;
+  color: var(--accent-fg);
+  padding-top: 2px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  height: 40px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.label {
+  position: sticky;
+  left: 0;
+  z-index: 4;
+  width: 220px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1px;
+  padding: 5px 12px;
+  background: var(--base-bg);
+  border-right: 1px solid var(--panel-border);
+  height: 100%;
+  overflow: hidden;
+}
+
+.name {
+  font-size: 11.5px;
+  color: var(--base-fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vendor {
+  font-size: 10px;
+  color: var(--cmp-fg-disabled);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.track {
+  position: relative;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.bar {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 5px;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.barLabel {
+  font-size: 9.5px;
+  color: oklch(0.16 0.01 260);
+  white-space: nowrap;
+}
+
+.notice {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--base-fg);
+  opacity: 0.5;
+}
+
+.caption {
+  font-size: 11px;
+  padding: 10px 2px 0;
+}
+
+.empty {
+  padding: 32px;
+  text-align: center;
+}

@@ -362,7 +362,7 @@ export const VendorRiskScreen = () => {
                 <Table.HeaderCell>Radar ring</Table.HeaderCell>
                 <Table.HeaderCell>Vendor</Table.HeaderCell>
                 <Table.HeaderCell>Support ends</Table.HeaderCell>
-                <Table.HeaderCell>Runway</Table.HeaderCell>
+                <Table.HeaderCell numeric>Runway</Table.HeaderCell>
                 <Table.HeaderCell>Systems affected</Table.HeaderCell>
               </Table.Row>
             </Table.Head>
