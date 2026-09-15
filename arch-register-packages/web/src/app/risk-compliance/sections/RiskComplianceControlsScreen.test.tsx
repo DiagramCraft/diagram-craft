@@ -10,13 +10,16 @@ const mocks = vi.hoisted(() => ({
   entityList: vi.fn(),
   entityGet: vi.fn(),
   schemasList: vi.fn(),
+  relationsList: vi.fn(),
   relationsListForEntity: vi.fn(),
   capabilityConfigurationsList: vi.fn(),
-  params: { workspaceSlug: 'ws-1' } as { workspaceSlug: string; controlId?: string }
+  params: { workspaceSlug: 'ws-1' } as { workspaceSlug: string; controlId?: string },
+  search: {} as Record<string, unknown>
 }));
 
 vi.mock('@tanstack/react-router', () => ({
   useParams: () => mocks.params,
+  useSearch: () => mocks.search,
   useNavigate: () => mocks.navigate
 }));
 
@@ -24,7 +27,7 @@ vi.mock('../../../lib/orpcClient', () => ({
   orpcClient: {
     entities: { list: mocks.entityList, get: mocks.entityGet },
     schemas: { list: mocks.schemasList },
-    relations: { listForEntity: mocks.relationsListForEntity },
+    relations: { list: mocks.relationsList, listForEntity: mocks.relationsListForEntity },
     config: { capabilityConfigurations: { list: mocks.capabilityConfigurationsList } }
   }
 }));
@@ -64,6 +67,7 @@ describe('RiskComplianceControlsScreen', () => {
     root = createRoot(container);
     queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     mocks.params = { workspaceSlug: 'ws-1' };
+    mocks.search = {};
     mocks.capabilityConfigurationsList.mockResolvedValue([CONFIG]);
     mocks.entityList.mockResolvedValue({
       items: [
@@ -86,6 +90,7 @@ describe('RiskComplianceControlsScreen', () => {
       _lifecycle: null
     });
     mocks.schemasList.mockResolvedValue([]);
+    mocks.relationsList.mockResolvedValue({ items: [], total: 0 });
     mocks.relationsListForEntity.mockResolvedValue({ outgoing: [], incoming: [] });
   });
 
@@ -128,5 +133,143 @@ describe('RiskComplianceControlsScreen', () => {
     mocks.capabilityConfigurationsList.mockResolvedValue([]);
     await renderScreen();
     expect(container.textContent).toContain('Risk & Compliance is not enabled.');
+  });
+
+  it('shows the coverage roll-up view with weakest-covered risks and assets', async () => {
+    mocks.search = { view: 'coverage' };
+    mocks.schemasList.mockResolvedValue([
+      {
+        id: 'risk',
+        name: 'Risk',
+        fields: [
+          { id: 'mitigating_controls', type: 'typedRelation', relationSchemaId: 'risk-control' },
+          { id: 'affected_entities', type: 'typedRelation', relationSchemaId: 'risk-affects' }
+        ]
+      },
+      {
+        id: 'control',
+        name: 'Control',
+        fields: [
+          { id: 'mitigated_risks', type: 'typedRelation', relationSchemaId: 'risk-control' },
+          {
+            id: 'satisfied_requirements',
+            type: 'typedRelation',
+            relationSchemaId: 'control-requirement'
+          }
+        ]
+      }
+    ]);
+    mocks.entityList.mockImplementation(({ query }: { query: { _schemaId?: string } }) => {
+      if (query._schemaId === 'risk') {
+        return Promise.resolve({
+          items: [{ _uid: 'risk-1', _publicId: 'RSK-001', _name: 'Account Takeover' }],
+          total: 1
+        });
+      }
+      return Promise.resolve({ items: [], total: 0 });
+    });
+    mocks.relationsList.mockImplementation(({ query }: { query: { schemaId?: string } }) => {
+      if (query.schemaId === 'risk-control') {
+        return Promise.resolve({
+          items: [
+            {
+              _uid: 'rel-1',
+              _schema: { id: 'risk-control', name: 'Risk Mitigation' },
+              _in: { id: 'risk-1', name: 'Account Takeover' },
+              _out: { id: 'control-1', name: 'MFA Enforcement' },
+              coverage: 50,
+              effectiveness: 'partial'
+            }
+          ],
+          total: 1
+        });
+      }
+      if (query.schemaId === 'risk-affects') {
+        return Promise.resolve({
+          items: [
+            {
+              _uid: 'rel-2',
+              _schema: { id: 'risk-affects', name: 'Risk Affects' },
+              _in: { id: 'risk-1', name: 'Account Takeover' },
+              _out: { id: 'asset-1', name: 'Customer DB' }
+            }
+          ],
+          total: 1
+        });
+      }
+      return Promise.resolve({ items: [], total: 0 });
+    });
+
+    mocks.entityGet.mockImplementation(({ params }: { params: { id: string } }) => {
+      if (params.id === 'risk-1') {
+        return Promise.resolve({
+          _uid: 'risk-1',
+          _publicId: 'RSK-001',
+          _name: 'Account Takeover',
+          _schema: { id: 'risk', name: 'Risk' },
+          _owner: null,
+          _lifecycle: null
+        });
+      }
+      if (params.id === 'asset-1') {
+        return Promise.resolve({
+          _uid: 'asset-1',
+          _publicId: 'AST-001',
+          _name: 'Customer DB',
+          _schema: { id: 'entity', name: 'Data Store' },
+          _owner: null,
+          _lifecycle: null
+        });
+      }
+      return Promise.resolve({
+        _uid: 'control-1',
+        _publicId: 'CTL-001',
+        _name: 'MFA Enforcement',
+        _schema: { id: 'control', name: 'Control' },
+        _owner: null,
+        _lifecycle: null
+      });
+    });
+
+    await renderScreen();
+    expect(container.textContent).toContain('Coverage by risk');
+    expect(container.textContent).toContain('Account Takeover');
+    expect(container.textContent).toContain('MFA Enforcement');
+    expect(container.textContent).toContain('Coverage by information asset');
+    expect(container.textContent).toContain('Customer DB');
+    expect(container.textContent).toContain('none');
+
+    // Clicking a "coverage by risk" row opens the shared RiskDrawer in-situ, not a route
+    // navigation — the row is a plain button (a bar-list, not a table), unlike the asset panel.
+    mocks.navigate.mockClear();
+    const riskRow = [...container.querySelectorAll('button')].find(button =>
+      button.textContent?.includes('Account Takeover')
+    );
+    await act(async () => {
+      riskRow!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    for (let i = 0; i < 8; i++) await flush();
+    expect(mocks.navigate).not.toHaveBeenCalled();
+    expect(container.textContent).toContain('RSK-001');
+    expect(container.querySelectorAll('[aria-label="Close"]').length).toBeGreaterThan(0);
+
+    const closeButtons = [...container.querySelectorAll('button[aria-label="Close"]')];
+    await act(async () => {
+      closeButtons.at(-1)!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    for (let i = 0; i < 8; i++) await flush();
+
+    // Clicking an asset row opens the local AssetDrawer in-situ, not a route navigation.
+    mocks.navigate.mockClear();
+    const assetRow = [...container.querySelectorAll('tr')].find(tr =>
+      tr.textContent?.includes('Customer DB')
+    );
+    await act(async () => {
+      assetRow!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    for (let i = 0; i < 8; i++) await flush();
+    expect(mocks.navigate).not.toHaveBeenCalled();
+    expect(container.textContent).toContain('AST-001');
+    expect(container.textContent).toContain('Open record in Entities');
   });
 });
