@@ -106,8 +106,9 @@ const compareNullable = (a: number | string | null, b: number | string | null): 
  * The Controls library: search, sort (name / risks mitigated / last verified), and facets (type,
  * effectiveness, framework) delivered by `RiskComplianceSidebar`'s `ControlsSidebarContent`, plus
  * a Coverage roll-up view — three stat tiles (Effective, Never tested, Uncontrolled risks), a
- * "coverage by risk" bar-list (weakest first), and a "coverage by information asset" table —
- * mirrors the design reference's `RCControls`/`RCCoverage` (`rc-views.jsx`) and this codebase's
+ * "coverage by risk" bar-list (weakest first), and a "coverage by information asset" table
+ * (Data Entities only — see `weakestAssets`'s filter below) — mirrors the design reference's
+ * `RCControls`/`RCCoverage` (`rc-views.jsx`) and this codebase's
  * own `RiskComplianceRisksScreen.tsx` register/matrix toggle. Opens the shared `ControlDrawer` on
  * row click, deep-linkable at `risk-compliance/controls/$controlId`. The Coverage view's own rows
  * (Risks, information assets) open their drawers in-situ over this same page too, via local
@@ -284,9 +285,22 @@ export const RiskComplianceControlsScreen = () => {
     view === 'coverage' ? riskAffectsRelationSchemaId : null,
     view === 'coverage' ? controlAffectsRelationSchemaId : null
   );
+  // `control-affects` is now schema-constrained to the Data Entity schema (`schemaTemplates.ts`'s
+  // 'control-protection' composition extension), so every control-linked asset already qualifies
+  // — but `risk-affects` stays unrestricted, so an asset reachable only via a Risk (a System, a
+  // Vendor, ...) can still show up in `assetCoverage.items`. Filtering to the resolved Data
+  // Entity schema id is what actually makes this panel list *only* information assets; when the
+  // workspace hasn't bound the `dataEntity` capability role yet, fall back to showing everything
+  // unfiltered rather than an empty table.
   const weakestAssets = useMemo(
-    () => [...assetCoverage.items].sort((a, b) => a.controlCount - b.controlCount),
-    [assetCoverage.items]
+    () =>
+      assetCoverage.items
+        .filter(
+          asset =>
+            !riskConfig?.dataEntitySchemaId || asset.assetSchemaId === riskConfig.dataEntitySchemaId
+        )
+        .sort((a, b) => a.controlCount - b.controlCount),
+    [assetCoverage.items, riskConfig?.dataEntitySchemaId]
   );
   // The stat tiles above the two roll-up panels DO respect the Library view's current filters —
   // the design reference passes its own filtered `rows` into `RCCoverage` for exactly these
@@ -465,26 +479,19 @@ export const RiskComplianceControlsScreen = () => {
               <Table.Head>
                 <Table.Row>
                   <Table.HeaderCell>Asset</Table.HeaderCell>
-                  <Table.HeaderCell>Type</Table.HeaderCell>
                   <Table.HeaderCell align={'right'}>Risks</Table.HeaderCell>
                   <Table.HeaderCell align={'right'}>Controls</Table.HeaderCell>
                 </Table.Row>
               </Table.Head>
               <Table.Body>
                 {weakestAssets.length === 0 ? (
-                  <Table.EmptyRow colSpan={4}>
+                  <Table.EmptyRow colSpan={3}>
                     {assetCoverage.isLoading ? 'Loading assets…' : 'No affected assets linked.'}
                   </Table.EmptyRow>
                 ) : (
                   weakestAssets.map(asset => (
                     <Table.Row key={asset.assetId} onClick={() => setOpenAssetId(asset.assetId)}>
                       <Table.NameCell title={asset.assetName} />
-                      <Table.Cell>
-                        {asset.assetSchemaId
-                          ? (schemas.data?.find(schema => schema.id === asset.assetSchemaId)
-                              ?.name ?? '—')
-                          : '—'}
-                      </Table.Cell>
                       <Table.Cell numeric>{asset.riskCount}</Table.Cell>
                       <Table.Cell
                         numeric

@@ -12,25 +12,28 @@ const validRiskComplianceConfiguration = {
     risk: entityBinding('risk-schema'),
     control: entityBinding('control-schema'),
     framework: entityBinding('framework-schema'),
-    complianceRequirement: entityBinding('compliance-requirement-schema')
+    complianceRequirement: entityBinding('compliance-requirement-schema'),
+    dataEntity: entityBinding('data-entity-schema')
   }
 } as unknown as WorkspaceCapabilityConfiguration;
 
 describe('resolveRiskComplianceConfig', () => {
-  it('resolves the risk, control, framework, and complianceRequirement bindings from a valid configuration', () => {
+  it('resolves the risk, control, framework, complianceRequirement, and dataEntity bindings from a valid configuration', () => {
     expect(resolveRiskComplianceConfig([validRiskComplianceConfiguration])).toEqual({
       riskSchemaId: 'risk-schema',
       controlSchemaId: 'control-schema',
       frameworkSchemaId: 'framework-schema',
-      complianceRequirementSchemaId: 'compliance-requirement-schema'
+      complianceRequirementSchemaId: 'compliance-requirement-schema',
+      dataEntitySchemaId: 'data-entity-schema'
     });
   });
 
-  it('resolves with a null control/framework/complianceRequirement schema id when unbound', () => {
+  it('resolves with a null control/framework/complianceRequirement/dataEntity schema id when unbound', () => {
     const {
       control: _control,
       framework: _framework,
       complianceRequirement: _complianceRequirement,
+      dataEntity: _dataEntity,
       ...bindingsWithoutOptionals
     } = validRiskComplianceConfiguration.bindings;
     expect(
@@ -41,7 +44,8 @@ describe('resolveRiskComplianceConfig', () => {
       riskSchemaId: 'risk-schema',
       controlSchemaId: null,
       frameworkSchemaId: null,
-      complianceRequirementSchemaId: null
+      complianceRequirementSchemaId: null,
+      dataEntitySchemaId: null
     });
   });
 

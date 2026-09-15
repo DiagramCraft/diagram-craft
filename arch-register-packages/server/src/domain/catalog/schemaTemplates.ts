@@ -1728,6 +1728,12 @@ const dataEntitySchema: TemplateSchema = {
 
 const dataFlowExtensionTemplateId = 'information-governance:data-flow';
 
+// The 'risk-compliance' template's 'control-protection' composition extension (below, on the
+// 'risk-compliance' template) — its synthetic fragment owner id, for cross-fragment
+// `symRelationSchemaId` references from Control's `protected_entities` field. Mirrors
+// `dataFlowExtensionTemplateId` immediately above.
+const controlProtectionExtensionTemplateId = 'risk-compliance:control-protection';
+
 const dataFlowRelationSchema: SymbolicRelationSchema = {
   symId: 'data-flow',
   name: 'Data Flow',
@@ -3138,16 +3144,9 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             direction: 'in',
             minCount: 0,
             maxCount: -1
-          },
-          {
-            id: 'protected_entities',
-            name: 'Protects',
-            type: 'typedRelation',
-            symRelationSchemaId: 'control-affects',
-            direction: 'in',
-            minCount: 0,
-            maxCount: -1
           }
+          // 'protected_entities' is added by the 'control-protection' composition extension below
+          // (only when 'information-governance' is also selected) — see its `schemaFields`.
         ]
       },
       {
@@ -3262,19 +3261,6 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         fields: [],
         color: AR_COLOR_RED,
         icon: 'alert-triangle'
-      },
-      {
-        symId: 'control-affects',
-        name: 'Control Protection',
-        description: 'Associates a Control with an architecture entity it protects.',
-        category: 'Governance',
-        inLabel: 'Protects Entities',
-        outLabel: 'Protected by Control',
-        inSymSchemaIds: ['control'],
-        outSymSchemaIds: 'any',
-        fields: [],
-        color: AR_COLOR_GREEN,
-        icon: 'shield-check'
       }
     ],
     documentTypes: commonDocumentTypes,
@@ -3428,6 +3414,79 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             showOrphanEntities: true
           }
         }
+      }
+    ],
+    // Control Protection (`control-affects`) only exists when 'information-governance' is also
+    // selected, since it points specifically at that template's Data Entity schema — everything
+    // else in Risk & Compliance (Risk register, Control library, mitigation, compliance
+    // frameworks) stays fully usable on its own. Mirrors 'information-governance'-own 'data-flow'
+    // composition extension's `system` dependency (same file, `dataFlowRelationSchema`) — same
+    // shape, but requiring a *named sibling template* rather than any 'full'-category one.
+    compositionExtensions: [
+      {
+        id: 'control-protection',
+        requiredTemplateIds: ['information-governance'],
+        dependencies: [
+          {
+            id: 'data-entity',
+            name: 'Data Entity schema',
+            description: 'The schema representing an information asset a Control can protect.',
+            kind: 'schema',
+            minTargets: 1,
+            maxTargets: 1
+          }
+        ],
+        relationSchemas: [
+          {
+            symId: 'control-affects',
+            name: 'Control Protection',
+            description: 'Associates a Control with the Data Entity it protects.',
+            category: 'Governance',
+            inLabel: 'Protects Data Entity',
+            outLabel: 'Protected by Control',
+            inSymSchemaIds: [{ templateId: 'risk-compliance', symId: 'control' }],
+            outSymSchemaIds: [{ dependencyId: 'data-entity' }],
+            fields: [],
+            color: AR_COLOR_GREEN,
+            icon: 'shield-check'
+          }
+        ],
+        schemaFields: [
+          {
+            target: { templateId: 'risk-compliance', symId: 'control' },
+            fields: [
+              {
+                id: 'protected_entities',
+                name: 'Protects',
+                type: 'typedRelation',
+                symRelationSchemaId: {
+                  templateId: controlProtectionExtensionTemplateId,
+                  symId: 'control-affects'
+                },
+                direction: 'in',
+                minCount: 0,
+                maxCount: -1
+              }
+            ]
+          },
+          {
+            target: { dependencyId: 'data-entity' },
+            fields: [
+              {
+                id: 'protecting_controls',
+                name: 'Protected by',
+                type: 'typedRelation',
+                symRelationSchemaId: {
+                  templateId: controlProtectionExtensionTemplateId,
+                  symId: 'control-affects'
+                },
+                direction: 'out',
+                minCount: 0,
+                maxCount: -1
+              }
+            ]
+          }
+        ]
       }
     ]
   },

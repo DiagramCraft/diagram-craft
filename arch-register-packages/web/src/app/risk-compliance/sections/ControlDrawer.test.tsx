@@ -30,7 +30,8 @@ const riskConfig: RiskComplianceConfig = {
   riskSchemaId: 'risk',
   controlSchemaId: 'control',
   frameworkSchemaId: null,
-  complianceRequirementSchemaId: null
+  complianceRequirementSchemaId: null,
+  dataEntitySchemaId: null
 };
 
 const controlSchema = {

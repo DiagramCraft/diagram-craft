@@ -142,8 +142,17 @@ describe('RiskComplianceControlsScreen', () => {
     expect(container.textContent).toContain('Risk & Compliance is not enabled.');
   });
 
-  it('shows the coverage roll-up view with weakest-covered risks and assets', async () => {
+  it('shows the coverage roll-up view with weakest-covered risks, and only Data Entities in the asset table', async () => {
     mocks.search = { view: 'coverage' };
+    mocks.capabilityConfigurationsList.mockResolvedValue([
+      {
+        ...CONFIG,
+        bindings: {
+          ...CONFIG.bindings,
+          dataEntity: { target: { kind: 'entity_schema', id: 'data-entity' } }
+        }
+      }
+    ]);
     mocks.schemasList.mockResolvedValue([
       {
         id: 'risk',
@@ -162,10 +171,10 @@ describe('RiskComplianceControlsScreen', () => {
             id: 'satisfied_requirements',
             type: 'typedRelation',
             relationSchemaId: 'control-requirement'
-          }
+          },
+          { id: 'protected_entities', type: 'typedRelation', relationSchemaId: 'control-affects' }
         ]
-      },
-      { id: 'data-store', name: 'Data Store', fields: [] }
+      }
     ]);
     mocks.entityList.mockImplementation(({ query }: { query: { _schemaId?: string } }) => {
       if (query._schemaId === 'risk') {
@@ -193,13 +202,29 @@ describe('RiskComplianceControlsScreen', () => {
         });
       }
       if (query.schemaId === 'risk-affects') {
+        // Reachable only via Risk Affects, and NOT Data Entity-schema'd — should be excluded
+        // from "coverage by information asset" now that it's Data-Entity-scoped.
         return Promise.resolve({
           items: [
             {
               _uid: 'rel-2',
               _schema: { id: 'risk-affects', name: 'Risk Affects' },
               _in: { id: 'risk-1', name: 'Account Takeover' },
-              _out: { id: 'asset-1', name: 'Customer DB', schemaId: 'data-store' }
+              _out: { id: 'asset-1', name: 'Payments System', schemaId: 'system' }
+            }
+          ],
+          total: 1
+        });
+      }
+      if (query.schemaId === 'control-affects') {
+        // Protected by a Control, Data Entity-schema'd — should appear.
+        return Promise.resolve({
+          items: [
+            {
+              _uid: 'rel-3',
+              _schema: { id: 'control-affects', name: 'Control Protection' },
+              _in: { id: 'control-1', name: 'MFA Enforcement' },
+              _out: { id: 'asset-2', name: 'Customer PII', schemaId: 'data-entity' }
             }
           ],
           total: 1
@@ -219,12 +244,12 @@ describe('RiskComplianceControlsScreen', () => {
           _lifecycle: null
         });
       }
-      if (params.id === 'asset-1') {
+      if (params.id === 'asset-2') {
         return Promise.resolve({
-          _uid: 'asset-1',
-          _publicId: 'AST-001',
-          _name: 'Customer DB',
-          _schema: { id: 'entity', name: 'Data Store' },
+          _uid: 'asset-2',
+          _publicId: 'AST-002',
+          _name: 'Customer PII',
+          _schema: { id: 'data-entity', name: 'Data Entity' },
           _owner: null,
           _lifecycle: null
         });
@@ -244,9 +269,10 @@ describe('RiskComplianceControlsScreen', () => {
     expect(container.textContent).toContain('Account Takeover');
     expect(container.textContent).toContain('MFA Enforcement');
     expect(container.textContent).toContain('Coverage by information asset');
-    expect(container.textContent).toContain('Customer DB');
-    expect(container.textContent).toContain('Data Store');
-    expect(container.textContent).toContain('none');
+    // Data Entity-schema'd asset (reached via control-affects) appears...
+    expect(container.textContent).toContain('Customer PII');
+    // ...but the System reached only via risk-affects is excluded from this panel.
+    expect(container.textContent).not.toContain('Payments System');
 
     // Clicking a "coverage by risk" row opens the shared RiskDrawer in-situ, not a route
     // navigation — the row is a plain button (a bar-list, not a table), unlike the asset panel.
@@ -271,14 +297,14 @@ describe('RiskComplianceControlsScreen', () => {
     // Clicking an asset row opens the local AssetDrawer in-situ, not a route navigation.
     mocks.navigate.mockClear();
     const assetRow = [...container.querySelectorAll('tr')].find(tr =>
-      tr.textContent?.includes('Customer DB')
+      tr.textContent?.includes('Customer PII')
     );
     await act(async () => {
       assetRow!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
     for (let i = 0; i < 8; i++) await flush();
     expect(mocks.navigate).not.toHaveBeenCalled();
-    expect(container.textContent).toContain('AST-001');
+    expect(container.textContent).toContain('AST-002');
     expect(container.textContent).toContain('Open record in Entities');
   });
 });
