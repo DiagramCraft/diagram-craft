@@ -68,7 +68,10 @@ export const riskComplianceAppDefinition: AppDefinition = {
       tooltip: 'Retention',
       route: RISK_RAIL_PATHS[RISK_RETENTION_ID],
       primarySidebar: ctx => (
-        <RiskComplianceSidebar workspaceSlug={ctx.workspaceSlug} activeSection={RISK_RETENTION_ID} />
+        <RiskComplianceSidebar
+          workspaceSlug={ctx.workspaceSlug}
+          activeSection={RISK_RETENTION_ID}
+        />
       )
     },
     {

@@ -22,9 +22,7 @@ export const RiskCompliancePlaceholderScreen = ({
   notEnabledMessage
 }: {
   title: string;
-  resolver: (
-    configurations: readonly WorkspaceCapabilityConfiguration[] | undefined
-  ) => unknown;
+  resolver: (configurations: readonly WorkspaceCapabilityConfiguration[] | undefined) => unknown;
   notEnabledMessage: string;
 }) => {
   const { workspaceSlug } = useParams({ strict: false }) as { workspaceSlug: string };
