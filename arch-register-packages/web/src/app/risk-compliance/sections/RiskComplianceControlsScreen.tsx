@@ -22,6 +22,7 @@ import { useControlRiskCounts } from '../useControlRiskCounts';
 import { useControlAssetCounts } from '../useControlAssetCounts';
 import { useRiskCoverageRollups } from '../useRiskCoverageRollups';
 import { useAssetCoverageRollups } from '../useAssetCoverageRollups';
+import { useControlTraceMatrix } from '../useControlTraceMatrix';
 import { useControlFrameworks } from '../useControlFrameworks';
 import { COVERAGE_BAND_COLOR } from '../riskCoverage';
 import { CONTROL_EFFECTIVENESS_COLOR } from '../controlEffectiveness';
@@ -30,8 +31,10 @@ import { Chip } from '../../../components/Chip';
 import type { ControlsSearchParams } from '../../../routes/searchParams';
 import { ControlDrawer } from './ControlDrawer';
 import { RiskDrawer } from './RiskDrawer';
+import { RiskComplianceTraceMatrix } from './RiskComplianceTraceMatrix';
 import filterStyles from '../../../sections/entities/components/EntityBrowser.module.css';
 import styles from './RiskComplianceControlsScreen.module.css';
+import traceStyles from './RiskComplianceTraceMatrix.module.css';
 
 /**
  * Minimal in-situ peek for an arbitrary information asset (any entity schema, per `risk-affects`'
@@ -95,6 +98,9 @@ const AssetDrawer = ({
 
 type SortKey = 'risksMitigated' | 'lastVerified' | 'name';
 
+const sizeMap = (source: Map<string, Set<string>>): Map<string, number> =>
+  new Map([...source].map(([key, value]) => [key, value.size]));
+
 const compareNullable = (a: number | string | null, b: number | string | null): number => {
   if (a == null && b == null) return 0;
   if (a == null) return 1;
@@ -107,12 +113,15 @@ const compareNullable = (a: number | string | null, b: number | string | null): 
  * effectiveness, framework) delivered by `RiskComplianceSidebar`'s `ControlsSidebarContent`, plus
  * a Coverage roll-up view — three stat tiles (Effective, Never tested, Uncontrolled risks), a
  * "coverage by risk" bar-list (weakest first), and a "coverage by information asset" table
- * (Data Entities only — see `weakestAssets`'s filter below) — mirrors the design reference's
- * `RCControls`/`RCCoverage` (`rc-views.jsx`) and this codebase's
- * own `RiskComplianceRisksScreen.tsx` register/matrix toggle. Opens the shared `ControlDrawer` on
- * row click, deep-linkable at `risk-compliance/controls/$controlId`. The Coverage view's own rows
- * (Risks, information assets) open their drawers in-situ over this same page too, via local
- * state rather than navigation — see `openRiskId`/`openAssetId` below.
+ * (Data Entities only — see `weakestAssets`'s filter below) — and a Traceability view, the dense
+ * control × risk/asset matrix from `RiskComplianceTraceMatrix.tsx` (`useControlTraceMatrix.ts`
+ * supplies the cell membership; `dim` toggles its columns between risks and assets). Mirrors the
+ * design reference's `RCControls`/`RCCoverage`/`rc-trace` (`rc-views.jsx`) and this codebase's own
+ * `RiskComplianceRisksScreen.tsx` register/matrix toggle. Opens the shared `ControlDrawer` on
+ * row click, deep-linkable at `risk-compliance/controls/$controlId`. The Coverage and
+ * Traceability views' own rows/columns (Risks, information assets) open their drawers in-situ
+ * over this same page too, via local state rather than navigation — see
+ * `openRiskId`/`openAssetId` below.
  *
  * The issue's design language ("family, type, automation, effectiveness, owner, frequency,
  * last/next test") doesn't fully match the shipped schema, which only gives Control
@@ -142,6 +151,7 @@ export const RiskComplianceControlsScreen = () => {
   const [openAssetId, setOpenAssetId] = useState<string | null>(null);
   const q = search.q ?? '';
   const view = search.view ?? 'library';
+  const dim = search.dim ?? 'risks';
   const configurations = useQuery(workspaceCapabilityConfigurationsQuery(workspaceSlug));
   const riskConfig = resolveRiskComplianceConfig(configurations.data);
   const schemas = useSchemas(workspaceSlug);
@@ -235,11 +245,12 @@ export const RiskComplianceControlsScreen = () => {
   // framework facets — mirrors the design reference's `RCCoverage` (`rc-views.jsx`), whose
   // `byRisk`/`byAsset` roll-ups read the full `RC_RISKS`/`RC_ASSETS` sets, not the filtered
   // `rows` prop (that prop only feeds the stat tiles above them — see `filtered` reuse below).
+  // The Traceability view's Risk-dimension columns (`liveRisks`) reuse this same fetch.
   const risks = useQuery(
     entitiesQuery(
       workspaceSlug,
       { schemaId: riskConfig?.riskSchemaId, view: 'full', limit: 500 },
-      view === 'coverage' && riskConfig != null
+      (view === 'coverage' || view === 'traceability') && riskConfig != null
     )
   );
   const riskCoverage = useRiskCoverageRollups(
@@ -280,10 +291,11 @@ export const RiskComplianceControlsScreen = () => {
       ),
     [liveRisks, riskCoverage.byId]
   );
+  // Also feeds the Traceability view's Asset-dimension columns (`weakestAssets` below).
   const assetCoverage = useAssetCoverageRollups(
     workspaceSlug,
-    view === 'coverage' ? riskAffectsRelationSchemaId : null,
-    view === 'coverage' ? controlAffectsRelationSchemaId : null
+    view === 'coverage' || view === 'traceability' ? riskAffectsRelationSchemaId : null,
+    view === 'coverage' || view === 'traceability' ? controlAffectsRelationSchemaId : null
   );
   // `control-affects` is now schema-constrained to the Data Entity schema (`schemaTemplates.ts`'s
   // 'control-protection' composition extension), so every control-linked asset already qualifies
@@ -310,6 +322,53 @@ export const RiskComplianceControlsScreen = () => {
     [liveRisks, riskCoverage.byId]
   );
 
+  // Traceability view: rows are the Library view's own filtered controls (per #3282's scope —
+  // reuses #3281's filtered dataset, respecting the type/effectiveness/framework facets); columns
+  // are either `liveRisks` or `weakestAssets` (already fetched above for the Coverage view),
+  // toggled by `dim`. Membership/totals come from `useControlTraceMatrix`, keyed by `_uid` like
+  // every other relation-derived map on this screen (`riskCounts`, `assetCounts`, ...) — the
+  // by-publicId lookup below translates a matrix row's uid back to what `openControl` expects.
+  // Column labels/tooltips mirror the design reference's `x.ref + " " + x.title` (risks) /
+  // `x.name` (assets) — `rc-views.jsx`.
+  const traceMatrix = useControlTraceMatrix(
+    workspaceSlug,
+    view === 'traceability' ? riskControlRelationSchemaId : null,
+    view === 'traceability' ? controlAffectsRelationSchemaId : null
+  );
+  const controlsByUid = useMemo(() => new Map(filtered.map(e => [e._uid, e])), [filtered]);
+  const traceControls = useMemo(
+    () => filtered.map(e => ({ id: e._uid, ref: e._publicId, name: e._name })),
+    [filtered]
+  );
+  const traceColumns = useMemo(
+    () =>
+      dim === 'assets'
+        ? weakestAssets.map(a => ({ id: a.assetId, label: a.assetName, title: a.assetName }))
+        : liveRisks.map(e => ({
+            id: e._uid,
+            label: `${e._publicId} ${e._name}`,
+            title: e._name
+          })),
+    [dim, weakestAssets, liveRisks]
+  );
+  const hasTraceLink = (controlUid: string, columnId: string) =>
+    (dim === 'assets'
+      ? traceMatrix.assetIdsByControlId.get(controlUid)
+      : traceMatrix.riskIdsByControlId.get(controlUid)
+    )?.has(columnId) ?? false;
+  const isTraceControlEffective = (controlUid: string) =>
+    controlsByUid.get(controlUid)?.operating_effectiveness === 'effective';
+  const traceControlCountByColumnId = useMemo(
+    () =>
+      sizeMap(dim === 'assets' ? traceMatrix.controlIdsByAssetId : traceMatrix.controlIdsByRiskId),
+    [dim, traceMatrix.controlIdsByAssetId, traceMatrix.controlIdsByRiskId]
+  );
+  const traceColumnCountByControlId = useMemo(
+    () =>
+      sizeMap(dim === 'assets' ? traceMatrix.assetIdsByControlId : traceMatrix.riskIdsByControlId),
+    [dim, traceMatrix.assetIdsByControlId, traceMatrix.riskIdsByControlId]
+  );
+
   const openControl = (id: string) =>
     navigate({
       to: `${RISK_RAIL_PATHS[RISK_CONTROLS_ID]}/$controlId`,
@@ -328,6 +387,10 @@ export const RiskComplianceControlsScreen = () => {
       params: { workspaceSlug },
       search: (previous: Record<string, unknown>) => ({ ...previous, ...patch })
     });
+  const openTraceControl = (uid: string) => {
+    const entity = controlsByUid.get(uid);
+    if (entity) openControl(entity._publicId);
+  };
 
   if (configurations.isLoading) {
     return <div className={styles.empty}>Loading risk & compliance…</div>;
@@ -355,35 +418,58 @@ export const RiskComplianceControlsScreen = () => {
           value={view}
           onChange={value => {
             if (value)
-              patchSearch({ view: value === 'library' ? undefined : (value as 'coverage') });
+              patchSearch({
+                view: value === 'library' ? undefined : (value as 'coverage' | 'traceability')
+              });
           }}
         >
           <ToggleButtonGroup.Item value="library">Library</ToggleButtonGroup.Item>
           <ToggleButtonGroup.Item value="coverage">Coverage</ToggleButtonGroup.Item>
+          <ToggleButtonGroup.Item value="traceability">Traceability</ToggleButtonGroup.Item>
         </ToggleButtonGroup.Root>
+        {/* Search stays visible (and keeps narrowing the Coverage view's stat tiles, via
+            `filtered`) for both Library and Coverage — hidden only for Traceability, mirroring
+            the design reference's `view !== "matrix"` condition (`rc-views.jsx`). */}
+        {view !== 'traceability' && (
+          <SearchInput
+            size="sm"
+            className={filterStyles.searchInline}
+            value={q}
+            placeholder="Search controls by name…"
+            aria-label="Search controls"
+            onChange={value => patchSearch({ q: value || undefined })}
+            onClear={() => patchSearch({ q: undefined })}
+          />
+        )}
         {view === 'library' && (
-          <>
-            <SearchInput
-              size="sm"
-              className={filterStyles.searchInline}
-              value={q}
-              placeholder="Search controls by name…"
-              aria-label="Search controls"
-              onChange={value => patchSearch({ q: value || undefined })}
-              onClear={() => patchSearch({ q: undefined })}
+          <div style={{ marginLeft: 'auto' }}>
+            <FilterDropdown
+              label="Sort"
+              value={sort?.key ?? 'name'}
+              onChange={value => value !== sort?.key && toggleSort(value as SortKey)}
+              options={[
+                { value: 'name', label: 'Name' },
+                { value: 'risksMitigated', label: 'Risks mitigated' },
+                { value: 'lastVerified', label: 'Last verified' }
+              ]}
             />
-            <div style={{ marginLeft: 'auto' }}>
-              <FilterDropdown
-                label="Sort"
-                value={sort?.key ?? 'name'}
-                onChange={value => value !== sort?.key && toggleSort(value as SortKey)}
-                options={[
-                  { value: 'name', label: 'Name' },
-                  { value: 'risksMitigated', label: 'Risks mitigated' },
-                  { value: 'lastVerified', label: 'Last verified' }
-                ]}
-              />
-            </div>
+          </div>
+        )}
+        {view === 'traceability' && (
+          <>
+            <div style={{ flex: 1 }} />
+            <ToggleButtonGroup.Root
+              type="single"
+              aria-label="Traceability dimension"
+              value={dim}
+              onChange={value => {
+                if (value)
+                  patchSearch({ dim: value === 'risks' ? undefined : (value as 'assets') });
+              }}
+            >
+              <ToggleButtonGroup.Item value="risks">Controls × risks</ToggleButtonGroup.Item>
+              <ToggleButtonGroup.Item value="assets">Controls × assets</ToggleButtonGroup.Item>
+            </ToggleButtonGroup.Root>
           </>
         )}
       </div>
@@ -506,6 +592,51 @@ export const RiskComplianceControlsScreen = () => {
                 )}
               </Table.Body>
             </Table.Root>
+          </div>
+        </>
+      ) : view === 'traceability' ? (
+        <>
+          <div className={styles.panel}>
+            <div className={styles.panelHeader}>
+              <span className={styles.panelTitle}>
+                Control → {dim === 'assets' ? 'information asset' : 'risk'} traceability
+              </span>
+              <div className={traceStyles.legend}>
+                <span className={traceStyles.legendItem}>
+                  <span className={traceStyles.legendSwatch} />
+                  linked
+                </span>
+                <span className={traceStyles.legendItem}>
+                  <span className={`${traceStyles.legendSwatch} ${traceStyles.legendSwatchWeak}`} />
+                  linked, control not effective
+                </span>
+                <span className={traceStyles.legendItem}>
+                  <span className={`${traceStyles.legendSwatch} ${traceStyles.legendSwatchGap}`} />
+                  no control
+                </span>
+              </div>
+            </div>
+            {(dim === 'assets' ? assetCoverage.isLoading : risks.isLoading) ||
+            controls.isLoading ? (
+              <div className={styles.empty}>Loading traceability matrix…</div>
+            ) : (
+              <RiskComplianceTraceMatrix
+                controls={traceControls}
+                columns={traceColumns}
+                dimensionLabel={dim === 'assets' ? 'asset' : 'risk'}
+                hasLink={hasTraceLink}
+                isControlEffective={isTraceControlEffective}
+                controlCountByColumnId={traceControlCountByColumnId}
+                columnCountByControlId={traceColumnCountByControlId}
+                onOpenControl={openTraceControl}
+              />
+            )}
+          </div>
+          <div className={styles.note}>
+            Rows are Control records, columns are the{' '}
+            {dim === 'assets' ? 'information assets in scope' : 'live risks in the register'}. The
+            bottom row is the coverage count — a red mark is an uncontrolled{' '}
+            {dim === 'assets' ? 'asset' : 'risk'}.
           </div>
         </>
       ) : (

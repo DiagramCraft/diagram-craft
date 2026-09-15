@@ -158,3 +158,12 @@
   font-size: 11px;
   font-variant-numeric: tabular-nums;
 }
+
+/* Traceability view's explanatory footnote — mirrors the design reference's `.rc-note`. */
+.note {
+  font-size: 11px;
+  color: var(--base-fg-more-dim);
+  padding: 10px 14px 4px;
+  max-width: 780px;
+  line-height: 1.6;
+}

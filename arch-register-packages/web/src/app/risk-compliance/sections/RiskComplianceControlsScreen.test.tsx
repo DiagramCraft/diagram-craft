@@ -307,4 +307,119 @@ describe('RiskComplianceControlsScreen', () => {
     expect(container.textContent).toContain('AST-002');
     expect(container.textContent).toContain('Open record in Entities');
   });
+
+  it('shows the traceability matrix with control x risk membership and per-column totals', async () => {
+    mocks.search = { view: 'traceability' };
+    mocks.schemasList.mockResolvedValue([
+      {
+        id: 'risk',
+        name: 'Risk',
+        fields: [
+          { id: 'mitigating_controls', type: 'typedRelation', relationSchemaId: 'risk-control' },
+          { id: 'affected_entities', type: 'typedRelation', relationSchemaId: 'risk-affects' }
+        ]
+      },
+      {
+        id: 'control',
+        name: 'Control',
+        fields: [
+          { id: 'mitigated_risks', type: 'typedRelation', relationSchemaId: 'risk-control' },
+          {
+            id: 'satisfied_requirements',
+            type: 'typedRelation',
+            relationSchemaId: 'control-requirement'
+          },
+          { id: 'protected_entities', type: 'typedRelation', relationSchemaId: 'control-affects' }
+        ]
+      }
+    ]);
+    mocks.entityList.mockImplementation(({ query }: { query: { _schemaId?: string } }) => {
+      if (query._schemaId === 'risk') {
+        return Promise.resolve({
+          items: [
+            { _uid: 'risk-1', _publicId: 'RSK-001', _name: 'Account Takeover' },
+            { _uid: 'risk-2', _publicId: 'RSK-002', _name: 'Data Leak' }
+          ],
+          total: 2
+        });
+      }
+      return Promise.resolve({
+        items: [
+          {
+            _uid: 'control-1',
+            _publicId: 'CTL-001',
+            _name: 'MFA Enforcement',
+            control_type: 'preventive',
+            operating_effectiveness: 'effective'
+          }
+        ],
+        total: 1
+      });
+    });
+    mocks.relationsList.mockImplementation(({ query }: { query: { schemaId?: string } }) => {
+      if (query.schemaId === 'risk-control') {
+        return Promise.resolve({
+          items: [
+            {
+              _uid: 'rel-1',
+              _schema: { id: 'risk-control', name: 'Risk Mitigation' },
+              _in: { id: 'risk-1', name: 'Account Takeover' },
+              _out: { id: 'control-1', name: 'MFA Enforcement' },
+              coverage: 100,
+              effectiveness: 'full'
+            }
+          ],
+          total: 1
+        });
+      }
+      return Promise.resolve({ items: [], total: 0 });
+    });
+
+    await renderScreen();
+
+    expect(container.textContent).toContain('Account Takeover');
+    expect(container.textContent).toContain('Data Leak');
+    expect(container.textContent).toContain('MFA Enforcement');
+
+    // Column headers carry the risk's reference + title (design reference's `x.ref + " " +
+    // x.title`), and aren't clickable — only the Control row header is.
+    const headerCells = [...container.querySelectorAll('thead th')];
+    const dataLeakColumnIndex = headerCells.findIndex(th => th.textContent?.includes('Data Leak'));
+    expect(dataLeakColumnIndex).toBeGreaterThan(0);
+
+    // "Data Leak" has no covering control — the bottom totals row renders a gap mark instead of
+    // a "0" for its column.
+    const bottomRow = [...container.querySelectorAll('tbody tr')].at(-1);
+    const dataLeakTotalCell = bottomRow?.querySelectorAll('td')[dataLeakColumnIndex - 1];
+    expect(dataLeakTotalCell?.textContent).toBe('');
+    expect(dataLeakTotalCell?.querySelector('span')).toBeTruthy();
+
+    // Clicking the control's row header opens the shared ControlDrawer via navigation.
+    mocks.navigate.mockClear();
+    const controlHeader = [...container.querySelectorAll('tbody th')].find(th =>
+      th.textContent?.includes('MFA Enforcement')
+    );
+    await act(async () => {
+      controlHeader!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    expect(mocks.navigate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: '/$workspaceSlug/risk-compliance/controls/$controlId',
+        params: { workspaceSlug: 'ws-1', controlId: 'CTL-001' }
+      })
+    );
+
+    // The dimension toggle (in the main toolbar, not the panel header) patches the `dim` search
+    // param rather than navigating away.
+    mocks.navigate.mockClear();
+    const assetsToggle = [...container.querySelectorAll('button')].find(
+      button => button.textContent === 'Controls × assets'
+    );
+    await act(async () => {
+      assetsToggle!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    expect(mocks.navigate).toHaveBeenCalledWith(
+      expect.objectContaining({ to: '/$workspaceSlug/risk-compliance/controls' })
+    );
+  });
 });
