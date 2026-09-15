@@ -339,7 +339,7 @@ export const JobMonitoringSubSection = ({ workspaceSlug }: { workspaceSlug: stri
     isLoading: runsLoading,
     isError: runsError,
     refetch: refetchRuns
-  } = useJobRuns(workspaceSlug, runFilters);
+  } = useJobRuns(workspaceSlug, runFilters, tab === 'history');
   const cancelRun = useCancelJobRun(workspaceSlug);
   const updateSchedule = useUpdateJobSchedule(workspaceSlug);
   const runScheduleNow = useRunJobScheduleNow(workspaceSlug);

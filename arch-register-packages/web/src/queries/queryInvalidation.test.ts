@@ -16,7 +16,12 @@ import {
   invalidateDeletedEntity,
   invalidateEntityQueries
 } from './entities';
-import { jobKeys, invalidateJobQueries } from './jobs';
+import {
+  invalidateJobRunQueries,
+  invalidateJobScheduleQueries,
+  jobKeys,
+  invalidateJobQueries
+} from './jobs';
 import { governanceKeys, invalidateGovernanceQueries } from './governance';
 import {
   addPinnedEntityToCache,
@@ -203,6 +208,18 @@ describe('workspace-scoped invalidation', () => {
 
     expect(invalidateQueries.mock.calls.map(([options]) => options.queryKey)).toEqual([
       jobKeys.servers('ws-1'),
+      jobKeys.schedules('ws-1'),
+      jobKeys.runsWorkspace('ws-1')
+    ]);
+  });
+
+  it('supports invalidating only the job query family changed by a mutation', async () => {
+    const { client, invalidateQueries } = queryClientSpy();
+
+    await invalidateJobScheduleQueries(client, 'ws-1');
+    await invalidateJobRunQueries(client, 'ws-1');
+
+    expect(invalidateQueries.mock.calls.map(([options]) => options.queryKey)).toEqual([
       jobKeys.schedules('ws-1'),
       jobKeys.runsWorkspace('ws-1')
     ]);

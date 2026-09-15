@@ -2,7 +2,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { CreateJobBody, JobScheduleUpdate } from '@arch-register/api-types/jobsContract';
 import { orpcClient } from '../lib/orpcClient';
 import {
-  invalidateJobQueries,
+  invalidateJobRunQueries,
+  invalidateJobScheduleQueries,
   jobRunsQuery,
   jobSchedulesQuery,
   jobServersQuery,
@@ -26,7 +27,7 @@ export const useCreateJob = (workspaceSlug: string) => {
         params: { workspace: workspaceSlug },
         body
       }),
-    onSuccess: async () => invalidateJobQueries(queryClient, workspaceSlug)
+    onSuccess: async () => invalidateJobScheduleQueries(queryClient, workspaceSlug)
   });
 };
 
@@ -42,7 +43,7 @@ export const useUpdateJobSchedule = (workspaceSlug: string) => {
         params: { workspace: workspaceSlug, id: input.id },
         body: input.body
       }),
-    onSuccess: () => invalidateJobQueries(queryClient, workspaceSlug)
+    onSuccess: () => invalidateJobScheduleQueries(queryClient, workspaceSlug)
   });
 };
 
@@ -54,7 +55,12 @@ export const useRunJobScheduleNow = (workspaceSlug: string) => {
       orpcClient.jobs.schedules.runNow({
         params: { workspace: workspaceSlug, id: scheduleId }
       }),
-    onSuccess: () => invalidateJobQueries(queryClient, workspaceSlug)
+    onSuccess: async () => {
+      await Promise.all([
+        invalidateJobScheduleQueries(queryClient, workspaceSlug),
+        invalidateJobRunQueries(queryClient, workspaceSlug)
+      ]);
+    }
   });
 };
 
@@ -66,6 +72,6 @@ export const useCancelJobRun = (workspaceSlug: string) => {
       orpcClient.jobs.runs.cancel({
         params: { workspace: workspaceSlug, id: runId }
       }),
-    onSuccess: () => invalidateJobQueries(queryClient, workspaceSlug)
+    onSuccess: () => invalidateJobRunQueries(queryClient, workspaceSlug)
   });
 };
