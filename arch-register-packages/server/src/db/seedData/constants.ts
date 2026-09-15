@@ -426,7 +426,11 @@ export const DEMO_RISK_COMPLIANCE_IDS = {
     cardholderDataTokenization: '00000000-0000-0000-000d-000000000205',
     paymentAccessLogging: '00000000-0000-0000-000d-000000000206',
     piiAccessControls: '00000000-0000-0000-000d-000000000207',
-    dataDeletionAutomation: '00000000-0000-0000-000d-000000000208'
+    dataDeletionAutomation: '00000000-0000-0000-000d-000000000208',
+    inventoryReconciliationAutomation: '00000000-0000-0000-000d-000000000209',
+    automatedRecordsDisposal: '00000000-0000-0000-000d-00000000020a',
+    marketingDataSharingAgreementReview: '00000000-0000-0000-000d-00000000020b',
+    quarterlyPciScanAutomation: '00000000-0000-0000-000d-00000000020c'
   },
   risks: {
     customerAccountTakeover: '00000000-0000-0000-000c-000000000201',
@@ -436,7 +440,11 @@ export const DEMO_RISK_COMPLIANCE_IDS = {
     paymentCardDataBreach: '00000000-0000-0000-000c-000000000205',
     unauthorizedAccessToPaymentLogs: '00000000-0000-0000-000c-000000000206',
     unauthorizedInternalPiiAccess: '00000000-0000-0000-000c-000000000207',
-    nonCompliantErasureRequests: '00000000-0000-0000-000c-000000000208'
+    nonCompliantErasureRequests: '00000000-0000-0000-000c-000000000208',
+    inventoryDataIntegrityFailure: '00000000-0000-0000-000c-000000000209',
+    retentionNonEnforcementOrderRecords: '00000000-0000-0000-000c-00000000020a',
+    uncontrolledMarketingDataSharing: '00000000-0000-0000-000c-00000000020b',
+    inaccuratePciScanReporting: '00000000-0000-0000-000c-00000000020c'
   }
 } as const;
 
@@ -447,13 +455,17 @@ export const DEMO_RETENTION_IDS = {
     paymentTransactionRecords: '00000000-0000-0000-0042-000000000501',
     customerPiiRecords: '00000000-0000-0000-0042-000000000502',
     marketingConsentRecords: '00000000-0000-0000-0042-000000000503',
-    orderFulfillmentRecords: '00000000-0000-0000-0042-000000000504'
+    orderFulfillmentRecords: '00000000-0000-0000-0042-000000000504',
+    inventorySupplyChainRecords: '00000000-0000-0000-0042-000000000505'
   },
   assignments: {
     transactionEvents: '00000000-0000-0000-0042-000000000601',
     customerCredentials: '00000000-0000-0000-0042-000000000602',
     clickstreamEvents: '00000000-0000-0000-0042-000000000603',
-    paymentsPlatform: '00000000-0000-0000-0042-000000000604'
+    paymentsPlatform: '00000000-0000-0000-0042-000000000604',
+    orderRecordsToFulfillmentPolicy: '00000000-0000-0000-0042-000000000605',
+    inventoryLevelsToSupplyChainPolicy: '00000000-0000-0000-0042-000000000606',
+    marketingConsentRecordsAssetToMarketingPolicy: '00000000-0000-0000-0042-000000000607'
   }
 } as const;
 
@@ -650,6 +662,7 @@ export const SEED_ENUM_IDS = {
   vendorStatus: '00000000-0000-0000-0000-e00000000019',
   vendorCostCentre: '00000000-0000-0000-0000-e0000000001a',
   contractType: '00000000-0000-0000-0000-e0000000001b',
+  riskCategory: '00000000-0000-0000-0000-e0000000001c',
   glossaryStatus: GLOSSARY_IDS.statusEnum,
   strategyStatus: STRATEGY_IDS.statusEnum,
   measureDirection: STRATEGY_IDS.measureDirectionEnum,

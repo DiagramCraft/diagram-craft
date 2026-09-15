@@ -1398,6 +1398,19 @@ const securityEnums = [
 
 const riskComplianceEnums = [
   enumDefinition(
+    'risk-category',
+    'Risk Category',
+    [
+      { value: 'privacy', label: 'Privacy' },
+      { value: 'security', label: 'Security' },
+      { value: 'operational', label: 'Operational' },
+      { value: 'regulatory', label: 'Regulatory' },
+      { value: 'third-party', label: 'Third-party' },
+      { value: 'records', label: 'Records' }
+    ],
+    'Governance'
+  ),
+  enumDefinition(
     'risk-status',
     'Risk Status',
     [
@@ -3041,6 +3054,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         fields: [
           { id: 'likelihood', name: 'Likelihood', type: 'number', min: 1, max: 5 },
           { id: 'impact', name: 'Impact', type: 'number', min: 1, max: 5 },
+          { id: 'category', name: 'Category', type: 'select', enumId: 'risk-category' },
           {
             id: 'inherent_risk_score',
             name: 'Inherent Risk Score',
