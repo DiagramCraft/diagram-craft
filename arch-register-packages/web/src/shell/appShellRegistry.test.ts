@@ -21,6 +21,11 @@ import {
   VENDOR_RISK_ID,
   VENDOR_RAIL_PATHS
 } from '../app/vendor-management/vendorManagementSections';
+import {
+  RISK_OVERVIEW_ID,
+  RISK_RETENTION_ID,
+  RISK_RAIL_PATHS
+} from '../app/risk-compliance/riskComplianceSections';
 
 const railIds = (appId: Parameters<typeof getAppDefinition>[0]) =>
   getAppDefinition(appId).sections.map(section => section.id);
@@ -81,6 +86,14 @@ describe('appShellRegistry', () => {
     expect(getRailSection(VENDOR_RISK_ID)?.route).toBe(VENDOR_RAIL_PATHS[VENDOR_RISK_ID]);
   });
 
+  it('registers Risk & Compliance as a capability-gated app owning five rail sections', () => {
+    const riskCompliance = getAppDefinition(RISK_OVERVIEW_ID);
+    expect(riskCompliance.applicationId).toBe('risk-compliance');
+    expect(railIds(RISK_OVERVIEW_ID)).toHaveLength(5);
+    expect(riskCompliance.enablement).toEqual({ capabilityType: 'risk-compliance' });
+    expect(getRailSection(RISK_RETENTION_ID)?.route).toBe(RISK_RAIL_PATHS[RISK_RETENTION_ID]);
+  });
+
   it('exposes non-home app routes under the stable APP_RAIL_ROUTES shape', () => {
     // Heatmaps is absent from the rail (see above), so its route is not in APP_RAIL_ROUTES.
     const shellStrategyRoutes = Object.fromEntries(
@@ -89,7 +102,8 @@ describe('appShellRegistry', () => {
     expect(APP_RAIL_ROUTES).toEqual({
       [GLOSSARY_RAIL_ITEM_ID]: GLOSSARY_RAIL_PATH,
       ...shellStrategyRoutes,
-      ...VENDOR_RAIL_PATHS
+      ...VENDOR_RAIL_PATHS,
+      ...RISK_RAIL_PATHS
     });
   });
 

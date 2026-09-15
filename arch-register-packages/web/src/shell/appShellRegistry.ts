@@ -17,6 +17,8 @@ import { strategyAppDefinition } from '../app/strategy-model/strategyShell';
 import type { StrategyRailItemId } from '../app/strategy-model/strategySections';
 import { vendorManagementAppDefinition } from '../app/vendor-management/vendorManagementShell';
 import type { VendorManagementRailItemId } from '../app/vendor-management/vendorManagementSections';
+import { riskComplianceAppDefinition } from '../app/risk-compliance/riskComplianceShell';
+import type { RiskComplianceRailItemId } from '../app/risk-compliance/riskComplianceSections';
 import type { AppDefinition, AppId, AppRailSection, WorkspaceRailItemId } from './shellTypes';
 
 /**
@@ -29,7 +31,11 @@ import type { AppDefinition, AppId, AppRailSection, WorkspaceRailItemId } from '
  * it, as `glossaryAppDefinition` does) — core shell files must not hardcode individual app ids.
  * Every rail-item id, icon, tooltip and route is derived from the apps' `sections`.
  */
-export type AppRailItemId = GlossaryRailItemId | StrategyRailItemId | VendorManagementRailItemId;
+export type AppRailItemId =
+  | GlossaryRailItemId
+  | StrategyRailItemId
+  | VendorManagementRailItemId
+  | RiskComplianceRailItemId;
 
 export const HOME_APP: AppDefinition = {
   id: 'home',
@@ -69,7 +75,8 @@ export const APP_DEFINITIONS: AppDefinition[] = [
   HOME_APP,
   glossaryAppDefinition,
   strategyAppDefinition,
-  vendorManagementAppDefinition
+  vendorManagementAppDefinition,
+  riskComplianceAppDefinition
 ];
 
 export const getAppDefinition = (id: AppId): AppDefinition =>

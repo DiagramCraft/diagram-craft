@@ -10,6 +10,7 @@ import { createGovernanceWorkspaceRoute } from './governanceWorkspaceRoute';
 import { createGlossaryWorkspaceRoutes } from '../../app/business-glossary/glossaryWorkspaceRoute';
 import { createStrategyWorkspaceRoutes } from '../../app/strategy-model/strategyWorkspaceRoute';
 import { createVendorManagementWorkspaceRoutes } from '../../app/vendor-management/vendorManagementWorkspaceRoute';
+import { createRiskComplianceWorkspaceRoutes } from '../../app/risk-compliance/riskComplianceWorkspaceRoute';
 
 export const createWorkspaceRouteEntries = <TParentRoute extends AnyRoute>(
   workspaceRoute: TParentRoute
@@ -22,6 +23,7 @@ export const createWorkspaceRouteEntries = <TParentRoute extends AnyRoute>(
     ...createGlossaryWorkspaceRoutes(workspaceRoute),
     ...createStrategyWorkspaceRoutes(workspaceRoute),
     ...createVendorManagementWorkspaceRoutes(workspaceRoute),
+    ...createRiskComplianceWorkspaceRoutes(workspaceRoute),
     ...createSearchWorkspaceRoute(workspaceRoute),
     ...createGovernanceWorkspaceRoute(workspaceRoute),
     ...createSettingsWorkspaceRoutes(workspaceRoute),

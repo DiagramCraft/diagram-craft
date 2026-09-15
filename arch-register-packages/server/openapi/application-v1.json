@@ -72804,7 +72804,8 @@
                           "home",
                           "business-glossary",
                           "strategy-model",
-                          "vendor-management"
+                          "vendor-management",
+                          "risk-compliance"
                         ],
                         "type": "string"
                       }
@@ -72816,7 +72817,8 @@
                           "home",
                           "business-glossary",
                           "strategy-model",
-                          "vendor-management"
+                          "vendor-management",
+                          "risk-compliance"
                         ],
                         "type": "string"
                       }
@@ -72889,7 +72891,8 @@
                               "home",
                               "business-glossary",
                               "strategy-model",
-                              "vendor-management"
+                              "vendor-management",
+                              "risk-compliance"
                             ],
                             "type": "string"
                           },
@@ -73041,7 +73044,8 @@
                 "home",
                 "business-glossary",
                 "strategy-model",
-                "vendor-management"
+                "vendor-management",
+                "risk-compliance"
               ],
               "type": "string"
             }
@@ -73115,7 +73119,8 @@
                         "home",
                         "business-glossary",
                         "strategy-model",
-                        "vendor-management"
+                        "vendor-management",
+                        "risk-compliance"
                       ],
                       "type": "string"
                     },
@@ -73160,7 +73165,8 @@
                 "home",
                 "business-glossary",
                 "strategy-model",
-                "vendor-management"
+                "vendor-management",
+                "risk-compliance"
               ],
               "type": "string"
             }
@@ -73200,7 +73206,8 @@
                             "home",
                             "business-glossary",
                             "strategy-model",
-                            "vendor-management"
+                            "vendor-management",
+                            "risk-compliance"
                           ],
                           "type": "string"
                         },
