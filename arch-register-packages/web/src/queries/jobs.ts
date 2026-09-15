@@ -16,14 +16,35 @@ export const jobKeys = {
   servers: (workspaceId: string) => [...jobKeys.all, 'servers', workspaceId] as const,
   schedules: (workspaceId: string) => [...jobKeys.all, 'schedules', workspaceId] as const,
   runsWorkspace: (workspaceId: string) => [...jobKeys.all, 'runs', workspaceId] as const,
-  runs: (workspaceId: string, filters: Record<string, unknown>) =>
+  runs: (workspaceId: string, filters: JobRunFilters) =>
     [...jobKeys.runsWorkspace(workspaceId), filters] as const
+};
+
+type NormalizedJobRunFilters = Omit<JobRunFilters, 'limit' | 'offset'> & {
+  limit: number;
+  offset: number;
+};
+
+const normalizeJobRunFilters = (filters: JobRunFilters): NormalizedJobRunFilters => {
+  const scheduleId = filters.scheduleId?.trim();
+  const plannedFrom = filters.plannedFrom?.trim();
+  const plannedTo = filters.plannedTo?.trim();
+
+  return {
+    scheduleId: scheduleId === '' ? undefined : scheduleId,
+    status: filters.status,
+    plannedFrom: plannedFrom === '' ? undefined : plannedFrom,
+    plannedTo: plannedTo === '' ? undefined : plannedTo,
+    limit: filters.limit ?? 50,
+    offset: filters.offset ?? 0
+  };
 };
 
 export const jobServersQuery = (workspaceId: string, enabled = true) =>
   queryOptions({
     queryKey: jobKeys.servers(workspaceId),
-    queryFn: () => orpcClient.jobs.servers.list({ params: { workspace: workspaceId } }),
+    queryFn: ({ signal }) =>
+      orpcClient.jobs.servers.list({ params: { workspace: workspaceId } }, { signal }),
     enabled: enabled && !!workspaceId,
     refetchInterval: 5000
   });
@@ -31,34 +52,43 @@ export const jobServersQuery = (workspaceId: string, enabled = true) =>
 export const jobSchedulesQuery = (workspaceId: string, enabled = true) =>
   queryOptions({
     queryKey: jobKeys.schedules(workspaceId),
-    queryFn: () => orpcClient.jobs.schedules.list({ params: { workspace: workspaceId } }),
+    queryFn: ({ signal }) =>
+      orpcClient.jobs.schedules.list({ params: { workspace: workspaceId } }, { signal }),
     enabled: enabled && !!workspaceId,
     refetchInterval: 5000
   });
 
-export const jobRunsQuery = (workspaceId: string, filters: JobRunFilters, enabled = true) =>
-  queryOptions({
-    queryKey: jobKeys.runs(workspaceId, filters),
-    queryFn: () =>
-      orpcClient.jobs.runs.list({
-        params: { workspace: workspaceId },
-        query: {
-          scheduleId: filters.scheduleId,
-          status: filters.status,
-          plannedFrom: filters.plannedFrom,
-          plannedTo: filters.plannedTo,
-          limit: filters.limit ?? 50,
-          offset: filters.offset ?? 0
-        }
-      }),
+export const jobRunsQuery = (workspaceId: string, filters: JobRunFilters, enabled = true) => {
+  const normalizedFilters = normalizeJobRunFilters(filters);
+
+  return queryOptions({
+    queryKey: jobKeys.runs(workspaceId, normalizedFilters),
+    queryFn: ({ signal }) =>
+      orpcClient.jobs.runs.list(
+        {
+          params: { workspace: workspaceId },
+          query: normalizedFilters
+        },
+        { signal }
+      ),
     enabled: enabled && !!workspaceId,
     refetchInterval: 5000
   });
+};
+
+export const invalidateJobServerQueries = (queryClient: QueryClient, workspaceId: string) =>
+  queryClient.invalidateQueries({ queryKey: jobKeys.servers(workspaceId) });
+
+export const invalidateJobScheduleQueries = (queryClient: QueryClient, workspaceId: string) =>
+  queryClient.invalidateQueries({ queryKey: jobKeys.schedules(workspaceId) });
+
+export const invalidateJobRunQueries = (queryClient: QueryClient, workspaceId: string) =>
+  queryClient.invalidateQueries({ queryKey: jobKeys.runsWorkspace(workspaceId) });
 
 export const invalidateJobQueries = async (queryClient: QueryClient, workspaceId: string) => {
   await Promise.all([
-    queryClient.invalidateQueries({ queryKey: jobKeys.servers(workspaceId) }),
-    queryClient.invalidateQueries({ queryKey: jobKeys.schedules(workspaceId) }),
-    queryClient.invalidateQueries({ queryKey: jobKeys.runsWorkspace(workspaceId) })
+    invalidateJobServerQueries(queryClient, workspaceId),
+    invalidateJobScheduleQueries(queryClient, workspaceId),
+    invalidateJobRunQueries(queryClient, workspaceId)
   ]);
 };
