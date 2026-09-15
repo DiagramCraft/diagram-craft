@@ -104,6 +104,26 @@ export const LazyVendorRiskScreen = lazyRouteComponent(
   () => import('../../app/vendor-management/sections/VendorRiskScreen'),
   'VendorRiskScreen'
 );
+export const LazyRiskComplianceOverviewScreen = lazyRouteComponent(
+  () => import('../../app/risk-compliance/sections/RiskComplianceOverviewScreen'),
+  'RiskComplianceOverviewScreen'
+);
+export const LazyRiskComplianceRisksScreen = lazyRouteComponent(
+  () => import('../../app/risk-compliance/sections/RiskComplianceRisksScreen'),
+  'RiskComplianceRisksScreen'
+);
+export const LazyRiskComplianceControlsScreen = lazyRouteComponent(
+  () => import('../../app/risk-compliance/sections/RiskComplianceControlsScreen'),
+  'RiskComplianceControlsScreen'
+);
+export const LazyRiskComplianceRetentionScreen = lazyRouteComponent(
+  () => import('../../app/risk-compliance/sections/RiskComplianceRetentionScreen'),
+  'RiskComplianceRetentionScreen'
+);
+export const LazyRiskComplianceAssessmentsScreen = lazyRouteComponent(
+  () => import('../../app/risk-compliance/sections/RiskComplianceAssessmentsScreen'),
+  'RiskComplianceAssessmentsScreen'
+);
 export const LazyWorkspaceSettingsScreen = lazyRouteComponent(
   () => import('../../sections/workspace-settings/WorkspaceSettingsScreen'),
   'WorkspaceSettingsScreen'

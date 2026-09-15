@@ -35,7 +35,8 @@
         - @id:ar.workspace.applications A workspace is organized into applications, switchable from a switcher in the
           top bar next to the workspace switcher. "Home" is the always-available core register (overview, content,
           projects, entities, search, my work, and AI); Business Glossary, Strategy & Capability Modelling
-          (@id:ar.strategy), and Vendor Management (@id:ar.vendor-management) are separate applications; selecting
+          (@id:ar.strategy), Vendor Management (@id:ar.vendor-management), and Risk & Compliance
+          (@id:ar.risk-compliance) are separate applications; selecting
           an application scopes the left icon rail to only that application's sections and re-skins the shell with
           its accent colour. An application may own several
           rail sections, each with its own icon, tooltip, route, and optionally its own primary sidebar. An
@@ -229,8 +230,8 @@
         - @id:ar.strategy.view-config Alongside the schema bindings, workspace administrators configure how the
           Business Capability attributes are presented across the application. In the "Applications & Capabilities"
           workspace settings screen — a secondary sidebar grouping the applications (Business Glossary, Strategy
-          & Capability Modelling, Vendor Management) and the remaining capabilities (API specification, Retention
-          policy), each row
+          & Capability Modelling, Vendor Management, Risk & Compliance) and the remaining capabilities (API
+          specification, Retention policy), each row
           showing a dot for whether that capability is enabled — the Strategy & Capability Modelling entry splits
           into Bindings / Fields / Dashboard / Access tabs. The Fields tab lists
           every capability field in one shared display order (no add or remove — the list follows the schema); each
@@ -379,6 +380,17 @@
           panel is hidden entirely, not shown with an explanatory empty state, when either is missing. The sidebar's
           "Technology EOL" facet always shows its own group label (with its own empty-state message when there's no
           exposure data) and lists the same exposed technologies, each opening its vendor.
+
+    - @id:ar.risk-compliance Workspaces can optionally enable Risk & Compliance as its own workspace application,
+      with a dedicated left rail scoped to five sections (Overview, Risks, Controls, Retention, Assessments). The
+      application is enabled once the workspace's `risk-compliance` capability configuration is valid (the required
+      Risk entity schema binding resolved; the Control, Framework, and Compliance Requirement entity schema bindings
+      are optional). The Retention section gates separately, on the existing, workspace-wide `retention` capability
+      (policy entity schema and assignment relation schema bindings), rather than on `risk-compliance` — a workspace
+      can have Retention configured without the rest of Risk & Compliance being enabled, or vice versa. Every
+      section is currently a scaffold: once its gating capability is configured it renders only its title and an
+      empty state; risk register, control library, retention dashboard, and assessment content land in later
+      sub-issues of the Risk & Compliance application epic.
 
     - @id:ar.entities Users can maintain a structured catalog of architectural entities and their relationships.
 

@@ -26,14 +26,16 @@ export const workspaceApplicationIdSchema = z.enum([
   'home',
   'business-glossary',
   'strategy-model',
-  'vendor-management'
+  'vendor-management',
+  'risk-compliance'
 ]);
 
 export const workspaceApplicationDefinitions = [
   { id: 'home', capabilityType: null },
   { id: 'business-glossary', capabilityType: 'business-glossary' },
   { id: 'strategy-model', capabilityType: 'strategy-model' },
-  { id: 'vendor-management', capabilityType: 'vendor-management' }
+  { id: 'vendor-management', capabilityType: 'vendor-management' },
+  { id: 'risk-compliance', capabilityType: 'risk-compliance' }
 ] as const;
 
 export const applicationAccessModeSchema = z.enum(['all_members', 'selected']);
