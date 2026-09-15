@@ -1,0 +1,92 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px 24px 32px;
+}
+
+.panel {
+  overflow: hidden;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+}
+
+.panelHead {
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.panelTitle {
+  color: var(--base-fg);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.panelSub,
+.hint {
+  color: var(--cmp-fg-disabled);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.panelSub {
+  margin-top: 3px;
+}
+
+.panelBody {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 16px 16px;
+}
+
+.inputLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--base-fg);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.input {
+  min-height: 150px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.error {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 9px 10px;
+  color: var(--error-fg);
+  background: var(--error-bg, color-mix(in srgb, var(--error-fg) 8%, transparent));
+  border: 1px solid var(--error-fg);
+  border-radius: var(--r);
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+
+.output {
+  max-height: 640px;
+  margin: 0;
+  padding: 16px;
+  overflow: auto;
+  color: var(--base-fg);
+  background: var(--cmp-bg);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

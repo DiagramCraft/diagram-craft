@@ -97,6 +97,12 @@ const SETTINGS_SECTIONS: SettingsNavItem[] = [
     icon: <TbFileExport size={12} />,
     group: 'Administration'
   },
+  {
+    id: 'query-console',
+    label: 'Query Console',
+    icon: <TbCode size={12} />,
+    group: 'Administration'
+  },
   { id: 'analytics', label: 'Analytics', icon: <TbChartBar size={12} />, group: 'Workspace' },
   { id: 'audit', label: 'Audit log', icon: <TbHistory size={12} />, group: 'Workspace' },
   { id: 'automation', label: 'Automation rules', icon: <TbBolt size={12} />, group: 'Workspace' },

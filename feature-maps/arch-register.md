@@ -137,6 +137,11 @@
               its value; schema validation remains available on entity save as a schema-local blocking or warning
               diagnostic.
 
+            - @id:ar.workspace.configuration.query-console Workspace settings administrators can run ad-hoc entity
+              query text DSL queries and inspect the returned records as raw JSON for debugging schemas, saved views,
+              derived fields, and other query-driven behavior. Parsing, compilation, entity visibility, and field-group
+              redaction use the same query and authorization pipeline as the entity browser.
+
             - @id:ar.workspace.configuration.schemas Administrators can define entity schemas, fields, select options,
             and reusable workspace enums. Enum options have stable values, editable labels and descriptions, an
             optional restricted/sensitive marker, ordering, and a retired state that preserves historical values while
