@@ -56,7 +56,7 @@ const VENDOR_SCHEMA = {
   fields: []
 };
 
-const today = () => {
+const soon = () => {
   const date = new Date();
   date.setDate(date.getDate() + 10);
   return date.toISOString().slice(0, 10);
@@ -97,6 +97,7 @@ describe('VendorOverviewScreen', () => {
           _uid: 'vnd-1',
           _publicId: 'VND-001',
           _name: 'Acme Corp',
+          tier: 'Strategic',
           security_risk: 5,
           concentration_risk: 5,
           financial_risk: 5,
@@ -107,6 +108,7 @@ describe('VendorOverviewScreen', () => {
           _uid: 'vnd-2',
           _publicId: 'VND-002',
           _name: 'Beta Supplies',
+          tier: 'Commodity',
           security_risk: 1,
           concentration_risk: 1,
           financial_risk: 1,
@@ -127,7 +129,14 @@ describe('VendorOverviewScreen', () => {
       nodes: [
         { _uid: 'vnd-1', _publicId: 'VND-001', _name: 'Acme Corp' },
         { _uid: 'vnd-2', _publicId: 'VND-002', _name: 'Beta Supplies' },
-        { _uid: 'ctr-1', _publicId: 'CTR-1', _name: 'Acme Support', contract_end: today() }
+        {
+          _uid: 'ctr-1',
+          _publicId: 'CTR-1',
+          _name: 'Acme Support',
+          contract_end: soon(),
+          annual_cost: { amount: 2000, currency: 'USD' },
+          auto_renew: true
+        }
       ],
       edges: [{ parentId: 'vnd-1', childId: 'ctr-1' }]
     });
@@ -140,58 +149,104 @@ describe('VendorOverviewScreen', () => {
     vi.clearAllMocks();
   });
 
-  it('shows the renewals-due, spend, and risk tolerance tiles', async () => {
+  it('shows the four header stats', async () => {
     await renderScreen();
-    expect(container.textContent).toContain('Renewals due');
-    expect(container.textContent).toContain('Spend');
-    expect(container.textContent).toContain('Above risk tolerance');
-    // vnd-1 is high risk (all dimensions 5, criticality 5)
-    expect(container.textContent).toContain('1');
+    expect(container.textContent).toContain('Contracted spend');
+    expect(container.textContent).toMatch(/4,000|4000/);
+    expect(container.textContent).toContain('Renewals in 90 days');
+    expect(container.textContent).toContain('Vendors above tolerance');
+    expect(container.textContent).toContain('Auto-renewing');
   });
 
-  it('lists the upcoming contract in the next renewals table', async () => {
+  it('shows the 12-month renewal strip and the next renewals list', async () => {
     await renderScreen();
+    expect(container.textContent).toContain('Renewals — next 12 months');
     expect(container.textContent).toContain('Next renewals');
     expect(container.textContent).toContain('Acme Support');
-    expect(container.textContent).toContain('Acme Corp');
+    expect(container.textContent).toContain('auto-renews');
+    expect(container.textContent).toContain('10d');
   });
 
-  it('navigates to the Contracts section when a renewal bucket is clicked', async () => {
+  it('shows spend by vendor and vendors-above-tolerance panels', async () => {
     await renderScreen();
-    const legendButton = [...container.querySelectorAll('button')].find(button =>
-      button.textContent?.includes('Next 30 days')
+    expect(container.textContent).toContain('Spend by vendor');
+    expect(container.textContent).toContain('Beta Supplies');
+    expect(container.textContent).toContain('Vendors above tolerance');
+    // vnd-1 is high risk (all dimensions 5, criticality 5) and appears in the register table
+    const table = [...container.querySelectorAll('table')].find(t =>
+      t.textContent?.includes('Criticality')
     );
-    expect(legendButton).toBeDefined();
+    expect(table?.textContent).toContain('Acme Corp');
+    expect(table?.textContent).toContain('Strategic');
+  });
+
+  it('shows the technology EOL exposure panel with a not-linked message when unbound', async () => {
+    await renderScreen();
+    expect(container.textContent).toContain('Technology end-of-life exposure');
+    expect(container.textContent).toContain('No Technology Release schema is linked');
+  });
+
+  it('shows the footnote linking to Entities', async () => {
+    await renderScreen();
+    expect(container.textContent).toContain('Entities');
+  });
+
+  it('navigates to the Contracts calendar when "Renewal calendar" is clicked', async () => {
+    await renderScreen();
+    const button = [...container.querySelectorAll('button')].find(
+      b => b.textContent === 'Renewal calendar'
+    );
+    expect(button).toBeDefined();
     await act(async () => {
-      legendButton!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      button!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
     expect(mocks.navigate).toHaveBeenCalledWith(
       expect.objectContaining({ to: '/$workspaceSlug/vendor-management/contracts' })
     );
   });
 
-  it('navigates to the Spend section when its tile is clicked', async () => {
+  it('navigates to the contract detail route when a next-renewal row is clicked', async () => {
     await renderScreen();
-    const spendTile = [...container.querySelectorAll('button')].find(button =>
-      button.textContent?.includes('annualised')
+    const row = [...container.querySelectorAll('button')].find(b =>
+      b.textContent?.includes('Acme Support')
     );
-    expect(spendTile).toBeDefined();
+    expect(row).toBeDefined();
     await act(async () => {
-      spendTile!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      row!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
     expect(mocks.navigate).toHaveBeenCalledWith(
-      expect.objectContaining({ to: '/$workspaceSlug/vendor-management/spend' })
+      expect.objectContaining({
+        to: '/$workspaceSlug/vendor-management/contracts/$contractId',
+        params: { workspaceSlug: 'ws-1', contractId: 'CTR-1' }
+      })
     );
   });
 
-  it('navigates to the Risk section when the above-tolerance tile is clicked', async () => {
+  it('navigates to the vendor spend detail route when a spend-by-vendor row is clicked', async () => {
     await renderScreen();
-    const riskTile = [...container.querySelectorAll('button')].find(button =>
-      button.textContent?.includes('Above risk tolerance')
+    const row = [...container.querySelectorAll('button')].find(b =>
+      b.textContent?.includes('Beta Supplies')
     );
-    expect(riskTile).toBeDefined();
+    expect(row).toBeDefined();
     await act(async () => {
-      riskTile!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      row!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    expect(mocks.navigate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: '/$workspaceSlug/vendor-management/spend/$vendorId',
+        params: { workspaceSlug: 'ws-1', vendorId: 'VND-002' }
+      })
+    );
+  });
+
+  it('navigates to the Risk section when "Risk view" is clicked', async () => {
+    await renderScreen();
+    const button = [...container.querySelectorAll('button')].find(
+      b => b.textContent === 'Risk view'
+    );
+    expect(button).toBeDefined();
+    await act(async () => {
+      button!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
     expect(mocks.navigate).toHaveBeenCalledWith(
       expect.objectContaining({ to: '/$workspaceSlug/vendor-management/risk' })

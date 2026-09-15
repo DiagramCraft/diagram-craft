@@ -1,7 +1,9 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useParams } from '@tanstack/react-router';
+import { Button } from '@diagram-craft/app-components/Button';
 import { Title } from '../../../components/Title';
+import { Chip } from '../../../components/Chip';
 import { Table } from '../../../components/table/Table';
 import { entitiesQuery } from '../../../queries/entities';
 import { workspaceCapabilityConfigurationsQuery } from '../../../queries/workspaceConfig';
@@ -15,37 +17,67 @@ import {
   VENDOR_SPEND_ID,
   VENDOR_RISK_ID
 } from '../vendorManagementSections';
-import { useVendorContracts } from '../useVendorContracts';
-import {
-  renewalWindow,
-  RENEWAL_WINDOWS,
-  RENEWAL_WINDOW_COLOR,
-  type RenewalWindow
-} from '../contractRenewalWindow';
+import { useVendorContracts, type VendorContractRow } from '../useVendorContracts';
+import { renewalWindow, RENEWAL_WINDOW_COLOR } from '../contractRenewalWindow';
 import { useVendorSpendRollups } from '../useVendorSpendRollups';
 import { computeVmTotalSpend } from '../vendorSpendAggregates';
 import { computeVendorRisk, VENDOR_RISK_BAND_COLOR } from '../vendorRisk';
-import { useVendorTechnologyExposure, groupVendorTechnologyExposure } from '../useVendorTechnologyExposure';
-import { SpendShareStrip } from './SpendShareBar';
-import { StackedBar, Section, type BarBucket } from '../../../sections/workspace-settings/sub-sections/analytics/analyticsPrimitives';
+import {
+  useVendorTechnologyExposure,
+  groupVendorTechnologyExposure
+} from '../useVendorTechnologyExposure';
+import { useVendorAppsSuppliedCounts } from '../useVendorAppsSuppliedCounts';
+import { SpendShareBar } from './SpendShareBar';
+import tileStyles from './VendorSpendScreen.module.css';
 import styles from './VendorOverviewScreen.module.css';
 
-const NEXT_RENEWALS_LIMIT = 8;
-const SPEND_STRIP_LIMIT = 8;
+const NEXT_RENEWALS_LIMIT = 7;
+const SPEND_LIST_LIMIT = 8;
+const EOL_LIST_LIMIT = 5;
+const RENEWAL_MONTHS = 12;
+// The monthly renewal strip flags a month as urgent when it holds a contract due this soon —
+// matching the Claude Design reference's `VMOverview` (`vendor.jsx`) 45-day threshold, expressed
+// here via the shared `renewalWindow` buckets (`next30`) rather than a bespoke day count, since
+// `next30` is the closest existing bucket boundary and keeps one definition of "due soon" across
+// the app instead of introducing a second one just for this strip.
+const STRIP_URGENT_WINDOWS = new Set(['overdue', 'next30']);
+
+const currencyAmount = (value: unknown): number | null =>
+  value != null && typeof value === 'object' && 'amount' in value
+    ? ((value as { amount: unknown }).amount as number)
+    : null;
 
 const fmtMoney = (amount: number, currency: string | null): string =>
   currency != null ? formatCurrencyValue({ amount, currency }) : '—';
 
+const contractEndOf = (row: VendorContractRow): string | null =>
+  typeof row.contract.contract_end === 'string' ? row.contract.contract_end : null;
+
+/** Days between `today` and a `YYYY-MM-DD` date-only string, positive for the future, negative for
+ *  the past — the numeric sibling of `renewalWindow`'s bucketed classification, needed here for the
+ *  "Xd" / "Xd ago" countdown the design reference shows on each next-renewal row. */
+const daysUntil = (dateStr: string, today: Date = new Date()): number => {
+  const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const end = new Date(`${dateStr.slice(0, 10)}T00:00:00`);
+  return Math.round((end.getTime() - todayMidnight.getTime()) / 86_400_000);
+};
+
+const monthKey = (date: Date): string =>
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+
+const MONTH_LABEL = new Intl.DateTimeFormat(undefined, { month: 'short' });
+
 /**
- * The Vendor Management app's landing screen (`sections[0]`, so the app switcher opens here). A
- * read-only dashboard of summary tiles — renewals due in the next 12 months, spend by vendor,
- * vendors above risk tolerance, and technology end-of-life exposure — plus a "Next renewals" list,
- * each linking into the rail section that owns the full view. Mirrors the Strategy app's landing
- * screen (`StrategyOverviewScreen.tsx`, #3196): everything is derived client-side from the same
- * entity/relation/metric queries and hooks the other four sections already use, with no bespoke
- * server endpoint and no new logic — this screen only summarizes it. Unlike the Strategy Overview,
- * the tiles are a fixed set (matching #3264's scope) rather than config-driven widgets, since
- * vendor-management has no per-view configurability to drive one.
+ * The Vendor Management app's landing screen (`sections[0]`, so the app switcher opens here) — a
+ * read-only dashboard summarizing the other four sections, each panel linking into the section
+ * that owns the full view. Mirrors the Claude Design reference's `VMOverview` (`vendor.jsx`)
+ * closely: four header stats, a 12-month renewal strip, a two-column row (next renewals / spend by
+ * vendor), a second two-column row (vendors above tolerance / technology EOL exposure), and a
+ * footnote linking back to Entities. Everything is derived client-side from the same
+ * entity/contract/metric queries and hooks the other four sections already use — no bespoke server
+ * endpoint and no new logic beyond `useVendorAppsSuppliedCounts` (a batched sibling of
+ * `useVendorAppsSupplied.ts`, added so the "vendors above tolerance" table can show each vendor's
+ * applications-supplied count without a per-row hook call).
  */
 export const VendorOverviewScreen = () => {
   const { workspaceSlug } = useParams({ strict: false }) as { workspaceSlug: string };
@@ -81,6 +113,14 @@ export const VendorOverviewScreen = () => {
     [spend.byId]
   );
 
+  const appCounts = useVendorAppsSuppliedCounts(
+    workspaceSlug,
+    vendorConfig?.vendorSchemaId ?? null,
+    vendorIds,
+    vendorConfig?.contractSchemaId ?? null,
+    systemContractRelationSchemaId
+  );
+
   const exposure = useVendorTechnologyExposure(
     workspaceSlug,
     vendorConfig?.vendorSchemaId ?? null,
@@ -91,65 +131,11 @@ export const VendorOverviewScreen = () => {
     schemas.data ?? []
   );
   const eolGroups = useMemo(
-    () => groupVendorTechnologyExposure(exposure.items),
-    [exposure.items]
-  );
-
-  // Renewals-due strip: every Contract bucketed by `renewalWindow`, counting toward the 12-month
-  // rollup (the calendar's own default window) rather than every `RenewalWindow` id — "later" and
-  // "none" contracts aren't due, so they're excluded from the strip's total but still reachable via
-  // the Contracts section itself.
-  const renewalBuckets = useMemo<BarBucket[]>(() => {
-    const counts = new Map<RenewalWindow, number>();
-    for (const row of contracts.items) {
-      const window = renewalWindow(
-        typeof row.contract.contract_end === 'string' ? row.contract.contract_end : null
-      );
-      counts.set(window, (counts.get(window) ?? 0) + 1);
-    }
-    const dueWindows = RENEWAL_WINDOWS.filter(w => w.id !== 'later' && w.id !== 'none');
-    const total = dueWindows.reduce((sum, w) => sum + (counts.get(w.id) ?? 0), 0) || 1;
-    return dueWindows
-      .filter(w => (counts.get(w.id) ?? 0) > 0)
-      .map(w => ({
-        label: w.label,
-        count: counts.get(w.id) ?? 0,
-        percent: ((counts.get(w.id) ?? 0) / total) * 100,
-        color: RENEWAL_WINDOW_COLOR[w.id],
-        onClick: () =>
-          navigate({
-            to: VENDOR_RAIL_PATHS[VENDOR_CONTRACTS_ID],
-            params: { workspaceSlug },
-            search: () => ({ renewalWindow: w.id })
-          })
-      }));
-  }, [contracts.items, navigate, workspaceSlug]);
-  const renewalsDueCount = renewalBuckets.reduce((sum, bucket) => sum + bucket.count, 0);
-
-  const nextRenewalRows = useMemo(() => {
-    const todayStr = new Date().toISOString().slice(0, 10);
-    return contracts.items
-      .filter(
-        row =>
-          typeof row.contract.contract_end === 'string' &&
-          row.contract.contract_end.slice(0, 10) >= todayStr
-      )
-      .sort((a, b) => (a.contract.contract_end as string).localeCompare(b.contract.contract_end as string))
-      .slice(0, NEXT_RENEWALS_LIMIT);
-  }, [contracts.items]);
-
-  const spendRows = useMemo(
     () =>
-      allVendors
-        .map(entity => ({
-          key: entity._uid,
-          label: entity._name,
-          vendorId: entity._publicId,
-          amount: spend.byId.get(entity._uid)?.vmSpend ?? 0
-        }))
-        .filter(row => row.amount > 0)
-        .sort((a, b) => b.amount - a.amount),
-    [allVendors, spend.byId]
+      [...groupVendorTechnologyExposure(exposure.items)].sort(
+        (a, b) => (a.exposure.daysUntilEol ?? Infinity) - (b.exposure.daysUntilEol ?? Infinity)
+      ),
+    [exposure.items]
   );
 
   const riskByUid = useMemo(() => {
@@ -170,15 +156,105 @@ export const VendorOverviewScreen = () => {
     }
     return map;
   }, [allVendors]);
-  const aboveToleranceCount = allVendors.filter(entity => {
-    const band = riskByUid.get(entity._uid)?.vmRiskBand;
-    return band === 'elevated' || band === 'high';
-  }).length;
+  const riskyVendors = useMemo(
+    () =>
+      allVendors
+        .filter(entity => {
+          const band = riskByUid.get(entity._uid)?.vmRiskBand;
+          return band === 'elevated' || band === 'high';
+        })
+        .sort((a, b) => (riskByUid.get(b._uid)?.vmRisk ?? 0) - (riskByUid.get(a._uid)?.vmRisk ?? 0)),
+    [allVendors, riskByUid]
+  );
 
-  const eolAtRiskCount = eolGroups.filter(
-    row => row.exposure.band && row.exposure.band !== 'ok'
-  ).length;
+  // Header stats
+  const due90 = useMemo(
+    () =>
+      contracts.items.filter(row => {
+        const end = contractEndOf(row);
+        if (!end) return false;
+        const days = daysUntil(end);
+        return days >= 0 && days <= 90;
+      }),
+    [contracts.items]
+  );
+  const due90Amount = useMemo(
+    () => due90.reduce((sum, row) => sum + (currencyAmount(row.contract.annual_cost) ?? 0), 0),
+    [due90]
+  );
+  const autoRenewCount = contracts.items.filter(row => row.contract.auto_renew === true).length;
 
+  // 12-month renewal strip — current month + next 11, folding an already-overdue contract into the
+  // current month's cell rather than dropping it (same convention `VendorContractsCalendar.tsx`
+  // uses for its own grid).
+  const months = useMemo(() => {
+    const today = new Date();
+    const currentMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+    const currentKey = monthKey(currentMonthStart);
+    const starts = Array.from(
+      { length: RENEWAL_MONTHS },
+      (_, i) => new Date(currentMonthStart.getFullYear(), currentMonthStart.getMonth() + i, 1)
+    );
+    const buckets = new Map(
+      starts.map(start => [
+        monthKey(start),
+        { key: monthKey(start), start, rows: [] as VendorContractRow[] }
+      ])
+    );
+    const lastKey = monthKey(starts[starts.length - 1]!);
+    for (const row of contracts.items) {
+      const end = contractEndOf(row);
+      if (!end) continue;
+      const endDate = new Date(`${end.slice(0, 10)}T00:00:00`);
+      if (Number.isNaN(endDate.getTime())) continue;
+      const key = endDate < currentMonthStart ? currentKey : monthKey(endDate);
+      if (key > lastKey) continue;
+      buckets.get(key)?.rows.push(row);
+    }
+    return [...buckets.values()].map(bucket => ({
+      ...bucket,
+      total: bucket.rows.reduce((sum, row) => sum + (currencyAmount(row.contract.annual_cost) ?? 0), 0),
+      urgent: bucket.rows.some(row => {
+        const end = contractEndOf(row);
+        return end && STRIP_URGENT_WINDOWS.has(renewalWindow(end));
+      })
+    }));
+  }, [contracts.items]);
+  const maxMonthTotal = Math.max(...months.map(m => m.total), 1);
+  const monthsContractCount = months.reduce((sum, m) => sum + m.rows.length, 0);
+
+  const nextRenewalRows = useMemo(() => {
+    const todayStr = new Date().toISOString().slice(0, 10);
+    return contracts.items
+      .filter(row => {
+        const end = contractEndOf(row);
+        return end != null && end.slice(0, 10) >= todayStr;
+      })
+      .sort((a, b) => contractEndOf(a)!.localeCompare(contractEndOf(b)!))
+      .slice(0, NEXT_RENEWALS_LIMIT);
+  }, [contracts.items]);
+
+  const spendRows = useMemo(
+    () =>
+      allVendors
+        .map(entity => ({
+          key: entity._uid,
+          label: entity._name,
+          vendorId: entity._publicId,
+          amount: spend.byId.get(entity._uid)?.vmSpend ?? 0
+        }))
+        .sort((a, b) => b.amount - a.amount)
+        .slice(0, SPEND_LIST_LIMIT),
+    [allVendors, spend.byId]
+  );
+  const maxSpendAmount = Math.max(...spendRows.map(row => row.amount), 1);
+
+  const openVendor = (id: string) =>
+    navigate({
+      to: `${VENDOR_RAIL_PATHS[VENDOR_SPEND_ID]}/$vendorId`,
+      params: { workspaceSlug, vendorId: id },
+      search: () => ({})
+    });
   const openContract = (contractId: string) =>
     navigate({
       to: `${VENDOR_RAIL_PATHS[VENDOR_CONTRACTS_ID]}/$contractId`,
@@ -202,131 +278,290 @@ export const VendorOverviewScreen = () => {
     <main className={styles.screen}>
       <Title
         title="Overview"
-        description="Renewals, spend, and risk across the vendor portfolio — each tile links to the section behind it."
+        description={`Renewals, committed spend and vendor risk across ${allVendors.length} suppliers. Figures roll up from Contract records.`}
+        buttons={
+          <Button
+            variant="secondary"
+            onClick={() =>
+              navigate({
+                to: VENDOR_RAIL_PATHS[VENDOR_CONTRACTS_ID],
+                params: { workspaceSlug },
+                search: () => ({ view: 'calendar' as const })
+              })
+            }
+          >
+            Renewal calendar
+          </Button>
+        }
       />
 
-      <div className={styles.tiles}>
-        <div className={styles.tile} key="renewals">
-          <div className={styles.tileLabel}>Renewals due</div>
-          <div className={styles.tileValue}>{renewalsDueCount}</div>
-          <StackedBar buckets={renewalBuckets} />
-          <div className={styles.legend}>
-            {renewalBuckets.map(bucket => (
-              <button
-                key={bucket.label}
-                type="button"
-                className={styles.legendItem}
-                onClick={bucket.onClick}
-                disabled={!bucket.onClick}
-              >
-                <span className={styles.swatch} style={{ background: bucket.color ?? undefined }} />
-                {bucket.label} {bucket.count}
-              </button>
-            ))}
-            {renewalBuckets.length === 0 && (
-              <span className={styles.tileSub}>No contracts due in the next 12 months.</span>
+      <div className={tileStyles.tiles}>
+        <div className={tileStyles.tile}>
+          <div className={tileStyles.tileLabel}>Contracted spend</div>
+          <div className={tileStyles.tileValue}>{fmtMoney(totalSpend, totalCurrency)}</div>
+          <div className={tileStyles.tileSub}>annualised, all active contracts</div>
+        </div>
+        <div className={tileStyles.tile}>
+          <div className={tileStyles.tileLabel}>Renewals in 90 days</div>
+          <div
+            className={tileStyles.tileValue}
+            style={due90.length > 0 ? { color: VENDOR_RISK_BAND_COLOR.elevated } : undefined}
+          >
+            {due90.length}
+          </div>
+          <div className={tileStyles.tileSub}>{fmtMoney(due90Amount, totalCurrency)} at stake</div>
+        </div>
+        <div className={tileStyles.tile}>
+          <div className={tileStyles.tileLabel}>Vendors above tolerance</div>
+          <div className={tileStyles.tileValue} style={{ color: VENDOR_RISK_BAND_COLOR.high }}>
+            {riskyVendors.length}
+          </div>
+          <div className={tileStyles.tileSub}>high or elevated composite risk</div>
+        </div>
+        <div className={tileStyles.tile}>
+          <div className={tileStyles.tileLabel}>Auto-renewing</div>
+          <div className={tileStyles.tileValue}>
+            {autoRenewCount} of {contracts.items.length}
+          </div>
+          <div className={tileStyles.tileSub}>notice periods apply</div>
+        </div>
+      </div>
+
+      <div className={styles.panel}>
+        <div className={styles.panelHeader}>
+          <span className={styles.panelTitle}>Renewals — next 12 months</span>
+          <span className="dim mono">{monthsContractCount} contracts</span>
+        </div>
+        <div className={styles.strip}>
+          {months.map(month => (
+            <div className={styles.stripCol} key={month.key}>
+              <div className={styles.stripBarWrap}>
+                <div
+                  className={styles.stripBar}
+                  style={{
+                    height: `${Math.max(2, (100 * month.total) / maxMonthTotal)}%`,
+                    background: month.urgent
+                      ? RENEWAL_WINDOW_COLOR.overdue
+                      : 'var(--accent-fg, #4b8bf5)'
+                  }}
+                />
+              </div>
+              <div className={`${styles.stripVal} dim mono tabular`}>
+                {month.total > 0 ? fmtMoney(month.total, totalCurrency) : '—'}
+              </div>
+              <div className={`${styles.stripLabel} dim mono`}>
+                {MONTH_LABEL.format(month.start)}
+                {month.start.getMonth() === 0 ? ` ${String(month.start.getFullYear()).slice(2)}` : ''}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className={styles.two}>
+        <div className={styles.panel}>
+          <div className={styles.panelHeader}>
+            <span className={styles.panelTitle}>Next renewals</span>
+            <button
+              type="button"
+              className={styles.panelLink}
+              onClick={() =>
+                navigate({ to: VENDOR_RAIL_PATHS[VENDOR_CONTRACTS_ID], params: { workspaceSlug } })
+              }
+            >
+              All contracts
+            </button>
+          </div>
+          <div className={styles.stack}>
+            {nextRenewalRows.length === 0 ? (
+              <div className={`${styles.empty} dim`}>
+                {contracts.isLoading ? 'Loading contracts…' : 'No upcoming renewals.'}
+              </div>
+            ) : (
+              nextRenewalRows.map(row => {
+                const end = contractEndOf(row)!;
+                const days = daysUntil(end);
+                return (
+                  <button
+                    key={row.contract._uid}
+                    type="button"
+                    className={styles.row}
+                    onClick={() => openContract(row.contract._publicId)}
+                  >
+                    <span className={styles.rowMain}>
+                      <span className={styles.rowName}>{row.contract._name}</span>
+                      <span className={`${styles.rowSub} dim`}>
+                        {row.vendorName ?? '—'}
+                        {row.contract.auto_renew === true ? ' · auto-renews' : ''}
+                      </span>
+                    </span>
+                    <span className="dim mono tabular">
+                      {fmtMoney(currencyAmount(row.contract.annual_cost) ?? 0, totalCurrency)}
+                    </span>
+                    <span
+                      className="mono tabular"
+                      style={{ color: RENEWAL_WINDOW_COLOR[renewalWindow(end)], minWidth: 72, textAlign: 'right' }}
+                    >
+                      {days < 0 ? `${Math.abs(days)}d ago` : `${days}d`}
+                    </span>
+                  </button>
+                );
+              })
             )}
           </div>
         </div>
 
-        <button
-          type="button"
-          className={styles.tile}
-          onClick={() =>
-            navigate({ to: VENDOR_RAIL_PATHS[VENDOR_SPEND_ID], params: { workspaceSlug } })
-          }
-        >
-          <div className={styles.tileLabel}>Spend</div>
-          <div className={styles.tileValue}>{fmtMoney(totalSpend, totalCurrency)}</div>
-          <div className={styles.tileSub}>annualised, {spendRows.length} vendors</div>
-        </button>
-
-        <button
-          type="button"
-          className={styles.tile}
-          onClick={() =>
-            navigate({
-              to: VENDOR_RAIL_PATHS[VENDOR_RISK_ID],
-              params: { workspaceSlug },
-              search: () => ({})
-            })
-          }
-        >
-          <div className={styles.tileLabel}>Above risk tolerance</div>
-          <div className={styles.tileValue} style={{ color: VENDOR_RISK_BAND_COLOR.elevated }}>
-            {aboveToleranceCount}
+        <div className={styles.panel}>
+          <div className={styles.panelHeader}>
+            <span className={styles.panelTitle}>Spend by vendor</span>
+            <span className="dim mono">top {SPEND_LIST_LIMIT}</span>
           </div>
-          <div className={styles.tileSub}>elevated or high composite risk</div>
-        </button>
-
-        {vendorConfig.technologyReleaseSchemaId && !exposure.unavailable && (
-          <button
-            type="button"
-            className={styles.tile}
-            onClick={() =>
-              navigate({
-                to: VENDOR_RAIL_PATHS[VENDOR_RISK_ID],
-                params: { workspaceSlug },
-                search: () => ({})
-              })
-            }
-          >
-            <div className={styles.tileLabel}>Technology EOL exposure</div>
-            <div className={styles.tileValue}>{eolAtRiskCount}</div>
-            <div className={styles.tileSub}>technologies within 12 months of end-of-life</div>
-          </button>
-        )}
-      </div>
-
-      {spendRows.length > 0 && (
-        <SpendShareStrip
-          segments={spendRows.slice(0, SPEND_STRIP_LIMIT).map(row => ({
-            key: row.key,
-            label: row.label,
-            amount: row.amount,
-            onClick: () =>
-              navigate({
-                to: `${VENDOR_RAIL_PATHS[VENDOR_SPEND_ID]}/$vendorId`,
-                params: { workspaceSlug, vendorId: row.vendorId },
-                search: () => ({})
-              })
-          }))}
-          total={spendRows.reduce((sum, row) => sum + row.amount, 0)}
-        />
-      )}
-
-      <Section
-        title="Next renewals"
-        sub="soonest contract end dates across every vendor"
-      >
-        <Table.Root bordered={false}>
-          <Table.Head>
-            <Table.Row>
-              <Table.HeaderCell>Contract</Table.HeaderCell>
-              <Table.HeaderCell>Vendor</Table.HeaderCell>
-              <Table.HeaderCell>Renewal</Table.HeaderCell>
-            </Table.Row>
-          </Table.Head>
-          <Table.Body>
-            {nextRenewalRows.length === 0 ? (
-              <Table.EmptyRow colSpan={3}>
-                {contracts.isLoading ? 'Loading contracts…' : 'No upcoming renewals.'}
-              </Table.EmptyRow>
+          <div className={styles.stack}>
+            {spendRows.length === 0 ? (
+              <div className={`${styles.empty} dim`}>
+                {spend.isLoading ? 'Loading spend…' : 'No spend recorded yet.'}
+              </div>
             ) : (
-              nextRenewalRows.map(row => (
-                <Table.Row
-                  key={row.contract._uid}
-                  onClick={() => openContract(row.contract._publicId)}
+              spendRows.map(row => (
+                <button
+                  key={row.key}
+                  type="button"
+                  className={styles.rowBar}
+                  onClick={() => openVendor(row.vendorId)}
                 >
-                  <Table.NameCell title={row.contract._name} />
-                  <Table.Cell>{row.vendorName ?? <span className="dim">—</span>}</Table.Cell>
-                  <Table.Cell>{formatDate(row.contract.contract_end)}</Table.Cell>
-                </Table.Row>
+                  <span className={styles.rowName}>{row.label}</span>
+                  <span style={{ flex: 1 }}>
+                    <SpendShareBar value={row.amount} max={maxSpendAmount} />
+                  </span>
+                  <span className="mono tabular">{fmtMoney(row.amount, totalCurrency)}</span>
+                </button>
               ))
             )}
-          </Table.Body>
-        </Table.Root>
-      </Section>
+          </div>
+        </div>
+      </div>
+
+      <div className={styles.two}>
+        <div className={styles.panel}>
+          <div className={styles.panelHeader}>
+            <span className={styles.panelTitle}>Vendors above tolerance</span>
+            <button
+              type="button"
+              className={styles.panelLink}
+              onClick={() =>
+                navigate({ to: VENDOR_RAIL_PATHS[VENDOR_RISK_ID], params: { workspaceSlug } })
+              }
+            >
+              Risk view
+            </button>
+          </div>
+          <Table.Root bordered={false}>
+            <Table.Head>
+              <Table.Row>
+                <Table.HeaderCell>Vendor</Table.HeaderCell>
+                <Table.HeaderCell>Tier</Table.HeaderCell>
+                <Table.HeaderCell numeric>Criticality</Table.HeaderCell>
+                <Table.HeaderCell>Risk</Table.HeaderCell>
+                <Table.HeaderCell numeric>Apps</Table.HeaderCell>
+              </Table.Row>
+            </Table.Head>
+            <Table.Body>
+              {riskyVendors.length === 0 ? (
+                <Table.EmptyRow colSpan={5}>
+                  {vendors.isLoading ? 'Loading vendors…' : 'No vendors above tolerance.'}
+                </Table.EmptyRow>
+              ) : (
+                riskyVendors.map(entity => {
+                  const risk = riskByUid.get(entity._uid);
+                  return (
+                    <Table.Row key={entity._uid} onClick={() => openVendor(entity._publicId)}>
+                      <Table.NameCell title={entity._name} />
+                      <Table.Cell>
+                        <span className="dim">
+                          {typeof entity.tier === 'string' ? entity.tier : '—'}
+                        </span>
+                      </Table.Cell>
+                      <Table.Cell numeric>
+                        {typeof entity.criticality === 'number' ? `${entity.criticality}/5` : '—'}
+                      </Table.Cell>
+                      <Table.Cell>
+                        {risk?.vmRisk != null ? (
+                          <Chip dot={VENDOR_RISK_BAND_COLOR[risk.vmRiskBand!]} tone="ghost">
+                            {risk.vmRiskBand} · {risk.vmRisk.toFixed(1)}
+                          </Chip>
+                        ) : (
+                          <span className="dim">—</span>
+                        )}
+                      </Table.Cell>
+                      <Table.Cell numeric>{appCounts.byId.get(entity._uid) ?? '—'}</Table.Cell>
+                    </Table.Row>
+                  );
+                })
+              )}
+            </Table.Body>
+          </Table.Root>
+        </div>
+
+        <div className={styles.panel}>
+          <div className={styles.panelHeader}>
+            <span className={styles.panelTitle}>Technology end-of-life exposure</span>
+            <span className="dim mono">{eolGroups.length}</span>
+          </div>
+          <div className={styles.stack}>
+            {!vendorConfig.technologyReleaseSchemaId || exposure.unavailable ? (
+              <div className={`${styles.empty} dim`}>
+                No Technology Release schema is linked — see the Risk section to configure it.
+              </div>
+            ) : eolGroups.length === 0 ? (
+              <div className={`${styles.empty} dim`}>
+                {exposure.isLoading ? 'Loading technology exposure…' : 'No exposure found.'}
+              </div>
+            ) : (
+              eolGroups.slice(0, EOL_LIST_LIMIT).map(row => (
+                <button
+                  key={row.key}
+                  type="button"
+                  className={styles.row}
+                  onClick={() => openVendor(row.vendor._publicId)}
+                >
+                  <span className={styles.rowMain}>
+                    <span className={styles.rowName}>{row.technologyRelease._name}</span>
+                    <span className={`${styles.rowSub} dim`}>
+                      {row.vendor._name} · {row.systems.length} application
+                      {row.systems.length === 1 ? '' : 's'} affected
+                    </span>
+                  </span>
+                  <span
+                    className="mono tabular"
+                    style={{
+                      color:
+                        row.exposure.band === 'past' || row.exposure.band === 'within6Months'
+                          ? RENEWAL_WINDOW_COLOR.overdue
+                          : VENDOR_RISK_BAND_COLOR.elevated
+                    }}
+                  >
+                    {row.exposure.effectiveDate ? formatDate(row.exposure.effectiveDate) : '—'}
+                  </span>
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className={`${styles.note} dim`}>
+        Vendor and Contract records are bound to this workspace by the vendor-management
+        capability. Spend, risk, and renewal figures are computed roll-ups — edit the underlying
+        records in{' '}
+        <button
+          type="button"
+          className={styles.noteLink}
+          onClick={() => navigate({ to: '/$workspaceSlug/entities', params: { workspaceSlug } })}
+        >
+          Entities
+        </button>
+        .
+      </div>
     </main>
   );
 };

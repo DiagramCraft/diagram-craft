@@ -306,13 +306,18 @@
       instead of its content.
 
         - @id:ar.vendor-management.overview The Overview section is the application's landing screen — where the app
-          switcher opens — and summarizes the other four sections rather than adding new data: a renewals-due tile
-          (contracts due within 12 months, bucketed by renewal window, each bucket linking to the Contracts section
-          pre-filtered to it), a spend tile (total annualised spend) and a portfolio-wide share-of-spend strip
-          linking into the Spend section, an above-risk-tolerance tile (vendors whose composite `vmRiskBand` is
-          Elevated or High) linking into the Risk section, a technology EOL exposure tile (hidden, not empty, when
-          the Technology Release binding is unset or unusable, same as the Risk section's own table), and a "Next
-          renewals" list of the soonest upcoming contract end dates that opens the contract drawer directly.
+          switcher opens — and summarizes the other four sections rather than adding new data. Four header stats
+          (contracted spend, renewals due in 90 days with the $ at stake, vendors above risk tolerance, auto-renewing
+          contract count) sit above a 12-month renewal strip — one bar per month, height by that month's contracted
+          $ value, colored red when the month holds a contract due within 30 days or overdue, folding an
+          already-overdue contract into the current month the same way the Contracts section's own calendar does.
+          Below that, a "Next renewals" list (contract, vendor, auto-renew flag, $ value, and a colored day
+          countdown) opens the contract detail route; a "Spend by vendor" list (top 8, magnitude bar + $ value)
+          opens the vendor drawer on the Spend section. A "Vendors above tolerance" table (Tier, Criticality, the
+          composite risk chip, and applications-supplied count) and a "Technology end-of-life exposure" list (top 5
+          by soonest EOL, hidden — not shown empty — when the optional Technology Release binding is unset or
+          unusable) both open the vendor drawer on the Risk section. A "Renewal calendar" button jumps to the
+          Contracts section's calendar view, and a footnote links back to Entities.
 
         - @id:ar.vendor-management.vendors The Vendors section is a register of Vendor entities: free-text search by
           name, sort by name / spend / risk / next renewal, and a sidebar of Tier, Category, and Relationship Owner
