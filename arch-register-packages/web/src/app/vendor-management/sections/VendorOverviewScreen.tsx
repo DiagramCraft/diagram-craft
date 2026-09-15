@@ -106,7 +106,11 @@ export const VendorOverviewScreen = () => {
 
   const contracts = useVendorContracts(workspaceSlug, vendorConfig?.contractSchemaId ?? null);
 
-  const spend = useVendorSpendRollups(workspaceSlug, vendorConfig?.contractSchemaId ?? null, vendorIds);
+  const spend = useVendorSpendRollups(
+    workspaceSlug,
+    vendorConfig?.contractSchemaId ?? null,
+    vendorIds
+  );
   const totalSpend = useMemo(() => computeVmTotalSpend(spend.byId), [spend.byId]);
   const totalCurrency = useMemo(
     () => [...spend.byId.values()].find(value => value.currency != null)?.currency ?? null,
@@ -163,7 +167,9 @@ export const VendorOverviewScreen = () => {
           const band = riskByUid.get(entity._uid)?.vmRiskBand;
           return band === 'elevated' || band === 'high';
         })
-        .sort((a, b) => (riskByUid.get(b._uid)?.vmRisk ?? 0) - (riskByUid.get(a._uid)?.vmRisk ?? 0)),
+        .sort(
+          (a, b) => (riskByUid.get(b._uid)?.vmRisk ?? 0) - (riskByUid.get(a._uid)?.vmRisk ?? 0)
+        ),
     [allVendors, riskByUid]
   );
 
@@ -213,7 +219,10 @@ export const VendorOverviewScreen = () => {
     }
     return [...buckets.values()].map(bucket => ({
       ...bucket,
-      total: bucket.rows.reduce((sum, row) => sum + (currencyAmount(row.contract.annual_cost) ?? 0), 0),
+      total: bucket.rows.reduce(
+        (sum, row) => sum + (currencyAmount(row.contract.annual_cost) ?? 0),
+        0
+      ),
       urgent: bucket.rows.some(row => {
         const end = contractEndOf(row);
         return end && STRIP_URGENT_WINDOWS.has(renewalWindow(end));
@@ -351,7 +360,9 @@ export const VendorOverviewScreen = () => {
               </div>
               <div className={`${styles.stripLabel} dim mono`}>
                 {MONTH_LABEL.format(month.start)}
-                {month.start.getMonth() === 0 ? ` ${String(month.start.getFullYear()).slice(2)}` : ''}
+                {month.start.getMonth() === 0
+                  ? ` ${String(month.start.getFullYear()).slice(2)}`
+                  : ''}
               </div>
             </div>
           ))}
@@ -400,7 +411,11 @@ export const VendorOverviewScreen = () => {
                     </span>
                     <span
                       className="mono tabular"
-                      style={{ color: RENEWAL_WINDOW_COLOR[renewalWindow(end)], minWidth: 72, textAlign: 'right' }}
+                      style={{
+                        color: RENEWAL_WINDOW_COLOR[renewalWindow(end)],
+                        minWidth: 72,
+                        textAlign: 'right'
+                      }}
                     >
                       {days < 0 ? `${Math.abs(days)}d ago` : `${days}d`}
                     </span>
@@ -550,9 +565,8 @@ export const VendorOverviewScreen = () => {
       </div>
 
       <div className={`${styles.note} dim`}>
-        Vendor and Contract records are bound to this workspace by the vendor-management
-        capability. Spend, risk, and renewal figures are computed roll-ups — edit the underlying
-        records in{' '}
+        Vendor and Contract records are bound to this workspace by the vendor-management capability.
+        Spend, risk, and renewal figures are computed roll-ups — edit the underlying records in{' '}
         <button
           type="button"
           className={styles.noteLink}
