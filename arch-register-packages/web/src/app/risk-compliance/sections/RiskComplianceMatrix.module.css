@@ -1,0 +1,135 @@
+/* Columns stay flexible (fill the panel's width, no horizontal overflow) while cells keep a fixed
+   2:1 aspect ratio via .cell's aspect-ratio — so a tall grid scrolls vertically only. */
+.scroll {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.matrix {
+  display: grid;
+  grid-template-columns: 92px repeat(5, minmax(0, 1fr));
+  gap: 6px;
+  padding: 12px 14px;
+}
+
+.corner {
+  font-size: 10.5px;
+  color: var(--base-fg-more-dim);
+  display: flex;
+  align-items: flex-end;
+  padding-bottom: 4px;
+  position: relative;
+  height: 40px;
+
+  & > div {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 200%;
+  }
+}
+
+.columnHeader {
+  font-size: 10.5px;
+  color: var(--base-fg-more-dim);
+  text-align: center;
+  align-self: end;
+  padding-bottom: 4px;
+  line-height: 1.25;
+}
+
+.row {
+  display: contents;
+}
+
+.rowHeader {
+  font-size: 10.5px;
+  color: var(--base-fg-more-dim);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  text-align: right;
+  padding-right: 8px;
+  line-height: 1.25;
+}
+
+.cell {
+  position: relative;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-sm);
+  background: color-mix(in srgb, var(--cell-color) 10%, var(--base-bg));
+  padding: 6px;
+  aspect-ratio: 2 / 1;
+  overflow: auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 4px;
+}
+
+/* A cell whose likelihood × impact lands outside risk appetite (high/critical band) gets a
+   stronger border, mirroring the design reference's `is-appetite` outline. */
+.cell[data-outside-appetite] {
+  border-color: var(--cell-color);
+}
+
+.tag {
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-full, 10px);
+  background: var(--panel-bg);
+  color: var(--base-fg);
+  font-size: 11px;
+  line-height: 1;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+
+.tag:hover {
+  border-color: var(--accent-fg);
+  color: var(--accent-fg);
+}
+
+.score {
+  position: absolute;
+  right: 6px;
+  bottom: 4px;
+  font-size: 9px;
+  color: var(--base-fg-more-dim);
+}
+
+.foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 14px 12px;
+  flex-wrap: wrap;
+}
+
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 10.5px;
+  color: var(--base-fg-more-dim);
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.legendSwatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  display: inline-block;
+}
+
+.footNote {
+  font-size: 10.5px;
+  color: var(--base-fg-more-dim);
+}
