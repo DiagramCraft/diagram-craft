@@ -817,6 +817,14 @@ describe('instantiateTemplate', () => {
       max: 5
     });
     expect(risk?.fields).toContainEqual(
+      expect.objectContaining({ id: 'category', type: 'select', enumId: expect.any(String) })
+    );
+    const categoryField = risk?.fields.find(field => field.id === 'category');
+    const categoryEnum = definitions.enums.find(enumeration => enumeration.name === 'Risk Category');
+    expect(categoryField?.type === 'select' && categoryField.enumId === categoryEnum?.id).toBe(
+      true
+    );
+    expect(risk?.fields).toContainEqual(
       expect.objectContaining({
         id: 'inherent_risk_score',
         type: 'derived',

@@ -92,6 +92,7 @@ const definitionId = (
     'enum:information-governance:processing-purposes': INFO_ASSET_IDS.processingPurposesEnum,
     'enum:information-governance:residency-regions': INFO_ASSET_IDS.residencyRegionsEnum,
     'enum:information-governance:retention-time-unit': RETENTION_IDS.timeUnitEnum,
+    'enum:risk-compliance:risk-category': SEED_ENUM_IDS.riskCategory,
     'enum:risk-compliance:risk-status': SEED_ENUM_IDS.riskStatus,
     'enum:risk-compliance:risk-mitigation-effectiveness': SEED_ENUM_IDS.mitigationEffectiveness,
     'enum:risk-compliance:rc-control-type': SEED_ENUM_IDS.controlType,

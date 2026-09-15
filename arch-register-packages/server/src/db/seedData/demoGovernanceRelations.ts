@@ -2,6 +2,7 @@ import type { RelationDbCreate } from '../../domain/catalog/db/relationDatabase'
 import {
   CONTROL_AFFECTS_RELATION_SCHEMA_ID,
   CONTROL_REQUIREMENT_SCHEMA_ID,
+  DEMO_ARCHITECTURE_IDS,
   DEMO_BUSINESS_CAPABILITY_IDS,
   DEMO_RETENTION_IDS,
   DEMO_RISK_COMPLIANCE_IDS,
@@ -98,6 +99,46 @@ export const demoGovernanceRelations: RelationDbCreate[] = [
     in_entity_id: DEMO_RISK_COMPLIANCE_IDS.risks.nonCompliantErasureRequests,
     out_entity_id: DEMO_RISK_COMPLIANCE_IDS.controls.dataDeletionAutomation,
     data: { effectiveness: 'partial', coverage: 50, reviewed_on: '2025-09-01' },
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0013-000000000209',
+    workspace: WORKSPACE_ID,
+    schema_id: RISK_CONTROL_SCHEMA_ID,
+    in_entity_id: DEMO_RISK_COMPLIANCE_IDS.risks.inventoryDataIntegrityFailure,
+    out_entity_id: DEMO_RISK_COMPLIANCE_IDS.controls.inventoryReconciliationAutomation,
+    data: { effectiveness: 'partial', coverage: 65, reviewed_on: '2026-01-15' },
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0013-00000000020a',
+    workspace: WORKSPACE_ID,
+    schema_id: RISK_CONTROL_SCHEMA_ID,
+    in_entity_id: DEMO_RISK_COMPLIANCE_IDS.risks.retentionNonEnforcementOrderRecords,
+    out_entity_id: DEMO_RISK_COMPLIANCE_IDS.controls.automatedRecordsDisposal,
+    data: { effectiveness: 'none', coverage: 20, reviewed_on: '2025-08-01' },
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0013-00000000020b',
+    workspace: WORKSPACE_ID,
+    schema_id: RISK_CONTROL_SCHEMA_ID,
+    in_entity_id: DEMO_RISK_COMPLIANCE_IDS.risks.uncontrolledMarketingDataSharing,
+    out_entity_id: DEMO_RISK_COMPLIANCE_IDS.controls.marketingDataSharingAgreementReview,
+    data: { effectiveness: 'partial', coverage: 70, reviewed_on: '2025-12-10' },
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0013-00000000020c',
+    workspace: WORKSPACE_ID,
+    schema_id: RISK_CONTROL_SCHEMA_ID,
+    in_entity_id: DEMO_RISK_COMPLIANCE_IDS.risks.inaccuratePciScanReporting,
+    out_entity_id: DEMO_RISK_COMPLIANCE_IDS.controls.quarterlyPciScanAutomation,
+    data: { effectiveness: 'substantial', coverage: 90, reviewed_on: '2026-02-01' },
     created_at: now,
     updated_at: now
   },
@@ -436,6 +477,105 @@ export const demoGovernanceRelations: RelationDbCreate[] = [
     created_at: now,
     updated_at: now
   },
+  {
+    id: '00000000-0000-0000-0015-000000000216',
+    workspace: WORKSPACE_ID,
+    schema_id: RISK_AFFECTS_RELATION_SCHEMA_ID,
+    // Inventory Data Integrity Failure -> Inventory Levels (Data Entity).
+    in_entity_id: DEMO_RISK_COMPLIANCE_IDS.risks.inventoryDataIntegrityFailure,
+    out_entity_id: DEMO_ARCHITECTURE_IDS.dataEntities.inventoryLevels,
+    data: {},
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0015-000000000217',
+    workspace: WORKSPACE_ID,
+    schema_id: RISK_AFFECTS_RELATION_SCHEMA_ID,
+    // Inventory Data Integrity Failure -> Order Fulfillment & Logistics capability.
+    in_entity_id: DEMO_RISK_COMPLIANCE_IDS.risks.inventoryDataIntegrityFailure,
+    out_entity_id: DEMO_BUSINESS_CAPABILITY_IDS.orderFulfillmentLogistics,
+    data: {},
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0015-000000000218',
+    workspace: WORKSPACE_ID,
+    schema_id: RISK_AFFECTS_RELATION_SCHEMA_ID,
+    // Retention Policy Non-Enforcement -> Order Records (Data Entity).
+    in_entity_id: DEMO_RISK_COMPLIANCE_IDS.risks.retentionNonEnforcementOrderRecords,
+    out_entity_id: DEMO_ARCHITECTURE_IDS.dataEntities.orderRecords,
+    data: {},
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0015-000000000219',
+    workspace: WORKSPACE_ID,
+    schema_id: RISK_AFFECTS_RELATION_SCHEMA_ID,
+    // Retention Policy Non-Enforcement -> Order Management capability.
+    in_entity_id: DEMO_RISK_COMPLIANCE_IDS.risks.retentionNonEnforcementOrderRecords,
+    out_entity_id: DEMO_BUSINESS_CAPABILITY_IDS.orderManagement,
+    data: {},
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0015-00000000021a',
+    workspace: WORKSPACE_ID,
+    schema_id: RISK_AFFECTS_RELATION_SCHEMA_ID,
+    // Uncontrolled Marketing Data Sharing -> Marketing Consent Records (Data Entity).
+    in_entity_id: DEMO_RISK_COMPLIANCE_IDS.risks.uncontrolledMarketingDataSharing,
+    out_entity_id: DEMO_ARCHITECTURE_IDS.dataEntities.marketingConsentRecords,
+    data: {},
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0015-00000000021b',
+    workspace: WORKSPACE_ID,
+    schema_id: RISK_AFFECTS_RELATION_SCHEMA_ID,
+    // Uncontrolled Marketing Data Sharing -> BrightWave Marketing vendor.
+    in_entity_id: DEMO_RISK_COMPLIANCE_IDS.risks.uncontrolledMarketingDataSharing,
+    out_entity_id: DEMO_VENDOR_IDS.vendors.brightWaveMarketing,
+    data: {},
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0015-00000000021c',
+    workspace: WORKSPACE_ID,
+    schema_id: RISK_AFFECTS_RELATION_SCHEMA_ID,
+    // Uncontrolled Marketing Data Sharing -> Digital Marketing capability.
+    in_entity_id: DEMO_RISK_COMPLIANCE_IDS.risks.uncontrolledMarketingDataSharing,
+    out_entity_id: DEMO_BUSINESS_CAPABILITY_IDS.digitalMarketing,
+    data: {},
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0015-00000000021d',
+    workspace: WORKSPACE_ID,
+    schema_id: RISK_AFFECTS_RELATION_SCHEMA_ID,
+    // Inaccurate PCI Scan Reporting -> Payments Platform.
+    in_entity_id: DEMO_RISK_COMPLIANCE_IDS.risks.inaccuratePciScanReporting,
+    out_entity_id: '00000000-0000-0000-0002-000000000003',
+    data: {},
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0015-00000000021e',
+    workspace: WORKSPACE_ID,
+    schema_id: RISK_AFFECTS_RELATION_SCHEMA_ID,
+    // Inaccurate PCI Scan Reporting -> Finance & Payments capability.
+    in_entity_id: DEMO_RISK_COMPLIANCE_IDS.risks.inaccuratePciScanReporting,
+    out_entity_id: DEMO_BUSINESS_CAPABILITY_IDS.financePayments,
+    data: {},
+    created_at: now,
+    updated_at: now
+  },
 
   // Control Protection (control -> information asset). Leaves Transaction Events (DE-2) with
   // neither a Risk nor a Control link, so the "Without Risk or Control Coverage" view is non-empty.
@@ -457,6 +597,28 @@ export const demoGovernanceRelations: RelationDbCreate[] = [
     // SIEM Alerting -> Clickstream Events (Data Entity DE-3).
     in_entity_id: DEMO_RISK_COMPLIANCE_IDS.controls.siemAlerting,
     out_entity_id: '00000000-0000-0000-0008-000000000003',
+    data: {},
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0016-000000000203',
+    workspace: WORKSPACE_ID,
+    schema_id: CONTROL_AFFECTS_RELATION_SCHEMA_ID,
+    // Inventory Reconciliation Automation -> Inventory Levels (Data Entity).
+    in_entity_id: DEMO_RISK_COMPLIANCE_IDS.controls.inventoryReconciliationAutomation,
+    out_entity_id: DEMO_ARCHITECTURE_IDS.dataEntities.inventoryLevels,
+    data: {},
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0016-000000000204',
+    workspace: WORKSPACE_ID,
+    schema_id: CONTROL_AFFECTS_RELATION_SCHEMA_ID,
+    // Marketing Data Sharing Agreement Review -> Marketing Consent Records (Data Entity).
+    in_entity_id: DEMO_RISK_COMPLIANCE_IDS.controls.marketingDataSharingAgreementReview,
+    out_entity_id: DEMO_ARCHITECTURE_IDS.dataEntities.marketingConsentRecords,
     data: {},
     created_at: now,
     updated_at: now
@@ -506,6 +668,39 @@ export const demoGovernanceRelations: RelationDbCreate[] = [
     in_entity_id: '00000000-0000-0000-0002-000000000003',
     out_entity_id: DEMO_RETENTION_IDS.policies.orderFulfillmentRecords,
     data: { activated_from: '2022-01-01' },
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: DEMO_RETENTION_IDS.assignments.orderRecordsToFulfillmentPolicy,
+    workspace: WORKSPACE_ID,
+    schema_id: RETENTION_IDS.assignmentRelationSchema,
+    // Order Records (Data Entity) -> Order & Fulfillment Records policy.
+    in_entity_id: DEMO_ARCHITECTURE_IDS.dataEntities.orderRecords,
+    out_entity_id: DEMO_RETENTION_IDS.policies.orderFulfillmentRecords,
+    data: { activated_from: '2024-01-01' },
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: DEMO_RETENTION_IDS.assignments.inventoryLevelsToSupplyChainPolicy,
+    workspace: WORKSPACE_ID,
+    schema_id: RETENTION_IDS.assignmentRelationSchema,
+    // Inventory Levels (Data Entity) -> Inventory & Supply Chain Records policy.
+    in_entity_id: DEMO_ARCHITECTURE_IDS.dataEntities.inventoryLevels,
+    out_entity_id: DEMO_RETENTION_IDS.policies.inventorySupplyChainRecords,
+    data: { activated_from: '2023-01-01' },
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: DEMO_RETENTION_IDS.assignments.marketingConsentRecordsAssetToMarketingPolicy,
+    workspace: WORKSPACE_ID,
+    schema_id: RETENTION_IDS.assignmentRelationSchema,
+    // Marketing Consent Records (Data Entity) -> Marketing Consent Records policy.
+    in_entity_id: DEMO_ARCHITECTURE_IDS.dataEntities.marketingConsentRecords,
+    out_entity_id: DEMO_RETENTION_IDS.policies.marketingConsentRecords,
+    data: { activated_from: '2025-01-01' },
     created_at: now,
     updated_at: now
   }
