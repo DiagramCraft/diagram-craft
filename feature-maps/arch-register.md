@@ -305,8 +305,14 @@
       section's own capability lookup is still loading, each section shows a capability-not-configured empty state
       instead of its content.
 
-        - @id:ar.vendor-management.overview The Overview section is scaffolded as a placeholder pending its
-          renewals-due, spend, and vendor-risk summary dashboard.
+        - @id:ar.vendor-management.overview The Overview section is the application's landing screen — where the app
+          switcher opens — and summarizes the other four sections rather than adding new data: a renewals-due tile
+          (contracts due within 12 months, bucketed by renewal window, each bucket linking to the Contracts section
+          pre-filtered to it), a spend tile (total annualised spend) and a portfolio-wide share-of-spend strip
+          linking into the Spend section, an above-risk-tolerance tile (vendors whose composite `vmRiskBand` is
+          Elevated or High) linking into the Risk section, a technology EOL exposure tile (hidden, not empty, when
+          the Technology Release binding is unset or unusable, same as the Risk section's own table), and a "Next
+          renewals" list of the soonest upcoming contract end dates that opens the contract drawer directly.
 
         - @id:ar.vendor-management.vendors The Vendors section is a register of Vendor entities: free-text search by
           name, sort by name / spend / risk / next renewal, and a sidebar of Tier, Category, and Relationship Owner
