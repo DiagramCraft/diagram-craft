@@ -396,8 +396,8 @@ describe('RiskComplianceControlsScreen', () => {
 
     // Clicking the control's row header opens the shared ControlDrawer via navigation.
     mocks.navigate.mockClear();
-    const controlHeader = [...container.querySelectorAll('tbody th')].find(
-      th => th.textContent?.includes('MFA Enforcement')
+    const controlHeader = [...container.querySelectorAll('tbody th')].find(th =>
+      th.textContent?.includes('MFA Enforcement')
     );
     await act(async () => {
       controlHeader!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
