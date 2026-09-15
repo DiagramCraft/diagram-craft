@@ -425,16 +425,18 @@
           affects Systems, Vendors, and Technology resources directly, not only information assets. Because
           `risk-affects` can still surface non-Data-Entity assets, the coverage-by-asset table additionally filters
           to the resolved Data Entity schema id (the capability's optional `dataEntity` binding role) rather than
-          relying on the relation constraint alone. A third, Traceability view is a dense grid: the library's
-          currently filtered Controls as rows, and — toggled by a Risks/Assets switch — either every live Risk or
-          the same Data-Entity-scoped assets as the Coverage view's asset table as columns, with a filled dot per
-          linked Control/Risk (`risk-control`) or Control/Asset (`control-affects`) pair, a per-row total (how many
-          columns that Control covers) and a per-column total that's highlighted when it's zero (an uncontrolled
-          Risk or asset). Both axes scroll with sticky row/column headers, since neither is bounded like the Risks
-          section's fixed 5×5 matrix. Clicking a row or column header opens the same Control/Risk/asset drawers as
-          the Library and Coverage views. Selecting a control opens the shared Control drawer, deep-linkable at
-          `risk-compliance/controls/$controlId`: attributes, the Risks it mitigates (with the `coverage`/
-          `effectiveness` it provides each one), and the Data Entities it protects (via `control-affects`).
+          relying on the relation constraint alone. A third, Traceability view is a dense table: the library's
+          currently filtered Controls as (sticky) rows, and — toggled by a "Controls × risks"/"Controls × assets"
+          switch in the toolbar — either every live Risk or the same Data-Entity-scoped assets as the Coverage
+          view's asset table as (sticky, vertically labelled) columns. A cell is a solid mark for a linked pair
+          whose Control is effective, an outlined mark for a link whose Control isn't, or empty for no link (a
+          legend in the panel header explains all three). Each row ends with its own total; a closing summary row
+          gives each column's total, with a red mark standing in for zero — an uncontrolled Risk or asset — instead
+          of the digit. Only the Control row headers are clickable, opening the shared Control drawer; Risk/asset
+          column headers are read-only, labelled but not linked. Selecting a control opens the shared Control
+          drawer, deep-linkable at `risk-compliance/controls/$controlId`: attributes, the Risks it mitigates (with
+          the `coverage`/`effectiveness` it provides each one), and the Data Entities it protects (via
+          `control-affects`).
 
     - @id:ar.entities Users can maintain a structured catalog of architectural entities and their relationships.
 

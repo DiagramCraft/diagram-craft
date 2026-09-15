@@ -381,16 +381,23 @@ describe('RiskComplianceControlsScreen', () => {
     expect(container.textContent).toContain('Data Leak');
     expect(container.textContent).toContain('MFA Enforcement');
 
-    // "Data Leak" has no covering control — its column total is 0.
-    const dataLeakHeader = [...container.querySelectorAll('button')].find(button =>
-      button.textContent?.includes('Data Leak')
-    );
-    expect(dataLeakHeader?.textContent).toContain('0');
+    // Column headers carry the risk's reference + title (design reference's `x.ref + " " +
+    // x.title`), and aren't clickable — only the Control row header is.
+    const headerCells = [...container.querySelectorAll('thead th')];
+    const dataLeakColumnIndex = headerCells.findIndex(th => th.textContent?.includes('Data Leak'));
+    expect(dataLeakColumnIndex).toBeGreaterThan(0);
+
+    // "Data Leak" has no covering control — the bottom totals row renders a gap mark instead of
+    // a "0" for its column.
+    const bottomRow = [...container.querySelectorAll('tbody tr')].at(-1);
+    const dataLeakTotalCell = bottomRow?.querySelectorAll('td')[dataLeakColumnIndex - 1];
+    expect(dataLeakTotalCell?.textContent).toBe('');
+    expect(dataLeakTotalCell?.querySelector('span')).toBeTruthy();
 
     // Clicking the control's row header opens the shared ControlDrawer via navigation.
     mocks.navigate.mockClear();
-    const controlHeader = [...container.querySelectorAll('button')].find(
-      button => button.textContent === 'MFA Enforcement'
+    const controlHeader = [...container.querySelectorAll('tbody th')].find(
+      th => th.textContent?.includes('MFA Enforcement')
     );
     await act(async () => {
       controlHeader!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
@@ -402,10 +409,11 @@ describe('RiskComplianceControlsScreen', () => {
       })
     );
 
-    // The dimension toggle patches the `dim` search param rather than navigating away.
+    // The dimension toggle (in the main toolbar, not the panel header) patches the `dim` search
+    // param rather than navigating away.
     mocks.navigate.mockClear();
     const assetsToggle = [...container.querySelectorAll('button')].find(
-      button => button.textContent === 'Assets'
+      button => button.textContent === 'Controls × assets'
     );
     await act(async () => {
       assetsToggle!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
