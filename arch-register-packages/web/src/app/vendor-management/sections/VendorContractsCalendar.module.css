@@ -12,6 +12,7 @@
 
 .cell {
   border: 1px solid var(--panel-border);
+  background-color: var(--panel-bg);
   border-radius: var(--r-md);
   padding: 10px;
   min-height: 120px;
@@ -22,8 +23,6 @@
 }
 
 .currentCell {
-  border-color: var(--cmp-fg-accent, var(--base-fg));
-  background: var(--base-bg-hover);
 }
 
 .cellHeader {
@@ -49,23 +48,42 @@
 .entry {
   display: flex;
   align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-  background: none;
-  border: none;
-  padding: 2px 0;
+  gap: 8px;
+  background: var(--base-bg);
+  border: 1px solid var(--panel-border);
+  border-left: 3px solid var(--tone);
+  border-radius: var(--r-sm);
+  padding: 5px 8px;
   text-align: left;
   cursor: pointer;
   min-width: 0;
 }
 
-.entryVendor {
-  font-size: 11px;
+.entry:hover {
+  background: var(--base-bg-hover);
 }
 
-.entryCost {
-  font-size: 11px;
-  margin-left: auto;
+.entryMain {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.entryName {
+  font-size: 11.5px;
+  color: var(--base-fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.entrySub {
+  font-size: 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .caption {

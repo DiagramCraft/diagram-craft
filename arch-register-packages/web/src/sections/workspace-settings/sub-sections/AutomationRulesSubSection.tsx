@@ -820,7 +820,9 @@ export const AutomationRulesSubSection = ({
                   <Table.HeaderCell width={155}>Planned</Table.HeaderCell>
                   <Table.HeaderCell width={155}>Completed</Table.HeaderCell>
                   <Table.HeaderCell width={100}>Status</Table.HeaderCell>
-                  <Table.HeaderCell width={90}>Attempts</Table.HeaderCell>
+                  <Table.HeaderCell width={90} numeric>
+                    Attempts
+                  </Table.HeaderCell>
                   <Table.HeaderCell>Result / error</Table.HeaderCell>
                 </Table.Row>
               </Table.Head>

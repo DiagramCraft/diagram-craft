@@ -72,6 +72,16 @@
   white-space: nowrap;
 }
 
+/* Alignment modifiers need to match .table .th's specificity or the default left alignment wins. */
+.table .th.numeric,
+.table .th.alignRight {
+  text-align: right;
+}
+
+.table .th.alignCenter {
+  text-align: center;
+}
+
 .table thead .th:first-child {
   border-radius: 4px 0 0 0;
 }

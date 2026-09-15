@@ -473,7 +473,9 @@ export const JobMonitoringSubSection = ({ workspaceSlug }: { workspaceSlug: stri
                     <Table.HeaderCell>Job type</Table.HeaderCell>
                     <Table.HeaderCell>Target schema</Table.HeaderCell>
                     <Table.HeaderCell>Recurrence</Table.HeaderCell>
-                    <Table.HeaderCell width={70}>Priority</Table.HeaderCell>
+                    <Table.HeaderCell width={70} numeric>
+                      Priority
+                    </Table.HeaderCell>
                     <Table.HeaderCell width={90}>State</Table.HeaderCell>
                     <Table.HeaderCell width={170}>Next planned run</Table.HeaderCell>
                     {canManageJobs && <Table.HeaderCell width={150} />}

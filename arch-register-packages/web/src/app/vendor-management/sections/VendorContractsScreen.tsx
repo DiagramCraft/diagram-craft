@@ -5,6 +5,7 @@ import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import { Title } from '../../../components/Title';
 import { SearchInput } from '../../../components/SearchInput';
 import { FilterDropdown } from '../../../components/FilterDropdown';
+import { ToggleButtonGroup } from '@diagram-craft/app-components/ToggleButtonGroup';
 import { Chip } from '../../../components/Chip';
 import { Table } from '../../../components/table/Table';
 import { useTableSort } from '../../../components/table/useTableSort';
@@ -18,6 +19,7 @@ import { vendorFieldValue } from '../vendorFieldDisplay';
 import { renewalWindow, RENEWAL_WINDOW_COLOR } from '../contractRenewalWindow';
 import type { ContractsSearchParams } from '../../../routes/searchParams';
 import { VendorContractsCalendar } from './VendorContractsCalendar';
+import { VendorContractsTimeline } from './VendorContractsTimeline';
 import { ContractDrawer } from './ContractDrawer';
 import filterStyles from '../../../sections/entities/components/EntityBrowser.module.css';
 import styles from './VendorManagementPlaceholderScreen.module.css';
@@ -33,10 +35,11 @@ const compareNullable = (a: number | string | null, b: number | string | null): 
 
 /**
  * The Contracts section: search, sort, and facets (renewal window, type, vendor) delivered by
- * `VendorManagementSidebar`'s `ContractsSidebarContent`, toggling between a list view and a
- * 12-month renewal calendar (`VendorContractsCalendar`). Row/entry click opens the shared
- * `ContractDrawer`, deep-linkable at `vendor-management/contracts/$contractId` — consistent with
- * how the Vendors section opens its own drawer rather than navigating away.
+ * `VendorManagementSidebar`'s `ContractsSidebarContent`, toggling between a list view, a
+ * 12-month renewal calendar (`VendorContractsCalendar`), and a Gantt-style contract timeline
+ * (`VendorContractsTimeline`). Row/entry/bar click opens the shared `ContractDrawer`,
+ * deep-linkable at `vendor-management/contracts/$contractId` — consistent with how the Vendors
+ * section opens its own drawer rather than navigating away.
  *
  * Fetches Contracts via `useVendorContracts` (a Contract tree join, resolving each Contract's
  * containing Vendor name — a flat entity fetch can't give that, see that hook's own comment).
@@ -148,6 +151,24 @@ export const VendorContractsScreen = () => {
       <Title title="Contracts" chips={!contracts.isLoading && <span>{filtered.length}</span>} />
 
       <div className={filterStyles.toolbar}>
+        <ToggleButtonGroup.Root
+          type="single"
+          aria-label="Contracts view"
+          value={view}
+          onChange={value => {
+            // BaseUI's single-select toggle group allows deselecting the active item (giving
+            // `undefined`); a view switch shouldn't be able to leave no view selected, so a
+            // deselect is ignored rather than clearing `view` back to 'list'.
+            if (value)
+              patchSearch({
+                view: value === 'list' ? undefined : (value as 'calendar' | 'timeline')
+              });
+          }}
+        >
+          <ToggleButtonGroup.Item value="list">List</ToggleButtonGroup.Item>
+          <ToggleButtonGroup.Item value="calendar">Renewal calendar</ToggleButtonGroup.Item>
+          <ToggleButtonGroup.Item value="timeline">Timelines</ToggleButtonGroup.Item>
+        </ToggleButtonGroup.Root>
         <SearchInput
           size="sm"
           className={filterStyles.searchInline}
@@ -157,8 +178,8 @@ export const VendorContractsScreen = () => {
           onChange={value => patchSearch({ q: value || undefined })}
           onClear={() => patchSearch({ q: undefined })}
         />
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
-          {view === 'list' && (
+        {view === 'list' && (
+          <div style={{ marginLeft: 'auto' }}>
             <FilterDropdown
               label="Sort"
               value={sort?.key ?? 'renewal'}
@@ -170,21 +191,14 @@ export const VendorContractsScreen = () => {
                 { value: 'renewal', label: 'Renewal date' }
               ]}
             />
-          )}
-          <FilterDropdown
-            label="View"
-            value={view}
-            onChange={value => patchSearch({ view: value === 'list' ? undefined : 'calendar' })}
-            options={[
-              { value: 'list', label: 'List' },
-              { value: 'calendar', label: 'Renewal calendar' }
-            ]}
-          />
-        </div>
+          </div>
+        )}
       </div>
 
       {view === 'calendar' ? (
         <VendorContractsCalendar contracts={sorted} onOpenContract={openContract} />
+      ) : view === 'timeline' ? (
+        <VendorContractsTimeline contracts={sorted} onOpenContract={openContract} />
       ) : (
         <Table.Root scroll stickyHeader>
           <Table.Head>

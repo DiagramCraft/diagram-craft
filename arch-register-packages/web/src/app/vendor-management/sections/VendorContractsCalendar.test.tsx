@@ -9,13 +9,15 @@ const row = (
   uid: string,
   name: string,
   contractEnd: string | null,
-  vendorName: string
+  vendorName: string,
+  annualCost?: number
 ): VendorContractRow => ({
   contract: {
     _uid: uid,
     _publicId: uid.toUpperCase(),
     _name: name,
-    contract_end: contractEnd
+    contract_end: contractEnd,
+    annual_cost: annualCost != null ? { amount: annualCost, currency: 'USD' } : null
   } as never,
   vendorId: `vnd-${uid}`,
   vendorName
@@ -93,6 +95,43 @@ describe('VendorContractsCalendar', () => {
 
     expect(container.textContent).not.toContain('Far Future');
     expect(container.textContent).toContain('1 renew beyond the next 12 months');
+  });
+
+  it("shows the month's total annualised value in its header, not a count", () => {
+    act(() => {
+      root.render(
+        <VendorContractsCalendar
+          contracts={[
+            row('ctr-1', 'Acme Support', '2026-10-05', 'Acme Corp', 1000),
+            row('ctr-2', 'Beta Maintenance', '2026-10-20', 'Beta Inc', 500)
+          ]}
+          onOpenContract={() => {}}
+        />
+      );
+    });
+
+    expect(container.textContent).toMatch(/\$1,500|1,500|1500/);
+  });
+
+  it('shows the vendor name as the primary label, with the contract name secondary', () => {
+    act(() => {
+      root.render(
+        <VendorContractsCalendar
+          contracts={[row('ctr-1', 'Acme Support', '2026-10-05', 'Acme Corp')]}
+          onOpenContract={() => {}}
+        />
+      );
+    });
+
+    const entry = [...container.querySelectorAll('button')].find(btn =>
+      btn.textContent?.includes('Acme Corp')
+    );
+    expect(entry).toBeDefined();
+    // Vendor name renders before the contract name within the entry.
+    const vendorIndex = entry!.textContent!.indexOf('Acme Corp');
+    const contractIndex = entry!.textContent!.indexOf('Acme Support');
+    expect(vendorIndex).toBeGreaterThanOrEqual(0);
+    expect(vendorIndex).toBeLessThan(contractIndex);
   });
 
   it('invokes onOpenContract when an entry is clicked', () => {

@@ -384,8 +384,9 @@ const contractsSearchSchema = defineSearchParamSchema({
   type: stringCodec,
   vendor: stringCodec,
   renewalWindow: stringCodec,
-  // Toggles the section between its list and 12-month renewal calendar; defaults to 'list'.
-  view: enumCodec(['list', 'calendar'] as const)
+  // Toggles the section between its list, 12-month renewal calendar, and Gantt-style contract
+  // timeline; defaults to 'list'.
+  view: enumCodec(['list', 'calendar', 'timeline'] as const)
 });
 
 export type ContractsSearchParams = SearchParamsFromSchema<typeof contractsSearchSchema>;

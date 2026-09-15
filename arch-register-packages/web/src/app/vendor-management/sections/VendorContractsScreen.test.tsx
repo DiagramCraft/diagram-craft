@@ -96,15 +96,18 @@ describe('VendorContractsScreen', () => {
           _publicId: 'CTR-1',
           _name: 'Acme Support',
           contract_type: 'licence',
+          contract_start: '2025-10-01',
           contract_end: '2026-10-01',
           annual_cost: { amount: 1000, currency: 'USD' },
-          auto_renew: true
+          auto_renew: true,
+          notice_period_days: 30
         },
         {
           _uid: 'ctr-2',
           _publicId: 'CTR-2',
           _name: 'Beta Maintenance',
           contract_type: 'support',
+          contract_start: '2025-09-01',
           contract_end: '2026-09-01',
           annual_cost: { amount: 500, currency: 'USD' },
           auto_renew: false
@@ -203,5 +206,36 @@ describe('VendorContractsScreen', () => {
     await renderScreen();
     expect(container.textContent).toContain('Acme Support');
     expect(container.querySelector('table')).toBeNull();
+  });
+
+  it('renders the view switcher as a segmented control, not a dropdown, and switches on click', async () => {
+    await renderScreen();
+    const calendarButton = [...container.querySelectorAll('button')].find(
+      btn => btn.textContent === 'Renewal calendar'
+    );
+    expect(calendarButton).toBeDefined();
+
+    await act(async () => {
+      calendarButton!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    for (let i = 0; i < 3; i++) await flush();
+
+    expect(mocks.navigate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: '/$workspaceSlug/vendor-management/contracts',
+        params: { workspaceSlug: 'ws-1' }
+      })
+    );
+  });
+
+  it('switches to the timeline view', async () => {
+    mocks.search = { view: 'timeline' };
+    await renderScreen();
+    expect(container.textContent).toContain('Acme Support');
+    expect(container.querySelector('table')).toBeNull();
+    const bar = [...container.querySelectorAll('button')].find(btn =>
+      btn.title?.includes('Acme Support')
+    );
+    expect(bar).toBeDefined();
   });
 });

@@ -1,12 +1,34 @@
 import { useMemo } from 'react';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
-import { Chip } from '../../../components/Chip';
 import { formatCurrencyValue } from '../../../utils/currencyFormat';
 import type { VendorContractRow } from '../useVendorContracts';
 import { renewalWindow, RENEWAL_WINDOW_COLOR } from '../contractRenewalWindow';
 import styles from './VendorContractsCalendar.module.css';
 
 const MONTH_LABEL = new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric' });
+
+const currencyAmount = (value: unknown): { amount: number; currency: string } | null =>
+  value != null &&
+  typeof value === 'object' &&
+  typeof (value as { amount?: unknown }).amount === 'number' &&
+  typeof (value as { currency?: unknown }).currency === 'string'
+    ? (value as { amount: number; currency: string })
+    : null;
+
+/** Sum of a month's contract values, formatted in the first contract's own currency (contracts
+ *  are assumed single-currency in practice, same simplifying assumption `VendorSpendScreen.tsx`
+ *  makes) — `null` when the month has no contracts with a parseable `annual_cost`. */
+const monthTotal = (rows: readonly VendorContractRow[]): string | null => {
+  let total = 0;
+  let currency: string | null = null;
+  for (const { contract } of rows) {
+    const value = currencyAmount(contract.annual_cost);
+    if (!value) continue;
+    total += value.amount;
+    currency ??= value.currency;
+  }
+  return currency ? formatCurrencyValue({ amount: total, currency }) : null;
+};
 
 const monthKey = (date: Date): string =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
@@ -96,30 +118,36 @@ export const VendorContractsCalendar = ({
           >
             <div className={styles.cellHeader}>
               <span>{month.label}</span>
-              <span className="dim mono">{month.rows.length}</span>
+              <span className="dim mono tabular">{monthTotal(month.rows) ?? '—'}</span>
             </div>
             {month.rows.length === 0 ? (
               <div className={`${styles.empty} dim`}>No renewals</div>
             ) : (
               <div className={styles.entries}>
                 {month.rows.map(({ contract, vendorName }) => {
-                  const contractWindow = renewalWindow(
-                    typeof contract.contract_end === 'string' ? contract.contract_end : null
-                  );
+                  const contractEnd =
+                    typeof contract.contract_end === 'string' ? contract.contract_end : null;
+                  const contractWindow = renewalWindow(contractEnd);
+                  const day = contractEnd ? new Date(`${contractEnd.slice(0, 10)}T00:00:00`) : null;
                   return (
                     <button
                       key={contract._uid}
                       type="button"
                       className={styles.entry}
+                      style={
+                        { '--tone': RENEWAL_WINDOW_COLOR[contractWindow] } as React.CSSProperties
+                      }
                       onClick={() => onOpenContract(contract)}
-                      title={vendorName ?? undefined}
                     >
-                      <Chip dot={RENEWAL_WINDOW_COLOR[contractWindow]} tone="ghost">
-                        {contract._name}
-                      </Chip>
-                      {vendorName && <span className={styles.entryVendor}>{vendorName}</span>}
+                      <span className="dim mono tabular">{day ? day.getDate() : '—'}</span>
+                      <span className={styles.entryMain}>
+                        <span className={styles.entryName}>{vendorName ?? contract._name}</span>
+                        {vendorName && (
+                          <span className={`${styles.entrySub} dim`}>{contract._name}</span>
+                        )}
+                      </span>
                       {contract.annual_cost != null && typeof contract.annual_cost === 'object' && (
-                        <span className={`${styles.entryCost} dim mono`}>
+                        <span className="dim mono tabular">
                           {formatCurrencyValue(contract.annual_cost)}
                         </span>
                       )}
