@@ -1,0 +1,198 @@
+.screen {
+  display: flex;
+  flex-direction: column;
+  padding: 20px 24px;
+  min-width: 0;
+  gap: 16px;
+}
+
+.empty {
+  padding: 32px;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.two {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+}
+
+@media (max-width: 1100px) {
+  .two {
+    grid-template-columns: 1fr;
+  }
+}
+
+.panel {
+  min-width: 0;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+}
+
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border-bottom: 1px solid var(--panel-border);
+  padding: 8px 14px;
+}
+
+.panelTitle {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--base-fg);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.panelLink {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-size: 11px;
+  color: var(--accent-fg);
+  cursor: pointer;
+}
+
+.panelLink:hover {
+  text-decoration: underline;
+}
+
+/* 12-month renewal strip */
+.strip {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  padding: 14px 14px 10px;
+  height: 140px;
+}
+
+.stripCol {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  height: 100%;
+}
+
+.stripBarWrap {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  position: relative;
+
+  &::before {
+    content: "";
+    background-color: var(--base-bg);
+    border: 1px solid var(--panel-border);
+    border-radius: 2px;
+    bottom: 0;
+    top: 0;
+    left: 5%;
+    right: 5%;
+    position: absolute;
+  }
+}
+
+.stripBar {
+  width: 90%;
+  min-width: 4px;
+  border-radius: 2px;
+
+  bottom: 0;
+  position: absolute;
+}
+
+.stripVal {
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.stripLabel {
+  font-size: 10px;
+}
+
+/* Row stacks — "Next renewals" / "Spend by vendor" / "Technology EOL exposure" */
+.stack {
+  display: flex;
+  flex-direction: column;
+}
+
+.row,
+.rowBar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 14px;
+  background: none;
+  border: 0;
+  border-top: 1px solid var(--panel-border);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+}
+
+.row:first-child,
+.rowBar:first-child {
+  border-top: 0;
+}
+
+.row:hover,
+.rowBar:hover {
+  background: var(--cmp-bg-hover);
+}
+
+.rowMain {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.rowName {
+  font-size: 12.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rowSub {
+  font-size: 11px;
+}
+
+.rowBar .rowName {
+  flex: 0 0 140px;
+}
+
+.rowBar {
+  gap: 12px;
+}
+
+.note {
+  font-size: 11.5px;
+  padding: 2px 2px 8px;
+}
+
+.noteLink {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: var(--accent-fg);
+  cursor: pointer;
+}
+
+.noteLink:hover {
+  text-decoration: underline;
+}
