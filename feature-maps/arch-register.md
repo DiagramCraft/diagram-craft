@@ -415,13 +415,20 @@
           measures a Control's effectiveness. The Coverage view has three stat tiles scoped to the library's
           current filters (Effective, Never tested, Uncontrolled risks), a "coverage by risk" bar-list of every live
           (non-closed) Risk sorted weakest-`rcCoverage`-first (each row: residual score, the names of its mitigating
-          Controls or "no control", and a coverage bar/percentage), and a "coverage by information asset" table —
-          asset name, its entity schema type, the count of distinct Risks affecting it (`risk-affects`), and the
-          count of distinct Controls directly protecting it (`control-affects`, styled as "none" when zero), sorted
-          fewest-controls-first. The traceability matrix (control × risk / control × asset) is still pending. Selecting a control
-          opens the shared Control drawer, deep-linkable at `risk-compliance/controls/$controlId`: attributes, the
-          Risks it mitigates (with the `coverage`/`effectiveness` it provides each one), and the entities it
-          protects (via `control-affects`).
+          Controls or "no control", and a coverage bar/percentage), and a "coverage by information asset" table,
+          scoped to Data Entities only — asset name, the count of distinct Risks affecting it (`risk-affects`), and
+          the count of distinct Controls directly protecting it (`control-affects`, styled as "none" when zero),
+          sorted fewest-controls-first. `control-affects` ("Control Protection") is schema-constrained to the
+          `information-governance` template's Data Entity schema (a `control-protection` composition extension on
+          the `risk-compliance` template, materializing only when `information-governance` is also selected in the
+          workspace) — unlike `risk-affects` ("Risk Affects"), which stays unrestricted, since a Risk legitimately
+          affects Systems, Vendors, and Technology resources directly, not only information assets. Because
+          `risk-affects` can still surface non-Data-Entity assets, the coverage-by-asset table additionally filters
+          to the resolved Data Entity schema id (the capability's optional `dataEntity` binding role) rather than
+          relying on the relation constraint alone. The traceability matrix (control × risk / control × asset) is
+          still pending. Selecting a control opens the shared Control drawer, deep-linkable at
+          `risk-compliance/controls/$controlId`: attributes, the Risks it mitigates (with the `coverage`/
+          `effectiveness` it provides each one), and the Data Entities it protects (via `control-affects`).
 
     - @id:ar.entities Users can maintain a structured catalog of architectural entities and their relationships.
 
