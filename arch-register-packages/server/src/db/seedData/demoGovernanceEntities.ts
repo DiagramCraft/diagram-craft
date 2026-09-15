@@ -567,8 +567,7 @@ export const demoControlEntities: SeedEntityInput[] = [
     slug: 'marketing-data-sharing-agreement-review',
     namespace: 'default',
     name: 'Marketing Data Sharing Agreement Review',
-    description:
-      'Legal review and DPA sign-off required before any ad-tech data feed is enabled.',
+    description: 'Legal review and DPA sign-off required before any ad-tech data feed is enabled.',
     owner: TEAM_IDS.design,
     lifecycle: LIFECYCLE_IDS.production,
     target_lifecycle: null,
@@ -903,8 +902,7 @@ export const demoRiskEntities: SeedEntityInput[] = [
     slug: 'uncontrolled-marketing-data-sharing',
     namespace: 'default',
     name: 'Uncontrolled Customer Data Sharing with Marketing Ad Platforms',
-    description:
-      'Customer data passed to ad-tech vendors without a documented sharing agreement.',
+    description: 'Customer data passed to ad-tech vendors without a documented sharing agreement.',
     owner: TEAM_IDS.design,
     lifecycle: LIFECYCLE_IDS.production,
     target_lifecycle: null,

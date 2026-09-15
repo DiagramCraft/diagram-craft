@@ -820,7 +820,9 @@ describe('instantiateTemplate', () => {
       expect.objectContaining({ id: 'category', type: 'select', enumId: expect.any(String) })
     );
     const categoryField = risk?.fields.find(field => field.id === 'category');
-    const categoryEnum = definitions.enums.find(enumeration => enumeration.name === 'Risk Category');
+    const categoryEnum = definitions.enums.find(
+      enumeration => enumeration.name === 'Risk Category'
+    );
     expect(categoryField?.type === 'select' && categoryField.enumId === categoryEnum?.id).toBe(
       true
     );
