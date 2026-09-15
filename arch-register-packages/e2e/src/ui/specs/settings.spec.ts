@@ -13,6 +13,18 @@ test.describe('settings section', () => {
     await settingsPage.expectLoaded();
   });
 
+  test('runs an entity query from the query console', async ({ page }) => {
+    const settingsPage = new SettingsPage(page, defaultWorkspace.slug);
+
+    await settingsPage.goto('query-console');
+    await expect(page.getByRole('heading', { name: 'Query Console', exact: true })).toBeVisible();
+    await page.getByRole('textbox', { name: 'Query text', exact: true }).fill('schema:Component');
+    await page.getByRole('button', { name: 'Run query', exact: true }).click();
+
+    await expect(page.getByText(/record\(s\) returned/)).toBeVisible();
+    await expect(page.locator('pre')).toContainText('"_uid"');
+  });
+
   test('opens the data model from workspace home through workspace settings', async ({ page }) => {
     const homePage = new HomePage(page, defaultWorkspace.slug);
     const dataModelPage = new DataModelPage(page, defaultWorkspace.slug);

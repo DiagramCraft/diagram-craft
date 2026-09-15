@@ -1,4 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
+import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import { orpcClient } from '../lib/orpcClient';
 
 // Wraps entityQuery.{parseText,printText} (specs/QUERY_LANGUAGE.md §4) — mutations rather than
@@ -23,5 +24,14 @@ export const usePrintEntityQueryText = (workspaceId: string) =>
       orpcClient.entityQueryText.printText({
         params: { workspace: workspaceId },
         body: variables
+      })
+  });
+
+export const useRunEntityQuery = (workspaceId: string) =>
+  useMutation({
+    mutationFn: (query: EntityQuery) =>
+      orpcClient.entities.list({
+        params: { workspace: workspaceId },
+        query: { entityQuery: JSON.stringify(query), view: 'full' }
       })
   });

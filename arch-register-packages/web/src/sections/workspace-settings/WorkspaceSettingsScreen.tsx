@@ -25,6 +25,7 @@ import { WorkspaceApiTokensSubSection } from './sub-sections/WorkspaceApiTokensS
 import { AssessmentTypesSubSection } from './sub-sections/AssessmentTypesSubSection';
 import { PublicCatalogSubSection } from './sub-sections/PublicCatalogSubSection';
 import { ConformanceSubSection } from './sub-sections/ConformanceSubSection';
+import { QueryConsoleSubSection } from './sub-sections/QueryConsoleSubSection';
 
 const WorkspaceAnalyticsScreen = lazy(() =>
   import('./sub-sections/analytics/WorkspaceAnalyticsScreen').then(module => ({
@@ -81,6 +82,10 @@ const SECTION_META: Record<string, { title: string; sub: string }> = {
   'export-import': {
     title: 'Export & Import',
     sub: 'Export workspace data to ZIP archive or import data from another workspace.'
+  },
+  'query-console': {
+    title: 'Query Console',
+    sub: 'Run ad-hoc entity queries and inspect the raw records returned by the catalog.'
   },
   'analytics': {
     title: 'Analytics',
@@ -292,6 +297,7 @@ export const WorkspaceSettingsScreen = () => {
         />
       )}
       {section === 'export-import' && <ExportImportSubSection />}
+      {section === 'query-console' && <QueryConsoleSubSection workspaceId={workspaceSlug} />}
       {section === 'analytics' && (
         <Suspense fallback={<RoutePendingComponent />}>
           <WorkspaceAnalyticsScreen analyticsView={search.analyticsView} />
