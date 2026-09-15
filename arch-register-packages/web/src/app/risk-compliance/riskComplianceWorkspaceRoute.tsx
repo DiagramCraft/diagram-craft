@@ -22,9 +22,11 @@ import { ensureApplicationAccess } from '../../routes/applicationAccess';
 const railPath = (path: string) => path.replace('/$workspaceSlug/', '');
 
 /**
- * Risk & Compliance's workspace routes: one per rail section, no detail/drawer routes and no
- * `validateSearch` yet — this is the #3278 scaffold (placeholder screens only). Mirrors
- * `../vendor-management/vendorManagementWorkspaceRoute.tsx`'s base per-section routes.
+ * Risk & Compliance's workspace routes: one per rail section, plus deep-linkable
+ * `$riskId`/`$controlId` detail routes for the shared drawers built in #3279. Mirrors
+ * `../vendor-management/vendorManagementWorkspaceRoute.tsx`'s `vendorsDetailRoute` treatment —
+ * same `component` as the base route, gated the same way, with the drawer rendered conditionally
+ * by the screen when the optional id param is present.
  */
 export const createRiskComplianceWorkspaceRoutes = <TParentRoute extends AnyRoute>(
   workspaceRoute: TParentRoute
@@ -65,10 +67,44 @@ export const createRiskComplianceWorkspaceRoutes = <TParentRoute extends AnyRout
         breadcrumbs: buildRiskComplianceBreadcrumbs(ctx, RISK_RISKS_ID)
       })
   );
+  const risksDetailRoute = withWorkspaceShell(
+    createRoute({
+      getParentRoute: () => workspaceRoute,
+      path: `${railPath(RISK_RAIL_PATHS[RISK_RISKS_ID])}/$riskId`,
+      beforeLoad: ({ context, params }) =>
+        ensureApplicationAccess(
+          context.queryClient,
+          (params as unknown as { workspaceSlug: string }).workspaceSlug,
+          'risk-compliance'
+        ),
+      component: LazyRiskComplianceRisksScreen
+    }),
+    ctx =>
+      railSectionShell(ctx, RISK_RISKS_ID, {
+        breadcrumbs: buildRiskComplianceBreadcrumbs(ctx, RISK_RISKS_ID)
+      })
+  );
   const controlsRoute = withWorkspaceShell(
     createRoute({
       getParentRoute: () => workspaceRoute,
       path: railPath(RISK_RAIL_PATHS[RISK_CONTROLS_ID]),
+      beforeLoad: ({ context, params }) =>
+        ensureApplicationAccess(
+          context.queryClient,
+          (params as unknown as { workspaceSlug: string }).workspaceSlug,
+          'risk-compliance'
+        ),
+      component: LazyRiskComplianceControlsScreen
+    }),
+    ctx =>
+      railSectionShell(ctx, RISK_CONTROLS_ID, {
+        breadcrumbs: buildRiskComplianceBreadcrumbs(ctx, RISK_CONTROLS_ID)
+      })
+  );
+  const controlsDetailRoute = withWorkspaceShell(
+    createRoute({
+      getParentRoute: () => workspaceRoute,
+      path: `${railPath(RISK_RAIL_PATHS[RISK_CONTROLS_ID])}/$controlId`,
       beforeLoad: ({ context, params }) =>
         ensureApplicationAccess(
           context.queryClient,
@@ -117,5 +153,13 @@ export const createRiskComplianceWorkspaceRoutes = <TParentRoute extends AnyRout
       })
   );
 
-  return [overviewRoute, risksRoute, controlsRoute, retentionRoute, assessmentsRoute] as const;
+  return [
+    overviewRoute,
+    risksRoute,
+    risksDetailRoute,
+    controlsRoute,
+    controlsDetailRoute,
+    retentionRoute,
+    assessmentsRoute
+  ] as const;
 };

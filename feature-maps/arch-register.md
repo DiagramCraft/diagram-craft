@@ -387,10 +387,25 @@
       Risk entity schema binding resolved; the Control, Framework, and Compliance Requirement entity schema bindings
       are optional). The Retention section gates separately, on the existing, workspace-wide `retention` capability
       (policy entity schema and assignment relation schema bindings), rather than on `risk-compliance` — a workspace
-      can have Retention configured without the rest of Risk & Compliance being enabled, or vice versa. Every
-      section is currently a scaffold: once its gating capability is configured it renders only its title and an
-      empty state; risk register, control library, retention dashboard, and assessment content land in later
-      sub-issues of the Risk & Compliance application epic.
+      can have Retention configured without the rest of Risk & Compliance being enabled, or vice versa. Overview,
+      Retention, and Assessments are currently scaffolds: once their gating capability is configured they render
+      only a title and an empty state; that content lands in later sub-issues of the Risk & Compliance application
+      epic.
+
+        - @id:ar.risk-compliance.risks The Risks section lists Risk entities; a minimal register view for now (the
+          register + 5×5 matrix are still pending). Selecting a risk opens the shared Risk drawer, deep-linkable at
+          `risk-compliance/risks/$riskId`: likelihood/impact, the existing `inherent_risk_score` and
+          `residual_risk_score` derived fields (the latter banded Low/Medium/High/Critical via the standard 5×5
+          heat-map thresholds), attributes, a multi-control coverage roll-up (`rcCoverage`/`rcBand`, combining every
+          mitigating Control's `coverage` % and `effectiveness` on its `risk-control` relation as independent,
+          overlapping layers of defense rather than a plain average), the list of mitigating Controls, and the
+          entities the risk affects (via `risk-affects`).
+
+        - @id:ar.risk-compliance.controls The Controls section lists Control entities; a minimal library view for
+          now (the full coverage view and traceability matrix are still pending). Selecting a control opens the
+          shared Control drawer, deep-linkable at `risk-compliance/controls/$controlId`: attributes, the Risks it
+          mitigates (with the `coverage`/`effectiveness` it provides each one), and the entities it protects (via
+          `control-affects`).
 
     - @id:ar.entities Users can maintain a structured catalog of architectural entities and their relationships.
 
