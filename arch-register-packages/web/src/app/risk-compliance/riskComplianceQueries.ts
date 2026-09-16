@@ -1,4 +1,8 @@
 import type { WorkspaceCapabilityConfiguration } from '@arch-register/api-types/workspaceCapabilityContract';
+import {
+  getWorkspaceCapabilityDefinition,
+  resolveCapabilityFieldId
+} from '@arch-register/api-types/integrationCatalog';
 
 const RISK_COMPLIANCE_CAPABILITY = 'risk-compliance';
 const RETENTION_CAPABILITY = 'retention';
@@ -84,4 +88,49 @@ export const resolveRetentionConfig = (
   if (!policySchemaId || !assignmentSchemaId) return null;
 
   return { policySchemaId, assignmentSchemaId };
+};
+
+export type RetentionFieldIds = {
+  durationFieldId: string;
+  timeUnitFieldId: string;
+  activatedFromFieldId: string;
+};
+
+/**
+ * Resolves the `retention` capability's `duration`/`timeUnit`/`activatedFrom` semantic field
+ * roles into the actual per-workspace field ids they're mapped to. Unlike `risk-compliance`'s
+ * fixed field ids (`control_type`, `residual_risk_score`, ...), `retention`'s binding roles carry
+ * their own field-role mappings (`workspaceCapabilityDefinitions` in
+ * `@arch-register/api-types/integrationCatalog`) — a workspace can map `duration` to any `number`
+ * field on its Retention Policy schema, not just one literally named `duration`. Mirrors the
+ * server's own `resolveRetentionBindings` in `server/src/domain/catalog/retentionStatus.ts`,
+ * resolved client-side so `useRetentionAssignments.ts` can read a policy's duration/time unit and
+ * an assignment's activation date to report them as plain facts — see that hook's doc comment for
+ * why it deliberately doesn't compute a per-assignment expiry date from them.
+ */
+export const resolveRetentionFieldIds = (
+  capabilityConfigurations: readonly WorkspaceCapabilityConfiguration[] | undefined
+): RetentionFieldIds | null => {
+  const definition = getWorkspaceCapabilityDefinition(RETENTION_CAPABILITY);
+  const configuration = capabilityConfigurations?.find(
+    candidate => candidate.type === RETENTION_CAPABILITY
+  );
+  if (!definition || !configuration?.valid) return null;
+
+  const policyBinding = configuration.bindings['policy'];
+  const assignmentBinding = configuration.bindings['assignment'];
+  if (!policyBinding || !assignmentBinding) return null;
+
+  const policyRole = definition.bindingRoles.find(role => role.id === 'policy');
+  const assignmentRole = definition.bindingRoles.find(role => role.id === 'assignment');
+  const durationRole = policyRole?.fieldRoles.find(role => role.id === 'duration');
+  const timeUnitRole = policyRole?.fieldRoles.find(role => role.id === 'timeUnit');
+  const activatedFromRole = assignmentRole?.fieldRoles.find(role => role.id === 'activatedFrom');
+  if (!durationRole || !timeUnitRole || !activatedFromRole) return null;
+
+  return {
+    durationFieldId: resolveCapabilityFieldId(policyBinding, durationRole),
+    timeUnitFieldId: resolveCapabilityFieldId(policyBinding, timeUnitRole),
+    activatedFromFieldId: resolveCapabilityFieldId(assignmentBinding, activatedFromRole)
+  };
 };

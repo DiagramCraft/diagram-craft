@@ -1,0 +1,52 @@
+.screen {
+  display: flex;
+  flex-direction: column;
+  padding: 20px 24px;
+  min-width: 0;
+  gap: 16px;
+}
+
+.empty {
+  padding: 32px;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+/* Active-filter chips (Policy / Incomplete), shown only when a sidebar facet has narrowed the
+   register — there is no search box or view toggle on this screen, filtering is sidebar-driven. */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.clearChip {
+  margin-left: 4px;
+  border: none;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+  padding: 0;
+}
+
+/* Governed entity / Policy cell links, open the record in Entities — mirrors
+   `sections/relations/RelationBrowser.module.css`'s `.entityLink`. */
+.entityLink {
+  color: inherit;
+  text-decoration: none;
+}
+
+.entityLink:hover {
+  text-decoration: underline;
+}
+
+/* Explanatory footnote — mirrors the sibling Risks/Controls screens' own `.note`. */
+.note {
+  font-size: 11px;
+  color: var(--base-fg-more-dim);
+  padding: 10px 14px 4px;
+  max-width: 780px;
+  line-height: 1.6;
+}

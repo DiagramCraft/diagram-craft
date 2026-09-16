@@ -1561,11 +1561,19 @@ const retentionAssignmentRelationSchema: SymbolicRelationSchema = {
   symId: 'retention-assignment',
   name: 'Subject to Retention Policy',
   description:
-    'Assigns a retention policy to a governed entity, recording the date it became subject to it.',
+    'Assigns a retention policy to a governed Data Entity category, recording the date it became ' +
+    'subject to it.',
   category: 'Governance',
   inLabel: 'Subject to Retention Policy',
   outLabel: 'Governs',
-  inSymSchemaIds: 'any',
+  // Retention is a category-level concept — the "activated from" date and the policy's
+  // duration/time-unit only ever describe the category as a whole, never an individual record's
+  // own age, so the governed side is constrained to the Data Entity schema this same template
+  // ships (retentionPolicySchema/dataEntitySchema are always composed together, so this adds no
+  // cross-template dependency). Assigning a retention policy directly to a System, Application, or
+  // other non-category entity mixes two different granularities under one policy — see the Risk &
+  // Compliance app's Retention section for the UI consequence this was designed to prevent.
+  inSymSchemaIds: ['data-entity'],
   outSymSchemaIds: ['retention-policy'],
   fields: [
     { id: 'activated_from', name: 'Activated From', type: 'date', requirementLevel: 'required' }
@@ -1721,6 +1729,21 @@ const dataEntitySchema: TemplateSchema = {
       type: 'select',
       enumId: 'pii-classification',
       requirementLevel: 'optional'
+    },
+    // Reverse side of retentionPolicySchema's 'governed_entities' — same template, so a plain
+    // symId reference rather than the cross-template `{ templateId, symId }` form composition
+    // extensions use (see 'protecting_controls' below for that form). A Data Entity category
+    // normally sits under one retention policy at a time, hence maxCount: 1 — retentionAssignment
+    // RelationSchema's `inSymSchemaIds` is constrained to this schema for the same reason
+    // (retention is category-level, not per-record).
+    {
+      id: 'retention_policy',
+      name: 'Retention Policy',
+      type: 'typedRelation',
+      symRelationSchemaId: 'retention-assignment',
+      direction: 'in',
+      minCount: 0,
+      maxCount: 1
     }
   ],
   sharedFieldGroupIds: ['information-asset-stewardship']

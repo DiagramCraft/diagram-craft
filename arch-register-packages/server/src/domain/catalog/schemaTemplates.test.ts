@@ -435,14 +435,20 @@ describe('instantiateTemplate', () => {
       definitions.fieldGroups[0]!.id
     ]);
     expect(dataEntitySchema!.fields).toEqual([
-      expect.objectContaining({ id: 'classification', type: 'select' })
+      expect.objectContaining({ id: 'classification', type: 'select' }),
+      expect.objectContaining({
+        id: 'retention_policy',
+        type: 'typedRelation',
+        direction: 'in',
+        maxCount: 1
+      })
     ]);
 
     expect(definitions.relationSchemas.map(relationSchema => relationSchema.name)).toEqual([
       'Subject to Retention Policy'
     ]);
     const [assignmentRelationSchema] = definitions.relationSchemas;
-    expect(assignmentRelationSchema!.in_schema_ids).toBe('any');
+    expect(assignmentRelationSchema!.in_schema_ids).toEqual([dataEntitySchema!.id]);
     expect(assignmentRelationSchema!.out_schema_ids).toEqual([retentionPolicySchema!.id]);
     expect(assignmentRelationSchema!.fields).toEqual([
       expect.objectContaining({ id: 'activated_from', type: 'date' })

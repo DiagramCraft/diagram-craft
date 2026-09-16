@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import type { WorkspaceCapabilityConfiguration } from '@arch-register/api-types/workspaceCapabilityContract';
-import { resolveRiskComplianceConfig, resolveRetentionConfig } from './riskComplianceQueries';
+import {
+  resolveRiskComplianceConfig,
+  resolveRetentionConfig,
+  resolveRetentionFieldIds
+} from './riskComplianceQueries';
 
 const entityBinding = (id: string) => ({ target: { kind: 'entity_schema' as const, id } });
 const relationBinding = (id: string) => ({ target: { kind: 'relation_schema' as const, id } });
@@ -115,6 +119,55 @@ describe('resolveRetentionConfig', () => {
     expect(
       resolveRetentionConfig([
         { ...validRetentionConfiguration, bindings: bindingsWithoutAssignment }
+      ])
+    ).toBeNull();
+  });
+});
+
+describe('resolveRetentionFieldIds', () => {
+  it('resolves the default field ids when no explicit field mappings are set', () => {
+    expect(resolveRetentionFieldIds([validRetentionConfiguration])).toEqual({
+      durationFieldId: 'duration',
+      timeUnitFieldId: 'time_unit',
+      activatedFromFieldId: 'activated_from'
+    });
+  });
+
+  it('resolves explicit field mappings over the defaults', () => {
+    const remapped = {
+      ...validRetentionConfiguration,
+      bindings: {
+        policy: {
+          ...validRetentionConfiguration.bindings.policy,
+          fieldMappings: { duration: 'retention_length', timeUnit: 'retention_unit' }
+        },
+        assignment: {
+          ...validRetentionConfiguration.bindings.assignment,
+          fieldMappings: { activatedFrom: 'subject_since' }
+        }
+      }
+    } as unknown as WorkspaceCapabilityConfiguration;
+    expect(resolveRetentionFieldIds([remapped])).toEqual({
+      durationFieldId: 'retention_length',
+      timeUnitFieldId: 'retention_unit',
+      activatedFromFieldId: 'subject_since'
+    });
+  });
+
+  it('returns null when there is no retention configuration', () => {
+    expect(resolveRetentionFieldIds([])).toBeNull();
+    expect(resolveRetentionFieldIds(undefined)).toBeNull();
+  });
+
+  it('returns null when the configuration is invalid', () => {
+    expect(resolveRetentionFieldIds([{ ...validRetentionConfiguration, valid: false }])).toBeNull();
+  });
+
+  it('returns null when the policy or assignment binding is missing', () => {
+    const { policy: _policy, ...bindingsWithoutPolicy } = validRetentionConfiguration.bindings;
+    expect(
+      resolveRetentionFieldIds([
+        { ...validRetentionConfiguration, bindings: bindingsWithoutPolicy }
       ])
     ).toBeNull();
   });

@@ -1,7 +1,15 @@
 import { useMemo, type ReactNode } from 'react';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
-import { TbAlertTriangle, TbBook, TbCheckbox, TbShieldCheck, TbTag, TbUsers } from 'react-icons/tb';
+import {
+  TbAlertTriangle,
+  TbArchive,
+  TbBook,
+  TbCheckbox,
+  TbShieldCheck,
+  TbTag,
+  TbUsers
+} from 'react-icons/tb';
 import {
   SidebarGroupLabel,
   SidebarTitleHeader
@@ -10,17 +18,29 @@ import { TreeRow } from '../../../components/TreeRow';
 import { entitiesQuery } from '../../../queries/entities';
 import { workspaceCapabilityConfigurationsQuery } from '../../../queries/workspaceConfig';
 import { useSchemas } from '../../../hooks/useSchemas';
-import { resolveRiskComplianceConfig, type RiskComplianceConfig } from '../riskComplianceQueries';
+import {
+  resolveRiskComplianceConfig,
+  resolveRetentionConfig,
+  resolveRetentionFieldIds,
+  type RiskComplianceConfig,
+  type RetentionConfig
+} from '../riskComplianceQueries';
 import { RESIDUAL_RISK_BAND_COLOR, residualRiskBand } from '../residualRiskBand';
 import { useControlFrameworks } from '../useControlFrameworks';
+import { useRetentionAssignments } from '../useRetentionAssignments';
 import {
   RISK_RAIL_PATHS,
   RISK_RISKS_ID,
   RISK_CONTROLS_ID,
+  RISK_RETENTION_ID,
   RISK_SECTIONS,
   type RiskComplianceRailItemId
 } from '../riskComplianceSections';
-import type { ControlsSearchParams, RisksSearchParams } from '../../../routes/searchParams';
+import type {
+  ControlsSearchParams,
+  RetentionSearchParams,
+  RisksSearchParams
+} from '../../../routes/searchParams';
 import styles from '../../../shell/SidePanel.module.css';
 
 const FacetRow = ({
@@ -375,12 +395,96 @@ const ControlsSidebarContent = ({
 };
 
 /**
+ * The Retention section's own primary-sidebar content — the section's only navigation, since the
+ * screen itself is a single Assignments register with no view toggle (see
+ * `RiskComplianceRetentionScreen.tsx`'s doc comment for why the earlier expiry-dashboard/
+ * Policies-library/Assignments-list split was removed): "All" (clears both facets), an
+ * "Incomplete" data-quality toggle (assignments missing a policy, duration, time unit, or
+ * activation date — not a disposal-urgency facet), and a "Policies" group listing every policy
+ * with its assignment count, each narrowing the register to that policy. Gated independently on
+ * the `retention` capability (`resolveRetentionConfig`), not `risk-compliance` — see
+ * `riskComplianceQueries.ts`'s doc comment on `resolveRetentionConfig`: Retention is enabled
+ * independently of the rest of the Risk & Compliance app.
+ */
+const RetentionSidebarContent = ({
+  workspaceSlug,
+  retentionConfig
+}: {
+  workspaceSlug: string;
+  retentionConfig: RetentionConfig;
+}) => {
+  const navigate = useNavigate();
+  const search = useSearch({ strict: false }) as RetentionSearchParams;
+  const { data: configurations } = useQuery(workspaceCapabilityConfigurationsQuery(workspaceSlug));
+  const fieldIds = resolveRetentionFieldIds(configurations);
+  const { rows, policyRows } = useRetentionAssignments(workspaceSlug, retentionConfig, fieldIds);
+
+  const incompleteCount = useMemo(() => rows.filter(row => row.missing.length > 0).length, [rows]);
+
+  const patchSearch = (patch: Partial<RetentionSearchParams>) =>
+    navigate({
+      to: RISK_RAIL_PATHS[RISK_RETENTION_ID],
+      params: { workspaceSlug },
+      search: (previous: Record<string, unknown>) => ({ ...previous, ...patch })
+    });
+
+  const hasAnySelection = !!search.policy || !!search.incomplete;
+
+  return (
+    <>
+      <TreeRow
+        icon={<TbArchive size={12} />}
+        label="All"
+        testId="retention-facet-all"
+        active={!hasAnySelection}
+        onClick={() => patchSearch({ policy: undefined, incomplete: undefined })}
+        trailing={<span className="dim mono">{rows.length}</span>}
+      />
+      <FacetRow
+        icon={<TbAlertTriangle size={12} />}
+        label="Incomplete"
+        testId="retention-facet-incomplete"
+        active={!!search.incomplete}
+        onClick={() =>
+          patchSearch({
+            incomplete: search.incomplete ? undefined : '1',
+            policy: undefined
+          })
+        }
+        trailing={<span className="dim mono">{incompleteCount}</span>}
+      />
+      <SidebarGroupLabel>Policies</SidebarGroupLabel>
+      {policyRows.length === 0 && (
+        <div className={`${styles.emptyState} dim`}>No retention policies yet.</div>
+      )}
+      {policyRows.map(policy => (
+        <FacetRow
+          key={policy._uid}
+          icon={<TbTag size={12} />}
+          label={policy._name}
+          testId={`retention-facet-policy-${policy._uid}`}
+          active={search.policy === policy._uid}
+          onClick={() =>
+            patchSearch({
+              policy: search.policy === policy._uid ? undefined : policy._uid,
+              incomplete: undefined
+            })
+          }
+          trailing={<span className="dim mono">{policy.governedCount}</span>}
+        />
+      ))}
+    </>
+  );
+};
+
+/**
  * Section-dependent primary sidebar for the Risk & Compliance app: navigation between the app's
  * five rail sections, gated on the `risk-compliance` capability configuration — mirrors
  * `../../vendor-management/sections/VendorManagementSidebar.tsx`. The Risks and Controls sections
  * replace this nav list with their own facet content (`RisksSidebarContent`,
- * `ControlsSidebarContent`); the remaining sections still fall through to the plain nav list
- * until their own sub-issues of #3151 land.
+ * `ControlsSidebarContent`); Retention replaces it with `RetentionSidebarContent`, gated on the
+ * separate `retention` capability rather than the `enabled` (risk-compliance) check below;
+ * Assessments still falls through to the plain nav list until its own sub-issue of #3151 lands.
  */
 export const RiskComplianceSidebar = ({
   workspaceSlug,
@@ -392,7 +496,26 @@ export const RiskComplianceSidebar = ({
   const navigate = useNavigate();
   const { data: configurations } = useQuery(workspaceCapabilityConfigurationsQuery(workspaceSlug));
   const riskConfig = resolveRiskComplianceConfig(configurations);
+  const retentionConfig = resolveRetentionConfig(configurations);
   const enabled = riskConfig !== null;
+
+  if (activeSection === RISK_RETENTION_ID) {
+    return (
+      <>
+        <SidebarTitleHeader title="Risk & Compliance" />
+        <div className={styles.scroll}>
+          {!retentionConfig ? (
+            <div className={`${styles.emptyState} dim`}>Retention is not configured.</div>
+          ) : (
+            <RetentionSidebarContent
+              workspaceSlug={workspaceSlug}
+              retentionConfig={retentionConfig}
+            />
+          )}
+        </div>
+      </>
+    );
+  }
 
   return (
     <>

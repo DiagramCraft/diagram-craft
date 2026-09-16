@@ -660,17 +660,12 @@ export const demoGovernanceRelations: RelationDbCreate[] = [
     created_at: now,
     updated_at: now
   },
-  {
-    id: DEMO_RETENTION_IDS.assignments.paymentsPlatform,
-    workspace: WORKSPACE_ID,
-    schema_id: RETENTION_IDS.assignmentRelationSchema,
-    // Payments Platform -> Order & Fulfillment Records.
-    in_entity_id: '00000000-0000-0000-0002-000000000003',
-    out_entity_id: DEMO_RETENTION_IDS.policies.orderFulfillmentRecords,
-    data: { activated_from: '2022-01-01' },
-    created_at: now,
-    updated_at: now
-  },
+  // A "Payments Platform" (System) -> "Order & Fulfillment Records" assignment used to live here,
+  // predating the `retention-assignment` schema's tightened `inSymSchemaIds: ['data-entity']`
+  // (schemaTemplates.ts) — retention is a category-level concept, so assigning a policy straight
+  // to a System mixed two different granularities under one policy. Removed rather than kept, in
+  // favor of the "Order Records" (Data Entity) assignment below, which is what the policy is
+  // actually about.
   {
     id: DEMO_RETENTION_IDS.assignments.orderRecordsToFulfillmentPolicy,
     workspace: WORKSPACE_ID,
