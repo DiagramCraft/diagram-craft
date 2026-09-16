@@ -17,7 +17,21 @@ const mocks = vi.hoisted(() => ({
 vi.mock('@tanstack/react-router', () => ({
   useParams: () => mocks.params,
   useSearch: () => mocks.search,
-  useNavigate: () => mocks.navigate
+  useNavigate: () => mocks.navigate,
+  Link: ({
+    children,
+    to,
+    params,
+    ...props
+  }: Record<string, unknown> & { children?: unknown; params?: { entityId?: string } }) => (
+    <a href={typeof to === 'string' ? to : undefined} data-entity-id={params?.entityId} {...props}>
+      {children as never}
+    </a>
+  )
+}));
+
+vi.mock('../../../layouts/WorkspaceContext', () => ({
+  useWorkspaceContext: () => ({ workspaceSlug: 'ws-1' })
 }));
 
 vi.mock('../../../lib/orpcClient', () => ({
@@ -119,6 +133,14 @@ describe('RiskComplianceRetentionScreen', () => {
     // No expiry-dashboard/urgency framing left on the screen.
     expect(container.textContent).not.toContain('Overdue');
     expect(container.textContent).not.toContain('Expiry');
+  });
+
+  it('links the governed entity and policy cells to their entity records', async () => {
+    await renderScreen();
+    const links = [...container.querySelectorAll('a[data-entity-id]')];
+    const entityIds = links.map(link => link.getAttribute('data-entity-id'));
+    expect(entityIds).toContain('entity-assignment-1');
+    expect(entityIds).toContain('policy-1');
   });
 
   it('shows what is missing for an incomplete assignment instead of a computed status', async () => {

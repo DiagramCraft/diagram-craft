@@ -166,7 +166,10 @@ export const RiskComplianceRetentionScreen = () => {
               <Table.Row key={row.uid}>
                 <Table.NameCell
                   title={
-                    <EntityNavigationLink publicId={row.governedEntityId} className={styles.entityLink}>
+                    <EntityNavigationLink
+                      publicId={row.governedEntityId}
+                      className={styles.entityLink}
+                    >
                       {row.governedEntityName}
                     </EntityNavigationLink>
                   }
