@@ -121,8 +121,10 @@ export const DataStewardshipStewardshipScreen = () => {
 
   const comparators: Record<SortKey, (a: EntityRecord, b: EntityRecord) => number> = {
     gaps: (a, b) =>
-      -((coverageById.get(a._uid)?.dsGaps.length ?? 0) -
-        (coverageById.get(b._uid)?.dsGaps.length ?? 0)),
+      -(
+        (coverageById.get(a._uid)?.dsGaps.length ?? 0) -
+        (coverageById.get(b._uid)?.dsGaps.length ?? 0)
+      ),
     review: (a, b) =>
       compareNullable(
         typeof a.review_date === 'string' ? a.review_date : null,
@@ -196,7 +198,10 @@ export const DataStewardshipStewardshipScreen = () => {
         </div>
         <div className={styles.tile}>
           <div className={styles.tileLabel}>Missing an owner</div>
-          <div className={styles.tileValue} style={missingOwner.length ? { color: DANGER } : undefined}>
+          <div
+            className={styles.tileValue}
+            style={missingOwner.length ? { color: DANGER } : undefined}
+          >
             {missingOwner.length}
           </div>
           <div className={styles.tileSub}>{missingSteward.length} missing a steward</div>
@@ -321,16 +326,16 @@ export const DataStewardshipStewardshipScreen = () => {
                   </Table.Cell>
                   <Table.Cell>
                     {classification ? (
-                      <Chip tone="ghost">{datasetFieldValue(dataEntitySchema, entity, 'classification')}</Chip>
+                      <Chip tone="ghost">
+                        {datasetFieldValue(dataEntitySchema, entity, 'classification')}
+                      </Chip>
                     ) : (
                       <span className="dim">—</span>
                     )}
                   </Table.Cell>
                   <Table.Cell>{formatDate(entity.review_date)}</Table.Cell>
                   <Table.Cell numeric>
-                    <span style={{ color: gapCount ? DANGER : undefined }}>
-                      {gapCount || '—'}
-                    </span>
+                    <span style={{ color: gapCount ? DANGER : undefined }}>{gapCount || '—'}</span>
                   </Table.Cell>
                 </Table.Row>
               );

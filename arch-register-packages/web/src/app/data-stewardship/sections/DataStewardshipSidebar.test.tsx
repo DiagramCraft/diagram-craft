@@ -80,7 +80,12 @@ describe('DataStewardshipSidebar', () => {
     ]);
     mocks.entityList.mockResolvedValue({
       items: [
-        { _uid: 'ds-1', _publicId: 'DS-001', _name: 'Customer Records', classification: 'confidential' }
+        {
+          _uid: 'ds-1',
+          _publicId: 'DS-001',
+          _name: 'Customer Records',
+          classification: 'confidential'
+        }
       ],
       total: 1
     });

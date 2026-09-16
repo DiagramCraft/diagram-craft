@@ -10,7 +10,10 @@ import { TreeRow } from '../../../components/TreeRow';
 import { entitiesQuery } from '../../../queries/entities';
 import { workspaceCapabilityConfigurationsQuery } from '../../../queries/workspaceConfig';
 import { useSchemas } from '../../../hooks/useSchemas';
-import { resolveDataStewardshipConfig, type DataStewardshipConfig } from '../dataStewardshipQueries';
+import {
+  resolveDataStewardshipConfig,
+  type DataStewardshipConfig
+} from '../dataStewardshipQueries';
 import { computeDatasetCoverage } from '../datasetCoverage';
 import {
   DS_RAIL_PATHS,
