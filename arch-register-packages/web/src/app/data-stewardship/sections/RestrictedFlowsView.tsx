@@ -46,7 +46,8 @@ export const RestrictedFlowsView = ({
   );
 
   const restricted = useMemo(
-    () => relations.data.filter(relation => isRestrictedClassification(relation.data_classification)),
+    () =>
+      relations.data.filter(relation => isRestrictedClassification(relation.data_classification)),
     [relations.data]
   );
 
@@ -127,12 +128,16 @@ export const RestrictedFlowsView = ({
                   <Table.Cell>
                     <Chip
                       tone="ghost"
-                      color={relation.data_classification === 'highly-sensitive' ? DANGER : undefined}
+                      color={
+                        relation.data_classification === 'highly-sensitive' ? DANGER : undefined
+                      }
                     >
                       {relationFieldValue(relationSchema, relation, 'data_classification')}
                     </Chip>
                   </Table.Cell>
-                  <Table.Cell>{relationFieldValue(relationSchema, relation, 'protocol')}</Table.Cell>
+                  <Table.Cell>
+                    {relationFieldValue(relationSchema, relation, 'protocol')}
+                  </Table.Cell>
                   <Table.Cell>
                     {ids.length === 0 ? (
                       <span className="dim">—</span>

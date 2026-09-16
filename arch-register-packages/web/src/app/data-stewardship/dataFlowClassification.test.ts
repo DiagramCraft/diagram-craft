@@ -86,18 +86,28 @@ describe('relationFieldValue', () => {
   } as unknown as Parameters<typeof relationFieldValue>[0];
 
   it('resolves a select value to its option label', () => {
-    expect(relationFieldValue(SCHEMA, { data_classification: 'sensitive' } as never, 'data_classification')).toBe(
-      'Sensitive'
-    );
+    expect(
+      relationFieldValue(
+        SCHEMA,
+        { data_classification: 'sensitive' } as never,
+        'data_classification'
+      )
+    ).toBe('Sensitive');
   });
 
   it('returns "—" for an empty value', () => {
-    expect(relationFieldValue(SCHEMA, { data_classification: null } as never, 'data_classification')).toBe('—');
+    expect(
+      relationFieldValue(SCHEMA, { data_classification: null } as never, 'data_classification')
+    ).toBe('—');
   });
 
   it('falls back to the raw value when the schema has no matching option', () => {
-    expect(relationFieldValue(SCHEMA, { data_classification: 'unknown-value' } as never, 'data_classification')).toBe(
-      'unknown-value'
-    );
+    expect(
+      relationFieldValue(
+        SCHEMA,
+        { data_classification: 'unknown-value' } as never,
+        'data_classification'
+      )
+    ).toBe('unknown-value');
   });
 });

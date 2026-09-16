@@ -76,7 +76,10 @@ export const DataStewardshipClassificationScreen = () => {
           openDataset={openDataset}
         />
       ) : view === 'cross-boundary' ? (
-        <CrossBoundaryTransfersView workspaceSlug={workspaceSlug} dataFlowConfig={dataFlowConfig.data} />
+        <CrossBoundaryTransfersView
+          workspaceSlug={workspaceSlug}
+          dataFlowConfig={dataFlowConfig.data}
+        />
       ) : (
         <ClassifiedDataView
           workspaceSlug={workspaceSlug}

@@ -94,7 +94,10 @@ export const CrossBoundaryTransfersView = ({
         </div>
         <div className={styles.tile}>
           <div className={styles.tileLabel}>Carrying personal data</div>
-          <div className={styles.tileValue} style={carryingPersonalData ? { color: WARN } : undefined}>
+          <div
+            className={styles.tileValue}
+            style={carryingPersonalData ? { color: WARN } : undefined}
+          >
             {carryingPersonalData}
           </div>
           <div className={styles.tileSub}>classification is sensitive or higher</div>

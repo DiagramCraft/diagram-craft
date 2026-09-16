@@ -1,4 +1,7 @@
-import type { RelationField, RelationSchema } from '@arch-register/api-types/relationSchemaContract';
+import type {
+  RelationField,
+  RelationSchema
+} from '@arch-register/api-types/relationSchemaContract';
 import type { RelationRecord } from '@arch-register/api-types/relationContract';
 import { scalarValues } from '../../lib/scalarFieldValues';
 
@@ -16,8 +19,7 @@ import { scalarValues } from '../../lib/scalarFieldValues';
 export const RESTRICTED_CLASSIFICATIONS = ['sensitive', 'highly-sensitive'] as const;
 
 export const isRestrictedClassification = (value: unknown): boolean =>
-  typeof value === 'string' &&
-  (RESTRICTED_CLASSIFICATIONS as readonly string[]).includes(value);
+  typeof value === 'string' && (RESTRICTED_CLASSIFICATIONS as readonly string[]).includes(value);
 
 /** "Personal data" is derived from classification, not a dedicated field — Data Entity/Data Flow
  *  have no `personal_data` field. Kept as a separately named export (rather than inlined at every
@@ -48,7 +50,11 @@ export const evaluateDataFlowCoverage = (input: {
   };
 };
 
-const optionLabel = (schema: RelationSchema | undefined, fieldId: string, value: string): string => {
+const optionLabel = (
+  schema: RelationSchema | undefined,
+  fieldId: string,
+  value: string
+): string => {
   const field = schema?.fields.find((f: RelationField) => f.id === fieldId);
   if (field && (field.type === 'select' || field.type === 'derived') && 'options' in field) {
     return field.options?.find(option => option.value === value)?.label ?? value;
