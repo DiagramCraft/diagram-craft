@@ -62,7 +62,12 @@ const dataEntitySchema = {
     },
     { id: 'regulatory_tags', name: 'Regulatory Tags', type: 'select', options: [] },
     { id: 'processing_purposes', name: 'Processing Purposes', type: 'select', options: [] },
-    { id: 'permitted_residency_regions', name: 'Permitted Residency Regions', type: 'select', options: [] }
+    {
+      id: 'permitted_residency_regions',
+      name: 'Permitted Residency Regions',
+      type: 'select',
+      options: []
+    }
   ]
 };
 
@@ -144,7 +149,9 @@ describe('DatasetDrawer', () => {
     expect(container.textContent).toContain('Yes'); // dsCovered
     expect(container.textContent).toContain('No change cases linked.');
     expect(container.textContent).toContain('Not yet available — queue items ship with #3298.');
-    expect(container.textContent).toContain('Not yet available — exceptions/waivers ship with #3301.');
+    expect(container.textContent).toContain(
+      'Not yet available — exceptions/waivers ship with #3301.'
+    );
     expect(container.textContent).toContain('Not yet available — assessments ship with #3302.');
     expect(container.textContent).toContain('API & Integration Catalog');
   });

@@ -71,8 +71,7 @@ export const DatasetDrawer = ({
   }
 
   const entity = dataset.data;
-  const classification =
-    typeof entity.classification === 'string' ? entity.classification : null;
+  const classification = typeof entity.classification === 'string' ? entity.classification : null;
   const ownerLabel = entity._owner?.name ?? null;
   const stewardLabel = principalLabel(entity.steward as PrincipalValue);
   const custodianLabel = principalLabel(entity.custodian as PrincipalValue);
@@ -125,8 +124,8 @@ export const DatasetDrawer = ({
       <div className={styles.sectionLabel}>
         Coverage
         <span className={styles.sectionCaption}>
-          Named owner, named steward, confirmed classification, and a current review — distinct
-          from Stewardship Status above, which only tracks steward/custodian/review date.
+          Named owner, named steward, confirmed classification, and a current review — distinct from
+          Stewardship Status above, which only tracks steward/custodian/review date.
         </span>
       </div>
       <div className={styles.statGrid}>

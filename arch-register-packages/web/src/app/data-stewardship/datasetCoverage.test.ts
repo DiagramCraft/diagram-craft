@@ -61,11 +61,7 @@ describe('computeDatasetCoverage', () => {
 
 describe('computeDatasetCoverageSummary', () => {
   it('returns a single "All datasets" bucket counting covered vs. total', () => {
-    const summary = computeDatasetCoverageSummary([
-      COVERED,
-      { ...COVERED, owner: null },
-      COVERED
-    ]);
+    const summary = computeDatasetCoverageSummary([COVERED, { ...COVERED, owner: null }, COVERED]);
     expect(summary).toEqual([{ domain: 'All datasets', covered: 2, total: 3 }]);
   });
 
