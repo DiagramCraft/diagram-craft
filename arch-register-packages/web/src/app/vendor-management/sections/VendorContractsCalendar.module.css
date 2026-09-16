@@ -22,9 +22,6 @@
   min-width: 0;
 }
 
-.currentCell {
-}
-
 .cellHeader {
   display: flex;
   align-items: baseline;
