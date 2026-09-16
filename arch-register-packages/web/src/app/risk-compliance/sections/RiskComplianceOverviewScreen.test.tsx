@@ -74,7 +74,13 @@ describe('RiskComplianceOverviewScreen', () => {
       if (params.schemaId === 'control') {
         return Promise.resolve({
           items: [
-            { _uid: 'ctrl-1', _publicId: 'CTL-001', _name: 'MFA', control_type: 'preventive', operating_effectiveness: 'effective' }
+            {
+              _uid: 'ctrl-1',
+              _publicId: 'CTL-001',
+              _name: 'MFA',
+              control_type: 'preventive',
+              operating_effectiveness: 'effective'
+            }
           ],
           total: 1
         });
@@ -108,7 +114,9 @@ describe('RiskComplianceOverviewScreen', () => {
       {
         id: 'risk',
         name: 'Risk',
-        fields: [{ id: 'mitigating_controls', type: 'typedRelation', relationSchemaId: 'risk-control' }]
+        fields: [
+          { id: 'mitigating_controls', type: 'typedRelation', relationSchemaId: 'risk-control' }
+        ]
       },
       { id: 'control', name: 'Control', fields: [] }
     ]);

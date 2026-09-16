@@ -140,13 +140,11 @@ export const RiskComplianceOverviewScreen = () => {
   const allControls = controls.data?.items ?? [];
   const effectiveControls = allControls.filter(c => c.operating_effectiveness === 'effective');
   const controlCoveragePct =
-    allControls.length > 0 ? Math.round((100 * effectiveControls.length) / allControls.length) : null;
+    allControls.length > 0
+      ? Math.round((100 * effectiveControls.length) / allControls.length)
+      : null;
 
-  const retention = useRetentionAssignments(
-    workspaceSlug,
-    retentionConfig,
-    retentionFieldIds
-  );
+  const retention = useRetentionAssignments(workspaceSlug, retentionConfig, retentionFieldIds);
   const retentionEnabled = retentionConfig != null && retentionFieldIds != null;
   const incompleteAssignments = useMemo(
     () => retention.rows.filter(row => row.missing.length > 0),
@@ -198,11 +196,12 @@ export const RiskComplianceOverviewScreen = () => {
   const highestResidualRisks = useMemo(
     () =>
       [...liveRisks]
-        .sort((a, b) =>
-          -compareNullable(
-            typeof a.residual_risk_score === 'number' ? a.residual_risk_score : null,
-            typeof b.residual_risk_score === 'number' ? b.residual_risk_score : null
-          )
+        .sort(
+          (a, b) =>
+            -compareNullable(
+              typeof a.residual_risk_score === 'number' ? a.residual_risk_score : null,
+              typeof b.residual_risk_score === 'number' ? b.residual_risk_score : null
+            )
         )
         .slice(0, HIGHEST_RISKS_LIMIT),
     [liveRisks]
@@ -215,11 +214,12 @@ export const RiskComplianceOverviewScreen = () => {
           const band = coverage.byId.get(entity._uid)?.rcBand ?? 'uncovered';
           return band === 'uncovered' || band === 'partial';
         })
-        .sort((a, b) =>
-          -compareNullable(
-            typeof a.residual_risk_score === 'number' ? a.residual_risk_score : null,
-            typeof b.residual_risk_score === 'number' ? b.residual_risk_score : null
-          )
+        .sort(
+          (a, b) =>
+            -compareNullable(
+              typeof a.residual_risk_score === 'number' ? a.residual_risk_score : null,
+              typeof b.residual_risk_score === 'number' ? b.residual_risk_score : null
+            )
         )
         .slice(0, WEAK_COVERAGE_LIMIT),
     [liveRisks, coverage.byId]
@@ -256,8 +256,13 @@ export const RiskComplianceOverviewScreen = () => {
     [liveRisks]
   );
 
-  const goToSection = (id: (typeof RISK_RISKS_ID | typeof RISK_CONTROLS_ID | typeof RISK_RETENTION_ID | typeof RISK_ASSESSMENTS_ID)) =>
-    navigate({ to: RISK_RAIL_PATHS[id], params: { workspaceSlug } });
+  const goToSection = (
+    id:
+      | typeof RISK_RISKS_ID
+      | typeof RISK_CONTROLS_ID
+      | typeof RISK_RETENTION_ID
+      | typeof RISK_ASSESSMENTS_ID
+  ) => navigate({ to: RISK_RAIL_PATHS[id], params: { workspaceSlug } });
 
   const openAssessment = (assessmentId: string) => {
     const assessment = upcomingAssessments.find(candidate => candidate.id === assessmentId);
