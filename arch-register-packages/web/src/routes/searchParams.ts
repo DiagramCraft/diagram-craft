@@ -597,3 +597,35 @@ export const validateDataStewardshipStewardshipSearch = (
   raw: Record<string, unknown>
 ): DataStewardshipStewardshipSearchParams =>
   parseSearchParams(dataStewardshipStewardshipSearchSchema, raw);
+
+// Data Stewardship classification-section params. Three views (classified data / restricted flows
+// / cross-boundary transfers) live in one screen, switched via the sidebar's own TreeRows
+// (`ClassificationSidebarContent` in `../app/data-stewardship/sections/DataStewardshipSidebar.tsx`)
+// rather than a separate route per view — see `DataStewardshipClassificationScreen.tsx`'s doc
+// comment for why.
+const dataStewardshipClassificationSearchSchema = defineSearchParamSchema({
+  q: stringCodec,
+  view: enumCodec(['classified', 'restricted-flows', 'cross-boundary'] as const),
+  // Classification select-field value — narrows the classified-data view; mirrors
+  // `dataStewardshipStewardshipSearchSchema`'s own `classification`.
+  classification: stringCodec,
+  // Narrows the classified-data view to entities flagged as carrying personal data
+  // (`isPersonalData` in `../app/data-stewardship/dataFlowClassification.ts`); '1' when set,
+  // absent otherwise.
+  personalDataOnly: enumCodec(['1'] as const),
+  // Sort keys differ per view ('classification' | 'name' for classified data, 'severity' | 'name'
+  // for the flow views), so this is a loose string rather than a per-view enum union.
+  sort: stringCodec,
+  // Opens the shared `DatasetDrawer` for this dataset id — from a classified-data row click, or a
+  // carried-data-entity chip click from either flow view.
+  datasetId: stringCodec
+});
+
+export type DataStewardshipClassificationSearchParams = SearchParamsFromSchema<
+  typeof dataStewardshipClassificationSearchSchema
+>;
+
+export const validateDataStewardshipClassificationSearch = (
+  raw: Record<string, unknown>
+): DataStewardshipClassificationSearchParams =>
+  parseSearchParams(dataStewardshipClassificationSearchSchema, raw);

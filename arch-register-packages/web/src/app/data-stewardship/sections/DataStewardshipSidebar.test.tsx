@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DataStewardshipSidebar } from './DataStewardshipSidebar';
 import {
+  DS_CLASSIFICATION_ID,
   DS_MY_WORK_ID,
   DS_STEWARDSHIP_ID,
   type DataStewardshipRailItemId
@@ -14,6 +15,7 @@ const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
   entityList: vi.fn(),
   schemasList: vi.fn(),
+  relationSchemasList: vi.fn(),
   capabilityConfigurationsList: vi.fn(),
   search: {} as Record<string, unknown>
 }));
@@ -27,6 +29,7 @@ vi.mock('../../../lib/orpcClient', () => ({
   orpcClient: {
     entities: { list: mocks.entityList },
     schemas: { list: mocks.schemasList },
+    relationSchemas: { list: mocks.relationSchemasList },
     config: { capabilityConfigurations: { list: mocks.capabilityConfigurationsList } }
   }
 }));
@@ -64,6 +67,7 @@ describe('DataStewardshipSidebar', () => {
     queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     mocks.search = {};
     mocks.capabilityConfigurationsList.mockResolvedValue([CONFIG]);
+    mocks.relationSchemasList.mockResolvedValue([]);
     mocks.schemasList.mockResolvedValue([
       {
         id: 'data-entity',
@@ -134,5 +138,36 @@ describe('DataStewardshipSidebar', () => {
     mocks.capabilityConfigurationsList.mockResolvedValue([]);
     await renderSidebar(DS_STEWARDSHIP_ID);
     expect(container.textContent).toContain('Data stewardship is not enabled.');
+  });
+
+  it('renders Classification view switcher rows, annotated as not configured without a Data Flow schema', async () => {
+    await renderSidebar(DS_CLASSIFICATION_ID);
+    expect(container.textContent).toContain('Classified data');
+    expect(container.textContent).toContain('Restricted flows');
+    expect(container.textContent).toContain('Cross-boundary transfers');
+    expect(container.textContent).toContain('not configured');
+  });
+
+  it('switches to the restricted-flows view when its row is clicked', async () => {
+    await renderSidebar(DS_CLASSIFICATION_ID);
+    const entry = container.querySelector(
+      '[data-testid="data-stewardship-classification-view-restricted-flows"]'
+    );
+    expect(entry).toBeDefined();
+    await act(async () => {
+      entry!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    expect(mocks.navigate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: '/$workspaceSlug/data-stewardship/classification',
+        params: { workspaceSlug: 'ws-1' }
+      })
+    );
+  });
+
+  it('does not annotate flow rows as not configured when a Data Flow schema exists', async () => {
+    mocks.relationSchemasList.mockResolvedValue([{ id: 'rs-1', name: 'Data Flow' }]);
+    await renderSidebar(DS_CLASSIFICATION_ID);
+    expect(container.textContent).not.toContain('not configured');
   });
 });
