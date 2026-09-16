@@ -38,7 +38,6 @@ const startOfMonth = (date: Date): Date => new Date(date.getFullYear(), date.get
 type MonthBucket = {
   key: string;
   label: string;
-  isCurrent: boolean;
   rows: VendorContractRow[];
 };
 
@@ -76,10 +75,7 @@ export const VendorContractsCalendar = ({
     const buckets = new Map<string, MonthBucket>(
       monthStarts.map(start => {
         const key = monthKey(start);
-        return [
-          key,
-          { key, label: MONTH_LABEL.format(start), isCurrent: key === currentKey, rows: [] }
-        ];
+        return [key, { key, label: MONTH_LABEL.format(start), rows: [] }];
       })
     );
 
@@ -112,10 +108,7 @@ export const VendorContractsCalendar = ({
     <div>
       <div className={styles.grid}>
         {months.map(month => (
-          <div
-            key={month.key}
-            className={month.isCurrent ? `${styles.cell} ${styles.currentCell}` : styles.cell}
-          >
+          <div key={month.key} className={styles.cell}>
             <div className={styles.cellHeader}>
               <span>{month.label}</span>
               <span className="dim mono tabular">{monthTotal(month.rows) ?? '—'}</span>

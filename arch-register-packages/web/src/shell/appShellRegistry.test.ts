@@ -26,6 +26,11 @@ import {
   RISK_RETENTION_ID,
   RISK_RAIL_PATHS
 } from '../app/risk-compliance/riskComplianceSections';
+import {
+  DS_MY_WORK_ID,
+  DS_CLASSIFICATION_ID,
+  DS_RAIL_PATHS
+} from '../app/data-stewardship/dataStewardshipSections';
 
 const railIds = (appId: Parameters<typeof getAppDefinition>[0]) =>
   getAppDefinition(appId).sections.map(section => section.id);
@@ -94,6 +99,16 @@ describe('appShellRegistry', () => {
     expect(getRailSection(RISK_RETENTION_ID)?.route).toBe(RISK_RAIL_PATHS[RISK_RETENTION_ID]);
   });
 
+  it('registers Data Stewardship as a capability-gated app owning five rail sections, with no separate Overview', () => {
+    const dataStewardship = getAppDefinition(DS_MY_WORK_ID);
+    expect(dataStewardship.applicationId).toBe('data-stewardship');
+    expect(railIds(DS_MY_WORK_ID)).toHaveLength(5);
+    // My work (not Overview) is sections[0], the app's landing section.
+    expect(railIds(DS_MY_WORK_ID)[0]).toBe(DS_MY_WORK_ID);
+    expect(dataStewardship.enablement).toEqual({ capabilityType: 'data-stewardship' });
+    expect(getRailSection(DS_CLASSIFICATION_ID)?.route).toBe(DS_RAIL_PATHS[DS_CLASSIFICATION_ID]);
+  });
+
   it('exposes non-home app routes under the stable APP_RAIL_ROUTES shape', () => {
     // Heatmaps is absent from the rail (see above), so its route is not in APP_RAIL_ROUTES.
     const shellStrategyRoutes = Object.fromEntries(
@@ -103,7 +118,8 @@ describe('appShellRegistry', () => {
       [GLOSSARY_RAIL_ITEM_ID]: GLOSSARY_RAIL_PATH,
       ...shellStrategyRoutes,
       ...VENDOR_RAIL_PATHS,
-      ...RISK_RAIL_PATHS
+      ...RISK_RAIL_PATHS,
+      ...DS_RAIL_PATHS
     });
   });
 

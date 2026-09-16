@@ -124,6 +124,26 @@ export const LazyRiskComplianceAssessmentsScreen = lazyRouteComponent(
   () => import('../../app/risk-compliance/sections/RiskComplianceAssessmentsScreen'),
   'RiskComplianceAssessmentsScreen'
 );
+export const LazyDataStewardshipMyWorkScreen = lazyRouteComponent(
+  () => import('../../app/data-stewardship/sections/DataStewardshipMyWorkScreen'),
+  'DataStewardshipMyWorkScreen'
+);
+export const LazyDataStewardshipStewardshipScreen = lazyRouteComponent(
+  () => import('../../app/data-stewardship/sections/DataStewardshipStewardshipScreen'),
+  'DataStewardshipStewardshipScreen'
+);
+export const LazyDataStewardshipClassificationScreen = lazyRouteComponent(
+  () => import('../../app/data-stewardship/sections/DataStewardshipClassificationScreen'),
+  'DataStewardshipClassificationScreen'
+);
+export const LazyDataStewardshipChangeCasesScreen = lazyRouteComponent(
+  () => import('../../app/data-stewardship/sections/DataStewardshipChangeCasesScreen'),
+  'DataStewardshipChangeCasesScreen'
+);
+export const LazyDataStewardshipAssessmentsScreen = lazyRouteComponent(
+  () => import('../../app/data-stewardship/sections/DataStewardshipAssessmentsScreen'),
+  'DataStewardshipAssessmentsScreen'
+);
 export const LazyWorkspaceSettingsScreen = lazyRouteComponent(
   () => import('../../sections/workspace-settings/WorkspaceSettingsScreen'),
   'WorkspaceSettingsScreen'

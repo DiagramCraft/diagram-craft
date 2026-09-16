@@ -19,6 +19,8 @@ import { vendorManagementAppDefinition } from '../app/vendor-management/vendorMa
 import type { VendorManagementRailItemId } from '../app/vendor-management/vendorManagementSections';
 import { riskComplianceAppDefinition } from '../app/risk-compliance/riskComplianceShell';
 import type { RiskComplianceRailItemId } from '../app/risk-compliance/riskComplianceSections';
+import { dataStewardshipAppDefinition } from '../app/data-stewardship/dataStewardshipShell';
+import type { DataStewardshipRailItemId } from '../app/data-stewardship/dataStewardshipSections';
 import type { AppDefinition, AppId, AppRailSection, WorkspaceRailItemId } from './shellTypes';
 
 /**
@@ -35,7 +37,8 @@ export type AppRailItemId =
   | GlossaryRailItemId
   | StrategyRailItemId
   | VendorManagementRailItemId
-  | RiskComplianceRailItemId;
+  | RiskComplianceRailItemId
+  | DataStewardshipRailItemId;
 
 export const HOME_APP: AppDefinition = {
   id: 'home',
@@ -76,7 +79,8 @@ export const APP_DEFINITIONS: AppDefinition[] = [
   glossaryAppDefinition,
   strategyAppDefinition,
   vendorManagementAppDefinition,
-  riskComplianceAppDefinition
+  riskComplianceAppDefinition,
+  dataStewardshipAppDefinition
 ];
 
 export const getAppDefinition = (id: AppId): AppDefinition =>

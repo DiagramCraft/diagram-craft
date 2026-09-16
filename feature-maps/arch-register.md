@@ -35,8 +35,8 @@
         - @id:ar.workspace.applications A workspace is organized into applications, switchable from a switcher in the
           top bar next to the workspace switcher. "Home" is the always-available core register (overview, content,
           projects, entities, search, my work, and AI); Business Glossary, Strategy & Capability Modelling
-          (@id:ar.strategy), Vendor Management (@id:ar.vendor-management), and Risk & Compliance
-          (@id:ar.risk-compliance) are separate applications; selecting
+          (@id:ar.strategy), Vendor Management (@id:ar.vendor-management), Risk & Compliance
+          (@id:ar.risk-compliance), and Data Stewardship (@id:ar.data-stewardship) are separate applications; selecting
           an application scopes the left icon rail to only that application's sections and re-skins the shell with
           its accent colour. An application may own several
           rail sections, each with its own icon, tooltip, route, and optionally its own primary sidebar. An
@@ -241,8 +241,8 @@
         - @id:ar.strategy.view-config Alongside the schema bindings, workspace administrators configure how the
           Business Capability attributes are presented across the application. In the "Applications & Capabilities"
           workspace settings screen — a secondary sidebar grouping the applications (Business Glossary, Strategy
-          & Capability Modelling, Vendor Management, Risk & Compliance) and the remaining capabilities (API
-          specification, Retention policy), each row
+          & Capability Modelling, Vendor Management, Risk & Compliance, Data Stewardship) and the remaining
+          capabilities (API specification, Retention policy), each row
           showing a dot for whether that capability is enabled — the Strategy & Capability Modelling entry splits
           into Bindings / Fields / Dashboard / Access tabs. The Fields tab lists
           every capability field in one shared display order (no add or remove — the list follows the schema); each
@@ -494,6 +494,32 @@
           Due (the same day-count styling), and a coloured Status pill. Assessments aren't owned by this app — each
           belongs to a Project — so this section has no create/edit affordance; opening a register row or a
           due-panel row navigates to the assessment's home project, deep-linked to its Assessments tab.
+
+    - @id:ar.data-stewardship Workspaces can optionally enable Data Stewardship as its own workspace application,
+      with a dedicated left rail scoped to five sections (My work, Stewardship, Classification, Change cases &
+      exceptions, Assessments) — unlike Strategy & Capability Modelling / Vendor Management / Risk & Compliance,
+      there is no separate Overview section; My work is both the first rail section and the application's landing
+      screen. The application is enabled once the workspace's `data-stewardship` capability configuration is valid
+      (the required Data Entity schema binding resolved — the same information-asset entities Risk & Compliance's
+      own optional `dataEntity` binding references). The Change cases & exceptions section reuses the existing
+      `entity.change-case` governance-case kind directly rather than a bound schema — Change Case is a built-in
+      governance-case type, not a workspace-defined entity schema, so the capability has only the one binding role.
+      Every section is currently a scaffolded placeholder pending its own sub-issue of the Data Stewardship epic.
+
+        - @id:ar.data-stewardship.my-work The My work section (the app switcher's landing section) is scaffolded as
+          a placeholder pending its own review-queue, assigned-cases, and six-week-calendar content.
+
+        - @id:ar.data-stewardship.stewardship The Stewardship section is scaffolded as a placeholder pending its own
+          coverage-by-domain, missing-owners/stewards, and overdue-reviews content.
+
+        - @id:ar.data-stewardship.classification The Classification section is scaffolded as a placeholder pending
+          its own classified-data, restricted-flow, and cross-boundary-transfer content.
+
+        - @id:ar.data-stewardship.change-cases The Change cases & exceptions section is scaffolded as a placeholder
+          pending its own change-proposal and time-bound exception/waiver register content.
+
+        - @id:ar.data-stewardship.assessments The Assessments section is scaffolded as a placeholder pending its own
+          DPIA, transfer-impact-assessment, records-survey, and data-quality-run content.
 
     - @id:ar.entities Users can maintain a structured catalog of architectural entities and their relationships.
 

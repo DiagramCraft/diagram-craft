@@ -72805,7 +72805,8 @@
                           "business-glossary",
                           "strategy-model",
                           "vendor-management",
-                          "risk-compliance"
+                          "risk-compliance",
+                          "data-stewardship"
                         ],
                         "type": "string"
                       }
@@ -72818,7 +72819,8 @@
                           "business-glossary",
                           "strategy-model",
                           "vendor-management",
-                          "risk-compliance"
+                          "risk-compliance",
+                          "data-stewardship"
                         ],
                         "type": "string"
                       }
@@ -72892,7 +72894,8 @@
                               "business-glossary",
                               "strategy-model",
                               "vendor-management",
-                              "risk-compliance"
+                              "risk-compliance",
+                              "data-stewardship"
                             ],
                             "type": "string"
                           },
@@ -73045,7 +73048,8 @@
                 "business-glossary",
                 "strategy-model",
                 "vendor-management",
-                "risk-compliance"
+                "risk-compliance",
+                "data-stewardship"
               ],
               "type": "string"
             }
@@ -73120,7 +73124,8 @@
                         "business-glossary",
                         "strategy-model",
                         "vendor-management",
-                        "risk-compliance"
+                        "risk-compliance",
+                        "data-stewardship"
                       ],
                       "type": "string"
                     },
@@ -73166,7 +73171,8 @@
                 "business-glossary",
                 "strategy-model",
                 "vendor-management",
-                "risk-compliance"
+                "risk-compliance",
+                "data-stewardship"
               ],
               "type": "string"
             }
@@ -73207,7 +73213,8 @@
                             "business-glossary",
                             "strategy-model",
                             "vendor-management",
-                            "risk-compliance"
+                            "risk-compliance",
+                            "data-stewardship"
                           ],
                           "type": "string"
                         },
