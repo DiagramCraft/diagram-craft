@@ -23,6 +23,26 @@
   letter-spacing: 0.5px;
 }
 
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.panelLink {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-size: 11px;
+  color: var(--accent-fg);
+  cursor: pointer;
+}
+
+.panelLink:hover {
+  text-decoration: underline;
+}
+
 .list {
   display: flex;
   flex-direction: column;

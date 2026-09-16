@@ -398,9 +398,23 @@
       Risk entity schema binding resolved; the Control, Framework, and Compliance Requirement entity schema bindings
       are optional). The Retention section gates separately, on the existing, workspace-wide `retention` capability
       (policy entity schema and assignment relation schema bindings), rather than on `risk-compliance` — a workspace
-      can have Retention configured without the rest of Risk & Compliance being enabled, or vice versa. Overview is
-      currently a scaffold: once the capability is configured it renders only a title and an empty state; that
-      content lands in a later sub-issue of the Risk & Compliance application epic.
+      can have Retention configured without the rest of Risk & Compliance being enabled, or vice versa.
+
+        - @id:ar.risk-compliance.overview The Overview section (the app switcher's landing section) is a read-only
+          dashboard summarizing the other four sections, each panel linking into the section that owns the full
+          view — mirroring Vendor Management's own Overview (`ar.vendor-management`). A four-tile stat strip (risks
+          outside appetite, control coverage %, retention completeness, and open risk/control assessments due within
+          30 days), a two-column row of the same 5×5 risk matrix the Risks section uses (with its own
+          inherent/residual toggle) plus the highest-residual live risks, a second two-column row of coverage grouped
+          by `control_type` (standing in for "family", same substitution the Controls section makes) plus a table of
+          live risks with weak or missing control coverage, and a third row pairing an "upcoming reviews" panel (the
+          union of open risk and control assessments, reusing the Assessments section's `AssessmentDuePanel`) with a
+          list of retention assignments missing a required field. The design reference's "records past disposal" /
+          retention-expiry-summary panel has no analog here: `retention-assignment` links a policy to a Data Entity
+          category, not an individual record, so no per-record disposal date exists to summarize (the same
+          constraint that shaped `ar.risk-compliance.retention` below) — retention *completeness* (assignments
+          missing a field) is reported instead, as the closest thing the data can actually support. Selecting a risk
+          from either risk panel opens the shared Risk drawer in place, without navigating away from Overview.
 
         - @id:ar.risk-compliance.risks The Risks section has a sortable register (search; sidebar facets for
           Category, Status, Owner, and an "outside appetite" toggle for residual scores banding high/critical) and a
