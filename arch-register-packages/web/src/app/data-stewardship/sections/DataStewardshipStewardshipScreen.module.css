@@ -1,0 +1,146 @@
+/* Mirrors `../../risk-compliance/sections/RiskComplianceOverviewScreen.module.css` /
+   `RiskComplianceRisksScreen.module.css` — same screen/tile/panel/row shell, reused rather than
+   reinvented. */
+
+.screen {
+  display: flex;
+  flex-direction: column;
+  padding: 20px 24px;
+  min-width: 0;
+  gap: 16px;
+}
+
+.empty {
+  padding: 32px;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+@media (max-width: 900px) {
+  .tiles {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.tile {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+  padding: 14px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tileLabel {
+  font-size: 11px;
+  color: var(--base-fg-more-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.tileValue {
+  font-size: 28px;
+  font-weight: 500;
+  letter-spacing: -0.5px;
+  line-height: 1;
+}
+
+.tileSub {
+  font-size: 11.5px;
+  color: var(--base-fg-more-dim);
+}
+
+.panel {
+  min-width: 0;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+}
+
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border-bottom: 1px solid var(--panel-border);
+  padding: 8px 14px;
+}
+
+.panelTitle {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--base-fg);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 14px;
+  background: none;
+  border: 0;
+  border-top: 1px solid var(--panel-border);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+}
+
+.row:first-child {
+  border-top: 0;
+}
+
+.row:hover {
+  background: var(--cmp-bg-hover);
+}
+
+.rowMain {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rowName {
+  font-size: 12.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+/* Per-gap tag in the "Gaps to close" panel — mirrors the Claude Design reference's `.ds-gap`
+   (`ds.css`): a small, sharp-cornered, danger-tinted tag, distinct from the rounded pill `Chip`
+   used for Classification elsewhere on this screen. */
+.gapTag {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 10px;
+  white-space: nowrap;
+  color: var(--cmp-fg-danger, #ef4444);
+  border: 1px solid color-mix(in oklch, var(--cmp-fg-danger, #ef4444) 45%, transparent);
+  background: color-mix(in oklch, var(--cmp-fg-danger, #ef4444) 10%, transparent);
+}
