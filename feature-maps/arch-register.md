@@ -504,13 +504,29 @@
       own optional `dataEntity` binding references). The Change cases & exceptions section reuses the existing
       `entity.change-case` governance-case kind directly rather than a bound schema — Change Case is a built-in
       governance-case type, not a workspace-defined entity schema, so the capability has only the one binding role.
-      Every section is currently a scaffolded placeholder pending its own sub-issue of the Data Stewardship epic.
+      My work, Classification, Change cases & exceptions, and Assessments are still scaffolded placeholders pending
+      their own sub-issues of the Data Stewardship epic; Stewardship has shipped its real content.
 
         - @id:ar.data-stewardship.my-work The My work section (the app switcher's landing section) is scaffolded as
           a placeholder pending its own review-queue, assigned-cases, and six-week-calendar content.
 
-        - @id:ar.data-stewardship.stewardship The Stewardship section is scaffolded as a placeholder pending its own
-          coverage-by-domain, missing-owners/stewards, and overdue-reviews content.
+        - @id:ar.data-stewardship.stewardship The Stewardship section has a four-tile stat strip (fully covered %,
+          missing an owner, reviews overdue, missing a steward), a "Gaps to close" panel (every dataset with a
+          coverage gap, each gap shown as a chip, opening the shared dataset drawer), and the full dataset table
+          (search across name/owner/steward; sort by gap count, next review date, or name; columns for Dataset,
+          Business owner, Steward, Classification, Next review, and Gaps). The sidebar swaps its plain section nav
+          for this section's own facets: an all-datasets/with-a-gap toggle and a Classification facet (counts only —
+          unlike `ar.risk-compliance.risks`'s sidebar, it doesn't also list every dataset individually; the dataset
+          table is where datasets are browsed one by one). Coverage reuses `ar.data-stewardship`'s dataset-coverage
+          roll-up (named owner, named steward, confirmed classification, current review) directly. The Claude
+          Design reference's `DSStewardship` also groups coverage by domain and sorts/reports a "quality" score and
+          a "certified" stat tile; none of the three exist as fields on Data Entity (no per-instance domain/category
+          field, no quality field, no certified flag), so the coverage-by-domain panel is dropped rather than
+          faked, quality/domain aren't offered as sort options, and the stat strip substitutes "Missing a steward"
+          for "Certified" — mirroring how `ar.risk-compliance.overview`/`ar.risk-compliance.controls` adapted their
+          own design references to the fields the shipped schema actually has. Opening a dataset (from the gaps
+          panel or the table) opens the shared dataset drawer, deep-linkable via a `datasetId` query param (no
+          dedicated child route exists yet for this scaffold's sections).
 
         - @id:ar.data-stewardship.classification The Classification section is scaffolded as a placeholder pending
           its own classified-data, restricted-flow, and cross-boundary-transfer content.
