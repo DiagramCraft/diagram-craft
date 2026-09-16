@@ -1,0 +1,12 @@
+.empty {
+  padding: 32px;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--base-fg);
+  margin-bottom: 6px;
+}

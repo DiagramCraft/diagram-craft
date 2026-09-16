@@ -504,8 +504,8 @@
       own optional `dataEntity` binding references). The Change cases & exceptions section reuses the existing
       `entity.change-case` governance-case kind directly rather than a bound schema — Change Case is a built-in
       governance-case type, not a workspace-defined entity schema, so the capability has only the one binding role.
-      My work, Classification, Change cases & exceptions, and Assessments are still scaffolded placeholders pending
-      their own sub-issues of the Data Stewardship epic; Stewardship has shipped its real content.
+      My work, Change cases & exceptions, and Assessments are still scaffolded placeholders pending their own
+      sub-issues of the Data Stewardship epic; Stewardship and Classification have shipped their real content.
 
         - @id:ar.data-stewardship.my-work The My work section (the app switcher's landing section) is scaffolded as
           a placeholder pending its own review-queue, assigned-cases, and six-week-calendar content.
@@ -528,8 +528,34 @@
           panel or the table) opens the shared dataset drawer, deep-linkable via a `datasetId` query param (no
           dedicated child route exists yet for this scaffold's sections).
 
-        - @id:ar.data-stewardship.classification The Classification section is scaffolded as a placeholder pending
-          its own classified-data, restricted-flow, and cross-boundary-transfer content.
+        - @id:ar.data-stewardship.classification The Classification section has three views, switched via an
+          in-screen toggle group in the screen's own header (mirroring the Claude Design reference's `DSClassification`
+          segmented control, and this codebase's own Controls-screen view toggle) — the sidebar carries dataset facets
+          only, shared with the Stewardship section's own shape (an all-datasets/with-a-gap toggle, a "Holds personal
+          data" toggle, and a Classification facet; no per-instance Domain field exists to facet by, same documented
+          gap as Stewardship's own dropped domain grouping). Classified data (every dataset, sorted
+          classification-first, with a "Datasets by classification" breakdown panel above the table, a derived
+          Personal data column, and a Lawful basis proxy column — Data Entity has no dedicated `personal_data` or
+          `lawful_basis` field, so Personal data is derived from Classification being sensitive/highly-sensitive, and
+          the proxy column shows Regulatory tags + Processing purposes instead) also supports the sidebar's
+          coverage-gap and personal-data toggles narrowing its table, same as Stewardship's own table. Each view's own
+          stat-tile row (three tiles, full width) sits between the view switcher and the view's own panel/table.
+          Restricted flows mirrors the design reference's own panel shape: a single titled table ("Flows carrying
+          restricted or confidential data" + a count) with one combined Flow (source → destination) column rather
+          than two, Dataset carried (clickable chips opening the shared dataset drawer), Classification, Protocol, and
+          Boundary (crosses/internal, off the real `cross_boundary` derived field) — the design reference's
+          Style/Adapter/Volume/Health columns come from the Integration Catalog app (#3150, not present in this repo)
+          and have no equivalent on the Data Flow relation schema, so they're dropped rather than faked. Cross-boundary
+          transfers renders as a card list, not a table, again mirroring the design reference: each card shows the
+          flow's route, a classification chip, a "personal data" chip when applicable, and either the exception(s)
+          authorizing the transfer or (since the exception/waiver register doesn't exist yet, #3301) a "no transfer
+          safeguard recorded" tag for every personal-data-carrying transfer; a note line (source/destination region
+          and protocol) and a meta row of carried-dataset links plus the flow's owner follow. Restricted flows and
+          Cross-boundary transfers both depend on a Data Flow relation schema existing in the workspace (resolved by
+          name, since relation schemas carry no stable symbolic id at runtime, and there is no dedicated capability
+          binding for this — unlike the app's own `dataEntity` binding); when absent, both views show a plain notice
+          instead of an empty table/list. No flow-detail drawer exists — each flow's row/card already carries every
+          field the Data Flow schema has.
 
         - @id:ar.data-stewardship.change-cases The Change cases & exceptions section is scaffolded as a placeholder
           pending its own change-proposal and time-bound exception/waiver register content.

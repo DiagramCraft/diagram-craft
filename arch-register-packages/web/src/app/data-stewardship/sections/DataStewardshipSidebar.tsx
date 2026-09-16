@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
-import { TbDatabase, TbLayersLinked, TbAlertTriangle } from 'react-icons/tb';
+import { TbDatabase, TbLayersLinked, TbAlertTriangle, TbUser } from 'react-icons/tb';
 import {
   SidebarGroupLabel,
   SidebarTitleHeader
@@ -15,13 +15,18 @@ import {
   type DataStewardshipConfig
 } from '../dataStewardshipQueries';
 import { computeDatasetCoverage } from '../datasetCoverage';
+import { isPersonalData } from '../dataFlowClassification';
 import {
+  DS_CLASSIFICATION_ID,
   DS_RAIL_PATHS,
   DS_SECTIONS,
   DS_STEWARDSHIP_ID,
   type DataStewardshipRailItemId
 } from '../dataStewardshipSections';
-import type { DataStewardshipStewardshipSearchParams } from '../../../routes/searchParams';
+import type {
+  DataStewardshipClassificationSearchParams,
+  DataStewardshipStewardshipSearchParams
+} from '../../../routes/searchParams';
 import styles from '../../../shell/SidePanel.module.css';
 
 /**
@@ -131,16 +136,139 @@ const StewardshipSidebarContent = ({
 };
 
 /**
+ * The Classification section's own primary-sidebar content — dataset facets, not a view switcher:
+ * per the Claude Design reference's `DSSidebar` (`ds.jsx`), Stewardship and Classification share
+ * one sidebar shape (all datasets / with-a-gap / holds-personal-data toggles, then a Classification
+ * facet); the three-view switch (classified data / restricted flows / cross-boundary transfers)
+ * lives in the screen itself as a `ToggleButtonGroup`, not here — see
+ * `DataStewardshipClassificationScreen.tsx`. "Holds personal data" is derived from `classification`
+ * (`isPersonalData` in `../dataFlowClassification.ts`), same as the design reference's `d.personal`
+ * flag — Data Entity has no dedicated field for it.
+ */
+const ClassificationSidebarContent = ({
+  workspaceSlug,
+  dataStewardshipConfig
+}: {
+  workspaceSlug: string;
+  dataStewardshipConfig: DataStewardshipConfig;
+}) => {
+  const navigate = useNavigate();
+  const search = useSearch({ strict: false }) as DataStewardshipClassificationSearchParams;
+  const { data: schemas } = useSchemas(workspaceSlug);
+  const dataEntitySchema = schemas?.find(
+    schema => schema.id === dataStewardshipConfig.dataEntitySchemaId
+  );
+
+  const { data: datasetsData } = useQuery(
+    entitiesQuery(workspaceSlug, {
+      schemaId: dataStewardshipConfig.dataEntitySchemaId,
+      view: 'full',
+      limit: 500
+    })
+  );
+  const datasets = datasetsData?.items ?? [];
+
+  const classificationOptions = useMemo(() => {
+    const field = dataEntitySchema?.fields.find(candidate => candidate.id === 'classification');
+    return field && field.type === 'select' ? (field.options ?? []) : [];
+  }, [dataEntitySchema]);
+
+  const classificationCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const dataset of datasets) {
+      const value = dataset.classification;
+      if (typeof value === 'string' && value) counts.set(value, (counts.get(value) ?? 0) + 1);
+    }
+    return counts;
+  }, [datasets]);
+
+  const gapCount = useMemo(
+    () =>
+      datasets.filter(
+        dataset =>
+          !computeDatasetCoverage({
+            owner: dataset._owner,
+            steward: dataset.steward,
+            classification: dataset.classification,
+            reviewStatus: dataset.review_status
+          }).dsCovered
+      ).length,
+    [datasets]
+  );
+  const personalDataCount = useMemo(
+    () => datasets.filter(dataset => isPersonalData(dataset.classification)).length,
+    [datasets]
+  );
+
+  const patchSearch = (patch: Partial<DataStewardshipClassificationSearchParams>) =>
+    navigate({
+      to: DS_RAIL_PATHS[DS_CLASSIFICATION_ID],
+      params: { workspaceSlug },
+      search: (previous: Record<string, unknown>) => ({ ...previous, ...patch })
+    });
+
+  const hasAnySelection = !!search.classification || !!search.gapsOnly || !!search.personalDataOnly;
+  const clearAll = () =>
+    patchSearch({ classification: undefined, gapsOnly: undefined, personalDataOnly: undefined });
+
+  return (
+    <>
+      <TreeRow
+        icon={<TbDatabase size={12} />}
+        label="All datasets"
+        testId="data-stewardship-classification-facet-all"
+        active={!hasAnySelection}
+        onClick={clearAll}
+        trailing={<span className="dim mono">{datasets.length}</span>}
+      />
+      <TreeRow
+        icon={<TbAlertTriangle size={12} />}
+        label="With a coverage gap"
+        testId="data-stewardship-classification-facet-gaps"
+        active={!!search.gapsOnly}
+        onClick={() => patchSearch({ gapsOnly: search.gapsOnly ? undefined : '1' })}
+        trailing={<span className="dim mono">{gapCount}</span>}
+      />
+      <TreeRow
+        icon={<TbUser size={12} />}
+        label="Holds personal data"
+        testId="data-stewardship-classification-facet-personal"
+        active={!!search.personalDataOnly}
+        onClick={() => patchSearch({ personalDataOnly: search.personalDataOnly ? undefined : '1' })}
+        trailing={<span className="dim mono">{personalDataCount}</span>}
+      />
+      <SidebarGroupLabel>Classification</SidebarGroupLabel>
+      {classificationOptions.map(option => (
+        <TreeRow
+          key={option.value}
+          icon={<TbLayersLinked size={12} />}
+          label={option.label}
+          testId={`data-stewardship-classification-facet-${option.value}`}
+          active={search.classification === option.value}
+          onClick={() =>
+            patchSearch({
+              classification: search.classification === option.value ? undefined : option.value
+            })
+          }
+          trailing={<span className="dim mono">{classificationCounts.get(option.value) ?? 0}</span>}
+        />
+      ))}
+    </>
+  );
+};
+
+/**
  * Section-dependent primary sidebar for the Data Stewardship app: navigation between the app's
  * five rail sections, gated on the `data-stewardship` capability configuration — mirrors
  * `../../vendor-management/sections/VendorManagementSidebar.tsx`'s `!enabled` empty state and its
  * fallback "Sections" nav list.
  *
- * Stewardship swaps in its own facet content (`StewardshipSidebarContent`) once enabled. My work /
- * Classification / Change cases & exceptions / Assessments still render only the shared nav list
- * for now — their real facet content (review-queue facets, classification/transfer facets, case
- * status facets) lands alongside each section's own content in later sub-issues of #3152, mirroring
- * how `VendorManagementSidebar` grew its own facet content incrementally after its scaffold.
+ * Stewardship and Classification swap in their own facet content (`StewardshipSidebarContent`,
+ * `ClassificationSidebarContent`) once enabled. My work / Change cases & exceptions / Assessments
+ * still render only the shared nav list for now — their real facet content (review-queue facets,
+ * case status facets) lands alongside each section's own content in later sub-issues of #3152,
+ * mirroring how `VendorManagementSidebar` grew its own facet content incrementally after its
+ * scaffold.
  */
 export const DataStewardshipSidebar = ({
   workspaceSlug,
@@ -161,6 +289,11 @@ export const DataStewardshipSidebar = ({
           <div className={`${styles.emptyState} dim`}>Data stewardship is not enabled.</div>
         ) : activeSection === DS_STEWARDSHIP_ID ? (
           <StewardshipSidebarContent
+            workspaceSlug={workspaceSlug}
+            dataStewardshipConfig={dataStewardshipConfig}
+          />
+        ) : activeSection === DS_CLASSIFICATION_ID ? (
+          <ClassificationSidebarContent
             workspaceSlug={workspaceSlug}
             dataStewardshipConfig={dataStewardshipConfig}
           />
