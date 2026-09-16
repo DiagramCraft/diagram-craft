@@ -613,6 +613,10 @@ const dataStewardshipClassificationSearchSchema = defineSearchParamSchema({
   // (`isPersonalData` in `../app/data-stewardship/dataFlowClassification.ts`); '1' when set,
   // absent otherwise.
   personalDataOnly: enumCodec(['1'] as const),
+  // Narrows the classified-data view to datasets with a coverage gap (`computeDatasetCoverage`);
+  // '1' when set, absent otherwise — mirrors `dataStewardshipStewardshipSearchSchema`'s own
+  // `gapsOnly`.
+  gapsOnly: enumCodec(['1'] as const),
   // Sort keys differ per view ('classification' | 'name' for classified data, 'severity' | 'name'
   // for the flow views), so this is a loose string rather than a per-view enum union.
   sort: stringCodec,

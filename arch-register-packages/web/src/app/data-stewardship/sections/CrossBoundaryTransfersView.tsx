@@ -1,10 +1,9 @@
-import { useMemo } from 'react';
-import type { RelationRecord } from '@arch-register/api-types/relationContract';
+import { useMemo, type ReactNode } from 'react';
 import { Chip } from '../../../components/Chip';
-import { Table } from '../../../components/table/Table';
-import { useTableSort } from '../../../components/table/useTableSort';
 import { useRelations } from '../../../hooks/useRelations';
 import { useRelationSchemas } from '../../../hooks/useRelationSchemas';
+import { useEntitiesByIds } from '../../../hooks/useEntities';
+import { relationIds } from '../../../lib/entityEditState';
 import type { DataFlowConfig } from '../useDataFlowConfig';
 import { evaluateDataFlowCoverage, relationFieldValue } from '../dataFlowClassification';
 import { DataFlowNotConfiguredNotice } from './DataFlowNotConfiguredNotice';
@@ -13,21 +12,28 @@ import styles from './DataStewardshipStewardshipScreen.module.css';
 const DANGER = 'var(--cmp-fg-danger, #ef4444)';
 const WARN = 'var(--cmp-fg-warning, #eab308)';
 
-type SortKey = 'unsafeguarded' | 'name';
-
 /**
  * The "cross-boundary transfers" view: every Data Flow relation whose derived `cross_boundary`
  * field is `'cross-boundary'`, paired with the exception that authorizes it — except that pairing
- * doesn't exist yet (#3301). Every personal-data-carrying cross-boundary transfer is flagged as
- * lacking a recorded safeguard until then; see `../dataFlowClassification.ts`'s
- * `evaluateDataFlowCoverage`, the single place that logic lives.
+ * doesn't exist yet (#3301). Mirrors the Claude Design reference's `DSClassification`'s
+ * `view === "transfers"` panel (`ds-views.jsx`): a card list (`.item`, not a table row) — each
+ * transfer's route, classification and personal-data chips, a descriptive note, and a meta row of
+ * carried-dataset links plus the flow's owner — rather than the flat table this view used before.
+ * The design pairs a transfer with real exception chips when one exists and falls back to a
+ * "no transfer safeguard recorded" tag otherwise; since no exception model exists yet, every
+ * personal-data-carrying transfer here always takes that fallback branch — see
+ * `../dataFlowClassification.ts`'s `evaluateDataFlowCoverage`, the single place that logic lives.
  */
 export const CrossBoundaryTransfersView = ({
   workspaceSlug,
-  dataFlowConfig
+  dataFlowConfig,
+  openDataset,
+  viewSwitcher
 }: {
   workspaceSlug: string;
   dataFlowConfig: DataFlowConfig | null;
+  openDataset: (id: string) => void;
+  viewSwitcher: ReactNode;
 }) => {
   const relationSchemas = useRelationSchemas(workspaceSlug, dataFlowConfig != null);
   const relationSchema = relationSchemas.data?.find(
@@ -45,6 +51,12 @@ export const CrossBoundaryTransfersView = ({
     [relations.data]
   );
 
+  const carriedEntityIds = useMemo(
+    () => crossBoundary.flatMap(relation => relationIds(relation.data_entities)),
+    [crossBoundary]
+  );
+  const carriedEntities = useEntitiesByIds(workspaceSlug, carriedEntityIds);
+
   const coverageByUid = useMemo(() => {
     const map = new Map<string, ReturnType<typeof evaluateDataFlowCoverage>>();
     for (const relation of crossBoundary) {
@@ -59,22 +71,13 @@ export const CrossBoundaryTransfersView = ({
     return map;
   }, [crossBoundary]);
 
-  const comparators: Record<SortKey, (a: RelationRecord, b: RelationRecord) => number> = {
-    unsafeguarded: (a, b) =>
-      -(
-        Number(coverageByUid.get(a._uid)?.unsafeguardedPersonalDataTransfer ?? false) -
-        Number(coverageByUid.get(b._uid)?.unsafeguardedPersonalDataTransfer ?? false)
-      ),
-    name: (a, b) => a._in.name.localeCompare(b._in.name)
-  };
-  const { sorted, sort, toggleSort } = useTableSort<RelationRecord, SortKey>(
-    crossBoundary,
-    comparators,
-    { key: 'unsafeguarded', dir: 'asc' }
-  );
-
   if (!dataFlowConfig) {
-    return <DataFlowNotConfiguredNotice title="Cross-boundary transfers" />;
+    return (
+      <>
+        {viewSwitcher}
+        <DataFlowNotConfiguredNotice title="Cross-boundary transfers" />
+      </>
+    );
   }
 
   const carryingPersonalData = crossBoundary.filter(
@@ -86,7 +89,7 @@ export const CrossBoundaryTransfersView = ({
 
   return (
     <>
-      <div className={styles.tiles}>
+      <div className={styles.tilesThree}>
         <div className={styles.tile}>
           <div className={styles.tileLabel}>Cross-boundary transfers</div>
           <div className={styles.tileValue}>{crossBoundary.length}</div>
@@ -111,62 +114,77 @@ export const CrossBoundaryTransfersView = ({
         </div>
       </div>
 
-      <Table.Root scroll stickyHeader>
-        <Table.Head>
-          <Table.Row>
-            <Table.HeaderCell>Source region</Table.HeaderCell>
-            <Table.HeaderCell>Destination region</Table.HeaderCell>
-            <Table.HeaderCell>Classification</Table.HeaderCell>
-            <Table.HeaderCell>Carries personal data</Table.HeaderCell>
-            <Table.SortableHeaderCell
-              sortKey="unsafeguarded"
-              sort={sort}
-              onSort={toggleSort}
-              title="Exception/waiver pairing lands with #3301 — every personal-data cross-boundary transfer is flagged until then."
-            >
-              Safeguard status
-            </Table.SortableHeaderCell>
-          </Table.Row>
-        </Table.Head>
-        <Table.Body>
-          {sorted.length === 0 ? (
-            <Table.EmptyRow colSpan={5}>
-              {relations.isLoading ? 'Loading flows…' : 'No cross-boundary transfers found.'}
-            </Table.EmptyRow>
-          ) : (
-            sorted.map(relation => {
+      {viewSwitcher}
+
+      <div className={styles.panel}>
+        <div className={styles.panelHeader}>
+          <span className={styles.panelTitle}>Cross-boundary transfers</span>
+          <span className="dim mono">{crossBoundary.length}</span>
+        </div>
+        {crossBoundary.length === 0 ? (
+          <div className={styles.stack}>
+            <div className={styles.item} style={{ fontSize: 11.5 }}>
+              <span className="dim">
+                {relations.isLoading ? 'Loading flows…' : 'No cross-boundary flow is recorded.'}
+              </span>
+            </div>
+          </div>
+        ) : (
+          <div className={styles.stack}>
+            {crossBoundary.map(relation => {
               const coverage = coverageByUid.get(relation._uid);
+              const ids = relationIds(relation.data_entities);
+              const sourceRegion = relationFieldValue(
+                relationSchema,
+                relation,
+                'source_residency_region'
+              );
+              const destRegion = relationFieldValue(
+                relationSchema,
+                relation,
+                'destination_residency_region'
+              );
+              const protocol = relationFieldValue(relationSchema, relation, 'protocol');
               return (
-                <Table.Row key={relation._uid}>
-                  <Table.Cell>
-                    {relationFieldValue(relationSchema, relation, 'source_residency_region')}
-                  </Table.Cell>
-                  <Table.Cell>
-                    {relationFieldValue(relationSchema, relation, 'destination_residency_region')}
-                  </Table.Cell>
-                  <Table.Cell>
+                <div key={relation._uid} className={styles.item}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: 11.5 }}>
+                      {relation._in.name} → {relation._out.name}
+                    </span>
                     <Chip tone="ghost">
                       {relationFieldValue(relationSchema, relation, 'data_classification')}
                     </Chip>
-                  </Table.Cell>
-                  <Table.Cell>{coverage?.carriesPersonalData ? 'Yes' : 'No'}</Table.Cell>
-                  <Table.Cell>
-                    {coverage?.unsafeguardedPersonalDataTransfer ? (
-                      <Chip tone="ghost" color={DANGER}>
-                        No exception recorded
-                      </Chip>
-                    ) : coverage?.carriesPersonalData ? (
-                      <span className="dim">—</span>
-                    ) : (
-                      <span className="dim">N/A</span>
+                    {coverage?.carriesPersonalData && <Chip tone="ghost">personal data</Chip>}
+                    {coverage?.unsafeguardedPersonalDataTransfer && (
+                      <span className={styles.gapTag}>no transfer safeguard recorded</span>
                     )}
-                  </Table.Cell>
-                </Table.Row>
+                  </div>
+                  <div className={styles.itemNote}>
+                    {sourceRegion} → {destRegion}
+                    {protocol !== '—' ? ` via ${protocol}` : ''}.
+                  </div>
+                  <div className={styles.itemMeta}>
+                    {ids.map(id => {
+                      const ref = carriedEntities.get(id);
+                      return (
+                        <button
+                          key={id}
+                          type="button"
+                          className={styles.link}
+                          onClick={() => openDataset(ref?.publicId ?? id)}
+                        >
+                          {ref?.name ?? id}
+                        </button>
+                      );
+                    })}
+                    <span className="mono">owner {relation._owner?.name ?? 'unassigned'}</span>
+                  </div>
+                </div>
               );
-            })
-          )}
-        </Table.Body>
-      </Table.Root>
+            })}
+          </div>
+        )}
+      </div>
     </>
   );
 };

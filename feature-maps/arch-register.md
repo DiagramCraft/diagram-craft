@@ -528,25 +528,34 @@
           panel or the table) opens the shared dataset drawer, deep-linkable via a `datasetId` query param (no
           dedicated child route exists yet for this scaffold's sections).
 
-        - @id:ar.data-stewardship.classification The Classification section has three views, switched via the
-          sidebar's own rows rather than an in-screen tab strip (mirroring how the Stewardship section drives its
-          own view from the sidebar): Classified data (every dataset, sorted classification-first, with a derived
-          Personal data column and a Lawful basis proxy column — Data Entity has no dedicated `personal_data` or
-          `lawful_basis` field, so Personal data is derived from Classification being sensitive/highly-sensitive,
-          and the proxy column shows Regulatory tags + Processing purposes instead); Restricted flows (Data Flow
-          relations classified sensitive/highly-sensitive — what the issue calls "Restricted/Confidential", not a
-          literal enum value — showing source/destination system, classification, protocol, and carried datasets as
-          clickable chips that open the shared dataset drawer); and Cross-boundary transfers (Data Flow relations
-          whose derived `cross_boundary` field reads cross-boundary, showing source/destination region,
-          classification, whether personal data is carried, and a Safeguard status column that always reads "No
-          exception recorded" for a personal-data-carrying transfer, since the exception/waiver register doesn't
-          exist yet — every such transfer is flagged as unsafeguarded until it ships). Restricted flows and
+        - @id:ar.data-stewardship.classification The Classification section has three views, switched via an
+          in-screen toggle group in the screen's own header (mirroring the Claude Design reference's `DSClassification`
+          segmented control, and this codebase's own Controls-screen view toggle) — the sidebar carries dataset facets
+          only, shared with the Stewardship section's own shape (an all-datasets/with-a-gap toggle, a "Holds personal
+          data" toggle, and a Classification facet; no per-instance Domain field exists to facet by, same documented
+          gap as Stewardship's own dropped domain grouping). Classified data (every dataset, sorted
+          classification-first, with a "Datasets by classification" breakdown panel above the table, a derived
+          Personal data column, and a Lawful basis proxy column — Data Entity has no dedicated `personal_data` or
+          `lawful_basis` field, so Personal data is derived from Classification being sensitive/highly-sensitive, and
+          the proxy column shows Regulatory tags + Processing purposes instead) also supports the sidebar's
+          coverage-gap and personal-data toggles narrowing its table, same as Stewardship's own table. Each view's own
+          stat-tile row (three tiles, full width) sits between the view switcher and the view's own panel/table.
+          Restricted flows mirrors the design reference's own panel shape: a single titled table ("Flows carrying
+          restricted or confidential data" + a count) with one combined Flow (source → destination) column rather
+          than two, Dataset carried (clickable chips opening the shared dataset drawer), Classification, Protocol, and
+          Boundary (crosses/internal, off the real `cross_boundary` derived field) — the design reference's
+          Style/Adapter/Volume/Health columns come from the Integration Catalog app (#3150, not present in this repo)
+          and have no equivalent on the Data Flow relation schema, so they're dropped rather than faked. Cross-boundary
+          transfers renders as a card list, not a table, again mirroring the design reference: each card shows the
+          flow's route, a classification chip, a "personal data" chip when applicable, and either the exception(s)
+          authorizing the transfer or (since the exception/waiver register doesn't exist yet, #3301) a "no transfer
+          safeguard recorded" tag for every personal-data-carrying transfer; a note line (source/destination region
+          and protocol) and a meta row of carried-dataset links plus the flow's owner follow. Restricted flows and
           Cross-boundary transfers both depend on a Data Flow relation schema existing in the workspace (resolved by
           name, since relation schemas carry no stable symbolic id at runtime, and there is no dedicated capability
           binding for this — unlike the app's own `dataEntity` binding); when absent, both views show a plain notice
-          instead of an empty table, and the sidebar's Restricted flows / Cross-boundary transfers rows are
-          annotated "not configured". No flow-detail drawer exists — each flow row already carries every field the
-          Data Flow schema has.
+          instead of an empty table/list. No flow-detail drawer exists — each flow's row/card already carries every
+          field the Data Flow schema has.
 
         - @id:ar.data-stewardship.change-cases The Change cases & exceptions section is scaffolded as a placeholder
           pending its own change-proposal and time-bound exception/waiver register content.

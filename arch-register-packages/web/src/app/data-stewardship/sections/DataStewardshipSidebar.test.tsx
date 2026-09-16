@@ -140,18 +140,19 @@ describe('DataStewardshipSidebar', () => {
     expect(container.textContent).toContain('Data stewardship is not enabled.');
   });
 
-  it('renders Classification view switcher rows, annotated as not configured without a Data Flow schema', async () => {
+  it('renders Classification facets — same shape as Stewardship, plus a personal-data toggle', async () => {
     await renderSidebar(DS_CLASSIFICATION_ID);
-    expect(container.textContent).toContain('Classified data');
-    expect(container.textContent).toContain('Restricted flows');
-    expect(container.textContent).toContain('Cross-boundary transfers');
-    expect(container.textContent).toContain('not configured');
+    expect(container.textContent).toContain('All datasets');
+    expect(container.textContent).toContain('With a coverage gap');
+    expect(container.textContent).toContain('Holds personal data');
+    expect(container.textContent).toContain('Confidential');
+    expect(container.textContent).not.toContain('Customer Records');
   });
 
-  it('switches to the restricted-flows view when its row is clicked', async () => {
+  it('narrows to a classification when its Classification facet is clicked', async () => {
     await renderSidebar(DS_CLASSIFICATION_ID);
     const entry = container.querySelector(
-      '[data-testid="data-stewardship-classification-view-restricted-flows"]'
+      '[data-testid="data-stewardship-classification-facet-confidential"]'
     );
     expect(entry).toBeDefined();
     await act(async () => {
@@ -165,9 +166,18 @@ describe('DataStewardshipSidebar', () => {
     );
   });
 
-  it('does not annotate flow rows as not configured when a Data Flow schema exists', async () => {
-    mocks.relationSchemasList.mockResolvedValue([{ id: 'rs-1', name: 'Data Flow' }]);
+  it('toggles the personal-data facet', async () => {
     await renderSidebar(DS_CLASSIFICATION_ID);
-    expect(container.textContent).not.toContain('not configured');
+    const entry = container.querySelector('[data-testid="data-stewardship-classification-facet-personal"]');
+    expect(entry).toBeDefined();
+    await act(async () => {
+      entry!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    expect(mocks.navigate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: '/$workspaceSlug/data-stewardship/classification',
+        params: { workspaceSlug: 'ws-1' }
+      })
+    );
   });
 });

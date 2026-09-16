@@ -22,8 +22,17 @@
   gap: 8px;
 }
 
+/* Three-tile variant (Classification's views have 3 stats, not Stewardship's 4) — same tile/gap
+   styling, full-width columns instead of leaving a trailing gap. */
+.tilesThree {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
 @media (max-width: 900px) {
-  .tiles {
+  .tiles,
+  .tilesThree {
     grid-template-columns: repeat(2, 1fr);
   }
 }
@@ -128,6 +137,67 @@
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
+}
+
+/* Mirrors the Claude Design reference's `DSBar` (`ds.jsx`) — a thin horizontal bar used in a
+   breakdown panel's rows (e.g. "Datasets by classification"), width proportional to a count. */
+.barTrack {
+  flex: 1;
+  min-width: 40px;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--panel-border);
+  overflow: hidden;
+}
+
+.barFill {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  background: var(--accent);
+}
+
+/* Mirrors the Claude Design reference's `.ds-item`/`.ds-item-note`/`.ds-item-meta`/`.ds-link`
+   (`ds.css`) — a non-clickable card row for content too rich for a table row (e.g. a
+   cross-boundary transfer: a header line of chips, a descriptive note, and a meta row of
+   drill-through links), as opposed to `.row`'s single-line clickable list item. */
+.item {
+  padding: 10px 14px;
+  border-top: 1px solid var(--panel-border);
+}
+
+.item:first-child {
+  border-top: 0;
+}
+
+.itemNote {
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--base-fg-more-dim);
+}
+
+.itemMeta {
+  margin-top: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  font-size: 10.5px;
+  color: var(--base-fg-more-dim);
+}
+
+.link {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-size: 10.5px;
+  cursor: pointer;
+  color: var(--accent);
+}
+
+.link:hover {
+  text-decoration: underline;
 }
 
 /* Per-gap tag in the "Gaps to close" panel — mirrors the Claude Design reference's `.ds-gap`

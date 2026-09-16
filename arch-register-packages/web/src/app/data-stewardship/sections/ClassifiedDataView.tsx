@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import { SearchInput } from '../../../components/SearchInput';
@@ -8,6 +8,7 @@ import { useTableSort } from '../../../components/table/useTableSort';
 import { useEntities } from '../../../hooks/useEntities';
 import { usePrincipalLabel, type PrincipalValue } from '../../../hooks/usePrincipalLabel';
 import type { DataStewardshipConfig } from '../dataStewardshipQueries';
+import { computeDatasetCoverage } from '../datasetCoverage';
 import { isPersonalData, isRestrictedClassification } from '../dataFlowClassification';
 import { datasetFieldValue } from '../datasetFieldDisplay';
 import type { DataStewardshipClassificationSearchParams } from '../../../routes/searchParams';
@@ -29,6 +30,14 @@ const classificationRank: Record<string, number> = {
 const rankOf = (value: unknown): number =>
   typeof value === 'string' ? (classificationRank[value] ?? 5) : 5;
 
+const isDatasetCovered = (entity: EntityRecord): boolean =>
+  computeDatasetCoverage({
+    owner: entity._owner,
+    steward: entity.steward,
+    classification: entity.classification,
+    reviewStatus: entity.review_status
+  }).dsCovered;
+
 /**
  * The "classified data" view: every dataset, classification-first, with a derived Personal data
  * flag and a lawful-basis *proxy* column — Data Entity has no dedicated `personal_data` or
@@ -42,7 +51,8 @@ export const ClassifiedDataView = ({
   dataEntitySchema,
   search,
   patchSearch,
-  openDataset
+  openDataset,
+  viewSwitcher
 }: {
   workspaceSlug: string;
   dataStewardshipConfig: DataStewardshipConfig;
@@ -50,6 +60,7 @@ export const ClassifiedDataView = ({
   search: DataStewardshipClassificationSearchParams;
   patchSearch: (patch: Partial<DataStewardshipClassificationSearchParams>) => void;
   openDataset: (id: string) => void;
+  viewSwitcher: ReactNode;
 }) => {
   const q = search.q ?? '';
   const datasets = useEntities(
@@ -75,9 +86,10 @@ export const ClassifiedDataView = ({
       }
       if (search.classification && entity.classification !== search.classification) return false;
       if (search.personalDataOnly && !isPersonalData(entity.classification)) return false;
+      if (search.gapsOnly && isDatasetCovered(entity)) return false;
       return true;
     });
-  }, [allDatasets, q, search.classification, search.personalDataOnly, principalLabel]);
+  }, [allDatasets, q, search.classification, search.personalDataOnly, search.gapsOnly, principalLabel]);
 
   const comparators: Record<SortKey, (a: EntityRecord, b: EntityRecord) => number> = {
     classification: (a, b) => rankOf(a.classification) - rankOf(b.classification),
@@ -99,9 +111,26 @@ export const ClassifiedDataView = ({
     return !hasTags && !hasPurposes;
   }).length;
 
+  const classificationOptions = dataEntitySchema?.fields.find(
+    field => field.id === 'classification'
+  );
+  const byClassification = useMemo(() => {
+    const options =
+      classificationOptions && classificationOptions.type === 'select'
+        ? (classificationOptions.options ?? [])
+        : [];
+    return options
+      .map(option => ({
+        option,
+        items: allDatasets.filter(entity => entity.classification === option.value)
+      }))
+      .filter(group => group.items.length > 0);
+  }, [allDatasets, classificationOptions]);
+  const maxByClassification = Math.max(1, ...byClassification.map(group => group.items.length));
+
   return (
     <>
-      <div className={styles.tiles}>
+      <div className={styles.tilesThree}>
         <div className={styles.tile}>
           <div className={styles.tileLabel}>Restricted datasets</div>
           <div className={styles.tileValue} style={restrictedCount ? { color: DANGER } : undefined}>
@@ -118,6 +147,46 @@ export const ClassifiedDataView = ({
           <div className={styles.tileLabel}>Total datasets</div>
           <div className={styles.tileValue}>{allDatasets.length}</div>
           <div className={styles.tileSub}>under governance</div>
+        </div>
+      </div>
+
+      {viewSwitcher}
+
+      <div className={styles.panel}>
+        <div className={styles.panelHeader}>
+          <span className={styles.panelTitle}>Datasets by classification</span>
+        </div>
+        <div className={styles.stack}>
+          {byClassification.map(({ option, items }) => (
+            <button
+              key={option.value}
+              type="button"
+              className={styles.row}
+              onClick={() =>
+                patchSearch({
+                  classification: search.classification === option.value ? undefined : option.value
+                })
+              }
+            >
+              <span className={styles.rowMain}>
+                <span className={styles.rowName}>{option.label}</span>
+                <span className="dim mono" style={{ fontSize: 10.5 }}>
+                  {items.filter(entity => isPersonalData(entity.classification)).length} with
+                  personal data
+                </span>
+              </span>
+              <span className={styles.barTrack}>
+                <span
+                  className={styles.barFill}
+                  style={{
+                    width: `${Math.max(2, (100 * items.length) / maxByClassification)}%`,
+                    background: isRestrictedClassification(option.value) ? DANGER : undefined
+                  }}
+                />
+              </span>
+              <span className="dim mono tabular">{items.length}</span>
+            </button>
+          ))}
         </div>
       </div>
 

@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
-import { TbDatabase, TbLayersLinked, TbAlertTriangle, TbRoute, TbWorld } from 'react-icons/tb';
+import { TbDatabase, TbLayersLinked, TbAlertTriangle, TbUser } from 'react-icons/tb';
 import {
   SidebarGroupLabel,
   SidebarTitleHeader
@@ -15,7 +15,7 @@ import {
   type DataStewardshipConfig
 } from '../dataStewardshipQueries';
 import { computeDatasetCoverage } from '../datasetCoverage';
-import { useDataFlowConfig } from '../useDataFlowConfig';
+import { isPersonalData } from '../dataFlowClassification';
 import {
   DS_CLASSIFICATION_ID,
   DS_RAIL_PATHS,
@@ -136,14 +136,14 @@ const StewardshipSidebarContent = ({
 };
 
 /**
- * The Classification section's own primary-sidebar content: `TreeRow`s switching between its three
- * views (classified data / restricted flows / cross-boundary transfers) — this drives
- * `search.view` for `DataStewardshipClassificationScreen.tsx`, which has no in-screen tab strip —
- * plus the same Classification facet block as `StewardshipSidebarContent` above, always shown
- * since `ClassifiedDataView` is the default view. The flow-dependent rows are annotated when Data
- * Flow relations aren't available in this workspace (`useDataFlowConfig`), as an at-a-glance
- * signal before the user even clicks in — the view itself still renders the "not configured"
- * notice regardless.
+ * The Classification section's own primary-sidebar content — dataset facets, not a view switcher:
+ * per the Claude Design reference's `DSSidebar` (`ds.jsx`), Stewardship and Classification share
+ * one sidebar shape (all datasets / with-a-gap / holds-personal-data toggles, then a Classification
+ * facet); the three-view switch (classified data / restricted flows / cross-boundary transfers)
+ * lives in the screen itself as a `ToggleButtonGroup`, not here — see
+ * `DataStewardshipClassificationScreen.tsx`. "Holds personal data" is derived from `classification`
+ * (`isPersonalData` in `../dataFlowClassification.ts`), same as the design reference's `d.personal`
+ * flag — Data Entity has no dedicated field for it.
  */
 const ClassificationSidebarContent = ({
   workspaceSlug,
@@ -158,7 +158,6 @@ const ClassificationSidebarContent = ({
   const dataEntitySchema = schemas?.find(
     schema => schema.id === dataStewardshipConfig.dataEntitySchemaId
   );
-  const dataFlowConfig = useDataFlowConfig(workspaceSlug);
 
   const { data: datasetsData } = useQuery(
     entitiesQuery(workspaceSlug, {
@@ -183,6 +182,24 @@ const ClassificationSidebarContent = ({
     return counts;
   }, [datasets]);
 
+  const gapCount = useMemo(
+    () =>
+      datasets.filter(
+        dataset =>
+          !computeDatasetCoverage({
+            owner: dataset._owner,
+            steward: dataset.steward,
+            classification: dataset.classification,
+            reviewStatus: dataset.review_status
+          }).dsCovered
+      ).length,
+    [datasets]
+  );
+  const personalDataCount = useMemo(
+    () => datasets.filter(dataset => isPersonalData(dataset.classification)).length,
+    [datasets]
+  );
+
   const patchSearch = (patch: Partial<DataStewardshipClassificationSearchParams>) =>
     navigate({
       to: DS_RAIL_PATHS[DS_CLASSIFICATION_ID],
@@ -190,34 +207,35 @@ const ClassificationSidebarContent = ({
       search: (previous: Record<string, unknown>) => ({ ...previous, ...patch })
     });
 
-  const view = search.view ?? 'classified';
-  const notConfigured = !dataFlowConfig.data;
+  const hasAnySelection = !!search.classification || !!search.gapsOnly || !!search.personalDataOnly;
+  const clearAll = () =>
+    patchSearch({ classification: undefined, gapsOnly: undefined, personalDataOnly: undefined });
 
   return (
     <>
       <TreeRow
         icon={<TbDatabase size={12} />}
-        label="Classified data"
-        testId="data-stewardship-classification-view-classified"
-        active={view === 'classified'}
-        onClick={() => patchSearch({ view: undefined })}
+        label="All datasets"
+        testId="data-stewardship-classification-facet-all"
+        active={!hasAnySelection}
+        onClick={clearAll}
         trailing={<span className="dim mono">{datasets.length}</span>}
       />
       <TreeRow
-        icon={<TbRoute size={12} />}
-        label="Restricted flows"
-        testId="data-stewardship-classification-view-restricted-flows"
-        active={view === 'restricted-flows'}
-        onClick={() => patchSearch({ view: 'restricted-flows' })}
-        trailing={notConfigured && <span className="dim">not configured</span>}
+        icon={<TbAlertTriangle size={12} />}
+        label="With a coverage gap"
+        testId="data-stewardship-classification-facet-gaps"
+        active={!!search.gapsOnly}
+        onClick={() => patchSearch({ gapsOnly: search.gapsOnly ? undefined : '1' })}
+        trailing={<span className="dim mono">{gapCount}</span>}
       />
       <TreeRow
-        icon={<TbWorld size={12} />}
-        label="Cross-boundary transfers"
-        testId="data-stewardship-classification-view-cross-boundary"
-        active={view === 'cross-boundary'}
-        onClick={() => patchSearch({ view: 'cross-boundary' })}
-        trailing={notConfigured && <span className="dim">not configured</span>}
+        icon={<TbUser size={12} />}
+        label="Holds personal data"
+        testId="data-stewardship-classification-facet-personal"
+        active={!!search.personalDataOnly}
+        onClick={() => patchSearch({ personalDataOnly: search.personalDataOnly ? undefined : '1' })}
+        trailing={<span className="dim mono">{personalDataCount}</span>}
       />
       <SidebarGroupLabel>Classification</SidebarGroupLabel>
       {classificationOptions.map(option => (

@@ -197,6 +197,52 @@ describe('DataStewardshipClassificationScreen', () => {
     expect(container.textContent).toContain('Open record in Entities');
   });
 
+  it('shows a "Datasets by classification" breakdown, clicking a row narrows the classification facet', async () => {
+    await renderScreen();
+    expect(container.textContent).toContain('Datasets by classification');
+    expect(container.textContent).toContain('Sensitive');
+
+    const row = [...container.querySelectorAll('button')].find(button =>
+      button.textContent?.includes('Sensitive')
+    );
+    expect(row).toBeDefined();
+    await act(async () => {
+      row!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    expect(mocks.navigate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: '/$workspaceSlug/data-stewardship/classification',
+        params: { workspaceSlug: 'ws-1' }
+      })
+    );
+  });
+
+  it('renders the view switcher below the stat tiles, matching the design reference layout', async () => {
+    await renderScreen();
+    const html = container.innerHTML;
+    const statsIndex = html.indexOf('Restricted datasets');
+    const switcherIndex = html.indexOf('Restricted flows');
+    expect(statsIndex).toBeGreaterThan(-1);
+    expect(switcherIndex).toBeGreaterThan(statsIndex);
+  });
+
+  it('switches views via the in-screen toggle group', async () => {
+    await renderScreen();
+    const restrictedFlowsToggle = [...container.querySelectorAll('button')].find(
+      button => button.textContent === 'Restricted flows'
+    );
+    expect(restrictedFlowsToggle).toBeDefined();
+    await act(async () => {
+      restrictedFlowsToggle!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    expect(mocks.navigate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: '/$workspaceSlug/data-stewardship/classification',
+        params: { workspaceSlug: 'ws-1' }
+      })
+    );
+  });
+
   it('shows a not-configured notice for restricted flows when no Data Flow schema exists', async () => {
     mocks.search = { view: 'restricted-flows' };
     await renderScreen();
@@ -267,7 +313,7 @@ describe('DataStewardshipClassificationScreen', () => {
     });
     mocks.search = { view: 'cross-boundary' };
     await renderScreen();
-    expect(container.textContent).toContain('No exception recorded');
+    expect(container.textContent).toContain('no transfer safeguard recorded');
     expect(container.textContent).toContain('Unsafeguarded personal-data transfers');
   });
 });
