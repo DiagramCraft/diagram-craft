@@ -3,6 +3,7 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { asProjectPublicId, projectDetailRoute } from '../../../routes/publicObjectRoutes';
 import { RiskComplianceAssessmentsScreen } from './RiskComplianceAssessmentsScreen';
 
 const mocks = vi.hoisted(() => ({
@@ -148,10 +149,12 @@ describe('RiskComplianceAssessmentsScreen', () => {
     });
 
     expect(mocks.navigate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        to: '/$workspaceSlug/projects/$projectId',
-        params: { workspaceSlug: 'ws-1', projectId: 'PRJ-001' }
-      })
+      expect.objectContaining(
+        projectDetailRoute('ws-1', asProjectPublicId('PRJ-001'), {
+          section: 'assessments',
+          assessmentId: 'assess-1'
+        })
+      )
     );
   });
 
@@ -167,10 +170,12 @@ describe('RiskComplianceAssessmentsScreen', () => {
     });
 
     expect(mocks.navigate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        to: '/$workspaceSlug/projects/$projectId',
-        params: { workspaceSlug: 'ws-1', projectId: 'PRJ-001' }
-      })
+      expect.objectContaining(
+        projectDetailRoute('ws-1', asProjectPublicId('PRJ-001'), {
+          section: 'assessments',
+          assessmentId: 'assess-2'
+        })
+      )
     );
   });
 
