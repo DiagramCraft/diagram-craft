@@ -1,10 +1,17 @@
 import { useNavigate } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
-import { SidebarGroupLabel, SidebarTitleHeader } from '../../../components/sidebar/SidebarPrimitives';
+import {
+  SidebarGroupLabel,
+  SidebarTitleHeader
+} from '../../../components/sidebar/SidebarPrimitives';
 import { TreeRow } from '../../../components/TreeRow';
 import { workspaceCapabilityConfigurationsQuery } from '../../../queries/workspaceConfig';
 import { resolveDataStewardshipConfig } from '../dataStewardshipQueries';
-import { DS_RAIL_PATHS, DS_SECTIONS, type DataStewardshipRailItemId } from '../dataStewardshipSections';
+import {
+  DS_RAIL_PATHS,
+  DS_SECTIONS,
+  type DataStewardshipRailItemId
+} from '../dataStewardshipSections';
 import styles from '../../../shell/SidePanel.module.css';
 
 /**

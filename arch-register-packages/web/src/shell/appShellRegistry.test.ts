@@ -106,9 +106,7 @@ describe('appShellRegistry', () => {
     // My work (not Overview) is sections[0], the app's landing section.
     expect(railIds(DS_MY_WORK_ID)[0]).toBe(DS_MY_WORK_ID);
     expect(dataStewardship.enablement).toEqual({ capabilityType: 'data-stewardship' });
-    expect(getRailSection(DS_CLASSIFICATION_ID)?.route).toBe(
-      DS_RAIL_PATHS[DS_CLASSIFICATION_ID]
-    );
+    expect(getRailSection(DS_CLASSIFICATION_ID)?.route).toBe(DS_RAIL_PATHS[DS_CLASSIFICATION_ID]);
   });
 
   it('exposes non-home app routes under the stable APP_RAIL_ROUTES shape', () => {

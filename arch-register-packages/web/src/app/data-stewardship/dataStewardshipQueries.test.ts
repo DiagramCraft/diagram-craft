@@ -31,9 +31,7 @@ describe('resolveDataStewardshipConfig', () => {
   it('returns null when the required dataEntity binding is missing or unbound', () => {
     const { dataEntity: _dataEntity, ...bindingsWithoutDataEntity } = validConfiguration.bindings;
     expect(
-      resolveDataStewardshipConfig([
-        { ...validConfiguration, bindings: bindingsWithoutDataEntity }
-      ])
+      resolveDataStewardshipConfig([{ ...validConfiguration, bindings: bindingsWithoutDataEntity }])
     ).toBeNull();
     expect(
       resolveDataStewardshipConfig([

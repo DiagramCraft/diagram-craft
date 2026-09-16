@@ -29,7 +29,7 @@ export const dataStewardshipCapabilityDefinition: WorkspaceCapabilityDefinition 
       label: 'Data Entity schema',
       description:
         'The entity schema used for datasets — the existing information-asset entities ' +
-        '(#3064/#3065). Typically the `information-governance` template\'s own Data Entity schema.',
+        "(#3064/#3065). Typically the `information-governance` template's own Data Entity schema.",
       required: true,
       targetKind: 'entity_schema',
       fieldRoles: []

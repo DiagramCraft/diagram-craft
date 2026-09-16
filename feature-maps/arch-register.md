@@ -501,8 +501,10 @@
       there is no separate Overview section; My work is both the first rail section and the application's landing
       screen. The application is enabled once the workspace's `data-stewardship` capability configuration is valid
       (the required Data Entity schema binding resolved — the same information-asset entities Risk & Compliance's
-      own optional `dataEntity` binding references; the Change Case entity schema binding is optional). Every
-      section is currently a scaffolded placeholder pending its own sub-issue of the Data Stewardship epic.
+      own optional `dataEntity` binding references). The Change cases & exceptions section reuses the existing
+      `entity.change-case` governance-case kind directly rather than a bound schema — Change Case is a built-in
+      governance-case type, not a workspace-defined entity schema, so the capability has only the one binding role.
+      Every section is currently a scaffolded placeholder pending its own sub-issue of the Data Stewardship epic.
 
         - @id:ar.data-stewardship.my-work The My work section (the app switcher's landing section) is scaffolded as
           a placeholder pending its own review-queue, assigned-cases, and six-week-calendar content.
