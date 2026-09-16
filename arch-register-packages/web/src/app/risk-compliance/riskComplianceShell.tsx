@@ -75,16 +75,13 @@ export const riskComplianceAppDefinition: AppDefinition = {
       )
     },
     {
+      // No `primarySidebar`: like Overview, Assessments is a self-contained register with its own
+      // due panels and in-page filters rather than a facet/nav sidebar, so the shell renders it
+      // full-width.
       id: RISK_ASSESSMENTS_ID,
       icon: TbListCheck,
       tooltip: 'Assessments',
-      route: RISK_RAIL_PATHS[RISK_ASSESSMENTS_ID],
-      primarySidebar: ctx => (
-        <RiskComplianceSidebar
-          workspaceSlug={ctx.workspaceSlug}
-          activeSection={RISK_ASSESSMENTS_ID}
-        />
-      )
+      route: RISK_RAIL_PATHS[RISK_ASSESSMENTS_ID]
     }
   ],
   enablement: { capabilityType: 'risk-compliance' }

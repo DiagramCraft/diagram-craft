@@ -398,9 +398,9 @@
       Risk entity schema binding resolved; the Control, Framework, and Compliance Requirement entity schema bindings
       are optional). The Retention section gates separately, on the existing, workspace-wide `retention` capability
       (policy entity schema and assignment relation schema bindings), rather than on `risk-compliance` — a workspace
-      can have Retention configured without the rest of Risk & Compliance being enabled, or vice versa. Overview and
-      Assessments are currently scaffolds: once their gating capability is configured they render only a title and
-      an empty state; that content lands in later sub-issues of the Risk & Compliance application epic.
+      can have Retention configured without the rest of Risk & Compliance being enabled, or vice versa. Overview is
+      currently a scaffold: once the capability is configured it renders only a title and an empty state; that
+      content lands in a later sub-issue of the Risk & Compliance application epic.
 
         - @id:ar.risk-compliance.risks The Risks section has a sortable register (search; sidebar facets for
           Category, Status, Owner, and an "outside appetite" toggle for residual scores banding high/critical) and a
@@ -467,6 +467,19 @@
           not. The sidebar is the only way to filter: "All" (count of every assignment), "Incomplete", and one row
           per Retention Policy with its assignment count — selecting a policy narrows the register to its
           assignments, shown as a dismissible chip in the toolbar.
+
+        - @id:ar.risk-compliance.assessments The Assessments section is a read view over the existing, generic
+          assessment machinery (the same `Assessment` model used by Projects, and by Strategy/Vendor Management's
+          own periodic reviews) — no new case kind — scoped down to whichever workspace assessments target the
+          Risk and/or Control entity schema (`assessment.scope`). Two "due soon" panels ("Risk reviews due",
+          "Control tests due" — the latter only when a Control schema is bound) list open, due-dated assessments in
+          each scope, soonest first, each row's due date shown as a coloured day-count ("18d" / "6d late") rather
+          than a plain date. Below them, a dense register table (a Risk/Control/All toggle, name search, and the
+          same Open-or-Closed/Draft/Archived/All status filter as a project's own Assessments tab) lists matching
+          assessments by Name, Scope (the schema names it targets), Progress (a bar plus completed/in-scope count),
+          Due (the same day-count styling), and a coloured Status pill. Assessments aren't owned by this app — each
+          belongs to a Project — so this section has no create/edit affordance; opening a register row or a
+          due-panel row navigates to the assessment's home project, deep-linked to its Assessments tab.
 
     - @id:ar.entities Users can maintain a structured catalog of architectural entities and their relationships.
 

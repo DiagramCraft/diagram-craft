@@ -1,0 +1,78 @@
+.panel {
+  min-width: 0;
+  flex: 1;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+}
+
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border-bottom: 1px solid var(--panel-border);
+  padding: 8px 14px;
+}
+
+.panelTitle {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--base-fg);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  padding: 6px 14px 10px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0;
+  border-radius: var(--r);
+  font-size: 12px;
+  text-align: left;
+}
+
+.row:hover {
+  background: var(--cmp-bg);
+}
+
+.rowMain {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.rowLabel {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--base-fg);
+}
+
+.rowSub {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 10.5px;
+}
+
+.rowMeta {
+  margin-left: auto;
+  font-size: 11px;
+  min-width: 54px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.footer {
+  padding: 3px 0;
+  font-size: 11px;
+}
