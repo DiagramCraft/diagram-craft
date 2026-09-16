@@ -73,6 +73,17 @@
           expiry status (active, approaching expiry, expired, or incomplete when the policy or activation date is
           missing) is available to `resolveEntityRetentionStatus` for later surfacing in queries, views, and
           exports.
+          What this actually captures: `activated_from` is a single date on the assignment relation, and the
+          governed entity it is usually attached to (a Data Entity) is a *category* of data (e.g. "Customer
+          Credentials"), not an individual record — there is no per-record creation-date tracking anywhere in this
+          model. So the computed expiry status answers "how long has this policy nominally applied to this
+          category, relative to its stated duration", not "which individual records are due for disposal" — the
+          records within a governed category don't all share one creation date, so a category showing "expired"
+          does not mean every (or any particular) record in it is actually due. Consumers of
+          `resolveEntityRetentionStatus` should treat it as a policy-governance/review signal (is this category's
+          retention policy stale enough to warrant a compliance check) rather than a disposal action queue; see
+          `ar.risk-compliance.retention` below, which was scoped down to a plain assignments register for exactly
+          this reason.
           The same template also contributes a Data Entity schema and an "Information Asset Stewardship" shared
           field group carrying steward and custodian principal-reference fields, a review date, and multi-valued
           regulatory tags, processing purposes, and permitted residency regions, alongside the entity's existing
@@ -387,10 +398,9 @@
       Risk entity schema binding resolved; the Control, Framework, and Compliance Requirement entity schema bindings
       are optional). The Retention section gates separately, on the existing, workspace-wide `retention` capability
       (policy entity schema and assignment relation schema bindings), rather than on `risk-compliance` — a workspace
-      can have Retention configured without the rest of Risk & Compliance being enabled, or vice versa. Overview,
-      Retention, and Assessments are currently scaffolds: once their gating capability is configured they render
-      only a title and an empty state; that content lands in later sub-issues of the Risk & Compliance application
-      epic.
+      can have Retention configured without the rest of Risk & Compliance being enabled, or vice versa. Overview and
+      Assessments are currently scaffolds: once their gating capability is configured they render only a title and
+      an empty state; that content lands in later sub-issues of the Risk & Compliance application epic.
 
         - @id:ar.risk-compliance.risks The Risks section has a sortable register (search; sidebar facets for
           Category, Status, Owner, and an "outside appetite" toggle for residual scores banding high/critical) and a
@@ -437,6 +447,26 @@
           drawer, deep-linkable at `risk-compliance/controls/$controlId`: attributes, the Risks it mitigates (with
           the `coverage`/`effectiveness` it provides each one), and the Data Entities it protects (via
           `control-affects`).
+
+        - @id:ar.risk-compliance.retention The Retention section — the first web UI consumer of the workspace-wide
+          `retention` capability — is a single register of Assignments ("Subject to Retention Policy" relations),
+          with no view toggle. It originally followed the Claude Design reference's `RCRetention` more closely (an
+          expiry dashboard with Overdue/Next-30/31-60/61-90/Beyond-90 buckets, a separate Policies list, and a
+          Holds/exceptions view), but the expiry framing was deliberately removed: a "Subject to Retention Policy"
+          assignment links a policy to a Data Entity *category*, not to an individual record (see
+          `ar.workspace.home`'s note on what the `retention` capability actually captures), so a computed "expiry
+          date" per assignment could only ever say "how long this policy has nominally applied to this category" —
+          labelling a category "Overdue" implied per-record actionability the data can't support. What remains
+          reports what the data actually says as plain, uncoloured facts: each row is a governed entity, its
+          policy, the policy's Period
+          (duration + time unit, read via the capability's `policy`/`assignment` semantic field-role mappings — a
+          workspace may map "duration" to any `number` field on its Policy schema, not only one literally named
+          `duration`), and the assignment's Activated-from date. A "Complete" column (and matching sidebar
+          "Incomplete" facet) flags assignments missing a policy, duration, time unit, or activation date — a
+          data-completeness signal, not a disposal-urgency one, so it was kept even though the expiry bucketing was
+          not. The sidebar is the only way to filter: "All" (count of every assignment), "Incomplete", and one row
+          per Retention Policy with its assignment count — selecting a policy narrows the register to its
+          assignments, shown as a dismissible chip in the toolbar.
 
     - @id:ar.entities Users can maintain a structured catalog of architectural entities and their relationships.
 

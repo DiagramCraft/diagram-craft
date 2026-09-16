@@ -462,7 +462,6 @@ export const DEMO_RETENTION_IDS = {
     transactionEvents: '00000000-0000-0000-0042-000000000601',
     customerCredentials: '00000000-0000-0000-0042-000000000602',
     clickstreamEvents: '00000000-0000-0000-0042-000000000603',
-    paymentsPlatform: '00000000-0000-0000-0042-000000000604',
     orderRecordsToFulfillmentPolicy: '00000000-0000-0000-0042-000000000605',
     inventoryLevelsToSupplyChainPolicy: '00000000-0000-0000-0042-000000000606',
     marketingConsentRecordsAssetToMarketingPolicy: '00000000-0000-0000-0042-000000000607'

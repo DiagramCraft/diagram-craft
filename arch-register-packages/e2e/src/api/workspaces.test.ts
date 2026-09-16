@@ -261,7 +261,13 @@ test.describe('workspace routes', () => {
 
     expect(dataEntity).toBeDefined();
     expect(dataEntity?.fields).toEqual([
-      expect.objectContaining({ id: 'classification', type: 'select' })
+      expect.objectContaining({ id: 'classification', type: 'select' }),
+      expect.objectContaining({
+        id: 'retention_policy',
+        type: 'typedRelation',
+        direction: 'in',
+        maxCount: 1
+      })
     ]);
     expect(dataEntity?.shared_field_group_links).toEqual([
       expect.objectContaining({ groupId: stewardshipGroup?.id })

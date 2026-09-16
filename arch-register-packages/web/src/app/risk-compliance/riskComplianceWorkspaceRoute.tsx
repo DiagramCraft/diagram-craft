@@ -8,7 +8,11 @@ import {
   RISK_ASSESSMENTS_ID,
   RISK_RAIL_PATHS
 } from './riskComplianceSections';
-import { validateRisksSearch, validateControlsSearch } from '../../routes/searchParams';
+import {
+  validateRisksSearch,
+  validateControlsSearch,
+  validateRetentionSearch
+} from '../../routes/searchParams';
 import { withWorkspaceShell } from '../../routes/workspace/workspaceShellRoute';
 import { railSectionShell } from '../../layouts/workspaceShellDescriptors';
 import {
@@ -127,6 +131,7 @@ export const createRiskComplianceWorkspaceRoutes = <TParentRoute extends AnyRout
     createRoute({
       getParentRoute: () => workspaceRoute,
       path: railPath(RISK_RAIL_PATHS[RISK_RETENTION_ID]),
+      validateSearch: validateRetentionSearch,
       beforeLoad: ({ context, params }) =>
         ensureApplicationAccess(
           context.queryClient,

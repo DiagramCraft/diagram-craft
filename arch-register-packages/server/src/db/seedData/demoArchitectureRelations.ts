@@ -6,9 +6,7 @@ import {
   DATA_FLOW_SCHEMA_ID,
   DEMO_ARCHITECTURE_IDS,
   DEMO_BUSINESS_CAPABILITY_IDS,
-  DEMO_RETENTION_IDS,
   LIFECYCLE_IDS,
-  RETENTION_IDS,
   TEAM_IDS,
   WORKSPACE_ID,
   now
@@ -198,29 +196,10 @@ export const demoArchitectureRelations: RelationDbCreate[] = [
     updated_at: now
   },
 
-  // Retention assignments
-  {
-    id: '00000000-0000-0000-0021-000000000401',
-    workspace: WORKSPACE_ID,
-    schema_id: RETENTION_IDS.assignmentRelationSchema,
-    // Order Records -> Order & Fulfillment Records.
-    in_entity_id: DE.orderRecords,
-    out_entity_id: DEMO_RETENTION_IDS.policies.orderFulfillmentRecords,
-    data: { activated_from: '2024-01-01' },
-    created_at: now,
-    updated_at: now
-  },
-  {
-    id: '00000000-0000-0000-0021-000000000402',
-    workspace: WORKSPACE_ID,
-    schema_id: RETENTION_IDS.assignmentRelationSchema,
-    // Marketing Consent Records -> Marketing Consent Records (policy).
-    in_entity_id: DE.marketingConsentRecords,
-    out_entity_id: DEMO_RETENTION_IDS.policies.marketingConsentRecords,
-    data: { activated_from: '2025-03-01' },
-    created_at: now,
-    updated_at: now
-  },
+  // Retention assignments for Order Records and Marketing Consent Records live in
+  // demoGovernanceRelations.ts (added by #3277's fuller retention seed data) — this file used to
+  // duplicate both with separate relation ids and, for Marketing Consent Records, a conflicting
+  // `activated_from` date, so they were removed here rather than kept as a second copy.
 
   // Business capability -> architecture entity
   {
