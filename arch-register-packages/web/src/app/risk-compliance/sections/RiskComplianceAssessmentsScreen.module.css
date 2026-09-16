@@ -1,0 +1,45 @@
+.screen {
+  display: flex;
+  flex-direction: column;
+  padding: 20px 24px;
+  min-width: 0;
+  gap: 16px;
+}
+
+.empty {
+  padding: 32px;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.panels {
+  display: flex;
+  gap: 16px;
+}
+
+.progress {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 120px;
+}
+
+.progressTrack {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--panel-border);
+  overflow: hidden;
+}
+
+.progressFill {
+  display: block;
+  height: 100%;
+  background: var(--cmp-fg-accent, #3b82f6);
+}
+
+.note {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}

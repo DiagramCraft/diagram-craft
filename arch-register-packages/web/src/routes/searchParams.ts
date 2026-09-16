@@ -479,6 +479,19 @@ export type ControlsSearchParams = SearchParamsFromSchema<typeof controlsSearchS
 export const validateControlsSearch = (raw: Record<string, unknown>): ControlsSearchParams =>
   parseSearchParams(controlsSearchSchema, raw);
 
+// Risk & Compliance assessments params
+const assessmentsSearchSchema = defineSearchParamSchema({
+  q: stringCodec,
+  // Narrows the register to assessments scoped to the Risk schema or the Control schema; unset
+  // shows both — set by the section's own Risk/Control/All toggle.
+  type: enumCodec(['risk', 'control'] as const)
+});
+
+export type AssessmentsSearchParams = SearchParamsFromSchema<typeof assessmentsSearchSchema>;
+
+export const validateAssessmentsSearch = (raw: Record<string, unknown>): AssessmentsSearchParams =>
+  parseSearchParams(assessmentsSearchSchema, raw);
+
 // Risk & Compliance retention params. The section is a single Assignments register (no view
 // toggle, no expiry dashboard) — a per-assignment "expiry" computed from a category-level
 // `activated_from` plus a policy's duration can't actually tell you which individual records are
