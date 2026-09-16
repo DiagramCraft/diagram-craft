@@ -89,7 +89,14 @@ export const ClassifiedDataView = ({
       if (search.gapsOnly && isDatasetCovered(entity)) return false;
       return true;
     });
-  }, [allDatasets, q, search.classification, search.personalDataOnly, search.gapsOnly, principalLabel]);
+  }, [
+    allDatasets,
+    q,
+    search.classification,
+    search.personalDataOnly,
+    search.gapsOnly,
+    principalLabel
+  ]);
 
   const comparators: Record<SortKey, (a: EntityRecord, b: EntityRecord) => number> = {
     classification: (a, b) => rankOf(a.classification) - rankOf(b.classification),

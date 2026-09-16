@@ -77,13 +77,16 @@ export const DataStewardshipClassificationScreen = () => {
       onChange={value => {
         if (value)
           patchSearch({
-            view: value === 'classified' ? undefined : (value as 'restricted-flows' | 'cross-boundary')
+            view:
+              value === 'classified' ? undefined : (value as 'restricted-flows' | 'cross-boundary')
           });
       }}
     >
       <ToggleButtonGroup.Item value="classified">Classified data</ToggleButtonGroup.Item>
       <ToggleButtonGroup.Item value="restricted-flows">Restricted flows</ToggleButtonGroup.Item>
-      <ToggleButtonGroup.Item value="cross-boundary">Cross-boundary transfers</ToggleButtonGroup.Item>
+      <ToggleButtonGroup.Item value="cross-boundary">
+        Cross-boundary transfers
+      </ToggleButtonGroup.Item>
     </ToggleButtonGroup.Root>
   );
 

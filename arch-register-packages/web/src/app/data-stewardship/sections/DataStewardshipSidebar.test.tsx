@@ -168,7 +168,9 @@ describe('DataStewardshipSidebar', () => {
 
   it('toggles the personal-data facet', async () => {
     await renderSidebar(DS_CLASSIFICATION_ID);
-    const entry = container.querySelector('[data-testid="data-stewardship-classification-facet-personal"]');
+    const entry = container.querySelector(
+      '[data-testid="data-stewardship-classification-facet-personal"]'
+    );
     expect(entry).toBeDefined();
     await act(async () => {
       entry!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
