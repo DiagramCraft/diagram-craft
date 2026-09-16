@@ -22,12 +22,26 @@ export const AssessmentDuePanel = ({
   title,
   assessments,
   projectsById,
-  onOpenAssessment
+  onOpenAssessment,
+  showCount = true,
+  viewAllLabel,
+  onViewAll
 }: {
   title: string;
   assessments: Assessment[];
   projectsById: Map<string, AssessmentDuePanelProject>;
   onOpenAssessment: (assessmentId: string) => void;
+  /** Hides the due-count next to the title — `RiskComplianceOverviewScreen.tsx`'s "Upcoming
+   *  reviews" panel merges risk and control assessments, where a raw count reads as an
+   *  unexplained total rather than the per-scope "X due" `RiskComplianceAssessmentsScreen.tsx`'s
+   *  two panels show. */
+  showCount?: boolean;
+  /** Optional header link out to the full register — used by
+   *  `RiskComplianceOverviewScreen.tsx`, which shows this panel outside the Assessments section
+   *  itself; left unset by `RiskComplianceAssessmentsScreen.tsx`'s own two panels, which are
+   *  already on that page. */
+  viewAllLabel?: string;
+  onViewAll?: () => void;
 }) => {
   const due = sortByDueDate(
     assessments.filter(assessment => assessment.status === 'open' && assessment.due_at !== null)
@@ -41,7 +55,14 @@ export const AssessmentDuePanel = ({
     <div className={styles.panel}>
       <div className={styles.panelHeader}>
         <span className={styles.panelTitle}>{title}</span>
-        <span className="dim mono">{due.length}</span>
+        <span className={styles.headerRight}>
+          {showCount && <span className="dim mono">{due.length}</span>}
+          {onViewAll && (
+            <button type="button" className={styles.panelLink} onClick={onViewAll}>
+              {viewAllLabel ?? 'View all'}
+            </button>
+          )}
+        </span>
       </div>
       <div className={styles.list}>
         {shown.map(assessment => (
