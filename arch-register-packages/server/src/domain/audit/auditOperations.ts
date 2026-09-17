@@ -2,7 +2,7 @@ import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { requireWorkspaceCapability } from '../auth/authorization';
 import { runAuthorizedOperation } from '../operation';
-import { toApiAuditLogEntry, filterAndPaginateAuditLogs, computeAuditStats } from './auditHelpers';
+import { toApiAuditLogEntry, computeAuditStats } from './auditHelpers';
 import { listEntities } from '../catalog/entityQueryOperations';
 import { parseEntityQuery, buildEntityQueryForExecution } from '../catalog/entityQuery';
 import { filterKnownRestrictedFieldGroups } from '../auth/fieldGroupAccessControl';
@@ -11,14 +11,7 @@ import type { FieldGroupSchemaShape } from '../auth/fieldGroupAccessControl';
 import { getEntitySchemaAt, getRelationSchemaAt } from '../catalog/schemaHistory';
 import { canViewTypedRelation } from '../catalog/relationAccessControl';
 import { AuditLogEntry, AuditStats } from '@arch-register/api-types/auditContract';
-import type { AuditLogDbResult } from './db/auditDatabase';
-
-// Drops raw `changes` before rows reach a consumer that must never see unredacted field values
-// (e.g. aggregate stats). `listAuditLog` is the only place allowed to hold onto `.changes`, and it
-// must always run it through `redactAuditEntryChanges` before returning. See
-// `auditAccessBoundary.test.ts` for the enforcement of this boundary.
-export const stripAuditChanges = (rows: AuditLogDbResult[]): Omit<AuditLogDbResult, 'changes'>[] =>
-  rows.map(({ changes, ...rest }) => rest);
+import type { AuditLogDbResult, AuditLogListOptions } from './db/auditDatabase';
 
 export const redactAuditEntryChanges = (
   entry: AuditLogEntry,
@@ -248,33 +241,56 @@ const listAuditLogForContext = async (
     entityIds = matchingEntities.map(e => e._uid);
   }
 
-  const rows = await db.audit.listAuditLogs(ws);
-  const auditFilters = {
-    entityType: filters.entityType ?? null,
-    entityId: filters.entityId ?? null,
-    entityIds,
-    schemaId: filters.owner || filters.lifecycle ? null : (filters.schemaId ?? null),
-    operation: filters.operation ?? null,
-    startDate: filters.startDate ?? null,
-    endDate: filters.endDate ?? null
+  const requestedLimit = filters.limit ?? 50;
+  const requestedOffset = filters.offset ?? 0;
+  if (requestedLimit === 0) return [];
+
+  const auditFilters: AuditLogListOptions = {
+    entityType: filters.entityType,
+    entityId: filters.entityId,
+    entityIds: entityIds ?? undefined,
+    schemaId: filters.owner || filters.lifecycle ? undefined : filters.schemaId,
+    operation: filters.operation,
+    startDate: filters.startDate ? new Date(filters.startDate) : undefined,
+    endDate: filters.endDate ? new Date(filters.endDate) : undefined
   };
-  const candidateRows = filterAndPaginateAuditLogs(rows, {
-    ...auditFilters,
-    limit: rows.length,
-    offset: 0
-  });
-  const preparedEntries = (
-    await Promise.all(
-      candidateRows.map(async rawEntry => {
-        const schemas = await resolveAuditSchemas(db, ws, rawEntry, authCtx);
-        return schemas ? { rawEntry, schemas } : null;
-      })
-    )
-  ).filter((entry): entry is NonNullable<typeof entry> => entry != null);
-  const paginatedEntries = preparedEntries.slice(
-    filters.offset ?? 0,
-    (filters.offset ?? 0) + (filters.limit ?? 50)
-  );
+  const batchSize = Math.max(requestedLimit, 50);
+  let databaseOffset = 0;
+  let remainingOffset = requestedOffset;
+  const paginatedEntries: { rawEntry: AuditLogDbResult; schemas: ResolvedAuditSchemas }[] = [];
+
+  // Relation visibility is resolved after the database query. Fetch in batches so hidden entries
+  // do not make a requested page appear short, while still keeping JSON parsing and schema lookup
+  // bounded for ordinary requests.
+  while (paginatedEntries.length < requestedLimit) {
+    const rows = await db.audit.listAuditLogs(ws, {
+      ...auditFilters,
+      limit: batchSize,
+      offset: databaseOffset
+    });
+    databaseOffset += rows.length;
+
+    const preparedEntries = (
+      await Promise.all(
+        rows.map(async rawEntry => {
+          const schemas = await resolveAuditSchemas(db, ws, rawEntry, authCtx);
+          return schemas ? { rawEntry, schemas } : null;
+        })
+      )
+    ).filter((entry): entry is NonNullable<typeof entry> => entry != null);
+
+    for (const entry of preparedEntries) {
+      if (remainingOffset > 0) {
+        remainingOffset--;
+        continue;
+      }
+      paginatedEntries.push(entry);
+      if (paginatedEntries.length === requestedLimit) break;
+    }
+
+    if (rows.length < batchSize) break;
+  }
+
   const entries = await Promise.all(
     paginatedEntries.map(async ({ rawEntry, schemas }) => {
       const entry = toApiAuditLogEntry(rawEntry);
@@ -320,8 +336,8 @@ export const getAuditStats = async (
     scope: { kind: 'workspace', workspace },
     operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'ws.audit');
-      const rows = await db.audit.listAuditLogs(ws);
-      return computeAuditStats(stripAuditChanges(rows));
+      const rows = await db.audit.listAuditLogSummaries(ws);
+      return computeAuditStats(rows);
     }
   });
 };

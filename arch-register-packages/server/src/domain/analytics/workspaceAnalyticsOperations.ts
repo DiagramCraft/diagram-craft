@@ -10,8 +10,7 @@ import { runAuthorizedOperation } from '../operation';
 import type { EntityDbResult, SchemaDbResult } from '../catalog/db/catalogDatabase';
 import type { LifecycleStateDbResult } from '../workspace/db/workspaceDatabase';
 import { listAllCatalogEntities } from '../catalog/entityLoader';
-import type { AuditLogDbResult } from '../audit/db/auditDatabase';
-import { stripAuditChanges } from '../audit/auditOperations';
+import type { AuditLogSummaryDbResult } from '../audit/db/auditDatabase';
 import { computeEntityCompleteness } from '../../utils/completeness';
 
 const roundPercent = (count: number, total: number) =>
@@ -51,7 +50,7 @@ const startOfUtcDay = (date: Date) =>
   new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
 
 export const computeActivityTrend = (
-  auditRows: Omit<AuditLogDbResult, 'changes'>[],
+  auditRows: AuditLogSummaryDbResult[],
   days: number,
   now = new Date()
 ): ActivityTrendBucket[] => {
@@ -84,7 +83,7 @@ export const computeWorkspaceAnalytics = (
   schemas: SchemaDbResult[],
   lifecycleStates: LifecycleStateDbResult[],
   staleAfterDays = 90,
-  auditRows: Omit<AuditLogDbResult, 'changes'>[] = [],
+  auditRows: AuditLogSummaryDbResult[] = [],
   now = new Date(),
   authCtx: AuthorizationContext | null = null
 ): WorkspaceAnalytics => {
@@ -286,7 +285,7 @@ export const getWorkspaceAnalytics = async (
         listAllCatalogEntities(db, ws),
         db.catalog.listSchemas(ws),
         db.workspace.listLifecycleStates(ws),
-        db.audit.listAuditLogs(ws)
+        db.audit.listAuditLogSummaries(ws, new Date(Date.now() - 90 * dayMs))
       ]);
 
       return computeWorkspaceAnalytics(
@@ -294,7 +293,7 @@ export const getWorkspaceAnalytics = async (
         schemas,
         lifecycleStates,
         staleAfterDays,
-        stripAuditChanges(auditRows),
+        auditRows,
         new Date(),
         authCtx
       );
