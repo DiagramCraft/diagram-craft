@@ -683,3 +683,26 @@ export type DataStewardshipMyWorkSearchParams = SearchParamsFromSchema<
 export const validateDataStewardshipMyWorkSearch = (
   raw: Record<string, unknown>
 ): DataStewardshipMyWorkSearchParams => parseSearchParams(dataStewardshipMyWorkSearchSchema, raw);
+
+// Data Stewardship change-cases-section params (#3301) — a read list over `entity.change-case`
+// governance cases against Data Entities; no exceptions/waiver register (removed after review).
+const dataStewardshipChangeCasesSearchSchema = defineSearchParamSchema({
+  q: stringCodec,
+  // Case status facet — `governanceCaseSchema`'s own status values.
+  status: enumCodec(['open', 'completed', 'cancelled'] as const),
+  // Opens the shared `DataStewardshipCaseDrawer.tsx` for this governance case id — same drawer
+  // `dataStewardshipMyWorkSearchSchema`'s own `caseId` opens (#3298).
+  caseId: stringCodec,
+  // Opens the shared `DatasetDrawer` for this dataset id — from a case row's linked dataset,
+  // mirrors `dataStewardshipStewardshipSearchSchema`'s own `datasetId`.
+  datasetId: stringCodec
+});
+
+export type DataStewardshipChangeCasesSearchParams = SearchParamsFromSchema<
+  typeof dataStewardshipChangeCasesSearchSchema
+>;
+
+export const validateDataStewardshipChangeCasesSearch = (
+  raw: Record<string, unknown>
+): DataStewardshipChangeCasesSearchParams =>
+  parseSearchParams(dataStewardshipChangeCasesSearchSchema, raw);

@@ -504,14 +504,15 @@
       own optional `dataEntity` binding references). The Change cases & exceptions section reuses the existing
       `entity.change-case` governance-case kind directly rather than a bound schema — Change Case is a built-in
       governance-case type, not a workspace-defined entity schema, so the capability has only the one binding role.
-      Change cases & exceptions is still a scaffolded placeholder pending its own sub-issue of the Data Stewardship
-      epic; My work, Stewardship, Classification, and Assessments have shipped their real content.
+      A time-bound exception/waiver register was considered for this section (#3301) but removed after review —
+      there is no exception/waiver concept anywhere in this application. All five sections have shipped their real
+      content.
 
         - @id:ar.data-stewardship.my-work The My work section (the app switcher's landing section) is the review
           queue over the workspace's existing governance-case/reminder machinery — not a new queue model — scoped
           down to cases against Data Entities. A four-tile stat strip (Assigned to me, Past due, Cases awaiting a
           decision, Reviews overdue — substituting the design reference's "Exceptions lapsed or expiring" stat,
-          since the exception/waiver register doesn't exist yet, #3301) sits above a six-week due-date calendar
+          since there is no exception/waiver register in this application) sits above a six-week due-date calendar
           (weekly buckets, an already-overdue item folded into the current week rather than dropped off the front,
           mirroring `ar.vendor-management`'s own monthly renewal calendar's overdue handling) and the queue list
           itself (kind, a derived priority pill, the dataset, and a due-date badge). Unlike every other section's
@@ -577,18 +578,37 @@
           Style/Adapter/Volume/Health columns come from the Integration Catalog app (#3150, not present in this repo)
           and have no equivalent on the Data Flow relation schema, so they're dropped rather than faked. Cross-boundary
           transfers renders as a card list, not a table, again mirroring the design reference: each card shows the
-          flow's route, a classification chip, a "personal data" chip when applicable, and either the exception(s)
-          authorizing the transfer or (since the exception/waiver register doesn't exist yet, #3301) a "no transfer
-          safeguard recorded" tag for every personal-data-carrying transfer; a note line (source/destination region
-          and protocol) and a meta row of carried-dataset links plus the flow's owner follow. Restricted flows and
+          flow's route, a classification chip, a "personal data" chip when applicable, and a "no transfer safeguard
+          recorded" tag for every personal-data-carrying transfer — there is no exception/waiver register in this
+          application (considered for #3301, removed after review) to authorize a transfer against instead; a note
+          line (source/destination region and protocol) and a meta row of carried-dataset links plus the flow's
+          owner follow. Restricted flows and
           Cross-boundary transfers both depend on a Data Flow relation schema existing in the workspace (resolved by
           name, since relation schemas carry no stable symbolic id at runtime, and there is no dedicated capability
           binding for this — unlike the app's own `dataEntity` binding); when absent, both views show a plain notice
           instead of an empty table/list. No flow-detail drawer exists — each flow's row/card already carries every
           field the Data Flow schema has.
 
-        - @id:ar.data-stewardship.change-cases The Change cases & exceptions section is scaffolded as a placeholder
-          pending its own change-proposal and time-bound exception/waiver register content.
+        - @id:ar.data-stewardship.change-cases The Change cases & exceptions section (despite the name — the
+          exceptions/waiver register #3301 considered was removed after review, so this is just "Change cases") is a
+          read list over the existing `entity.change-case` governance-case machinery — no new case kind, no new
+          workflow — scoped to cases whose subject is a Data Entity: columns for Kind, Dataset, Requester (the
+          case's initiating user, resolved against the workspace's member list), Steward (the linked dataset's own
+          steward field), Risk (the same derived priority bucket `ar.data-stewardship.my-work`'s queue computes —
+          governance cases carry no real risk/severity field), Raised, Due, and Status; a Status facet lives in the
+          section's own primary sidebar. Every status is shown here (unlike My work's queue, which only surfaces
+          open cases), since this is a register, not a personal work queue. Bulk entity-change proposals are out of
+          scope for this first cut, same call `ar.data-stewardship.my-work` already made. A row opens the same
+          shared, already-shipped case drawer `ar.data-stewardship.my-work`'s queue uses — a viewer who happens to
+          hold an open assignment on that case sees the same Approve/Acknowledge/Request-changes actions there as
+          from the workspace-wide governance inbox; this section doesn't add a second action surface. The section is
+          section's own rail icon is hidden entirely (rather than shown with an in-screen notice) unless the
+          configured Data Entity schema actually has its `entity.change-case` approval workflow enabled
+          (`schema.entity_approval_policy === 'required'`, the same field the Entities app checks before offering
+          "Propose a change") — without that, no `entity.change-case` governance cases are ever created for the
+          schema, so the register would always be empty. This gate is evaluated once, centrally, in
+          `WorkspaceLayout.tsx`'s rail-item visibility list (alongside the existing AI-feature gate on the
+          assistant/extract icons), not per-screen.
 
         - @id:ar.data-stewardship.assessments The Assessments section is a read view over the existing, generic
           assessment machinery (the same `Assessment`/`AssessmentResponse` model Projects and `ar.risk-compliance`'s

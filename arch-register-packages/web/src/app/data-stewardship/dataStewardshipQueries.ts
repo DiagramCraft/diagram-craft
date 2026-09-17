@@ -1,4 +1,5 @@
 import type { WorkspaceCapabilityConfiguration } from '@arch-register/api-types/workspaceCapabilityContract';
+import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 
 const DATA_STEWARDSHIP_CAPABILITY = 'data-stewardship';
 
@@ -32,4 +33,21 @@ export const resolveDataStewardshipConfig = (
   if (!dataEntitySchemaId) return null;
 
   return { dataEntitySchemaId };
+};
+
+/**
+ * Whether the configured Data Entity schema actually has its `entity.change-case` approval
+ * workflow enabled (`entity_approval_policy === 'required'` — the same field
+ * `useEntityBrowserSelection.ts`/`EntityDetailScreen.tsx` check before offering "Propose a
+ * change"). Without it, no `entity.change-case` governance cases are ever created for the schema,
+ * so the Change cases & exceptions section's rail icon is hidden rather than shown as an always-empty
+ * register (`WorkspaceLayout.tsx`'s `visibleRailItems`).
+ */
+export const isChangeCasesWorkflowEnabled = (
+  schemas: readonly Pick<EntitySchema, 'id' | 'entity_approval_policy'>[] | undefined,
+  config: DataStewardshipConfig | null
+): boolean => {
+  if (!config) return false;
+  const schema = schemas?.find(candidate => candidate.id === config.dataEntitySchemaId);
+  return (schema?.entity_approval_policy ?? 'disabled') === 'required';
 };

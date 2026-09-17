@@ -25,6 +25,7 @@ const mocks = vi.hoisted(() => ({
   capabilityConfigurationsList: vi.fn(),
   assignmentsMine: vi.fn(),
   casesList: vi.fn(),
+  membersList: vi.fn(),
   search: {} as Record<string, unknown>
 }));
 
@@ -46,7 +47,8 @@ vi.mock('../../../lib/orpcClient', () => ({
     },
     config: {
       capabilityConfigurations: { list: mocks.capabilityConfigurationsList },
-      assessmentTypes: { list: mocks.assessmentTypesList }
+      assessmentTypes: { list: mocks.assessmentTypesList },
+      members: { list: mocks.membersList }
     }
   }
 }));
@@ -122,6 +124,7 @@ describe('DataStewardshipSidebar', () => {
     mocks.assessmentTypesList.mockResolvedValue([]);
     mocks.assignmentsMine.mockResolvedValue([]);
     mocks.casesList.mockResolvedValue([]);
+    mocks.membersList.mockResolvedValue([]);
     mocks.entityGet.mockResolvedValue(null);
   });
 
@@ -157,11 +160,57 @@ describe('DataStewardshipSidebar', () => {
     );
   });
 
-  it('falls back to the plain section nav list for other sections', async () => {
+  it('renders Change cases & exceptions facets — an all-cases toggle plus a status facet', async () => {
+    mocks.casesList.mockResolvedValue([
+      {
+        id: 'case-1',
+        workspace: 'ws-1',
+        caseKind: 'entity.change-case',
+        subjectType: 'entity',
+        subjectId: 'ds-1',
+        subjectVersion: null,
+        status: 'open',
+        outcome: null,
+        policyVersion: null,
+        initiatorUserId: null,
+        parentCaseId: null,
+        selfApprovalAllowed: false,
+        payload: { entityId: 'ds-1' },
+        initiationFields: [],
+        createdAt: '2026-01-01T00:00:00.000Z',
+        dueAt: null,
+        completedAt: null,
+        cancelledAt: null,
+        escalatedAt: null
+      }
+    ]);
+    mocks.entityGet.mockResolvedValue({
+      _uid: 'ds-1',
+      _publicId: 'DS-001',
+      _name: 'Customer Records',
+      _schema: { id: 'data-entity', name: 'Data Entity' }
+    });
+
     await renderSidebar(DS_CHANGE_CASES_ID);
-    expect(container.textContent).toContain('Sections');
-    expect(container.textContent).toContain('My work');
-    expect(container.textContent).not.toContain('With a coverage gap');
+    expect(container.textContent).toContain('All change cases');
+    expect(container.textContent).toContain('open');
+  });
+
+  it('narrows to a status when its Change cases facet is clicked', async () => {
+    await renderSidebar(DS_CHANGE_CASES_ID);
+    const entry = container.querySelector(
+      '[data-testid="data-stewardship-change-cases-facet-status-open"]'
+    );
+    expect(entry).toBeDefined();
+    await act(async () => {
+      entry!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    expect(mocks.navigate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: '/$workspaceSlug/data-stewardship/change-cases',
+        params: { workspaceSlug: 'ws-1' }
+      })
+    );
   });
 
   it('renders My work scope facets with counts, defaulting to Assigned to me', async () => {

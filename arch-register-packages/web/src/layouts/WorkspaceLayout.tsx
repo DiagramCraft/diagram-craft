@@ -52,6 +52,11 @@ import {
   entityDetailRoute,
   projectDetailRoute
 } from '../routes/publicObjectRoutes';
+import {
+  isChangeCasesWorkflowEnabled,
+  resolveDataStewardshipConfig
+} from '../app/data-stewardship/dataStewardshipQueries';
+import { DS_CHANGE_CASES_ID } from '../app/data-stewardship/dataStewardshipSections';
 
 const routeApi = getRouteApi('/authenticated/$workspaceSlug');
 
@@ -327,12 +332,24 @@ export const WorkspaceLayout = () => {
     });
   }, [activeApp.applicationId, applicationAccess, navigate, workspaceSlug]);
 
+  // Data Stewardship's "Change cases & exceptions" rail icon is only shown once the configured
+  // Data Entity schema actually has its `entity.change-case` approval workflow enabled — without
+  // it, no entity.change-case governance cases are ever created for that schema, so the section
+  // would always be an empty register; hiding the icon (rather than showing an in-screen notice)
+  // keeps the rail itself an honest reflection of what's actually usable, mirroring the aiEnabled
+  // gate on the 'assistant'/'extract' items just below.
+  const changeCasesWorkflowEnabled = isChangeCasesWorkflowEnabled(
+    schemas,
+    resolveDataStewardshipConfig(capabilityConfigurations)
+  );
+
   const visibleRailItems: NavRailItem[] = (() => {
     const aiEnabled = aiConfig?.enabled === true;
     const count = governanceTaskCount?.count ?? 0;
     return activeApp.sections
       .map(section => section.id)
       .filter(id => aiEnabled || (id !== 'assistant' && id !== 'extract'))
+      .filter(id => changeCasesWorkflowEnabled || id !== DS_CHANGE_CASES_ID)
       .map(id => {
         const meta = railItemMeta(id);
         const item: NavRailItem = {
