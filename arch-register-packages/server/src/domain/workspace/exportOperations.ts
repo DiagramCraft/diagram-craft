@@ -31,6 +31,7 @@ import {
   ENTITY_DEPRECATION_POLICY_CASE_KIND,
   getSchemaGovernancePoliciesBySchema
 } from '../governance/schemaGovernancePolicy';
+import { entityDrawerConfigurationSchema } from '@arch-register/api-types/entityDrawerConfiguration';
 
 const checker = new PermissionChecker();
 
@@ -239,12 +240,17 @@ export const exportWorkspace = async (
 };
 
 const exportConfig = async (db: DatabaseAdapter, workspace: string): Promise<ExportConfig> => {
-  const [lifecycleStates, teams, customRoles, capabilityConfigurations] = await Promise.all([
-    db.workspace.listLifecycleStates(workspace),
-    db.workspace.listTeams(workspace),
-    db.workspace.listCustomWorkspaceRoles(workspace),
-    db.workspace.listWorkspaceCapabilityConfigurations(workspace)
-  ]);
+  const [lifecycleStates, teams, customRoles, capabilityConfigurations, entityDrawerConfiguration] =
+    await Promise.all([
+      db.workspace.listLifecycleStates(workspace),
+      db.workspace.listTeams(workspace),
+      db.workspace.listCustomWorkspaceRoles(workspace),
+      db.workspace.listWorkspaceCapabilityConfigurations(workspace),
+      db.workspace.getWorkspaceEntityDrawerConfiguration(workspace)
+    ]);
+  const parsedEntityDrawerConfiguration = entityDrawerConfigurationSchema.safeParse(
+    entityDrawerConfiguration?.configuration
+  );
 
   return {
     lifecycle_states: lifecycleStates.map(state => ({
@@ -274,6 +280,9 @@ const exportConfig = async (db: DatabaseAdapter, workspace: string): Promise<Exp
         bindings: configuration.bindings,
         ...(configuration.view_config != null && { view_config: configuration.view_config })
       }))
+    }),
+    ...(parsedEntityDrawerConfiguration.success && {
+      entity_drawer_configuration: parsedEntityDrawerConfiguration.data
     })
   };
 };

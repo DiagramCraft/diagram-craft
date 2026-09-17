@@ -13,6 +13,7 @@ import type { RelationField } from '@arch-register/api-types/relationSchemaContr
 import type { DocumentAiAction, DocumentField } from '@arch-register/api-types/documentContract';
 import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
 import type { WorkspaceCapabilityBindings } from '@arch-register/api-types/workspaceCapabilityContract';
+import type { EntityDrawerProfiles } from '@arch-register/api-types/entityDrawerConfiguration';
 import type { TemplateDependencyDescriptor } from '@arch-register/api-types/workspaceContract';
 import type {
   SchemaDbResult,
@@ -135,6 +136,7 @@ export type DefinitionSource = {
   relationSchemas: ImportableRelationSchema[];
   fieldGroups: ImportableFieldGroup[];
   capabilityConfigurations: ImportableCapabilityConfiguration[];
+  entityDrawerProfiles: EntityDrawerProfiles;
   dashboardWidgets: DashboardWidget[];
   dependencies: TemplateDependencyDescriptor[];
   schemaPatches: ImportableSchemaPatch[];
@@ -160,6 +162,7 @@ export type DefinitionImportPlan = {
   relationSchemas: ImportableRelationSchema[];
   fieldGroups: ImportableFieldGroup[];
   capabilityConfigurations: ImportableCapabilityConfiguration[];
+  entityDrawerProfiles: EntityDrawerProfiles;
   dashboardWidgets: DashboardWidget[];
   dependencyMappings: DefinitionImportDependencyMapping[];
   schemaPatches: PlannedSchemaPatch[];

@@ -26,6 +26,7 @@ import type {
 } from '../document/db/documentDatabase';
 import type { RelationField } from '@arch-register/api-types/relationSchemaContract';
 import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
+import type { EntityDrawerProfile } from '@arch-register/api-types/entityDrawerConfiguration';
 import type { BrowserView } from '@arch-register/api-types/viewContract';
 import type { EntityQuery, PathStep, QueryNode } from '@arch-register/api-types/entityQueryIR';
 import type { RelationSchemaDbCreate } from './db/relationDatabase';
@@ -296,6 +297,8 @@ export type SchemaTemplate = {
   documentTemplates: SymbolicDocumentTemplate[];
   dashboardWidgets?: SymbolicDashboardWidget[];
   capabilityConfigurations?: SymbolicCapabilityConfiguration[];
+  /** Authored drawer profiles keyed by this template's schema symId. */
+  entityDrawerProfiles?: Record<string, EntityDrawerProfile>;
   views?: SymbolicSavedView[];
   dependencies?: SymbolicTemplateDependency[];
   compositionExtensions?: SymbolicTemplateCompositionExtension[];
@@ -3569,6 +3572,45 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         }
       }
     ],
+    entityDrawerProfiles: {
+      business_capability: {
+        header: {
+          badges: [
+            { kind: 'field', fieldId: 'health' },
+            { kind: 'metadata', slot: 'lifecycle' }
+          ]
+        },
+        sections: [
+          {
+            id: 'strategy-assessment',
+            title: 'Strategy assessment',
+            collapsible: false,
+            items: [
+              { kind: 'field', fieldId: 'capability_type' },
+              { kind: 'field', fieldId: 'value_stream' },
+              { kind: 'field', fieldId: 'maturity' },
+              { kind: 'field', fieldId: 'maturity_target' },
+              { kind: 'field', fieldId: 'strategic_importance' },
+              { kind: 'field', fieldId: 'investment_priority' }
+            ]
+          },
+          {
+            id: 'application-content',
+            title: 'Application content',
+            collapsible: true,
+            items: [
+              {
+                kind: 'slot',
+                slotId: 'strategy.rollup',
+                options: {
+                  rollups: [{ fieldId: 'maturity', aggregation: 'avg', format: 'decimal1' }]
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
     views: [
       {
         id: 'strategy-objectives-table',
@@ -3917,6 +3959,8 @@ export type InstantiatedTemplate = {
     type: string;
     bindings: WorkspaceCapabilityBindings;
   }>;
+  /** Authored drawer profiles keyed by materialized schema id. */
+  entityDrawerProfiles: Record<string, EntityDrawerProfile>;
   dashboardGroups: Array<{ name: string; widgets: DashboardWidget[] }>;
   views: SavedViewDbCreate[];
 };
@@ -3954,6 +3998,7 @@ const emptyInstantiatedTemplate = (): InstantiatedTemplate => ({
   documentTemplates: [],
   dashboardWidgets: [],
   capabilityConfigurations: [],
+  entityDrawerProfiles: {},
   dashboardGroups: [],
   views: []
 });
@@ -4563,6 +4608,12 @@ const materializeTemplateFragments = (
         ) as WorkspaceCapabilityBindings
       })
     );
+    const entityDrawerProfiles = Object.fromEntries(
+      Object.entries(fragment.template.entityDrawerProfiles ?? {}).flatMap(([symId, profile]) => {
+        const schemaId = schemaIds.get(symId);
+        return schemaId ? [[schemaId, profile] as const] : [];
+      })
+    );
 
     return {
       ownerId: fragment.ownerId,
@@ -4579,6 +4630,7 @@ const materializeTemplateFragments = (
         schemaIds
       ),
       capabilityConfigurations,
+      entityDrawerProfiles,
       dashboardGroups:
         fragment.template.dashboardWidgets && fragment.template.dashboardWidgets.length > 0
           ? [
@@ -4764,6 +4816,7 @@ export const instantiateTemplateComposition = (
       });
     }
     result.capabilityConfigurations.push(...module.capabilityConfigurations);
+    Object.assign(result.entityDrawerProfiles, module.entityDrawerProfiles);
     if (module.dashboardWidgets.length > 0) {
       const groupName = module.template.category === 'full' ? 'Overview' : module.template.name;
       result.dashboardGroups.push({ name: groupName, widgets: module.dashboardWidgets });

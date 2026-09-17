@@ -5,6 +5,10 @@ import { isReferenceOrContainmentField } from '@arch-register/api-types/schemaCo
 import type { RelationField } from '@arch-register/api-types/relationSchemaContract';
 import { isEntityRelationField } from '@arch-register/api-types/relationSchemaContract';
 import type { WorkspaceCapabilityBindings } from '@arch-register/api-types/workspaceCapabilityContract';
+import {
+  entityDrawerConfigurationSchema,
+  mergeEntityDrawerProfiles
+} from '@arch-register/api-types/entityDrawerConfiguration';
 import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
 import type { DatabaseAdapter } from '../../db/database';
 import { httpAssert } from '../../utils/httpAssert';
@@ -457,6 +461,36 @@ export const applyDefinitionImport = async (
         created_at: now,
         updated_at: now
       });
+    }
+
+    const importedDrawerProfiles = Object.fromEntries(
+      Object.entries(plan.entityDrawerProfiles).flatMap(([sourceSchemaId, profile]) => {
+        const targetSchemaId = schemaIdMap.get(sourceSchemaId);
+        return targetSchemaId ? [[targetSchemaId, profile] as const] : [];
+      })
+    );
+    if (Object.keys(importedDrawerProfiles).length > 0) {
+      const existingDrawerConfiguration =
+        await tx.workspace.getWorkspaceEntityDrawerConfiguration(workspace);
+      const parsedExistingDrawerConfiguration = entityDrawerConfigurationSchema.safeParse(
+        existingDrawerConfiguration?.configuration
+      );
+      if (!existingDrawerConfiguration || parsedExistingDrawerConfiguration.success) {
+        await tx.workspace.upsertWorkspaceEntityDrawerConfiguration({
+          workspace,
+          configuration: {
+            version: 1,
+            profiles: mergeEntityDrawerProfiles(
+              parsedExistingDrawerConfiguration.success
+                ? parsedExistingDrawerConfiguration.data.profiles
+                : {},
+              importedDrawerProfiles
+            )
+          },
+          created_at: existingDrawerConfiguration?.created_at ?? now,
+          updated_at: now
+        });
+      }
     }
 
     if (plan.dashboardWidgets.length > 0) {

@@ -127,8 +127,9 @@
         - @id:ar.workspace.templates Administrators can create a workspace from no model, one full architecture
           template, or one full template combined with multiple cross-cutting concerns such as Business Glossary,
           Security / Threat Model, Risk & Compliance, and Strategy. Each selected template contributes its entity schemas,
-          select-option enums, document types and associated templates, and saved views scoped to the template's
-          schemas; conflicting later definition names are qualified, and concern dashboards are kept separate from
+          select-option enums, document types and associated templates, saved views scoped to the template's
+          schemas, and any authored schema-scoped entity drawer profiles; conflicting later definition names are
+          qualified, and concern dashboards are kept separate from
           the full template's Overview dashboard. Template objects include entity schemas, enums, typed relation
           schemas, shared field groups, and composition extensions for definitions that depend on more than one
           selected template. Cross-cutting dependencies are declared explicitly and resolved by an administrator
@@ -1358,12 +1359,12 @@
 
         - @id:ar.import-export.workspace-import Authorized users can validate, preview, and execute supported workspace
           imports. Entity and relation schema groups, field-group access controls, reusable shared fieldgroups, workspace
-          capability bindings, and their links are preserved with remapped references; relation endpoints follow remapped entity IDs; imports
-          reject restricted values the importing caller cannot edit, redact restricted values from conflict previews, and report missing
+          capability bindings, their links, and schema-scoped entity drawer profiles are preserved with remapped references; relation endpoints follow remapped entity IDs; imports
+          preserve destination custom drawer profiles, report stale drawer references as non-fatal diagnostics, reject restricted values the importing caller cannot edit, redact restricted values from conflict previews, and report missing
           relation dependencies.
 
         - @id:ar.import-export.workspace-replication Workspace copies preserve schema field groups, shared fieldgroup
-          links, field-group access-control semantics, and workspace capability bindings while remapping
+          links, field-group access-control semantics, workspace capability bindings, and schema-scoped entity drawer profiles while remapping
           workspace-local identifiers.
 
         - @id:ar.import-export.definition-import Workspace administrators can preview and atomically import selected
@@ -1371,7 +1372,7 @@
           administered workspace, including recursively resolved dependencies and remapped references. Cross-cutting
           dependencies can be mapped to one or more existing destination definitions; dependent schema patches are
           applied with the import atomically and versioned/audited. Built-in templates also apply their declared
-          dashboard layout to the default dashboard when the administrator opts in.
+          dashboard layout and authored entity drawer profiles when the administrator opts in.
 
         - @id:ar.import-export.entity-csv Users can import and export entity collections through CSV workflows.
           Columns for fields in access-restricted field groups are omitted from exported CSVs and import templates

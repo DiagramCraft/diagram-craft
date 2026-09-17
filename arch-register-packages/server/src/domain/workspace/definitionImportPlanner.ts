@@ -452,6 +452,11 @@ export const buildDefinitionImportPlan = async ({
       }
     })
   );
+  const entityDrawerProfiles = Object.fromEntries(
+    Object.entries(sourceData.entityDrawerProfiles).filter(([schemaId]) =>
+      resolvedSchemaIds.has(schemaId)
+    )
+  );
 
   for (const schema of schemas) {
     const unresolved = findUnresolvedFieldGroupReferences(schema.fields, schema.groups);
@@ -772,6 +777,7 @@ export const buildDefinitionImportPlan = async ({
       definition: group
     })),
     capabilityConfigurations: mappedCapabilityConfigurations,
+    entityDrawerProfiles,
     dependencyMappings,
     schemaPatches,
     schemaPatchTargets: schemaPatches.map(patch => ({
@@ -799,6 +805,7 @@ export const buildDefinitionImportPlan = async ({
     relationSchemas: mappedRelationSchemas,
     fieldGroups: mappedFieldGroups,
     capabilityConfigurations: mappedCapabilityConfigurations,
+    entityDrawerProfiles,
     dependencyMappings,
     schemaPatches,
     dashboardWidgets: selection.dashboard ? sourceData.dashboardWidgets : [],

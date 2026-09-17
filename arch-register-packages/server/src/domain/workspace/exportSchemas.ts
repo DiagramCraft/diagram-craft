@@ -11,6 +11,7 @@ import type {
   ExportSchema
 } from './exportTypes';
 import { workspaceCapabilityBindingsSchema } from '@arch-register/api-types/workspaceCapabilityContract';
+import { entityDrawerConfigurationSchema } from '@arch-register/api-types/entityDrawerConfiguration';
 
 const exportDataTypeSchema = z.enum([
   'config',
@@ -115,7 +116,8 @@ const exportConfigSchema = z.object({
         view_config: z.unknown().nullish()
       })
     )
-    .optional()
+    .optional(),
+  entity_drawer_configuration: entityDrawerConfigurationSchema.optional()
 });
 
 const sharedFieldGroupSchema = z
