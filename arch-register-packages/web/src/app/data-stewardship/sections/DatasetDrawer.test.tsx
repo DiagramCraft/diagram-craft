@@ -10,8 +10,12 @@ import { asEntityPublicId, entityDetailRoute } from '../../../routes/publicObjec
 const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
   entityGet: vi.fn(),
+  entityList: vi.fn(),
   schemasList: vi.fn(),
-  changeCasesListByEntity: vi.fn()
+  changeCasesListByEntity: vi.fn(),
+  assessmentsList: vi.fn(),
+  assessmentResponsesList: vi.fn(),
+  assessmentTypesList: vi.fn()
 }));
 
 vi.mock('@tanstack/react-router', () => ({
@@ -20,9 +24,12 @@ vi.mock('@tanstack/react-router', () => ({
 
 vi.mock('../../../lib/orpcClient', () => ({
   orpcClient: {
-    entities: { get: mocks.entityGet },
+    entities: { get: mocks.entityGet, list: mocks.entityList },
     schemas: { list: mocks.schemasList },
-    changeCases: { listByEntity: mocks.changeCasesListByEntity }
+    changeCases: { listByEntity: mocks.changeCasesListByEntity },
+    assessments: { list: mocks.assessmentsList },
+    assessmentResponses: { list: mocks.assessmentResponsesList },
+    config: { assessmentTypes: { list: mocks.assessmentTypesList } }
   }
 }));
 
@@ -105,6 +112,10 @@ describe('DatasetDrawer', () => {
     });
     mocks.schemasList.mockResolvedValue([dataEntitySchema]);
     mocks.changeCasesListByEntity.mockResolvedValue([]);
+    mocks.assessmentsList.mockResolvedValue([]);
+    mocks.assessmentResponsesList.mockResolvedValue([]);
+    mocks.assessmentTypesList.mockResolvedValue([]);
+    mocks.entityList.mockResolvedValue({ items: [], total: 0 });
   });
 
   afterEach(() => {
@@ -152,7 +163,7 @@ describe('DatasetDrawer', () => {
     expect(container.textContent).toContain(
       'Not yet available — exceptions/waivers ship with #3301.'
     );
-    expect(container.textContent).toContain('Not yet available — assessments ship with #3302.');
+    expect(container.textContent).toContain('No assessments target this dataset.');
     expect(container.textContent).toContain('API & Integration Catalog');
   });
 
@@ -186,6 +197,55 @@ describe('DatasetDrawer', () => {
 
     expect(container.textContent).toContain('Reclassify to restricted');
     expect(container.textContent).not.toContain('No change cases linked.');
+  });
+
+  it('lists assessments scoped to this dataset', async () => {
+    mocks.assessmentsList.mockResolvedValue([
+      {
+        id: 'assess-1',
+        workspace: 'ws-1',
+        project_id: 'proj-1',
+        name: 'DPIA — customer profile',
+        description: '',
+        status: 'open',
+        mode: 'fields',
+        assessment_type_id: 'type-dpia',
+        scope: ['data-entity'],
+        scope_conditions: [],
+        fields: [],
+        groups: [],
+        assigned_team_ids: [],
+        due_at: '2099-01-01T00:00:00.000Z',
+        recurrence: { type: 'none' },
+        response_window_days: null,
+        current_occurrence: 1,
+        next_occurrence_at: null,
+        response_count: 0,
+        completed_entity_count: 0,
+        team_acknowledge_status: [],
+        created_at: '2026-01-01T00:00:00.000Z',
+        updated_at: '2026-01-01T00:00:00.000Z'
+      }
+    ]);
+    mocks.assessmentTypesList.mockResolvedValue([
+      {
+        id: 'type-dpia',
+        workspace: 'ws-1',
+        name: 'DPIA',
+        sort_order: 0,
+        created_at: '2026-01-01T00:00:00.000Z',
+        updated_at: '2026-01-01T00:00:00.000Z'
+      }
+    ]);
+    mocks.entityList.mockResolvedValue({
+      items: [{ _uid: 'ds-1', _publicId: 'DS-001', _name: 'Customer Records', _owner: null }],
+      total: 1
+    });
+    await renderDrawer();
+
+    // No required fields, so `computeAssessmentStatus` reports Complete trivially.
+    expect(container.textContent).toContain('DPIA — Complete');
+    expect(container.textContent).not.toContain('No assessments target this dataset.');
   });
 
   it('navigates to the entity detail route when "Open record in Entities" is clicked', async () => {

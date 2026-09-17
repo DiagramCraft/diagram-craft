@@ -84,13 +84,16 @@ export const dataStewardshipAppDefinition: AppDefinition = {
       )
     },
     {
-      // No `primarySidebar`: like My work, Assessments is a self-contained register with its own
-      // due panels and in-page filters rather than a facet/nav sidebar, so the shell renders it
-      // full-width (same as `riskComplianceAppDefinition`'s Assessments).
       id: DS_ASSESSMENTS_ID,
       icon: TbChecklist,
       tooltip: 'Assessments',
-      route: DS_RAIL_PATHS[DS_ASSESSMENTS_ID]
+      route: DS_RAIL_PATHS[DS_ASSESSMENTS_ID],
+      primarySidebar: ctx => (
+        <DataStewardshipSidebar
+          workspaceSlug={ctx.workspaceSlug}
+          activeSection={DS_ASSESSMENTS_ID}
+        />
+      )
     }
   ],
   enablement: { capabilityType: 'data-stewardship' }

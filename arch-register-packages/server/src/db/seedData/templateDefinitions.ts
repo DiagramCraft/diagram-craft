@@ -311,5 +311,6 @@ export const SEED_CAPABILITY_CONFIGURATION_IDS = {
   'business-glossary': '00000000-0000-0000-0000-000000000008',
   'strategy-model': '00000000-0000-0000-0000-00000000000a',
   'vendor-management': '00000000-0000-0000-0000-00000000000b',
+  'data-stewardship': '00000000-0000-0000-0000-00000000000c',
   retention: RETENTION_IDS.capabilityConfiguration
 } as const;

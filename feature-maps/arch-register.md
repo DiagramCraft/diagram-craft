@@ -504,8 +504,8 @@
       own optional `dataEntity` binding references). The Change cases & exceptions section reuses the existing
       `entity.change-case` governance-case kind directly rather than a bound schema — Change Case is a built-in
       governance-case type, not a workspace-defined entity schema, so the capability has only the one binding role.
-      My work, Change cases & exceptions, and Assessments are still scaffolded placeholders pending their own
-      sub-issues of the Data Stewardship epic; Stewardship and Classification have shipped their real content.
+      My work and Change cases & exceptions are still scaffolded placeholders pending their own sub-issues of the
+      Data Stewardship epic; Stewardship, Classification, and Assessments have shipped their real content.
 
         - @id:ar.data-stewardship.my-work The My work section (the app switcher's landing section) is scaffolded as
           a placeholder pending its own review-queue, assigned-cases, and six-week-calendar content.
@@ -560,8 +560,36 @@
         - @id:ar.data-stewardship.change-cases The Change cases & exceptions section is scaffolded as a placeholder
           pending its own change-proposal and time-bound exception/waiver register content.
 
-        - @id:ar.data-stewardship.assessments The Assessments section is scaffolded as a placeholder pending its own
-          DPIA, transfer-impact-assessment, records-survey, and data-quality-run content.
+        - @id:ar.data-stewardship.assessments The Assessments section is a read view over the existing, generic
+          assessment machinery (the same `Assessment`/`AssessmentResponse` model Projects and `ar.risk-compliance`'s
+          own Assessments screen already use — no new questionnaire engine), scoped to whichever assessments target
+          the workspace's Data Entity schema. One row per assessment — not per dataset, even though a real
+          `Assessment` can scope many dataset entities: an earlier version joined every in-scope assessment against
+          every dataset entity it targets (matching the Claude Design reference's `DSAssessments` mock, where each
+          mock assessment record is already bound to exactly one dataset), but that repeated a "progress" bar per row
+          for what is really one assessment-level number once an assessment spans several datasets, so it was
+          replaced with one row per assessment and an aggregate progress bar (in-scope datasets with a complete
+          response, over the total in scope, off `Assessment.completed_entity_count`) — mirroring
+          `ar.risk-compliance.assessments`'s own one-row-per-assessment register. A four-tile stat strip (Overdue, In
+          progress, Not started, Complete) sits above a searchable table (Assessment — name plus its `description` as
+          a subtitle, Kind, Project, a progress bar, Questions, Due, Status); the design reference's "Dataset",
+          "Owner", and "Findings" columns have no analog once a row is a whole assessment rather than one dataset
+          (the same "Kind/Owner/Findings/Opened" gap `ar.risk-compliance`'s own Assessments screen already
+          documents), so they're dropped — replaced with a Project column resolving `assessment.project_id` — rather
+          than invented, with "Not started" promoted to its own stat-strip tile in "Findings"'s place so the strip
+          stays a genuine 4-way partition. Kind is the assessment's workspace-managed assessment-type name (falling
+          back to "Uncategorized"); Questions is the assessment's field count. Status is Overdue once the assessment
+          is open and past its due date with an incomplete rollup, otherwise Complete/In progress/Not started off the
+          same rollup. Like `ar.risk-compliance.assessments`, a row click navigates to the assessment's owning
+          Project, deep-linked to its Assessments tab (assessments are authored/filled there, not in this app). The
+          status facet lives in this section's own primary sidebar (all/Overdue/In progress/Not started/Complete,
+          mirroring the stat strip's own buckets) rather than an in-page toggle, the same facet-sidebar shape
+          `ar.data-stewardship.stewardship`/`ar.data-stewardship.classification` use; only free-text search (name,
+          kind, project) stays in the screen's own toolbar. The per-(assessment, dataset) join from the earlier
+          version still exists internally and backs the shared dataset drawer's own Assessments section (that
+          dataset's status on that assessment, listed alongside its attributes/stewardship/coverage/cases). A header
+          action links out to the My work section (still a placeholder) for sign-offs due, mirroring the design
+          reference.
 
     - @id:ar.entities Users can maintain a structured catalog of architectural entities and their relationships.
 

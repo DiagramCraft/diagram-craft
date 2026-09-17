@@ -11,6 +11,9 @@ import { asEntityPublicId, entityDetailRoute } from '../../../routes/publicObjec
 import { useDatasetCoverageRollup } from '../useDatasetCoverageRollup';
 import { DATASET_COVERAGE_GAP_LABEL } from '../datasetCoverage';
 import { fieldLabel, datasetFieldValue } from '../datasetFieldDisplay';
+import { useDataStewardshipAssessmentRows } from '../useDataStewardshipAssessmentRows';
+import { DS_ASSESSMENT_STATUS_LABEL } from '../dataStewardshipAssessments';
+import { dueLabel, dueTone } from '../../../utils/assessmentDueTone';
 import type { DataStewardshipConfig } from '../dataStewardshipQueries';
 import styles from './DatasetDrawer.module.css';
 
@@ -27,9 +30,10 @@ const STEWARDSHIP_TEXT_FIELDS = [
 
 /**
  * Slide-over showing one dataset's (Information Asset / Data Entity's) attributes, stewardship
- * metadata, coverage roll-up, change cases, and placeholders for the sections later sub-issues of
- * #3152 own (queue items #3298, exceptions #3301, assessments #3302) or that need a dependency not
- * yet configured (flows/systems, which need the API & Integration Catalog app, #3150). Mirrors
+ * metadata, coverage roll-up, change cases, assessments (`useDataStewardshipAssessmentRows`,
+ * filtered to this dataset — #3302), and placeholders for the sections later sub-issues of #3152
+ * own (queue items #3298, exceptions #3301) or that need a dependency not yet configured
+ * (flows/systems, which need the API & Integration Catalog app, #3150). Mirrors
  * `../../risk-compliance/sections/RiskDrawer.tsx`.
  */
 export const DatasetDrawer = ({
@@ -54,6 +58,12 @@ export const DatasetDrawer = ({
 
   const coverage = useDatasetCoverageRollup(workspaceSlug, uid);
   const cases = useChangeCasesByEntity(workspaceSlug, uid ?? '', !!uid);
+  const assessments = useDataStewardshipAssessmentRows(
+    workspaceSlug,
+    dataStewardshipConfig.dataEntitySchemaId,
+    !!uid
+  );
+  const assessmentRowsForDataset = assessments.rows.filter(row => row.entity._uid === uid);
 
   if (dataset.isLoading) {
     return (
@@ -166,7 +176,27 @@ export const DatasetDrawer = ({
       <span className="dim">Not yet available — exceptions/waivers ship with #3301.</span>
 
       <div className={styles.sectionLabel}>Assessments</div>
-      <span className="dim">Not yet available — assessments ship with #3302.</span>
+      {assessments.isLoading ? (
+        <span className="dim">Loading…</span>
+      ) : assessmentRowsForDataset.length === 0 ? (
+        <span className="dim">No assessments target this dataset.</span>
+      ) : (
+        <div className={styles.tags}>
+          {assessmentRowsForDataset.map(row => (
+            <Chip
+              key={row.assessment.id}
+              tone="ghost"
+              title={`${row.kind} · due ${dueLabel(row.due)}`}
+              color={row.status === 'overdue' ? 'var(--cmp-fg-danger, #ef4444)' : undefined}
+            >
+              {row.kind} — {DS_ASSESSMENT_STATUS_LABEL[row.status]}
+              <span className="dim" style={{ marginLeft: 4, color: dueTone(row.due) }}>
+                {dueLabel(row.due)}
+              </span>
+            </Chip>
+          ))}
+        </div>
+      )}
 
       <div className={styles.sectionLabel}>Flows</div>
       <span className="dim">

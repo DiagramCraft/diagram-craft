@@ -1,8 +1,10 @@
 /**
- * Day-count due-date idiom shared by `RiskComplianceAssessmentsScreen.tsx`'s register and
- * `AssessmentDuePanel.tsx` — mirrors the design reference's `rcDueTone`/day-count labels
- * (`rc-data.jsx`, `rc-views.jsx`'s `RCAssessments`): "18d" / "6d late" rather than a plain
- * formatted date, coloured danger/warning/ok by how close (or past) the due date is.
+ * Day-count due-date idiom shared by Risk & Compliance's `RiskComplianceAssessmentsScreen.tsx`
+ * register and `AssessmentDuePanel.tsx`, and Data Stewardship's `DataStewardshipAssessmentsScreen.tsx`
+ * — mirrors the design reference's `rcDueTone`/`dsDueTone` day-count labels (`rc-data.jsx`/`rc-views.jsx`,
+ * `ds-data.jsx`/`ds-views.jsx`): "18d" / "6d late" rather than a plain formatted date, coloured
+ * danger/warning/ok by how close (or past) the due date is. Promoted out of `app/risk-compliance/`
+ * once a second app needed the identical logic, rather than duplicating it.
  */
 const daysUntil = (dueAt: string): number =>
   Math.round((new Date(dueAt).getTime() - Date.now()) / 86400000);

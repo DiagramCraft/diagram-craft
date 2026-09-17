@@ -15,6 +15,7 @@ import { seededAssessments, seededProjects, seededSchemas } from '../seedFixture
 import {
   MILESTONE_IDS,
   PROJECT_ENTITY_TYPE_IDS,
+  SEED_SCHEMA_IDS,
   STRATEGY_IDS,
   TEAM_IDS,
   USER_IDS,
@@ -799,6 +800,74 @@ export const seedAssessments: AssessmentDbCreate[] = [
     assigned_team_ids: [],
     due_at: new Date('2026-01-15T00:00:00.000Z'),
     recurrence: { type: 'monthly', intervalMonths: 3 },
+    response_window_days: null,
+    current_occurrence: 1,
+    pending_occurrence_job_run_id: null,
+    next_occurrence_at: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    // Scoped to the Data Entity schema - gives Data Stewardship's Assessments section (#3302)
+    // something to show in the demo dataset; still open and due in the future, so every dataset row
+    // shows as "Not started".
+    id: '00000000-0000-0000-0025-000000000001',
+    workspace: WORKSPACE_ID,
+    project_id: seededProjects.checkoutRevamp.id,
+    name: 'Data quality review — customer data entities',
+    description: 'Annual completeness and duplicate-rate review across governed datasets.',
+    status: 'open',
+    mode: 'fields',
+    assessment_type_id: '00000000-0000-0000-0024-000000000002',
+    scope: [SEED_SCHEMA_IDS.dataEntity],
+    scope_conditions: [],
+    fields: [
+      {
+        id: 'f1',
+        label: 'Completeness threshold met',
+        type: 'rating',
+        requirementLevel: 'required'
+      },
+      {
+        id: 'f2',
+        label: 'Duplicate rate acceptable',
+        type: 'rating',
+        requirementLevel: 'required'
+      },
+      { id: 'f3', label: 'Notes', type: 'text', requirementLevel: 'optional' }
+    ],
+    groups: [],
+    assigned_team_ids: [],
+    due_at: new Date('2027-03-01T00:00:00.000Z'),
+    recurrence: { type: 'none' },
+    response_window_days: null,
+    current_occurrence: 1,
+    pending_occurrence_job_run_id: null,
+    next_occurrence_at: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    // Also scoped to the Data Entity schema, but past due and still open - the counterpart to the
+    // one above, so the Assessments section's "Overdue" stat tile has something to show too.
+    id: '00000000-0000-0000-0025-000000000002',
+    workspace: WORKSPACE_ID,
+    project_id: seededProjects.portalRedesign.id,
+    name: 'Privacy impact assessment — customer data entities',
+    description: 'Assess lawful basis and processing purposes for each governed dataset.',
+    status: 'open',
+    mode: 'fields',
+    assessment_type_id: null,
+    scope: [SEED_SCHEMA_IDS.dataEntity],
+    scope_conditions: [],
+    fields: [
+      { id: 'f1', label: 'Lawful basis confirmed', type: 'rating', requirementLevel: 'required' },
+      { id: 'f2', label: 'Notes', type: 'text', requirementLevel: 'optional' }
+    ],
+    groups: [],
+    assigned_team_ids: [],
+    due_at: new Date('2025-12-01T00:00:00.000Z'),
+    recurrence: { type: 'none' },
     response_window_days: null,
     current_occurrence: 1,
     pending_occurrence_job_run_id: null,

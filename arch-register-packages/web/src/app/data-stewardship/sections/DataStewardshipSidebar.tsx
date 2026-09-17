@@ -1,7 +1,16 @@
 import { useMemo } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
-import { TbDatabase, TbLayersLinked, TbAlertTriangle, TbUser } from 'react-icons/tb';
+import {
+  TbAlertTriangle,
+  TbChecklist,
+  TbCircleCheck,
+  TbCircleDashed,
+  TbClockHour4,
+  TbDatabase,
+  TbLayersLinked,
+  TbUser
+} from 'react-icons/tb';
 import {
   SidebarGroupLabel,
   SidebarTitleHeader
@@ -17,13 +26,20 @@ import {
 import { computeDatasetCoverage } from '../datasetCoverage';
 import { isPersonalData } from '../dataFlowClassification';
 import {
+  DS_ASSESSMENTS_ID,
   DS_CLASSIFICATION_ID,
   DS_RAIL_PATHS,
   DS_SECTIONS,
   DS_STEWARDSHIP_ID,
   type DataStewardshipRailItemId
 } from '../dataStewardshipSections';
+import {
+  DS_ASSESSMENT_STATUS_LABEL,
+  type DataStewardshipAssessmentStatus
+} from '../dataStewardshipAssessments';
+import { useDataStewardshipAssessmentRows } from '../useDataStewardshipAssessmentRows';
 import type {
+  DataStewardshipAssessmentsSearchParams,
   DataStewardshipClassificationSearchParams,
   DataStewardshipStewardshipSearchParams
 } from '../../../routes/searchParams';
@@ -257,18 +273,94 @@ const ClassificationSidebarContent = ({
   );
 };
 
+const ASSESSMENT_STATUS_FACET_ICON: Record<
+  DataStewardshipAssessmentStatus,
+  typeof TbAlertTriangle
+> = {
+  overdue: TbAlertTriangle,
+  in_progress: TbClockHour4,
+  not_started: TbCircleDashed,
+  complete: TbCircleCheck
+};
+
+/**
+ * The Assessments section's own primary-sidebar content — the stat strip's four status buckets as
+ * facets (All / Overdue / In progress / Not started / Complete), mirroring the Claude Design
+ * reference's `DSSidebar` (`ds.jsx`) and this file's own Stewardship/Classification facet panels.
+ * Replaces the toolbar's in-page status toggle that `DataStewardshipAssessmentsScreen.tsx` used
+ * before this section had its own sidebar content, same "facet moves to the sidebar once the
+ * section has one" shape those two screens already established.
+ */
+const AssessmentsSidebarContent = ({
+  workspaceSlug,
+  dataStewardshipConfig
+}: {
+  workspaceSlug: string;
+  dataStewardshipConfig: DataStewardshipConfig;
+}) => {
+  const navigate = useNavigate();
+  const search = useSearch({ strict: false }) as DataStewardshipAssessmentsSearchParams;
+  const { summaries } = useDataStewardshipAssessmentRows(
+    workspaceSlug,
+    dataStewardshipConfig.dataEntitySchemaId
+  );
+
+  const statusCounts = useMemo(() => {
+    const counts = new Map<DataStewardshipAssessmentStatus, number>();
+    for (const summary of summaries)
+      counts.set(summary.status, (counts.get(summary.status) ?? 0) + 1);
+    return counts;
+  }, [summaries]);
+
+  const patchSearch = (patch: Partial<DataStewardshipAssessmentsSearchParams>) =>
+    navigate({
+      to: DS_RAIL_PATHS[DS_ASSESSMENTS_ID],
+      params: { workspaceSlug },
+      search: (previous: Record<string, unknown>) => ({ ...previous, ...patch })
+    });
+
+  return (
+    <>
+      <TreeRow
+        icon={<TbChecklist size={12} />}
+        label="All"
+        testId="data-stewardship-assessments-facet-all"
+        active={!search.status}
+        onClick={() => patchSearch({ status: undefined })}
+        trailing={<span className="dim mono">{summaries.length}</span>}
+      />
+      {(Object.keys(DS_ASSESSMENT_STATUS_LABEL) as DataStewardshipAssessmentStatus[]).map(
+        status => {
+          const Icon = ASSESSMENT_STATUS_FACET_ICON[status];
+          return (
+            <TreeRow
+              key={status}
+              icon={<Icon size={12} />}
+              label={DS_ASSESSMENT_STATUS_LABEL[status]}
+              testId={`data-stewardship-assessments-facet-${status}`}
+              active={search.status === status}
+              onClick={() => patchSearch({ status: search.status === status ? undefined : status })}
+              trailing={<span className="dim mono">{statusCounts.get(status) ?? 0}</span>}
+            />
+          );
+        }
+      )}
+    </>
+  );
+};
+
 /**
  * Section-dependent primary sidebar for the Data Stewardship app: navigation between the app's
  * five rail sections, gated on the `data-stewardship` capability configuration — mirrors
  * `../../vendor-management/sections/VendorManagementSidebar.tsx`'s `!enabled` empty state and its
  * fallback "Sections" nav list.
  *
- * Stewardship and Classification swap in their own facet content (`StewardshipSidebarContent`,
- * `ClassificationSidebarContent`) once enabled. My work / Change cases & exceptions / Assessments
- * still render only the shared nav list for now — their real facet content (review-queue facets,
- * case status facets) lands alongside each section's own content in later sub-issues of #3152,
- * mirroring how `VendorManagementSidebar` grew its own facet content incrementally after its
- * scaffold.
+ * Stewardship, Classification, and Assessments swap in their own facet content
+ * (`StewardshipSidebarContent`, `ClassificationSidebarContent`, `AssessmentsSidebarContent`) once
+ * enabled. My work / Change cases & exceptions still render only the shared nav list for now —
+ * their real facet content (review-queue facets, case status facets) lands alongside each section's
+ * own content in later sub-issues of #3152, mirroring how `VendorManagementSidebar` grew its own
+ * facet content incrementally after its scaffold.
  */
 export const DataStewardshipSidebar = ({
   workspaceSlug,
@@ -294,6 +386,11 @@ export const DataStewardshipSidebar = ({
           />
         ) : activeSection === DS_CLASSIFICATION_ID ? (
           <ClassificationSidebarContent
+            workspaceSlug={workspaceSlug}
+            dataStewardshipConfig={dataStewardshipConfig}
+          />
+        ) : activeSection === DS_ASSESSMENTS_ID ? (
+          <AssessmentsSidebarContent
             workspaceSlug={workspaceSlug}
             dataStewardshipConfig={dataStewardshipConfig}
           />
