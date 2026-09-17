@@ -6,7 +6,7 @@ import { join, relative } from 'node:path';
 // values in `changes`). Only the files below are allowed to call it directly:
 //  - auditOperations.ts, which always redacts via `redactAuditEntryChanges` before returning
 //    (`listAuditLog`), or strips `changes` immediately via `stripAuditChanges` (`getAuditStats`)
-//  - workspaceAnalyticsOperations.ts, which strips `changes` immediately via `stripAuditChanges`
+//  - workspaceAnalyticsOperations.ts, which uses `listAuditLogSummaries()` and never loads JSON
 //  - DB contract tests, which assert raw DB-layer behavior
 //
 // If this test fails because a new call site appeared, don't just add it to the allowlist: make

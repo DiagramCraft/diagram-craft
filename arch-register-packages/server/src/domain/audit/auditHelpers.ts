@@ -1,4 +1,7 @@
-import type { AuditLogDbResult as InternalAuditLogEntry } from './db/auditDatabase';
+import type {
+  AuditLogDbResult as InternalAuditLogEntry,
+  AuditLogSummaryDbResult
+} from './db/auditDatabase';
 import { AuditLogEntry, AuditStats } from '@arch-register/api-types/auditContract';
 
 export type AuditListFilters = {
@@ -30,7 +33,7 @@ export const filterAndPaginateAuditLogs = (
 };
 
 export const computeAuditStats = (
-  rows: Omit<InternalAuditLogEntry, 'changes'>[],
+  rows: AuditLogSummaryDbResult[],
   nowMs = Date.now()
 ): AuditStats => {
   const byOperationMap = new Map<string, number>();

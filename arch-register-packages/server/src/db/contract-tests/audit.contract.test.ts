@@ -124,5 +124,72 @@ runContractSuiteAgainstBothDrivers('AuditDatabase', getDb => {
       expect(ids.indexOf(newer.id)).toBeLessThan(ids.indexOf(older.id));
       expect(logs.every(l => l.user_display_name === user.display_name)).toBe(true);
     });
+
+    it('applies database filters and uses the id as a deterministic timestamp tie-breaker', async () => {
+      const db = getDb();
+      const workspace = await createFixtureWorkspace(db);
+      const timestamp = new Date('2026-01-01T00:00:00.000Z');
+
+      const first = await db.audit.createAuditLog({
+        workspace,
+        timestamp,
+        user_id: null,
+        operation: 'create',
+        entity_type: 'entity',
+        entity_id: randomUUID(),
+        entity_name: 'first',
+        entity_slug: null,
+        schema_id: null,
+        changes: {},
+        metadata: {}
+      });
+      const second = await db.audit.createAuditLog({
+        workspace,
+        timestamp,
+        user_id: null,
+        operation: 'create',
+        entity_type: 'entity',
+        entity_id: randomUUID(),
+        entity_name: 'second',
+        entity_slug: null,
+        schema_id: null,
+        changes: {},
+        metadata: {}
+      });
+
+      const logs = await db.audit.listAuditLogs(workspace, {
+        operation: 'create',
+        limit: 2,
+        offset: 0
+      });
+      expect(logs.map(log => log.id)).toEqual([first.id, second.id].sort().reverse());
+      expect(
+        await db.audit.listAuditLogs(workspace, { entityId: first.entity_id })
+      ).toHaveLength(1);
+    });
+
+    it('lists lightweight summaries without loading audit JSON columns', async () => {
+      const db = getDb();
+      const workspace = await createFixtureWorkspace(db);
+      await db.audit.createAuditLog({
+        workspace,
+        timestamp: new Date(),
+        user_id: null,
+        operation: 'update',
+        entity_type: 'project',
+        entity_id: randomUUID(),
+        entity_name: 'project',
+        entity_slug: null,
+        schema_id: null,
+        changes: { new: { secret: 'value' } },
+        metadata: { source: 'test' }
+      });
+
+      const summaries = await db.audit.listAuditLogSummaries(workspace);
+      expect(summaries).toHaveLength(1);
+      expect(summaries[0]).toMatchObject({ operation: 'update', entity_type: 'project' });
+      expect(summaries[0]).not.toHaveProperty('changes');
+      expect(summaries[0]).not.toHaveProperty('metadata');
+    });
   });
 });
