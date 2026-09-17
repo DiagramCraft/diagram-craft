@@ -525,11 +525,20 @@
           change-case approvals, entity deprecation approvals) — the Claude Design reference's mocked "Access
           request" and "Data-subject request" queue kinds have no backing case-kind model anywhere in the workspace
           and are dropped rather than fabricated; bulk entity-change proposals are dropped too (out of scope for a
-          first cut, since joining them to a dataset needs an extra bulk-proposal lookup). Clicking a review-reminder
-          row opens the shared dataset drawer; clicking a change-case/deprecation row opens a new, minimal read-only
-          case drawer (status, dates, the linked dataset, a link to the entity — no approval-chain UI or
-          decide/withdraw/remind actions, which remain on the workspace-wide governance inbox screen). The shared
-          dataset drawer's own "Queue items" section now shows this same per-dataset queue instead of a placeholder.
+          first cut, since joining them to a dataset needs an extra bulk-proposal lookup). Every queue row — review
+          reminders included — opens a new governance case drawer, not the shared dataset drawer, since the point of
+          a queue row is the case that needs acting on: it shows case identity/dates, the linked dataset (with a
+          button through to the shared dataset drawer), and, when the current user holds the open, actionable
+          assignment on that case, the same Approve/Acknowledge (and, on entity-change-case/document-status kinds,
+          Request changes with a reason) decision actions the workspace-wide governance inbox screen offers, reusing
+          that screen's own decide mutation so a decision made here is identical in effect. Whether those actions
+          show depends on the same "list my own assignments" endpoint the Assignee-facet gap above already
+          documents: opened from "Assigned to me" they're reliably present, but opened from "All open items"/"Past
+          due" they only appear if the viewer also happens to hold that case's open assignment; otherwise the drawer
+          is a read-only view of the case. Withdraw/Send-reminder aren't offered here (both are initiator-only and
+          stay on the workspace-wide governance inbox screen, to avoid showing a button that would fail server-side
+          for most viewers of this queue). The shared dataset drawer's own "Queue items" section shows this same
+          per-dataset queue (opening the same case drawer, not a placeholder).
 
         - @id:ar.data-stewardship.stewardship The Stewardship section has a four-tile stat strip (fully covered %,
           missing an owner, reviews overdue, missing a steward), a "Gaps to close" panel (every dataset with a

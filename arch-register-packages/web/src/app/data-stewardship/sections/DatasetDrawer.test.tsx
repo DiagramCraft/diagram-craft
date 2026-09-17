@@ -301,6 +301,54 @@ describe('DatasetDrawer', () => {
     expect(onOpenCase).toHaveBeenCalledWith('case-1');
   });
 
+  it('opens the case drawer for a field-date-reminder queue item too, not just decision cases', async () => {
+    mocks.casesList.mockResolvedValue([
+      {
+        id: 'case-2',
+        workspace: 'ws-1',
+        caseKind: 'field-date-reminder',
+        subjectType: 'entity',
+        subjectId: 'ds-1',
+        subjectVersion: null,
+        status: 'open',
+        outcome: null,
+        policyVersion: null,
+        initiatorUserId: null,
+        parentCaseId: null,
+        selfApprovalAllowed: false,
+        payload: { fieldName: 'review_date' },
+        initiationFields: [],
+        createdAt: '2026-01-01T00:00:00.000Z',
+        dueAt: null,
+        completedAt: null,
+        cancelledAt: null,
+        escalatedAt: null
+      }
+    ]);
+    const onOpenCase = vi.fn();
+    await act(async () => {
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <DatasetDrawer
+            workspaceSlug="ws-1"
+            datasetId="ds-1"
+            dataStewardshipConfig={dataStewardshipConfig}
+            onClose={vi.fn()}
+            onOpenCase={onOpenCase}
+          />
+        </QueryClientProvider>
+      );
+    });
+    await flushUntilNoLoading();
+
+    const queueButton = [...container.querySelectorAll('button')].find(button =>
+      button.textContent?.includes('Date reminder')
+    );
+    expect(queueButton).toBeDefined();
+    await act(async () => queueButton!.click());
+    expect(onOpenCase).toHaveBeenCalledWith('case-2');
+  });
+
   it('navigates to the entity detail route when "Open record in Entities" is clicked', async () => {
     await renderDrawer();
 

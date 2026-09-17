@@ -62,6 +62,11 @@ const DECISION_CASE_KINDS = new Set(['entity.change-case', 'entity.deprecation']
  * There is no "assignee" facet/column: `governance.assignments.mine` only resolves an assignment
  * target for the current user's own tasks, so it can't be populated honestly for the "All open
  * items"/"Past due" scopes — the "Assigned to me" scope facet already conveys assignment implicitly.
+ *
+ * Every row opens the governance case drawer (`DataStewardshipCaseDrawer.tsx`) — not the shared
+ * dataset drawer, even for `field-date-reminder` rows — since the point of a queue row is the case
+ * that needs acting on, and that drawer surfaces the real Approve/Acknowledge/Request-changes
+ * actions plus a link through to the dataset, rather than the other way around.
  */
 export const DataStewardshipMyWorkScreen = () => {
   const { workspaceSlug } = useParams({ strict: false }) as { workspaceSlug: string };
@@ -114,13 +119,7 @@ export const DataStewardshipMyWorkScreen = () => {
       search: (previous: Record<string, unknown>) => ({ ...previous, ...patch })
     });
 
-  const openItem = (item: DataStewardshipQueueItem) => {
-    if (item.case.caseKind === 'field-date-reminder') {
-      patchSearch({ datasetId: item.dataset._publicId });
-    } else {
-      patchSearch({ caseId: item.case.id });
-    }
-  };
+  const openItem = (item: DataStewardshipQueueItem) => patchSearch({ caseId: item.case.id });
 
   if (configurations.isLoading) {
     return <div className={styles.empty}>Loading data stewardship…</div>;
@@ -254,6 +253,7 @@ export const DataStewardshipMyWorkScreen = () => {
           workspaceSlug={workspaceSlug}
           caseId={search.caseId}
           onClose={() => patchSearch({ caseId: undefined })}
+          onOpenDataset={datasetId => patchSearch({ caseId: undefined, datasetId })}
         />
       )}
     </div>

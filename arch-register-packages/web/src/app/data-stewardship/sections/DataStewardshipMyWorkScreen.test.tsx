@@ -3,6 +3,7 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { DialogContextProvider } from '@diagram-craft/app-components/Dialog';
 import { DataStewardshipMyWorkScreen } from './DataStewardshipMyWorkScreen';
 
 const mocks = vi.hoisted(() => ({
@@ -13,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   changeCasesListByEntity: vi.fn(),
   capabilityConfigurationsList: vi.fn(),
   assignmentsMine: vi.fn(),
+  assignmentsDecide: vi.fn(),
   casesList: vi.fn(),
   governanceCaseGet: vi.fn(),
   params: { workspaceSlug: 'ws-1' } as { workspaceSlug: string },
@@ -31,7 +33,7 @@ vi.mock('../../../lib/orpcClient', () => ({
     schemas: { list: mocks.schemasList },
     changeCases: { listByEntity: mocks.changeCasesListByEntity },
     governance: {
-      assignments: { mine: mocks.assignmentsMine },
+      assignments: { mine: mocks.assignmentsMine, decide: mocks.assignmentsDecide },
       cases: { list: mocks.casesList, get: mocks.governanceCaseGet }
     },
     config: { capabilityConfigurations: { list: mocks.capabilityConfigurationsList } }
@@ -82,7 +84,9 @@ describe('DataStewardshipMyWorkScreen', () => {
     await act(async () => {
       root.render(
         <QueryClientProvider client={queryClient}>
-          <DataStewardshipMyWorkScreen />
+          <DialogContextProvider onDialogShow={() => {}} onDialogHide={() => {}}>
+            <DataStewardshipMyWorkScreen />
+          </DialogContextProvider>
         </QueryClientProvider>
       );
     });
@@ -166,7 +170,7 @@ describe('DataStewardshipMyWorkScreen', () => {
     expect(container.textContent).not.toContain('No queue items match'); // sanity: real content rendered
   });
 
-  it('opens the dataset drawer for a field-date-reminder row', async () => {
+  it('opens the case drawer for a field-date-reminder row, not the dataset drawer', async () => {
     mocks.assignmentsMine.mockResolvedValue([
       { assignment: null, case: governanceCase(), requiresAction: false }
     ]);
@@ -185,7 +189,7 @@ describe('DataStewardshipMyWorkScreen', () => {
       })
     );
     const call = mocks.navigate.mock.calls.at(-1)?.[0];
-    expect(call.search({})).toEqual({ datasetId: 'DS-001' });
+    expect(call.search({})).toEqual({ caseId: 'case-1' });
   });
 
   it('opens the case drawer for a change-case row', async () => {
@@ -206,5 +210,45 @@ describe('DataStewardshipMyWorkScreen', () => {
 
     const call = mocks.navigate.mock.calls.at(-1)?.[0];
     expect(call.search({})).toEqual({ caseId: 'case-3' });
+  });
+
+  it('opens the case drawer with an Acknowledge action for a review reminder I hold the assignment on', async () => {
+    mocks.search = { caseId: 'case-1' };
+    mocks.governanceCaseGet.mockResolvedValue(governanceCase());
+    mocks.assignmentsMine.mockResolvedValue([
+      {
+        assignment: {
+          id: 'a-1',
+          caseId: 'case-1',
+          action: 'acknowledge',
+          targetType: 'user',
+          targetUserId: 'user-1',
+          targetTeamId: null,
+          targetTeamRole: null,
+          targetCapability: null,
+          status: 'open',
+          createdAt: '2026-01-01T00:00:00.000Z',
+          resolvedAt: null
+        },
+        case: governanceCase(),
+        requiresAction: true
+      }
+    ]);
+    mocks.assignmentsDecide.mockResolvedValue({ case: governanceCase(), event: {} });
+
+    await renderScreen();
+
+    const acknowledgeButton = [...container.querySelectorAll('button')].find(
+      button => button.textContent === 'Acknowledge'
+    );
+    expect(acknowledgeButton).toBeDefined();
+    await act(async () => acknowledgeButton!.click());
+
+    expect(mocks.assignmentsDecide).toHaveBeenCalledWith(
+      expect.objectContaining({
+        params: { workspace: 'ws-1', id: 'a-1' },
+        body: expect.objectContaining({ decision: 'acknowledge' })
+      })
+    );
   });
 });

@@ -49,9 +49,9 @@ export const DatasetDrawer = ({
   datasetId: string;
   dataStewardshipConfig: DataStewardshipConfig;
   onClose: () => void;
-  /** Opens a case drawer for a change-case/deprecation queue item — only `DataStewardshipMyWorkScreen.tsx`
-   *  currently has one (`DataStewardshipCaseDrawer.tsx`, #3298); when omitted, decision-case queue
-   *  items in the list below render without a click action instead of silently failing. */
+  /** Opens the governance case drawer for a queue item — only `DataStewardshipMyWorkScreen.tsx`
+   *  currently has one (`DataStewardshipCaseDrawer.tsx`, #3298); when omitted, queue items in the
+   *  list below render without a click action instead of silently failing. */
   onOpenCase?: (caseId: string) => void;
 }) => {
   const navigate = useNavigate();
@@ -178,9 +178,6 @@ export const DatasetDrawer = ({
         <span className="dim">Nothing in the queue against this dataset.</span>
       ) : (
         queueItemsForDataset.map(item => {
-          const isDecisionCase =
-            item.case.caseKind === 'entity.change-case' ||
-            item.case.caseKind === 'entity.deprecation';
           const content = (
             <>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -193,7 +190,7 @@ export const DatasetDrawer = ({
               </div>
             </>
           );
-          return isDecisionCase && onOpenCase ? (
+          return onOpenCase ? (
             <button
               key={item.case.id}
               type="button"
