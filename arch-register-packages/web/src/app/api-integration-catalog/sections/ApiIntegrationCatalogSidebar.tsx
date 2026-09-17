@@ -40,7 +40,9 @@ export const ApiIntegrationCatalogSidebar = ({
       <SidebarTitleHeader title="API & Integration Catalog" />
       <div className={styles.scroll}>
         {!enabled ? (
-          <div className={`${styles.emptyState} dim`}>API & Integration Catalog is not enabled.</div>
+          <div className={`${styles.emptyState} dim`}>
+            API & Integration Catalog is not enabled.
+          </div>
         ) : (
           <>
             <SidebarGroupLabel>Sections</SidebarGroupLabel>

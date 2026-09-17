@@ -25,7 +25,9 @@ describe('resolveApiIntegrationCatalogConfig', () => {
   });
 
   it('returns null when the configuration is invalid', () => {
-    expect(resolveApiIntegrationCatalogConfig([{ ...validConfiguration, valid: false }])).toBeNull();
+    expect(
+      resolveApiIntegrationCatalogConfig([{ ...validConfiguration, valid: false }])
+    ).toBeNull();
   });
 
   it('returns null when the required api binding is missing or unbound', () => {

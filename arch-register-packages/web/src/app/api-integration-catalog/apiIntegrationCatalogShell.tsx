@@ -48,7 +48,10 @@ export const apiIntegrationCatalogAppDefinition: AppDefinition = {
       tooltip: 'APIs',
       route: IC_RAIL_PATHS[IC_APIS_ID],
       primarySidebar: ctx => (
-        <ApiIntegrationCatalogSidebar workspaceSlug={ctx.workspaceSlug} activeSection={IC_APIS_ID} />
+        <ApiIntegrationCatalogSidebar
+          workspaceSlug={ctx.workspaceSlug}
+          activeSection={IC_APIS_ID}
+        />
       )
     },
     {
@@ -69,7 +72,10 @@ export const apiIntegrationCatalogAppDefinition: AppDefinition = {
       tooltip: 'Sync',
       route: IC_RAIL_PATHS[IC_SYNC_ID],
       primarySidebar: ctx => (
-        <ApiIntegrationCatalogSidebar workspaceSlug={ctx.workspaceSlug} activeSection={IC_SYNC_ID} />
+        <ApiIntegrationCatalogSidebar
+          workspaceSlug={ctx.workspaceSlug}
+          activeSection={IC_SYNC_ID}
+        />
       )
     },
     {
