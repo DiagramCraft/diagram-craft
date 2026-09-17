@@ -31,6 +31,11 @@ import {
   DS_CLASSIFICATION_ID,
   DS_RAIL_PATHS
 } from '../app/data-stewardship/dataStewardshipSections';
+import {
+  IC_OVERVIEW_ID,
+  IC_APIS_ID,
+  IC_RAIL_PATHS
+} from '../app/api-integration-catalog/apiIntegrationCatalogSections';
 
 const railIds = (appId: Parameters<typeof getAppDefinition>[0]) =>
   getAppDefinition(appId).sections.map(section => section.id);
@@ -109,6 +114,15 @@ describe('appShellRegistry', () => {
     expect(getRailSection(DS_CLASSIFICATION_ID)?.route).toBe(DS_RAIL_PATHS[DS_CLASSIFICATION_ID]);
   });
 
+  it('registers API & Integration Catalog as a capability-gated app owning five rail sections, with a separate Overview', () => {
+    const apiIntegrationCatalog = getAppDefinition(IC_OVERVIEW_ID);
+    expect(apiIntegrationCatalog.applicationId).toBe('api-integration-catalog');
+    expect(railIds(IC_OVERVIEW_ID)).toHaveLength(5);
+    expect(railIds(IC_OVERVIEW_ID)[0]).toBe(IC_OVERVIEW_ID);
+    expect(apiIntegrationCatalog.enablement).toEqual({ capabilityType: 'api-specification' });
+    expect(getRailSection(IC_APIS_ID)?.route).toBe(IC_RAIL_PATHS[IC_APIS_ID]);
+  });
+
   it('exposes non-home app routes under the stable APP_RAIL_ROUTES shape', () => {
     // Heatmaps is absent from the rail (see above), so its route is not in APP_RAIL_ROUTES.
     const shellStrategyRoutes = Object.fromEntries(
@@ -119,7 +133,8 @@ describe('appShellRegistry', () => {
       ...shellStrategyRoutes,
       ...VENDOR_RAIL_PATHS,
       ...RISK_RAIL_PATHS,
-      ...DS_RAIL_PATHS
+      ...DS_RAIL_PATHS,
+      ...IC_RAIL_PATHS
     });
   });
 

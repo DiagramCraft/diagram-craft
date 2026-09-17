@@ -144,6 +144,27 @@ export const LazyDataStewardshipAssessmentsScreen = lazyRouteComponent(
   () => import('../../app/data-stewardship/sections/DataStewardshipAssessmentsScreen'),
   'DataStewardshipAssessmentsScreen'
 );
+export const LazyApiIntegrationCatalogOverviewScreen = lazyRouteComponent(
+  () => import('../../app/api-integration-catalog/sections/ApiIntegrationCatalogOverviewScreen'),
+  'ApiIntegrationCatalogOverviewScreen'
+);
+export const LazyApiIntegrationCatalogApisScreen = lazyRouteComponent(
+  () => import('../../app/api-integration-catalog/sections/ApiIntegrationCatalogApisScreen'),
+  'ApiIntegrationCatalogApisScreen'
+);
+export const LazyApiIntegrationCatalogIntegrationsScreen = lazyRouteComponent(
+  () =>
+    import('../../app/api-integration-catalog/sections/ApiIntegrationCatalogIntegrationsScreen'),
+  'ApiIntegrationCatalogIntegrationsScreen'
+);
+export const LazyApiIntegrationCatalogSyncScreen = lazyRouteComponent(
+  () => import('../../app/api-integration-catalog/sections/ApiIntegrationCatalogSyncScreen'),
+  'ApiIntegrationCatalogSyncScreen'
+);
+export const LazyApiIntegrationCatalogImpactScreen = lazyRouteComponent(
+  () => import('../../app/api-integration-catalog/sections/ApiIntegrationCatalogImpactScreen'),
+  'ApiIntegrationCatalogImpactScreen'
+);
 export const LazyWorkspaceSettingsScreen = lazyRouteComponent(
   () => import('../../sections/workspace-settings/WorkspaceSettingsScreen'),
   'WorkspaceSettingsScreen'

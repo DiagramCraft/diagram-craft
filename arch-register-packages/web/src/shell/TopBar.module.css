@@ -523,7 +523,7 @@
   position: absolute;
   top: 32px;
   left: 0;
-  width: 440px;
+  width: 640px;
   white-space: normal;
   background: var(--cmp-bg);
   border: 1px solid var(--cmp-border);
@@ -535,7 +535,7 @@
 
 .appswGrid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 4px;
   padding: 2px;
 }
