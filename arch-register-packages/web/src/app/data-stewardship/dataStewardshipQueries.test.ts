@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import type { WorkspaceCapabilityConfiguration } from '@arch-register/api-types/workspaceCapabilityContract';
-import { isChangeCasesWorkflowEnabled, resolveDataStewardshipConfig } from './dataStewardshipQueries';
+import {
+  isChangeCasesWorkflowEnabled,
+  resolveDataStewardshipConfig
+} from './dataStewardshipQueries';
 
 const binding = (id: string) => ({ target: { kind: 'entity_schema' as const, id } });
 
@@ -48,8 +51,12 @@ describe('isChangeCasesWorkflowEnabled', () => {
   const config = { dataEntitySchemaId: 'data-entity-schema' };
 
   it('is false when there is no data-stewardship config at all', () => {
-    expect(isChangeCasesWorkflowEnabled([{ id: 'data-entity-schema', entity_approval_policy: 'required' }], null))
-      .toBe(false);
+    expect(
+      isChangeCasesWorkflowEnabled(
+        [{ id: 'data-entity-schema', entity_approval_policy: 'required' }],
+        null
+      )
+    ).toBe(false);
   });
 
   it('is false when the configured schema is missing from the schema list', () => {

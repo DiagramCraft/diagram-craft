@@ -75,8 +75,8 @@ export const useDataStewardshipChangeCases = (
                 case: governanceCase,
                 dataset,
                 requesterName: governanceCase.initiatorUserId
-                  ? memberNameById.get(governanceCase.initiatorUserId) ??
-                    governanceCase.initiatorUserId
+                  ? (memberNameById.get(governanceCase.initiatorUserId) ??
+                    governanceCase.initiatorUserId)
                   : null,
                 risk: queueItemPriority(governanceCase)
               }

@@ -129,7 +129,9 @@ export const DataStewardshipChangeCasesScreen = () => {
         <Table.Body>
           {filteredCases.length === 0 ? (
             <Table.EmptyRow colSpan={8}>
-              {changeCases.isLoading ? 'Loading change cases…' : 'No change cases match these filters.'}
+              {changeCases.isLoading
+                ? 'Loading change cases…'
+                : 'No change cases match these filters.'}
             </Table.EmptyRow>
           ) : (
             filteredCases.map(row => (

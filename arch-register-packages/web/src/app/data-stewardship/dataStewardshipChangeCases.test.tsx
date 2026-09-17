@@ -75,9 +75,7 @@ describe('useDataStewardshipChangeCases', () => {
     mocks.casesList.mockReset();
     mocks.entityGet.mockReset();
     mocks.membersList.mockReset();
-    mocks.membersList.mockResolvedValue([
-      { user_id: 'user-1', display_name: 'Alex Requester' }
-    ]);
+    mocks.membersList.mockResolvedValue([{ user_id: 'user-1', display_name: 'Alex Requester' }]);
   });
 
   afterEach(() => {
