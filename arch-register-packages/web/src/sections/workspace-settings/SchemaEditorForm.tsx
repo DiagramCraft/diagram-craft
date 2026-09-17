@@ -68,6 +68,8 @@ export const SchemaEditorForm = ({
   onToggleDetailLayoutEnabled,
   detailLayout,
   onDetailLayoutChange,
+  schemaId,
+  canEditDrawer,
   onDelete,
   onSave
 }: {
@@ -123,6 +125,8 @@ export const SchemaEditorForm = ({
   onToggleDetailLayoutEnabled: (enabled: boolean) => void;
   detailLayout: DetailLayoutConfig;
   onDetailLayoutChange: (layout: DetailLayoutConfig) => void;
+  schemaId?: string;
+  canEditDrawer?: boolean;
   onDelete?: () => void;
   onSave: () => void;
 }) => (
@@ -196,6 +200,8 @@ export const SchemaEditorForm = ({
       onToggleDetailLayoutEnabled={onToggleDetailLayoutEnabled}
       detailLayout={detailLayout}
       onDetailLayoutChange={onDetailLayoutChange}
+      schemaId={schemaId}
+      canEditDrawer={canEditDrawer ?? canEdit}
     />
   </SchemaEditorFormShell>
 );

@@ -155,6 +155,10 @@
               derived fields, and other query-driven behavior. Parsing, compilation, entity visibility, and field-group
               redaction use the same query and authorization pipeline as the entity browser.
 
+            - @id:ar.workspace.configuration.entity-drawers Administrators can configure a schema-scoped,
+              read-only entity drawer with ordered sections, fields, metadata, relations, and registered semantic
+              content slots. Missing or unsupported references fall back safely to the derived default drawer.
+
             - @id:ar.workspace.configuration.schemas Administrators can define entity schemas, fields, select options,
             and reusable workspace enums. Enum options have stable values, editable labels and descriptions, an
             optional restricted/sensitive marker, ordering, and a retired state that preserves historical values while

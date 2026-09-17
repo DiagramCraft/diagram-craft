@@ -44,12 +44,13 @@ const props: ComponentProps<typeof SchemaEditorTabs> = {
 };
 
 describe('SchemaEditorTabs', () => {
-  it('renders the stable fields, templates, validation, and layout tabs', () => {
+  it('renders the stable fields, templates, validation, layout, and drawer tabs', () => {
     const markup = renderToStaticMarkup(<SchemaEditorTabs {...props} />);
     expect(markup).toContain('Fields');
     expect(markup).toContain('Templates');
     expect(markup).toContain('Validation');
     expect(markup).toContain('Layout');
+    expect(markup).toContain('Entity drawer');
   });
 
   it('shows the custom layout editor only when the toggle is enabled', () => {

@@ -424,6 +424,8 @@ export const SchemaSettingsScreen = () => {
                 relationSchemas
               )
             }
+            schemaId={selected?.id}
+            canEditDrawer={canEdit}
             onDetailLayoutChange={layout =>
               editor.updateDraft(current => ({ ...current, detailLayout: layout }))
             }
