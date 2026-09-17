@@ -1,17 +1,29 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type {
+  ListGovernanceCasesQuery,
   ListGovernanceSubmissionsQuery,
   ListGovernanceTasksQuery
 } from '@arch-register/api-types/governanceContract';
 import { orpcClient } from '../lib/orpcClient';
 import {
   governanceCaseEventsQuery,
+  governanceCaseQuery,
+  governanceCasesQuery,
   governanceSubmissionsQuery,
   governanceTaskCountQuery,
   governanceTasksQuery,
   invalidateGovernanceQueries
 } from '../queries/governance';
 import { invalidateNotificationQueries } from '../queries/notifications';
+
+export const useGovernanceCases = (
+  workspaceId: string,
+  query: ListGovernanceCasesQuery = {},
+  enabled = true
+) => useQuery(governanceCasesQuery(workspaceId, query, enabled));
+
+export const useGovernanceCase = (workspaceId: string, caseId: string | null, enabled = true) =>
+  useQuery(governanceCaseQuery(workspaceId, caseId, enabled));
 
 export const useGovernanceTasks = (
   workspaceId: string,

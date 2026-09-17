@@ -14,6 +14,8 @@ import { fieldLabel, datasetFieldValue } from '../datasetFieldDisplay';
 import { useDataStewardshipAssessmentRows } from '../useDataStewardshipAssessmentRows';
 import { DS_ASSESSMENT_STATUS_LABEL } from '../dataStewardshipAssessments';
 import { dueLabel, dueTone } from '../../../utils/assessmentDueTone';
+import { caseKindLabel } from '../../../utils/governanceCaseLabels';
+import { useDataStewardshipQueue } from '../dataStewardshipQueue';
 import type { DataStewardshipConfig } from '../dataStewardshipQueries';
 import styles from './DatasetDrawer.module.css';
 
@@ -30,22 +32,27 @@ const STEWARDSHIP_TEXT_FIELDS = [
 
 /**
  * Slide-over showing one dataset's (Information Asset / Data Entity's) attributes, stewardship
- * metadata, coverage roll-up, change cases, assessments (`useDataStewardshipAssessmentRows`,
- * filtered to this dataset — #3302), and placeholders for the sections later sub-issues of #3152
- * own (queue items #3298, exceptions #3301) or that need a dependency not yet configured
- * (flows/systems, which need the API & Integration Catalog app, #3150). Mirrors
- * `../../risk-compliance/sections/RiskDrawer.tsx`.
+ * metadata, coverage roll-up, open queue items (`useDataStewardshipQueue`, filtered to this
+ * dataset — #3298), change cases, assessments (`useDataStewardshipAssessmentRows`, filtered to
+ * this dataset — #3302), and placeholders for the sections later sub-issues of #3152 own
+ * (exceptions #3301) or that need a dependency not yet configured (flows/systems, which need the
+ * API & Integration Catalog app, #3150). Mirrors `../../risk-compliance/sections/RiskDrawer.tsx`.
  */
 export const DatasetDrawer = ({
   workspaceSlug,
   datasetId,
   dataStewardshipConfig,
-  onClose
+  onClose,
+  onOpenCase
 }: {
   workspaceSlug: string;
   datasetId: string;
   dataStewardshipConfig: DataStewardshipConfig;
   onClose: () => void;
+  /** Opens a case drawer for a change-case/deprecation queue item — only `DataStewardshipMyWorkScreen.tsx`
+   *  currently has one (`DataStewardshipCaseDrawer.tsx`, #3298); when omitted, decision-case queue
+   *  items in the list below render without a click action instead of silently failing. */
+  onOpenCase?: (caseId: string) => void;
 }) => {
   const navigate = useNavigate();
   const dataset = useQuery(entityDetailQuery(workspaceSlug, datasetId));
@@ -64,6 +71,16 @@ export const DatasetDrawer = ({
     !!uid
   );
   const assessmentRowsForDataset = assessments.rows.filter(row => row.entity._uid === uid);
+  // Reuses the same workspace-wide "all open items" queue My work builds (#3298), narrowed to this
+  // one dataset — rather than a bespoke per-dataset query, so the two surfaces can never disagree
+  // about which cases are open/relevant.
+  const queue = useDataStewardshipQueue(
+    workspaceSlug,
+    dataStewardshipConfig.dataEntitySchemaId,
+    'all',
+    !!uid
+  );
+  const queueItemsForDataset = queue.items.filter(item => item.dataset._uid === uid);
 
   if (dataset.isLoading) {
     return (
@@ -154,8 +171,51 @@ export const DatasetDrawer = ({
         </div>
       )}
 
-      <div className={styles.sectionLabel}>Queue items</div>
-      <span className="dim">Not yet available — queue items ship with #3298.</span>
+      <div className={styles.sectionLabel}>Queue items — {queueItemsForDataset.length}</div>
+      {queue.isLoading ? (
+        <span className="dim">Loading…</span>
+      ) : queueItemsForDataset.length === 0 ? (
+        <span className="dim">Nothing in the queue against this dataset.</span>
+      ) : (
+        queueItemsForDataset.map(item => {
+          const isDecisionCase =
+            item.case.caseKind === 'entity.change-case' ||
+            item.case.caseKind === 'entity.deprecation';
+          const content = (
+            <>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 11.5, color: 'var(--fg-0)' }}>
+                  {caseKindLabel(item.case.caseKind, item.case.payload)}
+                </span>
+              </div>
+              <div className="dim" style={{ fontSize: 10.5, marginTop: 3 }}>
+                <span className="mono">due {dueLabel(item.case.dueAt)}</span>
+              </div>
+            </>
+          );
+          return isDecisionCase && onOpenCase ? (
+            <button
+              key={item.case.id}
+              type="button"
+              className={styles.attributeRow}
+              style={{
+                width: '100%',
+                textAlign: 'left',
+                background: 'none',
+                border: 0,
+                cursor: 'pointer'
+              }}
+              onClick={() => onOpenCase(item.case.id)}
+            >
+              {content}
+            </button>
+          ) : (
+            <div key={item.case.id} className={styles.attributeRow}>
+              {content}
+            </div>
+          );
+        })
+      )}
 
       <div className={styles.sectionLabel}>Cases</div>
       {cases.isLoading ? (

@@ -34,9 +34,7 @@ import {
   invalidateEntityChangeQueries
 } from '../../queries/entityChanges';
 import { useWithdrawEntityChangeApproval } from '../../hooks/useEntityChanges';
-
-const humanize = (value: string) =>
-  value.replace(/[._-]+/g, ' ').replace(/\b\w/g, character => character.toUpperCase());
+import { caseKindLabel, humanizeCaseKind as humanize } from '../../utils/governanceCaseLabels';
 
 const InitiationFieldSummary = ({
   fields
@@ -55,14 +53,6 @@ const InitiationFieldSummary = ({
       ))}
     </div>
   );
-};
-
-const caseKindLabel = (caseKind: string, payload: Record<string, unknown>) => {
-  if (caseKind === 'field-date-reminder') {
-    const fieldName = payload['fieldName'];
-    return typeof fieldName === 'string' ? `Date reminder · ${fieldName}` : 'Date reminder';
-  }
-  return humanize(caseKind);
 };
 
 const previewNote = (note: string) => (note.length > 180 ? `${note.slice(0, 177)}…` : note);

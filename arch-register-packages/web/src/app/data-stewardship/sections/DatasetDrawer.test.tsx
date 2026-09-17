@@ -15,7 +15,8 @@ const mocks = vi.hoisted(() => ({
   changeCasesListByEntity: vi.fn(),
   assessmentsList: vi.fn(),
   assessmentResponsesList: vi.fn(),
-  assessmentTypesList: vi.fn()
+  assessmentTypesList: vi.fn(),
+  casesList: vi.fn()
 }));
 
 vi.mock('@tanstack/react-router', () => ({
@@ -29,6 +30,7 @@ vi.mock('../../../lib/orpcClient', () => ({
     changeCases: { listByEntity: mocks.changeCasesListByEntity },
     assessments: { list: mocks.assessmentsList },
     assessmentResponses: { list: mocks.assessmentResponsesList },
+    governance: { cases: { list: mocks.casesList } },
     config: { assessmentTypes: { list: mocks.assessmentTypesList } }
   }
 }));
@@ -116,6 +118,7 @@ describe('DatasetDrawer', () => {
     mocks.assessmentResponsesList.mockResolvedValue([]);
     mocks.assessmentTypesList.mockResolvedValue([]);
     mocks.entityList.mockResolvedValue({ items: [], total: 0 });
+    mocks.casesList.mockResolvedValue([]);
   });
 
   afterEach(() => {
@@ -159,7 +162,7 @@ describe('DatasetDrawer', () => {
     expect(container.textContent).toContain('Principal user-1');
     expect(container.textContent).toContain('Yes'); // dsCovered
     expect(container.textContent).toContain('No change cases linked.');
-    expect(container.textContent).toContain('Not yet available — queue items ship with #3298.');
+    expect(container.textContent).toContain('Nothing in the queue against this dataset.');
     expect(container.textContent).toContain(
       'Not yet available — exceptions/waivers ship with #3301.'
     );
@@ -246,6 +249,56 @@ describe('DatasetDrawer', () => {
     // No required fields, so `computeAssessmentStatus` reports Complete trivially.
     expect(container.textContent).toContain('DPIA — Complete');
     expect(container.textContent).not.toContain('No assessments target this dataset.');
+  });
+
+  it('lists open queue items for this dataset and opens the case drawer on click', async () => {
+    mocks.casesList.mockResolvedValue([
+      {
+        id: 'case-1',
+        workspace: 'ws-1',
+        caseKind: 'entity.change-case',
+        subjectType: 'entity',
+        subjectId: 'ds-1',
+        subjectVersion: null,
+        status: 'open',
+        outcome: null,
+        policyVersion: null,
+        initiatorUserId: null,
+        parentCaseId: null,
+        selfApprovalAllowed: false,
+        payload: {},
+        initiationFields: [],
+        createdAt: '2026-01-01T00:00:00.000Z',
+        dueAt: null,
+        completedAt: null,
+        cancelledAt: null,
+        escalatedAt: null
+      }
+    ]);
+    const onOpenCase = vi.fn();
+    await act(async () => {
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <DatasetDrawer
+            workspaceSlug="ws-1"
+            datasetId="ds-1"
+            dataStewardshipConfig={dataStewardshipConfig}
+            onClose={vi.fn()}
+            onOpenCase={onOpenCase}
+          />
+        </QueryClientProvider>
+      );
+    });
+    await flushUntilNoLoading();
+
+    expect(container.textContent).toContain('Queue items — 1');
+    expect(container.textContent).toContain('Entity Change Case');
+    const queueButton = [...container.querySelectorAll('button')].find(button =>
+      button.textContent?.includes('Entity Change Case')
+    );
+    expect(queueButton).toBeDefined();
+    await act(async () => queueButton!.click());
+    expect(onOpenCase).toHaveBeenCalledWith('case-1');
   });
 
   it('navigates to the entity detail route when "Open record in Entities" is clicked', async () => {
