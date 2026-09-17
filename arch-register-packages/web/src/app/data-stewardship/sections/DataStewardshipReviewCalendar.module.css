@@ -1,0 +1,82 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+  margin: 8px;
+}
+
+@media (max-width: 1420px) {
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.cell {
+  border: 1px solid var(--panel-border);
+  background-color: var(--base-bg);
+  border-radius: var(--r-md);
+  padding: 8px;
+  min-height: 100px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.cellNow {
+  border-color: var(--cmp-accent-dim, var(--panel-border));
+}
+
+.cellHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.cellLabel {
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.cellCount {
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.empty {
+  font-size: 10.5px;
+  padding: 4px 0;
+  color: var(--text-muted);
+}
+
+.entries {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-y: auto;
+}
+
+.entry {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 4px 6px;
+  border-radius: var(--r-sm);
+  border-left: 2px solid var(--tone, var(--panel-border));
+  border-top: 1px solid var(--panel-border);
+  border-right: 1px solid var(--panel-border);
+  border-bottom: 1px solid var(--panel-border);
+  font-size: 10.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  background: var(--base-bg);
+  cursor: pointer;
+}
+
+.entry:hover {
+  background: var(--base-bg-hover);
+}

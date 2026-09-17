@@ -504,11 +504,41 @@
       own optional `dataEntity` binding references). The Change cases & exceptions section reuses the existing
       `entity.change-case` governance-case kind directly rather than a bound schema — Change Case is a built-in
       governance-case type, not a workspace-defined entity schema, so the capability has only the one binding role.
-      My work and Change cases & exceptions are still scaffolded placeholders pending their own sub-issues of the
-      Data Stewardship epic; Stewardship, Classification, and Assessments have shipped their real content.
+      Change cases & exceptions is still a scaffolded placeholder pending its own sub-issue of the Data Stewardship
+      epic; My work, Stewardship, Classification, and Assessments have shipped their real content.
 
-        - @id:ar.data-stewardship.my-work The My work section (the app switcher's landing section) is scaffolded as
-          a placeholder pending its own review-queue, assigned-cases, and six-week-calendar content.
+        - @id:ar.data-stewardship.my-work The My work section (the app switcher's landing section) is the review
+          queue over the workspace's existing governance-case/reminder machinery — not a new queue model — scoped
+          down to cases against Data Entities. A four-tile stat strip (Assigned to me, Past due, Cases awaiting a
+          decision, Reviews overdue — substituting the design reference's "Exceptions lapsed or expiring" stat,
+          since the exception/waiver register doesn't exist yet, #3301) sits above a six-week due-date calendar
+          (weekly buckets, an already-overdue item folded into the current week rather than dropped off the front,
+          mirroring `ar.vendor-management`'s own monthly renewal calendar's overdue handling) and the queue list
+          itself (kind, a derived priority pill, the dataset, and a due-date badge). Unlike every other section's
+          in-screen toggle, the scope tabs (Assigned to me / All open items / Past due) live in this section's own
+          primary sidebar as a facet, alongside a Kind facet and a derived Priority facet (High/Medium/Low, computed
+          from a case's due date and escalation state — governance cases carry no priority field of their own).
+          There is deliberately no Assignee facet or column: the workspace's "list my own assignments" endpoint only
+          resolves an assignment target for the current user's own tasks, so it can't be populated for the "All open
+          items"/"Past due" scopes; the "Assigned to me" scope already conveys assignment implicitly. The queue only
+          ever surfaces case kinds that actually exist in this codebase (dataset review-date reminders, entity
+          change-case approvals, entity deprecation approvals) — the Claude Design reference's mocked "Access
+          request" and "Data-subject request" queue kinds have no backing case-kind model anywhere in the workspace
+          and are dropped rather than fabricated; bulk entity-change proposals are dropped too (out of scope for a
+          first cut, since joining them to a dataset needs an extra bulk-proposal lookup). Every queue row — review
+          reminders included — opens a new governance case drawer, not the shared dataset drawer, since the point of
+          a queue row is the case that needs acting on: it shows case identity/dates, the linked dataset (with a
+          button through to the shared dataset drawer), and, when the current user holds the open, actionable
+          assignment on that case, the same Approve/Acknowledge (and, on entity-change-case/document-status kinds,
+          Request changes with a reason) decision actions the workspace-wide governance inbox screen offers, reusing
+          that screen's own decide mutation so a decision made here is identical in effect. Whether those actions
+          show depends on the same "list my own assignments" endpoint the Assignee-facet gap above already
+          documents: opened from "Assigned to me" they're reliably present, but opened from "All open items"/"Past
+          due" they only appear if the viewer also happens to hold that case's open assignment; otherwise the drawer
+          is a read-only view of the case. Withdraw/Send-reminder aren't offered here (both are initiator-only and
+          stay on the workspace-wide governance inbox screen, to avoid showing a button that would fail server-side
+          for most viewers of this queue). The shared dataset drawer's own "Queue items" section shows this same
+          per-dataset queue (opening the same case drawer, not a placeholder).
 
         - @id:ar.data-stewardship.stewardship The Stewardship section has a four-tile stat strip (fully covered %,
           missing an owner, reviews overdue, missing a steward), a "Gaps to close" panel (every dataset with a
@@ -588,7 +618,7 @@
           kind, project) stays in the screen's own toolbar. The per-(assessment, dataset) join from the earlier
           version still exists internally and backs the shared dataset drawer's own Assessments section (that
           dataset's status on that assessment, listed alongside its attributes/stewardship/coverage/cases). A header
-          action links out to the My work section (still a placeholder) for sign-offs due, mirroring the design
+          action links out to the My work section for sign-offs due, mirroring the design
           reference.
 
     - @id:ar.entities Users can maintain a structured catalog of architectural entities and their relationships.

@@ -8,7 +8,9 @@ import {
   TbCircleDashed,
   TbClockHour4,
   TbDatabase,
+  TbFlag,
   TbLayersLinked,
+  TbListCheck,
   TbUser
 } from 'react-icons/tb';
 import {
@@ -28,6 +30,7 @@ import { isPersonalData } from '../dataFlowClassification';
 import {
   DS_ASSESSMENTS_ID,
   DS_CLASSIFICATION_ID,
+  DS_MY_WORK_ID,
   DS_RAIL_PATHS,
   DS_SECTIONS,
   DS_STEWARDSHIP_ID,
@@ -38,9 +41,17 @@ import {
   type DataStewardshipAssessmentStatus
 } from '../dataStewardshipAssessments';
 import { useDataStewardshipAssessmentRows } from '../useDataStewardshipAssessmentRows';
+import {
+  queueItemPriority,
+  useDataStewardshipQueue,
+  type DataStewardshipQueuePriority,
+  type DataStewardshipQueueScope
+} from '../dataStewardshipQueue';
+import { caseKindLabel } from '../../../utils/governanceCaseLabels';
 import type {
   DataStewardshipAssessmentsSearchParams,
   DataStewardshipClassificationSearchParams,
+  DataStewardshipMyWorkSearchParams,
   DataStewardshipStewardshipSearchParams
 } from '../../../routes/searchParams';
 import styles from '../../../shell/SidePanel.module.css';
@@ -273,6 +284,128 @@ const ClassificationSidebarContent = ({
   );
 };
 
+const PRIORITY_FACET_LABEL: Record<DataStewardshipQueuePriority, string> = {
+  high: 'High',
+  medium: 'Medium',
+  low: 'Low'
+};
+
+const SCOPE_FACET_LABEL: Record<DataStewardshipQueueScope, string> = {
+  mine: 'Assigned to me',
+  all: 'All open items',
+  late: 'Past due'
+};
+
+/**
+ * The My work section's own primary-sidebar content: scope tabs (mirroring the in-screen `Tabs`
+ * on `DataStewardshipMyWorkScreen.tsx`, so either can drive the same `scope` search param), a Kind
+ * facet (one row per governance case kind actually present in the current scope), and a derived
+ * Priority facet (`queueItemPriority` — there is no real priority field on a governance case, see
+ * `../dataStewardshipQueue.ts`). No Assignee facet: `governance.assignments.mine` only resolves an
+ * assignment target for the current user's own tasks, so it can't be populated for "All open
+ * items"/"Past due" — see #3298's plan.
+ */
+const MyWorkSidebarContent = ({
+  workspaceSlug,
+  dataStewardshipConfig
+}: {
+  workspaceSlug: string;
+  dataStewardshipConfig: DataStewardshipConfig;
+}) => {
+  const navigate = useNavigate();
+  const search = useSearch({ strict: false }) as DataStewardshipMyWorkSearchParams;
+  const scope: DataStewardshipQueueScope = search.scope ?? 'mine';
+
+  const mineQueue = useDataStewardshipQueue(
+    workspaceSlug,
+    dataStewardshipConfig.dataEntitySchemaId,
+    'mine'
+  );
+  const allQueue = useDataStewardshipQueue(
+    workspaceSlug,
+    dataStewardshipConfig.dataEntitySchemaId,
+    'all'
+  );
+  const lateCount = allQueue.items.filter(
+    item => item.case.dueAt != null && new Date(item.case.dueAt) < new Date()
+  ).length;
+  const scopeCounts: Record<DataStewardshipQueueScope, number> = {
+    mine: mineQueue.items.length,
+    all: allQueue.items.length,
+    late: lateCount
+  };
+
+  const activeItems = scope === 'mine' ? mineQueue.items : allQueue.items;
+  const kindCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const item of activeItems)
+      counts.set(item.case.caseKind, (counts.get(item.case.caseKind) ?? 0) + 1);
+    return counts;
+  }, [activeItems]);
+  const priorityCounts = useMemo(() => {
+    const counts = new Map<DataStewardshipQueuePriority, number>();
+    for (const item of activeItems) {
+      const priority = queueItemPriority(item.case);
+      counts.set(priority, (counts.get(priority) ?? 0) + 1);
+    }
+    return counts;
+  }, [activeItems]);
+
+  const patchSearch = (patch: Partial<DataStewardshipMyWorkSearchParams>) =>
+    navigate({
+      to: DS_RAIL_PATHS[DS_MY_WORK_ID],
+      params: { workspaceSlug },
+      search: (previous: Record<string, unknown>) => ({ ...previous, ...patch })
+    });
+
+  return (
+    <>
+      <SidebarGroupLabel>Scope</SidebarGroupLabel>
+      {(['mine', 'all', 'late'] as const).map(scopeOption => (
+        <TreeRow
+          key={scopeOption}
+          icon={<TbListCheck size={12} />}
+          label={SCOPE_FACET_LABEL[scopeOption]}
+          testId={`data-stewardship-my-work-facet-scope-${scopeOption}`}
+          active={scope === scopeOption}
+          onClick={() => patchSearch({ scope: scopeOption, kind: undefined, priority: undefined })}
+          trailing={<span className="dim mono">{scopeCounts[scopeOption]}</span>}
+        />
+      ))}
+      {kindCounts.size > 0 && (
+        <>
+          <SidebarGroupLabel>Kind</SidebarGroupLabel>
+          {[...kindCounts.keys()].map(kind => (
+            <TreeRow
+              key={kind}
+              icon={<TbDatabase size={12} />}
+              label={caseKindLabel(kind, {})}
+              testId={`data-stewardship-my-work-facet-kind-${kind}`}
+              active={search.kind === kind}
+              onClick={() => patchSearch({ kind: search.kind === kind ? undefined : kind })}
+              trailing={<span className="dim mono">{kindCounts.get(kind) ?? 0}</span>}
+            />
+          ))}
+        </>
+      )}
+      <SidebarGroupLabel>Priority</SidebarGroupLabel>
+      {(['high', 'medium', 'low'] as const).map(priority => (
+        <TreeRow
+          key={priority}
+          icon={<TbFlag size={12} />}
+          label={PRIORITY_FACET_LABEL[priority]}
+          testId={`data-stewardship-my-work-facet-priority-${priority}`}
+          active={search.priority === priority}
+          onClick={() =>
+            patchSearch({ priority: search.priority === priority ? undefined : priority })
+          }
+          trailing={<span className="dim mono">{priorityCounts.get(priority) ?? 0}</span>}
+        />
+      ))}
+    </>
+  );
+};
+
 const ASSESSMENT_STATUS_FACET_ICON: Record<
   DataStewardshipAssessmentStatus,
   typeof TbAlertTriangle
@@ -355,12 +488,11 @@ const AssessmentsSidebarContent = ({
  * `../../vendor-management/sections/VendorManagementSidebar.tsx`'s `!enabled` empty state and its
  * fallback "Sections" nav list.
  *
- * Stewardship, Classification, and Assessments swap in their own facet content
- * (`StewardshipSidebarContent`, `ClassificationSidebarContent`, `AssessmentsSidebarContent`) once
- * enabled. My work / Change cases & exceptions still render only the shared nav list for now —
- * their real facet content (review-queue facets, case status facets) lands alongside each section's
- * own content in later sub-issues of #3152, mirroring how `VendorManagementSidebar` grew its own
- * facet content incrementally after its scaffold.
+ * My work, Stewardship, Classification, and Assessments swap in their own facet content
+ * (`MyWorkSidebarContent`, `StewardshipSidebarContent`, `ClassificationSidebarContent`,
+ * `AssessmentsSidebarContent`) once enabled. Change cases & exceptions still renders only the
+ * shared nav list for now — its real facet content lands with #3301, mirroring how
+ * `VendorManagementSidebar` grew its own facet content incrementally after its scaffold.
  */
 export const DataStewardshipSidebar = ({
   workspaceSlug,
@@ -379,6 +511,11 @@ export const DataStewardshipSidebar = ({
       <div className={styles.scroll}>
         {!dataStewardshipConfig ? (
           <div className={`${styles.emptyState} dim`}>Data stewardship is not enabled.</div>
+        ) : activeSection === DS_MY_WORK_ID ? (
+          <MyWorkSidebarContent
+            workspaceSlug={workspaceSlug}
+            dataStewardshipConfig={dataStewardshipConfig}
+          />
         ) : activeSection === DS_STEWARDSHIP_ID ? (
           <StewardshipSidebarContent
             workspaceSlug={workspaceSlug}

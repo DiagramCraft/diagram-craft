@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DataStewardshipSidebar } from './DataStewardshipSidebar';
 import {
   DS_ASSESSMENTS_ID,
+  DS_CHANGE_CASES_ID,
   DS_CLASSIFICATION_ID,
   DS_MY_WORK_ID,
   DS_STEWARDSHIP_ID,
@@ -15,12 +16,15 @@ import {
 const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
   entityList: vi.fn(),
+  entityGet: vi.fn(),
   schemasList: vi.fn(),
   relationSchemasList: vi.fn(),
   assessmentsList: vi.fn(),
   assessmentResponsesList: vi.fn(),
   assessmentTypesList: vi.fn(),
   capabilityConfigurationsList: vi.fn(),
+  assignmentsMine: vi.fn(),
+  casesList: vi.fn(),
   search: {} as Record<string, unknown>
 }));
 
@@ -31,11 +35,15 @@ vi.mock('@tanstack/react-router', () => ({
 
 vi.mock('../../../lib/orpcClient', () => ({
   orpcClient: {
-    entities: { list: mocks.entityList },
+    entities: { list: mocks.entityList, get: mocks.entityGet },
     schemas: { list: mocks.schemasList },
     relationSchemas: { list: mocks.relationSchemasList },
     assessments: { list: mocks.assessmentsList },
     assessmentResponses: { list: mocks.assessmentResponsesList },
+    governance: {
+      assignments: { mine: mocks.assignmentsMine },
+      cases: { list: mocks.casesList }
+    },
     config: {
       capabilityConfigurations: { list: mocks.capabilityConfigurationsList },
       assessmentTypes: { list: mocks.assessmentTypesList }
@@ -112,6 +120,9 @@ describe('DataStewardshipSidebar', () => {
     mocks.assessmentsList.mockResolvedValue([]);
     mocks.assessmentResponsesList.mockResolvedValue([]);
     mocks.assessmentTypesList.mockResolvedValue([]);
+    mocks.assignmentsMine.mockResolvedValue([]);
+    mocks.casesList.mockResolvedValue([]);
+    mocks.entityGet.mockResolvedValue(null);
   });
 
   afterEach(() => {
@@ -147,10 +158,82 @@ describe('DataStewardshipSidebar', () => {
   });
 
   it('falls back to the plain section nav list for other sections', async () => {
-    await renderSidebar(DS_MY_WORK_ID);
+    await renderSidebar(DS_CHANGE_CASES_ID);
     expect(container.textContent).toContain('Sections');
     expect(container.textContent).toContain('My work');
     expect(container.textContent).not.toContain('With a coverage gap');
+  });
+
+  it('renders My work scope facets with counts, defaulting to Assigned to me', async () => {
+    mocks.assignmentsMine.mockResolvedValue([
+      {
+        assignment: {
+          id: 'a-1',
+          caseId: 'case-1',
+          action: 'acknowledge',
+          targetType: 'user',
+          targetUserId: 'user-1',
+          targetTeamId: null,
+          targetTeamRole: null,
+          targetCapability: null,
+          status: 'open',
+          createdAt: '2026-01-01T00:00:00.000Z',
+          resolvedAt: null
+        },
+        case: {
+          id: 'case-1',
+          workspace: 'ws-1',
+          caseKind: 'field-date-reminder',
+          subjectType: 'entity',
+          subjectId: 'ds-1',
+          subjectVersion: null,
+          status: 'open',
+          outcome: null,
+          policyVersion: null,
+          initiatorUserId: null,
+          parentCaseId: null,
+          selfApprovalAllowed: false,
+          payload: { fieldName: 'review_date' },
+          initiationFields: [],
+          createdAt: '2026-01-01T00:00:00.000Z',
+          dueAt: null,
+          completedAt: null,
+          cancelledAt: null,
+          escalatedAt: null
+        },
+        requiresAction: true
+      }
+    ]);
+    mocks.entityGet.mockResolvedValue({
+      _uid: 'ds-1',
+      _publicId: 'DS-001',
+      _name: 'Customer Records',
+      _schema: { id: 'data-entity', name: 'Data Entity' }
+    });
+
+    await renderSidebar(DS_MY_WORK_ID);
+    expect(container.textContent).toContain('Assigned to me');
+    expect(container.textContent).toContain('All open items');
+    expect(container.textContent).toContain('Past due');
+    expect(container.textContent).toContain('Kind');
+    expect(container.textContent).toContain('Date reminder');
+  });
+
+  it('narrows to a priority when its My work facet is clicked', async () => {
+    await renderSidebar(DS_MY_WORK_ID);
+    const entry = container.querySelector(
+      '[data-testid="data-stewardship-my-work-facet-priority-low"]'
+    );
+    expect(entry).toBeDefined();
+    await act(async () => {
+      entry!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    expect(mocks.navigate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: '/$workspaceSlug/data-stewardship',
+        params: { workspaceSlug: 'ws-1' }
+      })
+    );
   });
 
   it('shows a not-enabled empty state when the capability is unconfigured', async () => {
