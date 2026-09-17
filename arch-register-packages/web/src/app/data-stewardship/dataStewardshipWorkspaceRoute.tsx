@@ -10,6 +10,7 @@ import {
 } from './dataStewardshipSections';
 import {
   validateDataStewardshipAssessmentsSearch,
+  validateDataStewardshipChangeCasesSearch,
   validateDataStewardshipClassificationSearch,
   validateDataStewardshipMyWorkSearch,
   validateDataStewardshipStewardshipSearch
@@ -96,6 +97,7 @@ export const createDataStewardshipWorkspaceRoutes = <TParentRoute extends AnyRou
     createRoute({
       getParentRoute: () => workspaceRoute,
       path: railPath(DS_RAIL_PATHS[DS_CHANGE_CASES_ID]),
+      validateSearch: validateDataStewardshipChangeCasesSearch,
       beforeLoad: ({ context, params }) =>
         ensureApplicationAccess(
           context.queryClient,
