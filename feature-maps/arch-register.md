@@ -649,14 +649,23 @@
       (@id:ar.integrations.api-specification-sync) is valid (the required API entity schema binding resolved) — this
       promotes `api-specification` from a capability-only binding (configurable in workspace settings but with no
       rail of its own) to a full application; it remains the same capability the Entities app's API artifact detail
-      views already read. Every section is currently a scaffolded placeholder pending its own sub-issue of the API &
-      Integration Catalog epic.
+      views already read. Overview, Integrations, Sync, and Impact remain scaffolded placeholders pending their own
+      sub-issues of the API & Integration Catalog epic; APIs has its real content (below).
 
         - @id:ar.api-integration-catalog.overview The Overview section (the app switcher's landing section) is
           scaffolded as a placeholder pending its own APIs/integrations/health catalog-landing content.
 
-        - @id:ar.api-integration-catalog.apis The APIs section is scaffolded as a placeholder pending its own
-          specification list and spec/operations viewer content.
+        - @id:ar.api-integration-catalog.apis The APIs section lists every entity of the workspace's `api` schema
+          (@id:ar.integrations.api-specification-sync) — name, protocol(s), declared API version, lifecycle, and
+          owner — searchable by name and sortable by name or normalized operations/messages count (read from the
+          entity's primary `api-specification` artifact's current revision, the same normalized-catalog projection
+          the Entities app's API artifact detail view reads; there is no telemetry column, matching the epic's
+          explicit non-goal of not being an API gateway or runtime observability tool). A row click opens a
+          deep-linkable spec drawer (`apis/$apiId`) shared with any other section that links into a spec: attributes,
+          the entities that provide and consume this API (via the `Provides API`/`Consumes API` typed relations),
+          and the full specification viewer — source/version picker, revision status notices, filterable normalized
+          operations/messages list, and a raw-source preview dialog — reusing the same viewer as the Entities app's
+          API artifact detail tab rather than a separate implementation.
 
         - @id:ar.api-integration-catalog.integrations The Integrations section is scaffolded as a placeholder
           pending its own integration relations and adapters content.

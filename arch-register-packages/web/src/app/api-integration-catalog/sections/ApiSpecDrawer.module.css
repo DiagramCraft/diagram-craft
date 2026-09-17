@@ -1,0 +1,42 @@
+.empty {
+  padding: 32px;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.sectionLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin: 16px 0 6px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.sectionLabel:first-child {
+  margin-top: 0;
+}
+
+.attributeRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.attributeRow:last-of-type {
+  border-bottom: none;
+}
+
+.attributeLabel {
+  color: var(--text-muted);
+}
+
+.catalogPane {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 6px;
+}
