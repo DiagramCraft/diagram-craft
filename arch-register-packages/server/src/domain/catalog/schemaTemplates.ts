@@ -1827,6 +1827,18 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           policy: { target: { kind: 'entity_schema', symId: 'retention-policy' } },
           assignment: { target: { kind: 'relation_schema', symId: 'retention-assignment' } }
         }
+      },
+      {
+        // Auto-binds `dataStewardshipCapabilityDefinition`'s one role
+        // (`../../app/data-stewardship/dataStewardshipCapability.ts`) to this template's own Data
+        // Entity schema by symId — same "auto-bind by default" rationale as the 'default' template's
+        // own 'vendor-management' capability configuration above, so a workspace using the default
+        // catalog gets the Data Stewardship application working without a manual Applications &
+        // Capabilities configuration step.
+        type: 'data-stewardship',
+        bindings: {
+          dataEntity: { target: { kind: 'entity_schema', symId: 'data-entity' } }
+        }
       }
     ],
     compositionExtensions: [

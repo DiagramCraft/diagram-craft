@@ -18,7 +18,7 @@ import { asProjectPublicId, projectDetailRoute } from '../../../routes/publicObj
 import type { AssessmentsSearchParams } from '../../../routes/searchParams';
 import { RISK_RAIL_PATHS, RISK_ASSESSMENTS_ID } from '../riskComplianceSections';
 import { AssessmentDuePanel, type AssessmentDuePanelProject } from './AssessmentDuePanel';
-import { dueLabel, dueTone } from './assessmentDueTone';
+import { dueLabel, dueTone } from '../../../utils/assessmentDueTone';
 import filterStyles from '../../../sections/entities/components/EntityBrowser.module.css';
 import styles from './RiskComplianceAssessmentsScreen.module.css';
 

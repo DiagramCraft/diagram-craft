@@ -1,5 +1,5 @@
 import type { Assessment } from '@arch-register/api-types/assessmentContract';
-import { dueLabel, dueTone } from './assessmentDueTone';
+import { dueLabel, dueTone } from '../../../utils/assessmentDueTone';
 import styles from './AssessmentDuePanel.module.css';
 
 const MAX_ITEMS = 5;

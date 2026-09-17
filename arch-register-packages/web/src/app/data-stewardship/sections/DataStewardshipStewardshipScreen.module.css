@@ -214,3 +214,27 @@
   border: 1px solid color-mix(in oklch, var(--cmp-fg-danger, #ef4444) 45%, transparent);
   background: color-mix(in oklch, var(--cmp-fg-danger, #ef4444) 10%, transparent);
 }
+
+/* Assessments' progress-bar cell — mirrors
+   `../../risk-compliance/sections/RiskComplianceAssessmentsScreen.module.css`'s identical
+   `.progress`/`.progressTrack`/`.progressFill`, reused here rather than duplicated. */
+.progress {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 120px;
+}
+
+.progressTrack {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--panel-border);
+  overflow: hidden;
+}
+
+.progressFill {
+  display: block;
+  height: 100%;
+  background: var(--cmp-fg-accent, #3b82f6);
+}

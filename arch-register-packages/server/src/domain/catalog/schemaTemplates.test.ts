@@ -463,6 +463,12 @@ describe('instantiateTemplate', () => {
             target: { kind: 'relation_schema', id: assignmentRelationSchema!.id }
           }
         }
+      },
+      {
+        type: 'data-stewardship',
+        bindings: {
+          dataEntity: { target: { kind: 'entity_schema', id: dataEntitySchema!.id } }
+        }
       }
     ]);
   });

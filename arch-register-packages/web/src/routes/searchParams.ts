@@ -633,3 +633,25 @@ export const validateDataStewardshipClassificationSearch = (
   raw: Record<string, unknown>
 ): DataStewardshipClassificationSearchParams =>
   parseSearchParams(dataStewardshipClassificationSearchSchema, raw);
+
+// Data Stewardship assessments-section params — one register, no sidebar facets (the section is
+// registered full-width, like Risk & Compliance's own Assessments screen), so its filters live in
+// its own in-page toolbar instead.
+const dataStewardshipAssessmentsSearchSchema = defineSearchParamSchema({
+  q: stringCodec,
+  // Narrows the register to one of the stat strip's four buckets — set by the toolbar's status
+  // toggle; unset shows all rows.
+  status: enumCodec(['overdue', 'in_progress', 'not_started', 'complete'] as const)
+  // No `datasetId` param here, unlike `dataStewardshipStewardshipSearchSchema` — a row is a whole
+  // assessment, not one dataset, so a click navigates out to the owning Project instead of opening
+  // the shared `DatasetDrawer`.
+});
+
+export type DataStewardshipAssessmentsSearchParams = SearchParamsFromSchema<
+  typeof dataStewardshipAssessmentsSearchSchema
+>;
+
+export const validateDataStewardshipAssessmentsSearch = (
+  raw: Record<string, unknown>
+): DataStewardshipAssessmentsSearchParams =>
+  parseSearchParams(dataStewardshipAssessmentsSearchSchema, raw);
