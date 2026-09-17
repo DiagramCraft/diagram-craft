@@ -21,6 +21,8 @@ import { riskComplianceAppDefinition } from '../app/risk-compliance/riskComplian
 import type { RiskComplianceRailItemId } from '../app/risk-compliance/riskComplianceSections';
 import { dataStewardshipAppDefinition } from '../app/data-stewardship/dataStewardshipShell';
 import type { DataStewardshipRailItemId } from '../app/data-stewardship/dataStewardshipSections';
+import { apiIntegrationCatalogAppDefinition } from '../app/api-integration-catalog/apiIntegrationCatalogShell';
+import type { ApiIntegrationCatalogRailItemId } from '../app/api-integration-catalog/apiIntegrationCatalogSections';
 import type { AppDefinition, AppId, AppRailSection, WorkspaceRailItemId } from './shellTypes';
 
 /**
@@ -38,7 +40,8 @@ export type AppRailItemId =
   | StrategyRailItemId
   | VendorManagementRailItemId
   | RiskComplianceRailItemId
-  | DataStewardshipRailItemId;
+  | DataStewardshipRailItemId
+  | ApiIntegrationCatalogRailItemId;
 
 export const HOME_APP: AppDefinition = {
   id: 'home',
@@ -80,7 +83,8 @@ export const APP_DEFINITIONS: AppDefinition[] = [
   strategyAppDefinition,
   vendorManagementAppDefinition,
   riskComplianceAppDefinition,
-  dataStewardshipAppDefinition
+  dataStewardshipAppDefinition,
+  apiIntegrationCatalogAppDefinition
 ];
 
 export const getAppDefinition = (id: AppId): AppDefinition =>

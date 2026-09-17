@@ -12,6 +12,7 @@ import { createStrategyWorkspaceRoutes } from '../../app/strategy-model/strategy
 import { createVendorManagementWorkspaceRoutes } from '../../app/vendor-management/vendorManagementWorkspaceRoute';
 import { createRiskComplianceWorkspaceRoutes } from '../../app/risk-compliance/riskComplianceWorkspaceRoute';
 import { createDataStewardshipWorkspaceRoutes } from '../../app/data-stewardship/dataStewardshipWorkspaceRoute';
+import { createApiIntegrationCatalogWorkspaceRoutes } from '../../app/api-integration-catalog/apiIntegrationCatalogWorkspaceRoute';
 
 export const createWorkspaceRouteEntries = <TParentRoute extends AnyRoute>(
   workspaceRoute: TParentRoute
@@ -26,6 +27,7 @@ export const createWorkspaceRouteEntries = <TParentRoute extends AnyRoute>(
     ...createVendorManagementWorkspaceRoutes(workspaceRoute),
     ...createRiskComplianceWorkspaceRoutes(workspaceRoute),
     ...createDataStewardshipWorkspaceRoutes(workspaceRoute),
+    ...createApiIntegrationCatalogWorkspaceRoutes(workspaceRoute),
     ...createSearchWorkspaceRoute(workspaceRoute),
     ...createGovernanceWorkspaceRoute(workspaceRoute),
     ...createSettingsWorkspaceRoutes(workspaceRoute),

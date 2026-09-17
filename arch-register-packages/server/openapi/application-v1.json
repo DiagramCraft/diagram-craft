@@ -72806,7 +72806,8 @@
                           "strategy-model",
                           "vendor-management",
                           "risk-compliance",
-                          "data-stewardship"
+                          "data-stewardship",
+                          "api-integration-catalog"
                         ],
                         "type": "string"
                       }
@@ -72820,7 +72821,8 @@
                           "strategy-model",
                           "vendor-management",
                           "risk-compliance",
-                          "data-stewardship"
+                          "data-stewardship",
+                          "api-integration-catalog"
                         ],
                         "type": "string"
                       }
@@ -72895,7 +72897,8 @@
                               "strategy-model",
                               "vendor-management",
                               "risk-compliance",
-                              "data-stewardship"
+                              "data-stewardship",
+                              "api-integration-catalog"
                             ],
                             "type": "string"
                           },
@@ -73049,7 +73052,8 @@
                 "strategy-model",
                 "vendor-management",
                 "risk-compliance",
-                "data-stewardship"
+                "data-stewardship",
+                "api-integration-catalog"
               ],
               "type": "string"
             }
@@ -73125,7 +73129,8 @@
                         "strategy-model",
                         "vendor-management",
                         "risk-compliance",
-                        "data-stewardship"
+                        "data-stewardship",
+                        "api-integration-catalog"
                       ],
                       "type": "string"
                     },
@@ -73172,7 +73177,8 @@
                 "strategy-model",
                 "vendor-management",
                 "risk-compliance",
-                "data-stewardship"
+                "data-stewardship",
+                "api-integration-catalog"
               ],
               "type": "string"
             }
@@ -73214,7 +73220,8 @@
                             "strategy-model",
                             "vendor-management",
                             "risk-compliance",
-                            "data-stewardship"
+                            "data-stewardship",
+                            "api-integration-catalog"
                           ],
                           "type": "string"
                         },

@@ -25,7 +25,7 @@ export type ACItem = {
   tabs: ACTab[];
 };
 
-const CAPABILITY_ONLY_TYPES = ['api-specification', 'retention'] as const;
+const CAPABILITY_ONLY_TYPES = ['retention'] as const;
 
 const bindingTabsFor = (capabilityType: string): ACTab[] =>
   capabilityType === 'strategy-model'
