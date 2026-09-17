@@ -8,6 +8,7 @@ import type {
 } from '@arch-register/api-types/workspaceConfigContract';
 import type { WorkspaceApplicationId } from '@arch-register/api-types/workspaceConfigContract';
 import type { WorkspaceCapabilityConfigurationInput } from '@arch-register/api-types/workspaceCapabilityContract';
+import type { EntityDrawerConfiguration } from '@arch-register/api-types/entityDrawerConfiguration';
 import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import { orpcClient } from '../lib/orpcClient';
 import {
@@ -23,6 +24,8 @@ import {
   teamAssignmentsQuery,
   teamsQuery,
   workspaceCapabilityConfigurationsQuery,
+  entityDrawerCatalogQuery,
+  entityDrawerConfigurationQuery,
   workspaceConfigKeys as workspaceConfigKeysFromQueries
 } from '../queries/workspaceConfig';
 
@@ -130,6 +133,38 @@ export const useSupportedCurrencies = (workspaceSlug: string, enabled = true) =>
 export const useWorkspaceCapabilityConfigurations = (workspaceSlug: string, enabled = true) =>
   useQuery(workspaceCapabilityConfigurationsQuery(workspaceSlug, enabled));
 
+export const useEntityDrawerConfiguration = (workspaceSlug: string, enabled = true) =>
+  useQuery(entityDrawerConfigurationQuery(workspaceSlug, enabled));
+
+export const useEntityDrawerCatalog = (workspaceSlug: string, enabled = true) =>
+  useQuery(entityDrawerCatalogQuery(workspaceSlug, enabled));
+
+export const useUpdateEntityDrawerConfiguration = (workspaceId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (configuration: EntityDrawerConfiguration) =>
+      orpcClient.config.entityDrawer.update({
+        params: { workspace: workspaceId },
+        body: configuration
+      }),
+    onSuccess: value => {
+      setWorkspaceConfigCache(queryClient, workspaceConfigKeys.entityDrawer(workspaceId), value);
+    }
+  });
+};
+
+export const useResetEntityDrawerConfiguration = (workspaceId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => orpcClient.config.entityDrawer.reset({ params: { workspace: workspaceId } }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: workspaceConfigKeys.entityDrawer(workspaceId)
+      });
+    }
+  });
+};
+
 export const useAccessibleApplications = (workspaceSlug: string, enabled = true) =>
   useQuery(accessibleApplicationsQuery(workspaceSlug, enabled));
 
@@ -198,6 +233,12 @@ export const useUpdateWorkspaceCapabilityConfiguration = (workspaceId: string, t
         workspaceConfigKeys.capabilityConfigurations(workspaceId),
         [...(current ?? []).filter(configuration => configuration.type !== value.type), value]
       );
+      void queryClient.invalidateQueries({
+        queryKey: workspaceConfigKeys.entityDrawerCatalog(workspaceId)
+      });
+      void queryClient.invalidateQueries({
+        queryKey: workspaceConfigKeys.entityDrawer(workspaceId)
+      });
     }
   });
 };
@@ -218,6 +259,12 @@ export const useDeleteWorkspaceCapabilityConfiguration = (workspaceId: string, t
         workspaceConfigKeys.capabilityConfigurations(workspaceId),
         (current ?? []).filter(configuration => configuration.type !== type)
       );
+      void queryClient.invalidateQueries({
+        queryKey: workspaceConfigKeys.entityDrawerCatalog(workspaceId)
+      });
+      void queryClient.invalidateQueries({
+        queryKey: workspaceConfigKeys.entityDrawer(workspaceId)
+      });
     }
   });
 };

@@ -56,6 +56,29 @@ runContractSuiteAgainstBothDrivers('WorkspaceDatabase', getDb => {
     });
   });
 
+  describe('entity drawer configuration', () => {
+    it('stores, replaces, and deletes one configuration per workspace', async () => {
+      const db = getDb();
+      const workspace = await createFixtureWorkspace(db);
+      const createdAt = new Date('2026-01-01T00:00:00.000Z');
+      const updatedAt = new Date('2026-01-02T00:00:00.000Z');
+      const saved = await db.workspace.upsertWorkspaceEntityDrawerConfiguration({
+        workspace,
+        configuration: { version: 1, profiles: { service: { sections: [] } } },
+        created_at: createdAt,
+        updated_at: updatedAt
+      });
+
+      expect(saved.configuration).toEqual({ version: 1, profiles: { service: { sections: [] } } });
+      expect(await db.workspace.getWorkspaceEntityDrawerConfiguration(workspace)).toMatchObject({
+        workspace,
+        updated_at: updatedAt
+      });
+      expect(await db.workspace.deleteWorkspaceEntityDrawerConfiguration(workspace)).not.toBeNull();
+      expect(await db.workspace.getWorkspaceEntityDrawerConfiguration(workspace)).toBeNull();
+    });
+  });
+
   describe('lifecycle states', () => {
     it('replaces lifecycle states atomically, updating and removing as needed', async () => {
       const db = getDb();

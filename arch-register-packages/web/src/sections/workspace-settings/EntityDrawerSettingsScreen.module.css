@@ -1,0 +1,141 @@
+.description {
+  max-width: 680px;
+  margin: 4px 0 0;
+  color: var(--base-fg-dim);
+  font-size: 11.5px;
+}
+
+.customHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 12px 0;
+}
+
+.defaultActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.warning {
+  padding: 8px 10px;
+  margin-bottom: 12px;
+  color: var(--warning-fg);
+  background: color-mix(in oklch, var(--warning-fg) 7%, transparent);
+  border-radius: var(--r);
+  font-size: 11.5px;
+}
+
+.editorGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 14px;
+}
+
+.form {
+  min-width: 0;
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+
+.panelTitle {
+  flex: 1;
+  min-width: 0;
+  color: var(--base-fg);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.optionsEditor {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 8px 8px 26px;
+  color: var(--cmp-fg-disabled);
+  font-size: 10.5px;
+}
+
+.optionsEditor textarea {
+  width: 100%;
+  resize: vertical;
+  font-family: monospace;
+  font-size: 11px;
+}
+
+.preview {
+  min-width: 0;
+}
+
+.previewStates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 8px 0 10px;
+}
+
+.previewCard {
+  min-width: 0;
+  padding: 14px;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+}
+
+.previewEyebrow {
+  color: var(--cmp-fg-disabled);
+  font-size: 10.5px;
+  text-transform: uppercase;
+}
+
+.previewTitle {
+  margin: 6px 0 12px;
+  font-size: 15px;
+}
+
+.previewBadges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 10px;
+}
+
+.previewBadge {
+  padding: 2px 7px;
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  font-size: 10.5px;
+}
+
+.previewSection {
+  padding: 10px 0;
+  border-top: 1px solid var(--panel-border);
+  font-size: 11.5px;
+}
+
+.previewRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 7px;
+}
+
+.previewValue,
+.previewEmpty {
+  color: var(--cmp-fg-disabled);
+  font-size: 10.5px;
+}
+
+.message {
+  color: var(--base-fg-dim);
+  font-size: 12px;
+}
+
+@media (max-width: 800px) {
+  .editorGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

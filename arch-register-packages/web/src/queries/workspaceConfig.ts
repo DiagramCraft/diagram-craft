@@ -9,6 +9,10 @@ import type {
   WorkspaceCapabilityConfiguration,
   WorkspaceCapabilityConfigurationInput
 } from '@arch-register/api-types/workspaceCapabilityContract';
+import type {
+  EntityDrawerCatalog,
+  EntityDrawerConfiguration
+} from '@arch-register/api-types/entityDrawerConfiguration';
 import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import { orpcClient } from '../lib/orpcClient';
 import { workspaceAnalyticsKeys } from './workspaceAnalytics';
@@ -28,7 +32,11 @@ export const workspaceConfigKeys = {
   currencies: (workspaceId: string) =>
     [...workspaceConfigKeys.all, 'currencies', workspaceId] as const,
   capabilityConfigurations: (workspaceId: string) =>
-    [...workspaceConfigKeys.all, 'capability-configurations', workspaceId] as const
+    [...workspaceConfigKeys.all, 'capability-configurations', workspaceId] as const,
+  entityDrawer: (workspaceId: string) =>
+    [...workspaceConfigKeys.all, 'entity-drawer', workspaceId] as const,
+  entityDrawerCatalog: (workspaceId: string) =>
+    [...workspaceConfigKeys.all, 'entity-drawer-catalog', workspaceId] as const
 };
 
 export const applicationAccessKeys = {
@@ -122,6 +130,22 @@ export const workspaceCapabilityConfigurationsQuery = (workspaceId: string, enab
     staleTime: 5 * 60 * 1000
   });
 
+export const entityDrawerConfigurationQuery = (workspaceId: string, enabled = true) =>
+  queryOptions({
+    queryKey: workspaceConfigKeys.entityDrawer(workspaceId),
+    queryFn: () => orpcClient.config.entityDrawer.get({ params: { workspace: workspaceId } }),
+    enabled: enabled && !!workspaceId,
+    staleTime: 5 * 60 * 1000
+  });
+
+export const entityDrawerCatalogQuery = (workspaceId: string, enabled = true) =>
+  queryOptions({
+    queryKey: workspaceConfigKeys.entityDrawerCatalog(workspaceId),
+    queryFn: () => orpcClient.config.entityDrawer.catalog({ params: { workspace: workspaceId } }),
+    enabled: enabled && !!workspaceId,
+    staleTime: 5 * 60 * 1000
+  });
+
 export const setWorkspaceConfigCache = (
   queryClient: QueryClient,
   key: readonly unknown[],
@@ -142,3 +166,5 @@ export type WorkspaceConfigMutation =
   | WorkspaceCapabilityConfigurationInput;
 
 export type WorkspaceCapabilityConfigurationResult = WorkspaceCapabilityConfiguration;
+export type EntityDrawerConfigurationResult = EntityDrawerConfiguration;
+export type EntityDrawerCatalogResult = EntityDrawerCatalog;

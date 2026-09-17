@@ -96,6 +96,13 @@ export type WorkspaceCapabilityConfigurationDbCreate = Omit<
   'view_config'
 > & { view_config?: unknown | null };
 
+export type WorkspaceEntityDrawerConfigurationDbResult = {
+  workspace: string;
+  configuration: unknown;
+  created_at: Date;
+  updated_at: Date;
+};
+
 export type WorkspaceApplicationAccessPolicyDbResult = {
   workspace: string;
   application_id: string;
@@ -223,6 +230,18 @@ export const workspaceMappers = {
     created_at: databaseDate(row['created_at']),
     updated_at: databaseDate(row['updated_at'])
   }),
+  workspaceEntityDrawerConfiguration: (
+    row: DatabaseRow
+  ): WorkspaceEntityDrawerConfigurationDbResult => ({
+    workspace: String(row['workspace']),
+    configuration: parseDatabaseJson(
+      row['configuration'],
+      {},
+      'workspace_entity_drawer_configuration.configuration'
+    ),
+    created_at: databaseDate(row['created_at']),
+    updated_at: databaseDate(row['updated_at'])
+  }),
   applicationAccessPolicy: (row: DatabaseRow): WorkspaceApplicationAccessPolicyDbResult => ({
     workspace: String(row['workspace']),
     application_id: String(row['application_id']),
@@ -302,6 +321,16 @@ export type WorkspaceDatabase = {
     ws: string,
     type: string
   ): Promise<WorkspaceCapabilityConfigurationDbResult | null>;
+
+  getWorkspaceEntityDrawerConfiguration(
+    ws: string
+  ): Promise<WorkspaceEntityDrawerConfigurationDbResult | null>;
+  upsertWorkspaceEntityDrawerConfiguration(
+    input: WorkspaceEntityDrawerConfigurationDbResult
+  ): Promise<WorkspaceEntityDrawerConfigurationDbResult>;
+  deleteWorkspaceEntityDrawerConfiguration(
+    ws: string
+  ): Promise<WorkspaceEntityDrawerConfigurationDbResult | null>;
 
   listWorkspaceApplicationAccessPolicies(
     ws: string

@@ -17,6 +17,11 @@ import {
   workspaceCapabilityConfigurationSchema,
   workspaceCapabilityTypeSchema
 } from '@arch-register/api-types/workspaceCapabilityContract';
+import {
+  entityDrawerCatalogSchema,
+  entityDrawerConfigurationSchema,
+  entityDrawerDiagnosticSchema
+} from '@arch-register/api-types/entityDrawerConfiguration';
 
 const timestampOutputSchema = z
   .union([z.string(), z.date()])
@@ -354,6 +359,68 @@ export const workspaceConfigContract = oc.tag('Workspace Config').router({
           })
         )
         .output(workspaceCapabilityConfigurationSchema)
+    },
+    entityDrawer: {
+      get: oc
+        .route({
+          method: 'GET',
+          path: '/{workspace}/config/entity-drawer',
+          inputStructure: 'detailed',
+          summary: 'Get entity drawer configuration',
+          description:
+            'Retrieves the stored and effective schema-scoped entity drawer configuration, including diagnostics for stale entries.',
+          tags: ['Workspace Config']
+        })
+        .input(z.object({ params: ws }))
+        .output(
+          z.object({
+            stored_configuration: z.unknown().nullable(),
+            effective_configuration: entityDrawerConfigurationSchema,
+            diagnostics: z.array(entityDrawerDiagnosticSchema),
+            updated_at: timestampOutputSchema.nullable()
+          })
+        ),
+      catalog: oc
+        .route({
+          method: 'GET',
+          path: '/{workspace}/config/entity-drawer/catalog',
+          inputStructure: 'detailed',
+          summary: 'Get entity drawer configuration catalog',
+          description:
+            'Lists schemas, fields, metadata slots, and registered semantic drawer slots.',
+          tags: ['Workspace Config']
+        })
+        .input(z.object({ params: ws }))
+        .output(entityDrawerCatalogSchema),
+      update: oc
+        .route({
+          method: 'PUT',
+          path: '/{workspace}/config/entity-drawer',
+          inputStructure: 'detailed',
+          summary: 'Save entity drawer configuration',
+          description: 'Replaces the workspace entity drawer configuration document.',
+          tags: ['Workspace Config']
+        })
+        .input(z.object({ params: ws, body: entityDrawerConfigurationSchema }))
+        .output(
+          z.object({
+            stored_configuration: z.unknown().nullable(),
+            effective_configuration: entityDrawerConfigurationSchema,
+            diagnostics: z.array(entityDrawerDiagnosticSchema),
+            updated_at: timestampOutputSchema.nullable()
+          })
+        ),
+      reset: oc
+        .route({
+          method: 'DELETE',
+          path: '/{workspace}/config/entity-drawer',
+          inputStructure: 'detailed',
+          summary: 'Reset entity drawer configuration',
+          description: 'Removes the custom document and restores derived defaults.',
+          tags: ['Workspace Config']
+        })
+        .input(z.object({ params: ws }))
+        .output(z.object({ success: z.literal(true) }))
     },
     lifecycleStates: {
       list: oc

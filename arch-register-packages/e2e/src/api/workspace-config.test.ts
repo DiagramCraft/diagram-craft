@@ -57,6 +57,38 @@ const createCustomRole = async (
 };
 
 test.describe('workspace config routes', () => {
+  test('gets the drawer catalog, saves a schema profile, and resets it', async ({
+    orpc,
+    seededUsers: _
+  }) => {
+    const catalog = await orpc.config.entityDrawer.catalog({ params: { workspace: 'default' } });
+    expect(catalog.schemas.length).toBeGreaterThan(0);
+    const schemaId = catalog.schemas[0]!.id;
+    const saved = await orpc.config.entityDrawer.update({
+      params: { workspace: 'default' },
+      body: {
+        version: 1,
+        profiles: {
+          [schemaId]: {
+            header: { badges: [{ kind: 'metadata', slot: 'publicId' }] },
+            sections: [{ id: 'custom', title: 'Custom', collapsible: false, items: [] }]
+          }
+        }
+      }
+    });
+    expect(saved.effective_configuration.profiles[schemaId]!.sections[0]!.title).toBe('Custom');
+
+    const listed = await orpc.config.entityDrawer.get({ params: { workspace: 'default' } });
+    expect(listed.stored_configuration).toMatchObject({ version: 1 });
+    expect(await orpc.config.entityDrawer.reset({ params: { workspace: 'default' } })).toEqual({
+      success: true
+    });
+    expect(
+      (await orpc.config.entityDrawer.get({ params: { workspace: 'default' } }))
+        .stored_configuration
+    ).toBeNull();
+  });
+
   test('returns guided public catalog selectors and previews an unsaved configuration', async ({
     orpc,
     seededUsers: _

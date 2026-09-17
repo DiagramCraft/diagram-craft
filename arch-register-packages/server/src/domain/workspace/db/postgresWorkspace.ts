@@ -111,6 +111,7 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
         await tx`DELETE FROM workspace_role WHERE workspace = ${id}`;
         await tx`DELETE FROM workspace_application_access WHERE workspace = ${id}`;
         await tx`DELETE FROM workspace_capability_configuration WHERE workspace = ${id}`;
+        await tx`DELETE FROM workspace_entity_drawer_configuration WHERE workspace = ${id}`;
         await tx`DELETE FROM team_membership WHERE workspace = ${id}`;
         await tx`DELETE FROM workspace_lifecycle_state WHERE workspace = ${id}`;
         await tx`DELETE FROM workspace_currency WHERE workspace = ${id}`;
@@ -182,6 +183,45 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
       RETURNING id, workspace, type, bindings, created_at, updated_at
     `;
     return row ? workspaceMappers.workspaceCapabilityConfiguration(row) : null;
+  }
+
+  async getWorkspaceEntityDrawerConfiguration(workspace: string) {
+    const [row] = await this.sql<DatabaseRow[]>`
+      SELECT workspace, configuration, created_at, updated_at
+      FROM workspace_entity_drawer_configuration WHERE workspace = ${workspace}
+    `;
+    return row ? workspaceMappers.workspaceEntityDrawerConfiguration(row) : null;
+  }
+
+  async upsertWorkspaceEntityDrawerConfiguration(input: {
+    workspace: string;
+    configuration: unknown;
+    created_at: Date;
+    updated_at: Date;
+  }) {
+    try {
+      const [row] = await this.sql<DatabaseRow[]>`
+        INSERT INTO workspace_entity_drawer_configuration
+          (workspace, configuration, created_at, updated_at)
+        VALUES (${input.workspace}, ${this.json(input.configuration)}, ${input.created_at}, ${input.updated_at})
+        ON CONFLICT (workspace) DO UPDATE SET
+          configuration = EXCLUDED.configuration,
+          updated_at = EXCLUDED.updated_at
+        RETURNING workspace, configuration, created_at, updated_at
+      `;
+      return workspaceMappers.workspaceEntityDrawerConfiguration(row!);
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async deleteWorkspaceEntityDrawerConfiguration(workspace: string) {
+    const [row] = await this.sql<DatabaseRow[]>`
+      DELETE FROM workspace_entity_drawer_configuration
+      WHERE workspace = ${workspace}
+      RETURNING workspace, configuration, created_at, updated_at
+    `;
+    return row ? workspaceMappers.workspaceEntityDrawerConfiguration(row) : null;
   }
 
   async listWorkspaceApplicationAccessPolicies(workspace: string) {

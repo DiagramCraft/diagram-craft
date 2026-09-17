@@ -114,6 +114,9 @@ export class SqliteWorkspaceDatabase extends SqliteDatabaseBase implements Works
       this.run('DELETE FROM workspace_role WHERE workspace = ?', [workspaceId]);
       this.run('DELETE FROM workspace_application_access WHERE workspace = ?', [workspaceId]);
       this.run('DELETE FROM workspace_capability_configuration WHERE workspace = ?', [workspaceId]);
+      this.run('DELETE FROM workspace_entity_drawer_configuration WHERE workspace = ?', [
+        workspaceId
+      ]);
       this.run('DELETE FROM team_membership WHERE workspace = ?', [workspaceId]);
       this.run('DELETE FROM workspace_lifecycle_state WHERE workspace = ?', [workspaceId]);
       this.run('DELETE FROM workspace_assessment_type WHERE workspace = ?', [workspaceId]);
@@ -185,6 +188,45 @@ export class SqliteWorkspaceDatabase extends SqliteDatabaseBase implements Works
       workspace,
       type
     ]);
+    return existing;
+  }
+
+  async getWorkspaceEntityDrawerConfiguration(workspace: string) {
+    return this.get(
+      `SELECT workspace, configuration, created_at, updated_at
+       FROM workspace_entity_drawer_configuration WHERE workspace = ?`,
+      [workspace],
+      workspaceMappers.workspaceEntityDrawerConfiguration
+    );
+  }
+
+  async upsertWorkspaceEntityDrawerConfiguration(input: {
+    workspace: string;
+    configuration: unknown;
+    created_at: Date;
+    updated_at: Date;
+  }) {
+    this.run(
+      `INSERT INTO workspace_entity_drawer_configuration
+         (workspace, configuration, created_at, updated_at)
+       VALUES (?, ?, ?, ?)
+       ON CONFLICT(workspace) DO UPDATE SET
+         configuration = excluded.configuration,
+         updated_at = excluded.updated_at`,
+      [
+        input.workspace,
+        JSON.stringify(input.configuration),
+        input.created_at.toISOString(),
+        input.updated_at.toISOString()
+      ]
+    );
+    return (await this.getWorkspaceEntityDrawerConfiguration(input.workspace))!;
+  }
+
+  async deleteWorkspaceEntityDrawerConfiguration(workspace: string) {
+    const existing = await this.getWorkspaceEntityDrawerConfiguration(workspace);
+    if (!existing) return null;
+    this.run('DELETE FROM workspace_entity_drawer_configuration WHERE workspace = ?', [workspace]);
     return existing;
   }
 

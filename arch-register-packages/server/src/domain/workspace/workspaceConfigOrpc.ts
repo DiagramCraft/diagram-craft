@@ -29,6 +29,12 @@ import {
   upsertWorkspaceCapabilityConfiguration,
   deleteWorkspaceCapabilityConfiguration
 } from './workspaceConfigOperations';
+import {
+  getEntityDrawerConfiguration,
+  getEntityDrawerCatalog,
+  updateEntityDrawerConfiguration,
+  resetEntityDrawerConfiguration
+} from './workspaceEntityDrawerOperations';
 import { workspaceConfigContract } from '@arch-register/api-types/workspaceConfigContract';
 import { createApiToken, listApiTokens, revokeApiToken } from '../auth/apiTokenOperations';
 import {
@@ -119,6 +125,33 @@ export const workspaceConfigORPCRouter = configRouter.router({
           );
         }
       )
+    },
+    entityDrawer: {
+      get: configRouter.config.entityDrawer.get.handler(async ({ input, context }) => {
+        return await getEntityDrawerConfiguration(
+          context.db,
+          input.params.workspace,
+          context.event
+        );
+      }),
+      catalog: configRouter.config.entityDrawer.catalog.handler(async ({ input, context }) => {
+        return await getEntityDrawerCatalog(context.db, input.params.workspace, context.event);
+      }),
+      update: configRouter.config.entityDrawer.update.handler(async ({ input, context }) => {
+        return await updateEntityDrawerConfiguration(
+          context.db,
+          input.params.workspace,
+          input.body,
+          context.event
+        );
+      }),
+      reset: configRouter.config.entityDrawer.reset.handler(async ({ input, context }) => {
+        return await resetEntityDrawerConfiguration(
+          context.db,
+          input.params.workspace,
+          context.event
+        );
+      })
     },
     lifecycleStates: {
       list: configRouter.config.lifecycleStates.list.handler(async ({ input, context }) => {

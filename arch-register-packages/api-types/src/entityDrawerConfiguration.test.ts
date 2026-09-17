@@ -1,0 +1,158 @@
+import { describe, expect, it } from 'vitest';
+import {
+  buildEntityDrawerCatalog,
+  buildDefaultEntityDrawerProfile,
+  entityDrawerConfigurationSchema,
+  resolveEntityDrawerConfiguration
+} from './entityDrawerConfiguration';
+
+const schema = {
+  id: 'service',
+  name: 'Service',
+  fields: [
+    { id: 'name', name: 'Name', type: 'text' },
+    { id: 'owner', name: 'Owner', type: 'principal' },
+    { id: 'score', name: 'Score', type: 'number' },
+    { id: 'depends_on', name: 'Depends on', type: 'reference' },
+    { id: 'retired', name: 'Retired', type: 'text', archived: true }
+  ],
+  groups: [{ id: 'core', name: 'Core' }]
+};
+
+describe('entity drawer configuration', () => {
+  it('derives a stable default profile from schema fields and metadata', () => {
+    const profile = buildDefaultEntityDrawerProfile(schema);
+    expect(profile.sections.flatMap(section => section.items)).toEqual(
+      expect.arrayContaining([
+        { kind: 'field', fieldId: 'name' },
+        { kind: 'relation', fieldId: 'depends_on' },
+        { kind: 'metadata', slot: 'publicId' }
+      ])
+    );
+    expect(profile.sections.flatMap(section => section.items)).not.toContainEqual({
+      kind: 'field',
+      fieldId: 'retired'
+    });
+  });
+
+  it('omits stale fields and unsupported slots while retaining defaults', () => {
+    const config = entityDrawerConfigurationSchema.parse({
+      version: 1,
+      profiles: {
+        service: {
+          sections: [
+            {
+              id: 'custom',
+              title: 'Custom',
+              items: [
+                { kind: 'field', fieldId: 'retired' },
+                { kind: 'field', fieldId: 'missing' },
+                { kind: 'slot', slotId: 'not-registered' }
+              ]
+            }
+          ]
+        }
+      }
+    });
+    const result = resolveEntityDrawerConfiguration(config, [schema]);
+    expect(result.effective.profiles.service!.sections[0]!.items).toEqual([]);
+    expect(result.diagnostics.map(diagnostic => diagnostic.code)).toEqual([
+      'missing_or_archived_field',
+      'missing_or_archived_field',
+      'unsupported_slot'
+    ]);
+  });
+
+  it('fails closed for unknown versions', () => {
+    const result = resolveEntityDrawerConfiguration({ version: 2, profiles: {} }, [schema]);
+    expect(result.effective.profiles.service!).toBeDefined();
+    expect(result.diagnostics[0]!.code).toBe('unknown_version');
+  });
+
+  it('uses defaults without diagnostics when no configuration has been stored', () => {
+    const result = resolveEntityDrawerConfiguration(null, [schema]);
+
+    expect(result.effective.profiles.service!).toEqual(buildDefaultEntityDrawerProfile(schema));
+    expect(result.diagnostics).toEqual([]);
+  });
+
+  it('builds provider defaults and validates provider options', () => {
+    const result = resolveEntityDrawerConfiguration(
+      null,
+      [schema],
+      [
+        {
+          type: 'strategy-model',
+          bindings: { business_capability: { target: { kind: 'entity_schema', id: 'service' } } },
+          view_config: {
+            fields: [
+              {
+                fieldId: 'score',
+                table: null,
+                rollup: { aggregation: 'sum', format: 'number' },
+                drawer: false,
+                overlay: null
+              }
+            ]
+          }
+        }
+      ]
+    );
+    const applicationSection = result.effective.profiles.service!.sections.find(
+      section => section.id === 'application-content'
+    );
+    expect(applicationSection?.items).toEqual([
+      {
+        kind: 'slot',
+        slotId: 'strategy.rollup',
+        options: { rollups: [{ fieldId: 'score', aggregation: 'sum', format: 'number' }] }
+      },
+      { kind: 'slot', slotId: 'strategy.children' },
+      { kind: 'slot', slotId: 'strategy.realized-by' },
+      { kind: 'slot', slotId: 'strategy.linked-objectives' },
+      { kind: 'slot', slotId: 'strategy.linked-initiatives' }
+    ]);
+
+    const invalid = resolveEntityDrawerConfiguration(
+      {
+        version: 1,
+        profiles: {
+          service: {
+            sections: [
+              {
+                id: 'content',
+                title: 'Content',
+                items: [{ kind: 'slot', slotId: 'strategy.rollup', options: { rollups: 'bad' } }]
+              }
+            ]
+          }
+        }
+      },
+      [schema],
+      [
+        {
+          type: 'strategy-model',
+          bindings: { business_capability: { target: { kind: 'entity_schema', id: 'service' } } }
+        }
+      ]
+    );
+    expect(invalid.diagnostics.at(-1)?.code).toBe('invalid_slot_options');
+  });
+
+  it('only advertises provider slots for their configured schema', () => {
+    const catalog = buildEntityDrawerCatalog(
+      [schema, { ...schema, id: 'other', name: 'Other' }],
+      [
+        {
+          type: 'strategy-model',
+          bindings: { business_capability: { target: { kind: 'entity_schema', id: 'service' } } }
+        }
+      ]
+    );
+    expect(catalog.slots.map(slot => slot.id)).toContain('strategy.rollup');
+    expect(catalog.slots.find(slot => slot.id === 'strategy.rollup')?.supportedSchemaIds).toEqual([
+      'service'
+    ]);
+    expect(catalog.slots.map(slot => slot.id)).not.toContain('vendor.spend');
+  });
+});

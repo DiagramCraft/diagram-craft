@@ -73995,6 +73995,1123 @@
         }
       }
     },
+    "/{workspace}/config/entity-drawer": {
+      "get": {
+        "operationId": "config.entityDrawer.get",
+        "summary": "Get entity drawer configuration",
+        "description": "Retrieves the stored and effective schema-scoped entity drawer configuration, including diagnostics for stale entries.",
+        "tags": [
+          "Workspace Config",
+          "Workspace Config"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "stored_configuration": {
+                      "anyOf": [
+                        {},
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "effective_configuration": {
+                      "type": "object",
+                      "properties": {
+                        "version": {
+                          "const": 1
+                        },
+                        "profiles": {
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "additionalProperties": {
+                            "type": "object",
+                            "properties": {
+                              "header": {
+                                "type": "object",
+                                "properties": {
+                                  "badges": {
+                                    "type": "array",
+                                    "items": {
+                                      "anyOf": [
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "kind": {
+                                              "const": "field"
+                                            },
+                                            "fieldId": {
+                                              "type": "string",
+                                              "minLength": 1
+                                            },
+                                            "label": {
+                                              "type": "string",
+                                              "minLength": 1,
+                                              "maxLength": 120
+                                            }
+                                          },
+                                          "required": [
+                                            "kind",
+                                            "fieldId"
+                                          ]
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "kind": {
+                                              "const": "metadata"
+                                            },
+                                            "slot": {
+                                              "enum": [
+                                                "slug",
+                                                "description",
+                                                "owner",
+                                                "lifecycle",
+                                                "targetLifecycle",
+                                                "targetLifecycleDate",
+                                                "tags",
+                                                "publicId",
+                                                "namespace"
+                                              ],
+                                              "type": "string"
+                                            },
+                                            "label": {
+                                              "type": "string",
+                                              "minLength": 1,
+                                              "maxLength": 120
+                                            }
+                                          },
+                                          "required": [
+                                            "kind",
+                                            "slot"
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  }
+                                },
+                                "required": [
+                                  "badges"
+                                ],
+                                "default": {
+                                  "badges": []
+                                }
+                              },
+                              "sections": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "id": {
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 120
+                                    },
+                                    "title": {
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 120
+                                    },
+                                    "collapsible": {
+                                      "type": "boolean",
+                                      "default": true
+                                    },
+                                    "items": {
+                                      "type": "array",
+                                      "items": {
+                                        "anyOf": [
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "kind": {
+                                                "const": "field"
+                                              },
+                                              "fieldId": {
+                                                "type": "string",
+                                                "minLength": 1
+                                              },
+                                              "label": {
+                                                "type": "string",
+                                                "minLength": 1,
+                                                "maxLength": 120
+                                              }
+                                            },
+                                            "required": [
+                                              "kind",
+                                              "fieldId"
+                                            ]
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "kind": {
+                                                "const": "metadata"
+                                              },
+                                              "slot": {
+                                                "enum": [
+                                                  "slug",
+                                                  "description",
+                                                  "owner",
+                                                  "lifecycle",
+                                                  "targetLifecycle",
+                                                  "targetLifecycleDate",
+                                                  "tags",
+                                                  "publicId",
+                                                  "namespace"
+                                                ],
+                                                "type": "string"
+                                              },
+                                              "label": {
+                                                "type": "string",
+                                                "minLength": 1,
+                                                "maxLength": 120
+                                              }
+                                            },
+                                            "required": [
+                                              "kind",
+                                              "slot"
+                                            ]
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "kind": {
+                                                "const": "relation"
+                                              },
+                                              "fieldId": {
+                                                "type": "string",
+                                                "minLength": 1
+                                              },
+                                              "label": {
+                                                "type": "string",
+                                                "minLength": 1,
+                                                "maxLength": 120
+                                              }
+                                            },
+                                            "required": [
+                                              "kind",
+                                              "fieldId"
+                                            ]
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "kind": {
+                                                "const": "slot"
+                                              },
+                                              "slotId": {
+                                                "type": "string",
+                                                "minLength": 1
+                                              },
+                                              "label": {
+                                                "type": "string",
+                                                "minLength": 1,
+                                                "maxLength": 120
+                                              },
+                                              "options": {
+                                                "type": "object",
+                                                "propertyNames": {
+                                                  "type": "string"
+                                                },
+                                                "additionalProperties": {}
+                                              }
+                                            },
+                                            "required": [
+                                              "kind",
+                                              "slotId"
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    }
+                                  },
+                                  "required": [
+                                    "id",
+                                    "title",
+                                    "items"
+                                  ]
+                                }
+                              }
+                            },
+                            "required": [
+                              "sections"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "version",
+                        "profiles"
+                      ]
+                    },
+                    "diagnostics": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "code": {
+                            "enum": [
+                              "invalid_configuration",
+                              "unknown_version",
+                              "missing_schema",
+                              "missing_or_archived_field",
+                              "missing_relation_field",
+                              "unsupported_slot",
+                              "invalid_slot_options",
+                              "unsupported_slot_for_schema"
+                            ],
+                            "type": "string"
+                          },
+                          "schemaId": {
+                            "type": "string"
+                          },
+                          "sectionId": {
+                            "type": "string"
+                          },
+                          "itemId": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "code",
+                          "message"
+                        ]
+                      }
+                    },
+                    "updated_at": {
+                      "anyOf": [
+                        {},
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "effective_configuration",
+                    "diagnostics"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "config.entityDrawer.update",
+        "summary": "Save entity drawer configuration",
+        "description": "Replaces the workspace entity drawer configuration document.",
+        "tags": [
+          "Workspace Config",
+          "Workspace Config"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "const": 1
+                  },
+                  "profiles": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "additionalProperties": {
+                      "type": "object",
+                      "properties": {
+                        "header": {
+                          "type": "object",
+                          "properties": {
+                            "badges": {
+                              "type": "array",
+                              "items": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "kind": {
+                                        "const": "field"
+                                      },
+                                      "fieldId": {
+                                        "type": "string",
+                                        "minLength": 1
+                                      },
+                                      "label": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "maxLength": 120
+                                      }
+                                    },
+                                    "required": [
+                                      "kind",
+                                      "fieldId"
+                                    ]
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "kind": {
+                                        "const": "metadata"
+                                      },
+                                      "slot": {
+                                        "enum": [
+                                          "slug",
+                                          "description",
+                                          "owner",
+                                          "lifecycle",
+                                          "targetLifecycle",
+                                          "targetLifecycleDate",
+                                          "tags",
+                                          "publicId",
+                                          "namespace"
+                                        ],
+                                        "type": "string"
+                                      },
+                                      "label": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "maxLength": 120
+                                      }
+                                    },
+                                    "required": [
+                                      "kind",
+                                      "slot"
+                                    ]
+                                  }
+                                ]
+                              }
+                            }
+                          },
+                          "required": [
+                            "badges"
+                          ],
+                          "default": {
+                            "badges": []
+                          }
+                        },
+                        "sections": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 120
+                              },
+                              "title": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 120
+                              },
+                              "collapsible": {
+                                "type": "boolean",
+                                "default": true
+                              },
+                              "items": {
+                                "type": "array",
+                                "items": {
+                                  "anyOf": [
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "const": "field"
+                                        },
+                                        "fieldId": {
+                                          "type": "string",
+                                          "minLength": 1
+                                        },
+                                        "label": {
+                                          "type": "string",
+                                          "minLength": 1,
+                                          "maxLength": 120
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "fieldId"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "const": "metadata"
+                                        },
+                                        "slot": {
+                                          "enum": [
+                                            "slug",
+                                            "description",
+                                            "owner",
+                                            "lifecycle",
+                                            "targetLifecycle",
+                                            "targetLifecycleDate",
+                                            "tags",
+                                            "publicId",
+                                            "namespace"
+                                          ],
+                                          "type": "string"
+                                        },
+                                        "label": {
+                                          "type": "string",
+                                          "minLength": 1,
+                                          "maxLength": 120
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "slot"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "const": "relation"
+                                        },
+                                        "fieldId": {
+                                          "type": "string",
+                                          "minLength": 1
+                                        },
+                                        "label": {
+                                          "type": "string",
+                                          "minLength": 1,
+                                          "maxLength": 120
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "fieldId"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "const": "slot"
+                                        },
+                                        "slotId": {
+                                          "type": "string",
+                                          "minLength": 1
+                                        },
+                                        "label": {
+                                          "type": "string",
+                                          "minLength": 1,
+                                          "maxLength": 120
+                                        },
+                                        "options": {
+                                          "type": "object",
+                                          "propertyNames": {
+                                            "type": "string"
+                                          },
+                                          "additionalProperties": {}
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "slotId"
+                                      ]
+                                    }
+                                  ]
+                                }
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "title",
+                              "items"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "sections"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "version",
+                  "profiles"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "stored_configuration": {
+                      "anyOf": [
+                        {},
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "effective_configuration": {
+                      "type": "object",
+                      "properties": {
+                        "version": {
+                          "const": 1
+                        },
+                        "profiles": {
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "additionalProperties": {
+                            "type": "object",
+                            "properties": {
+                              "header": {
+                                "type": "object",
+                                "properties": {
+                                  "badges": {
+                                    "type": "array",
+                                    "items": {
+                                      "anyOf": [
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "kind": {
+                                              "const": "field"
+                                            },
+                                            "fieldId": {
+                                              "type": "string",
+                                              "minLength": 1
+                                            },
+                                            "label": {
+                                              "type": "string",
+                                              "minLength": 1,
+                                              "maxLength": 120
+                                            }
+                                          },
+                                          "required": [
+                                            "kind",
+                                            "fieldId"
+                                          ]
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "kind": {
+                                              "const": "metadata"
+                                            },
+                                            "slot": {
+                                              "enum": [
+                                                "slug",
+                                                "description",
+                                                "owner",
+                                                "lifecycle",
+                                                "targetLifecycle",
+                                                "targetLifecycleDate",
+                                                "tags",
+                                                "publicId",
+                                                "namespace"
+                                              ],
+                                              "type": "string"
+                                            },
+                                            "label": {
+                                              "type": "string",
+                                              "minLength": 1,
+                                              "maxLength": 120
+                                            }
+                                          },
+                                          "required": [
+                                            "kind",
+                                            "slot"
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  }
+                                },
+                                "required": [
+                                  "badges"
+                                ],
+                                "default": {
+                                  "badges": []
+                                }
+                              },
+                              "sections": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "id": {
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 120
+                                    },
+                                    "title": {
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 120
+                                    },
+                                    "collapsible": {
+                                      "type": "boolean",
+                                      "default": true
+                                    },
+                                    "items": {
+                                      "type": "array",
+                                      "items": {
+                                        "anyOf": [
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "kind": {
+                                                "const": "field"
+                                              },
+                                              "fieldId": {
+                                                "type": "string",
+                                                "minLength": 1
+                                              },
+                                              "label": {
+                                                "type": "string",
+                                                "minLength": 1,
+                                                "maxLength": 120
+                                              }
+                                            },
+                                            "required": [
+                                              "kind",
+                                              "fieldId"
+                                            ]
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "kind": {
+                                                "const": "metadata"
+                                              },
+                                              "slot": {
+                                                "enum": [
+                                                  "slug",
+                                                  "description",
+                                                  "owner",
+                                                  "lifecycle",
+                                                  "targetLifecycle",
+                                                  "targetLifecycleDate",
+                                                  "tags",
+                                                  "publicId",
+                                                  "namespace"
+                                                ],
+                                                "type": "string"
+                                              },
+                                              "label": {
+                                                "type": "string",
+                                                "minLength": 1,
+                                                "maxLength": 120
+                                              }
+                                            },
+                                            "required": [
+                                              "kind",
+                                              "slot"
+                                            ]
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "kind": {
+                                                "const": "relation"
+                                              },
+                                              "fieldId": {
+                                                "type": "string",
+                                                "minLength": 1
+                                              },
+                                              "label": {
+                                                "type": "string",
+                                                "minLength": 1,
+                                                "maxLength": 120
+                                              }
+                                            },
+                                            "required": [
+                                              "kind",
+                                              "fieldId"
+                                            ]
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "kind": {
+                                                "const": "slot"
+                                              },
+                                              "slotId": {
+                                                "type": "string",
+                                                "minLength": 1
+                                              },
+                                              "label": {
+                                                "type": "string",
+                                                "minLength": 1,
+                                                "maxLength": 120
+                                              },
+                                              "options": {
+                                                "type": "object",
+                                                "propertyNames": {
+                                                  "type": "string"
+                                                },
+                                                "additionalProperties": {}
+                                              }
+                                            },
+                                            "required": [
+                                              "kind",
+                                              "slotId"
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    }
+                                  },
+                                  "required": [
+                                    "id",
+                                    "title",
+                                    "items"
+                                  ]
+                                }
+                              }
+                            },
+                            "required": [
+                              "sections"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "version",
+                        "profiles"
+                      ]
+                    },
+                    "diagnostics": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "code": {
+                            "enum": [
+                              "invalid_configuration",
+                              "unknown_version",
+                              "missing_schema",
+                              "missing_or_archived_field",
+                              "missing_relation_field",
+                              "unsupported_slot",
+                              "invalid_slot_options",
+                              "unsupported_slot_for_schema"
+                            ],
+                            "type": "string"
+                          },
+                          "schemaId": {
+                            "type": "string"
+                          },
+                          "sectionId": {
+                            "type": "string"
+                          },
+                          "itemId": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "code",
+                          "message"
+                        ]
+                      }
+                    },
+                    "updated_at": {
+                      "anyOf": [
+                        {},
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "effective_configuration",
+                    "diagnostics"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "config.entityDrawer.reset",
+        "summary": "Reset entity drawer configuration",
+        "description": "Removes the custom document and restores derived defaults.",
+        "tags": [
+          "Workspace Config",
+          "Workspace Config"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "const": true
+                    }
+                  },
+                  "required": [
+                    "success"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{workspace}/config/entity-drawer/catalog": {
+      "get": {
+        "operationId": "config.entityDrawer.catalog",
+        "summary": "Get entity drawer configuration catalog",
+        "description": "Lists schemas, fields, metadata slots, and registered semantic drawer slots.",
+        "tags": [
+          "Workspace Config",
+          "Workspace Config"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "schemas": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "fields": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                },
+                                "type": {
+                                  "type": "string"
+                                },
+                                "archived": {
+                                  "type": "boolean"
+                                },
+                                "groupId": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "name",
+                                "type",
+                                "archived",
+                                "groupId"
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name",
+                          "fields"
+                        ]
+                      }
+                    },
+                    "metadataSlots": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "enum": [
+                              "slug",
+                              "description",
+                              "owner",
+                              "lifecycle",
+                              "targetLifecycle",
+                              "targetLifecycleDate",
+                              "tags",
+                              "publicId",
+                              "namespace"
+                            ],
+                            "type": "string"
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "description": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "label",
+                          "description"
+                        ]
+                      }
+                    },
+                    "slots": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "description": {
+                            "type": "string"
+                          },
+                          "application": {
+                            "type": "string"
+                          },
+                          "supportedSchemaIds": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "defaultOptions": {
+                            "type": "object",
+                            "propertyNames": {
+                              "type": "string"
+                            },
+                            "additionalProperties": {}
+                          },
+                          "optionFields": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string"
+                                },
+                                "label": {
+                                  "type": "string"
+                                },
+                                "description": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "label",
+                                "description"
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "label",
+                          "description",
+                          "application",
+                          "supportedSchemaIds",
+                          "defaultOptions",
+                          "optionFields"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "schemas",
+                    "metadataSlots",
+                    "slots"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/{workspace}/config/lifecycle-states": {
       "get": {
         "operationId": "config.lifecycleStates.list",

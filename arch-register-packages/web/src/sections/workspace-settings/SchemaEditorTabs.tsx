@@ -16,9 +16,10 @@ import { SchemaFieldsEditor } from './SchemaFieldsEditor';
 import { SchemaTemplatesEditor } from './SchemaTemplatesEditor';
 import { SchemaValidationEditor } from './SchemaValidationEditor';
 import { SchemaLayoutEditor } from './SchemaLayoutEditor';
+import { EntityDrawerEditor } from './EntityDrawerSettingsScreen';
 import layoutStyles from './SchemaLayoutEditor.module.css';
 
-export type SchemaPanelTab = 'fields' | 'templates' | 'validation' | 'layout';
+export type SchemaPanelTab = 'fields' | 'templates' | 'validation' | 'layout' | 'drawer';
 
 export const SchemaEditorTabs = ({
   activeTab,
@@ -57,7 +58,9 @@ export const SchemaEditorTabs = ({
   detailLayoutEnabled,
   onToggleDetailLayoutEnabled,
   detailLayout,
-  onDetailLayoutChange
+  onDetailLayoutChange,
+  schemaId,
+  canEditDrawer
 }: {
   activeTab: SchemaPanelTab;
   onTabChange: (tab: SchemaPanelTab) => void;
@@ -96,6 +99,8 @@ export const SchemaEditorTabs = ({
   onToggleDetailLayoutEnabled: (enabled: boolean) => void;
   detailLayout: DetailLayoutConfig;
   onDetailLayoutChange: (layout: DetailLayoutConfig) => void;
+  schemaId?: string;
+  canEditDrawer?: boolean;
 }) => (
   <Tabs.Root value={activeTab} onValueChange={value => onTabChange(value as SchemaPanelTab)}>
     <Tabs.List aria-label="Schema editor sections">
@@ -103,6 +108,7 @@ export const SchemaEditorTabs = ({
       <Tabs.Trigger value="templates">Templates</Tabs.Trigger>
       <Tabs.Trigger value="validation">Validation</Tabs.Trigger>
       <Tabs.Trigger value="layout">Layout</Tabs.Trigger>
+      <Tabs.Trigger value="drawer">Entity drawer</Tabs.Trigger>
     </Tabs.List>
     <Tabs.Content value="fields" style={{ height: 'auto' }}>
       <SchemaFieldsEditor
@@ -187,6 +193,9 @@ export const SchemaEditorTabs = ({
           )}
         </div>
       )}
+    </Tabs.Content>
+    <Tabs.Content value="drawer" style={{ height: 'auto' }}>
+      <EntityDrawerEditor schemaId={schemaId} canEdit={canEditDrawer} />
     </Tabs.Content>
   </Tabs.Root>
 );
