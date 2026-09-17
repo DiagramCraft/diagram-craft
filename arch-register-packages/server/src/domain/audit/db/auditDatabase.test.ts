@@ -39,11 +39,7 @@ describe('audit database mappers', () => {
   });
 
   it('rejects JSON values that are not objects', () => {
-    expect(() => auditMappers.auditLog({ ...row, changes: 'null' })).toThrow(
-      'audit_log.changes'
-    );
-    expect(() => auditMappers.auditLog({ ...row, metadata: '[]' })).toThrow(
-      'audit_log.metadata'
-    );
+    expect(() => auditMappers.auditLog({ ...row, changes: 'null' })).toThrow('audit_log.changes');
+    expect(() => auditMappers.auditLog({ ...row, metadata: '[]' })).toThrow('audit_log.metadata');
   });
 });

@@ -29,7 +29,10 @@ export type AuditLogDbCreate = Omit<AuditLogDbResult, 'id' | 'user_display_name'
 
 export type AuditOperation = 'create' | 'update' | 'delete';
 
-export type AuditLogSummaryDbResult = Pick<AuditLogDbResult, 'timestamp' | 'operation' | 'entity_type'>;
+export type AuditLogSummaryDbResult = Pick<
+  AuditLogDbResult,
+  'timestamp' | 'operation' | 'entity_type'
+>;
 
 export type AuditLogListOptions = {
   entityType?: string;
@@ -61,7 +64,11 @@ export type AuditEntityType =
   // delivery, watcher notifications, or another round of automation rule evaluation.
   | 'automation_note';
 
-const AUDIT_OPERATIONS = ['create', 'update', 'delete'] as const satisfies readonly AuditOperation[];
+const AUDIT_OPERATIONS = [
+  'create',
+  'update',
+  'delete'
+] as const satisfies readonly AuditOperation[];
 const AUDIT_ENTITY_TYPES = [
   'workspace',
   'workspace_enum',

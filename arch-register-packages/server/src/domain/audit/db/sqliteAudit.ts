@@ -1,9 +1,5 @@
 import { newid } from '@diagram-craft/utils/id';
-import type {
-  AuditDatabase,
-  AuditLogDbCreate,
-  AuditLogListOptions
-} from './auditDatabase';
+import type { AuditDatabase, AuditLogDbCreate, AuditLogListOptions } from './auditDatabase';
 import { AUDIT_LOG_SELECT_SQL, auditMappers } from './auditDatabase';
 import { SqliteDatabaseBase } from '../../../db/sqliteBase';
 

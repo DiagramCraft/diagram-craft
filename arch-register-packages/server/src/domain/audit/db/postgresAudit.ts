@@ -1,8 +1,4 @@
-import type {
-  AuditDatabase,
-  AuditLogDbCreate,
-  AuditLogListOptions
-} from './auditDatabase';
+import type { AuditDatabase, AuditLogDbCreate, AuditLogListOptions } from './auditDatabase';
 import { AUDIT_LOG_SELECT_SQL, auditMappers } from './auditDatabase';
 import { normalizePostgresError, PostgresDatabaseBase } from '../../../db/postgresBase';
 
@@ -14,7 +10,8 @@ export class PostgresAuditDatabase extends PostgresDatabaseBase implements Audit
       params.push(value);
       return `$${params.length}`;
     };
-    if (options.entityType) conditions.push(`audit_log.entity_type = ${addParam(options.entityType)}`);
+    if (options.entityType)
+      conditions.push(`audit_log.entity_type = ${addParam(options.entityType)}`);
     if (options.entityId) conditions.push(`audit_log.entity_id = ${addParam(options.entityId)}`);
     if (options.entityIds) {
       if (options.entityIds.length === 0) return [];

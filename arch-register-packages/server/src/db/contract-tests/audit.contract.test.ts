@@ -163,9 +163,9 @@ runContractSuiteAgainstBothDrivers('AuditDatabase', getDb => {
         offset: 0
       });
       expect(logs.map(log => log.id)).toEqual([first.id, second.id].sort().reverse());
-      expect(
-        await db.audit.listAuditLogs(workspace, { entityId: first.entity_id })
-      ).toHaveLength(1);
+      expect(await db.audit.listAuditLogs(workspace, { entityId: first.entity_id })).toHaveLength(
+        1
+      );
     });
 
     it('lists lightweight summaries without loading audit JSON columns', async () => {
