@@ -55594,6 +55594,12 @@
                               "minimum": -9007199254740991,
                               "maximum": 9007199254740991,
                               "description": "Number of workspace capability configurations"
+                            },
+                            "entity_drawer_profiles": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                              "description": "Number of entity drawer profiles"
                             }
                           },
                           "required": [
@@ -56065,6 +56071,12 @@
                               "minimum": -9007199254740991,
                               "maximum": 9007199254740991,
                               "description": "Number of workspace capability configurations imported"
+                            },
+                            "entity_drawer_profiles": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                              "description": "Number of entity drawer profiles imported"
                             }
                           },
                           "required": [
