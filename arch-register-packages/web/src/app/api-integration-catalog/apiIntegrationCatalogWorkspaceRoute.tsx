@@ -22,10 +22,10 @@ import { ensureApplicationAccess } from '../../routes/applicationAccess';
 const railPath = (path: string) => path.replace('/$workspaceSlug/', '');
 
 /**
- * API & Integration Catalog's workspace routes: one per rail section. Mirrors
- * `../risk-compliance/riskComplianceWorkspaceRoute.tsx`, minus any deep-linkable detail routes —
- * this is a scaffold with placeholder screens only (#3315); detail drawers land alongside their
- * section's real content in later sub-issues of #3150 (#3316-#3320).
+ * API & Integration Catalog's workspace routes: one per rail section, plus the APIs section's
+ * deep-linkable spec drawer route (#3316). Mirrors `../risk-compliance/riskComplianceWorkspaceRoute.tsx`.
+ * Integrations, Sync, and Impact remain placeholder screens with no detail routes yet; those land
+ * alongside their section's real content in later sub-issues of #3150 (#3317-#3320).
  */
 export const createApiIntegrationCatalogWorkspaceRoutes = <TParentRoute extends AnyRoute>(
   workspaceRoute: TParentRoute
@@ -54,6 +54,27 @@ export const createApiIntegrationCatalogWorkspaceRoutes = <TParentRoute extends 
     createRoute({
       getParentRoute: () => workspaceRoute,
       path: railPath(IC_RAIL_PATHS[IC_APIS_ID]),
+      beforeLoad: ({ context, params }) =>
+        ensureApplicationAccess(
+          context.queryClient,
+          (params as unknown as { workspaceSlug: string }).workspaceSlug,
+          'api-integration-catalog'
+        ),
+      component: LazyApiIntegrationCatalogApisScreen
+    }),
+    ctx =>
+      railSectionShell(ctx, IC_APIS_ID, {
+        breadcrumbs: buildApiIntegrationCatalogBreadcrumbs(ctx, IC_APIS_ID)
+      })
+  );
+  // Deep-linkable API spec drawer, mirroring `vendorManagementWorkspaceRoute.tsx`'s
+  // `vendorsDetailRoute` — same `component` as the base APIs route, gated the same way, with the
+  // drawer rendered conditionally by `ApiIntegrationCatalogApisScreen` when the optional `apiId`
+  // route param is present.
+  const apisDetailRoute = withWorkspaceShell(
+    createRoute({
+      getParentRoute: () => workspaceRoute,
+      path: `${railPath(IC_RAIL_PATHS[IC_APIS_ID])}/$apiId`,
       beforeLoad: ({ context, params }) =>
         ensureApplicationAccess(
           context.queryClient,
@@ -119,5 +140,12 @@ export const createApiIntegrationCatalogWorkspaceRoutes = <TParentRoute extends 
       })
   );
 
-  return [overviewRoute, apisRoute, integrationsRoute, syncRoute, impactRoute] as const;
+  return [
+    overviewRoute,
+    apisRoute,
+    apisDetailRoute,
+    integrationsRoute,
+    syncRoute,
+    impactRoute
+  ] as const;
 };
