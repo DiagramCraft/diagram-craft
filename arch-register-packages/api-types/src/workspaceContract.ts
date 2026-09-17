@@ -252,7 +252,12 @@ const importParseResponseSchema = z.object({
             .number()
             .int()
             .optional()
-            .describe('Number of workspace capability configurations')
+            .describe('Number of workspace capability configurations'),
+          entity_drawer_profiles: z
+            .number()
+            .int()
+            .optional()
+            .describe('Number of entity drawer profiles')
         })
         .optional()
         .describe('Configuration summary'),
@@ -389,7 +394,12 @@ const importExecuteResponseSchema = z.object({
             .number()
             .int()
             .optional()
-            .describe('Number of workspace capability configurations imported')
+            .describe('Number of workspace capability configurations imported'),
+          entity_drawer_profiles: z
+            .number()
+            .int()
+            .optional()
+            .describe('Number of entity drawer profiles imported')
         })
         .optional()
         .describe('Configuration import results'),

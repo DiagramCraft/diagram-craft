@@ -15,6 +15,7 @@ import { getSchemaGovernancePoliciesBySchema } from '../governance/schemaGoverna
 import type { SchemaField, SharedFieldGroupLink } from '@arch-register/api-types/schemaContract';
 import type { RelationField } from '@arch-register/api-types/relationSchemaContract';
 import type { DefinitionImportSource } from '@arch-register/api-types/workspaceContract';
+import { entityDrawerConfigurationSchema } from '@arch-register/api-types/entityDrawerConfiguration';
 import type {
   DefinitionSource,
   ImportableFieldGroup,
@@ -310,6 +311,12 @@ export const sourceFromBuiltin = (template: SchemaTemplate): DefinitionSource =>
         ) as DefinitionSource['capabilityConfigurations'][number]['bindings']
       })
     ),
+    entityDrawerProfiles: Object.fromEntries(
+      Object.entries(template.entityDrawerProfiles ?? {}).map(([symId, profile]) => [
+        sourceDefinitionId(rootOwnerId, template.id, symId),
+        profile
+      ])
+    ),
     dashboardWidgets: template.dashboardWidgets ?? [],
     dependencies,
     schemaPatches: extensionSources.flatMap(extension => extension.schemaPatches),
@@ -332,7 +339,8 @@ export const sourceFromWorkspace = async (
     policiesBySchema,
     relationSchemas,
     capabilityConfigurations,
-    categories
+    categories,
+    entityDrawerConfiguration
   ] = await Promise.all([
     db.catalog.listSchemas(workspace),
     db.catalog.listEnums(workspace),
@@ -342,10 +350,14 @@ export const sourceFromWorkspace = async (
     getSchemaGovernancePoliciesBySchema(db, workspace),
     db.relation.listRelationSchemas(workspace),
     db.workspace.listWorkspaceCapabilityConfigurations(workspace),
-    db.catalog.listCategories(workspace)
+    db.catalog.listCategories(workspace),
+    db.workspace.getWorkspaceEntityDrawerConfiguration(workspace)
   ]);
   const teamNames = new Map(teams.map(team => [team.id, team.name]));
   const categoryNamesById = new Map(categories.map(category => [category.id, category.name]));
+  const parsedEntityDrawerConfiguration = entityDrawerConfigurationSchema.safeParse(
+    entityDrawerConfiguration?.configuration
+  );
 
   return {
     kind: 'workspace',
@@ -422,6 +434,9 @@ export const sourceFromWorkspace = async (
       type: configuration.type,
       bindings: configuration.bindings
     })),
+    entityDrawerProfiles: parsedEntityDrawerConfiguration.success
+      ? parsedEntityDrawerConfiguration.data.profiles
+      : {},
     dashboardWidgets: [],
     dependencies: [],
     schemaPatches: [],

@@ -8,6 +8,7 @@ import type {
 } from '@arch-register/api-types/documentContract';
 import type { GovernanceWorkflowConfig } from '@arch-register/api-types/governanceCaseConfigSchemas';
 import type { WorkspaceCapabilityBindings } from '@arch-register/api-types/workspaceCapabilityContract';
+import type { EntityDrawerConfiguration } from '@arch-register/api-types/entityDrawerConfiguration';
 import type {
   EntityTemplate,
   SchemaField,
@@ -100,6 +101,7 @@ export type ExportConfig = {
     bindings: WorkspaceCapabilityBindings;
     view_config?: unknown | null;
   }>;
+  entity_drawer_configuration?: EntityDrawerConfiguration;
 };
 
 export type ExportSchema = {
@@ -348,6 +350,7 @@ export type ImportParseResult = {
       teams: number;
       roles: number;
       capability_configurations?: number;
+      entity_drawer_profiles?: number;
     };
     schemas?: {
       count: number;
@@ -407,6 +410,7 @@ export type ImportExecuteResult = {
       teams: number;
       roles: number;
       capability_configurations?: number;
+      entity_drawer_profiles?: number;
     };
     schemas?: {
       created: number;

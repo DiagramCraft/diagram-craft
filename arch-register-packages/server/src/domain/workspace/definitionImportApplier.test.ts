@@ -66,6 +66,7 @@ describe('applyDefinitionImport', () => {
       relationSchemas: [],
       fieldGroups: [],
       capabilityConfigurations: [],
+      entityDrawerProfiles: {},
       dashboardWidgets: [],
       dependencyMappings: [],
       schemaPatches: [],

@@ -22,6 +22,7 @@ import type {
 import { buildImportPlan, applyConflictRenames } from './importPlanningOperations';
 import {
   importConfig,
+  importEntityDrawerConfiguration,
   importWorkspaceCapabilityConfigurations,
   importSchemas,
   importRelationSchemas,
@@ -194,6 +195,23 @@ export const executeImport = async (
               idMapping
             )
           };
+        }
+        if (
+          options.include.includes('config') &&
+          resolvedData.config?.entity_drawer_configuration
+        ) {
+          const drawerResult = await importEntityDrawerConfiguration(
+            transactionDb,
+            workspace,
+            resolvedData.config.entity_drawer_configuration,
+            options.preserve_ids ?? false,
+            idMapping
+          );
+          result.imported.config = {
+            ...(result.imported.config ?? { lifecycle_states: 0, teams: 0, roles: 0 }),
+            entity_drawer_profiles: drawerResult.profiles
+          };
+          result.warnings.push(...drawerResult.warnings);
         }
       }
     });

@@ -3,6 +3,8 @@ import {
   buildEntityDrawerCatalog,
   buildDefaultEntityDrawerProfile,
   entityDrawerConfigurationSchema,
+  mergeEntityDrawerProfiles,
+  remapEntityDrawerProfiles,
   resolveEntityDrawerConfiguration
 } from './entityDrawerConfiguration';
 
@@ -20,6 +22,17 @@ const schema = {
 };
 
 describe('entity drawer configuration', () => {
+  it('remaps imported profiles and keeps destination profiles on merge', () => {
+    const incoming = { source: buildDefaultEntityDrawerProfile(schema) };
+    const remapped = remapEntityDrawerProfiles(incoming, new Map([['source', 'target']]));
+    const existing = {
+      target: { ...buildDefaultEntityDrawerProfile(schema), header: { badges: [] } }
+    };
+
+    expect(remapped.target).toEqual(incoming.source);
+    expect(mergeEntityDrawerProfiles(existing, remapped)).toEqual(existing);
+  });
+
   it('derives a stable default profile from schema fields and metadata', () => {
     const profile = buildDefaultEntityDrawerProfile(schema);
     expect(profile.sections.flatMap(section => section.items)).toEqual(

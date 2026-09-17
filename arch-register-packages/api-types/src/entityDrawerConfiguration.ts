@@ -117,6 +117,7 @@ export type EntityDrawerItem = z.infer<typeof entityDrawerItemSchema>;
 export type EntityDrawerBadge = z.infer<typeof entityDrawerBadgeSchema>;
 export type EntityDrawerProfile = z.infer<typeof entityDrawerProfileSchema>;
 export type EntityDrawerConfiguration = z.infer<typeof entityDrawerConfigurationSchema>;
+export type EntityDrawerProfiles = EntityDrawerConfiguration['profiles'];
 export type EntityDrawerDiagnostic = z.infer<typeof entityDrawerDiagnosticSchema>;
 export type EntityDrawerCatalog = z.infer<typeof entityDrawerCatalogSchema>;
 export type EntityDrawerSlotDefinition = {
@@ -129,6 +130,22 @@ export type EntityDrawerSlotDefinition = {
   optionFields: Array<{ id: string; label: string; description: string }>;
   optionsSchema: z.ZodTypeAny;
 };
+
+export const remapEntityDrawerProfiles = (
+  profiles: EntityDrawerProfiles,
+  schemaIdMap: ReadonlyMap<string, string>
+): EntityDrawerProfiles =>
+  Object.fromEntries(
+    Object.entries(profiles).flatMap(([schemaId, profile]) => {
+      const mappedSchemaId = schemaIdMap.get(schemaId);
+      return mappedSchemaId ? [[mappedSchemaId, profile] as const] : [];
+    })
+  );
+
+export const mergeEntityDrawerProfiles = (
+  existing: EntityDrawerProfiles,
+  incoming: EntityDrawerProfiles
+): EntityDrawerProfiles => ({ ...incoming, ...existing });
 
 type CapabilityConfigurationLike = {
   type: string;

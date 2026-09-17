@@ -89,7 +89,9 @@ export const parseImport = async (
         lifecycle_states: data.config.lifecycle_states.length,
         teams: data.config.teams.length,
         roles: data.config.roles.length,
-        capability_configurations: data.config.capability_configurations?.length ?? 0
+        capability_configurations: data.config.capability_configurations?.length ?? 0,
+        entity_drawer_profiles: Object.keys(data.config.entity_drawer_configuration?.profiles ?? {})
+          .length
       };
       conflicts.push(...configResult.conflicts);
       warnings.push(...configResult.warnings);

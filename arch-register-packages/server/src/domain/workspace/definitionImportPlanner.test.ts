@@ -97,6 +97,7 @@ const source = (overrides: Partial<DefinitionSource> = {}): DefinitionSource => 
   relationSchemas: [],
   fieldGroups: [],
   capabilityConfigurations: [],
+  entityDrawerProfiles: {},
   dashboardWidgets: [],
   dependencies: [],
   schemaPatches: [],

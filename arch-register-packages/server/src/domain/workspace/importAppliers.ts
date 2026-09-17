@@ -52,6 +52,13 @@ import { throwRelationConstraintError } from '../catalog/relationConstraintError
 import { coordinateContentWrite } from '../project/contentWriteCoordinator';
 import type { WorkspaceCapabilityBindings } from '@arch-register/api-types/workspaceCapabilityContract';
 import {
+  entityDrawerConfigurationSchema,
+  mergeEntityDrawerProfiles,
+  remapEntityDrawerProfiles,
+  resolveEntityDrawerConfiguration,
+  type EntityDrawerConfiguration
+} from '@arch-register/api-types/entityDrawerConfiguration';
+import {
   generateSchemaKeyPrefix,
   remapDocumentLinks,
   remapDocumentMetadataValues,
@@ -270,6 +277,78 @@ export const importConfig = async (
     roles: roleCount,
     capability_configurations: 0
   };
+};
+
+export const importEntityDrawerConfiguration = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  configuration: EntityDrawerConfiguration,
+  preserveIds: boolean,
+  idMapping: IdMapping
+): Promise<{ profiles: number; warnings: string[] }> => {
+  const warnings: string[] = [];
+  const schemaIdMap = new Map(idMapping.schemas);
+
+  for (const sourceSchemaId of Object.keys(configuration.profiles)) {
+    if (schemaIdMap.has(sourceSchemaId) || !preserveIds) continue;
+    if (await db.catalog.getSchema(workspace, sourceSchemaId)) {
+      schemaIdMap.set(sourceSchemaId, sourceSchemaId);
+    }
+  }
+
+  const remappedProfiles = remapEntityDrawerProfiles(configuration.profiles, schemaIdMap);
+  for (const sourceSchemaId of Object.keys(configuration.profiles)) {
+    if (schemaIdMap.has(sourceSchemaId)) continue;
+    warnings.push(
+      `Drawer profile for schema '${sourceSchemaId}' was skipped because the schema is not present in the import target.`
+    );
+  }
+  if (Object.keys(remappedProfiles).length === 0) return { profiles: 0, warnings };
+
+  const existingRow = await db.workspace.getWorkspaceEntityDrawerConfiguration(workspace);
+  const existingParsed = entityDrawerConfigurationSchema.safeParse(existingRow?.configuration);
+  if (existingRow && !existingParsed.success) {
+    warnings.push(
+      'Existing entity drawer configuration is invalid; imported profiles were skipped.'
+    );
+    return { profiles: 0, warnings };
+  }
+
+  const existingProfiles = existingParsed.success ? existingParsed.data.profiles : {};
+  const profilesToAdd = Object.fromEntries(
+    Object.entries(remappedProfiles).filter(([schemaId]) => {
+      if (!existingProfiles[schemaId]) return true;
+      warnings.push(
+        `Drawer profile for schema '${schemaId}' was skipped because the destination has a custom profile.`
+      );
+      return false;
+    })
+  );
+  if (Object.keys(profilesToAdd).length === 0) return { profiles: 0, warnings };
+
+  const [schemas, capabilityConfigurations] = await Promise.all([
+    db.catalog.listSchemas(workspace),
+    db.workspace.listWorkspaceCapabilityConfigurations(workspace)
+  ]);
+  const resolved = resolveEntityDrawerConfiguration(
+    { version: 1, profiles: profilesToAdd },
+    schemas,
+    capabilityConfigurations
+  );
+  warnings.push(
+    ...resolved.diagnostics.map(diagnostic => `Drawer profile diagnostic: ${diagnostic.message}`)
+  );
+
+  await db.workspace.upsertWorkspaceEntityDrawerConfiguration({
+    workspace,
+    configuration: {
+      version: 1,
+      profiles: mergeEntityDrawerProfiles(existingProfiles, profilesToAdd)
+    },
+    created_at: existingRow?.created_at ?? new Date(),
+    updated_at: new Date()
+  });
+  return { profiles: Object.keys(profilesToAdd).length, warnings };
 };
 
 export const importWorkspaceCapabilityConfigurations = async (

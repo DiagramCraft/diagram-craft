@@ -38,6 +38,10 @@ import {
 import { coordinateContentWrite } from '../project/contentWriteCoordinator';
 import { createLogger } from '../../utils/logger';
 import type { WorkspaceCapabilityBindings } from '@arch-register/api-types/workspaceCapabilityContract';
+import {
+  entityDrawerConfigurationSchema,
+  remapEntityDrawerProfiles
+} from '@arch-register/api-types/entityDrawerConfiguration';
 import { listWorkspaceCapabilityConfigurations } from './workspaceCapabilityOperations';
 import {
   generateSchemaKeyPrefix,
@@ -484,7 +488,8 @@ export const createWorkspace = async (
             srcSchemas,
             srcSharedFieldGroups,
             srcGovernanceConfigs,
-            srcCapabilityConfigurations
+            srcCapabilityConfigurations,
+            srcEntityDrawerConfiguration
           ] = await Promise.all([
             db.workspace.listLifecycleStates(replicate_from),
             db.workspace.listTeams(replicate_from),
@@ -492,7 +497,8 @@ export const createWorkspace = async (
             db.catalog.listSchemas(replicate_from),
             db.catalog.listSharedFieldGroups(replicate_from),
             db.governanceCaseConfig.listCaseConfig(replicate_from),
-            listWorkspaceCapabilityConfigurations(db, replicate_from)
+            listWorkspaceCapabilityConfigurations(db, replicate_from),
+            db.workspace.getWorkspaceEntityDrawerConfiguration(replicate_from)
           ]);
 
           const lifecycleMap = new Map<string, string>();
@@ -919,6 +925,22 @@ export const createWorkspace = async (
                 updated_at: timestamp
               });
             }
+            if (includeSet.has('schemas') && srcEntityDrawerConfiguration) {
+              const parsedDrawer = entityDrawerConfigurationSchema.safeParse(
+                srcEntityDrawerConfiguration.configuration
+              );
+              if (parsedDrawer.success) {
+                const profiles = remapEntityDrawerProfiles(parsedDrawer.data.profiles, schemaMap);
+                if (Object.keys(profiles).length > 0) {
+                  await db.workspace.upsertWorkspaceEntityDrawerConfiguration({
+                    workspace: row.id,
+                    configuration: { version: 1, profiles },
+                    created_at: timestamp,
+                    updated_at: timestamp
+                  });
+                }
+              }
+            }
           }
         } else {
           await db.workspace.replaceLifecycleStates(
@@ -971,6 +993,14 @@ export const createWorkspace = async (
                 workspace: row.id,
                 type: configuration.type,
                 bindings: configuration.bindings,
+                created_at: timestamp,
+                updated_at: timestamp
+              });
+            }
+            if (Object.keys(definitions.entityDrawerProfiles).length > 0) {
+              await db.workspace.upsertWorkspaceEntityDrawerConfiguration({
+                workspace: row.id,
+                configuration: { version: 1, profiles: definitions.entityDrawerProfiles },
                 created_at: timestamp,
                 updated_at: timestamp
               });
