@@ -112,17 +112,15 @@ export const listApiSpecificationRevisions = async (
     )
   );
 
-  return revisions.map((revision, index) => {
+  // A revision with no projection row (e.g. seeded/created outside the normal ingestion path,
+  // which is what writes this projection) is omitted rather than failing the whole list — one
+  // legacy/unprocessed revision shouldn't make every other revision of this artifact unlistable.
+  return revisions.flatMap((revision, index) => {
     const projection = projections[index];
-    httpAssert.present(projection, {
-      status: 409,
-      message: 'Artifact revision has not been projected as an API specification'
-    });
-    return toApiSpecificationRevision(
-      revision,
-      projection,
-      artifact.current_revision_id === revision.id
-    );
+    if (!projection) return [];
+    return [
+      toApiSpecificationRevision(revision, projection, artifact.current_revision_id === revision.id)
+    ];
   });
 };
 
