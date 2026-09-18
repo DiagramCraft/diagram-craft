@@ -123,11 +123,5 @@ export const createApiIntegrationCatalogWorkspaceRoutes = <TParentRoute extends 
       })
   );
 
-  return [
-    overviewRoute,
-    apisRoute,
-    apisDetailRoute,
-    integrationsRoute,
-    impactRoute
-  ] as const;
+  return [overviewRoute, apisRoute, apisDetailRoute, integrationsRoute, impactRoute] as const;
 };

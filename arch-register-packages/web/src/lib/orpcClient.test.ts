@@ -62,9 +62,7 @@ describe('oRPC API surface routing', () => {
   });
 
   it('uses the core API surface for integration sync routes', async () => {
-    fetchWithAuthResponse.mockResolvedValue(
-      Response.json({ sources: [], runs: [], records: [] })
-    );
+    fetchWithAuthResponse.mockResolvedValue(Response.json({ sources: [], runs: [], records: [] }));
 
     await orpcClient.integrationSync.dashboard({ params: { workspace: 'default' } });
 

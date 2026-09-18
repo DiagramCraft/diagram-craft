@@ -4,12 +4,7 @@ export type IntegrationSourceStatus = 'active' | 'degraded' | 'paused';
 export type IntegrationSyncRunStatus = 'running' | 'succeeded' | 'failed' | 'cancelled';
 export type IntegrationSyncCoverage = 'complete' | 'partial';
 export type IntegrationManagedRecordType = 'entity' | 'relation' | 'artifact';
-export type IntegrationManagedRecordState =
-  | 'active'
-  | 'missing'
-  | 'orphaned'
-  | 'stale'
-  | 'failing';
+export type IntegrationManagedRecordState = 'active' | 'missing' | 'orphaned' | 'stale' | 'failing';
 
 export type IntegrationSourceDbResult = {
   id: string;
@@ -200,12 +195,23 @@ export type IntegrationSyncDatabase = {
       failures: string[];
     }
   ): Promise<IntegrationSyncRunDbResult | null>;
-  upsertManagedRecord(input: IntegrationManagedRecordDbUpsert): Promise<IntegrationManagedRecordDbResult>;
+  upsertManagedRecord(
+    input: IntegrationManagedRecordDbUpsert
+  ): Promise<IntegrationManagedRecordDbResult>;
   listManagedRecords(workspace: string): Promise<IntegrationManagedRecordDbResult[]>;
   getManagedRecord(workspace: string, id: string): Promise<IntegrationManagedRecordDbResult | null>;
   deleteManagedRecord(workspace: string, id: string): Promise<void>;
-  markMissing(workspace: string, sourceId: string, runId: string, scopeKey: string | null): Promise<void>;
-  relinkRecord(workspace: string, id: string, recordId: string): Promise<IntegrationManagedRecordDbResult | null>;
+  markMissing(
+    workspace: string,
+    sourceId: string,
+    runId: string,
+    scopeKey: string | null
+  ): Promise<void>;
+  relinkRecord(
+    workspace: string,
+    id: string,
+    recordId: string
+  ): Promise<IntegrationManagedRecordDbResult | null>;
   setManagedRecordState(
     workspace: string,
     id: string,

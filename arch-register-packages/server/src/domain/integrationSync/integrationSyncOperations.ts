@@ -27,10 +27,7 @@ const redactProvenance = (value: Record<string, unknown>): Record<string, unknow
   Object.fromEntries(
     Object.entries(value)
       .filter(([key]) => !/(token|secret|password|credential|authorization)/i.test(key))
-      .map(([key, entry]) => [
-        key,
-        typeof entry === 'string' ? entry.slice(0, 500) : entry
-      ])
+      .map(([key, entry]) => [key, typeof entry === 'string' ? entry.slice(0, 500) : entry])
   );
 
 const toSource = (source: IntegrationSourceDbResult): IntegrationSource => ({
@@ -148,7 +145,11 @@ export const startIntegrationSyncRun = async (
           `Integration source '${sourceKey}' is not approved for syncing (status: ${source.status})`
         );
       }
-      const existing = await db.integrationSync.getRunByExternalId(ws, sourceKey, body.externalRunId);
+      const existing = await db.integrationSync.getRunByExternalId(
+        ws,
+        sourceKey,
+        body.externalRunId
+      );
       if (existing) return toRun(existing);
       const now = new Date();
       return toRun(
@@ -316,7 +317,8 @@ export const retryIntegrationSyncRun = async (
       const sourceRun = await db.integrationSync.getRun(ws, runId);
       if (!sourceRun) throw new Error(`Integration sync run '${runId}' not found`);
       const source = await db.integrationSync.getSource(ws, sourceRun.source_key);
-      if (!source) throw new Error(`Integration source '${sourceRun.source_key}' is not configured`);
+      if (!source)
+        throw new Error(`Integration source '${sourceRun.source_key}' is not configured`);
       if (source.status !== 'active' && source.status !== 'degraded') {
         throw new Error(
           `Integration source '${source.source_key}' is not approved for syncing (status: ${source.status})`
@@ -360,43 +362,47 @@ export const relinkIntegrationRecord = async (
     before: ({ authCtx }) => requireWorkspaceAdmin(authCtx),
     operation: async ({ ws }) =>
       db.core.transaction(async tx => {
-      const record = await tx.integrationSync.getManagedRecord(ws, id);
-      if (!record) throw new Error(`Managed integration record '${id}' not found`);
-      const targetExists =
-        record.record_type === 'entity'
-          ? await tx.catalog.getEntity(ws, recordId)
-          : record.record_type === 'relation'
-            ? await tx.relation.getRelation(ws, recordId)
-            : await tx.artifact.getArtifact(ws, recordId);
-      if (!targetExists) throw new Error(`Target record '${recordId}' was not found`);
-      if (record.record_type === 'entity' || record.record_type === 'relation') {
-        await tx.externalIdentity.upsert({
+        const record = await tx.integrationSync.getManagedRecord(ws, id);
+        if (!record) throw new Error(`Managed integration record '${id}' not found`);
+        const targetExists =
+          record.record_type === 'entity'
+            ? await tx.catalog.getEntity(ws, recordId)
+            : record.record_type === 'relation'
+              ? await tx.relation.getRelation(ws, recordId)
+              : await tx.artifact.getArtifact(ws, recordId);
+        if (!targetExists) throw new Error(`Target record '${recordId}' was not found`);
+        if (record.record_type === 'entity' || record.record_type === 'relation') {
+          await tx.externalIdentity.upsert({
+            workspace: ws,
+            source: record.source_key,
+            external_key: record.external_key,
+            record_id: recordId
+          });
+        }
+        const relinked = await tx.integrationSync.relinkRecord(ws, id, recordId);
+        if (!relinked) throw new Error(`Managed integration record '${id}' could not be relinked`);
+        const user = event.context.user;
+        await tx.audit.createAuditLog({
           workspace: ws,
-          source: record.source_key,
-          external_key: record.external_key,
-          record_id: recordId
+          timestamp: new Date(),
+          user_id: user.id,
+          operation: 'update',
+          entity_type: 'automation_note',
+          entity_id: id,
+          entity_name: `Integration record ${record.external_key}`,
+          entity_slug: null,
+          schema_id: null,
+          changes: {
+            old: { record_id: record.record_id, state: record.state },
+            new: { record_id: recordId, state: 'active' }
+          },
+          metadata: {
+            integrationSync: true,
+            sourceKey: record.source_key,
+            recordType: record.record_type
+          }
         });
-      }
-      const relinked = await tx.integrationSync.relinkRecord(ws, id, recordId);
-      if (!relinked) throw new Error(`Managed integration record '${id}' could not be relinked`);
-      const user = event.context.user;
-      await tx.audit.createAuditLog({
-        workspace: ws,
-        timestamp: new Date(),
-        user_id: user.id,
-        operation: 'update',
-        entity_type: 'automation_note',
-        entity_id: id,
-        entity_name: `Integration record ${record.external_key}`,
-        entity_slug: null,
-        schema_id: null,
-        changes: {
-          old: { record_id: record.record_id, state: record.state },
-          new: { record_id: recordId, state: 'active' }
-        },
-        metadata: { integrationSync: true, sourceKey: record.source_key, recordType: record.record_type }
-      });
-      return toRecord(relinked);
+        return toRecord(relinked);
       })
   });
 

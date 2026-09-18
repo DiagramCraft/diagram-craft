@@ -159,12 +159,7 @@ test.describe('integration entity surface', () => {
     expect((await byId.json())._uid).toBe(entityId);
 
     const externalPath = '/entities/byExternalKey/e2e/integration-entity';
-    const run = await startIntegrationRun(
-      server,
-      auth,
-      'e2e',
-      `entity-surface-${randomUUID()}`
-    );
+    const run = await startIntegrationRun(server, auth, 'e2e', `entity-surface-${randomUUID()}`);
     const sync = await fetch(integrationUrl(server.baseUrl, externalPath), {
       method: 'PUT',
       headers: { Authorization: auth, 'content-type': 'application/json' },
@@ -314,9 +309,9 @@ test.describe('integration entity surface', () => {
     });
     expect(finish.status).toBe(200);
 
-    const managedRecord = (await server.db.integrationSync.listManagedRecords(seedIds.workspace.default)).find(
-      record => record.source_key === source && record.external_key === 'e2e-record'
-    );
+    const managedRecord = (
+      await server.db.integrationSync.listManagedRecords(seedIds.workspace.default)
+    ).find(record => record.source_key === source && record.external_key === 'e2e-record');
     expect(managedRecord).toBeDefined();
     await server.db.integrationSync.setManagedRecordState(
       seedIds.workspace.default,
@@ -332,9 +327,10 @@ test.describe('integration entity surface', () => {
       }
     );
     expect(relink.status).toBe(200);
-    expect((await server.db.externalIdentity.find(seedIds.workspace.default, source, 'e2e-record'))?.record_id).toBe(
-      entityId
-    );
+    expect(
+      (await server.db.externalIdentity.find(seedIds.workspace.default, source, 'e2e-record'))
+        ?.record_id
+    ).toBe(entityId);
 
     const sourceRow = await server.db.integrationSync.getSource(seedIds.workspace.default, source);
     expect(sourceRow).toBeDefined();

@@ -37,9 +37,19 @@ describe('integration sync seed data', () => {
       );
       expect(records).toEqual(
         expect.arrayContaining([
-          expect.objectContaining({ id: INTEGRATION_SYNC_IDS.records.missingService, state: 'missing' }),
-          expect.objectContaining({ id: INTEGRATION_SYNC_IDS.records.staleApi, state: 'stale', failure_count: 2 }),
-          expect.objectContaining({ id: INTEGRATION_SYNC_IDS.records.orphanedRelation, state: 'orphaned' })
+          expect.objectContaining({
+            id: INTEGRATION_SYNC_IDS.records.missingService,
+            state: 'missing'
+          }),
+          expect.objectContaining({
+            id: INTEGRATION_SYNC_IDS.records.staleApi,
+            state: 'stale',
+            failure_count: 2
+          }),
+          expect.objectContaining({
+            id: INTEGRATION_SYNC_IDS.records.orphanedRelation,
+            state: 'orphaned'
+          })
         ])
       );
     } finally {

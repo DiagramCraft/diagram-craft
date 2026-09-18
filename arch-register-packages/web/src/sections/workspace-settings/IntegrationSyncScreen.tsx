@@ -75,11 +75,13 @@ export const IntegrationSyncScreen = () => {
     mutationFn: (input: { id: string; recordId: string }) =>
       relinkIntegrationSyncRecord(workspaceSlug, input.id, input.recordId),
     onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: integrationSyncDashboardKey(workspaceSlug) }).then(() => {
-        setRelinkTarget(null);
-        setSelectedEntity(null);
-        setSelectedRelation(null);
-      }),
+      queryClient
+        .invalidateQueries({ queryKey: integrationSyncDashboardKey(workspaceSlug) })
+        .then(() => {
+          setRelinkTarget(null);
+          setSelectedEntity(null);
+          setSelectedRelation(null);
+        }),
     onError: error => window.alert(error instanceof Error ? error.message : String(error))
   });
   const saveSource = useMutation({
@@ -91,17 +93,21 @@ export const IntegrationSyncScreen = () => {
         ...(source.status !== 'degraded' ? { status: source.status } : {})
       }),
     onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: integrationSyncDashboardKey(workspaceSlug) }).then(() => {
-        setSourceEditor(null);
-      }),
+      queryClient
+        .invalidateQueries({ queryKey: integrationSyncDashboardKey(workspaceSlug) })
+        .then(() => {
+          setSourceEditor(null);
+        }),
     onError: error => window.alert(error instanceof Error ? error.message : String(error))
   });
   const stopManaging = useMutation({
     mutationFn: (id: string) => stopManagingIntegrationSyncRecord(workspaceSlug, id),
     onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: integrationSyncDashboardKey(workspaceSlug) }).then(() => {
-        setStopManagingTarget(null);
-      }),
+      queryClient
+        .invalidateQueries({ queryKey: integrationSyncDashboardKey(workspaceSlug) })
+        .then(() => {
+          setStopManagingTarget(null);
+        }),
     onError: error => window.alert(error instanceof Error ? error.message : String(error))
   });
   if (dashboard.isLoading) {
@@ -120,7 +126,8 @@ export const IntegrationSyncScreen = () => {
   };
   const submitRelink = () => {
     if (!relinkTarget) return;
-    const recordId = relinkTarget.recordType === 'relation' ? selectedRelation?._uid : selectedEntity?.id;
+    const recordId =
+      relinkTarget.recordType === 'relation' ? selectedRelation?._uid : selectedEntity?.id;
     if (!recordId) return;
     relink.mutate({ id: relinkTarget.id, recordId });
   };
@@ -144,15 +151,17 @@ export const IntegrationSyncScreen = () => {
                   status: 'paused'
                 })
               }
-            >Add Source
+            >
+              Add Source
             </Button>
           ) : undefined
         }
       />
 
       <p style={{ color: 'var(--base-fg-more-dim)', maxWidth: 760 }}>
-        Sources are configured and approved here by workspace administrators. Integration clients can
-        start runs only for configured sources that are active or degraded; paused sources are blocked.
+        Sources are configured and approved here by workspace administrators. Integration clients
+        can start runs only for configured sources that are active or degraded; paused sources are
+        blocked.
       </p>
 
       <h3>Sources</h3>
@@ -168,13 +177,17 @@ export const IntegrationSyncScreen = () => {
         </Table.Head>
         <Table.Body>
           {sources.length === 0 ? (
-            <Table.EmptyRow colSpan={5}>No integration sources have been configured yet.</Table.EmptyRow>
+            <Table.EmptyRow colSpan={5}>
+              No integration sources have been configured yet.
+            </Table.EmptyRow>
           ) : (
             sources.map(source => (
               <Table.Row key={source.id}>
                 <Table.NameCell title={source.displayName} subtitle={source.sourceKey} />
                 <Table.Cell>{source.type}</Table.Cell>
-                <Table.Cell><StatusChip value={source.status} /></Table.Cell>
+                <Table.Cell>
+                  <StatusChip value={source.status} />
+                </Table.Cell>
                 <Table.Cell>{dateLabel(source.lastSuccessAt)}</Table.Cell>
                 <Table.Cell>
                   {canManageWorkspaces && (
@@ -221,7 +234,9 @@ export const IntegrationSyncScreen = () => {
               <Table.Row key={run.id}>
                 <Table.Cell>{run.sourceKey}</Table.Cell>
                 <Table.Cell>{run.coverage}</Table.Cell>
-                <Table.Cell><StatusChip value={run.status} /></Table.Cell>
+                <Table.Cell>
+                  <StatusChip value={run.status} />
+                </Table.Cell>
                 <Table.Cell>{dateLabel(run.startedAt)}</Table.Cell>
                 <Table.Cell numeric>{run.counts.created + run.counts.updated}</Table.Cell>
                 <Table.Cell numeric>{run.counts.failed + run.failures.length}</Table.Cell>
@@ -256,34 +271,38 @@ export const IntegrationSyncScreen = () => {
         </Table.Head>
         <Table.Body>
           {recordsNeedingAttention.length === 0 ? (
-            <Table.EmptyRow colSpan={6}>No stale, missing, orphaned, or failing records.</Table.EmptyRow>
+            <Table.EmptyRow colSpan={6}>
+              No stale, missing, orphaned, or failing records.
+            </Table.EmptyRow>
           ) : (
             recordsNeedingAttention.map(record => (
               <Table.Row key={record.id}>
                 <Table.Cell>{record.sourceKey}</Table.Cell>
                 <Table.Cell>{record.recordType}</Table.Cell>
                 <Table.Cell title={record.externalKey}>{record.externalKey}</Table.Cell>
-                <Table.Cell><StatusChip value={record.state} /></Table.Cell>
+                <Table.Cell>
+                  <StatusChip value={record.state} />
+                </Table.Cell>
                 <Table.Cell>{dateLabel(record.lastSeenAt)}</Table.Cell>
                 <Table.Cell>
                   {record.state === 'orphaned' &&
                     (record.recordType === 'entity' || record.recordType === 'relation') && (
-                    <Button
-                      variant="secondary"
-                      disabled={relink.isPending}
-                      onClick={() => {
-                        setRelinkTarget({
-                          id: record.id,
-                          externalKey: record.externalKey,
-                          recordType: record.recordType as 'entity' | 'relation'
-                        });
-                        setSelectedEntity(null);
-                        setSelectedRelation(null);
-                      }}
-                    >
-                      Relink
-                    </Button>
-                  )}
+                      <Button
+                        variant="secondary"
+                        disabled={relink.isPending}
+                        onClick={() => {
+                          setRelinkTarget({
+                            id: record.id,
+                            externalKey: record.externalKey,
+                            recordType: record.recordType as 'entity' | 'relation'
+                          });
+                          setSelectedEntity(null);
+                          setSelectedRelation(null);
+                        }}
+                      >
+                        Relink
+                      </Button>
+                    )}
                   {record.state === 'orphaned' && (
                     <Button
                       variant="ghost"
@@ -309,7 +328,11 @@ export const IntegrationSyncScreen = () => {
       <Dialog
         open={relinkTarget !== null}
         onClose={closeRelinkDialog}
-        title={relinkTarget?.recordType === 'relation' ? 'Relink managed relation' : 'Relink managed entity'}
+        title={
+          relinkTarget?.recordType === 'relation'
+            ? 'Relink managed relation'
+            : 'Relink managed entity'
+        }
         sub={relinkTarget ? `External record: ${relinkTarget.externalKey}` : undefined}
         buttons={[
           {
@@ -326,14 +349,17 @@ export const IntegrationSyncScreen = () => {
                 : 'Relink entity',
             type: 'default',
             disabled:
-              (relinkTarget?.recordType === 'relation' ? selectedRelation === null : selectedEntity === null) ||
-              relink.isPending,
+              (relinkTarget?.recordType === 'relation'
+                ? selectedRelation === null
+                : selectedEntity === null) || relink.isPending,
             onClick: submitRelink
           }
         ]}
       >
         <FormElement
-          label={relinkTarget?.recordType === 'relation' ? 'New catalog relation' : 'New catalog entity'}
+          label={
+            relinkTarget?.recordType === 'relation' ? 'New catalog relation' : 'New catalog entity'
+          }
           required
           hint={
             relinkTarget?.recordType === 'relation'
@@ -371,7 +397,9 @@ export const IntegrationSyncScreen = () => {
         title="Stop managing this record?"
         message={
           stopManagingTarget ? (
-            <>Stop tracking <b>{stopManagingTarget.externalKey}</b> from this integration?</>
+            <>
+              Stop tracking <b>{stopManagingTarget.externalKey}</b> from this integration?
+            </>
           ) : (
             ''
           )

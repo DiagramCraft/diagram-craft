@@ -754,7 +754,9 @@ export const syncOrganization = async (org: string, config: Config): Promise<Syn
           warnings: report.warnings.length
         },
         warnings: report.warnings.map(warning => warning.warning),
-        failures: report.errors.map(error => `${error.repo}${error.entity ? `/${error.entity}` : ''}: ${error.error}`)
+        failures: report.errors.map(
+          error => `${error.repo}${error.entity ? `/${error.entity}` : ''}: ${error.error}`
+        )
       },
       config.archRegisterToken,
       config.archRegisterUrl

@@ -36,7 +36,13 @@ export const integrationSyncORPCRouter = router.router({
       )
     ),
     finishRun: router.integrationSync.finishRun.handler(({ input, context }) =>
-      finishIntegrationSyncRun(context.db, input.params.workspace, input.params.runId, input.body, context.event)
+      finishIntegrationSyncRun(
+        context.db,
+        input.params.workspace,
+        input.params.runId,
+        input.body,
+        context.event
+      )
     ),
     retryRun: router.integrationSync.retryRun.handler(({ input, context }) =>
       retryIntegrationSyncRun(context.db, input.params.workspace, input.params.runId, context.event)

@@ -55,20 +55,21 @@ test('atomically syncs API entities and provider-scoped specification sources', 
   const configure = await fetch(
     `${server.baseUrl}/api/application/v1/default/config/integration-sources/${encodeURIComponent(source)}`,
     {
-    method: 'PUT',
-    headers: { Authorization: auth, 'content-type': 'application/json' },
-    body: JSON.stringify({ displayName: source, type: 'e2e', status: 'active' })
+      method: 'PUT',
+      headers: { Authorization: auth, 'content-type': 'application/json' },
+      body: JSON.stringify({ displayName: source, type: 'e2e', status: 'active' })
     }
   );
   expect(configure.status).toBe(200);
-  const start = await fetch(
-    `${server.baseUrl}/api/integrations/v1/default${sourcePath}/runs`,
-    {
-      method: 'POST',
-      headers: { Authorization: auth, 'content-type': 'application/json' },
-      body: JSON.stringify({ externalRunId: 'api-spec-sync-e2e', scopeKey: 'e2e', coverage: 'partial' })
-    }
-  );
+  const start = await fetch(`${server.baseUrl}/api/integrations/v1/default${sourcePath}/runs`, {
+    method: 'POST',
+    headers: { Authorization: auth, 'content-type': 'application/json' },
+    body: JSON.stringify({
+      externalRunId: 'api-spec-sync-e2e',
+      scopeKey: 'e2e',
+      coverage: 'partial'
+    })
+  });
   expect(start.status).toBe(200);
   const run = (await start.json()) as { id: string };
   const syncContext = { runId: run.id, scopeKey: 'e2e' };
@@ -151,18 +152,15 @@ paths:
   });
   expect(refreshResponse.status).toBe(200);
   const refresh = (await refreshResponse.json()) as { status: string; artifact: { id: string } };
-  const finish = await fetch(
-    `${server.baseUrl}/api/integrations/v1/default/sync-runs/${run.id}`,
-    {
-      method: 'PATCH',
-      headers: { Authorization: auth, 'content-type': 'application/json' },
-      body: JSON.stringify({
-        status: 'succeeded',
-        coverage: 'partial',
-        counts: { created: 1, updated: 3, unchanged: 1, failed: 0, warnings: 0 }
-      })
-    }
-  );
+  const finish = await fetch(`${server.baseUrl}/api/integrations/v1/default/sync-runs/${run.id}`, {
+    method: 'PATCH',
+    headers: { Authorization: auth, 'content-type': 'application/json' },
+    body: JSON.stringify({
+      status: 'succeeded',
+      coverage: 'partial',
+      counts: { created: 1, updated: 3, unchanged: 1, failed: 0, warnings: 0 }
+    })
+  });
   expect(finish.status).toBe(200);
   expect(first).toMatchObject({
     status: 'created',

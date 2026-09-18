@@ -309,11 +309,18 @@ export const startIntegrationSyncRun = async (
   const response = await fetch(url, {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ externalRunId, scopeKey, coverage, provenance: { client: 'backstage-catalog-sync' } })
+    body: JSON.stringify({
+      externalRunId,
+      scopeKey,
+      coverage,
+      provenance: { client: 'backstage-catalog-sync' }
+    })
   });
   if (!response.ok) {
     const detail = await response.text();
-    throw new Error(`Sync run start failed: ${response.status} ${response.statusText}${detail ? `: ${detail}` : ''}`);
+    throw new Error(
+      `Sync run start failed: ${response.status} ${response.statusText}${detail ? `: ${detail}` : ''}`
+    );
   }
   return (await response.json()) as IntegrationSyncRun;
 };
@@ -321,7 +328,13 @@ export const startIntegrationSyncRun = async (
 export const finishIntegrationSyncRun = async (
   workspace: string,
   runId: string,
-  input: { status: 'succeeded' | 'failed'; coverage: 'complete' | 'partial'; counts: SyncCounts; warnings: string[]; failures: string[] },
+  input: {
+    status: 'succeeded' | 'failed';
+    coverage: 'complete' | 'partial';
+    counts: SyncCounts;
+    warnings: string[];
+    failures: string[];
+  },
   token: string,
   baseUrl: string
 ): Promise<IntegrationSyncRun> => {
@@ -331,7 +344,8 @@ export const finishIntegrationSyncRun = async (
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
     body: JSON.stringify(input)
   });
-  if (!response.ok) throw new Error(`Sync run finalization failed: ${response.status} ${response.statusText}`);
+  if (!response.ok)
+    throw new Error(`Sync run finalization failed: ${response.status} ${response.statusText}`);
   return (await response.json()) as IntegrationSyncRun;
 };
 

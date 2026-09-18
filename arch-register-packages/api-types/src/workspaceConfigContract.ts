@@ -22,9 +22,7 @@ import {
   entityDrawerConfigurationSchema,
   entityDrawerDiagnosticSchema
 } from '@arch-register/api-types/entityDrawerConfiguration';
-import {
-  integrationSourceSchema
-} from '@arch-register/api-types/integrationSyncContract';
+import { integrationSourceSchema } from '@arch-register/api-types/integrationSyncContract';
 
 const timestampOutputSchema = z
   .union([z.string(), z.date()])

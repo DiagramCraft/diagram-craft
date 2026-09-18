@@ -2,7 +2,9 @@ import { createHash, randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../../db/database';
 import { INTEGRATION_SYNC_IDS, now, WORKSPACE_ID } from './constants';
 
-const counts = (values: Partial<Parameters<DatabaseAdapter['integrationSync']['finishRun']>[2]['counts']>) => ({
+const counts = (
+  values: Partial<Parameters<DatabaseAdapter['integrationSync']['finishRun']>[2]['counts']>
+) => ({
   created: 0,
   updated: 0,
   unchanged: 0,
@@ -184,7 +186,12 @@ export const seedIntegrationSyncData = async (db: DatabaseAdapter): Promise<void
     failures: latestRun.failures
   });
   await db.integrationSync.markMissing(WORKSPACE_ID, backstage.id, latestRun.id, 'diagram-craft');
-  await db.integrationSync.updateSourceHealth(WORKSPACE_ID, backstage.id, 'active', new Date('2026-01-01T00:04:00.000Z'));
+  await db.integrationSync.updateSourceHealth(
+    WORKSPACE_ID,
+    backstage.id,
+    'active',
+    new Date('2026-01-01T00:04:00.000Z')
+  );
 
   const partialRun = await db.integrationSync.createRun({
     id: INTEGRATION_SYNC_IDS.runs.serviceNowPartial,
@@ -217,7 +224,13 @@ export const seedIntegrationSyncData = async (db: DatabaseAdapter): Promise<void
     last_seen_run_id: partialRun.id,
     updated_at: partialRun.ended_at ?? partialRun.started_at
   });
-  await db.integrationSync.setManagedRecordState(WORKSPACE_ID, INTEGRATION_SYNC_IDS.records.staleApi, 'stale', 'Last refresh failed; previous revision retained.', 2);
+  await db.integrationSync.setManagedRecordState(
+    WORKSPACE_ID,
+    INTEGRATION_SYNC_IDS.records.staleApi,
+    'stale',
+    'Last refresh failed; previous revision retained.',
+    2
+  );
   await db.integrationSync.upsertManagedRecord({
     id: INTEGRATION_SYNC_IDS.records.orphanedRelation,
     workspace: WORKSPACE_ID,
@@ -231,5 +244,9 @@ export const seedIntegrationSyncData = async (db: DatabaseAdapter): Promise<void
     last_seen_run_id: partialRun.id,
     updated_at: partialRun.ended_at ?? partialRun.started_at
   });
-  await db.integrationSync.setManagedRecordState(WORKSPACE_ID, INTEGRATION_SYNC_IDS.records.orphanedRelation, 'orphaned');
+  await db.integrationSync.setManagedRecordState(
+    WORKSPACE_ID,
+    INTEGRATION_SYNC_IDS.records.orphanedRelation,
+    'orphaned'
+  );
 };

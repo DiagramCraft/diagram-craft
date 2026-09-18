@@ -9,7 +9,10 @@ import type {
 } from './integrationSyncDatabase';
 import { integrationSyncMappers } from './integrationSyncDatabase';
 
-export class PostgresIntegrationSyncDatabase extends PostgresDatabaseBase implements IntegrationSyncDatabase {
+export class PostgresIntegrationSyncDatabase
+  extends PostgresDatabaseBase
+  implements IntegrationSyncDatabase
+{
   async upsertSource(input: IntegrationSourceDbUpsert) {
     try {
       const [row] = await this.sql<DatabaseRow[]>`
@@ -28,16 +31,25 @@ export class PostgresIntegrationSyncDatabase extends PostgresDatabaseBase implem
   }
 
   async getSource(workspace: string, sourceKey: string) {
-    const [row] = await this.sql<DatabaseRow[]>`SELECT * FROM integration_source WHERE workspace = ${workspace} AND source_key = ${sourceKey}`;
+    const [row] = await this.sql<
+      DatabaseRow[]
+    >`SELECT * FROM integration_source WHERE workspace = ${workspace} AND source_key = ${sourceKey}`;
     return row ? integrationSyncMappers.source(row) : null;
   }
 
   async listSources(workspace: string) {
-    const rows = await this.sql<DatabaseRow[]>`SELECT * FROM integration_source WHERE workspace = ${workspace} ORDER BY display_name, source_key`;
+    const rows = await this.sql<
+      DatabaseRow[]
+    >`SELECT * FROM integration_source WHERE workspace = ${workspace} ORDER BY display_name, source_key`;
     return mapDatabaseRows(rows, integrationSyncMappers.source);
   }
 
-  async updateSourceHealth(workspace: string, sourceId: string, status: 'active' | 'degraded' | 'paused', lastSuccessAt: Date | null) {
+  async updateSourceHealth(
+    workspace: string,
+    sourceId: string,
+    status: 'active' | 'degraded' | 'paused',
+    lastSuccessAt: Date | null
+  ) {
     const [row] = await this.sql<DatabaseRow[]>`
       UPDATE integration_source SET status = ${status}, last_success_at = ${lastSuccessAt}, updated_at = NOW()
       WHERE workspace = ${workspace} AND id = ${sourceId}
@@ -61,21 +73,31 @@ export class PostgresIntegrationSyncDatabase extends PostgresDatabaseBase implem
   }
 
   async getRun(workspace: string, id: string) {
-    const [row] = await this.sql<DatabaseRow[]>`SELECT * FROM integration_sync_run WHERE workspace = ${workspace} AND id = ${id}`;
+    const [row] = await this.sql<
+      DatabaseRow[]
+    >`SELECT * FROM integration_sync_run WHERE workspace = ${workspace} AND id = ${id}`;
     return row ? integrationSyncMappers.run(row) : null;
   }
 
   async getRunByExternalId(workspace: string, sourceKey: string, externalRunId: string) {
-    const [row] = await this.sql<DatabaseRow[]>`SELECT * FROM integration_sync_run WHERE workspace = ${workspace} AND source_key = ${sourceKey} AND external_run_id = ${externalRunId}`;
+    const [row] = await this.sql<
+      DatabaseRow[]
+    >`SELECT * FROM integration_sync_run WHERE workspace = ${workspace} AND source_key = ${sourceKey} AND external_run_id = ${externalRunId}`;
     return row ? integrationSyncMappers.run(row) : null;
   }
 
   async listRuns(workspace: string, limit: number) {
-    const rows = await this.sql<DatabaseRow[]>`SELECT * FROM integration_sync_run WHERE workspace = ${workspace} ORDER BY started_at DESC, id DESC LIMIT ${limit}`;
+    const rows = await this.sql<
+      DatabaseRow[]
+    >`SELECT * FROM integration_sync_run WHERE workspace = ${workspace} ORDER BY started_at DESC, id DESC LIMIT ${limit}`;
     return mapDatabaseRows(rows, integrationSyncMappers.run);
   }
 
-  async finishRun(workspace: string, id: string, input: Parameters<IntegrationSyncDatabase['finishRun']>[2]) {
+  async finishRun(
+    workspace: string,
+    id: string,
+    input: Parameters<IntegrationSyncDatabase['finishRun']>[2]
+  ) {
     const [row] = await this.sql<DatabaseRow[]>`
       UPDATE integration_sync_run
       SET status = ${input.status}, coverage = ${input.coverage}, ended_at = ${input.ended_at},
@@ -106,17 +128,22 @@ export class PostgresIntegrationSyncDatabase extends PostgresDatabaseBase implem
   }
 
   async listManagedRecords(workspace: string) {
-    const rows = await this.sql<DatabaseRow[]>`SELECT * FROM integration_managed_record WHERE workspace = ${workspace} ORDER BY updated_at DESC, id DESC`;
+    const rows = await this.sql<
+      DatabaseRow[]
+    >`SELECT * FROM integration_managed_record WHERE workspace = ${workspace} ORDER BY updated_at DESC, id DESC`;
     return mapDatabaseRows(rows, integrationSyncMappers.record);
   }
 
   async getManagedRecord(workspace: string, id: string) {
-    const [row] = await this.sql<DatabaseRow[]>`SELECT * FROM integration_managed_record WHERE workspace = ${workspace} AND id = ${id}`;
+    const [row] = await this.sql<
+      DatabaseRow[]
+    >`SELECT * FROM integration_managed_record WHERE workspace = ${workspace} AND id = ${id}`;
     return row ? integrationSyncMappers.record(row) : null;
   }
 
   async deleteManagedRecord(workspace: string, id: string) {
-    await this.sql`DELETE FROM integration_managed_record WHERE workspace = ${workspace} AND id = ${id}`;
+    await this
+      .sql`DELETE FROM integration_managed_record WHERE workspace = ${workspace} AND id = ${id}`;
   }
 
   async markMissing(workspace: string, sourceId: string, runId: string, scopeKey: string | null) {
@@ -141,7 +168,13 @@ export class PostgresIntegrationSyncDatabase extends PostgresDatabaseBase implem
     return row ? integrationSyncMappers.record(row) : null;
   }
 
-  async setManagedRecordState(workspace: string, id: string, state: 'active' | 'missing' | 'orphaned' | 'stale' | 'failing', lastError: string | null = null, failureCount = 0) {
+  async setManagedRecordState(
+    workspace: string,
+    id: string,
+    state: 'active' | 'missing' | 'orphaned' | 'stale' | 'failing',
+    lastError: string | null = null,
+    failureCount = 0
+  ) {
     const [row] = await this.sql<DatabaseRow[]>`
       UPDATE integration_managed_record
       SET state = ${state}, last_error = ${lastError}, failure_count = ${failureCount}, updated_at = NOW()
