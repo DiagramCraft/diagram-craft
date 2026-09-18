@@ -37,14 +37,14 @@ test.describe('settings section', () => {
     await dataModelPage.expectLoaded();
   });
 
-  test('shows a capability binding from the Applications & Capabilities sidebar', async ({
+  test('shows the API specification binding from the Applications & Capabilities sidebar', async ({
     page
   }) => {
     const settingsPage = new SettingsPage(page, defaultWorkspace.slug);
 
     await settingsPage.goto('applications-capabilities');
-    await page.getByText('API specification', { exact: true }).click();
-    // A capability detail view still renders a Tabs component even with a single tab.
+    await page.getByText('API & Integration Catalog', { exact: true }).click();
+    // The API specification binding is configured through its application entry.
     await expect(page.getByRole('tab', { name: 'Binding', exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Enabled', exact: true })).toHaveAttribute(
       'aria-pressed',
