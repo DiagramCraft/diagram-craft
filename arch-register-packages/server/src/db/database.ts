@@ -34,6 +34,7 @@ import type { BaselineDatabase } from '../domain/baseline/db/baselineDatabase';
 import type { PublicCatalogDatabase } from '../domain/publicCatalog/db/publicCatalogDatabase';
 import type { ConformanceDatabase } from '../domain/conformance/db/conformanceDatabase';
 import type { EntityMergeDatabase } from '../domain/catalog/db/entityMergeDatabase';
+import type { IntegrationSyncDatabase } from '../domain/integrationSync/db/integrationSyncDatabase';
 // Keep the existing import path stable for database consumers.
 // biome-ignore lint/performance/noBarrelFile: compatibility re-export for database errors
 export { DatabaseError, type NormalizedDbErrorCode } from './databaseError';
@@ -91,6 +92,7 @@ export type DatabaseAdapter = {
   publicCatalog: PublicCatalogDatabase;
   conformance: ConformanceDatabase;
   entityMerge: EntityMergeDatabase;
+  integrationSync: IntegrationSyncDatabase;
 };
 
 // Re-export domain types for convenience if needed, or just let consumers import from domain
@@ -266,6 +268,15 @@ export type {
   MergeExternalIdentityRow,
   MergeSideTableRow
 } from '../domain/catalog/db/entityMergeDatabase';
+export type {
+  IntegrationSyncDatabase,
+  IntegrationSourceDbResult,
+  IntegrationSourceDbUpsert,
+  IntegrationSyncRunDbResult,
+  IntegrationSyncRunDbCreate,
+  IntegrationManagedRecordDbResult,
+  IntegrationManagedRecordDbUpsert
+} from '../domain/integrationSync/db/integrationSyncDatabase';
 export type {
   PublicCatalogDatabase,
   PublicCatalogConfigDbResult,

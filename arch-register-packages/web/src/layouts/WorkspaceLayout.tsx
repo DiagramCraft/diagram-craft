@@ -149,7 +149,7 @@ export const WorkspaceLayout = () => {
       ...(canAdministerWorkspace ? ['api-tokens'] : []),
       ...(canManageWorkspaces ? ['ai', 'workflows', 'public-catalog'] : []),
       ...(canManageJobs ? ['webhooks', 'automation', 'jobs'] : []),
-      ...(canViewAudit ? ['analytics', 'audit'] : [])
+      ...(canViewAudit || canManageWorkspaces ? ['analytics', 'audit', 'integration-sync'] : [])
     ],
     [
       canManageWorkspaces,

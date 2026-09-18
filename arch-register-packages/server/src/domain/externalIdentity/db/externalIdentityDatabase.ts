@@ -34,4 +34,6 @@ export type CatalogRecordExternalIdentityDatabase = {
     externalKey: string
   ): Promise<CatalogRecordExternalIdentityRow | null>;
   create(row: CatalogRecordExternalIdentityDbCreate): Promise<CatalogRecordExternalIdentityRow>;
+  upsert(row: CatalogRecordExternalIdentityDbCreate): Promise<CatalogRecordExternalIdentityRow>;
+  delete(workspace: string, source: string, externalKey: string): Promise<void>;
 };

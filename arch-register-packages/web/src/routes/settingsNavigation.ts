@@ -1,4 +1,5 @@
-// `schemas`, `documents`, `applications-capabilities`, `model-overview`, and `schema-validation`
+// `schemas`, `documents`, `applications-capabilities`, `model-overview`, `schema-validation`, and
+// `integration-sync`
 // have dedicated static routes (settings/schemas, settings/documents, ...) that TanStack Router
 // matches in preference to the dynamic settings/$section route. Navigating to those
 // sections must use their own route template, or TanStack Router warns that the
@@ -21,6 +22,9 @@ export const settingsSectionTarget = (workspaceSlug: string, section: string) =>
   }
   if (section === 'schema-validation') {
     return { to: '/$workspaceSlug/settings/schema-validation', params: { workspaceSlug } };
+  }
+  if (section === 'integration-sync') {
+    return { to: '/$workspaceSlug/settings/integration-sync', params: { workspaceSlug } };
   }
   return { to: '/$workspaceSlug/settings/$section', params: { workspaceSlug, section } };
 };

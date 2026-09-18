@@ -17,6 +17,7 @@ export interface Config {
   archRegisterUrl: string;
   archRegisterWorkspace: string;
   archRegisterToken: string;
+  runId?: string;
   schemaMapping: SchemaMapping;
   relationSchemaMapping: RelationSchemaMapping;
   dryRun: boolean;
@@ -77,6 +78,7 @@ export const readConfig = (args: string[]): Config => {
     archRegisterUrl,
     archRegisterWorkspace,
     archRegisterToken,
+    runId: parsedArgs.runId,
     schemaMapping,
     relationSchemaMapping,
     dryRun,
@@ -88,6 +90,7 @@ interface ParsedArgs {
   org?: string;
   dryRun: boolean;
   verbose: boolean;
+  runId?: string;
 }
 
 const parseArgs = (args: string[]): ParsedArgs => {
@@ -106,6 +109,9 @@ const parseArgs = (args: string[]): ParsedArgs => {
       result.dryRun = true;
     } else if (arg === '--verbose' || arg === '-v') {
       result.verbose = true;
+    } else if (arg === '--run-id' && i + 1 < args.length) {
+      result.runId = args[i + 1];
+      i++;
     } else if (arg === '--help' || arg === '-h') {
       printHelp();
       process.exit(0);
@@ -128,6 +134,7 @@ Required Arguments:
 Options:
   --dry-run            Preview changes without syncing to Arch Register
   --verbose, -v        Enable verbose output
+  --run-id <id>        Reuse an external run ID when retrying a sync
   --help, -h           Show this help message
 
 Environment Variables:

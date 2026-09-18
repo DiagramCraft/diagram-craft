@@ -4,7 +4,6 @@ import {
   IC_OVERVIEW_ID,
   IC_APIS_ID,
   IC_INTEGRATIONS_ID,
-  IC_SYNC_ID,
   IC_IMPACT_ID,
   IC_RAIL_PATHS
 } from './apiIntegrationCatalogSections';
@@ -14,7 +13,6 @@ import {
   LazyApiIntegrationCatalogOverviewScreen,
   LazyApiIntegrationCatalogApisScreen,
   LazyApiIntegrationCatalogIntegrationsScreen,
-  LazyApiIntegrationCatalogSyncScreen,
   LazyApiIntegrationCatalogImpactScreen
 } from '../../routes/workspace/lazyWorkspaceScreens';
 import { ensureApplicationAccess } from '../../routes/applicationAccess';
@@ -25,7 +23,7 @@ const railPath = (path: string) => path.replace('/$workspaceSlug/', '');
 /**
  * API & Integration Catalog's workspace routes: one per rail section, plus the APIs section's
  * deep-linkable spec drawer route (#3316). Mirrors `../risk-compliance/riskComplianceWorkspaceRoute.tsx`.
- * Integrations, Sync, and Impact remain placeholder screens with no detail routes yet; those land
+ * Integrations and Impact remain placeholder screens with no detail routes yet; those land
  * alongside their section's real content in later sub-issues of #3150 (#3317-#3320).
  */
 export const createApiIntegrationCatalogWorkspaceRoutes = <TParentRoute extends AnyRoute>(
@@ -107,23 +105,6 @@ export const createApiIntegrationCatalogWorkspaceRoutes = <TParentRoute extends 
         breadcrumbs: buildApiIntegrationCatalogBreadcrumbs(ctx, IC_INTEGRATIONS_ID)
       })
   );
-  const syncRoute = withWorkspaceShell(
-    createRoute({
-      getParentRoute: () => workspaceRoute,
-      path: railPath(IC_RAIL_PATHS[IC_SYNC_ID]),
-      beforeLoad: ({ context, params }) =>
-        ensureApplicationAccess(
-          context.queryClient,
-          (params as unknown as { workspaceSlug: string }).workspaceSlug,
-          'api-integration-catalog'
-        ),
-      component: LazyApiIntegrationCatalogSyncScreen
-    }),
-    ctx =>
-      railSectionShell(ctx, IC_SYNC_ID, {
-        breadcrumbs: buildApiIntegrationCatalogBreadcrumbs(ctx, IC_SYNC_ID)
-      })
-  );
   const impactRoute = withWorkspaceShell(
     createRoute({
       getParentRoute: () => workspaceRoute,
@@ -147,7 +128,6 @@ export const createApiIntegrationCatalogWorkspaceRoutes = <TParentRoute extends 
     apisRoute,
     apisDetailRoute,
     integrationsRoute,
-    syncRoute,
     impactRoute
   ] as const;
 };

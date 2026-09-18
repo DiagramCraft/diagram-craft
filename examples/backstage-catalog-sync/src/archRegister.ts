@@ -1,5 +1,25 @@
 import type { ArchRegisterEntity } from './mapper.js';
 
+export interface SyncContext {
+  runId: string;
+  scopeKey?: string;
+}
+
+export interface SyncCounts {
+  created: number;
+  updated: number;
+  unchanged: number;
+  failed: number;
+  warnings: number;
+}
+
+export interface IntegrationSyncRun {
+  id: string;
+  externalRunId: string;
+  coverage: 'complete' | 'partial';
+  status: 'running' | 'succeeded' | 'failed' | 'cancelled';
+}
+
 interface Schema {
   id: string;
   name: string;
@@ -269,6 +289,52 @@ export const discoverRelationSchemas = async (
   };
 };
 
+const integrationUrl = (baseUrl: string, workspace: string, path: string) =>
+  `${baseUrl}/api/integrations/v1/${workspace}/${path}`;
+
+export const startIntegrationSyncRun = async (
+  workspace: string,
+  sourceKey: string,
+  externalRunId: string,
+  scopeKey: string,
+  coverage: 'complete' | 'partial',
+  token: string,
+  baseUrl: string
+): Promise<IntegrationSyncRun> => {
+  const url = integrationUrl(
+    baseUrl,
+    workspace,
+    `sync-sources/${encodeURIComponent(sourceKey)}/runs`
+  );
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ externalRunId, scopeKey, coverage, provenance: { client: 'backstage-catalog-sync' } })
+  });
+  if (!response.ok) {
+    const detail = await response.text();
+    throw new Error(`Sync run start failed: ${response.status} ${response.statusText}${detail ? `: ${detail}` : ''}`);
+  }
+  return (await response.json()) as IntegrationSyncRun;
+};
+
+export const finishIntegrationSyncRun = async (
+  workspace: string,
+  runId: string,
+  input: { status: 'succeeded' | 'failed'; coverage: 'complete' | 'partial'; counts: SyncCounts; warnings: string[]; failures: string[] },
+  token: string,
+  baseUrl: string
+): Promise<IntegrationSyncRun> => {
+  const url = integrationUrl(baseUrl, workspace, `sync-runs/${encodeURIComponent(runId)}`);
+  const response = await fetch(url, {
+    method: 'PATCH',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(input)
+  });
+  if (!response.ok) throw new Error(`Sync run finalization failed: ${response.status} ${response.statusText}`);
+  return (await response.json()) as IntegrationSyncRun;
+};
+
 /**
  * Syncs an entity to Arch Register using the integration API
  * Uses the idempotent upsert endpoint with external identity
@@ -279,7 +345,8 @@ export const syncEntity = async (
   externalKey: string,
   entity: ArchRegisterEntity,
   token: string,
-  baseUrl: string
+  baseUrl: string,
+  syncContext: SyncContext
 ): Promise<SyncResult> => {
   const encodedSource = encodeURIComponent(source);
   const encodedKey = encodeURIComponent(externalKey);
@@ -293,7 +360,7 @@ export const syncEntity = async (
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(entity)
+      body: JSON.stringify({ ...entity, syncContext })
     });
   } catch (error) {
     throw createSyncError(requestFailure(url, error).message, undefined, error);
@@ -363,7 +430,8 @@ export const syncApiSpecification = async (
   entity: ArchRegisterEntity,
   specification: ApiSpecificationSourcePayload | undefined,
   token: string,
-  baseUrl: string
+  baseUrl: string,
+  syncContext: SyncContext
 ): Promise<ApiSpecificationSyncResult> => {
   const encodedSource = encodeURIComponent(source);
   const encodedKey = encodeURIComponent(externalKey);
@@ -377,7 +445,11 @@ export const syncApiSpecification = async (
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ entity, ...(specification ? { source: specification } : {}) })
+      body: JSON.stringify({
+        entity,
+        ...(specification ? { source: specification } : {}),
+        syncContext
+      })
     });
   } catch (error) {
     throw createSyncError(requestFailure(url, error).message, undefined, error);
@@ -428,7 +500,8 @@ export const syncRelation = async (
     outEntityId: string;
   },
   token: string,
-  baseUrl: string
+  baseUrl: string,
+  syncContext: SyncContext
 ): Promise<RelationSyncResult> => {
   const encodedSource = encodeURIComponent(source);
   const encodedKey = encodeURIComponent(externalKey);
@@ -445,7 +518,8 @@ export const syncRelation = async (
       body: JSON.stringify({
         _schemaId: relation.schemaId,
         _inEntityId: relation.inEntityId,
-        _outEntityId: relation.outEntityId
+        _outEntityId: relation.outEntityId,
+        syncContext
       })
     });
   } catch (error) {

@@ -12,8 +12,7 @@ import styles from './ApiIntegrationCatalogPlaceholderScreen.module.css';
  * `resolveApiIntegrationCatalogConfig`.
  *
  * This is a placeholder for the scaffold: each section renders only its title and an empty state
- * once enabled. Real Overview / APIs / Integrations / Sync / Impact content lands in later
- * sub-issues of #3150 (#3316-#3320).
+ * once enabled. Real Overview / Impact content lands in later sub-issues of #3150 (#3316-#3320).
  */
 export const ApiIntegrationCatalogPlaceholderScreen = ({ title }: { title: string }) => {
   const { workspaceSlug } = useParams({ strict: false }) as { workspaceSlug: string };

@@ -9,6 +9,7 @@ import {
   seedCatalogEntities as seedSharedCatalogEntities,
   seedCatalogViews as seedSharedCatalogViews,
   seedPublicIdCounters,
+  seedIntegrationSyncData as seedSharedIntegrationSyncData,
   seedUsersAndRoles,
   seedWorkspaceBase,
   seedWorkspaceConfiguration
@@ -75,6 +76,10 @@ export async function seedCatalogRelations(db: DatabaseAdapter): Promise<void> {
 
 export async function seedCatalogViews(db: DatabaseAdapter): Promise<void> {
   await seedSharedCatalogViews(db);
+}
+
+export async function seedIntegrationSyncData(db: DatabaseAdapter): Promise<void> {
+  await seedSharedIntegrationSyncData(db);
 }
 
 // For API tests: generate a JWT directly without argon2 cost

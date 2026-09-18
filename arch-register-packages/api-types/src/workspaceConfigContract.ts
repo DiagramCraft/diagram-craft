@@ -22,6 +22,9 @@ import {
   entityDrawerConfigurationSchema,
   entityDrawerDiagnosticSchema
 } from '@arch-register/api-types/entityDrawerConfiguration';
+import {
+  integrationSourceSchema
+} from '@arch-register/api-types/integrationSyncContract';
 
 const timestampOutputSchema = z
   .union([z.string(), z.date()])
@@ -359,6 +362,30 @@ export const workspaceConfigContract = oc.tag('Workspace Config').router({
           })
         )
         .output(workspaceCapabilityConfigurationSchema)
+    },
+    integrationSources: {
+      upsert: oc
+        .route({
+          method: 'PUT',
+          path: '/{workspace}/config/integration-sources/{sourceKey}',
+          inputStructure: 'detailed',
+          summary: 'Configure an integration source',
+          description:
+            'Creates or updates a workspace-approved integration source. Source configuration is a workspace settings operation; integrations cannot self-register sources.',
+          tags: ['Workspace Config']
+        })
+        .input(
+          z.object({
+            params: ws.extend({ sourceKey: z.string().min(1).max(200) }),
+            body: z.object({
+              displayName: z.string().min(1).max(200),
+              type: z.string().min(1).max(100),
+              owner: z.string().max(200).nullable().optional(),
+              status: z.enum(['active', 'paused']).optional()
+            })
+          })
+        )
+        .output(integrationSourceSchema)
     },
     entityDrawer: {
       get: oc

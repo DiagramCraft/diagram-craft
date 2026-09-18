@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { ws } from '@arch-register/api-types/common';
 import { entityMutationBodySchema, entityRecordSchema } from './entityContract';
 import { artifactRevisionSchema, artifactSchema } from './artifactContract';
+import { integrationSyncContextSchema } from './integrationSyncContract';
 
 const externalIdentityParamsSchema = ws.extend({
   source: z.string().min(1).max(200),
@@ -76,7 +77,8 @@ export const apiSpecificationSourceStatusSchema = z.enum([
 
 export const apiSpecificationSyncBodySchema = z.object({
   entity: entityMutationBodySchema,
-  source: apiSpecificationSyncSourceStateSchema.optional()
+  source: apiSpecificationSyncSourceStateSchema.optional(),
+  syncContext: integrationSyncContextSchema
 });
 
 export const apiSpecificationSyncResultSchema = z.object({

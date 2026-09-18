@@ -41,6 +41,7 @@ import {
   seedWorkspaceBase,
   seedWorkspaceConfiguration
 } from './seedPhases';
+import { seedIntegrationSyncData } from './seedData/integrationSync';
 
 type Database = DatabaseAdapter;
 
@@ -266,6 +267,7 @@ export const seedBootstrapData = async (
     }
   }
   await seedTemplateRelationCapabilityConfigurations(db);
+  await seedIntegrationSyncData(db);
   await recalculateEntityDerivedFields(db, seededWorkspaces.default.id);
   await ensureDerivedRecalculationScheduleExists(db, seededWorkspaces.default.id, new Date());
   for (const assessment of seedAssessments) {

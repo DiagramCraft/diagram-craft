@@ -306,7 +306,7 @@ export const syncApiSpecificationByExternalKey = async (
   workspace: string,
   source: string,
   externalKey: string,
-  body: ApiSpecificationSyncBody,
+  body: Omit<ApiSpecificationSyncBody, 'syncContext'>,
   authCtx: AuthorizationContext | null,
   actor: EntityMutationActor
 ): Promise<ApiSpecificationSyncResult> => {

@@ -6,6 +6,10 @@ import { API_PREFIXES } from '../../constants';
 import { entityScoped, orpcErrorMiddleware, workspaceScoped } from '../../utils/orpcErrors';
 import { relationSyncContract } from '@arch-register/api-types/relationSyncContract';
 import { syncRelationByExternalKey, getRelationByExternalKey } from './relationSyncOperations';
+import {
+  recordIntegrationSyncItem,
+  validateIntegrationSyncContext
+} from '../integrationSync/integrationSyncOperations';
 
 type ORPCContext = {
   db: DatabaseAdapter;
@@ -36,15 +40,32 @@ export const relationSyncORPCRouter = relationSyncRouter.router({
       async ({ input, context }) => {
         const { workspace, authCtx } = context;
         const auditUser = context.event.context.user;
-        return await syncRelationByExternalKey(
+        const { syncContext, ...relationBody } = input.body;
+        await validateIntegrationSyncContext(context.db, {
+          workspace,
+          sourceKey: input.params.source,
+          runId: syncContext.runId,
+          scopeKey: syncContext.scopeKey
+        });
+        const result = await syncRelationByExternalKey(
           context.db,
           workspace,
           input.params.source,
           input.params.externalKey,
-          input.body,
+          relationBody,
           authCtx,
           { id: auditUser.id, displayName: auditUser.display_name }
         );
+        await recordIntegrationSyncItem(context.db, {
+          workspace,
+          sourceKey: input.params.source,
+          runId: syncContext.runId,
+          scopeKey: syncContext.scopeKey,
+          recordType: 'relation',
+          externalKey: input.params.externalKey,
+          recordId: result.relation._uid
+        });
+        return result;
       }
     )
   }

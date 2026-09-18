@@ -61,6 +61,7 @@ const expectedPrimaryContractIds = [
   'apiSpecificationSyncContract',
   'relationSyncContract',
   'integrationGovernanceContract',
+  'integrationSyncContract',
   'diagramCraftContract',
   'publicCatalogContract'
 ].sort();

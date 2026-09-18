@@ -2,7 +2,10 @@ import type { AnyContractRouter, ContractRouterClient } from '@orpc/contract';
 import type { JsonifiedClient } from '@orpc/openapi-client';
 import { createORPCClient } from '@orpc/client';
 import { OpenAPILink } from '@orpc/openapi-client/fetch';
-import { contractSurfaceManifest } from '@arch-register/api-types/contractSurfaceManifest';
+import {
+  contractSurfaceManifest,
+  integrationClientContracts
+} from '@arch-register/api-types/contractSurfaceManifest';
 import { fetchWithAuthResponse } from '../auth/authClient';
 import { resolveApiUrl } from './apiUrl';
 import { normalizeApiError } from './http';
@@ -83,9 +86,11 @@ const createApiClient = <T extends AnyContractRouter>(contracts: T, apiPath: str
 const coreClient = createApiClient(core.contracts, CORE_API_PATH);
 const applicationClient = createApiClient(application.contracts, APPLICATION_API_PATH);
 const diagramCraftClient = createApiClient(diagramCraft.contracts, CORE_API_PATH);
+const integrationClient = createApiClient(integrationClientContracts, CORE_API_PATH);
 
 type FirstPartyWebContractRouter = typeof core.contracts &
   typeof application.contracts &
+  typeof integrationClientContracts &
   typeof diagramCraft.contracts;
 type FirstPartyWebClient = JsonifiedClient<ContractRouterClient<FirstPartyWebContractRouter>>;
 
@@ -139,6 +144,7 @@ export const orpcClient: FirstPartyWebClient = {
   ...mergeClientSurfaces([
     { contracts: core.contracts, client: coreClient },
     { contracts: application.contracts, client: applicationClient },
+    { contracts: integrationClientContracts, client: integrationClient },
     { contracts: diagramCraft.contracts, client: diagramCraftClient }
   ])
 } as FirstPartyWebClient;

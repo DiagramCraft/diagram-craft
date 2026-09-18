@@ -45,6 +45,7 @@ import {
 import { SqlitePublicCatalogDatabase } from '../domain/publicCatalog/db/sqlitePublicCatalog';
 import { SqliteConformanceDatabase } from '../domain/conformance/db/sqliteConformance';
 import { SqliteEntityMergeDatabase } from '../domain/catalog/db/sqliteEntityMerge';
+import { SqliteIntegrationSyncDatabase } from '../domain/integrationSync/db/sqliteIntegrationSync';
 
 export class SqliteDatabase implements DatabaseAdapter {
   private db;
@@ -87,6 +88,7 @@ export class SqliteDatabase implements DatabaseAdapter {
   readonly publicCatalog: SqlitePublicCatalogDatabase;
   readonly conformance: SqliteConformanceDatabase;
   readonly entityMerge: SqliteEntityMergeDatabase;
+  readonly integrationSync: SqliteIntegrationSyncDatabase;
   private transactionTail: Promise<void> = Promise.resolve();
   private savepointCounter = 0;
 
@@ -135,6 +137,7 @@ export class SqliteDatabase implements DatabaseAdapter {
     this.publicCatalog = new SqlitePublicCatalogDatabase(() => this.db);
     this.conformance = new SqliteConformanceDatabase(() => this.db);
     this.entityMerge = new SqliteEntityMergeDatabase(() => this.db);
+    this.integrationSync = new SqliteIntegrationSyncDatabase(() => this.db);
 
     runSqliteMigrations(this.db);
 
@@ -233,7 +236,8 @@ export class SqliteDatabase implements DatabaseAdapter {
       baseline: this.baseline,
       publicCatalog: this.publicCatalog,
       conformance: this.conformance,
-      entityMerge: this.entityMerge
+      entityMerge: this.entityMerge,
+      integrationSync: this.integrationSync
     };
   }
 

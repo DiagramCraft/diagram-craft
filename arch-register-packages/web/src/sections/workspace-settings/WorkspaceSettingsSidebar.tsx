@@ -20,7 +20,8 @@ import {
   TbKey,
   TbClipboardCheck,
   TbWorld,
-  TbApps
+  TbApps,
+  TbRefresh
 } from 'react-icons/tb';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { TreeRow } from '../../components/TreeRow';
@@ -115,6 +116,12 @@ const SETTINGS_SECTIONS: SettingsNavItem[] = [
     group: 'Administration'
   },
   { id: 'jobs', label: 'Job monitoring', icon: <TbActivity size={12} />, group: 'Administration' },
+  {
+    id: 'integration-sync',
+    label: 'Integration sync',
+    icon: <TbRefresh size={12} />,
+    group: 'Administration'
+  },
   {
     id: 'danger',
     label: 'Danger zone',

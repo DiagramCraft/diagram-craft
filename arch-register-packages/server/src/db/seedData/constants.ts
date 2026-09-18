@@ -381,6 +381,32 @@ export const seedIds = {
   users: USER_IDS
 } as const;
 
+export const INTEGRATION_SYNC_IDS = {
+  sources: {
+    backstage: '00000000-0000-0000-0050-000000000001',
+    serviceNow: '00000000-0000-0000-0050-000000000002'
+  },
+  runs: {
+    backstagePrevious: '00000000-0000-0000-0051-000000000001',
+    backstageLatest: '00000000-0000-0000-0051-000000000002',
+    serviceNowPartial: '00000000-0000-0000-0051-000000000003'
+  },
+  records: {
+    customerApi: '00000000-0000-0000-0052-000000000001',
+    authApi: '00000000-0000-0000-0052-000000000002',
+    customerApiArtifact: '00000000-0000-0000-0052-000000000003',
+    missingService: '00000000-0000-0000-0052-000000000004',
+    staleApi: '00000000-0000-0000-0052-000000000005',
+    orphanedRelation: '00000000-0000-0000-0052-000000000006'
+  },
+  artifacts: {
+    customerApiSpecification: '00000000-0000-0000-0053-000000000001'
+  },
+  jobs: {
+    customerApiRefreshSchedule: '00000000-0000-0000-0054-000000000001'
+  }
+} as const;
+
 export const RETENTION_IDS = {
   timeUnitEnum: '00000000-0000-0000-0042-000000000003',
   policySchema: '00000000-0000-0000-0042-000000000001',
