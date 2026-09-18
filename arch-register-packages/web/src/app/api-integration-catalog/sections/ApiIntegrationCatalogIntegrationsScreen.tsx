@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
-import { Button } from '@diagram-craft/app-components/Button';
 import type { RelationRecord } from '@arch-register/api-types/relationContract';
 import { Title } from '../../../components/Title';
 import { SearchInput } from '../../../components/SearchInput';
