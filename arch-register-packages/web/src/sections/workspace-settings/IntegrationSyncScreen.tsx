@@ -22,11 +22,14 @@ import {
   retryIntegrationSyncRun,
   stopManagingIntegrationSyncRecord
 } from '../../queries/integrationSync';
-import styles from '../../app/api-integration-catalog/sections/ApiIntegrationCatalogPlaceholderScreen.module.css';
 import { useWorkspaceAuthorization } from '../../auth/WorkspaceAuthorizationContext';
 import { useTeams } from '../../hooks/useWorkspaceConfig';
+import styles from '../../app/api-integration-catalog/sections/ApiIntegrationCatalogPlaceholderScreen.module.css';
+import tileStyles from '../../app/api-integration-catalog/sections/ApiIntegrationCatalogIntegrationsScreen.module.css';
 
 const dateLabel = (value: string | null) => (value ? new Date(value).toLocaleString() : '—');
+const WARN = 'var(--cmp-fg-warning, #eab308)';
+const DANGER = 'var(--cmp-fg-danger, #ef4444)';
 
 type RelinkTarget = {
   id: string;
@@ -54,17 +57,44 @@ type SourceEditor = {
   status: 'active' | 'degraded' | 'paused';
 };
 
+/**
+ * Workspace-settings admin screen for #2982's integration sync control center: source
+ * configuration (add / edit, `configureIntegrationSource`), a stat-tile summary, and the
+ * sources/recent-runs/managed-records tables with retry, relink, and stop-managing actions.
+ *
+ * Clicking a sources-table row narrows the runs and managed-records tables to that source (the
+ * design reference's connector click-to-filter, `ic-views.jsx`'s `ICSync`) — kept as local
+ * component state rather than the URL, since this screen has no sidebar/facet params of its own.
+ */
 export const IntegrationSyncScreen = () => {
   const { workspaceSlug } = useParams({ strict: false }) as { workspaceSlug: string };
+  const [sourceEditor, setSourceEditor] = useState<SourceEditor | null>(null);
+  const [selectedSourceKey, setSelectedSourceKey] = useState<string | null>(null);
   const [relinkTarget, setRelinkTarget] = useState<RelinkTarget | null>(null);
   const [stopManagingTarget, setStopManagingTarget] = useState<StopManagingTarget | null>(null);
   const [selectedEntity, setSelectedEntity] = useState<SelectedEntity | null>(null);
   const [selectedRelation, setSelectedRelation] = useState<RelationRecord | null>(null);
-  const [sourceEditor, setSourceEditor] = useState<SourceEditor | null>(null);
   const { canManageWorkspaces } = useWorkspaceAuthorization(workspaceSlug);
   const { data: teams = [] } = useTeams(workspaceSlug, sourceEditor !== null);
   const dashboard = useQuery(integrationSyncDashboardQuery(workspaceSlug));
   const queryClient = useQueryClient();
+
+  const saveSource = useMutation({
+    mutationFn: (source: SourceEditor) =>
+      configureIntegrationSource(workspaceSlug, source.sourceKey, {
+        displayName: source.displayName,
+        type: source.type,
+        owner: source.owner.trim() === '' ? null : source.owner.trim(),
+        ...(source.status !== 'degraded' ? { status: source.status } : {})
+      }),
+    onSuccess: () =>
+      queryClient
+        .invalidateQueries({ queryKey: integrationSyncDashboardKey(workspaceSlug) })
+        .then(() => {
+          setSourceEditor(null);
+        }),
+    onError: error => window.alert(error instanceof Error ? error.message : String(error))
+  });
   const retry = useMutation({
     mutationFn: (runId: string) => retryIntegrationSyncRun(workspaceSlug, runId),
     onSuccess: () =>
@@ -84,22 +114,6 @@ export const IntegrationSyncScreen = () => {
         }),
     onError: error => window.alert(error instanceof Error ? error.message : String(error))
   });
-  const saveSource = useMutation({
-    mutationFn: (source: SourceEditor) =>
-      configureIntegrationSource(workspaceSlug, source.sourceKey, {
-        displayName: source.displayName,
-        type: source.type,
-        owner: source.owner.trim() === '' ? null : source.owner.trim(),
-        ...(source.status !== 'degraded' ? { status: source.status } : {})
-      }),
-    onSuccess: () =>
-      queryClient
-        .invalidateQueries({ queryKey: integrationSyncDashboardKey(workspaceSlug) })
-        .then(() => {
-          setSourceEditor(null);
-        }),
-    onError: error => window.alert(error instanceof Error ? error.message : String(error))
-  });
   const stopManaging = useMutation({
     mutationFn: (id: string) => stopManagingIntegrationSyncRecord(workspaceSlug, id),
     onSuccess: () =>
@@ -110,14 +124,26 @@ export const IntegrationSyncScreen = () => {
         }),
     onError: error => window.alert(error instanceof Error ? error.message : String(error))
   });
+
   if (dashboard.isLoading) {
     return <div className={styles.empty}>Loading integration sync health…</div>;
   }
 
   const sources = dashboard.data?.sources ?? [];
-  const runs = dashboard.data?.runs ?? [];
-  const records = dashboard.data?.records ?? [];
+  const allRuns = dashboard.data?.runs ?? [];
+  const allRecords = dashboard.data?.records ?? [];
+  const runs = allRuns.filter(run => !selectedSourceKey || run.sourceKey === selectedSourceKey);
+  const records = allRecords.filter(
+    record => !selectedSourceKey || record.sourceKey === selectedSourceKey
+  );
   const recordsNeedingAttention = records.filter(record => record.state !== 'active');
+  const allRecordsNeedingAttention = allRecords.filter(record => record.state !== 'active');
+  const notActive = sources.filter(source => source.status !== 'active');
+  const today = new Date().toISOString().slice(0, 10);
+  const changedToday = allRuns
+    .filter(run => run.startedAt.startsWith(today))
+    .reduce((sum, run) => sum + run.counts.created + run.counts.updated, 0);
+
   const closeRelinkDialog = () => {
     if (relink.isPending) return;
     setRelinkTarget(null);
@@ -164,6 +190,39 @@ export const IntegrationSyncScreen = () => {
         blocked.
       </p>
 
+      <div className={tileStyles.tiles} style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+        <div className={tileStyles.tile}>
+          <div className={tileStyles.tileLabel}>Sources</div>
+          <div className={tileStyles.tileValue}>{sources.length}</div>
+          <div className={tileStyles.tileSub}>{sources.length - notActive.length} active</div>
+        </div>
+        <div className={tileStyles.tile}>
+          <div className={tileStyles.tileLabel}>Degraded or paused</div>
+          <div
+            className={tileStyles.tileValue}
+            style={notActive.length ? { color: WARN } : undefined}
+          >
+            {notActive.length}
+          </div>
+          <div className={tileStyles.tileSub}>need an operator</div>
+        </div>
+        <div className={tileStyles.tile}>
+          <div className={tileStyles.tileLabel}>Records needing attention</div>
+          <div
+            className={tileStyles.tileValue}
+            style={allRecordsNeedingAttention.length ? { color: DANGER } : undefined}
+          >
+            {allRecordsNeedingAttention.length}
+          </div>
+          <div className={tileStyles.tileSub}>missing, orphaned, stale, or failing</div>
+        </div>
+        <div className={tileStyles.tile}>
+          <div className={tileStyles.tileLabel}>Changed today</div>
+          <div className={tileStyles.tileValue}>{changedToday}</div>
+          <div className={tileStyles.tileSub}>created + updated across all sources</div>
+        </div>
+      </div>
+
       <h3>Sources</h3>
       <Table.Root scroll stickyHeader>
         <Table.Head>
@@ -172,48 +231,64 @@ export const IntegrationSyncScreen = () => {
             <Table.HeaderCell>Type</Table.HeaderCell>
             <Table.HeaderCell>Status</Table.HeaderCell>
             <Table.HeaderCell>Last successful run</Table.HeaderCell>
-            <Table.HeaderCell>Actions</Table.HeaderCell>
+            {canManageWorkspaces && <Table.HeaderCell>Actions</Table.HeaderCell>}
           </Table.Row>
         </Table.Head>
         <Table.Body>
           {sources.length === 0 ? (
-            <Table.EmptyRow colSpan={5}>
+            <Table.EmptyRow colSpan={canManageWorkspaces ? 5 : 4}>
               No integration sources have been configured yet.
             </Table.EmptyRow>
           ) : (
             sources.map(source => (
-              <Table.Row key={source.id}>
+              <Table.Row
+                key={source.id}
+                selected={selectedSourceKey === source.sourceKey}
+                onClick={() =>
+                  setSelectedSourceKey(
+                    selectedSourceKey === source.sourceKey ? null : source.sourceKey
+                  )
+                }
+              >
                 <Table.NameCell title={source.displayName} subtitle={source.sourceKey} />
                 <Table.Cell>{source.type}</Table.Cell>
                 <Table.Cell>
                   <StatusChip value={source.status} />
                 </Table.Cell>
                 <Table.Cell>{dateLabel(source.lastSuccessAt)}</Table.Cell>
-                <Table.Cell>
-                  {canManageWorkspaces && (
+                {canManageWorkspaces && (
+                  <Table.Cell>
                     <Button
                       variant="ghost"
-                      onClick={() =>
+                      onClick={event => {
+                        event.stopPropagation();
                         setSourceEditor({
                           sourceKey: source.sourceKey,
                           displayName: source.displayName,
                           type: source.type,
                           owner: source.owner ?? '',
                           status: source.status
-                        })
-                      }
+                        });
+                      }}
                     >
                       Edit
                     </Button>
-                  )}
-                </Table.Cell>
+                  </Table.Cell>
+                )}
               </Table.Row>
             ))
           )}
         </Table.Body>
       </Table.Root>
 
-      <h3>Recent runs</h3>
+      <h3>
+        Recent runs
+        {selectedSourceKey && (
+          <Button variant="ghost" onClick={() => setSelectedSourceKey(null)}>
+            Clear filter
+          </Button>
+        )}
+      </h3>
       <Table.Root scroll stickyHeader>
         <Table.Head>
           <Table.Row>
@@ -228,7 +303,11 @@ export const IntegrationSyncScreen = () => {
         </Table.Head>
         <Table.Body>
           {runs.length === 0 ? (
-            <Table.EmptyRow colSpan={7}>No sync runs have been recorded yet.</Table.EmptyRow>
+            <Table.EmptyRow colSpan={7}>
+              {allRuns.length === 0
+                ? 'No sync runs have been recorded yet.'
+                : 'No sync runs for this source.'}
+            </Table.EmptyRow>
           ) : (
             runs.map(run => (
               <Table.Row key={run.id}>
