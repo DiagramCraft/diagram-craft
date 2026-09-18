@@ -539,7 +539,9 @@ test('a revision written outside the normal ingestion path is omitted, not a 409
       content: JSON.stringify({
         openapi: '3.1.0',
         info: { title: 'Test', version: '1.0.0' },
-        paths: { '/pets': { get: { operationId: 'listPets', responses: { '200': { description: 'ok' } } } } }
+        paths: {
+          '/pets': { get: { operationId: 'listPets', responses: { '200': { description: 'ok' } } } }
+        }
       })
     }
   });
