@@ -292,7 +292,10 @@ const runOpenApiValidation = async (
         category: 'validation_error',
         code: error.code ?? 'openapi_validation_error',
         message: error.message,
-        pointer: error.path == null ? undefined : `#/${error.path.map(pointerPart).join('/')}`
+        pointer:
+          error.path == null
+            ? undefined
+            : `#/${typeof error.path === 'string' ? error.path : error.path.map(pointerPart).join('/')}`
       });
     }
   } catch (error) {
