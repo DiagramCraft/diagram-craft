@@ -1,4 +1,5 @@
 import type { RelationRecord } from '@arch-register/api-types/relationContract';
+import { groupByApiId } from './apiEndpointRelations';
 
 /**
  * Provider/consumer pairs and their Data Flow coverage (#3340, follow-up to #3317). `Provides API`
@@ -38,17 +39,6 @@ export type ApiPairCoverageSummary = {
   coveredPairs: number;
   gapPairs: number;
   notApplicablePairs: number;
-};
-
-const groupByApiId = (relations: RelationRecord[]): Map<string, RelationRecord[]> => {
-  const map = new Map<string, RelationRecord[]>();
-  for (const relation of relations) {
-    const apiId = relation._out.id;
-    const existing = map.get(apiId);
-    if (existing) existing.push(relation);
-    else map.set(apiId, [relation]);
-  }
-  return map;
 };
 
 const dataFlowPairKey = (aId: string, bId: string): string => [aId, bId].sort().join('::');

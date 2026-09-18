@@ -1,24 +1,32 @@
 import { useMemo } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
-import { TbAlertTriangle, TbPlugConnected, TbTag } from 'react-icons/tb';
+import { TbAlertTriangle, TbApi, TbPlugConnected, TbTag, TbUser } from 'react-icons/tb';
 import {
   SidebarGroupLabel,
   SidebarTitleHeader
 } from '../../../components/sidebar/SidebarPrimitives';
 import { TreeRow } from '../../../components/TreeRow';
 import { workspaceCapabilityConfigurationsQuery } from '../../../queries/workspaceConfig';
+import { entitiesQuery } from '../../../queries/entities';
 import { useRelations } from '../../../hooks/useRelations';
 import { useRelationSchemas } from '../../../hooks/useRelationSchemas';
+import { useSchemas } from '../../../hooks/useSchemas';
+import { useLifecycleStates } from '../../../hooks/useWorkspaceConfig';
+import { scalarValues } from '../../../lib/scalarFieldValues';
 import { resolveApiIntegrationCatalogConfig } from '../apiIntegrationCatalogQueries';
 import { useDataFlowConfig } from '../useDataFlowConfig';
 import {
+  IC_APIS_ID,
   IC_INTEGRATIONS_ID,
   IC_RAIL_PATHS,
   IC_SECTIONS,
   type ApiIntegrationCatalogRailItemId
 } from '../apiIntegrationCatalogSections';
-import type { ApiIntegrationCatalogIntegrationsSearchParams } from '../../../routes/searchParams';
+import type {
+  ApiIntegrationCatalogApisSearchParams,
+  ApiIntegrationCatalogIntegrationsSearchParams
+} from '../../../routes/searchParams';
 import styles from '../../../shell/SidePanel.module.css';
 
 /**
@@ -138,15 +146,145 @@ const IntegrationsSidebarContent = ({ workspaceSlug }: { workspaceSlug: string }
 };
 
 /**
+ * The APIs section's own primary-sidebar content: Protocol / Lifecycle / Owning team facets over
+ * the workspace's `api` entities — mirrors `IntegrationsSidebarContent` above, fetching its own
+ * data independently (the screen's identical `entitiesQuery` call is deduped by react-query's
+ * cache, so this isn't a real extra network round trip). `protocols` is a multi-value field (an
+ * entity can carry more than one protocol), unlike `IntegrationsSidebarContent`'s single-value
+ * `countByValue`, so counting walks `scalarValues(entity.protocols)` per entity instead. Owning
+ * team has no schema-backed option list (unlike Protocol) — its facet values are the distinct
+ * `_owner`s actually observed on the fetched entities, mirroring how free-text-owner facets are
+ * built elsewhere in this app.
+ */
+const ApisSidebarContent = ({ workspaceSlug }: { workspaceSlug: string }) => {
+  const navigate = useNavigate();
+  const search = useSearch({ strict: false }) as ApiIntegrationCatalogApisSearchParams;
+
+  const configurations = useQuery(workspaceCapabilityConfigurationsQuery(workspaceSlug));
+  const apiConfig = resolveApiIntegrationCatalogConfig(configurations.data);
+  const schemas = useSchemas(workspaceSlug);
+  const apiSchema = schemas.data?.find(schema => schema.id === apiConfig?.apiSchemaId);
+  const { data: lifecycleStates = [] } = useLifecycleStates(workspaceSlug);
+
+  const apis = useQuery(
+    entitiesQuery(
+      workspaceSlug,
+      { schemaId: apiConfig?.apiSchemaId, view: 'full', limit: 500 },
+      apiConfig != null
+    )
+  );
+  const allItems = apis.data?.items ?? [];
+
+  const protocolField = apiSchema?.fields.find(field => field.id === 'protocols');
+  const protocolOptions = protocolField?.type === 'select' ? protocolField.options ?? [] : [];
+
+  const protocolCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const entity of allItems) {
+      for (const value of scalarValues(entity.protocols)) {
+        if (typeof value === 'string' && value) counts.set(value, (counts.get(value) ?? 0) + 1);
+      }
+    }
+    return counts;
+  }, [allItems]);
+
+  const lifecycleCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const entity of allItems) {
+      const id = entity._lifecycle?.id;
+      if (id) counts.set(id, (counts.get(id) ?? 0) + 1);
+    }
+    return counts;
+  }, [allItems]);
+
+  const owners = useMemo(() => {
+    const map = new Map<string, { id: string; name: string; count: number }>();
+    for (const entity of allItems) {
+      const owner = entity._owner;
+      if (!owner) continue;
+      const existing = map.get(owner.id);
+      if (existing) existing.count += 1;
+      else map.set(owner.id, { id: owner.id, name: owner.name, count: 1 });
+    }
+    return [...map.values()].sort((a, b) => a.name.localeCompare(b.name));
+  }, [allItems]);
+
+  const patchSearch = (patch: Partial<ApiIntegrationCatalogApisSearchParams>) =>
+    navigate({
+      to: IC_RAIL_PATHS[IC_APIS_ID],
+      params: { workspaceSlug },
+      search: (previous: Record<string, unknown>) => ({ ...previous, ...patch })
+    });
+
+  const hasAnySelection = !!search.protocol || !!search.lifecycle || !!search.owner;
+  const clearAll = () => patchSearch({ protocol: undefined, lifecycle: undefined, owner: undefined });
+
+  if (configurations.isLoading || apis.isLoading) return null;
+
+  return (
+    <>
+      <TreeRow
+        icon={<TbApi size={12} />}
+        label="All APIs"
+        testId="api-facet-all"
+        active={!hasAnySelection}
+        onClick={clearAll}
+        trailing={<span className="dim mono">{allItems.length}</span>}
+      />
+      <SidebarGroupLabel>Protocol</SidebarGroupLabel>
+      {protocolOptions.map(option => (
+        <TreeRow
+          key={option.value}
+          icon={<TbTag size={12} />}
+          label={option.label}
+          testId={`api-facet-protocol-${option.value}`}
+          active={search.protocol === option.value}
+          onClick={() =>
+            patchSearch({ protocol: search.protocol === option.value ? undefined : option.value })
+          }
+          trailing={<span className="dim mono">{protocolCounts.get(option.value) ?? 0}</span>}
+        />
+      ))}
+      <SidebarGroupLabel>Lifecycle</SidebarGroupLabel>
+      {lifecycleStates.map(state => (
+        <TreeRow
+          key={state.id}
+          icon={<TbTag size={12} />}
+          label={state.label}
+          testId={`api-facet-lifecycle-${state.id}`}
+          active={search.lifecycle === state.id}
+          onClick={() =>
+            patchSearch({ lifecycle: search.lifecycle === state.id ? undefined : state.id })
+          }
+          trailing={<span className="dim mono">{lifecycleCounts.get(state.id) ?? 0}</span>}
+        />
+      ))}
+      <SidebarGroupLabel>Owning team</SidebarGroupLabel>
+      {owners.map(owner => (
+        <TreeRow
+          key={owner.id}
+          icon={<TbUser size={12} />}
+          label={owner.name}
+          testId={`api-facet-owner-${owner.id}`}
+          active={search.owner === owner.id}
+          onClick={() => patchSearch({ owner: search.owner === owner.id ? undefined : owner.id })}
+          trailing={<span className="dim mono">{owner.count}</span>}
+        />
+      ))}
+    </>
+  );
+};
+
+/**
  * Section-dependent primary sidebar for the API & Integration Catalog app: navigation between the
  * app's rail sections, gated on the `api-specification` capability configuration — mirrors
  * `../../data-stewardship/sections/DataStewardshipSidebar.tsx`'s `!enabled` empty state and its
  * fallback "Sections" nav list.
  *
- * The Integrations section replaces this nav list with its own facet content
- * (`IntegrationsSidebarContent`) — mirrors `RiskComplianceSidebar.tsx`'s Risks/Controls facet
- * sections. APIs / Impact still fall through to the plain nav list until their own
- * sub-issues of #3150 add facets.
+ * The Integrations and APIs sections replace this nav list with their own facet content
+ * (`IntegrationsSidebarContent`, `ApisSidebarContent`) — mirrors `RiskComplianceSidebar.tsx`'s
+ * Risks/Controls facet sections. Impact still falls through to the plain nav list until its own
+ * sub-issue of #3150 adds facets.
  */
 export const ApiIntegrationCatalogSidebar = ({
   workspaceSlug,
@@ -169,6 +307,8 @@ export const ApiIntegrationCatalogSidebar = ({
           </div>
         ) : activeSection === IC_INTEGRATIONS_ID ? (
           <IntegrationsSidebarContent workspaceSlug={workspaceSlug} />
+        ) : activeSection === IC_APIS_ID ? (
+          <ApisSidebarContent workspaceSlug={workspaceSlug} />
         ) : (
           <>
             <SidebarGroupLabel>Sections</SidebarGroupLabel>

@@ -16,7 +16,10 @@ import {
   LazyApiIntegrationCatalogImpactScreen
 } from '../../routes/workspace/lazyWorkspaceScreens';
 import { ensureApplicationAccess } from '../../routes/applicationAccess';
-import { validateApiIntegrationCatalogIntegrationsSearch } from '../../routes/searchParams';
+import {
+  validateApiIntegrationCatalogApisSearch,
+  validateApiIntegrationCatalogIntegrationsSearch
+} from '../../routes/searchParams';
 
 const railPath = (path: string) => path.replace('/$workspaceSlug/', '');
 
@@ -53,6 +56,7 @@ export const createApiIntegrationCatalogWorkspaceRoutes = <TParentRoute extends 
     createRoute({
       getParentRoute: () => workspaceRoute,
       path: railPath(IC_RAIL_PATHS[IC_APIS_ID]),
+      validateSearch: validateApiIntegrationCatalogApisSearch,
       beforeLoad: ({ context, params }) =>
         ensureApplicationAccess(
           context.queryClient,
@@ -74,6 +78,7 @@ export const createApiIntegrationCatalogWorkspaceRoutes = <TParentRoute extends 
     createRoute({
       getParentRoute: () => workspaceRoute,
       path: `${railPath(IC_RAIL_PATHS[IC_APIS_ID])}/$apiId`,
+      validateSearch: validateApiIntegrationCatalogApisSearch,
       beforeLoad: ({ context, params }) =>
         ensureApplicationAccess(
           context.queryClient,

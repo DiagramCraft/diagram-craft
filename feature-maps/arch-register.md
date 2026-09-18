@@ -672,16 +672,28 @@
           scaffolded as a placeholder pending its own APIs/integrations/health catalog-landing content.
 
         - @id:ar.api-integration-catalog.apis The APIs section lists every entity of the workspace's `api` schema (@id:
-          ar.integrations.api-specification-sync) — name, protocol (s), declared API version, lifecycle, and
-          owner — searchable by name and sortable by name or normalized operations/messages count (read from the
-          entity's primary `api-specification` artifact's current revision, the same normalized-catalog projection
-          the Entities app's API artifact detail view reads; there is no telemetry column, matching the epic's
-          explicit non-goal of not being an API gateway or runtime observability tool). A row click opens a
-          deep-linkable spec drawer (`apis/$apiId`) shared with any other section that links into a spec: attributes,
-          the entities that provide and consume this API (via the `Provides API`/`Consumes API` typed relations),
-          and the full specification viewer — source/version picker, revision status notices, filterable normalized
-          operations/messages list, and a raw-source preview dialog — reusing the same viewer as the Entities app's
-          API artifact detail tab rather than a separate implementation.
+          ar.integrations.api-specification-sync) — name, protocol (s), declared API version, lifecycle, owner, and
+          the entities that provide and consume it (via the `Provides API`/`Consumes API` typed relations) —
+          searchable by name and sortable by name, provider count, consumer count, or normalized operations/messages
+          count (read from the entity's primary `api-specification` artifact's current revision, the same
+          normalized-catalog projection the Entities app's API artifact detail view reads; there is no telemetry
+          column, matching the epic's explicit non-goal of not being an API gateway or runtime observability tool).
+          The section's own primary sidebar replaces the app's plain section nav with Protocol, Lifecycle, and
+          Owning team facets over these entities (each option showing its count, state kept in the URL); the facets
+          narrow which APIs are in scope across both of the section's views below, not just the catalog table.
+          A toolbar toggle ("Catalog" / "Operations") additionally switches the table between the catalog above and
+          a flat, sortable cross-API table of every operation/message across the APIs in scope (method, path, API,
+          deprecated flag) — there is no sunset-date countdown, since no such field exists on the normalized
+          operation model. A row click (in either view) opens a deep-linkable spec drawer (`apis/$apiId`) shared
+          with any other section that links into a spec: attributes, providers/consumers, and the full specification
+          viewer — source/version picker, revision status notices, filterable normalized operations/messages list,
+          and a raw-source preview dialog — reusing the same viewer as the Entities app's API artifact detail tab
+          rather than a separate implementation. Clicking a row in the Operations view opens that operation's parent
+          API at the same drawer, not a per-operation deep link — the drawer has no per-operation addressing to
+          link into. A cross-API "Deprecated operations" view was deferred (tracked as a follow-up) after a
+          pre-existing server defect surfaced: `listApiSpecificationRevisions` 409s its entire response whenever any
+          revision of an artifact lacks a normalized projection row, which the Catalog view's operations-count column
+          already silently absorbs (falling back to "—") but the flat cross-API tables cannot.
 
         - @id:ar.api-integration-catalog.integrations The Integrations section lists every `Data Flow` typed relation
           in the workspace (the same relation modeled for Data Stewardship's classification views) — source and
