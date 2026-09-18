@@ -690,10 +690,10 @@
           and a raw-source preview dialog — reusing the same viewer as the Entities app's API artifact detail tab
           rather than a separate implementation. Clicking a row in the Operations view opens that operation's parent
           API at the same drawer, not a per-operation deep link — the drawer has no per-operation addressing to
-          link into. A cross-API "Deprecated operations" view was deferred (tracked as a follow-up) after a
-          pre-existing server defect surfaced: `listApiSpecificationRevisions` 409s its entire response whenever any
-          revision of an artifact lacks a normalized projection row, which the Catalog view's operations-count column
-          already silently absorbs (falling back to "—") but the flat cross-API tables cannot.
+          link into. A cross-API "Deprecated operations" view was deferred (re-adding it is tracked in #3347) after
+          a fan-out across every API's revisions surfaced a pre-existing server defect: `listApiSpecificationRevisions`
+          used to 409 its entire response whenever any revision of an artifact lacked a normalized projection row —
+          now fixed to omit that revision instead, rather than failing the whole list.
 
         - @id:ar.api-integration-catalog.integrations The Integrations section lists every `Data Flow` typed relation
           in the workspace (the same relation modeled for Data Stewardship's classification views) — source and

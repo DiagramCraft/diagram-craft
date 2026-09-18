@@ -745,9 +745,9 @@ const apiIntegrationCatalogApisSearchSchema = defineSearchParamSchema({
   // `entity._owner.id` — owning team/user id. No schema lookup; values come from observed owners.
   owner: stringCodec,
   // Switches between the APIs catalog table (the default, undefined) and a flat cross-API
-  // Operations table (#3345). A cross-API Deprecated-operations view was deferred — see the
-  // follow-up issue — after the projection fan-out triggered a 409 from the artifacts revisions
-  // endpoint.
+  // Operations table (#3345). A cross-API Deprecated-operations view was deferred (re-adding it
+  // is tracked in #3347) after the projection fan-out surfaced a 409 from the artifacts revisions
+  // endpoint — now fixed server-side.
   view: enumCodec(['catalog', 'operations'] as const)
 });
 

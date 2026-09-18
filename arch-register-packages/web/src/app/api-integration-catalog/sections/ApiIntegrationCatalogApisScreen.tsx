@@ -41,9 +41,12 @@ type SortKey = 'name' | 'operations' | 'providers' | 'consumers';
  * Facets narrow "which APIs are in scope" and apply across both sub-views — switching between
  * Catalog/Operations is a different lens on the same scope, not a different filter.
  *
- * A cross-API "Deprecated operations" view (also #3345) was pulled from this iteration: fanning
- * the projection query out across every API in scope triggered a 409 from the artifacts revisions
- * endpoint that needs a server-side fix first — see the tracking follow-up issue.
+ * A cross-API "Deprecated operations" view (also #3345) was pulled from this iteration after
+ * fanning the projection query out across every API in scope surfaced a 409 from the artifacts
+ * revisions endpoint (`apiSpecificationOperations.ts`'s `listApiSpecificationRevisions` — now
+ * fixed to omit an unprojected revision instead of 409ing the whole list). Re-adding that view is
+ * tracked in #3347; `useApiOperationsFeed`'s `filters.deprecated` and `ApiOperationsTable` are
+ * already generic and ready for it.
  */
 export const ApiIntegrationCatalogApisScreen = () => {
   const { workspaceSlug, apiId } = useParams({ strict: false }) as {
