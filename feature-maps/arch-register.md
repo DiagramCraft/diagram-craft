@@ -681,17 +681,18 @@
           The section's own primary sidebar replaces the app's plain section nav with Protocol, Lifecycle, and
           Owning team facets over these entities (each option showing its count, state kept in the URL); the facets
           narrow which APIs are in scope across both of the section's views below, not just the catalog table.
-          A toolbar toggle ("Catalog" / "Operations") additionally switches the table between the catalog above and
-          a flat, sortable cross-API table of every operation/message across the APIs in scope (method, path, API,
+          A toolbar toggle ("Catalog" / "Operations" / "Deprecated operations") additionally switches the table
+          between the catalog above and two flat, sortable cross-API tables built from the same feed: every
+          operation/message across the APIs in scope, or just the ones flagged deprecated (method, path, API,
           deprecated flag) — there is no sunset-date countdown, since no such field exists on the normalized
-          operation model. A row click (in either view) opens a deep-linkable spec drawer (`apis/$apiId`) shared
+          operation model. A row click (in any view) opens a deep-linkable spec drawer (`apis/$apiId`) shared
           with any other section that links into a spec: attributes, providers/consumers, and the full specification
           viewer — source/version picker, revision status notices, filterable normalized operations/messages list,
           and a raw-source preview dialog — reusing the same viewer as the Entities app's API artifact detail tab
-          rather than a separate implementation. Clicking a row in the Operations view opens that operation's parent
-          API at the same drawer, not a per-operation deep link — the drawer has no per-operation addressing to
-          link into. A cross-API "Deprecated operations" view was deferred (re-adding it is tracked in #3347) after
-          a fan-out across every API's revisions surfaced a pre-existing server defect: `listApiSpecificationRevisions`
+          rather than a separate implementation. Clicking a row in either operations view opens that operation's
+          parent API at the same drawer, not a per-operation deep link — the drawer has no per-operation addressing
+          to link into. The Deprecated operations view (#3347) was briefly deferred from #3345 after a fan-out
+          across every API's revisions surfaced a pre-existing server defect: `listApiSpecificationRevisions`
           used to 409 its entire response whenever any revision of an artifact lacked a normalized projection row —
           now fixed to omit that revision instead, rather than failing the whole list.
 
