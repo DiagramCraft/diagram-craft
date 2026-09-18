@@ -281,14 +281,14 @@ export const IntegrationSyncScreen = () => {
         </Table.Body>
       </Table.Root>
 
-      <h3>
-        Recent runs
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <h3 style={{ margin: 0 }}>Recent runs</h3>
         {selectedSourceKey && (
           <Button variant="ghost" onClick={() => setSelectedSourceKey(null)}>
             Clear filter
           </Button>
         )}
-      </h3>
+      </div>
       <Table.Root scroll stickyHeader>
         <Table.Head>
           <Table.Row>
