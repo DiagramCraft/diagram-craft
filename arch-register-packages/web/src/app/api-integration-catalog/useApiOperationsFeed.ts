@@ -67,7 +67,9 @@ export const useApiOperationsFeed = (
     (revisionsLoading ||
       projectionQueries.some(
         (query, index) =>
-          entries[index]?.artifactId != null && entries[index]?.revisionId != null && query.isPending
+          entries[index]?.artifactId != null &&
+          entries[index]?.revisionId != null &&
+          query.isPending
       ));
 
   const rows = useMemo(() => {
