@@ -50,6 +50,7 @@ import { isDevTracingEnabled } from '../domain/dev/devMode';
 import { PostgresPublicCatalogDatabase } from '../domain/publicCatalog/db/postgresPublicCatalog';
 import { PostgresConformanceDatabase } from '../domain/conformance/db/postgresConformance';
 import { PostgresEntityMergeDatabase } from '../domain/catalog/db/postgresEntityMerge';
+import { PostgresIntegrationSyncDatabase } from '../domain/integrationSync/db/postgresIntegrationSync';
 
 const PGCRYPTO_EXISTS_NOTICE = 'extension "pgcrypto" already exists, skipping';
 const logger = createLogger('postgres');
@@ -102,6 +103,7 @@ export class PostgresDatabase implements DatabaseAdapter {
   readonly publicCatalog: PostgresPublicCatalogDatabase;
   readonly conformance: PostgresConformanceDatabase;
   readonly entityMerge: PostgresEntityMergeDatabase;
+  readonly integrationSync: PostgresIntegrationSyncDatabase;
   readonly core;
 
   private adapterFor(sql: PostgresQueryClient): DatabaseAdapter {
@@ -144,7 +146,8 @@ export class PostgresDatabase implements DatabaseAdapter {
       baseline: new PostgresBaselineDatabase(sql),
       conformance: new PostgresConformanceDatabase(sql),
       publicCatalog: new PostgresPublicCatalogDatabase(sql),
-      entityMerge: new PostgresEntityMergeDatabase(sql)
+      entityMerge: new PostgresEntityMergeDatabase(sql),
+      integrationSync: new PostgresIntegrationSyncDatabase(sql)
     };
     let bound!: DatabaseAdapter;
     bound = {
@@ -230,6 +233,7 @@ export class PostgresDatabase implements DatabaseAdapter {
     this.publicCatalog = new PostgresPublicCatalogDatabase(this.sql);
     this.conformance = new PostgresConformanceDatabase(this.sql);
     this.entityMerge = new PostgresEntityMergeDatabase(this.sql);
+    this.integrationSync = new PostgresIntegrationSyncDatabase(this.sql);
 
     this.core = {
       driver: 'postgres' as const,

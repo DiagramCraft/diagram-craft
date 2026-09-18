@@ -59,6 +59,7 @@ import { createAutomationRuleORPCHandler } from './domain/automation/automationR
 import { createDocumentORPCHandler } from './domain/document/documentOrpc';
 import { createEntityDeprecationORPCHandler } from './domain/catalog/entityDeprecationOrpc';
 import { createEntityMergeORPCHandler } from './domain/catalog/entityMergeOrpc';
+import { createIntegrationSyncORPCHandler } from './domain/integrationSync/integrationSyncOrpc';
 import { createArtifactORPCHandler } from './domain/artifact/artifactOrpc';
 import { createBaselineORPCHandler } from './domain/baseline/baselineOrpc';
 import { createConformanceORPCHandler } from './domain/conformance/conformanceOrpc';
@@ -299,6 +300,15 @@ const protectedRouteDefinitions = [
     prefix: API_PREFIXES.root,
     surfaces: [API_PREFIXES.integrations],
     create: ({ db }) => createRelationSyncORPCHandler(db)
+  },
+  {
+    id: 'integration-sync-control-center',
+    auth: 'protected',
+    kind: 'orpc',
+    dependencies: ['db'],
+    prefix: API_PREFIXES.root,
+    surfaces: [API_PREFIXES.integrations],
+    create: ({ db }) => createIntegrationSyncORPCHandler(db)
   },
   {
     id: 'entity-versions',

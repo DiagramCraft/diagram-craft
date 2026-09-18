@@ -114,10 +114,10 @@ describe('appShellRegistry', () => {
     expect(getRailSection(DS_CLASSIFICATION_ID)?.route).toBe(DS_RAIL_PATHS[DS_CLASSIFICATION_ID]);
   });
 
-  it('registers API & Integration Catalog as a capability-gated app owning five rail sections, with a separate Overview', () => {
+  it('registers API & Integration Catalog as a capability-gated app owning four rail sections, with a separate Overview', () => {
     const apiIntegrationCatalog = getAppDefinition(IC_OVERVIEW_ID);
     expect(apiIntegrationCatalog.applicationId).toBe('api-integration-catalog');
-    expect(railIds(IC_OVERVIEW_ID)).toHaveLength(5);
+    expect(railIds(IC_OVERVIEW_ID)).toHaveLength(4);
     expect(railIds(IC_OVERVIEW_ID)[0]).toBe(IC_OVERVIEW_ID);
     expect(apiIntegrationCatalog.enablement).toEqual({ capabilityType: 'api-specification' });
     expect(getRailSection(IC_APIS_ID)?.route).toBe(IC_RAIL_PATHS[IC_APIS_ID]);

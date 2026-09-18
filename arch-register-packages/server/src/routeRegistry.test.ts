@@ -32,6 +32,7 @@ const expectedRouteIds = [
   'entity-sync',
   'api-specification-sync',
   'relation-sync',
+  'integration-sync-control-center',
   'entity-versions',
   'relation-versions',
   'entity-changes',

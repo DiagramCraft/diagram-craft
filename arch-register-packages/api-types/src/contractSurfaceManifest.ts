@@ -35,6 +35,7 @@ import { governanceWorkflowConfigContract } from './governanceWorkflowConfigCont
 import { glossaryContract } from './app/business-glossary/glossaryContract';
 import { integrationGovernanceContract } from './integrationGovernanceContract';
 import { integrationRelationContract } from './integrationRelationContract';
+import { integrationSyncContract } from './integrationSyncContract';
 import { jobsContract } from './jobsContract';
 import { workspaceMetricContract } from './metricContract';
 import { milestoneContract } from './milestoneContract';
@@ -191,7 +192,8 @@ const integrationPrimaryEntries = [
   { id: 'entitySyncContract', contract: entitySyncContract },
   { id: 'apiSpecificationSyncContract', contract: apiSpecificationSyncContract },
   { id: 'relationSyncContract', contract: relationSyncContract },
-  { id: 'integrationGovernanceContract', contract: integrationGovernanceContract }
+  { id: 'integrationGovernanceContract', contract: integrationGovernanceContract },
+  { id: 'integrationSyncContract', contract: integrationSyncContract }
 ] as const satisfies readonly ContractSurfaceEntry[];
 
 const integrationEntries = [
@@ -236,6 +238,11 @@ export const contractSurfaceManifest = {
     }
   ] as const
 } as const;
+
+// The integration surface includes an OpenAPI-only schema projection that intentionally
+// reuses the application surface's `schemas` router key. Browser clients should merge only
+// primary integration routers to avoid duplicate top-level client keys.
+export const integrationClientContracts = mergeContractEntries(integrationPrimaryEntries);
 
 export const allContracts = mergeContractEntries([
   ...coreEntries,

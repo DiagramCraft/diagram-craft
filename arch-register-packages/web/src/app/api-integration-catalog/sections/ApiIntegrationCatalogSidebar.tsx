@@ -145,7 +145,7 @@ const IntegrationsSidebarContent = ({ workspaceSlug }: { workspaceSlug: string }
  *
  * The Integrations section replaces this nav list with its own facet content
  * (`IntegrationsSidebarContent`) — mirrors `RiskComplianceSidebar.tsx`'s Risks/Controls facet
- * sections. APIs / Sync / Impact still fall through to the plain nav list until their own
+ * sections. APIs / Impact still fall through to the plain nav list until their own
  * sub-issues of #3150 add facets.
  */
 export const ApiIntegrationCatalogSidebar = ({

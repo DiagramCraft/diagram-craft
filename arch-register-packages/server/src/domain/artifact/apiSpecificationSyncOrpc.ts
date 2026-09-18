@@ -9,6 +9,10 @@ import {
   refreshApiSpecificationByExternalKey,
   syncApiSpecificationByExternalKey
 } from './apiSpecificationSyncOperations';
+import {
+  recordIntegrationSyncItem,
+  validateIntegrationSyncContext
+} from '../integrationSync/integrationSyncOperations';
 
 type ORPCContext = {
   db: DatabaseAdapter;
@@ -26,15 +30,43 @@ export const apiSpecificationSyncORPCRouter = router.router({
     syncByExternalKey: router.apiSpecificationSync.syncByExternalKey.handler(
       async ({ input, context }) => {
         const auditUser = context.event.context.user;
-        return syncApiSpecificationByExternalKey(
+        const { syncContext, ...syncBody } = input.body;
+        await validateIntegrationSyncContext(context.db, {
+          workspace: context.workspace,
+          sourceKey: input.params.source,
+          runId: syncContext.runId,
+          scopeKey: syncContext.scopeKey
+        });
+        const result = await syncApiSpecificationByExternalKey(
           context.db,
           context.workspace,
           input.params.source,
           input.params.externalKey,
-          input.body,
+          syncBody,
           context.authCtx,
           { id: auditUser.id, displayName: auditUser.display_name }
         );
+        await recordIntegrationSyncItem(context.db, {
+          workspace: context.workspace,
+          sourceKey: input.params.source,
+          runId: syncContext.runId,
+          scopeKey: syncContext.scopeKey,
+          recordType: 'entity',
+          externalKey: input.params.externalKey,
+          recordId: result.entity._uid
+        });
+        if (result.artifact?.sourceKey) {
+          await recordIntegrationSyncItem(context.db, {
+            workspace: context.workspace,
+            sourceKey: input.params.source,
+            runId: syncContext.runId,
+            scopeKey: syncContext.scopeKey,
+            recordType: 'artifact',
+            externalKey: result.artifact.sourceKey,
+            recordId: result.artifact.id
+          });
+        }
+        return result;
       }
     ),
     refreshByExternalKey: router.apiSpecificationSync.refreshByExternalKey.handler(

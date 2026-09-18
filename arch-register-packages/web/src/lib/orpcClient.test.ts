@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { contractSurfaceManifest } from '@arch-register/api-types/contractSurfaceManifest';
+import {
+  contractSurfaceManifest,
+  integrationClientContracts
+} from '@arch-register/api-types/contractSurfaceManifest';
 
 const fetchWithAuthResponse = vi.hoisted(() => vi.fn());
 
@@ -58,11 +61,20 @@ describe('oRPC API surface routing', () => {
     expect(requestPaths()).toEqual(['/api/adapters/diagram-craft/default/schemas']);
   });
 
+  it('uses the core API surface for integration sync routes', async () => {
+    fetchWithAuthResponse.mockResolvedValue(Response.json({ sources: [], runs: [], records: [] }));
+
+    await orpcClient.integrationSync.dashboard({ params: { workspace: 'default' } });
+
+    expect(requestPaths()).toEqual(['/api/integrations/v1/default/sync-control-center']);
+  });
+
   it('exports every router registered on the first-party manifest surfaces', () => {
     const { core, application, diagramCraft } = contractSurfaceManifest.surfaces;
     const expectedKeys = [
       ...Object.keys(core.contracts),
       ...Object.keys(application.contracts),
+      ...Object.keys(integrationClientContracts),
       ...Object.keys(diagramCraft.contracts)
     ].sort();
 

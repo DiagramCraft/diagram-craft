@@ -27,7 +27,8 @@ import {
   LazySchemaValidationScreen,
   LazySchemaSettingsScreen,
   LazyWorkspaceSettingsScreen,
-  LazyApplicationsCapabilitiesScreen
+  LazyApplicationsCapabilitiesScreen,
+  LazyIntegrationSyncScreen
 } from './lazyWorkspaceScreens';
 
 const SettingsRedirect = () => {
@@ -257,6 +258,28 @@ export const createSettingsWorkspaceRoutes = <TParentRoute extends AnyRoute>(
     })
   );
 
+  const integrationSyncRoute = withWorkspaceShell(
+    createRoute({
+      getParentRoute: () => workspaceRoute,
+      path: 'settings/integration-sync',
+      component: LazyIntegrationSyncScreen
+    }),
+    ctx => ({
+      variant: 'standard',
+      activeRailItem: null,
+      breadcrumbs: buildSettingsBreadcrumbs(ctx, 'Settings', '/$workspaceSlug/settings'),
+      primarySidebar: (
+        <WorkspaceSettingsSidebar
+          workspaceSlug={ctx.workspaceSlug}
+          workspace={ctx.workspace}
+          schemas={ctx.schemas}
+          projects={ctx.projects}
+          availableSections={ctx.availableSettingsSections}
+        />
+      )
+    })
+  );
+
   const modelOverviewRoute = withWorkspaceShell(
     createRoute({
       getParentRoute: () => workspaceRoute,
@@ -336,6 +359,7 @@ export const createSettingsWorkspaceRoutes = <TParentRoute extends AnyRoute>(
     schemaSettingsRoute,
     documentSettingsRoute,
     applicationsCapabilitiesRoute,
+    integrationSyncRoute,
     modelOverviewRoute,
     schemaValidationRoute,
     globalSettingsRoute,

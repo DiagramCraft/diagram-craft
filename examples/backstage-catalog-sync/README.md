@@ -41,6 +41,9 @@ Owner references are also passed through as Backstage strings; Arch Register res
    - `ent.external_update` to sync through the integration endpoint
    - `artifact.manage` to register and refresh API specification sources
 3. Set up a GitHub token when scanning private repositories or when higher rate limits are needed.
+4. In Workspace Settings → Integration sync, configure the source `backstage-github-{organization}` and
+   set its status to **Active**. New sources should remain paused until a workspace administrator has
+   reviewed and approved them.
 
 ## Setup
 
@@ -69,6 +72,7 @@ Run from this directory or use the workspace command from the repository root:
 pnpm start -- --org backstage
 pnpm start -- --org backstage --dry-run
 pnpm start -- --org backstage --verbose
+pnpm start -- --org backstage --run-id previous-run-id
 ```
 
 Use `GITHUB_TOKEN` in `.env` for private repositories. `DRY_RUN=true` is also supported.
@@ -83,6 +87,12 @@ Each entity uses:
 For example, a default-namespace component named `artist-web` uses `default/component/artist-web`. This makes repeated runs update the same Arch Register entity instead of creating duplicates.
 
 Each typed API relation uses the source entity key, relation kind, and target API key, for example `default/component/artist-web/typed-relations/provides-api/default/api/artist-api`.
+
+Before writing records, the example starts an idempotent sync run for the manually configured
+`backstage-github-{organization}` source, scoped to the organization. Entity, API specification, and typed relation
+writes carry that run context. The run is finalized with counts, warnings, failures, and complete/partial coverage.
+Use `--run-id` to resume or safely retry the same external submission; a missing, paused, or otherwise unapproved
+source is rejected before catalog records are written. Dry runs do not create a run.
 
 API specification sources use a provider-scoped key of the form
 `github:{organization}:{repository}:{catalog path}:{external entity key}:spec.definition`.

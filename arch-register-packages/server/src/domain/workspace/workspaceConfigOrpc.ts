@@ -29,6 +29,7 @@ import {
   upsertWorkspaceCapabilityConfiguration,
   deleteWorkspaceCapabilityConfiguration
 } from './workspaceConfigOperations';
+import { configureIntegrationSource } from '../integrationSync/integrationSyncOperations';
 import {
   getEntityDrawerConfiguration,
   getEntityDrawerCatalog,
@@ -124,6 +125,17 @@ export const workspaceConfigORPCRouter = configRouter.router({
             context.event
           );
         }
+      )
+    },
+    integrationSources: {
+      upsert: configRouter.config.integrationSources.upsert.handler(async ({ input, context }) =>
+        configureIntegrationSource(
+          context.db,
+          input.params.workspace,
+          input.params.sourceKey,
+          input.body,
+          context.event
+        )
       )
     },
     entityDrawer: {

@@ -9,6 +9,11 @@ import { syncEntityByExternalKey, getEntityByExternalKey } from './entitySyncOpe
 import { getEntity } from '../catalog/entityQueryOperations';
 import { updateEntityWithPayload } from '../catalog/entityMutationOperations';
 import { parseEntityMutationPayload } from '../catalog/dataHelpers';
+import {
+  recordIntegrationSyncItem,
+  validateIntegrationSyncContext
+} from '../integrationSync/integrationSyncOperations';
+import type { IntegrationSyncContext } from '@arch-register/api-types/integrationSyncContract';
 
 type ORPCContext = {
   db: DatabaseAdapter;
@@ -55,15 +60,34 @@ export const entitySyncORPCRouter = entitySyncRouter.router({
       async ({ input, context }) => {
         const { workspace, authCtx } = context;
         const auditUser = context.event.context.user;
-        return await syncEntityByExternalKey(
+        const { syncContext, ...entityBody } = input.body as typeof input.body & {
+          syncContext: IntegrationSyncContext;
+        };
+        await validateIntegrationSyncContext(context.db, {
+          workspace,
+          sourceKey: input.params.source,
+          runId: syncContext.runId,
+          scopeKey: syncContext.scopeKey
+        });
+        const result = await syncEntityByExternalKey(
           context.db,
           workspace,
           input.params.source,
           input.params.externalKey,
-          input.body,
+          entityBody,
           authCtx,
           { id: auditUser.id, displayName: auditUser.display_name }
         );
+        await recordIntegrationSyncItem(context.db, {
+          workspace,
+          sourceKey: input.params.source,
+          runId: syncContext.runId,
+          scopeKey: syncContext.scopeKey,
+          recordType: 'entity',
+          externalKey: input.params.externalKey,
+          recordId: result.entity._uid
+        });
+        return result;
       }
     )
   }

@@ -1,5 +1,6 @@
 import type { DatabaseAdapter } from '@arch-register/server/db/database';
 import { seedEntities } from '@arch-register/server/db/seedData/entities';
+import { seedIntegrationSyncData as seedSharedIntegrationSyncData } from '@arch-register/server/db/seedData/integrationSync';
 import { seedRelationSchemas, seedRelations } from '@arch-register/server/db/seedData/relations';
 import { seedWorkspaces } from '@arch-register/server/db/seedData/workspace';
 import { seedIds } from '@arch-register/server/db/seedData/constants';
@@ -75,6 +76,10 @@ export async function seedCatalogRelations(db: DatabaseAdapter): Promise<void> {
 
 export async function seedCatalogViews(db: DatabaseAdapter): Promise<void> {
   await seedSharedCatalogViews(db);
+}
+
+export async function seedIntegrationSyncData(db: DatabaseAdapter): Promise<void> {
+  await seedSharedIntegrationSyncData(db);
 }
 
 // For API tests: generate a JWT directly without argon2 cost

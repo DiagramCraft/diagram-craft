@@ -34,17 +34,18 @@
 
         - @id:ar.workspace.applications A workspace is organized into applications, switchable from a switcher in the
           top bar next to the workspace switcher. "Home" is the always-available core register (overview, content,
-          projects, entities, search, my work, and AI); Business Glossary, Strategy & Capability Modelling
-          (@id:ar.strategy), Vendor Management (@id:ar.vendor-management), Risk & Compliance
-          (@id:ar.risk-compliance), Data Stewardship (@id:ar.data-stewardship), and API & Integration Catalog
-          (@id:ar.api-integration-catalog) are separate applications; selecting
+          projects, entities, search, my work, and AI); Business Glossary, Strategy & Capability Modelling (@id:
+          ar.strategy), Vendor Management (@id:ar.vendor-management), Risk & Compliance (@id:ar.risk-compliance), Data
+          Stewardship (@id:ar.data-stewardship), and API & Integration Catalog (@id:ar.api-integration-catalog) are
+          separate applications; selecting
           an application scopes the left icon rail to only that application's sections and re-skins the shell with
           its accent colour. An application may own several
           rail sections, each with its own icon, tooltip, route, and optionally its own primary sidebar. An
           application appears in the switcher only when enabled, which is governed by its backing workspace
           capability configuration (managed from the "Applications & Capabilities" workspace settings screen, which
           pairs each application's schema binding with its access policy in one tabbed view). Workspace administrators
-          can separately control application access for ordinary members with an all-members or selected-people-and-teams policy;
+          can separately control application access for ordinary members with an all-members or
+          selected-people-and-teams policy;
           missing policies deny ordinary members by default while global administrators and workspace role managers
           retain access. Breadcrumbs are relative to the active application, which the switcher represents.
 
@@ -96,9 +97,11 @@
           retention policy through the same "Subject to Retention Policy" relation as any other entity. The bundled
           demo workspace composes this schema and field group from the same templates, with example Data Entities
           showing the full spread of stewardship completeness (fully staffed and partially staffed) and
-          review-date states (approaching and overdue). When Information Governance is composed with any full architecture template, the
+          review-date states (approaching and overdue). When Information Governance is composed with any full
+          architecture template, the
           templates also provide a "Data Flow" relation (a first-class relation between mapped system schemas recording
-          direction, protocol, and the Data Entity/Entities it carries) extended with transfer-specific governance metadata under a
+          direction, protocol, and the Data Entity/Entities it carries) extended with transfer-specific governance
+          metadata under a
           "Data Flow Governance" field group: flow-level classification, multi-valued regulatory tags and processing
           purposes, and single-valued source and destination residency regions, all drawn from the same configurable
           vocabularies as the Data Entity stewardship fields. The Protocol vocabulary is owned by Information
@@ -117,7 +120,7 @@
           bar rather than overlapping the content.
 
         - @id:ar.workspace.home.personal-dashboards Any workspace member can optionally create one or more personal
-          dashboards for themselves, separate from the shared workspace dashboard(s). Personal dashboards are listed
+          dashboards for themselves, separate from the shared workspace dashboard (s). Personal dashboards are listed
           in a "My Dashboards" section of the home sidebar, shown only when the user has at least one, and are
           created via the "New personal dashboard" item in the sidebar's "+" menu. Owners can freely rename or
           delete their own personal dashboards, including deleting the last one, and no workspace capability beyond
@@ -126,7 +129,8 @@
 
         - @id:ar.workspace.templates Administrators can create a workspace from no model, one full architecture
           template, or one full template combined with multiple cross-cutting concerns such as Business Glossary,
-          Security / Threat Model, Risk & Compliance, and Strategy. Each selected template contributes its entity schemas,
+          Security / Threat Model, Risk & Compliance, and Strategy. Each selected template contributes its entity
+          schemas,
           select-option enums, document types and associated templates, saved views scoped to the template's
           schemas, and any authored schema-scoped entity drawer profiles; conflicting later definition names are
           qualified, and concern dashboards are kept separate from
@@ -135,7 +139,8 @@
           selected template. Cross-cutting dependencies are declared explicitly and resolved by an administrator
           during workspace creation; the same mapping flow is used when importing a concern into an existing workspace.
 
-        - @id:ar.workspace.configuration Administrators can configure workspace lifecycle states, assessment types, teams, roles, members,
+        - @id:ar.workspace.configuration Administrators can configure workspace lifecycle states, assessment types,
+          teams, roles, members,
           supported currencies and the workspace's default currency, document types, templates, AI, analytics, audit,
           and other workspace settings.
 
@@ -161,69 +166,74 @@
               content slots. Missing or unsupported references fall back safely to the derived default drawer.
 
             - @id:ar.workspace.configuration.schemas Administrators can define entity schemas, fields, select options,
-            and reusable workspace enums. Enum options have stable values, editable labels and descriptions, an
-            optional restricted/sensitive marker, ordering, and a retired state that preserves historical values while
-            keeping them out of new record edits. Removing an unused option deletes it; an option still in use is
-            automatically retained as retired. Enum names and field references provide context without a hard-coded
-            enum category set.
-            reusable shared fieldgroups, relationships, and schema-specific behavior, including currency fields and
-            ordered multi-valued scalar fields (text, long text, boolean, date, number, currency, and select) with
-            minimum/maximum cardinality,
-            date fields that can generate schema-field-scoped approaching and overdue governance reminders,
-            which can be routed to a user/team field on the record (e.g. its steward), a specific user or team,
-            or the owning team, escalated when overdue, and configured to advance the date field by a fixed
-            interval each time the reminder is acknowledged so the review recurs; the bundled Data Entity
-            review date is enabled this way out of the box,
-            the built-in Vendor/Contract model where Contract records contain exactly one Vendor,
-            read-only derived fields calculated using a sandboxed expression over sibling fields and a bounded
-            one-hop JSON context — on entity schemas the `entity` root (direct references, containment, and
-            typed-relation targets); on relation schemas the `relation` root (the relation's own fields, its
-            `_in`/`_out` endpoint entities, and `entityRelation` targets) — with a
-            declared text, number, currency, select, boolean, or rating result type;
-            derived expressions can read `<root>.now` (the current date) and use `daysBetween`, and a
-            time-dependent derived field can declare an hourly or daily recalculation cadence so a recurring
-            scan job keeps its value current as the calendar advances without any record edit,
-            configure workspace-scoped integration capabilities from a dedicated integration catalog, with each capability
-            binding semantic roles to entity schemas or typed relation schemas (document-type-targeted roles are
-            reserved for future use) and declaring its available features and required fields; schema-level Bonsai validation rules with blocking errors or non-blocking warnings, field-specific messages,
-            activation/deactivation, revision through schema versioning, and preview testing against existing entities;
-            relation types use the same Bonsai rule model over a depth-1 relation context (`relation`, including its
-            typed fields and `in`/`out` endpoint projections),
-            and externally managed fields (by AI, an integration, or an internal automation) with a refresh mode of
-            on-change or scheduled. Derived values are materialized and synchronously recalculated for affected
-            entities and relations when inputs, relations, or definitions change (a relation's derived
-            values also re-materialize when a connected or carried entity's fields change), and are excluded
-            from required-field completeness. Fields can be organized into named, presentation-only groups (with an
-            optional description) that render as labeled sections wherever fields appear as a form or list; this has no
-            effect on validation, required-ness, or completeness. A group — a schema-local group, or a schema's
-            inclusion of a reusable shared fieldgroup — can optionally be assigned one or more teams to scope its
-            access: a team's reviewer role (or above) grants view, and editor role (or above) grants edit.
-            A schema's "Layout" admin tab lets administrators optionally customize the tab/panel/block composition
-            of the entity Details/Edit screen: fields, field groups, fixed metadata (name, slug, description, owner,
-            lifecycle, target lifecycle, tags, public ID, namespace), the external links block, and individually
-            placeable unbound typed-relation sections can each be arranged into named panels (optionally linked to a
-            field group, inheriting its access control) across one or more tabs. A schema without a saved layout
-            renders the previous default composition (ungrouped fields, then one section per field group, metadata,
-            links, then unbound relations) unchanged; the same layout drives both the Details and Edit screens. Field
-            or field-group renames/removals resolved via schema field migrations are applied to the saved layout
-            automatically, dropping stale placements without prompting.
-            Administrators can similarly define relation types (name, description, "in"/"out" endpoint constraints
-            naming the allowed entity schemas at each end, fields, groups, and field-group access control) from a
-            dedicated relation-types admin screen alongside entity types, enums, and shared fieldgroups; relation
-            types support the same field-group access control, shared-fieldgroup inclusion, field migrations,
-            version history, and externally managed fields (by AI, an integration, or an internal automation) with a
-            refresh mode of on-change or scheduled, as entity schemas, plus text, long text, boolean, date,
-            number, currency, select, entity-relation, and derived field types (no containment fields, and no templates or
-            approval/deprecation policy).
-            The model overview visualizes entity schemas and typed relation schemas as graph nodes, showing generic
-            references, relation endpoints, and relation-owned entity links; relation nodes and typed edges link to
-            their definitions. Categories are a managed, workspace-scoped list (not free text): administrators add a
-            category from the schema settings sidebar's "+" menu, and rename or delete one via a context menu on its
-            sidebar header — delete is only available once the category has no entity types, relation types, enums,
-            or shared fieldgroups assigned to it. Each of those four kinds is assigned an optional category from a
-            dropdown when edited. The schema settings sidebar groups every tab's list (entity types, relation types,
-            enums, and shared fieldgroups) by category, with uncategorized items shown in a final Uncategorized group
-            that is not itself an editable category.
+              and reusable workspace enums. Enum options have stable values, editable labels and descriptions, an
+              optional restricted/sensitive marker, ordering, and a retired state that preserves historical values while
+              keeping them out of new record edits. Removing an unused option deletes it; an option still in use is
+              automatically retained as retired. Enum names and field references provide context without a hard-coded
+              enum category set.
+              reusable shared fieldgroups, relationships, and schema-specific behavior, including currency fields and
+              ordered multi-valued scalar fields (text, long text, boolean, date, number, currency, and select) with
+              minimum/maximum cardinality,
+              date fields that can generate schema-field-scoped approaching and overdue governance reminders,
+              which can be routed to a user/team field on the record (e.g. its steward), a specific user or team,
+              or the owning team, escalated when overdue, and configured to advance the date field by a fixed
+              interval each time the reminder is acknowledged so the review recurs; the bundled Data Entity
+              review date is enabled this way out of the box,
+              the built-in Vendor/Contract model where Contract records contain exactly one Vendor,
+              read-only derived fields calculated using a sandboxed expression over sibling fields and a bounded
+              one-hop JSON context — on entity schemas the `entity` root (direct references, containment, and
+              typed-relation targets); on relation schemas the `relation` root (the relation's own fields, its
+              `_in`/`_out` endpoint entities, and `entityRelation` targets) — with a
+              declared text, number, currency, select, boolean, or rating result type;
+              derived expressions can read `<root>.now` (the current date) and use `daysBetween`, and a
+              time-dependent derived field can declare an hourly or daily recalculation cadence so a recurring
+              scan job keeps its value current as the calendar advances without any record edit,
+              configure workspace-scoped integration capabilities from a dedicated integration catalog, with each
+              capability
+              binding semantic roles to entity schemas or typed relation schemas (document-type-targeted roles are
+              reserved for future use) and declaring its available features and required fields; schema-level Bonsai
+              validation rules with blocking errors or non-blocking warnings, field-specific messages,
+              activation/deactivation, revision through schema versioning, and preview testing against existing
+              entities;
+              relation types use the same Bonsai rule model over a depth-1 relation context (`relation`, including its
+              typed fields and `in`/`out` endpoint projections),
+              and externally managed fields (by AI, an integration, or an internal automation) with a refresh mode of
+              on-change or scheduled. Derived values are materialized and synchronously recalculated for affected
+              entities and relations when inputs, relations, or definitions change (a relation's derived
+              values also re-materialize when a connected or carried entity's fields change), and are excluded
+              from required-field completeness. Fields can be organized into named, presentation-only groups (with an
+              optional description) that render as labeled sections wherever fields appear as a form or list; this has
+              no
+              effect on validation, required-ness, or completeness. A group — a schema-local group, or a schema's
+              inclusion of a reusable shared fieldgroup — can optionally be assigned one or more teams to scope its
+              access: a team's reviewer role (or above) grants view, and editor role (or above) grants edit.
+              A schema's "Layout" admin tab lets administrators optionally customize the tab/panel/block composition
+              of the entity Details/Edit screen: fields, field groups, fixed metadata (name, slug, description, owner,
+              lifecycle, target lifecycle, tags, public ID, namespace), the external links block, and individually
+              placeable unbound typed-relation sections can each be arranged into named panels (optionally linked to a
+              field group, inheriting its access control) across one or more tabs. A schema without a saved layout
+              renders the previous default composition (ungrouped fields, then one section per field group, metadata,
+              links, then unbound relations) unchanged; the same layout drives both the Details and Edit screens. Field
+              or field-group renames/removals resolved via schema field migrations are applied to the saved layout
+              automatically, dropping stale placements without prompting.
+              Administrators can similarly define relation types (name, description, "in"/"out" endpoint constraints
+              naming the allowed entity schemas at each end, fields, groups, and field-group access control) from a
+              dedicated relation-types admin screen alongside entity types, enums, and shared fieldgroups; relation
+              types support the same field-group access control, shared-fieldgroup inclusion, field migrations,
+              version history, and externally managed fields (by AI, an integration, or an internal automation) with a
+              refresh mode of on-change or scheduled, as entity schemas, plus text, long text, boolean, date,
+              number, currency, select, entity-relation, and derived field types (no containment fields, and no
+              templates or
+              approval/deprecation policy).
+              The model overview visualizes entity schemas and typed relation schemas as graph nodes, showing generic
+              references, relation endpoints, and relation-owned entity links; relation nodes and typed edges link to
+              their definitions. Categories are a managed, workspace-scoped list (not free text): administrators add a
+              category from the schema settings sidebar's "+" menu, and rename or delete one via a context menu on its
+              sidebar header — delete is only available once the category has no entity types, relation types, enums,
+              or shared fieldgroups assigned to it. Each of those four kinds is assigned an optional category from a
+              dropdown when edited. The schema settings sidebar groups every tab's list (entity types, relation types,
+              enums, and shared fieldgroups) by category, with uncategorized items shown in a final Uncategorized group
+              that is not itself an editable category.
 
             - @id:ar.workspace.configuration.document-types Administrators can define document types, templates, fields,
               versions, validation rules, and AI actions for structured content, including marking a field as externally
@@ -237,8 +247,8 @@
         - @id:ar.workspace.analytics Administrators can inspect workspace-wide analytics and completeness-oriented
           views.
 
-    - @id:ar.strategy Workspaces can optionally enable Strategy & Capability Modelling
-      (@id:ar.entities.strategy-model) as its own workspace application, with a dedicated left rail. The application
+    - @id:ar.strategy Workspaces can optionally enable Strategy & Capability Modelling (@id:ar.entities.strategy-model)
+      as its own workspace application, with a dedicated left rail. The application
       is enabled only once the workspace's `strategy-model` capability configuration is
       valid (all five Business Capability, Objective, Outcome, Initiative, and Measure schema bindings resolved);
       until then, or while a section's own capability lookup is still loading, each section shows a
@@ -265,8 +275,8 @@
           falls back to a built-in default that mirrors the seed schema fields.
 
         - @id:ar.strategy.overview The Overview section is the application's landing screen — where the app switcher
-          opens. It shows read-only summary tiles chosen by the workspace's view configuration
-          (@id:ar.strategy.view-config), derived from the same entity and relation data as the other sections:
+          opens. It shows read-only summary tiles chosen by the workspace's view configuration (@id:
+          ar.strategy.view-config), derived from the same entity and relation data as the other sections:
           capability count by level, objective count by a select field, application coverage (share of capabilities
           with at least one supporting application), an orphan-capability count (capabilities no objective supports),
           and top-N lists of the largest values of a capability field or roll-up. Each tile links into the section
@@ -367,13 +377,13 @@
           the contract's vendor drawer, and Systems used), deep-linkable at
           `vendor-management/contracts/$contractId`, mirroring the Vendors section's own drawer.
 
-        - @id:ar.vendor-management.spend The Spend section is a portfolio-wide spend roll-up: four header stats
-          (total annualised spend, fixed-term commitment not auto-renewing, the Strategic tier's share of spend,
+        - @id:ar.vendor-management.spend The Spend section is a portfolio-wide spend roll-up: four header stats (total
+          annualised spend, fixed-term commitment not auto-renewing, the Strategic tier's share of spend,
           and the number of cost centres charged), a toolbar toggle grouping the roll-up by vendor, by the Vendor
           schema's Cost Centre field, or by capability, a portfolio-wide share-of-spend strip, and a roll-up table
           (share bar, spend, % of total, contract count, largest contract) sorted by spend descending. A sidebar
-          of Cost Centre (each row showing that centre's own spend) and Owner facets narrows the roll-up rows
-          (the header stats stay portfolio-wide). Selecting a vendor row or share-strip segment (not available
+          of Cost Centre (each row showing that centre's own spend) and Owner facets narrows the roll-up rows (the
+          header stats stay portfolio-wide). Selecting a vendor row or share-strip segment (not available
           when grouped by cost centre) opens the shared vendor drawer in place, deep-linkable at
           `vendor-management/spend/$vendorId`. Grouping by capability shows an explanatory empty state instead of
           data — no Contract-to-capability link exists yet.
@@ -385,8 +395,8 @@
           is a weighted average of a vendor's security/concentration/financial/compliance risk fields (weights 0.34 /
           0.28 / 0.22 / 0.16) on their native 1-5 scale, linearly lifted by criticality (±6% per point off a
           criticality of 3), clamped to [1, 5], and banded Low (< 2.0) / Moderate (< 2.7) / Elevated (< 3.4) / High.
-          The matrix (criticality 5 down to 2 × the four bands) lists each cell's vendors as clickable name tags
-          (not a count) that open the shared vendor drawer directly — it isn't itself a filter control. The risk
+          The matrix (criticality 5 down to 2 × the four bands) lists each cell's vendors as clickable name tags (not a
+          count) that open the shared vendor drawer directly — it isn't itself a filter control. The risk
           register (Vendor, Sec, Conc, Fin, Comp, Score) is sorted by score descending and filterable only by the
           sidebar's Band facet. A technology end-of-life exposure table cross-references the Systems a vendor's
           Contracts serve against those Systems' linked Technology Release records (Technology, Radar ring, Vendor,
@@ -478,8 +488,8 @@
           date" per assignment could only ever say "how long this policy has nominally applied to this category" —
           labelling a category "Overdue" implied per-record actionability the data can't support. What remains
           reports what the data actually says as plain, uncoloured facts: each row is a governed entity, its
-          policy, the policy's Period
-          (duration + time unit, read via the capability's `policy`/`assignment` semantic field-role mappings — a
+          policy, the policy's Period (duration + time unit, read via the capability's `policy`/`assignment` semantic
+          field-role mappings — a
           workspace may map "duration" to any `number` field on its Policy schema, not only one literally named
           `duration`), and the assignment's Activated-from date. A "Complete" column (and matching sidebar
           "Incomplete" facet) flags assignments missing a policy, duration, time unit, or activation date — a
@@ -505,8 +515,8 @@
       with a dedicated left rail scoped to five sections (My work, Stewardship, Classification, Change cases &
       exceptions, Assessments) — unlike Strategy & Capability Modelling / Vendor Management / Risk & Compliance,
       there is no separate Overview section; My work is both the first rail section and the application's landing
-      screen. The application is enabled once the workspace's `data-stewardship` capability configuration is valid
-      (the required Data Entity schema binding resolved — the same information-asset entities Risk & Compliance's
+      screen. The application is enabled once the workspace's `data-stewardship` capability configuration is valid (the
+      required Data Entity schema binding resolved — the same information-asset entities Risk & Compliance's
       own optional `dataEntity` binding references). The Change cases & exceptions section reuses the existing
       `entity.change-case` governance-case kind directly rather than a bound schema — Change Case is a built-in
       governance-case type, not a workspace-defined entity schema, so the capability has only the one binding role.
@@ -549,8 +559,8 @@
 
         - @id:ar.data-stewardship.stewardship The Stewardship section has a four-tile stat strip (fully covered %,
           missing an owner, reviews overdue, missing a steward), a "Gaps to close" panel (every dataset with a
-          coverage gap, each gap shown as a chip, opening the shared dataset drawer), and the full dataset table
-          (search across name/owner/steward; sort by gap count, next review date, or name; columns for Dataset,
+          coverage gap, each gap shown as a chip, opening the shared dataset drawer), and the full dataset table (search
+          across name/owner/steward; sort by gap count, next review date, or name; columns for Dataset,
           Business owner, Steward, Classification, Next review, and Gaps). The sidebar swaps its plain section nav
           for this section's own facets: an all-datasets/with-a-gap toggle and a Classification facet (counts only —
           unlike `ar.risk-compliance.risks`'s sidebar, it doesn't also list every dataset individually; the dataset
@@ -629,8 +639,8 @@
           `ar.risk-compliance.assessments`'s own one-row-per-assessment register. A four-tile stat strip (Overdue, In
           progress, Not started, Complete) sits above a searchable table (Assessment — name plus its `description` as
           a subtitle, Kind, Project, a progress bar, Questions, Due, Status); the design reference's "Dataset",
-          "Owner", and "Findings" columns have no analog once a row is a whole assessment rather than one dataset
-          (the same "Kind/Owner/Findings/Opened" gap `ar.risk-compliance`'s own Assessments screen already
+          "Owner", and "Findings" columns have no analog once a row is a whole assessment rather than one dataset (the
+          same "Kind/Owner/Findings/Opened" gap `ar.risk-compliance`'s own Assessments screen already
           documents), so they're dropped — replaced with a Project column resolving `assessment.project_id` — rather
           than invented, with "Not started" promoted to its own stat-strip tile in "Findings"'s place so the strip
           stays a genuine 4-way partition. Kind is the assessment's workspace-managed assessment-type name (falling
@@ -641,27 +651,28 @@
           status facet lives in this section's own primary sidebar (all/Overdue/In progress/Not started/Complete,
           mirroring the stat strip's own buckets) rather than an in-page toggle, the same facet-sidebar shape
           `ar.data-stewardship.stewardship`/`ar.data-stewardship.classification` use; only free-text search (name,
-          kind, project) stays in the screen's own toolbar. The per-(assessment, dataset) join from the earlier
+          kind, project) stays in the screen's own toolbar. The per- (assessment, dataset) join from the earlier
           version still exists internally and backs the shared dataset drawer's own Assessments section (that
           dataset's status on that assessment, listed alongside its attributes/stewardship/coverage/cases). A header
           action links out to the My work section for sign-offs due, mirroring the design
           reference.
 
     - @id:ar.api-integration-catalog Workspaces can optionally enable API & Integration Catalog as its own workspace
-      application, with a dedicated left rail scoped to five sections (Overview, APIs, Integrations, Sync, Impact).
+      application, with a dedicated left rail scoped to four sections (Overview, APIs, Integrations, Impact).
       Unlike Data Stewardship, Overview is a separate landing section rather than doubling with the first facet
       section. The application is enabled once the workspace's existing `api-specification` capability configuration
       (@id:ar.integrations.api-specification-sync) is valid (the required API entity schema binding resolved) — this
       promotes `api-specification` from a capability-only binding (configurable in workspace settings but with no
       rail of its own) to a full application; it remains the same capability the Entities app's API artifact detail
       views already read. Overview, Sync, and Impact remain scaffolded placeholders pending their own sub-issues of
-      the API & Integration Catalog epic; APIs and Integrations have their real content (below).
+      the API & Integration Catalog epic; APIs and Integrations have their real content (below). Integration sync
+      operations are available under Workspace Settings rather than in this catalog browsing application.
 
         - @id:ar.api-integration-catalog.overview The Overview section (the app switcher's landing section) is
           scaffolded as a placeholder pending its own APIs/integrations/health catalog-landing content.
 
-        - @id:ar.api-integration-catalog.apis The APIs section lists every entity of the workspace's `api` schema
-          (@id:ar.integrations.api-specification-sync) — name, protocol(s), declared API version, lifecycle, and
+        - @id:ar.api-integration-catalog.apis The APIs section lists every entity of the workspace's `api` schema (@id:
+          ar.integrations.api-specification-sync) — name, protocol (s), declared API version, lifecycle, and
           owner — searchable by name and sortable by name or normalized operations/messages count (read from the
           entity's primary `api-specification` artifact's current revision, the same normalized-catalog projection
           the Entities app's API artifact detail view reads; there is no telemetry column, matching the epic's
@@ -699,8 +710,18 @@
           for a pair and without the governance fields (classification, carried data, boundary) that only exist on
           Data Flow relations.
 
-        - @id:ar.api-integration-catalog.sync The Sync section is scaffolded as a placeholder pending its own
-          ingestion/sync status, failures, and revisions content (blocked on the integration sync control center).
+        - @id:ar.workspace-settings.integration-sync Workspace administrators can open Integration sync from the
+          Workspace Settings Administration group. It is an operational control center for manually configured and
+          workspace-approved integration sources and their idempotent runs. Administrators can configure source
+          identity, ownership, type, and status; integrations cannot self-register sources. Paused (and any
+          future unapproved) sources are rejected before catalog writes. It shows source ownership/type/status, last
+          successful completion,
+          complete versus partial coverage, changed and failed counts, safe warnings/failures, and externally managed
+          entities, relations, and API artifacts. Complete scans can identify missing records; partial scans never do
+          so. Stale, orphaned, and repeatedly failing records remain visible for permissioned retry. Orphaned
+          entities and relations can be explicitly relinked through type-specific pickers, or an administrator can
+          confirm stopping management, which removes integration tracking without deleting the catalog record; all
+          reconciliation actions are audited and there is no automatic deletion.
 
         - @id:ar.api-integration-catalog.impact The Impact section is scaffolded as a placeholder pending its own
           dependency/blast-radius map content (blocked on catalog impact analysis).
@@ -732,7 +753,8 @@
           relation targets.
 
         - @id:ar.entities.artifacts Workspace administrators can bind typed, functionality-driving artifacts such as API
-          specifications or compliance evidence to workspace model objects. Authorized users can upload document-based API specifications from
+          specifications or compliance evidence to workspace model objects. Authorized users can upload document-based
+          API specifications from
           entity details, register link-only or HTTPS URL sources, manually refresh URL sources, retain immutable
           revisions, inspect asynchronous processing status and safe diagnostics, and retrieve raw content through a
           separate permission. Capability metadata, supported features, and required fields are owned by the integration
@@ -764,16 +786,16 @@
 
         - @id:ar.entities.strategy-model Workspaces can optionally enable a strategy model — nested Business
           Capability, Objective, Outcome, Initiative, and Measure entity schemas — bound to the workspace via a
-          `strategy-model` capability, surfaced as its own application (@id:ar.strategy) so other features
-          (traceability views, roll-ups) can discover it. The Objective Supports Business Capability relation
+          `strategy-model` capability, surfaced as its own application (@id:ar.strategy) so other features (traceability
+          views, roll-ups) can discover it. The Objective Supports Business Capability relation
           connects objectives to the nested capability hierarchy, while Business Capability Supports Entity connects
           capabilities to systems and other architecture entities; Objective Affects Entity remains a wildcard
           relation for architecture impact links. Relation endpoint constraints are authoritative and typed-relation
           fields provide projections on capability and objective schemas, so the hierarchy and strategic links can
           be browsed, edited, and queried. Business Capabilities also carry explicit maturity, maturity target,
           annual investment, and 1–5 risk ratings, plus a derived maturity gap (target minus maturity). They
-          additionally carry enterprise-architecture attributes for capability-based planning — capability type
-          (core / supporting / generic), value stream, stakeholders, business criticality (1–5), health (RAG),
+          additionally carry enterprise-architecture attributes for capability-based planning — capability type (core /
+          supporting / generic), value stream, stakeholders, business criticality (1–5), health (RAG),
           strategic importance, investment priority (TIME), target state, last-assessed date, and an external
           reference-model mapping (APQC PCF / BIAN / TM Forum eTOM) with a reference code — organised into
           presentation field groups (Maturity & Performance, Strategic Assessment, Investment & Risk, Lifecycle
@@ -808,7 +830,8 @@
           permission surfaces as other typed relations. Endpoint labels are contextual to the entity at each side,
           so inverse relation views remain understandable without relying on the relation schema name.
           The built-in Risk & Compliance template provides a `Risk Affects` relation from each Risk to any entity
-          schema, including Business Capabilities, with an inline `Affects` field on Risk, and a matching `Control Protection` relation from each
+          schema, including Business Capabilities, with an inline `Affects` field on Risk, and a matching
+          `Control Protection` relation from each
           Control to any entity schema, with an inline `Protects` field on Control; the bundled demo composes that
           template and seeds example relations. Together these let an information asset (Data Entity) be traced to
           the Risks that affect it and the Controls that protect it — and back — reusing the same typed-relation
@@ -1065,8 +1088,8 @@
           browser views provide a progressive filter builder popover (available alongside the multi-select sidebar
           facets in both modes) plus a Simple/Advanced toggle that switches the adjacent input between a plain
           free-text search box and a single text query parsed against the entity query language. The filter builder
-          opens as a flat list of conditions and grows in place into Any/All groups, negation, and relation traversal
-          (a per-condition hop chain that ends either on a field of the related record or on a bare "the related record
+          opens as a flat list of conditions and grows in place into Any/All groups, negation, and relation traversal (a
+          per-condition hop chain that ends either on a field of the related record or on a bare "the related record
           exists" check, with an optional per-hop same-instance "where" filter for the record that hop lands on), and
           a Columns section for traversed projection values (a hop chain plus a terminal field or a whole-path
           capture, with an optional column name; each becomes selectable as a table column under Manage fields),
@@ -1075,12 +1098,14 @@
           segment's `[...]` scope — `technology_releases[eol_date < date("2026-06-30") columns eol_date as "TR EOL"]`,
           or a capture-only bracket for an unfiltered traversal — covering entity- and relation-rooted queries,
           `relationForward` hops, and whole-path (`path`, `includePath` in the IR) captures; each column binds to
-          that scope's match witness. an empty group is treated as no filter rather than matching nothing, and a blank free-text row as no
+          that scope's match witness. an empty group is treated as no filter rather than matching nothing, and a blank
+          free-text row as no
           filter rather than an error. A free-text clause is normally the dedicated search box, but a "Free text"
           entry in any condition row's field dropdown places one inside the boolean tree for the "text OR a field
           predicate" case the search box (always root-level AND) cannot express. A query that uses relation-rooted
           traversal, a relation-instance projection, or a same-instance scoped filter inside a projection opens with
-          the Advanced text field shown until the corresponding visual editors are available. A field in a schema group the user cannot view is offered nowhere as a
+          the Advanced text field shown until the corresponding visual editors are available. A field in a schema group
+          the user cannot view is offered nowhere as a
           filter/sort option and is treated as unrecognized if referenced directly in an Advanced-mode query,
           matching how the field is hidden elsewhere. The builder shows an always-visible, copyable pretty-printed
           query preview, and the Advanced editor supports multiline text, formatting without applying the draft, and
@@ -1111,10 +1136,12 @@
         - @id:ar.projects.dashboard The project home screen shows a composable dashboard of widgets scoped to that
           project, built from the same widget catalog as the workspace dashboard (stat metrics, saved-view embeds,
           entity tables, entity cards, entity graphs, entity changelogs, document browsers, entity browsers, diagram
-          previews, project wiki-page embeds, configurable Markdown content, assessments, and upcoming milestones — plus a
+          previews, project wiki-page embeds, configurable Markdown content, assessments, and upcoming milestones — plus
+          a
           project-relevant subset of the general catalog; workspace-wide analytics widgets such as lifecycle and
           activity-trend charts, stale-entity reports, and the activity feed are not available at project scope). The
-          assessments widget lists up to four assessments filtered by mode and optional assessment type; the upcoming-milestones widget
+          assessments widget lists up to four assessments filtered by mode and optional assessment type; the
+          upcoming-milestones widget
           shows the most recently completed milestone plus up to three upcoming ones. A project has a single
           dashboard (no personal or multiple project dashboards); a fresh project shows a sensible default layout.
           Project editors can enter edit mode to add, remove, resize, and reposition widgets and save the layout;
@@ -1174,7 +1201,8 @@
           when defining a condition, and existing inaccessible conditions are hidden and fail closed for that caller.
           Enum fields can reference reusable workspace enums or define assessment-local option values.
           Rating fields use a 1-5 scale by default but a template or definition can widen it up to 1-10. Read-only
-          derived fields can calculate typed values from sibling responses through the `assessment` JSON root and are excluded from response
+          derived fields can calculate typed values from sibling responses through the `assessment` JSON root and are
+          excluded from response
           completeness and status. Fields can be organized into named, presentation-only groups (with an optional
           description) that render as labeled sections in the assessment editor and the per-entity assessment
           accordion; this is purely visual and does not affect the assessment grid/results view, where fields remain
@@ -1285,14 +1313,14 @@
               Reminders respect each user's notification delivery preferences and are not re-sent once a given
               reminder has already fired for a case. The inbox highlights an overdue deadline.
 
-              - @id:ar.collaboration.governance-inbox.scheduled-reminders.workspace-config Workspace administrators
-                can configure all supported governance workflows from the central Workflows settings screen. Each
-                saved configuration can enable or disable reminders and define the approaching/overdue cadence for a
-                workspace-wide or supported case-subkind scope. Each configuration has an administrator-defined short
-                name and optional description, which are shown in the configuration list.
+                - @id:ar.collaboration.governance-inbox.scheduled-reminders.workspace-config Workspace administrators
+                  can configure all supported governance workflows from the central Workflows settings screen. Each
+                  saved configuration can enable or disable reminders and define the approaching/overdue cadence for a
+                  workspace-wide or supported case-subkind scope. Each configuration has an administrator-defined short
+                  name and optional description, which are shown in the configuration list.
 
-            - @id:ar.collaboration.governance-inbox.escalation For governance case kinds that support escalation
-              (entity changes, entity deprecations, and document status approvals), a case left open past a
+            - @id:ar.collaboration.governance-inbox.escalation For governance case kinds that support escalation (entity
+              changes, entity deprecations, and document status approvals), a case left open past a
               configured number of days overdue is automatically escalated once. Each case kind resolves its own
               configured strategy first, then notifies all valid fallback users and teams; workspace administrators are
               the final fallback. Escalation is recorded in the case's activity history with the resolved targets, and
@@ -1312,7 +1340,8 @@
           approval bypass. This covers both a single entity's propose-a-change flow and a bulk-edit-originated
           proposal bundling several entities into one case, the latter routed through governance without a resubmit
           path. Approvals use the entity-owner-admin strategy, configurable quorum, fallback users/teams, and the
-          workspace-admin final fallback. Field values from access-restricted field groups are scrubbed from a proposal's base/proposed state
+          workspace-admin final fallback. Field values from access-restricted field groups are scrubbed from a
+          proposal's base/proposed state
           and diffs for viewers without view access to that group, mirroring the redaction applied when viewing the
           entity directly.
 
@@ -1375,20 +1404,26 @@
       and out of Arch Register.
 
         - @id:ar.import-export.workspace-export Authorized users can export selected or complete workspace data,
-          including supported content, workspace capability configuration, typed relation schemas, and typed relation instances. Exported
+          including supported content, workspace capability configuration, typed relation schemas, and typed relation
+          instances. Exported
           entity and relation data is scrubbed of access-restricted field groups per exporting user, mirroring the
           redaction applied when viewing those records directly. Filtered exports omit relations whose endpoint
           entities are not included, report safe diagnostics when field values are omitted, and record those
           omissions in archive diagnostics.
 
         - @id:ar.import-export.workspace-import Authorized users can validate, preview, and execute supported workspace
-          imports. Entity and relation schema groups, field-group access controls, reusable shared fieldgroups, workspace
-          capability bindings, their links, and schema-scoped entity drawer profiles are preserved with remapped references; relation endpoints follow remapped entity IDs; imports
-          preserve destination custom drawer profiles, report stale drawer references as non-fatal diagnostics, reject restricted values the importing caller cannot edit, redact restricted values from conflict previews, and report missing
+          imports. Entity and relation schema groups, field-group access controls, reusable shared fieldgroups,
+          workspace
+          capability bindings, their links, and schema-scoped entity drawer profiles are preserved with remapped
+          references; relation endpoints follow remapped entity IDs; imports
+          preserve destination custom drawer profiles, report stale drawer references as non-fatal diagnostics, reject
+          restricted values the importing caller cannot edit, redact restricted values from conflict previews, and
+          report missing
           relation dependencies.
 
         - @id:ar.import-export.workspace-replication Workspace copies preserve schema field groups, shared fieldgroup
-          links, field-group access-control semantics, workspace capability bindings, and schema-scoped entity drawer profiles while remapping
+          links, field-group access-control semantics, workspace capability bindings, and schema-scoped entity drawer
+          profiles while remapping
           workspace-local identifiers.
 
         - @id:ar.import-export.definition-import Workspace administrators can preview and atomically import selected
@@ -1475,14 +1510,19 @@
           automation rules that match entity or typed-relation triggers (creation, deletion, or a field change; entity
           rules also support lifecycle transitions) and an optional set of field conditions, then run one or more
           configured actions — recording an audit note, sending an in-app notification, or setting a field value on the
-          triggering subject. Conditions support equality, emptiness, and (for number, currency, and rating/derived-number
-          fields) numeric comparison operators (greater than, greater than or equal, less than, less than or equal). Field
+          triggering subject. Conditions support equality, emptiness, and (for number, currency, and
+          rating/derived-number
+          fields) numeric comparison operators (greater than, greater than or equal, less than, less than or equal).
+          Field
           conditions and
           field-targeting actions respect the rule author's current field-group access, and field references must remain
-          available in the applicable entity or relation schema. Rules are matched synchronously on every entity mutation
+          available in the applicable entity or relation schema. Rules are matched synchronously on every entity
+          mutation
           and rechecked before asynchronous actions execute, so access revocation, field reassignment, or removed fields
-          cannot leave an existing rule with restricted or stale access. Rule definitions redact stored literals associated
-          with restricted or unavailable field references for callers without field-group view access, while retaining field
+          cannot leave an existing rule with restricted or stale access. Rule definitions redact stored literals
+          associated
+          with restricted or unavailable field references for callers without field-group view access, while retaining
+          field
           identifiers.
           Administrators can inspect recent rule runs, including failures, from workspace settings.
 

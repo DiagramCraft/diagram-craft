@@ -1,4 +1,4 @@
-import { TbLayoutDashboard, TbApi, TbPlugConnected, TbRefresh, TbAffiliate } from 'react-icons/tb';
+import { TbLayoutDashboard, TbApi, TbPlugConnected, TbAffiliate } from 'react-icons/tb';
 import { buildHomeBreadcrumbs } from '../../shell/breadcrumbBuilders';
 import type { WorkspaceShellContext } from '../../layouts/workspaceShellDescriptors';
 import type { AppDefinition, BreadcrumbItem } from '../../shell/shellTypes';
@@ -7,7 +7,6 @@ import {
   IC_OVERVIEW_ID,
   IC_APIS_ID,
   IC_INTEGRATIONS_ID,
-  IC_SYNC_ID,
   IC_IMPACT_ID,
   IC_RAIL_PATHS,
   IC_SECTION_LABELS,
@@ -31,7 +30,7 @@ export const apiIntegrationCatalogAppDefinition: AppDefinition = {
   name: 'API & Integration Catalog',
   shortCode: 'IC',
   tint: 'oklch(0.6 0.15 250)',
-  description: 'API specifications, operations, integration relations, and sync status.',
+  description: 'API specifications, operations, and integration relations.',
   sections: [
     {
       // No `primarySidebar`: the Overview is a self-contained dashboard and the app's sections are
@@ -63,18 +62,6 @@ export const apiIntegrationCatalogAppDefinition: AppDefinition = {
         <ApiIntegrationCatalogSidebar
           workspaceSlug={ctx.workspaceSlug}
           activeSection={IC_INTEGRATIONS_ID}
-        />
-      )
-    },
-    {
-      id: IC_SYNC_ID,
-      icon: TbRefresh,
-      tooltip: 'Sync',
-      route: IC_RAIL_PATHS[IC_SYNC_ID],
-      primarySidebar: ctx => (
-        <ApiIntegrationCatalogSidebar
-          workspaceSlug={ctx.workspaceSlug}
-          activeSection={IC_SYNC_ID}
         />
       )
     },

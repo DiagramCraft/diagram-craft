@@ -1,8 +1,12 @@
 import assert from 'node:assert/strict';
 import { afterEach, describe, it } from 'node:test';
-import { discoverRelationSchemas, syncRelation } from './archRegister.js';
+import { discoverRelationSchemas, syncRelation, type SyncContext } from './archRegister.js';
 
 const originalFetch = globalThis.fetch;
+const syncContext: SyncContext = {
+  runId: '00000000-0000-0000-0000-000000000001',
+  scopeKey: 'default'
+};
 
 afterEach(() => {
   globalThis.fetch = originalFetch;
@@ -54,7 +58,8 @@ describe('Arch Register typed relation integration', () => {
         outEntityId: 'api-1'
       },
       'token',
-      'https://ar.example'
+      'https://ar.example',
+      syncContext
     );
 
     assert.equal(result.status, 'unchanged');
@@ -66,7 +71,8 @@ describe('Arch Register typed relation integration', () => {
     assert.deepEqual(requestBody, {
       _schemaId: 'provider-schema',
       _inEntityId: 'component-1',
-      _outEntityId: 'api-1'
+      _outEntityId: 'api-1',
+      syncContext
     });
   });
 });

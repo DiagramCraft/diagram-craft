@@ -5,6 +5,7 @@ import {
   relationCreateBodySchema,
   relationRecordSchema
 } from '@arch-register/api-types/relationContract';
+import { integrationSyncContextSchema } from './integrationSyncContract';
 
 export const relationSyncStatusSchema = z.enum(['created', 'updated', 'unchanged']);
 
@@ -51,7 +52,9 @@ export const relationSyncContract = oc.tag('Integrations').router({
             source: z.string().min(1).max(200),
             externalKey: z.string().min(1).max(500)
           }),
-          body: relationCreateBodySchema
+          body: relationCreateBodySchema.extend({
+            syncContext: integrationSyncContextSchema
+          })
         })
       )
       .output(relationSyncResultSchema)

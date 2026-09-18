@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import type { Config } from './config.js';
 import { listRepos, fetchCatalogInfoFile, type GitHubFile, type GitHubRepo } from './github.js';
 import {
@@ -18,6 +18,9 @@ import {
   discoverSchemas,
   discoverRelationSchemas,
   syncRelation,
+  startIntegrationSyncRun,
+  finishIntegrationSyncRun,
+  type SyncContext,
   type SyncResult
 } from './archRegister.js';
 import {
@@ -245,6 +248,9 @@ export const syncOrganization = async (org: string, config: Config): Promise<Syn
   // of GitHub's repository/entity ordering.
   const source = `backstage-github-${org}`;
 
+  let syncContext: SyncContext | undefined;
+  let runId: string | undefined;
+
   for (const repo of repos) {
     if (config.verbose) {
       console.log(`\n📂 Processing ${repo.fullName}...`);
@@ -382,6 +388,31 @@ export const syncOrganization = async (org: string, config: Config): Promise<Syn
     return report;
   }
 
+  runId = config.runId ?? randomUUID();
+  try {
+    const run = await startIntegrationSyncRun(
+      config.archRegisterWorkspace,
+      source,
+      runId,
+      org,
+      'partial',
+      config.archRegisterToken,
+      config.archRegisterUrl
+    );
+    syncContext = { runId: run.id, scopeKey: org };
+  } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    report.errors.push({ repo: 'sync-control-center', error: errorMsg });
+    report.failed++;
+    return report;
+  }
+
+  if (!syncContext) {
+    report.errors.push({ repo: 'sync-control-center', error: 'Sync run context was not created' });
+    report.failed++;
+    return report;
+  }
+
   const idsByReference = new Map<string, string>();
   const existingByKey = new Map<string, Record<string, unknown>>();
   const syncResults = new Map<string, SyncResult>();
@@ -477,7 +508,8 @@ export const syncOrganization = async (org: string, config: Config): Promise<Syn
               materialized,
               specification,
               config.archRegisterToken,
-              config.archRegisterUrl
+              config.archRegisterUrl,
+              syncContext
             )
           : await syncEntity(
               config.archRegisterWorkspace,
@@ -485,7 +517,8 @@ export const syncOrganization = async (org: string, config: Config): Promise<Syn
               item.externalKey,
               materialized,
               config.archRegisterToken,
-              config.archRegisterUrl
+              config.archRegisterUrl,
+              syncContext
             );
       syncResults.set(item.externalKey, result);
       idsByReference.set(
@@ -661,7 +694,8 @@ export const syncOrganization = async (org: string, config: Config): Promise<Syn
           item.externalKey,
           { ...item.mapped, ...relationshipPayload },
           config.archRegisterToken,
-          config.archRegisterUrl
+          config.archRegisterUrl,
+          syncContext
         );
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error);
@@ -683,7 +717,8 @@ export const syncOrganization = async (org: string, config: Config): Promise<Syn
             outEntityId: relation.targetId
           },
           config.archRegisterToken,
-          config.archRegisterUrl
+          config.archRegisterUrl,
+          syncContext
         );
         switch (result.status) {
           case 'created':
@@ -702,6 +737,36 @@ export const syncOrganization = async (org: string, config: Config): Promise<Syn
         report.errors.push({ repo: item.repo.fullName, entity: item.entityRef, error: errorMsg });
       }
     }
+  }
+
+  try {
+    await finishIntegrationSyncRun(
+      config.archRegisterWorkspace,
+      syncContext.runId,
+      {
+        status: report.failed > 0 ? 'failed' : 'succeeded',
+        coverage: scanComplete ? 'complete' : 'partial',
+        counts: {
+          created: report.created + report.relationsCreated,
+          updated: report.updated + report.relationsUpdated,
+          unchanged: report.unchanged + report.relationsUnchanged,
+          failed: report.failed,
+          warnings: report.warnings.length
+        },
+        warnings: report.warnings.map(warning => warning.warning),
+        failures: report.errors.map(
+          error => `${error.repo}${error.entity ? `/${error.entity}` : ''}: ${error.error}`
+        )
+      },
+      config.archRegisterToken,
+      config.archRegisterUrl
+    );
+  } catch (error) {
+    report.errors.push({
+      repo: 'sync-control-center',
+      error: error instanceof Error ? error.message : String(error)
+    });
+    report.failed++;
   }
 
   return report;

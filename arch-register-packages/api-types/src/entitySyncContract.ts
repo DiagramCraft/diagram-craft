@@ -5,6 +5,7 @@ import {
   entityMutationBodySchema,
   entityRecordSchema
 } from '@arch-register/api-types/entityContract';
+import { integrationSyncContextSchema } from './integrationSyncContract';
 
 export const entitySyncStatusSchema = z.enum(['created', 'updated', 'unchanged']);
 
@@ -85,7 +86,9 @@ export const entitySyncContract = oc.tag('Integrations').router({
             source: z.string().min(1).max(200),
             externalKey: z.string().min(1).max(500)
           }),
-          body: entityMutationBodySchema
+          body: entityMutationBodySchema.extend({
+            syncContext: integrationSyncContextSchema
+          })
         })
       )
       .output(entitySyncResultSchema)

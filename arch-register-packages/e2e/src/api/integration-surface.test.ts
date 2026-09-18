@@ -1,10 +1,12 @@
 import { randomUUID } from 'node:crypto';
 import { createApiTest, expect } from '../helpers/fixtures';
-import { seedCatalogEntities, seedIds } from '../helpers/seedHelper';
+import type { TestServer } from '../helpers/serverHelper';
+import { seedCatalogEntities, seedIds, seedIntegrationSyncData } from '../helpers/seedHelper';
 
 const test = createApiTest({
   afterSeed: async server => {
     await seedCatalogEntities(server.db);
+    await seedIntegrationSyncData(server.db);
   }
 });
 
@@ -17,6 +19,38 @@ const relationOutEntityId = '00000000-0000-0000-0002-000000000002';
 
 const integrationUrl = (baseUrl: string, path: string) =>
   `${baseUrl}/api/integrations/v1/default${path}`;
+
+const settingsIntegrationSourceUrl = (baseUrl: string, source: string) =>
+  `${baseUrl}/api/application/v1/default/config/integration-sources/${encodeURIComponent(source)}`;
+
+const startIntegrationRun = async (
+  server: TestServer,
+  authorization: string,
+  source: string,
+  externalRunId: string
+) => {
+  const existing = await server.db.integrationSync.getSource(seedIds.workspace.default, source);
+  const now = new Date();
+  await server.db.integrationSync.upsertSource({
+    id: existing?.id ?? randomUUID(),
+    workspace: seedIds.workspace.default,
+    source_key: source,
+    display_name: source,
+    type: 'e2e',
+    owner: null,
+    status: 'active',
+    created_at: existing?.created_at ?? now,
+    updated_at: now
+  });
+  const sourcePath = `/sync-sources/${encodeURIComponent(source)}`;
+  const start = await fetch(integrationUrl(server.baseUrl, `${sourcePath}/runs`), {
+    method: 'POST',
+    headers: { Authorization: authorization, 'content-type': 'application/json' },
+    body: JSON.stringify({ externalRunId, coverage: 'partial' })
+  });
+  expect(start.status).toBe(200);
+  return (await start.json()) as { id: string };
+};
 
 const mutationBody = (name: string) => ({
   _schemaId: schemaId,
@@ -125,10 +159,14 @@ test.describe('integration entity surface', () => {
     expect((await byId.json())._uid).toBe(entityId);
 
     const externalPath = '/entities/byExternalKey/e2e/integration-entity';
+    const run = await startIntegrationRun(server, auth, 'e2e', `entity-surface-${randomUUID()}`);
     const sync = await fetch(integrationUrl(server.baseUrl, externalPath), {
       method: 'PUT',
       headers: { Authorization: auth, 'content-type': 'application/json' },
-      body: JSON.stringify(mutationBody('Integration Entity'))
+      body: JSON.stringify({
+        ...mutationBody('Integration Entity'),
+        syncContext: { runId: run.id }
+      })
     });
     const syncText = await sync.text();
     expect(sync.status, syncText).toBe(200);
@@ -175,6 +213,192 @@ test.describe('integration entity surface', () => {
     expect(readOnly.status).toBe(403);
 
     await orpc.authProtected.apiTokens.revoke({ params: { id: token.id } });
+  });
+
+  test('records source runs and protects missing detection from partial scans', async ({
+    server,
+    auth
+  }) => {
+    const source = 'e2e-control-center';
+    const sourcePath = `/sync-sources/${source}`;
+    const legacyRegistration = await fetch(integrationUrl(server.baseUrl, sourcePath), {
+      method: 'PUT',
+      headers: { Authorization: auth, 'content-type': 'application/json' },
+      body: JSON.stringify({ displayName: source, type: 'test', status: 'active' })
+    });
+    expect(legacyRegistration.status).not.toBe(200);
+    const configure = await fetch(settingsIntegrationSourceUrl(server.baseUrl, source), {
+      method: 'PUT',
+      headers: { Authorization: auth, 'content-type': 'application/json' },
+      body: JSON.stringify({ displayName: 'E2E control center', type: 'test', status: 'active' })
+    });
+    expect(configure.status).toBe(200);
+
+    const manualDegraded = await fetch(settingsIntegrationSourceUrl(server.baseUrl, source), {
+      method: 'PUT',
+      headers: { Authorization: auth, 'content-type': 'application/json' },
+      body: JSON.stringify({ displayName: 'E2E control center', type: 'test', status: 'degraded' })
+    });
+    expect(manualDegraded.status).not.toBe(200);
+
+    const paused = await fetch(settingsIntegrationSourceUrl(server.baseUrl, source), {
+      method: 'PUT',
+      headers: { Authorization: auth, 'content-type': 'application/json' },
+      body: JSON.stringify({ displayName: 'E2E control center', type: 'test', status: 'paused' })
+    });
+    expect(paused.status).toBe(200);
+    const blockedStart = await fetch(integrationUrl(server.baseUrl, `${sourcePath}/runs`), {
+      method: 'POST',
+      headers: { Authorization: auth, 'content-type': 'application/json' },
+      body: JSON.stringify({ externalRunId: 'e2e-paused-run', coverage: 'partial' })
+    });
+    expect(blockedStart.status).not.toBe(200);
+
+    const reactivated = await fetch(settingsIntegrationSourceUrl(server.baseUrl, source), {
+      method: 'PUT',
+      headers: { Authorization: auth, 'content-type': 'application/json' },
+      body: JSON.stringify({ displayName: 'E2E control center', type: 'test', status: 'active' })
+    });
+    expect(reactivated.status).toBe(200);
+
+    const start = await fetch(integrationUrl(server.baseUrl, `${sourcePath}/runs`), {
+      method: 'POST',
+      headers: { Authorization: auth, 'content-type': 'application/json' },
+      body: JSON.stringify({
+        externalRunId: 'e2e-run-1',
+        scopeKey: 'default',
+        coverage: 'partial'
+      })
+    });
+    expect(start.status).toBe(200);
+    const run = await start.json();
+
+    const repeatedStart = await fetch(integrationUrl(server.baseUrl, `${sourcePath}/runs`), {
+      method: 'POST',
+      headers: { Authorization: auth, 'content-type': 'application/json' },
+      body: JSON.stringify({
+        externalRunId: 'e2e-run-1',
+        scopeKey: 'default',
+        coverage: 'partial'
+      })
+    });
+    expect(repeatedStart.status).toBe(200);
+    expect((await repeatedStart.json()).id).toBe(run.id);
+
+    const sync = await fetch(
+      integrationUrl(server.baseUrl, '/entities/byExternalKey/e2e-control-center/e2e-record'),
+      {
+        method: 'PUT',
+        headers: { Authorization: auth, 'content-type': 'application/json' },
+        body: JSON.stringify({
+          ...mutationBody('E2E managed record'),
+          syncContext: { runId: run.id, scopeKey: 'default' }
+        })
+      }
+    );
+    expect(sync.status).toBe(200);
+
+    const finish = await fetch(integrationUrl(server.baseUrl, `/sync-runs/${run.id}`), {
+      method: 'PATCH',
+      headers: { Authorization: auth, 'content-type': 'application/json' },
+      body: JSON.stringify({
+        status: 'succeeded',
+        coverage: 'partial',
+        counts: { created: 1, updated: 0, unchanged: 0, failed: 0, warnings: 0 }
+      })
+    });
+    expect(finish.status).toBe(200);
+
+    const managedRecord = (
+      await server.db.integrationSync.listManagedRecords(seedIds.workspace.default)
+    ).find(record => record.source_key === source && record.external_key === 'e2e-record');
+    expect(managedRecord).toBeDefined();
+    await server.db.integrationSync.setManagedRecordState(
+      seedIds.workspace.default,
+      managedRecord!.id,
+      'orphaned'
+    );
+    const relink = await fetch(
+      integrationUrl(server.baseUrl, `/sync-records/${managedRecord!.id}/relink`),
+      {
+        method: 'POST',
+        headers: { Authorization: auth, 'content-type': 'application/json' },
+        body: JSON.stringify({ recordId: entityId, confirm: true })
+      }
+    );
+    expect(relink.status).toBe(200);
+    expect(
+      (await server.db.externalIdentity.find(seedIds.workspace.default, source, 'e2e-record'))
+        ?.record_id
+    ).toBe(entityId);
+
+    const sourceRow = await server.db.integrationSync.getSource(seedIds.workspace.default, source);
+    expect(sourceRow).toBeDefined();
+    const stopManagedId = randomUUID();
+    const stopManagedExternalKey = 'e2e-stop-managed';
+    const now = new Date();
+    await server.db.integrationSync.upsertManagedRecord({
+      id: stopManagedId,
+      workspace: seedIds.workspace.default,
+      source_id: sourceRow!.id,
+      source_key: source,
+      record_type: 'entity',
+      external_key: stopManagedExternalKey,
+      record_id: entityId,
+      scope_key: null,
+      last_seen_at: now,
+      last_seen_run_id: run.id,
+      updated_at: now
+    });
+    await server.db.externalIdentity.upsert({
+      workspace: seedIds.workspace.default,
+      source,
+      external_key: stopManagedExternalKey,
+      record_id: entityId
+    });
+    await server.db.integrationSync.setManagedRecordState(
+      seedIds.workspace.default,
+      stopManagedId,
+      'orphaned'
+    );
+    const stopManaging = await fetch(
+      integrationUrl(server.baseUrl, `/sync-records/${stopManagedId}/stop-managing`),
+      {
+        method: 'POST',
+        headers: { Authorization: auth, 'content-type': 'application/json' },
+        body: JSON.stringify({ confirm: true })
+      }
+    );
+    expect(stopManaging.status).toBe(200);
+    expect(
+      await server.db.integrationSync.getManagedRecord(seedIds.workspace.default, stopManagedId)
+    ).toBeNull();
+    expect(
+      await server.db.externalIdentity.find(
+        seedIds.workspace.default,
+        source,
+        stopManagedExternalKey
+      )
+    ).toBeNull();
+    expect(await server.db.catalog.getEntity(seedIds.workspace.default, entityId)).not.toBeNull();
+
+    const dashboard = await fetch(integrationUrl(server.baseUrl, '/sync-control-center'), {
+      headers: { Authorization: auth }
+    });
+    expect(dashboard.status).toBe(200);
+    const dashboardBody = await dashboard.json();
+    expect(dashboardBody.sources).toEqual(
+      expect.arrayContaining([expect.objectContaining({ sourceKey: source })])
+    );
+    expect(dashboardBody.runs).toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: run.id, coverage: 'partial' })])
+    );
+    expect(dashboardBody.records).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ externalKey: 'e2e-record', state: 'active' }),
+        expect.objectContaining({ state: 'missing' })
+      ])
+    );
   });
 
   test('enforces restricted field writes and hides restricted data from sync status', async ({
@@ -256,19 +480,36 @@ test.describe('integration entity surface', () => {
       }
     });
     const url = integrationUrl(server.baseUrl, `/entities/byExternalKey/${source}/${externalKey}`);
+    const run = await startIntegrationRun(
+      server,
+      `Bearer ${token.token}`,
+      source,
+      `restricted-${randomUUID()}`
+    );
     const base = mutationBody('Restricted Sync Entity');
 
     const rejected = await fetch(url, {
       method: 'PUT',
       headers: { Authorization: `Bearer ${token.token}`, 'content-type': 'application/json' },
-      body: JSON.stringify({ ...base, _schemaId: schemaId, visible: 'public', secret: 'changed' })
+      body: JSON.stringify({
+        ...base,
+        _schemaId: schemaId,
+        visible: 'public',
+        secret: 'changed',
+        syncContext: { runId: run.id }
+      })
     });
     expect(rejected.status).toBe(403);
 
     const unchanged = await fetch(url, {
       method: 'PUT',
       headers: { Authorization: `Bearer ${token.token}`, 'content-type': 'application/json' },
-      body: JSON.stringify({ ...base, _schemaId: schemaId, visible: 'public' })
+      body: JSON.stringify({
+        ...base,
+        _schemaId: schemaId,
+        visible: 'public',
+        syncContext: { runId: run.id }
+      })
     });
     expect(unchanged.status).toBe(200);
     expect((await unchanged.json()).status).toBe('unchanged');
