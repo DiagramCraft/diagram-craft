@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import type { RelationRecord } from '@arch-register/api-types/relationContract';
+import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { Title } from '../../../components/Title';
 import { SearchInput } from '../../../components/SearchInput';
 import { Chip } from '../../../components/Chip';
@@ -15,8 +16,10 @@ import { relationIds } from '../../../lib/entityEditState';
 import { resolveApiIntegrationCatalogConfig } from '../apiIntegrationCatalogQueries';
 import { useDataFlowConfig } from '../useDataFlowConfig';
 import { relationFieldValue, RESTRICTED_CLASSIFICATIONS } from '../dataFlowRelationDisplay';
+import { computeApiPairCoverage, computeApiPairs, type EndpointRef } from '../apiPairCoverage';
 import { ApiSpecDrawer } from './ApiSpecDrawer';
 import { IntegrationDrawer } from './IntegrationDrawer';
+import { ApiPairsTable } from './ApiPairsTable';
 import { IC_INTEGRATIONS_ID, IC_RAIL_PATHS } from '../apiIntegrationCatalogSections';
 import type { ApiIntegrationCatalogIntegrationsSearchParams } from '../../../routes/searchParams';
 import filterStyles from '../../../sections/entities/components/EntityBrowser.module.css';
@@ -29,7 +32,6 @@ const DANGER = 'var(--cmp-fg-danger, #ef4444)';
 const WARN = 'var(--cmp-fg-warning, #eab308)';
 
 type SortKey = 'flow' | 'protocol' | 'classification' | 'boundary';
-type EndpointRef = { id: string; name: string };
 
 /**
  * The Integrations register: every `Data Flow` relation in the workspace — stat tiles, a sidebar
@@ -49,12 +51,17 @@ type EndpointRef = { id: string; name: string };
  * "+ New relation" action is also dropped — there is no generic quick-create flow pre-filled to a
  * relation schema in this codebase to wire it to (the APIs section's own "Register API" action was
  * dropped for the same reason in #3316).
+ *
+ * A fifth stat tile and a toolbar toggle (#3340) surface the complementary half of the API join:
+ * every `Provides API` × `Consumes API` pairing, and whether each has a matching Data Flow relation
+ * between its two endpoints — see `apiPairCoverage.ts` and `ApiPairsTable.tsx`.
  */
 export const ApiIntegrationCatalogIntegrationsScreen = () => {
   const { workspaceSlug } = useParams({ strict: false }) as { workspaceSlug: string };
   const navigate = useNavigate();
   const search = useSearch({ strict: false }) as ApiIntegrationCatalogIntegrationsSearchParams;
   const q = search.q ?? '';
+  const isPairsView = search.view === 'pairs';
 
   const configurations = useQuery(workspaceCapabilityConfigurationsQuery(workspaceSlug));
   const apiConfig = resolveApiIntegrationCatalogConfig(configurations.data);
@@ -109,6 +116,14 @@ export const ApiIntegrationCatalogIntegrationsScreen = () => {
 
   const registeredApiFor = (relation: RelationRecord): EndpointRef | null =>
     apiByEntityId.get(relation._in.id) ?? apiByEntityId.get(relation._out.id) ?? null;
+
+  // Provider × consumer pairs for each registered API and their Data Flow coverage (#3340) — reuses
+  // the same `providers`/`consumers`/`allRelations` fetched above, no new queries.
+  const pairs = useMemo(
+    () => computeApiPairs(providers.data, consumers.data, allRelations),
+    [providers.data, consumers.data, allRelations]
+  );
+  const coverage = useMemo(() => computeApiPairCoverage(pairs), [pairs]);
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -243,7 +258,30 @@ export const ApiIntegrationCatalogIntegrationsScreen = () => {
           <div className={styles.tileValue}>{apiLinkedCount}</div>
           <div className={styles.tileSub}>an endpoint provides or consumes an API</div>
         </div>
+        <div className={styles.tile}>
+          <div className={styles.tileLabel}>Provider/consumer gaps</div>
+          <div
+            className={styles.tileValue}
+            style={coverage.gapPairs ? { color: DANGER } : undefined}
+          >
+            {coverage.gapPairs}
+          </div>
+          <div className={styles.tileSub}>
+            {coverage.coveredPairs} of {coverage.applicablePairs} covered
+            {coverage.notApplicablePairs > 0 && ` · ${coverage.notApplicablePairs} n/a (component)`}
+          </div>
+        </div>
       </div>
+
+      <Tabs.Root
+        value={isPairsView ? 'pairs' : 'flows'}
+        onValueChange={value => patchSearch({ view: value === 'pairs' ? 'pairs' : undefined })}
+      >
+        <Tabs.List aria-label="Integrations view">
+          <Tabs.Trigger value="flows">Data Flows</Tabs.Trigger>
+          <Tabs.Trigger value="pairs">API Usage</Tabs.Trigger>
+        </Tabs.List>
+      </Tabs.Root>
 
       <div className={filterStyles.toolbar}>
         <SearchInput
@@ -257,73 +295,77 @@ export const ApiIntegrationCatalogIntegrationsScreen = () => {
         />
       </div>
 
-      <Table.Root scroll stickyHeader>
-        <Table.Head>
-          <Table.Row>
-            <Table.SortableHeaderCell sortKey="flow" sort={sort} onSort={toggleSort}>
-              Flow
-            </Table.SortableHeaderCell>
-            <Table.SortableHeaderCell sortKey="protocol" sort={sort} onSort={toggleSort}>
-              Protocol
-            </Table.SortableHeaderCell>
-            <Table.SortableHeaderCell sortKey="classification" sort={sort} onSort={toggleSort}>
-              Classification
-            </Table.SortableHeaderCell>
-            <Table.HeaderCell>Carried data</Table.HeaderCell>
-            <Table.SortableHeaderCell sortKey="boundary" sort={sort} onSort={toggleSort}>
-              Boundary
-            </Table.SortableHeaderCell>
-            <Table.HeaderCell>API</Table.HeaderCell>
-            <Table.HeaderCell>Owner</Table.HeaderCell>
-          </Table.Row>
-        </Table.Head>
-        <Table.Body>
-          {sorted.length === 0 ? (
-            <Table.EmptyRow colSpan={7}>
-              {relations.isLoading
-                ? 'Loading integrations…'
-                : 'No integrations match these filters.'}
-            </Table.EmptyRow>
-          ) : (
-            sorted.map(relation => {
-              const crosses = relation.cross_boundary === 'cross-boundary';
-              const registeredApi = registeredApiFor(relation);
-              const carriedCount = relationIds(relation.data_entities).length;
-              return (
-                <Table.Row
-                  key={relation._uid}
-                  selected={relation._uid === openRelationId}
-                  onClick={() => setOpenRelationId(relation._uid)}
-                >
-                  <Table.NameCell title={`${relation._in.name} → ${relation._out.name}`} />
-                  <Table.Cell className="dim">
-                    {relationFieldValue(relationSchema, relation, 'protocol')}
-                  </Table.Cell>
-                  <Table.Cell>
-                    <Chip tone="ghost">
-                      {relationFieldValue(relationSchema, relation, 'data_classification')}
-                    </Chip>
-                  </Table.Cell>
-                  <Table.Cell className="dim">{carriedCount || '—'}</Table.Cell>
-                  <Table.Cell>
-                    {crosses ? (
-                      <Chip tone="ghost" color={WARN}>
-                        crosses
+      {isPairsView ? (
+        <ApiPairsTable pairs={pairs} q={q} />
+      ) : (
+        <Table.Root scroll stickyHeader>
+          <Table.Head>
+            <Table.Row>
+              <Table.SortableHeaderCell sortKey="flow" sort={sort} onSort={toggleSort}>
+                Flow
+              </Table.SortableHeaderCell>
+              <Table.SortableHeaderCell sortKey="protocol" sort={sort} onSort={toggleSort}>
+                Protocol
+              </Table.SortableHeaderCell>
+              <Table.SortableHeaderCell sortKey="classification" sort={sort} onSort={toggleSort}>
+                Classification
+              </Table.SortableHeaderCell>
+              <Table.HeaderCell>Carried data</Table.HeaderCell>
+              <Table.SortableHeaderCell sortKey="boundary" sort={sort} onSort={toggleSort}>
+                Boundary
+              </Table.SortableHeaderCell>
+              <Table.HeaderCell>API</Table.HeaderCell>
+              <Table.HeaderCell>Owner</Table.HeaderCell>
+            </Table.Row>
+          </Table.Head>
+          <Table.Body>
+            {sorted.length === 0 ? (
+              <Table.EmptyRow colSpan={7}>
+                {relations.isLoading
+                  ? 'Loading integrations…'
+                  : 'No integrations match these filters.'}
+              </Table.EmptyRow>
+            ) : (
+              sorted.map(relation => {
+                const crosses = relation.cross_boundary === 'cross-boundary';
+                const registeredApi = registeredApiFor(relation);
+                const carriedCount = relationIds(relation.data_entities).length;
+                return (
+                  <Table.Row
+                    key={relation._uid}
+                    selected={relation._uid === openRelationId}
+                    onClick={() => setOpenRelationId(relation._uid)}
+                  >
+                    <Table.NameCell title={`${relation._in.name} → ${relation._out.name}`} />
+                    <Table.Cell className="dim">
+                      {relationFieldValue(relationSchema, relation, 'protocol')}
+                    </Table.Cell>
+                    <Table.Cell>
+                      <Chip tone="ghost">
+                        {relationFieldValue(relationSchema, relation, 'data_classification')}
                       </Chip>
-                    ) : (
-                      <span className="dim">internal</span>
-                    )}
-                  </Table.Cell>
-                  <Table.Cell className="dim">
-                    {registeredApi ? registeredApi.name : '—'}
-                  </Table.Cell>
-                  <Table.Cell className="dim">{relation._owner?.name ?? '—'}</Table.Cell>
-                </Table.Row>
-              );
-            })
-          )}
-        </Table.Body>
-      </Table.Root>
+                    </Table.Cell>
+                    <Table.Cell className="dim">{carriedCount || '—'}</Table.Cell>
+                    <Table.Cell>
+                      {crosses ? (
+                        <Chip tone="ghost" color={WARN}>
+                          crosses
+                        </Chip>
+                      ) : (
+                        <span className="dim">internal</span>
+                      )}
+                    </Table.Cell>
+                    <Table.Cell className="dim">
+                      {registeredApi ? registeredApi.name : '—'}
+                    </Table.Cell>
+                    <Table.Cell className="dim">{relation._owner?.name ?? '—'}</Table.Cell>
+                  </Table.Row>
+                );
+              })
+            )}
+          </Table.Body>
+        </Table.Root>
+      )}
 
       {openApiId && apiConfig && (
         <ApiSpecDrawer

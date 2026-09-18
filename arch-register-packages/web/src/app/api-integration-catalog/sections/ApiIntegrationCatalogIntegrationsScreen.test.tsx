@@ -102,8 +102,8 @@ const FLOW_RELATION_SCHEMA = {
 const FLOW_RELATION = {
   _uid: 'flow-1',
   _schema: { id: 'rs-data-flow', name: 'Data Flow' },
-  _in: { id: 'sys-a', name: 'System A' },
-  _out: { id: 'sys-b', name: 'System B' },
+  _in: { id: 'sys-a', name: 'System A', schemaId: 'system' },
+  _out: { id: 'sys-b', name: 'System B', schemaId: 'system' },
   protocol: 'https',
   data_classification: 'sensitive',
   cross_boundary: 'cross-boundary',
@@ -113,7 +113,14 @@ const FLOW_RELATION = {
 const PROVIDES_RELATION = {
   _uid: 'rel-provides-1',
   _schema: { id: 'provides-api', name: 'Provides API' },
-  _in: { id: 'sys-a', name: 'System A' },
+  _in: { id: 'sys-a', name: 'System A', schemaId: 'system' },
+  _out: { id: 'api-1', name: 'Orders API' }
+};
+
+const CONSUMES_RELATION = {
+  _uid: 'rel-consumes-1',
+  _schema: { id: 'consumes-api', name: 'Consumes API' },
+  _in: { id: 'sys-c', name: 'System C', schemaId: 'system' },
   _out: { id: 'api-1', name: 'Orders API' }
 };
 
@@ -151,6 +158,7 @@ describe('ApiIntegrationCatalogIntegrationsScreen', () => {
     mocks.relationsList.mockImplementation(async ({ query }: { query: { schemaId?: string } }) => {
       if (query.schemaId === 'rs-data-flow') return { items: [FLOW_RELATION], total: 1 };
       if (query.schemaId === 'provides-api') return { items: [PROVIDES_RELATION], total: 1 };
+      if (query.schemaId === 'consumes-api') return { items: [CONSUMES_RELATION], total: 1 };
       return { items: [], total: 0 };
     });
     mocks.relationsListForEntity.mockResolvedValue({ outgoing: [], incoming: [] });
@@ -231,5 +239,33 @@ describe('ApiIntegrationCatalogIntegrationsScreen', () => {
     for (let i = 0; i < 10; i++) await flush();
 
     expect(container.textContent).toContain('Open record in Entities');
+  });
+
+  it('shows a provider/consumer gap count when a pair has no matching Data Flow relation', async () => {
+    await renderScreen();
+    expect(container.textContent).toContain('Provider/consumer gaps');
+    // sys-a provides Orders API, sys-c consumes it, but the only Data Flow relation is sys-a↔sys-b —
+    // no Data Flow relation exists for the sys-c/sys-a pair, so it counts as a gap.
+    expect(container.textContent).toContain('0 of 1 covered');
+  });
+
+  it('switches to the pairs table and back via the view toggle', async () => {
+    await renderScreen();
+    const pairsButton = [...container.querySelectorAll('button')].find(
+      el => el.textContent === 'API Usage'
+    );
+    expect(pairsButton).toBeDefined();
+    await act(async () => {
+      pairsButton!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    expect(mocks.navigate).toHaveBeenCalled();
+  });
+
+  it('renders the pairs table with a gap flag when the view search param is set', async () => {
+    mocks.search = { view: 'pairs' };
+    await renderScreen();
+    expect(container.textContent).toContain('System C');
+    expect(container.textContent).toContain('System A');
+    expect(container.textContent).toContain('gap');
   });
 });
