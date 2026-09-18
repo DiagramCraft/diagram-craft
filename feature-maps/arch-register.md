@@ -690,7 +690,14 @@
           adapter/health/latency/volume columns and no "relations per adapter" breakdown, matching the epic's
           explicit non-goal of not being an API gateway or runtime observability tool; there is also no quick-create
           action for new relations, since no generic schema-pre-filled quick-create flow exists in this codebase to
-          wire it to (the APIs section's own "Register API" action was dropped for the same reason).
+          wire it to (the APIs section's own "Register API" action was dropped for the same reason). A fifth stat
+          tile counts `Provides`/`Consumes API` pairs with no matching Data Flow relation between their two
+          endpoints — Component-typed endpoints are excluded from this count as structurally ineligible, since Data
+          Flow relations are System-only. A toolbar toggle ("Data Flows" / "API Usage") switches the table between
+          this Data Flow relation list and a lighter provider/consumer pairs table (Consumer, API, Provider, and a
+          flag for whether a matching Data Flow relation exists), independent of whether a Data Flow relation exists
+          for a pair and without the governance fields (classification, carried data, boundary) that only exist on
+          Data Flow relations.
 
         - @id:ar.api-integration-catalog.sync The Sync section is scaffolded as a placeholder pending its own
           ingestion/sync status, failures, and revisions content (blocked on the integration sync control center).

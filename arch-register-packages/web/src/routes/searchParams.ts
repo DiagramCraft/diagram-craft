@@ -717,7 +717,10 @@ const apiIntegrationCatalogIntegrationsSearchSchema = defineSearchParamSchema({
   classification: stringCodec,
   // Narrows to relations whose derived `cross_boundary` field is `'cross-boundary'`. '1' when set,
   // absent otherwise, mirrors `risksSearchSchema`'s `outsideAppetite`.
-  boundary: enumCodec(['1'] as const)
+  boundary: enumCodec(['1'] as const),
+  // Toggles the table between the Data Flow relation list ('flows', the default — undefined) and
+  // the lighter Provider/Consumer Pairs table (#3340).
+  view: enumCodec(['flows', 'pairs'] as const)
 });
 
 export type ApiIntegrationCatalogIntegrationsSearchParams = SearchParamsFromSchema<
