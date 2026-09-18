@@ -14,3 +14,7 @@
   text-align: center;
   color: var(--text-muted);
 }
+
+.tableWrap {
+  margin-top: 16px;
+}

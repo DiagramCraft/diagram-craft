@@ -41,6 +41,7 @@ full-page experience and should remain separate from the read-only drawer config
 | Drawer | Entity or context | Header and actions | Sections and content | Entry/deep-link behavior |
 | --- | --- | --- | --- | --- |
 | `GlossaryTermDrawer` | Business Glossary Term | Public id eyebrow; status, lifecycle, and quality badges; **Open in Entities** footer action | Definition, aliases, conflict warning, categories, owner, and usage/backlinks grouped by entities, relations, documents, projects, and diagrams | `/glossary/$termId`; opened from the glossary register; usage comes from glossary-specific queries |
+| `ApiSpecDrawer` | API | Public id eyebrow; protocol/lifecycle badges; **Open record in Entities** footer action | Attributes; providers; consumers; source/version selection; specification status, diagnostics, normalized operations/messages, filters, and raw-source preview | `/api-integration-catalog/apis/$apiId`; shared with other sections that link to an API; artifact content remains permission-aware |
 | `DatasetDrawer` | Data Stewardship Data Entity/dataset | Public id eyebrow; classification badge; **Open record in Entities** footer action | Attributes; Stewardship; coverage score/gaps; queue items; change cases; exceptions placeholder; assessments; Flows and Systems placeholders | Uses `datasetId` search state on several Data Stewardship sections; queue items can open `DataStewardshipCaseDrawer` |
 | `DataStewardshipCaseDrawer` | Governance case, not an entity drawer | Case status eyebrow; priority badge; permission-dependent Approve/Acknowledge and Request changes actions; open subject dataset/record action | Case status, timestamps, due/escalation/outcome, current-user assignment, and dataset in scope | Uses `caseId` search state; remains a specialized case drawer outside the entity profile model |
 | `RiskDrawer` | Risk | Public id eyebrow; category/status badges; **Open record in Entities** footer action | Risk profile and residual band; attributes; aggregate coverage; mitigating controls with coverage/effectiveness; affected entities | `/risk-compliance/risks/$riskId`, plus in-situ opening from controls and overview surfaces |
@@ -210,6 +211,7 @@ The migration issue must cover these entity drawers and their provider adapters:
 - Strategy Business Capability;
 - Risk & Compliance Risk and Control;
 - Vendor Management Vendor and Contract;
+- API Integration Catalog API;
 - the generic arbitrary-entity path currently represented by the local AssetDrawer.
 
 The generic renderer should become the fallback for ordinary entity types that do not have an application-specific
