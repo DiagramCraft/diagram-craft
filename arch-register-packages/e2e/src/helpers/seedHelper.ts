@@ -1,5 +1,6 @@
 import type { DatabaseAdapter } from '@arch-register/server/db/database';
 import { seedEntities } from '@arch-register/server/db/seedData/entities';
+import { seedIntegrationSyncData as seedSharedIntegrationSyncData } from '@arch-register/server/db/seedData/integrationSync';
 import { seedRelationSchemas, seedRelations } from '@arch-register/server/db/seedData/relations';
 import { seedWorkspaces } from '@arch-register/server/db/seedData/workspace';
 import { seedIds } from '@arch-register/server/db/seedData/constants';
@@ -9,7 +10,6 @@ import {
   seedCatalogEntities as seedSharedCatalogEntities,
   seedCatalogViews as seedSharedCatalogViews,
   seedPublicIdCounters,
-  seedIntegrationSyncData as seedSharedIntegrationSyncData,
   seedUsersAndRoles,
   seedWorkspaceBase,
   seedWorkspaceConfiguration

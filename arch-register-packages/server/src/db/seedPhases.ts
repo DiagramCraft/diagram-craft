@@ -37,7 +37,6 @@ import { seedSavedViews } from './seedData/views';
 import { seededTestPassword } from './seedFixtures';
 import { hashPassword } from '../utils/password';
 import { randomUUID } from 'node:crypto';
-export { seedIntegrationSyncData } from './seedData/integrationSync';
 
 export type WorkspaceSeedOptions = {
   supportedCurrencies?: boolean;
