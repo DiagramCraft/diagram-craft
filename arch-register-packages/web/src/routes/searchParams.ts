@@ -706,3 +706,25 @@ export const validateDataStewardshipChangeCasesSearch = (
   raw: Record<string, unknown>
 ): DataStewardshipChangeCasesSearchParams =>
   parseSearchParams(dataStewardshipChangeCasesSearchSchema, raw);
+
+// API & Integration Catalog integrations-section params — facets set by the sidebar's
+// `IntegrationsSidebarContent` (`ApiIntegrationCatalogSidebar.tsx`), mirrors `risksSearchSchema`'s
+// facet params above.
+const apiIntegrationCatalogIntegrationsSearchSchema = defineSearchParamSchema({
+  q: stringCodec,
+  // `protocol` / `data_classification` select-field values on the Data Flow relation schema.
+  protocol: stringCodec,
+  classification: stringCodec,
+  // Narrows to relations whose derived `cross_boundary` field is `'cross-boundary'`. '1' when set,
+  // absent otherwise, mirrors `risksSearchSchema`'s `outsideAppetite`.
+  boundary: enumCodec(['1'] as const)
+});
+
+export type ApiIntegrationCatalogIntegrationsSearchParams = SearchParamsFromSchema<
+  typeof apiIntegrationCatalogIntegrationsSearchSchema
+>;
+
+export const validateApiIntegrationCatalogIntegrationsSearch = (
+  raw: Record<string, unknown>
+): ApiIntegrationCatalogIntegrationsSearchParams =>
+  parseSearchParams(apiIntegrationCatalogIntegrationsSearchSchema, raw);

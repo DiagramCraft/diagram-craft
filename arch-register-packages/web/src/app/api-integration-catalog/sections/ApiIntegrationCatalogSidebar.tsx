@@ -1,18 +1,141 @@
-import { useNavigate } from '@tanstack/react-router';
+import { useMemo } from 'react';
+import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
+import { TbAlertTriangle, TbPlugConnected, TbTag } from 'react-icons/tb';
 import {
   SidebarGroupLabel,
   SidebarTitleHeader
 } from '../../../components/sidebar/SidebarPrimitives';
 import { TreeRow } from '../../../components/TreeRow';
 import { workspaceCapabilityConfigurationsQuery } from '../../../queries/workspaceConfig';
+import { useRelations } from '../../../hooks/useRelations';
+import { useRelationSchemas } from '../../../hooks/useRelationSchemas';
 import { resolveApiIntegrationCatalogConfig } from '../apiIntegrationCatalogQueries';
+import { useDataFlowConfig } from '../useDataFlowConfig';
 import {
+  IC_INTEGRATIONS_ID,
   IC_RAIL_PATHS,
   IC_SECTIONS,
   type ApiIntegrationCatalogRailItemId
 } from '../apiIntegrationCatalogSections';
+import type { ApiIntegrationCatalogIntegrationsSearchParams } from '../../../routes/searchParams';
 import styles from '../../../shell/SidePanel.module.css';
+
+/**
+ * The Integrations section's own primary-sidebar content: Protocol / Classification facets plus a
+ * "crosses a boundary" toggle over the Data Flow register, replacing the plain "Sections" nav list
+ * for this section only — mirrors `../../risk-compliance/sections/RiskComplianceSidebar.tsx`'s
+ * `RisksSidebarContent`. Facet values come straight off the Data Flow relation schema's own
+ * `protocol`/`data_classification` select-field options; the Claude Design reference's `ICSidebar`
+ * (`ic.jsx`) also facets by Style, Health, and Adapter, but those have no analog on this schema (no
+ * backing data source — see `ApiIntegrationCatalogIntegrationsScreen.tsx`'s doc comment).
+ */
+const IntegrationsSidebarContent = ({ workspaceSlug }: { workspaceSlug: string }) => {
+  const navigate = useNavigate();
+  const search = useSearch({ strict: false }) as ApiIntegrationCatalogIntegrationsSearchParams;
+
+  const dataFlowConfig = useDataFlowConfig(workspaceSlug);
+  const relationSchemas = useRelationSchemas(workspaceSlug, dataFlowConfig.data != null);
+  const relationSchema = relationSchemas.data?.find(
+    candidate => candidate.id === dataFlowConfig.data?.relationSchemaId
+  );
+  const relations = useRelations(
+    workspaceSlug,
+    { schemaId: dataFlowConfig.data?.relationSchemaId, limit: 500 },
+    { enabled: dataFlowConfig.data != null }
+  );
+  const allRelations = relations.data;
+
+  const fieldOptions = (fieldId: string) => {
+    const field = relationSchema?.fields.find(candidate => candidate.id === fieldId);
+    return field && field.type === 'select' ? (field.options ?? []) : [];
+  };
+
+  const countByValue = useMemo(() => {
+    const build = (fieldId: string) => {
+      const counts = new Map<string, number>();
+      for (const relation of allRelations) {
+        const value = relation[fieldId];
+        if (typeof value === 'string' && value) counts.set(value, (counts.get(value) ?? 0) + 1);
+      }
+      return counts;
+    };
+    return { protocol: build('protocol'), classification: build('data_classification') };
+  }, [allRelations]);
+  const boundaryCount = allRelations.filter(
+    relation => relation.cross_boundary === 'cross-boundary'
+  ).length;
+
+  const patchSearch = (patch: Partial<ApiIntegrationCatalogIntegrationsSearchParams>) =>
+    navigate({
+      to: IC_RAIL_PATHS[IC_INTEGRATIONS_ID],
+      params: { workspaceSlug },
+      search: (previous: Record<string, unknown>) => ({ ...previous, ...patch })
+    });
+
+  const hasAnySelection = !!search.protocol || !!search.classification || !!search.boundary;
+  const clearAll = () =>
+    patchSearch({ protocol: undefined, classification: undefined, boundary: undefined });
+
+  if (!dataFlowConfig.data) {
+    return <div className={`${styles.emptyState} dim`}>No Data Flow relation is configured.</div>;
+  }
+
+  return (
+    <>
+      <TreeRow
+        icon={<TbPlugConnected size={12} />}
+        label="All integrations"
+        testId="integration-facet-all"
+        active={!hasAnySelection}
+        onClick={clearAll}
+        trailing={<span className="dim mono">{allRelations.length}</span>}
+      />
+      <TreeRow
+        icon={<TbAlertTriangle size={12} />}
+        label="Crosses a boundary"
+        testId="integration-facet-boundary"
+        active={!!search.boundary}
+        onClick={() => patchSearch({ boundary: search.boundary ? undefined : '1' })}
+        trailing={<span className="dim mono">{boundaryCount}</span>}
+      />
+      <SidebarGroupLabel>Protocol</SidebarGroupLabel>
+      {fieldOptions('protocol').map(option => (
+        <TreeRow
+          key={option.value}
+          icon={<TbTag size={12} />}
+          label={option.label}
+          testId={`integration-facet-protocol-${option.value}`}
+          active={search.protocol === option.value}
+          onClick={() =>
+            patchSearch({ protocol: search.protocol === option.value ? undefined : option.value })
+          }
+          trailing={
+            <span className="dim mono">{countByValue.protocol.get(option.value) ?? 0}</span>
+          }
+        />
+      ))}
+      <SidebarGroupLabel>Classification</SidebarGroupLabel>
+      {fieldOptions('data_classification').map(option => (
+        <TreeRow
+          key={option.value}
+          icon={<TbTag size={12} />}
+          label={option.label}
+          testId={`integration-facet-classification-${option.value}`}
+          active={search.classification === option.value}
+          onClick={() =>
+            patchSearch({
+              classification: search.classification === option.value ? undefined : option.value
+            })
+          }
+          trailing={
+            <span className="dim mono">{countByValue.classification.get(option.value) ?? 0}</span>
+          }
+        />
+      ))}
+    </>
+  );
+};
 
 /**
  * Section-dependent primary sidebar for the API & Integration Catalog app: navigation between the
@@ -20,9 +143,10 @@ import styles from '../../../shell/SidePanel.module.css';
  * `../../data-stewardship/sections/DataStewardshipSidebar.tsx`'s `!enabled` empty state and its
  * fallback "Sections" nav list.
  *
- * This is a placeholder for the scaffold: APIs / Integrations / Sync / Impact each render only
- * this shared nav list for now. Real per-section facet content lands in later sub-issues of #3150
- * (#3316-#3320).
+ * The Integrations section replaces this nav list with its own facet content
+ * (`IntegrationsSidebarContent`) — mirrors `RiskComplianceSidebar.tsx`'s Risks/Controls facet
+ * sections. APIs / Sync / Impact still fall through to the plain nav list until their own
+ * sub-issues of #3150 add facets.
  */
 export const ApiIntegrationCatalogSidebar = ({
   workspaceSlug,
@@ -43,6 +167,8 @@ export const ApiIntegrationCatalogSidebar = ({
           <div className={`${styles.emptyState} dim`}>
             API & Integration Catalog is not enabled.
           </div>
+        ) : activeSection === IC_INTEGRATIONS_ID ? (
+          <IntegrationsSidebarContent workspaceSlug={workspaceSlug} />
         ) : (
           <>
             <SidebarGroupLabel>Sections</SidebarGroupLabel>

@@ -654,8 +654,8 @@
       (@id:ar.integrations.api-specification-sync) is valid (the required API entity schema binding resolved) — this
       promotes `api-specification` from a capability-only binding (configurable in workspace settings but with no
       rail of its own) to a full application; it remains the same capability the Entities app's API artifact detail
-      views already read. Overview, Integrations, Sync, and Impact remain scaffolded placeholders pending their own
-      sub-issues of the API & Integration Catalog epic; APIs has its real content (below).
+      views already read. Overview, Sync, and Impact remain scaffolded placeholders pending their own sub-issues of
+      the API & Integration Catalog epic; APIs and Integrations have their real content (below).
 
         - @id:ar.api-integration-catalog.overview The Overview section (the app switcher's landing section) is
           scaffolded as a placeholder pending its own APIs/integrations/health catalog-landing content.
@@ -672,8 +672,25 @@
           operations/messages list, and a raw-source preview dialog — reusing the same viewer as the Entities app's
           API artifact detail tab rather than a separate implementation.
 
-        - @id:ar.api-integration-catalog.integrations The Integrations section is scaffolded as a placeholder
-          pending its own integration relations and adapters content.
+        - @id:ar.api-integration-catalog.integrations The Integrations section lists every `Data Flow` typed relation
+          in the workspace (the same relation modeled for Data Stewardship's classification views) — source and
+          destination system, protocol, data classification, count of carried Data Entities, whether the flow
+          crosses a residency boundary, owner, and (when resolvable) the registered API either endpoint provides or
+          consumes — rather than a separate integration-relation model. Above the table, four stat tiles summarize
+          relation count and protocols in use, boundary-crossing count, restricted/highly-sensitive classification
+          count, and how many relations resolve to a registered API; the section's own primary sidebar replaces the
+          app's plain section nav with Protocol and Classification facets plus a "crosses a boundary" toggle (each
+          option showing its count, state kept in the URL), and the table itself is additionally searchable by flow,
+          protocol, or classification and sortable by flow, protocol, classification, or boundary. A row click opens
+          a detail drawer with the flow's endpoints (linking to their entity records), direction, protocol,
+          classification, carried Data Entities, owner, and the shared Data Flow governance fields (regulatory tags,
+          processing purposes, source/destination residency); when either endpoint provides or consumes a registered
+          API (via the `Provides API`/`Consumes API` typed relations), the drawer's footer links into the same
+          shared spec drawer the APIs section uses (@id:ar.api-integration-catalog.apis). There are no
+          adapter/health/latency/volume columns and no "relations per adapter" breakdown, matching the epic's
+          explicit non-goal of not being an API gateway or runtime observability tool; there is also no quick-create
+          action for new relations, since no generic schema-pre-filled quick-create flow exists in this codebase to
+          wire it to (the APIs section's own "Register API" action was dropped for the same reason).
 
         - @id:ar.api-integration-catalog.sync The Sync section is scaffolded as a placeholder pending its own
           ingestion/sync status, failures, and revisions content (blocked on the integration sync control center).
