@@ -82,7 +82,9 @@ export const ApiOperationsTable = ({
       </Table.Head>
       <Table.Body>
         {sorted.length === 0 ? (
-          <Table.EmptyRow colSpan={4}>{isLoading ? 'Loading operations…' : emptyLabel}</Table.EmptyRow>
+          <Table.EmptyRow colSpan={4}>
+            {isLoading ? 'Loading operations…' : emptyLabel}
+          </Table.EmptyRow>
         ) : (
           sorted.map(row => (
             <Table.Row key={row.key} onClick={() => onOpenApi(row.api.publicId)}>

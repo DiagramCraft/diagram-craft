@@ -176,7 +176,7 @@ const ApisSidebarContent = ({ workspaceSlug }: { workspaceSlug: string }) => {
   const allItems = apis.data?.items ?? [];
 
   const protocolField = apiSchema?.fields.find(field => field.id === 'protocols');
-  const protocolOptions = protocolField?.type === 'select' ? protocolField.options ?? [] : [];
+  const protocolOptions = protocolField?.type === 'select' ? (protocolField.options ?? []) : [];
 
   const protocolCounts = useMemo(() => {
     const counts = new Map<string, number>();
@@ -217,7 +217,8 @@ const ApisSidebarContent = ({ workspaceSlug }: { workspaceSlug: string }) => {
     });
 
   const hasAnySelection = !!search.protocol || !!search.lifecycle || !!search.owner;
-  const clearAll = () => patchSearch({ protocol: undefined, lifecycle: undefined, owner: undefined });
+  const clearAll = () =>
+    patchSearch({ protocol: undefined, lifecycle: undefined, owner: undefined });
 
   if (configurations.isLoading || apis.isLoading) return null;
 

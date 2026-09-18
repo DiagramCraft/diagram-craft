@@ -82,8 +82,18 @@ const API_SCHEMA = {
       ]
     },
     { id: 'api_version', name: 'API Version', type: 'text' },
-    { id: 'providers', name: 'Provided by', type: 'typedRelation', relationSchemaId: 'provides-api' },
-    { id: 'consumers', name: 'Consumed by', type: 'typedRelation', relationSchemaId: 'consumes-api' }
+    {
+      id: 'providers',
+      name: 'Provided by',
+      type: 'typedRelation',
+      relationSchemaId: 'provides-api'
+    },
+    {
+      id: 'consumers',
+      name: 'Consumed by',
+      type: 'typedRelation',
+      relationSchemaId: 'consumes-api'
+    }
   ]
 };
 

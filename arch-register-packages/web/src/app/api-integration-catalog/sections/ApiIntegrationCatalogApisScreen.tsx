@@ -86,7 +86,8 @@ export const ApiIntegrationCatalogApisScreen = () => {
 
   const apiIds = useMemo(() => filtered.map(entity => entity._uid), [filtered]);
   const apiRefs = useMemo(
-    () => filtered.map(entity => ({ id: entity._uid, publicId: entity._publicId, name: entity._name })),
+    () =>
+      filtered.map(entity => ({ id: entity._uid, publicId: entity._publicId, name: entity._name })),
     [filtered]
   );
   const operationsCounts = useApiOperationsCounts(workspaceSlug, apiIds);
@@ -148,7 +149,9 @@ export const ApiIntegrationCatalogApisScreen = () => {
 
       <Tabs.Root
         value={view}
-        onValueChange={value => patchSearch({ view: value === 'catalog' ? undefined : 'operations' })}
+        onValueChange={value =>
+          patchSearch({ view: value === 'catalog' ? undefined : 'operations' })
+        }
       >
         <Tabs.List aria-label="APIs view">
           <Tabs.Trigger value="catalog">Catalog</Tabs.Trigger>
@@ -193,7 +196,12 @@ export const ApiIntegrationCatalogApisScreen = () => {
               <Table.SortableHeaderCell sortKey="consumers" sort={sort} onSort={toggleSort} numeric>
                 Consumers
               </Table.SortableHeaderCell>
-              <Table.SortableHeaderCell sortKey="operations" sort={sort} onSort={toggleSort} numeric>
+              <Table.SortableHeaderCell
+                sortKey="operations"
+                sort={sort}
+                onSort={toggleSort}
+                numeric
+              >
                 Operations
               </Table.SortableHeaderCell>
             </Table.Row>
@@ -221,7 +229,10 @@ export const ApiIntegrationCatalogApisScreen = () => {
                     <Table.Cell>{apiFieldValue(apiSchema, entity, 'api_version')}</Table.Cell>
                     <Table.Cell>
                       {entity._lifecycle ? (
-                        <StatusChip value={entity._lifecycle.id} lifecycleStates={lifecycleStates} />
+                        <StatusChip
+                          value={entity._lifecycle.id}
+                          lifecycleStates={lifecycleStates}
+                        />
                       ) : (
                         <span className="dim">—</span>
                       )}

@@ -48,13 +48,18 @@ export const useApiOperationsFeed = (
         entry.entityId,
         entry.artifactId ?? '',
         entry.revisionId ?? '',
-        { limit: 200, offset: 0, ...(filters.deprecated != null ? { deprecated: filters.deprecated } : {}) },
+        {
+          limit: 200,
+          offset: 0,
+          ...(filters.deprecated != null ? { deprecated: filters.deprecated } : {})
+        },
         enabled && entry.artifactId != null && entry.revisionId != null
       )
     )
   });
 
-  const isLoading = enabled && (revisionsLoading || projectionQueries.some(query => query.isPending));
+  const isLoading =
+    enabled && (revisionsLoading || projectionQueries.some(query => query.isPending));
 
   const rows = useMemo(() => {
     if (!enabled) return [];

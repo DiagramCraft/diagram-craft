@@ -267,7 +267,13 @@ describe('ApiIntegrationCatalogApisScreen', () => {
   it('shows a flat cross-API Operations table and navigates to the right API on row click', async () => {
     mocks.search = { view: 'operations' };
     mocks.apiSpecificationRevisions.mockResolvedValue([
-      { revision: { id: 'rev-1' }, isCurrent: true, itemCount: 1, protocol: 'openapi', status: 'current' }
+      {
+        revision: { id: 'rev-1' },
+        isCurrent: true,
+        itemCount: 1,
+        protocol: 'openapi',
+        status: 'current'
+      }
     ]);
     mocks.artifactsList.mockResolvedValue({
       artifacts: [
@@ -324,5 +330,4 @@ describe('ApiIntegrationCatalogApisScreen', () => {
       })
     );
   });
-
 });

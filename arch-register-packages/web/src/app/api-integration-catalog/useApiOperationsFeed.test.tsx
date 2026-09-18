@@ -151,7 +151,10 @@ describe('useApiOperationsFeed', () => {
   });
 
   it('forwards the deprecated filter server-side', async () => {
-    mocks.artifactsList.mockResolvedValue({ artifacts: [artifact('artifact-1')], status: 'current' });
+    mocks.artifactsList.mockResolvedValue({
+      artifacts: [artifact('artifact-1')],
+      status: 'current'
+    });
     mocks.revisionsList.mockResolvedValue([
       { revision: { id: 'rev-1' }, isCurrent: true, itemCount: 1 }
     ]);

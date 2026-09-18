@@ -21,8 +21,18 @@ const API_SCHEMA: EntitySchema = {
   id: 'api',
   name: 'API',
   fields: [
-    { id: 'providers', name: 'Provided by', type: 'typedRelation', relationSchemaId: 'provides-api' },
-    { id: 'consumers', name: 'Consumed by', type: 'typedRelation', relationSchemaId: 'consumes-api' },
+    {
+      id: 'providers',
+      name: 'Provided by',
+      type: 'typedRelation',
+      relationSchemaId: 'provides-api'
+    },
+    {
+      id: 'consumers',
+      name: 'Consumed by',
+      type: 'typedRelation',
+      relationSchemaId: 'consumes-api'
+    },
     { id: 'api_version', name: 'API Version', type: 'text' }
   ]
 } as unknown as EntitySchema;
@@ -52,7 +62,11 @@ describe('resolveTypedRelationSchemaId', () => {
 
 describe('groupByApiId', () => {
   it('groups relations by their API (_out) endpoint', () => {
-    const relations = [relation('r1', 'api-1', 'e1'), relation('r2', 'api-1', 'e2'), relation('r3', 'api-2', 'e3')];
+    const relations = [
+      relation('r1', 'api-1', 'e1'),
+      relation('r2', 'api-1', 'e2'),
+      relation('r3', 'api-2', 'e3')
+    ];
     const grouped = groupByApiId(relations);
     expect(grouped.get('api-1')).toHaveLength(2);
     expect(grouped.get('api-2')).toHaveLength(1);
