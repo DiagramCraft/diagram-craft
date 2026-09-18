@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { createApiTest, expect } from '../helpers/fixtures';
 import { seedIds } from '../helpers/seedHelper';
 
