@@ -94,6 +94,7 @@ const PrincipalEditor = ({
 
 export const PropertyRow = ({
   field,
+  label,
   value,
   editing,
   editValue,
@@ -115,6 +116,7 @@ export const PropertyRow = ({
   onTypedRelationToggleRemove
 }: {
   field: EntitySchema['fields'][number];
+  label?: string;
   value: unknown;
   editing: boolean;
   editValue: unknown;
@@ -518,7 +520,7 @@ export const PropertyRow = ({
   return (
     <div className={`${styles.propRow} ${hasError ? styles.propRowError : ''}`}>
       <div className={styles.propLabel}>
-        {field.name}
+        {label ?? field.name}
         <span className={styles.propType}>{typeLabel}</span>
         {field.requirementLevel === 'optional' && (
           <span className={styles.propOptional}>(optional)</span>

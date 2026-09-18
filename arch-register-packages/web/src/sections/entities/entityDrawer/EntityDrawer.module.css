@@ -1,0 +1,95 @@
+.badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.badgeWithLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.badgeLabel {
+  color: var(--base-fg-more-dim);
+  font-size: 11px;
+}
+
+.badgeTags,
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.sections {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.section {
+  border-bottom: 1px solid var(--panel-border);
+  padding-bottom: 12px;
+}
+
+.section:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.sectionHeading,
+.sectionTitle {
+  margin: 0 0 8px;
+  color: var(--base-fg);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.sectionToggle {
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.sectionToggle::after {
+  content: "⌄";
+  float: right;
+  color: var(--base-fg-more-dim);
+}
+
+.sectionToggle[aria-expanded="false"]::after {
+  content: "›";
+}
+
+.sectionContent {
+  min-width: 0;
+}
+
+.item + .item {
+  margin-top: 8px;
+}
+
+.metadataRow {
+  display: grid;
+  grid-template-columns: minmax(90px, 0.7fr) minmax(0, 1.3fr);
+  gap: 10px;
+  align-items: start;
+  padding: 4px 0;
+  color: var(--base-fg);
+  font-size: 12px;
+}
+
+.metadataLabel {
+  color: var(--base-fg-more-dim);
+}
+
+.empty {
+  color: var(--base-fg-more-dim);
+  font-size: 12px;
+}
