@@ -58,8 +58,19 @@ export const useApiOperationsFeed = (
     )
   });
 
+  // A query stays permanently disabled — and so permanently `isPending` — for an entry that never
+  // resolved an `artifactId`/`revisionId` (e.g. an artifact whose only revision was omitted for
+  // lacking a projection, like the seeded `Customer API`); only count queries actually expected to
+  // fetch, or a feed with no deprecated/matching operations would report `isLoading` forever.
   const isLoading =
-    enabled && (revisionsLoading || projectionQueries.some(query => query.isPending));
+    enabled &&
+    (revisionsLoading ||
+      projectionQueries.some(
+        (query, index) =>
+          entries[index]?.artifactId != null &&
+          entries[index]?.revisionId != null &&
+          query.isPending
+      ));
 
   const rows = useMemo(() => {
     if (!enabled) return [];

@@ -41,12 +41,12 @@ type SortKey = 'name' | 'operations' | 'providers' | 'consumers';
  * Facets narrow "which APIs are in scope" and apply across both sub-views — switching between
  * Catalog/Operations is a different lens on the same scope, not a different filter.
  *
- * A cross-API "Deprecated operations" view (also #3345) was pulled from this iteration after
- * fanning the projection query out across every API in scope surfaced a 409 from the artifacts
- * revisions endpoint (`apiSpecificationOperations.ts`'s `listApiSpecificationRevisions` — now
- * fixed to omit an unprojected revision instead of 409ing the whole list). Re-adding that view is
- * tracked in #3347; `useApiOperationsFeed`'s `filters.deprecated` and `ApiOperationsTable` are
- * already generic and ready for it.
+ * A third, cross-API "Deprecated operations" view (also #3345) was briefly pulled from that
+ * iteration after fanning the projection query out across every API in scope surfaced a 409 from
+ * the artifacts revisions endpoint (`apiSpecificationOperations.ts`'s
+ * `listApiSpecificationRevisions` — now fixed to omit an unprojected revision instead of 409ing
+ * the whole list) and re-added in #3347, reusing the same `useApiOperationsFeed`/
+ * `ApiOperationsTable` as the Operations view with `filters.deprecated: true`.
  */
 export const ApiIntegrationCatalogApisScreen = () => {
   const { workspaceSlug, apiId } = useParams({ strict: false }) as {
@@ -100,6 +100,12 @@ export const ApiIntegrationCatalogApisScreen = () => {
   const consumersByApi = useMemo(() => groupByApiId(consumers), [consumers]);
 
   const operationsFeed = useApiOperationsFeed(workspaceSlug, apiRefs, {}, view === 'operations');
+  const deprecatedFeed = useApiOperationsFeed(
+    workspaceSlug,
+    apiRefs,
+    { deprecated: true },
+    view === 'deprecated'
+  );
 
   const comparators: Record<SortKey, (a: EntityRecord, b: EntityRecord) => number> = {
     name: (a, b) => a._name.localeCompare(b._name),
@@ -153,12 +159,15 @@ export const ApiIntegrationCatalogApisScreen = () => {
       <Tabs.Root
         value={view}
         onValueChange={value =>
-          patchSearch({ view: value === 'catalog' ? undefined : 'operations' })
+          patchSearch({
+            view: value === 'catalog' ? undefined : (value as 'operations' | 'deprecated')
+          })
         }
       >
         <Tabs.List aria-label="APIs view">
           <Tabs.Trigger value="catalog">Catalog</Tabs.Trigger>
           <Tabs.Trigger value="operations">Operations</Tabs.Trigger>
+          <Tabs.Trigger value="deprecated">Deprecated operations</Tabs.Trigger>
         </Tabs.List>
       </Tabs.Root>
 
@@ -174,12 +183,16 @@ export const ApiIntegrationCatalogApisScreen = () => {
         />
       </div>
 
-      {view === 'operations' ? (
+      {view === 'operations' || view === 'deprecated' ? (
         <ApiOperationsTable
-          rows={operationsFeed.rows}
-          isLoading={operationsFeed.isLoading}
+          rows={view === 'operations' ? operationsFeed.rows : deprecatedFeed.rows}
+          isLoading={view === 'operations' ? operationsFeed.isLoading : deprecatedFeed.isLoading}
           q={q}
-          emptyLabel="No operations match these filters."
+          emptyLabel={
+            view === 'operations'
+              ? 'No operations match these filters.'
+              : 'No deprecated operations match these filters.'
+          }
           onOpenApi={openApi}
         />
       ) : (

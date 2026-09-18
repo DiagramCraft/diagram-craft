@@ -48,9 +48,14 @@ export const useApiSpecificationRevisions = (
     )
   });
 
+  // `revisionQueries` stays permanently disabled — and so permanently `isPending` — for any entity
+  // with no `api-specification` artifact at all (`artifactId == null`); only count queries actually
+  // expected to fetch, or a workspace with even one such API would report `isLoading` forever.
   const isLoading =
     artifactsQueries.some(query => query.isPending) ||
-    revisionQueries.some(query => query.isPending);
+    revisionQueries.some(
+      (query, index) => primaryArtifacts[index]?.artifactId != null && query.isPending
+    );
 
   const entries = useMemo(
     () =>
