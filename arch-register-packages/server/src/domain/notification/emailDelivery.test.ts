@@ -18,8 +18,13 @@ const message = {
   idempotencyKey: 'notification-delivery:1'
 };
 
-const transporterForTest = () =>
-  ({ sendMail: vi.fn() }) as unknown as ConstructorParameters<typeof SmtpEmailProvider>[0];
+const transporterForTest = () => {
+  const sendMail = vi.fn<() => Promise<{ messageId: string }>>();
+  return {
+    transporter: { sendMail } as unknown as ConstructorParameters<typeof SmtpEmailProvider>[0],
+    sendMail
+  };
+};
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -44,21 +49,14 @@ describe('email delivery helpers', () => {
 
 describe('SmtpEmailProvider', () => {
   it('sends the email contents and returns the SMTP message ID', async () => {
-    const transporter = transporterForTest();
-    vi.mocked(transporter.sendMail).mockResolvedValue({
-      messageId: '<message-1@example.com>',
-      envelope: { from: message.from, to: [message.to] },
-      accepted: [message.to],
-      rejected: [],
-      pending: [],
-      response: '250 OK'
-    });
+    const { transporter, sendMail } = transporterForTest();
+    sendMail.mockResolvedValue({ messageId: '<message-1@example.com>' });
     const provider = new SmtpEmailProvider(transporter);
 
     await expect(provider.send(message, new AbortController().signal)).resolves.toEqual({
       id: '<message-1@example.com>'
     });
-    expect(transporter.sendMail).toHaveBeenCalledWith({
+    expect(sendMail).toHaveBeenCalledWith({
       from: message.from,
       to: message.to,
       subject: message.subject,
@@ -76,8 +74,8 @@ describe('SmtpEmailProvider', () => {
     });
 
     for (const error of [transientResponse, connectionFailure]) {
-      const transporter = transporterForTest();
-      vi.mocked(transporter.sendMail).mockRejectedValue(error);
+      const { transporter, sendMail } = transporterForTest();
+      sendMail.mockRejectedValue(error);
       const provider = new SmtpEmailProvider(transporter);
 
       await expect(provider.send(message, new AbortController().signal)).rejects.toBeInstanceOf(
@@ -87,8 +85,8 @@ describe('SmtpEmailProvider', () => {
   });
 
   it('marks permanent SMTP responses as permanent failures', async () => {
-    const transporter = transporterForTest();
-    vi.mocked(transporter.sendMail).mockRejectedValue(
+    const { transporter, sendMail } = transporterForTest();
+    sendMail.mockRejectedValue(
       Object.assign(new Error('authentication failed'), { responseCode: 535 })
     );
     const provider = new SmtpEmailProvider(transporter);
