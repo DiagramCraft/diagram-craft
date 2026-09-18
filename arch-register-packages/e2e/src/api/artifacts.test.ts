@@ -522,17 +522,43 @@ test('a revision written outside the normal ingestion path is omitted, not a 409
 }) => {
   // Reproduces #3347: seed data that calls `db.artifact.createRevision` directly (bypassing the
   // processor that writes the `api-specification` projection row) must not make every other,
-  // properly-ingested revision of the same artifact unlistable.
-  const entityId = '00000000-0000-0000-0000-e2e000000101';
-  const workspaceId = seedIds.workspace.default;
+  // properly-ingested revision of the same artifact unlistable. Uses its own workspace/schema (the
+  // pattern the preceding test also uses) rather than 'default', since other tests in this file
+  // rebind 'default' workspace's `api-specification` capability configuration.
+  const workspace = await orpc.workspaces.create({
+    body: { name: `Unprocessed revision ${randomUUID()}`, badge: 'UPR' }
+  });
+  const schema = await orpc.schemas.create({
+    params: { workspace: workspace.url_slug },
+    body: {
+      name: 'Unprocessed Revision API Schema',
+      fields: [
+        { id: 'api_type', name: 'API type', type: 'text' },
+        { id: 'api_version', name: 'API version', type: 'text' }
+      ]
+    }
+  });
+  await orpc.config.capabilityConfigurations.upsert({
+    params: { workspace: workspace.url_slug, type: 'api-specification' },
+    body: { bindings: { api: { target: { kind: 'entity_schema', id: schema.id } } } }
+  });
+  const entity = await orpc.entities.create({
+    params: { workspace: workspace.url_slug },
+    body: {
+      _schemaId: schema.id,
+      _name: 'Unprocessed Revision API',
+      api_type: 'openapi',
+      api_version: '1.0.0'
+    } as never
+  });
 
   const artifact = await orpc.artifacts.create({
-    params: { workspace: 'default', entityId },
+    params: { workspace: workspace.url_slug, entityId: entity._uid },
     body: { artifactType: 'api-specification', kind: 'document', mediaType: 'application/json' }
   });
 
   const goodRevision = await orpc.artifacts.createRevision({
-    params: { workspace: 'default', entityId, artifactId: artifact.id },
+    params: { workspace: workspace.url_slug, entityId: entity._uid, artifactId: artifact.id },
     body: {
       mediaType: 'application/json',
       sourceRevision: 'good-1',
@@ -553,7 +579,7 @@ test('a revision written outside the normal ingestion path is omitted, not a 409
   });
   await server.db.artifact.createRevision({
     id: randomUUID(),
-    workspace: workspaceId,
+    workspace: workspace.id,
     artifact_id: artifact.id,
     source_revision: 'unprocessed-1',
     checksum: createHash('sha256').update(unprocessedContent, 'utf8').digest('hex'),
@@ -563,7 +589,7 @@ test('a revision written outside the normal ingestion path is omitted, not a 409
   });
 
   const revisions = await orpc.artifacts.listApiSpecificationRevisions({
-    params: { workspace: 'default', entityId, artifactId: artifact.id }
+    params: { workspace: workspace.url_slug, entityId: entity._uid, artifactId: artifact.id }
   });
   expect(revisions).toHaveLength(1);
   expect(revisions[0]).toMatchObject({
