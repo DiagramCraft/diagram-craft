@@ -16,6 +16,7 @@ const mocks = vi.hoisted(() => ({
   apiSpecificationRevisions: vi.fn(),
   apiSpecification: vi.fn(),
   relationsListForEntity: vi.fn(),
+  relationsList: vi.fn(),
   params: { workspaceSlug: 'ws-1' } as { workspaceSlug: string; apiId?: string },
   search: {} as Record<string, unknown>
 }));
@@ -39,7 +40,7 @@ vi.mock('../../../lib/orpcClient', () => ({
   orpcClient: {
     entities: { list: mocks.entityList, get: mocks.entityGet },
     schemas: { list: mocks.schemasList },
-    relations: { listForEntity: mocks.relationsListForEntity },
+    relations: { listForEntity: mocks.relationsListForEntity, list: mocks.relationsList },
     artifacts: {
       list: mocks.artifactsList,
       listApiSpecificationRevisions: mocks.apiSpecificationRevisions,
@@ -136,7 +137,49 @@ describe('ApiIntegrationCatalogApisScreen', () => {
     });
     mocks.artifactsList.mockResolvedValue({ artifacts: [], status: 'not_configured' });
     mocks.apiSpecificationRevisions.mockResolvedValue([]);
+    mocks.apiSpecification.mockResolvedValue({
+      revision: { revision: { id: 'rev-1' }, isCurrent: true, itemCount: 0 },
+      items: [],
+      total: 0,
+      limit: 200,
+      offset: 0
+    });
     mocks.relationsListForEntity.mockResolvedValue({ outgoing: [], incoming: [] });
+    mocks.relationsList.mockImplementation(({ query }: { query: { schemaId?: string } }) => {
+      if (query.schemaId === 'provides-api') {
+        return Promise.resolve({
+          items: [
+            {
+              _uid: 'rel-provides-1',
+              _schema: { id: 'provides-api', name: 'Provides API' },
+              _in: { id: 'system-1', name: 'Orders System' },
+              _out: { id: 'api-1', name: 'Orders API' }
+            }
+          ],
+          total: 1
+        });
+      }
+      if (query.schemaId === 'consumes-api') {
+        return Promise.resolve({
+          items: [
+            {
+              _uid: 'rel-consumes-1',
+              _schema: { id: 'consumes-api', name: 'Consumes API' },
+              _in: { id: 'system-2', name: 'Checkout System' },
+              _out: { id: 'api-1', name: 'Orders API' }
+            },
+            {
+              _uid: 'rel-consumes-2',
+              _schema: { id: 'consumes-api', name: 'Consumes API' },
+              _in: { id: 'system-3', name: 'Fulfillment System' },
+              _out: { id: 'api-1', name: 'Orders API' }
+            }
+          ],
+          total: 2
+        });
+      }
+      return Promise.resolve({ items: [], total: 0 });
+    });
     mocks.entityGet.mockResolvedValue({
       _uid: 'api-1',
       _publicId: 'API-001',
@@ -194,5 +237,97 @@ describe('ApiIntegrationCatalogApisScreen', () => {
     await renderScreen();
     expect(container.textContent).toContain('Payments API');
     expect(container.textContent).not.toContain('Orders API');
+  });
+
+  it('shows Providers/Consumers columns and sorts by consumers', async () => {
+    await renderScreen();
+    expect(container.textContent).toContain('Orders System');
+    expect(container.textContent).toContain('Checkout System');
+    expect(container.textContent).toContain('Fulfillment System');
+
+    const sortButton = [...container.querySelectorAll('th')].find(th =>
+      th.textContent?.includes('Consumers')
+    );
+    expect(sortButton).toBeDefined();
+    await act(async () => {
+      sortButton!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    const rowsAfterSort = [...container.querySelectorAll('tbody tr')].map(tr => tr.textContent);
+    // api-1 (2 consumers) should sort ahead of api-2 (0 consumers) in descending order.
+    expect(rowsAfterSort[0]).toContain('Orders API');
+  });
+
+  it('narrows the catalog by protocol/lifecycle/owner facet params', async () => {
+    mocks.search = { protocol: 'asyncapi' };
+    await renderScreen();
+    expect(container.textContent).toContain('Payments API');
+    expect(container.textContent).not.toContain('Orders API');
+  });
+
+  it('shows a flat cross-API Operations table and navigates to the right API on row click', async () => {
+    mocks.search = { view: 'operations' };
+    mocks.apiSpecificationRevisions.mockResolvedValue([
+      {
+        revision: { id: 'rev-1' },
+        isCurrent: true,
+        itemCount: 1,
+        protocol: 'openapi',
+        status: 'current'
+      }
+    ]);
+    mocks.artifactsList.mockResolvedValue({
+      artifacts: [
+        {
+          id: 'artifact-1',
+          artifactType: 'api-specification',
+          status: 'current',
+          createdAt: '2024-01-01T00:00:00Z'
+        }
+      ],
+      status: 'current'
+    });
+    mocks.apiSpecification.mockResolvedValue({
+      revision: { revision: { id: 'rev-1' }, isCurrent: true, itemCount: 1 },
+      items: [
+        {
+          id: 'op-1',
+          itemKey: 'op-1',
+          revisionId: 'rev-1',
+          protocol: 'openapi',
+          itemKind: 'operation',
+          path: '/orders',
+          channel: null,
+          action: 'get',
+          identifier: 'getOrders',
+          declaredIdentifier: null,
+          summary: null,
+          description: null,
+          tags: [],
+          deprecated: false,
+          parameters: []
+        }
+      ],
+      total: 1,
+      limit: 200,
+      offset: 0
+    });
+
+    await renderScreen();
+    expect(container.textContent).toContain('GET');
+    expect(container.textContent).toContain('/orders');
+
+    const row = [...container.querySelectorAll('tbody tr')].find(tr =>
+      tr.textContent?.includes('/orders')
+    );
+    expect(row).toBeDefined();
+    await act(async () => {
+      row!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    expect(mocks.navigate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: '/$workspaceSlug/api-integration-catalog/apis/$apiId',
+        params: { workspaceSlug: 'ws-1', apiId: 'API-001' }
+      })
+    );
   });
 });

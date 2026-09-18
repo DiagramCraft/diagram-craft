@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { createApiTest, expect } from '../helpers/fixtures';
 import { seedIds } from '../helpers/seedHelper';
 
@@ -514,4 +514,86 @@ test('artifact registration resolves a workspace capability binding', async ({ o
     body: { artifactType: 'api-specification', kind: 'document', mediaType: 'application/json' }
   });
   expect(artifact).toMatchObject({ artifactType: 'api-specification', status: 'pending' });
+});
+
+test('a revision written outside the normal ingestion path is omitted, not a 409 for the whole list', async ({
+  orpc,
+  server
+}) => {
+  // Reproduces #3347: seed data that calls `db.artifact.createRevision` directly (bypassing the
+  // processor that writes the `api-specification` projection row) must not make every other,
+  // properly-ingested revision of the same artifact unlistable. Uses its own workspace/schema (the
+  // pattern the preceding test also uses) rather than 'default', since other tests in this file
+  // rebind 'default' workspace's `api-specification` capability configuration.
+  const workspace = await orpc.workspaces.create({
+    body: { name: `Unprocessed revision ${randomUUID()}`, badge: 'UPR' }
+  });
+  const schema = await orpc.schemas.create({
+    params: { workspace: workspace.url_slug },
+    body: {
+      name: 'Unprocessed Revision API Schema',
+      fields: [
+        { id: 'api_type', name: 'API type', type: 'text' },
+        { id: 'api_version', name: 'API version', type: 'text' }
+      ]
+    }
+  });
+  await orpc.config.capabilityConfigurations.upsert({
+    params: { workspace: workspace.url_slug, type: 'api-specification' },
+    body: { bindings: { api: { target: { kind: 'entity_schema', id: schema.id } } } }
+  });
+  const entity = await orpc.entities.create({
+    params: { workspace: workspace.url_slug },
+    body: {
+      _schemaId: schema.id,
+      _name: 'Unprocessed Revision API',
+      api_type: 'openapi',
+      api_version: '1.0.0'
+    } as never
+  });
+
+  const artifact = await orpc.artifacts.create({
+    params: { workspace: workspace.url_slug, entityId: entity._uid },
+    body: { artifactType: 'api-specification', kind: 'document', mediaType: 'application/json' }
+  });
+
+  const goodRevision = await orpc.artifacts.createRevision({
+    params: { workspace: workspace.url_slug, entityId: entity._uid, artifactId: artifact.id },
+    body: {
+      mediaType: 'application/json',
+      sourceRevision: 'good-1',
+      content: JSON.stringify({
+        openapi: '3.1.0',
+        info: { title: 'Test', version: '1.0.0' },
+        paths: {
+          '/pets': { get: { operationId: 'listPets', responses: { '200': { description: 'ok' } } } }
+        }
+      })
+    }
+  });
+
+  const unprocessedContent = JSON.stringify({
+    openapi: '3.1.0',
+    info: { title: 'Test', version: '0.9.0' },
+    paths: {}
+  });
+  await server.db.artifact.createRevision({
+    id: randomUUID(),
+    workspace: workspace.id,
+    artifact_id: artifact.id,
+    source_revision: 'unprocessed-1',
+    checksum: createHash('sha256').update(unprocessedContent, 'utf8').digest('hex'),
+    media_type: 'application/json',
+    content: unprocessedContent,
+    created_at: new Date()
+  });
+
+  const revisions = await orpc.artifacts.listApiSpecificationRevisions({
+    params: { workspace: workspace.url_slug, entityId: entity._uid, artifactId: artifact.id }
+  });
+  expect(revisions).toHaveLength(1);
+  expect(revisions[0]).toMatchObject({
+    revision: expect.objectContaining({ id: goodRevision.id, sourceRevision: 'good-1' }),
+    isCurrent: true
+  });
 });

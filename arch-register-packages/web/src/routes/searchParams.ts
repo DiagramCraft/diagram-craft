@@ -731,3 +731,31 @@ export const validateApiIntegrationCatalogIntegrationsSearch = (
   raw: Record<string, unknown>
 ): ApiIntegrationCatalogIntegrationsSearchParams =>
   parseSearchParams(apiIntegrationCatalogIntegrationsSearchSchema, raw);
+
+// API & Integration Catalog apis-section params — facets set by the sidebar's
+// `ApisSidebarContent` (`ApiIntegrationCatalogSidebar.tsx`), mirrors
+// `apiIntegrationCatalogIntegrationsSearchSchema` above (#3345).
+const apiIntegrationCatalogApisSearchSchema = defineSearchParamSchema({
+  q: stringCodec,
+  // `protocols` select-field value on the `api` entity schema (multi-value field; an API matches
+  // when this value is one of its `protocols`).
+  protocol: stringCodec,
+  // `entity._lifecycle.id` — workspace lifecycle-state id.
+  lifecycle: stringCodec,
+  // `entity._owner.id` — owning team/user id. No schema lookup; values come from observed owners.
+  owner: stringCodec,
+  // Switches between the APIs catalog table (the default, undefined) and a flat cross-API
+  // Operations table (#3345). A cross-API Deprecated-operations view was deferred (re-adding it
+  // is tracked in #3347) after the projection fan-out surfaced a 409 from the artifacts revisions
+  // endpoint — now fixed server-side.
+  view: enumCodec(['catalog', 'operations'] as const)
+});
+
+export type ApiIntegrationCatalogApisSearchParams = SearchParamsFromSchema<
+  typeof apiIntegrationCatalogApisSearchSchema
+>;
+
+export const validateApiIntegrationCatalogApisSearch = (
+  raw: Record<string, unknown>
+): ApiIntegrationCatalogApisSearchParams =>
+  parseSearchParams(apiIntegrationCatalogApisSearchSchema, raw);

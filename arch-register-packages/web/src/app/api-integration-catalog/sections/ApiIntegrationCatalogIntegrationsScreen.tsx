@@ -17,6 +17,7 @@ import { resolveApiIntegrationCatalogConfig } from '../apiIntegrationCatalogQuer
 import { useDataFlowConfig } from '../useDataFlowConfig';
 import { relationFieldValue, RESTRICTED_CLASSIFICATIONS } from '../dataFlowRelationDisplay';
 import { computeApiPairCoverage, computeApiPairs, type EndpointRef } from '../apiPairCoverage';
+import { useApiEndpointRelations } from '../apiEndpointRelations';
 import { ApiSpecDrawer } from './ApiSpecDrawer';
 import { IntegrationDrawer } from './IntegrationDrawer';
 import { ApiPairsTable } from './ApiPairsTable';
@@ -26,8 +27,6 @@ import filterStyles from '../../../sections/entities/components/EntityBrowser.mo
 import placeholderStyles from './ApiIntegrationCatalogPlaceholderScreen.module.css';
 import styles from './ApiIntegrationCatalogIntegrationsScreen.module.css';
 
-const PROVIDERS_FIELD = 'providers';
-const CONSUMERS_FIELD = 'consumers';
 const DANGER = 'var(--cmp-fg-danger, #ef4444)';
 const WARN = 'var(--cmp-fg-warning, #eab308)';
 
@@ -81,38 +80,22 @@ export const ApiIntegrationCatalogIntegrationsScreen = () => {
   );
   const allRelations = relations.data;
 
-  // Endpoint → registered API lookup: resolve the `api` schema's `providers`/`consumers`
-  // typed-relation fields to their relation-schema ids (same lookup `ApiSpecDrawer.tsx` does), then
-  // fetch those relations workspace-wide. A Data Flow's endpoints are `System` entities, so looking
+  // Endpoint → registered API lookup: fetch the `Provides API`/`Consumes API` relations
+  // workspace-wide (`useApiEndpointRelations`, shared with `ApiIntegrationCatalogApisScreen.tsx`
+  // and `apiPairCoverage.ts` — #3345). A Data Flow's endpoints are `System` entities, so looking
   // this map up by a flow's `_in.id`/`_out.id` resolves to the API entity that System
   // provides/consumes, if any — mirrors `ApiSpecDrawer`'s `otherEndpoint` pattern without needing
   // the full API entity list.
-  const providersField = apiSchema?.fields.find(field => field.id === PROVIDERS_FIELD);
-  const providersRelationSchemaId =
-    providersField?.type === 'typedRelation' ? providersField.relationSchemaId : null;
-  const consumersField = apiSchema?.fields.find(field => field.id === CONSUMERS_FIELD);
-  const consumersRelationSchemaId =
-    consumersField?.type === 'typedRelation' ? consumersField.relationSchemaId : null;
-
-  const providers = useRelations(
-    workspaceSlug,
-    { schemaId: providersRelationSchemaId ?? undefined, limit: 500 },
-    { enabled: providersRelationSchemaId != null }
-  );
-  const consumers = useRelations(
-    workspaceSlug,
-    { schemaId: consumersRelationSchemaId ?? undefined, limit: 500 },
-    { enabled: consumersRelationSchemaId != null }
-  );
+  const { providers, consumers } = useApiEndpointRelations(workspaceSlug, apiSchema);
 
   const apiByEntityId = useMemo(() => {
     const map = new Map<string, EndpointRef>();
-    for (const relation of [...providers.data, ...consumers.data]) {
+    for (const relation of [...providers, ...consumers]) {
       map.set(relation._in.id, relation._out);
       map.set(relation._out.id, relation._in);
     }
     return map;
-  }, [providers.data, consumers.data]);
+  }, [providers, consumers]);
 
   const registeredApiFor = (relation: RelationRecord): EndpointRef | null =>
     apiByEntityId.get(relation._in.id) ?? apiByEntityId.get(relation._out.id) ?? null;
@@ -120,8 +103,8 @@ export const ApiIntegrationCatalogIntegrationsScreen = () => {
   // Provider × consumer pairs for each registered API and their Data Flow coverage (#3340) — reuses
   // the same `providers`/`consumers`/`allRelations` fetched above, no new queries.
   const pairs = useMemo(
-    () => computeApiPairs(providers.data, consumers.data, allRelations),
-    [providers.data, consumers.data, allRelations]
+    () => computeApiPairs(providers, consumers, allRelations),
+    [providers, consumers, allRelations]
   );
   const coverage = useMemo(() => computeApiPairCoverage(pairs), [pairs]);
 
