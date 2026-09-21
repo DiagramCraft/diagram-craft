@@ -310,8 +310,8 @@ describe('entity drawer configuration', () => {
       }
     } as const;
 
-    const profile = buildDefaultEntityDrawerConfiguration([contractSchema], [configuration]).profiles
-      .contract!;
+    const profile = buildDefaultEntityDrawerConfiguration([contractSchema], [configuration])
+      .profiles.contract!;
 
     expect(profile.header.badges).toEqual([
       { kind: 'field', fieldId: 'contract_type', showLabel: false }

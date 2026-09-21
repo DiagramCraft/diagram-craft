@@ -85,8 +85,6 @@ describe('Vendor Management Contract entity drawer providers', () => {
       ...context(),
       schema: { id: 'other', name: 'Other', fields: [] }
     } as unknown as EntityDrawerProviderContext;
-    expect(
-      provider.supports(otherContext)
-    ).toBe(false);
+    expect(provider.supports(otherContext)).toBe(false);
   });
 });
