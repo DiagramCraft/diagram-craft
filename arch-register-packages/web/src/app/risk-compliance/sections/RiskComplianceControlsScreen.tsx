@@ -697,11 +697,7 @@ export const RiskComplianceControlsScreen = () => {
       )}
 
       {controlId && (
-        <EntityDrawer
-          workspaceSlug={workspaceSlug}
-          entityId={controlId}
-          onClose={closeControl}
-        />
+        <EntityDrawer workspaceSlug={workspaceSlug} entityId={controlId} onClose={closeControl} />
       )}
       {openRiskId && (
         <RiskDrawer

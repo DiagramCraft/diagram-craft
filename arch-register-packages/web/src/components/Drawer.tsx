@@ -60,7 +60,12 @@ export const Drawer = ({
         <div className={styles.head}>
           <div className={styles.headTop}>
             {eyebrow}
-            <button type="button" className={styles.close} onClick={requestClose} aria-label="Close">
+            <button
+              type="button"
+              className={styles.close}
+              onClick={requestClose}
+              aria-label="Close"
+            >
               <TbX size={14} />
             </button>
           </div>

@@ -447,7 +447,9 @@ export const PropertyRow = ({
           return (
             <span>
               {value
-                .map(item => field.options.find(candidate => candidate.value === item)?.label ?? item)
+                .map(
+                  item => field.options.find(candidate => candidate.value === item)?.label ?? item
+                )
                 .join(', ')}
             </span>
           );
