@@ -33,7 +33,13 @@ vi.mock('../../../lib/orpcClient', () => ({
 }));
 
 vi.mock('../../../sections/entities/entityDrawer/EntityDrawer', () => ({
-  EntityDrawer: () => createElement('div', null, 'Open record in Entities')
+  EntityDrawer: ({ entityId, onClose }: { entityId: string; onClose: () => void }) =>
+    createElement(
+      'div',
+      null,
+      entityId === 'risk-1' ? 'RSK-001 Open record in Entities' : 'Open record in Entities',
+      createElement('button', { type: 'button', 'aria-label': 'Close', onClick: onClose })
+    )
 }));
 
 const CONFIG = {

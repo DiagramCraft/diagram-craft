@@ -314,14 +314,7 @@ export const RiskComplianceRisksScreen = () => {
         </Table.Root>
       )}
 
-      {riskId && (
-        <RiskDrawer
-          workspaceSlug={workspaceSlug}
-          riskId={riskId}
-          riskConfig={riskConfig}
-          onClose={closeRisk}
-        />
-      )}
+      {riskId && <RiskDrawer workspaceSlug={workspaceSlug} riskId={riskId} onClose={closeRisk} />}
     </div>
   );
 };

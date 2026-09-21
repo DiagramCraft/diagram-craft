@@ -14,6 +14,15 @@ export const formatDate = (value: unknown, fallback = '—'): string => {
   return date ? date.toLocaleDateString() : fallback;
 };
 
+export const formatIsoDate = (value: unknown, fallback = '—'): string => {
+  const date = toDate(value);
+  if (!date) return fallback;
+  const year = String(date.getFullYear()).padStart(4, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export const formatDateTime = (value: unknown, fallback = '—'): string => {
   const date = toDate(value);
   return date

@@ -908,6 +908,63 @@ describe('instantiateTemplate', () => {
         }
       ]
     });
+    expect(definitions.entityDrawerProfiles[risk!.id]).toEqual({
+      header: {
+        badges: [
+          { kind: 'field', fieldId: 'category', showLabel: false },
+          { kind: 'field', fieldId: 'status', showLabel: false }
+        ]
+      },
+      sections: [
+        {
+          id: 'risk-profile',
+          title: 'Risk profile',
+          collapsible: false,
+          layout: 'stat-grid',
+          items: [
+            { kind: 'field', fieldId: 'likelihood', presentation: 'mini-panel' },
+            { kind: 'field', fieldId: 'impact', presentation: 'mini-panel' },
+            { kind: 'field', fieldId: 'inherent_risk_score', presentation: 'mini-panel' },
+            {
+              kind: 'field',
+              fieldId: 'mitigation_effectiveness',
+              presentation: 'mini-panel'
+            },
+            { kind: 'field', fieldId: 'residual_risk_score', presentation: 'mini-panel' }
+          ]
+        },
+        {
+          id: 'attributes',
+          title: 'Attributes',
+          collapsible: false,
+          items: [
+            { kind: 'field', fieldId: 'category' },
+            { kind: 'field', fieldId: 'status' },
+            { kind: 'field', fieldId: 'risk_owner' },
+            { kind: 'field', fieldId: 'treatment_target_date' }
+          ]
+        },
+        {
+          id: 'coverage',
+          title: 'Coverage',
+          collapsible: false,
+          items: [{ kind: 'slot', slotId: 'risk.coverage', label: 'Coverage', showLabel: false }]
+        },
+        {
+          id: 'affected-entities',
+          title: 'Affected entities',
+          collapsible: false,
+          items: [
+            {
+              kind: 'slot',
+              slotId: 'risk.affected-entities',
+              label: 'Affected entities',
+              showLabel: false
+            }
+          ]
+        }
+      ]
+    });
   });
 
   it('materializes the Risk & Compliance capability bindings', () => {

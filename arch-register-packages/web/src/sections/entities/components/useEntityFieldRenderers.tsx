@@ -30,6 +30,7 @@ type UseEntityFieldRenderersProps = {
   typedRelationsOutgoing: RelationRecord[];
   typedRelationsIncoming: RelationRecord[];
   relationSchemas: RelationSchema[];
+  formatDateValue?: (value: unknown) => string;
 };
 
 /**
@@ -54,7 +55,8 @@ export const useEntityFieldRenderers = ({
   defaultCurrency,
   typedRelationsOutgoing,
   typedRelationsIncoming,
-  relationSchemas
+  relationSchemas,
+  formatDateValue
 }: UseEntityFieldRenderersProps) => {
   const getTypedRelationFieldState = (fieldId: string) =>
     typedRelationEditState[fieldId] ?? emptyTypedRelationFieldState();
@@ -137,6 +139,7 @@ export const useEntityFieldRenderers = ({
           else state.remove.add(relationUid);
         })
       }
+      formatDateValue={formatDateValue}
       onChange={v => {
         setEditState(s => ({ ...s, [f.id]: v }));
         if (validationErrors.has(f.id))

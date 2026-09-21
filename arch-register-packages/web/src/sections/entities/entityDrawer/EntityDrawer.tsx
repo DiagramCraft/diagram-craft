@@ -241,7 +241,8 @@ export const EntityDrawer = ({
   entityLoading = false,
   entityUnavailable = false,
   loadingMessage = 'Loading entity…',
-  unavailableMessage = 'This entity is unavailable.'
+  unavailableMessage = 'This entity is unavailable.',
+  formatDateValue
 }: {
   workspaceSlug: string;
   entityId: string;
@@ -255,6 +256,7 @@ export const EntityDrawer = ({
   entityUnavailable?: boolean;
   loadingMessage?: ReactNode;
   unavailableMessage?: ReactNode;
+  formatDateValue?: (value: unknown) => string;
 }) => {
   const navigate = useNavigate();
   const { schemas, relationSchemas, lifecycleStates, currencies } = useWorkspaceContext();
@@ -314,7 +316,8 @@ export const EntityDrawer = ({
     defaultCurrency: currencies.default_currency,
     typedRelationsOutgoing: typedRelations.outgoing,
     typedRelationsIncoming: typedRelations.incoming,
-    relationSchemas
+    relationSchemas,
+    formatDateValue
   });
 
   const openEntity = useCallback(

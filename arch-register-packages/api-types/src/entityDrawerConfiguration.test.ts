@@ -170,6 +170,38 @@ describe('entity drawer configuration', () => {
     expect(catalog.slots.map(slot => slot.id)).not.toContain('vendor.spend');
   });
 
+  it('advertises Risk & Compliance provider slots for the configured Risk schema', () => {
+    const riskSchema = {
+      id: 'risk',
+      name: 'Risk',
+      fields: [
+        { id: 'mitigating_controls', name: 'Mitigated by', type: 'typedRelation' },
+        { id: 'affected_entities', name: 'Affects', type: 'typedRelation' }
+      ]
+    };
+    const configuration = {
+      type: 'risk-compliance',
+      bindings: { risk: { target: { kind: 'entity_schema', id: 'risk' } } }
+    } as const;
+
+    const result = resolveEntityDrawerConfiguration(null, [riskSchema], [configuration]);
+    const items = result.effective.profiles.risk!.sections.flatMap(section => section.items);
+    expect(items).toEqual(
+      expect.arrayContaining([
+        { kind: 'slot', slotId: 'risk.coverage' },
+        { kind: 'slot', slotId: 'risk.affected-entities' }
+      ])
+    );
+
+    const catalog = buildEntityDrawerCatalog([riskSchema], [configuration]);
+    expect(catalog.slots.find(slot => slot.id === 'risk.coverage')?.supportedSchemaIds).toEqual([
+      'risk'
+    ]);
+    expect(
+      catalog.slots.find(slot => slot.id === 'risk.affected-entities')?.supportedSchemaIds
+    ).toEqual(['risk']);
+  });
+
   it('derives the glossary term profile from mapped capability fields', () => {
     const termSchema = {
       id: 'term',
