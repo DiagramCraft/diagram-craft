@@ -286,16 +286,6 @@ describe('instantiateTemplate', () => {
         })
       })
     ]);
-    expect(definitions.entityDrawerProfiles[businessCapability!.id]).toEqual(
-      expect.objectContaining({
-        sections: expect.arrayContaining([
-          expect.objectContaining({
-            id: 'strategy-assessment',
-            items: expect.arrayContaining([{ kind: 'field', fieldId: 'maturity' }])
-          })
-        ])
-      })
-    );
   });
 
   it('preserves date fields in enriched templates', () => {

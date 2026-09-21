@@ -485,7 +485,6 @@ export const StrategyStrategyScreen = () => {
         <CapabilityDrawer
           workspaceSlug={workspaceSlug}
           capabilityId={capabilityId}
-          strategyConfig={strategyConfig}
           onClose={closeCapability}
           onOpenCapability={openCapability}
         />

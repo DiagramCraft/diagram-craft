@@ -1,286 +1,45 @@
-// @vitest-environment jsdom
-import { act } from 'react';
-import { createRoot, type Root } from 'react-dom/client';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { MetricRollupResponse } from '@arch-register/api-types/metricContract';
+import type { ReactNode } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { describe, expect, it, vi } from 'vitest';
 import { CapabilityDrawer } from './CapabilityDrawer';
-import type { StrategyModelConfig } from '../strategyQueries';
-import { asEntityPublicId, entityDetailRoute } from '../../../routes/publicObjectRoutes';
 
 const mocks = vi.hoisted(() => ({
-  navigate: vi.fn(),
-  entityGet: vi.fn(),
-  entityList: vi.fn(),
-  entityTree: vi.fn(),
-  relationsForEntity: vi.fn(),
-  metricsRollup: vi.fn(),
-  lifecycleStatesList: vi.fn()
+  entityDrawerProps: undefined as
+    | {
+        entityId: string;
+        onOpenEntity?: (id: string) => void;
+        loadingMessage?: ReactNode;
+        unavailableMessage?: ReactNode;
+      }
+    | undefined
 }));
 
-vi.mock('@tanstack/react-router', () => ({
-  useNavigate: () => mocks.navigate
-}));
-
-vi.mock('../../../lib/orpcClient', () => ({
-  orpcClient: {
-    entities: { get: mocks.entityGet, list: mocks.entityList, tree: mocks.entityTree },
-    relations: { listForEntity: mocks.relationsForEntity },
-    metrics: { rollup: mocks.metricsRollup },
-    config: { lifecycleStates: { list: mocks.lifecycleStatesList } }
+vi.mock('../../../sections/entities/entityDrawer/EntityDrawer', () => ({
+  EntityDrawer: (props: typeof mocks.entityDrawerProps) => {
+    mocks.entityDrawerProps = props;
+    return <div>shared entity drawer</div>;
   }
 }));
 
-const strategyConfig: StrategyModelConfig = {
-  objectiveSchemaId: 'objective',
-  outcomeSchemaId: 'outcome',
-  initiativeSchemaId: 'initiative',
-  measureSchemaId: 'measure',
-  businessCapabilitySchemaId: 'business_capability',
-  objectiveSupportsBusinessCapabilityRelationSchemaId: 'objective-supports-business-capability-rel',
-  businessCapabilitySupportsEntityRelationSchemaId: 'business-capability-supports-entity-rel'
-};
-
-const emptyRollup: MetricRollupResponse = {
-  results: [
-    {
-      boxEntityId: 'cap-1',
-      value: 3,
-      lifecycleId: null,
-      dominantValue: null,
-      dominantLabel: null,
-      distribution: [],
-      sourceCount: 2,
-      populatedCount: 2,
-      duplicateCount: 0
-    }
-  ],
-  legend: { min: null, max: null }
-};
-
 describe('CapabilityDrawer', () => {
-  let container: HTMLDivElement;
-  let root: Root;
-  let queryClient: QueryClient;
-
-  beforeEach(() => {
-    (
-      globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-    ).IS_REACT_ACT_ENVIRONMENT = true;
-    container = document.createElement('div');
-    document.body.appendChild(container);
-    root = createRoot(container);
-    queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-
-    mocks.entityGet.mockResolvedValue({
-      _uid: 'cap-1',
-      _publicId: 'CAP-001',
-      _name: 'Customer Management',
-      _schema: { id: 'business_capability', name: 'Business Capability' },
-      _owner: null,
-      _lifecycle: null,
-      capability_level: 'L1'
-    });
-    mocks.entityList.mockResolvedValue({ items: [], total: 0 });
-    mocks.entityTree.mockResolvedValue({ nodes: [], edges: [] });
-    mocks.relationsForEntity.mockResolvedValue({ outgoing: [], incoming: [] });
-    mocks.metricsRollup.mockResolvedValue(emptyRollup);
-    mocks.lifecycleStatesList.mockResolvedValue([]);
-  });
-
-  afterEach(() => {
-    act(() => root.unmount());
-    queryClient.clear();
-    container.remove();
-    vi.clearAllMocks();
-  });
-
-  it('shows attributes and an empty "Realized by" state for a capability with no direct links', async () => {
-    await act(async () => {
-      root.render(
-        <QueryClientProvider client={queryClient}>
-          <CapabilityDrawer
-            workspaceSlug="ws-1"
-            capabilityId="cap-1"
-            strategyConfig={strategyConfig}
-            onClose={vi.fn()}
-            onOpenCapability={vi.fn()}
-          />
-        </QueryClientProvider>
-      );
-    });
-    const flush = () => act(async () => new Promise(resolve => setTimeout(resolve, 0)));
-    for (let i = 0; i < 5 && container.textContent?.includes('Loading capability'); i++) {
-      await flush();
-    }
-    for (let i = 0; i < 5 && container.textContent?.includes('Realized byLoading…'); i++) {
-      await flush();
-    }
-
-    expect(container.textContent).toContain('Customer Management');
-    expect(container.textContent).toContain('CAP-001');
-    expect(container.textContent).toContain('No owner assigned');
-    expect(container.textContent).toContain('Business Capability');
-    expect(container.textContent).toContain(
-      "No linked applications, directly or across this capability's descendants."
+  it('adapts the Strategy route to the shared entity drawer', () => {
+    const onOpenCapability = vi.fn();
+    const markup = renderToStaticMarkup(
+      <CapabilityDrawer
+        workspaceSlug="workspace-1"
+        capabilityId="CAP-001"
+        onClose={vi.fn()}
+        onOpenCapability={onOpenCapability}
+      />
     );
-    expect(container.textContent).toContain('No linked objectives.');
-    expect(container.textContent).toContain('No linked initiatives.');
-  });
 
-  it("lists direct children from the entity tree, resolved by uid rather than the route's public id", async () => {
-    // Regression test, two bugs at once:
-    // 1) Children used to come from an entities-query `parent equals capabilityId` filter, which
-    //    never matches (`parent` is a containment field stored as a ref array, and the filter
-    //    compiler only treats a field as array-shaped via `isMultiValuedScalarField`, which
-    //    excludes containment fields entirely) — children now come from `entities.tree`'s edges,
-    //    the same data the Capabilities sidebar's tree already relies on.
-    // 2) The drawer's `capabilityId` prop is the route's *public* id (`openCapability` passes
-    //    `entity._publicId`), but tree edges are keyed by internal uid — comparing edges against
-    //    the raw prop instead of the loaded entity's `_uid` matched nothing for every capability.
-    mocks.entityGet.mockResolvedValue({
-      _uid: 'uid-cap-1',
-      _publicId: 'CAP-001',
-      _name: 'Customer Management',
-      _schema: { id: 'business_capability', name: 'Business Capability' },
-      _owner: null,
-      _lifecycle: null,
-      capability_level: 'L1'
+    expect(markup).toContain('shared entity drawer');
+    expect(mocks.entityDrawerProps).toMatchObject({
+      entityId: 'CAP-001',
+      loadingMessage: 'Loading capability…',
+      unavailableMessage: 'This capability is unavailable.'
     });
-    mocks.entityTree.mockResolvedValue({
-      nodes: [
-        { _uid: 'uid-cap-1', _name: 'Customer Management', _slug: 'customer-management' },
-        { _uid: 'uid-cap-2', _name: 'Account Management', _slug: 'account-management' }
-      ],
-      edges: [{ parentId: 'uid-cap-1', childId: 'uid-cap-2' }]
-    });
-
-    await act(async () => {
-      root.render(
-        <QueryClientProvider client={queryClient}>
-          <CapabilityDrawer
-            workspaceSlug="ws-1"
-            capabilityId="CAP-001"
-            strategyConfig={strategyConfig}
-            onClose={vi.fn()}
-            onOpenCapability={vi.fn()}
-          />
-        </QueryClientProvider>
-      );
-    });
-    const flush = () => act(async () => new Promise(resolve => setTimeout(resolve, 0)));
-    for (let i = 0; i < 5 && container.textContent?.includes('Loading capability'); i++) {
-      await flush();
-    }
-
-    expect(container.textContent).toContain('Account Management');
-    expect(container.textContent).not.toContain('No child capabilities.');
-    expect(mocks.metricsRollup).toHaveBeenCalledWith(
-      expect.objectContaining({ body: expect.objectContaining({ boxEntityIds: ['uid-cap-1'] }) })
-    );
-  });
-
-  it('navigates to the entity detail route when "Open record in Entities" is clicked', async () => {
-    await act(async () => {
-      root.render(
-        <QueryClientProvider client={queryClient}>
-          <CapabilityDrawer
-            workspaceSlug="ws-1"
-            capabilityId="cap-1"
-            strategyConfig={strategyConfig}
-            onClose={vi.fn()}
-            onOpenCapability={vi.fn()}
-          />
-        </QueryClientProvider>
-      );
-    });
-    const flush = () => act(async () => new Promise(resolve => setTimeout(resolve, 0)));
-    for (let i = 0; i < 5 && container.textContent?.includes('Loading capability'); i++) {
-      await flush();
-    }
-
-    const footerButton = [...container.querySelectorAll('button')].find(
-      button => button.textContent === 'Open record in Entities'
-    );
-    expect(footerButton).toBeDefined();
-
-    await act(async () => {
-      footerButton!.click();
-    });
-
-    expect(mocks.navigate).toHaveBeenCalledWith(
-      entityDetailRoute('ws-1', asEntityPublicId('CAP-001'))
-    );
-  });
-
-  it('shows an application realized through a descendant capability, with provenance', async () => {
-    // #3205: a non-leaf capability's "Realized by" section unions the capability's own direct
-    // `business-capability-supports-entity` links with links carried anywhere in its recursive
-    // containment subtree. Here "cap-1" has no direct link of its own, but its descendant
-    // "cap-2" does, reached via `containmentSubtree(parent) -> typedRelation(..., in)`.
-    mocks.entityList.mockImplementation(async ({ query }: { query: { entityQuery?: string } }) => {
-      const entityQuery = query.entityQuery ? JSON.parse(query.entityQuery) : null;
-      if (entityQuery?.projections) {
-        return {
-          items: [
-            {
-              _uid: 'cap-1',
-              _projections: {
-                ownLinks: [],
-                subtreeLinks: [
-                  [
-                    { context: 'entity', id: 'cap-2', schemaId: 'business_capability' },
-                    { context: 'entity', id: 'app-1', schemaId: 'application' }
-                  ]
-                ]
-              }
-            }
-          ],
-          total: 1
-        };
-      }
-      return {
-        items: [
-          {
-            _uid: 'cap-2',
-            _publicId: 'CAP-002',
-            _name: 'Account Management',
-            _schema: { id: 'business_capability', name: 'Business Capability' },
-            _owner: null,
-            _lifecycle: null
-          },
-          {
-            _uid: 'app-1',
-            _publicId: 'APP-001',
-            _name: 'Billing System',
-            _schema: { id: 'application', name: 'Application' },
-            _owner: null,
-            _lifecycle: null
-          }
-        ],
-        total: 2
-      };
-    });
-
-    await act(async () => {
-      root.render(
-        <QueryClientProvider client={queryClient}>
-          <CapabilityDrawer
-            workspaceSlug="ws-1"
-            capabilityId="cap-1"
-            strategyConfig={strategyConfig}
-            onClose={vi.fn()}
-            onOpenCapability={vi.fn()}
-          />
-        </QueryClientProvider>
-      );
-    });
-    const flush = () => act(async () => new Promise(resolve => setTimeout(resolve, 0)));
-    for (let i = 0; i < 8 && !container.textContent?.includes('Billing System'); i++) {
-      await flush();
-    }
-
-    expect(container.textContent).toContain('Billing System');
-    expect(container.textContent).toContain('via Account Management');
+    mocks.entityDrawerProps?.onOpenEntity?.('child-1');
+    expect(onOpenCapability).toHaveBeenCalledWith('child-1');
   });
 });

@@ -302,13 +302,13 @@
           section nav list for a capability hierarchy tree (clicking a node filters the table to that subtree) plus
           an owner facet with counts.
 
-          The drawer shows the configured subtree roll-up stats (@id:ar.strategy.view-config) plus a leaf count,
-          structural attributes (type, level, owner, direct child count) and any configured extra attribute rows,
-          direct children, and linked objectives and initiatives, with a footer action to open the underlying
-          record in Entities. "Realized by" unions applications the capability supports directly with ones
-          supported anywhere in its recursive containment subtree, so non-leaf capabilities also surface coverage
-          carried by their descendants; each entity reached through a descendant shows a "via" provenance label naming
-          the contributing capability.
+          The configurable entity drawer shows the configured subtree roll-up stats (@id:ar.strategy.view-config) plus
+          a leaf count, capability badges, configured fields, and registered Strategy content slots for direct
+          children, linked objectives and initiatives, and realized-by applications. Child selections replace the
+          current drawer target, and the footer action opens the underlying record in Entities. "Realized by" unions
+          applications the capability supports directly with ones supported anywhere in its recursive containment
+          subtree, so non-leaf capabilities also surface coverage carried by their descendants; each entity reached
+          through a descendant shows a "via" provenance label naming the contributing capability.
 
         - @id:ar.strategy.heatmaps The Heatmaps section is deprioritized and not currently surfaced in the app rail
           or section nav; its route and placeholder screen are retained. The capability-map overlay control already

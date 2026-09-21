@@ -420,7 +420,6 @@ export const StrategyTraceabilityScreen = () => {
         <CapabilityDrawer
           workspaceSlug={workspaceSlug}
           capabilityId={capabilityId}
-          strategyConfig={strategyConfig}
           onClose={closeCapability}
           onOpenCapability={openCapability}
         />
