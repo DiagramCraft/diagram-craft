@@ -36,7 +36,7 @@ vi.mock('../../../sections/entities/entityDrawer/EntityDrawer', () => ({
   EntityDrawer: ({ entityId, onClose }: { entityId: string; onClose: () => void }) =>
     createElement(
       'div',
-      null,
+      { 'data-entity-id': entityId },
       entityId === 'risk-1' ? 'RSK-001 Open record in Entities' : 'Open record in Entities',
       createElement('button', { type: 'button', 'aria-label': 'Close', onClick: onClose })
     )
@@ -304,7 +304,8 @@ describe('RiskComplianceControlsScreen', () => {
     });
     for (let i = 0; i < 8; i++) await flush();
 
-    // Clicking an asset row opens the local AssetDrawer in-situ, not a route navigation.
+    // Clicking an asset row opens the schema-configured entity drawer in-situ, not a route
+    // navigation.
     mocks.navigate.mockClear();
     const assetRow = [...container.querySelectorAll('tr')].find(tr =>
       tr.textContent?.includes('Customer PII')
@@ -314,7 +315,7 @@ describe('RiskComplianceControlsScreen', () => {
     });
     for (let i = 0; i < 8; i++) await flush();
     expect(mocks.navigate).not.toHaveBeenCalled();
-    expect(container.textContent).toContain('AST-002');
+    expect(container.querySelector('[data-entity-id="asset-2"]')).toBeTruthy();
     expect(container.textContent).toContain('Open record in Entities');
   });
 
@@ -392,10 +393,12 @@ describe('RiskComplianceControlsScreen', () => {
     expect(container.textContent).toContain('MFA Enforcement');
 
     // Column headers carry the risk's reference + title (design reference's `x.ref + " " +
-    // x.title`), and aren't clickable — only the Control row header is.
+    // x.title`), and remain read-only — only the Control row header is interactive in this
+    // dimension.
     const headerCells = [...container.querySelectorAll('thead th')];
     const dataLeakColumnIndex = headerCells.findIndex(th => th.textContent?.includes('Data Leak'));
     expect(dataLeakColumnIndex).toBeGreaterThan(0);
+    expect(container.querySelector('button[aria-label^="Open risk"]')).toBeNull();
 
     // "Data Leak" has no covering control — the bottom totals row renders a gap mark instead of
     // a "0" for its column.
@@ -431,5 +434,71 @@ describe('RiskComplianceControlsScreen', () => {
     expect(mocks.navigate).toHaveBeenCalledWith(
       expect.objectContaining({ to: '/$workspaceSlug/risk-compliance/controls' })
     );
+  });
+
+  it('opens an arbitrary asset from traceability through the generic entity drawer', async () => {
+    mocks.search = { view: 'traceability', dim: 'assets' };
+    mocks.schemasList.mockResolvedValue([
+      {
+        id: 'risk',
+        name: 'Risk',
+        fields: [
+          { id: 'mitigating_controls', type: 'typedRelation', relationSchemaId: 'risk-control' },
+          { id: 'affected_entities', type: 'typedRelation', relationSchemaId: 'risk-affects' }
+        ]
+      },
+      {
+        id: 'control',
+        name: 'Control',
+        fields: [
+          { id: 'mitigated_risks', type: 'typedRelation', relationSchemaId: 'risk-control' },
+          { id: 'protected_entities', type: 'typedRelation', relationSchemaId: 'control-affects' }
+        ]
+      }
+    ]);
+    mocks.entityList.mockImplementation(({ query }: { query: { _schemaId?: string } }) => {
+      if (query._schemaId === 'risk') return Promise.resolve({ items: [], total: 0 });
+      return Promise.resolve({
+        items: [
+          {
+            _uid: 'control-1',
+            _publicId: 'CTL-001',
+            _name: 'MFA Enforcement',
+            operating_effectiveness: 'effective'
+          }
+        ],
+        total: 1
+      });
+    });
+    mocks.relationsList.mockImplementation(({ query }: { query: { schemaId?: string } }) => {
+      if (query.schemaId === 'control-affects') {
+        return Promise.resolve({
+          items: [
+            {
+              _uid: 'rel-asset',
+              _schema: { id: 'control-affects', name: 'Control Protection' },
+              _in: { id: 'control-1', name: 'MFA Enforcement' },
+              _out: { id: 'system-1', name: 'Payments System', schemaId: 'system' }
+            }
+          ],
+          total: 1
+        });
+      }
+      return Promise.resolve({ items: [], total: 0 });
+    });
+
+    await renderScreen();
+
+    const assetHeader = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Open asset Payments System"]'
+    );
+    expect(assetHeader).toBeTruthy();
+    mocks.navigate.mockClear();
+    await act(async () => {
+      assetHeader!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    expect(mocks.navigate).not.toHaveBeenCalled();
+    expect(container.querySelector('[data-entity-id="system-1"]')).toBeTruthy();
   });
 });

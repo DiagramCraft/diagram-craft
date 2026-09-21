@@ -421,6 +421,8 @@ export const PropertyRow = ({
           direction={field.direction === 'in' ? 'outgoing' : 'incoming'}
           relationSchema={relationSchemas.find(rs => rs.id === field.relationSchemaId)}
           workspaceId={workspaceSlug}
+          presentation={displayVariant === 'drawer-stat' ? 'drawer-stat' : 'default'}
+          showHistory={displayVariant !== 'drawer-stat'}
         />
       );
     }
@@ -547,19 +549,21 @@ export const PropertyRow = ({
   };
 
   const rowClass =
-    displayVariant === 'drawer'
-      ? styles.propRowDrawer
+    displayVariant === 'drawer' || (displayVariant === 'drawer-stat' && isTypedRelation)
+      ? displayVariant === 'drawer-stat' && isTypedRelation
+        ? styles.propRowDrawerRelation
+        : styles.propRowDrawer
       : displayVariant === 'drawer-stat'
         ? styles.propRowDrawerStat
         : styles.propRow;
   const labelClass =
-    displayVariant === 'drawer'
+    displayVariant === 'drawer' || (displayVariant === 'drawer-stat' && isTypedRelation)
       ? styles.propLabelDrawer
       : displayVariant === 'drawer-stat'
         ? styles.propLabelDrawerStat
         : styles.propLabel;
   const valueClass =
-    displayVariant === 'drawer'
+    displayVariant === 'drawer' || (displayVariant === 'drawer-stat' && isTypedRelation)
       ? styles.propValueDrawer
       : displayVariant === 'drawer-stat'
         ? styles.propValueDrawerStat
@@ -577,9 +581,11 @@ export const PropertyRow = ({
           field.requirementLevel === 'optional' && (
             <span className={styles.propOptional}>(optional)</span>
           )}
-        {field.requirementLevel === 'expected' && (
-          <span className={styles.propExpected}>Expected</span>
-        )}
+        {displayVariant !== 'drawer' &&
+          displayVariant !== 'drawer-stat' &&
+          field.requirementLevel === 'expected' && (
+            <span className={styles.propExpected}>Expected</span>
+          )}
       </div>
       <div
         className={valueClass}

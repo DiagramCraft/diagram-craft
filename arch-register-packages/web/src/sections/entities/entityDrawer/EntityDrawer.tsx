@@ -221,7 +221,7 @@ const DrawerItem = ({
         item.field,
         'view',
         item.label,
-        item.item.kind === 'field' && item.item.presentation === 'mini-panel'
+        item.item.presentation === 'mini-panel'
           ? 'drawer-stat'
           : 'drawer'
       )}
@@ -473,8 +473,10 @@ export const EntityDrawer = ({
                 <div
                   className={
                     item.item.kind === 'field' || item.item.kind === 'relation'
-                      ? item.item.kind === 'field' && item.item.presentation === 'mini-panel'
-                        ? styles.miniPanelItem
+                      ? item.item.presentation === 'mini-panel'
+                        ? item.field?.type === 'typedRelation'
+                          ? styles.relationPanelItem
+                          : styles.miniPanelItem
                         : styles.fieldItem
                       : styles.item
                   }
