@@ -102,6 +102,7 @@ export const PropertyRow = ({
   onChange,
   refLookup,
   referenceOptions,
+  onOpenRelatedEntity,
   hasError,
   externalMeta,
   typedRelationsOutgoing,
@@ -125,6 +126,7 @@ export const PropertyRow = ({
   onChange: (v: unknown) => void;
   refLookup: RefLookup;
   referenceOptions: Record<string, EntitySummary[]>;
+  onOpenRelatedEntity?: (fieldId: string, publicId: string) => boolean;
   hasError?: boolean;
   externalMeta?: ExternalMetadataResult;
   typedRelationsOutgoing: RelationRecord[];
@@ -431,7 +433,15 @@ export const PropertyRow = ({
             return (
               <span key={id}>
                 {index > 0 && ', '}
-                <EntityNavigationLink publicId={ref?._publicId ?? id} className={styles.propLink}>
+                <EntityNavigationLink
+                  publicId={ref?._publicId ?? id}
+                  className={styles.propLink}
+                  onClick={event => {
+                    if (onOpenRelatedEntity?.(field.id, ref?._publicId ?? id)) {
+                      event.preventDefault();
+                    }
+                  }}
+                >
                   {label}
                 </EntityNavigationLink>
               </span>

@@ -29,6 +29,10 @@ vi.mock('../../../lib/orpcClient', () => ({
   }
 }));
 
+vi.mock('../../../sections/entities/entityDrawer/EntityDrawer', () => ({
+  EntityDrawer: () => <div>Open record in Entities</div>
+}));
+
 const CONFIG = {
   type: 'vendor-management',
   valid: true,

@@ -259,7 +259,6 @@ export const VendorContractsScreen = () => {
         <ContractDrawer
           workspaceSlug={workspaceSlug}
           contractId={contractId}
-          vendorConfig={vendorConfig}
           onClose={closeContract}
         />
       )}

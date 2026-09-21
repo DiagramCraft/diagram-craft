@@ -284,4 +284,66 @@ describe('entity drawer configuration', () => {
       { kind: 'slot', slotId: 'vendor.spend', label: 'Spend', showLabel: false }
     ]);
   });
+
+  it('derives the Contract profile with the legacy drawer order and Systems used slot', () => {
+    const contractSchema = {
+      id: 'contract',
+      name: 'Contract',
+      fields: [
+        { id: 'vendor', name: 'Vendor', type: 'containment' },
+        { id: 'contract_start', name: 'Contract Start', type: 'date' },
+        { id: 'contract_end', name: 'Contract End', type: 'date' },
+        { id: 'annual_cost', name: 'Annual Cost', type: 'currency' },
+        { id: 'setup_fee', name: 'Setup Fee', type: 'currency' },
+        { id: 'system', name: 'Used by', type: 'typedRelation' },
+        { id: 'contract_type', name: 'Contract Type', type: 'select' },
+        { id: 'auto_renew', name: 'Auto-Renew', type: 'boolean' },
+        { id: 'notice_period_days', name: 'Notice Period (Days)', type: 'number' },
+        { id: 'contract_owner', name: 'Contract Owner', type: 'text' }
+      ]
+    };
+    const configuration = {
+      type: 'vendor-management',
+      bindings: {
+        vendor: { target: { kind: 'entity_schema', id: 'vendor' } },
+        contract: { target: { kind: 'entity_schema', id: 'contract' } }
+      }
+    } as const;
+
+    const profile = buildDefaultEntityDrawerConfiguration([contractSchema], [configuration])
+      .profiles.contract!;
+
+    expect(profile.header.badges).toEqual([
+      { kind: 'field', fieldId: 'contract_type', showLabel: false }
+    ]);
+    expect(profile.sections.map(section => section.id)).toEqual([
+      'vendor',
+      'terms',
+      'cost',
+      'systems-used'
+    ]);
+    expect(profile.sections[0]?.items).toEqual([
+      { kind: 'relation', fieldId: 'vendor', label: 'Provided by' }
+    ]);
+    expect(
+      profile.sections[1]?.items.map(item =>
+        item.kind === 'field' || item.kind === 'relation' ? item.fieldId : item.kind
+      )
+    ).toEqual([
+      'contract_start',
+      'contract_end',
+      'contract_type',
+      'notice_period_days',
+      'auto_renew',
+      'contract_owner'
+    ]);
+    expect(profile.sections[2]?.layout).toBe('stat-grid');
+    expect(profile.sections[2]?.items).toEqual([
+      { kind: 'field', fieldId: 'annual_cost', presentation: 'mini-panel' },
+      { kind: 'field', fieldId: 'setup_fee', presentation: 'mini-panel' }
+    ]);
+    expect(profile.sections[3]?.items).toEqual([
+      { kind: 'slot', slotId: 'contract.systems-used', label: 'Systems used', showLabel: false }
+    ]);
+  });
 });

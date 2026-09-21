@@ -24,6 +24,7 @@ type UseEntityFieldRenderersProps = {
   setValidationErrors: Dispatch<SetStateAction<Set<string>>>;
   refLookup: RefLookup;
   referenceOptions: Record<string, EntitySummary[]>;
+  onOpenRelatedEntity?: (fieldId: string, publicId: string) => boolean;
   currencies: SupportedCurrency[];
   defaultCurrency: string;
   typedRelationsOutgoing: RelationRecord[];
@@ -48,6 +49,7 @@ export const useEntityFieldRenderers = ({
   setValidationErrors,
   refLookup,
   referenceOptions,
+  onOpenRelatedEntity,
   currencies,
   defaultCurrency,
   typedRelationsOutgoing,
@@ -146,6 +148,7 @@ export const useEntityFieldRenderers = ({
       }}
       refLookup={refLookup}
       referenceOptions={referenceOptions}
+      onOpenRelatedEntity={onOpenRelatedEntity}
       hasError={validationErrors.has(f.id)}
       externalMeta={entity._externalMetadata?.[f.id]}
     />

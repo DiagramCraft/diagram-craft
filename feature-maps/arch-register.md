@@ -375,9 +375,10 @@
           renewal placed by the calendar month of its `contract_end`; an overdue contract is folded into the
           current month's cell instead of dropping off the grid, and a contract renewing beyond 12 months out, or
           with no end date, is excluded from the grid and counted in a caption below it (both remain visible in the
-          list). Selecting a contract, in either view, opens a contract detail drawer (terms, cost, a link back to
-          the contract's vendor drawer, and Systems used), deep-linkable at
-          `vendor-management/contracts/$contractId`, mirroring the Vendors section's own drawer.
+          list). Selecting a contract, in either view, opens the configurable contract entity drawer (contract and
+          renewal badges, configured terms and cost fields, a link back to the contract's vendor drawer, and the
+          `contract.systems-used` content slot), deep-linkable at `vendor-management/contracts/$contractId` and
+          mirroring the Vendors section's own drawer.
 
         - @id:ar.vendor-management.spend The Spend section is a portfolio-wide spend roll-up: four header stats (total
           annualised spend, fixed-term commitment not auto-renewing, the Strategic tier's share of spend,
