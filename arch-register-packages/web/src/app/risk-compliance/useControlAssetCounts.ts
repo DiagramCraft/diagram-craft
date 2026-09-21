@@ -16,7 +16,7 @@ const EMPTY: ControlAssetCounts = { countById: new Map(), isLoading: false, erro
  * "Assets" column (the design reference's `c.assets.length`, `rc-views.jsx`) — one
  * `relations.list` request over every `control-affects` relation in the workspace, grouped by
  * the protecting Control's `_uid` (`relation._in.id` — Control is the `_in` side, mirroring
- * `ControlDrawer.tsx`'s `protectedEntities` filter). Sibling of `useControlRiskCounts.ts`, same
+ * the entity drawer's `protectedEntities` filter). Sibling of `useControlRiskCounts.ts`, same
  * shape, different relation and endpoint role.
  */
 export const useControlAssetCounts = (

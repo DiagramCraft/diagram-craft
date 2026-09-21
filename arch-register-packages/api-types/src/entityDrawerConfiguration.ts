@@ -36,7 +36,12 @@ export const entityDrawerItemSchema = z.discriminatedUnion('kind', [
 ]);
 
 export const entityDrawerBadgeSchema = z.discriminatedUnion('kind', [
-  z.object({ kind: z.literal('field'), fieldId: z.string().min(1), label: labelOverrideSchema }),
+  z.object({
+    kind: z.literal('field'),
+    fieldId: z.string().min(1),
+    label: labelOverrideSchema,
+    showLabel: z.boolean().optional()
+  }),
   z.object({
     kind: z.literal('metadata'),
     slot: entityDrawerMetadataSlotSchema,

@@ -29,16 +29,6 @@
   gap: 14px;
 }
 
-.section {
-  border-bottom: 1px solid var(--panel-border);
-  padding-bottom: 12px;
-}
-
-.section:last-child {
-  border-bottom: 0;
-  padding-bottom: 0;
-}
-
 .sectionHeading,
 .sectionTitle {
   margin: 0 0 8px;
@@ -55,6 +45,7 @@
   color: inherit;
   cursor: pointer;
   text-align: left;
+  font-weight: 600;
 }
 
 .sectionToggle::after {
@@ -73,6 +64,10 @@
 
 .item + .item {
   margin-top: 8px;
+}
+
+.fieldItem {
+  margin-top: 0;
 }
 
 .metadataRow {

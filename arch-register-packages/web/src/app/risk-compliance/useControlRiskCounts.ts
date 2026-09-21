@@ -14,7 +14,7 @@ const EMPTY: ControlRiskCounts = { countById: new Map(), isLoading: false, error
  * How many Risks each Control mitigates, for the Controls library table's "Risks mitigated"
  * column — one `relations.list` request over every `risk-control` relation in the workspace,
  * grouped by the mitigating Control's `_uid` (`relation._out.id` — Control is the `_out` side,
- * mirroring `ControlDrawer.tsx`'s `mitigatedRisks` filter).
+ * mirroring the entity drawer's `mitigatedRisks` filter).
  *
  * This used to also compute a per-Control "coverage" percentage by running the same relations
  * through `computeRiskCoverage` (the "probability at least one control catches it" formula the

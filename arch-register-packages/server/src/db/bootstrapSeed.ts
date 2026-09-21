@@ -35,6 +35,7 @@ import {
   seedBootstrapUsers,
   seedCatalogDefinitions,
   seedCatalogEntities,
+  seedEntityDrawerConfiguration,
   seedCatalogViews,
   seedPublicIdCounters,
   seedTemplateRelationCapabilityConfigurations,
@@ -222,6 +223,7 @@ export const seedBootstrapData = async (
   await seedWorkspaceBase(db);
   await seedWorkspaceConfiguration(db);
   await seedCatalogDefinitions(db);
+  await seedEntityDrawerConfiguration(db);
   await seedAiConfiguration(db, options.aiConfig);
   for (const project of seedProjects) {
     await db.project.projects.createProject(project);

@@ -892,6 +892,32 @@ describe('instantiateTemplate', () => {
       type: 'Assessments',
       config: { mode: 'overdue', label: 'Overdue risk and control reviews' }
     });
+
+    expect(definitions.entityDrawerProfiles[control!.id]).toEqual({
+      header: { badges: [{ kind: 'field', fieldId: 'control_type', showLabel: false }] },
+      sections: [
+        {
+          id: 'attributes',
+          title: 'Attributes',
+          collapsible: false,
+          items: [
+            { kind: 'field', fieldId: 'control_type' },
+            { kind: 'field', fieldId: 'design_effectiveness' },
+            { kind: 'field', fieldId: 'operating_effectiveness' },
+            { kind: 'field', fieldId: 'last_verified' }
+          ]
+        },
+        {
+          id: 'application-content',
+          title: 'Additional attributes',
+          collapsible: true,
+          items: [
+            { kind: 'slot', slotId: 'risk.mitigated-risks', label: 'Risks mitigated' },
+            { kind: 'slot', slotId: 'risk.protected-entities', label: 'Protected entities' }
+          ]
+        }
+      ]
+    });
   });
 
   it('materializes the risk-compliance typed relations with correctly remapped endpoints', () => {

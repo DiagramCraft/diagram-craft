@@ -474,9 +474,10 @@
           gives each column's total, with a red mark standing in for zero — an uncontrolled Risk or asset — instead
           of the digit. Only the Control row headers are clickable, opening the shared Control drawer; Risk/asset
           column headers are read-only, labelled but not linked. Selecting a control opens the shared Control
-          drawer, deep-linkable at `risk-compliance/controls/$controlId`: attributes, the Risks it mitigates (with
-          the `coverage`/`effectiveness` it provides each one), and the Data Entities it protects (via
-          `control-affects`).
+          drawer, deep-linkable at `risk-compliance/controls/$controlId`: the template-authored default drawer profile
+          preserves the current attributes and `control_type` badge, while registered Risk & Compliance content slots
+          show the Risks it mitigates (with the `coverage`/`effectiveness` it provides each one) and the Data Entities
+          it protects (via `control-affects`).
 
         - @id:ar.risk-compliance.retention The Retention section — the first web UI consumer of the workspace-wide
           `retention` capability — is a single register of Assignments ("Subject to Retention Policy" relations),

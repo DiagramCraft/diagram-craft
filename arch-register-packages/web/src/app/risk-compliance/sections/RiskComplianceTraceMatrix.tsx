@@ -29,7 +29,7 @@ export type RiskComplianceTraceMatrixColumn = {
  * (design reference: `rc-trace-mark--gap`). Neither axis is bounded (unlike the fixed 5×5
  * `RiskComplianceMatrix`), so both scroll together under the sticky header/first column.
  *
- * Only the row (Control) header is clickable, opening the shared `ControlDrawer` — the design
+ * Only the row (Control) header is clickable, opening the shared entity drawer — the design
  * reference's column headers (Risk/asset) and totals aren't interactive either.
  */
 export const RiskComplianceTraceMatrix = ({

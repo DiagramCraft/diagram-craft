@@ -4,6 +4,7 @@ import {
   seedAiConfiguration,
   seedCatalogDefinitions,
   seedCatalogEntities,
+  seedEntityDrawerConfiguration,
   seedPublicIdCounters,
   seedUsersAndRoles,
   seedWorkspaceBase,
@@ -30,6 +31,7 @@ describe('composable seed phases', () => {
         assessmentTypes: false
       });
       await seedCatalogDefinitions(provisioned.db, { sharedFieldGroups: false });
+      await seedEntityDrawerConfiguration(provisioned.db);
       await seedAiConfiguration(provisioned.db);
       await seedUsersAndRoles(provisioned.db, {
         users: [
@@ -74,6 +76,14 @@ describe('composable seed phases', () => {
       expect(await provisioned.db.catalog.listSchemas(defaultWorkspace)).toHaveLength(
         seedSchemas.filter(schema => schema.workspace === defaultWorkspace).length
       );
+      await expect(
+        provisioned.db.workspace.getWorkspaceEntityDrawerConfiguration(defaultWorkspace)
+      ).resolves.toMatchObject({
+        configuration: {
+          version: 1,
+          profiles: seedTemplateDefinitions.entityDrawerProfiles
+        }
+      });
       // Sorted by `type` before comparing — `listWorkspaceCapabilityConfigurations` doesn't
       // guarantee the same order the source templates declare their capability configurations in
       // (they're composed from multiple templates), and this assertion only cares that every

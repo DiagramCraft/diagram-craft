@@ -44,6 +44,15 @@
   border-bottom: 1px solid var(--panel-border);
 }
 
+.propRowDrawer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--panel-border);
+}
+
 .propRow:last-child {
   border-bottom: 0;
 }
@@ -51,6 +60,15 @@
 .propLabel {
   font-size: 12px;
   color: var(--base-fg-more-dim);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.propLabelDrawer {
+  font-size: 12px;
+  color: var(--text-muted);
   display: flex;
   align-items: center;
   gap: 6px;
@@ -105,6 +123,18 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 4px;
+}
+
+.propValueDrawer {
+  min-height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 4px;
+  color: var(--base-fg);
+  font-size: 12.5px;
+  text-align: right;
 }
 
 .propLink {

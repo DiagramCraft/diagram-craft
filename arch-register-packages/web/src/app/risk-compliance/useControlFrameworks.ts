@@ -31,7 +31,7 @@ const EMPTY: ControlFrameworks = {
  * Compliance Requirement's own `framework` containment field (Compliance Requirement -> Framework)
  * — so this manually joins three batched fetches rather than reaching for the structured
  * entity-traversal engine (`useCapabilityRealizedBy.ts`'s `path` projections), matching this
- * app's existing "join relations by hand" style (`ControlDrawer.tsx`, `RiskDrawer.tsx`) since
+ * app's existing "join relations by hand" style (`RiskDrawer.tsx`) since
  * there's no drawer-level provenance need here, just a name/count roll-up. Faceted at Framework
  * granularity only — clause-level (`compliance_requirement`) detail is the traceability matrix's
  * job (#3282).
@@ -77,7 +77,7 @@ export const useControlFrameworks = (
     for (const relation of relations.data) {
       // Control is the `_in` side of `control-requirement` (`inSymSchemaIds: ['control']`),
       // Compliance Requirement the `_out` side — same "read the role off `_in`/`_out` directly"
-      // rule as `ControlDrawer.tsx`.
+      // rule as the entity drawer.
       const controlId = relation._in.id;
       const requirementId = relation._out.id;
       const frameworkId = frameworkIdByRequirementId.get(requirementId);

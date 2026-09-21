@@ -24,10 +24,8 @@ import {
   type ResolvedEntityDrawerBadge,
   type ResolvedEntityDrawerItem
 } from './entityDrawerState';
-import {
-  entityDrawerProviderRegistry,
-  type EntityDrawerProviderContext
-} from './EntityDrawerProviderRegistry';
+import type { EntityDrawerProviderContext } from './EntityDrawerProviderRegistry';
+import { entityDrawerProviderRegistry } from './entityDrawerProviders';
 import styles from './EntityDrawer.module.css';
 
 const EntityDrawerBadge = ({
@@ -95,7 +93,7 @@ const EntityDrawerBadge = ({
   const displayValue = formatDrawerFieldValue(field, value, resolvePrincipalLabel);
   return (
     <Chip tone="ghost">
-      {resolved.label}: {displayValue}
+      {resolved.badge.showLabel === false ? displayValue : `${resolved.label}: ${displayValue}`}
     </Chip>
   );
 };
@@ -204,7 +202,7 @@ const DrawerItem = ({
     return <Provider context={providerContext} item={item.item} label={item.label} />;
   }
   if (!item.field) return null;
-  return <>{renderPropertyRow(item.field, 'view', item.label)}</>;
+  return <>{renderPropertyRow(item.field, 'view', item.label, 'drawer')}</>;
 };
 
 export const EntityDrawer = ({
@@ -296,10 +294,25 @@ export const EntityDrawer = ({
             relationSchemas,
             relations,
             typedRelations,
+            typedRelationsStatus: {
+              isLoading: typedRelationsQuery.isLoading,
+              isError: typedRelationsQuery.isError
+            },
             openEntity
           }
         : null,
-    [entity, schema, workspaceSlug, schemas, relationSchemas, relations, typedRelations, openEntity]
+    [
+      entity,
+      schema,
+      workspaceSlug,
+      schemas,
+      relationSchemas,
+      relations,
+      typedRelations,
+      typedRelationsQuery.isLoading,
+      typedRelationsQuery.isError,
+      openEntity
+    ]
   );
 
   const profile = useMemo(
@@ -402,7 +415,14 @@ export const EntityDrawer = ({
           const content = (
             <div className={styles.sectionContent} hidden={!isOpen}>
               {section.items.map((item, index) => (
-                <div className={styles.item} key={`${item.item.kind}-${index}`}>
+                <div
+                  className={
+                    item.item.kind === 'field' || item.item.kind === 'relation'
+                      ? styles.fieldItem
+                      : styles.item
+                  }
+                  key={`${item.item.kind}-${index}`}
+                >
                   <DrawerItem
                     item={item}
                     providerContext={providerContext}

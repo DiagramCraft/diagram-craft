@@ -95,12 +95,14 @@ export const useEntityFieldRenderers = ({
   const renderPropertyRow = (
     f: EntitySchema['fields'][number],
     groupAccess: FieldGroupAccess = 'edit',
-    label?: string
+    label?: string,
+    displayVariant?: 'default' | 'drawer'
   ) => (
     <PropertyRow
       key={f.id}
       field={f}
       label={label}
+      displayVariant={displayVariant}
       value={entity[f.id]}
       editing={editing && groupAccess !== 'view'}
       editValue={editState[f.id]}
