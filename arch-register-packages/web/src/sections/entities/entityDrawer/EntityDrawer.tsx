@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Chip } from '../../../components/Chip';
@@ -26,6 +26,7 @@ import {
 } from './entityDrawerState';
 import type { EntityDrawerProviderContext } from './EntityDrawerProviderRegistry';
 import { entityDrawerProviderRegistry } from './entityDrawerProviders';
+import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import styles from './EntityDrawer.module.css';
 
 const EntityDrawerBadge = ({
@@ -34,7 +35,7 @@ const EntityDrawerBadge = ({
   lifecycleStates
 }: {
   resolved: ResolvedEntityDrawerBadge;
-  entity: NonNullable<ReturnType<typeof useEntity>['data']>;
+  entity: EntityRecord;
   lifecycleStates: ReturnType<typeof useWorkspaceContext>['lifecycleStates'];
 }) => {
   const resolvePrincipalLabel = usePrincipalLabel();
@@ -145,11 +146,13 @@ const MetadataItem = ({
     return (
       <div className={styles.metadataRow}>
         <span className={styles.metadataLabel}>{item.label}</span>
-        {lifecycle ? (
-          <StatusChip value={lifecycle.id} lifecycleStates={lifecycleStates} />
-        ) : (
-          <span className="dim">—</span>
-        )}
+        <span className={styles.metadataValue}>
+          {lifecycle ? (
+            <StatusChip value={lifecycle.id} lifecycleStates={lifecycleStates} />
+          ) : (
+            <span className="dim">—</span>
+          )}
+        </span>
       </div>
     );
   }
@@ -157,12 +160,14 @@ const MetadataItem = ({
     return (
       <div className={styles.metadataRow}>
         <span className={styles.metadataLabel}>{item.label}</span>
-        <span className={styles.tags}>
-          {(value as string[]).map(tag => (
-            <Chip key={tag} tone="ghost">
-              {tag}
-            </Chip>
-          ))}
+        <span className={styles.metadataValue}>
+          <span className={styles.tags}>
+            {(value as string[]).map(tag => (
+              <Chip key={tag} tone="ghost">
+                {tag}
+              </Chip>
+            ))}
+          </span>
         </span>
       </div>
     );
@@ -176,7 +181,7 @@ const MetadataItem = ({
   return (
     <div className={styles.metadataRow}>
       <span className={styles.metadataLabel}>{item.label}</span>
-      <span>{display}</span>
+      <span className={styles.metadataValue}>{display}</span>
     </div>
   );
 };
@@ -209,19 +214,37 @@ export const EntityDrawer = ({
   workspaceSlug,
   entityId,
   onClose,
-  onOpenEntity
+  onOpenEntity,
+  entityOverride,
+  additionalBadges,
+  entityQueryEnabled = true,
+  entityLoading = false,
+  entityUnavailable = false,
+  loadingMessage = 'Loading entity…',
+  unavailableMessage = 'This entity is unavailable.'
 }: {
   workspaceSlug: string;
   entityId: string;
   onClose: () => void;
   onOpenEntity?: (entityId: string) => void;
+  entityOverride?: EntityRecord;
+  additionalBadges?: ReactNode;
+  entityQueryEnabled?: boolean;
+  entityLoading?: boolean;
+  entityUnavailable?: boolean;
+  loadingMessage?: ReactNode;
+  unavailableMessage?: ReactNode;
 }) => {
   const navigate = useNavigate();
   const { schemas, relationSchemas, lifecycleStates, currencies } = useWorkspaceContext();
   const { getFieldGroupAccess } = useWorkspaceAuthorization(workspaceSlug);
-  const entityQuery = useEntity(workspaceSlug, entityId);
-  const entity = entityQuery.data;
-  const relationsQuery = useEntityRelations(workspaceSlug, entityId);
+  const entityQuery = useEntity(
+    workspaceSlug,
+    entityId,
+    entityQueryEnabled && entityOverride === undefined
+  );
+  const entity = entityOverride ?? entityQuery.data;
+  const relationsQuery = useEntityRelations(workspaceSlug, entity?._uid ?? entityId);
   const typedRelationsQuery = useEntityTypedRelations(workspaceSlug, entity?._uid ?? entityId);
   const configurationQuery = useEntityDrawerConfiguration(workspaceSlug);
 
@@ -343,17 +366,17 @@ export const EntityDrawer = ({
     if (renderModel) setOpenSections(new Set(renderModel.sections.map(section => section.id)));
   }, [renderModel]);
 
-  if (entityQuery.isLoading) {
+  if (entityLoading || (entityOverride === undefined && entityQuery.isLoading)) {
     return (
       <Drawer onClose={onClose} title="Loading…">
-        <div className={styles.empty}>Loading entity…</div>
+        <div className={styles.empty}>{loadingMessage}</div>
       </Drawer>
     );
   }
-  if (entityQuery.isError || !entity) {
+  if (entityUnavailable || (entityOverride === undefined && entityQuery.isError) || !entity) {
     return (
       <Drawer onClose={onClose} title="Unavailable">
-        <div className={styles.empty}>This entity is unavailable.</div>
+        <div className={styles.empty}>{unavailableMessage}</div>
       </Drawer>
     );
   }
@@ -385,7 +408,7 @@ export const EntityDrawer = ({
       eyebrow={<span className="dim mono">{entity._publicId}</span>}
       title={entity._name}
       badges={
-        renderModel.badges.length > 0 ? (
+        renderModel.badges.length > 0 || additionalBadges != null ? (
           <div className={styles.badges}>
             {renderModel.badges.map((badge, index) => (
               <EntityDrawerBadge
@@ -395,6 +418,7 @@ export const EntityDrawer = ({
                 lifecycleStates={lifecycleStates}
               />
             ))}
+            {additionalBadges}
           </div>
         ) : undefined
       }

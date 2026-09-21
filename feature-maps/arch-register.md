@@ -795,8 +795,11 @@
           glossary-scoped left rail. Users can browse and deep-link to terms, search canonical names, synonyms, and
           abbreviations, organize terms across flat many-to-many categories, inspect explicit usage across entities,
           typed relations, Markdown, projects, and diagrams, and review unused, conflicting, deprecated, and ownerless
-          quality reports. Term definitions, aliases, category changes, ownership, lifecycle, and status continue to
-          use the existing entity permissions, history, and approval mechanisms; generic entity behavior is unchanged.
+          quality reports. Term drawers use the workspace's configurable schema-scoped entity drawer for declarative
+          term fields, metadata, ordering, and the glossary usage slot, while quality badges and permission-filtered
+          usage remain glossary-owned application content. Term definitions, aliases, category changes, ownership,
+          lifecycle, and status continue to use the existing entity permissions, history, and approval mechanisms;
+          generic entity behavior is unchanged.
 
         - @id:ar.entities.strategy-model Workspaces can optionally enable a strategy model — nested Business
           Capability, Objective, Outcome, Initiative, and Measure entity schemas — bound to the workspace via a

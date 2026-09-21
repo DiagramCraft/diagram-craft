@@ -1,0 +1,38 @@
+.provider {
+  min-width: 0;
+}
+
+.sectionLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin: 16px 0 6px;
+}
+
+.usageGroup {
+  margin-bottom: 10px;
+}
+
+.usageGroupLabel {
+  color: var(--text-muted);
+  font-size: 10.5px;
+  margin-bottom: 4px;
+}
+
+.usageRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.usageRow:last-child {
+  border-bottom: none;
+}
+
+.usageContext {
+  color: var(--text-muted);
+  margin-left: auto;
+  font-size: 11px;
+}

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildEntityDrawerCatalog,
+  buildDefaultEntityDrawerConfiguration,
   buildDefaultEntityDrawerProfile,
   entityDrawerConfigurationSchema,
   mergeEntityDrawerProfiles,
@@ -167,5 +168,61 @@ describe('entity drawer configuration', () => {
       'service'
     ]);
     expect(catalog.slots.map(slot => slot.id)).not.toContain('vendor.spend');
+  });
+
+  it('derives the glossary term profile from mapped capability fields', () => {
+    const termSchema = {
+      id: 'term',
+      name: 'Term',
+      fields: [
+        { id: 'meaning', name: 'Meaning', type: 'longtext' },
+        { id: 'aliases', name: 'Aliases', type: 'text' },
+        { id: 'short_names', name: 'Short names', type: 'text' },
+        { id: 'topics', name: 'Topics', type: 'reference' },
+        { id: 'maturity', name: 'Maturity', type: 'select' }
+      ]
+    };
+    const configuration = {
+      type: 'business-glossary',
+      bindings: {
+        term: {
+          target: { kind: 'entity_schema', id: 'term' },
+          fieldMappings: {
+            definition: 'meaning',
+            synonyms: 'aliases',
+            abbreviations: 'short_names',
+            categories: 'topics',
+            status: 'maturity'
+          }
+        },
+        category: { target: { kind: 'entity_schema', id: 'category' } }
+      }
+    } as const;
+
+    const profile = buildDefaultEntityDrawerConfiguration([termSchema], [configuration]).profiles
+      .term!;
+
+    expect(profile.header.badges).toEqual([
+      { kind: 'field', fieldId: 'maturity', showLabel: false },
+      { kind: 'metadata', slot: 'lifecycle' }
+    ]);
+    expect(profile.sections.flatMap(section => section.items)).toEqual(
+      expect.arrayContaining([
+        { kind: 'field', fieldId: 'meaning' },
+        { kind: 'field', fieldId: 'aliases' },
+        { kind: 'field', fieldId: 'short_names' },
+        { kind: 'relation', fieldId: 'topics' },
+        { kind: 'metadata', slot: 'owner' },
+        { kind: 'slot', slotId: 'business-glossary.usage', label: 'Usage & backlinks' }
+      ])
+    );
+    expect(profile.sections.map(section => section.id)).toEqual(['attributes', 'details']);
+    expect(profile.sections.find(section => section.id === 'details')?.items).toEqual(
+      expect.arrayContaining([
+        { kind: 'metadata', slot: 'owner' },
+        { kind: 'relation', fieldId: 'topics' },
+        { kind: 'slot', slotId: 'business-glossary.usage', label: 'Usage & backlinks' }
+      ])
+    );
   });
 });

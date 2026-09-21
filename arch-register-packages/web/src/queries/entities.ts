@@ -48,12 +48,12 @@ export const entityKeys = {
     [...entityKeys.all, 'landscapeDiff', workspaceId, from, to] as const
 };
 
-export const entityDetailQuery = (workspaceId: string, entityId: string) =>
+export const entityDetailQuery = (workspaceId: string, entityId: string, enabled = true) =>
   queryOptions({
     queryKey: entityKeys.detail(workspaceId, entityId),
     queryFn: ({ signal }) =>
       orpcClient.entities.get({ params: { workspace: workspaceId, id: entityId } }, { signal }),
-    enabled: !!workspaceId && !!entityId
+    enabled: enabled && !!workspaceId && !!entityId
   });
 
 export const entitiesQuery = (

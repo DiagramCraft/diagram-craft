@@ -541,7 +541,7 @@ export const PropertyRow = ({
       <div className={labelClass}>
         {label ?? field.name}
         {displayVariant !== 'drawer' && <span className={styles.propType}>{typeLabel}</span>}
-        {field.requirementLevel === 'optional' && (
+        {displayVariant !== 'drawer' && field.requirementLevel === 'optional' && (
           <span className={styles.propOptional}>(optional)</span>
         )}
         {field.requirementLevel === 'expected' && (
