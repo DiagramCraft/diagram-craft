@@ -48,6 +48,7 @@ export type EntityDrawerProviderProps = {
   item: Extract<EntityDrawerItem, { kind: 'slot' }>;
   label: string;
   showLabel?: boolean;
+  presentation?: 'row' | 'mini-panel';
 };
 
 export type EntityDrawerProviderDefinition = {

@@ -64,7 +64,12 @@ const ProviderFrame = ({
   </div>
 );
 
-const VendorRiskProvider = ({ context, label, showLabel }: EntityDrawerProviderProps) => {
+const VendorRiskProvider = ({
+  context,
+  label,
+  showLabel,
+  presentation
+}: EntityDrawerProviderProps) => {
   const risk = computeVendorRisk({
     security_risk:
       typeof context.entity.security_risk === 'number' ? context.entity.security_risk : null,
@@ -79,6 +84,32 @@ const VendorRiskProvider = ({ context, label, showLabel }: EntityDrawerProviderP
     criticality: typeof context.entity.criticality === 'number' ? context.entity.criticality : null
   });
 
+  const riskBand = risk.vmRiskBand ? (
+    <div className={styles.riskBandRow}>
+      <Chip dot={VENDOR_RISK_BAND_COLOR[risk.vmRiskBand]} tone="ghost">
+        {risk.vmRiskBand}
+      </Chip>
+    </div>
+  ) : null;
+
+  if (presentation === 'mini-panel') {
+    return (
+      <div className={styles.stat}>
+        {showLabel && <div className={styles.statLabel}>{label}</div>}
+        <div className={styles.statValueWithBand}>
+          <div className={styles.statValue}>
+            {risk.vmRisk != null ? risk.vmRisk.toFixed(1) : '—'}
+          </div>
+          {risk.vmRiskBand && (
+            <Chip dot={VENDOR_RISK_BAND_COLOR[risk.vmRiskBand]} tone="ghost">
+              {risk.vmRiskBand}
+            </Chip>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <ProviderFrame label={label} showLabel={showLabel}>
       <div className={styles.statGrid}>
@@ -89,13 +120,7 @@ const VendorRiskProvider = ({ context, label, showLabel }: EntityDrawerProviderP
           </div>
         </div>
       </div>
-      {risk.vmRiskBand && (
-        <div className={styles.riskBandRow}>
-          <Chip dot={VENDOR_RISK_BAND_COLOR[risk.vmRiskBand]} tone="ghost">
-            {risk.vmRiskBand}
-          </Chip>
-        </div>
-      )}
+      {riskBand}
     </ProviderFrame>
   );
 };

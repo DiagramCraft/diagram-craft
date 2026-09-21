@@ -269,11 +269,17 @@ describe('entity drawer configuration', () => {
     ]);
     expect(profile.sections[0]?.items).toEqual(
       expect.arrayContaining([
-        { kind: 'field', fieldId: 'security_risk' },
-        { kind: 'field', fieldId: 'criticality' },
-        { kind: 'slot', slotId: 'vendor.risk', label: 'vmRisk' }
+        { kind: 'field', fieldId: 'security_risk', presentation: 'mini-panel' },
+        { kind: 'field', fieldId: 'criticality', presentation: 'mini-panel' },
+        {
+          kind: 'slot',
+          slotId: 'vendor.risk',
+          label: 'vmRisk',
+          presentation: 'mini-panel'
+        }
       ])
     );
+    expect(profile.sections[0]?.layout).toBe('stat-grid');
     expect(profile.sections[2]?.items).toEqual([
       { kind: 'slot', slotId: 'vendor.spend', label: 'Spend', showLabel: false }
     ]);

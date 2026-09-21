@@ -210,11 +210,23 @@ const DrawerItem = ({
         item={item.item}
         label={item.label}
         showLabel={item.item.showLabel !== false}
+        presentation={item.item.presentation}
       />
     );
   }
   if (!item.field) return null;
-  return <>{renderPropertyRow(item.field, 'view', item.label, 'drawer')}</>;
+  return (
+    <>
+      {renderPropertyRow(
+        item.field,
+        'view',
+        item.label,
+        item.item.kind === 'field' && item.item.presentation === 'mini-panel'
+          ? 'drawer-stat'
+          : 'drawer'
+      )}
+    </>
+  );
 };
 
 export const EntityDrawer = ({
@@ -445,12 +457,19 @@ export const EntityDrawer = ({
           const showTitle = section.showTitle !== false;
           const isOpen = !showTitle || (openSections?.has(section.id) ?? true);
           const content = (
-            <div className={styles.sectionContent} hidden={!isOpen}>
+            <div
+              className={`${styles.sectionContent} ${
+                section.layout === 'stat-grid' ? styles.sectionContentStatGrid : ''
+              }`}
+              hidden={!isOpen}
+            >
               {section.items.map((item, index) => (
                 <div
                   className={
                     item.item.kind === 'field' || item.item.kind === 'relation'
-                      ? styles.fieldItem
+                      ? item.item.kind === 'field' && item.item.presentation === 'mini-panel'
+                        ? styles.miniPanelItem
+                        : styles.fieldItem
                       : styles.item
                   }
                   key={`${item.item.kind}-${index}`}

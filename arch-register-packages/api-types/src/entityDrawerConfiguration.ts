@@ -20,10 +20,16 @@ export const entityDrawerMetadataSlotSchema = z.enum([
 ]);
 
 const labelOverrideSchema = z.string().min(1).max(120).optional();
+const entityDrawerItemPresentationSchema = z.enum(['row', 'mini-panel']).optional();
 export const entityDrawerSlotOptionsSchema = z.record(z.string(), z.unknown());
 
 export const entityDrawerItemSchema = z.discriminatedUnion('kind', [
-  z.object({ kind: z.literal('field'), fieldId: z.string().min(1), label: labelOverrideSchema }),
+  z.object({
+    kind: z.literal('field'),
+    fieldId: z.string().min(1),
+    label: labelOverrideSchema,
+    presentation: entityDrawerItemPresentationSchema
+  }),
   z.object({
     kind: z.literal('metadata'),
     slot: entityDrawerMetadataSlotSchema,
@@ -35,6 +41,7 @@ export const entityDrawerItemSchema = z.discriminatedUnion('kind', [
     slotId: z.string().min(1),
     label: labelOverrideSchema,
     showLabel: z.boolean().optional(),
+    presentation: entityDrawerItemPresentationSchema,
     options: entityDrawerSlotOptionsSchema.optional()
   })
 ]);
@@ -60,6 +67,7 @@ export const entityDrawerProfileSchema = z.object({
       id: z.string().min(1).max(120),
       title: z.string().min(1).max(120),
       showTitle: z.boolean().optional(),
+      layout: z.enum(['rows', 'stat-grid']).optional(),
       collapsible: z.boolean().default(true),
       items: z.array(entityDrawerItemSchema)
     })
@@ -674,13 +682,28 @@ const buildVendorManagementDefaultProfile = (
   providerItems: EntityDrawerItem[],
   fieldIds: VendorManagementFieldIds
 ): EntityDrawerProfile => {
-  const item = (fieldId: string): EntityDrawerItem => ({ kind: 'field', fieldId });
-  const provider = (slotId: string, label: string, showLabel = true): EntityDrawerItem | null => {
+  const item = (fieldId: string): Extract<EntityDrawerItem, { kind: 'field' }> => ({
+    kind: 'field',
+    fieldId
+  });
+  const provider = (
+    slotId: string,
+    label: string,
+    showLabel = true,
+    presentation?: 'row' | 'mini-panel'
+  ): EntityDrawerItem | null => {
     const slot = providerItems.find(
       (candidate): candidate is Extract<EntityDrawerItem, { kind: 'slot' }> =>
         candidate.kind === 'slot' && candidate.slotId === slotId
     );
-    return slot ? { ...slot, label, ...(showLabel ? {} : { showLabel: false }) } : null;
+    return slot
+      ? {
+          ...slot,
+          label,
+          ...(showLabel ? {} : { showLabel: false }),
+          ...(presentation ? { presentation } : {})
+        }
+      : null;
   };
   const section = (
     id: string,
@@ -702,14 +725,17 @@ const buildVendorManagementDefaultProfile = (
       ]
     },
     sections: [
-      section('risk-profile', 'Risk profile', [
-        item(fieldIds.securityRisk),
-        item(fieldIds.concentrationRisk),
-        item(fieldIds.financialRisk),
-        item(fieldIds.complianceRisk),
-        item(fieldIds.criticality),
-        provider('vendor.risk', 'vmRisk')
-      ]),
+      {
+        ...section('risk-profile', 'Risk profile', [
+          { ...item(fieldIds.securityRisk), presentation: 'mini-panel' },
+          { ...item(fieldIds.concentrationRisk), presentation: 'mini-panel' },
+          { ...item(fieldIds.financialRisk), presentation: 'mini-panel' },
+          { ...item(fieldIds.complianceRisk), presentation: 'mini-panel' },
+          { ...item(fieldIds.criticality), presentation: 'mini-panel' },
+          provider('vendor.risk', 'vmRisk', true, 'mini-panel')
+        ]),
+        layout: 'stat-grid' as const
+      },
       section('attributes', 'Attributes', [
         item(fieldIds.category),
         item(fieldIds.tier),
