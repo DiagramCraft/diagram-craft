@@ -1,11 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import {
-  TbArrowsRightLeft,
-  TbDatabase,
-  TbFileText,
-  TbFolders,
-  TbSitemap
-} from 'react-icons/tb';
+import { TbArrowsRightLeft, TbDatabase, TbFileText, TbFolders, TbSitemap } from 'react-icons/tb';
 import { glossaryUsageQuery } from '../glossaryQueries';
 import {
   EntityDrawerProviderStatus,

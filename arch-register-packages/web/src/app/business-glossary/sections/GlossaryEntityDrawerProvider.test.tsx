@@ -6,7 +6,10 @@ import { businessGlossaryEntityDrawerProviderDefinitions } from './GlossaryEntit
 const mocks = vi.hoisted(() => ({
   usage: {
     data: undefined as
-      | { items: Array<{ kind: string; id: string; label: string; context?: string }>; total: number }
+      | {
+          items: Array<{ kind: string; id: string; label: string; context?: string }>;
+          total: number;
+        }
       | undefined,
     isLoading: false,
     isError: false

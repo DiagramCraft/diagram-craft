@@ -76,7 +76,9 @@ vi.mock('../../../components/Title', () => ({
 
 vi.mock('../../../components/SearchInput', () => ({ SearchInput: () => <input /> }));
 vi.mock('../../../components/FilterDropdown', () => ({ FilterDropdown: () => <select /> }));
-vi.mock('../../../components/Chip', () => ({ Chip: ({ children }: { children: ReactNode }) => <span>{children}</span> }));
+vi.mock('../../../components/Chip', () => ({
+  Chip: ({ children }: { children: ReactNode }) => <span>{children}</span>
+}));
 vi.mock('../../../components/StatusChip', () => ({ StatusChip: () => <span /> }));
 vi.mock('../../../components/table/Table', () => {
   const passthrough = ({ children }: { children?: ReactNode }) => <>{children}</>;

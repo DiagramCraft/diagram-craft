@@ -610,11 +610,7 @@ const buildBusinessGlossaryDefaultProfile = (
         id: 'attributes',
         title: 'Attributes',
         collapsible: false,
-        items: [
-          item(fieldIds.definition),
-          item(fieldIds.synonyms),
-          item(fieldIds.abbreviations)
-        ]
+        items: [item(fieldIds.definition), item(fieldIds.synonyms), item(fieldIds.abbreviations)]
       },
       {
         id: 'details',
