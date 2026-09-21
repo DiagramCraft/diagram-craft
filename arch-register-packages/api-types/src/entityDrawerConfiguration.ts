@@ -767,6 +767,121 @@ const buildVendorManagementDefaultProfile = (
   };
 };
 
+type VendorManagementContractFieldIds = {
+  vendor: string;
+  contractStart: string;
+  contractEnd: string;
+  contractType: string;
+  noticePeriodDays: string;
+  autoRenew: string;
+  contractOwner: string;
+  annualCost: string;
+  setupFee: string;
+  system: string;
+};
+
+const vendorManagementContractFieldIds = (
+  schema: EntityDrawerSchema,
+  capabilityConfigurations: readonly CapabilityConfigurationLike[]
+): VendorManagementContractFieldIds | null => {
+  const configuration = capabilityConfigurations.find(
+    candidate => candidate.type === 'vendor-management'
+  );
+  const binding = configuration?.bindings.contract;
+  if (binding?.target.kind !== 'entity_schema' || binding.target.id !== schema.id) return null;
+
+  const fieldIds: VendorManagementContractFieldIds = {
+    vendor: 'vendor',
+    contractStart: 'contract_start',
+    contractEnd: 'contract_end',
+    contractType: 'contract_type',
+    noticePeriodDays: 'notice_period_days',
+    autoRenew: 'auto_renew',
+    contractOwner: 'contract_owner',
+    annualCost: 'annual_cost',
+    setupFee: 'setup_fee',
+    system: 'system'
+  };
+  const fields = Object.values(fieldIds).map(fieldId =>
+    schema.fields.find(field => field.id === fieldId && fieldIsVisible(field))
+  );
+  if (fields.some(field => field === undefined)) return null;
+
+  const vendorField = schema.fields.find(field => field.id === fieldIds.vendor);
+  const systemField = schema.fields.find(field => field.id === fieldIds.system);
+  if (!vendorField || !isRelationField(vendorField)) return null;
+  if (!systemField || systemField.type !== 'typedRelation') return null;
+
+  return fieldIds;
+};
+
+const buildVendorManagementContractDefaultProfile = (
+  providerItems: EntityDrawerItem[],
+  fieldIds: VendorManagementContractFieldIds
+): EntityDrawerProfile => {
+  const field = (
+    fieldId: string,
+    presentation?: 'row' | 'mini-panel'
+  ): Extract<EntityDrawerItem, { kind: 'field' }> => ({
+    kind: 'field',
+    fieldId,
+    ...(presentation ? { presentation } : {})
+  });
+  const relation = (fieldId: string, label: string): EntityDrawerItem => ({
+    kind: 'relation',
+    fieldId,
+    label
+  });
+  const provider = (slotId: string, label: string, showLabel = true): EntityDrawerItem | null => {
+    const slot = providerItems.find(
+      (candidate): candidate is Extract<EntityDrawerItem, { kind: 'slot' }> =>
+        candidate.kind === 'slot' && candidate.slotId === slotId
+    );
+    return slot ? { ...slot, label, ...(showLabel ? {} : { showLabel: false }) } : null;
+  };
+  const section = (
+    id: string,
+    title: string,
+    items: Array<EntityDrawerItem | null>,
+    collapsible = false
+  ) => ({
+    id,
+    title,
+    collapsible,
+    items: items.filter((candidate): candidate is EntityDrawerItem => candidate != null)
+  });
+
+  return {
+    header: {
+      badges: [{ kind: 'field', fieldId: fieldIds.contractType, showLabel: false }]
+    },
+    sections: [
+      section('vendor', 'Vendor', [relation(fieldIds.vendor, 'Provided by')]),
+      section('terms', 'Terms', [
+        field(fieldIds.contractStart),
+        field(fieldIds.contractEnd),
+        field(fieldIds.contractType),
+        field(fieldIds.noticePeriodDays),
+        field(fieldIds.autoRenew),
+        field(fieldIds.contractOwner)
+      ]),
+      {
+        ...section('cost', 'Cost', [
+          field(fieldIds.annualCost, 'mini-panel'),
+          field(fieldIds.setupFee, 'mini-panel')
+        ]),
+        layout: 'stat-grid' as const
+      },
+      section(
+        'systems-used',
+        'Systems used',
+        [provider('contract.systems-used', 'Systems used', false)],
+        true
+      )
+    ].filter(section => section.items.length > 0)
+  };
+};
+
 export const buildDefaultEntityDrawerProfile = (
   schema: EntityDrawerSchema,
   providerItems: EntityDrawerItem[] = []
@@ -825,13 +940,16 @@ export const buildDefaultEntityDrawerConfiguration = (
       const providerItems = getDefaultProviderItems(schemas, schema.id, capabilityConfigurations);
       const glossaryFieldIds = businessGlossaryFieldIds(schema, capabilityConfigurations);
       const vendorFieldIds = vendorManagementFieldIds(schema, capabilityConfigurations);
+      const contractFieldIds = vendorManagementContractFieldIds(schema, capabilityConfigurations);
       return [
         schema.id,
         glossaryFieldIds
           ? buildBusinessGlossaryDefaultProfile(providerItems, glossaryFieldIds)
           : vendorFieldIds
             ? buildVendorManagementDefaultProfile(providerItems, vendorFieldIds)
-            : buildDefaultEntityDrawerProfile(schema, providerItems)
+            : contractFieldIds
+              ? buildVendorManagementContractDefaultProfile(providerItems, contractFieldIds)
+              : buildDefaultEntityDrawerProfile(schema, providerItems)
       ];
     })
   )

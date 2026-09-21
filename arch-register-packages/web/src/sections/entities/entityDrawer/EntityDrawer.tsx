@@ -234,6 +234,7 @@ export const EntityDrawer = ({
   entityId,
   onClose,
   onOpenEntity,
+  onOpenRelatedEntity,
   entityOverride,
   additionalBadges,
   entityQueryEnabled = true,
@@ -246,8 +247,9 @@ export const EntityDrawer = ({
   entityId: string;
   onClose: () => void;
   onOpenEntity?: (entityId: string) => void;
+  onOpenRelatedEntity?: (fieldId: string, publicId: string) => boolean;
   entityOverride?: EntityRecord;
-  additionalBadges?: ReactNode;
+  additionalBadges?: ReactNode | ((entity: EntityRecord) => ReactNode);
   entityQueryEnabled?: boolean;
   entityLoading?: boolean;
   entityUnavailable?: boolean;
@@ -307,6 +309,7 @@ export const EntityDrawer = ({
     setValidationErrors,
     refLookup,
     referenceOptions,
+    onOpenRelatedEntity,
     currencies: currencies.currencies,
     defaultCurrency: currencies.default_currency,
     typedRelationsOutgoing: typedRelations.outgoing,
@@ -437,7 +440,7 @@ export const EntityDrawer = ({
                 lifecycleStates={lifecycleStates}
               />
             ))}
-            {additionalBadges}
+            {typeof additionalBadges === 'function' ? additionalBadges(entity) : additionalBadges}
           </div>
         ) : undefined
       }
