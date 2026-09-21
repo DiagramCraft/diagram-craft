@@ -221,9 +221,7 @@ const DrawerItem = ({
         item.field,
         'view',
         item.label,
-        item.item.presentation === 'mini-panel'
-          ? 'drawer-stat'
-          : 'drawer'
+        item.item.presentation === 'mini-panel' ? 'drawer-stat' : 'drawer'
       )}
     </>
   );

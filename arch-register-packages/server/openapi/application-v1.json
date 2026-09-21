@@ -74386,6 +74386,13 @@
                                                 "type": "string",
                                                 "minLength": 1,
                                                 "maxLength": 120
+                                              },
+                                              "presentation": {
+                                                "enum": [
+                                                  "row",
+                                                  "mini-panel"
+                                                ],
+                                                "type": "string"
                                               }
                                             },
                                             "required": [
@@ -74726,6 +74733,13 @@
                                           "type": "string",
                                           "minLength": 1,
                                           "maxLength": 120
+                                        },
+                                        "presentation": {
+                                          "enum": [
+                                            "row",
+                                            "mini-panel"
+                                          ],
+                                          "type": "string"
                                         }
                                       },
                                       "required": [
@@ -75007,6 +75021,13 @@
                                                 "type": "string",
                                                 "minLength": 1,
                                                 "maxLength": 120
+                                              },
+                                              "presentation": {
+                                                "enum": [
+                                                  "row",
+                                                  "mini-panel"
+                                                ],
+                                                "type": "string"
                                               }
                                             },
                                             "required": [
