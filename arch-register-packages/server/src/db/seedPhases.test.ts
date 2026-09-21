@@ -106,6 +106,24 @@ describe('composable seed phases', () => {
           )
         )
       );
+
+      const riskComplianceConfiguration = (
+        await provisioned.db.workspace.listWorkspaceCapabilityConfigurations(defaultWorkspace)
+      ).find(configuration => configuration.type === 'risk-compliance');
+      expect(riskComplianceConfiguration).toMatchObject({
+        type: 'risk-compliance',
+        bindings: {
+          risk: { target: { kind: 'entity_schema', id: expect.any(String) } },
+          control: { target: { kind: 'entity_schema', id: expect.any(String) } },
+          framework: { target: { kind: 'entity_schema', id: expect.any(String) } },
+          complianceRequirement: {
+            target: { kind: 'entity_schema', id: expect.any(String) }
+          },
+          dataEntity: {
+            target: { kind: 'entity_schema', id: expect.any(String) }
+          }
+        }
+      });
       expect(await provisioned.db.catalog.listSharedFieldGroups(defaultWorkspace)).toEqual([]);
       expect(await provisioned.db.catalog.listEntities(defaultWorkspace)).toEqual([]);
       expect(await provisioned.db.project.projects.listProjects(defaultWorkspace)).toEqual([]);

@@ -920,6 +920,30 @@ describe('instantiateTemplate', () => {
     });
   });
 
+  it('materializes the Risk & Compliance capability bindings', () => {
+    const definitions = instantiateTemplateDefinitions('ws-1', 'risk-compliance');
+    const risk = definitions.schemas.find(schema => schema.name === 'Risk');
+    const control = definitions.schemas.find(schema => schema.name === 'Control');
+    const framework = definitions.schemas.find(schema => schema.name === 'Framework');
+    const complianceRequirement = definitions.schemas.find(
+      schema => schema.name === 'Compliance Requirement'
+    );
+
+    expect(definitions.capabilityConfigurations).toEqual([
+      {
+        type: 'risk-compliance',
+        bindings: {
+          risk: { target: { kind: 'entity_schema', id: risk?.id } },
+          control: { target: { kind: 'entity_schema', id: control?.id } },
+          framework: { target: { kind: 'entity_schema', id: framework?.id } },
+          complianceRequirement: {
+            target: { kind: 'entity_schema', id: complianceRequirement?.id }
+          }
+        }
+      }
+    ]);
+  });
+
   it('materializes the risk-compliance typed relations with correctly remapped endpoints', () => {
     const definitions = instantiateTemplateDefinitions('ws-1', 'risk-compliance');
     const risk = definitions.schemas.find(schema => schema.name === 'Risk');

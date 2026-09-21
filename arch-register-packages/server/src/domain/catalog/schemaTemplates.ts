@@ -3233,6 +3233,23 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
       }
     ],
     enums: riskComplianceEnums,
+    capabilityConfigurations: [
+      {
+        // Auto-binds the Risk & Compliance capability to the schemas shipped by this template,
+        // so workspaces using the template get the application without a manual configuration
+        // step. The optional Data Entity binding is added by the default seed composition because
+        // that schema belongs to the Information Governance template.
+        type: 'risk-compliance',
+        bindings: {
+          risk: { target: { kind: 'entity_schema', symId: 'risk' } },
+          control: { target: { kind: 'entity_schema', symId: 'control' } },
+          framework: { target: { kind: 'entity_schema', symId: 'framework' } },
+          complianceRequirement: {
+            target: { kind: 'entity_schema', symId: 'compliance_requirement' }
+          }
+        }
+      }
+    ],
     relationSchemas: [
       {
         symId: 'risk-control',
