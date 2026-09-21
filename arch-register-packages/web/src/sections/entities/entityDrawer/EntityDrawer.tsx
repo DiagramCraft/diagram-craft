@@ -204,7 +204,14 @@ const DrawerItem = ({
   }
   if (item.item.kind === 'slot' && item.provider) {
     const Provider = item.provider.Component;
-    return <Provider context={providerContext} item={item.item} label={item.label} />;
+    return (
+      <Provider
+        context={providerContext}
+        item={item.item}
+        label={item.label}
+        showLabel={item.item.showLabel !== false}
+      />
+    );
   }
   if (!item.field) return null;
   return <>{renderPropertyRow(item.field, 'view', item.label, 'drawer')}</>;
@@ -435,7 +442,8 @@ export const EntityDrawer = ({
     >
       <div className={styles.sections}>
         {renderModel.sections.map(section => {
-          const isOpen = openSections?.has(section.id) ?? true;
+          const showTitle = section.showTitle !== false;
+          const isOpen = !showTitle || (openSections?.has(section.id) ?? true);
           const content = (
             <div className={styles.sectionContent} hidden={!isOpen}>
               {section.items.map((item, index) => (
@@ -460,7 +468,7 @@ export const EntityDrawer = ({
           );
           return (
             <section className={styles.section} key={section.id}>
-              {section.collapsible ? (
+              {showTitle && section.collapsible ? (
                 <h3 className={styles.sectionHeading}>
                   <button
                     type="button"
@@ -478,9 +486,9 @@ export const EntityDrawer = ({
                     {section.title}
                   </button>
                 </h3>
-              ) : (
+              ) : showTitle ? (
                 <h3 className={styles.sectionTitle}>{section.title}</h3>
-              )}
+              ) : null}
               {content}
             </section>
           );

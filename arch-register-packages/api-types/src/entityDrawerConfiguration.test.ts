@@ -225,4 +225,57 @@ describe('entity drawer configuration', () => {
       ])
     );
   });
+
+  it('derives the Vendor Management profile with fields and provider slots in drawer order', () => {
+    const vendorSchema = {
+      id: 'vendor',
+      name: 'Vendor',
+      fields: [
+        { id: 'category', name: 'Category', type: 'select' },
+        { id: 'tier', name: 'Tier', type: 'select' },
+        { id: 'status', name: 'Status', type: 'select' },
+        { id: 'relationship_owner', name: 'Relationship Owner', type: 'text' },
+        { id: 'cost_centre', name: 'Cost Centre', type: 'select' },
+        { id: 'security_risk', name: 'Security Risk', type: 'number' },
+        { id: 'concentration_risk', name: 'Concentration Risk', type: 'number' },
+        { id: 'financial_risk', name: 'Financial Risk', type: 'number' },
+        { id: 'compliance_risk', name: 'Compliance Risk', type: 'number' },
+        { id: 'criticality', name: 'Criticality', type: 'number' }
+      ]
+    };
+    const configuration = {
+      type: 'vendor-management',
+      bindings: {
+        vendor: { target: { kind: 'entity_schema', id: 'vendor' } },
+        contract: { target: { kind: 'entity_schema', id: 'contract' } }
+      }
+    } as const;
+
+    const profile = buildDefaultEntityDrawerConfiguration([vendorSchema], [configuration]).profiles
+      .vendor!;
+
+    expect(profile.header.badges).toEqual([
+      { kind: 'field', fieldId: 'tier', showLabel: false },
+      { kind: 'field', fieldId: 'status', showLabel: false }
+    ]);
+    expect(profile.sections.map(section => section.id)).toEqual([
+      'risk-profile',
+      'attributes',
+      'spend',
+      'contracts',
+      'applications-supplied',
+      'technology-lifecycle',
+      'capabilities-funded'
+    ]);
+    expect(profile.sections[0]?.items).toEqual(
+      expect.arrayContaining([
+        { kind: 'field', fieldId: 'security_risk' },
+        { kind: 'field', fieldId: 'criticality' },
+        { kind: 'slot', slotId: 'vendor.risk', label: 'vmRisk' }
+      ])
+    );
+    expect(profile.sections[2]?.items).toEqual([
+      { kind: 'slot', slotId: 'vendor.spend', label: 'Spend', showLabel: false }
+    ]);
+  });
 });

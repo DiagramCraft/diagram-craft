@@ -47,6 +47,7 @@ export type EntityDrawerProviderProps = {
   context: EntityDrawerProviderContext;
   item: Extract<EntityDrawerItem, { kind: 'slot' }>;
   label: string;
+  showLabel?: boolean;
 };
 
 export type EntityDrawerProviderDefinition = {

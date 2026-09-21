@@ -394,7 +394,6 @@ export const VendorSpendScreen = () => {
         <VendorDrawer
           workspaceSlug={workspaceSlug}
           vendorId={vendorId}
-          vendorConfig={vendorConfig}
           onClose={closeVendor}
         />
       )}

@@ -34,6 +34,7 @@ import styles from './EntityDrawerSettingsScreen.module.css';
 const newSection = () => ({
   id: `section-${crypto.randomUUID()}`,
   title: 'New section',
+  showTitle: true,
   collapsible: true,
   items: [] as EntityDrawerItem[]
 });
@@ -109,11 +110,15 @@ const AddMenu = ({ label, groups }: { label: string; groups: PickerGroup[] }) =>
 };
 
 const SectionMenu = ({
+  showTitle,
   collapsible,
+  onToggleShowTitle,
   onToggleCollapsible,
   onRemove
 }: {
+  showTitle: boolean;
   collapsible: boolean;
+  onToggleShowTitle: (value: boolean) => void;
   onToggleCollapsible: (value: boolean) => void;
   onRemove: () => void;
 }) => (
@@ -122,7 +127,14 @@ const SectionMenu = ({
       <TbDots size={12} />
     </MenuButton.Trigger>
     <MenuButton.Menu align="end">
-      <Menu.CheckboxItem checked={collapsible} onCheckedChange={onToggleCollapsible}>
+      <Menu.CheckboxItem checked={showTitle} onCheckedChange={onToggleShowTitle}>
+        Show title
+      </Menu.CheckboxItem>
+      <Menu.CheckboxItem
+        checked={collapsible}
+        disabled={!showTitle}
+        onCheckedChange={onToggleCollapsible}
+      >
         Collapsible
       </Menu.CheckboxItem>
       <Menu.Separator />
@@ -136,11 +148,15 @@ const SectionMenu = ({
 const ItemMenu = ({
   sectionId,
   sections,
+  showLabel,
+  onToggleShowLabel,
   onMoveTo,
   onRemove
 }: {
   sectionId: string;
   sections: EntityDrawerProfile['sections'];
+  showLabel?: boolean;
+  onToggleShowLabel?: (value: boolean) => void;
   onMoveTo: (sectionId: string) => void;
   onRemove: () => void;
 }) => (
@@ -149,6 +165,12 @@ const ItemMenu = ({
       <TbDots size={10} />
     </MenuButton.Trigger>
     <MenuButton.Menu align="end">
+      {showLabel !== undefined && onToggleShowLabel && (
+        <Menu.CheckboxItem checked={showLabel} onCheckedChange={onToggleShowLabel}>
+          Show label
+        </Menu.CheckboxItem>
+      )}
+      {showLabel !== undefined && <Menu.Separator />}
       {sections.length > 1 && (
         <Menu.SubMenu label="Move to section">
           {sections
@@ -644,7 +666,15 @@ export const EntityDrawerEditor = ({
                         <TbChevronDown size={12} />
                       </Button>
                       <SectionMenu
+                        showTitle={section.showTitle !== false}
                         collapsible={section.collapsible}
+                        onToggleShowTitle={showTitle =>
+                          updateSection(section.id, current => ({
+                            ...current,
+                            showTitle,
+                            ...(showTitle ? {} : { collapsible: false })
+                          }))
+                        }
                         onToggleCollapsible={collapsible =>
                           updateSection(section.id, current => ({ ...current, collapsible }))
                         }
@@ -718,6 +748,20 @@ export const EntityDrawerEditor = ({
                           <ItemMenu
                             sectionId={section.id}
                             sections={profile.sections}
+                            showLabel={item.kind === 'slot' ? item.showLabel !== false : undefined}
+                            onToggleShowLabel={
+                              item.kind === 'slot'
+                                ? showLabel =>
+                                    updateSection(section.id, current => ({
+                                      ...current,
+                                      items: current.items.map((entry, index) =>
+                                        index === itemIndex && entry.kind === 'slot'
+                                          ? { ...entry, showLabel }
+                                          : entry
+                                      )
+                                    }))
+                                : undefined
+                            }
                             onMoveTo={targetId =>
                               moveItemToSection(section.id, itemIndex, targetId)
                             }

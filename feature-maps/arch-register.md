@@ -356,13 +356,15 @@
           name, sort by name / spend / risk / next renewal, and a sidebar of Tier, Category, and Relationship Owner
           facets (each showing a count, driven off the Vendor schema's own field options and the fetched vendors'
           values). Next renewal is the earliest upcoming `Contract.contract_end` across a vendor's own Contracts.
-          Selecting a vendor opens the shared vendor drawer, deep-linkable at
-          `vendor-management/vendors/$vendorId`: a composite risk score (`vmRisk`/`vmRiskBand`,
-          weighted across the vendor's security, concentration, financial, and compliance risk fields and lifted by
-          criticality), attributes, spend (`vmSpend`, summed across the vendor's own Contracts), the vendor's
-          Contracts, the Systems its contracts serve ("Applications supplied"), and a best-effort technology
-          lifecycle view derived from those Systems' own lifecycle state. Capabilities funded is not yet
-          available — no Contract-to-capability link exists yet.
+          Selecting a vendor opens the configurable shared vendor drawer, deep-linkable at
+          `vendor-management/vendors/$vendorId`: its schema profile preserves a composite risk score
+          (`vmRisk`/`vmRiskBand`, weighted across the vendor's security, concentration, financial, and compliance
+          risk fields and lifted by criticality), attributes, spend (`vmSpend`, summed across the vendor's own
+          Contracts), the vendor's Contracts, the Systems its contracts serve ("Applications supplied"), and a
+          best-effort technology lifecycle view derived from those Systems' own lifecycle state. These sections
+          can be reordered, relabeled, or have their section and provider titles hidden through the workspace
+          entity-drawer configuration; Capabilities funded is not yet available — no Contract-to-capability link
+          exists yet.
 
         - @id:ar.vendor-management.contracts The Contracts section offers a list view and a 12-month renewal
           calendar (its timeline view is still pending). The list is a register of Contract entities: free-text
