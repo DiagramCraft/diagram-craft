@@ -44,8 +44,8 @@ export const useEntities = (
 };
 
 // Hook for fetching a single entity
-export const useEntity = (workspaceId: string, entityId: string) => {
-  return useQuery(entityDetailQuery(workspaceId, entityId));
+export const useEntity = (workspaceId: string, entityId: string, enabled = true) => {
+  return useQuery(entityDetailQuery(workspaceId, entityId, enabled));
 };
 
 export const useEntityJson = (workspaceId: string, entityId: string, enabled = true) =>

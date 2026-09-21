@@ -95,7 +95,12 @@ vi.mock('../../../hooks/useWorkspaceConfig', () => ({
 describe('EntityDrawer', () => {
   it('renders configured content with fixed identity and full-record navigation', () => {
     const markup = renderToStaticMarkup(
-      <EntityDrawer workspaceSlug="workspace-1" entityId="SRV-001" onClose={vi.fn()} />
+      <EntityDrawer
+        workspaceSlug="workspace-1"
+        entityId="SRV-001"
+        onClose={vi.fn()}
+        additionalBadges={<span>Quality badge</span>}
+      />
     );
 
     expect(markup).toContain('Payments');
@@ -105,5 +110,6 @@ describe('EntityDrawer', () => {
     expect(markup).toContain('Service name');
     expect(markup.indexOf('Current state')).toBeLessThan(markup.indexOf('Service name'));
     expect(markup).toContain('Open record in Entities');
+    expect(markup).toContain('Quality badge');
   });
 });

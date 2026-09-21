@@ -68,7 +68,7 @@
 
 .propLabelDrawer {
   font-size: 12px;
-  color: var(--text-muted);
+  color: var(--base-fg-dim);
   display: flex;
   align-items: center;
   gap: 6px;

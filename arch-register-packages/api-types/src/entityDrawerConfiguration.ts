@@ -3,6 +3,9 @@ import {
   DEFAULT_STRATEGY_VIEW_CONFIG,
   strategyModelViewConfigSchema
 } from './app/strategy-model/strategyModelViewConfig';
+import { businessGlossaryCapabilityDefinition } from './app/business-glossary/glossaryCapability';
+import { resolveCapabilityFieldId } from './integrationCatalog';
+import type { WorkspaceCapabilityBinding } from './workspaceCapabilityContract';
 
 export const entityDrawerMetadataSlotSchema = z.enum([
   'slug',
@@ -154,7 +157,7 @@ export const mergeEntityDrawerProfiles = (
 
 type CapabilityConfigurationLike = {
   type: string;
-  bindings: Record<string, { target?: { kind: string; id: string } | undefined }>;
+  bindings: Record<string, WorkspaceCapabilityBinding>;
   view_config?: unknown;
 };
 
@@ -535,6 +538,94 @@ const fieldItem = (field: EntityDrawerField): EntityDrawerItem =>
     ? { kind: 'relation', fieldId: field.id }
     : { kind: 'field', fieldId: field.id };
 
+type BusinessGlossaryFieldIds = {
+  definition: string;
+  synonyms: string;
+  abbreviations: string;
+  categories: string;
+  status: string;
+};
+
+const businessGlossaryFieldIds = (
+  schema: EntityDrawerSchema,
+  capabilityConfigurations: readonly CapabilityConfigurationLike[]
+): BusinessGlossaryFieldIds | null => {
+  const configuration = capabilityConfigurations.find(
+    candidate => candidate.type === 'business-glossary'
+  );
+  const binding = configuration?.bindings.term;
+  if (binding?.target.kind !== 'entity_schema' || binding.target.id !== schema.id) {
+    return null;
+  }
+
+  const role = businessGlossaryCapabilityDefinition.bindingRoles.find(item => item.id === 'term');
+  if (!role) return null;
+
+  const fieldIdFor = (roleId: keyof BusinessGlossaryFieldIds) => {
+    const fieldRole = role.fieldRoles.find(field => field.id === roleId);
+    return fieldRole ? resolveCapabilityFieldId(binding, fieldRole) : null;
+  };
+  const definition = fieldIdFor('definition');
+  const synonyms = fieldIdFor('synonyms');
+  const abbreviations = fieldIdFor('abbreviations');
+  const categories = fieldIdFor('categories');
+  const status = fieldIdFor('status');
+  if (!definition || !synonyms || !abbreviations || !categories || !status) return null;
+
+  const fieldIds = { definition, synonyms, abbreviations, categories, status };
+  const fields = Object.values(fieldIds).map(fieldId =>
+    schema.fields.find(field => field.id === fieldId && fieldIsVisible(field))
+  );
+  if (fields.some(field => field === undefined)) return null;
+
+  const categoriesField = schema.fields.find(field => field.id === fieldIds.categories);
+  if (!categoriesField || !isRelationField(categoriesField)) return null;
+
+  return fieldIds;
+};
+
+const buildBusinessGlossaryDefaultProfile = (
+  providerItems: EntityDrawerItem[],
+  fieldIds: BusinessGlossaryFieldIds
+): EntityDrawerProfile => {
+  const item = (fieldId: string, kind: 'field' | 'relation' = 'field'): EntityDrawerItem => ({
+    kind,
+    fieldId
+  });
+  const usageItems = providerItems.map(providerItem =>
+    providerItem.kind === 'slot' && providerItem.slotId === 'business-glossary.usage'
+      ? { ...providerItem, label: 'Usage & backlinks' }
+      : providerItem
+  );
+
+  return {
+    header: {
+      badges: [
+        { kind: 'field', fieldId: fieldIds.status, showLabel: false },
+        { kind: 'metadata', slot: 'lifecycle' }
+      ]
+    },
+    sections: [
+      {
+        id: 'attributes',
+        title: 'Attributes',
+        collapsible: false,
+        items: [item(fieldIds.definition), item(fieldIds.synonyms), item(fieldIds.abbreviations)]
+      },
+      {
+        id: 'details',
+        title: 'Details',
+        collapsible: true,
+        items: [
+          { kind: 'metadata', slot: 'owner' },
+          item(fieldIds.categories, 'relation'),
+          ...usageItems
+        ]
+      }
+    ]
+  };
+};
+
 export const buildDefaultEntityDrawerProfile = (
   schema: EntityDrawerSchema,
   providerItems: EntityDrawerItem[] = []
@@ -589,13 +680,16 @@ export const buildDefaultEntityDrawerConfiguration = (
 ): EntityDrawerConfiguration => ({
   version: 1,
   profiles: Object.fromEntries(
-    schemas.map(schema => [
-      schema.id,
-      buildDefaultEntityDrawerProfile(
-        schema,
-        getDefaultProviderItems(schemas, schema.id, capabilityConfigurations)
-      )
-    ])
+    schemas.map(schema => {
+      const providerItems = getDefaultProviderItems(schemas, schema.id, capabilityConfigurations);
+      const glossaryFieldIds = businessGlossaryFieldIds(schema, capabilityConfigurations);
+      return [
+        schema.id,
+        glossaryFieldIds
+          ? buildBusinessGlossaryDefaultProfile(providerItems, glossaryFieldIds)
+          : buildDefaultEntityDrawerProfile(schema, providerItems)
+      ];
+    })
   )
 });
 

@@ -71,8 +71,8 @@
 }
 
 .metadataRow {
-  display: grid;
-  grid-template-columns: minmax(90px, 0.7fr) minmax(0, 1.3fr);
+  display: flex;
+  justify-content: space-between;
   gap: 10px;
   align-items: start;
   padding: 4px 0;
@@ -81,7 +81,16 @@
 }
 
 .metadataLabel {
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dim);
+}
+
+.metadataValue {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  color: var(--base-fg);
+  text-align: right;
 }
 
 .empty {
