@@ -410,7 +410,8 @@
 
     - @id:ar.risk-compliance Workspaces can optionally enable Risk & Compliance as its own workspace application,
       with a dedicated left rail scoped to five sections (Overview, Risks, Controls, Retention, Assessments). The
-      application is enabled once the workspace's `risk-compliance` capability configuration is valid (the required
+      default seeded workspace has this capability preconfigured, and the application is enabled once the workspace's
+      `risk-compliance` capability configuration is valid (the required
       Risk entity schema binding resolved; the Control, Framework, and Compliance Requirement entity schema bindings
       are optional). The Retention section gates separately, on the existing, workspace-wide `retention` capability
       (policy entity schema and assignment relation schema bindings), rather than on `risk-compliance` — a workspace

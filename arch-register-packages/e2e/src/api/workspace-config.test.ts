@@ -758,6 +758,7 @@ test.describe('workspace config routes', () => {
     expect(initial.installed_application_ids).toEqual(
       expect.arrayContaining(['home', 'business-glossary'])
     );
+    expect(initial.installed_application_ids).toContain('risk-compliance');
     expect(initial.accessible_application_ids).toEqual(['home']);
     await expect(
       memberOrpc.glossary.config({ params: { workspace: 'default' } })

@@ -193,6 +193,21 @@ const rawSeedTemplateDefinitions = instantiateTemplateComposition(
   seedTemplateInstantiationOptions
 );
 
+const seedCapabilityConfigurations = rawSeedTemplateDefinitions.capabilityConfigurations.map(
+  configuration =>
+    configuration.type === 'risk-compliance'
+      ? {
+          ...configuration,
+          bindings: {
+            ...configuration.bindings,
+            dataEntity: {
+              target: { kind: 'entity_schema' as const, id: SEED_SCHEMA_IDS.dataEntity }
+            }
+          }
+        }
+      : configuration
+);
+
 const sharedFieldGroups = rawSeedTemplateDefinitions.fieldGroups as SharedFieldGroupDbResult[];
 
 const definitionOrder = <T>(
@@ -292,6 +307,7 @@ const orderedRelationSchemas = definitionOrder(
 
 export const seedTemplateDefinitions: InstantiatedTemplateComposition = {
   ...rawSeedTemplateDefinitions,
+  capabilityConfigurations: seedCapabilityConfigurations,
   schemas: orderedSchemas,
   enums: orderedEnums,
   fieldGroups: orderedFieldGroups,
@@ -312,5 +328,6 @@ export const SEED_CAPABILITY_CONFIGURATION_IDS = {
   'strategy-model': '00000000-0000-0000-0000-00000000000a',
   'vendor-management': '00000000-0000-0000-0000-00000000000b',
   'data-stewardship': '00000000-0000-0000-0000-00000000000c',
+  'risk-compliance': '00000000-0000-0000-0000-00000000000d',
   retention: RETENTION_IDS.capabilityConfiguration
 } as const;
