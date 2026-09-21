@@ -167,7 +167,11 @@ describe('Vendor Management entity drawer providers', () => {
     expect(
       definition.supports(
         context({
-          schema: { id: 'other', name: 'Other', fields: [] } as unknown as EntityDrawerProviderContext['schema']
+          schema: {
+            id: 'other',
+            name: 'Other',
+            fields: []
+          } as unknown as EntityDrawerProviderContext['schema']
         })
       )
     ).toBe(false);

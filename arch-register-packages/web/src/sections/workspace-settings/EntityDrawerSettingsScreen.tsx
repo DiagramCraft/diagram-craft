@@ -785,7 +785,7 @@ export const EntityDrawerEditor = ({
                             sections={profile.sections}
                             presentation={
                               item.kind === 'field' || item.kind === 'slot'
-                                ? item.presentation ?? 'row'
+                                ? (item.presentation ?? 'row')
                                 : undefined
                             }
                             onSetPresentation={

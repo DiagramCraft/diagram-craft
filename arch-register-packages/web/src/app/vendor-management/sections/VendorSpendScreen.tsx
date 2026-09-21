@@ -391,11 +391,7 @@ export const VendorSpendScreen = () => {
       )}
 
       {vendorId && (
-        <VendorDrawer
-          workspaceSlug={workspaceSlug}
-          vendorId={vendorId}
-          onClose={closeVendor}
-        />
+        <VendorDrawer workspaceSlug={workspaceSlug} vendorId={vendorId} onClose={closeVendor} />
       )}
     </div>
   );

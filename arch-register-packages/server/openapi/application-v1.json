@@ -74295,6 +74295,16 @@
                                       "minLength": 1,
                                       "maxLength": 120
                                     },
+                                    "showTitle": {
+                                      "type": "boolean"
+                                    },
+                                    "layout": {
+                                      "enum": [
+                                        "rows",
+                                        "stat-grid"
+                                      ],
+                                      "type": "string"
+                                    },
                                     "collapsible": {
                                       "type": "boolean",
                                       "default": true
@@ -74317,6 +74327,13 @@
                                                 "type": "string",
                                                 "minLength": 1,
                                                 "maxLength": 120
+                                              },
+                                              "presentation": {
+                                                "enum": [
+                                                  "row",
+                                                  "mini-panel"
+                                                ],
+                                                "type": "string"
                                               }
                                             },
                                             "required": [
@@ -74390,6 +74407,16 @@
                                                 "type": "string",
                                                 "minLength": 1,
                                                 "maxLength": 120
+                                              },
+                                              "showLabel": {
+                                                "type": "boolean"
+                                              },
+                                              "presentation": {
+                                                "enum": [
+                                                  "row",
+                                                  "mini-panel"
+                                                ],
+                                                "type": "string"
                                               },
                                               "options": {
                                                 "type": "object",
@@ -74608,6 +74635,16 @@
                                 "minLength": 1,
                                 "maxLength": 120
                               },
+                              "showTitle": {
+                                "type": "boolean"
+                              },
+                              "layout": {
+                                "enum": [
+                                  "rows",
+                                  "stat-grid"
+                                ],
+                                "type": "string"
+                              },
                               "collapsible": {
                                 "type": "boolean",
                                 "default": true
@@ -74630,6 +74667,13 @@
                                           "type": "string",
                                           "minLength": 1,
                                           "maxLength": 120
+                                        },
+                                        "presentation": {
+                                          "enum": [
+                                            "row",
+                                            "mini-panel"
+                                          ],
+                                          "type": "string"
                                         }
                                       },
                                       "required": [
@@ -74703,6 +74747,16 @@
                                           "type": "string",
                                           "minLength": 1,
                                           "maxLength": 120
+                                        },
+                                        "showLabel": {
+                                          "type": "boolean"
+                                        },
+                                        "presentation": {
+                                          "enum": [
+                                            "row",
+                                            "mini-panel"
+                                          ],
+                                          "type": "string"
                                         },
                                         "options": {
                                           "type": "object",
@@ -74862,6 +74916,16 @@
                                       "minLength": 1,
                                       "maxLength": 120
                                     },
+                                    "showTitle": {
+                                      "type": "boolean"
+                                    },
+                                    "layout": {
+                                      "enum": [
+                                        "rows",
+                                        "stat-grid"
+                                      ],
+                                      "type": "string"
+                                    },
                                     "collapsible": {
                                       "type": "boolean",
                                       "default": true
@@ -74884,6 +74948,13 @@
                                                 "type": "string",
                                                 "minLength": 1,
                                                 "maxLength": 120
+                                              },
+                                              "presentation": {
+                                                "enum": [
+                                                  "row",
+                                                  "mini-panel"
+                                                ],
+                                                "type": "string"
                                               }
                                             },
                                             "required": [
@@ -74957,6 +75028,16 @@
                                                 "type": "string",
                                                 "minLength": 1,
                                                 "maxLength": 120
+                                              },
+                                              "showLabel": {
+                                                "type": "boolean"
+                                              },
+                                              "presentation": {
+                                                "enum": [
+                                                  "row",
+                                                  "mini-panel"
+                                                ],
+                                                "type": "string"
                                               },
                                               "options": {
                                                 "type": "object",

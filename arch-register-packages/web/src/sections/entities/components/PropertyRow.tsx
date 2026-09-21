@@ -560,10 +560,11 @@ export const PropertyRow = ({
         {displayVariant !== 'drawer' && displayVariant !== 'drawer-stat' && (
           <span className={styles.propType}>{typeLabel}</span>
         )}
-        {displayVariant !== 'drawer' && displayVariant !== 'drawer-stat' &&
+        {displayVariant !== 'drawer' &&
+          displayVariant !== 'drawer-stat' &&
           field.requirementLevel === 'optional' && (
-          <span className={styles.propOptional}>(optional)</span>
-        )}
+            <span className={styles.propOptional}>(optional)</span>
+          )}
         {field.requirementLevel === 'expected' && (
           <span className={styles.propExpected}>Expected</span>
         )}

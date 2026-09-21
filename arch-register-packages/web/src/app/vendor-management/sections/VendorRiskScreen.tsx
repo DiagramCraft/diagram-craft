@@ -424,11 +424,7 @@ export const VendorRiskScreen = () => {
       )}
 
       {vendorId && (
-        <VendorDrawer
-          workspaceSlug={workspaceSlug}
-          vendorId={vendorId}
-          onClose={closeVendor}
-        />
+        <VendorDrawer workspaceSlug={workspaceSlug} vendorId={vendorId} onClose={closeVendor} />
       )}
     </div>
   );

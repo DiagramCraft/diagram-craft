@@ -251,11 +251,7 @@ export const VendorVendorsScreen = () => {
       </Table.Root>
 
       {vendorId && (
-        <VendorDrawer
-          workspaceSlug={workspaceSlug}
-          vendorId={vendorId}
-          onClose={closeVendor}
-        />
+        <VendorDrawer workspaceSlug={workspaceSlug} vendorId={vendorId} onClose={closeVendor} />
       )}
     </div>
   );
