@@ -35,7 +35,12 @@ export const entityDrawerItemSchema = z.discriminatedUnion('kind', [
     slot: entityDrawerMetadataSlotSchema,
     label: labelOverrideSchema
   }),
-  z.object({ kind: z.literal('relation'), fieldId: z.string().min(1), label: labelOverrideSchema }),
+  z.object({
+    kind: z.literal('relation'),
+    fieldId: z.string().min(1),
+    label: labelOverrideSchema,
+    presentation: entityDrawerItemPresentationSchema
+  }),
   z.object({
     kind: z.literal('slot'),
     slotId: z.string().min(1),
@@ -543,10 +548,13 @@ const fieldIsVisible = (field: EntityDrawerField): boolean => field.archived !==
 const isRelationField = (field: EntityDrawerField): boolean =>
   field.type === 'reference' || field.type === 'containment' || field.type === 'typedRelation';
 
-const fieldItem = (field: EntityDrawerField): EntityDrawerItem =>
+const fieldItem = (
+  field: EntityDrawerField,
+  presentation?: 'row' | 'mini-panel'
+): EntityDrawerItem =>
   isRelationField(field)
-    ? { kind: 'relation', fieldId: field.id }
-    : { kind: 'field', fieldId: field.id };
+    ? { kind: 'relation', fieldId: field.id, ...(presentation ? { presentation } : {}) }
+    : { kind: 'field', fieldId: field.id, ...(presentation ? { presentation } : {}) };
 
 type BusinessGlossaryFieldIds = {
   definition: string;
@@ -893,12 +901,17 @@ export const buildDefaultEntityDrawerProfile = (
     collapsible: true,
     items: fields
       .filter(field => field.groupId === group.id && !isRelationField(field))
-      .map(fieldItem)
+      .map(field => fieldItem(field))
   }));
   const ungrouped = fields
     .filter(field => !field.groupId && !isRelationField(field))
-    .map(fieldItem);
-  const relationItems = fields.filter(isRelationField).map(fieldItem);
+    .map(field => fieldItem(field));
+  const typedRelationItems = fields
+    .filter(field => field.type === 'typedRelation')
+    .map(field => fieldItem(field, 'mini-panel'));
+  const relationItems = fields
+    .filter(field => isRelationField(field) && field.type !== 'typedRelation')
+    .map(field => fieldItem(field));
   const sections = [
     ...(ungrouped.length > 0
       ? [{ id: 'attributes', title: 'Attributes', collapsible: false, items: ungrouped }]
@@ -906,6 +919,17 @@ export const buildDefaultEntityDrawerProfile = (
     ...groups.filter(group => group.items.length > 0),
     ...(relationItems.length > 0
       ? [{ id: 'related', title: 'Related entities', collapsible: true, items: relationItems }]
+      : []),
+    ...(typedRelationItems.length > 0
+      ? [
+          {
+            id: 'typed-relations',
+            title: 'Related data',
+            showTitle: false,
+            collapsible: false,
+            items: typedRelationItems
+          }
+        ]
       : []),
     {
       id: 'metadata',

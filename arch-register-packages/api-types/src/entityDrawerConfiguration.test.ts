@@ -17,6 +17,7 @@ const schema = {
     { id: 'owner', name: 'Owner', type: 'principal' },
     { id: 'score', name: 'Score', type: 'number' },
     { id: 'depends_on', name: 'Depends on', type: 'reference' },
+    { id: 'typed_relation', name: 'Typed relation', type: 'typedRelation' },
     { id: 'retired', name: 'Retired', type: 'text', archived: true }
   ],
   groups: [{ id: 'core', name: 'Core' }]
@@ -40,12 +41,17 @@ describe('entity drawer configuration', () => {
       expect.arrayContaining([
         { kind: 'field', fieldId: 'name' },
         { kind: 'relation', fieldId: 'depends_on' },
+        { kind: 'relation', fieldId: 'typed_relation', presentation: 'mini-panel' },
         { kind: 'metadata', slot: 'publicId' }
       ])
     );
     expect(profile.sections.flatMap(section => section.items)).not.toContainEqual({
       kind: 'field',
       fieldId: 'retired'
+    });
+    expect(profile.sections.find(section => section.id === 'typed-relations')).toMatchObject({
+      showTitle: false,
+      collapsible: false
     });
   });
 

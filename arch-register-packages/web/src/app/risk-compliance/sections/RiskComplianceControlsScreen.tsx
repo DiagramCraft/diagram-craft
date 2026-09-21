@@ -3,19 +3,16 @@ import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import { ToggleButtonGroup } from '@diagram-craft/app-components/ToggleButtonGroup';
-import { Button } from '@diagram-craft/app-components/Button';
 import { Title } from '../../../components/Title';
 import { SearchInput } from '../../../components/SearchInput';
 import { FilterDropdown } from '../../../components/FilterDropdown';
 import { Table } from '../../../components/table/Table';
 import { useTableSort } from '../../../components/table/useTableSort';
-import { Drawer } from '../../../components/Drawer';
 import { useRelations } from '../../../hooks/useRelations';
-import { entitiesQuery, entityDetailQuery } from '../../../queries/entities';
+import { entitiesQuery } from '../../../queries/entities';
 import { workspaceCapabilityConfigurationsQuery } from '../../../queries/workspaceConfig';
 import { useSchemas } from '../../../hooks/useSchemas';
 import { formatDate } from '../../../utils/dateFormat';
-import { asEntityPublicId, entityDetailRoute } from '../../../routes/publicObjectRoutes';
 import { resolveRiskComplianceConfig } from '../riskComplianceQueries';
 import { RISK_RAIL_PATHS, RISK_CONTROLS_ID } from '../riskComplianceSections';
 import { useControlRiskCounts } from '../useControlRiskCounts';
@@ -35,66 +32,6 @@ import { RiskComplianceTraceMatrix } from './RiskComplianceTraceMatrix';
 import filterStyles from '../../../sections/entities/components/EntityBrowser.module.css';
 import styles from './RiskComplianceControlsScreen.module.css';
 import traceStyles from './RiskComplianceTraceMatrix.module.css';
-
-/**
- * Minimal in-situ peek for an arbitrary information asset (any entity schema, per `risk-affects`'
- * `outSymSchemaIds: 'any'`) opened from the Coverage view's "coverage by information asset" panel
- * — no dedicated Asset entity/drawer exists, so this just shows identity plus a link out, mirroring
- * every other drawer's `Drawer` shell and "Open record in Entities" footer button
- * (`RiskDrawer.tsx`). Kept local to this screen rather than promoted to a
- * shared component since nothing else in the app needs to peek at an arbitrary entity yet.
- */
-const AssetDrawer = ({
-  workspaceSlug,
-  assetId,
-  onClose
-}: {
-  workspaceSlug: string;
-  assetId: string;
-  onClose: () => void;
-}) => {
-  const navigate = useNavigate();
-  const asset = useQuery(entityDetailQuery(workspaceSlug, assetId));
-
-  if (asset.isLoading) {
-    return (
-      <Drawer onClose={onClose} title="Loading…">
-        <div className={styles.empty}>Loading asset…</div>
-      </Drawer>
-    );
-  }
-  if (asset.isError || !asset.data) {
-    return (
-      <Drawer onClose={onClose} title="Unavailable">
-        <div className={styles.empty}>This asset is unavailable.</div>
-      </Drawer>
-    );
-  }
-
-  const entity = asset.data;
-  return (
-    <Drawer
-      onClose={onClose}
-      eyebrow={<span className="dim mono">{entity._publicId}</span>}
-      title={entity._name}
-      badges={<Chip tone="ghost">{entity._schema.name}</Chip>}
-      footer={
-        <Button
-          variant="primary"
-          onClick={() =>
-            navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(entity._publicId)))
-          }
-        >
-          Open record in Entities
-        </Button>
-      }
-    >
-      <span className="dim">
-        Affects risks shown on this page — open the full record for its attributes and links.
-      </span>
-    </Drawer>
-  );
-};
 
 type SortKey = 'risksMitigated' | 'lastVerified' | 'name';
 
@@ -118,10 +55,10 @@ const compareNullable = (a: number | string | null, b: number | string | null): 
  * supplies the cell membership; `dim` toggles its columns between risks and assets). Mirrors the
  * design reference's `RCControls`/`RCCoverage`/`rc-trace` (`rc-views.jsx`) and this codebase's own
  * `RiskComplianceRisksScreen.tsx` register/matrix toggle. Opens the shared entity drawer on
- * row click, deep-linkable at `risk-compliance/controls/$controlId`. The Coverage and
- * Traceability views' own rows/columns (Risks, information assets) open their drawers in-situ
- * over this same page too, via local state rather than navigation — see
- * `openRiskId`/`openAssetId` below.
+ * row click, deep-linkable at `risk-compliance/controls/$controlId`. The Coverage risk rows and
+ * asset rows, plus Traceability asset columns, open their drawers in-situ over this same page via
+ * local state rather than navigation — see
+ * `openRiskId`/`openEntityId` below.
  *
  * The issue's design language ("family, type, automation, effectiveness, owner, frequency,
  * last/next test") doesn't fully match the shipped schema, which only gives Control
@@ -148,7 +85,7 @@ export const RiskComplianceControlsScreen = () => {
   // the entity drawer (deep-linkable via the `$controlId` route param), these are local component
   // state, since there's no `/controls` route pattern for a Risk or arbitrary-entity id.
   const [openRiskId, setOpenRiskId] = useState<string | null>(null);
-  const [openAssetId, setOpenAssetId] = useState<string | null>(null);
+  const [openEntityId, setOpenEntityId] = useState<string | null>(null);
   const q = search.q ?? '';
   const view = search.view ?? 'library';
   const dim = search.dim ?? 'risks';
@@ -391,6 +328,7 @@ export const RiskComplianceControlsScreen = () => {
     const entity = controlsByUid.get(uid);
     if (entity) openControl(entity._publicId);
   };
+  const openTraceEntity = (id: string) => setOpenEntityId(id);
 
   if (configurations.isLoading) {
     return <div className={styles.empty}>Loading risk & compliance…</div>;
@@ -576,7 +514,7 @@ export const RiskComplianceControlsScreen = () => {
                   </Table.EmptyRow>
                 ) : (
                   weakestAssets.map(asset => (
-                    <Table.Row key={asset.assetId} onClick={() => setOpenAssetId(asset.assetId)}>
+                    <Table.Row key={asset.assetId} onClick={() => setOpenEntityId(asset.assetId)}>
                       <Table.NameCell title={asset.assetName} />
                       <Table.Cell numeric>{asset.riskCount}</Table.Cell>
                       <Table.Cell
@@ -629,6 +567,7 @@ export const RiskComplianceControlsScreen = () => {
                 controlCountByColumnId={traceControlCountByColumnId}
                 columnCountByControlId={traceColumnCountByControlId}
                 onOpenControl={openTraceControl}
+                onOpenColumn={dim === 'assets' ? openTraceEntity : undefined}
               />
             )}
           </div>
@@ -706,11 +645,11 @@ export const RiskComplianceControlsScreen = () => {
           onClose={() => setOpenRiskId(null)}
         />
       )}
-      {openAssetId && (
-        <AssetDrawer
+      {openEntityId && (
+        <EntityDrawer
           workspaceSlug={workspaceSlug}
-          assetId={openAssetId}
-          onClose={() => setOpenAssetId(null)}
+          entityId={openEntityId}
+          onClose={() => setOpenEntityId(null)}
         />
       )}
     </div>

@@ -26,7 +26,7 @@ const mocks = vi.hoisted(() => ({
     name: 'Service',
     fields: [
       { id: 'name', name: 'Name', type: 'text' },
-      { id: 'status', name: 'Status', type: 'text' }
+      { id: 'status', name: 'Status', type: 'text', requirementLevel: 'expected' }
     ],
     groups: [],
     shared_field_group_links: []
@@ -109,6 +109,7 @@ describe('EntityDrawer', () => {
     expect(markup).toContain('Current state');
     expect(markup).toContain('Service name');
     expect(markup.indexOf('Current state')).toBeLessThan(markup.indexOf('Service name'));
+    expect(markup).not.toContain('Expected');
     expect(markup).toContain('Open record in Entities');
     expect(markup).toContain('Quality badge');
   });

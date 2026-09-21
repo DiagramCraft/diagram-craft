@@ -106,6 +106,23 @@ describe('RelationRecordList', () => {
     expect(markup).toContain('<a href="/entities/entity-2"');
     expect(markup).toContain('Other Entity');
   });
+
+  it('keeps drawer stat relations expanded without history controls', () => {
+    const markup = renderToStaticMarkup(
+      <RelationRecordList
+        records={[record]}
+        direction="outgoing"
+        relationSchema={relationSchema}
+        workspaceId="ws-1"
+        presentation="drawer-stat"
+        showHistory={false}
+      />
+    );
+
+    expect(markup).toContain('Protocol');
+    expect(markup).toContain('https');
+    expect(markup).not.toContain('View history');
+  });
 });
 
 describe('formatRelationFieldValue', () => {

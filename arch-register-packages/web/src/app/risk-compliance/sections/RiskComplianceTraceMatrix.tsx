@@ -29,8 +29,8 @@ export type RiskComplianceTraceMatrixColumn = {
  * (design reference: `rc-trace-mark--gap`). Neither axis is bounded (unlike the fixed 5×5
  * `RiskComplianceMatrix`), so both scroll together under the sticky header/first column.
  *
- * Only the row (Control) header is clickable, opening the shared entity drawer — the design
- * reference's column headers (Risk/asset) and totals aren't interactive either.
+ * Control row headers open the shared entity drawer. Asset column headers may also be interactive
+ * when the caller provides `onOpenColumn`; Risk column headers and totals remain read-only.
  */
 export const RiskComplianceTraceMatrix = ({
   controls,
@@ -40,7 +40,8 @@ export const RiskComplianceTraceMatrix = ({
   isControlEffective,
   controlCountByColumnId,
   columnCountByControlId,
-  onOpenControl
+  onOpenControl,
+  onOpenColumn
 }: {
   controls: RiskComplianceTraceMatrixRow[];
   columns: RiskComplianceTraceMatrixColumn[];
@@ -50,6 +51,7 @@ export const RiskComplianceTraceMatrix = ({
   controlCountByColumnId: Map<string, number>;
   columnCountByControlId: Map<string, number>;
   onOpenControl: (id: string) => void;
+  onOpenColumn?: (id: string) => void;
 }) => {
   if (controls.length === 0 || columns.length === 0) {
     return (
@@ -72,7 +74,18 @@ export const RiskComplianceTraceMatrix = ({
             </th>
             {columns.map(column => (
               <th key={column.id} title={column.title}>
-                <div className={styles.vert}>{column.label}</div>
+                {onOpenColumn ? (
+                  <button
+                    type="button"
+                    className={styles.columnButton}
+                    aria-label={`Open ${dimensionLabel} ${column.title}`}
+                    onClick={() => onOpenColumn(column.id)}
+                  >
+                    <div className={styles.vert}>{column.label}</div>
+                  </button>
+                ) : (
+                  <div className={styles.vert}>{column.label}</div>
+                )}
               </th>
             ))}
             <th className={styles.tot} style={{ width: 44, minWidth: 44 }}>
