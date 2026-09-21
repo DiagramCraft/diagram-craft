@@ -9,6 +9,11 @@
   position: absolute;
   inset: 0;
   background: rgba(0, 0, 0, 0.35);
+  animation: drawerBackdropIn 160ms ease-out both;
+}
+
+.backdropClosing {
+  animation: drawerBackdropOut 160ms ease-in both;
 }
 
 .drawer {
@@ -22,6 +27,51 @@
   box-shadow: -8px 0 24px rgba(0, 0, 0, 0.2);
   display: flex;
   flex-direction: column;
+  animation: drawerSlideIn 180ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.drawerClosing {
+  animation: drawerSlideOut 180ms cubic-bezier(0.55, 0, 1, 0.45) both;
+}
+
+@keyframes drawerBackdropIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes drawerSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(220px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes drawerBackdropOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes drawerSlideOut {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(220px);
+  }
 }
 
 .head {
