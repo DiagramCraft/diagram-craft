@@ -5,6 +5,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { VendorVendorsScreen } from './VendorVendorsScreen';
 
+vi.mock('./VendorDrawer', () => ({
+  VendorDrawer: () => <div>Open record in Entities</div>
+}));
+
 const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
   entityList: vi.fn(),

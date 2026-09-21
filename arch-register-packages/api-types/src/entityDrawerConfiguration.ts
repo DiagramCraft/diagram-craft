@@ -20,10 +20,16 @@ export const entityDrawerMetadataSlotSchema = z.enum([
 ]);
 
 const labelOverrideSchema = z.string().min(1).max(120).optional();
+const entityDrawerItemPresentationSchema = z.enum(['row', 'mini-panel']).optional();
 export const entityDrawerSlotOptionsSchema = z.record(z.string(), z.unknown());
 
 export const entityDrawerItemSchema = z.discriminatedUnion('kind', [
-  z.object({ kind: z.literal('field'), fieldId: z.string().min(1), label: labelOverrideSchema }),
+  z.object({
+    kind: z.literal('field'),
+    fieldId: z.string().min(1),
+    label: labelOverrideSchema,
+    presentation: entityDrawerItemPresentationSchema
+  }),
   z.object({
     kind: z.literal('metadata'),
     slot: entityDrawerMetadataSlotSchema,
@@ -34,6 +40,8 @@ export const entityDrawerItemSchema = z.discriminatedUnion('kind', [
     kind: z.literal('slot'),
     slotId: z.string().min(1),
     label: labelOverrideSchema,
+    showLabel: z.boolean().optional(),
+    presentation: entityDrawerItemPresentationSchema,
     options: entityDrawerSlotOptionsSchema.optional()
   })
 ]);
@@ -58,6 +66,8 @@ export const entityDrawerProfileSchema = z.object({
     z.object({
       id: z.string().min(1).max(120),
       title: z.string().min(1).max(120),
+      showTitle: z.boolean().optional(),
+      layout: z.enum(['rows', 'stat-grid']).optional(),
       collapsible: z.boolean().default(true),
       items: z.array(entityDrawerItemSchema)
     })
@@ -626,6 +636,137 @@ const buildBusinessGlossaryDefaultProfile = (
   };
 };
 
+type VendorManagementFieldIds = {
+  category: string;
+  tier: string;
+  status: string;
+  relationshipOwner: string;
+  costCentre: string;
+  securityRisk: string;
+  concentrationRisk: string;
+  financialRisk: string;
+  complianceRisk: string;
+  criticality: string;
+};
+
+const vendorManagementFieldIds = (
+  schema: EntityDrawerSchema,
+  capabilityConfigurations: readonly CapabilityConfigurationLike[]
+): VendorManagementFieldIds | null => {
+  const configuration = capabilityConfigurations.find(
+    candidate => candidate.type === 'vendor-management'
+  );
+  const binding = configuration?.bindings.vendor;
+  if (binding?.target.kind !== 'entity_schema' || binding.target.id !== schema.id) return null;
+
+  const fieldIds: VendorManagementFieldIds = {
+    category: 'category',
+    tier: 'tier',
+    status: 'status',
+    relationshipOwner: 'relationship_owner',
+    costCentre: 'cost_centre',
+    securityRisk: 'security_risk',
+    concentrationRisk: 'concentration_risk',
+    financialRisk: 'financial_risk',
+    complianceRisk: 'compliance_risk',
+    criticality: 'criticality'
+  };
+  return Object.values(fieldIds).every(fieldId =>
+    schema.fields.some(field => field.id === fieldId && fieldIsVisible(field))
+  )
+    ? fieldIds
+    : null;
+};
+
+const buildVendorManagementDefaultProfile = (
+  providerItems: EntityDrawerItem[],
+  fieldIds: VendorManagementFieldIds
+): EntityDrawerProfile => {
+  const item = (fieldId: string): Extract<EntityDrawerItem, { kind: 'field' }> => ({
+    kind: 'field',
+    fieldId
+  });
+  const provider = (
+    slotId: string,
+    label: string,
+    showLabel = true,
+    presentation?: 'row' | 'mini-panel'
+  ): EntityDrawerItem | null => {
+    const slot = providerItems.find(
+      (candidate): candidate is Extract<EntityDrawerItem, { kind: 'slot' }> =>
+        candidate.kind === 'slot' && candidate.slotId === slotId
+    );
+    return slot
+      ? {
+          ...slot,
+          label,
+          ...(showLabel ? {} : { showLabel: false }),
+          ...(presentation ? { presentation } : {})
+        }
+      : null;
+  };
+  const section = (
+    id: string,
+    title: string,
+    items: Array<EntityDrawerItem | null>,
+    collapsible = false
+  ) => ({
+    id,
+    title,
+    collapsible,
+    items: items.filter((candidate): candidate is EntityDrawerItem => candidate != null)
+  });
+
+  return {
+    header: {
+      badges: [
+        { kind: 'field', fieldId: fieldIds.tier, showLabel: false },
+        { kind: 'field', fieldId: fieldIds.status, showLabel: false }
+      ]
+    },
+    sections: [
+      {
+        ...section('risk-profile', 'Risk profile', [
+          { ...item(fieldIds.securityRisk), presentation: 'mini-panel' },
+          { ...item(fieldIds.concentrationRisk), presentation: 'mini-panel' },
+          { ...item(fieldIds.financialRisk), presentation: 'mini-panel' },
+          { ...item(fieldIds.complianceRisk), presentation: 'mini-panel' },
+          { ...item(fieldIds.criticality), presentation: 'mini-panel' },
+          provider('vendor.risk', 'vmRisk', true, 'mini-panel')
+        ]),
+        layout: 'stat-grid' as const
+      },
+      section('attributes', 'Attributes', [
+        item(fieldIds.category),
+        item(fieldIds.tier),
+        item(fieldIds.status),
+        item(fieldIds.relationshipOwner),
+        item(fieldIds.costCentre)
+      ]),
+      section('spend', 'Spend', [provider('vendor.spend', 'Spend', false)], true),
+      section('contracts', 'Contracts', [provider('vendor.contracts', 'Contracts', false)], true),
+      section(
+        'applications-supplied',
+        'Applications supplied',
+        [provider('vendor.applications-supplied', 'Applications supplied', false)],
+        true
+      ),
+      section(
+        'technology-lifecycle',
+        'Technology lifecycle',
+        [provider('vendor.technology-lifecycle', 'Technology lifecycle', false)],
+        true
+      ),
+      section(
+        'capabilities-funded',
+        'Capabilities funded',
+        [provider('vendor.capabilities-funded', 'Capabilities funded', false)],
+        true
+      )
+    ].filter(section => section.items.length > 0)
+  };
+};
+
 export const buildDefaultEntityDrawerProfile = (
   schema: EntityDrawerSchema,
   providerItems: EntityDrawerItem[] = []
@@ -683,11 +824,14 @@ export const buildDefaultEntityDrawerConfiguration = (
     schemas.map(schema => {
       const providerItems = getDefaultProviderItems(schemas, schema.id, capabilityConfigurations);
       const glossaryFieldIds = businessGlossaryFieldIds(schema, capabilityConfigurations);
+      const vendorFieldIds = vendorManagementFieldIds(schema, capabilityConfigurations);
       return [
         schema.id,
         glossaryFieldIds
           ? buildBusinessGlossaryDefaultProfile(providerItems, glossaryFieldIds)
-          : buildDefaultEntityDrawerProfile(schema, providerItems)
+          : vendorFieldIds
+            ? buildVendorManagementDefaultProfile(providerItems, vendorFieldIds)
+            : buildDefaultEntityDrawerProfile(schema, providerItems)
       ];
     })
   )

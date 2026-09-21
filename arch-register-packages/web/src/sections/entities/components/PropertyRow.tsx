@@ -118,7 +118,7 @@ export const PropertyRow = ({
 }: {
   field: EntitySchema['fields'][number];
   label?: string;
-  displayVariant?: 'default' | 'drawer';
+  displayVariant?: 'default' | 'drawer' | 'drawer-stat';
   value: unknown;
   editing: boolean;
   editValue: unknown;
@@ -443,7 +443,7 @@ export const PropertyRow = ({
     if (Array.isArray(value)) {
       if (value.length === 0) return <span className={sharedStyles.dim}>—</span>;
       if (field.type === 'select') {
-        if (displayVariant === 'drawer') {
+        if (displayVariant === 'drawer' || displayVariant === 'drawer-stat') {
           return (
             <span>
               {value
@@ -494,7 +494,8 @@ export const PropertyRow = ({
       if (field.resultType === 'currency') return <span>{formatCurrencyValue(value)}</span>;
       if (field.resultType === 'select') {
         const opt = field.options?.find(o => o.value === String(value));
-        if (displayVariant === 'drawer') return <span>{opt?.label ?? String(value)}</span>;
+        if (displayVariant === 'drawer' || displayVariant === 'drawer-stat')
+          return <span>{opt?.label ?? String(value)}</span>;
         return <Chip tone="ghost">{opt?.label ?? String(value)}</Chip>;
       }
       return <span>{String(value)}</span>;
@@ -502,7 +503,8 @@ export const PropertyRow = ({
     if (field.type === 'boolean') return <span>{value ? 'Yes' : 'No'}</span>;
     if (field.type === 'select') {
       const opt = field.options.find(o => o.value === value);
-      if (displayVariant === 'drawer') return <span>{opt?.label ?? String(value)}</span>;
+      if (displayVariant === 'drawer' || displayVariant === 'drawer-stat')
+        return <span>{opt?.label ?? String(value)}</span>;
       return <Chip tone="ghost">{opt?.label ?? String(value)}</Chip>;
     }
     if (field.type === 'date') return <span>{formatDate(value)}</span>;
@@ -532,18 +534,37 @@ export const PropertyRow = ({
     );
   };
 
-  const rowClass = displayVariant === 'drawer' ? styles.propRowDrawer : styles.propRow;
-  const labelClass = displayVariant === 'drawer' ? styles.propLabelDrawer : styles.propLabel;
-  const valueClass = displayVariant === 'drawer' ? styles.propValueDrawer : styles.propValue;
+  const rowClass =
+    displayVariant === 'drawer'
+      ? styles.propRowDrawer
+      : displayVariant === 'drawer-stat'
+        ? styles.propRowDrawerStat
+        : styles.propRow;
+  const labelClass =
+    displayVariant === 'drawer'
+      ? styles.propLabelDrawer
+      : displayVariant === 'drawer-stat'
+        ? styles.propLabelDrawerStat
+        : styles.propLabel;
+  const valueClass =
+    displayVariant === 'drawer'
+      ? styles.propValueDrawer
+      : displayVariant === 'drawer-stat'
+        ? styles.propValueDrawerStat
+        : styles.propValue;
 
   return (
     <div className={`${rowClass} ${hasError ? styles.propRowError : ''}`}>
       <div className={labelClass}>
         {label ?? field.name}
-        {displayVariant !== 'drawer' && <span className={styles.propType}>{typeLabel}</span>}
-        {displayVariant !== 'drawer' && field.requirementLevel === 'optional' && (
-          <span className={styles.propOptional}>(optional)</span>
+        {displayVariant !== 'drawer' && displayVariant !== 'drawer-stat' && (
+          <span className={styles.propType}>{typeLabel}</span>
         )}
+        {displayVariant !== 'drawer' &&
+          displayVariant !== 'drawer-stat' &&
+          field.requirementLevel === 'optional' && (
+            <span className={styles.propOptional}>(optional)</span>
+          )}
         {field.requirementLevel === 'expected' && (
           <span className={styles.propExpected}>Expected</span>
         )}

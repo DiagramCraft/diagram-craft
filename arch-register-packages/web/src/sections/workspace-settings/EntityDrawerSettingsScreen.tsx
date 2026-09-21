@@ -34,6 +34,7 @@ import styles from './EntityDrawerSettingsScreen.module.css';
 const newSection = () => ({
   id: `section-${crypto.randomUUID()}`,
   title: 'New section',
+  showTitle: true,
   collapsible: true,
   items: [] as EntityDrawerItem[]
 });
@@ -109,11 +110,19 @@ const AddMenu = ({ label, groups }: { label: string; groups: PickerGroup[] }) =>
 };
 
 const SectionMenu = ({
+  showTitle,
+  layout,
   collapsible,
+  onToggleShowTitle,
+  onSetLayout,
   onToggleCollapsible,
   onRemove
 }: {
+  showTitle: boolean;
+  layout: 'rows' | 'stat-grid';
   collapsible: boolean;
+  onToggleShowTitle: (value: boolean) => void;
+  onSetLayout: (value: 'rows' | 'stat-grid') => void;
   onToggleCollapsible: (value: boolean) => void;
   onRemove: () => void;
 }) => (
@@ -122,9 +131,26 @@ const SectionMenu = ({
       <TbDots size={12} />
     </MenuButton.Trigger>
     <MenuButton.Menu align="end">
-      <Menu.CheckboxItem checked={collapsible} onCheckedChange={onToggleCollapsible}>
+      <Menu.CheckboxItem checked={showTitle} onCheckedChange={onToggleShowTitle}>
+        Show title
+      </Menu.CheckboxItem>
+      <Menu.CheckboxItem
+        checked={collapsible}
+        disabled={!showTitle}
+        onCheckedChange={onToggleCollapsible}
+      >
         Collapsible
       </Menu.CheckboxItem>
+      <Menu.SubMenu label="Layout">
+        <Menu.RadioGroup value={layout}>
+          <Menu.RadioItem value="rows" onClick={() => onSetLayout('rows')}>
+            Rows
+          </Menu.RadioItem>
+          <Menu.RadioItem value="stat-grid" onClick={() => onSetLayout('stat-grid')}>
+            2-column mini-panels
+          </Menu.RadioItem>
+        </Menu.RadioGroup>
+      </Menu.SubMenu>
       <Menu.Separator />
       <Menu.Item type="danger" onClick={onRemove}>
         Remove section
@@ -136,11 +162,19 @@ const SectionMenu = ({
 const ItemMenu = ({
   sectionId,
   sections,
+  presentation,
+  onSetPresentation,
+  showLabel,
+  onToggleShowLabel,
   onMoveTo,
   onRemove
 }: {
   sectionId: string;
   sections: EntityDrawerProfile['sections'];
+  presentation?: 'row' | 'mini-panel';
+  onSetPresentation?: (value: 'row' | 'mini-panel') => void;
+  showLabel?: boolean;
+  onToggleShowLabel?: (value: boolean) => void;
   onMoveTo: (sectionId: string) => void;
   onRemove: () => void;
 }) => (
@@ -149,6 +183,25 @@ const ItemMenu = ({
       <TbDots size={10} />
     </MenuButton.Trigger>
     <MenuButton.Menu align="end">
+      {presentation !== undefined && onSetPresentation && (
+        <Menu.SubMenu label="Presentation">
+          <Menu.RadioGroup value={presentation}>
+            <Menu.RadioItem value="row" onClick={() => onSetPresentation('row')}>
+              Row
+            </Menu.RadioItem>
+            <Menu.RadioItem value="mini-panel" onClick={() => onSetPresentation('mini-panel')}>
+              Mini-panel
+            </Menu.RadioItem>
+          </Menu.RadioGroup>
+        </Menu.SubMenu>
+      )}
+      {presentation !== undefined && showLabel !== undefined && <Menu.Separator />}
+      {showLabel !== undefined && onToggleShowLabel && (
+        <Menu.CheckboxItem checked={showLabel} onCheckedChange={onToggleShowLabel}>
+          Show label
+        </Menu.CheckboxItem>
+      )}
+      {showLabel !== undefined && <Menu.Separator />}
       {sections.length > 1 && (
         <Menu.SubMenu label="Move to section">
           {sections
@@ -644,7 +697,19 @@ export const EntityDrawerEditor = ({
                         <TbChevronDown size={12} />
                       </Button>
                       <SectionMenu
+                        showTitle={section.showTitle !== false}
+                        layout={section.layout ?? 'rows'}
                         collapsible={section.collapsible}
+                        onToggleShowTitle={showTitle =>
+                          updateSection(section.id, current => ({
+                            ...current,
+                            showTitle,
+                            ...(showTitle ? {} : { collapsible: false })
+                          }))
+                        }
+                        onSetLayout={layout =>
+                          updateSection(section.id, current => ({ ...current, layout }))
+                        }
                         onToggleCollapsible={collapsible =>
                           updateSection(section.id, current => ({ ...current, collapsible }))
                         }
@@ -718,6 +783,39 @@ export const EntityDrawerEditor = ({
                           <ItemMenu
                             sectionId={section.id}
                             sections={profile.sections}
+                            presentation={
+                              item.kind === 'field' || item.kind === 'slot'
+                                ? (item.presentation ?? 'row')
+                                : undefined
+                            }
+                            onSetPresentation={
+                              item.kind === 'field' || item.kind === 'slot'
+                                ? presentation =>
+                                    updateSection(section.id, current => ({
+                                      ...current,
+                                      items: current.items.map((entry, index) =>
+                                        index === itemIndex &&
+                                        (entry.kind === 'field' || entry.kind === 'slot')
+                                          ? { ...entry, presentation }
+                                          : entry
+                                      )
+                                    }))
+                                : undefined
+                            }
+                            showLabel={item.kind === 'slot' ? item.showLabel !== false : undefined}
+                            onToggleShowLabel={
+                              item.kind === 'slot'
+                                ? showLabel =>
+                                    updateSection(section.id, current => ({
+                                      ...current,
+                                      items: current.items.map((entry, index) =>
+                                        index === itemIndex && entry.kind === 'slot'
+                                          ? { ...entry, showLabel }
+                                          : entry
+                                      )
+                                    }))
+                                : undefined
+                            }
                             onMoveTo={targetId =>
                               moveItemToSection(section.id, itemIndex, targetId)
                             }

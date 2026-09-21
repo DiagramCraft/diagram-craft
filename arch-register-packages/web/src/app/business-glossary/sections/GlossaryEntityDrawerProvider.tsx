@@ -25,7 +25,7 @@ const USAGE_KIND_ICON = {
   diagram: TbSitemap
 } as const;
 
-const GlossaryUsageProvider = ({ context, label }: EntityDrawerProviderProps) => {
+const GlossaryUsageProvider = ({ context, label, showLabel }: EntityDrawerProviderProps) => {
   const usage = useQuery(glossaryUsageQuery(context.workspaceId, context.entity._uid));
   const usageItems = usage.data?.items ?? [];
   const usageGroups = (Object.keys(USAGE_KIND_LABEL) as Array<keyof typeof USAGE_KIND_LABEL>)
@@ -42,13 +42,15 @@ const GlossaryUsageProvider = ({ context, label }: EntityDrawerProviderProps) =>
 
   return (
     <div className={styles.provider}>
-      <div className={styles.sectionLabel}>
-        {label}
-        <span className="dim" style={{ marginLeft: 8, fontWeight: 400 }}>
-          {total} visible reference
-          {total === 1 ? '' : 's'}
-        </span>
-      </div>
+      {showLabel !== false && (
+        <div className={styles.sectionLabel}>
+          {label}
+          <span className="dim" style={{ marginLeft: 8, fontWeight: 400 }}>
+            {total} visible reference
+            {total === 1 ? '' : 's'}
+          </span>
+        </div>
+      )}
       <EntityDrawerProviderStatus
         state={state}
         emptyMessage="No visible explicit usage found."

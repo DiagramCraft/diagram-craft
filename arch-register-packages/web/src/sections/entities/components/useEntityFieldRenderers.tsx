@@ -96,7 +96,7 @@ export const useEntityFieldRenderers = ({
     f: EntitySchema['fields'][number],
     groupAccess: FieldGroupAccess = 'edit',
     label?: string,
-    displayVariant?: 'default' | 'drawer'
+    displayVariant?: 'default' | 'drawer' | 'drawer-stat'
   ) => (
     <PropertyRow
       key={f.id}

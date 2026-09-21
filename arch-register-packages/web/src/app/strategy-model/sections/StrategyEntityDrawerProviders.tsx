@@ -30,16 +30,26 @@ const isBusinessCapabilitySchema = (context: EntityDrawerProviderContext): boole
   context.schema.fields.some(field => field.id === 'parent' && field.type === 'containment') &&
   context.schema.fields.some(field => field.id === 'capability_level');
 
-const ProviderFrame = ({ label, children }: { label: string; children: ReactNode }) => (
+const ProviderFrame = ({
+  label,
+  showLabel = true,
+  children
+}: {
+  label: string;
+  showLabel?: boolean;
+  children: ReactNode;
+}) => (
   <div className={styles.provider}>
-    <div className="dim" style={{ fontSize: 12, fontWeight: 600, marginBottom: 6 }}>
-      {label}
-    </div>
+    {showLabel && (
+      <div className="dim" style={{ fontSize: 12, fontWeight: 600, marginBottom: 6 }}>
+        {label}
+      </div>
+    )}
     {children}
   </div>
 );
 
-const StrategyRollupProvider = ({ context, label }: EntityDrawerProviderProps) => {
+const StrategyRollupProvider = ({ context, label, showLabel }: EntityDrawerProviderProps) => {
   const { query: configurationQuery, config } = useStrategyConfiguration(context.workspaceId);
   const view = configurationQuery.data
     ? resolveStrategyViewConfig(configurationQuery.data, context.schema)
@@ -72,7 +82,7 @@ const StrategyRollupProvider = ({ context, label }: EntityDrawerProviderProps) =
           : 'ready';
 
   return (
-    <ProviderFrame label={label}>
+    <ProviderFrame label={label} showLabel={showLabel}>
       <EntityDrawerProviderStatus
         state={state}
         unavailableMessage="Strategy roll-up is unavailable."
@@ -100,7 +110,7 @@ const StrategyRollupProvider = ({ context, label }: EntityDrawerProviderProps) =
   );
 };
 
-const StrategyChildrenProvider = ({ context, label }: EntityDrawerProviderProps) => {
+const StrategyChildrenProvider = ({ context, label, showLabel }: EntityDrawerProviderProps) => {
   const tree = useEntityTree(context.workspaceId, { schemaId: context.schema.id }, true);
   const children = useMemo(() => {
     const nodeById = new Map((tree.data?.nodes ?? []).map(node => [node._uid, node]));
@@ -118,7 +128,7 @@ const StrategyChildrenProvider = ({ context, label }: EntityDrawerProviderProps)
         : 'empty';
 
   return (
-    <ProviderFrame label={label}>
+    <ProviderFrame label={label} showLabel={showLabel}>
       <EntityDrawerProviderStatus
         state={state}
         emptyMessage="No child capabilities."
@@ -141,7 +151,7 @@ const StrategyChildrenProvider = ({ context, label }: EntityDrawerProviderProps)
   );
 };
 
-const StrategyRealizedByProvider = ({ context, label }: EntityDrawerProviderProps) => {
+const StrategyRealizedByProvider = ({ context, label, showLabel }: EntityDrawerProviderProps) => {
   const { query: configurationQuery, config } = useStrategyConfiguration(context.workspaceId);
   const businessCapabilitySchemaId =
     config?.businessCapabilitySchemaId === context.schema.id
@@ -166,7 +176,7 @@ const StrategyRealizedByProvider = ({ context, label }: EntityDrawerProviderProp
             : 'empty';
 
   return (
-    <ProviderFrame label={label}>
+    <ProviderFrame label={label} showLabel={showLabel}>
       <EntityDrawerProviderStatus
         state={state}
         emptyMessage="No linked applications, directly or across this capability's descendants."
@@ -205,7 +215,11 @@ const supportingObjectives = (
       )
     : [];
 
-const StrategyLinkedObjectivesProvider = ({ context, label }: EntityDrawerProviderProps) => {
+const StrategyLinkedObjectivesProvider = ({
+  context,
+  label,
+  showLabel
+}: EntityDrawerProviderProps) => {
   const { query: configurationQuery, config } = useStrategyConfiguration(context.workspaceId);
   const matches = supportingObjectives(context, config);
   const state =
@@ -218,7 +232,7 @@ const StrategyLinkedObjectivesProvider = ({ context, label }: EntityDrawerProvid
           : 'empty';
 
   return (
-    <ProviderFrame label={label}>
+    <ProviderFrame label={label} showLabel={showLabel}>
       <EntityDrawerProviderStatus
         state={state}
         emptyMessage="No linked objectives."
@@ -236,7 +250,11 @@ const StrategyLinkedObjectivesProvider = ({ context, label }: EntityDrawerProvid
   );
 };
 
-const StrategyLinkedInitiativesProvider = ({ context, label }: EntityDrawerProviderProps) => {
+const StrategyLinkedInitiativesProvider = ({
+  context,
+  label,
+  showLabel
+}: EntityDrawerProviderProps) => {
   const { query: configurationQuery, config } = useStrategyConfiguration(context.workspaceId);
   const objectives = supportingObjectives(context, config);
   const objectiveIds = useMemo(
@@ -270,7 +288,7 @@ const StrategyLinkedInitiativesProvider = ({ context, label }: EntityDrawerProvi
                 : 'empty';
 
   return (
-    <ProviderFrame label={label}>
+    <ProviderFrame label={label} showLabel={showLabel}>
       <EntityDrawerProviderStatus
         state={state}
         emptyMessage="No linked initiatives."

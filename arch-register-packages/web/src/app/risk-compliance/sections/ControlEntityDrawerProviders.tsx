@@ -26,7 +26,7 @@ const allTypedRelations = (context: EntityDrawerProviderContext) => [
   ...context.typedRelations.incoming
 ];
 
-const MitigatedRisksProvider = ({ context, label }: EntityDrawerProviderProps) => {
+const MitigatedRisksProvider = ({ context, label, showLabel }: EntityDrawerProviderProps) => {
   const field = typedRelationField(context, 'mitigated_risks');
   const matches = field
     ? allTypedRelations(context).filter(
@@ -38,7 +38,7 @@ const MitigatedRisksProvider = ({ context, label }: EntityDrawerProviderProps) =
 
   return (
     <div className={styles.provider}>
-      <div className={styles.sectionLabel}>{label}</div>
+      {showLabel !== false && <div className={styles.sectionLabel}>{label}</div>}
       <EntityDrawerProviderStatus state={state} emptyMessage="No risks mitigated.">
         {matches.map(relation => (
           <div className={styles.attributeRow} key={relation._uid}>
@@ -54,7 +54,7 @@ const MitigatedRisksProvider = ({ context, label }: EntityDrawerProviderProps) =
   );
 };
 
-const ProtectedEntitiesProvider = ({ context, label }: EntityDrawerProviderProps) => {
+const ProtectedEntitiesProvider = ({ context, label, showLabel }: EntityDrawerProviderProps) => {
   const field = typedRelationField(context, 'protected_entities');
   const matches = field
     ? allTypedRelations(context).filter(
@@ -66,7 +66,7 @@ const ProtectedEntitiesProvider = ({ context, label }: EntityDrawerProviderProps
 
   return (
     <div className={styles.provider}>
-      <div className={styles.sectionLabel}>{label}</div>
+      {showLabel !== false && <div className={styles.sectionLabel}>{label}</div>}
       <EntityDrawerProviderStatus state={state} emptyMessage="No protected entities linked.">
         <div className={styles.tags}>
           {matches.map(relation => (
