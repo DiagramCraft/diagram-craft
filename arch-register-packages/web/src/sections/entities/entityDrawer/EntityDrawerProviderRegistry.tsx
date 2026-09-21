@@ -16,6 +16,10 @@ export type EntityDrawerProviderContext = {
     outgoing: RelationRecord[];
     incoming: RelationRecord[];
   };
+  typedRelationsStatus: {
+    isLoading: boolean;
+    isError: boolean;
+  };
   openEntity: (entityId: string) => void;
 };
 
@@ -72,13 +76,3 @@ export const createEntityDrawerProviderRegistry = (
     get: slotId => bySlot.get(slotId)
   };
 };
-
-/**
- * Application migrations extend this list with providers that keep their existing queries and
- * calculations. The generic renderer deliberately knows nothing about application-specific data.
- */
-export const ENTITY_DRAWER_PROVIDER_DEFINITIONS: readonly EntityDrawerProviderDefinition[] = [];
-
-export const entityDrawerProviderRegistry = createEntityDrawerProviderRegistry(
-  ENTITY_DRAWER_PROVIDER_DEFINITIONS
-);

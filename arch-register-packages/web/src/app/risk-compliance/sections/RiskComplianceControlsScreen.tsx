@@ -29,7 +29,7 @@ import { CONTROL_EFFECTIVENESS_COLOR } from '../controlEffectiveness';
 import { riskFieldValue } from '../riskFieldDisplay';
 import { Chip } from '../../../components/Chip';
 import type { ControlsSearchParams } from '../../../routes/searchParams';
-import { ControlDrawer } from './ControlDrawer';
+import { EntityDrawer } from '../../../sections/entities/entityDrawer/EntityDrawer';
 import { RiskDrawer } from './RiskDrawer';
 import { RiskComplianceTraceMatrix } from './RiskComplianceTraceMatrix';
 import filterStyles from '../../../sections/entities/components/EntityBrowser.module.css';
@@ -41,7 +41,7 @@ import traceStyles from './RiskComplianceTraceMatrix.module.css';
  * `outSymSchemaIds: 'any'`) opened from the Coverage view's "coverage by information asset" panel
  * — no dedicated Asset entity/drawer exists, so this just shows identity plus a link out, mirroring
  * every other drawer's `Drawer` shell and "Open record in Entities" footer button
- * (`RiskDrawer.tsx`, `ControlDrawer.tsx`). Kept local to this screen rather than promoted to a
+ * (`RiskDrawer.tsx`). Kept local to this screen rather than promoted to a
  * shared component since nothing else in the app needs to peek at an arbitrary entity yet.
  */
 const AssetDrawer = ({
@@ -117,7 +117,7 @@ const compareNullable = (a: number | string | null, b: number | string | null): 
  * control × risk/asset matrix from `RiskComplianceTraceMatrix.tsx` (`useControlTraceMatrix.ts`
  * supplies the cell membership; `dim` toggles its columns between risks and assets). Mirrors the
  * design reference's `RCControls`/`RCCoverage`/`rc-trace` (`rc-views.jsx`) and this codebase's own
- * `RiskComplianceRisksScreen.tsx` register/matrix toggle. Opens the shared `ControlDrawer` on
+ * `RiskComplianceRisksScreen.tsx` register/matrix toggle. Opens the shared entity drawer on
  * row click, deep-linkable at `risk-compliance/controls/$controlId`. The Coverage and
  * Traceability views' own rows/columns (Risks, information assets) open their drawers in-situ
  * over this same page too, via local state rather than navigation — see
@@ -145,7 +145,7 @@ export const RiskComplianceControlsScreen = () => {
   const search = useSearch({ strict: false }) as ControlsSearchParams;
   // The Coverage view's Risk/asset drawers open in-situ over this same page rather than
   // navigating to the Risks section or the generic entity view — unlike the Library view's
-  // `ControlDrawer` (deep-linkable via the `$controlId` route param), these are local component
+  // the entity drawer (deep-linkable via the `$controlId` route param), these are local component
   // state, since there's no `/controls` route pattern for a Risk or arbitrary-entity id.
   const [openRiskId, setOpenRiskId] = useState<string | null>(null);
   const [openAssetId, setOpenAssetId] = useState<string | null>(null);
@@ -159,7 +159,7 @@ export const RiskComplianceControlsScreen = () => {
   const riskSchema = schemas.data?.find(schema => schema.id === riskConfig?.riskSchemaId);
 
   // Fixed relations on Control's own typedRelation fields, not capability bindings — read their
-  // real, per-workspace relation schema ids off those fields, mirroring `ControlDrawer.tsx`.
+  // real, per-workspace relation schema ids off those fields, mirroring the entity drawer.
   const mitigatedRisksField = controlSchema?.fields.find(field => field.id === 'mitigated_risks');
   const riskControlRelationSchemaId =
     mitigatedRisksField?.type === 'typedRelation' ? mitigatedRisksField.relationSchemaId : null;
@@ -697,12 +697,7 @@ export const RiskComplianceControlsScreen = () => {
       )}
 
       {controlId && (
-        <ControlDrawer
-          workspaceSlug={workspaceSlug}
-          controlId={controlId}
-          riskConfig={riskConfig}
-          onClose={closeControl}
-        />
+        <EntityDrawer workspaceSlug={workspaceSlug} entityId={controlId} onClose={closeControl} />
       )}
       {openRiskId && (
         <RiskDrawer

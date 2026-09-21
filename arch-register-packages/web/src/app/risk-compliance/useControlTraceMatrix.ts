@@ -41,7 +41,7 @@ const addTo = (map: Map<string, Set<string>>, key: string, value: string) => {
  * against whichever of those hooks the Coverage view already fetched, so switching between
  * Coverage and Traceability doesn't refetch.
  *
- * Relation endpoint roles mirror `ControlDrawer.tsx`: `risk-control` has Control as `_out`, Risk
+ * Relation endpoint roles mirror the entity drawer: `risk-control` has Control as `_out`, Risk
  * as `_in`; `control-affects` has Control as `_in`, the asset as `_out`.
  */
 export const useControlTraceMatrix = (

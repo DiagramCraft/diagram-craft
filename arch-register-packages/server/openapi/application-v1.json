@@ -74228,6 +74228,9 @@
                                               "type": "string",
                                               "minLength": 1,
                                               "maxLength": 120
+                                            },
+                                            "showLabel": {
+                                              "type": "boolean"
                                             }
                                           },
                                           "required": [
@@ -74538,6 +74541,9 @@
                                         "type": "string",
                                         "minLength": 1,
                                         "maxLength": 120
+                                      },
+                                      "showLabel": {
+                                        "type": "boolean"
                                       }
                                     },
                                     "required": [
@@ -74789,6 +74795,9 @@
                                               "type": "string",
                                               "minLength": 1,
                                               "maxLength": 120
+                                            },
+                                            "showLabel": {
+                                              "type": "boolean"
                                             }
                                           },
                                           "required": [

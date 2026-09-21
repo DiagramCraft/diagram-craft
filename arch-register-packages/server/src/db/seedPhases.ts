@@ -197,6 +197,16 @@ export const seedWorkspaceConfiguration = async (
   }
 };
 
+/** Persists the template-authored drawer profiles for the default seeded workspace. */
+export const seedEntityDrawerConfiguration = async (db: DatabaseAdapter): Promise<void> => {
+  await db.workspace.upsertWorkspaceEntityDrawerConfiguration({
+    workspace: WORKSPACE_ID,
+    configuration: { version: 1, profiles: seedTemplateDefinitions.entityDrawerProfiles },
+    created_at: now,
+    updated_at: now
+  });
+};
+
 export const seedCatalogDefinitions = async (
   db: DatabaseAdapter,
   options: CatalogSeedOptions = {}

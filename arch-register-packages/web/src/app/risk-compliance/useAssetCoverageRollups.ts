@@ -79,7 +79,7 @@ export const useAssetCoverageRollups = (
     };
     // `risk-affects`: Risk is `_in`, the asset is `_out`. `control-affects`: Control is `_in`, the
     // asset is `_out` — both relation schemas share that shape (`inSymSchemaIds` the fixed side,
-    // `outSymSchemaIds: 'any'` the asset), mirroring `ControlDrawer.tsx`'s role-by-endpoint rule.
+    // `outSymSchemaIds: 'any'` the asset), mirroring the entity drawer's role-by-endpoint rule.
     for (const relation of riskAffects.data) {
       entryFor(relation._out.id, relation._out.name, relation._out.schemaId ?? null).riskIds.add(
         relation._in.id

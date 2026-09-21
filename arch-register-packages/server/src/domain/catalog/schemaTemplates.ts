@@ -3454,6 +3454,35 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         }
       }
     ],
+    entityDrawerProfiles: {
+      control: {
+        header: {
+          badges: [{ kind: 'field', fieldId: 'control_type', showLabel: false }]
+        },
+        sections: [
+          {
+            id: 'attributes',
+            title: 'Attributes',
+            collapsible: false,
+            items: [
+              { kind: 'field', fieldId: 'control_type' },
+              { kind: 'field', fieldId: 'design_effectiveness' },
+              { kind: 'field', fieldId: 'operating_effectiveness' },
+              { kind: 'field', fieldId: 'last_verified' }
+            ]
+          },
+          {
+            id: 'application-content',
+            title: 'Additional attributes',
+            collapsible: true,
+            items: [
+              { kind: 'slot', slotId: 'risk.mitigated-risks', label: 'Risks mitigated' },
+              { kind: 'slot', slotId: 'risk.protected-entities', label: 'Protected entities' }
+            ]
+          }
+        ]
+      }
+    },
     // Control Protection (`control-affects`) only exists when 'information-governance' is also
     // selected, since it points specifically at that template's Data Entity schema — everything
     // else in Risk & Compliance (Risk register, Control library, mitigation, compliance
