@@ -3632,6 +3632,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             title: 'Strategy assessment',
             collapsible: false,
             items: [
+              { kind: 'slot', slotId: 'strategy.rollup', label: 'Roll-up' },
               { kind: 'field', fieldId: 'capability_type' },
               { kind: 'field', fieldId: 'value_stream' },
               { kind: 'field', fieldId: 'maturity' },
@@ -3645,10 +3646,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             title: 'Additional attributes',
             collapsible: true,
             items: [
-              {
-                kind: 'slot',
-                slotId: 'strategy.rollup'
-              },
+              { kind: 'metadata', slot: 'owner' },
               { kind: 'slot', slotId: 'strategy.children', label: 'Children' },
               { kind: 'slot', slotId: 'strategy.realized-by', label: 'Realized by' },
               {

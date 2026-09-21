@@ -297,12 +297,15 @@ describe('instantiateTemplate', () => {
         sections: expect.arrayContaining([
           expect.objectContaining({
             id: 'strategy-assessment',
-            items: expect.arrayContaining([{ kind: 'field', fieldId: 'maturity' }])
+            items: expect.arrayContaining([
+              { kind: 'slot', slotId: 'strategy.rollup', label: 'Roll-up' },
+              { kind: 'field', fieldId: 'maturity' },
+              { kind: 'metadata', slot: 'owner' }
+            ])
           }),
           expect.objectContaining({
             id: 'application-content',
             items: expect.arrayContaining([
-              { kind: 'slot', slotId: 'strategy.rollup' },
               { kind: 'slot', slotId: 'strategy.children', label: 'Children' },
               { kind: 'slot', slotId: 'strategy.realized-by', label: 'Realized by' },
               { kind: 'slot', slotId: 'strategy.linked-objectives', label: 'Linked objectives' },
