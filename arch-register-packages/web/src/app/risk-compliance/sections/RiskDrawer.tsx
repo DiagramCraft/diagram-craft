@@ -1,5 +1,6 @@
 import { EntityDrawer } from '../../../sections/entities/entityDrawer/EntityDrawer';
 import { Chip } from '../../../components/Chip';
+import { formatIsoDate } from '../../../utils/dateFormat';
 import { RESIDUAL_RISK_BAND_COLOR, residualRiskBand } from '../residualRiskBand';
 
 /**
@@ -30,6 +31,7 @@ export const RiskDrawer = ({
         </Chip>
       ) : null;
     }}
+    formatDateValue={formatIsoDate}
     loadingMessage="Loading risk…"
     unavailableMessage="This risk is unavailable."
   />

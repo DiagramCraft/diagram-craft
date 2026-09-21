@@ -115,7 +115,8 @@ export const PropertyRow = ({
   onTypedRelationCreate,
   onTypedRelationRemoveDraft,
   onTypedRelationUpdateField,
-  onTypedRelationToggleRemove
+  onTypedRelationToggleRemove,
+  formatDateValue = formatDate
 }: {
   field: EntitySchema['fields'][number];
   label?: string;
@@ -140,6 +141,7 @@ export const PropertyRow = ({
   onTypedRelationRemoveDraft: (index: number) => void;
   onTypedRelationUpdateField: (relationUid: string, fieldId: string, value: unknown) => void;
   onTypedRelationToggleRemove: (relationUid: string) => void;
+  formatDateValue?: (value: unknown) => string;
 }) => {
   const isExternal = field.external_kind !== undefined;
   const isDerived = field.type === 'derived';
@@ -481,7 +483,7 @@ export const PropertyRow = ({
         return <span>{value.map(item => (item ? 'Yes' : 'No')).join(', ')}</span>;
       }
       if (field.type === 'date') {
-        return <span>{value.map(item => formatDate(item)).join(', ')}</span>;
+        return <span>{value.map(item => formatDateValue(item)).join(', ')}</span>;
       }
       if (field.type === 'currency') {
         return <span>{value.map(item => formatCurrencyValue(item)).join(', ')}</span>;
@@ -517,7 +519,7 @@ export const PropertyRow = ({
         return <span>{opt?.label ?? String(value)}</span>;
       return <Chip tone="ghost">{opt?.label ?? String(value)}</Chip>;
     }
-    if (field.type === 'date') return <span>{formatDate(value)}</span>;
+    if (field.type === 'date') return <span>{formatDateValue(value)}</span>;
     if (field.type === 'currency') return <span>{formatCurrencyValue(value)}</span>;
     return <span>{String(value)}</span>;
   };

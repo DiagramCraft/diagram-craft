@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
         entityId: string;
         loadingMessage?: unknown;
         unavailableMessage?: unknown;
+        formatDateValue?: (value: unknown) => string;
         additionalBadges?: (entity: EntityRecord) => unknown;
       }
     | undefined
@@ -40,6 +41,7 @@ describe('RiskDrawer', () => {
     expect(mocks.drawerProps?.entityId).toBe('risk-1');
     expect(mocks.drawerProps?.loadingMessage).toBe('Loading risk…');
     expect(mocks.drawerProps?.unavailableMessage).toBe('This risk is unavailable.');
+    expect(mocks.drawerProps?.formatDateValue?.('2026-06-01')).toBe('2026-06-01');
   });
 
   it('adds the residual-risk band from the loaded entity score', () => {
