@@ -445,7 +445,11 @@
           heat-map thresholds), attributes, a multi-control coverage roll-up (`rcCoverage`/`rcBand`, combining every
           mitigating Control's `coverage` % and `effectiveness` on its `risk-control` relation as independent,
           overlapping layers of defense rather than a plain average), the list of mitigating Controls, and the
-          entities the risk affects (via `risk-affects`).
+          entities the risk affects (via `risk-affects`). The configurable Risk drawer preserves the
+          template-authored default profile for these metrics, attributes, category/status badges, and the
+          residual-risk band, while registered Risk & Compliance provider slots expose coverage and affected
+          entities; workspace administrators can configure supported fields, sections, order, labels, and slot
+          placement.
 
         - @id:ar.risk-compliance.controls The Controls section has a sortable library table (search; sort by name,
           risks mitigated, or last verified; columns for Name, Type, Effectiveness — a colour-outlined pill — Risks

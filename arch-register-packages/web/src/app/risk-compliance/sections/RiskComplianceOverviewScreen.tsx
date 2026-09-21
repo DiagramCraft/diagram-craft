@@ -578,7 +578,6 @@ export const RiskComplianceOverviewScreen = () => {
         <RiskDrawer
           workspaceSlug={workspaceSlug}
           riskId={openRiskId}
-          riskConfig={riskConfig}
           onClose={() => setOpenRiskId(null)}
         />
       )}

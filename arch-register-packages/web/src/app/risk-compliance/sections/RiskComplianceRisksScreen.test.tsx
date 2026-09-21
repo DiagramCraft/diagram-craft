@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act } from 'react';
+import { act, createElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -30,6 +30,11 @@ vi.mock('../../../lib/orpcClient', () => ({
     relations: { list: mocks.relationsList, listForEntity: mocks.relationsListForEntity },
     config: { capabilityConfigurations: { list: mocks.capabilityConfigurationsList } }
   }
+}));
+
+vi.mock('../../../sections/entities/entityDrawer/EntityDrawer', () => ({
+  EntityDrawer: ({ entityId }: { entityId: string }) =>
+    createElement('div', null, `Open record in Entities ${entityId}`)
 }));
 
 const CONFIG = {
