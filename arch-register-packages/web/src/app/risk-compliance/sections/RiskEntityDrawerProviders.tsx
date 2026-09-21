@@ -22,11 +22,7 @@ const allTypedRelations = (context: EntityDrawerProviderContext) => [
 const supportsRiskField = (fieldId: string) => (context: EntityDrawerProviderContext) =>
   typedRelationField(context, fieldId) !== undefined;
 
-const RiskCoverageProvider = ({
-  context,
-  label,
-  showLabel
-}: EntityDrawerProviderProps) => {
+const RiskCoverageProvider = ({ context, label, showLabel }: EntityDrawerProviderProps) => {
   const field = typedRelationField(context, 'mitigating_controls');
   const coverage = useRiskCoverageRollup(
     context.workspaceId,
@@ -79,11 +75,7 @@ const RiskCoverageProvider = ({
   );
 };
 
-const AffectedEntitiesProvider = ({
-  context,
-  label,
-  showLabel
-}: EntityDrawerProviderProps) => {
+const AffectedEntitiesProvider = ({ context, label, showLabel }: EntityDrawerProviderProps) => {
   const field = typedRelationField(context, 'affected_entities');
   const matches = field
     ? allTypedRelations(context).filter(
