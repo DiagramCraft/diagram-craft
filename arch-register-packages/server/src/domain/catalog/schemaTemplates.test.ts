@@ -288,10 +288,26 @@ describe('instantiateTemplate', () => {
     ]);
     expect(definitions.entityDrawerProfiles[businessCapability!.id]).toEqual(
       expect.objectContaining({
+        header: {
+          badges: [
+            { kind: 'field', fieldId: 'capability_level', showLabel: false },
+            { kind: 'metadata', slot: 'lifecycle' }
+          ]
+        },
         sections: expect.arrayContaining([
           expect.objectContaining({
             id: 'strategy-assessment',
             items: expect.arrayContaining([{ kind: 'field', fieldId: 'maturity' }])
+          }),
+          expect.objectContaining({
+            id: 'application-content',
+            items: expect.arrayContaining([
+              { kind: 'slot', slotId: 'strategy.rollup' },
+              { kind: 'slot', slotId: 'strategy.children', label: 'Children' },
+              { kind: 'slot', slotId: 'strategy.realized-by', label: 'Realized by' },
+              { kind: 'slot', slotId: 'strategy.linked-objectives', label: 'Linked objectives' },
+              { kind: 'slot', slotId: 'strategy.linked-initiatives', label: 'Linked initiatives' }
+            ])
           })
         ])
       })

@@ -372,6 +372,14 @@ export const validateEntityTraversalPlan = (
 const textExpression = (expression: string, state: EntityQuerySqlRenderState): string =>
   state.dialectAdapter.textCast(expression);
 
+// PostgreSQL cannot always infer the type of a parameter used inside the recursive traversal
+// CTEs (notably the generic containment marker CTE). Schema ids are UUID columns, so make that
+// type explicit while keeping SQLite's positional parameter behaviour unchanged.
+const schemaIdParameter = (schemaId: string, state: EntityQuerySqlRenderState): string =>
+  state.dialect === 'postgres'
+    ? `${state.parameters.add(schemaId)}::uuid`
+    : state.parameters.add(schemaId);
+
 const listStart = (expression: string, state: EntityQuerySqlRenderState): string =>
   `('|' || ${textExpression(expression, state)} || '|')`;
 
@@ -461,7 +469,7 @@ const entitySourceValue = (
           )
           .map(
             field =>
-              `( ${alias}_leaf_child.schema_id = ${state.parameters.add(schema.id)} AND ${referenceContainsId(`${alias}_leaf_child`, field.id, `${alias}.id`, state)} )`
+              `( ${alias}_leaf_child.schema_id = ${schemaIdParameter(schema.id, state)} AND ${referenceContainsId(`${alias}_leaf_child`, field.id, `${alias}.id`, state)} )`
           )
       );
       if (childPredicates.length === 0)
@@ -545,7 +553,9 @@ const visibleSourceValue = (
   if (
     state.authCtx == null ||
     (source.context === 'entity'
-      ? ENTITY_PSEUDO_FIELD_IDS.has(source.fieldId) || source.fieldId.startsWith('_assessment:')
+      ? ENTITY_PSEUDO_FIELD_IDS.has(source.fieldId) ||
+        source.fieldId === '_isLeaf' ||
+        source.fieldId.startsWith('_assessment:')
       : RELATION_PSEUDO_FIELD_IDS.has(source.fieldId))
   ) {
     return value;
@@ -663,7 +673,7 @@ const fixedStepCte = (
     if (previousKind !== 'entity') throw new Error("'backward' traversal step requires an entity");
     const target = `${previousAlias}_target`;
     from += ` JOIN scoped_entity ${target} ON ${referenceContainsId(target, step.fieldId, `${previousAlias}.current_id`, state)}`;
-    from += ` AND ${target}.schema_id = ${state.parameters.add(step.ownerSchemaId)}`;
+    from += ` AND ${target}.schema_id = ${schemaIdParameter(step.ownerSchemaId, state)}`;
     const scope = schemaScopeClause(target, step.fieldId, state);
     if (scope) from += ` AND ${scope}`;
     if (step.filter) from += ` AND ${compileNode(step.filter, target, state, false)}`;
@@ -682,7 +692,7 @@ const fixedStepCte = (
     const owner = `${previousAlias}_owner`;
     const relation = `${previousAlias}_relation`;
     const target = `${previousAlias}_target`;
-    const relationSchema = state.parameters.add(step.relationSchemaId);
+    const relationSchema = schemaIdParameter(step.relationSchemaId, state);
     const ownerId =
       step.direction === 'in' ? `${relation}.in_record_id` : `${relation}.out_record_id`;
     const targetId =
@@ -771,7 +781,7 @@ const fixedStepCte = (
     if (previousKind !== 'entity')
       throw new Error("'relationBackward' traversal step requires an entity");
     const relation = `${previousAlias}_relation`;
-    from += ` JOIN scoped_relation ${relation} ON ${relation}.schema_id = ${state.parameters.add(step.relationSchemaId)} AND ${referenceContainsId(relation, step.fieldId, `${previousAlias}.current_id`, state)}`;
+    from += ` JOIN scoped_relation ${relation} ON ${relation}.schema_id = ${schemaIdParameter(step.relationSchemaId, state)} AND ${referenceContainsId(relation, step.fieldId, `${previousAlias}.current_id`, state)}`;
     if (step.filter)
       from += ` AND ${compileRelationNode(step.filter, relation, step.relationSchemaId, state)}`;
     projection = appendHop(
@@ -813,9 +823,9 @@ const recursiveStepCte = (
   const childAlias = `${previousAlias}_child`;
   // Allocate parameters in the same order in which the seed and recursive terms appear in SQL.
   // This is observable for SQLite, whose positional `?` placeholders cannot be reused.
-  const seedOwnerSchemaParam = state.parameters.add(step.ownerSchemaId);
+  const seedOwnerSchemaParam = schemaIdParameter(step.ownerSchemaId, state);
   const seedFilter = step.filter ? ` AND ${compileNode(step.filter, seedAlias, state, false)}` : '';
-  const recursiveOwnerSchemaParam = state.parameters.add(step.ownerSchemaId);
+  const recursiveOwnerSchemaParam = schemaIdParameter(step.ownerSchemaId, state);
   const maxDepthParam = state.parameters.add(maxDepth);
   const childJoin = referenceContainsId(
     childAlias,
@@ -865,7 +875,7 @@ const recursiveStepCte = (
   );
   const nodeParam = state.parameters.add(maxNodes);
   const markerMaxDepthParam = state.parameters.add(maxDepth);
-  const markerOwnerSchemaParam = state.parameters.add(step.ownerSchemaId);
+  const markerOwnerSchemaParam = schemaIdParameter(step.ownerSchemaId, state);
   const markerFilter = step.filter
     ? ` AND ${compileNode(step.filter, markerChild, state, false)}`
     : '';
@@ -876,7 +886,7 @@ const recursiveStepCte = (
     `${markerAlias}.current_id`,
     state
   );
-  const cycleOwnerSchemaParam = state.parameters.add(step.ownerSchemaId);
+  const cycleOwnerSchemaParam = schemaIdParameter(step.ownerSchemaId, state);
   const cycleFilter = step.filter
     ? ` AND ${compileNode(step.filter, cycleChild, state, false)}`
     : '';
@@ -925,7 +935,7 @@ const recursiveGenericContainmentCte = (
       : containmentFields
           .map(
             ({ schemaId, fieldId }) =>
-              `( ${childAlias}.schema_id = ${state.parameters.add(schemaId)} AND ${referenceContainsId(childAlias, fieldId, `${previousAlias}.current_id`, state)} )`
+              `( ${childAlias}.schema_id = ${schemaIdParameter(schemaId, state)} AND ${referenceContainsId(childAlias, fieldId, `${previousAlias}.current_id`, state)} )`
           )
           .join(' OR ');
   const seedColumns = [
@@ -966,7 +976,7 @@ const recursiveGenericContainmentCte = (
       : containmentFields
           .map(
             ({ schemaId, fieldId }) =>
-              `( ${markerChild}.schema_id = ${state.parameters.add(schemaId)} AND ${referenceContainsId(markerChild, fieldId, `${markerAlias}.current_id`, state)} )`
+              `( ${markerChild}.schema_id = ${schemaIdParameter(schemaId, state)} AND ${referenceContainsId(markerChild, fieldId, `${markerAlias}.current_id`, state)} )`
           )
           .join(' OR ');
   const cycleMarkerJoin =
@@ -975,7 +985,7 @@ const recursiveGenericContainmentCte = (
       : containmentFields
           .map(
             ({ schemaId, fieldId }) =>
-              `( ${markerChild}.schema_id = ${state.parameters.add(schemaId)} AND ${referenceContainsId(markerChild, fieldId, `${markerAlias}.current_id`, state)} )`
+              `( ${markerChild}.schema_id = ${schemaIdParameter(schemaId, state)} AND ${referenceContainsId(markerChild, fieldId, `${markerAlias}.current_id`, state)} )`
           )
           .join(' OR ');
   const nodeParam = state.parameters.add(maxNodes);

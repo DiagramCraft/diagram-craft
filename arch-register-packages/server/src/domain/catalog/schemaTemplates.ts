@@ -3622,7 +3622,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
       business_capability: {
         header: {
           badges: [
-            { kind: 'field', fieldId: 'health' },
+            { kind: 'field', fieldId: 'capability_level', showLabel: false },
             { kind: 'metadata', slot: 'lifecycle' }
           ]
         },
@@ -3642,15 +3642,24 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           },
           {
             id: 'application-content',
-            title: 'Application content',
+            title: 'Additional attributes',
             collapsible: true,
             items: [
               {
                 kind: 'slot',
-                slotId: 'strategy.rollup',
-                options: {
-                  rollups: [{ fieldId: 'maturity', aggregation: 'avg', format: 'decimal1' }]
-                }
+                slotId: 'strategy.rollup'
+              },
+              { kind: 'slot', slotId: 'strategy.children', label: 'Children' },
+              { kind: 'slot', slotId: 'strategy.realized-by', label: 'Realized by' },
+              {
+                kind: 'slot',
+                slotId: 'strategy.linked-objectives',
+                label: 'Linked objectives'
+              },
+              {
+                kind: 'slot',
+                slotId: 'strategy.linked-initiatives',
+                label: 'Linked initiatives'
               }
             ]
           }
