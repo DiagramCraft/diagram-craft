@@ -31,6 +31,7 @@ import {
   STRATEGY_TRACEABILITY_ID,
   STRATEGY_RAIL_PATHS,
   STRATEGY_SECTIONS,
+  STRATEGY_SECTION_LABELS,
   type StrategyRailItemId
 } from '../strategySections';
 import type {
@@ -428,7 +429,7 @@ export const StrategySidebar = ({
 
   return (
     <>
-      <SidebarTitleHeader title="Strategy" />
+      <SidebarTitleHeader title={STRATEGY_SECTION_LABELS[activeSection]} />
       <div className={styles.scroll}>
         {!enabled ? (
           <div className={`${styles.emptyState} dim`}>Strategy model is not enabled.</div>

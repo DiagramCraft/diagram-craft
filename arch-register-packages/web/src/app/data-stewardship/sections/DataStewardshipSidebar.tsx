@@ -34,6 +34,7 @@ import {
   DS_MY_WORK_ID,
   DS_RAIL_PATHS,
   DS_SECTIONS,
+  DS_SECTION_LABELS,
   DS_STEWARDSHIP_ID,
   type DataStewardshipRailItemId
 } from '../dataStewardshipSections';
@@ -570,7 +571,7 @@ export const DataStewardshipSidebar = ({
 
   return (
     <>
-      <SidebarTitleHeader title="Data Stewardship" />
+      <SidebarTitleHeader title={DS_SECTION_LABELS[activeSection]} />
       <div className={styles.scroll}>
         {!dataStewardshipConfig ? (
           <div className={`${styles.emptyState} dim`}>Data stewardship is not enabled.</div>

@@ -34,6 +34,7 @@ import {
   RISK_CONTROLS_ID,
   RISK_RETENTION_ID,
   RISK_SECTIONS,
+  RISK_SECTION_LABELS,
   type RiskComplianceRailItemId
 } from '../riskComplianceSections';
 import type {
@@ -502,7 +503,7 @@ export const RiskComplianceSidebar = ({
   if (activeSection === RISK_RETENTION_ID) {
     return (
       <>
-        <SidebarTitleHeader title="Risk & Compliance" />
+        <SidebarTitleHeader title={RISK_SECTION_LABELS[activeSection]} />
         <div className={styles.scroll}>
           {!retentionConfig ? (
             <div className={`${styles.emptyState} dim`}>Retention is not configured.</div>
@@ -519,7 +520,7 @@ export const RiskComplianceSidebar = ({
 
   return (
     <>
-      <SidebarTitleHeader title="Risk & Compliance" />
+      <SidebarTitleHeader title={RISK_SECTION_LABELS[activeSection]} />
       <div className={styles.scroll}>
         {!enabled ? (
           <div className={`${styles.emptyState} dim`}>Risk & Compliance is not enabled.</div>
