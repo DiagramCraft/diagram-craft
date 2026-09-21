@@ -21,6 +21,7 @@ import {
   IC_INTEGRATIONS_ID,
   IC_RAIL_PATHS,
   IC_SECTIONS,
+  IC_SECTION_LABELS,
   type ApiIntegrationCatalogRailItemId
 } from '../apiIntegrationCatalogSections';
 import type {
@@ -300,7 +301,7 @@ export const ApiIntegrationCatalogSidebar = ({
 
   return (
     <>
-      <SidebarTitleHeader title="API & Integration Catalog" />
+      <SidebarTitleHeader title={IC_SECTION_LABELS[activeSection]} />
       <div className={styles.scroll}>
         {!enabled ? (
           <div className={`${styles.emptyState} dim`}>

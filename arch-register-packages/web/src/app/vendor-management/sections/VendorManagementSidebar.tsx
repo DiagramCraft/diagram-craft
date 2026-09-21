@@ -40,6 +40,7 @@ import {
 import {
   VENDOR_RAIL_PATHS,
   VENDOR_SECTIONS,
+  VENDOR_SECTION_LABELS,
   VENDOR_CONTRACTS_ID,
   VENDOR_SPEND_ID,
   VENDOR_VENDORS_ID,
@@ -622,7 +623,7 @@ export const VendorManagementSidebar = ({
 
   return (
     <>
-      <SidebarTitleHeader title="Vendor Management" />
+      <SidebarTitleHeader title={VENDOR_SECTION_LABELS[activeSection]} />
       <div className={styles.scroll}>
         {!enabled ? (
           <div className={`${styles.emptyState} dim`}>Vendor management is not enabled.</div>
