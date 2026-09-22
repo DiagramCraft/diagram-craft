@@ -214,7 +214,10 @@ export const StrategyCapabilitiesScreen = () => {
     dir: 'asc'
   });
 
-  const currentRoute = { to: STRATEGY_RAIL_PATHS[STRATEGY_CAPABILITIES_ID], params: { workspaceSlug } };
+  const currentRoute = {
+    to: STRATEGY_RAIL_PATHS[STRATEGY_CAPABILITIES_ID],
+    params: { workspaceSlug }
+  };
 
   const patchSearch = (patch: Record<string, unknown>) =>
     navigate({
