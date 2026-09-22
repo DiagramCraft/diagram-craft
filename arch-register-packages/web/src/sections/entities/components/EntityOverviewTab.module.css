@@ -44,72 +44,12 @@
   border-bottom: 1px solid var(--panel-border);
 }
 
-.relationPropRow {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  align-items: flex-start;
-  padding: 8px 0;
-
-  &:last-child {
-    padding-bottom: 0;
-  }
-}
-
-.propRowDrawer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 4px 0;
-  border-bottom: 1px solid var(--panel-border);
-}
-
-.propRowDrawerRelation {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 0;
-  margin-top: 8px;
-
-  .propLabelDrawer {
-    align-self: start;
-  }
-}
-
-.propRowDrawerStat {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 2px;
-  padding: 0;
-}
-
 .propRow:last-child {
   border-bottom: 0;
 }
 
 .propLabel {
   font-size: 12px;
-  color: var(--base-fg-more-dim);
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.propLabelDrawer {
-  font-size: 12px;
-  color: var(--base-fg-dim);
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.propLabelDrawerStat {
-  font-size: 10.5px;
   color: var(--base-fg-more-dim);
   display: flex;
   align-items: center;
@@ -165,42 +105,6 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 4px;
-}
-
-.relationPropValue {
-  font-size: 12.5px;
-  color: var(--base-fg);
-  min-height: 22px;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-  gap: 4px;
-  text-align: right;
-}
-
-.propValueDrawer {
-  min-height: 22px;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-  gap: 4px;
-  color: var(--base-fg);
-  font-size: 12.5px;
-  text-align: right;
-}
-
-.propValueDrawerStat {
-  min-height: 22px;
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  flex-wrap: wrap;
-  gap: 4px;
-  color: var(--base-fg);
-  font-size: 15px;
-  font-variant-numeric: tabular-nums;
 }
 
 .propLink {

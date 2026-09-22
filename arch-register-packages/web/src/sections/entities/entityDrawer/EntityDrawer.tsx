@@ -13,8 +13,7 @@ import { asEntityPublicId, entityDetailRoute } from '../../../routes/publicObjec
 import { buildEntityRefLookup } from '../entityDetailHelpers';
 import { isReferenceOrContainmentField } from '@arch-register/api-types/schemaContract';
 import { buildDefaultEntityDrawerProfile } from '@arch-register/api-types/entityDrawerConfiguration';
-import { useEntityFieldRenderers } from '../components/useEntityFieldRenderers';
-import type { TypedRelationEditState } from '../../../lib/entityEditState';
+import { DrawerPropertyRow } from './DrawerPropertyRow';
 import { formatCurrencyValue } from '../../../utils/currencyFormat';
 import { formatDate } from '../../../utils/dateFormat';
 import { usePrincipalLabel } from '../../../hooks/usePrincipalLabel';
@@ -26,7 +25,10 @@ import {
 } from './entityDrawerState';
 import type { EntityDrawerProviderContext } from './EntityDrawerProviderRegistry';
 import { entityDrawerProviderRegistry } from './entityDrawerProviders';
-import type { EntityRecord } from '@arch-register/api-types/entityContract';
+import type { EntityRecord, EntitySummary } from '@arch-register/api-types/entityContract';
+import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
+import type { RelationRecord } from '@arch-register/api-types/relationContract';
+import type { RefLookup } from '../types/entityDetailTypes';
 import styles from './EntityDrawer.module.css';
 
 const EntityDrawerBadge = ({
@@ -189,15 +191,29 @@ const MetadataItem = ({
 const DrawerItem = ({
   item,
   providerContext,
-  renderPropertyRow,
   entity,
-  lifecycleStates
+  lifecycleStates,
+  refLookup,
+  referenceOptions,
+  typedRelationsOutgoing,
+  typedRelationsIncoming,
+  relationSchemas,
+  workspaceSlug,
+  formatDateValue,
+  onOpenRelatedEntity
 }: {
   item: ResolvedEntityDrawerItem;
   providerContext: EntityDrawerProviderContext;
-  renderPropertyRow: ReturnType<typeof useEntityFieldRenderers>['renderPropertyRow'];
   entity: NonNullable<ReturnType<typeof useEntity>['data']>;
   lifecycleStates: ReturnType<typeof useWorkspaceContext>['lifecycleStates'];
+  refLookup: RefLookup;
+  referenceOptions: Record<string, EntitySummary[]>;
+  typedRelationsOutgoing: RelationRecord[];
+  typedRelationsIncoming: RelationRecord[];
+  relationSchemas: RelationSchema[];
+  workspaceSlug: string;
+  formatDateValue?: (value: unknown) => string;
+  onOpenRelatedEntity?: (fieldId: string, publicId: string) => boolean;
 }) => {
   if (item.item.kind === 'metadata') {
     return <MetadataItem item={item} entity={entity} lifecycleStates={lifecycleStates} />;
@@ -216,14 +232,21 @@ const DrawerItem = ({
   }
   if (!item.field) return null;
   return (
-    <>
-      {renderPropertyRow(
-        item.field,
-        'view',
-        item.label,
-        item.item.presentation === 'mini-panel' ? 'drawer-stat' : 'drawer'
-      )}
-    </>
+    <DrawerPropertyRow
+      field={item.field}
+      label={item.label}
+      value={entity[item.field.id]}
+      presentation={item.item.presentation === 'mini-panel' ? 'mini-panel' : 'row'}
+      refLookup={refLookup}
+      referenceOptions={referenceOptions}
+      typedRelationsOutgoing={typedRelationsOutgoing}
+      typedRelationsIncoming={typedRelationsIncoming}
+      relationSchemas={relationSchemas}
+      workspaceSlug={workspaceSlug}
+      formatDateValue={formatDateValue}
+      onOpenRelatedEntity={onOpenRelatedEntity}
+      externalMeta={entity._externalMetadata?.[item.field.id]}
+    />
   );
 };
 
@@ -259,7 +282,7 @@ export const EntityDrawer = ({
   formatDateValue?: (value: unknown) => string;
 }) => {
   const navigate = useNavigate();
-  const { schemas, relationSchemas, lifecycleStates, currencies } = useWorkspaceContext();
+  const { schemas, relationSchemas, lifecycleStates } = useWorkspaceContext();
   const { getFieldGroupAccess } = useWorkspaceAuthorization(workspaceSlug);
   const entityQuery = useEntity(
     workspaceSlug,
@@ -296,29 +319,6 @@ export const EntityDrawer = ({
   const relations = relationsQuery.data ?? { outgoing: [], incoming: [] };
   const typedRelations = typedRelationsQuery.data ?? { outgoing: [], incoming: [] };
   const refLookup = useMemo(() => buildEntityRefLookup(relations), [relations]);
-  const [, setEditState] = useState<Record<string, unknown>>({});
-  const [, setTypedRelationEditState] = useState<TypedRelationEditState>({});
-  const [, setValidationErrors] = useState<Set<string>>(new Set());
-  const fieldRenderers = useEntityFieldRenderers({
-    workspaceSlug,
-    entity: entity!,
-    editing: false,
-    editState: {},
-    setEditState,
-    typedRelationEditState: {},
-    setTypedRelationEditState,
-    validationErrors: new Set(),
-    setValidationErrors,
-    refLookup,
-    referenceOptions,
-    onOpenRelatedEntity,
-    currencies: currencies.currencies,
-    defaultCurrency: currencies.default_currency,
-    typedRelationsOutgoing: typedRelations.outgoing,
-    typedRelationsIncoming: typedRelations.incoming,
-    relationSchemas,
-    formatDateValue
-  });
 
   const openEntity = useCallback(
     (targetId: string) => {
@@ -487,9 +487,16 @@ export const EntityDrawer = ({
                   <DrawerItem
                     item={item}
                     providerContext={providerContext}
-                    renderPropertyRow={fieldRenderers.renderPropertyRow}
                     entity={entity}
                     lifecycleStates={lifecycleStates}
+                    refLookup={refLookup}
+                    referenceOptions={referenceOptions}
+                    typedRelationsOutgoing={typedRelations.outgoing}
+                    typedRelationsIncoming={typedRelations.incoming}
+                    relationSchemas={relationSchemas}
+                    workspaceSlug={workspaceSlug}
+                    formatDateValue={formatDateValue}
+                    onOpenRelatedEntity={onOpenRelatedEntity}
                   />
                 </div>
               ))}

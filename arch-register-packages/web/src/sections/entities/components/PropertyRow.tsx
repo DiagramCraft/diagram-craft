@@ -5,7 +5,6 @@ import { Chip } from '../../../components/Chip';
 import { UserGroupPicker } from '../../../components/UserGroupPicker';
 import { usePrincipalLabel } from '../../../hooks/usePrincipalLabel';
 import { formatDate } from '../../../utils/dateFormat';
-import { formatCurrencyValue } from '../../../utils/currencyFormat';
 import { relationIds } from '../../../lib/entityEditState';
 import type { EntitySummary } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
@@ -13,32 +12,16 @@ import type { ExternalMetadataResult } from '@arch-register/api-types/common';
 import type { SupportedCurrency } from '@arch-register/api-types/workspaceConfigContract';
 import type { RefLookup } from '../types/entityDetailTypes';
 import styles from './EntityOverviewTab.module.css';
-import sharedStyles from '../EntityDetailScreen.module.css';
-import { EntityNavigationLink } from '../../../components/EntityNavigationLink';
 import { ExternalMetadataIndicator } from '../../../components/ExternalMetadataIndicator';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import type { RelationRecord } from '@arch-register/api-types/relationContract';
 import type { RelationRecordDraft } from '@arch-register/api-types/entityContract';
-import { RelationRecordList } from './RelationRecordList';
 import { TypedRelationFieldEditor } from './TypedRelationFieldEditor';
 import { MultiValueEditor } from '../../../components/MultiValueEditor';
 import { isMultiValuedScalarField } from '../../../lib/scalarFieldValues';
-import { resolveEntityReference } from '../entityDetailHelpers';
 import type { TypedRelationFieldEditState } from '../../../lib/entityEditState';
 import { selectableEnumOptions } from '../../../utils/enumOptions';
-
-const asPrincipal = (value: unknown): { principal_type?: string; principal_id?: string } =>
-  (typeof value === 'object' && value !== null ? value : {}) as {
-    principal_type?: string;
-    principal_id?: string;
-  };
-
-const PrincipalChip = ({ value }: { value: unknown }) => {
-  const resolveLabel = usePrincipalLabel();
-  const principal = asPrincipal(value);
-  if (!principal.principal_id) return <span className={sharedStyles.dim}>—</span>;
-  return <Chip tone="ghost">{resolveLabel(principal) ?? principal.principal_id}</Chip>;
-};
+import { asPrincipal, renderEntityFieldDisplayValue } from './entityFieldDisplay';
 
 const PrincipalEditor = ({
   value,
@@ -95,14 +78,12 @@ const PrincipalEditor = ({
 export const PropertyRow = ({
   field,
   label,
-  displayVariant = 'default',
   value,
   editing,
   editValue,
   onChange,
   refLookup,
   referenceOptions,
-  onOpenRelatedEntity,
   hasError,
   externalMeta,
   typedRelationsOutgoing,
@@ -115,19 +96,16 @@ export const PropertyRow = ({
   onTypedRelationCreate,
   onTypedRelationRemoveDraft,
   onTypedRelationUpdateField,
-  onTypedRelationToggleRemove,
-  formatDateValue = formatDate
+  onTypedRelationToggleRemove
 }: {
   field: EntitySchema['fields'][number];
   label?: string;
-  displayVariant?: 'default' | 'drawer' | 'drawer-stat';
   value: unknown;
   editing: boolean;
   editValue: unknown;
   onChange: (v: unknown) => void;
   refLookup: RefLookup;
   referenceOptions: Record<string, EntitySummary[]>;
-  onOpenRelatedEntity?: (fieldId: string, publicId: string) => boolean;
   hasError?: boolean;
   externalMeta?: ExternalMetadataResult;
   typedRelationsOutgoing: RelationRecord[];
@@ -141,8 +119,8 @@ export const PropertyRow = ({
   onTypedRelationRemoveDraft: (index: number) => void;
   onTypedRelationUpdateField: (relationUid: string, fieldId: string, value: unknown) => void;
   onTypedRelationToggleRemove: (relationUid: string) => void;
-  formatDateValue?: (value: unknown) => string;
 }) => {
+  const resolvePrincipalLabel = usePrincipalLabel();
   const isExternal = field.external_kind !== undefined;
   const isDerived = field.type === 'derived';
   // Inline editing of typedRelation instances lands separately; render read-only for now.
@@ -409,122 +387,18 @@ export const PropertyRow = ({
     );
   };
 
-  const renderDisplay = () => {
-    if (field.type === 'typedRelation') {
-      const records = (
-        field.direction === 'in' ? typedRelationsOutgoing : typedRelationsIncoming
-      ).filter(record => record._schema.id === field.relationSchemaId);
-      if (records.length === 0) return <span className={sharedStyles.dim}>—</span>;
-      return (
-        <RelationRecordList
-          records={records}
-          direction={field.direction === 'in' ? 'outgoing' : 'incoming'}
-          relationSchema={relationSchemas.find(rs => rs.id === field.relationSchemaId)}
-          workspaceId={workspaceSlug}
-          presentation={displayVariant === 'drawer-stat' ? 'drawer-stat' : 'default'}
-          showHistory={displayVariant !== 'drawer-stat'}
-        />
-      );
-    }
-    if (field.type === 'reference' || field.type === 'containment') {
-      const ids = relationIds(value);
-      if (ids.length === 0) return <span className={sharedStyles.dim}>—</span>;
-      return (
-        <>
-          {ids.map((id, index) => {
-            const ref = resolveEntityReference(id, field.schemaId, refLookup, referenceOptions);
-            const label = ref?._name ?? ref?._slug ?? id;
-            return (
-              <span key={id}>
-                {index > 0 && ', '}
-                <EntityNavigationLink
-                  publicId={ref?._publicId ?? id}
-                  className={styles.propLink}
-                  onClick={event => {
-                    if (onOpenRelatedEntity?.(field.id, ref?._publicId ?? id)) {
-                      event.preventDefault();
-                    }
-                  }}
-                >
-                  {label}
-                </EntityNavigationLink>
-              </span>
-            );
-          })}
-        </>
-      );
-    }
-    if (Array.isArray(value)) {
-      if (value.length === 0) return <span className={sharedStyles.dim}>—</span>;
-      if (field.type === 'select') {
-        if (displayVariant === 'drawer' || displayVariant === 'drawer-stat') {
-          return (
-            <span>
-              {value
-                .map(
-                  item => field.options.find(candidate => candidate.value === item)?.label ?? item
-                )
-                .join(', ')}
-            </span>
-          );
-        }
-        return (
-          <span style={{ display: 'inline-flex', gap: 4, flexWrap: 'wrap' }}>
-            {value.map((item, index) => {
-              const option = field.options.find(candidate => candidate.value === item);
-              return (
-                <Chip key={`${String(item)}-${index}`} tone="ghost">
-                  {option?.label ?? String(item)}
-                </Chip>
-              );
-            })}
-          </span>
-        );
-      }
-      if (field.type === 'boolean') {
-        return <span>{value.map(item => (item ? 'Yes' : 'No')).join(', ')}</span>;
-      }
-      if (field.type === 'date') {
-        return <span>{value.map(item => formatDateValue(item)).join(', ')}</span>;
-      }
-      if (field.type === 'currency') {
-        return <span>{value.map(item => formatCurrencyValue(item)).join(', ')}</span>;
-      }
-      if (field.type === 'principal') {
-        return (
-          <span style={{ display: 'inline-flex', gap: 4, flexWrap: 'wrap' }}>
-            {value.map((item, index) => (
-              <PrincipalChip key={index} value={item} />
-            ))}
-          </span>
-        );
-      }
-      return <span>{value.map(item => String(item)).join(', ')}</span>;
-    }
-    if (value == null || value === '') return <span className={sharedStyles.dim}>—</span>;
-    if (field.type === 'principal') return <PrincipalChip value={value} />;
-    if (field.type === 'derived') {
-      if (field.resultType === 'boolean') return <span>{value ? 'Yes' : 'No'}</span>;
-      if (field.resultType === 'currency') return <span>{formatCurrencyValue(value)}</span>;
-      if (field.resultType === 'select') {
-        const opt = field.options?.find(o => o.value === String(value));
-        if (displayVariant === 'drawer' || displayVariant === 'drawer-stat')
-          return <span>{opt?.label ?? String(value)}</span>;
-        return <Chip tone="ghost">{opt?.label ?? String(value)}</Chip>;
-      }
-      return <span>{String(value)}</span>;
-    }
-    if (field.type === 'boolean') return <span>{value ? 'Yes' : 'No'}</span>;
-    if (field.type === 'select') {
-      const opt = field.options.find(o => o.value === value);
-      if (displayVariant === 'drawer' || displayVariant === 'drawer-stat')
-        return <span>{opt?.label ?? String(value)}</span>;
-      return <Chip tone="ghost">{opt?.label ?? String(value)}</Chip>;
-    }
-    if (field.type === 'date') return <span>{formatDateValue(value)}</span>;
-    if (field.type === 'currency') return <span>{formatCurrencyValue(value)}</span>;
-    return <span>{String(value)}</span>;
-  };
+  const renderDisplay = () =>
+    renderEntityFieldDisplayValue(field, value, {
+      refLookup,
+      referenceOptions,
+      typedRelationsOutgoing,
+      typedRelationsIncoming,
+      relationSchemas,
+      workspaceSlug,
+      formatDateValue: formatDate,
+      resolvePrincipalLabel,
+      asChip: true
+    });
 
   const typeLabel = field.type.charAt(0).toUpperCase() + field.type.slice(1);
 
@@ -548,47 +422,20 @@ export const PropertyRow = ({
     );
   };
 
-  const rowClass =
-    displayVariant === 'drawer' || (displayVariant === 'drawer-stat' && isTypedRelation)
-      ? displayVariant === 'drawer-stat' && isTypedRelation
-        ? styles.propRowDrawerRelation
-        : styles.propRowDrawer
-      : displayVariant === 'drawer-stat'
-        ? styles.propRowDrawerStat
-        : styles.propRow;
-  const labelClass =
-    displayVariant === 'drawer' || (displayVariant === 'drawer-stat' && isTypedRelation)
-      ? styles.propLabelDrawer
-      : displayVariant === 'drawer-stat'
-        ? styles.propLabelDrawerStat
-        : styles.propLabel;
-  const valueClass =
-    displayVariant === 'drawer' || (displayVariant === 'drawer-stat' && isTypedRelation)
-      ? styles.propValueDrawer
-      : displayVariant === 'drawer-stat'
-        ? styles.propValueDrawerStat
-        : styles.propValue;
-
   return (
-    <div className={`${rowClass} ${hasError ? styles.propRowError : ''}`}>
-      <div className={labelClass}>
+    <div className={`${styles.propRow} ${hasError ? styles.propRowError : ''}`}>
+      <div className={styles.propLabel}>
         {label ?? field.name}
-        {displayVariant !== 'drawer' && displayVariant !== 'drawer-stat' && (
-          <span className={styles.propType}>{typeLabel}</span>
+        <span className={styles.propType}>{typeLabel}</span>
+        {field.requirementLevel === 'optional' && (
+          <span className={styles.propOptional}>(optional)</span>
         )}
-        {displayVariant !== 'drawer' &&
-          displayVariant !== 'drawer-stat' &&
-          field.requirementLevel === 'optional' && (
-            <span className={styles.propOptional}>(optional)</span>
-          )}
-        {displayVariant !== 'drawer' &&
-          displayVariant !== 'drawer-stat' &&
-          field.requirementLevel === 'expected' && (
-            <span className={styles.propExpected}>Expected</span>
-          )}
+        {field.requirementLevel === 'expected' && (
+          <span className={styles.propExpected}>Expected</span>
+        )}
       </div>
       <div
-        className={valueClass}
+        className={styles.propValue}
         style={hasError ? { flexDirection: 'column', alignItems: 'flex-start' } : undefined}
       >
         {editing && isTypedRelation
