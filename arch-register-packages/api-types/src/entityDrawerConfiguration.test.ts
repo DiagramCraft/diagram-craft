@@ -208,6 +208,51 @@ describe('entity drawer configuration', () => {
     ).toEqual(['risk']);
   });
 
+  it('derives the API specification profile and provider slot from the capability binding', () => {
+    const apiSchema = {
+      id: 'api',
+      name: 'API',
+      fields: [
+        { id: 'protocols', name: 'Protocols', type: 'select' },
+        { id: 'contract_version', name: 'API version', type: 'text' },
+        { id: 'providers', name: 'Providers', type: 'typedRelation' },
+        { id: 'consumers', name: 'Consumers', type: 'typedRelation' }
+      ]
+    };
+    const configuration = {
+      type: 'api-specification',
+      bindings: {
+        api: {
+          target: { kind: 'entity_schema', id: 'api' },
+          fieldMappings: { api_version: 'contract_version' }
+        }
+      }
+    } as const;
+
+    const result = buildDefaultEntityDrawerConfiguration([apiSchema], [configuration]);
+    const profile = result.profiles.api!;
+    const items = profile.sections.flatMap(section => section.items);
+
+    expect(profile.header.badges).toEqual([
+      { kind: 'field', fieldId: 'protocols', showLabel: false },
+      { kind: 'metadata', slot: 'lifecycle' }
+    ]);
+    expect(items).toEqual(
+      expect.arrayContaining([
+        { kind: 'field', fieldId: 'contract_version', label: 'API version' },
+        { kind: 'metadata', slot: 'owner' },
+        { kind: 'relation', fieldId: 'providers', label: 'Providers' },
+        { kind: 'relation', fieldId: 'consumers', label: 'Consumers' },
+        { kind: 'slot', slotId: 'api-specification.catalog', showLabel: false }
+      ])
+    );
+
+    const catalog = buildEntityDrawerCatalog([apiSchema], [configuration]);
+    expect(catalog.slots.find(slot => slot.id === 'api-specification.catalog')).toMatchObject({
+      supportedSchemaIds: ['api']
+    });
+  });
+
   it('derives the Data Entity profile with stewardship fields and supported provider slots', () => {
     const dataEntitySchema = {
       id: 'data-entity',

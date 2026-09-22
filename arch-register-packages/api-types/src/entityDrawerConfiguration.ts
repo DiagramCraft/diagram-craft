@@ -4,7 +4,7 @@ import {
   strategyModelViewConfigSchema
 } from './app/strategy-model/strategyModelViewConfig';
 import { businessGlossaryCapabilityDefinition } from './app/business-glossary/glossaryCapability';
-import { resolveCapabilityFieldId } from './integrationCatalog';
+import { getWorkspaceCapabilityDefinition, resolveCapabilityFieldId } from './integrationCatalog';
 import type { WorkspaceCapabilityBinding } from './workspaceCapabilityContract';
 
 export const entityDrawerMetadataSlotSchema = z.enum([
@@ -200,6 +200,16 @@ const strategyRollupOptionsSchema = z.object({
 });
 
 export const ENTITY_DRAWER_SLOT_DEFINITIONS: EntityDrawerSlotDefinition[] = [
+  {
+    id: 'api-specification.catalog',
+    label: 'API specification catalog',
+    description: 'Sources, revisions, diagnostics, and normalized API operations or messages.',
+    application: 'API & Integration Catalog',
+    capabilityBinding: { capabilityType: 'api-specification', role: 'api' },
+    defaultOptions: {},
+    optionFields: [],
+    optionsSchema: emptyOptionsSchema
+  },
   {
     id: 'business-glossary.usage',
     label: 'Glossary usage',
@@ -638,6 +648,94 @@ type DataStewardshipFieldIds = {
   permittedResidencyRegions: string;
 };
 
+type ApiSpecificationFieldIds = {
+  apiVersion: string;
+  protocols: string;
+  providers: string;
+  consumers: string;
+};
+
+const apiSpecificationFieldIds = (
+  schema: EntityDrawerSchema,
+  capabilityConfigurations: readonly CapabilityConfigurationLike[]
+): ApiSpecificationFieldIds | null => {
+  const configuration = capabilityConfigurations.find(
+    candidate => candidate.type === 'api-specification'
+  );
+  const binding = configuration?.bindings.api;
+  if (binding?.target.kind !== 'entity_schema' || binding.target.id !== schema.id) return null;
+
+  const definition = getWorkspaceCapabilityDefinition('api-specification');
+  const apiRole = definition?.bindingRoles.find(role => role.id === 'api');
+  const apiVersionRole = apiRole?.fieldRoles.find(role => role.id === 'api_version');
+  const apiVersion = apiVersionRole
+    ? resolveCapabilityFieldId(binding, apiVersionRole)
+    : 'api_version';
+  const fieldIds: ApiSpecificationFieldIds = {
+    apiVersion,
+    protocols: 'protocols',
+    providers: 'providers',
+    consumers: 'consumers'
+  };
+  const fields = Object.values(fieldIds).map(fieldId =>
+    schema.fields.find(field => field.id === fieldId && fieldIsVisible(field))
+  );
+  if (fields.some(field => field === undefined)) return null;
+
+  const providerField = schema.fields.find(field => field.id === fieldIds.providers);
+  const consumerField = schema.fields.find(field => field.id === fieldIds.consumers);
+  if (providerField?.type !== 'typedRelation' || consumerField?.type !== 'typedRelation') {
+    return null;
+  }
+  return fieldIds;
+};
+
+const buildApiSpecificationDefaultProfile = (
+  providerItems: EntityDrawerItem[],
+  fieldIds: ApiSpecificationFieldIds
+): EntityDrawerProfile => {
+  const provider = (slotId: string): EntityDrawerItem | null => {
+    const slot = providerItems.find(
+      (candidate): candidate is Extract<EntityDrawerItem, { kind: 'slot' }> =>
+        candidate.kind === 'slot' && candidate.slotId === slotId
+    );
+    return slot ? { ...slot, showLabel: false } : null;
+  };
+  const section = (
+    id: string,
+    title: string,
+    items: Array<EntityDrawerItem | null>,
+    collapsible = false
+  ) => ({
+    id,
+    title,
+    collapsible,
+    items: items.filter((candidate): candidate is EntityDrawerItem => candidate != null)
+  });
+
+  return {
+    header: {
+      badges: [
+        { kind: 'field', fieldId: fieldIds.protocols, showLabel: false },
+        { kind: 'metadata', slot: 'lifecycle' }
+      ]
+    },
+    sections: [
+      section('attributes', 'Attributes', [
+        { kind: 'field', fieldId: fieldIds.apiVersion, label: 'API version' },
+        { kind: 'metadata', slot: 'owner' }
+      ]),
+      section('providers', 'Providers', [
+        { kind: 'relation', fieldId: fieldIds.providers, label: 'Providers' }
+      ]),
+      section('consumers', 'Consumers', [
+        { kind: 'relation', fieldId: fieldIds.consumers, label: 'Consumers' }
+      ]),
+      section('specification', 'Specification', [provider('api-specification.catalog')])
+    ].filter(section => section.items.length > 0)
+  };
+};
+
 const dataStewardshipFieldIds = (
   schema: EntityDrawerSchema,
   capabilityConfigurations: readonly CapabilityConfigurationLike[]
@@ -906,7 +1004,7 @@ const vendorManagementContractFieldIds = (
   const vendorField = schema.fields.find(field => field.id === fieldIds.vendor);
   const systemField = schema.fields.find(field => field.id === fieldIds.system);
   if (!vendorField || !isRelationField(vendorField)) return null;
-  if (!systemField || systemField.type !== 'typedRelation') return null;
+  if (systemField?.type !== 'typedRelation') return null;
 
   return fieldIds;
 };
@@ -1055,6 +1153,10 @@ export const buildDefaultEntityDrawerConfiguration = (
         schema,
         capabilityConfigurations
       );
+      const apiSpecificationFieldIdsValue = apiSpecificationFieldIds(
+        schema,
+        capabilityConfigurations
+      );
       const vendorFieldIds = vendorManagementFieldIds(schema, capabilityConfigurations);
       const contractFieldIds = vendorManagementContractFieldIds(schema, capabilityConfigurations);
       return [
@@ -1063,11 +1165,13 @@ export const buildDefaultEntityDrawerConfiguration = (
           ? buildBusinessGlossaryDefaultProfile(providerItems, glossaryFieldIds)
           : dataStewardshipFieldIdsValue
             ? buildDataStewardshipDefaultProfile(providerItems, dataStewardshipFieldIdsValue)
-            : vendorFieldIds
-              ? buildVendorManagementDefaultProfile(providerItems, vendorFieldIds)
-              : contractFieldIds
-                ? buildVendorManagementContractDefaultProfile(providerItems, contractFieldIds)
-                : buildDefaultEntityDrawerProfile(schema, providerItems)
+            : apiSpecificationFieldIdsValue
+              ? buildApiSpecificationDefaultProfile(providerItems, apiSpecificationFieldIdsValue)
+              : vendorFieldIds
+                ? buildVendorManagementDefaultProfile(providerItems, vendorFieldIds)
+                : contractFieldIds
+                  ? buildVendorManagementContractDefaultProfile(providerItems, contractFieldIds)
+                  : buildDefaultEntityDrawerProfile(schema, providerItems)
       ];
     })
   )

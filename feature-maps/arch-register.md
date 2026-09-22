@@ -700,9 +700,10 @@
           deprecated flag) — there is no sunset-date countdown, since no such field exists on the normalized
           operation model. A row click (in any view) opens a deep-linkable spec drawer (`apis/$apiId`) shared
           with any other section that links into a spec: attributes, providers/consumers, and the full specification
-          viewer — source/version picker, revision status notices, filterable normalized operations/messages list,
-          and a raw-source preview dialog — reusing the same viewer as the Entities app's API artifact detail tab
-          rather than a separate implementation. Clicking a row in either operations view opens that operation's
+          viewer — source/version picker, revision status notices, normalized operations/messages list,
+          and a raw-source preview dialog — rendered through the configurable entity drawer with the specification
+          viewer supplied by a registered API provider slot, reusing the same viewer as the Entities app's API
+          artifact detail tab rather than a separate implementation. Clicking a row in either operations view opens that operation's
           parent API at the same drawer, not a per-operation deep link — the drawer has no per-operation addressing
           to link into. The Deprecated operations view (#3347) was briefly deferred from #3345 after a fan-out
           across every API's revisions surfaced a pre-existing server defect: `listApiSpecificationRevisions`

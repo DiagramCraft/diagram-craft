@@ -354,7 +354,6 @@ export const ApiIntegrationCatalogIntegrationsScreen = () => {
         <ApiSpecDrawer
           workspaceSlug={workspaceSlug}
           apiId={openApiId}
-          apiSchemaId={apiConfig.apiSchemaId}
           onClose={() => setOpenApiId(null)}
         />
       )}
