@@ -93,6 +93,24 @@ describe('instantiateTemplate', () => {
         })
       })
     ]);
+    expect(definitions.entityDrawerProfiles[term!.id]).toMatchObject({
+      header: {
+        badges: [
+          { kind: 'field', fieldId: 'status', showLabel: false },
+          { kind: 'metadata', slot: 'lifecycle' }
+        ]
+      },
+      sections: expect.arrayContaining([
+        expect.objectContaining({ id: 'attributes' }),
+        expect.objectContaining({
+          id: 'details',
+          items: expect.arrayContaining([
+            { kind: 'relation', fieldId: 'categories' },
+            { kind: 'slot', slotId: 'business-glossary.usage', label: 'Usage & backlinks' }
+          ])
+        })
+      ])
+    });
   });
 
   it('materializes the optional strategy template with nested Business Capabilities', () => {
@@ -286,6 +304,35 @@ describe('instantiateTemplate', () => {
         })
       })
     ]);
+  });
+
+  it('materializes the Data Entity drawer profile with stewardship content slots', () => {
+    const definitions = instantiateTemplateDefinitions('ws-1', 'information-governance');
+    const dataEntity = definitions.schemas.find(schema => schema.name === 'Data Entity');
+    const profile = definitions.entityDrawerProfiles[dataEntity!.id];
+
+    expect(profile).toMatchObject({
+      header: {
+        badges: [{ kind: 'field', fieldId: 'classification', showLabel: false }]
+      },
+      sections: expect.arrayContaining([
+        expect.objectContaining({
+          id: 'attributes',
+          items: expect.arrayContaining([
+            { kind: 'field', fieldId: 'classification' },
+            { kind: 'relation', fieldId: 'retention_policy', presentation: 'mini-panel' }
+          ])
+        }),
+        expect.objectContaining({
+          id: 'stewardship',
+          items: expect.arrayContaining([{ kind: 'metadata', slot: 'owner' }])
+        }),
+        expect.objectContaining({
+          id: 'assessments',
+          items: [{ kind: 'slot', slotId: 'data-stewardship.assessments', showLabel: false }]
+        })
+      ])
+    });
   });
 
   it('preserves date fields in enriched templates', () => {
@@ -772,6 +819,39 @@ describe('instantiateTemplate', () => {
         }
       }
     ]);
+    expect(Object.keys(definitions.entityDrawerProfiles).sort()).toEqual(
+      [api!.id, contract!.id, vendor!.id].sort()
+    );
+    expect(definitions.entityDrawerProfiles[api!.id]).toMatchObject({
+      header: {
+        badges: [
+          { kind: 'field', fieldId: 'protocols', showLabel: false },
+          { kind: 'metadata', slot: 'lifecycle' }
+        ]
+      },
+      sections: expect.arrayContaining([
+        expect.objectContaining({ id: 'providers' }),
+        expect.objectContaining({ id: 'consumers' }),
+        expect.objectContaining({
+          id: 'specification',
+          items: [{ kind: 'slot', slotId: 'api-specification.catalog', showLabel: false }]
+        })
+      ])
+    });
+    expect(
+      definitions.entityDrawerProfiles[vendor!.id]?.sections.map(section => section.id)
+    ).toEqual([
+      'risk-profile',
+      'attributes',
+      'spend',
+      'contracts',
+      'applications-supplied',
+      'technology-lifecycle',
+      'capabilities-funded'
+    ]);
+    expect(
+      definitions.entityDrawerProfiles[contract!.id]?.sections.map(section => section.id)
+    ).toEqual(['vendor', 'terms', 'cost', 'systems-used']);
   });
 
   it('seeds the reusable PII classification fieldgroup for the default catalog', () => {

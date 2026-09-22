@@ -1847,6 +1847,64 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         }
       }
     ],
+    entityDrawerProfiles: {
+      'data-entity': {
+        header: {
+          badges: [{ kind: 'field', fieldId: 'classification', showLabel: false }]
+        },
+        sections: [
+          {
+            id: 'attributes',
+            title: 'Attributes',
+            collapsible: false,
+            items: [
+              { kind: 'field', fieldId: 'classification' },
+              { kind: 'relation', fieldId: 'retention_policy', presentation: 'mini-panel' }
+            ]
+          },
+          {
+            id: 'stewardship',
+            title: 'Stewardship',
+            collapsible: false,
+            items: [
+              { kind: 'metadata', slot: 'owner' },
+              { kind: 'field', fieldId: 'steward' },
+              { kind: 'field', fieldId: 'custodian' },
+              { kind: 'field', fieldId: 'review_date' },
+              { kind: 'field', fieldId: 'review_status' },
+              { kind: 'field', fieldId: 'stewardship_status' },
+              { kind: 'field', fieldId: 'regulatory_tags' },
+              { kind: 'field', fieldId: 'processing_purposes' },
+              { kind: 'field', fieldId: 'permitted_residency_regions' }
+            ]
+          },
+          {
+            id: 'coverage',
+            title: 'Coverage',
+            collapsible: true,
+            items: [{ kind: 'slot', slotId: 'data-stewardship.coverage', showLabel: false }]
+          },
+          {
+            id: 'queue-items',
+            title: 'Queue items',
+            collapsible: true,
+            items: [{ kind: 'slot', slotId: 'data-stewardship.queue-items', showLabel: false }]
+          },
+          {
+            id: 'cases',
+            title: 'Cases',
+            collapsible: true,
+            items: [{ kind: 'slot', slotId: 'data-stewardship.change-cases', showLabel: false }]
+          },
+          {
+            id: 'assessments',
+            title: 'Assessments',
+            collapsible: true,
+            items: [{ kind: 'slot', slotId: 'data-stewardship.assessments', showLabel: false }]
+          }
+        ]
+      }
+    },
     compositionExtensions: [
       {
         id: 'data-flow',
@@ -2276,7 +2334,189 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           technologyRelease: { target: { kind: 'entity_schema', symId: 'technology_release' } }
         }
       }
-    ]
+    ],
+    entityDrawerProfiles: {
+      api: {
+        header: {
+          badges: [
+            { kind: 'field', fieldId: 'protocols', showLabel: false },
+            { kind: 'metadata', slot: 'lifecycle' }
+          ]
+        },
+        sections: [
+          {
+            id: 'attributes',
+            title: 'Attributes',
+            collapsible: false,
+            items: [
+              { kind: 'field', fieldId: 'api_version', label: 'API version' },
+              { kind: 'metadata', slot: 'owner' }
+            ]
+          },
+          {
+            id: 'providers',
+            title: 'Providers',
+            collapsible: false,
+            items: [{ kind: 'relation', fieldId: 'providers', label: 'Providers' }]
+          },
+          {
+            id: 'consumers',
+            title: 'Consumers',
+            collapsible: false,
+            items: [{ kind: 'relation', fieldId: 'consumers', label: 'Consumers' }]
+          },
+          {
+            id: 'specification',
+            title: 'Specification',
+            collapsible: false,
+            items: [{ kind: 'slot', slotId: 'api-specification.catalog', showLabel: false }]
+          }
+        ]
+      },
+      vendor: {
+        header: {
+          badges: [
+            { kind: 'field', fieldId: 'tier', showLabel: false },
+            { kind: 'field', fieldId: 'status', showLabel: false }
+          ]
+        },
+        sections: [
+          {
+            id: 'risk-profile',
+            title: 'Risk profile',
+            collapsible: false,
+            layout: 'stat-grid',
+            items: [
+              { kind: 'field', fieldId: 'security_risk', presentation: 'mini-panel' },
+              { kind: 'field', fieldId: 'concentration_risk', presentation: 'mini-panel' },
+              { kind: 'field', fieldId: 'financial_risk', presentation: 'mini-panel' },
+              { kind: 'field', fieldId: 'compliance_risk', presentation: 'mini-panel' },
+              { kind: 'field', fieldId: 'criticality', presentation: 'mini-panel' },
+              {
+                kind: 'slot',
+                slotId: 'vendor.risk',
+                label: 'vmRisk',
+                presentation: 'mini-panel'
+              }
+            ]
+          },
+          {
+            id: 'attributes',
+            title: 'Attributes',
+            collapsible: false,
+            items: [
+              { kind: 'field', fieldId: 'category' },
+              { kind: 'field', fieldId: 'tier' },
+              { kind: 'field', fieldId: 'status' },
+              { kind: 'field', fieldId: 'relationship_owner' },
+              { kind: 'field', fieldId: 'cost_centre' }
+            ]
+          },
+          {
+            id: 'spend',
+            title: 'Spend',
+            collapsible: true,
+            items: [{ kind: 'slot', slotId: 'vendor.spend', label: 'Spend', showLabel: false }]
+          },
+          {
+            id: 'contracts',
+            title: 'Contracts',
+            collapsible: true,
+            items: [
+              { kind: 'slot', slotId: 'vendor.contracts', label: 'Contracts', showLabel: false }
+            ]
+          },
+          {
+            id: 'applications-supplied',
+            title: 'Applications supplied',
+            collapsible: true,
+            items: [
+              {
+                kind: 'slot',
+                slotId: 'vendor.applications-supplied',
+                label: 'Applications supplied',
+                showLabel: false
+              }
+            ]
+          },
+          {
+            id: 'technology-lifecycle',
+            title: 'Technology lifecycle',
+            collapsible: true,
+            items: [
+              {
+                kind: 'slot',
+                slotId: 'vendor.technology-lifecycle',
+                label: 'Technology lifecycle',
+                showLabel: false
+              }
+            ]
+          },
+          {
+            id: 'capabilities-funded',
+            title: 'Capabilities funded',
+            collapsible: true,
+            items: [
+              {
+                kind: 'slot',
+                slotId: 'vendor.capabilities-funded',
+                label: 'Capabilities funded',
+                showLabel: false
+              }
+            ]
+          }
+        ]
+      },
+      contract: {
+        header: {
+          badges: [{ kind: 'field', fieldId: 'contract_type', showLabel: false }]
+        },
+        sections: [
+          {
+            id: 'vendor',
+            title: 'Vendor',
+            collapsible: false,
+            items: [{ kind: 'relation', fieldId: 'vendor', label: 'Provided by' }]
+          },
+          {
+            id: 'terms',
+            title: 'Terms',
+            collapsible: false,
+            items: [
+              { kind: 'field', fieldId: 'contract_start' },
+              { kind: 'field', fieldId: 'contract_end' },
+              { kind: 'field', fieldId: 'contract_type' },
+              { kind: 'field', fieldId: 'notice_period_days' },
+              { kind: 'field', fieldId: 'auto_renew' },
+              { kind: 'field', fieldId: 'contract_owner' }
+            ]
+          },
+          {
+            id: 'cost',
+            title: 'Cost',
+            collapsible: false,
+            layout: 'stat-grid',
+            items: [
+              { kind: 'field', fieldId: 'annual_cost', presentation: 'mini-panel' },
+              { kind: 'field', fieldId: 'setup_fee', presentation: 'mini-panel' }
+            ]
+          },
+          {
+            id: 'systems-used',
+            title: 'Systems used',
+            collapsible: true,
+            items: [
+              {
+                kind: 'slot',
+                slotId: 'contract.systems-used',
+                label: 'Systems used',
+                showLabel: false
+              }
+            ]
+          }
+        ]
+      }
+    }
   },
   {
     id: 'backstage',
