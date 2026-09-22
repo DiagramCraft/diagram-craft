@@ -89,7 +89,7 @@ export const VendorOverviewScreen = () => {
   const contractSchema = schemas.data?.find(schema => schema.id === vendorConfig?.contractSchemaId);
   // `system-contract` isn't exposed by `resolveVendorManagementConfig` — read its real,
   // per-workspace relation schema id off Contract's `system` typedRelation field, same as
-  // `VendorRiskScreen.tsx`/`VendorDrawer.tsx` do.
+  // `VendorRiskScreen.tsx`/`VendorEntityDrawerProviders.tsx` do.
   const systemField = contractSchema?.fields.find(field => field.id === 'system');
   const systemContractRelationSchemaId =
     systemField?.type === 'typedRelation' ? systemField.relationSchemaId : null;

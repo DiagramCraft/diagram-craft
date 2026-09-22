@@ -15,7 +15,7 @@ const WARN = 'var(--cmp-fg-warning, #eab308)';
  * independent of whether a Data Flow relation exists for it, with a column flagging whether one
  * does (#3340). Deliberately lighter than the Data Flow table above: no owner/classification/
  * carried-data/boundary columns, since those governance fields only exist on Data Flow relations.
- * Rows are non-interactive in this iteration — neither `ApiSpecDrawer` (API-scoped) nor
+ * Rows are non-interactive in this iteration — neither the shared API `EntityDrawer` (API-scoped) nor
  * `IntegrationDrawer` (expects Data Flow governance fields) fits a 3-entity pair without a new
  * drawer, deferred as a possible follow-up.
  */

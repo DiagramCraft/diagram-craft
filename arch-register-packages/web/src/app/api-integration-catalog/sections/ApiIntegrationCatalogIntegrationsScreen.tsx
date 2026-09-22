@@ -18,7 +18,7 @@ import { useDataFlowConfig } from '../useDataFlowConfig';
 import { relationFieldValue, RESTRICTED_CLASSIFICATIONS } from '../dataFlowRelationDisplay';
 import { computeApiPairCoverage, computeApiPairs, type EndpointRef } from '../apiPairCoverage';
 import { useApiEndpointRelations } from '../apiEndpointRelations';
-import { ApiSpecDrawer } from './ApiSpecDrawer';
+import { EntityDrawer } from '../../../sections/entities/entityDrawer/EntityDrawer';
 import { IntegrationDrawer } from './IntegrationDrawer';
 import { ApiPairsTable } from './ApiPairsTable';
 import { IC_INTEGRATIONS_ID, IC_RAIL_PATHS } from '../apiIntegrationCatalogSections';
@@ -39,7 +39,7 @@ type SortKey = 'flow' | 'protocol' | 'classification' | 'boundary';
  * the Claude Design reference's `ICIntegrations` (`ic-views.jsx`) layout, except the drawer: the
  * design renders the selected relation's detail as an inline panel below the table, but a
  * slide-over drawer keeps the pattern consistent with every other detail panel in this app
- * (`ApiSpecDrawer.tsx`) and its siblings elsewhere (`DatasetDrawer.tsx`, `RiskDrawer.tsx`). Reuses
+ * (the shared API `EntityDrawer`) and its siblings elsewhere (`DatasetDrawer.tsx`, `RiskDrawer.tsx`). Reuses
  * the existing `Data Flow` typed relation (#3065/information-governance) rather than a new
  * integration-relation model.
  *
@@ -351,9 +351,10 @@ export const ApiIntegrationCatalogIntegrationsScreen = () => {
       )}
 
       {openApiId && apiConfig && (
-        <ApiSpecDrawer
+        <EntityDrawer
           workspaceSlug={workspaceSlug}
-          apiId={openApiId}
+          entityId={openApiId}
+          entityLabel="API"
           onClose={() => setOpenApiId(null)}
         />
       )}

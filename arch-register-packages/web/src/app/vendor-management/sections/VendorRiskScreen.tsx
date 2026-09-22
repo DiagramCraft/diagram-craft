@@ -19,7 +19,7 @@ import {
 } from '../useVendorTechnologyExposure';
 import type { RiskSearchParams } from '../../../routes/searchParams';
 import { RiskMatrix, type RiskMatrixVendor } from './RiskMatrix';
-import { VendorDrawer } from './VendorDrawer';
+import { EntityDrawer } from '../../../sections/entities/entityDrawer/EntityDrawer';
 import tileStyles from './VendorSpendScreen.module.css';
 import placeholderStyles from './VendorManagementPlaceholderScreen.module.css';
 import styles from './VendorRiskScreen.module.css';
@@ -38,7 +38,7 @@ const CONCENTRATION_ALERT_THRESHOLD = 4;
  * EOL facets (`RiskSearchParams.band`/`technology`, combined with AND) — selecting a facet narrows
  * every panel down to the matching vendor(s), rather than only the register (this deliberately
  * diverges from the design reference, whose matrix/sidebar aren't filter-linked). Clicking a
- * vendor tag or row still opens the `VendorDrawer` directly, deep-linkable at
+ * vendor tag or row still opens the vendor `EntityDrawer` directly, deep-linkable at
  * `vendor-management/risk/$vendorId`. The four header stats stay portfolio-wide regardless of the
  * active filters, mirroring `VendorSpendScreen.tsx`'s sidebar-facets-narrow-rows-not-stats
  * convention.
@@ -64,7 +64,7 @@ export const VendorRiskScreen = () => {
   const contractSchema = schemas.data?.find(schema => schema.id === vendorConfig?.contractSchemaId);
   // `system-contract` isn't exposed by `resolveVendorManagementConfig` — read its real,
   // per-workspace relation schema id off Contract's `system` typedRelation field, same as
-  // `VendorDrawer.tsx` does.
+  // `VendorEntityDrawerProviders.tsx` does.
   const systemField = contractSchema?.fields.find(field => field.id === 'system');
   const systemContractRelationSchemaId =
     systemField?.type === 'typedRelation' ? systemField.relationSchemaId : null;
@@ -424,7 +424,12 @@ export const VendorRiskScreen = () => {
       )}
 
       {vendorId && (
-        <VendorDrawer workspaceSlug={workspaceSlug} vendorId={vendorId} onClose={closeVendor} />
+        <EntityDrawer
+          workspaceSlug={workspaceSlug}
+          entityId={vendorId}
+          entityLabel="vendor"
+          onClose={closeVendor}
+        />
       )}
     </div>
   );
