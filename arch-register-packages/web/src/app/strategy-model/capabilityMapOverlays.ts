@@ -3,7 +3,7 @@ import type {
   ColourBand,
   NumberFormat
 } from '@arch-register/api-types/app/strategy-model/strategyModelViewConfig';
-import { formatStrategyValue } from './strategyFormat';
+import { formatRollupValue } from '../../sections/entities/entityDrawer/rollup/formatRollupValue';
 
 /** The overlay shape these helpers need — the colour-band scale plus a value format. */
 type BandedOverlay = { bands: ColourBand[]; format: NumberFormat };
@@ -49,7 +49,7 @@ export const overlayValue = (
   currency?: string | null
 ): string | null => {
   if (value == null) return null;
-  return formatStrategyValue(value, overlay.format, currency);
+  return formatRollupValue(value, overlay.format, currency);
 };
 
 /** Toolbar-legend swatches for an overlay, best-to-worst by tone priority. */

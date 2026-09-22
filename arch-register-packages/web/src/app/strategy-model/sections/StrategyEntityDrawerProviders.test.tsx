@@ -6,14 +6,6 @@ import { strategyEntityDrawerProviderDefinitions } from './StrategyEntityDrawerP
 
 const mocks = vi.hoisted(() => ({
   query: vi.fn(),
-  rollup: {
-    values: { maturity: 3 },
-    currency: { maturity: null },
-    leafCount: 2,
-    sourceCount: 2,
-    isLoading: false,
-    error: null
-  },
   realizedBy: {
     items: [
       {
@@ -23,8 +15,7 @@ const mocks = vi.hoisted(() => ({
     ],
     isLoading: false,
     error: null
-  },
-  rollupHook: vi.fn()
+  }
 }));
 
 const config = {
@@ -55,13 +46,6 @@ vi.mock('../../../queries/entities', () => ({
 
 vi.mock('../../../queries/workspaceConfig', () => ({
   workspaceCapabilityConfigurationsQuery: () => ({ queryKey: ['strategy-config'] })
-}));
-
-vi.mock('../useCapabilityRollup', () => ({
-  useCapabilityRollup: (...args: unknown[]) => {
-    mocks.rollupHook(...args);
-    return mocks.rollup;
-  }
 }));
 
 vi.mock('../useCapabilityRealizedBy', () => ({
@@ -107,7 +91,6 @@ const provider = (slotId: string) =>
 
 describe('strategy entity drawer providers', () => {
   beforeEach(() => {
-    mocks.rollupHook.mockClear();
     mocks.query.mockImplementation((options: { queryKey: readonly unknown[] }) => {
       if (options.queryKey[0] === 'strategy-config') {
         return { data: [config], isLoading: false, isError: false };
@@ -118,41 +101,6 @@ describe('strategy entity drawer providers', () => {
         isError: false
       };
     });
-  });
-
-  it('renders configured roll-ups and leaf count', () => {
-    const definition = provider('strategy.rollup');
-    const markup = renderToStaticMarkup(
-      <definition.Component
-        context={context}
-        item={{
-          kind: 'slot',
-          slotId: definition.slotId,
-          options: { rollups: [{ fieldId: 'maturity', aggregation: 'avg', format: 'decimal1' }] }
-        }}
-        label="Roll-up"
-      />
-    );
-
-    expect(markup).toContain('Maturity');
-    expect(markup).toContain('Maturity Target');
-    expect(markup).toContain('Annual Investment');
-    expect(markup).toContain('Risk');
-    expect(markup).toContain('3.0');
-    expect(markup).toContain('Leaf count');
-    expect(markup).toContain('2');
-    expect(mocks.rollupHook).toHaveBeenCalledWith(
-      'workspace-1',
-      'business_capability',
-      'cap-1',
-      expect.arrayContaining([
-        expect.objectContaining({ fieldId: 'maturity' }),
-        expect.objectContaining({ fieldId: 'maturity_target' }),
-        expect.objectContaining({ fieldId: 'annual_investment' }),
-        expect.objectContaining({ fieldId: 'risk' })
-      ]),
-      context.entity
-    );
   });
 
   it('renders realized-by provenance, objectives, and initiatives', () => {
@@ -195,6 +143,14 @@ describe('strategy entity drawer providers', () => {
     expect(
       strategyEntityDrawerProviderDefinitions.some(
         definition => definition.slotId === 'strategy.children'
+      )
+    ).toBe(false);
+  });
+
+  it('does not own the roll-up slot — it is a generic drawer item kind now', () => {
+    expect(
+      strategyEntityDrawerProviderDefinitions.some(
+        definition => definition.slotId === 'strategy.rollup'
       )
     ).toBe(false);
   });

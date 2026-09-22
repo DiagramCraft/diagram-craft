@@ -23,6 +23,12 @@ const labelOverrideSchema = z.string().min(1).max(120).optional();
 const entityDrawerItemPresentationSchema = z.enum(['row', 'mini-panel']).optional();
 export const entityDrawerSlotOptionsSchema = z.record(z.string(), z.unknown());
 
+/** Aggregation and number-format options for a `rollup` drawer item. Kept local to this file
+ *  (rather than imported from Strategy's `strategyModelViewConfig.ts`) so the generic drawer item
+ *  contract doesn't depend on a specific capability's config model. */
+export const entityDrawerRollupAggregationSchema = z.enum(['avg', 'sum']);
+export const entityDrawerRollupFormatSchema = z.enum(['number', 'decimal1', 'currency', 'percent']);
+
 export const entityDrawerItemSchema = z.discriminatedUnion('kind', [
   z.object({
     kind: z.literal('field'),
@@ -54,6 +60,19 @@ export const entityDrawerItemSchema = z.discriminatedUnion('kind', [
     showLabel: z.boolean().optional(),
     presentation: entityDrawerItemPresentationSchema,
     options: entityDrawerSlotOptionsSchema.optional()
+  }),
+  z.object({
+    kind: z.literal('rollup'),
+    fieldId: z.string().min(1),
+    aggregation: entityDrawerRollupAggregationSchema,
+    format: entityDrawerRollupFormatSchema,
+    label: labelOverrideSchema,
+    showLabel: z.boolean().optional()
+  }),
+  z.object({
+    kind: z.literal('rollup-leaf-count'),
+    label: labelOverrideSchema,
+    showLabel: z.boolean().optional()
   })
 ]);
 
@@ -100,7 +119,8 @@ export const entityDrawerDiagnosticSchema = z.object({
     'invalid_children_target',
     'unsupported_slot',
     'invalid_slot_options',
-    'unsupported_slot_for_schema'
+    'unsupported_slot_for_schema',
+    'unsupported_rollup_schema'
   ]),
   schemaId: z.string().optional(),
   sectionId: z.string().optional(),
@@ -216,15 +236,6 @@ export const ENTITY_DRAWER_METADATA_SLOTS: EntityDrawerCatalog['metadataSlots'] 
 ];
 
 const emptyOptionsSchema = z.record(z.string(), z.unknown());
-const strategyRollupOptionsSchema = z.object({
-  rollups: z.array(
-    z.object({
-      fieldId: z.string().min(1),
-      aggregation: z.enum(['avg', 'sum']),
-      format: z.enum(['number', 'decimal1', 'currency', 'percent']).default('decimal1')
-    })
-  )
-});
 
 export const ENTITY_DRAWER_SLOT_DEFINITIONS: EntityDrawerSlotDefinition[] = [
   {
@@ -286,22 +297,6 @@ export const ENTITY_DRAWER_SLOT_DEFINITIONS: EntityDrawerSlotDefinition[] = [
     defaultOptions: {},
     optionFields: [],
     optionsSchema: emptyOptionsSchema
-  },
-  {
-    id: 'strategy.rollup',
-    label: 'Strategy roll-up',
-    description: 'Roll-up summary for this capability.',
-    application: 'Strategy Model',
-    capabilityBinding: { capabilityType: 'strategy-model', role: 'business_capability' },
-    defaultOptions: { rollups: [] },
-    optionFields: [
-      {
-        id: 'rollups',
-        label: 'Roll-ups',
-        description: 'JSON array of fieldId, aggregation, and format entries.'
-      }
-    ],
-    optionsSchema: strategyRollupOptionsSchema
   },
   {
     id: 'strategy.realized-by',
@@ -482,41 +477,10 @@ const getDefaultProviderItems = (
   capabilityConfigurations: readonly CapabilityConfigurationLike[]
 ): EntityDrawerItem[] => {
   const supported = getEntityDrawerSlotSchemaIds(schemas, capabilityConfigurations);
-  const schema = schemas.find(candidate => candidate.id === schemaId);
   const items: EntityDrawerItem[] = [];
   for (const definition of ENTITY_DRAWER_SLOT_DEFINITIONS) {
     if (!supported.get(definition.id)?.includes(schemaId)) continue;
-    const options =
-      definition.id === 'strategy.rollup'
-        ? (() => {
-            const configuration = capabilityConfigurations.find(
-              candidate => candidate.type === 'strategy-model'
-            );
-            const parsed = strategyModelViewConfigSchema.safeParse(
-              configuration?.view_config ?? DEFAULT_STRATEGY_VIEW_CONFIG
-            );
-            const view = parsed.success ? parsed.data : DEFAULT_STRATEGY_VIEW_CONFIG;
-            return {
-              rollups: view.fields.flatMap(field =>
-                field.rollup &&
-                schema?.fields.some(
-                  candidate =>
-                    candidate.id === field.fieldId &&
-                    fieldIsVisible(candidate) &&
-                    ['number', 'currency'].includes(candidate.type)
-                )
-                  ? [
-                      {
-                        fieldId: field.fieldId,
-                        aggregation: field.rollup.aggregation,
-                        format: field.rollup.format
-                      }
-                    ]
-                  : []
-              )
-            };
-          })()
-        : definition.defaultOptions;
+    const options = definition.defaultOptions;
     items.push({
       kind: 'slot',
       slotId: definition.id,
@@ -524,6 +488,48 @@ const getDefaultProviderItems = (
     });
   }
   return items;
+};
+
+/**
+ * Seeds generic `rollup`/`rollup-leaf-count` drawer items for a Business Capability schema from
+ * the Strategy view config's `field.rollup` markers — the same fields the Capabilities table rolls
+ * up. This only affects freshly-generated default profiles; once a workspace saves its own drawer
+ * profile, roll-up items live directly in that profile like any other item.
+ */
+const getStrategyRollupItems = (
+  schema: EntityDrawerSchema | undefined,
+  capabilityConfigurations: readonly CapabilityConfigurationLike[]
+): EntityDrawerItem[] => {
+  if (!schema) return [];
+  const configuration = capabilityConfigurations.find(
+    candidate => candidate.type === 'strategy-model'
+  );
+  const boundSchemaId = configuration?.bindings['business_capability']?.target;
+  if (boundSchemaId?.kind !== 'entity_schema' || boundSchemaId.id !== schema.id) return [];
+  const supportsSubtreeRollup = schema.fields.some(
+    candidate => candidate.id === 'parent' && candidate.type === 'containment'
+  );
+  if (!supportsSubtreeRollup) return [];
+  const parsed = strategyModelViewConfigSchema.safeParse(
+    configuration?.view_config ?? DEFAULT_STRATEGY_VIEW_CONFIG
+  );
+  const view = parsed.success ? parsed.data : DEFAULT_STRATEGY_VIEW_CONFIG;
+  const rollupItems: EntityDrawerItem[] = view.fields.flatMap(field => {
+    if (!field.rollup) return [];
+    const target = schema.fields.find(candidate => candidate.id === field.fieldId);
+    if (!target || !fieldIsVisible(target) || !['number', 'currency'].includes(target.type)) {
+      return [];
+    }
+    return [
+      {
+        kind: 'rollup' as const,
+        fieldId: field.fieldId,
+        aggregation: field.rollup.aggregation,
+        format: field.rollup.format
+      }
+    ];
+  });
+  return rollupItems.length > 0 ? [...rollupItems, { kind: 'rollup-leaf-count' as const }] : [];
 };
 
 export type EntityDrawerField = {
@@ -546,9 +552,37 @@ const fieldIsVisible = (field: EntityDrawerField): boolean => field.archived !==
 const isRelationField = (field: EntityDrawerField): boolean =>
   field.type === 'reference' || field.type === 'containment' || field.type === 'typedRelation';
 
+/** Expands a legacy `{kind:'slot', slotId:'strategy.rollup'}` item into the generic `rollup` +
+ *  `rollup-leaf-count` items it's replaced by, using whatever `options.rollups` happens to be
+ *  persisted on it. Items with no (or unparseable) options are dropped rather than recovered —
+ *  the slot never persisted the true config reliably (see `strategy.rollup`'s removal), so this is
+ *  a best-effort compatibility pass, not a source of truth. */
+const expandLegacyStrategyRollupItem = (item: Record<string, unknown>): unknown[] => {
+  const options = item['options'];
+  const rollups =
+    options && typeof options === 'object' && 'rollups' in options && Array.isArray(options.rollups)
+      ? options.rollups
+      : [];
+  const rollupItems = rollups.flatMap(entry => {
+    if (!entry || typeof entry !== 'object' || typeof entry.fieldId !== 'string') return [];
+    return [
+      {
+        kind: 'rollup',
+        fieldId: entry.fieldId,
+        aggregation: entry.aggregation === 'sum' ? 'sum' : 'avg',
+        format: ['number', 'decimal1', 'currency', 'percent'].includes(entry.format as string)
+          ? entry.format
+          : 'decimal1'
+      }
+    ];
+  });
+  return rollupItems.length > 0 ? [...rollupItems, { kind: 'rollup-leaf-count' }] : [];
+};
+
 /**
- * Converts the pre-built-in Strategy children slot while reading old stored configurations.
- * This intentionally happens before schema parsing so workspaces do not need a data migration.
+ * Converts pre-built-in Strategy slots (`strategy.children`, `strategy.rollup`) while reading old
+ * stored configurations. This intentionally happens before schema parsing so workspaces do not
+ * need a data migration.
  */
 export const normalizeLegacyEntityDrawerConfiguration = (raw: unknown): unknown => {
   if (!raw || typeof raw !== 'object' || !('profiles' in raw)) return raw;
@@ -574,23 +608,26 @@ export const normalizeLegacyEntityDrawerConfiguration = (raw: unknown): unknown 
               if (!Array.isArray(items)) return section;
               return {
                 ...section,
-                items: items.map(item => {
-                  if (
-                    !item ||
-                    typeof item !== 'object' ||
-                    item.kind !== 'slot' ||
-                    item.slotId !== 'strategy.children'
-                  ) {
-                    return item;
+                items: items.flatMap(item => {
+                  if (!item || typeof item !== 'object' || item.kind !== 'slot') {
+                    return [item];
                   }
-                  return {
-                    kind: 'children',
-                    childSchemaId: schemaId,
-                    fieldId: 'parent',
-                    ...('label' in item && typeof item.label === 'string'
-                      ? { label: item.label }
-                      : {})
-                  };
+                  if (item.slotId === 'strategy.children') {
+                    return [
+                      {
+                        kind: 'children',
+                        childSchemaId: schemaId,
+                        fieldId: 'parent',
+                        ...('label' in item && typeof item.label === 'string'
+                          ? { label: item.label }
+                          : {})
+                      }
+                    ];
+                  }
+                  if (item.slotId === 'strategy.rollup') {
+                    return expandLegacyStrategyRollupItem(item);
+                  }
+                  return [item];
                 })
               };
             })
@@ -1269,7 +1306,10 @@ export const buildDefaultEntityDrawerConfiguration = (
   version: 1,
   profiles: Object.fromEntries(
     schemas.map(schema => {
-      const providerItems = getDefaultProviderItems(schemas, schema.id, capabilityConfigurations);
+      const providerItems = [
+        ...getDefaultProviderItems(schemas, schema.id, capabilityConfigurations),
+        ...getStrategyRollupItems(schema, capabilityConfigurations)
+      ];
       const glossaryFieldIds = businessGlossaryFieldIds(schema, capabilityConfigurations);
       const dataStewardshipFieldIdsValue = dataStewardshipFieldIds(
         schema,
@@ -1353,32 +1393,35 @@ const validateItem = (
       return null;
     }
     const normalizedOptions = options.data as Record<string, unknown>;
-    if (item.slotId === 'strategy.rollup') {
-      const rollups = Array.isArray(normalizedOptions['rollups'])
-        ? normalizedOptions['rollups']
-        : [];
-      normalizedOptions['rollups'] = rollups.filter(value => {
-        if (!value || typeof value !== 'object' || !('fieldId' in value)) return false;
-        const fieldId = value.fieldId;
-        const field =
-          typeof fieldId === 'string'
-            ? schema.fields.find(candidate => candidate.id === fieldId)
-            : undefined;
-        const valid =
-          field != null && fieldIsVisible(field) && ['number', 'currency'].includes(field.type);
-        if (!valid) {
-          diagnostics.push({
-            code: 'missing_or_archived_field',
-            schemaId,
-            sectionId,
-            itemId: typeof fieldId === 'string' ? fieldId : item.slotId,
-            message: `Strategy roll-up field '${String(fieldId)}' is missing, archived, or not numeric.`
-          });
-        }
-        return valid;
-      });
-    }
     return { ...item, options: normalizedOptions };
+  }
+  if (item.kind === 'rollup' || item.kind === 'rollup-leaf-count') {
+    const supportsSubtreeRollup = schema.fields.some(
+      candidate => candidate.id === 'parent' && candidate.type === 'containment'
+    );
+    if (!supportsSubtreeRollup) {
+      diagnostics.push({
+        code: 'unsupported_rollup_schema',
+        schemaId,
+        sectionId,
+        itemId: item.kind === 'rollup' ? item.fieldId : item.kind,
+        message: `Drawer roll-up requires a 'parent' containment field on '${schemaId}'.`
+      });
+      return null;
+    }
+    if (item.kind === 'rollup-leaf-count') return item;
+    const field = schema.fields.find(candidate => candidate.id === item.fieldId);
+    if (!field || !fieldIsVisible(field) || !['number', 'currency'].includes(field.type)) {
+      diagnostics.push({
+        code: 'missing_or_archived_field',
+        schemaId,
+        sectionId,
+        itemId: item.fieldId,
+        message: `Roll-up field '${item.fieldId}' is missing, archived, or not numeric.`
+      });
+      return null;
+    }
+    return item;
   }
   const field = schema.fields.find(candidate => candidate.id === item.fieldId);
   if (!field || !fieldIsVisible(field)) {

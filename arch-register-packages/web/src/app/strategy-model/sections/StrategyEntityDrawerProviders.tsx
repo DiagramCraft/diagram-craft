@@ -9,15 +9,8 @@ import {
   type EntityDrawerProviderDefinition,
   type EntityDrawerProviderProps
 } from '../../../sections/entities/entityDrawer/EntityDrawerProviderRegistry';
-import {
-  resolveStrategyModelConfig,
-  resolveStrategyViewConfig,
-  type StrategyModelConfig
-} from '../strategyQueries';
+import { resolveStrategyModelConfig, type StrategyModelConfig } from '../strategyQueries';
 import { useCapabilityRealizedBy } from '../useCapabilityRealizedBy';
-import { useCapabilityRollup } from '../useCapabilityRollup';
-import { formatStrategyValue } from '../strategyFormat';
-import { fieldLabel } from '../capabilityFieldDisplay';
 import styles from './StrategyEntityDrawerProviders.module.css';
 
 const useStrategyConfiguration = (workspaceId: string) => {
@@ -47,67 +40,6 @@ const ProviderFrame = ({
     {children}
   </div>
 );
-
-const StrategyRollupProvider = ({ context, label, showLabel }: EntityDrawerProviderProps) => {
-  const { query: configurationQuery, config } = useStrategyConfiguration(context.workspaceId);
-  const view = configurationQuery.data
-    ? resolveStrategyViewConfig(configurationQuery.data, context.schema)
-    : null;
-  // Strategy view configuration remains the source of truth for the metric set. In particular,
-  // older workspace drawer profiles may contain a legacy single-metric slot option; honoring it
-  // here would silently hide the rest of the configured roll-ups after migration.
-  const rollups = view?.rollups ?? [];
-  // Match the legacy capability drawer's request contract: only query metrics after the strategy
-  // binding has resolved, and use its real per-workspace schema id rather than an inferred schema
-  // from the generic entity drawer context.
-  const businessCapabilitySchemaId =
-    config?.businessCapabilitySchemaId === context.schema.id
-      ? config.businessCapabilitySchemaId
-      : null;
-  const result = useCapabilityRollup(
-    context.workspaceId,
-    businessCapabilitySchemaId,
-    context.entity._uid,
-    rollups,
-    context.entity
-  );
-  const state =
-    configurationQuery.isLoading || result.isLoading
-      ? 'loading'
-      : configurationQuery.isError || !config || businessCapabilitySchemaId == null
-        ? 'unavailable'
-        : result.error
-          ? 'unavailable'
-          : 'ready';
-
-  return (
-    <ProviderFrame label={label} showLabel={showLabel}>
-      <EntityDrawerProviderStatus
-        state={state}
-        unavailableMessage="Strategy roll-up is unavailable."
-      >
-        <div className={styles.statGrid}>
-          {rollups.map(rollup => (
-            <div className={styles.stat} key={rollup.fieldId}>
-              <div className={styles.statLabel}>{fieldLabel(context.schema, rollup.fieldId)}</div>
-              <div className={styles.statValue}>
-                {formatStrategyValue(
-                  result.values[rollup.fieldId],
-                  rollup.format,
-                  result.currency[rollup.fieldId]
-                )}
-              </div>
-            </div>
-          ))}
-          <div className={styles.stat}>
-            <div className={styles.statLabel}>Leaf count</div>
-            <div className={styles.statValue}>{result.leafCount ?? '—'}</div>
-          </div>
-        </div>
-      </EntityDrawerProviderStatus>
-    </ProviderFrame>
-  );
-};
 
 const StrategyRealizedByProvider = ({ context, label, showLabel }: EntityDrawerProviderProps) => {
   const { query: configurationQuery, config } = useStrategyConfiguration(context.workspaceId);
@@ -265,11 +197,6 @@ const StrategyLinkedInitiativesProvider = ({
 };
 
 export const strategyEntityDrawerProviderDefinitions = [
-  {
-    slotId: 'strategy.rollup',
-    supports: isBusinessCapabilitySchema,
-    Component: StrategyRollupProvider
-  },
   {
     slotId: 'strategy.realized-by',
     supports: isBusinessCapabilitySchema,

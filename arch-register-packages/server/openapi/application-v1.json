@@ -74463,6 +74463,67 @@
                                               "kind",
                                               "slotId"
                                             ]
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "kind": {
+                                                "const": "rollup"
+                                              },
+                                              "fieldId": {
+                                                "type": "string",
+                                                "minLength": 1
+                                              },
+                                              "aggregation": {
+                                                "enum": [
+                                                  "avg",
+                                                  "sum"
+                                                ],
+                                                "type": "string"
+                                              },
+                                              "format": {
+                                                "enum": [
+                                                  "number",
+                                                  "decimal1",
+                                                  "currency",
+                                                  "percent"
+                                                ],
+                                                "type": "string"
+                                              },
+                                              "label": {
+                                                "type": "string",
+                                                "minLength": 1,
+                                                "maxLength": 120
+                                              },
+                                              "showLabel": {
+                                                "type": "boolean"
+                                              }
+                                            },
+                                            "required": [
+                                              "kind",
+                                              "fieldId",
+                                              "aggregation",
+                                              "format"
+                                            ]
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "kind": {
+                                                "const": "rollup-leaf-count"
+                                              },
+                                              "label": {
+                                                "type": "string",
+                                                "minLength": 1,
+                                                "maxLength": 120
+                                              },
+                                              "showLabel": {
+                                                "type": "boolean"
+                                              }
+                                            },
+                                            "required": [
+                                              "kind"
+                                            ]
                                           }
                                         ]
                                       }
@@ -74502,7 +74563,8 @@
                               "invalid_children_target",
                               "unsupported_slot",
                               "invalid_slot_options",
-                              "unsupported_slot_for_schema"
+                              "unsupported_slot_for_schema",
+                              "unsupported_rollup_schema"
                             ],
                             "type": "string"
                           },
@@ -74837,6 +74899,67 @@
                                         "kind",
                                         "slotId"
                                       ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "const": "rollup"
+                                        },
+                                        "fieldId": {
+                                          "type": "string",
+                                          "minLength": 1
+                                        },
+                                        "aggregation": {
+                                          "enum": [
+                                            "avg",
+                                            "sum"
+                                          ],
+                                          "type": "string"
+                                        },
+                                        "format": {
+                                          "enum": [
+                                            "number",
+                                            "decimal1",
+                                            "currency",
+                                            "percent"
+                                          ],
+                                          "type": "string"
+                                        },
+                                        "label": {
+                                          "type": "string",
+                                          "minLength": 1,
+                                          "maxLength": 120
+                                        },
+                                        "showLabel": {
+                                          "type": "boolean"
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "fieldId",
+                                        "aggregation",
+                                        "format"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "const": "rollup-leaf-count"
+                                        },
+                                        "label": {
+                                          "type": "string",
+                                          "minLength": 1,
+                                          "maxLength": 120
+                                        },
+                                        "showLabel": {
+                                          "type": "boolean"
+                                        }
+                                      },
+                                      "required": [
+                                        "kind"
+                                      ]
                                     }
                                   ]
                                 }
@@ -75151,6 +75274,67 @@
                                               "kind",
                                               "slotId"
                                             ]
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "kind": {
+                                                "const": "rollup"
+                                              },
+                                              "fieldId": {
+                                                "type": "string",
+                                                "minLength": 1
+                                              },
+                                              "aggregation": {
+                                                "enum": [
+                                                  "avg",
+                                                  "sum"
+                                                ],
+                                                "type": "string"
+                                              },
+                                              "format": {
+                                                "enum": [
+                                                  "number",
+                                                  "decimal1",
+                                                  "currency",
+                                                  "percent"
+                                                ],
+                                                "type": "string"
+                                              },
+                                              "label": {
+                                                "type": "string",
+                                                "minLength": 1,
+                                                "maxLength": 120
+                                              },
+                                              "showLabel": {
+                                                "type": "boolean"
+                                              }
+                                            },
+                                            "required": [
+                                              "kind",
+                                              "fieldId",
+                                              "aggregation",
+                                              "format"
+                                            ]
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "kind": {
+                                                "const": "rollup-leaf-count"
+                                              },
+                                              "label": {
+                                                "type": "string",
+                                                "minLength": 1,
+                                                "maxLength": 120
+                                              },
+                                              "showLabel": {
+                                                "type": "boolean"
+                                              }
+                                            },
+                                            "required": [
+                                              "kind"
+                                            ]
                                           }
                                         ]
                                       }
@@ -75190,7 +75374,8 @@
                               "invalid_children_target",
                               "unsupported_slot",
                               "invalid_slot_options",
-                              "unsupported_slot_for_schema"
+                              "unsupported_slot_for_schema",
+                              "unsupported_rollup_schema"
                             ],
                             "type": "string"
                           },

@@ -4,20 +4,12 @@ import { createRoot, type Root } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { MetricRollupResponse } from '@arch-register/api-types/metricContract';
-import type { DerivedRollup } from '@arch-register/api-types/app/strategy-model/strategyModelViewConfig';
-import { useCapabilityRollup, type CapabilityRollup } from './useCapabilityRollup';
-
-const ROLLUPS: DerivedRollup[] = [
-  { fieldId: 'maturity', aggregation: 'avg', format: 'decimal1' },
-  { fieldId: 'maturity_target', aggregation: 'avg', format: 'decimal1' },
-  { fieldId: 'gap', aggregation: 'avg', format: 'decimal1' },
-  { fieldId: 'risk', aggregation: 'avg', format: 'decimal1' },
-  { fieldId: 'annual_investment', aggregation: 'sum', format: 'currency' }
-];
+import { useEntityRollupMetric, type EntityRollupMetric } from './useEntityRollupMetric';
+import { useEntityRollupLeafCount, type EntityRollupLeafCount } from './useEntityRollupLeafCount';
 
 const mocks = vi.hoisted(() => ({ rollup: vi.fn() }));
 
-vi.mock('../../lib/orpcClient', () => ({
+vi.mock('../../../../lib/orpcClient', () => ({
   orpcClient: { metrics: { rollup: mocks.rollup } }
 }));
 
@@ -44,14 +36,32 @@ const resultFor = (
   legend: emptyLegend
 });
 
-let latest: CapabilityRollup | undefined;
+let latestMetric: EntityRollupMetric | undefined;
+let latestLeafCount: EntityRollupLeafCount | undefined;
 
-const Harness = ({ capabilityId }: { capabilityId: string | null }) => {
-  latest = useCapabilityRollup('ws-1', 'business_capability', capabilityId, ROLLUPS);
+const MetricHarness = ({
+  fieldId,
+  aggregation
+}: {
+  fieldId: 'maturity' | 'annual_investment';
+  aggregation: 'avg' | 'sum';
+}) => {
+  latestMetric = useEntityRollupMetric(
+    'ws-1',
+    'business_capability',
+    'cap-1',
+    fieldId,
+    aggregation
+  );
   return null;
 };
 
-describe('useCapabilityRollup', () => {
+const LeafCountHarness = () => {
+  latestLeafCount = useEntityRollupLeafCount('ws-1', 'business_capability', 'cap-1', 'maturity');
+  return null;
+};
+
+describe('useEntityRollupMetric / useEntityRollupLeafCount', () => {
   let container: HTMLDivElement;
   let root: Root;
   let queryClient: QueryClient;
@@ -64,16 +74,14 @@ describe('useCapabilityRollup', () => {
     document.body.appendChild(container);
     root = createRoot(container);
     queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    latest = undefined;
+    latestMetric = undefined;
+    latestLeafCount = undefined;
 
     mocks.rollup.mockImplementation(
       ({ body }: { body: { metric: { source: { fieldId: string }; aggregation: string } } }) => {
         const { fieldId } = body.metric.source;
         if (body.metric.aggregation === 'leafCount') return Promise.resolve(resultFor(2));
         if (fieldId === 'maturity') return Promise.resolve(resultFor(3));
-        if (fieldId === 'maturity_target') return Promise.resolve(resultFor(4));
-        if (fieldId === 'gap') return Promise.resolve(resultFor(1));
-        if (fieldId === 'risk') return Promise.resolve(resultFor(2));
         if (fieldId === 'annual_investment') {
           return Promise.resolve(resultFor(150000, { currencyCode: 'USD' }));
         }
@@ -89,41 +97,48 @@ describe('useCapabilityRollup', () => {
     vi.clearAllMocks();
   });
 
-  it('combines the five metric roll-ups into one object', async () => {
+  const flush = async (predicate: () => boolean) => {
+    for (let i = 0; i < 5 && !predicate(); i++) {
+      await act(async () => new Promise(resolve => setTimeout(resolve, 0)));
+    }
+  };
+
+  it('aggregates a numeric roll-up field', async () => {
     await act(async () => {
       root.render(
         <QueryClientProvider client={queryClient}>
-          <Harness capabilityId="cap-1" />
+          <MetricHarness fieldId="maturity" aggregation="avg" />
         </QueryClientProvider>
       );
     });
-    const flush = () => act(async () => new Promise(resolve => setTimeout(resolve, 0)));
-    for (let i = 0; i < 5 && latest?.isLoading !== false; i++) {
-      await flush();
-    }
+    await flush(() => latestMetric?.isLoading === false);
 
-    expect(latest).toMatchObject({
-      values: { maturity: 3, maturity_target: 4, gap: 1, risk: 2, annual_investment: 150000 },
-      currency: { annual_investment: 'USD' },
-      leafCount: 2,
-      sourceCount: 4,
-      isLoading: false,
-      error: null
-    });
-    expect(mocks.rollup).toHaveBeenCalledTimes(6);
+    expect(latestMetric).toMatchObject({ value: 3, currency: null, isLoading: false, error: null });
   });
 
-  it('returns an empty roll-up and skips requests when there is no capability id', async () => {
+  it('carries the currency code for currency-typed fields', async () => {
     await act(async () => {
       root.render(
         <QueryClientProvider client={queryClient}>
-          <Harness capabilityId={null} />
+          <MetricHarness fieldId="annual_investment" aggregation="sum" />
         </QueryClientProvider>
       );
-      await Promise.resolve();
     });
+    await flush(() => latestMetric?.isLoading === false);
 
-    expect(latest).toMatchObject({ values: {}, currency: {}, leafCount: null, sourceCount: 0 });
-    expect(mocks.rollup).not.toHaveBeenCalled();
+    expect(latestMetric).toMatchObject({ value: 150000, currency: 'USD' });
+  });
+
+  it('resolves the leaf count independently of any roll-up field', async () => {
+    await act(async () => {
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <LeafCountHarness />
+        </QueryClientProvider>
+      );
+    });
+    await flush(() => latestLeafCount?.isLoading === false);
+
+    expect(latestLeafCount).toMatchObject({ leafCount: 2, isLoading: false, error: null });
   });
 });

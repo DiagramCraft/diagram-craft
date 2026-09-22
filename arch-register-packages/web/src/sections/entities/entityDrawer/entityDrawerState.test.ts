@@ -182,6 +182,7 @@ describe('resolveEntityDrawerRenderModel', () => {
       section.items.map(item => {
         if (item.item.kind === 'metadata') return item.item.slot;
         if (item.item.kind === 'slot') return item.item.slotId;
+        if (item.item.kind === 'rollup-leaf-count') return item.item.kind;
         return item.item.fieldId;
       })
     );
@@ -275,5 +276,104 @@ describe('resolveEntityDrawerRenderModel', () => {
 
     expect(result.sections).toEqual([]);
     expect(result.diagnostics[0]?.code).toBe('invalid_children_target');
+  });
+
+  describe('generic rollup items', () => {
+    const schemaWithParent = {
+      ...schema,
+      fields: [
+        ...schema.fields,
+        { id: 'parent', name: 'Parent', type: 'containment', schemaId: 'service' },
+        { id: 'maturity', name: 'Maturity', type: 'number' }
+      ]
+    } as unknown as EntitySchema;
+    const rollupContext = {
+      ...providerContext,
+      schema: schemaWithParent
+    } as EntityDrawerProviderContext;
+
+    const resolveRollup = (profile: EntityDrawerProfile) =>
+      resolveEntityDrawerRenderModel({
+        entity,
+        schema: schemaWithParent,
+        profile,
+        providerRegistry: createEntityDrawerProviderRegistry([]),
+        providerContext: rollupContext,
+        getFieldGroupAccess: () => 'edit'
+      });
+
+    it('resolves a rollup item over a numeric field', () => {
+      const result = resolveRollup({
+        header: { badges: [] },
+        sections: [
+          {
+            id: 'rollup',
+            title: 'Roll-up',
+            collapsible: true,
+            items: [{ kind: 'rollup', fieldId: 'maturity', aggregation: 'avg', format: 'decimal1' }]
+          }
+        ]
+      });
+
+      expect(result.sections[0]?.items[0]).toMatchObject({
+        label: 'Maturity',
+        item: { kind: 'rollup', fieldId: 'maturity' }
+      });
+      expect(result.diagnostics).toEqual([]);
+    });
+
+    it('resolves a standalone leaf-count item', () => {
+      const result = resolveRollup({
+        header: { badges: [] },
+        sections: [
+          {
+            id: 'rollup',
+            title: 'Roll-up',
+            collapsible: true,
+            items: [{ kind: 'rollup-leaf-count' }]
+          }
+        ]
+      });
+
+      expect(result.sections[0]?.items[0]).toMatchObject({
+        label: 'Leaf count',
+        item: { kind: 'rollup-leaf-count' }
+      });
+      expect(result.diagnostics).toEqual([]);
+    });
+
+    it('omits a rollup item whose field is missing or non-numeric', () => {
+      const result = resolveRollup({
+        header: { badges: [] },
+        sections: [
+          {
+            id: 'rollup',
+            title: 'Roll-up',
+            collapsible: true,
+            items: [{ kind: 'rollup', fieldId: 'status', aggregation: 'avg', format: 'decimal1' }]
+          }
+        ]
+      });
+
+      expect(result.sections).toEqual([]);
+      expect(result.diagnostics[0]?.code).toBe('missing_or_archived_field');
+    });
+
+    it('omits rollup items on a schema without a parent containment field', () => {
+      const result = resolve({
+        header: { badges: [] },
+        sections: [
+          {
+            id: 'rollup',
+            title: 'Roll-up',
+            collapsible: true,
+            items: [{ kind: 'rollup-leaf-count' }]
+          }
+        ]
+      });
+
+      expect(result.sections).toEqual([]);
+      expect(result.diagnostics[0]?.code).toBe('unsupported_rollup_schema');
+    });
   });
 });
