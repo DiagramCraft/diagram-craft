@@ -83,10 +83,15 @@ test.describe('workspace config routes', () => {
     expect(await orpc.config.entityDrawer.reset({ params: { workspace: 'default' } })).toEqual({
       success: true
     });
-    expect(
-      (await orpc.config.entityDrawer.get({ params: { workspace: 'default' } }))
-        .stored_configuration
-    ).toBeNull();
+    const resetConfiguration = await orpc.config.entityDrawer.get({
+      params: { workspace: 'default' }
+    });
+    expect(resetConfiguration.stored_configuration).toBeNull();
+    const fallbackProfile = resetConfiguration.effective_configuration.profiles[schemaId]!;
+    expect(fallbackProfile.sections.map(section => section.id)).toContain('metadata');
+    expect(fallbackProfile.sections.map(section => section.id)).not.toEqual(
+      expect.arrayContaining(['related', 'typed-relations', 'application-content'])
+    );
   });
 
   test('returns guided public catalog selectors and previews an unsaved configuration', async ({

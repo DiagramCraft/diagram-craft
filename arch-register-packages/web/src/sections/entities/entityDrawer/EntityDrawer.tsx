@@ -12,7 +12,7 @@ import { useEntityDrawerConfiguration } from '../../../hooks/useWorkspaceConfig'
 import { asEntityPublicId, entityDetailRoute } from '../../../routes/publicObjectRoutes';
 import { buildEntityRefLookup } from '../entityDetailHelpers';
 import { isReferenceOrContainmentField } from '@arch-register/api-types/schemaContract';
-import { buildDefaultEntityDrawerProfile } from '@arch-register/api-types/entityDrawerConfiguration';
+import { buildFallbackEntityDrawerProfile } from '@arch-register/api-types/entityDrawerConfiguration';
 import { DrawerPropertyRow } from './DrawerPropertyRow';
 import { formatCurrencyValue } from '../../../utils/currencyFormat';
 import { formatDate } from '../../../utils/dateFormat';
@@ -369,7 +369,7 @@ export const EntityDrawer = ({
     () =>
       schema
         ? (configurationQuery.data?.effective_configuration.profiles[schema.id] ??
-          buildDefaultEntityDrawerProfile(schema))
+          buildFallbackEntityDrawerProfile(schema))
         : null,
     [configurationQuery.data?.effective_configuration.profiles, schema]
   );

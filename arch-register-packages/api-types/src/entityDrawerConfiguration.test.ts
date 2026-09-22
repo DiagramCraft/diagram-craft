@@ -3,6 +3,7 @@ import {
   buildEntityDrawerCatalog,
   buildDefaultEntityDrawerConfiguration,
   buildDefaultEntityDrawerProfile,
+  buildFallbackEntityDrawerProfile,
   entityDrawerConfigurationSchema,
   mergeEntityDrawerProfiles,
   remapEntityDrawerProfiles,
@@ -92,13 +93,65 @@ describe('entity drawer configuration', () => {
   it('uses defaults without diagnostics when no configuration has been stored', () => {
     const result = resolveEntityDrawerConfiguration(null, [schema]);
 
-    expect(result.effective.profiles.service!).toEqual(buildDefaultEntityDrawerProfile(schema));
+    expect(result.effective.profiles.service!).toEqual(buildFallbackEntityDrawerProfile(schema));
     expect(result.diagnostics).toEqual([]);
   });
 
-  it('builds provider defaults and validates provider options', () => {
+  it('uses the generic attribute and metadata fallback despite capability bindings', () => {
+    const groupedSchema = {
+      ...schema,
+      fields: schema.fields.map(field =>
+        field.id === 'score' ? { ...field, groupId: 'core' } : field
+      )
+    };
     const result = resolveEntityDrawerConfiguration(
       null,
+      [groupedSchema],
+      [
+        {
+          type: 'strategy-model',
+          bindings: { business_capability: { target: { kind: 'entity_schema', id: 'service' } } }
+        }
+      ]
+    );
+    const profile = result.effective.profiles.service!;
+
+    expect(profile).toEqual(buildFallbackEntityDrawerProfile(groupedSchema));
+    expect(profile.sections.map(section => section.id)).toEqual([
+      'attributes',
+      'group:core',
+      'metadata'
+    ]);
+    expect(profile.sections.flatMap(section => section.items)).toEqual(
+      expect.arrayContaining([
+        { kind: 'relation', fieldId: 'depends_on' },
+        { kind: 'relation', fieldId: 'typed_relation', presentation: 'mini-panel' },
+        { kind: 'field', fieldId: 'score' }
+      ])
+    );
+    expect(profile.sections.map(section => section.id)).not.toEqual(
+      expect.arrayContaining(['related', 'typed-relations', 'application-content'])
+    );
+  });
+
+  it('keeps an explicit stored profile instead of merging the generic fallback into it', () => {
+    const explicit = {
+      version: 1 as const,
+      profiles: {
+        service: {
+          header: { badges: [{ kind: 'metadata' as const, slot: 'publicId' as const }] },
+          sections: [{ id: 'custom', title: 'Custom', collapsible: false, items: [] }]
+        }
+      }
+    };
+
+    const result = resolveEntityDrawerConfiguration(explicit, [schema]);
+
+    expect(result.effective.profiles.service).toEqual(explicit.profiles.service);
+  });
+
+  it('builds provider defaults and validates provider options', () => {
+    const result = buildDefaultEntityDrawerConfiguration(
       [schema],
       [
         {
@@ -118,7 +171,7 @@ describe('entity drawer configuration', () => {
         }
       ]
     );
-    const applicationSection = result.effective.profiles.service!.sections.find(
+    const applicationSection = result.profiles.service!.sections.find(
       section => section.id === 'application-content'
     );
     expect(applicationSection?.items).toEqual([
@@ -192,7 +245,7 @@ describe('entity drawer configuration', () => {
 
     const result = resolveEntityDrawerConfiguration(null, [riskSchema], [configuration]);
     const items = result.effective.profiles.risk!.sections.flatMap(section => section.items);
-    expect(items).toEqual(
+    expect(items).not.toEqual(
       expect.arrayContaining([
         { kind: 'slot', slotId: 'risk.coverage' },
         { kind: 'slot', slotId: 'risk.affected-entities' }
