@@ -243,7 +243,6 @@ export const VendorContractsScreen = () => {
           </Table.Body>
         </Table.Root>
       )}
-
     </div>
   );
 };

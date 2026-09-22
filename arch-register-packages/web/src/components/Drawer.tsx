@@ -14,7 +14,7 @@ export const Drawer = ({
   width,
   active = true,
   stacked = false,
-  stackOffset = 0,
+  stackOffset = 0
 }: {
   onClose: () => void;
   eyebrow?: ReactNode;

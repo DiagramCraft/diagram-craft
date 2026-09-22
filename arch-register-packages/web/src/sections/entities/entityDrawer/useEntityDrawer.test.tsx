@@ -18,13 +18,8 @@ vi.mock('@tanstack/react-router', () => ({
 }));
 
 const Probe = () => {
-  const {
-    drawerStack,
-    activeDrawerIndex,
-    openEntityDrawer,
-    backEntityDrawer,
-    closeEntityDrawer
-  } = useEntityDrawer();
+  const { drawerStack, activeDrawerIndex, openEntityDrawer, backEntityDrawer, closeEntityDrawer } =
+    useEntityDrawer();
 
   return (
     <div>
