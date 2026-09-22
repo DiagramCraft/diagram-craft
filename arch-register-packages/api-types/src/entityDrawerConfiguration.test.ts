@@ -151,9 +151,14 @@ describe('entity drawer configuration', () => {
     expect(result.effective.profiles.service).toEqual(explicit.profiles.service);
   });
 
+  const schemaWithParent = {
+    ...schema,
+    fields: [...schema.fields, { id: 'parent', name: 'Parent', type: 'containment' }]
+  };
+
   it('builds provider defaults and validates provider options', () => {
     const result = buildDefaultEntityDrawerConfiguration(
-      [schema],
+      [schemaWithParent],
       [
         {
           type: 'strategy-model',
@@ -176,14 +181,11 @@ describe('entity drawer configuration', () => {
       section => section.id === 'application-content'
     );
     expect(applicationSection?.items).toEqual([
-      {
-        kind: 'slot',
-        slotId: 'strategy.rollup',
-        options: { rollups: [{ fieldId: 'score', aggregation: 'sum', format: 'number' }] }
-      },
       { kind: 'slot', slotId: 'strategy.realized-by' },
       { kind: 'slot', slotId: 'strategy.linked-objectives' },
-      { kind: 'slot', slotId: 'strategy.linked-initiatives' }
+      { kind: 'slot', slotId: 'strategy.linked-initiatives' },
+      { kind: 'rollup', fieldId: 'score', aggregation: 'sum', format: 'number' },
+      { kind: 'rollup-leaf-count' }
     ]);
 
     const invalid = resolveEntityDrawerConfiguration(
@@ -195,13 +197,15 @@ describe('entity drawer configuration', () => {
               {
                 id: 'content',
                 title: 'Content',
-                items: [{ kind: 'slot', slotId: 'strategy.rollup', options: { rollups: 'bad' } }]
+                items: [
+                  { kind: 'rollup', fieldId: 'missing', aggregation: 'sum', format: 'number' }
+                ]
               }
             ]
           }
         }
       },
-      [schema],
+      [schemaWithParent],
       [
         {
           type: 'strategy-model',
@@ -209,7 +213,21 @@ describe('entity drawer configuration', () => {
         }
       ]
     );
-    expect(invalid.diagnostics.at(-1)?.code).toBe('invalid_slot_options');
+    expect(invalid.diagnostics.at(-1)?.code).toBe('missing_or_archived_field');
+
+    const noParent = resolveEntityDrawerConfiguration(
+      {
+        version: 1,
+        profiles: {
+          service: {
+            sections: [{ id: 'content', title: 'Content', items: [{ kind: 'rollup-leaf-count' }] }]
+          }
+        }
+      },
+      [schema],
+      []
+    );
+    expect(noParent.diagnostics.at(-1)?.code).toBe('unsupported_rollup_schema');
   });
 
   it('only advertises provider slots for their configured schema', () => {
@@ -222,10 +240,11 @@ describe('entity drawer configuration', () => {
         }
       ]
     );
-    expect(catalog.slots.map(slot => slot.id)).toContain('strategy.rollup');
-    expect(catalog.slots.find(slot => slot.id === 'strategy.rollup')?.supportedSchemaIds).toEqual([
-      'service'
-    ]);
+    expect(catalog.slots.map(slot => slot.id)).toContain('strategy.realized-by');
+    expect(
+      catalog.slots.find(slot => slot.id === 'strategy.realized-by')?.supportedSchemaIds
+    ).toEqual(['service']);
+    expect(catalog.slots.map(slot => slot.id)).not.toContain('strategy.rollup');
     expect(catalog.slots.map(slot => slot.id)).not.toContain('vendor.spend');
   });
 
@@ -318,6 +337,67 @@ describe('entity drawer configuration', () => {
     ]);
     expect(result.diagnostics).toEqual([]);
     expect(normalizeLegacyEntityDrawerConfiguration(null)).toBeNull();
+  });
+
+  it('normalizes the legacy Strategy rollup slot at read time', () => {
+    const strategySchema = {
+      id: 'business_capability',
+      name: 'Business Capability',
+      fields: [
+        { id: 'parent', name: 'Parent', type: 'containment', schemaId: 'business_capability' },
+        { id: 'maturity', name: 'Maturity', type: 'number' }
+      ]
+    };
+    const result = resolveEntityDrawerConfiguration(
+      {
+        version: 1,
+        profiles: {
+          business_capability: {
+            sections: [
+              {
+                id: 'rollup',
+                title: 'Roll-up',
+                items: [
+                  {
+                    kind: 'slot',
+                    slotId: 'strategy.rollup',
+                    options: {
+                      rollups: [{ fieldId: 'maturity', aggregation: 'avg', format: 'decimal1' }]
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      [strategySchema]
+    );
+
+    expect(result.effective.profiles.business_capability?.sections[0]?.items).toEqual([
+      { kind: 'rollup', fieldId: 'maturity', aggregation: 'avg', format: 'decimal1' },
+      { kind: 'rollup-leaf-count' }
+    ]);
+    expect(result.diagnostics).toEqual([]);
+
+    const dropped = resolveEntityDrawerConfiguration(
+      {
+        version: 1,
+        profiles: {
+          business_capability: {
+            sections: [
+              {
+                id: 'rollup',
+                title: 'Roll-up',
+                items: [{ kind: 'slot', slotId: 'strategy.rollup' }]
+              }
+            ]
+          }
+        }
+      },
+      [strategySchema]
+    );
+    expect(dropped.effective.profiles.business_capability?.sections[0]?.items).toEqual([]);
   });
 
   it('remaps nested containment-child schema references', () => {

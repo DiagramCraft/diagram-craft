@@ -30,6 +30,7 @@ import {
   type EntityDrawerProviderContext
 } from './EntityDrawerProviderRegistry';
 import { entityDrawerProviderRegistry } from './entityDrawerProviders';
+import { RollupStatItem, RollupLeafCountItem } from './rollup/RollupItems';
 import type { EntityRecord, EntitySummary } from '@arch-register/api-types/entityContract';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import type { RelationRecord } from '@arch-register/api-types/relationContract';
@@ -287,6 +288,26 @@ const DrawerItem = ({
         label={item.label}
         workspaceSlug={workspaceSlug}
         openEntity={providerContext.openEntity}
+      />
+    );
+  }
+  if (item.item.kind === 'rollup') {
+    return (
+      <RollupStatItem
+        item={item.item}
+        label={item.label}
+        entity={entity}
+        context={providerContext}
+      />
+    );
+  }
+  if (item.item.kind === 'rollup-leaf-count') {
+    return (
+      <RollupLeafCountItem
+        item={item.item}
+        label={item.label}
+        entity={entity}
+        context={providerContext}
       />
     );
   }

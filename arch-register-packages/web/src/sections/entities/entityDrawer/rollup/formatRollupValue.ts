@@ -1,4 +1,6 @@
-import type { NumberFormat } from '@arch-register/api-types/app/strategy-model/strategyModelViewConfig';
+import type { EntityDrawerItem } from '@arch-register/api-types/entityDrawerConfiguration';
+
+export type RollupFormat = Extract<EntityDrawerItem, { kind: 'rollup' }>['format'];
 
 const compactMoney = (amount: number): string =>
   amount >= 1_000_000
@@ -8,12 +10,12 @@ const compactMoney = (amount: number): string =>
       : `$${Math.round(amount)}`;
 
 /**
- * Render a roll-up / overlay numeric value per its configured {@link NumberFormat}. `currency`
+ * Renders a drawer `rollup` item's value per its configured {@link RollupFormat}. `currency`
  * (when known) is used for the `currency` format's symbol; otherwise a compact `$` fallback.
  */
-export const formatStrategyValue = (
+export const formatRollupValue = (
   value: number | null | undefined,
-  format: NumberFormat,
+  format: RollupFormat,
   currency?: string | null
 ): string => {
   if (value == null) return '—';

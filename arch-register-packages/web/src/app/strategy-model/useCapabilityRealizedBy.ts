@@ -25,7 +25,7 @@ const EMPTY: CapabilityRealizedBy = { items: [], isLoading: false, error: null }
 /**
  * Unions `business-capability-supports-entity` links across a capability's own direct links and
  * its full recursive `parent` containment subtree (#3205) — the metric engine's `containmentSubtree`
- * walk excludes the box entity itself (see `useCapabilityRollup.ts`), so the capability's own
+ * walk excludes the box entity itself (see `useEntityRollupMetric.ts`), so the capability's own
  * links are queried as a separate zero-depth path rather than being folded into the subtree one.
  *
  * Reuses the shared entity-traversal engine (`executeEntityTraversal` /

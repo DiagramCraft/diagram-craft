@@ -305,9 +305,12 @@
           section nav list for a capability hierarchy tree (clicking a node filters the table to that subtree) plus
           an owner facet with counts.
 
-          The configurable entity drawer shows the configured subtree roll-up stats (@id:ar.strategy.view-config) plus
-          a leaf count, capability badges, configured fields, the built-in containment-child list, and registered
-          Strategy content slots for linked objectives and initiatives and realized-by applications. Child selections replace the
+          The configurable entity drawer shows subtree roll-up stats and a leaf count via the generic drawer
+          `rollup`/leaf-count item kinds (seeded from @id:ar.strategy.view-config's roll-up fields by default, but
+          configurable per drawer profile like any other item — the same reusable mechanism any schema with a
+          containment hierarchy can use), plus capability badges, configured fields, the built-in containment-child
+          list, and registered Strategy content slots for linked objectives and initiatives and realized-by
+          applications. Child selections replace the
           current drawer target, and the footer action opens the underlying record in Entities. "Realized by" unions
           applications the capability supports directly with ones supported anywhere in its recursive containment
           subtree, so non-leaf capabilities also surface coverage carried by their descendants; each entity reached

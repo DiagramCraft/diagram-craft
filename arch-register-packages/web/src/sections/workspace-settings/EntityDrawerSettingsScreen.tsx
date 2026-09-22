@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  TbChartBar,
   TbChevronDown,
   TbChevronUp,
   TbDots,
@@ -228,6 +229,7 @@ const itemReference = (item: EntityDrawerItem): string => {
   if (item.kind === 'metadata') return item.slot;
   if (item.kind === 'slot') return item.slotId;
   if (item.kind === 'children') return `${item.childSchemaId}:${item.fieldId}`;
+  if (item.kind === 'rollup-leaf-count') return item.kind;
   return item.fieldId;
 };
 
@@ -235,6 +237,8 @@ const itemPlacementKey = (item: EntityDrawerItem): string => {
   if (item.kind === 'metadata') return `metadata:${item.slot}`;
   if (item.kind === 'slot') return `slot:${item.slotId}`;
   if (item.kind === 'children') return `children:${item.childSchemaId}:${item.fieldId}`;
+  if (item.kind === 'rollup') return `rollup:${item.fieldId}`;
+  if (item.kind === 'rollup-leaf-count') return 'rollup-leaf-count';
   return `field:${item.fieldId}`;
 };
 
@@ -253,6 +257,13 @@ const itemLabel = (
     const field = childSchema?.fields.find(candidate => candidate.id === item.fieldId);
     return `${childSchema?.name ?? item.childSchemaId} · ${field?.name ?? item.fieldId}`;
   }
+  if (item.kind === 'rollup-leaf-count') return 'Leaf count';
+  if (item.kind === 'rollup') {
+    const field = catalog.schemas
+      .find(schema => schema.id === schemaId)
+      ?.fields.find(candidate => candidate.id === item.fieldId);
+    return `Roll-up · ${field?.name ?? item.fieldId}`;
+  }
   return (
     catalog.schemas
       .find(schema => schema.id === schemaId)
@@ -265,6 +276,7 @@ const ItemIcon = ({ kind }: { kind: EntityDrawerItem['kind'] }) => {
   if (kind === 'relation') return <TbLink size={11} />;
   if (kind === 'children') return <TbLink size={11} />;
   if (kind === 'slot') return <TbPuzzle size={11} />;
+  if (kind === 'rollup' || kind === 'rollup-leaf-count') return <TbChartBar size={11} />;
   return <TbSquare size={11} />;
 };
 
@@ -460,6 +472,10 @@ export const EntityDrawerEditor = ({
     });
   };
 
+  const supportsSubtreeRollup = availableFields.some(
+    field => field.id === 'parent' && field.type === 'containment'
+  );
+
   const addGroupsForSection = (sectionId: string): PickerGroup[] => [
     {
       label: 'Fields',
@@ -523,7 +539,40 @@ export const EntityDrawerEditor = ({
                 : {})
             })
         }))
-    }
+    },
+    ...(supportsSubtreeRollup
+      ? [
+          {
+            label: 'Roll-ups',
+            options: [
+              ...availableFields
+                .filter(field => field.type === 'number' || field.type === 'currency')
+                .filter(field => !placedItems.has(`rollup:${field.id}`))
+                .map(field => ({
+                  value: `rollup:${field.id}`,
+                  label: `Roll-up · ${field.name}`,
+                  pick: () =>
+                    addItem(sectionId, {
+                      kind: 'rollup' as const,
+                      fieldId: field.id,
+                      aggregation: field.type === 'currency' ? ('sum' as const) : ('avg' as const),
+                      format:
+                        field.type === 'currency' ? ('currency' as const) : ('decimal1' as const)
+                    })
+                })),
+              ...(!placedItems.has('rollup-leaf-count')
+                ? [
+                    {
+                      value: 'rollup-leaf-count',
+                      label: 'Leaf count',
+                      pick: () => addItem(sectionId, { kind: 'rollup-leaf-count' as const })
+                    }
+                  ]
+                : [])
+            ]
+          }
+        ]
+      : [])
   ];
 
   const badgeGroups: PickerGroup[] = [

@@ -116,6 +116,68 @@ const resolveChildrenItem = ({
   return { item, label: item.label ?? 'Children' };
 };
 
+const supportsSubtreeRollup = (schema: EntitySchema): boolean =>
+  schema.fields.some(candidate => candidate.id === 'parent' && candidate.type === 'containment');
+
+const resolveRollupItem = ({
+  item,
+  schema,
+  sectionId,
+  diagnostics
+}: {
+  item: Extract<EntityDrawerItem, { kind: 'rollup' }>;
+  schema: EntitySchema;
+  sectionId: string;
+  diagnostics: EntityDrawerDiagnostic[];
+}): ResolvedEntityDrawerItem | null => {
+  if (!supportsSubtreeRollup(schema)) {
+    diagnostics.push({
+      code: 'unsupported_rollup_schema',
+      schemaId: schema.id,
+      sectionId,
+      itemId: item.fieldId,
+      message: `Drawer roll-up requires a 'parent' containment field on '${schema.id}'.`
+    });
+    return null;
+  }
+  const field = schema.fields.find(candidate => candidate.id === item.fieldId);
+  if (!field || field.archived || (field.type !== 'number' && field.type !== 'currency')) {
+    diagnostics.push({
+      code: 'missing_or_archived_field',
+      schemaId: schema.id,
+      sectionId,
+      itemId: item.fieldId,
+      message: `Roll-up field '${item.fieldId}' is missing, archived, or not numeric.`
+    });
+    return null;
+  }
+  return { item, field, label: item.label ?? field.name };
+};
+
+const resolveRollupLeafCountItem = ({
+  item,
+  schema,
+  sectionId,
+  diagnostics
+}: {
+  item: Extract<EntityDrawerItem, { kind: 'rollup-leaf-count' }>;
+  schema: EntitySchema;
+  sectionId: string;
+  diagnostics: EntityDrawerDiagnostic[];
+}): ResolvedEntityDrawerItem | null => {
+  if (!supportsSubtreeRollup(schema)) {
+    diagnostics.push({
+      code: 'unsupported_rollup_schema',
+      schemaId: schema.id,
+      sectionId,
+      itemId: item.kind,
+      message: `Drawer roll-up requires a 'parent' containment field on '${schema.id}'.`
+    });
+    return null;
+  }
+  return { item, label: item.label ?? 'Leaf count' };
+};
+
 const fieldAccess = (
   schema: EntitySchema,
   field: EntitySchema['fields'][number],
@@ -278,6 +340,19 @@ export const resolveEntityDrawerRenderModel = ({
           item,
           schema,
           schemas: providerContext.schemas,
+          sectionId: section.id,
+          diagnostics
+        });
+        return resolved ? [resolved] : [];
+      }
+      if (item.kind === 'rollup') {
+        const resolved = resolveRollupItem({ item, schema, sectionId: section.id, diagnostics });
+        return resolved ? [resolved] : [];
+      }
+      if (item.kind === 'rollup-leaf-count') {
+        const resolved = resolveRollupLeafCountItem({
+          item,
+          schema,
           sectionId: section.id,
           diagnostics
         });

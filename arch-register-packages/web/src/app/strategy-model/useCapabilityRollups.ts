@@ -4,8 +4,11 @@ import type { MetricConfig, MetricRollupResponse } from '@arch-register/api-type
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { DerivedRollup } from '@arch-register/api-types/app/strategy-model/strategyModelViewConfig';
 import { metricRollupQuery } from '../../queries/metrics';
-import { buildMetric, METRIC_AGGREGATION } from './useCapabilityRollup';
-import { extractCapabilityOwnFields } from './capabilityOwnFields';
+import {
+  buildRollupMetric,
+  ROLLUP_METRIC_AGGREGATION
+} from '../../sections/entities/entityDrawer/rollup/useEntityRollupMetric';
+import { extractEntityOwnFields } from '../../sections/entities/entityDrawer/rollup/entityOwnFields';
 
 /** A table-row roll-up: subtree aggregates keyed by roll-up field id, plus the apps count. */
 export type CapabilityTableRollup = {
@@ -51,8 +54,9 @@ const buildAppsCountMetric = (
     : null;
 
 /**
- * Batched sibling of `useCapabilityRollup.ts`, for the Capabilities table / capability map rather
- * than the single-capability drawer: one `metrics.rollup` request per configured roll-up, each
+ * Batched sibling of the generic drawer `rollup` item's `useEntityRollupMetric.ts`, for the
+ * Capabilities table / capability map rather than the drawer: one `metrics.rollup` request per
+ * configured roll-up, each
  * covering every visible row's capability ids at once via `boxEntityIds`. Returns a map keyed by
  * capability id.
  *
@@ -69,7 +73,7 @@ export const useCapabilityRollups = (
   const boxEntityIds = useMemo(() => capabilities.map(c => c._uid), [capabilities]);
   const fieldIds = useMemo(() => rollups.map(rollup => rollup.fieldId), [rollups]);
   const ownFieldsById = useMemo(
-    () => new Map(capabilities.map(c => [c._uid, extractCapabilityOwnFields(c, fieldIds)])),
+    () => new Map(capabilities.map(c => [c._uid, extractEntityOwnFields(c, fieldIds)])),
     [capabilities, fieldIds]
   );
   const enabled = boxEntityIds.length > 0 && !!businessCapabilitySchemaId;
@@ -81,10 +85,10 @@ export const useCapabilityRollups = (
           workspaceId,
           {
             boxEntityIds,
-            metric: buildMetric(
+            metric: buildRollupMetric(
               businessCapabilitySchemaId,
               rollup.fieldId,
-              METRIC_AGGREGATION[rollup.aggregation]
+              ROLLUP_METRIC_AGGREGATION[rollup.aggregation]
             )
           },
           enabled

@@ -4,7 +4,7 @@ import type {
   NumberFormat,
   TableDisplay
 } from '@arch-register/api-types/app/strategy-model/strategyModelViewConfig';
-import { formatStrategyValue } from '../strategyFormat';
+import { formatRollupValue } from '../../../sections/entities/entityDrawer/rollup/formatRollupValue';
 import { CapabilityMaturityBar } from './CapabilityMaturityBar';
 import { formatGap } from './capabilityGap';
 
@@ -41,7 +41,7 @@ export const CapabilityRollupValue = ({
       </span>
     );
   }
-  return formatStrategyValue(value, format, currency);
+  return formatRollupValue(value, format, currency);
 };
 
 /** Whether a table cell with this display should be right-aligned (numeric) — a `bar` is not. */

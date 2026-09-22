@@ -8,29 +8,6 @@
   gap: 4px;
 }
 
-.statGrid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.stat {
-  border: 1px solid var(--panel-border);
-  border-radius: 6px;
-  padding: 8px 10px;
-}
-
-.statLabel {
-  font-size: 10.5px;
-  color: var(--text-muted);
-  margin-bottom: 2px;
-}
-
-.statValue {
-  font-size: 15px;
-  font-variant-numeric: tabular-nums;
-}
-
 .viaLabel {
   color: var(--text-muted);
 }
