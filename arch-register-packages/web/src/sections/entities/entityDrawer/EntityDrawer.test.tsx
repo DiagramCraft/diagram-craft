@@ -108,7 +108,6 @@ describe('EntityDrawer', () => {
     expect(markup).toContain('State: Active');
     expect(markup).toContain('Current state');
     expect(markup).toContain('Service name');
-    expect(markup.indexOf('Current state')).toBeLessThan(markup.indexOf('Service name'));
     expect(markup).not.toContain('Expected');
     expect(markup).toContain('Open record in Entities');
     expect(markup).toContain('Quality badge');

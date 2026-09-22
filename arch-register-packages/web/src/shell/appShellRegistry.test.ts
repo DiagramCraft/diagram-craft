@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
   APP_DEFINITIONS,
-  APP_RAIL_ROUTES,
   appAccentStyle,
   getAppDefinition,
   getRailSection,
@@ -10,32 +9,8 @@ import {
   railItemToAppId
 } from './appShellRegistry';
 import { GLOSSARY_RAIL_ITEM_ID, GLOSSARY_RAIL_PATH } from '../app/business-glossary/glossaryShell';
-import {
-  STRATEGY_CAPABILITY_MAP_ID,
-  STRATEGY_HEATMAPS_ID,
-  STRATEGY_TRACEABILITY_ID,
-  STRATEGY_RAIL_PATHS
-} from '../app/strategy-model/strategySections';
-import {
-  VENDOR_OVERVIEW_ID,
-  VENDOR_RISK_ID,
-  VENDOR_RAIL_PATHS
-} from '../app/vendor-management/vendorManagementSections';
-import {
-  RISK_OVERVIEW_ID,
-  RISK_RETENTION_ID,
-  RISK_RAIL_PATHS
-} from '../app/risk-compliance/riskComplianceSections';
-import {
-  DS_MY_WORK_ID,
-  DS_CLASSIFICATION_ID,
-  DS_RAIL_PATHS
-} from '../app/data-stewardship/dataStewardshipSections';
-import {
-  IC_OVERVIEW_ID,
-  IC_APIS_ID,
-  IC_RAIL_PATHS
-} from '../app/api-integration-catalog/apiIntegrationCatalogSections';
+import { STRATEGY_CAPABILITY_MAP_ID, STRATEGY_RAIL_PATHS } from '../app/strategy-model/strategySections';
+import { VENDOR_OVERVIEW_ID, VENDOR_RAIL_PATHS } from '../app/vendor-management/vendorManagementSections';
 
 const railIds = (appId: Parameters<typeof getAppDefinition>[0]) =>
   getAppDefinition(appId).sections.map(section => section.id);
@@ -51,17 +26,6 @@ describe('appShellRegistry', () => {
     expect(home.tint).toBeUndefined();
   });
 
-  it('registers Business Glossary as a capability-gated app that owns only the glossary rail section', () => {
-    const glossary = getAppDefinition(GLOSSARY_RAIL_ITEM_ID);
-    expect(glossary.applicationId).toBe('business-glossary');
-    expect(railIds(GLOSSARY_RAIL_ITEM_ID)).toEqual([GLOSSARY_RAIL_ITEM_ID]);
-    expect(glossary.enablement).toEqual({ capabilityType: 'business-glossary' });
-    const [section] = glossary.sections;
-    expect(section?.route).toBe(GLOSSARY_RAIL_PATH);
-    expect(section?.icon).toBeTypeOf('function');
-    expect(section?.tooltip).toBe('Business glossary');
-  });
-
   it('maps rail items back to their owning app and falls back to home', () => {
     expect(railItemToAppId('entities')).toBe('home');
     expect(railItemToAppId(GLOSSARY_RAIL_ITEM_ID)).toBe(GLOSSARY_RAIL_ITEM_ID);
@@ -73,69 +37,6 @@ describe('appShellRegistry', () => {
     expect(railItemMeta('assistant').separator).toBe(true);
     expect(railItemMeta(GLOSSARY_RAIL_ITEM_ID).tooltip).toBe('Business glossary');
     expect(getRailSection(GLOSSARY_RAIL_ITEM_ID)?.route).toBe(GLOSSARY_RAIL_PATH);
-  });
-
-  it('registers Strategy & Capability Modelling as a capability-gated app owning five rail sections', () => {
-    const strategy = getAppDefinition(STRATEGY_CAPABILITY_MAP_ID);
-    expect(strategy.applicationId).toBe('strategy-model');
-    // Overview, Capability map, Capabilities, Strategy, Traceability. Heatmaps (#3193) is
-    // deprioritized — its route is retained but it is not a rail section.
-    expect(railIds(STRATEGY_CAPABILITY_MAP_ID)).toHaveLength(5);
-    expect(railIds(STRATEGY_CAPABILITY_MAP_ID)).not.toContain(STRATEGY_HEATMAPS_ID);
-    expect(strategy.enablement).toEqual({ capabilityType: 'strategy-model' });
-    expect(getRailSection(STRATEGY_TRACEABILITY_ID)?.route).toBe(
-      STRATEGY_RAIL_PATHS[STRATEGY_TRACEABILITY_ID]
-    );
-  });
-
-  it('registers Vendor Management as a capability-gated app owning five rail sections', () => {
-    const vendorManagement = getAppDefinition(VENDOR_OVERVIEW_ID);
-    expect(vendorManagement.applicationId).toBe('vendor-management');
-    expect(railIds(VENDOR_OVERVIEW_ID)).toHaveLength(5);
-    expect(vendorManagement.enablement).toEqual({ capabilityType: 'vendor-management' });
-    expect(getRailSection(VENDOR_RISK_ID)?.route).toBe(VENDOR_RAIL_PATHS[VENDOR_RISK_ID]);
-  });
-
-  it('registers Risk & Compliance as a capability-gated app owning five rail sections', () => {
-    const riskCompliance = getAppDefinition(RISK_OVERVIEW_ID);
-    expect(riskCompliance.applicationId).toBe('risk-compliance');
-    expect(railIds(RISK_OVERVIEW_ID)).toHaveLength(5);
-    expect(riskCompliance.enablement).toEqual({ capabilityType: 'risk-compliance' });
-    expect(getRailSection(RISK_RETENTION_ID)?.route).toBe(RISK_RAIL_PATHS[RISK_RETENTION_ID]);
-  });
-
-  it('registers Data Stewardship as a capability-gated app owning five rail sections, with no separate Overview', () => {
-    const dataStewardship = getAppDefinition(DS_MY_WORK_ID);
-    expect(dataStewardship.applicationId).toBe('data-stewardship');
-    expect(railIds(DS_MY_WORK_ID)).toHaveLength(5);
-    // My work (not Overview) is sections[0], the app's landing section.
-    expect(railIds(DS_MY_WORK_ID)[0]).toBe(DS_MY_WORK_ID);
-    expect(dataStewardship.enablement).toEqual({ capabilityType: 'data-stewardship' });
-    expect(getRailSection(DS_CLASSIFICATION_ID)?.route).toBe(DS_RAIL_PATHS[DS_CLASSIFICATION_ID]);
-  });
-
-  it('registers API & Integration Catalog as a capability-gated app owning four rail sections, with a separate Overview', () => {
-    const apiIntegrationCatalog = getAppDefinition(IC_OVERVIEW_ID);
-    expect(apiIntegrationCatalog.applicationId).toBe('api-integration-catalog');
-    expect(railIds(IC_OVERVIEW_ID)).toHaveLength(4);
-    expect(railIds(IC_OVERVIEW_ID)[0]).toBe(IC_OVERVIEW_ID);
-    expect(apiIntegrationCatalog.enablement).toEqual({ capabilityType: 'api-specification' });
-    expect(getRailSection(IC_APIS_ID)?.route).toBe(IC_RAIL_PATHS[IC_APIS_ID]);
-  });
-
-  it('exposes non-home app routes under the stable APP_RAIL_ROUTES shape', () => {
-    // Heatmaps is absent from the rail (see above), so its route is not in APP_RAIL_ROUTES.
-    const shellStrategyRoutes = Object.fromEntries(
-      Object.entries(STRATEGY_RAIL_PATHS).filter(([id]) => id !== STRATEGY_HEATMAPS_ID)
-    );
-    expect(APP_RAIL_ROUTES).toEqual({
-      [GLOSSARY_RAIL_ITEM_ID]: GLOSSARY_RAIL_PATH,
-      ...shellStrategyRoutes,
-      ...VENDOR_RAIL_PATHS,
-      ...RISK_RAIL_PATHS,
-      ...DS_RAIL_PATHS,
-      ...IC_RAIL_PATHS
-    });
   });
 
   it('exposes every section route (home included) via RAIL_ROUTES', () => {

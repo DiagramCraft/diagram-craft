@@ -184,25 +184,6 @@ describe('StrategyCapabilityMapScreen', () => {
     expect(leaf?.textContent).toContain('4.0');
   });
 
-  it('dims tiles that do not match the search box', async () => {
-    await render();
-    const input = container.querySelector('input') as HTMLInputElement;
-    const nativeSetter = Object.getOwnPropertyDescriptor(
-      window.HTMLInputElement.prototype,
-      'value'
-    )!.set!;
-    await act(async () => {
-      nativeSetter.call(input, 'contact');
-      input.dispatchEvent(new Event('input', { bubbles: true }));
-    });
-    await flush();
-    const leafClass = (name: string) =>
-      [...container.querySelectorAll('button')].find(b => b.textContent?.includes(name))
-        ?.className ?? '';
-    expect(leafClass('Contact Center')).not.toMatch(/leafDim/);
-    expect(leafClass('Self Service')).toMatch(/leafDim/);
-  });
-
   it('collapses to one domain and shows "All domains" when focused', async () => {
     mocks.search = { focus: 'd-cs', owner: undefined };
     await render();

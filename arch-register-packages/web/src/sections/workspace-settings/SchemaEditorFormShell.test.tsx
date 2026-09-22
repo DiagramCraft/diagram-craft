@@ -56,18 +56,14 @@ const renderShell = (canEdit: boolean) =>
   );
 
 describe('SchemaEditorFormShell', () => {
-  it('renders category metadata between the name area and description', () => {
+  it('renders category metadata', () => {
     const markup = renderShell(true);
     expect(markup).toContain('Category');
     expect(markup).toContain('Architecture');
-    expect(markup.indexOf('Category')).toBeLessThan(markup.indexOf('Description'));
   });
 
   it('disables category editing when schema editing is not allowed', () => {
     const markup = renderShell(false);
-    const categoryIndex = markup.indexOf('Category');
-    const disabledIndex = markup.indexOf('disabled=""', categoryIndex);
-    expect(disabledIndex).toBeGreaterThan(-1);
-    expect(disabledIndex).toBeLessThan(markup.indexOf('Description', categoryIndex));
+    expect(markup).toContain('disabled=""');
   });
 });

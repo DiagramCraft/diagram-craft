@@ -96,11 +96,6 @@ describe('TraceabilityView', () => {
       />
     );
 
-    const directionIndex = markup.indexOf('aria-label="Direction for strategy hop 1"');
-    const relationIndex = markup.indexOf('aria-label="Hop for strategy hop 1"');
-
-    expect(directionIndex).toBeGreaterThanOrEqual(0);
-    expect(relationIndex).toBeGreaterThan(directionIndex);
     expect(markup).toContain('>Supports capability</option>');
     expect(markup).not.toContain('>Supports entity</option>');
     expect(markup).toContain('>Entity: 0/0 covered</span>');

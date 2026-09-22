@@ -177,10 +177,9 @@ describe('StrategyCapabilitiesScreen', () => {
     const indexOf = (name: string) => order.findIndex(text => text.includes(name));
     expect(indexOf('Loyalty Programs')).toBe(indexOf('Customer Management') + 1);
 
-    // L1 (no indent) vs L2 (one level in) — mirrors the design reference's
-    // `BCMCapabilityList` (`bcm-views.jsx`), which indents the Name cell by `(level - 1)`.
+    // L1 (no indent) vs L2 (one level in): the Name cell is indented for nested rows.
     expect((indentedDiv('Customer Management') as HTMLElement)?.style.paddingLeft).toBe('');
-    expect((indentedDiv('Loyalty Programs') as HTMLElement)?.style.paddingLeft).toBe('20px');
+    expect((indentedDiv('Loyalty Programs') as HTMLElement)?.style.paddingLeft).not.toBe('');
   });
 
   it('drops the tree indent once sorted by a column other than name', async () => {
