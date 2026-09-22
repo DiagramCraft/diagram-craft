@@ -232,6 +232,7 @@ export const EntityDrawer = ({
   entityId,
   onClose,
   onOpenEntity,
+  onOpenGovernanceCase,
   onOpenRelatedEntity,
   entityOverride,
   additionalBadges,
@@ -246,6 +247,7 @@ export const EntityDrawer = ({
   entityId: string;
   onClose: () => void;
   onOpenEntity?: (entityId: string) => void;
+  onOpenGovernanceCase?: (caseId: string) => void;
   onOpenRelatedEntity?: (fieldId: string, publicId: string) => boolean;
   entityOverride?: EntityRecord;
   additionalBadges?: ReactNode | ((entity: EntityRecord) => ReactNode);
@@ -344,7 +346,8 @@ export const EntityDrawer = ({
               isLoading: typedRelationsQuery.isLoading,
               isError: typedRelationsQuery.isError
             },
-            openEntity
+            openEntity,
+            openGovernanceCase: onOpenGovernanceCase
           }
         : null,
     [
@@ -357,7 +360,8 @@ export const EntityDrawer = ({
       typedRelations,
       typedRelationsQuery.isLoading,
       typedRelationsQuery.isError,
-      openEntity
+      openEntity,
+      onOpenGovernanceCase
     ]
   );
 

@@ -251,36 +251,6 @@ export const ENTITY_DRAWER_SLOT_DEFINITIONS: EntityDrawerSlotDefinition[] = [
     optionsSchema: emptyOptionsSchema
   },
   {
-    id: 'data-stewardship.exceptions',
-    label: 'Exceptions',
-    description: 'Exceptions associated with this dataset.',
-    application: 'Data Stewardship',
-    capabilityBinding: { capabilityType: 'data-stewardship', role: 'dataEntity' },
-    defaultOptions: {},
-    optionFields: [],
-    optionsSchema: emptyOptionsSchema
-  },
-  {
-    id: 'data-stewardship.flows',
-    label: 'Flows',
-    description: 'Data flows associated with this dataset.',
-    application: 'Data Stewardship',
-    capabilityBinding: { capabilityType: 'data-stewardship', role: 'dataEntity' },
-    defaultOptions: {},
-    optionFields: [],
-    optionsSchema: emptyOptionsSchema
-  },
-  {
-    id: 'data-stewardship.systems',
-    label: 'Systems',
-    description: 'Systems associated with this dataset.',
-    application: 'Data Stewardship',
-    capabilityBinding: { capabilityType: 'data-stewardship', role: 'dataEntity' },
-    defaultOptions: {},
-    optionFields: [],
-    optionsSchema: emptyOptionsSchema
-  },
-  {
     id: 'strategy.rollup',
     label: 'Strategy roll-up',
     description: 'Roll-up summary for this capability.',
@@ -551,10 +521,21 @@ const isRelationField = (field: EntityDrawerField): boolean =>
 const fieldItem = (
   field: EntityDrawerField,
   presentation?: 'row' | 'mini-panel'
-): EntityDrawerItem =>
-  isRelationField(field)
-    ? { kind: 'relation', fieldId: field.id, ...(presentation ? { presentation } : {}) }
-    : { kind: 'field', fieldId: field.id, ...(presentation ? { presentation } : {}) };
+): EntityDrawerItem => {
+  const resolvedPresentation =
+    presentation ?? (field.type === 'typedRelation' ? 'mini-panel' : undefined);
+  return isRelationField(field)
+    ? {
+        kind: 'relation',
+        fieldId: field.id,
+        ...(resolvedPresentation ? { presentation: resolvedPresentation } : {})
+      }
+    : {
+        kind: 'field',
+        fieldId: field.id,
+        ...(resolvedPresentation ? { presentation: resolvedPresentation } : {})
+      };
+};
 
 type BusinessGlossaryFieldIds = {
   definition: string;
@@ -641,6 +622,113 @@ const buildBusinessGlossaryDefaultProfile = (
         ]
       }
     ]
+  };
+};
+
+type DataStewardshipFieldIds = {
+  classification: string;
+  retentionPolicy: string;
+  steward: string;
+  custodian: string;
+  reviewDate: string;
+  reviewStatus: string;
+  stewardshipStatus: string;
+  regulatoryTags: string;
+  processingPurposes: string;
+  permittedResidencyRegions: string;
+};
+
+const dataStewardshipFieldIds = (
+  schema: EntityDrawerSchema,
+  capabilityConfigurations: readonly CapabilityConfigurationLike[]
+): DataStewardshipFieldIds | null => {
+  const configuration = capabilityConfigurations.find(
+    candidate => candidate.type === 'data-stewardship'
+  );
+  const binding = configuration?.bindings.dataEntity;
+  if (binding?.target.kind !== 'entity_schema' || binding.target.id !== schema.id) return null;
+
+  const fieldIds: DataStewardshipFieldIds = {
+    classification: 'classification',
+    retentionPolicy: 'retention_policy',
+    steward: 'steward',
+    custodian: 'custodian',
+    reviewDate: 'review_date',
+    reviewStatus: 'review_status',
+    stewardshipStatus: 'stewardship_status',
+    regulatoryTags: 'regulatory_tags',
+    processingPurposes: 'processing_purposes',
+    permittedResidencyRegions: 'permitted_residency_regions'
+  };
+
+  const fields = Object.values(fieldIds).map(fieldId =>
+    schema.fields.find(field => field.id === fieldId && fieldIsVisible(field))
+  );
+  if (fields.some(field => field === undefined)) return null;
+
+  const retentionPolicy = schema.fields.find(field => field.id === fieldIds.retentionPolicy);
+  if (!retentionPolicy || !isRelationField(retentionPolicy)) return null;
+
+  return fieldIds;
+};
+
+const buildDataStewardshipDefaultProfile = (
+  providerItems: EntityDrawerItem[],
+  fieldIds: DataStewardshipFieldIds
+): EntityDrawerProfile => {
+  const field = (
+    fieldId: string,
+    kind: 'field' | 'relation' = 'field',
+    presentation?: 'row' | 'mini-panel'
+  ): EntityDrawerItem => ({
+    kind,
+    fieldId,
+    ...(presentation ? { presentation } : {})
+  });
+  const provider = (slotId: string): EntityDrawerItem | null => {
+    const slot = providerItems.find(
+      (candidate): candidate is Extract<EntityDrawerItem, { kind: 'slot' }> =>
+        candidate.kind === 'slot' && candidate.slotId === slotId
+    );
+    return slot ? { ...slot, showLabel: false } : null;
+  };
+  const section = (
+    id: string,
+    title: string,
+    items: Array<EntityDrawerItem | null>,
+    collapsible = false
+  ) => ({
+    id,
+    title,
+    collapsible,
+    items: items.filter((candidate): candidate is EntityDrawerItem => candidate != null)
+  });
+
+  return {
+    header: {
+      badges: [{ kind: 'field', fieldId: fieldIds.classification, showLabel: false }]
+    },
+    sections: [
+      section('attributes', 'Attributes', [
+        field(fieldIds.classification),
+        field(fieldIds.retentionPolicy, 'relation', 'mini-panel')
+      ]),
+      section('stewardship', 'Stewardship', [
+        { kind: 'metadata', slot: 'owner' },
+        field(fieldIds.steward),
+        field(fieldIds.custodian),
+        field(fieldIds.reviewDate),
+        field(fieldIds.reviewStatus),
+        field(fieldIds.stewardshipStatus),
+        field(fieldIds.regulatoryTags),
+        field(fieldIds.processingPurposes),
+        field(fieldIds.permittedResidencyRegions)
+      ]),
+      section('coverage', 'Coverage', [provider('data-stewardship.coverage')], true),
+      section('queue-items', 'Queue items', [provider('data-stewardship.queue-items')], true),
+      section('cases', 'Cases', [provider('data-stewardship.change-cases')], true),
+      section('assessments', 'Assessments', [provider('data-stewardship.assessments')], true)
+    ].filter(section => section.items.length > 0)
   };
 };
 
@@ -963,17 +1051,23 @@ export const buildDefaultEntityDrawerConfiguration = (
     schemas.map(schema => {
       const providerItems = getDefaultProviderItems(schemas, schema.id, capabilityConfigurations);
       const glossaryFieldIds = businessGlossaryFieldIds(schema, capabilityConfigurations);
+      const dataStewardshipFieldIdsValue = dataStewardshipFieldIds(
+        schema,
+        capabilityConfigurations
+      );
       const vendorFieldIds = vendorManagementFieldIds(schema, capabilityConfigurations);
       const contractFieldIds = vendorManagementContractFieldIds(schema, capabilityConfigurations);
       return [
         schema.id,
         glossaryFieldIds
           ? buildBusinessGlossaryDefaultProfile(providerItems, glossaryFieldIds)
-          : vendorFieldIds
-            ? buildVendorManagementDefaultProfile(providerItems, vendorFieldIds)
-            : contractFieldIds
-              ? buildVendorManagementContractDefaultProfile(providerItems, contractFieldIds)
-              : buildDefaultEntityDrawerProfile(schema, providerItems)
+          : dataStewardshipFieldIdsValue
+            ? buildDataStewardshipDefaultProfile(providerItems, dataStewardshipFieldIdsValue)
+            : vendorFieldIds
+              ? buildVendorManagementDefaultProfile(providerItems, vendorFieldIds)
+              : contractFieldIds
+                ? buildVendorManagementContractDefaultProfile(providerItems, contractFieldIds)
+                : buildDefaultEntityDrawerProfile(schema, providerItems)
       ];
     })
   )

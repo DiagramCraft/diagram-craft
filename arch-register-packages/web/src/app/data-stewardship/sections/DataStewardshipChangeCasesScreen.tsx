@@ -175,7 +175,6 @@ export const DataStewardshipChangeCasesScreen = () => {
         <DatasetDrawer
           workspaceSlug={workspaceSlug}
           datasetId={search.datasetId}
-          dataStewardshipConfig={dataStewardshipConfig}
           onClose={closeDataset}
           onOpenCase={caseId => {
             closeDataset();

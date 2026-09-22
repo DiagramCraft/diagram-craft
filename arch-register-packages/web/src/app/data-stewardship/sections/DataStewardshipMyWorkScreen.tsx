@@ -243,7 +243,6 @@ export const DataStewardshipMyWorkScreen = () => {
         <DatasetDrawer
           workspaceSlug={workspaceSlug}
           datasetId={search.datasetId}
-          dataStewardshipConfig={dataStewardshipConfig}
           onClose={() => patchSearch({ datasetId: undefined })}
           onOpenCase={caseId => patchSearch({ datasetId: undefined, caseId })}
         />

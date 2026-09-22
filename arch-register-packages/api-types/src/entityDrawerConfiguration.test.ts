@@ -208,6 +208,73 @@ describe('entity drawer configuration', () => {
     ).toEqual(['risk']);
   });
 
+  it('derives the Data Entity profile with stewardship fields and supported provider slots', () => {
+    const dataEntitySchema = {
+      id: 'data-entity',
+      name: 'Data Entity',
+      fields: [
+        { id: 'classification', name: 'Classification', type: 'select' },
+        { id: 'retention_policy', name: 'Retention Policy', type: 'typedRelation' },
+        { id: 'steward', name: 'Steward', type: 'principal' },
+        { id: 'custodian', name: 'Custodian', type: 'principal' },
+        { id: 'review_date', name: 'Review Date', type: 'date' },
+        { id: 'review_status', name: 'Review Status', type: 'derived' },
+        { id: 'stewardship_status', name: 'Stewardship Status', type: 'derived' },
+        { id: 'regulatory_tags', name: 'Regulatory Tags', type: 'select' },
+        { id: 'processing_purposes', name: 'Processing Purposes', type: 'select' },
+        {
+          id: 'permitted_residency_regions',
+          name: 'Permitted Residency Regions',
+          type: 'select'
+        }
+      ]
+    };
+    const configuration = {
+      type: 'data-stewardship',
+      bindings: { dataEntity: { target: { kind: 'entity_schema', id: 'data-entity' } } }
+    } as const;
+
+    const profile = buildDefaultEntityDrawerConfiguration(
+      [dataEntitySchema],
+      [configuration]
+    ).profiles['data-entity']!;
+
+    expect(profile.header.badges).toEqual([
+      { kind: 'field', fieldId: 'classification', showLabel: false }
+    ]);
+    expect(profile.sections.map(section => section.id)).toEqual([
+      'attributes',
+      'stewardship',
+      'coverage',
+      'queue-items',
+      'cases',
+      'assessments'
+    ]);
+    expect(profile.sections.flatMap(section => section.items)).toEqual(
+      expect.arrayContaining([
+        { kind: 'metadata', slot: 'owner' },
+        { kind: 'field', fieldId: 'steward' },
+        { kind: 'field', fieldId: 'review_status' },
+        {
+          kind: 'relation',
+          fieldId: 'retention_policy',
+          presentation: 'mini-panel'
+        },
+        { kind: 'slot', slotId: 'data-stewardship.coverage', showLabel: false },
+        { kind: 'slot', slotId: 'data-stewardship.queue-items', showLabel: false },
+        { kind: 'slot', slotId: 'data-stewardship.change-cases', showLabel: false },
+        { kind: 'slot', slotId: 'data-stewardship.assessments', showLabel: false }
+      ])
+    );
+    expect(profile.sections.flatMap(section => section.items)).not.toEqual(
+      expect.arrayContaining([
+        { kind: 'slot', slotId: 'data-stewardship.exceptions' },
+        { kind: 'slot', slotId: 'data-stewardship.flows' },
+        { kind: 'slot', slotId: 'data-stewardship.systems' }
+      ])
+    );
+  });
+
   it('derives the glossary term profile from mapped capability fields', () => {
     const termSchema = {
       id: 'term',

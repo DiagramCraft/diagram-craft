@@ -582,8 +582,11 @@
           faked, quality/domain aren't offered as sort options, and the stat strip substitutes "Missing a steward"
           for "Certified" — mirroring how `ar.risk-compliance.overview`/`ar.risk-compliance.controls` adapted their
           own design references to the fields the shipped schema actually has. Opening a dataset (from the gaps
-          panel or the table) opens the shared dataset drawer, deep-linkable via a `datasetId` query param (no
-          dedicated child route exists yet for this scaffold's sections).
+          panel or the table) opens the configurable Data Entity drawer, deep-linkable via a `datasetId` query param
+          (no dedicated child route exists yet for this scaffold's sections). Its default profile preserves the
+          dataset's attributes and stewardship fields and exposes Coverage, Queue items, Cases, and Assessments as
+          Data Stewardship provider sections; unsupported placeholder-only Exceptions, Flows, and Systems sections
+          are omitted.
 
         - @id:ar.data-stewardship.classification The Classification section has three views, switched via an
           in-screen toggle group in the screen's own header (mirroring the Claude Design reference's `DSClassification`
