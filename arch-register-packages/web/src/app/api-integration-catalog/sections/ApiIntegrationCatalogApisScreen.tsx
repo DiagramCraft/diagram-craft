@@ -264,7 +264,6 @@ export const ApiIntegrationCatalogApisScreen = () => {
           </Table.Body>
         </Table.Root>
       )}
-
     </div>
   );
 };

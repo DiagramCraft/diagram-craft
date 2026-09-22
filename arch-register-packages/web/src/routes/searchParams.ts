@@ -19,8 +19,9 @@ const entityDrawerSearchParamSchema = defineSearchParamSchema({
 
 export type EntityDrawerSearchParams = SearchParamsFromSchema<typeof entityDrawerSearchParamSchema>;
 
-export const validateEntityDrawerSearch = (raw: Record<string, unknown>): EntityDrawerSearchParams =>
-  parseSearchParams(entityDrawerSearchParamSchema, raw);
+export const validateEntityDrawerSearch = (
+  raw: Record<string, unknown>
+): EntityDrawerSearchParams => parseSearchParams(entityDrawerSearchParamSchema, raw);
 
 const entityBrowserSidebarValues = enumCodec(['home', 'views', 'bookmarks', 'baselines'] as const);
 
