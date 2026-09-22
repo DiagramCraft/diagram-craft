@@ -24,13 +24,11 @@ type UseEntityFieldRenderersProps = {
   setValidationErrors: Dispatch<SetStateAction<Set<string>>>;
   refLookup: RefLookup;
   referenceOptions: Record<string, EntitySummary[]>;
-  onOpenRelatedEntity?: (fieldId: string, publicId: string) => boolean;
   currencies: SupportedCurrency[];
   defaultCurrency: string;
   typedRelationsOutgoing: RelationRecord[];
   typedRelationsIncoming: RelationRecord[];
   relationSchemas: RelationSchema[];
-  formatDateValue?: (value: unknown) => string;
 };
 
 /**
@@ -50,13 +48,11 @@ export const useEntityFieldRenderers = ({
   setValidationErrors,
   refLookup,
   referenceOptions,
-  onOpenRelatedEntity,
   currencies,
   defaultCurrency,
   typedRelationsOutgoing,
   typedRelationsIncoming,
-  relationSchemas,
-  formatDateValue
+  relationSchemas
 }: UseEntityFieldRenderersProps) => {
   const getTypedRelationFieldState = (fieldId: string) =>
     typedRelationEditState[fieldId] ?? emptyTypedRelationFieldState();
@@ -99,14 +95,12 @@ export const useEntityFieldRenderers = ({
   const renderPropertyRow = (
     f: EntitySchema['fields'][number],
     groupAccess: FieldGroupAccess = 'edit',
-    label?: string,
-    displayVariant?: 'default' | 'drawer' | 'drawer-stat'
+    label?: string
   ) => (
     <PropertyRow
       key={f.id}
       field={f}
       label={label}
-      displayVariant={displayVariant}
       value={entity[f.id]}
       editing={editing && groupAccess !== 'view'}
       editValue={editState[f.id]}
@@ -139,7 +133,6 @@ export const useEntityFieldRenderers = ({
           else state.remove.add(relationUid);
         })
       }
-      formatDateValue={formatDateValue}
       onChange={v => {
         setEditState(s => ({ ...s, [f.id]: v }));
         if (validationErrors.has(f.id))
@@ -151,7 +144,6 @@ export const useEntityFieldRenderers = ({
       }}
       refLookup={refLookup}
       referenceOptions={referenceOptions}
-      onOpenRelatedEntity={onOpenRelatedEntity}
       hasError={validationErrors.has(f.id)}
       externalMeta={entity._externalMetadata?.[f.id]}
     />

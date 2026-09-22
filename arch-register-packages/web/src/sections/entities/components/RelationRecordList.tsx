@@ -62,8 +62,6 @@ export const RelationRecordCard = ({
   expanded,
   onToggleExpand,
   onViewHistory,
-  showHistory = true,
-  presentation = 'default',
   onEdit,
   onDelete
 }: {
@@ -74,8 +72,6 @@ export const RelationRecordCard = ({
   expanded: boolean;
   onToggleExpand: () => void;
   onViewHistory: () => void;
-  showHistory?: boolean;
-  presentation?: 'default' | 'drawer-stat';
   onEdit?: () => void;
   onDelete?: () => void;
 }) => {
@@ -97,16 +93,15 @@ export const RelationRecordCard = ({
       return formatted !== null ? `${f.name}: ${formatted}` : null;
     })
     .filter((v): v is string => v !== null);
-  const alwaysExpanded = presentation === 'drawer-stat';
 
   return (
     <div
       style={{
-        marginBottom: alwaysExpanded ? 0 : 6,
+        marginBottom: 6,
         border: '1px solid var(--panel-border)',
-        borderRadius: alwaysExpanded ? 6 : 4,
+        borderRadius: 4,
         padding: 8,
-        background: alwaysExpanded ? 'transparent' : 'var(--base-bg)'
+        background: 'var(--base-bg)'
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -115,11 +110,11 @@ export const RelationRecordCard = ({
             legally nest inside one). Clicking anywhere but the link toggles expand. */}
         {/* biome-ignore lint/a11y/useSemanticElements: nested entity link can't sit inside a <button> */}
         <div
-          {...(alwaysExpanded ? {} : { role: 'button', tabIndex: 0 })}
-          style={{ flex: 1, cursor: alwaysExpanded ? undefined : 'pointer' }}
-          onClick={alwaysExpanded ? undefined : onToggleExpand}
+          role="button"
+          tabIndex={0}
+          style={{ flex: 1, cursor: 'pointer' }}
+          onClick={onToggleExpand}
           onKeyDown={event => {
-            if (alwaysExpanded) return;
             if (event.key === 'Enter' || event.key === ' ') {
               event.preventDefault();
               onToggleExpand();
@@ -127,16 +122,14 @@ export const RelationRecordCard = ({
           }}
         >
           <span className={styles.relationLead}>
-            {!alwaysExpanded && (
-              <TbChevronRight
-                size={10}
-                className={sharedStyles.dim}
-                style={{
-                  transform: expanded ? 'rotate(90deg)' : undefined,
-                  transition: 'transform 0.1s ease'
-                }}
-              />
-            )}
+            <TbChevronRight
+              size={10}
+              className={sharedStyles.dim}
+              style={{
+                transform: expanded ? 'rotate(90deg)' : undefined,
+                transition: 'transform 0.1s ease'
+              }}
+            />
             <EntityNavigationLink
               publicId={otherEndpoint.id}
               className={styles.relationName}
@@ -181,27 +174,11 @@ export const RelationRecordCard = ({
         )}
       </div>
       {expanded && (
-        <div
-          style={{ padding: presentation === 'drawer-stat' ? '2px 0 0 0' : '8px 10px 4px 16px' }}
-        >
+        <div style={{ padding: '8px 10px 4px 16px' }}>
           {activeFields.map(f => (
-            <div
-              key={f.id}
-              className={
-                presentation === 'drawer-stat'
-                  ? overviewStyles.relationPropRow
-                  : overviewStyles.propRow
-              }
-              style={{ alignItems: 'center' }}
-            >
+            <div key={f.id} className={overviewStyles.propRow} style={{ alignItems: 'center' }}>
               <div className={overviewStyles.propLabel}>{f.name}</div>
-              <div
-                className={
-                  presentation === 'drawer-stat'
-                    ? overviewStyles.relationPropValue
-                    : overviewStyles.propValue
-                }
-              >
+              <div className={overviewStyles.propValue}>
                 {f.type === 'entityRelation'
                   ? (renderEntityRelationFieldValue(record[f.id], refLookup) ?? (
                       <span className={sharedStyles.dim}>—</span>
@@ -212,13 +189,11 @@ export const RelationRecordCard = ({
               </div>
             </div>
           ))}
-          {showHistory && (
-            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-              <Button onClick={onViewHistory} style={{ marginTop: 8 }}>
-                View history
-              </Button>
-            </div>
-          )}
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <Button onClick={onViewHistory} style={{ marginTop: 8 }}>
+              View history
+            </Button>
+          </div>
         </div>
       )}
     </div>
@@ -229,16 +204,12 @@ export const RelationRecordList = ({
   records,
   direction,
   relationSchema,
-  workspaceId,
-  presentation = 'default',
-  showHistory = true
+  workspaceId
 }: {
   records: RelationRecord[];
   direction: RelationDirection;
   relationSchema: RelationSchema | undefined;
   workspaceId: string;
-  presentation?: 'default' | 'drawer-stat';
-  showHistory?: boolean;
 }) => {
   const [expandedUid, setExpandedUid] = useState<string | null>(null);
   const [historyRecord, setHistoryRecord] = useState<RelationRecord | null>(null);
@@ -254,11 +225,9 @@ export const RelationRecordList = ({
           direction={direction}
           relationSchema={relationSchema}
           workspaceId={workspaceId}
-          expanded={presentation === 'drawer-stat' || expandedUid === record._uid}
+          expanded={expandedUid === record._uid}
           onToggleExpand={() => setExpandedUid(expandedUid === record._uid ? null : record._uid)}
           onViewHistory={() => setHistoryRecord(record)}
-          showHistory={showHistory}
-          presentation={presentation}
         />
       ))}
       <RelationAuditLogDialog
