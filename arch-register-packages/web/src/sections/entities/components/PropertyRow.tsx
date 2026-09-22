@@ -12,7 +12,6 @@ import type { ExternalMetadataResult } from '@arch-register/api-types/common';
 import type { SupportedCurrency } from '@arch-register/api-types/workspaceConfigContract';
 import type { RefLookup } from '../types/entityDetailTypes';
 import styles from './EntityOverviewTab.module.css';
-import sharedStyles from '../EntityDetailScreen.module.css';
 import { ExternalMetadataIndicator } from '../../../components/ExternalMetadataIndicator';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import type { RelationRecord } from '@arch-register/api-types/relationContract';
