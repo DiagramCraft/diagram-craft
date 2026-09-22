@@ -7,7 +7,8 @@ import { isEntityRelationField } from '@arch-register/api-types/relationSchemaCo
 import type { WorkspaceCapabilityBindings } from '@arch-register/api-types/workspaceCapabilityContract';
 import {
   entityDrawerConfigurationSchema,
-  mergeEntityDrawerProfiles
+  mergeEntityDrawerProfiles,
+  remapEntityDrawerProfiles
 } from '@arch-register/api-types/entityDrawerConfiguration';
 import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
 import type { DatabaseAdapter } from '../../db/database';
@@ -463,11 +464,9 @@ export const applyDefinitionImport = async (
       });
     }
 
-    const importedDrawerProfiles = Object.fromEntries(
-      Object.entries(plan.entityDrawerProfiles).flatMap(([sourceSchemaId, profile]) => {
-        const targetSchemaId = schemaIdMap.get(sourceSchemaId);
-        return targetSchemaId ? [[targetSchemaId, profile] as const] : [];
-      })
+    const importedDrawerProfiles = remapEntityDrawerProfiles(
+      plan.entityDrawerProfiles,
+      schemaIdMap
     );
     if (Object.keys(importedDrawerProfiles).length > 0) {
       const existingDrawerConfiguration =

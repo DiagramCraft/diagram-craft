@@ -162,8 +162,9 @@
               redaction use the same query and authorization pipeline as the entity browser.
 
             - @id:ar.workspace.configuration.entity-drawers Administrators can configure a schema-scoped,
-              read-only entity drawer with ordered sections, fields, metadata, relations, and registered semantic
-              content slots. Without a stored profile, the drawer falls back to schema-ordered attributes,
+              read-only entity drawer with ordered sections, fields, metadata, relations, direct containment-child
+              lists, and registered semantic content slots. Without a stored profile, the drawer falls back to
+              schema-ordered attributes,
               attribute groups, and metadata; seeded or templated authored profiles retain their richer content.
               Missing or unsupported references fall back safely to that generic drawer.
 
@@ -305,8 +306,8 @@
           an owner facet with counts.
 
           The configurable entity drawer shows the configured subtree roll-up stats (@id:ar.strategy.view-config) plus
-          a leaf count, capability badges, configured fields, and registered Strategy content slots for direct
-          children, linked objectives and initiatives, and realized-by applications. Child selections replace the
+          a leaf count, capability badges, configured fields, the built-in containment-child list, and registered
+          Strategy content slots for linked objectives and initiatives and realized-by applications. Child selections replace the
           current drawer target, and the footer action opens the underlying record in Entities. "Realized by" unions
           applications the capability supports directly with ones supported anywhere in its recursive containment
           subtree, so non-leaf capabilities also surface coverage carried by their descendants; each entity reached

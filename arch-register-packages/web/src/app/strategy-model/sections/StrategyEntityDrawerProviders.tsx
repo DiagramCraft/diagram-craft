@@ -1,7 +1,6 @@
 import { useMemo, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Chip } from '../../../components/Chip';
-import { useEntityTree } from '../../../hooks/useEntities';
 import { entitiesQuery } from '../../../queries/entities';
 import { workspaceCapabilityConfigurationsQuery } from '../../../queries/workspaceConfig';
 import {
@@ -104,47 +103,6 @@ const StrategyRollupProvider = ({ context, label, showLabel }: EntityDrawerProvi
             <div className={styles.statLabel}>Leaf count</div>
             <div className={styles.statValue}>{result.leafCount ?? '—'}</div>
           </div>
-        </div>
-      </EntityDrawerProviderStatus>
-    </ProviderFrame>
-  );
-};
-
-const StrategyChildrenProvider = ({ context, label, showLabel }: EntityDrawerProviderProps) => {
-  const tree = useEntityTree(context.workspaceId, { schemaId: context.schema.id }, true);
-  const children = useMemo(() => {
-    const nodeById = new Map((tree.data?.nodes ?? []).map(node => [node._uid, node]));
-    return (tree.data?.edges ?? [])
-      .filter(edge => edge.parentId === context.entity._uid)
-      .map(edge => nodeById.get(edge.childId))
-      .filter((node): node is NonNullable<typeof node> => node != null);
-  }, [context.entity._uid, tree.data]);
-  const state = tree.isLoading
-    ? 'loading'
-    : tree.isError
-      ? 'unavailable'
-      : children.length > 0
-        ? 'ready'
-        : 'empty';
-
-  return (
-    <ProviderFrame label={label} showLabel={showLabel}>
-      <EntityDrawerProviderStatus
-        state={state}
-        emptyMessage="No child capabilities."
-        unavailableMessage="Child capabilities are unavailable."
-      >
-        <div className={styles.tags}>
-          {children.map(child => (
-            <button
-              key={child._uid}
-              type="button"
-              className={styles.childChip}
-              onClick={() => context.openEntity(child._uid)}
-            >
-              {child._name}
-            </button>
-          ))}
         </div>
       </EntityDrawerProviderStatus>
     </ProviderFrame>
@@ -311,11 +269,6 @@ export const strategyEntityDrawerProviderDefinitions = [
     slotId: 'strategy.rollup',
     supports: isBusinessCapabilitySchema,
     Component: StrategyRollupProvider
-  },
-  {
-    slotId: 'strategy.children',
-    supports: isBusinessCapabilitySchema,
-    Component: StrategyChildrenProvider
   },
   {
     slotId: 'strategy.realized-by',

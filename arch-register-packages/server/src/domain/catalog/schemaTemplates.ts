@@ -26,7 +26,10 @@ import type {
 } from '../document/db/documentDatabase';
 import type { RelationField } from '@arch-register/api-types/relationSchemaContract';
 import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
-import type { EntityDrawerProfile } from '@arch-register/api-types/entityDrawerConfiguration';
+import {
+  remapEntityDrawerProfiles,
+  type EntityDrawerProfile
+} from '@arch-register/api-types/entityDrawerConfiguration';
 import type { BrowserView } from '@arch-register/api-types/viewContract';
 import type { EntityQuery, PathStep, QueryNode } from '@arch-register/api-types/entityQueryIR';
 import type { RelationSchemaDbCreate } from './db/relationDatabase';
@@ -3704,7 +3707,12 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             collapsible: true,
             items: [
               { kind: 'metadata', slot: 'owner' },
-              { kind: 'slot', slotId: 'strategy.children', label: 'Children' },
+              {
+                kind: 'children',
+                childSchemaId: 'business_capability',
+                fieldId: 'parent',
+                label: 'Children'
+              },
               { kind: 'slot', slotId: 'strategy.realized-by', label: 'Realized by' },
               {
                 kind: 'slot',
@@ -4718,11 +4726,9 @@ const materializeTemplateFragments = (
         ) as WorkspaceCapabilityBindings
       })
     );
-    const entityDrawerProfiles = Object.fromEntries(
-      Object.entries(fragment.template.entityDrawerProfiles ?? {}).flatMap(([symId, profile]) => {
-        const schemaId = schemaIds.get(symId);
-        return schemaId ? [[schemaId, profile] as const] : [];
-      })
+    const entityDrawerProfiles = remapEntityDrawerProfiles(
+      fragment.template.entityDrawerProfiles ?? {},
+      schemaIds
     );
 
     return {

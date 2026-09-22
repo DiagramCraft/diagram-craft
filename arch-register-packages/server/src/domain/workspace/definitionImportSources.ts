@@ -15,7 +15,10 @@ import { getSchemaGovernancePoliciesBySchema } from '../governance/schemaGoverna
 import type { SchemaField, SharedFieldGroupLink } from '@arch-register/api-types/schemaContract';
 import type { RelationField } from '@arch-register/api-types/relationSchemaContract';
 import type { DefinitionImportSource } from '@arch-register/api-types/workspaceContract';
-import { entityDrawerConfigurationSchema } from '@arch-register/api-types/entityDrawerConfiguration';
+import {
+  entityDrawerConfigurationSchema,
+  remapEntityDrawerProfiles
+} from '@arch-register/api-types/entityDrawerConfiguration';
 import type {
   DefinitionSource,
   ImportableFieldGroup,
@@ -311,11 +314,14 @@ export const sourceFromBuiltin = (template: SchemaTemplate): DefinitionSource =>
         ) as DefinitionSource['capabilityConfigurations'][number]['bindings']
       })
     ),
-    entityDrawerProfiles: Object.fromEntries(
-      Object.entries(template.entityDrawerProfiles ?? {}).map(([symId, profile]) => [
-        sourceDefinitionId(rootOwnerId, template.id, symId),
-        profile
-      ])
+    entityDrawerProfiles: remapEntityDrawerProfiles(
+      template.entityDrawerProfiles ?? {},
+      new Map(
+        template.schemas.map(schema => [
+          schema.symId,
+          sourceDefinitionId(rootOwnerId, template.id, schema.symId)
+        ])
+      )
     ),
     dashboardWidgets: template.dashboardWidgets ?? [],
     dependencies,

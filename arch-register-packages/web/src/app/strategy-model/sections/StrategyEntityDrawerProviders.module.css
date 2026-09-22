@@ -31,23 +31,6 @@
   font-variant-numeric: tabular-nums;
 }
 
-.childChip {
-  display: inline-flex;
-  align-items: center;
-  border: 1px solid var(--panel-border);
-  border-radius: 999px;
-  padding: 3px 10px;
-  font-size: 11px;
-  background: var(--cmp-bg);
-  cursor: pointer;
-  color: var(--text-primary);
-}
-
-.childChip:hover {
-  border-color: var(--accent-fg);
-  color: var(--accent-fg);
-}
-
 .viaLabel {
   color: var(--text-muted);
 }

@@ -1,6 +1,4 @@
 // @vitest-environment jsdom
-import { act } from 'react';
-import { createRoot } from 'react-dom/client';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { EntityDrawerProviderContext } from '../../../sections/entities/entityDrawer/EntityDrawerProviderRegistry';
@@ -8,14 +6,6 @@ import { strategyEntityDrawerProviderDefinitions } from './StrategyEntityDrawerP
 
 const mocks = vi.hoisted(() => ({
   query: vi.fn(),
-  tree: {
-    data: {
-      nodes: [{ _uid: 'child-1', _name: 'Account Management' }],
-      edges: [{ parentId: 'cap-1', childId: 'child-1' }]
-    },
-    isLoading: false,
-    isError: false
-  },
   rollup: {
     values: { maturity: 3 },
     currency: { maturity: null },
@@ -57,10 +47,6 @@ const config = {
 
 vi.mock('@tanstack/react-query', () => ({
   useQuery: (options: { queryKey: readonly unknown[] }) => mocks.query(options)
-}));
-
-vi.mock('../../../hooks/useEntities', () => ({
-  useEntityTree: () => mocks.tree
 }));
 
 vi.mock('../../../queries/entities', () => ({
@@ -169,17 +155,13 @@ describe('strategy entity drawer providers', () => {
     );
   });
 
-  it('renders child capabilities, realized-by provenance, objectives, and initiatives', () => {
-    const children = provider('strategy.children');
+  it('renders realized-by provenance, objectives, and initiatives', () => {
     const realizedBy = provider('strategy.realized-by');
     const objectives = provider('strategy.linked-objectives');
     const initiatives = provider('strategy.linked-initiatives');
     const item = (slotId: string) => ({ kind: 'slot' as const, slotId });
 
     const markup = [
-      renderToStaticMarkup(
-        <children.Component context={context} item={item(children.slotId)} label="Children" />
-      ),
       renderToStaticMarkup(
         <realizedBy.Component
           context={context}
@@ -203,45 +185,17 @@ describe('strategy entity drawer providers', () => {
       )
     ].join('');
 
-    expect(markup).toContain('Account Management');
     expect(markup).toContain('Billing System');
     expect(markup).toContain('via Account Management');
     expect(markup).toContain('Increase conversion');
     expect(markup).toContain('Checkout Simplification');
   });
 
-  it('replaces the current drawer target when a child is selected', async () => {
-    const definition = provider('strategy.children');
-    const container = document.createElement('div');
-    const root = createRoot(container);
-    (
-      globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-    ).IS_REACT_ACT_ENVIRONMENT = true;
-
-    await act(async () => {
-      root.render(
-        <definition.Component
-          context={context}
-          item={{ kind: 'slot', slotId: definition.slotId }}
-          label="Children"
-        />
-      );
-    });
-    await act(async () => {
-      container.querySelector('button')?.click();
-    });
-
-    expect(context.openEntity).toHaveBeenCalledWith('child-1');
-    root.unmount();
-  });
-
-  it('only supports capability-shaped schemas', () => {
-    expect(provider('strategy.children').supports(context)).toBe(true);
+  it('does not own the built-in containment children item', () => {
     expect(
-      provider('strategy.children').supports({
-        ...context,
-        schema: { ...context.schema, fields: [] }
-      })
+      strategyEntityDrawerProviderDefinitions.some(
+        definition => definition.slotId === 'strategy.children'
+      )
     ).toBe(false);
   });
 });

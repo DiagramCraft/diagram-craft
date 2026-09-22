@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useNavigate } from '@tanstack/react-router';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Chip } from '../../../components/Chip';
 import { Drawer } from '../../../components/Drawer';
@@ -7,6 +8,7 @@ import { StatusChip } from '../../../components/StatusChip';
 import { useWorkspaceAuthorization } from '../../../auth/WorkspaceAuthorizationContext';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { useEntity, useEntitiesBySchema, useEntityRelations } from '../../../hooks/useEntities';
+import { entitiesQuery } from '../../../queries/entities';
 import { useEntityTypedRelations } from '../../../hooks/useRelations';
 import { useEntityDrawerConfiguration } from '../../../hooks/useWorkspaceConfig';
 import { asEntityPublicId, entityDetailRoute } from '../../../routes/publicObjectRoutes';
@@ -23,7 +25,10 @@ import {
   type ResolvedEntityDrawerBadge,
   type ResolvedEntityDrawerItem
 } from './entityDrawerState';
-import type { EntityDrawerProviderContext } from './EntityDrawerProviderRegistry';
+import {
+  EntityDrawerProviderStatus,
+  type EntityDrawerProviderContext
+} from './EntityDrawerProviderRegistry';
 import { entityDrawerProviderRegistry } from './entityDrawerProviders';
 import type { EntityRecord, EntitySummary } from '@arch-register/api-types/entityContract';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
@@ -188,6 +193,62 @@ const MetadataItem = ({
   );
 };
 
+const ContainmentChildrenItem = ({
+  item,
+  entity,
+  label,
+  workspaceSlug,
+  openEntity
+}: {
+  item: Extract<ResolvedEntityDrawerItem['item'], { kind: 'children' }>;
+  entity: EntityRecord;
+  label: string;
+  workspaceSlug: string;
+  openEntity: (entityId: string) => void;
+}) => {
+  const query = useQuery(
+    entitiesQuery(workspaceSlug, {
+      schemaId: item.childSchemaId,
+      view: 'summary',
+      conditions: [{ fieldId: item.fieldId, op: 'equals', value: entity._uid }]
+    })
+  );
+  const children = query.data?.items ?? [];
+  const state = query.isLoading
+    ? 'loading'
+    : query.isError
+      ? 'unavailable'
+      : children.length > 0
+        ? 'ready'
+        : 'empty';
+
+  return (
+    <div className={styles.childrenItem}>
+      <div className="dim" style={{ fontSize: 12, fontWeight: 600, marginBottom: 6 }}>
+        {label}
+      </div>
+      <EntityDrawerProviderStatus
+        state={state}
+        emptyMessage="No children."
+        unavailableMessage="Children are unavailable."
+      >
+        <div className={styles.childrenTags}>
+          {children.map(child => (
+            <button
+              key={child._uid}
+              type="button"
+              className={styles.childChip}
+              onClick={() => openEntity(child._uid)}
+            >
+              {child._name}
+            </button>
+          ))}
+        </div>
+      </EntityDrawerProviderStatus>
+    </div>
+  );
+};
+
 const DrawerItem = ({
   item,
   providerContext,
@@ -217,6 +278,17 @@ const DrawerItem = ({
 }) => {
   if (item.item.kind === 'metadata') {
     return <MetadataItem item={item} entity={entity} lifecycleStates={lifecycleStates} />;
+  }
+  if (item.item.kind === 'children') {
+    return (
+      <ContainmentChildrenItem
+        item={item.item}
+        entity={entity}
+        label={item.label}
+        workspaceSlug={workspaceSlug}
+        openEntity={providerContext.openEntity}
+      />
+    );
   }
   if (item.item.kind === 'slot' && item.provider) {
     const Provider = item.provider.Component;

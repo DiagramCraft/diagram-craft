@@ -211,4 +211,69 @@ describe('resolveEntityDrawerRenderModel', () => {
       presentation: 'mini-panel'
     });
   });
+
+  it('resolves cross-schema containment children with their configured label', () => {
+    const parentSchema = { ...schema, id: 'vendor', name: 'Vendor' };
+    const childSchema = {
+      id: 'contract',
+      name: 'Contract',
+      fields: [
+        {
+          id: 'vendor',
+          name: 'Vendor',
+          type: 'containment',
+          schemaId: 'vendor'
+        }
+      ]
+    } as unknown as EntitySchema;
+    const parentEntity = { ...entity, _schema: { id: 'vendor', name: 'Vendor' } };
+    const result = resolveEntityDrawerRenderModel({
+      entity: parentEntity,
+      schema: parentSchema,
+      profile: {
+        header: { badges: [] },
+        sections: [
+          {
+            id: 'children',
+            title: 'Children',
+            collapsible: true,
+            items: [
+              { kind: 'children', childSchemaId: 'contract', fieldId: 'vendor', label: 'Contracts' }
+            ]
+          }
+        ]
+      },
+      providerRegistry: createEntityDrawerProviderRegistry([]),
+      providerContext: {
+        ...providerContext,
+        entity: parentEntity,
+        schema: parentSchema,
+        schemas: [parentSchema, childSchema]
+      },
+      getFieldGroupAccess: () => 'edit'
+    });
+
+    expect(result.sections[0]?.items[0]).toMatchObject({
+      label: 'Contracts',
+      item: { kind: 'children', childSchemaId: 'contract', fieldId: 'vendor' }
+    });
+    expect(result.diagnostics).toEqual([]);
+  });
+
+  it('omits children whose containment target no longer matches the current schema', () => {
+    const result = resolve({
+      header: { badges: [] },
+      sections: [
+        {
+          id: 'children',
+          title: 'Children',
+          collapsible: true,
+          items: [{ kind: 'children', childSchemaId: 'missing', fieldId: 'parent' }]
+        }
+      ]
+    });
+
+    expect(result.sections).toEqual([]);
+    expect(result.diagnostics[0]?.code).toBe('invalid_children_target');
+  });
 });

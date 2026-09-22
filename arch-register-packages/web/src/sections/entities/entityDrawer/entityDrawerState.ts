@@ -82,6 +82,40 @@ const metadataLabel = (slot: string): string =>
 const slotLabel = (slotId: string): string =>
   ENTITY_DRAWER_SLOTS.find(candidate => candidate.id === slotId)?.label ?? slotId;
 
+const resolveChildrenItem = ({
+  item,
+  schema,
+  schemas,
+  sectionId,
+  diagnostics
+}: {
+  item: Extract<EntityDrawerItem, { kind: 'children' }>;
+  schema: EntitySchema;
+  schemas: EntitySchema[];
+  sectionId: string;
+  diagnostics: EntityDrawerDiagnostic[];
+}): ResolvedEntityDrawerItem | null => {
+  const childSchema = schemas.find(candidate => candidate.id === item.childSchemaId);
+  const field = childSchema?.fields.find(candidate => candidate.id === item.fieldId);
+  if (
+    !childSchema ||
+    !field ||
+    field.archived ||
+    field.type !== 'containment' ||
+    field.schemaId !== schema.id
+  ) {
+    diagnostics.push({
+      code: 'invalid_children_target',
+      schemaId: schema.id,
+      sectionId,
+      itemId: `${item.childSchemaId}:${item.fieldId}`,
+      message: `Drawer children target '${item.childSchemaId}.${item.fieldId}' is missing, archived, or does not contain this schema.`
+    });
+    return null;
+  }
+  return { item, label: item.label ?? 'Children' };
+};
+
 const fieldAccess = (
   schema: EntitySchema,
   field: EntitySchema['fields'][number],
@@ -238,6 +272,16 @@ export const resolveEntityDrawerRenderModel = ({
           return [];
         }
         return [{ item, label: item.label ?? slotLabel(item.slotId), provider }];
+      }
+      if (item.kind === 'children') {
+        const resolved = resolveChildrenItem({
+          item,
+          schema,
+          schemas: providerContext.schemas,
+          sectionId: section.id,
+          diagnostics
+        });
+        return resolved ? [resolved] : [];
       }
       const resolved = resolveFieldItem({
         item,
