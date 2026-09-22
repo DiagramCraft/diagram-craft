@@ -123,11 +123,5 @@ export const createVendorManagementWorkspaceRoutes = <TParentRoute extends AnyRo
       })
   );
 
-  return [
-    overviewRoute,
-    vendorsRoute,
-    contractsRoute,
-    spendRoute,
-    riskRoute
-  ] as const;
+  return [overviewRoute, vendorsRoute, contractsRoute, spendRoute, riskRoute] as const;
 };
