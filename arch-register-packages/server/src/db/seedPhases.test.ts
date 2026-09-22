@@ -84,6 +84,18 @@ describe('composable seed phases', () => {
           profiles: seedTemplateDefinitions.entityDrawerProfiles
         }
       });
+      expect(Object.keys(seedTemplateDefinitions.entityDrawerProfiles).sort()).toEqual(
+        [
+          seedSchemas.find(schema => schema.name === 'API')!.id,
+          seedSchemas.find(schema => schema.name === 'Contract')!.id,
+          seedSchemas.find(schema => schema.name === 'Business Capability')!.id,
+          seedSchemas.find(schema => schema.name === 'Control')!.id,
+          seedSchemas.find(schema => schema.name === 'Data Entity')!.id,
+          seedSchemas.find(schema => schema.name === 'Risk')!.id,
+          seedSchemas.find(schema => schema.name === 'Term')!.id,
+          seedSchemas.find(schema => schema.name === 'Vendor')!.id
+        ].sort()
+      );
       // Sorted by `type` before comparing — `listWorkspaceCapabilityConfigurations` doesn't
       // guarantee the same order the source templates declare their capability configurations in
       // (they're composed from multiple templates), and this assertion only cares that every

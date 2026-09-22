@@ -79,6 +79,38 @@ export const glossarySchemaTemplate: SchemaTemplate = {
   enums: [glossaryStatusEnum],
   documentTypes: commonDocumentTypes,
   documentTemplates: commonDocumentTemplates,
+  entityDrawerProfiles: {
+    term: {
+      header: {
+        badges: [
+          { kind: 'field', fieldId: 'status', showLabel: false },
+          { kind: 'metadata', slot: 'lifecycle' }
+        ]
+      },
+      sections: [
+        {
+          id: 'attributes',
+          title: 'Attributes',
+          collapsible: false,
+          items: [
+            { kind: 'field', fieldId: 'definition' },
+            { kind: 'field', fieldId: 'synonyms' },
+            { kind: 'field', fieldId: 'abbreviations' }
+          ]
+        },
+        {
+          id: 'details',
+          title: 'Details',
+          collapsible: true,
+          items: [
+            { kind: 'metadata', slot: 'owner' },
+            { kind: 'relation', fieldId: 'categories' },
+            { kind: 'slot', slotId: 'business-glossary.usage', label: 'Usage & backlinks' }
+          ]
+        }
+      ]
+    }
+  },
   capabilityConfigurations: [
     {
       type: 'business-glossary',
