@@ -87,11 +87,6 @@ export const entityDrawerBadgeSchema = z.discriminatedUnion('kind', [
     kind: z.literal('metadata'),
     slot: entityDrawerMetadataSlotSchema,
     label: labelOverrideSchema
-  }),
-  z.object({
-    kind: z.literal('derivedBadge'),
-    badgeId: z.string().min(1),
-    label: labelOverrideSchema
   })
 ]);
 
@@ -125,8 +120,7 @@ export const entityDrawerDiagnosticSchema = z.object({
     'unsupported_slot',
     'invalid_slot_options',
     'unsupported_slot_for_schema',
-    'unsupported_rollup_schema',
-    'unsupported_badge'
+    'unsupported_rollup_schema'
   ]),
   schemaId: z.string().optional(),
   sectionId: z.string().optional(),
@@ -227,73 +221,6 @@ type CapabilityConfigurationLike = {
   type: string;
   bindings: Record<string, WorkspaceCapabilityBinding>;
   view_config?: unknown;
-};
-
-/**
- * Catalog of badges computed from an entity's own field values (a band/threshold mapping, e.g.
- * Risk's residual-risk band or Contract's renewal window) rather than displaying a raw field
- * value. The actual per-entity computation lives in the web package's badge registry
- * (`entityDrawerBadges.ts`) alongside the source-of-truth banding logic it wraps; this catalog only
- * carries the metadata needed to validate a `derivedBadge` profile item and, for capability-bound
- * badges, to auto-include it in the default profile of any schema bound to that capability role
- * (mirrors `ENTITY_DRAWER_SLOT_DEFINITIONS`/`getEntityDrawerSlotSchemaIds` for slots).
- */
-export type EntityDrawerBadgeDefinition = {
-  id: string;
-  label: string;
-  description: string;
-  application: string;
-  capabilityBinding?: { capabilityType: string; role: string };
-};
-
-export const ENTITY_DRAWER_BADGE_DEFINITIONS: EntityDrawerBadgeDefinition[] = [
-  {
-    id: 'risk.residualBand',
-    label: 'Residual risk band',
-    description: 'Low/Medium/High/Critical band derived from the residual risk score.',
-    application: 'Risk & Compliance',
-    capabilityBinding: { capabilityType: 'risk-compliance', role: 'risk' }
-  },
-  {
-    id: 'contract.renewalWindow',
-    label: 'Renewal window',
-    description: 'Overdue/upcoming renewal window derived from the contract end date.',
-    application: 'Vendor Management',
-    capabilityBinding: { capabilityType: 'vendor-management', role: 'contract' }
-  }
-];
-
-export const getEntityDrawerBadgeSchemaIds = (
-  schemas: EntityDrawerSchema[],
-  capabilityConfigurations: readonly CapabilityConfigurationLike[] = []
-): ReadonlyMap<string, string[]> => {
-  const schemaIds = new Set(schemas.map(schema => schema.id));
-  const result = new Map<string, string[]>();
-  for (const definition of ENTITY_DRAWER_BADGE_DEFINITIONS) {
-    const binding = definition.capabilityBinding;
-    if (!binding) continue;
-    const configuration = capabilityConfigurations.find(
-      candidate => candidate.type === binding.capabilityType
-    );
-    const schemaId = configuration?.bindings[binding.role]?.target;
-    if (schemaId?.kind !== 'entity_schema' || !schemaIds.has(schemaId.id)) continue;
-    result.set(definition.id, [...(result.get(definition.id) ?? []), schemaId.id]);
-  }
-  return result;
-};
-
-const getDefaultHeaderBadges = (
-  schemas: EntityDrawerSchema[],
-  schemaId: string,
-  capabilityConfigurations: readonly CapabilityConfigurationLike[]
-): EntityDrawerBadge[] => {
-  const supported = getEntityDrawerBadgeSchemaIds(schemas, capabilityConfigurations);
-  const badges: EntityDrawerBadge[] = [];
-  for (const definition of ENTITY_DRAWER_BADGE_DEFINITIONS) {
-    if (!supported.get(definition.id)?.includes(schemaId)) continue;
-    badges.push({ kind: 'derivedBadge', badgeId: definition.id });
-  }
-  return badges;
 };
 
 export const ENTITY_DRAWER_METADATA_SLOTS: EntityDrawerCatalog['metadataSlots'] = [
@@ -1527,16 +1454,6 @@ export const resolveEntityDrawerConfiguration = (
 ): { effective: EntityDrawerConfiguration; diagnostics: EntityDrawerDiagnostic[] } => {
   const defaults = buildFallbackEntityDrawerConfiguration(schemas);
   const supportedSlotSchemaIds = getEntityDrawerSlotSchemaIds(schemas, capabilityConfigurations);
-  const supportedBadgeSchemaIds = getEntityDrawerBadgeSchemaIds(schemas, capabilityConfigurations);
-  for (const schema of schemas) {
-    const derivedBadges = getDefaultHeaderBadges(schemas, schema.id, capabilityConfigurations);
-    if (derivedBadges.length === 0) continue;
-    const fallbackProfile = defaults.profiles[schema.id]!;
-    defaults.profiles[schema.id] = {
-      ...fallbackProfile,
-      header: { badges: [...fallbackProfile.header.badges, ...derivedBadges] }
-    };
-  }
   const diagnostics: EntityDrawerDiagnostic[] = [];
   if (raw === null || raw === undefined) return { effective: defaults, diagnostics };
 
@@ -1587,21 +1504,6 @@ export const resolveEntityDrawerConfiguration = (
     }));
     const badges = profile.header.badges.filter(badge => {
       if (badge.kind === 'metadata') return true;
-      if (badge.kind === 'derivedBadge') {
-        const definition = ENTITY_DRAWER_BADGE_DEFINITIONS.find(
-          candidate => candidate.id === badge.badgeId
-        );
-        if (!definition || !supportedBadgeSchemaIds.get(badge.badgeId)?.includes(schemaId)) {
-          diagnostics.push({
-            code: 'unsupported_badge',
-            schemaId,
-            itemId: badge.badgeId,
-            message: `Drawer badge '${badge.badgeId}' is not available for this schema.`
-          });
-          return false;
-        }
-        return true;
-      }
       const field = schema.fields.find(candidate => candidate.id === badge.fieldId);
       if (!field || !fieldIsVisible(field)) {
         diagnostics.push({

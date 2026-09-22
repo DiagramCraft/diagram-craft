@@ -30,7 +30,6 @@ import {
   type EntityDrawerProviderContext
 } from './EntityDrawerProviderRegistry';
 import { entityDrawerProviderRegistry } from './entityDrawerProviders';
-import { entityDrawerBadgeRegistry } from './entityDrawerBadges';
 import { RollupStatItem, RollupLeafCountItem } from './rollup/RollupItems';
 import type { EntityRecord, EntitySummary } from '@arch-register/api-types/entityContract';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
@@ -48,16 +47,6 @@ const EntityDrawerBadge = ({
   lifecycleStates: ReturnType<typeof useWorkspaceContext>['lifecycleStates'];
 }) => {
   const resolvePrincipalLabel = usePrincipalLabel();
-
-  if (resolved.badge.kind === 'derivedBadge') {
-    if (!resolved.derived) return null;
-    return (
-      <Chip dot={resolved.derived.color} tone="ghost">
-        {resolved.derived.label}
-      </Chip>
-    );
-  }
-
   const value =
     resolved.badge.kind === 'metadata'
       ? entityDrawerMetadataValue(entity, resolved.badge.slot)
@@ -489,8 +478,7 @@ export const EntityDrawer = ({
             profile,
             providerRegistry: entityDrawerProviderRegistry,
             providerContext,
-            getFieldGroupAccess,
-            badgeRegistry: entityDrawerBadgeRegistry
+            getFieldGroupAccess
           })
         : null,
     [entity, schema, profile, providerContext, getFieldGroupAccess]

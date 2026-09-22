@@ -437,42 +437,6 @@ describe('entity drawer configuration', () => {
     });
   });
 
-  it('includes the residual-risk derivedBadge in the default profile for a risk-bound schema', () => {
-    const riskSchema = {
-      id: 'risk',
-      name: 'Risk',
-      fields: [{ id: 'category', name: 'Category', type: 'select' }]
-    };
-    const configuration = {
-      type: 'risk-compliance',
-      bindings: { risk: { target: { kind: 'entity_schema', id: 'risk' } } }
-    } as const;
-
-    const result = resolveEntityDrawerConfiguration(null, [riskSchema], [configuration]);
-    expect(result.effective.profiles.risk!.header.badges).toEqual(
-      expect.arrayContaining([{ kind: 'derivedBadge', badgeId: 'risk.residualBand' }])
-    );
-  });
-
-  it('drops an unsupported derivedBadge with a diagnostic', () => {
-    const riskSchema = { id: 'risk', name: 'Risk', fields: [] };
-    const raw = {
-      version: 1,
-      profiles: {
-        risk: {
-          header: { badges: [{ kind: 'derivedBadge', badgeId: 'unknown.badge' }] },
-          sections: []
-        }
-      }
-    };
-
-    const result = resolveEntityDrawerConfiguration(raw, [riskSchema], []);
-    expect(result.effective.profiles.risk!.header.badges).toEqual([]);
-    expect(result.diagnostics).toEqual([
-      expect.objectContaining({ code: 'unsupported_badge', itemId: 'unknown.badge' })
-    ]);
-  });
-
   it('advertises Risk & Compliance provider slots for the configured Risk schema', () => {
     const riskSchema = {
       id: 'risk',

@@ -2,9 +2,8 @@ import { EntityDrawer } from '../../../sections/entities/entityDrawer/EntityDraw
 import { formatIsoDate } from '../../../utils/dateFormat';
 
 /**
- * Route adapter for the shared configurable entity drawer. Risk-specific derived content,
- * including the residual-risk-band header badge, is supplied by the drawer profile configuration
- * and the entity-drawer badge registry.
+ * Route adapter for the shared configurable entity drawer. Risk-specific derived content stays in
+ * the Risk & Compliance provider registry.
  */
 export const RiskDrawer = ({
   workspaceSlug,

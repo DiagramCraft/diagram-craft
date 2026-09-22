@@ -9,7 +9,6 @@ import {
   createEntityDrawerProviderRegistry,
   type EntityDrawerProviderContext
 } from './EntityDrawerProviderRegistry';
-import { createEntityDrawerBadgeRegistry } from './EntityDrawerBadgeRegistry';
 import { resolveEntityDrawerRenderModel } from './entityDrawerState';
 
 const schema = {
@@ -127,69 +126,6 @@ describe('resolveEntityDrawerRenderModel', () => {
       'missing_or_archived_field',
       'missing_or_archived_field',
       'missing_relation_field'
-    ]);
-  });
-
-  it('resolves a derivedBadge from the badge registry and hides it when the registry returns null', () => {
-    const badgeRegistry = createEntityDrawerBadgeRegistry([
-      {
-        badgeId: 'test.band',
-        resolve: candidate =>
-          candidate.status === 'Active' ? { label: 'active-band', color: 'red' } : null
-      }
-    ]);
-
-    const active = resolveEntityDrawerRenderModel({
-      entity,
-      schema,
-      profile: {
-        header: { badges: [{ kind: 'derivedBadge', badgeId: 'test.band' }] },
-        sections: []
-      },
-      providerRegistry: createEntityDrawerProviderRegistry([]),
-      providerContext,
-      getFieldGroupAccess: () => 'edit',
-      badgeRegistry
-    });
-    expect(active.badges[0]?.derived).toEqual({ label: 'active-band', color: 'red' });
-
-    const inactive = resolveEntityDrawerRenderModel({
-      entity: { ...entity, status: 'Retired' } as EntityRecord,
-      schema,
-      profile: {
-        header: { badges: [{ kind: 'derivedBadge', badgeId: 'test.band' }] },
-        sections: []
-      },
-      providerRegistry: createEntityDrawerProviderRegistry([]),
-      providerContext,
-      getFieldGroupAccess: () => 'edit',
-      badgeRegistry
-    });
-    expect(inactive.badges).toEqual([]);
-  });
-
-  it('reports a diagnostic for an unregistered derivedBadge', () => {
-    const result = resolveEntityDrawerRenderModel({
-      entity,
-      schema,
-      profile: {
-        header: { badges: [{ kind: 'derivedBadge', badgeId: 'unknown.badge' }] },
-        sections: []
-      },
-      providerRegistry: createEntityDrawerProviderRegistry([]),
-      providerContext,
-      getFieldGroupAccess: () => 'edit',
-      badgeRegistry: createEntityDrawerBadgeRegistry([])
-    });
-
-    expect(result.badges).toEqual([]);
-    expect(result.diagnostics).toEqual([
-      {
-        code: 'unsupported_badge',
-        schemaId: 'service',
-        itemId: 'unknown.badge',
-        message: "Drawer badge 'unknown.badge' is not registered."
-      }
     ]);
   });
 

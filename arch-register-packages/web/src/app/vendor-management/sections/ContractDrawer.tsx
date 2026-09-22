@@ -4,9 +4,9 @@ import { VENDOR_RAIL_PATHS, VENDOR_VENDORS_ID } from '../vendorManagementSection
 
 /**
  * Shared, configurable Contract drawer used by the Contracts list and renewal calendar. The
- * contract profile owns declarative fields, the systems-used provider, and the renewal-window
- * header badge; this adapter retains Vendor Management's nested vendor navigation (see #3372 for
- * generalizing nested drawer navigation).
+ * contract profile owns declarative fields and the systems-used provider; this adapter retains
+ * Vendor Management's nested vendor navigation (see #3372 for generalizing nested drawer
+ * navigation).
  */
 export const ContractDrawer = ({
   workspaceSlug,
