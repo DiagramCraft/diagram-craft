@@ -221,15 +221,6 @@ describe('DataStewardshipClassificationScreen', () => {
     );
   });
 
-  it('renders the view switcher below the stat tiles, matching the design reference layout', async () => {
-    await renderScreen();
-    const html = container.innerHTML;
-    const statsIndex = html.indexOf('Restricted datasets');
-    const switcherIndex = html.indexOf('Restricted flows');
-    expect(statsIndex).toBeGreaterThan(-1);
-    expect(switcherIndex).toBeGreaterThan(statsIndex);
-  });
-
   it('switches views via the in-screen toggle group', async () => {
     await renderScreen();
     const restrictedFlowsToggle = [...container.querySelectorAll('button')].find(

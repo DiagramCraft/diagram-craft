@@ -92,19 +92,11 @@ const modes = [
   }
 ];
 
-const views = [
-  'table',
-  'cards',
-  'tree',
-  'map',
-  'explore',
-  'matrix',
-  'timeline',
-  'radar',
-  'bubble',
-  'graph',
-  'traceability'
-] as const;
+// One representative view per prop-forwarding category is enough: within a category, every
+// view is forwarded props identically (see entityListViews/configurableViews below), so testing
+// every view name would just repeat the same assertions. 'table' additionally covers the
+// selection-callback behavior, which only applies to that one view.
+const views = ['table', 'cards', 'map'] as const;
 const entityListViews = new Set(['table', 'cards', 'tree']);
 const configurableViews = new Set([
   'map',
