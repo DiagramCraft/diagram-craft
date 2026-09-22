@@ -1493,7 +1493,7 @@ export const buildEntityDrawerCatalog = (
         type: field.type,
         archived: field.archived === true,
         groupId: field.groupId ?? null,
-        schemaId: 'schemaId' in field ? (field.schemaId ?? null) : null
+        ...(field.schemaId !== undefined ? { schemaId: field.schemaId } : {})
       }))
     })),
     metadataSlots: ENTITY_DRAWER_METADATA_SLOTS,

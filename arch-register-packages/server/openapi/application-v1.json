@@ -74404,6 +74404,32 @@
                                             "type": "object",
                                             "properties": {
                                               "kind": {
+                                                "const": "children"
+                                              },
+                                              "childSchemaId": {
+                                                "type": "string",
+                                                "minLength": 1
+                                              },
+                                              "fieldId": {
+                                                "type": "string",
+                                                "minLength": 1
+                                              },
+                                              "label": {
+                                                "type": "string",
+                                                "minLength": 1,
+                                                "maxLength": 120
+                                              }
+                                            },
+                                            "required": [
+                                              "kind",
+                                              "childSchemaId",
+                                              "fieldId"
+                                            ]
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "kind": {
                                                 "const": "slot"
                                               },
                                               "slotId": {
@@ -74473,6 +74499,7 @@
                               "missing_schema",
                               "missing_or_archived_field",
                               "missing_relation_field",
+                              "invalid_children_target",
                               "unsupported_slot",
                               "invalid_slot_options",
                               "unsupported_slot_for_schema"
@@ -74744,6 +74771,32 @@
                                       },
                                       "required": [
                                         "kind",
+                                        "fieldId"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "const": "children"
+                                        },
+                                        "childSchemaId": {
+                                          "type": "string",
+                                          "minLength": 1
+                                        },
+                                        "fieldId": {
+                                          "type": "string",
+                                          "minLength": 1
+                                        },
+                                        "label": {
+                                          "type": "string",
+                                          "minLength": 1,
+                                          "maxLength": 120
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "childSchemaId",
                                         "fieldId"
                                       ]
                                     },
@@ -75039,6 +75092,32 @@
                                             "type": "object",
                                             "properties": {
                                               "kind": {
+                                                "const": "children"
+                                              },
+                                              "childSchemaId": {
+                                                "type": "string",
+                                                "minLength": 1
+                                              },
+                                              "fieldId": {
+                                                "type": "string",
+                                                "minLength": 1
+                                              },
+                                              "label": {
+                                                "type": "string",
+                                                "minLength": 1,
+                                                "maxLength": 120
+                                              }
+                                            },
+                                            "required": [
+                                              "kind",
+                                              "childSchemaId",
+                                              "fieldId"
+                                            ]
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "kind": {
                                                 "const": "slot"
                                               },
                                               "slotId": {
@@ -75108,6 +75187,7 @@
                               "missing_schema",
                               "missing_or_archived_field",
                               "missing_relation_field",
+                              "invalid_children_target",
                               "unsupported_slot",
                               "invalid_slot_options",
                               "unsupported_slot_for_schema"
@@ -75248,6 +75328,16 @@
                                   "type": "boolean"
                                 },
                                 "groupId": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                },
+                                "schemaId": {
                                   "anyOf": [
                                     {
                                       "type": "string"
