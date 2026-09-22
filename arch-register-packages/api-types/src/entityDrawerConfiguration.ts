@@ -1140,6 +1140,55 @@ export const buildDefaultEntityDrawerProfile = (
   return { header: { badges: [] }, sections };
 };
 
+/**
+ * Builds the generic drawer used when a workspace has no stored drawer profile.
+ *
+ * This deliberately mirrors the schema-driven part of the entity overview: fields stay in
+ * schema order, grouped fields stay inside their schema field groups, and metadata is shown in a
+ * separate details section. Application-specific profiles and provider slots are authored in
+ * seed/template/workspace configuration instead of being inferred here.
+ */
+export const buildFallbackEntityDrawerProfile = (
+  schema: EntityDrawerSchema
+): EntityDrawerProfile => {
+  const fields = schema.fields.filter(fieldIsVisible);
+  const groups = (schema.groups ?? []).map(group => ({
+    id: `group:${group.id}`,
+    title: group.name,
+    collapsible: false,
+    items: fields.filter(field => field.groupId === group.id).map(field => fieldItem(field))
+  }));
+  const ungrouped = fields.filter(field => !field.groupId).map(field => fieldItem(field));
+
+  return {
+    header: { badges: [] },
+    sections: [
+      ...(ungrouped.length > 0
+        ? [{ id: 'attributes', title: 'Attributes', collapsible: false, items: ungrouped }]
+        : []),
+      ...groups.filter(group => group.items.length > 0),
+      {
+        id: 'metadata',
+        title: 'Details',
+        collapsible: true,
+        items: ENTITY_DRAWER_METADATA_SLOTS.map(slot => ({
+          kind: 'metadata' as const,
+          slot: slot.id
+        }))
+      }
+    ]
+  };
+};
+
+export const buildFallbackEntityDrawerConfiguration = (
+  schemas: EntityDrawerSchema[]
+): EntityDrawerConfiguration => ({
+  version: 1,
+  profiles: Object.fromEntries(
+    schemas.map(schema => [schema.id, buildFallbackEntityDrawerProfile(schema)])
+  )
+});
+
 export const buildDefaultEntityDrawerConfiguration = (
   schemas: EntityDrawerSchema[],
   capabilityConfigurations: readonly CapabilityConfigurationLike[] = []
@@ -1265,7 +1314,7 @@ export const resolveEntityDrawerConfiguration = (
   schemas: EntityDrawerSchema[],
   capabilityConfigurations: readonly CapabilityConfigurationLike[] = []
 ): { effective: EntityDrawerConfiguration; diagnostics: EntityDrawerDiagnostic[] } => {
-  const defaults = buildDefaultEntityDrawerConfiguration(schemas, capabilityConfigurations);
+  const defaults = buildFallbackEntityDrawerConfiguration(schemas);
   const supportedSlotSchemaIds = getEntityDrawerSlotSchemaIds(schemas, capabilityConfigurations);
   const diagnostics: EntityDrawerDiagnostic[] = [];
   if (raw === null || raw === undefined) return { effective: defaults, diagnostics };

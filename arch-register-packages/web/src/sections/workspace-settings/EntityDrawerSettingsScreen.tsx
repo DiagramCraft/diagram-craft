@@ -21,7 +21,7 @@ import type {
   EntityDrawerItem,
   EntityDrawerProfile
 } from '@arch-register/api-types/entityDrawerConfiguration';
-import { buildDefaultEntityDrawerProfile } from '@arch-register/api-types/entityDrawerConfiguration';
+import { buildFallbackEntityDrawerProfile } from '@arch-register/api-types/entityDrawerConfiguration';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import {
   useEntityDrawerCatalog,
@@ -336,7 +336,7 @@ export const EntityDrawerEditor = ({
     return (
       draft?.profiles[selectedSchemaId] ??
       configurationQuery.data?.effective_configuration.profiles[selectedSchemaId] ??
-      buildDefaultEntityDrawerProfile(selectedSchema)
+      buildFallbackEntityDrawerProfile(selectedSchema)
     );
   }, [
     configurationQuery.data?.effective_configuration.profiles,
@@ -529,9 +529,9 @@ export const EntityDrawerEditor = ({
         <div className={layoutStyles.offCopy}>
           <div className={layoutStyles.offTitle}>Using the default drawer layout</div>
           <div className={layoutStyles.offDesc}>
-            Fields follow the schema order, followed by metadata, relations, and available
-            application content. The drawer stays read-only and keeps its standard responsive
-            behavior.
+            Fields follow the schema order and field groups, followed by metadata. Application
+            content appears when it is authored in a seeded, templated, or custom profile. The
+            drawer stays read-only and keeps its standard responsive behavior.
           </div>
         </div>
         {canEdit && (

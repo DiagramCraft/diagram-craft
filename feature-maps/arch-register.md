@@ -163,7 +163,9 @@
 
             - @id:ar.workspace.configuration.entity-drawers Administrators can configure a schema-scoped,
               read-only entity drawer with ordered sections, fields, metadata, relations, and registered semantic
-              content slots. Missing or unsupported references fall back safely to the derived default drawer.
+              content slots. Without a stored profile, the drawer falls back to schema-ordered attributes,
+              attribute groups, and metadata; seeded or templated authored profiles retain their richer content.
+              Missing or unsupported references fall back safely to that generic drawer.
 
             - @id:ar.workspace.configuration.schemas Administrators can define entity schemas, fields, select options,
               and reusable workspace enums. Enum options have stable values, editable labels and descriptions, an
