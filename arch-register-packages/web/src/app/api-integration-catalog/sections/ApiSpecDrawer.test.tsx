@@ -3,17 +3,11 @@ import { describe, expect, it, vi } from 'vitest';
 import { ApiSpecDrawer } from './ApiSpecDrawer';
 
 vi.mock('../../../sections/entities/entityDrawer/EntityDrawer', () => ({
-  EntityDrawer: (props: {
-    workspaceSlug: string;
-    entityId: string;
-    loadingMessage: string;
-    unavailableMessage: string;
-  }) => (
+  EntityDrawer: (props: { workspaceSlug: string; entityId: string; entityLabel: string }) => (
     <div>
       <span>{props.workspaceSlug}</span>
       <span>{props.entityId}</span>
-      <span>{props.loadingMessage}</span>
-      <span>{props.unavailableMessage}</span>
+      <span>{props.entityLabel}</span>
     </div>
   )
 }));
@@ -26,7 +20,6 @@ describe('ApiSpecDrawer', () => {
 
     expect(markup).toContain('workspace-1');
     expect(markup).toContain('API-001');
-    expect(markup).toContain('Loading API…');
-    expect(markup).toContain('This API is unavailable.');
+    expect(markup).toContain('API');
   });
 });

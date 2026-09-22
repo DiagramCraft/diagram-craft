@@ -25,8 +25,7 @@ export const GlossaryTermDrawer = ({
       entityQueryEnabled={false}
       entityLoading={term.isLoading}
       entityUnavailable={term.isError || !term.data}
-      loadingMessage="Loading term…"
-      unavailableMessage="This glossary term is unavailable."
+      entityLabel="glossary term"
       onClose={onClose}
     />
   );

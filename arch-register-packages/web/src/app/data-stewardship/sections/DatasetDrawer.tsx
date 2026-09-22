@@ -21,7 +21,6 @@ export const DatasetDrawer = ({
     entityId={datasetId}
     onClose={onClose}
     onOpenGovernanceCase={onOpenCase}
-    loadingMessage="Loading dataset…"
-    unavailableMessage="This dataset is unavailable."
+    entityLabel="dataset"
   />
 );

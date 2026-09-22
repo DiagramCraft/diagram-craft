@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 import { CapabilityDrawer } from './CapabilityDrawer';
@@ -8,8 +7,7 @@ const mocks = vi.hoisted(() => ({
     | {
         entityId: string;
         onOpenEntity?: (id: string) => void;
-        loadingMessage?: ReactNode;
-        unavailableMessage?: ReactNode;
+        entityLabel?: string;
       }
     | undefined
 }));
@@ -36,8 +34,7 @@ describe('CapabilityDrawer', () => {
     expect(markup).toContain('shared entity drawer');
     expect(mocks.entityDrawerProps).toMatchObject({
       entityId: 'CAP-001',
-      loadingMessage: 'Loading capability…',
-      unavailableMessage: 'This capability is unavailable.'
+      entityLabel: 'capability'
     });
     mocks.entityDrawerProps?.onOpenEntity?.('child-1');
     expect(onOpenCapability).toHaveBeenCalledWith('child-1');

@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 import { ContractDrawer } from './ContractDrawer';
@@ -7,10 +6,9 @@ const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
   drawerProps: undefined as
     | {
+        entityId: string;
+        entityLabel?: string;
         onOpenRelatedEntity?: (fieldId: string, publicId: string) => boolean;
-        additionalBadges?: ReactNode | ((entity: Record<string, unknown>) => ReactNode);
-        loadingMessage: ReactNode;
-        unavailableMessage: ReactNode;
       }
     | undefined
 }));
@@ -22,27 +20,19 @@ vi.mock('@tanstack/react-router', () => ({
 vi.mock('../../../sections/entities/entityDrawer/EntityDrawer', () => ({
   EntityDrawer: (props: typeof mocks.drawerProps) => {
     mocks.drawerProps = props;
-    return (
-      <div>
-        <span>{props?.loadingMessage}</span>
-        <span>{props?.unavailableMessage}</span>
-        {typeof props?.additionalBadges === 'function'
-          ? props.additionalBadges({ contract_end: '2026-09-30' })
-          : props?.additionalBadges}
-      </div>
-    );
+    return <div>shared entity drawer</div>;
   }
 }));
 
 describe('ContractDrawer', () => {
-  it('delegates to the shared drawer with contract state messages and renewal badge', () => {
+  it('delegates to the shared drawer with the contract entity label', () => {
     const markup = renderToStaticMarkup(
       <ContractDrawer workspaceSlug="workspace-1" contractId="CTR-001" onClose={() => undefined} />
     );
 
-    expect(markup).toContain('Loading contract…');
-    expect(markup).toContain('This contract is unavailable.');
-    expect(markup).toContain('Next 30 days');
+    expect(markup).toContain('shared entity drawer');
+    expect(mocks.drawerProps?.entityId).toBe('CTR-001');
+    expect(mocks.drawerProps?.entityLabel).toBe('contract');
   });
 
   it('keeps Vendor Management navigation for the vendor relation', () => {

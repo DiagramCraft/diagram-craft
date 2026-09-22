@@ -17,8 +17,7 @@ export const VendorDrawer = ({
   <EntityDrawer
     workspaceSlug={workspaceSlug}
     entityId={vendorId}
-    loadingMessage="Loading vendor…"
-    unavailableMessage="This vendor is unavailable."
+    entityLabel="vendor"
     onClose={onClose}
   />
 );

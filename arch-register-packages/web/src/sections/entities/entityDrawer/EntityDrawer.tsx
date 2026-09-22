@@ -355,8 +355,9 @@ export const EntityDrawer = ({
   entityQueryEnabled = true,
   entityLoading = false,
   entityUnavailable = false,
-  loadingMessage = 'Loading entity…',
-  unavailableMessage = 'This entity is unavailable.',
+  entityLabel,
+  loadingMessage = `Loading ${entityLabel ?? 'entity'}…`,
+  unavailableMessage = `This ${entityLabel ?? 'entity'} is unavailable.`,
   formatDateValue
 }: {
   workspaceSlug: string;
@@ -370,6 +371,8 @@ export const EntityDrawer = ({
   entityQueryEnabled?: boolean;
   entityLoading?: boolean;
   entityUnavailable?: boolean;
+  /** Short noun (e.g. "risk", "contract") used to compose the default loading/unavailable copy. */
+  entityLabel?: string;
   loadingMessage?: ReactNode;
   unavailableMessage?: ReactNode;
   formatDateValue?: (value: unknown) => string;
