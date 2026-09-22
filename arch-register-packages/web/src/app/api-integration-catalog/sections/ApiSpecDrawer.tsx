@@ -17,8 +17,7 @@ export const ApiSpecDrawer = ({
   <EntityDrawer
     workspaceSlug={workspaceSlug}
     entityId={apiId}
-    loadingMessage="Loading API…"
-    unavailableMessage="This API is unavailable."
+    entityLabel="API"
     onClose={onClose}
   />
 );

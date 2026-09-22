@@ -7,8 +7,7 @@ const mocks = vi.hoisted(() => ({
     | {
         workspaceSlug: string;
         entityId: string;
-        loadingMessage?: unknown;
-        unavailableMessage?: unknown;
+        entityLabel?: string;
         onOpenGovernanceCase?: (caseId: string) => void;
       }
     | undefined
@@ -36,8 +35,7 @@ describe('DatasetDrawer', () => {
     expect(markup).toContain('shared entity drawer');
     expect(mocks.drawerProps?.workspaceSlug).toBe('workspace-1');
     expect(mocks.drawerProps?.entityId).toBe('dataset-1');
-    expect(mocks.drawerProps?.loadingMessage).toBe('Loading dataset…');
-    expect(mocks.drawerProps?.unavailableMessage).toBe('This dataset is unavailable.');
+    expect(mocks.drawerProps?.entityLabel).toBe('dataset');
     expect(mocks.drawerProps?.onOpenGovernanceCase).toBe(onOpenCase);
   });
 });

@@ -3479,7 +3479,8 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         header: {
           badges: [
             { kind: 'field', fieldId: 'category', showLabel: false },
-            { kind: 'field', fieldId: 'status', showLabel: false }
+            { kind: 'field', fieldId: 'status', showLabel: false },
+            { kind: 'derivedBadge', badgeId: 'risk.residualBand' }
           ]
         },
         sections: [

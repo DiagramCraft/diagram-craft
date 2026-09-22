@@ -15,6 +15,13 @@ import type {
   EntityDrawerProviderDefinition,
   EntityDrawerProviderRegistry
 } from './EntityDrawerProviderRegistry';
+import {
+  createEntityDrawerBadgeRegistry,
+  type EntityDrawerBadgeRegistry,
+  type ResolvedDerivedBadge
+} from './EntityDrawerBadgeRegistry';
+
+const EMPTY_BADGE_REGISTRY = createEntityDrawerBadgeRegistry([]);
 
 export type EntityDrawerFieldGroupAccess = (
   accessControl: FieldGroupAccessControl | undefined
@@ -35,6 +42,7 @@ export type ResolvedEntityDrawerBadge = {
   badge: EntityDrawerBadge;
   label: string;
   field?: EntitySchema['fields'][number];
+  derived?: ResolvedDerivedBadge;
 };
 
 export type EntityDrawerRenderModel = {
@@ -250,18 +258,34 @@ const resolveBadge = ({
   entity,
   schema,
   getFieldGroupAccess,
-  diagnostics
+  diagnostics,
+  badgeRegistry
 }: {
   badge: EntityDrawerBadge;
   entity: EntityRecord;
   schema: EntitySchema;
   getFieldGroupAccess: EntityDrawerFieldGroupAccess;
   diagnostics: EntityDrawerDiagnostic[];
+  badgeRegistry: EntityDrawerBadgeRegistry;
 }): ResolvedEntityDrawerBadge | null => {
   if (badge.kind === 'metadata') {
     return isMeaningfulValue(entityDrawerMetadataValue(entity, badge.slot))
       ? { badge, label: badge.label ?? metadataLabel(badge.slot) }
       : null;
+  }
+  if (badge.kind === 'derivedBadge') {
+    const definition = badgeRegistry.get(badge.badgeId);
+    if (!definition) {
+      diagnostics.push({
+        code: 'unsupported_badge',
+        schemaId: schema.id,
+        itemId: badge.badgeId,
+        message: `Drawer badge '${badge.badgeId}' is not registered.`
+      });
+      return null;
+    }
+    const derived = definition.resolve(entity);
+    return derived ? { badge, label: badge.label ?? badge.badgeId, derived } : null;
   }
   const field = schema.fields.find(candidate => candidate.id === badge.fieldId);
   if (!field || field.archived) {
@@ -284,7 +308,8 @@ export const resolveEntityDrawerRenderModel = ({
   profile,
   providerRegistry,
   providerContext,
-  getFieldGroupAccess
+  getFieldGroupAccess,
+  badgeRegistry = EMPTY_BADGE_REGISTRY
 }: {
   entity: EntityRecord;
   schema: EntitySchema;
@@ -292,6 +317,7 @@ export const resolveEntityDrawerRenderModel = ({
   providerRegistry: EntityDrawerProviderRegistry;
   providerContext: Parameters<EntityDrawerProviderDefinition['supports']>[0];
   getFieldGroupAccess: EntityDrawerFieldGroupAccess;
+  badgeRegistry?: EntityDrawerBadgeRegistry;
 }): EntityDrawerRenderModel => {
   const diagnostics: EntityDrawerDiagnostic[] = [];
   const badges = profile.header.badges.flatMap(badge => {
@@ -300,7 +326,8 @@ export const resolveEntityDrawerRenderModel = ({
       entity,
       schema,
       getFieldGroupAccess,
-      diagnostics
+      diagnostics,
+      badgeRegistry
     });
     return resolved ? [resolved] : [];
   });

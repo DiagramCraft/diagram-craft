@@ -21,7 +21,6 @@ export const CapabilityDrawer = ({
     entityId={capabilityId}
     onClose={onClose}
     onOpenEntity={onOpenCapability}
-    loadingMessage="Loading capability…"
-    unavailableMessage="This capability is unavailable."
+    entityLabel="capability"
   />
 );

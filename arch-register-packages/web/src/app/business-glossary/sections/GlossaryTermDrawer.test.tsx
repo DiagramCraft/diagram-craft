@@ -27,21 +27,19 @@ vi.mock('../../../sections/entities/entityDrawer/EntityDrawer', () => ({
     additionalBadges,
     entityLoading,
     entityUnavailable,
-    loadingMessage,
-    unavailableMessage
+    entityLabel
   }: {
     entityOverride?: { _uid: string; _name: string };
     additionalBadges: ReactNode;
     entityLoading: boolean;
     entityUnavailable: boolean;
-    loadingMessage: ReactNode;
-    unavailableMessage: ReactNode;
+    entityLabel: string;
   }) => (
     <div>
       {entityLoading ? (
-        <span>{loadingMessage}</span>
+        <span>Loading {entityLabel}…</span>
       ) : entityUnavailable ? (
-        <span>{unavailableMessage}</span>
+        <span>This {entityLabel} is unavailable.</span>
       ) : (
         <>
           <span>{entityOverride?._uid}</span>
@@ -60,7 +58,7 @@ describe('GlossaryTermDrawer', () => {
       renderToStaticMarkup(
         <GlossaryTermDrawer workspaceSlug="workspace-1" termId="TERM-001" onClose={vi.fn()} />
       )
-    ).toContain('Loading term…');
+    ).toContain('Loading glossary term…');
 
     mocks.term = { data: undefined, isLoading: false, isError: true };
     expect(
