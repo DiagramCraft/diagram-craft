@@ -40,6 +40,10 @@ vi.mock('../../../hooks/usePrincipalLabel', () => ({
     principal?.principal_id ? `Principal ${principal.principal_id}` : undefined
 }));
 
+vi.mock('./DatasetDrawer', () => ({
+  DatasetDrawer: () => <div>Open record in Entities</div>
+}));
+
 const CONFIG = {
   type: 'data-stewardship',
   valid: true,

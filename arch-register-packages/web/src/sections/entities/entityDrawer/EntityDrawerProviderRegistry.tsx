@@ -21,6 +21,7 @@ export type EntityDrawerProviderContext = {
     isError: boolean;
   };
   openEntity: (entityId: string) => void;
+  openGovernanceCase?: (caseId: string) => void;
 };
 
 export type EntityDrawerProviderState = 'loading' | 'ready' | 'empty' | 'unavailable';

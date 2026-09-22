@@ -142,7 +142,11 @@ const resolveFieldItem = ({
     return null;
   }
   if (fieldAccess(schema, field, getFieldGroupAccess) === 'none') return null;
-  return { item, field, label: item.label ?? field.name };
+  const resolvedItem =
+    item.kind === 'relation' && field.type === 'typedRelation' && item.presentation === undefined
+      ? { ...item, presentation: 'mini-panel' as const }
+      : item;
+  return { item: resolvedItem, field, label: item.label ?? field.name };
 };
 
 const resolveBadge = ({

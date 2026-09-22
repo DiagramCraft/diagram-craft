@@ -18,6 +18,13 @@ const schema = {
     { id: 'name', name: 'Name', type: 'text' },
     { id: 'status', name: 'Status', type: 'text' },
     { id: 'depends_on', name: 'Depends on', type: 'reference', schemaId: 'service' },
+    {
+      id: 'retention_policy',
+      name: 'Retention Policy',
+      type: 'typedRelation',
+      relationSchemaId: 'retention-assignment',
+      direction: 'in'
+    },
     { id: 'restricted', name: 'Restricted', type: 'text', groupId: 'private' },
     { id: 'archived', name: 'Archived', type: 'text', archived: true }
   ],
@@ -183,5 +190,25 @@ describe('resolveEntityDrawerRenderModel', () => {
     expect(itemIds).toContain('depends_on');
     expect(itemIds).toContain('publicId');
     expect(itemIds).not.toContain('archived');
+  });
+
+  it('defaults typed relations without an explicit presentation to mini-panels', () => {
+    const result = resolve({
+      header: { badges: [] },
+      sections: [
+        {
+          id: 'custom',
+          title: 'Custom',
+          collapsible: false,
+          items: [{ kind: 'relation', fieldId: 'retention_policy' }]
+        }
+      ]
+    });
+
+    expect(result.sections[0]?.items[0]?.item).toEqual({
+      kind: 'relation',
+      fieldId: 'retention_policy',
+      presentation: 'mini-panel'
+    });
   });
 });

@@ -31,8 +31,8 @@ import styles from './DataStewardshipStewardshipScreen.module.css';
  * exist at the model layer but have no dedicated app (#3150) or capability binding yet — see
  * `../useDataFlowConfig.ts` for how "configured" is detected. When absent, both views render a
  * plain notice instead of an empty table, per the issue's explicit requirement. Per-dataset flow
- * linkage inside `DatasetDrawer` is intentionally out of scope here — that drawer's "Flows"/
- * "Systems" stub text is untouched by this change.
+ * linkage inside the Data Entity drawer is intentionally out of scope here — the drawer does not
+ * expose flow or system sections until those relationships have supported drawer providers.
  */
 export const DataStewardshipClassificationScreen = () => {
   const { workspaceSlug } = useParams({ strict: false }) as { workspaceSlug: string };
@@ -127,7 +127,6 @@ export const DataStewardshipClassificationScreen = () => {
         <DatasetDrawer
           workspaceSlug={workspaceSlug}
           datasetId={search.datasetId}
-          dataStewardshipConfig={dataStewardshipConfig}
           onClose={closeDataset}
         />
       )}
