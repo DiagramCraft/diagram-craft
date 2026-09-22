@@ -19,7 +19,7 @@ describe('Callout', () => {
     expect(markup).toContain('info');
   });
 
-  it('defaults to the info variant when given an unknown variant', () => {
+  it('defaults to the info variant when given an unrecognized MDX variant value', () => {
     const markup = renderToStaticMarkup(<Callout variant="bogus">text</Callout>);
     expect(markup).toContain('info');
   });
