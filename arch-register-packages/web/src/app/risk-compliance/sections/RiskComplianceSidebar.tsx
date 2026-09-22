@@ -1,5 +1,5 @@
 import { useMemo, type ReactNode } from 'react';
-import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
+import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
 import {
   TbAlertTriangle,
@@ -42,6 +42,7 @@ import type {
   RetentionSearchParams,
   RisksSearchParams
 } from '../../../routes/searchParams';
+import { useEntityDrawer } from '../../../sections/entities/entityDrawer/useEntityDrawer';
 import styles from '../../../shell/SidePanel.module.css';
 
 const FacetRow = ({
@@ -82,9 +83,9 @@ const FacetRow = ({
  * "outside appetite" is a derived toggle: risks whose `residual_risk_score` bands as high/critical
  * (`../residualRiskBand.ts`), not a stored attribute.
  *
- * Also lists every risk individually under a trailing "Risks" group, each opening the shared
- * `RiskDrawer` directly — a quick-jump list mirroring the design reference's `RCSidebar` (`rc.jsx`,
- * the overview/risks branch), which renders the full unfiltered register below the facets.
+ * Also lists every risk individually under a trailing "Risks" group, each opening the workspace
+ * entity drawer — a quick-jump list mirroring the design reference's `RCSidebar` (`rc.jsx`, the
+ * overview/risks branch), which renders the full unfiltered register below the facets.
  */
 const RisksSidebarContent = ({
   workspaceSlug,
@@ -94,7 +95,7 @@ const RisksSidebarContent = ({
   riskConfig: RiskComplianceConfig;
 }) => {
   const navigate = useNavigate();
-  const { riskId } = useParams({ strict: false }) as { riskId?: string };
+  const { drawerEntityId, openEntityDrawer } = useEntityDrawer();
   const search = useSearch({ strict: false }) as RisksSearchParams;
   const { data: schemas } = useSchemas(workspaceSlug);
   const riskSchema = schemas?.find(schema => schema.id === riskConfig.riskSchemaId);
@@ -147,12 +148,7 @@ const RisksSidebarContent = ({
       params: { workspaceSlug },
       search: (previous: Record<string, unknown>) => ({ ...previous, ...patch })
     });
-  const openRisk = (id: string) =>
-    navigate({
-      to: `${RISK_RAIL_PATHS[RISK_RISKS_ID]}/$riskId`,
-      params: { workspaceSlug, riskId: id },
-      search: (previous: Record<string, unknown>) => previous
-    });
+  const openRisk = (id: string) => openEntityDrawer(id);
 
   const hasAnySelection =
     !!search.category || !!search.status || !!search.owner || !!search.outsideAppetite;
@@ -243,7 +239,7 @@ const RisksSidebarContent = ({
             }
             label={`${risk._publicId} ${risk._name}`}
             testId={`risk-facet-risk-${risk._uid}`}
-            active={riskId === risk._publicId}
+            active={drawerEntityId === risk._publicId}
             onClick={() => openRisk(risk._publicId)}
           />
         );

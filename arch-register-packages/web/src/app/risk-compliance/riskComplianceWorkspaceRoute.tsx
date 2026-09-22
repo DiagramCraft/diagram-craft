@@ -1,4 +1,4 @@
-import { createRoute, type AnyRoute } from '@tanstack/react-router';
+import { createRoute, redirect, type AnyRoute } from '@tanstack/react-router';
 import { buildRiskComplianceBreadcrumbs } from './riskComplianceShell';
 import {
   RISK_OVERVIEW_ID,
@@ -28,11 +28,9 @@ import { ensureApplicationAccess } from '../../routes/applicationAccess';
 const railPath = (path: string) => path.replace('/$workspaceSlug/', '');
 
 /**
- * Risk & Compliance's workspace routes: one per rail section, plus deep-linkable
- * `$riskId`/`$controlId` detail routes for the shared drawers built in #3279. Mirrors
- * `../vendor-management/vendorManagementWorkspaceRoute.tsx`'s `vendorsDetailRoute` treatment —
- * same `component` as the base route, gated the same way, with the drawer rendered conditionally
- * by the screen when the optional id param is present.
+ * Risk & Compliance's workspace routes: one per rail section, plus the Controls detail route.
+ * The former Risks detail route remains as a legacy redirect to the workspace-wide entity drawer
+ * search parameter.
  */
 export const createRiskComplianceWorkspaceRoutes = <TParentRoute extends AnyRoute>(
   workspaceRoute: TParentRoute
@@ -74,24 +72,21 @@ export const createRiskComplianceWorkspaceRoutes = <TParentRoute extends AnyRout
         breadcrumbs: buildRiskComplianceBreadcrumbs(ctx, RISK_RISKS_ID)
       })
   );
-  const risksDetailRoute = withWorkspaceShell(
-    createRoute({
-      getParentRoute: () => workspaceRoute,
-      path: `${railPath(RISK_RAIL_PATHS[RISK_RISKS_ID])}/$riskId`,
-      validateSearch: validateRisksSearch,
-      beforeLoad: ({ context, params }) =>
-        ensureApplicationAccess(
-          context.queryClient,
-          (params as unknown as { workspaceSlug: string }).workspaceSlug,
-          'risk-compliance'
-        ),
-      component: LazyRiskComplianceRisksScreen
-    }),
-    ctx =>
-      railSectionShell(ctx, RISK_RISKS_ID, {
-        breadcrumbs: buildRiskComplianceBreadcrumbs(ctx, RISK_RISKS_ID)
-      })
-  );
+  const risksLegacyDetailRoute = createRoute({
+    getParentRoute: () => workspaceRoute,
+    path: `${railPath(RISK_RAIL_PATHS[RISK_RISKS_ID])}/$riskId`,
+    beforeLoad: ({ params }) => {
+      const { workspaceSlug, riskId } = params as unknown as {
+        workspaceSlug: string;
+        riskId: string;
+      };
+      throw redirect({
+        to: RISK_RAIL_PATHS[RISK_RISKS_ID],
+        params: { workspaceSlug },
+        search: (previous: Record<string, unknown>) => ({ ...previous, drawer: riskId })
+      });
+    }
+  });
   const controlsRoute = withWorkspaceShell(
     createRoute({
       getParentRoute: () => workspaceRoute,
@@ -168,7 +163,7 @@ export const createRiskComplianceWorkspaceRoutes = <TParentRoute extends AnyRout
   return [
     overviewRoute,
     risksRoute,
-    risksDetailRoute,
+    risksLegacyDetailRoute,
     controlsRoute,
     controlsDetailRoute,
     retentionRoute,

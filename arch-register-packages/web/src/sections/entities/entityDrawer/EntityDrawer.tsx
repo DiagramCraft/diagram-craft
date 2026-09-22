@@ -17,7 +17,7 @@ import { isReferenceOrContainmentField } from '@arch-register/api-types/schemaCo
 import { buildFallbackEntityDrawerProfile } from '@arch-register/api-types/entityDrawerConfiguration';
 import { DrawerPropertyRow } from './DrawerPropertyRow';
 import { formatCurrencyValue } from '../../../utils/currencyFormat';
-import { formatDate } from '../../../utils/dateFormat';
+import { formatDate, formatIsoDate } from '../../../utils/dateFormat';
 import { usePrincipalLabel } from '../../../hooks/usePrincipalLabel';
 import {
   entityDrawerMetadataValue,
@@ -35,6 +35,7 @@ import type { EntityRecord, EntitySummary } from '@arch-register/api-types/entit
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import type { RelationRecord } from '@arch-register/api-types/relationContract';
 import type { RefLookup } from '../types/entityDetailTypes';
+import type { EntityDrawerDateFormat } from '../../../shell/shellTypes';
 import styles from './EntityDrawer.module.css';
 
 const EntityDrawerBadge = ({
@@ -364,7 +365,8 @@ export const EntityDrawer = ({
   entityLabel,
   loadingMessage = `Loading ${entityLabel ?? 'entity'}…`,
   unavailableMessage = `This ${entityLabel ?? 'entity'} is unavailable.`,
-  formatDateValue
+  formatDateValue,
+  dateFormat
 }: {
   workspaceSlug: string;
   entityId: string;
@@ -385,6 +387,7 @@ export const EntityDrawer = ({
   loadingMessage?: ReactNode;
   unavailableMessage?: ReactNode;
   formatDateValue?: (value: unknown) => string;
+  dateFormat?: EntityDrawerDateFormat;
 }) => {
   const navigate = useNavigate();
   const { schemas, relationSchemas, lifecycleStates } = useWorkspaceContext();
@@ -395,6 +398,8 @@ export const EntityDrawer = ({
     entityQueryEnabled && entityOverride === undefined
   );
   const entity = entityOverride ?? entityQuery.data;
+  const resolvedFormatDateValue =
+    formatDateValue ?? (dateFormat === 'iso' ? formatIsoDate : undefined);
   const relationsQuery = useEntityRelations(workspaceSlug, entity?._uid ?? entityId);
   const typedRelationsQuery = useEntityTypedRelations(workspaceSlug, entity?._uid ?? entityId);
   const configurationQuery = useEntityDrawerConfiguration(workspaceSlug);
@@ -630,7 +635,7 @@ export const EntityDrawer = ({
                     typedRelationsIncoming={typedRelations.incoming}
                     relationSchemas={relationSchemas}
                     workspaceSlug={workspaceSlug}
-                    formatDateValue={formatDateValue}
+                    formatDateValue={resolvedFormatDateValue}
                     onOpenEntity={onOpenEntity}
                     onOpenRelatedEntity={onOpenRelatedEntity}
                   />

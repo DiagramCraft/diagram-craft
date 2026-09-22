@@ -447,8 +447,9 @@
         - @id:ar.risk-compliance.risks The Risks section has a sortable register (search; sidebar facets for
           Category, Status, Owner, and an "outside appetite" toggle for residual scores banding high/critical) and a
           5×5 likelihood × impact matrix, toggled by an inherent/residual axis switch — mutually exclusive views, not
-          shown side by side. Selecting a risk opens the shared Risk drawer, deep-linkable at
-          `risk-compliance/risks/$riskId`: likelihood/impact, the existing `inherent_risk_score` and
+          shown side by side. Selecting a risk opens the shared Risk drawer via the workspace-wide `drawer` search
+          parameter; legacy `risk-compliance/risks/$riskId` links redirect there. The drawer shows likelihood/impact,
+          the existing `inherent_risk_score` and
           `residual_risk_score` derived fields (the latter banded Low/Medium/High/Critical via the standard 5×5
           heat-map thresholds), attributes, a multi-control coverage roll-up (`rcCoverage`/`rcBand`, combining every
           mitigating Control's `coverage` % and `effectiveness` on its `risk-control` relation as independent,

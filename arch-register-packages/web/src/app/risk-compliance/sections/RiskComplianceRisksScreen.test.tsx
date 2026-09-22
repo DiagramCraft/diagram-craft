@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, createElement } from 'react';
+import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -13,7 +13,7 @@ const mocks = vi.hoisted(() => ({
   relationsList: vi.fn(),
   relationsListForEntity: vi.fn(),
   capabilityConfigurationsList: vi.fn(),
-  params: { workspaceSlug: 'ws-1' } as { workspaceSlug: string; riskId?: string },
+  params: { workspaceSlug: 'ws-1' } as { workspaceSlug: string },
   search: {} as Record<string, unknown>
 }));
 
@@ -30,11 +30,6 @@ vi.mock('../../../lib/orpcClient', () => ({
     relations: { list: mocks.relationsList, listForEntity: mocks.relationsListForEntity },
     config: { capabilityConfigurations: { list: mocks.capabilityConfigurationsList } }
   }
-}));
-
-vi.mock('../../../sections/entities/entityDrawer/EntityDrawer', () => ({
-  EntityDrawer: ({ entityId }: { entityId: string }) =>
-    createElement('div', null, `Open record in Entities ${entityId}`)
 }));
 
 const CONFIG = {
@@ -135,18 +130,8 @@ describe('RiskComplianceRisksScreen', () => {
       row!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
 
-    expect(mocks.navigate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        to: '/$workspaceSlug/risk-compliance/risks/$riskId',
-        params: { workspaceSlug: 'ws-1', riskId: 'RSK-001' }
-      })
-    );
-  });
-
-  it('renders the drawer when the route carries a riskId param', async () => {
-    mocks.params = { workspaceSlug: 'ws-1', riskId: 'risk-1' };
-    await renderScreen();
-    expect(container.textContent).toContain('Open record in Entities');
+    const [{ search }] = mocks.navigate.mock.calls[0]!;
+    expect(search({})).toEqual({ drawer: 'RSK-001' });
   });
 
   it('shows a not-enabled empty state when the capability is unconfigured', async () => {

@@ -1,5 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
+import { formatDate } from '../../../utils/dateFormat';
 import { EntityDrawer } from './EntityDrawer';
 
 const mocks = vi.hoisted(() => ({
@@ -19,14 +20,16 @@ const mocks = vi.hoisted(() => ({
     _tags: [],
     _links: [],
     name: 'Payments',
-    status: 'Active'
+    status: 'Active',
+    review_date: '2026-06-01'
   },
   schema: {
     id: 'service',
     name: 'Service',
     fields: [
       { id: 'name', name: 'Name', type: 'text' },
-      { id: 'status', name: 'Status', type: 'text', requirementLevel: 'expected' }
+      { id: 'status', name: 'Status', type: 'text', requirementLevel: 'expected' },
+      { id: 'review_date', name: 'Review date', type: 'date' }
     ],
     groups: [],
     shared_field_group_links: []
@@ -80,7 +83,8 @@ vi.mock('../../../hooks/useWorkspaceConfig', () => ({
                 collapsible: false,
                 items: [
                   { kind: 'field', fieldId: 'status', label: 'Current state' },
-                  { kind: 'field', fieldId: 'name', label: 'Service name' }
+                  { kind: 'field', fieldId: 'name', label: 'Service name' },
+                  { kind: 'field', fieldId: 'review_date', label: 'Review date' }
                 ]
               }
             ]
@@ -111,5 +115,22 @@ describe('EntityDrawer', () => {
     expect(markup).not.toContain('Expected');
     expect(markup).toContain('Open record in Entities');
     expect(markup).toContain('Quality badge');
+  });
+
+  it('uses the static ISO date format only when requested', () => {
+    const defaultMarkup = renderToStaticMarkup(
+      <EntityDrawer workspaceSlug="workspace-1" entityId="SRV-001" onClose={vi.fn()} />
+    );
+    const isoMarkup = renderToStaticMarkup(
+      <EntityDrawer
+        workspaceSlug="workspace-1"
+        entityId="SRV-001"
+        onClose={vi.fn()}
+        dateFormat="iso"
+      />
+    );
+
+    expect(defaultMarkup).toContain(formatDate('2026-06-01'));
+    expect(isoMarkup).toContain('2026-06-01');
   });
 });

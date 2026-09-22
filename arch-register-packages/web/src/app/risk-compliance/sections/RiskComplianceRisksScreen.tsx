@@ -20,8 +20,8 @@ import { residualRiskBand, RESIDUAL_RISK_BAND_COLOR } from '../residualRiskBand'
 import { COVERAGE_BAND_COLOR } from '../riskCoverage';
 import { riskFieldValue } from '../riskFieldDisplay';
 import type { RisksSearchParams } from '../../../routes/searchParams';
+import { useEntityDrawer } from '../../../sections/entities/entityDrawer/useEntityDrawer';
 import { RiskComplianceMatrix, type RiskComplianceMatrixRisk } from './RiskComplianceMatrix';
-import { RiskDrawer } from './RiskDrawer';
 import filterStyles from '../../../sections/entities/components/EntityBrowser.module.css';
 import styles from './RiskComplianceRisksScreen.module.css';
 
@@ -41,18 +41,17 @@ const compareNullable = (a: number | string | null, b: number | string | null): 
  * toggle). The register and matrix are mutually exclusive views switched by a toggle, not shown
  * side by side — mirrors the design reference's `RCRiskList` (`rc.jsx`) and this codebase's own
  * `../../vendor-management/sections/VendorContractsScreen.tsx` list/calendar/timeline toggle.
- * Opens the shared `RiskDrawer` on row/tag click, deep-linkable at `risk-compliance/risks/$riskId`.
+ * Opens the shared entity drawer on row/tag click through the workspace-wide `drawer` search
+ * parameter.
  *
  * "Next review" sorts by `treatment_target_date` and "reference" by `_publicId` — the closest
  * existing fields to the design's intent, since the shipped schema has neither a dedicated
  * "next review date" nor a "reference" field (see #3280's planning notes).
  */
 export const RiskComplianceRisksScreen = () => {
-  const { workspaceSlug, riskId } = useParams({ strict: false }) as {
-    workspaceSlug: string;
-    riskId?: string;
-  };
+  const { workspaceSlug } = useParams({ strict: false }) as { workspaceSlug: string };
   const navigate = useNavigate();
+  const { openEntityDrawer } = useEntityDrawer();
   const search = useSearch({ strict: false }) as RisksSearchParams;
   const q = search.q ?? '';
   const axis = search.axis ?? 'inherent';
@@ -143,18 +142,7 @@ export const RiskComplianceRisksScreen = () => {
     [filtered]
   );
 
-  const openRisk = (id: string) =>
-    navigate({
-      to: `${RISK_RAIL_PATHS[RISK_RISKS_ID]}/$riskId`,
-      params: { workspaceSlug, riskId: id },
-      search: (previous: Record<string, unknown>) => previous
-    });
-  const closeRisk = () =>
-    navigate({
-      to: RISK_RAIL_PATHS[RISK_RISKS_ID],
-      params: { workspaceSlug },
-      search: (previous: Record<string, unknown>) => previous
-    });
+  const openRisk = (id: string) => openEntityDrawer(id);
   const patchSearch = (patch: Partial<RisksSearchParams>) =>
     navigate({
       to: RISK_RAIL_PATHS[RISK_RISKS_ID],
@@ -313,8 +301,6 @@ export const RiskComplianceRisksScreen = () => {
           </Table.Body>
         </Table.Root>
       )}
-
-      {riskId && <RiskDrawer workspaceSlug={workspaceSlug} riskId={riskId} onClose={closeRisk} />}
     </div>
   );
 };
