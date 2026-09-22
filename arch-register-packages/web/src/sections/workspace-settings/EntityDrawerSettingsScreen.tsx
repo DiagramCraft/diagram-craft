@@ -271,14 +271,6 @@ const itemLabel = (
   );
 };
 
-const badgeLabel = (badge: EntityDrawerBadge, catalog: EntityDrawerCatalog): string => {
-  if (badge.label) return badge.label;
-  if (badge.kind === 'metadata')
-    return catalog.metadataSlots.find(slot => slot.id === badge.slot)?.label ?? badge.slot;
-  if (badge.kind === 'derivedBadge') return badge.badgeId;
-  return badge.fieldId;
-};
-
 const ItemIcon = ({ kind }: { kind: EntityDrawerItem['kind'] }) => {
   if (kind === 'metadata') return <TbTag size={11} />;
   if (kind === 'relation') return <TbLink size={11} />;
@@ -304,7 +296,7 @@ const EntityDrawerPreview = ({
       <div className={styles.previewBadges}>
         {profile.header.badges.map((badge, index) => (
           <span key={`${badge.kind}-${index}`} className={styles.previewBadge}>
-            {badgeLabel(badge, catalog)}
+            {badge.label ?? (badge.kind === 'field' ? badge.fieldId : badge.slot)}
           </span>
         ))}
       </div>
@@ -428,11 +420,7 @@ export const EntityDrawerEditor = ({
   );
   const placedBadges = new Set(
     profile.header.badges.map(badge =>
-      badge.kind === 'metadata'
-        ? `metadata:${badge.slot}`
-        : badge.kind === 'derivedBadge'
-          ? `derivedBadge:${badge.badgeId}`
-          : `field:${badge.fieldId}`
+      badge.kind === 'metadata' ? `metadata:${badge.slot}` : `field:${badge.fieldId}`
     )
   );
   const stored = configurationQuery.data.stored_configuration;
@@ -708,10 +696,8 @@ export const EntityDrawerEditor = ({
                           (badge.kind === 'metadata'
                             ? (catalog.metadataSlots.find(slot => slot.id === badge.slot)?.label ??
                               badge.slot)
-                            : badge.kind === 'derivedBadge'
-                              ? badge.badgeId
-                              : (availableFields.find(field => field.id === badge.fieldId)?.name ??
-                                badge.fieldId))
+                            : (availableFields.find(field => field.id === badge.fieldId)?.name ??
+                              badge.fieldId))
                         }
                         onChange={value => {
                           const nextBadge: EntityDrawerBadge = {
