@@ -9,8 +9,14 @@ import {
   railItemToAppId
 } from './appShellRegistry';
 import { GLOSSARY_RAIL_ITEM_ID, GLOSSARY_RAIL_PATH } from '../app/business-glossary/glossaryShell';
-import { STRATEGY_CAPABILITY_MAP_ID, STRATEGY_RAIL_PATHS } from '../app/strategy-model/strategySections';
-import { VENDOR_OVERVIEW_ID, VENDOR_RAIL_PATHS } from '../app/vendor-management/vendorManagementSections';
+import {
+  STRATEGY_CAPABILITY_MAP_ID,
+  STRATEGY_RAIL_PATHS
+} from '../app/strategy-model/strategySections';
+import {
+  VENDOR_OVERVIEW_ID,
+  VENDOR_RAIL_PATHS
+} from '../app/vendor-management/vendorManagementSections';
 
 const railIds = (appId: Parameters<typeof getAppDefinition>[0]) =>
   getAppDefinition(appId).sections.map(section => section.id);
