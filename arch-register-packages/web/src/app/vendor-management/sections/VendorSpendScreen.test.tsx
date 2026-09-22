@@ -5,19 +5,16 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { VendorSpendScreen } from './VendorSpendScreen';
 
-vi.mock('../../../sections/entities/entityDrawer/EntityDrawer', () => ({
-  EntityDrawer: () => <div>Open record in Entities</div>
-}));
-
 const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
+  openEntityDrawer: vi.fn(),
   entityList: vi.fn(),
   entityTree: vi.fn(),
   entityGet: vi.fn(),
   schemasList: vi.fn(),
   metricsRollup: vi.fn(),
   capabilityConfigurationsList: vi.fn(),
-  params: { workspaceSlug: 'ws-1' } as { workspaceSlug: string; vendorId?: string },
+  params: { workspaceSlug: 'ws-1' } as { workspaceSlug: string },
   search: {} as Record<string, unknown>
 }));
 
@@ -25,6 +22,10 @@ vi.mock('@tanstack/react-router', () => ({
   useParams: () => mocks.params,
   useNavigate: () => mocks.navigate,
   useSearch: () => mocks.search
+}));
+
+vi.mock('../../../sections/entities/entityDrawer/useEntityDrawer', () => ({
+  useEntityDrawer: () => ({ openEntityDrawer: mocks.openEntityDrawer })
 }));
 
 vi.mock('../../../lib/orpcClient', () => ({
@@ -181,28 +182,7 @@ describe('VendorSpendScreen', () => {
       row!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
 
-    expect(mocks.navigate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        to: '/$workspaceSlug/vendor-management/spend/$vendorId',
-        params: { workspaceSlug: 'ws-1', vendorId: 'VND-001' }
-      })
-    );
-  });
-
-  it('renders the drawer in place when the route carries a vendorId param', async () => {
-    mocks.params = { workspaceSlug: 'ws-1', vendorId: 'VND-001' };
-    mocks.entityGet.mockResolvedValue({
-      _uid: 'vnd-1',
-      _publicId: 'VND-001',
-      _name: 'Acme Corp',
-      _schema: { id: 'vendor', name: 'Vendor' },
-      _owner: null,
-      _lifecycle: null
-    });
-    await renderScreen();
-    // Still on the Spend screen (its own toolbar), with the drawer rendered alongside it.
-    expect(container.textContent).toContain('Group by');
-    expect(container.textContent).toContain('Open record in Entities');
+    expect(mocks.openEntityDrawer).toHaveBeenCalledWith('VND-001');
   });
 
   it('groups by cost centre when the group search param is set', async () => {
