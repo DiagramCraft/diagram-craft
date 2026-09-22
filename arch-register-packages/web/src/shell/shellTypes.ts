@@ -24,6 +24,12 @@ export type WorkspaceRailItemId = WorkspaceCoreRailItemId | AppRailItemId;
 /** Application identifier: `'home'` is the always-on core register; the rest are opt-in apps. */
 export type AppId = 'home' | AppRailItemId;
 
+export type EntityDrawerDateFormat = 'locale' | 'iso';
+
+export type EntityDrawerDisplayOptions = {
+  dateFormat?: EntityDrawerDateFormat;
+};
+
 /** Context passed to a section's `primarySidebar` factory (a structural subset of the shell context). */
 export type AppRailSectionContext = {
   workspaceSlug: string;
@@ -62,5 +68,6 @@ export type AppDefinition = {
   tint?: string;
   description: string;
   sections: AppRailSection[];
+  entityDrawer?: EntityDrawerDisplayOptions;
   enablement: 'always' | { capabilityType: string };
 };
