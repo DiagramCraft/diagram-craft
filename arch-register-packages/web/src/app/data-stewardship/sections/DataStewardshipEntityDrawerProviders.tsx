@@ -165,10 +165,7 @@ const AssessmentsProvider = ({ label, showLabel, context }: EntityDrawerProvider
   const state = assessments.isLoading ? 'loading' : rows.length > 0 ? 'ready' : 'empty';
   return (
     <ProviderFrame label={label} showLabel={showLabel}>
-      <EntityDrawerProviderStatus
-        state={state}
-        emptyMessage="No assessments target this dataset."
-      >
+      <EntityDrawerProviderStatus state={state} emptyMessage="No assessments target this dataset.">
         <div className={styles.tags}>
           {rows.map(row => (
             <Chip

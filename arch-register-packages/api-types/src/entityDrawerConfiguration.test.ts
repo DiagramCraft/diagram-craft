@@ -234,10 +234,8 @@ describe('entity drawer configuration', () => {
       bindings: { dataEntity: { target: { kind: 'entity_schema', id: 'data-entity' } } }
     } as const;
 
-    const profile = buildDefaultEntityDrawerConfiguration(
-      [dataEntitySchema],
-      [configuration]
-    ).profiles['data-entity']!;
+    const profile = buildDefaultEntityDrawerConfiguration([dataEntitySchema], [configuration])
+      .profiles['data-entity']!;
 
     expect(profile.header.badges).toEqual([
       { kind: 'field', fieldId: 'classification', showLabel: false }

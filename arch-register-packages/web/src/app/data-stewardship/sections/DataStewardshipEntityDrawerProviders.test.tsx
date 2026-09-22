@@ -57,9 +57,7 @@ const context = (
 
 const item = (slotId: string) => ({ kind: 'slot' as const, slotId });
 const provider = (slotId: string) =>
-  dataStewardshipEntityDrawerProviderDefinitions.find(
-    definition => definition.slotId === slotId
-  )!;
+  dataStewardshipEntityDrawerProviderDefinitions.find(definition => definition.slotId === slotId)!;
 
 describe('Data Stewardship entity drawer providers', () => {
   it('renders coverage and its data-quality gaps', () => {
