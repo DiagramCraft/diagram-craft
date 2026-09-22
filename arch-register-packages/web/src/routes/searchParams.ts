@@ -11,6 +11,18 @@ import {
   type SearchParamsFromSchema
 } from './searchParamCodecs';
 
+// Shared across every workspace screen (declared on the parent `$workspaceSlug` route) so an
+// entity drawer can be opened/closed without a per-screen route param — see useEntityDrawer.ts.
+const entityDrawerSearchParamSchema = defineSearchParamSchema({
+  drawer: stringCodec
+});
+
+export type EntityDrawerSearchParams = SearchParamsFromSchema<typeof entityDrawerSearchParamSchema>;
+
+export const validateEntityDrawerSearch = (
+  raw: Record<string, unknown>
+): EntityDrawerSearchParams => parseSearchParams(entityDrawerSearchParamSchema, raw);
+
 const entityBrowserSidebarValues = enumCodec(['home', 'views', 'bookmarks', 'baselines'] as const);
 
 export type EntityBrowserSidebarTab = SearchParamCodecOutput<typeof entityBrowserSidebarValues>;

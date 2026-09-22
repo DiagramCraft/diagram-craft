@@ -19,7 +19,7 @@ import { useVendorNextRenewals } from '../useVendorNextRenewals';
 import { computeVendorRisk, VENDOR_RISK_BAND_COLOR } from '../vendorRisk';
 import { vendorFieldValue } from '../vendorFieldDisplay';
 import type { VendorsSearchParams } from '../../../routes/searchParams';
-import { VendorDrawer } from './VendorDrawer';
+import { useEntityDrawer } from '../../../sections/entities/entityDrawer/useEntityDrawer';
 import filterStyles from '../../../sections/entities/components/EntityBrowser.module.css';
 import styles from './VendorManagementPlaceholderScreen.module.css';
 
@@ -35,18 +35,17 @@ const compareNullable = (a: number | string | null, b: number | string | null): 
 /**
  * The Vendors register: search, sort (spend / name / risk / next renewal), and facets (tier,
  * category, owner) delivered by `VendorManagementSidebar`'s `VendorsSidebarContent`, opening the
- * shared `VendorDrawer` on row click, deep-linkable at `vendor-management/vendors/$vendorId`.
+ * shared entity drawer on row click via `useEntityDrawer`, deep-linkable through its `drawer`
+ * search param.
  *
  * Fetches vendors with `view: 'full'` — `view: 'summary'` never carries an entity's custom field
  * data (only `_owner`/`_lifecycle`/etc.), so `tier`, `category`, `relationship_owner`, and the risk
  * dimensions this screen sorts and facets by would otherwise always be empty.
  */
 export const VendorVendorsScreen = () => {
-  const { workspaceSlug, vendorId } = useParams({ strict: false }) as {
-    workspaceSlug: string;
-    vendorId?: string;
-  };
+  const { workspaceSlug } = useParams({ strict: false }) as { workspaceSlug: string };
   const navigate = useNavigate();
+  const { openEntityDrawer } = useEntityDrawer();
   const search = useSearch({ strict: false }) as VendorsSearchParams;
   const q = search.q ?? '';
   const configurations = useQuery(workspaceCapabilityConfigurationsQuery(workspaceSlug));
@@ -127,18 +126,6 @@ export const VendorVendorsScreen = () => {
     dir: 'asc'
   });
 
-  const openVendor = (id: string) =>
-    navigate({
-      to: `${VENDOR_RAIL_PATHS[VENDOR_VENDORS_ID]}/$vendorId`,
-      params: { workspaceSlug, vendorId: id },
-      search: (previous: Record<string, unknown>) => previous
-    });
-  const closeVendor = () =>
-    navigate({
-      to: VENDOR_RAIL_PATHS[VENDOR_VENDORS_ID],
-      params: { workspaceSlug },
-      search: (previous: Record<string, unknown>) => previous
-    });
   const patchSearch = (patch: Partial<VendorsSearchParams>) =>
     navigate({
       to: VENDOR_RAIL_PATHS[VENDOR_VENDORS_ID],
@@ -218,7 +205,7 @@ export const VendorVendorsScreen = () => {
               const risk = riskByUid.get(entity._uid);
               const renewal = renewals.byId.get(entity._uid);
               return (
-                <Table.Row key={entity._uid} onClick={() => openVendor(entity._publicId)}>
+                <Table.Row key={entity._uid} onClick={() => openEntityDrawer(entity._publicId)}>
                   <Table.NameCell title={entity._name} subtitle={entity._publicId} />
                   <Table.Cell>{vendorFieldValue(vendorSchema, entity, 'tier')}</Table.Cell>
                   <Table.Cell>{vendorFieldValue(vendorSchema, entity, 'category')}</Table.Cell>
@@ -249,10 +236,6 @@ export const VendorVendorsScreen = () => {
           )}
         </Table.Body>
       </Table.Root>
-
-      {vendorId && (
-        <VendorDrawer workspaceSlug={workspaceSlug} vendorId={vendorId} onClose={closeVendor} />
-      )}
     </div>
   );
 };

@@ -362,8 +362,8 @@
           name, sort by name / spend / risk / next renewal, and a sidebar of Tier, Category, and Relationship Owner
           facets (each showing a count, driven off the Vendor schema's own field options and the fetched vendors'
           values). Next renewal is the earliest upcoming `Contract.contract_end` across a vendor's own Contracts.
-          Selecting a vendor opens the configurable shared vendor drawer, deep-linkable at
-          `vendor-management/vendors/$vendorId`: its schema profile preserves a composite risk score
+          Selecting a vendor opens the configurable shared vendor drawer, deep-linkable via the workspace-wide
+          `drawer` search param: its schema profile preserves a composite risk score
           (`vmRisk`/`vmRiskBand`, weighted across the vendor's security, concentration, financial, and compliance
           risk fields and lifted by criticality), attributes, spend (`vmSpend`, summed across the vendor's own
           Contracts), the vendor's Contracts, the Systems its contracts serve ("Applications supplied"), and a
@@ -704,8 +704,8 @@
           between the catalog above and two flat, sortable cross-API tables built from the same feed: every
           operation/message across the APIs in scope, or just the ones flagged deprecated (method, path, API,
           deprecated flag) — there is no sunset-date countdown, since no such field exists on the normalized
-          operation model. A row click (in any view) opens a deep-linkable spec drawer (`apis/$apiId`) shared
-          with any other section that links into a spec: attributes, providers/consumers, and the full specification
+          operation model. A row click (in any view) opens a deep-linkable spec drawer (via the workspace-wide
+          `drawer` search param) shared with any other section that links into a spec: attributes, providers/consumers, and the full specification
           viewer — source/version picker, revision status notices, normalized operations/messages list,
           and a raw-source preview dialog — rendered through the configurable entity drawer with the specification
           viewer supplied by a registered API provider slot, reusing the same viewer as the Entities app's API

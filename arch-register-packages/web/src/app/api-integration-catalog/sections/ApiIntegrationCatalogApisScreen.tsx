@@ -21,7 +21,7 @@ import { useApiOperationsCounts } from '../useApiOperationsCounts';
 import { useApiOperationsFeed } from '../useApiOperationsFeed';
 import { useApiEndpointRelations, groupByApiId } from '../apiEndpointRelations';
 import type { ApiIntegrationCatalogApisSearchParams } from '../../../routes/searchParams';
-import { ApiSpecDrawer } from './ApiSpecDrawer';
+import { useEntityDrawer } from '../../../sections/entities/entityDrawer/useEntityDrawer';
 import { ApiOperationsTable } from './ApiOperationsTable';
 import filterStyles from '../../../sections/entities/components/EntityBrowser.module.css';
 import styles from './ApiIntegrationCatalogPlaceholderScreen.module.css';
@@ -31,8 +31,8 @@ type SortKey = 'name' | 'operations' | 'providers' | 'consumers';
 /**
  * The APIs register: search + sort (name / operations / providers / consumers count), sidebar
  * facets (Protocol/Lifecycle/Owning team, `ApisSidebarContent` in `ApiIntegrationCatalogSidebar.tsx`),
- * and a Catalog/Operations view toggle (#3345) — opening the shared `ApiSpecDrawer` on row click,
- * deep-linkable at `api-integration-catalog/apis/$apiId`. Mirrors
+ * and a Catalog/Operations view toggle (#3345) — opening the shared entity drawer on row click via
+ * `useEntityDrawer`, deep-linkable through its `drawer` search param. Mirrors
  * `../../vendor-management/sections/VendorVendorsScreen.tsx`.
  *
  * Fetches APIs with `view: 'full'` — `protocols`/`api_version` (and any other custom fields the
@@ -49,11 +49,9 @@ type SortKey = 'name' | 'operations' | 'providers' | 'consumers';
  * `ApiOperationsTable` as the Operations view with `filters.deprecated: true`.
  */
 export const ApiIntegrationCatalogApisScreen = () => {
-  const { workspaceSlug, apiId } = useParams({ strict: false }) as {
-    workspaceSlug: string;
-    apiId?: string;
-  };
+  const { workspaceSlug } = useParams({ strict: false }) as { workspaceSlug: string };
   const navigate = useNavigate();
+  const { openEntityDrawer } = useEntityDrawer();
   const search = useSearch({ strict: false }) as ApiIntegrationCatalogApisSearchParams;
   const q = search.q ?? '';
   const view = search.view ?? 'catalog';
@@ -121,18 +119,6 @@ export const ApiIntegrationCatalogApisScreen = () => {
     dir: 'asc'
   });
 
-  const openApi = (id: string) =>
-    navigate({
-      to: `${IC_RAIL_PATHS[IC_APIS_ID]}/$apiId`,
-      params: { workspaceSlug, apiId: id },
-      search: (previous: Record<string, unknown>) => previous
-    });
-  const closeApi = () =>
-    navigate({
-      to: IC_RAIL_PATHS[IC_APIS_ID],
-      params: { workspaceSlug },
-      search: (previous: Record<string, unknown>) => previous
-    });
   const patchSearch = (patch: Partial<ApiIntegrationCatalogApisSearchParams>) =>
     navigate({
       to: IC_RAIL_PATHS[IC_APIS_ID],
@@ -193,7 +179,7 @@ export const ApiIntegrationCatalogApisScreen = () => {
               ? 'No operations match these filters.'
               : 'No deprecated operations match these filters.'
           }
-          onOpenApi={openApi}
+          onOpenApi={openEntityDrawer}
         />
       ) : (
         <Table.Root scroll stickyHeader>
@@ -233,7 +219,7 @@ export const ApiIntegrationCatalogApisScreen = () => {
                 const entityProviders = providersByApi.get(entity._uid) ?? [];
                 const entityConsumers = consumersByApi.get(entity._uid) ?? [];
                 return (
-                  <Table.Row key={entity._uid} onClick={() => openApi(entity._publicId)}>
+                  <Table.Row key={entity._uid} onClick={() => openEntityDrawer(entity._publicId)}>
                     <Table.NameCell title={entity._name} subtitle={entity._publicId} />
                     <Table.Cell>
                       {apiFieldValues(apiSchema, entity, 'protocols').map(value => (
@@ -278,8 +264,6 @@ export const ApiIntegrationCatalogApisScreen = () => {
           </Table.Body>
         </Table.Root>
       )}
-
-      {apiId && <ApiSpecDrawer workspaceSlug={workspaceSlug} apiId={apiId} onClose={closeApi} />}
     </div>
   );
 };

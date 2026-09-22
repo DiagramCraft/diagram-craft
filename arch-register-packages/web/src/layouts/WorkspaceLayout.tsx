@@ -27,6 +27,8 @@ import { WorkspaceContext } from './WorkspaceContext';
 import { RouteContentBoundary } from '../routes/RouteContentBoundary';
 import { AppErrorState } from '../components/AppErrorState';
 import { WorkspaceDetailLayout } from './WorkspaceDetailLayout';
+import { EntityDrawer } from '../sections/entities/entityDrawer/EntityDrawer';
+import { useEntityDrawer } from '../sections/entities/entityDrawer/useEntityDrawer';
 import {
   navigateFromRailItem,
   navigateToApp,
@@ -66,6 +68,7 @@ export const WorkspaceLayout = () => {
   const router = useRouter();
   const queryClient = useQueryClient();
   const matches = useMatches();
+  const { drawerEntityId, closeEntityDrawer } = useEntityDrawer();
 
   const [query, setQuery] = useState('');
   const [addWsOpen, setAddWsOpen] = useState(false);
@@ -478,6 +481,13 @@ export const WorkspaceLayout = () => {
                 )}
                 <main className={styles.main}>{routeContent}</main>
               </div>
+            )}
+            {drawerEntityId && (
+              <EntityDrawer
+                workspaceSlug={workspaceSlug}
+                entityId={drawerEntityId}
+                onClose={closeEntityDrawer}
+              />
             )}
           </div>
         )}
