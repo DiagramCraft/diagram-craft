@@ -40,8 +40,8 @@ full-page experience and should remain separate from the read-only drawer config
 
 | Drawer | Entity or context | Header and actions | Sections and content | Entry/deep-link behavior |
 | --- | --- | --- | --- | --- |
-| Generic `EntityDrawer` | Business Glossary Term | Public id eyebrow; status and lifecycle badges; **Open in Entities** footer action | Definition, synonyms, abbreviations, categories, owner, and usage/backlinks grouped by entities, relations, documents, projects, and diagrams | `/glossary/$termId`; opened from the glossary register; usage comes from the registered glossary provider |
-| `ApiSpecDrawer` | API | Configurable public-id/protocol/lifecycle badges; **Open record in Entities** footer action | Configured attributes and provider/consumer relations plus the registered API specification catalog slot for source/version selection, status, diagnostics, normalized operations/messages, and raw-source preview | `/api-integration-catalog/apis/$apiId`; shared with other sections that link to an API; artifact content remains permission-aware |
+| Generic `EntityDrawer` | Business Glossary Term | Public id eyebrow; status and lifecycle badges; **Open in Entities** footer action | Definition, synonyms, abbreviations, categories, owner, and usage/backlinks grouped by entities, relations, documents, projects, and diagrams | deep-linkable via the workspace-wide `drawer` search param (#3383); opened from the glossary register; usage comes from the registered glossary provider |
+| `ApiSpecDrawer` | API | Configurable public-id/protocol/lifecycle badges; **Open record in Entities** footer action | Configured attributes and provider/consumer relations plus the registered API specification catalog slot for source/version selection, status, diagnostics, normalized operations/messages, and raw-source preview | deep-linkable via the workspace-wide `drawer` search param (#3383); shared with other sections that link to an API; artifact content remains permission-aware |
 | `DatasetDrawer` | Data Stewardship Data Entity/dataset | Public id eyebrow; classification badge; **Open record in Entities** footer action | Attributes; Stewardship; coverage score/gaps; queue items; change cases; exceptions placeholder; assessments; Flows and Systems placeholders | Uses `datasetId` search state on several Data Stewardship sections; queue items can open `DataStewardshipCaseDrawer` |
 | `DataStewardshipCaseDrawer` | Governance case, not an entity drawer | Case status eyebrow; priority badge; permission-dependent Approve/Acknowledge and Request changes actions; open subject dataset/record action | Case status, timestamps, due/escalation/outcome, current-user assignment, and dataset in scope | Uses `caseId` search state; remains a specialized case drawer outside the entity profile model |
 | `RiskDrawer` | Risk | Public id eyebrow; category/status badges; **Open record in Entities** footer action | Risk profile and residual band; attributes; aggregate coverage; mitigating controls with coverage/effectiveness; affected entities | `/risk-compliance/risks/$riskId`, plus in-situ opening from controls and overview surfaces |
@@ -252,6 +252,18 @@ deep-link behavior with focused component tests.
 
 Update entity navigation links and route/search state handling after #3312. Keep an explicit action for opening the
 full entity detail route and verify links from generic entity views, Markdown, projects, relations, and app surfaces.
+
+### #3383 — single app-wide entry point for opening entity drawers
+
+Introduced a shared `drawer=<entityId>` search param, declared once on the parent `$workspaceSlug` route, plus a
+`useEntityDrawer()` hook (`openEntityDrawer`/`closeEntityDrawer`) so any screen can open any entity's drawer without
+its own route param or wrapper component; `WorkspaceLayout` is now the single place that renders the resulting
+`EntityDrawer`. Migrated as the first step: Vendor Management's Vendors screen, the API Integration Catalog's APIs
+screen, and the Business Glossary screen — each previously declared its own `$vendorId`/`$apiId`/`$termId` detail
+route purely to deep-link the drawer; those routes now redirect to the equivalent `drawer` search param for
+backwards compatibility. Screens with a bespoke `onOpenEntity`/`onOpenGovernanceCase`/`onOpenRelatedEntity`
+override (`ContractDrawer`, `CapabilityDrawer`, `DatasetDrawer`) or an existing stacked-drawer screen
+(`RiskComplianceControlsScreen`) were left on the per-screen pattern, most pending #3372 (nested/stacked drawers).
 
 ## Acceptance checklist
 

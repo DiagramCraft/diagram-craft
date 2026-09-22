@@ -7,6 +7,7 @@ import { RootLayout } from '../layouts/RootLayout';
 import { RouteErrorComponent } from './RouteErrorComponent';
 import { createWorkspaceRouteEntries } from './workspace/createWorkspaceRouteEntries';
 import { createPublicCatalogRoutes } from './publicCatalogRoutes';
+import { validateEntityDrawerSearch } from './searchParams';
 
 // ─── Root Route ───────────────────────────────────────────────
 const rootRoute = createRootRouteWithContext<RouterContext>()({
@@ -79,7 +80,10 @@ const authenticatedRoute = createRoute({
 const workspaceRoute = createRoute({
   getParentRoute: () => authenticatedRoute,
   path: '$workspaceSlug',
-  component: WorkspaceLayout
+  component: WorkspaceLayout,
+  // Shared across every child screen so any entity's drawer can be opened via a `drawer=<id>`
+  // search param instead of each screen declaring its own detail route — see useEntityDrawer.ts.
+  validateSearch: validateEntityDrawerSearch
 });
 
 const workspaceRouteEntries = createWorkspaceRouteEntries(workspaceRoute);

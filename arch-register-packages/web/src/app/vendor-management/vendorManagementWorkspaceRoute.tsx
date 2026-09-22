@@ -1,4 +1,4 @@
-import { createRoute, type AnyRoute } from '@tanstack/react-router';
+import { createRoute, redirect, type AnyRoute } from '@tanstack/react-router';
 import { buildVendorManagementBreadcrumbs } from './vendorManagementShell';
 import {
   VENDOR_OVERVIEW_ID,
@@ -68,27 +68,24 @@ export const createVendorManagementWorkspaceRoutes = <TParentRoute extends AnyRo
         breadcrumbs: buildVendorManagementBreadcrumbs(ctx, VENDOR_VENDORS_ID)
       })
   );
-  // Deep-linkable vendor drawer, mirroring `strategyWorkspaceRoute.tsx`'s `capabilitiesDetailRoute`
-  // — same `component` as the base Vendors route, gated the same way, with the drawer rendered
-  // conditionally by `VendorVendorsScreen` when the optional `vendorId` route param is present.
-  const vendorsDetailRoute = withWorkspaceShell(
-    createRoute({
-      getParentRoute: () => workspaceRoute,
-      path: `${railPath(VENDOR_RAIL_PATHS[VENDOR_VENDORS_ID])}/$vendorId`,
-      validateSearch: validateVendorsSearch,
-      beforeLoad: ({ context, params }) =>
-        ensureApplicationAccess(
-          context.queryClient,
-          (params as unknown as { workspaceSlug: string }).workspaceSlug,
-          'vendor-management'
-        ),
-      component: LazyVendorVendorsScreen
-    }),
-    ctx =>
-      railSectionShell(ctx, VENDOR_VENDORS_ID, {
-        breadcrumbs: buildVendorManagementBreadcrumbs(ctx, VENDOR_VENDORS_ID)
-      })
-  );
+  // Legacy deep link: `VendorVendorsScreen` now opens the vendor drawer via the shared
+  // `drawer` search param (see useEntityDrawer.ts) instead of a `$vendorId` route, so an old
+  // bookmarked `.../vendors/$vendorId` URL is redirected to the equivalent search param.
+  const vendorsDetailRoute = createRoute({
+    getParentRoute: () => workspaceRoute,
+    path: `${railPath(VENDOR_RAIL_PATHS[VENDOR_VENDORS_ID])}/$vendorId`,
+    beforeLoad: ({ params }) => {
+      const { workspaceSlug, vendorId } = params as unknown as {
+        workspaceSlug: string;
+        vendorId: string;
+      };
+      throw redirect({
+        to: VENDOR_RAIL_PATHS[VENDOR_VENDORS_ID],
+        params: { workspaceSlug },
+        search: (previous: Record<string, unknown>) => ({ ...previous, drawer: vendorId })
+      });
+    }
+  });
   const contractsRoute = withWorkspaceShell(
     createRoute({
       getParentRoute: () => workspaceRoute,

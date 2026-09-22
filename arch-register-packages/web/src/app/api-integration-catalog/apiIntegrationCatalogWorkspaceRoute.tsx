@@ -1,4 +1,4 @@
-import { createRoute, type AnyRoute } from '@tanstack/react-router';
+import { createRoute, redirect, type AnyRoute } from '@tanstack/react-router';
 import { buildApiIntegrationCatalogBreadcrumbs } from './apiIntegrationCatalogShell';
 import {
   IC_OVERVIEW_ID,
@@ -70,28 +70,24 @@ export const createApiIntegrationCatalogWorkspaceRoutes = <TParentRoute extends 
         breadcrumbs: buildApiIntegrationCatalogBreadcrumbs(ctx, IC_APIS_ID)
       })
   );
-  // Deep-linkable API spec drawer, mirroring `vendorManagementWorkspaceRoute.tsx`'s
-  // `vendorsDetailRoute` — same `component` as the base APIs route, gated the same way, with the
-  // drawer rendered conditionally by `ApiIntegrationCatalogApisScreen` when the optional `apiId`
-  // route param is present.
-  const apisDetailRoute = withWorkspaceShell(
-    createRoute({
-      getParentRoute: () => workspaceRoute,
-      path: `${railPath(IC_RAIL_PATHS[IC_APIS_ID])}/$apiId`,
-      validateSearch: validateApiIntegrationCatalogApisSearch,
-      beforeLoad: ({ context, params }) =>
-        ensureApplicationAccess(
-          context.queryClient,
-          (params as unknown as { workspaceSlug: string }).workspaceSlug,
-          'api-integration-catalog'
-        ),
-      component: LazyApiIntegrationCatalogApisScreen
-    }),
-    ctx =>
-      railSectionShell(ctx, IC_APIS_ID, {
-        breadcrumbs: buildApiIntegrationCatalogBreadcrumbs(ctx, IC_APIS_ID)
-      })
-  );
+  // Legacy deep link: `ApiIntegrationCatalogApisScreen` now opens the API drawer via the shared
+  // `drawer` search param (see useEntityDrawer.ts) instead of an `$apiId` route, so an old
+  // bookmarked `.../apis/$apiId` URL is redirected to the equivalent search param.
+  const apisDetailRoute = createRoute({
+    getParentRoute: () => workspaceRoute,
+    path: `${railPath(IC_RAIL_PATHS[IC_APIS_ID])}/$apiId`,
+    beforeLoad: ({ params }) => {
+      const { workspaceSlug, apiId } = params as unknown as {
+        workspaceSlug: string;
+        apiId: string;
+      };
+      throw redirect({
+        to: IC_RAIL_PATHS[IC_APIS_ID],
+        params: { workspaceSlug },
+        search: (previous: Record<string, unknown>) => ({ ...previous, drawer: apiId })
+      });
+    }
+  });
   const integrationsRoute = withWorkspaceShell(
     createRoute({
       getParentRoute: () => workspaceRoute,

@@ -5,10 +5,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { VendorVendorsScreen } from './VendorVendorsScreen';
 
-vi.mock('./VendorDrawer', () => ({
-  VendorDrawer: () => <div>Open record in Entities</div>
-}));
-
 const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
   entityList: vi.fn(),
@@ -146,7 +142,7 @@ describe('VendorVendorsScreen', () => {
     vi.clearAllMocks();
   });
 
-  it('lists vendors and opens the drawer on row click', async () => {
+  it('lists vendors and opens the shared entity drawer via the drawer search param on row click', async () => {
     await renderScreen();
     expect(container.textContent).toContain('Acme Corp');
     expect(container.textContent).toContain('VND-001');
@@ -159,18 +155,9 @@ describe('VendorVendorsScreen', () => {
       row!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
 
-    expect(mocks.navigate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        to: '/$workspaceSlug/vendor-management/vendors/$vendorId',
-        params: { workspaceSlug: 'ws-1', vendorId: 'VND-001' }
-      })
-    );
-  });
-
-  it('renders the drawer when the route carries a vendorId param', async () => {
-    mocks.params = { workspaceSlug: 'ws-1', vendorId: 'vnd-1' };
-    await renderScreen();
-    expect(container.textContent).toContain('Open record in Entities');
+    expect(mocks.navigate).toHaveBeenCalledTimes(1);
+    const [{ search }] = mocks.navigate.mock.calls[0]!;
+    expect(search({})).toEqual({ drawer: 'VND-001' });
   });
 
   it('shows a not-enabled empty state when the capability is unconfigured', async () => {

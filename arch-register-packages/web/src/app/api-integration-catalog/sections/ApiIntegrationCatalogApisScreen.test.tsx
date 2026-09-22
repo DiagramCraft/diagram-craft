@@ -27,10 +27,6 @@ vi.mock('@tanstack/react-router', () => ({
   useSearch: () => mocks.search
 }));
 
-vi.mock('./ApiSpecDrawer', () => ({
-  ApiSpecDrawer: () => <div>Open record in Entities</div>
-}));
-
 vi.mock('@diagram-craft/app-components/Dialog', () => ({
   Dialog: ({ open, children }: { open: boolean; children: React.ReactNode }) =>
     open ? <div role="dialog">{children}</div> : null
@@ -203,7 +199,7 @@ describe('ApiIntegrationCatalogApisScreen', () => {
     vi.clearAllMocks();
   });
 
-  it('lists APIs and opens the spec drawer on row click', async () => {
+  it('lists APIs and opens the shared entity drawer via the drawer search param on row click', async () => {
     await renderScreen();
     expect(container.textContent).toContain('Orders API');
     expect(container.textContent).toContain('API-001');
@@ -216,18 +212,9 @@ describe('ApiIntegrationCatalogApisScreen', () => {
       row!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
 
-    expect(mocks.navigate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        to: '/$workspaceSlug/api-integration-catalog/apis/$apiId',
-        params: { workspaceSlug: 'ws-1', apiId: 'API-001' }
-      })
-    );
-  });
-
-  it('renders the drawer when the route carries an apiId param', async () => {
-    mocks.params = { workspaceSlug: 'ws-1', apiId: 'api-1' };
-    await renderScreen();
-    expect(container.textContent).toContain('Open record in Entities');
+    expect(mocks.navigate).toHaveBeenCalledTimes(1);
+    const [{ search }] = mocks.navigate.mock.calls[0]!;
+    expect(search({})).toEqual({ drawer: 'API-001' });
   });
 
   it('shows a not-enabled empty state when the capability is unconfigured', async () => {
@@ -327,11 +314,8 @@ describe('ApiIntegrationCatalogApisScreen', () => {
     await act(async () => {
       row!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
-    expect(mocks.navigate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        to: '/$workspaceSlug/api-integration-catalog/apis/$apiId',
-        params: { workspaceSlug: 'ws-1', apiId: 'API-001' }
-      })
-    );
+    expect(mocks.navigate).toHaveBeenCalledTimes(1);
+    const [{ search }] = mocks.navigate.mock.calls[0]!;
+    expect(search({})).toEqual({ drawer: 'API-001' });
   });
 });
