@@ -5,6 +5,7 @@ import { strategyEntityDrawerProviderDefinitions } from '../../../app/strategy-m
 import { vendorContractEntityDrawerProviderDefinitions } from '../../../app/vendor-management/sections/ContractEntityDrawerProviders';
 import { vendorEntityDrawerProviderDefinitions } from '../../../app/vendor-management/sections/VendorEntityDrawerProviders';
 import { dataStewardshipEntityDrawerProviderDefinitions } from '../../../app/data-stewardship/sections/DataStewardshipEntityDrawerProviders';
+import { apiEntityDrawerProviderDefinitions } from '../../../app/api-integration-catalog/sections/ApiEntityDrawerProvider';
 import {
   createEntityDrawerProviderRegistry,
   type EntityDrawerProviderDefinition
@@ -17,7 +18,8 @@ const definitions: readonly EntityDrawerProviderDefinition[] = [
   ...strategyEntityDrawerProviderDefinitions,
   ...vendorContractEntityDrawerProviderDefinitions,
   ...vendorEntityDrawerProviderDefinitions,
-  ...dataStewardshipEntityDrawerProviderDefinitions
+  ...dataStewardshipEntityDrawerProviderDefinitions,
+  ...apiEntityDrawerProviderDefinitions
 ];
 
 export const entityDrawerProviderRegistry = createEntityDrawerProviderRegistry(definitions);

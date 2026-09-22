@@ -27,6 +27,10 @@ vi.mock('@tanstack/react-router', () => ({
   useSearch: () => mocks.search
 }));
 
+vi.mock('./ApiSpecDrawer', () => ({
+  ApiSpecDrawer: () => <div>Open record in Entities</div>
+}));
+
 vi.mock('@diagram-craft/app-components/Dialog', () => ({
   Dialog: ({ open, children }: { open: boolean; children: React.ReactNode }) =>
     open ? <div role="dialog">{children}</div> : null

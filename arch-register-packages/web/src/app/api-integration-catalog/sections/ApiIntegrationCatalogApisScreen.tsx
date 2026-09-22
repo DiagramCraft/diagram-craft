@@ -279,14 +279,7 @@ export const ApiIntegrationCatalogApisScreen = () => {
         </Table.Root>
       )}
 
-      {apiId && (
-        <ApiSpecDrawer
-          workspaceSlug={workspaceSlug}
-          apiId={apiId}
-          apiSchemaId={apiConfig.apiSchemaId}
-          onClose={closeApi}
-        />
-      )}
+      {apiId && <ApiSpecDrawer workspaceSlug={workspaceSlug} apiId={apiId} onClose={closeApi} />}
     </div>
   );
 };
