@@ -7,11 +7,12 @@ import { VendorContractsScreen } from './VendorContractsScreen';
 
 const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
+  openEntityDrawer: vi.fn(),
   entityTree: vi.fn(),
   entityGet: vi.fn(),
   schemasList: vi.fn(),
   capabilityConfigurationsList: vi.fn(),
-  params: { workspaceSlug: 'ws-1' } as { workspaceSlug: string; contractId?: string },
+  params: { workspaceSlug: 'ws-1' } as { workspaceSlug: string },
   search: {} as Record<string, unknown>
 }));
 
@@ -19,6 +20,10 @@ vi.mock('@tanstack/react-router', () => ({
   useParams: () => mocks.params,
   useNavigate: () => mocks.navigate,
   useSearch: () => mocks.search
+}));
+
+vi.mock('../../../sections/entities/entityDrawer/useEntityDrawer', () => ({
+  useEntityDrawer: () => ({ openEntityDrawer: mocks.openEntityDrawer })
 }));
 
 vi.mock('../../../lib/orpcClient', () => ({
@@ -140,7 +145,7 @@ describe('VendorContractsScreen', () => {
     expect(container.textContent).toContain('Beta Maintenance');
   });
 
-  it('opens the contract drawer on row click', async () => {
+  it('opens the contract drawer through the shared opener on row click', async () => {
     await renderScreen();
     const row = [...container.querySelectorAll('tr')].find(tr =>
       tr.textContent?.includes('Acme Support')
@@ -150,25 +155,13 @@ describe('VendorContractsScreen', () => {
       row!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
 
-    expect(mocks.navigate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        to: '/$workspaceSlug/vendor-management/contracts/$contractId',
-        params: { workspaceSlug: 'ws-1', contractId: 'CTR-1' }
-      })
-    );
+    expect(mocks.openEntityDrawer).toHaveBeenCalledWith('CTR-1');
   });
 
-  it('renders the drawer when the route carries a contractId param', async () => {
-    mocks.params = { workspaceSlug: 'ws-1', contractId: 'ctr-1' };
-    mocks.entityGet.mockResolvedValue({
-      _uid: 'ctr-1',
-      _publicId: 'CTR-1',
-      _name: 'Acme Support',
-      contract_type: 'licence',
-      contract_end: '2026-10-01'
-    });
+  it('keeps the contracts view state when a drawer search target is present', async () => {
+    mocks.search = { drawer: 'CTR-1', view: 'calendar' };
     await renderScreen();
-    expect(container.textContent).toContain('Open record in Entities');
+    expect(container.textContent).toContain('Renewal calendar');
   });
 
   it('shows a not-enabled empty state when the capability is unconfigured', async () => {

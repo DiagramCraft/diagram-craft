@@ -18,9 +18,9 @@ import { useVendorContracts, type VendorContractRow } from '../useVendorContract
 import { vendorFieldValue } from '../vendorFieldDisplay';
 import { renewalWindow, RENEWAL_WINDOW_COLOR } from '../contractRenewalWindow';
 import type { ContractsSearchParams } from '../../../routes/searchParams';
+import { useEntityDrawer } from '../../../sections/entities/entityDrawer/useEntityDrawer';
 import { VendorContractsCalendar } from './VendorContractsCalendar';
 import { VendorContractsTimeline } from './VendorContractsTimeline';
-import { ContractDrawer } from './ContractDrawer';
 import filterStyles from '../../../sections/entities/components/EntityBrowser.module.css';
 import styles from './VendorManagementPlaceholderScreen.module.css';
 
@@ -37,20 +37,20 @@ const compareNullable = (a: number | string | null, b: number | string | null): 
  * The Contracts section: search, sort, and facets (renewal window, type, vendor) delivered by
  * `VendorManagementSidebar`'s `ContractsSidebarContent`, toggling between a list view, a
  * 12-month renewal calendar (`VendorContractsCalendar`), and a Gantt-style contract timeline
- * (`VendorContractsTimeline`). Row/entry/bar click opens the shared `ContractDrawer`,
- * deep-linkable at `vendor-management/contracts/$contractId` — consistent with how the Vendors
- * section opens its own drawer rather than navigating away.
+ * (`VendorContractsTimeline`). Row/entry/bar click opens the workspace-wide entity drawer;
+ * legacy `vendor-management/contracts/$contractId` links redirect to the shared `drawer` search
+ * param.
  *
  * Fetches Contracts via `useVendorContracts` (a Contract tree join, resolving each Contract's
  * containing Vendor name — a flat entity fetch can't give that, see that hook's own comment).
  */
 export const VendorContractsScreen = () => {
-  const { workspaceSlug, contractId } = useParams({ strict: false }) as {
+  const { workspaceSlug } = useParams({ strict: false }) as {
     workspaceSlug: string;
-    contractId?: string;
   };
   const navigate = useNavigate();
   const search = useSearch({ strict: false }) as ContractsSearchParams;
+  const { openEntityDrawer } = useEntityDrawer();
   const q = search.q ?? '';
   const view = search.view ?? 'list';
 
@@ -113,18 +113,7 @@ export const VendorContractsScreen = () => {
       search: (previous: Record<string, unknown>) => ({ ...previous, ...patch })
     });
 
-  const openContract = (contract: EntityRecord) =>
-    navigate({
-      to: `${VENDOR_RAIL_PATHS[VENDOR_CONTRACTS_ID]}/$contractId`,
-      params: { workspaceSlug, contractId: contract._publicId },
-      search: (previous: Record<string, unknown>) => previous
-    });
-  const closeContract = () =>
-    navigate({
-      to: VENDOR_RAIL_PATHS[VENDOR_CONTRACTS_ID],
-      params: { workspaceSlug },
-      search: (previous: Record<string, unknown>) => previous
-    });
+  const openContract = (contract: EntityRecord) => openEntityDrawer(contract._publicId);
 
   if (configurations.isLoading) {
     return <div className={styles.empty}>Loading vendor management…</div>;
@@ -253,14 +242,6 @@ export const VendorContractsScreen = () => {
             )}
           </Table.Body>
         </Table.Root>
-      )}
-
-      {contractId && (
-        <ContractDrawer
-          workspaceSlug={workspaceSlug}
-          contractId={contractId}
-          onClose={closeContract}
-        />
       )}
     </div>
   );

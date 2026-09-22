@@ -262,6 +262,7 @@ const DrawerItem = ({
   relationSchemas,
   workspaceSlug,
   formatDateValue,
+  onOpenEntity,
   onOpenRelatedEntity
 }: {
   item: ResolvedEntityDrawerItem;
@@ -275,6 +276,7 @@ const DrawerItem = ({
   relationSchemas: RelationSchema[];
   workspaceSlug: string;
   formatDateValue?: (value: unknown) => string;
+  onOpenEntity?: (entityId: string) => void;
   onOpenRelatedEntity?: (fieldId: string, publicId: string) => boolean;
 }) => {
   if (item.item.kind === 'metadata') {
@@ -337,6 +339,7 @@ const DrawerItem = ({
       relationSchemas={relationSchemas}
       workspaceSlug={workspaceSlug}
       formatDateValue={formatDateValue}
+      onOpenEntity={onOpenEntity}
       onOpenRelatedEntity={onOpenRelatedEntity}
       externalMeta={entity._externalMetadata?.[item.field.id]}
     />
@@ -348,6 +351,9 @@ export const EntityDrawer = ({
   entityId,
   onClose,
   onOpenEntity,
+  active = true,
+  stacked = false,
+  stackOffset = 0,
   onOpenGovernanceCase,
   onOpenRelatedEntity,
   entityOverride,
@@ -364,6 +370,9 @@ export const EntityDrawer = ({
   entityId: string;
   onClose: () => void;
   onOpenEntity?: (entityId: string) => void;
+  active?: boolean;
+  stacked?: boolean;
+  stackOffset?: number;
   onOpenGovernanceCase?: (caseId: string) => void;
   onOpenRelatedEntity?: (fieldId: string, publicId: string) => boolean;
   entityOverride?: EntityRecord;
@@ -491,14 +500,26 @@ export const EntityDrawer = ({
 
   if (entityLoading || (entityOverride === undefined && entityQuery.isLoading)) {
     return (
-      <Drawer onClose={onClose} title="Loading…">
+      <Drawer
+        onClose={onClose}
+        title="Loading…"
+        active={active}
+        stacked={stacked}
+        stackOffset={stackOffset}
+      >
         <div className={styles.empty}>{loadingMessage}</div>
       </Drawer>
     );
   }
   if (entityUnavailable || (entityOverride === undefined && entityQuery.isError) || !entity) {
     return (
-      <Drawer onClose={onClose} title="Unavailable">
+      <Drawer
+        onClose={onClose}
+        title="Unavailable"
+        active={active}
+        stacked={stacked}
+        stackOffset={stackOffset}
+      >
         <div className={styles.empty}>{unavailableMessage}</div>
       </Drawer>
     );
@@ -507,13 +528,22 @@ export const EntityDrawer = ({
     return (
       <Drawer
         onClose={onClose}
+        active={active}
+        stacked={stacked}
+        stackOffset={stackOffset}
         eyebrow={<span className="dim mono">{entity._publicId}</span>}
         title={entity._name}
         footer={
           <Button
             variant="primary"
             onClick={() =>
-              navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(entity._publicId)))
+              navigate({
+                ...entityDetailRoute(workspaceSlug, asEntityPublicId(entity._publicId)),
+                search: (previous: Record<string, unknown>) => ({
+                  ...previous,
+                  drawer: undefined
+                })
+              } as unknown as Parameters<typeof navigate>[0])
             }
           >
             Open record in Entities
@@ -528,6 +558,9 @@ export const EntityDrawer = ({
   return (
     <Drawer
       onClose={onClose}
+      active={active}
+      stacked={stacked}
+      stackOffset={stackOffset}
       eyebrow={<span className="dim mono">{entity._publicId}</span>}
       title={entity._name}
       badges={
@@ -549,7 +582,13 @@ export const EntityDrawer = ({
         <Button
           variant="primary"
           onClick={() =>
-            navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(entity._publicId)))
+            navigate({
+              ...entityDetailRoute(workspaceSlug, asEntityPublicId(entity._publicId)),
+              search: (previous: Record<string, unknown>) => ({
+                ...previous,
+                drawer: undefined
+              })
+            } as unknown as Parameters<typeof navigate>[0])
           }
         >
           Open record in Entities
@@ -592,6 +631,7 @@ export const EntityDrawer = ({
                     relationSchemas={relationSchemas}
                     workspaceSlug={workspaceSlug}
                     formatDateValue={formatDateValue}
+                    onOpenEntity={onOpenEntity}
                     onOpenRelatedEntity={onOpenRelatedEntity}
                   />
                 </div>

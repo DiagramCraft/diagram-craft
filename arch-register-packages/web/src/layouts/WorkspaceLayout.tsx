@@ -28,7 +28,10 @@ import { RouteContentBoundary } from '../routes/RouteContentBoundary';
 import { AppErrorState } from '../components/AppErrorState';
 import { WorkspaceDetailLayout } from './WorkspaceDetailLayout';
 import { EntityDrawer } from '../sections/entities/entityDrawer/EntityDrawer';
-import { useEntityDrawer } from '../sections/entities/entityDrawer/useEntityDrawer';
+import {
+  EntityDrawerStackProvider,
+  useEntityDrawer
+} from '../sections/entities/entityDrawer/useEntityDrawer';
 import {
   navigateFromRailItem,
   navigateToApp,
@@ -41,7 +44,7 @@ import {
   railItemMeta,
   railItemToAppId
 } from '../shell/appShellRegistry';
-import type { AppId, WorkspaceRailItemId } from '../shell/shellTypes';
+import type { AppDefinition, AppId, WorkspaceRailItemId } from '../shell/shellTypes';
 import { getWorkspaceShellBuilder } from '../routes/workspace/workspaceShellRoute';
 import {
   useAccessibleApplications,
@@ -68,7 +71,6 @@ export const WorkspaceLayout = () => {
   const router = useRouter();
   const queryClient = useQueryClient();
   const matches = useMatches();
-  const { drawerEntityId, closeEntityDrawer } = useEntityDrawer();
 
   const [query, setQuery] = useState('');
   const [addWsOpen, setAddWsOpen] = useState(false);
@@ -430,112 +432,150 @@ export const WorkspaceLayout = () => {
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <WorkspaceContext.Provider value={contextValue}>
-        {shellDescriptor.variant === 'overlay' ? (
-          routeContent
-        ) : (
-          <div className={`ar-app ${styles.shell}`} style={appAccentStyle(activeApp)}>
-            <TopBar
-              workspaces={workspaces}
-              currentWs={ws?.id ?? ''}
-              workspaceSlug={workspaceSlug}
-              onPickWs={handlePickWs}
-              apps={enabledApps}
-              activeAppId={activeApp.id}
-              onPickApp={handlePickApp}
-              trail={shellDescriptor.breadcrumbs}
-              query={query}
-              onQueryChange={setQuery}
-              onQuerySubmit={handleQuerySubmit}
-              onOpenSettings={handleOpenSettings}
-              onOpenGlobalSettings={handleOpenGlobalSettings}
-              onAddWorkspace={() => setAddWsOpen(true)}
-              onNewProject={() => setAddProjectOpen(true)}
-              onNewEntity={openAddEntityDialog}
-              canOpenSettings={availableSettingsSections.length > 0}
-              canOpenGlobalSettings={canManageGlobalRoles}
-              canAddWorkspace={canManageWorkspaces}
-              canNewProject={canCreateProjects}
-              canNewEntity={canCreateEntities}
-              hideSearch={shellDescriptor.hideSearch}
-              hideWorkspaceSwitcher={shellDescriptor.hideWorkspaceSwitcher}
-            />
-            {shellDescriptor.variant === 'detail' ? (
-              <WorkspaceDetailLayout
-                rail={navRail}
-                navigationLabel={shellDescriptor.navigationLabel}
-                renderNavigation={shellDescriptor.renderNavigation}
-                secondarySidebar={shellDescriptor.secondarySidebar}
-              >
-                {routeContent}
-              </WorkspaceDetailLayout>
-            ) : (
-              <div
-                className={[styles.body, shellDescriptor.primarySidebar ? '' : styles.bodyNoSidebar]
-                  .filter(Boolean)
-                  .join(' ')}
-              >
-                {navRail}
-                {shellDescriptor.primarySidebar && (
-                  <div className={sidePanelStyles.panel}>{shellDescriptor.primarySidebar}</div>
-                )}
-                <main className={styles.main}>{routeContent}</main>
-              </div>
-            )}
-            {drawerEntityId && (
-              <EntityDrawer
+      <EntityDrawerStackProvider>
+        <WorkspaceContext.Provider value={contextValue}>
+          {shellDescriptor.variant === 'overlay' ? (
+            routeContent
+          ) : (
+            <div className={`ar-app ${styles.shell}`} style={appAccentStyle(activeApp)}>
+              <TopBar
+                workspaces={workspaces}
+                currentWs={ws?.id ?? ''}
                 workspaceSlug={workspaceSlug}
-                entityId={drawerEntityId}
-                onClose={closeEntityDrawer}
+                onPickWs={handlePickWs}
+                apps={enabledApps}
+                activeAppId={activeApp.id}
+                onPickApp={handlePickApp}
+                trail={shellDescriptor.breadcrumbs}
+                query={query}
+                onQueryChange={setQuery}
+                onQuerySubmit={handleQuerySubmit}
+                onOpenSettings={handleOpenSettings}
+                onOpenGlobalSettings={handleOpenGlobalSettings}
+                onAddWorkspace={() => setAddWsOpen(true)}
+                onNewProject={() => setAddProjectOpen(true)}
+                onNewEntity={openAddEntityDialog}
+                canOpenSettings={availableSettingsSections.length > 0}
+                canOpenGlobalSettings={canManageGlobalRoles}
+                canAddWorkspace={canManageWorkspaces}
+                canNewProject={canCreateProjects}
+                canNewEntity={canCreateEntities}
+                hideSearch={shellDescriptor.hideSearch}
+                hideWorkspaceSwitcher={shellDescriptor.hideWorkspaceSwitcher}
               />
-            )}
-          </div>
-        )}
-        {canManageWorkspaces && (
-          <AddWorkspaceDialog
-            open={addWsOpen}
-            onClose={() => setAddWsOpen(false)}
-            onCreated={newWs => {
-              void invalidateWorkspaceList(queryClient);
-              navigate({ to: '/$workspaceSlug', params: { workspaceSlug: newWs.url_slug } });
-            }}
-          />
-        )}
-        {workspaceSlug && canCreateProjects && (
-          <AddProjectDialog
-            open={addProjectOpen}
-            onClose={() => setAddProjectOpen(false)}
-            onCreated={project => {
-              void invalidateProjectList(queryClient, workspaceSlug);
-              navigate(
-                projectDetailRoute(workspaceSlug, asProjectPublicId(project.public_id), {
-                  tab:
-                    project.status === 'complete' || project.status === 'cancelled'
-                      ? 'archive'
-                      : 'projects',
-                  section: 'home'
-                })
-              );
-            }}
-            workspaceId={workspaceSlug}
-            teams={teams}
-          />
-        )}
-        {workspaceSlug && canCreateEntities && (
-          <AddEntityDialog
-            open={addEntityOpen}
-            onClose={() => setAddEntityOpen(false)}
-            onCreated={entity => {
-              navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(entity._publicId)));
-            }}
-            workspaceId={workspaceSlug}
-            schemas={schemas}
-            lifecycleStates={lifecycleStates}
-            teams={teams}
-            preselectedSchemaId={addEntitySchemaId}
-          />
-        )}
-      </WorkspaceContext.Provider>
+              {shellDescriptor.variant === 'detail' ? (
+                <WorkspaceDetailLayout
+                  rail={navRail}
+                  navigationLabel={shellDescriptor.navigationLabel}
+                  renderNavigation={shellDescriptor.renderNavigation}
+                  secondarySidebar={shellDescriptor.secondarySidebar}
+                >
+                  {routeContent}
+                </WorkspaceDetailLayout>
+              ) : (
+                <div
+                  className={[
+                    styles.body,
+                    shellDescriptor.primarySidebar ? '' : styles.bodyNoSidebar
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
+                >
+                  {navRail}
+                  {shellDescriptor.primarySidebar && (
+                    <div className={sidePanelStyles.panel}>{shellDescriptor.primarySidebar}</div>
+                  )}
+                  <main className={styles.main}>{routeContent}</main>
+                </div>
+              )}
+            </div>
+          )}
+          <WorkspaceEntityDrawerStack workspaceSlug={workspaceSlug} app={activeApp} />
+          {canManageWorkspaces && (
+            <AddWorkspaceDialog
+              open={addWsOpen}
+              onClose={() => setAddWsOpen(false)}
+              onCreated={newWs => {
+                void invalidateWorkspaceList(queryClient);
+                navigate({ to: '/$workspaceSlug', params: { workspaceSlug: newWs.url_slug } });
+              }}
+            />
+          )}
+          {workspaceSlug && canCreateProjects && (
+            <AddProjectDialog
+              open={addProjectOpen}
+              onClose={() => setAddProjectOpen(false)}
+              onCreated={project => {
+                void invalidateProjectList(queryClient, workspaceSlug);
+                navigate(
+                  projectDetailRoute(workspaceSlug, asProjectPublicId(project.public_id), {
+                    tab:
+                      project.status === 'complete' || project.status === 'cancelled'
+                        ? 'archive'
+                        : 'projects',
+                    section: 'home'
+                  })
+                );
+              }}
+              workspaceId={workspaceSlug}
+              teams={teams}
+            />
+          )}
+          {workspaceSlug && canCreateEntities && (
+            <AddEntityDialog
+              open={addEntityOpen}
+              onClose={() => setAddEntityOpen(false)}
+              onCreated={entity => {
+                navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(entity._publicId)));
+              }}
+              workspaceId={workspaceSlug}
+              schemas={schemas}
+              lifecycleStates={lifecycleStates}
+              teams={teams}
+              preselectedSchemaId={addEntitySchemaId}
+            />
+          )}
+        </WorkspaceContext.Provider>
+      </EntityDrawerStackProvider>
     </DndProvider>
+  );
+};
+
+const WorkspaceEntityDrawerStack = ({
+  workspaceSlug,
+  app
+}: {
+  workspaceSlug: string;
+  app: AppDefinition;
+}) => {
+  const { drawerStack, activeDrawerIndex, openEntityDrawer, closeEntityDrawer } = useEntityDrawer();
+
+  if (activeDrawerIndex < 0) return null;
+
+  const activeEntries = drawerStack.slice(0, activeDrawerIndex + 1);
+
+  return (
+    <div className={`ar-app ${styles.entityDrawerStack}`} style={appAccentStyle(app)}>
+      <div
+        className={styles.entityDrawerStackBackdrop}
+        onClick={closeEntityDrawer}
+        aria-hidden="true"
+      />
+      {activeEntries.map((entry, index) => {
+        const active = index === activeDrawerIndex;
+        return (
+          <EntityDrawer
+            key={entry.entityId}
+            workspaceSlug={workspaceSlug}
+            entityId={entry.entityId}
+            onClose={closeEntityDrawer}
+            onOpenEntity={openEntityDrawer}
+            active={active}
+            stacked
+            stackOffset={(activeDrawerIndex - index) * 12}
+          />
+        );
+      })}
+    </div>
   );
 };

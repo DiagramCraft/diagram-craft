@@ -1,12 +1,9 @@
-import { useNavigate } from '@tanstack/react-router';
 import { EntityDrawer } from '../../../sections/entities/entityDrawer/EntityDrawer';
-import { VENDOR_RAIL_PATHS, VENDOR_VENDORS_ID } from '../vendorManagementSections';
+import { useEntityDrawer } from '../../../sections/entities/entityDrawer/useEntityDrawer';
 
 /**
- * Shared, configurable Contract drawer used by the Contracts list and renewal calendar. The
- * contract profile owns declarative fields and the systems-used provider; this adapter retains
- * Vendor Management's nested vendor navigation (see #3372 for generalizing nested drawer
- * navigation).
+ * Compatibility adapter for callers that still render a Contract drawer locally. Entity links
+ * use the same workspace-wide nested drawer opener as the shared host.
  */
 export const ContractDrawer = ({
   workspaceSlug,
@@ -17,24 +14,14 @@ export const ContractDrawer = ({
   contractId: string;
   onClose: () => void;
 }) => {
-  const navigate = useNavigate();
-
-  const openRelatedEntity = (fieldId: string, publicId: string): boolean => {
-    if (fieldId !== 'vendor') return false;
-    navigate({
-      to: `${VENDOR_RAIL_PATHS[VENDOR_VENDORS_ID]}/$vendorId`,
-      params: { workspaceSlug, vendorId: publicId },
-      search: (previous: Record<string, unknown>) => previous
-    });
-    return true;
-  };
+  const { openEntityDrawer } = useEntityDrawer();
 
   return (
     <EntityDrawer
       workspaceSlug={workspaceSlug}
       entityId={contractId}
       onClose={onClose}
-      onOpenRelatedEntity={openRelatedEntity}
+      onOpenEntity={openEntityDrawer}
       entityLabel="contract"
     />
   );

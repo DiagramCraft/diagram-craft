@@ -383,8 +383,10 @@
           with no end date, is excluded from the grid and counted in a caption below it (both remain visible in the
           list). Selecting a contract, in either view, opens the configurable contract entity drawer (contract and
           renewal badges, configured terms and cost fields, a link back to the contract's vendor drawer, and the
-          `contract.systems-used` content slot), deep-linkable at `vendor-management/contracts/$contractId` and
-          mirroring the Vendors section's own drawer.
+          `contract.systems-used` content slot). The Vendor link opens a nested Vendor drawer while preserving the
+          Contract drawer; Back, Escape, or close returns to the parent, and a direct `drawer=<id>` link opens the
+          linked entity as the stack root. The drawer is deep-linkable through the workspace-wide `drawer` search
+          param, mirroring the Vendors section's shared drawer.
 
         - @id:ar.vendor-management.spend The Spend section is a portfolio-wide spend roll-up: four header stats (total
           annualised spend, fixed-term commitment not auto-renewing, the Strategic tier's share of spend,

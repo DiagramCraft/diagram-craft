@@ -104,27 +104,23 @@ export const createVendorManagementWorkspaceRoutes = <TParentRoute extends AnyRo
         breadcrumbs: buildVendorManagementBreadcrumbs(ctx, VENDOR_CONTRACTS_ID)
       })
   );
-  // Deep-linkable contract drawer, mirroring `vendorsDetailRoute` above — same `component` as the
-  // base Contracts route, gated the same way, with the drawer rendered conditionally by
-  // `VendorContractsScreen` when the optional `contractId` route param is present.
-  const contractsDetailRoute = withWorkspaceShell(
-    createRoute({
-      getParentRoute: () => workspaceRoute,
-      path: `${railPath(VENDOR_RAIL_PATHS[VENDOR_CONTRACTS_ID])}/$contractId`,
-      validateSearch: validateContractsSearch,
-      beforeLoad: ({ context, params }) =>
-        ensureApplicationAccess(
-          context.queryClient,
-          (params as unknown as { workspaceSlug: string }).workspaceSlug,
-          'vendor-management'
-        ),
-      component: LazyVendorContractsScreen
-    }),
-    ctx =>
-      railSectionShell(ctx, VENDOR_CONTRACTS_ID, {
-        breadcrumbs: buildVendorManagementBreadcrumbs(ctx, VENDOR_CONTRACTS_ID)
-      })
-  );
+  // Legacy contract drawer links now redirect to the workspace-wide `drawer` search param. The
+  // parent Contracts route remains the single renderer so filters and view state are preserved.
+  const contractsDetailRoute = createRoute({
+    getParentRoute: () => workspaceRoute,
+    path: `${railPath(VENDOR_RAIL_PATHS[VENDOR_CONTRACTS_ID])}/$contractId`,
+    beforeLoad: ({ params }) => {
+      const { workspaceSlug, contractId } = params as unknown as {
+        workspaceSlug: string;
+        contractId: string;
+      };
+      throw redirect({
+        to: VENDOR_RAIL_PATHS[VENDOR_CONTRACTS_ID],
+        params: { workspaceSlug },
+        search: (previous: Record<string, unknown>) => ({ ...previous, drawer: contractId })
+      });
+    }
+  });
   const spendRoute = withWorkspaceShell(
     createRoute({
       getParentRoute: () => workspaceRoute,

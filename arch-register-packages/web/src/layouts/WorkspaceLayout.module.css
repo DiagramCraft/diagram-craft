@@ -34,6 +34,27 @@
   background: var(--base-bg);
 }
 
+.entityDrawerStack {
+  /* The stack is mounted beside the shell, so it needs its own app scope for typography and theme variables. */
+}
+
+.entityDrawerStackBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 899;
+  background: rgba(0, 0, 0, 0.35);
+  animation: entityDrawerStackBackdropIn 160ms ease-out both;
+}
+
+@keyframes entityDrawerStackBackdropIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 .railBadge {
   position: absolute;
   top: 2px;

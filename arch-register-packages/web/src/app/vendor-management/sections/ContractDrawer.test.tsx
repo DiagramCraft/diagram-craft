@@ -4,17 +4,23 @@ import { ContractDrawer } from './ContractDrawer';
 
 const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
+  openEntityDrawer: vi.fn(),
   drawerProps: undefined as
     | {
         entityId: string;
         entityLabel?: string;
-        onOpenRelatedEntity?: (fieldId: string, publicId: string) => boolean;
+        onOpenEntity?: (entityId: string) => void;
       }
     | undefined
 }));
 
 vi.mock('@tanstack/react-router', () => ({
-  useNavigate: () => mocks.navigate
+  useNavigate: () => mocks.navigate,
+  useSearch: () => ({})
+}));
+
+vi.mock('../../../sections/entities/entityDrawer/useEntityDrawer', () => ({
+  useEntityDrawer: () => ({ openEntityDrawer: mocks.openEntityDrawer })
 }));
 
 vi.mock('../../../sections/entities/entityDrawer/EntityDrawer', () => ({
@@ -35,18 +41,12 @@ describe('ContractDrawer', () => {
     expect(mocks.drawerProps?.entityLabel).toBe('contract');
   });
 
-  it('keeps Vendor Management navigation for the vendor relation', () => {
+  it('uses the shared nested drawer opener for the vendor relation', () => {
     renderToStaticMarkup(
       <ContractDrawer workspaceSlug="workspace-1" contractId="CTR-001" onClose={() => undefined} />
     );
 
-    expect(mocks.drawerProps?.onOpenRelatedEntity?.('vendor', 'VND-001')).toBe(true);
-    expect(mocks.navigate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        to: '/$workspaceSlug/vendor-management/vendors/$vendorId',
-        params: { workspaceSlug: 'workspace-1', vendorId: 'VND-001' }
-      })
-    );
-    expect(mocks.drawerProps?.onOpenRelatedEntity?.('other', 'ENT-001')).toBe(false);
+    mocks.drawerProps?.onOpenEntity?.('VND-001');
+    expect(mocks.openEntityDrawer).toHaveBeenCalledWith('VND-001');
   });
 });
