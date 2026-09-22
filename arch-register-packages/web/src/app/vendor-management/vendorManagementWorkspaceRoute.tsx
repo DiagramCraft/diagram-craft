@@ -1,4 +1,4 @@
-import { createRoute, redirect, type AnyRoute } from '@tanstack/react-router';
+import { createRoute, type AnyRoute } from '@tanstack/react-router';
 import { buildVendorManagementBreadcrumbs } from './vendorManagementShell';
 import {
   VENDOR_OVERVIEW_ID,
@@ -68,24 +68,6 @@ export const createVendorManagementWorkspaceRoutes = <TParentRoute extends AnyRo
         breadcrumbs: buildVendorManagementBreadcrumbs(ctx, VENDOR_VENDORS_ID)
       })
   );
-  // Legacy deep link: `VendorVendorsScreen` now opens the vendor drawer via the shared
-  // `drawer` search param (see useEntityDrawer.ts) instead of a `$vendorId` route, so an old
-  // bookmarked `.../vendors/$vendorId` URL is redirected to the equivalent search param.
-  const vendorsDetailRoute = createRoute({
-    getParentRoute: () => workspaceRoute,
-    path: `${railPath(VENDOR_RAIL_PATHS[VENDOR_VENDORS_ID])}/$vendorId`,
-    beforeLoad: ({ params }) => {
-      const { workspaceSlug, vendorId } = params as unknown as {
-        workspaceSlug: string;
-        vendorId: string;
-      };
-      throw redirect({
-        to: VENDOR_RAIL_PATHS[VENDOR_VENDORS_ID],
-        params: { workspaceSlug },
-        search: (previous: Record<string, unknown>) => ({ ...previous, drawer: vendorId })
-      });
-    }
-  });
   const contractsRoute = withWorkspaceShell(
     createRoute({
       getParentRoute: () => workspaceRoute,
@@ -104,50 +86,10 @@ export const createVendorManagementWorkspaceRoutes = <TParentRoute extends AnyRo
         breadcrumbs: buildVendorManagementBreadcrumbs(ctx, VENDOR_CONTRACTS_ID)
       })
   );
-  // Legacy contract drawer links now redirect to the workspace-wide `drawer` search param. The
-  // parent Contracts route remains the single renderer so filters and view state are preserved.
-  const contractsDetailRoute = createRoute({
-    getParentRoute: () => workspaceRoute,
-    path: `${railPath(VENDOR_RAIL_PATHS[VENDOR_CONTRACTS_ID])}/$contractId`,
-    beforeLoad: ({ params }) => {
-      const { workspaceSlug, contractId } = params as unknown as {
-        workspaceSlug: string;
-        contractId: string;
-      };
-      throw redirect({
-        to: VENDOR_RAIL_PATHS[VENDOR_CONTRACTS_ID],
-        params: { workspaceSlug },
-        search: (previous: Record<string, unknown>) => ({ ...previous, drawer: contractId })
-      });
-    }
-  });
   const spendRoute = withWorkspaceShell(
     createRoute({
       getParentRoute: () => workspaceRoute,
       path: railPath(VENDOR_RAIL_PATHS[VENDOR_SPEND_ID]),
-      validateSearch: validateSpendSearch,
-      beforeLoad: ({ context, params }) =>
-        ensureApplicationAccess(
-          context.queryClient,
-          (params as unknown as { workspaceSlug: string }).workspaceSlug,
-          'vendor-management'
-        ),
-      component: LazyVendorSpendScreen
-    }),
-    ctx =>
-      railSectionShell(ctx, VENDOR_SPEND_ID, {
-        breadcrumbs: buildVendorManagementBreadcrumbs(ctx, VENDOR_SPEND_ID)
-      })
-  );
-  // Deep-linkable vendor drawer, mirroring `vendorsDetailRoute`/`contractsDetailRoute` above — same
-  // `component` as the base Spend route, gated the same way, with the drawer rendered conditionally
-  // by `VendorSpendScreen` when the optional `vendorId` route param is present. Its own route (not
-  // a redirect to `vendorsDetailRoute`) so the Spend screen's grouping/filter search params survive
-  // opening the drawer.
-  const spendDetailRoute = withWorkspaceShell(
-    createRoute({
-      getParentRoute: () => workspaceRoute,
-      path: `${railPath(VENDOR_RAIL_PATHS[VENDOR_SPEND_ID])}/$vendorId`,
       validateSearch: validateSpendSearch,
       beforeLoad: ({ context, params }) =>
         ensureApplicationAccess(
@@ -180,39 +122,6 @@ export const createVendorManagementWorkspaceRoutes = <TParentRoute extends AnyRo
         breadcrumbs: buildVendorManagementBreadcrumbs(ctx, VENDOR_RISK_ID)
       })
   );
-  // Deep-linkable vendor drawer, mirroring `vendorsDetailRoute`/`spendDetailRoute` above — same
-  // `component` as the base Risk route, gated the same way, with the drawer rendered conditionally
-  // by `VendorRiskScreen` when the optional `vendorId` route param is present. Its own route (not
-  // a redirect to `vendorsDetailRoute`) so the Risk screen's filter search params survive opening
-  // the drawer.
-  const riskDetailRoute = withWorkspaceShell(
-    createRoute({
-      getParentRoute: () => workspaceRoute,
-      path: `${railPath(VENDOR_RAIL_PATHS[VENDOR_RISK_ID])}/$vendorId`,
-      validateSearch: validateRiskSearch,
-      beforeLoad: ({ context, params }) =>
-        ensureApplicationAccess(
-          context.queryClient,
-          (params as unknown as { workspaceSlug: string }).workspaceSlug,
-          'vendor-management'
-        ),
-      component: LazyVendorRiskScreen
-    }),
-    ctx =>
-      railSectionShell(ctx, VENDOR_RISK_ID, {
-        breadcrumbs: buildVendorManagementBreadcrumbs(ctx, VENDOR_RISK_ID)
-      })
-  );
 
-  return [
-    overviewRoute,
-    vendorsRoute,
-    vendorsDetailRoute,
-    contractsRoute,
-    contractsDetailRoute,
-    spendRoute,
-    spendDetailRoute,
-    riskRoute,
-    riskDetailRoute
-  ] as const;
+  return [overviewRoute, vendorsRoute, contractsRoute, spendRoute, riskRoute] as const;
 };

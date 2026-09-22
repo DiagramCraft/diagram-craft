@@ -351,7 +351,7 @@
           $ value, colored red when the month holds a contract due within 30 days or overdue, folding an
           already-overdue contract into the current month the same way the Contracts section's own calendar does.
           Below that, a "Next renewals" list (contract, vendor, auto-renew flag, $ value, and a colored day
-          countdown) opens the contract detail route; a "Spend by vendor" list (top 8, magnitude bar + $ value)
+          countdown) opens the configurable contract drawer on the Contracts section; a "Spend by vendor" list (top 8, magnitude bar + $ value)
           opens the vendor drawer on the Spend section. A "Vendors above tolerance" table (Tier, Criticality, the
           composite risk chip, and applications-supplied count) and a "Technology end-of-life exposure" list (top 5
           by soonest EOL, hidden — not shown empty — when the optional Technology Release binding is unset or
@@ -395,8 +395,8 @@
           (share bar, spend, % of total, contract count, largest contract) sorted by spend descending. A sidebar
           of Cost Centre (each row showing that centre's own spend) and Owner facets narrows the roll-up rows (the
           header stats stay portfolio-wide). Selecting a vendor row or share-strip segment (not available
-          when grouped by cost centre) opens the shared vendor drawer in place, deep-linkable at
-          `vendor-management/spend/$vendorId`. Grouping by capability shows an explanatory empty state instead of
+          when grouped by cost centre) opens the shared vendor drawer in place via the workspace-wide `drawer`
+          search param. Grouping by capability shows an explanatory empty state instead of
           data — no Contract-to-capability link exists yet.
 
         - @id:ar.vendor-management.risk The Risk section has four header stats (High risk vendor count, vendors with

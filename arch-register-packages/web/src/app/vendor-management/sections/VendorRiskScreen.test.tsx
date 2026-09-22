@@ -7,6 +7,7 @@ import { VendorRiskScreen } from './VendorRiskScreen';
 
 const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
+  openEntityDrawer: vi.fn(),
   entityList: vi.fn(),
   entityGet: vi.fn(),
   entityTree: vi.fn(),
@@ -14,7 +15,7 @@ const mocks = vi.hoisted(() => ({
   metricsRollup: vi.fn(),
   lifecycleStatesList: vi.fn(),
   capabilityConfigurationsList: vi.fn(),
-  params: { workspaceSlug: 'ws-1' } as { workspaceSlug: string; vendorId?: string },
+  params: { workspaceSlug: 'ws-1' } as { workspaceSlug: string },
   search: {} as Record<string, unknown>
 }));
 
@@ -22,6 +23,10 @@ vi.mock('@tanstack/react-router', () => ({
   useParams: () => mocks.params,
   useNavigate: () => mocks.navigate,
   useSearch: () => mocks.search
+}));
+
+vi.mock('../../../sections/entities/entityDrawer/useEntityDrawer', () => ({
+  useEntityDrawer: () => ({ openEntityDrawer: mocks.openEntityDrawer })
 }));
 
 vi.mock('../../../lib/orpcClient', () => ({
@@ -160,12 +165,7 @@ describe('VendorRiskScreen', () => {
       tag!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
 
-    expect(mocks.navigate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        to: '/$workspaceSlug/vendor-management/risk/$vendorId',
-        params: { workspaceSlug: 'ws-1', vendorId: 'VND-001' }
-      })
-    );
+    expect(mocks.openEntityDrawer).toHaveBeenCalledWith('VND-001');
   });
 
   it('opens the vendor drawer on a risk register row click', async () => {
@@ -177,12 +177,7 @@ describe('VendorRiskScreen', () => {
       row!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
 
-    expect(mocks.navigate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        to: '/$workspaceSlug/vendor-management/risk/$vendorId',
-        params: { workspaceSlug: 'ws-1', vendorId: 'VND-001' }
-      })
-    );
+    expect(mocks.openEntityDrawer).toHaveBeenCalledWith('VND-001');
   });
 
   it('hides the EOL panel entirely when no Technology Release schema is bound', async () => {

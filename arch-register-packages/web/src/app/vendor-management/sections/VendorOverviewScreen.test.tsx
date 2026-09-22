@@ -205,7 +205,7 @@ describe('VendorOverviewScreen', () => {
     );
   });
 
-  it('navigates to the contract detail route when a next-renewal row is clicked', async () => {
+  it('opens the contract drawer on the Contracts section when a next-renewal row is clicked', async () => {
     await renderScreen();
     const row = [...container.querySelectorAll('button')].find(b =>
       b.textContent?.includes('Acme Support')
@@ -214,15 +214,18 @@ describe('VendorOverviewScreen', () => {
     await act(async () => {
       row!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
-    expect(mocks.navigate).toHaveBeenCalledWith(
+    const call = mocks.navigate.mock.calls.at(-1)?.[0];
+    expect(call).toEqual(
       expect.objectContaining({
-        to: '/$workspaceSlug/vendor-management/contracts/$contractId',
-        params: { workspaceSlug: 'ws-1', contractId: 'CTR-1' }
+        to: '/$workspaceSlug/vendor-management/contracts',
+        params: { workspaceSlug: 'ws-1' },
+        search: expect.any(Function)
       })
     );
+    expect(call.search({})).toEqual({ drawer: 'CTR-1' });
   });
 
-  it('navigates to the vendor spend detail route when a spend-by-vendor row is clicked', async () => {
+  it('opens the vendor drawer on the Spend section when a spend-by-vendor row is clicked', async () => {
     await renderScreen();
     const row = [...container.querySelectorAll('button')].find(b =>
       b.textContent?.includes('Beta Supplies')
@@ -231,12 +234,15 @@ describe('VendorOverviewScreen', () => {
     await act(async () => {
       row!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
-    expect(mocks.navigate).toHaveBeenCalledWith(
+    const call = mocks.navigate.mock.calls.at(-1)?.[0];
+    expect(call).toEqual(
       expect.objectContaining({
-        to: '/$workspaceSlug/vendor-management/spend/$vendorId',
-        params: { workspaceSlug: 'ws-1', vendorId: 'VND-002' }
+        to: '/$workspaceSlug/vendor-management/spend',
+        params: { workspaceSlug: 'ws-1' },
+        search: expect.any(Function)
       })
     );
+    expect(call.search({})).toEqual({ drawer: 'VND-002' });
   });
 
   it('navigates to the Risk section when "Risk view" is clicked', async () => {

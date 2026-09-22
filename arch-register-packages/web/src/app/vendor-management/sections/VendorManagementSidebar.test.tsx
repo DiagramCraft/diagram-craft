@@ -341,10 +341,7 @@ describe('VendorManagementSidebar', () => {
         params: { workspaceSlug: 'ws-1' }
       })
     );
-    // Doesn't navigate to a vendor detail route — it patches the `technology` search param.
-    expect(mocks.navigate).not.toHaveBeenCalledWith(
-      expect.objectContaining({ to: '/$workspaceSlug/vendor-management/risk/$vendorId' })
-    );
+    // The facet patches the `technology` search param on the base Risk route.
   });
 
   it('lists Technology EOL once per technology (not per vendor), soonest-EOL-first', async () => {

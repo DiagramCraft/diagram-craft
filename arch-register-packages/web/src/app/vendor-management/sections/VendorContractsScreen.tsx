@@ -37,9 +37,8 @@ const compareNullable = (a: number | string | null, b: number | string | null): 
  * The Contracts section: search, sort, and facets (renewal window, type, vendor) delivered by
  * `VendorManagementSidebar`'s `ContractsSidebarContent`, toggling between a list view, a
  * 12-month renewal calendar (`VendorContractsCalendar`), and a Gantt-style contract timeline
- * (`VendorContractsTimeline`). Row/entry/bar click opens the workspace-wide entity drawer;
- * legacy `vendor-management/contracts/$contractId` links redirect to the shared `drawer` search
- * param.
+ * (`VendorContractsTimeline`). Row/entry/bar click opens the workspace-wide entity drawer via the
+ * shared `drawer` search param.
  *
  * Fetches Contracts via `useVendorContracts` (a Contract tree join, resolving each Contract's
  * containing Vendor name — a flat entity fetch can't give that, see that hook's own comment).

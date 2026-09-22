@@ -16,7 +16,7 @@ import { useVendorContracts, type VendorContractRow } from '../useVendorContract
 import { computeVmTotalSpend, computeVmGroupSpend } from '../vendorSpendAggregates';
 import type { SpendSearchParams } from '../../../routes/searchParams';
 import { SpendShareBar, SpendShareStrip } from './SpendShareBar';
-import { EntityDrawer } from '../../../sections/entities/entityDrawer/EntityDrawer';
+import { useEntityDrawer } from '../../../sections/entities/entityDrawer/useEntityDrawer';
 import filterStyles from '../../../sections/entities/components/EntityBrowser.module.css';
 import styles from './VendorSpendScreen.module.css';
 
@@ -80,16 +80,14 @@ const largestContract = (rows: readonly VendorContractRow[]): string | null => {
  * largest-contract are read from the raw Contract records via `useVendorContracts` (the shared
  * model's batched `metrics.rollup` doesn't expose per-contract detail).
  *
- * Selecting a vendor (a row, or a share-strip segment) opens the shared vendor `EntityDrawer` in place,
- * deep-linkable at `vendor-management/spend/$vendorId` — its own detail route, rather than
- * navigating to the Vendors section, so grouping/filter state on this screen survives.
+ * Selecting a vendor (a row, or a share-strip segment) opens the shared vendor drawer in place via
+ * the workspace-wide `drawer` search param, rather than navigating to the Vendors section, so
+ * grouping/filter state on this screen survives.
  */
 export const VendorSpendScreen = () => {
-  const { workspaceSlug, vendorId } = useParams({ strict: false }) as {
-    workspaceSlug: string;
-    vendorId?: string;
-  };
+  const { workspaceSlug } = useParams({ strict: false }) as { workspaceSlug: string };
   const navigate = useNavigate();
+  const { openEntityDrawer } = useEntityDrawer();
   const search = useSearch({ strict: false }) as SpendSearchParams;
   const group = search.group ?? 'vendor';
 
@@ -230,18 +228,7 @@ export const VendorSpendScreen = () => {
     return [...grouped.entries()].filter(([value, amount]) => value !== '—' && amount > 0).length;
   }, [allVendors, spend.byId]);
 
-  const openVendor = (id: string) =>
-    navigate({
-      to: `${VENDOR_RAIL_PATHS[VENDOR_SPEND_ID]}/$vendorId`,
-      params: { workspaceSlug, vendorId: id },
-      search: (previous: Record<string, unknown>) => previous
-    });
-  const closeVendor = () =>
-    navigate({
-      to: VENDOR_RAIL_PATHS[VENDOR_SPEND_ID],
-      params: { workspaceSlug },
-      search: (previous: Record<string, unknown>) => previous
-    });
+  const openVendor = (id: string) => openEntityDrawer(id);
   const patchSearch = (patch: Partial<SpendSearchParams>) =>
     navigate({
       to: VENDOR_RAIL_PATHS[VENDOR_SPEND_ID],
@@ -388,15 +375,6 @@ export const VendorSpendScreen = () => {
             </Table.Body>
           </Table.Root>
         </>
-      )}
-
-      {vendorId && (
-        <EntityDrawer
-          workspaceSlug={workspaceSlug}
-          entityId={vendorId}
-          entityLabel="vendor"
-          onClose={closeVendor}
-        />
       )}
     </div>
   );

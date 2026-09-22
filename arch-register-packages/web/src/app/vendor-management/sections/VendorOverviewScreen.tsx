@@ -260,15 +260,15 @@ export const VendorOverviewScreen = () => {
 
   const openVendor = (id: string) =>
     navigate({
-      to: `${VENDOR_RAIL_PATHS[VENDOR_SPEND_ID]}/$vendorId`,
-      params: { workspaceSlug, vendorId: id },
-      search: () => ({})
+      to: VENDOR_RAIL_PATHS[VENDOR_SPEND_ID],
+      params: { workspaceSlug },
+      search: (previous: Record<string, unknown>) => ({ ...previous, drawer: id })
     });
   const openContract = (contractId: string) =>
     navigate({
-      to: `${VENDOR_RAIL_PATHS[VENDOR_CONTRACTS_ID]}/$contractId`,
-      params: { workspaceSlug, contractId },
-      search: () => ({})
+      to: VENDOR_RAIL_PATHS[VENDOR_CONTRACTS_ID],
+      params: { workspaceSlug },
+      search: (previous: Record<string, unknown>) => ({ ...previous, drawer: contractId })
     });
 
   if (configurations.isLoading) {

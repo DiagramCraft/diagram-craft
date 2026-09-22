@@ -11,7 +11,6 @@ import { workspaceCapabilityConfigurationsQuery } from '../../../queries/workspa
 import { useSchemas } from '../../../hooks/useSchemas';
 import { formatDate } from '../../../utils/dateFormat';
 import { resolveVendorManagementConfig } from '../vendorManagementQueries';
-import { VENDOR_RAIL_PATHS, VENDOR_RISK_ID } from '../vendorManagementSections';
 import { computeVendorRisk, VENDOR_RISK_BAND_COLOR, type VendorRiskBand } from '../vendorRisk';
 import {
   useVendorTechnologyExposure,
@@ -19,7 +18,7 @@ import {
 } from '../useVendorTechnologyExposure';
 import type { RiskSearchParams } from '../../../routes/searchParams';
 import { RiskMatrix, type RiskMatrixVendor } from './RiskMatrix';
-import { EntityDrawer } from '../../../sections/entities/entityDrawer/EntityDrawer';
+import { useEntityDrawer } from '../../../sections/entities/entityDrawer/useEntityDrawer';
 import tileStyles from './VendorSpendScreen.module.css';
 import placeholderStyles from './VendorManagementPlaceholderScreen.module.css';
 import styles from './VendorRiskScreen.module.css';
@@ -38,10 +37,9 @@ const CONCENTRATION_ALERT_THRESHOLD = 4;
  * EOL facets (`RiskSearchParams.band`/`technology`, combined with AND) — selecting a facet narrows
  * every panel down to the matching vendor(s), rather than only the register (this deliberately
  * diverges from the design reference, whose matrix/sidebar aren't filter-linked). Clicking a
- * vendor tag or row still opens the vendor `EntityDrawer` directly, deep-linkable at
- * `vendor-management/risk/$vendorId`. The four header stats stay portfolio-wide regardless of the
- * active filters, mirroring `VendorSpendScreen.tsx`'s sidebar-facets-narrow-rows-not-stats
- * convention.
+ * vendor tag or row still opens the vendor drawer directly through the workspace-wide `drawer`
+ * search param. The four header stats stay portfolio-wide regardless of the active filters,
+ * mirroring `VendorSpendScreen.tsx`'s sidebar-facets-narrow-rows-not-stats convention.
  *
  * The EOL table depends on the `vendor-management` capability's optional `technologyRelease`
  * schema binding (see `useVendorTechnologyExposure.ts`) — when unbound, or when no schema links a
@@ -49,11 +47,9 @@ const CONCENTRATION_ALERT_THRESHOLD = 4;
  * `VendorSpendScreen.tsx`'s capability-grouping caveat.
  */
 export const VendorRiskScreen = () => {
-  const { workspaceSlug, vendorId } = useParams({ strict: false }) as {
-    workspaceSlug: string;
-    vendorId?: string;
-  };
+  const { workspaceSlug } = useParams({ strict: false }) as { workspaceSlug: string };
   const navigate = useNavigate();
+  const { openEntityDrawer } = useEntityDrawer();
   const search = useSearch({ strict: false }) as RiskSearchParams;
   const bandFilter = (search.band as VendorRiskBand | undefined) ?? null;
   const technologyFilter = search.technology ?? null;
@@ -193,18 +189,7 @@ export const VendorRiskScreen = () => {
     row => row.exposure.band && row.exposure.band !== 'ok'
   ).length;
 
-  const openVendor = (id: string) =>
-    navigate({
-      to: `${VENDOR_RAIL_PATHS[VENDOR_RISK_ID]}/$vendorId`,
-      params: { workspaceSlug, vendorId: id },
-      search: (previous: Record<string, unknown>) => previous
-    });
-  const closeVendor = () =>
-    navigate({
-      to: VENDOR_RAIL_PATHS[VENDOR_RISK_ID],
-      params: { workspaceSlug },
-      search: (previous: Record<string, unknown>) => previous
-    });
+  const openVendor = (id: string) => openEntityDrawer(id);
 
   if (configurations.isLoading) {
     return <div className={placeholderStyles.empty}>Loading vendor management…</div>;
@@ -421,15 +406,6 @@ export const VendorRiskScreen = () => {
             </Table.Body>
           </Table.Root>
         </div>
-      )}
-
-      {vendorId && (
-        <EntityDrawer
-          workspaceSlug={workspaceSlug}
-          entityId={vendorId}
-          entityLabel="vendor"
-          onClose={closeVendor}
-        />
       )}
     </div>
   );
