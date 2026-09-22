@@ -11,7 +11,10 @@ export const Drawer = ({
   badges,
   children,
   footer,
-  width
+  width,
+  active = true,
+  stacked = false,
+  stackOffset = 0,
 }: {
   onClose: () => void;
   eyebrow?: ReactNode;
@@ -20,6 +23,9 @@ export const Drawer = ({
   children: ReactNode;
   footer?: ReactNode;
   width?: number | string;
+  active?: boolean;
+  stacked?: boolean;
+  stackOffset?: number;
 }) => {
   const [isClosing, setIsClosing] = useState(false);
   const closingRef = useRef(false);
@@ -33,6 +39,8 @@ export const Drawer = ({
   }, [onClose]);
 
   useEffect(() => {
+    if (!active) return;
+
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') requestClose();
     };
@@ -48,23 +56,33 @@ export const Drawer = ({
   );
 
   return (
-    <div className={styles.root}>
+    <div
+      className={`${styles.root} ${stacked ? styles.stackedRoot : ''}`}
+      aria-hidden={!active || undefined}
+    >
+      {!stacked && (
+        <div
+          className={`${styles.backdrop} ${isClosing ? styles.backdropClosing : ''}`}
+          onClick={requestClose}
+        />
+      )}
       <div
-        className={`${styles.backdrop} ${isClosing ? styles.backdropClosing : ''}`}
-        onClick={requestClose}
-      />
-      <div
-        className={`${styles.drawer} ${isClosing ? styles.drawerClosing : ''}`}
-        style={width != null ? { width } : undefined}
+        className={`${styles.drawer} ${isClosing ? styles.drawerClosing : ''} ${
+          stacked && !active ? styles.stackedInactive : ''
+        }`}
+        style={{
+          ...(width != null ? { width } : {}),
+          ...(stacked ? { right: `${stackOffset}px` } : {})
+        }}
       >
         <div className={styles.head}>
           <div className={styles.headTop}>
-            {eyebrow}
+            <div className={styles.headActions}>{eyebrow}</div>
             <button
               type="button"
               className={styles.close}
               onClick={requestClose}
-              aria-label="Close"
+              aria-label="Close drawer"
             >
               <TbX size={14} />
             </button>

@@ -261,9 +261,19 @@ its own route param or wrapper component; `WorkspaceLayout` is now the single pl
 `EntityDrawer`. Migrated as the first step: Vendor Management's Vendors screen, the API Integration Catalog's APIs
 screen, and the Business Glossary screen — each previously declared its own `$vendorId`/`$apiId`/`$termId` detail
 route purely to deep-link the drawer; those routes now redirect to the equivalent `drawer` search param for
-backwards compatibility. Screens with a bespoke `onOpenEntity`/`onOpenGovernanceCase`/`onOpenRelatedEntity`
-override (`ContractDrawer`, `CapabilityDrawer`, `DatasetDrawer`) or an existing stacked-drawer screen
-(`RiskComplianceControlsScreen`) were left on the per-screen pattern, most pending #3372 (nested/stacked drawers).
+backwards compatibility. The shared host now also supports a live nested stack: parent drawers remain mounted
+behind the active drawer, the active target remains the only URL value, and Back/close follows the drawer history.
+Entity links rendered inside a drawer use the shared opener, so application providers inherit the same nested
+navigation behavior.
+
+### #3372 — nested entity drawers
+
+The workspace-wide drawer host renders a stack of generic entity drawers while keeping only the active entity in
+the `drawer` search param. Opening a related entity pushes a browser-history entry and preserves the parent drawer;
+browser Back, the Back control, Escape, and close reveal the previous drawer, while closing the root removes the
+search param. A direct link to `drawer=<id>` opens that entity as the stack root. The active header shows a compact
+breadcrumb trail and parent drawers remain inert and visually offset behind it. The Contract-to-Vendor reference is
+the first migrated application-specific nested flow; non-entity governance-case drawers remain specialized.
 
 ## Acceptance checklist
 

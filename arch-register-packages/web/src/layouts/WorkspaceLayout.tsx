@@ -28,7 +28,10 @@ import { RouteContentBoundary } from '../routes/RouteContentBoundary';
 import { AppErrorState } from '../components/AppErrorState';
 import { WorkspaceDetailLayout } from './WorkspaceDetailLayout';
 import { EntityDrawer } from '../sections/entities/entityDrawer/EntityDrawer';
-import { useEntityDrawer } from '../sections/entities/entityDrawer/useEntityDrawer';
+import {
+  EntityDrawerStackProvider,
+  useEntityDrawer
+} from '../sections/entities/entityDrawer/useEntityDrawer';
 import {
   navigateFromRailItem,
   navigateToApp,
@@ -41,7 +44,7 @@ import {
   railItemMeta,
   railItemToAppId
 } from '../shell/appShellRegistry';
-import type { AppId, WorkspaceRailItemId } from '../shell/shellTypes';
+import type { AppDefinition, AppId, WorkspaceRailItemId } from '../shell/shellTypes';
 import { getWorkspaceShellBuilder } from '../routes/workspace/workspaceShellRoute';
 import {
   useAccessibleApplications,
@@ -68,7 +71,6 @@ export const WorkspaceLayout = () => {
   const router = useRouter();
   const queryClient = useQueryClient();
   const matches = useMatches();
-  const { drawerEntityId, closeEntityDrawer } = useEntityDrawer();
 
   const [query, setQuery] = useState('');
   const [addWsOpen, setAddWsOpen] = useState(false);
@@ -430,7 +432,8 @@ export const WorkspaceLayout = () => {
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <WorkspaceContext.Provider value={contextValue}>
+      <EntityDrawerStackProvider>
+        <WorkspaceContext.Provider value={contextValue}>
         {shellDescriptor.variant === 'overlay' ? (
           routeContent
         ) : (
@@ -482,15 +485,9 @@ export const WorkspaceLayout = () => {
                 <main className={styles.main}>{routeContent}</main>
               </div>
             )}
-            {drawerEntityId && (
-              <EntityDrawer
-                workspaceSlug={workspaceSlug}
-                entityId={drawerEntityId}
-                onClose={closeEntityDrawer}
-              />
-            )}
           </div>
         )}
+        <WorkspaceEntityDrawerStack workspaceSlug={workspaceSlug} app={activeApp} />
         {canManageWorkspaces && (
           <AddWorkspaceDialog
             open={addWsOpen}
@@ -535,7 +532,52 @@ export const WorkspaceLayout = () => {
             preselectedSchemaId={addEntitySchemaId}
           />
         )}
-      </WorkspaceContext.Provider>
+        </WorkspaceContext.Provider>
+      </EntityDrawerStackProvider>
     </DndProvider>
+  );
+};
+
+const WorkspaceEntityDrawerStack = ({
+  workspaceSlug,
+  app
+}: {
+  workspaceSlug: string;
+  app: AppDefinition;
+}) => {
+  const {
+    drawerStack,
+    activeDrawerIndex,
+    openEntityDrawer,
+    closeEntityDrawer
+  } = useEntityDrawer();
+
+  if (activeDrawerIndex < 0) return null;
+
+  const activeEntries = drawerStack.slice(0, activeDrawerIndex + 1);
+
+  return (
+    <div className={`ar-app ${styles.entityDrawerStack}`} style={appAccentStyle(app)}>
+      <div
+        className={styles.entityDrawerStackBackdrop}
+        onClick={closeEntityDrawer}
+        aria-hidden="true"
+      />
+      {activeEntries.map((entry, index) => {
+        const active = index === activeDrawerIndex;
+        return (
+          <EntityDrawer
+            key={entry.entityId}
+            workspaceSlug={workspaceSlug}
+            entityId={entry.entityId}
+            onClose={closeEntityDrawer}
+            onOpenEntity={openEntityDrawer}
+            active={active}
+            stacked
+            stackOffset={(activeDrawerIndex - index) * 12}
+          />
+        );
+      })}
+    </div>
   );
 };
