@@ -29,7 +29,7 @@ const selectField = {
 describe('renderEntityFieldDisplayValue', () => {
   it('renders select values as a Chip when asChip is true', () => {
     const markup = renderToStaticMarkup(
-      <>{renderEntityFieldDisplayValue(selectField, 'active', { ...noopDeps, asChip: true })}</>
+      renderEntityFieldDisplayValue(selectField, 'active', { ...noopDeps, asChip: true })
     );
     expect(markup).toContain('Active');
     expect(markup).toContain('chip');
@@ -37,7 +37,7 @@ describe('renderEntityFieldDisplayValue', () => {
 
   it('renders select values as plain text when asChip is false', () => {
     const markup = renderToStaticMarkup(
-      <>{renderEntityFieldDisplayValue(selectField, 'active', { ...noopDeps, asChip: false })}</>
+      renderEntityFieldDisplayValue(selectField, 'active', { ...noopDeps, asChip: false })
     );
     expect(markup).toContain('Active');
     expect(markup).not.toContain('chip');
@@ -46,16 +46,14 @@ describe('renderEntityFieldDisplayValue', () => {
   it('formats dates through the injected formatDateValue', () => {
     const dateField = { id: 'due', name: 'Due', type: 'date', requirementLevel: null } as never;
     const markup = renderToStaticMarkup(
-      <>{renderEntityFieldDisplayValue(dateField, '2024-01-01', noopDeps)}</>
+      renderEntityFieldDisplayValue(dateField, '2024-01-01', noopDeps)
     );
     expect(markup).toContain('formatted:2024-01-01');
   });
 
   it('renders an empty dash for null/empty values', () => {
     const textField = { id: 'name', name: 'Name', type: 'text', requirementLevel: null } as never;
-    const markup = renderToStaticMarkup(
-      <>{renderEntityFieldDisplayValue(textField, '', noopDeps)}</>
-    );
+    const markup = renderToStaticMarkup(renderEntityFieldDisplayValue(textField, '', noopDeps));
     expect(markup).toContain('—');
   });
 
@@ -67,13 +65,11 @@ describe('renderEntityFieldDisplayValue', () => {
       requirementLevel: null
     } as never;
     const markup = renderToStaticMarkup(
-      <>
-        {renderEntityFieldDisplayValue(
-          principalField,
-          { principal_type: 'user', principal_id: 'u1' },
-          { ...noopDeps, resolvePrincipalLabel: () => 'Alice' }
-        )}
-      </>
+      renderEntityFieldDisplayValue(
+        principalField,
+        { principal_type: 'user', principal_id: 'u1' },
+        { ...noopDeps, resolvePrincipalLabel: () => 'Alice' }
+      )
     );
     expect(markup).toContain('Alice');
   });
@@ -94,13 +90,11 @@ describe('renderEntityFieldDisplayValue', () => {
     } as never;
     const renderReferenceLink = vi.fn(({ id }) => <span>link:{id}</span>);
     const markup = renderToStaticMarkup(
-      <>
-        {renderEntityFieldDisplayValue(referenceField, ['e1'], {
-          ...noopDeps,
-          referenceOptions: { 'vendor-schema': [ref] },
-          renderReferenceLink
-        })}
-      </>
+      renderEntityFieldDisplayValue(referenceField, ['e1'], {
+        ...noopDeps,
+        referenceOptions: { 'vendor-schema': [ref] },
+        renderReferenceLink
+      })
     );
     expect(renderReferenceLink).toHaveBeenCalledWith(
       expect.objectContaining({ fieldId: 'vendor' })
@@ -126,14 +120,12 @@ describe('renderEntityFieldDisplayValue', () => {
     const relationSchema: RelationSchema = { id: 'rel-1' } as never;
     const renderTypedRelationList = vi.fn(() => <span>relation-list</span>);
     const markup = renderToStaticMarkup(
-      <>
-        {renderEntityFieldDisplayValue(typedRelationField, undefined, {
-          ...noopDeps,
-          typedRelationsOutgoing: [record],
-          relationSchemas: [relationSchema],
-          renderTypedRelationList
-        })}
-      </>
+      renderEntityFieldDisplayValue(typedRelationField, undefined, {
+        ...noopDeps,
+        typedRelationsOutgoing: [record],
+        relationSchemas: [relationSchema],
+        renderTypedRelationList
+      })
     );
     expect(renderTypedRelationList).toHaveBeenCalled();
     expect(markup).toContain('relation-list');
@@ -151,7 +143,7 @@ describe('renderEntityFieldDisplayValue', () => {
       ]
     } as unknown as EntitySchema['fields'][number];
     const markup = renderToStaticMarkup(
-      <>{renderEntityFieldDisplayValue(multiField, ['a', 'b'], { ...noopDeps, asChip: false })}</>
+      renderEntityFieldDisplayValue(multiField, ['a', 'b'], { ...noopDeps, asChip: false })
     );
     expect(markup).toContain('A, B');
   });
