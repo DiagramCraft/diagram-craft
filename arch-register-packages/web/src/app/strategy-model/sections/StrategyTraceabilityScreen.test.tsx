@@ -7,6 +7,7 @@ import { StrategyTraceabilityScreen } from './StrategyTraceabilityScreen';
 
 const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
+  openEntityDrawer: vi.fn(),
   search: {
     tab: undefined as string | undefined,
     objective: undefined as string | undefined,
@@ -19,9 +20,13 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock('@tanstack/react-router', () => ({
-  useParams: () => ({ workspaceSlug: 'ws-1', capabilityId: undefined }),
+  useParams: () => ({ workspaceSlug: 'ws-1' }),
   useSearch: () => mocks.search,
   useNavigate: () => mocks.navigate
+}));
+
+vi.mock('../../../sections/entities/entityDrawer/useEntityDrawer', () => ({
+  useEntityDrawer: () => ({ openEntityDrawer: mocks.openEntityDrawer })
 }));
 
 vi.mock('../../../components/EntityHoverCard', () => ({
@@ -222,7 +227,7 @@ describe('StrategyTraceabilityScreen', () => {
     );
   });
 
-  it('opens the capability drawer route from an orphan table row', async () => {
+  it('opens the shared entity drawer from an orphan table row', async () => {
     mocks.search = { tab: 'orphans', objective: undefined, capability: undefined };
     await renderScreen();
 
@@ -234,12 +239,7 @@ describe('StrategyTraceabilityScreen', () => {
       row!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
 
-    expect(mocks.navigate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        to: '/$workspaceSlug/strategy/traceability/$capabilityId',
-        params: { workspaceSlug: 'ws-1', capabilityId: 'CAP-ORPHAN' }
-      })
-    );
+    expect(mocks.openEntityDrawer).toHaveBeenCalledWith('CAP-ORPHAN');
   });
 
   it('shows the not-enabled state when the capability is not configured', async () => {

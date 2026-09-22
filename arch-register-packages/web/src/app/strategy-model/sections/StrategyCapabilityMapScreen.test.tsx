@@ -7,8 +7,9 @@ import { StrategyCapabilityMapScreen } from './StrategyCapabilityMapScreen';
 
 const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
+  openEntityDrawer: vi.fn(),
   search: { focus: undefined as string | undefined, owner: undefined as string | undefined },
-  params: { workspaceSlug: 'ws-1', capabilityId: undefined as string | undefined },
+  params: { workspaceSlug: 'ws-1' },
   entityList: vi.fn(),
   entityTree: vi.fn(),
   metricsRollup: vi.fn(),
@@ -19,6 +20,10 @@ vi.mock('@tanstack/react-router', () => ({
   useParams: () => mocks.params,
   useSearch: () => mocks.search,
   useNavigate: () => mocks.navigate
+}));
+
+vi.mock('../../../sections/entities/entityDrawer/useEntityDrawer', () => ({
+  useEntityDrawer: () => ({ openEntityDrawer: mocks.openEntityDrawer })
 }));
 
 vi.mock('../../../lib/orpcClient', () => ({
@@ -78,7 +83,7 @@ describe('StrategyCapabilityMapScreen', () => {
     root = createRoot(container);
     queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     mocks.search = { focus: undefined, owner: undefined };
-    mocks.params = { workspaceSlug: 'ws-1', capabilityId: undefined };
+    mocks.params = { workspaceSlug: 'ws-1' };
 
     mocks.capabilityConfigurationsList.mockResolvedValue([
       {
@@ -192,7 +197,7 @@ describe('StrategyCapabilityMapScreen', () => {
     expect(container.textContent).toContain('All domains');
   });
 
-  it('opens the drawer route when a leaf tile is clicked', async () => {
+  it('opens the shared entity drawer when a leaf tile is clicked', async () => {
     await render();
     const leaf = [...container.querySelectorAll('button')].find(b =>
       b.textContent?.includes('Contact Center')
@@ -200,11 +205,6 @@ describe('StrategyCapabilityMapScreen', () => {
     await act(async () => {
       leaf!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
-    expect(mocks.navigate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        to: '/$workspaceSlug/strategy/map/$capabilityId',
-        params: { workspaceSlug: 'ws-1', capabilityId: 'C-CONTACT' }
-      })
-    );
+    expect(mocks.openEntityDrawer).toHaveBeenCalledWith('C-CONTACT');
   });
 });

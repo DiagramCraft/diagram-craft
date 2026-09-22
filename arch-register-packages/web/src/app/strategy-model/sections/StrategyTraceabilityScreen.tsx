@@ -11,7 +11,7 @@ import { entitiesQuery } from '../../../queries/entities';
 import { workspaceCapabilityConfigurationsQuery } from '../../../queries/workspaceConfig';
 import { asEntityPublicId, entityDetailRoute } from '../../../routes/publicObjectRoutes';
 import { resolveStrategyModelConfig } from '../strategyQueries';
-import { CapabilityDrawer } from './CapabilityDrawer';
+import { useEntityDrawer } from '../../../sections/entities/entityDrawer/useEntityDrawer';
 import { STRATEGY_RAIL_PATHS, STRATEGY_TRACEABILITY_ID } from '../strategySections';
 import type { TraceabilitySearchParams } from '../../../routes/searchParams';
 import styles from './StrategyTraceabilityScreen.module.css';
@@ -37,12 +37,12 @@ const strOrNull = (value: unknown): string | null => (typeof value === 'string' 
  * (`TraceabilityView` matrix) is tracked as a follow-up (issue #3212).
  */
 export const StrategyTraceabilityScreen = () => {
-  const { workspaceSlug, capabilityId } = useParams({ strict: false }) as {
+  const { workspaceSlug } = useParams({ strict: false }) as {
     workspaceSlug: string;
-    capabilityId?: string;
   };
   const navigate = useNavigate();
   const search = useSearch({ strict: false }) as TraceabilitySearchParams;
+  const { openEntityDrawer } = useEntityDrawer();
   const tab: TraceabilityTab = search.tab === 'orphans' ? 'orphans' : 'chain';
 
   const configurations = useQuery(workspaceCapabilityConfigurationsQuery(workspaceSlug));
@@ -75,7 +75,7 @@ export const StrategyTraceabilityScreen = () => {
   // Both typed relations fetched workspace-wide, then joined in memory — the walker needs the whole
   // Objective→Capability and Capability→Application graph, not one entity's slice. Keyed by the
   // real per-workspace relation schema ids from `strategyConfig` (the template's symId strings
-  // never match `_schema.id`); see `CapabilityDrawer`.
+  // never match `_schema.id`).
   const objectiveSupportsCapability = useRelations(
     workspaceSlug,
     { schemaId: strategyConfig?.objectiveSupportsBusinessCapabilityRelationSchemaId },
@@ -172,20 +172,16 @@ export const StrategyTraceabilityScreen = () => {
   // Capabilities that never appear as the `_out` endpoint of an
   // `objective-supports-business-capability` relation. A plain set-membership check, matching the
   // design reference — a non-leaf capability whose descendants carry the link still counts as an
-  // orphan here (same simplification the `CapabilityDrawer` notes for its "Linked objectives"
-  // section).
+  // orphan here.
   const orphanCapabilities = useMemo(
     () => (capabilities.data?.items ?? []).filter(entity => !linkedCapabilityIds.has(entity._uid)),
     [capabilities.data, linkedCapabilityIds]
   );
 
-  const currentRoute = capabilityId
-    ? { to: `${TRACE_ROUTE}/$capabilityId`, params: { workspaceSlug, capabilityId } }
-    : { to: TRACE_ROUTE, params: { workspaceSlug } };
-
   const patchSearch = (patch: Partial<TraceabilitySearchParams>) =>
     navigate({
-      ...currentRoute,
+      to: TRACE_ROUTE,
+      params: { workspaceSlug },
       search: (previous: Record<string, unknown>) => ({ ...previous, ...patch })
     });
 
@@ -193,19 +189,6 @@ export const StrategyTraceabilityScreen = () => {
     patchSearch({ tab: next === 'orphans' ? 'orphans' : undefined });
   const selectObjective = (id: string) => patchSearch({ objective: id, capability: undefined });
   const selectCapability = (id: string) => patchSearch({ capability: id });
-
-  const openCapability = (id: string) =>
-    navigate({
-      to: `${TRACE_ROUTE}/$capabilityId`,
-      params: { workspaceSlug, capabilityId: id },
-      search: (previous: Record<string, unknown>) => previous
-    });
-  const closeCapability = () =>
-    navigate({
-      to: TRACE_ROUTE,
-      params: { workspaceSlug },
-      search: (previous: Record<string, unknown>) => previous
-    });
 
   if (configurations.isLoading) {
     return <div className={styles.empty}>Loading strategy model…</div>;
@@ -396,7 +379,7 @@ export const StrategyTraceabilityScreen = () => {
                 </Table.EmptyRow>
               ) : (
                 orphanCapabilities.map(entity => (
-                  <Table.Row key={entity._uid} onClick={() => openCapability(entity._publicId)}>
+                  <Table.Row key={entity._uid} onClick={() => openEntityDrawer(entity._publicId)}>
                     <Table.NameCell
                       title={
                         <EntityHoverCard entityId={entity._uid}>{entity._name}</EntityHoverCard>
@@ -415,15 +398,6 @@ export const StrategyTraceabilityScreen = () => {
           </Table.Root>
         </Tabs.Content>
       </Tabs.Root>
-
-      {capabilityId && (
-        <CapabilityDrawer
-          workspaceSlug={workspaceSlug}
-          capabilityId={capabilityId}
-          onClose={closeCapability}
-          onOpenCapability={openCapability}
-        />
-      )}
     </main>
   );
 };
