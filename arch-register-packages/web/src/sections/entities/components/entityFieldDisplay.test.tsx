@@ -53,7 +53,9 @@ describe('renderEntityFieldDisplayValue', () => {
 
   it('renders an empty dash for null/empty values', () => {
     const textField = { id: 'name', name: 'Name', type: 'text', requirementLevel: null } as never;
-    const markup = renderToStaticMarkup(<>{renderEntityFieldDisplayValue(textField, '', noopDeps)}</>);
+    const markup = renderToStaticMarkup(
+      <>{renderEntityFieldDisplayValue(textField, '', noopDeps)}</>
+    );
     expect(markup).toContain('—');
   });
 
@@ -84,7 +86,12 @@ describe('renderEntityFieldDisplayValue', () => {
       schemaId: 'vendor-schema',
       requirementLevel: null
     } as never;
-    const ref: EntitySummary = { _uid: 'e1', _publicId: 'V-1', _name: 'Acme', _slug: 'acme' } as never;
+    const ref: EntitySummary = {
+      _uid: 'e1',
+      _publicId: 'V-1',
+      _name: 'Acme',
+      _slug: 'acme'
+    } as never;
     const renderReferenceLink = vi.fn(({ id }) => <span>link:{id}</span>);
     const markup = renderToStaticMarkup(
       <>

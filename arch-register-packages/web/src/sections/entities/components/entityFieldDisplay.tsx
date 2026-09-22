@@ -13,7 +13,10 @@ import { RelationRecordList } from './RelationRecordList';
 import sharedStyles from '../EntityDetailScreen.module.css';
 import styles from './EntityOverviewTab.module.css';
 
-type ReferenceField = Extract<EntitySchema['fields'][number], { type: 'reference' | 'containment' }>;
+type ReferenceField = Extract<
+  EntitySchema['fields'][number],
+  { type: 'reference' | 'containment' }
+>;
 type TypedRelationField = Extract<EntitySchema['fields'][number], { type: 'typedRelation' }>;
 type SelectOption = { value: string; label: string };
 
@@ -96,7 +99,9 @@ const formatMultiSelectOptions = (
 ): ReactNode => {
   if (!asChip) {
     return (
-      <span>{values.map(item => options.find(o => o.value === item)?.label ?? item).join(', ')}</span>
+      <span>
+        {values.map(item => options.find(o => o.value === item)?.label ?? item).join(', ')}
+      </span>
     );
   }
   return (
@@ -134,7 +139,12 @@ const formatReferenceDisplayValue = (
   return (
     <>
       {ids.map((id, index) => {
-        const ref = resolveEntityReference(id, field.schemaId, deps.refLookup, deps.referenceOptions);
+        const ref = resolveEntityReference(
+          id,
+          field.schemaId,
+          deps.refLookup,
+          deps.referenceOptions
+        );
         return (
           <span key={id}>
             {index > 0 && ', '}
@@ -154,9 +164,8 @@ const formatTypedRelationDisplayValue = (
   > & { renderList: RenderTypedRelationList }
 ): ReactNode => {
   const direction = field.direction === 'in' ? 'outgoing' : 'incoming';
-  const records = (field.direction === 'in'
-    ? deps.typedRelationsOutgoing
-    : deps.typedRelationsIncoming
+  const records = (
+    field.direction === 'in' ? deps.typedRelationsOutgoing : deps.typedRelationsIncoming
   ).filter(record => record._schema.id === field.relationSchemaId);
   if (records.length === 0) return <span className={sharedStyles.dim}>—</span>;
   return deps.renderList({
@@ -174,7 +183,8 @@ const formatMultiValueDisplay = (
 ): ReactNode => {
   if (value.length === 0) return <span className={sharedStyles.dim}>—</span>;
   if (field.type === 'select') return formatMultiSelectOptions(field.options, value, deps.asChip);
-  if (field.type === 'boolean') return <span>{value.map(item => (item ? 'Yes' : 'No')).join(', ')}</span>;
+  if (field.type === 'boolean')
+    return <span>{value.map(item => (item ? 'Yes' : 'No')).join(', ')}</span>;
   if (field.type === 'date')
     return <span>{value.map(item => deps.formatDateValue(item)).join(', ')}</span>;
   if (field.type === 'currency')
@@ -223,14 +233,19 @@ export const renderEntityFieldDisplayValue = (
     });
   }
   if (Array.isArray(value)) {
-    return formatMultiValueDisplay(field, value, { formatDateValue, resolvePrincipalLabel, asChip });
+    return formatMultiValueDisplay(field, value, {
+      formatDateValue,
+      resolvePrincipalLabel,
+      asChip
+    });
   }
   if (value == null || value === '') return <span className={sharedStyles.dim}>—</span>;
   if (field.type === 'principal') return formatPrincipalDisplayValue(value, resolvePrincipalLabel);
   if (field.type === 'derived') {
     if (field.resultType === 'boolean') return <span>{value ? 'Yes' : 'No'}</span>;
     if (field.resultType === 'currency') return <span>{formatCurrencyValue(value)}</span>;
-    if (field.resultType === 'select') return formatSelectOption(field.options, String(value), asChip);
+    if (field.resultType === 'select')
+      return formatSelectOption(field.options, String(value), asChip);
     return <span>{String(value)}</span>;
   }
   if (field.type === 'boolean') return <span>{value ? 'Yes' : 'No'}</span>;

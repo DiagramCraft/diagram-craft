@@ -12,6 +12,21 @@ vi.mock('../../../hooks/useEntities', () => ({
   useEntitiesByIds: () => new Map()
 }));
 
+vi.mock('../../../components/EntityNavigationLink', () => ({
+  EntityNavigationLink: ({
+    publicId,
+    children,
+    ...props
+  }: {
+    publicId: string;
+    children: React.ReactNode;
+  }) => (
+    <a href={`/entities/${publicId}`} {...props}>
+      {children}
+    </a>
+  )
+}));
+
 const { DrawerPropertyRow } = await import('./DrawerPropertyRow');
 
 const baseProps = {

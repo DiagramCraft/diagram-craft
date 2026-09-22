@@ -170,16 +170,17 @@ export const DrawerPropertyRow = ({
     : presentation === 'mini-panel'
       ? styles.statLabel
       : styles.metadataLabel;
-  const valueClass = presentation === 'mini-panel' && !isMiniPanelRelation
-    ? styles.statValue
-    : styles.metadataValue;
+  const valueClass =
+    presentation === 'mini-panel' && !isMiniPanelRelation ? styles.statValue : styles.metadataValue;
 
   return (
     <div className={rowClass}>
       <span className={labelClass}>{label ?? field.name}</span>
       <span className={valueClass}>
         {display}
-        {isExternal && <ExternalMetadataIndicator kind={field.external_kind!} result={externalMeta} />}
+        {isExternal && (
+          <ExternalMetadataIndicator kind={field.external_kind!} result={externalMeta} />
+        )}
       </span>
     </div>
   );
