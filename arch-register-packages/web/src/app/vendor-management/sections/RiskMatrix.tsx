@@ -23,7 +23,7 @@ export type RiskMatrixVendor = { id: string; name: string };
  * config/rows and don't fit a fixed domain grid).
  *
  * Each cell lists the vendors that land in it as clickable name tags (not a bare count) — opening
- * a vendor's tag opens the shared `VendorDrawer` directly, there is no cell-level filtering.
+ * a vendor's tag opens the shared vendor `EntityDrawer` directly, there is no cell-level filtering.
  */
 export const RiskMatrix = ({
   vendorsByCell,

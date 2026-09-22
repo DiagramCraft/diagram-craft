@@ -31,7 +31,7 @@ const EMPTY: RiskCoverageRollup = {
  * fetch is needed to name the mitigating Controls.
  *
  * `riskControlRelationSchemaId` is the real, per-workspace relation schema id — like
- * `VendorDrawer.tsx`'s `systemContractRelationSchemaId`, `risk-control` isn't a capability
+ * `VendorEntityDrawerProviders.tsx`'s `systemContractRelationSchemaId`, `risk-control` isn't a capability
  * binding (it's a fixed relation on Risk's own `mitigating_controls` field), so callers resolve
  * it off that field's `relationSchemaId` rather than matching the template's `symRelationSchemaId`
  * string, which isn't the persisted schema id.

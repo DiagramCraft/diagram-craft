@@ -27,8 +27,8 @@ vi.mock('@tanstack/react-router', () => ({
   useSearch: () => mocks.search
 }));
 
-vi.mock('./ApiSpecDrawer', () => ({
-  ApiSpecDrawer: () => <div>Open record in Entities</div>
+vi.mock('../../../sections/entities/entityDrawer/EntityDrawer', () => ({
+  EntityDrawer: () => <div>Open record in Entities</div>
 }));
 
 vi.mock('@diagram-craft/app-components/Dialog', () => ({

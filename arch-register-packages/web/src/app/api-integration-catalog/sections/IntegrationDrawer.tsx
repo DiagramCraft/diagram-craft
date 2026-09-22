@@ -13,8 +13,8 @@ import styles from './ApiSpecDrawer.module.css';
 /**
  * The Integrations detail panel: one `Data Flow` relation's endpoints, protocol, carried data,
  * classification, boundary-crossing flag, and the shared `data-flow-governance` fields, plus a link
- * into the shared `ApiSpecDrawer` (#3316) when either endpoint provides/consumes a registered API.
- * A slide-over drawer, like every other detail panel in this app (`ApiSpecDrawer.tsx`) and its
+ * into the shared API `EntityDrawer` (#3316) when either endpoint provides/consumes a registered API.
+ * A slide-over drawer, like every other detail panel in this app (the shared API `EntityDrawer`) and its
  * siblings elsewhere (`DatasetDrawer.tsx`, `RiskDrawer.tsx`) — the Claude Design reference's
  * `ICIntegrations` (`ic-views.jsx`) renders this inline instead, but a drawer keeps the pattern
  * consistent with the rest of the app and reads better for a field-heavy relation like this one.

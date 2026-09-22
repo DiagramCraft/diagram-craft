@@ -20,7 +20,7 @@ const EMPTY: VendorContracts = { items: [], isLoading: false };
  * Contracts section's list, calendar, and sidebar facets all need both a Contract's own fields and
  * its vendor's name, which a flat `entitiesQuery` fetch can't give (the `vendor` containment field
  * on a Contract record is only the bare parent uid, wrapped in an array — no name). Fetching the
- * Contract tree once (as `useVendorNextRenewals.ts` and `VendorDrawer.tsx` already do) and joining
+ * Contract tree once (as `useVendorNextRenewals.ts` and the vendor drawer already do) and joining
  * `edges` against `nodes` client-side resolves both in a single request.
  */
 export const useVendorContracts = (

@@ -15,7 +15,7 @@ const EMPTY: VendorNextRenewals = { byId: new Map(), isLoading: false };
  * child, "provided by" a Vendor per `schemaTemplates.ts`).
  *
  * Fetches the Contract tree once for the whole table (`useEntityTree` defaults to `view: 'full'`
- * server-side, so `contract_end` is present — same fetch shape `VendorDrawer`'s own "Contracts"
+ * server-side, so `contract_end` is present — same fetch shape the vendor drawer's own "Contracts"
  * section already relies on for `annual_cost`), then groups by `parentId` client-side. A vendor
  * with no contracts, or none with a `contract_end` on or after today, maps to `null`.
  */

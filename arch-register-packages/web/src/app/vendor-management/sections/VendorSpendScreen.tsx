@@ -16,7 +16,7 @@ import { useVendorContracts, type VendorContractRow } from '../useVendorContract
 import { computeVmTotalSpend, computeVmGroupSpend } from '../vendorSpendAggregates';
 import type { SpendSearchParams } from '../../../routes/searchParams';
 import { SpendShareBar, SpendShareStrip } from './SpendShareBar';
-import { VendorDrawer } from './VendorDrawer';
+import { EntityDrawer } from '../../../sections/entities/entityDrawer/EntityDrawer';
 import filterStyles from '../../../sections/entities/components/EntityBrowser.module.css';
 import styles from './VendorSpendScreen.module.css';
 
@@ -80,7 +80,7 @@ const largestContract = (rows: readonly VendorContractRow[]): string | null => {
  * largest-contract are read from the raw Contract records via `useVendorContracts` (the shared
  * model's batched `metrics.rollup` doesn't expose per-contract detail).
  *
- * Selecting a vendor (a row, or a share-strip segment) opens the shared `VendorDrawer` in place,
+ * Selecting a vendor (a row, or a share-strip segment) opens the shared vendor `EntityDrawer` in place,
  * deep-linkable at `vendor-management/spend/$vendorId` — its own detail route, rather than
  * navigating to the Vendors section, so grouping/filter state on this screen survives.
  */
@@ -391,7 +391,12 @@ export const VendorSpendScreen = () => {
       )}
 
       {vendorId && (
-        <VendorDrawer workspaceSlug={workspaceSlug} vendorId={vendorId} onClose={closeVendor} />
+        <EntityDrawer
+          workspaceSlug={workspaceSlug}
+          entityId={vendorId}
+          entityLabel="vendor"
+          onClose={closeVendor}
+        />
       )}
     </div>
   );
