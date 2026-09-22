@@ -1156,9 +1156,7 @@ export const buildFallbackEntityDrawerProfile = (
     id: `group:${group.id}`,
     title: group.name,
     collapsible: false,
-    items: fields
-      .filter(field => field.groupId === group.id)
-      .map(field => fieldItem(field))
+    items: fields.filter(field => field.groupId === group.id).map(field => fieldItem(field))
   }));
   const ungrouped = fields.filter(field => !field.groupId).map(field => fieldItem(field));
 
