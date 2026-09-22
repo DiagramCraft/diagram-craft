@@ -6,6 +6,7 @@ import {
   buildFallbackEntityDrawerProfile,
   entityDrawerConfigurationSchema,
   mergeEntityDrawerProfiles,
+  normalizeLegacyEntityDrawerConfiguration,
   remapEntityDrawerProfiles,
   resolveEntityDrawerConfiguration
 } from './entityDrawerConfiguration';
@@ -180,7 +181,6 @@ describe('entity drawer configuration', () => {
         slotId: 'strategy.rollup',
         options: { rollups: [{ fieldId: 'score', aggregation: 'sum', format: 'number' }] }
       },
-      { kind: 'slot', slotId: 'strategy.children' },
       { kind: 'slot', slotId: 'strategy.realized-by' },
       { kind: 'slot', slotId: 'strategy.linked-objectives' },
       { kind: 'slot', slotId: 'strategy.linked-initiatives' }
@@ -227,6 +227,134 @@ describe('entity drawer configuration', () => {
       'service'
     ]);
     expect(catalog.slots.map(slot => slot.id)).not.toContain('vendor.spend');
+  });
+
+  it('validates cross-schema containment children and omits invalid targets', () => {
+    const parentSchema = {
+      ...schema,
+      id: 'vendor',
+      name: 'Vendor'
+    };
+    const childSchema = {
+      id: 'contract',
+      name: 'Contract',
+      fields: [
+        {
+          id: 'vendor',
+          name: 'Vendor',
+          type: 'containment',
+          schemaId: 'vendor',
+          archived: false
+        }
+      ]
+    };
+    const result = resolveEntityDrawerConfiguration(
+      {
+        version: 1,
+        profiles: {
+          vendor: {
+            sections: [
+              {
+                id: 'children',
+                title: 'Children',
+                items: [
+                  { kind: 'children', childSchemaId: 'contract', fieldId: 'vendor' },
+                  { kind: 'children', childSchemaId: 'service', fieldId: 'depends_on' }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      [parentSchema, childSchema, schema]
+    );
+
+    expect(result.effective.profiles.vendor?.sections[0]?.items).toEqual([
+      { kind: 'children', childSchemaId: 'contract', fieldId: 'vendor' }
+    ]);
+    expect(result.diagnostics.map(diagnostic => diagnostic.code)).toEqual([
+      'invalid_children_target'
+    ]);
+  });
+
+  it('normalizes the legacy Strategy children slot at read time', () => {
+    const strategySchema = {
+      id: 'business_capability',
+      name: 'Business Capability',
+      fields: [
+        {
+          id: 'parent',
+          name: 'Parent',
+          type: 'containment',
+          schemaId: 'business_capability'
+        }
+      ]
+    };
+    const result = resolveEntityDrawerConfiguration(
+      {
+        version: 1,
+        profiles: {
+          business_capability: {
+            sections: [
+              {
+                id: 'children',
+                title: 'Children',
+                items: [{ kind: 'slot', slotId: 'strategy.children', label: 'Child capabilities' }]
+              }
+            ]
+          }
+        }
+      },
+      [strategySchema]
+    );
+
+    expect(result.effective.profiles.business_capability?.sections[0]?.items).toEqual([
+      {
+        kind: 'children',
+        childSchemaId: 'business_capability',
+        fieldId: 'parent',
+        label: 'Child capabilities'
+      }
+    ]);
+    expect(result.diagnostics).toEqual([]);
+    expect(normalizeLegacyEntityDrawerConfiguration(null)).toBeNull();
+  });
+
+  it('remaps nested containment-child schema references', () => {
+    const profiles = {
+      parent: {
+        header: { badges: [] },
+        sections: [
+          {
+            id: 'children',
+            title: 'Children',
+            collapsible: true,
+            items: [{ kind: 'children' as const, childSchemaId: 'child', fieldId: 'parent' }]
+          }
+        ]
+      }
+    };
+    expect(
+      remapEntityDrawerProfiles(
+        profiles,
+        new Map([
+          ['parent', 'p2'],
+          ['child', 'c2']
+        ])
+      )
+    ).toEqual({
+      p2: {
+        header: { badges: [] },
+        sections: [
+          {
+            id: 'children',
+            title: 'Children',
+            collapsible: true,
+            items: [{ kind: 'children', childSchemaId: 'c2', fieldId: 'parent' }]
+          }
+        ]
+      }
+    });
   });
 
   it('advertises Risk & Compliance provider slots for the configured Risk schema', () => {

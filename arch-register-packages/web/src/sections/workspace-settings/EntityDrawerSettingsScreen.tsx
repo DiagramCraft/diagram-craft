@@ -21,7 +21,10 @@ import type {
   EntityDrawerItem,
   EntityDrawerProfile
 } from '@arch-register/api-types/entityDrawerConfiguration';
-import { buildFallbackEntityDrawerProfile } from '@arch-register/api-types/entityDrawerConfiguration';
+import {
+  buildFallbackEntityDrawerProfile,
+  normalizeLegacyEntityDrawerConfiguration
+} from '@arch-register/api-types/entityDrawerConfiguration';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import {
   useEntityDrawerCatalog,
@@ -224,12 +227,14 @@ const ItemMenu = ({
 const itemReference = (item: EntityDrawerItem): string => {
   if (item.kind === 'metadata') return item.slot;
   if (item.kind === 'slot') return item.slotId;
+  if (item.kind === 'children') return `${item.childSchemaId}:${item.fieldId}`;
   return item.fieldId;
 };
 
 const itemPlacementKey = (item: EntityDrawerItem): string => {
   if (item.kind === 'metadata') return `metadata:${item.slot}`;
   if (item.kind === 'slot') return `slot:${item.slotId}`;
+  if (item.kind === 'children') return `children:${item.childSchemaId}:${item.fieldId}`;
   return `field:${item.fieldId}`;
 };
 
@@ -243,6 +248,11 @@ const itemLabel = (
     return catalog.metadataSlots.find(slot => slot.id === item.slot)?.label ?? item.slot;
   if (item.kind === 'slot')
     return catalog.slots.find(slot => slot.id === item.slotId)?.label ?? item.slotId;
+  if (item.kind === 'children') {
+    const childSchema = catalog.schemas.find(schema => schema.id === item.childSchemaId);
+    const field = childSchema?.fields.find(candidate => candidate.id === item.fieldId);
+    return `${childSchema?.name ?? item.childSchemaId} · ${field?.name ?? item.fieldId}`;
+  }
   return (
     catalog.schemas
       .find(schema => schema.id === schemaId)
@@ -253,6 +263,7 @@ const itemLabel = (
 const ItemIcon = ({ kind }: { kind: EntityDrawerItem['kind'] }) => {
   if (kind === 'metadata') return <TbTag size={11} />;
   if (kind === 'relation') return <TbLink size={11} />;
+  if (kind === 'children') return <TbLink size={11} />;
   if (kind === 'slot') return <TbPuzzle size={11} />;
   return <TbSquare size={11} />;
 };
@@ -318,7 +329,9 @@ export const EntityDrawerEditor = ({
   const [customizing, setCustomizing] = useState(false);
 
   useEffect(() => {
-    const stored = configurationQuery.data?.stored_configuration;
+    const stored = normalizeLegacyEntityDrawerConfiguration(
+      configurationQuery.data?.stored_configuration
+    );
     setDraft(
       stored && typeof stored === 'object' && 'version' in stored && stored.version === 1
         ? (JSON.parse(JSON.stringify(stored)) as EntityDrawerConfiguration)
@@ -381,6 +394,14 @@ export const EntityDrawerEditor = ({
       ?.fields.filter(field => !field.archived) ?? [];
   const availableSlots = catalog.slots.filter(slot =>
     slot.supportedSchemaIds.includes(selectedSchema.id)
+  );
+  const availableChildren = catalog.schemas.flatMap(childSchema =>
+    childSchema.fields
+      .filter(
+        field =>
+          field.type === 'containment' && field.schemaId === selectedSchema.id && !field.archived
+      )
+      .map(field => ({ childSchema, field }))
   );
   const placedItems = new Set(
     profile.sections.flatMap(section => section.items.map(itemPlacementKey))
@@ -467,6 +488,23 @@ export const EntityDrawerEditor = ({
           value: `metadata:${slot.id}`,
           label: slot.label,
           pick: () => addItem(sectionId, { kind: 'metadata', slot: slot.id })
+        }))
+    },
+    {
+      label: 'Containment children',
+      options: availableChildren
+        .filter(
+          ({ childSchema, field }) => !placedItems.has(`children:${childSchema.id}:${field.id}`)
+        )
+        .map(({ childSchema, field }) => ({
+          value: `children:${childSchema.id}:${field.id}`,
+          label: `${childSchema.name} · ${field.name}`,
+          pick: () =>
+            addItem(sectionId, {
+              kind: 'children',
+              childSchemaId: childSchema.id,
+              fieldId: field.id
+            })
         }))
     },
     {

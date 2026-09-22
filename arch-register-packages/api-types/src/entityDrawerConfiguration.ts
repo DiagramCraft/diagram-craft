@@ -42,6 +42,12 @@ export const entityDrawerItemSchema = z.discriminatedUnion('kind', [
     presentation: entityDrawerItemPresentationSchema
   }),
   z.object({
+    kind: z.literal('children'),
+    childSchemaId: z.string().min(1),
+    fieldId: z.string().min(1),
+    label: labelOverrideSchema
+  }),
+  z.object({
     kind: z.literal('slot'),
     slotId: z.string().min(1),
     label: labelOverrideSchema,
@@ -91,6 +97,7 @@ export const entityDrawerDiagnosticSchema = z.object({
     'missing_schema',
     'missing_or_archived_field',
     'missing_relation_field',
+    'invalid_children_target',
     'unsupported_slot',
     'invalid_slot_options',
     'unsupported_slot_for_schema'
@@ -106,7 +113,8 @@ export const entityDrawerCatalogFieldSchema = z.object({
   name: z.string(),
   type: z.string(),
   archived: z.boolean(),
-  groupId: z.string().nullable()
+  groupId: z.string().nullable(),
+  schemaId: z.string().nullable().optional()
 });
 
 export const entityDrawerCatalogSchema = z.object({
@@ -161,7 +169,26 @@ export const remapEntityDrawerProfiles = (
   Object.fromEntries(
     Object.entries(profiles).flatMap(([schemaId, profile]) => {
       const mappedSchemaId = schemaIdMap.get(schemaId);
-      return mappedSchemaId ? [[mappedSchemaId, profile] as const] : [];
+      if (!mappedSchemaId) return [];
+      return [
+        [
+          mappedSchemaId,
+          {
+            ...profile,
+            sections: profile.sections.map(section => ({
+              ...section,
+              items: section.items.map(item =>
+                item.kind === 'children'
+                  ? {
+                      ...item,
+                      childSchemaId: schemaIdMap.get(item.childSchemaId) ?? item.childSchemaId
+                    }
+                  : item
+              )
+            }))
+          }
+        ] as const
+      ];
     })
   );
 
@@ -275,16 +302,6 @@ export const ENTITY_DRAWER_SLOT_DEFINITIONS: EntityDrawerSlotDefinition[] = [
       }
     ],
     optionsSchema: strategyRollupOptionsSchema
-  },
-  {
-    id: 'strategy.children',
-    label: 'Child capabilities',
-    description: 'Capabilities below this one.',
-    application: 'Strategy Model',
-    capabilityBinding: { capabilityType: 'strategy-model', role: 'business_capability' },
-    defaultOptions: {},
-    optionFields: [],
-    optionsSchema: emptyOptionsSchema
   },
   {
     id: 'strategy.realized-by',
@@ -515,6 +532,7 @@ export type EntityDrawerField = {
   type: string;
   archived?: boolean;
   groupId?: string;
+  schemaId?: string;
 };
 
 export type EntityDrawerSchema = {
@@ -527,6 +545,61 @@ export type EntityDrawerSchema = {
 const fieldIsVisible = (field: EntityDrawerField): boolean => field.archived !== true;
 const isRelationField = (field: EntityDrawerField): boolean =>
   field.type === 'reference' || field.type === 'containment' || field.type === 'typedRelation';
+
+/**
+ * Converts the pre-built-in Strategy children slot while reading old stored configurations.
+ * This intentionally happens before schema parsing so workspaces do not need a data migration.
+ */
+export const normalizeLegacyEntityDrawerConfiguration = (raw: unknown): unknown => {
+  if (!raw || typeof raw !== 'object' || !('profiles' in raw)) return raw;
+  const profiles = raw.profiles;
+  if (!profiles || typeof profiles !== 'object') return raw;
+
+  return {
+    ...raw,
+    profiles: Object.fromEntries(
+      Object.entries(profiles).map(([schemaId, profile]) => {
+        if (!profile || typeof profile !== 'object' || !('sections' in profile)) {
+          return [schemaId, profile];
+        }
+        const sections = profile.sections;
+        if (!Array.isArray(sections)) return [schemaId, profile];
+        return [
+          schemaId,
+          {
+            ...profile,
+            sections: sections.map(section => {
+              if (!section || typeof section !== 'object' || !('items' in section)) return section;
+              const items = section.items;
+              if (!Array.isArray(items)) return section;
+              return {
+                ...section,
+                items: items.map(item => {
+                  if (
+                    !item ||
+                    typeof item !== 'object' ||
+                    item.kind !== 'slot' ||
+                    item.slotId !== 'strategy.children'
+                  ) {
+                    return item;
+                  }
+                  return {
+                    kind: 'children',
+                    childSchemaId: schemaId,
+                    fieldId: 'parent',
+                    ...('label' in item && typeof item.label === 'string'
+                      ? { label: item.label }
+                      : {})
+                  };
+                })
+              };
+            })
+          }
+        ];
+      })
+    )
+  };
+};
 
 const fieldItem = (
   field: EntityDrawerField,
@@ -1229,11 +1302,33 @@ export const buildDefaultEntityDrawerConfiguration = (
 const validateItem = (
   item: EntityDrawerItem,
   schema: EntityDrawerSchema,
+  schemas: EntityDrawerSchema[],
   schemaId: string,
   sectionId: string,
   diagnostics: EntityDrawerDiagnostic[]
 ): EntityDrawerItem | null => {
   if (item.kind === 'metadata') return item;
+  if (item.kind === 'children') {
+    const childSchema = schemas.find(candidate => candidate.id === item.childSchemaId);
+    const field = childSchema?.fields.find(candidate => candidate.id === item.fieldId);
+    const valid =
+      childSchema != null &&
+      field != null &&
+      fieldIsVisible(field) &&
+      field.type === 'containment' &&
+      field.schemaId === schemaId;
+    if (!valid) {
+      diagnostics.push({
+        code: 'invalid_children_target',
+        schemaId,
+        sectionId,
+        itemId: `${item.childSchemaId}:${item.fieldId}`,
+        message: `Drawer children target '${item.childSchemaId}.${item.fieldId}' is missing, archived, or does not contain this schema.`
+      });
+      return null;
+    }
+    return item;
+  }
   if (item.kind === 'slot') {
     const definition = ENTITY_DRAWER_SLOT_DEFINITIONS.find(slot => slot.id === item.slotId);
     if (!definition) {
@@ -1319,7 +1414,9 @@ export const resolveEntityDrawerConfiguration = (
   const diagnostics: EntityDrawerDiagnostic[] = [];
   if (raw === null || raw === undefined) return { effective: defaults, diagnostics };
 
-  const parsed = entityDrawerConfigurationSchema.safeParse(raw);
+  const parsed = entityDrawerConfigurationSchema.safeParse(
+    normalizeLegacyEntityDrawerConfiguration(raw)
+  );
   if (!parsed.success) {
     const version = raw && typeof raw === 'object' && 'version' in raw ? raw.version : undefined;
     diagnostics.push({
@@ -1347,7 +1444,7 @@ export const resolveEntityDrawerConfiguration = (
     const sections = profile.sections.map(section => ({
       ...section,
       items: section.items.flatMap(item => {
-        const resolved = validateItem(item, schema, schemaId, section.id, diagnostics);
+        const resolved = validateItem(item, schema, schemas, schemaId, section.id, diagnostics);
         if (!resolved) return [];
         if (item.kind === 'slot' && !supportedSlotSchemaIds.get(item.slotId)?.includes(schemaId)) {
           diagnostics.push({
@@ -1395,7 +1492,8 @@ export const buildEntityDrawerCatalog = (
         name: field.name,
         type: field.type,
         archived: field.archived === true,
-        groupId: field.groupId ?? null
+        groupId: field.groupId ?? null,
+        schemaId: 'schemaId' in field ? (field.schemaId ?? null) : null
       }))
     })),
     metadataSlots: ENTITY_DRAWER_METADATA_SLOTS,
