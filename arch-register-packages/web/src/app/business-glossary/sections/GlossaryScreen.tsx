@@ -11,6 +11,7 @@ import { Chip } from '../../../components/Chip';
 import { StatusChip } from '../../../components/StatusChip';
 import { Table } from '../../../components/table/Table';
 import { useTableSort } from '../../../components/table/useTableSort';
+import { EntityDrawer } from '../../../sections/entities/entityDrawer/EntityDrawer';
 import { schemaColor } from '../../../lib/schemaPresentation';
 import { useTeams, useLifecycleStates } from '../../../hooks/useWorkspaceConfig';
 import { glossaryConfigQuery, glossaryTermsQuery } from '../glossaryQueries';
@@ -18,7 +19,6 @@ import { entitiesQuery } from '../../../queries/entities';
 import type { GlossaryTerm } from '@arch-register/api-types/app/business-glossary/glossaryContract';
 import type { GlossarySearchParams } from '../../../routes/searchParams';
 import { GlossaryQualityBadges } from './GlossaryQualityBadges';
-import { GlossaryTermDrawer } from './GlossaryTermDrawer';
 import filterStyles from '../../../sections/entities/components/EntityBrowser.module.css';
 import styles from './GlossaryScreen.module.css';
 
@@ -367,7 +367,12 @@ export const GlossaryScreen = () => {
       </Table.Root>
 
       {termId && (
-        <GlossaryTermDrawer workspaceSlug={workspaceSlug} termId={termId} onClose={closeTerm} />
+        <EntityDrawer
+          workspaceSlug={workspaceSlug}
+          entityId={termId}
+          entityLabel="glossary term"
+          onClose={closeTerm}
+        />
       )}
     </main>
   );

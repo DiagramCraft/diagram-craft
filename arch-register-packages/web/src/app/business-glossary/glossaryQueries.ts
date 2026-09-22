@@ -6,8 +6,6 @@ export const glossaryKeys = {
   config: (workspaceId: string) => [...glossaryKeys.all, 'config', workspaceId] as const,
   terms: (workspaceId: string, query: Record<string, unknown>) =>
     [...glossaryKeys.all, 'terms', workspaceId, query] as const,
-  term: (workspaceId: string, id: string) =>
-    [...glossaryKeys.all, 'term', workspaceId, id] as const,
   usage: (workspaceId: string, id: string) =>
     [...glossaryKeys.all, 'usage', workspaceId, id] as const
 };
@@ -39,13 +37,6 @@ export const glossaryTermsQuery = (
     queryFn: () => orpcClient.glossary.terms.list({ params: { workspace: workspaceId }, query }),
     enabled: enabled && !!workspaceId,
     staleTime: 30 * 1000
-  });
-
-export const glossaryTermQuery = (workspaceId: string, id: string, enabled = true) =>
-  queryOptions({
-    queryKey: glossaryKeys.term(workspaceId, id),
-    queryFn: () => orpcClient.glossary.terms.get({ params: { workspace: workspaceId, id } }),
-    enabled: enabled && !!workspaceId && !!id
   });
 
 export const glossaryUsageQuery = (workspaceId: string, id: string, enabled = true) =>
