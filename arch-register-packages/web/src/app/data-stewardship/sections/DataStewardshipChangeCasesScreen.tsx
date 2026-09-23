@@ -11,7 +11,7 @@ import { caseKindLabel } from '../../../utils/governanceCaseLabels';
 import { resolveDataStewardshipConfig } from '../dataStewardshipQueries';
 import { DS_CHANGE_CASES_ID, DS_RAIL_PATHS } from '../dataStewardshipSections';
 import { useDataStewardshipChangeCases } from '../dataStewardshipChangeCases';
-import { DatasetDrawer } from './DatasetDrawer';
+import { EntityDrawer } from '../../../sections/entities/entityDrawer/EntityDrawer';
 import { DataStewardshipCaseDrawer } from './DataStewardshipCaseDrawer';
 import type { DataStewardshipChangeCasesSearchParams } from '../../../routes/searchParams';
 import filterStyles from '../../../sections/entities/components/EntityBrowser.module.css';
@@ -172,11 +172,11 @@ export const DataStewardshipChangeCasesScreen = () => {
         />
       )}
       {search.datasetId && (
-        <DatasetDrawer
+        <EntityDrawer
           workspaceSlug={workspaceSlug}
-          datasetId={search.datasetId}
+          entityId={search.datasetId}
           onClose={closeDataset}
-          onOpenCase={caseId => {
+          onOpenGovernanceCase={caseId => {
             closeDataset();
             openCase(caseId);
           }}

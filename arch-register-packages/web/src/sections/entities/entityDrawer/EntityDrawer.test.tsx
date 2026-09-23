@@ -1,6 +1,5 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
-import { formatDate } from '../../../utils/dateFormat';
 import { EntityDrawer } from './EntityDrawer';
 
 const mocks = vi.hoisted(() => ({
@@ -163,20 +162,11 @@ describe('EntityDrawer', () => {
     expect(markup).toContain('Ledger');
   });
 
-  it('uses the static ISO date format only when requested', () => {
-    const defaultMarkup = renderToStaticMarkup(
+  it('uses the ISO date format by default', () => {
+    const markup = renderToStaticMarkup(
       <EntityDrawer workspaceSlug="workspace-1" entityId="SRV-001" onClose={vi.fn()} />
     );
-    const isoMarkup = renderToStaticMarkup(
-      <EntityDrawer
-        workspaceSlug="workspace-1"
-        entityId="SRV-001"
-        onClose={vi.fn()}
-        dateFormat="iso"
-      />
-    );
 
-    expect(defaultMarkup).toContain(formatDate('2026-06-01'));
-    expect(isoMarkup).toContain('2026-06-01');
+    expect(markup).toContain('2026-06-01');
   });
 });

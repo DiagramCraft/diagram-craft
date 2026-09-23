@@ -676,7 +676,7 @@ const dataStewardshipMyWorkSearchSchema = defineSearchParamSchema({
   // Opens the new minimal case drawer (`DataStewardshipCaseDrawer.tsx`) for this governance case id
   // — for entity.change-case / entity.deprecation queue rows.
   caseId: stringCodec,
-  // Opens the bespoke `DatasetDrawer` for this dataset id (paired with `caseId` above, so a click
+  // Opens the shared entity drawer for this dataset id (paired with `caseId` above, so a click
   // between the two swaps rather than stacks) — for field-date-reminder queue rows.
   datasetId: stringCodec
 });
@@ -698,7 +698,7 @@ const dataStewardshipChangeCasesSearchSchema = defineSearchParamSchema({
   // Opens the shared `DataStewardshipCaseDrawer.tsx` for this governance case id — same drawer
   // `dataStewardshipMyWorkSearchSchema`'s own `caseId` opens (#3298).
   caseId: stringCodec,
-  // Opens the bespoke `DatasetDrawer` for this dataset id — from a case row's linked dataset,
+  // Opens the shared entity drawer for this dataset id — from a case row's linked dataset,
   // paired with `caseId` above so a click between the two swaps rather than stacks.
   datasetId: stringCodec
 });

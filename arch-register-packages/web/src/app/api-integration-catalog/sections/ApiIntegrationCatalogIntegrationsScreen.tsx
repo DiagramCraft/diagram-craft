@@ -39,7 +39,7 @@ type SortKey = 'flow' | 'protocol' | 'classification' | 'boundary';
  * the Claude Design reference's `ICIntegrations` (`ic-views.jsx`) layout, except the drawer: the
  * design renders the selected relation's detail as an inline panel below the table, but a
  * slide-over drawer keeps the pattern consistent with every other detail panel in this app
- * (the shared API `EntityDrawer`) and its siblings elsewhere (`DatasetDrawer.tsx`, `RiskDrawer.tsx`). Reuses
+ * (the shared API `EntityDrawer`) and its sibling specialized drawers. Reuses
  * the existing `Data Flow` typed relation (#3065/information-governance) rather than a new
  * integration-relation model.
  *
@@ -354,7 +354,6 @@ export const ApiIntegrationCatalogIntegrationsScreen = () => {
         <EntityDrawer
           workspaceSlug={workspaceSlug}
           entityId={openApiId}
-          entityLabel="API"
           onClose={() => setOpenApiId(null)}
         />
       )}

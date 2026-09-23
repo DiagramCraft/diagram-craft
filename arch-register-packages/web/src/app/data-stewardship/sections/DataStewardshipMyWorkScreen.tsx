@@ -7,6 +7,7 @@ import { dueLabel, dueTone } from '../../../utils/assessmentDueTone';
 import { caseKindLabel } from '../../../utils/governanceCaseLabels';
 import { resolveDataStewardshipConfig } from '../dataStewardshipQueries';
 import { DS_MY_WORK_ID, DS_RAIL_PATHS } from '../dataStewardshipSections';
+import { EntityDrawer } from '../../../sections/entities/entityDrawer/EntityDrawer';
 import {
   isCaseOverdue,
   queueItemPriority,
@@ -15,7 +16,6 @@ import {
   type DataStewardshipQueuePriority,
   type DataStewardshipQueueScope
 } from '../dataStewardshipQueue';
-import { DatasetDrawer } from './DatasetDrawer';
 import { DataStewardshipCaseDrawer } from './DataStewardshipCaseDrawer';
 import { DataStewardshipReviewCalendar } from './DataStewardshipReviewCalendar';
 import type { DataStewardshipMyWorkSearchParams } from '../../../routes/searchParams';
@@ -240,11 +240,11 @@ export const DataStewardshipMyWorkScreen = () => {
       </div>
 
       {search.datasetId && dataStewardshipConfig && (
-        <DatasetDrawer
+        <EntityDrawer
           workspaceSlug={workspaceSlug}
-          datasetId={search.datasetId}
+          entityId={search.datasetId}
           onClose={() => patchSearch({ datasetId: undefined })}
-          onOpenCase={caseId => patchSearch({ datasetId: undefined, caseId })}
+          onOpenGovernanceCase={caseId => patchSearch({ datasetId: undefined, caseId })}
         />
       )}
       {search.caseId && (
