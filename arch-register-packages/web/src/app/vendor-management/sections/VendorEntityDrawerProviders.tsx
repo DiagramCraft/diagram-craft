@@ -1,4 +1,4 @@
-import { useMemo, type ReactNode } from 'react';
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Chip } from '../../../components/Chip';
 import { StatusChip } from '../../../components/StatusChip';
@@ -47,27 +47,7 @@ const systemContractRelationSchemaId = (
   return systemField?.type === 'typedRelation' ? systemField.relationSchemaId : null;
 };
 
-const ProviderFrame = ({
-  label,
-  showLabel = true,
-  children
-}: {
-  label: string;
-  showLabel?: boolean;
-  children?: ReactNode;
-}) => (
-  <div className={styles.provider}>
-    {showLabel && <div className={styles.sectionLabel}>{label}</div>}
-    {children}
-  </div>
-);
-
-const VendorRiskProvider = ({
-  context,
-  label,
-  showLabel,
-  presentation
-}: EntityDrawerProviderProps) => {
+const VendorRiskProvider = ({ context, presentation }: EntityDrawerProviderProps) => {
   const risk = computeVendorRisk({
     security_risk:
       typeof context.entity.security_risk === 'number' ? context.entity.security_risk : null,
@@ -92,24 +72,19 @@ const VendorRiskProvider = ({
 
   if (presentation === 'mini-panel') {
     return (
-      <div className={styles.stat}>
-        {showLabel && <div className={styles.statLabel}>{label}</div>}
-        <div className={styles.statValueWithBand}>
-          <div className={styles.statValue}>
-            {risk.vmRisk != null ? risk.vmRisk.toFixed(1) : '—'}
-          </div>
-          {risk.vmRiskBand && (
-            <Chip dot={VENDOR_RISK_BAND_COLOR[risk.vmRiskBand]} tone="ghost">
-              {risk.vmRiskBand}
-            </Chip>
-          )}
-        </div>
+      <div className={styles.statValueWithBand}>
+        <div className={styles.statValue}>{risk.vmRisk != null ? risk.vmRisk.toFixed(1) : '—'}</div>
+        {risk.vmRiskBand && (
+          <Chip dot={VENDOR_RISK_BAND_COLOR[risk.vmRiskBand]} tone="ghost">
+            {risk.vmRiskBand}
+          </Chip>
+        )}
       </div>
     );
   }
 
   return (
-    <ProviderFrame label={label} showLabel={showLabel}>
+    <>
       <div className={styles.statGrid}>
         <div className={styles.stat}>
           <div className={styles.statLabel}>vmRisk</div>
@@ -119,11 +94,11 @@ const VendorRiskProvider = ({
         </div>
       </div>
       {riskBand}
-    </ProviderFrame>
+    </>
   );
 };
 
-const VendorSpendProvider = ({ context, label, showLabel }: EntityDrawerProviderProps) => {
+const VendorSpendProvider = ({ context }: EntityDrawerProviderProps) => {
   const { query: configurationQuery, config } = useVendorProviderConfiguration(context.workspaceId);
   const spend = useVendorSpendRollup(
     context.workspaceId,
@@ -142,32 +117,30 @@ const VendorSpendProvider = ({ context, label, showLabel }: EntityDrawerProvider
             : 'empty';
 
   return (
-    <ProviderFrame label={label} showLabel={showLabel}>
-      <EntityDrawerProviderStatus
-        state={state}
-        emptyMessage="No Contract entity schema is bound."
-        unavailableMessage="Vendor spend is unavailable."
-      >
-        <div className={styles.statGrid}>
-          <div className={styles.stat}>
-            <div className={styles.statLabel}>vmSpend</div>
-            <div className={styles.statValue}>
-              {spend.vmSpend != null
-                ? formatCurrencyValue({ amount: spend.vmSpend, currency: spend.currency })
-                : '—'}
-            </div>
-          </div>
-          <div className={styles.stat}>
-            <div className={styles.statLabel}>Contracts</div>
-            <div className={styles.statValue}>{spend.contractCount ?? '—'}</div>
+    <EntityDrawerProviderStatus
+      state={state}
+      emptyMessage="No Contract entity schema is bound."
+      unavailableMessage="Vendor spend is unavailable."
+    >
+      <div className={styles.statGrid}>
+        <div className={styles.stat}>
+          <div className={styles.statLabel}>vmSpend</div>
+          <div className={styles.statValue}>
+            {spend.vmSpend != null
+              ? formatCurrencyValue({ amount: spend.vmSpend, currency: spend.currency })
+              : '—'}
           </div>
         </div>
-      </EntityDrawerProviderStatus>
-    </ProviderFrame>
+        <div className={styles.stat}>
+          <div className={styles.statLabel}>Contracts</div>
+          <div className={styles.statValue}>{spend.contractCount ?? '—'}</div>
+        </div>
+      </div>
+    </EntityDrawerProviderStatus>
   );
 };
 
-const VendorContractsProvider = ({ context, label, showLabel }: EntityDrawerProviderProps) => {
+const VendorContractsProvider = ({ context }: EntityDrawerProviderProps) => {
   const { query: configurationQuery, config } = useVendorProviderConfiguration(context.workspaceId);
   const contractSchemaId = config?.contractSchemaId ?? null;
   const tree = useEntityTree(
@@ -202,28 +175,22 @@ const VendorContractsProvider = ({ context, label, showLabel }: EntityDrawerProv
               : 'empty';
 
   return (
-    <ProviderFrame label={label} showLabel={showLabel}>
-      <EntityDrawerProviderStatus
-        state={state}
-        emptyMessage="No contracts."
-        unavailableMessage="Contracts are unavailable."
-      >
-        {contracts.map(contract => (
-          <div className={styles.attributeRow} key={contract._uid}>
-            <span className={styles.attributeLabel}>{contract._name}</span>
-            <span>{vendorFieldValue(contractSchema, contract, 'annual_cost')}</span>
-          </div>
-        ))}
-      </EntityDrawerProviderStatus>
-    </ProviderFrame>
+    <EntityDrawerProviderStatus
+      state={state}
+      emptyMessage="No contracts."
+      unavailableMessage="Contracts are unavailable."
+    >
+      {contracts.map(contract => (
+        <div className={styles.attributeRow} key={contract._uid}>
+          <span className={styles.attributeLabel}>{contract._name}</span>
+          <span>{vendorFieldValue(contractSchema, contract, 'annual_cost')}</span>
+        </div>
+      ))}
+    </EntityDrawerProviderStatus>
   );
 };
 
-const VendorApplicationsSuppliedProvider = ({
-  context,
-  label,
-  showLabel
-}: EntityDrawerProviderProps) => {
+const VendorApplicationsSuppliedProvider = ({ context }: EntityDrawerProviderProps) => {
   const { query: configurationQuery, config } = useVendorProviderConfiguration(context.workspaceId);
   const relationSchemaId = systemContractRelationSchemaId(
     context,
@@ -248,29 +215,23 @@ const VendorApplicationsSuppliedProvider = ({
             : 'empty';
 
   return (
-    <ProviderFrame label={label} showLabel={showLabel}>
-      <EntityDrawerProviderStatus
-        state={state}
-        emptyMessage="No linked applications, via any contract."
-        unavailableMessage="Applications supplied are unavailable."
-      >
-        <div className={styles.tags}>
-          {appsSupplied.items.map(({ system, contract }) => (
-            <Chip key={system._uid} tone="ghost" title={`via ${contract._name}`}>
-              {system._name}
-            </Chip>
-          ))}
-        </div>
-      </EntityDrawerProviderStatus>
-    </ProviderFrame>
+    <EntityDrawerProviderStatus
+      state={state}
+      emptyMessage="No linked applications, via any contract."
+      unavailableMessage="Applications supplied are unavailable."
+    >
+      <div className={styles.tags}>
+        {appsSupplied.items.map(({ system, contract }) => (
+          <Chip key={system._uid} tone="ghost" title={`via ${contract._name}`}>
+            {system._name}
+          </Chip>
+        ))}
+      </div>
+    </EntityDrawerProviderStatus>
   );
 };
 
-const VendorTechnologyLifecycleProvider = ({
-  context,
-  label,
-  showLabel
-}: EntityDrawerProviderProps) => {
+const VendorTechnologyLifecycleProvider = ({ context }: EntityDrawerProviderProps) => {
   const { query: configurationQuery, config } = useVendorProviderConfiguration(context.workspaceId);
   const relationSchemaId = systemContractRelationSchemaId(
     context,
@@ -296,7 +257,7 @@ const VendorTechnologyLifecycleProvider = ({
             : 'empty';
 
   return (
-    <ProviderFrame label={label} showLabel={showLabel}>
+    <>
       <div className={styles.sectionCaption}>Derived from linked Systems' lifecycle state.</div>
       <EntityDrawerProviderStatus
         state={state}
@@ -314,17 +275,15 @@ const VendorTechnologyLifecycleProvider = ({
           )}
         </div>
       </EntityDrawerProviderStatus>
-    </ProviderFrame>
+    </>
   );
 };
 
-const VendorCapabilitiesFundedProvider = ({ label, showLabel }: EntityDrawerProviderProps) => (
-  <ProviderFrame label={label} showLabel={showLabel}>
-    <EntityDrawerProviderStatus
-      state="empty"
-      emptyMessage="Not yet available — no linked capability data yet."
-    />
-  </ProviderFrame>
+const VendorCapabilitiesFundedProvider = () => (
+  <EntityDrawerProviderStatus
+    state="empty"
+    emptyMessage="Not yet available — no linked capability data yet."
+  />
 );
 
 export const vendorEntityDrawerProviderDefinitions = [

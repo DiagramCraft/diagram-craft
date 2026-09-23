@@ -52,7 +52,7 @@ describe('Vendor Management Contract entity drawer providers', () => {
     ];
 
     const markup = renderToStaticMarkup(
-      <provider.Component context={context(['sys-1', 'sys-2'])} item={item} label="Systems used" />
+      <provider.Component context={context(['sys-1', 'sys-2'])} item={item} />
     );
 
     expect(markup).toContain('Billing System');
@@ -62,24 +62,18 @@ describe('Vendor Management Contract entity drawer providers', () => {
   it('renders empty, loading, and unavailable states', () => {
     mocks.queryResults = [];
     expect(
-      renderToStaticMarkup(
-        <provider.Component context={context([])} item={item} label="Systems used" />
-      )
+      renderToStaticMarkup(<provider.Component context={context([])} item={item} />)
     ).toContain('No linked Systems.');
 
     mocks.queryResults = [{ data: undefined, isLoading: true, isError: false }];
-    expect(
-      renderToStaticMarkup(
-        <provider.Component context={context()} item={item} label="Systems used" />
-      )
-    ).toContain('Loading…');
+    expect(renderToStaticMarkup(<provider.Component context={context()} item={item} />)).toContain(
+      'Loading…'
+    );
 
     mocks.queryResults = [{ data: undefined, isLoading: false, isError: true }];
-    expect(
-      renderToStaticMarkup(
-        <provider.Component context={context()} item={item} label="Systems used" />
-      )
-    ).toContain('Systems used are unavailable.');
+    expect(renderToStaticMarkup(<provider.Component context={context()} item={item} />)).toContain(
+      'Systems used are unavailable.'
+    );
   });
 
   it('only supports Contract schemas with the typed system field', () => {

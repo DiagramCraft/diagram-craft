@@ -42,6 +42,7 @@ const item = { kind: 'slot' as const, slotId: 'business-glossary.usage' };
 
 describe('business glossary entity drawer provider', () => {
   const Provider = businessGlossaryEntityDrawerProviderDefinitions[0]!.Component;
+  const LabelAdornment = businessGlossaryEntityDrawerProviderDefinitions[0]!.LabelAdornment!;
 
   it('renders grouped usage across entities, relations, documents, projects, and diagrams', () => {
     mocks.usage = {
@@ -59,11 +60,10 @@ describe('business glossary entity drawer provider', () => {
       isError: false
     };
 
-    const markup = renderToStaticMarkup(
-      <Provider context={context} item={item} label="Usage & backlinks" />
-    );
+    const markup = renderToStaticMarkup(<Provider context={context} item={item} />);
+    const labelMarkup = renderToStaticMarkup(<LabelAdornment context={context} item={item} />);
 
-    expect(markup).toContain('5 visible references');
+    expect(labelMarkup).toContain('5 visible references');
     expect(markup).toContain('Referencing entities');
     expect(markup).toContain('Typed relations');
     expect(markup).toContain('Linked documents');
@@ -74,18 +74,16 @@ describe('business glossary entity drawer provider', () => {
 
   it('preserves loading, empty, and unavailable states', () => {
     mocks.usage = { data: undefined, isLoading: true, isError: false };
-    expect(
-      renderToStaticMarkup(<Provider context={context} item={item} label="Usage" />)
-    ).toContain('Loading…');
+    expect(renderToStaticMarkup(<Provider context={context} item={item} />)).toContain('Loading…');
 
     mocks.usage = { data: { items: [], total: 0 }, isLoading: false, isError: false };
-    expect(
-      renderToStaticMarkup(<Provider context={context} item={item} label="Usage" />)
-    ).toContain('No visible explicit usage found.');
+    expect(renderToStaticMarkup(<Provider context={context} item={item} />)).toContain(
+      'No visible explicit usage found.'
+    );
 
     mocks.usage = { data: undefined, isLoading: false, isError: true };
-    expect(
-      renderToStaticMarkup(<Provider context={context} item={item} label="Usage" />)
-    ).toContain('Glossary usage is unavailable.');
+    expect(renderToStaticMarkup(<Provider context={context} item={item} />)).toContain(
+      'Glossary usage is unavailable.'
+    );
   });
 });

@@ -3,6 +3,7 @@ import { TbArrowsRightLeft, TbDatabase, TbFileText, TbFolders, TbSitemap } from 
 import { glossaryUsageQuery } from '../glossaryQueries';
 import {
   EntityDrawerProviderStatus,
+  type EntityDrawerProviderLabelProps,
   type EntityDrawerProviderContext,
   type EntityDrawerProviderDefinition,
   type EntityDrawerProviderProps
@@ -25,13 +26,24 @@ const USAGE_KIND_ICON = {
   diagram: TbSitemap
 } as const;
 
-const GlossaryUsageProvider = ({ context, label, showLabel }: EntityDrawerProviderProps) => {
+const GlossaryUsageLabelAdornment = ({ context }: EntityDrawerProviderLabelProps) => {
+  const usage = useQuery(glossaryUsageQuery(context.workspaceId, context.entity._uid));
+  const total = usage.data?.total ?? usage.data?.items.length ?? 0;
+
+  return (
+    <span className="dim" style={{ marginLeft: 8, fontWeight: 400 }}>
+      {total} visible reference
+      {total === 1 ? '' : 's'}
+    </span>
+  );
+};
+
+const GlossaryUsageProvider = ({ context }: EntityDrawerProviderProps) => {
   const usage = useQuery(glossaryUsageQuery(context.workspaceId, context.entity._uid));
   const usageItems = usage.data?.items ?? [];
   const usageGroups = (Object.keys(USAGE_KIND_LABEL) as Array<keyof typeof USAGE_KIND_LABEL>)
     .map(kind => ({ kind, items: usageItems.filter(item => item.kind === kind) }))
     .filter(group => group.items.length > 0);
-  const total = usage.data?.total ?? usageItems.length;
   const state = usage.isLoading
     ? 'loading'
     : usage.isError
@@ -41,38 +53,27 @@ const GlossaryUsageProvider = ({ context, label, showLabel }: EntityDrawerProvid
         : 'empty';
 
   return (
-    <div className={styles.provider}>
-      {showLabel !== false && (
-        <div className={styles.sectionLabel}>
-          {label}
-          <span className="dim" style={{ marginLeft: 8, fontWeight: 400 }}>
-            {total} visible reference
-            {total === 1 ? '' : 's'}
-          </span>
-        </div>
-      )}
-      <EntityDrawerProviderStatus
-        state={state}
-        emptyMessage="No visible explicit usage found."
-        unavailableMessage="Glossary usage is unavailable."
-      >
-        {usageGroups.map(group => {
-          const KindIcon = USAGE_KIND_ICON[group.kind];
-          return (
-            <div key={group.kind} className={styles.usageGroup}>
-              <div className={styles.usageGroupLabel}>{USAGE_KIND_LABEL[group.kind]}</div>
-              {group.items.map((item, index) => (
-                <div key={`${item.kind}:${item.id}:${index}`} className={styles.usageRow}>
-                  <KindIcon size={13} />
-                  <span>{item.label}</span>
-                  {item.context && <span className={styles.usageContext}>{item.context}</span>}
-                </div>
-              ))}
-            </div>
-          );
-        })}
-      </EntityDrawerProviderStatus>
-    </div>
+    <EntityDrawerProviderStatus
+      state={state}
+      emptyMessage="No visible explicit usage found."
+      unavailableMessage="Glossary usage is unavailable."
+    >
+      {usageGroups.map(group => {
+        const KindIcon = USAGE_KIND_ICON[group.kind];
+        return (
+          <div key={group.kind} className={styles.usageGroup}>
+            <div className={styles.usageGroupLabel}>{USAGE_KIND_LABEL[group.kind]}</div>
+            {group.items.map((item, index) => (
+              <div key={`${item.kind}:${item.id}:${index}`} className={styles.usageRow}>
+                <KindIcon size={13} />
+                <span>{item.label}</span>
+                {item.context && <span className={styles.usageContext}>{item.context}</span>}
+              </div>
+            ))}
+          </div>
+        );
+      })}
+    </EntityDrawerProviderStatus>
   );
 };
 
@@ -80,6 +81,7 @@ export const businessGlossaryEntityDrawerProviderDefinitions = [
   {
     slotId: 'business-glossary.usage',
     supports: (_context: EntityDrawerProviderContext) => true,
-    Component: GlossaryUsageProvider
+    Component: GlossaryUsageProvider,
+    LabelAdornment: GlossaryUsageLabelAdornment
   }
 ] satisfies readonly EntityDrawerProviderDefinition[];

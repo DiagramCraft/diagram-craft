@@ -1,0 +1,28 @@
+.provider {
+  min-width: 0;
+  width: 100%;
+}
+
+.sectionLabel,
+.miniPanelLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.sectionLabel {
+  margin: 16px 0 6px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.miniPanel {
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+
+.miniPanelLabel {
+  margin-bottom: 2px;
+}

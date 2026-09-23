@@ -111,25 +111,13 @@ describe('strategy entity drawer providers', () => {
 
     const markup = [
       renderToStaticMarkup(
-        <realizedBy.Component
-          context={context}
-          item={item(realizedBy.slotId)}
-          label="Realized by"
-        />
+        <realizedBy.Component context={context} item={item(realizedBy.slotId)} />
       ),
       renderToStaticMarkup(
-        <objectives.Component
-          context={context}
-          item={item(objectives.slotId)}
-          label="Linked objectives"
-        />
+        <objectives.Component context={context} item={item(objectives.slotId)} />
       ),
       renderToStaticMarkup(
-        <initiatives.Component
-          context={context}
-          item={item(initiatives.slotId)}
-          label="Linked initiatives"
-        />
+        <initiatives.Component context={context} item={item(initiatives.slotId)} />
       )
     ].join('');
 

@@ -77,7 +77,6 @@ describe('Data Stewardship entity drawer providers', () => {
           } as never
         })}
         item={item(definition.slotId)}
-        label="Coverage"
       />
     );
 
@@ -91,11 +90,7 @@ describe('Data Stewardship entity drawer providers', () => {
   it('renders the empty queue state without issue references', () => {
     const definition = provider('data-stewardship.queue-items');
     const markup = renderToStaticMarkup(
-      <definition.Component
-        context={context()}
-        item={item(definition.slotId)}
-        label="Queue items"
-      />
+      <definition.Component context={context()} item={item(definition.slotId)} />
     );
 
     expect(markup).toContain('Nothing in the queue against this dataset.');

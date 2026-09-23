@@ -91,8 +91,6 @@ const renderProvider = () => {
     <definition.Component
       context={context}
       item={{ kind: 'slot', slotId: 'api-specification.catalog' }}
-      label="Specification"
-      showLabel={false}
     />
   );
 };

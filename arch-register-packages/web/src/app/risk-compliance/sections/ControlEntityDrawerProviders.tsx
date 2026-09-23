@@ -26,7 +26,7 @@ const allTypedRelations = (context: EntityDrawerProviderContext) => [
   ...context.typedRelations.incoming
 ];
 
-const MitigatedRisksProvider = ({ context, label, showLabel }: EntityDrawerProviderProps) => {
+const MitigatedRisksProvider = ({ context }: EntityDrawerProviderProps) => {
   const field = typedRelationField(context, 'mitigated_risks');
   const matches = field
     ? allTypedRelations(context).filter(
@@ -37,24 +37,21 @@ const MitigatedRisksProvider = ({ context, label, showLabel }: EntityDrawerProvi
   const state = field ? relationState(context, matches) : 'unavailable';
 
   return (
-    <div className={styles.provider}>
-      {showLabel !== false && <div className={styles.sectionLabel}>{label}</div>}
-      <EntityDrawerProviderStatus state={state} emptyMessage="No risks mitigated.">
-        {matches.map(relation => (
-          <div className={styles.attributeRow} key={relation._uid}>
-            <span className={styles.attributeLabel}>{relation._in.name}</span>
-            <span className={styles.attributeValue}>
-              {typeof relation.coverage === 'number' ? `${relation.coverage}%` : '—'} ·{' '}
-              {typeof relation.effectiveness === 'string' ? relation.effectiveness : '—'}
-            </span>
-          </div>
-        ))}
-      </EntityDrawerProviderStatus>
-    </div>
+    <EntityDrawerProviderStatus state={state} emptyMessage="No risks mitigated.">
+      {matches.map(relation => (
+        <div className={styles.attributeRow} key={relation._uid}>
+          <span className={styles.attributeLabel}>{relation._in.name}</span>
+          <span className={styles.attributeValue}>
+            {typeof relation.coverage === 'number' ? `${relation.coverage}%` : '—'} ·{' '}
+            {typeof relation.effectiveness === 'string' ? relation.effectiveness : '—'}
+          </span>
+        </div>
+      ))}
+    </EntityDrawerProviderStatus>
   );
 };
 
-const ProtectedEntitiesProvider = ({ context, label, showLabel }: EntityDrawerProviderProps) => {
+const ProtectedEntitiesProvider = ({ context }: EntityDrawerProviderProps) => {
   const field = typedRelationField(context, 'protected_entities');
   const matches = field
     ? allTypedRelations(context).filter(
@@ -65,18 +62,15 @@ const ProtectedEntitiesProvider = ({ context, label, showLabel }: EntityDrawerPr
   const state = field ? relationState(context, matches) : 'unavailable';
 
   return (
-    <div className={styles.provider}>
-      {showLabel !== false && <div className={styles.sectionLabel}>{label}</div>}
-      <EntityDrawerProviderStatus state={state} emptyMessage="No protected entities linked.">
-        <div className={styles.tags}>
-          {matches.map(relation => (
-            <Chip key={relation._uid} tone="ghost">
-              {relation._out.name}
-            </Chip>
-          ))}
-        </div>
-      </EntityDrawerProviderStatus>
-    </div>
+    <EntityDrawerProviderStatus state={state} emptyMessage="No protected entities linked.">
+      <div className={styles.tags}>
+        {matches.map(relation => (
+          <Chip key={relation._uid} tone="ghost">
+            {relation._out.name}
+          </Chip>
+        ))}
+      </div>
+    </EntityDrawerProviderStatus>
   );
 };
 

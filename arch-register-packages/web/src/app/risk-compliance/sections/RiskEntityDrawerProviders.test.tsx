@@ -86,11 +86,7 @@ describe('risk entity drawer providers', () => {
 
     const definition = provider('risk.coverage');
     const markup = renderToStaticMarkup(
-      <definition.Component
-        context={riskContext()}
-        item={item(definition.slotId)}
-        label="Coverage"
-      />
+      <definition.Component context={riskContext()} item={item(definition.slotId)} />
     );
 
     expect(markup).toContain('35.0%');
@@ -110,32 +106,28 @@ describe('risk entity drawer providers', () => {
     };
     expect(
       renderToStaticMarkup(
-        <coverage.Component context={riskContext()} item={item(coverage.slotId)} label="Coverage" />
+        <coverage.Component context={riskContext()} item={item(coverage.slotId)} />
       )
     ).toContain('No mitigating controls.');
 
     mocks.coverage = { ...mocks.coverage, isLoading: true };
     expect(
       renderToStaticMarkup(
-        <coverage.Component context={riskContext()} item={item(coverage.slotId)} label="Coverage" />
+        <coverage.Component context={riskContext()} item={item(coverage.slotId)} />
       )
     ).toContain('Loading…');
 
     mocks.coverage = { ...mocks.coverage, isLoading: false, error: new Error('forbidden') };
     expect(
       renderToStaticMarkup(
-        <coverage.Component context={riskContext()} item={item(coverage.slotId)} label="Coverage" />
+        <coverage.Component context={riskContext()} item={item(coverage.slotId)} />
       )
     ).toContain('Mitigating controls are unavailable.');
 
     const affected = provider('risk.affected-entities');
     expect(
       renderToStaticMarkup(
-        <affected.Component
-          context={riskContext()}
-          item={item(affected.slotId)}
-          label="Affected entities"
-        />
+        <affected.Component context={riskContext()} item={item(affected.slotId)} />
       )
     ).toContain('No affected entities linked.');
   });
@@ -170,7 +162,6 @@ describe('risk entity drawer providers', () => {
           } as unknown as EntityDrawerProviderContext['typedRelations']
         })}
         item={item(definition.slotId)}
-        label="Affected entities"
       />
     );
 

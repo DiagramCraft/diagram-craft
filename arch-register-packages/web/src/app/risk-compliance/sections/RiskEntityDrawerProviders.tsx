@@ -22,7 +22,7 @@ const allTypedRelations = (context: EntityDrawerProviderContext) => [
 const supportsRiskField = (fieldId: string) => (context: EntityDrawerProviderContext) =>
   typedRelationField(context, fieldId) !== undefined;
 
-const RiskCoverageProvider = ({ context, label, showLabel }: EntityDrawerProviderProps) => {
+const RiskCoverageProvider = ({ context }: EntityDrawerProviderProps) => {
   const field = typedRelationField(context, 'mitigating_controls');
   const coverage = useRiskCoverageRollup(
     context.workspaceId,
@@ -38,8 +38,7 @@ const RiskCoverageProvider = ({ context, label, showLabel }: EntityDrawerProvide
         : 'empty';
 
   return (
-    <div className={styles.provider}>
-      {showLabel !== false && <div className={styles.sectionLabel}>{label}</div>}
+    <>
       <div className={styles.statGrid}>
         <div className={styles.stat}>
           <div className={styles.statLabel}>rcCoverage</div>
@@ -71,11 +70,11 @@ const RiskCoverageProvider = ({ context, label, showLabel }: EntityDrawerProvide
           </div>
         ))}
       </EntityDrawerProviderStatus>
-    </div>
+    </>
   );
 };
 
-const AffectedEntitiesProvider = ({ context, label, showLabel }: EntityDrawerProviderProps) => {
+const AffectedEntitiesProvider = ({ context }: EntityDrawerProviderProps) => {
   const field = typedRelationField(context, 'affected_entities');
   const matches = field
     ? allTypedRelations(context).filter(
@@ -92,22 +91,19 @@ const AffectedEntitiesProvider = ({ context, label, showLabel }: EntityDrawerPro
         : 'empty';
 
   return (
-    <div className={styles.provider}>
-      {showLabel !== false && <div className={styles.sectionLabel}>{label}</div>}
-      <EntityDrawerProviderStatus
-        state={state}
-        emptyMessage="No affected entities linked."
-        unavailableMessage="Affected entities are unavailable."
-      >
-        <div className={styles.tags}>
-          {matches.map(relation => (
-            <Chip key={relation._uid} tone="ghost">
-              {relation._out.name}
-            </Chip>
-          ))}
-        </div>
-      </EntityDrawerProviderStatus>
-    </div>
+    <EntityDrawerProviderStatus
+      state={state}
+      emptyMessage="No affected entities linked."
+      unavailableMessage="Affected entities are unavailable."
+    >
+      <div className={styles.tags}>
+        {matches.map(relation => (
+          <Chip key={relation._uid} tone="ghost">
+            {relation._out.name}
+          </Chip>
+        ))}
+      </div>
+    </EntityDrawerProviderStatus>
   );
 };
 
