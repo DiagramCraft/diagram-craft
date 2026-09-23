@@ -15,9 +15,7 @@ import { useSchemas } from '../../../hooks/useSchemas';
 import { formatDate } from '../../../utils/dateFormat';
 import { resolveRiskComplianceConfig } from '../riskComplianceQueries';
 import { RISK_RAIL_PATHS, RISK_RISKS_ID } from '../riskComplianceSections';
-import { useRiskCoverageRollups } from '../useRiskCoverageRollups';
 import { residualRiskBand, RESIDUAL_RISK_BAND_COLOR } from '../residualRiskBand';
-import { COVERAGE_BAND_COLOR } from '../riskCoverage';
 import { riskFieldValue } from '../riskFieldDisplay';
 import type { RisksSearchParams } from '../../../routes/searchParams';
 import { useEntityDrawer } from '../../../sections/entities/entityDrawer/useEntityDrawer';
@@ -61,17 +59,6 @@ export const RiskComplianceRisksScreen = () => {
   const schemas = useSchemas(workspaceSlug);
   const riskSchema = schemas.data?.find(schema => schema.id === riskConfig?.riskSchemaId);
 
-  // `risk-control` isn't a capability binding (it's a fixed relation on Risk's own
-  // `mitigating_controls` field) — read its real, per-workspace relation schema id off that
-  // field, mirroring the shared entity drawer's risk-control relation lookup.
-  const mitigatingControlsField = riskSchema?.fields.find(
-    field => field.id === 'mitigating_controls'
-  );
-  const riskControlRelationSchemaId =
-    mitigatingControlsField?.type === 'typedRelation'
-      ? mitigatingControlsField.relationSchemaId
-      : null;
-
   const risks = useQuery(
     entitiesQuery(
       workspaceSlug,
@@ -80,7 +67,6 @@ export const RiskComplianceRisksScreen = () => {
     )
   );
   const allItems = risks.data?.items ?? [];
-  const coverage = useRiskCoverageRollups(workspaceSlug, riskControlRelationSchemaId);
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -114,8 +100,8 @@ export const RiskComplianceRisksScreen = () => {
       ),
     coverage: (a, b) =>
       -compareNullable(
-        coverage.byId.get(a._uid)?.rcCoverage ?? null,
-        coverage.byId.get(b._uid)?.rcCoverage ?? null
+        typeof a.risk_coverage === 'number' ? a.risk_coverage : null,
+        typeof b.risk_coverage === 'number' ? b.risk_coverage : null
       ),
     nextReview: (a, b) =>
       compareNullable(
@@ -259,7 +245,6 @@ export const RiskComplianceRisksScreen = () => {
                 const residualBand = residualRiskBand(
                   typeof entity.residual_risk_score === 'number' ? entity.residual_risk_score : null
                 );
-                const entityCoverage = coverage.byId.get(entity._uid);
                 return (
                   <Table.Row key={entity._uid} onClick={() => openRisk(entity._publicId)}>
                     <Table.NameCell title={entity._name} subtitle={entity._publicId} />
@@ -281,10 +266,8 @@ export const RiskComplianceRisksScreen = () => {
                       )}
                     </Table.Cell>
                     <Table.Cell>
-                      {entityCoverage?.rcBand ? (
-                        <Chip dot={COVERAGE_BAND_COLOR[entityCoverage.rcBand]} tone="ghost">
-                          {entityCoverage.rcCoverage?.toFixed(0)}%
-                        </Chip>
+                      {typeof entity.risk_coverage === 'number' ? (
+                        `${entity.risk_coverage}%`
                       ) : (
                         <span className="dim">—</span>
                       )}

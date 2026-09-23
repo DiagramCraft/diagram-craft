@@ -1046,6 +1046,15 @@ describe('instantiateTemplate', () => {
         resultType: 'number'
       })
     );
+    expect(risk?.fields).toContainEqual(
+      expect.objectContaining({
+        id: 'risk_coverage',
+        name: 'Risk Coverage',
+        type: 'derived',
+        requirementLevel: 'optional',
+        resultType: 'number'
+      })
+    );
 
     expect(complianceRequirement?.fields).toContainEqual({
       id: 'framework',
@@ -1149,6 +1158,7 @@ describe('instantiateTemplate', () => {
           title: 'Coverage',
           collapsible: false,
           items: [
+            { kind: 'field', fieldId: 'risk_coverage', presentation: 'mini-panel' },
             {
               kind: 'typed-relation-list',
               fieldId: 'mitigating_controls',
@@ -1344,6 +1354,46 @@ describe('instantiateTemplate', () => {
         }
       }
     }
+  });
+
+  it('evaluates Risk Coverage from projected mitigating controls', () => {
+    const definitions = instantiateTemplateDefinitions('ws-1', 'risk-compliance');
+    const risk = definitions.schemas.find(schema => schema.name === 'Risk')!;
+    const plan = buildDerivedPlan(risk.fields);
+    const context = { objectType: 'entity' as const, objectId: 'risk-1' };
+
+    expect(
+      evaluateDerivedFields(
+        plan,
+        {},
+        context,
+        new Set(),
+        { mitigating_controls: [{ coverage: 50, effectiveness: 'partial' }] }
+      ).risk_coverage
+    ).toBe(25);
+    expect(
+      evaluateDerivedFields(
+        plan,
+        {},
+        context,
+        new Set(),
+        {
+          mitigating_controls: [
+            { coverage: 100, effectiveness: 'partial' },
+            { coverage: 100, effectiveness: 'partial' }
+          ]
+        }
+      ).risk_coverage
+    ).toBe(75);
+    expect(
+      evaluateDerivedFields(
+        plan,
+        {},
+        context,
+        new Set(),
+        { mitigating_controls: [{ coverage: null, effectiveness: 'full' }] }
+      ).risk_coverage
+    ).toBeUndefined();
   });
 
   describe('template saved views', () => {

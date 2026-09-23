@@ -153,7 +153,8 @@ describe('RiskComplianceControlsScreen', () => {
         name: 'Risk',
         fields: [
           { id: 'mitigating_controls', type: 'typedRelation', relationSchemaId: 'risk-control' },
-          { id: 'affected_entities', type: 'typedRelation', relationSchemaId: 'risk-affects' }
+          { id: 'affected_entities', type: 'typedRelation', relationSchemaId: 'risk-affects' },
+          { id: 'risk_coverage', type: 'derived' }
         ]
       },
       {
@@ -173,7 +174,14 @@ describe('RiskComplianceControlsScreen', () => {
     mocks.entityList.mockImplementation(({ query }: { query: { _schemaId?: string } }) => {
       if (query._schemaId === 'risk') {
         return Promise.resolve({
-          items: [{ _uid: 'risk-1', _publicId: 'RSK-001', _name: 'Account Takeover' }],
+          items: [
+            {
+              _uid: 'risk-1',
+              _publicId: 'RSK-001',
+              _name: 'Account Takeover',
+              risk_coverage: 25
+            }
+          ],
           total: 1
         });
       }
@@ -262,6 +270,8 @@ describe('RiskComplianceControlsScreen', () => {
     expect(container.textContent).toContain('Coverage by risk');
     expect(container.textContent).toContain('Account Takeover');
     expect(container.textContent).toContain('MFA Enforcement');
+    expect(container.textContent).toContain('25%');
+    expect(container.textContent).not.toContain('partial');
     expect(container.textContent).toContain('Coverage by information asset');
     // Data Entity-schema'd asset (reached via control-affects) appears...
     expect(container.textContent).toContain('Customer PII');

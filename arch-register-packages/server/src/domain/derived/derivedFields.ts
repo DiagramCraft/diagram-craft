@@ -1,4 +1,4 @@
-import { bonsai, type ASTNode, type CompiledExpression } from 'bonsai-js';
+import { bonsai, BonsaiTypeError, type ASTNode, type CompiledExpression } from 'bonsai-js';
 import { arrays, math, strings, types } from 'bonsai-js/stdlib';
 import type { AssessmentField } from '@arch-register/api-types/assessmentContract';
 import {
@@ -76,6 +76,19 @@ const engine = bonsai<EvaluationContext>({ timeout: 50, maxDepth: 50 })
   .use(math)
   .use(strings)
   .use(types)
+  .addTransform('product', value => {
+    if (!Array.isArray(value)) throw new BonsaiTypeError('product', 'an array of numbers', value);
+    for (const item of value) {
+      if (typeof item !== 'number') {
+        throw new BonsaiTypeError(
+          'product',
+          'an array of numbers (all elements must be numbers)',
+          item
+        );
+      }
+    }
+    return value.reduce((product, item) => product * item, 1);
+  })
   // Signed whole-day difference between two ISO date strings; `null` when either is unparseable
   // (the surrounding expression then falls through to its "missing" branch). Enables
   // approaching/overdue windows against the injected `<root>.now`.
