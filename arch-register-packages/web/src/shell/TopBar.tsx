@@ -56,6 +56,7 @@ import {
   workspaceMarkdownRoute
 } from '../routes/publicObjectRoutes';
 import { useDismissibleMenu } from '../hooks/useDismissibleMenu';
+import { useEntityDrawer } from '../sections/entities/entityDrawer/useEntityDrawer';
 import { discussionRoute } from './topBarViewModel';
 
 type TopBarProps = {
@@ -574,6 +575,7 @@ const DiscussionsMenu = ({ workspaceSlug }: { workspaceSlug: string }) => {
 
 const NotificationMenu = ({ workspaceSlug }: { workspaceSlug: string }) => {
   const navigate = useNavigate();
+  const { openEntityDrawer } = useEntityDrawer();
   const [tab, setTab] = useState<'notifications' | 'watching'>('notifications');
   const { open, setOpen, ref } = useDismissibleMenu<HTMLDivElement>();
   const { data: count } = useNotificationCount(workspaceSlug, !!workspaceSlug);
@@ -586,7 +588,7 @@ const NotificationMenu = ({ workspaceSlug }: { workspaceSlug: string }) => {
 
   const openEntity = (entityId: string) => {
     setOpen(false);
-    navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(entityId)));
+    openEntityDrawer(entityId);
   };
 
   const openNotificationRoute = (route: string) => {

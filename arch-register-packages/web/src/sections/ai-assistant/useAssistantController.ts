@@ -11,7 +11,7 @@ import {
   useDeleteConversation,
   useRenameConversation
 } from '../../hooks/useAiConversations';
-import { asEntityPublicId, entityDetailRoute } from '../../routes/publicObjectRoutes';
+import { useEntityDrawer } from '../entities/entityDrawer/useEntityDrawer';
 import { hasRenderableParts, optimisticConversationTitle } from './assistantViewModel';
 import { formatAiActionSeedMessage, readAndClearAiActionSeed } from '../../lib/aiActionSeed';
 import { invalidateAiConversation, updateAiConversationTitle } from '../../queries/ai';
@@ -22,6 +22,7 @@ export const useAssistantController = () => {
   const { workspaceSlug, teams } = useWorkspaceContext();
   const { user } = useAuth();
   const navigate = routeApi.useNavigate();
+  const { openEntityDrawer } = useEntityDrawer();
   const conversationId = routeApi.useSearch().conversation;
   const queryClient = useQueryClient();
   const [draft, setDraft] = useState('');
@@ -75,9 +76,9 @@ export const useAssistantController = () => {
   );
   const navigateToEntity = useCallback(
     (id: string) => {
-      navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(id)));
+      openEntityDrawer(id);
     },
-    [navigate, workspaceSlug]
+    [openEntityDrawer]
   );
   const respondToApproval = useCallback(
     (id: string, approved: boolean) => {

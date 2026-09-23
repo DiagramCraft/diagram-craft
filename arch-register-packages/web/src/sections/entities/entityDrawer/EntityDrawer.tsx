@@ -273,7 +273,6 @@ const DrawerItem = ({
   relationSchemas,
   workspaceSlug,
   formatDateValue,
-  onOpenEntity,
   onOpenRelatedEntity
 }: {
   item: ResolvedEntityDrawerItem;
@@ -287,7 +286,6 @@ const DrawerItem = ({
   relationSchemas: RelationSchema[];
   workspaceSlug: string;
   formatDateValue?: (value: unknown) => string;
-  onOpenEntity?: (entityId: string) => void;
   onOpenRelatedEntity?: (fieldId: string, publicId: string) => boolean;
 }) => {
   if (item.item.kind === 'metadata') {
@@ -398,7 +396,6 @@ const DrawerItem = ({
       relationSchemas={relationSchemas}
       workspaceSlug={workspaceSlug}
       formatDateValue={formatDateValue}
-      onOpenEntity={onOpenEntity}
       onOpenRelatedEntity={onOpenRelatedEntity}
       externalMeta={entity._externalMetadata?.[item.field.id]}
     />
@@ -735,7 +732,6 @@ export const EntityDrawer = ({
                     relationSchemas={relationSchemas}
                     workspaceSlug={workspaceSlug}
                     formatDateValue={resolvedFormatDateValue}
-                    onOpenEntity={onOpenEntity}
                     onOpenRelatedEntity={onOpenRelatedEntity}
                   />
                 </div>

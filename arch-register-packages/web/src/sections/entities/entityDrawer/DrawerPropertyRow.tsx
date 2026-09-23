@@ -27,14 +27,12 @@ const DrawerRelationRecordCard = ({
   record,
   direction,
   relationSchema,
-  workspaceId,
-  onOpenEntity
+  workspaceId
 }: {
   record: RelationRecord;
   direction: 'outgoing' | 'incoming';
   relationSchema: RelationSchema | undefined;
   workspaceId: string;
-  onOpenEntity?: (entityId: string) => void;
 }) => {
   const otherEndpoint = direction === 'outgoing' ? record._out : record._in;
   const activeFields = (relationSchema?.fields ?? []).filter(field => !field.archived);
@@ -45,15 +43,7 @@ const DrawerRelationRecordCard = ({
 
   return (
     <div style={{ marginBottom: 0, borderRadius: 6, padding: 8 }}>
-      <EntityNavigationLink
-        publicId={otherEndpoint.id}
-        className={relationStyles.relationName}
-        onClick={event => {
-          if (!onOpenEntity) return;
-          event.preventDefault();
-          onOpenEntity(otherEndpoint.id);
-        }}
-      >
+      <EntityNavigationLink publicId={otherEndpoint.id} className={relationStyles.relationName}>
         {otherEndpoint.name}
       </EntityNavigationLink>
       <div style={{ padding: '2px 0 0 0' }}>
@@ -80,14 +70,12 @@ const DrawerRelationRecordList = ({
   records,
   direction,
   relationSchema,
-  workspaceId,
-  onOpenEntity
+  workspaceId
 }: {
   records: RelationRecord[];
   direction: 'outgoing' | 'incoming';
   relationSchema: RelationSchema | undefined;
   workspaceId: string;
-  onOpenEntity?: (entityId: string) => void;
 }) => (
   <>
     {records.map(record => (
@@ -97,7 +85,6 @@ const DrawerRelationRecordList = ({
         direction={direction}
         relationSchema={relationSchema}
         workspaceId={workspaceId}
-        onOpenEntity={onOpenEntity}
       />
     ))}
   </>
@@ -122,7 +109,6 @@ export const DrawerPropertyRow = ({
   relationSchemas,
   workspaceSlug,
   formatDateValue = formatDate,
-  onOpenEntity,
   onOpenRelatedEntity,
   externalMeta
 }: {
@@ -137,7 +123,6 @@ export const DrawerPropertyRow = ({
   relationSchemas: RelationSchema[];
   workspaceSlug: string;
   formatDateValue?: (value: unknown) => string;
-  onOpenEntity?: (entityId: string) => void;
   onOpenRelatedEntity?: (fieldId: string, publicId: string) => boolean;
   externalMeta?: ExternalMetadataResult;
 }) => {
@@ -159,12 +144,7 @@ export const DrawerPropertyRow = ({
       <EntityNavigationLink
         publicId={id}
         onClick={event => {
-          if (onOpenRelatedEntity?.(fieldId, id)) {
-            event.preventDefault();
-          } else if (onOpenEntity) {
-            event.preventDefault();
-            onOpenEntity(id);
-          }
+          if (onOpenRelatedEntity?.(fieldId, id)) event.preventDefault();
         }}
       >
         {ref?._name ?? ref?._slug ?? id}
@@ -176,7 +156,6 @@ export const DrawerPropertyRow = ({
         direction={direction}
         relationSchema={relationSchema}
         workspaceId={workspaceId}
-        onOpenEntity={onOpenEntity}
       />
     )
   });

@@ -33,11 +33,13 @@ import {
 import { ResultRow } from './components/ResultRow';
 import { PreviewPane } from './components/PreviewPane';
 import { useAutoFocus } from '../../hooks/useAutoFocus';
+import { useEntityDrawer } from '../entities/entityDrawer/useEntityDrawer';
 
 // ── Screen ───────────────────────────────────────────────────
 
 export const SearchScreen = () => {
   const routerNavigate = useNavigate();
+  const { openEntityDrawer } = useEntityDrawer();
   const routerSearch = useRouterSearch({ strict: false }) as {
     q?: string;
     category?: SearchFilter;
@@ -128,9 +130,9 @@ export const SearchScreen = () => {
 
   const navigateToEntity = useCallback(
     (entityId: string) => {
-      routerNavigate(entityDetailRoute(workspaceSlug, asEntityPublicId(entityId)));
+      openEntityDrawer(entityId);
     },
-    [routerNavigate, workspaceSlug]
+    [openEntityDrawer]
   );
 
   const navigateToProject = useCallback(

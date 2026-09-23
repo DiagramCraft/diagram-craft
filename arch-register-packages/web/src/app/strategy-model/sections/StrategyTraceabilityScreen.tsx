@@ -9,7 +9,6 @@ import { useEntityTree } from '../../../hooks/useEntities';
 import { useRelations } from '../../../hooks/useRelations';
 import { entitiesQuery } from '../../../queries/entities';
 import { workspaceCapabilityConfigurationsQuery } from '../../../queries/workspaceConfig';
-import { asEntityPublicId, entityDetailRoute } from '../../../routes/publicObjectRoutes';
 import { resolveStrategyModelConfig } from '../strategyQueries';
 import { useEntityDrawer } from '../../../sections/entities/entityDrawer/useEntityDrawer';
 import { STRATEGY_RAIL_PATHS, STRATEGY_TRACEABILITY_ID } from '../strategySections';
@@ -318,9 +317,7 @@ export const StrategyTraceabilityScreen = () => {
                     key={application.id}
                     type="button"
                     className={styles.row}
-                    onClick={() =>
-                      navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(application.id)))
-                    }
+                    onClick={() => openEntityDrawer(application.id)}
                   >
                     <span className={styles.name}>
                       <EntityHoverCard entityId={application.id}>

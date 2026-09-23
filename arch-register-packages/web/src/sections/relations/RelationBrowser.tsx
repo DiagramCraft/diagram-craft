@@ -21,7 +21,7 @@ import { Table } from '../../components/table/Table';
 import { useTableSort } from '../../components/table/useTableSort';
 import { DropdownMenu, type MenuItem } from '../../components/DropdownMenu';
 import { EntityNavigationLink } from '../../components/EntityNavigationLink';
-import { asEntityPublicId, entityDetailRoute } from '../../routes/publicObjectRoutes';
+import { useEntityDrawer } from '../entities/entityDrawer/useEntityDrawer';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { useTeams, useLifecycleStates } from '../../hooks/useWorkspaceConfig';
 import { useSavedViews, useCreateSavedView, useUpdateSavedView } from '../../hooks/useSavedViews';
@@ -91,6 +91,7 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
   const { data: owners = [] } = useTeams(workspaceId);
   const { data: lifecycleStates = [] } = useLifecycleStates(workspaceId);
   const navigate = useNavigate();
+  const { openEntityDrawer } = useEntityDrawer();
   const { permissions } = useWorkspaceContext();
 
   const [detail, setDetail] = useState<{ relationId: string; x: number; y: number } | null>(null);
@@ -515,9 +516,7 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
             edgeColorFieldId={edgeColorFieldId}
             onEdgeColorFieldIdChange={setEdgeColorFieldId}
             typedRelationMode={relationGraphMode}
-            onEntityClick={entityId =>
-              navigate(entityDetailRoute(workspaceId, asEntityPublicId(entityId)))
-            }
+            onEntityClick={entityId => openEntityDrawer(entityId)}
           />
         </div>
       )}

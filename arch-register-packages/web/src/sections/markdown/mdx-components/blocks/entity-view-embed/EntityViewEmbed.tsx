@@ -1,10 +1,9 @@
 import { useCallback, useMemo } from 'react';
-import { useNavigate } from '@tanstack/react-router';
 import { useEntities } from '../../../../../hooks/useEntities';
 import { useSavedViews } from '../../../../../hooks/useSavedViews';
 import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
 import { useMdxContext } from '../../../MdxContext';
-import { asEntityPublicId, entityDetailRoute } from '../../../../../routes/publicObjectRoutes';
+import { useEntityDrawer } from '../../../../entities/entityDrawer/useEntityDrawer';
 import { EntityBrowserView } from '../../../../entities/components/EntityBrowserView';
 import {
   getSavedViewConfig,
@@ -23,7 +22,7 @@ type Props = {
 };
 
 export const EntityViewEmbed = ({ viewId }: Props) => {
-  const navigate = useNavigate();
+  const { openEntityDrawer } = useEntityDrawer();
   const { workspaceSlug, schemas, relationSchemas, lifecycleStates, projects } =
     useWorkspaceContext();
   const { projectId } = useMdxContext();
@@ -74,8 +73,8 @@ export const EntityViewEmbed = ({ viewId }: Props) => {
   );
 
   const onEntityClick = useCallback(
-    (publicId: string) => navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(publicId))),
-    [navigate, workspaceSlug]
+    (publicId: string) => openEntityDrawer(publicId),
+    [openEntityDrawer]
   );
 
   const isLoading = viewsLoading || (!isTreeBased && entitiesLoading);

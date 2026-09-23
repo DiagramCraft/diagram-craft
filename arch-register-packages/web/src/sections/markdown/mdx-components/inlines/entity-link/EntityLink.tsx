@@ -1,7 +1,6 @@
-import { Link } from '@tanstack/react-router';
 import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
 import { useEntity } from '../../../../../hooks/useEntities';
-import { entityDetailRoute, asEntityPublicId } from '../../../../../routes/publicObjectRoutes';
+import { EntityNavigationLink } from '../../../../../components/EntityNavigationLink';
 import { HoverCard } from '../../../../../components/HoverCard';
 import { EntityHoverCardBody } from '../../../../../components/EntityHoverCardBody';
 import styles from './EntityLink.module.css';
@@ -31,13 +30,9 @@ export const EntityLink = ({ id }: { id: string }) => {
         />
       }
     >
-      <Link
-        {...entityDetailRoute(workspaceSlug, asEntityPublicId(id))}
-        className={styles.link}
-        onClick={event => event.stopPropagation()}
-      >
+      <EntityNavigationLink publicId={id} className={styles.link}>
         {entity._name}
-      </Link>
+      </EntityNavigationLink>
     </HoverCard>
   );
 };

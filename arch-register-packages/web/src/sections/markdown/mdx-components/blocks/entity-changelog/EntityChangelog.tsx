@@ -1,8 +1,7 @@
 import { useMemo } from 'react';
-import { Link } from '@tanstack/react-router';
 import { useAuditLog } from '../../../../../hooks/useAudit';
 import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
-import { entityDetailRoute, asEntityPublicId } from '../../../../../routes/publicObjectRoutes';
+import { EntityNavigationLink } from '../../../../../components/EntityNavigationLink';
 import type { AuditLogEntry } from '@arch-register/api-types/auditContract';
 import styles from './EntityChangelog.module.css';
 import { formatRelativeTime } from '../../../../../utils/dateFormat';
@@ -117,12 +116,9 @@ export const EntityChangelog = ({ id, schema, owner, lifecycle, limit, since }: 
                 </Table.Cell>
                 <Table.Cell>
                   {entry.public_id ? (
-                    <Link
-                      {...entityDetailRoute(workspaceSlug, asEntityPublicId(entry.public_id!))}
-                      className={styles.entityLink}
-                    >
+                    <EntityNavigationLink publicId={entry.public_id} className={styles.entityLink}>
                       {entry.entity_name}
-                    </Link>
+                    </EntityNavigationLink>
                   ) : (
                     entry.entity_name
                   )}

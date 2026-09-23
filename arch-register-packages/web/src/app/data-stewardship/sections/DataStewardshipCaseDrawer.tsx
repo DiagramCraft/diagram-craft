@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useNavigate } from '@tanstack/react-router';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
@@ -12,7 +11,7 @@ import {
   useGovernanceTasks
 } from '../../../hooks/useGovernance';
 import { useEntity } from '../../../hooks/useEntities';
-import { asEntityPublicId, entityDetailRoute } from '../../../routes/publicObjectRoutes';
+import { useEntityDrawer } from '../../../sections/entities/entityDrawer/useEntityDrawer';
 import { caseKindLabel, humanizeCaseKind } from '../../../utils/governanceCaseLabels';
 import { dueLabel, dueTone } from '../../../utils/assessmentDueTone';
 import { queueItemPriority, type DataStewardshipQueuePriority } from '../dataStewardshipQueue';
@@ -79,10 +78,10 @@ export const DataStewardshipCaseDrawer = ({
   onClose: () => void;
   /** Switches to the shared dataset drawer for this case's subject, staying within My work rather
    *  than navigating to the Stewardship section — only `DataStewardshipMyWorkScreen.tsx` wires
-   *  this; other openers of this drawer fall back to `entityDetailRoute`. */
+   *  this; other openers of this drawer fall back to the app-wide `useEntityDrawer()` stack. */
   onOpenDataset?: (datasetPublicId: string) => void;
 }) => {
-  const navigate = useNavigate();
+  const { openEntityDrawer } = useEntityDrawer();
   const governanceCase = useGovernanceCase(workspaceSlug, caseId);
   const dataset = useEntity(workspaceSlug, governanceCase.data?.subjectId ?? '');
   const myTasks = useGovernanceTasks(workspaceSlug, { state: 'open' });
@@ -147,7 +146,7 @@ export const DataStewardshipCaseDrawer = ({
   const openDataset = () => {
     if (!datasetEntity) return;
     if (onOpenDataset) onOpenDataset(datasetEntity._publicId);
-    else navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(datasetEntity._publicId)));
+    else openEntityDrawer(datasetEntity._publicId);
   };
 
   return (

@@ -1,8 +1,9 @@
-import { Link, useNavigate } from '@tanstack/react-router';
+import { Link } from '@tanstack/react-router';
 import { Banner } from '../../../../../components/Banner';
 import { LoadingState } from '../../../../../components/LoadingState';
 import { useEntity } from '../../../../../hooks/useEntities';
 import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
+import { useEntityDrawer } from '../../../../entities/entityDrawer/useEntityDrawer';
 import { asEntityPublicId, entityDetailRoute } from '../../../../../routes/publicObjectRoutes';
 import { EntityGraphView } from '../../../../entities/components/EntityGraphView';
 import {
@@ -19,7 +20,7 @@ type Props = {
 };
 
 export const EntityGraph = ({ id, depth, direction }: Props) => {
-  const navigate = useNavigate();
+  const { openEntityDrawer } = useEntityDrawer();
   const { workspaceSlug, schemas } = useWorkspaceContext();
   const normalizedDepth = normalizeEntityGraphDepth(depth);
   const normalizedDirection: EntityGraphDirection = normalizeEntityGraphDirection(direction);
@@ -40,7 +41,7 @@ export const EntityGraph = ({ id, depth, direction }: Props) => {
   }
 
   const onEntityClick = (entityId: string) => {
-    navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(entityId)));
+    openEntityDrawer(entityId);
   };
 
   return (
