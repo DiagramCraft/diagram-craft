@@ -273,11 +273,11 @@ export const ENTITY_DRAWER_SLOT_DEFINITIONS: EntityDrawerSlotDefinition[] = [
     optionsSchema: emptyOptionsSchema
   },
   {
-    id: 'business-glossary.usage',
-    label: 'Glossary usage',
-    description: 'Where this term is used.',
-    application: 'Business Glossary',
-    capabilityBinding: { capabilityType: 'business-glossary', role: 'term' },
+    id: 'entity.usage',
+    label: 'Entity usage',
+    description:
+      'Visible entities, relations, documents, projects, and diagrams that reference the current entity.',
+    application: 'Entity',
     defaultOptions: {},
     optionFields: [],
     optionsSchema: emptyOptionsSchema
@@ -691,7 +691,7 @@ const buildBusinessGlossaryDefaultProfile = (
     fieldId
   });
   const usageItems = providerItems.map(providerItem =>
-    providerItem.kind === 'slot' && providerItem.slotId === 'business-glossary.usage'
+    providerItem.kind === 'slot' && providerItem.slotId === 'entity.usage'
       ? { ...providerItem, label: 'Usage & backlinks' }
       : providerItem
   );
@@ -1281,6 +1281,7 @@ export const buildDefaultEntityDrawerConfiguration = (
         schema,
         capabilityConfigurations
       );
+      const glossaryFieldIds = businessGlossaryFieldIds(schema, capabilityConfigurations);
       const providerItems = [
         ...getStrategyRealizedByItem(schema, capabilityConfigurations),
         ...getDefaultProviderItems(schemas, schema.id, capabilityConfigurations),
@@ -1293,9 +1294,9 @@ export const buildDefaultEntityDrawerConfiguration = (
         ...(dataStewardshipFieldIdsValue
           ? [{ kind: 'slot' as const, slotId: 'entity.assessments' }]
           : []),
+        ...(glossaryFieldIds ? [{ kind: 'slot' as const, slotId: 'entity.usage' }] : []),
         ...getStrategyRollupItems(schema, capabilityConfigurations)
       ];
-      const glossaryFieldIds = businessGlossaryFieldIds(schema, capabilityConfigurations);
       const apiSpecificationFieldIdsValue = apiSpecificationFieldIds(
         schema,
         capabilityConfigurations

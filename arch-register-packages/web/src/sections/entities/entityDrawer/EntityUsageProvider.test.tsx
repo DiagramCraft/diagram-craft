@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
-import type { EntityDrawerProviderContext } from '../../../sections/entities/entityDrawer/EntityDrawerProviderRegistry';
-import { businessGlossaryEntityDrawerProviderDefinitions } from './GlossaryEntityDrawerProvider';
+import type { EntityDrawerProviderContext } from './EntityDrawerProviderRegistry';
+import { entityUsageDrawerProviderDefinitions } from './EntityUsageProvider';
 
 const mocks = vi.hoisted(() => ({
   usage: {
@@ -20,16 +20,16 @@ vi.mock('@tanstack/react-query', () => ({
   useQuery: () => mocks.usage
 }));
 
-vi.mock('../glossaryQueries', () => ({
-  glossaryUsageQuery: (workspaceId: string, entityId: string) => ({
-    queryKey: ['glossary', 'usage', workspaceId, entityId]
+vi.mock('../../../queries/entities', () => ({
+  entityUsageQuery: (workspaceId: string, entityId: string) => ({
+    queryKey: ['entities', 'usage', workspaceId, entityId]
   })
 }));
 
 const context = {
   workspaceId: 'workspace-1',
-  entity: { _uid: 'term-1' },
-  schema: { id: 'term', name: 'Term', fields: [] },
+  entity: { _uid: 'entity-1' },
+  schema: { id: 'entity', name: 'Entity', fields: [] },
   schemas: [],
   relationSchemas: [],
   relations: { outgoing: [], incoming: [] },
@@ -38,11 +38,11 @@ const context = {
   openEntity: vi.fn()
 } as unknown as EntityDrawerProviderContext;
 
-const item = { kind: 'slot' as const, slotId: 'business-glossary.usage' };
+const item = { kind: 'slot' as const, slotId: 'entity.usage' };
 
-describe('business glossary entity drawer provider', () => {
-  const Provider = businessGlossaryEntityDrawerProviderDefinitions[0]!.Component;
-  const LabelAdornment = businessGlossaryEntityDrawerProviderDefinitions[0]!.LabelAdornment!;
+describe('entity usage drawer provider', () => {
+  const Provider = entityUsageDrawerProviderDefinitions[0]!.Component;
+  const LabelAdornment = entityUsageDrawerProviderDefinitions[0]!.LabelAdornment!;
 
   it('renders grouped usage across entities, relations, documents, projects, and diagrams', () => {
     mocks.usage = {
@@ -83,7 +83,7 @@ describe('business glossary entity drawer provider', () => {
 
     mocks.usage = { data: undefined, isLoading: false, isError: true };
     expect(renderToStaticMarkup(<Provider context={context} item={item} />)).toContain(
-      'Glossary usage is unavailable.'
+      'Entity usage is unavailable.'
     );
   });
 });

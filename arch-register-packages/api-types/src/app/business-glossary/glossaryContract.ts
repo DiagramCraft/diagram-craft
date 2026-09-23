@@ -36,20 +36,6 @@ export const glossaryTermSchema = z.object({
   quality: glossaryQualitySchema.describe('Computed glossary quality indicators')
 });
 
-export const glossaryUsageSchema = z.object({
-  kind: z
-    .enum(['entity', 'relation', 'document', 'project', 'diagram'])
-    .describe('Type of resource that references the term'),
-  id: z.string().describe('Identifier of the referencing resource'),
-  label: z.string().describe('Display label of the referencing resource'),
-  context: z.string().optional().describe('Field or relation context for the reference')
-});
-
-export const glossaryUsagePageSchema = z.object({
-  items: z.array(glossaryUsageSchema).describe('Visible usage references in this page'),
-  total: z.number().int().min(0).describe('Total number of visible usage references')
-});
-
 export const glossaryReportKindSchema = z
   .enum(['unused', 'conflicting', 'deprecated', 'ownerless'])
   .describe('Quality report to run');
@@ -120,38 +106,6 @@ export const glossaryContract = oc.tag('Glossary').router({
         })
         .input(z.object({ params: wsAndId }))
         .output(glossaryTermSchema),
-      usage: oc
-        .route({
-          method: 'GET',
-          path: '/{workspace}/glossary/terms/{id}/usage',
-          inputStructure: 'detailed',
-          summary: 'List glossary term usage',
-          description: 'Returns permission-filtered explicit references to a term.',
-          tags: ['Glossary']
-        })
-        .input(
-          z.object({
-            params: wsAndId,
-            query: z
-              .object({
-                limit: z.coerce
-                  .number()
-                  .int()
-                  .min(1)
-                  .max(200)
-                  .optional()
-                  .describe('Maximum number of usage references to return'),
-                offset: z.coerce
-                  .number()
-                  .int()
-                  .min(0)
-                  .optional()
-                  .describe('Number of usage references to skip')
-              })
-              .optional()
-          })
-        )
-        .output(glossaryUsagePageSchema)
     },
     reports: {
       list: oc
@@ -191,5 +145,3 @@ export const glossaryContract = oc.tag('Glossary').router({
 
 export type GlossaryConfig = z.infer<typeof glossaryConfigSchema>;
 export type GlossaryTerm = z.infer<typeof glossaryTermSchema>;
-export type GlossaryUsage = z.infer<typeof glossaryUsageSchema>;
-export type GlossaryUsagePage = z.infer<typeof glossaryUsagePageSchema>;

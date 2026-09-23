@@ -746,7 +746,7 @@ describe('entity drawer configuration', () => {
         { kind: 'field', fieldId: 'short_names' },
         { kind: 'relation', fieldId: 'topics' },
         { kind: 'metadata', slot: 'owner' },
-        { kind: 'slot', slotId: 'business-glossary.usage', label: 'Usage & backlinks' }
+        { kind: 'slot', slotId: 'entity.usage', label: 'Usage & backlinks' }
       ])
     );
     expect(profile.sections.map(section => section.id)).toEqual(['attributes', 'details']);
@@ -754,7 +754,7 @@ describe('entity drawer configuration', () => {
       expect.arrayContaining([
         { kind: 'metadata', slot: 'owner' },
         { kind: 'relation', fieldId: 'topics' },
-        { kind: 'slot', slotId: 'business-glossary.usage', label: 'Usage & backlinks' }
+        { kind: 'slot', slotId: 'entity.usage', label: 'Usage & backlinks' }
       ])
     );
   });

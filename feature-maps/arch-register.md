@@ -821,7 +821,7 @@
           abbreviations, organize terms across flat many-to-many categories, inspect explicit usage across entities,
           typed relations, Markdown, projects, and diagrams, and review unused, conflicting, deprecated, and ownerless
           quality reports. Term drawers use the workspace's configurable schema-scoped entity drawer for declarative
-          term fields, metadata, ordering, and the glossary usage slot, while quality badges and permission-filtered
+          term fields, metadata, ordering, and the generic `entity.usage` slot, while quality badges and permission-filtered
           usage remain glossary-owned application content. Term definitions, aliases, category changes, ownership,
           lifecycle, and status continue to use the existing entity permissions, history, and approval mechanisms;
           generic entity behavior is unchanged.
@@ -1293,8 +1293,9 @@
 
         - @id:ar.content.diagrams Users can associate Diagram Craft diagrams with architectural entities and projects.
 
-        - @id:ar.content.glossary-links Glossary term usage and backlinks include only explicit, permission-visible
-          links from Markdown metadata, project associations, and diagram entity references.
+        - @id:ar.content.glossary-links Glossary term usage and backlinks are collected through the generic entity
+          usage API and include only explicit, permission-visible links from Markdown metadata, project associations,
+          and diagram entity references.
 
             - @id:ar.content.diagrams.entity-graphs Users can generate or inspect diagrams derived from entity
               relationships and graph data.

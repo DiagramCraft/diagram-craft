@@ -58,6 +58,19 @@ test.describe('data routes', () => {
     expect(body.items[0]).not.toHaveProperty('technology');
   });
 
+  test('GET /api/:workspace/data/:id/usage works for a regular entity', async ({
+    orpc,
+    seeded: _
+  }) => {
+    const body = await orpc.entities.usage({
+      params: { workspace: 'default', id: componentId },
+      query: { limit: 1 }
+    });
+
+    expect(body.total).toBeGreaterThanOrEqual(body.items.length);
+    expect(body.items).toHaveLength(Math.min(body.total, 1));
+  });
+
   test('GET /api/:workspace/data returns 401 without authentication', async ({ server }) => {
     const anonOrpc = createTestORPCClient(server.baseUrl);
     await expect(

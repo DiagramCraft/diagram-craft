@@ -126,7 +126,7 @@ bootstrapTest('exposes seeded glossary examples through the glossary API', async
   expect(report.total).toBeGreaterThanOrEqual(report.items.length);
   expect(report.items.length).toBeLessThanOrEqual(1);
 
-  const usage = await orpc.glossary.terms.usage({
+  const usage = await orpc.entities.usage({
     params: { workspace: 'default', id: result.items[0]!.entity._uid },
     query: { limit: 1 }
   });

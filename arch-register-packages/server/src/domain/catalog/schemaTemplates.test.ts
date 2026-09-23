@@ -107,7 +107,7 @@ describe('instantiateTemplate', () => {
           id: 'details',
           items: expect.arrayContaining([
             { kind: 'relation', fieldId: 'categories' },
-            { kind: 'slot', slotId: 'business-glossary.usage', label: 'Usage & backlinks' }
+            { kind: 'slot', slotId: 'entity.usage', label: 'Usage & backlinks' }
           ])
         })
       ])
