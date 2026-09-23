@@ -317,7 +317,7 @@ const DrawerItem = ({
     );
   }
   if (item.item.kind === 'typed-relation-list') {
-    if (!item.field || item.field.type !== 'typedRelation') return null;
+    if (item.field?.type !== 'typedRelation') return null;
     return (
       <TypedRelationListItem
         item={item.item}
