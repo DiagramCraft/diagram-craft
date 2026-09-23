@@ -5,8 +5,10 @@ import {
   TbChevronUp,
   TbDots,
   TbLink,
+  TbMessage,
   TbPlus,
   TbPuzzle,
+  TbSearch,
   TbSquare,
   TbTag,
   TbTrash
@@ -14,6 +16,8 @@ import {
 import { Button } from '@diagram-craft/app-components/Button';
 import { Menu } from '@diagram-craft/app-components/Menu';
 import { MenuButton } from '@diagram-craft/app-components/MenuButton';
+import { Select } from '@diagram-craft/app-components/Select';
+import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import type {
   EntityDrawerBadge,
@@ -75,16 +79,22 @@ const useCloseOnOutsideClick = (open: boolean, onClose: () => void) => {
 type PickerOption = { value: string; label: string; pick: () => void };
 type PickerGroup = { label: string; options: PickerOption[] };
 
+type MetadataSlotId = Extract<EntityDrawerItem, { kind: 'metadata' }>['slot'];
+
 type RelationRollupOption = {
   path: MetricPathOption;
   sourceSchema: EntitySchema;
   field: EntitySchema['fields'][number];
 };
 
-const relationRollupPathKey = (path: MetricPathOption['step']): string => JSON.stringify(path);
+const fieldItemKind = (type: string): 'field' | 'relation' =>
+  type === 'reference' || type === 'containment' || type === 'typedRelation' ? 'relation' : 'field';
 
-const relationRollupOptionKey = (option: RelationRollupOption): string =>
-  `${option.sourceSchema.id}:${relationRollupPathKey(option.path.step)}`;
+const rollupSourceKey = (
+  fieldId: string,
+  sourceSchemaId?: string,
+  traversal?: RelationRollupOption['path']['step']
+): string => `${sourceSchemaId ?? 'self'}:${fieldId}:${JSON.stringify(traversal ?? null)}`;
 
 const getRelationRollupOptions = (
   schema: EntitySchema,
@@ -102,6 +112,21 @@ const getRelationRollupOptions = (
         .map(field => ({ path, sourceSchema, field }));
     })
   );
+
+const getTypedRelationTargetSchemas = (
+  fieldId: string,
+  schema: EntitySchema,
+  schemas: EntitySchema[],
+  relationSchemas: ReturnType<typeof useWorkspaceContext>['relationSchemas']
+): EntitySchema[] => {
+  const field = schema.fields.find(candidate => candidate.id === fieldId);
+  if (field?.type !== 'typedRelation') return [];
+  const relationSchema = relationSchemas.find(candidate => candidate.id === field.relationSchemaId);
+  if (!relationSchema) return [];
+  const targetEndpoint = field.direction === 'in' ? relationSchema.out : relationSchema.in;
+  if (targetEndpoint.schemaIds === 'any') return schemas;
+  return schemas.filter(candidate => targetEndpoint.schemaIds.includes(candidate.id));
+};
 
 const AddMenu = ({ label, groups }: { label: string; groups: PickerGroup[] }) => {
   const [open, setOpen] = useState(false);
@@ -122,9 +147,9 @@ const AddMenu = ({ label, groups }: { label: string; groups: PickerGroup[] }) =>
           {availableGroups.length === 0 && (
             <div className={layoutStyles.menuEmpty}>Everything available is already placed</div>
           )}
-          {availableGroups.map(group => (
-            <div key={group.label} className={layoutStyles.menuGroup}>
-              <div className={layoutStyles.menuLabel}>{group.label}</div>
+          {availableGroups.map((group, groupIndex) => (
+            <div key={group.label || groupIndex} className={layoutStyles.menuGroup}>
+              {group.label && <div className={layoutStyles.menuLabel}>{group.label}</div>}
               {group.options.map(option => (
                 <button
                   key={option.value}
@@ -282,19 +307,6 @@ const itemPresentation = (
   return item.presentation ?? 'row';
 };
 
-const itemPlacementKey = (item: EntityDrawerItem): string => {
-  if (item.kind === 'metadata') return `metadata:${item.slot}`;
-  if (item.kind === 'slot') return `slot:${item.slotId}`;
-  if (item.kind === 'children') return `children:${item.childSchemaId}:${item.fieldId}`;
-  if (item.kind === 'rollup') {
-    return `rollup:${item.sourceSchemaId ?? ''}:${item.fieldId}:${item.aggregation}:${JSON.stringify(item.traversal ?? null)}`;
-  }
-  if (item.kind === 'rollup-leaf-count') return 'rollup-leaf-count';
-  if (item.kind === 'placeholder') return `placeholder:${item.message}`;
-  if (item.kind === 'query') return `query:${item.queryText}`;
-  return `field:${item.fieldId}`;
-};
-
 const itemLabel = (
   item: EntityDrawerItem,
   catalog: EntityDrawerCatalog,
@@ -329,57 +341,14 @@ const itemLabel = (
 
 const ItemIcon = ({ kind }: { kind: EntityDrawerItem['kind'] }) => {
   if (kind === 'metadata') return <TbTag size={11} />;
-  if (kind === 'relation') return <TbLink size={11} />;
+  if (kind === 'relation' || kind === 'typed-relation-list') return <TbLink size={11} />;
   if (kind === 'children') return <TbLink size={11} />;
   if (kind === 'slot') return <TbPuzzle size={11} />;
   if (kind === 'rollup' || kind === 'rollup-leaf-count') return <TbChartBar size={11} />;
+  if (kind === 'placeholder') return <TbMessage size={11} />;
+  if (kind === 'query') return <TbSearch size={11} />;
   return <TbSquare size={11} />;
 };
-
-const EntityDrawerPreview = ({
-  profile,
-  catalog,
-  schemaId
-}: {
-  profile: EntityDrawerProfile;
-  catalog: EntityDrawerCatalog;
-  schemaId: string;
-}) => (
-  <aside className={styles.previewCard} aria-label="Entity drawer preview">
-    <div className={styles.previewEyebrow}>PUBLIC ID · {schemaId}</div>
-    <h3 className={styles.previewTitle}>Representative entity</h3>
-    {profile.header.badges.length > 0 && (
-      <div className={styles.previewBadges}>
-        {profile.header.badges.map((badge, index) => (
-          <span key={`${badge.kind}-${index}`} className={styles.previewBadge}>
-            {badge.label ?? (badge.kind === 'field' ? badge.fieldId : badge.slot)}
-          </span>
-        ))}
-      </div>
-    )}
-    {profile.sections.map(section => (
-      <section key={section.id} className={styles.previewSection}>
-        <strong>{section.title}</strong>
-        {section.items.length === 0 ? (
-          <div className={styles.previewEmpty}>Empty section</div>
-        ) : (
-          section.items.map((item, index) => (
-            <div key={`${item.kind}-${itemReference(item)}-${index}`} className={styles.previewRow}>
-              <span>{itemLabel(item, catalog, schemaId)}</span>
-              <span className={styles.previewValue}>
-                {item.kind === 'slot'
-                  ? 'Unavailable in preview'
-                  : item.kind === 'placeholder'
-                    ? item.message
-                    : 'Example value'}
-              </span>
-            </div>
-          ))
-        )}
-      </section>
-    ))}
-  </aside>
-);
 
 export const EntityDrawerEditor = ({
   schemaId,
@@ -395,9 +364,6 @@ export const EntityDrawerEditor = ({
   const catalogQuery = useEntityDrawerCatalog(workspaceSlug);
   const update = useUpdateEntityDrawerConfiguration(workspaceSlug);
   const [draft, setDraft] = useState<EntityDrawerConfiguration | null>(null);
-  const [previewState, setPreviewState] = useState<'ready' | 'loading' | 'empty' | 'unavailable'>(
-    'ready'
-  );
   const [customizing, setCustomizing] = useState(false);
 
   useEffect(() => {
@@ -476,13 +442,8 @@ export const EntityDrawerEditor = ({
       .map(field => ({ childSchema, field }))
   );
   const relationRollupOptions = getRelationRollupOptions(selectedSchema, schemas, relationSchemas);
-  const placedItems = new Set(
-    profile.sections.flatMap(section => section.items.map(itemPlacementKey))
-  );
-  const placedBadges = new Set(
-    profile.header.badges.map(badge =>
-      badge.kind === 'metadata' ? `metadata:${badge.slot}` : `field:${badge.fieldId}`
-    )
+  const hasLeafCount = profile.sections.some(section =>
+    section.items.some(item => item.kind === 'rollup-leaf-count')
   );
   const stored = configurationQuery.data.stored_configuration;
   const storedProfiles =
@@ -537,181 +498,196 @@ export const EntityDrawerEditor = ({
     field => field.id === 'parent' && field.type === 'containment'
   );
 
+  type RollupSourceOption = {
+    key: string;
+    label: string;
+    sourceSchemaId?: string;
+    fieldId: string;
+    fieldType: string;
+    traversal?: RelationRollupOption['path']['step'];
+  };
+
+  const rollupSources: RollupSourceOption[] = [
+    ...(supportsSubtreeRollup
+      ? availableFields
+          .filter(field => field.type === 'number' || field.type === 'currency')
+          .map(field => ({
+            key: rollupSourceKey(field.id),
+            label: field.name,
+            fieldId: field.id,
+            fieldType: field.type
+          }))
+      : []),
+    ...relationRollupOptions.map(option => ({
+      key: rollupSourceKey(option.field.id, option.sourceSchema.id, option.path.step),
+      label: `${option.path.label} · ${option.sourceSchema.name} · ${option.field.name}`,
+      sourceSchemaId: option.sourceSchema.id,
+      fieldId: option.field.id,
+      fieldType: option.field.type,
+      traversal: option.path.step
+    }))
+  ];
+
   const addGroupsForSection = (sectionId: string): PickerGroup[] => [
     {
-      label: 'Fields',
-      options: availableFields
-        .filter(field => !placedItems.has(`field:${field.id}`))
-        .map(field => ({
-          value: `field:${field.id}`,
-          label: field.name,
-          pick: () =>
-            addItem(sectionId, {
-              kind:
-                field.type === 'reference' ||
-                field.type === 'containment' ||
-                field.type === 'typedRelation'
-                  ? 'relation'
-                  : 'field',
-              fieldId: field.id
-            })
-        }))
-    },
-    {
-      label: 'Metadata',
-      options: catalog.metadataSlots
-        .filter(slot => !placedItems.has(`metadata:${slot.id}`))
-        .map(slot => ({
-          value: `metadata:${slot.id}`,
-          label: slot.label,
-          pick: () => addItem(sectionId, { kind: 'metadata', slot: slot.id })
-        }))
-    },
-    {
-      label: 'Containment children',
-      options: availableChildren
-        .filter(
-          ({ childSchema, field }) => !placedItems.has(`children:${childSchema.id}:${field.id}`)
-        )
-        .map(({ childSchema, field }) => ({
-          value: `children:${childSchema.id}:${field.id}`,
-          label: `${childSchema.name} · ${field.name}`,
-          pick: () =>
-            addItem(sectionId, {
-              kind: 'children',
-              childSchemaId: childSchema.id,
-              fieldId: field.id
-            })
-        }))
-    },
-    {
-      label: 'Application content',
-      options: availableSlots
-        .filter(slot => !placedItems.has(`slot:${slot.id}`))
-        .map(slot => ({
-          value: `slot:${slot.id}`,
-          label: slot.label,
-          pick: () =>
-            addItem(sectionId, {
-              kind: 'slot',
-              slotId: slot.id,
-              ...(Object.keys(slot.defaultOptions).length > 0
-                ? { options: slot.defaultOptions }
-                : {})
-            })
-        }))
-    },
-    ...(supportsSubtreeRollup
-      ? [
-          {
-            label: 'Roll-ups',
-            options: [
-              ...availableFields
-                .filter(field => field.type === 'number' || field.type === 'currency')
-                .filter(
-                  field =>
-                    !placedItems.has(
-                      itemPlacementKey({
-                        kind: 'rollup',
-                        fieldId: field.id,
-                        aggregation: field.type === 'currency' ? 'sum' : 'avg',
-                        format: field.type === 'currency' ? 'currency' : 'decimal1'
-                      })
-                    )
-                )
-                .map(field => ({
-                  value: `rollup:${field.id}`,
-                  label: `Roll-up · ${field.name}`,
-                  pick: () =>
-                    addItem(sectionId, {
-                      kind: 'rollup' as const,
-                      fieldId: field.id,
-                      aggregation: field.type === 'currency' ? ('sum' as const) : ('avg' as const),
-                      format:
-                        field.type === 'currency' ? ('currency' as const) : ('decimal1' as const)
-                    })
-                })),
-              ...(!placedItems.has('rollup-leaf-count')
-                ? [
-                    {
-                      value: 'rollup-leaf-count',
-                      label: 'Leaf count',
-                      pick: () => addItem(sectionId, { kind: 'rollup-leaf-count' as const })
-                    }
-                  ]
-                : [])
+      label: '',
+      options: [
+        ...(availableFields.length > 0
+          ? [
+              {
+                value: 'field',
+                label: 'Field',
+                pick: () => {
+                  const field = availableFields[0]!;
+                  addItem(sectionId, { kind: fieldItemKind(field.type), fieldId: field.id });
+                }
+              }
             ]
-          }
-        ]
-      : []),
-    {
-      label: 'Relation roll-ups',
-      options: relationRollupOptions.flatMap(({ path, sourceSchema, field }) => {
-        const traversal = path.step;
-        const sumItem: Extract<EntityDrawerItem, { kind: 'rollup' }> = {
-          kind: 'rollup',
-          sourceSchemaId: sourceSchema.id,
-          fieldId: field.id,
-          traversal,
-          aggregation: 'sum',
-          format: field.type === 'currency' ? 'currency' : 'decimal1'
-        };
-        const countItem: Extract<EntityDrawerItem, { kind: 'rollup' }> = {
-          kind: 'rollup',
-          sourceSchemaId: sourceSchema.id,
-          fieldId: field.id,
-          traversal,
-          aggregation: 'count',
-          format: 'number'
-        };
-        return [
-          {
-            value: itemPlacementKey(sumItem),
-            label: `${path.label} · Sum ${field.name}`,
-            pick: () => addItem(sectionId, sumItem)
-          },
-          {
-            value: itemPlacementKey(countItem),
-            label: `${path.label} · Count ${sourceSchema.name}`,
-            pick: () => addItem(sectionId, countItem)
-          }
-        ].filter(option => !placedItems.has(option.value));
-      })
+          : []),
+        ...(availableFields.some(field => field.type === 'typedRelation')
+          ? [
+              {
+                value: 'typed-relation-list',
+                label: 'Typed relation list',
+                pick: () => {
+                  const field = availableFields.find(
+                    candidate => candidate.type === 'typedRelation'
+                  )!;
+                  addItem(sectionId, { kind: 'typed-relation-list', fieldId: field.id });
+                }
+              }
+            ]
+          : []),
+        ...(catalog.metadataSlots.length > 0
+          ? [
+              {
+                value: 'metadata',
+                label: 'Metadata',
+                pick: () =>
+                  addItem(sectionId, { kind: 'metadata', slot: catalog.metadataSlots[0]!.id })
+              }
+            ]
+          : []),
+        ...(availableChildren.length > 0
+          ? [
+              {
+                value: 'children',
+                label: 'Containment child',
+                pick: () => {
+                  const first = availableChildren[0]!;
+                  addItem(sectionId, {
+                    kind: 'children',
+                    childSchemaId: first.childSchema.id,
+                    fieldId: first.field.id
+                  });
+                }
+              }
+            ]
+          : []),
+        ...(availableSlots.length > 0
+          ? [
+              {
+                value: 'slot',
+                label: 'Application content',
+                pick: () => {
+                  const slot = availableSlots[0]!;
+                  addItem(sectionId, {
+                    kind: 'slot',
+                    slotId: slot.id,
+                    ...(Object.keys(slot.defaultOptions).length > 0
+                      ? { options: slot.defaultOptions }
+                      : {})
+                  });
+                }
+              }
+            ]
+          : []),
+        ...(rollupSources.length > 0
+          ? [
+              {
+                value: 'rollup',
+                label: 'Roll-up',
+                pick: () => {
+                  const source = rollupSources[0]!;
+                  addItem(sectionId, {
+                    kind: 'rollup',
+                    fieldId: source.fieldId,
+                    sourceSchemaId: source.sourceSchemaId,
+                    traversal: source.traversal,
+                    aggregation: source.fieldType === 'currency' ? 'sum' : 'avg',
+                    format: source.fieldType === 'currency' ? 'currency' : 'decimal1'
+                  });
+                }
+              }
+            ]
+          : []),
+        ...(supportsSubtreeRollup && !hasLeafCount
+          ? [
+              {
+                value: 'rollup-leaf-count',
+                label: 'Leaf count',
+                pick: () => addItem(sectionId, { kind: 'rollup-leaf-count' as const })
+              }
+            ]
+          : []),
+        {
+          value: 'placeholder',
+          label: 'Placeholder text',
+          pick: () => addItem(sectionId, { kind: 'placeholder', message: 'Not yet available.' })
+        },
+        {
+          value: 'query',
+          label: 'Query',
+          pick: () =>
+            addItem(sectionId, {
+              kind: 'query',
+              queryText: '<-"Relation name"',
+              presentation: 'list'
+            })
+        }
+      ]
     }
   ];
 
   const badgeGroups: PickerGroup[] = [
     {
-      label: 'Fields',
-      options: availableFields
-        .filter(field => !placedBadges.has(`field:${field.id}`))
-        .map(field => ({
-          value: `field:${field.id}`,
-          label: field.name,
-          pick: () =>
-            updateProfile({
-              ...profile,
-              header: {
-                badges: [...profile.header.badges, { kind: 'field', fieldId: field.id }]
+      label: '',
+      options: [
+        ...(availableFields.length > 0
+          ? [
+              {
+                value: 'field',
+                label: 'Field',
+                pick: () => {
+                  const field = availableFields[0]!;
+                  updateProfile({
+                    ...profile,
+                    header: {
+                      badges: [...profile.header.badges, { kind: 'field', fieldId: field.id }]
+                    }
+                  });
+                }
               }
-            })
-        }))
-    },
-    {
-      label: 'Metadata',
-      options: catalog.metadataSlots
-        .filter(slot => !placedBadges.has(`metadata:${slot.id}`))
-        .map(slot => ({
-          value: `metadata:${slot.id}`,
-          label: slot.label,
-          pick: () =>
-            updateProfile({
-              ...profile,
-              header: {
-                badges: [...profile.header.badges, { kind: 'metadata', slot: slot.id }]
+            ]
+          : []),
+        ...(catalog.metadataSlots.length > 0
+          ? [
+              {
+                value: 'metadata',
+                label: 'Metadata',
+                pick: () => {
+                  const slot = catalog.metadataSlots[0]!;
+                  updateProfile({
+                    ...profile,
+                    header: {
+                      badges: [...profile.header.badges, { kind: 'metadata', slot: slot.id }]
+                    }
+                  });
+                }
               }
-            })
-        }))
+            ]
+          : [])
+      ]
     }
   ];
 
@@ -778,9 +754,8 @@ export const EntityDrawerEditor = ({
         </div>
       )}
 
-      <div className={styles.editorGrid}>
-        <fieldset disabled={!canEdit} className={styles.form}>
-          <div className={layoutStyles.canvas}>
+      <fieldset disabled={!canEdit} className={styles.form}>
+        <div className={layoutStyles.canvas}>
             <div className={layoutStyles.column}>
               <div className={layoutStyles.panel}>
                 <div className={layoutStyles.panelHead}>
@@ -791,52 +766,122 @@ export const EntityDrawerEditor = ({
                     <div className={layoutStyles.emptyInline}>No header badges</div>
                   )}
                   {profile.header.badges.map((badge, index) => (
-                    <div key={`${badge.kind}-${index}`} className={layoutStyles.block}>
-                      <span className={layoutStyles.blockIcon}>
-                        {badge.kind === 'metadata' ? <TbTag size={11} /> : <TbSquare size={11} />}
-                      </span>
-                      <TextInput
-                        value={
-                          badge.label ??
-                          (badge.kind === 'metadata'
-                            ? (catalog.metadataSlots.find(slot => slot.id === badge.slot)?.label ??
-                              badge.slot)
-                            : (availableFields.find(field => field.id === badge.fieldId)?.name ??
-                              badge.fieldId))
-                        }
-                        onChange={value => {
-                          const nextBadge: EntityDrawerBadge = {
-                            ...badge,
-                            label: value && value.trim() !== '' ? value : undefined
-                          };
-                          updateProfile({
-                            ...profile,
-                            header: {
-                              badges: profile.header.badges.map((entry, badgeIndex) =>
-                                badgeIndex === index ? nextBadge : entry
-                              )
-                            }
-                          });
-                        }}
-                        style={{ flex: 1, minWidth: 0 }}
-                      />
-                      <Button
-                        variant="icon-only"
-                        size="xs"
-                        aria-label="Remove badge"
-                        onClick={() =>
-                          updateProfile({
-                            ...profile,
-                            header: {
-                              badges: profile.header.badges.filter(
-                                (_, badgeIndex) => badgeIndex !== index
-                              )
-                            }
-                          })
-                        }
-                      >
-                        <TbTrash size={11} />
-                      </Button>
+                    <div key={`${badge.kind}-${index}`} className={layoutStyles.blockGroup}>
+                      <div className={layoutStyles.blockGroupRow}>
+                        <span className={layoutStyles.blockIcon}>
+                          {badge.kind === 'metadata' ? <TbTag size={11} /> : <TbSquare size={11} />}
+                        </span>
+                        <TextInput
+                          value={
+                            badge.label ??
+                            (badge.kind === 'metadata'
+                              ? (catalog.metadataSlots.find(slot => slot.id === badge.slot)
+                                  ?.label ?? badge.slot)
+                              : (availableFields.find(field => field.id === badge.fieldId)?.name ??
+                                badge.fieldId))
+                          }
+                          onChange={value => {
+                            const nextBadge: EntityDrawerBadge = {
+                              ...badge,
+                              label: value && value.trim() !== '' ? value : undefined
+                            };
+                            updateProfile({
+                              ...profile,
+                              header: {
+                                badges: profile.header.badges.map((entry, badgeIndex) =>
+                                  badgeIndex === index ? nextBadge : entry
+                                )
+                              }
+                            });
+                          }}
+                          style={{ flex: 1, minWidth: 0 }}
+                        />
+                        <Button
+                          variant="icon-only"
+                          size="xs"
+                          aria-label="Remove badge"
+                          onClick={() =>
+                            updateProfile({
+                              ...profile,
+                              header: {
+                                badges: profile.header.badges.filter(
+                                  (_, badgeIndex) => badgeIndex !== index
+                                )
+                              }
+                            })
+                          }
+                        >
+                          <TbTrash size={11} />
+                        </Button>
+                      </div>
+                      {badge.kind === 'field' && (
+                        <>
+                          <hr className={layoutStyles.blockGroupDivider} />
+                          <div className={styles.optionsEditor}>
+                            <label>
+                              <span>Field</span>
+                              <Select.Root
+                                value={badge.fieldId}
+                                onChange={value => {
+                                  const field = availableFields.find(
+                                    candidate => candidate.id === value
+                                  );
+                                  if (!field) return;
+                                  updateProfile({
+                                    ...profile,
+                                    header: {
+                                      badges: profile.header.badges.map((entry, badgeIndex) =>
+                                        badgeIndex === index && entry.kind === 'field'
+                                          ? { ...entry, fieldId: field.id }
+                                          : entry
+                                      )
+                                    }
+                                  });
+                                }}
+                              >
+                                {availableFields.map(field => (
+                                  <Select.Item key={field.id} value={field.id}>
+                                    {field.name}
+                                  </Select.Item>
+                                ))}
+                              </Select.Root>
+                            </label>
+                          </div>
+                        </>
+                      )}
+                      {badge.kind === 'metadata' && (
+                        <>
+                          <hr className={layoutStyles.blockGroupDivider} />
+                          <div className={styles.optionsEditor}>
+                            <label>
+                              <span>Metadata field</span>
+                              <Select.Root
+                                value={badge.slot}
+                                onChange={value => {
+                                  if (!value) return;
+                                  const slot = value as MetadataSlotId;
+                                  updateProfile({
+                                    ...profile,
+                                    header: {
+                                      badges: profile.header.badges.map((entry, badgeIndex) =>
+                                        badgeIndex === index && entry.kind === 'metadata'
+                                          ? { ...entry, slot }
+                                          : entry
+                                      )
+                                    }
+                                  });
+                                }}
+                              >
+                                {catalog.metadataSlots.map(slot => (
+                                  <Select.Item key={slot.id} value={slot.id}>
+                                    {slot.label}
+                                  </Select.Item>
+                                ))}
+                              </Select.Root>
+                            </label>
+                          </div>
+                        </>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -920,8 +965,11 @@ export const EntityDrawerEditor = ({
                       <div className={layoutStyles.emptyInline}>No content yet</div>
                     )}
                     {section.items.map((item, itemIndex) => (
-                      <div key={`${item.kind}-${itemReference(item)}-${itemIndex}`}>
-                        <div className={layoutStyles.block}>
+                      <div
+                        key={`${item.kind}-${itemReference(item)}-${itemIndex}`}
+                        className={layoutStyles.blockGroup}
+                      >
+                        <div className={layoutStyles.blockGroupRow}>
                           <span className={layoutStyles.blockIcon}>
                             <ItemIcon kind={item.kind} />
                           </span>
@@ -997,18 +1045,27 @@ export const EntityDrawerEditor = ({
                                 : undefined
                             }
                             showLabel={
-                              item.kind === 'slot' || item.kind === 'rollup'
+                              item.kind === 'slot' ||
+                              item.kind === 'rollup' ||
+                              item.kind === 'typed-relation-list' ||
+                              item.kind === 'query'
                                 ? item.showLabel !== false
                                 : undefined
                             }
                             onToggleShowLabel={
-                              item.kind === 'slot' || item.kind === 'rollup'
+                              item.kind === 'slot' ||
+                              item.kind === 'rollup' ||
+                              item.kind === 'typed-relation-list' ||
+                              item.kind === 'query'
                                 ? showLabel =>
                                     updateSection(section.id, current => ({
                                       ...current,
                                       items: current.items.map((entry, index) =>
                                         index === itemIndex &&
-                                        (entry.kind === 'slot' || entry.kind === 'rollup')
+                                        (entry.kind === 'slot' ||
+                                          entry.kind === 'rollup' ||
+                                          entry.kind === 'typed-relation-list' ||
+                                          entry.kind === 'query')
                                           ? { ...entry, showLabel }
                                           : entry
                                       )
@@ -1026,149 +1083,605 @@ export const EntityDrawerEditor = ({
                             }
                           />
                         </div>
-                        {item.kind === 'slot' && item.options && (
-                          <label className={styles.optionsEditor}>
-                            <span>Provider options</span>
-                            <textarea
-                              aria-label={`${itemLabel(item, catalog, selectedSchema.id)} options`}
-                              value={JSON.stringify(item.options, null, 2)}
-                              onChange={event => {
-                                try {
-                                  const options = JSON.parse(event.target.value) as Record<
-                                    string,
-                                    unknown
-                                  >;
-                                  updateSection(section.id, current => ({
-                                    ...current,
-                                    items: current.items.map((entry, index) =>
-                                      index === itemIndex ? { ...entry, options } : entry
-                                    )
-                                  }));
-                                } catch {
-                                  // Keep the draft unchanged until the JSON is valid.
-                                }
-                              }}
-                              rows={3}
-                            />
-                          </label>
+                        {(item.kind === 'field' || item.kind === 'relation') && (
+                          <>
+                            <hr className={layoutStyles.blockGroupDivider} />
+                            <div className={styles.optionsEditor}>
+                              <label>
+                                <span>Field</span>
+                                <Select.Root
+                                  value={item.fieldId}
+                                  onChange={value => {
+                                    const field = availableFields.find(
+                                      candidate => candidate.id === value
+                                    );
+                                    if (!field) return;
+                                    updateSection(section.id, current => ({
+                                      ...current,
+                                      items: current.items.map((entry, index) =>
+                                        index === itemIndex &&
+                                        (entry.kind === 'field' || entry.kind === 'relation')
+                                          ? {
+                                              ...entry,
+                                              kind: fieldItemKind(field.type),
+                                              fieldId: field.id
+                                            }
+                                          : entry
+                                      )
+                                    }));
+                                  }}
+                                >
+                                  {availableFields.map(field => (
+                                    <Select.Item key={field.id} value={field.id}>
+                                      {field.name}
+                                    </Select.Item>
+                                  ))}
+                                </Select.Root>
+                              </label>
+                            </div>
+                          </>
                         )}
-                        {item.kind === 'rollup' && item.traversal && (
-                          <div className={styles.optionsEditor}>
-                            <label>
-                              <span>Relation path</span>
-                              <select
-                                value={
-                                  relationRollupOptions.find(
-                                    option =>
-                                      option.sourceSchema.id === item.sourceSchemaId &&
-                                      relationRollupPathKey(option.path.step) ===
-                                        relationRollupPathKey(item.traversal!)
-                                  )
-                                    ? `${item.sourceSchemaId}:${relationRollupPathKey(item.traversal)}`
-                                    : ''
-                                }
-                                onChange={event => {
-                                  const option = relationRollupOptions.find(
-                                    candidate =>
-                                      relationRollupOptionKey(candidate) === event.target.value
-                                  );
-                                  if (!option) return;
-                                  updateSection(section.id, current => ({
-                                    ...current,
-                                    items: current.items.map((entry, index) =>
-                                      index === itemIndex && entry.kind === 'rollup'
-                                        ? {
-                                            ...entry,
-                                            sourceSchemaId: option.sourceSchema.id,
-                                            fieldId: option.field.id,
-                                            traversal: option.path.step,
-                                            format:
-                                              entry.aggregation === 'count'
-                                                ? 'number'
-                                                : option.field.type === 'currency'
-                                                  ? 'currency'
-                                                  : 'decimal1'
-                                          }
-                                        : entry
-                                    )
-                                  }));
-                                }}
+                        {item.kind === 'metadata' && (
+                          <>
+                            <hr className={layoutStyles.blockGroupDivider} />
+                            <div className={styles.optionsEditor}>
+                              <label>
+                                <span>Metadata field</span>
+                                <Select.Root
+                                  value={item.slot}
+                                  onChange={value => {
+                                    if (!value) return;
+                                    const slot = value as MetadataSlotId;
+                                    updateSection(section.id, current => ({
+                                      ...current,
+                                      items: current.items.map((entry, index) =>
+                                        index === itemIndex && entry.kind === 'metadata'
+                                          ? { ...entry, slot }
+                                          : entry
+                                      )
+                                    }));
+                                  }}
+                                >
+                                  {catalog.metadataSlots.map(slot => (
+                                    <Select.Item key={slot.id} value={slot.id}>
+                                      {slot.label}
+                                    </Select.Item>
+                                  ))}
+                                </Select.Root>
+                              </label>
+                            </div>
+                          </>
+                        )}
+                        {item.kind === 'children' && (
+                          <>
+                            <hr className={layoutStyles.blockGroupDivider} />
+                            <div className={styles.optionsEditor}>
+                              <label>
+                                <span>Child</span>
+                                <Select.Root
+                                  value={`${item.childSchemaId}:${item.fieldId}`}
+                                  onChange={value => {
+                                    const match = availableChildren.find(
+                                      ({ childSchema, field }) =>
+                                        `${childSchema.id}:${field.id}` === value
+                                    );
+                                    if (!match) return;
+                                    updateSection(section.id, current => ({
+                                      ...current,
+                                      items: current.items.map((entry, index) =>
+                                        index === itemIndex && entry.kind === 'children'
+                                          ? {
+                                              ...entry,
+                                              childSchemaId: match.childSchema.id,
+                                              fieldId: match.field.id
+                                            }
+                                          : entry
+                                      )
+                                    }));
+                                  }}
+                                >
+                                  {availableChildren.map(({ childSchema, field }) => (
+                                    <Select.Item
+                                      key={`${childSchema.id}:${field.id}`}
+                                      value={`${childSchema.id}:${field.id}`}
+                                    >
+                                      {childSchema.name} · {field.name}
+                                    </Select.Item>
+                                  ))}
+                                </Select.Root>
+                              </label>
+                            </div>
+                          </>
+                        )}
+                        {item.kind === 'slot' &&
+                          (() => {
+                            const slotDef = catalog.slots.find(
+                              candidate => candidate.id === item.slotId
+                            );
+                            const optionFields = slotDef?.optionFields ?? [];
+                            const options = item.options ?? {};
+                            const setOptions = (nextOptions: Record<string, unknown>) =>
+                              updateSection(section.id, current => ({
+                                ...current,
+                                items: current.items.map((entry, index) =>
+                                  index === itemIndex ? { ...entry, options: nextOptions } : entry
+                                )
+                              }));
+                            return (
+                              <>
+                                <hr className={layoutStyles.blockGroupDivider} />
+                                <div className={styles.optionsEditor}>
+                                  <label>
+                                    <span>Slot</span>
+                                    <Select.Root
+                                      value={item.slotId}
+                                      onChange={value => {
+                                        const nextSlot = availableSlots.find(
+                                          candidate => candidate.id === value
+                                        );
+                                        if (!nextSlot) return;
+                                        updateSection(section.id, current => ({
+                                          ...current,
+                                          items: current.items.map((entry, index) =>
+                                            index === itemIndex && entry.kind === 'slot'
+                                              ? {
+                                                  ...entry,
+                                                  slotId: nextSlot.id,
+                                                  ...(Object.keys(nextSlot.defaultOptions).length >
+                                                  0
+                                                    ? { options: nextSlot.defaultOptions }
+                                                    : { options: undefined })
+                                                }
+                                              : entry
+                                          )
+                                        }));
+                                      }}
+                                    >
+                                      {availableSlots.map(slot => (
+                                        <Select.Item key={slot.id} value={slot.id}>
+                                          {slot.label}
+                                        </Select.Item>
+                                      ))}
+                                    </Select.Root>
+                                  </label>
+                                  {optionFields.map(field => (
+                                    <label key={field.id} title={field.description}>
+                                      <span>{field.label}</span>
+                                      <TextInput
+                                        value={
+                                          typeof options[field.id] === 'string'
+                                            ? (options[field.id] as string)
+                                            : options[field.id] !== undefined
+                                              ? JSON.stringify(options[field.id])
+                                              : ''
+                                        }
+                                        onChange={value =>
+                                          setOptions({ ...options, [field.id]: value ?? '' })
+                                        }
+                                        style={{ width: '100%' }}
+                                      />
+                                    </label>
+                                  ))}
+                                  <label>
+                                    <span>Advanced options (JSON)</span>
+                                    <TextArea
+                                      aria-label={`${itemLabel(item, catalog, selectedSchema.id)} options`}
+                                      value={JSON.stringify(options, null, 2)}
+                                      onChange={value => {
+                                        try {
+                                          setOptions(
+                                            JSON.parse(value ?? '{}') as Record<string, unknown>
+                                          );
+                                        } catch {
+                                          // Keep the draft unchanged until the JSON is valid.
+                                        }
+                                      }}
+                                      rows={3}
+                                      style={{ width: '100%' }}
+                                    />
+                                  </label>
+                                </div>
+                              </>
+                            );
+                          })()}
+                        {item.kind === 'typed-relation-list' &&
+                          (() => {
+                            const typedRelationFields = availableFields.filter(
+                              field => field.type === 'typedRelation'
+                            );
+                            const targetSchemas = getTypedRelationTargetSchemas(
+                              item.fieldId,
+                              selectedSchema,
+                              schemas,
+                              relationSchemas
+                            );
+                            const targetFields = targetSchemas.flatMap(targetSchema =>
+                              targetSchema.fields
+                                .filter(field => !field.archived)
+                                .map(field => ({ targetSchema, field }))
+                            );
+                            const attributes = item.attributes ?? [];
+                            const setAttributes = (
+                              nextAttributes: NonNullable<
+                                Extract<
+                                  EntityDrawerItem,
+                                  { kind: 'typed-relation-list' }
+                                >['attributes']
                               >
-                                {Array.from(
-                                  new Map(
-                                    relationRollupOptions.map(option => [
-                                      relationRollupOptionKey(option),
-                                      option
-                                    ])
-                                  ).values()
-                                ).map(option => (
-                                  <option
-                                    key={relationRollupOptionKey(option)}
-                                    value={relationRollupOptionKey(option)}
+                            ) =>
+                              updateSection(section.id, current => ({
+                                ...current,
+                                items: current.items.map((entry, index) =>
+                                  index === itemIndex
+                                    ? { ...entry, attributes: nextAttributes }
+                                    : entry
+                                )
+                              }));
+                            return (
+                              <>
+                                <hr className={layoutStyles.blockGroupDivider} />
+                                <div className={styles.optionsEditor}>
+                                  <label>
+                                    <span>Field</span>
+                                    <Select.Root
+                                      value={item.fieldId}
+                                      onChange={value => {
+                                        if (!value) return;
+                                        updateSection(section.id, current => ({
+                                          ...current,
+                                          items: current.items.map((entry, index) =>
+                                            index === itemIndex &&
+                                            entry.kind === 'typed-relation-list'
+                                              ? { ...entry, fieldId: value, attributes: [] }
+                                              : entry
+                                          )
+                                        }));
+                                      }}
+                                    >
+                                      {typedRelationFields.map(field => (
+                                        <Select.Item key={field.id} value={field.id}>
+                                          {field.name}
+                                        </Select.Item>
+                                      ))}
+                                    </Select.Root>
+                                  </label>
+                                  {attributes.map((attribute, attributeIndex) => (
+                                    <span key={attributeIndex} className={layoutStyles.block}>
+                                      <Select.Root
+                                        value={attribute.fieldId}
+                                        onChange={value =>
+                                          setAttributes(
+                                            attributes.map((entry, index) =>
+                                              index === attributeIndex
+                                                ? { ...entry, fieldId: value ?? entry.fieldId }
+                                                : entry
+                                            )
+                                          )
+                                        }
+                                      >
+                                        {!targetFields.some(
+                                          ({ field }) => field.id === attribute.fieldId
+                                        ) && (
+                                          <Select.Item value={attribute.fieldId}>
+                                            {attribute.fieldId}
+                                          </Select.Item>
+                                        )}
+                                        {targetFields.map(({ targetSchema, field }) => (
+                                          <Select.Item
+                                            key={`${targetSchema.id}:${field.id}`}
+                                            value={field.id}
+                                          >
+                                            {targetSchemas.length > 1
+                                              ? `${targetSchema.name} · ${field.name}`
+                                              : field.name}
+                                          </Select.Item>
+                                        ))}
+                                      </Select.Root>
+                                      <TextInput
+                                        value={attribute.label ?? ''}
+                                        onChange={value =>
+                                          setAttributes(
+                                            attributes.map((entry, index) =>
+                                              index === attributeIndex
+                                                ? {
+                                                    ...entry,
+                                                    label:
+                                                      value && value.trim() !== ''
+                                                        ? value
+                                                        : undefined
+                                                  }
+                                                : entry
+                                            )
+                                          )
+                                        }
+                                        style={{ flex: 1, minWidth: 0 }}
+                                      />
+                                      <Button
+                                        variant="icon-only"
+                                        size="xs"
+                                        aria-label="Remove attribute"
+                                        onClick={() =>
+                                          setAttributes(
+                                            attributes.filter(
+                                              (_, index) => index !== attributeIndex
+                                            )
+                                          )
+                                        }
+                                      >
+                                        <TbTrash size={11} />
+                                      </Button>
+                                    </span>
+                                  ))}
+                                  {targetFields.length > 0 && (
+                                    <button
+                                      type="button"
+                                      className={layoutStyles.addBlockBtn}
+                                      onClick={() => {
+                                        const next = targetFields.find(
+                                          ({ field }) =>
+                                            !attributes.some(
+                                              attribute => attribute.fieldId === field.id
+                                            )
+                                        );
+                                        if (next)
+                                          setAttributes([
+                                            ...attributes,
+                                            { fieldId: next.field.id }
+                                          ]);
+                                      }}
+                                    >
+                                      <TbPlus size={10} /> Add attribute
+                                    </button>
+                                  )}
+                                </div>
+                              </>
+                            );
+                          })()}
+                        {item.kind === 'query' && (
+                          <>
+                            <hr className={layoutStyles.blockGroupDivider} />
+                            <div className={styles.optionsEditor}>
+                              <label>
+                                <span>Query</span>
+                                <TextArea
+                                  aria-label={`${itemLabel(item, catalog, selectedSchema.id)} query text`}
+                                  value={item.queryText}
+                                  onChange={value =>
+                                    updateSection(section.id, current => ({
+                                      ...current,
+                                      items: current.items.map((entry, index) =>
+                                        index === itemIndex && entry.kind === 'query'
+                                          ? { ...entry, queryText: value ?? '' }
+                                          : entry
+                                      )
+                                    }))
+                                  }
+                                  rows={2}
+                                  style={{ width: '100%' }}
+                                />
+                              </label>
+                              <label>
+                                <span>Presentation</span>
+                                <Select.Root
+                                  value={item.presentation ?? 'list'}
+                                  onChange={value => {
+                                    const presentation = (value ?? 'list') as 'chips' | 'list';
+                                    updateSection(section.id, current => ({
+                                      ...current,
+                                      items: current.items.map((entry, index) =>
+                                        index === itemIndex && entry.kind === 'query'
+                                          ? { ...entry, presentation }
+                                          : entry
+                                      )
+                                    }));
+                                  }}
+                                >
+                                  <Select.Item value="list">List</Select.Item>
+                                  <Select.Item value="chips">Chips</Select.Item>
+                                </Select.Root>
+                              </label>
+                              {(item.fields ?? []).map((field, fieldIndex) => (
+                                <span key={fieldIndex} className={layoutStyles.block}>
+                                  <TextInput
+                                    value={field.fieldId}
+                                    onChange={value =>
+                                      updateSection(section.id, current => ({
+                                        ...current,
+                                        items: current.items.map((entry, index) =>
+                                          index === itemIndex && entry.kind === 'query'
+                                            ? {
+                                                ...entry,
+                                                fields: (entry.fields ?? []).map(
+                                                  (entry2, index2) =>
+                                                    index2 === fieldIndex
+                                                      ? { ...entry2, fieldId: value ?? '' }
+                                                      : entry2
+                                                )
+                                              }
+                                            : entry
+                                        )
+                                      }))
+                                    }
+                                    style={{ flex: 1, minWidth: 0 }}
+                                  />
+                                  <TextInput
+                                    value={field.label ?? ''}
+                                    onChange={value =>
+                                      updateSection(section.id, current => ({
+                                        ...current,
+                                        items: current.items.map((entry, index) =>
+                                          index === itemIndex && entry.kind === 'query'
+                                            ? {
+                                                ...entry,
+                                                fields: (entry.fields ?? []).map(
+                                                  (entry2, index2) =>
+                                                    index2 === fieldIndex
+                                                      ? {
+                                                          ...entry2,
+                                                          label:
+                                                            value && value.trim() !== ''
+                                                              ? value
+                                                              : undefined
+                                                        }
+                                                      : entry2
+                                                )
+                                              }
+                                            : entry
+                                        )
+                                      }))
+                                    }
+                                    style={{ flex: 1, minWidth: 0 }}
+                                  />
+                                  <Button
+                                    variant="icon-only"
+                                    size="xs"
+                                    aria-label="Remove field"
+                                    onClick={() =>
+                                      updateSection(section.id, current => ({
+                                        ...current,
+                                        items: current.items.map((entry, index) =>
+                                          index === itemIndex && entry.kind === 'query'
+                                            ? {
+                                                ...entry,
+                                                fields: (entry.fields ?? []).filter(
+                                                  (_, index2) => index2 !== fieldIndex
+                                                )
+                                              }
+                                            : entry
+                                        )
+                                      }))
+                                    }
                                   >
-                                    {option.path.label} · {option.sourceSchema.name}
-                                  </option>
-                                ))}
-                              </select>
-                            </label>
-                            <label>
-                              <span>Aggregation</span>
-                              <select
-                                value={item.aggregation}
-                                onChange={event => {
-                                  const aggregation = event.target.value as 'avg' | 'sum' | 'count';
+                                    <TbTrash size={11} />
+                                  </Button>
+                                </span>
+                              ))}
+                              <button
+                                type="button"
+                                className={layoutStyles.addBlockBtn}
+                                onClick={() =>
                                   updateSection(section.id, current => ({
                                     ...current,
                                     items: current.items.map((entry, index) =>
-                                      index === itemIndex && entry.kind === 'rollup'
+                                      index === itemIndex && entry.kind === 'query'
                                         ? {
                                             ...entry,
-                                            aggregation,
-                                            format:
-                                              aggregation === 'count'
-                                                ? 'number'
-                                                : entry.format === 'number'
-                                                  ? 'decimal1'
-                                                  : entry.format
+                                            fields: [...(entry.fields ?? []), { fieldId: '' }]
                                           }
                                         : entry
                                     )
-                                  }));
-                                }}
+                                  }))
+                                }
                               >
-                                <option value="sum">Sum</option>
-                                <option value="avg">Average</option>
-                                <option value="count">Count</option>
-                              </select>
-                            </label>
-                            <label>
-                              <span>Format</span>
-                              <select
-                                value={item.format}
-                                disabled={item.aggregation === 'count'}
-                                onChange={event => {
-                                  const format = event.target.value as
-                                    | 'number'
-                                    | 'decimal1'
-                                    | 'currency'
-                                    | 'percent';
-                                  updateSection(section.id, current => ({
-                                    ...current,
-                                    items: current.items.map((entry, index) =>
-                                      index === itemIndex && entry.kind === 'rollup'
-                                        ? { ...entry, format }
-                                        : entry
-                                    )
-                                  }));
-                                }}
-                              >
-                                <option value="number">Number</option>
-                                <option value="decimal1">One decimal</option>
-                                <option value="currency">Currency</option>
-                                <option value="percent">Percent</option>
-                              </select>
-                            </label>
-                          </div>
+                                <TbPlus size={10} /> Add field
+                              </button>
+                            </div>
+                          </>
+                        )}
+                        {item.kind === 'rollup' && (
+                          <>
+                            <hr className={layoutStyles.blockGroupDivider} />
+                            <div className={styles.optionsEditor}>
+                              <label>
+                                <span>Source</span>
+                                <Select.Root
+                                  value={rollupSourceKey(
+                                    item.fieldId,
+                                    item.sourceSchemaId,
+                                    item.traversal
+                                  )}
+                                  onChange={value => {
+                                    const source = rollupSources.find(
+                                      candidate => candidate.key === value
+                                    );
+                                    if (!source) return;
+                                    updateSection(section.id, current => ({
+                                      ...current,
+                                      items: current.items.map((entry, index) =>
+                                        index === itemIndex && entry.kind === 'rollup'
+                                          ? {
+                                              ...entry,
+                                              fieldId: source.fieldId,
+                                              sourceSchemaId: source.sourceSchemaId,
+                                              traversal: source.traversal,
+                                              format:
+                                                entry.aggregation === 'count'
+                                                  ? 'number'
+                                                  : source.fieldType === 'currency'
+                                                    ? 'currency'
+                                                    : 'decimal1'
+                                            }
+                                          : entry
+                                      )
+                                    }));
+                                  }}
+                                >
+                                  {rollupSources.map(source => (
+                                    <Select.Item key={source.key} value={source.key}>
+                                      {source.label}
+                                    </Select.Item>
+                                  ))}
+                                </Select.Root>
+                              </label>
+                              <label>
+                                <span>Aggregation</span>
+                                <Select.Root
+                                  value={item.aggregation}
+                                  onChange={value => {
+                                    const aggregation = (value ?? 'sum') as 'avg' | 'sum' | 'count';
+                                    updateSection(section.id, current => ({
+                                      ...current,
+                                      items: current.items.map((entry, index) =>
+                                        index === itemIndex && entry.kind === 'rollup'
+                                          ? {
+                                              ...entry,
+                                              aggregation,
+                                              format:
+                                                aggregation === 'count'
+                                                  ? 'number'
+                                                  : entry.format === 'number'
+                                                    ? 'decimal1'
+                                                    : entry.format
+                                            }
+                                          : entry
+                                      )
+                                    }));
+                                  }}
+                                >
+                                  <Select.Item value="sum">Sum</Select.Item>
+                                  <Select.Item value="avg">Average</Select.Item>
+                                  <Select.Item value="count">Count</Select.Item>
+                                </Select.Root>
+                              </label>
+                              <label>
+                                <span>Format</span>
+                                <Select.Root
+                                  value={item.format}
+                                  disabled={item.aggregation === 'count'}
+                                  onChange={value => {
+                                    const format = (value ?? 'number') as
+                                      | 'number'
+                                      | 'decimal1'
+                                      | 'currency'
+                                      | 'percent';
+                                    updateSection(section.id, current => ({
+                                      ...current,
+                                      items: current.items.map((entry, index) =>
+                                        index === itemIndex && entry.kind === 'rollup'
+                                          ? { ...entry, format }
+                                          : entry
+                                      )
+                                    }));
+                                  }}
+                                >
+                                  <Select.Item value="number">Number</Select.Item>
+                                  <Select.Item value="decimal1">One decimal</Select.Item>
+                                  <Select.Item value="currency">Currency</Select.Item>
+                                  <Select.Item value="percent">Percent</Select.Item>
+                                </Select.Root>
+                              </label>
+                            </div>
+                          </>
                         )}
                       </div>
                     ))}
@@ -1190,41 +1703,7 @@ export const EntityDrawerEditor = ({
               )}
             </div>
           </div>
-        </fieldset>
-
-        <div className={styles.preview}>
-          <div className={layoutStyles.sectionLabel}>Preview</div>
-          <div className={styles.previewStates}>
-            {(['ready', 'loading', 'empty', 'unavailable'] as const).map(state => (
-              <button
-                type="button"
-                key={state}
-                className={layoutStyles.tabChip}
-                data-active={previewState === state}
-                onClick={() => setPreviewState(state)}
-              >
-                <span className={layoutStyles.tabChipLabel}>{state}</span>
-              </button>
-            ))}
-          </div>
-          {previewState === 'ready' ? (
-            <EntityDrawerPreview profile={profile} catalog={catalog} schemaId={selectedSchema.id} />
-          ) : (
-            <div className={layoutStyles.panel}>
-              <strong>
-                {previewState === 'loading'
-                  ? 'Loading entity…'
-                  : previewState === 'empty'
-                    ? 'No values available'
-                    : 'Content unavailable'}
-              </strong>
-              <p className={styles.previewEmpty}>
-                The drawer keeps its structure and omits values that are unavailable to the viewer.
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
+      </fieldset>
     </>
   );
 };
