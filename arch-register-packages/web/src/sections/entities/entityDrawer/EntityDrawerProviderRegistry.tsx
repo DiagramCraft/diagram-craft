@@ -70,7 +70,8 @@ export const schemaHasRequiredFields = (
 ): boolean =>
   requiredFields.every(required =>
     schema.fields.some(
-      field => field.id === required.id && (required.type === undefined || field.type === required.type)
+      field =>
+        field.id === required.id && (required.type === undefined || field.type === required.type)
     )
   );
 
@@ -79,7 +80,8 @@ export const providerSupportsContext = (
   context: EntityDrawerProviderContext
 ): boolean => {
   if (definition.supports) return definition.supports(context);
-  if (definition.requiredFields) return schemaHasRequiredFields(context.schema, definition.requiredFields);
+  if (definition.requiredFields)
+    return schemaHasRequiredFields(context.schema, definition.requiredFields);
   return true;
 };
 
