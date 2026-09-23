@@ -167,9 +167,9 @@
               schema-ordered attributes,
               attribute groups, and metadata; seeded or templated authored profiles retain their richer content.
               Missing or unsupported references fall back safely to that generic drawer. Registered content slots
-              may be capability-bound or generic; the Entity Change cases slot is associated with the
-              current entity and can therefore be added to any schema's drawer, while remaining seeded by default
-              only for Data Entity profiles.
+              may be capability-bound or generic; the Entity Change cases and Entity Assessments slots are
+              associated with the current entity and can therefore be added to any schema's drawer, while remaining
+              seeded by default only for Data Entity profiles.
 
             - @id:ar.workspace.configuration.schemas Administrators can define entity schemas, fields, select options,
               and reusable workspace enums. Enum options have stable values, editable labels and descriptions, an
@@ -596,9 +596,8 @@
           own design references to the fields the shipped schema actually has. Opening a dataset (from the gaps
           panel or the table) opens the configurable Data Entity drawer via the workspace-wide `drawer` search
           param. Its default profile preserves the
-          dataset's attributes and stewardship fields and exposes Queue items, Cases, and Assessments as
-          Data Stewardship provider sections; unsupported placeholder-only Exceptions, Flows, and Systems sections
-          are omitted.
+          dataset's attributes and stewardship fields and exposes Queue items, Cases, and the generic Assessments
+          slot; unsupported placeholder-only Exceptions, Flows, and Systems sections are omitted.
 
         - @id:ar.data-stewardship.classification The Classification section has three views, switched via an
           in-screen toggle group in the screen's own header (mirroring the Claude Design reference's `DSClassification`
@@ -676,9 +675,9 @@
           status facet lives in this section's own primary sidebar (all/Overdue/In progress/Not started/Complete,
           mirroring the stat strip's own buckets) rather than an in-page toggle, the same facet-sidebar shape
           `ar.data-stewardship.stewardship`/`ar.data-stewardship.classification` use; only free-text search (name,
-          kind, project) stays in the screen's own toolbar. The per- (assessment, dataset) join from the earlier
-          version still exists internally and backs the shared dataset drawer's own Assessments section (that
-          dataset's status on that assessment, listed alongside its attributes/stewardship/coverage/cases). A header
+          kind, project) stays in the screen's own toolbar. The per- (assessment, entity) join from the earlier
+          version still exists internally and backs the shared entity drawer's own Assessments section (that
+          entity's status on that assessment, listed alongside its attributes/stewardship/coverage/cases). A header
           action links out to the My work section for sign-offs due, mirroring the design
           reference.
 

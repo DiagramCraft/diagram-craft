@@ -347,7 +347,7 @@ describe('instantiateTemplate', () => {
         }),
         expect.objectContaining({
           id: 'assessments',
-          items: [{ kind: 'slot', slotId: 'data-stewardship.assessments', showLabel: false }]
+          items: [{ kind: 'slot', slotId: 'entity.assessments', showLabel: false }]
         })
       ])
     });

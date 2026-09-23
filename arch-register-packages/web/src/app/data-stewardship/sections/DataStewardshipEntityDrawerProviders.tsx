@@ -1,7 +1,4 @@
-import { Chip } from '../../../components/Chip';
-import { useDataStewardshipAssessmentRows } from '../useDataStewardshipAssessmentRows';
-import { DS_ASSESSMENT_STATUS_LABEL } from '../dataStewardshipAssessments';
-import { dueLabel, dueTone } from '../../../utils/assessmentDueTone';
+import { dueLabel } from '../../../utils/assessmentDueTone';
 import { caseKindLabel } from '../../../utils/governanceCaseLabels';
 import { useDataStewardshipQueue } from '../dataStewardshipQueue';
 import {
@@ -71,40 +68,10 @@ const QueueItemsProvider = ({ context }: EntityDrawerProviderProps) => {
   );
 };
 
-const AssessmentsProvider = ({ context }: EntityDrawerProviderProps) => {
-  const assessments = useDataStewardshipAssessmentRows(context.workspaceId, context.schema.id);
-  const rows = assessments.rows.filter(row => row.entity._uid === context.entity._uid);
-  const state = assessments.isLoading ? 'loading' : rows.length > 0 ? 'ready' : 'empty';
-  return (
-    <EntityDrawerProviderStatus state={state} emptyMessage="No assessments target this dataset.">
-      <div className={styles.tags}>
-        {rows.map(row => (
-          <Chip
-            key={row.assessment.id}
-            tone="ghost"
-            title={`${row.kind} · due ${dueLabel(row.due)}`}
-            color={row.status === 'overdue' ? 'var(--cmp-fg-danger, #ef4444)' : undefined}
-          >
-            {row.kind} — {DS_ASSESSMENT_STATUS_LABEL[row.status]}
-            <span className="dim" style={{ marginLeft: 4, color: dueTone(row.due) }}>
-              {dueLabel(row.due)}
-            </span>
-          </Chip>
-        ))}
-      </div>
-    </EntityDrawerProviderStatus>
-  );
-};
-
 export const dataStewardshipEntityDrawerProviderDefinitions = [
   {
     slotId: 'data-stewardship.queue-items',
     requiredFields: DATA_STEWARDSHIP_REQUIRED_FIELDS,
     Component: QueueItemsProvider
-  },
-  {
-    slotId: 'data-stewardship.assessments',
-    requiredFields: DATA_STEWARDSHIP_REQUIRED_FIELDS,
-    Component: AssessmentsProvider
   }
 ] satisfies readonly EntityDrawerProviderDefinition[];

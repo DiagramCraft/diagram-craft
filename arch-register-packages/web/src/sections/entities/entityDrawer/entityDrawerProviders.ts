@@ -4,6 +4,7 @@ import { vendorEntityDrawerProviderDefinitions } from '../../../app/vendor-manag
 import { dataStewardshipEntityDrawerProviderDefinitions } from '../../../app/data-stewardship/sections/DataStewardshipEntityDrawerProviders';
 import { apiEntityDrawerProviderDefinitions } from '../../../app/api-integration-catalog/sections/ApiEntityDrawerProvider';
 import { entityChangeCasesDrawerProviderDefinitions } from './EntityChangeCasesProvider';
+import { entityAssessmentsDrawerProviderDefinitions } from './EntityAssessmentsProvider';
 import {
   createEntityDrawerProviderRegistry,
   type EntityDrawerProviderDefinition
@@ -15,6 +16,7 @@ const definitions: readonly EntityDrawerProviderDefinition[] = [
   ...vendorEntityDrawerProviderDefinitions,
   ...dataStewardshipEntityDrawerProviderDefinitions,
   ...entityChangeCasesDrawerProviderDefinitions,
+  ...entityAssessmentsDrawerProviderDefinitions,
   ...apiEntityDrawerProviderDefinitions
 ];
 

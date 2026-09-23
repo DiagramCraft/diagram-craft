@@ -5,8 +5,7 @@ import { dataStewardshipEntityDrawerProviderDefinitions } from './DataStewardshi
 
 const mocks = vi.hoisted(() => ({
   queue: { items: [], isLoading: false },
-  cases: { data: [], isLoading: false, isError: false },
-  assessments: { rows: [], summaries: [], isLoading: false }
+  cases: { data: [], isLoading: false, isError: false }
 }));
 
 vi.mock('../dataStewardshipQueue', () => ({
@@ -15,10 +14,6 @@ vi.mock('../dataStewardshipQueue', () => ({
 
 vi.mock('../../../hooks/useChangeCases', () => ({
   useChangeCasesByEntity: () => mocks.cases
-}));
-
-vi.mock('../useDataStewardshipAssessmentRows', () => ({
-  useDataStewardshipAssessmentRows: () => mocks.assessments
 }));
 
 const context = (

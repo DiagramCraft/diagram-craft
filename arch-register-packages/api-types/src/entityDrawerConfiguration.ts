@@ -302,11 +302,10 @@ export const ENTITY_DRAWER_SLOT_DEFINITIONS: EntityDrawerSlotDefinition[] = [
     optionsSchema: emptyOptionsSchema
   },
   {
-    id: 'data-stewardship.assessments',
+    id: 'entity.assessments',
     label: 'Assessments',
-    description: 'Related assessments.',
+    description: 'Assessments associated with the current entity.',
     application: 'Data Stewardship',
-    capabilityBinding: { capabilityType: 'data-stewardship', role: 'dataEntity' },
     defaultOptions: {},
     optionFields: [],
     optionsSchema: emptyOptionsSchema
@@ -915,7 +914,7 @@ const buildDataStewardshipDefaultProfile = (
       ]),
       section('queue-items', 'Queue items', [provider('data-stewardship.queue-items')], true),
       section('cases', 'Cases', [provider('entity.change-cases')], true),
-      section('assessments', 'Assessments', [provider('data-stewardship.assessments')], true)
+      section('assessments', 'Assessments', [provider('entity.assessments')], true)
     ].filter(section => section.items.length > 0)
   };
 };
@@ -1288,6 +1287,9 @@ export const buildDefaultEntityDrawerConfiguration = (
         ...getDefaultProviderItems(schemas, schema.id, capabilityConfigurations),
         ...(dataStewardshipFieldIdsValue
           ? [{ kind: 'slot' as const, slotId: 'entity.change-cases' }]
+          : []),
+        ...(dataStewardshipFieldIdsValue
+          ? [{ kind: 'slot' as const, slotId: 'entity.assessments' }]
           : []),
         ...getStrategyRollupItems(schema, capabilityConfigurations)
       ];

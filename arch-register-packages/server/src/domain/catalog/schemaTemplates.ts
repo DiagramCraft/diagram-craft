@@ -1895,7 +1895,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             id: 'assessments',
             title: 'Assessments',
             collapsible: true,
-            items: [{ kind: 'slot', slotId: 'data-stewardship.assessments', showLabel: false }]
+            items: [{ kind: 'slot', slotId: 'entity.assessments', showLabel: false }]
           }
         ]
       }

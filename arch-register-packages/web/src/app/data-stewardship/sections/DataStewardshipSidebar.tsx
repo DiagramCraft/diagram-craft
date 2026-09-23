@@ -40,10 +40,10 @@ import {
 } from '../dataStewardshipSections';
 import { useDataStewardshipChangeCases } from '../dataStewardshipChangeCases';
 import {
-  DS_ASSESSMENT_STATUS_LABEL,
-  type DataStewardshipAssessmentStatus
-} from '../dataStewardshipAssessments';
-import { useDataStewardshipAssessmentRows } from '../useDataStewardshipAssessmentRows';
+  ENTITY_ASSESSMENT_STATUS_LABEL,
+  type EntityAssessmentStatus
+} from '../../../sections/entities/entityDrawer/entityAssessments';
+import { useEntityAssessmentRows } from '../../../sections/entities/entityDrawer/useEntityAssessmentRows';
 import {
   queueItemPriority,
   useDataStewardshipQueue,
@@ -471,10 +471,7 @@ const ChangeCasesSidebarContent = ({
   );
 };
 
-const ASSESSMENT_STATUS_FACET_ICON: Record<
-  DataStewardshipAssessmentStatus,
-  typeof TbAlertTriangle
-> = {
+const ASSESSMENT_STATUS_FACET_ICON: Record<EntityAssessmentStatus, typeof TbAlertTriangle> = {
   overdue: TbAlertTriangle,
   in_progress: TbClockHour4,
   not_started: TbCircleDashed,
@@ -498,13 +495,13 @@ const AssessmentsSidebarContent = ({
 }) => {
   const navigate = useNavigate();
   const search = useSearch({ strict: false }) as DataStewardshipAssessmentsSearchParams;
-  const { summaries } = useDataStewardshipAssessmentRows(
+  const { summaries } = useEntityAssessmentRows(
     workspaceSlug,
     dataStewardshipConfig.dataEntitySchemaId
   );
 
   const statusCounts = useMemo(() => {
-    const counts = new Map<DataStewardshipAssessmentStatus, number>();
+    const counts = new Map<EntityAssessmentStatus, number>();
     for (const summary of summaries)
       counts.set(summary.status, (counts.get(summary.status) ?? 0) + 1);
     return counts;
@@ -527,22 +524,20 @@ const AssessmentsSidebarContent = ({
         onClick={() => patchSearch({ status: undefined })}
         trailing={<span className="dim mono">{summaries.length}</span>}
       />
-      {(Object.keys(DS_ASSESSMENT_STATUS_LABEL) as DataStewardshipAssessmentStatus[]).map(
-        status => {
-          const Icon = ASSESSMENT_STATUS_FACET_ICON[status];
-          return (
-            <TreeRow
-              key={status}
-              icon={<Icon size={12} />}
-              label={DS_ASSESSMENT_STATUS_LABEL[status]}
-              testId={`data-stewardship-assessments-facet-${status}`}
-              active={search.status === status}
-              onClick={() => patchSearch({ status: search.status === status ? undefined : status })}
-              trailing={<span className="dim mono">{statusCounts.get(status) ?? 0}</span>}
-            />
-          );
-        }
-      )}
+      {(Object.keys(ENTITY_ASSESSMENT_STATUS_LABEL) as EntityAssessmentStatus[]).map(status => {
+        const Icon = ASSESSMENT_STATUS_FACET_ICON[status];
+        return (
+          <TreeRow
+            key={status}
+            icon={<Icon size={12} />}
+            label={ENTITY_ASSESSMENT_STATUS_LABEL[status]}
+            testId={`data-stewardship-assessments-facet-${status}`}
+            active={search.status === status}
+            onClick={() => patchSearch({ status: search.status === status ? undefined : status })}
+            trailing={<span className="dim mono">{statusCounts.get(status) ?? 0}</span>}
+          />
+        );
+      })}
     </>
   );
 };

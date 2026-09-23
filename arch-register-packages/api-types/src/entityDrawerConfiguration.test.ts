@@ -686,7 +686,7 @@ describe('entity drawer configuration', () => {
         },
         { kind: 'slot', slotId: 'data-stewardship.queue-items', showLabel: false },
         { kind: 'slot', slotId: 'entity.change-cases', showLabel: false },
-        { kind: 'slot', slotId: 'data-stewardship.assessments', showLabel: false }
+        { kind: 'slot', slotId: 'entity.assessments', showLabel: false }
       ])
     );
     expect(profile.sections.flatMap(section => section.items)).not.toEqual(
