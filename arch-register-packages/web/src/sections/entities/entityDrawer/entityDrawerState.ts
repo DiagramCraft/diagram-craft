@@ -336,6 +336,9 @@ export const resolveEntityDrawerRenderModel = ({
   });
   const sections = profile.sections.flatMap(section => {
     const items = section.items.flatMap(item => {
+      if (item.kind === 'placeholder') {
+        return [{ item, label: item.message }];
+      }
       if (item.kind === 'metadata') {
         return isMeaningfulValue(entityDrawerMetadataValue(entity, item.slot))
           ? [{ item, label: item.label ?? metadataLabel(item.slot) }]

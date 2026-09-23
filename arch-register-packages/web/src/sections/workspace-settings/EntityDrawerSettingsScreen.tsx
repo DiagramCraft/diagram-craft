@@ -230,6 +230,7 @@ const itemReference = (item: EntityDrawerItem): string => {
   if (item.kind === 'slot') return item.slotId;
   if (item.kind === 'children') return `${item.childSchemaId}:${item.fieldId}`;
   if (item.kind === 'rollup-leaf-count') return item.kind;
+  if (item.kind === 'placeholder') return item.message;
   return item.fieldId;
 };
 
@@ -239,6 +240,7 @@ const itemPlacementKey = (item: EntityDrawerItem): string => {
   if (item.kind === 'children') return `children:${item.childSchemaId}:${item.fieldId}`;
   if (item.kind === 'rollup') return `rollup:${item.fieldId}`;
   if (item.kind === 'rollup-leaf-count') return 'rollup-leaf-count';
+  if (item.kind === 'placeholder') return `placeholder:${item.message}`;
   return `field:${item.fieldId}`;
 };
 
@@ -247,6 +249,7 @@ const itemLabel = (
   catalog: EntityDrawerCatalog,
   schemaId: string
 ): string => {
+  if (item.kind === 'placeholder') return item.message;
   if (item.label) return item.label;
   if (item.kind === 'metadata')
     return catalog.metadataSlots.find(slot => slot.id === item.slot)?.label ?? item.slot;
@@ -311,7 +314,11 @@ const EntityDrawerPreview = ({
             <div key={`${item.kind}-${itemReference(item)}-${index}`} className={styles.previewRow}>
               <span>{itemLabel(item, catalog, schemaId)}</span>
               <span className={styles.previewValue}>
-                {item.kind === 'slot' ? 'Unavailable in preview' : 'Example value'}
+                {item.kind === 'slot'
+                  ? 'Unavailable in preview'
+                  : item.kind === 'placeholder'
+                    ? item.message
+                    : 'Example value'}
               </span>
             </div>
           ))
@@ -827,10 +834,16 @@ export const EntityDrawerEditor = ({
                                 ...current,
                                 items: current.items.map((entry, index) =>
                                   index === itemIndex
-                                    ? {
-                                        ...entry,
-                                        label: value && value.trim() !== '' ? value : undefined
-                                      }
+                                    ? entry.kind === 'placeholder'
+                                      ? {
+                                          ...entry,
+                                          message:
+                                            value && value.trim() !== '' ? value : entry.message
+                                        }
+                                      : {
+                                          ...entry,
+                                          label: value && value.trim() !== '' ? value : undefined
+                                        }
                                     : entry
                                 )
                               }))

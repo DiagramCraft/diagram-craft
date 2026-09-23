@@ -285,6 +285,9 @@ const DrawerItem = ({
   if (item.item.kind === 'metadata') {
     return <MetadataItem item={item} entity={entity} lifecycleStates={lifecycleStates} />;
   }
+  if (item.item.kind === 'placeholder') {
+    return <span className="dim">{item.item.message}</span>;
+  }
   if (item.item.kind === 'children') {
     return (
       <ContainmentChildrenItem

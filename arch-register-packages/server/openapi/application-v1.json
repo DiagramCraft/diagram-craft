@@ -74529,6 +74529,22 @@
                                             "type": "object",
                                             "properties": {
                                               "kind": {
+                                                "const": "placeholder"
+                                              },
+                                              "message": {
+                                                "type": "string",
+                                                "minLength": 1
+                                              }
+                                            },
+                                            "required": [
+                                              "kind",
+                                              "message"
+                                            ]
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "kind": {
                                                 "const": "typed-relation-list"
                                               },
                                               "fieldId": {
@@ -74999,6 +75015,22 @@
                                       "type": "object",
                                       "properties": {
                                         "kind": {
+                                          "const": "placeholder"
+                                        },
+                                        "message": {
+                                          "type": "string",
+                                          "minLength": 1
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "message"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
                                           "const": "typed-relation-list"
                                         },
                                         "fieldId": {
@@ -75402,6 +75434,22 @@
                                             },
                                             "required": [
                                               "kind"
+                                            ]
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "kind": {
+                                                "const": "placeholder"
+                                              },
+                                              "message": {
+                                                "type": "string",
+                                                "minLength": 1
+                                              }
+                                            },
+                                            "required": [
+                                              "kind",
+                                              "message"
                                             ]
                                           },
                                           {
