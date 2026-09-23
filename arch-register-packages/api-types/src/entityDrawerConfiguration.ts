@@ -283,11 +283,10 @@ export const ENTITY_DRAWER_SLOT_DEFINITIONS: EntityDrawerSlotDefinition[] = [
     optionsSchema: emptyOptionsSchema
   },
   {
-    id: 'data-stewardship.queue-items',
-    label: 'Stewardship queue',
-    description: 'Open stewardship queue items.',
-    application: 'Data Stewardship',
-    capabilityBinding: { capabilityType: 'data-stewardship', role: 'dataEntity' },
+    id: 'entity.governance-items',
+    label: 'Governance items',
+    description: 'Open governance cases associated with the current entity.',
+    application: 'Governance',
     defaultOptions: {},
     optionFields: [],
     optionsSchema: emptyOptionsSchema
@@ -912,7 +911,7 @@ const buildDataStewardshipDefaultProfile = (
         field(fieldIds.processingPurposes),
         field(fieldIds.permittedResidencyRegions)
       ]),
-      section('queue-items', 'Queue items', [provider('data-stewardship.queue-items')], true),
+      section('queue-items', 'Queue items', [provider('entity.governance-items')], true),
       section('cases', 'Cases', [provider('entity.change-cases')], true),
       section('assessments', 'Assessments', [provider('entity.assessments')], true)
     ].filter(section => section.items.length > 0)
@@ -1287,6 +1286,9 @@ export const buildDefaultEntityDrawerConfiguration = (
         ...getDefaultProviderItems(schemas, schema.id, capabilityConfigurations),
         ...(dataStewardshipFieldIdsValue
           ? [{ kind: 'slot' as const, slotId: 'entity.change-cases' }]
+          : []),
+        ...(dataStewardshipFieldIdsValue
+          ? [{ kind: 'slot' as const, slotId: 'entity.governance-items' }]
           : []),
         ...(dataStewardshipFieldIdsValue
           ? [{ kind: 'slot' as const, slotId: 'entity.assessments' }]

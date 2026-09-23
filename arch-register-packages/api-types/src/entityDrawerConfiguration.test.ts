@@ -684,7 +684,7 @@ describe('entity drawer configuration', () => {
           fieldId: 'retention_policy',
           presentation: 'mini-panel'
         },
-        { kind: 'slot', slotId: 'data-stewardship.queue-items', showLabel: false },
+        { kind: 'slot', slotId: 'entity.governance-items', showLabel: false },
         { kind: 'slot', slotId: 'entity.change-cases', showLabel: false },
         { kind: 'slot', slotId: 'entity.assessments', showLabel: false }
       ])

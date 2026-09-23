@@ -1883,7 +1883,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             id: 'queue-items',
             title: 'Queue items',
             collapsible: true,
-            items: [{ kind: 'slot', slotId: 'data-stewardship.queue-items', showLabel: false }]
+            items: [{ kind: 'slot', slotId: 'entity.governance-items', showLabel: false }]
           },
           {
             id: 'cases',

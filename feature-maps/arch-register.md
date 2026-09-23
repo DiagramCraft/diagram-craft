@@ -167,7 +167,8 @@
               schema-ordered attributes,
               attribute groups, and metadata; seeded or templated authored profiles retain their richer content.
               Missing or unsupported references fall back safely to that generic drawer. Registered content slots
-              may be capability-bound or generic; the Entity Change cases and Entity Assessments slots are
+              may be capability-bound or generic; the Entity Change cases, Entity Governance items, and Entity
+              Assessments slots are
               associated with the current entity and can therefore be added to any schema's drawer, while remaining
               seeded by default only for Data Entity profiles.
 
@@ -576,8 +577,8 @@
           due" they only appear if the viewer also happens to hold that case's open assignment; otherwise the drawer
           is a read-only view of the case. Withdraw/Send-reminder aren't offered here (both are initiator-only and
           stay on the workspace-wide governance inbox screen, to avoid showing a button that would fail server-side
-          for most viewers of this queue). The shared dataset drawer's own "Queue items" section shows this same
-          per-dataset queue (opening the same case drawer, not a placeholder).
+          for most viewers of this queue). The shared entity drawer's own "Governance items" section shows the open
+          governance cases for the current entity (opening the same case drawer, not a placeholder).
 
         - @id:ar.data-stewardship.stewardship The Stewardship section has a four-tile stat strip (fully covered %,
           missing an owner, reviews overdue, missing a steward), a "Gaps to close" panel (every dataset with a
@@ -596,8 +597,8 @@
           own design references to the fields the shipped schema actually has. Opening a dataset (from the gaps
           panel or the table) opens the configurable Data Entity drawer via the workspace-wide `drawer` search
           param. Its default profile preserves the
-          dataset's attributes and stewardship fields and exposes Queue items, Cases, and the generic Assessments
-          slot; unsupported placeholder-only Exceptions, Flows, and Systems sections are omitted.
+          dataset's attributes and stewardship fields and exposes Governance items, Cases, and the generic
+          Assessments slot; unsupported placeholder-only Exceptions, Flows, and Systems sections are omitted.
 
         - @id:ar.data-stewardship.classification The Classification section has three views, switched via an
           in-screen toggle group in the screen's own header (mirroring the Claude Design reference's `DSClassification`
