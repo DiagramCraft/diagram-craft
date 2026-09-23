@@ -7,6 +7,7 @@ import { DataStewardshipStewardshipScreen } from './DataStewardshipStewardshipSc
 
 const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
+  openEntityDrawer: vi.fn(),
   entityList: vi.fn(),
   entityGet: vi.fn(),
   schemasList: vi.fn(),
@@ -20,6 +21,10 @@ vi.mock('@tanstack/react-router', () => ({
   useParams: () => mocks.params,
   useSearch: () => mocks.search,
   useNavigate: () => mocks.navigate
+}));
+
+vi.mock('../../../sections/entities/entityDrawer/useEntityDrawer', () => ({
+  useEntityDrawer: () => ({ openEntityDrawer: mocks.openEntityDrawer })
 }));
 
 vi.mock('../../../lib/orpcClient', () => ({
@@ -36,10 +41,6 @@ vi.mock('../../../lib/orpcClient', () => ({
 vi.mock('../../../hooks/usePrincipalLabel', () => ({
   usePrincipalLabel: () => (principal: { principal_id?: string } | null | undefined) =>
     principal?.principal_id ? `Principal ${principal.principal_id}` : undefined
-}));
-
-vi.mock('./DatasetDrawer', () => ({
-  DatasetDrawer: () => <div>Open record in Entities</div>
 }));
 
 const CONFIG = {
@@ -141,7 +142,7 @@ describe('DataStewardshipStewardshipScreen', () => {
     vi.clearAllMocks();
   });
 
-  it('lists datasets with their coverage gaps and opens the drawer on row click', async () => {
+  it('lists datasets with their coverage gaps and opens the shared drawer on row click', async () => {
     await renderScreen();
     expect(container.textContent).toContain('Customer Records');
     expect(container.textContent).toContain('Support Transcripts');
@@ -156,12 +157,7 @@ describe('DataStewardshipStewardshipScreen', () => {
       row!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
 
-    expect(mocks.navigate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        to: '/$workspaceSlug/data-stewardship/stewardship',
-        params: { workspaceSlug: 'ws-1' }
-      })
-    );
+    expect(mocks.openEntityDrawer).toHaveBeenCalledWith('DS-001');
   });
 
   it('narrows the "Gaps to close" panel to the sidebar\'s classification facet, like the table', async () => {
@@ -194,12 +190,6 @@ describe('DataStewardshipStewardshipScreen', () => {
     await renderScreen();
     expect(container.textContent).toContain('Customer Records');
     expect(container.textContent).not.toContain('Support Transcripts');
-  });
-
-  it('renders the drawer when the route carries a datasetId search param', async () => {
-    mocks.search = { datasetId: 'DS-001' };
-    await renderScreen();
-    expect(container.textContent).toContain('Open record in Entities');
   });
 
   it('shows a not-enabled empty state when the capability is unconfigured', async () => {

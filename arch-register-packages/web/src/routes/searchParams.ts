@@ -595,10 +595,7 @@ const dataStewardshipStewardshipSearchSchema = defineSearchParamSchema({
   classification: stringCodec,
   // Narrows to datasets with a coverage gap (`computeDatasetCoverage`); '1' when set, absent
   // otherwise — mirrors `outsideAppetite` above.
-  gapsOnly: enumCodec(['1'] as const),
-  // Opens the shared `DatasetDrawer` for this dataset id, so the drawer is deep-linkable without a
-  // dedicated child route (there is none for this scaffold's sections yet).
-  datasetId: stringCodec
+  gapsOnly: enumCodec(['1'] as const)
 });
 
 export type DataStewardshipStewardshipSearchParams = SearchParamsFromSchema<
@@ -631,10 +628,7 @@ const dataStewardshipClassificationSearchSchema = defineSearchParamSchema({
   gapsOnly: enumCodec(['1'] as const),
   // Sort keys differ per view ('classification' | 'name' for classified data, 'severity' | 'name'
   // for the flow views), so this is a loose string rather than a per-view enum union.
-  sort: stringCodec,
-  // Opens the shared `DatasetDrawer` for this dataset id — from a classified-data row click, or a
-  // carried-data-entity chip click from either flow view.
-  datasetId: stringCodec
+  sort: stringCodec
 });
 
 export type DataStewardshipClassificationSearchParams = SearchParamsFromSchema<
@@ -654,9 +648,8 @@ const dataStewardshipAssessmentsSearchSchema = defineSearchParamSchema({
   // Narrows the register to one of the stat strip's four buckets — set by the toolbar's status
   // toggle; unset shows all rows.
   status: enumCodec(['overdue', 'in_progress', 'not_started', 'complete'] as const)
-  // No `datasetId` param here, unlike `dataStewardshipStewardshipSearchSchema` — a row is a whole
-  // assessment, not one dataset, so a click navigates out to the owning Project instead of opening
-  // the shared `DatasetDrawer`.
+  // No `datasetId` param here — a row is a whole assessment, not one dataset, so a click navigates
+  // out to the owning Project instead of opening an entity drawer.
 });
 
 export type DataStewardshipAssessmentsSearchParams = SearchParamsFromSchema<
@@ -683,8 +676,8 @@ const dataStewardshipMyWorkSearchSchema = defineSearchParamSchema({
   // Opens the new minimal case drawer (`DataStewardshipCaseDrawer.tsx`) for this governance case id
   // — for entity.change-case / entity.deprecation queue rows.
   caseId: stringCodec,
-  // Opens the shared `DatasetDrawer` for this dataset id — for field-date-reminder queue rows,
-  // mirrors `dataStewardshipStewardshipSearchSchema`'s own `datasetId`.
+  // Opens the bespoke `DatasetDrawer` for this dataset id (paired with `caseId` above, so a click
+  // between the two swaps rather than stacks) — for field-date-reminder queue rows.
   datasetId: stringCodec
 });
 
@@ -705,8 +698,8 @@ const dataStewardshipChangeCasesSearchSchema = defineSearchParamSchema({
   // Opens the shared `DataStewardshipCaseDrawer.tsx` for this governance case id — same drawer
   // `dataStewardshipMyWorkSearchSchema`'s own `caseId` opens (#3298).
   caseId: stringCodec,
-  // Opens the shared `DatasetDrawer` for this dataset id — from a case row's linked dataset,
-  // mirrors `dataStewardshipStewardshipSearchSchema`'s own `datasetId`.
+  // Opens the bespoke `DatasetDrawer` for this dataset id — from a case row's linked dataset,
+  // paired with `caseId` above so a click between the two swaps rather than stacks.
   datasetId: stringCodec
 });
 

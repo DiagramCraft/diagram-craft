@@ -12,7 +12,7 @@ import type { DataStewardshipClassificationSearchParams } from '../../../routes/
 import { ClassifiedDataView } from './ClassifiedDataView';
 import { RestrictedFlowsView } from './RestrictedFlowsView';
 import { CrossBoundaryTransfersView } from './CrossBoundaryTransfersView';
-import { DatasetDrawer } from './DatasetDrawer';
+import { useEntityDrawer } from '../../../sections/entities/entityDrawer/useEntityDrawer';
 import styles from './DataStewardshipStewardshipScreen.module.css';
 
 /**
@@ -38,6 +38,7 @@ export const DataStewardshipClassificationScreen = () => {
   const { workspaceSlug } = useParams({ strict: false }) as { workspaceSlug: string };
   const navigate = useNavigate();
   const search = useSearch({ strict: false }) as DataStewardshipClassificationSearchParams;
+  const { openEntityDrawer } = useEntityDrawer();
   const view = search.view ?? 'classified';
 
   const configurations = useQuery(workspaceCapabilityConfigurationsQuery(workspaceSlug));
@@ -54,8 +55,6 @@ export const DataStewardshipClassificationScreen = () => {
       params: { workspaceSlug },
       search: (previous: Record<string, unknown>) => ({ ...previous, ...patch })
     });
-  const openDataset = (id: string) => patchSearch({ datasetId: id });
-  const closeDataset = () => patchSearch({ datasetId: undefined });
 
   if (configurations.isLoading) {
     return <div className={styles.empty}>Loading data stewardship…</div>;
@@ -101,14 +100,14 @@ export const DataStewardshipClassificationScreen = () => {
         <RestrictedFlowsView
           workspaceSlug={workspaceSlug}
           dataFlowConfig={dataFlowConfig.data}
-          openDataset={openDataset}
+          openDataset={openEntityDrawer}
           viewSwitcher={viewSwitcher}
         />
       ) : view === 'cross-boundary' ? (
         <CrossBoundaryTransfersView
           workspaceSlug={workspaceSlug}
           dataFlowConfig={dataFlowConfig.data}
-          openDataset={openDataset}
+          openDataset={openEntityDrawer}
           viewSwitcher={viewSwitcher}
         />
       ) : (
@@ -118,16 +117,8 @@ export const DataStewardshipClassificationScreen = () => {
           dataEntitySchema={dataEntitySchema}
           search={search}
           patchSearch={patchSearch}
-          openDataset={openDataset}
+          openDataset={openEntityDrawer}
           viewSwitcher={viewSwitcher}
-        />
-      )}
-
-      {search.datasetId && (
-        <DatasetDrawer
-          workspaceSlug={workspaceSlug}
-          datasetId={search.datasetId}
-          onClose={closeDataset}
         />
       )}
     </div>

@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
+import { useEntityDrawer } from '../../../sections/entities/entityDrawer/useEntityDrawer';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import { Title } from '../../../components/Title';
 import { SearchInput } from '../../../components/SearchInput';
@@ -17,7 +18,6 @@ import { resolveDataStewardshipConfig } from '../dataStewardshipQueries';
 import { DS_RAIL_PATHS, DS_STEWARDSHIP_ID } from '../dataStewardshipSections';
 import { computeDatasetCoverage, DATASET_COVERAGE_GAP_LABEL } from '../datasetCoverage';
 import { datasetFieldValue } from '../datasetFieldDisplay';
-import { DatasetDrawer } from './DatasetDrawer';
 import type { DataStewardshipStewardshipSearchParams } from '../../../routes/searchParams';
 import filterStyles from '../../../sections/entities/components/EntityBrowser.module.css';
 import styles from './DataStewardshipStewardshipScreen.module.css';
@@ -44,7 +44,7 @@ const GAPS_TO_CLOSE_LIMIT = 8;
  * governance — a stat strip, a "gaps to close" panel, and the full searchable/sortable dataset
  * table. Mirrors the Claude Design reference's `DSStewardship` (`ds.jsx`) and this codebase's own
  * `../../risk-compliance/sections/RiskComplianceRisksScreen.tsx` for the search/sort/table
- * structure, opening the shared `DatasetDrawer` (#3296) on row click — its first real consumer.
+ * structure, opening the shared entity drawer (`useEntityDrawer()`) on row click.
  *
  * Two of the design reference's pieces don't survive the shipped schema and are dropped rather
  * than faked: a per-dataset "domain" (there is no generic per-instance domain/category field on
@@ -59,6 +59,7 @@ export const DataStewardshipStewardshipScreen = () => {
   const { workspaceSlug } = useParams({ strict: false }) as { workspaceSlug: string };
   const navigate = useNavigate();
   const search = useSearch({ strict: false }) as DataStewardshipStewardshipSearchParams;
+  const { openEntityDrawer } = useEntityDrawer();
   const q = search.q ?? '';
 
   const configurations = useQuery(workspaceCapabilityConfigurationsQuery(workspaceSlug));
@@ -144,18 +145,6 @@ export const DataStewardshipStewardshipScreen = () => {
   const coveragePct =
     allDatasets.length > 0 ? Math.round((100 * covered.length) / allDatasets.length) : null;
 
-  const openDataset = (id: string) =>
-    navigate({
-      to: DS_RAIL_PATHS[DS_STEWARDSHIP_ID],
-      params: { workspaceSlug },
-      search: (previous: Record<string, unknown>) => ({ ...previous, datasetId: id })
-    });
-  const closeDataset = () =>
-    navigate({
-      to: DS_RAIL_PATHS[DS_STEWARDSHIP_ID],
-      params: { workspaceSlug },
-      search: (previous: Record<string, unknown>) => ({ ...previous, datasetId: undefined })
-    });
   const patchSearch = (patch: Partial<DataStewardshipStewardshipSearchParams>) =>
     navigate({
       to: DS_RAIL_PATHS[DS_STEWARDSHIP_ID],
@@ -246,7 +235,7 @@ export const DataStewardshipStewardshipScreen = () => {
                   key={entity._uid}
                   type="button"
                   className={styles.row}
-                  onClick={() => openDataset(entity._publicId)}
+                  onClick={() => openEntityDrawer(entity._publicId)}
                 >
                   <span className={styles.rowMain}>
                     <span className={styles.rowName}>{entity._name}</span>
@@ -316,7 +305,7 @@ export const DataStewardshipStewardshipScreen = () => {
               const classification =
                 typeof entity.classification === 'string' ? entity.classification : null;
               return (
-                <Table.Row key={entity._uid} onClick={() => openDataset(entity._publicId)}>
+                <Table.Row key={entity._uid} onClick={() => openEntityDrawer(entity._publicId)}>
                   <Table.NameCell title={entity._name} subtitle={entity._publicId} />
                   <Table.Cell className={entity._owner == null ? 'dim' : undefined}>
                     {entity._owner?.name ?? 'unassigned'}
@@ -343,14 +332,6 @@ export const DataStewardshipStewardshipScreen = () => {
           )}
         </Table.Body>
       </Table.Root>
-
-      {search.datasetId && (
-        <DatasetDrawer
-          workspaceSlug={workspaceSlug}
-          datasetId={search.datasetId}
-          onClose={closeDataset}
-        />
-      )}
     </div>
   );
 };

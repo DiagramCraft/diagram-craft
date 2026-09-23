@@ -293,14 +293,14 @@
           without removing them, and the
           sidebar's owner facet dims tiles the same way. Clicking a domain header (or a node in the sidebar's
           capability tree) focuses the grid on that subtree, with an "All domains" control to clear it (`focus`
-          and `owner` are carried in the URL). Clicking a tile opens the capability's detail drawer at
-          `strategy/map/$capabilityId`.
+          and `owner` are carried in the URL). Clicking a tile opens the capability's drawer via the workspace-wide
+          `drawer` search param.
 
         - @id:ar.strategy.capabilities The Capabilities section lists every Business Capability with columns chosen
           by the workspace's view configuration (@id:ar.strategy.view-config) — capability fields, subtree roll-up
           metrics, and structural columns such as level, owner, and supported-application count — plus level and
-          owner filters, and sortable columns. Rows deep-link to the
-          capability's detail drawer at `strategy/capabilities/$capabilityId` (see below) and carry a separate "Open
+          owner filters, and sortable columns. Rows open the
+          capability's drawer via the workspace-wide `drawer` search param (see below) and carry a separate "Open
           in Entities" action to the Home entity browser. The section's own primary sidebar swaps the app's usual
           section nav list for a capability hierarchy tree (clicking a node filters the table to that subtree) plus
           an owner facet with counts.
@@ -310,8 +310,8 @@
           configurable per drawer profile like any other item — the same reusable mechanism any schema with a
           containment hierarchy can use), plus capability badges, configured fields, the built-in containment-child
           list, and registered Strategy content slots for linked objectives and initiatives and realized-by
-          applications. Child selections replace the
-          current drawer target, and the footer action opens the underlying record in Entities. "Realized by" unions
+          applications. Child selections open a nested drawer on top of the current one (the shared workspace drawer
+          stack), and the footer action opens the underlying record in Entities. "Realized by" unions
           applications the capability supports directly with ones supported anywhere in its recursive containment
           subtree, so non-leaf capabilities also surface coverage carried by their descendants; each entity reached
           through a descendant shows a "via" provenance label naming the contributing capability.
@@ -327,7 +327,7 @@
           table with maturity, gap, investment, and application roll-ups over each capability's containment subtree.
           Measures render a baseline → current → target progress bar from the Measure schema's measurement fields. A
           "New objective" action opens the entity-create dialog pre-set to the Objective schema. Selecting a
-          capability opens the shared capability drawer at `strategy/strategy/$capabilityId`.
+          capability opens the shared capability drawer via the workspace-wide `drawer` search param.
 
         - @id:ar.strategy.traceability The Traceability section has two tabs. **Trace chain** is a three-column
           hop walker — Objective → Capability → Application — walked one hop at a time over the Objective Supports
@@ -491,10 +491,10 @@
           gives each column's total, with a red mark standing in for zero — an uncontrolled Risk or asset — instead
           of the digit. Control row headers are clickable, opening the shared Control drawer; asset-dimension column
           headers open the schema-configured generic entity drawer in place, while Risk-dimension column headers are
-          read-only. Selecting a control opens the shared Control drawer, deep-linkable at
-          `risk-compliance/controls/$controlId`: the template-authored default drawer profile
-          preserves the current attributes and `control_type` badge, while registered Risk & Compliance content slots
-          show the Risks it mitigates (with the `coverage`/`effectiveness` it provides each one) and the Data Entities
+          read-only. Selecting a control, a Coverage-view risk row, or a Coverage/Traceability-view asset row all open
+          through the same workspace-wide `drawer` search param, stacking rather than competing: the template-authored
+          default drawer profile preserves the current attributes and `control_type` badge, while registered Risk &
+          Compliance content slots show the Risks it mitigates (with the `coverage`/`effectiveness` it provides each one) and the Data Entities
           it protects (via `control-affects`).
 
         - @id:ar.risk-compliance.retention The Retention section — the first web UI consumer of the workspace-wide
@@ -591,8 +591,8 @@
           faked, quality/domain aren't offered as sort options, and the stat strip substitutes "Missing a steward"
           for "Certified" — mirroring how `ar.risk-compliance.overview`/`ar.risk-compliance.controls` adapted their
           own design references to the fields the shipped schema actually has. Opening a dataset (from the gaps
-          panel or the table) opens the configurable Data Entity drawer, deep-linkable via a `datasetId` query param
-          (no dedicated child route exists yet for this scaffold's sections). Its default profile preserves the
+          panel or the table) opens the configurable Data Entity drawer via the workspace-wide `drawer` search
+          param. Its default profile preserves the
           dataset's attributes and stewardship fields and exposes Coverage, Queue items, Cases, and Assessments as
           Data Stewardship provider sections; unsupported placeholder-only Exceptions, Flows, and Systems sections
           are omitted.
