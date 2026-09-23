@@ -334,15 +334,32 @@ describe('entity drawer configuration', () => {
     ...schema,
     fields: [...schema.fields, { id: 'parent', name: 'Parent', type: 'containment' }]
   };
+  const initiativeSchema = {
+    id: 'initiative',
+    name: 'Initiative',
+    fields: [
+      {
+        id: 'objectives',
+        name: 'Objectives',
+        type: 'reference',
+        schemaId: 'objective'
+      }
+    ]
+  };
 
   it('builds provider defaults and validates provider options', () => {
     const result = buildDefaultEntityDrawerConfiguration(
-      [schemaWithParent],
+      [schemaWithParent, initiativeSchema],
       [
         {
           type: 'strategy-model',
           bindings: {
+            objective: { target: { kind: 'entity_schema', id: 'objective' } },
+            initiative: { target: { kind: 'entity_schema', id: 'initiative' } },
             business_capability: { target: { kind: 'entity_schema', id: 'service' } },
+            objective_supports_business_capability: {
+              target: { kind: 'relation_schema', id: 'objective-supports-capability' }
+            },
             business_capability_supports_entity: {
               target: { kind: 'relation_schema', id: 'bcse-rel' }
             }
@@ -370,8 +387,12 @@ describe('entity drawer configuration', () => {
         queryText: 'subtree(parent).->"bcse-rel"',
         label: 'Realized by'
       },
+      {
+        kind: 'query',
+        queryText: '<-"objective-supports-capability".<-"Initiative".objectives',
+        label: 'Linked initiatives'
+      },
       { kind: 'slot', slotId: 'strategy.linked-objectives' },
-      { kind: 'slot', slotId: 'strategy.linked-initiatives' },
       { kind: 'rollup', fieldId: 'score', aggregation: 'sum', format: 'number' },
       { kind: 'rollup-leaf-count' }
     ]);
@@ -429,6 +450,7 @@ describe('entity drawer configuration', () => {
       ]
     );
     expect(catalog.slots.map(slot => slot.id)).toContain('strategy.linked-objectives');
+    expect(catalog.slots.map(slot => slot.id)).not.toContain('strategy.linked-initiatives');
     expect(
       catalog.slots.find(slot => slot.id === 'strategy.linked-objectives')?.supportedSchemaIds
     ).toEqual(['service']);

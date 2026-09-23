@@ -313,7 +313,7 @@
           `rollup`/leaf-count item kinds (seeded from @id:ar.strategy.view-config's roll-up fields by default, but
           configurable per drawer profile like any other item — the same reusable mechanism any schema with a
           containment hierarchy can use), plus capability badges, configured fields, the built-in containment-child
-          list, registered Strategy content slots for linked objectives and initiatives, and a "Realized by" item
+          list, configurable drawer items for linked objectives and initiatives, and a "Realized by" item
           using the generic drawer `query` item kind — a path expression in the text query DSL (see
           `specs/QUERY_LANGUAGE.md`) evaluated against the current entity, letting any drawer profile declare
           recursive-containment or typed-relation traversals without app-specific code. Child selections open a

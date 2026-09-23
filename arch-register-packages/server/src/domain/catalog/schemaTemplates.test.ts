@@ -236,6 +236,19 @@ describe('instantiateTemplate', () => {
       { kind: 'field', fieldId: 'strategic_importance' },
       { kind: 'field', fieldId: 'investment_priority' }
     ]);
+    expect(
+      definitions.entityDrawerProfiles[businessCapability!.id]?.sections.find(
+        section => section.id === 'application-content'
+      )?.items
+    ).toEqual(
+      expect.arrayContaining([
+        {
+          kind: 'query',
+          queryText: '<-"Objective Supports Business Capability".<-"Initiative".objectives',
+          label: 'Linked initiatives'
+        }
+      ])
+    );
     // Every field group is referenced by at least one field.
     for (const group of businessCapability?.groups ?? []) {
       expect(businessCapability?.fields.some(field => field.groupId === group.id)).toBe(true);

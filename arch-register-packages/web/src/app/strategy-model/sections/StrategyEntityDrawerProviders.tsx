@@ -1,7 +1,5 @@
-import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Chip } from '../../../components/Chip';
-import { entitiesQuery } from '../../../queries/entities';
 import { workspaceCapabilityConfigurationsQuery } from '../../../queries/workspaceConfig';
 import {
   EntityDrawerProviderStatus,
@@ -64,65 +62,10 @@ const StrategyLinkedObjectivesProvider = ({ context }: EntityDrawerProviderProps
   );
 };
 
-const StrategyLinkedInitiativesProvider = ({ context }: EntityDrawerProviderProps) => {
-  const { query: configurationQuery, config } = useStrategyConfiguration(context.workspaceId);
-  const objectives = supportingObjectives(context, config);
-  const objectiveIds = useMemo(
-    () => [...new Set(objectives.map(relation => relation._in.id))],
-    [objectives]
-  );
-  const initiatives = useQuery(
-    entitiesQuery(
-      context.workspaceId,
-      {
-        schemaId: config?.initiativeSchemaId,
-        view: 'summary',
-        conditions: [{ fieldId: 'objectives', op: 'in', value: objectiveIds }]
-      },
-      objectiveIds.length > 0 && config != null
-    )
-  );
-  const state =
-    configurationQuery.isLoading || context.typedRelationsStatus.isLoading
-      ? 'loading'
-      : configurationQuery.isError || !config || context.typedRelationsStatus.isError
-        ? 'unavailable'
-        : objectiveIds.length === 0
-          ? 'empty'
-          : initiatives.isLoading
-            ? 'loading'
-            : initiatives.isError
-              ? 'unavailable'
-              : (initiatives.data?.items.length ?? 0) > 0
-                ? 'ready'
-                : 'empty';
-
-  return (
-    <EntityDrawerProviderStatus
-      state={state}
-      emptyMessage="No linked initiatives."
-      unavailableMessage="Linked initiatives are unavailable."
-    >
-      <div className={styles.tags}>
-        {(initiatives.data?.items ?? []).map(initiative => (
-          <Chip key={initiative._uid} tone="ghost">
-            {initiative._name}
-          </Chip>
-        ))}
-      </div>
-    </EntityDrawerProviderStatus>
-  );
-};
-
 export const strategyEntityDrawerProviderDefinitions = [
   {
     slotId: 'strategy.linked-objectives',
     requiredFields: BUSINESS_CAPABILITY_REQUIRED_FIELDS,
     Component: StrategyLinkedObjectivesProvider
-  },
-  {
-    slotId: 'strategy.linked-initiatives',
-    requiredFields: BUSINESS_CAPABILITY_REQUIRED_FIELDS,
-    Component: StrategyLinkedInitiativesProvider
   }
 ] satisfies readonly EntityDrawerProviderDefinition[];

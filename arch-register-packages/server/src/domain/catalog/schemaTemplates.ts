@@ -3994,8 +3994,8 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
                 label: 'Linked objectives'
               },
               {
-                kind: 'slot',
-                slotId: 'strategy.linked-initiatives',
+                kind: 'query',
+                queryText: '<-"Objective Supports Business Capability".<-"Initiative".objectives',
                 label: 'Linked initiatives'
               }
             ]

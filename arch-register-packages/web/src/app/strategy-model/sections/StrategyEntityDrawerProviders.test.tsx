@@ -30,10 +30,6 @@ vi.mock('@tanstack/react-query', () => ({
   useQuery: (options: { queryKey: readonly unknown[] }) => mocks.query(options)
 }));
 
-vi.mock('../../../queries/entities', () => ({
-  entitiesQuery: () => ({ queryKey: ['entities'] })
-}));
-
 vi.mock('../../../queries/workspaceConfig', () => ({
   workspaceCapabilityConfigurationsQuery: () => ({ queryKey: ['strategy-config'] })
 }));
@@ -81,30 +77,23 @@ describe('strategy entity drawer providers', () => {
       if (options.queryKey[0] === 'strategy-config') {
         return { data: [config], isLoading: false, isError: false };
       }
-      return {
-        data: { items: [{ _uid: 'initiative-1', _name: 'Checkout Simplification' }] },
-        isLoading: false,
-        isError: false
-      };
+      return { data: [], isLoading: false, isError: false };
     });
   });
 
-  it('renders linked objectives and initiatives', () => {
+  it('renders linked objectives', () => {
     const objectives = provider('strategy.linked-objectives');
-    const initiatives = provider('strategy.linked-initiatives');
     const item = (slotId: string) => ({ kind: 'slot' as const, slotId });
 
-    const markup = [
-      renderToStaticMarkup(
-        <objectives.Component context={context} item={item(objectives.slotId)} />
-      ),
-      renderToStaticMarkup(
-        <initiatives.Component context={context} item={item(initiatives.slotId)} />
-      )
-    ].join('');
+    const markup = renderToStaticMarkup(
+      <objectives.Component context={context} item={item(objectives.slotId)} />
+    );
 
     expect(markup).toContain('Increase conversion');
-    expect(markup).toContain('Checkout Simplification');
+  });
+
+  it('does not register linked initiatives as a specialized provider', () => {
+    expect(provider('strategy.linked-initiatives')).toBeUndefined();
   });
 
   it('does not own the built-in containment children item', () => {
