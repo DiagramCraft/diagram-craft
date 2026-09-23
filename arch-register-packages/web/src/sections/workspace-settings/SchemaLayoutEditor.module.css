@@ -189,6 +189,29 @@
   color: var(--base-fg-dim);
 }
 
+.blockGroup {
+  display: flex;
+  flex-direction: column;
+  background: var(--base-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r);
+  font-size: 11.5px;
+  color: var(--base-fg-dim);
+}
+
+.blockGroupRow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 8px;
+}
+
+.blockGroupDivider {
+  border: none;
+  border-top: 1px solid var(--panel-border);
+  margin: 0;
+}
+
 .blockIcon {
   color: var(--cmp-fg-disabled);
   flex-shrink: 0;
