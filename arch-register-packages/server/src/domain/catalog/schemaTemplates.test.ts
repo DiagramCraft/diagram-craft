@@ -850,9 +850,9 @@ describe('instantiateTemplate', () => {
       'technology-lifecycle',
       'capabilities-funded'
     ]);
-    expect(
-      definitions.entityDrawerProfiles[vendor!.id]?.sections.at(-1)?.items
-    ).toEqual([{ kind: 'placeholder', message: VENDOR_CAPABILITIES_FUNDED_PLACEHOLDER_MESSAGE }]);
+    expect(definitions.entityDrawerProfiles[vendor!.id]?.sections.at(-1)?.items).toEqual([
+      { kind: 'placeholder', message: VENDOR_CAPABILITIES_FUNDED_PLACEHOLDER_MESSAGE }
+    ]);
     expect(
       definitions.entityDrawerProfiles[contract!.id]?.sections.map(section => section.id)
     ).toEqual(['vendor', 'terms', 'cost', 'systems-used']);

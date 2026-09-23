@@ -212,6 +212,7 @@ describe('resolveEntityDrawerRenderModel', () => {
       section.items.map(item => {
         if (item.item.kind === 'metadata') return item.item.slot;
         if (item.item.kind === 'slot') return item.item.slotId;
+        if (item.item.kind === 'placeholder') return item.item.message;
         if (item.item.kind === 'rollup-leaf-count') return item.item.kind;
         return item.item.fieldId;
       })

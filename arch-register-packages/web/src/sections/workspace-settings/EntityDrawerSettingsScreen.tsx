@@ -832,8 +832,8 @@ export const EntityDrawerEditor = ({
                             onChange={value =>
                               updateSection(section.id, current => ({
                                 ...current,
-                            items: current.items.map((entry, index) =>
-                              index === itemIndex
+                                items: current.items.map((entry, index) =>
+                                  index === itemIndex
                                     ? entry.kind === 'placeholder'
                                       ? {
                                           ...entry,
@@ -845,7 +845,7 @@ export const EntityDrawerEditor = ({
                                           label: value && value.trim() !== '' ? value : undefined
                                         }
                                     : entry
-                            )
+                                )
                               }))
                             }
                             style={{ flex: 1, minWidth: 0 }}
