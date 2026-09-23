@@ -756,87 +756,357 @@ export const EntityDrawerEditor = ({
 
       <fieldset disabled={!canEdit} className={styles.form}>
         <div className={layoutStyles.canvas}>
-            <div className={layoutStyles.column}>
-              <div className={layoutStyles.panel}>
+          <div className={layoutStyles.column}>
+            <div className={layoutStyles.panel}>
+              <div className={layoutStyles.panelHead}>
+                <span className={styles.panelTitle}>Header badges</span>
+              </div>
+              <div className={layoutStyles.blockList}>
+                {profile.header.badges.length === 0 && (
+                  <div className={layoutStyles.emptyInline}>No header badges</div>
+                )}
+                {profile.header.badges.map((badge, index) => (
+                  <div key={`${badge.kind}-${index}`} className={layoutStyles.blockGroup}>
+                    <div className={layoutStyles.blockGroupRow}>
+                      <span className={layoutStyles.blockIcon}>
+                        {badge.kind === 'metadata' ? <TbTag size={11} /> : <TbSquare size={11} />}
+                      </span>
+                      <TextInput
+                        value={
+                          badge.label ??
+                          (badge.kind === 'metadata'
+                            ? (catalog.metadataSlots.find(slot => slot.id === badge.slot)?.label ??
+                              badge.slot)
+                            : (availableFields.find(field => field.id === badge.fieldId)?.name ??
+                              badge.fieldId))
+                        }
+                        onChange={value => {
+                          const nextBadge: EntityDrawerBadge = {
+                            ...badge,
+                            label: value && value.trim() !== '' ? value : undefined
+                          };
+                          updateProfile({
+                            ...profile,
+                            header: {
+                              badges: profile.header.badges.map((entry, badgeIndex) =>
+                                badgeIndex === index ? nextBadge : entry
+                              )
+                            }
+                          });
+                        }}
+                        style={{ flex: 1, minWidth: 0 }}
+                      />
+                      <Button
+                        variant="icon-only"
+                        size="xs"
+                        aria-label="Remove badge"
+                        onClick={() =>
+                          updateProfile({
+                            ...profile,
+                            header: {
+                              badges: profile.header.badges.filter(
+                                (_, badgeIndex) => badgeIndex !== index
+                              )
+                            }
+                          })
+                        }
+                      >
+                        <TbTrash size={11} />
+                      </Button>
+                    </div>
+                    {badge.kind === 'field' && (
+                      <>
+                        <hr className={layoutStyles.blockGroupDivider} />
+                        <div className={styles.optionsEditor}>
+                          <label>
+                            <span>Field</span>
+                            <Select.Root
+                              value={badge.fieldId}
+                              onChange={value => {
+                                const field = availableFields.find(
+                                  candidate => candidate.id === value
+                                );
+                                if (!field) return;
+                                updateProfile({
+                                  ...profile,
+                                  header: {
+                                    badges: profile.header.badges.map((entry, badgeIndex) =>
+                                      badgeIndex === index && entry.kind === 'field'
+                                        ? { ...entry, fieldId: field.id }
+                                        : entry
+                                    )
+                                  }
+                                });
+                              }}
+                            >
+                              {availableFields.map(field => (
+                                <Select.Item key={field.id} value={field.id}>
+                                  {field.name}
+                                </Select.Item>
+                              ))}
+                            </Select.Root>
+                          </label>
+                        </div>
+                      </>
+                    )}
+                    {badge.kind === 'metadata' && (
+                      <>
+                        <hr className={layoutStyles.blockGroupDivider} />
+                        <div className={styles.optionsEditor}>
+                          <label>
+                            <span>Metadata field</span>
+                            <Select.Root
+                              value={badge.slot}
+                              onChange={value => {
+                                if (!value) return;
+                                const slot = value as MetadataSlotId;
+                                updateProfile({
+                                  ...profile,
+                                  header: {
+                                    badges: profile.header.badges.map((entry, badgeIndex) =>
+                                      badgeIndex === index && entry.kind === 'metadata'
+                                        ? { ...entry, slot }
+                                        : entry
+                                    )
+                                  }
+                                });
+                              }}
+                            >
+                              {catalog.metadataSlots.map(slot => (
+                                <Select.Item key={slot.id} value={slot.id}>
+                                  {slot.label}
+                                </Select.Item>
+                              ))}
+                            </Select.Root>
+                          </label>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <AddMenu label="Add badge" groups={badgeGroups} />
+            </div>
+
+            {profile.sections.length === 0 && (
+              <div className={layoutStyles.columnEmpty}>No sections yet</div>
+            )}
+            {profile.sections.map((section, sectionIndex) => (
+              <div key={section.id} className={layoutStyles.panel}>
                 <div className={layoutStyles.panelHead}>
-                  <span className={styles.panelTitle}>Header badges</span>
+                  <TextInput
+                    value={section.title}
+                    onChange={value =>
+                      updateSection(section.id, current => ({
+                        ...current,
+                        title: value ?? ''
+                      }))
+                    }
+                    style={{ flex: 1, minWidth: 0 }}
+                  />
+                  <span className={layoutStyles.panelActions}>
+                    <Button
+                      variant="icon-only"
+                      size="xs"
+                      disabled={sectionIndex === 0}
+                      aria-label="Move section up"
+                      onClick={() =>
+                        updateProfile({
+                          ...profile,
+                          sections: move(profile.sections, sectionIndex, -1)
+                        })
+                      }
+                    >
+                      <TbChevronUp size={12} />
+                    </Button>
+                    <Button
+                      variant="icon-only"
+                      size="xs"
+                      disabled={sectionIndex === profile.sections.length - 1}
+                      aria-label="Move section down"
+                      onClick={() =>
+                        updateProfile({
+                          ...profile,
+                          sections: move(profile.sections, sectionIndex, 1)
+                        })
+                      }
+                    >
+                      <TbChevronDown size={12} />
+                    </Button>
+                    <SectionMenu
+                      showTitle={section.showTitle !== false}
+                      layout={section.layout ?? 'rows'}
+                      collapsible={section.collapsible}
+                      onToggleShowTitle={showTitle =>
+                        updateSection(section.id, current => ({
+                          ...current,
+                          showTitle,
+                          ...(showTitle ? {} : { collapsible: false })
+                        }))
+                      }
+                      onSetLayout={layout =>
+                        updateSection(section.id, current => ({ ...current, layout }))
+                      }
+                      onToggleCollapsible={collapsible =>
+                        updateSection(section.id, current => ({ ...current, collapsible }))
+                      }
+                      onRemove={() =>
+                        updateProfile({
+                          ...profile,
+                          sections: profile.sections.filter(entry => entry.id !== section.id)
+                        })
+                      }
+                    />
+                  </span>
                 </div>
+
                 <div className={layoutStyles.blockList}>
-                  {profile.header.badges.length === 0 && (
-                    <div className={layoutStyles.emptyInline}>No header badges</div>
+                  {section.items.length === 0 && (
+                    <div className={layoutStyles.emptyInline}>No content yet</div>
                   )}
-                  {profile.header.badges.map((badge, index) => (
-                    <div key={`${badge.kind}-${index}`} className={layoutStyles.blockGroup}>
+                  {section.items.map((item, itemIndex) => (
+                    <div
+                      key={`${item.kind}-${itemReference(item)}-${itemIndex}`}
+                      className={layoutStyles.blockGroup}
+                    >
                       <div className={layoutStyles.blockGroupRow}>
                         <span className={layoutStyles.blockIcon}>
-                          {badge.kind === 'metadata' ? <TbTag size={11} /> : <TbSquare size={11} />}
+                          <ItemIcon kind={item.kind} />
                         </span>
                         <TextInput
-                          value={
-                            badge.label ??
-                            (badge.kind === 'metadata'
-                              ? (catalog.metadataSlots.find(slot => slot.id === badge.slot)
-                                  ?.label ?? badge.slot)
-                              : (availableFields.find(field => field.id === badge.fieldId)?.name ??
-                                badge.fieldId))
+                          value={itemLabel(item, catalog, selectedSchema.id)}
+                          onChange={value =>
+                            updateSection(section.id, current => ({
+                              ...current,
+                              items: current.items.map((entry, index) =>
+                                index === itemIndex
+                                  ? entry.kind === 'placeholder'
+                                    ? {
+                                        ...entry,
+                                        message:
+                                          value && value.trim() !== '' ? value : entry.message
+                                      }
+                                    : {
+                                        ...entry,
+                                        label: value && value.trim() !== '' ? value : undefined
+                                      }
+                                  : entry
+                              )
+                            }))
                           }
-                          onChange={value => {
-                            const nextBadge: EntityDrawerBadge = {
-                              ...badge,
-                              label: value && value.trim() !== '' ? value : undefined
-                            };
-                            updateProfile({
-                              ...profile,
-                              header: {
-                                badges: profile.header.badges.map((entry, badgeIndex) =>
-                                  badgeIndex === index ? nextBadge : entry
-                                )
-                              }
-                            });
-                          }}
                           style={{ flex: 1, minWidth: 0 }}
                         />
-                        <Button
-                          variant="icon-only"
-                          size="xs"
-                          aria-label="Remove badge"
-                          onClick={() =>
-                            updateProfile({
-                              ...profile,
-                              header: {
-                                badges: profile.header.badges.filter(
-                                  (_, badgeIndex) => badgeIndex !== index
-                                )
-                              }
-                            })
+                        <span className={layoutStyles.blockOrder}>
+                          <Button
+                            variant="icon-only"
+                            size="xs"
+                            disabled={itemIndex === 0}
+                            aria-label="Move content up"
+                            onClick={() =>
+                              updateSection(section.id, current => ({
+                                ...current,
+                                items: move(current.items, itemIndex, -1)
+                              }))
+                            }
+                          >
+                            <TbChevronUp size={11} />
+                          </Button>
+                          <Button
+                            variant="icon-only"
+                            size="xs"
+                            disabled={itemIndex === section.items.length - 1}
+                            aria-label="Move content down"
+                            onClick={() =>
+                              updateSection(section.id, current => ({
+                                ...current,
+                                items: move(current.items, itemIndex, 1)
+                              }))
+                            }
+                          >
+                            <TbChevronDown size={11} />
+                          </Button>
+                        </span>
+                        <ItemMenu
+                          sectionId={section.id}
+                          sections={profile.sections}
+                          presentation={itemPresentation(item, catalog)}
+                          onSetPresentation={
+                            itemPresentation(item, catalog) !== undefined
+                              ? presentation =>
+                                  updateSection(section.id, current => ({
+                                    ...current,
+                                    items: current.items.map((entry, index) =>
+                                      index === itemIndex &&
+                                      (entry.kind === 'field' || entry.kind === 'slot')
+                                        ? { ...entry, presentation }
+                                        : entry
+                                    )
+                                  }))
+                              : undefined
                           }
-                        >
-                          <TbTrash size={11} />
-                        </Button>
+                          showLabel={
+                            item.kind === 'slot' ||
+                            item.kind === 'rollup' ||
+                            item.kind === 'typed-relation-list' ||
+                            item.kind === 'query'
+                              ? item.showLabel !== false
+                              : undefined
+                          }
+                          onToggleShowLabel={
+                            item.kind === 'slot' ||
+                            item.kind === 'rollup' ||
+                            item.kind === 'typed-relation-list' ||
+                            item.kind === 'query'
+                              ? showLabel =>
+                                  updateSection(section.id, current => ({
+                                    ...current,
+                                    items: current.items.map((entry, index) =>
+                                      index === itemIndex &&
+                                      (entry.kind === 'slot' ||
+                                        entry.kind === 'rollup' ||
+                                        entry.kind === 'typed-relation-list' ||
+                                        entry.kind === 'query')
+                                        ? { ...entry, showLabel }
+                                        : entry
+                                    )
+                                  }))
+                              : undefined
+                          }
+                          onMoveTo={targetId => moveItemToSection(section.id, itemIndex, targetId)}
+                          onRemove={() =>
+                            updateSection(section.id, current => ({
+                              ...current,
+                              items: current.items.filter((_, index) => index !== itemIndex)
+                            }))
+                          }
+                        />
                       </div>
-                      {badge.kind === 'field' && (
+                      {(item.kind === 'field' || item.kind === 'relation') && (
                         <>
                           <hr className={layoutStyles.blockGroupDivider} />
                           <div className={styles.optionsEditor}>
                             <label>
                               <span>Field</span>
                               <Select.Root
-                                value={badge.fieldId}
+                                value={item.fieldId}
                                 onChange={value => {
                                   const field = availableFields.find(
                                     candidate => candidate.id === value
                                   );
                                   if (!field) return;
-                                  updateProfile({
-                                    ...profile,
-                                    header: {
-                                      badges: profile.header.badges.map((entry, badgeIndex) =>
-                                        badgeIndex === index && entry.kind === 'field'
-                                          ? { ...entry, fieldId: field.id }
-                                          : entry
-                                      )
-                                    }
-                                  });
+                                  updateSection(section.id, current => ({
+                                    ...current,
+                                    items: current.items.map((entry, index) =>
+                                      index === itemIndex &&
+                                      (entry.kind === 'field' || entry.kind === 'relation')
+                                        ? {
+                                            ...entry,
+                                            kind: fieldItemKind(field.type),
+                                            fieldId: field.id
+                                          }
+                                        : entry
+                                    )
+                                  }));
                                 }}
                               >
                                 {availableFields.map(field => (
@@ -849,27 +1119,25 @@ export const EntityDrawerEditor = ({
                           </div>
                         </>
                       )}
-                      {badge.kind === 'metadata' && (
+                      {item.kind === 'metadata' && (
                         <>
                           <hr className={layoutStyles.blockGroupDivider} />
                           <div className={styles.optionsEditor}>
                             <label>
                               <span>Metadata field</span>
                               <Select.Root
-                                value={badge.slot}
+                                value={item.slot}
                                 onChange={value => {
                                   if (!value) return;
                                   const slot = value as MetadataSlotId;
-                                  updateProfile({
-                                    ...profile,
-                                    header: {
-                                      badges: profile.header.badges.map((entry, badgeIndex) =>
-                                        badgeIndex === index && entry.kind === 'metadata'
-                                          ? { ...entry, slot }
-                                          : entry
-                                      )
-                                    }
-                                  });
+                                  updateSection(section.id, current => ({
+                                    ...current,
+                                    items: current.items.map((entry, index) =>
+                                      index === itemIndex && entry.kind === 'metadata'
+                                        ? { ...entry, slot }
+                                        : entry
+                                    )
+                                  }));
                                 }}
                               >
                                 {catalog.metadataSlots.map(slot => (
@@ -882,827 +1150,547 @@ export const EntityDrawerEditor = ({
                           </div>
                         </>
                       )}
-                    </div>
-                  ))}
-                </div>
-                <AddMenu label="Add badge" groups={badgeGroups} />
-              </div>
-
-              {profile.sections.length === 0 && (
-                <div className={layoutStyles.columnEmpty}>No sections yet</div>
-              )}
-              {profile.sections.map((section, sectionIndex) => (
-                <div key={section.id} className={layoutStyles.panel}>
-                  <div className={layoutStyles.panelHead}>
-                    <TextInput
-                      value={section.title}
-                      onChange={value =>
-                        updateSection(section.id, current => ({
-                          ...current,
-                          title: value ?? ''
-                        }))
-                      }
-                      style={{ flex: 1, minWidth: 0 }}
-                    />
-                    <span className={layoutStyles.panelActions}>
-                      <Button
-                        variant="icon-only"
-                        size="xs"
-                        disabled={sectionIndex === 0}
-                        aria-label="Move section up"
-                        onClick={() =>
-                          updateProfile({
-                            ...profile,
-                            sections: move(profile.sections, sectionIndex, -1)
-                          })
-                        }
-                      >
-                        <TbChevronUp size={12} />
-                      </Button>
-                      <Button
-                        variant="icon-only"
-                        size="xs"
-                        disabled={sectionIndex === profile.sections.length - 1}
-                        aria-label="Move section down"
-                        onClick={() =>
-                          updateProfile({
-                            ...profile,
-                            sections: move(profile.sections, sectionIndex, 1)
-                          })
-                        }
-                      >
-                        <TbChevronDown size={12} />
-                      </Button>
-                      <SectionMenu
-                        showTitle={section.showTitle !== false}
-                        layout={section.layout ?? 'rows'}
-                        collapsible={section.collapsible}
-                        onToggleShowTitle={showTitle =>
-                          updateSection(section.id, current => ({
-                            ...current,
-                            showTitle,
-                            ...(showTitle ? {} : { collapsible: false })
-                          }))
-                        }
-                        onSetLayout={layout =>
-                          updateSection(section.id, current => ({ ...current, layout }))
-                        }
-                        onToggleCollapsible={collapsible =>
-                          updateSection(section.id, current => ({ ...current, collapsible }))
-                        }
-                        onRemove={() =>
-                          updateProfile({
-                            ...profile,
-                            sections: profile.sections.filter(entry => entry.id !== section.id)
-                          })
-                        }
-                      />
-                    </span>
-                  </div>
-
-                  <div className={layoutStyles.blockList}>
-                    {section.items.length === 0 && (
-                      <div className={layoutStyles.emptyInline}>No content yet</div>
-                    )}
-                    {section.items.map((item, itemIndex) => (
-                      <div
-                        key={`${item.kind}-${itemReference(item)}-${itemIndex}`}
-                        className={layoutStyles.blockGroup}
-                      >
-                        <div className={layoutStyles.blockGroupRow}>
-                          <span className={layoutStyles.blockIcon}>
-                            <ItemIcon kind={item.kind} />
-                          </span>
-                          <TextInput
-                            value={itemLabel(item, catalog, selectedSchema.id)}
-                            onChange={value =>
-                              updateSection(section.id, current => ({
-                                ...current,
-                                items: current.items.map((entry, index) =>
-                                  index === itemIndex
-                                    ? entry.kind === 'placeholder'
-                                      ? {
-                                          ...entry,
-                                          message:
-                                            value && value.trim() !== '' ? value : entry.message
-                                        }
-                                      : {
-                                          ...entry,
-                                          label: value && value.trim() !== '' ? value : undefined
-                                        }
-                                    : entry
-                                )
-                              }))
-                            }
-                            style={{ flex: 1, minWidth: 0 }}
-                          />
-                          <span className={layoutStyles.blockOrder}>
-                            <Button
-                              variant="icon-only"
-                              size="xs"
-                              disabled={itemIndex === 0}
-                              aria-label="Move content up"
-                              onClick={() =>
-                                updateSection(section.id, current => ({
-                                  ...current,
-                                  items: move(current.items, itemIndex, -1)
-                                }))
-                              }
-                            >
-                              <TbChevronUp size={11} />
-                            </Button>
-                            <Button
-                              variant="icon-only"
-                              size="xs"
-                              disabled={itemIndex === section.items.length - 1}
-                              aria-label="Move content down"
-                              onClick={() =>
-                                updateSection(section.id, current => ({
-                                  ...current,
-                                  items: move(current.items, itemIndex, 1)
-                                }))
-                              }
-                            >
-                              <TbChevronDown size={11} />
-                            </Button>
-                          </span>
-                          <ItemMenu
-                            sectionId={section.id}
-                            sections={profile.sections}
-                            presentation={itemPresentation(item, catalog)}
-                            onSetPresentation={
-                              itemPresentation(item, catalog) !== undefined
-                                ? presentation =>
-                                    updateSection(section.id, current => ({
-                                      ...current,
-                                      items: current.items.map((entry, index) =>
-                                        index === itemIndex &&
-                                        (entry.kind === 'field' || entry.kind === 'slot')
-                                          ? { ...entry, presentation }
-                                          : entry
-                                      )
-                                    }))
-                                : undefined
-                            }
-                            showLabel={
-                              item.kind === 'slot' ||
-                              item.kind === 'rollup' ||
-                              item.kind === 'typed-relation-list' ||
-                              item.kind === 'query'
-                                ? item.showLabel !== false
-                                : undefined
-                            }
-                            onToggleShowLabel={
-                              item.kind === 'slot' ||
-                              item.kind === 'rollup' ||
-                              item.kind === 'typed-relation-list' ||
-                              item.kind === 'query'
-                                ? showLabel =>
-                                    updateSection(section.id, current => ({
-                                      ...current,
-                                      items: current.items.map((entry, index) =>
-                                        index === itemIndex &&
-                                        (entry.kind === 'slot' ||
-                                          entry.kind === 'rollup' ||
-                                          entry.kind === 'typed-relation-list' ||
-                                          entry.kind === 'query')
-                                          ? { ...entry, showLabel }
-                                          : entry
-                                      )
-                                    }))
-                                : undefined
-                            }
-                            onMoveTo={targetId =>
-                              moveItemToSection(section.id, itemIndex, targetId)
-                            }
-                            onRemove={() =>
-                              updateSection(section.id, current => ({
-                                ...current,
-                                items: current.items.filter((_, index) => index !== itemIndex)
-                              }))
-                            }
-                          />
-                        </div>
-                        {(item.kind === 'field' || item.kind === 'relation') && (
-                          <>
-                            <hr className={layoutStyles.blockGroupDivider} />
-                            <div className={styles.optionsEditor}>
-                              <label>
-                                <span>Field</span>
-                                <Select.Root
-                                  value={item.fieldId}
-                                  onChange={value => {
-                                    const field = availableFields.find(
-                                      candidate => candidate.id === value
-                                    );
-                                    if (!field) return;
-                                    updateSection(section.id, current => ({
-                                      ...current,
-                                      items: current.items.map((entry, index) =>
-                                        index === itemIndex &&
-                                        (entry.kind === 'field' || entry.kind === 'relation')
-                                          ? {
-                                              ...entry,
-                                              kind: fieldItemKind(field.type),
-                                              fieldId: field.id
-                                            }
-                                          : entry
-                                      )
-                                    }));
-                                  }}
-                                >
-                                  {availableFields.map(field => (
-                                    <Select.Item key={field.id} value={field.id}>
-                                      {field.name}
-                                    </Select.Item>
-                                  ))}
-                                </Select.Root>
-                              </label>
-                            </div>
-                          </>
-                        )}
-                        {item.kind === 'metadata' && (
-                          <>
-                            <hr className={layoutStyles.blockGroupDivider} />
-                            <div className={styles.optionsEditor}>
-                              <label>
-                                <span>Metadata field</span>
-                                <Select.Root
-                                  value={item.slot}
-                                  onChange={value => {
-                                    if (!value) return;
-                                    const slot = value as MetadataSlotId;
-                                    updateSection(section.id, current => ({
-                                      ...current,
-                                      items: current.items.map((entry, index) =>
-                                        index === itemIndex && entry.kind === 'metadata'
-                                          ? { ...entry, slot }
-                                          : entry
-                                      )
-                                    }));
-                                  }}
-                                >
-                                  {catalog.metadataSlots.map(slot => (
-                                    <Select.Item key={slot.id} value={slot.id}>
-                                      {slot.label}
-                                    </Select.Item>
-                                  ))}
-                                </Select.Root>
-                              </label>
-                            </div>
-                          </>
-                        )}
-                        {item.kind === 'children' && (
-                          <>
-                            <hr className={layoutStyles.blockGroupDivider} />
-                            <div className={styles.optionsEditor}>
-                              <label>
-                                <span>Child</span>
-                                <Select.Root
-                                  value={`${item.childSchemaId}:${item.fieldId}`}
-                                  onChange={value => {
-                                    const match = availableChildren.find(
-                                      ({ childSchema, field }) =>
-                                        `${childSchema.id}:${field.id}` === value
-                                    );
-                                    if (!match) return;
-                                    updateSection(section.id, current => ({
-                                      ...current,
-                                      items: current.items.map((entry, index) =>
-                                        index === itemIndex && entry.kind === 'children'
-                                          ? {
-                                              ...entry,
-                                              childSchemaId: match.childSchema.id,
-                                              fieldId: match.field.id
-                                            }
-                                          : entry
-                                      )
-                                    }));
-                                  }}
-                                >
-                                  {availableChildren.map(({ childSchema, field }) => (
-                                    <Select.Item
-                                      key={`${childSchema.id}:${field.id}`}
-                                      value={`${childSchema.id}:${field.id}`}
-                                    >
-                                      {childSchema.name} · {field.name}
-                                    </Select.Item>
-                                  ))}
-                                </Select.Root>
-                              </label>
-                            </div>
-                          </>
-                        )}
-                        {item.kind === 'slot' &&
-                          (() => {
-                            const slotDef = catalog.slots.find(
-                              candidate => candidate.id === item.slotId
-                            );
-                            const optionFields = slotDef?.optionFields ?? [];
-                            const options = item.options ?? {};
-                            const setOptions = (nextOptions: Record<string, unknown>) =>
-                              updateSection(section.id, current => ({
-                                ...current,
-                                items: current.items.map((entry, index) =>
-                                  index === itemIndex ? { ...entry, options: nextOptions } : entry
-                                )
-                              }));
-                            return (
-                              <>
-                                <hr className={layoutStyles.blockGroupDivider} />
-                                <div className={styles.optionsEditor}>
-                                  <label>
-                                    <span>Slot</span>
-                                    <Select.Root
-                                      value={item.slotId}
-                                      onChange={value => {
-                                        const nextSlot = availableSlots.find(
-                                          candidate => candidate.id === value
-                                        );
-                                        if (!nextSlot) return;
-                                        updateSection(section.id, current => ({
-                                          ...current,
-                                          items: current.items.map((entry, index) =>
-                                            index === itemIndex && entry.kind === 'slot'
-                                              ? {
-                                                  ...entry,
-                                                  slotId: nextSlot.id,
-                                                  ...(Object.keys(nextSlot.defaultOptions).length >
-                                                  0
-                                                    ? { options: nextSlot.defaultOptions }
-                                                    : { options: undefined })
-                                                }
-                                              : entry
-                                          )
-                                        }));
-                                      }}
-                                    >
-                                      {availableSlots.map(slot => (
-                                        <Select.Item key={slot.id} value={slot.id}>
-                                          {slot.label}
-                                        </Select.Item>
-                                      ))}
-                                    </Select.Root>
-                                  </label>
-                                  {optionFields.map(field => (
-                                    <label key={field.id} title={field.description}>
-                                      <span>{field.label}</span>
-                                      <TextInput
-                                        value={
-                                          typeof options[field.id] === 'string'
-                                            ? (options[field.id] as string)
-                                            : options[field.id] !== undefined
-                                              ? JSON.stringify(options[field.id])
-                                              : ''
-                                        }
-                                        onChange={value =>
-                                          setOptions({ ...options, [field.id]: value ?? '' })
-                                        }
-                                        style={{ width: '100%' }}
-                                      />
-                                    </label>
-                                  ))}
-                                  <label>
-                                    <span>Advanced options (JSON)</span>
-                                    <TextArea
-                                      aria-label={`${itemLabel(item, catalog, selectedSchema.id)} options`}
-                                      value={JSON.stringify(options, null, 2)}
-                                      onChange={value => {
-                                        try {
-                                          setOptions(
-                                            JSON.parse(value ?? '{}') as Record<string, unknown>
-                                          );
-                                        } catch {
-                                          // Keep the draft unchanged until the JSON is valid.
-                                        }
-                                      }}
-                                      rows={3}
+                      {item.kind === 'children' && (
+                        <>
+                          <hr className={layoutStyles.blockGroupDivider} />
+                          <div className={styles.optionsEditor}>
+                            <label>
+                              <span>Child</span>
+                              <Select.Root
+                                value={`${item.childSchemaId}:${item.fieldId}`}
+                                onChange={value => {
+                                  const match = availableChildren.find(
+                                    ({ childSchema, field }) =>
+                                      `${childSchema.id}:${field.id}` === value
+                                  );
+                                  if (!match) return;
+                                  updateSection(section.id, current => ({
+                                    ...current,
+                                    items: current.items.map((entry, index) =>
+                                      index === itemIndex && entry.kind === 'children'
+                                        ? {
+                                            ...entry,
+                                            childSchemaId: match.childSchema.id,
+                                            fieldId: match.field.id
+                                          }
+                                        : entry
+                                    )
+                                  }));
+                                }}
+                              >
+                                {availableChildren.map(({ childSchema, field }) => (
+                                  <Select.Item
+                                    key={`${childSchema.id}:${field.id}`}
+                                    value={`${childSchema.id}:${field.id}`}
+                                  >
+                                    {childSchema.name} · {field.name}
+                                  </Select.Item>
+                                ))}
+                              </Select.Root>
+                            </label>
+                          </div>
+                        </>
+                      )}
+                      {item.kind === 'slot' &&
+                        (() => {
+                          const slotDef = catalog.slots.find(
+                            candidate => candidate.id === item.slotId
+                          );
+                          const optionFields = slotDef?.optionFields ?? [];
+                          const options = item.options ?? {};
+                          const setOptions = (nextOptions: Record<string, unknown>) =>
+                            updateSection(section.id, current => ({
+                              ...current,
+                              items: current.items.map((entry, index) =>
+                                index === itemIndex ? { ...entry, options: nextOptions } : entry
+                              )
+                            }));
+                          return (
+                            <>
+                              <hr className={layoutStyles.blockGroupDivider} />
+                              <div className={styles.optionsEditor}>
+                                <label>
+                                  <span>Slot</span>
+                                  <Select.Root
+                                    value={item.slotId}
+                                    onChange={value => {
+                                      const nextSlot = availableSlots.find(
+                                        candidate => candidate.id === value
+                                      );
+                                      if (!nextSlot) return;
+                                      updateSection(section.id, current => ({
+                                        ...current,
+                                        items: current.items.map((entry, index) =>
+                                          index === itemIndex && entry.kind === 'slot'
+                                            ? {
+                                                ...entry,
+                                                slotId: nextSlot.id,
+                                                ...(Object.keys(nextSlot.defaultOptions).length > 0
+                                                  ? { options: nextSlot.defaultOptions }
+                                                  : { options: undefined })
+                                              }
+                                            : entry
+                                        )
+                                      }));
+                                    }}
+                                  >
+                                    {availableSlots.map(slot => (
+                                      <Select.Item key={slot.id} value={slot.id}>
+                                        {slot.label}
+                                      </Select.Item>
+                                    ))}
+                                  </Select.Root>
+                                </label>
+                                {optionFields.map(field => (
+                                  <label key={field.id} title={field.description}>
+                                    <span>{field.label}</span>
+                                    <TextInput
+                                      value={
+                                        typeof options[field.id] === 'string'
+                                          ? (options[field.id] as string)
+                                          : options[field.id] !== undefined
+                                            ? JSON.stringify(options[field.id])
+                                            : ''
+                                      }
+                                      onChange={value =>
+                                        setOptions({ ...options, [field.id]: value ?? '' })
+                                      }
                                       style={{ width: '100%' }}
                                     />
                                   </label>
-                                </div>
-                              </>
-                            );
-                          })()}
-                        {item.kind === 'typed-relation-list' &&
-                          (() => {
-                            const typedRelationFields = availableFields.filter(
-                              field => field.type === 'typedRelation'
-                            );
-                            const targetSchemas = getTypedRelationTargetSchemas(
-                              item.fieldId,
-                              selectedSchema,
-                              schemas,
-                              relationSchemas
-                            );
-                            const targetFields = targetSchemas.flatMap(targetSchema =>
-                              targetSchema.fields
-                                .filter(field => !field.archived)
-                                .map(field => ({ targetSchema, field }))
-                            );
-                            const attributes = item.attributes ?? [];
-                            const setAttributes = (
-                              nextAttributes: NonNullable<
-                                Extract<
-                                  EntityDrawerItem,
-                                  { kind: 'typed-relation-list' }
-                                >['attributes']
-                              >
-                            ) =>
-                              updateSection(section.id, current => ({
-                                ...current,
-                                items: current.items.map((entry, index) =>
-                                  index === itemIndex
-                                    ? { ...entry, attributes: nextAttributes }
-                                    : entry
-                                )
-                              }));
-                            return (
-                              <>
-                                <hr className={layoutStyles.blockGroupDivider} />
-                                <div className={styles.optionsEditor}>
-                                  <label>
-                                    <span>Field</span>
+                                ))}
+                                <label>
+                                  <span>Advanced options (JSON)</span>
+                                  <TextArea
+                                    aria-label={`${itemLabel(item, catalog, selectedSchema.id)} options`}
+                                    value={JSON.stringify(options, null, 2)}
+                                    onChange={value => {
+                                      try {
+                                        setOptions(
+                                          JSON.parse(value ?? '{}') as Record<string, unknown>
+                                        );
+                                      } catch {
+                                        // Keep the draft unchanged until the JSON is valid.
+                                      }
+                                    }}
+                                    rows={3}
+                                    style={{ width: '100%' }}
+                                  />
+                                </label>
+                              </div>
+                            </>
+                          );
+                        })()}
+                      {item.kind === 'typed-relation-list' &&
+                        (() => {
+                          const typedRelationFields = availableFields.filter(
+                            field => field.type === 'typedRelation'
+                          );
+                          const targetSchemas = getTypedRelationTargetSchemas(
+                            item.fieldId,
+                            selectedSchema,
+                            schemas,
+                            relationSchemas
+                          );
+                          const targetFields = targetSchemas.flatMap(targetSchema =>
+                            targetSchema.fields
+                              .filter(field => !field.archived)
+                              .map(field => ({ targetSchema, field }))
+                          );
+                          const attributes = item.attributes ?? [];
+                          const setAttributes = (
+                            nextAttributes: NonNullable<
+                              Extract<
+                                EntityDrawerItem,
+                                { kind: 'typed-relation-list' }
+                              >['attributes']
+                            >
+                          ) =>
+                            updateSection(section.id, current => ({
+                              ...current,
+                              items: current.items.map((entry, index) =>
+                                index === itemIndex
+                                  ? { ...entry, attributes: nextAttributes }
+                                  : entry
+                              )
+                            }));
+                          return (
+                            <>
+                              <hr className={layoutStyles.blockGroupDivider} />
+                              <div className={styles.optionsEditor}>
+                                <label>
+                                  <span>Field</span>
+                                  <Select.Root
+                                    value={item.fieldId}
+                                    onChange={value => {
+                                      if (!value) return;
+                                      updateSection(section.id, current => ({
+                                        ...current,
+                                        items: current.items.map((entry, index) =>
+                                          index === itemIndex &&
+                                          entry.kind === 'typed-relation-list'
+                                            ? { ...entry, fieldId: value, attributes: [] }
+                                            : entry
+                                        )
+                                      }));
+                                    }}
+                                  >
+                                    {typedRelationFields.map(field => (
+                                      <Select.Item key={field.id} value={field.id}>
+                                        {field.name}
+                                      </Select.Item>
+                                    ))}
+                                  </Select.Root>
+                                </label>
+                                {attributes.map((attribute, attributeIndex) => (
+                                  <span key={attributeIndex} className={layoutStyles.block}>
                                     <Select.Root
-                                      value={item.fieldId}
-                                      onChange={value => {
-                                        if (!value) return;
-                                        updateSection(section.id, current => ({
-                                          ...current,
-                                          items: current.items.map((entry, index) =>
-                                            index === itemIndex &&
-                                            entry.kind === 'typed-relation-list'
-                                              ? { ...entry, fieldId: value, attributes: [] }
+                                      value={attribute.fieldId}
+                                      onChange={value =>
+                                        setAttributes(
+                                          attributes.map((entry, index) =>
+                                            index === attributeIndex
+                                              ? { ...entry, fieldId: value ?? entry.fieldId }
                                               : entry
                                           )
-                                        }));
-                                      }}
+                                        )
+                                      }
                                     >
-                                      {typedRelationFields.map(field => (
-                                        <Select.Item key={field.id} value={field.id}>
-                                          {field.name}
+                                      {!targetFields.some(
+                                        ({ field }) => field.id === attribute.fieldId
+                                      ) && (
+                                        <Select.Item value={attribute.fieldId}>
+                                          {attribute.fieldId}
+                                        </Select.Item>
+                                      )}
+                                      {targetFields.map(({ targetSchema, field }) => (
+                                        <Select.Item
+                                          key={`${targetSchema.id}:${field.id}`}
+                                          value={field.id}
+                                        >
+                                          {targetSchemas.length > 1
+                                            ? `${targetSchema.name} · ${field.name}`
+                                            : field.name}
                                         </Select.Item>
                                       ))}
                                     </Select.Root>
-                                  </label>
-                                  {attributes.map((attribute, attributeIndex) => (
-                                    <span key={attributeIndex} className={layoutStyles.block}>
-                                      <Select.Root
-                                        value={attribute.fieldId}
-                                        onChange={value =>
-                                          setAttributes(
-                                            attributes.map((entry, index) =>
-                                              index === attributeIndex
-                                                ? { ...entry, fieldId: value ?? entry.fieldId }
-                                                : entry
-                                            )
+                                    <TextInput
+                                      value={attribute.label ?? ''}
+                                      onChange={value =>
+                                        setAttributes(
+                                          attributes.map((entry, index) =>
+                                            index === attributeIndex
+                                              ? {
+                                                  ...entry,
+                                                  label:
+                                                    value && value.trim() !== '' ? value : undefined
+                                                }
+                                              : entry
                                           )
-                                        }
-                                      >
-                                        {!targetFields.some(
-                                          ({ field }) => field.id === attribute.fieldId
-                                        ) && (
-                                          <Select.Item value={attribute.fieldId}>
-                                            {attribute.fieldId}
-                                          </Select.Item>
-                                        )}
-                                        {targetFields.map(({ targetSchema, field }) => (
-                                          <Select.Item
-                                            key={`${targetSchema.id}:${field.id}`}
-                                            value={field.id}
-                                          >
-                                            {targetSchemas.length > 1
-                                              ? `${targetSchema.name} · ${field.name}`
-                                              : field.name}
-                                          </Select.Item>
-                                        ))}
-                                      </Select.Root>
-                                      <TextInput
-                                        value={attribute.label ?? ''}
-                                        onChange={value =>
-                                          setAttributes(
-                                            attributes.map((entry, index) =>
-                                              index === attributeIndex
-                                                ? {
-                                                    ...entry,
-                                                    label:
-                                                      value && value.trim() !== ''
-                                                        ? value
-                                                        : undefined
-                                                  }
-                                                : entry
-                                            )
-                                          )
-                                        }
-                                        style={{ flex: 1, minWidth: 0 }}
-                                      />
-                                      <Button
-                                        variant="icon-only"
-                                        size="xs"
-                                        aria-label="Remove attribute"
-                                        onClick={() =>
-                                          setAttributes(
-                                            attributes.filter(
-                                              (_, index) => index !== attributeIndex
-                                            )
-                                          )
-                                        }
-                                      >
-                                        <TbTrash size={11} />
-                                      </Button>
-                                    </span>
-                                  ))}
-                                  {targetFields.length > 0 && (
-                                    <button
-                                      type="button"
-                                      className={layoutStyles.addBlockBtn}
-                                      onClick={() => {
-                                        const next = targetFields.find(
-                                          ({ field }) =>
-                                            !attributes.some(
-                                              attribute => attribute.fieldId === field.id
-                                            )
-                                        );
-                                        if (next)
-                                          setAttributes([
-                                            ...attributes,
-                                            { fieldId: next.field.id }
-                                          ]);
-                                      }}
+                                        )
+                                      }
+                                      style={{ flex: 1, minWidth: 0 }}
+                                    />
+                                    <Button
+                                      variant="icon-only"
+                                      size="xs"
+                                      aria-label="Remove attribute"
+                                      onClick={() =>
+                                        setAttributes(
+                                          attributes.filter((_, index) => index !== attributeIndex)
+                                        )
+                                      }
                                     >
-                                      <TbPlus size={10} /> Add attribute
-                                    </button>
-                                  )}
-                                </div>
-                              </>
-                            );
-                          })()}
-                        {item.kind === 'query' && (
-                          <>
-                            <hr className={layoutStyles.blockGroupDivider} />
-                            <div className={styles.optionsEditor}>
-                              <label>
-                                <span>Query</span>
-                                <TextArea
-                                  aria-label={`${itemLabel(item, catalog, selectedSchema.id)} query text`}
-                                  value={item.queryText}
+                                      <TbTrash size={11} />
+                                    </Button>
+                                  </span>
+                                ))}
+                                {targetFields.length > 0 && (
+                                  <button
+                                    type="button"
+                                    className={layoutStyles.addBlockBtn}
+                                    onClick={() => {
+                                      const next = targetFields.find(
+                                        ({ field }) =>
+                                          !attributes.some(
+                                            attribute => attribute.fieldId === field.id
+                                          )
+                                      );
+                                      if (next)
+                                        setAttributes([...attributes, { fieldId: next.field.id }]);
+                                    }}
+                                  >
+                                    <TbPlus size={10} /> Add attribute
+                                  </button>
+                                )}
+                              </div>
+                            </>
+                          );
+                        })()}
+                      {item.kind === 'query' && (
+                        <>
+                          <hr className={layoutStyles.blockGroupDivider} />
+                          <div className={styles.optionsEditor}>
+                            <label>
+                              <span>Query</span>
+                              <TextArea
+                                aria-label={`${itemLabel(item, catalog, selectedSchema.id)} query text`}
+                                value={item.queryText}
+                                onChange={value =>
+                                  updateSection(section.id, current => ({
+                                    ...current,
+                                    items: current.items.map((entry, index) =>
+                                      index === itemIndex && entry.kind === 'query'
+                                        ? { ...entry, queryText: value ?? '' }
+                                        : entry
+                                    )
+                                  }))
+                                }
+                                rows={2}
+                                style={{ width: '100%' }}
+                              />
+                            </label>
+                            <label>
+                              <span>Presentation</span>
+                              <Select.Root
+                                value={item.presentation ?? 'list'}
+                                onChange={value => {
+                                  const presentation = (value ?? 'list') as 'chips' | 'list';
+                                  updateSection(section.id, current => ({
+                                    ...current,
+                                    items: current.items.map((entry, index) =>
+                                      index === itemIndex && entry.kind === 'query'
+                                        ? { ...entry, presentation }
+                                        : entry
+                                    )
+                                  }));
+                                }}
+                              >
+                                <Select.Item value="list">List</Select.Item>
+                                <Select.Item value="chips">Chips</Select.Item>
+                              </Select.Root>
+                            </label>
+                            {(item.fields ?? []).map((field, fieldIndex) => (
+                              <span key={fieldIndex} className={layoutStyles.block}>
+                                <TextInput
+                                  value={field.fieldId}
                                   onChange={value =>
                                     updateSection(section.id, current => ({
                                       ...current,
                                       items: current.items.map((entry, index) =>
                                         index === itemIndex && entry.kind === 'query'
-                                          ? { ...entry, queryText: value ?? '' }
+                                          ? {
+                                              ...entry,
+                                              fields: (entry.fields ?? []).map((entry2, index2) =>
+                                                index2 === fieldIndex
+                                                  ? { ...entry2, fieldId: value ?? '' }
+                                                  : entry2
+                                              )
+                                            }
                                           : entry
                                       )
                                     }))
                                   }
-                                  rows={2}
-                                  style={{ width: '100%' }}
+                                  style={{ flex: 1, minWidth: 0 }}
                                 />
-                              </label>
-                              <label>
-                                <span>Presentation</span>
-                                <Select.Root
-                                  value={item.presentation ?? 'list'}
-                                  onChange={value => {
-                                    const presentation = (value ?? 'list') as 'chips' | 'list';
+                                <TextInput
+                                  value={field.label ?? ''}
+                                  onChange={value =>
                                     updateSection(section.id, current => ({
                                       ...current,
                                       items: current.items.map((entry, index) =>
                                         index === itemIndex && entry.kind === 'query'
-                                          ? { ...entry, presentation }
+                                          ? {
+                                              ...entry,
+                                              fields: (entry.fields ?? []).map((entry2, index2) =>
+                                                index2 === fieldIndex
+                                                  ? {
+                                                      ...entry2,
+                                                      label:
+                                                        value && value.trim() !== ''
+                                                          ? value
+                                                          : undefined
+                                                    }
+                                                  : entry2
+                                              )
+                                            }
                                           : entry
                                       )
-                                    }));
-                                  }}
+                                    }))
+                                  }
+                                  style={{ flex: 1, minWidth: 0 }}
+                                />
+                                <Button
+                                  variant="icon-only"
+                                  size="xs"
+                                  aria-label="Remove field"
+                                  onClick={() =>
+                                    updateSection(section.id, current => ({
+                                      ...current,
+                                      items: current.items.map((entry, index) =>
+                                        index === itemIndex && entry.kind === 'query'
+                                          ? {
+                                              ...entry,
+                                              fields: (entry.fields ?? []).filter(
+                                                (_, index2) => index2 !== fieldIndex
+                                              )
+                                            }
+                                          : entry
+                                      )
+                                    }))
+                                  }
                                 >
-                                  <Select.Item value="list">List</Select.Item>
-                                  <Select.Item value="chips">Chips</Select.Item>
-                                </Select.Root>
-                              </label>
-                              {(item.fields ?? []).map((field, fieldIndex) => (
-                                <span key={fieldIndex} className={layoutStyles.block}>
-                                  <TextInput
-                                    value={field.fieldId}
-                                    onChange={value =>
-                                      updateSection(section.id, current => ({
-                                        ...current,
-                                        items: current.items.map((entry, index) =>
-                                          index === itemIndex && entry.kind === 'query'
-                                            ? {
-                                                ...entry,
-                                                fields: (entry.fields ?? []).map(
-                                                  (entry2, index2) =>
-                                                    index2 === fieldIndex
-                                                      ? { ...entry2, fieldId: value ?? '' }
-                                                      : entry2
-                                                )
-                                              }
-                                            : entry
-                                        )
-                                      }))
-                                    }
-                                    style={{ flex: 1, minWidth: 0 }}
-                                  />
-                                  <TextInput
-                                    value={field.label ?? ''}
-                                    onChange={value =>
-                                      updateSection(section.id, current => ({
-                                        ...current,
-                                        items: current.items.map((entry, index) =>
-                                          index === itemIndex && entry.kind === 'query'
-                                            ? {
-                                                ...entry,
-                                                fields: (entry.fields ?? []).map(
-                                                  (entry2, index2) =>
-                                                    index2 === fieldIndex
-                                                      ? {
-                                                          ...entry2,
-                                                          label:
-                                                            value && value.trim() !== ''
-                                                              ? value
-                                                              : undefined
-                                                        }
-                                                      : entry2
-                                                )
-                                              }
-                                            : entry
-                                        )
-                                      }))
-                                    }
-                                    style={{ flex: 1, minWidth: 0 }}
-                                  />
-                                  <Button
-                                    variant="icon-only"
-                                    size="xs"
-                                    aria-label="Remove field"
-                                    onClick={() =>
-                                      updateSection(section.id, current => ({
-                                        ...current,
-                                        items: current.items.map((entry, index) =>
-                                          index === itemIndex && entry.kind === 'query'
-                                            ? {
-                                                ...entry,
-                                                fields: (entry.fields ?? []).filter(
-                                                  (_, index2) => index2 !== fieldIndex
-                                                )
-                                              }
-                                            : entry
-                                        )
-                                      }))
-                                    }
-                                  >
-                                    <TbTrash size={11} />
-                                  </Button>
-                                </span>
-                              ))}
-                              <button
-                                type="button"
-                                className={layoutStyles.addBlockBtn}
-                                onClick={() =>
+                                  <TbTrash size={11} />
+                                </Button>
+                              </span>
+                            ))}
+                            <button
+                              type="button"
+                              className={layoutStyles.addBlockBtn}
+                              onClick={() =>
+                                updateSection(section.id, current => ({
+                                  ...current,
+                                  items: current.items.map((entry, index) =>
+                                    index === itemIndex && entry.kind === 'query'
+                                      ? {
+                                          ...entry,
+                                          fields: [...(entry.fields ?? []), { fieldId: '' }]
+                                        }
+                                      : entry
+                                  )
+                                }))
+                              }
+                            >
+                              <TbPlus size={10} /> Add field
+                            </button>
+                          </div>
+                        </>
+                      )}
+                      {item.kind === 'rollup' && (
+                        <>
+                          <hr className={layoutStyles.blockGroupDivider} />
+                          <div className={styles.optionsEditor}>
+                            <label>
+                              <span>Source</span>
+                              <Select.Root
+                                value={rollupSourceKey(
+                                  item.fieldId,
+                                  item.sourceSchemaId,
+                                  item.traversal
+                                )}
+                                onChange={value => {
+                                  const source = rollupSources.find(
+                                    candidate => candidate.key === value
+                                  );
+                                  if (!source) return;
                                   updateSection(section.id, current => ({
                                     ...current,
                                     items: current.items.map((entry, index) =>
-                                      index === itemIndex && entry.kind === 'query'
+                                      index === itemIndex && entry.kind === 'rollup'
                                         ? {
                                             ...entry,
-                                            fields: [...(entry.fields ?? []), { fieldId: '' }]
+                                            fieldId: source.fieldId,
+                                            sourceSchemaId: source.sourceSchemaId,
+                                            traversal: source.traversal,
+                                            format:
+                                              entry.aggregation === 'count'
+                                                ? 'number'
+                                                : source.fieldType === 'currency'
+                                                  ? 'currency'
+                                                  : 'decimal1'
                                           }
                                         : entry
                                     )
-                                  }))
-                                }
+                                  }));
+                                }}
                               >
-                                <TbPlus size={10} /> Add field
-                              </button>
-                            </div>
-                          </>
-                        )}
-                        {item.kind === 'rollup' && (
-                          <>
-                            <hr className={layoutStyles.blockGroupDivider} />
-                            <div className={styles.optionsEditor}>
-                              <label>
-                                <span>Source</span>
-                                <Select.Root
-                                  value={rollupSourceKey(
-                                    item.fieldId,
-                                    item.sourceSchemaId,
-                                    item.traversal
-                                  )}
-                                  onChange={value => {
-                                    const source = rollupSources.find(
-                                      candidate => candidate.key === value
-                                    );
-                                    if (!source) return;
-                                    updateSection(section.id, current => ({
-                                      ...current,
-                                      items: current.items.map((entry, index) =>
-                                        index === itemIndex && entry.kind === 'rollup'
-                                          ? {
-                                              ...entry,
-                                              fieldId: source.fieldId,
-                                              sourceSchemaId: source.sourceSchemaId,
-                                              traversal: source.traversal,
-                                              format:
-                                                entry.aggregation === 'count'
-                                                  ? 'number'
-                                                  : source.fieldType === 'currency'
-                                                    ? 'currency'
-                                                    : 'decimal1'
-                                            }
-                                          : entry
-                                      )
-                                    }));
-                                  }}
-                                >
-                                  {rollupSources.map(source => (
-                                    <Select.Item key={source.key} value={source.key}>
-                                      {source.label}
-                                    </Select.Item>
-                                  ))}
-                                </Select.Root>
-                              </label>
-                              <label>
-                                <span>Aggregation</span>
-                                <Select.Root
-                                  value={item.aggregation}
-                                  onChange={value => {
-                                    const aggregation = (value ?? 'sum') as 'avg' | 'sum' | 'count';
-                                    updateSection(section.id, current => ({
-                                      ...current,
-                                      items: current.items.map((entry, index) =>
-                                        index === itemIndex && entry.kind === 'rollup'
-                                          ? {
-                                              ...entry,
-                                              aggregation,
-                                              format:
-                                                aggregation === 'count'
-                                                  ? 'number'
-                                                  : entry.format === 'number'
-                                                    ? 'decimal1'
-                                                    : entry.format
-                                            }
-                                          : entry
-                                      )
-                                    }));
-                                  }}
-                                >
-                                  <Select.Item value="sum">Sum</Select.Item>
-                                  <Select.Item value="avg">Average</Select.Item>
-                                  <Select.Item value="count">Count</Select.Item>
-                                </Select.Root>
-                              </label>
-                              <label>
-                                <span>Format</span>
-                                <Select.Root
-                                  value={item.format}
-                                  disabled={item.aggregation === 'count'}
-                                  onChange={value => {
-                                    const format = (value ?? 'number') as
-                                      | 'number'
-                                      | 'decimal1'
-                                      | 'currency'
-                                      | 'percent';
-                                    updateSection(section.id, current => ({
-                                      ...current,
-                                      items: current.items.map((entry, index) =>
-                                        index === itemIndex && entry.kind === 'rollup'
-                                          ? { ...entry, format }
-                                          : entry
-                                      )
-                                    }));
-                                  }}
-                                >
-                                  <Select.Item value="number">Number</Select.Item>
-                                  <Select.Item value="decimal1">One decimal</Select.Item>
-                                  <Select.Item value="currency">Currency</Select.Item>
-                                  <Select.Item value="percent">Percent</Select.Item>
-                                </Select.Root>
-                              </label>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                  <AddMenu label="Add content" groups={addGroupsForSection(section.id)} />
+                                {rollupSources.map(source => (
+                                  <Select.Item key={source.key} value={source.key}>
+                                    {source.label}
+                                  </Select.Item>
+                                ))}
+                              </Select.Root>
+                            </label>
+                            <label>
+                              <span>Aggregation</span>
+                              <Select.Root
+                                value={item.aggregation}
+                                onChange={value => {
+                                  const aggregation = (value ?? 'sum') as 'avg' | 'sum' | 'count';
+                                  updateSection(section.id, current => ({
+                                    ...current,
+                                    items: current.items.map((entry, index) =>
+                                      index === itemIndex && entry.kind === 'rollup'
+                                        ? {
+                                            ...entry,
+                                            aggregation,
+                                            format:
+                                              aggregation === 'count'
+                                                ? 'number'
+                                                : entry.format === 'number'
+                                                  ? 'decimal1'
+                                                  : entry.format
+                                          }
+                                        : entry
+                                    )
+                                  }));
+                                }}
+                              >
+                                <Select.Item value="sum">Sum</Select.Item>
+                                <Select.Item value="avg">Average</Select.Item>
+                                <Select.Item value="count">Count</Select.Item>
+                              </Select.Root>
+                            </label>
+                            <label>
+                              <span>Format</span>
+                              <Select.Root
+                                value={item.format}
+                                disabled={item.aggregation === 'count'}
+                                onChange={value => {
+                                  const format = (value ?? 'number') as
+                                    | 'number'
+                                    | 'decimal1'
+                                    | 'currency'
+                                    | 'percent';
+                                  updateSection(section.id, current => ({
+                                    ...current,
+                                    items: current.items.map((entry, index) =>
+                                      index === itemIndex && entry.kind === 'rollup'
+                                        ? { ...entry, format }
+                                        : entry
+                                    )
+                                  }));
+                                }}
+                              >
+                                <Select.Item value="number">Number</Select.Item>
+                                <Select.Item value="decimal1">One decimal</Select.Item>
+                                <Select.Item value="currency">Currency</Select.Item>
+                                <Select.Item value="percent">Percent</Select.Item>
+                              </Select.Root>
+                            </label>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  ))}
                 </div>
-              ))}
+                <AddMenu label="Add content" groups={addGroupsForSection(section.id)} />
+              </div>
+            ))}
 
-              {canEdit && (
-                <button
-                  type="button"
-                  className={layoutStyles.addPanelBtn}
-                  onClick={() =>
-                    updateProfile({ ...profile, sections: [...profile.sections, newSection()] })
-                  }
-                >
-                  <TbPlus size={11} /> Add section
-                </button>
-              )}
-            </div>
+            {canEdit && (
+              <button
+                type="button"
+                className={layoutStyles.addPanelBtn}
+                onClick={() =>
+                  updateProfile({ ...profile, sections: [...profile.sections, newSection()] })
+                }
+              >
+                <TbPlus size={11} /> Add section
+              </button>
+            )}
           </div>
+        </div>
       </fieldset>
     </>
   );
