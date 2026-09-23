@@ -9,25 +9,20 @@ import { caseKindLabel } from '../../../utils/governanceCaseLabels';
 import { useDataStewardshipQueue } from '../dataStewardshipQueue';
 import {
   EntityDrawerProviderStatus,
-  type EntityDrawerProviderContext,
   type EntityDrawerProviderDefinition,
-  type EntityDrawerProviderProps
+  type EntityDrawerProviderProps,
+  type EntityDrawerRequiredField
 } from '../../../sections/entities/entityDrawer/EntityDrawerProviderRegistry';
 import styles from './DatasetDrawer.module.css';
 
-const DATA_STEWARDSHIP_FIELD_IDS = [
-  'classification',
-  'steward',
-  'custodian',
-  'review_date',
-  'review_status',
-  'stewardship_status'
-] as const;
-
-const supportsDataStewardshipSchema = (context: EntityDrawerProviderContext): boolean =>
-  DATA_STEWARDSHIP_FIELD_IDS.every(fieldId =>
-    context.schema.fields.some(field => field.id === fieldId)
-  );
+const DATA_STEWARDSHIP_REQUIRED_FIELDS = [
+  { id: 'classification' },
+  { id: 'steward' },
+  { id: 'custodian' },
+  { id: 'review_date' },
+  { id: 'review_status' },
+  { id: 'stewardship_status' }
+] satisfies readonly EntityDrawerRequiredField[];
 
 const ProviderFrame = ({
   label,
@@ -189,22 +184,22 @@ const AssessmentsProvider = ({ label, showLabel, context }: EntityDrawerProvider
 export const dataStewardshipEntityDrawerProviderDefinitions = [
   {
     slotId: 'data-stewardship.coverage',
-    supports: supportsDataStewardshipSchema,
+    requiredFields: DATA_STEWARDSHIP_REQUIRED_FIELDS,
     Component: CoverageProvider
   },
   {
     slotId: 'data-stewardship.queue-items',
-    supports: supportsDataStewardshipSchema,
+    requiredFields: DATA_STEWARDSHIP_REQUIRED_FIELDS,
     Component: QueueItemsProvider
   },
   {
     slotId: 'data-stewardship.change-cases',
-    supports: supportsDataStewardshipSchema,
+    requiredFields: DATA_STEWARDSHIP_REQUIRED_FIELDS,
     Component: ChangeCasesProvider
   },
   {
     slotId: 'data-stewardship.assessments',
-    supports: supportsDataStewardshipSchema,
+    requiredFields: DATA_STEWARDSHIP_REQUIRED_FIELDS,
     Component: AssessmentsProvider
   }
 ] satisfies readonly EntityDrawerProviderDefinition[];

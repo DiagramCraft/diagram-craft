@@ -1,6 +1,9 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
-import type { EntityDrawerProviderContext } from '../../../sections/entities/entityDrawer/EntityDrawerProviderRegistry';
+import {
+  providerSupportsContext,
+  type EntityDrawerProviderContext
+} from '../../../sections/entities/entityDrawer/EntityDrawerProviderRegistry';
 import { dataStewardshipEntityDrawerProviderDefinitions } from './DataStewardshipEntityDrawerProviders';
 
 const mocks = vi.hoisted(() => ({
@@ -100,9 +103,10 @@ describe('Data Stewardship entity drawer providers', () => {
   });
 
   it('supports only schemas with the Data Entity stewardship fields', () => {
-    expect(provider('data-stewardship.coverage').supports(context())).toBe(true);
+    expect(providerSupportsContext(provider('data-stewardship.coverage'), context())).toBe(true);
     expect(
-      provider('data-stewardship.coverage').supports(
+      providerSupportsContext(
+        provider('data-stewardship.coverage'),
         context({ schema: { id: 'other', name: 'Other', fields: [] } as never })
       )
     ).toBe(false);

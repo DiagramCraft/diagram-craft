@@ -9,7 +9,8 @@ import {
   EntityDrawerProviderStatus,
   type EntityDrawerProviderContext,
   type EntityDrawerProviderDefinition,
-  type EntityDrawerProviderProps
+  type EntityDrawerProviderProps,
+  type EntityDrawerRequiredField
 } from '../../../sections/entities/entityDrawer/EntityDrawerProviderRegistry';
 import { formatCurrencyValue } from '../../../utils/currencyFormat';
 import { resolveVendorManagementConfig } from '../vendorManagementQueries';
@@ -19,21 +20,18 @@ import { computeVendorRisk, VENDOR_RISK_BAND_COLOR } from '../vendorRisk';
 import { vendorFieldValue } from '../vendorFieldDisplay';
 import styles from './VendorDrawer.module.css';
 
-const VENDOR_FIELD_IDS = [
-  'category',
-  'tier',
-  'status',
-  'relationship_owner',
-  'cost_centre',
-  'security_risk',
-  'concentration_risk',
-  'financial_risk',
-  'compliance_risk',
-  'criticality'
-] as const;
-
-const supportsVendorSchema = (context: EntityDrawerProviderContext): boolean =>
-  VENDOR_FIELD_IDS.every(fieldId => context.schema.fields.some(field => field.id === fieldId));
+const VENDOR_REQUIRED_FIELDS = [
+  { id: 'category' },
+  { id: 'tier' },
+  { id: 'status' },
+  { id: 'relationship_owner' },
+  { id: 'cost_centre' },
+  { id: 'security_risk' },
+  { id: 'concentration_risk' },
+  { id: 'financial_risk' },
+  { id: 'compliance_risk' },
+  { id: 'criticality' }
+] satisfies readonly EntityDrawerRequiredField[];
 
 const useVendorProviderConfiguration = (workspaceId: string) => {
   const query = useQuery(workspaceCapabilityConfigurationsQuery(workspaceId));
@@ -332,32 +330,32 @@ const VendorCapabilitiesFundedProvider = ({ label, showLabel }: EntityDrawerProv
 export const vendorEntityDrawerProviderDefinitions = [
   {
     slotId: 'vendor.risk',
-    supports: supportsVendorSchema,
+    requiredFields: VENDOR_REQUIRED_FIELDS,
     Component: VendorRiskProvider
   },
   {
     slotId: 'vendor.spend',
-    supports: supportsVendorSchema,
+    requiredFields: VENDOR_REQUIRED_FIELDS,
     Component: VendorSpendProvider
   },
   {
     slotId: 'vendor.contracts',
-    supports: supportsVendorSchema,
+    requiredFields: VENDOR_REQUIRED_FIELDS,
     Component: VendorContractsProvider
   },
   {
     slotId: 'vendor.applications-supplied',
-    supports: supportsVendorSchema,
+    requiredFields: VENDOR_REQUIRED_FIELDS,
     Component: VendorApplicationsSuppliedProvider
   },
   {
     slotId: 'vendor.technology-lifecycle',
-    supports: supportsVendorSchema,
+    requiredFields: VENDOR_REQUIRED_FIELDS,
     Component: VendorTechnologyLifecycleProvider
   },
   {
     slotId: 'vendor.capabilities-funded',
-    supports: supportsVendorSchema,
+    requiredFields: VENDOR_REQUIRED_FIELDS,
     Component: VendorCapabilitiesFundedProvider
   }
 ] satisfies readonly EntityDrawerProviderDefinition[];
