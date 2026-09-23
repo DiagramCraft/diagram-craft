@@ -1,11 +1,10 @@
 import { useMemo } from 'react';
-import { Link } from '@tanstack/react-router';
 import { TypeBadge } from '../../../../../components/TypeBadge';
 import { StatusChip } from '../../../../../components/StatusChip';
 import { useEntities } from '../../../../../hooks/useEntities';
 import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
 import { useMdxContext } from '../../../MdxContext';
-import { asEntityPublicId, entityDetailRoute } from '../../../../../routes/publicObjectRoutes';
+import { EntityNavigationLink } from '../../../../../components/EntityNavigationLink';
 import { resolveSchemaColor } from '../../../../../lib/schemaPresentation';
 import { Table } from '../../../../../components/table/Table';
 import styles from './EntityTable.module.css';
@@ -116,12 +115,12 @@ export const EntityTable = ({ schema, owner, lifecycle, limit }: Props) => {
                     )
                   }
                   title={
-                    <Link
-                      {...entityDetailRoute(workspaceSlug, asEntityPublicId(entity._publicId))}
+                    <EntityNavigationLink
+                      publicId={entity._publicId}
                       style={{ color: 'inherit', textDecoration: 'none' }}
                     >
                       {entity._name ?? entity._slug}
-                    </Link>
+                    </EntityNavigationLink>
                   }
                   subtitle={entity._description}
                 />

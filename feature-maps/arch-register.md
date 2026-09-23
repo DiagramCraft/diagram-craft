@@ -297,15 +297,15 @@
           without removing them, and the
           sidebar's owner facet dims tiles the same way. Clicking a domain header (or a node in the sidebar's
           capability tree) focuses the grid on that subtree, with an "All domains" control to clear it (`focus`
-          and `owner` are carried in the URL). Clicking a tile opens the capability's drawer via the workspace-wide
-          `drawer` search param.
+          and `owner` are carried in the URL). Clicking a tile opens the capability's drawer without changing the
+          URL; the drawer's own link-icon action copies a shareable `?drawer=<id>` link.
 
         - @id:ar.strategy.capabilities The Capabilities section lists every Business Capability with columns chosen
           by the workspace's view configuration (@id:ar.strategy.view-config) — capability fields, subtree roll-up
           metrics, and structural columns such as level, owner, and supported-application count — plus level and
           owner filters, and sortable columns. Rows open the
-          capability's drawer via the workspace-wide `drawer` search param (see below) and carry a separate "Open
-          in Entities" action to the Home entity browser. The section's own primary sidebar swaps the app's usual
+          capability's drawer (see below) and carry a separate "Open in Entities" action to the Home entity
+          browser. The section's own primary sidebar swaps the app's usual
           section nav list for a capability hierarchy tree (clicking a node filters the table to that subtree) plus
           an owner facet with counts.
 
@@ -334,7 +334,7 @@
           table with maturity, gap, investment, and application roll-ups over each capability's containment subtree.
           Measures render a baseline → current → target progress bar from the Measure schema's measurement fields. A
           "New objective" action opens the entity-create dialog pre-set to the Objective schema. Selecting a
-          capability opens the shared capability drawer via the workspace-wide `drawer` search param.
+          capability opens the shared capability drawer.
 
         - @id:ar.strategy.traceability The Traceability section has two tabs. **Trace chain** is a three-column
           hop walker — Objective → Capability → Application — walked one hop at a time over the Objective Supports
@@ -369,8 +369,8 @@
           name, sort by name / spend / risk / next renewal, and a sidebar of Tier, Category, and Relationship Owner
           facets (each showing a count, driven off the Vendor schema's own field options and the fetched vendors'
           values). Next renewal is the earliest upcoming `Contract.contract_end` across a vendor's own Contracts.
-          Selecting a vendor opens the configurable shared vendor drawer, deep-linkable via the workspace-wide
-          `drawer` search param: its schema profile preserves the Vendor schema's derived `risk` rating (weighted
+          Selecting a vendor opens the configurable shared vendor drawer (deep-linkable via its own link-icon
+          action, see below): its schema profile preserves the Vendor schema's derived `risk` rating (weighted
           across the vendor's security, concentration, financial, and compliance risk fields and lifted by
           criticality), with the existing Low/Moderate/Elevated/High band presentation, attributes, spend (`vmSpend`, summed across the vendor's own
           Contracts via a generic relation roll-up, the vendor's Contracts in a configurable list with annual cost, the Systems its contracts serve ("Applications supplied"), and a
@@ -392,8 +392,8 @@
           renewal badges, configured terms and cost fields, a link back to the contract's vendor drawer, and the
           `contract.systems-used` content slot). The Vendor link opens a nested Vendor drawer while preserving the
           Contract drawer; Back, Escape, or close returns to the parent, and a direct `drawer=<id>` link opens the
-          linked entity as the stack root. The drawer is deep-linkable through the workspace-wide `drawer` search
-          param, mirroring the Vendors section's shared drawer.
+          linked entity as the stack root. Opening the drawer never changes the URL itself; its own link-icon action
+          copies a shareable `drawer=<id>` link, mirroring the Vendors section's shared drawer.
 
         - @id:ar.vendor-management.spend The Spend section is a portfolio-wide spend roll-up: four header stats (total
           annualised spend, fixed-term commitment not auto-renewing, the Strategic tier's share of spend,
@@ -402,8 +402,8 @@
           (share bar, spend, % of total, contract count, largest contract) sorted by spend descending. A sidebar
           of Cost Centre (each row showing that centre's own spend) and Owner facets narrows the roll-up rows (the
           header stats stay portfolio-wide). Selecting a vendor row or share-strip segment (not available
-          when grouped by cost centre) opens the shared vendor drawer in place via the workspace-wide `drawer`
-          search param. Grouping by capability shows an explanatory empty state instead of
+          when grouped by cost centre) opens the shared vendor drawer in place. Grouping by capability shows an
+          explanatory empty state instead of
           data — no Contract-to-capability link exists yet.
 
         - @id:ar.vendor-management.risk The Risk section has four header stats (High risk vendor count, vendors with
@@ -455,8 +455,8 @@
         - @id:ar.risk-compliance.risks The Risks section has a sortable register (search; sidebar facets for
           Category, Status, Owner, and an "outside appetite" toggle for residual scores banding high/critical) and a
           5×5 likelihood × impact matrix, toggled by an inherent/residual axis switch — mutually exclusive views, not
-          shown side by side. Selecting a risk opens the shared Risk drawer via the workspace-wide `drawer` search
-          parameter; legacy `risk-compliance/risks/$riskId` links redirect there. The drawer shows likelihood/impact,
+          shown side by side. Selecting a risk opens the shared Risk drawer; legacy `risk-compliance/risks/$riskId`
+          links redirect there. The drawer shows likelihood/impact,
           the existing `inherent_risk_score` and
           `residual_risk_score` and `risk_coverage` derived fields (the latter a numeric 0–100 percentage calculated
           from the mitigating-control relations), attributes, the list of mitigating Controls with each relation's
@@ -499,7 +499,7 @@
           of the digit. Control row headers are clickable, opening the shared Control drawer; asset-dimension column
           headers open the schema-configured generic entity drawer in place, while Risk-dimension column headers are
           read-only. Selecting a control, a Coverage-view risk row, or a Coverage/Traceability-view asset row all open
-          through the same workspace-wide `drawer` search param, stacking rather than competing: the template-authored
+          through the same shared drawer stack, stacking rather than competing: the template-authored
           default drawer profile preserves the current attributes and `control_type` badge, while registered Risk &
           Compliance content slots show the Risks it mitigates (with the `coverage`/`effectiveness` it provides each one) and the Data Entities
           it protects (via `control-affects`).
@@ -598,8 +598,7 @@
           faked, quality/domain aren't offered as sort options, and the stat strip substitutes "Missing a steward"
           for "Certified" — mirroring how `ar.risk-compliance.overview`/`ar.risk-compliance.controls` adapted their
           own design references to the fields the shipped schema actually has. Opening a dataset (from the gaps
-          panel or the table) opens the configurable Data Entity drawer via the workspace-wide `drawer` search
-          param. Its default profile preserves the
+          panel or the table) opens the configurable Data Entity drawer. Its default profile preserves the
           dataset's attributes and stewardship fields and exposes Governance items, Cases, and the generic
           Assessments slot; unsupported placeholder-only Exceptions, Flows, and Systems sections are omitted.
 
@@ -713,8 +712,8 @@
           between the catalog above and two flat, sortable cross-API tables built from the same feed: every
           operation/message across the APIs in scope, or just the ones flagged deprecated (method, path, API,
           deprecated flag) — there is no sunset-date countdown, since no such field exists on the normalized
-          operation model. A row click (in any view) opens a deep-linkable spec drawer (via the workspace-wide
-          `drawer` search param) shared with any other section that links into a spec: attributes, providers/consumers, and the full specification
+          operation model. A row click (in any view) opens a deep-linkable spec drawer (deep-linkable via its own
+          link-icon action) shared with any other section that links into a spec: attributes, providers/consumers, and the full specification
           viewer — source/version picker, revision status notices, normalized operations/messages list,
           and a raw-source preview dialog — rendered through the configurable entity drawer with the specification
           viewer supplied by a registered API provider slot, reusing the same viewer as the Entities app's API
@@ -776,6 +775,20 @@
 
         - @id:ar.entities.hierarchy Users can organize entities into hierarchical scopes and navigate from parents to
           descendants and related records.
+
+        - @id:ar.entities.drawer-first-links Inline entity references across the app — table and list rows, relation
+          endpoints, search results, dashboard widgets, the activity feed, the governance inbox, notifications, AI
+          assistant responses, and markdown-authored entity links/mentions — open the entity's drawer by default
+          instead of navigating to its full overview page. Opening, navigating within, and closing the drawer never
+          changes the URL; the drawer's own link-icon action copies a shareable `drawer=<id>` link for when one is
+          wanted (@id:ar.workspace.configuration.entity-drawers). Wherever the reference renders as a real link (the
+          main entity table's name cell, relation endpoints, markdown mentions), a modifier-click or right-click
+          "open in new tab" still opens the full overview page natively. A few surfaces are deliberately exempt and
+          always navigate to the full page: the entity's own detail screen managing its own tab/URL state, the
+          drawer's own "Open record in Entities" action, the redirect after creating a new entity, returning from an
+          entity's diagram to the entity itself, a markdown document's own breadcrumb close action, a graph
+          embed's "View full graph" link, an entity-card embed's "View in catalog" action, and a notification that
+          deep-links to an entity's Discussions tab (which the drawer has no equivalent surface for).
 
         - @id:ar.entities.fields Users can view and edit standard and schema-defined fields, including owners,
           lifecycle, links, references, typed relations, currency values, ordered multi-valued scalar values, custom

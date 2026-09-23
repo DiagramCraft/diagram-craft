@@ -2,12 +2,8 @@ import { useNavigate } from '@tanstack/react-router';
 import { AuditLogEntry } from '@arch-register/api-types/auditContract';
 import { useAuditLog } from '../../../hooks/useAudit';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
-import {
-  asEntityPublicId,
-  asProjectPublicId,
-  entityDetailRoute,
-  projectDetailRoute
-} from '../../../routes/publicObjectRoutes';
+import { useEntityDrawer } from '../../entities/entityDrawer/useEntityDrawer';
+import { asProjectPublicId, projectDetailRoute } from '../../../routes/publicObjectRoutes';
 import { ENTITY_TYPE_LABELS, OPERATION_LABELS } from '../../../utils/auditLabels';
 import { formatRelativeTime } from '../../../utils/dateFormat';
 import styles from './ActivityFeedWidget.module.css';
@@ -22,6 +18,7 @@ type Props = {
 
 export const ActivityFeedWidget = ({ config }: Props) => {
   const navigate = useNavigate();
+  const { openEntityDrawer } = useEntityDrawer();
   const { workspaceSlug, permissions } = useWorkspaceContext();
   const { canViewAudit } = permissions;
   const limit = config.limit ?? DEFAULT_ACTIVITY_LIMIT;
@@ -35,8 +32,7 @@ export const ActivityFeedWidget = ({ config }: Props) => {
   const handleActivityClick = (entry: AuditLogEntry) => {
     switch (entry.entity_type) {
       case 'entity':
-        if (entry.public_id)
-          navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(entry.public_id)));
+        if (entry.public_id) openEntityDrawer(entry.public_id);
         break;
       case 'project':
         if (entry.public_id) {

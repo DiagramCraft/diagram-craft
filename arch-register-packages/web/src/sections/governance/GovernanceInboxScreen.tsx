@@ -21,7 +21,8 @@ import type {
   GovernanceTask
 } from '@arch-register/api-types/governanceContract';
 import styles from './GovernanceInboxScreen.module.css';
-import { entityDetailRoute, asEntityPublicId } from '../../routes/publicObjectRoutes';
+import { useEntityDrawer } from '../entities/entityDrawer/useEntityDrawer';
+import { EntityNavigationLink } from '../../components/EntityNavigationLink';
 import { workspaceMarkdownRoute } from '../../routes/publicObjectRoutes';
 import { projectDetailRoute, asProjectPublicId } from '../../routes/publicObjectRoutes';
 import { entityDetailQuery } from '../../queries/entities';
@@ -70,6 +71,7 @@ const describeWaitingOn = (assignment: GovernanceAssignment) => {
 export const GovernanceInboxScreen = () => {
   const { workspaceSlug } = useParams({ strict: false });
   const navigate = useNavigate();
+  const { openEntityDrawer } = useEntityDrawer();
   const workspace = workspaceSlug ?? '';
   const [scope, setScope] = useState<'assigned' | 'submitted'>('assigned');
   const [state, setState] = useState<'open' | 'completed'>('open');
@@ -431,7 +433,7 @@ export const GovernanceInboxScreen = () => {
               const proposalNote = latestRevision?.message;
               const viewSubject = () => {
                 if (subjectEntity?._publicId) {
-                  navigate(entityDetailRoute(workspace, asEntityPublicId(subjectEntity._publicId)));
+                  openEntityDrawer(subjectEntity._publicId);
                 } else if (submission.case.subjectType === 'document') {
                   navigate(
                     workspaceMarkdownRoute(workspace, submission.case.subjectId, {
@@ -490,20 +492,9 @@ export const GovernanceInboxScreen = () => {
                           <span key={memberEntity._uid}>
                             {index > 0 && <span>, </span>}
                             {memberEntity._publicId ? (
-                              <a
-                                href="#"
-                                onClick={event => {
-                                  event.preventDefault();
-                                  navigate(
-                                    entityDetailRoute(
-                                      workspace,
-                                      asEntityPublicId(memberEntity._publicId)
-                                    )
-                                  );
-                                }}
-                              >
+                              <EntityNavigationLink publicId={memberEntity._publicId}>
                                 {memberEntity._name}
-                              </a>
+                              </EntityNavigationLink>
                             ) : (
                               memberEntity._name
                             )}
@@ -643,7 +634,7 @@ export const GovernanceInboxScreen = () => {
             const proposalNote = latestRevision?.message;
             const viewSubject = () => {
               if (subjectEntity?._publicId) {
-                navigate(entityDetailRoute(workspace, asEntityPublicId(subjectEntity._publicId)));
+                openEntityDrawer(subjectEntity._publicId);
               } else if (task.case.subjectType === 'document') {
                 navigate(
                   workspaceMarkdownRoute(workspace, task.case.subjectId, { mode: 'preview' })
@@ -675,20 +666,9 @@ export const GovernanceInboxScreen = () => {
                         <span key={memberEntity._uid}>
                           {index > 0 && <span>, </span>}
                           {memberEntity._publicId ? (
-                            <a
-                              href="#"
-                              onClick={event => {
-                                event.preventDefault();
-                                navigate(
-                                  entityDetailRoute(
-                                    workspace,
-                                    asEntityPublicId(memberEntity._publicId)
-                                  )
-                                );
-                              }}
-                            >
+                            <EntityNavigationLink publicId={memberEntity._publicId}>
                               {memberEntity._name}
-                            </a>
+                            </EntityNavigationLink>
                           ) : (
                             memberEntity._name
                           )}

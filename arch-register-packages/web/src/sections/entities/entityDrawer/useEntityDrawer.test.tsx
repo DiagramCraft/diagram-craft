@@ -6,14 +6,11 @@ import { EntityDrawerStackProvider, useEntityDrawer } from './useEntityDrawer';
 
 const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
-  historyBack: vi.fn(),
-  historyGo: vi.fn(),
   search: {} as Record<string, unknown>
 }));
 
 vi.mock('@tanstack/react-router', () => ({
   useNavigate: () => mocks.navigate,
-  useRouter: () => ({ history: { back: mocks.historyBack, go: mocks.historyGo } }),
   useSearch: () => mocks.search
 }));
 
@@ -48,8 +45,6 @@ describe('useEntityDrawer stack controller', () => {
   beforeEach(() => {
     mocks.search = {};
     mocks.navigate.mockReset();
-    mocks.historyBack.mockReset();
-    mocks.historyGo.mockReset();
     container = document.createElement('div');
     document.body.appendChild(container);
     root = createRoot(container);
@@ -60,7 +55,7 @@ describe('useEntityDrawer stack controller', () => {
     container.remove();
   });
 
-  it('pushes a child, restores its parent, and closes the root without adding history', async () => {
+  it('pushes and pops a child stack entry without ever touching the URL', async () => {
     await act(async () => {
       root.render(
         <EntityDrawerStackProvider>
@@ -73,25 +68,48 @@ describe('useEntityDrawer stack controller', () => {
       container.querySelector<HTMLButtonElement>('button:nth-of-type(1)')?.click();
     });
     expect(container.querySelector('[data-testid="stack"]')?.textContent).toBe('CON-1');
-    expect(mocks.navigate).toHaveBeenCalledOnce();
+    expect(mocks.navigate).not.toHaveBeenCalled();
 
     await act(async () => {
       container.querySelector<HTMLButtonElement>('button:nth-of-type(2)')?.click();
     });
     expect(container.querySelector('[data-testid="stack"]')?.textContent).toBe('CON-1/VND-1');
     expect(container.querySelector('[data-testid="active"]')?.textContent).toBe('1');
+    expect(mocks.navigate).not.toHaveBeenCalled();
 
     await act(async () => {
       container.querySelector<HTMLButtonElement>('button:nth-of-type(3)')?.click();
     });
     expect(container.querySelector('[data-testid="active"]')?.textContent).toBe('0');
-    expect(mocks.historyBack).toHaveBeenCalledOnce();
+    expect(mocks.navigate).not.toHaveBeenCalled();
 
     await act(async () => {
       container.querySelector<HTMLButtonElement>('button:nth-of-type(4)')?.click();
     });
     expect(container.querySelector('[data-testid="active"]')?.textContent).toBe('-1');
-    expect(mocks.navigate).toHaveBeenLastCalledWith(
+    // This drawer was opened purely from in-app navigation (the URL never had a `drawer` param
+    // for it), so closing it doesn't touch the URL either.
+    expect(mocks.navigate).not.toHaveBeenCalled();
+  });
+
+  it('clears a stale `drawer` search param when closing a drawer that arrived via a shared link', async () => {
+    mocks.search = { drawer: 'CON-1' };
+
+    await act(async () => {
+      root.render(
+        <EntityDrawerStackProvider>
+          <Probe />
+        </EntityDrawerStackProvider>
+      );
+    });
+    expect(container.querySelector('[data-testid="stack"]')?.textContent).toBe('CON-1');
+
+    await act(async () => {
+      container.querySelector<HTMLButtonElement>('button:nth-of-type(4)')?.click();
+    });
+    expect(container.querySelector('[data-testid="active"]')?.textContent).toBe('-1');
+    expect(mocks.navigate).toHaveBeenCalledOnce();
+    expect(mocks.navigate).toHaveBeenCalledWith(
       expect.objectContaining({ replace: true, search: expect.any(Function) })
     );
   });

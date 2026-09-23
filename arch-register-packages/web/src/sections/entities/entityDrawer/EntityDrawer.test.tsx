@@ -43,7 +43,8 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock('@tanstack/react-router', () => ({
-  useNavigate: () => mocks.navigate
+  useNavigate: () => mocks.navigate,
+  useRouter: () => ({ buildLocation: () => ({ href: '/workspace-1?drawer=SRV-001' }) })
 }));
 
 vi.mock('../../../layouts/WorkspaceContext', () => ({

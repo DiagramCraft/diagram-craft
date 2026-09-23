@@ -1,5 +1,4 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
-import { useNavigate } from '@tanstack/react-router';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
@@ -10,7 +9,7 @@ import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteCo
 import { Pagination } from '../../../components/Pagination';
 import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
-import { asEntityPublicId, entityDetailRoute } from '../../../routes/publicObjectRoutes';
+import { useEntityDrawer } from '../entityDrawer/useEntityDrawer';
 import { BulkEditToolbar } from './BulkEditToolbar';
 import {
   buildEntityQueryFromBrowserFilters,
@@ -220,7 +219,7 @@ export const EntityBrowser = ({
   timelineMarkers,
   onFirstFilteredSchemaIdChange
 }: EntityBrowserProps) => {
-  const navigate = useNavigate();
+  const { openEntityDrawer } = useEntityDrawer();
   const {
     workspaceSlug,
     schemas,
@@ -377,9 +376,9 @@ export const EntityBrowser = ({
 
   const navigateToEntity = useCallback(
     (entityId: string) => {
-      navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(entityId)));
+      openEntityDrawer(entityId);
     },
-    [navigate, workspaceSlug]
+    [openEntityDrawer]
   );
 
   const focusEntity = useCallback(

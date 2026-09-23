@@ -14,7 +14,8 @@ export const Drawer = ({
   width,
   active = true,
   stacked = false,
-  stackOffset = 0
+  stackOffset = 0,
+  extraActions
 }: {
   onClose: () => void;
   eyebrow?: ReactNode;
@@ -26,6 +27,8 @@ export const Drawer = ({
   active?: boolean;
   stacked?: boolean;
   stackOffset?: number;
+  // Rendered immediately before the close button, e.g. a copy-link action.
+  extraActions?: ReactNode;
 }) => {
   const [isClosing, setIsClosing] = useState(false);
   const closingRef = useRef(false);
@@ -78,14 +81,17 @@ export const Drawer = ({
         <div className={styles.head}>
           <div className={styles.headTop}>
             <div className={styles.headActions}>{eyebrow}</div>
-            <button
-              type="button"
-              className={styles.close}
-              onClick={requestClose}
-              aria-label="Close drawer"
-            >
-              <TbX size={14} />
-            </button>
+            <div className={styles.headButtons}>
+              {extraActions}
+              <button
+                type="button"
+                className={styles.close}
+                onClick={requestClose}
+                aria-label="Close drawer"
+              >
+                <TbX size={14} />
+              </button>
+            </div>
           </div>
           <div className={styles.title}>{title}</div>
           {badges && <div className={styles.badges}>{badges}</div>}

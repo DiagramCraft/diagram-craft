@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
-import { Link, useNavigate } from '@tanstack/react-router';
+import { useNavigate } from '@tanstack/react-router';
 import { TbEdit, TbDots, TbTrash, TbFilter, TbDownload } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
@@ -36,7 +36,7 @@ import {
 } from '../../hooks/useAssessmentResponses';
 import type { AssessmentResponse } from '@arch-register/api-types/assessmentResponseContract';
 import { getAssessmentEnumOptions } from '@arch-register/api-types/assessmentFieldOptions';
-import { entityDetailRoute, asEntityPublicId } from '../../routes/publicObjectRoutes';
+import { EntityNavigationLink } from '../../components/EntityNavigationLink';
 import { ProjectScreenLayout } from './ProjectScreenLayout';
 import { AssessmentEditorDialog } from './components/AssessmentEditorDialog';
 import { AssessmentFieldCell } from './components/AssessmentFieldCells';
@@ -445,16 +445,13 @@ export const AssessmentDetailsScreen = ({
                                 />
                               }
                               title={
-                                <Link
-                                  {...entityDetailRoute(
-                                    workspaceSlug,
-                                    asEntityPublicId(entity._publicId)
-                                  )}
+                                <EntityNavigationLink
+                                  publicId={entity._publicId}
                                   className={styles.entNameBtn}
                                   title={entity._name}
                                 >
                                   {entity._name ?? entity._slug}
-                                </Link>
+                                </EntityNavigationLink>
                               }
                             />
                             <Table.Cell className={styles.cell}>

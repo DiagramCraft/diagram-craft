@@ -6,12 +6,11 @@ import { useAuditLog } from '../../../hooks/useAudit';
 import { Workspace } from '@arch-register/api-types/workspaceContract';
 import { AuditLogEntry } from '@arch-register/api-types/auditContract';
 import {
-  asEntityPublicId,
   asProjectPublicId,
-  entityDetailRoute,
   projectContentFolderRoute,
   projectDetailRoute
 } from '../../../routes/publicObjectRoutes';
+import { useEntityDrawer } from '../../entities/entityDrawer/useEntityDrawer';
 import { formatRelativeTime } from '../../../utils/dateFormat';
 import { EmptyState } from '../../../components/EmptyState';
 import { LoadingState } from '../../../components/LoadingState';
@@ -81,6 +80,7 @@ export const AuditLogSubSection = ({
   };
 }) => {
   const navigate = useNavigate();
+  const { openEntityDrawer } = useEntityDrawer();
   const [entityType, setEntityType] = useState<'' | AuditEntityType>(
     (initialFilters.entityType as AuditEntityType | undefined) ?? ''
   );
@@ -100,8 +100,7 @@ export const AuditLogSubSection = ({
   const handleEntryClick = (entry: AuditLogEntry) => {
     switch (entry.entity_type) {
       case 'entity':
-        if (entry.public_id)
-          navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(entry.public_id)));
+        if (entry.public_id) openEntityDrawer(entry.public_id);
         return;
       case 'project':
         if (entry.public_id) {

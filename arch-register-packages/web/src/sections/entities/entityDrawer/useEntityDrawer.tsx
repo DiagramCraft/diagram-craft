@@ -1,13 +1,5 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-  type ReactNode
-} from 'react';
-import { useNavigate, useRouter, useSearch } from '@tanstack/react-router';
+import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from 'react';
+import { useNavigate, useSearch } from '@tanstack/react-router';
 import type { EntityDrawerSearchParams } from '../../../routes/searchParams';
 
 export type EntityDrawerStackEntry = {
@@ -25,28 +17,23 @@ export type EntityDrawerController = {
 
 const EntityDrawerStackContext = createContext<EntityDrawerController | null>(null);
 
-const navigateSearch = (
-  entityId: string | undefined,
-  replace = false
-): Record<string, unknown> => ({
-  search: (previous: Record<string, unknown>) => ({ ...previous, drawer: entityId }),
-  ...(replace ? { replace: true } : {})
-});
-
 /**
- * Provides the workspace-local entity drawer stack. The URL deliberately stores only the active
- * entity so links stay short; the stack is reconstructed from in-app navigation and browser
- * history. A direct `drawer=<id>` link therefore opens that entity as the root drawer.
+ * Provides the workspace-local entity drawer stack. Opening, navigating within, and closing the
+ * stack is purely local state — the URL is never rewritten by these interactions, so it stays
+ * whatever the user was already looking at. The one exception is a drawer that arrived via a
+ * shared `drawer=<id>` link on page load: fully closing it clears that param (via a history
+ * replace) so a later refresh or back navigation doesn't reopen it. `EntityDrawer`'s own copy-link
+ * action is the supported way to put a `drawer=<id>` URL back on the clipboard for sharing.
  */
 export const EntityDrawerStackProvider = ({ children }: { children: ReactNode }) => {
   const navigate = useNavigate();
-  const router = useRouter();
   const search = useSearch({ strict: false }) as EntityDrawerSearchParams;
   const initialStack = search.drawer ? [{ entityId: search.drawer }] : [];
   const [drawerStack, setDrawerStack] = useState<readonly EntityDrawerStackEntry[]>(initialStack);
   const [activeDrawerIndex, setActiveDrawerIndex] = useState(search.drawer ? 0 : -1);
   const stackRef = useRef<readonly EntityDrawerStackEntry[]>(initialStack);
   const activeIndexRef = useRef(search.drawer ? 0 : -1);
+  const linkedEntityIdRef = useRef(search.drawer);
 
   const commitStack = useCallback(
     (nextStack: readonly EntityDrawerStackEntry[], nextIndex: number) => {
@@ -57,21 +44,6 @@ export const EntityDrawerStackProvider = ({ children }: { children: ReactNode })
     },
     []
   );
-
-  useEffect(() => {
-    const entityId = search.drawer;
-    if (!entityId) {
-      commitStack(stackRef.current, -1);
-      return;
-    }
-
-    const existingIndex = stackRef.current.findIndex(entry => entry.entityId === entityId);
-    if (existingIndex >= 0) {
-      commitStack(stackRef.current, existingIndex);
-    } else {
-      commitStack([{ entityId }], 0);
-    }
-  }, [commitStack, search.drawer]);
 
   const openEntityDrawer = useCallback(
     (entityId: string) => {
@@ -87,16 +59,8 @@ export const EntityDrawerStackProvider = ({ children }: { children: ReactNode })
       const nextIndex = existingIndex >= 0 ? existingIndex : nextStack.length - 1;
 
       commitStack(nextStack, nextIndex);
-      if (nextIndex === currentIndex && search.drawer === entityId) return;
-
-      if (existingIndex >= 0 && nextIndex < currentIndex) {
-        router.history.go(nextIndex - currentIndex);
-        return;
-      }
-
-      void navigate(navigateSearch(entityId) as Parameters<typeof navigate>[0]);
     },
-    [commitStack, navigate, router.history, search.drawer]
+    [commitStack]
   );
 
   const backEntityDrawer = useCallback(() => {
@@ -105,13 +69,19 @@ export const EntityDrawerStackProvider = ({ children }: { children: ReactNode })
 
     if (currentIndex > 0) {
       commitStack(stackRef.current, currentIndex - 1);
-      router.history.back();
       return;
     }
 
+    const closingEntityId = stackRef.current[0]?.entityId;
     commitStack(stackRef.current, -1);
-    void navigate(navigateSearch(undefined, true) as Parameters<typeof navigate>[0]);
-  }, [commitStack, navigate, router.history]);
+    if (closingEntityId && linkedEntityIdRef.current === closingEntityId) {
+      linkedEntityIdRef.current = undefined;
+      void navigate({
+        search: (previous: Record<string, unknown>) => ({ ...previous, drawer: undefined }),
+        replace: true
+      } as Parameters<typeof navigate>[0]);
+    }
+  }, [commitStack, navigate]);
 
   return (
     <EntityDrawerStackContext.Provider

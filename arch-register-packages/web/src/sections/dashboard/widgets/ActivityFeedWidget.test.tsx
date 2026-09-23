@@ -5,7 +5,8 @@ import type { AuditLogEntry } from '@arch-register/api-types/auditContract';
 const useAuditLogMock = vi.fn();
 
 vi.mock('@tanstack/react-router', () => ({
-  useNavigate: () => vi.fn()
+  useNavigate: () => vi.fn(),
+  useSearch: () => ({})
 }));
 
 vi.mock('../../../hooks/useAudit', () => ({

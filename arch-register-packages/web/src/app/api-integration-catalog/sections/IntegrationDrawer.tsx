@@ -1,4 +1,3 @@
-import { useNavigate } from '@tanstack/react-router';
 import { Button } from '@diagram-craft/app-components/Button';
 import type { RelationRecord } from '@arch-register/api-types/relationContract';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
@@ -6,7 +5,7 @@ import { Chip } from '../../../components/Chip';
 import { Drawer } from '../../../components/Drawer';
 import { useEntitiesByIds } from '../../../hooks/useEntities';
 import { relationIds } from '../../../lib/entityEditState';
-import { asEntityPublicId, entityDetailRoute } from '../../../routes/publicObjectRoutes';
+import { useEntityDrawer } from '../../../sections/entities/entityDrawer/useEntityDrawer';
 import { relationFieldValue } from '../dataFlowRelationDisplay';
 import styles from './ApiSpecDrawer.module.css';
 
@@ -34,7 +33,7 @@ export const IntegrationDrawer = ({
   onClose: () => void;
   onOpenApi: (apiId: string) => void;
 }) => {
-  const navigate = useNavigate();
+  const { openEntityDrawer } = useEntityDrawer();
   const carriedIds = relationIds(relation.data_entities);
   const endpointIds = [relation._in.id, relation._out.id];
   const entities = useEntitiesByIds(workspaceSlug, [...endpointIds, ...carriedIds]);
@@ -42,7 +41,7 @@ export const IntegrationDrawer = ({
   const openEntity = (id: string) => {
     const ref = entities.get(id);
     if (!ref) return;
-    navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(ref.publicId)));
+    openEntityDrawer(ref.publicId);
   };
 
   const crosses = relation.cross_boundary === 'cross-boundary';

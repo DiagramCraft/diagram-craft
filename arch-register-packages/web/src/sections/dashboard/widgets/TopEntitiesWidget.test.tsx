@@ -4,7 +4,8 @@ import { describe, expect, it, vi } from 'vitest';
 const useEntitiesMock = vi.fn();
 
 vi.mock('@tanstack/react-router', () => ({
-  useNavigate: () => vi.fn()
+  useNavigate: () => vi.fn(),
+  useSearch: () => ({})
 }));
 
 vi.mock('../../../hooks/useEntities', () => ({

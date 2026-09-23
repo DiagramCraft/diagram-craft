@@ -1,5 +1,6 @@
 import { Chip } from '../../../components/Chip';
 import { DropdownMenu } from '../../../components/DropdownMenu';
+import { EntityNavigationLink } from '../../../components/EntityNavigationLink';
 import { Table } from '../../../components/table/Table';
 import { TypeBadge } from '../../../components/TypeBadge';
 import { resolveSchemaColor } from '../../../lib/schemaPresentation';
@@ -19,6 +20,7 @@ import {
   type EntityDisplayField
 } from './entityDisplayFields';
 import { isEntityInProject } from './entityBrowserState';
+import styles from './TableView.module.css';
 
 type DateField = Extract<EntitySchema['fields'][number], { type: 'date' }>;
 
@@ -123,7 +125,11 @@ export const TableView = ({
                     />
                   )
                 }
-                title={entityName(entity)}
+                title={
+                  <EntityNavigationLink publicId={entity._publicId} className={styles.nameLink}>
+                    {entityName(entity)}
+                  </EntityNavigationLink>
+                }
                 titleMuted={
                   projectContext != null && !isEntityInProject(entity, projectContext.project.id)
                 }

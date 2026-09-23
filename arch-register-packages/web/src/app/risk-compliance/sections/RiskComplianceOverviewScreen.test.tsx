@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, createElement } from 'react';
+import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -20,7 +20,8 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('@tanstack/react-router', () => ({
   useParams: () => mocks.params,
-  useNavigate: () => mocks.navigate
+  useNavigate: () => mocks.navigate,
+  useSearch: () => ({})
 }));
 
 vi.mock('../../../lib/orpcClient', () => ({
@@ -32,11 +33,6 @@ vi.mock('../../../lib/orpcClient', () => ({
     assessments: { list: mocks.assessmentsList },
     projects: { list: mocks.projectsList }
   }
-}));
-
-vi.mock('../../../sections/entities/entityDrawer/EntityDrawer', () => ({
-  EntityDrawer: ({ entityId }: { entityId: string }) =>
-    createElement('div', null, `Open record in Entities ${entityId}`)
 }));
 
 const CONFIG = {
@@ -163,6 +159,10 @@ describe('RiskComplianceOverviewScreen', () => {
     });
     for (let i = 0; i < 4; i++) await flush();
 
-    expect(container.textContent).toContain('Open record in Entities');
+    // The screen opens the shared entity drawer through `useEntityDrawer()` rather than rendering
+    // its own `<EntityDrawer>` — the actual drawer is mounted centrally by `WorkspaceLayout`.
+    expect(mocks.navigate).toHaveBeenCalledWith(
+      expect.objectContaining({ search: expect.any(Function) })
+    );
   });
 });

@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useEntities } from '../../../hooks/useEntities';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
-import { asEntityPublicId, entityDetailRoute } from '../../../routes/publicObjectRoutes';
+import { useEntityDrawer } from '../../entities/entityDrawer/useEntityDrawer';
 import { firstScalarValue } from '../../../lib/scalarFieldValues';
 import styles from './WidgetRowList.module.css';
 
@@ -24,6 +24,7 @@ type Props = {
 
 export const TopEntitiesWidget = ({ config }: Props) => {
   const navigate = useNavigate();
+  const { openEntityDrawer } = useEntityDrawer();
   const { workspaceSlug } = useWorkspaceContext();
   const hasConfig = !!config.schema && !!config.fieldId;
 
@@ -82,9 +83,7 @@ export const TopEntitiesWidget = ({ config }: Props) => {
           key={entity._uid}
           type="button"
           className={styles.row}
-          onClick={() =>
-            navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(entity._publicId)))
-          }
+          onClick={() => openEntityDrawer(entity._publicId)}
         >
           <span className={styles.rowLabel}>{entity._name}</span>
           <span className={styles.rowMeta}>{value}</span>

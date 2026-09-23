@@ -43,7 +43,7 @@ import { TypeBadge } from '../../components/TypeBadge';
 import styles from '../../shell/SidePanel.module.css';
 import { EntitySchema } from '@arch-register/api-types/schemaContract';
 import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
-import { asEntityPublicId, entityDetailRoute } from '../../routes/publicObjectRoutes';
+import { useEntityDrawer } from './entityDrawer/useEntityDrawer';
 import {
   hasFacetSelection,
   parseConditionsFromSearch,
@@ -117,6 +117,7 @@ export const EntitiesSidebar = ({
   onExpand?: () => void;
 }) => {
   const navigate = useNavigate();
+  const { openEntityDrawer } = useEntityDrawer();
   const { entityId: routeEntityId } = useParams({ strict: false });
   const { pathname } = useLocation();
   const onRelationsRoute = pathname.includes('/entities/relations');
@@ -513,13 +514,7 @@ export const EntitiesSidebar = ({
                   }
                   label={entity.entity_name}
                   active={routeEntityId === entity.entity_public_id}
-                  onClick={() =>
-                    navigate(
-                      entityDetailRoute(workspaceSlug, asEntityPublicId(entity.entity_public_id), {
-                        sidebarTab: 'bookmarks'
-                      })
-                    )
-                  }
+                  onClick={() => openEntityDrawer(entity.entity_public_id)}
                   trailing={<TbPinned size={12} className="dim" />}
                   tagColor={color}
                 />
