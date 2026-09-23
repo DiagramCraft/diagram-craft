@@ -3,6 +3,7 @@ import { strategyEntityDrawerProviderDefinitions } from '../../../app/strategy-m
 import { vendorEntityDrawerProviderDefinitions } from '../../../app/vendor-management/sections/VendorEntityDrawerProviders';
 import { dataStewardshipEntityDrawerProviderDefinitions } from '../../../app/data-stewardship/sections/DataStewardshipEntityDrawerProviders';
 import { apiEntityDrawerProviderDefinitions } from '../../../app/api-integration-catalog/sections/ApiEntityDrawerProvider';
+import { entityChangeCasesDrawerProviderDefinitions } from './EntityChangeCasesProvider';
 import {
   createEntityDrawerProviderRegistry,
   type EntityDrawerProviderDefinition
@@ -13,6 +14,7 @@ const definitions: readonly EntityDrawerProviderDefinition[] = [
   ...strategyEntityDrawerProviderDefinitions,
   ...vendorEntityDrawerProviderDefinitions,
   ...dataStewardshipEntityDrawerProviderDefinitions,
+  ...entityChangeCasesDrawerProviderDefinitions,
   ...apiEntityDrawerProviderDefinitions
 ];
 

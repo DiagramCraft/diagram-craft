@@ -1,5 +1,4 @@
 import { Chip } from '../../../components/Chip';
-import { useChangeCasesByEntity } from '../../../hooks/useChangeCases';
 import { useDataStewardshipAssessmentRows } from '../useDataStewardshipAssessmentRows';
 import { DS_ASSESSMENT_STATUS_LABEL } from '../dataStewardshipAssessments';
 import { dueLabel, dueTone } from '../../../utils/assessmentDueTone';
@@ -72,34 +71,6 @@ const QueueItemsProvider = ({ context }: EntityDrawerProviderProps) => {
   );
 };
 
-const ChangeCasesProvider = ({ context }: EntityDrawerProviderProps) => {
-  const cases = useChangeCasesByEntity(context.workspaceId, context.entity._uid, true);
-  const items = cases.data ?? [];
-  const state = cases.isLoading
-    ? 'loading'
-    : cases.isError
-      ? 'unavailable'
-      : items.length > 0
-        ? 'ready'
-        : 'empty';
-
-  return (
-    <EntityDrawerProviderStatus
-      state={state}
-      emptyMessage="No change cases linked."
-      unavailableMessage="Change cases are unavailable."
-    >
-      <div className={styles.tags}>
-        {items.map(changeCase => (
-          <Chip key={changeCase.id} tone="ghost">
-            {changeCase.name ?? changeCase.id}
-          </Chip>
-        ))}
-      </div>
-    </EntityDrawerProviderStatus>
-  );
-};
-
 const AssessmentsProvider = ({ context }: EntityDrawerProviderProps) => {
   const assessments = useDataStewardshipAssessmentRows(context.workspaceId, context.schema.id);
   const rows = assessments.rows.filter(row => row.entity._uid === context.entity._uid);
@@ -130,11 +101,6 @@ export const dataStewardshipEntityDrawerProviderDefinitions = [
     slotId: 'data-stewardship.queue-items',
     requiredFields: DATA_STEWARDSHIP_REQUIRED_FIELDS,
     Component: QueueItemsProvider
-  },
-  {
-    slotId: 'data-stewardship.change-cases',
-    requiredFields: DATA_STEWARDSHIP_REQUIRED_FIELDS,
-    Component: ChangeCasesProvider
   },
   {
     slotId: 'data-stewardship.assessments',

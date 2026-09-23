@@ -166,7 +166,10 @@
               lists, and registered semantic content slots. Without a stored profile, the drawer falls back to
               schema-ordered attributes,
               attribute groups, and metadata; seeded or templated authored profiles retain their richer content.
-              Missing or unsupported references fall back safely to that generic drawer.
+              Missing or unsupported references fall back safely to that generic drawer. Registered content slots
+              may be capability-bound or generic; the Entity Change cases slot is associated with the
+              current entity and can therefore be added to any schema's drawer, while remaining seeded by default
+              only for Data Entity profiles.
 
             - @id:ar.workspace.configuration.schemas Administrators can define entity schemas, fields, select options,
               and reusable workspace enums. Enum options have stable values, editable labels and descriptions, an

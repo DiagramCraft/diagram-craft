@@ -1889,7 +1889,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             id: 'cases',
             title: 'Cases',
             collapsible: true,
-            items: [{ kind: 'slot', slotId: 'data-stewardship.change-cases', showLabel: false }]
+            items: [{ kind: 'slot', slotId: 'entity.change-cases', showLabel: false }]
           },
           {
             id: 'assessments',

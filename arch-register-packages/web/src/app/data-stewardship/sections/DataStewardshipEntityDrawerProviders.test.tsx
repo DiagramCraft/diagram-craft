@@ -1,8 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
-import {
-  type EntityDrawerProviderContext
-} from '../../../sections/entities/entityDrawer/EntityDrawerProviderRegistry';
+import { type EntityDrawerProviderContext } from '../../../sections/entities/entityDrawer/EntityDrawerProviderRegistry';
 import { dataStewardshipEntityDrawerProviderDefinitions } from './DataStewardshipEntityDrawerProviders';
 
 const mocks = vi.hoisted(() => ({
@@ -71,5 +69,4 @@ describe('Data Stewardship entity drawer providers', () => {
     expect(markup).toContain('Nothing in the queue against this dataset.');
     expect(markup).not.toMatch(/#\d{3,5}/);
   });
-
 });

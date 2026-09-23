@@ -191,6 +191,44 @@ describe('entity drawer configuration', () => {
     });
   });
 
+  it('normalizes the legacy Data Stewardship change-case slot', () => {
+    expect(
+      normalizeLegacyEntityDrawerConfiguration({
+        version: 1,
+        profiles: {
+          service: {
+            sections: [
+              {
+                id: 'cases',
+                title: 'Cases',
+                items: [
+                  {
+                    kind: 'slot',
+                    slotId: 'data-stewardship.change-cases',
+                    showLabel: false
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      })
+    ).toEqual({
+      version: 1,
+      profiles: {
+        service: {
+          sections: [
+            {
+              id: 'cases',
+              title: 'Cases',
+              items: [{ kind: 'slot', slotId: 'entity.change-cases', showLabel: false }]
+            }
+          ]
+        }
+      }
+    });
+  });
+
   it('fails closed for unknown versions', () => {
     const result = resolveEntityDrawerConfiguration({ version: 2, profiles: {} }, [schema]);
     expect(result.effective.profiles.service!).toBeDefined();
@@ -345,7 +383,7 @@ describe('entity drawer configuration', () => {
     expect(noParent.diagnostics.at(-1)?.code).toBe('unsupported_rollup_schema');
   });
 
-  it('only advertises provider slots for their configured schema', () => {
+  it('advertises capability-bound slots only for their configured schema', () => {
     const catalog = buildEntityDrawerCatalog(
       [schema, { ...schema, id: 'other', name: 'Other' }],
       [
@@ -361,6 +399,41 @@ describe('entity drawer configuration', () => {
     ).toEqual(['service']);
     expect(catalog.slots.map(slot => slot.id)).not.toContain('vendor.spend');
     expect(catalog.slots.map(slot => slot.id)).not.toContain('vendor.capabilities-funded');
+    expect(catalog.slots.find(slot => slot.id === 'entity.change-cases')).toMatchObject({
+      supportedSchemaIds: ['service', 'other']
+    });
+  });
+
+  it('accepts the generic change-case slot for a non-Data-Entity profile', () => {
+    const result = resolveEntityDrawerConfiguration(
+      {
+        version: 1,
+        profiles: {
+          service: {
+            sections: [
+              {
+                id: 'cases',
+                title: 'Cases',
+                items: [{ kind: 'slot', slotId: 'entity.change-cases' }]
+              }
+            ]
+          }
+        }
+      },
+      [schema]
+    );
+
+    expect(result.effective.profiles.service?.sections[0]?.items).toEqual([
+      expect.objectContaining({
+        kind: 'slot',
+        slotId: 'entity.change-cases',
+        options: {}
+      })
+    ]);
+    expect(result.diagnostics).toEqual([]);
+    expect(buildDefaultEntityDrawerConfiguration([schema]).profiles.service?.sections).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: 'application-content' })])
+    );
   });
 
   it('validates cross-schema containment children and omits invalid targets', () => {
@@ -612,7 +685,7 @@ describe('entity drawer configuration', () => {
           presentation: 'mini-panel'
         },
         { kind: 'slot', slotId: 'data-stewardship.queue-items', showLabel: false },
-        { kind: 'slot', slotId: 'data-stewardship.change-cases', showLabel: false },
+        { kind: 'slot', slotId: 'entity.change-cases', showLabel: false },
         { kind: 'slot', slotId: 'data-stewardship.assessments', showLabel: false }
       ])
     );

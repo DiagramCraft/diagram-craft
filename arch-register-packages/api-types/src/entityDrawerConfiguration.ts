@@ -293,11 +293,10 @@ export const ENTITY_DRAWER_SLOT_DEFINITIONS: EntityDrawerSlotDefinition[] = [
     optionsSchema: emptyOptionsSchema
   },
   {
-    id: 'data-stewardship.change-cases',
+    id: 'entity.change-cases',
     label: 'Change cases',
-    description: 'Related change cases.',
+    description: 'Change cases associated with the current entity.',
     application: 'Data Stewardship',
-    capabilityBinding: { capabilityType: 'data-stewardship', role: 'dataEntity' },
     defaultOptions: {},
     optionFields: [],
     optionsSchema: emptyOptionsSchema
@@ -406,7 +405,10 @@ export const getEntityDrawerSlotSchemaIds = (
   const result = new Map<string, string[]>();
   for (const definition of ENTITY_DRAWER_SLOT_DEFINITIONS) {
     const binding = definition.capabilityBinding;
-    if (!binding) continue;
+    if (!binding) {
+      result.set(definition.id, [...schemaIds]);
+      continue;
+    }
     const configuration = capabilityConfigurations.find(
       candidate => candidate.type === binding.capabilityType
     );
@@ -425,6 +427,9 @@ const getDefaultProviderItems = (
   const supported = getEntityDrawerSlotSchemaIds(schemas, capabilityConfigurations);
   const items: EntityDrawerItem[] = [];
   for (const definition of ENTITY_DRAWER_SLOT_DEFINITIONS) {
+    // Generic slots are available from the drawer editor but are opt-in for schemas. Built-in
+    // application profiles add the generic content they own explicitly below.
+    if (!definition.capabilityBinding) continue;
     if (!supported.get(definition.id)?.includes(schemaId)) continue;
     const options = definition.defaultOptions;
     items.push({
@@ -581,6 +586,9 @@ export const normalizeLegacyEntityDrawerConfiguration = (raw: unknown): unknown 
                           : {})
                       }
                     ];
+                  }
+                  if (item.slotId === 'data-stewardship.change-cases') {
+                    return [{ ...item, slotId: 'entity.change-cases' }];
                   }
                   return [normalizeFixedPresentationSlotItem(item)];
                 })
@@ -906,7 +914,7 @@ const buildDataStewardshipDefaultProfile = (
         field(fieldIds.permittedResidencyRegions)
       ]),
       section('queue-items', 'Queue items', [provider('data-stewardship.queue-items')], true),
-      section('cases', 'Cases', [provider('data-stewardship.change-cases')], true),
+      section('cases', 'Cases', [provider('entity.change-cases')], true),
       section('assessments', 'Assessments', [provider('data-stewardship.assessments')], true)
     ].filter(section => section.items.length > 0)
   };
@@ -1271,16 +1279,19 @@ export const buildDefaultEntityDrawerConfiguration = (
   version: 1,
   profiles: Object.fromEntries(
     schemas.map(schema => {
-      const providerItems = [
-        ...getStrategyRealizedByItem(schema, capabilityConfigurations),
-        ...getDefaultProviderItems(schemas, schema.id, capabilityConfigurations),
-        ...getStrategyRollupItems(schema, capabilityConfigurations)
-      ];
-      const glossaryFieldIds = businessGlossaryFieldIds(schema, capabilityConfigurations);
       const dataStewardshipFieldIdsValue = dataStewardshipFieldIds(
         schema,
         capabilityConfigurations
       );
+      const providerItems = [
+        ...getStrategyRealizedByItem(schema, capabilityConfigurations),
+        ...getDefaultProviderItems(schemas, schema.id, capabilityConfigurations),
+        ...(dataStewardshipFieldIdsValue
+          ? [{ kind: 'slot' as const, slotId: 'entity.change-cases' }]
+          : []),
+        ...getStrategyRollupItems(schema, capabilityConfigurations)
+      ];
+      const glossaryFieldIds = businessGlossaryFieldIds(schema, capabilityConfigurations);
       const apiSpecificationFieldIdsValue = apiSpecificationFieldIds(
         schema,
         capabilityConfigurations
