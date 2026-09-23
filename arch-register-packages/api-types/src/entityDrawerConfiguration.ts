@@ -358,17 +358,6 @@ export const ENTITY_DRAWER_SLOT_DEFINITIONS: EntityDrawerSlotDefinition[] = [
     optionsSchema: emptyOptionsSchema
   },
   {
-    id: 'vendor.risk',
-    label: 'Risk profile',
-    description: 'Derived risk profile for this vendor.',
-    application: 'Vendor Management',
-    fixedPresentation: 'mini-panel',
-    capabilityBinding: { capabilityType: 'vendor-management', role: 'vendor' },
-    defaultOptions: {},
-    optionFields: [],
-    optionsSchema: emptyOptionsSchema
-  },
-  {
     id: 'vendor.technology-lifecycle',
     label: 'Technology lifecycle',
     description: 'Technology lifecycle summary.',
@@ -1264,8 +1253,7 @@ const buildVendorManagementDefaultProfile = (
           { ...item(fieldIds.concentrationRisk), presentation: 'mini-panel' },
           { ...item(fieldIds.financialRisk), presentation: 'mini-panel' },
           { ...item(fieldIds.complianceRisk), presentation: 'mini-panel' },
-          { ...item(fieldIds.criticality), presentation: 'mini-panel' },
-          provider('vendor.risk', 'vmRisk')
+          { ...item(fieldIds.criticality), presentation: 'mini-panel' }
         ]),
         layout: 'stat-grid' as const
       },

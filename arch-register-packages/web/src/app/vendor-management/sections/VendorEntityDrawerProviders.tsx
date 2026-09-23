@@ -3,7 +3,6 @@
 // the Vendor schema itself — they're all indirect joins (e.g. Vendor -> Contract -> System) or
 // computed roll-ups, which the new item kind doesn't represent.
 import { useQuery } from '@tanstack/react-query';
-import { Chip } from '../../../components/Chip';
 import { StatusChip } from '../../../components/StatusChip';
 import { useLifecycleStates } from '../../../hooks/useWorkspaceConfig';
 import { workspaceCapabilityConfigurationsQuery } from '../../../queries/workspaceConfig';
@@ -16,7 +15,6 @@ import {
 } from '../../../sections/entities/entityDrawer/EntityDrawerProviderRegistry';
 import { resolveVendorManagementConfig } from '../vendorManagementQueries';
 import { useVendorAppsSupplied } from '../useVendorAppsSupplied';
-import { computeVendorRisk, VENDOR_RISK_BAND_COLOR } from '../vendorRisk';
 import styles from './VendorDrawer.module.css';
 
 const VENDOR_REQUIRED_FIELDS = [
@@ -44,33 +42,6 @@ const systemContractRelationSchemaId = (
   const contractSchema = context.schemas.find(schema => schema.id === contractSchemaId);
   const systemField = contractSchema?.fields.find(field => field.id === 'system');
   return systemField?.type === 'typedRelation' ? systemField.relationSchemaId : null;
-};
-
-const VendorRiskProvider = ({ context }: EntityDrawerProviderProps) => {
-  const risk = computeVendorRisk({
-    security_risk:
-      typeof context.entity.security_risk === 'number' ? context.entity.security_risk : null,
-    concentration_risk:
-      typeof context.entity.concentration_risk === 'number'
-        ? context.entity.concentration_risk
-        : null,
-    financial_risk:
-      typeof context.entity.financial_risk === 'number' ? context.entity.financial_risk : null,
-    compliance_risk:
-      typeof context.entity.compliance_risk === 'number' ? context.entity.compliance_risk : null,
-    criticality: typeof context.entity.criticality === 'number' ? context.entity.criticality : null
-  });
-
-  return (
-    <div className={styles.statValueWithBand}>
-      <div className={styles.statValue}>{risk.vmRisk != null ? risk.vmRisk.toFixed(1) : '—'}</div>
-      {risk.vmRiskBand && (
-        <Chip dot={VENDOR_RISK_BAND_COLOR[risk.vmRiskBand]} tone="ghost">
-          {risk.vmRiskBand}
-        </Chip>
-      )}
-    </div>
-  );
 };
 
 const VendorTechnologyLifecycleProvider = ({ context }: EntityDrawerProviderProps) => {
@@ -122,11 +93,6 @@ const VendorTechnologyLifecycleProvider = ({ context }: EntityDrawerProviderProp
 };
 
 export const vendorEntityDrawerProviderDefinitions = [
-  {
-    slotId: 'vendor.risk',
-    requiredFields: VENDOR_REQUIRED_FIELDS,
-    Component: VendorRiskProvider
-  },
   {
     slotId: 'vendor.technology-lifecycle',
     requiredFields: VENDOR_REQUIRED_FIELDS,

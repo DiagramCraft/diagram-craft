@@ -2386,12 +2386,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
               { kind: 'field', fieldId: 'concentration_risk', presentation: 'mini-panel' },
               { kind: 'field', fieldId: 'financial_risk', presentation: 'mini-panel' },
               { kind: 'field', fieldId: 'compliance_risk', presentation: 'mini-panel' },
-              { kind: 'field', fieldId: 'criticality', presentation: 'mini-panel' },
-              {
-                kind: 'slot',
-                slotId: 'vendor.risk',
-                label: 'vmRisk'
-              }
+              { kind: 'field', fieldId: 'criticality', presentation: 'mini-panel' }
             ]
           },
           {

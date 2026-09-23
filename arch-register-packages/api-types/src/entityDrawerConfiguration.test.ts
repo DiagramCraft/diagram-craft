@@ -928,12 +928,7 @@ describe('entity drawer configuration', () => {
     expect(profile.sections[0]?.items).toEqual(
       expect.arrayContaining([
         { kind: 'field', fieldId: 'security_risk', presentation: 'mini-panel' },
-        { kind: 'field', fieldId: 'criticality', presentation: 'mini-panel' },
-        {
-          kind: 'slot',
-          slotId: 'vendor.risk',
-          label: 'vmRisk'
-        }
+        { kind: 'field', fieldId: 'criticality', presentation: 'mini-panel' }
       ])
     );
     expect(profile.sections[0]?.layout).toBe('stat-grid');
@@ -987,58 +982,6 @@ describe('entity drawer configuration', () => {
     expect(profile.sections.at(-1)?.items).toEqual([
       { kind: 'placeholder', message: VENDOR_CAPABILITIES_FUNDED_PLACEHOLDER_MESSAGE }
     ]);
-  });
-
-  it('fixes the vendor risk slot to a mini-panel', () => {
-    const vendorSchema = {
-      id: 'vendor',
-      name: 'Vendor',
-      fields: [
-        { id: 'security_risk', name: 'Security Risk', type: 'number' },
-        { id: 'concentration_risk', name: 'Concentration Risk', type: 'number' },
-        { id: 'financial_risk', name: 'Financial Risk', type: 'number' },
-        { id: 'compliance_risk', name: 'Compliance Risk', type: 'number' },
-        { id: 'criticality', name: 'Criticality', type: 'number' }
-      ]
-    };
-    const configuration = {
-      type: 'vendor-management',
-      bindings: {
-        vendor: { target: { kind: 'entity_schema', id: 'vendor' } }
-      }
-    } as const;
-    const result = resolveEntityDrawerConfiguration(
-      {
-        version: 1,
-        profiles: {
-          vendor: {
-            header: { badges: [] },
-            sections: [
-              {
-                id: 'risk',
-                title: 'Risk',
-                items: [{ kind: 'slot', slotId: 'vendor.risk', presentation: 'row' }]
-              }
-            ]
-          }
-        }
-      },
-      [vendorSchema],
-      [configuration]
-    );
-
-    expect(result.effective.profiles.vendor?.sections[0]?.items).toEqual([
-      expect.objectContaining({
-        kind: 'slot',
-        slotId: 'vendor.risk',
-        presentation: 'mini-panel'
-      })
-    ]);
-    expect(
-      buildEntityDrawerCatalog([vendorSchema], [configuration]).slots.find(
-        slot => slot.id === 'vendor.risk'
-      )?.fixedPresentation
-    ).toBe('mini-panel');
   });
 
   it('derives the Contract profile with the legacy drawer order and Systems used slot', () => {

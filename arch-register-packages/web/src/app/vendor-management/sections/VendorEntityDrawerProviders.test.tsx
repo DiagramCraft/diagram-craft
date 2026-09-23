@@ -96,16 +96,6 @@ const provider = (slotId: string) =>
   vendorEntityDrawerProviderDefinitions.find(definition => definition.slotId === slotId)!;
 
 describe('Vendor Management entity drawer providers', () => {
-  it('renders the derived risk score and band', () => {
-    const definition = provider('vendor.risk');
-    const markup = renderToStaticMarkup(
-      <definition.Component context={context()} item={item(definition.slotId)} />
-    );
-
-    expect(markup).toContain('3.0');
-    expect(markup).toContain('elevated');
-  });
-
   it('does not register applications supplied as a specialized provider', () => {
     expect(provider('vendor.applications-supplied')).toBeUndefined();
   });
@@ -134,7 +124,7 @@ describe('Vendor Management entity drawer providers', () => {
   });
 
   it('only supports schemas with the established Vendor Management fields', () => {
-    const definition = provider('vendor.risk');
+    const definition = provider('vendor.technology-lifecycle');
     expect(providerSupportsContext(definition, context())).toBe(true);
     expect(
       providerSupportsContext(
