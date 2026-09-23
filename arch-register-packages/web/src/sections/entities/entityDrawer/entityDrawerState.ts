@@ -11,9 +11,11 @@ import {
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { FieldGroupAccess, FieldGroupAccessControl } from '@arch-register/permissions';
 import { resolveGroupAccessControl } from '../../../lib/fieldGroupAccess';
-import type {
-  EntityDrawerProviderDefinition,
-  EntityDrawerProviderRegistry
+import {
+  providerSupportsContext,
+  type EntityDrawerProviderContext,
+  type EntityDrawerProviderDefinition,
+  type EntityDrawerProviderRegistry
 } from './EntityDrawerProviderRegistry';
 
 export type EntityDrawerFieldGroupAccess = (
@@ -290,7 +292,7 @@ export const resolveEntityDrawerRenderModel = ({
   schema: EntitySchema;
   profile: EntityDrawerProfile;
   providerRegistry: EntityDrawerProviderRegistry;
-  providerContext: Parameters<EntityDrawerProviderDefinition['supports']>[0];
+  providerContext: EntityDrawerProviderContext;
   getFieldGroupAccess: EntityDrawerFieldGroupAccess;
 }): EntityDrawerRenderModel => {
   const diagnostics: EntityDrawerDiagnostic[] = [];
@@ -323,7 +325,7 @@ export const resolveEntityDrawerRenderModel = ({
           });
           return [];
         }
-        if (!provider.supports(providerContext)) {
+        if (!providerSupportsContext(provider, providerContext)) {
           diagnostics.push({
             code: 'unsupported_slot_for_schema',
             schemaId: schema.id,

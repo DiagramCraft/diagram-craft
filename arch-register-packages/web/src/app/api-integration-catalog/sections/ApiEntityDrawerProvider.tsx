@@ -24,18 +24,18 @@ import {
 import {
   type EntityDrawerProviderContext,
   type EntityDrawerProviderDefinition,
-  type EntityDrawerProviderProps
+  type EntityDrawerProviderProps,
+  type EntityDrawerRequiredField
 } from '../../../sections/entities/entityDrawer/EntityDrawerProviderRegistry';
 import styles from './ApiSpecDrawer.module.css';
 
 const API_SLOT_ID = 'api-specification.catalog';
 
-const supportsApiSpecificationSchema = (context: EntityDrawerProviderContext): boolean => {
-  const requiredFieldIds = ['protocols', 'providers', 'consumers'];
-  return requiredFieldIds.every(fieldId =>
-    context.schema.fields.some(field => field.id === fieldId)
-  );
-};
+const API_SPECIFICATION_REQUIRED_FIELDS = [
+  { id: 'protocols' },
+  { id: 'providers' },
+  { id: 'consumers' }
+] satisfies readonly EntityDrawerRequiredField[];
 
 const declaredApiType = (
   context: EntityDrawerProviderContext,
@@ -201,7 +201,7 @@ const ApiSpecificationCatalogProvider = ({
 export const apiEntityDrawerProviderDefinitions = [
   {
     slotId: API_SLOT_ID,
-    supports: supportsApiSpecificationSchema,
+    requiredFields: API_SPECIFICATION_REQUIRED_FIELDS,
     Component: ApiSpecificationCatalogProvider
   }
 ] satisfies readonly EntityDrawerProviderDefinition[];

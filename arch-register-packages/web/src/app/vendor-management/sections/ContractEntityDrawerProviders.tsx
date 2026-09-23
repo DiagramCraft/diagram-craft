@@ -4,17 +4,16 @@ import { Chip } from '../../../components/Chip';
 import { entityDetailQuery } from '../../../queries/entities';
 import {
   EntityDrawerProviderStatus,
-  type EntityDrawerProviderContext,
   type EntityDrawerProviderDefinition,
-  type EntityDrawerProviderProps
+  type EntityDrawerProviderProps,
+  type EntityDrawerRequiredField
 } from '../../../sections/entities/entityDrawer/EntityDrawerProviderRegistry';
 import { scalarValues } from '../../../lib/scalarFieldValues';
 import styles from './VendorDrawer.module.css';
 
-const supportsContractSchema = (context: EntityDrawerProviderContext): boolean => {
-  const systemField = context.schema.fields.find(field => field.id === 'system');
-  return systemField?.type === 'typedRelation';
-};
+const CONTRACT_REQUIRED_FIELDS = [
+  { id: 'system', type: 'typedRelation' }
+] satisfies readonly EntityDrawerRequiredField[];
 
 const ContractSystemsUsedProvider = ({
   context,
@@ -67,7 +66,7 @@ const ContractSystemsUsedProvider = ({
 export const vendorContractEntityDrawerProviderDefinitions = [
   {
     slotId: 'contract.systems-used',
-    supports: supportsContractSchema,
+    requiredFields: CONTRACT_REQUIRED_FIELDS,
     Component: ContractSystemsUsedProvider
   }
 ] satisfies readonly EntityDrawerProviderDefinition[];

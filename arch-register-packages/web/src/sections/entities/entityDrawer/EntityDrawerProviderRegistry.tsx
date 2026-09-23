@@ -52,10 +52,35 @@ export type EntityDrawerProviderProps = {
   presentation?: 'row' | 'mini-panel';
 };
 
+export type EntityDrawerRequiredField = {
+  id: string;
+  type?: EntitySchema['fields'][number]['type'];
+};
+
 export type EntityDrawerProviderDefinition = {
   slotId: string;
-  supports: (context: EntityDrawerProviderContext) => boolean;
+  supports?: (context: EntityDrawerProviderContext) => boolean;
+  requiredFields?: readonly EntityDrawerRequiredField[];
   Component: ComponentType<EntityDrawerProviderProps>;
+};
+
+export const schemaHasRequiredFields = (
+  schema: EntitySchema,
+  requiredFields: readonly EntityDrawerRequiredField[]
+): boolean =>
+  requiredFields.every(required =>
+    schema.fields.some(
+      field => field.id === required.id && (required.type === undefined || field.type === required.type)
+    )
+  );
+
+export const providerSupportsContext = (
+  definition: EntityDrawerProviderDefinition,
+  context: EntityDrawerProviderContext
+): boolean => {
+  if (definition.supports) return definition.supports(context);
+  if (definition.requiredFields) return schemaHasRequiredFields(context.schema, definition.requiredFields);
+  return true;
 };
 
 export type EntityDrawerProviderRegistry = {

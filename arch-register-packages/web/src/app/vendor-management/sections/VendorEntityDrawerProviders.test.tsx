@@ -1,6 +1,9 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
-import type { EntityDrawerProviderContext } from '../../../sections/entities/entityDrawer/EntityDrawerProviderRegistry';
+import {
+  providerSupportsContext,
+  type EntityDrawerProviderContext
+} from '../../../sections/entities/entityDrawer/EntityDrawerProviderRegistry';
 import { vendorEntityDrawerProviderDefinitions } from './VendorEntityDrawerProviders';
 
 const mocks = vi.hoisted(() => ({
@@ -163,9 +166,10 @@ describe('Vendor Management entity drawer providers', () => {
 
   it('only supports schemas with the established Vendor Management fields', () => {
     const definition = provider('vendor.risk');
-    expect(definition.supports(context())).toBe(true);
+    expect(providerSupportsContext(definition, context())).toBe(true);
     expect(
-      definition.supports(
+      providerSupportsContext(
+        definition,
         context({
           schema: {
             id: 'other',

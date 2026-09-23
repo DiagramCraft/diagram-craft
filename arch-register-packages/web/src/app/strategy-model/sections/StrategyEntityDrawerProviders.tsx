@@ -7,7 +7,8 @@ import {
   EntityDrawerProviderStatus,
   type EntityDrawerProviderContext,
   type EntityDrawerProviderDefinition,
-  type EntityDrawerProviderProps
+  type EntityDrawerProviderProps,
+  type EntityDrawerRequiredField
 } from '../../../sections/entities/entityDrawer/EntityDrawerProviderRegistry';
 import { resolveStrategyModelConfig, type StrategyModelConfig } from '../strategyQueries';
 import { useCapabilityRealizedBy } from '../useCapabilityRealizedBy';
@@ -18,9 +19,10 @@ const useStrategyConfiguration = (workspaceId: string) => {
   return { query, config: resolveStrategyModelConfig(query.data) };
 };
 
-const isBusinessCapabilitySchema = (context: EntityDrawerProviderContext): boolean =>
-  context.schema.fields.some(field => field.id === 'parent' && field.type === 'containment') &&
-  context.schema.fields.some(field => field.id === 'capability_level');
+const BUSINESS_CAPABILITY_REQUIRED_FIELDS = [
+  { id: 'parent', type: 'containment' },
+  { id: 'capability_level' }
+] satisfies readonly EntityDrawerRequiredField[];
 
 const ProviderFrame = ({
   label,
@@ -199,17 +201,17 @@ const StrategyLinkedInitiativesProvider = ({
 export const strategyEntityDrawerProviderDefinitions = [
   {
     slotId: 'strategy.realized-by',
-    supports: isBusinessCapabilitySchema,
+    requiredFields: BUSINESS_CAPABILITY_REQUIRED_FIELDS,
     Component: StrategyRealizedByProvider
   },
   {
     slotId: 'strategy.linked-objectives',
-    supports: isBusinessCapabilitySchema,
+    requiredFields: BUSINESS_CAPABILITY_REQUIRED_FIELDS,
     Component: StrategyLinkedObjectivesProvider
   },
   {
     slotId: 'strategy.linked-initiatives',
-    supports: isBusinessCapabilitySchema,
+    requiredFields: BUSINESS_CAPABILITY_REQUIRED_FIELDS,
     Component: StrategyLinkedInitiativesProvider
   }
 ] satisfies readonly EntityDrawerProviderDefinition[];
