@@ -340,6 +340,9 @@ export const resolveEntityDrawerRenderModel = ({
       if (item.kind === 'placeholder') {
         return [{ item, label: item.message }];
       }
+      if (item.kind === 'query') {
+        return [{ item, label: item.label ?? 'Query' }];
+      }
       if (item.kind === 'metadata') {
         return isMeaningfulValue(entityDrawerMetadataValue(entity, item.slot))
           ? [{ item, label: item.label ?? metadataLabel(item.slot) }]

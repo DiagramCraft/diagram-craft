@@ -109,6 +109,54 @@ describe('entity drawer configuration', () => {
     expect(result.diagnostics).toEqual([]);
   });
 
+  it('accepts and resolves generic query items without diagnostics', () => {
+    const config = entityDrawerConfigurationSchema.parse({
+      version: 1,
+      profiles: {
+        service: {
+          sections: [
+            {
+              id: 'content',
+              title: 'Content',
+              items: [
+                {
+                  kind: 'query',
+                  queryText: 'subtree(parent).->"Business Capability Supports Entity"',
+                  label: 'Realized by'
+                }
+              ]
+            }
+          ]
+        }
+      }
+    });
+
+    const result = resolveEntityDrawerConfiguration(config, [schema]);
+    expect(result.effective.profiles.service?.sections[0]?.items).toEqual([
+      {
+        kind: 'query',
+        queryText: 'subtree(parent).->"Business Capability Supports Entity"',
+        label: 'Realized by'
+      }
+    ]);
+    expect(result.diagnostics).toEqual([]);
+  });
+
+  it('rejects a query item with an empty queryText', () => {
+    expect(() =>
+      entityDrawerConfigurationSchema.parse({
+        version: 1,
+        profiles: {
+          service: {
+            sections: [
+              { id: 'content', title: 'Content', items: [{ kind: 'query', queryText: '' }] }
+            ]
+          }
+        }
+      })
+    ).toThrow();
+  });
+
   it('normalizes the legacy Vendor capabilities-funded slot to a placeholder', () => {
     expect(
       normalizeLegacyEntityDrawerConfiguration({
@@ -220,7 +268,12 @@ describe('entity drawer configuration', () => {
       [
         {
           type: 'strategy-model',
-          bindings: { business_capability: { target: { kind: 'entity_schema', id: 'service' } } },
+          bindings: {
+            business_capability: { target: { kind: 'entity_schema', id: 'service' } },
+            business_capability_supports_entity: {
+              target: { kind: 'relation_schema', id: 'bcse-rel' }
+            }
+          },
           view_config: {
             fields: [
               {
@@ -239,7 +292,11 @@ describe('entity drawer configuration', () => {
       section => section.id === 'application-content'
     );
     expect(applicationSection?.items).toEqual([
-      { kind: 'slot', slotId: 'strategy.realized-by' },
+      {
+        kind: 'query',
+        queryText: 'subtree(parent).->"bcse-rel"',
+        label: 'Realized by'
+      },
       { kind: 'slot', slotId: 'strategy.linked-objectives' },
       { kind: 'slot', slotId: 'strategy.linked-initiatives' },
       { kind: 'rollup', fieldId: 'score', aggregation: 'sum', format: 'number' },
@@ -298,9 +355,9 @@ describe('entity drawer configuration', () => {
         }
       ]
     );
-    expect(catalog.slots.map(slot => slot.id)).toContain('strategy.realized-by');
+    expect(catalog.slots.map(slot => slot.id)).toContain('strategy.linked-objectives');
     expect(
-      catalog.slots.find(slot => slot.id === 'strategy.realized-by')?.supportedSchemaIds
+      catalog.slots.find(slot => slot.id === 'strategy.linked-objectives')?.supportedSchemaIds
     ).toEqual(['service']);
     expect(catalog.slots.map(slot => slot.id)).not.toContain('vendor.spend');
     expect(catalog.slots.map(slot => slot.id)).not.toContain('vendor.capabilities-funded');
@@ -540,7 +597,6 @@ describe('entity drawer configuration', () => {
     expect(profile.sections.map(section => section.id)).toEqual([
       'attributes',
       'stewardship',
-      'coverage',
       'queue-items',
       'cases',
       'assessments'
@@ -555,7 +611,6 @@ describe('entity drawer configuration', () => {
           fieldId: 'retention_policy',
           presentation: 'mini-panel'
         },
-        { kind: 'slot', slotId: 'data-stewardship.coverage', showLabel: false },
         { kind: 'slot', slotId: 'data-stewardship.queue-items', showLabel: false },
         { kind: 'slot', slotId: 'data-stewardship.change-cases', showLabel: false },
         { kind: 'slot', slotId: 'data-stewardship.assessments', showLabel: false }
@@ -568,6 +623,11 @@ describe('entity drawer configuration', () => {
         { kind: 'slot', slotId: 'data-stewardship.systems' }
       ])
     );
+    expect(
+      buildEntityDrawerCatalog([dataEntitySchema], [configuration]).slots.find(
+        slot => slot.id === 'data-stewardship.coverage'
+      )
+    ).toBeUndefined();
   });
 
   it('derives the glossary term profile from mapped capability fields', () => {

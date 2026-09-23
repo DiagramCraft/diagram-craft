@@ -7,7 +7,3 @@
   flex-wrap: wrap;
   gap: 4px;
 }
-
-.viaLabel {
-  color: var(--text-muted);
-}

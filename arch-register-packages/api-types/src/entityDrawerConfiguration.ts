@@ -89,6 +89,12 @@ export const entityDrawerItemSchema = z.discriminatedUnion('kind', [
     attributes: z
       .array(z.object({ fieldId: z.string().min(1), label: labelOverrideSchema }))
       .optional()
+  }),
+  z.object({
+    kind: z.literal('query'),
+    queryText: z.string().min(1),
+    label: labelOverrideSchema,
+    showLabel: z.boolean().optional()
   })
 ]);
 
@@ -277,16 +283,6 @@ export const ENTITY_DRAWER_SLOT_DEFINITIONS: EntityDrawerSlotDefinition[] = [
     optionsSchema: emptyOptionsSchema
   },
   {
-    id: 'data-stewardship.coverage',
-    label: 'Stewardship coverage',
-    description: 'Dataset coverage and ownership.',
-    application: 'Data Stewardship',
-    capabilityBinding: { capabilityType: 'data-stewardship', role: 'dataEntity' },
-    defaultOptions: {},
-    optionFields: [],
-    optionsSchema: emptyOptionsSchema
-  },
-  {
     id: 'data-stewardship.queue-items',
     label: 'Stewardship queue',
     description: 'Open stewardship queue items.',
@@ -312,16 +308,6 @@ export const ENTITY_DRAWER_SLOT_DEFINITIONS: EntityDrawerSlotDefinition[] = [
     description: 'Related assessments.',
     application: 'Data Stewardship',
     capabilityBinding: { capabilityType: 'data-stewardship', role: 'dataEntity' },
-    defaultOptions: {},
-    optionFields: [],
-    optionsSchema: emptyOptionsSchema
-  },
-  {
-    id: 'strategy.realized-by',
-    label: 'Realized by',
-    description: 'Products and initiatives realizing this capability.',
-    application: 'Strategy Model',
-    capabilityBinding: { capabilityType: 'strategy-model', role: 'business_capability' },
     defaultOptions: {},
     optionFields: [],
     optionsSchema: emptyOptionsSchema
@@ -490,6 +476,38 @@ const getStrategyRollupItems = (
     ];
   });
   return rollupItems.length > 0 ? [...rollupItems, { kind: 'rollup-leaf-count' as const }] : [];
+};
+
+/**
+ * Seeds the generic `query` drawer item that replaces the old `strategy.realized-by` bespoke slot
+ * for a freshly-generated default profile — the flat union of a Business Capability's own and its
+ * descendants' `business_capability_supports_entity` links, via a `subtree(parent)` traversal
+ * (specs/QUERY_LANGUAGE.md §4). Mirrors `getStrategyRollupItems`'s binding checks; only affects
+ * freshly-generated default profiles, not stored ones.
+ */
+const getStrategyRealizedByItem = (
+  schema: EntityDrawerSchema | undefined,
+  capabilityConfigurations: readonly CapabilityConfigurationLike[]
+): EntityDrawerItem[] => {
+  if (!schema) return [];
+  const configuration = capabilityConfigurations.find(
+    candidate => candidate.type === 'strategy-model'
+  );
+  const boundSchemaId = configuration?.bindings['business_capability']?.target;
+  if (boundSchemaId?.kind !== 'entity_schema' || boundSchemaId.id !== schema.id) return [];
+  const supportsSubtreeQuery = schema.fields.some(
+    candidate => candidate.id === 'parent' && candidate.type === 'containment'
+  );
+  if (!supportsSubtreeQuery) return [];
+  const relationTarget = configuration?.bindings['business_capability_supports_entity']?.target;
+  if (relationTarget?.kind !== 'relation_schema') return [];
+  return [
+    {
+      kind: 'query' as const,
+      queryText: `subtree(parent).->"${relationTarget.id}"`,
+      label: 'Realized by'
+    }
+  ];
 };
 
 export type EntityDrawerField = {
@@ -887,7 +905,6 @@ const buildDataStewardshipDefaultProfile = (
         field(fieldIds.processingPurposes),
         field(fieldIds.permittedResidencyRegions)
       ]),
-      section('coverage', 'Coverage', [provider('data-stewardship.coverage')], true),
       section('queue-items', 'Queue items', [provider('data-stewardship.queue-items')], true),
       section('cases', 'Cases', [provider('data-stewardship.change-cases')], true),
       section('assessments', 'Assessments', [provider('data-stewardship.assessments')], true)
@@ -1255,6 +1272,7 @@ export const buildDefaultEntityDrawerConfiguration = (
   profiles: Object.fromEntries(
     schemas.map(schema => {
       const providerItems = [
+        ...getStrategyRealizedByItem(schema, capabilityConfigurations),
         ...getDefaultProviderItems(schemas, schema.id, capabilityConfigurations),
         ...getStrategyRollupItems(schema, capabilityConfigurations)
       ];
@@ -1297,6 +1315,7 @@ const validateItem = (
 ): EntityDrawerItem | null => {
   if (item.kind === 'metadata') return item;
   if (item.kind === 'placeholder') return item;
+  if (item.kind === 'query') return item;
   if (item.kind === 'children') {
     const childSchema = schemas.find(candidate => candidate.id === item.childSchemaId);
     const field = childSchema?.fields.find(candidate => candidate.id === item.fieldId);

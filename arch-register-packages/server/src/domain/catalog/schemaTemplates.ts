@@ -1880,12 +1880,6 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             ]
           },
           {
-            id: 'coverage',
-            title: 'Coverage',
-            collapsible: true,
-            items: [{ kind: 'slot', slotId: 'data-stewardship.coverage', showLabel: false }]
-          },
-          {
             id: 'queue-items',
             title: 'Queue items',
             collapsible: true,
@@ -3982,7 +3976,11 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
                 fieldId: 'parent',
                 label: 'Children'
               },
-              { kind: 'slot', slotId: 'strategy.realized-by', label: 'Realized by' },
+              {
+                kind: 'query',
+                queryText: 'subtree(parent).->"Business Capability Supports Entity"',
+                label: 'Realized by'
+              },
               {
                 kind: 'slot',
                 slotId: 'strategy.linked-objectives',

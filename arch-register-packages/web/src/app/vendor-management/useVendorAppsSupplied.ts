@@ -28,9 +28,10 @@ const EMPTY: VendorAppsSupplied = { items: [], isLoading: false, error: null };
  * subtree), so this uses one `relation`/`typedRelation` hop chain, not `containmentSubtree`.
  *
  * Reuses the generic `entities.list` `path`-projection mechanism (rather than `metrics.rollup`,
- * which only returns counts) the same way `useCapabilityRealizedBy.ts` does — provenance hops
- * only carry `{id, schemaId}`, so the terminal Systems and intermediate Contracts are resolved in
- * one batched follow-up lookup via `useEntitiesByIdSetQuery`.
+ * which only returns counts) the same way the drawer's generic `query` item
+ * (`useEntityDrawerQueryItem.ts`) does — provenance hops only carry `{id, schemaId}`, so the
+ * terminal Systems and intermediate Contracts are resolved in one batched follow-up lookup via
+ * `useEntitiesByIdSetQuery`.
  *
  * The drawer's "Technology lifecycle" section reuses this hook's `items` directly (each
  * `EntityRecord` already carries its own `_lifecycle`) rather than issuing a separate query.

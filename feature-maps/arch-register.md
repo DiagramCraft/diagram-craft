@@ -309,12 +309,15 @@
           `rollup`/leaf-count item kinds (seeded from @id:ar.strategy.view-config's roll-up fields by default, but
           configurable per drawer profile like any other item — the same reusable mechanism any schema with a
           containment hierarchy can use), plus capability badges, configured fields, the built-in containment-child
-          list, and registered Strategy content slots for linked objectives and initiatives and realized-by
-          applications. Child selections open a nested drawer on top of the current one (the shared workspace drawer
-          stack), and the footer action opens the underlying record in Entities. "Realized by" unions
-          applications the capability supports directly with ones supported anywhere in its recursive containment
-          subtree, so non-leaf capabilities also surface coverage carried by their descendants; each entity reached
-          through a descendant shows a "via" provenance label naming the contributing capability.
+          list, registered Strategy content slots for linked objectives and initiatives, and a "Realized by" item
+          using the generic drawer `query` item kind — a path expression in the text query DSL (see
+          `specs/QUERY_LANGUAGE.md`) evaluated against the current entity, letting any drawer profile declare
+          recursive-containment or typed-relation traversals without app-specific code. Child selections open a
+          nested drawer on top of the current one (the shared workspace drawer stack), and the footer action opens
+          the underlying record in Entities. "Realized by" unions applications the capability supports directly with
+          ones supported anywhere in its recursive containment subtree, so non-leaf capabilities also surface
+          coverage carried by their descendants, shown as a flat list (no per-entity provenance of which descendant
+          contributed the link).
 
         - @id:ar.strategy.heatmaps The Heatmaps section is deprioritized and not currently surfaced in the app rail
           or section nav; its route and placeholder screen are retained. The capability-map overlay control already
@@ -590,7 +593,7 @@
           own design references to the fields the shipped schema actually has. Opening a dataset (from the gaps
           panel or the table) opens the configurable Data Entity drawer via the workspace-wide `drawer` search
           param. Its default profile preserves the
-          dataset's attributes and stewardship fields and exposes Coverage, Queue items, Cases, and Assessments as
+          dataset's attributes and stewardship fields and exposes Queue items, Cases, and Assessments as
           Data Stewardship provider sections; unsupported placeholder-only Exceptions, Flows, and Systems sections
           are omitted.
 

@@ -1,7 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 import {
-  providerSupportsContext,
   type EntityDrawerProviderContext
 } from '../../../sections/entities/entityDrawer/EntityDrawerProviderRegistry';
 import { dataStewardshipEntityDrawerProviderDefinitions } from './DataStewardshipEntityDrawerProviders';
@@ -63,30 +62,6 @@ const provider = (slotId: string) =>
   dataStewardshipEntityDrawerProviderDefinitions.find(definition => definition.slotId === slotId)!;
 
 describe('Data Stewardship entity drawer providers', () => {
-  it('renders coverage and its data-quality gaps', () => {
-    const definition = provider('data-stewardship.coverage');
-    const markup = renderToStaticMarkup(
-      <definition.Component
-        context={context({
-          entity: {
-            _uid: 'dataset-1',
-            _owner: null,
-            classification: null,
-            steward: null,
-            review_status: 'overdue'
-          } as never
-        })}
-        item={item(definition.slotId)}
-      />
-    );
-
-    expect(markup).toContain('No named owner');
-    expect(markup).toContain('No named steward');
-    expect(markup).toContain('Classification not confirmed');
-    expect(markup).toContain('Review not current');
-    expect(markup).toContain('No');
-  });
-
   it('renders the empty queue state without issue references', () => {
     const definition = provider('data-stewardship.queue-items');
     const markup = renderToStaticMarkup(
@@ -97,13 +72,4 @@ describe('Data Stewardship entity drawer providers', () => {
     expect(markup).not.toMatch(/#\d{3,5}/);
   });
 
-  it('supports only schemas with the Data Entity stewardship fields', () => {
-    expect(providerSupportsContext(provider('data-stewardship.coverage'), context())).toBe(true);
-    expect(
-      providerSupportsContext(
-        provider('data-stewardship.coverage'),
-        context({ schema: { id: 'other', name: 'Other', fields: [] } as never })
-      )
-    ).toBe(false);
-  });
 });

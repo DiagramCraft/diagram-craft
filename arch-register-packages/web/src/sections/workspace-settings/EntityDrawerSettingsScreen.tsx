@@ -231,6 +231,7 @@ const itemReference = (item: EntityDrawerItem): string => {
   if (item.kind === 'children') return `${item.childSchemaId}:${item.fieldId}`;
   if (item.kind === 'rollup-leaf-count') return item.kind;
   if (item.kind === 'placeholder') return item.message;
+  if (item.kind === 'query') return item.queryText;
   return item.fieldId;
 };
 
@@ -255,6 +256,7 @@ const itemPlacementKey = (item: EntityDrawerItem): string => {
   if (item.kind === 'rollup') return `rollup:${item.fieldId}`;
   if (item.kind === 'rollup-leaf-count') return 'rollup-leaf-count';
   if (item.kind === 'placeholder') return `placeholder:${item.message}`;
+  if (item.kind === 'query') return `query:${item.queryText}`;
   return `field:${item.fieldId}`;
 };
 
@@ -281,6 +283,7 @@ const itemLabel = (
       ?.fields.find(candidate => candidate.id === item.fieldId);
     return `Roll-up · ${field?.name ?? item.fieldId}`;
   }
+  if (item.kind === 'query') return item.queryText;
   return (
     catalog.schemas
       .find(schema => schema.id === schemaId)

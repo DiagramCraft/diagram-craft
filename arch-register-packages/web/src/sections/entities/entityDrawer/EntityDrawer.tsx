@@ -33,6 +33,7 @@ import {
 import { entityDrawerProviderRegistry } from './entityDrawerProviders';
 import { RollupStatItem, RollupLeafCountItem } from './rollup/RollupItems';
 import { TypedRelationListItem } from './TypedRelationListItem';
+import { QueryListItem } from './QueryListItem';
 import type { EntityRecord, EntitySummary } from '@arch-register/api-types/entityContract';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import type { RelationRecord } from '@arch-register/api-types/relationContract';
@@ -330,6 +331,17 @@ const DrawerItem = ({
         typedRelationsIncoming={typedRelationsIncoming}
         typedRelationsStatus={providerContext.typedRelationsStatus}
         relationSchemas={relationSchemas}
+      />
+    );
+  }
+  if (item.item.kind === 'query') {
+    return (
+      <QueryListItem
+        item={item.item}
+        label={item.label}
+        workspaceId={workspaceSlug}
+        schemaName={providerContext.schema.name}
+        entityId={entity._uid}
       />
     );
   }

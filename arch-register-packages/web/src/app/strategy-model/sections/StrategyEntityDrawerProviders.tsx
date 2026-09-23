@@ -11,7 +11,6 @@ import {
   type EntityDrawerRequiredField
 } from '../../../sections/entities/entityDrawer/EntityDrawerProviderRegistry';
 import { resolveStrategyModelConfig, type StrategyModelConfig } from '../strategyQueries';
-import { useCapabilityRealizedBy } from '../useCapabilityRealizedBy';
 import styles from './StrategyEntityDrawerProviders.module.css';
 
 const useStrategyConfiguration = (workspaceId: string) => {
@@ -23,56 +22,6 @@ const BUSINESS_CAPABILITY_REQUIRED_FIELDS = [
   { id: 'parent', type: 'containment' },
   { id: 'capability_level' }
 ] satisfies readonly EntityDrawerRequiredField[];
-
-const StrategyRealizedByProvider = ({ context }: EntityDrawerProviderProps) => {
-  const { query: configurationQuery, config } = useStrategyConfiguration(context.workspaceId);
-  const businessCapabilitySchemaId =
-    config?.businessCapabilitySchemaId === context.schema.id
-      ? config.businessCapabilitySchemaId
-      : null;
-  const realizedBy = useCapabilityRealizedBy(
-    context.workspaceId,
-    businessCapabilitySchemaId,
-    context.entity._uid,
-    config?.businessCapabilitySupportsEntityRelationSchemaId ?? null
-  );
-  const state = configurationQuery.isLoading
-    ? 'loading'
-    : configurationQuery.isError || !config || businessCapabilitySchemaId == null
-      ? 'unavailable'
-      : realizedBy.isLoading
-        ? 'loading'
-        : realizedBy.error
-          ? 'unavailable'
-          : realizedBy.items.length > 0
-            ? 'ready'
-            : 'empty';
-
-  return (
-    <EntityDrawerProviderStatus
-      state={state}
-      emptyMessage="No linked applications, directly or across this capability's descendants."
-      unavailableMessage="Realized-by relationships are unavailable."
-    >
-      <div className={styles.tags}>
-        {realizedBy.items.map(({ entity, contributingCapability }) => (
-          <Chip
-            key={entity._uid}
-            tone="ghost"
-            title={
-              contributingCapability ? `Realized via ${contributingCapability._name}` : undefined
-            }
-          >
-            {entity._name}
-            {contributingCapability && (
-              <span className={styles.viaLabel}> · via {contributingCapability._name}</span>
-            )}
-          </Chip>
-        ))}
-      </div>
-    </EntityDrawerProviderStatus>
-  );
-};
 
 const supportingObjectives = (
   context: EntityDrawerProviderContext,
@@ -166,11 +115,6 @@ const StrategyLinkedInitiativesProvider = ({ context }: EntityDrawerProviderProp
 };
 
 export const strategyEntityDrawerProviderDefinitions = [
-  {
-    slotId: 'strategy.realized-by',
-    requiredFields: BUSINESS_CAPABILITY_REQUIRED_FIELDS,
-    Component: StrategyRealizedByProvider
-  },
   {
     slotId: 'strategy.linked-objectives',
     requiredFields: BUSINESS_CAPABILITY_REQUIRED_FIELDS,

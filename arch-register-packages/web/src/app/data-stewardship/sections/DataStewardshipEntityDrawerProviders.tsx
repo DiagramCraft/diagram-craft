@@ -1,6 +1,5 @@
 import { Chip } from '../../../components/Chip';
 import { useChangeCasesByEntity } from '../../../hooks/useChangeCases';
-import { computeDatasetCoverage, DATASET_COVERAGE_GAP_LABEL } from '../datasetCoverage';
 import { useDataStewardshipAssessmentRows } from '../useDataStewardshipAssessmentRows';
 import { DS_ASSESSMENT_STATUS_LABEL } from '../dataStewardshipAssessments';
 import { dueLabel, dueTone } from '../../../utils/assessmentDueTone';
@@ -22,39 +21,6 @@ const DATA_STEWARDSHIP_REQUIRED_FIELDS = [
   { id: 'review_status' },
   { id: 'stewardship_status' }
 ] satisfies readonly EntityDrawerRequiredField[];
-
-const CoverageProvider = ({ context }: EntityDrawerProviderProps) => {
-  const coverage = computeDatasetCoverage({
-    owner: context.entity._owner,
-    steward: context.entity.steward,
-    classification: context.entity.classification,
-    reviewStatus: context.entity.review_status
-  });
-
-  return (
-    <>
-      <span className={styles.sectionCaption}>
-        Named owner, named steward, confirmed classification, and a current review — distinct from
-        Stewardship Status above, which only tracks steward/custodian/review date.
-      </span>
-      <div className={styles.statGrid}>
-        <div className={styles.stat}>
-          <div className={styles.statLabel}>dsCovered</div>
-          <div className={styles.statValue}>{coverage.dsCovered ? 'Yes' : 'No'}</div>
-        </div>
-      </div>
-      {coverage.dsGaps.length > 0 && (
-        <div className={styles.tags}>
-          {coverage.dsGaps.map(gap => (
-            <Chip key={gap} tone="ghost">
-              {DATASET_COVERAGE_GAP_LABEL[gap]}
-            </Chip>
-          ))}
-        </div>
-      )}
-    </>
-  );
-};
 
 const QueueItemsProvider = ({ context }: EntityDrawerProviderProps) => {
   const queue = useDataStewardshipQueue(context.workspaceId, context.schema.id, 'all');
@@ -160,11 +126,6 @@ const AssessmentsProvider = ({ context }: EntityDrawerProviderProps) => {
 };
 
 export const dataStewardshipEntityDrawerProviderDefinitions = [
-  {
-    slotId: 'data-stewardship.coverage',
-    requiredFields: DATA_STEWARDSHIP_REQUIRED_FIELDS,
-    Component: CoverageProvider
-  },
   {
     slotId: 'data-stewardship.queue-items',
     requiredFields: DATA_STEWARDSHIP_REQUIRED_FIELDS,

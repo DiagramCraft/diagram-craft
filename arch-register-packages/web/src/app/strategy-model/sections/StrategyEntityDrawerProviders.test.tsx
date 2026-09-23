@@ -5,17 +5,7 @@ import type { EntityDrawerProviderContext } from '../../../sections/entities/ent
 import { strategyEntityDrawerProviderDefinitions } from './StrategyEntityDrawerProviders';
 
 const mocks = vi.hoisted(() => ({
-  query: vi.fn(),
-  realizedBy: {
-    items: [
-      {
-        entity: { _uid: 'app-1', _name: 'Billing System' },
-        contributingCapability: { _uid: 'child-1', _name: 'Account Management' }
-      }
-    ],
-    isLoading: false,
-    error: null
-  }
+  query: vi.fn()
 }));
 
 const config = {
@@ -46,10 +36,6 @@ vi.mock('../../../queries/entities', () => ({
 
 vi.mock('../../../queries/workspaceConfig', () => ({
   workspaceCapabilityConfigurationsQuery: () => ({ queryKey: ['strategy-config'] })
-}));
-
-vi.mock('../useCapabilityRealizedBy', () => ({
-  useCapabilityRealizedBy: () => mocks.realizedBy
 }));
 
 const context = {
@@ -103,16 +89,12 @@ describe('strategy entity drawer providers', () => {
     });
   });
 
-  it('renders realized-by provenance, objectives, and initiatives', () => {
-    const realizedBy = provider('strategy.realized-by');
+  it('renders linked objectives and initiatives', () => {
     const objectives = provider('strategy.linked-objectives');
     const initiatives = provider('strategy.linked-initiatives');
     const item = (slotId: string) => ({ kind: 'slot' as const, slotId });
 
     const markup = [
-      renderToStaticMarkup(
-        <realizedBy.Component context={context} item={item(realizedBy.slotId)} />
-      ),
       renderToStaticMarkup(
         <objectives.Component context={context} item={item(objectives.slotId)} />
       ),
@@ -121,8 +103,6 @@ describe('strategy entity drawer providers', () => {
       )
     ].join('');
 
-    expect(markup).toContain('Billing System');
-    expect(markup).toContain('via Account Management');
     expect(markup).toContain('Increase conversion');
     expect(markup).toContain('Checkout Simplification');
   });

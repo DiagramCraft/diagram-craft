@@ -125,6 +125,38 @@ describe('resolveEntityDrawerRenderModel', () => {
     expect(result.diagnostics).toEqual([]);
   });
 
+  it('resolves generic query items without requiring a provider', () => {
+    const result = resolve({
+      header: { badges: [] },
+      sections: [
+        {
+          id: 'content',
+          title: 'Content',
+          collapsible: true,
+          items: [
+            {
+              kind: 'query',
+              queryText: 'subtree(parent).->"Business Capability Supports Entity"',
+              label: 'Realized by'
+            }
+          ]
+        }
+      ]
+    });
+
+    expect(result.sections[0]?.items).toEqual([
+      {
+        item: {
+          kind: 'query',
+          queryText: 'subtree(parent).->"Business Capability Supports Entity"',
+          label: 'Realized by'
+        },
+        label: 'Realized by'
+      }
+    ]);
+    expect(result.diagnostics).toEqual([]);
+  });
+
   it('omits stale fields, invalid relations, and inaccessible field groups with diagnostics', () => {
     const result = resolve(
       {
@@ -243,6 +275,7 @@ describe('resolveEntityDrawerRenderModel', () => {
         if (item.item.kind === 'slot') return item.item.slotId;
         if (item.item.kind === 'placeholder') return item.item.message;
         if (item.item.kind === 'rollup-leaf-count') return item.item.kind;
+        if (item.item.kind === 'query') return item.item.queryText;
         return item.item.fieldId;
       })
     );

@@ -79,6 +79,17 @@ export const entitiesQuery = (
     enabled: enabled && !!workspaceId
   });
 
+export const entityQueryTextParseQuery = (workspaceId: string, text: string, enabled = true) =>
+  queryOptions({
+    queryKey: [...entityKeys.all, 'queryText', 'parse', workspaceId, text],
+    queryFn: ({ signal }) =>
+      orpcClient.entityQueryText.parseText(
+        { params: { workspace: workspaceId }, query: { text } },
+        { signal }
+      ),
+    enabled: enabled && !!workspaceId && !!text
+  });
+
 export const entityJsonQuery = (workspaceId: string, entityId: string, enabled = true) =>
   queryOptions({
     queryKey: entityKeys.json(workspaceId, entityId, 1),
