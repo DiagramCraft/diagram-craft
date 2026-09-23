@@ -69,50 +69,10 @@ export const createStrategyWorkspaceRoutes = <TParentRoute extends AnyRoute>(
         breadcrumbs: buildStrategyBreadcrumbs(ctx, STRATEGY_CAPABILITY_MAP_ID)
       })
   );
-  // Renders the same StrategyCapabilityMapScreen with a capability opened as a slide-over drawer
-  // on top, rather than a separate page — keeps the deep-linkable /strategy/map/$id URL, mirroring
-  // `glossaryWorkspaceRoute.tsx`'s `glossaryTermRoute`.
-  const capabilityMapDetailRoute = withWorkspaceShell(
-    createRoute({
-      getParentRoute: () => workspaceRoute,
-      path: `${railPath(STRATEGY_RAIL_PATHS[STRATEGY_CAPABILITY_MAP_ID])}/$capabilityId`,
-      validateSearch: validateCapabilityMapSearch,
-      beforeLoad: ({ context, params }) =>
-        ensureApplicationAccess(
-          context.queryClient,
-          (params as unknown as { workspaceSlug: string }).workspaceSlug,
-          'strategy-model'
-        ),
-      component: LazyStrategyCapabilityMapScreen
-    }),
-    ctx =>
-      railSectionShell(ctx, STRATEGY_CAPABILITY_MAP_ID, {
-        breadcrumbs: buildStrategyBreadcrumbs(ctx, STRATEGY_CAPABILITY_MAP_ID)
-      })
-  );
   const capabilitiesRoute = withWorkspaceShell(
     createRoute({
       getParentRoute: () => workspaceRoute,
       path: railPath(STRATEGY_RAIL_PATHS[STRATEGY_CAPABILITIES_ID]),
-      validateSearch: validateCapabilitiesSearch,
-      beforeLoad: ({ context, params }) =>
-        ensureApplicationAccess(
-          context.queryClient,
-          (params as unknown as { workspaceSlug: string }).workspaceSlug,
-          'strategy-model'
-        ),
-      component: LazyStrategyCapabilitiesScreen
-    }),
-    ctx =>
-      railSectionShell(ctx, STRATEGY_CAPABILITIES_ID, {
-        breadcrumbs: buildStrategyBreadcrumbs(ctx, STRATEGY_CAPABILITIES_ID)
-      })
-  );
-  // See `capabilityMapDetailRoute` above — same pattern, deep-linkable from the list section too.
-  const capabilitiesDetailRoute = withWorkspaceShell(
-    createRoute({
-      getParentRoute: () => workspaceRoute,
-      path: `${railPath(STRATEGY_RAIL_PATHS[STRATEGY_CAPABILITIES_ID])}/$capabilityId`,
       validateSearch: validateCapabilitiesSearch,
       beforeLoad: ({ context, params }) =>
         ensureApplicationAccess(
@@ -162,27 +122,6 @@ export const createStrategyWorkspaceRoutes = <TParentRoute extends AnyRoute>(
         breadcrumbs: buildStrategyBreadcrumbs(ctx, STRATEGY_STRATEGY_ID)
       })
   );
-  // See `capabilityMapDetailRoute` — same pattern: keeps the deep-linkable
-  // /strategy/strategy/$capabilityId URL for opening a capability from the "Capabilities this
-  // objective depends on" table as a slide-over on top of the Strategy screen.
-  const strategyDetailRoute = withWorkspaceShell(
-    createRoute({
-      getParentRoute: () => workspaceRoute,
-      path: `${railPath(STRATEGY_RAIL_PATHS[STRATEGY_STRATEGY_ID])}/$capabilityId`,
-      validateSearch: validateStrategySearch,
-      beforeLoad: ({ context, params }) =>
-        ensureApplicationAccess(
-          context.queryClient,
-          (params as unknown as { workspaceSlug: string }).workspaceSlug,
-          'strategy-model'
-        ),
-      component: LazyStrategyStrategyScreen
-    }),
-    ctx =>
-      railSectionShell(ctx, STRATEGY_STRATEGY_ID, {
-        breadcrumbs: buildStrategyBreadcrumbs(ctx, STRATEGY_STRATEGY_ID)
-      })
-  );
   const traceabilityRoute = withWorkspaceShell(
     createRoute({
       getParentRoute: () => workspaceRoute,
@@ -201,38 +140,13 @@ export const createStrategyWorkspaceRoutes = <TParentRoute extends AnyRoute>(
         breadcrumbs: buildStrategyBreadcrumbs(ctx, STRATEGY_TRACEABILITY_ID)
       })
   );
-  // See `capabilityMapDetailRoute` — same pattern: keeps the deep-linkable
-  // /strategy/traceability/$capabilityId URL for opening a capability as a slide-over on top of
-  // the walker.
-  const traceabilityDetailRoute = withWorkspaceShell(
-    createRoute({
-      getParentRoute: () => workspaceRoute,
-      path: `${railPath(STRATEGY_RAIL_PATHS[STRATEGY_TRACEABILITY_ID])}/$capabilityId`,
-      validateSearch: validateTraceabilitySearch,
-      beforeLoad: ({ context, params }) =>
-        ensureApplicationAccess(
-          context.queryClient,
-          (params as unknown as { workspaceSlug: string }).workspaceSlug,
-          'strategy-model'
-        ),
-      component: LazyStrategyTraceabilityScreen
-    }),
-    ctx =>
-      railSectionShell(ctx, STRATEGY_TRACEABILITY_ID, {
-        breadcrumbs: buildStrategyBreadcrumbs(ctx, STRATEGY_TRACEABILITY_ID)
-      })
-  );
 
   return [
     overviewRoute,
     capabilityMapRoute,
-    capabilityMapDetailRoute,
     capabilitiesRoute,
-    capabilitiesDetailRoute,
     heatmapsRoute,
     strategyRoute,
-    strategyDetailRoute,
-    traceabilityRoute,
-    traceabilityDetailRoute
+    traceabilityRoute
   ] as const;
 };

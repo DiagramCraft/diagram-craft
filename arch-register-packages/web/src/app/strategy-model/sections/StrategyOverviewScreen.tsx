@@ -11,6 +11,7 @@ import { resolveStrategyModelConfig, resolveStrategyViewConfig } from '../strate
 import { useCapabilityRollups } from '../useCapabilityRollups';
 import { formatGap } from './capabilityGap';
 import { fieldLabel } from '../capabilityFieldDisplay';
+import { useEntityDrawer } from '../../../sections/entities/entityDrawer/useEntityDrawer';
 import {
   StackedBar,
   Section,
@@ -54,6 +55,7 @@ const LEVEL_COLORS = ['var(--accent-fg)', 'var(--green)', 'var(--warning-fg)', '
 export const StrategyOverviewScreen = () => {
   const { workspaceSlug } = useParams({ strict: false }) as { workspaceSlug: string };
   const navigate = useNavigate();
+  const { openEntityDrawer } = useEntityDrawer();
 
   const configurations = useQuery(workspaceCapabilityConfigurationsQuery(workspaceSlug));
   const strategyConfig = resolveStrategyModelConfig(configurations.data);
@@ -176,13 +178,6 @@ export const StrategyOverviewScreen = () => {
       )
       .sort((a, b) => b.gap - a.gap)
       .slice(0, limit);
-
-  const openCapability = (publicId: string) =>
-    navigate({
-      to: `${STRATEGY_RAIL_PATHS[STRATEGY_CAPABILITIES_ID]}/$capabilityId`,
-      params: { workspaceSlug, capabilityId: publicId },
-      search: () => ({})
-    });
 
   if (configurations.isLoading) {
     return <div className={styles.empty}>Loading strategy model…</div>;
@@ -318,7 +313,7 @@ export const StrategyOverviewScreen = () => {
                   rows.map(({ item, gap }) => {
                     const formatted = formatGap(gap);
                     return (
-                      <Table.Row key={item._uid} onClick={() => openCapability(item._publicId)}>
+                      <Table.Row key={item._uid} onClick={() => openEntityDrawer(item._publicId)}>
                         <Table.NameCell title={item._name} subtitle={item._publicId} />
                         <Table.Cell numeric className={formatted.className} style={formatted.style}>
                           {formatted.text}

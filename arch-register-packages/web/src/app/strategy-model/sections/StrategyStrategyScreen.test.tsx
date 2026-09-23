@@ -7,6 +7,7 @@ import { StrategyStrategyScreen } from './StrategyStrategyScreen';
 
 const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
+  openEntityDrawer: vi.fn(),
   search: { objective: undefined as string | undefined },
   entityList: vi.fn(),
   entityTree: vi.fn(),
@@ -16,9 +17,13 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock('@tanstack/react-router', () => ({
-  useParams: () => ({ workspaceSlug: 'ws-1', capabilityId: undefined }),
+  useParams: () => ({ workspaceSlug: 'ws-1' }),
   useSearch: () => mocks.search,
   useNavigate: () => mocks.navigate
+}));
+
+vi.mock('../../../sections/entities/entityDrawer/useEntityDrawer', () => ({
+  useEntityDrawer: () => ({ openEntityDrawer: mocks.openEntityDrawer })
 }));
 
 vi.mock('../../../components/EntityHoverCard', () => ({
@@ -234,7 +239,7 @@ describe('StrategyStrategyScreen', () => {
     expect(container.textContent).toContain('No initiative pursues this objective.');
   });
 
-  it('opens the capability drawer route from a depends-on table row', async () => {
+  it('opens the shared entity drawer from a depends-on table row', async () => {
     await renderScreen();
 
     const row = [...container.querySelectorAll('tr')].find(tr =>
@@ -244,12 +249,7 @@ describe('StrategyStrategyScreen', () => {
     await act(async () => {
       row!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
-    expect(mocks.navigate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        to: '/$workspaceSlug/strategy/strategy/$capabilityId',
-        params: { workspaceSlug: 'ws-1', capabilityId: 'CAP-1' }
-      })
-    );
+    expect(mocks.openEntityDrawer).toHaveBeenCalledWith('CAP-1');
   });
 
   it('shows the not-enabled state when the capability is not configured', async () => {

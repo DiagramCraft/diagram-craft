@@ -7,6 +7,7 @@ import { DataStewardshipClassificationScreen } from './DataStewardshipClassifica
 
 const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
+  openEntityDrawer: vi.fn(),
   entityList: vi.fn(),
   entityGet: vi.fn(),
   schemasList: vi.fn(),
@@ -24,6 +25,10 @@ vi.mock('@tanstack/react-router', () => ({
   useNavigate: () => mocks.navigate
 }));
 
+vi.mock('../../../sections/entities/entityDrawer/useEntityDrawer', () => ({
+  useEntityDrawer: () => ({ openEntityDrawer: mocks.openEntityDrawer })
+}));
+
 vi.mock('../../../lib/orpcClient', () => ({
   orpcClient: {
     entities: { list: mocks.entityList, get: mocks.entityGet },
@@ -38,10 +43,6 @@ vi.mock('../../../lib/orpcClient', () => ({
 vi.mock('../../../hooks/usePrincipalLabel', () => ({
   usePrincipalLabel: () => (principal: { principal_id?: string } | null | undefined) =>
     principal?.principal_id ? `Principal ${principal.principal_id}` : undefined
-}));
-
-vi.mock('./DatasetDrawer', () => ({
-  DatasetDrawer: () => <div>Open record in Entities</div>
 }));
 
 const CONFIG = {
@@ -174,7 +175,7 @@ describe('DataStewardshipClassificationScreen', () => {
     expect(container.textContent).toContain('Data stewardship is not enabled.');
   });
 
-  it('lists datasets with classification and personal-data columns, and opens the drawer on row click', async () => {
+  it('lists datasets with classification and personal-data columns, and opens the shared drawer on row click', async () => {
     await renderScreen();
     expect(container.textContent).toContain('Customer Records');
     expect(container.textContent).toContain('Public Catalog');
@@ -187,18 +188,7 @@ describe('DataStewardshipClassificationScreen', () => {
     await act(async () => {
       row!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
-    expect(mocks.navigate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        to: '/$workspaceSlug/data-stewardship/classification',
-        params: { workspaceSlug: 'ws-1' }
-      })
-    );
-  });
-
-  it('renders the drawer when the route carries a datasetId search param', async () => {
-    mocks.search = { datasetId: 'DS-001' };
-    await renderScreen();
-    expect(container.textContent).toContain('Open record in Entities');
+    expect(mocks.openEntityDrawer).toHaveBeenCalledWith('DS-001');
   });
 
   it('shows a "Datasets by classification" breakdown, clicking a row narrows the classification facet', async () => {

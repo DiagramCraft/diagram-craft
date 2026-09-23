@@ -13,7 +13,7 @@ import { resolveStrategyModelConfig, resolveStrategyViewConfig } from '../strate
 import { useCapabilityRollups, type CapabilityTableRollup } from '../useCapabilityRollups';
 import { capabilityNumericValue, fieldLabel } from '../capabilityFieldDisplay';
 import { overlayColor, overlayLegend, overlayValue } from '../capabilityMapOverlays';
-import { CapabilityDrawer } from './CapabilityDrawer';
+import { useEntityDrawer } from '../../../sections/entities/entityDrawer/useEntityDrawer';
 import { STRATEGY_CAPABILITY_MAP_ID, STRATEGY_RAIL_PATHS } from '../strategySections';
 import type { CapabilityMapSearchParams } from '../../../routes/searchParams';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
@@ -25,12 +25,12 @@ const EMPTY_ROLLUP: CapabilityTableRollup = { values: {}, currency: {}, appsCoun
 const MAP_ROUTE = STRATEGY_RAIL_PATHS[STRATEGY_CAPABILITY_MAP_ID];
 
 export const StrategyCapabilityMapScreen = () => {
-  const { workspaceSlug, capabilityId } = useParams({ strict: false }) as {
+  const { workspaceSlug } = useParams({ strict: false }) as {
     workspaceSlug: string;
-    capabilityId?: string;
   };
   const search = useSearch({ strict: false }) as CapabilityMapSearchParams;
   const navigate = useNavigate();
+  const { openEntityDrawer } = useEntityDrawer();
 
   const configurations = useQuery(workspaceCapabilityConfigurationsQuery(workspaceSlug));
   const strategyConfig = resolveStrategyModelConfig(configurations.data);
@@ -107,22 +107,9 @@ export const StrategyCapabilityMapScreen = () => {
 
   const patchSearch = (patch: Partial<CapabilityMapSearchParams>) =>
     navigate({
-      to: capabilityId ? `${MAP_ROUTE}/$capabilityId` : MAP_ROUTE,
-      params: { workspaceSlug, ...(capabilityId ? { capabilityId } : {}) },
-      search: (previous: Record<string, unknown>) => ({ ...previous, ...patch })
-    });
-
-  const openCapability = (id: string) =>
-    navigate({
-      to: `${MAP_ROUTE}/$capabilityId`,
-      params: { workspaceSlug, capabilityId: id },
-      search: (previous: Record<string, unknown>) => previous
-    });
-  const closeCapability = () =>
-    navigate({
       to: MAP_ROUTE,
       params: { workspaceSlug },
-      search: (previous: Record<string, unknown>) => previous
+      search: (previous: Record<string, unknown>) => ({ ...previous, ...patch })
     });
 
   const focusDomain = (uid: string) =>
@@ -169,7 +156,7 @@ export const StrategyCapabilityMapScreen = () => {
         type="button"
         className={`${styles.leaf} ${matches(cap) ? '' : styles.leafDim}`}
         style={heat ? ({ '--heat': heat } as React.CSSProperties) : undefined}
-        onClick={() => openCapability(cap._publicId)}
+        onClick={() => openEntityDrawer(cap._publicId)}
         title={cap._name}
       >
         <span className={styles.dot} style={heat ? { background: heat } : undefined} />
@@ -253,7 +240,7 @@ export const StrategyCapabilityMapScreen = () => {
                     type="button"
                     className={styles.domainName}
                     onClick={() =>
-                      focusCap ? openCapability(domain._publicId) : focusDomain(domain._uid)
+                      focusCap ? openEntityDrawer(domain._publicId) : focusDomain(domain._uid)
                     }
                   >
                     {domain._name}
@@ -276,7 +263,7 @@ export const StrategyCapabilityMapScreen = () => {
                           <button
                             type="button"
                             className={styles.l2Head}
-                            onClick={() => openCapability(sub._publicId)}
+                            onClick={() => openEntityDrawer(sub._publicId)}
                           >
                             <span className={`${styles.dot} ${styles.dotSm}`} />
                             <span className={styles.l2Name}>{sub._name}</span>
@@ -294,15 +281,6 @@ export const StrategyCapabilityMapScreen = () => {
           })
         )}
       </div>
-
-      {capabilityId && strategyConfig && (
-        <CapabilityDrawer
-          workspaceSlug={workspaceSlug}
-          capabilityId={capabilityId}
-          onClose={closeCapability}
-          onOpenCapability={openCapability}
-        />
-      )}
     </main>
   );
 };

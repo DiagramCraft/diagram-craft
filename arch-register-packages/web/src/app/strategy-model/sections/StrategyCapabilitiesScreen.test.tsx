@@ -7,6 +7,7 @@ import { StrategyCapabilitiesScreen } from './StrategyCapabilitiesScreen';
 
 const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
+  openEntityDrawer: vi.fn(),
   entityList: vi.fn(),
   entityTree: vi.fn(),
   metricsRollup: vi.fn(),
@@ -15,9 +16,13 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock('@tanstack/react-router', () => ({
-  useParams: () => ({ workspaceSlug: 'ws-1', capabilityId: undefined }),
+  useParams: () => ({ workspaceSlug: 'ws-1' }),
   useSearch: () => ({}),
   useNavigate: () => mocks.navigate
+}));
+
+vi.mock('../../../sections/entities/entityDrawer/useEntityDrawer', () => ({
+  useEntityDrawer: () => ({ openEntityDrawer: mocks.openEntityDrawer })
 }));
 
 vi.mock('../../../lib/orpcClient', () => ({
@@ -211,7 +216,7 @@ describe('StrategyCapabilitiesScreen', () => {
     expect((indentedDiv('Loyalty Programs') as HTMLElement)?.style.paddingLeft).toBe('');
   });
 
-  it('opens the capability drawer route when a row is clicked', async () => {
+  it('opens the shared entity drawer when a row is clicked', async () => {
     await act(async () => {
       root.render(
         <QueryClientProvider client={queryClient}>
@@ -233,11 +238,6 @@ describe('StrategyCapabilitiesScreen', () => {
       row!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
 
-    expect(mocks.navigate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        to: '/$workspaceSlug/strategy/capabilities/$capabilityId',
-        params: { workspaceSlug: 'ws-1', capabilityId: 'CAP-1' }
-      })
-    );
+    expect(mocks.openEntityDrawer).toHaveBeenCalledWith('CAP-1');
   });
 });

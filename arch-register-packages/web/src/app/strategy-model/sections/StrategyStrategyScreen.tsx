@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useParams, useNavigate, useSearch } from '@tanstack/react-router';
+import { useParams, useSearch } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
 import { Title } from '../../../components/Title';
 import { Table } from '../../../components/table/Table';
@@ -12,15 +12,12 @@ import { useSchemas } from '../../../hooks/useSchemas';
 import { resolveStrategyModelConfig, resolveStrategyViewConfig } from '../strategyQueries';
 import { useCapabilityRollups, type CapabilityTableRollup } from '../useCapabilityRollups';
 import { fieldLabel } from '../capabilityFieldDisplay';
-import { CapabilityDrawer } from './CapabilityDrawer';
+import { useEntityDrawer } from '../../../sections/entities/entityDrawer/useEntityDrawer';
 import { CapabilityRollupValue, displayIsNumeric } from './CapabilityRollupValue';
 import { MeasureProgressBar } from './MeasureProgressBar';
-import { STRATEGY_RAIL_PATHS, STRATEGY_STRATEGY_ID } from '../strategySections';
 import type { StrategySearchParams } from '../../../routes/searchParams';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import styles from './StrategyStrategyScreen.module.css';
-
-const STRATEGY_ROUTE = STRATEGY_RAIL_PATHS[STRATEGY_STRATEGY_ID];
 
 const strOrNull = (value: unknown): string | null =>
   typeof value === 'string' && value.length > 0 ? value : null;
@@ -80,12 +77,11 @@ const StatusChip = ({ status }: { status: unknown }) => {
  * `StrategyTraceabilityScreen` deferred the `strategy-traceability` matrix view to #3212.
  */
 export const StrategyStrategyScreen = () => {
-  const { workspaceSlug, capabilityId } = useParams({ strict: false }) as {
+  const { workspaceSlug } = useParams({ strict: false }) as {
     workspaceSlug: string;
-    capabilityId?: string;
   };
-  const navigate = useNavigate();
   const search = useSearch({ strict: false }) as StrategySearchParams;
+  const { openEntityDrawer } = useEntityDrawer();
 
   const configurations = useQuery(workspaceCapabilityConfigurationsQuery(workspaceSlug));
   const strategyConfig = resolveStrategyModelConfig(configurations.data);
@@ -264,19 +260,6 @@ export const StrategyStrategyScreen = () => {
     return nameByUid.get(current) ?? '—';
   };
 
-  const openCapability = (id: string) =>
-    navigate({
-      to: `${STRATEGY_ROUTE}/$capabilityId`,
-      params: { workspaceSlug, capabilityId: id },
-      search: (previous: Record<string, unknown>) => previous
-    });
-  const closeCapability = () =>
-    navigate({
-      to: STRATEGY_ROUTE,
-      params: { workspaceSlug },
-      search: (previous: Record<string, unknown>) => previous
-    });
-
   if (configurations.isLoading) {
     return <div className={styles.empty}>Loading strategy model…</div>;
   }
@@ -450,7 +433,7 @@ export const StrategyStrategyScreen = () => {
                 const rollup = rollupFor(entity._uid);
                 const apps = applicationsByCapability.get(entity._uid) ?? [];
                 return (
-                  <Table.Row key={entity._uid} onClick={() => openCapability(entity._publicId)}>
+                  <Table.Row key={entity._uid} onClick={() => openEntityDrawer(entity._publicId)}>
                     <Table.NameCell
                       title={
                         <EntityHoverCard entityId={entity._uid}>{entity._name}</EntityHoverCard>
@@ -480,15 +463,6 @@ export const StrategyStrategyScreen = () => {
           </Table.Body>
         </Table.Root>
       </div>
-
-      {capabilityId && (
-        <CapabilityDrawer
-          workspaceSlug={workspaceSlug}
-          capabilityId={capabilityId}
-          onClose={closeCapability}
-          onOpenCapability={openCapability}
-        />
-      )}
     </main>
   );
 };

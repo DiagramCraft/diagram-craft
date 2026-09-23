@@ -28,9 +28,10 @@ import { ensureApplicationAccess } from '../../routes/applicationAccess';
 const railPath = (path: string) => path.replace('/$workspaceSlug/', '');
 
 /**
- * Risk & Compliance's workspace routes: one per rail section, plus the Controls detail route.
- * The former Risks detail route remains as a legacy redirect to the workspace-wide entity drawer
- * search parameter.
+ * Risk & Compliance's workspace routes: one per rail section. The former Risks detail route
+ * remains as a legacy redirect to the workspace-wide entity drawer search parameter; the former
+ * Controls detail route was dropped outright (no redirect), mirroring the vendor management app's
+ * `$vendorId`/`$contractId` removal.
  */
 export const createRiskComplianceWorkspaceRoutes = <TParentRoute extends AnyRoute>(
   workspaceRoute: TParentRoute
@@ -105,24 +106,6 @@ export const createRiskComplianceWorkspaceRoutes = <TParentRoute extends AnyRout
         breadcrumbs: buildRiskComplianceBreadcrumbs(ctx, RISK_CONTROLS_ID)
       })
   );
-  const controlsDetailRoute = withWorkspaceShell(
-    createRoute({
-      getParentRoute: () => workspaceRoute,
-      path: `${railPath(RISK_RAIL_PATHS[RISK_CONTROLS_ID])}/$controlId`,
-      validateSearch: validateControlsSearch,
-      beforeLoad: ({ context, params }) =>
-        ensureApplicationAccess(
-          context.queryClient,
-          (params as unknown as { workspaceSlug: string }).workspaceSlug,
-          'risk-compliance'
-        ),
-      component: LazyRiskComplianceControlsScreen
-    }),
-    ctx =>
-      railSectionShell(ctx, RISK_CONTROLS_ID, {
-        breadcrumbs: buildRiskComplianceBreadcrumbs(ctx, RISK_CONTROLS_ID)
-      })
-  );
   const retentionRoute = withWorkspaceShell(
     createRoute({
       getParentRoute: () => workspaceRoute,
@@ -165,7 +148,6 @@ export const createRiskComplianceWorkspaceRoutes = <TParentRoute extends AnyRout
     risksRoute,
     risksLegacyDetailRoute,
     controlsRoute,
-    controlsDetailRoute,
     retentionRoute,
     assessmentsRoute
   ] as const;

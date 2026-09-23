@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, createElement } from 'react';
+import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -7,13 +7,14 @@ import { RiskComplianceControlsScreen } from './RiskComplianceControlsScreen';
 
 const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
+  openEntityDrawer: vi.fn(),
   entityList: vi.fn(),
   entityGet: vi.fn(),
   schemasList: vi.fn(),
   relationsList: vi.fn(),
   relationsListForEntity: vi.fn(),
   capabilityConfigurationsList: vi.fn(),
-  params: { workspaceSlug: 'ws-1' } as { workspaceSlug: string; controlId?: string },
+  params: { workspaceSlug: 'ws-1' } as { workspaceSlug: string },
   search: {} as Record<string, unknown>
 }));
 
@@ -23,6 +24,10 @@ vi.mock('@tanstack/react-router', () => ({
   useNavigate: () => mocks.navigate
 }));
 
+vi.mock('../../../sections/entities/entityDrawer/useEntityDrawer', () => ({
+  useEntityDrawer: () => ({ openEntityDrawer: mocks.openEntityDrawer })
+}));
+
 vi.mock('../../../lib/orpcClient', () => ({
   orpcClient: {
     entities: { list: mocks.entityList, get: mocks.entityGet },
@@ -30,16 +35,6 @@ vi.mock('../../../lib/orpcClient', () => ({
     relations: { list: mocks.relationsList, listForEntity: mocks.relationsListForEntity },
     config: { capabilityConfigurations: { list: mocks.capabilityConfigurationsList } }
   }
-}));
-
-vi.mock('../../../sections/entities/entityDrawer/EntityDrawer', () => ({
-  EntityDrawer: ({ entityId, onClose }: { entityId: string; onClose: () => void }) =>
-    createElement(
-      'div',
-      { 'data-entity-id': entityId },
-      entityId === 'risk-1' ? 'RSK-001 Open record in Entities' : 'Open record in Entities',
-      createElement('button', { type: 'button', 'aria-label': 'Close', onClick: onClose })
-    )
 }));
 
 const CONFIG = {
@@ -132,18 +127,7 @@ describe('RiskComplianceControlsScreen', () => {
       row!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
 
-    expect(mocks.navigate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        to: '/$workspaceSlug/risk-compliance/controls/$controlId',
-        params: { workspaceSlug: 'ws-1', controlId: 'CTL-001' }
-      })
-    );
-  });
-
-  it('renders the drawer when the route carries a controlId param', async () => {
-    mocks.params = { workspaceSlug: 'ws-1', controlId: 'control-1' };
-    await renderScreen();
-    expect(container.textContent).toContain('Open record in Entities');
+    expect(mocks.openEntityDrawer).toHaveBeenCalledWith('CTL-001');
   });
 
   it('shows a not-enabled empty state when the capability is unconfigured', async () => {
@@ -284,39 +268,27 @@ describe('RiskComplianceControlsScreen', () => {
     // ...but the System reached only via risk-affects is excluded from this panel.
     expect(container.textContent).not.toContain('Payments System');
 
-    // Clicking a "coverage by risk" row opens the shared RiskDrawer in-situ, not a route
-    // navigation — the row is a plain button (a bar-list, not a table), unlike the asset panel.
-    mocks.navigate.mockClear();
+    // Clicking a "coverage by risk" row opens the shared entity drawer via `openEntityDrawer`, not
+    // a route navigation — the row is a plain button (a bar-list, not a table), unlike the asset
+    // panel.
+    mocks.openEntityDrawer.mockClear();
     const riskRow = [...container.querySelectorAll('button')].find(button =>
       button.textContent?.includes('Account Takeover')
     );
     await act(async () => {
       riskRow!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
-    for (let i = 0; i < 8; i++) await flush();
-    expect(mocks.navigate).not.toHaveBeenCalled();
-    expect(container.textContent).toContain('RSK-001');
-    expect(container.querySelectorAll('[aria-label="Close"]').length).toBeGreaterThan(0);
+    expect(mocks.openEntityDrawer).toHaveBeenCalledWith('RSK-001');
 
-    const closeButtons = [...container.querySelectorAll('button[aria-label="Close"]')];
-    await act(async () => {
-      closeButtons.at(-1)!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    });
-    for (let i = 0; i < 8; i++) await flush();
-
-    // Clicking an asset row opens the schema-configured entity drawer in-situ, not a route
-    // navigation.
-    mocks.navigate.mockClear();
+    // Clicking an asset row opens the shared entity drawer the same way.
+    mocks.openEntityDrawer.mockClear();
     const assetRow = [...container.querySelectorAll('tr')].find(tr =>
       tr.textContent?.includes('Customer PII')
     );
     await act(async () => {
       assetRow!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
-    for (let i = 0; i < 8; i++) await flush();
-    expect(mocks.navigate).not.toHaveBeenCalled();
-    expect(container.querySelector('[data-entity-id="asset-2"]')).toBeTruthy();
-    expect(container.textContent).toContain('Open record in Entities');
+    expect(mocks.openEntityDrawer).toHaveBeenCalledWith('asset-2');
   });
 
   it('shows the traceability matrix with control x risk membership and per-column totals', async () => {
@@ -407,20 +379,15 @@ describe('RiskComplianceControlsScreen', () => {
     expect(dataLeakTotalCell?.textContent).toBe('');
     expect(dataLeakTotalCell?.querySelector('span')).toBeTruthy();
 
-    // Clicking the control's row header opens the shared entity drawer via navigation.
-    mocks.navigate.mockClear();
+    // Clicking the control's row header opens the shared entity drawer via `openEntityDrawer`.
+    mocks.openEntityDrawer.mockClear();
     const controlHeader = [...container.querySelectorAll('tbody th')].find(th =>
       th.textContent?.includes('MFA Enforcement')
     );
     await act(async () => {
       controlHeader!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
-    expect(mocks.navigate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        to: '/$workspaceSlug/risk-compliance/controls/$controlId',
-        params: { workspaceSlug: 'ws-1', controlId: 'CTL-001' }
-      })
-    );
+    expect(mocks.openEntityDrawer).toHaveBeenCalledWith('CTL-001');
 
     // The dimension toggle (in the main toolbar, not the panel header) patches the `dim` search
     // param rather than navigating away.
@@ -493,12 +460,11 @@ describe('RiskComplianceControlsScreen', () => {
       'button[aria-label="Open asset Payments System"]'
     );
     expect(assetHeader).toBeTruthy();
-    mocks.navigate.mockClear();
+    mocks.openEntityDrawer.mockClear();
     await act(async () => {
       assetHeader!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
 
-    expect(mocks.navigate).not.toHaveBeenCalled();
-    expect(container.querySelector('[data-entity-id="system-1"]')).toBeTruthy();
+    expect(mocks.openEntityDrawer).toHaveBeenCalledWith('system-1');
   });
 });

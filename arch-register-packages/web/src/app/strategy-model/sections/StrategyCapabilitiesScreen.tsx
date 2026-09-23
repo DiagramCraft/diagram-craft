@@ -12,7 +12,7 @@ import { useTeams } from '../../../hooks/useWorkspaceConfig';
 import { useEntityTree } from '../../../hooks/useEntities';
 import { useSchemas } from '../../../hooks/useSchemas';
 import { entitiesQuery } from '../../../queries/entities';
-import { CapabilityDrawer } from './CapabilityDrawer';
+import { useEntityDrawer } from '../../../sections/entities/entityDrawer/useEntityDrawer';
 import { useCapabilityRollups, type CapabilityTableRollup } from '../useCapabilityRollups';
 import { buildCapabilityTree, flattenCapabilityTree } from '../capabilityTree';
 import {
@@ -83,13 +83,13 @@ const collectSubtreeIds = (
 const EMPTY_ROLLUP: CapabilityTableRollup = { values: {}, currency: {}, appsCount: null };
 
 export const StrategyCapabilitiesScreen = () => {
-  const { workspaceSlug, capabilityId } = useParams({ strict: false }) as {
+  const { workspaceSlug } = useParams({ strict: false }) as {
     workspaceSlug: string;
-    capabilityId?: string;
   };
   const navigate = useNavigate();
   const search = useSearch({ strict: false }) as CapabilitiesSearchParams;
   const filterPopoverRef = useRef<PopoverActions | null>(null);
+  const { openEntityDrawer } = useEntityDrawer();
 
   const configurations = useQuery(workspaceCapabilityConfigurationsQuery(workspaceSlug));
   const strategyConfig = resolveStrategyModelConfig(configurations.data);
@@ -104,8 +104,7 @@ export const StrategyCapabilitiesScreen = () => {
   const { data: owners = [] } = useTeams(workspaceSlug);
   // `view: 'full'`, not 'summary': the Level column reads `capability_level`, a schema-defined
   // (derived) field, and `toApiEntitySummary` on the server omits schema `data` fields entirely —
-  // only the full entity projection carries them (see `CapabilityDrawer`, which fetches one
-  // capability in full for the same reason).
+  // only the full entity projection carries them.
   const capabilities = useQuery(
     entitiesQuery(
       workspaceSlug,
@@ -215,30 +214,15 @@ export const StrategyCapabilitiesScreen = () => {
     dir: 'asc'
   });
 
-  const currentRoute = capabilityId
-    ? {
-        to: `${STRATEGY_RAIL_PATHS[STRATEGY_CAPABILITIES_ID]}/$capabilityId`,
-        params: { workspaceSlug, capabilityId }
-      }
-    : { to: STRATEGY_RAIL_PATHS[STRATEGY_CAPABILITIES_ID], params: { workspaceSlug } };
+  const currentRoute = {
+    to: STRATEGY_RAIL_PATHS[STRATEGY_CAPABILITIES_ID],
+    params: { workspaceSlug }
+  };
 
   const patchSearch = (patch: Record<string, unknown>) =>
     navigate({
       ...currentRoute,
       search: (previous: Record<string, unknown>) => ({ ...previous, ...patch })
-    });
-
-  const openCapability = (id: string) =>
-    navigate({
-      to: `${STRATEGY_RAIL_PATHS[STRATEGY_CAPABILITIES_ID]}/$capabilityId`,
-      params: { workspaceSlug, capabilityId: id },
-      search: (previous: Record<string, unknown>) => previous
-    });
-  const closeCapability = () =>
-    navigate({
-      to: STRATEGY_RAIL_PATHS[STRATEGY_CAPABILITIES_ID],
-      params: { workspaceSlug },
-      search: (previous: Record<string, unknown>) => previous
     });
 
   // The Name column's tree indent only lines up with a hierarchical sort.
@@ -452,7 +436,7 @@ export const StrategyCapabilitiesScreen = () => {
             </Table.EmptyRow>
           ) : (
             sorted.map(entity => (
-              <Table.Row key={entity._uid} onClick={() => openCapability(entity._publicId)}>
+              <Table.Row key={entity._uid} onClick={() => openEntityDrawer(entity._publicId)}>
                 {columns.map(column =>
                   column.fieldId === '_name' ? (
                     <Table.NameCell
@@ -474,15 +458,6 @@ export const StrategyCapabilitiesScreen = () => {
           )}
         </Table.Body>
       </Table.Root>
-
-      {capabilityId && strategyConfig && (
-        <CapabilityDrawer
-          workspaceSlug={workspaceSlug}
-          capabilityId={capabilityId}
-          onClose={closeCapability}
-          onOpenCapability={openCapability}
-        />
-      )}
     </main>
   );
 };
