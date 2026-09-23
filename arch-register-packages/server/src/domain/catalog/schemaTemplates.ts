@@ -2247,6 +2247,19 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             min: 1,
             max: 5,
             groupId: 'risk'
+          },
+          {
+            id: 'risk',
+            name: 'Risk',
+            type: 'derived',
+            groupId: 'risk',
+            expression:
+              'isBlank(entity.security_risk) || isBlank(entity.concentration_risk) || ' +
+              'isBlank(entity.financial_risk) || isBlank(entity.compliance_risk) ? null : ' +
+              '(((entity.security_risk * 0.34 + entity.concentration_risk * 0.28 + ' +
+              'entity.financial_risk * 0.22 + entity.compliance_risk * 0.16) * ' +
+              '(1 + ((entity.criticality ?? 3) - 3) * 0.06)) |> round |> clamp(1, 5))',
+            resultType: 'rating'
           }
         ],
         groups: [
@@ -2380,7 +2393,8 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
               { kind: 'field', fieldId: 'concentration_risk', presentation: 'mini-panel' },
               { kind: 'field', fieldId: 'financial_risk', presentation: 'mini-panel' },
               { kind: 'field', fieldId: 'compliance_risk', presentation: 'mini-panel' },
-              { kind: 'field', fieldId: 'criticality', presentation: 'mini-panel' }
+              { kind: 'field', fieldId: 'criticality', presentation: 'mini-panel' },
+              { kind: 'field', fieldId: 'risk', presentation: 'mini-panel' }
             ]
           },
           {

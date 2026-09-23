@@ -18,7 +18,7 @@ export type RiskMatrixVendor = { id: string; name: string };
 /**
  * Criticality (rows, 5 down to 2 — criticality-1 vendors aren't broken out, matching the design
  * reference) × risk-band (columns, low to high) matrix. A fixed grid over a derived,
- * non-schema value (`vmRiskBand`), so this is a small bespoke component rather than the generic
+ * UI-derived band from the Vendor schema's `risk` field, so this is a small bespoke component rather than the generic
  * `EntityBrowser` `HeatmapView`/`MatrixView` (those are tightly coupled to entity-browser view
  * config/rows and don't fit a fixed domain grid).
  *

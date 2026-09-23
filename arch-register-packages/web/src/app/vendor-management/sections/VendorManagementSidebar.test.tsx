@@ -192,6 +192,7 @@ describe('VendorManagementSidebar', () => {
           _name: 'Acme Corp',
           tier: 'strategic',
           criticality: 5,
+          risk: 5,
           security_risk: 5,
           concentration_risk: 5,
           financial_risk: 5,
@@ -203,6 +204,7 @@ describe('VendorManagementSidebar', () => {
           _name: 'Beta Inc',
           tier: 'tactical',
           criticality: 2,
+          risk: 1,
           security_risk: 1,
           concentration_risk: 1,
           financial_risk: 1,
@@ -313,7 +315,7 @@ describe('VendorManagementSidebar', () => {
       // Plain vendor register list (no entityQuery) — used by RiskSidebarContent's own vendor
       // fetch and by the Band facet counts.
       return {
-        items: [{ _uid: 'vnd-1', _publicId: 'VND-1', _name: 'Acme Corp', criticality: 5 }],
+        items: [{ _uid: 'vnd-1', _publicId: 'VND-1', _name: 'Acme Corp', criticality: 5, risk: 5 }],
         total: 1
       };
     });
@@ -452,8 +454,8 @@ describe('VendorManagementSidebar', () => {
       }
       return {
         items: [
-          { _uid: 'vnd-1', _publicId: 'VND-1', _name: 'Acme Corp', criticality: 5 },
-          { _uid: 'vnd-2', _publicId: 'VND-2', _name: 'Beta Inc', criticality: 3 }
+          { _uid: 'vnd-1', _publicId: 'VND-1', _name: 'Acme Corp', criticality: 5, risk: 5 },
+          { _uid: 'vnd-2', _publicId: 'VND-2', _name: 'Beta Inc', criticality: 3, risk: 1 }
         ],
         total: 2
       };

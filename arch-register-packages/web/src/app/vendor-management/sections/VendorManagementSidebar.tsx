@@ -28,7 +28,7 @@ import { useVendorSpendRollups } from '../useVendorSpendRollups';
 import { computeVmGroupSpend, computeVmTotalSpend } from '../vendorSpendAggregates';
 import { renewalWindow, RENEWAL_WINDOWS } from '../contractRenewalWindow';
 import {
-  computeVendorRisk,
+  vendorRiskBandFor,
   VENDOR_RISK_BAND_COLOR,
   VENDOR_RISK_BAND_LABEL,
   type VendorRiskBand
@@ -487,25 +487,15 @@ const RiskSidebarContent = ({
   const vendorIds = useMemo(() => vendors.map(vendor => vendor._uid), [vendors]);
 
   const risks = useMemo(
-    () =>
-      vendors.map(vendor =>
-        computeVendorRisk({
-          security_risk: typeof vendor.security_risk === 'number' ? vendor.security_risk : null,
-          concentration_risk:
-            typeof vendor.concentration_risk === 'number' ? vendor.concentration_risk : null,
-          financial_risk: typeof vendor.financial_risk === 'number' ? vendor.financial_risk : null,
-          compliance_risk:
-            typeof vendor.compliance_risk === 'number' ? vendor.compliance_risk : null,
-          criticality: typeof vendor.criticality === 'number' ? vendor.criticality : null
-        })
-      ),
+    () => vendors.map(vendor => (typeof vendor.risk === 'number' ? vendor.risk : null)),
     [vendors]
   );
 
   const bandCounts = useMemo(() => {
     const counts = new Map<VendorRiskBand, number>();
     for (const risk of risks) {
-      if (risk.vmRiskBand) counts.set(risk.vmRiskBand, (counts.get(risk.vmRiskBand) ?? 0) + 1);
+      const band = vendorRiskBandFor(risk);
+      if (band) counts.set(band, (counts.get(band) ?? 0) + 1);
     }
     return counts;
   }, [risks]);

@@ -27,12 +27,12 @@ describe('EntityDrawerProviderFrame', () => {
 
   it('keeps mini-panel labels inside the shared panel chrome', () => {
     const markup = renderToStaticMarkup(
-      <EntityDrawerProviderFrame label="vmRisk" presentation="mini-panel">
+      <EntityDrawerProviderFrame label="Risk" presentation="mini-panel">
         <span>3.0</span>
       </EntityDrawerProviderFrame>
     );
 
-    expect(markup.indexOf('vmRisk')).toBeLessThan(markup.indexOf('3.0'));
+    expect(markup.indexOf('Risk')).toBeLessThan(markup.indexOf('3.0'));
   });
 
   it('renders label adornments through the shared label element', () => {

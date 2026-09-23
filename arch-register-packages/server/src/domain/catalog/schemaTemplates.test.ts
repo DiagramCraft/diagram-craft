@@ -749,7 +749,8 @@ describe('instantiateTemplate', () => {
       'concentration_risk',
       'financial_risk',
       'compliance_risk',
-      'criticality'
+      'criticality',
+      'risk'
     ]);
     expect(contract?.fields).toContainEqual({
       id: 'vendor',
@@ -786,6 +787,38 @@ describe('instantiateTemplate', () => {
         direction: 'out'
       })
     );
+  });
+
+  it('materializes the Vendor derived risk rating with the documented formula and null semantics', () => {
+    const definitions = instantiateTemplateDefinitions('ws-1', 'default');
+    const vendor = definitions.schemas.find(schema => schema.name === 'Vendor')!;
+    const risk = vendor.fields.find(field => field.id === 'risk')!;
+    const plan = buildDerivedPlan(vendor.fields);
+
+    expect(risk).toMatchObject({
+      id: 'risk',
+      name: 'Risk',
+      type: 'derived',
+      requirementLevel: 'optional',
+      groupId: 'risk',
+      resultType: 'rating'
+    });
+    expect(risk.type).toBe('derived');
+    if (risk.type !== 'derived') throw new Error('Vendor risk field should be derived');
+    expect(risk.expression).toContain('0.34');
+    expect(risk.expression).toContain('0.28');
+    expect(risk.expression).toContain('0.22');
+    expect(risk.expression).toContain('0.16');
+
+    const evaluate = (values: Record<string, unknown>) =>
+      evaluateDerivedFields(plan, values, { objectType: 'entity', objectId: 'vendor-1' }).risk;
+
+    expect(evaluate({ security_risk: 3, concentration_risk: 3, financial_risk: 3, compliance_risk: 3, criticality: 3 })).toBe(3);
+    expect(evaluate({ security_risk: 1, concentration_risk: 1, financial_risk: 1, compliance_risk: 1, criticality: 1 })).toBe(1);
+    expect(evaluate({ security_risk: 5, concentration_risk: 5, financial_risk: 5, compliance_risk: 5, criticality: 5 })).toBe(5);
+    expect(evaluate({ security_risk: 5, concentration_risk: 3, financial_risk: 2, compliance_risk: 4, criticality: 4 })).toBe(4);
+    expect(evaluate({ security_risk: 3, concentration_risk: 3, financial_risk: 3, compliance_risk: 3 })).toBe(3);
+    expect(evaluate({ security_risk: 3, concentration_risk: 3, financial_risk: 3, criticality: 3 })).toBeUndefined();
   });
 
   it('materializes API participation relations for Components, Systems, and APIs', () => {
