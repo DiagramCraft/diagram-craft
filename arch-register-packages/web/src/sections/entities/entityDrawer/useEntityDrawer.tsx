@@ -45,20 +45,23 @@ export const EntityDrawerStackProvider = ({ children }: { children: ReactNode })
     []
   );
 
-  const openEntityDrawer = useCallback((entityId: string) => {
-    if (!entityId) return;
+  const openEntityDrawer = useCallback(
+    (entityId: string) => {
+      if (!entityId) return;
 
-    const currentIndex = activeIndexRef.current;
-    const visibleStack = stackRef.current.slice(0, currentIndex + 1);
-    const existingIndex = visibleStack.findIndex(entry => entry.entityId === entityId);
-    const nextStack =
-      existingIndex >= 0
-        ? visibleStack
-        : [...visibleStack, { entityId } satisfies EntityDrawerStackEntry];
-    const nextIndex = existingIndex >= 0 ? existingIndex : nextStack.length - 1;
+      const currentIndex = activeIndexRef.current;
+      const visibleStack = stackRef.current.slice(0, currentIndex + 1);
+      const existingIndex = visibleStack.findIndex(entry => entry.entityId === entityId);
+      const nextStack =
+        existingIndex >= 0
+          ? visibleStack
+          : [...visibleStack, { entityId } satisfies EntityDrawerStackEntry];
+      const nextIndex = existingIndex >= 0 ? existingIndex : nextStack.length - 1;
 
-    commitStack(nextStack, nextIndex);
-  }, [commitStack]);
+      commitStack(nextStack, nextIndex);
+    },
+    [commitStack]
+  );
 
   const backEntityDrawer = useCallback(() => {
     const currentIndex = activeIndexRef.current;
