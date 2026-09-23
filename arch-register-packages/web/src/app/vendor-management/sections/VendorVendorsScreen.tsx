@@ -102,11 +102,7 @@ export const VendorVendorsScreen = () => {
         spend.byId.get(a._uid)?.vmSpend ?? null,
         spend.byId.get(b._uid)?.vmSpend ?? null
       ),
-    risk: (a, b) =>
-      -compareNullable(
-        riskByUid.get(a._uid) ?? null,
-        riskByUid.get(b._uid) ?? null
-      ),
+    risk: (a, b) => -compareNullable(riskByUid.get(a._uid) ?? null, riskByUid.get(b._uid) ?? null),
     renewal: (a, b) =>
       compareNullable(renewals.byId.get(a._uid) ?? null, renewals.byId.get(b._uid) ?? null)
   };

@@ -28,9 +28,7 @@ export const VENDOR_RISK_BAND_LABEL: Record<VendorRiskBand, string> = {
   high: 'High'
 };
 
-export const vendorRiskBandFor = (
-  risk: number | null | undefined
-): VendorRiskBand | null => {
+export const vendorRiskBandFor = (risk: number | null | undefined): VendorRiskBand | null => {
   if (typeof risk !== 'number' || !Number.isFinite(risk)) return null;
   let result: VendorRiskBand = 'low';
   for (const { band, min } of VENDOR_RISK_BANDS) {

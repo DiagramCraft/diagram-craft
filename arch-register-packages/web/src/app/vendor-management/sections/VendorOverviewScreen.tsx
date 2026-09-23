@@ -154,9 +154,7 @@ export const VendorOverviewScreen = () => {
           const band = vendorRiskBandFor(riskByUid.get(entity._uid));
           return band === 'elevated' || band === 'high';
         })
-        .sort(
-          (a, b) => (riskByUid.get(b._uid) ?? 0) - (riskByUid.get(a._uid) ?? 0)
-        ),
+        .sort((a, b) => (riskByUid.get(b._uid) ?? 0) - (riskByUid.get(a._uid) ?? 0)),
     [allVendors, riskByUid]
   );
 

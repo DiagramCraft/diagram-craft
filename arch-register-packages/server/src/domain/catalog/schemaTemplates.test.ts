@@ -813,12 +813,48 @@ describe('instantiateTemplate', () => {
     const evaluate = (values: Record<string, unknown>) =>
       evaluateDerivedFields(plan, values, { objectType: 'entity', objectId: 'vendor-1' }).risk;
 
-    expect(evaluate({ security_risk: 3, concentration_risk: 3, financial_risk: 3, compliance_risk: 3, criticality: 3 })).toBe(3);
-    expect(evaluate({ security_risk: 1, concentration_risk: 1, financial_risk: 1, compliance_risk: 1, criticality: 1 })).toBe(1);
-    expect(evaluate({ security_risk: 5, concentration_risk: 5, financial_risk: 5, compliance_risk: 5, criticality: 5 })).toBe(5);
-    expect(evaluate({ security_risk: 5, concentration_risk: 3, financial_risk: 2, compliance_risk: 4, criticality: 4 })).toBe(4);
-    expect(evaluate({ security_risk: 3, concentration_risk: 3, financial_risk: 3, compliance_risk: 3 })).toBe(3);
-    expect(evaluate({ security_risk: 3, concentration_risk: 3, financial_risk: 3, criticality: 3 })).toBeUndefined();
+    expect(
+      evaluate({
+        security_risk: 3,
+        concentration_risk: 3,
+        financial_risk: 3,
+        compliance_risk: 3,
+        criticality: 3
+      })
+    ).toBe(3);
+    expect(
+      evaluate({
+        security_risk: 1,
+        concentration_risk: 1,
+        financial_risk: 1,
+        compliance_risk: 1,
+        criticality: 1
+      })
+    ).toBe(1);
+    expect(
+      evaluate({
+        security_risk: 5,
+        concentration_risk: 5,
+        financial_risk: 5,
+        compliance_risk: 5,
+        criticality: 5
+      })
+    ).toBe(5);
+    expect(
+      evaluate({
+        security_risk: 5,
+        concentration_risk: 3,
+        financial_risk: 2,
+        compliance_risk: 4,
+        criticality: 4
+      })
+    ).toBe(4);
+    expect(
+      evaluate({ security_risk: 3, concentration_risk: 3, financial_risk: 3, compliance_risk: 3 })
+    ).toBe(3);
+    expect(
+      evaluate({ security_risk: 3, concentration_risk: 3, financial_risk: 3, criticality: 3 })
+    ).toBeUndefined();
   });
 
   it('materializes API participation relations for Components, Systems, and APIs', () => {

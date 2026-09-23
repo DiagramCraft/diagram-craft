@@ -142,9 +142,7 @@ export const VendorRiskScreen = () => {
     () =>
       allVendors
         .filter(vendorInScope)
-        .sort(
-          (a, b) => (riskByUid.get(b._uid) ?? 0) - (riskByUid.get(a._uid) ?? 0)
-        ),
+        .sort((a, b) => (riskByUid.get(b._uid) ?? 0) - (riskByUid.get(a._uid) ?? 0)),
     [allVendors, vendorInScope, riskByUid]
   );
 
@@ -275,16 +273,16 @@ export const VendorRiskScreen = () => {
                 <Table.HeaderCell>Score</Table.HeaderCell>
               </Table.Row>
             </Table.Head>
-              <Table.Body>
-                {registerRows.length === 0 ? (
+            <Table.Body>
+              {registerRows.length === 0 ? (
                 <Table.EmptyRow colSpan={6}>
                   {isLoading ? 'Loading vendors…' : 'No vendors match this filter.'}
                 </Table.EmptyRow>
-                ) : (
-                  registerRows.map(entity => {
-                    const risk = riskByUid.get(entity._uid);
-                    const riskBand = vendorRiskBandFor(risk);
-                    return (
+              ) : (
+                registerRows.map(entity => {
+                  const risk = riskByUid.get(entity._uid);
+                  const riskBand = vendorRiskBandFor(risk);
+                  return (
                     <Table.Row key={entity._uid} onClick={() => openVendor(entity._publicId)}>
                       <Table.NameCell title={entity._name} />
                       <Table.Cell numeric>
