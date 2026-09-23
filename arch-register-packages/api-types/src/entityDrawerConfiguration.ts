@@ -23,6 +23,9 @@ const labelOverrideSchema = z.string().min(1).max(120).optional();
 const entityDrawerItemPresentationSchema = z.enum(['row', 'mini-panel']).optional();
 export const entityDrawerSlotOptionsSchema = z.record(z.string(), z.unknown());
 
+export const VENDOR_CAPABILITIES_FUNDED_PLACEHOLDER_MESSAGE =
+  'Not yet available — no linked capability data yet.';
+
 /** Aggregation and number-format options for a `rollup` drawer item. Kept local to this file
  *  (rather than imported from Strategy's `strategyModelViewConfig.ts`) so the generic drawer item
  *  contract doesn't depend on a specific capability's config model. */
@@ -73,6 +76,10 @@ export const entityDrawerItemSchema = z.discriminatedUnion('kind', [
     kind: z.literal('rollup-leaf-count'),
     label: labelOverrideSchema,
     showLabel: z.boolean().optional()
+  }),
+  z.object({
+    kind: z.literal('placeholder'),
+    message: z.string().min(1)
   }),
   z.object({
     kind: z.literal('typed-relation-list'),
@@ -396,16 +403,6 @@ export const ENTITY_DRAWER_SLOT_DEFINITIONS: EntityDrawerSlotDefinition[] = [
     defaultOptions: {},
     optionFields: [],
     optionsSchema: emptyOptionsSchema
-  },
-  {
-    id: 'vendor.capabilities-funded',
-    label: 'Capabilities funded',
-    description: 'Capabilities funded by this vendor.',
-    application: 'Vendor Management',
-    capabilityBinding: { capabilityType: 'vendor-management', role: 'vendor' },
-    defaultOptions: {},
-    optionFields: [],
-    optionsSchema: emptyOptionsSchema
   }
 ];
 
@@ -580,6 +577,14 @@ export const normalizeLegacyEntityDrawerConfiguration = (raw: unknown): unknown 
                 items: items.flatMap(item => {
                   if (!item || typeof item !== 'object' || item.kind !== 'slot') {
                     return [item];
+                  }
+                  if (item.slotId === 'vendor.capabilities-funded') {
+                    return [
+                      {
+                        kind: 'placeholder',
+                        message: VENDOR_CAPABILITIES_FUNDED_PLACEHOLDER_MESSAGE
+                      }
+                    ];
                   }
                   if (item.slotId === 'strategy.children') {
                     return [
@@ -1033,7 +1038,7 @@ const buildVendorManagementDefaultProfile = (
       section(
         'capabilities-funded',
         'Capabilities funded',
-        [provider('vendor.capabilities-funded', 'Capabilities funded', false)],
+        [{ kind: 'placeholder', message: VENDOR_CAPABILITIES_FUNDED_PLACEHOLDER_MESSAGE }],
         true
       )
     ].filter(section => section.items.length > 0)
@@ -1316,6 +1321,7 @@ const validateItem = (
   diagnostics: EntityDrawerDiagnostic[]
 ): EntityDrawerItem | null => {
   if (item.kind === 'metadata') return item;
+  if (item.kind === 'placeholder') return item;
   if (item.kind === 'children') {
     const childSchema = schemas.find(candidate => candidate.id === item.childSchemaId);
     const field = childSchema?.fields.find(candidate => candidate.id === item.fieldId);

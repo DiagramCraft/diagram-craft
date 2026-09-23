@@ -135,9 +135,8 @@ describe('Vendor Management entity drawer providers', () => {
     ).toContain('No linked applications, via any contract.');
   });
 
-  it('preserves the lifecycle and capabilities-funded empty states', () => {
+  it('preserves the lifecycle empty state', () => {
     const lifecycleDefinition = provider('vendor.technology-lifecycle');
-    const capabilitiesDefinition = provider('vendor.capabilities-funded');
 
     expect(
       renderToStaticMarkup(
@@ -147,14 +146,12 @@ describe('Vendor Management entity drawer providers', () => {
         />
       )
     ).toContain('No linked Systems to derive a lifecycle state from.');
-    expect(
-      renderToStaticMarkup(
-        <capabilitiesDefinition.Component
-          context={context()}
-          item={item(capabilitiesDefinition.slotId)}
-        />
-      )
-    ).toContain('Not yet available — no linked capability data yet.');
+  });
+
+  it('does not register the static capabilities-funded placeholder as a provider', () => {
+    expect(vendorEntityDrawerProviderDefinitions).not.toContainEqual(
+      expect.objectContaining({ slotId: 'vendor.capabilities-funded' })
+    );
   });
 
   it('only supports schemas with the established Vendor Management fields', () => {

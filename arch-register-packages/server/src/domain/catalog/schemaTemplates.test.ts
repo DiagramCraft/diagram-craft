@@ -13,6 +13,7 @@ import {
   validateDerivedFieldGroupAccess
 } from '../derived/derivedFields';
 import { compileRelationSchemaWithSharedGroups } from './relationSchemaHelpers';
+import { VENDOR_CAPABILITIES_FUNDED_PLACEHOLDER_MESSAGE } from '@arch-register/api-types/entityDrawerConfiguration';
 
 describe('instantiateTemplate', () => {
   it('assigns a presentation category to every built-in entity and relation schema', () => {
@@ -849,6 +850,9 @@ describe('instantiateTemplate', () => {
       'technology-lifecycle',
       'capabilities-funded'
     ]);
+    expect(
+      definitions.entityDrawerProfiles[vendor!.id]?.sections.at(-1)?.items
+    ).toEqual([{ kind: 'placeholder', message: VENDOR_CAPABILITIES_FUNDED_PLACEHOLDER_MESSAGE }]);
     expect(
       definitions.entityDrawerProfiles[contract!.id]?.sections.map(section => section.id)
     ).toEqual(['vendor', 'terms', 'cost', 'systems-used']);

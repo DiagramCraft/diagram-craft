@@ -115,7 +115,8 @@ vi.mock('../../../hooks/useWorkspaceConfig', () => ({
                 items: [
                   { kind: 'field', fieldId: 'status', label: 'Current state' },
                   { kind: 'field', fieldId: 'name', label: 'Service name' },
-                  { kind: 'field', fieldId: 'review_date', label: 'Review date' }
+                  { kind: 'field', fieldId: 'review_date', label: 'Review date' },
+                  { kind: 'placeholder', message: 'Static drawer message' }
                 ]
               },
               {
@@ -155,6 +156,7 @@ describe('EntityDrawer', () => {
     expect(markup).toContain('State: Active');
     expect(markup).toContain('Current state');
     expect(markup).toContain('Service name');
+    expect(markup).toContain('Static drawer message');
     expect(markup).not.toContain('Expected');
     expect(markup).toContain('Open record in Entities');
     expect(markup).toContain('Quality badge');

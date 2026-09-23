@@ -28,6 +28,7 @@ import type { RelationField } from '@arch-register/api-types/relationSchemaContr
 import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
 import {
   remapEntityDrawerProfiles,
+  VENDOR_CAPABILITIES_FUNDED_PLACEHOLDER_MESSAGE,
   type EntityDrawerProfile
 } from '@arch-register/api-types/entityDrawerConfiguration';
 import type { BrowserView } from '@arch-register/api-types/viewContract';
@@ -2458,10 +2459,8 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             collapsible: true,
             items: [
               {
-                kind: 'slot',
-                slotId: 'vendor.capabilities-funded',
-                label: 'Capabilities funded',
-                showLabel: false
+                kind: 'placeholder',
+                message: VENDOR_CAPABILITIES_FUNDED_PLACEHOLDER_MESSAGE
               }
             ]
           }

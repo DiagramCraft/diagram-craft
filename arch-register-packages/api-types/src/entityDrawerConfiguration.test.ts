@@ -8,7 +8,8 @@ import {
   mergeEntityDrawerProfiles,
   normalizeLegacyEntityDrawerConfiguration,
   remapEntityDrawerProfiles,
-  resolveEntityDrawerConfiguration
+  resolveEntityDrawerConfiguration,
+  VENDOR_CAPABILITIES_FUNDED_PLACEHOLDER_MESSAGE
 } from './entityDrawerConfiguration';
 
 const schema = {
@@ -83,6 +84,63 @@ describe('entity drawer configuration', () => {
       'missing_or_archived_field',
       'unsupported_slot'
     ]);
+  });
+
+  it('accepts and resolves static placeholder items without diagnostics', () => {
+    const config = entityDrawerConfigurationSchema.parse({
+      version: 1,
+      profiles: {
+        service: {
+          sections: [
+            {
+              id: 'content',
+              title: 'Content',
+              items: [{ kind: 'placeholder', message: 'Not available yet.' }]
+            }
+          ]
+        }
+      }
+    });
+
+    const result = resolveEntityDrawerConfiguration(config, [schema]);
+    expect(result.effective.profiles.service?.sections[0]?.items).toEqual([
+      { kind: 'placeholder', message: 'Not available yet.' }
+    ]);
+    expect(result.diagnostics).toEqual([]);
+  });
+
+  it('normalizes the legacy Vendor capabilities-funded slot to a placeholder', () => {
+    expect(
+      normalizeLegacyEntityDrawerConfiguration({
+        version: 1,
+        profiles: {
+          vendor: {
+            sections: [
+              {
+                id: 'capabilities-funded',
+                title: 'Capabilities funded',
+                items: [{ kind: 'slot', slotId: 'vendor.capabilities-funded' }]
+              }
+            ]
+          }
+        }
+      })
+    ).toEqual({
+      version: 1,
+      profiles: {
+        vendor: {
+          sections: [
+            {
+              id: 'capabilities-funded',
+              title: 'Capabilities funded',
+              items: [
+                { kind: 'placeholder', message: VENDOR_CAPABILITIES_FUNDED_PLACEHOLDER_MESSAGE }
+              ]
+            }
+          ]
+        }
+      }
+    });
   });
 
   it('fails closed for unknown versions', () => {
@@ -246,6 +304,7 @@ describe('entity drawer configuration', () => {
     ).toEqual(['service']);
     expect(catalog.slots.map(slot => slot.id)).not.toContain('strategy.rollup');
     expect(catalog.slots.map(slot => slot.id)).not.toContain('vendor.spend');
+    expect(catalog.slots.map(slot => slot.id)).not.toContain('vendor.capabilities-funded');
   });
 
   it('validates cross-schema containment children and omits invalid targets', () => {
@@ -689,6 +748,9 @@ describe('entity drawer configuration', () => {
     expect(profile.sections[0]?.layout).toBe('stat-grid');
     expect(profile.sections[2]?.items).toEqual([
       { kind: 'slot', slotId: 'vendor.spend', label: 'Spend', showLabel: false }
+    ]);
+    expect(profile.sections.at(-1)?.items).toEqual([
+      { kind: 'placeholder', message: VENDOR_CAPABILITIES_FUNDED_PLACEHOLDER_MESSAGE }
     ]);
   });
 

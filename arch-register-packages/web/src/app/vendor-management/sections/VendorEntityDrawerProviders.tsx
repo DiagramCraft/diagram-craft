@@ -283,13 +283,6 @@ const VendorTechnologyLifecycleProvider = ({ context }: EntityDrawerProviderProp
   );
 };
 
-const VendorCapabilitiesFundedProvider = () => (
-  <EntityDrawerProviderStatus
-    state="empty"
-    emptyMessage="Not yet available — no linked capability data yet."
-  />
-);
-
 export const vendorEntityDrawerProviderDefinitions = [
   {
     slotId: 'vendor.risk',
@@ -315,10 +308,5 @@ export const vendorEntityDrawerProviderDefinitions = [
     slotId: 'vendor.technology-lifecycle',
     requiredFields: VENDOR_REQUIRED_FIELDS,
     Component: VendorTechnologyLifecycleProvider
-  },
-  {
-    slotId: 'vendor.capabilities-funded',
-    requiredFields: VENDOR_REQUIRED_FIELDS,
-    Component: VendorCapabilitiesFundedProvider
   }
 ] satisfies readonly EntityDrawerProviderDefinition[];

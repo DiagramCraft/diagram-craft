@@ -103,6 +103,28 @@ describe('resolveEntityDrawerRenderModel', () => {
     expect(result.diagnostics).toEqual([]);
   });
 
+  it('resolves static placeholders without requiring a provider', () => {
+    const result = resolve({
+      header: { badges: [] },
+      sections: [
+        {
+          id: 'content',
+          title: 'Content',
+          collapsible: true,
+          items: [{ kind: 'placeholder', message: 'Not available yet.' }]
+        }
+      ]
+    });
+
+    expect(result.sections[0]?.items).toEqual([
+      {
+        item: { kind: 'placeholder', message: 'Not available yet.' },
+        label: 'Not available yet.'
+      }
+    ]);
+    expect(result.diagnostics).toEqual([]);
+  });
+
   it('omits stale fields, invalid relations, and inaccessible field groups with diagnostics', () => {
     const result = resolve(
       {
