@@ -97,7 +97,8 @@ describe('RiskComplianceOverviewScreen', () => {
             likelihood: 5,
             impact: 5,
             inherent_risk_score: 25,
-            residual_risk_score: 25
+            residual_risk_score: 25,
+            risk_coverage: 75
           }
         ],
         total: 1
@@ -116,7 +117,8 @@ describe('RiskComplianceOverviewScreen', () => {
         id: 'risk',
         name: 'Risk',
         fields: [
-          { id: 'mitigating_controls', type: 'typedRelation', relationSchemaId: 'risk-control' }
+          { id: 'mitigating_controls', type: 'typedRelation', relationSchemaId: 'risk-control' },
+          { id: 'risk_coverage', type: 'derived' }
         ]
       },
       { id: 'control', name: 'Control', fields: [] }
@@ -146,6 +148,7 @@ describe('RiskComplianceOverviewScreen', () => {
     expect(container.textContent).toContain('Control coverage');
     expect(container.textContent).toContain('Highest residual risks');
     expect(container.textContent).toContain('Customer Account Takeover');
+    expect(container.textContent).toContain('75%');
 
     const row = [...container.querySelectorAll('button')].find(button =>
       button.textContent?.includes('Customer Account Takeover')

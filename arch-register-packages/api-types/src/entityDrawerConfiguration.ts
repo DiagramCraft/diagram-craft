@@ -1083,6 +1083,7 @@ type VendorManagementFieldIds = {
   financialRisk: string;
   complianceRisk: string;
   criticality: string;
+  risk?: string;
 };
 
 const vendorManagementFieldIds = (
@@ -1107,11 +1108,13 @@ const vendorManagementFieldIds = (
     complianceRisk: 'compliance_risk',
     criticality: 'criticality'
   };
-  return Object.values(fieldIds).every(fieldId =>
+  const requiredFieldsPresent = Object.values(fieldIds).every(fieldId =>
     schema.fields.some(field => field.id === fieldId && fieldIsVisible(field))
-  )
-    ? fieldIds
-    : null;
+  );
+  if (!requiredFieldsPresent) return null;
+
+  const risk = schema.fields.find(field => field.id === 'risk' && fieldIsVisible(field))?.id;
+  return risk ? { ...fieldIds, risk } : fieldIds;
 };
 
 const vendorManagementSpendRollupItems = (
@@ -1211,7 +1214,8 @@ const buildVendorManagementDefaultProfile = (
           { ...item(fieldIds.concentrationRisk), presentation: 'mini-panel' },
           { ...item(fieldIds.financialRisk), presentation: 'mini-panel' },
           { ...item(fieldIds.complianceRisk), presentation: 'mini-panel' },
-          { ...item(fieldIds.criticality), presentation: 'mini-panel' }
+          { ...item(fieldIds.criticality), presentation: 'mini-panel' },
+          fieldIds.risk ? { ...item(fieldIds.risk), presentation: 'mini-panel' } : null
         ]),
         layout: 'stat-grid' as const
       },

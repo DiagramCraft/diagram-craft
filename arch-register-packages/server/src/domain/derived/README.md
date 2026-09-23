@@ -161,6 +161,13 @@ For a text result, the expression can combine sibling values:
 entity.vendor + ' — ' + entity.contract_number
 ```
 
+Numeric arrays can be combined multiplicatively with the `product` transform. It returns `1` for
+an empty array, matching the multiplicative identity:
+
+```text
+entity.layers.map(.coverage) |> product
+```
+
 ## Evaluation behavior
 
 - Missing, empty, or `null` dependencies cause the derived value to be omitted.

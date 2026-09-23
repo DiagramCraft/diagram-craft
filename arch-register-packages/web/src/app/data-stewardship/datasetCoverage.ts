@@ -1,8 +1,8 @@
 /**
  * Coverage / gap computation for a single Information Asset (Data Entity), over fields already
  * shipped by #3064/#3065 — owner, steward, classification, and the derived `review_status`. No
- * relation traversal is involved (unlike `../risk-compliance/riskCoverage.ts`'s multi-control
- * roll-up): every field a dataset needs for coverage lives on the entity's own record.
+ * relation traversal is involved (unlike Risk's server-derived multi-control coverage): every
+ * field a dataset needs for coverage lives on the entity's own record.
  *
  * Two criteria from the original design (`dsGaps`/`dsCovered` in the design's `ds-data.jsx`) are
  * intentionally not computed here: a "quality above threshold" signal, because no quality field

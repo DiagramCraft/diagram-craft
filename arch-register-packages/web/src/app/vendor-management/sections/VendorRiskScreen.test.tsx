@@ -89,7 +89,8 @@ describe('VendorRiskScreen', () => {
           concentration_risk: 5,
           financial_risk: 5,
           compliance_risk: 5,
-          criticality: 5
+          criticality: 5,
+          risk: 5
         },
         {
           _uid: 'vnd-2',
@@ -100,7 +101,8 @@ describe('VendorRiskScreen', () => {
           concentration_risk: 1,
           financial_risk: 1,
           compliance_risk: 1,
-          criticality: 1
+          criticality: 1,
+          risk: 1
         }
       ],
       total: 2

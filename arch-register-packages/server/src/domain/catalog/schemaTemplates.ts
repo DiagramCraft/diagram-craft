@@ -2247,6 +2247,19 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             min: 1,
             max: 5,
             groupId: 'risk'
+          },
+          {
+            id: 'risk',
+            name: 'Risk',
+            type: 'derived',
+            groupId: 'risk',
+            expression:
+              'isBlank(entity.security_risk) || isBlank(entity.concentration_risk) || ' +
+              'isBlank(entity.financial_risk) || isBlank(entity.compliance_risk) ? null : ' +
+              '(((entity.security_risk * 0.34 + entity.concentration_risk * 0.28 + ' +
+              'entity.financial_risk * 0.22 + entity.compliance_risk * 0.16) * ' +
+              '(1 + ((entity.criticality ?? 3) - 3) * 0.06)) |> round |> clamp(1, 5))',
+            resultType: 'rating'
           }
         ],
         groups: [
@@ -2380,7 +2393,8 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
               { kind: 'field', fieldId: 'concentration_risk', presentation: 'mini-panel' },
               { kind: 'field', fieldId: 'financial_risk', presentation: 'mini-panel' },
               { kind: 'field', fieldId: 'compliance_risk', presentation: 'mini-panel' },
-              { kind: 'field', fieldId: 'criticality', presentation: 'mini-panel' }
+              { kind: 'field', fieldId: 'criticality', presentation: 'mini-panel' },
+              { kind: 'field', fieldId: 'risk', presentation: 'mini-panel' }
             ]
           },
           {
@@ -3381,6 +3395,14 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
               "entity.likelihood * (entity.mitigation_effectiveness == 'full' ? 0 : entity.mitigation_effectiveness == 'substantial' ? (entity.impact - 2 < 1 ? 1 : entity.impact - 2) : entity.mitigation_effectiveness == 'partial' ? (entity.impact - 1 < 1 ? 1 : entity.impact - 1) : entity.impact)",
             resultType: 'number'
           },
+          {
+            id: 'risk_coverage',
+            name: 'Risk Coverage',
+            type: 'derived',
+            expression:
+              "entity.mitigating_controls.filter(.coverage != null && (.effectiveness == 'none' || .effectiveness == 'partial' || .effectiveness == 'substantial' || .effectiveness == 'full')) |> count == 0 ? null : ((entity.mitigating_controls.filter(.coverage != null && (.effectiveness == 'none' || .effectiveness == 'partial' || .effectiveness == 'substantial' || .effectiveness == 'full')).map(.coverage * (.effectiveness == 'none' ? 0 : .effectiveness == 'partial' ? 0.5 : .effectiveness == 'substantial' ? 0.75 : 1) / -100 + 1) |> product) * -100 + 100) |> round",
+            resultType: 'number'
+          },
           { id: 'risk_owner', name: 'Risk Owner', type: 'text' },
           { id: 'status', name: 'Status', type: 'select', enumId: 'risk-status' },
           { id: 'treatment_target_date', name: 'Treatment Target Date', type: 'date' },
@@ -3774,6 +3796,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             title: 'Coverage',
             collapsible: false,
             items: [
+              { kind: 'field', fieldId: 'risk_coverage', presentation: 'mini-panel' },
               {
                 kind: 'typed-relation-list',
                 fieldId: 'mitigating_controls',

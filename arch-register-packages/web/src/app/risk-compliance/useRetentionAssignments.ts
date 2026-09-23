@@ -30,8 +30,8 @@ const isRetentionTimeUnit = (value: unknown): value is 'days' | 'months' | 'year
 
 /**
  * Fetches every Retention Policy and Assignment relation in the workspace and joins them into
- * per-assignment rows — the Retention screen's equivalent of `useRiskCoverageRollups.ts`. An
- * assignment's governing policy is looked up by the relation's `_out.id` (the policy entity's
+ * per-assignment rows. An assignment's governing policy is looked up by the relation's `_out.id`
+ * (the policy entity's
  * `_uid`, per `useRelations.ts`'s endpoint shape), and its duration/time-unit/activation-date
  * values are read off the per-workspace field ids resolved by `resolveRetentionFieldIds` (not the
  * literal `duration`/`time_unit`/`activated_from` ids, which are only the *defaults* a

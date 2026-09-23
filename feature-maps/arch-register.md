@@ -370,9 +370,9 @@
           facets (each showing a count, driven off the Vendor schema's own field options and the fetched vendors'
           values). Next renewal is the earliest upcoming `Contract.contract_end` across a vendor's own Contracts.
           Selecting a vendor opens the configurable shared vendor drawer (deep-linkable via its own link-icon
-          action, see below): its schema profile preserves a composite risk score
-          (`vmRisk`/`vmRiskBand`, weighted across the vendor's security, concentration, financial, and compliance
-          risk fields and lifted by criticality), attributes, spend (`vmSpend`, summed across the vendor's own
+          action, see below): its schema profile preserves the Vendor schema's derived `risk` rating (weighted
+          across the vendor's security, concentration, financial, and compliance risk fields and lifted by
+          criticality), with the existing Low/Moderate/Elevated/High band presentation, attributes, spend (`vmSpend`, summed across the vendor's own
           Contracts via a generic relation roll-up, the vendor's Contracts in a configurable list with annual cost, the Systems its contracts serve ("Applications supplied"), and a
           best-effort technology lifecycle view derived from those Systems' own lifecycle state. These sections
           can be reordered, relabeled, or have their section and provider titles hidden through the workspace
@@ -409,10 +409,11 @@
         - @id:ar.vendor-management.risk The Risk section has four header stats (High risk vendor count, vendors with
           Concentration Risk ≥ 4, technologies nearing end-of-life, and Systems exposed to one), a two-column
           criticality × risk-band matrix and risk register, and a technology end-of-life exposure table — layout and
-          composite scoring mirror the Claude Design reference (`vendor-data.jsx`/`vendor-views.jsx`) exactly. `vmRisk`
-          is a weighted average of a vendor's security/concentration/financial/compliance risk fields (weights 0.34 /
-          0.28 / 0.22 / 0.16) on their native 1-5 scale, linearly lifted by criticality (±6% per point off a
-          criticality of 3), clamped to [1, 5], and banded Low (< 2.0) / Moderate (< 2.7) / Elevated (< 3.4) / High.
+          composite scoring mirror the Claude Design reference (`vendor-data.jsx`/`vendor-views.jsx`) exactly. The
+          Vendor schema's derived `risk` field is a weighted average of security/concentration/financial/compliance
+          risk fields (weights 0.34 / 0.28 / 0.22 / 0.16) on their native 1-5 scale, linearly lifted by criticality
+          (±6% per point off a criticality of 3), rounded and clamped to [1, 5], then presented as Low (< 2.0) /
+          Moderate (< 2.7) / Elevated (< 3.4) / High.
           The matrix (criticality 5 down to 2 × the four bands) lists each cell's vendors as clickable name tags (not a
           count) that open the shared vendor drawer directly — it isn't itself a filter control. The risk
           register (Vendor, Sec, Conc, Fin, Comp, Score) is sorted by score descending and filterable only by the
@@ -457,9 +458,10 @@
           shown side by side. Selecting a risk opens the shared Risk drawer; legacy `risk-compliance/risks/$riskId`
           links redirect there. The drawer shows likelihood/impact,
           the existing `inherent_risk_score` and
-          `residual_risk_score` derived fields (the latter banded Low/Medium/High/Critical via the standard 5×5
-          heat-map thresholds), attributes, the list of mitigating Controls with each relation's `coverage` % and
-          `effectiveness`, and the entities the risk affects (via `risk-affects`). The configurable Risk drawer
+          `residual_risk_score` and `risk_coverage` derived fields (the latter a numeric 0–100 percentage calculated
+          from the mitigating-control relations), attributes, the list of mitigating Controls with each relation's
+          `coverage` % and `effectiveness`, and the entities the risk affects (via `risk-affects`). The configurable
+          Risk drawer
           preserves the template-authored default profile for these metrics, attributes, category/status badges,
           and the residual-risk band; workspace administrators can configure supported fields, sections, order,
           labels, and item placement.
@@ -475,8 +477,9 @@
           the Risks section's own Coverage column does); `operating_effectiveness` is the field that actually
           measures a Control's effectiveness. The Coverage view has three stat tiles scoped to the library's
           current filters (Effective, Never tested, Uncontrolled risks), a "coverage by risk" bar-list of every live
-          (non-closed) Risk sorted weakest-`rcCoverage`-first (each row: residual score, the names of its mitigating
-          Controls or "no control", and a coverage bar/percentage), and a "coverage by information asset" table,
+          (non-closed) Risk sorted weakest-`risk_coverage`-first (each row: residual score, the names of its
+          mitigating Controls or "no control", and a numeric coverage bar/percentage), and a "coverage by
+          information asset" table,
           scoped to Data Entities only — asset name, the count of distinct Risks affecting it (`risk-affects`), and
           the count of distinct Controls directly protecting it (`control-affects`, styled as "none" when zero),
           sorted fewest-controls-first. `control-affects` ("Control Protection") is schema-constrained to the

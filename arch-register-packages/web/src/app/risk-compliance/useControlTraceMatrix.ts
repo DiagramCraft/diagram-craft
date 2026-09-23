@@ -36,10 +36,9 @@ const addTo = (map: Map<string, Set<string>>, key: string, value: string) => {
  * `useControlRiskCounts.ts`/`useControlAssetCounts.ts`, which only tally how many risks/assets
  * each Control has, this hook keeps the actual pairs so the matrix can plot a cell per
  * control/column and derive per-row and per-column totals from the same data. Two
- * `relations.list` requests, same `{ schemaId, limit: 1000 }` filters as the sibling
- * hooks/`useRiskCoverageRollups.ts`/`useAssetCoverageRollups.ts` — react-query dedupes these
- * against whichever of those hooks the Coverage view already fetched, so switching between
- * Coverage and Traceability doesn't refetch.
+ * `relations.list` requests, using the same `{ schemaId, limit: 1000 }` filters as the Coverage
+ * view's existing relation queries — react-query dedupes these when switching between Coverage
+ * and Traceability, so the workspace-wide data isn't refetched.
  *
  * Relation endpoint roles mirror the entity drawer: `risk-control` has Control as `_out`, Risk
  * as `_in`; `control-affects` has Control as `_in`, the asset as `_out`.

@@ -21,7 +21,7 @@ import { useVendorContracts, type VendorContractRow } from '../useVendorContract
 import { renewalWindow, RENEWAL_WINDOW_COLOR } from '../contractRenewalWindow';
 import { useVendorSpendRollups } from '../useVendorSpendRollups';
 import { computeVmTotalSpend } from '../vendorSpendAggregates';
-import { computeVendorRisk, VENDOR_RISK_BAND_COLOR } from '../vendorRisk';
+import { vendorRiskBandFor, VENDOR_RISK_BAND_COLOR } from '../vendorRisk';
 import {
   useVendorTechnologyExposure,
   groupVendorTechnologyExposure
@@ -141,20 +141,9 @@ export const VendorOverviewScreen = () => {
   );
 
   const riskByUid = useMemo(() => {
-    const map = new Map<string, ReturnType<typeof computeVendorRisk>>();
+    const map = new Map<string, number | null>();
     for (const entity of allVendors) {
-      map.set(
-        entity._uid,
-        computeVendorRisk({
-          security_risk: typeof entity.security_risk === 'number' ? entity.security_risk : null,
-          concentration_risk:
-            typeof entity.concentration_risk === 'number' ? entity.concentration_risk : null,
-          financial_risk: typeof entity.financial_risk === 'number' ? entity.financial_risk : null,
-          compliance_risk:
-            typeof entity.compliance_risk === 'number' ? entity.compliance_risk : null,
-          criticality: typeof entity.criticality === 'number' ? entity.criticality : null
-        })
-      );
+      map.set(entity._uid, typeof entity.risk === 'number' ? entity.risk : null);
     }
     return map;
   }, [allVendors]);
@@ -162,12 +151,10 @@ export const VendorOverviewScreen = () => {
     () =>
       allVendors
         .filter(entity => {
-          const band = riskByUid.get(entity._uid)?.vmRiskBand;
+          const band = vendorRiskBandFor(riskByUid.get(entity._uid));
           return band === 'elevated' || band === 'high';
         })
-        .sort(
-          (a, b) => (riskByUid.get(b._uid)?.vmRisk ?? 0) - (riskByUid.get(a._uid)?.vmRisk ?? 0)
-        ),
+        .sort((a, b) => (riskByUid.get(b._uid) ?? 0) - (riskByUid.get(a._uid) ?? 0)),
     [allVendors, riskByUid]
   );
 
@@ -486,6 +473,7 @@ export const VendorOverviewScreen = () => {
               ) : (
                 riskyVendors.map(entity => {
                   const risk = riskByUid.get(entity._uid);
+                  const riskBand = vendorRiskBandFor(risk);
                   return (
                     <Table.Row key={entity._uid} onClick={() => openVendor(entity._publicId)}>
                       <Table.NameCell title={entity._name} />
@@ -498,9 +486,9 @@ export const VendorOverviewScreen = () => {
                         {typeof entity.criticality === 'number' ? `${entity.criticality}/5` : '—'}
                       </Table.Cell>
                       <Table.Cell>
-                        {risk?.vmRisk != null ? (
-                          <Chip dot={VENDOR_RISK_BAND_COLOR[risk.vmRiskBand!]} tone="ghost">
-                            {risk.vmRiskBand} · {risk.vmRisk.toFixed(1)}
+                        {risk != null && riskBand != null ? (
+                          <Chip dot={VENDOR_RISK_BAND_COLOR[riskBand]} tone="ghost">
+                            {riskBand} · {risk.toFixed(1)}
                           </Chip>
                         ) : (
                           <span className="dim">—</span>

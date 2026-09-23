@@ -109,6 +109,50 @@ describe('derived fields', () => {
     });
   });
 
+  it('supports multiplicative relation aggregates with null filtering and integer results', () => {
+    const fields: SchemaField[] = [
+      {
+        id: 'mitigating_controls',
+        name: 'Mitigating controls',
+        type: 'typedRelation',
+        relationSchemaId: 'risk-control',
+        direction: 'in',
+        minCount: 0,
+        maxCount: -1
+      },
+      {
+        id: 'risk_coverage',
+        name: 'Risk Coverage',
+        type: 'derived',
+        requirementLevel: 'optional',
+        expression:
+          "entity.mitigating_controls.filter(.coverage != null && (.effectiveness == 'none' || .effectiveness == 'partial' || .effectiveness == 'substantial' || .effectiveness == 'full')) |> count == 0 ? null : ((entity.mitigating_controls.filter(.coverage != null && (.effectiveness == 'none' || .effectiveness == 'partial' || .effectiveness == 'substantial' || .effectiveness == 'full')).map(.coverage * (.effectiveness == 'none' ? 0 : .effectiveness == 'partial' ? 0.5 : .effectiveness == 'substantial' ? 0.75 : 1) / -100 + 1) |> product) * -100 + 100) |> round",
+        resultType: 'number'
+      }
+    ];
+
+    expect(
+      materializeDerivedFields(fields, {}, entityContext, [], {
+        mitigating_controls: [
+          { coverage: 90, effectiveness: 'substantial' },
+          { coverage: 60, effectiveness: 'partial' }
+        ]
+      }).risk_coverage
+    ).toBe(77);
+    expect(
+      materializeDerivedFields(fields, {}, entityContext, [], {
+        mitigating_controls: [
+          { coverage: null, effectiveness: 'full' },
+          { coverage: 80, effectiveness: 'unknown' }
+        ]
+      }).risk_coverage
+    ).toBeUndefined();
+    expect(
+      materializeDerivedFields(fields, {}, entityContext, [], { mitigating_controls: [] })
+        .risk_coverage
+    ).toBeUndefined();
+  });
+
   it('calculates nested capability levels from projected parents', () => {
     const fields: SchemaField[] = [
       {
