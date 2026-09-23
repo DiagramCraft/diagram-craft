@@ -2417,7 +2417,14 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             title: 'Contracts',
             collapsible: true,
             items: [
-              { kind: 'slot', slotId: 'vendor.contracts', label: 'Contracts', showLabel: false }
+              {
+                kind: 'query',
+                queryText: '<-"Contract".vendor',
+                label: 'Contracts',
+                showLabel: false,
+                presentation: 'list',
+                fields: [{ fieldId: 'annual_cost', label: 'Annual cost' }]
+              }
             ]
           },
           {

@@ -17,14 +17,23 @@ const item: Extract<EntityDrawerItem, { kind: 'query' }> = {
   label: 'Realized by'
 };
 
-const render = () =>
+const schemas = [
+  {
+    id: 'contract',
+    name: 'Contract',
+    fields: [{ id: 'annual_cost', name: 'Annual cost', type: 'currency' }]
+  }
+] as never;
+
+const render = (queryItem = item) =>
   renderToStaticMarkup(
     <QueryListItem
-      item={item}
+      item={queryItem}
       label="Realized by"
       workspaceId="ws-1"
       schemaName="Business Capability"
       entityId="cap-1"
+      schemas={schemas}
     />
   );
 
@@ -37,6 +46,40 @@ describe('QueryListItem', () => {
     } satisfies EntityDrawerQueryItemResult);
 
     expect(render()).toContain('Billing System');
+  });
+
+  it('renders configured fields in list presentation', () => {
+    mocks.result.mockReturnValue({
+      items: [
+        {
+          _uid: 'contract-1',
+          _name: 'Support contract',
+          _schema: { id: 'contract', name: 'Contract' },
+          annual_cost: { amount: 1200, currency: 'USD' }
+        } as unknown as EntityRecord
+      ],
+      isLoading: false,
+      error: null
+    });
+
+    expect(
+      render({
+        kind: 'query',
+        queryText: '<-"Contract".vendor',
+        label: 'Contracts',
+        presentation: 'list',
+        fields: [{ fieldId: 'annual_cost', label: 'Annual cost' }]
+      })
+    ).toContain('Annual cost');
+    expect(
+      render({
+        kind: 'query',
+        queryText: '<-"Contract".vendor',
+        label: 'Contracts',
+        presentation: 'list',
+        fields: [{ fieldId: 'annual_cost', label: 'Annual cost' }]
+      })
+    ).toContain('$1,200.00');
   });
 
   it('renders loading, empty, and unavailable states', () => {

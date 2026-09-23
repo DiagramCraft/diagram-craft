@@ -1,9 +1,54 @@
 import type { EntityDrawerItem } from '@arch-register/api-types/entityDrawerConfiguration';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
+import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import { Chip } from '../../../components/Chip';
+import { formatDate } from '../../../utils/dateFormat';
+import { renderEntityFieldDisplayValue } from '../components/entityFieldDisplay';
+import type { RefLookup } from '../types/entityDetailTypes';
 import { EntityDrawerProviderStatus } from './EntityDrawerProviderRegistry';
 import { useEntityDrawerQueryItem } from './useEntityDrawerQueryItem';
 import styles from './EntityDrawer.module.css';
+
+const QueryListFields = ({
+  entity,
+  schema,
+  fields,
+  workspaceSlug
+}: {
+  entity: EntityRecord;
+  schema: EntitySchema | undefined;
+  fields: NonNullable<Extract<EntityDrawerItem, { kind: 'query' }>['fields']>;
+  workspaceSlug: string;
+}) => {
+  const refLookup: RefLookup = new Map();
+
+  return (
+    <div className={styles.queryFields}>
+      {fields.flatMap(configuredField => {
+        const field = schema?.fields.find(candidate => candidate.id === configuredField.fieldId);
+        if (!field) return [];
+        return [
+          <div className={styles.queryField} key={configuredField.fieldId}>
+            <span className={styles.queryFieldLabel}>{configuredField.label ?? field.name}</span>
+            <span className={styles.queryFieldValue}>
+              {renderEntityFieldDisplayValue(field, entity[field.id], {
+                refLookup,
+                referenceOptions: {},
+                typedRelationsOutgoing: [],
+                typedRelationsIncoming: [],
+                relationSchemas: [],
+                workspaceSlug,
+                formatDateValue: formatDate,
+                resolvePrincipalLabel: value => value.principal_id,
+                asChip: false
+              })}
+            </span>
+          </div>
+        ];
+      })}
+    </div>
+  );
+};
 
 /**
  * Renders a generic `query` drawer item: the flat, deduplicated set of entities matched by the
@@ -17,17 +62,26 @@ export const QueryListItem = ({
   label,
   workspaceId,
   schemaName,
-  entityId
+  entityId,
+  schemas
 }: {
   item: Extract<EntityDrawerItem, { kind: 'query' }>;
   label: string;
   workspaceId: string;
   schemaName: string;
   entityId: string;
+  schemas: EntitySchema[];
 }) => {
   const result = useEntityDrawerQueryItem(workspaceId, schemaName, entityId, item.queryText);
+  const presentation = item.presentation ?? 'chips';
 
-  const state = result.isLoading ? 'loading' : result.error ? 'unavailable' : result.items.length > 0 ? 'ready' : 'empty';
+  const state = result.isLoading
+    ? 'loading'
+    : result.error
+      ? 'unavailable'
+      : result.items.length > 0
+        ? 'ready'
+        : 'empty';
 
   return (
     <EntityDrawerProviderStatus
@@ -35,13 +89,29 @@ export const QueryListItem = ({
       emptyMessage={`No ${label.toLowerCase()} linked.`}
       unavailableMessage={`${label} is unavailable.`}
     >
-      <div className={styles.tags}>
-        {result.items.map((entity: EntityRecord) => (
-          <Chip key={entity._uid} tone="ghost">
-            {entity._name}
-          </Chip>
-        ))}
-      </div>
+      {presentation === 'chips' ? (
+        <div className={styles.tags}>
+          {result.items.map((entity: EntityRecord) => (
+            <Chip key={entity._uid} tone="ghost">
+              {entity._name}
+            </Chip>
+          ))}
+        </div>
+      ) : (
+        <div className={styles.queryList}>
+          {result.items.map((entity: EntityRecord) => (
+            <div className={styles.queryRow} key={entity._uid}>
+              <div className={styles.queryName}>{entity._name}</div>
+              <QueryListFields
+                entity={entity}
+                schema={schemas.find(schema => schema.id === entity._schema.id)}
+                fields={item.fields ?? []}
+                workspaceSlug={workspaceId}
+              />
+            </div>
+          ))}
+        </div>
+      )}
     </EntityDrawerProviderStatus>
   );
 };

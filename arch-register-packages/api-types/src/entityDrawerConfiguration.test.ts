@@ -142,6 +142,41 @@ describe('entity drawer configuration', () => {
     expect(result.diagnostics).toEqual([]);
   });
 
+  it('accepts list query presentation with configured fields', () => {
+    const config = entityDrawerConfigurationSchema.parse({
+      version: 1,
+      profiles: {
+        service: {
+          sections: [
+            {
+              id: 'content',
+              title: 'Content',
+              items: [
+                {
+                  kind: 'query',
+                  queryText: '<-"Contract".vendor',
+                  label: 'Contracts',
+                  presentation: 'list',
+                  fields: [{ fieldId: 'annual_cost', label: 'Annual cost' }]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    });
+
+    expect(config.profiles.service?.sections[0]?.items).toEqual([
+      {
+        kind: 'query',
+        queryText: '<-"Contract".vendor',
+        label: 'Contracts',
+        presentation: 'list',
+        fields: [{ fieldId: 'annual_cost', label: 'Annual cost' }]
+      }
+    ]);
+  });
+
   it('rejects a query item with an empty queryText', () => {
     expect(() =>
       entityDrawerConfigurationSchema.parse({
@@ -759,7 +794,7 @@ describe('entity drawer configuration', () => {
     );
   });
 
-  it('derives the Vendor Management profile with fields and provider slots in drawer order', () => {
+  it('derives the Vendor Management profile with fields and query content in drawer order', () => {
     const vendorSchema = {
       id: 'vendor',
       name: 'Vendor',
@@ -776,6 +811,14 @@ describe('entity drawer configuration', () => {
         { id: 'criticality', name: 'Criticality', type: 'number' }
       ]
     };
+    const contractSchema = {
+      id: 'contract',
+      name: 'Contract',
+      fields: [
+        { id: 'vendor', name: 'Vendor', type: 'containment' },
+        { id: 'annual_cost', name: 'Annual Cost', type: 'currency' }
+      ]
+    };
     const configuration = {
       type: 'vendor-management',
       bindings: {
@@ -784,8 +827,10 @@ describe('entity drawer configuration', () => {
       }
     } as const;
 
-    const profile = buildDefaultEntityDrawerConfiguration([vendorSchema], [configuration]).profiles
-      .vendor!;
+    const profile = buildDefaultEntityDrawerConfiguration(
+      [vendorSchema, contractSchema],
+      [configuration]
+    ).profiles.vendor!;
 
     expect(profile.header.badges).toEqual([
       { kind: 'field', fieldId: 'tier', showLabel: false },
@@ -814,6 +859,16 @@ describe('entity drawer configuration', () => {
     expect(profile.sections[0]?.layout).toBe('stat-grid');
     expect(profile.sections[2]?.items).toEqual([
       { kind: 'slot', slotId: 'vendor.spend', label: 'Spend', showLabel: false }
+    ]);
+    expect(profile.sections[3]?.items).toEqual([
+      {
+        kind: 'query',
+        queryText: '<-"Contract".vendor',
+        label: 'Contracts',
+        showLabel: false,
+        presentation: 'list',
+        fields: [{ fieldId: 'annual_cost', label: 'Annual cost' }]
+      }
     ]);
     expect(profile.sections.at(-1)?.items).toEqual([
       { kind: 'placeholder', message: VENDOR_CAPABILITIES_FUNDED_PLACEHOLDER_MESSAGE }

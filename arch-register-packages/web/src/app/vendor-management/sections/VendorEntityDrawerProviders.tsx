@@ -2,11 +2,9 @@
 // intentionally excluded: none of these slots directly filter a typedRelation field declared on
 // the Vendor schema itself — they're all indirect joins (e.g. Vendor -> Contract -> System) or
 // computed roll-ups, which the new item kind doesn't represent.
-import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Chip } from '../../../components/Chip';
 import { StatusChip } from '../../../components/StatusChip';
-import { useEntityTree } from '../../../hooks/useEntities';
 import { useLifecycleStates } from '../../../hooks/useWorkspaceConfig';
 import { workspaceCapabilityConfigurationsQuery } from '../../../queries/workspaceConfig';
 import {
@@ -21,7 +19,6 @@ import { resolveVendorManagementConfig } from '../vendorManagementQueries';
 import { useVendorAppsSupplied } from '../useVendorAppsSupplied';
 import { useVendorSpendRollup } from '../useVendorSpendRollup';
 import { computeVendorRisk, VENDOR_RISK_BAND_COLOR } from '../vendorRisk';
-import { vendorFieldValue } from '../vendorFieldDisplay';
 import styles from './VendorDrawer.module.css';
 
 const VENDOR_REQUIRED_FIELDS = [
@@ -116,56 +113,6 @@ const VendorSpendProvider = ({ context }: EntityDrawerProviderProps) => {
           <div className={styles.statValue}>{spend.contractCount ?? '—'}</div>
         </div>
       </div>
-    </EntityDrawerProviderStatus>
-  );
-};
-
-const VendorContractsProvider = ({ context }: EntityDrawerProviderProps) => {
-  const { query: configurationQuery, config } = useVendorProviderConfiguration(context.workspaceId);
-  const contractSchemaId = config?.contractSchemaId ?? null;
-  const tree = useEntityTree(
-    context.workspaceId,
-    { schemaId: contractSchemaId ?? undefined },
-    contractSchemaId != null
-  );
-  const nodeById = useMemo(
-    () => new Map((tree.data?.nodes ?? []).map(node => [node._uid, node])),
-    [tree.data]
-  );
-  const contracts = useMemo(
-    () =>
-      (tree.data?.edges ?? [])
-        .filter(edge => edge.parentId === context.entity._uid)
-        .map(edge => nodeById.get(edge.childId))
-        .filter((node): node is NonNullable<typeof node> => node != null),
-    [context.entity._uid, nodeById, tree.data]
-  );
-  const contractSchema = context.schemas.find(schema => schema.id === contractSchemaId);
-  const state =
-    configurationQuery.isLoading || tree.isLoading
-      ? 'loading'
-      : configurationQuery.isError
-        ? 'unavailable'
-        : contractSchemaId == null
-          ? 'empty'
-          : tree.isError
-            ? 'unavailable'
-            : contracts.length > 0
-              ? 'ready'
-              : 'empty';
-
-  return (
-    <EntityDrawerProviderStatus
-      state={state}
-      emptyMessage="No contracts."
-      unavailableMessage="Contracts are unavailable."
-    >
-      {contracts.map(contract => (
-        <div className={styles.attributeRow} key={contract._uid}>
-          <span className={styles.attributeLabel}>{contract._name}</span>
-          <span>{vendorFieldValue(contractSchema, contract, 'annual_cost')}</span>
-        </div>
-      ))}
     </EntityDrawerProviderStatus>
   );
 };
@@ -269,11 +216,6 @@ export const vendorEntityDrawerProviderDefinitions = [
     slotId: 'vendor.spend',
     requiredFields: VENDOR_REQUIRED_FIELDS,
     Component: VendorSpendProvider
-  },
-  {
-    slotId: 'vendor.contracts',
-    requiredFields: VENDOR_REQUIRED_FIELDS,
-    Component: VendorContractsProvider
   },
   {
     slotId: 'vendor.applications-supplied',

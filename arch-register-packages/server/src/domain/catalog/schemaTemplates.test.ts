@@ -871,6 +871,20 @@ describe('instantiateTemplate', () => {
       { kind: 'placeholder', message: VENDOR_CAPABILITIES_FUNDED_PLACEHOLDER_MESSAGE }
     ]);
     expect(
+      definitions.entityDrawerProfiles[vendor!.id]?.sections.find(
+        section => section.id === 'contracts'
+      )?.items
+    ).toEqual([
+      {
+        kind: 'query',
+        queryText: '<-"Contract".vendor',
+        label: 'Contracts',
+        showLabel: false,
+        presentation: 'list',
+        fields: [{ fieldId: 'annual_cost', label: 'Annual cost' }]
+      }
+    ]);
+    expect(
       definitions.entityDrawerProfiles[contract!.id]?.sections.map(section => section.id)
     ).toEqual(['vendor', 'terms', 'cost', 'systems-used']);
   });

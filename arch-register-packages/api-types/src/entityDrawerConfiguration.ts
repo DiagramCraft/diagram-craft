@@ -94,7 +94,9 @@ export const entityDrawerItemSchema = z.discriminatedUnion('kind', [
     kind: z.literal('query'),
     queryText: z.string().min(1),
     label: labelOverrideSchema,
-    showLabel: z.boolean().optional()
+    showLabel: z.boolean().optional(),
+    presentation: z.enum(['chips', 'list']).optional(),
+    fields: z.array(z.object({ fieldId: z.string().min(1), label: labelOverrideSchema })).optional()
   })
 ]);
 
@@ -345,16 +347,6 @@ export const ENTITY_DRAWER_SLOT_DEFINITIONS: EntityDrawerSlotDefinition[] = [
     description: 'Derived risk profile for this vendor.',
     application: 'Vendor Management',
     fixedPresentation: 'mini-panel',
-    capabilityBinding: { capabilityType: 'vendor-management', role: 'vendor' },
-    defaultOptions: {},
-    optionFields: [],
-    optionsSchema: emptyOptionsSchema
-  },
-  {
-    id: 'vendor.contracts',
-    label: 'Contracts',
-    description: 'Contracts associated with this vendor.',
-    application: 'Vendor Management',
     capabilityBinding: { capabilityType: 'vendor-management', role: 'vendor' },
     defaultOptions: {},
     optionFields: [],
@@ -962,7 +954,8 @@ const vendorManagementFieldIds = (
 
 const buildVendorManagementDefaultProfile = (
   providerItems: EntityDrawerItem[],
-  fieldIds: VendorManagementFieldIds
+  fieldIds: VendorManagementFieldIds,
+  contractsQueryItem: Extract<EntityDrawerItem, { kind: 'query' }> | null
 ): EntityDrawerProfile => {
   const item = (fieldId: string): Extract<EntityDrawerItem, { kind: 'field' }> => ({
     kind: 'field',
@@ -1020,7 +1013,7 @@ const buildVendorManagementDefaultProfile = (
         item(fieldIds.costCentre)
       ]),
       section('spend', 'Spend', [provider('vendor.spend', 'Spend', false)], true),
-      section('contracts', 'Contracts', [provider('vendor.contracts', 'Contracts', false)], true),
+      section('contracts', 'Contracts', [contractsQueryItem], true),
       section(
         'applications-supplied',
         'Applications supplied',
@@ -1089,6 +1082,43 @@ const vendorManagementContractFieldIds = (
   if (systemField?.type !== 'typedRelation') return null;
 
   return fieldIds;
+};
+
+const escapeQueryStringLiteral = (value: string): string =>
+  value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+
+const vendorManagementContractsQueryItem = (
+  vendorSchema: EntityDrawerSchema,
+  schemas: EntityDrawerSchema[],
+  capabilityConfigurations: readonly CapabilityConfigurationLike[]
+): Extract<EntityDrawerItem, { kind: 'query' }> | null => {
+  const configuration = capabilityConfigurations.find(
+    candidate => candidate.type === 'vendor-management'
+  );
+  const vendorBinding = configuration?.bindings.vendor;
+  const contractBinding = configuration?.bindings.contract;
+  if (
+    vendorBinding?.target.kind !== 'entity_schema' ||
+    vendorBinding.target.id !== vendorSchema.id ||
+    contractBinding?.target.kind !== 'entity_schema'
+  ) {
+    return null;
+  }
+
+  const contractSchema = schemas.find(schema => schema.id === contractBinding.target.id);
+  if (!contractSchema) return null;
+
+  const vendorField = contractSchema.fields.find(field => field.id === 'vendor');
+  if (!vendorField || !isRelationField(vendorField)) return null;
+
+  return {
+    kind: 'query',
+    queryText: `<-"${escapeQueryStringLiteral(contractSchema.name)}".${vendorField.id}`,
+    label: 'Contracts',
+    showLabel: false,
+    presentation: 'list',
+    fields: [{ fieldId: 'annual_cost', label: 'Annual cost' }]
+  };
 };
 
 const buildVendorManagementContractDefaultProfile = (
@@ -1303,6 +1333,11 @@ export const buildDefaultEntityDrawerConfiguration = (
       );
       const vendorFieldIds = vendorManagementFieldIds(schema, capabilityConfigurations);
       const contractFieldIds = vendorManagementContractFieldIds(schema, capabilityConfigurations);
+      const contractsQueryItem = vendorManagementContractsQueryItem(
+        schema,
+        schemas,
+        capabilityConfigurations
+      );
       return [
         schema.id,
         glossaryFieldIds
@@ -1312,7 +1347,11 @@ export const buildDefaultEntityDrawerConfiguration = (
             : apiSpecificationFieldIdsValue
               ? buildApiSpecificationDefaultProfile(providerItems, apiSpecificationFieldIdsValue)
               : vendorFieldIds
-                ? buildVendorManagementDefaultProfile(providerItems, vendorFieldIds)
+                ? buildVendorManagementDefaultProfile(
+                    providerItems,
+                    vendorFieldIds,
+                    contractsQueryItem
+                  )
                 : contractFieldIds
                   ? buildVendorManagementContractDefaultProfile(contractFieldIds)
                   : buildDefaultEntityDrawerProfile(schema, providerItems)

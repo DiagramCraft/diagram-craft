@@ -17,7 +17,6 @@ const mocks = vi.hoisted(() => ({
       }
     }
   ],
-  tree: { data: { nodes: [], edges: [] }, isLoading: false, isError: false },
   spend: { vmSpend: null, currency: null, contractCount: null, isLoading: false, error: null },
   apps: { items: [], isLoading: false, error: null },
   lifecycleStates: []
@@ -29,10 +28,6 @@ vi.mock('@tanstack/react-query', () => ({
 
 vi.mock('../../../queries/workspaceConfig', () => ({
   workspaceCapabilityConfigurationsQuery: () => ({ queryKey: ['capability-configurations'] })
-}));
-
-vi.mock('../../../hooks/useEntities', () => ({
-  useEntityTree: () => mocks.tree
 }));
 
 vi.mock('../../../hooks/useWorkspaceConfig', () => ({
@@ -116,15 +111,9 @@ describe('Vendor Management entity drawer providers', () => {
     expect(markup).toContain('elevated');
   });
 
-  it('renders contract and application empty states', () => {
-    const contractDefinition = provider('vendor.contracts');
+  it('renders the application empty state', () => {
     const applicationsDefinition = provider('vendor.applications-supplied');
 
-    expect(
-      renderToStaticMarkup(
-        <contractDefinition.Component context={context()} item={item(contractDefinition.slotId)} />
-      )
-    ).toContain('No contracts.');
     expect(
       renderToStaticMarkup(
         <applicationsDefinition.Component

@@ -74705,6 +74705,23 @@
                                               },
                                               "showLabel": {
                                                 "type": "boolean"
+                                              },
+                                              "presentation": {
+                                                "enum": [
+                                                  "chips",
+                                                  "list"
+                                                ],
+                                                "type": "string"
+                                              },
+                                              "fields": {
+                                                "type": "array",
+                                                "items": {
+                                                  "type": "object",
+                                                  "properties": {
+                                                    "fieldId": {},
+                                                    "label": {}
+                                                  }
+                                                }
                                               }
                                             },
                                             "required": [
@@ -75215,6 +75232,23 @@
                                         },
                                         "showLabel": {
                                           "type": "boolean"
+                                        },
+                                        "presentation": {
+                                          "enum": [
+                                            "chips",
+                                            "list"
+                                          ],
+                                          "type": "string"
+                                        },
+                                        "fields": {
+                                          "type": "array",
+                                          "items": {
+                                            "type": "object",
+                                            "properties": {
+                                              "fieldId": {},
+                                              "label": {}
+                                            }
+                                          }
                                         }
                                       },
                                       "required": [
@@ -75664,6 +75698,23 @@
                                               },
                                               "showLabel": {
                                                 "type": "boolean"
+                                              },
+                                              "presentation": {
+                                                "enum": [
+                                                  "chips",
+                                                  "list"
+                                                ],
+                                                "type": "string"
+                                              },
+                                              "fields": {
+                                                "type": "array",
+                                                "items": {
+                                                  "type": "object",
+                                                  "properties": {
+                                                    "fieldId": {},
+                                                    "label": {}
+                                                  }
+                                                }
                                               }
                                             },
                                             "required": [
