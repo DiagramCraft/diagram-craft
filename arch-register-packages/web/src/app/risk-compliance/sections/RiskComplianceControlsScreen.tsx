@@ -457,9 +457,7 @@ export const RiskComplianceControlsScreen = () => {
                           }}
                         />
                       </span>
-                      <span className={styles.covPct}>
-                        {pct == null ? '—' : `${pct}%`}
-                      </span>
+                      <span className={styles.covPct}>{pct == null ? '—' : `${pct}%`}</span>
                     </button>
                   );
                 })}

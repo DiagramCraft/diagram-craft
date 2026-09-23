@@ -1363,36 +1363,22 @@ describe('instantiateTemplate', () => {
     const context = { objectType: 'entity' as const, objectId: 'risk-1' };
 
     expect(
-      evaluateDerivedFields(
-        plan,
-        {},
-        context,
-        new Set(),
-        { mitigating_controls: [{ coverage: 50, effectiveness: 'partial' }] }
-      ).risk_coverage
+      evaluateDerivedFields(plan, {}, context, new Set(), {
+        mitigating_controls: [{ coverage: 50, effectiveness: 'partial' }]
+      }).risk_coverage
     ).toBe(25);
     expect(
-      evaluateDerivedFields(
-        plan,
-        {},
-        context,
-        new Set(),
-        {
-          mitigating_controls: [
-            { coverage: 100, effectiveness: 'partial' },
-            { coverage: 100, effectiveness: 'partial' }
-          ]
-        }
-      ).risk_coverage
+      evaluateDerivedFields(plan, {}, context, new Set(), {
+        mitigating_controls: [
+          { coverage: 100, effectiveness: 'partial' },
+          { coverage: 100, effectiveness: 'partial' }
+        ]
+      }).risk_coverage
     ).toBe(75);
     expect(
-      evaluateDerivedFields(
-        plan,
-        {},
-        context,
-        new Set(),
-        { mitigating_controls: [{ coverage: null, effectiveness: 'full' }] }
-      ).risk_coverage
+      evaluateDerivedFields(plan, {}, context, new Set(), {
+        mitigating_controls: [{ coverage: null, effectiveness: 'full' }]
+      }).risk_coverage
     ).toBeUndefined();
   });
 
