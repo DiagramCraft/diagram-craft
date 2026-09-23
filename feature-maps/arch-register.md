@@ -458,9 +458,10 @@
           shown side by side. Selecting a risk opens the shared Risk drawer via the workspace-wide `drawer` search
           parameter; legacy `risk-compliance/risks/$riskId` links redirect there. The drawer shows likelihood/impact,
           the existing `inherent_risk_score` and
-          `residual_risk_score` derived fields (the latter banded Low/Medium/High/Critical via the standard 5×5
-          heat-map thresholds), attributes, the list of mitigating Controls with each relation's `coverage` % and
-          `effectiveness`, and the entities the risk affects (via `risk-affects`). The configurable Risk drawer
+          `residual_risk_score` and `risk_coverage` derived fields (the latter a numeric 0–100 percentage calculated
+          from the mitigating-control relations), attributes, the list of mitigating Controls with each relation's
+          `coverage` % and `effectiveness`, and the entities the risk affects (via `risk-affects`). The configurable
+          Risk drawer
           preserves the template-authored default profile for these metrics, attributes, category/status badges,
           and the residual-risk band; workspace administrators can configure supported fields, sections, order,
           labels, and item placement.
@@ -476,8 +477,9 @@
           the Risks section's own Coverage column does); `operating_effectiveness` is the field that actually
           measures a Control's effectiveness. The Coverage view has three stat tiles scoped to the library's
           current filters (Effective, Never tested, Uncontrolled risks), a "coverage by risk" bar-list of every live
-          (non-closed) Risk sorted weakest-`rcCoverage`-first (each row: residual score, the names of its mitigating
-          Controls or "no control", and a coverage bar/percentage), and a "coverage by information asset" table,
+          (non-closed) Risk sorted weakest-`risk_coverage`-first (each row: residual score, the names of its
+          mitigating Controls or "no control", and a numeric coverage bar/percentage), and a "coverage by
+          information asset" table,
           scoped to Data Entities only — asset name, the count of distinct Risks affecting it (`risk-affects`), and
           the count of distinct Controls directly protecting it (`control-affects`, styled as "none" when zero),
           sorted fewest-controls-first. `control-affects` ("Control Protection") is schema-constrained to the

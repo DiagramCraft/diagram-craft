@@ -16,15 +16,8 @@ const EMPTY: ControlRiskCounts = { countById: new Map(), isLoading: false, error
  * grouped by the mitigating Control's `_uid` (`relation._out.id` — Control is the `_out` side,
  * mirroring the entity drawer's `mitigatedRisks` filter).
  *
- * This used to also compute a per-Control "coverage" percentage by running the same relations
- * through `computeRiskCoverage` (the "probability at least one control catches it" formula the
- * Risks screen uses to combine *multiple controls covering one Risk*). Reused the other way
- * round — combining one Control's coverage/effectiveness values across its *different* Risks —
- * that formula doesn't hold up: the result grows toward 100% purely from how many unrelated
- * Risks a Control happens to be linked to, not from how effective it actually is, so a Control
- * on 5 weakly-covered Risks would out-score one on a single strongly-covered Risk. Removed;
- * `operating_effectiveness` (already a field on Control) is the honest measure of that, and this
- * hook now only counts.
+ * This hook intentionally only counts relations; Risk coverage is now materialized on each Risk
+ * by the server-derived `risk_coverage` field rather than recomputed in the client.
  */
 export const useControlRiskCounts = (
   workspaceId: string,

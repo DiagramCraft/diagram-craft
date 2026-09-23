@@ -79,7 +79,8 @@ describe('RiskComplianceRisksScreen', () => {
           likelihood: 3,
           impact: 3,
           inherent_risk_score: 9,
-          residual_risk_score: 9
+          residual_risk_score: 9,
+          risk_coverage: 75
         }
       ],
       total: 1
@@ -101,7 +102,8 @@ describe('RiskComplianceRisksScreen', () => {
             id: 'mitigating_controls',
             type: 'typedRelation',
             relationSchemaId: 'risk-control'
-          }
+          },
+          { id: 'risk_coverage', type: 'derived' }
         ]
       }
     ]);
@@ -121,6 +123,7 @@ describe('RiskComplianceRisksScreen', () => {
     expect(container.textContent).toContain('Customer Account Takeover');
     expect(container.textContent).toContain('RSK-001');
     expect(container.textContent).toContain('medium');
+    expect(container.textContent).toContain('75%');
 
     const row = [...container.querySelectorAll('tr')].find(tr =>
       tr.textContent?.includes('Customer Account Takeover')

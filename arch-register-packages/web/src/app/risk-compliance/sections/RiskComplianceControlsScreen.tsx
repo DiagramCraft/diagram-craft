@@ -17,11 +17,9 @@ import { resolveRiskComplianceConfig } from '../riskComplianceQueries';
 import { RISK_RAIL_PATHS, RISK_CONTROLS_ID } from '../riskComplianceSections';
 import { useControlRiskCounts } from '../useControlRiskCounts';
 import { useControlAssetCounts } from '../useControlAssetCounts';
-import { useRiskCoverageRollups } from '../useRiskCoverageRollups';
 import { useAssetCoverageRollups } from '../useAssetCoverageRollups';
 import { useControlTraceMatrix } from '../useControlTraceMatrix';
 import { useControlFrameworks } from '../useControlFrameworks';
-import { COVERAGE_BAND_COLOR } from '../riskCoverage';
 import { CONTROL_EFFECTIVENESS_COLOR } from '../controlEffectiveness';
 import { riskFieldValue } from '../riskFieldDisplay';
 import { Chip } from '../../../components/Chip';
@@ -33,6 +31,9 @@ import styles from './RiskComplianceControlsScreen.module.css';
 import traceStyles from './RiskComplianceTraceMatrix.module.css';
 
 type SortKey = 'risksMitigated' | 'lastVerified' | 'name';
+
+const DANGER_COLOR = 'var(--cmp-fg-danger, #ef4444)';
+const COVERAGE_COLOR = 'var(--cmp-fg-accent, #3b82f6)';
 
 const sizeMap = (source: Map<string, Set<string>>): Map<string, number> =>
   new Map([...source].map(([key, value]) => [key, value.size]));
@@ -68,10 +69,8 @@ const compareNullable = (a: number | string | null, b: number | string | null): 
  * automation/owner/frequency/next-test have no analog and are simply not shown. Risks mitigated
  * and Assets (`useControlRiskCounts.ts`/`useControlAssetCounts.ts`) are synthesized counts from
  * the `risk-control`/`control-affects` relations, matching the design reference's `c.risks.length`
- * / `c.assets.length`. The library table intentionally has no "coverage %" column — reusing the
- * Risks screen's per-Risk `computeRiskCoverage` combination formula the other way round (across
- * one Control's *different* Risks, rather than across the *different controls covering one*
- * Risk) doesn't produce a meaningful number, see `useControlRiskCounts.ts`'s doc comment.
+ * / `c.assets.length`. The library table intentionally has no "coverage %" column — Risk coverage
+ * is a per-Risk derived value, not a meaningful aggregate across a Control's different Risks.
  */
 export const RiskComplianceControlsScreen = () => {
   const { workspaceSlug } = useParams({ strict: false }) as {
@@ -184,14 +183,8 @@ export const RiskComplianceControlsScreen = () => {
       (view === 'coverage' || view === 'traceability') && riskConfig != null
     )
   );
-  const riskCoverage = useRiskCoverageRollups(
-    workspaceSlug,
-    view === 'coverage' ? riskControlRelationSchemaId : null
-  );
-  // Raw relations behind the coverage rollup, to list each weakest risk's mitigating Control
-  // names (or "no control") next to its bar — same `{ schemaId, limit: 1000 }` filters as
-  // `useRiskCoverageRollups`'s own internal fetch, so this dedupes against that query's cache
-  // rather than firing a second network request.
+  // Raw relations are used only to list each weakest risk's mitigating Control names (or "no
+  // control") next to its derived coverage value.
   const riskControlRelations = useRelations(
     workspaceSlug,
     { schemaId: riskControlRelationSchemaId ?? undefined, limit: 1000 },
@@ -216,11 +209,11 @@ export const RiskComplianceControlsScreen = () => {
     () =>
       [...liveRisks].sort((a, b) =>
         compareNullable(
-          riskCoverage.byId.get(a._uid)?.rcCoverage ?? null,
-          riskCoverage.byId.get(b._uid)?.rcCoverage ?? null
+          typeof a.risk_coverage === 'number' ? a.risk_coverage : null,
+          typeof b.risk_coverage === 'number' ? b.risk_coverage : null
         )
       ),
-    [liveRisks, riskCoverage.byId]
+    [liveRisks]
   );
   // Also feeds the Traceability view's Asset-dimension columns (`weakestAssets` below).
   const assetCoverage = useAssetCoverageRollups(
@@ -249,8 +242,8 @@ export const RiskComplianceControlsScreen = () => {
   // the design reference passes its own filtered `rows` into `RCCoverage` for exactly these
   // three stats, unlike the panels below them.
   const uncontrolledRiskCount = useMemo(
-    () => liveRisks.filter(r => (riskCoverage.byId.get(r._uid)?.rcCoverage ?? null) == null).length,
-    [liveRisks, riskCoverage.byId]
+    () => liveRisks.filter(r => typeof r.risk_coverage !== 'number').length,
+    [liveRisks]
   );
 
   // Traceability view: rows are the Library view's own filtered controls (per #3282's scope —
@@ -415,7 +408,7 @@ export const RiskComplianceControlsScreen = () => {
               <div className={styles.tileLabel}>Uncontrolled risks</div>
               <div
                 className={styles.tileValue}
-                style={uncontrolledRiskCount ? { color: COVERAGE_BAND_COLOR.uncovered } : undefined}
+                style={uncontrolledRiskCount ? { color: DANGER_COLOR } : undefined}
               >
                 {uncontrolledRiskCount}
               </div>
@@ -435,9 +428,8 @@ export const RiskComplianceControlsScreen = () => {
             ) : (
               <div className={styles.covStack}>
                 {weakestRisks.map(entity => {
-                  const entityCoverage = riskCoverage.byId.get(entity._uid);
-                  const band = entityCoverage?.rcBand ?? 'uncovered';
-                  const pct = entityCoverage?.rcCoverage ?? 0;
+                  const pct =
+                    typeof entity.risk_coverage === 'number' ? entity.risk_coverage : null;
                   const controlNames = controlNamesByRiskId.get(entity._uid) ?? [];
                   return (
                     <button
@@ -460,14 +452,12 @@ export const RiskComplianceControlsScreen = () => {
                         <span
                           className={styles.covFill}
                           style={{
-                            width: `${Math.max(2, pct)}%`,
-                            background: COVERAGE_BAND_COLOR[band]
+                            width: `${Math.max(2, pct ?? 0)}%`,
+                            background: COVERAGE_COLOR
                           }}
                         />
                       </span>
-                      <span className={styles.covPct} style={{ color: COVERAGE_BAND_COLOR[band] }}>
-                        {Math.round(pct)}%
-                      </span>
+                      <span className={styles.covPct}>{pct == null ? '—' : `${pct}%`}</span>
                     </button>
                   );
                 })}
@@ -500,9 +490,7 @@ export const RiskComplianceControlsScreen = () => {
                       <Table.Cell numeric>{asset.riskCount}</Table.Cell>
                       <Table.Cell
                         numeric
-                        style={
-                          !asset.controlCount ? { color: COVERAGE_BAND_COLOR.uncovered } : undefined
-                        }
+                        style={!asset.controlCount ? { color: DANGER_COLOR } : undefined}
                       >
                         {asset.controlCount || 'none'}
                       </Table.Cell>

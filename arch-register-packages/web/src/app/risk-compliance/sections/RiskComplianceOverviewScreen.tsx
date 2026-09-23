@@ -24,9 +24,7 @@ import {
   RISK_RETENTION_ID,
   RISK_ASSESSMENTS_ID
 } from '../riskComplianceSections';
-import { useRiskCoverageRollups } from '../useRiskCoverageRollups';
 import { residualRiskBand, RESIDUAL_RISK_BAND_COLOR } from '../residualRiskBand';
-import { COVERAGE_BAND_COLOR } from '../riskCoverage';
 import { riskFieldValue } from '../riskFieldDisplay';
 import { useRetentionAssignments } from '../useRetentionAssignments';
 import { asProjectPublicId, projectDetailRoute } from '../../../routes/publicObjectRoutes';
@@ -109,14 +107,6 @@ export const RiskComplianceOverviewScreen = () => {
   const riskSchema = schemas.data?.find(schema => schema.id === riskConfig?.riskSchemaId);
   const controlSchema = schemas.data?.find(schema => schema.id === riskConfig?.controlSchemaId);
 
-  const mitigatingControlsField = riskSchema?.fields.find(
-    field => field.id === 'mitigating_controls'
-  );
-  const riskControlRelationSchemaId =
-    mitigatingControlsField?.type === 'typedRelation'
-      ? mitigatingControlsField.relationSchemaId
-      : null;
-
   const risks = useQuery(
     entitiesQuery(
       workspaceSlug,
@@ -128,8 +118,6 @@ export const RiskComplianceOverviewScreen = () => {
     () => (risks.data?.items ?? []).filter(entity => entity.status !== 'closed'),
     [risks.data]
   );
-  const coverage = useRiskCoverageRollups(workspaceSlug, riskControlRelationSchemaId);
-
   const controls = useQuery(
     entitiesQuery(
       workspaceSlug,
@@ -211,8 +199,7 @@ export const RiskComplianceOverviewScreen = () => {
     () =>
       liveRisks
         .filter(entity => {
-          const band = coverage.byId.get(entity._uid)?.rcBand ?? 'uncovered';
-          return band === 'uncovered' || band === 'partial';
+          return typeof entity.risk_coverage !== 'number' || entity.risk_coverage < 40;
         })
         .sort(
           (a, b) =>
@@ -222,7 +209,7 @@ export const RiskComplianceOverviewScreen = () => {
             )
         )
         .slice(0, WEAK_COVERAGE_LIMIT),
-    [liveRisks, coverage.byId]
+    [liveRisks]
   );
 
   const coverageByType = useMemo(() => {
@@ -385,7 +372,6 @@ export const RiskComplianceOverviewScreen = () => {
                 const band = residualRiskBand(
                   typeof entity.residual_risk_score === 'number' ? entity.residual_risk_score : null
                 );
-                const entityCoverage = coverage.byId.get(entity._uid);
                 return (
                   <button
                     key={entity._uid}
@@ -400,10 +386,8 @@ export const RiskComplianceOverviewScreen = () => {
                         {riskFieldValue(riskSchema, entity, 'risk_owner')}
                       </span>
                     </span>
-                    {entityCoverage?.rcBand ? (
-                      <Chip dot={COVERAGE_BAND_COLOR[entityCoverage.rcBand]} tone="ghost">
-                        {entityCoverage.rcCoverage?.toFixed(0)}%
-                      </Chip>
+                    {typeof entity.risk_coverage === 'number' ? (
+                      `${entity.risk_coverage}%`
                     ) : (
                       <span className="dim">—</span>
                     )}
@@ -489,7 +473,6 @@ export const RiskComplianceOverviewScreen = () => {
                       ? entity.residual_risk_score
                       : null
                   );
-                  const entityCoverage = coverage.byId.get(entity._uid);
                   return (
                     <Table.Row key={entity._uid} onClick={() => setOpenRiskId(entity._publicId)}>
                       <Table.NameCell title={entity._name} subtitle={entity._publicId} />
@@ -497,10 +480,8 @@ export const RiskComplianceOverviewScreen = () => {
                         {riskFieldValue(riskSchema, entity, 'category')}
                       </Table.Cell>
                       <Table.Cell>
-                        {entityCoverage?.rcBand ? (
-                          <Chip dot={COVERAGE_BAND_COLOR[entityCoverage.rcBand]} tone="ghost">
-                            {entityCoverage.rcCoverage?.toFixed(0)}%
-                          </Chip>
+                        {typeof entity.risk_coverage === 'number' ? (
+                          `${entity.risk_coverage}%`
                         ) : (
                           <span className="dim">—</span>
                         )}
