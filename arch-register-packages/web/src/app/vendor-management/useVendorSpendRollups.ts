@@ -2,10 +2,10 @@ import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { MetricRollupResponse } from '@arch-register/api-types/metricContract';
 import { metricRollupQuery } from '../../queries/metrics';
-import { buildVendorSpendMetric } from './useVendorSpendRollup';
+import { buildVendorSpendMetric } from './vendorSpendMetric';
 
 /** One vendor's spend, keyed by vendor `_uid` — the batched, table-wide sibling of
- *  `useVendorSpendRollup.ts`'s single-vendor result shape. */
+ *  the shared single-vendor spend metric's result shape. */
 export type VendorSpendRollupValue = {
   vmSpend: number | null;
   currency: string | null;
@@ -21,7 +21,7 @@ export type VendorSpendRollups = {
 const EMPTY: VendorSpendRollups = { byId: new Map(), isLoading: false, error: null };
 
 /**
- * Batched sibling of `useVendorSpendRollup.ts`, for table/overview screens: one `metrics.rollup`
+ * Batched spend hook for table/overview screens: one `metrics.rollup`
  * request across every visible vendor's id at once, returning a map keyed by vendor `_uid`.
  */
 export const useVendorSpendRollups = (

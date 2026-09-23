@@ -373,7 +373,7 @@
           `drawer` search param: its schema profile preserves a composite risk score
           (`vmRisk`/`vmRiskBand`, weighted across the vendor's security, concentration, financial, and compliance
           risk fields and lifted by criticality), attributes, spend (`vmSpend`, summed across the vendor's own
-          Contracts), the vendor's Contracts in a configurable list with annual cost, the Systems its contracts serve ("Applications supplied"), and a
+          Contracts via a generic relation roll-up, the vendor's Contracts in a configurable list with annual cost, the Systems its contracts serve ("Applications supplied"), and a
           best-effort technology lifecycle view derived from those Systems' own lifecycle state. These sections
           can be reordered, relabeled, or have their section and provider titles hidden through the workspace
           entity-drawer configuration; the composite risk summary remains a compact mini-panel. Capabilities funded

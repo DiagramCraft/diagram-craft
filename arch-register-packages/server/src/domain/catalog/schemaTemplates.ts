@@ -2410,7 +2410,37 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             id: 'spend',
             title: 'Spend',
             collapsible: true,
-            items: [{ kind: 'slot', slotId: 'vendor.spend', label: 'Spend', showLabel: false }]
+            layout: 'stat-grid',
+            items: [
+              {
+                kind: 'rollup',
+                sourceSchemaId: 'contract',
+                fieldId: 'annual_cost',
+                traversal: {
+                  kind: 'relation',
+                  fieldId: 'vendor',
+                  direction: 'backward',
+                  ownerSchemaId: 'contract'
+                },
+                aggregation: 'sum',
+                format: 'currency',
+                label: 'vmSpend'
+              },
+              {
+                kind: 'rollup',
+                sourceSchemaId: 'contract',
+                fieldId: 'annual_cost',
+                traversal: {
+                  kind: 'relation',
+                  fieldId: 'vendor',
+                  direction: 'backward',
+                  ownerSchemaId: 'contract'
+                },
+                aggregation: 'count',
+                format: 'number',
+                label: 'Contracts'
+              }
+            ]
           },
           {
             id: 'contracts',
@@ -5001,7 +5031,8 @@ const materializeTemplateFragments = (
     );
     const entityDrawerProfiles = remapEntityDrawerProfiles(
       fragment.template.entityDrawerProfiles ?? {},
-      schemaIds
+      schemaIds,
+      relationSchemaIds
     );
 
     return {

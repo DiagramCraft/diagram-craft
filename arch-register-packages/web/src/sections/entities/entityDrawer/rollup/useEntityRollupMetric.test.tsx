@@ -44,7 +44,7 @@ const MetricHarness = ({
   aggregation
 }: {
   fieldId: 'maturity' | 'annual_investment';
-  aggregation: 'avg' | 'sum';
+  aggregation: 'avg' | 'sum' | 'count';
 }) => {
   latestMetric = useEntityRollupMetric(
     'ws-1',
@@ -52,6 +52,25 @@ const MetricHarness = ({
     'cap-1',
     fieldId,
     aggregation
+  );
+  return null;
+};
+
+const RelationMetricHarness = () => {
+  latestMetric = useEntityRollupMetric(
+    'ws-1',
+    'vendor',
+    'vendor-1',
+    'annual_cost',
+    'count',
+    undefined,
+    'contract',
+    {
+      kind: 'relation',
+      fieldId: 'vendor',
+      direction: 'backward',
+      ownerSchemaId: 'contract'
+    }
   );
   return null;
 };
@@ -81,6 +100,8 @@ describe('useEntityRollupMetric / useEntityRollupLeafCount', () => {
       ({ body }: { body: { metric: { source: { fieldId: string }; aggregation: string } } }) => {
         const { fieldId } = body.metric.source;
         if (body.metric.aggregation === 'leafCount') return Promise.resolve(resultFor(2));
+        if (body.metric.aggregation === 'count')
+          return Promise.resolve(resultFor(4, { boxEntityId: 'vendor-1' }));
         if (fieldId === 'maturity') return Promise.resolve(resultFor(3));
         if (fieldId === 'annual_investment') {
           return Promise.resolve(resultFor(150000, { currencyCode: 'USD' }));
@@ -127,6 +148,37 @@ describe('useEntityRollupMetric / useEntityRollupLeafCount', () => {
     await flush(() => latestMetric?.isLoading === false);
 
     expect(latestMetric).toMatchObject({ value: 150000, currency: 'USD' });
+  });
+
+  it('counts relation sources without applying the own-entity fallback', async () => {
+    await act(async () => {
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <RelationMetricHarness />
+        </QueryClientProvider>
+      );
+    });
+    await flush(() => latestMetric?.isLoading === false);
+
+    expect(latestMetric).toMatchObject({ value: 4, currency: null, error: null });
+    expect(mocks.rollup).toHaveBeenCalledWith(
+      expect.objectContaining({
+        body: expect.objectContaining({
+          metric: expect.objectContaining({
+            sourceSchemaId: 'contract',
+            aggregation: 'count',
+            path: [
+              {
+                kind: 'relation',
+                fieldId: 'vendor',
+                direction: 'backward',
+                ownerSchemaId: 'contract'
+              }
+            ]
+          })
+        })
+      })
+    );
   });
 
   it('resolves the leaf count independently of any roll-up field', async () => {

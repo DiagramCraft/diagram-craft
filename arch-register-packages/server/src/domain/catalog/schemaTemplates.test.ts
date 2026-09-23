@@ -903,6 +903,44 @@ describe('instantiateTemplate', () => {
       }
     ]);
     expect(
+      definitions.entityDrawerProfiles[vendor!.id]?.sections.find(section => section.id === 'spend')
+    ).toEqual({
+      id: 'spend',
+      title: 'Spend',
+      collapsible: true,
+      layout: 'stat-grid',
+      items: [
+        {
+          kind: 'rollup',
+          sourceSchemaId: contract!.id,
+          fieldId: 'annual_cost',
+          traversal: {
+            kind: 'relation',
+            fieldId: 'vendor',
+            direction: 'backward',
+            ownerSchemaId: contract!.id
+          },
+          aggregation: 'sum',
+          format: 'currency',
+          label: 'vmSpend'
+        },
+        {
+          kind: 'rollup',
+          sourceSchemaId: contract!.id,
+          fieldId: 'annual_cost',
+          traversal: {
+            kind: 'relation',
+            fieldId: 'vendor',
+            direction: 'backward',
+            ownerSchemaId: contract!.id
+          },
+          aggregation: 'count',
+          format: 'number',
+          label: 'Contracts'
+        }
+      ]
+    });
+    expect(
       definitions.entityDrawerProfiles[vendor!.id]?.sections.find(
         section => section.id === 'applications-supplied'
       )?.items

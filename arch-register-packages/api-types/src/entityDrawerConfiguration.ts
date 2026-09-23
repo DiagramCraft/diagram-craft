@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import { metricTraversalStepSchema, type MetricTraversalStep } from './metricContract';
+import type { RelationSchema } from './relationSchemaContract';
 import {
   DEFAULT_STRATEGY_VIEW_CONFIG,
   strategyModelViewConfigSchema
@@ -29,8 +31,9 @@ export const VENDOR_CAPABILITIES_FUNDED_PLACEHOLDER_MESSAGE =
 /** Aggregation and number-format options for a `rollup` drawer item. Kept local to this file
  *  (rather than imported from Strategy's `strategyModelViewConfig.ts`) so the generic drawer item
  *  contract doesn't depend on a specific capability's config model. */
-export const entityDrawerRollupAggregationSchema = z.enum(['avg', 'sum']);
+export const entityDrawerRollupAggregationSchema = z.enum(['avg', 'sum', 'count']);
 export const entityDrawerRollupFormatSchema = z.enum(['number', 'decimal1', 'currency', 'percent']);
+export const entityDrawerRollupTraversalSchema = metricTraversalStepSchema;
 
 export const entityDrawerItemSchema = z.discriminatedUnion('kind', [
   z.object({
@@ -67,6 +70,8 @@ export const entityDrawerItemSchema = z.discriminatedUnion('kind', [
   z.object({
     kind: z.literal('rollup'),
     fieldId: z.string().min(1),
+    sourceSchemaId: z.string().min(1).optional(),
+    traversal: entityDrawerRollupTraversalSchema.optional(),
     aggregation: entityDrawerRollupAggregationSchema,
     format: entityDrawerRollupFormatSchema,
     label: labelOverrideSchema,
@@ -144,7 +149,8 @@ export const entityDrawerDiagnosticSchema = z.object({
     'unsupported_slot',
     'invalid_slot_options',
     'unsupported_slot_for_schema',
-    'unsupported_rollup_schema'
+    'unsupported_rollup_schema',
+    'invalid_rollup_traversal'
   ]),
   schemaId: z.string().optional(),
   sectionId: z.string().optional(),
@@ -196,6 +202,7 @@ export type EntityDrawerConfiguration = z.infer<typeof entityDrawerConfiguration
 export type EntityDrawerProfiles = EntityDrawerConfiguration['profiles'];
 export type EntityDrawerDiagnostic = z.infer<typeof entityDrawerDiagnosticSchema>;
 export type EntityDrawerCatalog = z.infer<typeof entityDrawerCatalogSchema>;
+export type EntityDrawerRollupTraversal = MetricTraversalStep;
 export type EntityDrawerSlotDefinition = {
   id: string;
   label: string;
@@ -210,7 +217,8 @@ export type EntityDrawerSlotDefinition = {
 
 export const remapEntityDrawerProfiles = (
   profiles: EntityDrawerProfiles,
-  schemaIdMap: ReadonlyMap<string, string>
+  schemaIdMap: ReadonlyMap<string, string>,
+  relationSchemaIdMap: ReadonlyMap<string, string> = new Map()
 ): EntityDrawerProfiles =>
   Object.fromEntries(
     Object.entries(profiles).flatMap(([schemaId, profile]) => {
@@ -229,7 +237,43 @@ export const remapEntityDrawerProfiles = (
                       ...item,
                       childSchemaId: schemaIdMap.get(item.childSchemaId) ?? item.childSchemaId
                     }
-                  : item
+                  : item.kind === 'rollup'
+                    ? {
+                        ...item,
+                        ...(item.sourceSchemaId
+                          ? {
+                              sourceSchemaId:
+                                schemaIdMap.get(item.sourceSchemaId) ?? item.sourceSchemaId
+                            }
+                          : {}),
+                        ...(item.traversal
+                          ? {
+                              traversal:
+                                item.traversal.kind === 'relation'
+                                  ? {
+                                      ...item.traversal,
+                                      ...(item.traversal.ownerSchemaId
+                                        ? {
+                                            ownerSchemaId:
+                                              schemaIdMap.get(item.traversal.ownerSchemaId) ??
+                                              item.traversal.ownerSchemaId
+                                          }
+                                        : {})
+                                    }
+                                  : item.traversal.kind === 'typedRelation' ||
+                                      item.traversal.kind === 'unboundTypedRelation'
+                                    ? {
+                                        ...item.traversal,
+                                        relationSchemaId:
+                                          relationSchemaIdMap.get(
+                                            item.traversal.relationSchemaId
+                                          ) ?? item.traversal.relationSchemaId
+                                      }
+                                    : item.traversal
+                            }
+                          : {})
+                      }
+                    : item
               )
             }))
           }
@@ -248,6 +292,8 @@ type CapabilityConfigurationLike = {
   bindings: Record<string, WorkspaceCapabilityBinding>;
   view_config?: unknown;
 };
+
+export type EntityDrawerRelationSchema = Pick<RelationSchema, 'id' | 'in' | 'out'>;
 
 export const ENTITY_DRAWER_METADATA_SLOTS: EntityDrawerCatalog['metadataSlots'] = [
   { id: 'publicId', label: 'Public ID', description: 'The stable public identifier.' },
@@ -307,16 +353,6 @@ export const ENTITY_DRAWER_SLOT_DEFINITIONS: EntityDrawerSlotDefinition[] = [
     label: 'Assessments',
     description: 'Assessments associated with the current entity.',
     application: 'Data Stewardship',
-    defaultOptions: {},
-    optionFields: [],
-    optionsSchema: emptyOptionsSchema
-  },
-  {
-    id: 'vendor.spend',
-    label: 'Spend',
-    description: 'Spend summary for this vendor.',
-    application: 'Vendor Management',
-    capabilityBinding: { capabilityType: 'vendor-management', role: 'vendor' },
     defaultOptions: {},
     optionFields: [],
     optionsSchema: emptyOptionsSchema
@@ -565,6 +601,7 @@ export type EntityDrawerField = {
   groupId?: string;
   schemaId?: string;
   relationSchemaId?: string;
+  direction?: 'in' | 'out';
 };
 
 export type EntityDrawerSchema = {
@@ -577,6 +614,118 @@ export type EntityDrawerSchema = {
 const fieldIsVisible = (field: EntityDrawerField): boolean => field.archived !== true;
 const isRelationField = (field: EntityDrawerField): boolean =>
   field.type === 'reference' || field.type === 'containment' || field.type === 'typedRelation';
+
+const rollupFieldIsValid = (field: EntityDrawerField | undefined): boolean =>
+  field !== undefined &&
+  fieldIsVisible(field) &&
+  (field.type === 'number' || field.type === 'currency');
+
+const relationEndpointAllowsSchema = (
+  endpoint: RelationSchema['in'] | RelationSchema['out'],
+  schemaId: string
+): boolean => endpoint.schemaIds === 'any' || endpoint.schemaIds.includes(schemaId);
+
+const validateRollupTraversal = ({
+  item,
+  currentSchema,
+  sourceSchema,
+  schemas,
+  relationSchemas
+}: {
+  item: Extract<EntityDrawerItem, { kind: 'rollup' }>;
+  currentSchema: EntityDrawerSchema;
+  sourceSchema: EntityDrawerSchema | undefined;
+  schemas: EntityDrawerSchema[];
+  relationSchemas: EntityDrawerRelationSchema[];
+}): string | null => {
+  if (!item.traversal) {
+    if (item.sourceSchemaId !== undefined) {
+      return 'A roll-up source schema requires a traversal.';
+    }
+    if (!rollupFieldIsValid(currentSchema.fields.find(field => field.id === item.fieldId))) {
+      return null;
+    }
+    return null;
+  }
+  if (!sourceSchema || !item.sourceSchemaId) {
+    return 'A relation roll-up must identify an existing source schema.';
+  }
+
+  const step = item.traversal;
+  if (step.kind === 'relation') {
+    if (step.direction === 'forward') {
+      const field = currentSchema.fields.find(candidate => candidate.id === step.fieldId);
+      if (
+        !field ||
+        !fieldIsVisible(field) ||
+        !['reference', 'containment'].includes(field.type) ||
+        field.schemaId !== item.sourceSchemaId ||
+        (step.ownerSchemaId !== undefined && step.ownerSchemaId !== currentSchema.id)
+      ) {
+        return 'The roll-up relation does not point from the current schema to its source schema.';
+      }
+      return null;
+    }
+
+    const owner = schemas.find(
+      candidate => candidate.id === (step.ownerSchemaId ?? item.sourceSchemaId)
+    );
+    const field = owner?.fields.find(candidate => candidate.id === step.fieldId);
+    if (
+      !owner ||
+      owner.id !== item.sourceSchemaId ||
+      !field ||
+      !fieldIsVisible(field) ||
+      !['reference', 'containment'].includes(field.type) ||
+      field.schemaId !== currentSchema.id
+    ) {
+      return 'The backward roll-up relation must be owned by the source schema and target the current schema.';
+    }
+    return null;
+  }
+
+  if (step.kind === 'typedRelation') {
+    const field = currentSchema.fields.find(candidate => candidate.id === step.fieldId);
+    const relationSchema = relationSchemas.find(
+      candidate => candidate.id === step.relationSchemaId
+    );
+    const targetEndpoint = step.direction === 'in' ? relationSchema?.out : relationSchema?.in;
+    if (
+      !field ||
+      !fieldIsVisible(field) ||
+      field.type !== 'typedRelation' ||
+      field.relationSchemaId !== step.relationSchemaId ||
+      field.direction !== step.direction ||
+      !relationSchema ||
+      !targetEndpoint ||
+      !relationEndpointAllowsSchema(targetEndpoint, item.sourceSchemaId)
+    ) {
+      return 'The typed relation roll-up does not point to its source schema.';
+    }
+    return null;
+  }
+
+  const relationSchema = relationSchemas.find(candidate => candidate.id === step.relationSchemaId);
+  const currentAtIn = relationSchema
+    ? relationEndpointAllowsSchema(relationSchema.in, currentSchema.id)
+    : false;
+  const currentAtOut = relationSchema
+    ? relationEndpointAllowsSchema(relationSchema.out, currentSchema.id)
+    : false;
+  const sourceAllowed = (endpoint: RelationSchema['in'] | RelationSchema['out']) =>
+    relationEndpointAllowsSchema(endpoint, item.sourceSchemaId!);
+  const validDirection =
+    step.direction === 'both'
+      ? (currentAtIn || currentAtOut) &&
+        (sourceAllowed(relationSchema?.in ?? { schemaIds: [] }) ||
+          sourceAllowed(relationSchema?.out ?? { schemaIds: [] }))
+      : step.direction === 'in'
+        ? currentAtIn && sourceAllowed(relationSchema?.out ?? { schemaIds: [] })
+        : currentAtOut && sourceAllowed(relationSchema?.in ?? { schemaIds: [] });
+  return relationSchema && validDirection
+    ? null
+    : 'The unbound typed relation roll-up does not point to its source schema.';
+};
 
 /**
  * Converts the pre-built-in Strategy children slot while reading old stored configurations. This
@@ -1005,11 +1154,72 @@ const vendorManagementFieldIds = (
     : null;
 };
 
+const vendorManagementSpendRollupItems = (
+  vendorSchema: EntityDrawerSchema,
+  schemas: EntityDrawerSchema[],
+  capabilityConfigurations: readonly CapabilityConfigurationLike[]
+): EntityDrawerItem[] => {
+  const configuration = capabilityConfigurations.find(
+    candidate => candidate.type === 'vendor-management'
+  );
+  const vendorBinding = configuration?.bindings.vendor;
+  const contractBinding = configuration?.bindings.contract;
+  if (
+    vendorBinding?.target.kind !== 'entity_schema' ||
+    vendorBinding.target.id !== vendorSchema.id ||
+    contractBinding?.target.kind !== 'entity_schema'
+  ) {
+    return [];
+  }
+
+  const contractSchema = schemas.find(schema => schema.id === contractBinding.target.id);
+  const vendorField = contractSchema?.fields.find(field => field.id === 'vendor');
+  const annualCostField = contractSchema?.fields.find(field => field.id === 'annual_cost');
+  if (
+    !contractSchema ||
+    !vendorField ||
+    !isRelationField(vendorField) ||
+    annualCostField === undefined ||
+    !fieldIsVisible(annualCostField) ||
+    !['number', 'currency'].includes(annualCostField.type)
+  ) {
+    return [];
+  }
+
+  const traversal = {
+    kind: 'relation' as const,
+    fieldId: vendorField.id,
+    direction: 'backward' as const,
+    ownerSchemaId: contractSchema.id
+  };
+  return [
+    {
+      kind: 'rollup' as const,
+      sourceSchemaId: contractSchema.id,
+      fieldId: annualCostField.id,
+      traversal,
+      aggregation: 'sum' as const,
+      format: 'currency' as const,
+      label: 'vmSpend'
+    },
+    {
+      kind: 'rollup' as const,
+      sourceSchemaId: contractSchema.id,
+      fieldId: annualCostField.id,
+      traversal,
+      aggregation: 'count' as const,
+      format: 'number' as const,
+      label: 'Contracts'
+    }
+  ];
+};
+
 const buildVendorManagementDefaultProfile = (
   providerItems: EntityDrawerItem[],
   fieldIds: VendorManagementFieldIds,
   contractsQueryItem: Extract<EntityDrawerItem, { kind: 'query' }> | null,
-  applicationsSuppliedQueryItem: Extract<EntityDrawerItem, { kind: 'query' }> | null
+  applicationsSuppliedQueryItem: Extract<EntityDrawerItem, { kind: 'query' }> | null,
+  spendRollupItems: EntityDrawerItem[]
 ): EntityDrawerProfile => {
   const item = (fieldId: string): Extract<EntityDrawerItem, { kind: 'field' }> => ({
     kind: 'field',
@@ -1066,7 +1276,10 @@ const buildVendorManagementDefaultProfile = (
         item(fieldIds.relationshipOwner),
         item(fieldIds.costCentre)
       ]),
-      section('spend', 'Spend', [provider('vendor.spend', 'Spend', false)], true),
+      {
+        ...section('spend', 'Spend', spendRollupItems, true),
+        layout: 'stat-grid' as const
+      },
       section('contracts', 'Contracts', [contractsQueryItem], true),
       section(
         'applications-supplied',
@@ -1437,6 +1650,11 @@ export const buildDefaultEntityDrawerConfiguration = (
         schemas,
         capabilityConfigurations
       );
+      const spendRollupItems = vendorManagementSpendRollupItems(
+        schema,
+        schemas,
+        capabilityConfigurations
+      );
       return [
         schema.id,
         glossaryFieldIds
@@ -1450,7 +1668,8 @@ export const buildDefaultEntityDrawerConfiguration = (
                     providerItems,
                     vendorFieldIds,
                     contractsQueryItem,
-                    applicationsSuppliedQueryItem
+                    applicationsSuppliedQueryItem,
+                    spendRollupItems
                   )
                 : contractFieldIds
                   ? buildVendorManagementContractDefaultProfile(contractFieldIds)
@@ -1464,6 +1683,7 @@ const validateItem = (
   item: EntityDrawerItem,
   schema: EntityDrawerSchema,
   schemas: EntityDrawerSchema[],
+  relationSchemas: EntityDrawerRelationSchema[],
   schemaId: string,
   sectionId: string,
   diagnostics: EntityDrawerDiagnostic[]
@@ -1519,6 +1739,48 @@ const validateItem = (
     return { ...item, options: normalizedOptions };
   }
   if (item.kind === 'rollup' || item.kind === 'rollup-leaf-count') {
+    if (item.kind === 'rollup' && item.sourceSchemaId && !item.traversal) {
+      diagnostics.push({
+        code: 'invalid_rollup_traversal',
+        schemaId,
+        sectionId,
+        itemId: item.fieldId,
+        message: 'A roll-up source schema requires a traversal.'
+      });
+      return null;
+    }
+    if (item.kind === 'rollup' && item.traversal) {
+      const sourceSchema = schemas.find(candidate => candidate.id === item.sourceSchemaId);
+      const traversalError = validateRollupTraversal({
+        item,
+        currentSchema: schema,
+        sourceSchema,
+        schemas,
+        relationSchemas
+      });
+      const sourceField = sourceSchema?.fields.find(field => field.id === item.fieldId);
+      if (traversalError) {
+        diagnostics.push({
+          code: 'invalid_rollup_traversal',
+          schemaId,
+          sectionId,
+          itemId: item.fieldId,
+          message: traversalError
+        });
+        return null;
+      }
+      if (!rollupFieldIsValid(sourceField)) {
+        diagnostics.push({
+          code: 'missing_or_archived_field',
+          schemaId,
+          sectionId,
+          itemId: `${item.sourceSchemaId}.${item.fieldId}`,
+          message: `Roll-up source field '${item.sourceSchemaId}.${item.fieldId}' is missing, archived, or not numeric.`
+        });
+        return null;
+      }
+      return item;
+    }
     const supportsSubtreeRollup = schema.fields.some(
       candidate => candidate.id === 'parent' && candidate.type === 'containment'
     );
@@ -1587,7 +1849,8 @@ const validateItem = (
 export const resolveEntityDrawerConfiguration = (
   raw: unknown,
   schemas: EntityDrawerSchema[],
-  capabilityConfigurations: readonly CapabilityConfigurationLike[] = []
+  capabilityConfigurations: readonly CapabilityConfigurationLike[] = [],
+  relationSchemas: EntityDrawerRelationSchema[] = []
 ): { effective: EntityDrawerConfiguration; diagnostics: EntityDrawerDiagnostic[] } => {
   const defaults = buildFallbackEntityDrawerConfiguration(schemas);
   const supportedSlotSchemaIds = getEntityDrawerSlotSchemaIds(schemas, capabilityConfigurations);
@@ -1624,7 +1887,15 @@ export const resolveEntityDrawerConfiguration = (
     const sections = profile.sections.map(section => ({
       ...section,
       items: section.items.flatMap(item => {
-        const resolved = validateItem(item, schema, schemas, schemaId, section.id, diagnostics);
+        const resolved = validateItem(
+          item,
+          schema,
+          schemas,
+          relationSchemas,
+          schemaId,
+          section.id,
+          diagnostics
+        );
         if (!resolved) return [];
         if (item.kind === 'slot' && !supportedSlotSchemaIds.get(item.slotId)?.includes(schemaId)) {
           diagnostics.push({

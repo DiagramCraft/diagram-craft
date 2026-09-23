@@ -326,14 +326,21 @@ export const importEntityDrawerConfiguration = async (
   );
   if (Object.keys(profilesToAdd).length === 0) return { profiles: 0, warnings };
 
-  const [schemas, capabilityConfigurations] = await Promise.all([
+  const [schemas, relationSchemas, capabilityConfigurations] = await Promise.all([
     db.catalog.listSchemas(workspace),
+    db.relation.listRelationSchemas(workspace),
     db.workspace.listWorkspaceCapabilityConfigurations(workspace)
   ]);
+  const drawerRelationSchemas = relationSchemas.map(relationSchema => ({
+    id: relationSchema.id,
+    in: { schemaIds: relationSchema.in_schema_ids },
+    out: { schemaIds: relationSchema.out_schema_ids }
+  }));
   const resolved = resolveEntityDrawerConfiguration(
     { version: 1, profiles: profilesToAdd },
     schemas,
-    capabilityConfigurations
+    capabilityConfigurations,
+    drawerRelationSchemas
   );
   warnings.push(
     ...resolved.diagnostics.map(diagnostic => `Drawer profile diagnostic: ${diagnostic.message}`)

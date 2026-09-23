@@ -463,6 +463,56 @@ describe('entity drawer configuration', () => {
     });
   });
 
+  it('accepts one-hop relation roll-ups without a parent containment field', () => {
+    const vendorSchema = {
+      id: 'vendor',
+      name: 'Vendor',
+      fields: [{ id: 'name', name: 'Name', type: 'text' }]
+    };
+    const contractSchema = {
+      id: 'contract',
+      name: 'Contract',
+      fields: [
+        { id: 'vendor', name: 'Vendor', type: 'containment', schemaId: 'vendor' },
+        { id: 'annual_cost', name: 'Annual cost', type: 'currency' }
+      ]
+    };
+    const config = {
+      version: 1 as const,
+      profiles: {
+        vendor: {
+          sections: [
+            {
+              id: 'spend',
+              title: 'Spend',
+              items: [
+                {
+                  kind: 'rollup' as const,
+                  sourceSchemaId: 'contract',
+                  fieldId: 'annual_cost',
+                  traversal: {
+                    kind: 'relation' as const,
+                    fieldId: 'vendor',
+                    direction: 'backward' as const,
+                    ownerSchemaId: 'contract'
+                  },
+                  aggregation: 'count' as const,
+                  format: 'number' as const
+                }
+              ]
+            }
+          ]
+        }
+      }
+    };
+    const result = resolveEntityDrawerConfiguration(config, [vendorSchema, contractSchema], [], []);
+
+    expect(result.diagnostics).toEqual([]);
+    expect(result.effective.profiles.vendor?.sections[0]?.items).toEqual(
+      config.profiles.vendor.sections[0]?.items
+    );
+  });
+
   it('accepts the generic change-case slot for a non-Data-Entity profile', () => {
     const result = resolveEntityDrawerConfiguration(
       {
@@ -888,7 +938,34 @@ describe('entity drawer configuration', () => {
     );
     expect(profile.sections[0]?.layout).toBe('stat-grid');
     expect(profile.sections[2]?.items).toEqual([
-      { kind: 'slot', slotId: 'vendor.spend', label: 'Spend', showLabel: false }
+      {
+        kind: 'rollup',
+        sourceSchemaId: 'contract',
+        fieldId: 'annual_cost',
+        traversal: {
+          kind: 'relation',
+          fieldId: 'vendor',
+          direction: 'backward',
+          ownerSchemaId: 'contract'
+        },
+        aggregation: 'sum',
+        format: 'currency',
+        label: 'vmSpend'
+      },
+      {
+        kind: 'rollup',
+        sourceSchemaId: 'contract',
+        fieldId: 'annual_cost',
+        traversal: {
+          kind: 'relation',
+          fieldId: 'vendor',
+          direction: 'backward',
+          ownerSchemaId: 'contract'
+        },
+        aggregation: 'count',
+        format: 'number',
+        label: 'Contracts'
+      }
     ]);
     expect(profile.sections[3]?.items).toEqual([
       {

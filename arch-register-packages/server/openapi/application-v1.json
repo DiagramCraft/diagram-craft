@@ -74587,10 +74587,45 @@
                                                 "type": "string",
                                                 "minLength": 1
                                               },
+                                              "sourceSchemaId": {
+                                                "type": "string",
+                                                "minLength": 1
+                                              },
+                                              "traversal": {
+                                                "anyOf": [
+                                                  {
+                                                    "type": "object",
+                                                    "properties": {
+                                                      "kind": {},
+                                                      "fieldId": {},
+                                                      "direction": {},
+                                                      "ownerSchemaId": {}
+                                                    }
+                                                  },
+                                                  {
+                                                    "type": "object",
+                                                    "properties": {
+                                                      "kind": {},
+                                                      "fieldId": {},
+                                                      "relationSchemaId": {},
+                                                      "direction": {}
+                                                    }
+                                                  },
+                                                  {
+                                                    "type": "object",
+                                                    "properties": {
+                                                      "kind": {},
+                                                      "relationSchemaId": {},
+                                                      "direction": {}
+                                                    }
+                                                  }
+                                                ]
+                                              },
                                               "aggregation": {
                                                 "enum": [
                                                   "avg",
-                                                  "sum"
+                                                  "sum",
+                                                  "count"
                                                 ],
                                                 "type": "string"
                                               },
@@ -74768,7 +74803,8 @@
                               "unsupported_slot",
                               "invalid_slot_options",
                               "unsupported_slot_for_schema",
-                              "unsupported_rollup_schema"
+                              "unsupported_rollup_schema",
+                              "invalid_rollup_traversal"
                             ],
                             "type": "string"
                           },
@@ -75114,10 +75150,45 @@
                                           "type": "string",
                                           "minLength": 1
                                         },
+                                        "sourceSchemaId": {
+                                          "type": "string",
+                                          "minLength": 1
+                                        },
+                                        "traversal": {
+                                          "anyOf": [
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "kind": {},
+                                                "fieldId": {},
+                                                "direction": {},
+                                                "ownerSchemaId": {}
+                                              }
+                                            },
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "kind": {},
+                                                "fieldId": {},
+                                                "relationSchemaId": {},
+                                                "direction": {}
+                                              }
+                                            },
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "kind": {},
+                                                "relationSchemaId": {},
+                                                "direction": {}
+                                              }
+                                            }
+                                          ]
+                                        },
                                         "aggregation": {
                                           "enum": [
                                             "avg",
-                                            "sum"
+                                            "sum",
+                                            "count"
                                           ],
                                           "type": "string"
                                         },
@@ -75580,10 +75651,45 @@
                                                 "type": "string",
                                                 "minLength": 1
                                               },
+                                              "sourceSchemaId": {
+                                                "type": "string",
+                                                "minLength": 1
+                                              },
+                                              "traversal": {
+                                                "anyOf": [
+                                                  {
+                                                    "type": "object",
+                                                    "properties": {
+                                                      "kind": {},
+                                                      "fieldId": {},
+                                                      "direction": {},
+                                                      "ownerSchemaId": {}
+                                                    }
+                                                  },
+                                                  {
+                                                    "type": "object",
+                                                    "properties": {
+                                                      "kind": {},
+                                                      "fieldId": {},
+                                                      "relationSchemaId": {},
+                                                      "direction": {}
+                                                    }
+                                                  },
+                                                  {
+                                                    "type": "object",
+                                                    "properties": {
+                                                      "kind": {},
+                                                      "relationSchemaId": {},
+                                                      "direction": {}
+                                                    }
+                                                  }
+                                                ]
+                                              },
                                               "aggregation": {
                                                 "enum": [
                                                   "avg",
-                                                  "sum"
+                                                  "sum",
+                                                  "count"
                                                 ],
                                                 "type": "string"
                                               },
@@ -75761,7 +75867,8 @@
                               "unsupported_slot",
                               "invalid_slot_options",
                               "unsupported_slot_for_schema",
-                              "unsupported_rollup_schema"
+                              "unsupported_rollup_schema",
+                              "invalid_rollup_traversal"
                             ],
                             "type": "string"
                           },

@@ -14,10 +14,8 @@ import {
   type EntityDrawerProviderProps,
   type EntityDrawerRequiredField
 } from '../../../sections/entities/entityDrawer/EntityDrawerProviderRegistry';
-import { formatCurrencyValue } from '../../../utils/currencyFormat';
 import { resolveVendorManagementConfig } from '../vendorManagementQueries';
 import { useVendorAppsSupplied } from '../useVendorAppsSupplied';
-import { useVendorSpendRollup } from '../useVendorSpendRollup';
 import { computeVendorRisk, VENDOR_RISK_BAND_COLOR } from '../vendorRisk';
 import styles from './VendorDrawer.module.css';
 
@@ -75,48 +73,6 @@ const VendorRiskProvider = ({ context }: EntityDrawerProviderProps) => {
   );
 };
 
-const VendorSpendProvider = ({ context }: EntityDrawerProviderProps) => {
-  const { query: configurationQuery, config } = useVendorProviderConfiguration(context.workspaceId);
-  const spend = useVendorSpendRollup(
-    context.workspaceId,
-    config?.contractSchemaId ?? null,
-    context.entity._uid
-  );
-  const state =
-    configurationQuery.isLoading || spend.isLoading
-      ? 'loading'
-      : configurationQuery.isError || !config
-        ? 'unavailable'
-        : spend.error
-          ? 'unavailable'
-          : config.contractSchemaId
-            ? 'ready'
-            : 'empty';
-
-  return (
-    <EntityDrawerProviderStatus
-      state={state}
-      emptyMessage="No Contract entity schema is bound."
-      unavailableMessage="Vendor spend is unavailable."
-    >
-      <div className={styles.statGrid}>
-        <div className={styles.stat}>
-          <div className={styles.statLabel}>vmSpend</div>
-          <div className={styles.statValue}>
-            {spend.vmSpend != null
-              ? formatCurrencyValue({ amount: spend.vmSpend, currency: spend.currency })
-              : '—'}
-          </div>
-        </div>
-        <div className={styles.stat}>
-          <div className={styles.statLabel}>Contracts</div>
-          <div className={styles.statValue}>{spend.contractCount ?? '—'}</div>
-        </div>
-      </div>
-    </EntityDrawerProviderStatus>
-  );
-};
-
 const VendorTechnologyLifecycleProvider = ({ context }: EntityDrawerProviderProps) => {
   const { query: configurationQuery, config } = useVendorProviderConfiguration(context.workspaceId);
   const relationSchemaId = systemContractRelationSchemaId(
@@ -170,11 +126,6 @@ export const vendorEntityDrawerProviderDefinitions = [
     slotId: 'vendor.risk',
     requiredFields: VENDOR_REQUIRED_FIELDS,
     Component: VendorRiskProvider
-  },
-  {
-    slotId: 'vendor.spend',
-    requiredFields: VENDOR_REQUIRED_FIELDS,
-    Component: VendorSpendProvider
   },
   {
     slotId: 'vendor.technology-lifecycle',

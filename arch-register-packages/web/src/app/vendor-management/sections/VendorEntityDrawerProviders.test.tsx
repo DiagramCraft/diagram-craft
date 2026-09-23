@@ -17,7 +17,6 @@ const mocks = vi.hoisted(() => ({
       }
     }
   ],
-  spend: { vmSpend: null, currency: null, contractCount: null, isLoading: false, error: null },
   apps: { items: [], isLoading: false, error: null },
   lifecycleStates: []
 }));
@@ -32,10 +31,6 @@ vi.mock('../../../queries/workspaceConfig', () => ({
 
 vi.mock('../../../hooks/useWorkspaceConfig', () => ({
   useLifecycleStates: () => ({ data: mocks.lifecycleStates })
-}));
-
-vi.mock('../useVendorSpendRollup', () => ({
-  useVendorSpendRollup: () => mocks.spend
 }));
 
 vi.mock('../useVendorAppsSupplied', () => ({
@@ -113,6 +108,10 @@ describe('Vendor Management entity drawer providers', () => {
 
   it('does not register applications supplied as a specialized provider', () => {
     expect(provider('vendor.applications-supplied')).toBeUndefined();
+  });
+
+  it('does not register spend as a specialized provider', () => {
+    expect(provider('vendor.spend')).toBeUndefined();
   });
 
   it('preserves the lifecycle empty state', () => {
