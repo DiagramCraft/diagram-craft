@@ -11,7 +11,7 @@ import { workspaceCapabilityConfigurationsQuery } from '../../../queries/workspa
 import { useSchemas } from '../../../hooks/useSchemas';
 import { formatDate } from '../../../utils/dateFormat';
 import { resolveVendorManagementConfig } from '../vendorManagementQueries';
-import { computeVendorRisk, VENDOR_RISK_BAND_COLOR, type VendorRiskBand } from '../vendorRisk';
+import { vendorRiskBandFor, VENDOR_RISK_BAND_COLOR, type VendorRiskBand } from '../vendorRisk';
 import {
   useVendorTechnologyExposure,
   groupVendorTechnologyExposure
@@ -30,8 +30,8 @@ const CONCENTRATION_ALERT_THRESHOLD = 4;
  * end-of-life (EOL) exposure view cross-referencing linked Systems' Technology Releases — the
  * three views scoped by #3263. Layout, stats, and both tables mirror the Claude Design
  * reference's `vendor-views.jsx` (`VMRisk`) closely: four header stats, a two-column
- * matrix-plus-register row, and a full-width EOL table below it. Reuses the composite `vmRisk`/
- * `vmRiskBand` model (`vendorRisk.ts`) already shown in the Vendors table and vendor drawer.
+ * matrix-plus-register row, and a full-width EOL table below it. Reuses the derived Vendor
+ * `risk` rating and its presentation band already shown in the Vendors table and vendor drawer.
  *
  * The matrix, risk register, and EOL table are all filtered by the sidebar's Band and Technology
  * EOL facets (`RiskSearchParams.band`/`technology`, combined with AND) — selecting a facet narrows
@@ -74,20 +74,9 @@ export const VendorRiskScreen = () => {
   const allVendors = vendors.data?.items ?? [];
 
   const riskByUid = useMemo(() => {
-    const map = new Map<string, ReturnType<typeof computeVendorRisk>>();
+    const map = new Map<string, number | null>();
     for (const entity of allVendors) {
-      map.set(
-        entity._uid,
-        computeVendorRisk({
-          security_risk: typeof entity.security_risk === 'number' ? entity.security_risk : null,
-          concentration_risk:
-            typeof entity.concentration_risk === 'number' ? entity.concentration_risk : null,
-          financial_risk: typeof entity.financial_risk === 'number' ? entity.financial_risk : null,
-          compliance_risk:
-            typeof entity.compliance_risk === 'number' ? entity.compliance_risk : null,
-          criticality: typeof entity.criticality === 'number' ? entity.criticality : null
-        })
-      );
+      map.set(entity._uid, typeof entity.risk === 'number' ? entity.risk : null);
     }
     return map;
   }, [allVendors]);
@@ -126,7 +115,7 @@ export const VendorRiskScreen = () => {
 
   const vendorInScope = useCallback(
     (entity: EntityRecord): boolean => {
-      if (bandFilter && riskByUid.get(entity._uid)?.vmRiskBand !== bandFilter) return false;
+      if (bandFilter && vendorRiskBandFor(riskByUid.get(entity._uid)) !== bandFilter) return false;
       if (technologyFilterVendorIds && !technologyFilterVendorIds.has(entity._uid)) return false;
       return true;
     },
@@ -138,9 +127,10 @@ export const VendorRiskScreen = () => {
     for (const entity of allVendors) {
       if (!vendorInScope(entity)) continue;
       const risk = riskByUid.get(entity._uid);
+      const riskBand = vendorRiskBandFor(risk);
       const criticality = typeof entity.criticality === 'number' ? entity.criticality : null;
-      if (criticality == null || !risk?.vmRiskBand) continue;
-      const key = `${criticality}:${risk.vmRiskBand}`;
+      if (criticality == null || !riskBand) continue;
+      const key = `${criticality}:${riskBand}`;
       const list = map.get(key) ?? [];
       list.push({ id: entity._publicId, name: entity._name });
       map.set(key, list);
@@ -152,9 +142,7 @@ export const VendorRiskScreen = () => {
     () =>
       allVendors
         .filter(vendorInScope)
-        .sort(
-          (a, b) => (riskByUid.get(b._uid)?.vmRisk ?? 0) - (riskByUid.get(a._uid)?.vmRisk ?? 0)
-        ),
+        .sort((a, b) => (riskByUid.get(b._uid) ?? 0) - (riskByUid.get(a._uid) ?? 0)),
     [allVendors, vendorInScope, riskByUid]
   );
 
@@ -177,7 +165,7 @@ export const VendorRiskScreen = () => {
   }, [eolGroupsAll]);
 
   const highRiskCount = allVendors.filter(
-    entity => riskByUid.get(entity._uid)?.vmRiskBand === 'high'
+    entity => vendorRiskBandFor(riskByUid.get(entity._uid)) === 'high'
   ).length;
   const highConcentrationCount = allVendors.filter(
     entity =>
@@ -293,6 +281,7 @@ export const VendorRiskScreen = () => {
               ) : (
                 registerRows.map(entity => {
                   const risk = riskByUid.get(entity._uid);
+                  const riskBand = vendorRiskBandFor(risk);
                   return (
                     <Table.Row key={entity._uid} onClick={() => openVendor(entity._publicId)}>
                       <Table.NameCell title={entity._name} />
@@ -311,9 +300,9 @@ export const VendorRiskScreen = () => {
                         {typeof entity.compliance_risk === 'number' ? entity.compliance_risk : '—'}
                       </Table.Cell>
                       <Table.Cell>
-                        {risk?.vmRisk != null ? (
-                          <Chip dot={VENDOR_RISK_BAND_COLOR[risk.vmRiskBand!]} tone="ghost">
-                            {risk.vmRiskBand} · {risk.vmRisk.toFixed(1)}
+                        {risk != null && riskBand != null ? (
+                          <Chip dot={VENDOR_RISK_BAND_COLOR[riskBand]} tone="ghost">
+                            {riskBand} · {risk.toFixed(1)}
                           </Chip>
                         ) : (
                           <span className="dim">—</span>

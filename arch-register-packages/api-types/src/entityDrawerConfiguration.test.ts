@@ -879,7 +879,8 @@ describe('entity drawer configuration', () => {
         { id: 'concentration_risk', name: 'Concentration Risk', type: 'number' },
         { id: 'financial_risk', name: 'Financial Risk', type: 'number' },
         { id: 'compliance_risk', name: 'Compliance Risk', type: 'number' },
-        { id: 'criticality', name: 'Criticality', type: 'number' }
+        { id: 'criticality', name: 'Criticality', type: 'number' },
+        { id: 'risk', name: 'Risk', type: 'derived', resultType: 'rating' }
       ]
     };
     const contractSchema = {
@@ -925,7 +926,8 @@ describe('entity drawer configuration', () => {
     expect(profile.sections[0]?.items).toEqual(
       expect.arrayContaining([
         { kind: 'field', fieldId: 'security_risk', presentation: 'mini-panel' },
-        { kind: 'field', fieldId: 'criticality', presentation: 'mini-panel' }
+        { kind: 'field', fieldId: 'criticality', presentation: 'mini-panel' },
+        { kind: 'field', fieldId: 'risk', presentation: 'mini-panel' }
       ])
     );
     expect(profile.sections[0]?.layout).toBe('stat-grid');

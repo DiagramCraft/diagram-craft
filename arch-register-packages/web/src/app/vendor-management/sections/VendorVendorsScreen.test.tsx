@@ -87,7 +87,8 @@ describe('VendorVendorsScreen', () => {
           concentration_risk: 3,
           financial_risk: 2,
           compliance_risk: 3,
-          criticality: 4
+          criticality: 4,
+          risk: 5
         },
         {
           _uid: 'vnd-2',
@@ -101,7 +102,8 @@ describe('VendorVendorsScreen', () => {
           concentration_risk: null,
           financial_risk: null,
           compliance_risk: null,
-          criticality: null
+          criticality: null,
+          risk: null
         }
       ],
       total: 2
@@ -199,8 +201,9 @@ describe('VendorVendorsScreen', () => {
     });
 
     const rows = [...container.querySelectorAll('tbody tr')];
-    // Acme Corp has scored risk dimensions, Beta Supplies has none (`vmRisk` is null and sorts
+    // Acme Corp has a derived risk score, Beta Supplies has none (risk is null and sorts
     // last) — descending risk puts Acme Corp first regardless of toggle direction.
     expect(rows[0]?.textContent).toContain('Acme Corp');
+    expect(rows[0]?.textContent).toContain('high · 5.0');
   });
 });

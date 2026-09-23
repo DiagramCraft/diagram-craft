@@ -55,7 +55,7 @@ const bandFor = (daysUntilEol: number): TechnologyEolExposureBand =>
 /**
  * Bands a Technology Release's end-of-life exposure relative to `now`. Returns nulls when neither
  * `eol_date` nor `security_support_until` is set — an unscored release shouldn't imply a false
- * "OK", same reasoning `computeVendorRisk` applies to a partially-scored vendor.
+ * "OK", because a partially-scored vendor should not imply a false level of confidence.
  */
 export const computeTechnologyEolExposure = (
   input: TechnologyEolExposureInput,

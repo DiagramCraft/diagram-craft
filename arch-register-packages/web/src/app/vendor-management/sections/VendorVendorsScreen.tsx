@@ -16,7 +16,7 @@ import { resolveVendorManagementConfig } from '../vendorManagementQueries';
 import { VENDOR_RAIL_PATHS, VENDOR_VENDORS_ID } from '../vendorManagementSections';
 import { useVendorSpendRollups } from '../useVendorSpendRollups';
 import { useVendorNextRenewals } from '../useVendorNextRenewals';
-import { computeVendorRisk, VENDOR_RISK_BAND_COLOR } from '../vendorRisk';
+import { vendorRiskBandFor, VENDOR_RISK_BAND_COLOR } from '../vendorRisk';
 import { vendorFieldValue } from '../vendorFieldDisplay';
 import type { VendorsSearchParams } from '../../../routes/searchParams';
 import { useEntityDrawer } from '../../../sections/entities/entityDrawer/useEntityDrawer';
@@ -88,20 +88,9 @@ export const VendorVendorsScreen = () => {
   );
 
   const riskByUid = useMemo(() => {
-    const map = new Map<string, ReturnType<typeof computeVendorRisk>>();
+    const map = new Map<string, number | null>();
     for (const entity of filtered) {
-      map.set(
-        entity._uid,
-        computeVendorRisk({
-          security_risk: typeof entity.security_risk === 'number' ? entity.security_risk : null,
-          concentration_risk:
-            typeof entity.concentration_risk === 'number' ? entity.concentration_risk : null,
-          financial_risk: typeof entity.financial_risk === 'number' ? entity.financial_risk : null,
-          compliance_risk:
-            typeof entity.compliance_risk === 'number' ? entity.compliance_risk : null,
-          criticality: typeof entity.criticality === 'number' ? entity.criticality : null
-        })
-      );
+      map.set(entity._uid, typeof entity.risk === 'number' ? entity.risk : null);
     }
     return map;
   }, [filtered]);
@@ -113,11 +102,7 @@ export const VendorVendorsScreen = () => {
         spend.byId.get(a._uid)?.vmSpend ?? null,
         spend.byId.get(b._uid)?.vmSpend ?? null
       ),
-    risk: (a, b) =>
-      -compareNullable(
-        riskByUid.get(a._uid)?.vmRisk ?? null,
-        riskByUid.get(b._uid)?.vmRisk ?? null
-      ),
+    risk: (a, b) => -compareNullable(riskByUid.get(a._uid) ?? null, riskByUid.get(b._uid) ?? null),
     renewal: (a, b) =>
       compareNullable(renewals.byId.get(a._uid) ?? null, renewals.byId.get(b._uid) ?? null)
   };
@@ -203,6 +188,7 @@ export const VendorVendorsScreen = () => {
             sorted.map(entity => {
               const entitySpend = spend.byId.get(entity._uid);
               const risk = riskByUid.get(entity._uid);
+              const riskBand = vendorRiskBandFor(risk);
               const renewal = renewals.byId.get(entity._uid);
               return (
                 <Table.Row key={entity._uid} onClick={() => openEntityDrawer(entity._publicId)}>
@@ -221,9 +207,9 @@ export const VendorVendorsScreen = () => {
                       : '—'}
                   </Table.Cell>
                   <Table.Cell>
-                    {risk?.vmRisk != null ? (
-                      <Chip dot={VENDOR_RISK_BAND_COLOR[risk.vmRiskBand!]} tone="ghost">
-                        {risk.vmRiskBand} · {risk.vmRisk.toFixed(1)}
+                    {risk != null && riskBand != null ? (
+                      <Chip dot={VENDOR_RISK_BAND_COLOR[riskBand]} tone="ghost">
+                        {riskBand} · {risk.toFixed(1)}
                       </Chip>
                     ) : (
                       <span className="dim">—</span>
