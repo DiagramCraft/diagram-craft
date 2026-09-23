@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { useNavigate } from '@tanstack/react-router';
+import { useNavigate, useRouter } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
+import { TbCheck, TbLink } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Chip } from '../../../components/Chip';
 import { Drawer } from '../../../components/Drawer';
@@ -404,6 +405,48 @@ const DrawerItem = ({
   );
 };
 
+/**
+ * Copies a `drawer=<entityId>` link to the current screen to the clipboard, preserving whatever
+ * other search params are already set. Opening/closing the drawer itself never touches the URL —
+ * this button is the deliberate, explicit way to get a shareable link when one is wanted.
+ */
+const CopyDrawerLinkButton = ({ entityId }: { entityId: string }) => {
+  const router = useRouter();
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (!copied) return;
+    const timeout = setTimeout(() => setCopied(false), 1500);
+    return () => clearTimeout(timeout);
+  }, [copied]);
+
+  const copyLink = async () => {
+    if (!navigator.clipboard) return;
+    const location = router.buildLocation({
+      search: (previous: Record<string, unknown>) => ({ ...previous, drawer: entityId })
+    } as Parameters<typeof router.buildLocation>[0]);
+    try {
+      await navigator.clipboard.writeText(`${window.location.origin}${location.href}`);
+      setCopied(true);
+    } catch {
+      // Clipboard permissions can be unavailable in embedded or non-secure contexts.
+      setCopied(false);
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      className={styles.copyLink}
+      onClick={() => void copyLink()}
+      aria-label={copied ? 'Link copied' : 'Copy link to this record'}
+      title={copied ? 'Link copied' : 'Copy link to this record'}
+    >
+      {copied ? <TbCheck size={14} /> : <TbLink size={14} />}
+    </button>
+  );
+};
+
 export const EntityDrawer = ({
   workspaceSlug,
   entityId,
@@ -562,6 +605,7 @@ export const EntityDrawer = ({
         active={active}
         stacked={stacked}
         stackOffset={stackOffset}
+        extraActions={<CopyDrawerLinkButton entityId={entityId} />}
       >
         <div className={styles.empty}>{loadingMessage}</div>
       </Drawer>
@@ -575,6 +619,7 @@ export const EntityDrawer = ({
         active={active}
         stacked={stacked}
         stackOffset={stackOffset}
+        extraActions={<CopyDrawerLinkButton entityId={entityId} />}
       >
         <div className={styles.empty}>{unavailableMessage}</div>
       </Drawer>
@@ -587,6 +632,7 @@ export const EntityDrawer = ({
         active={active}
         stacked={stacked}
         stackOffset={stackOffset}
+        extraActions={<CopyDrawerLinkButton entityId={entityId} />}
         eyebrow={<span className="dim mono">{entity._publicId}</span>}
         title={entity._name}
         footer={
@@ -617,6 +663,7 @@ export const EntityDrawer = ({
       active={active}
       stacked={stacked}
       stackOffset={stackOffset}
+      extraActions={<CopyDrawerLinkButton entityId={entityId} />}
       eyebrow={<span className="dim mono">{entity._publicId}</span>}
       title={entity._name}
       badges={

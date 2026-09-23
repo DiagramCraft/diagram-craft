@@ -105,6 +105,12 @@
   gap: 8px;
 }
 
+.headButtons {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .close {
   display: inline-flex;
   align-items: center;

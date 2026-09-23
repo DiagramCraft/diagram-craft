@@ -27,10 +27,6 @@ vi.mock('@tanstack/react-router', () => ({
   useSearch: () => mocks.search
 }));
 
-vi.mock('../../../sections/entities/entityDrawer/EntityDrawer', () => ({
-  EntityDrawer: () => <div>Open record in Entities</div>
-}));
-
 vi.mock('@diagram-craft/app-components/Dialog', () => ({
   Dialog: ({ open, children }: { open: boolean; children: React.ReactNode }) =>
     open ? <div role="dialog">{children}</div> : null
@@ -242,7 +238,13 @@ describe('ApiIntegrationCatalogIntegrationsScreen', () => {
     });
     for (let i = 0; i < 10; i++) await flush();
 
-    expect(container.textContent).toContain('Open record in Entities');
+    // Opens the shared entity drawer through `useEntityDrawer()` — the drawer itself is mounted
+    // centrally by `WorkspaceLayout`, not rendered locally by this screen.
+    expect(mocks.navigate).toHaveBeenCalledWith(
+      expect.objectContaining({ search: expect.any(Function) })
+    );
+    const lastCall = mocks.navigate.mock.calls.at(-1)?.[0] as { search: (p: object) => object };
+    expect(lastCall.search({})).toEqual({ drawer: 'api-1' });
   });
 
   it('shows a provider/consumer gap count when a pair has no matching Data Flow relation', async () => {

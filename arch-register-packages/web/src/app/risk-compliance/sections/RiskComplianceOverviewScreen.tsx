@@ -31,7 +31,7 @@ import { riskFieldValue } from '../riskFieldDisplay';
 import { useRetentionAssignments } from '../useRetentionAssignments';
 import { asProjectPublicId, projectDetailRoute } from '../../../routes/publicObjectRoutes';
 import { RiskComplianceMatrix, type RiskComplianceMatrixRisk } from './RiskComplianceMatrix';
-import { EntityDrawer } from '../../../sections/entities/entityDrawer/EntityDrawer';
+import { useEntityDrawer } from '../../../sections/entities/entityDrawer/useEntityDrawer';
 import { AssessmentDuePanel, type AssessmentDuePanelProject } from './AssessmentDuePanel';
 import tileStyles from './RiskComplianceControlsScreen.module.css';
 import styles from './RiskComplianceOverviewScreen.module.css';
@@ -98,7 +98,7 @@ const ratioColor = (effective: number, total: number): string => {
 export const RiskComplianceOverviewScreen = () => {
   const { workspaceSlug } = useParams({ strict: false }) as { workspaceSlug: string };
   const navigate = useNavigate();
-  const [openRiskId, setOpenRiskId] = useState<string | null>(null);
+  const { openEntityDrawer } = useEntityDrawer();
   const [matrixAxis, setMatrixAxis] = useState<'inherent' | 'residual'>('residual');
 
   const configurations = useQuery(workspaceCapabilityConfigurationsQuery(workspaceSlug));
@@ -361,7 +361,7 @@ export const RiskComplianceOverviewScreen = () => {
           <RiskComplianceMatrix
             risks={matrixRisks}
             axis={matrixAxis}
-            onOpenRisk={id => setOpenRiskId(id)}
+            onOpenRisk={id => openEntityDrawer(id)}
           />
         </div>
         <div className={styles.panel}>
@@ -391,7 +391,7 @@ export const RiskComplianceOverviewScreen = () => {
                     key={entity._uid}
                     type="button"
                     className={styles.row}
-                    onClick={() => setOpenRiskId(entity._publicId)}
+                    onClick={() => openEntityDrawer(entity._publicId)}
                   >
                     <span className={styles.rowMain}>
                       <span className={styles.rowName}>{entity._name}</span>
@@ -491,7 +491,7 @@ export const RiskComplianceOverviewScreen = () => {
                   );
                   const entityCoverage = coverage.byId.get(entity._uid);
                   return (
-                    <Table.Row key={entity._uid} onClick={() => setOpenRiskId(entity._publicId)}>
+                    <Table.Row key={entity._uid} onClick={() => openEntityDrawer(entity._publicId)}>
                       <Table.NameCell title={entity._name} subtitle={entity._publicId} />
                       <Table.Cell className="dim">
                         {riskFieldValue(riskSchema, entity, 'category')}
@@ -573,14 +573,6 @@ export const RiskComplianceOverviewScreen = () => {
           </div>
         )}
       </div>
-
-      {openRiskId && (
-        <EntityDrawer
-          workspaceSlug={workspaceSlug}
-          entityId={openRiskId}
-          onClose={() => setOpenRiskId(null)}
-        />
-      )}
     </div>
   );
 };

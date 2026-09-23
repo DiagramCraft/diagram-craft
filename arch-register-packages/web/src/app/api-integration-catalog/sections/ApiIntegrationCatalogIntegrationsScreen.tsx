@@ -18,7 +18,7 @@ import { useDataFlowConfig } from '../useDataFlowConfig';
 import { relationFieldValue, RESTRICTED_CLASSIFICATIONS } from '../dataFlowRelationDisplay';
 import { computeApiPairCoverage, computeApiPairs, type EndpointRef } from '../apiPairCoverage';
 import { useApiEndpointRelations } from '../apiEndpointRelations';
-import { EntityDrawer } from '../../../sections/entities/entityDrawer/EntityDrawer';
+import { useEntityDrawer } from '../../../sections/entities/entityDrawer/useEntityDrawer';
 import { IntegrationDrawer } from './IntegrationDrawer';
 import { ApiPairsTable } from './ApiPairsTable';
 import { IC_INTEGRATIONS_ID, IC_RAIL_PATHS } from '../apiIntegrationCatalogSections';
@@ -155,7 +155,7 @@ export const ApiIntegrationCatalogIntegrationsScreen = () => {
   );
 
   const [openRelationId, setOpenRelationId] = useState<string | null>(null);
-  const [openApiId, setOpenApiId] = useState<string | null>(null);
+  const { drawerEntityId, openEntityDrawer } = useEntityDrawer();
   const openRelation = allRelations.find(relation => relation._uid === openRelationId) ?? null;
 
   const protocolsInUse = useMemo(
@@ -350,21 +350,14 @@ export const ApiIntegrationCatalogIntegrationsScreen = () => {
         </Table.Root>
       )}
 
-      {openApiId && apiConfig && (
-        <EntityDrawer
-          workspaceSlug={workspaceSlug}
-          entityId={openApiId}
-          onClose={() => setOpenApiId(null)}
-        />
-      )}
-      {!openApiId && openRelation && (
+      {!drawerEntityId && openRelation && (
         <IntegrationDrawer
           workspaceSlug={workspaceSlug}
           relation={openRelation}
           relationSchema={relationSchema}
           registeredApi={registeredApiFor(openRelation)}
           onClose={() => setOpenRelationId(null)}
-          onOpenApi={apiId => setOpenApiId(apiId)}
+          onOpenApi={apiId => openEntityDrawer(apiId)}
         />
       )}
     </div>

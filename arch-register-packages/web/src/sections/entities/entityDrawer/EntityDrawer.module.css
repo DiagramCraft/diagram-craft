@@ -5,6 +5,21 @@
   flex-wrap: wrap;
 }
 
+.copyLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 4px;
+}
+
+.copyLink:hover {
+  color: var(--text-primary);
+}
+
 .badgeWithLabel {
   display: inline-flex;
   align-items: center;
