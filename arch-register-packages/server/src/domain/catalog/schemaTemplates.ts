@@ -2507,8 +2507,8 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             collapsible: true,
             items: [
               {
-                kind: 'slot',
-                slotId: 'contract.systems-used',
+                kind: 'typed-relation-list',
+                fieldId: 'system',
                 label: 'Systems used',
                 showLabel: false
               }
@@ -3755,7 +3755,16 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             id: 'coverage',
             title: 'Coverage',
             collapsible: false,
-            items: [{ kind: 'slot', slotId: 'risk.coverage', label: 'Coverage', showLabel: false }]
+            items: [
+              { kind: 'slot', slotId: 'risk.coverage', label: 'Coverage', showLabel: false },
+              {
+                kind: 'typed-relation-list',
+                fieldId: 'mitigating_controls',
+                label: 'Mitigating controls',
+                showLabel: false,
+                attributes: [{ fieldId: 'coverage' }, { fieldId: 'effectiveness' }]
+              }
+            ]
           },
           {
             id: 'affected-entities',
@@ -3763,8 +3772,8 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             collapsible: false,
             items: [
               {
-                kind: 'slot',
-                slotId: 'risk.affected-entities',
+                kind: 'typed-relation-list',
+                fieldId: 'affected_entities',
                 label: 'Affected entities',
                 showLabel: false
               }
@@ -3793,8 +3802,17 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             title: 'Additional attributes',
             collapsible: true,
             items: [
-              { kind: 'slot', slotId: 'risk.mitigated-risks', label: 'Risks mitigated' },
-              { kind: 'slot', slotId: 'risk.protected-entities', label: 'Protected entities' }
+              {
+                kind: 'typed-relation-list',
+                fieldId: 'mitigated_risks',
+                label: 'Risks mitigated',
+                attributes: [{ fieldId: 'coverage' }, { fieldId: 'effectiveness' }]
+              },
+              {
+                kind: 'typed-relation-list',
+                fieldId: 'protected_entities',
+                label: 'Protected entities'
+              }
             ]
           }
         ]

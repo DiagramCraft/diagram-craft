@@ -1,3 +1,7 @@
+// Evaluated for migration onto the `typed-relation-list` drawer item (#3403/#3404) and
+// intentionally excluded: none of these slots directly filter a typedRelation field declared on
+// the Vendor schema itself — they're all indirect joins (e.g. Vendor -> Contract -> System) or
+// computed roll-ups, which the new item kind doesn't represent.
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Chip } from '../../../components/Chip';

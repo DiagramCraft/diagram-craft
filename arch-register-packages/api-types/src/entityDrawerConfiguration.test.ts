@@ -43,7 +43,7 @@ describe('entity drawer configuration', () => {
       expect.arrayContaining([
         { kind: 'field', fieldId: 'name' },
         { kind: 'relation', fieldId: 'depends_on' },
-        { kind: 'relation', fieldId: 'typed_relation', presentation: 'mini-panel' },
+        { kind: 'typed-relation-list', fieldId: 'typed_relation' },
         { kind: 'metadata', slot: 'publicId' }
       ])
     );
@@ -464,9 +464,7 @@ describe('entity drawer configuration', () => {
     expect(catalog.slots.find(slot => slot.id === 'risk.coverage')?.supportedSchemaIds).toEqual([
       'risk'
     ]);
-    expect(
-      catalog.slots.find(slot => slot.id === 'risk.affected-entities')?.supportedSchemaIds
-    ).toEqual(['risk']);
+    expect(catalog.slots.find(slot => slot.id === 'risk.affected-entities')).toBeUndefined();
   });
 
   it('derives the API specification profile and provider slot from the capability binding', () => {
@@ -752,7 +750,12 @@ describe('entity drawer configuration', () => {
       { kind: 'field', fieldId: 'setup_fee', presentation: 'mini-panel' }
     ]);
     expect(profile.sections[3]?.items).toEqual([
-      { kind: 'slot', slotId: 'contract.systems-used', label: 'Systems used', showLabel: false }
+      {
+        kind: 'typed-relation-list',
+        fieldId: 'system',
+        label: 'Systems used',
+        showLabel: false
+      }
     ]);
   });
 });

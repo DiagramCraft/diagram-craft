@@ -247,6 +247,34 @@ const resolveFieldItem = ({
   return { item: resolvedItem, field, label: item.label ?? field.name };
 };
 
+const resolveTypedRelationListItem = ({
+  item,
+  schema,
+  sectionId,
+  getFieldGroupAccess,
+  diagnostics
+}: {
+  item: Extract<EntityDrawerItem, { kind: 'typed-relation-list' }>;
+  schema: EntitySchema;
+  sectionId: string;
+  getFieldGroupAccess: EntityDrawerFieldGroupAccess;
+  diagnostics: EntityDrawerDiagnostic[];
+}): ResolvedEntityDrawerItem | null => {
+  const field = schema.fields.find(candidate => candidate.id === item.fieldId);
+  if (!field || field.archived || field.type !== 'typedRelation') {
+    diagnostics.push({
+      code: 'missing_relation_field',
+      schemaId: schema.id,
+      sectionId,
+      itemId: item.fieldId,
+      message: `Drawer typed-relation-list field '${item.fieldId}' is missing or is no longer a typed relation.`
+    });
+    return null;
+  }
+  if (fieldAccess(schema, field, getFieldGroupAccess) === 'none') return null;
+  return { item, field, label: item.label ?? field.name };
+};
+
 const resolveBadge = ({
   badge,
   entity,
@@ -356,6 +384,16 @@ export const resolveEntityDrawerRenderModel = ({
           item,
           schema,
           sectionId: section.id,
+          diagnostics
+        });
+        return resolved ? [resolved] : [];
+      }
+      if (item.kind === 'typed-relation-list') {
+        const resolved = resolveTypedRelationListItem({
+          item,
+          schema,
+          sectionId: section.id,
+          getFieldGroupAccess,
           diagnostics
         });
         return resolved ? [resolved] : [];

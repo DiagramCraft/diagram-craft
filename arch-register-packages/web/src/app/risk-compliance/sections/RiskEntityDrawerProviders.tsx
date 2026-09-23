@@ -1,7 +1,6 @@
 import { Chip } from '../../../components/Chip';
 import { useRiskCoverageRollup } from '../useRiskCoverageRollup';
 import {
-  EntityDrawerProviderStatus,
   type EntityDrawerProviderContext,
   type EntityDrawerProviderDefinition,
   type EntityDrawerProviderProps
@@ -14,14 +13,12 @@ const typedRelationField = (context: EntityDrawerProviderContext, fieldId: strin
   return field?.type === 'typedRelation' ? field : undefined;
 };
 
-const allTypedRelations = (context: EntityDrawerProviderContext) => [
-  ...context.typedRelations.outgoing,
-  ...context.typedRelations.incoming
-];
-
 const supportsRiskField = (fieldId: string) => (context: EntityDrawerProviderContext) =>
   typedRelationField(context, fieldId) !== undefined;
 
+// Renders only the coverage stat + band — the "Mitigating controls" row list moved to a
+// `typed-relation-list` drawer item (see `schemaTemplates.ts`'s `risk` profile), since
+// `mitigating_controls` is a plain typed-relation field and needs no bespoke rendering.
 const RiskCoverageProvider = ({ context }: EntityDrawerProviderProps) => {
   const field = typedRelationField(context, 'mitigating_controls');
   const coverage = useRiskCoverageRollup(
@@ -29,13 +26,6 @@ const RiskCoverageProvider = ({ context }: EntityDrawerProviderProps) => {
     context.entity._uid,
     field?.relationSchemaId ?? null
   );
-  const controlsState = coverage.isLoading
-    ? 'loading'
-    : coverage.error
-      ? 'unavailable'
-      : coverage.controls.length > 0
-        ? 'ready'
-        : 'empty';
 
   return (
     <>
@@ -54,56 +44,7 @@ const RiskCoverageProvider = ({ context }: EntityDrawerProviderProps) => {
           </Chip>
         </div>
       )}
-      <div className={styles.sectionLabel}>Mitigating controls</div>
-      <EntityDrawerProviderStatus
-        state={controlsState}
-        emptyMessage="No mitigating controls."
-        unavailableMessage="Mitigating controls are unavailable."
-      >
-        {coverage.controls.map(({ relation, controlId, controlName }) => (
-          <div className={styles.attributeRow} key={controlId}>
-            <span className={styles.attributeLabel}>{controlName}</span>
-            <span className={styles.attributeValue}>
-              {typeof relation.coverage === 'number' ? `${relation.coverage}%` : '—'} ·{' '}
-              {typeof relation.effectiveness === 'string' ? relation.effectiveness : '—'}
-            </span>
-          </div>
-        ))}
-      </EntityDrawerProviderStatus>
     </>
-  );
-};
-
-const AffectedEntitiesProvider = ({ context }: EntityDrawerProviderProps) => {
-  const field = typedRelationField(context, 'affected_entities');
-  const matches = field
-    ? allTypedRelations(context).filter(
-        relation =>
-          relation._schema.id === field.relationSchemaId && relation._in.id === context.entity._uid
-      )
-    : [];
-  const state = context.typedRelationsStatus.isLoading
-    ? 'loading'
-    : context.typedRelationsStatus.isError
-      ? 'unavailable'
-      : matches.length > 0
-        ? 'ready'
-        : 'empty';
-
-  return (
-    <EntityDrawerProviderStatus
-      state={state}
-      emptyMessage="No affected entities linked."
-      unavailableMessage="Affected entities are unavailable."
-    >
-      <div className={styles.tags}>
-        {matches.map(relation => (
-          <Chip key={relation._uid} tone="ghost">
-            {relation._out.name}
-          </Chip>
-        ))}
-      </div>
-    </EntityDrawerProviderStatus>
   );
 };
 
@@ -112,10 +53,5 @@ export const riskEntityDrawerProviderDefinitions = [
     slotId: 'risk.coverage',
     supports: supportsRiskField('mitigating_controls'),
     Component: RiskCoverageProvider
-  },
-  {
-    slotId: 'risk.affected-entities',
-    supports: supportsRiskField('affected_entities'),
-    Component: AffectedEntitiesProvider
   }
 ] satisfies readonly EntityDrawerProviderDefinition[];

@@ -73,6 +73,15 @@ export const entityDrawerItemSchema = z.discriminatedUnion('kind', [
     kind: z.literal('rollup-leaf-count'),
     label: labelOverrideSchema,
     showLabel: z.boolean().optional()
+  }),
+  z.object({
+    kind: z.literal('typed-relation-list'),
+    fieldId: z.string().min(1),
+    label: labelOverrideSchema,
+    showLabel: z.boolean().optional(),
+    attributes: z
+      .array(z.object({ fieldId: z.string().min(1), label: labelOverrideSchema }))
+      .optional()
   })
 ]);
 
@@ -339,36 +348,6 @@ export const ENTITY_DRAWER_SLOT_DEFINITIONS: EntityDrawerSlotDefinition[] = [
     optionsSchema: emptyOptionsSchema
   },
   {
-    id: 'risk.affected-entities',
-    label: 'Affected entities',
-    description: 'Entities affected by this risk.',
-    application: 'Risk & Compliance',
-    capabilityBinding: { capabilityType: 'risk-compliance', role: 'risk' },
-    defaultOptions: {},
-    optionFields: [],
-    optionsSchema: emptyOptionsSchema
-  },
-  {
-    id: 'risk.mitigated-risks',
-    label: 'Mitigated risks',
-    description: 'Risks mitigated by this control.',
-    application: 'Risk & Compliance',
-    capabilityBinding: { capabilityType: 'risk-compliance', role: 'control' },
-    defaultOptions: {},
-    optionFields: [],
-    optionsSchema: emptyOptionsSchema
-  },
-  {
-    id: 'risk.protected-entities',
-    label: 'Protected entities',
-    description: 'Entities protected by this control.',
-    application: 'Risk & Compliance',
-    capabilityBinding: { capabilityType: 'risk-compliance', role: 'control' },
-    defaultOptions: {},
-    optionFields: [],
-    optionsSchema: emptyOptionsSchema
-  },
-  {
     id: 'vendor.spend',
     label: 'Spend',
     description: 'Spend summary for this vendor.',
@@ -424,16 +403,6 @@ export const ENTITY_DRAWER_SLOT_DEFINITIONS: EntityDrawerSlotDefinition[] = [
     description: 'Capabilities funded by this vendor.',
     application: 'Vendor Management',
     capabilityBinding: { capabilityType: 'vendor-management', role: 'vendor' },
-    defaultOptions: {},
-    optionFields: [],
-    optionsSchema: emptyOptionsSchema
-  },
-  {
-    id: 'contract.systems-used',
-    label: 'Systems used',
-    description: 'Systems used by this contract.',
-    application: 'Vendor Management',
-    capabilityBinding: { capabilityType: 'vendor-management', role: 'contract' },
     defaultOptions: {},
     optionFields: [],
     optionsSchema: emptyOptionsSchema
@@ -1120,7 +1089,6 @@ const vendorManagementContractFieldIds = (
 };
 
 const buildVendorManagementContractDefaultProfile = (
-  providerItems: EntityDrawerItem[],
   fieldIds: VendorManagementContractFieldIds
 ): EntityDrawerProfile => {
   const field = (
@@ -1136,13 +1104,6 @@ const buildVendorManagementContractDefaultProfile = (
     fieldId,
     label
   });
-  const provider = (slotId: string, label: string, showLabel = true): EntityDrawerItem | null => {
-    const slot = providerItems.find(
-      (candidate): candidate is Extract<EntityDrawerItem, { kind: 'slot' }> =>
-        candidate.kind === 'slot' && candidate.slotId === slotId
-    );
-    return slot ? { ...slot, label, ...(showLabel ? {} : { showLabel: false }) } : null;
-  };
   const section = (
     id: string,
     title: string,
@@ -1179,7 +1140,14 @@ const buildVendorManagementContractDefaultProfile = (
       section(
         'systems-used',
         'Systems used',
-        [provider('contract.systems-used', 'Systems used', false)],
+        [
+          {
+            kind: 'typed-relation-list',
+            fieldId: fieldIds.system,
+            label: 'Systems used',
+            showLabel: false
+          }
+        ],
         true
       )
     ].filter(section => section.items.length > 0)
@@ -1202,9 +1170,9 @@ export const buildDefaultEntityDrawerProfile = (
   const ungrouped = fields
     .filter(field => !field.groupId && !isRelationField(field))
     .map(field => fieldItem(field));
-  const typedRelationItems = fields
+  const typedRelationItems: EntityDrawerItem[] = fields
     .filter(field => field.type === 'typedRelation')
-    .map(field => fieldItem(field, 'mini-panel'));
+    .map(field => ({ kind: 'typed-relation-list', fieldId: field.id }));
   const relationItems = fields
     .filter(field => isRelationField(field) && field.type !== 'typedRelation')
     .map(field => fieldItem(field));
@@ -1332,7 +1300,7 @@ export const buildDefaultEntityDrawerConfiguration = (
               : vendorFieldIds
                 ? buildVendorManagementDefaultProfile(providerItems, vendorFieldIds)
                 : contractFieldIds
-                  ? buildVendorManagementContractDefaultProfile(providerItems, contractFieldIds)
+                  ? buildVendorManagementContractDefaultProfile(contractFieldIds)
                   : buildDefaultEntityDrawerProfile(schema, providerItems)
       ];
     })
@@ -1418,6 +1386,20 @@ const validateItem = (
         sectionId,
         itemId: item.fieldId,
         message: `Roll-up field '${item.fieldId}' is missing, archived, or not numeric.`
+      });
+      return null;
+    }
+    return item;
+  }
+  if (item.kind === 'typed-relation-list') {
+    const field = schema.fields.find(candidate => candidate.id === item.fieldId);
+    if (!field || !fieldIsVisible(field) || field.type !== 'typedRelation') {
+      diagnostics.push({
+        code: 'missing_relation_field',
+        schemaId,
+        sectionId,
+        itemId: item.fieldId,
+        message: `Drawer typed-relation-list field '${item.fieldId}' is missing, archived, or not a typed relation.`
       });
       return null;
     }
