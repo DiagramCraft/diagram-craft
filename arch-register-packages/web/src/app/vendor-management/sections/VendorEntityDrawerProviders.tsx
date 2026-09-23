@@ -51,7 +51,7 @@ const systemContractRelationSchemaId = (
   return systemField?.type === 'typedRelation' ? systemField.relationSchemaId : null;
 };
 
-const VendorRiskProvider = ({ context, presentation }: EntityDrawerProviderProps) => {
+const VendorRiskProvider = ({ context }: EntityDrawerProviderProps) => {
   const risk = computeVendorRisk({
     security_risk:
       typeof context.entity.security_risk === 'number' ? context.entity.security_risk : null,
@@ -66,39 +66,15 @@ const VendorRiskProvider = ({ context, presentation }: EntityDrawerProviderProps
     criticality: typeof context.entity.criticality === 'number' ? context.entity.criticality : null
   });
 
-  const riskBand = risk.vmRiskBand ? (
-    <div className={styles.riskBandRow}>
-      <Chip dot={VENDOR_RISK_BAND_COLOR[risk.vmRiskBand]} tone="ghost">
-        {risk.vmRiskBand}
-      </Chip>
-    </div>
-  ) : null;
-
-  if (presentation === 'mini-panel') {
-    return (
-      <div className={styles.statValueWithBand}>
-        <div className={styles.statValue}>{risk.vmRisk != null ? risk.vmRisk.toFixed(1) : '—'}</div>
-        {risk.vmRiskBand && (
-          <Chip dot={VENDOR_RISK_BAND_COLOR[risk.vmRiskBand]} tone="ghost">
-            {risk.vmRiskBand}
-          </Chip>
-        )}
-      </div>
-    );
-  }
-
   return (
-    <>
-      <div className={styles.statGrid}>
-        <div className={styles.stat}>
-          <div className={styles.statLabel}>vmRisk</div>
-          <div className={styles.statValue}>
-            {risk.vmRisk != null ? risk.vmRisk.toFixed(1) : '—'}
-          </div>
-        </div>
-      </div>
-      {riskBand}
-    </>
+    <div className={styles.statValueWithBand}>
+      <div className={styles.statValue}>{risk.vmRisk != null ? risk.vmRisk.toFixed(1) : '—'}</div>
+      {risk.vmRiskBand && (
+        <Chip dot={VENDOR_RISK_BAND_COLOR[risk.vmRiskBand]} tone="ghost">
+          {risk.vmRiskBand}
+        </Chip>
+      )}
+    </div>
   );
 };
 

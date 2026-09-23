@@ -302,7 +302,6 @@ describe('entity drawer configuration', () => {
     expect(
       catalog.slots.find(slot => slot.id === 'strategy.realized-by')?.supportedSchemaIds
     ).toEqual(['service']);
-    expect(catalog.slots.map(slot => slot.id)).not.toContain('strategy.rollup');
     expect(catalog.slots.map(slot => slot.id)).not.toContain('vendor.spend');
     expect(catalog.slots.map(slot => slot.id)).not.toContain('vendor.capabilities-funded');
   });
@@ -398,67 +397,6 @@ describe('entity drawer configuration', () => {
     expect(normalizeLegacyEntityDrawerConfiguration(null)).toBeNull();
   });
 
-  it('normalizes the legacy Strategy rollup slot at read time', () => {
-    const strategySchema = {
-      id: 'business_capability',
-      name: 'Business Capability',
-      fields: [
-        { id: 'parent', name: 'Parent', type: 'containment', schemaId: 'business_capability' },
-        { id: 'maturity', name: 'Maturity', type: 'number' }
-      ]
-    };
-    const result = resolveEntityDrawerConfiguration(
-      {
-        version: 1,
-        profiles: {
-          business_capability: {
-            sections: [
-              {
-                id: 'rollup',
-                title: 'Roll-up',
-                items: [
-                  {
-                    kind: 'slot',
-                    slotId: 'strategy.rollup',
-                    options: {
-                      rollups: [{ fieldId: 'maturity', aggregation: 'avg', format: 'decimal1' }]
-                    }
-                  }
-                ]
-              }
-            ]
-          }
-        }
-      },
-      [strategySchema]
-    );
-
-    expect(result.effective.profiles.business_capability?.sections[0]?.items).toEqual([
-      { kind: 'rollup', fieldId: 'maturity', aggregation: 'avg', format: 'decimal1' },
-      { kind: 'rollup-leaf-count' }
-    ]);
-    expect(result.diagnostics).toEqual([]);
-
-    const dropped = resolveEntityDrawerConfiguration(
-      {
-        version: 1,
-        profiles: {
-          business_capability: {
-            sections: [
-              {
-                id: 'rollup',
-                title: 'Roll-up',
-                items: [{ kind: 'slot', slotId: 'strategy.rollup' }]
-              }
-            ]
-          }
-        }
-      },
-      [strategySchema]
-    );
-    expect(dropped.effective.profiles.business_capability?.sections[0]?.items).toEqual([]);
-  });
-
   it('remaps nested containment-child schema references', () => {
     const profiles = {
       parent: {
@@ -496,7 +434,7 @@ describe('entity drawer configuration', () => {
     });
   });
 
-  it('advertises Risk & Compliance provider slots for the configured Risk schema', () => {
+  it('does not advertise the removed Risk coverage provider slot', () => {
     const riskSchema = {
       id: 'risk',
       name: 'Risk',
@@ -513,16 +451,12 @@ describe('entity drawer configuration', () => {
     const result = resolveEntityDrawerConfiguration(null, [riskSchema], [configuration]);
     const items = result.effective.profiles.risk!.sections.flatMap(section => section.items);
     expect(items).not.toEqual(
-      expect.arrayContaining([
-        { kind: 'slot', slotId: 'risk.coverage' },
-        { kind: 'slot', slotId: 'risk.affected-entities' }
-      ])
+      expect.arrayContaining([{ kind: 'slot', slotId: 'risk.affected-entities' }])
     );
+    expect(items).not.toEqual(expect.arrayContaining([{ kind: 'slot', slotId: 'risk.coverage' }]));
 
     const catalog = buildEntityDrawerCatalog([riskSchema], [configuration]);
-    expect(catalog.slots.find(slot => slot.id === 'risk.coverage')?.supportedSchemaIds).toEqual([
-      'risk'
-    ]);
+    expect(catalog.slots.find(slot => slot.id === 'risk.coverage')).toBeUndefined();
     expect(catalog.slots.find(slot => slot.id === 'risk.affected-entities')).toBeUndefined();
   });
 
@@ -740,8 +674,7 @@ describe('entity drawer configuration', () => {
         {
           kind: 'slot',
           slotId: 'vendor.risk',
-          label: 'vmRisk',
-          presentation: 'mini-panel'
+          label: 'vmRisk'
         }
       ])
     );
@@ -752,6 +685,58 @@ describe('entity drawer configuration', () => {
     expect(profile.sections.at(-1)?.items).toEqual([
       { kind: 'placeholder', message: VENDOR_CAPABILITIES_FUNDED_PLACEHOLDER_MESSAGE }
     ]);
+  });
+
+  it('fixes the vendor risk slot to a mini-panel', () => {
+    const vendorSchema = {
+      id: 'vendor',
+      name: 'Vendor',
+      fields: [
+        { id: 'security_risk', name: 'Security Risk', type: 'number' },
+        { id: 'concentration_risk', name: 'Concentration Risk', type: 'number' },
+        { id: 'financial_risk', name: 'Financial Risk', type: 'number' },
+        { id: 'compliance_risk', name: 'Compliance Risk', type: 'number' },
+        { id: 'criticality', name: 'Criticality', type: 'number' }
+      ]
+    };
+    const configuration = {
+      type: 'vendor-management',
+      bindings: {
+        vendor: { target: { kind: 'entity_schema', id: 'vendor' } }
+      }
+    } as const;
+    const result = resolveEntityDrawerConfiguration(
+      {
+        version: 1,
+        profiles: {
+          vendor: {
+            header: { badges: [] },
+            sections: [
+              {
+                id: 'risk',
+                title: 'Risk',
+                items: [{ kind: 'slot', slotId: 'vendor.risk', presentation: 'row' }]
+              }
+            ]
+          }
+        }
+      },
+      [vendorSchema],
+      [configuration]
+    );
+
+    expect(result.effective.profiles.vendor?.sections[0]?.items).toEqual([
+      expect.objectContaining({
+        kind: 'slot',
+        slotId: 'vendor.risk',
+        presentation: 'mini-panel'
+      })
+    ]);
+    expect(
+      buildEntityDrawerCatalog([vendorSchema], [configuration]).slots.find(
+        slot => slot.id === 'vendor.risk'
+      )?.fixedPresentation
+    ).toBe('mini-panel');
   });
 
   it('derives the Contract profile with the legacy drawer order and Systems used slot', () => {

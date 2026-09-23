@@ -2,6 +2,7 @@ import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import {
   ENTITY_DRAWER_METADATA_SLOTS,
   ENTITY_DRAWER_SLOTS,
+  resolveEntityDrawerSlotItemPresentation,
   type EntityDrawerBadge,
   type EntityDrawerDiagnostic,
   type EntityDrawerMetadataSlot,
@@ -366,7 +367,13 @@ export const resolveEntityDrawerRenderModel = ({
           });
           return [];
         }
-        return [{ item, label: item.label ?? slotLabel(item.slotId), provider }];
+        return [
+          {
+            item: resolveEntityDrawerSlotItemPresentation(item),
+            label: item.label ?? slotLabel(item.slotId),
+            provider
+          }
+        ];
       }
       if (item.kind === 'children') {
         const resolved = resolveChildrenItem({

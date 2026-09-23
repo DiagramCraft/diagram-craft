@@ -46,7 +46,7 @@ export const Drawer = ({
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [requestClose]);
+  }, [requestClose, active]);
 
   useEffect(
     () => () => {

@@ -170,6 +170,7 @@ export const entityDrawerCatalogSchema = z.object({
       label: z.string(),
       description: z.string(),
       application: z.string(),
+      fixedPresentation: z.enum(['row', 'mini-panel']).optional(),
       supportedSchemaIds: z.array(z.string()),
       defaultOptions: entityDrawerSlotOptionsSchema,
       optionFields: z.array(
@@ -192,6 +193,7 @@ export type EntityDrawerSlotDefinition = {
   label: string;
   description: string;
   application: string;
+  fixedPresentation?: 'row' | 'mini-panel';
   capabilityBinding?: { capabilityType: string; role: string };
   defaultOptions: Record<string, unknown>;
   optionFields: Array<{ id: string; label: string; description: string }>;
@@ -345,16 +347,6 @@ export const ENTITY_DRAWER_SLOT_DEFINITIONS: EntityDrawerSlotDefinition[] = [
     optionsSchema: emptyOptionsSchema
   },
   {
-    id: 'risk.coverage',
-    label: 'Risk coverage',
-    description: 'Controls and coverage for this risk.',
-    application: 'Risk & Compliance',
-    capabilityBinding: { capabilityType: 'risk-compliance', role: 'risk' },
-    defaultOptions: {},
-    optionFields: [],
-    optionsSchema: emptyOptionsSchema
-  },
-  {
     id: 'vendor.spend',
     label: 'Spend',
     description: 'Spend summary for this vendor.',
@@ -369,6 +361,7 @@ export const ENTITY_DRAWER_SLOT_DEFINITIONS: EntityDrawerSlotDefinition[] = [
     label: 'Risk profile',
     description: 'Derived risk profile for this vendor.',
     application: 'Vendor Management',
+    fixedPresentation: 'mini-panel',
     capabilityBinding: { capabilityType: 'vendor-management', role: 'vendor' },
     defaultOptions: {},
     optionFields: [],
@@ -412,6 +405,7 @@ export const ENTITY_DRAWER_SLOTS: EntityDrawerCatalog['slots'] = ENTITY_DRAWER_S
     label: definition.label,
     description: definition.description,
     application: definition.application,
+    ...(definition.fixedPresentation ? { fixedPresentation: definition.fixedPresentation } : {}),
     supportedSchemaIds: [],
     defaultOptions: definition.defaultOptions,
     optionFields: definition.optionFields
@@ -518,37 +512,9 @@ const fieldIsVisible = (field: EntityDrawerField): boolean => field.archived !==
 const isRelationField = (field: EntityDrawerField): boolean =>
   field.type === 'reference' || field.type === 'containment' || field.type === 'typedRelation';
 
-/** Expands a legacy `{kind:'slot', slotId:'strategy.rollup'}` item into the generic `rollup` +
- *  `rollup-leaf-count` items it's replaced by, using whatever `options.rollups` happens to be
- *  persisted on it. Items with no (or unparseable) options are dropped rather than recovered —
- *  the slot never persisted the true config reliably (see `strategy.rollup`'s removal), so this is
- *  a best-effort compatibility pass, not a source of truth. */
-const expandLegacyStrategyRollupItem = (item: Record<string, unknown>): unknown[] => {
-  const options = item['options'];
-  const rollups =
-    options && typeof options === 'object' && 'rollups' in options && Array.isArray(options.rollups)
-      ? options.rollups
-      : [];
-  const rollupItems = rollups.flatMap(entry => {
-    if (!entry || typeof entry !== 'object' || typeof entry.fieldId !== 'string') return [];
-    return [
-      {
-        kind: 'rollup',
-        fieldId: entry.fieldId,
-        aggregation: entry.aggregation === 'sum' ? 'sum' : 'avg',
-        format: ['number', 'decimal1', 'currency', 'percent'].includes(entry.format as string)
-          ? entry.format
-          : 'decimal1'
-      }
-    ];
-  });
-  return rollupItems.length > 0 ? [...rollupItems, { kind: 'rollup-leaf-count' }] : [];
-};
-
 /**
- * Converts pre-built-in Strategy slots (`strategy.children`, `strategy.rollup`) while reading old
- * stored configurations. This intentionally happens before schema parsing so workspaces do not
- * need a data migration.
+ * Converts the pre-built-in Strategy children slot while reading old stored configurations. This
+ * intentionally happens before schema parsing so workspaces do not need a data migration.
  */
 export const normalizeLegacyEntityDrawerConfiguration = (raw: unknown): unknown => {
   if (!raw || typeof raw !== 'object' || !('profiles' in raw)) return raw;
@@ -598,10 +564,7 @@ export const normalizeLegacyEntityDrawerConfiguration = (raw: unknown): unknown 
                       }
                     ];
                   }
-                  if (item.slotId === 'strategy.rollup') {
-                    return expandLegacyStrategyRollupItem(item);
-                  }
-                  return [item];
+                  return [normalizeFixedPresentationSlotItem(item)];
                 })
               };
             })
@@ -610,6 +573,24 @@ export const normalizeLegacyEntityDrawerConfiguration = (raw: unknown): unknown 
       })
     )
   };
+};
+
+const fixedPresentationForSlot = (slotId: string): 'row' | 'mini-panel' | undefined =>
+  ENTITY_DRAWER_SLOT_DEFINITIONS.find(definition => definition.id === slotId)?.fixedPresentation;
+
+const normalizeFixedPresentationSlotItem = (
+  item: Extract<EntityDrawerItem, { kind: 'slot' }>
+): Extract<EntityDrawerItem, { kind: 'slot' }> => {
+  if (!fixedPresentationForSlot(item.slotId) || item.presentation === undefined) return item;
+  const { presentation: _presentation, ...withoutPresentation } = item;
+  return withoutPresentation;
+};
+
+export const resolveEntityDrawerSlotItemPresentation = (
+  item: Extract<EntityDrawerItem, { kind: 'slot' }>
+): Extract<EntityDrawerItem, { kind: 'slot' }> => {
+  const fixedPresentation = fixedPresentationForSlot(item.slotId);
+  return fixedPresentation ? { ...item, presentation: fixedPresentation } : item;
 };
 
 const fieldItem = (
@@ -964,12 +945,7 @@ const buildVendorManagementDefaultProfile = (
     kind: 'field',
     fieldId
   });
-  const provider = (
-    slotId: string,
-    label: string,
-    showLabel = true,
-    presentation?: 'row' | 'mini-panel'
-  ): EntityDrawerItem | null => {
+  const provider = (slotId: string, label: string, showLabel = true): EntityDrawerItem | null => {
     const slot = providerItems.find(
       (candidate): candidate is Extract<EntityDrawerItem, { kind: 'slot' }> =>
         candidate.kind === 'slot' && candidate.slotId === slotId
@@ -978,8 +954,7 @@ const buildVendorManagementDefaultProfile = (
       ? {
           ...slot,
           label,
-          ...(showLabel ? {} : { showLabel: false }),
-          ...(presentation ? { presentation } : {})
+          ...(showLabel ? {} : { showLabel: false })
         }
       : null;
   };
@@ -1010,7 +985,7 @@ const buildVendorManagementDefaultProfile = (
           { ...item(fieldIds.financialRisk), presentation: 'mini-panel' },
           { ...item(fieldIds.complianceRisk), presentation: 'mini-panel' },
           { ...item(fieldIds.criticality), presentation: 'mini-panel' },
-          provider('vendor.risk', 'vmRisk', true, 'mini-panel')
+          provider('vendor.risk', 'vmRisk')
         ]),
         layout: 'stat-grid' as const
       },
@@ -1487,7 +1462,9 @@ export const resolveEntityDrawerConfiguration = (
           });
           return [];
         }
-        return [resolved];
+        return [
+          resolved.kind === 'slot' ? resolveEntityDrawerSlotItemPresentation(resolved) : resolved
+        ];
       })
     }));
     const badges = profile.header.badges.filter(badge => {
@@ -1536,6 +1513,7 @@ export const buildEntityDrawerCatalog = (
       label: definition.label,
       description: definition.description,
       application: definition.application,
+      ...(definition.fixedPresentation ? { fixedPresentation: definition.fixedPresentation } : {}),
       supportedSchemaIds: supportedSlotSchemaIds.get(definition.id) ?? [],
       defaultOptions: definition.defaultOptions,
       optionFields: definition.optionFields

@@ -134,12 +134,4 @@ describe('strategy entity drawer providers', () => {
       )
     ).toBe(false);
   });
-
-  it('does not own the roll-up slot — it is a generic drawer item kind now', () => {
-    expect(
-      strategyEntityDrawerProviderDefinitions.some(
-        definition => definition.slotId === 'strategy.rollup'
-      )
-    ).toBe(false);
-  });
 });

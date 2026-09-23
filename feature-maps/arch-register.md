@@ -369,8 +369,8 @@
           Contracts), the vendor's Contracts, the Systems its contracts serve ("Applications supplied"), and a
           best-effort technology lifecycle view derived from those Systems' own lifecycle state. These sections
           can be reordered, relabeled, or have their section and provider titles hidden through the workspace
-          entity-drawer configuration; Capabilities funded is not yet available — no Contract-to-capability link
-          exists yet.
+          entity-drawer configuration; the composite risk summary remains a compact mini-panel. Capabilities funded
+          is not yet available — no Contract-to-capability link exists yet.
 
         - @id:ar.vendor-management.contracts The Contracts section offers a list view and a 12-month renewal
           calendar (its timeline view is still pending). The list is a register of Contract entities: free-text
@@ -451,14 +451,11 @@
           parameter; legacy `risk-compliance/risks/$riskId` links redirect there. The drawer shows likelihood/impact,
           the existing `inherent_risk_score` and
           `residual_risk_score` derived fields (the latter banded Low/Medium/High/Critical via the standard 5×5
-          heat-map thresholds), attributes, a multi-control coverage roll-up (`rcCoverage`/`rcBand`, combining every
-          mitigating Control's `coverage` % and `effectiveness` on its `risk-control` relation as independent,
-          overlapping layers of defense rather than a plain average), the list of mitigating Controls, and the
-          entities the risk affects (via `risk-affects`). The configurable Risk drawer preserves the
-          template-authored default profile for these metrics, attributes, category/status badges, and the
-          residual-risk band, while registered Risk & Compliance provider slots expose coverage and affected
-          entities; workspace administrators can configure supported fields, sections, order, labels, and slot
-          placement.
+          heat-map thresholds), attributes, the list of mitigating Controls with each relation's `coverage` % and
+          `effectiveness`, and the entities the risk affects (via `risk-affects`). The configurable Risk drawer
+          preserves the template-authored default profile for these metrics, attributes, category/status badges,
+          and the residual-risk band; workspace administrators can configure supported fields, sections, order,
+          labels, and item placement.
 
         - @id:ar.risk-compliance.controls The Controls section has a sortable library table (search; sort by name,
           risks mitigated, or last verified; columns for Name, Type, Effectiveness — a colour-outlined pill — Risks

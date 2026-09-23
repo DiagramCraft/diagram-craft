@@ -1,4 +1,3 @@
-import { riskEntityDrawerProviderDefinitions } from '../../../app/risk-compliance/sections/RiskEntityDrawerProviders';
 import { businessGlossaryEntityDrawerProviderDefinitions } from '../../../app/business-glossary/sections/GlossaryEntityDrawerProvider';
 import { strategyEntityDrawerProviderDefinitions } from '../../../app/strategy-model/sections/StrategyEntityDrawerProviders';
 import { vendorEntityDrawerProviderDefinitions } from '../../../app/vendor-management/sections/VendorEntityDrawerProviders';
@@ -11,7 +10,6 @@ import {
 
 const definitions: readonly EntityDrawerProviderDefinition[] = [
   ...businessGlossaryEntityDrawerProviderDefinitions,
-  ...riskEntityDrawerProviderDefinitions,
   ...strategyEntityDrawerProviderDefinitions,
   ...vendorEntityDrawerProviderDefinitions,
   ...dataStewardshipEntityDrawerProviderDefinitions,

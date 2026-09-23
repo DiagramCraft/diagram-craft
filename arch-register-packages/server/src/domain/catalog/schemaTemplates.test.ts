@@ -219,6 +219,23 @@ describe('instantiateTemplate', () => {
       expect.objectContaining({ id: 'lifecycle-review', name: 'Lifecycle & Review' }),
       expect.objectContaining({ id: 'reference-models', name: 'Reference Models' })
     ]);
+    expect(
+      definitions.entityDrawerProfiles[businessCapability!.id]?.sections.find(
+        section => section.id === 'strategy-assessment'
+      )?.items
+    ).toEqual([
+      { kind: 'rollup', fieldId: 'maturity', aggregation: 'avg', format: 'decimal1' },
+      { kind: 'rollup', fieldId: 'maturity_target', aggregation: 'avg', format: 'decimal1' },
+      { kind: 'rollup', fieldId: 'annual_investment', aggregation: 'sum', format: 'currency' },
+      { kind: 'rollup', fieldId: 'risk', aggregation: 'avg', format: 'decimal1' },
+      { kind: 'rollup-leaf-count' },
+      { kind: 'field', fieldId: 'capability_type' },
+      { kind: 'field', fieldId: 'value_stream' },
+      { kind: 'field', fieldId: 'maturity' },
+      { kind: 'field', fieldId: 'maturity_target' },
+      { kind: 'field', fieldId: 'strategic_importance' },
+      { kind: 'field', fieldId: 'investment_priority' }
+    ]);
     // Every field group is referenced by at least one field.
     for (const group of businessCapability?.groups ?? []) {
       expect(businessCapability?.fields.some(field => field.groupId === group.id)).toBe(true);
@@ -1042,7 +1059,6 @@ describe('instantiateTemplate', () => {
           title: 'Coverage',
           collapsible: false,
           items: [
-            { kind: 'slot', slotId: 'risk.coverage', label: 'Coverage', showLabel: false },
             {
               kind: 'typed-relation-list',
               fieldId: 'mitigating_controls',

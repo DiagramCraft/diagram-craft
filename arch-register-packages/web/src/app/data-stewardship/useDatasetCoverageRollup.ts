@@ -17,7 +17,7 @@ const EMPTY: DatasetCoverageRollup = {
 };
 
 /**
- * Singular coverage roll-up for the `DatasetDrawer`. Unlike `useRiskCoverageRollup.ts`, this needs
+ * Singular coverage roll-up for the `DatasetDrawer`. Unlike the Risk coverage roll-up, this needs
  * no relation traversal — every field `computeDatasetCoverage` needs (`_owner`, `steward`,
  * `classification`, `review_status`) already lives on the dataset's own entity record, so one
  * `useEntity` fetch is enough.

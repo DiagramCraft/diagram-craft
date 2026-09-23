@@ -2396,8 +2396,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
               {
                 kind: 'slot',
                 slotId: 'vendor.risk',
-                label: 'vmRisk',
-                presentation: 'mini-panel'
+                label: 'vmRisk'
               }
             ]
           },
@@ -3755,7 +3754,6 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             title: 'Coverage',
             collapsible: false,
             items: [
-              { kind: 'slot', slotId: 'risk.coverage', label: 'Coverage', showLabel: false },
               {
                 kind: 'typed-relation-list',
                 fieldId: 'mitigating_controls',
@@ -3949,7 +3947,21 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             title: 'Strategy assessment',
             collapsible: false,
             items: [
-              { kind: 'slot', slotId: 'strategy.rollup', label: 'Roll-up' },
+              { kind: 'rollup', fieldId: 'maturity', aggregation: 'avg', format: 'decimal1' },
+              {
+                kind: 'rollup',
+                fieldId: 'maturity_target',
+                aggregation: 'avg',
+                format: 'decimal1'
+              },
+              {
+                kind: 'rollup',
+                fieldId: 'annual_investment',
+                aggregation: 'sum',
+                format: 'currency'
+              },
+              { kind: 'rollup', fieldId: 'risk', aggregation: 'avg', format: 'decimal1' },
+              { kind: 'rollup-leaf-count' },
               { kind: 'field', fieldId: 'capability_type' },
               { kind: 'field', fieldId: 'value_stream' },
               { kind: 'field', fieldId: 'maturity' },

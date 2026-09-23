@@ -206,6 +206,35 @@ describe('resolveEntityDrawerRenderModel', () => {
     ]);
   });
 
+  it('forces the vendor risk slot to its fixed mini-panel presentation', () => {
+    const result = resolveEntityDrawerRenderModel({
+      entity,
+      schema,
+      profile: {
+        header: { badges: [] },
+        sections: [
+          {
+            id: 'risk',
+            title: 'Risk',
+            collapsible: false,
+            items: [{ kind: 'slot', slotId: 'vendor.risk', presentation: 'row' }]
+          }
+        ]
+      },
+      providerRegistry: createEntityDrawerProviderRegistry([
+        { slotId: 'vendor.risk', supports: () => true, Component: () => null }
+      ]),
+      providerContext,
+      getFieldGroupAccess: () => 'edit'
+    });
+
+    expect(result.sections[0]?.items[0]?.item).toEqual({
+      kind: 'slot',
+      slotId: 'vendor.risk',
+      presentation: 'mini-panel'
+    });
+  });
+
   it('renders the schema-derived default profile through the same resolver', () => {
     const result = resolve(buildDefaultEntityDrawerProfile(schema));
     const itemIds = result.sections.flatMap(section =>

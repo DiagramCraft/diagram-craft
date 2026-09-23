@@ -234,6 +234,20 @@ const itemReference = (item: EntityDrawerItem): string => {
   return item.fieldId;
 };
 
+const itemPresentation = (
+  item: EntityDrawerItem,
+  catalog: EntityDrawerCatalog
+): 'row' | 'mini-panel' | undefined => {
+  if (item.kind !== 'field' && item.kind !== 'slot') return undefined;
+  if (
+    item.kind === 'slot' &&
+    catalog.slots.find(slot => slot.id === item.slotId)?.fixedPresentation !== undefined
+  ) {
+    return undefined;
+  }
+  return item.presentation ?? 'row';
+};
+
 const itemPlacementKey = (item: EntityDrawerItem): string => {
   if (item.kind === 'metadata') return `metadata:${item.slot}`;
   if (item.kind === 'slot') return `slot:${item.slotId}`;
@@ -883,13 +897,9 @@ export const EntityDrawerEditor = ({
                           <ItemMenu
                             sectionId={section.id}
                             sections={profile.sections}
-                            presentation={
-                              item.kind === 'field' || item.kind === 'slot'
-                                ? (item.presentation ?? 'row')
-                                : undefined
-                            }
+                            presentation={itemPresentation(item, catalog)}
                             onSetPresentation={
-                              item.kind === 'field' || item.kind === 'slot'
+                              itemPresentation(item, catalog) !== undefined
                                 ? presentation =>
                                     updateSection(section.id, current => ({
                                       ...current,

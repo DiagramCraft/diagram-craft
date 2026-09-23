@@ -75750,6 +75750,13 @@
                           "application": {
                             "type": "string"
                           },
+                          "fixedPresentation": {
+                            "enum": [
+                              "row",
+                              "mini-panel"
+                            ],
+                            "type": "string"
+                          },
                           "supportedSchemaIds": {
                             "type": "array",
                             "items": {
