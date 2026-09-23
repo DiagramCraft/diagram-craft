@@ -4,6 +4,7 @@ import type { EntityDrawerItem } from '@arch-register/api-types/entityDrawerConf
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { RelationRecord } from '@arch-register/api-types/relationContract';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
+import styles from './EntityDrawerProviderRegistry.module.css';
 
 export type EntityDrawerProviderContext = {
   workspaceId: string;
@@ -47,9 +48,47 @@ export const EntityDrawerProviderStatus = ({
 export type EntityDrawerProviderProps = {
   context: EntityDrawerProviderContext;
   item: Extract<EntityDrawerItem, { kind: 'slot' }>;
+  presentation?: 'row' | 'mini-panel';
+};
+
+export type EntityDrawerProviderLabelProps = {
+  context: EntityDrawerProviderContext;
+  item: Extract<EntityDrawerItem, { kind: 'slot' }>;
+};
+
+export const EntityDrawerProviderFrame = ({
+  label,
+  showLabel = true,
+  presentation = 'row',
+  labelAdornment,
+  children
+}: {
   label: string;
   showLabel?: boolean;
   presentation?: 'row' | 'mini-panel';
+  labelAdornment?: ReactNode;
+  children?: ReactNode;
+}) => {
+  if (presentation === 'mini-panel') {
+    return (
+      <div className={styles.miniPanel}>
+        {showLabel && <div className={styles.miniPanelLabel}>{label}</div>}
+        {children}
+      </div>
+    );
+  }
+
+  return (
+    <div className={styles.provider}>
+      {showLabel && (
+        <div className={styles.sectionLabel}>
+          {label}
+          {labelAdornment}
+        </div>
+      )}
+      {children}
+    </div>
+  );
 };
 
 export type EntityDrawerRequiredField = {
@@ -62,6 +101,7 @@ export type EntityDrawerProviderDefinition = {
   supports?: (context: EntityDrawerProviderContext) => boolean;
   requiredFields?: readonly EntityDrawerRequiredField[];
   Component: ComponentType<EntityDrawerProviderProps>;
+  LabelAdornment?: ComponentType<EntityDrawerProviderLabelProps>;
 };
 
 export const schemaHasRequiredFields = (

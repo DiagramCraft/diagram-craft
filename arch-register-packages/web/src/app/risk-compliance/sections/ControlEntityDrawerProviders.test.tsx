@@ -63,7 +63,6 @@ describe('risk compliance entity drawer providers', () => {
           } as unknown as EntityDrawerProviderContext['typedRelations']
         })}
         item={item(provider.slotId)}
-        label="Risks mitigated"
       />
     );
 
@@ -75,11 +74,7 @@ describe('risk compliance entity drawer providers', () => {
   it('renders the empty state and loading state for protected entities', () => {
     const provider = riskComplianceEntityDrawerProviderDefinitions[1]!;
     const emptyMarkup = renderToStaticMarkup(
-      <provider.Component
-        context={context()}
-        item={item(provider.slotId)}
-        label="Protected entities"
-      />
+      <provider.Component context={context()} item={item(provider.slotId)} />
     );
     expect(emptyMarkup).toContain('No protected entities linked.');
 
@@ -87,7 +82,6 @@ describe('risk compliance entity drawer providers', () => {
       <provider.Component
         context={context({ typedRelationsStatus: { isLoading: true, isError: false } })}
         item={item(provider.slotId)}
-        label="Protected entities"
       />
     );
     expect(loadingMarkup).toContain('Loading…');

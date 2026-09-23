@@ -1,4 +1,4 @@
-import { useMemo, type ReactNode } from 'react';
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Chip } from '../../../components/Chip';
 import { entitiesQuery } from '../../../queries/entities';
@@ -24,26 +24,7 @@ const BUSINESS_CAPABILITY_REQUIRED_FIELDS = [
   { id: 'capability_level' }
 ] satisfies readonly EntityDrawerRequiredField[];
 
-const ProviderFrame = ({
-  label,
-  showLabel = true,
-  children
-}: {
-  label: string;
-  showLabel?: boolean;
-  children: ReactNode;
-}) => (
-  <div className={styles.provider}>
-    {showLabel && (
-      <div className="dim" style={{ fontSize: 12, fontWeight: 600, marginBottom: 6 }}>
-        {label}
-      </div>
-    )}
-    {children}
-  </div>
-);
-
-const StrategyRealizedByProvider = ({ context, label, showLabel }: EntityDrawerProviderProps) => {
+const StrategyRealizedByProvider = ({ context }: EntityDrawerProviderProps) => {
   const { query: configurationQuery, config } = useStrategyConfiguration(context.workspaceId);
   const businessCapabilitySchemaId =
     config?.businessCapabilitySchemaId === context.schema.id
@@ -68,30 +49,28 @@ const StrategyRealizedByProvider = ({ context, label, showLabel }: EntityDrawerP
             : 'empty';
 
   return (
-    <ProviderFrame label={label} showLabel={showLabel}>
-      <EntityDrawerProviderStatus
-        state={state}
-        emptyMessage="No linked applications, directly or across this capability's descendants."
-        unavailableMessage="Realized-by relationships are unavailable."
-      >
-        <div className={styles.tags}>
-          {realizedBy.items.map(({ entity, contributingCapability }) => (
-            <Chip
-              key={entity._uid}
-              tone="ghost"
-              title={
-                contributingCapability ? `Realized via ${contributingCapability._name}` : undefined
-              }
-            >
-              {entity._name}
-              {contributingCapability && (
-                <span className={styles.viaLabel}> · via {contributingCapability._name}</span>
-              )}
-            </Chip>
-          ))}
-        </div>
-      </EntityDrawerProviderStatus>
-    </ProviderFrame>
+    <EntityDrawerProviderStatus
+      state={state}
+      emptyMessage="No linked applications, directly or across this capability's descendants."
+      unavailableMessage="Realized-by relationships are unavailable."
+    >
+      <div className={styles.tags}>
+        {realizedBy.items.map(({ entity, contributingCapability }) => (
+          <Chip
+            key={entity._uid}
+            tone="ghost"
+            title={
+              contributingCapability ? `Realized via ${contributingCapability._name}` : undefined
+            }
+          >
+            {entity._name}
+            {contributingCapability && (
+              <span className={styles.viaLabel}> · via {contributingCapability._name}</span>
+            )}
+          </Chip>
+        ))}
+      </div>
+    </EntityDrawerProviderStatus>
   );
 };
 
@@ -107,11 +86,7 @@ const supportingObjectives = (
       )
     : [];
 
-const StrategyLinkedObjectivesProvider = ({
-  context,
-  label,
-  showLabel
-}: EntityDrawerProviderProps) => {
+const StrategyLinkedObjectivesProvider = ({ context }: EntityDrawerProviderProps) => {
   const { query: configurationQuery, config } = useStrategyConfiguration(context.workspaceId);
   const matches = supportingObjectives(context, config);
   const state =
@@ -124,29 +99,23 @@ const StrategyLinkedObjectivesProvider = ({
           : 'empty';
 
   return (
-    <ProviderFrame label={label} showLabel={showLabel}>
-      <EntityDrawerProviderStatus
-        state={state}
-        emptyMessage="No linked objectives."
-        unavailableMessage="Linked objectives are unavailable."
-      >
-        <div className={styles.tags}>
-          {matches.map(relation => (
-            <Chip key={relation._uid} tone="ghost">
-              {relation._in.name}
-            </Chip>
-          ))}
-        </div>
-      </EntityDrawerProviderStatus>
-    </ProviderFrame>
+    <EntityDrawerProviderStatus
+      state={state}
+      emptyMessage="No linked objectives."
+      unavailableMessage="Linked objectives are unavailable."
+    >
+      <div className={styles.tags}>
+        {matches.map(relation => (
+          <Chip key={relation._uid} tone="ghost">
+            {relation._in.name}
+          </Chip>
+        ))}
+      </div>
+    </EntityDrawerProviderStatus>
   );
 };
 
-const StrategyLinkedInitiativesProvider = ({
-  context,
-  label,
-  showLabel
-}: EntityDrawerProviderProps) => {
+const StrategyLinkedInitiativesProvider = ({ context }: EntityDrawerProviderProps) => {
   const { query: configurationQuery, config } = useStrategyConfiguration(context.workspaceId);
   const objectives = supportingObjectives(context, config);
   const objectiveIds = useMemo(
@@ -180,21 +149,19 @@ const StrategyLinkedInitiativesProvider = ({
                 : 'empty';
 
   return (
-    <ProviderFrame label={label} showLabel={showLabel}>
-      <EntityDrawerProviderStatus
-        state={state}
-        emptyMessage="No linked initiatives."
-        unavailableMessage="Linked initiatives are unavailable."
-      >
-        <div className={styles.tags}>
-          {(initiatives.data?.items ?? []).map(initiative => (
-            <Chip key={initiative._uid} tone="ghost">
-              {initiative._name}
-            </Chip>
-          ))}
-        </div>
-      </EntityDrawerProviderStatus>
-    </ProviderFrame>
+    <EntityDrawerProviderStatus
+      state={state}
+      emptyMessage="No linked initiatives."
+      unavailableMessage="Linked initiatives are unavailable."
+    >
+      <div className={styles.tags}>
+        {(initiatives.data?.items ?? []).map(initiative => (
+          <Chip key={initiative._uid} tone="ghost">
+            {initiative._name}
+          </Chip>
+        ))}
+      </div>
+    </EntityDrawerProviderStatus>
   );
 };
 

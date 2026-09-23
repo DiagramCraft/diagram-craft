@@ -109,7 +109,7 @@ describe('Vendor Management entity drawer providers', () => {
   it('renders the derived risk score and band', () => {
     const definition = provider('vendor.risk');
     const markup = renderToStaticMarkup(
-      <definition.Component context={context()} item={item(definition.slotId)} label="vmRisk" />
+      <definition.Component context={context()} item={item(definition.slotId)} />
     );
 
     expect(markup).toContain('3.0');
@@ -122,11 +122,7 @@ describe('Vendor Management entity drawer providers', () => {
 
     expect(
       renderToStaticMarkup(
-        <contractDefinition.Component
-          context={context()}
-          item={item(contractDefinition.slotId)}
-          label="Contracts"
-        />
+        <contractDefinition.Component context={context()} item={item(contractDefinition.slotId)} />
       )
     ).toContain('No contracts.');
     expect(
@@ -134,7 +130,6 @@ describe('Vendor Management entity drawer providers', () => {
         <applicationsDefinition.Component
           context={context()}
           item={item(applicationsDefinition.slotId)}
-          label="Applications supplied"
         />
       )
     ).toContain('No linked applications, via any contract.');
@@ -149,7 +144,6 @@ describe('Vendor Management entity drawer providers', () => {
         <lifecycleDefinition.Component
           context={context()}
           item={item(lifecycleDefinition.slotId)}
-          label="Technology lifecycle"
         />
       )
     ).toContain('No linked Systems to derive a lifecycle state from.');
@@ -158,7 +152,6 @@ describe('Vendor Management entity drawer providers', () => {
         <capabilitiesDefinition.Component
           context={context()}
           item={item(capabilitiesDefinition.slotId)}
-          label="Capabilities funded"
         />
       )
     ).toContain('Not yet available — no linked capability data yet.');

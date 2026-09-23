@@ -15,11 +15,7 @@ const CONTRACT_REQUIRED_FIELDS = [
   { id: 'system', type: 'typedRelation' }
 ] satisfies readonly EntityDrawerRequiredField[];
 
-const ContractSystemsUsedProvider = ({
-  context,
-  label,
-  showLabel = true
-}: EntityDrawerProviderProps) => {
+const ContractSystemsUsedProvider = ({ context }: EntityDrawerProviderProps) => {
   const systemIds = useMemo(
     () => [...new Set(scalarValues(context.entity.system).filter((id): id is string => !!id))],
     [context.entity.system]
@@ -44,22 +40,19 @@ const ContractSystemsUsedProvider = ({
             : 'empty';
 
   return (
-    <div>
-      {showLabel && <div className={styles.sectionLabel}>{label}</div>}
-      <EntityDrawerProviderStatus
-        state={state}
-        emptyMessage="No linked Systems."
-        unavailableMessage="Systems used are unavailable."
-      >
-        <div className={styles.tags}>
-          {resolvedSystems.map(system => (
-            <Chip key={system.publicId} tone="ghost">
-              {system.name}
-            </Chip>
-          ))}
-        </div>
-      </EntityDrawerProviderStatus>
-    </div>
+    <EntityDrawerProviderStatus
+      state={state}
+      emptyMessage="No linked Systems."
+      unavailableMessage="Systems used are unavailable."
+    >
+      <div className={styles.tags}>
+        {resolvedSystems.map(system => (
+          <Chip key={system.publicId} tone="ghost">
+            {system.name}
+          </Chip>
+        ))}
+      </div>
+    </EntityDrawerProviderStatus>
   );
 };
 

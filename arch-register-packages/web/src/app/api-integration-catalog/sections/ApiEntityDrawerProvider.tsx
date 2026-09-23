@@ -54,11 +54,7 @@ const declaredApiType = (
   return typeof value === 'string' ? value : undefined;
 };
 
-const ApiSpecificationCatalogProvider = ({
-  context,
-  label,
-  showLabel
-}: EntityDrawerProviderProps) => {
+const ApiSpecificationCatalogProvider = ({ context }: EntityDrawerProviderProps) => {
   const { canViewArtifactContent } = useWorkspaceAuthorization(context.workspaceId);
   const capabilityConfigurations = useWorkspaceCapabilityConfigurations(context.workspaceId);
   const { artifactsQuery, apiArtifacts, sources, revisionsLoading, revisionsError } =
@@ -115,7 +111,6 @@ const ApiSpecificationCatalogProvider = ({
 
   return (
     <div className={styles.catalogPane}>
-      {showLabel !== false && <div className={styles.sectionLabel}>{label}</div>}
       {artifactsQuery.isLoading && <LoadingState text="Loading API catalog…" />}
       {artifactsQuery.isError && (
         <EmptyState

@@ -26,6 +26,7 @@ import {
   type ResolvedEntityDrawerItem
 } from './entityDrawerState';
 import {
+  EntityDrawerProviderFrame,
   EntityDrawerProviderStatus,
   type EntityDrawerProviderContext
 } from './EntityDrawerProviderRegistry';
@@ -316,14 +317,25 @@ const DrawerItem = ({
   }
   if (item.item.kind === 'slot' && item.provider) {
     const Provider = item.provider.Component;
+    const LabelAdornment = item.provider.LabelAdornment;
+    const showLabel = item.item.showLabel !== false;
     return (
-      <Provider
-        context={providerContext}
-        item={item.item}
+      <EntityDrawerProviderFrame
         label={item.label}
-        showLabel={item.item.showLabel !== false}
+        showLabel={showLabel}
         presentation={item.item.presentation}
-      />
+        labelAdornment={
+          showLabel && LabelAdornment ? (
+            <LabelAdornment context={providerContext} item={item.item} />
+          ) : undefined
+        }
+      >
+        <Provider
+          context={providerContext}
+          item={item.item}
+          presentation={item.item.presentation}
+        />
+      </EntityDrawerProviderFrame>
     );
   }
   if (!item.field) return null;
