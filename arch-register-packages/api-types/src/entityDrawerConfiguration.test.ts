@@ -979,6 +979,15 @@ describe('entity drawer configuration', () => {
         label: 'Applications supplied'
       }
     ]);
+    expect(profile.sections[5]?.items).toEqual([
+      {
+        kind: 'query',
+        queryText: '<-"Contract".vendor.<-"system-contract"',
+        label: 'Technology lifecycle',
+        presentation: 'list',
+        fields: [{ fieldId: '_lifecycle', label: 'Lifecycle' }]
+      }
+    ]);
     expect(profile.sections.at(-1)?.items).toEqual([
       { kind: 'placeholder', message: VENDOR_CAPABILITIES_FUNDED_PLACEHOLDER_MESSAGE }
     ]);

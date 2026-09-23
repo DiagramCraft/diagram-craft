@@ -2470,10 +2470,11 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             collapsible: true,
             items: [
               {
-                kind: 'slot',
-                slotId: 'vendor.technology-lifecycle',
+                kind: 'query',
+                queryText: '<-"Contract".vendor.<-"System Contract"',
                 label: 'Technology lifecycle',
-                showLabel: false
+                presentation: 'list',
+                fields: [{ fieldId: '_lifecycle', label: 'Lifecycle' }]
               }
             ]
           },

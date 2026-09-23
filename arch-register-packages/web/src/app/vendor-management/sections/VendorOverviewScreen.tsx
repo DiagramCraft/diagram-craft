@@ -75,8 +75,7 @@ const MONTH_LABEL = new Intl.DateTimeFormat(undefined, { month: 'short' });
  * vendor), a second two-column row (vendors above tolerance / technology EOL exposure), and a
  * footnote linking back to Entities. Everything is derived client-side from the same
  * entity/contract/metric queries and hooks the other four sections already use — no bespoke server
- * endpoint and no new logic beyond `useVendorAppsSuppliedCounts` (a batched sibling of
- * `useVendorAppsSupplied.ts`, added so the "vendors above tolerance" table can show each vendor's
+ * endpoint and no new logic beyond `useVendorAppsSuppliedCounts` (added so the "vendors above tolerance" table can show each vendor's
  * applications-supplied count without a per-row hook call).
  */
 export const VendorOverviewScreen = () => {
@@ -88,8 +87,7 @@ export const VendorOverviewScreen = () => {
   const schemas = useSchemas(workspaceSlug);
   const contractSchema = schemas.data?.find(schema => schema.id === vendorConfig?.contractSchemaId);
   // `system-contract` isn't exposed by `resolveVendorManagementConfig` — read its real,
-  // per-workspace relation schema id off Contract's `system` typedRelation field, same as
-  // `VendorRiskScreen.tsx`/`VendorEntityDrawerProviders.tsx` do.
+  // per-workspace relation schema id off Contract's `system` typedRelation field.
   const systemField = contractSchema?.fields.find(field => field.id === 'system');
   const systemContractRelationSchemaId =
     systemField?.type === 'typedRelation' ? systemField.relationSchemaId : null;

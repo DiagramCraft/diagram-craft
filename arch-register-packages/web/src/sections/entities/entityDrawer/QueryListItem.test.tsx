@@ -34,6 +34,7 @@ const render = (queryItem = item) =>
       schemaName="Business Capability"
       entityId="cap-1"
       schemas={schemas}
+      lifecycleStates={[{ id: 'active', label: 'Active', color: '#00a000', sort_order: 0 }]}
     />
   );
 
@@ -80,6 +81,31 @@ describe('QueryListItem', () => {
         fields: [{ fieldId: 'annual_cost', label: 'Annual cost' }]
       })
     ).toContain('$1,200.00');
+  });
+
+  it('renders lifecycle metadata as a status chip in list presentation', () => {
+    mocks.result.mockReturnValue({
+      items: [
+        {
+          _uid: 'system-1',
+          _name: 'Billing System',
+          _schema: { id: 'system', name: 'System' },
+          _lifecycle: { id: 'active', name: 'Active' }
+        } as unknown as EntityRecord
+      ],
+      isLoading: false,
+      error: null
+    });
+
+    expect(
+      render({
+        kind: 'query',
+        queryText: '<-"Contract".vendor.<-"System Contract"',
+        label: 'Technology lifecycle',
+        presentation: 'list',
+        fields: [{ fieldId: '_lifecycle', label: 'Lifecycle' }]
+      })
+    ).toContain('Active');
   });
 
   it('renders loading, empty, and unavailable states', () => {

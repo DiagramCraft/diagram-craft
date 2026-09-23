@@ -952,6 +952,19 @@ describe('instantiateTemplate', () => {
       }
     ]);
     expect(
+      definitions.entityDrawerProfiles[vendor!.id]?.sections.find(
+        section => section.id === 'technology-lifecycle'
+      )?.items
+    ).toEqual([
+      {
+        kind: 'query',
+        queryText: '<-"Contract".vendor.<-"System Contract"',
+        label: 'Technology lifecycle',
+        presentation: 'list',
+        fields: [{ fieldId: '_lifecycle', label: 'Lifecycle' }]
+      }
+    ]);
+    expect(
       definitions.entityDrawerProfiles[contract!.id]?.sections.map(section => section.id)
     ).toEqual(['vendor', 'terms', 'cost', 'systems-used']);
   });

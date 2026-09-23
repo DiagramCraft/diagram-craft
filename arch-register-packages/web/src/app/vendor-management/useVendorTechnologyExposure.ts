@@ -10,7 +10,7 @@ import {
 } from './technologyEolExposure';
 
 /** One hop of a traversal provenance chain, as returned in an entity's `_projections.<alias>` —
- *  same shape `useVendorAppsSupplied.ts` reads. */
+ *  same shape as the generic entity-drawer query traversal reads. */
 type TraversalHop = { context: 'entity' | 'relation'; id: string; schemaId: string };
 
 type SystemToTechnologyReleaseLink = {
@@ -119,7 +119,7 @@ const findSystemToTechnologyReleaseLinks = (
  * combination reachable from the vendor-management app's bound schemas, banded by
  * `computeTechnologyEolExposure`. Powers the Risk section's EOL exposure table.
  *
- * Two batched projection queries, mirroring `useVendorAppsSupplied.ts`'s single-vendor traversal
+ * Two batched projection queries, mirroring the entity-drawer query's single-vendor traversal
  * generalized to every vendor at once (an `op: 'in'` root predicate over every vendor id, instead
  * of `equals` over one) — `EntityQuery.projections` is orthogonal to `root` (per
  * `specs/QUERY_LANGUAGE.md` §4.6), so this returns one `_projections.systems` per matched vendor:

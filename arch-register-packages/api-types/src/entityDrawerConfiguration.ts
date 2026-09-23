@@ -356,16 +356,6 @@ export const ENTITY_DRAWER_SLOT_DEFINITIONS: EntityDrawerSlotDefinition[] = [
     defaultOptions: {},
     optionFields: [],
     optionsSchema: emptyOptionsSchema
-  },
-  {
-    id: 'vendor.technology-lifecycle',
-    label: 'Technology lifecycle',
-    description: 'Technology lifecycle summary.',
-    application: 'Vendor Management',
-    capabilityBinding: { capabilityType: 'vendor-management', role: 'vendor' },
-    defaultOptions: {},
-    optionFields: [],
-    optionsSchema: emptyOptionsSchema
   }
 ];
 
@@ -1204,29 +1194,16 @@ const vendorManagementSpendRollupItems = (
 };
 
 const buildVendorManagementDefaultProfile = (
-  providerItems: EntityDrawerItem[],
   fieldIds: VendorManagementFieldIds,
   contractsQueryItem: Extract<EntityDrawerItem, { kind: 'query' }> | null,
   applicationsSuppliedQueryItem: Extract<EntityDrawerItem, { kind: 'query' }> | null,
-  spendRollupItems: EntityDrawerItem[]
+  spendRollupItems: EntityDrawerItem[],
+  technologyLifecycleQueryItem: Extract<EntityDrawerItem, { kind: 'query' }> | null
 ): EntityDrawerProfile => {
   const item = (fieldId: string): Extract<EntityDrawerItem, { kind: 'field' }> => ({
     kind: 'field',
     fieldId
   });
-  const provider = (slotId: string, label: string, showLabel = true): EntityDrawerItem | null => {
-    const slot = providerItems.find(
-      (candidate): candidate is Extract<EntityDrawerItem, { kind: 'slot' }> =>
-        candidate.kind === 'slot' && candidate.slotId === slotId
-    );
-    return slot
-      ? {
-          ...slot,
-          label,
-          ...(showLabel ? {} : { showLabel: false })
-        }
-      : null;
-  };
   const section = (
     id: string,
     title: string,
@@ -1278,7 +1255,7 @@ const buildVendorManagementDefaultProfile = (
       section(
         'technology-lifecycle',
         'Technology lifecycle',
-        [provider('vendor.technology-lifecycle', 'Technology lifecycle', false)],
+        [technologyLifecycleQueryItem],
         true
       ),
       section(
@@ -1411,6 +1388,26 @@ const vendorManagementApplicationsSuppliedQueryItem = (
     kind: 'query',
     queryText: `<-"${escapeQueryStringLiteral(contractSchema.name)}".${vendorField.id}.<-"${escapeQueryStringLiteral(systemField.relationSchemaId)}"`,
     label: 'Applications supplied'
+  };
+};
+
+const vendorManagementTechnologyLifecycleQueryItem = (
+  vendorSchema: EntityDrawerSchema,
+  schemas: EntityDrawerSchema[],
+  capabilityConfigurations: readonly CapabilityConfigurationLike[]
+): Extract<EntityDrawerItem, { kind: 'query' }> | null => {
+  const applicationsSupplied = vendorManagementApplicationsSuppliedQueryItem(
+    vendorSchema,
+    schemas,
+    capabilityConfigurations
+  );
+  if (!applicationsSupplied) return null;
+
+  return {
+    ...applicationsSupplied,
+    label: 'Technology lifecycle',
+    presentation: 'list',
+    fields: [{ fieldId: '_lifecycle', label: 'Lifecycle' }]
   };
 };
 
@@ -1638,6 +1635,11 @@ export const buildDefaultEntityDrawerConfiguration = (
         schemas,
         capabilityConfigurations
       );
+      const technologyLifecycleQueryItem = vendorManagementTechnologyLifecycleQueryItem(
+        schema,
+        schemas,
+        capabilityConfigurations
+      );
       const spendRollupItems = vendorManagementSpendRollupItems(
         schema,
         schemas,
@@ -1653,11 +1655,11 @@ export const buildDefaultEntityDrawerConfiguration = (
               ? buildApiSpecificationDefaultProfile(providerItems, apiSpecificationFieldIdsValue)
               : vendorFieldIds
                 ? buildVendorManagementDefaultProfile(
-                    providerItems,
                     vendorFieldIds,
                     contractsQueryItem,
                     applicationsSuppliedQueryItem,
-                    spendRollupItems
+                    spendRollupItems,
+                    technologyLifecycleQueryItem
                   )
                 : contractFieldIds
                   ? buildVendorManagementContractDefaultProfile(contractFieldIds)

@@ -89,13 +89,3 @@ button.attributeRow {
 .attributeLabel {
   color: var(--text-muted);
 }
-
-.lifecycleRow {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  border: 1px solid var(--panel-border);
-  border-radius: 999px;
-  padding: 3px 10px;
-  font-size: 11px;
-}

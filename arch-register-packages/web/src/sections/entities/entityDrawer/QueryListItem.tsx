@@ -1,7 +1,9 @@
 import type { EntityDrawerItem } from '@arch-register/api-types/entityDrawerConfiguration';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
+import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import { Chip } from '../../../components/Chip';
+import { StatusChip } from '../../../components/StatusChip';
 import { formatDate } from '../../../utils/dateFormat';
 import { renderEntityFieldDisplayValue } from '../components/entityFieldDisplay';
 import type { RefLookup } from '../types/entityDetailTypes';
@@ -13,18 +15,33 @@ const QueryListFields = ({
   entity,
   schema,
   fields,
-  workspaceSlug
+  workspaceSlug,
+  lifecycleStates
 }: {
   entity: EntityRecord;
   schema: EntitySchema | undefined;
   fields: NonNullable<Extract<EntityDrawerItem, { kind: 'query' }>['fields']>;
   workspaceSlug: string;
+  lifecycleStates: WorkspaceLifecycleState[];
 }) => {
   const refLookup: RefLookup = new Map();
 
   return (
     <div className={styles.queryFields}>
       {fields.flatMap(configuredField => {
+        if (configuredField.fieldId === '_lifecycle') {
+          if (!entity._lifecycle) return [];
+          return [
+            <div className={styles.queryField} key={configuredField.fieldId}>
+              <span className={styles.queryFieldLabel}>
+                {configuredField.label ?? 'Lifecycle'}
+              </span>
+              <span className={styles.queryFieldValue}>
+                <StatusChip value={entity._lifecycle.id} lifecycleStates={lifecycleStates} />
+              </span>
+            </div>
+          ];
+        }
         const field = schema?.fields.find(candidate => candidate.id === configuredField.fieldId);
         if (!field) return [];
         return [
@@ -63,7 +80,8 @@ export const QueryListItem = ({
   workspaceId,
   schemaName,
   entityId,
-  schemas
+  schemas,
+  lifecycleStates = []
 }: {
   item: Extract<EntityDrawerItem, { kind: 'query' }>;
   label: string;
@@ -71,6 +89,7 @@ export const QueryListItem = ({
   schemaName: string;
   entityId: string;
   schemas: EntitySchema[];
+  lifecycleStates?: WorkspaceLifecycleState[];
 }) => {
   const result = useEntityDrawerQueryItem(workspaceId, schemaName, entityId, item.queryText);
   const presentation = item.presentation ?? 'chips';
@@ -107,6 +126,7 @@ export const QueryListItem = ({
                 schema={schemas.find(schema => schema.id === entity._schema.id)}
                 fields={item.fields ?? []}
                 workspaceSlug={workspaceId}
+                lifecycleStates={lifecycleStates}
               />
             </div>
           ))}

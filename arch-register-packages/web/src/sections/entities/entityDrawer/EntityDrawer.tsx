@@ -343,6 +343,7 @@ const DrawerItem = ({
         schemaName={providerContext.schema.name}
         entityId={entity._uid}
         schemas={providerContext.schemas}
+        lifecycleStates={lifecycleStates}
       />
     );
   }
