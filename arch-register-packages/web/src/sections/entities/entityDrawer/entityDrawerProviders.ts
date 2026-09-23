@@ -1,4 +1,3 @@
-import { strategyEntityDrawerProviderDefinitions } from '../../../app/strategy-model/sections/StrategyEntityDrawerProviders';
 import { vendorEntityDrawerProviderDefinitions } from '../../../app/vendor-management/sections/VendorEntityDrawerProviders';
 import { apiEntityDrawerProviderDefinitions } from '../../../app/api-integration-catalog/sections/ApiEntityDrawerProvider';
 import { entityChangeCasesDrawerProviderDefinitions } from './EntityChangeCasesProvider';
@@ -11,7 +10,6 @@ import {
 } from './EntityDrawerProviderRegistry';
 
 const definitions: readonly EntityDrawerProviderDefinition[] = [
-  ...strategyEntityDrawerProviderDefinitions,
   ...vendorEntityDrawerProviderDefinitions,
   ...entityChangeCasesDrawerProviderDefinitions,
   ...entityAssessmentsDrawerProviderDefinitions,

@@ -312,16 +312,6 @@ export const ENTITY_DRAWER_SLOT_DEFINITIONS: EntityDrawerSlotDefinition[] = [
     optionsSchema: emptyOptionsSchema
   },
   {
-    id: 'strategy.linked-objectives',
-    label: 'Linked objectives',
-    description: 'Objectives linked to this capability.',
-    application: 'Strategy Model',
-    capabilityBinding: { capabilityType: 'strategy-model', role: 'business_capability' },
-    defaultOptions: {},
-    optionFields: [],
-    optionsSchema: emptyOptionsSchema
-  },
-  {
     id: 'vendor.spend',
     label: 'Spend',
     description: 'Spend summary for this vendor.',
@@ -491,6 +481,39 @@ const getStrategyRealizedByItem = (
       kind: 'query' as const,
       queryText: `subtree(parent).->"${relationTarget.id}"`,
       label: 'Realized by'
+    }
+  ];
+};
+
+/**
+ * Seeds the generic `query` drawer item that replaces the bespoke
+ * `strategy.linked-objectives` provider for a freshly-generated default profile. The query
+ * follows the bound Objective-to-Business-Capability relation from the current capability to its
+ * supporting Objectives.
+ */
+const getStrategyLinkedObjectivesItem = (
+  schema: EntityDrawerSchema | undefined,
+  capabilityConfigurations: readonly CapabilityConfigurationLike[]
+): EntityDrawerItem[] => {
+  if (!schema) return [];
+  const configuration = capabilityConfigurations.find(
+    candidate => candidate.type === 'strategy-model'
+  );
+  const businessCapabilityTarget = configuration?.bindings.business_capability?.target;
+  const relationTarget = configuration?.bindings.objective_supports_business_capability?.target;
+  if (
+    businessCapabilityTarget?.kind !== 'entity_schema' ||
+    businessCapabilityTarget.id !== schema.id ||
+    relationTarget?.kind !== 'relation_schema'
+  ) {
+    return [];
+  }
+
+  return [
+    {
+      kind: 'query' as const,
+      queryText: `<-"${escapeQueryStringLiteral(relationTarget.id)}"`,
+      label: 'Linked objectives'
     }
   ];
 };
@@ -1353,6 +1376,7 @@ export const buildDefaultEntityDrawerConfiguration = (
       const glossaryFieldIds = businessGlossaryFieldIds(schema, capabilityConfigurations);
       const providerItems = [
         ...getStrategyRealizedByItem(schema, capabilityConfigurations),
+        ...getStrategyLinkedObjectivesItem(schema, capabilityConfigurations),
         ...getStrategyLinkedInitiativesItem(schema, schemas, capabilityConfigurations),
         ...getDefaultProviderItems(schemas, schema.id, capabilityConfigurations),
         ...(dataStewardshipFieldIdsValue

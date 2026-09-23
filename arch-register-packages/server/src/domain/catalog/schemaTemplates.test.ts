@@ -244,6 +244,11 @@ describe('instantiateTemplate', () => {
       expect.arrayContaining([
         {
           kind: 'query',
+          queryText: '<-"Objective Supports Business Capability"',
+          label: 'Linked objectives'
+        },
+        {
+          kind: 'query',
           queryText: '<-"Objective Supports Business Capability".<-"Initiative".objectives',
           label: 'Linked initiatives'
         }

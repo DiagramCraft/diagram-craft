@@ -389,10 +389,14 @@ describe('entity drawer configuration', () => {
       },
       {
         kind: 'query',
+        queryText: '<-"objective-supports-capability"',
+        label: 'Linked objectives'
+      },
+      {
+        kind: 'query',
         queryText: '<-"objective-supports-capability".<-"Initiative".objectives',
         label: 'Linked initiatives'
       },
-      { kind: 'slot', slotId: 'strategy.linked-objectives' },
       { kind: 'rollup', fieldId: 'score', aggregation: 'sum', format: 'number' },
       { kind: 'rollup-leaf-count' }
     ]);
@@ -449,11 +453,8 @@ describe('entity drawer configuration', () => {
         }
       ]
     );
-    expect(catalog.slots.map(slot => slot.id)).toContain('strategy.linked-objectives');
+    expect(catalog.slots.map(slot => slot.id)).not.toContain('strategy.linked-objectives');
     expect(catalog.slots.map(slot => slot.id)).not.toContain('strategy.linked-initiatives');
-    expect(
-      catalog.slots.find(slot => slot.id === 'strategy.linked-objectives')?.supportedSchemaIds
-    ).toEqual(['service']);
     expect(catalog.slots.map(slot => slot.id)).not.toContain('vendor.spend');
     expect(catalog.slots.map(slot => slot.id)).not.toContain('vendor.capabilities-funded');
     expect(catalog.slots.find(slot => slot.id === 'entity.change-cases')).toMatchObject({

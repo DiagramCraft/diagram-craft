@@ -1,9 +1,0 @@
-.provider {
-  min-width: 0;
-}
-
-.tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}

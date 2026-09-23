@@ -3989,8 +3989,8 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
                 label: 'Realized by'
               },
               {
-                kind: 'slot',
-                slotId: 'strategy.linked-objectives',
+                kind: 'query',
+                queryText: '<-"Objective Supports Business Capability"',
                 label: 'Linked objectives'
               },
               {
