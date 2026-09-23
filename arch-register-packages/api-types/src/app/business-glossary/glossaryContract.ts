@@ -105,7 +105,7 @@ export const glossaryContract = oc.tag('Glossary').router({
           tags: ['Glossary']
         })
         .input(z.object({ params: wsAndId }))
-        .output(glossaryTermSchema),
+        .output(glossaryTermSchema)
     },
     reports: {
       list: oc

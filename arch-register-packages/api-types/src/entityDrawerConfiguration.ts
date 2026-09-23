@@ -1233,12 +1233,7 @@ const buildVendorManagementDefaultProfile = (
         [applicationsSuppliedQueryItem],
         true
       ),
-      section(
-        'technology-lifecycle',
-        'Technology lifecycle',
-        [technologyLifecycleQueryItem],
-        true
-      ),
+      section('technology-lifecycle', 'Technology lifecycle', [technologyLifecycleQueryItem], true),
       section(
         'capabilities-funded',
         'Capabilities funded',

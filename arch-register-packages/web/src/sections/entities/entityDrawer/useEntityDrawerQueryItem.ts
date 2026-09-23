@@ -16,7 +16,8 @@ export type EntityDrawerQueryItemResult = {
 
 const EMPTY: EntityDrawerQueryItemResult = { items: [], isLoading: false, error: null };
 
-const escapeQueryStringLiteral = (value: string) => value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+const escapeQueryStringLiteral = (value: string) =>
+  value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 
 /**
  * Executes a generic `query` drawer item's path expression (specs/QUERY_LANGUAGE.md §4), scoped to

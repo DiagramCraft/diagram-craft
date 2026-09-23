@@ -33,9 +33,7 @@ const QueryListFields = ({
           if (!entity._lifecycle) return [];
           return [
             <div className={styles.queryField} key={configuredField.fieldId}>
-              <span className={styles.queryFieldLabel}>
-                {configuredField.label ?? 'Lifecycle'}
-              </span>
+              <span className={styles.queryFieldLabel}>{configuredField.label ?? 'Lifecycle'}</span>
               <span className={styles.queryFieldValue}>
                 <StatusChip value={entity._lifecycle.id} lifecycleStates={lifecycleStates} />
               </span>
