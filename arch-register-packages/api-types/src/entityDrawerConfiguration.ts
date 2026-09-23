@@ -311,16 +311,6 @@ const emptyOptionsSchema = z.record(z.string(), z.unknown());
 
 export const ENTITY_DRAWER_SLOT_DEFINITIONS: EntityDrawerSlotDefinition[] = [
   {
-    id: 'api-specification.catalog',
-    label: 'API specification catalog',
-    description: 'Sources, revisions, diagnostics, and normalized API operations or messages.',
-    application: 'API & Integration Catalog',
-    capabilityBinding: { capabilityType: 'api-specification', role: 'api' },
-    defaultOptions: {},
-    optionFields: [],
-    optionsSchema: emptyOptionsSchema
-  },
-  {
     id: 'entity.usage',
     label: 'Entity usage',
     description:
@@ -953,16 +943,8 @@ const apiSpecificationFieldIds = (
 };
 
 const buildApiSpecificationDefaultProfile = (
-  providerItems: EntityDrawerItem[],
   fieldIds: ApiSpecificationFieldIds
 ): EntityDrawerProfile => {
-  const provider = (slotId: string): EntityDrawerItem | null => {
-    const slot = providerItems.find(
-      (candidate): candidate is Extract<EntityDrawerItem, { kind: 'slot' }> =>
-        candidate.kind === 'slot' && candidate.slotId === slotId
-    );
-    return slot ? { ...slot, showLabel: false } : null;
-  };
   const section = (
     id: string,
     title: string,
@@ -992,8 +974,7 @@ const buildApiSpecificationDefaultProfile = (
       ]),
       section('consumers', 'Consumers', [
         { kind: 'relation', fieldId: fieldIds.consumers, label: 'Consumers' }
-      ]),
-      section('specification', 'Specification', [provider('api-specification.catalog')])
+      ])
     ].filter(section => section.items.length > 0)
   };
 };
@@ -1652,7 +1633,7 @@ export const buildDefaultEntityDrawerConfiguration = (
           : dataStewardshipFieldIdsValue
             ? buildDataStewardshipDefaultProfile(providerItems, dataStewardshipFieldIdsValue)
             : apiSpecificationFieldIdsValue
-              ? buildApiSpecificationDefaultProfile(providerItems, apiSpecificationFieldIdsValue)
+              ? buildApiSpecificationDefaultProfile(apiSpecificationFieldIdsValue)
               : vendorFieldIds
                 ? buildVendorManagementDefaultProfile(
                     vendorFieldIds,

@@ -699,7 +699,7 @@ describe('entity drawer configuration', () => {
     expect(catalog.slots.find(slot => slot.id === 'risk.affected-entities')).toBeUndefined();
   });
 
-  it('derives the API specification profile and provider slot from the capability binding', () => {
+  it('derives the API specification profile from the capability binding', () => {
     const apiSchema = {
       id: 'api',
       name: 'API',
@@ -733,15 +733,12 @@ describe('entity drawer configuration', () => {
         { kind: 'field', fieldId: 'contract_version', label: 'API version' },
         { kind: 'metadata', slot: 'owner' },
         { kind: 'relation', fieldId: 'providers', label: 'Providers' },
-        { kind: 'relation', fieldId: 'consumers', label: 'Consumers' },
-        { kind: 'slot', slotId: 'api-specification.catalog', showLabel: false }
+        { kind: 'relation', fieldId: 'consumers', label: 'Consumers' }
       ])
     );
 
     const catalog = buildEntityDrawerCatalog([apiSchema], [configuration]);
-    expect(catalog.slots.find(slot => slot.id === 'api-specification.catalog')).toMatchObject({
-      supportedSchemaIds: ['api']
-    });
+    expect(catalog.slots.find(slot => slot.id === 'api-specification.catalog')).toBeUndefined();
   });
 
   it('derives the Data Entity profile with stewardship fields and supported provider slots', () => {

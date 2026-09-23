@@ -2359,12 +2359,6 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             title: 'Consumers',
             collapsible: false,
             items: [{ kind: 'relation', fieldId: 'consumers', label: 'Consumers' }]
-          },
-          {
-            id: 'specification',
-            title: 'Specification',
-            collapsible: false,
-            items: [{ kind: 'slot', slotId: 'api-specification.catalog', showLabel: false }]
           }
         ]
       },

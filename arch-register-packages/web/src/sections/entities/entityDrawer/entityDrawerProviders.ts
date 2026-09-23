@@ -1,4 +1,3 @@
-import { apiEntityDrawerProviderDefinitions } from '../../../app/api-integration-catalog/sections/ApiEntityDrawerProvider';
 import { entityChangeCasesDrawerProviderDefinitions } from './EntityChangeCasesProvider';
 import { entityAssessmentsDrawerProviderDefinitions } from './EntityAssessmentsProvider';
 import { entityGovernanceItemsDrawerProviderDefinitions } from './EntityGovernanceItemsProvider';
@@ -12,8 +11,7 @@ const definitions: readonly EntityDrawerProviderDefinition[] = [
   ...entityChangeCasesDrawerProviderDefinitions,
   ...entityAssessmentsDrawerProviderDefinitions,
   ...entityGovernanceItemsDrawerProviderDefinitions,
-  ...entityUsageDrawerProviderDefinitions,
-  ...apiEntityDrawerProviderDefinitions
+  ...entityUsageDrawerProviderDefinitions
 ];
 
 export const entityDrawerProviderRegistry = createEntityDrawerProviderRegistry(definitions);

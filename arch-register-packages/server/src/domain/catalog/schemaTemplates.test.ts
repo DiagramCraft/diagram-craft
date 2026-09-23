@@ -867,11 +867,7 @@ describe('instantiateTemplate', () => {
       },
       sections: expect.arrayContaining([
         expect.objectContaining({ id: 'providers' }),
-        expect.objectContaining({ id: 'consumers' }),
-        expect.objectContaining({
-          id: 'specification',
-          items: [{ kind: 'slot', slotId: 'api-specification.catalog', showLabel: false }]
-        })
+        expect.objectContaining({ id: 'consumers' })
       ])
     });
     expect(
