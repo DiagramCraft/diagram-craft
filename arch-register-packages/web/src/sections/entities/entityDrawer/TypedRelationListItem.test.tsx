@@ -107,7 +107,9 @@ describe('TypedRelationListItem', () => {
           record(),
           record({ _uid: 'other-schema', _schema: { id: 'other', name: 'Other' } })
         ]}
-        typedRelationsIncoming={[record({ _uid: 'wrong-direction', _out: { id: 'control-2', name: 'Wrong Direction' } })]}
+        typedRelationsIncoming={[
+          record({ _uid: 'wrong-direction', _out: { id: 'control-2', name: 'Wrong Direction' } })
+        ]}
         typedRelationsStatus={{ isLoading: false, isError: false }}
         relationSchemas={[relationSchema]}
       />

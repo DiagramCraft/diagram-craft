@@ -32,9 +32,9 @@ export const TypedRelationListItem = ({
   relationSchemas: RelationSchema[];
 }) => {
   const direction = field.direction === 'in' ? 'outgoing' : 'incoming';
-  const records = (field.direction === 'in' ? typedRelationsOutgoing : typedRelationsIncoming).filter(
-    record => record._schema.id === field.relationSchemaId
-  );
+  const records = (
+    field.direction === 'in' ? typedRelationsOutgoing : typedRelationsIncoming
+  ).filter(record => record._schema.id === field.relationSchemaId);
   const otherEndpoint = (record: RelationRecord) =>
     direction === 'outgoing' ? record._out : record._in;
 
@@ -44,7 +44,13 @@ export const TypedRelationListItem = ({
       candidate => candidate.id === attribute.fieldId && !candidate.archived
     );
     return attributeField
-      ? [{ fieldId: attribute.fieldId, label: attribute.label ?? attributeField.name, field: attributeField }]
+      ? [
+          {
+            fieldId: attribute.fieldId,
+            label: attribute.label ?? attributeField.name,
+            field: attributeField
+          }
+        ]
       : [];
   });
 
@@ -65,7 +71,10 @@ export const TypedRelationListItem = ({
               <span className={styles.attributeLabel}>{otherEndpoint(record).name}</span>
               <span className={styles.attributeValue}>
                 {attributes
-                  .map(attribute => formatRelationFieldValue(attribute.field, record[attribute.fieldId]) ?? '—')
+                  .map(
+                    attribute =>
+                      formatRelationFieldValue(attribute.field, record[attribute.fieldId]) ?? '—'
+                  )
                   .join(' · ')}
               </span>
             </div>

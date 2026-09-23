@@ -406,7 +406,7 @@ export const ENTITY_DRAWER_SLOT_DEFINITIONS: EntityDrawerSlotDefinition[] = [
     defaultOptions: {},
     optionFields: [],
     optionsSchema: emptyOptionsSchema
-  },
+  }
 ];
 
 export const ENTITY_DRAWER_SLOTS: EntityDrawerCatalog['slots'] = ENTITY_DRAWER_SLOT_DEFINITIONS.map(
@@ -1140,7 +1140,14 @@ const buildVendorManagementContractDefaultProfile = (
       section(
         'systems-used',
         'Systems used',
-        [{ kind: 'typed-relation-list', fieldId: fieldIds.system, label: 'Systems used', showLabel: false }],
+        [
+          {
+            kind: 'typed-relation-list',
+            fieldId: fieldIds.system,
+            label: 'Systems used',
+            showLabel: false
+          }
+        ],
         true
       )
     ].filter(section => section.items.length > 0)

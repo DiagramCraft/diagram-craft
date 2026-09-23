@@ -439,7 +439,9 @@ describe('resolveEntityDrawerRenderModel', () => {
             id: 'custom',
             title: 'Custom',
             collapsible: false,
-            items: [{ kind: 'typed-relation-list', fieldId: 'retention_policy', label: 'Retention' }]
+            items: [
+              { kind: 'typed-relation-list', fieldId: 'retention_policy', label: 'Retention' }
+            ]
           }
         ]
       });
