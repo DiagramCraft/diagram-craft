@@ -31,7 +31,7 @@ const severityRank = (value: unknown): number => (value === 'highly-sensitive' ?
  * this repo) and have no equivalent on the Data Flow relation schema, so they're dropped rather
  * than faked; Protocol (a real field) stands in as the closest available "how it moves" signal.
  * No `FlowDrawer` — every field the Data Flow schema has is already in the row; carried-dataset
- * chips reuse the shared `DatasetDrawer` instead of a new detail panel.
+ * chips reuse the shared entity drawer instead of a new detail panel.
  */
 export const RestrictedFlowsView = ({
   workspaceSlug,

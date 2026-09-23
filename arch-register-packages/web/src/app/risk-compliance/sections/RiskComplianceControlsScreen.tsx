@@ -57,7 +57,8 @@ const compareNullable = (a: number | string | null, b: number | string | null): 
  * a control row, a Coverage risk row, a Coverage/Traceability asset row — goes through the shared
  * `useEntityDrawer()` stack (`WorkspaceEntityDrawerStack` in `WorkspaceLayout.tsx`), so they stack
  * rather than compete; ISO date formatting for the risk drawer comes from the app-level
- * `entityDrawer.dateFormat` config in `riskComplianceShell.tsx`, not a bespoke wrapper.
+ * The shared entity drawer now uses ISO date formatting by default, so no app-specific drawer
+ * adapter is needed here.
  *
  * The issue's design language ("family, type, automation, effectiveness, owner, frequency,
  * last/next test") doesn't fully match the shipped schema, which only gives Control

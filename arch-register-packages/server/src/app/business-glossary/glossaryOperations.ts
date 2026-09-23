@@ -10,20 +10,12 @@ import {
 } from '@arch-register/api-types/integrationCatalog';
 import type {
   GlossaryConfig,
-  GlossaryTerm,
-  GlossaryUsage,
-  GlossaryUsagePage
+  GlossaryTerm
 } from '@arch-register/api-types/app/business-glossary/glossaryContract';
+import type { EntityUsage } from '@arch-register/api-types/entityUsageContract';
 import { listEntitiesWithCount, getEntity } from '../../domain/catalog/entityQueryOperations';
-import {
-  getBatchEntityDependents,
-  getEntityDependents
-} from '../../domain/catalog/entityRelationshipOperations';
-import {
-  getEntityProjects,
-  getEntityDiagramFiles
-} from '../../domain/project/projectEntityOperations';
-import { listRelatedContent } from '../../domain/project/markdownListingOperations';
+import { getBatchEntityDependents } from '../../domain/catalog/entityRelationshipOperations';
+import { collectEntityUsage } from '../../domain/catalog/entityUsageOperations';
 import { runAuthorizedOperation } from '../../domain/operation';
 import { projectDbErrorMessages } from '../../domain/project/projectOperationHelpers';
 import { requireWorkspaceCapability } from '../../domain/auth/authorization';
@@ -218,57 +210,6 @@ type GlossaryTermMetadata = Omit<GlossaryTerm, 'usageCount' | 'quality'> & {
   quality: Omit<GlossaryTerm['quality'], 'unused'>;
 };
 
-type GlossaryDependents = Awaited<ReturnType<typeof getEntityDependents>>;
-
-const collectUsage = async (
-  db: DatabaseAdapter,
-  workspaceId: string,
-  workspaceKey: string,
-  entityId: string,
-  event: AuthenticatedEvent,
-  authCtx: AuthorizationContext,
-  preloadedDependents?: GlossaryDependents
-): Promise<GlossaryUsage[]> => {
-  const [dependents, documents, projects, diagrams] = await Promise.all([
-    preloadedDependents ??
-      getEntityDependents(db, workspaceId, entityId, { transitive: false }, authCtx),
-    listRelatedContent(db, workspaceKey, entityId, event),
-    getEntityProjects(db, workspaceKey, entityId, event),
-    getEntityDiagramFiles(db, workspaceKey, entityId, event)
-  ]);
-
-  const usage: GlossaryUsage[] = [];
-  const seen = new Set<string>();
-  const add = (item: GlossaryUsage) => {
-    const key = `${item.kind}:${item.id}:${item.context ?? ''}`;
-    if (seen.has(key)) return;
-    seen.add(key);
-    usage.push(item);
-  };
-
-  for (const dependent of dependents.dependents) {
-    add({
-      kind: dependent.kind === 'typed' ? 'relation' : 'entity',
-      id:
-        dependent.kind === 'typed'
-          ? (dependent.relationId ?? dependent.entityId)
-          : dependent.entityId,
-      label: dependent.entityName,
-      context: dependent.fieldName
-    });
-  }
-  for (const document of documents) {
-    add({ kind: 'document', id: document.file.id, label: document.file.name });
-  }
-  for (const project of projects) {
-    add({ kind: 'project', id: project.project.id, label: project.project.name });
-  }
-  for (const diagram of diagrams) {
-    add({ kind: 'diagram', id: diagram.file.id, label: diagram.file.name });
-  }
-  return usage;
-};
-
 const buildTermMetadata = async (
   db: DatabaseAdapter,
   workspace: string,
@@ -372,16 +313,16 @@ const filterTerms = <Term extends FilterableGlossaryTerm>(
 
 const collectUsageByTerm = async (
   db: DatabaseAdapter,
-  workspace: string,
-  workspaceKey: string,
+  workspaceId: string,
+  workspaceSlug: string,
   terms: GlossaryTermMetadata[],
   event: AuthenticatedEvent,
   authCtx: AuthorizationContext
 ) => {
-  if (terms.length === 0) return new Map<string, GlossaryUsage[]>();
+  if (terms.length === 0) return new Map<string, EntityUsage[]>();
   const dependentsByTerm = await getBatchEntityDependents(
     db,
-    workspace,
+    workspaceId,
     terms.map(term => term.entity._uid),
     { transitive: false },
     authCtx
@@ -392,10 +333,10 @@ const collectUsageByTerm = async (
     async term =>
       [
         term.entity._uid,
-        await collectUsage(
+        await collectEntityUsage(
           db,
-          workspace,
-          workspaceKey,
+          workspaceId,
+          workspaceSlug,
           term.entity._uid,
           event,
           authCtx,
@@ -408,15 +349,15 @@ const collectUsageByTerm = async (
 
 const buildTerms = async (
   db: DatabaseAdapter,
-  workspace: string,
-  workspaceKey: string,
+  workspaceId: string,
+  workspaceSlug: string,
   authCtx: AuthorizationContext,
   event: AuthenticatedEvent,
   resolution: GlossaryResolution,
   query: GlossaryTermQuery = {},
   entityIds?: Set<string>
 ) => {
-  const metadata = (await buildTermMetadata(db, workspace, authCtx, resolution)).filter(
+  const metadata = (await buildTermMetadata(db, workspaceId, authCtx, resolution)).filter(
     term => entityIds === undefined || entityIds.has(term.entity._uid)
   );
   const candidates = filterTerms(metadata, query, query.quality !== 'unused');
@@ -426,8 +367,8 @@ const buildTerms = async (
     query.quality === 'unused' ? candidates : candidates.slice(offset, offset + limit);
   const usageByTerm = await collectUsageByTerm(
     db,
-    workspace,
-    workspaceKey,
+    workspaceId,
+    workspaceSlug,
     usageTargets,
     event,
     authCtx
@@ -527,38 +468,6 @@ export const getGlossaryTerm = async (
       ).items[0];
       httpAssert.present(result, { status: 404, message: `Glossary term '${id}' not found` });
       return result!;
-    }
-  });
-
-export const getGlossaryTermUsage = async (
-  db: DatabaseAdapter,
-  workspace: string,
-  id: string,
-  event: AuthenticatedEvent,
-  limit?: number,
-  offset?: number
-) =>
-  runAuthorizedOperation({
-    db,
-    event,
-    scope: { kind: 'entity', workspace },
-    fallback: 'Failed to retrieve glossary term usage',
-    dbErrorMessages: projectDbErrorMessages,
-    operation: async ({ ws, authCtx }) => {
-      await requireApplicationAccess(db, ws, 'business-glossary', authCtx, event);
-      const resolution = await requireGlossary(db, ws);
-      const entity = await getEntity(db, ws, id, authCtx);
-      httpAssert.true(entity._schema.id === resolution.termSchemaId, {
-        status: 404,
-        message: `Data record '${id}' is not a glossary term`
-      });
-      const usage = await collectUsage(db, ws, workspace, entity._uid, event, authCtx);
-      const pageLimit = limit ?? 100;
-      const pageOffset = offset ?? 0;
-      return {
-        items: usage.slice(pageOffset, pageOffset + pageLimit),
-        total: usage.length
-      } satisfies GlossaryUsagePage;
     }
   });
 

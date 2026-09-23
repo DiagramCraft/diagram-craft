@@ -7,7 +7,6 @@ import { orpcErrorMiddleware } from '../../utils/orpcErrors';
 import {
   getGlossaryConfig,
   getGlossaryTerm,
-  getGlossaryTermUsage,
   listGlossaryReports,
   listGlossaryTerms
 } from './glossaryOperations';
@@ -26,16 +25,6 @@ export const glossaryORPCRouter = router.router({
       ),
       get: router.glossary.terms.get.handler(({ input, context }) =>
         getGlossaryTerm(context.db, input.params.workspace, input.params.id, context.event)
-      ),
-      usage: router.glossary.terms.usage.handler(({ input, context }) =>
-        getGlossaryTermUsage(
-          context.db,
-          input.params.workspace,
-          input.params.id,
-          context.event,
-          input.query?.limit,
-          input.query?.offset
-        )
       )
     },
     reports: {

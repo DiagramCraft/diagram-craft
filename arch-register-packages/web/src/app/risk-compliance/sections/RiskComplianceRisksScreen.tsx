@@ -63,7 +63,7 @@ export const RiskComplianceRisksScreen = () => {
 
   // `risk-control` isn't a capability binding (it's a fixed relation on Risk's own
   // `mitigating_controls` field) — read its real, per-workspace relation schema id off that
-  // field, mirroring `RiskDrawer.tsx`'s `riskControlRelationSchemaId`.
+  // field, mirroring the shared entity drawer's risk-control relation lookup.
   const mitigatingControlsField = riskSchema?.fields.find(
     field => field.id === 'mitigating_controls'
   );

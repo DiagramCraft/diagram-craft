@@ -48311,6 +48311,119 @@
         }
       }
     },
+    "/{workspace}/data/{id}/usage": {
+      "get": {
+        "operationId": "entities.usage",
+        "summary": "Get entity usage",
+        "description": "Retrieves visible entities, relations, documents, projects, and diagrams that reference this entity.",
+        "tags": [
+          "Entities",
+          "Entities"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 200,
+              "exclusiveMinimum": 0
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "enum": [
+                              "entity",
+                              "relation",
+                              "document",
+                              "project",
+                              "diagram"
+                            ],
+                            "type": "string",
+                            "description": "Type of resource that references the entity"
+                          },
+                          "id": {
+                            "type": "string",
+                            "description": "Identifier of the referencing resource"
+                          },
+                          "label": {
+                            "type": "string",
+                            "description": "Display label of the referencing resource"
+                          },
+                          "context": {
+                            "type": "string",
+                            "description": "Field or relation context for the reference"
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "id",
+                          "label"
+                        ]
+                      },
+                      "description": "Visible usage references in this page"
+                    },
+                    "total": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991,
+                      "description": "Total number of visible usage references"
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "total"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/{workspace}/data/bulk": {
       "post": {
         "operationId": "entities.bulkCreate",
@@ -74474,10 +74587,45 @@
                                                 "type": "string",
                                                 "minLength": 1
                                               },
+                                              "sourceSchemaId": {
+                                                "type": "string",
+                                                "minLength": 1
+                                              },
+                                              "traversal": {
+                                                "anyOf": [
+                                                  {
+                                                    "type": "object",
+                                                    "properties": {
+                                                      "kind": {},
+                                                      "fieldId": {},
+                                                      "direction": {},
+                                                      "ownerSchemaId": {}
+                                                    }
+                                                  },
+                                                  {
+                                                    "type": "object",
+                                                    "properties": {
+                                                      "kind": {},
+                                                      "fieldId": {},
+                                                      "relationSchemaId": {},
+                                                      "direction": {}
+                                                    }
+                                                  },
+                                                  {
+                                                    "type": "object",
+                                                    "properties": {
+                                                      "kind": {},
+                                                      "relationSchemaId": {},
+                                                      "direction": {}
+                                                    }
+                                                  }
+                                                ]
+                                              },
                                               "aggregation": {
                                                 "enum": [
                                                   "avg",
-                                                  "sum"
+                                                  "sum",
+                                                  "count"
                                                 ],
                                                 "type": "string"
                                               },
@@ -74574,6 +74722,47 @@
                                               "kind",
                                               "fieldId"
                                             ]
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "kind": {
+                                                "const": "query"
+                                              },
+                                              "queryText": {
+                                                "type": "string",
+                                                "minLength": 1
+                                              },
+                                              "label": {
+                                                "type": "string",
+                                                "minLength": 1,
+                                                "maxLength": 120
+                                              },
+                                              "showLabel": {
+                                                "type": "boolean"
+                                              },
+                                              "presentation": {
+                                                "enum": [
+                                                  "chips",
+                                                  "list"
+                                                ],
+                                                "type": "string"
+                                              },
+                                              "fields": {
+                                                "type": "array",
+                                                "items": {
+                                                  "type": "object",
+                                                  "properties": {
+                                                    "fieldId": {},
+                                                    "label": {}
+                                                  }
+                                                }
+                                              }
+                                            },
+                                            "required": [
+                                              "kind",
+                                              "queryText"
+                                            ]
                                           }
                                         ]
                                       }
@@ -74614,7 +74803,8 @@
                               "unsupported_slot",
                               "invalid_slot_options",
                               "unsupported_slot_for_schema",
-                              "unsupported_rollup_schema"
+                              "unsupported_rollup_schema",
+                              "invalid_rollup_traversal"
                             ],
                             "type": "string"
                           },
@@ -74960,10 +75150,45 @@
                                           "type": "string",
                                           "minLength": 1
                                         },
+                                        "sourceSchemaId": {
+                                          "type": "string",
+                                          "minLength": 1
+                                        },
+                                        "traversal": {
+                                          "anyOf": [
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "kind": {},
+                                                "fieldId": {},
+                                                "direction": {},
+                                                "ownerSchemaId": {}
+                                              }
+                                            },
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "kind": {},
+                                                "fieldId": {},
+                                                "relationSchemaId": {},
+                                                "direction": {}
+                                              }
+                                            },
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "kind": {},
+                                                "relationSchemaId": {},
+                                                "direction": {}
+                                              }
+                                            }
+                                          ]
+                                        },
                                         "aggregation": {
                                           "enum": [
                                             "avg",
-                                            "sum"
+                                            "sum",
+                                            "count"
                                           ],
                                           "type": "string"
                                         },
@@ -75059,6 +75284,47 @@
                                       "required": [
                                         "kind",
                                         "fieldId"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "const": "query"
+                                        },
+                                        "queryText": {
+                                          "type": "string",
+                                          "minLength": 1
+                                        },
+                                        "label": {
+                                          "type": "string",
+                                          "minLength": 1,
+                                          "maxLength": 120
+                                        },
+                                        "showLabel": {
+                                          "type": "boolean"
+                                        },
+                                        "presentation": {
+                                          "enum": [
+                                            "chips",
+                                            "list"
+                                          ],
+                                          "type": "string"
+                                        },
+                                        "fields": {
+                                          "type": "array",
+                                          "items": {
+                                            "type": "object",
+                                            "properties": {
+                                              "fieldId": {},
+                                              "label": {}
+                                            }
+                                          }
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "queryText"
                                       ]
                                     }
                                   ]
@@ -75385,10 +75651,45 @@
                                                 "type": "string",
                                                 "minLength": 1
                                               },
+                                              "sourceSchemaId": {
+                                                "type": "string",
+                                                "minLength": 1
+                                              },
+                                              "traversal": {
+                                                "anyOf": [
+                                                  {
+                                                    "type": "object",
+                                                    "properties": {
+                                                      "kind": {},
+                                                      "fieldId": {},
+                                                      "direction": {},
+                                                      "ownerSchemaId": {}
+                                                    }
+                                                  },
+                                                  {
+                                                    "type": "object",
+                                                    "properties": {
+                                                      "kind": {},
+                                                      "fieldId": {},
+                                                      "relationSchemaId": {},
+                                                      "direction": {}
+                                                    }
+                                                  },
+                                                  {
+                                                    "type": "object",
+                                                    "properties": {
+                                                      "kind": {},
+                                                      "relationSchemaId": {},
+                                                      "direction": {}
+                                                    }
+                                                  }
+                                                ]
+                                              },
                                               "aggregation": {
                                                 "enum": [
                                                   "avg",
-                                                  "sum"
+                                                  "sum",
+                                                  "count"
                                                 ],
                                                 "type": "string"
                                               },
@@ -75485,6 +75786,47 @@
                                               "kind",
                                               "fieldId"
                                             ]
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "kind": {
+                                                "const": "query"
+                                              },
+                                              "queryText": {
+                                                "type": "string",
+                                                "minLength": 1
+                                              },
+                                              "label": {
+                                                "type": "string",
+                                                "minLength": 1,
+                                                "maxLength": 120
+                                              },
+                                              "showLabel": {
+                                                "type": "boolean"
+                                              },
+                                              "presentation": {
+                                                "enum": [
+                                                  "chips",
+                                                  "list"
+                                                ],
+                                                "type": "string"
+                                              },
+                                              "fields": {
+                                                "type": "array",
+                                                "items": {
+                                                  "type": "object",
+                                                  "properties": {
+                                                    "fieldId": {},
+                                                    "label": {}
+                                                  }
+                                                }
+                                              }
+                                            },
+                                            "required": [
+                                              "kind",
+                                              "queryText"
+                                            ]
                                           }
                                         ]
                                       }
@@ -75525,7 +75867,8 @@
                               "unsupported_slot",
                               "invalid_slot_options",
                               "unsupported_slot_for_schema",
-                              "unsupported_rollup_schema"
+                              "unsupported_rollup_schema",
+                              "invalid_rollup_traversal"
                             ],
                             "type": "string"
                           },
@@ -75748,6 +76091,13 @@
                             "type": "string"
                           },
                           "application": {
+                            "type": "string"
+                          },
+                          "fixedPresentation": {
+                            "enum": [
+                              "row",
+                              "mini-panel"
+                            ],
                             "type": "string"
                           },
                           "supportedSchemaIds": {
@@ -79888,120 +80238,6 @@
                     "status",
                     "usageCount",
                     "quality"
-                  ]
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/{workspace}/glossary/terms/{id}/usage": {
-      "get": {
-        "operationId": "glossary.terms.usage",
-        "summary": "List glossary term usage",
-        "description": "Returns permission-filtered explicit references to a term.",
-        "tags": [
-          "Glossary",
-          "Glossary"
-        ],
-        "parameters": [
-          {
-            "name": "workspace",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 200,
-              "description": "Maximum number of usage references to return"
-            },
-            "allowEmptyValue": true,
-            "allowReserved": true
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "minimum": 0,
-              "maximum": 9007199254740991,
-              "description": "Number of usage references to skip"
-            },
-            "allowEmptyValue": true,
-            "allowReserved": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "items": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "kind": {
-                            "enum": [
-                              "entity",
-                              "relation",
-                              "document",
-                              "project",
-                              "diagram"
-                            ],
-                            "type": "string",
-                            "description": "Type of resource that references the term"
-                          },
-                          "id": {
-                            "type": "string",
-                            "description": "Identifier of the referencing resource"
-                          },
-                          "label": {
-                            "type": "string",
-                            "description": "Display label of the referencing resource"
-                          },
-                          "context": {
-                            "type": "string",
-                            "description": "Field or relation context for the reference"
-                          }
-                        },
-                        "required": [
-                          "kind",
-                          "id",
-                          "label"
-                        ]
-                      },
-                      "description": "Visible usage references in this page"
-                    },
-                    "total": {
-                      "type": "integer",
-                      "minimum": 0,
-                      "maximum": 9007199254740991,
-                      "description": "Total number of visible usage references"
-                    }
-                  },
-                  "required": [
-                    "items",
-                    "total"
                   ]
                 }
               }

@@ -22,7 +22,7 @@ const EMPTY: DatasetCoverageRollups = {
 };
 
 /**
- * Batched sibling of `useDatasetCoverageRollup.ts`, for table/overview screens. Unlike
+ * Batched dataset coverage rollup for table/overview screens. Unlike
  * `useRiskCoverageRollups.ts`, which fetches relations, this fetches the Data Entities themselves
  * (one `entities.list` request scoped to the workspace's `data-stewardship` schema binding) since
  * coverage is computed entirely off each entity's own fields.

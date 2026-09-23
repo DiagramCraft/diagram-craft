@@ -1,24 +1,35 @@
 import { useQuery } from '@tanstack/react-query';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { MetricConfig } from '@arch-register/api-types/metricContract';
+import type { MetricTraversalStep } from '@arch-register/api-types/metricContract';
 import type { EntityDrawerItem } from '@arch-register/api-types/entityDrawerConfiguration';
 import { metricRollupQuery } from '../../../../queries/metrics';
 import { extractEntityOwnFields } from './entityOwnFields';
 
 export type RollupAggregation = Extract<EntityDrawerItem, { kind: 'rollup' }>['aggregation'];
 
-/** Drawer `rollup` aggregation ids (`avg`/`sum`) → metric-engine aggregation names. */
+/** Drawer `rollup` aggregation ids (`avg`/`sum`/`count`) → metric-engine aggregation names. */
 export const ROLLUP_METRIC_AGGREGATION: Record<RollupAggregation, MetricConfig['aggregation']> = {
   avg: 'average',
-  sum: 'sum'
+  sum: 'sum',
+  count: 'count'
 };
 
 export const buildRollupMetric = (
   schemaId: string | null,
   fieldId: string,
-  aggregation: MetricConfig['aggregation']
+  aggregation: MetricConfig['aggregation'],
+  sourceSchemaId: string | null = schemaId,
+  traversal?: MetricTraversalStep
 ): MetricConfig | null =>
-  schemaId ? { sourceSchemaId: schemaId, source: { kind: 'field', fieldId }, aggregation } : null;
+  sourceSchemaId
+    ? {
+        sourceSchemaId,
+        source: { kind: 'field', fieldId },
+        aggregation,
+        ...(traversal ? { path: [traversal] } : {})
+      }
+    : null;
 
 export type EntityRollupMetric = {
   value: number | null;
@@ -44,7 +55,9 @@ export const useEntityRollupMetric = (
   entityId: string | null,
   fieldId: string,
   aggregation: RollupAggregation,
-  ownEntity?: EntityRecord | null
+  ownEntity?: EntityRecord | null,
+  sourceSchemaId?: string,
+  traversal?: MetricTraversalStep
 ): EntityRollupMetric => {
   const boxEntityIds = entityId ? [entityId] : [];
   const enabled = boxEntityIds.length > 0 && !!schemaId;
@@ -53,7 +66,13 @@ export const useEntityRollupMetric = (
       workspaceId,
       {
         boxEntityIds,
-        metric: buildRollupMetric(schemaId, fieldId, ROLLUP_METRIC_AGGREGATION[aggregation])
+        metric: buildRollupMetric(
+          schemaId,
+          fieldId,
+          ROLLUP_METRIC_AGGREGATION[aggregation],
+          sourceSchemaId ?? schemaId,
+          traversal
+        )
       },
       enabled
     )
@@ -63,12 +82,22 @@ export const useEntityRollupMetric = (
   if (!id0) return { ...EMPTY, isLoading: query.isLoading, error: (query.error as Error) ?? null };
 
   const result = query.data?.results.find(candidate => candidate.boxEntityId === id0);
+  const isLegacyContainmentRollup = traversal === undefined;
   const isLeaf = (result?.sourceCount ?? 0) === 0;
   const own = extractEntityOwnFields(ownEntity, [fieldId])[fieldId];
+  const value =
+    isLegacyContainmentRollup && isLeaf
+      ? aggregation === 'count'
+        ? 1
+        : (own?.value ?? null)
+      : (result?.value ?? null);
 
   return {
-    value: isLeaf ? (own?.value ?? null) : (result?.value ?? null),
-    currency: isLeaf ? (own?.currency ?? null) : (result?.currencyCode ?? null),
+    value,
+    currency:
+      isLegacyContainmentRollup && isLeaf
+        ? (own?.currency ?? null)
+        : (result?.currencyCode ?? null),
     isLoading: query.isLoading,
     error: (query.error as Error) ?? null
   };

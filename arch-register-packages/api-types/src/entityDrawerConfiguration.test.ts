@@ -109,6 +109,89 @@ describe('entity drawer configuration', () => {
     expect(result.diagnostics).toEqual([]);
   });
 
+  it('accepts and resolves generic query items without diagnostics', () => {
+    const config = entityDrawerConfigurationSchema.parse({
+      version: 1,
+      profiles: {
+        service: {
+          sections: [
+            {
+              id: 'content',
+              title: 'Content',
+              items: [
+                {
+                  kind: 'query',
+                  queryText: 'subtree(parent).->"Business Capability Supports Entity"',
+                  label: 'Realized by'
+                }
+              ]
+            }
+          ]
+        }
+      }
+    });
+
+    const result = resolveEntityDrawerConfiguration(config, [schema]);
+    expect(result.effective.profiles.service?.sections[0]?.items).toEqual([
+      {
+        kind: 'query',
+        queryText: 'subtree(parent).->"Business Capability Supports Entity"',
+        label: 'Realized by'
+      }
+    ]);
+    expect(result.diagnostics).toEqual([]);
+  });
+
+  it('accepts list query presentation with configured fields', () => {
+    const config = entityDrawerConfigurationSchema.parse({
+      version: 1,
+      profiles: {
+        service: {
+          sections: [
+            {
+              id: 'content',
+              title: 'Content',
+              items: [
+                {
+                  kind: 'query',
+                  queryText: '<-"Contract".vendor',
+                  label: 'Contracts',
+                  presentation: 'list',
+                  fields: [{ fieldId: 'annual_cost', label: 'Annual cost' }]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    });
+
+    expect(config.profiles.service?.sections[0]?.items).toEqual([
+      {
+        kind: 'query',
+        queryText: '<-"Contract".vendor',
+        label: 'Contracts',
+        presentation: 'list',
+        fields: [{ fieldId: 'annual_cost', label: 'Annual cost' }]
+      }
+    ]);
+  });
+
+  it('rejects a query item with an empty queryText', () => {
+    expect(() =>
+      entityDrawerConfigurationSchema.parse({
+        version: 1,
+        profiles: {
+          service: {
+            sections: [
+              { id: 'content', title: 'Content', items: [{ kind: 'query', queryText: '' }] }
+            ]
+          }
+        }
+      })
+    ).toThrow();
+  });
+
   it('normalizes the legacy Vendor capabilities-funded slot to a placeholder', () => {
     expect(
       normalizeLegacyEntityDrawerConfiguration({
@@ -136,6 +219,44 @@ describe('entity drawer configuration', () => {
               items: [
                 { kind: 'placeholder', message: VENDOR_CAPABILITIES_FUNDED_PLACEHOLDER_MESSAGE }
               ]
+            }
+          ]
+        }
+      }
+    });
+  });
+
+  it('normalizes the legacy Data Stewardship change-case slot', () => {
+    expect(
+      normalizeLegacyEntityDrawerConfiguration({
+        version: 1,
+        profiles: {
+          service: {
+            sections: [
+              {
+                id: 'cases',
+                title: 'Cases',
+                items: [
+                  {
+                    kind: 'slot',
+                    slotId: 'data-stewardship.change-cases',
+                    showLabel: false
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      })
+    ).toEqual({
+      version: 1,
+      profiles: {
+        service: {
+          sections: [
+            {
+              id: 'cases',
+              title: 'Cases',
+              items: [{ kind: 'slot', slotId: 'entity.change-cases', showLabel: false }]
             }
           ]
         }
@@ -213,14 +334,36 @@ describe('entity drawer configuration', () => {
     ...schema,
     fields: [...schema.fields, { id: 'parent', name: 'Parent', type: 'containment' }]
   };
+  const initiativeSchema = {
+    id: 'initiative',
+    name: 'Initiative',
+    fields: [
+      {
+        id: 'objectives',
+        name: 'Objectives',
+        type: 'reference',
+        schemaId: 'objective'
+      }
+    ]
+  };
 
   it('builds provider defaults and validates provider options', () => {
     const result = buildDefaultEntityDrawerConfiguration(
-      [schemaWithParent],
+      [schemaWithParent, initiativeSchema],
       [
         {
           type: 'strategy-model',
-          bindings: { business_capability: { target: { kind: 'entity_schema', id: 'service' } } },
+          bindings: {
+            objective: { target: { kind: 'entity_schema', id: 'objective' } },
+            initiative: { target: { kind: 'entity_schema', id: 'initiative' } },
+            business_capability: { target: { kind: 'entity_schema', id: 'service' } },
+            objective_supports_business_capability: {
+              target: { kind: 'relation_schema', id: 'objective-supports-capability' }
+            },
+            business_capability_supports_entity: {
+              target: { kind: 'relation_schema', id: 'bcse-rel' }
+            }
+          },
           view_config: {
             fields: [
               {
@@ -239,9 +382,21 @@ describe('entity drawer configuration', () => {
       section => section.id === 'application-content'
     );
     expect(applicationSection?.items).toEqual([
-      { kind: 'slot', slotId: 'strategy.realized-by' },
-      { kind: 'slot', slotId: 'strategy.linked-objectives' },
-      { kind: 'slot', slotId: 'strategy.linked-initiatives' },
+      {
+        kind: 'query',
+        queryText: 'subtree(parent).->"bcse-rel"',
+        label: 'Realized by'
+      },
+      {
+        kind: 'query',
+        queryText: '<-"objective-supports-capability"',
+        label: 'Linked objectives'
+      },
+      {
+        kind: 'query',
+        queryText: '<-"objective-supports-capability".<-"Initiative".objectives',
+        label: 'Linked initiatives'
+      },
       { kind: 'rollup', fieldId: 'score', aggregation: 'sum', format: 'number' },
       { kind: 'rollup-leaf-count' }
     ]);
@@ -288,7 +443,7 @@ describe('entity drawer configuration', () => {
     expect(noParent.diagnostics.at(-1)?.code).toBe('unsupported_rollup_schema');
   });
 
-  it('only advertises provider slots for their configured schema', () => {
+  it('advertises capability-bound slots only for their configured schema', () => {
     const catalog = buildEntityDrawerCatalog(
       [schema, { ...schema, id: 'other', name: 'Other' }],
       [
@@ -298,13 +453,96 @@ describe('entity drawer configuration', () => {
         }
       ]
     );
-    expect(catalog.slots.map(slot => slot.id)).toContain('strategy.realized-by');
-    expect(
-      catalog.slots.find(slot => slot.id === 'strategy.realized-by')?.supportedSchemaIds
-    ).toEqual(['service']);
-    expect(catalog.slots.map(slot => slot.id)).not.toContain('strategy.rollup');
+    expect(catalog.slots.map(slot => slot.id)).not.toContain('strategy.linked-objectives');
+    expect(catalog.slots.map(slot => slot.id)).not.toContain('strategy.linked-initiatives');
     expect(catalog.slots.map(slot => slot.id)).not.toContain('vendor.spend');
+    expect(catalog.slots.map(slot => slot.id)).not.toContain('vendor.applications-supplied');
     expect(catalog.slots.map(slot => slot.id)).not.toContain('vendor.capabilities-funded');
+    expect(catalog.slots.find(slot => slot.id === 'entity.change-cases')).toMatchObject({
+      supportedSchemaIds: ['service', 'other']
+    });
+  });
+
+  it('accepts one-hop relation roll-ups without a parent containment field', () => {
+    const vendorSchema = {
+      id: 'vendor',
+      name: 'Vendor',
+      fields: [{ id: 'name', name: 'Name', type: 'text' }]
+    };
+    const contractSchema = {
+      id: 'contract',
+      name: 'Contract',
+      fields: [
+        { id: 'vendor', name: 'Vendor', type: 'containment', schemaId: 'vendor' },
+        { id: 'annual_cost', name: 'Annual cost', type: 'currency' }
+      ]
+    };
+    const config = {
+      version: 1 as const,
+      profiles: {
+        vendor: {
+          sections: [
+            {
+              id: 'spend',
+              title: 'Spend',
+              items: [
+                {
+                  kind: 'rollup' as const,
+                  sourceSchemaId: 'contract',
+                  fieldId: 'annual_cost',
+                  traversal: {
+                    kind: 'relation' as const,
+                    fieldId: 'vendor',
+                    direction: 'backward' as const,
+                    ownerSchemaId: 'contract'
+                  },
+                  aggregation: 'count' as const,
+                  format: 'number' as const
+                }
+              ]
+            }
+          ]
+        }
+      }
+    };
+    const result = resolveEntityDrawerConfiguration(config, [vendorSchema, contractSchema], [], []);
+
+    expect(result.diagnostics).toEqual([]);
+    expect(result.effective.profiles.vendor?.sections[0]?.items).toEqual(
+      config.profiles.vendor.sections[0]?.items
+    );
+  });
+
+  it('accepts the generic change-case slot for a non-Data-Entity profile', () => {
+    const result = resolveEntityDrawerConfiguration(
+      {
+        version: 1,
+        profiles: {
+          service: {
+            sections: [
+              {
+                id: 'cases',
+                title: 'Cases',
+                items: [{ kind: 'slot', slotId: 'entity.change-cases' }]
+              }
+            ]
+          }
+        }
+      },
+      [schema]
+    );
+
+    expect(result.effective.profiles.service?.sections[0]?.items).toEqual([
+      expect.objectContaining({
+        kind: 'slot',
+        slotId: 'entity.change-cases',
+        options: {}
+      })
+    ]);
+    expect(result.diagnostics).toEqual([]);
+    expect(buildDefaultEntityDrawerConfiguration([schema]).profiles.service?.sections).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: 'application-content' })])
+    );
   });
 
   it('validates cross-schema containment children and omits invalid targets', () => {
@@ -398,67 +636,6 @@ describe('entity drawer configuration', () => {
     expect(normalizeLegacyEntityDrawerConfiguration(null)).toBeNull();
   });
 
-  it('normalizes the legacy Strategy rollup slot at read time', () => {
-    const strategySchema = {
-      id: 'business_capability',
-      name: 'Business Capability',
-      fields: [
-        { id: 'parent', name: 'Parent', type: 'containment', schemaId: 'business_capability' },
-        { id: 'maturity', name: 'Maturity', type: 'number' }
-      ]
-    };
-    const result = resolveEntityDrawerConfiguration(
-      {
-        version: 1,
-        profiles: {
-          business_capability: {
-            sections: [
-              {
-                id: 'rollup',
-                title: 'Roll-up',
-                items: [
-                  {
-                    kind: 'slot',
-                    slotId: 'strategy.rollup',
-                    options: {
-                      rollups: [{ fieldId: 'maturity', aggregation: 'avg', format: 'decimal1' }]
-                    }
-                  }
-                ]
-              }
-            ]
-          }
-        }
-      },
-      [strategySchema]
-    );
-
-    expect(result.effective.profiles.business_capability?.sections[0]?.items).toEqual([
-      { kind: 'rollup', fieldId: 'maturity', aggregation: 'avg', format: 'decimal1' },
-      { kind: 'rollup-leaf-count' }
-    ]);
-    expect(result.diagnostics).toEqual([]);
-
-    const dropped = resolveEntityDrawerConfiguration(
-      {
-        version: 1,
-        profiles: {
-          business_capability: {
-            sections: [
-              {
-                id: 'rollup',
-                title: 'Roll-up',
-                items: [{ kind: 'slot', slotId: 'strategy.rollup' }]
-              }
-            ]
-          }
-        }
-      },
-      [strategySchema]
-    );
-    expect(dropped.effective.profiles.business_capability?.sections[0]?.items).toEqual([]);
-  });
-
   it('remaps nested containment-child schema references', () => {
     const profiles = {
       parent: {
@@ -496,7 +673,7 @@ describe('entity drawer configuration', () => {
     });
   });
 
-  it('advertises Risk & Compliance provider slots for the configured Risk schema', () => {
+  it('does not advertise the removed Risk coverage provider slot', () => {
     const riskSchema = {
       id: 'risk',
       name: 'Risk',
@@ -513,20 +690,16 @@ describe('entity drawer configuration', () => {
     const result = resolveEntityDrawerConfiguration(null, [riskSchema], [configuration]);
     const items = result.effective.profiles.risk!.sections.flatMap(section => section.items);
     expect(items).not.toEqual(
-      expect.arrayContaining([
-        { kind: 'slot', slotId: 'risk.coverage' },
-        { kind: 'slot', slotId: 'risk.affected-entities' }
-      ])
+      expect.arrayContaining([{ kind: 'slot', slotId: 'risk.affected-entities' }])
     );
+    expect(items).not.toEqual(expect.arrayContaining([{ kind: 'slot', slotId: 'risk.coverage' }]));
 
     const catalog = buildEntityDrawerCatalog([riskSchema], [configuration]);
-    expect(catalog.slots.find(slot => slot.id === 'risk.coverage')?.supportedSchemaIds).toEqual([
-      'risk'
-    ]);
+    expect(catalog.slots.find(slot => slot.id === 'risk.coverage')).toBeUndefined();
     expect(catalog.slots.find(slot => slot.id === 'risk.affected-entities')).toBeUndefined();
   });
 
-  it('derives the API specification profile and provider slot from the capability binding', () => {
+  it('derives the API specification profile from the capability binding', () => {
     const apiSchema = {
       id: 'api',
       name: 'API',
@@ -560,15 +733,12 @@ describe('entity drawer configuration', () => {
         { kind: 'field', fieldId: 'contract_version', label: 'API version' },
         { kind: 'metadata', slot: 'owner' },
         { kind: 'relation', fieldId: 'providers', label: 'Providers' },
-        { kind: 'relation', fieldId: 'consumers', label: 'Consumers' },
-        { kind: 'slot', slotId: 'api-specification.catalog', showLabel: false }
+        { kind: 'relation', fieldId: 'consumers', label: 'Consumers' }
       ])
     );
 
     const catalog = buildEntityDrawerCatalog([apiSchema], [configuration]);
-    expect(catalog.slots.find(slot => slot.id === 'api-specification.catalog')).toMatchObject({
-      supportedSchemaIds: ['api']
-    });
+    expect(catalog.slots.find(slot => slot.id === 'api-specification.catalog')).toBeUndefined();
   });
 
   it('derives the Data Entity profile with stewardship fields and supported provider slots', () => {
@@ -606,7 +776,6 @@ describe('entity drawer configuration', () => {
     expect(profile.sections.map(section => section.id)).toEqual([
       'attributes',
       'stewardship',
-      'coverage',
       'queue-items',
       'cases',
       'assessments'
@@ -621,10 +790,9 @@ describe('entity drawer configuration', () => {
           fieldId: 'retention_policy',
           presentation: 'mini-panel'
         },
-        { kind: 'slot', slotId: 'data-stewardship.coverage', showLabel: false },
-        { kind: 'slot', slotId: 'data-stewardship.queue-items', showLabel: false },
-        { kind: 'slot', slotId: 'data-stewardship.change-cases', showLabel: false },
-        { kind: 'slot', slotId: 'data-stewardship.assessments', showLabel: false }
+        { kind: 'slot', slotId: 'entity.governance-items', showLabel: false },
+        { kind: 'slot', slotId: 'entity.change-cases', showLabel: false },
+        { kind: 'slot', slotId: 'entity.assessments', showLabel: false }
       ])
     );
     expect(profile.sections.flatMap(section => section.items)).not.toEqual(
@@ -634,6 +802,11 @@ describe('entity drawer configuration', () => {
         { kind: 'slot', slotId: 'data-stewardship.systems' }
       ])
     );
+    expect(
+      buildEntityDrawerCatalog([dataEntitySchema], [configuration]).slots.find(
+        slot => slot.id === 'data-stewardship.coverage'
+      )
+    ).toBeUndefined();
   });
 
   it('derives the glossary term profile from mapped capability fields', () => {
@@ -679,7 +852,7 @@ describe('entity drawer configuration', () => {
         { kind: 'field', fieldId: 'short_names' },
         { kind: 'relation', fieldId: 'topics' },
         { kind: 'metadata', slot: 'owner' },
-        { kind: 'slot', slotId: 'business-glossary.usage', label: 'Usage & backlinks' }
+        { kind: 'slot', slotId: 'entity.usage', label: 'Usage & backlinks' }
       ])
     );
     expect(profile.sections.map(section => section.id)).toEqual(['attributes', 'details']);
@@ -687,12 +860,12 @@ describe('entity drawer configuration', () => {
       expect.arrayContaining([
         { kind: 'metadata', slot: 'owner' },
         { kind: 'relation', fieldId: 'topics' },
-        { kind: 'slot', slotId: 'business-glossary.usage', label: 'Usage & backlinks' }
+        { kind: 'slot', slotId: 'entity.usage', label: 'Usage & backlinks' }
       ])
     );
   });
 
-  it('derives the Vendor Management profile with fields and provider slots in drawer order', () => {
+  it('derives the Vendor Management profile with fields and query content in drawer order', () => {
     const vendorSchema = {
       id: 'vendor',
       name: 'Vendor',
@@ -709,6 +882,20 @@ describe('entity drawer configuration', () => {
         { id: 'criticality', name: 'Criticality', type: 'number' }
       ]
     };
+    const contractSchema = {
+      id: 'contract',
+      name: 'Contract',
+      fields: [
+        { id: 'vendor', name: 'Vendor', type: 'containment' },
+        {
+          id: 'system',
+          name: 'Used by',
+          type: 'typedRelation',
+          relationSchemaId: 'system-contract'
+        },
+        { id: 'annual_cost', name: 'Annual Cost', type: 'currency' }
+      ]
+    };
     const configuration = {
       type: 'vendor-management',
       bindings: {
@@ -717,8 +904,10 @@ describe('entity drawer configuration', () => {
       }
     } as const;
 
-    const profile = buildDefaultEntityDrawerConfiguration([vendorSchema], [configuration]).profiles
-      .vendor!;
+    const profile = buildDefaultEntityDrawerConfiguration(
+      [vendorSchema, contractSchema],
+      [configuration]
+    ).profiles.vendor!;
 
     expect(profile.header.badges).toEqual([
       { kind: 'field', fieldId: 'tier', showLabel: false },
@@ -736,18 +925,65 @@ describe('entity drawer configuration', () => {
     expect(profile.sections[0]?.items).toEqual(
       expect.arrayContaining([
         { kind: 'field', fieldId: 'security_risk', presentation: 'mini-panel' },
-        { kind: 'field', fieldId: 'criticality', presentation: 'mini-panel' },
-        {
-          kind: 'slot',
-          slotId: 'vendor.risk',
-          label: 'vmRisk',
-          presentation: 'mini-panel'
-        }
+        { kind: 'field', fieldId: 'criticality', presentation: 'mini-panel' }
       ])
     );
     expect(profile.sections[0]?.layout).toBe('stat-grid');
     expect(profile.sections[2]?.items).toEqual([
-      { kind: 'slot', slotId: 'vendor.spend', label: 'Spend', showLabel: false }
+      {
+        kind: 'rollup',
+        sourceSchemaId: 'contract',
+        fieldId: 'annual_cost',
+        traversal: {
+          kind: 'relation',
+          fieldId: 'vendor',
+          direction: 'backward',
+          ownerSchemaId: 'contract'
+        },
+        aggregation: 'sum',
+        format: 'currency',
+        label: 'vmSpend'
+      },
+      {
+        kind: 'rollup',
+        sourceSchemaId: 'contract',
+        fieldId: 'annual_cost',
+        traversal: {
+          kind: 'relation',
+          fieldId: 'vendor',
+          direction: 'backward',
+          ownerSchemaId: 'contract'
+        },
+        aggregation: 'count',
+        format: 'number',
+        label: 'Contracts'
+      }
+    ]);
+    expect(profile.sections[3]?.items).toEqual([
+      {
+        kind: 'query',
+        queryText: '<-"Contract".vendor',
+        label: 'Contracts',
+        showLabel: false,
+        presentation: 'list',
+        fields: [{ fieldId: 'annual_cost', label: 'Annual cost' }]
+      }
+    ]);
+    expect(profile.sections[4]?.items).toEqual([
+      {
+        kind: 'query',
+        queryText: '<-"Contract".vendor.<-"system-contract"',
+        label: 'Applications supplied'
+      }
+    ]);
+    expect(profile.sections[5]?.items).toEqual([
+      {
+        kind: 'query',
+        queryText: '<-"Contract".vendor.<-"system-contract"',
+        label: 'Technology lifecycle',
+        presentation: 'list',
+        fields: [{ fieldId: '_lifecycle', label: 'Lifecycle' }]
+      }
     ]);
     expect(profile.sections.at(-1)?.items).toEqual([
       { kind: 'placeholder', message: VENDOR_CAPABILITIES_FUNDED_PLACEHOLDER_MESSAGE }

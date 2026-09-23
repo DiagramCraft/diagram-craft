@@ -107,7 +107,7 @@ describe('instantiateTemplate', () => {
           id: 'details',
           items: expect.arrayContaining([
             { kind: 'relation', fieldId: 'categories' },
-            { kind: 'slot', slotId: 'business-glossary.usage', label: 'Usage & backlinks' }
+            { kind: 'slot', slotId: 'entity.usage', label: 'Usage & backlinks' }
           ])
         })
       ])
@@ -219,6 +219,41 @@ describe('instantiateTemplate', () => {
       expect.objectContaining({ id: 'lifecycle-review', name: 'Lifecycle & Review' }),
       expect.objectContaining({ id: 'reference-models', name: 'Reference Models' })
     ]);
+    expect(
+      definitions.entityDrawerProfiles[businessCapability!.id]?.sections.find(
+        section => section.id === 'strategy-assessment'
+      )?.items
+    ).toEqual([
+      { kind: 'rollup', fieldId: 'maturity', aggregation: 'avg', format: 'decimal1' },
+      { kind: 'rollup', fieldId: 'maturity_target', aggregation: 'avg', format: 'decimal1' },
+      { kind: 'rollup', fieldId: 'annual_investment', aggregation: 'sum', format: 'currency' },
+      { kind: 'rollup', fieldId: 'risk', aggregation: 'avg', format: 'decimal1' },
+      { kind: 'rollup-leaf-count' },
+      { kind: 'field', fieldId: 'capability_type' },
+      { kind: 'field', fieldId: 'value_stream' },
+      { kind: 'field', fieldId: 'maturity' },
+      { kind: 'field', fieldId: 'maturity_target' },
+      { kind: 'field', fieldId: 'strategic_importance' },
+      { kind: 'field', fieldId: 'investment_priority' }
+    ]);
+    expect(
+      definitions.entityDrawerProfiles[businessCapability!.id]?.sections.find(
+        section => section.id === 'application-content'
+      )?.items
+    ).toEqual(
+      expect.arrayContaining([
+        {
+          kind: 'query',
+          queryText: '<-"Objective Supports Business Capability"',
+          label: 'Linked objectives'
+        },
+        {
+          kind: 'query',
+          queryText: '<-"Objective Supports Business Capability".<-"Initiative".objectives',
+          label: 'Linked initiatives'
+        }
+      ])
+    );
     // Every field group is referenced by at least one field.
     for (const group of businessCapability?.groups ?? []) {
       expect(businessCapability?.fields.some(field => field.groupId === group.id)).toBe(true);
@@ -330,7 +365,7 @@ describe('instantiateTemplate', () => {
         }),
         expect.objectContaining({
           id: 'assessments',
-          items: [{ kind: 'slot', slotId: 'data-stewardship.assessments', showLabel: false }]
+          items: [{ kind: 'slot', slotId: 'entity.assessments', showLabel: false }]
         })
       ])
     });
@@ -832,11 +867,7 @@ describe('instantiateTemplate', () => {
       },
       sections: expect.arrayContaining([
         expect.objectContaining({ id: 'providers' }),
-        expect.objectContaining({ id: 'consumers' }),
-        expect.objectContaining({
-          id: 'specification',
-          items: [{ kind: 'slot', slotId: 'api-specification.catalog', showLabel: false }]
-        })
+        expect.objectContaining({ id: 'consumers' })
       ])
     });
     expect(
@@ -852,6 +883,82 @@ describe('instantiateTemplate', () => {
     ]);
     expect(definitions.entityDrawerProfiles[vendor!.id]?.sections.at(-1)?.items).toEqual([
       { kind: 'placeholder', message: VENDOR_CAPABILITIES_FUNDED_PLACEHOLDER_MESSAGE }
+    ]);
+    expect(
+      definitions.entityDrawerProfiles[vendor!.id]?.sections.find(
+        section => section.id === 'contracts'
+      )?.items
+    ).toEqual([
+      {
+        kind: 'query',
+        queryText: '<-"Contract".vendor',
+        label: 'Contracts',
+        showLabel: false,
+        presentation: 'list',
+        fields: [{ fieldId: 'annual_cost', label: 'Annual cost' }]
+      }
+    ]);
+    expect(
+      definitions.entityDrawerProfiles[vendor!.id]?.sections.find(section => section.id === 'spend')
+    ).toEqual({
+      id: 'spend',
+      title: 'Spend',
+      collapsible: true,
+      layout: 'stat-grid',
+      items: [
+        {
+          kind: 'rollup',
+          sourceSchemaId: contract!.id,
+          fieldId: 'annual_cost',
+          traversal: {
+            kind: 'relation',
+            fieldId: 'vendor',
+            direction: 'backward',
+            ownerSchemaId: contract!.id
+          },
+          aggregation: 'sum',
+          format: 'currency',
+          label: 'vmSpend'
+        },
+        {
+          kind: 'rollup',
+          sourceSchemaId: contract!.id,
+          fieldId: 'annual_cost',
+          traversal: {
+            kind: 'relation',
+            fieldId: 'vendor',
+            direction: 'backward',
+            ownerSchemaId: contract!.id
+          },
+          aggregation: 'count',
+          format: 'number',
+          label: 'Contracts'
+        }
+      ]
+    });
+    expect(
+      definitions.entityDrawerProfiles[vendor!.id]?.sections.find(
+        section => section.id === 'applications-supplied'
+      )?.items
+    ).toEqual([
+      {
+        kind: 'query',
+        queryText: '<-"Contract".vendor.<-"System Contract"',
+        label: 'Applications supplied'
+      }
+    ]);
+    expect(
+      definitions.entityDrawerProfiles[vendor!.id]?.sections.find(
+        section => section.id === 'technology-lifecycle'
+      )?.items
+    ).toEqual([
+      {
+        kind: 'query',
+        queryText: '<-"Contract".vendor.<-"System Contract"',
+        label: 'Technology lifecycle',
+        presentation: 'list',
+        fields: [{ fieldId: '_lifecycle', label: 'Lifecycle' }]
+      }
     ]);
     expect(
       definitions.entityDrawerProfiles[contract!.id]?.sections.map(section => section.id)
@@ -1042,7 +1149,6 @@ describe('instantiateTemplate', () => {
           title: 'Coverage',
           collapsible: false,
           items: [
-            { kind: 'slot', slotId: 'risk.coverage', label: 'Coverage', showLabel: false },
             {
               kind: 'typed-relation-list',
               fieldId: 'mitigating_controls',

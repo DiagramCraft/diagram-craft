@@ -22,6 +22,7 @@ import {
   getBatchEntityRelations,
   getEntityDependents
 } from './entityRelationshipOperations';
+import { getEntityUsage } from './entityUsageOperations';
 import { getEntityJsonProjection } from './entityProjectionOperations';
 import {
   createEntityWithPayload,
@@ -158,6 +159,19 @@ const entityHandlers = {
       input.params.id,
       { transitive, maxDepth },
       authCtx
+    );
+  }),
+
+  usage: entityRouter.entities.usage.handler(async ({ input, context }) => {
+    return await getEntityUsage(
+      context.db,
+      context.workspace,
+      input.params.workspace,
+      input.params.id,
+      context.event,
+      context.authCtx,
+      input.query?.limit,
+      input.query?.offset
     );
   }),
 

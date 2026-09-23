@@ -105,7 +105,7 @@ export const glossarySchemaTemplate: SchemaTemplate = {
           items: [
             { kind: 'metadata', slot: 'owner' },
             { kind: 'relation', fieldId: 'categories' },
-            { kind: 'slot', slotId: 'business-glossary.usage', label: 'Usage & backlinks' }
+            { kind: 'slot', slotId: 'entity.usage', label: 'Usage & backlinks' }
           ]
         }
       ]

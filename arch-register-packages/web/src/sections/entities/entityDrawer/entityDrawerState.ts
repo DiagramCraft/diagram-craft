@@ -2,6 +2,7 @@ import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import {
   ENTITY_DRAWER_METADATA_SLOTS,
   ENTITY_DRAWER_SLOTS,
+  resolveEntityDrawerSlotItemPresentation,
   type EntityDrawerBadge,
   type EntityDrawerDiagnostic,
   type EntityDrawerMetadataSlot,
@@ -124,14 +125,36 @@ const supportsSubtreeRollup = (schema: EntitySchema): boolean =>
 const resolveRollupItem = ({
   item,
   schema,
+  schemas,
   sectionId,
   diagnostics
 }: {
   item: Extract<EntityDrawerItem, { kind: 'rollup' }>;
   schema: EntitySchema;
+  schemas: EntitySchema[];
   sectionId: string;
   diagnostics: EntityDrawerDiagnostic[];
 }): ResolvedEntityDrawerItem | null => {
+  if (item.traversal) {
+    const sourceSchema = schemas.find(candidate => candidate.id === item.sourceSchemaId);
+    const sourceField = sourceSchema?.fields.find(candidate => candidate.id === item.fieldId);
+    if (
+      !sourceSchema ||
+      !sourceField ||
+      sourceField.archived ||
+      (sourceField.type !== 'number' && sourceField.type !== 'currency')
+    ) {
+      diagnostics.push({
+        code: 'missing_or_archived_field',
+        schemaId: schema.id,
+        sectionId,
+        itemId: `${item.sourceSchemaId ?? 'source'}.${item.fieldId}`,
+        message: `Roll-up source field '${item.sourceSchemaId ?? 'source'}.${item.fieldId}' is missing, archived, or not numeric.`
+      });
+      return null;
+    }
+    return { item, field: sourceField, label: item.label ?? sourceField.name };
+  }
   if (!supportsSubtreeRollup(schema)) {
     diagnostics.push({
       code: 'unsupported_rollup_schema',
@@ -339,6 +362,9 @@ export const resolveEntityDrawerRenderModel = ({
       if (item.kind === 'placeholder') {
         return [{ item, label: item.message }];
       }
+      if (item.kind === 'query') {
+        return [{ item, label: item.label ?? 'Query' }];
+      }
       if (item.kind === 'metadata') {
         return isMeaningfulValue(entityDrawerMetadataValue(entity, item.slot))
           ? [{ item, label: item.label ?? metadataLabel(item.slot) }]
@@ -366,7 +392,13 @@ export const resolveEntityDrawerRenderModel = ({
           });
           return [];
         }
-        return [{ item, label: item.label ?? slotLabel(item.slotId), provider }];
+        return [
+          {
+            item: resolveEntityDrawerSlotItemPresentation(item),
+            label: item.label ?? slotLabel(item.slotId),
+            provider
+          }
+        ];
       }
       if (item.kind === 'children') {
         const resolved = resolveChildrenItem({
@@ -379,7 +411,13 @@ export const resolveEntityDrawerRenderModel = ({
         return resolved ? [resolved] : [];
       }
       if (item.kind === 'rollup') {
-        const resolved = resolveRollupItem({ item, schema, sectionId: section.id, diagnostics });
+        const resolved = resolveRollupItem({
+          item,
+          schema,
+          schemas: providerContext.schemas,
+          sectionId: section.id,
+          diagnostics
+        });
         return resolved ? [resolved] : [];
       }
       if (item.kind === 'rollup-leaf-count') {

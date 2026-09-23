@@ -34,7 +34,6 @@ export const riskComplianceAppDefinition: AppDefinition = {
   shortCode: 'RC',
   tint: 'oklch(0.6 0.16 25)',
   description: 'Risk register, control library, retention, and compliance assessments.',
-  entityDrawer: { dateFormat: 'iso' },
   sections: [
     {
       // No `primarySidebar`: the Overview is a self-contained dashboard and the app's sections are

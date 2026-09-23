@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { entitiesQuery } from '../../queries/entities';
 
 /** One hop of a traversal provenance chain, as returned in an entity's `_projections.<alias>` —
- *  same shape `useVendorAppsSupplied.ts` and `useVendorTechnologyExposure.ts` read. */
+ *  same shape as `useVendorTechnologyExposure.ts` and the entity-drawer query read. */
 type TraversalHop = { context: 'entity' | 'relation'; id: string; schemaId: string };
 
 export type VendorAppsSuppliedCounts = {
@@ -14,7 +14,7 @@ export type VendorAppsSuppliedCounts = {
 const EMPTY: VendorAppsSuppliedCounts = { byId: new Map(), isLoading: false };
 
 /**
- * Batched sibling of `useVendorAppsSupplied.ts`, for table/overview screens that only need a count
+ * Batched traversal for table/overview screens that only need a count
  * (not each System's own fields): the number of distinct Systems each vendor's Contracts serve,
  * across every vendor at once. Same single-hop-each-way traversal
  * (Vendor -> backward Contract's `vendor` field -> Contract -> typedRelation `system` -> System)

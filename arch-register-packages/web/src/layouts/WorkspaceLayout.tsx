@@ -573,7 +573,6 @@ const WorkspaceEntityDrawerStack = ({
             active={active}
             stacked
             stackOffset={(activeDrawerIndex - index) * 12}
-            dateFormat={app.entityDrawer?.dateFormat}
           />
         );
       })}

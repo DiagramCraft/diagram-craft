@@ -30,8 +30,9 @@ const EMPTY: ControlFrameworks = {
  * it's a two-hop join over `control-requirement` (Control <-> Compliance Requirement) and
  * Compliance Requirement's own `framework` containment field (Compliance Requirement -> Framework)
  * — so this manually joins three batched fetches rather than reaching for the structured
- * entity-traversal engine (`useCapabilityRealizedBy.ts`'s `path` projections), matching this
- * app's existing "join relations by hand" style (`RiskDrawer.tsx`) since
+ * entity-traversal engine (the drawer's generic `query` item, `useEntityDrawerQueryItem.ts`'s
+ * `path` projections), matching this app's existing "join relations by hand" style
+ * (the shared entity drawer) since
  * there's no drawer-level provenance need here, just a name/count roll-up. Faceted at Framework
  * granularity only — clause-level (`compliance_requirement`) detail is the traceability matrix's
  * job (#3282).

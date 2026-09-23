@@ -17,6 +17,7 @@ import {
 import { entityQuerySchema } from '@arch-register/api-types/entityQueryIR';
 import { relationRecordSchema } from '@arch-register/api-types/relationContract';
 import { entityConformanceStatusSchema } from '@arch-register/api-types/conformanceContract';
+import { entityUsagePageSchema } from '@arch-register/api-types/entityUsageContract';
 
 // ── Query text ⇄ IR (specs/QUERY_LANGUAGE.md §4) ───────────────
 
@@ -864,6 +865,28 @@ export const workspaceEntityContract = oc.tag('Entities').router({
         })
       )
       .output(entityDependentsSchema),
+    usage: oc
+      .route({
+        method: 'GET',
+        path: '/{workspace}/data/{id}/usage',
+        inputStructure: 'detailed',
+        summary: 'Get entity usage',
+        description:
+          'Retrieves visible entities, relations, documents, projects, and diagrams that reference this entity.',
+        tags: ['Entities']
+      })
+      .input(
+        z.object({
+          params: wsAndId,
+          query: z
+            .object({
+              limit: z.coerce.number().int().positive().max(200).optional(),
+              offset: z.coerce.number().int().min(0).optional()
+            })
+            .optional()
+        })
+      )
+      .output(entityUsagePageSchema),
     create: oc
       .route({
         method: 'POST',
@@ -1080,6 +1103,7 @@ export type EntityRelation = z.infer<typeof entityRelationSchema>;
 export type EntityRelations = z.infer<typeof entityRelationsSchema>;
 export type EntityDependent = z.infer<typeof entityDependentSchema>;
 export type EntityDependents = z.infer<typeof entityDependentsSchema>;
+export type { EntityUsage, EntityUsagePage } from '@arch-register/api-types/entityUsageContract';
 export type TreeResponse = z.infer<typeof treeResponseSchema>;
 export type TreeNode = TreeResponse['nodes'][number];
 export type TreeEdge = TreeResponse['edges'][number];

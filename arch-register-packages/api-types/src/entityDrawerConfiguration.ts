@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import { metricTraversalStepSchema, type MetricTraversalStep } from './metricContract';
+import type { RelationSchema } from './relationSchemaContract';
 import {
   DEFAULT_STRATEGY_VIEW_CONFIG,
   strategyModelViewConfigSchema
@@ -29,8 +31,9 @@ export const VENDOR_CAPABILITIES_FUNDED_PLACEHOLDER_MESSAGE =
 /** Aggregation and number-format options for a `rollup` drawer item. Kept local to this file
  *  (rather than imported from Strategy's `strategyModelViewConfig.ts`) so the generic drawer item
  *  contract doesn't depend on a specific capability's config model. */
-export const entityDrawerRollupAggregationSchema = z.enum(['avg', 'sum']);
+export const entityDrawerRollupAggregationSchema = z.enum(['avg', 'sum', 'count']);
 export const entityDrawerRollupFormatSchema = z.enum(['number', 'decimal1', 'currency', 'percent']);
+export const entityDrawerRollupTraversalSchema = metricTraversalStepSchema;
 
 export const entityDrawerItemSchema = z.discriminatedUnion('kind', [
   z.object({
@@ -67,6 +70,8 @@ export const entityDrawerItemSchema = z.discriminatedUnion('kind', [
   z.object({
     kind: z.literal('rollup'),
     fieldId: z.string().min(1),
+    sourceSchemaId: z.string().min(1).optional(),
+    traversal: entityDrawerRollupTraversalSchema.optional(),
     aggregation: entityDrawerRollupAggregationSchema,
     format: entityDrawerRollupFormatSchema,
     label: labelOverrideSchema,
@@ -89,6 +94,14 @@ export const entityDrawerItemSchema = z.discriminatedUnion('kind', [
     attributes: z
       .array(z.object({ fieldId: z.string().min(1), label: labelOverrideSchema }))
       .optional()
+  }),
+  z.object({
+    kind: z.literal('query'),
+    queryText: z.string().min(1),
+    label: labelOverrideSchema,
+    showLabel: z.boolean().optional(),
+    presentation: z.enum(['chips', 'list']).optional(),
+    fields: z.array(z.object({ fieldId: z.string().min(1), label: labelOverrideSchema })).optional()
   })
 ]);
 
@@ -136,7 +149,8 @@ export const entityDrawerDiagnosticSchema = z.object({
     'unsupported_slot',
     'invalid_slot_options',
     'unsupported_slot_for_schema',
-    'unsupported_rollup_schema'
+    'unsupported_rollup_schema',
+    'invalid_rollup_traversal'
   ]),
   schemaId: z.string().optional(),
   sectionId: z.string().optional(),
@@ -170,6 +184,7 @@ export const entityDrawerCatalogSchema = z.object({
       label: z.string(),
       description: z.string(),
       application: z.string(),
+      fixedPresentation: z.enum(['row', 'mini-panel']).optional(),
       supportedSchemaIds: z.array(z.string()),
       defaultOptions: entityDrawerSlotOptionsSchema,
       optionFields: z.array(
@@ -187,11 +202,13 @@ export type EntityDrawerConfiguration = z.infer<typeof entityDrawerConfiguration
 export type EntityDrawerProfiles = EntityDrawerConfiguration['profiles'];
 export type EntityDrawerDiagnostic = z.infer<typeof entityDrawerDiagnosticSchema>;
 export type EntityDrawerCatalog = z.infer<typeof entityDrawerCatalogSchema>;
+export type EntityDrawerRollupTraversal = MetricTraversalStep;
 export type EntityDrawerSlotDefinition = {
   id: string;
   label: string;
   description: string;
   application: string;
+  fixedPresentation?: 'row' | 'mini-panel';
   capabilityBinding?: { capabilityType: string; role: string };
   defaultOptions: Record<string, unknown>;
   optionFields: Array<{ id: string; label: string; description: string }>;
@@ -200,7 +217,8 @@ export type EntityDrawerSlotDefinition = {
 
 export const remapEntityDrawerProfiles = (
   profiles: EntityDrawerProfiles,
-  schemaIdMap: ReadonlyMap<string, string>
+  schemaIdMap: ReadonlyMap<string, string>,
+  relationSchemaIdMap: ReadonlyMap<string, string> = new Map()
 ): EntityDrawerProfiles =>
   Object.fromEntries(
     Object.entries(profiles).flatMap(([schemaId, profile]) => {
@@ -219,7 +237,43 @@ export const remapEntityDrawerProfiles = (
                       ...item,
                       childSchemaId: schemaIdMap.get(item.childSchemaId) ?? item.childSchemaId
                     }
-                  : item
+                  : item.kind === 'rollup'
+                    ? {
+                        ...item,
+                        ...(item.sourceSchemaId
+                          ? {
+                              sourceSchemaId:
+                                schemaIdMap.get(item.sourceSchemaId) ?? item.sourceSchemaId
+                            }
+                          : {}),
+                        ...(item.traversal
+                          ? {
+                              traversal:
+                                item.traversal.kind === 'relation'
+                                  ? {
+                                      ...item.traversal,
+                                      ...(item.traversal.ownerSchemaId
+                                        ? {
+                                            ownerSchemaId:
+                                              schemaIdMap.get(item.traversal.ownerSchemaId) ??
+                                              item.traversal.ownerSchemaId
+                                          }
+                                        : {})
+                                    }
+                                  : item.traversal.kind === 'typedRelation' ||
+                                      item.traversal.kind === 'unboundTypedRelation'
+                                    ? {
+                                        ...item.traversal,
+                                        relationSchemaId:
+                                          relationSchemaIdMap.get(
+                                            item.traversal.relationSchemaId
+                                          ) ?? item.traversal.relationSchemaId
+                                      }
+                                    : item.traversal
+                            }
+                          : {})
+                      }
+                    : item
               )
             }))
           }
@@ -239,6 +293,8 @@ type CapabilityConfigurationLike = {
   view_config?: unknown;
 };
 
+export type EntityDrawerRelationSchema = Pick<RelationSchema, 'id' | 'in' | 'out'>;
+
 export const ENTITY_DRAWER_METADATA_SLOTS: EntityDrawerCatalog['metadataSlots'] = [
   { id: 'publicId', label: 'Public ID', description: 'The stable public identifier.' },
   { id: 'slug', label: 'Slug', description: 'The entity slug, when present.' },
@@ -255,151 +311,38 @@ const emptyOptionsSchema = z.record(z.string(), z.unknown());
 
 export const ENTITY_DRAWER_SLOT_DEFINITIONS: EntityDrawerSlotDefinition[] = [
   {
-    id: 'api-specification.catalog',
-    label: 'API specification catalog',
-    description: 'Sources, revisions, diagnostics, and normalized API operations or messages.',
-    application: 'API & Integration Catalog',
-    capabilityBinding: { capabilityType: 'api-specification', role: 'api' },
+    id: 'entity.usage',
+    label: 'Entity usage',
+    description:
+      'Visible entities, relations, documents, projects, and diagrams that reference the current entity.',
+    application: 'Entity',
     defaultOptions: {},
     optionFields: [],
     optionsSchema: emptyOptionsSchema
   },
   {
-    id: 'business-glossary.usage',
-    label: 'Glossary usage',
-    description: 'Where this term is used.',
-    application: 'Business Glossary',
-    capabilityBinding: { capabilityType: 'business-glossary', role: 'term' },
+    id: 'entity.governance-items',
+    label: 'Governance items',
+    description: 'Open governance cases associated with the current entity.',
+    application: 'Governance',
     defaultOptions: {},
     optionFields: [],
     optionsSchema: emptyOptionsSchema
   },
   {
-    id: 'data-stewardship.coverage',
-    label: 'Stewardship coverage',
-    description: 'Dataset coverage and ownership.',
-    application: 'Data Stewardship',
-    capabilityBinding: { capabilityType: 'data-stewardship', role: 'dataEntity' },
-    defaultOptions: {},
-    optionFields: [],
-    optionsSchema: emptyOptionsSchema
-  },
-  {
-    id: 'data-stewardship.queue-items',
-    label: 'Stewardship queue',
-    description: 'Open stewardship queue items.',
-    application: 'Data Stewardship',
-    capabilityBinding: { capabilityType: 'data-stewardship', role: 'dataEntity' },
-    defaultOptions: {},
-    optionFields: [],
-    optionsSchema: emptyOptionsSchema
-  },
-  {
-    id: 'data-stewardship.change-cases',
+    id: 'entity.change-cases',
     label: 'Change cases',
-    description: 'Related change cases.',
+    description: 'Change cases associated with the current entity.',
     application: 'Data Stewardship',
-    capabilityBinding: { capabilityType: 'data-stewardship', role: 'dataEntity' },
     defaultOptions: {},
     optionFields: [],
     optionsSchema: emptyOptionsSchema
   },
   {
-    id: 'data-stewardship.assessments',
+    id: 'entity.assessments',
     label: 'Assessments',
-    description: 'Related assessments.',
+    description: 'Assessments associated with the current entity.',
     application: 'Data Stewardship',
-    capabilityBinding: { capabilityType: 'data-stewardship', role: 'dataEntity' },
-    defaultOptions: {},
-    optionFields: [],
-    optionsSchema: emptyOptionsSchema
-  },
-  {
-    id: 'strategy.realized-by',
-    label: 'Realized by',
-    description: 'Products and initiatives realizing this capability.',
-    application: 'Strategy Model',
-    capabilityBinding: { capabilityType: 'strategy-model', role: 'business_capability' },
-    defaultOptions: {},
-    optionFields: [],
-    optionsSchema: emptyOptionsSchema
-  },
-  {
-    id: 'strategy.linked-objectives',
-    label: 'Linked objectives',
-    description: 'Objectives linked to this capability.',
-    application: 'Strategy Model',
-    capabilityBinding: { capabilityType: 'strategy-model', role: 'business_capability' },
-    defaultOptions: {},
-    optionFields: [],
-    optionsSchema: emptyOptionsSchema
-  },
-  {
-    id: 'strategy.linked-initiatives',
-    label: 'Linked initiatives',
-    description: 'Initiatives linked to this capability.',
-    application: 'Strategy Model',
-    capabilityBinding: { capabilityType: 'strategy-model', role: 'business_capability' },
-    defaultOptions: {},
-    optionFields: [],
-    optionsSchema: emptyOptionsSchema
-  },
-  {
-    id: 'risk.coverage',
-    label: 'Risk coverage',
-    description: 'Controls and coverage for this risk.',
-    application: 'Risk & Compliance',
-    capabilityBinding: { capabilityType: 'risk-compliance', role: 'risk' },
-    defaultOptions: {},
-    optionFields: [],
-    optionsSchema: emptyOptionsSchema
-  },
-  {
-    id: 'vendor.spend',
-    label: 'Spend',
-    description: 'Spend summary for this vendor.',
-    application: 'Vendor Management',
-    capabilityBinding: { capabilityType: 'vendor-management', role: 'vendor' },
-    defaultOptions: {},
-    optionFields: [],
-    optionsSchema: emptyOptionsSchema
-  },
-  {
-    id: 'vendor.risk',
-    label: 'Risk profile',
-    description: 'Derived risk profile for this vendor.',
-    application: 'Vendor Management',
-    capabilityBinding: { capabilityType: 'vendor-management', role: 'vendor' },
-    defaultOptions: {},
-    optionFields: [],
-    optionsSchema: emptyOptionsSchema
-  },
-  {
-    id: 'vendor.contracts',
-    label: 'Contracts',
-    description: 'Contracts associated with this vendor.',
-    application: 'Vendor Management',
-    capabilityBinding: { capabilityType: 'vendor-management', role: 'vendor' },
-    defaultOptions: {},
-    optionFields: [],
-    optionsSchema: emptyOptionsSchema
-  },
-  {
-    id: 'vendor.applications-supplied',
-    label: 'Applications supplied',
-    description: 'Applications supplied by this vendor.',
-    application: 'Vendor Management',
-    capabilityBinding: { capabilityType: 'vendor-management', role: 'vendor' },
-    defaultOptions: {},
-    optionFields: [],
-    optionsSchema: emptyOptionsSchema
-  },
-  {
-    id: 'vendor.technology-lifecycle',
-    label: 'Technology lifecycle',
-    description: 'Technology lifecycle summary.',
-    application: 'Vendor Management',
-    capabilityBinding: { capabilityType: 'vendor-management', role: 'vendor' },
     defaultOptions: {},
     optionFields: [],
     optionsSchema: emptyOptionsSchema
@@ -412,6 +355,7 @@ export const ENTITY_DRAWER_SLOTS: EntityDrawerCatalog['slots'] = ENTITY_DRAWER_S
     label: definition.label,
     description: definition.description,
     application: definition.application,
+    ...(definition.fixedPresentation ? { fixedPresentation: definition.fixedPresentation } : {}),
     supportedSchemaIds: [],
     defaultOptions: definition.defaultOptions,
     optionFields: definition.optionFields
@@ -426,7 +370,10 @@ export const getEntityDrawerSlotSchemaIds = (
   const result = new Map<string, string[]>();
   for (const definition of ENTITY_DRAWER_SLOT_DEFINITIONS) {
     const binding = definition.capabilityBinding;
-    if (!binding) continue;
+    if (!binding) {
+      result.set(definition.id, [...schemaIds]);
+      continue;
+    }
     const configuration = capabilityConfigurations.find(
       candidate => candidate.type === binding.capabilityType
     );
@@ -445,6 +392,9 @@ const getDefaultProviderItems = (
   const supported = getEntityDrawerSlotSchemaIds(schemas, capabilityConfigurations);
   const items: EntityDrawerItem[] = [];
   for (const definition of ENTITY_DRAWER_SLOT_DEFINITIONS) {
+    // Generic slots are available from the drawer editor but are opt-in for schemas. Built-in
+    // application profiles add the generic content they own explicitly below.
+    if (!definition.capabilityBinding) continue;
     if (!supported.get(definition.id)?.includes(schemaId)) continue;
     const options = definition.defaultOptions;
     items.push({
@@ -498,6 +448,120 @@ const getStrategyRollupItems = (
   return rollupItems.length > 0 ? [...rollupItems, { kind: 'rollup-leaf-count' as const }] : [];
 };
 
+/**
+ * Seeds the generic `query` drawer item that replaces the old `strategy.realized-by` bespoke slot
+ * for a freshly-generated default profile — the flat union of a Business Capability's own and its
+ * descendants' `business_capability_supports_entity` links, via a `subtree(parent)` traversal
+ * (specs/QUERY_LANGUAGE.md §4). Mirrors `getStrategyRollupItems`'s binding checks; only affects
+ * freshly-generated default profiles, not stored ones.
+ */
+const getStrategyRealizedByItem = (
+  schema: EntityDrawerSchema | undefined,
+  capabilityConfigurations: readonly CapabilityConfigurationLike[]
+): EntityDrawerItem[] => {
+  if (!schema) return [];
+  const configuration = capabilityConfigurations.find(
+    candidate => candidate.type === 'strategy-model'
+  );
+  const boundSchemaId = configuration?.bindings['business_capability']?.target;
+  if (boundSchemaId?.kind !== 'entity_schema' || boundSchemaId.id !== schema.id) return [];
+  const supportsSubtreeQuery = schema.fields.some(
+    candidate => candidate.id === 'parent' && candidate.type === 'containment'
+  );
+  if (!supportsSubtreeQuery) return [];
+  const relationTarget = configuration?.bindings['business_capability_supports_entity']?.target;
+  if (relationTarget?.kind !== 'relation_schema') return [];
+  return [
+    {
+      kind: 'query' as const,
+      queryText: `subtree(parent).->"${relationTarget.id}"`,
+      label: 'Realized by'
+    }
+  ];
+};
+
+/**
+ * Seeds the generic `query` drawer item that replaces the bespoke
+ * `strategy.linked-objectives` provider for a freshly-generated default profile. The query
+ * follows the bound Objective-to-Business-Capability relation from the current capability to its
+ * supporting Objectives.
+ */
+const getStrategyLinkedObjectivesItem = (
+  schema: EntityDrawerSchema | undefined,
+  capabilityConfigurations: readonly CapabilityConfigurationLike[]
+): EntityDrawerItem[] => {
+  if (!schema) return [];
+  const configuration = capabilityConfigurations.find(
+    candidate => candidate.type === 'strategy-model'
+  );
+  const businessCapabilityTarget = configuration?.bindings.business_capability?.target;
+  const relationTarget = configuration?.bindings.objective_supports_business_capability?.target;
+  if (
+    businessCapabilityTarget?.kind !== 'entity_schema' ||
+    businessCapabilityTarget.id !== schema.id ||
+    relationTarget?.kind !== 'relation_schema'
+  ) {
+    return [];
+  }
+
+  return [
+    {
+      kind: 'query' as const,
+      queryText: `<-"${escapeQueryStringLiteral(relationTarget.id)}"`,
+      label: 'Linked objectives'
+    }
+  ];
+};
+
+/**
+ * Seeds the generic `query` drawer item that replaces the bespoke
+ * `strategy.linked-initiatives` provider for a freshly-generated default profile. The query
+ * walks from the current Business Capability to its supporting Objectives and then reverses the
+ * Initiative `objectives` reference to reach the linked Initiatives.
+ */
+const getStrategyLinkedInitiativesItem = (
+  schema: EntityDrawerSchema | undefined,
+  schemas: EntityDrawerSchema[],
+  capabilityConfigurations: readonly CapabilityConfigurationLike[]
+): EntityDrawerItem[] => {
+  if (!schema) return [];
+  const configuration = capabilityConfigurations.find(
+    candidate => candidate.type === 'strategy-model'
+  );
+  const businessCapabilityTarget = configuration?.bindings.business_capability?.target;
+  const objectiveTarget = configuration?.bindings.objective?.target;
+  const initiativeTarget = configuration?.bindings.initiative?.target;
+  const relationTarget = configuration?.bindings.objective_supports_business_capability?.target;
+  if (
+    businessCapabilityTarget?.kind !== 'entity_schema' ||
+    businessCapabilityTarget.id !== schema.id ||
+    objectiveTarget?.kind !== 'entity_schema' ||
+    initiativeTarget?.kind !== 'entity_schema' ||
+    relationTarget?.kind !== 'relation_schema'
+  ) {
+    return [];
+  }
+
+  const initiativeSchema = schemas.find(candidate => candidate.id === initiativeTarget.id);
+  const objectivesField = initiativeSchema?.fields.find(field => field.id === 'objectives');
+  if (
+    !initiativeSchema ||
+    !objectivesField ||
+    !['reference', 'containment'].includes(objectivesField.type) ||
+    (objectivesField.schemaId !== undefined && objectivesField.schemaId !== objectiveTarget.id)
+  ) {
+    return [];
+  }
+
+  return [
+    {
+      kind: 'query' as const,
+      queryText: `<-"${escapeQueryStringLiteral(relationTarget.id)}".<-"${escapeQueryStringLiteral(initiativeSchema.name)}".${objectivesField.id}`,
+      label: 'Linked initiatives'
+    }
+  ];
+};
+
 export type EntityDrawerField = {
   id: string;
   name: string;
@@ -505,6 +569,8 @@ export type EntityDrawerField = {
   archived?: boolean;
   groupId?: string;
   schemaId?: string;
+  relationSchemaId?: string;
+  direction?: 'in' | 'out';
 };
 
 export type EntityDrawerSchema = {
@@ -518,37 +584,121 @@ const fieldIsVisible = (field: EntityDrawerField): boolean => field.archived !==
 const isRelationField = (field: EntityDrawerField): boolean =>
   field.type === 'reference' || field.type === 'containment' || field.type === 'typedRelation';
 
-/** Expands a legacy `{kind:'slot', slotId:'strategy.rollup'}` item into the generic `rollup` +
- *  `rollup-leaf-count` items it's replaced by, using whatever `options.rollups` happens to be
- *  persisted on it. Items with no (or unparseable) options are dropped rather than recovered —
- *  the slot never persisted the true config reliably (see `strategy.rollup`'s removal), so this is
- *  a best-effort compatibility pass, not a source of truth. */
-const expandLegacyStrategyRollupItem = (item: Record<string, unknown>): unknown[] => {
-  const options = item['options'];
-  const rollups =
-    options && typeof options === 'object' && 'rollups' in options && Array.isArray(options.rollups)
-      ? options.rollups
-      : [];
-  const rollupItems = rollups.flatMap(entry => {
-    if (!entry || typeof entry !== 'object' || typeof entry.fieldId !== 'string') return [];
-    return [
-      {
-        kind: 'rollup',
-        fieldId: entry.fieldId,
-        aggregation: entry.aggregation === 'sum' ? 'sum' : 'avg',
-        format: ['number', 'decimal1', 'currency', 'percent'].includes(entry.format as string)
-          ? entry.format
-          : 'decimal1'
+const rollupFieldIsValid = (field: EntityDrawerField | undefined): boolean =>
+  field !== undefined &&
+  fieldIsVisible(field) &&
+  (field.type === 'number' || field.type === 'currency');
+
+const relationEndpointAllowsSchema = (
+  endpoint: RelationSchema['in'] | RelationSchema['out'],
+  schemaId: string
+): boolean => endpoint.schemaIds === 'any' || endpoint.schemaIds.includes(schemaId);
+
+const validateRollupTraversal = ({
+  item,
+  currentSchema,
+  sourceSchema,
+  schemas,
+  relationSchemas
+}: {
+  item: Extract<EntityDrawerItem, { kind: 'rollup' }>;
+  currentSchema: EntityDrawerSchema;
+  sourceSchema: EntityDrawerSchema | undefined;
+  schemas: EntityDrawerSchema[];
+  relationSchemas: EntityDrawerRelationSchema[];
+}): string | null => {
+  if (!item.traversal) {
+    if (item.sourceSchemaId !== undefined) {
+      return 'A roll-up source schema requires a traversal.';
+    }
+    if (!rollupFieldIsValid(currentSchema.fields.find(field => field.id === item.fieldId))) {
+      return null;
+    }
+    return null;
+  }
+  if (!sourceSchema || !item.sourceSchemaId) {
+    return 'A relation roll-up must identify an existing source schema.';
+  }
+
+  const step = item.traversal;
+  if (step.kind === 'relation') {
+    if (step.direction === 'forward') {
+      const field = currentSchema.fields.find(candidate => candidate.id === step.fieldId);
+      if (
+        !field ||
+        !fieldIsVisible(field) ||
+        !['reference', 'containment'].includes(field.type) ||
+        field.schemaId !== item.sourceSchemaId ||
+        (step.ownerSchemaId !== undefined && step.ownerSchemaId !== currentSchema.id)
+      ) {
+        return 'The roll-up relation does not point from the current schema to its source schema.';
       }
-    ];
-  });
-  return rollupItems.length > 0 ? [...rollupItems, { kind: 'rollup-leaf-count' }] : [];
+      return null;
+    }
+
+    const owner = schemas.find(
+      candidate => candidate.id === (step.ownerSchemaId ?? item.sourceSchemaId)
+    );
+    const field = owner?.fields.find(candidate => candidate.id === step.fieldId);
+    if (
+      !owner ||
+      owner.id !== item.sourceSchemaId ||
+      !field ||
+      !fieldIsVisible(field) ||
+      !['reference', 'containment'].includes(field.type) ||
+      field.schemaId !== currentSchema.id
+    ) {
+      return 'The backward roll-up relation must be owned by the source schema and target the current schema.';
+    }
+    return null;
+  }
+
+  if (step.kind === 'typedRelation') {
+    const field = currentSchema.fields.find(candidate => candidate.id === step.fieldId);
+    const relationSchema = relationSchemas.find(
+      candidate => candidate.id === step.relationSchemaId
+    );
+    const targetEndpoint = step.direction === 'in' ? relationSchema?.out : relationSchema?.in;
+    if (
+      !field ||
+      !fieldIsVisible(field) ||
+      field.type !== 'typedRelation' ||
+      field.relationSchemaId !== step.relationSchemaId ||
+      field.direction !== step.direction ||
+      !relationSchema ||
+      !targetEndpoint ||
+      !relationEndpointAllowsSchema(targetEndpoint, item.sourceSchemaId)
+    ) {
+      return 'The typed relation roll-up does not point to its source schema.';
+    }
+    return null;
+  }
+
+  const relationSchema = relationSchemas.find(candidate => candidate.id === step.relationSchemaId);
+  const currentAtIn = relationSchema
+    ? relationEndpointAllowsSchema(relationSchema.in, currentSchema.id)
+    : false;
+  const currentAtOut = relationSchema
+    ? relationEndpointAllowsSchema(relationSchema.out, currentSchema.id)
+    : false;
+  const sourceAllowed = (endpoint: RelationSchema['in'] | RelationSchema['out']) =>
+    relationEndpointAllowsSchema(endpoint, item.sourceSchemaId!);
+  const validDirection =
+    step.direction === 'both'
+      ? (currentAtIn || currentAtOut) &&
+        (sourceAllowed(relationSchema?.in ?? { schemaIds: [] }) ||
+          sourceAllowed(relationSchema?.out ?? { schemaIds: [] }))
+      : step.direction === 'in'
+        ? currentAtIn && sourceAllowed(relationSchema?.out ?? { schemaIds: [] })
+        : currentAtOut && sourceAllowed(relationSchema?.in ?? { schemaIds: [] });
+  return relationSchema && validDirection
+    ? null
+    : 'The unbound typed relation roll-up does not point to its source schema.';
 };
 
 /**
- * Converts pre-built-in Strategy slots (`strategy.children`, `strategy.rollup`) while reading old
- * stored configurations. This intentionally happens before schema parsing so workspaces do not
- * need a data migration.
+ * Converts the pre-built-in Strategy children slot while reading old stored configurations. This
+ * intentionally happens before schema parsing so workspaces do not need a data migration.
  */
 export const normalizeLegacyEntityDrawerConfiguration = (raw: unknown): unknown => {
   if (!raw || typeof raw !== 'object' || !('profiles' in raw)) return raw;
@@ -598,10 +748,10 @@ export const normalizeLegacyEntityDrawerConfiguration = (raw: unknown): unknown 
                       }
                     ];
                   }
-                  if (item.slotId === 'strategy.rollup') {
-                    return expandLegacyStrategyRollupItem(item);
+                  if (item.slotId === 'data-stewardship.change-cases') {
+                    return [{ ...item, slotId: 'entity.change-cases' }];
                   }
-                  return [item];
+                  return [normalizeFixedPresentationSlotItem(item)];
                 })
               };
             })
@@ -610,6 +760,24 @@ export const normalizeLegacyEntityDrawerConfiguration = (raw: unknown): unknown 
       })
     )
   };
+};
+
+const fixedPresentationForSlot = (slotId: string): 'row' | 'mini-panel' | undefined =>
+  ENTITY_DRAWER_SLOT_DEFINITIONS.find(definition => definition.id === slotId)?.fixedPresentation;
+
+const normalizeFixedPresentationSlotItem = (
+  item: Extract<EntityDrawerItem, { kind: 'slot' }>
+): Extract<EntityDrawerItem, { kind: 'slot' }> => {
+  if (!fixedPresentationForSlot(item.slotId) || item.presentation === undefined) return item;
+  const { presentation: _presentation, ...withoutPresentation } = item;
+  return withoutPresentation;
+};
+
+export const resolveEntityDrawerSlotItemPresentation = (
+  item: Extract<EntityDrawerItem, { kind: 'slot' }>
+): Extract<EntityDrawerItem, { kind: 'slot' }> => {
+  const fixedPresentation = fixedPresentationForSlot(item.slotId);
+  return fixedPresentation ? { ...item, presentation: fixedPresentation } : item;
 };
 
 const fieldItem = (
@@ -686,7 +854,7 @@ const buildBusinessGlossaryDefaultProfile = (
     fieldId
   });
   const usageItems = providerItems.map(providerItem =>
-    providerItem.kind === 'slot' && providerItem.slotId === 'business-glossary.usage'
+    providerItem.kind === 'slot' && providerItem.slotId === 'entity.usage'
       ? { ...providerItem, label: 'Usage & backlinks' }
       : providerItem
   );
@@ -775,16 +943,8 @@ const apiSpecificationFieldIds = (
 };
 
 const buildApiSpecificationDefaultProfile = (
-  providerItems: EntityDrawerItem[],
   fieldIds: ApiSpecificationFieldIds
 ): EntityDrawerProfile => {
-  const provider = (slotId: string): EntityDrawerItem | null => {
-    const slot = providerItems.find(
-      (candidate): candidate is Extract<EntityDrawerItem, { kind: 'slot' }> =>
-        candidate.kind === 'slot' && candidate.slotId === slotId
-    );
-    return slot ? { ...slot, showLabel: false } : null;
-  };
   const section = (
     id: string,
     title: string,
@@ -814,8 +974,7 @@ const buildApiSpecificationDefaultProfile = (
       ]),
       section('consumers', 'Consumers', [
         { kind: 'relation', fieldId: fieldIds.consumers, label: 'Consumers' }
-      ]),
-      section('specification', 'Specification', [provider('api-specification.catalog')])
+      ])
     ].filter(section => section.items.length > 0)
   };
 };
@@ -906,10 +1065,9 @@ const buildDataStewardshipDefaultProfile = (
         field(fieldIds.processingPurposes),
         field(fieldIds.permittedResidencyRegions)
       ]),
-      section('coverage', 'Coverage', [provider('data-stewardship.coverage')], true),
-      section('queue-items', 'Queue items', [provider('data-stewardship.queue-items')], true),
-      section('cases', 'Cases', [provider('data-stewardship.change-cases')], true),
-      section('assessments', 'Assessments', [provider('data-stewardship.assessments')], true)
+      section('queue-items', 'Queue items', [provider('entity.governance-items')], true),
+      section('cases', 'Cases', [provider('entity.change-cases')], true),
+      section('assessments', 'Assessments', [provider('entity.assessments')], true)
     ].filter(section => section.items.length > 0)
   };
 };
@@ -956,33 +1114,77 @@ const vendorManagementFieldIds = (
     : null;
 };
 
+const vendorManagementSpendRollupItems = (
+  vendorSchema: EntityDrawerSchema,
+  schemas: EntityDrawerSchema[],
+  capabilityConfigurations: readonly CapabilityConfigurationLike[]
+): EntityDrawerItem[] => {
+  const configuration = capabilityConfigurations.find(
+    candidate => candidate.type === 'vendor-management'
+  );
+  const vendorBinding = configuration?.bindings.vendor;
+  const contractBinding = configuration?.bindings.contract;
+  if (
+    vendorBinding?.target.kind !== 'entity_schema' ||
+    vendorBinding.target.id !== vendorSchema.id ||
+    contractBinding?.target.kind !== 'entity_schema'
+  ) {
+    return [];
+  }
+
+  const contractSchema = schemas.find(schema => schema.id === contractBinding.target.id);
+  const vendorField = contractSchema?.fields.find(field => field.id === 'vendor');
+  const annualCostField = contractSchema?.fields.find(field => field.id === 'annual_cost');
+  if (
+    !contractSchema ||
+    !vendorField ||
+    !isRelationField(vendorField) ||
+    annualCostField === undefined ||
+    !fieldIsVisible(annualCostField) ||
+    !['number', 'currency'].includes(annualCostField.type)
+  ) {
+    return [];
+  }
+
+  const traversal = {
+    kind: 'relation' as const,
+    fieldId: vendorField.id,
+    direction: 'backward' as const,
+    ownerSchemaId: contractSchema.id
+  };
+  return [
+    {
+      kind: 'rollup' as const,
+      sourceSchemaId: contractSchema.id,
+      fieldId: annualCostField.id,
+      traversal,
+      aggregation: 'sum' as const,
+      format: 'currency' as const,
+      label: 'vmSpend'
+    },
+    {
+      kind: 'rollup' as const,
+      sourceSchemaId: contractSchema.id,
+      fieldId: annualCostField.id,
+      traversal,
+      aggregation: 'count' as const,
+      format: 'number' as const,
+      label: 'Contracts'
+    }
+  ];
+};
+
 const buildVendorManagementDefaultProfile = (
-  providerItems: EntityDrawerItem[],
-  fieldIds: VendorManagementFieldIds
+  fieldIds: VendorManagementFieldIds,
+  contractsQueryItem: Extract<EntityDrawerItem, { kind: 'query' }> | null,
+  applicationsSuppliedQueryItem: Extract<EntityDrawerItem, { kind: 'query' }> | null,
+  spendRollupItems: EntityDrawerItem[],
+  technologyLifecycleQueryItem: Extract<EntityDrawerItem, { kind: 'query' }> | null
 ): EntityDrawerProfile => {
   const item = (fieldId: string): Extract<EntityDrawerItem, { kind: 'field' }> => ({
     kind: 'field',
     fieldId
   });
-  const provider = (
-    slotId: string,
-    label: string,
-    showLabel = true,
-    presentation?: 'row' | 'mini-panel'
-  ): EntityDrawerItem | null => {
-    const slot = providerItems.find(
-      (candidate): candidate is Extract<EntityDrawerItem, { kind: 'slot' }> =>
-        candidate.kind === 'slot' && candidate.slotId === slotId
-    );
-    return slot
-      ? {
-          ...slot,
-          label,
-          ...(showLabel ? {} : { showLabel: false }),
-          ...(presentation ? { presentation } : {})
-        }
-      : null;
-  };
   const section = (
     id: string,
     title: string,
@@ -1009,8 +1211,7 @@ const buildVendorManagementDefaultProfile = (
           { ...item(fieldIds.concentrationRisk), presentation: 'mini-panel' },
           { ...item(fieldIds.financialRisk), presentation: 'mini-panel' },
           { ...item(fieldIds.complianceRisk), presentation: 'mini-panel' },
-          { ...item(fieldIds.criticality), presentation: 'mini-panel' },
-          provider('vendor.risk', 'vmRisk', true, 'mini-panel')
+          { ...item(fieldIds.criticality), presentation: 'mini-panel' }
         ]),
         layout: 'stat-grid' as const
       },
@@ -1021,20 +1222,18 @@ const buildVendorManagementDefaultProfile = (
         item(fieldIds.relationshipOwner),
         item(fieldIds.costCentre)
       ]),
-      section('spend', 'Spend', [provider('vendor.spend', 'Spend', false)], true),
-      section('contracts', 'Contracts', [provider('vendor.contracts', 'Contracts', false)], true),
+      {
+        ...section('spend', 'Spend', spendRollupItems, true),
+        layout: 'stat-grid' as const
+      },
+      section('contracts', 'Contracts', [contractsQueryItem], true),
       section(
         'applications-supplied',
         'Applications supplied',
-        [provider('vendor.applications-supplied', 'Applications supplied', false)],
+        [applicationsSuppliedQueryItem],
         true
       ),
-      section(
-        'technology-lifecycle',
-        'Technology lifecycle',
-        [provider('vendor.technology-lifecycle', 'Technology lifecycle', false)],
-        true
-      ),
+      section('technology-lifecycle', 'Technology lifecycle', [technologyLifecycleQueryItem], true),
       section(
         'capabilities-funded',
         'Capabilities funded',
@@ -1091,6 +1290,101 @@ const vendorManagementContractFieldIds = (
   if (systemField?.type !== 'typedRelation') return null;
 
   return fieldIds;
+};
+
+const escapeQueryStringLiteral = (value: string): string =>
+  value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+
+const vendorManagementContractsQueryItem = (
+  vendorSchema: EntityDrawerSchema,
+  schemas: EntityDrawerSchema[],
+  capabilityConfigurations: readonly CapabilityConfigurationLike[]
+): Extract<EntityDrawerItem, { kind: 'query' }> | null => {
+  const configuration = capabilityConfigurations.find(
+    candidate => candidate.type === 'vendor-management'
+  );
+  const vendorBinding = configuration?.bindings.vendor;
+  const contractBinding = configuration?.bindings.contract;
+  if (
+    vendorBinding?.target.kind !== 'entity_schema' ||
+    vendorBinding.target.id !== vendorSchema.id ||
+    contractBinding?.target.kind !== 'entity_schema'
+  ) {
+    return null;
+  }
+
+  const contractSchema = schemas.find(schema => schema.id === contractBinding.target.id);
+  if (!contractSchema) return null;
+
+  const vendorField = contractSchema.fields.find(field => field.id === 'vendor');
+  if (!vendorField || !isRelationField(vendorField)) return null;
+
+  return {
+    kind: 'query',
+    queryText: `<-"${escapeQueryStringLiteral(contractSchema.name)}".${vendorField.id}`,
+    label: 'Contracts',
+    showLabel: false,
+    presentation: 'list',
+    fields: [{ fieldId: 'annual_cost', label: 'Annual cost' }]
+  };
+};
+
+const vendorManagementApplicationsSuppliedQueryItem = (
+  vendorSchema: EntityDrawerSchema,
+  schemas: EntityDrawerSchema[],
+  capabilityConfigurations: readonly CapabilityConfigurationLike[]
+): Extract<EntityDrawerItem, { kind: 'query' }> | null => {
+  const configuration = capabilityConfigurations.find(
+    candidate => candidate.type === 'vendor-management'
+  );
+  const vendorBinding = configuration?.bindings.vendor;
+  const contractBinding = configuration?.bindings.contract;
+  if (
+    vendorBinding?.target.kind !== 'entity_schema' ||
+    vendorBinding.target.id !== vendorSchema.id ||
+    contractBinding?.target.kind !== 'entity_schema'
+  ) {
+    return null;
+  }
+
+  const contractSchema = schemas.find(schema => schema.id === contractBinding.target.id);
+  const vendorField = contractSchema?.fields.find(field => field.id === 'vendor');
+  const systemField = contractSchema?.fields.find(field => field.id === 'system');
+  if (
+    !contractSchema ||
+    !vendorField ||
+    !isRelationField(vendorField) ||
+    systemField?.type !== 'typedRelation' ||
+    !systemField.relationSchemaId
+  ) {
+    return null;
+  }
+
+  return {
+    kind: 'query',
+    queryText: `<-"${escapeQueryStringLiteral(contractSchema.name)}".${vendorField.id}.<-"${escapeQueryStringLiteral(systemField.relationSchemaId)}"`,
+    label: 'Applications supplied'
+  };
+};
+
+const vendorManagementTechnologyLifecycleQueryItem = (
+  vendorSchema: EntityDrawerSchema,
+  schemas: EntityDrawerSchema[],
+  capabilityConfigurations: readonly CapabilityConfigurationLike[]
+): Extract<EntityDrawerItem, { kind: 'query' }> | null => {
+  const applicationsSupplied = vendorManagementApplicationsSuppliedQueryItem(
+    vendorSchema,
+    schemas,
+    capabilityConfigurations
+  );
+  if (!applicationsSupplied) return null;
+
+  return {
+    ...applicationsSupplied,
+    label: 'Technology lifecycle',
+    presentation: 'list',
+    fields: [{ fieldId: '_lifecycle', label: 'Lifecycle' }]
+  };
 };
 
 const buildVendorManagementContractDefaultProfile = (
@@ -1279,21 +1573,54 @@ export const buildDefaultEntityDrawerConfiguration = (
   version: 1,
   profiles: Object.fromEntries(
     schemas.map(schema => {
-      const providerItems = [
-        ...getDefaultProviderItems(schemas, schema.id, capabilityConfigurations),
-        ...getStrategyRollupItems(schema, capabilityConfigurations)
-      ];
-      const glossaryFieldIds = businessGlossaryFieldIds(schema, capabilityConfigurations);
       const dataStewardshipFieldIdsValue = dataStewardshipFieldIds(
         schema,
         capabilityConfigurations
       );
+      const glossaryFieldIds = businessGlossaryFieldIds(schema, capabilityConfigurations);
+      const providerItems = [
+        ...getStrategyRealizedByItem(schema, capabilityConfigurations),
+        ...getStrategyLinkedObjectivesItem(schema, capabilityConfigurations),
+        ...getStrategyLinkedInitiativesItem(schema, schemas, capabilityConfigurations),
+        ...getDefaultProviderItems(schemas, schema.id, capabilityConfigurations),
+        ...(dataStewardshipFieldIdsValue
+          ? [{ kind: 'slot' as const, slotId: 'entity.change-cases' }]
+          : []),
+        ...(dataStewardshipFieldIdsValue
+          ? [{ kind: 'slot' as const, slotId: 'entity.governance-items' }]
+          : []),
+        ...(dataStewardshipFieldIdsValue
+          ? [{ kind: 'slot' as const, slotId: 'entity.assessments' }]
+          : []),
+        ...(glossaryFieldIds ? [{ kind: 'slot' as const, slotId: 'entity.usage' }] : []),
+        ...getStrategyRollupItems(schema, capabilityConfigurations)
+      ];
       const apiSpecificationFieldIdsValue = apiSpecificationFieldIds(
         schema,
         capabilityConfigurations
       );
       const vendorFieldIds = vendorManagementFieldIds(schema, capabilityConfigurations);
       const contractFieldIds = vendorManagementContractFieldIds(schema, capabilityConfigurations);
+      const contractsQueryItem = vendorManagementContractsQueryItem(
+        schema,
+        schemas,
+        capabilityConfigurations
+      );
+      const applicationsSuppliedQueryItem = vendorManagementApplicationsSuppliedQueryItem(
+        schema,
+        schemas,
+        capabilityConfigurations
+      );
+      const technologyLifecycleQueryItem = vendorManagementTechnologyLifecycleQueryItem(
+        schema,
+        schemas,
+        capabilityConfigurations
+      );
+      const spendRollupItems = vendorManagementSpendRollupItems(
+        schema,
+        schemas,
+        capabilityConfigurations
+      );
       return [
         schema.id,
         glossaryFieldIds
@@ -1301,9 +1628,15 @@ export const buildDefaultEntityDrawerConfiguration = (
           : dataStewardshipFieldIdsValue
             ? buildDataStewardshipDefaultProfile(providerItems, dataStewardshipFieldIdsValue)
             : apiSpecificationFieldIdsValue
-              ? buildApiSpecificationDefaultProfile(providerItems, apiSpecificationFieldIdsValue)
+              ? buildApiSpecificationDefaultProfile(apiSpecificationFieldIdsValue)
               : vendorFieldIds
-                ? buildVendorManagementDefaultProfile(providerItems, vendorFieldIds)
+                ? buildVendorManagementDefaultProfile(
+                    vendorFieldIds,
+                    contractsQueryItem,
+                    applicationsSuppliedQueryItem,
+                    spendRollupItems,
+                    technologyLifecycleQueryItem
+                  )
                 : contractFieldIds
                   ? buildVendorManagementContractDefaultProfile(contractFieldIds)
                   : buildDefaultEntityDrawerProfile(schema, providerItems)
@@ -1316,12 +1649,14 @@ const validateItem = (
   item: EntityDrawerItem,
   schema: EntityDrawerSchema,
   schemas: EntityDrawerSchema[],
+  relationSchemas: EntityDrawerRelationSchema[],
   schemaId: string,
   sectionId: string,
   diagnostics: EntityDrawerDiagnostic[]
 ): EntityDrawerItem | null => {
   if (item.kind === 'metadata') return item;
   if (item.kind === 'placeholder') return item;
+  if (item.kind === 'query') return item;
   if (item.kind === 'children') {
     const childSchema = schemas.find(candidate => candidate.id === item.childSchemaId);
     const field = childSchema?.fields.find(candidate => candidate.id === item.fieldId);
@@ -1370,6 +1705,48 @@ const validateItem = (
     return { ...item, options: normalizedOptions };
   }
   if (item.kind === 'rollup' || item.kind === 'rollup-leaf-count') {
+    if (item.kind === 'rollup' && item.sourceSchemaId && !item.traversal) {
+      diagnostics.push({
+        code: 'invalid_rollup_traversal',
+        schemaId,
+        sectionId,
+        itemId: item.fieldId,
+        message: 'A roll-up source schema requires a traversal.'
+      });
+      return null;
+    }
+    if (item.kind === 'rollup' && item.traversal) {
+      const sourceSchema = schemas.find(candidate => candidate.id === item.sourceSchemaId);
+      const traversalError = validateRollupTraversal({
+        item,
+        currentSchema: schema,
+        sourceSchema,
+        schemas,
+        relationSchemas
+      });
+      const sourceField = sourceSchema?.fields.find(field => field.id === item.fieldId);
+      if (traversalError) {
+        diagnostics.push({
+          code: 'invalid_rollup_traversal',
+          schemaId,
+          sectionId,
+          itemId: item.fieldId,
+          message: traversalError
+        });
+        return null;
+      }
+      if (!rollupFieldIsValid(sourceField)) {
+        diagnostics.push({
+          code: 'missing_or_archived_field',
+          schemaId,
+          sectionId,
+          itemId: `${item.sourceSchemaId}.${item.fieldId}`,
+          message: `Roll-up source field '${item.sourceSchemaId}.${item.fieldId}' is missing, archived, or not numeric.`
+        });
+        return null;
+      }
+      return item;
+    }
     const supportsSubtreeRollup = schema.fields.some(
       candidate => candidate.id === 'parent' && candidate.type === 'containment'
     );
@@ -1438,7 +1815,8 @@ const validateItem = (
 export const resolveEntityDrawerConfiguration = (
   raw: unknown,
   schemas: EntityDrawerSchema[],
-  capabilityConfigurations: readonly CapabilityConfigurationLike[] = []
+  capabilityConfigurations: readonly CapabilityConfigurationLike[] = [],
+  relationSchemas: EntityDrawerRelationSchema[] = []
 ): { effective: EntityDrawerConfiguration; diagnostics: EntityDrawerDiagnostic[] } => {
   const defaults = buildFallbackEntityDrawerConfiguration(schemas);
   const supportedSlotSchemaIds = getEntityDrawerSlotSchemaIds(schemas, capabilityConfigurations);
@@ -1475,7 +1853,15 @@ export const resolveEntityDrawerConfiguration = (
     const sections = profile.sections.map(section => ({
       ...section,
       items: section.items.flatMap(item => {
-        const resolved = validateItem(item, schema, schemas, schemaId, section.id, diagnostics);
+        const resolved = validateItem(
+          item,
+          schema,
+          schemas,
+          relationSchemas,
+          schemaId,
+          section.id,
+          diagnostics
+        );
         if (!resolved) return [];
         if (item.kind === 'slot' && !supportedSlotSchemaIds.get(item.slotId)?.includes(schemaId)) {
           diagnostics.push({
@@ -1487,7 +1873,9 @@ export const resolveEntityDrawerConfiguration = (
           });
           return [];
         }
-        return [resolved];
+        return [
+          resolved.kind === 'slot' ? resolveEntityDrawerSlotItemPresentation(resolved) : resolved
+        ];
       })
     }));
     const badges = profile.header.badges.filter(badge => {
@@ -1536,6 +1924,7 @@ export const buildEntityDrawerCatalog = (
       label: definition.label,
       description: definition.description,
       application: definition.application,
+      ...(definition.fixedPresentation ? { fixedPresentation: definition.fixedPresentation } : {}),
       supportedSchemaIds: supportedSlotSchemaIds.get(definition.id) ?? [],
       defaultOptions: definition.defaultOptions,
       optionFields: definition.optionFields

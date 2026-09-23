@@ -11,7 +11,7 @@ export type RiskCoverageRollups = {
 const EMPTY: RiskCoverageRollups = { byId: new Map(), isLoading: false, error: null };
 
 /**
- * Batched sibling of `useRiskCoverageRollup.ts`, for table/overview screens: one
+ * Batched coverage rollup for table/overview screens: one
  * `relations.list` request across every `risk-control` relation in the workspace at once
  * (filtered by schema, not per-Risk), grouped by the mitigated Risk's `_uid`. No metric engine
  * involved, same as the singular hook — `coverage`/`effectiveness` already live on the relation.

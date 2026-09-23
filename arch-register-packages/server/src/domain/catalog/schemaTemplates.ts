@@ -1880,28 +1880,22 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             ]
           },
           {
-            id: 'coverage',
-            title: 'Coverage',
-            collapsible: true,
-            items: [{ kind: 'slot', slotId: 'data-stewardship.coverage', showLabel: false }]
-          },
-          {
             id: 'queue-items',
             title: 'Queue items',
             collapsible: true,
-            items: [{ kind: 'slot', slotId: 'data-stewardship.queue-items', showLabel: false }]
+            items: [{ kind: 'slot', slotId: 'entity.governance-items', showLabel: false }]
           },
           {
             id: 'cases',
             title: 'Cases',
             collapsible: true,
-            items: [{ kind: 'slot', slotId: 'data-stewardship.change-cases', showLabel: false }]
+            items: [{ kind: 'slot', slotId: 'entity.change-cases', showLabel: false }]
           },
           {
             id: 'assessments',
             title: 'Assessments',
             collapsible: true,
-            items: [{ kind: 'slot', slotId: 'data-stewardship.assessments', showLabel: false }]
+            items: [{ kind: 'slot', slotId: 'entity.assessments', showLabel: false }]
           }
         ]
       }
@@ -2365,12 +2359,6 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             title: 'Consumers',
             collapsible: false,
             items: [{ kind: 'relation', fieldId: 'consumers', label: 'Consumers' }]
-          },
-          {
-            id: 'specification',
-            title: 'Specification',
-            collapsible: false,
-            items: [{ kind: 'slot', slotId: 'api-specification.catalog', showLabel: false }]
           }
         ]
       },
@@ -2392,13 +2380,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
               { kind: 'field', fieldId: 'concentration_risk', presentation: 'mini-panel' },
               { kind: 'field', fieldId: 'financial_risk', presentation: 'mini-panel' },
               { kind: 'field', fieldId: 'compliance_risk', presentation: 'mini-panel' },
-              { kind: 'field', fieldId: 'criticality', presentation: 'mini-panel' },
-              {
-                kind: 'slot',
-                slotId: 'vendor.risk',
-                label: 'vmRisk',
-                presentation: 'mini-panel'
-              }
+              { kind: 'field', fieldId: 'criticality', presentation: 'mini-panel' }
             ]
           },
           {
@@ -2417,14 +2399,51 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             id: 'spend',
             title: 'Spend',
             collapsible: true,
-            items: [{ kind: 'slot', slotId: 'vendor.spend', label: 'Spend', showLabel: false }]
+            layout: 'stat-grid',
+            items: [
+              {
+                kind: 'rollup',
+                sourceSchemaId: 'contract',
+                fieldId: 'annual_cost',
+                traversal: {
+                  kind: 'relation',
+                  fieldId: 'vendor',
+                  direction: 'backward',
+                  ownerSchemaId: 'contract'
+                },
+                aggregation: 'sum',
+                format: 'currency',
+                label: 'vmSpend'
+              },
+              {
+                kind: 'rollup',
+                sourceSchemaId: 'contract',
+                fieldId: 'annual_cost',
+                traversal: {
+                  kind: 'relation',
+                  fieldId: 'vendor',
+                  direction: 'backward',
+                  ownerSchemaId: 'contract'
+                },
+                aggregation: 'count',
+                format: 'number',
+                label: 'Contracts'
+              }
+            ]
           },
           {
             id: 'contracts',
             title: 'Contracts',
             collapsible: true,
             items: [
-              { kind: 'slot', slotId: 'vendor.contracts', label: 'Contracts', showLabel: false }
+              {
+                kind: 'query',
+                queryText: '<-"Contract".vendor',
+                label: 'Contracts',
+                showLabel: false,
+                presentation: 'list',
+                fields: [{ fieldId: 'annual_cost', label: 'Annual cost' }]
+              }
             ]
           },
           {
@@ -2433,10 +2452,9 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             collapsible: true,
             items: [
               {
-                kind: 'slot',
-                slotId: 'vendor.applications-supplied',
-                label: 'Applications supplied',
-                showLabel: false
+                kind: 'query',
+                queryText: '<-"Contract".vendor.<-"System Contract"',
+                label: 'Applications supplied'
               }
             ]
           },
@@ -2446,10 +2464,11 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             collapsible: true,
             items: [
               {
-                kind: 'slot',
-                slotId: 'vendor.technology-lifecycle',
+                kind: 'query',
+                queryText: '<-"Contract".vendor.<-"System Contract"',
                 label: 'Technology lifecycle',
-                showLabel: false
+                presentation: 'list',
+                fields: [{ fieldId: '_lifecycle', label: 'Lifecycle' }]
               }
             ]
           },
@@ -3755,7 +3774,6 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             title: 'Coverage',
             collapsible: false,
             items: [
-              { kind: 'slot', slotId: 'risk.coverage', label: 'Coverage', showLabel: false },
               {
                 kind: 'typed-relation-list',
                 fieldId: 'mitigating_controls',
@@ -3949,7 +3967,21 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             title: 'Strategy assessment',
             collapsible: false,
             items: [
-              { kind: 'slot', slotId: 'strategy.rollup', label: 'Roll-up' },
+              { kind: 'rollup', fieldId: 'maturity', aggregation: 'avg', format: 'decimal1' },
+              {
+                kind: 'rollup',
+                fieldId: 'maturity_target',
+                aggregation: 'avg',
+                format: 'decimal1'
+              },
+              {
+                kind: 'rollup',
+                fieldId: 'annual_investment',
+                aggregation: 'sum',
+                format: 'currency'
+              },
+              { kind: 'rollup', fieldId: 'risk', aggregation: 'avg', format: 'decimal1' },
+              { kind: 'rollup-leaf-count' },
               { kind: 'field', fieldId: 'capability_type' },
               { kind: 'field', fieldId: 'value_stream' },
               { kind: 'field', fieldId: 'maturity' },
@@ -3970,15 +4002,19 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
                 fieldId: 'parent',
                 label: 'Children'
               },
-              { kind: 'slot', slotId: 'strategy.realized-by', label: 'Realized by' },
               {
-                kind: 'slot',
-                slotId: 'strategy.linked-objectives',
+                kind: 'query',
+                queryText: 'subtree(parent).->"Business Capability Supports Entity"',
+                label: 'Realized by'
+              },
+              {
+                kind: 'query',
+                queryText: '<-"Objective Supports Business Capability"',
                 label: 'Linked objectives'
               },
               {
-                kind: 'slot',
-                slotId: 'strategy.linked-initiatives',
+                kind: 'query',
+                queryText: '<-"Objective Supports Business Capability".<-"Initiative".objectives',
                 label: 'Linked initiatives'
               }
             ]
@@ -4985,7 +5021,8 @@ const materializeTemplateFragments = (
     );
     const entityDrawerProfiles = remapEntityDrawerProfiles(
       fragment.template.entityDrawerProfiles ?? {},
-      schemaIds
+      schemaIds,
+      relationSchemaIds
     );
 
     return {

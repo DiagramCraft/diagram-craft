@@ -22,6 +22,11 @@ import type {
   EntityDrawerItem,
   EntityDrawerProfile
 } from '@arch-register/api-types/entityDrawerConfiguration';
+import type { EntitySchema } from '@arch-register/api-types/schemaContract';
+import {
+  getMetricPathOptions,
+  type MetricPathOption
+} from '../entities/components/mapMetricConfig';
 import {
   buildFallbackEntityDrawerProfile,
   normalizeLegacyEntityDrawerConfiguration
@@ -69,6 +74,34 @@ const useCloseOnOutsideClick = (open: boolean, onClose: () => void) => {
 
 type PickerOption = { value: string; label: string; pick: () => void };
 type PickerGroup = { label: string; options: PickerOption[] };
+
+type RelationRollupOption = {
+  path: MetricPathOption;
+  sourceSchema: EntitySchema;
+  field: EntitySchema['fields'][number];
+};
+
+const relationRollupPathKey = (path: MetricPathOption['step']): string => JSON.stringify(path);
+
+const relationRollupOptionKey = (option: RelationRollupOption): string =>
+  `${option.sourceSchema.id}:${relationRollupPathKey(option.path.step)}`;
+
+const getRelationRollupOptions = (
+  schema: EntitySchema,
+  schemas: EntitySchema[],
+  relationSchemas: ReturnType<typeof useWorkspaceContext>['relationSchemas']
+): RelationRollupOption[] =>
+  getMetricPathOptions(schema, relationSchemas, () => 'edit', schemas).flatMap(path =>
+    path.targetSchemaIds.flatMap(targetSchemaId => {
+      const sourceSchema = schemas.find(candidate => candidate.id === targetSchemaId);
+      if (!sourceSchema) return [];
+      return sourceSchema.fields
+        .filter(
+          field => field.archived !== true && (field.type === 'number' || field.type === 'currency')
+        )
+        .map(field => ({ path, sourceSchema, field }));
+    })
+  );
 
 const AddMenu = ({ label, groups }: { label: string; groups: PickerGroup[] }) => {
   const [open, setOpen] = useState(false);
@@ -231,16 +264,34 @@ const itemReference = (item: EntityDrawerItem): string => {
   if (item.kind === 'children') return `${item.childSchemaId}:${item.fieldId}`;
   if (item.kind === 'rollup-leaf-count') return item.kind;
   if (item.kind === 'placeholder') return item.message;
+  if (item.kind === 'query') return item.queryText;
   return item.fieldId;
+};
+
+const itemPresentation = (
+  item: EntityDrawerItem,
+  catalog: EntityDrawerCatalog
+): 'row' | 'mini-panel' | undefined => {
+  if (item.kind !== 'field' && item.kind !== 'slot') return undefined;
+  if (
+    item.kind === 'slot' &&
+    catalog.slots.find(slot => slot.id === item.slotId)?.fixedPresentation !== undefined
+  ) {
+    return undefined;
+  }
+  return item.presentation ?? 'row';
 };
 
 const itemPlacementKey = (item: EntityDrawerItem): string => {
   if (item.kind === 'metadata') return `metadata:${item.slot}`;
   if (item.kind === 'slot') return `slot:${item.slotId}`;
   if (item.kind === 'children') return `children:${item.childSchemaId}:${item.fieldId}`;
-  if (item.kind === 'rollup') return `rollup:${item.fieldId}`;
+  if (item.kind === 'rollup') {
+    return `rollup:${item.sourceSchemaId ?? ''}:${item.fieldId}:${item.aggregation}:${JSON.stringify(item.traversal ?? null)}`;
+  }
   if (item.kind === 'rollup-leaf-count') return 'rollup-leaf-count';
   if (item.kind === 'placeholder') return `placeholder:${item.message}`;
+  if (item.kind === 'query') return `query:${item.queryText}`;
   return `field:${item.fieldId}`;
 };
 
@@ -263,10 +314,12 @@ const itemLabel = (
   if (item.kind === 'rollup-leaf-count') return 'Leaf count';
   if (item.kind === 'rollup') {
     const field = catalog.schemas
-      .find(schema => schema.id === schemaId)
+      .find(schema => schema.id === (item.sourceSchemaId ?? schemaId))
       ?.fields.find(candidate => candidate.id === item.fieldId);
-    return `Roll-up · ${field?.name ?? item.fieldId}`;
+    const source = item.sourceSchemaId ? ` · ${item.sourceSchemaId}` : '';
+    return `Roll-up · ${field?.name ?? item.fieldId}${source}`;
   }
+  if (item.kind === 'query') return item.queryText;
   return (
     catalog.schemas
       .find(schema => schema.id === schemaId)
@@ -335,7 +388,7 @@ export const EntityDrawerEditor = ({
   schemaId?: string;
   canEdit?: boolean;
 }) => {
-  const { workspaceSlug, schemas } = useWorkspaceContext();
+  const { workspaceSlug, schemas, relationSchemas } = useWorkspaceContext();
   const selectedSchemaId = schemaId ?? schemas[0]?.id;
   const selectedSchema = schemas.find(schema => schema.id === selectedSchemaId) ?? schemas[0];
   const configurationQuery = useEntityDrawerConfiguration(workspaceSlug);
@@ -422,6 +475,7 @@ export const EntityDrawerEditor = ({
       )
       .map(field => ({ childSchema, field }))
   );
+  const relationRollupOptions = getRelationRollupOptions(selectedSchema, schemas, relationSchemas);
   const placedItems = new Set(
     profile.sections.flatMap(section => section.items.map(itemPlacementKey))
   );
@@ -554,7 +608,17 @@ export const EntityDrawerEditor = ({
             options: [
               ...availableFields
                 .filter(field => field.type === 'number' || field.type === 'currency')
-                .filter(field => !placedItems.has(`rollup:${field.id}`))
+                .filter(
+                  field =>
+                    !placedItems.has(
+                      itemPlacementKey({
+                        kind: 'rollup',
+                        fieldId: field.id,
+                        aggregation: field.type === 'currency' ? 'sum' : 'avg',
+                        format: field.type === 'currency' ? 'currency' : 'decimal1'
+                      })
+                    )
+                )
                 .map(field => ({
                   value: `rollup:${field.id}`,
                   label: `Roll-up · ${field.name}`,
@@ -579,7 +643,41 @@ export const EntityDrawerEditor = ({
             ]
           }
         ]
-      : [])
+      : []),
+    {
+      label: 'Relation roll-ups',
+      options: relationRollupOptions.flatMap(({ path, sourceSchema, field }) => {
+        const traversal = path.step;
+        const sumItem: Extract<EntityDrawerItem, { kind: 'rollup' }> = {
+          kind: 'rollup',
+          sourceSchemaId: sourceSchema.id,
+          fieldId: field.id,
+          traversal,
+          aggregation: 'sum',
+          format: field.type === 'currency' ? 'currency' : 'decimal1'
+        };
+        const countItem: Extract<EntityDrawerItem, { kind: 'rollup' }> = {
+          kind: 'rollup',
+          sourceSchemaId: sourceSchema.id,
+          fieldId: field.id,
+          traversal,
+          aggregation: 'count',
+          format: 'number'
+        };
+        return [
+          {
+            value: itemPlacementKey(sumItem),
+            label: `${path.label} · Sum ${field.name}`,
+            pick: () => addItem(sectionId, sumItem)
+          },
+          {
+            value: itemPlacementKey(countItem),
+            label: `${path.label} · Count ${sourceSchema.name}`,
+            pick: () => addItem(sectionId, countItem)
+          }
+        ].filter(option => !placedItems.has(option.value));
+      })
+    }
   ];
 
   const badgeGroups: PickerGroup[] = [
@@ -883,13 +981,9 @@ export const EntityDrawerEditor = ({
                           <ItemMenu
                             sectionId={section.id}
                             sections={profile.sections}
-                            presentation={
-                              item.kind === 'field' || item.kind === 'slot'
-                                ? (item.presentation ?? 'row')
-                                : undefined
-                            }
+                            presentation={itemPresentation(item, catalog)}
                             onSetPresentation={
-                              item.kind === 'field' || item.kind === 'slot'
+                              itemPresentation(item, catalog) !== undefined
                                 ? presentation =>
                                     updateSection(section.id, current => ({
                                       ...current,
@@ -902,14 +996,19 @@ export const EntityDrawerEditor = ({
                                     }))
                                 : undefined
                             }
-                            showLabel={item.kind === 'slot' ? item.showLabel !== false : undefined}
+                            showLabel={
+                              item.kind === 'slot' || item.kind === 'rollup'
+                                ? item.showLabel !== false
+                                : undefined
+                            }
                             onToggleShowLabel={
-                              item.kind === 'slot'
+                              item.kind === 'slot' || item.kind === 'rollup'
                                 ? showLabel =>
                                     updateSection(section.id, current => ({
                                       ...current,
                                       items: current.items.map((entry, index) =>
-                                        index === itemIndex && entry.kind === 'slot'
+                                        index === itemIndex &&
+                                        (entry.kind === 'slot' || entry.kind === 'rollup')
                                           ? { ...entry, showLabel }
                                           : entry
                                       )
@@ -952,6 +1051,124 @@ export const EntityDrawerEditor = ({
                               rows={3}
                             />
                           </label>
+                        )}
+                        {item.kind === 'rollup' && item.traversal && (
+                          <div className={styles.optionsEditor}>
+                            <label>
+                              <span>Relation path</span>
+                              <select
+                                value={
+                                  relationRollupOptions.find(
+                                    option =>
+                                      option.sourceSchema.id === item.sourceSchemaId &&
+                                      relationRollupPathKey(option.path.step) ===
+                                        relationRollupPathKey(item.traversal!)
+                                  )
+                                    ? `${item.sourceSchemaId}:${relationRollupPathKey(item.traversal)}`
+                                    : ''
+                                }
+                                onChange={event => {
+                                  const option = relationRollupOptions.find(
+                                    candidate =>
+                                      relationRollupOptionKey(candidate) === event.target.value
+                                  );
+                                  if (!option) return;
+                                  updateSection(section.id, current => ({
+                                    ...current,
+                                    items: current.items.map((entry, index) =>
+                                      index === itemIndex && entry.kind === 'rollup'
+                                        ? {
+                                            ...entry,
+                                            sourceSchemaId: option.sourceSchema.id,
+                                            fieldId: option.field.id,
+                                            traversal: option.path.step,
+                                            format:
+                                              entry.aggregation === 'count'
+                                                ? 'number'
+                                                : option.field.type === 'currency'
+                                                  ? 'currency'
+                                                  : 'decimal1'
+                                          }
+                                        : entry
+                                    )
+                                  }));
+                                }}
+                              >
+                                {Array.from(
+                                  new Map(
+                                    relationRollupOptions.map(option => [
+                                      relationRollupOptionKey(option),
+                                      option
+                                    ])
+                                  ).values()
+                                ).map(option => (
+                                  <option
+                                    key={relationRollupOptionKey(option)}
+                                    value={relationRollupOptionKey(option)}
+                                  >
+                                    {option.path.label} · {option.sourceSchema.name}
+                                  </option>
+                                ))}
+                              </select>
+                            </label>
+                            <label>
+                              <span>Aggregation</span>
+                              <select
+                                value={item.aggregation}
+                                onChange={event => {
+                                  const aggregation = event.target.value as 'avg' | 'sum' | 'count';
+                                  updateSection(section.id, current => ({
+                                    ...current,
+                                    items: current.items.map((entry, index) =>
+                                      index === itemIndex && entry.kind === 'rollup'
+                                        ? {
+                                            ...entry,
+                                            aggregation,
+                                            format:
+                                              aggregation === 'count'
+                                                ? 'number'
+                                                : entry.format === 'number'
+                                                  ? 'decimal1'
+                                                  : entry.format
+                                          }
+                                        : entry
+                                    )
+                                  }));
+                                }}
+                              >
+                                <option value="sum">Sum</option>
+                                <option value="avg">Average</option>
+                                <option value="count">Count</option>
+                              </select>
+                            </label>
+                            <label>
+                              <span>Format</span>
+                              <select
+                                value={item.format}
+                                disabled={item.aggregation === 'count'}
+                                onChange={event => {
+                                  const format = event.target.value as
+                                    | 'number'
+                                    | 'decimal1'
+                                    | 'currency'
+                                    | 'percent';
+                                  updateSection(section.id, current => ({
+                                    ...current,
+                                    items: current.items.map((entry, index) =>
+                                      index === itemIndex && entry.kind === 'rollup'
+                                        ? { ...entry, format }
+                                        : entry
+                                    )
+                                  }));
+                                }}
+                              >
+                                <option value="number">Number</option>
+                                <option value="decimal1">One decimal</option>
+                                <option value="currency">Currency</option>
+                                <option value="percent">Percent</option>
+                              </select>
+                            </label>
+                          </div>
                         )}
                       </div>
                     ))}

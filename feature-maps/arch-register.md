@@ -166,7 +166,11 @@
               lists, and registered semantic content slots. Without a stored profile, the drawer falls back to
               schema-ordered attributes,
               attribute groups, and metadata; seeded or templated authored profiles retain their richer content.
-              Missing or unsupported references fall back safely to that generic drawer.
+              Missing or unsupported references fall back safely to that generic drawer. Registered content slots
+              may be capability-bound or generic; the Entity Change cases, Entity Governance items, and Entity
+              Assessments slots are
+              associated with the current entity and can therefore be added to any schema's drawer, while remaining
+              seeded by default only for Data Entity profiles.
 
             - @id:ar.workspace.configuration.schemas Administrators can define entity schemas, fields, select options,
               and reusable workspace enums. Enum options have stable values, editable labels and descriptions, an
@@ -309,12 +313,15 @@
           `rollup`/leaf-count item kinds (seeded from @id:ar.strategy.view-config's roll-up fields by default, but
           configurable per drawer profile like any other item — the same reusable mechanism any schema with a
           containment hierarchy can use), plus capability badges, configured fields, the built-in containment-child
-          list, and registered Strategy content slots for linked objectives and initiatives and realized-by
-          applications. Child selections open a nested drawer on top of the current one (the shared workspace drawer
-          stack), and the footer action opens the underlying record in Entities. "Realized by" unions
-          applications the capability supports directly with ones supported anywhere in its recursive containment
-          subtree, so non-leaf capabilities also surface coverage carried by their descendants; each entity reached
-          through a descendant shows a "via" provenance label naming the contributing capability.
+          list, configurable drawer items for linked objectives and initiatives, and a "Realized by" item
+          using the generic drawer `query` item kind — a path expression in the text query DSL (see
+          `specs/QUERY_LANGUAGE.md`) evaluated against the current entity, letting any drawer profile declare
+          recursive-containment or typed-relation traversals without app-specific code. Child selections open a
+          nested drawer on top of the current one (the shared workspace drawer stack), and the footer action opens
+          the underlying record in Entities. "Realized by" unions applications the capability supports directly with
+          ones supported anywhere in its recursive containment subtree, so non-leaf capabilities also surface
+          coverage carried by their descendants, shown as a flat list (no per-entity provenance of which descendant
+          contributed the link).
 
         - @id:ar.strategy.heatmaps The Heatmaps section is deprioritized and not currently surfaced in the app rail
           or section nav; its route and placeholder screen are retained. The capability-map overlay control already
@@ -366,11 +373,11 @@
           `drawer` search param: its schema profile preserves a composite risk score
           (`vmRisk`/`vmRiskBand`, weighted across the vendor's security, concentration, financial, and compliance
           risk fields and lifted by criticality), attributes, spend (`vmSpend`, summed across the vendor's own
-          Contracts), the vendor's Contracts, the Systems its contracts serve ("Applications supplied"), and a
+          Contracts via a generic relation roll-up, the vendor's Contracts in a configurable list with annual cost, the Systems its contracts serve ("Applications supplied"), and a
           best-effort technology lifecycle view derived from those Systems' own lifecycle state. These sections
           can be reordered, relabeled, or have their section and provider titles hidden through the workspace
-          entity-drawer configuration; Capabilities funded is not yet available — no Contract-to-capability link
-          exists yet.
+          entity-drawer configuration; the composite risk summary remains a compact mini-panel. Capabilities funded
+          is not yet available — no Contract-to-capability link exists yet.
 
         - @id:ar.vendor-management.contracts The Contracts section offers a list view and a 12-month renewal
           calendar (its timeline view is still pending). The list is a register of Contract entities: free-text
@@ -451,14 +458,11 @@
           parameter; legacy `risk-compliance/risks/$riskId` links redirect there. The drawer shows likelihood/impact,
           the existing `inherent_risk_score` and
           `residual_risk_score` derived fields (the latter banded Low/Medium/High/Critical via the standard 5×5
-          heat-map thresholds), attributes, a multi-control coverage roll-up (`rcCoverage`/`rcBand`, combining every
-          mitigating Control's `coverage` % and `effectiveness` on its `risk-control` relation as independent,
-          overlapping layers of defense rather than a plain average), the list of mitigating Controls, and the
-          entities the risk affects (via `risk-affects`). The configurable Risk drawer preserves the
-          template-authored default profile for these metrics, attributes, category/status badges, and the
-          residual-risk band, while registered Risk & Compliance provider slots expose coverage and affected
-          entities; workspace administrators can configure supported fields, sections, order, labels, and slot
-          placement.
+          heat-map thresholds), attributes, the list of mitigating Controls with each relation's `coverage` % and
+          `effectiveness`, and the entities the risk affects (via `risk-affects`). The configurable Risk drawer
+          preserves the template-authored default profile for these metrics, attributes, category/status badges,
+          and the residual-risk band; workspace administrators can configure supported fields, sections, order,
+          labels, and item placement.
 
         - @id:ar.risk-compliance.controls The Controls section has a sortable library table (search; sort by name,
           risks mitigated, or last verified; columns for Name, Type, Effectiveness — a colour-outlined pill — Risks
@@ -573,8 +577,8 @@
           due" they only appear if the viewer also happens to hold that case's open assignment; otherwise the drawer
           is a read-only view of the case. Withdraw/Send-reminder aren't offered here (both are initiator-only and
           stay on the workspace-wide governance inbox screen, to avoid showing a button that would fail server-side
-          for most viewers of this queue). The shared dataset drawer's own "Queue items" section shows this same
-          per-dataset queue (opening the same case drawer, not a placeholder).
+          for most viewers of this queue). The shared entity drawer's own "Governance items" section shows the open
+          governance cases for the current entity (opening the same case drawer, not a placeholder).
 
         - @id:ar.data-stewardship.stewardship The Stewardship section has a four-tile stat strip (fully covered %,
           missing an owner, reviews overdue, missing a steward), a "Gaps to close" panel (every dataset with a
@@ -593,9 +597,8 @@
           own design references to the fields the shipped schema actually has. Opening a dataset (from the gaps
           panel or the table) opens the configurable Data Entity drawer via the workspace-wide `drawer` search
           param. Its default profile preserves the
-          dataset's attributes and stewardship fields and exposes Coverage, Queue items, Cases, and Assessments as
-          Data Stewardship provider sections; unsupported placeholder-only Exceptions, Flows, and Systems sections
-          are omitted.
+          dataset's attributes and stewardship fields and exposes Governance items, Cases, and the generic
+          Assessments slot; unsupported placeholder-only Exceptions, Flows, and Systems sections are omitted.
 
         - @id:ar.data-stewardship.classification The Classification section has three views, switched via an
           in-screen toggle group in the screen's own header (mirroring the Claude Design reference's `DSClassification`
@@ -673,9 +676,9 @@
           status facet lives in this section's own primary sidebar (all/Overdue/In progress/Not started/Complete,
           mirroring the stat strip's own buckets) rather than an in-page toggle, the same facet-sidebar shape
           `ar.data-stewardship.stewardship`/`ar.data-stewardship.classification` use; only free-text search (name,
-          kind, project) stays in the screen's own toolbar. The per- (assessment, dataset) join from the earlier
-          version still exists internally and backs the shared dataset drawer's own Assessments section (that
-          dataset's status on that assessment, listed alongside its attributes/stewardship/coverage/cases). A header
+          kind, project) stays in the screen's own toolbar. The per- (assessment, entity) join from the earlier
+          version still exists internally and backs the shared entity drawer's own Assessments section (that
+          entity's status on that assessment, listed alongside its attributes/stewardship/coverage/cases). A header
           action links out to the My work section for sign-offs due, mirroring the design
           reference.
 
@@ -818,7 +821,7 @@
           abbreviations, organize terms across flat many-to-many categories, inspect explicit usage across entities,
           typed relations, Markdown, projects, and diagrams, and review unused, conflicting, deprecated, and ownerless
           quality reports. Term drawers use the workspace's configurable schema-scoped entity drawer for declarative
-          term fields, metadata, ordering, and the glossary usage slot, while quality badges and permission-filtered
+          term fields, metadata, ordering, and the generic `entity.usage` slot, while quality badges and permission-filtered
           usage remain glossary-owned application content. Term definitions, aliases, category changes, ownership,
           lifecycle, and status continue to use the existing entity permissions, history, and approval mechanisms;
           generic entity behavior is unchanged.
@@ -1290,8 +1293,9 @@
 
         - @id:ar.content.diagrams Users can associate Diagram Craft diagrams with architectural entities and projects.
 
-        - @id:ar.content.glossary-links Glossary term usage and backlinks include only explicit, permission-visible
-          links from Markdown metadata, project associations, and diagram entity references.
+        - @id:ar.content.glossary-links Glossary term usage and backlinks are collected through the generic entity
+          usage API and include only explicit, permission-visible links from Markdown metadata, project associations,
+          and diagram entity references.
 
             - @id:ar.content.diagrams.entity-graphs Users can generate or inspect diagrams derived from entity
               relationships and graph data.

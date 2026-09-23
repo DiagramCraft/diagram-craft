@@ -53,7 +53,7 @@ vi.mock('../../../lib/orpcClient', () => ({
   }
 }));
 
-// Same rationale as `DatasetDrawer.test.tsx`: member/team resolution needs a full
+// Same rationale as the entity drawer integration: member/team resolution needs a full
 // WorkspaceContext provider out of scope for this component test.
 vi.mock('../../../hooks/usePrincipalLabel', () => ({
   usePrincipalLabel: () => (principal: { principal_id?: string } | null | undefined) =>

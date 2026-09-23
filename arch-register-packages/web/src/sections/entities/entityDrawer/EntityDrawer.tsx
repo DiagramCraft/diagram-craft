@@ -17,7 +17,7 @@ import { isReferenceOrContainmentField } from '@arch-register/api-types/schemaCo
 import { buildFallbackEntityDrawerProfile } from '@arch-register/api-types/entityDrawerConfiguration';
 import { DrawerPropertyRow } from './DrawerPropertyRow';
 import { formatCurrencyValue } from '../../../utils/currencyFormat';
-import { formatDate, formatIsoDate } from '../../../utils/dateFormat';
+import { formatIsoDate } from '../../../utils/dateFormat';
 import { usePrincipalLabel } from '../../../hooks/usePrincipalLabel';
 import {
   entityDrawerMetadataValue,
@@ -33,21 +33,23 @@ import {
 import { entityDrawerProviderRegistry } from './entityDrawerProviders';
 import { RollupStatItem, RollupLeafCountItem } from './rollup/RollupItems';
 import { TypedRelationListItem } from './TypedRelationListItem';
+import { QueryListItem } from './QueryListItem';
 import type { EntityRecord, EntitySummary } from '@arch-register/api-types/entityContract';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import type { RelationRecord } from '@arch-register/api-types/relationContract';
 import type { RefLookup } from '../types/entityDetailTypes';
-import type { EntityDrawerDateFormat } from '../../../shell/shellTypes';
 import styles from './EntityDrawer.module.css';
 
 const EntityDrawerBadge = ({
   resolved,
   entity,
-  lifecycleStates
+  lifecycleStates,
+  formatDateValue
 }: {
   resolved: ResolvedEntityDrawerBadge;
   entity: EntityRecord;
   lifecycleStates: ReturnType<typeof useWorkspaceContext>['lifecycleStates'];
+  formatDateValue: (value: unknown) => string;
 }) => {
   const resolvePrincipalLabel = usePrincipalLabel();
   const value =
@@ -102,7 +104,7 @@ const EntityDrawerBadge = ({
 
   const field = resolved.field;
   if (!field) return null;
-  const displayValue = formatDrawerFieldValue(field, value, resolvePrincipalLabel);
+  const displayValue = formatDrawerFieldValue(field, value, resolvePrincipalLabel, formatDateValue);
   return (
     <Chip tone="ghost">
       {resolved.badge.showLabel === false ? displayValue : `${resolved.label}: ${displayValue}`}
@@ -116,13 +118,16 @@ const formatDrawerFieldValue = (
   resolvePrincipalLabel: (value: {
     principal_type?: string;
     principal_id?: string;
-  }) => string | undefined
+  }) => string | undefined,
+  formatDateValue: (value: unknown) => string
 ): string => {
   if (value === null || value === undefined || value === '') return '—';
   if (Array.isArray(value))
-    return value.map(item => formatDrawerFieldValue(field, item, resolvePrincipalLabel)).join(', ');
+    return value
+      .map(item => formatDrawerFieldValue(field, item, resolvePrincipalLabel, formatDateValue))
+      .join(', ');
   if (field.type === 'boolean') return value ? 'Yes' : 'No';
-  if (field.type === 'date') return formatDate(value);
+  if (field.type === 'date') return formatDateValue(value);
   if (field.type === 'currency') return formatCurrencyValue(value);
   if (field.type === 'principal' && typeof value === 'object' && value !== null) {
     const principal = value as { principal_type?: string; principal_id?: string };
@@ -144,11 +149,13 @@ const formatDrawerFieldValue = (
 const MetadataItem = ({
   item,
   entity,
-  lifecycleStates
+  lifecycleStates,
+  formatDateValue
 }: {
   item: ResolvedEntityDrawerItem;
   entity: NonNullable<ReturnType<typeof useEntity>['data']>;
   lifecycleStates: ReturnType<typeof useWorkspaceContext>['lifecycleStates'];
+  formatDateValue: (value: unknown) => string;
 }) => {
   if (item.item.kind !== 'metadata') return null;
   const value = entityDrawerMetadataValue(entity, item.item.slot);
@@ -187,7 +194,7 @@ const MetadataItem = ({
     item.item.slot === 'owner'
       ? (entity._owner?.name ?? '—')
       : item.item.slot === 'targetLifecycleDate'
-        ? formatDate(value)
+        ? formatDateValue(value)
         : String(value ?? '—');
   return (
     <div className={styles.metadataRow}>
@@ -283,7 +290,14 @@ const DrawerItem = ({
   onOpenRelatedEntity?: (fieldId: string, publicId: string) => boolean;
 }) => {
   if (item.item.kind === 'metadata') {
-    return <MetadataItem item={item} entity={entity} lifecycleStates={lifecycleStates} />;
+    return (
+      <MetadataItem
+        item={item}
+        entity={entity}
+        lifecycleStates={lifecycleStates}
+        formatDateValue={formatDateValue ?? formatIsoDate}
+      />
+    );
   }
   if (item.item.kind === 'placeholder') {
     return <span className="dim">{item.item.message}</span>;
@@ -330,6 +344,19 @@ const DrawerItem = ({
         typedRelationsIncoming={typedRelationsIncoming}
         typedRelationsStatus={providerContext.typedRelationsStatus}
         relationSchemas={relationSchemas}
+      />
+    );
+  }
+  if (item.item.kind === 'query') {
+    return (
+      <QueryListItem
+        item={item.item}
+        label={item.label}
+        workspaceId={workspaceSlug}
+        schemaName={providerContext.schema.name}
+        entityId={entity._uid}
+        schemas={providerContext.schemas}
+        lifecycleStates={lifecycleStates}
       />
     );
   }
@@ -392,11 +419,9 @@ export const EntityDrawer = ({
   entityQueryEnabled = true,
   entityLoading = false,
   entityUnavailable = false,
-  entityLabel,
-  loadingMessage = `Loading ${entityLabel ?? 'entity'}…`,
-  unavailableMessage = `This ${entityLabel ?? 'entity'} is unavailable.`,
-  formatDateValue,
-  dateFormat
+  loadingMessage = 'Loading entity…',
+  unavailableMessage = 'This entity is unavailable.',
+  formatDateValue
 }: {
   workspaceSlug: string;
   entityId: string;
@@ -412,12 +437,9 @@ export const EntityDrawer = ({
   entityQueryEnabled?: boolean;
   entityLoading?: boolean;
   entityUnavailable?: boolean;
-  /** Short noun (e.g. "risk", "contract") used to compose the default loading/unavailable copy. */
-  entityLabel?: string;
   loadingMessage?: ReactNode;
   unavailableMessage?: ReactNode;
   formatDateValue?: (value: unknown) => string;
-  dateFormat?: EntityDrawerDateFormat;
 }) => {
   const navigate = useNavigate();
   const { schemas, relationSchemas, lifecycleStates } = useWorkspaceContext();
@@ -428,8 +450,7 @@ export const EntityDrawer = ({
     entityQueryEnabled && entityOverride === undefined
   );
   const entity = entityOverride ?? entityQuery.data;
-  const resolvedFormatDateValue =
-    formatDateValue ?? (dateFormat === 'iso' ? formatIsoDate : undefined);
+  const resolvedFormatDateValue = formatDateValue ?? formatIsoDate;
   const relationsQuery = useEntityRelations(workspaceSlug, entity?._uid ?? entityId);
   const typedRelationsQuery = useEntityTypedRelations(workspaceSlug, entity?._uid ?? entityId);
   const configurationQuery = useEntityDrawerConfiguration(workspaceSlug);
@@ -607,6 +628,7 @@ export const EntityDrawer = ({
                 resolved={badge}
                 entity={entity}
                 lifecycleStates={lifecycleStates}
+                formatDateValue={resolvedFormatDateValue}
               />
             ))}
             {typeof additionalBadges === 'function' ? additionalBadges(entity) : additionalBadges}

@@ -16,7 +16,7 @@ import { asEntityPublicId, entityDetailRoute } from '../../../routes/publicObjec
 import { caseKindLabel, humanizeCaseKind } from '../../../utils/governanceCaseLabels';
 import { dueLabel, dueTone } from '../../../utils/assessmentDueTone';
 import { queueItemPriority, type DataStewardshipQueuePriority } from '../dataStewardshipQueue';
-// Reuses `DatasetDrawer`'s content classes (`sectionLabel`/`attributeRow`/`empty`) rather than
+// Reuses the data-stewardship drawer content classes (`sectionLabel`/`attributeRow`/`empty`) rather than
 // duplicating them — both drawers render the same "label above a row of key/value attributes"
 // shape.
 import styles from './DatasetDrawer.module.css';

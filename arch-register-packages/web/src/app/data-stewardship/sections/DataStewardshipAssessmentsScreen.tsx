@@ -12,11 +12,11 @@ import { dueLabel, dueTone } from '../../../utils/assessmentDueTone';
 import { resolveDataStewardshipConfig } from '../dataStewardshipQueries';
 import { DS_ASSESSMENTS_ID, DS_MY_WORK_ID, DS_RAIL_PATHS } from '../dataStewardshipSections';
 import {
-  DS_ASSESSMENT_STATUS_LABEL,
-  type DataStewardshipAssessmentStatus,
-  type DataStewardshipAssessmentSummary
-} from '../dataStewardshipAssessments';
-import { useDataStewardshipAssessmentRows } from '../useDataStewardshipAssessmentRows';
+  ENTITY_ASSESSMENT_STATUS_LABEL,
+  type EntityAssessmentStatus,
+  type EntityAssessmentSummary
+} from '../../../sections/entities/entityDrawer/entityAssessments';
+import { useEntityAssessmentRows } from '../../../sections/entities/entityDrawer/useEntityAssessmentRows';
 import { asProjectPublicId, projectDetailRoute } from '../../../routes/publicObjectRoutes';
 import type { DataStewardshipAssessmentsSearchParams } from '../../../routes/searchParams';
 import filterStyles from '../../../sections/entities/components/EntityBrowser.module.css';
@@ -24,7 +24,7 @@ import styles from './DataStewardshipStewardshipScreen.module.css';
 
 /** Status-pill/dot colours — mirrors the design reference's `DS_AT_TONE`
  *  (`ds-data.jsx`: Overdue/In progress/Not started/Complete). */
-const STATUS_TONE: Record<DataStewardshipAssessmentStatus, string> = {
+const STATUS_TONE: Record<EntityAssessmentStatus, string> = {
   overdue: 'var(--cmp-fg-danger, #ef4444)',
   in_progress: 'var(--cmp-fg-warning, #eab308)',
   not_started: 'var(--cmp-fg-dim, #9ca3af)',
@@ -39,15 +39,15 @@ const STATUS_TONE: Record<DataStewardshipAssessmentStatus, string> = {
  * whichever assessments target the workspace's Data Entity schema (`assessment.scope`), same
  * `scopedTo` shape RC's screen uses with only one bound schema instead of two.
  *
- * One row per assessment (`deriveDataStewardshipAssessmentSummaries`), not per dataset — an earlier
+ * One row per assessment (`deriveEntityAssessmentSummaries`), not per dataset — an earlier
  * version joined every assessment against every dataset entity it targets, matching the Claude
  * Design reference's `DSAssessments` mock (`ds-views.jsx`), where each mock assessment record is
  * already bound to exactly one dataset. That join reads as a confusing, arbitrarily-repeated
  * "progress" per row once a real assessment spans several datasets — one row, one aggregate
  * progress bar (in-scope datasets with a complete response, over the total in scope) reads far more
  * clearly, and mirrors RC's own one-row-per-assessment register. The per-dataset join still backs
- * the shared dataset drawer (`DatasetDrawer.tsx`'s Assessments section), where "this dataset's
- * status on this assessment" is exactly what's wanted.
+ * the shared entity drawer's Assessments section, where "this entity's status on this assessment"
+ * is exactly what's wanted.
  *
  * The Assessment column's subtitle is the assessment's own `description` — the closest analog to
  * the design reference's per-assessment `note` line under the name.
@@ -75,7 +75,7 @@ export const DataStewardshipAssessmentsScreen = () => {
   const configurations = useQuery(workspaceCapabilityConfigurationsQuery(workspaceSlug));
   const dataStewardshipConfig = resolveDataStewardshipConfig(configurations.data);
 
-  const { summaries, isLoading: loading } = useDataStewardshipAssessmentRows(
+  const { summaries, isLoading: loading } = useEntityAssessmentRows(
     workspaceSlug,
     dataStewardshipConfig?.dataEntitySchemaId ?? null,
     dataStewardshipConfig != null
@@ -116,7 +116,7 @@ export const DataStewardshipAssessmentsScreen = () => {
       search: (previous: Record<string, unknown>) => ({ ...previous, ...patch })
     });
 
-  const openAssessment = (summary: DataStewardshipAssessmentSummary) => {
+  const openAssessment = (summary: EntityAssessmentSummary) => {
     const project = projectsById.get(summary.assessment.project_id);
     if (!project) return;
     navigate(
@@ -252,7 +252,7 @@ export const DataStewardshipAssessmentsScreen = () => {
                 </Table.Cell>
                 <Table.Cell>
                   <Chip tone="ghost" color={STATUS_TONE[summary.status]}>
-                    {DS_ASSESSMENT_STATUS_LABEL[summary.status]}
+                    {ENTITY_ASSESSMENT_STATUS_LABEL[summary.status]}
                   </Chip>
                 </Table.Cell>
               </Table.Row>

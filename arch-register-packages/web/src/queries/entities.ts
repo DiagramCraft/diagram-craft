@@ -41,6 +41,8 @@ export const entityKeys = {
     [...entityKeys.all, 'dependents', workspaceId] as const,
   dependents: (workspaceId: string, entityId: string, transitive: boolean) =>
     [...entityKeys.workspaceDependents(workspaceId), entityId, transitive] as const,
+  usage: (workspaceId: string, entityId: string) =>
+    [...entityKeys.all, 'usage', workspaceId, entityId] as const,
   trees: (workspaceId: string) => [...entityKeys.all, 'tree', workspaceId] as const,
   tree: (workspaceId: string, filters: Record<string, unknown>) =>
     [...entityKeys.trees(workspaceId), filters] as const,
@@ -77,6 +79,17 @@ export const entitiesQuery = (
         { signal }
       ),
     enabled: enabled && !!workspaceId
+  });
+
+export const entityQueryTextParseQuery = (workspaceId: string, text: string, enabled = true) =>
+  queryOptions({
+    queryKey: [...entityKeys.all, 'queryText', 'parse', workspaceId, text],
+    queryFn: ({ signal }) =>
+      orpcClient.entityQueryText.parseText(
+        { params: { workspace: workspaceId }, query: { text } },
+        { signal }
+      ),
+    enabled: enabled && !!workspaceId && !!text
   });
 
 export const entityJsonQuery = (workspaceId: string, entityId: string, enabled = true) =>
@@ -169,6 +182,17 @@ export const entityDependentsQuery = (workspaceId: string, entityId: string, tra
         { signal }
       ),
     enabled: !!workspaceId && !!entityId
+  });
+
+export const entityUsageQuery = (workspaceId: string, entityId: string, enabled = true) =>
+  queryOptions({
+    queryKey: entityKeys.usage(workspaceId, entityId),
+    queryFn: ({ signal }) =>
+      orpcClient.entities.usage(
+        { params: { workspace: workspaceId, id: entityId }, query: {} },
+        { signal }
+      ),
+    enabled: enabled && !!workspaceId && !!entityId
   });
 
 export const entityTreeQuery = (

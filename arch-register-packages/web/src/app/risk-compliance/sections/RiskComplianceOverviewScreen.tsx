@@ -31,7 +31,7 @@ import { riskFieldValue } from '../riskFieldDisplay';
 import { useRetentionAssignments } from '../useRetentionAssignments';
 import { asProjectPublicId, projectDetailRoute } from '../../../routes/publicObjectRoutes';
 import { RiskComplianceMatrix, type RiskComplianceMatrixRisk } from './RiskComplianceMatrix';
-import { RiskDrawer } from './RiskDrawer';
+import { EntityDrawer } from '../../../sections/entities/entityDrawer/EntityDrawer';
 import { AssessmentDuePanel, type AssessmentDuePanelProject } from './AssessmentDuePanel';
 import tileStyles from './RiskComplianceControlsScreen.module.css';
 import styles from './RiskComplianceOverviewScreen.module.css';
@@ -575,9 +575,9 @@ export const RiskComplianceOverviewScreen = () => {
       </div>
 
       {openRiskId && (
-        <RiskDrawer
+        <EntityDrawer
           workspaceSlug={workspaceSlug}
-          riskId={openRiskId}
+          entityId={openRiskId}
           onClose={() => setOpenRiskId(null)}
         />
       )}

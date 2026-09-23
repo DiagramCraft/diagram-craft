@@ -46,15 +46,22 @@ const getResource = async (
   db: DatabaseAdapter,
   workspace: string
 ): Promise<EntityDrawerResource> => {
-  const [row, schemas, capabilityConfigurations] = await Promise.all([
+  const [row, schemas, relationSchemaRows, capabilityConfigurations] = await Promise.all([
     db.workspace.getWorkspaceEntityDrawerConfiguration(workspace),
     loadSchemas(db, workspace),
+    db.relation.listRelationSchemas(workspace),
     db.workspace.listWorkspaceCapabilityConfigurations(workspace)
   ]);
+  const relationSchemas = relationSchemaRows.map(relationSchema => ({
+    id: relationSchema.id,
+    in: { schemaIds: relationSchema.in_schema_ids },
+    out: { schemaIds: relationSchema.out_schema_ids }
+  }));
   const resolved = resolveEntityDrawerConfiguration(
     row?.configuration ?? null,
     schemas,
-    capabilityConfigurations
+    capabilityConfigurations,
+    relationSchemas
   );
   return {
     stored_configuration: row?.configuration ?? null,

@@ -1,14 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
 import { TbArrowsRightLeft, TbDatabase, TbFileText, TbFolders, TbSitemap } from 'react-icons/tb';
-import { glossaryUsageQuery } from '../glossaryQueries';
+import { entityUsageQuery } from '../../../queries/entities';
 import {
   EntityDrawerProviderStatus,
   type EntityDrawerProviderLabelProps,
   type EntityDrawerProviderContext,
   type EntityDrawerProviderDefinition,
   type EntityDrawerProviderProps
-} from '../../../sections/entities/entityDrawer/EntityDrawerProviderRegistry';
-import styles from './GlossaryEntityDrawerProvider.module.css';
+} from './EntityDrawerProviderRegistry';
+import styles from './EntityUsageProvider.module.css';
 
 const USAGE_KIND_LABEL = {
   entity: 'Referencing entities',
@@ -26,8 +26,8 @@ const USAGE_KIND_ICON = {
   diagram: TbSitemap
 } as const;
 
-const GlossaryUsageLabelAdornment = ({ context }: EntityDrawerProviderLabelProps) => {
-  const usage = useQuery(glossaryUsageQuery(context.workspaceId, context.entity._uid));
+const EntityUsageLabelAdornment = ({ context }: EntityDrawerProviderLabelProps) => {
+  const usage = useQuery(entityUsageQuery(context.workspaceId, context.entity._uid));
   const total = usage.data?.total ?? usage.data?.items.length ?? 0;
 
   return (
@@ -38,8 +38,8 @@ const GlossaryUsageLabelAdornment = ({ context }: EntityDrawerProviderLabelProps
   );
 };
 
-const GlossaryUsageProvider = ({ context }: EntityDrawerProviderProps) => {
-  const usage = useQuery(glossaryUsageQuery(context.workspaceId, context.entity._uid));
+const EntityUsageProvider = ({ context }: EntityDrawerProviderProps) => {
+  const usage = useQuery(entityUsageQuery(context.workspaceId, context.entity._uid));
   const usageItems = usage.data?.items ?? [];
   const usageGroups = (Object.keys(USAGE_KIND_LABEL) as Array<keyof typeof USAGE_KIND_LABEL>)
     .map(kind => ({ kind, items: usageItems.filter(item => item.kind === kind) }))
@@ -56,7 +56,7 @@ const GlossaryUsageProvider = ({ context }: EntityDrawerProviderProps) => {
     <EntityDrawerProviderStatus
       state={state}
       emptyMessage="No visible explicit usage found."
-      unavailableMessage="Glossary usage is unavailable."
+      unavailableMessage="Entity usage is unavailable."
     >
       {usageGroups.map(group => {
         const KindIcon = USAGE_KIND_ICON[group.kind];
@@ -77,11 +77,11 @@ const GlossaryUsageProvider = ({ context }: EntityDrawerProviderProps) => {
   );
 };
 
-export const businessGlossaryEntityDrawerProviderDefinitions = [
+export const entityUsageDrawerProviderDefinitions = [
   {
-    slotId: 'business-glossary.usage',
+    slotId: 'entity.usage',
     supports: (_context: EntityDrawerProviderContext) => true,
-    Component: GlossaryUsageProvider,
-    LabelAdornment: GlossaryUsageLabelAdornment
+    Component: EntityUsageProvider,
+    LabelAdornment: EntityUsageLabelAdornment
   }
 ] satisfies readonly EntityDrawerProviderDefinition[];

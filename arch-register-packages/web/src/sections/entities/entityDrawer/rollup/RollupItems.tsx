@@ -10,10 +10,9 @@ import { formatRollupValue } from './formatRollupValue';
 import styles from '../EntityDrawer.module.css';
 
 /**
- * Renders a generic drawer `rollup` item: the configured field/aggregation/format aggregated over
- * the entity's own recursive `parent`-containment subtree. Unlike a `slot` item, this needs no
- * per-capability provider — the metric engine is schema-agnostic, so any schema with a `parent`
- * containment field can use it directly.
+ * Renders a generic drawer `rollup` item over either the legacy containment subtree or a configured
+ * one-hop relation. Unlike a `slot` item, this needs no per-capability provider — the metric
+ * engine is schema-agnostic.
  */
 export const RollupStatItem = ({
   item,
@@ -32,7 +31,9 @@ export const RollupStatItem = ({
     entity._uid,
     item.fieldId,
     item.aggregation,
-    entity
+    item.traversal ? undefined : entity,
+    item.sourceSchemaId,
+    item.traversal
   );
   const state = result.isLoading ? 'loading' : result.error ? 'unavailable' : 'ready';
 
