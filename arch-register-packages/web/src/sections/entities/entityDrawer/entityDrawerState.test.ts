@@ -26,6 +26,14 @@ const schema = {
       direction: 'in'
     },
     { id: 'restricted', name: 'Restricted', type: 'text', groupId: 'private' },
+    {
+      id: 'restricted_relation',
+      name: 'Restricted relation',
+      type: 'typedRelation',
+      relationSchemaId: 'restricted-assignment',
+      direction: 'in',
+      groupId: 'private'
+    },
     { id: 'archived', name: 'Archived', type: 'text', archived: true }
   ],
   groups: [{ id: 'private', name: 'Private', accessControl: { teamIds: ['team-private'] } }],
@@ -374,6 +382,132 @@ describe('resolveEntityDrawerRenderModel', () => {
 
       expect(result.sections).toEqual([]);
       expect(result.diagnostics[0]?.code).toBe('unsupported_rollup_schema');
+    });
+  });
+
+  describe('typed-relation-list items', () => {
+    it('resolves with the referenced field populated', () => {
+      const result = resolve({
+        header: { badges: [] },
+        sections: [
+          {
+            id: 'custom',
+            title: 'Custom',
+            collapsible: false,
+            items: [{ kind: 'typed-relation-list', fieldId: 'retention_policy' }]
+          }
+        ]
+      });
+
+      expect(result.sections[0]?.items[0]).toMatchObject({
+        label: 'Retention Policy',
+        item: { kind: 'typed-relation-list', fieldId: 'retention_policy' },
+        field: { id: 'retention_policy', type: 'typedRelation' }
+      });
+      expect(result.diagnostics).toEqual([]);
+    });
+
+    it('passes configured attributes through untouched', () => {
+      const result = resolve({
+        header: { badges: [] },
+        sections: [
+          {
+            id: 'custom',
+            title: 'Custom',
+            collapsible: false,
+            items: [
+              {
+                kind: 'typed-relation-list',
+                fieldId: 'retention_policy',
+                attributes: [{ fieldId: 'coverage' }, { fieldId: 'effectiveness', label: 'Eff.' }]
+              }
+            ]
+          }
+        ]
+      });
+
+      expect(result.sections[0]?.items[0]?.item).toMatchObject({
+        attributes: [{ fieldId: 'coverage' }, { fieldId: 'effectiveness', label: 'Eff.' }]
+      });
+    });
+
+    it('defaults the label to the field name', () => {
+      const result = resolve({
+        header: { badges: [] },
+        sections: [
+          {
+            id: 'custom',
+            title: 'Custom',
+            collapsible: false,
+            items: [{ kind: 'typed-relation-list', fieldId: 'retention_policy', label: 'Retention' }]
+          }
+        ]
+      });
+
+      expect(result.sections[0]?.items[0]?.label).toBe('Retention');
+    });
+
+    it('omits and reports a diagnostic when the field is missing, archived, or not a typed relation', () => {
+      const missing = resolve({
+        header: { badges: [] },
+        sections: [
+          {
+            id: 'custom',
+            title: 'Custom',
+            collapsible: false,
+            items: [{ kind: 'typed-relation-list', fieldId: 'nope' }]
+          }
+        ]
+      });
+      expect(missing.sections).toEqual([]);
+      expect(missing.diagnostics[0]?.code).toBe('missing_relation_field');
+
+      const wrongType = resolve({
+        header: { badges: [] },
+        sections: [
+          {
+            id: 'custom',
+            title: 'Custom',
+            collapsible: false,
+            items: [{ kind: 'typed-relation-list', fieldId: 'status' }]
+          }
+        ]
+      });
+      expect(wrongType.sections).toEqual([]);
+      expect(wrongType.diagnostics[0]?.code).toBe('missing_relation_field');
+
+      const archived = resolve({
+        header: { badges: [] },
+        sections: [
+          {
+            id: 'custom',
+            title: 'Custom',
+            collapsible: false,
+            items: [{ kind: 'typed-relation-list', fieldId: 'archived' }]
+          }
+        ]
+      });
+      expect(archived.sections).toEqual([]);
+      expect(archived.diagnostics[0]?.code).toBe('missing_relation_field');
+    });
+
+    it('omits the item when the field group access is none', () => {
+      const result = resolve(
+        {
+          header: { badges: [] },
+          sections: [
+            {
+              id: 'custom',
+              title: 'Custom',
+              collapsible: false,
+              items: [{ kind: 'typed-relation-list', fieldId: 'restricted_relation' }]
+            }
+          ]
+        },
+        { access: 'none' }
+      );
+
+      expect(result.sections).toEqual([]);
     });
   });
 });

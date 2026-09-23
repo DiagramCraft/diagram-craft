@@ -69,17 +69,11 @@ const provider = (slotId: string) =>
   riskEntityDrawerProviderDefinitions.find(definition => definition.slotId === slotId)!;
 
 describe('risk entity drawer providers', () => {
-  it('renders aggregate coverage and matching mitigating controls', () => {
+  it('renders aggregate coverage stat and band', () => {
     mocks.coverage = {
       rcCoverage: 35,
       rcBand: 'partial',
-      controls: [
-        {
-          relation: { coverage: 70, effectiveness: 'partial' },
-          controlId: 'control-1',
-          controlName: 'MFA Enforcement'
-        }
-      ],
+      controls: [],
       isLoading: false,
       error: null
     };
@@ -90,12 +84,10 @@ describe('risk entity drawer providers', () => {
     );
 
     expect(markup).toContain('35.0%');
-    expect(markup).toContain('MFA Enforcement');
-    expect(markup).toContain('70% · partial');
     expect(markup).toContain('partial');
   });
 
-  it('renders empty, loading, and unavailable states', () => {
+  it('renders a dash when coverage is unavailable', () => {
     const coverage = provider('risk.coverage');
     mocks.coverage = {
       rcCoverage: null,
@@ -108,73 +100,13 @@ describe('risk entity drawer providers', () => {
       renderToStaticMarkup(
         <coverage.Component context={riskContext()} item={item(coverage.slotId)} />
       )
-    ).toContain('No mitigating controls.');
-
-    mocks.coverage = { ...mocks.coverage, isLoading: true };
-    expect(
-      renderToStaticMarkup(
-        <coverage.Component context={riskContext()} item={item(coverage.slotId)} />
-      )
-    ).toContain('Loading…');
-
-    mocks.coverage = { ...mocks.coverage, isLoading: false, error: new Error('forbidden') };
-    expect(
-      renderToStaticMarkup(
-        <coverage.Component context={riskContext()} item={item(coverage.slotId)} />
-      )
-    ).toContain('Mitigating controls are unavailable.');
-
-    const affected = provider('risk.affected-entities');
-    expect(
-      renderToStaticMarkup(
-        <affected.Component context={riskContext()} item={item(affected.slotId)} />
-      )
-    ).toContain('No affected entities linked.');
-  });
-
-  it('filters affected entities by the configured relation schema and endpoint', () => {
-    const definition = provider('risk.affected-entities');
-    const markup = renderToStaticMarkup(
-      <definition.Component
-        context={riskContext({
-          typedRelations: {
-            outgoing: [
-              {
-                _uid: 'affected-1',
-                _schema: { id: 'risk-affects', name: 'Risk Affects' },
-                _in: { id: 'risk-1', name: 'Account Takeover' },
-                _out: { id: 'system-1', name: 'Payments System' }
-              },
-              {
-                _uid: 'other-1',
-                _schema: { id: 'other', name: 'Other' },
-                _in: { id: 'risk-1', name: 'Account Takeover' },
-                _out: { id: 'system-2', name: 'Other System' }
-              },
-              {
-                _uid: 'inverse-1',
-                _schema: { id: 'risk-affects', name: 'Risk Affects' },
-                _in: { id: 'risk-2', name: 'Other Risk' },
-                _out: { id: 'system-3', name: 'Inverse System' }
-              }
-            ],
-            incoming: []
-          } as unknown as EntityDrawerProviderContext['typedRelations']
-        })}
-        item={item(definition.slotId)}
-      />
-    );
-
-    expect(markup).toContain('Payments System');
-    expect(markup).not.toContain('Other System');
-    expect(markup).not.toContain('Inverse System');
+    ).toContain('—');
   });
 
   it('reports slot support from the workspace relation fields', () => {
     expect(provider('risk.coverage').supports(riskContext())).toBe(true);
-    expect(provider('risk.affected-entities').supports(riskContext())).toBe(true);
     expect(
-      provider('risk.affected-entities').supports(
+      provider('risk.coverage').supports(
         riskContext({ schema: { id: 'risk', name: 'Risk', fields: [] } as never })
       )
     ).toBe(false);

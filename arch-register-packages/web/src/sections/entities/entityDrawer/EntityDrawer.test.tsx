@@ -29,7 +29,14 @@ const mocks = vi.hoisted(() => ({
     fields: [
       { id: 'name', name: 'Name', type: 'text' },
       { id: 'status', name: 'Status', type: 'text', requirementLevel: 'expected' },
-      { id: 'review_date', name: 'Review date', type: 'date' }
+      { id: 'review_date', name: 'Review date', type: 'date' },
+      {
+        id: 'depended_on_by',
+        name: 'Depended on by',
+        type: 'typedRelation',
+        relationSchemaId: 'depends-on',
+        direction: 'in'
+      }
     ],
     groups: [],
     shared_field_group_links: []
@@ -44,7 +51,19 @@ vi.mock('../../../layouts/WorkspaceContext', () => ({
   useWorkspaceContext: () => ({
     workspaceSlug: 'workspace-1',
     schemas: [mocks.schema],
-    relationSchemas: [],
+    relationSchemas: [
+      {
+        id: 'depends-on',
+        workspace: 'workspace-1',
+        name: 'Depends on',
+        category: null,
+        description: '',
+        in: { schemaIds: ['service'] },
+        out: { schemaIds: ['service'] },
+        fields: [],
+        groups: []
+      }
+    ],
     lifecycleStates: [],
     currencies: { currencies: [], default_currency: 'USD' }
   })
@@ -65,7 +84,19 @@ vi.mock('../../../hooks/useEntities', () => ({
 }));
 
 vi.mock('../../../hooks/useRelations', () => ({
-  useEntityTypedRelations: () => ({ data: { outgoing: [], incoming: [] } })
+  useEntityTypedRelations: () => ({
+    data: {
+      outgoing: [
+        {
+          _uid: 'relation-1',
+          _schema: { id: 'depends-on', name: 'Depends on' },
+          _in: { id: 'entity-1', name: 'Payments' },
+          _out: { id: 'entity-2', name: 'Ledger' }
+        }
+      ],
+      incoming: []
+    }
+  })
 }));
 
 vi.mock('../../../hooks/useWorkspaceConfig', () => ({
@@ -85,6 +116,18 @@ vi.mock('../../../hooks/useWorkspaceConfig', () => ({
                   { kind: 'field', fieldId: 'status', label: 'Current state' },
                   { kind: 'field', fieldId: 'name', label: 'Service name' },
                   { kind: 'field', fieldId: 'review_date', label: 'Review date' }
+                ]
+              },
+              {
+                id: 'related',
+                title: 'Related',
+                collapsible: false,
+                items: [
+                  {
+                    kind: 'typed-relation-list',
+                    fieldId: 'depended_on_by',
+                    label: 'Depended on by'
+                  }
                 ]
               }
             ]
@@ -115,6 +158,7 @@ describe('EntityDrawer', () => {
     expect(markup).not.toContain('Expected');
     expect(markup).toContain('Open record in Entities');
     expect(markup).toContain('Quality badge');
+    expect(markup).toContain('Ledger');
   });
 
   it('uses the static ISO date format only when requested', () => {
