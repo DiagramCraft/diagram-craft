@@ -903,6 +903,17 @@ describe('instantiateTemplate', () => {
       }
     ]);
     expect(
+      definitions.entityDrawerProfiles[vendor!.id]?.sections.find(
+        section => section.id === 'applications-supplied'
+      )?.items
+    ).toEqual([
+      {
+        kind: 'query',
+        queryText: '<-"Contract".vendor.<-"System Contract"',
+        label: 'Applications supplied'
+      }
+    ]);
+    expect(
       definitions.entityDrawerProfiles[contract!.id]?.sections.map(section => section.id)
     ).toEqual(['vendor', 'terms', 'cost', 'systems-used']);
   });

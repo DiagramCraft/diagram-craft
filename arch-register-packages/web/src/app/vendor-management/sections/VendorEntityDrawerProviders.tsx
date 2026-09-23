@@ -117,47 +117,6 @@ const VendorSpendProvider = ({ context }: EntityDrawerProviderProps) => {
   );
 };
 
-const VendorApplicationsSuppliedProvider = ({ context }: EntityDrawerProviderProps) => {
-  const { query: configurationQuery, config } = useVendorProviderConfiguration(context.workspaceId);
-  const relationSchemaId = systemContractRelationSchemaId(
-    context,
-    config?.contractSchemaId ?? null
-  );
-  const appsSupplied = useVendorAppsSupplied(
-    context.workspaceId,
-    config?.vendorSchemaId ?? null,
-    context.entity._uid,
-    config?.contractSchemaId ?? null,
-    relationSchemaId
-  );
-  const state =
-    configurationQuery.isLoading || appsSupplied.isLoading
-      ? 'loading'
-      : configurationQuery.isError
-        ? 'unavailable'
-        : appsSupplied.error
-          ? 'unavailable'
-          : appsSupplied.items.length > 0
-            ? 'ready'
-            : 'empty';
-
-  return (
-    <EntityDrawerProviderStatus
-      state={state}
-      emptyMessage="No linked applications, via any contract."
-      unavailableMessage="Applications supplied are unavailable."
-    >
-      <div className={styles.tags}>
-        {appsSupplied.items.map(({ system, contract }) => (
-          <Chip key={system._uid} tone="ghost" title={`via ${contract._name}`}>
-            {system._name}
-          </Chip>
-        ))}
-      </div>
-    </EntityDrawerProviderStatus>
-  );
-};
-
 const VendorTechnologyLifecycleProvider = ({ context }: EntityDrawerProviderProps) => {
   const { query: configurationQuery, config } = useVendorProviderConfiguration(context.workspaceId);
   const relationSchemaId = systemContractRelationSchemaId(
@@ -216,11 +175,6 @@ export const vendorEntityDrawerProviderDefinitions = [
     slotId: 'vendor.spend',
     requiredFields: VENDOR_REQUIRED_FIELDS,
     Component: VendorSpendProvider
-  },
-  {
-    slotId: 'vendor.applications-supplied',
-    requiredFields: VENDOR_REQUIRED_FIELDS,
-    Component: VendorApplicationsSuppliedProvider
   },
   {
     slotId: 'vendor.technology-lifecycle',

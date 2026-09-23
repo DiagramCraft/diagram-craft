@@ -111,17 +111,8 @@ describe('Vendor Management entity drawer providers', () => {
     expect(markup).toContain('elevated');
   });
 
-  it('renders the application empty state', () => {
-    const applicationsDefinition = provider('vendor.applications-supplied');
-
-    expect(
-      renderToStaticMarkup(
-        <applicationsDefinition.Component
-          context={context()}
-          item={item(applicationsDefinition.slotId)}
-        />
-      )
-    ).toContain('No linked applications, via any contract.');
+  it('does not register applications supplied as a specialized provider', () => {
+    expect(provider('vendor.applications-supplied')).toBeUndefined();
   });
 
   it('preserves the lifecycle empty state', () => {

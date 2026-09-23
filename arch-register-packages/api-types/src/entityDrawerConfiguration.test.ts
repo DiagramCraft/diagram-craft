@@ -456,6 +456,7 @@ describe('entity drawer configuration', () => {
     expect(catalog.slots.map(slot => slot.id)).not.toContain('strategy.linked-objectives');
     expect(catalog.slots.map(slot => slot.id)).not.toContain('strategy.linked-initiatives');
     expect(catalog.slots.map(slot => slot.id)).not.toContain('vendor.spend');
+    expect(catalog.slots.map(slot => slot.id)).not.toContain('vendor.applications-supplied');
     expect(catalog.slots.map(slot => slot.id)).not.toContain('vendor.capabilities-funded');
     expect(catalog.slots.find(slot => slot.id === 'entity.change-cases')).toMatchObject({
       supportedSchemaIds: ['service', 'other']
@@ -839,6 +840,12 @@ describe('entity drawer configuration', () => {
       name: 'Contract',
       fields: [
         { id: 'vendor', name: 'Vendor', type: 'containment' },
+        {
+          id: 'system',
+          name: 'Used by',
+          type: 'typedRelation',
+          relationSchemaId: 'system-contract'
+        },
         { id: 'annual_cost', name: 'Annual Cost', type: 'currency' }
       ]
     };
@@ -891,6 +898,13 @@ describe('entity drawer configuration', () => {
         showLabel: false,
         presentation: 'list',
         fields: [{ fieldId: 'annual_cost', label: 'Annual cost' }]
+      }
+    ]);
+    expect(profile.sections[4]?.items).toEqual([
+      {
+        kind: 'query',
+        queryText: '<-"Contract".vendor.<-"system-contract"',
+        label: 'Applications supplied'
       }
     ]);
     expect(profile.sections.at(-1)?.items).toEqual([

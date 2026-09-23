@@ -333,16 +333,6 @@ export const ENTITY_DRAWER_SLOT_DEFINITIONS: EntityDrawerSlotDefinition[] = [
     optionsSchema: emptyOptionsSchema
   },
   {
-    id: 'vendor.applications-supplied',
-    label: 'Applications supplied',
-    description: 'Applications supplied by this vendor.',
-    application: 'Vendor Management',
-    capabilityBinding: { capabilityType: 'vendor-management', role: 'vendor' },
-    defaultOptions: {},
-    optionFields: [],
-    optionsSchema: emptyOptionsSchema
-  },
-  {
     id: 'vendor.technology-lifecycle',
     label: 'Technology lifecycle',
     description: 'Technology lifecycle summary.',
@@ -574,6 +564,7 @@ export type EntityDrawerField = {
   archived?: boolean;
   groupId?: string;
   schemaId?: string;
+  relationSchemaId?: string;
 };
 
 export type EntityDrawerSchema = {
@@ -1017,7 +1008,8 @@ const vendorManagementFieldIds = (
 const buildVendorManagementDefaultProfile = (
   providerItems: EntityDrawerItem[],
   fieldIds: VendorManagementFieldIds,
-  contractsQueryItem: Extract<EntityDrawerItem, { kind: 'query' }> | null
+  contractsQueryItem: Extract<EntityDrawerItem, { kind: 'query' }> | null,
+  applicationsSuppliedQueryItem: Extract<EntityDrawerItem, { kind: 'query' }> | null
 ): EntityDrawerProfile => {
   const item = (fieldId: string): Extract<EntityDrawerItem, { kind: 'field' }> => ({
     kind: 'field',
@@ -1079,7 +1071,7 @@ const buildVendorManagementDefaultProfile = (
       section(
         'applications-supplied',
         'Applications supplied',
-        [provider('vendor.applications-supplied', 'Applications supplied', false)],
+        [applicationsSuppliedQueryItem],
         true
       ),
       section(
@@ -1180,6 +1172,44 @@ const vendorManagementContractsQueryItem = (
     showLabel: false,
     presentation: 'list',
     fields: [{ fieldId: 'annual_cost', label: 'Annual cost' }]
+  };
+};
+
+const vendorManagementApplicationsSuppliedQueryItem = (
+  vendorSchema: EntityDrawerSchema,
+  schemas: EntityDrawerSchema[],
+  capabilityConfigurations: readonly CapabilityConfigurationLike[]
+): Extract<EntityDrawerItem, { kind: 'query' }> | null => {
+  const configuration = capabilityConfigurations.find(
+    candidate => candidate.type === 'vendor-management'
+  );
+  const vendorBinding = configuration?.bindings.vendor;
+  const contractBinding = configuration?.bindings.contract;
+  if (
+    vendorBinding?.target.kind !== 'entity_schema' ||
+    vendorBinding.target.id !== vendorSchema.id ||
+    contractBinding?.target.kind !== 'entity_schema'
+  ) {
+    return null;
+  }
+
+  const contractSchema = schemas.find(schema => schema.id === contractBinding.target.id);
+  const vendorField = contractSchema?.fields.find(field => field.id === 'vendor');
+  const systemField = contractSchema?.fields.find(field => field.id === 'system');
+  if (
+    !contractSchema ||
+    !vendorField ||
+    !isRelationField(vendorField) ||
+    systemField?.type !== 'typedRelation' ||
+    !systemField.relationSchemaId
+  ) {
+    return null;
+  }
+
+  return {
+    kind: 'query',
+    queryText: `<-"${escapeQueryStringLiteral(contractSchema.name)}".${vendorField.id}.<-"${escapeQueryStringLiteral(systemField.relationSchemaId)}"`,
+    label: 'Applications supplied'
   };
 };
 
@@ -1402,6 +1432,11 @@ export const buildDefaultEntityDrawerConfiguration = (
         schemas,
         capabilityConfigurations
       );
+      const applicationsSuppliedQueryItem = vendorManagementApplicationsSuppliedQueryItem(
+        schema,
+        schemas,
+        capabilityConfigurations
+      );
       return [
         schema.id,
         glossaryFieldIds
@@ -1414,7 +1449,8 @@ export const buildDefaultEntityDrawerConfiguration = (
                 ? buildVendorManagementDefaultProfile(
                     providerItems,
                     vendorFieldIds,
-                    contractsQueryItem
+                    contractsQueryItem,
+                    applicationsSuppliedQueryItem
                   )
                 : contractFieldIds
                   ? buildVendorManagementContractDefaultProfile(contractFieldIds)

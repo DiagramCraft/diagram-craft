@@ -2433,10 +2433,9 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             collapsible: true,
             items: [
               {
-                kind: 'slot',
-                slotId: 'vendor.applications-supplied',
-                label: 'Applications supplied',
-                showLabel: false
+                kind: 'query',
+                queryText: '<-"Contract".vendor.<-"System Contract"',
+                label: 'Applications supplied'
               }
             ]
           },
