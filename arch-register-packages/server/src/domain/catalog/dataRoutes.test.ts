@@ -619,6 +619,100 @@ describe('data route helpers', () => {
     expect(allowed.dependents.map(dependent => dependent.entityId)).toEqual(['component-1']);
   });
 
+  it('filters restricted entities before applying dependent caps and rejects restricted roots', () => {
+    const referenceSchema: SchemaDbResult = {
+      ...componentSchema,
+      fields: [
+        {
+          id: 'points_to',
+          name: 'Points to',
+          type: 'reference',
+          predicate: 'points to',
+          schemaId: componentSchema.id,
+          minCount: 0,
+          maxCount: -1
+        }
+      ],
+      groups: []
+    };
+    const visibleRoot = { ...dependency, id: 'visible-root', name: 'Visible root', data: {} };
+    const hiddenRoot = { ...dependency, id: 'hidden-root', name: 'Hidden root', data: {} };
+    const visibleDependent = {
+      ...component,
+      id: 'visible-dependent',
+      name: 'Visible dependent',
+      data: { points_to: [visibleRoot.id, hiddenRoot.id] }
+    };
+    const hiddenDependents = Array.from({ length: 501 }, (_, index) => ({
+      ...component,
+      id: `hidden-dependent-${index}`,
+      name: `Hidden dependent ${index}`,
+      data: { points_to: [visibleRoot.id] }
+    }));
+    const entities = [visibleRoot, hiddenRoot, visibleDependent, ...hiddenDependents];
+    const permissionAuthCtx = buildAuthorizationContext({
+      userId: 'user-1',
+      globalRoles: [],
+      workspaceRole: null,
+      schemas: [referenceSchema],
+      entities,
+      grants: [visibleRoot, visibleDependent].map((entity, index) => ({
+        id: `visible-grant-${index}`,
+        workspace: 'default',
+        entity_id: entity.id,
+        principal_type: 'user' as const,
+        principal_id: 'user-1',
+        role: 'editor' as const,
+        applies_to: 'self' as const,
+        created_at: now
+      }))
+    });
+
+    const visibleRootResult = buildEntityDependents(
+      visibleRoot.id,
+      entities,
+      [referenceSchema],
+      { transitive: false },
+      permissionAuthCtx
+    );
+    expect(visibleRootResult.dependents.map(dependent => dependent.entityId)).toEqual([
+      visibleDependent.id
+    ]);
+    expect(visibleRootResult.truncated).toBe(false);
+
+    const hiddenRootResult = buildEntityDependents(
+      hiddenRoot.id,
+      entities,
+      [referenceSchema],
+      { transitive: false },
+      permissionAuthCtx
+    );
+    expect(hiddenRootResult).toEqual({ dependents: [], truncated: false });
+
+    const batch = buildBatchEntityDependents(
+      [visibleRoot.id, hiddenRoot.id],
+      entities,
+      [referenceSchema],
+      { transitive: false },
+      permissionAuthCtx
+    );
+    expect(batch.get(visibleRoot.id)).toMatchObject({
+      dependents: [{ entityId: visibleDependent.id }],
+      truncated: false
+    });
+    expect(batch.get(hiddenRoot.id)).toEqual({ dependents: [], truncated: false });
+
+    const visibleOverLimitResult = buildEntityDependents(
+      visibleRoot.id,
+      entities,
+      [referenceSchema],
+      { transitive: false },
+      allowedAuthCtx
+    );
+    expect(visibleOverLimitResult.dependents).toHaveLength(500);
+    expect(visibleOverLimitResult.truncated).toBe(true);
+  });
+
   it('returns owner metadata and redacts restricted criticality from dependent rows', () => {
     const schemaWithCriticality: SchemaDbResult = {
       ...componentSchema,

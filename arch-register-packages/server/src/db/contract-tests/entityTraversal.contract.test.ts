@@ -14,6 +14,7 @@ import {
   EntityTraversalLimitError,
   EntityTraversalValidationError
 } from '../../domain/catalog/entityTraversal';
+import { executeSubjectTraversalAggregation } from '../../domain/catalog/entityTraversalOperations';
 
 const runTraversal = async (
   db: DatabaseAdapter,
@@ -431,11 +432,43 @@ runContractSuiteAgainstBothDrivers('entityTraversal', (getDb, _driver: DbDriver)
     const targetSchemaId = randomUUID();
     const alternateSchemaId = randomUUID();
     const relationSchemaId = randomUUID();
+    const alternateRelationSchemaId = randomUUID();
 
     await db.relation.createRelationSchema({
       id: relationSchemaId,
       workspace,
       name: 'Supports',
+      description: '',
+      in_schema_ids: [sourceSchemaId],
+      out_schema_ids: [targetSchemaId],
+      fields: [
+        {
+          id: 'note',
+          name: 'Note',
+          type: 'text',
+          requirementLevel: 'optional',
+          groupId: 'restricted'
+        }
+      ],
+      groups: [
+        {
+          id: 'restricted',
+          name: 'Restricted',
+          accessControl: { teamIds: ['secret-team'] }
+        }
+      ],
+      shared_field_group_links: [],
+      color: null,
+      icon: null,
+      relation_approval_policy: 'disabled',
+      unique_endpoint_pair: false,
+      created_at: new Date(),
+      updated_at: new Date()
+    });
+    await db.relation.createRelationSchema({
+      id: alternateRelationSchemaId,
+      workspace,
+      name: 'Alternate relation',
       description: '',
       in_schema_ids: [sourceSchemaId],
       out_schema_ids: [targetSchemaId],
@@ -475,7 +508,10 @@ runContractSuiteAgainstBothDrivers('entityTraversal', (getDb, _driver: DbDriver)
     await createFixtureSchema(db, workspace, {
       id: targetSchemaId,
       name: 'Target',
-      fields: [{ id: 'secret', name: 'Secret', type: 'text', groupId: 'restricted' }],
+      fields: [
+        { id: 'secret', name: 'Secret', type: 'text', groupId: 'restricted' },
+        { id: 'criticality', name: 'Criticality', type: 'number', groupId: 'restricted' }
+      ],
       groups: [
         {
           id: 'restricted',
@@ -487,12 +523,15 @@ runContractSuiteAgainstBothDrivers('entityTraversal', (getDb, _driver: DbDriver)
     await createFixtureSchema(db, workspace, {
       id: alternateSchemaId,
       name: 'Alternate',
-      fields: [{ id: 'secret', name: 'Secret', type: 'text' }]
+      fields: [
+        { id: 'secret', name: 'Secret', type: 'text' },
+        { id: 'criticality', name: 'Criticality', type: 'number' }
+      ]
     });
 
     const target = await createFixtureEntity(db, workspace, targetSchemaId, {
       name: 'Visible target',
-      data: { secret: 'must not escape' }
+      data: { secret: 'must not escape', criticality: 5 }
     });
     const hiddenTarget = await createFixtureEntity(db, workspace, targetSchemaId, {
       name: 'Hidden target',
@@ -502,8 +541,9 @@ runContractSuiteAgainstBothDrivers('entityTraversal', (getDb, _driver: DbDriver)
       name: 'Source',
       data: { ref: [target.id, hiddenTarget.id] }
     });
+    const visibleRelationId = randomUUID();
     await db.relation.createRelation({
-      id: randomUUID(),
+      id: visibleRelationId,
       workspace,
       schema_id: relationSchemaId,
       in_entity_id: source.id,
@@ -585,6 +625,20 @@ runContractSuiteAgainstBothDrivers('entityTraversal', (getDb, _driver: DbDriver)
             }
           ],
           sourceFields: [{ context: 'entity', fieldId: 'secret' }]
+        },
+        {
+          id: 'typed-relation',
+          steps: [
+            {
+              kind: 'typedRelation',
+              fieldId: 'links',
+              relationSchemaId,
+              direction: 'in',
+              ownerSchemaIds: [sourceSchemaId]
+            }
+          ],
+          terminalContext: 'relation',
+          sourceFields: [{ context: 'relation', fieldId: 'note' }]
         }
       ]
     });
@@ -595,6 +649,20 @@ runContractSuiteAgainstBothDrivers('entityTraversal', (getDb, _driver: DbDriver)
     ]);
     expect(paths.get('forward')?.occurrences[0]?.terminal.source.secret).toBeNull();
     expect(paths.get('typed')?.distinctTerminals.map(terminal => terminal.id)).toEqual([target.id]);
+    expect(paths.get('typed-relation')?.distinctTerminals.map(terminal => terminal.id)).toEqual([
+      visibleRelationId
+    ]);
+    expect(paths.get('typed-relation')?.occurrences[0]?.terminal.source.note).toBeNull();
+
+    const aggregate = await executeSubjectTraversalAggregation(db, workspace, authCtx, {
+      subject: { kind: 'entity', entityId: source.id },
+      paths: [{ id: 'forward', steps: [{ kind: 'forward', fieldId: 'ref' }] }]
+    });
+    expect(aggregate.entities.map(entity => entity.entityId)).toEqual([target.id]);
+    expect(aggregate.entities[0]?.criticality).toBeNull();
+    expect(aggregate.groups.criticality).toMatchObject([
+      { key: null, count: 1, entityIds: [target.id] }
+    ]);
   });
 
   it('fails explicitly when recursive depth or node limits would truncate results', async () => {
