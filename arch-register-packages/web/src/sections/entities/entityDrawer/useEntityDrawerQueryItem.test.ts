@@ -31,9 +31,9 @@ describe('extractTerminalIds', () => {
   });
 
   it('dedupes terminal ids across chains', () => {
-    expect(extractTerminalIds([[hop('app-1', 'application')], [hop('app-1', 'application')]])).toEqual([
-      'app-1'
-    ]);
+    expect(
+      extractTerminalIds([[hop('app-1', 'application')], [hop('app-1', 'application')]])
+    ).toEqual(['app-1']);
   });
 
   it('returns an empty array for no chains', () => {

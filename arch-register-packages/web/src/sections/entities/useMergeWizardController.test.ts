@@ -3,7 +3,11 @@ import type {
   MergeExecuteResponse,
   MergePreview
 } from '@arch-register/api-types/entityMergeContract';
-import { advanceQueueState, resolveExecuteOutcome, resolvePreviewOutcome } from './useMergeWizardController';
+import {
+  advanceQueueState,
+  resolveExecuteOutcome,
+  resolvePreviewOutcome
+} from './useMergeWizardController';
 
 const basePreview: MergePreview = {
   sourceId: 'source-1',

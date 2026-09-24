@@ -94,8 +94,10 @@ export const reduceDocumentState = (
 // A background refetch of the server document must not clobber unsaved local edits — the first
 // hydration after a node loads always applies, but every subsequent one is skipped while the
 // document is dirty.
-export const shouldApplyServerRefresh = (params: { initialized: boolean; dirty: boolean }): boolean =>
-  !params.initialized || !params.dirty;
+export const shouldApplyServerRefresh = (params: {
+  initialized: boolean;
+  dirty: boolean;
+}): boolean => !params.initialized || !params.dirty;
 
 export type MarkdownEditorDocumentStateOptions = {
   nodeId: string;

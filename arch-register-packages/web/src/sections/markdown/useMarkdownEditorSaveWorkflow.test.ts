@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { decideSaveAction, decideSaveAndCloseAction, needsMigration } from './useMarkdownEditorSaveWorkflow';
+import {
+  decideSaveAction,
+  decideSaveAndCloseAction,
+  needsMigration
+} from './useMarkdownEditorSaveWorkflow';
 
 describe('needsMigration', () => {
   it('is true when the document type has changed', () => {

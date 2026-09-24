@@ -48,8 +48,14 @@ describe('buildSpendRows', () => {
     vendor('vnd-2', 'Beta Supplies', 'VND-002', 'sales')
   ];
   const spendById = new Map<string, VendorSpendRollupValue>([
-    ['vnd-1', { vmSpend: 3000, currency: 'USD', sourceCount: 2 } as unknown as VendorSpendRollupValue],
-    ['vnd-2', { vmSpend: 1000, currency: 'USD', sourceCount: 1 } as unknown as VendorSpendRollupValue]
+    [
+      'vnd-1',
+      { vmSpend: 3000, currency: 'USD', sourceCount: 2 } as unknown as VendorSpendRollupValue
+    ],
+    [
+      'vnd-2',
+      { vmSpend: 1000, currency: 'USD', sourceCount: 1 } as unknown as VendorSpendRollupValue
+    ]
   ]);
   const contractItems = [
     contractRow('ctr-1', 'vnd-1', 2000),

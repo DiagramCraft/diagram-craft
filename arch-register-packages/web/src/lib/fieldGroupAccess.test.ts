@@ -44,9 +44,7 @@ describe('resolveFieldAccess', () => {
       groups: [{ id: 'financials', accessControl: { teamIds: ['team-finance'] } }],
       shared_field_group_links: []
     };
-    expect(resolveFieldAccess(schema, { groupId: 'financials' }, getFieldGroupAccess)).toBe(
-      'none'
-    );
+    expect(resolveFieldAccess(schema, { groupId: 'financials' }, getFieldGroupAccess)).toBe('none');
   });
 
   it('applies a shared_field_group_links override before falling back to the group default', () => {
@@ -54,9 +52,7 @@ describe('resolveFieldAccess', () => {
       groups: [{ id: 'financials', accessControl: { teamIds: ['team-finance'] } }],
       shared_field_group_links: [{ groupId: 'financials' }]
     };
-    expect(resolveFieldAccess(schema, { groupId: 'financials' }, getFieldGroupAccess)).toBe(
-      'edit'
-    );
+    expect(resolveFieldAccess(schema, { groupId: 'financials' }, getFieldGroupAccess)).toBe('edit');
   });
 
   it('treats an unknown groupId (group missing from the schema) as having no accessControl', () => {
