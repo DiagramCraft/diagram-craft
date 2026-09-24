@@ -102,8 +102,15 @@ export class EntitiesPage extends WorkspacePage {
     await expect(this.page.getByRole('alertdialog', { name: 'New entity' })).toBeVisible();
   };
 
+  openEntityDrawerButton = () => this.page.getByRole('button', { name: 'Open record in Entities' });
+
   openEntity = async (name: string) => {
+    // A row click now opens the entity's summary drawer rather than navigating directly (#3313).
+    // Drill into the full record via the drawer's "Open record in Entities" action so downstream
+    // helpers (edit mode, tabs, API catalog, action menus) keep working against the full page.
     await this.entityRow(name).click();
+    await expect(this.openEntityDrawerButton()).toBeVisible();
+    await this.openEntityDrawerButton().click();
     await expect(this.page.getByRole('heading', { name })).toBeVisible();
   };
 

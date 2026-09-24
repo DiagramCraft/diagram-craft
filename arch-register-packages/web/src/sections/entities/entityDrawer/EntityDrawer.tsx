@@ -646,15 +646,10 @@ export const EntityDrawer = ({
         footer={
           <Button
             variant="primary"
-            onClick={() =>
-              navigate({
-                ...entityDetailRoute(workspaceSlug, asEntityPublicId(entity._publicId)),
-                search: (previous: Record<string, unknown>) => ({
-                  ...previous,
-                  drawer: undefined
-                })
-              } as unknown as Parameters<typeof navigate>[0])
-            }
+            onClick={() => {
+              onClose();
+              navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(entity._publicId)));
+            }}
           >
             Open record in Entities
           </Button>
@@ -693,15 +688,10 @@ export const EntityDrawer = ({
       footer={
         <Button
           variant="primary"
-          onClick={() =>
-            navigate({
-              ...entityDetailRoute(workspaceSlug, asEntityPublicId(entity._publicId)),
-              search: (previous: Record<string, unknown>) => ({
-                ...previous,
-                drawer: undefined
-              })
-            } as unknown as Parameters<typeof navigate>[0])
-          }
+          onClick={() => {
+            onClose();
+            navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(entity._publicId)));
+          }}
         >
           Open record in Entities
         </Button>
