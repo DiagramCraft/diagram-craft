@@ -7,9 +7,9 @@ import { MAX_PATH_HOPS, pathStepSchema } from '@arch-register/api-types/entityQu
 //
 // Normalizes a subject reference (entity, relation instance, or change case) into one or more
 // entity roots and runs the existing bounded, permission-aware traversal engine
-// (server/src/domain/catalog/entityTraversal.ts) against them. Ranking/grouping, planned-change
-// diffing, and UI surfacing are separate follow-up issues (#3359-#3362); this endpoint is only
-// the entry point.
+// (server/src/domain/catalog/entityTraversal.ts) against them. Planned-change graph diffing is
+// exposed alongside this entry point; ranking/grouping and UI surfacing remain separate follow-up
+// work.
 
 export const entityTraversalSubjectSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('entity'), entityId: z.string() }).describe('Start from an entity'),
@@ -69,14 +69,24 @@ const entityTraversalGraphEdgeSchema = z.object({
   to: entityTraversalGraphNodeSchema
 });
 
-const entityTraversalGraphDiffRequestSchema = entityTraversalRequestSchema.extend({
-  candidateCaseId: z
-    .string()
-    .optional()
-    .describe(
-      'Candidate planned-change case. Defaults to the subject case when the subject kind is changeCase.'
-    )
-});
+const entityTraversalGraphDiffRequestSchema = entityTraversalRequestSchema
+  .extend({
+    candidateCaseId: z
+      .string()
+      .optional()
+      .describe(
+        'Candidate planned-change case. Defaults to the subject case when the subject kind is changeCase.'
+      )
+  })
+  .superRefine((value, context) => {
+    if (value.subject.kind !== 'changeCase' && value.candidateCaseId == null) {
+      context.addIssue({
+        code: 'custom',
+        path: ['candidateCaseId'],
+        message: 'A candidate planned-change case is required for entity or relation subjects'
+      });
+    }
+  });
 
 const entityTraversalGraphDiffResponseSchema = z.object({
   nodes: z.object({

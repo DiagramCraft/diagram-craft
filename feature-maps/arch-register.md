@@ -1261,6 +1261,10 @@
             - @id:ar.projects.planned-changes.apply Users can apply a planned entity change case atomically, promoting
               all approved member states into the live entities.
 
+            - @id:ar.projects.planned-changes.traversal-diff Users can compare the entities, relations, and routes
+              reachable from a selected subject before and after one planned-change case, with traversal limits and
+              the caller's existing project and record visibility enforced.
+
             - @id:ar.projects.planned-changes.whats-changed Users can view a summary of what changes across a
               project's connected entities once all of its planned changes are applied, compared to the current
               live state — entities added, removed, or changed, with a field-level diff on drill-down for changed

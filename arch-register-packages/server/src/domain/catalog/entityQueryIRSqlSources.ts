@@ -584,6 +584,58 @@ const snapshotRelationRowset = (state: EntityQuerySqlRenderState): string => {
   )`;
 };
 
+const candidateEntitySource = (): string => `candidate_entity_source AS (
+      SELECT e.id, e.workspace, e.kind,
+             CASE WHEN overlay.id IS NULL THEN e.public_id ELSE overlay.public_id END AS public_id,
+             CASE WHEN overlay.id IS NULL THEN e.slug ELSE overlay.slug END AS slug,
+             CASE WHEN overlay.id IS NULL THEN e.namespace ELSE overlay.namespace END AS namespace,
+             CASE WHEN overlay.id IS NULL THEN e.name ELSE overlay.name END AS name,
+             CASE WHEN overlay.id IS NULL THEN e.description ELSE overlay.description END AS description,
+             CASE WHEN overlay.id IS NULL THEN e.owner ELSE overlay.owner END AS owner,
+             CASE WHEN overlay.id IS NULL THEN e.lifecycle ELSE overlay.lifecycle END AS lifecycle,
+             CASE WHEN overlay.id IS NULL THEN e.target_lifecycle ELSE overlay.target_lifecycle END AS target_lifecycle,
+             CASE WHEN overlay.id IS NULL THEN e.target_lifecycle_date ELSE overlay.target_lifecycle_date END AS target_lifecycle_date,
+             CASE WHEN overlay.id IS NULL THEN e.tags ELSE overlay.tags END AS tags,
+             CASE WHEN overlay.id IS NULL THEN e.links ELSE overlay.links END AS links,
+             CASE WHEN overlay.id IS NULL THEN e.schema_id ELSE overlay.schema_id END AS schema_id,
+             CASE WHEN overlay.id IS NULL THEN e.data ELSE overlay.data END AS data,
+             CASE WHEN overlay.id IS NULL THEN e.created_at ELSE overlay.created_at END AS created_at,
+             CASE WHEN overlay.id IS NULL THEN e.updated_at ELSE overlay.updated_at END AS updated_at,
+             e.deleted_at,
+             CASE WHEN overlay.id IS NULL THEN e.version ELSE overlay.version END AS version,
+             CASE WHEN overlay.id IS NULL THEN e.approval_policy_override ELSE overlay.approval_policy_override END AS approval_policy_override,
+             CASE WHEN overlay.id IS NULL THEN e.generated_metadata ELSE overlay.generated_metadata END AS generated_metadata,
+             CASE WHEN overlay.id IS NULL THEN e.project_id ELSE overlay.project_id END AS project_id,
+             CASE WHEN overlay.id IS NULL THEN e.completeness ELSE overlay.completeness END AS completeness,
+             e.last_attested_at, e.in_record_id, e.out_record_id
+      FROM catalog_record e
+      LEFT JOIN snapshot_entity_source overlay
+        ON overlay.id = e.id AND overlay.workspace = e.workspace
+      WHERE e.kind = 'entity'
+    )`;
+
+const candidateRelationSource = (): string => `candidate_relation_source AS (
+      SELECT r.id, r.workspace, r.kind, r.public_id, r.slug, r.namespace, r.name,
+             r.description,
+             CASE WHEN overlay.id IS NULL THEN r.owner ELSE overlay.owner END AS owner,
+             CASE WHEN overlay.id IS NULL THEN r.lifecycle ELSE overlay.lifecycle END AS lifecycle,
+             r.target_lifecycle, r.target_lifecycle_date, r.tags, r.links,
+             CASE WHEN overlay.id IS NULL THEN r.schema_id ELSE overlay.schema_id END AS schema_id,
+             CASE WHEN overlay.id IS NULL THEN r.data ELSE overlay.data END AS data,
+             CASE WHEN overlay.id IS NULL THEN r.created_at ELSE overlay.created_at END AS created_at,
+             CASE WHEN overlay.id IS NULL THEN r.updated_at ELSE overlay.updated_at END AS updated_at,
+             r.deleted_at,
+             CASE WHEN overlay.id IS NULL THEN r.version ELSE overlay.version END AS version,
+             CASE WHEN overlay.id IS NULL THEN r.approval_policy_override ELSE overlay.approval_policy_override END AS approval_policy_override,
+             r.generated_metadata, r.project_id, r.completeness, r.last_attested_at,
+             CASE WHEN overlay.id IS NULL THEN r.in_record_id ELSE overlay.in_record_id END AS in_record_id,
+             CASE WHEN overlay.id IS NULL THEN r.out_record_id ELSE overlay.out_record_id END AS out_record_id
+      FROM catalog_record r
+      LEFT JOIN snapshot_relation_source overlay
+        ON overlay.id = r.id AND overlay.workspace = r.workspace
+      WHERE r.kind = 'relation'
+    )`;
+
 // Builds the one source CTE consumed by every traversal alias. Live queries use catalog_record;
 // temporal queries reconstruct a JSON state in SQL and project it into entity-shaped columns.
 export const buildScopeCte = (state: EntityQuerySqlRenderState): string => {
@@ -593,6 +645,7 @@ export const buildScopeCte = (state: EntityQuerySqlRenderState): string => {
     : `${state.dialectAdapter.nullJson} AS assessment_values`;
   const source = state.asOf ? buildTemporalSource(state) : '';
   const snapshotSource = state.snapshotEntities == null ? '' : snapshotEntityRowset(state);
+  const entitySourceCte = state.snapshotEntities == null ? '' : candidateEntitySource();
   const conformanceStatusCte = buildConformanceStatusCte(state);
 
   if (state.asOf) {
@@ -609,7 +662,7 @@ export const buildScopeCte = (state: EntityQuerySqlRenderState): string => {
     state.dialect,
     value => addParam(state, value),
     'e',
-    state.snapshotEntities == null ? 'catalog_record' : 'snapshot_entity_source'
+    state.snapshotEntities == null ? 'catalog_record' : 'candidate_entity_source'
   );
   const visibleClause =
     state.visibleEntityIds == null
@@ -624,8 +677,8 @@ export const buildScopeCte = (state: EntityQuerySqlRenderState): string => {
         ? '1=0'
         : `e.id IN (${state.collectionEntityIds.map(id => addParam(state, id)).join(', ')})`;
   const scopedWhere = `${scopeClause} AND ${visibleClause || '1=1'} AND ${collectionClause || '1=1'} AND ${permissionScope.predicate}`;
-  const entitySource = state.snapshotEntities == null ? 'catalog_record' : 'snapshot_entity_source';
-  return `${snapshotSource ? `${snapshotSource},\n    ` : ''}${permissionScope.cte ? `${permissionScope.cte},\n    ` : ''}${conformanceStatusCte},\n    ${SCOPE_CTE} AS (\n      SELECT e.*, ${assessmentColumn},\n             cs.conformance_status,\n             cs.conformance_evaluated_at,\n             cs.conformance_stale\n      FROM ${entitySource} e\n      LEFT JOIN conformance_entity_status cs ON cs.entity_id = e.id\n      LEFT JOIN assessment_response ar\n        ON ar.entity_id = e.id\n       AND ar.assessment_id = ${assessmentParam ?? 'NULL'}\n       AND ar.workspace = e.workspace\n      WHERE e.kind = 'entity'\n        AND e.workspace = ${workspaceParam}\n        AND e.deleted_at IS NULL\n        AND ${scopedWhere}\n    )`;
+  const entitySource = state.snapshotEntities == null ? 'catalog_record' : 'candidate_entity_source';
+  return `${snapshotSource ? `${snapshotSource},\n    ` : ''}${entitySourceCte ? `${entitySourceCte},\n    ` : ''}${permissionScope.cte ? `${permissionScope.cte},\n    ` : ''}${conformanceStatusCte},\n    ${SCOPE_CTE} AS (\n      SELECT e.*, ${assessmentColumn},\n             cs.conformance_status,\n             cs.conformance_evaluated_at,\n             cs.conformance_stale\n      FROM ${entitySource} e\n      LEFT JOIN conformance_entity_status cs ON cs.entity_id = e.id\n      LEFT JOIN assessment_response ar\n        ON ar.entity_id = e.id\n       AND ar.assessment_id = ${assessmentParam ?? 'NULL'}\n       AND ar.workspace = e.workspace\n      WHERE e.kind = 'entity'\n        AND e.workspace = ${workspaceParam}\n        AND e.deleted_at IS NULL\n        AND ${scopedWhere}\n    )`;
 };
 
 const temporalRelationProjection = (
@@ -802,6 +855,7 @@ export const buildRelationScopeCte = (state: EntityQuerySqlRenderState): string 
     : '';
   if (state.snapshotRelations != null) {
     const relationSource = snapshotRelationRowset(state);
+    const candidateSource = candidateRelationSource();
     const workspaceParam = addParam(state, state.workspace);
     const sourceClause = relationSourceConstraintClause(
       'r',
@@ -815,7 +869,7 @@ export const buildRelationScopeCte = (state: EntityQuerySqlRenderState): string 
       'out_visibility_endpoint',
       state
     );
-    return `${relationSource},\n    ${RELATION_SCOPE_CTE} AS (\n      SELECT r.*\n      FROM snapshot_relation_source r${sourceEndpointJoins}${endpointJoins}\n      WHERE r.workspace = ${workspaceParam}\n        AND ${sourceClause}\n        AND ${visibilityClause}\n    )`;
+    return `${relationSource},\n    ${candidateSource},\n    ${RELATION_SCOPE_CTE} AS (\n      SELECT r.*\n      FROM candidate_relation_source r${sourceEndpointJoins}${endpointJoins}\n      WHERE r.workspace = ${workspaceParam}\n        AND r.deleted_at IS NULL\n        AND ${sourceClause}\n        AND ${visibilityClause}\n    )`;
   }
   if (state.asOf) {
     const source = buildTemporalRelationSource(state);

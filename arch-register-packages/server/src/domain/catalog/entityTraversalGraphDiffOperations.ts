@@ -8,7 +8,11 @@ import { requireProjectAccess } from '../auth/authorization';
 import { httpAssert } from '../../utils/httpAssert';
 import type { EntityDbResult } from './db/catalogDatabase';
 import type { RelationDbResult } from './db/relationDatabase';
-import { getActiveRevisionOrThrow, getCaseOrThrow } from './changeCaseContext';
+import {
+  getActiveRevisionOrThrow,
+  getCaseMemberSubject,
+  getCaseOrThrow
+} from './changeCaseContext';
 import { executeEntityTraversal, type EntityTraversalHop } from './entityTraversal';
 import { reconstructEntitiesAsOf } from './entitySnapshotReconstruction';
 import { reconstructRelationsAsOf } from './relationSnapshotReconstruction';
@@ -235,6 +239,16 @@ export const diffSubjectTraversal = async (
   const rootEntityIds = await resolveTraversalRootEntityIds(db, workspace, input.subject);
   const paths = input.paths.map(path => ({ id: path.id, steps: path.steps }));
   const now = new Date();
+  const members = await db.changeCase.listMembers(workspace, revision.id);
+  const candidateMemberSubjects = await Promise.all(
+    members.map(member => getCaseMemberSubject(db, workspace, member.entity_id))
+  );
+  const candidateEntityIds = candidateMemberSubjects.flatMap(subject =>
+    subject?.kind === 'entity' ? [subject.entity.id] : []
+  );
+  const candidateRelationIds = candidateMemberSubjects.flatMap(subject =>
+    subject?.kind === 'relation' ? [subject.relation.id] : []
+  );
   const [liveTraversal, candidateState] = await Promise.all([
     executeEntityTraversal(db, workspace, authCtx, {
       root: { kind: 'ids', entityIds: rootEntityIds },
@@ -248,7 +262,7 @@ export const diffSubjectTraversal = async (
         workspace,
         now,
         authCtx,
-        undefined,
+        candidateEntityIds,
         true,
         changeCase.project_id,
         undefined,
@@ -259,7 +273,7 @@ export const diffSubjectTraversal = async (
         workspace,
         now,
         authCtx,
-        undefined,
+        candidateRelationIds,
         true,
         changeCase.project_id,
         undefined,
