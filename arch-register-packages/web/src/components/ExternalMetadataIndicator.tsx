@@ -10,6 +10,8 @@ import {
   TooltipRow
 } from './HoverCardParts';
 import styles from './ExternalMetadataIndicator.module.css';
+import { formatDateTime } from '../utils/dateFormat';
+import { useDateTimeFormatPreference } from '../hooks/useDateTimeFormatPreference';
 
 const STATUS_LABEL: Record<ExternalMetadataResult['status'], string> = {
   success: 'Up to date',
@@ -29,18 +31,15 @@ const KIND_LABEL: Record<ExternalKind, string> = {
   automation: 'Automatically computed value'
 };
 
-const formatTimestamp = (iso: string) => {
-  const date = new Date(iso);
-  return Number.isNaN(date.getTime()) ? iso : date.toLocaleString();
-};
-
 const ExternalMetadataResultBody = ({
   title,
   result
 }: {
   title: string;
   result: ExternalMetadataResult | undefined;
-}) => (
+}) => {
+  const dateTimeFormatPreference = useDateTimeFormatPreference();
+  return (
   <>
     <HoverCardTitle>{title}</HoverCardTitle>
     {!result ? (
@@ -73,7 +72,10 @@ const ExternalMetadataResultBody = ({
         )}
         <HoverCardRows>
           <TooltipRow label="Source" value={result.source} />
-          <TooltipRow label="Updated" value={formatTimestamp(result.timestamp)} />
+          <TooltipRow
+            label="Updated"
+            value={formatDateTime(result.timestamp, result.timestamp, dateTimeFormatPreference)}
+          />
           {result.sourceVersion != null && (
             <TooltipRow label="Version" value={result.sourceVersion} />
           )}
@@ -88,7 +90,8 @@ const ExternalMetadataResultBody = ({
       </>
     )}
   </>
-);
+  );
+};
 
 /**
  * Provenance indicator for a read-only, externally-managed field value (schema/document fields

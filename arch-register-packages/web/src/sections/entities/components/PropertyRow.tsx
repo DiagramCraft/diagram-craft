@@ -5,6 +5,7 @@ import { Chip } from '../../../components/Chip';
 import { UserGroupPicker } from '../../../components/UserGroupPicker';
 import { usePrincipalLabel } from '../../../hooks/usePrincipalLabel';
 import { formatDate } from '../../../utils/dateFormat';
+import { useDateTimeFormatPreference } from '../../../hooks/useDateTimeFormatPreference';
 import { relationIds } from '../../../lib/entityEditState';
 import type { EntitySummary } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
@@ -121,6 +122,8 @@ export const PropertyRow = ({
   onTypedRelationToggleRemove: (relationUid: string) => void;
 }) => {
   const resolvePrincipalLabel = usePrincipalLabel();
+  const dateTimeFormatPreference = useDateTimeFormatPreference();
+  const formatDateValue = (value: unknown) => formatDate(value, '—', dateTimeFormatPreference);
   const isExternal = field.external_kind !== undefined;
   const isDerived = field.type === 'derived';
   // Inline editing of typedRelation instances lands separately; render read-only for now.
@@ -395,7 +398,7 @@ export const PropertyRow = ({
       typedRelationsIncoming,
       relationSchemas,
       workspaceSlug,
-      formatDateValue: formatDate,
+      formatDateValue,
       resolvePrincipalLabel,
       asChip: true
     });

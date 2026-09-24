@@ -45,6 +45,19 @@ const definitionImportSchemaPatchSchema = z.object({
   fields: z.array(z.record(z.string(), z.unknown()))
 });
 
+// Strict enums: used to validate input (create/update requests) so an invalid
+// value is rejected with a 400 rather than silently coerced.
+const workspaceDateFormatEnum = z.enum(['iso', 'month-name', 'md-slash', 'dmy-slash', 'dmy-dot']);
+const workspaceTimeFormatEnum = z.enum(['12h', '24h']);
+export type WorkspaceDateFormat = z.infer<typeof workspaceDateFormatEnum>;
+export type WorkspaceTimeFormat = z.infer<typeof workspaceTimeFormatEnum>;
+
+// Lenient variants: used to parse values read back from the database, so a
+// legacy/unrecognized stored value falls back to the default instead of
+// breaking the whole workspace fetch.
+export const workspaceDateFormatSchema = workspaceDateFormatEnum.catch('iso');
+export const workspaceTimeFormatSchema = workspaceTimeFormatEnum.catch('24h');
+
 export const workspaceSchema = z.object({
   id: z.string().describe('Unique workspace identifier'),
   name: z.string().describe('Workspace name'),
@@ -52,6 +65,8 @@ export const workspaceSchema = z.object({
   short_code: z.string().describe('Short code for workspace identification'),
   color: z.string().describe('Workspace color (hex format)'),
   description: z.string().describe('Workspace description'),
+  date_format: workspaceDateFormatSchema.describe('Preferred date display format'),
+  time_format: workspaceTimeFormatSchema.describe('Preferred time display format'),
   created_at: z.string().describe('ISO 8601 creation timestamp'),
   updated_at: z.string().describe('ISO 8601 last update timestamp')
 });
@@ -502,6 +517,12 @@ export const workspaceManagementContract = oc.tag('Workspaces').router({
             name: z.string().describe('Workspace name'),
             description: z.string().optional().describe('Workspace description'),
             color: z.string().optional().describe('Workspace color (hex format)'),
+            date_format: workspaceDateFormatEnum
+              .optional()
+              .describe('Preferred date display format'),
+            time_format: workspaceTimeFormatEnum
+              .optional()
+              .describe('Preferred time display format'),
             slug: z
               .string()
               .optional()
@@ -555,7 +576,13 @@ export const workspaceManagementContract = oc.tag('Workspaces').router({
             description: z.string().optional().describe('Workspace description'),
             url_slug: z.string().optional().describe('URL slug'),
             short_code: z.string().optional().describe('Short code'),
-            color: z.string().optional().describe('Workspace color (hex format)')
+            color: z.string().optional().describe('Workspace color (hex format)'),
+            date_format: workspaceDateFormatEnum
+              .optional()
+              .describe('Preferred date display format'),
+            time_format: workspaceTimeFormatEnum
+              .optional()
+              .describe('Preferred time display format')
           })
         })
       )

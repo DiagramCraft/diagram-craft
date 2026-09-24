@@ -18,7 +18,8 @@ import { isReferenceOrContainmentField } from '@arch-register/api-types/schemaCo
 import { buildFallbackEntityDrawerProfile } from '@arch-register/api-types/entityDrawerConfiguration';
 import { DrawerPropertyRow } from './DrawerPropertyRow';
 import { formatCurrencyValue } from '../../../utils/currencyFormat';
-import { formatIsoDate } from '../../../utils/dateFormat';
+import { formatDate } from '../../../utils/dateFormat';
+import { useDateTimeFormatPreference } from '../../../hooks/useDateTimeFormatPreference';
 import { usePrincipalLabel } from '../../../hooks/usePrincipalLabel';
 import {
   entityDrawerMetadataValue,
@@ -288,13 +289,16 @@ const DrawerItem = ({
   formatDateValue?: (value: unknown) => string;
   onOpenRelatedEntity?: (fieldId: string, publicId: string) => boolean;
 }) => {
+  const dateTimeFormatPreference = useDateTimeFormatPreference();
+  const defaultFormatDateValue = (value: unknown) =>
+    formatDate(value, '—', dateTimeFormatPreference);
   if (item.item.kind === 'metadata') {
     return (
       <MetadataItem
         item={item}
         entity={entity}
         lifecycleStates={lifecycleStates}
-        formatDateValue={formatDateValue ?? formatIsoDate}
+        formatDateValue={formatDateValue ?? defaultFormatDateValue}
       />
     );
   }
@@ -490,7 +494,9 @@ export const EntityDrawer = ({
     entityQueryEnabled && entityOverride === undefined
   );
   const entity = entityOverride ?? entityQuery.data;
-  const resolvedFormatDateValue = formatDateValue ?? formatIsoDate;
+  const dateTimeFormatPreference = useDateTimeFormatPreference();
+  const resolvedFormatDateValue =
+    formatDateValue ?? ((value: unknown) => formatDate(value, '—', dateTimeFormatPreference));
   const relationsQuery = useEntityRelations(workspaceSlug, entity?._uid ?? entityId);
   const typedRelationsQuery = useEntityTypedRelations(workspaceSlug, entity?._uid ?? entityId);
   const configurationQuery = useEntityDrawerConfiguration(workspaceSlug);

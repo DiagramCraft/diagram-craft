@@ -5,6 +5,8 @@ import { useEntities } from '../../../hooks/useEntities';
 import { workspaceCapabilityConfigurationsQuery } from '../../../queries/workspaceConfig';
 import { dueLabel, dueTone } from '../../../utils/assessmentDueTone';
 import { caseKindLabel } from '../../../utils/governanceCaseLabels';
+import { formatDate } from '../../../utils/dateFormat';
+import { useDateTimeFormatPreference } from '../../../hooks/useDateTimeFormatPreference';
 import { resolveDataStewardshipConfig } from '../dataStewardshipQueries';
 import { DS_MY_WORK_ID, DS_RAIL_PATHS } from '../dataStewardshipSections';
 import { EntityDrawer } from '../../../sections/entities/entityDrawer/EntityDrawer';
@@ -71,6 +73,7 @@ const DECISION_CASE_KINDS = new Set(['entity.change-case', 'entity.deprecation']
 export const DataStewardshipMyWorkScreen = () => {
   const { workspaceSlug } = useParams({ strict: false }) as { workspaceSlug: string };
   const navigate = useNavigate();
+  const dateTimeFormatPreference = useDateTimeFormatPreference();
   const search = useSearch({ strict: false }) as DataStewardshipMyWorkSearchParams;
   const scope: DataStewardshipQueueScope = search.scope ?? 'mine';
 
@@ -229,7 +232,7 @@ export const DataStewardshipMyWorkScreen = () => {
                   <span className={queueStyles.cardDue} style={{ color: dueTone(item.case.dueAt) }}>
                     {dueLabel(item.case.dueAt)}
                     <span className={queueStyles.cardDueDate}>
-                      {item.case.dueAt ? new Date(item.case.dueAt).toLocaleDateString() : ''}
+                      {item.case.dueAt ? formatDate(item.case.dueAt, '', dateTimeFormatPreference) : ''}
                     </span>
                   </span>
                 </button>

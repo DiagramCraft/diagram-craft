@@ -38,6 +38,8 @@ export const seedWorkspaces: WorkspaceDbResult[] = [
     short_code: seededWorkspaces.default.shortCode,
     description: seededWorkspaces.default.description,
     color: '',
+    date_format: 'iso',
+    time_format: '24h',
     created_at: now,
     updated_at: now
   },
@@ -48,6 +50,8 @@ export const seedWorkspaces: WorkspaceDbResult[] = [
     short_code: seededWorkspaces.second.shortCode,
     description: seededWorkspaces.second.description,
     color: '',
+    date_format: 'iso',
+    time_format: '24h',
     created_at: now,
     updated_at: now
   }

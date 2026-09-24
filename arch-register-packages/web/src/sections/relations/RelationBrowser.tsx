@@ -44,6 +44,8 @@ import { PROJECTION_FIELD_PREFIX } from '../entities/components/entityDisplayFie
 import { exportRelationsToCSV } from '../../lib/relationCsv';
 import { downloadBlob } from '../../lib/browserDownload';
 import { RelationGraphView } from './RelationGraphView';
+import { formatDateTime } from '../../utils/dateFormat';
+import { useDateTimeFormatPreference } from '../../hooks/useDateTimeFormatPreference';
 
 // Standalone relation-rooted browser (#2689/#2784): lists relation instances via the /relations/query
 // endpoint, distinct from the entity-embedded relation tab (EntityRelationsTab/RelationRecordList),
@@ -63,6 +65,7 @@ import { RelationGraphView } from './RelationGraphView';
 // Saved views reuse the entity browser's SaveViewDialog and useSavedViews hooks as-is — relation-rooted
 // saved views persist the canonical query plus the selected table/graph mode.
 export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
+  const dateTimeFormatPreference = useDateTimeFormatPreference();
   const search = useSearch({ strict: false });
   const view: RelationBrowserView = search.viewMode === 'graph' ? 'graph' : 'table';
   const edgeLabelFieldId = search.edgeLabelFieldId ?? RELATION_GRAPH_TYPE_LABEL;
@@ -457,7 +460,9 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
                       )}
                     </Table.Cell>
                   ))}
-                  <Table.Cell>{new Date(relation._updatedAt).toLocaleString()}</Table.Cell>
+                  <Table.Cell>
+                    {formatDateTime(relation._updatedAt, '—', dateTimeFormatPreference)}
+                  </Table.Cell>
                   <Table.Cell interactive>
                     {(relation.canEdit || relation.canDelete) && (
                       <DropdownMenu

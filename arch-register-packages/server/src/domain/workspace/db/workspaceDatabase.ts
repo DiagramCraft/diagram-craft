@@ -20,6 +20,15 @@ const APPLICATION_ACCESS_MODES = ['all_members', 'selected'] as const;
 const isWorkspaceCapabilities = (value: unknown): value is WorkspaceCapability[] =>
   workspaceCapabilitySchema.array().safeParse(value).success;
 
+export const WORKSPACE_DATE_FORMATS = [
+  'iso',
+  'month-name',
+  'md-slash',
+  'dmy-slash',
+  'dmy-dot'
+] as const;
+export const WORKSPACE_TIME_FORMATS = ['12h', '24h'] as const;
+
 export type WorkspaceDbResult = {
   id: string;
   name: string;
@@ -27,6 +36,8 @@ export type WorkspaceDbResult = {
   short_code: string;
   color: string;
   description: string;
+  date_format: (typeof WORKSPACE_DATE_FORMATS)[number];
+  time_format: (typeof WORKSPACE_TIME_FORMATS)[number];
   created_at: Date;
   updated_at: Date;
 };
@@ -184,6 +195,8 @@ export const workspaceMappers = {
     short_code: String(row['short_code']),
     color: String(row['color'] ?? ''),
     description: String(row['description']),
+    date_format: databaseEnum(row['date_format'], WORKSPACE_DATE_FORMATS, 'date_format'),
+    time_format: databaseEnum(row['time_format'], WORKSPACE_TIME_FORMATS, 'time_format'),
     created_at: databaseDate(row['created_at']),
     updated_at: databaseDate(row['updated_at'])
   }),

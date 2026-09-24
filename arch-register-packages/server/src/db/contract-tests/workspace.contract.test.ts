@@ -19,6 +19,8 @@ runContractSuiteAgainstBothDrivers('WorkspaceDatabase', getDb => {
         short_code: fetched!.short_code,
         color: '#123456',
         description: 'updated',
+        date_format: 'iso',
+        time_format: '24h',
         updated_at: new Date()
       });
       expect(updated!.name).toBe('renamed');
@@ -28,6 +30,28 @@ runContractSuiteAgainstBothDrivers('WorkspaceDatabase', getDb => {
       expect(deleted!.id).toBe(id);
       expect(projectIds).toEqual([]);
       expect(await db.workspace.getWorkspace(id)).toBeNull();
+    });
+
+    it('defaults date_format/time_format to iso/24h and round-trips updates', async () => {
+      const db = getDb();
+      const id = await createFixtureWorkspace(db);
+
+      const fetched = await db.workspace.getWorkspace(id);
+      expect(fetched!.date_format).toBe('iso');
+      expect(fetched!.time_format).toBe('24h');
+
+      const updated = await db.workspace.updateWorkspace(id, {
+        name: fetched!.name,
+        url_slug: fetched!.url_slug,
+        short_code: fetched!.short_code,
+        color: fetched!.color,
+        description: fetched!.description,
+        date_format: 'dmy-slash',
+        time_format: '12h',
+        updated_at: new Date()
+      });
+      expect(updated!.date_format).toBe('dmy-slash');
+      expect(updated!.time_format).toBe('12h');
     });
 
     it('deleting an unknown workspace returns a null workspace and empty project list', async () => {

@@ -16,6 +16,7 @@ import { publicCatalogRequest } from '../lib/orpcClient';
 import { publicCatalogApiRoute, publicCatalogEntityRoute } from '../routes/publicObjectRoutes';
 import styles from './publicCatalog.module.css';
 import { useQuery } from '@tanstack/react-query';
+import { formatDate } from '../utils/dateFormat';
 
 const routeParams = () =>
   useParams({ strict: false }) as {
@@ -176,7 +177,7 @@ export const PublicCatalogEntityPage = () => {
         </div>
         <div>
           <span>Updated</span>
-          <strong>{new Date(data.updatedAt).toLocaleDateString()}</strong>
+          <strong>{formatDate(data.updatedAt)}</strong>
         </div>
       </div>
       <div className={styles.fieldTable}>

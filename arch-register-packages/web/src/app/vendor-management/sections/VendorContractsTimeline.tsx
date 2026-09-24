@@ -1,6 +1,8 @@
 import { useMemo } from 'react';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import { formatCurrencyValue } from '../../../utils/currencyFormat';
+import { formatDate } from '../../../utils/dateFormat';
+import { useDateTimeFormatPreference } from '../../../hooks/useDateTimeFormatPreference';
 import type { VendorContractRow } from '../useVendorContracts';
 import { renewalWindow, RENEWAL_WINDOW_COLOR } from '../contractRenewalWindow';
 import {
@@ -55,6 +57,7 @@ export const VendorContractsTimeline = ({
   onOpenContract: (contract: EntityRecord) => void;
 }) => {
   const today = useMemo(() => new Date(), []);
+  const dateTimeFormatPreference = useDateTimeFormatPreference();
 
   const { positioned, excludedCount } = useMemo(() => {
     const positionedRows: PositionedContract[] = [];
@@ -162,7 +165,7 @@ export const VendorContractsTimeline = ({
                   className={styles.bar}
                   style={{ left: startPx, width, background: tone }}
                   onClick={() => onOpenContract(contract)}
-                  title={`${contract._name} · ${start.toLocaleDateString()} → ${end.toLocaleDateString()}`}
+                  title={`${contract._name} · ${formatDate(start, '—', dateTimeFormatPreference)} → ${formatDate(end, '—', dateTimeFormatPreference)}`}
                 >
                   <span className={styles.barLabel}>
                     {contract.annual_cost != null && typeof contract.annual_cost === 'object'
