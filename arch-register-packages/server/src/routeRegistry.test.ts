@@ -28,6 +28,7 @@ const expectedRouteIds = [
   'integration-relations',
   'integration-governance',
   'workspace-entities',
+  'workspace-entity-traversal',
   'workspace-glossary',
   'entity-sync',
   'api-specification-sync',

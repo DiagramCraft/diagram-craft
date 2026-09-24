@@ -13,6 +13,7 @@ const expectedPrimaryContractIds = [
   'workspaceRelationSchemaContract',
   'workspaceRelationContract',
   'workspaceEntityContract',
+  'workspaceEntityTraversalContract',
   'workspaceManagementContract',
   'projectContract',
   'workspaceConfigContract',
