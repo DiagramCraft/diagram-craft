@@ -169,11 +169,25 @@
               redaction use the same query and authorization pipeline as the entity browser.
 
             - @id:ar.workspace.configuration.entity-drawers Administrators can configure a schema-scoped,
-              read-only entity drawer with ordered sections, fields, metadata, relations, direct containment-child
-              lists, and registered semantic content slots. Without a stored profile, the drawer falls back to
+              read-only entity drawer with ordered, collapsible sections (an optional `stat-grid` layout alongside
+              the default row layout) built from fields, metadata slots, plain relations, a typed-relation-list item
+              (a typed relation's related entities shown as chips or rows with configurable relation-attribute
+              columns, distinct from a plain relation item which cannot surface data carried on the relation edge
+              itself), direct containment-child lists, roll-up and leaf-count aggregates (the same schema-agnostic
+              metric engine behind the Strategy subtree roll-ups and other bespoke roll-up hooks it replaces, over
+              either the legacy containment subtree or a configured one-hop relation traversal), a static
+              placeholder item, a query item evaluating a path expression against the current entity in the text
+              query DSL (`specs/QUERY_LANGUAGE.md`) — letting any profile declare relation or subtree traversals as
+              chips or a list without app-specific code, authored as free text rather than a query builder — and
+              registered semantic content slots. Item and section labels, visibility, and per-item presentation
+              (row/mini-panel for fields, relations, and slots) are all configurable; there is no live preview in
+              the editor. Without a stored profile, the drawer falls back to
               schema-ordered attributes,
               attribute groups, and metadata; seeded or templated authored profiles retain their richer content.
-              Missing or unsupported references fall back safely to that generic drawer. Registered content slots
+              Missing or unsupported references — including unresolvable roll-up traversals and unsupported slots —
+              fall back safely to that generic drawer, disappearing rather than showing a restricted-field
+              placeholder, and every item kind resolves data through the same permission-aware paths as the rest of
+              the app, so drawer configuration itself never grants access. Registered content slots
               may be capability-bound or generic; the Entity Change cases, Entity Governance items, and Entity
               Assessments slots are
               associated with the current entity and can therefore be added to any schema's drawer, while remaining
