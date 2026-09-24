@@ -40,56 +40,56 @@ const ExternalMetadataResultBody = ({
 }) => {
   const dateTimeFormatPreference = useDateTimeFormatPreference();
   return (
-  <>
-    <HoverCardTitle>{title}</HoverCardTitle>
-    {!result ? (
-      <HoverCardDescription>No external update yet.</HoverCardDescription>
-    ) : (
-      <>
-        <TooltipChips>
-          <TooltipChip
-            style={
-              result.status === 'outdated'
-                ? { color: 'var(--warning-fg, #b8860b)' }
-                : result.status === 'failed'
-                  ? { color: 'var(--danger-fg, #c94a4a)' }
-                  : undefined
-            }
-          >
-            {STATUS_LABEL[result.status]}
-          </TooltipChip>
-        </TooltipChips>
-        {result.explanation && <HoverCardDescription>{result.explanation}</HoverCardDescription>}
-        {result.findings && result.findings.length > 0 && (
-          <ul className={styles.findingsList}>
-            {result.findings.map((finding, index) => (
-              <li key={index}>{finding}</li>
-            ))}
-          </ul>
-        )}
-        {result.failureNotice && (
-          <HoverCardDescription>{result.failureNotice}</HoverCardDescription>
-        )}
-        <HoverCardRows>
-          <TooltipRow label="Source" value={result.source} />
-          <TooltipRow
-            label="Updated"
-            value={formatDateTime(result.timestamp, result.timestamp, dateTimeFormatPreference)}
-          />
-          {result.sourceVersion != null && (
-            <TooltipRow label="Version" value={result.sourceVersion} />
+    <>
+      <HoverCardTitle>{title}</HoverCardTitle>
+      {!result ? (
+        <HoverCardDescription>No external update yet.</HoverCardDescription>
+      ) : (
+        <>
+          <TooltipChips>
+            <TooltipChip
+              style={
+                result.status === 'outdated'
+                  ? { color: 'var(--warning-fg, #b8860b)' }
+                  : result.status === 'failed'
+                    ? { color: 'var(--danger-fg, #c94a4a)' }
+                    : undefined
+              }
+            >
+              {STATUS_LABEL[result.status]}
+            </TooltipChip>
+          </TooltipChips>
+          {result.explanation && <HoverCardDescription>{result.explanation}</HoverCardDescription>}
+          {result.findings && result.findings.length > 0 && (
+            <ul className={styles.findingsList}>
+              {result.findings.map((finding, index) => (
+                <li key={index}>{finding}</li>
+              ))}
+            </ul>
           )}
-          {result.requestId != null && <TooltipRow label="Request id" value={result.requestId} />}
-          {result.sourceRevision != null && (
-            <TooltipRow label="Assessed revision" value={result.sourceRevision} />
+          {result.failureNotice && (
+            <HoverCardDescription>{result.failureNotice}</HoverCardDescription>
           )}
-          {result.generatorVersion != null && (
-            <TooltipRow label="Generator version" value={result.generatorVersion} />
-          )}
-        </HoverCardRows>
-      </>
-    )}
-  </>
+          <HoverCardRows>
+            <TooltipRow label="Source" value={result.source} />
+            <TooltipRow
+              label="Updated"
+              value={formatDateTime(result.timestamp, result.timestamp, dateTimeFormatPreference)}
+            />
+            {result.sourceVersion != null && (
+              <TooltipRow label="Version" value={result.sourceVersion} />
+            )}
+            {result.requestId != null && <TooltipRow label="Request id" value={result.requestId} />}
+            {result.sourceRevision != null && (
+              <TooltipRow label="Assessed revision" value={result.sourceRevision} />
+            )}
+            {result.generatorVersion != null && (
+              <TooltipRow label="Generator version" value={result.generatorVersion} />
+            )}
+          </HoverCardRows>
+        </>
+      )}
+    </>
   );
 };
 

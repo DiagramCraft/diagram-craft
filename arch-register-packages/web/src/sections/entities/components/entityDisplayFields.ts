@@ -255,9 +255,7 @@ export const formatEntityDisplayValue = (
       return value.map(item => (item ? 'Yes' : 'No')).join(', ');
     }
     if (field.schemaField?.type === 'date') {
-      return value
-        .map(item => formatDate(item, String(item), dateTimeFormatPreference))
-        .join(', ');
+      return value.map(item => formatDate(item, String(item), dateTimeFormatPreference)).join(', ');
     }
     if (field.schemaField?.type === 'currency') {
       return value.map(item => formatCurrencyValue(item)).join(', ');

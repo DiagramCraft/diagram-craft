@@ -488,7 +488,8 @@ export const GovernanceInboxScreen = () => {
                       <span>{subjectLabel}</span>
                       <span>·</span>
                       <span>
-                        Submitted {formatDateTime(submission.case.createdAt, '—', dateTimeFormatPreference)}
+                        Submitted{' '}
+                        {formatDateTime(submission.case.createdAt, '—', dateTimeFormatPreference)}
                       </span>
                     </div>
                     {isBulk && bulkMemberEntities.length > 0 && (
@@ -695,7 +696,8 @@ export const GovernanceInboxScreen = () => {
                               : undefined
                           }
                         >
-                          <TbClock size={11} /> Due {formatDate(task.case.dueAt, '—', dateTimeFormatPreference)}
+                          <TbClock size={11} /> Due{' '}
+                          {formatDate(task.case.dueAt, '—', dateTimeFormatPreference)}
                         </span>
                       </>
                     )}

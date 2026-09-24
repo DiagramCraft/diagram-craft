@@ -64,7 +64,13 @@ describe('date formatting', () => {
 
   describe('timezone-shift safety', () => {
     it('renders a date-only value on the same calendar day for every preset', () => {
-      for (const date_format of ['iso', 'month-name', 'md-slash', 'dmy-slash', 'dmy-dot'] as const) {
+      for (const date_format of [
+        'iso',
+        'month-name',
+        'md-slash',
+        'dmy-slash',
+        'dmy-dot'
+      ] as const) {
         const pref: DateTimeFormatPreference = { date_format, time_format: '24h' };
         const result = formatDate('2026-01-01', '—', pref);
         expect(result).not.toBe(formatDate('2025-12-31', '—', pref));

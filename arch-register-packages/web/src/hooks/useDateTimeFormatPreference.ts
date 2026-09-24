@@ -1,5 +1,8 @@
 import { useWorkspaceContext } from '../layouts/WorkspaceContext';
-import { DEFAULT_DATE_TIME_FORMAT_PREFERENCE, type DateTimeFormatPreference } from '../utils/dateFormat';
+import {
+  DEFAULT_DATE_TIME_FORMAT_PREFERENCE,
+  type DateTimeFormatPreference
+} from '../utils/dateFormat';
 
 /**
  * Resolves the current workspace's configured date/time display preference,

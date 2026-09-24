@@ -232,7 +232,9 @@ export const DataStewardshipMyWorkScreen = () => {
                   <span className={queueStyles.cardDue} style={{ color: dueTone(item.case.dueAt) }}>
                     {dueLabel(item.case.dueAt)}
                     <span className={queueStyles.cardDueDate}>
-                      {item.case.dueAt ? formatDate(item.case.dueAt, '', dateTimeFormatPreference) : ''}
+                      {item.case.dueAt
+                        ? formatDate(item.case.dueAt, '', dateTimeFormatPreference)
+                        : ''}
                     </span>
                   </span>
                 </button>
