@@ -470,10 +470,7 @@ describe('EntityDrawerEditor', () => {
       const toggle = rendered.container.querySelector(
         'input[type="checkbox"]'
       ) as HTMLInputElement;
-      act(() => {
-        toggle.checked = false;
-        toggle.dispatchEvent(new Event('change', { bubbles: true }));
-      });
+      act(() => toggle.click());
 
       expect(rendered.container.textContent).toContain('Using the default drawer layout');
       clickButton(rendered.container, 'Save changes');
