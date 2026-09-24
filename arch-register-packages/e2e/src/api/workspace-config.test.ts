@@ -94,6 +94,111 @@ test.describe('workspace config routes', () => {
     );
   });
 
+  test('validates drawer query paths and result fields before persisting', async ({
+    orpc,
+    seededUsers: _
+  }) => {
+    const catalog = await orpc.config.entityDrawer.catalog({
+      params: { workspace: 'default' }
+    });
+    const source = catalog.schemas.find(schema =>
+      schema.fields.some(
+        field =>
+          (field.type === 'reference' || field.type === 'containment') &&
+          field.schemaId !== undefined &&
+          !field.archived
+      )
+    );
+    expect(source).toBeDefined();
+    const relationField = source!.fields.find(
+      field =>
+        (field.type === 'reference' || field.type === 'containment') &&
+        field.schemaId !== undefined &&
+        !field.archived
+    );
+    expect(relationField).toBeDefined();
+    const target = catalog.schemas.find(schema => schema.id === relationField!.schemaId);
+    expect(target).toBeDefined();
+    const targetField = target!.fields.find(
+      field =>
+        !field.archived &&
+        field.type !== 'reference' &&
+        field.type !== 'containment' &&
+        field.type !== 'typedRelation'
+    );
+    expect(targetField).toBeDefined();
+
+    const profile = (queryText: string, fieldId: string) => ({
+      version: 1 as const,
+      profiles: {
+        [source!.id]: {
+          header: { badges: [] },
+          sections: [
+            {
+              id: 'query',
+              title: 'Query',
+              collapsible: false,
+              items: [
+                {
+                  kind: 'query' as const,
+                  queryText,
+                  presentation: 'list' as const,
+                  fields: [{ fieldId }]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    });
+
+    const valid = await orpc.config.entityDrawer.update({
+      params: { workspace: 'default' },
+      body: profile(relationField!.id, targetField!.id)
+    });
+    expect(valid.effective_configuration.profiles[source!.id]!.sections[0]!.items).toEqual([
+      expect.objectContaining({
+        kind: 'query',
+        queryText: relationField!.id,
+        fields: [{ fieldId: targetField!.id }]
+      })
+    ]);
+
+    await expect(
+      orpc.config.entityDrawer.update({
+        params: { workspace: 'default' },
+        body: profile(`${relationField!.id}(`, targetField!.id)
+      })
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+
+    await expect(
+      orpc.config.entityDrawer.update({
+        params: { workspace: 'default' },
+        body: profile(relationField!.id, 'stale-result-field')
+      })
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+
+    const unchanged = await orpc.config.entityDrawer.get({
+      params: { workspace: 'default' }
+    });
+    expect(unchanged.stored_configuration).toMatchObject({
+      profiles: {
+        [source!.id]: {
+          sections: [
+            {
+              items: [
+                expect.objectContaining({
+                  queryText: relationField!.id,
+                  fields: [{ fieldId: targetField!.id }]
+                })
+              ]
+            }
+          ]
+        }
+      }
+    });
+  });
+
   test('returns guided public catalog selectors and previews an unsaved configuration', async ({
     orpc,
     seededUsers: _

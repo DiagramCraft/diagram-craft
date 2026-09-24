@@ -87,6 +87,31 @@ type RelationRollupOption = {
   field: EntitySchema['fields'][number];
 };
 
+const validateLocalEntityDrawerDraft = (configuration: EntityDrawerConfiguration): string[] =>
+  Object.entries(configuration.profiles).flatMap(([schemaId, profile]) =>
+    profile.sections.flatMap(section =>
+      section.items.flatMap(item => {
+        if (item.kind !== 'query') return [];
+        return (item.fields ?? []).flatMap(field =>
+          field.fieldId.trim() === ''
+            ? [
+                `Schema '${schemaId}', section '${section.title}': query result fields require a field id.`
+              ]
+            : []
+        );
+      })
+    )
+  );
+
+const SaveErrors = ({ errors }: { errors: string[] }) =>
+  errors.length > 0 ? (
+    <div className={styles.error} role="alert">
+      {errors.map((error, index) => (
+        <div key={`${error}-${index}`}>{error}</div>
+      ))}
+    </div>
+  ) : null;
+
 const fieldItemKind = (type: string): 'field' | 'relation' =>
   type === 'reference' || type === 'containment' || type === 'typedRelation' ? 'relation' : 'field';
 
@@ -365,6 +390,7 @@ export const EntityDrawerEditor = ({
   const update = useUpdateEntityDrawerConfiguration(workspaceSlug);
   const [draft, setDraft] = useState<EntityDrawerConfiguration | null>(null);
   const [customizing, setCustomizing] = useState(false);
+  const [localErrors, setLocalErrors] = useState<string[]>([]);
 
   useEffect(() => {
     const stored = normalizeLegacyEntityDrawerConfiguration(
@@ -405,6 +431,8 @@ export const EntityDrawerEditor = ({
 
   const updateProfile = (next: EntityDrawerProfile) => {
     if (!draft || !selectedSchemaId) return;
+    update.reset();
+    setLocalErrors([]);
     setDraft({ ...draft, profiles: { ...draft.profiles, [selectedSchemaId]: next } });
   };
 
@@ -425,7 +453,23 @@ export const EntityDrawerEditor = ({
     setCustomizing(false);
   };
 
-  const save = () => draft && update.mutate(draft);
+  const save = () => {
+    if (!draft) return;
+    const errors = validateLocalEntityDrawerDraft(draft);
+    if (errors.length > 0) {
+      update.reset();
+      setLocalErrors(errors);
+      return;
+    }
+    setLocalErrors([]);
+    update.mutate(draft);
+  };
+  const saveErrors = [
+    ...localErrors,
+    ...(update.error instanceof Error
+      ? [`Unable to save drawer configuration: ${update.error.message}`]
+      : [])
+  ];
   const availableFields =
     catalog.schemas
       .find(schema => schema.id === selectedSchemaId)
@@ -714,6 +758,7 @@ export const EntityDrawerEditor = ({
             </Button>
           </div>
         )}
+        <SaveErrors errors={saveErrors} />
       </div>
     );
 
@@ -747,10 +792,17 @@ export const EntityDrawerEditor = ({
         )}
       </div>
 
+      <SaveErrors errors={saveErrors} />
+
       {configurationQuery.data.diagnostics.length > 0 && (
         <div className={styles.warning} role="alert">
-          {configurationQuery.data.diagnostics.length} stale or invalid configuration entries are
-          being omitted.
+          <div>
+            {configurationQuery.data.diagnostics.length} stale or invalid configuration entries are
+            being omitted.
+          </div>
+          {configurationQuery.data.diagnostics.map((diagnostic, index) => (
+            <div key={`${diagnostic.code}-${diagnostic.itemId ?? index}`}>{diagnostic.message}</div>
+          ))}
         </div>
       )}
 
