@@ -3,7 +3,9 @@ import type { TypedRelationField } from '@arch-register/api-types/schemaContract
 import type { RelationRecord } from '@arch-register/api-types/relationContract';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import { Chip } from '../../../components/Chip';
+import { resolveFieldAccess } from '../../../lib/fieldGroupAccess';
 import { formatRelationFieldValue } from '../components/RelationRecordList';
+import type { EntityDrawerFieldGroupAccess } from './entityDrawerState';
 import { EntityDrawerProviderStatus } from './EntityDrawerProviderRegistry';
 import styles from './EntityDrawer.module.css';
 
@@ -21,7 +23,8 @@ export const TypedRelationListItem = ({
   typedRelationsOutgoing,
   typedRelationsIncoming,
   typedRelationsStatus,
-  relationSchemas
+  relationSchemas,
+  getFieldGroupAccess
 }: {
   item: Extract<EntityDrawerItem, { kind: 'typed-relation-list' }>;
   field: TypedRelationField;
@@ -30,6 +33,7 @@ export const TypedRelationListItem = ({
   typedRelationsIncoming: RelationRecord[];
   typedRelationsStatus: { isLoading: boolean; isError: boolean };
   relationSchemas: RelationSchema[];
+  getFieldGroupAccess: EntityDrawerFieldGroupAccess;
 }) => {
   const direction = field.direction === 'in' ? 'outgoing' : 'incoming';
   const records = (
@@ -43,15 +47,17 @@ export const TypedRelationListItem = ({
     const attributeField = relationSchema?.fields.find(
       candidate => candidate.id === attribute.fieldId && !candidate.archived
     );
-    return attributeField
-      ? [
-          {
-            fieldId: attribute.fieldId,
-            label: attribute.label ?? attributeField.name,
-            field: attributeField
-          }
-        ]
-      : [];
+    if (!attributeField || !relationSchema) return [];
+    if (resolveFieldAccess(relationSchema, attributeField, getFieldGroupAccess) === 'none') {
+      return [];
+    }
+    return [
+      {
+        fieldId: attribute.fieldId,
+        label: attribute.label ?? attributeField.name,
+        field: attributeField
+      }
+    ];
   });
 
   const state = typedRelationsStatus.isLoading
