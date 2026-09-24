@@ -142,10 +142,12 @@ let configurationQueryData: {
 };
 let catalogQueryData: EntityDrawerCatalog;
 
+const reset = vi.fn();
+
 vi.mock('../../hooks/useWorkspaceConfig', () => ({
   useEntityDrawerConfiguration: () => ({ data: configurationQueryData }),
   useEntityDrawerCatalog: () => ({ data: catalogQueryData }),
-  useUpdateEntityDrawerConfiguration: () => ({ mutate, isPending: false })
+  useUpdateEntityDrawerConfiguration: () => ({ mutate, reset, isPending: false, error: null })
 }));
 
 const { EntityDrawerEditor } = await import('./EntityDrawerSettingsScreen');
@@ -175,7 +177,11 @@ const otherSchema = {
 const relationSchema = {
   id: 'rel-owns',
   in: { schemaIds: [otherSchema.id] },
-  out: { schemaIds: [schema.id] }
+  out: { schemaIds: [schema.id] },
+  fields: [
+    { id: 'field-role', name: 'Role', archived: false },
+    { id: 'field-since', name: 'Since', archived: false }
+  ]
 } as unknown as RelationSchema;
 
 const catalogFixture: EntityDrawerCatalog = {
@@ -283,6 +289,7 @@ const setInputValue = (input: HTMLInputElement | HTMLTextAreaElement, value: str
 
 afterEach(() => {
   mutate.mockClear();
+  reset.mockClear();
   document.body.replaceChildren();
 });
 
@@ -616,6 +623,26 @@ describe('EntityDrawerEditor', () => {
         })
       );
     });
+
+    it('blocks saving a query result field left without a field id', () => {
+      const profile = customProfileFixture();
+      profile.sections[0]!.items = [
+        { kind: 'query', queryText: '<-"Relation name"', presentation: 'list' }
+      ];
+      configurationQueryData = buildConfigurationQueryData(profile);
+      catalogQueryData = catalogFixture;
+      const rendered = renderEditor();
+      root = rendered.root;
+
+      clickButton(rendered.container, 'Add field');
+      clickButton(rendered.container, 'Save changes');
+
+      expect(mutate).not.toHaveBeenCalled();
+      const alert = [...rendered.container.querySelectorAll('[role="alert"]')].find(node =>
+        node.textContent?.includes('query result fields require a field id')
+      );
+      expect(alert).toBeDefined();
+    });
   });
 
   describe('typed-relation attribute selection', () => {
@@ -632,7 +659,7 @@ describe('EntityDrawerEditor', () => {
       ]
     });
 
-    it('adds an attribute row scoped to the typed relation target schema fields', () => {
+    it('adds an attribute row scoped to the relation schema attribute fields', () => {
       configurationQueryData = buildConfigurationQueryData(withTypedRelationItem());
       catalogQueryData = catalogFixture;
       const rendered = renderEditor();
@@ -649,7 +676,7 @@ describe('EntityDrawerEditor', () => {
                 expect.objectContaining({
                   items: [
                     expect.objectContaining({
-                      attributes: [{ fieldId: 'field-title' }]
+                      attributes: [{ fieldId: 'field-role' }]
                     })
                   ]
                 })
@@ -663,7 +690,7 @@ describe('EntityDrawerEditor', () => {
     it('sets a label override on an attribute', () => {
       const profile = withTypedRelationItem();
       (profile.sections[0]!.items[0] as { attributes: Array<{ fieldId: string }> }).attributes = [
-        { fieldId: 'field-title' }
+        { fieldId: 'field-role' }
       ];
       configurationQueryData = buildConfigurationQueryData(profile);
       catalogQueryData = catalogFixture;
@@ -684,7 +711,7 @@ describe('EntityDrawerEditor', () => {
                 expect.objectContaining({
                   items: [
                     expect.objectContaining({
-                      attributes: [{ fieldId: 'field-title', label: 'Team name' }]
+                      attributes: [{ fieldId: 'field-role', label: 'Team name' }]
                     })
                   ]
                 })
@@ -698,7 +725,7 @@ describe('EntityDrawerEditor', () => {
     it('removes an attribute', () => {
       const profile = withTypedRelationItem();
       (profile.sections[0]!.items[0] as { attributes: Array<{ fieldId: string }> }).attributes = [
-        { fieldId: 'field-title' }
+        { fieldId: 'field-role' }
       ];
       configurationQueryData = buildConfigurationQueryData(profile);
       catalogQueryData = catalogFixture;
@@ -726,7 +753,7 @@ describe('EntityDrawerEditor', () => {
     it('resets attributes when switching the typed-relation field', () => {
       const profile = withTypedRelationItem();
       (profile.sections[0]!.items[0] as { attributes: Array<{ fieldId: string }> }).attributes = [
-        { fieldId: 'field-title' }
+        { fieldId: 'field-role' }
       ];
       configurationQueryData = buildConfigurationQueryData(profile);
       catalogQueryData = catalogFixture;
