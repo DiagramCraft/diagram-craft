@@ -14,6 +14,8 @@ import { Table } from '../../components/table/Table';
 import { StatusChip } from '../../components/StatusChip';
 import { EntityPicker } from '../../components/EntityPicker';
 import { RelationPicker } from '../../components/RelationPicker';
+import { formatDateTime } from '../../utils/dateFormat';
+import { useDateTimeFormatPreference } from '../../hooks/useDateTimeFormatPreference';
 import {
   configureIntegrationSource,
   integrationSyncDashboardKey,
@@ -27,7 +29,6 @@ import { useTeams } from '../../hooks/useWorkspaceConfig';
 import styles from '../../app/api-integration-catalog/sections/ApiIntegrationCatalogPlaceholderScreen.module.css';
 import tileStyles from '../../app/api-integration-catalog/sections/ApiIntegrationCatalogIntegrationsScreen.module.css';
 
-const dateLabel = (value: string | null) => (value ? new Date(value).toLocaleString() : '—');
 const WARN = 'var(--cmp-fg-warning, #eab308)';
 const DANGER = 'var(--cmp-fg-danger, #ef4444)';
 
@@ -68,6 +69,9 @@ type SourceEditor = {
  */
 export const IntegrationSyncScreen = () => {
   const { workspaceSlug } = useParams({ strict: false }) as { workspaceSlug: string };
+  const dateTimeFormatPreference = useDateTimeFormatPreference();
+  const dateLabel = (value: string | null) =>
+    value ? formatDateTime(value, '—', dateTimeFormatPreference) : '—';
   const [sourceEditor, setSourceEditor] = useState<SourceEditor | null>(null);
   const [selectedSourceKey, setSelectedSourceKey] = useState<string | null>(null);
   const [relinkTarget, setRelinkTarget] = useState<RelinkTarget | null>(null);

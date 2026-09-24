@@ -15,9 +15,9 @@ import { downloadBlob } from '../../lib/browserDownload';
 import { ApiError } from '../../lib/http';
 import { Table } from '../../components/table/Table';
 import { Title } from '../../components/Title';
+import { formatDateTime } from '../../utils/dateFormat';
+import { useDateTimeFormatPreference } from '../../hooks/useDateTimeFormatPreference';
 import styles from './BaselineDetailScreen.module.css';
-
-const formatDate = (value: string) => new Date(value).toLocaleString();
 
 type BaselineTab = 'entities' | 'relations' | 'compare';
 
@@ -32,6 +32,7 @@ export const BaselineDetailView = ({
   baselineId,
   onDeleted
 }: BaselineDetailViewProps) => {
+  const dateTimeFormatPreference = useDateTimeFormatPreference();
   const { data: baseline, isLoading, error } = useBaseline(workspaceSlug, baselineId);
   const { data: baselines = [] } = useBaselines(workspaceSlug);
   const diff = useBaselineDiff(workspaceSlug);
@@ -123,7 +124,7 @@ export const BaselineDetailView = ({
           </div>
           <div>
             <dt>Effective date</dt>
-            <dd>{formatDate(baseline.effectiveAt)}</dd>
+            <dd>{formatDateTime(baseline.effectiveAt, '—', dateTimeFormatPreference)}</dd>
           </div>
           <div>
             <dt>Scope</dt>

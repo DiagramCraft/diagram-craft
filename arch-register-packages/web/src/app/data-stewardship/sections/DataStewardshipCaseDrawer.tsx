@@ -14,6 +14,8 @@ import { useEntity } from '../../../hooks/useEntities';
 import { useEntityDrawer } from '../../../sections/entities/entityDrawer/useEntityDrawer';
 import { caseKindLabel, humanizeCaseKind } from '../../../utils/governanceCaseLabels';
 import { dueLabel, dueTone } from '../../../utils/assessmentDueTone';
+import { formatDateTime } from '../../../utils/dateFormat';
+import { useDateTimeFormatPreference } from '../../../hooks/useDateTimeFormatPreference';
 import { queueItemPriority, type DataStewardshipQueuePriority } from '../dataStewardshipQueue';
 // Reuses the data-stewardship drawer content classes (`sectionLabel`/`attributeRow`/`empty`) rather than
 // duplicating them — both drawers render the same "label above a row of key/value attributes"
@@ -41,9 +43,6 @@ const REQUEST_CHANGES_CASE_KINDS = new Set([
   'entity.change-case.bulk',
   'document.status'
 ]);
-
-const formatTimestamp = (value: string | null): string =>
-  value == null ? '—' : new Date(value).toLocaleString();
 
 /**
  * Drawer for a single governance case, opened from every row in Data Stewardship's "My work" queue
@@ -82,6 +81,9 @@ export const DataStewardshipCaseDrawer = ({
   onOpenDataset?: (datasetPublicId: string) => void;
 }) => {
   const { openEntityDrawer } = useEntityDrawer();
+  const dateTimeFormatPreference = useDateTimeFormatPreference();
+  const formatTimestamp = (value: string | null): string =>
+    value == null ? '—' : formatDateTime(value, '—', dateTimeFormatPreference);
   const governanceCase = useGovernanceCase(workspaceSlug, caseId);
   const dataset = useEntity(workspaceSlug, governanceCase.data?.subjectId ?? '');
   const myTasks = useGovernanceTasks(workspaceSlug, { state: 'open' });

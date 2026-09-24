@@ -106,6 +106,8 @@ const test = createApiTest({
         short_code: 'NA',
         color: '',
         description: '',
+        date_format: 'iso',
+        time_format: '24h',
         created_at: now,
         updated_at: now
       });

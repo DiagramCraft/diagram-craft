@@ -17,6 +17,7 @@ import { Chip } from '../../components/Chip';
 import { EntityNavigationLink } from '../../components/EntityNavigationLink';
 import { getRelationDisplayLabel } from '../../lib/entityRelations';
 import { useWorkspaceAuthorization } from '../../auth/WorkspaceAuthorizationContext';
+import { useDateTimeFormatPreference } from '../../hooks/useDateTimeFormatPreference';
 import {
   getArtifactStatusLabel,
   resolveApiSpecificationSelection,
@@ -139,6 +140,7 @@ const ApiMetadata = ({
   isRefreshing: boolean;
   onRefresh: () => void;
 }) => {
+  const dateTimeFormatPreference = useDateTimeFormatPreference();
   const declaredType = readMappedStringField(entity, capabilityBinding, 'api_type');
   const declaredVersion = readMappedStringField(entity, capabilityBinding, 'api_version');
   const statusLabel = selectionRequired
@@ -165,14 +167,23 @@ const ApiMetadata = ({
         <MetadataItem label="Protocol" value={protocolLabel(protocol)} />
         <MetadataItem label="Source kind" value={artifact?.kind ?? 'Not selected'} />
         <MetadataItem label="Media type" value={artifact?.mediaType ?? 'Not available'} />
-        <MetadataItem label="Last attempt" value={formatDate(artifact?.lastAttemptAt)} />
-        <MetadataItem label="Last success" value={formatDate(artifact?.lastSuccessAt)} />
+        <MetadataItem
+          label="Last attempt"
+          value={formatDate(artifact?.lastAttemptAt, dateTimeFormatPreference)}
+        />
+        <MetadataItem
+          label="Last success"
+          value={formatDate(artifact?.lastSuccessAt, dateTimeFormatPreference)}
+        />
         <MetadataItem label="Revision" value={revisionLabel} />
         <MetadataItem
           label="Selected version"
           value={revision ? (revision.isCurrent ? 'Current' : 'Historical') : 'None'}
         />
-        <MetadataItem label="Accepted at" value={formatDate(revision?.revision.createdAt)} />
+        <MetadataItem
+          label="Accepted at"
+          value={formatDate(revision?.revision.createdAt, dateTimeFormatPreference)}
+        />
       </div>
       {selectionRequired && (
         <div className={styles.sourceNotice}>

@@ -12,6 +12,7 @@ import {
   projectEntityMenuItems
 } from './entityBrowserViewShared';
 import { formatDate } from '../../../utils/dateFormat';
+import { useDateTimeFormatPreference } from '../../../hooks/useDateTimeFormatPreference';
 import {
   filterDisplayFieldIdsForContext,
   findEntityDisplayField,
@@ -50,6 +51,7 @@ export const TableView = ({
   config,
   displayFields
 }: TableViewProps) => {
+  const dateTimeFormatPreference = useDateTimeFormatPreference();
   const allSelected = !readOnly && rows.length > 0 && selectedIds?.size === rows.length;
   const someSelected =
     !readOnly && (selectedIds?.size ?? 0) > 0 && (selectedIds?.size ?? 0) < rows.length;
@@ -149,7 +151,9 @@ export const TableView = ({
                     findEntityDisplayField(column.id, entity, schemaMap, displayFields) ?? column;
                   return (
                     <Table.Cell key={column.id}>
-                      <span className="dim">{formatEntityDisplayValue(entity, field) ?? '—'}</span>
+                      <span className="dim">
+                        {formatEntityDisplayValue(entity, field, dateTimeFormatPreference) ?? '—'}
+                      </span>
                     </Table.Cell>
                   );
                 })}
@@ -159,7 +163,9 @@ export const TableView = ({
                     {formatDate(
                       Array.isArray(activeDateValue)
                         ? (activeDateValue[0] as string | undefined)
-                        : (activeDateValue as string | undefined)
+                        : (activeDateValue as string | undefined),
+                      '—',
+                      dateTimeFormatPreference
                     )}
                   </span>
                 </Table.Cell>

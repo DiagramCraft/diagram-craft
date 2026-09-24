@@ -108,6 +108,8 @@ const test = createApiTest().extend<{ mockAI: MockAIState }>({
         short_code: 'NA',
         color: '',
         description: '',
+        date_format: 'iso',
+        time_format: '24h',
         created_at: new Date('2026-06-07T10:00:00.000Z'),
         updated_at: new Date('2026-06-07T10:00:00.000Z')
       });

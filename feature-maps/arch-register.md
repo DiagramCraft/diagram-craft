@@ -141,8 +141,15 @@
 
         - @id:ar.workspace.configuration Administrators can configure workspace lifecycle states, assessment types,
           teams, roles, members,
-          supported currencies and the workspace's default currency, document types, templates, AI, analytics, audit,
-          and other workspace settings.
+          supported currencies and the workspace's default currency, a preferred date and time display format,
+          document types, templates, AI, analytics, audit, and other workspace settings.
+
+            - @id:ar.workspace.configuration.date-time-format Administrators can choose a workspace-wide date format
+              (ISO, month name, or one of two slash/dot day-month orderings) and time format (12-hour or 24-hour) from
+              the General settings screen, with a live preview of the current date/time. The preference applies
+              consistently across entity drawers, entity fields, tables, dashboards, assessments, and governance
+              views; date-only values always render on the same calendar day regardless of the viewer's timezone. New
+              workspaces default to ISO dates and 24-hour time.
 
             - @id:ar.workspace.configuration.conformance Administrators can manage centrally scheduled conformance
               checks in one workspace-level section, including reusable schema validation expressions, cross-cutting

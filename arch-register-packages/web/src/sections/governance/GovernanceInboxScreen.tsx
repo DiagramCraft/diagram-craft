@@ -36,6 +36,8 @@ import {
 } from '../../queries/entityChanges';
 import { useWithdrawEntityChangeApproval } from '../../hooks/useEntityChanges';
 import { caseKindLabel, humanizeCaseKind as humanize } from '../../utils/governanceCaseLabels';
+import { formatDate, formatDateTime } from '../../utils/dateFormat';
+import { useDateTimeFormatPreference } from '../../hooks/useDateTimeFormatPreference';
 
 const InitiationFieldSummary = ({
   fields
@@ -72,6 +74,7 @@ export const GovernanceInboxScreen = () => {
   const { workspaceSlug } = useParams({ strict: false });
   const navigate = useNavigate();
   const { openEntityDrawer } = useEntityDrawer();
+  const dateTimeFormatPreference = useDateTimeFormatPreference();
   const workspace = workspaceSlug ?? '';
   const [scope, setScope] = useState<'assigned' | 'submitted'>('assigned');
   const [state, setState] = useState<'open' | 'completed'>('open');
@@ -484,7 +487,10 @@ export const GovernanceInboxScreen = () => {
                       <span>·</span>
                       <span>{subjectLabel}</span>
                       <span>·</span>
-                      <span>Submitted {new Date(submission.case.createdAt).toLocaleString()}</span>
+                      <span>
+                        Submitted{' '}
+                        {formatDateTime(submission.case.createdAt, '—', dateTimeFormatPreference)}
+                      </span>
                     </div>
                     {isBulk && bulkMemberEntities.length > 0 && (
                       <div className={styles.taskMeta}>
@@ -690,7 +696,8 @@ export const GovernanceInboxScreen = () => {
                               : undefined
                           }
                         >
-                          <TbClock size={11} /> Due {new Date(task.case.dueAt).toLocaleDateString()}
+                          <TbClock size={11} /> Due{' '}
+                          {formatDate(task.case.dueAt, '—', dateTimeFormatPreference)}
                         </span>
                       </>
                     )}
@@ -706,7 +713,7 @@ export const GovernanceInboxScreen = () => {
                   {latestRevision && (
                     <div className={styles.taskProposalMeta}>
                       Proposed by {latestRevision.createdByName ?? 'Unknown user'} ·{' '}
-                      {new Date(latestRevision.createdAt).toLocaleString()}
+                      {formatDateTime(latestRevision.createdAt, '—', dateTimeFormatPreference)}
                     </div>
                   )}
                   {proposalNote && (

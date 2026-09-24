@@ -20,6 +20,8 @@ export const toApiWorkspace = (workspace: WorkspaceDbResult): Workspace => ({
   short_code: workspace.short_code,
   color: workspace.color,
   description: workspace.description,
+  date_format: workspace.date_format,
+  time_format: workspace.time_format,
   created_at: workspace.created_at.toISOString(),
   updated_at: workspace.updated_at.toISOString()
 });

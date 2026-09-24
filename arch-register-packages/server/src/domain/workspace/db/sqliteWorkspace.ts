@@ -73,13 +73,15 @@ export class SqliteWorkspaceDatabase extends SqliteDatabaseBase implements Works
 
   async updateWorkspace(id: string, input: WorkspaceDbUpdate) {
     this.run(
-      'UPDATE workspace SET name = ?, url_slug = ?, short_code = ?, color = ?, description = ?, updated_at = ? WHERE id = ?',
+      'UPDATE workspace SET name = ?, url_slug = ?, short_code = ?, color = ?, description = ?, date_format = ?, time_format = ?, updated_at = ? WHERE id = ?',
       [
         input.name,
         input.url_slug,
         input.short_code,
         input.color,
         input.description,
+        input.date_format,
+        input.time_format,
         input.updated_at.toISOString(),
         id
       ]

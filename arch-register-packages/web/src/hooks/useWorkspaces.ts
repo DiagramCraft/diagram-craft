@@ -1,4 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import type {
+  WorkspaceDateFormat,
+  WorkspaceTimeFormat
+} from '@arch-register/api-types/workspaceContract';
 import { orpcClient } from '../lib/orpcClient';
 import {
   invalidateWorkspaceAfterUpdate,
@@ -32,6 +36,8 @@ export const useUpdateWorkspace = () => {
         short_code?: string;
         color?: string;
         description?: string;
+        date_format?: WorkspaceDateFormat;
+        time_format?: WorkspaceTimeFormat;
       };
     }) => orpcClient.workspaces.update({ params: { workspace: workspaceId }, body: data }),
     onSuccess: async (updatedWorkspace, variables) => {

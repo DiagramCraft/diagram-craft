@@ -14,7 +14,11 @@ import {
   type TemplateDependencyMapping
 } from '../catalog/schemaTemplates';
 import type { WorkspaceDbResult } from './db/workspaceDatabase';
-import { Workspace } from '@arch-register/api-types/workspaceContract';
+import {
+  Workspace,
+  WorkspaceDateFormat,
+  WorkspaceTimeFormat
+} from '@arch-register/api-types/workspaceContract';
 import { parseGovernanceWorkflowConfig } from '../governance/governanceWorkflowConfig';
 import { formatPublicId, validatePublicIdPrefix } from '../../utils/publicIds';
 import { ensureNotificationDeliverySchedule } from '../notification/emailDelivery';
@@ -95,6 +99,8 @@ const buildCreateInput = (
     color?: string;
     slug?: string;
     badge?: string;
+    date_format?: WorkspaceDateFormat;
+    time_format?: WorkspaceTimeFormat;
   },
   createdAt: Date
 ) => {
@@ -111,6 +117,8 @@ const buildCreateInput = (
     short_code: validatePublicIdPrefix(input.badge ?? shortCodeFrom(input.name), 'short_code')!,
     color: input.color ?? '',
     description: input.description ?? '',
+    date_format: input.date_format ?? 'iso',
+    time_format: input.time_format ?? '24h',
     created_at: createdAt,
     updated_at: createdAt
   };
@@ -123,6 +131,8 @@ const buildUpdateInput = (
     url_slug?: string;
     short_code?: string;
     color?: string;
+    date_format?: WorkspaceDateFormat;
+    time_format?: WorkspaceTimeFormat;
   },
   current: WorkspaceDbResult,
   updatedAt: Date
@@ -136,6 +146,8 @@ const buildUpdateInput = (
       : current.short_code,
   color: input.color ?? current.color,
   description: input.description ?? current.description,
+  date_format: input.date_format ?? current.date_format,
+  time_format: input.time_format ?? current.time_format,
   updated_at: updatedAt
 });
 
@@ -423,6 +435,8 @@ export const createWorkspace = async (
     name: string;
     description?: string;
     color?: string;
+    date_format?: WorkspaceDateFormat;
+    time_format?: WorkspaceTimeFormat;
     slug?: string;
     badge?: string;
     template?: string;
@@ -1063,6 +1077,8 @@ export const updateWorkspace = async (
     url_slug?: string;
     short_code?: string;
     color?: string;
+    date_format?: WorkspaceDateFormat;
+    time_format?: WorkspaceTimeFormat;
   },
   event: AuthenticatedEvent
 ): Promise<Workspace> => {

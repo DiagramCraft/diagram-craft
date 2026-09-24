@@ -12,6 +12,8 @@ import { SearchInput } from '../../../components/SearchInput';
 import { EmptyState } from '../../../components/EmptyState';
 import { LoadingState } from '../../../components/LoadingState';
 import { Chip } from '../../../components/Chip';
+import { formatDateTime, type DateTimeFormatPreference } from '../../../utils/dateFormat';
+import { useDateTimeFormatPreference } from '../../../hooks/useDateTimeFormatPreference';
 import {
   getArtifactStatusLabel,
   selectApiSpecificationArtifacts,
@@ -56,10 +58,9 @@ export const statusTone = (status: ArtifactStatus) => {
   return styles.statusNeutral;
 };
 
-export const formatDate = (value: string | null | undefined) => {
+export const formatDate = (value: string | null | undefined, pref?: DateTimeFormatPreference) => {
   if (!value) return 'Not available';
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
+  return formatDateTime(value, value, pref);
 };
 
 export const formatJson = (value: unknown) => {
@@ -175,12 +176,12 @@ const sourceLabel = (source: ApiSpecificationSourceState) => {
   return `${source.artifact.kind} source · ${source.artifact.id.slice(0, 8)}`;
 };
 
-const revisionLabel = (revision: ApiSpecificationRevision) =>
+const revisionLabel = (revision: ApiSpecificationRevision, pref: DateTimeFormatPreference) =>
   [
     revision.isCurrent ? 'Current' : 'Historical',
     revision.specificationVersion ?? 'version unavailable',
     revision.revision.sourceRevision ?? revision.revision.id,
-    formatDate(revision.revision.createdAt)
+    formatDate(revision.revision.createdAt, pref)
   ].join(' · ');
 
 export const ApiSourceVersionPicker = ({
@@ -195,75 +196,80 @@ export const ApiSourceVersionPicker = ({
   selectedRevisionId?: string;
   revisionsLoading: boolean;
   onSelect: (artifactId: string, revisionId?: string) => void;
-}) => (
-  <section className={styles.sourcePicker} aria-label="API specification sources and versions">
-    <div className={styles.sourcePickerHeader}>
-      <div>
-        <div className={sharedStyles.sectionLabel}>Sources and versions</div>
-        <div className={styles.sourcePickerHint}>
-          Each source keeps its own revision history. Current versions are marked explicitly.
+}) => {
+  const dateTimeFormatPreference = useDateTimeFormatPreference();
+  return (
+    <section className={styles.sourcePicker} aria-label="API specification sources and versions">
+      <div className={styles.sourcePickerHeader}>
+        <div>
+          <div className={sharedStyles.sectionLabel}>Sources and versions</div>
+          <div className={styles.sourcePickerHint}>
+            Each source keeps its own revision history. Current versions are marked explicitly.
+          </div>
         </div>
       </div>
-    </div>
-    <div className={styles.sourceList}>
-      {sources.map(source => {
-        const isSelected = source.artifact.id === selectedArtifactId;
-        const currentRevision = source.revisions.find(revision => revision.isCurrent);
-        return (
-          <div
-            key={source.artifact.id}
-            className={`${styles.sourceCard} ${isSelected ? styles.sourceCardSelected : ''}`}
-          >
-            <div className={styles.sourceCardHeader}>
-              <button
-                type="button"
-                className={styles.sourceButton}
-                aria-pressed={isSelected}
-                onClick={() => onSelect(source.artifact.id, currentRevision?.revision.id)}
-              >
-                <span className={styles.sourceName}>{sourceLabel(source)}</span>
-                <span className={`${styles.status} ${statusTone(source.artifact.status)}`}>
-                  {getArtifactStatusLabel(source.artifact.status)}
-                </span>
-              </button>
-              {source.artifact.location && (
-                <span className={styles.sourceKind}>{source.artifact.kind}</span>
-              )}
+      <div className={styles.sourceList}>
+        {sources.map(source => {
+          const isSelected = source.artifact.id === selectedArtifactId;
+          const currentRevision = source.revisions.find(revision => revision.isCurrent);
+          return (
+            <div
+              key={source.artifact.id}
+              className={`${styles.sourceCard} ${isSelected ? styles.sourceCardSelected : ''}`}
+            >
+              <div className={styles.sourceCardHeader}>
+                <button
+                  type="button"
+                  className={styles.sourceButton}
+                  aria-pressed={isSelected}
+                  onClick={() => onSelect(source.artifact.id, currentRevision?.revision.id)}
+                >
+                  <span className={styles.sourceName}>{sourceLabel(source)}</span>
+                  <span className={`${styles.status} ${statusTone(source.artifact.status)}`}>
+                    {getArtifactStatusLabel(source.artifact.status)}
+                  </span>
+                </button>
+                {source.artifact.location && (
+                  <span className={styles.sourceKind}>{source.artifact.kind}</span>
+                )}
+              </div>
+              <div className={styles.versionList}>
+                {revisionsLoading && source.revisions.length === 0 ? (
+                  <span className={styles.sourceEmpty}>Loading versions…</span>
+                ) : source.revisions.length === 0 ? (
+                  <span className={styles.sourceEmpty}>No accepted revisions</span>
+                ) : (
+                  source.revisions.map(revision => {
+                    const isVersionSelected =
+                      isSelected && revision.revision.id === selectedRevisionId;
+                    return (
+                      <button
+                        type="button"
+                        key={revision.revision.id}
+                        className={`${styles.versionButton} ${
+                          isVersionSelected ? styles.versionButtonSelected : ''
+                        }`}
+                        aria-pressed={isVersionSelected}
+                        onClick={() => onSelect(source.artifact.id, revision.revision.id)}
+                      >
+                        <span className={styles.versionLabel}>
+                          {revisionLabel(revision, dateTimeFormatPreference)}
+                        </span>
+                        <span className={`${styles.versionStatus} ${statusTone(revision.status)}`}>
+                          {getArtifactStatusLabel(revision.status)}
+                        </span>
+                      </button>
+                    );
+                  })
+                )}
+              </div>
             </div>
-            <div className={styles.versionList}>
-              {revisionsLoading && source.revisions.length === 0 ? (
-                <span className={styles.sourceEmpty}>Loading versions…</span>
-              ) : source.revisions.length === 0 ? (
-                <span className={styles.sourceEmpty}>No accepted revisions</span>
-              ) : (
-                source.revisions.map(revision => {
-                  const isVersionSelected =
-                    isSelected && revision.revision.id === selectedRevisionId;
-                  return (
-                    <button
-                      type="button"
-                      key={revision.revision.id}
-                      className={`${styles.versionButton} ${
-                        isVersionSelected ? styles.versionButtonSelected : ''
-                      }`}
-                      aria-pressed={isVersionSelected}
-                      onClick={() => onSelect(source.artifact.id, revision.revision.id)}
-                    >
-                      <span className={styles.versionLabel}>{revisionLabel(revision)}</span>
-                      <span className={`${styles.versionStatus} ${statusTone(revision.status)}`}>
-                        {getArtifactStatusLabel(revision.status)}
-                      </span>
-                    </button>
-                  );
-                })
-              )}
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  </section>
-);
+          );
+        })}
+      </div>
+    </section>
+  );
+};
 
 export const RevisionDiagnostics = ({ revision }: { revision: ApiSpecificationRevision }) => {
   if (revision.diagnostics.length === 0) return null;

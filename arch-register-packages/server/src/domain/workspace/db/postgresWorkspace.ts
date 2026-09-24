@@ -77,6 +77,8 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
             short_code = ${input.short_code},
             color = ${input.color},
             description = ${input.description},
+            date_format = ${input.date_format},
+            time_format = ${input.time_format},
             updated_at = ${input.updated_at}
         WHERE id = ${id}
         RETURNING *

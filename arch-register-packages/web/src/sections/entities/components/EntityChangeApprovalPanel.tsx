@@ -13,6 +13,8 @@ import {
 } from '../../../hooks/useGovernance';
 import { invalidateEntityChangeQueries } from '../../../queries/entityChanges';
 import { changeApprovalDiffRows, formatChangeApprovalValue } from './entityChangeApprovalHelpers';
+import { formatDateTime } from '../../../utils/dateFormat';
+import { useDateTimeFormatPreference } from '../../../hooks/useDateTimeFormatPreference';
 import styles from '../EntityDetailScreen.module.css';
 import type { EntityChangeApprovalRevision } from '@arch-register/api-types/entityChangeContract';
 
@@ -40,6 +42,7 @@ export const EntityChangeApprovalPanel = ({
 }: Props) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const dateTimeFormatPreference = useDateTimeFormatPreference();
   const bypass = useBypassEntityApproval(workspaceId, entityId);
   const [bypassDialogOpen, setBypassDialogOpen] = useState(false);
   const [bypassReason, setBypassReason] = useState('');
@@ -118,7 +121,7 @@ export const EntityChangeApprovalPanel = ({
             </h2>
             <div className={styles.proposalMeta}>
               Proposed by {revision.createdByName ?? 'Unknown user'} ·{' '}
-              {new Date(revision.createdAt).toLocaleString()}
+              {formatDateTime(revision.createdAt, '—', dateTimeFormatPreference)}
             </div>
           </div>
           <div className={styles.proposalActions}>

@@ -1,5 +1,6 @@
 import { usePrincipalLabel } from '../../../hooks/usePrincipalLabel';
 import { formatDate } from '../../../utils/dateFormat';
+import { useDateTimeFormatPreference } from '../../../hooks/useDateTimeFormatPreference';
 import { relationIds } from '../../../lib/entityEditState';
 import { useEntitiesByIds } from '../../../hooks/useEntities';
 import { EntityNavigationLink } from '../../../components/EntityNavigationLink';
@@ -108,7 +109,7 @@ export const DrawerPropertyRow = ({
   typedRelationsIncoming,
   relationSchemas,
   workspaceSlug,
-  formatDateValue = formatDate,
+  formatDateValue,
   onOpenRelatedEntity,
   externalMeta
 }: {
@@ -126,6 +127,9 @@ export const DrawerPropertyRow = ({
   onOpenRelatedEntity?: (fieldId: string, publicId: string) => boolean;
   externalMeta?: ExternalMetadataResult;
 }) => {
+  const dateTimeFormatPreference = useDateTimeFormatPreference();
+  const resolvedFormatDateValue =
+    formatDateValue ?? ((v: unknown) => formatDate(v, '—', dateTimeFormatPreference));
   const resolvePrincipalLabel = usePrincipalLabel();
   const isExternal = field.external_kind !== undefined;
   const isMiniPanelRelation = presentation === 'mini-panel' && field.type === 'typedRelation';
@@ -137,7 +141,7 @@ export const DrawerPropertyRow = ({
     typedRelationsIncoming,
     relationSchemas,
     workspaceSlug,
-    formatDateValue,
+    formatDateValue: resolvedFormatDateValue,
     resolvePrincipalLabel,
     asChip: false,
     renderReferenceLink: ({ id, ref, fieldId }) => (

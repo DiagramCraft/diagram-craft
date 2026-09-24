@@ -24,6 +24,8 @@ describe('toApiWorkspace', () => {
       short_code: 'ACM',
       color: '#fff',
       description: 'desc',
+      date_format: 'iso',
+      time_format: '24h',
       created_at: now,
       updated_at: now
     };
@@ -31,6 +33,8 @@ describe('toApiWorkspace', () => {
     expect(result.id).toBe('ws-1');
     expect(result.url_slug).toBe('acme');
     expect(result.created_at).toBe(nowIso);
+    expect(result.date_format).toBe('iso');
+    expect(result.time_format).toBe('24h');
   });
 });
 

@@ -15,6 +15,8 @@ import { computeApiPairs, computeApiPairCoverage } from '../apiPairCoverage';
 import { RESTRICTED_CLASSIFICATIONS } from '../dataFlowRelationDisplay';
 import { useApiIntegrationCatalogQueue } from '../apiIntegrationCatalogQueue';
 import { IC_APIS_ID, IC_INTEGRATIONS_ID, IC_RAIL_PATHS } from '../apiIntegrationCatalogSections';
+import { formatDate } from '../../../utils/dateFormat';
+import { useDateTimeFormatPreference } from '../../../hooks/useDateTimeFormatPreference';
 import placeholderStyles from './ApiIntegrationCatalogPlaceholderScreen.module.css';
 import styles from './ApiIntegrationCatalogOverviewScreen.module.css';
 
@@ -50,6 +52,7 @@ const AT_RISK_LIMIT = 8;
 export const ApiIntegrationCatalogOverviewScreen = () => {
   const { workspaceSlug } = useParams({ strict: false }) as { workspaceSlug: string };
   const navigate = useNavigate();
+  const dateTimeFormatPreference = useDateTimeFormatPreference();
 
   const configurations = useQuery(workspaceCapabilityConfigurationsQuery(workspaceSlug));
   const apiConfig = resolveApiIntegrationCatalogConfig(configurations.data);
@@ -244,7 +247,7 @@ export const ApiIntegrationCatalogOverviewScreen = () => {
                   </span>
                   {item.case.dueAt && (
                     <span className="dim mono" style={{ fontSize: 10.5 }}>
-                      due {new Date(item.case.dueAt).toLocaleDateString()}
+                      due {formatDate(item.case.dueAt, '—', dateTimeFormatPreference)}
                     </span>
                   )}
                 </button>

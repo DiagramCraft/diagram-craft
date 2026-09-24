@@ -278,6 +278,8 @@ runContractSuiteAgainstBothDrivers('AuthDatabase', getDb => {
         short_code: 'TOK',
         color: '',
         description: '',
+        date_format: 'iso',
+        time_format: '24h',
         created_at: now,
         updated_at: now
       });

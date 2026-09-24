@@ -11,7 +11,7 @@ import {
   resolveAssessmentValue
 } from '@arch-register/api-types/assessmentFilter';
 import type { BrowserEntityRecord } from './entityBrowserState';
-import { formatDate } from '../../../utils/dateFormat';
+import { formatDate, type DateTimeFormatPreference } from '../../../utils/dateFormat';
 import { formatCurrencyValue } from '../../../utils/currencyFormat';
 
 export const DISPLAY_FIELD_VIEWS = new Set<BrowserView>([
@@ -206,7 +206,8 @@ export const findEntityDisplayField = (
 
 export const formatEntityDisplayValue = (
   entity: EntityRecord,
-  field: EntityDisplayField
+  field: EntityDisplayField,
+  dateTimeFormatPreference?: DateTimeFormatPreference
 ): string | null => {
   if (field.assessmentField) {
     const value = resolveAssessmentValue(entity as BrowserEntityRecord, field.id);
@@ -254,7 +255,7 @@ export const formatEntityDisplayValue = (
       return value.map(item => (item ? 'Yes' : 'No')).join(', ');
     }
     if (field.schemaField?.type === 'date') {
-      return value.map(item => formatDate(item, String(item))).join(', ');
+      return value.map(item => formatDate(item, String(item), dateTimeFormatPreference)).join(', ');
     }
     if (field.schemaField?.type === 'currency') {
       return value.map(item => formatCurrencyValue(item)).join(', ');
@@ -277,7 +278,8 @@ export const formatEntityDisplayValue = (
         : undefined) ?? String(value)
     );
   }
-  if (field.schemaField?.type === 'date') return formatDate(value, String(value));
+  if (field.schemaField?.type === 'date')
+    return formatDate(value, String(value), dateTimeFormatPreference);
   if (
     field.schemaField?.type === 'currency' ||
     (field.schemaField?.type === 'derived' && field.schemaField.resultType === 'currency')

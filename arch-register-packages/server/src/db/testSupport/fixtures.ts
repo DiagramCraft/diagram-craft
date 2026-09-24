@@ -29,6 +29,8 @@ export const createFixtureWorkspace = async (
     short_code: 'WS',
     color: '#000000',
     description: '',
+    date_format: 'iso',
+    time_format: '24h',
     ...overrides,
     id,
     created_at: createdAt,

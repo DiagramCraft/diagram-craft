@@ -53407,6 +53407,25 @@
                         "type": "string",
                         "description": "Workspace description"
                       },
+                      "date_format": {
+                        "enum": [
+                          "iso",
+                          "month-name",
+                          "md-slash",
+                          "dmy-slash",
+                          "dmy-dot"
+                        ],
+                        "type": "string",
+                        "description": "Preferred date display format"
+                      },
+                      "time_format": {
+                        "enum": [
+                          "12h",
+                          "24h"
+                        ],
+                        "type": "string",
+                        "description": "Preferred time display format"
+                      },
                       "created_at": {
                         "type": "string",
                         "description": "ISO 8601 creation timestamp"
@@ -53423,6 +53442,8 @@
                       "short_code",
                       "color",
                       "description",
+                      "date_format",
+                      "time_format",
                       "created_at",
                       "updated_at"
                     ]
@@ -53459,6 +53480,25 @@
                   "color": {
                     "type": "string",
                     "description": "Workspace color (hex format)"
+                  },
+                  "date_format": {
+                    "enum": [
+                      "iso",
+                      "month-name",
+                      "md-slash",
+                      "dmy-slash",
+                      "dmy-dot"
+                    ],
+                    "type": "string",
+                    "description": "Preferred date display format"
+                  },
+                  "time_format": {
+                    "enum": [
+                      "12h",
+                      "24h"
+                    ],
+                    "type": "string",
+                    "description": "Preferred time display format"
                   },
                   "slug": {
                     "type": "string",
@@ -53568,6 +53608,25 @@
                       "type": "string",
                       "description": "Workspace description"
                     },
+                    "date_format": {
+                      "enum": [
+                        "iso",
+                        "month-name",
+                        "md-slash",
+                        "dmy-slash",
+                        "dmy-dot"
+                      ],
+                      "type": "string",
+                      "description": "Preferred date display format"
+                    },
+                    "time_format": {
+                      "enum": [
+                        "12h",
+                        "24h"
+                      ],
+                      "type": "string",
+                      "description": "Preferred time display format"
+                    },
                     "created_at": {
                       "type": "string",
                       "description": "ISO 8601 creation timestamp"
@@ -53584,6 +53643,8 @@
                     "short_code",
                     "color",
                     "description",
+                    "date_format",
+                    "time_format",
                     "created_at",
                     "updated_at"
                   ]
@@ -53639,6 +53700,25 @@
                   "color": {
                     "type": "string",
                     "description": "Workspace color (hex format)"
+                  },
+                  "date_format": {
+                    "enum": [
+                      "iso",
+                      "month-name",
+                      "md-slash",
+                      "dmy-slash",
+                      "dmy-dot"
+                    ],
+                    "type": "string",
+                    "description": "Preferred date display format"
+                  },
+                  "time_format": {
+                    "enum": [
+                      "12h",
+                      "24h"
+                    ],
+                    "type": "string",
+                    "description": "Preferred time display format"
                   }
                 },
                 "required": [
@@ -53680,6 +53760,25 @@
                       "type": "string",
                       "description": "Workspace description"
                     },
+                    "date_format": {
+                      "enum": [
+                        "iso",
+                        "month-name",
+                        "md-slash",
+                        "dmy-slash",
+                        "dmy-dot"
+                      ],
+                      "type": "string",
+                      "description": "Preferred date display format"
+                    },
+                    "time_format": {
+                      "enum": [
+                        "12h",
+                        "24h"
+                      ],
+                      "type": "string",
+                      "description": "Preferred time display format"
+                    },
                     "created_at": {
                       "type": "string",
                       "description": "ISO 8601 creation timestamp"
@@ -53696,6 +53795,8 @@
                     "short_code",
                     "color",
                     "description",
+                    "date_format",
+                    "time_format",
                     "created_at",
                     "updated_at"
                   ]
