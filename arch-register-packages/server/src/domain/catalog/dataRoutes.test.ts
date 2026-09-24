@@ -619,6 +619,61 @@ describe('data route helpers', () => {
     expect(allowed.dependents.map(dependent => dependent.entityId)).toEqual(['component-1']);
   });
 
+  it('returns owner metadata and redacts restricted criticality from dependent rows', () => {
+    const schemaWithCriticality: SchemaDbResult = {
+      ...componentSchema,
+      fields: [
+        {
+          id: 'points_to',
+          name: 'Points to',
+          type: 'reference',
+          predicate: 'points to',
+          schemaId: 'schema-component',
+          minCount: 0,
+          maxCount: -1
+        },
+        {
+          id: 'criticality',
+          name: 'Criticality',
+          type: 'number',
+          min: 1,
+          max: 5,
+          groupId: 'restricted'
+        }
+      ]
+    };
+    const entityWithCriticality = {
+      ...component,
+      data: { points_to: [dependency.id], criticality: 5 }
+    };
+    const entities = [entityWithCriticality, dependency];
+    const schemas = [schemaWithCriticality];
+
+    const restricted = buildEntityDependents(
+      dependency.id,
+      entities,
+      schemas,
+      { transitive: false },
+      restrictedAuthCtx
+    );
+    const allowed = buildEntityDependents(
+      dependency.id,
+      entities,
+      schemas,
+      { transitive: false },
+      allowedAuthCtx
+    );
+
+    expect(restricted.dependents[0]).toMatchObject({
+      ownerId: 'Design Systems',
+      criticality: null
+    });
+    expect(allowed.dependents[0]).toMatchObject({
+      ownerId: 'Design Systems',
+      criticality: 5
+    });
+  });
+
   it('builds dependent results for multiple targets from one shared graph', () => {
     const batch = buildBatchEntityDependents(
       [dependency.id, system.id],

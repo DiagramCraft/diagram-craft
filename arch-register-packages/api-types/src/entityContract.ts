@@ -504,7 +504,12 @@ const viaNodeSchema = z.object({
 
 const entityDependentSchema = entityRelationSchema.extend({
   schemaName: z.string().describe('Schema name of the dependent entity'),
+  ownerId: z.string().nullable().describe('Owner team identifier of the dependent entity'),
   lifecycleState: z.string().nullable().describe('Lifecycle state of the dependent entity'),
+  criticality: z
+    .number()
+    .nullable()
+    .describe('Visible numeric criticality value, or null when absent or not visible'),
   depth: z.number().int().min(1).describe('Dependency depth (1 = direct)'),
   viaPath: z
     .array(viaNodeSchema)

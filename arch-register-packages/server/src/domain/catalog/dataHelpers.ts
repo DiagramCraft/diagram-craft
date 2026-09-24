@@ -635,7 +635,9 @@ export const buildEntityRelations = (
 
 export type DependentRecord = EntityRelationRecord & {
   schemaName: string;
+  ownerId: string | null;
   lifecycleState: string | null;
+  criticality: number | null;
   depth: number;
   viaPath: Array<{ entityId: string; entityName: string }>;
 };
@@ -749,7 +751,8 @@ const buildEntityDependentsFromIndex = (
   entities: Entity[],
   schemas: InternalEntitySchema[],
   options: { transitive: boolean; maxDepth?: number },
-  incomingIndex: IncomingIndex
+  incomingIndex: IncomingIndex,
+  authCtx: AuthorizationContext | null
 ): DependentsResponse => {
   const maxDepth = options.maxDepth ?? 5;
   const schemaMap = new Map(schemas.map(s => [s.id, s]));
@@ -797,7 +800,15 @@ const buildEntityDependentsFromIndex = (
         entityName: entity.name ?? entity.slug ?? entity.id,
         entitySchemaId: entity.schema_id,
         schemaName: schema?.name ?? entity.schema_id,
+        ownerId: entity.owner ?? null,
         lifecycleState: entity.lifecycle ?? null,
+        criticality:
+          schema?.fields.some(field => field.id === 'criticality' && field.type === 'number') &&
+          !isFieldViewRestricted(authCtx, schema, 'criticality') &&
+          typeof entity.data?.criticality === 'number' &&
+          Number.isFinite(entity.data.criticality)
+            ? entity.data.criticality
+            : null,
         fieldName,
         fieldPredicate,
         kind,
@@ -844,7 +855,8 @@ export const buildEntityDependents = (
     entities,
     schemas,
     options,
-    buildIncomingIndex(entities, schemas, authCtx, typedRelations, relationSchemas)
+    buildIncomingIndex(entities, schemas, authCtx, typedRelations, relationSchemas),
+    authCtx
   );
 
 /**
@@ -872,7 +884,7 @@ export const buildBatchEntityDependents = (
   for (const entityId of new Set(entityIds)) {
     result.set(
       entityId,
-      buildEntityDependentsFromIndex(entityId, entities, schemas, options, incomingIndex)
+      buildEntityDependentsFromIndex(entityId, entities, schemas, options, incomingIndex, authCtx)
     );
   }
   return result;
