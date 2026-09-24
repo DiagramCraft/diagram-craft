@@ -677,7 +677,8 @@ export const buildScopeCte = (state: EntityQuerySqlRenderState): string => {
         ? '1=0'
         : `e.id IN (${state.collectionEntityIds.map(id => addParam(state, id)).join(', ')})`;
   const scopedWhere = `${scopeClause} AND ${visibleClause || '1=1'} AND ${collectionClause || '1=1'} AND ${permissionScope.predicate}`;
-  const entitySource = state.snapshotEntities == null ? 'catalog_record' : 'candidate_entity_source';
+  const entitySource =
+    state.snapshotEntities == null ? 'catalog_record' : 'candidate_entity_source';
   return `${snapshotSource ? `${snapshotSource},\n    ` : ''}${entitySourceCte ? `${entitySourceCte},\n    ` : ''}${permissionScope.cte ? `${permissionScope.cte},\n    ` : ''}${conformanceStatusCte},\n    ${SCOPE_CTE} AS (\n      SELECT e.*, ${assessmentColumn},\n             cs.conformance_status,\n             cs.conformance_evaluated_at,\n             cs.conformance_stale\n      FROM ${entitySource} e\n      LEFT JOIN conformance_entity_status cs ON cs.entity_id = e.id\n      LEFT JOIN assessment_response ar\n        ON ar.entity_id = e.id\n       AND ar.assessment_id = ${assessmentParam ?? 'NULL'}\n       AND ar.workspace = e.workspace\n      WHERE e.kind = 'entity'\n        AND e.workspace = ${workspaceParam}\n        AND e.deleted_at IS NULL\n        AND ${scopedWhere}\n    )`;
 };
 

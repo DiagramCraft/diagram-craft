@@ -158,9 +158,15 @@ runContractSuiteAgainstBothDrivers('entityTraversalGraphDiff', getDb => {
       { data: { first: [afterBranch.id], secretLink: [hiddenTarget.id] } },
       projectId
     );
-    await createPlannedChangeCase(db, workspace, root, {
-      data: { first: [decoyBranch.id] }
-    }, projectId);
+    await createPlannedChangeCase(
+      db,
+      workspace,
+      root,
+      {
+        data: { first: [decoyBranch.id] }
+      },
+      projectId
+    );
 
     const visibleEntities = [root, beforeBranch, afterBranch, target, decoyBranch];
     const grants = await Promise.all(
@@ -278,9 +284,15 @@ runContractSuiteAgainstBothDrivers('entityTraversalGraphDiff', getDb => {
     });
     const root = await createFixtureEntity(db, workspace, schemaId, { data: { parent: [] } });
     const child = await createFixtureEntity(db, workspace, schemaId, { data: { parent: [] } });
-    const candidate = await createPlannedChangeCase(db, workspace, child, {
-      data: { parent: [root.id] }
-    }, projectId);
+    const candidate = await createPlannedChangeCase(
+      db,
+      workspace,
+      child,
+      {
+        data: { parent: [root.id] }
+      },
+      projectId
+    );
 
     await expect(
       diffSubjectTraversal(db, workspace, null, {
@@ -334,9 +346,15 @@ runContractSuiteAgainstBothDrivers('entityTraversalGraphDiff', getDb => {
       state: relationToBaseState(relation),
       applied_case_revision_id: null
     });
-    const candidate = await createPlannedChangeCase(db, workspace, relation, {
-      data: { sourceLink: [source.id], carried: [target.id] }
-    }, projectId);
+    const candidate = await createPlannedChangeCase(
+      db,
+      workspace,
+      relation,
+      {
+        data: { sourceLink: [source.id], carried: [target.id] }
+      },
+      projectId
+    );
 
     const result = await diffSubjectTraversal(db, workspace, null, {
       subject: { kind: 'entity', entityId: source.id },
