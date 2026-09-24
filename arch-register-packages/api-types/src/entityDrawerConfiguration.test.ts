@@ -428,7 +428,6 @@ describe('entity drawer configuration', () => {
         queryText: '<-"objective-supports-capability".<-"Initiative".objectives',
         label: 'Linked initiatives'
       },
-      { kind: 'slot', slotId: 'entity.blast-radius' },
       { kind: 'rollup', fieldId: 'score', aggregation: 'sum', format: 'number' },
       { kind: 'rollup-leaf-count' }
     ]);
@@ -572,15 +571,8 @@ describe('entity drawer configuration', () => {
       })
     ]);
     expect(result.diagnostics).toEqual([]);
-    // The blast-radius slot is unconditional, so every schema now gets an application-content
-    // section containing at least it, even without any bound capability.
-    expect(buildDefaultEntityDrawerConfiguration([schema]).profiles.service?.sections).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          id: 'application-content',
-          items: [{ kind: 'slot', slotId: 'entity.blast-radius' }]
-        })
-      ])
+    expect(buildDefaultEntityDrawerConfiguration([schema]).profiles.service?.sections).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: 'application-content' })])
     );
   });
 

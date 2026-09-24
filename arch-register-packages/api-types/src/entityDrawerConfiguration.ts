@@ -352,17 +352,6 @@ export const ENTITY_DRAWER_SLOT_DEFINITIONS: EntityDrawerSlotDefinition[] = [
     defaultOptions: {},
     optionFields: [],
     optionsSchema: emptyOptionsSchema
-  },
-  {
-    id: 'entity.blast-radius',
-    label: 'Blast radius',
-    description:
-      'Entities reachable from the current entity through reference, containment, and typed ' +
-      'relations, with filters by depth, owner, and schema.',
-    application: 'Data Stewardship',
-    defaultOptions: {},
-    optionFields: [],
-    optionsSchema: emptyOptionsSchema
   }
 ];
 
@@ -1621,7 +1610,6 @@ export const buildDefaultEntityDrawerConfiguration = (
           ? [{ kind: 'slot' as const, slotId: 'entity.assessments' }]
           : []),
         ...(glossaryFieldIds ? [{ kind: 'slot' as const, slotId: 'entity.usage' }] : []),
-        { kind: 'slot' as const, slotId: 'entity.blast-radius' },
         ...getStrategyRollupItems(schema, capabilityConfigurations)
       ];
       const apiSpecificationFieldIdsValue = apiSpecificationFieldIds(

@@ -7,7 +7,6 @@ import { TypeBadge } from '../../../components/TypeBadge';
 import { StatusChip } from '../../../components/StatusChip';
 import { Chip } from '../../../components/Chip';
 import { FilterDropdown } from '../../../components/FilterDropdown';
-import { SchemaMultiSelect } from '../../../components/SchemaMultiSelect';
 import { EntityNavigationLink } from '../../../components/EntityNavigationLink';
 import { EmptyState } from '../../../components/EmptyState';
 import { LoadingState } from '../../../components/LoadingState';
@@ -35,8 +34,6 @@ const DEPTH_OPTIONS = [
 
 export const BlastRadiusPanel = ({ workspaceId, subject, schemas, lifecycleStates }: Props) => {
   const [depth, setDepth] = useState(DEFAULT_BLAST_RADIUS_DEPTH);
-  const [schemaFilter, setSchemaFilter] = useState<string[]>([]);
-  const [viaSchemaFilter, setViaSchemaFilter] = useState<string[]>([]);
   const [ownerFilter, setOwnerFilter] = useState('all');
 
   const { data: teams } = useTeams(workspaceId);
@@ -48,11 +45,14 @@ export const BlastRadiusPanel = ({ workspaceId, subject, schemas, lifecycleState
     [teams]
   );
 
+  // Entity-schema and relationship-type filtering are still supported end-to-end (useBlastRadius,
+  // the aggregate endpoint, and the traversal engine) - just not exposed as controls here, to keep
+  // this view simple. Pass schemaIds/viaSchemaIds again if that's wanted back.
   const { status, entities, totalCount, hopLookup } = useBlastRadius(workspaceId, subject, {
     maxDepth: depth,
     ownerId: ownerFilter === 'all' ? null : ownerFilter,
-    schemaIds: schemaFilter.length > 0 ? schemaFilter : null,
-    viaSchemaIds: viaSchemaFilter.length > 0 ? viaSchemaFilter : null
+    schemaIds: null,
+    viaSchemaIds: null
   });
 
   return (
@@ -71,24 +71,6 @@ export const BlastRadiusPanel = ({ workspaceId, subject, schemas, lifecycleState
           options={ownerOptions}
         />
       </div>
-      <div className={styles.multiFilters}>
-        <SchemaMultiSelect
-          label="Entity schema"
-          hint="Only show results of these types."
-          schemas={schemas}
-          selectedIds={schemaFilter}
-          onChange={setSchemaFilter}
-        />
-        {depth > 1 && (
-          <SchemaMultiSelect
-            label="Relationship type"
-            hint="Only show results reached through these entity types."
-            schemas={schemas}
-            selectedIds={viaSchemaFilter}
-            onChange={setViaSchemaFilter}
-          />
-        )}
-      </div>
 
       {status === 'loading' ? (
         <LoadingState text="Computing blast radius…" size="sm" />
@@ -102,7 +84,7 @@ export const BlastRadiusPanel = ({ workspaceId, subject, schemas, lifecycleState
           subtitle={
             totalCount === 0
               ? 'No entities are reachable within the selected depth.'
-              : 'Try widening the owner, schema, or relationship-type filters.'
+              : 'Try widening the owner filter.'
           }
         />
       ) : (

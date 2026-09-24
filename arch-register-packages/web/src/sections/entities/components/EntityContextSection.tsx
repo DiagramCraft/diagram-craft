@@ -4,6 +4,7 @@ import styles from '../EntityDetailScreen.module.css';
 import { EntityTopologyTab } from './EntityTopologyTab';
 import { EntityGraphView } from './EntityGraphView';
 import { EntityDependentsTab } from './EntityDependentsTab';
+import { BlastRadiusPanel } from './BlastRadiusPanel';
 import { EntityRelatedContentTab } from './EntityRelatedContentTab';
 import type { TabId } from '../types/entityDetailTypes';
 
@@ -14,6 +15,7 @@ type Props = {
   topologyProps: ComponentProps<typeof EntityTopologyTab>;
   graphProps: ComponentProps<typeof EntityGraphView>;
   dependentsProps: ComponentProps<typeof EntityDependentsTab>;
+  blastRadiusProps: ComponentProps<typeof BlastRadiusPanel>;
   relatedContentProps: ComponentProps<typeof EntityRelatedContentTab>;
 };
 
@@ -24,6 +26,7 @@ export const EntityContextSection = ({
   topologyProps,
   graphProps,
   dependentsProps,
+  blastRadiusProps,
   relatedContentProps
 }: Props) => (
   <>
@@ -35,6 +38,7 @@ export const EntityContextSection = ({
           <Tabs.Trigger value="dependents">
             Dependents{dependentsCount > 0 ? ` (${dependentsCount})` : ''}
           </Tabs.Trigger>
+          <Tabs.Trigger value="blast-radius">Blast radius</Tabs.Trigger>
           <Tabs.Trigger value="related-content">Related content</Tabs.Trigger>
         </Tabs.List>
       </Tabs.Root>
@@ -46,6 +50,7 @@ export const EntityContextSection = ({
       </div>
     )}
     {tab === 'dependents' && <EntityDependentsTab {...dependentsProps} />}
+    {tab === 'blast-radius' && <BlastRadiusPanel {...blastRadiusProps} />}
     {tab === 'related-content' && <EntityRelatedContentTab {...relatedContentProps} />}
   </>
 );
