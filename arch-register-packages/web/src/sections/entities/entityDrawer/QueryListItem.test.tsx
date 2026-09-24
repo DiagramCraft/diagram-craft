@@ -30,9 +30,7 @@ const restrictedSchemas = [
   {
     id: 'contract',
     name: 'Contract',
-    fields: [
-      { id: 'annual_cost', name: 'Annual cost', type: 'currency', groupId: 'financials' }
-    ],
+    fields: [{ id: 'annual_cost', name: 'Annual cost', type: 'currency', groupId: 'financials' }],
     groups: [{ id: 'financials', accessControl: { teamIds: ['team-finance'] } }],
     shared_field_group_links: []
   }

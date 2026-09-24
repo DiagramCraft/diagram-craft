@@ -153,7 +153,10 @@ describe('TypedRelationListItem', () => {
   it('renders a restricted attribute when the viewer has field-group access', () => {
     const markup = renderToStaticMarkup(
       <TypedRelationListItem
-        item={{ ...chipItem, attributes: [{ fieldId: 'coverage' }, { fieldId: 'effectiveness_score' }] }}
+        item={{
+          ...chipItem,
+          attributes: [{ fieldId: 'coverage' }, { fieldId: 'effectiveness_score' }]
+        }}
         field={field}
         label="Mitigating controls"
         typedRelationsOutgoing={[record({ effectiveness_score: 90 } as never)]}
@@ -170,7 +173,10 @@ describe('TypedRelationListItem', () => {
   it('omits a restricted attribute entirely when the viewer has no field-group access', () => {
     const markup = renderToStaticMarkup(
       <TypedRelationListItem
-        item={{ ...chipItem, attributes: [{ fieldId: 'coverage' }, { fieldId: 'effectiveness_score' }] }}
+        item={{
+          ...chipItem,
+          attributes: [{ fieldId: 'coverage' }, { fieldId: 'effectiveness_score' }]
+        }}
         field={field}
         label="Mitigating controls"
         typedRelationsOutgoing={[record()]}
