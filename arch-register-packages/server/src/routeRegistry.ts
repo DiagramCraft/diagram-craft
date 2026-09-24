@@ -17,6 +17,7 @@ import {
   createIntegrationRelationORPCHandler
 } from './domain/catalog/relationOrpc';
 import { createWorkspaceEntityORPCHandler } from './domain/catalog/entityOrpc';
+import { createWorkspaceEntityTraversalORPCHandler } from './domain/catalog/entityTraversalOrpc';
 import { createEntitySyncORPCHandler } from './domain/externalIdentity/entitySyncOrpc';
 import { createApiSpecificationSyncORPCHandler } from './domain/artifact/apiSpecificationSyncOrpc';
 import { createRelationSyncORPCHandler } from './domain/catalog/relationSyncOrpc';
@@ -264,6 +265,15 @@ const protectedRouteDefinitions = [
     prefix: API_PREFIXES.application,
     surfaces: [API_PREFIXES.application],
     create: ({ db }) => createWorkspaceEntityORPCHandler(db)
+  },
+  {
+    id: 'workspace-entity-traversal',
+    auth: 'protected',
+    kind: 'orpc',
+    dependencies: ['db'],
+    prefix: API_PREFIXES.application,
+    surfaces: [API_PREFIXES.application],
+    create: ({ db }) => createWorkspaceEntityTraversalORPCHandler(db)
   },
   {
     id: 'workspace-glossary',

@@ -26,6 +26,7 @@ import { workspaceEntityContract } from './entityContract';
 import { entityDeprecationContract } from './entityDeprecationContract';
 import { entityMergeContract } from './entityMergeContract';
 import { entitySyncContract } from './entitySyncContract';
+import { workspaceEntityTraversalContract } from './entityTraversalContract';
 import { entityVersionContract } from './entityVersionContract';
 import { workspaceEnumContract } from './enumContract';
 import { externalContentContract } from './externalContentContract';
@@ -130,6 +131,7 @@ const applicationEntries = [
   { id: 'workspaceRelationSchemaContract', contract: workspaceRelationSchemaContract },
   { id: 'workspaceRelationContract', contract: workspaceRelationContract },
   { id: 'workspaceEntityContract', contract: workspaceEntityContract },
+  { id: 'workspaceEntityTraversalContract', contract: workspaceEntityTraversalContract },
   { id: 'workspaceManagementContract', contract: workspaceManagementContract },
   { id: 'projectContract', contract: projectContract },
   { id: 'workspaceConfigContract', contract: workspaceConfigContract },
