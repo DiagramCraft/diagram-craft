@@ -15,7 +15,10 @@ would make precedence and administration substantially harder before the common 
 leave room for those selectors later.
 
 The v1 configuration controls presentation and optional registered content. It does not become a general-purpose
-programming, query, permission, or action-authoring surface.
+programming, permission, or action-authoring surface, and it exposes no arbitrary SQL/query builder or free-form
+query-authoring UI. It does include one bounded query item kind, authored as a plain-text path expression in the
+existing entity query text DSL (`specs/QUERY_LANGUAGE.md`) and evaluated read-only against the current entity — not
+a general query/filter builder, and not an escape hatch into boolean grouping or predicates.
 
 ## Current implementation inventory
 
@@ -103,13 +106,24 @@ The persisted resource is one workspace-level JSON document:
           "id": "related",
           "title": "Related entities",
           "items": [
-            { "kind": "relation", "fieldId": "affected_entities", "label": "Affected entities" }
+            { "kind": "relation", "fieldId": "affected_entities", "label": "Affected entities" },
+            { "kind": "typed-relation-list", "fieldId": "system", "label": "Systems used",
+              "attributes": [{ "fieldId": "role", "label": "Role" }] },
+            { "kind": "children", "childSchemaId": "schema-id", "fieldId": "parent" }
           ]
         },
         {
           "id": "coverage",
           "title": "Coverage",
-          "items": [{ "kind": "slot", "slotId": "risk.coverage" }]
+          "layout": "stat-grid",
+          "items": [
+            { "kind": "slot", "slotId": "risk.coverage" },
+            { "kind": "rollup", "fieldId": "spend", "aggregation": "sum", "format": "currency" },
+            { "kind": "rollup-leaf-count" },
+            { "kind": "query", "queryText": "subtree(parent).->\"business_capability_supports_entity\"",
+              "label": "Realized by", "presentation": "list" },
+            { "kind": "placeholder", "message": "Not yet available." }
+          ]
         }
       ]
     }
@@ -120,12 +134,29 @@ The persisted resource is one workspace-level JSON document:
 The exact API naming can follow the existing contract conventions, but the semantics are fixed:
 
 - Presence and array order control visibility and ordering.
-- Sections control grouping, titles, and collapsibility.
-- Field items reference schema field ids and may override the display label.
+- Sections control grouping, titles, collapsibility, and an optional `stat-grid` layout alongside the default row
+  layout.
+- Field items reference schema field ids and may override the display label and row/mini-panel presentation.
 - Metadata items reference a fixed allowlist of identity/metadata slots, such as public id, description, owner,
   lifecycle, target lifecycle, namespace, and tags.
-- Relation items reference an entity relation field or a registered relation source. They do not contain arbitrary
-  query expressions.
+- Relation items reference a plain entity relation field (reference or containment) and its row/mini-panel
+  presentation; they show only the linked entities, not data carried on the relation itself.
+- Typed-relation-list items reference a typed-relation field and may declare which relation-instance attributes
+  (fields living on the relation edge, not the endpoint entity) appear as columns — the one item kind that can
+  surface that edge data.
+- Children items reference a containment field and a child schema id to list direct containment children.
+- Roll-up items compute an aggregate (`avg`/`sum`/`count`) with a number format, either over the current entity's
+  legacy containment subtree or over a configured one-hop relation traversal to another schema; a companion
+  `rollup-leaf-count` item reports the matching leaf-descendant count. Both reuse the same schema-agnostic metric
+  engine that already backs Strategy's capability roll-ups and other application-specific roll-up surfaces (Risk
+  coverage, Vendor spend), rather than introducing a parallel calculation path.
+- Placeholder items render a fixed, admin-authored "not yet available" message with no live data.
+- Query items evaluate a plain-text path expression (`queryText`) against the current entity, using the existing
+  entity query text DSL's path grammar (`specs/QUERY_LANGUAGE.md` §4 — dotted `field`, `<-field`, `->relation`,
+  `<-relation`, and `subtree(field)` steps only, not the full boolean/predicate query language) and render the
+  results as chips or a list, optionally with extra field columns. This lets a profile declare relation or subtree
+  traversals declaratively, without registering an application-specific slot, but it is not a free-form
+  query-builder surface — no boolean grouping, comparators, or predicates are authored here.
 - Slot items reference a semantic provider slot registered by an application. The slot registry supplies the
   friendly admin label, supported schemas, renderer, data loading, and permission behavior; the configuration does
   not expose component names or implementation paths.
@@ -138,17 +169,22 @@ The exact API naming can follow the existing contract conventions, but the seman
 The follow-up configuration UI should provide:
 
 - a schema/entity-type selector within the workspace settings area;
-- a list of available fields, metadata slots, relations, and registered content slots;
+- a list of available fields, metadata slots, relations, roll-up sources, and registered content slots;
 - add/remove and drag-and-drop ordering for sections and items;
 - section title and collapsibility editing;
 - field and slot label overrides where supported;
-- a preview using a representative entity, including loading, empty, and unavailable content states;
 - reset-to-default behavior;
 - warnings for archived/missing fields, inaccessible field groups, unsupported slots, and stale relation references;
 - a clear indication that permissions and contextual actions are not granted by drawer configuration.
 
 The UI should not expose arbitrary SQL/query builders, JSX/component identifiers, custom formulas, custom action
 handlers, viewer-specific layouts, drawer width, responsive breakpoints, or tab construction in v1.
+
+A live preview rendering the profile against a representative entity is intentionally deferred beyond v1: it adds
+loading/empty/unavailable-state handling and data-fetching complexity that isn't required to ship a usable editor,
+and the structural editor (section/item add, remove, and reorder; per-item option and label editing) gives
+administrators enough feedback to author a profile without one. Add it once a concrete need for pre-save visual
+verification outweighs that cost.
 
 ### Selection, fallback, and permissions
 
@@ -165,9 +201,11 @@ The same schema profile applies wherever that entity is opened. Application and 
 in v1.
 
 Configuration must never grant access. The renderer must reapply field-group visibility before rendering fields,
-including shared field-group links. Related-entity queries and registered slots must use the existing permission-aware
-API/data paths. Hidden groups and empty sections should disappear rather than reveal a restricted-field placeholder.
-Admin editing remains gated by the existing workspace/schema administration permissions.
+including shared field-group links. Related-entity queries, roll-up traversals, query items, and registered slots
+must all resolve data through the existing permission-aware API/data paths, the same ones the rest of the app uses —
+none of them are a way to bypass field-group or entity visibility. Hidden groups, unresolvable roll-up traversals,
+and empty sections should disappear rather than reveal a restricted-field placeholder. Admin editing remains gated
+by the existing workspace/schema administration permissions.
 
 ### Tabs and responsive behavior
 

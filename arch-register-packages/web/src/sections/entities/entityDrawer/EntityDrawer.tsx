@@ -24,6 +24,7 @@ import { usePrincipalLabel } from '../../../hooks/usePrincipalLabel';
 import {
   entityDrawerMetadataValue,
   resolveEntityDrawerRenderModel,
+  type EntityDrawerFieldGroupAccess,
   type ResolvedEntityDrawerBadge,
   type ResolvedEntityDrawerItem
 } from './entityDrawerState';
@@ -274,7 +275,8 @@ const DrawerItem = ({
   relationSchemas,
   workspaceSlug,
   formatDateValue,
-  onOpenRelatedEntity
+  onOpenRelatedEntity,
+  getFieldGroupAccess
 }: {
   item: ResolvedEntityDrawerItem;
   providerContext: EntityDrawerProviderContext;
@@ -288,6 +290,7 @@ const DrawerItem = ({
   workspaceSlug: string;
   formatDateValue?: (value: unknown) => string;
   onOpenRelatedEntity?: (fieldId: string, publicId: string) => boolean;
+  getFieldGroupAccess: EntityDrawerFieldGroupAccess;
 }) => {
   const dateTimeFormatPreference = useDateTimeFormatPreference();
   const defaultFormatDateValue = (value: unknown) =>
@@ -347,6 +350,7 @@ const DrawerItem = ({
         typedRelationsIncoming={typedRelationsIncoming}
         typedRelationsStatus={providerContext.typedRelationsStatus}
         relationSchemas={relationSchemas}
+        getFieldGroupAccess={getFieldGroupAccess}
       />
     );
   }
@@ -360,6 +364,7 @@ const DrawerItem = ({
         entityId={entity._uid}
         schemas={providerContext.schemas}
         lifecycleStates={lifecycleStates}
+        getFieldGroupAccess={getFieldGroupAccess}
       />
     );
   }
@@ -739,6 +744,7 @@ export const EntityDrawer = ({
                     workspaceSlug={workspaceSlug}
                     formatDateValue={resolvedFormatDateValue}
                     onOpenRelatedEntity={onOpenRelatedEntity}
+                    getFieldGroupAccess={getFieldGroupAccess}
                   />
                 </div>
               ))}

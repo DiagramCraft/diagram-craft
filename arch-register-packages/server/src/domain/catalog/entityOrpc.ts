@@ -35,15 +35,11 @@ import { workspaceEntityContract } from '@arch-register/api-types/entityContract
 import { prepareEntityQueryRequest } from './entityQueryRequest';
 import { downloadEntityImportTemplate, exportEntitiesCsv } from './entityCsvOperations';
 import {
-  parseEntityQueryText,
+  parseAndValidateEntityQueryText,
   printEntityQueryText,
   type EnumCatalog
 } from './entityQueryTextCompiler';
-import {
-  validateEntityQueryIR,
-  type RelationSchemaCatalog,
-  type SchemaCatalog
-} from './entityQueryIRValidator';
+import { type RelationSchemaCatalog, type SchemaCatalog } from './entityQueryIRValidator';
 import { diffEntityLandscapes } from './entityLandscapeDiffOperations';
 
 type ORPCContext = {
@@ -329,19 +325,13 @@ const entityQueryTextHandlers = {
   parseText: entityRouter.entityQueryText.parseText.handler(async ({ input, context }) => {
     const { workspace, authCtx } = context;
     const { schemas, enums, relationSchemas } = await buildQueryCatalogs(context.db, workspace);
-    const result = parseEntityQueryText(input.query.text, schemas, enums, authCtx, relationSchemas);
-    if (!result.ok) return result;
-    const validation = validateEntityQueryIR(result.query, schemas, authCtx, relationSchemas);
-    if (!validation.ok) {
-      return {
-        ok: false,
-        errors: validation.errors.map(error => ({
-          offset: 0,
-          message: `${error.path.join('.')}: ${error.message}`
-        }))
-      };
-    }
-    return result;
+    return parseAndValidateEntityQueryText(
+      input.query.text,
+      schemas,
+      enums,
+      authCtx,
+      relationSchemas
+    );
   }),
 
   printText: entityRouter.entityQueryText.printText.handler(async ({ input, context }) => {

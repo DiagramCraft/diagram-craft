@@ -4,9 +4,11 @@ import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import { Chip } from '../../../components/Chip';
 import { StatusChip } from '../../../components/StatusChip';
+import { resolveFieldAccess } from '../../../lib/fieldGroupAccess';
 import { formatDate } from '../../../utils/dateFormat';
 import { renderEntityFieldDisplayValue } from '../components/entityFieldDisplay';
 import type { RefLookup } from '../types/entityDetailTypes';
+import type { EntityDrawerFieldGroupAccess } from './entityDrawerState';
 import { EntityDrawerProviderStatus } from './EntityDrawerProviderRegistry';
 import { useEntityDrawerQueryItem } from './useEntityDrawerQueryItem';
 import styles from './EntityDrawer.module.css';
@@ -16,13 +18,15 @@ const QueryListFields = ({
   schema,
   fields,
   workspaceSlug,
-  lifecycleStates
+  lifecycleStates,
+  getFieldGroupAccess
 }: {
   entity: EntityRecord;
   schema: EntitySchema | undefined;
   fields: NonNullable<Extract<EntityDrawerItem, { kind: 'query' }>['fields']>;
   workspaceSlug: string;
   lifecycleStates: WorkspaceLifecycleState[];
+  getFieldGroupAccess: EntityDrawerFieldGroupAccess;
 }) => {
   const refLookup: RefLookup = new Map();
 
@@ -42,6 +46,7 @@ const QueryListFields = ({
         }
         const field = schema?.fields.find(candidate => candidate.id === configuredField.fieldId);
         if (!field) return [];
+        if (schema && resolveFieldAccess(schema, field, getFieldGroupAccess) === 'none') return [];
         return [
           <div className={styles.queryField} key={configuredField.fieldId}>
             <span className={styles.queryFieldLabel}>{configuredField.label ?? field.name}</span>
@@ -79,7 +84,8 @@ export const QueryListItem = ({
   schemaName,
   entityId,
   schemas,
-  lifecycleStates = []
+  lifecycleStates = [],
+  getFieldGroupAccess
 }: {
   item: Extract<EntityDrawerItem, { kind: 'query' }>;
   label: string;
@@ -88,6 +94,7 @@ export const QueryListItem = ({
   entityId: string;
   schemas: EntitySchema[];
   lifecycleStates?: WorkspaceLifecycleState[];
+  getFieldGroupAccess: EntityDrawerFieldGroupAccess;
 }) => {
   const result = useEntityDrawerQueryItem(workspaceId, schemaName, entityId, item.queryText);
   const presentation = item.presentation ?? 'chips';
@@ -125,6 +132,7 @@ export const QueryListItem = ({
                 fields={item.fields ?? []}
                 workspaceSlug={workspaceId}
                 lifecycleStates={lifecycleStates}
+                getFieldGroupAccess={getFieldGroupAccess}
               />
             </div>
           ))}
