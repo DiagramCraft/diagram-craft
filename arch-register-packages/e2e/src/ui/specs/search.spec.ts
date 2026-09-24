@@ -33,6 +33,11 @@ test.describe('search section', () => {
 
     await searchPage.resultRow(customerApiEntity.name).click();
 
+    // A search result click now opens the entity's summary drawer rather than navigating
+    // directly (#3313); drill into the full record from there.
+    await expect(entitiesPage.openEntityDrawerButton()).toBeVisible();
+    await entitiesPage.openEntityDrawerButton().click();
+
     await expect(page).toHaveURL(
       new RegExp(`/${defaultWorkspace.slug}/entities/${customerApiEntity.publicId}$`)
     );
