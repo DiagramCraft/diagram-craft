@@ -1,28 +1,36 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { debounce, debounceMicrotask } from './debounce';
 
 describe('debounce', () => {
-  it('should delay the execution of the function by the specified time', async () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('should delay the execution of the function by the specified time', () => {
     const mockFn = vi.fn();
     const debouncedFn = debounce(mockFn, 100);
 
     debouncedFn();
     expect(mockFn).not.toHaveBeenCalled();
 
-    await new Promise(resolve => setTimeout(resolve, 110));
+    vi.advanceTimersByTime(100);
     expect(mockFn).toHaveBeenCalledTimes(1);
   });
 
-  it('should call the function with the correct arguments', async () => {
+  it('should call the function with the correct arguments', () => {
     const mockFn = vi.fn();
     const debouncedFn = debounce(mockFn, 100);
 
     debouncedFn('arg1', 'arg2');
-    await new Promise(resolve => setTimeout(resolve, 110));
+    vi.advanceTimersByTime(100);
     expect(mockFn).toHaveBeenCalledWith('arg1', 'arg2');
   });
 
-  it('should only call the function once if invoked multiple times in delay period', async () => {
+  it('should only call the function once if invoked multiple times in delay period', () => {
     const mockFn = vi.fn();
     const debouncedFn = debounce(mockFn, 100);
 
@@ -30,29 +38,33 @@ describe('debounce', () => {
     debouncedFn();
     debouncedFn();
 
-    await new Promise(resolve => setTimeout(resolve, 110));
+    vi.advanceTimersByTime(100);
     expect(mockFn).toHaveBeenCalledTimes(1);
   });
 
-  it('should reset the timer if called again within the delay period', async () => {
+  it('should reset the timer if called again within the delay period', () => {
     const mockFn = vi.fn();
     const debouncedFn = debounce(mockFn, 100);
 
     debouncedFn();
-    setTimeout(() => debouncedFn(), 90);
+    vi.advanceTimersByTime(90);
+    debouncedFn();
 
-    await new Promise(resolve => setTimeout(resolve, 200));
+    vi.advanceTimersByTime(99);
+    expect(mockFn).not.toHaveBeenCalled();
+
+    vi.advanceTimersByTime(1);
     expect(mockFn).toHaveBeenCalledTimes(1);
   });
 
-  it('should retain the correct "this" context when executed', async () => {
+  it('should retain the correct "this" context when executed', () => {
     const mockFn = vi.fn(function (this: any) {
       expect(this.test).toBe('context');
     });
     const debouncedFn = debounce(mockFn.bind({ test: 'context' }), 100);
 
     debouncedFn();
-    await new Promise(resolve => setTimeout(resolve, 110));
+    vi.advanceTimersByTime(100);
     expect(mockFn).toHaveBeenCalledTimes(1);
   });
 });
