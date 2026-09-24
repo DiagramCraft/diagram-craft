@@ -18,6 +18,7 @@ import type { RelationField } from '@arch-register/api-types/relationSchemaContr
 import { isNowDateLiteral } from '@arch-register/api-types/nowDateLiteral';
 import { relationSchemaNameById, schemaNameById } from './entityQueryTextResolver';
 import { collectRootPathOccurrences, entityQueryPathStartsWith } from './entityQueryIRPlan';
+import { UnsupportedEntityQueryIRError } from './entityQueryIRErrors';
 
 // Pre-rendered `columns` capture entries, keyed by the identity of the `PathStep` in `query.root`
 // that a projection binds to. Populated per `printEntityQueryText` call, read by `printScope`.
@@ -196,6 +197,10 @@ const stepName = (
       return step.direction === 'in' ? '_in' : '_out';
     case 'containmentSubtree':
       return `subtree(${step.fieldId})`;
+    case 'relationSubtree':
+      throw new UnsupportedEntityQueryIRError(
+        "The 'relationSubtree' path step has no text query language syntax; it is only used by the entity traversal compiler"
+      );
   }
 };
 
@@ -232,9 +237,13 @@ const printScope = (
   options: NormalizedPrintOptions,
   level: number
 ): string => {
-  const columnEntries = step.kind === 'endpoint' ? undefined : activeColumnsByStep?.get(step);
+  const columnEntries =
+    step.kind === 'endpoint' || step.kind === 'relationSubtree'
+      ? undefined
+      : activeColumnsByStep?.get(step);
   const columnsText = columnEntries?.length ? renderColumnsClause(columnEntries) : undefined;
-  const filter = step.kind === 'endpoint' ? undefined : step.filter;
+  const filter =
+    step.kind === 'endpoint' || step.kind === 'relationSubtree' ? undefined : step.filter;
   if (!filter && !columnsText) return '';
   if (!filter) return `[${columnsText}]`;
 
@@ -374,6 +383,11 @@ const printPathSteps = (
       schemaId = field && isReferenceOrContainmentField(field) ? field.schemaId : undefined;
       relationSchemaId = undefined;
       return `subtree(${step.fieldId})`;
+    }
+    if (step.kind === 'relationSubtree') {
+      throw new UnsupportedEntityQueryIRError(
+        "The 'relationSubtree' path step has no text query language syntax; it is only used by the entity traversal compiler"
+      );
     }
     const relationSchema = relationSchemas.get(step.relationSchemaId);
     const targetSchemaIds =

@@ -65,9 +65,9 @@ export const buildProjectionBindings = (
 
     state.compilingBinding = true;
     binding.path.forEach((step, stepIndex) => {
-      if (step.kind === 'containmentSubtree') {
+      if (step.kind === 'containmentSubtree' || step.kind === 'relationSubtree') {
         throw new UnsupportedEntityQueryIRError(
-          "The 'containmentSubtree' path step is only supported by the entity traversal compiler"
+          `The '${step.kind}' path step is only supported by the entity traversal compiler`
         );
       }
       if (step.kind === 'endpoint') {

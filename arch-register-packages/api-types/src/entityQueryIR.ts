@@ -75,6 +75,22 @@ export type PathStep =
       fieldId: string;
       ownerSchemaId: string;
       filter?: QueryNode;
+    }
+  | {
+      // Root-inclusive recursive traversal over every visible reference/containment field and
+      // unbound typed relation, in the requested direction, up to the traversal plan's maxDepth.
+      // Unlike `containmentSubtree`'s wildcard form (fieldId:'*'/ownerSchemaId:'*'), this also
+      // walks reference fields and typed relations, not just containment fields, so it has no
+      // owning field to name. `direction` picks which edges to follow at each hop: 'forward'
+      // follows fields/typed-relation endpoints declared on the current entity pointing outward,
+      // 'backward' follows fields on other schemas/relation endpoints pointing at the current
+      // entity, 'both' follows both. Like the wildcard containmentSubtree, this must be the only
+      // step in its path. Unlike other steps, it intentionally has no `filter`: it fans out
+      // across every field/relation schema in the catalog, so a per-hop filter would need to be
+      // meaningful against heterogeneous target schemas: callers that need to scope results
+      // filter the traversal output instead.
+      kind: 'relationSubtree';
+      direction: 'forward' | 'backward' | 'both';
     };
 
 export type QueryNode =
@@ -139,6 +155,10 @@ export const pathStepSchema: z.ZodType<PathStep> = z.lazy(() =>
       fieldId: z.string(),
       ownerSchemaId: z.string(),
       filter: queryNodeSchema.optional()
+    }),
+    z.object({
+      kind: z.literal('relationSubtree'),
+      direction: z.enum(['forward', 'backward', 'both'])
     })
   ])
 );

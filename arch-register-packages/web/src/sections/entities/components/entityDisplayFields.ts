@@ -138,7 +138,9 @@ export const buildEntityDisplayFields = (
             ? `endpoint(${step.direction})`
             : step.kind === 'unboundTypedRelation'
               ? `${step.direction === 'in' ? '->' : '<-'}${step.relationSchemaId}`
-              : step.fieldId
+              : step.kind === 'relationSubtree'
+                ? `relationSubtree(${step.direction})`
+                : step.fieldId
         ),
         projection.fieldId
       ].join('.');

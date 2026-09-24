@@ -1896,6 +1896,12 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             title: 'Assessments',
             collapsible: true,
             items: [{ kind: 'slot', slotId: 'entity.assessments', showLabel: false }]
+          },
+          {
+            id: 'blast-radius',
+            title: 'Blast radius',
+            collapsible: true,
+            items: [{ kind: 'slot', slotId: 'entity.blast-radius', showLabel: false }]
           }
         ]
       }
@@ -4199,6 +4205,7 @@ const resolvePathStepSchemaIds = (
         })
       };
     case 'endpoint':
+    case 'relationSubtree':
       return step;
   }
 };

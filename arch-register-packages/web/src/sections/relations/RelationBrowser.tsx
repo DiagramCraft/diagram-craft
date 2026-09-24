@@ -9,7 +9,8 @@ import {
   TbDownload,
   TbUpload,
   TbChevronLeft,
-  TbChevronRight
+  TbChevronRight,
+  TbAffiliate
 } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
@@ -29,6 +30,7 @@ import { useDeleteRelation } from '../../hooks/useRelations';
 import { useEntitiesByIds } from '../../hooks/useEntities';
 import { relationIds } from '../../lib/entityEditState';
 import { RelationDetailPopover } from '../entities/components/RelationDetailPopover';
+import { RelationBlastRadiusDialog } from './RelationBlastRadiusDialog';
 import { SaveViewDialog } from '../entities/components/EntityBrowser';
 import { RelationEditDialog } from '../../dialogs/RelationEditDialog';
 import { useRelationBrowserData } from './useRelationBrowserData';
@@ -98,6 +100,7 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
   const { permissions } = useWorkspaceContext();
 
   const [detail, setDetail] = useState<{ relationId: string; x: number; y: number } | null>(null);
+  const [blastRadiusRelationId, setBlastRadiusRelationId] = useState<string | null>(null);
   const [isSavingView, setIsSavingView] = useState(false);
   const [editRelationId, setEditRelationId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{
@@ -464,44 +467,47 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
                     {formatDateTime(relation._updatedAt, '—', dateTimeFormatPreference)}
                   </Table.Cell>
                   <Table.Cell interactive>
-                    {(relation.canEdit || relation.canDelete) && (
-                      <DropdownMenu
-                        trigger={
-                          <Button
-                            variant="ghost"
-                            aria-label="Relation actions"
-                            icon={<TbDots size={14} />}
-                          />
-                        }
-                        items={[
-                          ...(relation.canEdit
-                            ? [
-                                {
-                                  label: 'Edit',
-                                  icon: <TbPencil size={14} />,
-                                  onClick: () => setEditRelationId(relation._uid)
-                                }
-                              ]
-                            : []),
-                          ...(relation.canDelete
-                            ? [
-                                {
-                                  label: 'Delete',
-                                  icon: <TbTrash size={14} />,
-                                  danger: true,
-                                  onClick: () =>
-                                    setDeleteTarget({
-                                      relationId: relation._uid,
-                                      inEntityId: relation._in.id,
-                                      outEntityId: relation._out.id,
-                                      label: `${relation._in.name} → ${relation._out.name}`
-                                    })
-                                }
-                              ]
-                            : [])
-                        ]}
-                      />
-                    )}
+                    <DropdownMenu
+                      trigger={
+                        <Button
+                          variant="ghost"
+                          aria-label="Relation actions"
+                          icon={<TbDots size={14} />}
+                        />
+                      }
+                      items={[
+                        {
+                          label: 'View blast radius',
+                          icon: <TbAffiliate size={14} />,
+                          onClick: () => setBlastRadiusRelationId(relation._uid)
+                        },
+                        ...(relation.canEdit
+                          ? [
+                              {
+                                label: 'Edit',
+                                icon: <TbPencil size={14} />,
+                                onClick: () => setEditRelationId(relation._uid)
+                              }
+                            ]
+                          : []),
+                        ...(relation.canDelete
+                          ? [
+                              {
+                                label: 'Delete',
+                                icon: <TbTrash size={14} />,
+                                danger: true,
+                                onClick: () =>
+                                  setDeleteTarget({
+                                    relationId: relation._uid,
+                                    inEntityId: relation._in.id,
+                                    outEntityId: relation._out.id,
+                                    label: `${relation._in.name} → ${relation._out.name}`
+                                  })
+                              }
+                            ]
+                          : [])
+                      ]}
+                    />
                   </Table.Cell>
                 </Table.Row>
               ))
@@ -585,6 +591,15 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
         onClose={() => setEditRelationId(null)}
         workspaceId={workspaceId}
         relationId={editRelationId}
+      />
+
+      <RelationBlastRadiusDialog
+        open={blastRadiusRelationId != null}
+        onClose={() => setBlastRadiusRelationId(null)}
+        workspaceId={workspaceId}
+        relationId={blastRadiusRelationId}
+        schemas={entitySchemas}
+        lifecycleStates={lifecycleStates}
       />
 
       <DeleteConfirmationDialog
