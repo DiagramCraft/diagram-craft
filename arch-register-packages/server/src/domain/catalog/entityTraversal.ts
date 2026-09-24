@@ -81,6 +81,11 @@ export type EntityTraversalPlan = {
   paths: readonly EntityTraversalPath[];
   maxDepth?: number;
   maxNodes?: number;
+  /** Reconstructed row sources used when traversing a planned state. */
+  snapshot?: {
+    entities: readonly Record<string, unknown>[];
+    relations: readonly Record<string, unknown>[];
+  };
 };
 
 export type EntityTraversalHop = {
@@ -1122,7 +1127,9 @@ const compileTraversalSql = (
         authCtx,
         schemas.values(),
         relationSchemas.values()
-      )
+      ),
+      snapshotEntities: plan.snapshot?.entities,
+      snapshotRelations: plan.snapshot?.relations
     },
     authCtx,
     relationSchemas,

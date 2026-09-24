@@ -41,6 +41,9 @@ export type CompiledEntityQueryOptions = {
   // Relation-root visibility policy. It is compiled to SQL against the relation's endpoint
   // schema ids and owner, avoiding a workspace-wide relation scan and large id-list parameter.
   relationVisibility?: TypedRelationVisibilityPolicy;
+  /** Optional reconstructed graph rows used by planned-state traversals. */
+  snapshotEntities?: readonly Record<string, unknown>[];
+  snapshotRelations?: readonly Record<string, unknown>[];
   // SQL-level pagination for both entity- and relation-rooted paths. The caller supplies the
   // normalized page window; COUNT(*) queries omit these options.
   limit?: number;
@@ -71,6 +74,8 @@ export type EntityQuerySqlRenderState = EntityQueryPermissionPlan & {
   permissionPlan: EntityQueryPermissionPlan;
   relationSourceConstraints: readonly RelationSourceConstraint[];
   relationRootTemporalCandidate: RelationRootTemporalCandidate | null;
+  snapshotEntities?: readonly Record<string, unknown>[];
+  snapshotRelations?: readonly Record<string, unknown>[];
 };
 
 export type EntityQueryPlanInputs = {
@@ -106,7 +111,9 @@ export const createEntityQuerySqlRenderState = ({
   dialect,
   workspace,
   semanticPlan,
-  permissionPlan
+  permissionPlan,
+  snapshotEntities,
+  snapshotRelations
 }: {
   query: EntityQuery;
   schemas: SchemaCatalog;
@@ -115,6 +122,8 @@ export const createEntityQuerySqlRenderState = ({
   workspace: string;
   semanticPlan: EntityQuerySemanticPlan;
   permissionPlan: EntityQueryPermissionPlan;
+  snapshotEntities?: readonly Record<string, unknown>[];
+  snapshotRelations?: readonly Record<string, unknown>[];
 }): EntityQuerySqlRenderState => {
   const dialectAdapter = createEntityQueryDialectAdapter(dialect);
   return {
@@ -136,6 +145,8 @@ export const createEntityQuerySqlRenderState = ({
     semanticPlan,
     permissionPlan,
     relationSourceConstraints: semanticPlan.relationSourceConstraints,
-    relationRootTemporalCandidate: semanticPlan.relationRootTemporalCandidate
+    relationRootTemporalCandidate: semanticPlan.relationRootTemporalCandidate,
+    snapshotEntities,
+    snapshotRelations
   };
 };

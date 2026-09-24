@@ -1001,8 +1001,20 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
     return row ? catalogMappers.entityVersion(row) : null;
   }
 
-  async listPlannedEntityChangesAsOf(workspace: string, asOf: Date, entityIds?: string[]) {
+  async listPlannedEntityChangesAsOf(
+    workspace: string,
+    asOf: Date,
+    entityIds?: string[],
+    candidateRevisionId?: string
+  ) {
     if (entityIds != null && entityIds.length === 0) return [];
+    const plannedDateFilter =
+      candidateRevisionId == null
+        ? this.sql`AND (
+            COALESCE(c.effective_date, pm.target_date) IS NULL OR
+            COALESCE(c.effective_date, pm.target_date) <= ${asOf.toISOString().slice(0, 10)}
+          )`
+        : this.sql`AND r.id = ${candidateRevisionId}`;
     const rows = await this.sql<DatabaseRow[]>`
       SELECT m.id, c.workspace, m.record_id AS entity_id,
              c.id AS case_id, r.id AS case_revision_id, r.revision_number,
@@ -1023,10 +1035,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
         AND c.status IN ('planned', 'in_approval')
         AND r.status IN ('draft', 'submitted', 'changes_requested')
         AND r.created_at <= ${asOf}
-        AND (
-          COALESCE(c.effective_date, pm.target_date) IS NULL OR
-          COALESCE(c.effective_date, pm.target_date) <= ${asOf.toISOString().slice(0, 10)}
-        )
+        ${plannedDateFilter}
         ${entityIds != null ? this.sql`AND m.record_id = ANY(${entityIds})` : this.sql``}
       ORDER BY m.record_id, COALESCE(c.effective_date, pm.target_date) NULLS FIRST, r.created_at ASC,
                r.revision_number ASC, c.id ASC, m.id ASC
@@ -1034,8 +1043,20 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
     return mapDatabaseRows(rows, catalogMappers.plannedEntityChange);
   }
 
-  async listPlannedRelationChangesAsOf(workspace: string, asOf: Date, relationIds?: string[]) {
+  async listPlannedRelationChangesAsOf(
+    workspace: string,
+    asOf: Date,
+    relationIds?: string[],
+    candidateRevisionId?: string
+  ) {
     if (relationIds != null && relationIds.length === 0) return [];
+    const plannedDateFilter =
+      candidateRevisionId == null
+        ? this.sql`AND (
+            COALESCE(c.effective_date, pm.target_date) IS NULL OR
+            COALESCE(c.effective_date, pm.target_date) <= ${asOf.toISOString().slice(0, 10)}
+          )`
+        : this.sql`AND r.id = ${candidateRevisionId}`;
     const rows = await this.sql<DatabaseRow[]>`
       SELECT m.id, c.workspace, m.record_id AS entity_id,
              c.id AS case_id, r.id AS case_revision_id, r.revision_number,
@@ -1056,10 +1077,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
         AND c.status IN ('planned', 'in_approval')
         AND r.status IN ('draft', 'submitted', 'changes_requested')
         AND r.created_at <= ${asOf}
-        AND (
-          COALESCE(c.effective_date, pm.target_date) IS NULL OR
-          COALESCE(c.effective_date, pm.target_date) <= ${asOf.toISOString().slice(0, 10)}
-        )
+        ${plannedDateFilter}
         ${relationIds != null ? this.sql`AND m.record_id = ANY(${relationIds})` : this.sql``}
       ORDER BY m.record_id, COALESCE(c.effective_date, pm.target_date) NULLS FIRST, r.created_at ASC,
                r.revision_number ASC, c.id ASC, m.id ASC

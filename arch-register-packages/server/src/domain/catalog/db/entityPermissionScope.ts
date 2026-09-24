@@ -44,11 +44,12 @@ export const buildEntityViewPermissionScope = (
 
 const postgresAncestorCte = (
   baseWorkspaceParam: string,
-  recursiveWorkspaceParam: string
+  recursiveWorkspaceParam: string,
+  entitySource: string
 ): string => `
   permission_ancestors (descendant_id, ancestor_id) AS (
     SELECT child.id, parent.id
-    FROM catalog_record child
+    FROM ${entitySource} child
     JOIN entity_schema child_schema
       ON child_schema.workspace = child.workspace
      AND child_schema.id = child.schema_id
@@ -60,7 +61,7 @@ const postgresAncestorCte = (
         ELSE '[]'::jsonb
       END
     ) AS parent_ref
-    JOIN catalog_record parent
+    JOIN ${entitySource} parent
       ON parent.workspace = child.workspace
      AND parent.id::text = parent_ref.value
      AND parent.kind = 'entity'
@@ -74,7 +75,7 @@ const postgresAncestorCte = (
 
     SELECT ancestors.descendant_id, parent.id
     FROM permission_ancestors ancestors
-    JOIN catalog_record child
+    JOIN ${entitySource} child
       ON child.workspace = ${recursiveWorkspaceParam}
      AND child.id = ancestors.ancestor_id
      AND child.kind = 'entity'
@@ -90,7 +91,7 @@ const postgresAncestorCte = (
         ELSE '[]'::jsonb
       END
     ) AS parent_ref
-    JOIN catalog_record parent
+    JOIN ${entitySource} parent
       ON parent.workspace = child.workspace
      AND parent.id::text = parent_ref.value
      AND parent.kind = 'entity'
@@ -98,10 +99,14 @@ const postgresAncestorCte = (
     WHERE schema_field.value ->> 'type' = 'containment'
   )`;
 
-const sqliteAncestorCte = (baseWorkspaceParam: string, recursiveWorkspaceParam: string): string => `
+const sqliteAncestorCte = (
+  baseWorkspaceParam: string,
+  recursiveWorkspaceParam: string,
+  entitySource: string
+): string => `
   permission_ancestors (descendant_id, ancestor_id) AS (
     SELECT child.id, parent.id
-    FROM catalog_record child
+    FROM ${entitySource} child
     JOIN entity_schema child_schema
       ON child_schema.workspace = child.workspace
      AND child_schema.id = child.schema_id
@@ -114,7 +119,7 @@ const sqliteAncestorCte = (baseWorkspaceParam: string, recursiveWorkspaceParam: 
         ELSE json_array(data_field.value)
       END
     ) parent_ref
-    JOIN catalog_record parent
+    JOIN ${entitySource} parent
       ON parent.workspace = child.workspace
      AND parent.id = parent_ref.value
      AND parent.kind = 'entity'
@@ -128,7 +133,7 @@ const sqliteAncestorCte = (baseWorkspaceParam: string, recursiveWorkspaceParam: 
 
     SELECT ancestors.descendant_id, parent.id
     FROM permission_ancestors ancestors
-    JOIN catalog_record child
+    JOIN ${entitySource} child
       ON child.workspace = ${recursiveWorkspaceParam}
      AND child.id = ancestors.ancestor_id
      AND child.kind = 'entity'
@@ -145,7 +150,7 @@ const sqliteAncestorCte = (baseWorkspaceParam: string, recursiveWorkspaceParam: 
         ELSE json_array(data_field.value)
       END
     ) parent_ref
-    JOIN catalog_record parent
+    JOIN ${entitySource} parent
       ON parent.workspace = child.workspace
      AND parent.id = parent_ref.value
      AND parent.kind = 'entity'
@@ -162,7 +167,8 @@ export const compileEntityViewPermissionScope = (
   scope: EntityViewPermissionScope | null,
   dialect: EntityPermissionScopeDialect,
   addParam: AddParam,
-  entityAlias = 'e'
+  entityAlias = 'e',
+  entitySource = 'catalog_record'
 ): { cte: string | null; predicate: string } => {
   if (scope == null || scope.workspaceWide) return { cte: null, predicate: '1=1' };
   if (!scope.scopedViewAllowed) return { cte: null, predicate: '1=0' };
@@ -184,7 +190,7 @@ export const compileEntityViewPermissionScope = (
       : `EXISTS (
           SELECT 1
           FROM permission_ancestors visible_ancestor
-          JOIN catalog_record ancestor
+          JOIN ${entitySource} ancestor
             ON ancestor.workspace = ${entityAlias}.workspace
            AND ancestor.id = visible_ancestor.ancestor_id
            AND ancestor.kind = 'entity'
@@ -221,8 +227,8 @@ export const compileEntityViewPermissionScope = (
   return {
     cte:
       dialect === 'postgres'
-        ? postgresAncestorCte(baseWorkspaceParam, recursiveWorkspaceParam)
-        : sqliteAncestorCte(baseWorkspaceParam, recursiveWorkspaceParam),
+        ? postgresAncestorCte(baseWorkspaceParam, recursiveWorkspaceParam, entitySource)
+        : sqliteAncestorCte(baseWorkspaceParam, recursiveWorkspaceParam, entitySource),
     predicate: `(${ownerClause} OR ${ancestorOwnerClause} OR ${grantClause})`
   };
 };

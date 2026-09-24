@@ -5,7 +5,7 @@ import type {
   PlannedEntityChangeDbResult
 } from './db/catalogDatabase';
 import { EntityLink } from '@arch-register/api-types/entityContract';
-import type { AuthorizationContext } from '@arch-register/permissions';
+import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
 import { canAccessProject } from '../auth/authorization';
 import { listAllCatalogEntities } from './entityLoader';
 
@@ -85,11 +85,12 @@ const entityToState = (entity: EntityDbResult): Record<string, unknown> => ({
 export const resolveFutureUpdatesByRecord = async (
   db: DatabaseAdapter,
   workspace: string,
-  authCtx: AuthorizationContext | null,
+  authCtx: WorkspaceAuthorizationContext | null,
   asOf: Date,
   plannedChanges: PlannedEntityChangeDbResult[],
   plannedChangesProjectId: string | null | undefined,
-  excludeOverdueChangesBefore?: Date
+  excludeOverdueChangesBefore?: Date,
+  candidateRevisionId?: string
 ): Promise<Map<string, PlannedEntityChangeDbResult[]>> => {
   // Landscape comparisons can scope planned changes to one project while retaining the same
   // reconstruction and authorization rules used by the workspace browser.
@@ -144,10 +145,13 @@ export const resolveFutureUpdatesByRecord = async (
   );
 
   const asOfDate = asOf.toISOString().slice(0, 10);
-  const asOfFilteredChanges = applicablePlannedChanges.filter(change => {
-    const effectiveDate = effectiveTargetDate(change, milestoneTargetDates);
-    return !effectiveDate || effectiveDate <= asOfDate;
-  });
+  const asOfFilteredChanges =
+    candidateRevisionId == null
+      ? applicablePlannedChanges.filter(change => {
+          const effectiveDate = effectiveTargetDate(change, milestoneTargetDates);
+          return !effectiveDate || effectiveDate <= asOfDate;
+        })
+      : applicablePlannedChanges;
 
   // Landscape diffing can exclude "overdue" changes — planned changes whose target date has
   // already passed (relative to `excludeOverdueChangesBefore`, typically "now") but were never
@@ -155,7 +159,7 @@ export const resolveFutureUpdatesByRecord = async (
   // change in every reconstruction from today onward. Changes with no resolvable date (no
   // target_date and no milestone) aren't excluded — there's nothing to judge as overdue.
   const overdueFilteredChanges =
-    excludeOverdueChangesBefore == null
+    candidateRevisionId != null || excludeOverdueChangesBefore == null
       ? asOfFilteredChanges
       : asOfFilteredChanges.filter(change => {
           const effectiveDate = effectiveTargetDate(change, milestoneTargetDates);
@@ -193,16 +197,22 @@ export const reconstructEntitiesAsOf = async (
   db: DatabaseAdapter,
   workspace: string,
   asOf: Date,
-  authCtx: AuthorizationContext | null,
+  authCtx: WorkspaceAuthorizationContext | null,
   candidateEntityIds?: string[],
   includePlannedChanges = true,
   plannedChangesProjectId?: string | null,
-  excludeOverdueChangesBefore?: Date
+  excludeOverdueChangesBefore?: Date,
+  candidateRevisionId?: string
 ): Promise<EntityDbResult[]> => {
   const [baselineVersions, plannedChanges, schemas, owners, lifecycles] = await Promise.all([
     db.catalog.listEntityVersionsAsOf(workspace, asOf, candidateEntityIds),
     includePlannedChanges
-      ? db.catalog.listPlannedEntityChangesAsOf(workspace, asOf, candidateEntityIds)
+      ? db.catalog.listPlannedEntityChangesAsOf(
+          workspace,
+          asOf,
+          candidateEntityIds,
+          candidateRevisionId
+        )
       : Promise.resolve([]),
     db.catalog.listSchemas(workspace),
     db.workspace.listTeams(workspace),
@@ -227,7 +237,8 @@ export const reconstructEntitiesAsOf = async (
     asOf,
     plannedChanges,
     plannedChangesProjectId,
-    excludeOverdueChangesBefore
+    excludeOverdueChangesBefore,
+    candidateRevisionId
   );
 
   const buildResult = (

@@ -802,13 +802,15 @@ export type CatalogDatabase = {
   listPlannedEntityChangesAsOf(
     ws: string,
     asOf: Date,
-    entityIds?: string[]
+    entityIds?: string[],
+    candidateRevisionId?: string
   ): Promise<PlannedEntityChangeDbResult[]>;
   /** Relation counterpart of listPlannedEntityChangesAsOf — see listRelationVersionsAsOf. */
   listPlannedRelationChangesAsOf(
     ws: string,
     asOf: Date,
-    relationIds?: string[]
+    relationIds?: string[],
+    candidateRevisionId?: string
   ): Promise<PlannedEntityChangeDbResult[]>;
   listTimelineMarkers(ws: string): Promise<TimelineMarkerDbResult[]>;
   listEntityIdsWithVersionHistory(ws: string, entityIds?: string[]): Promise<string[]>;
