@@ -21,6 +21,61 @@ export type MergePhase =
   | 'executing'
   | 'done';
 
+// Given the outcome of a preview call, decides the resulting phase and (on success) the default
+// resolutions/blocker-acknowledgement state to seed the review step with.
+export const resolvePreviewOutcome = (
+  result: { ok: true; preview: MergePreview } | { ok: false; error: unknown }
+):
+  | {
+      phase: 'review';
+      preview: MergePreview;
+      resolutions: MergeResolutionMaps;
+      acknowledgedBlockers: Set<string>;
+    }
+  | { phase: 'pick-target'; error: string } => {
+  if (!result.ok) {
+    return {
+      phase: 'pick-target',
+      error:
+        result.error instanceof Error
+          ? result.error.message
+          : 'Failed to preview the merge. Please try again.'
+    };
+  }
+  return {
+    phase: 'review',
+    preview: result.preview,
+    resolutions: buildDefaultResolutions(result.preview),
+    acknowledgedBlockers: new Set()
+  };
+};
+
+// Given the outcome of an execute call, decides the resulting phase — a failure (typically a 409
+// from stale preview state) returns to `confirm` rather than resetting the whole wizard, since the
+// preview/resolutions are still shown while the caller decides whether to re-preview.
+export const resolveExecuteOutcome = (
+  result: { ok: true; result: MergeExecuteResponse } | { ok: false; error: unknown }
+): { phase: 'done'; result: MergeExecuteResponse } | { phase: 'confirm'; error: string } => {
+  if (!result.ok) {
+    return {
+      phase: 'confirm',
+      error:
+        result.error instanceof Error
+          ? result.error.message
+          : 'Failed to complete the merge. Please refresh and re-review.'
+    };
+  }
+  return { phase: 'done', result: result.result };
+};
+
+// Splits the next queued source entity off the remaining queue, or null once it's empty.
+export const advanceQueueState = (
+  remainingQueue: readonly string[]
+): { next: string; rest: string[] } | null => {
+  const [next, ...rest] = remainingQueue;
+  return next ? { next, rest } : null;
+};
+
 export type UseMergeWizardControllerArgs = {
   workspaceId: string;
   sourceEntityId: string;
@@ -60,20 +115,24 @@ export const useMergeWizardController = ({
       setTargetEntityId(resolvedTargetId);
       setPhase('loading-preview');
       setPreviewError(null);
+      let outcome: ReturnType<typeof resolvePreviewOutcome>;
       try {
         const result = await previewMutation.mutateAsync({
           sourceId: currentSourceId,
           targetId: resolvedTargetId
         });
-        setPreview(result);
-        setResolutions(buildDefaultResolutions(result));
-        setAcknowledgedBlockers(new Set());
-        setPhase('review');
+        outcome = resolvePreviewOutcome({ ok: true, preview: result });
       } catch (error) {
         console.error('Failed to preview entity merge:', error);
-        setPreviewError(
-          error instanceof Error ? error.message : 'Failed to preview the merge. Please try again.'
-        );
+        outcome = resolvePreviewOutcome({ ok: false, error });
+      }
+      if (outcome.phase === 'review') {
+        setPreview(outcome.preview);
+        setResolutions(outcome.resolutions);
+        setAcknowledgedBlockers(outcome.acknowledgedBlockers);
+        setPhase('review');
+      } else {
+        setPreviewError(outcome.error);
         setPhase('pick-target');
       }
     },
@@ -141,18 +200,20 @@ export const useMergeWizardController = ({
     if (!preview) return;
     setPhase('executing');
     setExecuteError(null);
+    const body = buildMergeExecuteBody(preview, resolutions, acknowledgedBlockers);
+    let outcome: ReturnType<typeof resolveExecuteOutcome>;
     try {
-      const body = buildMergeExecuteBody(preview, resolutions, acknowledgedBlockers);
       const result = await executeMutation.mutateAsync({ sourceId: currentSourceId, body });
-      setMergeResult(result);
-      setPhase('done');
+      outcome = resolveExecuteOutcome({ ok: true, result });
     } catch (error) {
       console.error('Failed to execute entity merge:', error);
-      setExecuteError(
-        error instanceof Error
-          ? error.message
-          : 'Failed to complete the merge. Please refresh and re-review.'
-      );
+      outcome = resolveExecuteOutcome({ ok: false, error });
+    }
+    if (outcome.phase === 'done') {
+      setMergeResult(outcome.result);
+      setPhase('done');
+    } else {
+      setExecuteError(outcome.error);
       setPhase('confirm');
     }
   }, [acknowledgedBlockers, currentSourceId, executeMutation, preview, resolutions]);
@@ -166,10 +227,10 @@ export const useMergeWizardController = ({
   }, [runPreview, targetEntityId]);
 
   const advanceQueue = useCallback(() => {
-    const [next, ...rest] = remainingQueue;
-    if (!next) return false;
-    setRemainingQueue(rest);
-    setCurrentSourceId(next);
+    const advance = advanceQueueState(remainingQueue);
+    if (!advance) return false;
+    setRemainingQueue(advance.rest);
+    setCurrentSourceId(advance.next);
     setPreview(null);
     setResolutions({ fieldResolutions: {}, relationResolutions: {}, sideTableResolutions: {} });
     setAcknowledgedBlockers(new Set());

@@ -35,6 +35,37 @@ const subtractDays = (date: Date, days: number): Date => {
 };
 
 /**
+ * Only contracts with both a parseable `contract_start` and `contract_end` can be drawn as a bar —
+ * those without either are excluded and counted separately. An auto-renewing contract with a
+ * `notice_period_days` gets a notice-marker date computed by subtracting that many days from its
+ * end date.
+ */
+export const buildPositionedContracts = (
+  contracts: readonly VendorContractRow[]
+): { positioned: PositionedContract[]; excludedCount: number } => {
+  const positionedRows: PositionedContract[] = [];
+  let excluded = 0;
+  for (const row of contracts) {
+    const start = parseTimelineDate(
+      typeof row.contract.contract_start === 'string' ? row.contract.contract_start : null
+    );
+    const end = parseTimelineDate(
+      typeof row.contract.contract_end === 'string' ? row.contract.contract_end : null
+    );
+    if (!start || !end) {
+      excluded++;
+      continue;
+    }
+    const noticeDays =
+      typeof row.contract.notice_period_days === 'number' ? row.contract.notice_period_days : null;
+    const noticeDate =
+      row.contract.auto_renew === true && noticeDays != null ? subtractDays(end, noticeDays) : null;
+    positionedRows.push({ row, start, end, noticeDate });
+  }
+  return { positioned: positionedRows, excludedCount: excluded };
+};
+
+/**
  * Contract terms as a Gantt chart: one row per contract, a bar spanning `contract_start` →
  * `contract_end`, a notice-period marker on auto-renewing contracts, and a today line — over a
  * fixed multi-year window sized to the contracts actually shown (not re-fit as you scroll).
@@ -59,32 +90,10 @@ export const VendorContractsTimeline = ({
   const today = useMemo(() => new Date(), []);
   const dateTimeFormatPreference = useDateTimeFormatPreference();
 
-  const { positioned, excludedCount } = useMemo(() => {
-    const positionedRows: PositionedContract[] = [];
-    let excluded = 0;
-    for (const row of contracts) {
-      const start = parseTimelineDate(
-        typeof row.contract.contract_start === 'string' ? row.contract.contract_start : null
-      );
-      const end = parseTimelineDate(
-        typeof row.contract.contract_end === 'string' ? row.contract.contract_end : null
-      );
-      if (!start || !end) {
-        excluded++;
-        continue;
-      }
-      const noticeDays =
-        typeof row.contract.notice_period_days === 'number'
-          ? row.contract.notice_period_days
-          : null;
-      const noticeDate =
-        row.contract.auto_renew === true && noticeDays != null
-          ? subtractDays(end, noticeDays)
-          : null;
-      positionedRows.push({ row, start, end, noticeDate });
-    }
-    return { positioned: positionedRows, excludedCount: excluded };
-  }, [contracts]);
+  const { positioned, excludedCount } = useMemo(
+    () => buildPositionedContracts(contracts),
+    [contracts]
+  );
 
   const dates = useMemo(() => positioned.flatMap(({ start, end }) => [start, end]), [positioned]);
 

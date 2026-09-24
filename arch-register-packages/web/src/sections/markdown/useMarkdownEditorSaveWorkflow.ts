@@ -38,6 +38,55 @@ export type MarkdownEditorSaveWorkflowOptions = {
   transitions: MarkdownEditorTransitions;
 };
 
+// True when the document's type has changed since it was loaded, so saving must go through the
+// migration mutation (which handles re-deriving fields for the new type) rather than a plain save.
+export const needsMigration = (
+  documentTypeId: string | null,
+  currentDocumentTypeId: string | null
+): boolean => documentTypeId !== currentDocumentTypeId;
+
+export type SaveAction =
+  | { kind: 'noop' }
+  | { kind: 'rotate-diagram' }
+  | { kind: 'save-draft' }
+  | { kind: 'request-existing-save' };
+
+// Mirrors handleSave's branching: what should happen when the user triggers a save, without
+// closing the editor.
+export const decideSaveAction = (params: {
+  isDraft: boolean;
+  isReadOnly: boolean;
+  isDirty: boolean;
+  hasPendingDiagramChanges: boolean;
+  isSavingDraft: boolean;
+}): SaveAction => {
+  if (params.isDraft) return params.isSavingDraft ? { kind: 'noop' } : { kind: 'save-draft' };
+  if (params.isReadOnly) return { kind: 'noop' };
+  if (!params.isDirty) {
+    return params.hasPendingDiagramChanges ? { kind: 'rotate-diagram' } : { kind: 'noop' };
+  }
+  return { kind: 'request-existing-save' };
+};
+
+export type SaveAndCloseAction =
+  | { kind: 'noop' }
+  | { kind: 'save-draft' }
+  | { kind: 'finalize-exit' }
+  | { kind: 'request-existing-save' };
+
+// Mirrors handleSaveAndClose's branching: what should happen when the user triggers a save that
+// also closes the editor.
+export const decideSaveAndCloseAction = (params: {
+  isDraft: boolean;
+  isReadOnly: boolean;
+  isDirty: boolean;
+  isSavingDraft: boolean;
+}): SaveAndCloseAction => {
+  if (params.isDraft) return params.isSavingDraft ? { kind: 'noop' } : { kind: 'save-draft' };
+  if (params.isReadOnly) return { kind: 'finalize-exit' };
+  return params.isDirty ? { kind: 'request-existing-save' } : { kind: 'finalize-exit' };
+};
+
 export const useMarkdownEditorSaveWorkflow = ({
   context,
   data,
@@ -68,7 +117,7 @@ export const useMarkdownEditorSaveWorkflow = ({
         initiation_fields: initiationFieldValues
       };
 
-      if (document.documentTypeId !== currentDocumentTypeId) {
+      if (needsMigration(document.documentTypeId, currentDocumentTypeId)) {
         await migrateMutation.mutateAsync(input);
       } else {
         await saveMutation.mutateAsync(input);
@@ -155,23 +204,31 @@ export const useMarkdownEditorSaveWorkflow = ({
   }, [context.draftFolder, document, saveNewMutation]);
 
   const handleSave = useCallback(async () => {
-    if (context.isDraft) {
-      if (saveNewMutation.isPending) return;
-      const savedFile = await saveDraftDocument();
-      if (!savedFile) return;
-      document.markClean();
-      transitions.finalizeSavedDraft(savedFile);
-      return;
-    }
-    if (context.isReadOnly) return;
-    if (!document.dirty) {
-      if (diagram.hasPendingDiagramChanges) {
+    const action = decideSaveAction({
+      isDraft: context.isDraft,
+      isReadOnly: context.isReadOnly,
+      isDirty: document.dirty,
+      hasPendingDiagramChanges: diagram.hasPendingDiagramChanges,
+      isSavingDraft: saveNewMutation.isPending
+    });
+    switch (action.kind) {
+      case 'noop':
+        return;
+      case 'save-draft': {
+        const savedFile = await saveDraftDocument();
+        if (!savedFile) return;
+        document.markClean();
+        transitions.finalizeSavedDraft(savedFile);
+        return;
+      }
+      case 'rotate-diagram':
         diagram.rotateDiagramSession();
         close.clearCloseSummary();
-      }
-      return;
+        return;
+      case 'request-existing-save':
+        await requestExistingSave('save');
+        return;
     }
-    await requestExistingSave('save');
   }, [
     close,
     context.isDraft,
@@ -185,25 +242,30 @@ export const useMarkdownEditorSaveWorkflow = ({
   ]);
 
   const handleSaveAndClose = useCallback(async () => {
-    if (context.isDraft) {
-      if (saveNewMutation.isPending) return;
-      const savedFile = await saveDraftDocument();
-      if (!savedFile) return;
-      document.markClean();
-      transitions.finalizeBack();
-      return;
+    const action = decideSaveAndCloseAction({
+      isDraft: context.isDraft,
+      isReadOnly: context.isReadOnly,
+      isDirty: document.dirty,
+      isSavingDraft: saveNewMutation.isPending
+    });
+    switch (action.kind) {
+      case 'noop':
+        return;
+      case 'save-draft': {
+        const savedFile = await saveDraftDocument();
+        if (!savedFile) return;
+        document.markClean();
+        transitions.finalizeBack();
+        return;
+      }
+      case 'finalize-exit':
+        close.clearCloseSummary();
+        transitions.finalizeExit();
+        return;
+      case 'request-existing-save':
+        await requestExistingSave('save-and-close');
+        return;
     }
-    if (context.isReadOnly) {
-      close.clearCloseSummary();
-      transitions.finalizeExit();
-      return;
-    }
-    if (document.dirty) {
-      await requestExistingSave('save-and-close');
-      return;
-    }
-    close.clearCloseSummary();
-    transitions.finalizeExit();
   }, [
     close,
     context.isDraft,

@@ -45,6 +45,59 @@ type MonthBucket = {
  * A 12-month grid (current month + next 11), one cell per month, bucketing the given contracts by
  * the calendar month of `contract_end`. A contract already overdue (its `contract_end` before the
  * start of the current month) is folded into the current month's cell instead of disappearing off
+ * the front of the grid; a contract renewing more than 12 months out, or with no `contract_end` at
+ * all, is excluded from the grid and counted separately.
+ */
+export const buildContractCalendarMonths = (
+  contracts: readonly VendorContractRow[],
+  today: Date
+): { months: MonthBucket[]; beyondCount: number; noEndDateCount: number } => {
+  const currentMonthStart = startOfMonth(today);
+  const currentKey = monthKey(currentMonthStart);
+  const monthStarts: Date[] = [];
+  for (let i = 0; i < 12; i++) {
+    monthStarts.push(
+      new Date(currentMonthStart.getFullYear(), currentMonthStart.getMonth() + i, 1)
+    );
+  }
+  const lastKey = monthKey(monthStarts[monthStarts.length - 1]!);
+
+  const buckets = new Map<string, MonthBucket>(
+    monthStarts.map(start => {
+      const key = monthKey(start);
+      return [key, { key, label: MONTH_LABEL.format(start), rows: [] }];
+    })
+  );
+
+  let beyond = 0;
+  let noEndDate = 0;
+  for (const row of contracts) {
+    const contractEnd =
+      typeof row.contract.contract_end === 'string' ? row.contract.contract_end : null;
+    if (!contractEnd) {
+      noEndDate++;
+      continue;
+    }
+    const end = new Date(`${contractEnd.slice(0, 10)}T00:00:00`);
+    if (Number.isNaN(end.getTime())) {
+      noEndDate++;
+      continue;
+    }
+    const key = end < currentMonthStart ? currentKey : monthKey(end);
+    if (key > lastKey) {
+      beyond++;
+      continue;
+    }
+    buckets.get(key)?.rows.push(row);
+  }
+
+  return { months: [...buckets.values()], beyondCount: beyond, noEndDateCount: noEndDate };
+};
+
+/**
+ * A 12-month grid (current month + next 11), one cell per month, bucketing the given contracts by
+ * the calendar month of `contract_end`. A contract already overdue (its `contract_end` before the
+ * start of the current month) is folded into the current month's cell instead of disappearing off
  * the front of the grid, so nothing due is ever missing from view; a contract renewing more than
  * 12 months out, or with no `contract_end` at all, is excluded from the grid and counted in the
  * caption below it — both are still visible in the list view.
@@ -61,48 +114,10 @@ export const VendorContractsCalendar = ({
 }) => {
   const today = useMemo(() => new Date(), []);
 
-  const { months, beyondCount, noEndDateCount } = useMemo(() => {
-    const currentMonthStart = startOfMonth(today);
-    const currentKey = monthKey(currentMonthStart);
-    const monthStarts: Date[] = [];
-    for (let i = 0; i < 12; i++) {
-      monthStarts.push(
-        new Date(currentMonthStart.getFullYear(), currentMonthStart.getMonth() + i, 1)
-      );
-    }
-    const lastKey = monthKey(monthStarts[monthStarts.length - 1]!);
-
-    const buckets = new Map<string, MonthBucket>(
-      monthStarts.map(start => {
-        const key = monthKey(start);
-        return [key, { key, label: MONTH_LABEL.format(start), rows: [] }];
-      })
-    );
-
-    let beyond = 0;
-    let noEndDate = 0;
-    for (const row of contracts) {
-      const contractEnd =
-        typeof row.contract.contract_end === 'string' ? row.contract.contract_end : null;
-      if (!contractEnd) {
-        noEndDate++;
-        continue;
-      }
-      const end = new Date(`${contractEnd.slice(0, 10)}T00:00:00`);
-      if (Number.isNaN(end.getTime())) {
-        noEndDate++;
-        continue;
-      }
-      const key = end < currentMonthStart ? currentKey : monthKey(end);
-      if (key > lastKey) {
-        beyond++;
-        continue;
-      }
-      buckets.get(key)?.rows.push(row);
-    }
-
-    return { months: [...buckets.values()], beyondCount: beyond, noEndDateCount: noEndDate };
-  }, [contracts, today]);
+  const { months, beyondCount, noEndDateCount } = useMemo(
+    () => buildContractCalendarMonths(contracts, today),
+    [contracts, today]
+  );
 
   return (
     <div>
