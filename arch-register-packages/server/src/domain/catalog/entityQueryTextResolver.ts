@@ -988,7 +988,7 @@ function resolvePathExpression(
 
   const last = steps[steps.length - 1]!;
   if (node.comparator) {
-    if (last.step.kind !== 'endpoint' && last.step.filter) {
+    if (last.step.kind !== 'endpoint' && last.step.kind !== 'relationSubtree' && last.step.filter) {
       throw new TextCompileError(
         `'[...]' cannot be combined with a trailing comparator on the same segment`,
         node.comparator.offset

@@ -170,6 +170,7 @@ const pathUsesRecursiveContainment = (steps: readonly PathStep[]): boolean =>
   steps.some(
     step =>
       step.kind === 'containmentSubtree' ||
+      step.kind === 'relationSubtree' ||
       ('filter' in step && step.filter != null && queryNodeUsesRecursiveContainment(step.filter))
   );
 
@@ -267,7 +268,7 @@ export const validateEntityTraversalPlan = (
       errors.push({
         path: ['root', 'entityQuery', 'root'],
         message:
-          "Entity traversal root queries cannot use 'containmentSubtree'; put recursive steps in a traversal path"
+          "Entity traversal root queries cannot use 'containmentSubtree' or 'relationSubtree'; put recursive steps in a traversal path"
       });
     }
   } else {
@@ -297,15 +298,15 @@ export const validateEntityTraversalPlan = (
     }
     pathIds.add(path.id);
 
-    const genericContainment = path.steps.some(
-      step =>
-        step.kind === 'containmentSubtree' && step.fieldId === '*' && step.ownerSchemaId === '*'
-    );
-    if (genericContainment) {
+    const isWildcardStep = (step: PathStep): boolean =>
+      (step.kind === 'containmentSubtree' && step.fieldId === '*' && step.ownerSchemaId === '*') ||
+      step.kind === 'relationSubtree';
+    const usesWildcardStep = path.steps.some(isWildcardStep);
+    if (usesWildcardStep) {
       if (path.steps.length !== 1) {
         errors.push({
           path: ['paths', pathIndex, 'steps'],
-          message: "Wildcard containment traversal must be the path's only step"
+          message: "Wildcard containment/relation traversal must be the path's only step"
         });
       }
     } else {
@@ -646,7 +647,7 @@ const fixedStepCte = (
   cteName: string,
   previousName: string,
   previousKind: EntityTraversalPathTerminal,
-  step: Exclude<PathStep, { kind: 'containmentSubtree' }>,
+  step: Exclude<PathStep, { kind: 'containmentSubtree' } | { kind: 'relationSubtree' }>,
   terminalContext: EntityTraversalPathTerminal | undefined,
   isTerminalStep: boolean,
   state: EntityQuerySqlRenderState
@@ -799,7 +800,9 @@ const fixedStepCte = (
     );
     nextKind = 'relation';
   } else {
-    throw new Error("'containmentSubtree' must be handled by the recursive traversal compiler");
+    throw new Error(
+      "'containmentSubtree'/'relationSubtree' must be handled by the recursive traversal compiler"
+    );
   }
 
   return {
@@ -1013,6 +1016,270 @@ const recursiveGenericContainmentCte = (
   };
 };
 
+/** Recursive traversal used by the blast-radius `relationSubtree` wildcard step. Unlike
+ * `recursiveGenericContainmentCte` (containment fields only), this unions in reference fields and
+ * unbound typed relations too, in the requested direction, producing one recursive CTE with a
+ * branch per edge kind rather than reimplementing traversal per hop. */
+const recursiveGenericRelationCte = (
+  cteName: string,
+  previousName: string,
+  step: Extract<PathStep, { kind: 'relationSubtree' }>,
+  state: EntityQuerySqlRenderState,
+  schemas: SchemaCatalog,
+  relationSchemas: RelationSchemaCatalog,
+  maxDepth: number,
+  maxNodes: number
+): { sql: string; marker: RecursiveMarker } => {
+  const previousAlias = `p_${cteName}`.replace(/[^a-zA-Z0-9_]/g, '_');
+  const seedAlias = `${previousAlias}_seed`;
+  const includeForward = step.direction === 'forward' || step.direction === 'both';
+  const includeBackward = step.direction === 'backward' || step.direction === 'both';
+
+  // Every visible reference/containment field across every schema; a `relationSubtree` step has
+  // no owning field, so (unlike `forward`/`backward`) it must OR across all of them.
+  const referenceFields = [...schemas.values()].flatMap(schema =>
+    schema.fields
+      .filter(
+        field =>
+          (field.type === 'containment' || field.type === 'reference') &&
+          !isFieldViewRestricted(state.authCtx, schema, field.id)
+      )
+      .map(field => ({ schemaId: schema.id, fieldId: field.id }))
+  );
+  const relationSchemaIds = [...relationSchemas.keys()];
+
+  const seedColumns = [
+    `${previousAlias}.root_id AS root_id`,
+    `'entity' AS current_kind`,
+    `${seedAlias}.id AS current_id`,
+    `${seedAlias}.schema_id AS current_schema_id`,
+    `${seedAlias}.name AS current_name`,
+    `${previousAlias}.recursive_depth AS recursive_depth`,
+    `${previousAlias}.visited_ids AS visited_ids`,
+    `${previousAlias}.provenance_contexts AS provenance_contexts`,
+    `${previousAlias}.provenance_ids AS provenance_ids`,
+    `${previousAlias}.provenance_schema_ids AS provenance_schema_ids`,
+    `${previousAlias}.cycle_detected AS cycle_detected`
+  ];
+  const seed = `SELECT ${seedColumns.join(', ')} FROM ${previousName} ${previousAlias} JOIN scoped_entity ${seedAlias} ON ${seedAlias}.id = ${previousAlias}.current_id`;
+
+  const notVisited = (poolAlias: string): string =>
+    `NOT ${listContains(`${previousAlias}.visited_ids`, `${poolAlias}.child_id`, state)}`;
+  const recursiveColumns = (poolAlias: string): string =>
+    [
+      `${previousAlias}.root_id AS root_id`,
+      `'entity' AS current_kind`,
+      `${poolAlias}.child_id AS current_id`,
+      `${poolAlias}.child_schema_id AS current_schema_id`,
+      `${poolAlias}.child_name AS current_name`,
+      `${previousAlias}.recursive_depth + 1 AS recursive_depth`,
+      `${listAppend(`${previousAlias}.visited_ids`, `${poolAlias}.child_id`, state)} AS visited_ids`,
+      `${listAppendLiteral(`${previousAlias}.provenance_contexts`, 'entity')} AS provenance_contexts`,
+      `${listAppend(`${previousAlias}.provenance_ids`, `${poolAlias}.child_id`, state)} AS provenance_ids`,
+      `${listAppend(`${previousAlias}.provenance_schema_ids`, `${poolAlias}.child_schema_id`, state)} AS provenance_schema_ids`,
+      `${previousAlias}.cycle_detected AS cycle_detected`
+    ].join(', ');
+
+  // Postgres permits only a single self-reference to the recursive CTE within its own recursive
+  // term ("recursive reference to query ... must not appear more than once"), which rules out
+  // unioning several branches that each independently `JOIN cteName previousAlias`. Instead, every
+  // edge kind (reference/containment forward & backward, typed-relation forward & backward) is
+  // computed as a plain, uncorrelated "edge pool" - {owner_id, child_id, child_schema_id,
+  // child_name} rows for every visible edge in the workspace - and `cteName` is joined against
+  // that pool exactly once, correlating via an ordinary `pool.owner_id = previousAlias.current_id`
+  // predicate rather than a nested FROM-clause self-reference.
+  const poolAlias = `${previousAlias}_pool`;
+  const poolSelects: string[] = [];
+
+  if (includeForward && referenceFields.length > 0) {
+    const ownerAlias = `${previousAlias}_fo`;
+    const childAlias = `${previousAlias}_ft`;
+    const joins = referenceFields
+      .map(
+        ({ schemaId, fieldId }) =>
+          `(${ownerAlias}.schema_id = ${schemaIdParameter(schemaId, state)} AND ${relationJoinClause(ownerAlias, fieldId, childAlias, state)})`
+      )
+      .join(' OR ');
+    poolSelects.push(
+      `SELECT ${ownerAlias}.id AS owner_id, ${childAlias}.id AS child_id, ${childAlias}.schema_id AS child_schema_id, ${childAlias}.name AS child_name ` +
+        `FROM scoped_entity ${ownerAlias} JOIN scoped_entity ${childAlias} ON (${joins})`
+    );
+  }
+
+  if (includeBackward && referenceFields.length > 0) {
+    // Unlike the forward branch, a backward edge's owner isn't a distinct row to join against -
+    // it's whichever id the child's own reference/containment field array happens to contain, so
+    // each field is unnested (one pool branch per field) rather than checked as a single OR'd
+    // membership predicate against a fixed target.
+    referenceFields.forEach(({ schemaId, fieldId }, index) => {
+      const childAlias = `${previousAlias}_bt${index}`;
+      const elementAlias = `${previousAlias}_be${index}`;
+      const element = jsonArrayLateralElement(childAlias, fieldId, elementAlias, state);
+      poolSelects.push(
+        `SELECT ${element.valueColumn} AS owner_id, ${childAlias}.id AS child_id, ${childAlias}.schema_id AS child_schema_id, ${childAlias}.name AS child_name ` +
+          `FROM scoped_entity ${childAlias} ${element.joinClause} ` +
+          `WHERE ${childAlias}.schema_id = ${schemaIdParameter(schemaId, state)}`
+      );
+    });
+  }
+
+  // Owner occupies the 'out' endpoint for a forward hop (target is 'in'), and the 'in' endpoint
+  // for a backward hop (target is 'out') — mirrors `unboundTypedRelation`'s direction semantics
+  // in `fixedStepCte`.
+  relationSchemaIds.forEach((relationSchemaId, index) => {
+    if (includeForward) {
+      const ownerAlias = `${previousAlias}_tfo${index}`;
+      const relAlias = `${previousAlias}_tfr${index}`;
+      const childAlias = `${previousAlias}_tft${index}`;
+      // `state.parameters.add` calls must happen in the same left-to-right order their `?`
+      // placeholders end up in the final SQL text - SQLite binds the Nth `?` occurrence to the
+      // Nth value regardless of which call "logically" produced it. The relation-schema param is
+      // embedded in the `JOIN ... ON` clause (textually first); the owner-schema clause's params
+      // land in the `WHERE` clause (textually after) - so it must be computed second, even though
+      // it's referenced in the template literal after the join clause is already written out.
+      const relationSchemaParam = schemaIdParameter(relationSchemaId, state);
+      const ownerSchemaClause = unboundTypedRelationOwnerSchemaClause(
+        ownerAlias,
+        relationSchemaId,
+        'out',
+        state
+      );
+      poolSelects.push(
+        `SELECT ${ownerAlias}.id AS owner_id, ${childAlias}.id AS child_id, ${childAlias}.schema_id AS child_schema_id, ${childAlias}.name AS child_name ` +
+          `FROM scoped_entity ${ownerAlias} ` +
+          `JOIN scoped_relation ${relAlias} ON ${relAlias}.workspace = ${ownerAlias}.workspace AND ${relAlias}.schema_id = ${relationSchemaParam} AND ${relAlias}.out_record_id = ${ownerAlias}.id ` +
+          `JOIN scoped_entity ${childAlias} ON ${childAlias}.id = ${relAlias}.in_record_id ` +
+          `WHERE ${ownerSchemaClause}`
+      );
+    }
+    if (includeBackward) {
+      const ownerAlias = `${previousAlias}_tbo${index}`;
+      const relAlias = `${previousAlias}_tbr${index}`;
+      const childAlias = `${previousAlias}_tbt${index}`;
+      const relationSchemaParam = schemaIdParameter(relationSchemaId, state);
+      const ownerSchemaClause = unboundTypedRelationOwnerSchemaClause(
+        ownerAlias,
+        relationSchemaId,
+        'in',
+        state
+      );
+      poolSelects.push(
+        `SELECT ${ownerAlias}.id AS owner_id, ${childAlias}.id AS child_id, ${childAlias}.schema_id AS child_schema_id, ${childAlias}.name AS child_name ` +
+          `FROM scoped_entity ${ownerAlias} ` +
+          `JOIN scoped_relation ${relAlias} ON ${relAlias}.workspace = ${ownerAlias}.workspace AND ${relAlias}.schema_id = ${relationSchemaParam} AND ${relAlias}.in_record_id = ${ownerAlias}.id ` +
+          `JOIN scoped_entity ${childAlias} ON ${childAlias}.id = ${relAlias}.out_record_id ` +
+          `WHERE ${ownerSchemaClause}`
+      );
+    }
+  });
+
+  const maxDepthParam = state.parameters.add(maxDepth);
+  const recursive =
+    poolSelects.length > 0
+      ? `SELECT ${recursiveColumns(poolAlias)} FROM ${cteName} ${previousAlias} ` +
+        `JOIN (${poolSelects.join(' UNION ALL ')}) ${poolAlias} ON ${poolAlias}.owner_id = ${previousAlias}.current_id ` +
+        `WHERE ${previousAlias}.recursive_depth < ${maxDepthParam} AND ${notVisited(poolAlias)}`
+      : `SELECT ${recursiveColumns(`${previousAlias}_none`)} FROM ${cteName} ${previousAlias} JOIN (SELECT NULL AS owner_id, NULL AS child_id, NULL AS child_schema_id, NULL AS child_name WHERE 1=0) ${previousAlias}_none ON 1=0`;
+
+  const markerName = `${cteName}_limits`;
+  const markerAlias = `m_${cteName.replace(/[^a-zA-Z0-9_]/g, '_')}`;
+  const nodeParam = state.parameters.add(maxNodes);
+
+  // Builds one EXISTS clause per edge kind (reference-forward/backward, typed-forward/backward),
+  // OR'd together, mirroring the recursive term's own branches but scoped to a single alias.
+  const edgeExists = (rootAlias: string, suffix: string, requireVisited: boolean): string => {
+    const clauses: string[] = [];
+    const visitedClause = (childAlias: string): string =>
+      requireVisited
+        ? listContains(`${rootAlias}.visited_ids`, `${childAlias}.id`, state)
+        : `NOT ${listContains(`${rootAlias}.visited_ids`, `${childAlias}.id`, state)}`;
+
+    if (includeForward && referenceFields.length > 0) {
+      const ownerAlias = `${markerAlias}_${suffix}fo`;
+      const childAlias = `${markerAlias}_${suffix}ft`;
+      const joins = referenceFields
+        .map(
+          ({ schemaId, fieldId }) =>
+            `(${ownerAlias}.schema_id = ${schemaIdParameter(schemaId, state)} AND ${relationJoinClause(ownerAlias, fieldId, childAlias, state)})`
+        )
+        .join(' OR ');
+      clauses.push(
+        `EXISTS (SELECT 1 FROM scoped_entity ${ownerAlias} JOIN scoped_entity ${childAlias} ON (${joins}) WHERE ${ownerAlias}.id = ${rootAlias}.current_id AND ${visitedClause(childAlias)})`
+      );
+    }
+    if (includeBackward && referenceFields.length > 0) {
+      const childAlias = `${markerAlias}_${suffix}bt`;
+      const joins = referenceFields
+        .map(
+          ({ schemaId, fieldId }) =>
+            `(${childAlias}.schema_id = ${schemaIdParameter(schemaId, state)} AND ${referenceContainsId(childAlias, fieldId, `${rootAlias}.current_id`, state)})`
+        )
+        .join(' OR ');
+      clauses.push(
+        `EXISTS (SELECT 1 FROM scoped_entity ${childAlias} WHERE (${joins}) AND ${visitedClause(childAlias)})`
+      );
+    }
+    relationSchemaIds.forEach((relationSchemaId, index) => {
+      if (includeForward) {
+        const ownerAlias = `${markerAlias}_${suffix}tfo${index}`;
+        const relAlias = `${markerAlias}_${suffix}tfr${index}`;
+        const childAlias = `${markerAlias}_${suffix}tft${index}`;
+        // See the parameter-ordering comment on the recursive term's typed-relation branches
+        // above - the relation-schema param must be allocated before the owner-schema clause's.
+        const relationSchemaParam = schemaIdParameter(relationSchemaId, state);
+        const ownerSchemaClause = unboundTypedRelationOwnerSchemaClause(
+          ownerAlias,
+          relationSchemaId,
+          'out',
+          state
+        );
+        clauses.push(
+          `EXISTS (SELECT 1 FROM scoped_entity ${ownerAlias} JOIN scoped_relation ${relAlias} ON ${relAlias}.workspace = ${ownerAlias}.workspace AND ${relAlias}.schema_id = ${relationSchemaParam} AND ${relAlias}.out_record_id = ${ownerAlias}.id JOIN scoped_entity ${childAlias} ON ${childAlias}.id = ${relAlias}.in_record_id WHERE ${ownerAlias}.id = ${rootAlias}.current_id AND ${ownerSchemaClause} AND ${visitedClause(childAlias)})`
+        );
+      }
+      if (includeBackward) {
+        const ownerAlias = `${markerAlias}_${suffix}tbo${index}`;
+        const relAlias = `${markerAlias}_${suffix}tbr${index}`;
+        const childAlias = `${markerAlias}_${suffix}tbt${index}`;
+        const relationSchemaParam = schemaIdParameter(relationSchemaId, state);
+        const ownerSchemaClause = unboundTypedRelationOwnerSchemaClause(
+          ownerAlias,
+          relationSchemaId,
+          'in',
+          state
+        );
+        clauses.push(
+          `EXISTS (SELECT 1 FROM scoped_entity ${ownerAlias} JOIN scoped_relation ${relAlias} ON ${relAlias}.workspace = ${ownerAlias}.workspace AND ${relAlias}.schema_id = ${relationSchemaParam} AND ${relAlias}.in_record_id = ${ownerAlias}.id JOIN scoped_entity ${childAlias} ON ${childAlias}.id = ${relAlias}.out_record_id WHERE ${ownerAlias}.id = ${rootAlias}.current_id AND ${ownerSchemaClause} AND ${visitedClause(childAlias)})`
+        );
+      }
+    });
+    return clauses.length > 0 ? clauses.join(' OR ') : '1=0';
+  };
+
+  // Unlike a fixed-path traversal (where hitting maxDepth means the caller's requested data may be
+  // incomplete and `EntityTraversalLimitError` is the right signal), `relationSubtree` is an
+  // open-ended "what's reachable within N hops" exploration - maxDepth is the intended stopping
+  // point, not an overflow to fail on. `node_exceeded` (a genuine safety cap on total traversed
+  // rows) is still enforced.
+  const marker = [
+    `${markerName} AS (SELECT ${markerAlias}.root_id AS root_id,`,
+    `CASE WHEN COUNT(*) > ${nodeParam} THEN 1 ELSE 0 END AS node_exceeded,`,
+    `0 AS depth_exceeded,`,
+    `CASE WHEN MAX(CASE WHEN (${edgeExists(markerAlias, 'c', true)}) THEN 1 ELSE 0 END) = 1 THEN 1 ELSE 0 END AS cycle_detected`,
+    `FROM ${cteName} ${markerAlias} GROUP BY ${markerAlias}.root_id)`
+  ].join(' ');
+
+  return {
+    sql: `${cteName} AS (${seed} UNION ALL ${recursive}), ${marker}`,
+    marker: {
+      name: markerName,
+      depthExceeded: 'depth_exceeded',
+      nodeExceeded: 'node_exceeded',
+      cycleDetected: 'cycle_detected'
+    }
+  };
+};
+
 const mappedColumns = (
   entityAlias: string,
   relationAlias: string,
@@ -1187,6 +1454,20 @@ const compileTraversalSql = (
                 plan.maxDepth ?? DEFAULT_ENTITY_TRAVERSAL_MAX_DEPTH,
                 plan.maxNodes ?? DEFAULT_ENTITY_TRAVERSAL_MAX_NODES
               );
+        ctes.push(recursive.sql);
+        markers.push(recursive.marker);
+        previousKind = 'entity';
+      } else if (step.kind === 'relationSubtree') {
+        const recursive = recursiveGenericRelationCte(
+          cteName,
+          previousName,
+          step,
+          state,
+          schemas,
+          relationSchemas,
+          plan.maxDepth ?? DEFAULT_ENTITY_TRAVERSAL_MAX_DEPTH,
+          plan.maxNodes ?? DEFAULT_ENTITY_TRAVERSAL_MAX_NODES
+        );
         ctes.push(recursive.sql);
         markers.push(recursive.marker);
         previousKind = 'entity';

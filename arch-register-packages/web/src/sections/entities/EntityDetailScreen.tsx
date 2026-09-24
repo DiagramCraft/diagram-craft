@@ -543,6 +543,12 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
             onEntityClick: navigateToEntity
           }}
           dependentsProps={{ workspaceId, entityId, schemas, lifecycleStates }}
+          blastRadiusProps={{
+            workspaceId,
+            subject: { kind: 'entity', entityId: entity?._uid ?? entityId },
+            schemas,
+            lifecycleStates
+          }}
           relatedContentProps={{ workspaceId, entityId }}
         />
       )}

@@ -567,6 +567,11 @@ export const validatePathSteps = (
           });
         }
       }
+    } else if (step.kind === 'relationSubtree') {
+      // Unreachable in practice: validateEntityTraversalPlan's wildcard-must-be-only-step check
+      // (entityTraversal.ts) never forwards a relationSubtree path to validatePathSteps. This
+      // branch exists only so the step doesn't fall into the generic `fieldId` check below, which
+      // a relationSubtree step doesn't have.
     } else {
       if (!isKnownFieldId(step.fieldId, schemas, authCtx)) {
         errors.push({
@@ -581,6 +586,7 @@ export const validatePathSteps = (
       step.kind !== 'typedRelation' &&
       step.kind !== 'unboundTypedRelation' &&
       step.kind !== 'relationBackward' &&
+      step.kind !== 'relationSubtree' &&
       step.filter
     ) {
       hopsUsed = validateNode(
@@ -750,7 +756,11 @@ const validateNode = (
 // PathStep.filter (the `[...]` scoping, §4.3).
 const pathUsesAssessmentField = (steps: PathStep[]): boolean =>
   steps.some(
-    step => step.kind !== 'endpoint' && step.filter != null && nodeUsesAssessmentField(step.filter)
+    step =>
+      step.kind !== 'endpoint' &&
+      step.kind !== 'relationSubtree' &&
+      step.filter != null &&
+      nodeUsesAssessmentField(step.filter)
   );
 
 const nodeUsesAssessmentField = (node: QueryNode): boolean => {
@@ -799,6 +809,8 @@ const projectionAlias = (projection: NonNullable<EntityQuery['projections']>[num
           return `<-${step.relationSchemaId}.${step.fieldId}`;
         case 'containmentSubtree':
           return `subtree(${step.ownerSchemaId}.${step.fieldId})`;
+        case 'relationSubtree':
+          return `relationSubtree(${step.direction})`;
       }
     })
     .join('.');
@@ -987,7 +999,7 @@ export const validateEntityQueryIR = (
     // further hops past the scoped segment (`releases[f columns tech.name]`) leaves the filter
     // mid-path, which is fine as long as that prefix is still witness-bound.
     projection.path.forEach((step, stepIndex) => {
-      if (step.kind === 'endpoint' || !step.filter) return;
+      if (step.kind === 'endpoint' || step.kind === 'relationSubtree' || !step.filter) return;
       const prefix = projection.path.slice(0, stepIndex + 1);
       if (!rootPathOccurrences.some(occurrence => entityQueryPathStartsWith(occurrence, prefix))) {
         errors.push({

@@ -130,8 +130,10 @@ const pathUsesRestrictedField = (
         : false;
     }
     // 'endpoint' has no field/ACL of its own to restrict — visibility of the entity it lands on
-    // is governed by ordinary entity view permissions, not schema field-group ACL.
-    if (step.kind === 'endpoint') return false;
+    // is governed by ordinary entity view permissions, not schema field-group ACL. 'relationSubtree'
+    // never names a single field (it fans out over every visible field/relation, each individually
+    // ACL-checked by the traversal compiler) and never appears in a saved view/projection path.
+    if (step.kind === 'endpoint' || step.kind === 'relationSubtree') return false;
     const stepRestricted =
       step.kind === 'backward' || step.kind === 'containmentSubtree'
         ? fieldIsRestricted(step.fieldId, schemas, authCtx, step.ownerSchemaId)

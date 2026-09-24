@@ -975,6 +975,19 @@
           derived fields. The Risk & Compliance template additionally ships a `Control Coverage` traceability view
           following each Control out to its mitigated Risks and protected entities.
 
+        - @id:ar.entities.blast-radius On the entity detail screen, users can open a "Blast radius" tab alongside
+          Topology, Graph, and Dependents. It runs a bounded, permission-aware traversal outward from the entity
+          across every visible reference, containment, and typed relation, grouped and ranked by lifecycle, owner,
+          schema, and available criticality metadata, and lists each reachable entity with an explainable path
+          back to the subject; clicking a result opens that entity's drawer. Users can filter results by depth
+          (direct, or an extended two/three-hop traversal), owner, entity schema, and — for extended depths — the
+          schemas encountered along the path. The same panel is also reachable from a relation instance: a "View
+          blast radius" action in the Relations browser's row menu, and a "View blast radius" button in the
+          relation detail popover shown by the entity graph and Topology views, both opening it in a dialog scoped
+          to that relation's two endpoints. Restricted entities and relations are never disclosed through the
+          traversal or its result counts, reusing the same permission-scoping the entity query engine and
+          dependents lookups already apply.
+
         - @id:ar.entities.content Users can attach and manage structured or Markdown-based content associated with an
           entity.
 

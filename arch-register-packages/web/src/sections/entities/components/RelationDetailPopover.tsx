@@ -3,10 +3,13 @@ import { Popover } from '@diagram-craft/app-components/Popover';
 import { Button } from '@diagram-craft/app-components/Button';
 import { useRelation } from '../../../hooks/useRelations';
 import { useRelationSchemas } from '../../../hooks/useRelationSchemas';
+import { useSchemas } from '../../../hooks/useSchemas';
+import { useLifecycleStates } from '../../../hooks/useWorkspaceConfig';
 import { useEntitiesByIds } from '../../../hooks/useEntities';
 import { relationIds } from '../../../lib/entityEditState';
 import { EntityNavigationLink } from '../../../components/EntityNavigationLink';
 import { RelationAuditLogDialog } from '../../../dialogs/RelationAuditLogDialog';
+import { RelationBlastRadiusDialog } from '../../relations/RelationBlastRadiusDialog';
 import { formatRelationFieldValue, renderEntityRelationFieldValue } from './RelationRecordList';
 import sharedStyles from '../EntityDetailScreen.module.css';
 import overviewStyles from './EntityOverviewTab.module.css';
@@ -26,8 +29,11 @@ type Props = {
 // without navigating away to a full page.
 export const RelationDetailPopover = ({ workspaceId, relationId, x, y, onClose }: Props) => {
   const [showHistory, setShowHistory] = useState(false);
+  const [showBlastRadius, setShowBlastRadius] = useState(false);
   const { data: record, isLoading } = useRelation(workspaceId, relationId);
   const { data: relationSchemas } = useRelationSchemas(workspaceId, !!relationId);
+  const { data: schemas = [] } = useSchemas(workspaceId);
+  const { data: lifecycleStates = [] } = useLifecycleStates(workspaceId);
   const relationSchema = relationSchemas?.find(schema => schema.id === record?._schema.id);
   const activeFields = (relationSchema?.fields ?? []).filter(field => !field.archived);
   const entityRelationIds = record
@@ -78,6 +84,7 @@ export const RelationDetailPopover = ({ workspaceId, relationId, x, y, onClose }
               </div>
             )}
             <div className={styles.footer}>
+              <Button onClick={() => setShowBlastRadius(true)}>View blast radius</Button>
               <Button onClick={() => setShowHistory(true)}>View history</Button>
             </div>
           </div>
@@ -88,6 +95,14 @@ export const RelationDetailPopover = ({ workspaceId, relationId, x, y, onClose }
         onClose={() => setShowHistory(false)}
         workspaceId={workspaceId}
         relation={record ?? null}
+      />
+      <RelationBlastRadiusDialog
+        open={showBlastRadius}
+        onClose={() => setShowBlastRadius(false)}
+        workspaceId={workspaceId}
+        relationId={record?._uid ?? null}
+        schemas={schemas}
+        lifecycleStates={lifecycleStates}
       />
     </>
   );

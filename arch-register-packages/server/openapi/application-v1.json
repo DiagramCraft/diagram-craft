@@ -20396,6 +20396,26 @@
                                 "fieldId",
                                 "ownerSchemaId"
                               ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "kind": {
+                                  "const": "relationSubtree"
+                                },
+                                "direction": {
+                                  "enum": [
+                                    "forward",
+                                    "backward",
+                                    "both"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "kind",
+                                "direction"
+                              ]
                             }
                           ]
                         }
@@ -21127,6 +21147,26 @@
                                   "fieldId",
                                   "ownerSchemaId"
                                 ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "const": "relationSubtree"
+                                  },
+                                  "direction": {
+                                    "enum": [
+                                      "forward",
+                                      "backward",
+                                      "both"
+                                    ],
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "direction"
+                                ]
                               }
                             ]
                           }
@@ -21331,6 +21371,26 @@
                                   "kind",
                                   "fieldId",
                                   "ownerSchemaId"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "const": "relationSubtree"
+                                  },
+                                  "direction": {
+                                    "enum": [
+                                      "forward",
+                                      "backward",
+                                      "both"
+                                    ],
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "direction"
                                 ]
                               }
                             ]
@@ -21547,6 +21607,26 @@
                                   "kind",
                                   "fieldId",
                                   "ownerSchemaId"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "const": "relationSubtree"
+                                  },
+                                  "direction": {
+                                    "enum": [
+                                      "forward",
+                                      "backward",
+                                      "both"
+                                    ],
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "direction"
                                 ]
                               }
                             ]
@@ -23321,6 +23401,26 @@
                                 "fieldId",
                                 "ownerSchemaId"
                               ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "kind": {
+                                  "const": "relationSubtree"
+                                },
+                                "direction": {
+                                  "enum": [
+                                    "forward",
+                                    "backward",
+                                    "both"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "kind",
+                                "direction"
+                              ]
                             }
                           ]
                         }
@@ -24052,6 +24152,26 @@
                                   "fieldId",
                                   "ownerSchemaId"
                                 ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "const": "relationSubtree"
+                                  },
+                                  "direction": {
+                                    "enum": [
+                                      "forward",
+                                      "backward",
+                                      "both"
+                                    ],
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "direction"
+                                ]
                               }
                             ]
                           }
@@ -24256,6 +24376,26 @@
                                   "kind",
                                   "fieldId",
                                   "ownerSchemaId"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "const": "relationSubtree"
+                                  },
+                                  "direction": {
+                                    "enum": [
+                                      "forward",
+                                      "backward",
+                                      "both"
+                                    ],
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "direction"
                                 ]
                               }
                             ]
@@ -24472,6 +24612,26 @@
                                   "kind",
                                   "fieldId",
                                   "ownerSchemaId"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "const": "relationSubtree"
+                                  },
+                                  "direction": {
+                                    "enum": [
+                                      "forward",
+                                      "backward",
+                                      "both"
+                                    ],
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "direction"
                                 ]
                               }
                             ]
@@ -28148,6 +28308,26 @@
                                             "fieldId",
                                             "ownerSchemaId"
                                           ]
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "kind": {
+                                              "const": "relationSubtree"
+                                            },
+                                            "direction": {
+                                              "enum": [
+                                                "forward",
+                                                "backward",
+                                                "both"
+                                              ],
+                                              "type": "string"
+                                            }
+                                          },
+                                          "required": [
+                                            "kind",
+                                            "direction"
+                                          ]
                                         }
                                       ]
                                     }
@@ -29005,6 +29185,26 @@
                                               "fieldId",
                                               "ownerSchemaId"
                                             ]
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "kind": {
+                                                "const": "relationSubtree"
+                                              },
+                                              "direction": {
+                                                "enum": [
+                                                  "forward",
+                                                  "backward",
+                                                  "both"
+                                                ],
+                                                "type": "string"
+                                              }
+                                            },
+                                            "required": [
+                                              "kind",
+                                              "direction"
+                                            ]
                                           }
                                         ]
                                       }
@@ -29216,6 +29416,26 @@
                                               "kind",
                                               "fieldId",
                                               "ownerSchemaId"
+                                            ]
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "kind": {
+                                                "const": "relationSubtree"
+                                              },
+                                              "direction": {
+                                                "enum": [
+                                                  "forward",
+                                                  "backward",
+                                                  "both"
+                                                ],
+                                                "type": "string"
+                                              }
+                                            },
+                                            "required": [
+                                              "kind",
+                                              "direction"
                                             ]
                                           }
                                         ]
@@ -29432,6 +29652,26 @@
                                               "kind",
                                               "fieldId",
                                               "ownerSchemaId"
+                                            ]
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "kind": {
+                                                "const": "relationSubtree"
+                                              },
+                                              "direction": {
+                                                "enum": [
+                                                  "forward",
+                                                  "backward",
+                                                  "both"
+                                                ],
+                                                "type": "string"
+                                              }
+                                            },
+                                            "required": [
+                                              "kind",
+                                              "direction"
                                             ]
                                           }
                                         ]
@@ -30791,6 +31031,26 @@
                                       "fieldId",
                                       "ownerSchemaId"
                                     ]
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "kind": {
+                                        "const": "relationSubtree"
+                                      },
+                                      "direction": {
+                                        "enum": [
+                                          "forward",
+                                          "backward",
+                                          "both"
+                                        ],
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "kind",
+                                      "direction"
+                                    ]
                                   }
                                 ]
                               }
@@ -31522,6 +31782,26 @@
                                         "fieldId",
                                         "ownerSchemaId"
                                       ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "const": "relationSubtree"
+                                        },
+                                        "direction": {
+                                          "enum": [
+                                            "forward",
+                                            "backward",
+                                            "both"
+                                          ],
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "direction"
+                                      ]
                                     }
                                   ]
                                 }
@@ -31726,6 +32006,26 @@
                                         "kind",
                                         "fieldId",
                                         "ownerSchemaId"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "const": "relationSubtree"
+                                        },
+                                        "direction": {
+                                          "enum": [
+                                            "forward",
+                                            "backward",
+                                            "both"
+                                          ],
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "direction"
                                       ]
                                     }
                                   ]
@@ -31942,6 +32242,26 @@
                                         "kind",
                                         "fieldId",
                                         "ownerSchemaId"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "const": "relationSubtree"
+                                        },
+                                        "direction": {
+                                          "enum": [
+                                            "forward",
+                                            "backward",
+                                            "both"
+                                          ],
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "direction"
                                       ]
                                     }
                                   ]
@@ -33386,6 +33706,26 @@
                                 "fieldId",
                                 "ownerSchemaId"
                               ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "kind": {
+                                  "const": "relationSubtree"
+                                },
+                                "direction": {
+                                  "enum": [
+                                    "forward",
+                                    "backward",
+                                    "both"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "kind",
+                                "direction"
+                              ]
                             }
                           ]
                         }
@@ -34117,6 +34457,26 @@
                                   "fieldId",
                                   "ownerSchemaId"
                                 ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "const": "relationSubtree"
+                                  },
+                                  "direction": {
+                                    "enum": [
+                                      "forward",
+                                      "backward",
+                                      "both"
+                                    ],
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "direction"
+                                ]
                               }
                             ]
                           }
@@ -34321,6 +34681,26 @@
                                   "kind",
                                   "fieldId",
                                   "ownerSchemaId"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "const": "relationSubtree"
+                                  },
+                                  "direction": {
+                                    "enum": [
+                                      "forward",
+                                      "backward",
+                                      "both"
+                                    ],
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "direction"
                                 ]
                               }
                             ]
@@ -34537,6 +34917,26 @@
                                   "kind",
                                   "fieldId",
                                   "ownerSchemaId"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "const": "relationSubtree"
+                                  },
+                                  "direction": {
+                                    "enum": [
+                                      "forward",
+                                      "backward",
+                                      "both"
+                                    ],
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "direction"
                                 ]
                               }
                             ]
@@ -37611,6 +38011,26 @@
                                 "fieldId",
                                 "ownerSchemaId"
                               ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "kind": {
+                                  "const": "relationSubtree"
+                                },
+                                "direction": {
+                                  "enum": [
+                                    "forward",
+                                    "backward",
+                                    "both"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "kind",
+                                "direction"
+                              ]
                             }
                           ]
                         }
@@ -38342,6 +38762,26 @@
                                   "fieldId",
                                   "ownerSchemaId"
                                 ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "const": "relationSubtree"
+                                  },
+                                  "direction": {
+                                    "enum": [
+                                      "forward",
+                                      "backward",
+                                      "both"
+                                    ],
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "direction"
+                                ]
                               }
                             ]
                           }
@@ -38546,6 +38986,26 @@
                                   "kind",
                                   "fieldId",
                                   "ownerSchemaId"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "const": "relationSubtree"
+                                  },
+                                  "direction": {
+                                    "enum": [
+                                      "forward",
+                                      "backward",
+                                      "both"
+                                    ],
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "direction"
                                 ]
                               }
                             ]
@@ -38762,6 +39222,26 @@
                                   "kind",
                                   "fieldId",
                                   "ownerSchemaId"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "const": "relationSubtree"
+                                  },
+                                  "direction": {
+                                    "enum": [
+                                      "forward",
+                                      "backward",
+                                      "both"
+                                    ],
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "direction"
                                 ]
                               }
                             ]
@@ -44070,6 +44550,26 @@
                                 "fieldId",
                                 "ownerSchemaId"
                               ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "kind": {
+                                  "const": "relationSubtree"
+                                },
+                                "direction": {
+                                  "enum": [
+                                    "forward",
+                                    "backward",
+                                    "both"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "kind",
+                                "direction"
+                              ]
                             }
                           ]
                         }
@@ -44801,6 +45301,26 @@
                                   "fieldId",
                                   "ownerSchemaId"
                                 ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "const": "relationSubtree"
+                                  },
+                                  "direction": {
+                                    "enum": [
+                                      "forward",
+                                      "backward",
+                                      "both"
+                                    ],
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "direction"
+                                ]
                               }
                             ]
                           }
@@ -45005,6 +45525,26 @@
                                   "kind",
                                   "fieldId",
                                   "ownerSchemaId"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "const": "relationSubtree"
+                                  },
+                                  "direction": {
+                                    "enum": [
+                                      "forward",
+                                      "backward",
+                                      "both"
+                                    ],
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "direction"
                                 ]
                               }
                             ]
@@ -45221,6 +45761,26 @@
                                   "kind",
                                   "fieldId",
                                   "ownerSchemaId"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "const": "relationSubtree"
+                                  },
+                                  "direction": {
+                                    "enum": [
+                                      "forward",
+                                      "backward",
+                                      "both"
+                                    ],
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "direction"
                                 ]
                               }
                             ]
@@ -52077,6 +52637,26 @@
                                 "fieldId",
                                 "ownerSchemaId"
                               ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "kind": {
+                                  "const": "relationSubtree"
+                                },
+                                "direction": {
+                                  "enum": [
+                                    "forward",
+                                    "backward",
+                                    "both"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "kind",
+                                "direction"
+                              ]
                             }
                           ]
                         }
@@ -52808,6 +53388,26 @@
                                   "fieldId",
                                   "ownerSchemaId"
                                 ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "const": "relationSubtree"
+                                  },
+                                  "direction": {
+                                    "enum": [
+                                      "forward",
+                                      "backward",
+                                      "both"
+                                    ],
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "direction"
+                                ]
                               }
                             ]
                           }
@@ -53012,6 +53612,26 @@
                                   "kind",
                                   "fieldId",
                                   "ownerSchemaId"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "const": "relationSubtree"
+                                  },
+                                  "direction": {
+                                    "enum": [
+                                      "forward",
+                                      "backward",
+                                      "both"
+                                    ],
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "direction"
                                 ]
                               }
                             ]
@@ -53228,6 +53848,26 @@
                                   "kind",
                                   "fieldId",
                                   "ownerSchemaId"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "const": "relationSubtree"
+                                  },
+                                  "direction": {
+                                    "enum": [
+                                      "forward",
+                                      "backward",
+                                      "both"
+                                    ],
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "direction"
                                 ]
                               }
                             ]
@@ -54695,6 +55335,26 @@
                                   "kind",
                                   "fieldId",
                                   "ownerSchemaId"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "const": "relationSubtree"
+                                  },
+                                  "direction": {
+                                    "enum": [
+                                      "forward",
+                                      "backward",
+                                      "both"
+                                    ],
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "direction"
                                 ]
                               }
                             ]
@@ -56207,6 +56867,26 @@
                                   "kind",
                                   "fieldId",
                                   "ownerSchemaId"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "const": "relationSubtree"
+                                  },
+                                  "direction": {
+                                    "enum": [
+                                      "forward",
+                                      "backward",
+                                      "both"
+                                    ],
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "direction"
                                 ]
                               }
                             ]
@@ -57950,6 +58630,26 @@
                                   "kind",
                                   "fieldId",
                                   "ownerSchemaId"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "const": "relationSubtree"
+                                  },
+                                  "direction": {
+                                    "enum": [
+                                      "forward",
+                                      "backward",
+                                      "both"
+                                    ],
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "direction"
                                 ]
                               }
                             ]
@@ -99845,6 +100545,26 @@
                                           "fieldId",
                                           "ownerSchemaId"
                                         ]
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "kind": {
+                                            "const": "relationSubtree"
+                                          },
+                                          "direction": {
+                                            "enum": [
+                                              "forward",
+                                              "backward",
+                                              "both"
+                                            ],
+                                            "type": "string"
+                                          }
+                                        },
+                                        "required": [
+                                          "kind",
+                                          "direction"
+                                        ]
                                       }
                                     ]
                                   }
@@ -100702,6 +101422,26 @@
                                             "fieldId",
                                             "ownerSchemaId"
                                           ]
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "kind": {
+                                              "const": "relationSubtree"
+                                            },
+                                            "direction": {
+                                              "enum": [
+                                                "forward",
+                                                "backward",
+                                                "both"
+                                              ],
+                                              "type": "string"
+                                            }
+                                          },
+                                          "required": [
+                                            "kind",
+                                            "direction"
+                                          ]
                                         }
                                       ]
                                     }
@@ -100913,6 +101653,26 @@
                                             "kind",
                                             "fieldId",
                                             "ownerSchemaId"
+                                          ]
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "kind": {
+                                              "const": "relationSubtree"
+                                            },
+                                            "direction": {
+                                              "enum": [
+                                                "forward",
+                                                "backward",
+                                                "both"
+                                              ],
+                                              "type": "string"
+                                            }
+                                          },
+                                          "required": [
+                                            "kind",
+                                            "direction"
                                           ]
                                         }
                                       ]
@@ -101129,6 +101889,26 @@
                                             "kind",
                                             "fieldId",
                                             "ownerSchemaId"
+                                          ]
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "kind": {
+                                              "const": "relationSubtree"
+                                            },
+                                            "direction": {
+                                              "enum": [
+                                                "forward",
+                                                "backward",
+                                                "both"
+                                              ],
+                                              "type": "string"
+                                            }
+                                          },
+                                          "required": [
+                                            "kind",
+                                            "direction"
                                           ]
                                         }
                                       ]
@@ -103083,6 +103863,26 @@
                                                 "fieldId",
                                                 "ownerSchemaId"
                                               ]
+                                            },
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "kind": {
+                                                  "const": "relationSubtree"
+                                                },
+                                                "direction": {
+                                                  "enum": [
+                                                    "forward",
+                                                    "backward",
+                                                    "both"
+                                                  ],
+                                                  "type": "string"
+                                                }
+                                              },
+                                              "required": [
+                                                "kind",
+                                                "direction"
+                                              ]
                                             }
                                           ],
                                           "description": "Explicit hop connecting this level to the previous level; derived from schema adjacency when absent"
@@ -103842,6 +104642,26 @@
                                                   "kind",
                                                   "fieldId",
                                                   "ownerSchemaId"
+                                                ]
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "relationSubtree"
+                                                  },
+                                                  "direction": {
+                                                    "enum": [
+                                                      "forward",
+                                                      "backward",
+                                                      "both"
+                                                    ],
+                                                    "type": "string"
+                                                  }
+                                                },
+                                                "required": [
+                                                  "kind",
+                                                  "direction"
                                                 ]
                                               }
                                             ]
@@ -105420,6 +106240,26 @@
                                             "fieldId",
                                             "ownerSchemaId"
                                           ]
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "kind": {
+                                              "const": "relationSubtree"
+                                            },
+                                            "direction": {
+                                              "enum": [
+                                                "forward",
+                                                "backward",
+                                                "both"
+                                              ],
+                                              "type": "string"
+                                            }
+                                          },
+                                          "required": [
+                                            "kind",
+                                            "direction"
+                                          ]
                                         }
                                       ]
                                     },
@@ -106832,6 +107672,26 @@
                                       "fieldId",
                                       "ownerSchemaId"
                                     ]
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "kind": {
+                                        "const": "relationSubtree"
+                                      },
+                                      "direction": {
+                                        "enum": [
+                                          "forward",
+                                          "backward",
+                                          "both"
+                                        ],
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "kind",
+                                      "direction"
+                                    ]
                                   }
                                 ]
                               }
@@ -107563,6 +108423,26 @@
                                         "fieldId",
                                         "ownerSchemaId"
                                       ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "const": "relationSubtree"
+                                        },
+                                        "direction": {
+                                          "enum": [
+                                            "forward",
+                                            "backward",
+                                            "both"
+                                          ],
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "direction"
+                                      ]
                                     }
                                   ]
                                 }
@@ -107767,6 +108647,26 @@
                                         "kind",
                                         "fieldId",
                                         "ownerSchemaId"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "const": "relationSubtree"
+                                        },
+                                        "direction": {
+                                          "enum": [
+                                            "forward",
+                                            "backward",
+                                            "both"
+                                          ],
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "direction"
                                       ]
                                     }
                                   ]
@@ -107983,6 +108883,26 @@
                                         "kind",
                                         "fieldId",
                                         "ownerSchemaId"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "const": "relationSubtree"
+                                        },
+                                        "direction": {
+                                          "enum": [
+                                            "forward",
+                                            "backward",
+                                            "both"
+                                          ],
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "direction"
                                       ]
                                     }
                                   ]
@@ -109643,6 +110563,26 @@
                                             "fieldId",
                                             "ownerSchemaId"
                                           ]
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "kind": {
+                                              "const": "relationSubtree"
+                                            },
+                                            "direction": {
+                                              "enum": [
+                                                "forward",
+                                                "backward",
+                                                "both"
+                                              ],
+                                              "type": "string"
+                                            }
+                                          },
+                                          "required": [
+                                            "kind",
+                                            "direction"
+                                          ]
                                         }
                                       ],
                                       "description": "Explicit hop connecting this level to the previous level; derived from schema adjacency when absent"
@@ -110402,6 +111342,26 @@
                                               "kind",
                                               "fieldId",
                                               "ownerSchemaId"
+                                            ]
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "kind": {
+                                                "const": "relationSubtree"
+                                              },
+                                              "direction": {
+                                                "enum": [
+                                                  "forward",
+                                                  "backward",
+                                                  "both"
+                                                ],
+                                                "type": "string"
+                                              }
+                                            },
+                                            "required": [
+                                              "kind",
+                                              "direction"
                                             ]
                                           }
                                         ]
@@ -111685,6 +112645,26 @@
                                         "kind",
                                         "fieldId",
                                         "ownerSchemaId"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "const": "relationSubtree"
+                                        },
+                                        "direction": {
+                                          "enum": [
+                                            "forward",
+                                            "backward",
+                                            "both"
+                                          ],
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "direction"
                                       ]
                                     }
                                   ]
@@ -113362,6 +114342,26 @@
                                         "fieldId",
                                         "ownerSchemaId"
                                       ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "const": "relationSubtree"
+                                        },
+                                        "direction": {
+                                          "enum": [
+                                            "forward",
+                                            "backward",
+                                            "both"
+                                          ],
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "direction"
+                                      ]
                                     }
                                   ]
                                 }
@@ -114219,6 +115219,26 @@
                                           "fieldId",
                                           "ownerSchemaId"
                                         ]
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "kind": {
+                                            "const": "relationSubtree"
+                                          },
+                                          "direction": {
+                                            "enum": [
+                                              "forward",
+                                              "backward",
+                                              "both"
+                                            ],
+                                            "type": "string"
+                                          }
+                                        },
+                                        "required": [
+                                          "kind",
+                                          "direction"
+                                        ]
                                       }
                                     ]
                                   }
@@ -114430,6 +115450,26 @@
                                           "kind",
                                           "fieldId",
                                           "ownerSchemaId"
+                                        ]
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "kind": {
+                                            "const": "relationSubtree"
+                                          },
+                                          "direction": {
+                                            "enum": [
+                                              "forward",
+                                              "backward",
+                                              "both"
+                                            ],
+                                            "type": "string"
+                                          }
+                                        },
+                                        "required": [
+                                          "kind",
+                                          "direction"
                                         ]
                                       }
                                     ]
@@ -114646,6 +115686,26 @@
                                           "kind",
                                           "fieldId",
                                           "ownerSchemaId"
+                                        ]
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "kind": {
+                                            "const": "relationSubtree"
+                                          },
+                                          "direction": {
+                                            "enum": [
+                                              "forward",
+                                              "backward",
+                                              "both"
+                                            ],
+                                            "type": "string"
+                                          }
+                                        },
+                                        "required": [
+                                          "kind",
+                                          "direction"
                                         ]
                                       }
                                     ]
@@ -116600,6 +117660,26 @@
                                               "fieldId",
                                               "ownerSchemaId"
                                             ]
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "kind": {
+                                                "const": "relationSubtree"
+                                              },
+                                              "direction": {
+                                                "enum": [
+                                                  "forward",
+                                                  "backward",
+                                                  "both"
+                                                ],
+                                                "type": "string"
+                                              }
+                                            },
+                                            "required": [
+                                              "kind",
+                                              "direction"
+                                            ]
                                           }
                                         ],
                                         "description": "Explicit hop connecting this level to the previous level; derived from schema adjacency when absent"
@@ -118291,6 +119371,26 @@
                                                 "fieldId",
                                                 "ownerSchemaId"
                                               ]
+                                            },
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "kind": {
+                                                  "const": "relationSubtree"
+                                                },
+                                                "direction": {
+                                                  "enum": [
+                                                    "forward",
+                                                    "backward",
+                                                    "both"
+                                                  ],
+                                                  "type": "string"
+                                                }
+                                              },
+                                              "required": [
+                                                "kind",
+                                                "direction"
+                                              ]
                                             }
                                           ]
                                         },
@@ -119868,6 +120968,26 @@
                                           "fieldId",
                                           "ownerSchemaId"
                                         ]
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "kind": {
+                                            "const": "relationSubtree"
+                                          },
+                                          "direction": {
+                                            "enum": [
+                                              "forward",
+                                              "backward",
+                                              "both"
+                                            ],
+                                            "type": "string"
+                                          }
+                                        },
+                                        "required": [
+                                          "kind",
+                                          "direction"
+                                        ]
                                       }
                                     ]
                                   },
@@ -121271,6 +122391,26 @@
                                       "fieldId",
                                       "ownerSchemaId"
                                     ]
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "kind": {
+                                        "const": "relationSubtree"
+                                      },
+                                      "direction": {
+                                        "enum": [
+                                          "forward",
+                                          "backward",
+                                          "both"
+                                        ],
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "kind",
+                                      "direction"
+                                    ]
                                   }
                                 ]
                               }
@@ -122002,6 +123142,26 @@
                                         "fieldId",
                                         "ownerSchemaId"
                                       ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "const": "relationSubtree"
+                                        },
+                                        "direction": {
+                                          "enum": [
+                                            "forward",
+                                            "backward",
+                                            "both"
+                                          ],
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "direction"
+                                      ]
                                     }
                                   ]
                                 }
@@ -122206,6 +123366,26 @@
                                         "kind",
                                         "fieldId",
                                         "ownerSchemaId"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "const": "relationSubtree"
+                                        },
+                                        "direction": {
+                                          "enum": [
+                                            "forward",
+                                            "backward",
+                                            "both"
+                                          ],
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "direction"
                                       ]
                                     }
                                   ]
@@ -122422,6 +123602,26 @@
                                         "kind",
                                         "fieldId",
                                         "ownerSchemaId"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "const": "relationSubtree"
+                                        },
+                                        "direction": {
+                                          "enum": [
+                                            "forward",
+                                            "backward",
+                                            "both"
+                                          ],
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "direction"
                                       ]
                                     }
                                   ]
@@ -124082,6 +125282,26 @@
                                             "fieldId",
                                             "ownerSchemaId"
                                           ]
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "kind": {
+                                              "const": "relationSubtree"
+                                            },
+                                            "direction": {
+                                              "enum": [
+                                                "forward",
+                                                "backward",
+                                                "both"
+                                              ],
+                                              "type": "string"
+                                            }
+                                          },
+                                          "required": [
+                                            "kind",
+                                            "direction"
+                                          ]
                                         }
                                       ],
                                       "description": "Explicit hop connecting this level to the previous level; derived from schema adjacency when absent"
@@ -124841,6 +126061,26 @@
                                               "kind",
                                               "fieldId",
                                               "ownerSchemaId"
+                                            ]
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "kind": {
+                                                "const": "relationSubtree"
+                                              },
+                                              "direction": {
+                                                "enum": [
+                                                  "forward",
+                                                  "backward",
+                                                  "both"
+                                                ],
+                                                "type": "string"
+                                              }
+                                            },
+                                            "required": [
+                                              "kind",
+                                              "direction"
                                             ]
                                           }
                                         ]
@@ -126124,6 +127364,26 @@
                                         "kind",
                                         "fieldId",
                                         "ownerSchemaId"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "const": "relationSubtree"
+                                        },
+                                        "direction": {
+                                          "enum": [
+                                            "forward",
+                                            "backward",
+                                            "both"
+                                          ],
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "direction"
                                       ]
                                     }
                                   ]
@@ -127796,6 +129056,26 @@
                                         "fieldId",
                                         "ownerSchemaId"
                                       ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "const": "relationSubtree"
+                                        },
+                                        "direction": {
+                                          "enum": [
+                                            "forward",
+                                            "backward",
+                                            "both"
+                                          ],
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "direction"
+                                      ]
                                     }
                                   ]
                                 }
@@ -128653,6 +129933,26 @@
                                           "fieldId",
                                           "ownerSchemaId"
                                         ]
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "kind": {
+                                            "const": "relationSubtree"
+                                          },
+                                          "direction": {
+                                            "enum": [
+                                              "forward",
+                                              "backward",
+                                              "both"
+                                            ],
+                                            "type": "string"
+                                          }
+                                        },
+                                        "required": [
+                                          "kind",
+                                          "direction"
+                                        ]
                                       }
                                     ]
                                   }
@@ -128864,6 +130164,26 @@
                                           "kind",
                                           "fieldId",
                                           "ownerSchemaId"
+                                        ]
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "kind": {
+                                            "const": "relationSubtree"
+                                          },
+                                          "direction": {
+                                            "enum": [
+                                              "forward",
+                                              "backward",
+                                              "both"
+                                            ],
+                                            "type": "string"
+                                          }
+                                        },
+                                        "required": [
+                                          "kind",
+                                          "direction"
                                         ]
                                       }
                                     ]
@@ -129080,6 +130400,26 @@
                                           "kind",
                                           "fieldId",
                                           "ownerSchemaId"
+                                        ]
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "kind": {
+                                            "const": "relationSubtree"
+                                          },
+                                          "direction": {
+                                            "enum": [
+                                              "forward",
+                                              "backward",
+                                              "both"
+                                            ],
+                                            "type": "string"
+                                          }
+                                        },
+                                        "required": [
+                                          "kind",
+                                          "direction"
                                         ]
                                       }
                                     ]
@@ -131034,6 +132374,26 @@
                                               "fieldId",
                                               "ownerSchemaId"
                                             ]
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "kind": {
+                                                "const": "relationSubtree"
+                                              },
+                                              "direction": {
+                                                "enum": [
+                                                  "forward",
+                                                  "backward",
+                                                  "both"
+                                                ],
+                                                "type": "string"
+                                              }
+                                            },
+                                            "required": [
+                                              "kind",
+                                              "direction"
+                                            ]
                                           }
                                         ],
                                         "description": "Explicit hop connecting this level to the previous level; derived from schema adjacency when absent"
@@ -132725,6 +134085,26 @@
                                                 "fieldId",
                                                 "ownerSchemaId"
                                               ]
+                                            },
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "kind": {
+                                                  "const": "relationSubtree"
+                                                },
+                                                "direction": {
+                                                  "enum": [
+                                                    "forward",
+                                                    "backward",
+                                                    "both"
+                                                  ],
+                                                  "type": "string"
+                                                }
+                                              },
+                                              "required": [
+                                                "kind",
+                                                "direction"
+                                              ]
                                             }
                                           ]
                                         },
@@ -134301,6 +135681,26 @@
                                           "kind",
                                           "fieldId",
                                           "ownerSchemaId"
+                                        ]
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "kind": {
+                                            "const": "relationSubtree"
+                                          },
+                                          "direction": {
+                                            "enum": [
+                                              "forward",
+                                              "backward",
+                                              "both"
+                                            ],
+                                            "type": "string"
+                                          }
+                                        },
+                                        "required": [
+                                          "kind",
+                                          "direction"
                                         ]
                                       }
                                     ]
@@ -137255,6 +138655,26 @@
                                                   "fieldId",
                                                   "ownerSchemaId"
                                                 ]
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "relationSubtree"
+                                                  },
+                                                  "direction": {
+                                                    "enum": [
+                                                      "forward",
+                                                      "backward",
+                                                      "both"
+                                                    ],
+                                                    "type": "string"
+                                                  }
+                                                },
+                                                "required": [
+                                                  "kind",
+                                                  "direction"
+                                                ]
                                               }
                                             ]
                                           }
@@ -138117,6 +139537,26 @@
                                                     "fieldId",
                                                     "ownerSchemaId"
                                                   ]
+                                                },
+                                                {
+                                                  "type": "object",
+                                                  "properties": {
+                                                    "kind": {
+                                                      "const": "relationSubtree"
+                                                    },
+                                                    "direction": {
+                                                      "enum": [
+                                                        "forward",
+                                                        "backward",
+                                                        "both"
+                                                      ],
+                                                      "type": "string"
+                                                    }
+                                                  },
+                                                  "required": [
+                                                    "kind",
+                                                    "direction"
+                                                  ]
                                                 }
                                               ]
                                             }
@@ -138333,6 +139773,26 @@
                                                     "kind",
                                                     "fieldId",
                                                     "ownerSchemaId"
+                                                  ]
+                                                },
+                                                {
+                                                  "type": "object",
+                                                  "properties": {
+                                                    "kind": {
+                                                      "const": "relationSubtree"
+                                                    },
+                                                    "direction": {
+                                                      "enum": [
+                                                        "forward",
+                                                        "backward",
+                                                        "both"
+                                                      ],
+                                                      "type": "string"
+                                                    }
+                                                  },
+                                                  "required": [
+                                                    "kind",
+                                                    "direction"
                                                   ]
                                                 }
                                               ]
@@ -138554,6 +140014,26 @@
                                                     "kind",
                                                     "fieldId",
                                                     "ownerSchemaId"
+                                                  ]
+                                                },
+                                                {
+                                                  "type": "object",
+                                                  "properties": {
+                                                    "kind": {
+                                                      "const": "relationSubtree"
+                                                    },
+                                                    "direction": {
+                                                      "enum": [
+                                                        "forward",
+                                                        "backward",
+                                                        "both"
+                                                      ],
+                                                      "type": "string"
+                                                    }
+                                                  },
+                                                  "required": [
+                                                    "kind",
+                                                    "direction"
                                                   ]
                                                 }
                                               ]
@@ -139110,6 +140590,26 @@
                                               "kind",
                                               "fieldId",
                                               "ownerSchemaId"
+                                            ]
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "kind": {
+                                                "const": "relationSubtree"
+                                              },
+                                              "direction": {
+                                                "enum": [
+                                                  "forward",
+                                                  "backward",
+                                                  "both"
+                                                ],
+                                                "type": "string"
+                                              }
+                                            },
+                                            "required": [
+                                              "kind",
+                                              "direction"
                                             ]
                                           }
                                         ]
@@ -139840,6 +141340,26 @@
                                                 "fieldId",
                                                 "ownerSchemaId"
                                               ]
+                                            },
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "kind": {
+                                                  "const": "relationSubtree"
+                                                },
+                                                "direction": {
+                                                  "enum": [
+                                                    "forward",
+                                                    "backward",
+                                                    "both"
+                                                  ],
+                                                  "type": "string"
+                                                }
+                                              },
+                                              "required": [
+                                                "kind",
+                                                "direction"
+                                              ]
                                             }
                                           ]
                                         }
@@ -140042,6 +141562,26 @@
                                                 "kind",
                                                 "fieldId",
                                                 "ownerSchemaId"
+                                              ]
+                                            },
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "kind": {
+                                                  "const": "relationSubtree"
+                                                },
+                                                "direction": {
+                                                  "enum": [
+                                                    "forward",
+                                                    "backward",
+                                                    "both"
+                                                  ],
+                                                  "type": "string"
+                                                }
+                                              },
+                                              "required": [
+                                                "kind",
+                                                "direction"
                                               ]
                                             }
                                           ]
@@ -140256,6 +141796,26 @@
                                                 "kind",
                                                 "fieldId",
                                                 "ownerSchemaId"
+                                              ]
+                                            },
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "kind": {
+                                                  "const": "relationSubtree"
+                                                },
+                                                "direction": {
+                                                  "enum": [
+                                                    "forward",
+                                                    "backward",
+                                                    "both"
+                                                  ],
+                                                  "type": "string"
+                                                }
+                                              },
+                                              "required": [
+                                                "kind",
+                                                "direction"
                                               ]
                                             }
                                           ]
@@ -141109,6 +142669,26 @@
                                                 "fieldId",
                                                 "ownerSchemaId"
                                               ]
+                                            },
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "kind": {
+                                                  "const": "relationSubtree"
+                                                },
+                                                "direction": {
+                                                  "enum": [
+                                                    "forward",
+                                                    "backward",
+                                                    "both"
+                                                  ],
+                                                  "type": "string"
+                                                }
+                                              },
+                                              "required": [
+                                                "kind",
+                                                "direction"
+                                              ]
                                             }
                                           ]
                                         }
@@ -141966,6 +143546,26 @@
                                                   "fieldId",
                                                   "ownerSchemaId"
                                                 ]
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "relationSubtree"
+                                                  },
+                                                  "direction": {
+                                                    "enum": [
+                                                      "forward",
+                                                      "backward",
+                                                      "both"
+                                                    ],
+                                                    "type": "string"
+                                                  }
+                                                },
+                                                "required": [
+                                                  "kind",
+                                                  "direction"
+                                                ]
                                               }
                                             ]
                                           }
@@ -142177,6 +143777,26 @@
                                                   "kind",
                                                   "fieldId",
                                                   "ownerSchemaId"
+                                                ]
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "relationSubtree"
+                                                  },
+                                                  "direction": {
+                                                    "enum": [
+                                                      "forward",
+                                                      "backward",
+                                                      "both"
+                                                    ],
+                                                    "type": "string"
+                                                  }
+                                                },
+                                                "required": [
+                                                  "kind",
+                                                  "direction"
                                                 ]
                                               }
                                             ]
@@ -142393,6 +144013,26 @@
                                                   "kind",
                                                   "fieldId",
                                                   "ownerSchemaId"
+                                                ]
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "relationSubtree"
+                                                  },
+                                                  "direction": {
+                                                    "enum": [
+                                                      "forward",
+                                                      "backward",
+                                                      "both"
+                                                    ],
+                                                    "type": "string"
+                                                  }
+                                                },
+                                                "required": [
+                                                  "kind",
+                                                  "direction"
                                                 ]
                                               }
                                             ]
@@ -142958,6 +144598,26 @@
                                               "kind",
                                               "fieldId",
                                               "ownerSchemaId"
+                                            ]
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "kind": {
+                                                "const": "relationSubtree"
+                                              },
+                                              "direction": {
+                                                "enum": [
+                                                  "forward",
+                                                  "backward",
+                                                  "both"
+                                                ],
+                                                "type": "string"
+                                              }
+                                            },
+                                            "required": [
+                                              "kind",
+                                              "direction"
                                             ]
                                           }
                                         ]
@@ -143688,6 +145348,26 @@
                                                 "fieldId",
                                                 "ownerSchemaId"
                                               ]
+                                            },
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "kind": {
+                                                  "const": "relationSubtree"
+                                                },
+                                                "direction": {
+                                                  "enum": [
+                                                    "forward",
+                                                    "backward",
+                                                    "both"
+                                                  ],
+                                                  "type": "string"
+                                                }
+                                              },
+                                              "required": [
+                                                "kind",
+                                                "direction"
+                                              ]
                                             }
                                           ]
                                         }
@@ -143890,6 +145570,26 @@
                                                 "kind",
                                                 "fieldId",
                                                 "ownerSchemaId"
+                                              ]
+                                            },
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "kind": {
+                                                  "const": "relationSubtree"
+                                                },
+                                                "direction": {
+                                                  "enum": [
+                                                    "forward",
+                                                    "backward",
+                                                    "both"
+                                                  ],
+                                                  "type": "string"
+                                                }
+                                              },
+                                              "required": [
+                                                "kind",
+                                                "direction"
                                               ]
                                             }
                                           ]
@@ -144104,6 +145804,26 @@
                                                 "kind",
                                                 "fieldId",
                                                 "ownerSchemaId"
+                                              ]
+                                            },
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "kind": {
+                                                  "const": "relationSubtree"
+                                                },
+                                                "direction": {
+                                                  "enum": [
+                                                    "forward",
+                                                    "backward",
+                                                    "both"
+                                                  ],
+                                                  "type": "string"
+                                                }
+                                              },
+                                              "required": [
+                                                "kind",
+                                                "direction"
                                               ]
                                             }
                                           ]
@@ -144952,6 +146672,26 @@
                                                 "fieldId",
                                                 "ownerSchemaId"
                                               ]
+                                            },
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "kind": {
+                                                  "const": "relationSubtree"
+                                                },
+                                                "direction": {
+                                                  "enum": [
+                                                    "forward",
+                                                    "backward",
+                                                    "both"
+                                                  ],
+                                                  "type": "string"
+                                                }
+                                              },
+                                              "required": [
+                                                "kind",
+                                                "direction"
+                                              ]
                                             }
                                           ]
                                         }
@@ -145809,6 +147549,26 @@
                                                   "fieldId",
                                                   "ownerSchemaId"
                                                 ]
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "relationSubtree"
+                                                  },
+                                                  "direction": {
+                                                    "enum": [
+                                                      "forward",
+                                                      "backward",
+                                                      "both"
+                                                    ],
+                                                    "type": "string"
+                                                  }
+                                                },
+                                                "required": [
+                                                  "kind",
+                                                  "direction"
+                                                ]
                                               }
                                             ]
                                           }
@@ -146020,6 +147780,26 @@
                                                   "kind",
                                                   "fieldId",
                                                   "ownerSchemaId"
+                                                ]
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "relationSubtree"
+                                                  },
+                                                  "direction": {
+                                                    "enum": [
+                                                      "forward",
+                                                      "backward",
+                                                      "both"
+                                                    ],
+                                                    "type": "string"
+                                                  }
+                                                },
+                                                "required": [
+                                                  "kind",
+                                                  "direction"
                                                 ]
                                               }
                                             ]
@@ -146236,6 +148016,26 @@
                                                   "kind",
                                                   "fieldId",
                                                   "ownerSchemaId"
+                                                ]
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "relationSubtree"
+                                                  },
+                                                  "direction": {
+                                                    "enum": [
+                                                      "forward",
+                                                      "backward",
+                                                      "both"
+                                                    ],
+                                                    "type": "string"
+                                                  }
+                                                },
+                                                "required": [
+                                                  "kind",
+                                                  "direction"
                                                 ]
                                               }
                                             ]
@@ -177937,6 +179737,26 @@
                                 "fieldId",
                                 "ownerSchemaId"
                               ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "kind": {
+                                  "const": "relationSubtree"
+                                },
+                                "direction": {
+                                  "enum": [
+                                    "forward",
+                                    "backward",
+                                    "both"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "kind",
+                                "direction"
+                              ]
                             }
                           ]
                         },
@@ -179453,6 +181273,26 @@
                                       "fieldId",
                                       "ownerSchemaId"
                                     ]
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "kind": {
+                                        "const": "relationSubtree"
+                                      },
+                                      "direction": {
+                                        "enum": [
+                                          "forward",
+                                          "backward",
+                                          "both"
+                                        ],
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "kind",
+                                      "direction"
+                                    ]
                                   }
                                 ]
                               }
@@ -180184,6 +182024,26 @@
                                         "fieldId",
                                         "ownerSchemaId"
                                       ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "const": "relationSubtree"
+                                        },
+                                        "direction": {
+                                          "enum": [
+                                            "forward",
+                                            "backward",
+                                            "both"
+                                          ],
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "direction"
+                                      ]
                                     }
                                   ]
                                 }
@@ -180388,6 +182248,26 @@
                                         "kind",
                                         "fieldId",
                                         "ownerSchemaId"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "const": "relationSubtree"
+                                        },
+                                        "direction": {
+                                          "enum": [
+                                            "forward",
+                                            "backward",
+                                            "both"
+                                          ],
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "direction"
                                       ]
                                     }
                                   ]
@@ -180604,6 +182484,26 @@
                                         "kind",
                                         "fieldId",
                                         "ownerSchemaId"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "const": "relationSubtree"
+                                        },
+                                        "direction": {
+                                          "enum": [
+                                            "forward",
+                                            "backward",
+                                            "both"
+                                          ],
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "direction"
                                       ]
                                     }
                                   ]
@@ -189824,6 +191724,26 @@
                                                   "fieldId",
                                                   "ownerSchemaId"
                                                 ]
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "relationSubtree"
+                                                  },
+                                                  "direction": {
+                                                    "enum": [
+                                                      "forward",
+                                                      "backward",
+                                                      "both"
+                                                    ],
+                                                    "type": "string"
+                                                  }
+                                                },
+                                                "required": [
+                                                  "kind",
+                                                  "direction"
+                                                ]
                                               }
                                             ]
                                           }
@@ -190681,6 +192601,26 @@
                                                     "fieldId",
                                                     "ownerSchemaId"
                                                   ]
+                                                },
+                                                {
+                                                  "type": "object",
+                                                  "properties": {
+                                                    "kind": {
+                                                      "const": "relationSubtree"
+                                                    },
+                                                    "direction": {
+                                                      "enum": [
+                                                        "forward",
+                                                        "backward",
+                                                        "both"
+                                                      ],
+                                                      "type": "string"
+                                                    }
+                                                  },
+                                                  "required": [
+                                                    "kind",
+                                                    "direction"
+                                                  ]
                                                 }
                                               ]
                                             }
@@ -190892,6 +192832,26 @@
                                                     "kind",
                                                     "fieldId",
                                                     "ownerSchemaId"
+                                                  ]
+                                                },
+                                                {
+                                                  "type": "object",
+                                                  "properties": {
+                                                    "kind": {
+                                                      "const": "relationSubtree"
+                                                    },
+                                                    "direction": {
+                                                      "enum": [
+                                                        "forward",
+                                                        "backward",
+                                                        "both"
+                                                      ],
+                                                      "type": "string"
+                                                    }
+                                                  },
+                                                  "required": [
+                                                    "kind",
+                                                    "direction"
                                                   ]
                                                 }
                                               ]
@@ -191108,6 +193068,26 @@
                                                     "kind",
                                                     "fieldId",
                                                     "ownerSchemaId"
+                                                  ]
+                                                },
+                                                {
+                                                  "type": "object",
+                                                  "properties": {
+                                                    "kind": {
+                                                      "const": "relationSubtree"
+                                                    },
+                                                    "direction": {
+                                                      "enum": [
+                                                        "forward",
+                                                        "backward",
+                                                        "both"
+                                                      ],
+                                                      "type": "string"
+                                                    }
+                                                  },
+                                                  "required": [
+                                                    "kind",
+                                                    "direction"
                                                   ]
                                                 }
                                               ]
@@ -192608,6 +194588,26 @@
                                           "fieldId",
                                           "ownerSchemaId"
                                         ]
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "kind": {
+                                            "const": "relationSubtree"
+                                          },
+                                          "direction": {
+                                            "enum": [
+                                              "forward",
+                                              "backward",
+                                              "both"
+                                            ],
+                                            "type": "string"
+                                          }
+                                        },
+                                        "required": [
+                                          "kind",
+                                          "direction"
+                                        ]
                                       }
                                     ]
                                   }
@@ -193339,6 +195339,26 @@
                                             "fieldId",
                                             "ownerSchemaId"
                                           ]
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "kind": {
+                                              "const": "relationSubtree"
+                                            },
+                                            "direction": {
+                                              "enum": [
+                                                "forward",
+                                                "backward",
+                                                "both"
+                                              ],
+                                              "type": "string"
+                                            }
+                                          },
+                                          "required": [
+                                            "kind",
+                                            "direction"
+                                          ]
                                         }
                                       ]
                                     }
@@ -193543,6 +195563,26 @@
                                             "kind",
                                             "fieldId",
                                             "ownerSchemaId"
+                                          ]
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "kind": {
+                                              "const": "relationSubtree"
+                                            },
+                                            "direction": {
+                                              "enum": [
+                                                "forward",
+                                                "backward",
+                                                "both"
+                                              ],
+                                              "type": "string"
+                                            }
+                                          },
+                                          "required": [
+                                            "kind",
+                                            "direction"
                                           ]
                                         }
                                       ]
@@ -193759,6 +195799,26 @@
                                             "kind",
                                             "fieldId",
                                             "ownerSchemaId"
+                                          ]
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "kind": {
+                                              "const": "relationSubtree"
+                                            },
+                                            "direction": {
+                                              "enum": [
+                                                "forward",
+                                                "backward",
+                                                "both"
+                                              ],
+                                              "type": "string"
+                                            }
+                                          },
+                                          "required": [
+                                            "kind",
+                                            "direction"
                                           ]
                                         }
                                       ]
@@ -195514,6 +197574,26 @@
                                                 "fieldId",
                                                 "ownerSchemaId"
                                               ]
+                                            },
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "kind": {
+                                                  "const": "relationSubtree"
+                                                },
+                                                "direction": {
+                                                  "enum": [
+                                                    "forward",
+                                                    "backward",
+                                                    "both"
+                                                  ],
+                                                  "type": "string"
+                                                }
+                                              },
+                                              "required": [
+                                                "kind",
+                                                "direction"
+                                              ]
                                             }
                                           ]
                                         }
@@ -196371,6 +198451,26 @@
                                                   "fieldId",
                                                   "ownerSchemaId"
                                                 ]
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "relationSubtree"
+                                                  },
+                                                  "direction": {
+                                                    "enum": [
+                                                      "forward",
+                                                      "backward",
+                                                      "both"
+                                                    ],
+                                                    "type": "string"
+                                                  }
+                                                },
+                                                "required": [
+                                                  "kind",
+                                                  "direction"
+                                                ]
                                               }
                                             ]
                                           }
@@ -196582,6 +198682,26 @@
                                                   "kind",
                                                   "fieldId",
                                                   "ownerSchemaId"
+                                                ]
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "relationSubtree"
+                                                  },
+                                                  "direction": {
+                                                    "enum": [
+                                                      "forward",
+                                                      "backward",
+                                                      "both"
+                                                    ],
+                                                    "type": "string"
+                                                  }
+                                                },
+                                                "required": [
+                                                  "kind",
+                                                  "direction"
                                                 ]
                                               }
                                             ]
@@ -196798,6 +198918,26 @@
                                                   "kind",
                                                   "fieldId",
                                                   "ownerSchemaId"
+                                                ]
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "relationSubtree"
+                                                  },
+                                                  "direction": {
+                                                    "enum": [
+                                                      "forward",
+                                                      "backward",
+                                                      "both"
+                                                    ],
+                                                    "type": "string"
+                                                  }
+                                                },
+                                                "required": [
+                                                  "kind",
+                                                  "direction"
                                                 ]
                                               }
                                             ]
@@ -198642,6 +200782,26 @@
                                                 "fieldId",
                                                 "ownerSchemaId"
                                               ]
+                                            },
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "kind": {
+                                                  "const": "relationSubtree"
+                                                },
+                                                "direction": {
+                                                  "enum": [
+                                                    "forward",
+                                                    "backward",
+                                                    "both"
+                                                  ],
+                                                  "type": "string"
+                                                }
+                                              },
+                                              "required": [
+                                                "kind",
+                                                "direction"
+                                              ]
                                             }
                                           ]
                                         }
@@ -199499,6 +201659,26 @@
                                                   "fieldId",
                                                   "ownerSchemaId"
                                                 ]
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "relationSubtree"
+                                                  },
+                                                  "direction": {
+                                                    "enum": [
+                                                      "forward",
+                                                      "backward",
+                                                      "both"
+                                                    ],
+                                                    "type": "string"
+                                                  }
+                                                },
+                                                "required": [
+                                                  "kind",
+                                                  "direction"
+                                                ]
                                               }
                                             ]
                                           }
@@ -199710,6 +201890,26 @@
                                                   "kind",
                                                   "fieldId",
                                                   "ownerSchemaId"
+                                                ]
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "relationSubtree"
+                                                  },
+                                                  "direction": {
+                                                    "enum": [
+                                                      "forward",
+                                                      "backward",
+                                                      "both"
+                                                    ],
+                                                    "type": "string"
+                                                  }
+                                                },
+                                                "required": [
+                                                  "kind",
+                                                  "direction"
                                                 ]
                                               }
                                             ]
@@ -199926,6 +202126,26 @@
                                                   "kind",
                                                   "fieldId",
                                                   "ownerSchemaId"
+                                                ]
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "relationSubtree"
+                                                  },
+                                                  "direction": {
+                                                    "enum": [
+                                                      "forward",
+                                                      "backward",
+                                                      "both"
+                                                    ],
+                                                    "type": "string"
+                                                  }
+                                                },
+                                                "required": [
+                                                  "kind",
+                                                  "direction"
                                                 ]
                                               }
                                             ]
@@ -202793,6 +205013,26 @@
                                                 "fieldId",
                                                 "ownerSchemaId"
                                               ]
+                                            },
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "kind": {
+                                                  "const": "relationSubtree"
+                                                },
+                                                "direction": {
+                                                  "enum": [
+                                                    "forward",
+                                                    "backward",
+                                                    "both"
+                                                  ],
+                                                  "type": "string"
+                                                }
+                                              },
+                                              "required": [
+                                                "kind",
+                                                "direction"
+                                              ]
                                             }
                                           ]
                                         }
@@ -203650,6 +205890,26 @@
                                                   "fieldId",
                                                   "ownerSchemaId"
                                                 ]
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "relationSubtree"
+                                                  },
+                                                  "direction": {
+                                                    "enum": [
+                                                      "forward",
+                                                      "backward",
+                                                      "both"
+                                                    ],
+                                                    "type": "string"
+                                                  }
+                                                },
+                                                "required": [
+                                                  "kind",
+                                                  "direction"
+                                                ]
                                               }
                                             ]
                                           }
@@ -203861,6 +206121,26 @@
                                                   "kind",
                                                   "fieldId",
                                                   "ownerSchemaId"
+                                                ]
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "relationSubtree"
+                                                  },
+                                                  "direction": {
+                                                    "enum": [
+                                                      "forward",
+                                                      "backward",
+                                                      "both"
+                                                    ],
+                                                    "type": "string"
+                                                  }
+                                                },
+                                                "required": [
+                                                  "kind",
+                                                  "direction"
                                                 ]
                                               }
                                             ]
@@ -204077,6 +206357,26 @@
                                                   "kind",
                                                   "fieldId",
                                                   "ownerSchemaId"
+                                                ]
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "relationSubtree"
+                                                  },
+                                                  "direction": {
+                                                    "enum": [
+                                                      "forward",
+                                                      "backward",
+                                                      "both"
+                                                    ],
+                                                    "type": "string"
+                                                  }
+                                                },
+                                                "required": [
+                                                  "kind",
+                                                  "direction"
                                                 ]
                                               }
                                             ]
@@ -209052,6 +211352,26 @@
                                                 "fieldId",
                                                 "ownerSchemaId"
                                               ]
+                                            },
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "kind": {
+                                                  "const": "relationSubtree"
+                                                },
+                                                "direction": {
+                                                  "enum": [
+                                                    "forward",
+                                                    "backward",
+                                                    "both"
+                                                  ],
+                                                  "type": "string"
+                                                }
+                                              },
+                                              "required": [
+                                                "kind",
+                                                "direction"
+                                              ]
                                             }
                                           ]
                                         }
@@ -209909,6 +212229,26 @@
                                                   "fieldId",
                                                   "ownerSchemaId"
                                                 ]
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "relationSubtree"
+                                                  },
+                                                  "direction": {
+                                                    "enum": [
+                                                      "forward",
+                                                      "backward",
+                                                      "both"
+                                                    ],
+                                                    "type": "string"
+                                                  }
+                                                },
+                                                "required": [
+                                                  "kind",
+                                                  "direction"
+                                                ]
                                               }
                                             ]
                                           }
@@ -210120,6 +212460,26 @@
                                                   "kind",
                                                   "fieldId",
                                                   "ownerSchemaId"
+                                                ]
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "relationSubtree"
+                                                  },
+                                                  "direction": {
+                                                    "enum": [
+                                                      "forward",
+                                                      "backward",
+                                                      "both"
+                                                    ],
+                                                    "type": "string"
+                                                  }
+                                                },
+                                                "required": [
+                                                  "kind",
+                                                  "direction"
                                                 ]
                                               }
                                             ]
@@ -210336,6 +212696,26 @@
                                                   "kind",
                                                   "fieldId",
                                                   "ownerSchemaId"
+                                                ]
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "relationSubtree"
+                                                  },
+                                                  "direction": {
+                                                    "enum": [
+                                                      "forward",
+                                                      "backward",
+                                                      "both"
+                                                    ],
+                                                    "type": "string"
+                                                  }
+                                                },
+                                                "required": [
+                                                  "kind",
+                                                  "direction"
                                                 ]
                                               }
                                             ]
@@ -212180,6 +214560,26 @@
                                                 "fieldId",
                                                 "ownerSchemaId"
                                               ]
+                                            },
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "kind": {
+                                                  "const": "relationSubtree"
+                                                },
+                                                "direction": {
+                                                  "enum": [
+                                                    "forward",
+                                                    "backward",
+                                                    "both"
+                                                  ],
+                                                  "type": "string"
+                                                }
+                                              },
+                                              "required": [
+                                                "kind",
+                                                "direction"
+                                              ]
                                             }
                                           ]
                                         }
@@ -213037,6 +215437,26 @@
                                                   "fieldId",
                                                   "ownerSchemaId"
                                                 ]
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "relationSubtree"
+                                                  },
+                                                  "direction": {
+                                                    "enum": [
+                                                      "forward",
+                                                      "backward",
+                                                      "both"
+                                                    ],
+                                                    "type": "string"
+                                                  }
+                                                },
+                                                "required": [
+                                                  "kind",
+                                                  "direction"
+                                                ]
                                               }
                                             ]
                                           }
@@ -213248,6 +215668,26 @@
                                                   "kind",
                                                   "fieldId",
                                                   "ownerSchemaId"
+                                                ]
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "relationSubtree"
+                                                  },
+                                                  "direction": {
+                                                    "enum": [
+                                                      "forward",
+                                                      "backward",
+                                                      "both"
+                                                    ],
+                                                    "type": "string"
+                                                  }
+                                                },
+                                                "required": [
+                                                  "kind",
+                                                  "direction"
                                                 ]
                                               }
                                             ]
@@ -213464,6 +215904,26 @@
                                                   "kind",
                                                   "fieldId",
                                                   "ownerSchemaId"
+                                                ]
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "relationSubtree"
+                                                  },
+                                                  "direction": {
+                                                    "enum": [
+                                                      "forward",
+                                                      "backward",
+                                                      "both"
+                                                    ],
+                                                    "type": "string"
+                                                  }
+                                                },
+                                                "required": [
+                                                  "kind",
+                                                  "direction"
                                                 ]
                                               }
                                             ]

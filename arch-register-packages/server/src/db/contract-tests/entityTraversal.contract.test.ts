@@ -11,7 +11,8 @@ import {
 import type { DatabaseAdapter, DbDriver } from '../database';
 import {
   executeEntityTraversal,
-  EntityTraversalLimitError
+  EntityTraversalLimitError,
+  EntityTraversalValidationError
 } from '../../domain/catalog/entityTraversal';
 
 const runTraversal = async (
@@ -772,5 +773,316 @@ runContractSuiteAgainstBothDrivers('entityTraversal', (getDb, _driver: DbDriver)
     expect(targetPaths.get('backward')?.distinctTerminals.map(terminal => terminal.id)).toEqual([
       source.id
     ]);
+  });
+
+  it('relationSubtree forward walks reference and containment fields recursively', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const targetSchemaId = randomUUID();
+    const nodeSchemaId = randomUUID();
+    await createFixtureSchema(db, workspace, { id: targetSchemaId, name: 'Target' });
+    await createFixtureSchema(db, workspace, {
+      id: nodeSchemaId,
+      name: 'Node',
+      fields: [
+        {
+          id: 'children',
+          name: 'Children',
+          type: 'containment',
+          schemaId: nodeSchemaId,
+          minCount: 0,
+          maxCount: 1
+        },
+        {
+          id: 'ref',
+          name: 'Reference',
+          type: 'reference',
+          schemaId: targetSchemaId,
+          minCount: 0,
+          maxCount: 1
+        }
+      ]
+    });
+    const target = await createFixtureEntity(db, workspace, targetSchemaId, { name: 'Target' });
+    const grandchild = await createFixtureEntity(db, workspace, nodeSchemaId, {
+      name: 'Grandchild',
+      data: { children: [] }
+    });
+    const child = await createFixtureEntity(db, workspace, nodeSchemaId, {
+      name: 'Child',
+      data: { children: [grandchild.id] }
+    });
+    const root = await createFixtureEntity(db, workspace, nodeSchemaId, {
+      name: 'Root',
+      data: { children: [child.id], ref: [target.id] }
+    });
+
+    const result = await executeEntityTraversal(db, workspace, null, {
+      root: { kind: 'ids', entityIds: [root.id] },
+      paths: [{ id: 'forward', steps: [{ kind: 'relationSubtree', direction: 'forward' }] }]
+    });
+    const path = result.roots[0]!.paths[0]!;
+    expect(path.distinctTerminals.map(terminal => terminal.id).sort()).toEqual(
+      [root.id, child.id, target.id, grandchild.id].sort()
+    );
+    const byId = new Map(
+      path.occurrences.map(occurrence => [occurrence.terminal.id, occurrence.provenance.length])
+    );
+    expect(byId.get(root.id)).toBe(1);
+    expect(byId.get(child.id)).toBe(2);
+    expect(byId.get(target.id)).toBe(2);
+    expect(byId.get(grandchild.id)).toBe(3);
+  });
+
+  it('relationSubtree backward walks entities that reference the root', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const targetSchemaId = randomUUID();
+    const nodeSchemaId = randomUUID();
+    await createFixtureSchema(db, workspace, { id: targetSchemaId, name: 'Target' });
+    await createFixtureSchema(db, workspace, {
+      id: nodeSchemaId,
+      name: 'Node',
+      fields: [
+        {
+          id: 'children',
+          name: 'Children',
+          type: 'containment',
+          schemaId: nodeSchemaId,
+          minCount: 0,
+          maxCount: 1
+        },
+        {
+          id: 'ref',
+          name: 'Reference',
+          type: 'reference',
+          schemaId: targetSchemaId,
+          minCount: 0,
+          maxCount: 1
+        }
+      ]
+    });
+    const root = await createFixtureEntity(db, workspace, targetSchemaId, { name: 'Root' });
+    const nodeA = await createFixtureEntity(db, workspace, nodeSchemaId, {
+      name: 'Node A',
+      data: { ref: [root.id] }
+    });
+    const nodeB = await createFixtureEntity(db, workspace, nodeSchemaId, {
+      name: 'Node B',
+      data: { children: [nodeA.id] }
+    });
+
+    const result = await executeEntityTraversal(db, workspace, null, {
+      root: { kind: 'ids', entityIds: [root.id] },
+      paths: [{ id: 'backward', steps: [{ kind: 'relationSubtree', direction: 'backward' }] }]
+    });
+    const path = result.roots[0]!.paths[0]!;
+    expect(path.distinctTerminals.map(terminal => terminal.id).sort()).toEqual(
+      [root.id, nodeA.id, nodeB.id].sort()
+    );
+    const byId = new Map(
+      path.occurrences.map(occurrence => [occurrence.terminal.id, occurrence.provenance.length])
+    );
+    expect(byId.get(root.id)).toBe(1);
+    expect(byId.get(nodeA.id)).toBe(2);
+    expect(byId.get(nodeB.id)).toBe(3);
+  });
+
+  it('relationSubtree both directions also traverses unbound typed relations', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const sourceSchemaId = randomUUID();
+    const targetSchemaId = randomUUID();
+    const relationSchemaId = randomUUID();
+    await createFixtureSchema(db, workspace, {
+      id: sourceSchemaId,
+      name: 'Source',
+      fields: [
+        {
+          id: 'ref',
+          name: 'Reference',
+          type: 'reference',
+          schemaId: targetSchemaId,
+          minCount: 0,
+          maxCount: 1
+        }
+      ]
+    });
+    await createFixtureSchema(db, workspace, { id: targetSchemaId, name: 'Target' });
+    await db.relation.createRelationSchema({
+      id: relationSchemaId,
+      workspace,
+      name: 'Source to target',
+      description: '',
+      in_schema_ids: [sourceSchemaId],
+      out_schema_ids: [targetSchemaId],
+      fields: [],
+      groups: [],
+      shared_field_group_links: [],
+      color: null,
+      icon: null,
+      relation_approval_policy: 'disabled',
+      unique_endpoint_pair: false,
+      created_at: new Date(),
+      updated_at: new Date()
+    });
+    const target = await createFixtureEntity(db, workspace, targetSchemaId, { name: 'Target' });
+    const otherTarget = await createFixtureEntity(db, workspace, targetSchemaId, {
+      name: 'Other target'
+    });
+    const source = await createFixtureEntity(db, workspace, sourceSchemaId, {
+      name: 'Source',
+      data: { ref: [target.id] }
+    });
+    await db.relation.createRelation({
+      id: randomUUID(),
+      workspace,
+      schema_id: relationSchemaId,
+      in_entity_id: source.id,
+      out_entity_id: otherTarget.id,
+      data: {},
+      owner: null,
+      lifecycle: null,
+      version: 1,
+      approval_policy_override: null,
+      created_at: new Date(),
+      updated_at: new Date()
+    });
+
+    const result = await executeEntityTraversal(db, workspace, null, {
+      root: { kind: 'ids', entityIds: [source.id] },
+      paths: [{ id: 'both', steps: [{ kind: 'relationSubtree', direction: 'both' }] }]
+    });
+    const path = result.roots[0]!.paths[0]!;
+    expect(path.distinctTerminals.map(terminal => terminal.id).sort()).toEqual(
+      [source.id, target.id, otherTarget.id].sort()
+    );
+  });
+
+  it('respects maxDepth for relationSubtree traversal', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const nodeSchemaId = randomUUID();
+    await createFixtureSchema(db, workspace, {
+      id: nodeSchemaId,
+      name: 'Node',
+      fields: [
+        {
+          id: 'children',
+          name: 'Children',
+          type: 'containment',
+          schemaId: nodeSchemaId,
+          minCount: 0,
+          maxCount: 1
+        }
+      ]
+    });
+    const grandchild = await createFixtureEntity(db, workspace, nodeSchemaId, {
+      name: 'Grandchild',
+      data: { children: [] }
+    });
+    const child = await createFixtureEntity(db, workspace, nodeSchemaId, {
+      name: 'Child',
+      data: { children: [grandchild.id] }
+    });
+    const root = await createFixtureEntity(db, workspace, nodeSchemaId, {
+      name: 'Root',
+      data: { children: [child.id] }
+    });
+
+    // Unlike a fixed-path traversal, hitting maxDepth on a relationSubtree step is the caller's
+    // intended stopping point (e.g. "direct" vs "extended" blast radius), not truncated/incomplete
+    // data to fail on - so this resolves with only the depth-1 result, not an
+    // EntityTraversalLimitError, even though `grandchild` remains unreached beyond the bound.
+    const result = await executeEntityTraversal(db, workspace, null, {
+      root: { kind: 'ids', entityIds: [root.id] },
+      maxDepth: 1,
+      paths: [{ id: 'forward', steps: [{ kind: 'relationSubtree', direction: 'forward' }] }]
+    });
+    const path = result.roots[0]!.paths[0]!;
+    expect(path.distinctTerminals.map(terminal => terminal.id).sort()).toEqual(
+      [root.id, child.id].sort()
+    );
+  });
+
+  it('detects cycles in relationSubtree traversal without infinite recursion', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const nodeSchemaId = randomUUID();
+    await createFixtureSchema(db, workspace, {
+      id: nodeSchemaId,
+      name: 'Node',
+      fields: [
+        {
+          id: 'children',
+          name: 'Children',
+          type: 'containment',
+          schemaId: nodeSchemaId,
+          minCount: 0,
+          maxCount: 1
+        }
+      ]
+    });
+    const rootId = randomUUID();
+    const childId = randomUUID();
+    await createFixtureEntity(db, workspace, nodeSchemaId, {
+      id: rootId,
+      name: 'Root',
+      data: { children: [childId] }
+    });
+    await createFixtureEntity(db, workspace, nodeSchemaId, {
+      id: childId,
+      name: 'Child',
+      data: { children: [rootId] }
+    });
+
+    const result = await executeEntityTraversal(db, workspace, null, {
+      root: { kind: 'ids', entityIds: [rootId] },
+      paths: [{ id: 'forward', steps: [{ kind: 'relationSubtree', direction: 'forward' }] }]
+    });
+    const path = result.roots[0]!.paths[0]!;
+    expect(path.distinctTerminals.map(terminal => terminal.id).sort()).toEqual(
+      [rootId, childId].sort()
+    );
+    expect(path.cycleDetected).toBe(true);
+  });
+
+  it('rejects a relationSubtree step combined with another step in the same path', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const nodeSchemaId = randomUUID();
+    await createFixtureSchema(db, workspace, {
+      id: nodeSchemaId,
+      name: 'Node',
+      fields: [
+        {
+          id: 'children',
+          name: 'Children',
+          type: 'containment',
+          schemaId: nodeSchemaId,
+          minCount: 0,
+          maxCount: 1
+        }
+      ]
+    });
+    const root = await createFixtureEntity(db, workspace, nodeSchemaId, {
+      name: 'Root',
+      data: { children: [] }
+    });
+
+    await expect(
+      executeEntityTraversal(db, workspace, null, {
+        root: { kind: 'ids', entityIds: [root.id] },
+        paths: [
+          {
+            id: 'invalid',
+            steps: [
+              { kind: 'relationSubtree', direction: 'forward' },
+              { kind: 'forward', fieldId: 'children' }
+            ]
+          }
+        ]
+      })
+    ).rejects.toBeInstanceOf(EntityTraversalValidationError);
   });
 });

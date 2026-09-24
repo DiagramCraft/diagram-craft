@@ -84,7 +84,7 @@ const collectRelationSourceConstraintsFromPath = (
       };
       constraints.set(JSON.stringify(constraint), constraint);
     }
-    if (step.kind !== 'endpoint' && step.filter) {
+    if (step.kind !== 'endpoint' && step.kind !== 'relationSubtree' && step.filter) {
       collectRelationSourceConstraintsFromNode(step.filter, constraints);
     }
   });
@@ -208,7 +208,7 @@ export const relationPathIsMultiValued = (
     // the field's own maxCount says nothing about (maxCount bounds the forward direction: how many
     // targets one owner row can have). Mirrors relationBackward below - always potentially many.
     if (step.kind === 'relationBackward' || step.kind === 'backward') return true;
-    if (step.kind === 'containmentSubtree') return true;
+    if (step.kind === 'containmentSubtree' || step.kind === 'relationSubtree') return true;
     if (step.kind === 'relationForward') {
       const fields = [...relationSchemas.values()].map(schema =>
         relationFieldById(schema, step.fieldId)
@@ -314,6 +314,15 @@ export const resolveProjectionPathSchemaInfo = (
 
     if (step.kind === 'containmentSubtree') {
       currentEntitySchemaIds = availableSchemaIds([step.ownerSchemaId], schemas);
+      currentRelationSchemaIds = [];
+      currentKind = 'entity';
+      entitySchemaIdsByStep.push(currentEntitySchemaIds);
+      continue;
+    }
+
+    if (step.kind === 'relationSubtree') {
+      // Schema-agnostic wildcard traversal: any entity schema may be reached.
+      currentEntitySchemaIds = availableSchemaIds(schemas.keys(), schemas);
       currentRelationSchemaIds = [];
       currentKind = 'entity';
       entitySchemaIdsByStep.push(currentEntitySchemaIds);

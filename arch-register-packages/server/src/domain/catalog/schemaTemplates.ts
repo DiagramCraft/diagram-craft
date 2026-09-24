@@ -4199,6 +4199,7 @@ const resolvePathStepSchemaIds = (
         })
       };
     case 'endpoint':
+    case 'relationSubtree':
       return step;
   }
 };
