@@ -1276,9 +1276,9 @@ export const EntityDrawerEditor = ({
                             field => field.type === 'typedRelation'
                           );
                           const selectedField = selectedSchema.fields.find(
-                            field => field.id === item.fieldId && field.type === 'typedRelation'
+                            field => field.id === item.fieldId
                           );
-                          const attributeFields = selectedField
+                          const attributeFields = selectedField?.type === 'typedRelation'
                             ? getTypedRelationAttributeFields(selectedField, relationSchemas)
                             : [];
                           const attributes = item.attributes ?? [];
