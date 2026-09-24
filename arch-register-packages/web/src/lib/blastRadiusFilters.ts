@@ -31,5 +31,7 @@ export const filterBlastRadiusEntities = (
   });
 
 export const uniqueProvenanceHopIds = (entities: readonly BlastRadiusEntity[]): string[] => [
-  ...new Set(entities.flatMap(entity => entity.paths.flatMap(path => path.provenance.map(hop => hop.id))))
+  ...new Set(
+    entities.flatMap(entity => entity.paths.flatMap(path => path.provenance.map(hop => hop.id)))
+  )
 ];

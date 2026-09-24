@@ -33,9 +33,9 @@ const entity = (overrides: Partial<BlastRadiusEntity> = {}): BlastRadiusEntity =
 describe('filterBlastRadiusEntities', () => {
   it('returns everything when no filters are set', () => {
     const entities = [entity(), entity({ entityId: 'e2' })];
-    expect(filterBlastRadiusEntities(entities, { ownerId: null, schemaIds: null, viaSchemaIds: null })).toHaveLength(
-      2
-    );
+    expect(
+      filterBlastRadiusEntities(entities, { ownerId: null, schemaIds: null, viaSchemaIds: null })
+    ).toHaveLength(2);
   });
 
   it('filters by owner', () => {
@@ -49,7 +49,10 @@ describe('filterBlastRadiusEntities', () => {
   });
 
   it('filters by entity schema', () => {
-    const entities = [entity({ schemaId: 'schema-a' }), entity({ entityId: 'e2', schemaId: 'schema-b' })];
+    const entities = [
+      entity({ schemaId: 'schema-a' }),
+      entity({ entityId: 'e2', schemaId: 'schema-b' })
+    ];
     const result = filterBlastRadiusEntities(entities, {
       ownerId: null,
       schemaIds: ['schema-b'],

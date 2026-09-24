@@ -30,7 +30,11 @@ export const entityBlastRadiusAggregateQuery = (
       orpcClient.entityTraversal.aggregate(
         {
           params: { workspace: workspaceId },
-          body: { subject, paths: paths.map(path => ({ id: path.id, steps: [...path.steps] })), maxDepth }
+          body: {
+            subject,
+            paths: paths.map(path => ({ id: path.id, steps: [...path.steps] })),
+            maxDepth
+          }
         },
         { signal }
       ),
