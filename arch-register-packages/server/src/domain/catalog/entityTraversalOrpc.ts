@@ -5,6 +5,7 @@ import type { AuthenticatedEvent } from '../../middleware/auth';
 import { createOrpcHandler } from '../../utils/orpcHandler';
 import { entityScoped, orpcErrorMiddleware, workspaceScoped } from '../../utils/orpcErrors';
 import { executeSubjectTraversal } from './entityTraversalOperations';
+import { diffSubjectTraversal } from './entityTraversalGraphDiffOperations';
 
 type ORPCContext = {
   db: DatabaseAdapter;
@@ -27,6 +28,10 @@ const entityTraversalHandlers = {
       maxDepth,
       maxNodes
     });
+  }),
+  diff: entityTraversalRouter.entityTraversal.diff.handler(async ({ input, context }) => {
+    const { workspace, authCtx } = context;
+    return diffSubjectTraversal(context.db, workspace, authCtx, input.body);
   })
 };
 

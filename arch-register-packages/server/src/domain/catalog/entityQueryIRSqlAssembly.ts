@@ -55,7 +55,9 @@ export const buildQueryFragments = (
     dialect,
     workspace,
     semanticPlan,
-    permissionPlan
+    permissionPlan,
+    snapshotEntities: options.snapshotEntities,
+    snapshotRelations: options.snapshotRelations
   });
 
   if (state.asOf && Number.isNaN(state.asOf.getTime())) {

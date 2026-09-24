@@ -486,6 +486,104 @@ const buildTemporalSource = (state: EntityQuerySqlRenderState): string => {
     )`;
 };
 
+const snapshotEntityRowset = (state: EntityQuerySqlRenderState): string => {
+  const parameter = addParam(state, JSON.stringify(state.snapshotEntities ?? []));
+  if (state.dialect === 'postgres') {
+    return `snapshot_entity_source AS (
+      SELECT rows.id, rows.workspace, 'entity'::text AS kind, rows.public_id, rows.slug,
+             rows.namespace, rows.name, rows.description, rows.owner, rows.lifecycle,
+             rows.target_lifecycle, rows.target_lifecycle_date, rows.tags, rows.links,
+             rows.schema_id, rows.data, rows.created_at, rows.updated_at,
+             NULL::timestamptz AS deleted_at, rows.version, rows.approval_policy_override,
+             rows.generated_metadata, rows.project_id, rows.completeness,
+             NULL::timestamptz AS last_attested_at,
+             NULL::uuid AS in_record_id, NULL::uuid AS out_record_id
+      FROM jsonb_to_recordset(${parameter}::jsonb) AS rows(
+        id uuid, workspace uuid, public_id text, slug text, namespace text, name text,
+        description text, owner uuid, lifecycle uuid, target_lifecycle uuid,
+        target_lifecycle_date text, tags jsonb, links jsonb, schema_id uuid, data jsonb,
+        created_at timestamptz, updated_at timestamptz, version integer,
+        approval_policy_override text, generated_metadata jsonb, project_id uuid,
+        completeness integer
+      )
+    )`;
+  }
+  return `snapshot_entity_source AS (
+    SELECT json_extract(value, '$.id') AS id,
+           json_extract(value, '$.workspace') AS workspace,
+           'entity' AS kind,
+           json_extract(value, '$.public_id') AS public_id,
+           json_extract(value, '$.slug') AS slug,
+           json_extract(value, '$.namespace') AS namespace,
+           json_extract(value, '$.name') AS name,
+           json_extract(value, '$.description') AS description,
+           json_extract(value, '$.owner') AS owner,
+           json_extract(value, '$.lifecycle') AS lifecycle,
+           json_extract(value, '$.target_lifecycle') AS target_lifecycle,
+           json_extract(value, '$.target_lifecycle_date') AS target_lifecycle_date,
+           json_extract(value, '$.tags') AS tags,
+           json_extract(value, '$.links') AS links,
+           json_extract(value, '$.schema_id') AS schema_id,
+           json_extract(value, '$.data') AS data,
+           json_extract(value, '$.created_at') AS created_at,
+           json_extract(value, '$.updated_at') AS updated_at,
+           NULL AS deleted_at,
+           json_extract(value, '$.version') AS version,
+           json_extract(value, '$.approval_policy_override') AS approval_policy_override,
+           json_extract(value, '$.generated_metadata') AS generated_metadata,
+           json_extract(value, '$.project_id') AS project_id,
+           json_extract(value, '$.completeness') AS completeness,
+           NULL AS last_attested_at,
+           NULL AS in_record_id,
+           NULL AS out_record_id
+    FROM json_each(${parameter})
+  )`;
+};
+
+const snapshotRelationRowset = (state: EntityQuerySqlRenderState): string => {
+  const parameter = addParam(state, JSON.stringify(state.snapshotRelations ?? []));
+  if (state.dialect === 'postgres') {
+    return `snapshot_relation_source AS (
+      SELECT rows.id, rows.workspace, 'relation'::text AS kind, rows.schema_id,
+             rows.data, rows.created_at, rows.updated_at, NULL::timestamptz AS deleted_at,
+             rows.version, rows.approval_policy_override, rows.owner, rows.lifecycle,
+             NULL::text AS public_id, NULL::text AS slug, NULL::text AS namespace,
+             NULL::text AS name, ''::text AS description, '[]'::jsonb AS tags,
+             '[]'::jsonb AS links, NULL::uuid AS target_lifecycle,
+             NULL::text AS target_lifecycle_date, NULL::uuid AS project_id,
+             0::integer AS completeness, NULL::timestamptz AS last_attested_at,
+             rows.in_record_id, rows.out_record_id, '{}'::jsonb AS generated_metadata
+      FROM jsonb_to_recordset(${parameter}::jsonb) AS rows(
+        id uuid, workspace uuid, schema_id uuid, data jsonb, created_at timestamptz,
+        updated_at timestamptz, version integer, approval_policy_override text,
+        owner uuid, lifecycle uuid, in_record_id uuid, out_record_id uuid
+      )
+    )`;
+  }
+  return `snapshot_relation_source AS (
+    SELECT json_extract(value, '$.id') AS id,
+           json_extract(value, '$.workspace') AS workspace,
+           'relation' AS kind,
+           json_extract(value, '$.schema_id') AS schema_id,
+           json_extract(value, '$.data') AS data,
+           json_extract(value, '$.created_at') AS created_at,
+           json_extract(value, '$.updated_at') AS updated_at,
+           NULL AS deleted_at,
+           json_extract(value, '$.version') AS version,
+           json_extract(value, '$.approval_policy_override') AS approval_policy_override,
+           json_extract(value, '$.owner') AS owner,
+           json_extract(value, '$.lifecycle') AS lifecycle,
+           NULL AS public_id, NULL AS slug, NULL AS namespace, NULL AS name,
+           '' AS description, '[]' AS tags, '[]' AS links,
+           NULL AS target_lifecycle, NULL AS target_lifecycle_date,
+           NULL AS project_id, 0 AS completeness, NULL AS last_attested_at,
+           json_extract(value, '$.in_record_id') AS in_record_id,
+           json_extract(value, '$.out_record_id') AS out_record_id,
+           '{}' AS generated_metadata
+    FROM json_each(${parameter})
+  )`;
+};
+
 // Builds the one source CTE consumed by every traversal alias. Live queries use catalog_record;
 // temporal queries reconstruct a JSON state in SQL and project it into entity-shaped columns.
 export const buildScopeCte = (state: EntityQuerySqlRenderState): string => {
@@ -494,6 +592,7 @@ export const buildScopeCte = (state: EntityQuerySqlRenderState): string => {
     ? `ar."values" AS assessment_values`
     : `${state.dialectAdapter.nullJson} AS assessment_values`;
   const source = state.asOf ? buildTemporalSource(state) : '';
+  const snapshotSource = state.snapshotEntities == null ? '' : snapshotEntityRowset(state);
   const conformanceStatusCte = buildConformanceStatusCte(state);
 
   if (state.asOf) {
@@ -509,7 +608,8 @@ export const buildScopeCte = (state: EntityQuerySqlRenderState): string => {
     state.permissionScope ?? null,
     state.dialect,
     value => addParam(state, value),
-    'e'
+    'e',
+    state.snapshotEntities == null ? 'catalog_record' : 'snapshot_entity_source'
   );
   const visibleClause =
     state.visibleEntityIds == null
@@ -524,7 +624,8 @@ export const buildScopeCte = (state: EntityQuerySqlRenderState): string => {
         ? '1=0'
         : `e.id IN (${state.collectionEntityIds.map(id => addParam(state, id)).join(', ')})`;
   const scopedWhere = `${scopeClause} AND ${visibleClause || '1=1'} AND ${collectionClause || '1=1'} AND ${permissionScope.predicate}`;
-  return `${permissionScope.cte ? `${permissionScope.cte},\n    ` : ''}${conformanceStatusCte},\n    ${SCOPE_CTE} AS (\n      SELECT e.*, ${assessmentColumn},\n             cs.conformance_status,\n             cs.conformance_evaluated_at,\n             cs.conformance_stale\n      FROM catalog_record e\n      LEFT JOIN conformance_entity_status cs ON cs.entity_id = e.id\n      LEFT JOIN assessment_response ar\n        ON ar.entity_id = e.id\n       AND ar.assessment_id = ${assessmentParam ?? 'NULL'}\n       AND ar.workspace = e.workspace\n      WHERE e.kind = 'entity'\n        AND e.workspace = ${workspaceParam}\n        AND e.deleted_at IS NULL\n        AND ${scopedWhere}\n    )`;
+  const entitySource = state.snapshotEntities == null ? 'catalog_record' : 'snapshot_entity_source';
+  return `${snapshotSource ? `${snapshotSource},\n    ` : ''}${permissionScope.cte ? `${permissionScope.cte},\n    ` : ''}${conformanceStatusCte},\n    ${SCOPE_CTE} AS (\n      SELECT e.*, ${assessmentColumn},\n             cs.conformance_status,\n             cs.conformance_evaluated_at,\n             cs.conformance_stale\n      FROM ${entitySource} e\n      LEFT JOIN conformance_entity_status cs ON cs.entity_id = e.id\n      LEFT JOIN assessment_response ar\n        ON ar.entity_id = e.id\n       AND ar.assessment_id = ${assessmentParam ?? 'NULL'}\n       AND ar.workspace = e.workspace\n      WHERE e.kind = 'entity'\n        AND e.workspace = ${workspaceParam}\n        AND e.deleted_at IS NULL\n        AND ${scopedWhere}\n    )`;
 };
 
 const temporalRelationProjection = (
@@ -675,16 +776,17 @@ const buildTemporalRelationSource = (state: EntityQuerySqlRenderState): string =
 export const buildRelationScopeCte = (state: EntityQuerySqlRenderState): string => {
   const policy = state.relationVisibility;
   const needsEndpointJoins = policy != null;
+  const entityEndpointSource = state.snapshotEntities == null ? 'catalog_record' : SCOPE_CTE;
   const endpointJoins = needsEndpointJoins
     ? `
-      JOIN catalog_record in_visibility_endpoint
+      JOIN ${entityEndpointSource} in_visibility_endpoint
         ON in_visibility_endpoint.workspace = r.workspace
        AND in_visibility_endpoint.id = r.in_record_id
-       AND in_visibility_endpoint.kind = 'entity'
-      JOIN catalog_record out_visibility_endpoint
+       ${state.snapshotEntities == null ? "AND in_visibility_endpoint.kind = 'entity'" : ''}
+      JOIN ${entityEndpointSource} out_visibility_endpoint
         ON out_visibility_endpoint.workspace = r.workspace
        AND out_visibility_endpoint.id = r.out_record_id
-       AND out_visibility_endpoint.kind = 'entity'`
+       ${state.snapshotEntities == null ? "AND out_visibility_endpoint.kind = 'entity'" : ''}`
     : '';
   const needsSourceEndpointJoins = state.relationSourceConstraints.some(
     constraint => constraint.ownerDirection != null
@@ -698,6 +800,23 @@ export const buildRelationScopeCte = (state: EntityQuerySqlRenderState): string 
         ON out_relation_source_endpoint.workspace = r.workspace
        AND out_relation_source_endpoint.id = r.out_record_id`
     : '';
+  if (state.snapshotRelations != null) {
+    const relationSource = snapshotRelationRowset(state);
+    const workspaceParam = addParam(state, state.workspace);
+    const sourceClause = relationSourceConstraintClause(
+      'r',
+      'in_relation_source_endpoint',
+      'out_relation_source_endpoint',
+      state
+    );
+    const visibilityClause = relationVisibilityClause(
+      'r',
+      'in_visibility_endpoint',
+      'out_visibility_endpoint',
+      state
+    );
+    return `${relationSource},\n    ${RELATION_SCOPE_CTE} AS (\n      SELECT r.*\n      FROM snapshot_relation_source r${sourceEndpointJoins}${endpointJoins}\n      WHERE r.workspace = ${workspaceParam}\n        AND ${sourceClause}\n        AND ${visibilityClause}\n    )`;
+  }
   if (state.asOf) {
     const source = buildTemporalRelationSource(state);
     const sourceClause = relationSourceConstraintClause(

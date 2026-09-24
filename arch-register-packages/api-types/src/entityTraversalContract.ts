@@ -46,6 +46,56 @@ const entityTraversalRequestSchema = z.object({
     .describe('Overrides the default max traversed node count')
 });
 
+const entityTraversalGraphNodeSchema = z.object({
+  context: z.enum(['entity', 'relation']),
+  id: z.string(),
+  schemaId: z.string()
+});
+
+const entityTraversalGraphPathSchema = z.object({
+  pathId: z.string().nullable(),
+  hops: z.array(entityTraversalGraphNodeSchema)
+});
+
+const entityTraversalGraphNodeChangeSchema = z.object({
+  node: entityTraversalGraphNodeSchema,
+  path: entityTraversalGraphPathSchema
+});
+
+const entityTraversalGraphEdgeSchema = z.object({
+  pathId: z.string(),
+  stepIndex: z.number().int().min(0),
+  from: entityTraversalGraphNodeSchema,
+  to: entityTraversalGraphNodeSchema
+});
+
+const entityTraversalGraphDiffRequestSchema = entityTraversalRequestSchema.extend({
+  candidateCaseId: z
+    .string()
+    .optional()
+    .describe(
+      'Candidate planned-change case. Defaults to the subject case when the subject kind is changeCase.'
+    )
+});
+
+const entityTraversalGraphDiffResponseSchema = z.object({
+  nodes: z.object({
+    added: z.array(entityTraversalGraphNodeChangeSchema),
+    removed: z.array(entityTraversalGraphNodeChangeSchema),
+    pathChanged: z.array(
+      z.object({
+        node: entityTraversalGraphNodeSchema,
+        beforePath: entityTraversalGraphPathSchema,
+        afterPath: entityTraversalGraphPathSchema
+      })
+    )
+  }),
+  edges: z.object({
+    added: z.array(entityTraversalGraphEdgeSchema),
+    removed: z.array(entityTraversalGraphEdgeSchema)
+  })
+});
+
 const entityTraversalHopSchema = z.object({
   context: z.enum(['entity', 'relation']),
   id: z.string(),
@@ -102,6 +152,29 @@ export const workspaceEntityTraversalContract = oc.tag('EntityTraversal').router
           body: entityTraversalRequestSchema
         })
       )
-      .output(entityTraversalResultSchema)
+      .output(entityTraversalResultSchema),
+    diff: oc
+      .route({
+        method: 'POST',
+        path: '/{workspace}/data/traverse/diff',
+        inputStructure: 'detailed',
+        summary: 'Compare reachable graphs with a planned change applied',
+        description:
+          'Returns added and removed reachable nodes and edges between live state and the active ' +
+          'revision of a selected planned-change case, including canonical paths for changed nodes.',
+        tags: ['EntityTraversal']
+      })
+      .input(
+        z.object({
+          params: ws,
+          body: entityTraversalGraphDiffRequestSchema
+        })
+      )
+      .output(entityTraversalGraphDiffResponseSchema)
   }
 });
+
+export type EntityTraversalGraphDiffRequest = z.infer<typeof entityTraversalGraphDiffRequestSchema>;
+export type EntityTraversalGraphDiffResponse = z.infer<
+  typeof entityTraversalGraphDiffResponseSchema
+>;

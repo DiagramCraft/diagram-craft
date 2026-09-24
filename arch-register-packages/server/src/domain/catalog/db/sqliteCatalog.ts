@@ -1004,7 +1004,12 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     );
   }
 
-  async listPlannedEntityChangesAsOf(workspace: string, asOf: Date, entityIds?: string[]) {
+  async listPlannedEntityChangesAsOf(
+    workspace: string,
+    asOf: Date,
+    entityIds?: string[],
+    candidateRevisionId?: string
+  ) {
     if (entityIds != null && entityIds.length === 0) return [];
     const entityFilter =
       entityIds != null ? `AND m.record_id IN (${entityIds.map(() => '?').join(',')})` : '';
@@ -1028,17 +1033,27 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
          AND c.status IN ('planned', 'in_approval')
          AND r.status IN ('draft', 'submitted', 'changes_requested')
          AND r.created_at <= ?
-         AND (COALESCE(c.effective_date, pm.target_date) IS NULL OR COALESCE(c.effective_date, pm.target_date) <= ?)
+         AND ${candidateRevisionId != null ? 'r.id = ?' : '(COALESCE(c.effective_date, pm.target_date) IS NULL OR COALESCE(c.effective_date, pm.target_date) <= ?)'}
          ${entityFilter}
        ORDER BY m.record_id, COALESCE(c.effective_date, pm.target_date) IS NULL DESC,
                 COALESCE(c.effective_date, pm.target_date) ASC, r.created_at ASC,
                 r.revision_number ASC, c.id ASC, m.id ASC`,
-      [workspace, asOf.toISOString(), asOf.toISOString().slice(0, 10), ...(entityIds ?? [])],
+      [
+        workspace,
+        asOf.toISOString(),
+        candidateRevisionId ?? asOf.toISOString().slice(0, 10),
+        ...(entityIds ?? [])
+      ],
       catalogMappers.plannedEntityChange
     );
   }
 
-  async listPlannedRelationChangesAsOf(workspace: string, asOf: Date, relationIds?: string[]) {
+  async listPlannedRelationChangesAsOf(
+    workspace: string,
+    asOf: Date,
+    relationIds?: string[],
+    candidateRevisionId?: string
+  ) {
     if (relationIds != null && relationIds.length === 0) return [];
     const relationFilter =
       relationIds != null ? `AND m.record_id IN (${relationIds.map(() => '?').join(',')})` : '';
@@ -1062,12 +1077,17 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
          AND c.status IN ('planned', 'in_approval')
          AND r.status IN ('draft', 'submitted', 'changes_requested')
          AND r.created_at <= ?
-         AND (COALESCE(c.effective_date, pm.target_date) IS NULL OR COALESCE(c.effective_date, pm.target_date) <= ?)
+         AND ${candidateRevisionId != null ? 'r.id = ?' : '(COALESCE(c.effective_date, pm.target_date) IS NULL OR COALESCE(c.effective_date, pm.target_date) <= ?)'}
          ${relationFilter}
        ORDER BY m.record_id, COALESCE(c.effective_date, pm.target_date) IS NULL DESC,
                 COALESCE(c.effective_date, pm.target_date) ASC, r.created_at ASC,
                 r.revision_number ASC, c.id ASC, m.id ASC`,
-      [workspace, asOf.toISOString(), asOf.toISOString().slice(0, 10), ...(relationIds ?? [])],
+      [
+        workspace,
+        asOf.toISOString(),
+        candidateRevisionId ?? asOf.toISOString().slice(0, 10),
+        ...(relationIds ?? [])
+      ],
       catalogMappers.plannedEntityChange
     );
   }

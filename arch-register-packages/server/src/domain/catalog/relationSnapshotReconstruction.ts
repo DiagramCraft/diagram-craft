@@ -1,7 +1,7 @@
 import type { DatabaseAdapter } from '../../db/database';
 import type { EntityVersionDbResult } from './db/catalogDatabase';
 import type { RelationDbResult } from './db/relationDatabase';
-import type { AuthorizationContext } from '@arch-register/permissions';
+import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
 import {
   mergeState,
   parseDate,
@@ -22,16 +22,22 @@ export const reconstructRelationsAsOf = async (
   db: DatabaseAdapter,
   workspace: string,
   asOf: Date,
-  authCtx: AuthorizationContext | null,
+  authCtx: WorkspaceAuthorizationContext | null,
   candidateRelationIds?: string[],
   includePlannedChanges = true,
   plannedChangesProjectId?: string | null,
-  excludeOverdueChangesBefore?: Date
+  excludeOverdueChangesBefore?: Date,
+  candidateRevisionId?: string
 ): Promise<RelationDbResult[]> => {
   const [baselineVersions, plannedChanges, relationSchemas] = await Promise.all([
     db.catalog.listRelationVersionsAsOf(workspace, asOf, candidateRelationIds),
     includePlannedChanges
-      ? db.catalog.listPlannedRelationChangesAsOf(workspace, asOf, candidateRelationIds)
+      ? db.catalog.listPlannedRelationChangesAsOf(
+          workspace,
+          asOf,
+          candidateRelationIds,
+          candidateRevisionId
+        )
       : Promise.resolve([]),
     db.relation.listRelationSchemas(workspace)
   ]);
@@ -52,7 +58,8 @@ export const reconstructRelationsAsOf = async (
     asOf,
     plannedChanges,
     plannedChangesProjectId,
-    excludeOverdueChangesBefore
+    excludeOverdueChangesBefore,
+    candidateRevisionId
   );
 
   const resolvedStateByRelation = new Map<
