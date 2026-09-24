@@ -37,7 +37,7 @@ type MarkdownEditorDocumentAction =
   | { type: 'set-metadata'; fieldId: string; value: MetadataValue }
   | { type: 'mark-clean' };
 
-const emptyDocumentState = (): MarkdownEditorDocumentState => ({
+export const emptyDocumentState = (): MarkdownEditorDocumentState => ({
   body: '',
   documentTypeId: null,
   metadata: {},
@@ -45,7 +45,7 @@ const emptyDocumentState = (): MarkdownEditorDocumentState => ({
   dirty: false
 });
 
-const createInitialDocumentState = (
+export const createInitialDocumentState = (
   isDraft: boolean,
   draftType: string | null
 ): MarkdownEditorDocumentState => ({
@@ -54,7 +54,7 @@ const createInitialDocumentState = (
   dirty: isDraft
 });
 
-const reduceDocumentState = (
+export const reduceDocumentState = (
   state: MarkdownEditorDocumentState,
   action: MarkdownEditorDocumentAction
 ): MarkdownEditorDocumentState => {
@@ -90,6 +90,14 @@ const reduceDocumentState = (
       return { ...state, dirty: false };
   }
 };
+
+// A background refetch of the server document must not clobber unsaved local edits — the first
+// hydration after a node loads always applies, but every subsequent one is skipped while the
+// document is dirty.
+export const shouldApplyServerRefresh = (params: {
+  initialized: boolean;
+  dirty: boolean;
+}): boolean => !params.initialized || !params.dirty;
 
 export type MarkdownEditorDocumentStateOptions = {
   nodeId: string;
@@ -136,29 +144,18 @@ export const useMarkdownEditorDocumentState = ({
 
   useEffect(() => {
     if (isDraft || !data) return;
-    if (!initializedRef.current) {
-      dispatch({
-        type: 'hydrate',
-        body: data.body,
-        documentTypeId: data.document_type_id,
-        metadata: data.metadata,
-        generatedMetadata: data.generated_metadata ?? {},
-        dirty: false
-      });
-      initializedRef.current = true;
-      return;
-    }
+    const wasInitialized = initializedRef.current;
+    if (!shouldApplyServerRefresh({ initialized: wasInitialized, dirty: state.dirty })) return;
 
-    if (!state.dirty) {
-      dispatch({
-        type: 'hydrate',
-        body: data.body,
-        documentTypeId: data.document_type_id,
-        metadata: data.metadata,
-        generatedMetadata: data.generated_metadata ?? {},
-        dirty: false
-      });
-    }
+    dispatch({
+      type: 'hydrate',
+      body: data.body,
+      documentTypeId: data.document_type_id,
+      metadata: data.metadata,
+      generatedMetadata: data.generated_metadata ?? {},
+      dirty: false
+    });
+    if (!wasInitialized) initializedRef.current = true;
   }, [data, isDraft, state.dirty]);
 
   useEffect(() => {

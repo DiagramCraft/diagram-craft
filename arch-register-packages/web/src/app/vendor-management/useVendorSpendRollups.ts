@@ -20,6 +20,23 @@ export type VendorSpendRollups = {
 
 const EMPTY: VendorSpendRollups = { byId: new Map(), isLoading: false, error: null };
 
+/** Builds the per-vendor spend map, null-filling any vendor id with no matching rollup result. */
+export const buildVendorSpendRollupMap = (
+  boxEntityIds: readonly string[],
+  data: MetricRollupResponse | undefined
+): Map<string, VendorSpendRollupValue> => {
+  const map = new Map<string, VendorSpendRollupValue>();
+  for (const id of boxEntityIds) {
+    const result = data?.results.find(r => r.boxEntityId === id);
+    map.set(id, {
+      vmSpend: result?.value ?? null,
+      currency: result?.currencyCode ?? null,
+      contractCount: result?.sourceCount ?? null
+    });
+  }
+  return map;
+};
+
 /**
  * Batched spend hook for table/overview screens: one `metrics.rollup`
  * request across every visible vendor's id at once, returning a map keyed by vendor `_uid`.
@@ -40,19 +57,10 @@ export const useVendorSpendRollups = (
     )
   );
 
-  const byId = useMemo(() => {
-    const map = new Map<string, VendorSpendRollupValue>();
-    const data = query.data as MetricRollupResponse | undefined;
-    for (const id of boxEntityIds) {
-      const result = data?.results.find(r => r.boxEntityId === id);
-      map.set(id, {
-        vmSpend: result?.value ?? null,
-        currency: result?.currencyCode ?? null,
-        contractCount: result?.sourceCount ?? null
-      });
-    }
-    return map;
-  }, [boxEntityIds, query.data]);
+  const byId = useMemo(
+    () => buildVendorSpendRollupMap(boxEntityIds, query.data as MetricRollupResponse | undefined),
+    [boxEntityIds, query.data]
+  );
 
   if (!enabled) return EMPTY;
 

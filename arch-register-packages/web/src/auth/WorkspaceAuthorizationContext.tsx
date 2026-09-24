@@ -12,6 +12,7 @@ import {
 import { useAuth } from './AuthContext';
 import { useAuthorizationData } from './AuthorizationDataContext';
 import { buildWorkspaceAuthorizationContextFromAuthData } from './authorizationContextAdapter';
+import type { AuthBaseData } from './types';
 
 export type WorkspaceAuthorization = {
   context: NormalizedWorkspaceAuthorizationContext | null;
@@ -54,6 +55,36 @@ const WorkspaceAuthorizationSourceContext = createContext<WorkspaceAuthorization
 );
 
 /**
+ * Builds a `getContext(workspaceId)` resolver caching one normalized context per workspace id for
+ * the lifetime of the given `authorizationData` snapshot. Fails closed (returns `null` for every
+ * workspace id) when there is no signed-in user or authorization data hasn't loaded yet. The
+ * caller (the provider's `useMemo`) is responsible for constructing a fresh resolver — and so a
+ * fresh cache — whenever `user`/`authorizationData` identity changes.
+ */
+export const createWorkspaceContextResolver = (
+  userId: string | null | undefined,
+  authorizationData: AuthBaseData | null | undefined
+): ((workspaceId: string | null | undefined) => NormalizedWorkspaceAuthorizationContext | null) => {
+  const contexts = new Map<string | null, NormalizedWorkspaceAuthorizationContext>();
+
+  return (workspaceId: string | null | undefined) => {
+    if (!userId || !authorizationData) return null;
+
+    const contextKey = workspaceId || null;
+    const cached = contexts.get(contextKey);
+    if (cached) return cached;
+
+    const context = buildWorkspaceAuthorizationContextFromAuthData(
+      userId,
+      authorizationData,
+      contextKey
+    );
+    contexts.set(contextKey, context);
+    return context;
+  };
+};
+
+/**
  * Owns the shared frontend authorization source.
  *
  * Normalized workspace contexts are cached for the lifetime of the current auth snapshot so every
@@ -65,25 +96,10 @@ export const WorkspaceAuthorizationProvider = ({ children }: { children: ReactNo
   const checker = useMemo(() => new PermissionChecker(), []);
   const capabilities = useMemo(() => new CapabilityEvaluator(), []);
 
-  const getContext = useMemo(() => {
-    const contexts = new Map<string | null, NormalizedWorkspaceAuthorizationContext>();
-
-    return (workspaceId: string | null | undefined) => {
-      if (!user || !authorizationData) return null;
-
-      const contextKey = workspaceId || null;
-      const cached = contexts.get(contextKey);
-      if (cached) return cached;
-
-      const context = buildWorkspaceAuthorizationContextFromAuthData(
-        user.id,
-        authorizationData,
-        contextKey
-      );
-      contexts.set(contextKey, context);
-      return context;
-    };
-  }, [authorizationData, user]);
+  const getContext = useMemo(
+    () => createWorkspaceContextResolver(user?.id, authorizationData),
+    [authorizationData, user]
+  );
 
   const source = useMemo<WorkspaceAuthorizationSource>(
     () => ({ getContext, checker, capabilities }),

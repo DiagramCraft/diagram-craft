@@ -28,6 +28,53 @@ export type RetentionPolicyRow = EntityRecord & { governedCount: number };
 const isRetentionTimeUnit = (value: unknown): value is 'days' | 'months' | 'years' =>
   value === 'days' || value === 'months' || value === 'years';
 
+type RetentionRelation = {
+  _uid: string;
+  _in: { id: string; name: string };
+  _out: { id: string; name: string };
+  [key: string]: unknown;
+};
+
+/**
+ * Joins retention-assignment relations to their governing policy (looked up by the relation's
+ * `_out.id`, i.e. the policy entity's `_uid`) and reports each assignment's policy period as a
+ * plain fact plus which of policy/duration/time-unit/activation-date is missing.
+ */
+export const buildRetentionAssignmentRows = (
+  relations: readonly RetentionRelation[],
+  policiesById: ReadonlyMap<string, EntityRecord>,
+  fieldIds: RetentionFieldIds
+): RetentionAssignmentRow[] =>
+  relations.map(relation => {
+    const policy = policiesById.get(relation._out.id);
+    const duration = policy ? policy[fieldIds.durationFieldId] : null;
+    const timeUnit = policy ? policy[fieldIds.timeUnitFieldId] : null;
+    const activatedFrom = relation[fieldIds.activatedFromFieldId];
+
+    const missing: string[] = [];
+    if (!policy) missing.push('policy');
+    if (typeof duration !== 'number') missing.push('duration');
+    if (!isRetentionTimeUnit(timeUnit)) missing.push('time unit');
+    if (typeof activatedFrom !== 'string' || !activatedFrom) missing.push('activation date');
+
+    const policyPeriod =
+      typeof duration === 'number' && isRetentionTimeUnit(timeUnit)
+        ? `${duration} ${timeUnit}`
+        : null;
+
+    return {
+      uid: relation._uid,
+      publicId: relation._uid,
+      governedEntityId: relation._in.id,
+      governedEntityName: relation._in.name,
+      policyId: policy?._uid ?? null,
+      policyName: relation._out.name,
+      policyPeriod,
+      activatedFrom: typeof activatedFrom === 'string' ? activatedFrom : null,
+      missing
+    };
+  });
+
 /**
  * Fetches every Retention Policy and Assignment relation in the workspace and joins them into
  * per-assignment rows. An assignment's governing policy is looked up by the relation's `_out.id`
@@ -71,35 +118,7 @@ export const useRetentionAssignments = (
 
   const rows = useMemo<RetentionAssignmentRow[]>(() => {
     if (!fieldIds) return [];
-    return assignments.data.map(relation => {
-      const policy = policiesById.get(relation._out.id);
-      const duration = policy ? policy[fieldIds.durationFieldId] : null;
-      const timeUnit = policy ? policy[fieldIds.timeUnitFieldId] : null;
-      const activatedFrom = relation[fieldIds.activatedFromFieldId];
-
-      const missing: string[] = [];
-      if (!policy) missing.push('policy');
-      if (typeof duration !== 'number') missing.push('duration');
-      if (!isRetentionTimeUnit(timeUnit)) missing.push('time unit');
-      if (typeof activatedFrom !== 'string' || !activatedFrom) missing.push('activation date');
-
-      const policyPeriod =
-        typeof duration === 'number' && isRetentionTimeUnit(timeUnit)
-          ? `${duration} ${timeUnit}`
-          : null;
-
-      return {
-        uid: relation._uid,
-        publicId: relation._uid,
-        governedEntityId: relation._in.id,
-        governedEntityName: relation._in.name,
-        policyId: policy?._uid ?? null,
-        policyName: relation._out.name,
-        policyPeriod,
-        activatedFrom: typeof activatedFrom === 'string' ? activatedFrom : null,
-        missing
-      };
-    });
+    return buildRetentionAssignmentRows(assignments.data, policiesById, fieldIds);
   }, [assignments.data, policiesById, fieldIds]);
 
   const governedCountByPolicyId = useMemo(() => {

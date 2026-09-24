@@ -19,6 +19,25 @@ const EMPTY: EntityDrawerQueryItemResult = { items: [], isLoading: false, error:
 const escapeQueryStringLiteral = (value: string) =>
   value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 
+/** Wraps an admin-authored path expression with a root predicate anchored to the given entity,
+ *  escaping the schema name / entity id for embedding as query-DSL string literals. */
+export const buildWrappedQueryText = (
+  schemaName: string,
+  entityId: string,
+  queryText: string
+): string =>
+  `schema:"${escapeQueryStringLiteral(schemaName)}" _id = "${escapeQueryStringLiteral(entityId)}" columns path ${queryText} as "value"`;
+
+/** Flattens every matched traversal chain's terminal (last-hop) entity id, deduped. */
+export const extractTerminalIds = (chains: readonly TraversalHop[][]): string[] => [
+  ...new Set(
+    chains.flatMap(chain => {
+      const terminal = chain.at(-1);
+      return terminal ? [terminal.id] : [];
+    })
+  )
+];
+
 /**
  * Executes a generic `query` drawer item's path expression (specs/QUERY_LANGUAGE.md §4), scoped to
  * the current entity as root. Wraps the admin-authored path expression (e.g.
@@ -35,9 +54,7 @@ export const useEntityDrawerQueryItem = (
   queryText: string
 ): EntityDrawerQueryItemResult => {
   const enabled = !!workspaceId && !!schemaName && !!entityId && !!queryText;
-  const wrappedText = enabled
-    ? `schema:"${escapeQueryStringLiteral(schemaName)}" _id = "${escapeQueryStringLiteral(entityId)}" columns path ${queryText} as "value"`
-    : '';
+  const wrappedText = enabled ? buildWrappedQueryText(schemaName, entityId, queryText) : '';
 
   const parsed = useQuery(entityQueryTextParseQuery(workspaceId, wrappedText, enabled));
   const ir = parsed.data?.ok ? parsed.data.query : null;
@@ -54,14 +71,7 @@ export const useEntityDrawerQueryItem = (
     const projections = query.data?.items[0]?._projections as
       | { value?: TraversalHop[][] }
       | undefined;
-    return [
-      ...new Set(
-        (projections?.value ?? []).flatMap(chain => {
-          const terminal = chain.at(-1);
-          return terminal ? [terminal.id] : [];
-        })
-      )
-    ];
+    return extractTerminalIds(projections?.value ?? []);
   }, [query.data]);
 
   const entities = useEntitiesByIdSetQuery(workspaceId, terminalIds, { enabled: query.isSuccess });

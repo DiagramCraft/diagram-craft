@@ -31,6 +31,35 @@ const addTo = (map: Map<string, Set<string>>, key: string, value: string) => {
   map.set(key, set);
 };
 
+type TraceRelation = { _in: { id: string }; _out: { id: string } };
+
+/**
+ * Builds the four bidirectional membership maps from `risk-control` (Control as `_out`, Risk as
+ * `_in`) and `control-affects` (Control as `_in`, asset as `_out`) relations.
+ */
+export const buildControlTraceMatrix = (
+  riskControlRelations: readonly TraceRelation[],
+  controlAffectsRelations: readonly TraceRelation[]
+) => {
+  const riskIdsByControlId = new Map<string, Set<string>>();
+  const controlIdsByRiskId = new Map<string, Set<string>>();
+  for (const relation of riskControlRelations) {
+    const controlId = relation._out.id;
+    const riskId = relation._in.id;
+    addTo(riskIdsByControlId, controlId, riskId);
+    addTo(controlIdsByRiskId, riskId, controlId);
+  }
+  const assetIdsByControlId = new Map<string, Set<string>>();
+  const controlIdsByAssetId = new Map<string, Set<string>>();
+  for (const relation of controlAffectsRelations) {
+    const controlId = relation._in.id;
+    const assetId = relation._out.id;
+    addTo(assetIdsByControlId, controlId, assetId);
+    addTo(controlIdsByAssetId, assetId, controlId);
+  }
+  return { riskIdsByControlId, controlIdsByRiskId, assetIdsByControlId, controlIdsByAssetId };
+};
+
 /**
  * Control × risk/asset membership for the Controls section's Traceability matrix (#3282) — unlike
  * `useControlRiskCounts.ts`/`useControlAssetCounts.ts`, which only tally how many risks/assets
@@ -60,25 +89,10 @@ export const useControlTraceMatrix = (
     { enabled: !!controlAffectsRelationSchemaId }
   );
 
-  const maps = useMemo(() => {
-    const riskIdsByControlId = new Map<string, Set<string>>();
-    const controlIdsByRiskId = new Map<string, Set<string>>();
-    for (const relation of riskControl.data) {
-      const controlId = relation._out.id;
-      const riskId = relation._in.id;
-      addTo(riskIdsByControlId, controlId, riskId);
-      addTo(controlIdsByRiskId, riskId, controlId);
-    }
-    const assetIdsByControlId = new Map<string, Set<string>>();
-    const controlIdsByAssetId = new Map<string, Set<string>>();
-    for (const relation of controlAffects.data) {
-      const controlId = relation._in.id;
-      const assetId = relation._out.id;
-      addTo(assetIdsByControlId, controlId, assetId);
-      addTo(controlIdsByAssetId, assetId, controlId);
-    }
-    return { riskIdsByControlId, controlIdsByRiskId, assetIdsByControlId, controlIdsByAssetId };
-  }, [riskControl.data, controlAffects.data]);
+  const maps = useMemo(
+    () => buildControlTraceMatrix(riskControl.data, controlAffects.data),
+    [riskControl.data, controlAffects.data]
+  );
 
   if (!enabled) return EMPTY;
 

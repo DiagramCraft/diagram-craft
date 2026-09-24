@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
+import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import { Title } from '../../../components/Title';
 import { FilterDropdown } from '../../../components/FilterDropdown';
 import { Table } from '../../../components/table/Table';
@@ -11,7 +12,7 @@ import { useSchemas } from '../../../hooks/useSchemas';
 import { formatCurrencyValue } from '../../../utils/currencyFormat';
 import { resolveVendorManagementConfig } from '../vendorManagementQueries';
 import { VENDOR_RAIL_PATHS, VENDOR_SPEND_ID } from '../vendorManagementSections';
-import { useVendorSpendRollups } from '../useVendorSpendRollups';
+import { useVendorSpendRollups, type VendorSpendRollupValue } from '../useVendorSpendRollups';
 import { useVendorContracts, type VendorContractRow } from '../useVendorContracts';
 import { computeVmTotalSpend, computeVmGroupSpend } from '../vendorSpendAggregates';
 import type { SpendSearchParams } from '../../../routes/searchParams';
@@ -62,6 +63,61 @@ const largestContract = (rows: readonly VendorContractRow[]): string | null => {
       (currencyAmount(b.contract.annual_cost) ?? 0) - (currencyAmount(a.contract.annual_cost) ?? 0)
   );
   return sorted[0]!.contract._name;
+};
+
+/**
+ * Spend rows for the table: grouped by vendor, or by Vendor's `cost_centre` field, each carrying
+ * its own contract count and largest contract, sorted by spend descending.
+ */
+export const buildSpendRows = ({
+  group,
+  scopedVendors,
+  spendById,
+  contractItems,
+  contractsByVendorUid,
+  costCentreByVendorUid,
+  vendorSchema
+}: {
+  group: 'vendor' | 'costCentre' | 'capability';
+  scopedVendors: readonly EntityRecord[];
+  spendById: ReadonlyMap<string, VendorSpendRollupValue>;
+  contractItems: readonly VendorContractRow[];
+  contractsByVendorUid: Map<string, VendorContractRow[]>;
+  costCentreByVendorUid: Map<string, string>;
+  vendorSchema: EntitySchema | undefined;
+}): SpendRow[] => {
+  if (group === 'capability') return [];
+  if (group === 'costCentre') {
+    const grouped = computeVmGroupSpend(scopedVendors, spendById, 'cost_centre');
+    return [...grouped.entries()]
+      .map(([value, amount]) => {
+        const groupContracts = contractItems.filter(
+          row => row.vendorId && costCentreByVendorUid.get(row.vendorId) === value
+        );
+        return {
+          key: value,
+          label: costCentreLabel(vendorSchema, value),
+          amount,
+          contractCount: groupContracts.length,
+          largestContractName: largestContract(groupContracts)
+        };
+      })
+      .sort((a, b) => b.amount - a.amount);
+  }
+  return scopedVendors
+    .map(entity => {
+      const vendorContracts = contractsByVendorUid.get(entity._uid) ?? [];
+      return {
+        key: entity._uid,
+        label: entity._name,
+        subtitle: entity._publicId,
+        amount: spendById.get(entity._uid)?.vmSpend ?? 0,
+        vendorId: entity._publicId,
+        contractCount: vendorContracts.length,
+        largestContractName: largestContract(vendorContracts)
+      };
+    })
+    .sort((a, b) => b.amount - a.amount);
 };
 
 /**
@@ -158,48 +214,27 @@ export const VendorSpendScreen = () => {
     [allVendors, ccFilter, ownerFilter, costCentreByVendorUid]
   );
 
-  const rows: SpendRow[] = useMemo(() => {
-    if (group === 'capability') return [];
-    if (group === 'costCentre') {
-      const grouped = computeVmGroupSpend(scopedVendors, spend.byId, 'cost_centre');
-      return [...grouped.entries()]
-        .map(([value, amount]) => {
-          const groupContracts = contracts.items.filter(
-            row => row.vendorId && costCentreByVendorUid.get(row.vendorId) === value
-          );
-          return {
-            key: value,
-            label: costCentreLabel(vendorSchema, value),
-            amount,
-            contractCount: groupContracts.length,
-            largestContractName: largestContract(groupContracts)
-          };
-        })
-        .sort((a, b) => b.amount - a.amount);
-    }
-    return scopedVendors
-      .map(entity => {
-        const vendorContracts = contractsByVendorUid.get(entity._uid) ?? [];
-        return {
-          key: entity._uid,
-          label: entity._name,
-          subtitle: entity._publicId,
-          amount: spend.byId.get(entity._uid)?.vmSpend ?? 0,
-          vendorId: entity._publicId,
-          contractCount: vendorContracts.length,
-          largestContractName: largestContract(vendorContracts)
-        };
-      })
-      .sort((a, b) => b.amount - a.amount);
-  }, [
-    group,
-    scopedVendors,
-    spend.byId,
-    contracts.items,
-    contractsByVendorUid,
-    costCentreByVendorUid,
-    vendorSchema
-  ]);
+  const rows: SpendRow[] = useMemo(
+    () =>
+      buildSpendRows({
+        group,
+        scopedVendors,
+        spendById: spend.byId,
+        contractItems: contracts.items,
+        contractsByVendorUid,
+        costCentreByVendorUid,
+        vendorSchema
+      }),
+    [
+      group,
+      scopedVendors,
+      spend.byId,
+      contracts.items,
+      contractsByVendorUid,
+      costCentreByVendorUid,
+      vendorSchema
+    ]
+  );
 
   const rowsTotal = useMemo(() => rows.reduce((sum, row) => sum + row.amount, 0), [rows]);
   const maxRowAmount = useMemo(() => Math.max(...rows.map(row => row.amount), 1), [rows]);
