@@ -21,6 +21,11 @@ export const entityDrawerMetadataSlotSchema = z.enum([
   'namespace'
 ]);
 
+/** Metadata fields supported by query drawer list rows in addition to schema fields. */
+export const ENTITY_DRAWER_QUERY_METADATA_FIELDS = [
+  { id: '_lifecycle', label: 'Lifecycle' }
+] as const;
+
 const labelOverrideSchema = z.string().min(1).max(120).optional();
 const entityDrawerItemPresentationSchema = z.enum(['row', 'mini-panel']).optional();
 export const entityDrawerSlotOptionsSchema = z.record(z.string(), z.unknown());
@@ -145,6 +150,7 @@ export const entityDrawerDiagnosticSchema = z.object({
     'missing_schema',
     'missing_or_archived_field',
     'missing_relation_field',
+    'invalid_query',
     'invalid_children_target',
     'unsupported_slot',
     'invalid_slot_options',
@@ -579,6 +585,13 @@ export type EntityDrawerSchema = {
   fields: EntityDrawerField[];
   groups?: Array<{ id: string; name: string }>;
 };
+
+export type EntityDrawerQueryValidator = (args: {
+  item: Extract<EntityDrawerItem, { kind: 'query' }>;
+  schema: EntityDrawerSchema;
+  schemaId: string;
+  sectionId: string;
+}) => string | null;
 
 const fieldIsVisible = (field: EntityDrawerField): boolean => field.archived !== true;
 const isRelationField = (field: EntityDrawerField): boolean =>
@@ -1656,11 +1669,25 @@ const validateItem = (
   relationSchemas: EntityDrawerRelationSchema[],
   schemaId: string,
   sectionId: string,
-  diagnostics: EntityDrawerDiagnostic[]
+  diagnostics: EntityDrawerDiagnostic[],
+  queryValidator?: EntityDrawerQueryValidator
 ): EntityDrawerItem | null => {
   if (item.kind === 'metadata') return item;
   if (item.kind === 'placeholder') return item;
-  if (item.kind === 'query') return item;
+  if (item.kind === 'query') {
+    const validationError = queryValidator?.({ item, schema, schemaId, sectionId });
+    if (validationError) {
+      diagnostics.push({
+        code: 'invalid_query',
+        schemaId,
+        sectionId,
+        itemId: item.queryText,
+        message: validationError
+      });
+      return null;
+    }
+    return item;
+  }
   if (item.kind === 'children') {
     const childSchema = schemas.find(candidate => candidate.id === item.childSchemaId);
     const field = childSchema?.fields.find(candidate => candidate.id === item.fieldId);
@@ -1820,7 +1847,8 @@ export const resolveEntityDrawerConfiguration = (
   raw: unknown,
   schemas: EntityDrawerSchema[],
   capabilityConfigurations: readonly CapabilityConfigurationLike[] = [],
-  relationSchemas: EntityDrawerRelationSchema[] = []
+  relationSchemas: EntityDrawerRelationSchema[] = [],
+  queryValidator?: EntityDrawerQueryValidator
 ): { effective: EntityDrawerConfiguration; diagnostics: EntityDrawerDiagnostic[] } => {
   const defaults = buildFallbackEntityDrawerConfiguration(schemas);
   const supportedSlotSchemaIds = getEntityDrawerSlotSchemaIds(schemas, capabilityConfigurations);
@@ -1864,7 +1892,8 @@ export const resolveEntityDrawerConfiguration = (
           relationSchemas,
           schemaId,
           section.id,
-          diagnostics
+          diagnostics,
+          queryValidator
         );
         if (!resolved) return [];
         if (item.kind === 'slot' && !supportedSlotSchemaIds.get(item.slotId)?.includes(schemaId)) {

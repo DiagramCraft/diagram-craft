@@ -9,6 +9,7 @@ import {
 } from './entityQueryTextPrinter';
 import { tokenize } from './entityQueryTextTokenizer';
 import type { RelationSchemaCatalog, SchemaCatalog } from './entityQueryIRResolution';
+import { validateEntityQueryIR } from './entityQueryIRValidator';
 
 // Public façade for the text ⇄ IR compiler. The individual stages are intentionally kept in
 // sibling modules so tokenization, parsing, resolution, and printing can be tested independently.
@@ -33,6 +34,32 @@ export const parseEntityQueryText = (
     }
     throw error;
   }
+};
+
+/**
+ * Parses text and applies the same IR validation used by the public parse endpoint. Keeping this
+ * as one façade ensures server-side configuration validation cannot drift from drawer rendering.
+ */
+export const parseAndValidateEntityQueryText = (
+  text: string,
+  schemas: SchemaCatalog,
+  enums: EnumCatalog,
+  authCtx: WorkspaceAuthorizationContext | null = null,
+  relationSchemas: RelationSchemaCatalog = new Map()
+): TextParseResult => {
+  const result = parseEntityQueryText(text, schemas, enums, authCtx, relationSchemas);
+  if (!result.ok) return result;
+  const validation = validateEntityQueryIR(result.query, schemas, authCtx, relationSchemas);
+  if (!validation.ok) {
+    return {
+      ok: false,
+      errors: validation.errors.map(error => ({
+        offset: 0,
+        message: `${error.path.join('.')}: ${error.message}`
+      }))
+    };
+  }
+  return result;
 };
 
 export const printEntityQueryText = (

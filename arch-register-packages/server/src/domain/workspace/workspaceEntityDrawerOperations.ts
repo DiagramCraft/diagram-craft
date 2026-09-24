@@ -10,6 +10,7 @@ import { requireWorkspaceCapability } from '../auth/authorization';
 import { runAuthorizedOperation } from '../operation';
 import { PermissionChecker, type WorkspaceAuthorizationContext } from '@arch-register/permissions';
 import { httpAssert } from '../../utils/httpAssert';
+import { createEntityDrawerQueryValidator } from './entityDrawerQueryValidation';
 
 type EntityDrawerResource = {
   stored_configuration: unknown | null;
@@ -44,11 +45,13 @@ const requireEntityDrawerWrite = (authCtx: WorkspaceAuthorizationContext) => {
 
 const getResource = async (
   db: DatabaseAdapter,
-  workspace: string
+  workspace: string,
+  authCtx: WorkspaceAuthorizationContext
 ): Promise<EntityDrawerResource> => {
-  const [row, schemas, relationSchemaRows, capabilityConfigurations] = await Promise.all([
+  const [row, schemas, enums, relationSchemaRows, capabilityConfigurations] = await Promise.all([
     db.workspace.getWorkspaceEntityDrawerConfiguration(workspace),
     loadSchemas(db, workspace),
+    db.catalog.listEnums(workspace),
     db.relation.listRelationSchemas(workspace),
     db.workspace.listWorkspaceCapabilityConfigurations(workspace)
   ]);
@@ -57,11 +60,16 @@ const getResource = async (
     in: { schemaIds: relationSchema.in_schema_ids },
     out: { schemaIds: relationSchema.out_schema_ids }
   }));
+  const queryValidator = createEntityDrawerQueryValidator(
+    { schemas, enums, relationSchemas: relationSchemaRows },
+    authCtx
+  );
   const resolved = resolveEntityDrawerConfiguration(
     row?.configuration ?? null,
     schemas,
     capabilityConfigurations,
-    relationSchemas
+    relationSchemas,
+    queryValidator
   );
   return {
     stored_configuration: row?.configuration ?? null,
@@ -78,7 +86,7 @@ export const getEntityDrawerConfiguration = async (
 ) =>
   runEntityDrawerOperation(db, workspace, event, async (ws, authCtx) => {
     requireWorkspaceCapability(authCtx, 'ws.view');
-    return await getResource(db, ws);
+    return await getResource(db, ws, authCtx);
   });
 
 export const getEntityDrawerCatalog = async (
@@ -108,6 +116,35 @@ export const updateEntityDrawerConfiguration = async (
       status: 400,
       message: 'Invalid entity drawer configuration'
     });
+    const [schemas, enums, relationSchemaRows, capabilityConfigurations] = await Promise.all([
+      loadSchemas(db, ws),
+      db.catalog.listEnums(ws),
+      db.relation.listRelationSchemas(ws),
+      db.workspace.listWorkspaceCapabilityConfigurations(ws)
+    ]);
+    const relationSchemas = relationSchemaRows.map(relationSchema => ({
+      id: relationSchema.id,
+      in: { schemaIds: relationSchema.in_schema_ids },
+      out: { schemaIds: relationSchema.out_schema_ids }
+    }));
+    const queryValidator = createEntityDrawerQueryValidator(
+      { schemas, enums, relationSchemas: relationSchemaRows },
+      authCtx
+    );
+    const validation = resolveEntityDrawerConfiguration(
+      parsed.data,
+      schemas,
+      capabilityConfigurations,
+      relationSchemas,
+      queryValidator
+    );
+    const queryErrors = validation.diagnostics.filter(
+      diagnostic => diagnostic.code === 'invalid_query'
+    );
+    httpAssert.true(queryErrors.length === 0, {
+      status: 400,
+      message: queryErrors.map(diagnostic => diagnostic.message).join('; ')
+    });
     const now = new Date();
     await db.workspace.upsertWorkspaceEntityDrawerConfiguration({
       workspace: ws,
@@ -115,7 +152,7 @@ export const updateEntityDrawerConfiguration = async (
       created_at: now,
       updated_at: now
     });
-    return await getResource(db, ws);
+    return await getResource(db, ws, authCtx);
   });
 
 export const resetEntityDrawerConfiguration = async (

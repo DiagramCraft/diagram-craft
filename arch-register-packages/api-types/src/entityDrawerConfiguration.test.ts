@@ -177,6 +177,37 @@ describe('entity drawer configuration', () => {
     ]);
   });
 
+  it('omits query items rejected by the runtime query validator', () => {
+    const result = resolveEntityDrawerConfiguration(
+      {
+        version: 1,
+        profiles: {
+          service: {
+            sections: [
+              {
+                id: 'content',
+                title: 'Content',
+                items: [{ kind: 'query', queryText: 'missing', fields: [{ fieldId: 'stale' }] }]
+              }
+            ]
+          }
+        }
+      },
+      [schema],
+      [],
+      [],
+      () => "Result field 'stale' is not available on the query target."
+    );
+
+    expect(result.effective.profiles.service?.sections[0]?.items).toEqual([]);
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({
+        code: 'invalid_query',
+        message: "Result field 'stale' is not available on the query target."
+      })
+    ]);
+  });
+
   it('rejects a query item with an empty queryText', () => {
     expect(() =>
       entityDrawerConfigurationSchema.parse({

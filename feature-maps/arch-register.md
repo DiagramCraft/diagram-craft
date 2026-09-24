@@ -170,7 +170,9 @@
               may be capability-bound or generic; the Entity Change cases, Entity Governance items, and Entity
               Assessments slots are
               associated with the current entity and can therefore be added to any schema's drawer, while remaining
-              seeded by default only for Data Entity profiles.
+              seeded by default only for Data Entity profiles. Query drawer items are validated with the same query
+              parser used at render time before saving; stale query result fields are rejected, and invalid legacy
+              items are omitted with diagnostics.
 
             - @id:ar.workspace.configuration.schemas Administrators can define entity schemas, fields, select options,
               and reusable workspace enums. Enum options have stable values, editable labels and descriptions, an
