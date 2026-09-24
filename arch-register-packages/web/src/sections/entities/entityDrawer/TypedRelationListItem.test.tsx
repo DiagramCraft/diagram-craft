@@ -37,6 +37,7 @@ const record = (overrides: Partial<RelationRecord> = {}): RelationRecord =>
     _out: { id: 'control-1', name: 'MFA Enforcement' },
     coverage: 70,
     effectiveness: 'partial',
+    control_status: 'Active',
     ...overrides
   }) as unknown as RelationRecord;
 
@@ -63,10 +64,17 @@ describe('TypedRelationListItem', () => {
     expect(markup).not.toContain('70');
   });
 
-  it('renders rows with formatted attribute columns when attributes are configured', () => {
+  it('renders selected relation schema fields as formatted columns', () => {
     const markup = renderToStaticMarkup(
       <TypedRelationListItem
-        item={{ ...chipItem, attributes: [{ fieldId: 'coverage' }, { fieldId: 'effectiveness' }] }}
+        item={{
+          ...chipItem,
+          attributes: [
+            { fieldId: 'coverage' },
+            { fieldId: 'effectiveness' },
+            { fieldId: 'control_status' }
+          ]
+        }}
         field={field}
         label="Mitigating controls"
         typedRelationsOutgoing={[record()]}
@@ -78,6 +86,7 @@ describe('TypedRelationListItem', () => {
 
     expect(markup).toContain('MFA Enforcement');
     expect(markup).toContain('70 · partial');
+    expect(markup).not.toContain('Active');
   });
 
   it('silently skips attribute field ids that no longer exist on the relation schema', () => {

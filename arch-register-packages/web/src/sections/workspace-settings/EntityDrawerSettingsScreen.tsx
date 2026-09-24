@@ -35,6 +35,10 @@ import {
   buildFallbackEntityDrawerProfile,
   normalizeLegacyEntityDrawerConfiguration
 } from '@arch-register/api-types/entityDrawerConfiguration';
+import {
+  changeTypedRelationListField,
+  getTypedRelationAttributeFields
+} from './entityDrawerSettingsHelpers';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import {
   useEntityDrawerCatalog,
@@ -112,21 +116,6 @@ const getRelationRollupOptions = (
         .map(field => ({ path, sourceSchema, field }));
     })
   );
-
-const getTypedRelationTargetSchemas = (
-  fieldId: string,
-  schema: EntitySchema,
-  schemas: EntitySchema[],
-  relationSchemas: ReturnType<typeof useWorkspaceContext>['relationSchemas']
-): EntitySchema[] => {
-  const field = schema.fields.find(candidate => candidate.id === fieldId);
-  if (field?.type !== 'typedRelation') return [];
-  const relationSchema = relationSchemas.find(candidate => candidate.id === field.relationSchemaId);
-  if (!relationSchema) return [];
-  const targetEndpoint = field.direction === 'in' ? relationSchema.out : relationSchema.in;
-  if (targetEndpoint.schemaIds === 'any') return schemas;
-  return schemas.filter(candidate => targetEndpoint.schemaIds.includes(candidate.id));
-};
 
 const AddMenu = ({ label, groups }: { label: string; groups: PickerGroup[] }) => {
   const [open, setOpen] = useState(false);
@@ -1286,17 +1275,12 @@ export const EntityDrawerEditor = ({
                           const typedRelationFields = availableFields.filter(
                             field => field.type === 'typedRelation'
                           );
-                          const targetSchemas = getTypedRelationTargetSchemas(
-                            item.fieldId,
-                            selectedSchema,
-                            schemas,
-                            relationSchemas
+                          const selectedField = selectedSchema.fields.find(
+                            field => field.id === item.fieldId && field.type === 'typedRelation'
                           );
-                          const targetFields = targetSchemas.flatMap(targetSchema =>
-                            targetSchema.fields
-                              .filter(field => !field.archived)
-                              .map(field => ({ targetSchema, field }))
-                          );
+                          const attributeFields = selectedField
+                            ? getTypedRelationAttributeFields(selectedField, relationSchemas)
+                            : [];
                           const attributes = item.attributes ?? [];
                           const setAttributes = (
                             nextAttributes: NonNullable<
@@ -1329,7 +1313,7 @@ export const EntityDrawerEditor = ({
                                         items: current.items.map((entry, index) =>
                                           index === itemIndex &&
                                           entry.kind === 'typed-relation-list'
-                                            ? { ...entry, fieldId: value, attributes: [] }
+                                            ? changeTypedRelationListField(entry, value)
                                             : entry
                                         )
                                       }));
@@ -1356,21 +1340,16 @@ export const EntityDrawerEditor = ({
                                         )
                                       }
                                     >
-                                      {!targetFields.some(
-                                        ({ field }) => field.id === attribute.fieldId
+                                      {!attributeFields.some(
+                                        field => field.id === attribute.fieldId
                                       ) && (
                                         <Select.Item value={attribute.fieldId}>
                                           {attribute.fieldId}
                                         </Select.Item>
                                       )}
-                                      {targetFields.map(({ targetSchema, field }) => (
-                                        <Select.Item
-                                          key={`${targetSchema.id}:${field.id}`}
-                                          value={field.id}
-                                        >
-                                          {targetSchemas.length > 1
-                                            ? `${targetSchema.name} · ${field.name}`
-                                            : field.name}
+                                      {attributeFields.map(field => (
+                                        <Select.Item key={field.id} value={field.id}>
+                                          {field.name}
                                         </Select.Item>
                                       ))}
                                     </Select.Root>
@@ -1405,19 +1384,19 @@ export const EntityDrawerEditor = ({
                                     </Button>
                                   </span>
                                 ))}
-                                {targetFields.length > 0 && (
+                                {attributeFields.length > 0 && (
                                   <button
                                     type="button"
                                     className={layoutStyles.addBlockBtn}
                                     onClick={() => {
-                                      const next = targetFields.find(
-                                        ({ field }) =>
+                                      const next = attributeFields.find(
+                                        field =>
                                           !attributes.some(
                                             attribute => attribute.fieldId === field.id
                                           )
                                       );
                                       if (next)
-                                        setAttributes([...attributes, { fieldId: next.field.id }]);
+                                        setAttributes([...attributes, { fieldId: next.id }]);
                                     }}
                                   >
                                     <TbPlus size={10} /> Add attribute
