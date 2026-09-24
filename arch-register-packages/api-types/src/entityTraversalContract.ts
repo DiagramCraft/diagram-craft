@@ -143,6 +143,47 @@ const entityTraversalResultSchema = z.object({
   roots: z.array(entityTraversalRootResultSchema)
 });
 
+const entityImpactPathSchema = z.object({
+  rootId: z.string(),
+  pathId: z.string(),
+  depth: z.number().int().min(0),
+  provenance: z.array(entityTraversalHopSchema)
+});
+
+const entityImpactEntitySchema = z.object({
+  entityId: z.string(),
+  entityName: z.string(),
+  entitySlug: z.string(),
+  schemaId: z.string(),
+  schemaName: z.string(),
+  ownerId: z.string().nullable(),
+  lifecycleState: z.string().nullable(),
+  criticality: z.number().nullable(),
+  depth: z.number().int().min(0),
+  rank: z.number().int().min(1),
+  paths: z.array(entityImpactPathSchema)
+});
+
+const entityImpactGroupSchema = z.object({
+  key: z.string().nullable(),
+  label: z.string(),
+  count: z.number().int().min(0),
+  rank: z.number().int().min(1),
+  entityIds: z.array(z.string()),
+  highestCriticality: z.number().nullable(),
+  shallowestDepth: z.number().int().min(0)
+});
+
+const entityTraversalAggregationSchema = z.object({
+  entities: z.array(entityImpactEntitySchema),
+  groups: z.object({
+    lifecycle: z.array(entityImpactGroupSchema),
+    owner: z.array(entityImpactGroupSchema),
+    schema: z.array(entityImpactGroupSchema),
+    criticality: z.array(entityImpactGroupSchema)
+  })
+});
+
 export const workspaceEntityTraversalContract = oc.tag('EntityTraversal').router({
   entityTraversal: {
     traverse: oc
@@ -163,6 +204,24 @@ export const workspaceEntityTraversalContract = oc.tag('EntityTraversal').router
         })
       )
       .output(entityTraversalResultSchema),
+    aggregate: oc
+      .route({
+        method: 'POST',
+        path: '/{workspace}/data/traverse/aggregate',
+        inputStructure: 'detailed',
+        summary: 'Group and rank permission-filtered traversal results',
+        description:
+          'Runs a bounded traversal and groups distinct visible entity results by lifecycle, owner, ' +
+          'schema, and available criticality metadata.',
+        tags: ['EntityTraversal']
+      })
+      .input(
+        z.object({
+          params: ws,
+          body: entityTraversalRequestSchema
+        })
+      )
+      .output(entityTraversalAggregationSchema),
     diff: oc
       .route({
         method: 'POST',
@@ -188,3 +247,4 @@ export type EntityTraversalGraphDiffRequest = z.infer<typeof entityTraversalGrap
 export type EntityTraversalGraphDiffResponse = z.infer<
   typeof entityTraversalGraphDiffResponseSchema
 >;
+export type EntityTraversalAggregation = z.infer<typeof entityTraversalAggregationSchema>;

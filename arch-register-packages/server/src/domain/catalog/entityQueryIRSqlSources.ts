@@ -487,8 +487,11 @@ const buildTemporalSource = (state: EntityQuerySqlRenderState): string => {
 };
 
 const snapshotEntityRowset = (state: EntityQuerySqlRenderState): string => {
-  const parameter = addParam(state, JSON.stringify(state.snapshotEntities ?? []));
+  const snapshotEntities = state.snapshotEntities ?? [];
   if (state.dialect === 'postgres') {
+    // postgres.js encodes an array parameter itself when cast to ::jsonb; pre-stringifying it
+    // here would double-encode it into a jsonb string, which jsonb_to_recordset then rejects.
+    const parameter = addParam(state, snapshotEntities);
     return `snapshot_entity_source AS (
       SELECT rows.id, rows.workspace, 'entity'::text AS kind, rows.public_id, rows.slug,
              rows.namespace, rows.name, rows.description, rows.owner, rows.lifecycle,
@@ -508,6 +511,7 @@ const snapshotEntityRowset = (state: EntityQuerySqlRenderState): string => {
       )
     )`;
   }
+  const parameter = addParam(state, JSON.stringify(snapshotEntities));
   return `snapshot_entity_source AS (
     SELECT json_extract(value, '$.id') AS id,
            json_extract(value, '$.workspace') AS workspace,
@@ -541,8 +545,11 @@ const snapshotEntityRowset = (state: EntityQuerySqlRenderState): string => {
 };
 
 const snapshotRelationRowset = (state: EntityQuerySqlRenderState): string => {
-  const parameter = addParam(state, JSON.stringify(state.snapshotRelations ?? []));
+  const snapshotRelations = state.snapshotRelations ?? [];
   if (state.dialect === 'postgres') {
+    // postgres.js encodes an array parameter itself when cast to ::jsonb; pre-stringifying it
+    // here would double-encode it into a jsonb string, which jsonb_to_recordset then rejects.
+    const parameter = addParam(state, snapshotRelations);
     return `snapshot_relation_source AS (
       SELECT rows.id, rows.workspace, 'relation'::text AS kind, rows.schema_id,
              rows.data, rows.created_at, rows.updated_at, NULL::timestamptz AS deleted_at,
@@ -560,6 +567,7 @@ const snapshotRelationRowset = (state: EntityQuerySqlRenderState): string => {
       )
     )`;
   }
+  const parameter = addParam(state, JSON.stringify(snapshotRelations));
   return `snapshot_relation_source AS (
     SELECT json_extract(value, '$.id') AS id,
            json_extract(value, '$.workspace') AS workspace,

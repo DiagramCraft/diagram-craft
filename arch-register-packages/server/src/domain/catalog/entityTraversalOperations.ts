@@ -1,12 +1,15 @@
 import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
 import type { EntityTraversalSubject } from '@arch-register/api-types/entityTraversalContract';
 import type { DatabaseAdapter } from '../../db/database';
+import { isFieldViewRestricted } from '../auth/fieldGroupAccessControl';
 import { httpAssert } from '../../utils/httpAssert';
+import { kindAfterPath } from './entityQueryIRResolution';
 import {
   executeEntityTraversal,
   type EntityTraversalPath,
   type EntityTraversalResult
 } from './entityTraversal';
+import { aggregateEntityTraversalResult } from './entityTraversalAggregation';
 import {
   getActiveRevisionOrThrow,
   getCaseMemberSubject,
@@ -102,4 +105,46 @@ export const executeSubjectTraversal = async (
     maxNodes: input.maxNodes
   });
   return toApiTraversalResult(result);
+};
+
+/** Runs the same bounded traversal as the flat endpoint and aggregates its visible entity rows. */
+export const executeSubjectTraversalAggregation = async (
+  db: DatabaseAdapter,
+  ws: string,
+  authCtx: WorkspaceAuthorizationContext | null,
+  input: {
+    subject: EntityTraversalSubject;
+    paths: readonly EntityTraversalPath[];
+    maxDepth?: number;
+    maxNodes?: number;
+  }
+) => {
+  const schemas = await db.catalog.listSchemas(ws);
+  const hasVisibleNumericCriticality = schemas.some(
+    schema =>
+      schema.fields.some(field => field.id === 'criticality' && field.type === 'number') &&
+      !isFieldViewRestricted(authCtx, schema, 'criticality')
+  );
+  const metadataFields = [
+    { context: 'entity' as const, fieldId: '_name' },
+    { context: 'entity' as const, fieldId: '_slug' },
+    { context: 'entity' as const, fieldId: '_owner' },
+    { context: 'entity' as const, fieldId: '_lifecycle' },
+    ...(hasVisibleNumericCriticality
+      ? [{ context: 'entity' as const, fieldId: 'criticality' }]
+      : [])
+  ];
+  const paths = input.paths.map(path =>
+    kindAfterPath([...path.steps], 'entity') === 'entity'
+      ? { ...path, sourceFields: metadataFields }
+      : path
+  );
+  const entityIds = await resolveTraversalRootEntityIds(db, ws, input.subject);
+  const result = await executeEntityTraversal(db, ws, authCtx, {
+    root: { kind: 'ids', entityIds },
+    paths,
+    maxDepth: input.maxDepth,
+    maxNodes: input.maxNodes
+  });
+  return aggregateEntityTraversalResult(result, schemas);
 };

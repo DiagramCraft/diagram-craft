@@ -4,7 +4,10 @@ import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { createOrpcHandler } from '../../utils/orpcHandler';
 import { entityScoped, orpcErrorMiddleware, workspaceScoped } from '../../utils/orpcErrors';
-import { executeSubjectTraversal } from './entityTraversalOperations';
+import {
+  executeSubjectTraversal,
+  executeSubjectTraversalAggregation
+} from './entityTraversalOperations';
 import { diffSubjectTraversal } from './entityTraversalGraphDiffOperations';
 
 type ORPCContext = {
@@ -23,6 +26,16 @@ const entityTraversalHandlers = {
     const { workspace, authCtx } = context;
     const { subject, paths, maxDepth, maxNodes } = input.body;
     return executeSubjectTraversal(context.db, workspace, authCtx, {
+      subject,
+      paths,
+      maxDepth,
+      maxNodes
+    });
+  }),
+  aggregate: entityTraversalRouter.entityTraversal.aggregate.handler(async ({ input, context }) => {
+    const { workspace, authCtx } = context;
+    const { subject, paths, maxDepth, maxNodes } = input.body;
+    return executeSubjectTraversalAggregation(context.db, workspace, authCtx, {
       subject,
       paths,
       maxDepth,
