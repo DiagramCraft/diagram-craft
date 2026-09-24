@@ -273,7 +273,9 @@ const findTextInput = (container: HTMLElement, index = 0) => {
 
 const setInputValue = (input: HTMLInputElement | HTMLTextAreaElement, value: string) => {
   const prototype =
-    input instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
+    input instanceof HTMLTextAreaElement
+      ? HTMLTextAreaElement.prototype
+      : HTMLInputElement.prototype;
   const setter = Object.getOwnPropertyDescriptor(prototype, 'value')?.set;
   setter?.call(input, value);
   input.dispatchEvent(new Event('input', { bubbles: true }));
@@ -315,9 +317,7 @@ describe('EntityDrawerEditor', () => {
 
       clickButton(rendered.container, 'Use a custom layout');
 
-      expect(
-        rendered.container.querySelector('input[type="checkbox"]')
-      ).not.toBeNull();
+      expect(rendered.container.querySelector('input[type="checkbox"]')).not.toBeNull();
       expect(rendered.container.textContent).toContain('Entity drawer layout');
     });
 
@@ -467,17 +467,13 @@ describe('EntityDrawerEditor', () => {
       const rendered = renderEditor();
       root = rendered.root;
 
-      const toggle = rendered.container.querySelector(
-        'input[type="checkbox"]'
-      ) as HTMLInputElement;
+      const toggle = rendered.container.querySelector('input[type="checkbox"]') as HTMLInputElement;
       act(() => toggle.click());
 
       expect(rendered.container.textContent).toContain('Using the default drawer layout');
       clickButton(rendered.container, 'Save changes');
 
-      expect(mutate).toHaveBeenCalledWith(
-        expect.objectContaining({ profiles: {} })
-      );
+      expect(mutate).toHaveBeenCalledWith(expect.objectContaining({ profiles: {} }));
     });
   });
 
@@ -503,9 +499,7 @@ describe('EntityDrawerEditor', () => {
 
       const fieldset = rendered.container.querySelector('fieldset');
       expect(fieldset?.disabled).toBe(true);
-      const toggle = rendered.container.querySelector(
-        'input[type="checkbox"]'
-      ) as HTMLInputElement;
+      const toggle = rendered.container.querySelector('input[type="checkbox"]') as HTMLInputElement;
       expect(toggle.disabled).toBe(true);
       expect(
         [...rendered.container.querySelectorAll('button')].some(
@@ -583,9 +577,7 @@ describe('EntityDrawerEditor', () => {
             [schema.id]: expect.objectContaining({
               sections: [
                 expect.objectContaining({
-                  items: [
-                    expect.objectContaining({ queryText: '<-"Relation name".field-name' })
-                  ]
+                  items: [expect.objectContaining({ queryText: '<-"Relation name".field-name' })]
                 })
               ]
             })
@@ -678,9 +670,9 @@ describe('EntityDrawerEditor', () => {
       const rendered = renderEditor();
       root = rendered.root;
 
-      const attributeLabelInput = [
-        ...rendered.container.querySelectorAll('input')
-      ].filter(candidate => candidate.type !== 'checkbox').at(-1)!;
+      const attributeLabelInput = [...rendered.container.querySelectorAll('input')]
+        .filter(candidate => candidate.type !== 'checkbox')
+        .at(-1)!;
       act(() => setInputValue(attributeLabelInput, 'Team name'));
       clickButton(rendered.container, 'Save changes');
 
@@ -713,7 +705,7 @@ describe('EntityDrawerEditor', () => {
       const rendered = renderEditor();
       root = rendered.root;
 
-      clickButton(rendered.container, 'Remove attribute');
+      act(() => findButton(rendered.container, 'Remove attribute').click());
       clickButton(rendered.container, 'Save changes');
 
       expect(mutate).toHaveBeenCalledWith(
@@ -741,7 +733,9 @@ describe('EntityDrawerEditor', () => {
       const rendered = renderEditor();
       root = rendered.root;
 
-      const fieldSelect = [...rendered.container.querySelectorAll('select')][0] as HTMLSelectElement;
+      const fieldSelect = [
+        ...rendered.container.querySelectorAll('select')
+      ][0] as HTMLSelectElement;
       act(() => {
         fieldSelect.value = 'field-owner';
         fieldSelect.dispatchEvent(new Event('change', { bubbles: true }));
