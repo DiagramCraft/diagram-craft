@@ -4,7 +4,10 @@ import type { EntityDrawerItem } from '@arch-register/api-types/entityDrawerConf
 import type { TypedRelationField } from '@arch-register/api-types/schemaContract';
 import type { RelationRecord } from '@arch-register/api-types/relationContract';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
+import type { EntityDrawerFieldGroupAccess } from './entityDrawerState';
 import { TypedRelationListItem } from './TypedRelationListItem';
+
+const fullAccess: EntityDrawerFieldGroupAccess = () => 'edit';
 
 const field = {
   id: 'mitigating_controls',
@@ -46,6 +49,21 @@ const chipItem: Extract<EntityDrawerItem, { kind: 'typed-relation-list' }> = {
   fieldId: 'mitigating_controls'
 };
 
+const restrictedRelationSchema: RelationSchema = {
+  ...relationSchema,
+  fields: [
+    ...relationSchema.fields,
+    {
+      id: 'effectiveness_score',
+      name: 'Effectiveness score',
+      requirementLevel: null,
+      type: 'number',
+      groupId: 'sensitive'
+    } as never
+  ],
+  groups: [{ id: 'sensitive', accessControl: { teamIds: ['team-risk'] } } as never]
+} as unknown as RelationSchema;
+
 describe('TypedRelationListItem', () => {
   it('renders a chip per related entity when no attributes are configured', () => {
     const markup = renderToStaticMarkup(
@@ -57,6 +75,7 @@ describe('TypedRelationListItem', () => {
         typedRelationsIncoming={[]}
         typedRelationsStatus={{ isLoading: false, isError: false }}
         relationSchemas={[relationSchema]}
+        getFieldGroupAccess={fullAccess}
       />
     );
 
@@ -81,6 +100,7 @@ describe('TypedRelationListItem', () => {
         typedRelationsIncoming={[]}
         typedRelationsStatus={{ isLoading: false, isError: false }}
         relationSchemas={[relationSchema]}
+        getFieldGroupAccess={fullAccess}
       />
     );
 
@@ -99,6 +119,7 @@ describe('TypedRelationListItem', () => {
         typedRelationsIncoming={[]}
         typedRelationsStatus={{ isLoading: false, isError: false }}
         relationSchemas={[relationSchema]}
+        getFieldGroupAccess={fullAccess}
       />
     );
 
@@ -121,11 +142,48 @@ describe('TypedRelationListItem', () => {
         ]}
         typedRelationsStatus={{ isLoading: false, isError: false }}
         relationSchemas={[relationSchema]}
+        getFieldGroupAccess={fullAccess}
       />
     );
 
     expect(markup).toContain('MFA Enforcement');
     expect(markup).not.toContain('Wrong Direction');
+  });
+
+  it('renders a restricted attribute when the viewer has field-group access', () => {
+    const markup = renderToStaticMarkup(
+      <TypedRelationListItem
+        item={{ ...chipItem, attributes: [{ fieldId: 'coverage' }, { fieldId: 'effectiveness_score' }] }}
+        field={field}
+        label="Mitigating controls"
+        typedRelationsOutgoing={[record({ effectiveness_score: 90 } as never)]}
+        typedRelationsIncoming={[]}
+        typedRelationsStatus={{ isLoading: false, isError: false }}
+        relationSchemas={[restrictedRelationSchema]}
+        getFieldGroupAccess={() => 'view'}
+      />
+    );
+
+    expect(markup).toContain('70 · 90');
+  });
+
+  it('omits a restricted attribute entirely when the viewer has no field-group access', () => {
+    const markup = renderToStaticMarkup(
+      <TypedRelationListItem
+        item={{ ...chipItem, attributes: [{ fieldId: 'coverage' }, { fieldId: 'effectiveness_score' }] }}
+        field={field}
+        label="Mitigating controls"
+        typedRelationsOutgoing={[record()]}
+        typedRelationsIncoming={[]}
+        typedRelationsStatus={{ isLoading: false, isError: false }}
+        relationSchemas={[restrictedRelationSchema]}
+        getFieldGroupAccess={() => 'none'}
+      />
+    );
+
+    expect(markup).toContain('70');
+    expect(markup).not.toContain('Effectiveness score');
+    expect(markup).not.toContain('undefined');
   });
 
   it('renders loading, empty, and unavailable states', () => {
@@ -139,6 +197,7 @@ describe('TypedRelationListItem', () => {
           typedRelationsIncoming={[]}
           typedRelationsStatus={{ isLoading: true, isError: false }}
           relationSchemas={[relationSchema]}
+          getFieldGroupAccess={fullAccess}
         />
       )
     ).toContain('Loading…');
@@ -153,6 +212,7 @@ describe('TypedRelationListItem', () => {
           typedRelationsIncoming={[]}
           typedRelationsStatus={{ isLoading: false, isError: false }}
           relationSchemas={[relationSchema]}
+          getFieldGroupAccess={fullAccess}
         />
       )
     ).toContain('No mitigating controls linked.');
@@ -167,6 +227,7 @@ describe('TypedRelationListItem', () => {
           typedRelationsIncoming={[]}
           typedRelationsStatus={{ isLoading: false, isError: true }}
           relationSchemas={[relationSchema]}
+          getFieldGroupAccess={fullAccess}
         />
       )
     ).toContain('This content is unavailable.');

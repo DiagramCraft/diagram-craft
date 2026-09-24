@@ -11,7 +11,7 @@ import {
 } from '@arch-register/api-types/entityDrawerConfiguration';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { FieldGroupAccess, FieldGroupAccessControl } from '@arch-register/permissions';
-import { resolveGroupAccessControl } from '../../../lib/fieldGroupAccess';
+import { resolveFieldAccess } from '../../../lib/fieldGroupAccess';
 import {
   providerSupportsContext,
   type EntityDrawerProviderContext,
@@ -207,15 +207,7 @@ const fieldAccess = (
   schema: EntitySchema,
   field: EntitySchema['fields'][number],
   getFieldGroupAccess: EntityDrawerFieldGroupAccess
-): FieldGroupAccess => {
-  if (!field.groupId) return 'edit';
-  const group = schema.groups?.find(candidate => candidate.id === field.groupId);
-  const accessControl = resolveGroupAccessControl(
-    group ?? { id: field.groupId },
-    schema.shared_field_group_links ?? []
-  );
-  return getFieldGroupAccess(accessControl);
-};
+): FieldGroupAccess => resolveFieldAccess(schema, field, getFieldGroupAccess);
 
 const fieldDiagnostic = (
   item: Extract<EntityDrawerItem, { kind: 'field' | 'relation' }>,
