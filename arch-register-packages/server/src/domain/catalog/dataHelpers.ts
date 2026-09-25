@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import type { EntityGrantDbCretae, DatabaseAdapter } from '../../db/database';
-import type { AuthorizationContext } from '@arch-register/permissions';
+import { PermissionChecker, type AuthorizationContext } from '@arch-register/permissions';
 import { decodeRefs } from '../../types';
 import { Entity, type SchemaDbResult as InternalEntitySchema } from './db/catalogDatabase';
 import type { EntityDbResult } from './db/catalogDatabase';
@@ -648,6 +648,17 @@ export type DependentsResponse = {
 };
 
 const MAX_DEPENDENTS_NODES = 500;
+const permissionChecker = new PermissionChecker();
+
+const filterVisibleDependentEntities = (
+  entities: Entity[],
+  authCtx: AuthorizationContext | null
+): Entity[] =>
+  authCtx == null
+    ? entities
+    : entities.filter(entity =>
+        permissionChecker.hasEntityPermission(authCtx, entity, 'view_entity')
+      );
 
 type IncomingIndexEntry = {
   entity: Entity;
@@ -762,6 +773,10 @@ const buildEntityDependentsFromIndex = (
   const dependents: DependentRecord[] = [];
   let truncated = false;
 
+  // The incoming index is built from visible rows, but a requested root must also be visible.
+  // Otherwise a caller who knows a restricted entity id could infer its dependents from counts.
+  if (authCtx != null && !entityMap.has(entityId)) return { dependents, truncated };
+
   // BFS queue entries: [id, depth, viaPath]
   type QueueEntry = [string, number, Array<{ entityId: string; entityName: string }>];
   const queue: QueueEntry[] = [[entityId, 0, []]];
@@ -849,15 +864,17 @@ export const buildEntityDependents = (
   authCtx: AuthorizationContext | null,
   typedRelations?: RelationDbResult[],
   relationSchemas?: RelationSchemaDbResult[]
-): DependentsResponse =>
-  buildEntityDependentsFromIndex(
+): DependentsResponse => {
+  const visibleEntities = filterVisibleDependentEntities(entities, authCtx);
+  return buildEntityDependentsFromIndex(
     entityId,
-    entities,
+    visibleEntities,
     schemas,
     options,
-    buildIncomingIndex(entities, schemas, authCtx, typedRelations, relationSchemas),
+    buildIncomingIndex(visibleEntities, schemas, authCtx, typedRelations, relationSchemas),
     authCtx
   );
+};
 
 /**
  * Builds dependent lookups for several entities from one shared inverse graph. This is useful for
@@ -873,8 +890,10 @@ export const buildBatchEntityDependents = (
   typedRelations?: RelationDbResult[],
   relationSchemas?: RelationSchemaDbResult[]
 ): Map<string, DependentsResponse> => {
+  const visibleEntities = filterVisibleDependentEntities(entities, authCtx);
+  const visibleEntityIds = new Set(visibleEntities.map(entity => entity.id));
   const incomingIndex = buildIncomingIndex(
-    entities,
+    visibleEntities,
     schemas,
     authCtx,
     typedRelations,
@@ -884,7 +903,16 @@ export const buildBatchEntityDependents = (
   for (const entityId of new Set(entityIds)) {
     result.set(
       entityId,
-      buildEntityDependentsFromIndex(entityId, entities, schemas, options, incomingIndex, authCtx)
+      authCtx != null && !visibleEntityIds.has(entityId)
+        ? { dependents: [], truncated: false }
+        : buildEntityDependentsFromIndex(
+            entityId,
+            visibleEntities,
+            schemas,
+            options,
+            incomingIndex,
+            authCtx
+          )
     );
   }
   return result;
