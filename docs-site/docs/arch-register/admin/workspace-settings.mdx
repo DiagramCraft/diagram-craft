@@ -4,6 +4,10 @@ import ThemedImage from '@theme/ThemedImage';
 
 Workspace Settings is the main governance screen for a workspace.
 
+The settings sidebar shows sections allowed by your permissions. A global platform administrator or a member with the
+workspace capability required by that section can manage it; requirements differ for model, people, and operational
+settings. Ask a workspace administrator if a section is missing.
+
 <ThemedImage
   alt="Workspace settings general screen in Arch Register"
   sources={{
@@ -17,6 +21,8 @@ Workspace Settings is the main governance screen for a workspace.
 The implemented settings area includes:
 
 - general workspace identity
+- application capability bindings and application access policies
+- supported currencies, default currency, and assessment types
 - lifecycle
 - model overview
 - entity types (schemas)
@@ -38,15 +44,33 @@ The implemented settings area includes:
 
 ## General
 
-Use general settings to manage the basic workspace identity such as name, slug, description, and visual identity.
+Use **Workspace Settings → General** to manage the basic workspace identity such as name, slug, description, visual
+identity, and workspace date/time display preferences. Date choices include ISO, month-name, and day/month formats;
+time can use a 12-hour or 24-hour clock. The preference applies across entity drawers, fields, tables, dashboards,
+assessments, and governance views. Date-only values stay on the same calendar day regardless of the viewer's timezone.
+New workspaces use ISO dates and 24-hour time by default.
+
+## Currencies And Assessment Types
+
+Open **Workspace Settings → Currencies** to choose the supported currencies and the workspace's default currency.
+Open **Workspace Settings → Assessment types** to manage the categories used to organize workspace assessments and
+their dashboard views.
 
 ## Lifecycle
 
-Lifecycle settings define the allowed lifecycle states for entities in the workspace. They control classification and
-filtering, not access.
+Open **Workspace Settings → Lifecycle** to define the states available for entities and choose the deprecated state.
+Lifecycle classifies maturity and supports filtering; it does not grant or deny access.
 
 One state can be designated as the workspace's deprecated state. Finalizing an
 [entity deprecation](../use/governance) moves the entity to that state.
+
+## Applications And Capabilities
+
+Open **Workspace Settings → Applications & Capabilities** to enable an optional application and connect its required
+roles to workspace schemas. Use the Access tab to choose all members or selected people and teams. The capability
+binding determines whether the app is configured; the access policy determines who may open it. See
+[Workspace Templates and Capabilities](workspace-templates-capabilities) for the setup sequence and
+[Roles and Permissions](roles-permissions) for the access rules.
 
 ## Governance Policies
 
@@ -78,12 +102,10 @@ See [Document Types And Templates](document-types-templates) for the full config
 
 ## Analytics And Audit
 
-These two sections exist for different operational jobs:
-
-- **Analytics** for workspace-wide coverage and completeness views
-- **Audit log** for change inspection
-
-Keep them conceptually separate. They solve different problems.
+Open **Workspace Settings → Analytics** for catalog coverage, lifecycle distribution, ownership gaps, and completeness.
+Open **Workspace Settings → Audit log** to inspect activity by object type and date range. They answer different
+questions: analytics summarizes the catalog; audit records changes. Access requires the relevant workspace permission.
+See [Analytics and Audit](analytics-and-audit) for what each screen shows and how restricted field values are handled.
 
 ## Administration
 
@@ -108,9 +130,18 @@ Access is deny-by-default for ordinary members until a policy is configured. Use
 access. Global administrators and workspace role managers always retain access. Removing a policy returns the
 application to administrator-only access; Home is always available.
 
+## Public Catalog
+
+**Public catalog** configures the separate unauthenticated read-only catalog. Select only the schemas, fields, entities,
+wiki pages, and API specifications that may be shared externally. See [Public Catalog](public-catalog) for its preview,
+indexing, and reader behavior.
+
 ## Related Pages
 
 - [Schemas and Model Overview](schemas-model-overview)
 - [Document Types And Templates](document-types-templates)
 - [Roles and Permissions](roles-permissions)
+- [Workspace Templates and Capabilities](workspace-templates-capabilities)
+- [Analytics and Audit](analytics-and-audit)
+- [Public Catalog](public-catalog)
 - [Export and Import](export-import)

@@ -25,6 +25,7 @@
     "docs:typedoc": "pnpm --filter docs-site typedoc",
     "docs:dev": "pnpm --filter docs-site start",
     "docs:build": "pnpm --filter docs-site build",
+    "docs:screenshots": "pnpm --filter docs-site docs:screenshots",
     "docs:serve": "pnpm --filter docs-site serve",
     "docs:clear": "pnpm --filter docs-site clear"
   },

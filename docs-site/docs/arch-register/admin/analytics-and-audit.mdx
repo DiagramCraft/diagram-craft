@@ -1,0 +1,26 @@
+# Analytics And Audit
+
+Analytics and the audit log are workspace-wide review tools in **Workspace Settings**. Analytics summarizes catalog
+coverage; the audit log records changes. Members need the workspace `ws.audit` permission to view them; workspace
+managers also retain access.
+
+## Analytics
+
+Open **Workspace Settings → Analytics** to review catalog coverage, lifecycle distribution, ownership gaps, and
+completeness. Use these views to identify areas that need attention, then open the relevant entities or schemas to make
+changes. Results reflect the data and access visible in the current workspace.
+
+## Audit Log
+
+Open **Workspace Settings → Audit log** to inspect recent activity across the workspace. Filter by object type and date
+range to narrow the history. Audit access is separate from editing permissions; a member may be able to review activity
+without being able to change the affected records.
+
+Restricted field-group values are redacted from audit details unless the viewer has access to those fields. See
+[Roles and Permissions](roles-permissions) for field-group access and [Permission Model](../reference/permission-model)
+for the broader access boundaries.
+
+## Related Pages
+
+- [Workspace Settings](workspace-settings)
+- [Governance and Approvals](../use/governance)

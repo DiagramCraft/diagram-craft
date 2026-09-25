@@ -4,15 +4,24 @@ This page summarizes the implemented permission model without repeating the full
 
 ## Layers
 
-1. Global permissions
-2. Workspace roles
-3. Team roles
+1. Global permissions apply across the deployment.
+2. Workspace roles grant capabilities inside a workspace.
+3. Team roles govern work owned by the member's teams.
+4. Entity grants can give a user or team targeted access to one entity or its subtree.
+5. Project actions can come from workspace capabilities or the project's owner team.
+6. Field-group access can further restrict selected fields.
+7. Application access policies gate optional applications.
 
 ## Practical Meaning
 
-- global permissions control platform-wide administration
-- workspace roles control workspace-wide capabilities, including entity/workspace content access
-- team roles control owned entities and projects
+- global permissions control platform-wide administration, such as creating workspaces and managing local users
+- workspace roles control workspace-wide capabilities and, depending on the capability, settings, entities, content,
+  memberships, schemas, dashboards, and audit access
+- team roles control access to team-owned entities and projects
+- field-group access limits visibility and editing for fields assigned to restricted groups; team reviewer grants view,
+  team editor/admin grants edit, and full workspace data administrators bypass the team restriction
+- application access policies decide who may open an optional app; they do not replace its capability binding or
+  workspace permissions
 
 ## Important Separations
 
@@ -21,6 +30,12 @@ This page summarizes the implemented permission model without repeating the full
 - project access depends on the wider permission model; it is not an isolated project ACL system
 - entity- and workspace-scoped content requires `content.view` for reads and `content.edit` for mutations
 - project-scoped content continues to use project authorization rather than the `content.*` capabilities
+- entity visibility and editing depend on the workspace role and the entity's owning team
+- administrators can also grant a user or team an entity-scoped `editor`, `contributor`, or `entity_admin` role for the
+  entity itself or its subtree
+- project actions come from workspace project capabilities and the project owner's team role; project-scoped entities
+  remain within the project context
+- a user's workspace membership, workspace role, team membership, and application access are separate checks
 
 ## Automation rule authorization
 
@@ -29,6 +44,18 @@ owner's current team memberships, workspace role, and field-group access are che
 event is matched and again immediately before queued actions execute. Removing access or moving a
 field into a restricted group therefore prevents an existing rule from reading that field, writing
 it, or using it to resolve notification recipients.
+
+## Where Administrators Manage Access
+
+- **Global permissions:** Workspace Settings → Global permissions
+- **Workspace roles and members:** Workspace Settings → Roles & permissions and Members
+- **Team membership and roles:** Workspace Settings → Teams
+- **Field-group access:** the schema editor's field-group access control
+- **Application access:** Workspace Settings → Applications & Capabilities → Access
+- **Entity-specific grants:** the entity access operations in the [Entities API Reference](pathname:///arch-register/api.html)
+
+Audit visibility is controlled by workspace permission. Restricted field values in audit details remain redacted unless
+the viewer has field-group access.
 
 ## Related Pages
 

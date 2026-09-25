@@ -1,0 +1,43 @@
+import ThemedImage from '@theme/ThemedImage';
+
+# Workspace Dashboards
+
+Workspace Home can show shared dashboards for the workspace and personal dashboards for one member. Use the dashboard
+sidebar to select one. The first shared dashboard in the list is the default workspace home.
+
+<ThemedImage
+  alt="Workspace home dashboard in Arch Register"
+  sources={{
+    light: require('/img/arch-register/workspace/home-overview-light.png').default,
+    dark: require('/img/arch-register/workspace/home-overview-dark.png').default,
+  }}
+/>
+
+## Shared Dashboards
+
+Workspace administrators can create dashboards from the sidebar's **+** menu, then rename or delete them from a
+dashboard's context menu. A workspace always has at least one shared dashboard. Administrators can edit its layout by
+adding, removing, resizing, and repositioning widgets; other members see the shared layout read-only.
+
+<ThemedImage
+  alt="Workspace dashboard editing controls in Arch Register"
+  sources={{
+    light: require('/img/arch-register/workspace/dashboard-editing-light.png').default,
+    dark: require('/img/arch-register/workspace/dashboard-editing-dark.png').default,
+  }}
+/>
+
+Dashboards can combine summary metrics, saved views, entity tables and browsers, entity cards and graphs, changelogs,
+document browsers, diagram previews, wiki-page embeds, lifecycle and activity charts, stale-entity reports, activity
+feeds, and Markdown content. The dashboard editor saves layout changes to the active shared dashboard.
+
+## Personal Dashboards
+
+Any workspace member can create one or more personal dashboards from **+ → New personal dashboard**. They appear under
+**My Dashboards** when you have at least one. You can edit their layout, rename them, or delete them, including the last
+one. Personal dashboards are private to their owner and require no capability beyond workspace membership.
+
+## Related Pages
+
+- [Workspace Home and Navigation](workspace-home-navigation)
+- [Workspace Settings](../admin/workspace-settings)

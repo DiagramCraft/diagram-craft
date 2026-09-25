@@ -8,7 +8,7 @@
     "build-api-docs": "tsx ./scripts/build-api-docs.ts",
     "start": "pnpm build-api-docs && docusaurus start",
     "build": "pnpm build-api-docs && docusaurus build",
-    "docs:screenshots": "tsx ./scripts/generate-screenshots.ts",
+    "docs:screenshots": "node --import tsx/esm ./scripts/generate-screenshots.ts",
     "swizzle": "docusaurus swizzle",
     "deploy": "docusaurus deploy",
     "clear": "docusaurus clear",

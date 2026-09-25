@@ -14,16 +14,25 @@ Schemas define:
 - references
 - containment relationships
 
-Schemas can also include reusable shared fieldgroups. A shared fieldgroup is defined once in workspace settings and
-can be included by multiple schemas, keeping its fields consistent when the fieldgroup changes. The default workspace
-includes a **PII Classification** fieldgroup with **PII Classification** and **PII Scope**, used by the API, Component,
-and System schemas.
+Schemas can also include reusable shared field groups. Define a shared group once in Workspace Settings and include it
+in multiple schemas to keep its fields consistent. The default workspace includes a **PII Classification** field group
+with **PII Classification** and **PII Scope**, used by the API, Component, and System schemas.
+
+To restrict a group's fields, open its access control from the schema editor and select the teams that may use them.
+Team reviewers can view those fields; team editors and administrators can view and edit them. Members outside the
+selected teams do not see or query the fields. A workspace role with `ws.settings`, `schema.edit`, and `ent.edit`, or a
+global platform administrator, has full field-group access. See [Roles and Permissions](roles-permissions) for how this
+differs from entity and project access.
 
 Supported field types include text, long text, boolean, date, select, reference, and containment.
 
-The **Entity drawer** tab configures the read-only presentation for entities of the selected schema. Administrators
-can order sections and add fields, metadata, relations, and registered application content slots; missing or archived
-references are safely omitted and the derived default is used when no profile is saved.
+The **Entity drawer** tab configures the read-only presentation for entities of the selected schema. Administrators can
+create ordered, collapsible sections and add fields, metadata, relations, typed-relation lists, containment children,
+aggregates, query results, and registered application content slots. Labels, visibility, and row or mini-panel
+presentation can be configured per item. There is no live preview in the editor. A profile changes presentation only;
+every item still uses the normal permission-aware data path, so a drawer configuration never grants access to a
+restricted field. Missing or unsupported references are omitted safely, and schemas without a saved profile use the
+generic field-and-metadata drawer.
 
 <ThemedImage
   alt="Schema editor in Arch Register"
@@ -60,3 +69,5 @@ nodes, with endpoint links and any relation-owned entity links shown around them
 
 - [Entities](../use/entities)
 - [Entity Views](../use/entity-views)
+- [Roles and Permissions](roles-permissions)
+- [Workspace Templates and Capabilities](workspace-templates-capabilities)

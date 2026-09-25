@@ -211,6 +211,7 @@ const env = {
   AUTH_MODE: 'local',
   DB_DRIVER: 'sqlite',
   JWT_SECRET: 'e2e-test-secret-must-be-at-least-32-chars!!',
+  NODE_ENV: 'development',
   PNPM_WORKSPACE_DIR: repoRoot,
   SQLITE_PATH: '',
   STORAGE_BACKEND: 'fs',
@@ -412,7 +413,7 @@ const runArchRegisterScreenshots = async (configs: ArchRegisterScreenshotConfig[
 
   try {
     console.log('Bootstrapping Arch Register dev data...');
-    await runCommand('pnpm', ['--dir', 'arch-register-packages/server', 'bootstrap'], serverEnv);
+    await runCommand('pnpm', ['--dir', 'arch-register-packages/server', 'bootstrap', '--reset'], serverEnv);
 
     console.log('Starting Arch Register dev servers...');
     startCommand(

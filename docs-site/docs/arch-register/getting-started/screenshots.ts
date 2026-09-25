@@ -1,3 +1,4 @@
+import { expect } from '@playwright/test';
 import type { ArchRegisterScreenshotConfig } from '../../../scripts/screenshot-types.js';
 import { defaultWorkspace } from '../../../../arch-register-packages/e2e/src/ui/support/workspaces';
 
@@ -32,6 +33,18 @@ export const screenshots: ArchRegisterScreenshotConfig[] = [
     setup: async ({ homePage }) => {
       await homePage.goto();
       await homePage.expectLoaded(defaultWorkspace.name);
+    }
+  },
+  {
+    product: 'arch-register',
+    category: 'workspace',
+    name: 'dashboard-editing',
+    fullPage: false,
+    setup: async ({ homePage }) => {
+      await homePage.goto();
+      await homePage.expectLoaded(defaultWorkspace.name);
+      await homePage.enterEditMode();
+      await expect(homePage.addWidgetButton()).toBeVisible();
     }
   }
 ];
