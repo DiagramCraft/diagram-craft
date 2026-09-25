@@ -135,4 +135,25 @@ describe('entity query text parser', () => {
       ]
     });
   });
+
+  it('parses chained backward typed-relation hops', () => {
+    const syntax = parseTextQuery(
+      tokenize('<-"Objective Supports Business Capability".<-"Initiative".objectives')
+    );
+    expect(syntax.root).toMatchObject({
+      kind: 'path',
+      steps: [
+        {
+          kind: 'typedRelation',
+          direction: 'out',
+          relationRef: { value: 'Objective Supports Business Capability' }
+        },
+        {
+          kind: 'backward',
+          schemaRef: { value: 'Initiative' },
+          field: { value: 'objectives' }
+        }
+      ]
+    });
+  });
 });
