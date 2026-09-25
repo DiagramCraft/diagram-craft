@@ -18,14 +18,17 @@ import { resolveApiIntegrationCatalogConfig } from '../apiIntegrationCatalogQuer
 import { useDataFlowConfig } from '../useDataFlowConfig';
 import {
   IC_APIS_ID,
+  IC_IMPACT_ID,
   IC_INTEGRATIONS_ID,
   IC_RAIL_PATHS,
   IC_SECTIONS,
   IC_SECTION_LABELS,
   type ApiIntegrationCatalogRailItemId
 } from '../apiIntegrationCatalogSections';
+import { useApiEndpointRelations, groupByApiId } from '../apiEndpointRelations';
 import type {
   ApiIntegrationCatalogApisSearchParams,
+  ApiIntegrationCatalogImpactSearchParams,
   ApiIntegrationCatalogIntegrationsSearchParams
 } from '../../../routes/searchParams';
 import styles from '../../../shell/SidePanel.module.css';
@@ -278,15 +281,76 @@ const ApisSidebarContent = ({ workspaceSlug }: { workspaceSlug: string }) => {
 };
 
 /**
+ * The Impact section's own primary-sidebar content (#3320): every API, picked via the `api` search
+ * param — mirrors the Claude Design reference's `ICSidebar` "impact" branch ("Pick a specification"),
+ * which is this section's only way to choose a subject (the design has no list in its main content,
+ * unlike APIs/Integrations). The trailing count is the API's total `Provides API`/`Consumes API`
+ * relation count, not the design's fabricated per-spec "registered consumers" count.
+ */
+const ImpactSidebarContent = ({ workspaceSlug }: { workspaceSlug: string }) => {
+  const navigate = useNavigate();
+  const search = useSearch({ strict: false }) as ApiIntegrationCatalogImpactSearchParams;
+
+  const configurations = useQuery(workspaceCapabilityConfigurationsQuery(workspaceSlug));
+  const apiConfig = resolveApiIntegrationCatalogConfig(configurations.data);
+  const schemas = useSchemas(workspaceSlug);
+  const apiSchema = schemas.data?.find(schema => schema.id === apiConfig?.apiSchemaId);
+
+  const apis = useQuery(
+    entitiesQuery(
+      workspaceSlug,
+      { schemaId: apiConfig?.apiSchemaId, limit: 500 },
+      apiConfig != null
+    )
+  );
+  const allItems = apis.data?.items ?? [];
+  const sorted = [...allItems].sort((a, b) => a._name.localeCompare(b._name));
+
+  const { providers, consumers } = useApiEndpointRelations(workspaceSlug, apiSchema);
+  const providersByApi = useMemo(() => groupByApiId(providers), [providers]);
+  const consumersByApi = useMemo(() => groupByApiId(consumers), [consumers]);
+
+  const patchSearch = (patch: Partial<ApiIntegrationCatalogImpactSearchParams>) =>
+    navigate({
+      to: IC_RAIL_PATHS[IC_IMPACT_ID],
+      params: { workspaceSlug },
+      search: (previous: Record<string, unknown>) => ({ ...previous, ...patch })
+    });
+
+  if (configurations.isLoading || apis.isLoading) return null;
+
+  return (
+    <>
+      <SidebarGroupLabel>APIs</SidebarGroupLabel>
+      {sorted.map(entity => {
+        const relationCount =
+          (providersByApi.get(entity._uid)?.length ?? 0) +
+          (consumersByApi.get(entity._uid)?.length ?? 0);
+        return (
+          <TreeRow
+            key={entity._uid}
+            icon={<TbApi size={12} />}
+            label={entity._name}
+            testId={`impact-facet-api-${entity._uid}`}
+            active={search.api === entity._publicId}
+            onClick={() => patchSearch({ api: entity._publicId })}
+            trailing={<span className="dim mono">{relationCount}</span>}
+          />
+        );
+      })}
+    </>
+  );
+};
+
+/**
  * Section-dependent primary sidebar for the API & Integration Catalog app: navigation between the
  * app's rail sections, gated on the `api-specification` capability configuration — mirrors
  * `../../data-stewardship/sections/DataStewardshipSidebar.tsx`'s `!enabled` empty state and its
  * fallback "Sections" nav list.
  *
- * The Integrations and APIs sections replace this nav list with their own facet content
- * (`IntegrationsSidebarContent`, `ApisSidebarContent`) — mirrors `RiskComplianceSidebar.tsx`'s
- * Risks/Controls facet sections. Impact still falls through to the plain nav list until its own
- * sub-issue of #3150 adds facets.
+ * The Integrations, APIs, and Impact sections replace this nav list with their own facet content
+ * (`IntegrationsSidebarContent`, `ApisSidebarContent`, `ImpactSidebarContent`) — mirrors
+ * `RiskComplianceSidebar.tsx`'s Risks/Controls facet sections.
  */
 export const ApiIntegrationCatalogSidebar = ({
   workspaceSlug,
@@ -311,6 +375,8 @@ export const ApiIntegrationCatalogSidebar = ({
           <IntegrationsSidebarContent workspaceSlug={workspaceSlug} />
         ) : activeSection === IC_APIS_ID ? (
           <ApisSidebarContent workspaceSlug={workspaceSlug} />
+        ) : activeSection === IC_IMPACT_ID ? (
+          <ImpactSidebarContent workspaceSlug={workspaceSlug} />
         ) : (
           <>
             <SidebarGroupLabel>Sections</SidebarGroupLabel>

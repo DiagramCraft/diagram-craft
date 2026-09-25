@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { EntityTraversalSubject } from '@arch-register/api-types/entityTraversalContract';
+import type { PathStep } from '@arch-register/api-types/entityQueryIR';
 import { entityBlastRadiusAggregateQuery } from '../queries/entityTraversal';
 import {
   filterBlastRadiusEntities,
@@ -15,21 +16,31 @@ export type BlastRadiusFilters = BlastRadiusEntityFilters & { maxDepth: number }
 
 export type BlastRadiusStatus = 'loading' | 'error' | 'empty' | 'ready';
 
-const BLAST_RADIUS_PATHS = [
-  { id: 'blast-radius', steps: [{ kind: 'relationSubtree' as const, direction: 'both' as const }] }
+export type BlastRadiusPath = { id: string; steps: readonly PathStep[] };
+
+const WILDCARD_BLAST_RADIUS_PATHS: readonly BlastRadiusPath[] = [
+  { id: 'blast-radius', steps: [{ kind: 'relationSubtree', direction: 'both' }] }
 ];
 
+/**
+ * `paths` defaults to the wildcard relation-subtree walk (every relation/reference field in
+ * either direction). Callers that want to scope the traversal to specific relation types — e.g.
+ * the API & Integration Catalog Impact section scoping to `Provides API`/`Consumes API` (#3320) —
+ * pass their own `unboundTypedRelation`/`typedRelation` paths instead; the aggregate query and
+ * engine already support arbitrary paths, this is just exposing that through the hook.
+ */
 export const useBlastRadius = (
   workspaceId: string,
   subject: EntityTraversalSubject | null,
   filters: BlastRadiusFilters,
-  enabled = true
+  enabled = true,
+  paths: readonly BlastRadiusPath[] = WILDCARD_BLAST_RADIUS_PATHS
 ) => {
   const query = useQuery(
     entityBlastRadiusAggregateQuery(
       workspaceId,
       subject ?? { kind: 'entity', entityId: '' },
-      BLAST_RADIUS_PATHS,
+      paths,
       filters.maxDepth,
       enabled && !!subject
     )
