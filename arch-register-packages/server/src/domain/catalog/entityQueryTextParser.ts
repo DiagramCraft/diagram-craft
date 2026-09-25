@@ -260,24 +260,30 @@ const parseBackwardStep = (state: ParserState, arrow: Token): TextPathStep => {
   const first = peek(state);
   if (first.kind === 'STRING') {
     const schemaRef = nameRef(advance(state));
-    if (peek(state).kind !== 'DOT') {
-      return applyScope(
-        {
-          kind: 'typedRelation',
-          direction: 'out',
-          relationRef: schemaRef,
-          offset: arrow.offset
-        },
-        parseScope(state)
-      );
+    if (peek(state).kind === 'DOT') {
+      const save = state.pos;
+      advance(state);
+      if (peek(state).kind === 'IDENT') {
+        const field = nameRef(advance(state));
+        return applyScope(
+          {
+            kind: 'backward',
+            schemaRef,
+            field,
+            offset: arrow.offset
+          },
+          parseScope(state)
+        );
+      }
+      // Not a trailing field name (e.g. a chained `.<-"Other"` hop) — leave the DOT
+      // for parsePathExpression's step loop to consume.
+      state.pos = save;
     }
-    advance(state);
-    const field = nameRef(expect(state, 'IDENT'));
     return applyScope(
       {
-        kind: 'backward',
-        schemaRef,
-        field,
+        kind: 'typedRelation',
+        direction: 'out',
+        relationRef: schemaRef,
         offset: arrow.offset
       },
       parseScope(state)
