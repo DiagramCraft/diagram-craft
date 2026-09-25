@@ -4,58 +4,33 @@ sidebar_position: 2
 
 # Core Concepts
 
-Arch Register is built around a few product boundaries. If these concepts are clear, the rest of the product makes
-more sense.
+Arch Register is built around a few product boundaries. Understanding them makes it easier to find the right workflow
+and understand which settings or permissions apply.
 
 ## Workspace
 
-A workspace is the top-level boundary for data, configuration, and access.
+A workspace is the top-level boundary for data, configuration, and access. Each workspace has its own schemas, entities,
+projects, content, teams, members, settings, permissions, AI configuration, and audit history.
 
-Each workspace has its own:
-
-- schemas and enums
-- entities
-- projects and workspace content
-- teams and members
-- settings, permissions, AI configuration, and audit history
+Use [Workspace Home and Navigation](../use/workspace-home-navigation) to move between workspace areas. Workspace
+administrators manage shared configuration from [Workspace Settings](../admin/workspace-settings).
 
 ## Schema
 
-A schema defines an entity type and its fields.
-
-Schemas are where you decide:
-
-- which entity types exist
-- which fields are required
-- which fields are text, date, select, reference, or containment
-- which relationships are hierarchy vs cross-cutting links
+A schema defines an entity type and its fields. Schemas determine which entity types exist, which fields are required,
+and whether values are text, dates, selections, references, or containment relationships. See
+[Data Modeling and Schemas](../use/data-modeling-schemas) for how the model shapes records.
 
 ## Entity
 
-An entity is a record created from a schema.
-
-Entities combine schema-defined fields with built-in metadata such as:
-
-- name
-- owner team
-- lifecycle
-- tags and links
-- related entities
-- attached content
+An entity is a record created from a schema. Entities combine schema-defined fields with built-in metadata such as name,
+owner team, lifecycle, tags, links, relationships, and attached content. Use the [Entities guide](../use/entities) to
+browse, create, and update catalog records.
 
 ## Project
 
-A project is a content boundary inside a workspace.
-
-Projects hold:
-
-- diagrams
-- wiki pages
-- uploaded files
-- folders
-- templates
-- assessments
-- collaborative editing sessions
+A project is a content boundary inside a workspace. Projects hold diagrams, wiki pages, uploaded files, folders,
+templates, assessments, and collaborative editing sessions. See [Projects](../use/projects) for project workflows.
 
 ## Content Scope
 
@@ -65,27 +40,25 @@ Arch Register has three content scopes:
 - **Project content** for project-specific files and notes
 - **Entity content** for files and notes attached to one entity
 
-The editor experience is similar across scopes. The difference is what the content belongs to and which permissions
-apply.
+The editor experience is similar across scopes. What changes is what the content belongs to and which permissions apply.
+The [Content guide](../use/content) explains the differences.
 
 ## Team
 
-A team is the ownership boundary for entities and projects.
+A team is the ownership boundary for entities and projects. Teams answer “who is responsible?” while workspace
+membership answers “who can access the workspace?” See [Teams and Members](../admin/teams-members) for administration.
 
-Teams answer "who is responsible?" while workspace membership answers "who can access the workspace?"
+## Roles and Permissions
 
-## Roles And Permissions
+Access is layered: global permissions cover platform administration, workspace roles grant workspace capabilities, and
+team roles govern team-owned content. These layers are related, but they are not interchangeable. See
+[Roles and Permissions](../admin/roles-permissions) for access rules and the [Permission Model](../reference/permission-model)
+for a concise reference.
 
-Access is layered:
+## Applications
 
-- global permissions for platform-wide administration
-- workspace roles for workspace-level capabilities
-- team roles for team-owned content
+Workspaces can expose optional applications alongside the Home register. Each application has its own sections and may
+require workspace capability configuration and an application access policy. See [Application Guides](../applications/intro)
+for application workflows and [Application Access](../admin/roles-permissions#application-access) for the access gate.
 
-These layers are related, but they are not interchangeable.
-
-## Where To Go Next
-
-- For setup, continue with [Getting Started](../getting-started/intro)
-- For day-to-day workflows, start with [Workspace Home and Navigation](../use/workspace-home-navigation)
-- For workspace governance, start with [Admin Overview](../admin/overview)
+For role-based entry points, return to the [Arch Register introduction](../intro).

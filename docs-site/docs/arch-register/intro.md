@@ -4,31 +4,17 @@ sidebar_position: 1
 
 # Arch Register
 
-Arch Register is a workspace-based application for storing architectural entities, defining schemas, and organizing
-projects, diagrams, and documentation around that catalog.
+Arch Register is a workspace-based architecture catalog. It connects schema-defined entities with projects, diagrams,
+documents, and optional workspace applications.
 
-## Start here
+## Choose your path
 
-- [Getting started](getting-started/intro)
-- [Core concepts](overview/core-concepts)
-- [Workspace home and navigation](use/workspace-home-navigation)
-- [Admin overview](admin/overview)
+- **Product users:** follow [Getting Started](getting-started/intro) to find your way around a workspace and begin
+  working with entities, projects, and content.
+- **Workspace administrators:** start with [Admin Overview](admin/overview) for workspace configuration, membership,
+  permissions, and administration.
+- **Integrators:** start with [API and Integrations](reference/api-integrations), then choose the [MCP guide](reference/mcp-server)
+  or [external integration guide](reference/external-integrations) for your integration method.
 
-## Core concepts
-
-- **Workspace**: the top-level boundary for schemas, entities, projects, teams, and settings.
-- **Schema**: the definition of an entity type and its fields.
-- **Entity**: a record created from a schema.
-- **Project**: a container for related diagrams, files, and wiki pages.
-- **Team**: a group used for ownership and permissions.
-
-## What this section covers
-
-- Local setup and bootstrap
-- Creating the first workspace
-- Adding the first entity
-- Creating the first project and diagram
-- Day-to-day usage guides for entities, projects, content, search, and AI features
-- Collaboration, notifications, and governance workflows such as change approval and deprecation
-- Workspace administration for model, permissions, AI, export/import, and operational controls
-- Reference pages for scope, permissions, and implemented product screens
+Optional workspace applications have their own workflows. Browse the [Application Guides](applications/intro), or read
+[Core Concepts](overview/core-concepts) if you want the product model before choosing a task.
