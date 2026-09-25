@@ -1,4 +1,7 @@
-# Installation and Setup
+# Local Development Setup
+
+This page is for developers who need to run Arch Register from the repository. Product users joining an existing
+deployment can start with [Getting Started](intro) instead.
 
 ## Prerequisites
 
