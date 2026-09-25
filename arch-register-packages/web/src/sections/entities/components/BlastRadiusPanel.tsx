@@ -13,7 +13,11 @@ import { LoadingState } from '../../../components/LoadingState';
 import { Banner } from '../../../components/Banner';
 import { resolveSchemaColor } from '../../../lib/schemaPresentation';
 import { useTeams } from '../../../hooks/useWorkspaceConfig';
-import { useBlastRadius, DEFAULT_BLAST_RADIUS_DEPTH } from '../../../hooks/useBlastRadius';
+import {
+  useBlastRadius,
+  DEFAULT_BLAST_RADIUS_DEPTH,
+  type BlastRadiusPath
+} from '../../../hooks/useBlastRadius';
 import styles from './BlastRadiusPanel.module.css';
 
 type BlastRadiusEntity = ReturnType<typeof useBlastRadius>['entities'][number];
@@ -24,6 +28,9 @@ type Props = {
   subject: EntityTraversalSubject;
   schemas: EntitySchema[];
   lifecycleStates: WorkspaceLifecycleState[];
+  // Scopes the traversal to specific relation types instead of the default wildcard walk — see
+  // useBlastRadius's `paths` param.
+  paths?: readonly BlastRadiusPath[];
 };
 
 const DEPTH_OPTIONS = [
@@ -32,7 +39,13 @@ const DEPTH_OPTIONS = [
   { value: '3', label: 'Extended (depth 3)' }
 ];
 
-export const BlastRadiusPanel = ({ workspaceId, subject, schemas, lifecycleStates }: Props) => {
+export const BlastRadiusPanel = ({
+  workspaceId,
+  subject,
+  schemas,
+  lifecycleStates,
+  paths
+}: Props) => {
   const [depth, setDepth] = useState(DEFAULT_BLAST_RADIUS_DEPTH);
   const [ownerFilter, setOwnerFilter] = useState('all');
 
@@ -48,12 +61,18 @@ export const BlastRadiusPanel = ({ workspaceId, subject, schemas, lifecycleState
   // Entity-schema and relationship-type filtering are still supported end-to-end (useBlastRadius,
   // the aggregate endpoint, and the traversal engine) - just not exposed as controls here, to keep
   // this view simple. Pass schemaIds/viaSchemaIds again if that's wanted back.
-  const { status, entities, totalCount, hopLookup } = useBlastRadius(workspaceId, subject, {
-    maxDepth: depth,
-    ownerId: ownerFilter === 'all' ? null : ownerFilter,
-    schemaIds: null,
-    viaSchemaIds: null
-  });
+  const { status, entities, totalCount, hopLookup } = useBlastRadius(
+    workspaceId,
+    subject,
+    {
+      maxDepth: depth,
+      ownerId: ownerFilter === 'all' ? null : ownerFilter,
+      schemaIds: null,
+      viaSchemaIds: null
+    },
+    true,
+    paths
+  );
 
   return (
     <div className={styles.panel}>

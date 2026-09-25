@@ -764,3 +764,21 @@ export const validateApiIntegrationCatalogApisSearch = (
   raw: Record<string, unknown>
 ): ApiIntegrationCatalogApisSearchParams =>
   parseSearchParams(apiIntegrationCatalogApisSearchSchema, raw);
+
+// API & Integration Catalog impact-section params (#3320) — `api` opens the `ApiImpactDrawer` for
+// that API's public id, deep-linkable like `apiIntegrationCatalogApisSearchSchema`'s `drawer` param
+// opens the shared entity drawer, but kept separate since the two drawers can be open independently
+// (the impact drawer links out to the shared entity drawer for a result row).
+const apiIntegrationCatalogImpactSearchSchema = defineSearchParamSchema({
+  q: stringCodec,
+  api: stringCodec
+});
+
+export type ApiIntegrationCatalogImpactSearchParams = SearchParamsFromSchema<
+  typeof apiIntegrationCatalogImpactSearchSchema
+>;
+
+export const validateApiIntegrationCatalogImpactSearch = (
+  raw: Record<string, unknown>
+): ApiIntegrationCatalogImpactSearchParams =>
+  parseSearchParams(apiIntegrationCatalogImpactSearchSchema, raw);

@@ -18,7 +18,8 @@ import {
 import { ensureApplicationAccess } from '../../routes/applicationAccess';
 import {
   validateApiIntegrationCatalogApisSearch,
-  validateApiIntegrationCatalogIntegrationsSearch
+  validateApiIntegrationCatalogIntegrationsSearch,
+  validateApiIntegrationCatalogImpactSearch
 } from '../../routes/searchParams';
 
 const railPath = (path: string) => path.replace('/$workspaceSlug/', '');
@@ -26,8 +27,9 @@ const railPath = (path: string) => path.replace('/$workspaceSlug/', '');
 /**
  * API & Integration Catalog's workspace routes: one per rail section, plus the APIs section's
  * deep-linkable spec drawer route (#3316). Mirrors `../risk-compliance/riskComplianceWorkspaceRoute.tsx`.
- * Integrations and Impact remain placeholder screens with no detail routes yet; those land
- * alongside their section's real content in later sub-issues of #3150 (#3317-#3320).
+ * Integrations remains a placeholder screen with no detail route yet; it lands alongside its own
+ * real content in a later sub-issue of #3150 (#3317). Impact (#3320) has real content, but no
+ * dedicated detail route — its `ApiImpactDrawer` is opened via the `api` search param instead.
  */
 export const createApiIntegrationCatalogWorkspaceRoutes = <TParentRoute extends AnyRoute>(
   workspaceRoute: TParentRoute
@@ -110,6 +112,7 @@ export const createApiIntegrationCatalogWorkspaceRoutes = <TParentRoute extends 
     createRoute({
       getParentRoute: () => workspaceRoute,
       path: railPath(IC_RAIL_PATHS[IC_IMPACT_ID]),
+      validateSearch: validateApiIntegrationCatalogImpactSearch,
       beforeLoad: ({ context, params }) =>
         ensureApplicationAccess(
           context.queryClient,

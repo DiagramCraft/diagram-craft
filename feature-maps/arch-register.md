@@ -714,8 +714,8 @@
       (@id:ar.integrations.api-specification-sync) is valid (the required API entity schema binding resolved) — this
       promotes `api-specification` from a capability-only binding (configurable in workspace settings but with no
       rail of its own) to a full application; it remains the same capability the Entities app's API artifact detail
-      views already read. Overview, Sync, and Impact remain scaffolded placeholders pending their own sub-issues of
-      the API & Integration Catalog epic; APIs and Integrations have their real content (below). Integration sync
+      views already read. Overview and Sync remain scaffolded placeholders pending their own sub-issues of the API &
+      Integration Catalog epic; APIs, Integrations, and Impact have their real content (below). Integration sync
       operations are available under Workspace Settings rather than in this catalog browsing application.
 
         - @id:ar.api-integration-catalog.overview The Overview section (the app switcher's landing section) is
@@ -787,8 +787,17 @@
           confirm stopping management, which removes integration tracking without deleting the catalog record; all
           reconciliation actions are audited and there is no automatic deletion.
 
-        - @id:ar.api-integration-catalog.impact The Impact section is scaffolded as a placeholder pending its own
-          dependency/blast-radius map content (blocked on catalog impact analysis).
+        - @id:ar.api-integration-catalog.impact The Impact section is a single-API blast-radius inspector: the API is
+          picked from the section's own primary sidebar (every `api`-schema entity, with its combined provider/consumer
+          relation count), and the whole main content area shows that one API's impact — mirroring the design
+          reference's dedicated one-subject layout rather than a browsable list. The "Blast radius" panel itself keeps
+          the design's three-column shape (Providers / Direct consumers / Second order), but is computed from the
+          generic catalog impact/blast-radius engine (@id:ar.entities.blast-radius) scoped to only the selected API's
+          `Provides API`/`Consumes API` typed relations, rather than the design's bespoke "consumer registration" walk
+          annotated with contract-test status and traffic-share fields that have no real data source (the same
+          exclusion #3316 already applied to the APIs section's telemetry columns) — "second order" here is instead
+          every entity the engine reaches two hops out over those same two relation types. A header action opens the
+          same shared specification drawer the APIs section uses (@id:ar.api-integration-catalog.apis).
 
     - @id:ar.entities Users can maintain a structured catalog of architectural entities and their relationships.
 
