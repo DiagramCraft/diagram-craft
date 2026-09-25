@@ -21,6 +21,10 @@ The main layers are:
 - team roles
 - application access policies
 
+Manage workspace roles under **Workspace Settings → Roles & permissions**, global permissions under **Global
+permissions**, and application policies under **Applications & Capabilities → Access**. A user may pass one gate and
+still lack another; workspace membership does not grant access to every optional application or team-owned project.
+
 ## Workspace Roles
 
 Workspace roles govern capabilities across the workspace, including entity- and workspace-scoped content.
@@ -41,24 +45,56 @@ The dedicated content capabilities are:
 By default, every built-in workspace role can view content. Owners, administrators, and editors can also edit it.
 These capabilities do not control project-scoped content; projects retain their project and owner-team authorization.
 
+Workspace roles also govern capabilities such as settings, schema editing, membership, dashboard management, and audit
+viewing. Assign a role under **Workspace Settings → Members** and grant only the capabilities the member needs.
+
 ## Team Roles
 
-Team roles govern access to owned entities and projects. Project content follows project authorization, while content
-attached directly to an entity follows the workspace role's `content.view` and `content.edit` capabilities.
+Team roles govern access to team-owned entities and project actions. Team administrators can edit and delete team-owned
+projects; editors can edit them. Reviewers can view team-owned entities but receive no project actions from their team
+role. Entity visibility and edit rights combine workspace capabilities with the entity's owning team. Project content
+follows project and owner-team authorization, while content attached directly to an entity follows the workspace
+role's `content.view` and `content.edit` capabilities.
+
+## Entity And Field-Group Access
+
+Entity access also supports direct grants to a user or team. An entity administrator can grant `editor` (view and edit),
+`contributor` (view, edit, and create children), or `entity_admin` (those actions plus manage access) on the entity
+itself or its subtree. These grants are managed through the entity access operations in the
+[API Reference](pathname:///arch-register/api.html); they do not replace workspace membership or access checks for
+other entities.
+
+Fields can belong to a restricted field group. In the schema editor, open the field group's access control and select
+the teams that may use it. Listed team access is additive: team reviewers can view the group's fields, while team
+editors and administrators can view and edit them. A member with no access to any selected team cannot see or use those
+fields, including in queries, views, drawers, and exports. A workspace role with `ws.settings`, `schema.edit`, and
+`ent.edit`, or a global platform administrator, has full field-group access.
+
+## Project Access
+
+Workspace roles with `proj.edit` or `proj.delete` can manage projects at the corresponding level. Team roles on the
+project's owner team also grant the actions allowed by that role. Entities scoped to one project stay in that project
+context and are excluded from global listings and search; they still use the normal entity and field-group permissions.
 
 ## Global Permissions
 
-Global permissions sit outside one workspace and cover platform-wide administration such as global role assignment.
+Global permissions sit outside one workspace and cover platform-wide administration, such as user management and
+workspace creation. They are not workspace roles. See [Identity and Authentication](identity-and-authentication)
+for local account administration.
 
 ## Application Access
 
 Application access is an independent workspace-level gate for optional applications such as Business Glossary and
 Strategy & Capability Modelling. Workspace administrators can allow all workspace members or select individual people
-and teams. Individual and team grants are additive, and application access does not replace the required workspace
-capabilities for the application's underlying data.
+and teams. Individual and team grants are additive. An ordinary member also needs `ws.view`; application access does not
+replace the required workspace capabilities for the application's underlying data.
 
 If no policy exists, ordinary members cannot open the application. Global administrators and workspace role managers
 retain access, and Home is always available.
+
+Applications & Capabilities configures two independent controls: the capability binding enables and connects an app to
+workspace schemas, while the access policy selects which people may open it. A valid binding does not grant access to a
+member, and an access grant does not supply a missing binding.
 
 ## Related Pages
 

@@ -2,19 +2,23 @@
 
 This page is the quick reference for where content lives and which parent context applies.
 
-| Scope | Best for | Parent boundary | Typical content |
-| --- | --- | --- | --- |
-| Workspace content | Shared docs and shared diagrams | Workspace | Standards, shared notes, common diagrams |
-| Project content | Initiative-specific material | Project | Project wiki pages, project diagrams, uploads |
-| Entity content | Record-specific context | Entity | Attached docs, diagrams, files, runbooks |
+| Scope | Best for | Parent boundary | Access is primarily controlled by | Typical content |
+| --- | --- | --- | --- | --- |
+| Workspace | Shared docs, diagrams, and workspace-level records | Workspace | Workspace role | Standards, shared notes, common diagrams |
+| Entity | Record-specific context | Entity and owner team | Workspace role plus entity/team permissions; field groups can restrict fields | Attached docs, diagrams, files, runbooks |
+| Project | Initiative-specific material | Project and owner team | Project and team permissions | Project wiki pages, diagrams, uploads |
+| Application | Optional domain workflows | Workspace | Capability binding plus application access policy | Glossary, strategy, and other enabled apps |
 
 ## Rule Of Thumb
 
 - if the material belongs to the whole workspace, use workspace content
 - if it belongs to one initiative, use project content
 - if it belongs to one catalog record, use entity content
+- team ownership answers who can work on a record or project; it does not replace workspace membership or workspace role
+- restricted field groups hide or limit individual fields even when the record itself is visible
 
 ## Related Pages
 
 - [Content](../use/content)
 - [Permission Model](permission-model)
+- [Roles and Permissions](../admin/roles-permissions)

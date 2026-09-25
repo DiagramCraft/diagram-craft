@@ -5,6 +5,10 @@ import ThemedImage from '@theme/ThemedImage';
 Export and import are administrative operations because they move or reshape workspace data at a broader scope than
 normal editing.
 
+Open **Workspace Settings → Export & Import**. These operations require workspace administration access. Review the
+archive contents and import preview before applying changes, especially when moving data between workspaces with
+different schemas or permissions.
+
 <ThemedImage
   alt="Export and import screen in Arch Register"
   sources={{
@@ -38,8 +42,11 @@ Use:
 
 - workspace export/import for workspace-wide movement
 - entity import/export for schema-oriented catalog operations
+- definition import for bringing supported templates or cross-cutting concerns into an existing workspace; resolve
+  schema dependencies in the import preview before applying them
 
 ## Related Pages
 
 - [Workspace Settings](workspace-settings)
 - [Entity Views](../use/entity-views)
+- [Workspace Templates and Capabilities](workspace-templates-capabilities)

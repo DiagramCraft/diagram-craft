@@ -1,0 +1,37 @@
+# Workspace Templates And Capabilities
+
+Workspace templates provide a starting model when creating a workspace. Applications and capabilities configure
+optional workflows for an existing workspace. These are related setup choices, but they serve different purposes.
+
+## Create A Workspace From A Template
+
+Users with the global permission to create workspaces can open the workspace selector and choose **New workspace**.
+Start blank, choose one full architecture template, or combine a full template with one or more cross-cutting concerns.
+The template selection screen describes the available starting models.
+
+A template can contribute entity and typed-relation schemas, enums, shared field groups, document types and templates,
+saved views, and authored entity drawer profiles. Cross-cutting concerns can depend on schemas from the selected full
+template. Resolve each dependency to a destination schema during workspace creation; an unresolved required mapping
+prevents creation. Concern dashboards remain separate from the full template's Overview dashboard.
+
+To add a concern to an existing workspace, open **Workspace Settings → Export & Import → Definitions** and use the
+definition import flow. Review the proposed mappings and resolve dependencies before applying the import.
+
+## Configure Applications And Capabilities
+
+Open **Workspace Settings → Applications & Capabilities**. Enable and configure an application's capability binding
+there. A binding connects the application's required semantic roles to workspace schemas and, where supported, fields.
+An application appears in the switcher only after its capability is configured.
+
+Use the **Access** tab in the same area to set who can use each optional application. The policy can allow all workspace
+members or selected people and teams. Individual and team grants are additive. This access policy is separate from
+workspace roles and from the capability binding: members still need workspace access, and the application needs a
+valid capability configuration. A missing policy denies ordinary members; global administrators and workspace role
+managers retain access. Home remains available to workspace members.
+
+## Related Pages
+
+- [Your First Workspace](../getting-started/first-workspace)
+- [Workspace Settings](workspace-settings)
+- [Roles and Permissions](roles-permissions)
+- [Export and Import](export-import)

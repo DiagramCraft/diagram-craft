@@ -20,12 +20,15 @@ catalog, organizing project work, or preparing a workspace for your team.
 
 ## First-use sequence
 
-1. Open an existing workspace. If you cannot access one, ask a workspace administrator to invite you and grant the
+1. Sign in with the method configured for your deployment. See [Identity and Authentication](../admin/identity-and-authentication)
+   if you need to understand local accounts, OIDC, or workspace membership.
+2. Open an existing workspace. If you cannot access one, ask a workspace administrator to add you and grant the
    needed access.
-2. Learn the workspace layout from [Workspace Home and Navigation](../use/workspace-home-navigation).
-3. Create an entity if your workspace has a suitable schema and you have permission to add records.
-4. Create a project and diagram if you have permission to create projects.
-5. Use [Next Steps](next-steps) to continue with the workflows that match your role.
+3. Learn the workspace layout from [Workspace Home and Navigation](../use/workspace-home-navigation), then arrange
+   personal views with [Workspace Dashboards](../use/workspace-dashboards).
+4. Create an entity if your workspace has a suitable schema and you have permission to add records.
+5. Create a project and diagram if you have permission to create projects.
+6. Use [Next Steps](next-steps) to continue with the workflows that match your role.
 
 The repository setup instructions are for developers running a local instance. See
 [Local Development Setup](installation) when you need that environment.

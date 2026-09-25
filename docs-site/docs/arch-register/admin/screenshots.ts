@@ -84,5 +84,15 @@ export const screenshots: ArchRegisterScreenshotConfig[] = [
       await settingsPage.goto('export-import');
       await expect(settingsPage.page.getByRole('heading', { name: 'Export & Import' })).toBeVisible();
     }
+  },
+  {
+    product: 'arch-register',
+    category: 'admin',
+    name: 'public-catalog',
+    fullPage: false,
+    setup: async ({ settingsPage }) => {
+      await settingsPage.goto('public-catalog');
+      await expect(settingsPage.page.getByText('Enable public catalog')).toBeVisible();
+    }
   }
 ];

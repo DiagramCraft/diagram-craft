@@ -1,0 +1,41 @@
+import ThemedImage from '@theme/ThemedImage';
+
+# Public Catalog
+
+Workspace administrators can publish a separate, read-only catalog for unauthenticated external readers. Nothing is
+public until the catalog is enabled and content is selected. Configure it under **Workspace Settings → Public catalog**;
+the setting requires workspace administration access.
+
+<ThemedImage
+  alt="Public catalog settings in Arch Register"
+  sources={{
+    light: require('/img/arch-register/admin/public-catalog-light.png').default,
+    dark: require('/img/arch-register/admin/public-catalog-dark.png').default,
+  }}
+/>
+
+## Choose What To Publish
+
+Set the catalog title and description, then select entity schemas and the fields that external readers may see. Restricted
+fields cannot be selected. Add per-entity overrides to publish or exclude individual entities, and optionally choose a
+field set for each published entity.
+
+Select eligible non-project Markdown pages and assign their public paths and order. You can also publish API
+specifications from the available artifacts. Project-only pages and unpublished entity pages are not available for
+selection. Use the preview before saving to check the resulting public content.
+
+## Public Reader Experience
+
+Readers use `/public/{workspace-slug}` without signing in. They can browse the published entities, Markdown pages,
+and API specifications in the read-only catalog. The catalog has its own accessible light and dark presentation; it does
+not expose workspace editing controls.
+
+The **Allow indexing** option controls whether the public pages may be indexed by search engines. It defaults to off.
+Review every selected schema, field, entity, and page before enabling indexing or sharing the public URL.
+If an entity is merged into another record, its retired identifier redirects readers to the canonical record.
+
+## Related Pages
+
+- [Workspace Settings](workspace-settings)
+- [Entities](../use/entities)
+- [Export and Import](export-import)

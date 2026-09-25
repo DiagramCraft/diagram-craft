@@ -32,6 +32,7 @@ const sidebars: SidebarsConfig = {
           label: 'Catalog and Discovery',
           items: [
             'use/workspace-home-navigation',
+            'use/workspace-dashboards',
             'use/search',
             'use/data-modeling-schemas',
             'use/entities',
@@ -60,7 +61,11 @@ const sidebars: SidebarsConfig = {
       label: 'Workspace Administration',
       items: [
         'admin/overview',
+        'admin/identity-and-authentication',
         'admin/workspace-settings',
+        'admin/workspace-templates-capabilities',
+        'admin/analytics-and-audit',
+        'admin/public-catalog',
         'admin/schemas-model-overview',
         'admin/document-types-templates',
         'admin/teams-members',

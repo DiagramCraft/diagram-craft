@@ -1,0 +1,39 @@
+# Identity And Authentication
+
+Arch Register sign-in is configured for the deployment. Workspace administrators manage membership and workspace roles;
+platform administrators manage local user accounts when local authentication is enabled.
+
+## Sign In
+
+Open the deployment's web app and use the method shown on its sign-in screen:
+
+- **Local authentication** uses a username and password for an account in Arch Register.
+- **OIDC single sign-on** redirects to the identity provider configured by the deployment. OIDC is experimental; a
+  deployment administrator configures it in the server environment, not in Workspace Settings.
+
+If you can sign in but cannot enter a workspace, ask a workspace administrator to add you under **Workspace Settings →
+Members** and assign the appropriate workspace role. An account and workspace membership are separate: creating an
+account does not by itself grant access to every workspace.
+
+## Manage Local User Accounts
+
+In local-authentication deployments, platform administrators with the global `admin_platform` permission can create and
+update local user accounts, deactivate or reactivate them, and change their passwords. User management is available
+from the workspace **Members** settings when local authentication is enabled. It is unavailable when OIDC is enabled;
+the identity provider manages sign-in credentials in that mode.
+
+Workspace administrators can manage membership and workspace roles separately. See [Teams and Members](teams-members)
+and [Roles and Permissions](roles-permissions).
+
+## Development-Only User Switcher
+
+The optional user-switcher toolbar is an experimental development tool. It bypasses normal sign-in and lets a developer
+assume an account from the local database. It is available only when the server runs in development mode and
+`DEV_USER_SWITCHER_ENABLED=true`; production mode disables it regardless of that flag. Do not enable it on a deployed
+production instance.
+
+## Related Pages
+
+- [Getting Started](../getting-started/intro)
+- [Account Settings](../use/account-settings)
+- [Workspace Settings](workspace-settings)

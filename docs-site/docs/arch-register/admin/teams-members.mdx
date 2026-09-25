@@ -4,14 +4,24 @@ import ThemedImage from '@theme/ThemedImage';
 
 Teams and members are related, but they are not the same administrative concern.
 
+Manage both from **Workspace Settings → People**. Workspace administrators with the relevant people-management
+permissions can add or remove members, assign workspace roles, create teams, and assign team roles. Platform
+administrators can create local user accounts from Members only when local authentication is enabled; see
+[Identity and Authentication](identity-and-authentication).
+
+Member and team actions depend on the corresponding workspace capabilities, such as `people.invite`, `people.remove`,
+`people.role`, and `people.teams`. A user's global account role does not automatically make them a member of each
+workspace.
+
 ## Teams
 
-Teams define ownership boundaries for entities and projects.
+Teams define ownership boundaries for entities and projects. A team membership does not automatically make someone a
+workspace member; the person must also belong to the workspace.
 
 Use teams to:
 
 - assign responsibility
-- control team-scoped access
+- control team-scoped access to owned entities and projects
 - keep ownership aligned with the people doing the work
 
 <ThemedImage
@@ -21,6 +31,11 @@ Use teams to:
     dark: require('/img/arch-register/admin/teams-dark.png').default,
   }}
 />
+
+Add or edit teams from **Workspace Settings → Teams**. Assign workspace users to a team and give each person a team
+role. Team administrators and editors can edit team-owned entities; reviewers can view them. Team administrators can
+edit and delete team-owned projects, and team editors can edit them. Use team ownership to answer who is responsible,
+and the workspace role to control broader workspace capabilities.
 
 ## Members
 
@@ -34,6 +49,11 @@ Members are the users who belong to the workspace. Member management is where yo
   }}
 />
 
+Open **Workspace Settings → Members** to review membership, filter by role or team, add an existing account, and assign
+its workspace role. Creating a new local account additionally requires the global `admin_platform` permission and is
+unavailable in OIDC mode. Removing a workspace member removes workspace access; it does not delete that person's
+account or membership in other workspaces.
+
 ## Why They Are Separate
 
 Keep these mental models distinct:
@@ -41,8 +61,10 @@ Keep these mental models distinct:
 - a person can be a workspace member without owning content
 - a team can own content without replacing workspace roles
 - team-role assignment and workspace-role assignment solve different access problems
+- application access policies can further limit access to optional applications
 
 ## Related Pages
 
 - [Roles and Permissions](roles-permissions)
 - [Permission Model](../reference/permission-model)
+- [Identity and Authentication](identity-and-authentication)
