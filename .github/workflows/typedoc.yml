@@ -35,8 +35,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Generate TypeDoc
-        run: pnpm --dir docs-site run typedoc
+      - name: Build docs site
+        # TODO: re-enable typedoc generation once it supports TypeScript 7 (see #3480)
+        run: DOCS_SITE_TYPEDOC=0 pnpm docs:build
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
@@ -46,6 +47,8 @@ jobs:
 
       - name: Copy files
         run: |
+          mkdir -p ./output/typedoc
+          cp -r ./docs-site/build/* ./output/typedoc
           mkdir -p ./output/typedoc/app
           cp -r ./packages/main/dist/* ./output/typedoc/app
 
