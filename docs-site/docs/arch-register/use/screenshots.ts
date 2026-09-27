@@ -56,6 +56,17 @@ export const screenshots: ArchRegisterScreenshotConfig[] = [
   {
     product: 'arch-register',
     category: 'entities',
+    name: 'browser-graph',
+    fullPage: false,
+    setup: async ({ entitiesPage }) => {
+      await entitiesPage.goto({ viewMode: 'graph', type: componentSchema.id, q: 'Frontend App' });
+      await expect(entitiesPage.browserTitle()).toHaveText(componentSchema.name);
+      await expect(entitiesPage.graphNodes().first()).toBeVisible({ timeout: 15000 });
+    }
+  },
+  {
+    product: 'arch-register',
+    category: 'entities',
     name: 'detail-overview',
     fullPage: false,
     setup: async ({ entitiesPage }) => {
@@ -63,6 +74,23 @@ export const screenshots: ArchRegisterScreenshotConfig[] = [
       await entitiesPage.expectLoaded();
       await entitiesPage.openEntity(frontendAppEntity.name);
       await entitiesPage.expectEntityDetailLoaded(frontendAppEntity.name);
+    }
+  },
+  {
+    product: 'arch-register',
+    category: 'entities',
+    name: 'detail-topology',
+    fullPage: false,
+    setup: async ({ entitiesPage }) => {
+      await entitiesPage.goto();
+      await entitiesPage.expectLoaded();
+      await entitiesPage.openEntity(frontendAppEntity.name);
+      const topologyUrl = new URL(entitiesPage.page.url());
+      topologyUrl.searchParams.set('tab', 'topology');
+      await entitiesPage.page.goto(topologyUrl.toString());
+      const topologyTab = entitiesPage.page.getByRole('tab', { name: 'Topology', exact: true });
+      await expect(topologyTab).toBeVisible();
+      await expect(topologyTab).toHaveAttribute('aria-selected', 'true');
     }
   },
   {
@@ -166,6 +194,17 @@ export const screenshots: ArchRegisterScreenshotConfig[] = [
   {
     product: 'arch-register',
     category: 'entities',
+    name: 'browser-diff',
+    fullPage: false,
+    setup: async ({ entitiesPage }) => {
+      await entitiesPage.goto({ viewMode: 'diff', asOf: '2026-12-31' });
+      await expect(entitiesPage.browserTitle()).toBeVisible();
+      await expect(entitiesPage.page.getByText(/What changes by/)).toBeVisible({ timeout: 15000 });
+    }
+  },
+  {
+    product: 'arch-register',
+    category: 'entities',
     name: 'browser-matrix',
     fullPage: false,
     setup: async ({ entitiesPage }) => {
@@ -225,6 +264,51 @@ export const screenshots: ArchRegisterScreenshotConfig[] = [
       await entitiesPage.goto({ viewMode: 'explore' });
       await entitiesPage.expectLoaded();
       await expect(entitiesPage.browserTitle()).toBeVisible();
+    }
+  },
+  {
+    product: 'arch-register',
+    category: 'entities',
+    name: 'browser-traceability',
+    fullPage: false,
+    setup: async ({ entitiesPage }) => {
+      await entitiesPage.goto({ viewMode: 'traceability' });
+      await entitiesPage.expectLoaded();
+      await expect(entitiesPage.page.getByRole('button', { name: 'Add path' })).toBeVisible();
+    }
+  },
+  {
+    product: 'arch-register',
+    category: 'entities',
+    name: 'browser-path-walker',
+    fullPage: false,
+    setup: async ({ entitiesPage }) => {
+      await entitiesPage.goto({ viewMode: 'path-walker', type: componentSchema.id });
+      await expect(entitiesPage.browserTitle()).toBeVisible();
+      await entitiesPage.page.getByRole('button', { name: /Frontend App/ }).click();
+      await expect(
+        entitiesPage.page.getByRole('combobox', { name: 'Relation to follow from column 1' })
+      ).toBeVisible();
+    }
+  },
+  {
+    product: 'arch-register',
+    category: 'entities',
+    name: 'browser-heatmap',
+    fullPage: false,
+    setup: async ({ entitiesPage }) => {
+      const viewConfigs = JSON.stringify(
+        JSON.stringify({
+          heatmap: {
+            likelihoodFieldId: '_lifecycle',
+            impactFieldId: '_owner',
+            buckets: 5,
+            colorFieldId: null
+          }
+        })
+      );
+      await entitiesPage.goto({ viewMode: 'heatmap', type: componentSchema.id, viewConfigs });
+      await expect(entitiesPage.browserTitle()).toHaveText(componentSchema.name);
     }
   },
   {

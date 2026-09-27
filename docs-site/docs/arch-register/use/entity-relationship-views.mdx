@@ -1,0 +1,106 @@
+import ThemedImage from '@theme/ThemedImage';
+
+# Entity Relationship Views
+
+These views help you follow relationships between catalog records. Browser views start from the current entity query;
+the Topology view starts from one entity's detail screen. Relationship visibility follows your workspace and
+field-group permissions.
+
+## Graph
+
+Choose **Graph** in the entity browser's **View** menu to see the matching entities as roots and traverse their
+relationships to a configurable depth. Use it to understand a local dependency neighborhood. Generic containment and
+reference links and typed relation instances are shown with their relationship types; click an entity to open it, or a
+typed relation to inspect its fields and history.
+
+<ThemedImage
+  alt="Entity graph browser view in Arch Register"
+  sources={{
+    light: require('/img/arch-register/entities/browser-graph-light.png').default,
+    dark: require('/img/arch-register/entities/browser-graph-dark.png').default,
+  }}
+/>
+
+An entity's detail screen also has a **Graph** tab rooted at that entity. Use the browser graph for a filtered set of
+roots and the detail graph when you are investigating one record.
+
+## Topology
+
+Open an entity and select its **Topology** tab to see its containment parents and children, incoming and outgoing
+references, and typed relations grouped by relation schema. Use it for a compact view of one record's immediate
+context. Select a related entity to open it; select a typed relation to inspect its fields and history.
+
+<ThemedImage
+  alt="Entity topology tab in Arch Register"
+  sources={{
+    light: require('/img/arch-register/entities/detail-topology-light.png').default,
+    dark: require('/img/arch-register/entities/detail-topology-dark.png').default,
+  }}
+/>
+
+## Explore
+
+Choose **Explore** to compare connected entity sets in adjacent columns. Start with the filtered records in the first
+column, then use the relation filter and schema controls to choose how each next column is reached. A column's schema
+selection constrains later traversal, so use it to follow a meaningful path through mixed-schema data.
+
+<ThemedImage
+  alt="Entity explore view in Arch Register"
+  sources={{
+    light: require('/img/arch-register/entities/browser-explore-light.png').default,
+    dark: require('/img/arch-register/entities/browser-explore-dark.png').default,
+  }}
+/>
+
+## Matrix
+
+Choose **Matrix** to compare relationship density or coverage across entities. Configure entity columns or attribute
+columns, then use populated cells to see where relationships exist and blank cells to spot gaps. A relation-field
+filter narrows which connections are counted; hide empty rows or columns when you want to focus on connected records.
+Joined assessment select fields can also be used as dimensions for review comparisons.
+
+<ThemedImage
+  alt="Entity matrix view in Arch Register"
+  sources={{
+    light: require('/img/arch-register/entities/browser-matrix-light.png').default,
+    dark: require('/img/arch-register/entities/browser-matrix-dark.png').default,
+  }}
+/>
+
+## Traceability
+
+Choose **Traceability** to define one or more relationship paths from the current filtered entities. Add a path label
+and select the direction and relationship for each step. The resulting rows show which target records each root
+reaches, with architecture coverage and project delivery coverage presented separately. Use this view when you need to
+review whether a chain such as controls to risks to assets is complete. See [Projects](projects).
+
+<ThemedImage
+  alt="Entity traceability view in Arch Register"
+  sources={{
+    light: require('/img/arch-register/entities/browser-traceability-light.png').default,
+    dark: require('/img/arch-register/entities/browser-traceability-dark.png').default,
+  }}
+/>
+
+## Path Walker
+
+Choose **Path Walker** to explore one relationship chain interactively without defining the complete path first. The
+first column contains the current filtered entities. Select an entity, choose a relationship from the arrow menu, and
+continue through the next column; each step narrows the records shown at the next hop. The walker supports up to six
+hops and shows where a chain stops when no records match. The selected chain is reflected in the URL; saving the view
+also remembers the chosen hop sequence.
+
+<ThemedImage
+  alt="Entity path walker view in Arch Register"
+  sources={{
+    light: require('/img/arch-register/entities/browser-path-walker-light.png').default,
+    dark: require('/img/arch-register/entities/browser-path-walker-dark.png').default,
+  }}
+/>
+
+## Related Pages
+
+- [Entities](entities)
+- [Entity Views](entity-views)
+- [Data Modeling And Schemas](data-modeling-schemas)
+- [Entity Planning And Portfolio Views](entity-planning-views)

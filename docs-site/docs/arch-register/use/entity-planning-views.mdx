@@ -1,0 +1,107 @@
+import ThemedImage from '@theme/ThemedImage';
+
+# Entity Planning And Portfolio Views
+
+These views help compare catalog records by category, dates, change, or a selected metric. Choose a view from the
+entity browser's **View** menu. The current entity query and project scope determine which records are available to
+the view.
+
+## Radar
+
+Use **Radar** to group records by two categorical fields. Choose the schema, the field that defines quadrants, and the
+field that defines ordered rings. Each plotted record's position shows its values for those fields; use the quadrant
+and ring controls to focus the display. A useful radar needs records with values in both selected fields. For example,
+Technology Releases can be plotted by technology category and lifecycle status.
+
+<ThemedImage
+  alt="Entity radar view in Arch Register"
+  sources={{
+    light: require('/img/arch-register/entities/browser-radar-light.png').default,
+    dark: require('/img/arch-register/entities/browser-radar-dark.png').default,
+  }}
+/>
+
+## Timeline
+
+Use **Timeline** to review dates, planned changes, and sequence over time. Configure start and end date fields, choose a
+grouping such as owner, type, project, or containment, and set the zoom to month, quarter, or year. Snapshot and
+project-lane controls add historical context, milestones, and project plans where available. Records without usable
+dates cannot be placed on a date axis. In the Capability + Entity + Project roadmap mode, undated entities are shown
+separately from the dated horizon.
+
+<ThemedImage
+  alt="Entity timeline view in Arch Register"
+  sources={{
+    light: require('/img/arch-register/entities/browser-timeline-light.png').default,
+    dark: require('/img/arch-register/entities/browser-timeline-dark.png').default,
+  }}
+/>
+
+## Diff
+
+Use **Diff** to compare the current scope with a selected future date. The result identifies entities added, removed,
+or changed by that date and applies relevant planned changes across projects. The browser's filters and project scope
+limit the comparison; open a changed record to inspect field-level differences. Overdue planned changes are excluded
+by default and can be included with the view's overdue option.
+
+<ThemedImage
+  alt="Entity diff view in Arch Register"
+  sources={{
+    light: require('/img/arch-register/entities/browser-diff-light.png').default,
+    dark: require('/img/arch-register/entities/browser-diff-dark.png').default,
+  }}
+/>
+
+## Bubble
+
+Use **Bubble** to compare records across two axes, with bubble size and colour adding two more dimensions. Map each
+dimension to a numeric or categorical field; joined assessment rating and enum fields are available when an assessment
+is joined. Records with matching coordinates are spread apart so each remains visible. Optional quadrant dividers add
+labels for two-axis comparisons, and the labels and field mappings are retained in saved views and wiki embeds.
+
+<ThemedImage
+  alt="Entity bubble view in Arch Register"
+  sources={{
+    light: require('/img/arch-register/entities/browser-bubble-light.png').default,
+    dark: require('/img/arch-register/entities/browser-bubble-dark.png').default,
+  }}
+/>
+
+## Heatmap
+
+Use **Heatmap** to count records in an NxN grid. Choose likelihood and impact fields from the schemas in scope; numeric
+fields are divided into configurable bands, while select fields use their declared options. Cells show how many
+records share those values and are coloured by grid severity by default. You can colour cells by an averaged numeric
+field instead. Select a populated cell to open its matching records.
+
+<ThemedImage
+  alt="Entity heatmap view in Arch Register"
+  sources={{
+    light: require('/img/arch-register/entities/browser-heatmap-light.png').default,
+    dark: require('/img/arch-register/entities/browser-heatmap-dark.png').default,
+  }}
+/>
+
+## Map
+
+Use **Map** to show entity records as nested levels and roll a metric up through the configured relationships. Choose
+the levels and the hop connecting each level, then select a numeric, currency, lifecycle, enum, or assessment metric
+and its aggregation. Numeric values use a colour gradient, lifecycle values use workspace lifecycle colours, and enum
+values show the dominant option with the distribution in the tooltip. The current filters select relevant branches;
+ancestors and configured descendants provide structural context. Selecting a box opens that entity's detail card.
+
+<ThemedImage
+  alt="Entity map view in Arch Register"
+  sources={{
+    light: require('/img/arch-register/entities/browser-map-light.png').default,
+    dark: require('/img/arch-register/entities/browser-map-dark.png').default,
+  }}
+/>
+
+## Related Pages
+
+- [Entity Views](entity-views)
+- [Entity Relationship Views](entity-relationship-views)
+- [Projects](projects)
+- [Assessments](assessments)
+- [Workspace Dashboards](workspace-dashboards)
