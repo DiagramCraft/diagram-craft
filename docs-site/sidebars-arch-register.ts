@@ -36,6 +36,9 @@ const sidebars: SidebarsConfig = {
             'use/search',
             'use/data-modeling-schemas',
             'use/entities',
+            'use/entity-baselines',
+            'use/entity-artifacts',
+            'use/entity-merging',
             'use/entity-views'
           ]
         },

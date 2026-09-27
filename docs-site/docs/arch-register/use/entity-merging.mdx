@@ -1,0 +1,53 @@
+import ThemedImage from '@theme/ThemedImage';
+
+# Merge Entities
+
+Merge duplicate records when one entity should become the canonical record. The merge transfers supported relationships
+and attached records to the target, retires the source identifier, and keeps that identifier resolving to the canonical
+entity.
+
+## Review And Apply A Merge
+
+Users need the `ent.merge` workspace capability and entity administration access on both records. Start **Merge into…**
+from an entity detail screen or the entity browser. A merge can target only another entity with the same schema.
+
+The wizard guides you through four steps:
+
+1. Choose the canonical target.
+2. Review field, relation, and attached-record conflicts, plus the dependents that will be repointed.
+3. Type the source entity's name to confirm.
+4. Review the result and open the canonical entity.
+
+The preview is read-only. Resolve each editable conflict by choosing the source or target value. A conflict in a field
+group you cannot edit is shown read-only with an explanation. Some blockers are absolute; others can proceed only after
+you explicitly acknowledge the warning. The operation runs atomically after confirmation.
+
+<ThemedImage
+  alt="Entity merge impact review in Arch Register"
+  sources={{
+    light: require('/img/arch-register/entities/merge-review-light.png').default,
+    dark: require('/img/arch-register/entities/merge-review-dark.png').default,
+  }}
+/>
+
+## Scope And Effects
+
+Source and target must have the same project scope. A cross-project merge and a source entity with an open governance
+case are hard blockers. A merge that would remove project confinement from the source or move the canonical target
+into a project requires an acknowledged warning.
+
+The merge rewrites supported reverse references and typed relations, transfers entity history and supported side-table
+records, removes the source as a live record, and creates an alias for its retired identifier. That identifier continues
+to resolve to the target for authenticated lookups and external links. A correlated audit trail records the retired
+source, canonical target, and rewritten dependents. Merging several selected sources into one target runs the review
+wizard once per source.
+
+Merge permission does not grant access to restricted field values. Resolve only the conflicts available to your role;
+permission-scoped records remain protected. For retirement without record consolidation, use [Entity Deprecation](governance#entity-deprecation).
+
+## Related Pages
+
+- [Entities](entities)
+- [Roles and Permissions](../admin/roles-permissions)
+- [Entity Baselines](entity-baselines)
+- [Governance and Approvals](governance)

@@ -2,15 +2,18 @@ import ThemedImage from '@theme/ThemedImage';
 
 # Data Modeling And Schemas
 
-Even if schema editing is an admin workflow, regular users still need to understand the model they work inside.
+Schema editing is an administrator workflow, but the model determines what every user can create, edit, browse, and
+report on. A workspace model usually contains entity schemas, fields, enums, reusable shared field groups, and typed
+relation schemas.
 
 ## Read The Model Before You Create Data
 
 Use the model to answer:
 
 - which entity types exist
-- which fields are required
-- which relationships are references versus containment
+- which fields are required, grouped, or multi-valued
+- which values come from shared enums
+- which relationships are references, containment, or typed relations
 - which lifecycle and ownership expectations apply
 
 <ThemedImage
@@ -23,8 +26,9 @@ Use the model to answer:
 
 ## Schemas Define The Record Shape
 
-Schemas define the fields and relationships available when you create or edit an entity. That is why schema choices
-directly affect browsing, filtering, views, and reporting later.
+Entity schemas define the record fields and relationship projections available during creation and editing. Field types,
+requiredness, cardinality, enum options, and validation rules shape which values a record can hold. These choices also
+affect browsing, filtering, views, derived values, and reporting.
 
 <ThemedImage
   alt="Schema editor in Arch Register"
@@ -34,16 +38,57 @@ directly affect browsing, filtering, views, and reporting later.
   }}
 />
 
-## Practical Guidance
+## Fields, Enums, And Shared Field Groups
+
+Fields can be ordinary editable values, references, containment links, or relation projections. A field can also be
+externally managed, in which case its value is read-only to users and displays its source and update status. Ordered
+multi-valued scalar fields preserve their configured order and cardinality.
+
+Enums give a field a shared vocabulary. Enum option values remain stable while labels and descriptions can change;
+retired options remain available on existing records but are not offered for new edits.
+
+Shared field groups let administrators define fields once and reuse them in multiple schemas. Groups organize
+presentation and can also restrict field visibility and editing to selected teams. Team reviewers can view restricted
+fields; team editors and administrators can view and edit them. Workspace roles with `ws.settings`, `schema.edit`, and
+`ent.edit`, and global platform administrators, have full field-group access. Layout or drawer configuration does not
+grant additional access. See [Roles and Permissions](../admin/roles-permissions) for details.
+
+Schema templates prefill supported field and metadata defaults when creating an entity. They do not bypass required
+fields or validation. Administrators define them on the schema editor's **Templates** tab; see [Schemas and Model
+Overview](../admin/schemas-model-overview).
+
+## References, Containment, And Typed Relations
 
 Use:
 
 - reference fields for cross-cutting links such as dependencies
 - containment fields for ownership hierarchy
-- enums and lifecycle states when consistency matters across the workspace
+- typed relation schemas when a relationship needs named endpoint rules or its own data, such as a relationship date
+  or status
+
+Typed relation schemas define the allowed `in` and `out` entity schemas and the relation's own fields and field groups.
+An entity schema can project a relation from either endpoint as a typed relation field. Each relation instance is a
+separate, addressable record with its own permissions and audit history; the endpoint entities do not own its fields.
+When editing an entity, projected relation instances can be changed inline with that entity's other edits.
+
+Containment should express hierarchy and ownership. References express links that cross that hierarchy. Typed
+relations express named, modeled links whose endpoints or relationship data need stronger structure.
+
+## Domain Models Built On The Catalog
+
+The Business Glossary uses ordinary entity schemas for terms and categories, then adds glossary search, quality, and
+usage workflows. See the [Business Glossary guide](../applications/guides/business-glossary) for the full application
+workflow.
+
+Strategy & Capability Modelling uses entity schemas for nested capabilities, objectives, outcomes, initiatives, and
+measures, plus typed relations for strategic links. Its workspace capability binds those schemas to the application;
+the application guide entry point is [Application Guides](../applications/intro). These application workflows build on
+the same entity, relation, and permission behavior described here.
 
 ## Related Pages
 
 - [Entities](entities)
 - [Entity Views](entity-views)
 - [Schemas and Model Overview](../admin/schemas-model-overview)
+- [Roles and Permissions](../admin/roles-permissions)
+- [Workspace Templates and Capabilities](../admin/workspace-templates-capabilities)

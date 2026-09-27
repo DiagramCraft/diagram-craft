@@ -1,0 +1,50 @@
+import ThemedImage from '@theme/ThemedImage';
+
+# Entity Baselines
+
+A baseline is a named, read-only snapshot of entity and relation state at an effective date. Use one to preserve an
+architecture scope for later comparison even as live records change or are deleted.
+
+## Create A Baseline
+
+From **Entities**, use the entity browser actions and choose **Create baseline**. You can capture the current filters
+and search or a saved view. Baselines can also be created from an explicit entity selection, a workspace scope, or a
+project scope. The creation dialog lets you name the baseline, set its effective date, and choose supported planned
+change options.
+
+<ThemedImage
+  alt="Architecture baseline detail in Arch Register"
+  sources={{
+    light: require('/img/arch-register/entities/baseline-detail-light.png').default,
+    dark: require('/img/arch-register/entities/baseline-detail-dark.png').default,
+  }}
+/>
+
+Viewing baselines requires workspace view access, and each baseline shows only entities and relations the viewer can
+access. The creator or a workspace administrator can manage an unowned baseline. When a baseline has an owning project
+team, workspace administrators and project editors can manage it. Project baselines stay in that project's context;
+workspace baselines appear alongside the entity browser.
+
+## Review And Compare
+
+Select a baseline to review its captured entities and relations. The **Compare** tab compares it with another baseline
+or the current scope. The baseline detail also supports JSON export; exported data follows the same permission-aware
+scope as the viewer.
+
+Baselines use three lifecycle states:
+
+- **Active** — reconstructing the captured scope still matches its saved entities and relations.
+- **Stale** — the current reconstruction differs from the saved entities or relations, or the comparison cannot be
+  completed.
+- **Superseded** — an administrator or authorized user has explicitly marked it as replaced by another baseline.
+
+Superseding is explicit. Removing a baseline is a soft deletion, and the captured point-in-time state remains
+independent of later edits or deletion of live records. Approval decisions remain part of their linked governance
+cases rather than the baseline status.
+
+## Related Pages
+
+- [Entities](entities)
+- [Entity Views](entity-views)
+- [Projects](projects)
+- [Governance and Approvals](governance)
