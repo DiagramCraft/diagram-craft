@@ -1,56 +1,51 @@
+---
+related_reading:
+  - label: Governance And Approvals
+    to: /diagram-craft/arch-register/use/governance
+  - label: Account Settings
+    to: /diagram-craft/arch-register/use/account-settings
+  - label: Entities
+    to: /diagram-craft/arch-register/use/entities
+---
+
 # Collaboration And Notifications
 
-Arch Register keeps collaboration close to the records: watch an entity to follow it, discuss records and documents
-where they live, and pick up everything in one notification feed.
+Arch Register keeps collaboration close to the records. Watch entities for changes, discuss records and content where
+they live, and use the notification feed to return to activity that needs your attention.
 
-## Watching Entities
+## Watch Entities
 
-Use the watch button on an entity detail screen to follow that record. Watched entities generate notifications when
-relevant changes occur.
+Select the watch control on an entity detail screen to follow that record. Watched entities generate notifications
+when relevant changes occur. The bell menu's **Watching** tab lists the entities you follow; open a record from the
+list or unwatch one you no longer need to follow.
 
-The bell menu in the top bar has a **Watching** tab that lists everything you watch, with a shortcut to unwatch
-records you no longer care about.
+## Discuss Records And Content
 
-## The Notification Feed
+Entity detail screens have a **Discussions** tab for threads attached to the record. Supported wiki pages and
+documents also support inline comments and discussion threads, so reviewers can keep feedback beside the content it
+refers to. The top-bar discussions menu collects threads you participate in.
 
-The bell in the top bar is the single consolidated in-app feed. It combines:
+Comment activity can notify the person who owns an entity or content item when someone comments on it, and can notify
+someone when another person replies to their comment. Arch Register excludes the person who posted the comment, and
+notifications respect the recipient's current access to the related content.
 
-- changes on watched entities
+## Use The Notification Feed
+
+The bell in the top bar opens the consolidated in-app feed. It includes:
+
+- changes on entities you watch
+- comment activity on entities and content you own, or replies to your comments
 - governance action items assigned to you
 
-An unread count badge appears on the bell. From the feed you can:
+Open a notification to visit its related entity, content, or [My Work](governance). You can clear an individual item
+or mark all notifications read. An unread count appears on the bell. Governance action-item notifications clear
+automatically when the task is resolved, superseded, or cancelled; other feed items remain in the feed until cleared.
 
-- open a notification — entity notifications open the entity, governance notifications open [My Work](governance)
-- clear an individual notification
-- mark all notifications read
+## Set Notification Preferences
 
-Governance action-item notifications clear themselves once the underlying task is resolved, superseded, or
-cancelled — you do not need to open each one to keep the feed accurate.
+Open **Account settings → Notifications** to choose delivery by notification type and channel. In-app delivery is on
+by default for normal notification types and off by default for reminder types. Email delivery is available when the
+deployment has configured it; Slack and SMS are not currently deliverable.
 
-## Notification Preferences
-
-Control which notifications you receive from **Account settings → Notifications**. Preferences work per notification
-type and per delivery channel:
-
-- in-app delivery is on by default for normal notification types and off by default for reminder types
-- email is deliverable when configured by the deployment; Slack and SMS remain unavailable
-
-Preferences are scoped per user per workspace, and only affect future notifications — existing feed items are not
-removed retroactively.
-
-## Discussions
-
-Discussion threads attach to supported records and content:
-
-- entity detail screens include a **Discussions** tab
-- supported wiki and document content supports inline comments and discussion threads
-- the top bar exposes a discussions menu for threads you participate in
-
-Use discussions when the conversation should stay attached to the object it is about, rather than living in an
-external channel.
-
-## Related Pages
-
-- [Governance and Approvals](governance)
-- [Account Settings](account-settings)
-- [Entities](entities)
+Preferences apply per user and workspace and only affect future notifications. Changing a preference does not remove
+existing feed items.
