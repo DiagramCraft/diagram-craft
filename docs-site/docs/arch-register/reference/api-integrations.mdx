@@ -12,38 +12,48 @@ New consumers should choose the surface that matches their role:
 
 - `/api/application/v1/*` is the first-party application surface. It is being introduced domain by domain while
   existing `/api/*` routes remain available for compatibility.
-- `/api/integrations/v1/*` is the stable REST surface for supported third-party integrations. The entity sync routes
-  use `/entities/{id}` for internal IDs and `/entities/byExternalKey/{source}/{externalKey}` for external identities.
-  API catalog integrations use `/api-specifications/byExternalKey/{source}/{externalKey}` to atomically sync an
-  API entity and a provider-scoped specification source, with `/refresh` for URL-backed refreshes.
+- `/api/integrations/v1/*` is the versioned REST surface for supported third-party integrations. It includes entity
+  and typed-relation operations, external-identity synchronization, API specification synchronization, sync-run
+  tracking, and external governance operations.
 - `/api/adapters/diagram-craft/*` is the Diagram Craft-specific adapter surface. The existing `/api/public/*` paths are
   authenticated compatibility aliases; `public` is not a security boundary.
 - `/mcp` is a separate MCP protocol endpoint, documented under [MCP Server](mcp-server), rather than a REST path.
 
-The legacy `/api/*` surface is not removed as part of the initial migration. Clients should move when their domain has
-an equivalent versioned contract, and breaking changes to versioned surfaces require a new major URL version.
+The legacy `/api/*` surface remains available for compatibility. Clients can use a versioned surface when it provides
+the operation they need; breaking changes to a versioned surface require a new major URL version.
+
+## Tokens and permissions
+
+Users can create personal API tokens from [Account Settings](../use/account-settings). Workspace administrators can
+also create workspace-scoped tokens backed by a system user from [Workspace Settings](../admin/workspace-settings).
+Both token types are limited to the capabilities selected for them; copy the secret when it is created and revoke it
+when it is no longer needed.
+
+Choose capabilities for the operations the integration calls. Entity data reads require `content.view`; workspace and
+schema discovery may also require `ws.view`. Ordinary entity or relation mutations require `ent.edit`. Integrations
+that update only fields marked as externally managed can use `ent.external_update`. API specification operations may
+also require `artifact.manage`, and viewing raw specification content requires `artifact.content.view`. Endpoint
+authorization and field-group access checks still apply to every request.
 
 ## Current route inventory
 
-The route classification below is the compatibility baseline for the migration. “Live” means the path is currently
-served by the application; “target” means the path is the destination for a later migration issue.
+The table summarizes the currently served surfaces. Consult the generated API Reference for the operation-level
+request, response, and error contracts.
 
-| Surface | Current routes | Status | Owner / migration issue |
-| --- | --- | --- | --- |
-| Legacy application API | `/api/workspaces`, `/api/:workspace/*` for catalog, projects, configuration, governance, search, audit, jobs, documents, webhooks, and related domains | Live canonical routes | Keep compatible while domains move to the application surface; inventory changes belong in #2448 |
-| Application v1 | `/api/application/v1/:workspace/schemas/*` and `/api/application/v1/:workspace/data/*` | Live aliases for catalog schemas and entities | Extend domain by domain in #2446 |
-| Integration v1 | `GET /api/integrations/v1/:workspace/schemas`, `/relation-schemas`, `/relations`, `/data/:id/typed-relations`, `/entities/*`, and `/api-specifications/byExternalKey/*` | Live schema, typed-relation, entity-sync, and API-specification sync routes | Productize the supported contract and migrate remaining examples in #2449 |
-| Diagram Craft adapter | `/api/adapters/diagram-craft/:workspace/schemas` and `/api/adapters/diagram-craft/:workspace/data` | Live aliases for the authenticated `/api/public/*` adapter routes | Expand and document adapter-specific behavior in #2451 |
-| Legacy adapter name | `/api/public/:workspace/*` | Live compatibility alias; the name does not make the route public | Retain until all Diagram Craft consumers use the adapter surface |
-| Authentication infrastructure | `/api/auth/*`, `/api/auth/oidc/callback` | Live special-purpose browser and session/token endpoints | Remains outside application/integration versioning; token audience enforcement is deferred to #2383 |
-| Development infrastructure | `/api/dev/*` | Live, environment-gated development endpoints | Never expose as a supported integration surface |
-| MCP | `/mcp`, legacy `/sse`, `/messages` | Live in the standalone MCP server | Keep as a protocol surface; upstream REST migration is #2450 |
-| API descriptions | `/openapi.yaml`, `/openapi.json`, and surface-specific `/openapi/*.json` endpoints | Live documentation endpoints | Keep unified output compatible; publish surface specs in #2447 |
+| Surface | Current routes | Purpose |
+| --- | --- | --- |
+| Legacy application API | `/api/workspaces`, `/api/:workspace/*` | Existing application operations, including catalog, projects, configuration, governance, jobs, documents, and webhooks |
+| Application v1 | `/api/application/v1/:workspace/*` | Versioned first-party application contracts, including catalog and AI operations |
+| Integration v1 | `/api/integrations/v1/:workspace/*` | Supported third-party contracts, including entity/relation sync, API specifications, sync tracking, and external governance |
+| Diagram Craft adapter | `/api/adapters/diagram-craft/:workspace/*` | Authenticated adapter operations for Diagram Craft |
+| Legacy adapter alias | `/api/public/:workspace/*` | Compatibility paths for the authenticated Diagram Craft adapter; these routes are not anonymous |
+| Authentication | `/api/auth/*` | Browser sign-in and session flows |
+| Development | `/api/dev/*` | Environment-gated development endpoints; not a supported integration surface |
+| MCP | `/mcp`, with legacy `/sse` and `/messages` transports | Standalone MCP protocol server; see [MCP Server](mcp-server) |
+| OpenAPI descriptions | `/openapi.yaml`, `/openapi.json`, and surface-specific `/openapi/*.json` | Generated descriptions of the live contracts |
 
-The inventory intentionally distinguishes a route that exists from a route that has been selected as a migration
-destination. Surface ownership is not exclusive: a contract may be exposed on both the application and integration
-surfaces when the behavior, authorization, and representation are the same. In particular, `/api/integrations/v1/*`
-must not be treated as generally available until #2449 mounts the entity-sync contract there.
+Surface ownership is not exclusive: a contract may be exposed on both application and integration surfaces when the
+behavior, authorization, and representation are the same.
 
 ## Compatibility policy
 
@@ -60,8 +70,6 @@ must not be treated as generally available until #2449 mounts the entity-sync co
   breaking changes require a new major version and a migration note.
 - `/api/public/*` is a naming-compatibility path, not an anonymous API. Authentication and workspace permissions apply
   exactly as they do to the adapter route.
-- Do not add token audiences, scopes, or enforcement as part of route migration. Those decisions are tracked
-  separately in #2383.
 
 ## Deprecation and removal
 
@@ -113,22 +121,24 @@ The [API Reference](pathname:///arch-register/api.html) page is a static HTML fi
 Besides the HTTP API:
 
 - the [MCP Server](mcp-server) exposes entity and typed-relation discovery, traversal, and mutation tools for AI and automation clients
-- outbound [webhooks](../admin/workspace-settings#administration) deliver workspace events to external
-  systems
+- [Integration Sync](integration-sync) covers entity, relation, and API specification synchronization, including the
+  Backstage example
+- [Webhooks](../admin/webhooks) deliver signed workspace events to external systems
+- [Scheduled Jobs](../admin/scheduled-jobs) and [Automation Rules](../admin/automation-rules) cover recurring and
+  event-driven workspace work
 - the [External Integration Example](external-integrations) demonstrates a complete webhook-to-API
   write-back service
+- [External Content](../use/content#experimental-external-content) describes the experimental Git repository mount
+  workflow
 
-### API specification synchronization
-
-The API specification sync contract accepts a complete entity mutation together with one source state. A source has a
-provider-scoped `sourceKey`, independent of internal Arch Register IDs, and can be a bounded submitted document, a
-secure HTTPS URL, or a link-only source. Submitted documents and URL fetches use SHA-256 checksums to avoid duplicate
-immutable revisions. URL refreshes run through the existing job worker; scheduled URL policies use the same handler as
-manual refreshes. A missing source state preserves the entity and last successful revision while exposing a stale or
-failed diagnostic, and raw specification content remains protected by `artifact.content.view`.
+External governance workflows are available through the integration API and are currently **experimental**. See
+[External Governance](external-integrations#experimental-external-governance-workflows) for the capability and setup
+overview.
 
 ## Related Pages
 
 - [API Reference](pathname:///arch-register/api.html)
+- [Integration Sync](integration-sync)
 - [MCP Server](mcp-server)
+- [Webhooks](../admin/webhooks)
 - [Export and Import](../admin/export-import)

@@ -1,0 +1,86 @@
+import ThemedImage from '@theme/ThemedImage';
+
+# Integration Sync
+
+Arch Register provides versioned integration routes for synchronizing externally managed entities, typed relations,
+and API specification sources. The contracts are described in the [API Reference](pathname:///arch-register/api.html).
+Use stable external identities so reruns update the same records instead of creating duplicates.
+
+<ThemedImage
+  alt="Integration sync control center in Arch Register"
+  sources={{
+    light: require('/img/arch-register/admin/integration-sync-light.png').default,
+    dark: require('/img/arch-register/admin/integration-sync-dark.png').default,
+  }}
+/>
+
+## Prepare access
+
+Create a personal token in [Account Settings](../use/account-settings) or ask a workspace administrator for a
+workspace token in [Workspace Settings](../admin/workspace-settings). Select only the capabilities the importer needs.
+For example, the Backstage importer uses:
+
+- `ws.view` to discover workspace schemas
+- `content.view` to read existing entities during repeat runs
+- `ent.edit` to create ordinary entity records
+- `ent.external_update` to use the external synchronization contract
+- `artifact.manage` to register or refresh API specification sources
+
+Raw API specification content additionally requires `artifact.content.view`. Workspace and endpoint authorization,
+schema constraints, and field-group access checks continue to apply.
+
+## Synchronize entities and relations
+
+The entity and relation sync routes identify records by a durable `(source, externalKey)` pair. Use a source name
+owned by your integration and a key that remains stable when the importer runs again. A repeated submission converges
+on the existing record and reports whether it was created, updated, or unchanged.
+
+Typed relation sync uses the same identity pattern. The relation schema and its `in` and `out` endpoints are fixed
+when the relation is created; a later sync cannot repoint it. Check the relation schema’s endpoint constraints before
+submitting records.
+
+When an importer manages a larger catalog, use the integration sync-run routes as well. Start a run, include its
+context with entity, relation, and artifact writes, and finalize it with counts, warnings, failures, and whether the
+scan covered the complete source. Workspace Settings → **Integration sync** shows sources, runs, and managed-record
+health. Failed runs can be retried; administrators can also relink a tracked record or stop managing it without
+deleting the Arch Register record.
+
+## Synchronize API specifications
+
+Use the API specification sync route to create or update an API entity and its specification source in one operation.
+The source has a provider-scoped key independent of Arch Register's internal IDs. It can contain a bounded submitted
+document, point to a secure HTTPS URL, or preserve link-only provenance.
+
+Submitted documents and fetched URL content are checksum-deduplicated into immutable revisions. URL sources can be
+refreshed manually or on a schedule through the job worker. If a fetch fails or a source is marked missing, Arch
+Register preserves the last successful revision and exposes stale or failed diagnostics. Raw source content remains
+permission-protected by `artifact.content.view`.
+
+## Backstage catalog example
+
+The repository includes a forkable [Backstage Catalog Sync example](https://github.com/DiagramCraft/diagram-craft/tree/main/examples/backstage-catalog-sync).
+It imports supported `Component`, `API`, `Resource`, `System`, and `Domain` entries from root-level
+`catalog-info.yaml` files in a GitHub organization. It also synchronizes API specifications and typed
+`Provides API` / `Consumes API` relations.
+
+To try it:
+
+1. Create a workspace from the **Backstage** template.
+2. Create a token with the capabilities listed above; add a GitHub token for private repositories or higher API limits.
+3. Configure the `backstage-github-{organization}` source in Workspace Settings → **Integration sync** and set it to
+   **Active** after reviewing the source.
+4. Configure `ARCH_REGISTER_URL`, `ARCH_REGISTER_WORKSPACE`, and `ARCH_REGISTER_TOKEN` in the example's
+   `.env` file, then run it with `pnpm start -- --org {organization}`.
+
+Use `--dry-run` to inspect the proposed import, `--verbose` for detailed logging, and `--run-id` to resume or safely
+retry a submission. The example reports unsupported specifications and unresolved references as warnings. A partial
+GitHub scan does not mark unseen sources stale; a missing API definition is marked stale only after a complete
+organization scan. See the example README for supported reference formats, field mappings, and limitations.
+
+## Related pages
+
+- [API and Integrations](api-integrations)
+- [Backstage Catalog Sync example](https://github.com/DiagramCraft/diagram-craft/tree/main/examples/backstage-catalog-sync)
+- [Scheduled Jobs](../admin/scheduled-jobs)
+- [External Integrations](external-integrations)
+- [API Reference](pathname:///arch-register/api.html)

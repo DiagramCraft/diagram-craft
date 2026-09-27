@@ -13,8 +13,9 @@ documents, and optional workspace applications.
   working with entities, projects, and content.
 - **Workspace administrators:** start with [Admin Overview](admin/overview) for workspace configuration, membership,
   permissions, and administration.
-- **Integrators:** start with [API and Integrations](reference/api-integrations), then choose the [MCP guide](reference/mcp-server)
-  or [external integration guide](reference/external-integrations) for your integration method.
+- **Integrators:** start with [API and Integrations](reference/api-integrations), then choose [Integration Sync](reference/integration-sync),
+  the [MCP guide](reference/mcp-server), [Webhooks](admin/webhooks), or the
+  [external integration guide](reference/external-integrations) for your workflow.
 
 Optional workspace applications have their own workflows. Browse the [Application Guides](applications/intro), or read
 [Core Concepts](overview/core-concepts) if you want the product model before choosing a task.

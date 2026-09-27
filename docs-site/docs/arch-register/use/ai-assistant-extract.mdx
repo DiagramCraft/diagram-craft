@@ -5,6 +5,9 @@ import ThemedImage from '@theme/ThemedImage';
 Arch Register exposes two AI-facing sections in the workspace shell: **Assistant** and **Extract**. Document types
 can additionally define AI actions that run directly from a document.
 
+> **Experimental:** Assistant, Extract, document AI actions, and AI metadata generation are experimental features.
+Their behavior and availability may change.
+
 ## Assistant
 
 Assistant is the conversational workspace screen. Use it when you need:
@@ -14,6 +17,9 @@ Assistant is the conversational workspace screen. Use it when you need:
 - AI-supported drafting with workspace context
 
 Assistant behavior depends on workspace AI configuration, including provider, model, and optional system prompt.
+The assistant can search and inspect records that you are allowed to view. If you ask it to create or change an entity
+or relation, review the proposed change and explicitly approve it before the write runs. The usual workspace,
+entity, and field-group permissions still apply.
 
 <ThemedImage
   alt="AI Assistant in Arch Register"
@@ -25,8 +31,10 @@ Assistant behavior depends on workspace AI configuration, including provider, mo
 
 ## Extract
 
-Extract is the structured AI flow for turning input material into more usable architecture data. Treat it as a focused
-workflow rather than a general chat interface.
+Extract is the structured AI flow for turning supported input material into proposed architecture records. Review the
+detected fields, adjust each proposed entity name, and choose which records to accept. Arch Register creates only the
+records you accept, subject to your normal workspace and schema permissions. Treat Extract as a focused workflow
+rather than a general chat interface.
 
 <ThemedImage
   alt="AI Extract in Arch Register"
@@ -49,15 +57,22 @@ worth keeping or exploring further, continue it as an Assistant conversation fro
 Actions are defined per document type in
 [Document Types and Templates](../admin/document-types-templates).
 
+Document types can also define AI metadata generators. Unlike interactive actions, a generator runs after a document
+change and automatically writes its validated result to its configured AI-managed field. The result and its
+generation details remain visible on the document; changes to the document mark the result outdated. Administrators
+configure generators in [Document Types and Templates](../admin/document-types-templates).
+
 ## Availability
 
-These sections are workspace features, not guaranteed defaults. If they are missing, check:
+These sections are experimental workspace features, not guaranteed defaults. If they are missing, check:
 
 - whether AI is enabled for the workspace
 - whether your role exposes the feature
 - whether the workspace has valid provider configuration
+- whether you have workspace view access and permission to view the relevant records
 
 ## Related Pages
 
 - [AI Configuration](../admin/ai-configuration)
+- [Document Types and Templates](../admin/document-types-templates)
 - [Workspace Home and Navigation](workspace-home-navigation)
