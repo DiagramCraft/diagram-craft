@@ -39,7 +39,9 @@ const sidebars: SidebarsConfig = {
             'use/entity-baselines',
             'use/entity-artifacts',
             'use/entity-merging',
-            'use/entity-views'
+            'use/entity-views',
+            'use/entity-relationship-views',
+            'use/entity-planning-views'
           ]
         },
         {

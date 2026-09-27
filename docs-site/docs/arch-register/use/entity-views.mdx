@@ -2,12 +2,29 @@ import ThemedImage from '@theme/ThemedImage';
 
 # Entity Views
 
-The entity browser supports several screens for different kinds of analysis. Start in the default table screen, then
-switch when the question changes.
+Use the entity browser to find a catalog slice, choose how to inspect it, and save the configuration for repeat work.
+The browser is available from **Entities** and in project entity scope. Your workspace and entity permissions determine
+which records and fields appear.
 
-## Table
+## Filter And Sort Entities
 
-Use the table screen for auditing, sorting, and comparing fields side by side.
+Start with the sidebar facets for schema, lifecycle, and owner. You can select several values in a facet; those
+selections are alternatives, while selections in different facets narrow the results together. Use the search box for
+text matches, then open the filter builder for field conditions or a structured query. The Simple/Advanced switch lets
+you edit the query as text when you need boolean groups or relationship traversal. In a project browser, use **Scope**
+to show project entities or all entities.
+
+Use **Sort** to choose an available entity field and sort direction. In **Manage fields**, choose the fields shown by
+the table. Assessment fields can be added by joining an assessment; this is useful for reviewing answers beside
+catalog data. See [Assessments](assessments) for the project assessment workflow.
+
+## Table, Cards, And Tree
+
+### Table
+
+Use the table for auditing, sorting, and comparing fields side by side. Select rows for bulk actions, or choose fields
+in **Manage fields** to focus the table on the information needed for the task. Project context can add project-only
+fields such as project role and project status.
 
 <ThemedImage
   alt="Entity table screen in Arch Register"
@@ -17,12 +34,9 @@ Use the table screen for auditing, sorting, and comparing fields side by side.
   }}
 />
 
-When you join an assessment, assessment fields can appear beside normal entity fields. This is useful for comparing
-review scores, filtering by unanswered assessment fields, or building portfolio views from assessment answers.
+### Cards
 
-## Cards
-
-Use cards when quick visual scanning matters more than dense comparison.
+Use cards to scan entity summaries when comparing a few key details matters more than fitting many rows on screen.
 
 <ThemedImage
   alt="Entity cards screen in Arch Register"
@@ -32,9 +46,10 @@ Use cards when quick visual scanning matters more than dense comparison.
   }}
 />
 
-## Tree
+### Tree
 
-Use the tree screen when containment hierarchy is the main thing you need to inspect.
+Use the tree to inspect containment structure. Expand parent records to follow their children; the tree follows
+containment relationships rather than every reference or typed relation.
 
 <ThemedImage
   alt="Entity tree screen in Arch Register"
@@ -44,114 +59,44 @@ Use the tree screen when containment hierarchy is the main thing you need to ins
   }}
 />
 
-## Radar
+## Choose Another View
 
-Use radar when you want a higher-level distribution view rather than row-level detail.
+The **View** menu includes specialized screens. Each view keeps the current entity query and scope while presenting the
+matching records for a different task:
 
-<ThemedImage
-  alt="Entity radar screen in Arch Register"
-  sources={{
-    light: require('/img/arch-register/entities/browser-radar-light.png').default,
-    dark: require('/img/arch-register/entities/browser-radar-dark.png').default,
-  }}
-/>
+- Use [Relationship Views](entity-relationship-views) to follow connections with Graph, Topology, Explore, Matrix,
+  Traceability, or Path Walker.
+- Use [Planning And Portfolio Views](entity-planning-views) to compare distributions, dates, changes, and metrics
+  with Radar, Timeline, Diff, Bubble, Heatmap, or Map.
 
-## Timeline
+## Save And Reuse A View
 
-Use timeline when target dates, planned change, and sequence over time are the main concern.
+Members with saved-view management permission can open the entity browser actions menu and choose **Save View As...**
+to name the current view. A saved view retains its query, sorting, display fields, selected display mode, and that
+mode's configuration; joined assessment data is retained as well. When working in a project, choose the available
+workspace or project scope. Workspace views can be pinned for other members when the permission is available.
 
-<ThemedImage
-  alt="Entity timeline screen in Arch Register"
-  sources={{
-    light: require('/img/arch-register/entities/browser-timeline-light.png').default,
-    dark: require('/img/arch-register/entities/browser-timeline-dark.png').default,
-  }}
-/>
-
-## Matrix
-
-Use matrix when you need to inspect density, gaps, or overlap across a relationship dimension.
-Joined assessment select fields can be used as matrix dimensions when you need to compare entities by review result.
-
-<ThemedImage
-  alt="Entity matrix screen in Arch Register"
-  sources={{
-    light: require('/img/arch-register/entities/browser-matrix-light.png').default,
-    dark: require('/img/arch-register/entities/browser-matrix-dark.png').default,
-  }}
-/>
-
-## Bubble
-
-Use bubble when you want to plot entities against two axes at once, with size and colour adding a third and fourth
-dimension. X axis, Y axis, size, and colour can each be mapped independently to a numeric or categorical field —
-numeric sources include schema number fields and a joined assessment's rating fields; categorical sources include
-select fields, lifecycle, owner, and a joined assessment's enum fields. Entities that land on the same coordinate are
-spread apart automatically so nothing is hidden behind another bubble. Use the Quadrants control to add equal divider
-lines and editable labels for business-fit or other two-axis comparisons; this configuration is retained in saved
-views and wiki embeds.
-
-<ThemedImage
-  alt="Entity bubble screen in Arch Register"
-  sources={{
-    light: require('/img/arch-register/entities/browser-bubble-light.png').default,
-    dark: require('/img/arch-register/entities/browser-bubble-dark.png').default,
-  }}
-/>
-
-## Explore
-
-Use explore when you need to navigate from one entity set into related records without losing comparison context.
-
-<ThemedImage
-  alt="Entity explore screen in Arch Register"
-  sources={{
-    light: require('/img/arch-register/entities/browser-explore-light.png').default,
-    dark: require('/img/arch-register/entities/browser-explore-dark.png').default,
-  }}
-/>
-
-## Map
-
-Use map when you want a three-level containment map of your entities, with each box colored by a single configurable
-metric. Pick a schema for each of up to three levels along containment relationships, then choose a metric — a
-numeric field, lifecycle state, or a joined assessment's rating/enum fields — and an aggregation (count, sum,
-average, minimum, maximum, or worst) to roll up over each box's descendants. Numeric metrics render as a colour
-gradient normalized across the visible boxes; lifecycle metrics use the workspace's lifecycle colours; enum-based
-metrics use the dominant option among descendants, with the full distribution available in the tooltip. Click a box
-to focus the map on that entity and drill into its descendants; use the breadcrumb to navigate back up.
-
-<ThemedImage
-  alt="Entity map screen in Arch Register"
-  sources={{
-    light: require('/img/arch-register/entities/browser-map-light.png').default,
-    dark: require('/img/arch-register/entities/browser-map-dark.png').default,
-  }}
-/>
-
-## Saved Views
-
-View configuration — fields, filters, sorting, display mode, and joined data such as assessment fields — can be saved
-and reused. Use saved views when the same slice of the catalog recurs in reviews, governance work, or planning
-sessions.
-
-Technology lifecycle work can use the same saved-view surfaces. Technology Release records can be displayed in a
-table for support-date review, in a radar using technology category and Adopt/Trial/Assess/Hold status, or in a
-timeline mapping release date to EOL date. These views show release-level information; filtering applications by the
-support state of referenced releases requires relationship-aware reporting beyond the current entity filters. The
-Technology Release catalog is included in the Default workspace template and seeded workspace; named model templates
-retain their native technology concepts.
+Select a saved view in the sidebar to restore its filters and configuration. When the active saved view changes, use
+**Save View** to update it; use the view menu to rename or remove saved views. Saved views can also be embedded in
+workspace dashboards and wiki pages. See [Workspace Dashboards](workspace-dashboards) and [Content](content) for those
+workflows. Workspace templates may also provide starter views for their schemas.
 
 ## Import And Export
 
-The entity browser also supports CSV workflows:
+The entity browser also supports CSV workflows: export the current browser slice, import entities through a review
+screen before anything is written, or download schema-specific templates to prepare data outside Arch Register.
 
-- export the current browser slice to CSV
-- import entities through the import screen, with review before anything is written
-- download schema-specific import templates to prepare data outside Arch Register
+## Technology Lifecycle Example
+
+Technology Release records can be reviewed in a table for support dates, in Radar by technology category and lifecycle
+status, or in Timeline by release and end-of-life dates. These are release-level views; filtering applications by the
+support state of referenced releases requires relationship-aware reporting. The Default workspace template and seeded
+workspace include the Technology Release catalog.
 
 ## Related Pages
 
 - [Entities](entities)
-- [Data Modeling and Schemas](data-modeling-schemas)
+- [Data Modeling And Schemas](data-modeling-schemas)
+- [Entity Relationship Views](entity-relationship-views)
+- [Entity Planning And Portfolio Views](entity-planning-views)
 - [Entity Screen Reference](../reference/entity-screen-reference)

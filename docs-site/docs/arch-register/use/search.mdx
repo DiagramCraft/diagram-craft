@@ -2,36 +2,24 @@ import ThemedImage from '@theme/ThemedImage';
 
 # Search
 
-Search is the cross-section discovery tool for the current workspace. Use it when you know what you need but not
-where it lives.
+Use workspace search when you know what you need but not where it lives. It searches the current workspace across
+entities, projects, files, schemas, and relation records. Business Glossary has its own alias-aware term search and
+quality filters; see [Business Glossary](../applications/guides/business-glossary).
 
-## What Search Covers
+## Workspace Search
 
-Workspace search spans:
+Enter a text query in **Search**. Results are grouped into **Entities**, **Projects**, **Diagrams**, **Schemas**, and
+**Relations**. The Diagrams group includes searchable content files such as diagrams and Markdown pages. Search matches
+record names and descriptions, entity and relation fields, file paths and metadata, and schema names and field names.
 
-- entities
-- projects
-- diagrams
-- wiki pages and other content
-- schemas
+Use the category chips to narrow results to one type or return to **All**. Each result shows identifying context such
+as its schema, project, folder, owner, lifecycle, matched fields, or content metadata. Select a result to preview it in
+the side pane. Use its open action or double-click the row to navigate; the up and down arrows move through results,
+and Enter opens the selected result.
 
-This is broader than the local filters inside entity browsers or project folders.
-
-## When To Use Search
-
-Use search when:
-
-- you do not know whether the item is an entity or project artifact
-- you want to find a schema, record, or file from one entry point
-- you need to jump across product areas quickly
-
-Do not use workspace search when you are already inside a narrow slice and only need a local filter. In that case,
-use the filter controls inside the current screen.
-
-## Result Shape
-
-Results are grouped by category and include enough context to show where the match belongs. That context is important
-for project content, where the same file name may appear in more than one project or folder.
+Entity results open the entity drawer. Project results open the project, and file results take you to the containing
+workspace, entity, or project folder. Schema results open the schema in Settings. Relation results open the related
+entity so you can inspect its relationships.
 
 <ThemedImage
   alt="Workspace search results in Arch Register"
@@ -41,8 +29,21 @@ for project content, where the same file name may appear in more than one projec
   }}
 />
 
+For detailed catalog filtering, open [Entities](entities) and use the entity browser's facets and query builder. For
+project files, see [Projects](projects) and [Content](content).
+
+## Business Glossary Term Search
+
+The glossary searches canonical term names, synonyms, and abbreviations. Narrow results with category facets,
+quality facets (**Unused**, **Conflicting**, **Deprecated**, or **Missing owner**), and the **Owner / Lifecycle**
+filter. Sort by name, usage count, or status. Select a term to open its entity drawer and review its fields and usage;
+open the full record in **Entities** to edit it. Glossary search requires the application to be enabled and available
+to your account. See the [Business Glossary guide](../applications/guides/business-glossary) for setup and term
+maintenance.
+
 ## Related Pages
 
 - [Entities](entities)
 - [Projects](projects)
-- [Project and Content Screen Reference](../reference/project-content-screen-reference)
+- [Business Glossary](../applications/guides/business-glossary)
+- [Project And Content Screen Reference](../reference/project-content-screen-reference)
