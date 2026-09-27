@@ -334,6 +334,49 @@ export const screenshots: ArchRegisterScreenshotConfig[] = [
   {
     product: 'arch-register',
     category: 'projects',
+    name: 'milestones',
+    fullPage: false,
+    setup: async ({ projectsPage }) => {
+      await projectsPage.page.goto(
+        `/${defaultWorkspace.slug}/projects/${authMigrationProject.id}?tab=projects&section=milestones`
+      );
+      await expect(projectsPage.page.getByRole('heading', { name: 'Milestones' })).toBeVisible();
+      await expect(projectsPage.page.getByText('Identity platform cutover')).toBeVisible();
+    }
+  },
+  {
+    product: 'arch-register',
+    category: 'projects',
+    name: 'planned-changes-timeline',
+    fullPage: false,
+    setup: async ({ projectsPage }) => {
+      await projectsPage.page.goto(
+        `/${defaultWorkspace.slug}/projects/${authMigrationProject.id}?tab=projects&section=entities`
+      );
+      await expect(projectsPage.page.getByRole('heading', { name: 'Project Entities' })).toBeVisible();
+      await projectsPage.page.getByRole('button', { name: 'Timeline', exact: true }).click();
+      await expect(projectsPage.page.getByRole('toolbar', { name: 'Timeline grouping' })).toBeVisible();
+      await expect(projectsPage.page.getByText('Planned change', { exact: true })).toBeVisible();
+    }
+  },
+  {
+    product: 'arch-register',
+    category: 'projects',
+    name: 'planned-changes-summary',
+    fullPage: false,
+    setup: async ({ projectsPage }) => {
+      await projectsPage.page.goto(
+        `/${defaultWorkspace.slug}/projects/${authMigrationProject.id}?tab=projects&section=entities`
+      );
+      await expect(projectsPage.page.getByRole('heading', { name: 'Project Entities' })).toBeVisible();
+      await projectsPage.page.getByRole('button', { name: "What's changed", exact: true }).click();
+      await expect(projectsPage.page.getByText(/What's changed by/)).toBeVisible();
+      await expect(projectsPage.page.getByText('Overdue changes')).toBeVisible();
+    }
+  },
+  {
+    product: 'arch-register',
+    category: 'projects',
     name: 'new-diagram-dialog',
     selector: '[role="alertdialog"]',
     setup: async ({ projectsPage }) => {
@@ -373,6 +416,48 @@ export const screenshots: ArchRegisterScreenshotConfig[] = [
       ).toBeVisible();
       await projectsPage.page.getByRole('button', { name: 'Edit' }).click();
       await expect(projectsPage.page.getByRole('alertdialog', { name: 'Edit assessment' })).toBeVisible();
+    }
+  },
+  {
+    product: 'arch-register',
+    category: 'projects',
+    name: 'assessment-assignment',
+    selector: '[role="alertdialog"]',
+    setup: async ({ projectsPage }) => {
+      await projectsPage.page.goto(
+        `/${defaultWorkspace.slug}/projects/${checkoutRevampProject.id}?tab=projects&section=assessments`
+      );
+      await expect(projectsPage.page.getByRole('heading', { name: 'Assessments' })).toBeVisible();
+      await projectsPage.page.getByRole('button', { name: 'New assessment' }).first().click();
+      await expect(projectsPage.page.getByRole('alertdialog', { name: 'New assessment' })).toBeVisible();
+      await projectsPage.page.getByRole('tab', { name: 'Assignment' }).click();
+      const teamPicker = projectsPage.page.getByRole('combobox', {
+        name: 'Search teams to add…'
+      });
+      await teamPicker.fill('Security');
+      await projectsPage.page.getByRole('option', { name: 'Security & Compliance' }).click();
+      await projectsPage.page.locator('input[type="date"]').fill('2026-10-31');
+      await expect(projectsPage.page.locator('button[title="Remove team"]')).toBeVisible();
+    }
+  },
+  {
+    product: 'arch-register',
+    category: 'projects',
+    name: 'assessment-recurrence',
+    selector: '[role="alertdialog"]',
+    setup: async ({ projectsPage }) => {
+      await projectsPage.page.goto(
+        `/${defaultWorkspace.slug}/projects/${checkoutRevampProject.id}?tab=projects&section=assessments`
+      );
+      await expect(projectsPage.page.getByRole('heading', { name: 'Assessments' })).toBeVisible();
+      await projectsPage.page.getByRole('button', { name: 'New assessment' }).first().click();
+      await expect(projectsPage.page.getByRole('alertdialog', { name: 'New assessment' })).toBeVisible();
+      await projectsPage.page.getByRole('tab', { name: 'Advanced' }).click();
+      await projectsPage.page.getByRole('combobox').last().click();
+      await projectsPage.page.getByRole('option', { name: 'Monthly' }).click();
+      await projectsPage.page.getByRole('textbox', { name: 'Every N months' }).fill('3');
+      await projectsPage.page.getByRole('textbox', { name: 'Response window (days)' }).fill('14');
+      await expect(projectsPage.page.getByText('Response window (days)')).toBeVisible();
     }
   },
   {

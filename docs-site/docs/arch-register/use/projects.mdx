@@ -1,68 +1,84 @@
+---
+related_reading:
+  - label: Assessments
+    to: /diagram-craft/arch-register/use/assessments
+  - label: Content
+    to: /diagram-craft/arch-register/use/content
+  - label: Entity Planning And Portfolio Views
+    to: /diagram-craft/arch-register/use/entity-planning-views
+---
+
 import ThemedImage from '@theme/ThemedImage';
 
 # Projects
 
-Projects are the bounded work areas in Arch Register. They group metadata, files, related entities, and planned
-change around one initiative.
+Projects organize an initiative's metadata, related entities, files, milestones, planned changes, and assessments.
+Use a project when the work needs a shared planning boundary across several catalog records and documents.
 
-## Project List
+## Create And Organize Projects
 
-Use the project section to scan current work, pinned work, and archived work.
+In **Projects**, select **New project** and enter a name. You can also set a description, status, owner team, and
+optional start and target dates. Edit these details from the project home screen. Pin projects you return to often;
+the sidebar groups pinned, draft, and active projects, while complete and cancelled projects appear under **Archive**.
 
-<ThemedImage
-  alt="Projects list in Arch Register"
-  sources={{
-    light: require('/img/arch-register/projects/list-overview-light.png').default,
-    dark: require('/img/arch-register/projects/list-overview-dark.png').default,
-  }}
-/>
+Creating, editing, or deleting a project depends on your workspace project capabilities and team role. Project content
+and actions follow the project's owner team and the wider workspace permission model. See
+[Roles And Permissions](../admin/roles-permissions) for how these access rules combine.
 
-## Project Detail
+## Use The Project Dashboard
 
-The main project screen is where you manage:
-
-- status and metadata
-- owner
-- pinned state
-- file tree
-- associated entities
-- assessments
-- milestones
-- planned changes and the project timeline
+The project home screen shows one dashboard for that project. Project editors can add, remove, resize, and reposition
+widgets; other project members see the dashboard read-only. The available widgets include project-scoped entity
+tables and browsers, saved views, diagrams, documents, assessments, and upcoming milestones. Use the sidebar to open
+the project's files or planning sections.
 
 <ThemedImage
-  alt="Project detail screen in Arch Register"
+  alt="Project home dashboard in Arch Register"
   sources={{
     light: require('/img/arch-register/projects/detail-home-light.png').default,
     dark: require('/img/arch-register/projects/detail-home-dark.png').default,
   }}
 />
 
-## Milestones
+## Organize Entities And Content
 
-Milestones give a project its planning checkpoints. Each milestone has a target date and a status, and planned entity
-changes can be associated with a milestone instead of a fixed date.
+Use the project's **Entities** section to associate catalog entities with the initiative and review them in project
+scope. An entity can be associated with more than one project. Project context makes its milestones and planned changes
+available alongside the entity's current state.
 
-## Planned Changes
+Use the content tree in the sidebar to create folders, add diagrams and Markdown documents, or upload files. Project
+documents can use project-specific templates. Supported documents keep revision history, where you can inspect earlier
+versions, compare changes, and restore a revision. The [Content guide](content) explains project files, documents,
+diagrams, and revision history in more detail.
 
-Planned changes record proposed future changes to entities within the scope of a project, without touching the
-current live entity state. A planned change can be:
+From **Project actions → Create project baseline**, capture a read-only snapshot of the project's entities and
+relations at an effective date. Open project baselines from the sidebar's **Baselines** section and compare them with
+another baseline or the current scope. See [Entity Baselines](entity-baselines).
 
-- targeted at a future date, or associated with a project milestone
-- inspected in the project timeline and in entity timeline views, alongside historical change
-- applied when it is ready, promoting the proposed state into the live entity
+## Plan Milestones And Changes
 
-Use planned changes when a project needs to describe a future state — a decommissioning, a migration target — before
-it happens.
+Milestones name project checkpoints. Each has a target date and one of four statuses: **Planned**, **Active**,
+**Complete**, or **Cancelled**. Planned changes can use a milestone's date as their effective date, so moving the
+milestone also moves the planned change on the timeline. Open **Milestones** from the project sidebar to create, edit,
+filter, or delete checkpoints.
 
-## Use Projects When
+In **Entities**, choose **Plan change** to create a named change case for one or more entities. You can propose future
+field values without changing the current live entities, and add a new project-scoped entity to a change case. Related
+entity updates can share one case so they are reviewed and applied together. Schedule a case for a future date or
+associate it with a milestone; a case may also remain undated.
 
-Use a project when the main thing you are organizing is a file and planning boundary rather than a catalog record.
-Use assessments inside a project when the project needs structured review data across a scoped set of entities.
+Use the **Future changes** tab to review planned cases, grouped by entity or date. **Timeline** places dated changes
+beside milestones and historical updates and lists unscheduled changes separately. Select a change to inspect its
+proposed state. Users who can edit the project can update or withdraw a planned case and apply it when ready. Applying
+a case promotes all of its proposed member states to the live entities atomically.
 
-## Related Pages
+The **What's changed** tab compares the project's planned future state with the current state, showing entities and
+relations added, removed, or changed, with field-level differences for changed entities. Its comparison date is the
+latest effective date among the project's planned changes, falling back to the project target date when none of the
+changes has a date. If neither provides a date, the comparison is unavailable. Use **Overdue changes** to include
+planned changes whose effective dates have passed, or select another project to compare the two proposed futures.
+Restricted field values remain hidden according to your access; the comparison may show that restricted changes exist
+without exposing their values.
 
-- [Assessments](assessments)
-- [Content](content)
-- [Search](search)
-- [Project and Content Screen Reference](../reference/project-content-screen-reference)
+The [Entity Planning And Portfolio Views](entity-planning-views) guide covers workspace-wide timelines and future-date
+comparisons that can include multiple projects.
