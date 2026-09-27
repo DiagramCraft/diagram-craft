@@ -48,8 +48,10 @@ API tokens are workspace-scoped credentials for tools and service integrations. 
 section, choose a workspace and capability set, and copy the secret when it is shown. The complete token is shown
 only once.
 
-For an external AI client, grant `ws.view` for read access. Add `ent.edit` only when the integration must create or
-update entities. Treat tokens like passwords and revoke them when they are no longer needed.
+For an external client that reads entity data, grant `content.view`; add `ws.view` when it also needs workspace or
+schema discovery. Add `ent.edit` only when the integration must make ordinary entity or relation changes.
+Integrations that write only externally managed fields can use `ent.external_update`. Treat tokens like passwords and
+revoke them when they are no longer needed.
 
 See [MCP Server](../reference/mcp-server) for connecting an AI client to the Arch Register catalog.
 

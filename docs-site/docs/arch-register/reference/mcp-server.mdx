@@ -10,12 +10,14 @@ permissions.
 1. Open **Account Settings → API tokens**.
 2. Create a token for the workspace you want the AI client to use.
 3. Give it a descriptive name, such as `Claude architecture assistant`.
-4. Select **View workspace** (`ws.view`) for read-only access.
+4. Select **View entity & workspace content** (`content.view`) for catalog reads. Add **View workspace** (`ws.view`)
+   when the client also needs workspace or schema discovery.
 5. Also select **Edit entities** (`ent.edit`) if the client should be allowed to create or update entities or typed relations.
 6. Copy the token immediately. The complete `ar_pat_...` secret is shown only once.
 
 API tokens are limited to one workspace and can be revoked from the same screen. Use the smallest capability set
-that fits the integration. A token used for MCP reads needs `ws.view`; mutation access additionally needs `ent.edit`.
+that fits the integration. Read-only catalog access requires `content.view`; mutation access additionally requires
+`ent.edit` and `MCP_ENABLE_MUTATIONS=true`.
 
 ## Available tools
 
@@ -106,6 +108,10 @@ The server binds to localhost by default. If it is exposed beyond the local mach
 
 Keep `MCP_ENABLE_MUTATIONS` unset for a read-only integration. The process writes diagnostics to stderr so stdio
 remains a valid MCP JSON-RPC stream.
+
+If a client cannot connect, check that the MCP process is running, its URL and workspace are correct, and the token has
+the required capabilities and has not expired or been revoked. If a tool call is denied, check the user's entity,
+endpoint, and field-group permissions; MCP forwards the API's authorization checks rather than bypassing them.
 
 ## Related pages
 

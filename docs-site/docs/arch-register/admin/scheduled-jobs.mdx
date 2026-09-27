@@ -1,0 +1,57 @@
+import ThemedImage from '@theme/ThemedImage';
+
+# Scheduled Jobs
+
+Scheduled jobs refresh supported workspace data in the background. Workspace administrators (capability
+`people.role`) use Workspace Settings for schedule controls and run history; platform administrators can manage jobs
+across workspaces. A separately deployed Arch Register job server must be available to execute queued work.
+
+<ThemedImage
+  alt="Job monitoring screen in Arch Register"
+  sources={{
+    light: require('/img/arch-register/admin/job-monitoring-light.png').default,
+    dark: require('/img/arch-register/admin/job-monitoring-dark.png').default,
+  }}
+/>
+
+## Configure Technology End of Life synchronization
+
+The administrator-configurable recurring integration job currently supported in Workspace Settings is **Technology End
+of Life**. It reads product and release-cycle values from a selected entity schema and synchronizes release, support,
+and end-of-life details from endoflife.date into mapped externally managed fields.
+
+In **Workspace Settings → Job monitoring**, create a Technology End of Life job, choose the schema and field mappings,
+and set its refresh frequency. The product and cycle fields must exist in that schema. Output fields are marked as
+scheduled integration data and are read-only to ordinary edits. You can review or change the mapping and schedule from
+the job settings.
+
+The worker needs network access to endoflife.date. Temporary provider or network failures are retried according to the
+job's retry policy and appear in run history if they remain unsuccessful.
+
+## Monitor and operate runs
+
+Job monitoring shows schedules, job-server availability, and retained run history, including queued, running,
+succeeded, failed, and cancelled runs. Planned execution is best-effort, so a run may start later than its scheduled
+time when workers are busy or unavailable.
+
+- **Run now** queues an immediate run. If one for that schedule is already queued or running, that existing run is
+  returned.
+- **Cancel** stops a queued run without changing its recurring schedule. A running job cannot be interrupted from
+  this screen.
+- Use run details to inspect attempt counts, result data, and the recorded error.
+
+Production deployments should run the separate `@arch-register/job-server` package with the same database
+configuration as the main server. See the [job server setup guide](https://github.com/DiagramCraft/diagram-craft/blob/main/arch-register-packages/job-server/README.md)
+for worker configuration and deployment requirements.
+
+Some background jobs are system-managed rather than configured by workspace administrators. For example, currency
+rollups use a shared daily rate snapshot and retain the last successful snapshot when the provider is unavailable. API
+specification refreshes and AI metadata generation also use the job worker; AI generation requires the worker to use
+the same `AI_ENCRYPTION_KEY` as the main server.
+
+## Related pages
+
+- [Workspace Settings](workspace-settings)
+- [Integration Sync](../reference/integration-sync)
+- [AI Configuration](ai-configuration)
+- [API Reference](pathname:///arch-register/api.html)

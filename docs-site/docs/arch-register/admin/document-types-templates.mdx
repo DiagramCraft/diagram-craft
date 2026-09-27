@@ -50,12 +50,21 @@ Each field has a stable field ID, a display name, and a requirement:
 Link fields can also define minimum and maximum cardinality. Enum fields must define their allowed options.
 Values are checked against the field type when a document is saved.
 
-### AI Actions
+### AI Actions and Metadata Generators
 
-A document type can define interactive AI actions and metadata generators. Actions are named, predefined prompts that
-use the document body, metadata, type, and location with read-only tools. Interactive actions can be run by anyone who
-can view a typed document; metadata generators run automatically after document changes. Neither action kind can
-modify documents, metadata, or entities through its AI tools.
+A document type can define interactive AI actions and metadata generators. These AI features are experimental and
+require workspace AI configuration. Both kinds use the document body, metadata, type, and location with read-only
+architecture tools. An interactive action can be run by anyone who can view the typed document and returns a temporary
+result; it does not change the document.
+
+A metadata generator runs automatically a short time after an effective document body or metadata change. Its target
+field must be marked as externally managed with kind **AI**. The model's tools cannot write data, but after the
+generated value passes field validation, Arch Register stores it in the target field under an AI system actor. Users
+do not approve each generated value before it is written. They can inspect the value and its generation details,
+including its explanation, findings, status, and timestamp. A later document edit marks the result outdated; a new
+edit while generation is running discards that result and schedules generation for the latest revision. A failed run
+is retried once before its failure notice is retained. Editing a generator's prompt marks existing values outdated but
+does not start a new run until the document changes.
 
 Actions are shown by name and type when editing a document type. Select **Add AI action** or **Edit** to open the action
 dialog, where you can set the name, kind, prompt, available read-only tools, output field for metadata generators, and
@@ -67,7 +76,8 @@ select **Test action**. Testing uses the current unsaved action draft and return
 model, duration, parsed metadata value when applicable, and any actionable parsing, validation, permission, or tool
 errors. Testing does not change the document, metadata, revisions, or generation schedules.
 
-AI actions require workspace [AI configuration](ai-configuration) to be in place. See
+AI actions require workspace [AI configuration](ai-configuration) and an available job server for metadata
+generation. See
 [AI Assistant and Extract](../use/ai-assistant-extract) for the reader-facing workflow.
 
 ### Evolving A Type

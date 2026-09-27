@@ -1,0 +1,47 @@
+import ThemedImage from '@theme/ThemedImage';
+
+# Automation Rules
+
+Automation rules perform a small set of actions when an entity or typed relation changes. Workspace administrators
+(capability `people.role`) can create, edit, enable, disable, and delete rules in
+**Workspace Settings → Automation rules**. Platform administrators can manage rules across workspaces.
+
+<ThemedImage
+  alt="Automation rules screen in Arch Register"
+  sources={{
+    light: require('/img/arch-register/admin/automation-rules-light.png').default,
+    dark: require('/img/arch-register/admin/automation-rules-dark.png').default,
+  }}
+/>
+
+## Define a rule
+
+Choose whether the rule applies to entities or relations, and optionally select a schema. Select one trigger:
+
+- creation or deletion of an entity or typed relation
+- a selected entity or relation field changing
+- an entity lifecycle transition
+
+You can add field conditions using equality, inequality, empty or non-empty checks, and numeric comparisons for number,
+currency, or numeric/rating derived fields.
+
+Each rule needs at least one action. Supported actions create an audit note, send an in-app notification to a user, the
+owning team, or a user referenced by a field, or set a field value on the triggering record.
+
+## Permissions and execution
+
+Rules run with the permissions of the administrator who created them, not as a trusted system user. The rule author's
+workspace role, team membership, and field-group access are checked when the event is matched and again before queued
+actions execute. A rule cannot retain access to a field after its access is revoked, the field is moved to a restricted
+group, or the field is removed.
+
+Matching happens when an entity or relation mutation is recorded; actions execute asynchronously. Open the
+**Automation rules** run history in Workspace Settings to inspect recent successes and failures. Correct an invalid
+field reference or permission issue, then enable or trigger the rule again as appropriate.
+
+## Related pages
+
+- [Workspace Settings](workspace-settings)
+- [Permission Model](../reference/permission-model)
+- [API and Integrations](../reference/api-integrations)
+- [API Reference](pathname:///arch-register/api.html)

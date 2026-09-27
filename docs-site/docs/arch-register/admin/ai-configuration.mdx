@@ -2,7 +2,11 @@ import ThemedImage from '@theme/ThemedImage';
 
 # AI Configuration
 
-AI configuration is workspace-scoped and controls how Assistant and Extract behave.
+> **Experimental:** Arch Register's AI features are experimental. Their availability and behavior may change.
+
+AI configuration is workspace-scoped and controls Assistant, Extract, document AI actions, and metadata generation.
+Members with `ws.settings` can configure the provider and model once for the workspace; individual users still act
+through their own permissions.
 
 <ThemedImage
   alt="AI settings in Arch Register"
@@ -23,6 +27,10 @@ The current UI exposes configuration for:
 - temperature
 - optional system prompt
 
+Choose a provider supported by the deployment and supply valid credentials and a model name. Users can access AI
+features only when workspace AI is enabled, provider configuration is valid, and their normal workspace permissions
+allow the requested data.
+
 ## Operational Notes
 
 The workspace prompt is shared configuration, not a per-user preference. Treat it as a workspace behavior control and
@@ -33,7 +41,14 @@ new plaintext credential writes are rejected. For legacy values or key rotation,
 `rotate:ai-keys` command in `--check` mode and then `--apply` mode with the appropriate `--legacy-format` and old-key
 environment variables. Do this during a maintenance window, and remove the old key after successful migration.
 
+AI metadata generation is asynchronous. The separately deployed job server must use the same `AI_ENCRYPTION_KEY` as
+the main server to read workspace credentials. See [Scheduled Jobs](scheduled-jobs) for worker setup and run monitoring.
+Generation writes a validated value to the configured AI-managed document field automatically; it does not wait for a
+user to approve each result. Interactive Assistant writes and Extract results have separate review or approval steps.
+
 ## Related Pages
 
 - [AI Assistant and Extract](../use/ai-assistant-extract)
+- [Document Types and Templates](document-types-templates)
+- [Scheduled Jobs](scheduled-jobs)
 - [Workspace Settings](workspace-settings)

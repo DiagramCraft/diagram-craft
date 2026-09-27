@@ -1,0 +1,52 @@
+import ThemedImage from '@theme/ThemedImage';
+
+# Webhooks
+
+Workspace webhooks send signed events to an external HTTP endpoint so another service can react to entity, relation,
+or governance changes.
+
+<ThemedImage
+  alt="Webhook administration screen in Arch Register"
+  sources={{
+    light: require('/img/arch-register/admin/webhooks-light.png').default,
+    dark: require('/img/arch-register/admin/webhooks-dark.png').default,
+  }}
+/>
+
+## Configure a webhook
+
+Open **Workspace Settings → Webhooks**. Add the endpoint URL, choose one or more event operations, and optionally
+filter by entity or relation schema. You can edit the URL and filters, disable a webhook, delete it, or rotate its
+secret.
+
+Managing webhooks requires `ws.settings`, `schema.edit`, and `ent.edit`, or platform administrator access.
+Production endpoints must use HTTPS and resolve to a publicly routable host. Local HTTP endpoints are allowed only for
+local development.
+
+The supported operations are:
+
+- entity create, update, and delete
+- typed relation create, update, and delete, optionally filtered by relation schema
+- governance workflow started, inbox item approved, rejected or returned for changes, workflow escalated, and workflow
+  finalized
+
+The complete operation names and payload contracts are in the [API Reference](pathname:///arch-register/api.html).
+
+## Verify deliveries
+
+Arch Register shows the webhook secret only when the webhook is created or its secret is rotated. Store it securely.
+For each request, verify the HMAC-SHA256 signature in `x-arch-register-signature-256` against the exact raw request
+body before parsing or acting on the event. The request also includes event and delivery identifiers in
+`x-arch-register-event-id` and `x-arch-register-delivery-id`; use them to make your receiver idempotent.
+
+Return any 2xx status after accepting the event. Network failures, HTTP 408, 429, and 5xx responses are retried; the
+delivery worker honors `Retry-After` for 429 and 503 responses. Redirects and other 3xx or 4xx responses are treated
+as failures without retry. Inspect attempts, status, and errors in **Workspace Settings → Job monitoring**.
+
+## Related pages
+
+- [API and Integrations](../reference/api-integrations)
+- [External Integration Example](../reference/external-integrations)
+- [Scheduled Jobs](scheduled-jobs)
+- [Roles and Permissions](roles-permissions)
+- [API Reference](pathname:///arch-register/api.html)

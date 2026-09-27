@@ -75,6 +75,9 @@ const sidebars: SidebarsConfig = {
         'admin/document-types-templates',
         'admin/teams-members',
         'admin/roles-permissions',
+        'admin/webhooks',
+        'admin/automation-rules',
+        'admin/scheduled-jobs',
         'admin/ai-configuration',
         'admin/export-import'
       ]
@@ -112,6 +115,7 @@ const sidebars: SidebarsConfig = {
           label: 'APIs and Integrations',
           items: [
             'reference/api-integrations',
+            'reference/integration-sync',
             'reference/mcp-server',
             'reference/external-integrations',
             {

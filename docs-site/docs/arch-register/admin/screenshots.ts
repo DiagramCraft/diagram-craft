@@ -78,6 +78,46 @@ export const screenshots: ArchRegisterScreenshotConfig[] = [
   {
     product: 'arch-register',
     category: 'admin',
+    name: 'webhooks',
+    fullPage: false,
+    setup: async ({ settingsPage }) => {
+      await settingsPage.goto('webhooks');
+      await expect(settingsPage.page.getByRole('heading', { name: 'Webhooks' })).toBeVisible();
+    }
+  },
+  {
+    product: 'arch-register',
+    category: 'admin',
+    name: 'automation-rules',
+    fullPage: false,
+    setup: async ({ settingsPage }) => {
+      await settingsPage.goto('automation');
+      await expect(settingsPage.page.getByRole('heading', { name: 'Automation rules' })).toBeVisible();
+    }
+  },
+  {
+    product: 'arch-register',
+    category: 'admin',
+    name: 'job-monitoring',
+    fullPage: false,
+    setup: async ({ settingsPage }) => {
+      await settingsPage.goto('jobs');
+      await expect(settingsPage.page.getByRole('heading', { name: 'Job monitoring' })).toBeVisible();
+    }
+  },
+  {
+    product: 'arch-register',
+    category: 'admin',
+    name: 'integration-sync',
+    fullPage: false,
+    setup: async ({ settingsPage }) => {
+      await settingsPage.goto('integration-sync');
+      await expect(settingsPage.page.getByText('Integration sync')).toBeVisible();
+    }
+  },
+  {
+    product: 'arch-register',
+    category: 'admin',
     name: 'export-import',
     fullPage: false,
     setup: async ({ settingsPage }) => {
