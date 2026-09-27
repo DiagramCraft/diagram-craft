@@ -1,18 +1,27 @@
+---
+related_reading:
+  - label: Projects
+    to: /diagram-craft/arch-register/use/projects
+  - label: Entity Views
+    to: /diagram-craft/arch-register/use/entity-views
+  - label: Governance And Approvals
+    to: /diagram-craft/arch-register/use/governance
+---
+
 import ThemedImage from '@theme/ThemedImage';
 
 # Assessments
 
-Assessments collect structured review data for the entities in a project. Use them when a project needs a repeatable
-checklist, scorecard, or review pass across a defined set of catalog records.
+Assessments collect structured review data about entities in a project. Use one for a repeatable checklist, scorecard,
+or confirmation that existing entity data is accurate. You can review responses from the project assessment grid or
+from an entity's detail screen.
 
-## Assessment List
+## Find An Assessment
 
-Open a project, then select **Assessments** in the project sidebar. The list groups assessments by status:
-
-- **Draft** for assessments that are still being configured
-- **Open** for assessments that can collect responses
-- **Closed** for completed assessments that remain available for review
-- **Archived** for assessments that should be hidden from the main open/closed list
+Open a project and select **Assessments** in its sidebar. The list groups assessments as **Draft**, **Open**,
+**Closed**, and **Archived**. Draft assessments are still being configured; open assessments accept responses; closed
+assessments keep their results available for review; archived assessments are separated from the main list. Open and
+closed assessments show completion progress.
 
 <ThemedImage
   alt="Project assessment list in Arch Register"
@@ -22,54 +31,82 @@ Open a project, then select **Assessments** in the project sidebar. The list gro
   }}
 />
 
-Open and closed assessments show completion progress on the list. Progress is based on in-scope entities whose
-required assessment fields are complete.
+Creating, editing, or changing an assessment's status requires edit access to its project. Project access follows
+workspace project capabilities and the project owner's team role. See [Roles And Permissions](../admin/roles-permissions).
 
-## Create Or Edit An Assessment
+## Define Scope And Fields
 
-An assessment definition contains basic information, status, scope, and fields. When creating an assessment, you can
-start from a built-in template or start from scratch.
+Select **New assessment** to start from scratch or from a built-in template. Templates provide editable suggested names,
+descriptions, scopes, and fields:
 
-The built-in templates currently include:
+- **Business fit vs. technical fit** has required 1–10 Business fit and Technical fit ratings plus a calculated
+  **TIME quadrant** (Tolerate, Invest, Migrate, or Eliminate).
+- **6Rs migration strategy** has a required selection for Rehost, Replatform, Refactor / Rearchitect, Repurchase,
+  Retire, or Retain.
+- **Pace Layering** has a required selection for Systems of Record, Systems of Differentiation, or Systems of
+  Innovation.
 
-- **Business fit vs. technical fit**, with required 1–5 **Business fit** and **Technical fit** rating fields.
-- **6Rs migration strategy**, with a required **Migration strategy** field covering Rehost, Replatform, Refactor /
-  Rearchitect, Repurchase, Retire, and Retain.
-- **Pace Layering**, with a required **Pace layer** field covering Systems of Record, Systems of Differentiation,
-  and Systems of Innovation.
+The **Scope** tab selects the entity types in the project that the assessment covers. Add optional filters such as
+owner, lifecycle, namespace, or schema fields to narrow the set; the conditions are combined with AND logic, and the
+editor previews the number of matching entities. Filters can use only fields you are allowed to view. If your access
+does not include a restricted field used by an existing condition, that condition is hidden and fails closed for you.
+Changing scope can add or remove entities from the assessment view, but it keeps existing responses.
 
-Enum fields can use a reusable workspace enum or define their values locally to the assessment. Local values are
-independent of later workspace enum changes and are used by the framework-specific starter templates.
+Use **Fields** to define the response data:
 
-The suggested name and description remain editable, and you must choose the entity types in scope for the project.
+- **Rating** is 1–5 by default and can be configured up to 1–10.
+- **Select** stores one value from a workspace enum or assessment-local options.
+- **Notes** stores free text.
+- **Derived** calculates a read-only value from other assessment fields.
+
+Mark response fields **Required** or **Optional** and optionally arrange them into named groups. Groups only affect how
+fields are presented; they do not change the assessment grid or results. Derived fields are optional and do not affect
+completion status. Choose **Confirm only** as the completion mode when reviewers should confirm entity data rather than
+fill in fields; confirm-only assessments do not accept field values.
 
 <ThemedImage
-  alt="Assessment editor in Arch Register"
+  alt="Assessment definition editor in Arch Register"
   sources={{
     light: require('/img/arch-register/projects/assessment-editor-light.png').default,
     dark: require('/img/arch-register/projects/assessment-editor-dark.png').default,
   }}
 />
 
-Use **Scope** to choose the entity types the assessment applies to. You can also add scope filters, such as owner,
-lifecycle, namespace, or schema fields. Scope filters are combined with AND logic, and the editor shows how many
-entities currently match.
+## Assign Teams And Set A Schedule
 
-Use fields to define what reviewers fill in for each entity:
+In the editor's **Assignment** tab, you can assign one or more teams and set an optional due date while the assessment
+is a draft. When it opens, each assigned team receives an acknowledgement task in [My Work](governance). Closing the
+assessment resolves those tasks. The Summary tab shows each team's acknowledgement status. Assigned teams and the due
+date are locked while the assessment is open; return it to draft to change them. Team assignment does not itself grant
+permission to edit the project or record responses.
 
-- **Rating** stores a numeric 1-5 value.
-- **Select** stores one value from a workspace enum.
-- **Notes** stores free text.
+<ThemedImage
+  alt="Assessment assignment settings for teams and due date"
+  sources={{
+    light: require('/img/arch-register/projects/assessment-assignment-light.png').default,
+    dark: require('/img/arch-register/projects/assessment-assignment-dark.png').default,
+  }}
+/>
 
-Each field can be **Required** or **Optional**. Only required fields control the entity status inside the assessment.
+The **Advanced** tab can make an assessment one-off or recurring weekly or monthly. Set the interval in weeks or
+months (for example, every three months) and, for recurring assessments, a response window in days. The interval
+determines when the next response cycle opens; the response window sets its due date. Each new cycle starts with fresh
+completion progress while preserving earlier responses for history. The assigned teams receive a new acknowledgement
+task for each cycle, and the assessment card shows its current cycle and next opening date.
 
-If you change scope after responses exist, entities may be added to or removed from the assessment view. Existing
-responses are kept.
+<ThemedImage
+  alt="Recurring assessment interval and response window settings"
+  sources={{
+    light: require('/img/arch-register/projects/assessment-recurrence-light.png').default,
+    dark: require('/img/arch-register/projects/assessment-recurrence-dark.png').default,
+  }}
+/>
 
-## Fill In Responses
+## Record Responses
 
-Open an assessment to review every in-scope entity in one grid. The assessment must be **Open** before responses can
-be recorded.
+Open an assessment to see every in-scope entity in the **Details** grid. The assessment must be **Open** to record a
+response. Recording responses requires edit access to the project. Reviewers can also respond from the entity's
+**Assessments** tab when an open project assessment applies to that entity.
 
 <ThemedImage
   alt="Assessment details grid in Arch Register"
@@ -79,26 +116,17 @@ be recorded.
   }}
 />
 
-The Details tab includes:
+In field-based assessments, **Not started** means no required fields are filled in, **In progress** means some required
+fields are filled in, and **Complete** means all required fields are filled in. An assessment with no required fields
+is complete by definition. In confirm-only mode, each in-scope entity is either unconfirmed or confirmed. Use the grid's
+status filters, search, field filters, sorting, and inline editing to work through the scope. Closed assessments remain
+available to inspect but do not accept new responses.
 
-- status filters for all, not started, in progress, and complete
-- entity search
-- field filters
-- sortable entity, owner, schema, assessment field, and status columns
-- inline editing for assessment fields
-- CSV export from the assessment menu
+## Review Results And Export
 
-Entity status is derived from required fields:
-
-- **Not started** means no required fields are filled in.
-- **In progress** means some required fields are filled in.
-- **Complete** means all required fields are filled in.
-
-Assessments with no required fields are complete by definition.
-
-## Review Results
-
-Use the Summary tab to inspect aggregate results for the assessment.
+Select the **Summary** tab to review response counts and aggregate field results. Rating fields show averages, select
+fields show value distributions, and notes fields show how often a value was entered. When teams are assigned, the
+summary also shows their acknowledgement status.
 
 <ThemedImage
   alt="Assessment summary in Arch Register"
@@ -108,28 +136,13 @@ Use the Summary tab to inspect aggregate results for the assessment.
   }}
 />
 
-The summary shows how many in-scope entities have a recorded response. Rating fields show averages, select fields show
-value distributions, and notes fields show fill rate.
-
-CSV export includes one row per in-scope entity, standard entity columns, and one column for each assessment field.
-Entities without answers are included with blank assessment cells.
-
-## Assess From An Entity
-
-The entity detail screen includes an **Assessments** tab. It lists open project assessments that apply to that entity
-and lets reviewers fill in the same fields without leaving the entity. Use **View in Assessments** to jump from the
-entity back to the project assessment grid.
+Choose **Export CSV** from the assessment menu to download one row per in-scope entity, with standard entity columns
+and one column per assessment field. Entities with no response are included with blank assessment cells. Exported
+rows and scope-derived results follow your field access; information based on scope conditions you cannot view is
+omitted.
 
 ## Use Assessment Data In Entity Views
 
-The entity browser can join one assessment at a time. Joined assessment fields appear alongside normal entity fields,
-so you can sort, filter, or configure analysis views using assessment answers.
-
-Joined fields are scoped to the selected assessment. If you change or clear the joined assessment, filters and view
-configuration that referenced the old assessment fields are removed.
-
-## Related Pages
-
-- [Projects](projects)
-- [Entity Views](entity-views)
-- [Project and Content Screen Reference](../reference/project-content-screen-reference)
+The entity browser can join one assessment at a time. Joined assessment fields appear beside normal entity fields and
+can be used for sorting, filtering, and analysis. Changing or clearing the joined assessment removes filters and view
+configuration that referenced the previous assessment's fields. See [Entity Views](entity-views).

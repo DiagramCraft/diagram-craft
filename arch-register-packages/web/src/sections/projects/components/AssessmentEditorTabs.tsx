@@ -351,8 +351,7 @@ export const AssessmentAdvancedTab = ({ editor }: { editor: AssessmentEditorCont
     <div className={styles.section}>
       <div className={styles.sectionLabel}>Recurrence</div>
       <div className={styles.sectionHint}>
-        Recurring assessments automatically reopen for a new response cycle once the response window
-        elapses.
+        The interval sets when each new response cycle opens. The response window sets its due date.
       </div>
       <div style={{ width: 160 }}>
         <Select.Root
