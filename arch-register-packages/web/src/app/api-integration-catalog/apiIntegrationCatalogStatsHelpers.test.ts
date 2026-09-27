@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import type { RelationRecord } from '@arch-register/api-types/relationContract';
-import { classifyDataFlowRelations, selectAtRiskIntegrations } from './apiIntegrationCatalogStatsHelpers';
+import {
+  classifyDataFlowRelations,
+  selectAtRiskIntegrations
+} from './apiIntegrationCatalogStatsHelpers';
 
 const relation = (
   id: string,
@@ -46,7 +49,10 @@ describe('classifyDataFlowRelations', () => {
   });
 
   it('classifies a relation matching both predicates into both sets', () => {
-    const both = relation('r1', { cross_boundary: 'cross-boundary', data_classification: 'sensitive' });
+    const both = relation('r1', {
+      cross_boundary: 'cross-boundary',
+      data_classification: 'sensitive'
+    });
     const result = classifyDataFlowRelations([both]);
     expect(result.crossing).toEqual([both]);
     expect(result.restricted).toEqual([both]);
@@ -63,7 +69,10 @@ describe('selectAtRiskIntegrations', () => {
   });
 
   it('dedupes a relation matching both predicates into a single annotated row', () => {
-    const both = relation('r1', { cross_boundary: 'cross-boundary', data_classification: 'sensitive' });
+    const both = relation('r1', {
+      cross_boundary: 'cross-boundary',
+      data_classification: 'sensitive'
+    });
     const result = selectAtRiskIntegrations([both], 8);
     expect(result).toHaveLength(1);
     expect(result[0]).toEqual({ relation: both, crossesBoundary: true, restricted: true });

@@ -60,7 +60,8 @@ export const rankMostConsumedApis = (
 ): EntityRecord[] =>
   [...apis]
     .sort(
-      (a, b) => (consumersByApi.get(b._uid)?.length ?? 0) - (consumersByApi.get(a._uid)?.length ?? 0)
+      (a, b) =>
+        (consumersByApi.get(b._uid)?.length ?? 0) - (consumersByApi.get(a._uid)?.length ?? 0)
     )
     .slice(0, limit);
 

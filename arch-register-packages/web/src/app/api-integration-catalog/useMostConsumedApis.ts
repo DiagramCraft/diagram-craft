@@ -3,7 +3,11 @@ import { useQuery } from '@tanstack/react-query';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import { entitiesQuery } from '../../queries/entities';
 import { useSchemas } from '../../hooks/useSchemas';
-import { useApiEndpointRelations, groupByApiId, rankMostConsumedApis } from './apiEndpointRelations';
+import {
+  useApiEndpointRelations,
+  groupByApiId,
+  rankMostConsumedApis
+} from './apiEndpointRelations';
 import { useApiOperationsCounts } from './useApiOperationsCounts';
 import { useResolvedApiIntegrationCatalogConfig } from './useResolvedApiIntegrationCatalogConfig';
 
@@ -37,7 +41,10 @@ export const useMostConsumedApis = (
   );
   const allApis = apis.data?.items ?? [];
 
-  const { consumers, isLoading: consumersLoading } = useApiEndpointRelations(workspaceId, apiSchema);
+  const { consumers, isLoading: consumersLoading } = useApiEndpointRelations(
+    workspaceId,
+    apiSchema
+  );
   const consumersByApi = useMemo(() => groupByApiId(consumers), [consumers]);
   const apiIds = useMemo(() => allApis.map(entity => entity._uid), [allApis]);
   const operationsCounts = useApiOperationsCounts(workspaceId, apiIds);

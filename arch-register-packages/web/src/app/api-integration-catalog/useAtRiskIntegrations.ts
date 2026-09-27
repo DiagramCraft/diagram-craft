@@ -1,7 +1,10 @@
 import { useMemo } from 'react';
 import { useRelations } from '../../hooks/useRelations';
 import { useDataFlowConfig } from './useDataFlowConfig';
-import { selectAtRiskIntegrations, type AtRiskIntegration } from './apiIntegrationCatalogStatsHelpers';
+import {
+  selectAtRiskIntegrations,
+  type AtRiskIntegration
+} from './apiIntegrationCatalogStatsHelpers';
 
 /**
  * Self-fetching data for the Overview's "Integrations needing attention" panel (#3458) — resolves

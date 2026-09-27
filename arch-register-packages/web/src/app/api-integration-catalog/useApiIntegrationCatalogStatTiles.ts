@@ -59,7 +59,11 @@ export const useApiIntegrationCatalogStatTiles = (
   const coverage = useMemo(() => computeApiPairCoverage(pairs), [pairs]);
 
   const isLoading =
-    config.isLoading || schemas.isLoading || queue.isLoading || dataFlowConfig.isLoading || relations.isLoading;
+    config.isLoading ||
+    schemas.isLoading ||
+    queue.isLoading ||
+    dataFlowConfig.isLoading ||
+    relations.isLoading;
   const isError = config.isError || queue.isError || relations.isError;
 
   return {

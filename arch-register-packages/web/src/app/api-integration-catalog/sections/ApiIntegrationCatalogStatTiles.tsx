@@ -37,14 +37,13 @@ export const ApiIntegrationCatalogStatTiles = ({ workspaceId }: Props) => {
       </div>
       <div className={styles.tile}>
         <div className={styles.tileLabel}>Crossing a boundary</div>
-        <div
-          className={styles.tileValue}
-          style={stats.crossingCount ? { color: WARN } : undefined}
-        >
+        <div className={styles.tileValue} style={stats.crossingCount ? { color: WARN } : undefined}>
           {stats.dataFlowConfigured ? stats.crossingCount : '—'}
         </div>
         <div className={styles.tileSub}>
-          {stats.dataFlowConfigured ? 'source and destination regions differ' : 'Data Flow not configured'}
+          {stats.dataFlowConfigured
+            ? 'source and destination regions differ'
+            : 'Data Flow not configured'}
         </div>
       </div>
       <div className={styles.tile}>

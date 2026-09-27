@@ -2,7 +2,11 @@ import { describe, expect, it } from 'vitest';
 import type { RelationRecord } from '@arch-register/api-types/relationContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
-import { groupByApiId, rankMostConsumedApis, resolveTypedRelationSchemaId } from './apiEndpointRelations';
+import {
+  groupByApiId,
+  rankMostConsumedApis,
+  resolveTypedRelationSchemaId
+} from './apiEndpointRelations';
 
 const API_SCHEMA: EntitySchema = {
   id: 'api',
@@ -65,7 +69,8 @@ describe('groupByApiId', () => {
   });
 });
 
-const api = (id: string): EntityRecord => ({ _uid: id, _name: `API ${id}` }) as unknown as EntityRecord;
+const api = (id: string): EntityRecord =>
+  ({ _uid: id, _name: `API ${id}` }) as unknown as EntityRecord;
 
 describe('rankMostConsumedApis', () => {
   it('returns an empty array for no apis', () => {

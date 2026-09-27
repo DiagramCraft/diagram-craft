@@ -26,8 +26,9 @@ export const classifyDataFlowRelations = (
 ): { crossing: RelationRecord[]; restricted: RelationRecord[]; highlySensitiveCount: number } => ({
   crossing: relations.filter(isCrossingBoundary),
   restricted: relations.filter(isRestrictedClassification),
-  highlySensitiveCount: relations.filter(relation => relation.data_classification === 'highly-sensitive')
-    .length
+  highlySensitiveCount: relations.filter(
+    relation => relation.data_classification === 'highly-sensitive'
+  ).length
 });
 
 /**
