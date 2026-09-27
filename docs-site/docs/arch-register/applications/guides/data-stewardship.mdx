@@ -1,0 +1,65 @@
+---
+sidebar_position: 5
+related_reading:
+  - label: Entities
+    to: /diagram-craft/arch-register/use/entities
+  - label: Assessments
+    to: /diagram-craft/arch-register/use/assessments
+  - label: Workspace Settings
+    to: /diagram-craft/arch-register/admin/workspace-settings
+---
+
+import ThemedImage from '@theme/ThemedImage';
+
+# Data Stewardship
+
+Data Stewardship helps teams review ownership, stewardship coverage, classification, governance cases, and assessments
+for Data Entity records. Its **My work** section is the application landing screen; there is no separate Overview.
+
+<ThemedImage
+  alt="Data stewardship coverage gaps and dataset register"
+  sources={{
+    light: require('/img/arch-register/applications/data-stewardship-light.png').default,
+    dark: require('/img/arch-register/applications/data-stewardship-dark.png').default,
+  }}
+/>
+
+## Enable and configure the application
+
+In **Workspace Settings → Applications & Capabilities**, configure **Data Stewardship** and bind its required **Data
+Entity** schema. The default Information Governance catalog binds its Data Entity schema automatically. Application
+access is a separate setting in the capability's **Access** tab; users also need workspace access. See [Workspace
+Templates and Capabilities](../../admin/workspace-templates-capabilities) and [Roles and
+Permissions](../../admin/roles-permissions).
+
+The **Classification** section's flow views require a **Data Flow** relation schema in the workspace. This relation is
+discovered from the workspace model; there is no separate Data Flow binding in the Data Stewardship capability.
+
+## Review stewardship and classification
+
+Use **My work** to review open governance cases and reminders related to Data Entities. Its filters narrow the queue by
+assignment, status, kind, and derived priority. Decision actions appear only when you hold an actionable assignment on a
+case; otherwise, the case drawer is read-only.
+
+In **Stewardship**, review ownership and steward coverage, upcoming review dates, and the datasets with completeness
+gaps. Select a dataset to open its shared entity drawer. **Classification** has three views: classified data, restricted
+flows, and cross-boundary transfers. The flow views summarize Data Flow relations and the datasets they carry; when no
+Data Flow schema is configured, they show a notice.
+
+**Change cases & exceptions** lists governance cases for Data Entities. Despite the section label, it has no exception
+or waiver register. The section is available only when the bound Data Entity schema requires approval for entity
+changes. **Assessments** lists project assessments that target the Data Entity schema; it is read-only here. Open an
+assessment in its project to edit its definition or responses.
+
+## Shared catalog and governance workflows
+
+Data Entity records and Data Flow relations remain in the shared catalog. The Classification view derives its “personal
+data” indicator from classification, and presents regulatory tags and processing purposes as a lawful-basis proxy; the
+schema does not provide dedicated personal-data or lawful-basis fields. No flow-detail drawer is available because the
+flow views already show the fields on each relation.
+
+Maintain records in [Entities](../../use/entities) and configure their model in [Data Modeling and Schemas](../../use/data-modeling-schemas).
+Use [Entity Views](../../use/entity-views) and [Entity Relationship Views](../../use/entity-relationship-views) for
+other catalog views. See [Projects](../../use/projects) and [Assessments](../../use/assessments) for assessment
+authoring, and [Governance and Approvals](../../use/governance) for case decisions. Administrators configure schemas
+and app access in [Workspace Settings](../../admin/workspace-settings) and [Roles and Permissions](../../admin/roles-permissions).

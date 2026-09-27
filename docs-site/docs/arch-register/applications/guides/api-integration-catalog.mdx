@@ -1,0 +1,65 @@
+---
+sidebar_position: 6
+related_reading:
+  - label: Artifact-Backed Details
+    to: /diagram-craft/arch-register/use/entity-artifacts
+  - label: API and Integrations Reference
+    to: /diagram-craft/arch-register/reference/api-integrations
+  - label: Workspace Settings
+    to: /diagram-craft/arch-register/admin/workspace-settings
+---
+
+import ThemedImage from '@theme/ThemedImage';
+
+# API & Integration Catalog
+
+API & Integration Catalog brings API specifications, API participation, Data Flow relations, and API impact into one
+application. It reads API entities and their specification artifacts from the shared catalog. It does not operate APIs
+at runtime.
+
+<ThemedImage
+  alt="API catalog listing API entities, protocols, and provider and consumer counts"
+  sources={{
+    light: require('/img/arch-register/applications/api-catalog-light.png').default,
+    dark: require('/img/arch-register/applications/api-catalog-dark.png').default,
+  }}
+/>
+
+## Enable and configure the application
+
+In **Workspace Settings → Applications & Capabilities**, configure the existing **API specification** capability and
+bind its required **API** entity schema. Map **API type** and **API version** to compatible fields on that schema; these
+fields identify the specification format and declared version. This capability also powers API specification details
+in **Entities**. The default catalog binds the API schema and its standard fields automatically. Set application access
+separately in the capability's **Access** tab; members also need workspace access. See [Workspace Settings](../../admin/workspace-settings),
+[Workspace Templates and Capabilities](../../admin/workspace-templates-capabilities), and [Roles and Permissions](../../admin/roles-permissions).
+
+The **APIs** section reads API specification artifacts and the workspace's **Provides API** and **Consumes API** typed
+relations. **Integrations** reads the workspace's **Data Flow** relation schema. These relations are shared catalog
+data, not additional API Catalog capability bindings.
+
+## Browse APIs and integrations
+
+The **Overview** landing section is currently a placeholder. In **APIs**, search and filter API entities, then switch
+between the catalog, normalized operations or messages, and deprecated operations. Open an API to inspect its entity
+details and specification. Operation rows open the parent API's specification drawer.
+
+Use **Integrations** to inspect Data Flow relations, their endpoints, carried Data Entities, protocol, classification,
+and residency information. Switch to **API Usage** to see provider and consumer pairs and whether a matching Data Flow
+relation exists. Use **Impact** to select an API and follow its providers, direct consumers, and second-order
+connections through the Provides API and Consumes API relations.
+
+Integration source setup and sync runs are administered separately under **Workspace Settings → Integration sync**;
+they are not part of this catalog browsing application.
+
+## Scope and shared workflows
+
+The catalog has no runtime telemetry, gateway monitoring, adapter health, or volume metrics. It also has no quick-create
+action for API entities or Data Flow relations; create and maintain those records in [Entities](../../use/entities).
+Specification source and revision behavior is covered in [Artifact-Backed Details](../../use/entity-artifacts). Use
+[Data Modeling and Schemas](../../use/data-modeling-schemas), [Entity Views](../../use/entity-views), and [Entity
+Relationship Views](../../use/entity-relationship-views) to work with the surrounding catalog. [Projects](../../use/projects),
+[Assessments](../../use/assessments), and [Governance and Approvals](../../use/governance) cover shared project and review
+workflows. Administrators manage bindings and app access in [Workspace Settings](../../admin/workspace-settings) and
+[Roles and Permissions](../../admin/roles-permissions); see the [API and Integrations Reference](../../reference/api-integrations)
+for external API surfaces.

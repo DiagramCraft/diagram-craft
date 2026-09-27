@@ -1,0 +1,67 @@
+---
+sidebar_position: 3
+related_reading:
+  - label: Entities
+    to: /diagram-craft/arch-register/use/entities
+  - label: Entity Views
+    to: /diagram-craft/arch-register/use/entity-views
+  - label: Workspace Templates and Capabilities
+    to: /diagram-craft/arch-register/admin/workspace-templates-capabilities
+---
+
+import ThemedImage from '@theme/ThemedImage';
+
+# Vendor Management
+
+Vendor Management summarizes vendor records, their contracts, renewal dates, spend, and risk. It reads the workspace
+catalog: vendors and contracts are entity records, and contract links to vendors and systems provide the relationships
+used by the application.
+
+<ThemedImage
+  alt="Vendor contracts displayed on a twelve-month renewal calendar"
+  sources={{
+    light: require('/img/arch-register/applications/vendor-contracts-calendar-light.png').default,
+    dark: require('/img/arch-register/applications/vendor-contracts-calendar-dark.png').default,
+  }}
+/>
+
+## Enable and configure the application
+
+In **Workspace Settings → Applications & Capabilities**, configure **Vendor Management** and bind a **Vendor** entity
+schema. The Vendor binding is required. **Contract** and **Technology Release** schemas are optional; without a Contract
+binding, contract, renewal, and spend data are unavailable. Technology Release is only needed for the technology
+end-of-life exposure view in **Risk**. The default catalog binds its Vendor, Contract, and Technology Release schemas
+automatically.
+
+Set who can open the application in its **Access** tab. Members need workspace access, a valid capability binding, and
+application access. See [Workspace Settings](../../admin/workspace-settings), [Workspace Templates and Capabilities](../../admin/workspace-templates-capabilities),
+and [Roles and Permissions](../../admin/roles-permissions).
+
+## Review vendors, contracts, and spend
+
+**Overview** summarizes contracted spend, upcoming renewals, auto-renewing contracts, and vendors above the configured
+risk bands. Select an item to open the related vendor or contract in its section.
+
+Use **Vendors** to search and filter vendors by tier, category, or relationship owner. A vendor drawer combines its
+catalog attributes and risk profile with spend from its contracts, those contracts, and the systems they serve.
+
+In **Contracts**, search and filter contracts by renewal window, type, or vendor. Switch between the register and the
+12-month renewal calendar to review dates and amounts, or use **Timelines** to compare contract terms across time.
+Overdue contracts appear in the current month; contracts beyond the calendar window or without an end date remain
+available in the register. The timeline draws a bar only when both start and end dates are available; an auto-renewing
+contract with a notice period also shows its notice date. Contracts missing either date remain in the register and are
+counted below the timeline.
+
+Use **Spend** to group annualized spend by vendor or cost centre. The capability grouping option currently has no data
+because contracts have no Contract-to-capability link. The **Risk** section combines a criticality and risk-band matrix,
+a vendor risk register, and an optional technology end-of-life exposure table. The exposure table requires a Technology
+Release binding and catalog links from Systems to Technology Release records; it is hidden when those are missing.
+
+## Current limitations and shared workflows
+
+Create and maintain vendor and contract records in [Entities](../../use/entities); the application provides focused
+registers and drawers. See [Data Modeling and Schemas](../../use/data-modeling-schemas)
+and [Entity Relationship Views](../../use/entity-relationship-views) for the shared catalog model. [Projects](../../use/projects),
+[Assessments](../../use/assessments), and [Governance and Approvals](../../use/governance) describe shared planning and
+review workflows. Administrators configure schemas and application access in [Workspace Settings](../../admin/workspace-settings)
+and [Roles and Permissions](../../admin/roles-permissions).
