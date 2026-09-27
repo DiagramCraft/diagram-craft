@@ -1,0 +1,46 @@
+import ThemedImage from '@theme/ThemedImage';
+
+# Artifact-Backed Details
+
+Some entities can expose structured details backed by a typed artifact. The current entity-facing catalog is for API
+specifications: it turns supported OpenAPI and AsyncAPI documents into queryable operations or messages. It is not a
+general-purpose attachment store; use [entity content](content) for documents, diagrams, and uploaded files.
+
+## Sources And Revisions
+
+When the workspace has a valid API specification capability binding for the entity's schema, its detail screen has an
+API catalog section. Authorized users can upload an API document, register an HTTPS or link-only source, and manually
+refresh a URL source. Each successful source version is retained as an immutable revision.
+
+The catalog supports OpenAPI 3.0 and 3.1, and AsyncAPI 2.x and 3.0. It projects supported operations or messages into a
+searchable, filterable, paginated view. External references in the specifications are preserved without fetching
+additional content.
+
+<ThemedImage
+  alt="Normalized API specification catalog on an entity"
+  sources={{
+    light: require('/img/arch-register/entities/api-catalog-light.png').default,
+    dark: require('/img/arch-register/entities/api-catalog-dark.png').default,
+  }}
+/>
+
+## Status, Access, And Limitations
+
+Processing runs asynchronously. The catalog shows source and revision status, diagnostics, and whether a failed or
+stale refresh still has a last successful revision. Users can select a particular source and revision, including an
+older revision, for inspection. Raw specification content has a separate permission from catalog metadata and
+normalized entries.
+
+Workspace administrators configure artifact capabilities and schema bindings in **Workspace Settings → Applications
+& Capabilities**. The binding determines which schemas expose the catalog and which entity fields the integration
+uses. Managing sources requires entity edit access and the `artifact.manage` capability. Viewing raw specification
+content requires entity view access and the separate `artifact.content.view` capability. An entity schema without a
+valid binding does not show the API catalog.
+
+## Related Pages
+
+- [Entities](entities)
+- [Data Modeling and Schemas](data-modeling-schemas)
+- [External Integrations](../reference/external-integrations)
+- [Workspace Templates and Capabilities](../admin/workspace-templates-capabilities)
+- [Application Guides](../applications/intro)

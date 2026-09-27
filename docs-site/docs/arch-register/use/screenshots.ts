@@ -1,7 +1,11 @@
 import { expect } from '@playwright/test';
 import type { ArchRegisterScreenshotConfig } from '../../../scripts/screenshot-types.js';
 import { defaultWorkspace } from '../../../../arch-register-packages/e2e/src/ui/support/workspaces';
-import { frontendAppEntity } from '../../../../arch-register-packages/e2e/src/ui/support/entities';
+import {
+  authApiEntity,
+  customerApiEntity,
+  frontendAppEntity
+} from '../../../../arch-register-packages/e2e/src/ui/support/entities';
 import {
   authMigrationProject,
   checkoutRevampProject
@@ -16,6 +20,7 @@ import {
 } from '../../../scripts/screenshot-helpers.js';
 
 const projectDiagramName = 'Project overview draft';
+let seededApiCatalogScreenshotSource: { artifactId: string; revisionId: string } | undefined;
 
 export const screenshots: ArchRegisterScreenshotConfig[] = [
   {
@@ -58,6 +63,71 @@ export const screenshots: ArchRegisterScreenshotConfig[] = [
       await entitiesPage.expectLoaded();
       await entitiesPage.openEntity(frontendAppEntity.name);
       await entitiesPage.expectEntityDetailLoaded(frontendAppEntity.name);
+    }
+  },
+  {
+    product: 'arch-register',
+    category: 'entities',
+    name: 'baseline-detail',
+    fullPage: false,
+    setup: async ({ entitiesPage }) => {
+      await entitiesPage.goto();
+      const baseline = await entitiesPage.createWorkspaceBaseline('Architecture baseline');
+      await entitiesPage.goto();
+      await entitiesPage.baselinesTab().click();
+      await entitiesPage.page.getByTestId(`workspace-baseline-${baseline.id}`).click();
+      await expect(entitiesPage.page.getByRole('heading', { name: baseline.name })).toBeVisible();
+      await expect(entitiesPage.page.getByRole('tab', { name: 'Compare' })).toBeVisible();
+    }
+  },
+  {
+    product: 'arch-register',
+    category: 'entities',
+    name: 'api-catalog',
+    fullPage: false,
+    selector: '[aria-label="Normalized API catalog"]',
+    setup: async ({ entitiesPage }) => {
+      await entitiesPage.goto();
+      if (seededApiCatalogScreenshotSource == null) {
+        seededApiCatalogScreenshotSource = await entitiesPage.seedApiSpecification(
+          authApiEntity.id,
+          {
+            openapi: '3.1.0',
+            info: { title: 'Auth API', version: 'v1' },
+            paths: {
+              '/sessions': {
+                get: {
+                  operationId: 'listSessions',
+                  summary: 'List sessions',
+                  responses: { '200': { description: 'ok' } }
+                }
+              }
+            }
+          },
+          'docs-example-v1'
+        );
+      }
+      await entitiesPage.openApiCatalog(authApiEntity.name);
+      const catalog = entitiesPage.page.locator('[aria-label="Normalized API catalog"]');
+      await expect(catalog).toBeVisible();
+      await catalog.scrollIntoViewIfNeeded();
+    }
+  },
+  {
+    product: 'arch-register',
+    category: 'entities',
+    name: 'merge-review',
+    fullPage: false,
+    setup: async ({ entitiesPage }) => {
+      await entitiesPage.goto();
+      await entitiesPage.openEntity(authApiEntity.name);
+      await entitiesPage.openEntityActions();
+      await entitiesPage.page.getByRole('menuitem', { name: 'Merge into…' }).click();
+      const mergeDialog = entitiesPage.page.getByRole('alertdialog', { name: 'Merge entity' });
+      await mergeDialog.getByPlaceholder('Search for an entity…').fill(customerApiEntity.name);
+      await entitiesPage.page.getByRole('option', { name: customerApiEntity.name }).click();
+      await mergeDialog.getByRole('button', { name: 'Next' }).click();
+      await expect(mergeDialog.getByText(/entity versions transferring/)).toBeVisible();
     }
   },
   {

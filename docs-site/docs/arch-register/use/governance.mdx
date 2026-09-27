@@ -43,7 +43,8 @@ distinct approval slots and actors are required.
 Administrators can configure a schema-scoped entity deprecation workflow in **Workspace Settings → Workflows**. When
 enabled, retiring an entity goes through a deprecation proposal rather than a direct lifecycle edit:
 
-- propose a deprecation with a target date, a reason, an optional successor entity, and an optional related project
+- a user with entity view and edit access plus the `ent.propose` capability proposes a target date and reason, and can
+  add an optional successor entity and related project
 - the proposal routes through approval like other governed changes
 - affected owner teams are notified and asked to acknowledge the deprecation
 - the deprecation can be postponed, finalized on schedule, or cancelled while in flight
@@ -52,7 +53,10 @@ Deprecation approval uses the same entity-owner-admin strategy and fallback rule
 separate acknowledgement tasks.
 
 Finalizing moves the entity to the workspace's designated deprecated lifecycle state, configured in
-**Workspace Settings → Lifecycle**.
+**Workspace Settings → Lifecycle**. The deprecated lifecycle state is a catalog classification; access is still
+governed by workspace, team, entity, and field-group permissions. The proposal records its successor and reason for
+reviewers and affected teams; it does not automatically merge or rewrite references to the entity. Use [Merge Entities](entity-merging)
+when consolidating a duplicate record.
 
 ## Document Status Approval
 
@@ -67,5 +71,6 @@ is available only for case kinds that register escalation support; assessment re
 
 - [Collaboration and Notifications](collaboration-notifications)
 - [Entities](entities)
+- [Merge Entities](entity-merging)
 - [Workspace Settings](../admin/workspace-settings)
 - [Roles and Permissions](../admin/roles-permissions)

@@ -2,8 +2,9 @@ import ThemedImage from '@theme/ThemedImage';
 
 # Entities
 
-Entities are the catalog records in Arch Register. This page covers the core workflows: browse, create, edit, and
-understand relationships.
+Entities are the catalog records in Arch Register. A schema defines the record's fields and allowed relationships;
+workspace and entity permissions determine who can see or change them. Read [Data Modeling and Schemas](data-modeling-schemas)
+to understand the model before creating records.
 
 ## Browse Entities
 
@@ -14,7 +15,11 @@ The entity browser is the main catalog screen. Use it to:
   facets narrow the result together
 - adjust or clear facet selections directly in the sidebar, or filter further by field values
 - switch between saved working slices
-- open a record into its detail view
+- open a record in its summary drawer, then use **Open record in Entities** for the full detail screen
+
+Inline entity links in many parts of the app open a drawer without changing the current page or URL. The drawer's link
+action copies a shareable `drawer=<id>` link. Some actions, such as opening an entity's discussions, go directly to its
+full detail screen.
 
 <ThemedImage
   alt="Entity browser in Arch Register"
@@ -36,18 +41,17 @@ The normal flow is:
 
 The created record opens in the detail screen.
 
-Workspaces can also configure entity templates. Creating from a template pre-fills the record so recurring entity
-structures stay consistent.
+If a schema has templates, choose one to prefill its configured defaults, including ordered multi-valued fields. A
+template speeds up recurring record creation; the normal required-field and validation rules still apply. New entity
+creation can also be available from the workspace home screen.
 
 ## Edit An Entity
 
 The detail screen is where you edit:
 
-- built-in metadata
+- name, description, slug, links, and tags
+- owner, lifecycle, target lifecycle, and target date
 - schema-driven fields
-- owner and lifecycle
-- target lifecycle and target date
-- links and tags
 
 <ThemedImage
   alt="Entity detail screen in Arch Register"
@@ -57,27 +61,37 @@ The detail screen is where you edit:
   }}
 />
 
-The entity detail screen also exposes related content and history rather than forcing those concerns back into the
-browser.
+Use **View JSON** in the entity actions menu to inspect the depth-1 projection used by derived fields. It includes
+metadata, direct references, and typed-relation targets; it is an inspection view, not a deep export of the catalog.
 
-If the entity's schema requires approval for changes, saving submits a change proposal for review instead of updating
-the record directly. See [Governance and Approvals](governance).
+If the schema or workflow requires approval for a change, saving submits a proposal rather than changing the live
+record. Validation can also return warnings or block a save. See [Governance and Approvals](governance).
 
 ## Bulk Edit
 
-In the table view of the entity browser, select multiple rows to open the bulk edit toolbar. Bulk edit updates
-supported fields across the whole selection in one operation — useful for reassigning owners or correcting a
-classification field across many records.
+In the table view, select multiple rows to open the bulk edit toolbar. For supported fields, a bulk edit can replace a
+value; for ordered multi-valued scalar fields it can also append, remove, reorder, or clear values. The operation
+respects each entity's permissions and validation. Entities requiring approval are bundled into one multi-entity
+proposal for review instead of being silently skipped. See [Governance and Approvals](governance).
 
 ## Relationships
 
-Entities can relate to each other in two main ways:
+Entity schemas can define generic and typed relationships:
 
-- **reference** fields for directional links such as depends on or provides
-- **containment** fields for hierarchy such as parent-child structures
+- **Reference** fields connect records across the catalog, such as a dependency or provider link.
+- **Containment** fields define parent-child ownership and drive hierarchy-oriented navigation and views.
+- **Typed relations** use a relation schema with allowed endpoint schemas and its own fields. The schema can expose a
+  relation from either endpoint; relation instances remain first-class records, so their fields and history belong to
+  the relation rather than to either entity.
 
-Use containment when one parent should own the hierarchy. Use reference when the relationship cuts across ownership or
-structure.
+You can add, edit, or remove projected typed relations while editing an entity. Those changes save with the entity in
+one operation. Relation fields and values remain subject to the relation schema's access rules and any field-group
+restrictions. See [Data Modeling and Schemas](data-modeling-schemas) for how administrators define these relationship
+types.
+
+For a durable point-in-time record of a catalog scope, see [Entity Baselines](entity-baselines). For API specifications
+attached to supported entities, see [Artifact-Backed Details](entity-artifacts). To consolidate duplicates, see
+[Merge Entities](entity-merging).
 
 ## Content And History
 
@@ -92,12 +106,19 @@ Entity detail also exposes several context and planning tabs:
 - **Topology** for the entity's relationships and dependencies in a topology layout
 - **Graph** for exploring the relationship graph outward from the entity
 - **Dependents** and **Related content** for records and material connected to the entity
-- **Changes** for entity change history
+- **Changes** for immutable entity versions, comparison, and restore where permitted
 - **Timeline** for historical and planned change over time
 - **Discussions** for threads attached to the record
 
 Use the watch button on the detail screen to follow the entity and receive
 [notifications](collaboration-notifications) when it changes.
+
+Viewers without access to a restricted field group see those field values scrubbed from historical versions, just as
+they are from the current entity. Merging entities transfers the source record's history to the canonical record; see
+[Merge Entities](entity-merging).
+
+When a schema opts into a deprecation workflow, retiring an entity uses a proposal and review process rather than a
+direct lifecycle edit. See [Entity Deprecation](governance#entity-deprecation).
 
 When an entity is in scope for an open project assessment, its detail screen also shows an **Assessments** tab. Use
 that tab to fill in the entity's assessment fields without opening the full project assessment grid.
@@ -105,6 +126,10 @@ that tab to fill in the entity's assessment fields without opening the full proj
 ## Related Pages
 
 - [Entity Views](entity-views)
+- [Data Modeling and Schemas](data-modeling-schemas)
+- [Entity Baselines](entity-baselines)
+- [Artifact-Backed Details](entity-artifacts)
+- [Merge Entities](entity-merging)
 - [Governance and Approvals](governance)
 - [Collaboration and Notifications](collaboration-notifications)
 - [Assessments](assessments)
