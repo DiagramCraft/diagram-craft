@@ -372,6 +372,8 @@ export const screenshots: ArchRegisterScreenshotConfig[] = [
       await projectsPage.page.getByRole('button', { name: "What's changed", exact: true }).click();
       await expect(projectsPage.page.getByText(/What's changed by/)).toBeVisible();
       await expect(projectsPage.page.getByText('Overdue changes')).toBeVisible();
+      await projectsPage.page.getByRole('checkbox', { name: 'Overdue changes' }).check();
+      await expect(projectsPage.page.getByText('No entity changes')).not.toBeVisible();
     }
   },
   {

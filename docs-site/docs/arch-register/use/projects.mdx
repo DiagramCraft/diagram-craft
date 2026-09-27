@@ -62,6 +62,14 @@ Milestones name project checkpoints. Each has a target date and one of four stat
 milestone also moves the planned change on the timeline. Open **Milestones** from the project sidebar to create, edit,
 filter, or delete checkpoints.
 
+<ThemedImage
+  alt="Project milestones in Arch Register"
+  sources={{
+    light: require('/img/arch-register/projects/milestones-light.png').default,
+    dark: require('/img/arch-register/projects/milestones-dark.png').default,
+  }}
+/>
+
 In **Entities**, choose **Plan change** to create a named change case for one or more entities. You can propose future
 field values without changing the current live entities, and add a new project-scoped entity to a change case. Related
 entity updates can share one case so they are reviewed and applied together. Schedule a case for a future date or
@@ -72,6 +80,14 @@ beside milestones and historical updates and lists unscheduled changes separatel
 proposed state. Users who can edit the project can update or withdraw a planned case and apply it when ready. Applying
 a case promotes all of its proposed member states to the live entities atomically.
 
+<ThemedImage
+  alt="Project timeline with milestones and planned changes"
+  sources={{
+    light: require('/img/arch-register/projects/planned-changes-timeline-light.png').default,
+    dark: require('/img/arch-register/projects/planned-changes-timeline-dark.png').default,
+  }}
+/>
+
 The **What's changed** tab compares the project's planned future state with the current state, showing entities and
 relations added, removed, or changed, with field-level differences for changed entities. Its comparison date is the
 latest effective date among the project's planned changes, falling back to the project target date when none of the
@@ -79,6 +95,14 @@ changes has a date. If neither provides a date, the comparison is unavailable. U
 planned changes whose effective dates have passed, or select another project to compare the two proposed futures.
 Restricted field values remain hidden according to your access; the comparison may show that restricted changes exist
 without exposing their values.
+
+<ThemedImage
+  alt="Project planned changes compared with the current state"
+  sources={{
+    light: require('/img/arch-register/projects/planned-changes-summary-light.png').default,
+    dark: require('/img/arch-register/projects/planned-changes-summary-dark.png').default,
+  }}
+/>
 
 The [Entity Planning And Portfolio Views](entity-planning-views) guide covers workspace-wide timelines and future-date
 comparisons that can include multiple projects.
