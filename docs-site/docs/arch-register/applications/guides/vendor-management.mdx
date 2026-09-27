@@ -46,8 +46,11 @@ Use **Vendors** to search and filter vendors by tier, category, or relationship 
 catalog attributes and risk profile with spend from its contracts, those contracts, and the systems they serve.
 
 In **Contracts**, search and filter contracts by renewal window, type, or vendor. Switch between the register and the
-12-month renewal calendar to review dates and amounts. Overdue contracts appear in the current month; contracts beyond
-the calendar window or without an end date remain available in the register.
+12-month renewal calendar to review dates and amounts, or use **Timelines** to compare contract terms across time.
+Overdue contracts appear in the current month; contracts beyond the calendar window or without an end date remain
+available in the register. The timeline draws a bar only when both start and end dates are available; an auto-renewing
+contract with a notice period also shows its notice date. Contracts missing either date remain in the register and are
+counted below the timeline.
 
 Use **Spend** to group annualized spend by vendor or cost centre. The capability grouping option currently has no data
 because contracts have no Contract-to-capability link. The **Risk** section combines a criticality and risk-band matrix,
@@ -56,8 +59,8 @@ Release binding and catalog links from Systems to Technology Release records; it
 
 ## Current limitations and shared workflows
 
-The Contracts timeline view is still pending. Create and maintain vendor and contract records in [Entities](../../use/entities);
-the application provides focused registers and drawers. See [Data Modeling and Schemas](../../use/data-modeling-schemas)
+Create and maintain vendor and contract records in [Entities](../../use/entities); the application provides focused
+registers and drawers. See [Data Modeling and Schemas](../../use/data-modeling-schemas)
 and [Entity Relationship Views](../../use/entity-relationship-views) for the shared catalog model. [Projects](../../use/projects),
 [Assessments](../../use/assessments), and [Governance and Approvals](../../use/governance) describe shared planning and
 review workflows. Administrators configure schemas and application access in [Workspace Settings](../../admin/workspace-settings)
