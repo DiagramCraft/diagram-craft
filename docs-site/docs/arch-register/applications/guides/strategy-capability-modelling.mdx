@@ -1,0 +1,62 @@
+---
+sidebar_position: 2
+related_reading:
+  - label: Data Modeling and Schemas
+    to: /diagram-craft/arch-register/use/data-modeling-schemas
+  - label: Entity Relationship Views
+    to: /diagram-craft/arch-register/use/entity-relationship-views
+  - label: Workspace Templates and Capabilities
+    to: /diagram-craft/arch-register/admin/workspace-templates-capabilities
+---
+
+import ThemedImage from '@theme/ThemedImage';
+
+# Strategy & Capability Modelling
+
+Strategy & Capability Modelling connects business capabilities to strategic objectives and to the applications or
+systems that realize them. Its screens are read views over the workspace entity catalog; capability and strategy
+records remain ordinary entities with the same access, history, and approval rules.
+
+<ThemedImage
+  alt="Nested business capability map with a configurable overlay"
+  sources={{
+    light: require('/img/arch-register/applications/strategy-capability-map-light.png').default,
+    dark: require('/img/arch-register/applications/strategy-capability-map-dark.png').default,
+  }}
+/>
+
+## Enable and configure the application
+
+In **Workspace Settings → Applications & Capabilities**, configure the **Strategy & Capability Modelling** capability.
+Bind the **Business Capability**, **Objective**, **Outcome**, **Initiative**, and **Measure** entity schemas, plus the
+**Objective Supports Business Capability** and **Business Capability Supports Entity** relation schemas. These seven
+bindings are required for the application to be available.
+
+Use the **Fields** and **Dashboard** tabs to choose how capability fields appear in the Capabilities table, roll-ups,
+drawer, map overlays, and Overview tiles. Members also need application access in the **Access** tab. A valid capability
+binding and application access are separate requirements; see [Roles and Permissions](../../admin/roles-permissions).
+The default catalog supplies a configured model, while custom workspaces can bind their own schemas. See [Workspace
+Templates and Capabilities](../../admin/workspace-templates-capabilities) for the configuration workflow.
+
+## Follow a strategy workflow
+
+Start at **Overview** to follow summary tiles into the sections they summarize. Use **Capability map** to browse the
+nested L1–L3 capability hierarchy, focus on a domain, and apply a configured field or subtree roll-up overlay. **Owner**
+and name search dim non-matching capabilities without removing them from the map.
+
+Use **Capabilities** to filter and sort the capability register by level, owner, configured fields, and roll-ups. Open a
+row to inspect its hierarchy, linked objectives and initiatives, and the applications that realize it. Use **Open in
+Entities** when you need the full entity record or need to edit it.
+
+In **Strategy**, choose an objective to review its outcomes, initiatives, measures, and the capabilities it depends on.
+The **New objective** action creates an Objective entity. Measures show baseline, current, and target values when those
+fields are configured. Use **Traceability** to walk an Objective → Capability → Application chain or find capabilities
+that no objective supports.
+
+## What the application does not include
+
+**Heatmaps** is not surfaced in the application navigation. Use the configured overlay selector in **Capability map**
+for capability heat colouring. The application presents shared entity data; use **Entities** to create or edit records
+other than the Objective quick-create action.
+
+The model depends on normal entity containment and typed relations. See [Entities](../../use/entities), [Entity Views](../../use/entity-views), and [Entity Relationship Views](../../use/entity-relationship-views) for working with catalog records and their connections. [Projects](../../use/projects) and [Assessments](../../use/assessments) cover project-based planning and reviews; [Governance and Approvals](../../use/governance) explains approval workflows. Administrators can manage bindings in [Workspace Settings](../../admin/workspace-settings), and access in [Roles and Permissions](../../admin/roles-permissions).
