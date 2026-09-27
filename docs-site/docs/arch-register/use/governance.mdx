@@ -1,78 +1,99 @@
+---
+related_reading:
+  - label: Collaboration And Notifications
+    to: /diagram-craft/arch-register/use/collaboration-notifications
+  - label: Merge Entities
+    to: /diagram-craft/arch-register/use/entity-merging
+  - label: Workspace Settings
+    to: /diagram-craft/arch-register/admin/workspace-settings
+---
+
 # Governance And Approvals
 
-Workspaces can require review before certain changes take effect. Administrators configure governance centrally in
-**Workspace Settings → Workflows**, where each case kind can expose supported approval, reminder, escalation, and
-case-specific settings. This page covers the governance inbox and the governed workflows users interact with.
+Workspace administrators configure review workflows in **Workspace Settings → Workflows**. A workflow can route
+changes to approvers, request acknowledgements, and configure deadlines, reminders, and escalation where supported.
+This guide explains where to find tasks and how the supported entity and document workflows behave.
 
-## My Work
+## Find And Review Work In My Work
 
-**My Work** in the navigation rail is the governance inbox. It shows an open-task count badge and has two scopes:
+Open **My Work** from the navigation rail to review governance tasks:
 
-- **Assigned** lists open governance tasks waiting on you, with completed task history available separately
-- **Submitted** lists governance work you have started, so you can see what — or who — is currently blocking it
+- **Assigned** lists open tasks waiting on you. Filter by state, task kind (approve, acknowledge, review, or remediate),
+  case kind, and due date (overdue or due within a week).
+- **Completed** shows your completed task history.
+- **Submitted** lists work you started and shows what or who is blocking it. Where the workflow allows it, withdraw an
+  open submission from this view.
 
-Filter tasks by state, task kind (approve, acknowledge, review, remediate), case kind, and due date (overdue, or due
-within a week). Each task links back to the governed record.
+Select a task to open its governed record and available action. The actions depend on the workflow: an approver may
+approve or request changes, a deprecation approver may also reject, and an affected team may need to acknowledge.
+When an open case has outstanding assignees, its initiator can send them an on-demand reminder from Submitted. These
+reminders are rate-limited. Governance action items also appear in the [notification feed](collaboration-notifications)
+and clear automatically when the task is resolved, superseded, or cancelled.
 
-From the **Submitted** scope you can withdraw an open submission where permitted.
+## Configure Reminders And Escalation
 
-Governance tasks also appear as action items in the [notification feed](collaboration-notifications); those
-notifications clear automatically when the underlying task is resolved, superseded, or cancelled.
-When a project assessment assigns teams, each team receives an acknowledgement task while that assessment is open.
-See [Assessments](assessments) for how assignment and recurring response cycles work.
+For cases with deadlines, scheduled reminders notify still-open assignees as a deadline approaches and again after it
+passes. The supported reminder workflows include entity change proposals, entity deprecations, relation change
+proposals, document status approvals, and assessment responses. Each workflow can use its own approaching and overdue
+cadence; reminders respect each recipient's notification preferences and are not repeated after that reminder window
+has fired for a case. My Work highlights overdue tasks. See [Assessments](assessments) for assessment response tasks.
 
-## Entity Change Approval
+Workspace administrators configure reminder schedules in **Workspace Settings → Workflows**. A configuration can
+enable or disable reminders and set a cadence for a workflow or supported case subtype.
 
-Administrators can require approval for entity changes by adding an entity-change workflow configuration in
-**Workspace Settings → Workflows**. The configuration can be scoped to a schema. When approval is required:
+Escalation is available for entity change proposals, entity deprecations, and document status approvals. If an open
+case remains unresolved past its configured overdue threshold, it is escalated once. The workflow's escalation
+strategy resolves recipients first, followed by configured fallback users or teams; workspace administrators are the
+final fallback. The escalation is recorded in the case activity and shown with a badge in My Work. Administrators can
+enable or disable escalation and set its strategy, threshold, and fallback targets alongside reminders. Relation
+change proposals and assessment responses support reminders but do not support escalation.
 
-1. Saving a change submits an immutable revision instead of updating the entity directly.
-2. Approvers review a before/after diff of the proposed change.
-3. Approvers approve, or request changes — after requested changes, the submitter can resubmit.
-4. On approval, the proposed state is applied to the live entity.
+Administrators can also configure ordered, typed initiation fields for supported workflows. When starting a case, the
+initiator supplies required values; those values remain visible on the case, in the inbox and related notifications,
+and in applicable escalation and integration messages.
 
-Two special cases are supported:
+## Approve Entity Changes
 
-- if you are the sole eligible approver, you can self-approve your own submission
-- authorized users can record an approval bypass, which is captured in the audit trail
+Administrators can require approval for entity changes, optionally scoped to a schema. To submit a proposal, a user
+needs view and edit access to the entity and the workspace `ent.propose` capability. Saving a proposed change creates
+an immutable revision; the live entity is unchanged until approval. Approvers review a before-and-after diff and can
+approve or request changes; a reason is required when requesting changes. The proposed state is applied once the
+configured quorum of distinct approvers has approved it. If changes are requested, the submitter can revise and
+resubmit a single-entity proposal.
 
-Approval targets use the configured entity-owner-admin strategy, followed by configured fallback users or teams.
-Workspace administrators are used if no approval target resolves. The configured approval quorum determines how many
-distinct approval slots and actors are required.
+Bulk-edit-originated proposals bundle changes to several entities into one governance case; they do not have the
+single-entity resubmit path. Approval targets use the configured entity-owner-admin strategy, then fallback users or
+teams, with workspace administrators as the final fallback. If you are the sole eligible approver, you may
+self-approve. Authorized users can bypass approval with a reason; the bypass is recorded in the audit trail. Restricted
+field-group values remain hidden from reviewers who cannot view those fields. A user with the workspace `ent.override`
+capability can bypass approval with a reason; the bypass is recorded in the audit trail.
 
 ## Entity Deprecation
 
-Administrators can configure a schema-scoped entity deprecation workflow in **Workspace Settings → Workflows**. When
-enabled, retiring an entity goes through a deprecation proposal rather than a direct lifecycle edit:
+Administrators can enable a schema-scoped deprecation workflow. To propose a deprecation, a user needs view and edit
+access to the entity and the `ent.propose` workspace capability. Enter the target date and reason, and optionally name
+a successor entity and related project. Approvers can approve, reject, or request changes. Affected owner teams have
+separate acknowledgement tasks. Approval targets use the entity-owner-admin strategy, configured fallbacks, and the
+workspace-administrator final fallback.
 
-- a user with entity view and edit access plus the `ent.propose` capability proposes a target date and reason, and can
-  add an optional successor entity and related project
-- the proposal routes through approval like other governed changes
-- affected owner teams are notified and asked to acknowledge the deprecation
-- the deprecation can be postponed, finalized on schedule, or cancelled while in flight
+While the proposal is in flight, an authorized user can postpone or cancel it. It can be finalized on schedule, which
+moves the entity to the state designated in **Workspace Settings → Lifecycle**. Deprecation does not merge the entity
+or rewrite its references; use [Merge Entities](entity-merging) to consolidate a duplicate record.
 
-Deprecation approval uses the same entity-owner-admin strategy and fallback rules. Affected owner teams retain their
-separate acknowledgement tasks.
+## Approve A Document Status
 
-Finalizing moves the entity to the workspace's designated deprecated lifecycle state, configured in
-**Workspace Settings → Lifecycle**. The deprecated lifecycle state is a catalog classification; access is still
-governed by workspace, team, entity, and field-group permissions. The proposal records its successor and reason for
-reviewers and affected teams; it does not automatically merge or rewrite references to the entity. Use [Merge Entities](entity-merging)
-when consolidating a duplicate record.
+Administrators configure document status approval for an enum field on a document type and select which status values
+require approval. Users with permission to edit the document can change its status; values not selected for approval
+continue without a governance case. An approval task is assigned according to the workflow configuration. For
+approval and escalation targets independently, administrators may select an active user or team field from the
+document type. If that field has no valid value, configured fallback users and teams are used, followed by workspace
+administrators. Approvers can approve or request changes. See
+[Document Types And Templates](../admin/document-types-templates) for setting up typed documents.
 
-## Document Status Approval
+## Merge A Duplicate Entity
 
-Document status approval is configured for a document type's enum field in **Workspace Settings → Workflows**. The
-workflow configuration uses the shared approval and reminder settings, while its document-status extension identifies
-the status values that require approval. Status values that are not selected continue without an approval case.
-Approval and escalation can independently use a selected active user or team field from the document type. If the
-field has no valid value, configured fallback users and teams are used, followed by workspace administrators. Escalation
-is available only for case kinds that register escalation support; assessment responses remain notification-only.
-
-## Related Pages
-
-- [Collaboration and Notifications](collaboration-notifications)
-- [Entities](entities)
-- [Merge Entities](entity-merging)
-- [Workspace Settings](../admin/workspace-settings)
-- [Roles and Permissions](../admin/roles-permissions)
+Entity merging is a privileged, review-and-confirm action rather than a governance approval case. It requires the
+`ent.merge` capability and entity administration access on both records. The wizard lets an authorized user preview
+the impact, resolve editable conflicts, acknowledge supported warnings, and confirm the merge. An open governance case
+on the source blocks the merge. Read the [Merge Entities guide](entity-merging) for the conflict, scope, and record
+transfer details.
