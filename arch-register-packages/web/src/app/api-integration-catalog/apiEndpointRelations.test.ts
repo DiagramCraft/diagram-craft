@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { RelationRecord } from '@arch-register/api-types/relationContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
-import { groupByApiId, resolveTypedRelationSchemaId } from './apiEndpointRelations';
+import type { EntityRecord } from '@arch-register/api-types/entityContract';
+import { groupByApiId, rankMostConsumedApis, resolveTypedRelationSchemaId } from './apiEndpointRelations';
 
 const API_SCHEMA: EntitySchema = {
   id: 'api',
@@ -61,5 +62,48 @@ describe('groupByApiId', () => {
 
   it('returns an empty map for no relations', () => {
     expect(groupByApiId([]).size).toBe(0);
+  });
+});
+
+const api = (id: string): EntityRecord => ({ _uid: id, _name: `API ${id}` }) as unknown as EntityRecord;
+
+describe('rankMostConsumedApis', () => {
+  it('returns an empty array for no apis', () => {
+    expect(rankMostConsumedApis([], new Map(), 6)).toEqual([]);
+  });
+
+  it('ranks apis by consumer count, descending', () => {
+    const apiA = api('a');
+    const apiB = api('b');
+    const consumersByApi = new Map([
+      ['a', [relation('r1', 'a', 'e1')]],
+      ['b', [relation('r2', 'b', 'e2'), relation('r3', 'b', 'e3')]]
+    ]);
+    expect(rankMostConsumedApis([apiA, apiB], consumersByApi, 6)).toEqual([apiB, apiA]);
+  });
+
+  it('treats an api absent from consumersByApi as having 0 consumers, sorting it last', () => {
+    const apiA = api('a');
+    const apiB = api('b');
+    const consumersByApi = new Map([['a', [relation('r1', 'a', 'e1')]]]);
+    expect(rankMostConsumedApis([apiA, apiB], consumersByApi, 6)).toEqual([apiA, apiB]);
+  });
+
+  it('caps the result at limit', () => {
+    const apis = [api('a'), api('b'), api('c')];
+    expect(rankMostConsumedApis(apis, new Map(), 2)).toHaveLength(2);
+  });
+
+  it('returns all apis when limit exceeds the input length', () => {
+    const apis = [api('a'), api('b')];
+    expect(rankMostConsumedApis(apis, new Map(), 6)).toHaveLength(2);
+  });
+
+  it('does not throw on ties and preserves both entries', () => {
+    const apiA = api('a');
+    const apiB = api('b');
+    const result = rankMostConsumedApis([apiA, apiB], new Map(), 6);
+    expect(result).toHaveLength(2);
+    expect(result).toEqual(expect.arrayContaining([apiA, apiB]));
   });
 });

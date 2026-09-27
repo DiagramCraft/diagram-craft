@@ -1,4 +1,5 @@
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
+import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { RelationRecord } from '@arch-register/api-types/relationContract';
 import { useRelations } from '../../hooks/useRelations';
 
@@ -47,6 +48,21 @@ export const useApiEndpointRelations = (
     isLoading: providers.isLoading || consumers.isLoading
   };
 };
+
+/**
+ * Ranks APIs by consumer count, descending, capped at `limit` — the "Most consumed APIs" panel's
+ * row order. An API absent from `consumersByApi` is treated as having 0 consumers.
+ */
+export const rankMostConsumedApis = (
+  apis: readonly EntityRecord[],
+  consumersByApi: Map<string, RelationRecord[]>,
+  limit: number
+): EntityRecord[] =>
+  [...apis]
+    .sort(
+      (a, b) => (consumersByApi.get(b._uid)?.length ?? 0) - (consumersByApi.get(a._uid)?.length ?? 0)
+    )
+    .slice(0, limit);
 
 /** Groups relations by their API endpoint (`_out` — the API is always the `_out` side of
  *  `Provides API` / `Consumes API` relations, confirmed by how these relations are modeled). */

@@ -44,7 +44,7 @@ export const useApiIntegrationCatalogQueue = (
   workspaceSlug: string,
   apiSchemaId: string | null,
   enabled = true
-): { items: ApiIntegrationCatalogQueueItem[]; isLoading: boolean } => {
+): { items: ApiIntegrationCatalogQueueItem[]; isLoading: boolean; isError: boolean } => {
   const cases = useGovernanceCases(
     workspaceSlug,
     { status: 'open', subjectType: 'entity' },
@@ -65,5 +65,5 @@ export const useApiIntegrationCatalogQueue = (
         entry.api != null && entry.api._schema?.id === apiSchemaId
     );
 
-  return { items, isLoading: cases.isLoading };
+  return { items, isLoading: cases.isLoading, isError: cases.isError };
 };
