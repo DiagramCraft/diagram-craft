@@ -308,7 +308,7 @@ test.describe('workspace routes', () => {
     expect(dashboards).toHaveLength(2);
     expect(dashboards.find(dashboard => dashboard.name === 'Overview')!.widgets).toHaveLength(0);
     const riskDashboard = dashboards.find(dashboard => dashboard.name === 'Risk & Compliance')!;
-    expect(riskDashboard.widgets).toHaveLength(8);
+    expect(riskDashboard.widgets).toHaveLength(10);
     expect(riskDashboard.widgets).toContainEqual(
       expect.objectContaining({
         id: 'top-risks-by-score',
