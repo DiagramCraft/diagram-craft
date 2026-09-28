@@ -5,9 +5,16 @@ import { normalizePostgresError, PostgresDatabaseBase } from '../../../db/postgr
 export class PostgresDashboardDatabase extends PostgresDatabaseBase implements DashboardDatabase {
   async list(workspace: string) {
     const rows = await this.sql<Record<string, unknown>[]>`
-      SELECT * FROM workspace_dashboard WHERE workspace = ${workspace} ORDER BY sort_order
+      SELECT * FROM workspace_dashboard WHERE workspace = ${workspace} AND app_key IS NULL ORDER BY sort_order
     `;
     return rows.map(mapWorkspaceDashboardRow);
+  }
+
+  async getByAppKey(workspace: string, appKey: string) {
+    const [row] = await this.sql<Record<string, unknown>[]>`
+      SELECT * FROM workspace_dashboard WHERE workspace = ${workspace} AND app_key = ${appKey}
+    `;
+    return row ? mapWorkspaceDashboardRow(row) : null;
   }
 
   async get(workspace: string, id: string) {
@@ -20,8 +27,8 @@ export class PostgresDashboardDatabase extends PostgresDatabaseBase implements D
   async create(input: DashboardDbCreate) {
     try {
       const [row] = await this.sql<Record<string, unknown>[]>`
-        INSERT INTO workspace_dashboard (id, workspace, name, sort_order, layout, updated_at, updated_by)
-        VALUES (${input.id}, ${input.workspace}, ${input.name}, ${input.sort_order}, '[]', NOW(), ${input.updated_by})
+        INSERT INTO workspace_dashboard (id, workspace, name, description, sort_order, app_key, layout, updated_at, updated_by)
+        VALUES (${input.id}, ${input.workspace}, ${input.name}, ${input.description ?? ''}, ${input.sort_order}, ${input.app_key ?? null}, '[]', NOW(), ${input.updated_by})
         RETURNING *
       `;
       return mapWorkspaceDashboardRow(row!);
@@ -35,6 +42,7 @@ export class PostgresDashboardDatabase extends PostgresDatabaseBase implements D
       const [row] = await this.sql<Record<string, unknown>[]>`
         UPDATE workspace_dashboard
         SET name = COALESCE(${input.name ?? null}, name),
+            description = COALESCE(${input.description ?? null}, description),
             layout = COALESCE(${input.layout ? this.json(input.layout) : null}, layout),
             updated_at = NOW(),
             updated_by = ${input.updated_by}

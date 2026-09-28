@@ -18,7 +18,7 @@ import {
 /**
  * Proves `ApiIntegrationCatalogMostConsumedPanel` (#3458) renders from a plain prop object with
  * zero router involvement — see #3459. `apiSchemaId` arrives as a resolved id prop, mirroring
- * `ApiIntegrationCatalogOverviewScreen.tsx`'s `apiConfig.apiSchemaId`.
+ * the former Overview screen's `apiConfig.apiSchemaId`.
  */
 const meta = {
   title: 'API & Integration Catalog/MostConsumedPanel',

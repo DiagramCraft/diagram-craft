@@ -136049,6 +136049,10 @@
                         "type": "string",
                         "description": "Dashboard name"
                       },
+                      "description": {
+                        "type": "string",
+                        "description": "Dashboard description; empty when not set"
+                      },
                       "order": {
                         "type": "integer",
                         "minimum": -9007199254740991,
@@ -136134,12 +136138,24 @@
                           }
                         ],
                         "description": "Identifier of the user who last updated the layout"
+                      },
+                      "appKey": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Set when the dashboard belongs to an app rather than the workspace home"
                       }
                     },
                     "required": [
                       "id",
                       "workspaceId",
                       "name",
+                      "description",
                       "order",
                       "widgets",
                       "updatedAt",
@@ -136180,6 +136196,10 @@
                   "name": {
                     "type": "string",
                     "description": "Dashboard name"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Dashboard description"
                   }
                 },
                 "required": [
@@ -136208,6 +136228,10 @@
                     "name": {
                       "type": "string",
                       "description": "Dashboard name"
+                    },
+                    "description": {
+                      "type": "string",
+                      "description": "Dashboard description; empty when not set"
                     },
                     "order": {
                       "type": "integer",
@@ -136294,12 +136318,24 @@
                         }
                       ],
                       "description": "Identifier of the user who last updated the layout"
+                    },
+                    "appKey": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Set when the dashboard belongs to an app rather than the workspace home"
                     }
                   },
                   "required": [
                     "id",
                     "workspaceId",
                     "name",
+                    "description",
                     "order",
                     "widgets",
                     "updatedAt",
@@ -136360,6 +136396,10 @@
                       "type": "string",
                       "description": "Dashboard name"
                     },
+                    "description": {
+                      "type": "string",
+                      "description": "Dashboard description; empty when not set"
+                    },
                     "order": {
                       "type": "integer",
                       "minimum": -9007199254740991,
@@ -136445,12 +136485,24 @@
                         }
                       ],
                       "description": "Identifier of the user who last updated the layout"
+                    },
+                    "appKey": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Set when the dashboard belongs to an app rather than the workspace home"
                     }
                   },
                   "required": [
                     "id",
                     "workspaceId",
                     "name",
+                    "description",
                     "order",
                     "widgets",
                     "updatedAt",
@@ -136499,6 +136551,10 @@
                   "name": {
                     "type": "string",
                     "description": "Dashboard name"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Dashboard description"
                   },
                   "widgets": {
                     "type": "array",
@@ -136583,6 +136639,10 @@
                       "type": "string",
                       "description": "Dashboard name"
                     },
+                    "description": {
+                      "type": "string",
+                      "description": "Dashboard description; empty when not set"
+                    },
                     "order": {
                       "type": "integer",
                       "minimum": -9007199254740991,
@@ -136668,12 +136728,24 @@
                         }
                       ],
                       "description": "Identifier of the user who last updated the layout"
+                    },
+                    "appKey": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Set when the dashboard belongs to an app rather than the workspace home"
                     }
                   },
                   "required": [
                     "id",
                     "workspaceId",
                     "name",
+                    "description",
                     "order",
                     "widgets",
                     "updatedAt",
@@ -136727,6 +136799,172 @@
                   },
                   "required": [
                     "success"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{workspace}/app-dashboards/{appKey}": {
+      "get": {
+        "operationId": "dashboards.getApp",
+        "summary": "Get app dashboard",
+        "description": "Retrieves the dashboard backing an app section, seeding the default layout on first access. App dashboards are not part of the workspace home dashboard list and are updated through the regular dashboard update endpoint.",
+        "tags": [
+          "Dashboard",
+          "Dashboard"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "appKey",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "Unique dashboard identifier"
+                    },
+                    "workspaceId": {
+                      "type": "string",
+                      "description": "Parent workspace identifier"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "Dashboard name"
+                    },
+                    "description": {
+                      "type": "string",
+                      "description": "Dashboard description; empty when not set"
+                    },
+                    "order": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991,
+                      "description": "Position among the workspace dashboards, ascending; the lowest is shown at the workspace home"
+                    },
+                    "widgets": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "description": "Unique widget identifier"
+                          },
+                          "x": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                            "description": "Grid column position"
+                          },
+                          "y": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                            "description": "Grid row position"
+                          },
+                          "w": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                            "description": "Grid width in columns"
+                          },
+                          "h": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                            "description": "Grid height in rows"
+                          },
+                          "type": {
+                            "type": "string",
+                            "description": "Extensible widget type identifier"
+                          },
+                          "config": {
+                            "type": "object",
+                            "propertyNames": {
+                              "type": "string"
+                            },
+                            "additionalProperties": {},
+                            "description": "Widget-specific configuration; interpreted by the widget implementation"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "x",
+                          "y",
+                          "w",
+                          "h",
+                          "type",
+                          "config"
+                        ]
+                      },
+                      "description": "Dashboard widget layout"
+                    },
+                    "updatedAt": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "ISO 8601 last update timestamp"
+                    },
+                    "updatedBy": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Identifier of the user who last updated the layout"
+                    },
+                    "appKey": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Set when the dashboard belongs to an app rather than the workspace home"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "workspaceId",
+                    "name",
+                    "description",
+                    "order",
+                    "widgets",
+                    "updatedAt",
+                    "updatedBy"
                   ]
                 }
               }
@@ -136895,6 +137133,10 @@
                   "name": {
                     "type": "string",
                     "description": "Dashboard name"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Dashboard description"
                   }
                 },
                 "required": [
@@ -137190,6 +137432,10 @@
                   "name": {
                     "type": "string",
                     "description": "Dashboard name"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Dashboard description"
                   },
                   "widgets": {
                     "type": "array",

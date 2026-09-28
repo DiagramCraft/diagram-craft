@@ -26,6 +26,7 @@ export const workspaceDashboardSchema = z.object({
   id: z.string().describe('Unique dashboard identifier'),
   workspaceId: z.string().describe('Parent workspace identifier'),
   name: z.string().describe('Dashboard name'),
+  description: z.string().describe('Dashboard description; empty when not set'),
   order: z
     .number()
     .int()
@@ -34,17 +35,24 @@ export const workspaceDashboardSchema = z.object({
     ),
   widgets: z.array(dashboardWidgetSchema).describe('Dashboard widget layout'),
   updatedAt: z.string().nullable().describe('ISO 8601 last update timestamp'),
-  updatedBy: z.string().nullable().describe('Identifier of the user who last updated the layout')
+  updatedBy: z.string().nullable().describe('Identifier of the user who last updated the layout'),
+  appKey: z
+    .string()
+    .nullable()
+    .optional()
+    .describe('Set when the dashboard belongs to an app rather than the workspace home')
 });
 
 // ── Request schemas ───────────────────────────────────────────
 
 export const createDashboardBodySchema = z.object({
-  name: z.string().describe('Dashboard name')
+  name: z.string().describe('Dashboard name'),
+  description: z.string().optional().describe('Dashboard description')
 });
 
 export const updateDashboardBodySchema = z.object({
   name: z.string().optional().describe('Dashboard name'),
+  description: z.string().optional().describe('Dashboard description'),
   widgets: z.array(dashboardWidgetSchema).optional().describe('Dashboard widget layout to persist')
 });
 
@@ -89,6 +97,18 @@ export const workspaceDashboardContract = oc.tag('Dashboard').router({
         tags: ['Dashboard']
       })
       .input(z.object({ params: wsAndUUID }))
+      .output(workspaceDashboardSchema),
+    getApp: oc
+      .route({
+        method: 'GET',
+        path: '/{workspace}/app-dashboards/{appKey}',
+        inputStructure: 'detailed',
+        summary: 'Get app dashboard',
+        description:
+          'Retrieves the dashboard backing an app section, seeding the default layout on first access. App dashboards are not part of the workspace home dashboard list and are updated through the regular dashboard update endpoint.',
+        tags: ['Dashboard']
+      })
+      .input(z.object({ params: ws.extend({ appKey: z.string() }) }))
       .output(workspaceDashboardSchema),
     update: oc
       .route({

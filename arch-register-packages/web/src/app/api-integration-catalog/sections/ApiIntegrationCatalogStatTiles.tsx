@@ -10,7 +10,7 @@ type Props = { workspaceId: string };
 
 /**
  * The Overview section's 4 stat tiles (#3458) — extracted from
- * `ApiIntegrationCatalogOverviewScreen.tsx`'s former inline JSX into a standalone, self-fetching
+ * the former Overview screen's inline JSX into a standalone, self-fetching
  * component matching `ApiBlastRadiusPanel.tsx`'s shape.
  */
 export const ApiIntegrationCatalogStatTiles = ({ workspaceId }: Props) => {

@@ -39,6 +39,8 @@ export type AppRailSection = {
   icon: IconType;
   tooltip: string;
   route: string;
+  /** Marks the section as rendering the seeded app dashboard stored under this key. */
+  dashboard?: { appKey: string };
   /** Renders a rail divider before this item. */
   separator?: boolean;
   /** Primary sidebar shown while this section is active; resolved by the section's route. */

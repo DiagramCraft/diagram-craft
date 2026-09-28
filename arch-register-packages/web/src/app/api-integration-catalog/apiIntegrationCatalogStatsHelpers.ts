@@ -18,7 +18,7 @@ const isRestrictedClassification = (relation: RelationRecord): boolean =>
 /**
  * Splits a workspace's Data Flow relations into the crossing-boundary and restricted-classification
  * sets the Overview stat tiles and "Integrations needing attention" panel both need — pulled out of
- * `ApiIntegrationCatalogOverviewScreen.tsx`'s former inline filters so both call sites share one
+ * the former Overview screen's inline filters so both call sites share one
  * definition of "crossing"/"restricted" rather than risking drift.
  */
 export const classifyDataFlowRelations = (

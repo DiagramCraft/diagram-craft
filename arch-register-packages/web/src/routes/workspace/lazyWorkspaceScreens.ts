@@ -144,9 +144,9 @@ export const LazyDataStewardshipAssessmentsScreen = lazyRouteComponent(
   () => import('../../app/data-stewardship/sections/DataStewardshipAssessmentsScreen'),
   'DataStewardshipAssessmentsScreen'
 );
-export const LazyApiIntegrationCatalogOverviewScreen = lazyRouteComponent(
-  () => import('../../app/api-integration-catalog/sections/ApiIntegrationCatalogOverviewScreen'),
-  'ApiIntegrationCatalogOverviewScreen'
+export const LazyApiIntegrationCatalogOverviewDashboard = lazyRouteComponent(
+  () => import('../../app/api-integration-catalog/sections/ApiIntegrationCatalogOverviewDashboard'),
+  'ApiIntegrationCatalogOverviewDashboard'
 );
 export const LazyApiIntegrationCatalogApisScreen = lazyRouteComponent(
   () => import('../../app/api-integration-catalog/sections/ApiIntegrationCatalogApisScreen'),

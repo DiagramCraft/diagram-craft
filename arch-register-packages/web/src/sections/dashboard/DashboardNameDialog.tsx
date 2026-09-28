@@ -8,7 +8,9 @@ type Props = {
   title: string;
   confirmLabel: string;
   initialName?: string;
-  onConfirm: (name: string) => void;
+  /** When set (even to ''), the dialog also edits a description. */
+  initialDescription?: string;
+  onConfirm: (name: string, description: string) => void;
   onCancel: () => void;
 };
 
@@ -17,15 +19,17 @@ export const DashboardNameDialog = ({
   title,
   confirmLabel,
   initialName = '',
+  initialDescription,
   onConfirm,
   onCancel
 }: Props) => {
   const [name, setName] = useState(initialName);
+  const [description, setDescription] = useState(initialDescription ?? '');
 
   const confirm = () => {
     const value = name.trim();
     if (!value) return;
-    onConfirm(value);
+    onConfirm(value, description.trim());
   };
 
   return (
@@ -46,6 +50,11 @@ export const DashboardNameDialog = ({
           autoFocus
         />
       </FormElement>
+      {initialDescription !== undefined && (
+        <FormElement label="Description">
+          <TextInput value={description} onChange={value => setDescription(value ?? '')} />
+        </FormElement>
+      )}
     </Dialog>
   );
 };

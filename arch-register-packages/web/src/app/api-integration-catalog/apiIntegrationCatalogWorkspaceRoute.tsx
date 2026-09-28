@@ -10,7 +10,7 @@ import {
 import { withWorkspaceShell } from '../../routes/workspace/workspaceShellRoute';
 import { railSectionShell } from '../../layouts/workspaceShellDescriptors';
 import {
-  LazyApiIntegrationCatalogOverviewScreen,
+  LazyApiIntegrationCatalogOverviewDashboard,
   LazyApiIntegrationCatalogApisScreen,
   LazyApiIntegrationCatalogIntegrationsScreen,
   LazyApiIntegrationCatalogImpactScreen
@@ -47,7 +47,7 @@ export const createApiIntegrationCatalogWorkspaceRoutes = <TParentRoute extends 
           (params as unknown as { workspaceSlug: string }).workspaceSlug,
           'api-integration-catalog'
         ),
-      component: LazyApiIntegrationCatalogOverviewScreen
+      component: LazyApiIntegrationCatalogOverviewDashboard
     }),
     ctx =>
       railSectionShell(ctx, IC_OVERVIEW_ID, {

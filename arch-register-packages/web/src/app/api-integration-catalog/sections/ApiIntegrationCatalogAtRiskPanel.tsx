@@ -2,7 +2,7 @@ import { EmptyState } from '../../../components/EmptyState';
 import { LoadingState } from '../../../components/LoadingState';
 import { Banner } from '../../../components/Banner';
 import { useAtRiskIntegrations } from '../useAtRiskIntegrations';
-import styles from './ApiIntegrationCatalogOverviewScreen.module.css';
+import styles from './ApiIntegrationCatalogPanels.module.css';
 
 type Props = {
   workspaceId: string;
@@ -13,7 +13,7 @@ type Props = {
 
 /**
  * The Overview section's "Integrations needing attention" panel (#3458) — extracted from
- * `ApiIntegrationCatalogOverviewScreen.tsx`'s former inline JSX into a standalone, self-fetching
+ * the former Overview screen's inline JSX into a standalone, self-fetching
  * component matching `ApiBlastRadiusPanel.tsx`'s shape. Distinguishes "Data Flow not configured"
  * from "configured, nothing at risk" with separate empty-state copy, matching prior behavior.
  */

@@ -1,9 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useSearch } from '@tanstack/react-router';
 import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
-import { Title } from '../../components/Title';
-import { Button } from '@diagram-craft/app-components/Button';
-import { TbPencil } from 'react-icons/tb';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import {
   useWorkspaceDashboards,
@@ -11,6 +8,7 @@ import {
   usePersonalDashboards,
   useUpdatePersonalDashboard
 } from '../../hooks/useDashboard';
+import { DashboardHeader } from './DashboardHeader';
 import { DashboardGrid } from './DashboardGrid';
 import { MdxContext } from '../markdown/MdxContext';
 import { DEFAULT_SEEDED_WIDGETS } from './dashboardWidgetDefaults';
@@ -45,35 +43,53 @@ export const DashboardScreen = () => {
   );
 
   const [isEditing, setIsEditing] = useState(false);
+  const [draft, setDraft] = useState({ name: '', description: '' });
 
   if (!workspace) return null;
 
   const canEditActiveDashboard = canManageDashboard || isPersonalActive;
+
+  const startEditing = () => {
+    setDraft({
+      name: sharedDashboard?.name ?? '',
+      description: sharedDashboard?.description ?? ''
+    });
+    setIsEditing(true);
+  };
 
   const handleSave = (widgets: DashboardWidget[]) => {
     if (!activeDashboardId) return;
     if (isPersonalActive) {
       updatePersonalDashboard.mutate({ id: activeDashboardId, body: { widgets } });
     } else {
-      updateDashboard.mutate({ id: activeDashboardId, body: { widgets } });
+      updateDashboard.mutate({
+        id: activeDashboardId,
+        body: {
+          widgets,
+          name: draft.name.trim() || sharedDashboard?.name,
+          description: draft.description.trim()
+        }
+      });
     }
   };
 
   return (
     <div className={styles.screen}>
       <div className={styles.header}>
-        <Title
-          eyebrow="Home"
-          title={workspace.name}
-          description={workspace.description}
-          buttons={
-            canEditActiveDashboard &&
-            !isEditing && (
-              <Button icon={<TbPencil size={12} />} onClick={() => setIsEditing(true)}>
-                Edit
-              </Button>
-            )
+        <DashboardHeader
+          eyebrow={sharedDashboard ? workspace.name : 'Home'}
+          title={sharedDashboard?.name ?? workspace.name}
+          description={
+            sharedDashboard
+              ? sharedDashboard.description || workspace.description || undefined
+              : workspace.description
           }
+          canEdit={canEditActiveDashboard}
+          detailsEditable={!isPersonalActive}
+          isEditing={isEditing}
+          draft={draft}
+          onDraftChange={setDraft}
+          onStartEditing={startEditing}
         />
       </div>
 
