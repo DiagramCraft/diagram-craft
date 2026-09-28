@@ -1,4 +1,5 @@
 import type {SidebarsConfig} from '@docusaurus/plugin-content-docs';
+import {shouldGenerateTypedoc} from './typedoc-config';
 
 const typedocSidebarPath = './docs/diagram-craft/api/typedoc-sidebar.cjs';
 
@@ -38,6 +39,21 @@ const stripDocsRootPrefix = (item: any): any => {
 
   return item;
 };
+
+const apiSidebar = shouldGenerateTypedoc
+  ? [
+      {
+        type: 'category' as const,
+        label: 'API',
+        link: {
+          type: 'generated-index' as const,
+          title: 'API',
+          description: 'TypeDoc reference for Diagram Craft packages'
+        },
+        items: typedocSidebar.map(stripDocsRootPrefix)
+      }
+    ]
+  : [];
 
 const sidebars: SidebarsConfig = {
   tutorialSidebar: [
@@ -199,16 +215,7 @@ const sidebars: SidebarsConfig = {
         'developing/contributing'
       ]
     },
-    {
-      type: 'category',
-      label: 'API',
-      link: {
-        type: 'generated-index',
-        title: 'API',
-        description: 'TypeDoc reference for Diagram Craft packages'
-      },
-      items: typedocSidebar.map(stripDocsRootPrefix)
-    }
+    ...apiSidebar
   ],
 };
 

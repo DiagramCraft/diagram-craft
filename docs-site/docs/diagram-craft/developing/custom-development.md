@@ -17,7 +17,8 @@ From the repo root, the main extension points are:
 - `packages/stencil-*`: notation-specific stencil packages such as BPMN, UML, C4, ArchiMate, and data modelling
 - `packages/canvas-drawio`: Draw.io import support and Draw.io-backed stencil loading
 
-For API-level details, use the generated docs under the [API](../api) section after running `pnpm docs:typedoc` if you need refreshed output.
+For API-level details, run `pnpm docs:typedoc` to generate the API reference when you need refreshed output. The
+generated pages appear under the API section when TypeDoc generation is enabled.
 
 ## How The App Boots
 
