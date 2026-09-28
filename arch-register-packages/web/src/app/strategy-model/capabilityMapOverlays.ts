@@ -3,6 +3,7 @@ import type {
   ColourBand,
   NumberFormat
 } from '@arch-register/api-types/app/strategy-model/strategyModelViewConfig';
+import { BAND_TONE_COLORS, bandTone } from '../../components/bandColor';
 import { formatRollupValue } from '../../sections/entities/entityDrawer/rollup/formatRollupValue';
 
 /** The overlay shape these helpers need — the colour-band scale plus a value format. */
@@ -16,25 +17,9 @@ type BandedOverlay = { bands: ColourBand[]; format: NumberFormat };
  * is synthesised by the screen, not stored.
  */
 
-// The app's token set carries only three severity colours — same convention as
-// `CapabilityMaturityBar.tsx`'s `heatColor`.
-export const BAND_TONE_COLORS: Record<BandTone, string> = {
-  good: 'var(--green)',
-  warn: 'var(--warning-fg)',
-  bad: 'var(--error-fg, #e05252)'
-};
-
-/**
- * The heat tone for `value` under `overlay`, or `null` when there is no value.
- * Bands are evaluated low-to-high: each carries an upper bound `max` (`null` = catch-all top band).
- */
-export const overlayTone = (overlay: BandedOverlay, value: number | null): BandTone | null => {
-  if (value == null) return null;
-  for (const band of overlay.bands) {
-    if (band.max == null || value <= band.max) return band.tone;
-  }
-  return overlay.bands.at(-1)?.tone ?? null;
-};
+/** The heat tone for `value` under `overlay`, or `null` when there is no value. */
+export const overlayTone = (overlay: BandedOverlay, value: number | null): BandTone | null =>
+  value == null ? null : bandTone(value, overlay.bands);
 
 /** The `--heat` colour for `value` under `overlay`, or `undefined` when there is no value. */
 export const overlayColor = (overlay: BandedOverlay, value: number | null): string | undefined => {
