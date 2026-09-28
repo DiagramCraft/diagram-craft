@@ -12,6 +12,7 @@ import { ApiIntegrationCatalogAtRiskPanel } from './sections/ApiIntegrationCatal
 import { ApiIntegrationCatalogMostConsumedPanel } from './sections/ApiIntegrationCatalogMostConsumedPanel';
 import { ApiIntegrationCatalogNeedsAttentionPanel } from './sections/ApiIntegrationCatalogNeedsAttentionPanel';
 import { ApiIntegrationCatalogStatTiles } from './sections/ApiIntegrationCatalogStatTiles';
+import { ApiIntegrationCatalogSingleStatTile } from './sections/ApiIntegrationCatalogSingleStatTile';
 import { useApiIntegrationCatalogQueue } from './apiIntegrationCatalogQueue';
 import panelStyles from './sections/ApiIntegrationCatalogPanels.module.css';
 import styles from '../../sections/dashboard/WidgetConfigDialog.module.css';
@@ -136,6 +137,20 @@ const ApiCatalogStatsWidget = ({ config: _config }: { config: TitleWidgetConfig 
   return <ApiIntegrationCatalogStatTiles workspaceId={workspaceSlug} />;
 };
 
+const ApiCatalogNeedsAttentionCountWidget = ({
+  config: _config
+}: {
+  config: TitleWidgetConfig;
+}) => {
+  const { workspaceSlug } = useWorkspaceContext();
+  return <ApiIntegrationCatalogSingleStatTile workspaceId={workspaceSlug} kind="needs-attention" />;
+};
+
+const ApiCatalogPairGapsWidget = ({ config: _config }: { config: TitleWidgetConfig }) => {
+  const { workspaceSlug } = useWorkspaceContext();
+  return <ApiIntegrationCatalogSingleStatTile workspaceId={workspaceSlug} kind="pair-gaps" />;
+};
+
 const ApiCatalogNeedsAttentionWidget = ({ config }: { config: ListWidgetConfig }) => {
   const { workspaceSlug, openApi } = useApiCatalogNavigation();
   const { apiConfig, isLoading, isError } = useResolvedApiIntegrationCatalogConfig(workspaceSlug);
@@ -228,6 +243,40 @@ export const apiIntegrationCatalogDashboardWidgetSpecs: Array<{
       isValidConfig: isValidTitleConfig,
       createDefaultConfig: () => ({}),
       getTitle: (config: TitleWidgetConfig) => titleFor(config, 'API catalog stats'),
+      configForm: TitleConfigForm
+    }
+  },
+  {
+    type: 'api-integration-catalog-needs-attention-count',
+    spec: {
+      icon: TbAlertTriangle,
+      label: 'Needs attention (count)',
+      description: 'Number of open API change and deprecation cases.',
+      defaultW: 3,
+      defaultH: 5,
+      surfaces: ['workspace'],
+      component: ApiCatalogNeedsAttentionCountWidget,
+      frame: { hideOutsideEdit: true, padded: false, showIcon: false },
+      isValidConfig: isValidTitleConfig,
+      createDefaultConfig: () => ({}),
+      getTitle: (config: TitleWidgetConfig) => titleFor(config, 'Needs attention (count)'),
+      configForm: TitleConfigForm
+    }
+  },
+  {
+    type: 'api-integration-catalog-pair-gaps',
+    spec: {
+      icon: TbChartBar,
+      label: 'Provider/consumer gaps',
+      description: 'API provider/consumer pairs without a matching Data Flow.',
+      defaultW: 3,
+      defaultH: 5,
+      surfaces: ['workspace'],
+      component: ApiCatalogPairGapsWidget,
+      frame: { hideOutsideEdit: true, padded: false, showIcon: false },
+      isValidConfig: isValidTitleConfig,
+      createDefaultConfig: () => ({}),
+      getTitle: (config: TitleWidgetConfig) => titleFor(config, 'Provider/consumer gaps'),
       configForm: TitleConfigForm
     }
   },

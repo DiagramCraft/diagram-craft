@@ -1,6 +1,6 @@
 import { implement } from '@orpc/server';
 import type { DatabaseAdapter } from '../../db/database';
-import { requireEntityAction } from '../auth/authorization';
+import { requireEntityAction, requireSchemaRead } from '../auth/authorization';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { createOrpcHandler } from '../../utils/orpcHandler';
 import { entityScoped, orpcErrorMiddleware, workspaceScoped } from '../../utils/orpcErrors';
@@ -11,6 +11,7 @@ import { importParse, importCommit } from './importOperations';
 import {
   listEntitiesWithCount,
   countEntities,
+  countRelations,
   getEntityFacets,
   getTimelineMarkers,
   getEntityTree,
@@ -332,6 +333,32 @@ const entityQueryTextHandlers = {
       authCtx,
       relationSchemas
     );
+  }),
+
+  countText: entityRouter.entityQueryText.countText.handler(async ({ input, context }) => {
+    const { workspace, authCtx } = context;
+    const { schemas, enums, relationSchemas } = await buildQueryCatalogs(context.db, workspace);
+    const parsed = parseAndValidateEntityQueryText(
+      input.query.text,
+      schemas,
+      enums,
+      authCtx,
+      relationSchemas
+    );
+    if (!parsed.ok) return parsed;
+
+    if (parsed.query.root_kind === 'relation') {
+      requireSchemaRead(authCtx);
+      const total = await countRelations(context.db, workspace, authCtx, {
+        relationQuery: parsed.query
+      });
+      return { ok: true as const, total };
+    }
+    const { query } = await prepareEntityQueryRequest(context.db, workspace, authCtx, {
+      entityQuery: parsed.query
+    });
+    const total = await countEntities(context.db, workspace, authCtx, query);
+    return { ok: true as const, total };
   }),
 
   printText: entityRouter.entityQueryText.printText.handler(async ({ input, context }) => {

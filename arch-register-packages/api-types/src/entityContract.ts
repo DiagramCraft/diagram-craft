@@ -31,6 +31,11 @@ const entityQueryParseResultSchema = z.discriminatedUnion('ok', [
   z.object({ ok: z.literal(false), errors: z.array(entityQueryParseErrorSchema) })
 ]);
 
+const entityQueryCountResultSchema = z.discriminatedUnion('ok', [
+  z.object({ ok: z.literal(true), total: z.number().int() }),
+  z.object({ ok: z.literal(false), errors: z.array(entityQueryParseErrorSchema) })
+]);
+
 // ── Shared sub-schemas ────────────────────────────────────────
 
 const entityLinkSchema = z.object({
@@ -620,6 +625,19 @@ export const workspaceEntityContract = oc.tag('Entities').router({
       })
       .input(z.object({ params: ws, query: z.object({ text: z.string() }) }))
       .output(entityQueryParseResultSchema),
+    countText: oc
+      .route({
+        method: 'GET',
+        path: '/{workspace}/query/count-text',
+        inputStructure: 'detailed',
+        summary: 'Count records matching a text query',
+        description:
+          'Parses and validates a text query for the calling user and returns the number of matching ' +
+          'entities (or relations, for relation-rooted queries), or structured parse errors.',
+        tags: ['Entities']
+      })
+      .input(z.object({ params: ws, query: z.object({ text: z.string() }) }))
+      .output(entityQueryCountResultSchema),
     printText: oc
       .route({
         method: 'POST',

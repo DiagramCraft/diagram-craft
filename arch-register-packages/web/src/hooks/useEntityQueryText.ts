@@ -1,6 +1,7 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import { orpcClient } from '../lib/orpcClient';
+import { entityQueryTextCountQuery } from '../queries/entities';
 
 // Wraps entityQuery.{parseText,printText} (specs/QUERY_LANGUAGE.md §4) — mutations rather than
 // queries since callers trigger these on demand (debounced typing, mode switch), not as a
@@ -35,3 +36,6 @@ export const useRunEntityQuery = (workspaceId: string) =>
         query: { entityQuery: JSON.stringify(query), view: 'full' }
       })
   });
+
+export const useQueryTextCount = (workspaceId: string, text: string, enabled = true) =>
+  useQuery(entityQueryTextCountQuery(workspaceId, text, enabled));

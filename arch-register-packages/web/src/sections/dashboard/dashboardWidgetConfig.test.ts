@@ -134,6 +134,37 @@ describe('parseKnownDashboardWidget', () => {
     ).toBeNull();
   });
 
+  it('parses a query-mode AggregateStat and rejects percent without a denominator', () => {
+    const base = { id: 'stat', type: 'AggregateStat', x: 0, y: 0, w: 3, h: 2 };
+    expect(
+      parseKnownDashboardWidget({
+        ...base,
+        config: {
+          query: 'schema:"Data Flow"',
+          subtextQuery: 'schema:"Data Flow"',
+          severity: { warnAt: 1 }
+        }
+      })?.type
+    ).toBe('AggregateStat');
+    expect(
+      parseKnownDashboardWidget({
+        ...base,
+        config: { query: 'schema:"Control"', display: 'percent' }
+      })
+    ).toBeNull();
+    expect(
+      parseKnownDashboardWidget({
+        ...base,
+        config: {
+          query: 'schema:"Control"',
+          display: 'percent',
+          denominatorQuery: 'schema:"Control"'
+        }
+      })?.type
+    ).toBe('AggregateStat');
+    expect(parseKnownDashboardWidget({ ...base, config: { query: '' } })).toBeNull();
+  });
+
   it('parses a TopEntities widget with a sort field', () => {
     const widget = parseKnownDashboardWidget({
       id: 'top-entities',

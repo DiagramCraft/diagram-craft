@@ -3677,7 +3677,37 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         w: 4,
         h: 8
       },
-      { id: 'default-activity-feed', type: 'activity-feed', config: {}, x: 0, y: 16, w: 12, h: 24 }
+      {
+        id: 'risks-outside-appetite',
+        type: 'AggregateStat',
+        config: {
+          query: 'schema:Risk AND status != "closed" AND residual_risk_score >= 10',
+          label: 'Risks outside appetite',
+          subtextTemplate: 'open, high or critical residual risk',
+          severity: { warnAt: 1 }
+        },
+        x: 0,
+        y: 16,
+        w: 6,
+        h: 8
+      },
+      {
+        id: 'control-coverage',
+        type: 'AggregateStat',
+        config: {
+          query: 'schema:Control AND operating_effectiveness = "effective"',
+          denominatorQuery: 'schema:Control',
+          display: 'percent',
+          label: 'Control coverage',
+          subtextTemplate: '{count} of {total} tested effective',
+          severity: { warnAt: 80, critAt: 50, direction: 'below' }
+        },
+        x: 6,
+        y: 16,
+        w: 6,
+        h: 8
+      },
+      { id: 'default-activity-feed', type: 'activity-feed', config: {}, x: 0, y: 24, w: 12, h: 24 }
     ],
     views: [
       {

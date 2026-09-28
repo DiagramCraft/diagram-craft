@@ -92,6 +92,17 @@ export const entityQueryTextParseQuery = (workspaceId: string, text: string, ena
     enabled: enabled && !!workspaceId && !!text
   });
 
+export const entityQueryTextCountQuery = (workspaceId: string, text: string, enabled = true) =>
+  queryOptions({
+    queryKey: [...entityKeys.all, 'queryText', 'count', workspaceId, text],
+    queryFn: ({ signal }) =>
+      orpcClient.entityQueryText.countText(
+        { params: { workspace: workspaceId }, query: { text } },
+        { signal }
+      ),
+    enabled: enabled && !!workspaceId && text.trim() !== ''
+  });
+
 export const entityJsonQuery = (workspaceId: string, entityId: string, enabled = true) =>
   queryOptions({
     queryKey: entityKeys.json(workspaceId, entityId, 1),

@@ -526,7 +526,7 @@ test.describe('definition import', () => {
 
     expect(preview.errors).toEqual([]);
     expect(preview.conflicts).toEqual([]);
-    expect(preview.dashboardWidgets).toHaveLength(8);
+    expect(preview.dashboardWidgets).toHaveLength(10);
     const dependencySchemaNames = preview.schemas
       .filter(schema => schema.dependency)
       .map(schema => schema.name);

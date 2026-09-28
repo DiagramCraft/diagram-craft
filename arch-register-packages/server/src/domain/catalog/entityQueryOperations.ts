@@ -1347,6 +1347,33 @@ export const collectRelationsFromIR = async (
   });
 };
 
+export const countRelations = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  authCtx: WorkspaceAuthorizationContext | null,
+  options: Pick<RelationQueryOptions, 'relationQuery'>
+): Promise<number> => {
+  try {
+    const [schemas, relationSchemas] = await Promise.all([
+      db.catalog.listSchemas(workspace),
+      db.relation.listRelationSchemas(workspace)
+    ]);
+    const { countQuery } = await compileRelationQueries(
+      db,
+      workspace,
+      authCtx,
+      options,
+      schemas,
+      relationSchemas,
+      null,
+      0
+    );
+    return db.relation.runCompiledRelationCountQuery(countQuery.sql, countQuery.params);
+  } catch (error) {
+    return handleError(error, 'Failed to count relations');
+  }
+};
+
 export const listRelationsWithCount = async (
   db: DatabaseAdapter,
   workspace: string,

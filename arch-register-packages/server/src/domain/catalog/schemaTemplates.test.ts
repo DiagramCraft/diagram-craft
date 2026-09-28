@@ -1136,7 +1136,7 @@ describe('instantiateTemplate', () => {
       requirementLevel: 'required'
     });
 
-    expect(definitions.dashboardWidgets).toHaveLength(8);
+    expect(definitions.dashboardWidgets).toHaveLength(10);
     expect(
       definitions.dashboardWidgets.find(widget => widget.id === 'top-risks-by-score')
     ).toMatchObject({

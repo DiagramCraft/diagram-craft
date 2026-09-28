@@ -119,6 +119,11 @@
           let users choose how many items to show. Other widget types show a fixed title naming the widget type. In
           edit mode, the per-widget edit and remove controls appear within the title bar rather than overlapping the
           content.
+          An "Aggregate stat" widget shows the number of entities or relations matching a query written in the
+          entity query language, or a percentage of a second "total" query. It can add a subtext (optionally using a
+          second query's count) and highlight the value in warning or critical colours beyond configurable
+          thresholds, and its link opens the matching records in the catalog. Stats that need logic beyond a query
+          count (case queues, provider/consumer coverage, sums, group-by distributions) remain dedicated widgets.
           A "Blast radius" widget can be added to workspace dashboards: users pick an entity in the widget's
           configuration and it shows the same depth- and owner-filterable blast-radius list as the entity detail tab.
 
