@@ -16,7 +16,10 @@ test.describe('App Dashboard API', () => {
     expect(dashboard.name).toBe('Overview');
     expect(dashboard.description).not.toBe('');
     expect(dashboard.widgets.map(w => w.type)).toEqual([
-      'api-integration-catalog-stats',
+      'api-integration-catalog-needs-attention-count',
+      'AggregateStat',
+      'AggregateStat',
+      'api-integration-catalog-pair-gaps',
       'api-integration-catalog-needs-attention',
       'api-integration-catalog-most-consumed',
       'api-integration-catalog-at-risk'

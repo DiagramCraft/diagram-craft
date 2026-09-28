@@ -14,12 +14,52 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
     description: 'API specifications, operations and integration relations at a glance.',
     widgets: [
       {
-        id: 'seed-stats',
-        type: 'api-integration-catalog-stats',
+        id: 'seed-stat-needs-attention',
+        type: 'api-integration-catalog-needs-attention-count',
         config: {},
         x: 0,
         y: 0,
-        w: 12,
+        w: 3,
+        h: 5
+      },
+      {
+        id: 'seed-stat-crossing-boundary',
+        type: 'AggregateStat',
+        config: {
+          query: 'schema:"Data Flow" AND cross_boundary = "cross-boundary"',
+          label: 'Crossing a boundary',
+          subtextTemplate: 'source and destination regions differ',
+          severity: { warnAt: 1 },
+          showLink: false
+        },
+        x: 3,
+        y: 0,
+        w: 3,
+        h: 5
+      },
+      {
+        id: 'seed-stat-restricted-data',
+        type: 'AggregateStat',
+        config: {
+          query: 'schema:"Data Flow" AND data_classification in ("sensitive", "highly-sensitive")',
+          label: 'Carrying restricted data',
+          subtextQuery: 'schema:"Data Flow" AND data_classification = "highly-sensitive"',
+          subtextTemplate: '{sub} highly sensitive',
+          severity: { critAt: 1 },
+          showLink: false
+        },
+        x: 6,
+        y: 0,
+        w: 3,
+        h: 5
+      },
+      {
+        id: 'seed-stat-pair-gaps',
+        type: 'api-integration-catalog-pair-gaps',
+        config: {},
+        x: 9,
+        y: 0,
+        w: 3,
         h: 5
       },
       {

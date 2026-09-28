@@ -12,12 +12,14 @@
   margin: 0 0 var(--article-block-gap) 0;
 }
 
-/* Rendered as dashboard widget content: WidgetFrame already supplies chrome. */
+/* Rendered as dashboard widget content: match the app stat tiles (uppercase label above a
+   medium-weight value, dim subtext). WidgetFrame supplies no title chrome for this widget. */
 div[data-frame="true"] .card {
-  border: none;
-  background: transparent;
+  width: auto;
+  height: 100%;
   margin: 0;
-  padding: 0;
+  padding: 14px 16px 16px;
+  gap: 2px;
   min-width: 0;
 }
 
@@ -26,6 +28,25 @@ div[data-frame="true"] .card {
   font-weight: 700;
   line-height: 1;
   color: var(--base-fg);
+}
+
+div[data-frame="true"] .card .number {
+  order: 1;
+  font-size: 28px;
+  font-weight: 500;
+  letter-spacing: -0.5px;
+}
+
+div[data-frame="true"] .card .label {
+  order: 0;
+  font-size: 11px;
+  color: var(--base-fg-more-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+div[data-frame="true"] .card .sub {
+  order: 2;
 }
 
 @container frame (max-width: 220px) {
@@ -37,6 +58,15 @@ div[data-frame="true"] .card {
 .label {
   font-size: 13px;
   color: var(--base-fg-dim);
+}
+
+.sub {
+  font-size: 11.5px;
+  color: var(--base-fg-more-dim);
+}
+
+div[data-frame="true"] .card .viewLink {
+  order: 3;
 }
 
 .viewLink {

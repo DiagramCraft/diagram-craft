@@ -33,6 +33,34 @@ const createEntity = async (orpc: TestORPCClient, body: Record<string, unknown>)
 };
 
 test.describe('data routes', () => {
+  test('GET /query/count-text counts entities, relations and reports parse errors', async ({
+    orpc,
+    seeded: _
+  }) => {
+    const componentCount = await orpc.entities.count({
+      params: { workspace: 'default' },
+      query: { _schemaId: componentSchemaId }
+    });
+    const byText = await orpc.entityQueryText.countText({
+      params: { workspace: 'default' },
+      query: { text: 'schema:Component' }
+    });
+    expect(byText).toEqual({ ok: true, total: componentCount.total });
+
+    const relationCount = await orpc.entityQueryText.countText({
+      params: { workspace: 'default' },
+      query: { text: 'schema:"Consumes API"' }
+    });
+    expect(relationCount.ok).toBe(true);
+    expect(relationCount.ok && relationCount.total).toBeGreaterThan(0);
+
+    const invalid = await orpc.entityQueryText.countText({
+      params: { workspace: 'default' },
+      query: { text: 'schema:Component AND (' }
+    });
+    expect(invalid.ok).toBe(false);
+  });
+
   test('GET /api/:workspace/data lists seeded entities and supports summary filters', async ({
     orpc,
     seeded: _
