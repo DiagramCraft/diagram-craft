@@ -272,6 +272,13 @@ describe('parseKnownDashboardWidget', () => {
         config: { limit: 8 },
         width: 6,
         height: 4
+      },
+      {
+        type: 'blast-radius',
+        title: 'Blast radius',
+        config: {},
+        width: 6,
+        height: 4
       }
     ];
 

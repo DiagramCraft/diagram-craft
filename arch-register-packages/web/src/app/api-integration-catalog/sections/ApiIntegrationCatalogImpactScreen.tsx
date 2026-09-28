@@ -15,7 +15,13 @@ import {
 } from '../apiEndpointRelations';
 import type { ApiIntegrationCatalogImpactSearchParams } from '../../../routes/searchParams';
 import { useEntityDrawer } from '../../../sections/entities/entityDrawer/useEntityDrawer';
-import { ApiBlastRadiusPanel } from './ApiBlastRadiusPanel';
+import { BlastRadiusPanel } from '../../../sections/entities/components/BlastRadiusPanel';
+import {
+  API_BLAST_RADIUS_GROUPS,
+  API_BLAST_RADIUS_MAX_DEPTH,
+  API_BLAST_RADIUS_NO_PATHS_STATE,
+  buildApiBlastRadiusPaths
+} from './apiBlastRadiusConfig';
 import styles from './ApiIntegrationCatalogPlaceholderScreen.module.css';
 
 /**
@@ -84,11 +90,15 @@ export const ApiIntegrationCatalogImpactScreen = () => {
               'What a change to this specification would reach: registered consumers, then whatever consumes their APIs in turn.'
             }
           />
-          <ApiBlastRadiusPanel
+          <BlastRadiusPanel
             workspaceId={workspaceSlug}
-            apiId={selectedApi._uid}
-            providersRelationSchemaId={providersRelationSchemaId}
-            consumersRelationSchemaId={consumersRelationSchemaId}
+            subject={{ kind: 'entity', entityId: selectedApi._uid }}
+            paths={buildApiBlastRadiusPaths(providersRelationSchemaId, consumersRelationSchemaId)}
+            groups={API_BLAST_RADIUS_GROUPS}
+            showFilters={false}
+            maxDepth={API_BLAST_RADIUS_MAX_DEPTH}
+            title="Blast radius"
+            noPathsState={API_BLAST_RADIUS_NO_PATHS_STATE}
             schemas={schemas.data ?? []}
             lifecycleStates={lifecycleStates}
           />
