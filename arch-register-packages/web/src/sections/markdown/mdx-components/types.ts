@@ -56,6 +56,16 @@ export type DashboardWidgetSpec<Config extends Record<string, unknown> = Record<
     component: React.ComponentType<{ config: Config }>;
     /** Optional live title renderer for widgets whose title comes from fetched data. */
     titleComponent?: React.ComponentType<{ config: Config }>;
+    /** Extra content (links, counts) at the right of the frame header, before the edit/remove controls. */
+    headerActionsComponent?: React.ComponentType<{ config: Config }>;
+    frame?: {
+      /** No border, background or header unless the dashboard is being edited. */
+      hideOutsideEdit?: boolean;
+      /** Whether the frame body has padding; defaults to true. */
+      padded?: boolean;
+      /** Whether the widget's icon is shown in the frame header; defaults to true. The picker always shows it. */
+      showIcon?: boolean;
+    };
     /**
      * Structural validity AND save-completeness: also gates the dialog's Save
      * button, so this should reject configs missing required selections (e.g. an

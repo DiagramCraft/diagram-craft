@@ -125,7 +125,7 @@ export const blastRadiusDashboardWidgetSpec: {
     label: 'Blast radius',
     description: 'Entities reachable from a chosen entity, with depth and owner filters.',
     defaultW: 6,
-    defaultH: 4,
+    defaultH: 16,
     surfaces: ['workspace'],
     component: BlastRadiusWidget,
     isValidConfig,

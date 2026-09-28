@@ -26,7 +26,7 @@ export const entityTableSpec = defineMdxComponent<
     label: 'Entity table',
     description: 'A filtered table of entities.',
     defaultW: 6,
-    defaultH: 6,
+    defaultH: 24,
     surfaces: ['workspace', 'project'],
     component: createDashboardWidgetAdapter(EntityTable, (config: EntityTableWidgetConfig) => ({
       schema: config.schema,

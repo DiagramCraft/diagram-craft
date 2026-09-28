@@ -28,7 +28,7 @@ export const entityStaleReportSpec = defineMdxComponent<
     label: 'Stale entity report',
     description: 'Entities that have not been updated recently.',
     defaultW: 6,
-    defaultH: 6,
+    defaultH: 24,
     surfaces: ['workspace'],
     component: createDashboardWidgetAdapter(
       EntityStaleReport,

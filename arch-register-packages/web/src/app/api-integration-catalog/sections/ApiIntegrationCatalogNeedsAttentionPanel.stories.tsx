@@ -18,7 +18,7 @@ const casesQuery = { status: 'open', subjectType: 'entity' } as const;
  * Proves `ApiIntegrationCatalogNeedsAttentionPanel` (#3458) renders from a plain prop object with
  * zero router involvement — see #3459. The panel itself imports no router hooks; a real app Screen
  * resolves `workspaceId`/`apiSchemaId` from `useParams` and hands them down as props (see
- * `ApiIntegrationCatalogOverviewScreen.tsx`).
+ * the seeded Overview dashboard).
  */
 const meta = {
   title: 'API & Integration Catalog/NeedsAttentionPanel',

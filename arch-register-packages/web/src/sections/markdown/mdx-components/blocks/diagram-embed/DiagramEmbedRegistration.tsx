@@ -24,7 +24,7 @@ export const diagramEmbedSpec = defineMdxComponent<
     label: 'Diagram',
     description: 'A read-only preview of a selected architecture diagram.',
     defaultW: 6,
-    defaultH: 4,
+    defaultH: 16,
     surfaces: ['workspace', 'project'],
     component: createDashboardWidgetAdapter(DiagramEmbed, (config: DiagramEmbedWidgetConfig) => ({
       id: config.fileId,

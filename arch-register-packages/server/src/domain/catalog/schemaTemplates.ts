@@ -3611,7 +3611,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         x: 0,
         y: 0,
         w: 3,
-        h: 2
+        h: 8
       },
       {
         id: 'default-project-count',
@@ -3620,7 +3620,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         x: 3,
         y: 0,
         w: 3,
-        h: 2
+        h: 8
       },
       {
         id: 'default-diagram-count',
@@ -3629,7 +3629,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         x: 6,
         y: 0,
         w: 3,
-        h: 2
+        h: 8
       },
       {
         id: 'default-completeness-percent',
@@ -3638,7 +3638,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         x: 9,
         y: 0,
         w: 3,
-        h: 2
+        h: 8
       },
       {
         id: 'top-risks-by-score',
@@ -3651,9 +3651,9 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           label: 'Top risks by score'
         },
         x: 0,
-        y: 2,
+        y: 8,
         w: 4,
-        h: 2
+        h: 8
       },
       {
         id: 'compliance-coverage',
@@ -3664,20 +3664,20 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           label: 'Compliance coverage'
         },
         x: 4,
-        y: 2,
+        y: 8,
         w: 4,
-        h: 2
+        h: 8
       },
       {
         id: 'overdue-risk-control-reviews',
         type: 'Assessments',
         config: { mode: 'overdue', label: 'Overdue risk and control reviews' },
         x: 8,
-        y: 2,
+        y: 8,
         w: 4,
-        h: 2
+        h: 8
       },
-      { id: 'default-activity-feed', type: 'activity-feed', config: {}, x: 0, y: 4, w: 12, h: 6 }
+      { id: 'default-activity-feed', type: 'activity-feed', config: {}, x: 0, y: 16, w: 12, h: 24 }
     ],
     views: [
       {

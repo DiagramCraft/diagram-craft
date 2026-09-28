@@ -1,4 +1,5 @@
 import { Fragment, type ReactNode } from 'react';
+import { InlineEditableText } from './InlineEditableText';
 import styles from './Title.module.css';
 
 export type TitleBreadcrumbItem = {
@@ -14,6 +15,10 @@ export type TitleProps = {
   titleTestId?: string;
   chips?: ReactNode;
   description?: ReactNode;
+  /** When set, the title becomes an inline-editable text field. */
+  onTitleChange?: (title: string) => void;
+  /** When set, the description becomes an inline-editable text field (`description` must be a string). */
+  onDescriptionChange?: (description: string) => void;
   toggleButtons?: ReactNode;
   buttons?: ReactNode;
   menu?: ReactNode;
@@ -27,6 +32,8 @@ export const Title = ({
   titleTestId,
   chips,
   description,
+  onTitleChange,
+  onDescriptionChange,
   toggleButtons,
   buttons,
   menu
@@ -60,13 +67,35 @@ export const Title = ({
               {eyebrow && <div className={styles.eyebrow}>{eyebrow}</div>}
               <div className={styles.titleLine}>
                 <h1 className={styles.title} data-testid={titleTestId}>
-                  {title}
+                  {onTitleChange ? (
+                    <InlineEditableText
+                      value={title}
+                      ariaLabel="Name"
+                      placeholder="Name"
+                      testId="dashboard-name-input"
+                      onChange={onTitleChange}
+                    />
+                  ) : (
+                    title
+                  )}
                 </h1>
                 {chips && <div className={styles.chips}>{chips}</div>}
               </div>
             </div>
           </div>
-          {description && <div className={styles.description}>{description}</div>}
+          {onDescriptionChange ? (
+            <div className={styles.description}>
+              <InlineEditableText
+                value={typeof description === 'string' ? description : ''}
+                ariaLabel="Description"
+                placeholder="Add a description"
+                testId="dashboard-description-input"
+                onChange={onDescriptionChange}
+              />
+            </div>
+          ) : (
+            description && <div className={styles.description}>{description}</div>
+          )}
         </div>
 
         {hasRight && (

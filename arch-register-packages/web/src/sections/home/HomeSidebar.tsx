@@ -68,7 +68,11 @@ export const HomeSidebar = ({
   const deletePersonalDashboard = useDeletePersonalDashboard(workspaceSlug);
 
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [renameTarget, setRenameTarget] = useState<{ id: string; name: string } | null>(null);
+  const [renameTarget, setRenameTarget] = useState<{
+    id: string;
+    name: string;
+    description: string;
+  } | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
   const [contextMenu, setContextMenu] = useState<{
     x: number;
@@ -292,9 +296,10 @@ export const HomeSidebar = ({
         title="New dashboard"
         confirmLabel="Create dashboard"
         onCancel={() => setCreateDialogOpen(false)}
-        onConfirm={name => {
+        initialDescription=""
+        onConfirm={(name, description) => {
           createDashboard.mutate(
-            { name },
+            { name, description },
             {
               onSuccess: created => {
                 setCreateDialogOpen(false);
@@ -312,10 +317,11 @@ export const HomeSidebar = ({
           title="Rename dashboard"
           confirmLabel="Save"
           initialName={renameTarget.name}
+          initialDescription={renameTarget.description}
           onCancel={() => setRenameTarget(null)}
-          onConfirm={name => {
+          onConfirm={(name, description) => {
             updateDashboard.mutate(
-              { id: renameTarget.id, body: { name } },
+              { id: renameTarget.id, body: { name, description } },
               { onSuccess: () => setRenameTarget(null) }
             );
           }}

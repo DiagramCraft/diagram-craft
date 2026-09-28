@@ -7,16 +7,19 @@ import type {
 } from '@arch-register/api-types/dashboardContract';
 import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
 import type { WorkspaceDashboardDbResult } from './db/dashboardDatabase';
+import { APP_DASHBOARD_SEEDS } from './appDashboardSeeds';
 import { httpAssert } from '../../utils/httpAssert';
 
 export const toApi = (row: WorkspaceDashboardDbResult): ApiWorkspaceDashboard => ({
   id: row.id,
   workspaceId: row.workspace,
   name: row.name,
+  description: row.description,
   order: row.sort_order,
   widgets: row.layout,
   updatedAt: row.updated_at.toISOString(),
-  updatedBy: row.updated_by
+  updatedBy: row.updated_by,
+  appKey: row.app_key
 });
 
 const nextSortOrder = (existing: WorkspaceDashboardDbResult[]): number =>
@@ -100,6 +103,33 @@ export const listWorkspaceDashboards = async (
   return [toApi(seeded)];
 };
 
+export const getOrCreateAppDashboard = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  appKey: string
+): Promise<ApiWorkspaceDashboard> => {
+  const seed = APP_DASHBOARD_SEEDS[appKey];
+  httpAssert.present(seed, { status: 404, message: 'App dashboard not found' });
+
+  const existing = await db.dashboard.getByAppKey(workspace, appKey);
+  if (existing) return toApi(existing);
+
+  const created = await db.dashboard.create({
+    id: randomUUID(),
+    workspace,
+    name: seed!.name,
+    description: seed!.description,
+    sort_order: 0,
+    app_key: appKey,
+    updated_by: null
+  });
+  const seeded = await db.dashboard.update(workspace, created.id, {
+    layout: seed!.widgets.map(widget => ({ ...widget, config: { ...widget.config } })),
+    updated_by: null
+  });
+  return toApi(seeded!);
+};
+
 export const getWorkspaceDashboard = async (
   db: DatabaseAdapter,
   workspace: string,
@@ -123,6 +153,7 @@ export const createWorkspaceDashboard = async (
     id: randomUUID(),
     workspace,
     name: body.name,
+    description: body.description,
     sort_order: nextSortOrder(existing),
     updated_by: actorUserId
   });
@@ -141,6 +172,7 @@ export const updateWorkspaceDashboard = async (
 
   const updated = await db.dashboard.update(workspace, id, {
     name: body.name,
+    description: body.description,
     layout: body.widgets,
     updated_by: actorUserId
   });

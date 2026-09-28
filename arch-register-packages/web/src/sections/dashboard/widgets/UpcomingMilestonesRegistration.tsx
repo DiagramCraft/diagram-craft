@@ -24,7 +24,7 @@ export const upcomingMilestonesSpec = defineMdxComponent<
     label: 'Upcoming milestones',
     description: 'The most recently completed milestone and up to three upcoming ones.',
     defaultW: 3,
-    defaultH: 2,
+    defaultH: 8,
     surfaces: ['project'],
     component: UpcomingMilestonesWidget,
     isValidConfig: (_config): _config is Record<string, never> => true,

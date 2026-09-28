@@ -15,7 +15,7 @@ const DEFAULT_SEEDED_WIDGETS: ApiProjectDashboard['widgets'] = [
     x: 0,
     y: 0,
     w: 3,
-    h: 2
+    h: 8
   },
   {
     id: 'default-diagram-count',
@@ -24,7 +24,7 @@ const DEFAULT_SEEDED_WIDGETS: ApiProjectDashboard['widgets'] = [
     x: 3,
     y: 0,
     w: 3,
-    h: 2
+    h: 8
   },
   {
     id: 'default-assessments',
@@ -33,7 +33,7 @@ const DEFAULT_SEEDED_WIDGETS: ApiProjectDashboard['widgets'] = [
     x: 6,
     y: 0,
     w: 3,
-    h: 2
+    h: 8
   },
   {
     id: 'default-upcoming-milestones',
@@ -42,9 +42,9 @@ const DEFAULT_SEEDED_WIDGETS: ApiProjectDashboard['widgets'] = [
     x: 9,
     y: 0,
     w: 3,
-    h: 2
+    h: 8
   },
-  { id: 'default-entity-table', type: 'EntityTable', config: {}, x: 0, y: 2, w: 12, h: 6 }
+  { id: 'default-entity-table', type: 'EntityTable', config: {}, x: 0, y: 8, w: 12, h: 24 }
 ];
 
 export const toApi = (row: ProjectDashboardDbResult): ApiProjectDashboard => ({

@@ -36,7 +36,7 @@ export const entityBrowserEmbedSpec = defineMdxComponent<
     label: 'Entity browser',
     description: 'A fully configurable, live entity browser (arbitrary filters, sort, and views).',
     defaultW: 6,
-    defaultH: 6,
+    defaultH: 24,
     surfaces: ['workspace', 'project'],
     component: createDashboardWidgetAdapter(
       EntityBrowserEmbed,

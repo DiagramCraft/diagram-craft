@@ -5,7 +5,7 @@ import { caseKindLabel } from '../../../utils/governanceCaseLabels';
 import { formatDate } from '../../../utils/dateFormat';
 import { useDateTimeFormatPreference } from '../../../hooks/useDateTimeFormatPreference';
 import { useApiIntegrationCatalogQueue } from '../apiIntegrationCatalogQueue';
-import styles from './ApiIntegrationCatalogOverviewScreen.module.css';
+import styles from './ApiIntegrationCatalogPanels.module.css';
 
 const QUEUE_LIMIT = 8;
 
@@ -19,7 +19,7 @@ type Props = {
 
 /**
  * The Overview section's "Needs attention" queue panel (#3458) — extracted from
- * `ApiIntegrationCatalogOverviewScreen.tsx`'s former inline JSX into a standalone, self-fetching
+ * the former Overview screen's inline JSX into a standalone, self-fetching
  * component matching `ApiBlastRadiusPanel.tsx`'s shape.
  */
 export const ApiIntegrationCatalogNeedsAttentionPanel = ({
@@ -33,11 +33,13 @@ export const ApiIntegrationCatalogNeedsAttentionPanel = ({
   const queue = useApiIntegrationCatalogQueue(workspaceId, apiSchemaId, apiSchemaId != null);
 
   return (
-    <div className={embedded ? styles.widgetPanel : styles.panel}>
-      <div className={embedded ? styles.widgetHeader : styles.panelHeader}>
-        {!embedded && <span className={styles.panelTitle}>Needs attention</span>}
-        <span className="dim mono">{queue.items.length}</span>
-      </div>
+    <div className={embedded ? undefined : styles.panel}>
+      {!embedded && (
+        <div className={styles.panelHeader}>
+          <span className={styles.panelTitle}>Needs attention</span>
+          <span className="dim mono">{queue.items.length}</span>
+        </div>
+      )}
       <div className={styles.stack}>
         {queue.isLoading ? (
           <div className={styles.row}>

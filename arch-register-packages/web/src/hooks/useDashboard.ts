@@ -3,7 +3,11 @@ import type {
   CreateDashboardRequest,
   UpdateDashboardRequest
 } from '@arch-register/api-types/dashboardContract';
-import { invalidateDashboardQueries, workspaceDashboardsQuery } from '../queries/dashboard';
+import {
+  appDashboardQuery,
+  invalidateDashboardQueries,
+  workspaceDashboardsQuery
+} from '../queries/dashboard';
 import {
   invalidatePersonalDashboardQueries,
   personalDashboardsQuery
@@ -12,6 +16,9 @@ import { orpcClient } from '../lib/orpcClient';
 
 export const useWorkspaceDashboards = (workspaceSlug: string) =>
   useQuery(workspaceDashboardsQuery(workspaceSlug));
+
+export const useAppDashboard = (workspaceSlug: string, appKey: string) =>
+  useQuery(appDashboardQuery(workspaceSlug, appKey));
 
 export const useCreateWorkspaceDashboard = (workspaceSlug: string) => {
   const queryClient = useQueryClient();

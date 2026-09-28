@@ -22,7 +22,7 @@ export type ApiIntegrationCatalogStatTiles = {
 
 /**
  * Self-fetching data for the Overview's 4 stat tiles — pulled out of
- * `ApiIntegrationCatalogOverviewScreen.tsx`'s former screen-level `useQuery`/`useMemo`
+ * the former Overview screen's screen-level `useQuery`/`useMemo`
  * orchestration so the tiles are a standalone, composable unit (#3458). Independently resolves the
  * same capability config, Data Flow relations, and provider/consumer relations the Screen and other
  * extracted panels also fetch — React Query dedupes the overlapping query keys.

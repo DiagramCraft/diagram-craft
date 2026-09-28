@@ -9,7 +9,7 @@ Stewardship, Risk & Compliance, Strategy & Capability Model, Vendor Management).
 `ApiBlastRadiusPanel` from #3320) never import `useParams`/`useSearch`/`useNavigate` or any other
 router hook, directly or transitively through the hooks they call. Each `*Screen.tsx` file is the
 router boundary for its standalone app screen: it reads route params/search and resolves them into
-plain ids/strings/callbacks passed down as props (see `ApiIntegrationCatalogOverviewScreen.tsx`).
+plain ids/strings/callbacks passed down as props (see the seeded Overview dashboard).
 Dashboard widgets use small registry adapters as a separate composition boundary. Those adapters
 read workspace context and use `useNavigate` for panel callbacks, while passing the same explicit
 props to the panels. The panels remain router-free prop-consumers with their own React Query

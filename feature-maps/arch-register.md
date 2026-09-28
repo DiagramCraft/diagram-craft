@@ -728,6 +728,8 @@
           API statistics, open change and deprecation cases, most-consumed APIs, and integrations needing attention,
           with links into the APIs and Integrations sections. The statistics and three list panels can also be added
           separately to workspace dashboards, where users can set a title and choose a visible-item limit for lists.
+          The section itself is a seeded dashboard built from these widgets; users with dashboard-management permission
+          can edit its layout, and it does not appear among the workspace home dashboards.
 
         - @id:ar.api-integration-catalog.apis The APIs section lists every entity of the workspace's `api` schema (@id:
           ar.integrations.api-specification-sync) — name, protocol (s), declared API version, lifecycle, owner, and

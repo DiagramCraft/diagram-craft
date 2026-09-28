@@ -54,7 +54,7 @@ export const aggregateStatSpec = defineMdxComponent<
     label: 'Aggregate stat',
     description: 'A percentage of entities matching a condition, e.g. coverage or compliance.',
     defaultW: 3,
-    defaultH: 2,
+    defaultH: 8,
     surfaces: ['workspace', 'project'],
     component: AggregateStatWidget,
     isValidConfig: (config): config is AggregateStatWidgetConfig =>

@@ -12,6 +12,8 @@ import { ApiIntegrationCatalogAtRiskPanel } from './sections/ApiIntegrationCatal
 import { ApiIntegrationCatalogMostConsumedPanel } from './sections/ApiIntegrationCatalogMostConsumedPanel';
 import { ApiIntegrationCatalogNeedsAttentionPanel } from './sections/ApiIntegrationCatalogNeedsAttentionPanel';
 import { ApiIntegrationCatalogStatTiles } from './sections/ApiIntegrationCatalogStatTiles';
+import { useApiIntegrationCatalogQueue } from './apiIntegrationCatalogQueue';
+import panelStyles from './sections/ApiIntegrationCatalogPanels.module.css';
 import styles from '../../sections/dashboard/WidgetConfigDialog.module.css';
 
 type TitleWidgetConfig = Record<string, unknown> & { label?: string };
@@ -181,6 +183,32 @@ const ApiCatalogAtRiskWidget = ({ config }: { config: ListWidgetConfig }) => {
   );
 };
 
+const ApiCatalogNeedsAttentionHeaderActions = () => {
+  const { workspaceSlug } = useWorkspaceContext();
+  const { apiConfig } = useResolvedApiIntegrationCatalogConfig(workspaceSlug);
+  const apiSchemaId = apiConfig?.apiSchemaId ?? null;
+  const queue = useApiIntegrationCatalogQueue(workspaceSlug, apiSchemaId, apiSchemaId != null);
+  return <span className="dim mono">{queue.items.length}</span>;
+};
+
+const ApiCatalogMostConsumedHeaderActions = () => {
+  const { viewCatalog } = useApiCatalogNavigation();
+  return (
+    <button type="button" className={panelStyles.panelLink} onClick={viewCatalog}>
+      Catalog
+    </button>
+  );
+};
+
+const ApiCatalogAtRiskHeaderActions = () => {
+  const { viewIntegrations } = useApiCatalogNavigation();
+  return (
+    <button type="button" className={panelStyles.panelLink} onClick={viewIntegrations}>
+      All integrations
+    </button>
+  );
+};
+
 export const apiIntegrationCatalogDashboardWidgetSpecs: Array<{
   type: string;
   // biome-ignore lint/suspicious/noExplicitAny: this registry intentionally erases per-widget config types
@@ -193,9 +221,10 @@ export const apiIntegrationCatalogDashboardWidgetSpecs: Array<{
       label: 'API catalog stats',
       description: 'Workspace API, governance, and integration health metrics.',
       defaultW: 12,
-      defaultH: 2,
+      defaultH: 5,
       surfaces: ['workspace'],
       component: ApiCatalogStatsWidget,
+      frame: { hideOutsideEdit: true, padded: false, showIcon: false },
       isValidConfig: isValidTitleConfig,
       createDefaultConfig: () => ({}),
       getTitle: (config: TitleWidgetConfig) => titleFor(config, 'API catalog stats'),
@@ -209,9 +238,11 @@ export const apiIntegrationCatalogDashboardWidgetSpecs: Array<{
       label: 'Needs attention',
       description: 'Open API change and deprecation cases awaiting a decision.',
       defaultW: 6,
-      defaultH: 4,
+      defaultH: 16,
       surfaces: ['workspace'],
       component: ApiCatalogNeedsAttentionWidget,
+      headerActionsComponent: ApiCatalogNeedsAttentionHeaderActions,
+      frame: { padded: false, showIcon: false },
       isValidConfig: isValidListConfig,
       createDefaultConfig: () => ({ limit: 8 }),
       getTitle: (config: ListWidgetConfig) => titleFor(config, 'Needs attention'),
@@ -225,9 +256,11 @@ export const apiIntegrationCatalogDashboardWidgetSpecs: Array<{
       label: 'Most consumed APIs',
       description: 'APIs with the most registered consumers.',
       defaultW: 6,
-      defaultH: 4,
+      defaultH: 16,
       surfaces: ['workspace'],
       component: ApiCatalogMostConsumedWidget,
+      headerActionsComponent: ApiCatalogMostConsumedHeaderActions,
+      frame: { padded: false, showIcon: false },
       isValidConfig: isValidListConfig,
       createDefaultConfig: () => ({ limit: 6 }),
       getTitle: (config: ListWidgetConfig) => titleFor(config, 'Most consumed APIs'),
@@ -241,9 +274,11 @@ export const apiIntegrationCatalogDashboardWidgetSpecs: Array<{
       label: 'Integrations needing attention',
       description: 'Data flows that cross a boundary or carry restricted data.',
       defaultW: 6,
-      defaultH: 4,
+      defaultH: 16,
       surfaces: ['workspace'],
       component: ApiCatalogAtRiskWidget,
+      headerActionsComponent: ApiCatalogAtRiskHeaderActions,
+      frame: { padded: false, showIcon: false },
       isValidConfig: isValidListConfig,
       createDefaultConfig: () => ({ limit: 8 }),
       getTitle: (config: ListWidgetConfig) => titleFor(config, 'Integrations needing attention'),

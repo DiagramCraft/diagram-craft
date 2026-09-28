@@ -6,11 +6,12 @@ import { getWidgetTitle } from '../dashboardWidgetDefaults';
 
 type Props = {
   widget: DashboardWidget;
+  isEditing?: boolean;
   onEdit?: () => void;
   onRemove?: () => void;
 };
 
-export const DashboardWidgetRenderer = ({ widget, onEdit, onRemove }: Props) => {
+export const DashboardWidgetRenderer = ({ widget, isEditing = false, onEdit, onRemove }: Props) => {
   const knownWidget = parseKnownDashboardWidget(widget);
   const dashboardWidget = knownWidget ? getDashboardWidgetSpec(knownWidget.type) : undefined;
   const title = knownWidget ? (
@@ -23,11 +24,15 @@ export const DashboardWidgetRenderer = ({ widget, onEdit, onRemove }: Props) => 
     widget.type
   );
   const Icon = dashboardWidget?.icon;
+  const HeaderActions = dashboardWidget?.headerActionsComponent;
 
   return (
     <WidgetFrame
       title={title}
-      icon={Icon && <Icon size={14} />}
+      icon={Icon && dashboardWidget?.frame?.showIcon !== false && <Icon size={14} />}
+      headerActions={HeaderActions && knownWidget && <HeaderActions config={knownWidget.config} />}
+      padded={dashboardWidget?.frame?.padded !== false}
+      bare={!!dashboardWidget?.frame?.hideOutsideEdit && !isEditing}
       onEdit={onEdit}
       onRemove={onRemove}
     >

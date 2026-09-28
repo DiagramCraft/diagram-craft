@@ -39,7 +39,8 @@ export const apiIntegrationCatalogAppDefinition: AppDefinition = {
       id: IC_OVERVIEW_ID,
       icon: TbLayoutDashboard,
       tooltip: 'Overview',
-      route: IC_RAIL_PATHS[IC_OVERVIEW_ID]
+      route: IC_RAIL_PATHS[IC_OVERVIEW_ID],
+      dashboard: { appKey: 'api-integration-catalog' }
     },
     {
       id: IC_APIS_ID,

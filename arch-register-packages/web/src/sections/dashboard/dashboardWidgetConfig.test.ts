@@ -250,35 +250,35 @@ describe('parseKnownDashboardWidget', () => {
         title: 'API catalog stats',
         config: {},
         width: 12,
-        height: 2
+        height: 5
       },
       {
         type: 'api-integration-catalog-needs-attention',
         title: 'Needs attention',
         config: { limit: 8 },
         width: 6,
-        height: 4
+        height: 16
       },
       {
         type: 'api-integration-catalog-most-consumed',
         title: 'Most consumed APIs',
         config: { limit: 6 },
         width: 6,
-        height: 4
+        height: 16
       },
       {
         type: 'api-integration-catalog-at-risk',
         title: 'Integrations needing attention',
         config: { limit: 8 },
         width: 6,
-        height: 4
+        height: 16
       },
       {
         type: 'blast-radius',
         title: 'Blast radius',
         config: {},
         width: 6,
-        height: 4
+        height: 16
       }
     ];
 
@@ -338,5 +338,25 @@ describe('parseKnownDashboardWidget', () => {
         h: 2
       })
     ).toBeNull();
+  });
+});
+
+describe('api integration catalog widget frames', () => {
+  it('hides the stats frame outside edit mode and removes body padding', () => {
+    expect(getDashboardWidgetSpec('api-integration-catalog-stats')?.frame).toEqual({
+      hideOutsideEdit: true,
+      padded: false,
+      showIcon: false
+    });
+  });
+
+  it.each([
+    'api-integration-catalog-needs-attention',
+    'api-integration-catalog-most-consumed',
+    'api-integration-catalog-at-risk'
+  ])('%s has an unpadded body and header actions', type => {
+    const spec = getDashboardWidgetSpec(type);
+    expect(spec?.frame).toEqual({ padded: false, showIcon: false });
+    expect(spec?.headerActionsComponent).toBeDefined();
   });
 });

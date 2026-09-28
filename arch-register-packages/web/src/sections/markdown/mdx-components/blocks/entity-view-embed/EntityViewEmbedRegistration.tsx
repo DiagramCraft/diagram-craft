@@ -24,7 +24,7 @@ export const entityViewEmbedSpec = defineMdxComponent<
     label: 'Saved view',
     description: 'Embed one of the workspace saved views.',
     defaultW: 6,
-    defaultH: 6,
+    defaultH: 24,
     surfaces: ['workspace', 'project'],
     component: createDashboardWidgetAdapter(
       EntityViewEmbed,

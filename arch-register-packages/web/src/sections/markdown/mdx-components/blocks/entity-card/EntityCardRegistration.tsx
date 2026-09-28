@@ -23,7 +23,7 @@ export const entityCardSpec = defineMdxComponent<
     label: 'Entity card',
     description: 'A focused summary card for a single entity.',
     defaultW: 3,
-    defaultH: 2,
+    defaultH: 8,
     surfaces: ['workspace', 'project'],
     component: createDashboardWidgetAdapter(EntityCard, (config: EntityCardWidgetConfig) => ({
       id: config.entityId,
