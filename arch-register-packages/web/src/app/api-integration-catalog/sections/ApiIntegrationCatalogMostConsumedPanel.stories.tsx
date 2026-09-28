@@ -59,7 +59,11 @@ export const Populated: Story = {
     type ArtifactCollection = NonNullable<
       Awaited<ReturnType<NonNullable<ReturnType<typeof entityArtifactsQuery>['queryFn']>>>
     >;
-    const noArtifacts = { entity: {}, artifacts: [], status: 'not_configured' } as unknown as ArtifactCollection;
+    const noArtifacts = {
+      entity: {},
+      artifacts: [],
+      status: 'not_configured'
+    } as unknown as ArtifactCollection;
     client.setQueryData(entityArtifactsQuery(WORKSPACE, 'api-1').queryKey, noArtifacts);
     client.setQueryData(entityArtifactsQuery(WORKSPACE, 'api-2').queryKey, noArtifacts);
 

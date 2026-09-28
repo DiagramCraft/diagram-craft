@@ -66,8 +66,12 @@ export const Populated: Story = {
   render: () => {
     const client = createStoryQueryClient();
     client.setQueryData(
-      entityBlastRadiusAggregateQuery(WORKSPACE, { kind: 'entity', entityId: API_ID }, paths, MAX_DEPTH)
-        .queryKey,
+      entityBlastRadiusAggregateQuery(
+        WORKSPACE,
+        { kind: 'entity', entityId: API_ID },
+        paths,
+        MAX_DEPTH
+      ).queryKey,
       {
         entities: [
           {
