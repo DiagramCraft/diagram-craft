@@ -9,6 +9,8 @@ type Props = {
   apiSchemaId: string | null;
   onOpenApi: (publicId: string) => void;
   onViewCatalog: () => void;
+  limit?: number;
+  embedded?: boolean;
 };
 
 /**
@@ -20,14 +22,16 @@ export const ApiIntegrationCatalogMostConsumedPanel = ({
   workspaceId,
   apiSchemaId,
   onOpenApi,
-  onViewCatalog
+  onViewCatalog,
+  limit = 6,
+  embedded = false
 }: Props) => {
-  const mostConsumed = useMostConsumedApis(workspaceId, apiSchemaId);
+  const mostConsumed = useMostConsumedApis(workspaceId, apiSchemaId, limit);
 
   return (
-    <div className={styles.panel}>
-      <div className={styles.panelHeader}>
-        <span className={styles.panelTitle}>Most consumed APIs</span>
+    <div className={embedded ? styles.widgetPanel : styles.panel}>
+      <div className={embedded ? styles.widgetHeader : styles.panelHeader}>
+        {!embedded && <span className={styles.panelTitle}>Most consumed APIs</span>}
         <button type="button" className={styles.panelLink} onClick={onViewCatalog}>
           Catalog
         </button>

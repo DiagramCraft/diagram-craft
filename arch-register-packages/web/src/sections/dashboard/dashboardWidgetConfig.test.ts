@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { parseKnownDashboardWidget } from './dashboardWidgetConfig';
 import { getWidgetTitle } from './dashboardWidgetDefaults';
+import { getDashboardWidgetSpec } from './dashboardWidgetRegistry';
 
 describe('parseKnownDashboardWidget', () => {
   it('parses a built-in widget with nested config', () => {
@@ -237,6 +238,96 @@ describe('parseKnownDashboardWidget', () => {
         x: 0,
         y: 0,
         w: 3,
+        h: 2
+      })
+    ).toBeNull();
+  });
+
+  it('registers the API Catalog pilot widgets for workspace dashboards', () => {
+    const pilotWidgets = [
+      {
+        type: 'api-integration-catalog-stats',
+        title: 'API catalog stats',
+        config: {},
+        width: 12,
+        height: 2
+      },
+      {
+        type: 'api-integration-catalog-needs-attention',
+        title: 'Needs attention',
+        config: { limit: 8 },
+        width: 6,
+        height: 4
+      },
+      {
+        type: 'api-integration-catalog-most-consumed',
+        title: 'Most consumed APIs',
+        config: { limit: 6 },
+        width: 6,
+        height: 4
+      },
+      {
+        type: 'api-integration-catalog-at-risk',
+        title: 'Integrations needing attention',
+        config: { limit: 8 },
+        width: 6,
+        height: 4
+      }
+    ];
+
+    for (const { type, title, config, width, height } of pilotWidgets) {
+      const spec = getDashboardWidgetSpec(type);
+      expect(spec).toBeDefined();
+      expect(spec?.surfaces).toEqual(['workspace']);
+      expect(spec?.icon).toBeDefined();
+      expect(spec?.label).toBe(title);
+      expect(spec?.defaultW).toBe(width);
+      expect(spec?.defaultH).toBe(height);
+      expect(spec?.configForm).toBeDefined();
+      expect(spec?.createDefaultConfig({})).toEqual(config);
+      expect(spec?.isValidConfig(config)).toBe(true);
+      expect(getWidgetTitle({ id: type, type, config, x: 0, y: 0, w: 6, h: 4 })).toBe(title);
+      expect(
+        parseKnownDashboardWidget({ id: type, type, config, x: 0, y: 0, w: 6, h: 4 })
+      ).not.toBeNull();
+    }
+  });
+
+  it('validates API Catalog widget titles and visible-item limits', () => {
+    expect(
+      parseKnownDashboardWidget({
+        id: 'needs-attention',
+        type: 'api-integration-catalog-needs-attention',
+        config: { label: 'Queue', limit: 1 },
+        x: 0,
+        y: 0,
+        w: 6,
+        h: 4
+      })
+    ).not.toBeNull();
+
+    for (const limit of [0, 21, 1.5, '8']) {
+      expect(
+        parseKnownDashboardWidget({
+          id: 'needs-attention',
+          type: 'api-integration-catalog-needs-attention',
+          config: { limit },
+          x: 0,
+          y: 0,
+          w: 6,
+          h: 4
+        })
+      ).toBeNull();
+    }
+
+    expect(
+      parseKnownDashboardWidget({
+        id: 'stats',
+        type: 'api-integration-catalog-stats',
+        config: { label: 42 },
+        x: 0,
+        y: 0,
+        w: 12,
         h: 2
       })
     ).toBeNull();

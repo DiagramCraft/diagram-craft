@@ -133,6 +133,24 @@ test.describe('projects section', () => {
     await projectsPage.openDashboardEditor();
   });
 
+  test('keeps API Catalog widgets out of the project dashboard picker', async ({ page }) => {
+    const projectsPage = new ProjectsPage(page, defaultWorkspace.slug);
+
+    await projectsPage.gotoProject(authMigrationProject.id);
+    await projectsPage.expectProjectOpened(authMigrationProject.name);
+    await projectsPage.openDashboardEditor();
+    await page.getByRole('button', { name: 'Add widget', exact: true }).click();
+
+    for (const name of [
+      /API catalog stats/,
+      /Open API change and deprecation cases/,
+      /APIs with the most registered consumers/,
+      /Data flows that cross a boundary/
+    ]) {
+      await expect(page.getByRole('button', { name })).toHaveCount(0);
+    }
+  });
+
   test('creates a new project from the sidebar action', async ({ page }) => {
     const projectsPage = new ProjectsPage(page, defaultWorkspace.slug);
     const projectName = `Sidebar Project ${Date.now()}`;

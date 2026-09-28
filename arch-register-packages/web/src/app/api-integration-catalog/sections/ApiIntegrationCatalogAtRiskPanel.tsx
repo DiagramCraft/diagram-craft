@@ -7,6 +7,8 @@ import styles from './ApiIntegrationCatalogOverviewScreen.module.css';
 type Props = {
   workspaceId: string;
   onViewIntegrations: () => void;
+  limit?: number;
+  embedded?: boolean;
 };
 
 /**
@@ -15,13 +17,18 @@ type Props = {
  * component matching `ApiBlastRadiusPanel.tsx`'s shape. Distinguishes "Data Flow not configured"
  * from "configured, nothing at risk" with separate empty-state copy, matching prior behavior.
  */
-export const ApiIntegrationCatalogAtRiskPanel = ({ workspaceId, onViewIntegrations }: Props) => {
-  const atRisk = useAtRiskIntegrations(workspaceId);
+export const ApiIntegrationCatalogAtRiskPanel = ({
+  workspaceId,
+  onViewIntegrations,
+  limit = 8,
+  embedded = false
+}: Props) => {
+  const atRisk = useAtRiskIntegrations(workspaceId, limit);
 
   return (
-    <div className={styles.panel}>
-      <div className={styles.panelHeader}>
-        <span className={styles.panelTitle}>Integrations needing attention</span>
+    <div className={embedded ? styles.widgetPanel : styles.panel}>
+      <div className={embedded ? styles.widgetHeader : styles.panelHeader}>
+        {!embedded && <span className={styles.panelTitle}>Integrations needing attention</span>}
         <button type="button" className={styles.panelLink} onClick={onViewIntegrations}>
           All integrations
         </button>
