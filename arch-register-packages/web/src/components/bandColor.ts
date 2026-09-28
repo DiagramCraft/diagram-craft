@@ -1,4 +1,7 @@
-import type { BandTone, ColourBand } from '@arch-register/api-types/app/strategy-model/strategyModelViewConfig';
+import type {
+  BandTone,
+  ColourBand
+} from '@arch-register/api-types/app/strategy-model/strategyModelViewConfig';
 
 export type ToneOrNeutral = BandTone | 'neutral';
 
