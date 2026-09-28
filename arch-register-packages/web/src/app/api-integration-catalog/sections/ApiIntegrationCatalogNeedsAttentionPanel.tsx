@@ -13,6 +13,8 @@ type Props = {
   workspaceId: string;
   apiSchemaId: string | null;
   onOpenApi: (publicId: string) => void;
+  limit?: number;
+  embedded?: boolean;
 };
 
 /**
@@ -23,15 +25,17 @@ type Props = {
 export const ApiIntegrationCatalogNeedsAttentionPanel = ({
   workspaceId,
   apiSchemaId,
-  onOpenApi
+  onOpenApi,
+  limit = QUEUE_LIMIT,
+  embedded = false
 }: Props) => {
   const dateTimeFormatPreference = useDateTimeFormatPreference();
   const queue = useApiIntegrationCatalogQueue(workspaceId, apiSchemaId, apiSchemaId != null);
 
   return (
-    <div className={styles.panel}>
-      <div className={styles.panelHeader}>
-        <span className={styles.panelTitle}>Needs attention</span>
+    <div className={embedded ? styles.widgetPanel : styles.panel}>
+      <div className={embedded ? styles.widgetHeader : styles.panelHeader}>
+        {!embedded && <span className={styles.panelTitle}>Needs attention</span>}
         <span className="dim mono">{queue.items.length}</span>
       </div>
       <div className={styles.stack}>
@@ -48,7 +52,7 @@ export const ApiIntegrationCatalogNeedsAttentionPanel = ({
             <EmptyState title="Nothing awaiting a decision" compact />
           </div>
         ) : (
-          queue.items.slice(0, QUEUE_LIMIT).map(item => (
+          queue.items.slice(0, limit).map(item => (
             <button
               key={item.case.id}
               type="button"

@@ -53,7 +53,7 @@
           diagrams, and other primary work areas. The home screen shows a composable dashboard of widgets (stat metrics,
           saved-view embeds, entity tables, entity cards, entity graphs, entity changelogs, document browsers, entity
           browsers, diagram previews, wiki-page embeds, lifecycle and activity-trend charts, stale-entity reports, an
-          activity feed, and configurable Markdown content)
+          activity feed, configurable Markdown content, and API & Integration Catalog statistics and list panels)
           laid out on a grid; a fresh workspace shows a sensible default layout. The entity table and entity browser
           widgets both show a list of entities but serve different needs: entity table offers quick, flat schema/owner/
           lifecycle/limit filtering with fixed columns, while entity browser exposes the full entity browser experience
@@ -115,9 +115,10 @@
           field.
           The home sidebar's Data model section groups schema links by schema category.
           Every widget shows a title bar (an icon and a title, separated from the widget's content by a divider); the
-          stat-metric widget's title is configurable (via its label setting), while other widget types show a fixed
-          title naming the widget type. In edit mode, the per-widget edit and remove controls appear within the title
-          bar rather than overlapping the content.
+          stat-metric and API & Integration Catalog widgets have configurable titles; the catalog's list panels also
+          let users choose how many items to show. Other widget types show a fixed title naming the widget type. In
+          edit mode, the per-widget edit and remove controls appear within the title bar rather than overlapping the
+          content.
 
         - @id:ar.workspace.home.personal-dashboards Any workspace member can optionally create one or more personal
           dashboards for themselves, separate from the shared workspace dashboard (s). Personal dashboards are listed
@@ -710,16 +711,21 @@
     - @id:ar.api-integration-catalog Workspaces can optionally enable API & Integration Catalog as its own workspace
       application, with a dedicated left rail scoped to four sections (Overview, APIs, Integrations, Impact).
       Unlike Data Stewardship, Overview is a separate landing section rather than doubling with the first facet
-      section. The application is enabled once the workspace's existing `api-specification` capability configuration
-      (@id:ar.integrations.api-specification-sync) is valid (the required API entity schema binding resolved) — this
-      promotes `api-specification` from a capability-only binding (configurable in workspace settings but with no
-      rail of its own) to a full application; it remains the same capability the Entities app's API artifact detail
-      views already read. Overview and Sync remain scaffolded placeholders pending their own sub-issues of the API &
-      Integration Catalog epic; APIs, Integrations, and Impact have their real content (below). Integration sync
+      section. Overview summarizes API statistics, open change and deprecation cases, most-consumed APIs, and at-risk
+      integrations, with links into the APIs and Integrations sections. Its four panels are also available as workspace
+      dashboard widgets. The application is enabled once the workspace's existing `api-specification` capability
+      configuration (@id:ar.integrations.api-specification-sync) is valid (the required API entity schema binding
+      resolves) — this promotes `api-specification` from a capability-only binding (configurable in
+      workspace settings but with no rail of its own) to a full application; it remains the same capability that the
+      Entities app's API artifact detail views already read. Sync remains a scaffolded placeholder pending its own
+      sub-issue of the API & Integration
+      Catalog epic; Overview, APIs, Integrations, and Impact have their real content (below). Integration sync
       operations are available under Workspace Settings rather than in this catalog browsing application.
 
-        - @id:ar.api-integration-catalog.overview The Overview section (the app switcher's landing section) is
-          scaffolded as a placeholder pending its own APIs/integrations/health catalog-landing content.
+        - @id:ar.api-integration-catalog.overview The Overview section (the app switcher's landing section) summarizes
+          API statistics, open change and deprecation cases, most-consumed APIs, and integrations needing attention,
+          with links into the APIs and Integrations sections. The statistics and three list panels can also be added
+          separately to workspace dashboards, where users can set a title and choose a visible-item limit for lists.
 
         - @id:ar.api-integration-catalog.apis The APIs section lists every entity of the workspace's `api` schema (@id:
           ar.integrations.api-specification-sync) — name, protocol (s), declared API version, lifecycle, owner, and
@@ -1242,7 +1248,8 @@
           previews, project wiki-page embeds, configurable Markdown content, assessments, and upcoming milestones — plus
           a
           project-relevant subset of the general catalog; workspace-wide analytics widgets such as lifecycle and
-          activity-trend charts, stale-entity reports, and the activity feed are not available at project scope). The
+          activity-trend charts, stale-entity reports, the activity feed, and API & Integration Catalog widgets are
+          not available at project scope). The
           assessments widget lists up to four assessments filtered by mode and optional assessment type; the
           upcoming-milestones widget
           shows the most recently completed milestone plus up to three upcoming ones. A project has a single
