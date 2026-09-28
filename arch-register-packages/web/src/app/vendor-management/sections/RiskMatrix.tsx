@@ -1,10 +1,11 @@
+import { useMemo } from 'react';
 import {
   VENDOR_RISK_BAND_COLOR,
   VENDOR_RISK_BANDS,
   VENDOR_RISK_BAND_LABEL,
   type VendorRiskBand
 } from '../vendorRisk';
-import styles from './RiskMatrix.module.css';
+import { MatrixGrid, type MatrixGridItem } from '../../../components/MatrixGrid';
 
 const CRITICALITY_LEVELS = [5, 4, 3, 2] as const;
 
@@ -32,45 +33,33 @@ export const RiskMatrix = ({
   vendorsByCell: ReadonlyMap<string, readonly RiskMatrixVendor[]>;
   onOpenVendor: (id: string) => void;
 }) => {
-  const cellKey = (criticality: number, band: VendorRiskBand) => `${criticality}:${band}`;
+  const items = useMemo(() => {
+    const map = new Map<string, MatrixGridItem[]>();
+    for (const [key, vendors] of vendorsByCell) {
+      map.set(
+        key,
+        vendors.map(vendor => ({ id: vendor.id, label: vendor.name }))
+      );
+    }
+    return map;
+  }, [vendorsByCell]);
 
   return (
-    <div className={styles.matrix}>
-      <div className={styles.corner}>
-        <div>criticality ↓ / risk →</div>
-      </div>
-      {VENDOR_RISK_BANDS.map(({ band }) => (
-        <div key={band} className={styles.columnHeader}>
-          {VENDOR_RISK_BAND_LABEL[band]}
-        </div>
-      ))}
-      {CRITICALITY_LEVELS.map(criticality => (
-        <div key={criticality} className={styles.row}>
-          <div className={styles.rowHeader}>{criticality}</div>
-          {VENDOR_RISK_BANDS.map(({ band }) => {
-            const vendors = vendorsByCell.get(cellKey(criticality, band)) ?? [];
-            return (
-              <div
-                key={band}
-                className={styles.cell}
-                data-hot={isHot(criticality, band) || undefined}
-                style={{ '--cell-color': VENDOR_RISK_BAND_COLOR[band] } as React.CSSProperties}
-              >
-                {vendors.map(vendor => (
-                  <button
-                    key={vendor.id}
-                    type="button"
-                    className={styles.tag}
-                    onClick={() => onOpenVendor(vendor.id)}
-                  >
-                    {vendor.name}
-                  </button>
-                ))}
-              </div>
-            );
-          })}
-        </div>
-      ))}
-    </div>
+    <MatrixGrid
+      cornerLabel="criticality ↓ / risk →"
+      columns={VENDOR_RISK_BANDS.map(({ band }) => ({
+        key: band,
+        label: VENDOR_RISK_BAND_LABEL[band]
+      }))}
+      rows={CRITICALITY_LEVELS.map(criticality => ({ key: criticality, label: criticality }))}
+      cells={items}
+      getCellStyle={(criticality, band) => ({
+        color: VENDOR_RISK_BAND_COLOR[band as VendorRiskBand],
+        emphasized: isHot(Number(criticality), band as VendorRiskBand)
+      })}
+      onOpenItem={onOpenVendor}
+      rowHeaderWidth={64}
+      cellAspect={false}
+    />
   );
 };
