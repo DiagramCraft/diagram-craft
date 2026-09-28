@@ -1,11 +1,7 @@
 import { themes as prismThemes } from 'prism-react-renderer';
 import type { Config } from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
-
-const typedocEnv = process.env.DOCS_SITE_TYPEDOC;
-const isDevServerCommand = process.argv.includes('start') || process.argv.includes('serve');
-const shouldGenerateTypedoc =
-  typedocEnv === '1' || (typedocEnv == null && !isDevServerCommand);
+import { shouldGenerateTypedoc } from './typedoc-config';
 
 const typedocPlugins = shouldGenerateTypedoc
   ? [
