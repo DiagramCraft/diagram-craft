@@ -105,7 +105,7 @@ export const wikiPageWidgetSpec = defineMdxComponent<
     label: 'Wiki page',
     description: 'Display a selected wiki page on the dashboard.',
     defaultW: 6,
-    defaultH: 6,
+    defaultH: 24,
     surfaces: ['workspace', 'project'],
     component: WikiPageWidget,
     titleComponent: WikiPageWidgetTitle,

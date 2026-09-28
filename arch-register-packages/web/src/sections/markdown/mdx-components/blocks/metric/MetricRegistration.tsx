@@ -40,7 +40,7 @@ export const metricSpec = defineMdxComponent<
     label: 'Stat metric',
     description: 'A single number, such as entity count or completeness percentage.',
     defaultW: 3,
-    defaultH: 2,
+    defaultH: 8,
     surfaces: ['workspace', 'project'],
     component: createDashboardWidgetAdapter(Metric, (config: StatMetricWidgetConfig) => ({
       metricType: config.metricType,

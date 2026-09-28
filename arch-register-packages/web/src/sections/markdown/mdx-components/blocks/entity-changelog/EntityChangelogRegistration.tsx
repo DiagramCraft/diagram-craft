@@ -34,7 +34,7 @@ export const entityChangelogSpec = defineMdxComponent<
     label: 'Entity changelog',
     description: 'A recent-changes feed for one entity or a filtered set.',
     defaultW: 6,
-    defaultH: 4,
+    defaultH: 16,
     surfaces: ['workspace', 'project'],
     component: createDashboardWidgetAdapter(
       EntityChangelog,

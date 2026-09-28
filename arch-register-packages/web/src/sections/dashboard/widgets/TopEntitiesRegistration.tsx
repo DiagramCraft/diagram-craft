@@ -28,7 +28,7 @@ export const topEntitiesSpec = defineMdxComponent<
     label: 'Ranked list',
     description: 'The top entities of a type, ranked by a numeric field.',
     defaultW: 4,
-    defaultH: 4,
+    defaultH: 16,
     surfaces: ['workspace', 'project'],
     component: TopEntitiesWidget,
     isValidConfig: (config): config is TopEntitiesWidgetConfig =>

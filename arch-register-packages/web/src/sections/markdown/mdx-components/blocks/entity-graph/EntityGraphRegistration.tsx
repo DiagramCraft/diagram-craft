@@ -26,7 +26,7 @@ export const entityGraphSpec = defineMdxComponent<
     description:
       'A clickable dependency and relationship graph for one entity. Works best at 6x4 or larger.',
     defaultW: 6,
-    defaultH: 4,
+    defaultH: 16,
     surfaces: ['workspace', 'project'],
     component: createDashboardWidgetAdapter(EntityGraph, (config: EntityGraphWidgetConfig) => ({
       id: config.entityId,

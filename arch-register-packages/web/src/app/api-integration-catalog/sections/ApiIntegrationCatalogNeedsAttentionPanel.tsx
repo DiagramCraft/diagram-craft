@@ -33,11 +33,13 @@ export const ApiIntegrationCatalogNeedsAttentionPanel = ({
   const queue = useApiIntegrationCatalogQueue(workspaceId, apiSchemaId, apiSchemaId != null);
 
   return (
-    <div className={embedded ? styles.widgetPanel : styles.panel}>
-      <div className={embedded ? styles.widgetHeader : styles.panelHeader}>
-        {!embedded && <span className={styles.panelTitle}>Needs attention</span>}
-        <span className="dim mono">{queue.items.length}</span>
-      </div>
+    <div className={embedded ? undefined : styles.panel}>
+      {!embedded && (
+        <div className={styles.panelHeader}>
+          <span className={styles.panelTitle}>Needs attention</span>
+          <span className="dim mono">{queue.items.length}</span>
+        </div>
+      )}
       <div className={styles.stack}>
         {queue.isLoading ? (
           <div className={styles.row}>

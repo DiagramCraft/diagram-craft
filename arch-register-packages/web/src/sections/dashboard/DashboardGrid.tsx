@@ -15,7 +15,8 @@ import { parseKnownDashboardWidget } from './dashboardWidgetConfig';
 import styles from './DashboardGrid.module.css';
 
 const GRID_COLS = 12;
-const GRID_ROW_HEIGHT = 80;
+// Fine-grained rows: with the 12px margin, 4 rows span exactly what 1 row of the former 80px grid did.
+const GRID_ROW_HEIGHT = 11;
 const FALLBACK_WIDTH = 1200;
 
 type Props = {
@@ -141,6 +142,7 @@ export const DashboardGrid = ({
                 <div key={widget.id} className={styles.gridItem}>
                   <DashboardWidgetRenderer
                     widget={widget}
+                    isEditing={canEditGrid}
                     onEdit={
                       canEditGrid && parseKnownDashboardWidget(widget)
                         ? () => setEditingWidgetId(widget.id)

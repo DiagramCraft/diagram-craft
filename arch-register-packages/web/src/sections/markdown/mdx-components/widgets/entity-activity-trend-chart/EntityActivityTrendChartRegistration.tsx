@@ -28,7 +28,7 @@ export const entityActivityTrendChartSpec = defineMdxComponent<
     label: 'Activity trend chart',
     description: 'Recent activity volume over time.',
     defaultW: 6,
-    defaultH: 6,
+    defaultH: 24,
     surfaces: ['workspace'],
     component: createDashboardWidgetAdapter(
       EntityActivityTrendChart,

@@ -11,10 +11,6 @@
   border-radius: var(--r-md);
 }
 
-.widgetPanel {
-  min-width: 0;
-}
-
 .panelHeader {
   display: flex;
   align-items: center;
@@ -22,14 +18,6 @@
   gap: 8px;
   border-bottom: 1px solid var(--panel-border);
   padding: 8px 14px;
-}
-
-.widgetHeader {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  min-height: 18px;
-  padding: 0 0 6px;
 }
 
 .panelTitle {

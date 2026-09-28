@@ -39,7 +39,7 @@ export const DEFAULT_SEEDED_WIDGETS: DashboardWidget[] = [
     x: 0,
     y: 0,
     w: 3,
-    h: 2
+    h: 8
   },
   {
     id: 'default-project-count',
@@ -48,7 +48,7 @@ export const DEFAULT_SEEDED_WIDGETS: DashboardWidget[] = [
     x: 3,
     y: 0,
     w: 3,
-    h: 2
+    h: 8
   },
   {
     id: 'default-diagram-count',
@@ -57,7 +57,7 @@ export const DEFAULT_SEEDED_WIDGETS: DashboardWidget[] = [
     x: 6,
     y: 0,
     w: 3,
-    h: 2
+    h: 8
   },
   {
     id: 'default-completeness-percent',
@@ -66,7 +66,7 @@ export const DEFAULT_SEEDED_WIDGETS: DashboardWidget[] = [
     x: 9,
     y: 0,
     w: 3,
-    h: 2
+    h: 8
   },
-  { id: 'default-activity-feed', type: 'activity-feed', config: {}, x: 0, y: 2, w: 12, h: 6 }
+  { id: 'default-activity-feed', type: 'activity-feed', config: {}, x: 0, y: 8, w: 12, h: 24 }
 ];

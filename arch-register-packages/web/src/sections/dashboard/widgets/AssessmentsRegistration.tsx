@@ -21,7 +21,7 @@ export const assessmentsSpec = defineMdxComponent<
     label: 'Assessments',
     description: 'Open or all assessments filtered by mode and assessment type.',
     defaultW: 3,
-    defaultH: 3,
+    defaultH: 12,
     surfaces: ['workspace', 'project'],
     component: AssessmentsWidget,
     isValidConfig: (config): config is AssessmentsWidgetConfig =>

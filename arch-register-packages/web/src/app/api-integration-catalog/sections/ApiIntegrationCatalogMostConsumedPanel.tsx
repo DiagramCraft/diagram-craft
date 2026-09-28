@@ -29,13 +29,15 @@ export const ApiIntegrationCatalogMostConsumedPanel = ({
   const mostConsumed = useMostConsumedApis(workspaceId, apiSchemaId, limit);
 
   return (
-    <div className={embedded ? styles.widgetPanel : styles.panel}>
-      <div className={embedded ? styles.widgetHeader : styles.panelHeader}>
-        {!embedded && <span className={styles.panelTitle}>Most consumed APIs</span>}
-        <button type="button" className={styles.panelLink} onClick={onViewCatalog}>
-          Catalog
-        </button>
-      </div>
+    <div className={embedded ? undefined : styles.panel}>
+      {!embedded && (
+        <div className={styles.panelHeader}>
+          <span className={styles.panelTitle}>Most consumed APIs</span>
+          <button type="button" className={styles.panelLink} onClick={onViewCatalog}>
+            Catalog
+          </button>
+        </div>
+      )}
       <div className={styles.stack}>
         {mostConsumed.status === 'loading' ? (
           <div className={styles.row}>

@@ -23,7 +23,7 @@ export const conformanceSummarySpec = defineMdxComponent<
     label: 'Conformance summary',
     description: 'Current conformance violations grouped by severity, check, and schema.',
     defaultW: 5,
-    defaultH: 4,
+    defaultH: 16,
     surfaces: ['workspace'],
     component: ConformanceSummaryWidget,
     isValidConfig: (config): config is ConformanceSummaryWidgetConfig =>

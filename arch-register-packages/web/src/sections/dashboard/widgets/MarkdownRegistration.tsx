@@ -23,7 +23,7 @@ export const markdownWidgetSpec = defineMdxComponent<
     label: 'Markdown',
     description: 'Display simple Markdown content on the dashboard.',
     defaultW: 6,
-    defaultH: 4,
+    defaultH: 16,
     surfaces: ['workspace', 'project'],
     component: MarkdownWidget,
     isValidConfig: (config): config is MarkdownWidgetConfig =>

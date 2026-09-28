@@ -36,7 +36,7 @@ export const documentBrowserEmbedSpec = defineMdxComponent<
     label: 'Document browser',
     description: 'A filterable list of documents in this workspace or project.',
     defaultW: 6,
-    defaultH: 4,
+    defaultH: 16,
     surfaces: ['workspace', 'project'],
     component: createDashboardWidgetAdapter(
       DocumentBrowserEmbed,

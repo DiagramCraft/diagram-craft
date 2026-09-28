@@ -28,7 +28,7 @@ export const activityFeedSpec = defineMdxComponent<
     label: 'Activity feed',
     description: 'A live feed of recent audit log activity.',
     defaultW: 12,
-    defaultH: 6,
+    defaultH: 24,
     surfaces: ['workspace'],
     component: ActivityFeedWidget,
     isValidConfig: (config): config is ActivityFeedWidgetConfig =>

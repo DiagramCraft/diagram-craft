@@ -24,7 +24,7 @@ export const entityLifecycleChartSpec = defineMdxComponent<
     label: 'Lifecycle chart',
     description: 'Breakdown of entities by lifecycle state.',
     defaultW: 6,
-    defaultH: 6,
+    defaultH: 24,
     surfaces: ['workspace'],
     component: EntityLifecycleChartWidget,
     isValidConfig: (_config): _config is Record<string, never> => true,
