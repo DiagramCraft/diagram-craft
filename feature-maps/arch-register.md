@@ -119,6 +119,8 @@
           let users choose how many items to show. Other widget types show a fixed title naming the widget type. In
           edit mode, the per-widget edit and remove controls appear within the title bar rather than overlapping the
           content.
+          A "Blast radius" widget can be added to workspace dashboards: users pick an entity in the widget's
+          configuration and it shows the same depth- and owner-filterable blast-radius list as the entity detail tab.
 
         - @id:ar.workspace.home.personal-dashboards Any workspace member can optionally create one or more personal
           dashboards for themselves, separate from the shared workspace dashboard (s). Personal dashboards are listed
@@ -995,8 +997,7 @@
           across every visible reference, containment, and typed relation, grouped and ranked by lifecycle, owner,
           schema, and available criticality metadata, and lists each reachable entity with an explainable path
           back to the subject; clicking a result opens that entity's drawer. Users can filter results by depth
-          (direct, or an extended two/three-hop traversal), owner, entity schema, and — for extended depths — the
-          schemas encountered along the path. The same panel is also reachable from a relation instance: a "View
+          (direct, or an extended two/three-hop traversal) and owner. The same panel is also reachable from a relation instance: a "View
           blast radius" action in the Relations browser's row menu, and a "View blast radius" button in the
           relation detail popover shown by the entity graph and Topology views, both opening it in a dialog scoped
           to that relation's two endpoints. Restricted entities and relations are never disclosed through the

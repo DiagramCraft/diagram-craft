@@ -9,35 +9,18 @@ import {
 } from '../../../sections/markdown/mdx-components/blocks/StorybookHarness';
 import { entityBlastRadiusAggregateQuery } from '../../../queries/entityTraversal';
 import { entityDetailQuery } from '../../../queries/entities';
-import { ApiBlastRadiusPanel } from './ApiBlastRadiusPanel';
+import { BlastRadiusPanel } from '../../../sections/entities/components/BlastRadiusPanel';
+import {
+  API_BLAST_RADIUS_GROUPS,
+  API_BLAST_RADIUS_MAX_DEPTH,
+  API_BLAST_RADIUS_NO_PATHS_STATE,
+  buildApiBlastRadiusPaths
+} from './apiBlastRadiusConfig';
 
 const API_ID = 'api-1';
 const PROVIDERS_RELATION_SCHEMA_ID = 'provides-api-relation';
 const CONSUMERS_RELATION_SCHEMA_ID = 'consumes-api-relation';
-const MAX_DEPTH = 2;
-
-const paths = [
-  {
-    id: 'provides-api',
-    steps: [
-      {
-        kind: 'unboundTypedRelation' as const,
-        relationSchemaId: PROVIDERS_RELATION_SCHEMA_ID,
-        direction: 'both' as const
-      }
-    ]
-  },
-  {
-    id: 'consumes-api',
-    steps: [
-      {
-        kind: 'unboundTypedRelation' as const,
-        relationSchemaId: CONSUMERS_RELATION_SCHEMA_ID,
-        direction: 'both' as const
-      }
-    ]
-  }
-];
+const paths = buildApiBlastRadiusPaths(PROVIDERS_RELATION_SCHEMA_ID, CONSUMERS_RELATION_SCHEMA_ID);
 
 const schemas = [
   { id: 'service', name: 'Service', icon: 'server', entity_count: 12, fields: [] }
@@ -49,7 +32,7 @@ const lifecycleStates = [
 ] as WorkspaceLifecycleState[];
 
 /**
- * Proves `ApiBlastRadiusPanel` (#3320, the shape #3458's panels were modeled on) renders from a
+ * Proves the unified `BlastRadiusPanel` (#3320/#3461), here in its API-catalog column configuration, renders from a
  * plain prop object with zero router involvement — see #3459. `workspaceId`/`apiId`/relation-schema
  * ids/`schemas`/`lifecycleStates` all arrive as props; the Screen (`ApiIntegrationCatalogImpactScreen.tsx`)
  * is the one that reads `useParams`/`useSearch` to resolve them.
@@ -70,7 +53,7 @@ export const Populated: Story = {
         WORKSPACE,
         { kind: 'entity', entityId: API_ID },
         paths,
-        MAX_DEPTH
+        API_BLAST_RADIUS_MAX_DEPTH
       ).queryKey,
       {
         entities: [
@@ -142,11 +125,15 @@ export const Populated: Story = {
 
     return (
       <StoryProviders client={client}>
-        <ApiBlastRadiusPanel
+        <BlastRadiusPanel
           workspaceId={WORKSPACE}
-          apiId={API_ID}
-          providersRelationSchemaId={PROVIDERS_RELATION_SCHEMA_ID}
-          consumersRelationSchemaId={CONSUMERS_RELATION_SCHEMA_ID}
+          subject={{ kind: 'entity', entityId: API_ID }}
+          paths={paths}
+          groups={API_BLAST_RADIUS_GROUPS}
+          showFilters={false}
+          maxDepth={API_BLAST_RADIUS_MAX_DEPTH}
+          title="Blast radius"
+          noPathsState={API_BLAST_RADIUS_NO_PATHS_STATE}
           schemas={schemas}
           lifecycleStates={lifecycleStates}
         />
@@ -158,11 +145,15 @@ export const Populated: Story = {
 export const NoRelationFieldsConfigured: Story = {
   render: () => (
     <StoryProviders client={createStoryQueryClient()}>
-      <ApiBlastRadiusPanel
+      <BlastRadiusPanel
         workspaceId={WORKSPACE}
-        apiId={API_ID}
-        providersRelationSchemaId={null}
-        consumersRelationSchemaId={null}
+        subject={{ kind: 'entity', entityId: API_ID }}
+        paths={buildApiBlastRadiusPaths(null, null)}
+        groups={API_BLAST_RADIUS_GROUPS}
+        showFilters={false}
+        maxDepth={API_BLAST_RADIUS_MAX_DEPTH}
+        title="Blast radius"
+        noPathsState={API_BLAST_RADIUS_NO_PATHS_STATE}
         schemas={schemas}
         lifecycleStates={lifecycleStates}
       />

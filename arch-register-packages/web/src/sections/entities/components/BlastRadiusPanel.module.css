@@ -5,6 +5,35 @@
   padding: 16px 24px 32px;
 }
 
+.card {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  margin: 16px 0 32px;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border-bottom: 1px solid var(--panel-border);
+  padding: 8px 14px;
+}
+
+.cardTitle {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--base-fg);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.cardBody {
+  padding: 16px 24px;
+}
+
 .toolbar {
   display: flex;
   align-items: center;
@@ -12,10 +41,49 @@
   flex-wrap: wrap;
 }
 
+.blast {
+  display: flex;
+  flex-direction: column;
+}
+
+.column {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--panel-border);
+  min-width: 0;
+}
+
+.column:last-child {
+  border-bottom: 0;
+}
+
+.columnHead {
+  font-size: 10.5px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--base-fg-more-dim);
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.empty {
+  font-size: 11.5px;
+  color: var(--base-fg-more-dim);
+  padding: 4px 2px;
+}
+
 .list {
   display: flex;
   flex-direction: column;
   gap: 4px;
+}
+
+.cardList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .row {
@@ -35,7 +103,26 @@
   text-decoration: none;
 }
 
-.row:hover {
+.node {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 8px 10px;
+  border-radius: var(--r);
+  text-align: left;
+  color: var(--base-fg-dim);
+  background: var(--base-bg);
+  border: 1px solid var(--panel-border);
+  cursor: pointer;
+  font-size: 11.5px;
+  width: 100%;
+  box-sizing: border-box;
+  text-decoration: none;
+}
+
+.row:hover,
+.node:hover {
   border-color: var(--base-fg-more-dim);
 }
 
@@ -48,7 +135,15 @@
   flex-wrap: wrap;
 }
 
-.rowName {
+.nodeLead {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  width: 100%;
+}
+
+.name {
   color: var(--base-fg);
   font-weight: 500;
   min-width: 0;
@@ -75,6 +170,12 @@
   gap: 6px;
   flex-shrink: 0;
   margin-left: auto;
+}
+
+.nodeMeta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .dim {
