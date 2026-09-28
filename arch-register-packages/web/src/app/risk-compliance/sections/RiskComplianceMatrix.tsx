@@ -1,11 +1,10 @@
-import type { CSSProperties } from 'react';
+import { MatrixGrid, matrixCellKey, type MatrixGridItem } from '../../../components/MatrixGrid';
 import {
   RESIDUAL_RISK_BAND_COLOR,
   RESIDUAL_RISK_BAND_LABEL,
   RESIDUAL_RISK_BANDS,
   residualRiskBand
 } from '../residualRiskBand';
-import styles from './RiskComplianceMatrix.module.css';
 
 const LIKELIHOOD_LEVELS = [1, 2, 3, 4, 5] as const;
 const IMPACT_LEVELS = [5, 4, 3, 2, 1] as const;
@@ -58,9 +57,7 @@ export const RiskComplianceMatrix = ({
   axis: 'inherent' | 'residual';
   onOpenRisk: (id: string) => void;
 }) => {
-  const cellKey = (likelihood: number, impact: number) => `${likelihood}:${impact}`;
-
-  const risksByCell = new Map<string, { id: string; name: string }[]>();
+  const risksByCell = new Map<string, MatrixGridItem[]>();
   for (const risk of risks) {
     if (risk.likelihood == null) continue;
     const likelihood = clampLevel(risk.likelihood);
@@ -73,81 +70,44 @@ export const RiskComplianceMatrix = ({
           ? clampLevel(risk.residualRiskScore / likelihood)
           : null;
     if (impact == null) continue;
-    const key = cellKey(likelihood, impact);
+    const key = matrixCellKey(impact, likelihood);
     const list = risksByCell.get(key) ?? [];
-    list.push({ id: risk.id, name: risk.name });
+    list.push({ id: risk.id, label: risk.id, title: risk.name });
     risksByCell.set(key, list);
   }
 
   return (
-    <div className={styles.scroll}>
-      <div className={styles.matrix}>
-        <div className={styles.corner}>
-          <div>
-            Impact ↑<br />
-            Likelihood →
-          </div>
-        </div>
-        {LIKELIHOOD_LEVELS.map(likelihood => (
-          <div key={likelihood} className={styles.columnHeader}>
-            {likelihood} · {LIKELIHOOD_LABELS[likelihood - 1]}
-          </div>
-        ))}
-        {IMPACT_LEVELS.map(impact => (
-          <div key={impact} className={styles.row}>
-            <div className={styles.rowHeader}>
-              {impact} · {IMPACT_LABELS[impact - 1]}
-            </div>
-            {LIKELIHOOD_LEVELS.map(likelihood => {
-              const cellRisks = risksByCell.get(cellKey(likelihood, impact)) ?? [];
-              const score = likelihood * impact;
-              const band = residualRiskBand(score);
-              return (
-                <div
-                  key={likelihood}
-                  className={styles.cell}
-                  data-outside-appetite={isOutsideAppetite(likelihood, impact) || undefined}
-                  style={
-                    {
-                      '--cell-color': band ? RESIDUAL_RISK_BAND_COLOR[band] : 'var(--panel-border)'
-                    } as CSSProperties
-                  }
-                >
-                  {cellRisks.map(risk => (
-                    <button
-                      key={risk.id}
-                      type="button"
-                      className={styles.tag}
-                      title={risk.name}
-                      onClick={() => onOpenRisk(risk.id)}
-                    >
-                      {risk.id}
-                    </button>
-                  ))}
-                  <span className={styles.score}>{score}</span>
-                </div>
-              );
-            })}
-          </div>
-        ))}
-      </div>
-      <div className={styles.foot}>
-        <div className={styles.legend}>
-          {RESIDUAL_RISK_BANDS.map(({ band }) => (
-            <span key={band} className={styles.legendItem}>
-              <span
-                className={styles.legendSwatch}
-                style={{ background: RESIDUAL_RISK_BAND_COLOR[band] }}
-              />
-              {RESIDUAL_RISK_BAND_LABEL[band]}
-            </span>
-          ))}
-        </div>
-        <span className={styles.footNote}>
-          Outlined cells are outside risk appetite — likelihood × impact above the high/critical
-          threshold.
-        </span>
-      </div>
-    </div>
+    <MatrixGrid
+      cornerLabel={
+        <>
+          Impact ↑<br />
+          Likelihood →
+        </>
+      }
+      columns={LIKELIHOOD_LEVELS.map(likelihood => ({
+        key: likelihood,
+        label: `${likelihood} · ${LIKELIHOOD_LABELS[likelihood - 1]}`
+      }))}
+      rows={IMPACT_LEVELS.map(impact => ({
+        key: impact,
+        label: `${impact} · ${IMPACT_LABELS[impact - 1]}`
+      }))}
+      cells={risksByCell}
+      getCellStyle={(impact, likelihood) => {
+        const score = Number(likelihood) * Number(impact);
+        const band = residualRiskBand(score);
+        return {
+          color: band ? RESIDUAL_RISK_BAND_COLOR[band] : 'var(--panel-border)',
+          emphasized: isOutsideAppetite(Number(likelihood), Number(impact)),
+          score
+        };
+      }}
+      onOpenItem={onOpenRisk}
+      legend={RESIDUAL_RISK_BANDS.map(({ band }) => ({
+        label: RESIDUAL_RISK_BAND_LABEL[band],
+        color: RESIDUAL_RISK_BAND_COLOR[band]
+      }))}
+      footNote="Outlined cells are outside risk appetite — likelihood × impact above the high/critical threshold."
+    />
   );
 };

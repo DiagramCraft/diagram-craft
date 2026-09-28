@@ -1,6 +1,12 @@
+/* Columns stay flexible (fill the container's width, no horizontal overflow); with
+   data-fixed-aspect the cells keep a 2:1 ratio so a tall grid scrolls vertically only. */
+.scroll {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
 .matrix {
   display: grid;
-  grid-template-columns: 64px repeat(4, 1fr);
   gap: 6px;
   padding: 12px 14px;
 }
@@ -23,11 +29,12 @@
 }
 
 .columnHeader {
-  font-size: 11px;
+  font-size: 10.5px;
   color: var(--base-fg-more-dim);
   text-align: center;
   align-self: end;
   padding-bottom: 4px;
+  line-height: 1.25;
 }
 
 .row {
@@ -35,29 +42,37 @@
 }
 
 .rowHeader {
-  font-size: 12px;
+  font-size: 10.5px;
   color: var(--base-fg-more-dim);
   display: flex;
   align-items: center;
   justify-content: flex-end;
+  text-align: right;
   padding-right: 8px;
+  line-height: 1.25;
 }
 
 .cell {
+  position: relative;
   border: 1px solid var(--panel-border);
   border-radius: var(--r-sm);
   background: color-mix(in srgb, var(--cell-color) 10%, var(--base-bg));
   padding: 6px;
   min-height: 40px;
+  overflow: auto;
   display: flex;
   flex-wrap: wrap;
   align-content: flex-start;
   gap: 4px;
 }
 
-/* A highly critical vendor scoring elevated-or-worse risk gets a stronger tint and a matching
-   border, on top of its column's own color, as a visual callout. */
-.cell[data-hot] {
+.cell[data-fixed-aspect] {
+  aspect-ratio: 2 / 1;
+}
+
+/* Emphasized cells (outside risk appetite, "hot" vendors) get a matching border and a stronger
+   tint on top of their own colour. */
+.cell[data-emphasized] {
   border-color: var(--cell-color);
   background: color-mix(in srgb, var(--cell-color) 20%, var(--base-bg));
 }
@@ -76,4 +91,49 @@
 .tag:hover {
   border-color: var(--accent-fg);
   color: var(--accent-fg);
+}
+
+.score {
+  position: absolute;
+  right: 6px;
+  bottom: 4px;
+  font-size: 9px;
+  color: var(--base-fg-more-dim);
+}
+
+.foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 14px 12px;
+  flex-wrap: wrap;
+}
+
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 10.5px;
+  color: var(--base-fg-more-dim);
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.legendSwatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  display: inline-block;
+}
+
+.footNote {
+  font-size: 10.5px;
+  color: var(--base-fg-more-dim);
 }
