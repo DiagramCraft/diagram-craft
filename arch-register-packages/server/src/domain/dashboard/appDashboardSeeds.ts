@@ -13,34 +13,42 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
     name: 'Overview',
     description: 'API specifications, operations and integration relations at a glance.',
     widgets: [
-    { id: 'seed-stats', type: 'api-integration-catalog-stats', config: {}, x: 0, y: 0, w: 12, h: 2 },
-    {
-      id: 'seed-needs-attention',
-      type: 'api-integration-catalog-needs-attention',
-      config: { limit: 8 },
-      x: 0,
-      y: 2,
-      w: 6,
-      h: 5
-    },
-    {
-      id: 'seed-most-consumed',
-      type: 'api-integration-catalog-most-consumed',
-      config: { limit: 6 },
-      x: 6,
-      y: 2,
-      w: 6,
-      h: 5
-    },
-    {
-      id: 'seed-at-risk',
-      type: 'api-integration-catalog-at-risk',
-      config: { limit: 8 },
-      x: 0,
-      y: 7,
-      w: 12,
-      h: 5
-    }
+      {
+        id: 'seed-stats',
+        type: 'api-integration-catalog-stats',
+        config: {},
+        x: 0,
+        y: 0,
+        w: 12,
+        h: 2
+      },
+      {
+        id: 'seed-needs-attention',
+        type: 'api-integration-catalog-needs-attention',
+        config: { limit: 8 },
+        x: 0,
+        y: 2,
+        w: 6,
+        h: 5
+      },
+      {
+        id: 'seed-most-consumed',
+        type: 'api-integration-catalog-most-consumed',
+        config: { limit: 6 },
+        x: 6,
+        y: 2,
+        w: 6,
+        h: 5
+      },
+      {
+        id: 'seed-at-risk',
+        type: 'api-integration-catalog-at-risk',
+        config: { limit: 8 },
+        x: 0,
+        y: 7,
+        w: 12,
+        h: 5
+      }
     ]
   }
 };

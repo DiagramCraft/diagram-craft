@@ -14,7 +14,9 @@ export class SqliteDashboardDatabase implements DashboardDatabase {
   async list(workspace: string) {
     try {
       const rows = this.db
-        .prepare('SELECT * FROM workspace_dashboard WHERE workspace = ? AND app_key IS NULL ORDER BY sort_order')
+        .prepare(
+          'SELECT * FROM workspace_dashboard WHERE workspace = ? AND app_key IS NULL ORDER BY sort_order'
+        )
         .all(workspace) as Record<string, unknown>[];
       return rows.map(mapWorkspaceDashboardRow);
     } catch (error) {

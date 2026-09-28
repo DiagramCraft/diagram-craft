@@ -68,9 +68,11 @@ export const HomeSidebar = ({
   const deletePersonalDashboard = useDeletePersonalDashboard(workspaceSlug);
 
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [renameTarget, setRenameTarget] = useState<{ id: string; name: string; description: string } | null>(
-    null
-  );
+  const [renameTarget, setRenameTarget] = useState<{
+    id: string;
+    name: string;
+    description: string;
+  } | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
   const [contextMenu, setContextMenu] = useState<{
     x: number;
