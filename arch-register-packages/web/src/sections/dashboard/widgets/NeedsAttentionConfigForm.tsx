@@ -110,7 +110,9 @@ export const NeedsAttentionConfigForm = ({ config, onChange }: Props) => {
       <DialogSection label="Scope" required={false}>
         <Select.Root
           value={config.scope}
-          onChange={value => onChange({ ...config, scope: (value as NeedsAttentionScope) ?? 'workspace' })}
+          onChange={value =>
+            onChange({ ...config, scope: (value as NeedsAttentionScope) ?? 'workspace' })
+          }
         >
           {(Object.keys(SCOPE_LABEL) as NeedsAttentionScope[]).map(scope => (
             <Select.Item key={scope} value={scope}>
@@ -145,7 +147,10 @@ export const NeedsAttentionConfigForm = ({ config, onChange }: Props) => {
                 className={styles.labelInput}
                 value={config.limit}
                 onChange={event =>
-                  onChange({ ...config, limit: Math.max(1, Number(event.currentTarget.value) || 8) })
+                  onChange({
+                    ...config,
+                    limit: Math.max(1, Number(event.currentTarget.value) || 8)
+                  })
                 }
               />
             </div>
@@ -157,7 +162,9 @@ export const NeedsAttentionConfigForm = ({ config, onChange }: Props) => {
                 type="text"
                 className={styles.labelInput}
                 value={config.label ?? ''}
-                onChange={event => onChange({ ...config, label: optionalText(event.currentTarget.value) })}
+                onChange={event =>
+                  onChange({ ...config, label: optionalText(event.currentTarget.value) })
+                }
                 placeholder="Needs attention"
               />
             </div>

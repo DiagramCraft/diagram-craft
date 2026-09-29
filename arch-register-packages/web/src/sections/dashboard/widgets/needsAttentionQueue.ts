@@ -90,7 +90,8 @@ export const useNeedsAttentionQueue = (
       : (cases.data ?? []).map(governanceCase => ({ case: governanceCase, assignment: null }));
 
   const relevant = rawEntries.filter(entry => isRelevantCase(entry.case, caseKinds));
-  const scoped = scope === 'late' ? relevant.filter(entry => isCaseOverdue(entry.case, now)) : relevant;
+  const scoped =
+    scope === 'late' ? relevant.filter(entry => isCaseOverdue(entry.case, now)) : relevant;
 
   const entityIds = [...new Set(scoped.map(entry => entry.case.subjectId))];
   const entityQueries = useQueries({

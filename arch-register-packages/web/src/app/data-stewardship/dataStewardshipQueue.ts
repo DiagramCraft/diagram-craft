@@ -1,4 +1,7 @@
-import type { GovernanceAssignment, GovernanceCase } from '@arch-register/api-types/governanceContract';
+import type {
+  GovernanceAssignment,
+  GovernanceCase
+} from '@arch-register/api-types/governanceContract';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import {
   deriveDueDatePriority,

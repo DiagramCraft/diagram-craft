@@ -1,6 +1,10 @@
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { useEntityDrawer } from '../../entities/entityDrawer/useEntityDrawer';
-import { useNeedsAttentionQueue, type NeedsAttentionScope, type NeedsAttentionSeverity } from './needsAttentionQueue';
+import {
+  useNeedsAttentionQueue,
+  type NeedsAttentionScope,
+  type NeedsAttentionSeverity
+} from './needsAttentionQueue';
 import { NeedsAttentionList } from './NeedsAttentionList';
 
 export type NeedsAttentionWidgetConfig = {
