@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { Layout } from 'react-grid-layout';
 import ReactGridLayout from 'react-grid-layout/legacy';
 import 'react-grid-layout/css/styles.css';
@@ -28,6 +28,8 @@ type Props = {
   isLoading: boolean;
   workspaceSlug: string;
   surface?: WidgetSurface;
+  /** Extra buttons rendered in the edit-actions row, before Cancel/Save (e.g. "Edit sidebar"). */
+  extraActions?: ReactNode;
 };
 
 export const DashboardGrid = ({
@@ -38,7 +40,8 @@ export const DashboardGrid = ({
   onSave,
   isLoading,
   workspaceSlug,
-  surface = 'workspace'
+  surface = 'workspace',
+  extraActions
 }: Props) => {
   const ambientMdxContext = useMdxContext();
   const [localWidgets, setLocalWidgets] = useState<DashboardWidget[]>(widgets);
@@ -107,6 +110,7 @@ export const DashboardGrid = ({
             </Button>
           </div>
           <div className={styles.editActionsRight}>
+            {extraActions}
             <Button variant="secondary" icon={<TbX size={12} />} onClick={handleCancel}>
               Cancel
             </Button>

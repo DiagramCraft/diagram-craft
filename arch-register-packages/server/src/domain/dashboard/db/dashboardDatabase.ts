@@ -1,4 +1,7 @@
-import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
+import type {
+  DashboardSidebarConfig,
+  DashboardWidget
+} from '@arch-register/api-types/dashboardContract';
 import { databaseDate, parseDatabaseJson } from '../../../db/rowMappers';
 
 export type WorkspaceDashboardDbResult = {
@@ -9,6 +12,7 @@ export type WorkspaceDashboardDbResult = {
   sort_order: number;
   app_key: string | null;
   layout: DashboardWidget[];
+  sidebar: DashboardSidebarConfig | null;
   updated_at: Date;
   updated_by: string | null;
 };
@@ -23,6 +27,11 @@ export const mapWorkspaceDashboardRow = (
   sort_order: Number(row['sort_order']),
   app_key: row['app_key'] == null ? null : String(row['app_key']),
   layout: parseDatabaseJson<DashboardWidget[]>(row['layout'], [], 'workspace_dashboard.layout'),
+  sidebar: parseDatabaseJson<DashboardSidebarConfig | null>(
+    row['sidebar'],
+    null,
+    'workspace_dashboard.sidebar'
+  ),
   updated_at: databaseDate(row['updated_at']),
   updated_by: row['updated_by'] == null ? null : String(row['updated_by'])
 });
@@ -41,6 +50,8 @@ export type DashboardDbUpdate = {
   name?: string;
   description?: string;
   layout?: DashboardWidget[];
+  /** Present (including `null`) means "set"; absent means "leave unchanged". */
+  sidebar?: DashboardSidebarConfig | null;
   updated_by: string | null;
 };
 

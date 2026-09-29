@@ -19,7 +19,8 @@ export const toApi = (row: WorkspaceDashboardDbResult): ApiWorkspaceDashboard =>
   widgets: row.layout,
   updatedAt: row.updated_at.toISOString(),
   updatedBy: row.updated_by,
-  appKey: row.app_key
+  appKey: row.app_key,
+  sidebar: row.sidebar ?? undefined
 });
 
 const nextSortOrder = (existing: WorkspaceDashboardDbResult[]): number =>
@@ -125,6 +126,7 @@ export const getOrCreateAppDashboard = async (
   });
   const seeded = await db.dashboard.update(workspace, created.id, {
     layout: seed!.widgets.map(widget => ({ ...widget, config: { ...widget.config } })),
+    sidebar: seed!.sidebar ?? null,
     updated_by: null
   });
   return toApi(seeded!);
@@ -174,6 +176,7 @@ export const updateWorkspaceDashboard = async (
     name: body.name,
     description: body.description,
     layout: body.widgets,
+    ...('sidebar' in body ? { sidebar: body.sidebar ?? null } : {}),
     updated_by: actorUserId
   });
   httpAssert.present(updated, { status: 404, message: 'Dashboard not found' });

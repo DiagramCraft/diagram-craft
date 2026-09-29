@@ -1,11 +1,16 @@
 import { useNavigate } from '@tanstack/react-router';
-import { TbAlertTriangle, TbApi, TbChartBar, TbPlugConnected } from 'react-icons/tb';
+import { TbAffiliate, TbAlertTriangle, TbApi, TbChartBar, TbPlugConnected } from 'react-icons/tb';
 import { DialogSection } from '../../sections/markdown/editor/BlockDialog';
 import type { DashboardWidgetSpec } from '../../sections/markdown/mdx-components/types';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { Banner } from '../../components/Banner';
 import { EmptyState } from '../../components/EmptyState';
 import { LoadingState } from '../../components/LoadingState';
+import { useSchemas } from '../../hooks/useSchemas';
+import { useLifecycleStates } from '../../hooks/useWorkspaceConfig';
+import { useEntity } from '../../hooks/useEntities';
+import { useEntityDrawer } from '../../sections/entities/entityDrawer/useEntityDrawer';
+import { BlastRadiusPanel } from '../../sections/entities/components/BlastRadiusPanel';
 import { IC_APIS_ID, IC_INTEGRATIONS_ID, IC_RAIL_PATHS } from './apiIntegrationCatalogSections';
 import { useResolvedApiIntegrationCatalogConfig } from './useResolvedApiIntegrationCatalogConfig';
 import { ApiIntegrationCatalogAtRiskPanel } from './sections/ApiIntegrationCatalogAtRiskPanel';
@@ -15,11 +20,26 @@ import { ApiIntegrationCatalogSingleStatTile } from './sections/ApiIntegrationCa
 import { useNeedsAttentionQueue } from '../../sections/dashboard/widgets/needsAttentionQueue';
 import { NeedsAttentionList } from '../../sections/dashboard/widgets/NeedsAttentionList';
 import { IC_QUEUE_CASE_KINDS } from './apiIntegrationCatalogQueue';
+import {
+  PROVIDERS_FIELD,
+  CONSUMERS_FIELD,
+  resolveTypedRelationSchemaId
+} from './apiEndpointRelations';
+import {
+  API_BLAST_RADIUS_GROUPS,
+  API_BLAST_RADIUS_MAX_DEPTH,
+  API_BLAST_RADIUS_NO_PATHS_STATE,
+  buildApiBlastRadiusPaths
+} from './sections/apiBlastRadiusConfig';
 import panelStyles from './sections/ApiIntegrationCatalogPanels.module.css';
 import styles from '../../sections/dashboard/WidgetConfigDialog.module.css';
 
 type TitleWidgetConfig = Record<string, unknown> & { label?: string };
 type ListWidgetConfig = TitleWidgetConfig & { limit: number };
+// `entityId` is meant to be set to a dashboard sidebar variable reference (e.g. `$apiEntityId`),
+// resolved by `DashboardWidgetRenderer` before this config reaches the widget — see
+// `resolveSidebarVariableReferences.ts` and the Impact dashboard's seed in `appDashboardSeeds.ts`.
+type ImpactWidgetConfig = TitleWidgetConfig & { entityId?: string };
 
 type TitleConfigFormProps = {
   config: TitleWidgetConfig;
@@ -43,6 +63,10 @@ const isValidListConfig = (config: Record<string, unknown>): config is ListWidge
   Number.isInteger(config.limit) &&
   config.limit >= 1 &&
   config.limit <= 20;
+
+const isValidImpactConfig = (config: Record<string, unknown>): config is ImpactWidgetConfig =>
+  isValidTitleConfig(config) &&
+  (config.entityId === undefined || typeof config.entityId === 'string');
 
 const titleFor = (config: TitleWidgetConfig, fallback: string): string => {
   const label = config.label?.trim();
@@ -193,6 +217,50 @@ const ApiCatalogMostConsumedWidget = ({ config }: { config: ListWidgetConfig }) 
   );
 };
 
+const ApiCatalogImpactWidget = ({ config }: { config: ImpactWidgetConfig }) => {
+  const { workspaceSlug } = useWorkspaceContext();
+  const { apiConfig } = useResolvedApiIntegrationCatalogConfig(workspaceSlug);
+  const schemas = useSchemas(workspaceSlug);
+  const apiSchema = schemas.data?.find(schema => schema.id === apiConfig?.apiSchemaId);
+  const { data: lifecycleStates = [] } = useLifecycleStates(workspaceSlug);
+  const entityId = config.entityId ?? '';
+  const { data: entity, isLoading } = useEntity(workspaceSlug, entityId, entityId !== '');
+
+  if (entityId === '') {
+    return (
+      <EmptyState
+        title="Select an API"
+        subtitle="Pick an API from the sidebar to see what a change to it would reach."
+      />
+    );
+  }
+  if (isLoading || !entity) {
+    return isLoading ? (
+      <LoadingState text="Loading API…" size="sm" />
+    ) : (
+      <EmptyState title="API not found" subtitle="The selected API no longer exists." />
+    );
+  }
+
+  const providersRelationSchemaId = resolveTypedRelationSchemaId(apiSchema, PROVIDERS_FIELD);
+  const consumersRelationSchemaId = resolveTypedRelationSchemaId(apiSchema, CONSUMERS_FIELD);
+
+  return (
+    <BlastRadiusPanel
+      workspaceId={workspaceSlug}
+      subject={{ kind: 'entity', entityId: entity._uid }}
+      paths={buildApiBlastRadiusPaths(providersRelationSchemaId, consumersRelationSchemaId)}
+      groups={API_BLAST_RADIUS_GROUPS}
+      showFilters={false}
+      maxDepth={API_BLAST_RADIUS_MAX_DEPTH}
+      noPathsState={API_BLAST_RADIUS_NO_PATHS_STATE}
+      schemas={schemas.data ?? []}
+      lifecycleStates={lifecycleStates}
+      embedded
+    />
+  );
+};
+
 const ApiCatalogAtRiskWidget = ({ config }: { config: ListWidgetConfig }) => {
   const { workspaceSlug, viewIntegrations } = useApiCatalogNavigation();
 
@@ -232,6 +300,21 @@ const ApiCatalogAtRiskHeaderActions = () => {
   return (
     <button type="button" className={panelStyles.panelLink} onClick={viewIntegrations}>
       All integrations
+    </button>
+  );
+};
+
+const ApiCatalogImpactHeaderActions = ({ config }: { config: ImpactWidgetConfig }) => {
+  const { openEntityDrawer } = useEntityDrawer();
+  const entityId = config.entityId ?? '';
+  if (entityId === '') return null;
+  return (
+    <button
+      type="button"
+      className={panelStyles.panelLink}
+      onClick={() => openEntityDrawer(entityId)}
+    >
+      Open specification
     </button>
   );
 };
@@ -344,6 +427,27 @@ export const apiIntegrationCatalogDashboardWidgetSpecs: Array<{
       createDefaultConfig: () => ({ limit: 8 }),
       getTitle: (config: ListWidgetConfig) => titleFor(config, 'Integrations needing attention'),
       configForm: ListConfigForm
+    }
+  },
+  {
+    type: 'api-integration-catalog-impact',
+    spec: {
+      icon: TbAffiliate,
+      label: 'API impact',
+      description:
+        'Blast radius (providers, direct consumers, second order) for the API selected in the dashboard sidebar.',
+      defaultW: 12,
+      defaultH: 30,
+      surfaces: ['workspace'],
+      component: ApiCatalogImpactWidget,
+      headerActionsComponent: ApiCatalogImpactHeaderActions,
+      // BlastRadiusPanel renders its own page-level padding (`.panel` in BlastRadiusPanel.module.css)
+      // since it's shared with non-widget contexts (the entity drawer); WidgetFrame's own padding
+      // on top of that doubled up the spacing, so it's turned off here.
+      frame: { padded: false },
+      isValidConfig: isValidImpactConfig,
+      createDefaultConfig: () => ({ entityId: '$apiEntityId' }),
+      getTitle: (config: ImpactWidgetConfig) => titleFor(config, 'Blast radius')
     }
   }
 ];

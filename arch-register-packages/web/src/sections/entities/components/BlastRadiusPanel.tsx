@@ -48,6 +48,10 @@ type Props = {
   // Wraps the panel in a bordered card with this header.
   title?: string;
   noPathsState?: { title: string; subtitle: string };
+  // Skips the panel's own outer padding — for embedding in a container that already provides its
+  // own chrome/padding, such as a dashboard widget's WidgetFrame. Ignored when `title` is set,
+  // since the card variant's padding comes from `.cardBody`, not `.panel`.
+  embedded?: boolean;
 };
 
 const DEPTH_OPTIONS = [
@@ -66,7 +70,8 @@ export const BlastRadiusPanel = ({
   showFilters = true,
   maxDepth,
   title,
-  noPathsState
+  noPathsState,
+  embedded = false
 }: Props) => {
   const [depth, setDepth] = useState(maxDepth ?? DEFAULT_BLAST_RADIUS_DEPTH);
   const [ownerFilter, setOwnerFilter] = useState('all');
@@ -185,7 +190,7 @@ export const BlastRadiusPanel = ({
   }
 
   return (
-    <div className={styles.panel}>
+    <div className={embedded ? styles.panelEmbedded : styles.panel}>
       {showFilters && (
         <Toolbar {...{ depth, setDepth, ownerFilter, setOwnerFilter, ownerOptions }} />
       )}

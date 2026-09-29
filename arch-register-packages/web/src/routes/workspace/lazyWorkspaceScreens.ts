@@ -161,9 +161,9 @@ export const LazyIntegrationSyncScreen = lazyRouteComponent(
   () => import('../../sections/workspace-settings/IntegrationSyncScreen'),
   'IntegrationSyncScreen'
 );
-export const LazyApiIntegrationCatalogImpactScreen = lazyRouteComponent(
-  () => import('../../app/api-integration-catalog/sections/ApiIntegrationCatalogImpactScreen'),
-  'ApiIntegrationCatalogImpactScreen'
+export const LazyApiIntegrationCatalogImpactDashboard = lazyRouteComponent(
+  () => import('../../app/api-integration-catalog/sections/ApiIntegrationCatalogImpactDashboard'),
+  'ApiIntegrationCatalogImpactDashboard'
 );
 export const LazyWorkspaceSettingsScreen = lazyRouteComponent(
   () => import('../../sections/workspace-settings/WorkspaceSettingsScreen'),

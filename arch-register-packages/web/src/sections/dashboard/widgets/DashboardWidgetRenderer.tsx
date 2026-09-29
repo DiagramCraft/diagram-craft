@@ -3,6 +3,8 @@ import { WidgetFrame } from './WidgetFrame';
 import { getDashboardWidgetSpec } from '../dashboardWidgetRegistry';
 import { parseKnownDashboardWidget } from '../dashboardWidgetConfig';
 import { getWidgetTitle } from '../dashboardWidgetDefaults';
+import { useDashboardSidebarVariables } from '../DashboardSidebarContext';
+import { resolveConfigVariables } from '../resolveSidebarVariableReferences';
 
 type Props = {
   widget: DashboardWidget;
@@ -12,7 +14,11 @@ type Props = {
 };
 
 export const DashboardWidgetRenderer = ({ widget, isEditing = false, onEdit, onRemove }: Props) => {
-  const knownWidget = parseKnownDashboardWidget(widget);
+  const sidebarVariables = useDashboardSidebarVariables();
+  const parsedWidget = parseKnownDashboardWidget(widget);
+  const knownWidget = parsedWidget
+    ? { ...parsedWidget, config: resolveConfigVariables(parsedWidget.config, sidebarVariables) }
+    : null;
   const dashboardWidget = knownWidget ? getDashboardWidgetSpec(knownWidget.type) : undefined;
   const title = knownWidget ? (
     dashboardWidget?.titleComponent ? (
