@@ -15,7 +15,7 @@ import {
 /**
  * Proves `ApiIntegrationCatalogAtRiskPanel` (#3458) renders from a plain prop object with zero
  * router involvement — see #3459. The panel takes only `workspaceId` and an `onViewIntegrations`
- * callback; navigation itself stays in the Screen (`ApiIntegrationCatalogOverviewDashboard.tsx`).
+ * callback; navigation itself stays in the Screen (`ApiIntegrationCatalogDashboardScreens.tsx`).
  */
 const meta = {
   title: 'API & Integration Catalog/AtRiskPanel',
