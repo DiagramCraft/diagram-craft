@@ -145,7 +145,7 @@ export const LazyDataStewardshipAssessmentsScreen = lazyRouteComponent(
   'DataStewardshipAssessmentsScreen'
 );
 export const LazyApiIntegrationCatalogOverviewDashboard = lazyRouteComponent(
-  () => import('../../app/api-integration-catalog/sections/ApiIntegrationCatalogOverviewDashboard'),
+  () => import('../../app/api-integration-catalog/sections/ApiIntegrationCatalogDashboardScreens'),
   'ApiIntegrationCatalogOverviewDashboard'
 );
 export const LazyApiIntegrationCatalogApisScreen = lazyRouteComponent(
@@ -162,7 +162,7 @@ export const LazyIntegrationSyncScreen = lazyRouteComponent(
   'IntegrationSyncScreen'
 );
 export const LazyApiIntegrationCatalogImpactDashboard = lazyRouteComponent(
-  () => import('../../app/api-integration-catalog/sections/ApiIntegrationCatalogImpactDashboard'),
+  () => import('../../app/api-integration-catalog/sections/ApiIntegrationCatalogDashboardScreens'),
   'ApiIntegrationCatalogImpactDashboard'
 );
 export const LazyWorkspaceSettingsScreen = lazyRouteComponent(
