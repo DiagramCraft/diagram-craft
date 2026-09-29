@@ -6,6 +6,7 @@ import type { Assessment } from '@arch-register/api-types/assessmentContract';
 import { ToggleButtonGroup } from '@diagram-craft/app-components/ToggleButtonGroup';
 import { Title } from '../../../components/Title';
 import { Chip } from '../../../components/Chip';
+import { ratioColor } from '../../../components/bandColor';
 import { Table } from '../../../components/table/Table';
 import { entitiesQuery } from '../../../queries/entities';
 import { workspaceCapabilityConfigurationsQuery } from '../../../queries/workspaceConfig';
@@ -61,17 +62,6 @@ const dedupeById = (assessments: Assessment[]): Assessment[] => {
   const byId = new Map<string, Assessment>();
   assessments.forEach(assessment => byId.set(assessment.id, assessment));
   return [...byId.values()];
-};
-
-/** Banded green/amber/red bar colour by ratio — mirrors `../../strategy-model/sections/
- *  CapabilityMaturityBar.tsx`'s `heatColor`, applied to an effective/total ratio instead of a
- *  1-5 maturity score. */
-const ratioColor = (effective: number, total: number): string => {
-  if (total === 0) return 'var(--base-fg-more-dim)';
-  const ratio = effective / total;
-  if (ratio >= 1) return 'var(--cmp-fg-success, #22c55e)';
-  if (ratio >= 0.5) return 'var(--cmp-fg-warning, #eab308)';
-  return 'var(--cmp-fg-danger, #ef4444)';
 };
 
 /**

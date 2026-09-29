@@ -1,16 +1,7 @@
+import { heatColor } from '../../../components/bandColor';
 import styles from './CapabilityMaturityBar.module.css';
 
 const pctOf = (value: number, max: number) => Math.min(100, Math.max(0, (value / max) * 100));
-
-// This app's real token set (`packages/main/src/tokens.css`) only has three severity colors —
-// `--error-fg`, `--warning-fg`, and `--green` (no dedicated "success" token) — so maturity bands
-// into those three tiers by its rounded value: 1–2 red, 3 amber, 4–5 green.
-const heatColor = (maturity: number): string => {
-  const rounded = Math.round(maturity);
-  if (rounded <= 2) return 'var(--error-fg, #e05252)';
-  if (rounded === 3) return 'var(--warning-fg)';
-  return 'var(--green)';
-};
 
 /**
  * Maturity bar + value for the Capabilities table's Maturity column: a filled track for the
