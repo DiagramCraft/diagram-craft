@@ -20,9 +20,8 @@ const NOT_ENABLED_MESSAGE = (
  * source of truth these two screens render, rather than a literal repeated here (#3469).
  */
 const sectionDashboardAppKey = (id: ApiIntegrationCatalogRailItemId): string => {
-  const appKey = apiIntegrationCatalogAppDefinition.sections.find(
-    section => section.id === id
-  )?.dashboard?.appKey;
+  const appKey = apiIntegrationCatalogAppDefinition.sections.find(section => section.id === id)
+    ?.dashboard?.appKey;
   if (!appKey) throw new Error(`API & Integration Catalog section "${id}" has no dashboard.appKey`);
   return appKey;
 };
