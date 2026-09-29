@@ -6,7 +6,8 @@ import { useDataFlowConfig } from './useDataFlowConfig';
 import { useApiEndpointRelations } from './apiEndpointRelations';
 import { computeApiPairs, computeApiPairCoverage } from './apiPairCoverage';
 import { classifyDataFlowRelations } from './apiIntegrationCatalogStatsHelpers';
-import { useApiIntegrationCatalogQueue } from './apiIntegrationCatalogQueue';
+import { useNeedsAttentionQueue } from '../../sections/dashboard/widgets/needsAttentionQueue';
+import { IC_QUEUE_CASE_KINDS } from './apiIntegrationCatalogQueue';
 
 export type ApiIntegrationCatalogStatTiles = {
   status: 'loading' | 'error' | 'ready';
@@ -34,9 +35,13 @@ export const useApiIntegrationCatalogStatTiles = (
   const schemas = useSchemas(workspaceId);
   const apiSchema = schemas.data?.find(schema => schema.id === config.apiConfig?.apiSchemaId);
 
-  const queue = useApiIntegrationCatalogQueue(
+  const queue = useNeedsAttentionQueue(
     workspaceId,
-    config.apiConfig?.apiSchemaId ?? null,
+    {
+      schemaId: config.apiConfig?.apiSchemaId ?? null,
+      caseKinds: IC_QUEUE_CASE_KINDS,
+      scope: 'workspace'
+    },
     config.apiConfig != null
   );
 

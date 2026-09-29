@@ -2,26 +2,25 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import type { GovernanceCase } from '@arch-register/api-types/governanceContract';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import {
+  DashboardStory,
   StoryProviders,
   WORKSPACE,
-  createStoryQueryClient
-} from '../../../sections/markdown/mdx-components/blocks/StorybookHarness';
+  createStoryQueryClient,
+  dashboardWidget
+} from '../../markdown/mdx-components/blocks/StorybookHarness';
 import { governanceCasesQuery } from '../../../queries/governance';
 import { entityDetailQuery } from '../../../queries/entities';
-import { ApiIntegrationCatalogNeedsAttentionPanel } from './ApiIntegrationCatalogNeedsAttentionPanel';
 
 const API_SCHEMA_ID = 'story-api-schema';
-
 const casesQuery = { status: 'open', subjectType: 'entity' } as const;
 
 /**
- * Proves `ApiIntegrationCatalogNeedsAttentionPanel` (#3458) renders from a plain prop object with
- * zero router involvement — see #3459. The panel itself imports no router hooks; a real app Screen
- * resolves `workspaceId`/`apiSchemaId` from `useParams` and hands them down as props (see
- * the seeded Overview dashboard).
+ * Proves the generalized "needs attention" widget (#3466) renders the same shape API & Integration
+ * Catalog's and Data Stewardship's own queues did before this widget existed, now driven purely by
+ * config (schema/case-kinds/scope/severity) rather than app-specific wiring.
  */
 const meta = {
-  title: 'API & Integration Catalog/NeedsAttentionPanel',
+  title: 'Dashboard Widgets/NeedsAttention',
   parameters: { layout: 'padded' }
 } satisfies Meta;
 
@@ -66,10 +65,25 @@ export const Populated: Story = {
 
     return (
       <StoryProviders client={client}>
-        <ApiIntegrationCatalogNeedsAttentionPanel
-          workspaceId={WORKSPACE}
-          apiSchemaId={API_SCHEMA_ID}
-          onOpenApi={() => {}}
+        <DashboardStory
+          widgets={[
+            dashboardWidget(
+              'needs-attention',
+              'NeedsAttentionQueue',
+              {
+                schema: API_SCHEMA_ID,
+                caseKinds: ['entity.change-case', 'entity.deprecation'],
+                scope: 'workspace',
+                severity: 'due-date',
+                limit: 8,
+                label: 'Needs attention'
+              },
+              0,
+              0,
+              6,
+              16
+            )
+          ]}
         />
       </StoryProviders>
     );
@@ -83,10 +97,25 @@ export const Empty: Story = {
 
     return (
       <StoryProviders client={client}>
-        <ApiIntegrationCatalogNeedsAttentionPanel
-          workspaceId={WORKSPACE}
-          apiSchemaId={API_SCHEMA_ID}
-          onOpenApi={() => {}}
+        <DashboardStory
+          widgets={[
+            dashboardWidget(
+              'needs-attention',
+              'NeedsAttentionQueue',
+              {
+                schema: API_SCHEMA_ID,
+                caseKinds: ['entity.change-case', 'entity.deprecation'],
+                scope: 'workspace',
+                severity: 'due-date',
+                limit: 8,
+                label: 'Needs attention'
+              },
+              0,
+              0,
+              6,
+              16
+            )
+          ]}
         />
       </StoryProviders>
     );

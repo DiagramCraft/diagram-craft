@@ -193,6 +193,46 @@ describe('parseKnownDashboardWidget', () => {
     ).toBeNull();
   });
 
+  it('parses a NeedsAttentionQueue widget with a schema and case kinds', () => {
+    const widget = parseKnownDashboardWidget({
+      id: 'needs-attention',
+      type: 'NeedsAttentionQueue',
+      config: {
+        schema: 'risk',
+        caseKinds: ['entity.change-case', 'entity.deprecation'],
+        scope: 'workspace',
+        severity: 'due-date',
+        limit: 8
+      },
+      x: 0,
+      y: 0,
+      w: 6,
+      h: 16
+    });
+
+    expect(widget?.type).toBe('NeedsAttentionQueue');
+  });
+
+  it('rejects a NeedsAttentionQueue widget with an invalid scope or non-array case kinds', () => {
+    expect(
+      parseKnownDashboardWidget({
+        id: 'needs-attention',
+        type: 'NeedsAttentionQueue',
+        config: {
+          schema: 'risk',
+          caseKinds: 'entity.change-case',
+          scope: 'sideways',
+          severity: 'due-date',
+          limit: 8
+        },
+        x: 0,
+        y: 0,
+        w: 6,
+        h: 16
+      })
+    ).toBeNull();
+  });
+
   it('parses an Assessments widget with a mode and no assessment type filter', () => {
     const widget = parseKnownDashboardWidget({
       id: 'assessments',

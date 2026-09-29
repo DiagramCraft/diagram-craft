@@ -4,9 +4,9 @@ This is the template #3471 rolls out to the other five bespoke apps (Business Gl
 Stewardship, Risk & Compliance, Strategy & Capability Model, Vendor Management).
 
 **Decision: explicit props, no context provider.** The panels extracted in #3458
-(`ApiIntegrationCatalogStatTiles`, `ApiIntegrationCatalogNeedsAttentionPanel`,
-`ApiIntegrationCatalogMostConsumedPanel`, `ApiIntegrationCatalogAtRiskPanel`, plus
-`ApiBlastRadiusPanel` from #3320) never import `useParams`/`useSearch`/`useNavigate` or any other
+(`ApiIntegrationCatalogStatTiles`, `ApiIntegrationCatalogMostConsumedPanel`,
+`ApiIntegrationCatalogAtRiskPanel`, plus `ApiBlastRadiusPanel` from #3320) never import
+`useParams`/`useSearch`/`useNavigate` or any other
 router hook, directly or transitively through the hooks they call. Each `*Screen.tsx` file is the
 router boundary for its standalone app screen: it reads route params/search and resolves them into
 plain ids/strings/callbacks passed down as props (see the seeded Overview dashboard).
@@ -31,3 +31,11 @@ If a later app's panel tree grows deep enough for this to become real prop-drill
 can introduce its own context then, following `WorkspaceLayout.tsx` → `WorkspaceContext` as the
 template (read the router once at the top, provide a typed context) — but none of the six apps need
 that today.
+
+**The "Needs attention" panel outgrew this pattern (#3466).** It's no longer one of the app-local
+panels above: its query/join/severity logic and row rendering were generalized into
+`sections/dashboard/widgets/needsAttentionQueue.ts` / `NeedsAttentionList.tsx`, shared with Data
+Stewardship's "My work" queue and available as its own placeable `NeedsAttentionQueue` dashboard
+widget. This app's `api-integration-catalog-needs-attention` registry adapter
+(`apiIntegrationCatalogDashboardWidgets.tsx`) now just supplies its resolved schema/case-kinds to
+that shared hook/component, rather than owning a standalone panel.

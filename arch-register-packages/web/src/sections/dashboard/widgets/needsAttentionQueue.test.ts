@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { GovernanceCase } from '@arch-register/api-types/governanceContract';
-import { isCaseOverdue, queueItemPriority } from './dataStewardshipQueue';
+import { deriveDueDatePriority, isCaseOverdue } from './needsAttentionQueue';
 
 const governanceCase = (overrides: Partial<GovernanceCase> = {}): GovernanceCase => ({
   id: 'case-1',
@@ -38,31 +38,31 @@ describe('isCaseOverdue', () => {
   });
 });
 
-describe('queueItemPriority', () => {
+describe('deriveDueDatePriority', () => {
   const now = new Date('2026-09-17T00:00:00.000Z');
 
   it('is high once escalated, regardless of due date', () => {
     expect(
-      queueItemPriority(governanceCase({ escalatedAt: '2026-09-01T00:00:00.000Z' }), now)
+      deriveDueDatePriority(governanceCase({ escalatedAt: '2026-09-01T00:00:00.000Z' }), now)
     ).toBe('high');
   });
 
   it('is high once overdue', () => {
-    expect(queueItemPriority(governanceCase({ dueAt: '2026-09-01T00:00:00.000Z' }), now)).toBe(
+    expect(deriveDueDatePriority(governanceCase({ dueAt: '2026-09-01T00:00:00.000Z' }), now)).toBe(
       'high'
     );
   });
 
   it('is medium when due within 7 days', () => {
-    expect(queueItemPriority(governanceCase({ dueAt: '2026-09-20T00:00:00.000Z' }), now)).toBe(
+    expect(deriveDueDatePriority(governanceCase({ dueAt: '2026-09-20T00:00:00.000Z' }), now)).toBe(
       'medium'
     );
   });
 
   it('is low when due further out, or with no due date at all', () => {
-    expect(queueItemPriority(governanceCase({ dueAt: '2026-10-20T00:00:00.000Z' }), now)).toBe(
+    expect(deriveDueDatePriority(governanceCase({ dueAt: '2026-10-20T00:00:00.000Z' }), now)).toBe(
       'low'
     );
-    expect(queueItemPriority(governanceCase({ dueAt: null }), now)).toBe('low');
+    expect(deriveDueDatePriority(governanceCase({ dueAt: null }), now)).toBe('low');
   });
 });
