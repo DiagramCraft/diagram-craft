@@ -1,4 +1,5 @@
 import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
+import { GENERIC_STARTER_DASHBOARD_WIDGETS } from '@arch-register/api-types/dashboardWidgetSeeds';
 import { getDashboardWidgetSpec } from './dashboardWidgetRegistry';
 import type { KnownDashboardWidget } from './dashboardWidgetConfig';
 
@@ -32,41 +33,6 @@ export const createDefaultWidget = (
 };
 
 export const DEFAULT_SEEDED_WIDGETS: DashboardWidget[] = [
-  {
-    id: 'default-entity-count',
-    type: 'Metric',
-    config: { metricType: 'entity-count' },
-    x: 0,
-    y: 0,
-    w: 3,
-    h: 8
-  },
-  {
-    id: 'default-project-count',
-    type: 'Metric',
-    config: { metricType: 'project-count' },
-    x: 3,
-    y: 0,
-    w: 3,
-    h: 8
-  },
-  {
-    id: 'default-diagram-count',
-    type: 'Metric',
-    config: { metricType: 'diagram-count' },
-    x: 6,
-    y: 0,
-    w: 3,
-    h: 8
-  },
-  {
-    id: 'default-completeness-percent',
-    type: 'Metric',
-    config: { metricType: 'completeness-percent' },
-    x: 9,
-    y: 0,
-    w: 3,
-    h: 8
-  },
+  ...GENERIC_STARTER_DASHBOARD_WIDGETS,
   { id: 'default-activity-feed', type: 'activity-feed', config: {}, x: 0, y: 8, w: 12, h: 24 }
 ];
