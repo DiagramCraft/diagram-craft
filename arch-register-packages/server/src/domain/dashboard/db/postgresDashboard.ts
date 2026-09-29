@@ -38,12 +38,14 @@ export class PostgresDashboardDatabase extends PostgresDatabaseBase implements D
   }
 
   async update(workspace: string, id: string, input: DashboardDbUpdate) {
+    const touchesSidebar = 'sidebar' in input;
     try {
       const [row] = await this.sql<Record<string, unknown>[]>`
         UPDATE workspace_dashboard
         SET name = COALESCE(${input.name ?? null}, name),
             description = COALESCE(${input.description ?? null}, description),
             layout = COALESCE(${input.layout ? this.json(input.layout) : null}, layout),
+            sidebar = ${touchesSidebar ? this.json(input.sidebar ?? null) : this.sql`sidebar`},
             updated_at = NOW(),
             updated_by = ${input.updated_by}
         WHERE workspace = ${workspace} AND id = ${id}

@@ -53,6 +53,7 @@ const BlastRadiusWidget = ({ config }: { config: BlastRadiusWidgetConfig }) => {
       subject={{ kind: 'entity', entityId: entity._uid }}
       schemas={schemas.data ?? []}
       lifecycleStates={lifecycleStates}
+      embedded
     />
   );
 };
@@ -128,6 +129,10 @@ export const blastRadiusDashboardWidgetSpec: {
     defaultH: 16,
     surfaces: ['workspace'],
     component: BlastRadiusWidget,
+    // BlastRadiusPanel renders its own page-level padding (`.panel` in BlastRadiusPanel.module.css)
+    // since it's shared with non-widget contexts (the entity drawer); WidgetFrame's own padding on
+    // top of that doubled up the spacing, so it's turned off here.
+    frame: { padded: false },
     isValidConfig,
     createDefaultConfig: () => ({}),
     getTitle: titleFor,

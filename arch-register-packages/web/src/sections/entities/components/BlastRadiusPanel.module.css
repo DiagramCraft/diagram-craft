@@ -5,6 +5,12 @@
   padding: 16px 24px 32px;
 }
 
+.panelEmbedded {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 .card {
   background: var(--panel-bg);
   border: 1px solid var(--panel-border);

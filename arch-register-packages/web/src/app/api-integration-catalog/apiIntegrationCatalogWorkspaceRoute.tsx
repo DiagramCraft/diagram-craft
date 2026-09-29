@@ -13,13 +13,12 @@ import {
   LazyApiIntegrationCatalogOverviewDashboard,
   LazyApiIntegrationCatalogApisScreen,
   LazyApiIntegrationCatalogIntegrationsScreen,
-  LazyApiIntegrationCatalogImpactScreen
+  LazyApiIntegrationCatalogImpactDashboard
 } from '../../routes/workspace/lazyWorkspaceScreens';
 import { ensureApplicationAccess } from '../../routes/applicationAccess';
 import {
   validateApiIntegrationCatalogApisSearch,
-  validateApiIntegrationCatalogIntegrationsSearch,
-  validateApiIntegrationCatalogImpactSearch
+  validateApiIntegrationCatalogIntegrationsSearch
 } from '../../routes/searchParams';
 
 const railPath = (path: string) => path.replace('/$workspaceSlug/', '');
@@ -28,8 +27,9 @@ const railPath = (path: string) => path.replace('/$workspaceSlug/', '');
  * API & Integration Catalog's workspace routes: one per rail section, plus the APIs section's
  * deep-linkable spec drawer route (#3316). Mirrors `../risk-compliance/riskComplianceWorkspaceRoute.tsx`.
  * Integrations remains a placeholder screen with no detail route yet; it lands alongside its own
- * real content in a later sub-issue of #3150 (#3317). Impact (#3320) has real content, but no
- * dedicated detail route — its `ApiImpactDrawer` is opened via the `api` search param instead.
+ * real content in a later sub-issue of #3150 (#3317). Impact (#3320) is a single-widget dashboard
+ * (#3467) — its API picker is the dashboard's own sidebar, its selection carried as an untyped
+ * search param (the sidebar's `variableName`), so it needs no `validateSearch`.
  */
 export const createApiIntegrationCatalogWorkspaceRoutes = <TParentRoute extends AnyRoute>(
   workspaceRoute: TParentRoute
@@ -112,14 +112,13 @@ export const createApiIntegrationCatalogWorkspaceRoutes = <TParentRoute extends 
     createRoute({
       getParentRoute: () => workspaceRoute,
       path: railPath(IC_RAIL_PATHS[IC_IMPACT_ID]),
-      validateSearch: validateApiIntegrationCatalogImpactSearch,
       beforeLoad: ({ context, params }) =>
         ensureApplicationAccess(
           context.queryClient,
           (params as unknown as { workspaceSlug: string }).workspaceSlug,
           'api-integration-catalog'
         ),
-      component: LazyApiIntegrationCatalogImpactScreen
+      component: LazyApiIntegrationCatalogImpactDashboard
     }),
     ctx =>
       railSectionShell(ctx, IC_IMPACT_ID, {

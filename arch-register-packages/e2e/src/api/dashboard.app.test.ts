@@ -53,3 +53,39 @@ test.describe('App Dashboard API', () => {
     ).rejects.toBeTruthy();
   });
 });
+
+const IMPACT_APP_KEY = 'api-integration-catalog-impact';
+
+test.describe('App Dashboard sidebar', () => {
+  test('getApp includes the seeded sidebar for a dashboard that declares one', async ({ orpc }) => {
+    const dashboard = await orpc.dashboard.getApp({
+      params: { workspace: 'default', appKey: IMPACT_APP_KEY }
+    });
+
+    expect(dashboard.sidebar).toEqual({
+      kind: 'entity-picker',
+      schemaName: 'API',
+      variableName: 'apiEntityId',
+      itemLabel: 'APIs'
+    });
+    expect(dashboard.widgets.map(w => w.type)).toEqual(['api-integration-catalog-impact']);
+  });
+
+  test('the seeded sidebar is still returned after the dashboard has been edited', async ({
+    orpc
+  }) => {
+    const dashboard = await orpc.dashboard.getApp({
+      params: { workspace: 'default', appKey: IMPACT_APP_KEY }
+    });
+
+    await orpc.dashboard.update({
+      params: { workspace: 'default', id: dashboard.id },
+      body: { widgets: dashboard.widgets, name: 'Impact' }
+    });
+
+    const refreshed = await orpc.dashboard.getApp({
+      params: { workspace: 'default', appKey: IMPACT_APP_KEY }
+    });
+    expect(refreshed.sidebar).toEqual(dashboard.sidebar);
+  });
+});

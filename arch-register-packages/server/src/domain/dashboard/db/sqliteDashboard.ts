@@ -75,18 +75,20 @@ export class SqliteDashboardDatabase implements DashboardDatabase {
     const existing = await this.get(workspace, id);
     if (!existing) return null;
 
+    const sidebar = 'sidebar' in input ? (input.sidebar ?? null) : existing.sidebar;
     const now = new Date().toISOString();
     try {
       this.db
         .prepare(
           `UPDATE workspace_dashboard
-           SET name = ?, description = ?, layout = ?, updated_at = ?, updated_by = ?
+           SET name = ?, description = ?, layout = ?, sidebar = ?, updated_at = ?, updated_by = ?
            WHERE workspace = ? AND id = ?`
         )
         .run(
           input.name ?? existing.name,
           input.description ?? existing.description,
           input.layout ? JSON.stringify(input.layout) : JSON.stringify(existing.layout),
+          sidebar ? JSON.stringify(sidebar) : null,
           now,
           input.updated_by,
           workspace,

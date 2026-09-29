@@ -22,6 +22,21 @@ export const dashboardWidgetSchema = z.object({
     .describe('Widget-specific configuration; interpreted by the widget implementation')
 });
 
+export const dashboardSidebarConfigSchema = z.object({
+  kind: z.literal('entity-picker').describe('Selection UI kind; more kinds may be added later'),
+  schemaName: z
+    .string()
+    .describe(
+      "Entity schema display name to list in the picker, matched at render time — the schema's actual id is often workspace-configurable, so it cannot be seeded as a fixed id (mirrors AggregateStat widget configs referencing schemas by name in query strings)"
+    ),
+  variableName: z
+    .string()
+    .describe(
+      'Exposed as $<variableName> for substitution into widget config string values (see resolveSidebarVariableReferences)'
+    ),
+  itemLabel: z.string().optional().describe('Group label shown above the picker list')
+});
+
 export const workspaceDashboardSchema = z.object({
   id: z.string().describe('Unique dashboard identifier'),
   workspaceId: z.string().describe('Parent workspace identifier'),
@@ -40,7 +55,10 @@ export const workspaceDashboardSchema = z.object({
     .string()
     .nullable()
     .optional()
-    .describe('Set when the dashboard belongs to an app rather than the workspace home')
+    .describe('Set when the dashboard belongs to an app rather than the workspace home'),
+  sidebar: dashboardSidebarConfigSchema
+    .optional()
+    .describe('Optional selection sidebar whose current selection can drive widget config')
 });
 
 // ── Request schemas ───────────────────────────────────────────
@@ -53,7 +71,11 @@ export const createDashboardBodySchema = z.object({
 export const updateDashboardBodySchema = z.object({
   name: z.string().optional().describe('Dashboard name'),
   description: z.string().optional().describe('Dashboard description'),
-  widgets: z.array(dashboardWidgetSchema).optional().describe('Dashboard widget layout to persist')
+  widgets: z.array(dashboardWidgetSchema).optional().describe('Dashboard widget layout to persist'),
+  sidebar: dashboardSidebarConfigSchema
+    .nullable()
+    .optional()
+    .describe('Selection sidebar to persist; omit to leave unchanged, null to remove it')
 });
 
 const deleteDashboardResponseSchema = z.object({
@@ -142,6 +164,8 @@ export type DashboardWidgetType = z.infer<typeof dashboardWidgetTypeSchema>;
 export type DashboardWidget = z.infer<typeof dashboardWidgetSchema>;
 
 export type WorkspaceDashboard = z.infer<typeof workspaceDashboardSchema>;
+
+export type DashboardSidebarConfig = z.infer<typeof dashboardSidebarConfigSchema>;
 
 export type CreateDashboardRequest = z.infer<typeof createDashboardBodySchema>;
 

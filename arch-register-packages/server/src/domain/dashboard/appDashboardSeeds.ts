@@ -1,11 +1,16 @@
-import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
+import type {
+  DashboardSidebarConfig,
+  DashboardWidget
+} from '@arch-register/api-types/dashboardContract';
 
 export const API_INTEGRATION_CATALOG_APP_KEY = 'api-integration-catalog';
+export const API_INTEGRATION_CATALOG_IMPACT_APP_KEY = 'api-integration-catalog-impact';
 
 export type AppDashboardSeed = {
   name: string;
   description: string;
   widgets: DashboardWidget[];
+  sidebar?: DashboardSidebarConfig;
 };
 
 export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
@@ -90,5 +95,27 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
         h: 20
       }
     ]
+  },
+  [API_INTEGRATION_CATALOG_IMPACT_APP_KEY]: {
+    name: 'Impact',
+    description:
+      'What a change to an API would reach: registered consumers, then whatever consumes their APIs in turn.',
+    widgets: [
+      {
+        id: 'seed-impact',
+        type: 'api-integration-catalog-impact',
+        config: { entityId: '$apiEntityId' },
+        x: 0,
+        y: 0,
+        w: 12,
+        h: 30
+      }
+    ],
+    sidebar: {
+      kind: 'entity-picker',
+      schemaName: 'API',
+      variableName: 'apiEntityId',
+      itemLabel: 'APIs'
+    }
   }
 };

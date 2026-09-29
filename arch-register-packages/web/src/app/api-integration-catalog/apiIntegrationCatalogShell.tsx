@@ -3,6 +3,7 @@ import { buildHomeBreadcrumbs } from '../../shell/breadcrumbBuilders';
 import type { WorkspaceShellContext } from '../../layouts/workspaceShellDescriptors';
 import type { AppDefinition, BreadcrumbItem } from '../../shell/shellTypes';
 import { ApiIntegrationCatalogSidebar } from './sections/ApiIntegrationCatalogSidebar';
+import { AppDashboardPrimarySidebar } from '../../sections/dashboard/AppDashboardPrimarySidebar';
 import {
   IC_OVERVIEW_ID,
   IC_APIS_ID,
@@ -67,14 +68,18 @@ export const apiIntegrationCatalogAppDefinition: AppDefinition = {
       )
     },
     {
+      // Impact is a dashboard (#3467) whose own sidebar (an API picker) is rendered through the
+      // regular `primarySidebar` slot via `AppDashboardPrimarySidebar` — the same fixed side panel
+      // every other section uses, rather than a column drawn inside the dashboard's own body.
       id: IC_IMPACT_ID,
       icon: TbAffiliate,
       tooltip: 'Impact',
       route: IC_RAIL_PATHS[IC_IMPACT_ID],
+      dashboard: { appKey: 'api-integration-catalog-impact' },
       primarySidebar: ctx => (
-        <ApiIntegrationCatalogSidebar
+        <AppDashboardPrimarySidebar
           workspaceSlug={ctx.workspaceSlug}
-          activeSection={IC_IMPACT_ID}
+          appKey="api-integration-catalog-impact"
         />
       )
     }
