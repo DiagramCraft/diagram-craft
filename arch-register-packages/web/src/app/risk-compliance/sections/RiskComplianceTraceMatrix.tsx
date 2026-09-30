@@ -1,3 +1,4 @@
+import { MatrixTable } from '../../../components/MatrixTable';
 import styles from './RiskComplianceTraceMatrix.module.css';
 
 export type RiskComplianceTraceMatrixRow = {
@@ -19,15 +20,11 @@ export type RiskComplianceTraceMatrixColumn = {
 
 /**
  * Control × risk/asset traceability grid for the Controls section's Traceability view (#3282) —
- * a real `<table>` with a sticky top-left corner, sticky header row (vertical, rotated column
- * labels), and a sticky first column (control names), mirroring the design reference's
- * `RCControls` matrix view (`rc-views.jsx`'s `rc-trace` table, styled by `rc.css`) rather than a
- * bespoke CSS grid. A solid mark is a linked pair whose Control is effective; an outlined
- * (unfilled) mark is linked but not effective; an empty cell has no link at all. Each row ends
- * with its own total (columns it covers); a final summary row gives each column's total, with a
- * red mark standing in for a zero — an uncontrolled risk or asset — instead of the digit "0"
- * (design reference: `rc-trace-mark--gap`). Neither axis is bounded (unlike the fixed 5×5
- * `RiskComplianceMatrix`), so both scroll together under the sticky header/first column.
+ * a thin domain wrapper over the shared `MatrixTable` primitive (#3496). A solid mark is a linked
+ * pair whose Control is effective; an outlined (unfilled) mark is linked but not effective; an
+ * empty cell has no link at all. Each row ends with its own total (columns it covers); a final
+ * summary row gives each column's total, with a red mark standing in for a zero — an uncontrolled
+ * risk or asset — instead of the digit "0" (design reference: `rc-trace-mark--gap`).
  *
  * Control row headers open the shared entity drawer. Asset column headers may also be interactive
  * when the caller provides `onOpenColumn`; Risk column headers and totals remain read-only.
@@ -52,91 +49,51 @@ export const RiskComplianceTraceMatrix = ({
   columnCountByControlId: Map<string, number>;
   onOpenControl: (id: string) => void;
   onOpenColumn?: (id: string) => void;
-}) => {
-  if (controls.length === 0 || columns.length === 0) {
-    return (
-      <div className={styles.empty}>
-        {controls.length === 0
-          ? 'No controls match these filters.'
-          : `No ${dimensionLabel}s to trace against.`}
-      </div>
-    );
-  }
-
-  return (
-    <div className={styles.wrap}>
-      <table className={styles.trace}>
-        <thead>
-          <tr>
-            <th className={styles.hd0}>
-              {controls.length} controls × {columns.length} {dimensionLabel}
-              {columns.length === 1 ? '' : 's'}
-            </th>
-            {columns.map(column => (
-              <th key={column.id} title={column.title}>
-                {onOpenColumn ? (
-                  <button
-                    type="button"
-                    className={styles.columnButton}
-                    aria-label={`Open ${dimensionLabel} ${column.title}`}
-                    onClick={() => onOpenColumn(column.id)}
-                  >
-                    <div className={styles.vert}>{column.label}</div>
-                  </button>
-                ) : (
-                  <div className={styles.vert}>{column.label}</div>
-                )}
-              </th>
-            ))}
-            <th className={styles.tot} style={{ width: 44, minWidth: 44 }}>
-              <div className={styles.vert}>total</div>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {controls.map(control => (
-            <tr key={control.id}>
-              <th onClick={() => onOpenControl(control.id)} className={styles.rowHeaderCell}>
-                <span className={styles.rowname}>
-                  <span className="mono">{control.ref}</span> {control.name}
-                </span>
-              </th>
-              {columns.map(column => {
-                const linked = hasLink(control.id, column.id);
-                return (
-                  <td key={column.id} title={linked ? `${control.name} → ${column.title}` : ''}>
-                    {linked && (
-                      <span
-                        className={
-                          styles.mark +
-                          (isControlEffective(control.id) ? '' : ` ${styles.markWeak}`)
-                        }
-                      />
-                    )}
-                  </td>
-                );
-              })}
-              <td className={styles.tot}>{columnCountByControlId.get(control.id) ?? 0}</td>
-            </tr>
-          ))}
-          <tr>
-            <th className={styles.totLabel}>controls per {dimensionLabel}</th>
-            {columns.map(column => {
-              const n = controlCountByColumnId.get(column.id) ?? 0;
-              return (
-                <td
-                  key={column.id}
-                  className={styles.tot}
-                  style={{ color: n ? undefined : 'var(--cmp-fg-danger, #ef4444)' }}
-                >
-                  {n || <span className={`${styles.mark} ${styles.markGap}`} />}
-                </td>
-              );
-            })}
-            <td className={styles.tot} />
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  );
-};
+}) => (
+  <MatrixTable
+    cornerLabel={
+      <>
+        {controls.length} controls × {columns.length} {dimensionLabel}
+        {columns.length === 1 ? '' : 's'}
+      </>
+    }
+    rows={controls.map(control => ({
+      id: control.id,
+      title: control.name,
+      label: (
+        <>
+          <span className="mono">{control.ref}</span> {control.name}
+        </>
+      )
+    }))}
+    columns={columns.map(column => ({ id: column.id, label: column.label, title: column.title }))}
+    renderCell={(controlId, columnId) =>
+      hasLink(controlId, columnId) && (
+        <span
+          className={styles.mark + (isControlEffective(controlId) ? '' : ` ${styles.markWeak}`)}
+        />
+      )
+    }
+    getCellTitle={(controlId, columnId) => {
+      if (!hasLink(controlId, columnId)) return undefined;
+      const control = controls.find(c => c.id === controlId);
+      const column = columns.find(c => c.id === columnId);
+      return control && column ? `${control.name} → ${column.title}` : undefined;
+    }}
+    rowTotal={{ label: 'total', getValue: id => columnCountByControlId.get(id) ?? 0 }}
+    columnTotal={{
+      label: `controls per ${dimensionLabel}`,
+      getValue: columnId => {
+        const n = controlCountByColumnId.get(columnId) ?? 0;
+        return n || <span className={`${styles.mark} ${styles.markGap}`} />;
+      }
+    }}
+    onOpenRow={onOpenControl}
+    onOpenColumn={onOpenColumn}
+    emptyMessage={
+      controls.length === 0
+        ? 'No controls match these filters.'
+        : `No ${dimensionLabel}s to trace against.`
+    }
+  />
+);
