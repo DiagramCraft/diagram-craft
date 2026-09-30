@@ -881,7 +881,7 @@
         - @id:ar.entities.business-glossary Workspaces can enable a permission-aware business glossary backed by
           ordinary entity schemas, surfaced as its own application (@id:ar.workspace.applications) as a configurable
           dashboard: a single full-width term table plus a facets sidebar (category, owner, lifecycle, each
-          multi-select with counts) that filters the table live. The table shows canonical name, synonyms,
+          multi-select with counts) that filters the table live. Administrators can edit the facets sidebar (add, remove, reorder facets) from the dashboard's Edit sidebar dialog. The table shows canonical name, synonyms,
           abbreviations, categories, owner, lifecycle, status, and a usage count (entities, typed relations,
           Markdown, projects, and diagrams referencing the term); clicking a row opens the term's entity drawer.
           There is no free-text search box, column sort, or pagination on this screen yet (tracked as a follow-up),
