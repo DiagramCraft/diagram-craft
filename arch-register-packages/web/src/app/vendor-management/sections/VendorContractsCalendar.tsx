@@ -1,6 +1,8 @@
 import { useMemo } from 'react';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import { formatCurrencyValue } from '../../../utils/currencyFormat';
+import { bucketByPeriod } from '../../../utils/calendarBuckets';
+import { CalendarGrid } from '../../../components/CalendarGrid';
 import type { VendorContractRow } from '../useVendorContracts';
 import { renewalWindow, RENEWAL_WINDOW_COLOR } from '../contractRenewalWindow';
 import styles from './VendorContractsCalendar.module.css';
@@ -52,46 +54,29 @@ export const buildContractCalendarMonths = (
   contracts: readonly VendorContractRow[],
   today: Date
 ): { months: MonthBucket[]; beyondCount: number; noEndDateCount: number } => {
-  const currentMonthStart = startOfMonth(today);
-  const currentKey = monthKey(currentMonthStart);
-  const monthStarts: Date[] = [];
-  for (let i = 0; i < 12; i++) {
-    monthStarts.push(
-      new Date(currentMonthStart.getFullYear(), currentMonthStart.getMonth() + i, 1)
-    );
-  }
-  const lastKey = monthKey(monthStarts[monthStarts.length - 1]!);
-
-  const buckets = new Map<string, MonthBucket>(
-    monthStarts.map(start => {
-      const key = monthKey(start);
-      return [key, { key, label: MONTH_LABEL.format(start), rows: [] }];
-    })
-  );
-
-  let beyond = 0;
-  let noEndDate = 0;
-  for (const row of contracts) {
+  const getContractEnd = (row: VendorContractRow): Date | null => {
     const contractEnd =
       typeof row.contract.contract_end === 'string' ? row.contract.contract_end : null;
-    if (!contractEnd) {
-      noEndDate++;
-      continue;
-    }
-    const end = new Date(`${contractEnd.slice(0, 10)}T00:00:00`);
-    if (Number.isNaN(end.getTime())) {
-      noEndDate++;
-      continue;
-    }
-    const key = end < currentMonthStart ? currentKey : monthKey(end);
-    if (key > lastKey) {
-      beyond++;
-      continue;
-    }
-    buckets.get(key)?.rows.push(row);
-  }
+    return contractEnd ? new Date(`${contractEnd.slice(0, 10)}T00:00:00`) : null;
+  };
 
-  return { months: [...buckets.values()], beyondCount: beyond, noEndDateCount: noEndDate };
+  const { buckets, beyondCount, unbucketedCount } = bucketByPeriod({
+    items: contracts,
+    today,
+    periodCount: 12,
+    getItemDate: getContractEnd,
+    startOfPeriod: startOfMonth,
+    periodStartAt: (currentPeriodStart, index) =>
+      new Date(currentPeriodStart.getFullYear(), currentPeriodStart.getMonth() + index, 1),
+    periodKey: monthKey,
+    periodLabel: periodStart => MONTH_LABEL.format(periodStart)
+  });
+
+  return {
+    months: buckets.map(({ key, label, items }) => ({ key, label, rows: items })),
+    beyondCount,
+    noEndDateCount: unbucketedCount
+  };
 };
 
 /**
@@ -121,14 +106,21 @@ export const VendorContractsCalendar = ({
 
   return (
     <div>
-      <div className={styles.grid}>
-        {months.map(month => (
-          <div key={month.key} className={styles.cell}>
-            <div className={styles.cellHeader}>
-              <span>{month.label}</span>
-              <span className="dim mono tabular">{monthTotal(month.rows) ?? '—'}</span>
-            </div>
-            {month.rows.length === 0 ? (
+      <CalendarGrid
+        columns={4}
+        collapseColumns={2}
+        collapseBreakpoint={1100}
+        cellClassName={styles.cell}
+        cells={months.map(month => ({
+          key: month.key,
+          label: <span className={styles.cellLabel}>{month.label}</span>,
+          headerRight: (
+            <span className={`${styles.cellLabel} dim mono tabular`}>
+              {monthTotal(month.rows) ?? '—'}
+            </span>
+          ),
+          children:
+            month.rows.length === 0 ? (
               <div className={`${styles.empty} dim`}>No renewals</div>
             ) : (
               <div className={styles.entries}>
@@ -163,10 +155,9 @@ export const VendorContractsCalendar = ({
                   );
                 })}
               </div>
-            )}
-          </div>
-        ))}
-      </div>
+            )
+        }))}
+      />
       {(beyondCount > 0 || noEndDateCount > 0) && (
         <div className={`${styles.caption} dim`}>
           {beyondCount > 0 && <span>{beyondCount} renew beyond the next 12 months. </span>}
