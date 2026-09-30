@@ -59,7 +59,8 @@ const seededRiskComplianceDashboardWidgets = resolveTemplateDashboardWidgets(
 );
 
 // The default workspace's "Overview" dashboard is otherwise seeded lazily on first client visit
-// (see web's DEFAULT_SEEDED_WIDGETS). The risk/compliance template owns this complete seeded
+// (see web's DEFAULT_SEEDED_WIDGETS, which shares its generic starter widgets with this template
+// via GENERIC_STARTER_DASHBOARD_WIDGETS). The risk/compliance template owns this complete seeded
 // layout, including the generic starter widgets and the risk/compliance widgets from #2848.
 export const seedWorkspaceDashboards: {
   id: string;
