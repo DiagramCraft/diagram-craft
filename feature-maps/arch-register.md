@@ -583,18 +583,18 @@
 
         - @id:ar.data-stewardship.my-work The My work section (the app switcher's landing section) is the review
           queue over the workspace's existing governance-case/reminder machinery — not a new queue model — scoped
-          down to cases against Data Entities. A four-tile stat strip (Assigned to me, Past due, Cases awaiting a
-          decision, Reviews overdue — substituting the design reference's "Exceptions lapsed or expiring" stat,
-          since there is no exception/waiver register in this application) sits above a six-week due-date calendar
-          (weekly buckets, an already-overdue item folded into the current week rather than dropped off the front,
-          mirroring `ar.vendor-management`'s own monthly renewal calendar's overdue handling) and the queue list
-          itself (kind, a derived priority pill, the dataset, and a due-date badge). Unlike every other section's
-          in-screen toggle, the scope tabs (Assigned to me / All open items / Past due) live in this section's own
-          primary sidebar as a facet, alongside a Kind facet and a derived Priority facet (High/Medium/Low, computed
-          from a case's due date and escalation state — governance cases carry no priority field of their own).
-          There is deliberately no Assignee facet or column: the workspace's "list my own assignments" endpoint only
-          resolves an assignment target for the current user's own tasks, so it can't be populated for the "All open
-          items"/"Past due" scopes; the "Assigned to me" scope already conveys assignment implicitly. The queue only
+          down to cases against Data Entities. The section renders a seeded, user-editable app dashboard (`data-stewardship`,
+          full-width, no sidebar) built from Data Stewardship widgets: a four-tile stat strip (Assigned to me, Past
+          due, Cases awaiting a decision, Reviews overdue — substituting the design reference's "Exceptions lapsed or
+          expiring" stat, since there is no exception/waiver register in this application), a six-week due-date
+          calendar (weekly buckets, an already-overdue item folded into the current week rather than dropped off the
+          front, mirroring `ar.vendor-management`'s own monthly renewal calendar's overdue handling) and the queue
+          list itself (kind, a derived priority pill, the dataset, and a due-date badge, oldest deadline first). The
+          case widgets are configured per widget by scope (Assigned to me / All open items / Past due) and case
+          kind rather than through URL filters, and the priority (High/Medium/Low) is derived from a case's due date
+          and escalation state — governance cases carry no priority field of their own. There is deliberately no
+          Assignee column: the workspace's "list my own assignments" endpoint only resolves an assignment target for
+          the current user's own tasks, so it can't be populated for the "All open items"/"Past due" scopes. The queue only
           ever surfaces case kinds that actually exist in this codebase (dataset review-date reminders, entity
           change-case approvals, entity deprecation approvals) — the Claude Design reference's mocked "Access
           request" and "Data-subject request" queue kinds have no backing case-kind model anywhere in the workspace

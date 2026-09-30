@@ -662,17 +662,8 @@ export const validateDataStewardshipAssessmentsSearch = (
   parseSearchParams(dataStewardshipAssessmentsSearchSchema, raw);
 
 // Data Stewardship My work-section params — the review queue that's also the app's landing screen
-// (`DataStewardshipMyWorkScreen.tsx`, #3298).
+// (`DataStewardshipDashboardScreen.tsx`, #3298/#3501).
 const dataStewardshipMyWorkSearchSchema = defineSearchParamSchema({
-  // Scope tab: assigned to the current user, every open item visible in the workspace, or just
-  // the overdue subset of "all". Defaults to 'mine' when absent.
-  scope: enumCodec(['mine', 'all', 'late'] as const),
-  // Governance case-kind value — set by the sidebar's Kind facet
-  // (`MyWorkSidebarContent` in `DataStewardshipSidebar.tsx`).
-  kind: stringCodec,
-  // Derived priority bucket (`queueItemPriority` in `../app/data-stewardship/dataStewardshipQueue.ts`)
-  // — there is no real priority field on a governance case, see that module's doc comment.
-  priority: enumCodec(['high', 'medium', 'low'] as const),
   // Opens the new minimal case drawer (`DataStewardshipCaseDrawer.tsx`) for this governance case id
   // — for entity.change-case / entity.deprecation queue rows.
   caseId: stringCodec,
