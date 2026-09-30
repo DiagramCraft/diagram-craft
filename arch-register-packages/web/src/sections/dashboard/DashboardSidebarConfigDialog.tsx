@@ -60,7 +60,9 @@ export const DashboardSidebarConfigDialog = ({
       ?.fields.filter(field => field.type === 'reference')
       .map(field => field.name);
     setFacets(current =>
-      current.map(f => (f.fieldId.startsWith('_') || names?.includes(f.fieldId) ? f : { ...f, fieldId: '' }))
+      current.map(f =>
+        f.fieldId.startsWith('_') || names?.includes(f.fieldId) ? f : { ...f, fieldId: '' }
+      )
     );
   };
 
@@ -127,128 +129,132 @@ export const DashboardSidebarConfigDialog = ({
         </DialogSection>
         {kind === 'facets' ? (
           <>
-        <DialogSection label="Entity schema">
-          <select
-            className={styles.selectInput}
-            value={facetsSchemaName}
-            onChange={event => changeFacetsSchema(event.currentTarget.value)}
-          >
-            <option value="">Select a schema…</option>
-            {(schemas.data ?? []).map(schema => (
-              <option key={schema.id} value={schema.name}>
-                {schema.name}
-              </option>
-            ))}
-          </select>
-        </DialogSection>
-        <DialogSection label="Facets">
-          <div className={styles.options}>
-            {facets.map((facet, index) => (
-              <div key={index} className={styles.options}>
-                <select
-                  className={styles.selectInput}
-                  value={facet.fieldId}
-                  onChange={event => updateFacet(index, { fieldId: event.currentTarget.value })}
+            <DialogSection label="Entity schema">
+              <select
+                className={styles.selectInput}
+                value={facetsSchemaName}
+                onChange={event => changeFacetsSchema(event.currentTarget.value)}
+              >
+                <option value="">Select a schema…</option>
+                {(schemas.data ?? []).map(schema => (
+                  <option key={schema.id} value={schema.name}>
+                    {schema.name}
+                  </option>
+                ))}
+              </select>
+            </DialogSection>
+            <DialogSection label="Facets">
+              <div className={styles.options}>
+                {facets.map((facet, index) => (
+                  <div key={index} className={styles.options}>
+                    <select
+                      className={styles.selectInput}
+                      value={facet.fieldId}
+                      onChange={event => updateFacet(index, { fieldId: event.currentTarget.value })}
+                    >
+                      <option value="">Select a field…</option>
+                      <option value="_owner">Owner</option>
+                      <option value="_lifecycle">Lifecycle</option>
+                      {(referenceFieldNames ?? []).map(name => (
+                        <option key={name} value={name}>
+                          {name}
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      type="text"
+                      className={styles.labelInput}
+                      placeholder="Variable name, e.g. category"
+                      value={facet.variableName}
+                      onChange={event =>
+                        updateFacet(index, { variableName: event.currentTarget.value })
+                      }
+                    />
+                    <input
+                      type="text"
+                      className={styles.labelInput}
+                      placeholder="Label (optional)"
+                      value={facet.itemLabel ?? ''}
+                      onChange={event =>
+                        updateFacet(index, { itemLabel: event.currentTarget.value })
+                      }
+                    />
+                    <div className={styles.optionRow}>
+                      <Button
+                        variant="secondary"
+                        disabled={index === 0}
+                        onClick={() => setFacets(current => moveItem(current, index, -1))}
+                      >
+                        Move up
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        disabled={index === facets.length - 1}
+                        onClick={() => setFacets(current => moveItem(current, index, 1))}
+                      >
+                        Move down
+                      </Button>
+                      <Button
+                        variant="danger"
+                        onClick={() => setFacets(current => current.filter((_, i) => i !== index))}
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+                <Button
+                  variant="secondary"
+                  onClick={() =>
+                    setFacets(current => [...current, { fieldId: '', variableName: '' }])
+                  }
                 >
-                  <option value="">Select a field…</option>
-                  <option value="_owner">Owner</option>
-                  <option value="_lifecycle">Lifecycle</option>
-                  {(referenceFieldNames ?? []).map(name => (
-                    <option key={name} value={name}>
-                      {name}
-                    </option>
-                  ))}
-                </select>
-                <input
-                  type="text"
-                  className={styles.labelInput}
-                  placeholder="Variable name, e.g. category"
-                  value={facet.variableName}
-                  onChange={event => updateFacet(index, { variableName: event.currentTarget.value })}
-                />
-                <input
-                  type="text"
-                  className={styles.labelInput}
-                  placeholder="Label (optional)"
-                  value={facet.itemLabel ?? ''}
-                  onChange={event => updateFacet(index, { itemLabel: event.currentTarget.value })}
-                />
-                <div className={styles.optionRow}>
-                  <Button
-                    variant="secondary"
-                    disabled={index === 0}
-                    onClick={() => setFacets(current => moveItem(current, index, -1))}
-                  >
-                    Move up
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    disabled={index === facets.length - 1}
-                    onClick={() => setFacets(current => moveItem(current, index, 1))}
-                  >
-                    Move down
-                  </Button>
-                  <Button
-                    variant="danger"
-                    onClick={() => setFacets(current => current.filter((_, i) => i !== index))}
-                  >
-                    Remove
-                  </Button>
-                </div>
+                  Add facet
+                </Button>
               </div>
-            ))}
-            <Button
-              variant="secondary"
-              onClick={() =>
-                setFacets(current => [...current, { fieldId: '', variableName: '' }])
-              }
-            >
-              Add facet
-            </Button>
-          </div>
-          <div className={styles.hint}>
-            Each variable is referenced as <code>$&lt;name&gt;</code> and holds the comma-joined
-            selected ids.
-          </div>
-        </DialogSection>
+              <div className={styles.hint}>
+                Each variable is referenced as <code>$&lt;name&gt;</code> and holds the comma-joined
+                selected ids.
+              </div>
+            </DialogSection>
           </>
         ) : (
           <>
-        <DialogSection label="Entity schema">
-          <select
-            className={styles.selectInput}
-            value={schemaName}
-            onChange={event => setSchemaName(event.currentTarget.value)}
-          >
-            <option value="">Select a schema…</option>
-            {(schemas.data ?? []).map(schema => (
-              <option key={schema.id} value={schema.name}>
-                {schema.name}
-              </option>
-            ))}
-          </select>
-        </DialogSection>
-        <DialogSection label="Variable name">
-          <input
-            type="text"
-            className={styles.labelInput}
-            placeholder="e.g. apiEntityId"
-            value={variableName}
-            onChange={event => setVariableName(event.currentTarget.value)}
-          />
-          <div className={styles.hint}>
-            Referenced in widget config as <code>${variableName || '<name>'}</code>.
-          </div>
-        </DialogSection>
-        <DialogSection label="List label" required={false}>
-          <input
-            type="text"
-            className={styles.labelInput}
-            placeholder="e.g. APIs"
-            value={itemLabel}
-            onChange={event => setItemLabel(event.currentTarget.value)}
-          />
-        </DialogSection>
+            <DialogSection label="Entity schema">
+              <select
+                className={styles.selectInput}
+                value={schemaName}
+                onChange={event => setSchemaName(event.currentTarget.value)}
+              >
+                <option value="">Select a schema…</option>
+                {(schemas.data ?? []).map(schema => (
+                  <option key={schema.id} value={schema.name}>
+                    {schema.name}
+                  </option>
+                ))}
+              </select>
+            </DialogSection>
+            <DialogSection label="Variable name">
+              <input
+                type="text"
+                className={styles.labelInput}
+                placeholder="e.g. apiEntityId"
+                value={variableName}
+                onChange={event => setVariableName(event.currentTarget.value)}
+              />
+              <div className={styles.hint}>
+                Referenced in widget config as <code>${variableName || '<name>'}</code>.
+              </div>
+            </DialogSection>
+            <DialogSection label="List label" required={false}>
+              <input
+                type="text"
+                className={styles.labelInput}
+                placeholder="e.g. APIs"
+                value={itemLabel}
+                onChange={event => setItemLabel(event.currentTarget.value)}
+              />
+            </DialogSection>
           </>
         )}
       </DialogContent>

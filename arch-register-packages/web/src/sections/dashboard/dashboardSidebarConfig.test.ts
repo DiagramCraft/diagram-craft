@@ -1,9 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  isFacetsConfigValid,
-  moveItem,
-  normalizeFacets
-} from './dashboardSidebarConfig';
+import { isFacetsConfigValid, moveItem, normalizeFacets } from './dashboardSidebarConfig';
 
 const facet = (fieldId: string, variableName: string) => ({ fieldId, variableName });
 
