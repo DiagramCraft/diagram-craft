@@ -581,6 +581,7 @@ export const QueryLeaf = ({
           }
           onRemove={onRemove}
           hideRemove
+          allowIn
         />
         <button
           type="button"
@@ -832,6 +833,7 @@ export const QueryLeaf = ({
                   onUpdate={updates => onChange({ ...node, ...updates })}
                   onRemove={onRemove}
                   hideRemove
+                  allowIn
                 />
               </div>
             </div>

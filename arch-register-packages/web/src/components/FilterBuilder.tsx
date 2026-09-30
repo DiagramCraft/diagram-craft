@@ -32,6 +32,21 @@ export const TEXT_OPERATORS = [
   { value: 'not_empty', label: 'Is not empty' }
 ];
 
+// Multi-value membership. Offered only where a row opts in (`allowIn`) - the visual query builder -
+// because its value is an array (literal values and/or `$variable` references) rather than a scalar.
+export const IN_OPERATOR = { value: 'in', label: 'Is any of' };
+
+const withIn = (ops: { value: string; label: string }[]) => {
+  const emptyIdx = ops.findIndex(o => o.value === 'empty');
+  return [...ops.slice(0, emptyIdx), IN_OPERATOR, ...ops.slice(emptyIdx)];
+};
+
+const parseInValue = (raw: string): string[] =>
+  raw
+    .split(',')
+    .map(v => v.trim())
+    .filter(v => v !== '');
+
 export const DATE_OPERATORS = [
   { value: 'on', label: 'On' },
   { value: 'before', label: 'Before' },
@@ -162,6 +177,7 @@ export const getEntityFilterFieldDefs = ({
   const builtIn: FieldDef[] = [
     { id: '_name', name: 'Name', type: 'text' },
     { id: '_slug', name: 'Slug', type: 'text' },
+    { id: '_id', name: 'ID', type: 'text' },
     {
       id: '_owner',
       name: 'Owner',
@@ -376,7 +392,8 @@ export const FilterRow = ({
   fields,
   onUpdate,
   onRemove,
-  hideRemove = false
+  hideRemove = false,
+  allowIn = false
 }: {
   condition: FilterCondition;
   fields: FieldDef[];
@@ -385,32 +402,41 @@ export const FilterRow = ({
   // The visual query builder owns a single remove control per condition row (top-right), so it
   // suppresses FilterRow's own trailing X to avoid two X buttons on the same row.
   hideRemove?: boolean;
+  // Adds the multi-value "Is any of" operator for text and select fields.
+  allowIn?: boolean;
 }) => {
   const field = fields.find(f => f.id === condition.fieldId) ?? fields[0]!;
 
   // Local draft value for text inputs — only committed on Enter to avoid per-keystroke requests
-  const [localTextValue, setLocalTextValue] = React.useState((condition.value as string) ?? '');
+  const isIn = condition.op === 'in';
+  const toDraft = (value: unknown) =>
+    Array.isArray(value) ? value.join(', ') : ((value as string) ?? '');
+  const [localTextValue, setLocalTextValue] = React.useState(toDraft(condition.value));
   // biome-ignore lint/correctness/useExhaustiveDependencies: fieldId is intentional — resets localTextValue when field changes, even if condition.value was already ''
   React.useEffect(() => {
-    setLocalTextValue((condition.value as string) ?? '');
+    setLocalTextValue(toDraft(condition.value));
   }, [condition.fieldId, condition.value]);
 
   const commitTextValue = () =>
-    onUpdate({
-      // `rating` keeps its numeric value in the IR; text / number / free text stay strings, as
-      // before this row switched from a raw <input> to the shared TextInput.
-      value:
-        field.type === 'rating' && localTextValue !== '' ? Number(localTextValue) : localTextValue
-    });
+    isIn
+      ? onUpdate({ value: parseInValue(localTextValue) })
+      : onUpdate({
+          // `rating` keeps its numeric value in the IR; text / number / free text stay strings, as
+          // before this row switched from a raw <input> to the shared TextInput.
+          value:
+            field.type === 'rating' && localTextValue !== ''
+              ? Number(localTextValue)
+              : localTextValue
+        });
 
   const operators = React.useMemo(() => {
     if (field.type === 'date') return DATE_OPERATORS;
-    if (field.type === 'select') return SELECT_OPERATORS;
+    if (field.type === 'select') return allowIn ? withIn(SELECT_OPERATORS) : SELECT_OPERATORS;
     if (field.type === 'number') return NUMBER_OPERATORS;
     if (field.type === 'rating') return RATING_OPERATORS;
     if (field.type === 'presence') return PRESENCE_OPERATORS;
-    return TEXT_OPERATORS;
-  }, [field.type]);
+    return allowIn ? withIn(TEXT_OPERATORS) : TEXT_OPERATORS;
+  }, [field.type, allowIn]);
 
   const isFreeText = field.type === 'freetext';
   const showValueInput = isFreeText || (condition.op !== 'empty' && condition.op !== 'not_empty');
@@ -421,6 +447,7 @@ export const FilterRow = ({
       onBlur={e => {
         if (
           (field.type === 'text' ||
+            isIn ||
             field.type === 'number' ||
             field.type === 'rating' ||
             isFreeText) &&
@@ -444,7 +471,19 @@ export const FilterRow = ({
           <div className={styles.tokOp}>
             <Select.Root
               value={condition.op}
-              onChange={v => onUpdate({ op: v as FilterCondition['op'] })}
+              onChange={v => {
+                const op = v as FilterCondition['op'];
+                // Convert the value between scalar and array shape when crossing the `in` boundary.
+                if (op === 'in' && !isIn) {
+                  const current = typeof condition.value === 'string' ? condition.value : '';
+                  onUpdate({ op, value: parseInValue(current) });
+                } else if (op !== 'in' && isIn) {
+                  const first = Array.isArray(condition.value) ? condition.value[0] : undefined;
+                  onUpdate({ op, value: typeof first === 'string' ? first : '' });
+                } else {
+                  onUpdate({ op });
+                }
+              }}
             >
               {operators.map(o => (
                 <Select.Item key={o.value} value={o.value}>
@@ -458,7 +497,16 @@ export const FilterRow = ({
 
       {showValueInput && (
         <div className={styles.rowBody}>
-          {field.type === 'select' ? (
+          {isIn ? (
+            <TextInput
+              value={localTextValue}
+              placeholder="value, value, $variable"
+              onChange={v => setLocalTextValue(v ?? '')}
+              onKeyDown={(e: React.KeyboardEvent) => {
+                if (e.key === 'Enter') commitTextValue();
+              }}
+            />
+          ) : field.type === 'select' ? (
             <Select.Root value={condition.value as string} onChange={v => onUpdate({ value: v })}>
               {field.options?.map(o => (
                 <Select.Item key={o.value} value={o.value}>
