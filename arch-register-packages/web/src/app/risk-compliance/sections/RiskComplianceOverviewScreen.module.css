@@ -153,24 +153,3 @@
 .rowSub {
   font-size: 11px;
 }
-
-/* Coverage-by-control-type bars — mirrors RiskComplianceControlsScreen.module.css's .covTrack/.covFill,
-   duplicated locally (rather than imported) since these are banded by ratio, unlike that screen's
-   coverage-band colour, and this screen already imports that module's .tile/.cov* classes for the
-   bar-list row shell itself. */
-.typeTrack {
-  position: relative;
-  width: 120px;
-  flex-shrink: 0;
-  height: 5px;
-  background: var(--cmp-bg);
-  border: 1px solid var(--panel-border);
-  border-radius: 3px;
-  overflow: hidden;
-}
-
-.typeFill {
-  display: block;
-  height: 100%;
-  border-radius: 3px;
-}
