@@ -6,6 +6,7 @@ import type {
 export const API_INTEGRATION_CATALOG_APP_KEY = 'api-integration-catalog';
 export const API_INTEGRATION_CATALOG_IMPACT_APP_KEY = 'api-integration-catalog-impact';
 export const BUSINESS_GLOSSARY_APP_KEY = 'business-glossary';
+export const DATA_STEWARDSHIP_APP_KEY = 'data-stewardship';
 
 /** The `entity-browser-embed` widget type, shared with the markdown/wiki embed block (see
  *  `web/src/sections/markdown/mdx-components/blocks/entity-browser-embed/EntityBrowserEmbedEditable.tsx`'s
@@ -124,6 +125,87 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
       variableName: 'apiEntityId',
       itemLabel: 'APIs'
     }
+  },
+  [DATA_STEWARDSHIP_APP_KEY]: {
+    name: 'My work',
+    description: 'Reviews, change-case approvals and deprecation approvals awaiting action.',
+    widgets: [
+      {
+        id: 'seed-stat-assigned',
+        type: 'data-stewardship-case-count',
+        config: {
+          label: 'Assigned to me',
+          scope: 'mine',
+          caseKinds: [],
+          tone: 'none',
+          subtextTemplate: '{due} due within a week',
+          dueWithinDays: 7
+        },
+        x: 0,
+        y: 0,
+        w: 3,
+        h: 5
+      },
+      {
+        id: 'seed-stat-past-due',
+        type: 'data-stewardship-case-count',
+        config: {
+          label: 'Past due',
+          scope: 'late',
+          caseKinds: [],
+          tone: 'danger',
+          subtextTemplate: 'across all assignees',
+          dueWithinDays: 7
+        },
+        x: 3,
+        y: 0,
+        w: 3,
+        h: 5
+      },
+      {
+        id: 'seed-stat-awaiting-decision',
+        type: 'data-stewardship-case-count',
+        config: {
+          label: 'Cases awaiting a decision',
+          scope: 'workspace',
+          caseKinds: ['entity.change-case', 'entity.deprecation'],
+          tone: 'warning',
+          subtextTemplate: 'change-case & deprecation approvals',
+          dueWithinDays: 7
+        },
+        x: 6,
+        y: 0,
+        w: 3,
+        h: 5
+      },
+      {
+        id: 'seed-stat-reviews-overdue',
+        type: 'data-stewardship-reviews-overdue',
+        config: { subtextTemplate: 'scheduled review date passed' },
+        x: 9,
+        y: 0,
+        w: 3,
+        h: 5
+      },
+      {
+        id: 'seed-calendar',
+        type: 'data-stewardship-case-calendar',
+        config: { label: 'Next six weeks', scope: 'mine', caseKinds: [] },
+        x: 0,
+        y: 5,
+        w: 12,
+        h: 14
+      },
+      {
+        id: 'seed-queue',
+        type: 'data-stewardship-case-queue',
+        config: { label: 'Assigned to me', scope: 'mine', caseKinds: [] },
+        x: 0,
+        y: 19,
+        w: 12,
+        h: 22
+      }
+    ]
   },
   [BUSINESS_GLOSSARY_APP_KEY]: {
     name: 'Business glossary',

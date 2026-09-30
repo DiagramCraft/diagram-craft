@@ -124,9 +124,9 @@ export const LazyRiskComplianceAssessmentsScreen = lazyRouteComponent(
   () => import('../../app/risk-compliance/sections/RiskComplianceAssessmentsScreen'),
   'RiskComplianceAssessmentsScreen'
 );
-export const LazyDataStewardshipMyWorkScreen = lazyRouteComponent(
-  () => import('../../app/data-stewardship/sections/DataStewardshipMyWorkScreen'),
-  'DataStewardshipMyWorkScreen'
+export const LazyDataStewardshipDashboardScreen = lazyRouteComponent(
+  () => import('../../app/data-stewardship/sections/DataStewardshipDashboardScreen'),
+  'DataStewardshipDashboardScreen'
 );
 export const LazyDataStewardshipStewardshipScreen = lazyRouteComponent(
   () => import('../../app/data-stewardship/sections/DataStewardshipStewardshipScreen'),

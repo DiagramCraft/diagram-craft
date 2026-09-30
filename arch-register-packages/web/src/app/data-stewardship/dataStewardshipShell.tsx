@@ -20,6 +20,8 @@ import {
   type DataStewardshipRailItemId
 } from './dataStewardshipSections';
 
+export const DS_APP_KEY = 'data-stewardship';
+
 /**
  * Data Stewardship's workspace-rail identity: its rail-item ids (defined in
  * `./dataStewardshipSections.ts`, alongside `dataStewardshipAppDefinition` and its breadcrumb
@@ -28,7 +30,7 @@ import {
  *
  * Unlike Risk & Compliance / Vendor Management, there is no separate Overview section — My work is
  * `sections[0]`, so it is where the app switcher lands (`appRootRoute`), and it is a self-contained
- * dashboard (review queue, assigned cases, six-week calendar) rather than a facet browser.
+ * configurable dashboard (stat tiles, six-week calendar, review queue) rather than a facet browser.
  */
 export const dataStewardshipAppDefinition: AppDefinition = {
   id: DS_MY_WORK_ID,
@@ -41,8 +43,10 @@ export const dataStewardshipAppDefinition: AppDefinition = {
     {
       // No `primarySidebar`: My work is a self-contained dashboard and the app's sections are
       // already switchable from the outer icon rail, so the shell renders it full-width (same as
-      // `riskComplianceAppDefinition`'s Overview).
+      // `riskComplianceAppDefinition`'s Overview). Renders the seeded `data-stewardship` app
+      // dashboard (#3501).
       id: DS_MY_WORK_ID,
+      dashboard: { appKey: DS_APP_KEY },
       icon: TbClipboardCheck,
       tooltip: 'My work',
       route: DS_RAIL_PATHS[DS_MY_WORK_ID]

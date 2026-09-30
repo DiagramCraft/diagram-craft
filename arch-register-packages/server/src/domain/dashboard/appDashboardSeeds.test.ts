@@ -3,7 +3,11 @@ import {
   dashboardSidebarConfigSchema,
   dashboardWidgetSchema
 } from '@arch-register/api-types/dashboardContract';
-import { APP_DASHBOARD_SEEDS, BUSINESS_GLOSSARY_APP_KEY } from './appDashboardSeeds';
+import {
+  APP_DASHBOARD_SEEDS,
+  BUSINESS_GLOSSARY_APP_KEY,
+  DATA_STEWARDSHIP_APP_KEY
+} from './appDashboardSeeds';
 
 describe('APP_DASHBOARD_SEEDS', () => {
   it('every seed widget matches the dashboard widget contract', () => {
@@ -47,5 +51,19 @@ describe('APP_DASHBOARD_SEEDS', () => {
         { fieldId: '_lifecycle', variableName: 'lifecycleIds', itemLabel: 'Lifecycle' }
       ]
     });
+  });
+
+  it('seeds the data stewardship My work dashboard with four stat tiles, a calendar and a queue', () => {
+    const seed = APP_DASHBOARD_SEEDS[DATA_STEWARDSHIP_APP_KEY];
+    expect(seed).toBeDefined();
+    expect(seed!.sidebar).toBeUndefined();
+    expect(seed!.widgets.map(widget => widget.type)).toEqual([
+      'data-stewardship-case-count',
+      'data-stewardship-case-count',
+      'data-stewardship-case-count',
+      'data-stewardship-reviews-overdue',
+      'data-stewardship-case-calendar',
+      'data-stewardship-case-queue'
+    ]);
   });
 });

@@ -1,10 +1,5 @@
-/* Queue card list — mirrors the Claude Design reference's `.ds-queue`/`.ds-card`/`.ds-pill`
-   (`ds.css`), which look distinctly different from the plain single-line `.row`/`.item` rows
-   `DataStewardshipStewardshipScreen.module.css` uses elsewhere in this app: a colored priority
-   tick down the left edge, a kind/priority/ref header line, a title line, a meta line, and a
-   right-aligned due-date column — rather than a generic list item. This screen still reuses that
-   sibling module for its `.screen`/`.tiles`/`.tile*`/`.panel*`/`.empty` shell (same stat-tile shape
-   every Data Stewardship screen shares); only the queue list itself gets its own look here. */
+/* Queue card list (colored priority tick, kind/priority/ref header, title, meta, right-aligned due
+   column) and the stat tile shape used by the Data Stewardship dashboard widgets. */
 
 .queue {
   display: flex;
@@ -98,4 +93,34 @@
   border-radius: 999px;
   font-size: 10px;
   white-space: nowrap;
+}
+
+.tile {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+  padding: 14px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  height: 100%;
+}
+
+.tileLabel {
+  font-size: 11px;
+  color: var(--base-fg-more-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.tileValue {
+  font-size: 28px;
+  font-weight: 500;
+  letter-spacing: -0.5px;
+  line-height: 1;
+}
+
+.tileSub {
+  font-size: 11.5px;
+  color: var(--base-fg-more-dim);
 }

@@ -18,7 +18,7 @@ import {
 import { withWorkspaceShell } from '../../routes/workspace/workspaceShellRoute';
 import { railSectionShell } from '../../layouts/workspaceShellDescriptors';
 import {
-  LazyDataStewardshipMyWorkScreen,
+  LazyDataStewardshipDashboardScreen,
   LazyDataStewardshipStewardshipScreen,
   LazyDataStewardshipClassificationScreen,
   LazyDataStewardshipChangeCasesScreen,
@@ -50,7 +50,7 @@ export const createDataStewardshipWorkspaceRoutes = <TParentRoute extends AnyRou
           (params as unknown as { workspaceSlug: string }).workspaceSlug,
           'data-stewardship'
         ),
-      component: LazyDataStewardshipMyWorkScreen
+      component: LazyDataStewardshipDashboardScreen
     }),
     ctx =>
       railSectionShell(ctx, DS_MY_WORK_ID, {
