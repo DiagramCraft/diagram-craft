@@ -17,7 +17,7 @@ export type EntityBrowserEmbedConfig = {
    * An advanced, structured query (the same `EntityQuery` shape saved views store — filter tree,
    * relation-path conditions, and projected columns) alongside the embed's "Basic" `conditions`/`q`
    * mode, mirroring saved views' own Basic/Advanced duality (`isBasicRepresentable` et al. in
-   * `entityBrowserState.ts`). Not authorable via the embed's own config form yet — set only by
+   * `entityBrowserState.ts`). Authorable via the config form's Advanced filter mode, or set by
    * callers building a config programmatically (e.g. a seeded dashboard widget), where it's the only
    * way to express something `conditions` can't (e.g. "has a category in this set", via
    * `relationExists`). Every field NAME (not id — a schema's actual field ids are workspace-specific)

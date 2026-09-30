@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { TbChevronLeft, TbChevronRight } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
@@ -12,10 +12,13 @@ import type { EntityBrowserEmbedConfig } from './EntityBrowserEmbedCodec';
 import {
   buildEntityDisplayFields,
   DISPLAY_FIELD_VIEWS,
+  filterDisplayFieldIdsForContext,
   getDisplayFieldIds,
   withDisplayFieldIds,
   withoutDisplayFieldIds
 } from '../../../../entities/components/entityDisplayFields';
+import { resolveConfigVariables } from '../../../../dashboard/resolveSidebarVariableReferences';
+import { resolveEntityQuery } from './EntityBrowserEmbedFieldResolution';
 import styles from './EntityBrowserEmbedConfigForm.module.css';
 
 type Props = {
@@ -32,10 +35,12 @@ export const EntityBrowserEmbedConfigForm = ({ config, onChange, context }: Prop
   const {
     activeViewConfig,
     conditions,
+    entityQuery,
     ownerFilter,
     projectScope,
     q,
     setConditions,
+    setEntityQuery,
     setActiveViewConfig,
     setProjectScope,
     setQ,
@@ -43,7 +48,7 @@ export const EntityBrowserEmbedConfigForm = ({ config, onChange, context }: Prop
     setView,
     sort,
     statusFilter,
-    typeFilter,
+    typeFilter: conditionTypeFilter,
     view,
     viewConfigs
   } = useEntityBrowserLocalState({
@@ -54,17 +59,70 @@ export const EntityBrowserEmbedConfigForm = ({ config, onChange, context }: Prop
       projectScope: config.projectScope,
       sort: config.sort,
       view: config.view,
-      viewConfigs: config.viewConfigs
+      viewConfigs: config.viewConfigs,
+      entityQuery: config.entityQuery ?? null
     }
   });
 
   useEffect(() => {
-    onChange({ q, conditions, sort, view, viewConfigs, projectScope });
-  }, [q, conditions, sort, view, viewConfigs, projectScope, onChange]);
+    onChange({
+      q,
+      conditions,
+      sort,
+      view,
+      viewConfigs,
+      projectScope,
+      ...(entityQuery ? { entityQuery } : {}),
+      ...(config.schemaName ? { schemaName: config.schemaName } : {})
+    });
+  }, [
+    q,
+    conditions,
+    sort,
+    view,
+    viewConfigs,
+    projectScope,
+    entityQuery,
+    config.schemaName,
+    onChange
+  ]);
 
-  const displayFields = buildEntityDisplayFields(
-    typeFilter ? schemas.filter(s => s.id === typeFilter) : schemas,
-    !!projectId
+  // Same schemaName -> id resolution the rendered embed does, so the preview matches it.
+  const schemaNameId = config.schemaName
+    ? schemas.find(schema => schema.name === config.schemaName)?.id
+    : undefined;
+  const typeFilter = conditionTypeFilter ?? schemaNameId ?? null;
+
+  // The stored query may carry field NAMES and `$variable` references that only make sense at
+  // render time (see EntityBrowserEmbedFieldResolution.ts / resolveSidebarVariableReferences.ts).
+  // The dialog has no sidebar, so preview against the resolved query with every variable empty -
+  // an empty `in` is dropped as "no constraint" - rather than sending the raw query, which the
+  // server rejects with a 400. The stored query is left untouched.
+  const previewEntityQuery = useMemo(() => {
+    if (!entityQuery) return null;
+    const variables = Object.fromEntries(
+      [...JSON.stringify(entityQuery).matchAll(/\$(\w+)/g)].map(([, name]) => [name!, ''])
+    );
+    const rootSchema = typeFilter ? schemas.find(schema => schema.id === typeFilter) : undefined;
+    return resolveEntityQuery(
+      resolveConfigVariables(
+        entityQuery as unknown as Record<string, unknown>,
+        variables
+      ) as typeof entityQuery,
+      rootSchema,
+      typeFilter
+    );
+  }, [entityQuery, schemas, typeFilter]);
+
+  const displayFields = useMemo(
+    () =>
+      buildEntityDisplayFields(
+        typeFilter ? schemas.filter(s => s.id === typeFilter) : schemas,
+        !!projectId,
+        null,
+        entityQuery?.projections ?? []
+      ),
+    [schemas, typeFilter, projectId, entityQuery?.projections]
   );
   const displayView = DISPLAY_FIELD_VIEWS.has(view)
     ? (view as 'table' | 'cards' | 'tree' | 'explore' | 'map')
@@ -80,7 +138,8 @@ export const EntityBrowserEmbedConfigForm = ({ config, onChange, context }: Prop
       ownerFilter,
       statusFilter,
       projectId,
-      projectScope
+      projectScope,
+      entityQuery: previewEntityQuery
     });
 
   const { filtered, filteredCount, isLoading, owners, schemaMap, sortOptions } =
@@ -98,7 +157,8 @@ export const EntityBrowserEmbedConfigForm = ({ config, onChange, context }: Prop
       view,
       pageIndex,
       pageSize,
-      activeViewConfig
+      activeViewConfig,
+      entityQuery: previewEntityQuery
     });
 
   return (
@@ -122,9 +182,16 @@ export const EntityBrowserEmbedConfigForm = ({ config, onChange, context }: Prop
         sortOptions={sortOptions}
         view={view}
         setView={setView}
+        entityQuery={entityQuery}
+        setEntityQuery={setEntityQuery}
         displayFields={displayView ? displayFields : undefined}
         selectedDisplayFieldIds={
-          displayView ? getDisplayFieldIds(displayView, activeViewConfig) : undefined
+          displayView
+            ? filterDisplayFieldIdsForContext(
+                getDisplayFieldIds(displayView, activeViewConfig),
+                !!projectId
+              )
+            : undefined
         }
         onDisplayFieldsChange={
           displayView

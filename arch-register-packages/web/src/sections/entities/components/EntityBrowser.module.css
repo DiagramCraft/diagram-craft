@@ -61,7 +61,11 @@
   position: relative !important;
   z-index: 1100 !important;
 }
+/* Same stacking fix as .filterPopover: this popover is also used inside the
+   EntityBrowserEmbedConfigForm dialog, whose viewport would otherwise intercept pointer events. */
 .fieldsPopover {
+  position: relative !important;
+  z-index: 1100 !important;
   width: 260px;
   max-height: min(480px, 70vh);
   overflow: auto;
