@@ -35,6 +35,8 @@ type UseEntityBrowserDataProps = {
   includePlannedChanges?: boolean;
   activeViewConfig?: unknown;
   onCountChange?: (count: number) => void;
+  /** Forwarded to `useEntities`/`entitiesQuery` — see `EntityListOptions.includeUsageCount`. */
+  includeUsageCount?: boolean;
 };
 
 export const useEntityBrowserData = ({
@@ -59,7 +61,8 @@ export const useEntityBrowserData = ({
   asOf,
   includePlannedChanges = true,
   activeViewConfig,
-  onCountChange
+  onCountChange,
+  includeUsageCount
 }: UseEntityBrowserDataProps) => {
   const isPagedBrowse = !disablePaging && (view === 'table' || view === 'cards') && sort === 'name';
   const shouldLoadEntityList = enabled && !isTreeBasedView(view) && !!workspaceId;
@@ -103,7 +106,8 @@ export const useEntityBrowserData = ({
       limit: isPagedBrowse ? pageSize : undefined,
       offset: isPagedBrowse ? pagedOffset : undefined,
       asOf,
-      includePlannedChanges
+      includePlannedChanges,
+      includeUsageCount
     },
     { enabled: shouldLoadEntityList && isPagedBrowse }
   );
@@ -128,7 +132,8 @@ export const useEntityBrowserData = ({
       collectionId: collectionId ?? undefined,
       view: 'full',
       asOf,
-      includePlannedChanges
+      includePlannedChanges,
+      includeUsageCount
     },
     { enabled: shouldLoadEntityList && !isPagedBrowse }
   );

@@ -137,7 +137,16 @@ const entitySummarySchema = entityCapabilitiesSchema.extend({
   _projections: z
     .record(z.string(), z.unknown())
     .optional()
-    .describe('Values returned by structured EntityQuery projections')
+    .describe('Values returned by structured EntityQuery projections'),
+  _usageCount: z
+    .number()
+    .int()
+    .optional()
+    .describe(
+      'Total references to this entity (relation dependents, document/markdown mentions, ' +
+        'project links, diagram files). Only present when includeUsageCount was requested — ' +
+        'expensive to compute, so never included by default.'
+    )
 });
 
 // EntityRecord = EntitySummary + dynamic schema fields
@@ -299,7 +308,14 @@ export const entityListFiltersSchema = z.object({
     .describe('Tree context expansion mode; map views use both ancestors and descendants'),
   treeDepth: treeDepthQuerySchema.describe(
     'Maximum descendant depth used when treeExpansion is both'
-  )
+  ),
+  includeUsageCount: booleanQuerySchema
+    .optional()
+    .describe(
+      'When true, compute and include _usageCount on each returned entity. Opt-in only — ' +
+        'this aggregates relation dependents, document/markdown mentions, project links, and ' +
+        'diagram files per entity, which is too expensive to compute unconditionally.'
+    )
 });
 
 const deleteEntityResponseSchema = z.object({

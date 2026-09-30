@@ -88,4 +88,32 @@ describe('EntityBrowserEmbedCodec', () => {
     const encoded = encodeEntityBrowserEmbedConfig(fullConfig);
     expect(SAFE_PROP_VALUE.test(encoded)).toBe(true);
   });
+
+  it('round-trips an advanced entityQuery', () => {
+    const withEntityQuery: EntityBrowserEmbedConfig = {
+      ...fullConfig,
+      entityQuery: {
+        root: {
+          kind: 'and',
+          children: [
+            {
+              kind: 'relationExists',
+              path: [{ kind: 'forward', fieldId: 'Categories' }]
+            },
+            { kind: 'predicate', path: [], fieldId: '_owner', op: 'in', value: ['$ownerIds'] }
+          ]
+        },
+        projections: [
+          {
+            path: [{ kind: 'forward', fieldId: 'Categories' }],
+            fieldId: '_name',
+            alias: 'Category'
+          }
+        ]
+      }
+    };
+    const encoded = encodeEntityBrowserEmbedConfig(withEntityQuery);
+    const decoded = decodeEntityBrowserEmbedConfig(encoded);
+    expect(decoded).toEqual(withEntityQuery);
+  });
 });

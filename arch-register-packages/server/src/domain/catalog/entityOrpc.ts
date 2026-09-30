@@ -58,7 +58,13 @@ const entityHandlers = {
   list: entityRouter.entities.list.handler(async ({ input, context }) => {
     const { workspace, authCtx } = context;
     const { query } = await prepareEntityQueryRequest(context.db, workspace, authCtx, input.query);
-    return await listEntitiesWithCount(context.db, workspace, authCtx, query);
+    return await listEntitiesWithCount(context.db, workspace, authCtx, {
+      ...query,
+      includeUsageCount: input.query.includeUsageCount,
+      usageContext: input.query.includeUsageCount
+        ? { workspaceSlug: input.params.workspace, event: context.event }
+        : null
+    });
   }),
 
   count: entityRouter.entities.count.handler(async ({ input, context }) => {

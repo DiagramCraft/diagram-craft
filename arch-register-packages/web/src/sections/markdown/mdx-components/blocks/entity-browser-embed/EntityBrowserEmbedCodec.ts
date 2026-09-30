@@ -1,4 +1,5 @@
 import type { BrowserView, FilterCondition } from '@arch-register/api-types/viewContract';
+import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import type { BrowserViewConfigMap } from '../../../../entities/components/entityBrowserState';
 import {
   parseViewConfigs,
@@ -12,6 +13,27 @@ export type EntityBrowserEmbedConfig = {
   view: BrowserView;
   viewConfigs: BrowserViewConfigMap;
   projectScope?: 'project' | 'all';
+  /**
+   * An advanced, structured query (the same `EntityQuery` shape saved views store — filter tree,
+   * relation-path conditions, and projected columns) alongside the embed's "Basic" `conditions`/`q`
+   * mode, mirroring saved views' own Basic/Advanced duality (`isBasicRepresentable` et al. in
+   * `entityBrowserState.ts`). Not authorable via the embed's own config form yet — set only by
+   * callers building a config programmatically (e.g. a seeded dashboard widget), where it's the only
+   * way to express something `conditions` can't (e.g. "has a category in this set", via
+   * `relationExists`). Every field NAME (not id — a schema's actual field ids are workspace-specific)
+   * appearing as a single forward-hop `path[0].fieldId`, or as a `path`-less `fieldId` not starting
+   * with `_`, is resolved against the relevant schema at render time, mirroring `schemaName` below;
+   * deeper multi-hop paths are used as-is (assumed to already carry real ids). Takes effect instead
+   * of the `conditions`-built query when present; `q` still applies as live free-text search on top.
+   */
+  entityQuery?: EntityQuery;
+  /**
+   * Schema display NAME to scope the browser to, resolved to a schema id at render time (mirrors
+   * `dashboardSidebarConfigSchema.schemaName`) — for a seeded, cross-workspace config, where the
+   * actual schema id isn't stable. Takes effect alongside (not instead of) any `_schemaId`
+   * condition already in `conditions`. Not authorable via the embed's own config form yet.
+   */
+  schemaName?: string;
 };
 
 const toBase64Url = (input: string): string => {
@@ -38,7 +60,9 @@ export const encodeEntityBrowserEmbedConfig = (config: EntityBrowserEmbedConfig)
     sort: config.sort,
     view: config.view,
     viewConfigs: serializeViewConfigs(config.viewConfigs),
-    projectScope: config.projectScope
+    projectScope: config.projectScope,
+    entityQuery: config.entityQuery,
+    schemaName: config.schemaName
   };
   return toBase64Url(JSON.stringify(payload));
 };
@@ -61,7 +85,12 @@ export const decodeEntityBrowserEmbedConfig = (
       projectScope:
         parsed.projectScope === 'project' || parsed.projectScope === 'all'
           ? parsed.projectScope
-          : undefined
+          : undefined,
+      entityQuery:
+        parsed.entityQuery != null && typeof parsed.entityQuery === 'object'
+          ? (parsed.entityQuery as EntityQuery)
+          : undefined,
+      schemaName: typeof parsed.schemaName === 'string' ? parsed.schemaName : undefined
     };
   } catch {
     return null;

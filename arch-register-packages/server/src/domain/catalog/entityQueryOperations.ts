@@ -50,6 +50,9 @@ import { buildTypedRelationVisibilityPolicy } from './relationAccessControl';
 import { buildEntityViewPermissionScope } from './db/entityPermissionScope';
 import { executeEntityTraversal, type EntityTraversalPathResult } from './entityTraversal';
 import { effectiveProjectionAlias } from './entityQueryIRProjectionPlan';
+import { getBatchEntityDependents } from './entityRelationshipOperations';
+import { collectEntityUsage } from './entityUsageOperations';
+import type { AuthenticatedEvent } from '../../middleware/auth';
 
 const checker = new PermissionChecker();
 
@@ -75,6 +78,14 @@ export type EntityQueryOptions = {
   offset?: number | null;
   asOf?: Date | null;
   includePlannedChanges?: boolean;
+  /**
+   * Opt-in: compute and attach `_usageCount` to each returned entity. Expensive per row
+   * (aggregates relation dependents, document/markdown mentions, project links, and diagram
+   * files), so it is only computed when this is true and `usageContext` is supplied.
+   */
+  includeUsageCount?: boolean;
+  /** Required alongside `includeUsageCount` — carries what `collectEntityUsage` needs beyond `workspace`/`authCtx`. */
+  usageContext?: { workspaceSlug: string; event: AuthenticatedEvent } | null;
 };
 
 export type EntityListPage = {
@@ -99,6 +110,8 @@ export type NormalizedEntityQueryOptions = {
   offset: number;
   asOf: Date | null;
   includePlannedChanges: boolean;
+  includeUsageCount: boolean;
+  usageContext: { workspaceSlug: string; event: AuthenticatedEvent } | null;
 };
 
 export const normalizeEntityQueryOptions = (
@@ -119,7 +132,9 @@ export const normalizeEntityQueryOptions = (
   limit: options.limit ?? null,
   offset: options.offset ?? 0,
   asOf: options.asOf ?? null,
-  includePlannedChanges: options.includePlannedChanges ?? true
+  includePlannedChanges: options.includePlannedChanges ?? true,
+  includeUsageCount: options.includeUsageCount ?? false,
+  usageContext: options.usageContext ?? null
 });
 
 const attachProjectLink = (
@@ -455,6 +470,66 @@ export const collectEntitiesFromIR = async (
   );
 };
 
+const mapWithConcurrency = async <T, Result>(
+  items: T[],
+  concurrency: number,
+  mapper: (item: T) => Promise<Result>
+): Promise<Result[]> => {
+  if (items.length === 0) return [];
+  const results = new Array<Result>(items.length);
+  let nextIndex = 0;
+  const worker = async () => {
+    while (true) {
+      const index = nextIndex++;
+      if (index >= items.length) return;
+      results[index] = await mapper(items[index]!);
+    }
+  };
+  await Promise.all(
+    Array.from({ length: Math.min(Math.max(concurrency, 1), items.length) }, () => worker())
+  );
+  return results;
+};
+
+/**
+ * Attaches `_usageCount` to each entity via `collectEntityUsage`, batched with bounded
+ * concurrency (mirrors the business-glossary usage-count batching) rather than one request
+ * per row. No-ops when usage count wasn't requested, or when the caller didn't supply the
+ * context (`authCtx`, `workspaceSlug`, `event`) `collectEntityUsage` requires.
+ */
+export const attachUsageCounts = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  authCtx: AuthorizationContext | null,
+  normalized: Pick<NormalizedEntityQueryOptions, 'includeUsageCount' | 'usageContext'>,
+  entities: EntityRecord[]
+): Promise<EntityRecord[]> => {
+  const { includeUsageCount, usageContext } = normalized;
+  if (!includeUsageCount || !usageContext || !authCtx || entities.length === 0) return entities;
+
+  const ids = entities.map(entity => String(entity._uid));
+  const dependentsById = await getBatchEntityDependents(
+    db,
+    workspace,
+    ids,
+    { transitive: false },
+    authCtx
+  );
+  const counts = await mapWithConcurrency(entities, 8, async entity => {
+    const usage = await collectEntityUsage(
+      db,
+      workspace,
+      usageContext.workspaceSlug,
+      String(entity._uid),
+      usageContext.event,
+      authCtx,
+      dependentsById.get(String(entity._uid))
+    );
+    return usage.length;
+  });
+  return entities.map((entity, index) => ({ ...entity, _usageCount: counts[index] }));
+};
+
 export const listEntitiesWithCount = async (
   db: DatabaseAdapter,
   workspace: string,
@@ -499,15 +574,16 @@ export const listEntitiesWithCount = async (
         normalized.entityQuery!,
         rows
       );
+      const items = mapEntityQueryRows(
+        rowsWithTraversalProjections,
+        authCtx,
+        normalized,
+        schemaCatalog,
+        historicalSchemas,
+        projectEntities
+      ).map(row => row.entity);
       return {
-        items: mapEntityQueryRows(
-          rowsWithTraversalProjections,
-          authCtx,
-          normalized,
-          schemaCatalog,
-          historicalSchemas,
-          projectEntities
-        ).map(row => row.entity),
+        items: await attachUsageCounts(db, workspace, authCtx, normalized, items),
         total
       };
     } catch (error) {
@@ -520,8 +596,9 @@ export const listEntitiesWithCount = async (
     const rows = await collectEntities(db, workspace, authCtx, queryOptions);
     const windowed =
       safeLimit != null ? rows.slice(safeOffset, safeOffset + safeLimit) : rows.slice(safeOffset);
+    const items = windowed.map(row => row.entity);
     return {
-      items: windowed.map(row => row.entity),
+      items: await attachUsageCounts(db, workspace, authCtx, normalized, items),
       total: rows.length
     };
   } catch (error) {

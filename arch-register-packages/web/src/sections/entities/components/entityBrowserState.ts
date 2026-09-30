@@ -92,6 +92,12 @@ export const parseEntityQueryFromSearch = (search: BrowserSearch): EntityQuery |
 const rootChildren = (query: EntityQuery): EntityQuery['root'][] =>
   query.root.kind === 'and' ? query.root.children : [query.root];
 
+const isEmptyInValue = (node: EntityQuery['root']): boolean =>
+  node.kind === 'predicate' &&
+  node.op === 'in' &&
+  Array.isArray(node.value) &&
+  node.value.length === 0;
+
 const stripEmptyGroupsNode = (node: EntityQuery['root']): EntityQuery['root'] | null => {
   if (node.kind === 'and' || node.kind === 'or') {
     const children = node.children
@@ -107,6 +113,16 @@ const stripEmptyGroupsNode = (node: EntityQuery['root']): EntityQuery['root'] | 
   // dropped too - an empty `freeText` value is a validation error, not "match everything".
   if (node.kind === 'freeText') {
     return node.value.trim() === '' ? null : node;
+  }
+  // A multi-select `in` filter with no selection (e.g. a dashboard `facets` sidebar's variable
+  // substitution resolving to an empty array — see `resolveSidebarVariableReferences.ts`) means
+  // "no constraint", not "match nothing", for the same reason an empty and/or group above does.
+  if (isEmptyInValue(node)) return null;
+  if (
+    node.kind === 'relationExists' &&
+    node.path.some(step => 'filter' in step && step.filter && isEmptyInValue(step.filter))
+  ) {
+    return null;
   }
   return node;
 };

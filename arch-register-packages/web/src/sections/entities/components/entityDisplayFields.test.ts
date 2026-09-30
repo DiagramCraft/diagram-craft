@@ -91,6 +91,17 @@ describe('entity display fields', () => {
     );
   });
 
+  it('formats usage count when present and blank when omitted', () => {
+    const fields = buildEntityDisplayFields([schema], false);
+    const usageField = fields.find(field => field.id === '_usageCount')!;
+
+    expect(usageField).toMatchObject({ label: 'Usage count', group: 'General' });
+    expect(
+      formatEntityDisplayValue({ _usageCount: 3 } as unknown as EntityRecord, usageField)
+    ).toBe('3');
+    expect(formatEntityDisplayValue({} as unknown as EntityRecord, usageField)).toBeNull();
+  });
+
   it('exposes conformance status and marks stale coverage separately', () => {
     const fields = buildEntityDisplayFields([schema], false);
     const statusField = fields.find(field => field.id === '_conformanceStatus');
