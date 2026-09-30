@@ -879,15 +879,17 @@
           refresh or completed source scan fails.
 
         - @id:ar.entities.business-glossary Workspaces can enable a permission-aware business glossary backed by
-          ordinary entity schemas, surfaced as its own application (@id:ar.workspace.applications) with a
-          glossary-scoped left rail. Users can browse and deep-link to terms, search canonical names, synonyms, and
-          abbreviations, organize terms across flat many-to-many categories, inspect explicit usage across entities,
-          typed relations, Markdown, projects, and diagrams, and review unused, conflicting, deprecated, and ownerless
-          quality reports. Term drawers use the workspace's configurable schema-scoped entity drawer for declarative
-          term fields, metadata, ordering, and the generic `entity.usage` slot, while quality badges and permission-filtered
-          usage remain glossary-owned application content. Term definitions, aliases, category changes, ownership,
-          lifecycle, and status continue to use the existing entity permissions, history, and approval mechanisms;
-          generic entity behavior is unchanged.
+          ordinary entity schemas, surfaced as its own application (@id:ar.workspace.applications) as a configurable
+          dashboard: a single full-width term table plus a facets sidebar (category, owner, lifecycle, each
+          multi-select with counts) that filters the table live. The table shows canonical name, synonyms,
+          abbreviations, categories, owner, lifecycle, status, and a usage count (entities, typed relations,
+          Markdown, projects, and diagrams referencing the term); clicking a row opens the term's entity drawer.
+          There is no free-text search box, column sort, or pagination on this screen yet (tracked as a follow-up),
+          and unused/conflicting/deprecated/ownerless quality reporting is no longer surfaced here. Term drawers use
+          the workspace's configurable schema-scoped entity drawer for declarative term fields, metadata, ordering,
+          and the generic `entity.usage` slot. Term definitions, aliases, category changes, ownership, lifecycle,
+          and status continue to use the existing entity permissions, history, and approval mechanisms; generic
+          entity behavior is unchanged.
 
         - @id:ar.entities.strategy-model Workspaces can optionally enable a strategy model — nested Business
           Capability, Objective, Outcome, Initiative, and Measure entity schemas — bound to the workspace via a
@@ -1239,8 +1241,8 @@
         - @id:ar.search.navigation Search results provide context and links into the relevant entity, project, document,
           or workspace surface.
 
-        - @id:ar.search.glossary The dedicated glossary surface provides alias-aware term search and quality filters
-          without changing the semantics of generic workspace search.
+        - @id:ar.search.glossary The dedicated glossary surface provides category/owner/lifecycle faceted
+          browsing of terms without changing the semantics of generic workspace search.
 
     - @id:ar.projects Users can organize architecture work into projects containing files, content, diagrams,
       milestones, and assessments.

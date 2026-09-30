@@ -13,6 +13,7 @@ import { decodeEntityBrowserEmbedConfig } from './EntityBrowserEmbedCodec';
 import styles from './EntityBrowserEmbed.module.css';
 import { EmptyState } from '../../../../../components/EmptyState';
 import { buildEntityDisplayFields } from '../../../../entities/components/entityDisplayFields';
+import { resolveEntityQuery, resolveTableFieldIds } from './EntityBrowserEmbedFieldResolution';
 
 type Props = {
   config?: string;
@@ -28,7 +29,16 @@ export const EntityBrowserEmbed = ({ config: rawConfig }: Props) => {
 
   const isTreeBased = !!config && isTreeBasedView(config.view);
 
-  const typeFilter = config ? getFilterValue(config.conditions, '_schemaId') : null;
+  // `schemaName` (a seeded, cross-workspace config's only safe way to reference a schema — its
+  // actual id is workspace-specific) resolves to an id here at render time, same as
+  // `dashboardSidebarConfigSchema.schemaName` does; an explicit `_schemaId` condition still wins if
+  // both are present.
+  const schemaNameId = config?.schemaName
+    ? schemas.find(schema => schema.name === config.schemaName)?.id
+    : undefined;
+  const typeFilter = config
+    ? (getFilterValue(config.conditions, '_schemaId') ?? schemaNameId ?? null)
+    : null;
   const ownerFilter = config ? getFilterValue(config.conditions, '_owner') : null;
   const statusFilter = config ? getFilterValue(config.conditions, '_lifecycle') : null;
 
@@ -42,6 +52,27 @@ export const EntityBrowserEmbed = ({ config: rawConfig }: Props) => {
     [openEntityDrawer]
   );
 
+  // The root schema an `entityQuery`'s field NAMEs (see `EntityBrowserEmbedConfig`'s doc comment)
+  // and `viewConfigs.table.fieldIds` resolve against — the same reason `schemaName` above isn't
+  // used as a raw id directly.
+  const rootSchema = typeFilter ? schemas.find(schema => schema.id === typeFilter) : undefined;
+  const resolvedEntityQuery = useMemo(() => {
+    if (!config?.entityQuery) return null;
+    return resolveEntityQuery(config.entityQuery, rootSchema, typeFilter);
+  }, [config?.entityQuery, rootSchema, typeFilter]);
+
+  const resolvedActiveViewConfig = useMemo(
+    () => resolveTableFieldIds(config?.viewConfigs[config?.view ?? 'table'], rootSchema),
+    [config, rootSchema]
+  );
+  // `_usageCount` is opt-in server-side (not free per row) — request it only when a shown column
+  // actually asks for it.
+  const includeUsageCount =
+    !!resolvedActiveViewConfig &&
+    typeof resolvedActiveViewConfig === 'object' &&
+    Array.isArray((resolvedActiveViewConfig as { fieldIds?: unknown }).fieldIds) &&
+    (resolvedActiveViewConfig as { fieldIds: string[] }).fieldIds.includes('_usageCount');
+
   const resolvedProjectId = projectId;
   const projectScope = resolvedProjectId ? (config?.projectScope ?? 'project') : 'all';
   const { filtered: rows, isLoading } = useEntityBrowserData({
@@ -51,6 +82,7 @@ export const EntityBrowserEmbed = ({ config: rawConfig }: Props) => {
     schemas,
     q: config?.q ?? '',
     conditions: config?.conditions ?? [],
+    entityQuery: resolvedEntityQuery,
     typeFilter,
     ownerFilter,
     statusFilter,
@@ -60,7 +92,8 @@ export const EntityBrowserEmbed = ({ config: rawConfig }: Props) => {
     pageSize: 0,
     disablePaging: true,
     enabled: !!workspaceSlug && !!config && !isTreeBased,
-    activeViewConfig: config?.viewConfigs[config?.view ?? 'table']
+    activeViewConfig: resolvedActiveViewConfig,
+    includeUsageCount
   });
 
   if (!config) {
@@ -81,11 +114,13 @@ export const EntityBrowserEmbed = ({ config: rawConfig }: Props) => {
     );
   }
 
-  const viewConfig = config.viewConfigs[config.view] ?? null;
+  const viewConfig = resolvedActiveViewConfig ?? null;
   const browserRows = rows as BrowserEntityRecord[];
   const displayFields = buildEntityDisplayFields(
     typeFilter ? schemas.filter(s => s.id === typeFilter) : schemas,
-    !!resolvedProjectId
+    !!resolvedProjectId,
+    null,
+    config.entityQuery?.projections ?? []
   );
 
   return (

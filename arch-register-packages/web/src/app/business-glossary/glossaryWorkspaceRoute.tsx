@@ -3,7 +3,7 @@ import { buildGlossaryBreadcrumbs, GLOSSARY_RAIL_ITEM_ID } from './glossaryShell
 import { withWorkspaceShell } from '../../routes/workspace/workspaceShellRoute';
 import { railSectionShell } from '../../layouts/workspaceShellDescriptors';
 import { validateGlossarySearch } from '../../routes/searchParams';
-import { LazyGlossaryScreen } from '../../routes/workspace/lazyWorkspaceScreens';
+import { LazyGlossaryDashboardScreen } from '../../routes/workspace/lazyWorkspaceScreens';
 import { ensureApplicationAccess } from '../../routes/applicationAccess';
 
 export const createGlossaryWorkspaceRoutes = <TParentRoute extends AnyRoute>(
@@ -20,7 +20,7 @@ export const createGlossaryWorkspaceRoutes = <TParentRoute extends AnyRoute>(
           (params as unknown as { workspaceSlug: string }).workspaceSlug,
           'business-glossary'
         ),
-      component: LazyGlossaryScreen
+      component: LazyGlossaryDashboardScreen
     }),
     ctx =>
       railSectionShell(ctx, GLOSSARY_RAIL_ITEM_ID, {

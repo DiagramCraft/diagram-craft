@@ -2,7 +2,9 @@ import { TbBook } from 'react-icons/tb';
 import { buildHomeBreadcrumbs } from '../../shell/breadcrumbBuilders';
 import type { WorkspaceShellContext } from '../../layouts/workspaceShellDescriptors';
 import type { AppDefinition, BreadcrumbItem } from '../../shell/shellTypes';
-import { GlossarySidebar } from './sections/GlossarySidebar';
+import { AppDashboardPrimarySidebar } from '../../sections/dashboard/AppDashboardPrimarySidebar';
+
+export const GLOSSARY_APP_KEY = 'business-glossary';
 
 /**
  * Business Glossary's workspace-rail identity: the rail item id, its route, and its breadcrumb
@@ -24,11 +26,17 @@ export const glossaryAppDefinition: AppDefinition = {
   description: 'Managed business terms, aliases, categories, and quality reports.',
   sections: [
     {
+      // A self-contained dashboard (single `entity-browser-embed` widget) with its own `facets`
+      // sidebar (categories/owner/lifecycle) routed through the standard dashboard sidebar slot,
+      // mirroring `apiIntegrationCatalogAppDefinition`'s Impact section.
       id: GLOSSARY_RAIL_ITEM_ID,
       icon: TbBook,
       tooltip: 'Business glossary',
       route: GLOSSARY_RAIL_PATH,
-      primarySidebar: ctx => <GlossarySidebar workspaceSlug={ctx.workspaceSlug} />
+      dashboard: { appKey: GLOSSARY_APP_KEY },
+      primarySidebar: ctx => (
+        <AppDashboardPrimarySidebar workspaceSlug={ctx.workspaceSlug} appKey={GLOSSARY_APP_KEY} />
+      )
     }
   ],
   enablement: { capabilityType: 'business-glossary' }

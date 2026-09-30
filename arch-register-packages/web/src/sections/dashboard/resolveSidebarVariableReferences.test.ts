@@ -55,4 +55,32 @@ describe('resolveConfigVariables', () => {
       resolveConfigVariables({ limit: 8, enabled: true, label: null }, { apiEntityId: 'API-4' })
     ).toEqual({ limit: 8, enabled: true, label: null });
   });
+
+  it('expands a whole-match array element into one element per comma-joined id', () => {
+    expect(
+      resolveConfigVariables({ value: ['$categoryIds'] }, { categoryIds: 'cat-1,cat-2, cat-3' })
+    ).toEqual({ value: ['cat-1', 'cat-2', 'cat-3'] });
+  });
+
+  it('expands a whole-match array element with a single id to a one-element array', () => {
+    expect(resolveConfigVariables({ value: ['$categoryIds'] }, { categoryIds: 'cat-1' })).toEqual({
+      value: ['cat-1']
+    });
+  });
+
+  it('drops a whole-match array element with an empty selection', () => {
+    expect(resolveConfigVariables({ value: ['$categoryIds'] }, { categoryIds: '' })).toEqual({
+      value: []
+    });
+  });
+
+  it('leaves an array element with an unset variable as the literal placeholder', () => {
+    expect(resolveConfigVariables({ value: ['$missing'] }, {})).toEqual({ value: ['$missing'] });
+  });
+
+  it('does not expand a variable embedded in a larger array-element string', () => {
+    expect(
+      resolveConfigVariables({ value: ['prefix-$categoryIds'] }, { categoryIds: 'cat-1,cat-2' })
+    ).toEqual({ value: ['prefix-cat-1,cat-2'] });
+  });
 });

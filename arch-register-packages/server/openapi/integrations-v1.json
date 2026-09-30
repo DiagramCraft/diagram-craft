@@ -7032,6 +7032,12 @@
                       },
                       "additionalProperties": {},
                       "description": "Values returned by structured EntityQuery projections"
+                    },
+                    "_usageCount": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991,
+                      "description": "Total references to this entity (relation dependents, document/markdown mentions, project links, diagram files). Only present when includeUsageCount was requested — expensive to compute, so never included by default."
                     }
                   },
                   "required": [
@@ -7966,6 +7972,12 @@
                       },
                       "additionalProperties": {},
                       "description": "Values returned by structured EntityQuery projections"
+                    },
+                    "_usageCount": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991,
+                      "description": "Total references to this entity (relation dependents, document/markdown mentions, project links, diagram files). Only present when includeUsageCount was requested — expensive to compute, so never included by default."
                     }
                   },
                   "required": [
@@ -8588,6 +8600,12 @@
                       },
                       "additionalProperties": {},
                       "description": "Values returned by structured EntityQuery projections"
+                    },
+                    "_usageCount": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991,
+                      "description": "Total references to this entity (relation dependents, document/markdown mentions, project links, diagram files). Only present when includeUsageCount was requested — expensive to compute, so never included by default."
                     }
                   },
                   "required": [
@@ -9563,6 +9581,12 @@
                           },
                           "additionalProperties": {},
                           "description": "Values returned by structured EntityQuery projections"
+                        },
+                        "_usageCount": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991,
+                          "description": "Total references to this entity (relation dependents, document/markdown mentions, project links, diagram files). Only present when includeUsageCount was requested — expensive to compute, so never included by default."
                         }
                       },
                       "required": [
@@ -10761,6 +10785,12 @@
                           },
                           "additionalProperties": {},
                           "description": "Values returned by structured EntityQuery projections"
+                        },
+                        "_usageCount": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991,
+                          "description": "Total references to this entity (relation dependents, document/markdown mentions, project links, diagram files). Only present when includeUsageCount was requested — expensive to compute, so never included by default."
                         }
                       },
                       "required": [

@@ -23,7 +23,9 @@ describe('parseEntityQuery', () => {
       limit: null,
       offset: 0,
       asOf: null,
-      includePlannedChanges: true
+      includePlannedChanges: true,
+      includeUsageCount: false,
+      usageContext: null
     });
   });
 

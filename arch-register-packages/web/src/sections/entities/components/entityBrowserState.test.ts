@@ -877,6 +877,76 @@ describe('stripEmptyGroups', () => {
       }
     });
   });
+
+  it('drops an empty `in` predicate (an unselected multi-select facet) rather than matching nothing', () => {
+    expect(
+      stripEmptyGroups({
+        root: {
+          kind: 'and',
+          children: [
+            { kind: 'predicate', path: [], fieldId: '_owner', op: 'in', value: [] },
+            { kind: 'predicate', path: [], fieldId: '_name', op: 'contains', value: 'x' }
+          ]
+        }
+      })
+    ).toEqual({
+      root: {
+        kind: 'and',
+        children: [{ kind: 'predicate', path: [], fieldId: '_name', op: 'contains', value: 'x' }]
+      }
+    });
+  });
+
+  it('keeps a populated `in` predicate', () => {
+    const query: EntityQuery = {
+      root: { kind: 'predicate', path: [], fieldId: '_owner', op: 'in', value: ['a', 'b'] }
+    };
+    expect(stripEmptyGroups(query)).toEqual(query);
+  });
+
+  it('drops a relationExists whose nested path filter is an empty `in` predicate', () => {
+    expect(
+      stripEmptyGroups({
+        root: {
+          kind: 'and',
+          children: [
+            {
+              kind: 'relationExists',
+              path: [
+                {
+                  kind: 'forward',
+                  fieldId: 'categories',
+                  filter: { kind: 'predicate', path: [], fieldId: '_id', op: 'in', value: [] }
+                }
+              ]
+            },
+            { kind: 'predicate', path: [], fieldId: '_name', op: 'contains', value: 'x' }
+          ]
+        }
+      })
+    ).toEqual({
+      root: {
+        kind: 'and',
+        children: [{ kind: 'predicate', path: [], fieldId: '_name', op: 'contains', value: 'x' }]
+      }
+    });
+  });
+
+  it('keeps a relationExists whose nested path filter is a populated `in` predicate', () => {
+    const query: EntityQuery = {
+      root: {
+        kind: 'relationExists',
+        path: [
+          {
+            kind: 'forward',
+            fieldId: 'categories',
+            filter: { kind: 'predicate', path: [], fieldId: '_id', op: 'in', value: ['c1'] }
+          }
+        ]
+      }
+    };
+    expect(stripEmptyGroups(query)).toEqual(query);
+  });
 });
 
 describe('withLiveSearchText', () => {

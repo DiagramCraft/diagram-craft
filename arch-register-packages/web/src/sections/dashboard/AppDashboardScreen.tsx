@@ -11,10 +11,8 @@ import { useAppDashboard, useUpdateWorkspaceDashboard } from '../../hooks/useDas
 import { DashboardHeader } from './DashboardHeader';
 import { DashboardGrid } from './DashboardGrid';
 import { DashboardSidebarConfigDialog } from './DashboardSidebarConfigDialog';
-import {
-  DashboardSidebarProvider,
-  type DashboardSidebarVariables
-} from './DashboardSidebarContext';
+import { DashboardSidebarProvider } from './DashboardSidebarContext';
+import { computeSidebarVariables } from './dashboardSidebarVariables';
 import { MdxContext } from '../markdown/MdxContext';
 import styles from './DashboardScreen.module.css';
 
@@ -27,11 +25,10 @@ export const AppDashboardScreen = (props: { appKey: string }) => {
   const widgets = useMemo(() => dashboard?.widgets ?? [], [dashboard]);
   const search = useSearch({ strict: false }) as Record<string, unknown>;
   const sidebar = dashboard?.sidebar;
-  const sidebarVariables = useMemo((): DashboardSidebarVariables => {
-    if (!sidebar) return {};
-    const value = search[sidebar.variableName];
-    return typeof value === 'string' ? { [sidebar.variableName]: value } : {};
-  }, [sidebar, search]);
+  const sidebarVariables = useMemo(
+    () => computeSidebarVariables(sidebar, search),
+    [sidebar, search]
+  );
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState({ name: '', description: '' });
   const [sidebarDraft, setSidebarDraft] = useState<DashboardSidebarConfig | null>(sidebar ?? null);

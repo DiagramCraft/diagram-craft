@@ -22,20 +22,56 @@ export const dashboardWidgetSchema = z.object({
     .describe('Widget-specific configuration; interpreted by the widget implementation')
 });
 
-export const dashboardSidebarConfigSchema = z.object({
-  kind: z.literal('entity-picker').describe('Selection UI kind; more kinds may be added later'),
-  schemaName: z
+const dashboardSidebarSchemaNameSchema = z
+  .string()
+  .describe(
+    "Entity schema display name to list in the picker, matched at render time — the schema's actual id is often workspace-configurable, so it cannot be seeded as a fixed id (mirrors AggregateStat widget configs referencing schemas by name in query strings)"
+  );
+
+const dashboardSidebarVariableNameSchema = z
+  .string()
+  .describe(
+    'Exposed as $<variableName> for substitution into widget config string values (see resolveSidebarVariableReferences)'
+  );
+
+export const dashboardFacetConfigSchema = z.object({
+  fieldId: z
     .string()
     .describe(
-      "Entity schema display name to list in the picker, matched at render time — the schema's actual id is often workspace-configurable, so it cannot be seeded as a fixed id (mirrors AggregateStat widget configs referencing schemas by name in query strings)"
+      "Field to facet on: either a reference field's display NAME on the faceted schema (matched " +
+        "at render time, like `schemaName` — a schema's actual field ids are workspace-specific, " +
+        "resolved via capability field-role binding, so they can't be seeded as fixed ids; its " +
+        "counts are tallied against the referenced schema's entities), or one of the stable " +
+        "standard fields '_owner' / '_lifecycle'"
     ),
-  variableName: z
-    .string()
-    .describe(
-      'Exposed as $<variableName> for substitution into widget config string values (see resolveSidebarVariableReferences)'
-    ),
-  itemLabel: z.string().optional().describe('Group label shown above the picker list')
+  variableName: dashboardSidebarVariableNameSchema.describe(
+    'Exposed as $<variableName>, holding a comma-joined list of the selected ids (multi-select, ' +
+      "unlike entity-picker's single id) for substitution into widget config string values " +
+      '(see resolveSidebarVariableReferences)'
+  ),
+  itemLabel: z.string().optional().describe("Group label shown above this facet's list")
 });
+
+export const dashboardSidebarConfigSchema = z.discriminatedUnion('kind', [
+  z.object({
+    kind: z.literal('entity-picker').describe('Single-select list of one schema’s entities'),
+    schemaName: dashboardSidebarSchemaNameSchema,
+    variableName: dashboardSidebarVariableNameSchema,
+    itemLabel: z.string().optional().describe('Group label shown above the picker list')
+  }),
+  z.object({
+    kind: z
+      .literal('facets')
+      .describe('One or more independent multi-select facet lists over one schema’s entities'),
+    schemaName: dashboardSidebarSchemaNameSchema.describe(
+      'Entity schema display name whose entities are being faceted'
+    ),
+    facets: z
+      .array(dashboardFacetConfigSchema)
+      .min(1)
+      .describe('Facet sections to render, each its own labeled multi-select list')
+  })
+]);
 
 export const workspaceDashboardSchema = z.object({
   id: z.string().describe('Unique dashboard identifier'),
@@ -166,6 +202,8 @@ export type DashboardWidget = z.infer<typeof dashboardWidgetSchema>;
 export type WorkspaceDashboard = z.infer<typeof workspaceDashboardSchema>;
 
 export type DashboardSidebarConfig = z.infer<typeof dashboardSidebarConfigSchema>;
+
+export type DashboardFacetConfig = z.infer<typeof dashboardFacetConfigSchema>;
 
 export type CreateDashboardRequest = z.infer<typeof createDashboardBodySchema>;
 

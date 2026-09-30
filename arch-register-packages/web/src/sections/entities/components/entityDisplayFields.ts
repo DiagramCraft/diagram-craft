@@ -44,6 +44,7 @@ const STANDARD_FIELDS: EntityDisplayField[] = [
   { id: '_namespace', label: 'Namespace', group: 'General' },
   { id: '_tags', label: 'Tags', group: 'General' },
   { id: '_completeness', label: 'Completeness', group: 'General' },
+  { id: '_usageCount', label: 'Usage count', group: 'General' },
   { id: '_projectRole', label: 'Project role', group: 'Project' },
   { id: '_projectStatus', label: 'Project status', group: 'Project' }
 ];
@@ -235,6 +236,8 @@ export const formatEntityDisplayValue = (
   if (field.id === '_tags') return entity._tags.length ? entity._tags.join(', ') : null;
   if (field.id === '_completeness')
     return entity._completeness == null ? null : `${entity._completeness}%`;
+  if (field.id === '_usageCount')
+    return entity._usageCount == null ? null : String(entity._usageCount);
   if (field.id === '_projectRole') return entity._projectLink?.entityType?.name ?? null;
   if (field.id === '_projectStatus')
     return entity._projectLink?.linked ? (entity._projectLink.isDone ? 'Done' : 'Open') : null;

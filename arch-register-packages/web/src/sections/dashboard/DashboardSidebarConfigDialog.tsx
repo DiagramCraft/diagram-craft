@@ -29,10 +29,13 @@ export const DashboardSidebarConfigDialog = ({
   onClose,
   onSave
 }: Props) => {
+  // This dialog only authors the `entity-picker` kind today; a `facets` sidebar (#3467 follow-up)
+  // has no config UI yet and can only be persisted by other means (e.g. seeded dashboards).
+  const entityPicker = sidebar?.kind === 'entity-picker' ? sidebar : null;
   const schemas = useSchemas(workspaceSlug);
-  const [schemaName, setSchemaName] = useState(sidebar?.schemaName ?? '');
-  const [variableName, setVariableName] = useState(sidebar?.variableName ?? '');
-  const [itemLabel, setItemLabel] = useState(sidebar?.itemLabel ?? '');
+  const [schemaName, setSchemaName] = useState(entityPicker?.schemaName ?? '');
+  const [variableName, setVariableName] = useState(entityPicker?.variableName ?? '');
+  const [itemLabel, setItemLabel] = useState(entityPicker?.itemLabel ?? '');
 
   const canSave = schemaName.trim() !== '' && isValidVariableName(variableName.trim());
 
