@@ -7,6 +7,7 @@ import { ToggleButtonGroup } from '@diagram-craft/app-components/ToggleButtonGro
 import { Title } from '../../../components/Title';
 import { Chip } from '../../../components/Chip';
 import { ratioColor } from '../../../components/bandColor';
+import { BarList } from '../../../components/BarList';
 import { Table } from '../../../components/table/Table';
 import { entitiesQuery } from '../../../queries/entities';
 import { workspaceCapabilityConfigurationsQuery } from '../../../queries/workspaceConfig';
@@ -32,7 +33,6 @@ import { asProjectPublicId, projectDetailRoute } from '../../../routes/publicObj
 import { RiskComplianceMatrix, type RiskComplianceMatrixRisk } from './RiskComplianceMatrix';
 import { useEntityDrawer } from '../../../sections/entities/entityDrawer/useEntityDrawer';
 import { AssessmentDuePanel, type AssessmentDuePanelProject } from './AssessmentDuePanel';
-import tileStyles from './RiskComplianceControlsScreen.module.css';
 import styles from './RiskComplianceOverviewScreen.module.css';
 
 const HIGHEST_RISKS_LIMIT = 6;
@@ -408,33 +408,16 @@ export const RiskComplianceOverviewScreen = () => {
               Control library
             </button>
           </div>
-          <div className={tileStyles.covStack}>
-            {coverageByType.length === 0 ? (
-              <div className={`${tileStyles.empty} dim`}>
-                {controls.isLoading ? 'Loading controls…' : 'No controls bound.'}
-              </div>
-            ) : (
-              coverageByType.map(group => (
-                <div key={group.key} className={tileStyles.covRow} style={{ cursor: 'default' }}>
-                  <span className={tileStyles.covName}>
-                    <span className={tileStyles.covTitle}>{group.label}</span>
-                  </span>
-                  <span className={styles.typeTrack}>
-                    <span
-                      className={styles.typeFill}
-                      style={{
-                        width: `${Math.max(2, (100 * group.effective) / group.total)}%`,
-                        background: ratioColor(group.effective, group.total)
-                      }}
-                    />
-                  </span>
-                  <span className={`${tileStyles.covPct} mono tabular dim`}>
-                    {group.effective}/{group.total}
-                  </span>
-                </div>
-              ))
-            )}
-          </div>
+          <BarList
+            rows={coverageByType.map(group => ({
+              id: group.key,
+              label: group.label,
+              effective: group.effective,
+              total: group.total
+            }))}
+            getColor={row => ratioColor(row.effective, row.total)}
+            emptyMessage={controls.isLoading ? 'Loading controls…' : 'No controls bound.'}
+          />
         </div>
 
         <div className={styles.panel}>

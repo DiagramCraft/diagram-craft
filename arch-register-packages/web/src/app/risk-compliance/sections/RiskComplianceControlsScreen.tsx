@@ -7,6 +7,7 @@ import { Title } from '../../../components/Title';
 import { SearchInput } from '../../../components/SearchInput';
 import { FilterDropdown } from '../../../components/FilterDropdown';
 import { Table } from '../../../components/table/Table';
+import { BarList } from '../../../components/BarList';
 import { useTableSort } from '../../../components/table/useTableSort';
 import { useRelations } from '../../../hooks/useRelations';
 import { entitiesQuery } from '../../../queries/entities';
@@ -421,48 +422,27 @@ export const RiskComplianceControlsScreen = () => {
               <span className={styles.panelTitle}>Coverage by risk</span>
               <span className="dim mono">weakest first</span>
             </div>
-            {weakestRisks.length === 0 ? (
-              <div className={styles.empty}>
-                {risks.isLoading ? 'Loading risks…' : 'No risks yet.'}
-              </div>
-            ) : (
-              <div className={styles.covStack}>
-                {weakestRisks.map(entity => {
-                  const pct =
-                    typeof entity.risk_coverage === 'number' ? entity.risk_coverage : null;
-                  const controlNames = controlNamesByRiskId.get(entity._uid) ?? [];
-                  return (
-                    <button
-                      type="button"
-                      key={entity._uid}
-                      className={styles.covRow}
-                      onClick={() => openEntityDrawer(entity._publicId)}
-                    >
-                      <span className={styles.covName}>
-                        <span className={styles.covTitle}>{entity._name}</span>
-                        <span className={styles.covSub}>
-                          {entity._publicId} · residual{' '}
-                          {typeof entity.residual_risk_score === 'number'
-                            ? entity.residual_risk_score
-                            : '—'}{' '}
-                          · {controlNames.length ? controlNames.join(', ') : 'no control'}
-                        </span>
-                      </span>
-                      <span className={styles.covTrack}>
-                        <span
-                          className={styles.covFill}
-                          style={{
-                            width: `${Math.max(2, pct ?? 0)}%`,
-                            background: COVERAGE_COLOR
-                          }}
-                        />
-                      </span>
-                      <span className={styles.covPct}>{pct == null ? '—' : `${pct}%`}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
+            <BarList
+              rows={weakestRisks.map(entity => {
+                const pct = typeof entity.risk_coverage === 'number' ? entity.risk_coverage : null;
+                const controlNames = controlNamesByRiskId.get(entity._uid) ?? [];
+                return {
+                  id: entity._publicId,
+                  label: entity._name,
+                  sublabel: `${entity._publicId} · residual ${
+                    typeof entity.residual_risk_score === 'number'
+                      ? entity.residual_risk_score
+                      : '—'
+                  } · ${controlNames.length ? controlNames.join(', ') : 'no control'}`,
+                  effective: pct ?? 0,
+                  total: 100,
+                  valueLabel: pct == null ? '—' : `${pct}%`
+                };
+              })}
+              getColor={() => COVERAGE_COLOR}
+              onOpenItem={openEntityDrawer}
+              emptyMessage={risks.isLoading ? 'Loading risks…' : 'No risks yet.'}
+            />
           </div>
 
           <div className={styles.panel}>
