@@ -1,3 +1,5 @@
+import { toneColor, type ToneOrNeutral } from '../../components/bandColor';
+
 /**
  * Colour for `Control.operating_effectiveness`'s fixed `control-effectiveness` enum values (see
  * `schemaTemplates.ts`'s `risk-compliance` template) — mirrors the design reference's
@@ -8,10 +10,20 @@
  * multiple controls over *one* risk — a reuse that doesn't hold up the other way round (it grows
  * with unrelated risk count rather than reflecting how effective the control actually is), so
  * effectiveness itself — the field this already measures — is the honest thing to colour by.
+ * Colors come from `../../components/bandColor.ts`'s good/neutral/warn/bad scheme.
  */
+type ControlEffectiveness = 'effective' | 'partially-effective' | 'ineffective' | 'not-tested';
+
+export const CONTROL_EFFECTIVENESS_TONE: Record<ControlEffectiveness, ToneOrNeutral> = {
+  effective: 'good',
+  'partially-effective': 'warn',
+  ineffective: 'bad',
+  'not-tested': 'neutral'
+};
+
 export const CONTROL_EFFECTIVENESS_COLOR: Record<string, string> = {
-  effective: 'var(--cmp-fg-success, #22c55e)',
-  'partially-effective': 'var(--cmp-fg-warning, #eab308)',
-  ineffective: 'var(--cmp-fg-danger, #ef4444)',
-  'not-tested': 'var(--cmp-fg-dim, #9ca3af)'
+  effective: toneColor(CONTROL_EFFECTIVENESS_TONE.effective),
+  'partially-effective': toneColor(CONTROL_EFFECTIVENESS_TONE['partially-effective']),
+  ineffective: toneColor(CONTROL_EFFECTIVENESS_TONE.ineffective),
+  'not-tested': toneColor(CONTROL_EFFECTIVENESS_TONE['not-tested'])
 };
