@@ -3,10 +3,7 @@ import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
 import {
   TbAlertTriangle,
-  TbChecklist,
-  TbCircleCheck,
   TbCircleDashed,
-  TbClockHour4,
   TbDatabase,
   TbLayersLinked,
   TbListCheck,
@@ -27,7 +24,6 @@ import {
 import { computeDatasetCoverage } from '../datasetCoverage';
 import { isPersonalData } from '../dataFlowClassification';
 import {
-  DS_ASSESSMENTS_ID,
   DS_CHANGE_CASES_ID,
   DS_CLASSIFICATION_ID,
   DS_RAIL_PATHS,
@@ -37,13 +33,7 @@ import {
   type DataStewardshipRailItemId
 } from '../dataStewardshipSections';
 import { useDataStewardshipChangeCases } from '../dataStewardshipChangeCases';
-import {
-  ENTITY_ASSESSMENT_STATUS_LABEL,
-  type EntityAssessmentStatus
-} from '../../../sections/entities/entityDrawer/entityAssessments';
-import { useEntityAssessmentRows } from '../../../sections/entities/entityDrawer/useEntityAssessmentRows';
 import type {
-  DataStewardshipAssessmentsSearchParams,
   DataStewardshipChangeCasesSearchParams,
   DataStewardshipClassificationSearchParams,
   DataStewardshipStewardshipSearchParams
@@ -339,77 +329,6 @@ const ChangeCasesSidebarContent = ({
   );
 };
 
-const ASSESSMENT_STATUS_FACET_ICON: Record<EntityAssessmentStatus, typeof TbAlertTriangle> = {
-  overdue: TbAlertTriangle,
-  in_progress: TbClockHour4,
-  not_started: TbCircleDashed,
-  complete: TbCircleCheck
-};
-
-/**
- * The Assessments section's own primary-sidebar content — the stat strip's four status buckets as
- * facets (All / Overdue / In progress / Not started / Complete), mirroring the Claude Design
- * reference's `DSSidebar` (`ds.jsx`) and this file's own Stewardship/Classification facet panels.
- * Replaces the toolbar's in-page status toggle that `DataStewardshipAssessmentsScreen.tsx` used
- * before this section had its own sidebar content, same "facet moves to the sidebar once the
- * section has one" shape those two screens already established.
- */
-const AssessmentsSidebarContent = ({
-  workspaceSlug,
-  dataStewardshipConfig
-}: {
-  workspaceSlug: string;
-  dataStewardshipConfig: DataStewardshipConfig;
-}) => {
-  const navigate = useNavigate();
-  const search = useSearch({ strict: false }) as DataStewardshipAssessmentsSearchParams;
-  const { summaries } = useEntityAssessmentRows(
-    workspaceSlug,
-    dataStewardshipConfig.dataEntitySchemaId
-  );
-
-  const statusCounts = useMemo(() => {
-    const counts = new Map<EntityAssessmentStatus, number>();
-    for (const summary of summaries)
-      counts.set(summary.status, (counts.get(summary.status) ?? 0) + 1);
-    return counts;
-  }, [summaries]);
-
-  const patchSearch = (patch: Partial<DataStewardshipAssessmentsSearchParams>) =>
-    navigate({
-      to: DS_RAIL_PATHS[DS_ASSESSMENTS_ID],
-      params: { workspaceSlug },
-      search: (previous: Record<string, unknown>) => ({ ...previous, ...patch })
-    });
-
-  return (
-    <>
-      <TreeRow
-        icon={<TbChecklist size={12} />}
-        label="All"
-        testId="data-stewardship-assessments-facet-all"
-        active={!search.status}
-        onClick={() => patchSearch({ status: undefined })}
-        trailing={<span className="dim mono">{summaries.length}</span>}
-      />
-      {(Object.keys(ENTITY_ASSESSMENT_STATUS_LABEL) as EntityAssessmentStatus[]).map(status => {
-        const Icon = ASSESSMENT_STATUS_FACET_ICON[status];
-        return (
-          <TreeRow
-            key={status}
-            icon={<Icon size={12} />}
-            label={ENTITY_ASSESSMENT_STATUS_LABEL[status]}
-            testId={`data-stewardship-assessments-facet-${status}`}
-            active={search.status === status}
-            onClick={() => patchSearch({ status: search.status === status ? undefined : status })}
-            trailing={<span className="dim mono">{statusCounts.get(status) ?? 0}</span>}
-          />
-        );
-      })}
-    </>
-  );
-};
-
 /**
  * Section-dependent primary sidebar for the Data Stewardship app: navigation between the app's
  * five rail sections, gated on the `data-stewardship` capability configuration — mirrors
@@ -449,11 +368,6 @@ export const DataStewardshipSidebar = ({
           />
         ) : activeSection === DS_CHANGE_CASES_ID ? (
           <ChangeCasesSidebarContent
-            workspaceSlug={workspaceSlug}
-            dataStewardshipConfig={dataStewardshipConfig}
-          />
-        ) : activeSection === DS_ASSESSMENTS_ID ? (
-          <AssessmentsSidebarContent
             workspaceSlug={workspaceSlug}
             dataStewardshipConfig={dataStewardshipConfig}
           />

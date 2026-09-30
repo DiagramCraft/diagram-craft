@@ -9,7 +9,6 @@ import {
   DS_RAIL_PATHS
 } from './dataStewardshipSections';
 import {
-  validateDataStewardshipAssessmentsSearch,
   validateDataStewardshipChangeCasesSearch,
   validateDataStewardshipClassificationSearch,
   validateDataStewardshipMyWorkSearch,
@@ -22,7 +21,7 @@ import {
   LazyDataStewardshipStewardshipScreen,
   LazyDataStewardshipClassificationScreen,
   LazyDataStewardshipChangeCasesScreen,
-  LazyDataStewardshipAssessmentsScreen
+  LazyDataStewardshipAssessmentsDashboardScreen
 } from '../../routes/workspace/lazyWorkspaceScreens';
 import { ensureApplicationAccess } from '../../routes/applicationAccess';
 
@@ -115,14 +114,13 @@ export const createDataStewardshipWorkspaceRoutes = <TParentRoute extends AnyRou
     createRoute({
       getParentRoute: () => workspaceRoute,
       path: railPath(DS_RAIL_PATHS[DS_ASSESSMENTS_ID]),
-      validateSearch: validateDataStewardshipAssessmentsSearch,
       beforeLoad: ({ context, params }) =>
         ensureApplicationAccess(
           context.queryClient,
           (params as unknown as { workspaceSlug: string }).workspaceSlug,
           'data-stewardship'
         ),
-      component: LazyDataStewardshipAssessmentsScreen
+      component: LazyDataStewardshipAssessmentsDashboardScreen
     }),
     ctx =>
       railSectionShell(ctx, DS_ASSESSMENTS_ID, {

@@ -140,9 +140,9 @@ export const LazyDataStewardshipChangeCasesScreen = lazyRouteComponent(
   () => import('../../app/data-stewardship/sections/DataStewardshipChangeCasesScreen'),
   'DataStewardshipChangeCasesScreen'
 );
-export const LazyDataStewardshipAssessmentsScreen = lazyRouteComponent(
-  () => import('../../app/data-stewardship/sections/DataStewardshipAssessmentsScreen'),
-  'DataStewardshipAssessmentsScreen'
+export const LazyDataStewardshipAssessmentsDashboardScreen = lazyRouteComponent(
+  () => import('../../app/data-stewardship/sections/DataStewardshipAssessmentsDashboardScreen'),
+  'DataStewardshipAssessmentsDashboardScreen'
 );
 export const LazyApiIntegrationCatalogOverviewDashboard = lazyRouteComponent(
   () => import('../../app/api-integration-catalog/sections/ApiIntegrationCatalogDashboardScreens'),

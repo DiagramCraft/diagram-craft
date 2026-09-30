@@ -7,8 +7,25 @@ import { wikiPageWidgetSpec } from './widgets/WikiPageWidget';
 import { apiIntegrationCatalogDashboardWidgetSpecs } from '../../app/api-integration-catalog/apiIntegrationCatalogDashboardWidgets';
 import { dataStewardshipDashboardWidgetSpecs } from '../../app/data-stewardship/dataStewardshipDashboardWidgets';
 import { blastRadiusDashboardWidgetSpec } from './widgets/BlastRadiusWidget';
+import {
+  ASSESSMENT_STATUS_STAT_TYPE,
+  assessmentStatusStatSpec
+} from './widgets/AssessmentStatusStatRegistration';
+import {
+  ASSESSMENT_PROGRESS_TABLE_TYPE,
+  assessmentProgressTableSpec
+} from './widgets/AssessmentProgressTableRegistration';
 
 const WIKI_PAGE_WIDGET_TYPE = 'wiki-page';
+
+const assessmentDashboardWidgetSpecs: Array<{
+  type: string;
+  // biome-ignore lint/suspicious/noExplicitAny: this registry intentionally erases per-widget config types
+  spec: DashboardWidgetSpec<any>;
+}> = [
+  { type: ASSESSMENT_STATUS_STAT_TYPE, spec: assessmentStatusStatSpec },
+  { type: ASSESSMENT_PROGRESS_TABLE_TYPE, spec: assessmentProgressTableSpec }
+];
 
 export const getDashboardWidgetSpecs = (): Array<{
   type: string;
@@ -17,6 +34,7 @@ export const getDashboardWidgetSpecs = (): Array<{
   ...getBaseDashboardWidgetSpecs(),
   ...apiIntegrationCatalogDashboardWidgetSpecs,
   ...dataStewardshipDashboardWidgetSpecs,
+  ...assessmentDashboardWidgetSpecs,
   blastRadiusDashboardWidgetSpec,
   { type: WIKI_PAGE_WIDGET_TYPE, spec: wikiPageWidgetSpec.dashboardWidget! }
 ];
@@ -25,6 +43,7 @@ export const getDashboardWidgetSpec = (type: string): DashboardWidgetSpec | unde
   [
     ...apiIntegrationCatalogDashboardWidgetSpecs,
     ...dataStewardshipDashboardWidgetSpecs,
+    ...assessmentDashboardWidgetSpecs,
     blastRadiusDashboardWidgetSpec
   ].find(entry => entry.type === type)?.spec ??
   (type === WIKI_PAGE_WIDGET_TYPE
