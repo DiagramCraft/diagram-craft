@@ -26,9 +26,7 @@ export const getDashboardWidgetSpec = (type: string): DashboardWidgetSpec | unde
     ...apiIntegrationCatalogDashboardWidgetSpecs,
     ...dataStewardshipDashboardWidgetSpecs,
     blastRadiusDashboardWidgetSpec
-  ].find(
-    entry => entry.type === type
-  )?.spec ??
+  ].find(entry => entry.type === type)?.spec ??
   (type === WIKI_PAGE_WIDGET_TYPE
     ? wikiPageWidgetSpec.dashboardWidget
     : getBaseDashboardWidgetSpec(type));
