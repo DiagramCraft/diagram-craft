@@ -7,6 +7,7 @@ export const API_INTEGRATION_CATALOG_APP_KEY = 'api-integration-catalog';
 export const API_INTEGRATION_CATALOG_IMPACT_APP_KEY = 'api-integration-catalog-impact';
 export const BUSINESS_GLOSSARY_APP_KEY = 'business-glossary';
 export const DATA_STEWARDSHIP_APP_KEY = 'data-stewardship';
+export const DATA_STEWARDSHIP_ASSESSMENTS_APP_KEY = 'data-stewardship-assessments';
 
 /** The `entity-browser-embed` widget type, shared with the markdown/wiki embed block (see
  *  `web/src/sections/markdown/mdx-components/blocks/entity-browser-embed/EntityBrowserEmbedEditable.tsx`'s
@@ -125,6 +126,78 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
       variableName: 'apiEntityId',
       itemLabel: 'APIs'
     }
+  },
+  [DATA_STEWARDSHIP_ASSESSMENTS_APP_KEY]: {
+    name: 'Assessments',
+    description:
+      'Impact assessments, transfer assessments, records surveys and data-quality runs bound to datasets.',
+    widgets: [
+      {
+        id: 'seed-stat-overdue',
+        type: 'AssessmentStatusStat',
+        config: {
+          schemaName: 'Data Entity',
+          status: 'overdue',
+          label: 'Overdue',
+          subtextTemplate: 'past the scheduled date'
+        },
+        x: 0,
+        y: 0,
+        w: 3,
+        h: 5
+      },
+      {
+        id: 'seed-stat-in-progress',
+        type: 'AssessmentStatusStat',
+        config: {
+          schemaName: 'Data Entity',
+          status: 'in_progress',
+          label: 'In progress',
+          subtextTemplate: '{notStarted} not started'
+        },
+        x: 3,
+        y: 0,
+        w: 3,
+        h: 5
+      },
+      {
+        id: 'seed-stat-not-started',
+        type: 'AssessmentStatusStat',
+        config: {
+          schemaName: 'Data Entity',
+          status: 'not_started',
+          label: 'Not started',
+          subtextTemplate: 'no response recorded yet'
+        },
+        x: 6,
+        y: 0,
+        w: 3,
+        h: 5
+      },
+      {
+        id: 'seed-stat-complete',
+        type: 'AssessmentStatusStat',
+        config: {
+          schemaName: 'Data Entity',
+          status: 'complete',
+          label: 'Complete',
+          subtextTemplate: 'of {total} assessments'
+        },
+        x: 9,
+        y: 0,
+        w: 3,
+        h: 5
+      },
+      {
+        id: 'seed-assessments-table',
+        type: 'AssessmentProgressTable',
+        config: { schemaName: 'Data Entity', label: 'Assessments' },
+        x: 0,
+        y: 5,
+        w: 12,
+        h: 20
+      }
+    ]
   },
   [DATA_STEWARDSHIP_APP_KEY]: {
     name: 'My work',

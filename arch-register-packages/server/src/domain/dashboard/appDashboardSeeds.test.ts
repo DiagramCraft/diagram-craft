@@ -6,7 +6,8 @@ import {
 import {
   APP_DASHBOARD_SEEDS,
   BUSINESS_GLOSSARY_APP_KEY,
-  DATA_STEWARDSHIP_APP_KEY
+  DATA_STEWARDSHIP_APP_KEY,
+  DATA_STEWARDSHIP_ASSESSMENTS_APP_KEY
 } from './appDashboardSeeds';
 
 describe('APP_DASHBOARD_SEEDS', () => {
@@ -64,6 +65,25 @@ describe('APP_DASHBOARD_SEEDS', () => {
       'data-stewardship-reviews-overdue',
       'data-stewardship-case-calendar',
       'data-stewardship-case-queue'
+    ]);
+  });
+
+  it('seeds the data stewardship Assessments dashboard with four status tiles and a progress table, no sidebar', () => {
+    const seed = APP_DASHBOARD_SEEDS[DATA_STEWARDSHIP_ASSESSMENTS_APP_KEY];
+    expect(seed).toBeDefined();
+    expect(seed!.sidebar).toBeUndefined();
+    expect(seed!.widgets.map(widget => widget.type)).toEqual([
+      'AssessmentStatusStat',
+      'AssessmentStatusStat',
+      'AssessmentStatusStat',
+      'AssessmentStatusStat',
+      'AssessmentProgressTable'
+    ]);
+    expect(seed!.widgets.slice(0, 4).map(widget => widget.config.status)).toEqual([
+      'overdue',
+      'in_progress',
+      'not_started',
+      'complete'
     ]);
   });
 });

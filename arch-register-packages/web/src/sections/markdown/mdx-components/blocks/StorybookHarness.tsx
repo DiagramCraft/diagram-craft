@@ -94,17 +94,20 @@ export const StoryProviders = ({
   children,
   client = queryClient,
   permissions,
-  projectId
+  projectId,
+  schemas: schemasOverride
 }: {
   children: ReactNode;
   client?: QueryClient;
   permissions?: Partial<WorkspaceContextType['permissions']>;
   projectId?: string;
+  schemas?: EntitySchema[];
 }) => (
   <QueryClientProvider client={client}>
     <WorkspaceContext.Provider
       value={{
         ...workspaceContext,
+        schemas: schemasOverride ?? workspaceContext.schemas,
         permissions: { ...workspaceContext.permissions, ...permissions }
       }}
     >

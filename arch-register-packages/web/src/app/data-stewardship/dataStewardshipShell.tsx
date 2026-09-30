@@ -21,6 +21,7 @@ import {
 } from './dataStewardshipSections';
 
 export const DS_APP_KEY = 'data-stewardship';
+export const DS_ASSESSMENTS_APP_KEY = 'data-stewardship-assessments';
 
 /**
  * Data Stewardship's workspace-rail identity: its rail-item ids (defined in
@@ -88,16 +89,13 @@ export const dataStewardshipAppDefinition: AppDefinition = {
       )
     },
     {
+      // No `primarySidebar`: renders the seeded `data-stewardship-assessments` app dashboard
+      // full-width (#3505).
       id: DS_ASSESSMENTS_ID,
+      dashboard: { appKey: DS_ASSESSMENTS_APP_KEY },
       icon: TbChecklist,
       tooltip: 'Assessments',
-      route: DS_RAIL_PATHS[DS_ASSESSMENTS_ID],
-      primarySidebar: ctx => (
-        <DataStewardshipSidebar
-          workspaceSlug={ctx.workspaceSlug}
-          activeSection={DS_ASSESSMENTS_ID}
-        />
-      )
+      route: DS_RAIL_PATHS[DS_ASSESSMENTS_ID]
     }
   ],
   enablement: { capabilityType: 'data-stewardship' }
