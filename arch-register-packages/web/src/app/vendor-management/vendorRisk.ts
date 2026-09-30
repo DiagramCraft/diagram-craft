@@ -1,3 +1,5 @@
+import { toneColor, type ToneOrNeutral } from '../../components/bandColor';
+
 /** Presentation helpers for the derived Vendor `risk` rating. */
 
 export type VendorRiskBand = 'low' | 'moderate' | 'elevated' | 'high';
@@ -11,14 +13,22 @@ export const VENDOR_RISK_BANDS: { band: VendorRiskBand; min: number }[] = [
   { band: 'high', min: 3.4 }
 ];
 
-/** Shared band → color mapping, used by the vendor drawer, Vendors table, and Risk section
- *  (chips and the `RiskMatrix`'s per-column tint) — red/amber/gray/green, gray rather than an
- *  accent color for 'moderate' so it doesn't read as more alarming than 'low'. */
+/** Shared band → tone mapping, used by the vendor drawer, Vendors table, and Risk section
+ *  (chips and the `RiskMatrix`'s per-column tint) — `moderate` maps to `neutral` (gray) rather
+ *  than `warn` so it doesn't read as more alarming than `low`. Colors come from
+ *  `../../components/bandColor.ts`'s good/neutral/warn/bad scheme. */
+export const VENDOR_RISK_BAND_TONE: Record<VendorRiskBand, ToneOrNeutral> = {
+  low: 'good',
+  moderate: 'neutral',
+  elevated: 'warn',
+  high: 'bad'
+};
+
 export const VENDOR_RISK_BAND_COLOR: Record<VendorRiskBand, string> = {
-  low: 'var(--cmp-fg-success, #22c55e)',
-  moderate: 'var(--cmp-fg-dim, #9ca3af)',
-  elevated: 'var(--cmp-fg-warning, #eab308)',
-  high: 'var(--cmp-fg-danger, #ef4444)'
+  low: toneColor(VENDOR_RISK_BAND_TONE.low),
+  moderate: toneColor(VENDOR_RISK_BAND_TONE.moderate),
+  elevated: toneColor(VENDOR_RISK_BAND_TONE.elevated),
+  high: toneColor(VENDOR_RISK_BAND_TONE.high)
 };
 
 export const VENDOR_RISK_BAND_LABEL: Record<VendorRiskBand, string> = {

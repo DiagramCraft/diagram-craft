@@ -31,6 +31,21 @@ export const bandTone = (
 
 export const toneColor = (tone: ToneOrNeutral): string => BAND_TONE_COLORS[tone];
 
+export type MinBand = { min: number; tone: ToneOrNeutral };
+
+/**
+ * The tone for `value` against ascending `min`-threshold bands — the tone of the last
+ * band whose `min` the value meets or exceeds. Complements `bandTone`'s max-based
+ * (descending) bands for scales phrased as "band N starts at score X".
+ */
+export const minBandTone = (value: number, bands: MinBand[]): ToneOrNeutral => {
+  let result: ToneOrNeutral = bands[0]?.tone ?? 'neutral';
+  for (const { min, tone } of bands) {
+    if (value >= min) result = tone;
+  }
+  return result;
+};
+
 const HEAT_BANDS: ColourBand[] = [
   { max: 2, tone: 'bad' },
   { max: 3, tone: 'warn' },
