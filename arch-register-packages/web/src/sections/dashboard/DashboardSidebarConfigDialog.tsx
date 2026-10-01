@@ -5,6 +5,7 @@ import type {
   DashboardFacetConfig,
   DashboardSidebarConfig
 } from '@arch-register/api-types/dashboardContract';
+import { facetKindForField } from './dashboardFacetFields';
 import { useSchemas } from '../../hooks/useSchemas';
 import { DialogContent, DialogSection } from '../markdown/editor/BlockDialog';
 import {
@@ -47,7 +48,7 @@ export const DashboardSidebarConfigDialog = ({
 
   const referenceFieldNames = (schemas.data ?? [])
     .find(schema => schema.name === facetsSchemaName)
-    ?.fields.filter(field => field.type === 'reference')
+    ?.fields.filter(field => facetKindForField(field) !== undefined)
     .map(field => field.name);
 
   const updateFacet = (index: number, patch: Partial<DashboardFacetConfig>) =>
@@ -57,7 +58,7 @@ export const DashboardSidebarConfigDialog = ({
     setFacetsSchemaName(name);
     const names = (schemas.data ?? [])
       .find(schema => schema.name === name)
-      ?.fields.filter(field => field.type === 'reference')
+      ?.fields.filter(field => facetKindForField(field) !== undefined)
       .map(field => field.name);
     setFacets(current =>
       current.map(f =>

@@ -60,6 +60,20 @@ export const DEFAULT_DISPLAY_FIELDS: Record<
   map: ['_description', '_lifecycle', '_owner', '_tags']
 };
 
+/** Number-like columns (number, currency, and derived number/currency/rating), shown right-aligned
+ *  in tables so digits line up. */
+export const isNumericDisplayField = (field: EntityDisplayField): boolean => {
+  const schemaField = field.schemaField;
+  if (!schemaField) return false;
+  if (schemaField.type === 'number' || schemaField.type === 'currency') return true;
+  return (
+    schemaField.type === 'derived' &&
+    (schemaField.resultType === 'number' ||
+      schemaField.resultType === 'currency' ||
+      schemaField.resultType === 'rating')
+  );
+};
+
 const SCALAR_TYPES = new Set([
   'text',
   'longtext',

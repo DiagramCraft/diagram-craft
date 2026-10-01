@@ -399,10 +399,15 @@
           unusable) both open the vendor drawer on the Risk section. A "Renewal calendar" button jumps to the
           Contracts section's calendar view, and a footnote links back to Entities.
 
-        - @id:ar.vendor-management.vendors The Vendors section is a register of Vendor entities: free-text search by
-          name, sort by name / spend / risk / next renewal, and a sidebar of Tier, Category, and Relationship Owner
-          facets (each showing a count, driven off the Vendor schema's own field options and the fetched vendors'
-          values). Next renewal is the earliest upcoming `Contract.contract_end` across a vendor's own Contracts.
+        - @id:ar.vendor-management.vendors The Vendors section is a configurable dashboard: one entity-browser table of
+          Vendor entities (Tier, Category, Relationship Owner, Annual Spend, Risk, Next Renewal) with a sidebar of
+          multi-select Tier, Category, and Relationship Owner facets (each showing a count tallied from the first 200
+          vendors). Annual Spend (summed across the vendor's own Contracts) and Next Renewal (the earliest upcoming
+          `Contract.contract_end`, refreshed daily) are derived fields on the Vendor schema, alongside the derived
+          `risk` rating; they are populated for newly created workspaces. Risk is shown as its numeric rating, without
+          the band pill. Free-text search and the old spend / risk / renewal sort options are not part of this
+          screen. Facet filters previously carried as `tier` / `category`
+          / `owner` URL parameters are now `tiers` / `categories` / `relationshipOwners` (comma-joined).
           Selecting a vendor opens the configurable shared vendor drawer (deep-linkable via its own link-icon
           action, see below): its schema profile preserves the Vendor schema's derived `risk` rating (weighted
           across the vendor's security, concentration, financial, and compliance risk fields and lifted by

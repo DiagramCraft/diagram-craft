@@ -93,10 +93,29 @@ const canExposeTypedRelation = (
   );
 };
 
+// Entities whose reference/containment fields point at `entity` (e.g. a Vendor's Contracts, via
+// `Contract.vendor`). Exposed as `entity.referrers` on the root projection only.
+const referrersOf = (state: ProjectionState, entity: EntityDbResult) => {
+  const result: EntityDbResult[] = [];
+  for (const candidate of state.entitiesById.values()) {
+    if (candidate.id === entity.id || !canViewEntity(state, candidate)) continue;
+    const schema = state.schemasById.get(candidate.schema_id);
+    const refersToEntity = schema?.fields.some(
+      field =>
+        isReferenceOrContainmentField(field) &&
+        !isFieldViewRestricted(state.authCtx, schema, field.id) &&
+        decodeRefs(candidate.data[field.id]).includes(entity.id)
+    );
+    if (refersToEntity) result.push(candidate);
+  }
+  return result;
+};
+
 const buildProjection = (
   entity: EntityDbResult,
   depth: number,
-  state: ProjectionState
+  state: ProjectionState,
+  isRoot = false
 ): Record<string, unknown> => {
   const schema = state.schemasById.get(entity.schema_id);
   const visibleData = filterLiveFieldGroups(state.authCtx, schema, entity.data);
@@ -104,6 +123,16 @@ const buildProjection = (
     ...visibleData,
     metadata: metadata(entity)
   };
+
+  if (isRoot && depth > 0) {
+    result['referrers'] = referrersOf(state, entity).map(referrer => ({
+      ...buildProjection(referrer, 0, state),
+      metadata: {
+        ...metadata(referrer),
+        schemaName: state.schemasById.get(referrer.schema_id)?.name
+      }
+    }));
+  }
 
   if (depth <= 0 || !schema) {
     for (const field of schema?.fields.filter(isReferenceOrContainmentField) ?? []) {
@@ -182,6 +211,6 @@ export const buildEntityProjection = (
     authCtx: options.authCtx ?? null
   };
   return canViewEntity(state, entity)
-    ? buildProjection(entity, Math.max(0, options.depth), state)
+    ? buildProjection(entity, Math.max(0, options.depth), state, true)
     : null;
 };

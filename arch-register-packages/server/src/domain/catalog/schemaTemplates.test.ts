@@ -750,7 +750,9 @@ describe('instantiateTemplate', () => {
       'financial_risk',
       'compliance_risk',
       'criticality',
-      'risk'
+      'risk',
+      'spend',
+      'next_renewal'
     ]);
     expect(contract?.fields).toContainEqual({
       id: 'vendor',

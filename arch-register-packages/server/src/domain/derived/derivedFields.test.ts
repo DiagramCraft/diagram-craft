@@ -441,3 +441,105 @@ describe('time-aware derived fields', () => {
     ).toThrow(/recalc_interval/);
   });
 });
+
+describe('vendor-style derived fields over entity.referrers', () => {
+  const fields: SchemaField[] = [
+    {
+      id: 'spend',
+      name: 'Spend',
+      type: 'derived',
+      resultType: 'currency',
+      expression: 'sumCurrency((entity.referrers ?? []).map(.annual_cost), entity.fx)'
+    } as SchemaField,
+    {
+      id: 'next_renewal',
+      name: 'Next Renewal',
+      type: 'derived',
+      resultType: 'text',
+      recalc_interval: 'daily',
+      expression: 'earliestOnOrAfter((entity.referrers ?? []).map(.contract_end), entity.now)'
+    } as SchemaField
+  ];
+  const now = new Date('2026-03-01T00:00:00.000Z');
+  const run = (referrers: unknown[]) =>
+    materializeDerivedFields(
+      fields,
+      {},
+      { objectType: 'entity', objectId: 'v1' },
+      [],
+      { referrers },
+      now
+    );
+
+  it('sums annual cost and picks the earliest upcoming end date', () => {
+    expect(
+      run([
+        { annual_cost: { amount: 100, currency: 'USD' }, contract_end: '2026-02-01' },
+        { annual_cost: { amount: 50, currency: 'USD' }, contract_end: '2026-09-01' },
+        { annual_cost: { amount: 25, currency: 'USD' }, contract_end: '2026-05-01' }
+      ])
+    ).toMatchObject({
+      spend: { amount: 175, currency: 'USD' },
+      next_renewal: '2026-05-01'
+    });
+  });
+
+  it('tolerates a context without referrers', () => {
+    const result = materializeDerivedFields(
+      fields,
+      {},
+      { objectType: 'entity', objectId: 'v1' },
+      [],
+      {},
+      now
+    );
+    expect(result['spend']).toBeUndefined();
+    expect(result['next_renewal']).toBeUndefined();
+  });
+
+  it('omits both values when there are no contracts', () => {
+    const result = run([]);
+    expect(result['spend']).toBeUndefined();
+    expect(result['next_renewal']).toBeUndefined();
+  });
+
+  describe('currency conversion', () => {
+    const mixed = [
+      { annual_cost: { amount: 100, currency: 'USD' }, contract_end: '2026-09-01' },
+      { annual_cost: { amount: 80, currency: 'EUR' }, contract_end: '2026-09-01' }
+    ];
+    const runWithFx = (
+      referrers: unknown[],
+      fx?: { targetCurrency: string; rates: Record<string, number> }
+    ) =>
+      materializeDerivedFields(
+        fields,
+        {},
+        { objectType: 'entity', objectId: 'v1' },
+        [],
+        { referrers },
+        now,
+        fx
+      );
+
+    it('converts every contract to the target currency when rates are available', () => {
+      const result = runWithFx(mixed, { targetCurrency: 'USD', rates: { USD: 1, EUR: 0.8 } });
+      expect(result['spend']).toEqual({ amount: 200, currency: 'USD' });
+    });
+
+    it('omits spend for mixed currencies without rates, but keeps single-currency totals', () => {
+      expect(runWithFx(mixed)['spend']).toBeUndefined();
+      expect(runWithFx([mixed[0]])['spend']).toEqual({ amount: 100, currency: 'USD' });
+    });
+
+    it('omits spend when a needed rate is missing', () => {
+      const result = runWithFx(mixed, { targetCurrency: 'USD', rates: { USD: 1 } });
+      expect(result['spend']).toBeUndefined();
+    });
+
+    it('treats a field that reads entity.fx as time-dependent', () => {
+      const plan = buildDerivedPlan(fields, 'entity');
+      expect(plan.timeDependentFieldIds.has('spend')).toBe(true);
+    });
+  });
+});

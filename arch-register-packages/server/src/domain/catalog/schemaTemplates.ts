@@ -2261,6 +2261,31 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
               'entity.financial_risk * 0.22 + entity.compliance_risk * 0.16) * ' +
               '(1 + ((entity.criticality ?? 3) - 3) * 0.06)) |> round |> clamp(1, 5))',
             resultType: 'rating'
+          },
+          {
+            id: 'spend',
+            name: 'Annual Spend',
+            type: 'derived',
+            groupId: 'ownership',
+            // Sum of annual_cost across the vendor's Contracts (entity.referrers are the entities
+            // pointing at this vendor, i.e. Contract.vendor). Converted to the workspace
+            // currency via entity.fx; without exchange rates only single-currency vendors resolve. `?? []` because mutation paths that
+            // skip the projection (create, seed) evaluate without `referrers`; the follow-up
+            // recalculation fills it in.
+            expression: 'sumCurrency((entity.referrers ?? []).map(.annual_cost), entity.fx)',
+            resultType: 'currency',
+            recalcInterval: 'daily'
+          },
+          {
+            id: 'next_renewal',
+            name: 'Next Renewal',
+            type: 'derived',
+            groupId: 'ownership',
+            // Earliest upcoming Contract.contract_end. Kept current by the daily recalculation scan.
+            expression:
+              'earliestOnOrAfter((entity.referrers ?? []).map(.contract_end), entity.now)',
+            resultType: 'text',
+            recalcInterval: 'daily'
           }
         ],
         groups: [

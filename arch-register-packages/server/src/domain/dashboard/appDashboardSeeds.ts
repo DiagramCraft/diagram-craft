@@ -6,6 +6,7 @@ import type {
 export const API_INTEGRATION_CATALOG_APP_KEY = 'api-integration-catalog';
 export const API_INTEGRATION_CATALOG_IMPACT_APP_KEY = 'api-integration-catalog-impact';
 export const BUSINESS_GLOSSARY_APP_KEY = 'business-glossary';
+export const VENDOR_MANAGEMENT_VENDORS_APP_KEY = 'vendor-management-vendors';
 export const DATA_STEWARDSHIP_APP_KEY = 'data-stewardship';
 export const DATA_STEWARDSHIP_ASSESSMENTS_APP_KEY = 'data-stewardship-assessments';
 
@@ -279,6 +280,77 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
         h: 22
       }
     ]
+  },
+  [VENDOR_MANAGEMENT_VENDORS_APP_KEY]: {
+    name: 'Vendors',
+    description: 'Vendor register with tier, category, owner, spend, risk and next renewal.',
+    widgets: [
+      {
+        id: 'seed-vendors',
+        type: ENTITY_BROWSER_EMBED_WIDGET_TYPE,
+        config: {
+          q: '',
+          conditions: [],
+          sort: 'name',
+          view: 'table',
+          viewConfigs: {
+            table: {
+              fieldIds: [
+                'Tier',
+                'Category',
+                'Relationship Owner',
+                'Annual Spend',
+                'Risk',
+                'Next Renewal'
+              ]
+            }
+          },
+          // Field NAMES are resolved at render time against the live Vendor schema — see
+          // EntityBrowserEmbedFieldResolution.ts. Annual Spend / Risk / Next Renewal are derived
+          // fields on the Vendor schema, so they render as plain columns.
+          schemaName: 'Vendor',
+          entityQuery: {
+            root: {
+              kind: 'and',
+              children: [
+                { kind: 'predicate', path: [], fieldId: 'Tier', op: 'in', value: ['$tiers'] },
+                {
+                  kind: 'predicate',
+                  path: [],
+                  fieldId: 'Category',
+                  op: 'in',
+                  value: ['$categories']
+                },
+                {
+                  kind: 'predicate',
+                  path: [],
+                  fieldId: 'Relationship Owner',
+                  op: 'in',
+                  value: ['$relationshipOwners']
+                }
+              ]
+            }
+          }
+        },
+        x: 0,
+        y: 0,
+        w: 12,
+        h: 40
+      }
+    ],
+    sidebar: {
+      kind: 'facets',
+      schemaName: 'Vendor',
+      facets: [
+        { fieldId: 'Tier', variableName: 'tiers', itemLabel: 'Tier' },
+        { fieldId: 'Category', variableName: 'categories', itemLabel: 'Category' },
+        {
+          fieldId: 'Relationship Owner',
+          variableName: 'relationshipOwners',
+          itemLabel: 'Owner'
+        }
+      ]
+    }
   },
   [BUSINESS_GLOSSARY_APP_KEY]: {
     name: 'Business glossary',

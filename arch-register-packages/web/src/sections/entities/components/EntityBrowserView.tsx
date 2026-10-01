@@ -404,6 +404,7 @@ export const EntityBrowserView = ({
           readOnly={readOnly}
           config={activeViewConfig}
           displayFields={displayFields}
+          hideTypeColumn={typeFilter != null}
         />
       );
     default:

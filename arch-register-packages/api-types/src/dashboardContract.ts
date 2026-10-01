@@ -38,10 +38,11 @@ export const dashboardFacetConfigSchema = z.object({
   fieldId: z
     .string()
     .describe(
-      "Field to facet on: either a reference field's display NAME on the faceted schema (matched " +
+      "Field to facet on: either a reference, select or text field's display NAME on the faceted schema (matched " +
         "at render time, like `schemaName` — a schema's actual field ids are workspace-specific, " +
         "resolved via capability field-role binding, so they can't be seeded as fixed ids; its " +
-        "counts are tallied against the referenced schema's entities), or one of the stable " +
+        "counts are tallied against the referenced schema's entities; select facets use the " +
+        "field's options as labels, text facets the distinct values), or one of the stable " +
         "standard fields '_owner' / '_lifecycle'"
     ),
   variableName: dashboardSidebarVariableNameSchema.describe(

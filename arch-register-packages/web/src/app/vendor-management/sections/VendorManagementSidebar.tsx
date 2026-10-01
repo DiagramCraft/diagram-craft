@@ -43,15 +43,13 @@ import {
   VENDOR_SECTION_LABELS,
   VENDOR_CONTRACTS_ID,
   VENDOR_SPEND_ID,
-  VENDOR_VENDORS_ID,
   VENDOR_RISK_ID,
   type VendorManagementRailItemId
 } from '../vendorManagementSections';
 import type {
   ContractsSearchParams,
   RiskSearchParams,
-  SpendSearchParams,
-  VendorsSearchParams
+  SpendSearchParams
 } from '../../../routes/searchParams';
 import styles from '../../../shell/SidePanel.module.css';
 
@@ -81,137 +79,14 @@ const FacetRow = ({
 );
 
 /**
- * The Vendors section's own primary-sidebar content: Tier / Category / Owner facets over the
- * vendor register, replacing the plain "Sections" nav list for this section only — mirrors
- * `../../strategy-model/sections/StrategySidebar.tsx`'s `CapabilitiesSidebarContent`.
- *
- * Tier and Category are fixed `select` fields, so their facet options come straight off the
- * Vendor schema's own field definitions (`optionLabel`'s approach in `../vendorFieldDisplay.ts`),
- * not an enum-lookup hook. Owner (`relationship_owner`) is free text, not a team relation, so its
- * facet is the distinct values actually present among fetched vendors — same "derive facets from
- * the fetched page" approach `GlossarySidebar`/`CapabilitiesSidebarContent` already use, with the
- * same undercount caveat beyond the 500-vendor page cap.
- */
-const VendorsSidebarContent = ({
-  workspaceSlug,
-  vendorSchemaId
-}: {
-  workspaceSlug: string;
-  vendorSchemaId: string;
-}) => {
-  const navigate = useNavigate();
-  const search = useSearch({ strict: false }) as VendorsSearchParams;
-  const { data: schemas } = useSchemas(workspaceSlug);
-  const vendorSchema = schemas?.find(schema => schema.id === vendorSchemaId);
-
-  const { data: vendorsData } = useQuery(
-    entitiesQuery(workspaceSlug, { schemaId: vendorSchemaId, view: 'full', limit: 500 })
-  );
-  const vendors = vendorsData?.items ?? [];
-
-  const fieldOptions = (fieldId: string) => {
-    const field = vendorSchema?.fields.find(candidate => candidate.id === fieldId);
-    return field && field.type === 'select' ? (field.options ?? []) : [];
-  };
-
-  const countByValue = useMemo(() => {
-    const build = (fieldId: string) => {
-      const counts = new Map<string, number>();
-      for (const vendor of vendors) {
-        const value = vendor[fieldId];
-        if (typeof value === 'string' && value) counts.set(value, (counts.get(value) ?? 0) + 1);
-      }
-      return counts;
-    };
-    return { tier: build('tier'), category: build('category') };
-  }, [vendors]);
-  const tierCounts = countByValue.tier;
-  const categoryCounts = countByValue.category;
-  const ownerCounts = useMemo(() => {
-    const counts = new Map<string, number>();
-    for (const vendor of vendors) {
-      const owner = vendor.relationship_owner;
-      if (typeof owner === 'string' && owner) counts.set(owner, (counts.get(owner) ?? 0) + 1);
-    }
-    return [...counts.entries()].sort((a, b) => b[1] - a[1]);
-  }, [vendors]);
-
-  const patchSearch = (patch: Partial<VendorsSearchParams>) =>
-    navigate({
-      to: VENDOR_RAIL_PATHS[VENDOR_VENDORS_ID],
-      params: { workspaceSlug },
-      search: (previous: Record<string, unknown>) => ({ ...previous, ...patch })
-    });
-
-  const hasAnySelection = !!search.tier || !!search.category || !!search.owner;
-  const clearAll = () => patchSearch({ tier: undefined, category: undefined, owner: undefined });
-
-  return (
-    <>
-      <TreeRow
-        icon={<TbBuildingStore size={12} />}
-        label="All vendors"
-        testId="vendor-facet-all"
-        active={!hasAnySelection}
-        onClick={clearAll}
-        trailing={<span className="dim mono">{vendors.length}</span>}
-      />
-      <SidebarGroupLabel>Tier</SidebarGroupLabel>
-      {fieldOptions('tier').map(option => (
-        <FacetRow
-          key={option.value}
-          icon={<TbTag size={12} />}
-          label={option.label}
-          testId={`vendor-facet-tier-${option.value}`}
-          active={search.tier === option.value}
-          onClick={() =>
-            patchSearch({ tier: search.tier === option.value ? undefined : option.value })
-          }
-          trailing={<span className="dim mono">{tierCounts.get(option.value) ?? 0}</span>}
-        />
-      ))}
-      <SidebarGroupLabel>Category</SidebarGroupLabel>
-      {fieldOptions('category').map(option => (
-        <FacetRow
-          key={option.value}
-          icon={<TbTag size={12} />}
-          label={option.label}
-          testId={`vendor-facet-category-${option.value}`}
-          active={search.category === option.value}
-          onClick={() =>
-            patchSearch({ category: search.category === option.value ? undefined : option.value })
-          }
-          trailing={<span className="dim mono">{categoryCounts.get(option.value) ?? 0}</span>}
-        />
-      ))}
-      <SidebarGroupLabel>Owner</SidebarGroupLabel>
-      {ownerCounts.length === 0 && (
-        <div className={`${styles.emptyState} dim`}>No relationship owners assigned.</div>
-      )}
-      {ownerCounts.map(([owner, count]) => (
-        <FacetRow
-          key={owner}
-          icon={<TbUsers size={12} />}
-          label={owner}
-          testId={`vendor-facet-owner-${owner}`}
-          active={search.owner === owner}
-          onClick={() => patchSearch({ owner: search.owner === owner ? undefined : owner })}
-          trailing={<span className="dim mono">{count}</span>}
-        />
-      ))}
-    </>
-  );
-};
-
-/**
  * The Contracts section's own primary-sidebar content: Renewal window / Type / Vendor facets over
- * the Contract register, mirroring `VendorsSidebarContent` above. Renewal window isn't a schema
+ * the Contract register, mirroring `SpendSidebarContent` below. Renewal window isn't a schema
  * `select` field (it's a computed bucket, see `../contractRenewalWindow.ts`), so its facet options
  * come from the fixed `RENEWAL_WINDOWS` list rather than `fieldOptions`; Type does come from
  * Contract's own `contract_type` select field; Vendor is derived from the distinct vendors present
  * among fetched contracts (via `useVendorContracts`'s tree join, since a flat fetch can't resolve
  * vendor names — see that hook's own comment), same "derive facets from the fetched page" approach
- * the Owner facet above uses, patched by vendor **uid** but displayed by vendor **name**.
+ * the Owner facet this section once had used, patched by vendor **uid** but displayed by vendor **name**.
  */
 const ContractsSidebarContent = ({
   workspaceSlug,
@@ -335,7 +210,7 @@ const ContractsSidebarContent = ({
 
 /**
  * The Spend section's own primary-sidebar content: Cost Centre and Owner facets over the vendor
- * register, mirroring `VendorsSidebarContent`/`ContractsSidebarContent` above. Each Cost Centre
+ * register, mirroring `ContractsSidebarContent` above. Each Cost Centre
  * row's trailing figure is that centre's own annualised spend (`vmGroupSpend` over `cost_centre`),
  * not a plain count — the whole point of this facet is to jump straight to the biggest spend
  * pools. Selecting a facet sets `VendorSpendScreen.tsx`'s `cc`/`owner` search params, which narrow
@@ -594,10 +469,10 @@ const RiskSidebarContent = ({
 /**
  * Section-dependent primary sidebar for the Vendor Management app: navigation between the app's
  * five rail sections, gated on the `vendor-management` capability configuration (mirrors
- * `../../strategy-model/sections/StrategySidebar.tsx`'s `!enabled` empty state). The Vendors,
- * Contracts, Spend, and Risk sections replace this nav list with their own facet content (see
- * `VendorsSidebarContent`/`ContractsSidebarContent`/`SpendSidebarContent`/`RiskSidebarContent`
- * above).
+ * `../../strategy-model/sections/StrategySidebar.tsx`'s `!enabled` empty state). The Contracts,
+ * Spend, and Risk sections replace this nav list with their own facet content (see
+ * `ContractsSidebarContent`/`SpendSidebarContent`/`RiskSidebarContent` above). The Vendors
+ * section uses the dashboard `facets` sidebar instead (`VENDOR_MANAGEMENT_VENDORS_APP_KEY`).
  */
 export const VendorManagementSidebar = ({
   workspaceSlug,
@@ -617,11 +492,6 @@ export const VendorManagementSidebar = ({
       <div className={styles.scroll}>
         {!enabled ? (
           <div className={`${styles.emptyState} dim`}>Vendor management is not enabled.</div>
-        ) : activeSection === VENDOR_VENDORS_ID ? (
-          <VendorsSidebarContent
-            workspaceSlug={workspaceSlug}
-            vendorSchemaId={vendorConfig.vendorSchemaId}
-          />
         ) : activeSection === VENDOR_CONTRACTS_ID && vendorConfig.contractSchemaId ? (
           <ContractsSidebarContent
             workspaceSlug={workspaceSlug}
