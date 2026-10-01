@@ -18,6 +18,7 @@ import {
   findEntityDisplayField,
   formatEntityDisplayValue,
   getDisplayFieldIds,
+  isNumericDisplayField,
   type EntityDisplayField
 } from './entityDisplayFields';
 import { isEntityInProject } from './entityBrowserState';
@@ -81,7 +82,9 @@ export const TableView = ({
           {columns
             .filter(c => c.id !== '_description')
             .map(c => (
-              <Table.HeaderCell key={c.id}>{c.label}</Table.HeaderCell>
+              <Table.HeaderCell key={c.id} numeric={isNumericDisplayField(c)}>
+                {c.label}
+              </Table.HeaderCell>
             ))}
           {activeDateField && !fieldIds.includes(activeDateField.id) && (
             <Table.HeaderCell>{activeDateField.name}</Table.HeaderCell>
@@ -150,7 +153,7 @@ export const TableView = ({
                   const field =
                     findEntityDisplayField(column.id, entity, schemaMap, displayFields) ?? column;
                   return (
-                    <Table.Cell key={column.id}>
+                    <Table.Cell key={column.id} numeric={isNumericDisplayField(field)}>
                       <span className="dim">
                         {formatEntityDisplayValue(entity, field, dateTimeFormatPreference) ?? '—'}
                       </span>

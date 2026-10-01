@@ -8,6 +8,7 @@ import {
 import { buildHomeBreadcrumbs } from '../../shell/breadcrumbBuilders';
 import type { WorkspaceShellContext } from '../../layouts/workspaceShellDescriptors';
 import type { AppDefinition, BreadcrumbItem } from '../../shell/shellTypes';
+import { AppDashboardPrimarySidebar } from '../../sections/dashboard/AppDashboardPrimarySidebar';
 import { VendorManagementSidebar } from './sections/VendorManagementSidebar';
 import {
   VENDOR_OVERVIEW_ID,
@@ -19,6 +20,8 @@ import {
   VENDOR_SECTION_LABELS,
   type VendorManagementRailItemId
 } from './vendorManagementSections';
+
+export const VENDOR_MANAGEMENT_VENDORS_APP_KEY = 'vendor-management-vendors';
 
 /**
  * Vendor Management's workspace-rail identity: its rail-item ids (defined in
@@ -49,10 +52,13 @@ export const vendorManagementAppDefinition: AppDefinition = {
       icon: TbBuilding,
       tooltip: 'Vendors',
       route: VENDOR_RAIL_PATHS[VENDOR_VENDORS_ID],
+      // A self-contained dashboard (single `entity-browser-embed` widget) with its own `facets`
+      // sidebar (tier/category/owner) routed through the standard dashboard sidebar slot.
+      dashboard: { appKey: VENDOR_MANAGEMENT_VENDORS_APP_KEY },
       primarySidebar: ctx => (
-        <VendorManagementSidebar
+        <AppDashboardPrimarySidebar
           workspaceSlug={ctx.workspaceSlug}
-          activeSection={VENDOR_VENDORS_ID}
+          appKey={VENDOR_MANAGEMENT_VENDORS_APP_KEY}
         />
       )
     },

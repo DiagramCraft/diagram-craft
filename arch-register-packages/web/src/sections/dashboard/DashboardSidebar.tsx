@@ -10,6 +10,7 @@ import { TreeRow } from '../../components/TreeRow';
 import { entitiesQuery } from '../../queries/entities';
 import { useSchemas } from '../../hooks/useSchemas';
 import styles from '../../shell/SidePanel.module.css';
+import { facetKindForField } from './dashboardFacetFields';
 
 type Props = {
   workspaceSlug: string;
@@ -95,7 +96,10 @@ const FacetSection = ({
   selectedIds: Set<string>;
   onToggle: (id: string) => void;
 }) => {
-  const isReferenceFacet = !facet.fieldId.startsWith('_');
+  // Any non-`_` facet is a schema field matched by display name: a reference field (tallied
+  // against the referenced schema's entities), a select field (labels from its options) or a
+  // text field (the raw values double as labels).
+  const isFieldFacet = !facet.fieldId.startsWith('_');
 
   // For a reference facet, `facet.fieldId` is the field's display NAME (e.g. "Categories"), not
   // its id — a schema template's field id is workspace-specific (resolved via capability
@@ -104,16 +108,28 @@ const FacetSection = ({
   // render time (mirrors `schemaName` on this same config and on `entity-picker`). `_owner` /
   // `_lifecycle` are stable meta-field ids and pass through unchanged.
   const schemas = useSchemas(workspaceSlug);
-  const { resolvedFieldId, targetSchemaId } = useMemo(() => {
-    if (!isReferenceFacet) return { resolvedFieldId: facet.fieldId, targetSchemaId: undefined };
-    if (!schemaId) return { resolvedFieldId: undefined, targetSchemaId: undefined };
+  const { resolvedFieldId, targetSchemaId, selectOptions } = useMemo(() => {
+    if (!isFieldFacet) {
+      return {
+        resolvedFieldId: facet.fieldId,
+        targetSchemaId: undefined,
+        selectOptions: undefined
+      };
+    }
+    if (!schemaId) {
+      return { resolvedFieldId: undefined, targetSchemaId: undefined, selectOptions: undefined };
+    }
     const schema = schemas.data?.find(candidate => candidate.id === schemaId);
     const field = schema?.fields.find(candidate => candidate.name === facet.fieldId);
     return {
       resolvedFieldId: field?.id,
-      targetSchemaId: field?.type === 'reference' ? field.schemaId : undefined
+      targetSchemaId: field?.type === 'reference' ? field.schemaId : undefined,
+      selectOptions:
+        field && facetKindForField(field) === 'select' && 'options' in field
+          ? field.options
+          : undefined
     };
-  }, [isReferenceFacet, schemas.data, schemaId, facet.fieldId]);
+  }, [isFieldFacet, schemas.data, schemaId, facet.fieldId]);
 
   // Capped sample of the faceted schema's own entities, used to tally this facet's counts
   // client-side (see FACET_SAMPLE_LIMIT).
@@ -121,7 +137,7 @@ const FacetSection = ({
     entitiesQuery(
       workspaceSlug,
       { schemaId, view: 'full', limit: FACET_SAMPLE_LIMIT },
-      !!schemaId && !!resolvedFieldId && (!isReferenceFacet || !!targetSchemaId)
+      !!schemaId && !!resolvedFieldId
     )
   );
   const sampledItems = sample.data?.items ?? [];
@@ -138,23 +154,26 @@ const FacetSection = ({
     return tally;
   }, [sampledItems, resolvedFieldId]);
 
-  // Reference facet: fetch the target schema's entities for their display names. Standard-field
-  // facet: labels come straight off the sampled entities' own `_owner`/`_lifecycle` values.
+  // Reference facet: fetch the target schema's entities for their display names. Select facet:
+  // labels come from the field's options. Text / standard-field facet: labels come straight off
+  // the sampled values (`_owner`/`_lifecycle` foreign keys, or the raw text itself).
   const targetEntities = useQuery(
     entitiesQuery(
       workspaceSlug,
       { schemaId: targetSchemaId, view: 'summary', limit: 500 },
-      isReferenceFacet && !!targetSchemaId
+      !!targetSchemaId
     )
   );
 
   const options = useMemo(() => {
-    if (isReferenceFacet) {
+    if (targetSchemaId) {
       return (targetEntities.data?.items ?? [])
         .filter(entity => counts.has(entity._uid))
         .map(entity => ({ id: entity._uid, label: entity._name }));
     }
-    const labels = new Map<string, string>();
+    const labels = new Map<string, string>(
+      (selectOptions ?? []).map(option => [option.value, option.label])
+    );
     if (resolvedFieldId) {
       for (const entity of sampledItems) {
         const value = (entity as unknown as Record<string, unknown>)[resolvedFieldId];
@@ -162,7 +181,7 @@ const FacetSection = ({
       }
     }
     return Array.from(counts.keys()).map(id => ({ id, label: labels.get(id) ?? id }));
-  }, [isReferenceFacet, targetEntities.data, counts, sampledItems, resolvedFieldId]);
+  }, [targetSchemaId, targetEntities.data, counts, sampledItems, resolvedFieldId, selectOptions]);
 
   const sorted = useMemo(
     () => [...options].sort((a, b) => (counts.get(b.id) ?? 0) - (counts.get(a.id) ?? 0)),

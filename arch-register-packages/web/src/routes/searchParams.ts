@@ -373,14 +373,12 @@ export const validateCapabilitiesSearch = (
   raw: Record<string, unknown>
 ): CapabilitiesSearchParams => parseSearchParams(capabilitiesSearchSchema, raw);
 
-// Vendor Management vendors params
+// Vendor Management vendors params — the facets' dashboard sidebar variables (see the
+// `vendor-management-vendors` seed in `appDashboardSeeds.ts`), each a comma-joined value list.
 const vendorsSearchSchema = defineSearchParamSchema({
-  q: stringCodec,
-  // Vendor Tier / Category select-field values, and a Relationship Owner free-text value — set by
-  // the sidebar's facets (`VendorsSidebarContent`).
-  tier: stringCodec,
-  category: stringCodec,
-  owner: stringCodec
+  tiers: stringCodec,
+  categories: stringCodec,
+  relationshipOwners: stringCodec
 });
 
 export type VendorsSearchParams = SearchParamsFromSchema<typeof vendorsSearchSchema>;

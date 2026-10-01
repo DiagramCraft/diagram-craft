@@ -48,6 +48,10 @@ export type DerivedFieldGroup = {
  */
 export const RELATION_ROOT_PSEUDO_FIELDS = new Set(['_in', '_out']);
 
+/** Exchange rates injected as `<root>.fx` so a derived expression can convert currency values to
+ *  the workspace currency (see the `sumCurrency` helper). `rates` are relative to one base. */
+export type DerivedCurrencyConversion = { targetCurrency: string; rates: Record<string, number> };
+
 type DerivedPlan = {
   fields: DerivedFieldDefinition[];
   compiled: Map<string, CompiledExpression>;
@@ -97,6 +101,46 @@ const engine = bonsai<EvaluationContext>({ timeout: 50, maxDepth: 50 })
     const b = Date.parse(String(to));
     return Number.isNaN(a) || Number.isNaN(b) ? null : Math.round((b - a) / 86_400_000);
   })
+  // Earliest ISO date in `dates` that is on or after `from`; `null` when there is none. Unparseable
+  // entries are ignored. Used for "next renewal" style fields over related entities.
+  .addFunction('earliestOnOrAfter', (dates, from) => {
+    const floor = Date.parse(String(from));
+    if (!Array.isArray(dates) || Number.isNaN(floor)) return null;
+    const upcoming = dates
+      .filter(date => typeof date === 'string' && Date.parse(date) >= floor)
+      .sort();
+    return upcoming[0] ?? null;
+  })
+  // Total of a list of `{ amount, currency }` values. With `fx`, each value is converted to
+  // `fx.targetCurrency` first; without it the values must share one currency (the total keeps it).
+  // `null` when the list holds no valid amounts, when currencies are mixed without `fx`, or when
+  // a needed exchange rate is missing.
+  .addFunction('sumCurrency', (values, fx) => {
+    if (!Array.isArray(values)) return null;
+    const valid = values.filter(
+      (value): value is { amount: number; currency: string } =>
+        value != null &&
+        typeof value === 'object' &&
+        Number.isFinite((value as { amount?: unknown }).amount) &&
+        typeof (value as { currency?: unknown }).currency === 'string'
+    );
+    if (valid.length === 0) return null;
+    const conversion = fx as Partial<DerivedCurrencyConversion> | null | undefined;
+    if (!conversion?.targetCurrency || !conversion.rates) {
+      const currency = valid[0]!.currency;
+      if (valid.some(value => value.currency !== currency)) return null;
+      return { amount: valid.reduce((total, value) => total + value.amount, 0), currency };
+    }
+    const targetRate = conversion.rates[conversion.targetCurrency];
+    if (targetRate == null || !(targetRate > 0)) return null;
+    let amount = 0;
+    for (const value of valid) {
+      const sourceRate = conversion.rates[value.currency.toUpperCase()];
+      if (sourceRate == null || !(sourceRate > 0)) return null;
+      amount += (value.amount * targetRate) / sourceRate;
+    }
+    return { amount, currency: conversion.targetCurrency };
+  })
   // `null` / `undefined` / empty-string / empty-array test — a missing context key reads as
   // `undefined`, which bonsai's `== null` does not always catch.
   .addFunction(
@@ -127,9 +171,15 @@ const collectRootDependencies = (node: ASTNode, root: DerivedRoot, dependencies:
     member.object.name === root
   ) {
     const property = member.computed ? member.property?.value : member.property?.name;
-    // `metadata` is a synthetic projection object, `now` is the injected current date — neither
-    // is a schema field, so neither is a recalculation dependency.
-    if (typeof property === 'string' && property !== 'metadata' && property !== 'now') {
+    // `metadata` and `referrers` are synthetic projection keys and `now` / `fx` are injected
+    // values — none is a schema field, so none is a recalculation dependency.
+    if (
+      typeof property === 'string' &&
+      property !== 'metadata' &&
+      property !== 'referrers' &&
+      property !== 'now' &&
+      property !== 'fx'
+    ) {
       dependencies.push(property);
     }
   }
@@ -173,7 +223,10 @@ const collectObjectLiteralKeys = (node: ASTNode, keys: Set<string>) => {
   }
 };
 
-/** True when the AST reads `<root>.now` anywhere (the injected current-date string). */
+/** Root keys injected by the engine that change over time: the current date and the exchange rates. */
+const TIME_DEPENDENT_ROOT_KEYS = new Set(['now', 'fx']);
+
+/** True when the AST reads `<root>.now` or `<root>.fx` anywhere (injected values that go stale). */
 const referencesRootNow = (node: ASTNode, root: DerivedRoot): boolean => {
   const member = node as unknown as {
     type?: string;
@@ -185,7 +238,9 @@ const referencesRootNow = (node: ASTNode, root: DerivedRoot): boolean => {
     member.type === 'MemberExpression' &&
     member.object?.type === 'Identifier' &&
     member.object.name === root &&
-    (member.computed ? member.property?.value : member.property?.name) === 'now'
+    TIME_DEPENDENT_ROOT_KEYS.has(
+      (member.computed ? member.property?.value : member.property?.name) ?? ''
+    )
   ) {
     return true;
   }
@@ -265,7 +320,7 @@ export const buildDerivedPlan = (
       if (!definition.recalcInterval) definition.recalcInterval = 'daily';
     } else if (definition.recalcInterval) {
       throw new Error(
-        `Derived field '${definition.id}' sets recalc_interval but its expression does not reference ${root}.now`
+        `Derived field '${definition.id}' sets recalc_interval but its expression does not reference ${root}.now or ${root}.fx`
       );
     }
   }
@@ -450,13 +505,18 @@ export const evaluateDerivedFields = (
   context: { objectType: DerivedRoot; objectId: string },
   unsafeDerivedFieldIds: ReadonlySet<string> = new Set(),
   entityContext: DerivedEntityContext = inputValues,
-  now: Date = new Date()
+  now: Date = new Date(),
+  fx?: DerivedCurrencyConversion
 ): Record<string, unknown> => {
   const values = { ...inputValues };
   // `<root>.now` — the current date as an ISO day string, so expressions can compute
   // approaching/overdue windows. Injected here (the one path every root funnels through) rather
   // than in each projection builder.
-  const rootContext: Record<string, unknown> = { ...entityContext, now: toIsoDay(now) };
+  const rootContext: Record<string, unknown> = {
+    ...entityContext,
+    now: toIsoDay(now),
+    ...(fx ? { fx } : {})
+  };
   const evaluationContext: EvaluationContext =
     plan.root === 'entity'
       ? { entity: rootContext }
@@ -505,7 +565,8 @@ export const materializeDerivedFields = (
   context: { objectType: DerivedRoot; objectId: string },
   groups?: ReadonlyArray<DerivedFieldGroup>,
   entityContext?: DerivedEntityContext,
-  now: Date = new Date()
+  now: Date = new Date(),
+  fx?: DerivedCurrencyConversion
 ) => {
   const plan = buildDerivedPlan(fields, context.objectType);
   const unsafeDerivedFieldIds = groups
@@ -540,7 +601,8 @@ export const materializeDerivedFields = (
     context,
     deferredDerivedFieldIds,
     entityContext ?? values,
-    now
+    now,
+    fx
   );
 };
 
