@@ -33,6 +33,8 @@ export type TableViewProps = EntityBrowserBaseViewProps & {
   onSelectRow?: (uid: string) => void;
   config: unknown;
   displayFields: EntityDisplayField[];
+  /** Omit the Type column, e.g. when the browser is scoped to a single schema. */
+  hideTypeColumn?: boolean;
 };
 
 export const TableView = ({
@@ -50,7 +52,8 @@ export const TableView = ({
   onSelectRow,
   readOnly,
   config,
-  displayFields
+  displayFields,
+  hideTypeColumn
 }: TableViewProps) => {
   const dateTimeFormatPreference = useDateTimeFormatPreference();
   const allSelected = !readOnly && rows.length > 0 && selectedIds?.size === rows.length;
@@ -78,7 +81,7 @@ export const TableView = ({
             />
           )}
           <Table.HeaderCell style={{ minWidth: 200 }}>Name</Table.HeaderCell>
-          <Table.HeaderCell>Type</Table.HeaderCell>
+          {!hideTypeColumn && <Table.HeaderCell>Type</Table.HeaderCell>}
           {columns
             .filter(c => c.id !== '_description')
             .map(c => (
@@ -144,9 +147,11 @@ export const TableView = ({
                     : undefined
                 }
               />
-              <Table.Cell>
-                {schemaEntry && <Chip tone="ghost">{schemaEntry.schema.name}</Chip>}
-              </Table.Cell>
+              {!hideTypeColumn && (
+                <Table.Cell>
+                  {schemaEntry && <Chip tone="ghost">{schemaEntry.schema.name}</Chip>}
+                </Table.Cell>
+              )}
               {columns
                 .filter(c => c.id !== '_description')
                 .map(column => {
