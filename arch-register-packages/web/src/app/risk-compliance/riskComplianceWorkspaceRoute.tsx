@@ -20,7 +20,7 @@ import {
   LazyRiskComplianceOverviewScreen,
   LazyRiskComplianceRisksScreen,
   LazyRiskComplianceControlsScreen,
-  LazyRiskComplianceRetentionScreen,
+  LazyRiskComplianceRetentionDashboardScreen,
   LazyRiskComplianceAssessmentsScreen
 } from '../../routes/workspace/lazyWorkspaceScreens';
 import { ensureApplicationAccess } from '../../routes/applicationAccess';
@@ -117,7 +117,7 @@ export const createRiskComplianceWorkspaceRoutes = <TParentRoute extends AnyRout
           (params as unknown as { workspaceSlug: string }).workspaceSlug,
           'risk-compliance'
         ),
-      component: LazyRiskComplianceRetentionScreen
+      component: LazyRiskComplianceRetentionDashboardScreen
     }),
     ctx =>
       railSectionShell(ctx, RISK_RETENTION_ID, {

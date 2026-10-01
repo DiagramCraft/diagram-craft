@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
+import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import { resolveEntityQuery, resolveTableFieldIds } from './EntityBrowserEmbedFieldResolution';
 
 const rootSchema: EntitySchema = {
@@ -147,5 +148,123 @@ describe('resolveEntityQuery', () => {
       root: { kind: 'predicate', path: [], fieldId: 'Status', op: 'equals', value: 'a' }
     };
     expect(resolveEntityQuery(query, undefined, null)).toBe(query);
+  });
+});
+
+describe('resolveEntityQuery with typed relations', () => {
+  const dataEntity = {
+    id: 'schema-de',
+    name: 'Data Entity',
+    fields: [
+      {
+        id: 'f-retention',
+        name: 'Retention Policy',
+        type: 'typedRelation',
+        relationSchemaId: 'rel-assign',
+        direction: 'in',
+        minCount: 0,
+        maxCount: 1,
+        requirementLevel: 'optional'
+      }
+    ]
+  } as unknown as EntitySchema;
+  const policy = {
+    id: 'schema-policy',
+    name: 'Retention Policy',
+    fields: [{ id: 'f-duration', name: 'Duration', type: 'number' }]
+  } as unknown as EntitySchema;
+  const assignment = {
+    id: 'rel-assign',
+    in: { schemaIds: ['schema-de'] },
+    out: { schemaIds: ['schema-policy'] },
+    fields: [{ id: 'f-activated', name: 'Activated From', type: 'date' }]
+  } as unknown as RelationSchema;
+  const context = { schemas: [dataEntity, policy], relationSchemas: [assignment] };
+  const hop = { kind: 'forward' as const, fieldId: 'Retention Policy' };
+  const resolvedHop = {
+    kind: 'typedRelation',
+    fieldId: 'f-retention',
+    relationSchemaId: 'rel-assign',
+    direction: 'in',
+    ownerSchemaIds: ['schema-de']
+  };
+
+  it('upgrades a forward hop naming a typedRelation field and keeps its filter', () => {
+    const filter = {
+      kind: 'predicate' as const,
+      path: [],
+      fieldId: '_id',
+      op: 'in' as const,
+      value: ['x']
+    };
+    const resolved = resolveEntityQuery(
+      { root: { kind: 'relationExists', path: [{ ...hop, filter }] } },
+      dataEntity,
+      'schema-de',
+      context
+    );
+    expect(resolved.root).toEqual({
+      kind: 'relationExists',
+      path: [{ ...resolvedHop, filter }]
+    });
+  });
+
+  it('resolves projection terminal names against the neighbour schema and the relation schema', () => {
+    const resolved = resolveEntityQuery(
+      {
+        root: { kind: 'and', children: [] },
+        projections: [
+          { path: [hop], fieldId: 'Duration', alias: 'Duration' },
+          { path: [hop], fieldId: 'Activated From', source: 'relation', alias: 'Activated' },
+          { path: [hop], fieldId: '_name', alias: 'Policy' }
+        ]
+      },
+      dataEntity,
+      'schema-de',
+      context
+    );
+    expect(resolved.projections).toEqual([
+      { path: [resolvedHop], fieldId: 'f-duration', alias: 'Duration' },
+      { path: [resolvedHop], fieldId: 'f-activated', source: 'relation', alias: 'Activated' },
+      { path: [resolvedHop], fieldId: '_name', alias: 'Policy' }
+    ]);
+  });
+
+  it('leaves unknown terminal names unchanged', () => {
+    const resolved = resolveEntityQuery(
+      { root: { kind: 'and', children: [] }, projections: [{ path: [hop], fieldId: 'Nope' }] },
+      dataEntity,
+      'schema-de',
+      context
+    );
+    expect(resolved.projections?.[0]).toMatchObject({ fieldId: 'Nope' });
+  });
+
+  it('turns a path predicate whose $variable placeholder was never substituted into relationExists', () => {
+    const resolved = resolveEntityQuery(
+      {
+        root: { kind: 'predicate', path: [hop], fieldId: '_id', op: 'in', value: ['$policyId'] }
+      },
+      dataEntity,
+      'schema-de',
+      context
+    );
+    expect(resolved.root).toEqual({ kind: 'relationExists', path: [resolvedHop] });
+  });
+
+  it('keeps a path predicate once its placeholder is substituted', () => {
+    const resolved = resolveEntityQuery(
+      { root: { kind: 'predicate', path: [hop], fieldId: '_id', op: 'in', value: ['abc'] } },
+      dataEntity,
+      'schema-de',
+      context
+    );
+    expect(resolved.root).toEqual({
+      kind: 'predicate',
+      path: [resolvedHop],
+      fieldId: '_id',
+      op: 'in',
+      value: ['abc']
+    });
   });
 });

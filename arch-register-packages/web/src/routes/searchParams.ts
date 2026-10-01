@@ -502,22 +502,11 @@ export type AssessmentsSearchParams = SearchParamsFromSchema<typeof assessmentsS
 export const validateAssessmentsSearch = (raw: Record<string, unknown>): AssessmentsSearchParams =>
   parseSearchParams(assessmentsSearchSchema, raw);
 
-// Risk & Compliance retention params. The section is a single Assignments register (no view
-// toggle, no expiry dashboard) — a per-assignment "expiry" computed from a category-level
-// `activated_from` plus a policy's duration can't actually tell you which individual records are
-// due, since retention policies are assigned to Data Entity *categories*, not to records with
-// their own creation dates (see the Retention section's own doc comment in
-// `RiskComplianceRetentionScreen.tsx`), so that framing was deliberately removed. What's left is
-// a plain register, filtered by a sidebar Policy facet or an "incomplete" data-quality facet.
+// Risk & Compliance retention params. The section is a dashboard (`risk-compliance-retention`
+// seed in `appDashboardSeeds.ts`) whose `entity-picker` sidebar narrows the assignments register to
+// one Retention Policy via this variable-named param (`resolveSidebarVariableReferences.ts`).
 const retentionSearchSchema = defineSearchParamSchema({
-  // Narrows to one Retention Policy's assignments — set by a sidebar facet, mirroring
-  // `risksSearchSchema`'s facet params above.
-  policy: stringCodec,
-  // Narrows to assignments missing required data (no policy, duration, time unit, or activation
-  // date — see `useRetentionAssignments.ts`'s `missing`) — a data-completeness facet, not a
-  // disposal-urgency one. '1' when set, absent otherwise, mirrors `risksSearchSchema`'s
-  // `outsideAppetite`.
-  incomplete: enumCodec(['1'] as const)
+  policyId: stringCodec
 });
 
 export type RetentionSearchParams = SearchParamsFromSchema<typeof retentionSearchSchema>;

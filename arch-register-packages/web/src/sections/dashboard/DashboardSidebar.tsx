@@ -285,11 +285,15 @@ const EntityPickerSidebar = ({
   const items = entities.data?.items ?? [];
   const sorted = useMemo(() => [...items].sort((a, b) => a._name.localeCompare(b._name)), [items]);
 
-  const select = (publicId: string) =>
+  const selectionValue = (entity: (typeof items)[number]) =>
+    sidebar.valueKind === 'id' ? entity._uid : entity._publicId;
+
+  // Re-selecting the active item clears the selection.
+  const toggle = (value: string) =>
     navigate({
       search: (previous: Record<string, unknown>) => ({
         ...previous,
-        [sidebar.variableName]: publicId
+        [sidebar.variableName]: selected === value ? undefined : value
       })
     } as Parameters<typeof navigate>[0]);
 
@@ -304,8 +308,8 @@ const EntityPickerSidebar = ({
               key={entity._uid}
               label={entity._name}
               testId={`dashboard-sidebar-item-${entity._uid}`}
-              active={selected === entity._publicId}
-              onClick={() => select(entity._publicId)}
+              active={selected === selectionValue(entity)}
+              onClick={() => toggle(selectionValue(entity))}
             />
           ))}
       </div>

@@ -76,7 +76,7 @@ const dedupeById = (assessments: Assessment[]): Assessment[] => {
  * Two of the design reference's stats don't survive the shipped schema and are substituted rather
  * than dropped or faked: "records past disposal" / a retention expiry summary need a per-record
  * disposal due date, but `retention-assignment` links a policy to a Data Entity *category*, not an
- * individual record — exactly why `RiskComplianceRetentionScreen.tsx` itself dropped its own
+ * individual record — exactly why the Retention dashboard seed (`appDashboardSeeds.ts`) itself dropped its own
  * Overdue/Next-30-days dashboard (see that file's doc comment). This screen instead reports
  * retention *completeness* — assignments missing a required field — which the data can actually
  * support. "Coverage by family" groups by `control_type` (Controls has no dedicated family field,

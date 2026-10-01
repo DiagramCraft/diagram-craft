@@ -58,8 +58,11 @@ export const EntityBrowserEmbed = ({ config: rawConfig }: Props) => {
   const rootSchema = typeFilter ? schemas.find(schema => schema.id === typeFilter) : undefined;
   const resolvedEntityQuery = useMemo(() => {
     if (!config?.entityQuery) return null;
-    return resolveEntityQuery(config.entityQuery, rootSchema, typeFilter);
-  }, [config?.entityQuery, rootSchema, typeFilter]);
+    return resolveEntityQuery(config.entityQuery, rootSchema, typeFilter, {
+      schemas,
+      relationSchemas
+    });
+  }, [config?.entityQuery, rootSchema, typeFilter, schemas, relationSchemas]);
 
   const resolvedActiveViewConfig = useMemo(
     () => resolveTableFieldIds(config?.viewConfigs[config?.view ?? 'table'], rootSchema),

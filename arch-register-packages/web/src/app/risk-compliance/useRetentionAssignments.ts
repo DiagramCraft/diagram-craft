@@ -19,7 +19,7 @@ export type RetentionAssignmentRow = {
   /** Which of policy / duration / time unit / activation date is missing or invalid — a
    *  data-completeness signal (can this assignment even be evaluated), independent of any
    *  per-record disposal timing, which this model has no way to represent (see this screen's own
-   *  doc comment in `RiskComplianceRetentionScreen.tsx`). */
+   *  doc comment in the Retention dashboard seed (`appDashboardSeeds.ts`)). */
   missing: string[];
 };
 

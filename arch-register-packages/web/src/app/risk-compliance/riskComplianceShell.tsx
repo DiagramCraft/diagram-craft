@@ -8,6 +8,7 @@ import {
 import { buildHomeBreadcrumbs } from '../../shell/breadcrumbBuilders';
 import type { WorkspaceShellContext } from '../../layouts/workspaceShellDescriptors';
 import type { AppDefinition, BreadcrumbItem } from '../../shell/shellTypes';
+import { AppDashboardPrimarySidebar } from '../../sections/dashboard/AppDashboardPrimarySidebar';
 import { RiskComplianceSidebar } from './sections/RiskComplianceSidebar';
 import {
   RISK_OVERVIEW_ID,
@@ -19,6 +20,9 @@ import {
   RISK_SECTION_LABELS,
   type RiskComplianceRailItemId
 } from './riskComplianceSections';
+
+/** Keys the Retention section's dashboard (seeded server-side in `appDashboardSeeds.ts`). */
+export const RISK_COMPLIANCE_RETENTION_APP_KEY = 'risk-compliance-retention';
 
 /**
  * Risk & Compliance's workspace-rail identity: its rail-item ids (defined in
@@ -67,10 +71,13 @@ export const riskComplianceAppDefinition: AppDefinition = {
       icon: TbArchive,
       tooltip: 'Retention',
       route: RISK_RAIL_PATHS[RISK_RETENTION_ID],
+      // A self-contained dashboard (one retention-assignments table widget) with an
+      // `entity-picker` sidebar for narrowing to a single Retention Policy.
+      dashboard: { appKey: RISK_COMPLIANCE_RETENTION_APP_KEY },
       primarySidebar: ctx => (
-        <RiskComplianceSidebar
+        <AppDashboardPrimarySidebar
           workspaceSlug={ctx.workspaceSlug}
-          activeSection={RISK_RETENTION_ID}
+          appKey={RISK_COMPLIANCE_RETENTION_APP_KEY}
         />
       )
     },
