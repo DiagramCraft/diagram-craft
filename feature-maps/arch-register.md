@@ -676,14 +676,7 @@
           scope for this first cut, same call `ar.data-stewardship.my-work` already made. A row opens the same
           shared, already-shipped case drawer `ar.data-stewardship.my-work`'s queue uses — a viewer who happens to
           hold an open assignment on that case sees the same Approve/Acknowledge/Request-changes actions there as
-          from the workspace-wide governance inbox; this section doesn't add a second action surface. The section is
-          section's own rail icon is hidden entirely (rather than shown with an in-screen notice) unless the
-          configured Data Entity schema actually has its `entity.change-case` approval workflow enabled
-          (`schema.entity_approval_policy === 'required'`, the same field the Entities app checks before offering
-          "Propose a change") — without that, no `entity.change-case` governance cases are ever created for the
-          schema, so the register would always be empty. This gate is evaluated once, centrally, in
-          `WorkspaceLayout.tsx`'s rail-item visibility list (alongside the existing AI-feature gate on the
-          assistant/extract icons), not per-screen.
+          from the workspace-wide governance inbox; this section doesn't add a second action surface.
 
         - @id:ar.data-stewardship.assessments The Assessments section is a configurable dashboard (seeded as the
           `data-stewardship-assessments` app dashboard, editable like other app dashboards) over the existing, generic

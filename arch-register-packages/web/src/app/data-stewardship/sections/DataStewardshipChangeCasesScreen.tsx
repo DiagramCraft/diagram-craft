@@ -39,12 +39,6 @@ const RISK_LABEL: Record<string, string> = { high: 'High', medium: 'Medium', low
  *
  * The exceptions/waiver register the issue also called for was removed after review — see git
  * history for the removed schema/UI if it's revisited.
- *
- * This section's rail icon is only shown when the configured Data Entity schema actually has its
- * `entity.change-case` approval workflow enabled (`WorkspaceLayout.tsx`'s `visibleRailItems`) —
- * without it, no entity.change-case governance cases are ever created for the schema, so there is
- * no in-screen gating/notice here; a direct navigation while it's disabled just shows an
- * (always-empty) register.
  */
 export const DataStewardshipChangeCasesScreen = () => {
   const { workspaceSlug } = useParams({ strict: false }) as { workspaceSlug: string };
