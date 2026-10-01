@@ -16,6 +16,11 @@ import {
   assessmentProgressTableSpec
 } from './widgets/AssessmentProgressTableRegistration';
 
+import {
+  CONFORMANCE_VIOLATIONS_TYPE,
+  conformanceViolationsSpec
+} from './widgets/ConformanceViolationsRegistration';
+
 const WIKI_PAGE_WIDGET_TYPE = 'wiki-page';
 
 const assessmentDashboardWidgetSpecs: Array<{
@@ -24,7 +29,8 @@ const assessmentDashboardWidgetSpecs: Array<{
   spec: DashboardWidgetSpec<any>;
 }> = [
   { type: ASSESSMENT_STATUS_STAT_TYPE, spec: assessmentStatusStatSpec },
-  { type: ASSESSMENT_PROGRESS_TABLE_TYPE, spec: assessmentProgressTableSpec }
+  { type: ASSESSMENT_PROGRESS_TABLE_TYPE, spec: assessmentProgressTableSpec },
+  { type: CONFORMANCE_VIOLATIONS_TYPE, spec: conformanceViolationsSpec }
 ];
 
 export const getDashboardWidgetSpecs = (): Array<{

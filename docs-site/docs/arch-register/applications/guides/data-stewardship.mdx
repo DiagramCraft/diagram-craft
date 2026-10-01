@@ -42,8 +42,11 @@ with stat tiles, a six-week calendar, and a queue sorted by due date; each case 
 to you, all open cases, or past-due cases. Priority is derived from the due date. Decision actions appear only when you hold an actionable assignment on a
 case; otherwise, the case drawer is read-only.
 
-In **Stewardship**, review ownership and steward coverage, upcoming review dates, and the datasets with completeness
-gaps. Select a dataset to open its shared entity drawer. **Classification** has three views: classified data, restricted
+**Stewardship** is a dashboard of coverage tiles (fully covered, missing an owner, reviews overdue, missing a steward)
+and a "Gaps to close" list of datasets with active conformance violations. The gaps come from four conformance checks
+on Data Entity (no owner, no steward, unconfirmed classification, review not current), which are seeded in the demo
+workspace and can be edited under **Workspace Settings → Conformance**. Coverage figures reflect the latest conformance
+evaluation. You can edit the dashboard's widgets. Select a dataset to open its shared entity drawer. **Classification** has three views: classified data, restricted
 flows, and cross-boundary transfers. The flow views summarize Data Flow relations and the datasets they carry; when no
 Data Flow schema is configured, they show a notice.
 

@@ -9,6 +9,7 @@ export const BUSINESS_GLOSSARY_APP_KEY = 'business-glossary';
 export const VENDOR_MANAGEMENT_VENDORS_APP_KEY = 'vendor-management-vendors';
 export const DATA_STEWARDSHIP_APP_KEY = 'data-stewardship';
 export const DATA_STEWARDSHIP_ASSESSMENTS_APP_KEY = 'data-stewardship-assessments';
+export const DATA_STEWARDSHIP_STEWARDSHIP_APP_KEY = 'data-stewardship-stewardship';
 
 /** The `entity-browser-embed` widget type, shared with the markdown/wiki embed block (see
  *  `web/src/sections/markdown/mdx-components/blocks/entity-browser-embed/EntityBrowserEmbedEditable.tsx`'s
@@ -197,6 +198,86 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
         y: 5,
         w: 12,
         h: 20
+      }
+    ]
+  },
+  [DATA_STEWARDSHIP_STEWARDSHIP_APP_KEY]: {
+    name: 'Stewardship',
+    description:
+      'Coverage across every dataset: who owns each, who stewards it and when it was last reviewed.',
+    widgets: [
+      {
+        id: 'seed-stat-covered',
+        type: 'AggregateStat',
+        config: {
+          query: 'schema:"Data Entity" AND _conformanceStatus = "conformant"',
+          denominatorQuery: 'schema:"Data Entity"',
+          display: 'percent',
+          subtextTemplate: '{count} of {total} datasets clean',
+          label: 'Fully covered',
+          severity: { warnAt: 60, direction: 'below' },
+          showLink: false
+        },
+        x: 0,
+        y: 0,
+        w: 3,
+        h: 5
+      },
+      {
+        id: 'seed-stat-no-owner',
+        type: 'AggregateStat',
+        config: {
+          query: 'schema:"Data Entity" AND _owner = empty',
+          subtextQuery: 'schema:"Data Entity" AND steward = empty',
+          subtextTemplate: '{sub} missing a steward',
+          severity: { critAt: 1 },
+          label: 'Missing an owner',
+          showLink: false
+        },
+        x: 3,
+        y: 0,
+        w: 3,
+        h: 5
+      },
+      {
+        id: 'seed-stat-overdue',
+        type: 'AggregateStat',
+        config: {
+          query: 'schema:"Data Entity" AND review_status = "overdue"',
+          subtextTemplate: 'scheduled date passed',
+          severity: { warnAt: 1 },
+          label: 'Reviews overdue',
+          showLink: false
+        },
+        x: 6,
+        y: 0,
+        w: 3,
+        h: 5
+      },
+      {
+        id: 'seed-stat-no-steward',
+        type: 'AggregateStat',
+        config: {
+          query: 'schema:"Data Entity" AND steward = empty',
+          subtextQuery: 'schema:"Data Entity" AND _owner = empty',
+          subtextTemplate: '{sub} missing an owner',
+          severity: { critAt: 1 },
+          label: 'Missing a steward',
+          showLink: false
+        },
+        x: 9,
+        y: 0,
+        w: 3,
+        h: 5
+      },
+      {
+        id: 'seed-gaps-to-close',
+        type: 'ConformanceViolations',
+        config: { schemaName: 'Data Entity', limit: 8, label: 'Gaps to close' },
+        x: 0,
+        y: 5,
+        w: 12,
+        h: 14
       }
     ]
   },

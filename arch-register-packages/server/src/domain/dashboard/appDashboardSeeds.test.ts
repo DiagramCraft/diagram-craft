@@ -7,7 +7,8 @@ import {
   APP_DASHBOARD_SEEDS,
   BUSINESS_GLOSSARY_APP_KEY,
   DATA_STEWARDSHIP_APP_KEY,
-  DATA_STEWARDSHIP_ASSESSMENTS_APP_KEY
+  DATA_STEWARDSHIP_ASSESSMENTS_APP_KEY,
+  DATA_STEWARDSHIP_STEWARDSHIP_APP_KEY
 } from './appDashboardSeeds';
 
 describe('APP_DASHBOARD_SEEDS', () => {
@@ -85,5 +86,19 @@ describe('APP_DASHBOARD_SEEDS', () => {
       'not_started',
       'complete'
     ]);
+  });
+
+  it('seeds the data stewardship Stewardship dashboard with four coverage tiles and a conformance gaps list, no sidebar', () => {
+    const seed = APP_DASHBOARD_SEEDS[DATA_STEWARDSHIP_STEWARDSHIP_APP_KEY];
+    expect(seed).toBeDefined();
+    expect(seed!.sidebar).toBeUndefined();
+    expect(seed!.widgets.map(widget => widget.type)).toEqual([
+      'AggregateStat',
+      'AggregateStat',
+      'AggregateStat',
+      'AggregateStat',
+      'ConformanceViolations'
+    ]);
+    expect(seed!.widgets[4]!.config).toMatchObject({ schemaName: 'Data Entity', limit: 8 });
   });
 });

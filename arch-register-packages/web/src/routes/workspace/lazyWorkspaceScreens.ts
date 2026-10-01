@@ -128,9 +128,9 @@ export const LazyDataStewardshipDashboardScreen = lazyRouteComponent(
   () => import('../../app/data-stewardship/sections/DataStewardshipDashboardScreen'),
   'DataStewardshipDashboardScreen'
 );
-export const LazyDataStewardshipStewardshipScreen = lazyRouteComponent(
-  () => import('../../app/data-stewardship/sections/DataStewardshipStewardshipScreen'),
-  'DataStewardshipStewardshipScreen'
+export const LazyDataStewardshipStewardshipDashboardScreen = lazyRouteComponent(
+  () => import('../../app/data-stewardship/sections/DataStewardshipStewardshipDashboardScreen'),
+  'DataStewardshipStewardshipDashboardScreen'
 );
 export const LazyDataStewardshipClassificationScreen = lazyRouteComponent(
   () => import('../../app/data-stewardship/sections/DataStewardshipClassificationScreen'),

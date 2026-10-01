@@ -622,22 +622,16 @@
           for most viewers of this queue). The shared entity drawer's own "Governance items" section shows the open
           governance cases for the current entity (opening the same case drawer, not a placeholder).
 
-        - @id:ar.data-stewardship.stewardship The Stewardship section has a four-tile stat strip (fully covered %,
-          missing an owner, reviews overdue, missing a steward), a "Gaps to close" panel (every dataset with a
-          coverage gap, each gap shown as a chip, opening the shared dataset drawer), and the full dataset table (search
-          across name/owner/steward; sort by gap count, next review date, or name; columns for Dataset,
-          Business owner, Steward, Classification, Next review, and Gaps). The sidebar swaps its plain section nav
-          for this section's own facets: an all-datasets/with-a-gap toggle and a Classification facet (counts only —
-          unlike `ar.risk-compliance.risks`'s sidebar, it doesn't also list every dataset individually; the dataset
-          table is where datasets are browsed one by one). Coverage reuses `ar.data-stewardship`'s dataset-coverage
-          roll-up (named owner, named steward, confirmed classification, current review) directly. The Claude
-          Design reference's `DSStewardship` also groups coverage by domain and sorts/reports a "quality" score and
-          a "certified" stat tile; none of the three exist as fields on Data Entity (no per-instance domain/category
-          field, no quality field, no certified flag), so the coverage-by-domain panel is dropped rather than
-          faked, quality/domain aren't offered as sort options, and the stat strip substitutes "Missing a steward"
-          for "Certified" — mirroring how `ar.risk-compliance.overview`/`ar.risk-compliance.controls` adapted their
-          own design references to the fields the shipped schema actually has. Opening a dataset (from the gaps
-          panel or the table) opens the configurable Data Entity drawer. Its default profile preserves the
+        - @id:ar.data-stewardship.stewardship The Stewardship section is a full-width configurable dashboard (no
+          sidebar) with a four-tile stat strip (fully covered %, missing an owner, reviews overdue, missing a
+          steward) and a "Gaps to close" panel listing the top datasets with active conformance violations, each
+          failing check shown as a chip, opening the shared dataset drawer. "Fully covered" is the share of Data
+          Entities whose conformance status is conformant, so it reflects the latest conformance evaluation. The
+          gaps are four seeded Data Entity conformance checks (no business owner, no steward, classification not
+          confirmed, review not current) that admins can edit in Workspace Settings → Conformance. The
+          `ConformanceViolations` dashboard widget (schema, optional check names, row limit) is generic and
+          available on any dashboard. The former dataset table, search/sort toolbar and facet sidebar were removed.
+          Opening a dataset opens the configurable Data Entity drawer. Its default profile preserves the
           dataset's attributes and stewardship fields and exposes Governance items, Cases, and the generic
           Assessments slot; unsupported placeholder-only Exceptions, Flows, and Systems sections are omitted.
 

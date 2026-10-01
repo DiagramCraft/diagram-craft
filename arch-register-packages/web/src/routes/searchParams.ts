@@ -580,31 +580,6 @@ export type HomeSearchParams = SearchParamsFromSchema<typeof homeSearchSchema>;
 export const validateHomeSearch = (raw: Record<string, unknown>): HomeSearchParams =>
   parseSearchParams(homeSearchSchema, raw);
 
-// Data Stewardship stewardship-section params — mirrors `risksSearchSchema` above.
-const dataStewardshipStewardshipSearchSchema = defineSearchParamSchema({
-  q: stringCodec,
-  // Sorts the dataset table by gap count, next review date (`review_date`), or name; defaults to
-  // 'gaps'. The design reference (`ds.jsx`'s `DSStewardship`) also sorts by "quality" and
-  // "domain", but Data Entity has neither field (see `../app/data-stewardship/datasetCoverage.ts`)
-  // so those options aren't offered.
-  sort: enumCodec(['gaps', 'review', 'name'] as const),
-  // Classification select-field value — set by the sidebar's Classification facet
-  // (`StewardshipSidebarContent` in `DataStewardshipSidebar.tsx`).
-  classification: stringCodec,
-  // Narrows to datasets with a coverage gap (`computeDatasetCoverage`); '1' when set, absent
-  // otherwise — mirrors `outsideAppetite` above.
-  gapsOnly: enumCodec(['1'] as const)
-});
-
-export type DataStewardshipStewardshipSearchParams = SearchParamsFromSchema<
-  typeof dataStewardshipStewardshipSearchSchema
->;
-
-export const validateDataStewardshipStewardshipSearch = (
-  raw: Record<string, unknown>
-): DataStewardshipStewardshipSearchParams =>
-  parseSearchParams(dataStewardshipStewardshipSearchSchema, raw);
-
 // Data Stewardship classification-section params. Three views (classified data / restricted flows
 // / cross-boundary transfers) live in one screen, switched via the sidebar's own TreeRows
 // (`ClassificationSidebarContent` in `../app/data-stewardship/sections/DataStewardshipSidebar.tsx`)
