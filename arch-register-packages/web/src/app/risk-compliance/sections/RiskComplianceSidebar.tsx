@@ -1,14 +1,7 @@
 import { useMemo, type ReactNode } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
-import {
-  TbAlertTriangle,
-  TbBook,
-  TbCheckbox,
-  TbShieldCheck,
-  TbTag,
-  TbUsers
-} from 'react-icons/tb';
+import { TbAlertTriangle, TbBook, TbCheckbox, TbShieldCheck, TbTag, TbUsers } from 'react-icons/tb';
 import {
   SidebarGroupLabel,
   SidebarTitleHeader
@@ -17,10 +10,7 @@ import { TreeRow } from '../../../components/TreeRow';
 import { entitiesQuery } from '../../../queries/entities';
 import { workspaceCapabilityConfigurationsQuery } from '../../../queries/workspaceConfig';
 import { useSchemas } from '../../../hooks/useSchemas';
-import {
-  resolveRiskComplianceConfig,
-  type RiskComplianceConfig
-} from '../riskComplianceQueries';
+import { resolveRiskComplianceConfig, type RiskComplianceConfig } from '../riskComplianceQueries';
 import { RESIDUAL_RISK_BAND_COLOR, residualRiskBand } from '../residualRiskBand';
 import { useControlFrameworks } from '../useControlFrameworks';
 import {
@@ -31,10 +21,7 @@ import {
   RISK_SECTION_LABELS,
   type RiskComplianceRailItemId
 } from '../riskComplianceSections';
-import type {
-  ControlsSearchParams,
-  RisksSearchParams
-} from '../../../routes/searchParams';
+import type { ControlsSearchParams, RisksSearchParams } from '../../../routes/searchParams';
 import { useEntityDrawer } from '../../../sections/entities/entityDrawer/useEntityDrawer';
 import styles from '../../../shell/SidePanel.module.css';
 
