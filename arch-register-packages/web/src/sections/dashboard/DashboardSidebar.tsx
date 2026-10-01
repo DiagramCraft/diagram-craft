@@ -7,6 +7,7 @@ import type {
 } from '@arch-register/api-types/dashboardContract';
 import { SidebarGroupLabel, SidebarTitleHeader } from '../../components/sidebar/SidebarPrimitives';
 import { TreeRow } from '../../components/TreeRow';
+import { TypeBadge } from '../../components/TypeBadge';
 import { entitiesQuery } from '../../queries/entities';
 import { useSchemas } from '../../hooks/useSchemas';
 import styles from '../../shell/SidePanel.module.css';
@@ -277,7 +278,8 @@ const EntityPickerSidebar = ({
   const selected = search[sidebar.variableName];
 
   const schemas = useSchemas(workspaceSlug);
-  const schemaId = schemas.data?.find(schema => schema.name === sidebar.schemaName)?.id;
+  const schema = schemas.data?.find(candidate => candidate.name === sidebar.schemaName);
+  const schemaId = schema?.id;
 
   const entities = useQuery(
     entitiesQuery(workspaceSlug, { schemaId, limit: 500 }, schemaId != null)
@@ -306,6 +308,7 @@ const EntityPickerSidebar = ({
           sorted.map(entity => (
             <TreeRow
               key={entity._uid}
+              icon={<TypeBadge color="currentColor" icon={schema?.icon} size={14} hideBorder />}
               label={entity._name}
               testId={`dashboard-sidebar-item-${entity._uid}`}
               active={selected === selectionValue(entity)}
