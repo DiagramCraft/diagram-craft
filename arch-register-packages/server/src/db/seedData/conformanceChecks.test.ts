@@ -13,7 +13,10 @@ describe('conformance check seed data', () => {
       expect(check.enabled).toBe(true);
       expect(check.definition.type).toBe('query_policy');
       if (check.definition.type !== 'query_policy') continue;
-      expect(entityQuerySchema.safeParse(JSON.parse(JSON.stringify(check.definition.query))).success, check.name).toBe(true);
+      expect(
+        entityQuerySchema.safeParse(JSON.parse(JSON.stringify(check.definition.query))).success,
+        check.name
+      ).toBe(true);
       expect(check.definition.query.schemaId).toBe(SEED_SCHEMA_IDS.dataEntity);
     }
   });
