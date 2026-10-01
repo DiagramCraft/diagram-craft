@@ -7,6 +7,7 @@ export const API_INTEGRATION_CATALOG_APP_KEY = 'api-integration-catalog';
 export const API_INTEGRATION_CATALOG_IMPACT_APP_KEY = 'api-integration-catalog-impact';
 export const BUSINESS_GLOSSARY_APP_KEY = 'business-glossary';
 export const VENDOR_MANAGEMENT_VENDORS_APP_KEY = 'vendor-management-vendors';
+export const RISK_COMPLIANCE_RETENTION_APP_KEY = 'risk-compliance-retention';
 export const DATA_STEWARDSHIP_APP_KEY = 'data-stewardship';
 export const DATA_STEWARDSHIP_ASSESSMENTS_APP_KEY = 'data-stewardship-assessments';
 
@@ -280,6 +281,83 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
         h: 22
       }
     ]
+  },
+  [RISK_COMPLIANCE_RETENTION_APP_KEY]: {
+    name: 'Retention',
+    description: 'Retention policy assignments with governed entity, period and activation date.',
+    widgets: [
+      {
+        id: 'seed-retention-assignments',
+        type: ENTITY_BROWSER_EMBED_WIDGET_TYPE,
+        config: {
+          q: '',
+          conditions: [],
+          sort: 'name',
+          view: 'table',
+          viewConfigs: {
+            table: {
+              fieldIds: [
+                '_projection:Policy',
+                '_projection:Duration',
+                '_projection:Time Unit',
+                '_projection:Activated From'
+              ]
+            }
+          },
+          // A Data Entity category sits under at most one retention policy, so one row per
+          // governed entity equals one row per assignment. The `Retention Policy` hop and the
+          // projected terminal field NAMES are resolved at render time (typed-relation upgrade in
+          // EntityBrowserEmbedFieldResolution.ts). The path predicate filters the policy entity itself (a
+          // hop filter would run against the relation row); an unpicked `$policyId` becomes a plain
+          // "has a policy" check.
+          schemaName: 'Data Entity',
+          entityQuery: {
+            root: {
+              kind: 'predicate',
+              path: [{ kind: 'forward', fieldId: 'Retention Policy' }],
+              fieldId: '_id',
+              op: 'in',
+              value: ['$policyId']
+            },
+            projections: [
+              {
+                path: [{ kind: 'forward', fieldId: 'Retention Policy' }],
+                fieldId: '_name',
+                alias: 'Policy'
+              },
+              {
+                path: [{ kind: 'forward', fieldId: 'Retention Policy' }],
+                fieldId: 'Duration',
+                alias: 'Duration'
+              },
+              {
+                path: [{ kind: 'forward', fieldId: 'Retention Policy' }],
+                fieldId: 'Time Unit',
+                alias: 'Time Unit'
+              },
+              {
+                path: [{ kind: 'forward', fieldId: 'Retention Policy' }],
+                fieldId: 'Activated From',
+                source: 'relation',
+                alias: 'Activated From'
+              }
+            ]
+          }
+        },
+        x: 0,
+        y: 0,
+        w: 12,
+        h: 40
+      }
+    ],
+    sidebar: {
+      kind: 'entity-picker',
+      schemaName: 'Retention Policy',
+      variableName: 'policyId',
+      itemLabel: 'Policies',
+      // The `_id` predicate matches the internal id, not the public id.
+      valueKind: 'id'
+    }
   },
   [VENDOR_MANAGEMENT_VENDORS_APP_KEY]: {
     name: 'Vendors',

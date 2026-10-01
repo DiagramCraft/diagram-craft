@@ -109,7 +109,8 @@ export const DashboardSidebarConfigDialog = ({
                     kind: 'entity-picker',
                     schemaName: schemaName.trim(),
                     variableName: variableName.trim(),
-                    itemLabel: itemLabel.trim() || undefined
+                    itemLabel: itemLabel.trim() || undefined,
+                    ...(entityPicker?.valueKind ? { valueKind: entityPicker.valueKind } : {})
                   }
             );
             onClose();

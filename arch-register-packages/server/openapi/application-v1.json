@@ -136383,6 +136383,14 @@
                               "itemLabel": {
                                 "type": "string",
                                 "description": "Group label shown above the picker list"
+                              },
+                              "valueKind": {
+                                "enum": [
+                                  "publicId",
+                                  "id"
+                                ],
+                                "type": "string",
+                                "description": "Which identifier the selection exposes as $<variableName>: the entity's public id (default) or its internal id, which is what a query's '_id' predicate matches"
                               }
                             },
                             "required": [
@@ -136638,6 +136646,14 @@
                             "itemLabel": {
                               "type": "string",
                               "description": "Group label shown above the picker list"
+                            },
+                            "valueKind": {
+                              "enum": [
+                                "publicId",
+                                "id"
+                              ],
+                              "type": "string",
+                              "description": "Which identifier the selection exposes as $<variableName>: the entity's public id (default) or its internal id, which is what a query's '_id' predicate matches"
                             }
                           },
                           "required": [
@@ -136880,6 +136896,14 @@
                             "itemLabel": {
                               "type": "string",
                               "description": "Group label shown above the picker list"
+                            },
+                            "valueKind": {
+                              "enum": [
+                                "publicId",
+                                "id"
+                              ],
+                              "type": "string",
+                              "description": "Which identifier the selection exposes as $<variableName>: the entity's public id (default) or its internal id, which is what a query's '_id' predicate matches"
                             }
                           },
                           "required": [
@@ -137074,6 +137098,14 @@
                               "itemLabel": {
                                 "type": "string",
                                 "description": "Group label shown above the picker list"
+                              },
+                              "valueKind": {
+                                "enum": [
+                                  "publicId",
+                                  "id"
+                                ],
+                                "type": "string",
+                                "description": "Which identifier the selection exposes as $<variableName>: the entity's public id (default) or its internal id, which is what a query's '_id' predicate matches"
                               }
                             },
                             "required": [
@@ -137280,6 +137312,14 @@
                             "itemLabel": {
                               "type": "string",
                               "description": "Group label shown above the picker list"
+                            },
+                            "valueKind": {
+                              "enum": [
+                                "publicId",
+                                "id"
+                              ],
+                              "type": "string",
+                              "description": "Which identifier the selection exposes as $<variableName>: the entity's public id (default) or its internal id, which is what a query's '_id' predicate matches"
                             }
                           },
                           "required": [
@@ -137570,6 +137610,14 @@
                             "itemLabel": {
                               "type": "string",
                               "description": "Group label shown above the picker list"
+                            },
+                            "valueKind": {
+                              "enum": [
+                                "publicId",
+                                "id"
+                              ],
+                              "type": "string",
+                              "description": "Which identifier the selection exposes as $<variableName>: the entity's public id (default) or its internal id, which is what a query's '_id' predicate matches"
                             }
                           },
                           "required": [
@@ -138187,6 +138235,14 @@
                               "itemLabel": {
                                 "type": "string",
                                 "description": "Group label shown above the picker list"
+                              },
+                              "valueKind": {
+                                "enum": [
+                                  "publicId",
+                                  "id"
+                                ],
+                                "type": "string",
+                                "description": "Which identifier the selection exposes as $<variableName>: the entity's public id (default) or its internal id, which is what a query's '_id' predicate matches"
                               }
                             },
                             "required": [
