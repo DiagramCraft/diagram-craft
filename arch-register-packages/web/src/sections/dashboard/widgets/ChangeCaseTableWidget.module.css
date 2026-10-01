@@ -1,0 +1,44 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  height: 100%;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 8px 12px 0;
+}
+
+.statusFilters {
+  display: flex;
+  gap: 4px;
+}
+
+.statusFilter {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  border: 1px solid var(--panel-border);
+  border-radius: 10px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+  text-transform: capitalize;
+}
+
+.statusFilterActive {
+  background: var(--cmp-bg-accent-subtle, var(--panel-border));
+  border-color: var(--cmp-fg-accent, #3b82f6);
+}
+
+.message {
+  padding: 8px 12px;
+  font-size: 12px;
+}

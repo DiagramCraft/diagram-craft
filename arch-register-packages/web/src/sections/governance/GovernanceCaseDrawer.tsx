@@ -3,32 +3,32 @@ import { Button } from '@diagram-craft/app-components/Button';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
-import { Chip } from '../../../components/Chip';
-import { Drawer } from '../../../components/Drawer';
+import { Chip } from '../../components/Chip';
+import { Drawer } from '../../components/Drawer';
 import {
   useDecideGovernanceAssignment,
   useGovernanceCase,
   useGovernanceTasks
-} from '../../../hooks/useGovernance';
-import { useEntity } from '../../../hooks/useEntities';
-import { useEntityDrawer } from '../../../sections/entities/entityDrawer/useEntityDrawer';
-import { caseKindLabel, humanizeCaseKind } from '../../../utils/governanceCaseLabels';
-import { dueLabel, dueTone } from '../../../utils/assessmentDueTone';
-import { formatDateTime } from '../../../utils/dateFormat';
-import { useDateTimeFormatPreference } from '../../../hooks/useDateTimeFormatPreference';
-import { queueItemPriority, type DataStewardshipQueuePriority } from '../dataStewardshipQueue';
-// Reuses the data-stewardship drawer content classes (`sectionLabel`/`attributeRow`/`empty`) rather than
-// duplicating them — both drawers render the same "label above a row of key/value attributes"
-// shape.
-import styles from './DatasetDrawer.module.css';
+} from '../../hooks/useGovernance';
+import { useEntity } from '../../hooks/useEntities';
+import { useEntityDrawer } from '../../sections/entities/entityDrawer/useEntityDrawer';
+import { caseKindLabel, humanizeCaseKind } from '../../utils/governanceCaseLabels';
+import { dueLabel, dueTone } from '../../utils/assessmentDueTone';
+import { formatDateTime } from '../../utils/dateFormat';
+import { useDateTimeFormatPreference } from '../../hooks/useDateTimeFormatPreference';
+import {
+  deriveDueDatePriority,
+  type NeedsAttentionPriority
+} from '../dashboard/widgets/needsAttentionQueue';
+import styles from './GovernanceCaseDrawer.module.css';
 
-const PRIORITY_LABEL: Record<DataStewardshipQueuePriority, string> = {
+const PRIORITY_LABEL: Record<NeedsAttentionPriority, string> = {
   high: 'High',
   medium: 'Medium',
   low: 'Low'
 };
 
-const PRIORITY_TONE: Record<DataStewardshipQueuePriority, string> = {
+const PRIORITY_TONE: Record<NeedsAttentionPriority, string> = {
   high: 'var(--cmp-fg-danger, #ef4444)',
   medium: 'var(--cmp-fg-warning, #eab308)',
   low: 'var(--cmp-fg-dim, #9ca3af)'
@@ -44,11 +44,13 @@ const REQUEST_CHANGES_CASE_KINDS = new Set([
   'document.status'
 ]);
 
+const capitalize = (value: string): string => value.charAt(0).toUpperCase() + value.slice(1);
+
 /**
- * Drawer for a single governance case, opened from every row in Data Stewardship's "My work" queue
- * (#3298) — not just change-case/deprecation rows, since a review-date reminder is just as much a
- * governance case the user may need to act on (typically by acknowledging it). Shows case identity,
- * dates, the dataset it concerns, and — when the current user holds an open, actionable assignment
+ * Drawer for a single governance case, opened from Data Stewardship's "My work" queue (#3298) and
+ * from the Change case table dashboard widget — not just change-case/deprecation rows, since a
+ * review-date reminder is just as much a governance case the user may need to act on (typically by
+ * acknowledging it). Shows case identity, dates, the entity it concerns, and — when the current user holds an open, actionable assignment
  * on this case — the same decision actions `GovernanceInboxScreen.tsx` offers (Approve/Acknowledge,
  * plus Request changes on the same case kinds that screen allows it for), reusing that screen's own
  * `useDecideGovernanceAssignment` mutation so a decision made here is identical in effect to one
@@ -66,19 +68,22 @@ const REQUEST_CHANGES_CASE_KINDS = new Set([
  * available on the workspace-wide governance inbox; adding them here without a "is this user the
  * initiator" check client-side would show a button that fails server-side for most viewers.
  */
-export const DataStewardshipCaseDrawer = ({
+export const GovernanceCaseDrawer = ({
   workspaceSlug,
   caseId,
   onClose,
-  onOpenDataset
+  onOpenDataset,
+  entityNoun = 'entity'
 }: {
   workspaceSlug: string;
   caseId: string;
   onClose: () => void;
-  /** Switches to the shared dataset drawer for this case's subject, staying within My work rather
-   *  than navigating to the Stewardship section — only `DataStewardshipMyWorkScreen.tsx` wires
+  /** Switches to the shared entity drawer for this case's subject, staying within My work rather
+   *  than navigating to the Stewardship section — only `DataStewardshipDashboardScreen.tsx` wires
    *  this; other openers of this drawer fall back to the app-wide `useEntityDrawer()` stack. */
   onOpenDataset?: (datasetPublicId: string) => void;
+  /** Lower-case noun for the case's subject in labels (e.g. 'dataset'). */
+  entityNoun?: string;
 }) => {
   const { openEntityDrawer } = useEntityDrawer();
   const dateTimeFormatPreference = useDateTimeFormatPreference();
@@ -107,7 +112,7 @@ export const DataStewardshipCaseDrawer = ({
   }
 
   const kase = governanceCase.data;
-  const priority = queueItemPriority(kase);
+  const priority = deriveDueDatePriority(kase);
   const datasetEntity = kase.subjectType === 'entity' ? dataset.data : undefined;
 
   const myTask = (myTasks.data ?? []).find(task => task.case.id === caseId);
@@ -185,7 +190,7 @@ export const DataStewardshipCaseDrawer = ({
           )}
           {datasetEntity && (
             <Button variant={canDecide ? 'secondary' : 'primary'} onClick={openDataset}>
-              {onOpenDataset ? 'Open dataset' : 'Open record in Entities'}
+              {onOpenDataset ? `Open ${entityNoun}` : 'Open record in Entities'}
             </Button>
           )}
         </>
@@ -223,9 +228,9 @@ export const DataStewardshipCaseDrawer = ({
         </div>
       )}
 
-      <div className={styles.sectionLabel}>Dataset in scope</div>
+      <div className={styles.sectionLabel}>{`${capitalize(entityNoun)} in scope`}</div>
       {kase.subjectType !== 'entity' ? (
-        <span className="dim">This case doesn't reference a single dataset.</span>
+        <span className="dim">{`This case doesn't reference a single ${entityNoun}.`}</span>
       ) : dataset.isLoading ? (
         <span className="dim">Loading…</span>
       ) : datasetEntity ? (
@@ -239,7 +244,7 @@ export const DataStewardshipCaseDrawer = ({
           <span className="dim mono">{datasetEntity._publicId}</span>
         </button>
       ) : (
-        <span className="dim">Dataset unavailable.</span>
+        <span className="dim">{`${capitalize(entityNoun)} unavailable.`}</span>
       )}
 
       <Dialog

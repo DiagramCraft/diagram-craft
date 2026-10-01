@@ -12,7 +12,7 @@ const optionalText = (value: string): string | undefined =>
 
 /** Case kinds with a real backing case model in this codebase — not an enum, just known ones to
  * offer without requiring a user to type a raw case-kind string from scratch. */
-const KNOWN_CASE_KINDS = ['entity.change-case', 'entity.deprecation', 'field-date-reminder'];
+export const KNOWN_CASE_KINDS = ['entity.change-case', 'entity.deprecation', 'field-date-reminder'];
 
 const SCOPE_LABEL: Record<NeedsAttentionScope, string> = {
   workspace: 'Workspace-wide',

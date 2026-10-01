@@ -22,6 +22,7 @@ import {
 
 export const DS_APP_KEY = 'data-stewardship';
 export const DS_STEWARDSHIP_APP_KEY = 'data-stewardship-stewardship';
+export const DS_CHANGE_CASES_APP_KEY = 'data-stewardship-change-cases';
 export const DS_ASSESSMENTS_APP_KEY = 'data-stewardship-assessments';
 
 /**
@@ -75,16 +76,13 @@ export const dataStewardshipAppDefinition: AppDefinition = {
       )
     },
     {
+      // No `primarySidebar`: renders the seeded `data-stewardship-change-cases` app dashboard
+      // full-width (#3504).
       id: DS_CHANGE_CASES_ID,
+      dashboard: { appKey: DS_CHANGE_CASES_APP_KEY },
       icon: TbGitPullRequest,
       tooltip: 'Change cases & exceptions',
-      route: DS_RAIL_PATHS[DS_CHANGE_CASES_ID],
-      primarySidebar: ctx => (
-        <DataStewardshipSidebar
-          workspaceSlug={ctx.workspaceSlug}
-          activeSection={DS_CHANGE_CASES_ID}
-        />
-      )
+      route: DS_RAIL_PATHS[DS_CHANGE_CASES_ID]
     },
     {
       // No `primarySidebar`: renders the seeded `data-stewardship-assessments` app dashboard
