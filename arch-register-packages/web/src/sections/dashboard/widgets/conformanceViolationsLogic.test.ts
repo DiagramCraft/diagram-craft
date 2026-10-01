@@ -36,7 +36,8 @@ describe('groupViolationsByEntity', () => {
   });
 
   it('falls back to the entity id when the name is missing', () => {
-    expect(groupViolationsByEntity([v('x', 'c1', 'warning', null)], { limit: 1 }).entities[0]!
-      .entityName).toBe('x');
+    expect(
+      groupViolationsByEntity([v('x', 'c1', 'warning', null)], { limit: 1 }).entities[0]!.entityName
+    ).toBe('x');
   });
 });

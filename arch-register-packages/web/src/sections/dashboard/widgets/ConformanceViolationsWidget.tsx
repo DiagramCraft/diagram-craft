@@ -46,7 +46,8 @@ export const ConformanceViolationsWidget = ({
   }, [violations.data, checks.data, config.checkNames, config.limit]);
 
   if (!canView) return <EmptyState title="You do not have access to conformance." compact />;
-  if (schemaId == null) return <EmptyState title={`Schema '${config.schemaName}' not found`} compact />;
+  if (schemaId == null)
+    return <EmptyState title={`Schema '${config.schemaName}' not found`} compact />;
   if (violations.isLoading || checks.isLoading) return <LoadingState text="Loading…" size="sm" />;
   if (grouped.entities.length === 0) {
     return <EmptyState title="No conformance gaps. Nothing to close." compact />;
