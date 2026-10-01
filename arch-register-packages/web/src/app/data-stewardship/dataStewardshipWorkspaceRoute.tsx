@@ -11,14 +11,13 @@ import {
 import {
   validateDataStewardshipChangeCasesSearch,
   validateDataStewardshipClassificationSearch,
-  validateDataStewardshipMyWorkSearch,
-  validateDataStewardshipStewardshipSearch
+  validateDataStewardshipMyWorkSearch
 } from '../../routes/searchParams';
 import { withWorkspaceShell } from '../../routes/workspace/workspaceShellRoute';
 import { railSectionShell } from '../../layouts/workspaceShellDescriptors';
 import {
   LazyDataStewardshipDashboardScreen,
-  LazyDataStewardshipStewardshipScreen,
+  LazyDataStewardshipStewardshipDashboardScreen,
   LazyDataStewardshipClassificationScreen,
   LazyDataStewardshipChangeCasesScreen,
   LazyDataStewardshipAssessmentsDashboardScreen
@@ -60,14 +59,13 @@ export const createDataStewardshipWorkspaceRoutes = <TParentRoute extends AnyRou
     createRoute({
       getParentRoute: () => workspaceRoute,
       path: railPath(DS_RAIL_PATHS[DS_STEWARDSHIP_ID]),
-      validateSearch: validateDataStewardshipStewardshipSearch,
       beforeLoad: ({ context, params }) =>
         ensureApplicationAccess(
           context.queryClient,
           (params as unknown as { workspaceSlug: string }).workspaceSlug,
           'data-stewardship'
         ),
-      component: LazyDataStewardshipStewardshipScreen
+      component: LazyDataStewardshipStewardshipDashboardScreen
     }),
     ctx =>
       railSectionShell(ctx, DS_STEWARDSHIP_ID, {

@@ -21,6 +21,7 @@ import {
 } from './dataStewardshipSections';
 
 export const DS_APP_KEY = 'data-stewardship';
+export const DS_STEWARDSHIP_APP_KEY = 'data-stewardship-stewardship';
 export const DS_ASSESSMENTS_APP_KEY = 'data-stewardship-assessments';
 
 /**
@@ -53,16 +54,13 @@ export const dataStewardshipAppDefinition: AppDefinition = {
       route: DS_RAIL_PATHS[DS_MY_WORK_ID]
     },
     {
+      // No `primarySidebar`: renders the seeded `data-stewardship-stewardship` app dashboard
+      // full-width (#3502).
       id: DS_STEWARDSHIP_ID,
+      dashboard: { appKey: DS_STEWARDSHIP_APP_KEY },
       icon: TbUserShield,
       tooltip: 'Stewardship',
-      route: DS_RAIL_PATHS[DS_STEWARDSHIP_ID],
-      primarySidebar: ctx => (
-        <DataStewardshipSidebar
-          workspaceSlug={ctx.workspaceSlug}
-          activeSection={DS_STEWARDSHIP_ID}
-        />
-      )
+      route: DS_RAIL_PATHS[DS_STEWARDSHIP_ID]
     },
     {
       id: DS_CLASSIFICATION_ID,

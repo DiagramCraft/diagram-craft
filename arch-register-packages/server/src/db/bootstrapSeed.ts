@@ -28,6 +28,8 @@ import { buildDefaultAdrDocuments } from '../domain/document/documentDefaults';
 import { randomUUID } from 'node:crypto';
 import { recalculateEntityDerivedFields } from '../domain/derived/derivedRecalculation';
 import { ensureDerivedRecalculationScheduleExists } from '../domain/derived/derivedRecalculationJob';
+import { executeConformanceRun } from '../domain/conformance/conformanceEvaluation';
+import { ensureConformanceSchedule } from '../domain/conformance/conformanceJob';
 import type { AiConfigInputDbUpsert } from '../domain/ai/db/aiDatabase';
 import type { DatabaseAdapter } from './database';
 import {
@@ -210,6 +212,29 @@ const seedBootstrapCollections = async (db: Database) => {
   }
 };
 
+/**
+ * Evaluates the seeded conformance checks right away (after derived fields are current, since
+ * checks may query them) so violations and per-entity conformance status are populated without
+ * waiting for the nightly scan, and registers that nightly schedule.
+ */
+const runSeedConformanceScan = async (db: Database, workspace: string): Promise<void> => {
+  const run = await db.conformance.createRun({
+    id: randomUUID(),
+    workspace,
+    check_id: null,
+    job_run_id: null,
+    status: 'running',
+    started_at: new Date(),
+    completed_at: null,
+    checked_count: 0,
+    violation_count: 0,
+    error: null,
+    configuration: { seed: true }
+  });
+  await executeConformanceRun(db, workspace, run.id);
+  await ensureConformanceSchedule(db, workspace);
+};
+
 export const seedBootstrapData = async (
   db: Database,
   storage: StorageAdapter,
@@ -272,6 +297,7 @@ export const seedBootstrapData = async (
   await seedIntegrationSyncData(db);
   await recalculateEntityDerivedFields(db, seededWorkspaces.default.id);
   await ensureDerivedRecalculationScheduleExists(db, seededWorkspaces.default.id, new Date());
+  await runSeedConformanceScan(db, seededWorkspaces.default.id);
   for (const assessment of seedAssessments) {
     await db.project.assessments.createAssessment(assessment);
   }
