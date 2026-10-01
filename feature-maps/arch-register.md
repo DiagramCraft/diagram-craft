@@ -556,12 +556,11 @@
           policy, the policy's Period (duration + time unit, read via the capability's `policy`/`assignment` semantic
           field-role mappings — a
           workspace may map "duration" to any `number` field on its Policy schema, not only one literally named
-          `duration`), and the assignment's Activated-from date. A "Complete" column (and matching sidebar
-          "Incomplete" facet) flags assignments missing a policy, duration, time unit, or activation date — a
-          data-completeness signal, not a disposal-urgency one, so it was kept even though the expiry bucketing was
-          not. The sidebar is the only way to filter: "All" (count of every assignment), "Incomplete", and one row
-          per Retention Policy with its assignment count — selecting a policy narrows the register to its
-          assignments, shown as a dismissible chip in the toolbar.
+          `duration`), and the assignment's Activated-from date. The section is a configurable dashboard (the
+          `risk-compliance-retention` app dashboard: one entity-browser table of governed Data Entities with the
+          policy's name, duration and time unit and the assignment's activation date as columns) whose standard dashboard sidebar has a Retention Policy picker narrowing the
+          register to one policy's assignments (`policyId` search param). The earlier "Complete" column and
+          sidebar "Incomplete" facet were dropped; completeness is still summarised on the Overview.
 
         - @id:ar.risk-compliance.assessments The Assessments section is a read view over the existing, generic
           assessment machinery (the same `Assessment` model used by Projects, and by Strategy/Vendor Management's

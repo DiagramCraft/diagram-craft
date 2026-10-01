@@ -1,4 +1,5 @@
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
+import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import type {
   EntityQuery,
   PathStep,
@@ -15,7 +16,17 @@ import type {
  * never resolved. Scope is deliberately narrow: only a single forward hop (`path.length === 1`,
  * `kind === 'forward'`) is resolved; anything deeper, or already using a real id, passes through
  * unchanged rather than throwing.
+ *
+ * A single forward hop naming a `typedRelation` field is upgraded to a real `typedRelation` step
+ * (the field carries the relation schema id and direction, which a seed can't know). Given the
+ * workspace's schemas, a projection's terminal `fieldId` is also resolved by name, against the
+ * schema at the end of that step (or the relation schema for `source: 'relation'`).
  */
+
+export type FieldResolutionContext = {
+  schemas: readonly EntitySchema[];
+  relationSchemas: readonly RelationSchema[];
+};
 
 export const resolveTableFieldIds = (
   viewConfig: unknown,
@@ -40,8 +51,34 @@ const resolvePathFieldName = (path: PathStep[], rootSchema: EntitySchema): PathS
   const [step] = path;
   if (path.length !== 1 || step?.kind !== 'forward') return path;
   const field = rootSchema.fields.find(candidate => candidate.name === step.fieldId);
-  return field ? [{ ...step, fieldId: field.id }] : path;
+  if (!field) return path;
+  if (field.type === 'typedRelation') {
+    return [
+      {
+        kind: 'typedRelation',
+        fieldId: field.id,
+        relationSchemaId: field.relationSchemaId,
+        direction: field.direction,
+        ownerSchemaIds: [rootSchema.id],
+        ...(step.filter ? { filter: step.filter } : {})
+      }
+    ];
+  }
+  return [{ ...step, fieldId: field.id }];
 };
+
+/**
+ * An `entity-picker` sidebar leaves its `$variable` placeholder literal when nothing is picked
+ * (`dashboardSidebarVariables.ts`), so a path predicate like `_id in ['$policyId']` must read as
+ * "has a related entity" (`relationExists`) rather than "matches nothing".
+ */
+const isUnresolvedPlaceholderPredicate = (node: QueryNode): boolean =>
+  node.kind === 'predicate' &&
+  node.path.length > 0 &&
+  node.op === 'in' &&
+  Array.isArray(node.value) &&
+  node.value.length > 0 &&
+  node.value.every(value => typeof value === 'string' && value.startsWith('$'));
 
 const resolveQueryNodeFieldNames = (node: QueryNode, rootSchema: EntitySchema): QueryNode => {
   switch (node.kind) {
@@ -61,23 +98,60 @@ const resolveQueryNodeFieldNames = (node: QueryNode, rootSchema: EntitySchema): 
         const field = rootSchema.fields.find(candidate => candidate.name === node.fieldId);
         return field ? { ...node, fieldId: field.id } : node;
       }
+      if (isUnresolvedPlaceholderPredicate(node)) {
+        return { kind: 'relationExists', path: resolvePathFieldName(node.path, rootSchema) };
+      }
       return { ...node, path: resolvePathFieldName(node.path, rootSchema) };
     default:
       return node;
   }
 };
 
+/** The field list a projection's terminal `fieldId` names live in, when it can be determined. */
+const terminalFields = (
+  projection: ProjectionField,
+  path: PathStep[],
+  rootSchema: EntitySchema,
+  context: FieldResolutionContext | undefined
+): ReadonlyArray<{ id: string; name: string }> | undefined => {
+  if (path.length === 0) return rootSchema.fields;
+  const last = path[path.length - 1];
+  if (!context || path.length !== 1 || last?.kind !== 'typedRelation') return undefined;
+  const relationSchema = context.relationSchemas.find(
+    candidate => candidate.id === last.relationSchemaId
+  );
+  if (!relationSchema) return undefined;
+  if ('source' in projection && projection.source === 'relation') return relationSchema.fields;
+  const neighbourSchemaIds = (last.direction === 'in' ? relationSchema.out : relationSchema.in)
+    .schemaIds;
+  if (neighbourSchemaIds === 'any' || neighbourSchemaIds.length !== 1) return undefined;
+  return context.schemas.find(schema => schema.id === neighbourSchemaIds[0])?.fields;
+};
+
 const resolveProjectionFieldNames = (
   projection: ProjectionField,
-  rootSchema: EntitySchema
-): ProjectionField => ({ ...projection, path: resolvePathFieldName(projection.path, rootSchema) });
+  rootSchema: EntitySchema,
+  context: FieldResolutionContext | undefined
+): ProjectionField => {
+  const path = resolvePathFieldName(projection.path, rootSchema);
+  const resolved = { ...projection, path } as ProjectionField;
+  if (!('fieldId' in resolved) || !resolved.fieldId || resolved.fieldId.startsWith('_')) {
+    return resolved;
+  }
+  const fieldId = resolved.fieldId;
+  const field = terminalFields(resolved, path, rootSchema, context)?.find(
+    candidate => candidate.name === fieldId
+  );
+  return field ? { ...resolved, fieldId: field.id } : resolved;
+};
 
 /** Resolves every field NAME in an advanced `entityQuery` against the root schema, and pins its
  *  `schemaId` to the already-resolved `typeFilter`. */
 export const resolveEntityQuery = (
   query: EntityQuery,
   rootSchema: EntitySchema | undefined,
-  typeFilter: string | null
+  typeFilter: string | null,
+  context?: FieldResolutionContext
 ): EntityQuery => {
   if (!rootSchema) return query;
   return {
@@ -85,7 +159,7 @@ export const resolveEntityQuery = (
     schemaId: typeFilter ?? query.schemaId,
     root: resolveQueryNodeFieldNames(query.root, rootSchema),
     projections: query.projections?.map(projection =>
-      resolveProjectionFieldNames(projection, rootSchema)
+      resolveProjectionFieldNames(projection, rootSchema, context)
     )
   };
 };

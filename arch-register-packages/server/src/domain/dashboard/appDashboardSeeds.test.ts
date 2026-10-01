@@ -8,7 +8,8 @@ import {
   BUSINESS_GLOSSARY_APP_KEY,
   DATA_STEWARDSHIP_APP_KEY,
   DATA_STEWARDSHIP_ASSESSMENTS_APP_KEY,
-  DATA_STEWARDSHIP_STEWARDSHIP_APP_KEY
+  DATA_STEWARDSHIP_STEWARDSHIP_APP_KEY,
+  RISK_COMPLIANCE_RETENTION_APP_KEY
 } from './appDashboardSeeds';
 
 describe('APP_DASHBOARD_SEEDS', () => {
@@ -100,5 +101,19 @@ describe('APP_DASHBOARD_SEEDS', () => {
       'ConformanceViolations'
     ]);
     expect(seed!.widgets[4]!.config).toMatchObject({ schemaName: 'Data Entity', limit: 8 });
+  });
+
+  it('seeds the retention dashboard with one entity browser bound to a policy entity-picker', () => {
+    const seed = APP_DASHBOARD_SEEDS[RISK_COMPLIANCE_RETENTION_APP_KEY];
+    expect(seed).toBeDefined();
+    expect(seed!.widgets.map(widget => widget.type)).toEqual(['EntityBrowserEmbed']);
+    expect(seed!.widgets[0]!.config.schemaName).toBe('Data Entity');
+    expect(seed!.sidebar).toEqual({
+      kind: 'entity-picker',
+      schemaName: 'Retention Policy',
+      variableName: 'policyId',
+      itemLabel: 'Policies',
+      valueKind: 'id'
+    });
   });
 });

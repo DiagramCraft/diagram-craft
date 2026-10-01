@@ -58,7 +58,14 @@ export const dashboardSidebarConfigSchema = z.discriminatedUnion('kind', [
     kind: z.literal('entity-picker').describe('Single-select list of one schema’s entities'),
     schemaName: dashboardSidebarSchemaNameSchema,
     variableName: dashboardSidebarVariableNameSchema,
-    itemLabel: z.string().optional().describe('Group label shown above the picker list')
+    itemLabel: z.string().optional().describe('Group label shown above the picker list'),
+    valueKind: z
+      .enum(['publicId', 'id'])
+      .optional()
+      .describe(
+        "Which identifier the selection exposes as $<variableName>: the entity's public id " +
+          "(default) or its internal id, which is what a query's '_id' predicate matches"
+      )
   }),
   z.object({
     kind: z

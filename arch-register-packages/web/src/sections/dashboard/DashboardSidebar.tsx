@@ -7,6 +7,7 @@ import type {
 } from '@arch-register/api-types/dashboardContract';
 import { SidebarGroupLabel, SidebarTitleHeader } from '../../components/sidebar/SidebarPrimitives';
 import { TreeRow } from '../../components/TreeRow';
+import { TypeBadge } from '../../components/TypeBadge';
 import { entitiesQuery } from '../../queries/entities';
 import { useSchemas } from '../../hooks/useSchemas';
 import styles from '../../shell/SidePanel.module.css';
@@ -277,7 +278,8 @@ const EntityPickerSidebar = ({
   const selected = search[sidebar.variableName];
 
   const schemas = useSchemas(workspaceSlug);
-  const schemaId = schemas.data?.find(schema => schema.name === sidebar.schemaName)?.id;
+  const schema = schemas.data?.find(candidate => candidate.name === sidebar.schemaName);
+  const schemaId = schema?.id;
 
   const entities = useQuery(
     entitiesQuery(workspaceSlug, { schemaId, limit: 500 }, schemaId != null)
@@ -285,11 +287,15 @@ const EntityPickerSidebar = ({
   const items = entities.data?.items ?? [];
   const sorted = useMemo(() => [...items].sort((a, b) => a._name.localeCompare(b._name)), [items]);
 
-  const select = (publicId: string) =>
+  const selectionValue = (entity: (typeof items)[number]) =>
+    sidebar.valueKind === 'id' ? entity._uid : entity._publicId;
+
+  // Re-selecting the active item clears the selection.
+  const toggle = (value: string) =>
     navigate({
       search: (previous: Record<string, unknown>) => ({
         ...previous,
-        [sidebar.variableName]: publicId
+        [sidebar.variableName]: selected === value ? undefined : value
       })
     } as Parameters<typeof navigate>[0]);
 
@@ -302,10 +308,11 @@ const EntityPickerSidebar = ({
           sorted.map(entity => (
             <TreeRow
               key={entity._uid}
+              icon={<TypeBadge color="currentColor" icon={schema?.icon} size={14} hideBorder />}
               label={entity._name}
               testId={`dashboard-sidebar-item-${entity._uid}`}
-              active={selected === entity._publicId}
-              onClick={() => select(entity._publicId)}
+              active={selected === selectionValue(entity)}
+              onClick={() => toggle(selectionValue(entity))}
             />
           ))}
       </div>
