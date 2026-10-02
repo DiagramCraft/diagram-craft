@@ -2,7 +2,11 @@ import { describe, expect, it } from 'vitest';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
-import { resolveEntityQuery, resolveTableFieldIds } from './EntityBrowserEmbedFieldResolution';
+import {
+  resolveEntityQuery,
+  resolveSort,
+  resolveTableFieldIds
+} from './EntityBrowserEmbedFieldResolution';
 
 const rootSchema: EntitySchema = {
   id: 'schema-term-real-id',
@@ -266,5 +270,20 @@ describe('resolveEntityQuery with typed relations', () => {
       op: 'in',
       value: ['abc']
     });
+  });
+});
+
+describe('resolveSort', () => {
+  it('resolves a field name in a field sort to the live field id', () => {
+    expect(resolveSort('field:Categories:desc', rootSchema)).toBe(
+      'field:field-categories-real-id:desc'
+    );
+  });
+
+  it('passes through other sorts, standard fields and unknown names', () => {
+    expect(resolveSort('name', rootSchema)).toBe('name');
+    expect(resolveSort('field:_owner:asc', rootSchema)).toBe('field:_owner:asc');
+    expect(resolveSort('field:Unknown:asc', rootSchema)).toBe('field:Unknown:asc');
+    expect(resolveSort('field:Categories:asc', undefined)).toBe('field:Categories:asc');
   });
 });

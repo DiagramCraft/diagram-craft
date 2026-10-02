@@ -21,6 +21,9 @@ import {
   type RiskComplianceRailItemId
 } from './riskComplianceSections';
 
+/** Keys the Overview section's dashboard (seeded server-side in `appDashboardSeeds.ts`). */
+export const RISK_COMPLIANCE_OVERVIEW_APP_KEY = 'risk-compliance-overview';
+
 /** Keys the Retention section's dashboard (seeded server-side in `appDashboardSeeds.ts`). */
 export const RISK_COMPLIANCE_RETENTION_APP_KEY = 'risk-compliance-retention';
 
@@ -46,7 +49,8 @@ export const riskComplianceAppDefinition: AppDefinition = {
       id: RISK_OVERVIEW_ID,
       icon: TbLayoutDashboard,
       tooltip: 'Overview',
-      route: RISK_RAIL_PATHS[RISK_OVERVIEW_ID]
+      route: RISK_RAIL_PATHS[RISK_OVERVIEW_ID],
+      dashboard: { appKey: RISK_COMPLIANCE_OVERVIEW_APP_KEY }
     },
     {
       id: RISK_RISKS_ID,

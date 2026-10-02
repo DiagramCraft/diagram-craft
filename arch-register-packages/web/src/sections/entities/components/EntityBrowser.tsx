@@ -623,6 +623,8 @@ export const EntityBrowser = ({
               linkedEntityIds={linkedEntityIds}
               onFocusEntity={focusEntity}
               activeDateField={dateBrowserEnabled ? activeDateField : null}
+              sort={sort}
+              onSortChange={next => setSort(next)}
               joinAssessmentId={effectiveJoinAssessmentId}
               joinedAssessment={joinedAssessmentContext}
               responsesByEntity={responsesByEntity}

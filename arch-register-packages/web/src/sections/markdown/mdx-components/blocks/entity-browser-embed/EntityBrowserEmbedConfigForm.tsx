@@ -1,6 +1,8 @@
 import { useEffect, useMemo } from 'react';
 import { TbChevronLeft, TbChevronRight } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
+import { NumberInput } from '@diagram-craft/app-components/NumberInput';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
 import { EntityBrowserToolbar } from '../../../../entities/components/EntityBrowserToolbar';
 import { EntityBrowserView } from '../../../../entities/components/EntityBrowserView';
@@ -18,7 +20,8 @@ import {
   withoutDisplayFieldIds
 } from '../../../../entities/components/entityDisplayFields';
 import { resolveConfigVariables } from '../../../../dashboard/resolveSidebarVariableReferences';
-import { resolveEntityQuery } from './EntityBrowserEmbedFieldResolution';
+import { resolveEntityQuery, resolveSort } from './EntityBrowserEmbedFieldResolution';
+import dialogStyles from '../../../../dashboard/WidgetConfigDialog.module.css';
 import styles from './EntityBrowserEmbedConfigForm.module.css';
 
 type Props = {
@@ -73,7 +76,9 @@ export const EntityBrowserEmbedConfigForm = ({ config, onChange, context }: Prop
       viewConfigs,
       projectScope,
       ...(entityQuery ? { entityQuery } : {}),
-      ...(config.schemaName ? { schemaName: config.schemaName } : {})
+      ...(config.schemaName ? { schemaName: config.schemaName } : {}),
+      ...(config.title ? { title: config.title } : {}),
+      ...(config.limit ? { limit: config.limit } : {})
     });
   }, [
     q,
@@ -84,6 +89,8 @@ export const EntityBrowserEmbedConfigForm = ({ config, onChange, context }: Prop
     projectScope,
     entityQuery,
     config.schemaName,
+    config.title,
+    config.limit,
     onChange
   ]);
 
@@ -92,6 +99,11 @@ export const EntityBrowserEmbedConfigForm = ({ config, onChange, context }: Prop
     ? schemas.find(schema => schema.name === config.schemaName)?.id
     : undefined;
   const typeFilter = conditionTypeFilter ?? schemaNameId ?? null;
+  // A seeded sort may name its field; resolve it to the live id so the preview sorts too.
+  const effectiveSort = resolveSort(
+    sort,
+    typeFilter ? schemas.find(schema => schema.id === typeFilter) : undefined
+  );
 
   // The stored query may carry field NAMES and `$variable` references that only make sense at
   // render time (see EntityBrowserEmbedFieldResolution.ts / resolveSidebarVariableReferences.ts).
@@ -153,7 +165,7 @@ export const EntityBrowserEmbedConfigForm = ({ config, onChange, context }: Prop
       typeFilter,
       ownerFilter,
       statusFilter,
-      sort,
+      sort: effectiveSort,
       view,
       pageIndex,
       pageSize,
@@ -163,6 +175,32 @@ export const EntityBrowserEmbedConfigForm = ({ config, onChange, context }: Prop
 
   return (
     <div className={styles.body}>
+      <div className={styles.options}>
+        <label className={dialogStyles.optionRow}>
+          <span className={dialogStyles.optionLabel}>Title</span>
+          <TextInput
+            value={config.title ?? ''}
+            placeholder="Entity browser"
+            onChange={value => onChange({ ...config, title: value })}
+          />
+        </label>
+        <label className={dialogStyles.optionRow}>
+          <span className={dialogStyles.optionLabel}>Max rows</span>
+          <NumberInput
+            value={config.limit ?? ''}
+            min={1}
+            step={1}
+            placeholder="All"
+            style={{ width: '80px' }}
+            onChange={value =>
+              onChange({
+                ...config,
+                limit: value !== undefined && value >= 1 ? Math.floor(value) : undefined
+              })
+            }
+          />
+        </label>
+      </div>
       <EntityBrowserToolbar
         workspaceId={workspaceSlug}
         q={q}
@@ -177,7 +215,7 @@ export const EntityBrowserEmbedConfigForm = ({ config, onChange, context }: Prop
         projectId={projectId}
         projectScope={projectScope}
         setProjectScope={setProjectScope}
-        sort={sort}
+        sort={effectiveSort}
         setSort={setSort}
         sortOptions={sortOptions}
         view={view}
@@ -221,6 +259,8 @@ export const EntityBrowserEmbedConfigForm = ({ config, onChange, context }: Prop
           ownerFilter={ownerFilter}
           statusFilter={statusFilter}
           activeViewConfig={activeViewConfig}
+          sort={effectiveSort}
+          onSortChange={setSort}
           displayFields={displayFields}
           isLoading={isLoading}
           mode={{ kind: 'configure', onConfigChange: setActiveViewConfig }}

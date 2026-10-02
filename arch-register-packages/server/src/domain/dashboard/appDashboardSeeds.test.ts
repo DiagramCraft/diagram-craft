@@ -10,6 +10,7 @@ import {
   DATA_STEWARDSHIP_ASSESSMENTS_APP_KEY,
   DATA_STEWARDSHIP_CHANGE_CASES_APP_KEY,
   DATA_STEWARDSHIP_STEWARDSHIP_APP_KEY,
+  RISK_COMPLIANCE_OVERVIEW_APP_KEY,
   RISK_COMPLIANCE_RETENTION_APP_KEY
 } from './appDashboardSeeds';
 
@@ -138,5 +139,33 @@ describe('APP_DASHBOARD_SEEDS', () => {
       itemLabel: 'Policies',
       valueKind: 'id'
     });
+  });
+
+  it('seeds the risk & compliance overview dashboard without a sidebar', () => {
+    const seed = APP_DASHBOARD_SEEDS[RISK_COMPLIANCE_OVERVIEW_APP_KEY];
+    expect(seed).toBeDefined();
+    expect(seed!.sidebar).toBeUndefined();
+    expect(seed!.widgets.map(widget => widget.type)).toEqual([
+      'AggregateStat',
+      'AggregateStat',
+      'AssessmentCount',
+      'risk-compliance-risk-matrix',
+      'EntityBrowserEmbed',
+      'RatioBarList',
+      'Assessments',
+      'EntityBrowserEmbed'
+    ]);
+    const browsers = seed!.widgets.filter(widget => widget.type === 'EntityBrowserEmbed');
+    expect(browsers.map(widget => widget.config.title)).toEqual([
+      'Highest residual risks',
+      'Risks with weak or missing control'
+    ]);
+    expect(browsers[0]!.config.limit).toBe(7);
+    expect(browsers.map(widget => widget.config.sort)).toEqual([
+      'field:Residual Risk Score:desc',
+      'field:Residual Risk Score:desc'
+    ]);
+    const ids = seed!.widgets.map(widget => widget.id);
+    expect(new Set(ids).size).toBe(ids.length);
   });
 });

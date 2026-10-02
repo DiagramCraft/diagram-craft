@@ -1,3 +1,8 @@
+import {
+  encodeFieldSort,
+  isFieldSort,
+  parseSort
+} from '../../../../entities/components/entityBrowserSort';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import type {
@@ -26,6 +31,15 @@ import type {
 export type FieldResolutionContext = {
   schemas: readonly EntitySchema[];
   relationSchemas: readonly RelationSchema[];
+};
+
+/** Resolves a `field:<name>:asc|desc` sort's field NAME to the live schema's field id; other
+ *  sorts, standard/projection ids and unknown names pass through unchanged. */
+export const resolveSort = (sort: string, rootSchema: EntitySchema | undefined): string => {
+  const parsed = isFieldSort(sort) ? parseSort(sort) : null;
+  if (!rootSchema || !parsed || parsed.key.startsWith('_')) return sort;
+  const field = rootSchema.fields.find(candidate => candidate.name === parsed.key);
+  return field ? encodeFieldSort(field.id, parsed.dir) : sort;
 };
 
 export const resolveTableFieldIds = (
