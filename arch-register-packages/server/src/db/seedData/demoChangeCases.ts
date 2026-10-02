@@ -11,10 +11,10 @@ export type DemoChangeCase = {
   initiatorUserId: string;
   message: string;
   /** Applied on top of the entity's current state to form the proposed state. */
-  propose: (current: {
-    description: string;
-    data: Record<string, unknown>;
-  }) => { description?: string; data?: Record<string, unknown> };
+  propose: (current: { description: string; data: Record<string, unknown> }) => {
+    description?: string;
+    data?: Record<string, unknown>;
+  };
   outcome: DemoChangeCaseOutcome;
   /** Days relative to seeding when the case was raised (negative = in the past). */
   raisedDaysAgo: number;

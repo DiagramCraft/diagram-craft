@@ -56,8 +56,11 @@ describe('dashboardSidebarConfigSchema', () => {
 
   it('rejects an options sidebar with no options or an empty option value', () => {
     expect(
-      dashboardSidebarConfigSchema.safeParse({ kind: 'options', variableName: 'status', options: [] })
-        .success
+      dashboardSidebarConfigSchema.safeParse({
+        kind: 'options',
+        variableName: 'status',
+        options: []
+      }).success
     ).toBe(false);
     expect(
       dashboardSidebarConfigSchema.safeParse({

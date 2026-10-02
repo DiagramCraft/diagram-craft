@@ -43,7 +43,9 @@ export const DashboardSidebarConfigDialog = ({
   const facetsSidebar = sidebar?.kind === 'facets' ? sidebar : null;
   const optionsSidebar = sidebar?.kind === 'options' ? sidebar : null;
   const schemas = useSchemas(workspaceSlug);
-  const [kind, setKind] = useState<DashboardSidebarConfig['kind']>(sidebar?.kind ?? 'entity-picker');
+  const [kind, setKind] = useState<DashboardSidebarConfig['kind']>(
+    sidebar?.kind ?? 'entity-picker'
+  );
   const [optionsVariableName, setOptionsVariableName] = useState(
     optionsSidebar?.variableName ?? ''
   );
@@ -129,12 +131,12 @@ export const DashboardSidebarConfigDialog = ({
                       options: normalizeOptions(options)
                     }
                   : {
-                    kind: 'entity-picker',
-                    schemaName: schemaName.trim(),
-                    variableName: variableName.trim(),
-                    itemLabel: itemLabel.trim() || undefined,
-                    ...(entityPicker?.valueKind ? { valueKind: entityPicker.valueKind } : {})
-                  }
+                      kind: 'entity-picker',
+                      schemaName: schemaName.trim(),
+                      variableName: variableName.trim(),
+                      itemLabel: itemLabel.trim() || undefined,
+                      ...(entityPicker?.valueKind ? { valueKind: entityPicker.valueKind } : {})
+                    }
             );
             onClose();
           }
@@ -146,9 +148,7 @@ export const DashboardSidebarConfigDialog = ({
           <select
             className={styles.selectInput}
             value={kind}
-            onChange={event =>
-              setKind(event.currentTarget.value as DashboardSidebarConfig['kind'])
-            }
+            onChange={event => setKind(event.currentTarget.value as DashboardSidebarConfig['kind'])}
           >
             <option value="entity-picker">Entity picker (single select)</option>
             <option value="facets">Facets (multi select)</option>
@@ -166,8 +166,8 @@ export const DashboardSidebarConfigDialog = ({
                 onChange={event => setOptionsVariableName(event.currentTarget.value)}
               />
               <div className={styles.hint}>
-                Referenced in widget config as <code>${optionsVariableName || '<name>'}</code>; empty
-                when nothing is selected.
+                Referenced in widget config as <code>${optionsVariableName || '<name>'}</code>;
+                empty when nothing is selected.
               </div>
             </DialogSection>
             <DialogSection label="List label" required={false}>

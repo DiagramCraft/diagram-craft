@@ -1,12 +1,7 @@
 import { useMemo } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
-import {
-  TbAlertTriangle,
-  TbDatabase,
-  TbLayersLinked,
-  TbUser
-} from 'react-icons/tb';
+import { TbAlertTriangle, TbDatabase, TbLayersLinked, TbUser } from 'react-icons/tb';
 import {
   SidebarGroupLabel,
   SidebarTitleHeader

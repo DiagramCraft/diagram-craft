@@ -5,12 +5,7 @@ const row = (id: string, status: 'open' | 'completed' | 'cancelled') => ({
   case: { id, status }
 });
 
-const rows = [
-  row('1', 'open'),
-  row('2', 'open'),
-  row('3', 'completed'),
-  row('4', 'cancelled')
-];
+const rows = [row('1', 'open'), row('2', 'open'), row('3', 'completed'), row('4', 'cancelled')];
 
 describe('isChangeCaseStatus', () => {
   it('accepts only the three case statuses', () => {

@@ -73,7 +73,9 @@ export const ChangeCaseTableWidget = ({ config }: { config: ChangeCaseTableConfi
     return <div className={`${styles.message} dim`}>This widget is not fully configured.</div>;
   }
   if (schemaId == null) {
-    return <div className={`${styles.message} dim`}>Entity type “{config.schemaName}” not found.</div>;
+    return (
+      <div className={`${styles.message} dim`}>Entity type “{config.schemaName}” not found.</div>
+    );
   }
 
   const showRisk = config.severity === 'due-date';
@@ -117,7 +119,9 @@ export const ChangeCaseTableWidget = ({ config }: { config: ChangeCaseTableConfi
                     </Chip>
                   </Table.Cell>
                 )}
-                <Table.Cell>{formatDate(row.case.createdAt, '—', dateTimeFormatPreference)}</Table.Cell>
+                <Table.Cell>
+                  {formatDate(row.case.createdAt, '—', dateTimeFormatPreference)}
+                </Table.Cell>
                 <Table.Cell>{formatDate(row.case.dueAt, '—', dateTimeFormatPreference)}</Table.Cell>
                 <Table.Cell>
                   <Chip tone="ghost">{row.case.status}</Chip>

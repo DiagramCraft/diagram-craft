@@ -41,8 +41,12 @@ runContractSuiteAgainstBothDrivers('seededChangeCases', getDb => {
       row => row.case_kind === 'entity.change-case'
     );
     expect(cases).toHaveLength(demoChangeCases.length);
-    expect(new Set(cases.map(row => row.status))).toEqual(new Set(['open', 'completed', 'cancelled']));
-    expect(cases.filter(row => row.status === 'open').some(row => row.due_at && row.due_at < new Date())).toBe(true);
+    expect(new Set(cases.map(row => row.status))).toEqual(
+      new Set(['open', 'completed', 'cancelled'])
+    );
+    expect(
+      cases.filter(row => row.status === 'open').some(row => row.due_at && row.due_at < new Date())
+    ).toBe(true);
 
     for (const row of cases) {
       const entity = await db.catalog.getEntity(workspace, row.subject_id);

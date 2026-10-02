@@ -5,7 +5,8 @@ import { ChangeCaseTableWidget, type ChangeCaseTableConfig } from './ChangeCaseT
 
 export const CHANGE_CASE_TABLE_TYPE = 'ChangeCaseTable' as const;
 
-const isOptionalString = (value: unknown): boolean => value === undefined || typeof value === 'string';
+const isOptionalString = (value: unknown): boolean =>
+  value === undefined || typeof value === 'string';
 
 /**
  * Dashboard-only table of governance cases (every status) against entities of a chosen
@@ -15,8 +16,7 @@ const isOptionalString = (value: unknown): boolean => value === undefined || typ
 export const changeCaseTableSpec: DashboardWidgetSpec<ChangeCaseTableConfig> = {
   icon: TbGitPullRequest,
   label: 'Change case table',
-  description:
-    'Register of governance cases against entities of a chosen type, in any status.',
+  description: 'Register of governance cases against entities of a chosen type, in any status.',
   defaultW: 12,
   defaultH: 20,
   surfaces: ['workspace'],
