@@ -20,6 +20,7 @@ import {
   CONFORMANCE_VIOLATIONS_TYPE,
   conformanceViolationsSpec
 } from './widgets/ConformanceViolationsRegistration';
+import { CHANGE_CASE_TABLE_TYPE, changeCaseTableSpec } from './widgets/ChangeCaseTableRegistration';
 
 const WIKI_PAGE_WIDGET_TYPE = 'wiki-page';
 
@@ -30,7 +31,8 @@ const assessmentDashboardWidgetSpecs: Array<{
 }> = [
   { type: ASSESSMENT_STATUS_STAT_TYPE, spec: assessmentStatusStatSpec },
   { type: ASSESSMENT_PROGRESS_TABLE_TYPE, spec: assessmentProgressTableSpec },
-  { type: CONFORMANCE_VIOLATIONS_TYPE, spec: conformanceViolationsSpec }
+  { type: CONFORMANCE_VIOLATIONS_TYPE, spec: conformanceViolationsSpec },
+  { type: CHANGE_CASE_TABLE_TYPE, spec: changeCaseTableSpec }
 ];
 
 export const getDashboardWidgetSpecs = (): Array<{

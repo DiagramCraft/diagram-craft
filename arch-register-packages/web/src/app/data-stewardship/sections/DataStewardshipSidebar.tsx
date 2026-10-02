@@ -1,14 +1,7 @@
 import { useMemo } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
-import {
-  TbAlertTriangle,
-  TbCircleDashed,
-  TbDatabase,
-  TbLayersLinked,
-  TbListCheck,
-  TbUser
-} from 'react-icons/tb';
+import { TbAlertTriangle, TbDatabase, TbLayersLinked, TbUser } from 'react-icons/tb';
 import {
   SidebarGroupLabel,
   SidebarTitleHeader
@@ -24,18 +17,13 @@ import {
 import { computeDatasetCoverage } from '../datasetCoverage';
 import { isPersonalData } from '../dataFlowClassification';
 import {
-  DS_CHANGE_CASES_ID,
   DS_CLASSIFICATION_ID,
   DS_RAIL_PATHS,
   DS_SECTIONS,
   DS_SECTION_LABELS,
   type DataStewardshipRailItemId
 } from '../dataStewardshipSections';
-import { useDataStewardshipChangeCases } from '../dataStewardshipChangeCases';
-import type {
-  DataStewardshipChangeCasesSearchParams,
-  DataStewardshipClassificationSearchParams
-} from '../../../routes/searchParams';
+import type { DataStewardshipClassificationSearchParams } from '../../../routes/searchParams';
 import styles from '../../../shell/SidePanel.module.css';
 
 /**
@@ -161,74 +149,12 @@ const ClassificationSidebarContent = ({
 };
 
 /**
- * The Change cases & exceptions section's own primary-sidebar content (#3301) — a status facet
- * over the `entity.change-case` register (there's no exceptions/waiver register any more — see
- * `DataStewardshipChangeCasesScreen.tsx`'s doc comment). Mirrors the "facet
- * drives the same search param as the in-screen control" shape.
- */
-const ChangeCasesSidebarContent = ({
-  workspaceSlug,
-  dataStewardshipConfig
-}: {
-  workspaceSlug: string;
-  dataStewardshipConfig: DataStewardshipConfig;
-}) => {
-  const navigate = useNavigate();
-  const search = useSearch({ strict: false }) as DataStewardshipChangeCasesSearchParams;
-
-  const changeCases = useDataStewardshipChangeCases(
-    workspaceSlug,
-    dataStewardshipConfig.dataEntitySchemaId
-  );
-
-  const caseStatusCounts = useMemo(() => {
-    const counts = new Map<string, number>();
-    for (const row of changeCases.rows)
-      counts.set(row.case.status, (counts.get(row.case.status) ?? 0) + 1);
-    return counts;
-  }, [changeCases.rows]);
-
-  const patchSearch = (patch: Partial<DataStewardshipChangeCasesSearchParams>) =>
-    navigate({
-      to: DS_RAIL_PATHS[DS_CHANGE_CASES_ID],
-      params: { workspaceSlug },
-      search: (previous: Record<string, unknown>) => ({ ...previous, ...patch })
-    });
-
-  return (
-    <>
-      <TreeRow
-        icon={<TbListCheck size={12} />}
-        label="All change cases"
-        testId="data-stewardship-change-cases-facet-all"
-        active={!search.status}
-        onClick={() => patchSearch({ status: undefined })}
-        trailing={<span className="dim mono">{changeCases.rows.length}</span>}
-      />
-      <SidebarGroupLabel>Status</SidebarGroupLabel>
-      {(['open', 'completed', 'cancelled'] as const).map(status => (
-        <TreeRow
-          key={status}
-          icon={<TbCircleDashed size={12} />}
-          label={status}
-          testId={`data-stewardship-change-cases-facet-status-${status}`}
-          active={search.status === status}
-          onClick={() => patchSearch({ status: search.status === status ? undefined : status })}
-          trailing={<span className="dim mono">{caseStatusCounts.get(status) ?? 0}</span>}
-        />
-      ))}
-    </>
-  );
-};
-
-/**
  * Section-dependent primary sidebar for the Data Stewardship app: navigation between the app's
  * five rail sections, gated on the `data-stewardship` capability configuration — mirrors
  * `../../vendor-management/sections/VendorManagementSidebar.tsx`'s `!enabled` empty state and its
  * fallback "Sections" nav list.
  *
- * Every section swaps in its own facet content (`ClassificationSidebarContent`, `ChangeCasesSidebarContent`,
- * `AssessmentsSidebarContent`) once enabled — mirroring how `VendorManagementSidebar` grew its own
+ * Every section swaps in its own facet content (`ClassificationSidebarContent`) once enabled — mirroring how `VendorManagementSidebar` grew its own
  * facet content incrementally after its scaffold.
  */
 export const DataStewardshipSidebar = ({
@@ -250,11 +176,6 @@ export const DataStewardshipSidebar = ({
           <div className={`${styles.emptyState} dim`}>Data stewardship is not enabled.</div>
         ) : activeSection === DS_CLASSIFICATION_ID ? (
           <ClassificationSidebarContent
-            workspaceSlug={workspaceSlug}
-            dataStewardshipConfig={dataStewardshipConfig}
-          />
-        ) : activeSection === DS_CHANGE_CASES_ID ? (
-          <ChangeCasesSidebarContent
             workspaceSlug={workspaceSlug}
             dataStewardshipConfig={dataStewardshipConfig}
           />

@@ -51,6 +51,35 @@ export const seedGovernanceCaseConfigs: GovernanceCaseConfigDbUpsert[] = [
   },
   {
     workspace: WORKSPACE_ID,
+    case_kind: ENTITY_CHANGE_CASE_KIND,
+    case_subkind: encodeCaseSubkind(SEED_SCHEMA_IDS.dataEntity),
+    name: 'Data Entity change review',
+    description: 'Review changes proposed to Data Entities.',
+    enabled: true,
+    config: {
+      approvals: {
+        requiredApprovals: 1,
+        strategy: ENTITY_OWNER_ADMIN_STRATEGY,
+        strategyConfig: {},
+        fallbackUserIds: [],
+        fallbackTeamIds: [TEAM_IDS.data]
+      },
+      reminders: { enabled: true, approachingDays: [3, 1], overdueDays: [1, 7] },
+      escalation: {
+        enabled: true,
+        overdueDays: 5,
+        strategy: ENTITY_OWNER_ADMIN_STRATEGY,
+        strategyConfig: {},
+        fallbackUserIds: [],
+        fallbackTeamIds: [TEAM_IDS.data]
+      },
+      extensions: {}
+    },
+    updated_at: now,
+    updated_by: null
+  },
+  {
+    workspace: WORKSPACE_ID,
     case_kind: ENTITY_CHANGE_CASE_BULK_KIND,
     case_subkind: null,
     name: 'Bulk entity change review',

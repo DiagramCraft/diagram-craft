@@ -233,6 +233,35 @@ describe('parseKnownDashboardWidget', () => {
     ).toBeNull();
   });
 
+  it('parses a ChangeCaseTable widget and rejects an invalid severity or case kinds', () => {
+    const base = {
+      id: 'change-case-table',
+      type: 'ChangeCaseTable',
+      x: 0,
+      y: 0,
+      w: 12,
+      h: 20
+    };
+    expect(
+      parseKnownDashboardWidget({
+        ...base,
+        config: { schemaName: 'Data Entity', caseKinds: ['entity.change-case'], severity: 'none' }
+      })?.type
+    ).toBe('ChangeCaseTable');
+    expect(
+      parseKnownDashboardWidget({
+        ...base,
+        config: { schemaName: 'Data Entity', caseKinds: 'entity.change-case', severity: 'none' }
+      })
+    ).toBeNull();
+    expect(
+      parseKnownDashboardWidget({
+        ...base,
+        config: { schemaName: 'Data Entity', caseKinds: [], severity: 'loud' }
+      })
+    ).toBeNull();
+  });
+
   it('parses an Assessments widget with a mode and no assessment type filter', () => {
     const widget = parseKnownDashboardWidget({
       id: 'assessments',

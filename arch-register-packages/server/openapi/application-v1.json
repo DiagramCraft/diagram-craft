@@ -136442,6 +136442,55 @@
                               "schemaName",
                               "facets"
                             ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "const": "options",
+                                "description": "Single-select list of fixed value/label pairs (no counts, no entity lookup)"
+                              },
+                              "variableName": {
+                                "type": "string",
+                                "description": "Exposed as $<variableName>, holding the selected option value, or an empty string when nothing is selected, for substitution into widget config string values (see resolveSidebarVariableReferences)"
+                              },
+                              "itemLabel": {
+                                "type": "string",
+                                "description": "Group label shown above the options list"
+                              },
+                              "allLabel": {
+                                "type": "string",
+                                "description": "When set, a first row with this label is shown that is active while nothing is selected and clears the selection when clicked"
+                              },
+                              "options": {
+                                "type": "array",
+                                "minItems": 1,
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "value": {
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "description": "Value exposed as $<variableName> when this option is selected"
+                                    },
+                                    "label": {
+                                      "type": "string",
+                                      "description": "Label shown for this option in the sidebar"
+                                    }
+                                  },
+                                  "required": [
+                                    "value",
+                                    "label"
+                                  ]
+                                },
+                                "description": "Fixed options to choose between; re-selecting the active one clears it"
+                              }
+                            },
+                            "required": [
+                              "kind",
+                              "variableName",
+                              "options"
+                            ]
                           }
                         ],
                         "description": "Optional selection sidebar whose current selection can drive widget config"
@@ -136705,6 +136754,55 @@
                             "schemaName",
                             "facets"
                           ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "const": "options",
+                              "description": "Single-select list of fixed value/label pairs (no counts, no entity lookup)"
+                            },
+                            "variableName": {
+                              "type": "string",
+                              "description": "Exposed as $<variableName>, holding the selected option value, or an empty string when nothing is selected, for substitution into widget config string values (see resolveSidebarVariableReferences)"
+                            },
+                            "itemLabel": {
+                              "type": "string",
+                              "description": "Group label shown above the options list"
+                            },
+                            "allLabel": {
+                              "type": "string",
+                              "description": "When set, a first row with this label is shown that is active while nothing is selected and clears the selection when clicked"
+                            },
+                            "options": {
+                              "type": "array",
+                              "minItems": 1,
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "value": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "description": "Value exposed as $<variableName> when this option is selected"
+                                  },
+                                  "label": {
+                                    "type": "string",
+                                    "description": "Label shown for this option in the sidebar"
+                                  }
+                                },
+                                "required": [
+                                  "value",
+                                  "label"
+                                ]
+                              },
+                              "description": "Fixed options to choose between; re-selecting the active one clears it"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "variableName",
+                            "options"
+                          ]
                         }
                       ],
                       "description": "Optional selection sidebar whose current selection can drive widget config"
@@ -136955,6 +137053,55 @@
                             "schemaName",
                             "facets"
                           ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "const": "options",
+                              "description": "Single-select list of fixed value/label pairs (no counts, no entity lookup)"
+                            },
+                            "variableName": {
+                              "type": "string",
+                              "description": "Exposed as $<variableName>, holding the selected option value, or an empty string when nothing is selected, for substitution into widget config string values (see resolveSidebarVariableReferences)"
+                            },
+                            "itemLabel": {
+                              "type": "string",
+                              "description": "Group label shown above the options list"
+                            },
+                            "allLabel": {
+                              "type": "string",
+                              "description": "When set, a first row with this label is shown that is active while nothing is selected and clears the selection when clicked"
+                            },
+                            "options": {
+                              "type": "array",
+                              "minItems": 1,
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "value": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "description": "Value exposed as $<variableName> when this option is selected"
+                                  },
+                                  "label": {
+                                    "type": "string",
+                                    "description": "Label shown for this option in the sidebar"
+                                  }
+                                },
+                                "required": [
+                                  "value",
+                                  "label"
+                                ]
+                              },
+                              "description": "Fixed options to choose between; re-selecting the active one clears it"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "variableName",
+                            "options"
+                          ]
                         }
                       ],
                       "description": "Optional selection sidebar whose current selection can drive widget config"
@@ -137156,6 +137303,55 @@
                               "kind",
                               "schemaName",
                               "facets"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "const": "options",
+                                "description": "Single-select list of fixed value/label pairs (no counts, no entity lookup)"
+                              },
+                              "variableName": {
+                                "type": "string",
+                                "description": "Exposed as $<variableName>, holding the selected option value, or an empty string when nothing is selected, for substitution into widget config string values (see resolveSidebarVariableReferences)"
+                              },
+                              "itemLabel": {
+                                "type": "string",
+                                "description": "Group label shown above the options list"
+                              },
+                              "allLabel": {
+                                "type": "string",
+                                "description": "When set, a first row with this label is shown that is active while nothing is selected and clears the selection when clicked"
+                              },
+                              "options": {
+                                "type": "array",
+                                "minItems": 1,
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "value": {
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "description": "Value exposed as $<variableName> when this option is selected"
+                                    },
+                                    "label": {
+                                      "type": "string",
+                                      "description": "Label shown for this option in the sidebar"
+                                    }
+                                  },
+                                  "required": [
+                                    "value",
+                                    "label"
+                                  ]
+                                },
+                                "description": "Fixed options to choose between; re-selecting the active one clears it"
+                              }
+                            },
+                            "required": [
+                              "kind",
+                              "variableName",
+                              "options"
                             ]
                           }
                         ]
@@ -137370,6 +137566,55 @@
                             "kind",
                             "schemaName",
                             "facets"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "const": "options",
+                              "description": "Single-select list of fixed value/label pairs (no counts, no entity lookup)"
+                            },
+                            "variableName": {
+                              "type": "string",
+                              "description": "Exposed as $<variableName>, holding the selected option value, or an empty string when nothing is selected, for substitution into widget config string values (see resolveSidebarVariableReferences)"
+                            },
+                            "itemLabel": {
+                              "type": "string",
+                              "description": "Group label shown above the options list"
+                            },
+                            "allLabel": {
+                              "type": "string",
+                              "description": "When set, a first row with this label is shown that is active while nothing is selected and clears the selection when clicked"
+                            },
+                            "options": {
+                              "type": "array",
+                              "minItems": 1,
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "value": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "description": "Value exposed as $<variableName> when this option is selected"
+                                  },
+                                  "label": {
+                                    "type": "string",
+                                    "description": "Label shown for this option in the sidebar"
+                                  }
+                                },
+                                "required": [
+                                  "value",
+                                  "label"
+                                ]
+                              },
+                              "description": "Fixed options to choose between; re-selecting the active one clears it"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "variableName",
+                            "options"
                           ]
                         }
                       ],
@@ -137668,6 +137913,55 @@
                             "kind",
                             "schemaName",
                             "facets"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "const": "options",
+                              "description": "Single-select list of fixed value/label pairs (no counts, no entity lookup)"
+                            },
+                            "variableName": {
+                              "type": "string",
+                              "description": "Exposed as $<variableName>, holding the selected option value, or an empty string when nothing is selected, for substitution into widget config string values (see resolveSidebarVariableReferences)"
+                            },
+                            "itemLabel": {
+                              "type": "string",
+                              "description": "Group label shown above the options list"
+                            },
+                            "allLabel": {
+                              "type": "string",
+                              "description": "When set, a first row with this label is shown that is active while nothing is selected and clears the selection when clicked"
+                            },
+                            "options": {
+                              "type": "array",
+                              "minItems": 1,
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "value": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "description": "Value exposed as $<variableName> when this option is selected"
+                                  },
+                                  "label": {
+                                    "type": "string",
+                                    "description": "Label shown for this option in the sidebar"
+                                  }
+                                },
+                                "required": [
+                                  "value",
+                                  "label"
+                                ]
+                              },
+                              "description": "Fixed options to choose between; re-selecting the active one clears it"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "variableName",
+                            "options"
                           ]
                         }
                       ],
@@ -138293,6 +138587,55 @@
                               "kind",
                               "schemaName",
                               "facets"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "const": "options",
+                                "description": "Single-select list of fixed value/label pairs (no counts, no entity lookup)"
+                              },
+                              "variableName": {
+                                "type": "string",
+                                "description": "Exposed as $<variableName>, holding the selected option value, or an empty string when nothing is selected, for substitution into widget config string values (see resolveSidebarVariableReferences)"
+                              },
+                              "itemLabel": {
+                                "type": "string",
+                                "description": "Group label shown above the options list"
+                              },
+                              "allLabel": {
+                                "type": "string",
+                                "description": "When set, a first row with this label is shown that is active while nothing is selected and clears the selection when clicked"
+                              },
+                              "options": {
+                                "type": "array",
+                                "minItems": 1,
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "value": {
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "description": "Value exposed as $<variableName> when this option is selected"
+                                    },
+                                    "label": {
+                                      "type": "string",
+                                      "description": "Label shown for this option in the sidebar"
+                                    }
+                                  },
+                                  "required": [
+                                    "value",
+                                    "label"
+                                  ]
+                                },
+                                "description": "Fixed options to choose between; re-selecting the active one clears it"
+                              }
+                            },
+                            "required": [
+                              "kind",
+                              "variableName",
+                              "options"
                             ]
                           }
                         ]

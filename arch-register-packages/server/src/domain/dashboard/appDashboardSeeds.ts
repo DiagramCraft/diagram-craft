@@ -11,6 +11,7 @@ export const RISK_COMPLIANCE_RETENTION_APP_KEY = 'risk-compliance-retention';
 export const DATA_STEWARDSHIP_APP_KEY = 'data-stewardship';
 export const DATA_STEWARDSHIP_ASSESSMENTS_APP_KEY = 'data-stewardship-assessments';
 export const DATA_STEWARDSHIP_STEWARDSHIP_APP_KEY = 'data-stewardship-stewardship';
+export const DATA_STEWARDSHIP_CHANGE_CASES_APP_KEY = 'data-stewardship-change-cases';
 
 /** The `entity-browser-embed` widget type, shared with the markdown/wiki embed block (see
  *  `web/src/sections/markdown/mdx-components/blocks/entity-browser-embed/EntityBrowserEmbedEditable.tsx`'s
@@ -201,6 +202,38 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
         h: 20
       }
     ]
+  },
+  [DATA_STEWARDSHIP_CHANGE_CASES_APP_KEY]: {
+    name: 'Change cases & exceptions',
+    description: 'Change proposals against governed datasets, in every status.',
+    widgets: [
+      {
+        id: 'seed-change-cases-table',
+        type: 'ChangeCaseTable',
+        config: {
+          schemaName: 'Data Entity',
+          caseKinds: ['entity.change-case'],
+          severity: 'due-date',
+          status: '$status',
+          label: 'Change cases'
+        },
+        x: 0,
+        y: 0,
+        w: 12,
+        h: 25
+      }
+    ],
+    sidebar: {
+      kind: 'options',
+      variableName: 'status',
+      itemLabel: 'Status',
+      allLabel: 'All change cases',
+      options: [
+        { value: 'open', label: 'Open' },
+        { value: 'completed', label: 'Completed' },
+        { value: 'cancelled', label: 'Cancelled' }
+      ]
+    }
   },
   [DATA_STEWARDSHIP_STEWARDSHIP_APP_KEY]: {
     name: 'Stewardship',

@@ -666,24 +666,23 @@
 
         - @id:ar.data-stewardship.change-cases The Change cases & exceptions section (despite the name — the
           exceptions/waiver register #3301 considered was removed after review, so this is just "Change cases") is a
-          read list over the existing `entity.change-case` governance-case machinery — no new case kind, no new
-          workflow — scoped to cases whose subject is a Data Entity: columns for Kind, Dataset, Requester (the
-          case's initiating user, resolved against the workspace's member list), Steward (the linked dataset's own
-          steward field), Risk (the same derived priority bucket `ar.data-stewardship.my-work`'s queue computes —
-          governance cases carry no real risk/severity field), Raised, Due, and Status; a Status facet lives in the
-          section's own primary sidebar. Every status is shown here (unlike My work's queue, which only surfaces
-          open cases), since this is a register, not a personal work queue. Bulk entity-change proposals are out of
-          scope for this first cut, same call `ar.data-stewardship.my-work` already made. A row opens the same
-          shared, already-shipped case drawer `ar.data-stewardship.my-work`'s queue uses — a viewer who happens to
-          hold an open assignment on that case sees the same Approve/Acknowledge/Request-changes actions there as
-          from the workspace-wide governance inbox; this section doesn't add a second action surface. The section is
-          section's own rail icon is hidden entirely (rather than shown with an in-screen notice) unless the
-          configured Data Entity schema actually has its `entity.change-case` approval workflow enabled
-          (`schema.entity_approval_policy === 'required'`, the same field the Entities app checks before offering
-          "Propose a change") — without that, no `entity.change-case` governance cases are ever created for the
-          schema, so the register would always be empty. This gate is evaluated once, centrally, in
-          `WorkspaceLayout.tsx`'s rail-item visibility list (alongside the existing AI-feature gate on the
-          assistant/extract icons), not per-screen.
+          configurable dashboard (seeded as the `data-stewardship-change-cases` app dashboard, editable like other
+          app dashboards) around a single generic "Change case table" widget, scoped to `entity.change-case`
+          governance cases whose subject is a Data Entity — no new case kind, no new workflow. The table shows Kind,
+          Data Entity, Requester (the case's initiating user, resolved against the workspace's member list), Risk (the same derived priority bucket `ar.data-stewardship.my-work`'s
+          queue computes — governance cases carry no real risk/severity field), Raised, Due and Status. There is no
+          search box; the status filter (All / Open / Completed / Cancelled) is the dashboard's own
+          primary sidebar, a "fixed options" sidebar type — a single-select list of configured value/label pairs
+          (no counts) whose selection feeds the table's status setting, and which administrators can edit like the
+          other dashboard sidebars. Every
+          status is shown here (unlike My work's queue, which only surfaces open cases), since this is a register,
+          not a personal work queue. Bulk entity-change proposals are out of scope for this first cut, same call
+          `ar.data-stewardship.my-work` already made. A row opens the shared governance case drawer that
+          `ar.data-stewardship.my-work`'s queue also uses — a viewer who happens to hold an open assignment on that
+          case sees the same Approve/Acknowledge/Request-changes actions there as from the workspace-wide governance
+          inbox; this section doesn't add a second action surface. The "Change case table" widget is not specific to
+          Data Stewardship: the entity type, case kinds, status filter
+          and priority mode are config options, so it can be added to any workspace dashboard.
 
         - @id:ar.data-stewardship.assessments The Assessments section is a configurable dashboard (seeded as the
           `data-stewardship-assessments` app dashboard, editable like other app dashboards) over the existing, generic

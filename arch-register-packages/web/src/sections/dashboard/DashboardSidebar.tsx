@@ -320,16 +320,70 @@ const EntityPickerSidebar = ({
   );
 };
 
+const OptionsSidebar = ({
+  sidebar,
+  title
+}: {
+  sidebar: Extract<DashboardSidebarConfig, { kind: 'options' }>;
+  title: string;
+}) => {
+  const navigate = useNavigate();
+  const search = useSearch({ strict: false }) as Record<string, unknown>;
+  const raw = search[sidebar.variableName];
+  const selected = typeof raw === 'string' ? raw : undefined;
+
+  const select = (value: string | undefined) =>
+    navigate({
+      search: (previous: Record<string, unknown>) => ({
+        ...previous,
+        [sidebar.variableName]: value
+      })
+    } as Parameters<typeof navigate>[0]);
+
+  return (
+    <>
+      <SidebarTitleHeader title={title} />
+      <div className={styles.scroll}>
+        {sidebar.allLabel && (
+          <TreeRow
+            label={sidebar.allLabel}
+            testId={`dashboard-sidebar-option-${sidebar.variableName}-all`}
+            active={selected === undefined}
+            onClick={() => select(undefined)}
+            hideIconSlot
+          />
+        )}
+        {sidebar.itemLabel && <SidebarGroupLabel>{sidebar.itemLabel}</SidebarGroupLabel>}
+        {sidebar.options.map(option => (
+          <TreeRow
+            key={option.value}
+            label={option.label}
+            testId={`dashboard-sidebar-option-${sidebar.variableName}-${option.value}`}
+            active={selected === option.value}
+            // Re-selecting the active option clears the selection.
+            onClick={() => select(selected === option.value ? undefined : option.value)}
+            hideIconSlot
+          />
+        ))}
+      </div>
+    </>
+  );
+};
+
 /**
- * A dashboard's optional selection sidebar. Supports two kinds:
+ * A dashboard's optional selection sidebar. Supports three kinds:
  * - `entity-picker`: a plain list of a schema's entities, single-select — mirroring the shape of
  *   the API & Integration Catalog Impact section's former bespoke `ImpactSidebarContent`.
  * - `facets`: one or more independent multi-select facet lists over one schema's entities, each
  *   backed by either a reference field or a standard `_owner`/`_lifecycle` field (#3467 follow-up,
  *   prep work for migrating the Business Glossary screen onto the dashboard system).
  *
- * Both kinds keep their selection as URL state, keyed by each variable's `variableName` — a single
- * id for `entity-picker`, a comma-joined list of ids for each `facets` facet — exactly like every
+ * - `options`: a single-select list of fixed value/label pairs configured on the sidebar itself
+ *   (e.g. a status filter) — no entity lookup, so no counts.
+ *
+ * All kinds keep their selection as URL state, keyed by each variable's `variableName` — a single
+ * id for `entity-picker`, a comma-joined list of ids for each `facets` facet, the option value for
+ * `options` — exactly like every
  * other per-app sidebar in this app. `AppDashboardScreen` reads the same params to populate
  * `DashboardSidebarContext`, which widget config strings reference via
  * `resolveSidebarVariableReferences`.
@@ -337,6 +391,9 @@ const EntityPickerSidebar = ({
 export const DashboardSidebar = ({ workspaceSlug, sidebar, title }: Props) => {
   if (sidebar.kind === 'facets') {
     return <FacetsSidebar workspaceSlug={workspaceSlug} sidebar={sidebar} title={title} />;
+  }
+  if (sidebar.kind === 'options') {
+    return <OptionsSidebar sidebar={sidebar} title={title} />;
   }
   return <EntityPickerSidebar workspaceSlug={workspaceSlug} sidebar={sidebar} title={title} />;
 };

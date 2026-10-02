@@ -39,6 +39,13 @@ describe('governance workflow seed data', () => {
         })
       }
     });
+    expect(
+      sampleRows.find(
+        row =>
+          row.case_kind === 'entity.change-case' &&
+          row.case_subkind === encodeCaseSubkind(SEED_SCHEMA_IDS.dataEntity)
+      )
+    ).toMatchObject({ enabled: true });
     expect(sampleRows.find(row => row.case_kind === 'entity.change-case.bulk')).toMatchObject({
       case_subkind: null,
       config: {

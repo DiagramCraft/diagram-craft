@@ -8,6 +8,7 @@ import {
 import { buildHomeBreadcrumbs } from '../../shell/breadcrumbBuilders';
 import type { WorkspaceShellContext } from '../../layouts/workspaceShellDescriptors';
 import type { AppDefinition, BreadcrumbItem } from '../../shell/shellTypes';
+import { AppDashboardPrimarySidebar } from '../../sections/dashboard/AppDashboardPrimarySidebar';
 import { DataStewardshipSidebar } from './sections/DataStewardshipSidebar';
 import {
   DS_MY_WORK_ID,
@@ -22,6 +23,7 @@ import {
 
 export const DS_APP_KEY = 'data-stewardship';
 export const DS_STEWARDSHIP_APP_KEY = 'data-stewardship-stewardship';
+export const DS_CHANGE_CASES_APP_KEY = 'data-stewardship-change-cases';
 export const DS_ASSESSMENTS_APP_KEY = 'data-stewardship-assessments';
 
 /**
@@ -75,14 +77,17 @@ export const dataStewardshipAppDefinition: AppDefinition = {
       )
     },
     {
+      // The seeded `data-stewardship-change-cases` app dashboard, with its `options` status
+      // sidebar rendered through the shell's primary sidebar slot (#3504).
       id: DS_CHANGE_CASES_ID,
+      dashboard: { appKey: DS_CHANGE_CASES_APP_KEY },
       icon: TbGitPullRequest,
       tooltip: 'Change cases & exceptions',
       route: DS_RAIL_PATHS[DS_CHANGE_CASES_ID],
       primarySidebar: ctx => (
-        <DataStewardshipSidebar
+        <AppDashboardPrimarySidebar
           workspaceSlug={ctx.workspaceSlug}
-          activeSection={DS_CHANGE_CASES_ID}
+          appKey={DS_CHANGE_CASES_APP_KEY}
         />
       )
     },

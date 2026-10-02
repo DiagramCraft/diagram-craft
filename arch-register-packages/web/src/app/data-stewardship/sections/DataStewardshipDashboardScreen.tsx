@@ -7,7 +7,7 @@ import type { DataStewardshipMyWorkSearchParams } from '../../../routes/searchPa
 import { dataStewardshipAppDefinition } from '../dataStewardshipShell';
 import { resolveDataStewardshipConfig } from '../dataStewardshipQueries';
 import { DS_MY_WORK_ID, DS_RAIL_PATHS } from '../dataStewardshipSections';
-import { DataStewardshipCaseDrawer } from './DataStewardshipCaseDrawer';
+import { GovernanceCaseDrawer } from '../../../sections/governance/GovernanceCaseDrawer';
 
 /**
  * `AppRailSection.dashboard.appKey` (declared once in `dataStewardshipShell.tsx`) is the source of
@@ -57,7 +57,8 @@ export const DataStewardshipDashboardScreen = () => {
         />
       )}
       {isEnabled && search.caseId && (
-        <DataStewardshipCaseDrawer
+        <GovernanceCaseDrawer
+          entityNoun="dataset"
           workspaceSlug={workspaceSlug}
           caseId={search.caseId}
           onClose={() => patchSearch({ caseId: undefined })}

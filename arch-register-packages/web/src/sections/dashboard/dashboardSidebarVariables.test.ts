@@ -25,6 +25,25 @@ describe('computeSidebarVariables', () => {
     });
   });
 
+  describe('options', () => {
+    const sidebar: DashboardSidebarConfig = {
+      kind: 'options',
+      variableName: 'status',
+      options: [
+        { value: 'open', label: 'Open' },
+        { value: 'completed', label: 'Completed' }
+      ]
+    };
+
+    it('resolves the selected option value', () => {
+      expect(computeSidebarVariables(sidebar, { status: 'open' })).toEqual({ status: 'open' });
+    });
+
+    it('defaults to an empty string when nothing is selected', () => {
+      expect(computeSidebarVariables(sidebar, {})).toEqual({ status: '' });
+    });
+  });
+
   describe('facets', () => {
     const sidebar: DashboardSidebarConfig = {
       kind: 'facets',

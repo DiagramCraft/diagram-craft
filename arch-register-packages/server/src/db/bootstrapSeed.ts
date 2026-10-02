@@ -37,6 +37,7 @@ import {
   seedBootstrapUsers,
   seedCatalogDefinitions,
   seedCatalogEntities,
+  seedDemoEntityChangeCases,
   seedEntityDrawerConfiguration,
   seedCatalogViews,
   seedPublicIdCounters,
@@ -428,6 +429,9 @@ export const seedBootstrapData = async (
   }
 
   await seedBootstrapUsers(db);
+  if (options.dataset === 'demo') {
+    await seedDemoEntityChangeCases(db);
+  }
 
   // Seed the actual current state into the target historical version model before adding
   // planned cases. Seed data is a clean bootstrap, so no legacy snapshot backfill is needed.

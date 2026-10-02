@@ -3,16 +3,19 @@ import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { Button } from '@diagram-craft/app-components/Button';
 import type {
   DashboardFacetConfig,
-  DashboardSidebarConfig
+  DashboardSidebarConfig,
+  DashboardSidebarOption
 } from '@arch-register/api-types/dashboardContract';
 import { facetKindForField } from './dashboardFacetFields';
 import { useSchemas } from '../../hooks/useSchemas';
 import { DialogContent, DialogSection } from '../markdown/editor/BlockDialog';
 import {
   isFacetsConfigValid,
+  isOptionsConfigValid,
   isValidVariableName,
   moveItem,
-  normalizeFacets
+  normalizeFacets,
+  normalizeOptions
 } from './dashboardSidebarConfig';
 import styles from './WidgetConfigDialog.module.css';
 
@@ -25,8 +28,8 @@ type Props = {
 };
 
 /**
- * Configures a dashboard's optional sidebar (#3467): either a single-select `entity-picker` or a
- * multi-select `facets` sidebar. Variables are referenced by widget config as `$<variableName>`,
+ * Configures a dashboard's optional sidebar (#3467): a single-select `entity-picker`, a
+ * multi-select `facets` sidebar, or a single-select `options` list of fixed value/label pairs. Variables are referenced by widget config as `$<variableName>`,
  * see `resolveSidebarVariableReferences.ts`.
  */
 export const DashboardSidebarConfigDialog = ({
@@ -38,8 +41,17 @@ export const DashboardSidebarConfigDialog = ({
 }: Props) => {
   const entityPicker = sidebar?.kind === 'entity-picker' ? sidebar : null;
   const facetsSidebar = sidebar?.kind === 'facets' ? sidebar : null;
+  const optionsSidebar = sidebar?.kind === 'options' ? sidebar : null;
   const schemas = useSchemas(workspaceSlug);
-  const [kind, setKind] = useState<'entity-picker' | 'facets'>(sidebar?.kind ?? 'entity-picker');
+  const [kind, setKind] = useState<DashboardSidebarConfig['kind']>(
+    sidebar?.kind ?? 'entity-picker'
+  );
+  const [optionsVariableName, setOptionsVariableName] = useState(
+    optionsSidebar?.variableName ?? ''
+  );
+  const [optionsItemLabel, setOptionsItemLabel] = useState(optionsSidebar?.itemLabel ?? '');
+  const [optionsAllLabel, setOptionsAllLabel] = useState(optionsSidebar?.allLabel ?? '');
+  const [options, setOptions] = useState<DashboardSidebarOption[]>(optionsSidebar?.options ?? []);
   const [schemaName, setSchemaName] = useState(entityPicker?.schemaName ?? '');
   const [variableName, setVariableName] = useState(entityPicker?.variableName ?? '');
   const [itemLabel, setItemLabel] = useState(entityPicker?.itemLabel ?? '');
@@ -67,10 +79,15 @@ export const DashboardSidebarConfigDialog = ({
     );
   };
 
+  const updateOption = (index: number, patch: Partial<DashboardSidebarOption>) =>
+    setOptions(current => current.map((o, i) => (i === index ? { ...o, ...patch } : o)));
+
   const canSave =
     kind === 'facets'
       ? isFacetsConfigValid(facetsSchemaName, facets)
-      : schemaName.trim() !== '' && isValidVariableName(variableName.trim());
+      : kind === 'options'
+        ? isOptionsConfigValid(optionsVariableName, options)
+        : schemaName.trim() !== '' && isValidVariableName(variableName.trim());
 
   return (
     <Dialog
@@ -105,13 +122,21 @@ export const DashboardSidebarConfigDialog = ({
                     schemaName: facetsSchemaName.trim(),
                     facets: normalizeFacets(facets)
                   }
-                : {
-                    kind: 'entity-picker',
-                    schemaName: schemaName.trim(),
-                    variableName: variableName.trim(),
-                    itemLabel: itemLabel.trim() || undefined,
-                    ...(entityPicker?.valueKind ? { valueKind: entityPicker.valueKind } : {})
-                  }
+                : kind === 'options'
+                  ? {
+                      kind: 'options',
+                      variableName: optionsVariableName.trim(),
+                      itemLabel: optionsItemLabel.trim() || undefined,
+                      allLabel: optionsAllLabel.trim() || undefined,
+                      options: normalizeOptions(options)
+                    }
+                  : {
+                      kind: 'entity-picker',
+                      schemaName: schemaName.trim(),
+                      variableName: variableName.trim(),
+                      itemLabel: itemLabel.trim() || undefined,
+                      ...(entityPicker?.valueKind ? { valueKind: entityPicker.valueKind } : {})
+                    }
             );
             onClose();
           }
@@ -123,13 +148,97 @@ export const DashboardSidebarConfigDialog = ({
           <select
             className={styles.selectInput}
             value={kind}
-            onChange={event => setKind(event.currentTarget.value as 'entity-picker' | 'facets')}
+            onChange={event => setKind(event.currentTarget.value as DashboardSidebarConfig['kind'])}
           >
             <option value="entity-picker">Entity picker (single select)</option>
             <option value="facets">Facets (multi select)</option>
+            <option value="options">Fixed options (single select)</option>
           </select>
         </DialogSection>
-        {kind === 'facets' ? (
+        {kind === 'options' ? (
+          <>
+            <DialogSection label="Variable name">
+              <input
+                type="text"
+                className={styles.labelInput}
+                placeholder="e.g. status"
+                value={optionsVariableName}
+                onChange={event => setOptionsVariableName(event.currentTarget.value)}
+              />
+              <div className={styles.hint}>
+                Referenced in widget config as <code>${optionsVariableName || '<name>'}</code>. It
+                is empty when nothing is selected.
+              </div>
+            </DialogSection>
+            <DialogSection label="List label" required={false}>
+              <input
+                type="text"
+                className={styles.labelInput}
+                value={optionsItemLabel}
+                onChange={event => setOptionsItemLabel(event.currentTarget.value)}
+              />
+            </DialogSection>
+            <DialogSection label="“All” row label" required={false}>
+              <input
+                type="text"
+                className={styles.labelInput}
+                placeholder="e.g. All (leave empty for no “All” row)"
+                value={optionsAllLabel}
+                onChange={event => setOptionsAllLabel(event.currentTarget.value)}
+              />
+            </DialogSection>
+            <DialogSection label="Options">
+              <div className={styles.options}>
+                {options.map((option, index) => (
+                  <div key={index} className={styles.options}>
+                    <input
+                      type="text"
+                      className={styles.labelInput}
+                      placeholder="Value"
+                      value={option.value}
+                      onChange={event => updateOption(index, { value: event.currentTarget.value })}
+                    />
+                    <input
+                      type="text"
+                      className={styles.labelInput}
+                      placeholder="Label"
+                      value={option.label}
+                      onChange={event => updateOption(index, { label: event.currentTarget.value })}
+                    />
+                    <div className={styles.optionRow}>
+                      <Button
+                        variant="secondary"
+                        disabled={index === 0}
+                        onClick={() => setOptions(current => moveItem(current, index, -1))}
+                      >
+                        Move up
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        disabled={index === options.length - 1}
+                        onClick={() => setOptions(current => moveItem(current, index, 1))}
+                      >
+                        Move down
+                      </Button>
+                      <Button
+                        variant="danger"
+                        onClick={() => setOptions(current => current.filter((_, i) => i !== index))}
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+                <Button
+                  variant="secondary"
+                  onClick={() => setOptions(current => [...current, { value: '', label: '' }])}
+                >
+                  Add option
+                </Button>
+              </div>
+            </DialogSection>
+          </>
+        ) : kind === 'facets' ? (
           <>
             <DialogSection label="Entity schema">
               <select

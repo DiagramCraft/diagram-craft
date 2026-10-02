@@ -12,7 +12,7 @@ const optionalText = (value: string): string | undefined =>
 
 /** Case kinds with a real backing case model in this codebase — not an enum, just known ones to
  * offer without requiring a user to type a raw case-kind string from scratch. */
-const KNOWN_CASE_KINDS = ['entity.change-case', 'entity.deprecation', 'field-date-reminder'];
+export const KNOWN_CASE_KINDS = ['entity.change-case', 'entity.deprecation', 'field-date-reminder'];
 
 const SCOPE_LABEL: Record<NeedsAttentionScope, string> = {
   workspace: 'Workspace-wide',
@@ -68,7 +68,7 @@ export const NeedsAttentionConfigForm = ({ config, onChange }: Props) => {
       <DialogSection label="Case kinds">
         <div className={styles.options}>
           {KNOWN_CASE_KINDS.map(kind => (
-            <label key={kind} className={styles.optionRow}>
+            <label key={kind} className={styles.checkboxRow}>
               <input
                 type="checkbox"
                 checked={config.caseKinds.includes(kind)}
@@ -78,7 +78,7 @@ export const NeedsAttentionConfigForm = ({ config, onChange }: Props) => {
             </label>
           ))}
           {otherKinds.map(kind => (
-            <label key={kind} className={styles.optionRow}>
+            <label key={kind} className={styles.checkboxRow}>
               <input
                 type="checkbox"
                 checked
