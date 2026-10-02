@@ -39,6 +39,35 @@ describe('dashboardSidebarConfigSchema', () => {
     expect(result.success && result.data.kind === 'facets' && result.data.facets).toHaveLength(3);
   });
 
+  it('accepts an options sidebar with fixed value/label pairs', () => {
+    const result = dashboardSidebarConfigSchema.safeParse({
+      kind: 'options',
+      variableName: 'status',
+      itemLabel: 'Status',
+      allLabel: 'All change cases',
+      options: [
+        { value: 'open', label: 'Open' },
+        { value: 'completed', label: 'Completed' }
+      ]
+    });
+    expect(result.success).toBe(true);
+    expect(result.success && result.data.kind).toBe('options');
+  });
+
+  it('rejects an options sidebar with no options or an empty option value', () => {
+    expect(
+      dashboardSidebarConfigSchema.safeParse({ kind: 'options', variableName: 'status', options: [] })
+        .success
+    ).toBe(false);
+    expect(
+      dashboardSidebarConfigSchema.safeParse({
+        kind: 'options',
+        variableName: 'status',
+        options: [{ value: '', label: 'Nothing' }]
+      }).success
+    ).toBe(false);
+  });
+
   it('rejects a facets sidebar with an empty facets array', () => {
     const result = dashboardSidebarConfigSchema.safeParse({
       kind: 'facets',

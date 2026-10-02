@@ -22,13 +22,12 @@ const config = {
   schemaName: 'Data Entity',
   caseKinds: ['entity.change-case'],
   severity: 'due-date',
-  entityLabel: 'Dataset',
   label: 'Change cases'
 };
 
 /**
  * The generic change case table (#3504): every case of the configured kinds against entities of
- * one schema, with local search and status filter.
+ * one schema, optionally narrowed to a status.
  */
 const meta = {
   title: 'Dashboard Widgets/ChangeCaseTable',

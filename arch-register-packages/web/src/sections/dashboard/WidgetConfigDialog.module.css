@@ -15,6 +15,14 @@
   gap: 16px;
 }
 
+/* A checkbox followed by its label, kept together on the left (unlike `.optionRow`, which pushes
+   its two children to opposite edges). */
+.checkboxRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .optionLabel {
   font-size: 13px;
   color: var(--base-fg);

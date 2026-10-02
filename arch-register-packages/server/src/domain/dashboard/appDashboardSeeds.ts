@@ -214,9 +214,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
           schemaName: 'Data Entity',
           caseKinds: ['entity.change-case'],
           severity: 'due-date',
-          entityLabel: 'Dataset',
-          principalField: 'steward',
-          principalLabel: 'Steward',
+          status: '$status',
           label: 'Change cases'
         },
         x: 0,
@@ -224,7 +222,18 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
         w: 12,
         h: 25
       }
-    ]
+    ],
+    sidebar: {
+      kind: 'options',
+      variableName: 'status',
+      itemLabel: 'Status',
+      allLabel: 'All change cases',
+      options: [
+        { value: 'open', label: 'Open' },
+        { value: 'completed', label: 'Completed' },
+        { value: 'cancelled', label: 'Cancelled' }
+      ]
+    }
   },
   [DATA_STEWARDSHIP_STEWARDSHIP_APP_KEY]: {
     name: 'Stewardship',

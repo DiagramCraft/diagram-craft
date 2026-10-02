@@ -78,7 +78,7 @@ export const ChangeCaseTableConfigForm = ({ config, onChange }: Props) => {
             ...KNOWN_CASE_KINDS,
             ...config.caseKinds.filter(kind => !KNOWN_CASE_KINDS.includes(kind))
           ].map(kind => (
-            <label key={kind} className={styles.optionRow}>
+            <label key={kind} className={styles.checkboxRow}>
               <input
                 type="checkbox"
                 checked={config.caseKinds.includes(kind)}
@@ -103,6 +103,16 @@ export const ChangeCaseTableConfigForm = ({ config, onChange }: Props) => {
           ))}
         </Select.Root>
       </DialogSection>
+      <DialogSection label="Status filter" required={false}>
+        <div className={styles.options}>
+          <TextOption
+            label="Status"
+            value={config.status}
+            placeholder="open, completed, cancelled or $variable"
+            onChange={status => onChange({ ...config, status })}
+          />
+        </div>
+      </DialogSection>
       <DialogSection label="Display" required={false}>
         <div className={styles.options}>
           <TextOption
@@ -110,24 +120,6 @@ export const ChangeCaseTableConfigForm = ({ config, onChange }: Props) => {
             value={config.label}
             placeholder="Change cases"
             onChange={label => onChange({ ...config, label })}
-          />
-          <TextOption
-            label="Entity label"
-            value={config.entityLabel}
-            placeholder="Entity"
-            onChange={entityLabel => onChange({ ...config, entityLabel })}
-          />
-          <TextOption
-            label="Principal field"
-            value={config.principalField}
-            placeholder="e.g. steward"
-            onChange={principalField => onChange({ ...config, principalField })}
-          />
-          <TextOption
-            label="Principal column"
-            value={config.principalLabel}
-            placeholder="Defaults to the field"
-            onChange={principalLabel => onChange({ ...config, principalLabel })}
           />
         </div>
       </DialogSection>

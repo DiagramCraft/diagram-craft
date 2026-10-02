@@ -8,7 +8,7 @@ export const CHANGE_CASE_TABLE_TYPE = 'ChangeCaseTable' as const;
 const isOptionalString = (value: unknown): boolean => value === undefined || typeof value === 'string';
 
 /**
- * Dashboard-only searchable table of governance cases (every status) against entities of a chosen
+ * Dashboard-only table of governance cases (every status) against entities of a chosen
  * schema, restricted to a chosen set of case kinds — not tied to any particular app. Generalized
  * from Data Stewardship's former Change cases screen (#3504).
  */
@@ -16,7 +16,7 @@ export const changeCaseTableSpec: DashboardWidgetSpec<ChangeCaseTableConfig> = {
   icon: TbGitPullRequest,
   label: 'Change case table',
   description:
-    'Searchable register of governance cases against entities of a chosen type, in any status.',
+    'Register of governance cases against entities of a chosen type, in any status.',
   defaultW: 12,
   defaultH: 20,
   surfaces: ['workspace'],
@@ -27,9 +27,7 @@ export const changeCaseTableSpec: DashboardWidgetSpec<ChangeCaseTableConfig> = {
     Array.isArray(config.caseKinds) &&
     config.caseKinds.every(kind => typeof kind === 'string') &&
     (config.severity === 'none' || config.severity === 'due-date') &&
-    isOptionalString(config.entityLabel) &&
-    isOptionalString(config.principalField) &&
-    isOptionalString(config.principalLabel) &&
+    isOptionalString(config.status) &&
     isOptionalString(config.label),
   createDefaultConfig: () => ({
     schemaName: '',

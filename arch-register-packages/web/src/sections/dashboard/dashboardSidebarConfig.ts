@@ -1,4 +1,7 @@
-import type { DashboardFacetConfig } from '@arch-register/api-types/dashboardContract';
+import type {
+  DashboardFacetConfig,
+  DashboardSidebarOption
+} from '@arch-register/api-types/dashboardContract';
 
 export const isValidVariableName = (value: string) => /^[a-zA-Z_]\w*$/.test(value);
 
@@ -30,3 +33,20 @@ export const normalizeFacets = (facets: readonly DashboardFacetConfig[]): Dashbo
     variableName: facet.variableName.trim(),
     itemLabel: facet.itemLabel?.trim() || undefined
   }));
+
+export const isOptionsConfigValid = (
+  variableName: string,
+  options: readonly DashboardSidebarOption[]
+): boolean => {
+  if (!isValidVariableName(variableName.trim()) || options.length === 0) return false;
+  const values = options.map(option => option.value.trim());
+  return (
+    options.every(option => option.value.trim() !== '' && option.label.trim() !== '') &&
+    new Set(values).size === values.length
+  );
+};
+
+export const normalizeOptions = (
+  options: readonly DashboardSidebarOption[]
+): DashboardSidebarOption[] =>
+  options.map(option => ({ value: option.value.trim(), label: option.label.trim() }));

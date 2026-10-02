@@ -53,6 +53,14 @@ export const dashboardFacetConfigSchema = z.object({
   itemLabel: z.string().optional().describe("Group label shown above this facet's list")
 });
 
+export const dashboardSidebarOptionSchema = z.object({
+  value: z
+    .string()
+    .min(1)
+    .describe('Value exposed as $<variableName> when this option is selected'),
+  label: z.string().describe('Label shown for this option in the sidebar')
+});
+
 export const dashboardSidebarConfigSchema = z.discriminatedUnion('kind', [
   z.object({
     kind: z.literal('entity-picker').describe('Single-select list of one schema’s entities'),
@@ -78,6 +86,28 @@ export const dashboardSidebarConfigSchema = z.discriminatedUnion('kind', [
       .array(dashboardFacetConfigSchema)
       .min(1)
       .describe('Facet sections to render, each its own labeled multi-select list')
+  }),
+  z.object({
+    kind: z
+      .literal('options')
+      .describe('Single-select list of fixed value/label pairs (no counts, no entity lookup)'),
+    variableName: dashboardSidebarVariableNameSchema.describe(
+      'Exposed as $<variableName>, holding the selected option value, or an empty string when ' +
+        'nothing is selected, for substitution into widget config string values (see ' +
+        'resolveSidebarVariableReferences)'
+    ),
+    itemLabel: z.string().optional().describe('Group label shown above the options list'),
+    allLabel: z
+      .string()
+      .optional()
+      .describe(
+        'When set, a first row with this label is shown that is active while nothing is selected ' +
+          'and clears the selection when clicked'
+      ),
+    options: z
+      .array(dashboardSidebarOptionSchema)
+      .min(1)
+      .describe('Fixed options to choose between; re-selecting the active one clears it')
   })
 ]);
 
@@ -211,6 +241,7 @@ export type WorkspaceDashboard = z.infer<typeof workspaceDashboardSchema>;
 
 export type DashboardSidebarConfig = z.infer<typeof dashboardSidebarConfigSchema>;
 
+export type DashboardSidebarOption = z.infer<typeof dashboardSidebarOptionSchema>;
 export type DashboardFacetConfig = z.infer<typeof dashboardFacetConfigSchema>;
 
 export type CreateDashboardRequest = z.infer<typeof createDashboardBodySchema>;

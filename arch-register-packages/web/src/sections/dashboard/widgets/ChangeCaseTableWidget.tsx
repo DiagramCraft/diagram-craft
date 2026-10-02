@@ -1,11 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { Chip } from '../../../components/Chip';
-import { SearchInput } from '../../../components/SearchInput';
 import { Table } from '../../../components/table/Table';
 import { toneColor } from '../../../components/bandColor';
 import { useDateTimeFormatPreference } from '../../../hooks/useDateTimeFormatPreference';
-import { usePrincipalLabel, type PrincipalValue } from '../../../hooks/usePrincipalLabel';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { formatDate } from '../../../utils/dateFormat';
 import { caseKindLabel } from '../../../utils/governanceCaseLabels';
@@ -13,12 +11,7 @@ import { GovernanceCaseDrawer } from '../../governance/GovernanceCaseDrawer';
 import { useEntityDrawer } from '../../entities/entityDrawer/useEntityDrawer';
 import type { NeedsAttentionPriority, NeedsAttentionSeverity } from './needsAttentionQueue';
 import { useEntityCaseRegister } from './entityCaseRegister';
-import {
-  CHANGE_CASE_STATUSES,
-  countByStatus,
-  filterChangeCaseRows,
-  type ChangeCaseStatus
-} from './changeCaseTableLogic';
+import { filterByStatus, isChangeCaseStatus } from './changeCaseTableLogic';
 import styles from './ChangeCaseTableWidget.module.css';
 
 export type ChangeCaseTableConfig = {
@@ -26,12 +19,11 @@ export type ChangeCaseTableConfig = {
   schemaName: string;
   caseKinds: string[];
   severity: NeedsAttentionSeverity;
-  /** Singular label for the case subject, used as the column header and drawer noun. */
-  entityLabel?: string;
-  /** Key of a principal field on the entity to show as an extra column (e.g. a steward). */
-  principalField?: string;
-  /** Header of the principal column; defaults to the field key. */
-  principalLabel?: string;
+  /**
+   * Only list cases in this status (`open`, `completed` or `cancelled`). Any other value —
+   * including an unresolved or empty `$variable` from a dashboard sidebar — means no filter.
+   */
+  status?: string;
   label?: string;
 };
 
@@ -47,14 +39,10 @@ const PRIORITY_COLOR: Record<NeedsAttentionPriority, string | undefined> = {
   low: undefined
 };
 
-const STATUS_FILTERS: ReadonlyArray<ChangeCaseStatus | undefined> = [
-  undefined,
-  ...CHANGE_CASE_STATUSES
-];
-
 /**
- * A searchable register of governance cases (any case kinds) against entities of one schema, in
- * every status. The search box and status chips are local state. Rows open the shared
+ * A register of governance cases (any case kinds) against entities of one schema, in
+ * every status. The status filter comes from `config.status`, which a
+ * dashboard's `options` sidebar can drive. Rows open the shared
  * `GovernanceCaseDrawer` through the `caseId` search param, which this widget also hosts.
  */
 export const ChangeCaseTableWidget = ({ config }: { config: ChangeCaseTableConfig }) => {
@@ -62,11 +50,9 @@ export const ChangeCaseTableWidget = ({ config }: { config: ChangeCaseTableConfi
   const navigate = useNavigate();
   const { openEntityDrawer } = useEntityDrawer();
   const search = useSearch({ strict: false }) as { caseId?: string };
-  const principalLabel = usePrincipalLabel();
   const dateTimeFormatPreference = useDateTimeFormatPreference();
 
-  const [query, setQuery] = useState('');
-  const [status, setStatus] = useState<ChangeCaseStatus | undefined>(undefined);
+  const status = isChangeCaseStatus(config.status) ? config.status : undefined;
 
   const schemaId = schemas.find(schema => schema.name === config.schemaName)?.id ?? null;
   const hasConfig = !!config.schemaName && config.caseKinds.length > 0;
@@ -76,11 +62,7 @@ export const ChangeCaseTableWidget = ({ config }: { config: ChangeCaseTableConfi
     hasConfig
   );
 
-  const counts = useMemo(() => countByStatus(register.rows), [register.rows]);
-  const rows = useMemo(
-    () => filterChangeCaseRows(register.rows, { status, query }),
-    [register.rows, status, query]
-  );
+  const rows = useMemo(() => filterByStatus(register.rows, status), [register.rows, status]);
 
   const patchCaseId = (caseId: string | undefined) =>
     navigate({
@@ -94,49 +76,17 @@ export const ChangeCaseTableWidget = ({ config }: { config: ChangeCaseTableConfi
     return <div className={`${styles.message} dim`}>Entity type “{config.schemaName}” not found.</div>;
   }
 
-  const entityLabel = config.entityLabel?.trim() || 'Entity';
   const showRisk = config.severity === 'due-date';
-  const columnCount = 6 + (config.principalField ? 1 : 0) + (showRisk ? 1 : 0);
+  const columnCount = 6 + (showRisk ? 1 : 0);
 
   return (
     <div className={styles.root}>
-      <div className={styles.toolbar}>
-        <SearchInput
-          size="sm"
-          value={query}
-          placeholder={`Search ${entityLabel.toLowerCase()}s, requesters…`}
-          aria-label="Search"
-          onChange={setQuery}
-          onClear={() => setQuery('')}
-        />
-        <div className={styles.statusFilters}>
-          {STATUS_FILTERS.map(value => (
-            <button
-              key={value ?? 'all'}
-              type="button"
-              className={`${styles.statusFilter} ${status === value ? styles.statusFilterActive : ''}`}
-              data-testid={`change-case-table-status-${value ?? 'all'}`}
-              aria-pressed={status === value}
-              onClick={() => setStatus(value)}
-            >
-              {value ?? 'All'}
-              <span className="dim mono">
-                {value ? counts[value] : register.rows.length}
-              </span>
-            </button>
-          ))}
-        </div>
-      </div>
-
       <Table.Root scroll stickyHeader>
         <Table.Head>
           <Table.Row>
             <Table.HeaderCell>Kind</Table.HeaderCell>
-            <Table.HeaderCell>{entityLabel}</Table.HeaderCell>
+            <Table.HeaderCell>{config.schemaName}</Table.HeaderCell>
             <Table.HeaderCell>Requester</Table.HeaderCell>
-            {config.principalField && (
-              <Table.HeaderCell>{config.principalLabel ?? config.principalField}</Table.HeaderCell>
-            )}
             {showRisk && <Table.HeaderCell>Risk</Table.HeaderCell>}
             <Table.HeaderCell>Raised</Table.HeaderCell>
             <Table.HeaderCell>Due</Table.HeaderCell>
@@ -160,14 +110,6 @@ export const ChangeCaseTableWidget = ({ config }: { config: ChangeCaseTableConfi
                 <Table.Cell className={row.requesterName == null ? 'dim' : undefined}>
                   {row.requesterName ?? 'unknown'}
                 </Table.Cell>
-                {config.principalField && (
-                  <Table.Cell
-                    className={row.entity[config.principalField] == null ? 'dim' : undefined}
-                  >
-                    {principalLabel(row.entity[config.principalField] as PrincipalValue) ??
-                      'unassigned'}
-                  </Table.Cell>
-                )}
                 {showRisk && (
                   <Table.Cell>
                     <Chip tone="ghost" color={PRIORITY_COLOR[row.risk]}>
@@ -190,7 +132,7 @@ export const ChangeCaseTableWidget = ({ config }: { config: ChangeCaseTableConfi
         <GovernanceCaseDrawer
           workspaceSlug={workspaceSlug}
           caseId={search.caseId}
-          entityNoun={entityLabel.toLowerCase()}
+          entityNoun={config.schemaName.toLowerCase()}
           onClose={() => patchCaseId(undefined)}
           onOpenDataset={publicId => {
             patchCaseId(undefined);

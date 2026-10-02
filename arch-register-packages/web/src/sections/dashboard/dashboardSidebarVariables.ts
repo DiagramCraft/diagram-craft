@@ -8,6 +8,9 @@ import type { DashboardSidebarVariables } from './DashboardSidebarContext';
  * `entity-picker` (single-select) leaves an unselected variable absent, so its `$variableName`
  * placeholder stays literal (visibly "nothing picked") rather than resolving to an empty string.
  *
+ * `options` (fixed single-select) resolves an unselected variable to an empty string rather than
+ * leaving the placeholder literal: its consumers (e.g. a status filter) treat '' as "no filter".
+ *
  * `facets` (multi-select) must instead resolve an unselected variable to an explicit empty string:
  * `resolveConfigVariables`'s whole-match array expansion turns `''` into `[]`, which
  * `stripEmptyGroups` then drops as "no filter" (`entityBrowserState.ts`). Leaving the variable
@@ -23,6 +26,11 @@ export const computeSidebarVariables = (
   if (sidebar.kind === 'entity-picker') {
     const value = search[sidebar.variableName];
     if (typeof value === 'string') variables[sidebar.variableName] = value;
+    return variables;
+  }
+  if (sidebar.kind === 'options') {
+    const value = search[sidebar.variableName];
+    variables[sidebar.variableName] = typeof value === 'string' ? value : '';
     return variables;
   }
   for (const facet of sidebar.facets) {

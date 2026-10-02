@@ -68,7 +68,7 @@ export const NeedsAttentionConfigForm = ({ config, onChange }: Props) => {
       <DialogSection label="Case kinds">
         <div className={styles.options}>
           {KNOWN_CASE_KINDS.map(kind => (
-            <label key={kind} className={styles.optionRow}>
+            <label key={kind} className={styles.checkboxRow}>
               <input
                 type="checkbox"
                 checked={config.caseKinds.includes(kind)}
@@ -78,7 +78,7 @@ export const NeedsAttentionConfigForm = ({ config, onChange }: Props) => {
             </label>
           ))}
           {otherKinds.map(kind => (
-            <label key={kind} className={styles.optionRow}>
+            <label key={kind} className={styles.checkboxRow}>
               <input
                 type="checkbox"
                 checked

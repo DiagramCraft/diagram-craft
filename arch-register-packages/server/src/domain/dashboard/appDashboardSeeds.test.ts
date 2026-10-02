@@ -104,15 +104,25 @@ describe('APP_DASHBOARD_SEEDS', () => {
     expect(seed!.widgets[4]!.config).toMatchObject({ schemaName: 'Data Entity', limit: 8 });
   });
 
-  it('seeds the data stewardship Change cases dashboard with one change case table, no sidebar', () => {
+  it('seeds the data stewardship Change cases dashboard with one change case table and a status options sidebar', () => {
     const seed = APP_DASHBOARD_SEEDS[DATA_STEWARDSHIP_CHANGE_CASES_APP_KEY];
     expect(seed).toBeDefined();
-    expect(seed!.sidebar).toBeUndefined();
+    expect(seed!.sidebar).toEqual({
+      kind: 'options',
+      variableName: 'status',
+      itemLabel: 'Status',
+      allLabel: 'All change cases',
+      options: [
+        { value: 'open', label: 'Open' },
+        { value: 'completed', label: 'Completed' },
+        { value: 'cancelled', label: 'Cancelled' }
+      ]
+    });
     expect(seed!.widgets.map(widget => widget.type)).toEqual(['ChangeCaseTable']);
     expect(seed!.widgets[0]!.config).toMatchObject({
       schemaName: 'Data Entity',
       caseKinds: ['entity.change-case'],
-      principalField: 'steward'
+      status: '$status'
     });
   });
 
