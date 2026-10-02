@@ -19,7 +19,7 @@ export const assessmentsSpec = defineMdxComponent<
   dashboardWidget: {
     icon: TbClipboardCheck,
     label: 'Assessments',
-    description: 'Open or all assessments filtered by mode and assessment type.',
+    description: 'Open or all assessments filtered by mode, assessment type and entity type scope.',
     defaultW: 3,
     defaultH: 12,
     surfaces: ['workspace', 'project'],
@@ -30,6 +30,10 @@ export const assessmentsSpec = defineMdxComponent<
         config.mode === 'overdue' ||
         config.mode === 'all') &&
       (config.assessmentTypeId === undefined || typeof config.assessmentTypeId === 'string') &&
+      (config.schemaNames === undefined ||
+        (Array.isArray(config.schemaNames) &&
+          config.schemaNames.every(name => typeof name === 'string'))) &&
+      (config.relativeDue === undefined || typeof config.relativeDue === 'boolean') &&
       (config.label === undefined || typeof config.label === 'string'),
     createDefaultConfig: () => ({ mode: 'active' }),
     getTitle: (config: AssessmentsWidgetConfig) => {

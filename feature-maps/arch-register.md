@@ -53,11 +53,14 @@
           diagrams, and other primary work areas. The home screen shows a composable dashboard of widgets (stat metrics,
           saved-view embeds, entity tables, entity cards, entity graphs, entity changelogs, document browsers, entity
           browsers, diagram previews, wiki-page embeds, lifecycle and activity-trend charts, stale-entity reports, an
-          activity feed, configurable Markdown content, and API & Integration Catalog statistics and list panels)
+          activity feed, configurable Markdown content, API & Integration Catalog statistics and list panels, ratio
+          bar-lists, a risk matrix, and assessment lists and counts scoped to chosen entity types)
           laid out on a grid; a fresh workspace shows a sensible default layout. The entity table and entity browser
           widgets both show a list of entities but serve different needs: entity table offers quick, flat schema/owner/
           lifecycle/limit filtering with fixed columns, while entity browser exposes the full entity browser experience
           (arbitrary filter conditions, sort, and table/cards/tree/map views) for users who need finer-grained control.
+          Table column headers are clickable to sort by any column, ascending or descending, and an entity browser
+          widget can have its own title and a maximum number of rows.
           A workspace can have multiple
           named dashboards, listed in order in a "Dashboards" section of the home sidebar and switchable by selecting
           one; the first dashboard in that order is shown at the workspace home, and a workspace always retains at
@@ -475,21 +478,18 @@
       (policy entity schema and assignment relation schema bindings), rather than on `risk-compliance` — a workspace
       can have Retention configured without the rest of Risk & Compliance being enabled, or vice versa.
 
-        - @id:ar.risk-compliance.overview The Overview section (the app switcher's landing section) is a read-only
-          dashboard summarizing the other four sections, each panel linking into the section that owns the full
-          view — mirroring Vendor Management's own Overview (`ar.vendor-management`). A four-tile stat strip (risks
-          outside appetite, control coverage %, retention completeness, and open risk/control assessments due within
-          30 days), a two-column row of the same 5×5 risk matrix the Risks section uses (with its own
-          inherent/residual toggle) plus the highest-residual live risks, a second two-column row of coverage grouped
-          by `control_type` (standing in for "family", same substitution the Controls section makes) plus a table of
-          live risks with weak or missing control coverage, and a third row pairing an "upcoming reviews" panel (the
-          union of open risk and control assessments, reusing the Assessments section's `AssessmentDuePanel`) with a
-          list of retention assignments missing a required field. The design reference's "records past disposal" /
-          retention-expiry-summary panel has no analog here: `retention-assignment` links a policy to a Data Entity
-          category, not an individual record, so no per-record disposal date exists to summarize (the same
-          constraint that shaped `ar.risk-compliance.retention` below) — retention *completeness* (assignments
-          missing a field) is reported instead, as the closest thing the data can actually support. Selecting a risk
-          from either risk panel opens the shared Risk drawer in place, without navigating away from Overview.
+        - @id:ar.risk-compliance.overview The Overview section (the app switcher's landing section) is a
+          configurable dashboard (the same seeded, editable app dashboard as the Retention section) summarizing risk
+          posture, control coverage and what falls due next. The seeded layout has a three-tile stat strip (risks
+          outside appetite, control coverage %, and open risk/control assessments due within 30 days), the 5×5 risk
+          matrix the Risks section uses (with its own inherent/residual toggle) beside a table of live risks, a
+          ratio bar-list of control effectiveness grouped by `control_type` (standing in for "family", same
+          substitution the Controls section makes) beside an "upcoming reviews" list of open risk and control
+          assessments (day-count due labels and owning project), and a table of live risks with weak or missing
+          control coverage. Selecting a risk from the matrix or a table opens the shared Risk drawer in place. The
+          dashboard can be rearranged and its widgets reconfigured like any other app dashboard. The earlier
+          retention-completeness tile and retention-gaps panel are no longer on Overview; retention assignments are
+          reviewed in the Retention section (`ar.risk-compliance.retention`).
 
         - @id:ar.risk-compliance.risks The Risks section has a sortable register (search; sidebar facets for
           Category, Status, Owner, and an "outside appetite" toggle for residual scores banding high/critical) and a

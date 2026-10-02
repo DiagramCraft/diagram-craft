@@ -7,6 +7,7 @@ export const API_INTEGRATION_CATALOG_APP_KEY = 'api-integration-catalog';
 export const API_INTEGRATION_CATALOG_IMPACT_APP_KEY = 'api-integration-catalog-impact';
 export const BUSINESS_GLOSSARY_APP_KEY = 'business-glossary';
 export const VENDOR_MANAGEMENT_VENDORS_APP_KEY = 'vendor-management-vendors';
+export const RISK_COMPLIANCE_OVERVIEW_APP_KEY = 'risk-compliance-overview';
 export const RISK_COMPLIANCE_RETENTION_APP_KEY = 'risk-compliance-retention';
 export const DATA_STEWARDSHIP_APP_KEY = 'data-stewardship';
 export const DATA_STEWARDSHIP_ASSESSMENTS_APP_KEY = 'data-stewardship-assessments';
@@ -393,6 +394,188 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
         y: 19,
         w: 12,
         h: 22
+      }
+    ]
+  },
+  [RISK_COMPLIANCE_OVERVIEW_APP_KEY]: {
+    name: 'Overview',
+    description: 'Risk posture, control coverage and what falls due next.',
+    widgets: [
+      {
+        id: 'seed-stat-outside-appetite',
+        type: 'AggregateStat',
+        config: {
+          query: 'schema:Risk AND status != "closed" AND residual_risk_score >= 10',
+          label: 'Outside appetite',
+          subtextTemplate: 'residual banded high or critical',
+          severity: { warnAt: 1 },
+          showLink: false
+        },
+        x: 0,
+        y: 0,
+        w: 4,
+        h: 5
+      },
+      {
+        id: 'seed-stat-control-coverage',
+        type: 'AggregateStat',
+        config: {
+          query: 'schema:Control AND operating_effectiveness = "effective"',
+          denominatorQuery: 'schema:Control',
+          display: 'percent',
+          label: 'Control coverage',
+          subtextTemplate: '{count} of {total} tested effective',
+          severity: { warnAt: 80, critAt: 50, direction: 'below' },
+          showLink: false
+        },
+        x: 4,
+        y: 0,
+        w: 4,
+        h: 5
+      },
+      {
+        id: 'seed-stat-due-soon',
+        type: 'AssessmentCount',
+        config: {
+          mode: 'active',
+          schemaNames: ['Risk', 'Control'],
+          dueWithinDays: 30,
+          label: 'Due in 30 days',
+          subtext: 'open risk reviews and control tests'
+        },
+        x: 8,
+        y: 0,
+        w: 4,
+        h: 5
+      },
+      {
+        id: 'seed-risk-matrix',
+        type: 'risk-compliance-risk-matrix',
+        config: {
+          schemaName: 'Risk',
+          axis: 'residual',
+          label: 'Risk matrix — likelihood × impact'
+        },
+        x: 0,
+        y: 5,
+        w: 6,
+        h: 24
+      },
+      {
+        id: 'seed-highest-residual-risks',
+        type: ENTITY_BROWSER_EMBED_WIDGET_TYPE,
+        config: {
+          title: 'Highest residual risks',
+          limit: 7,
+          q: '',
+          conditions: [],
+          // Highest residual score first; the field NAME is resolved to its id at render time.
+          sort: 'field:Residual Risk Score:desc',
+          view: 'table',
+          viewConfigs: {
+            table: {
+              fieldIds: ['Category', 'Risk Owner', 'Risk Coverage', 'Residual Risk Score']
+            }
+          },
+          // Live (not closed) risks; field NAMES are resolved against the Risk schema at render
+          // time — see EntityBrowserEmbedFieldResolution.ts.
+          schemaName: 'Risk',
+          entityQuery: {
+            root: {
+              kind: 'predicate',
+              path: [],
+              fieldId: 'Status',
+              op: 'not_equals',
+              value: 'closed'
+            }
+          }
+        },
+        x: 6,
+        y: 5,
+        w: 6,
+        h: 24
+      },
+      {
+        id: 'seed-coverage-by-control-type',
+        type: 'RatioBarList',
+        config: {
+          schemaName: 'Control',
+          groupByFieldId: 'control_type',
+          numeratorFieldId: 'operating_effectiveness',
+          numeratorValue: 'effective',
+          label: 'Control effectiveness by control type'
+        },
+        x: 0,
+        y: 29,
+        w: 6,
+        h: 16
+      },
+      {
+        id: 'seed-upcoming-reviews',
+        type: 'Assessments',
+        config: {
+          mode: 'active',
+          schemaNames: ['Risk', 'Control'],
+          relativeDue: true,
+          label: 'Upcoming risk and control reviews'
+        },
+        x: 6,
+        y: 29,
+        w: 6,
+        h: 16
+      },
+      {
+        id: 'seed-weak-control-risks',
+        type: ENTITY_BROWSER_EMBED_WIDGET_TYPE,
+        config: {
+          title: 'Risks with weak or missing control',
+          q: '',
+          conditions: [],
+          sort: 'field:Residual Risk Score:desc',
+          view: 'table',
+          viewConfigs: {
+            table: { fieldIds: ['Category', 'Risk Coverage', 'Residual Risk Score'] }
+          },
+          // Live risks whose coverage is missing or below 40%.
+          schemaName: 'Risk',
+          entityQuery: {
+            root: {
+              kind: 'and',
+              children: [
+                {
+                  kind: 'predicate',
+                  path: [],
+                  fieldId: 'Status',
+                  op: 'not_equals',
+                  value: 'closed'
+                },
+                {
+                  kind: 'or',
+                  children: [
+                    {
+                      kind: 'predicate',
+                      path: [],
+                      fieldId: 'Risk Coverage',
+                      op: 'empty',
+                      value: null
+                    },
+                    {
+                      kind: 'predicate',
+                      path: [],
+                      fieldId: 'Risk Coverage',
+                      op: 'lt',
+                      value: 40
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        x: 0,
+        y: 45,
+        w: 12,
+        h: 20
       }
     ]
   },

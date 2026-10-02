@@ -57,6 +57,9 @@ type EntityBrowserViewData = {
   linkedEntityIds?: string[];
   onFocusEntity?: (entityId: string) => void;
   activeDateField?: TableViewProps['activeDateField'];
+  /** Current `sort` string; with `onSortChange`, makes table column headers clickable. */
+  sort?: string;
+  onSortChange?: (sort: string) => void;
   unsupportedView?: ReactNode;
   joinAssessmentId?: string | null;
   joinedAssessment?: JoinedAssessmentContext | null;
@@ -132,6 +135,8 @@ export const EntityBrowserView = ({
   linkedEntityIds,
   onFocusEntity,
   activeDateField,
+  sort,
+  onSortChange,
   unsupportedView = null,
   joinAssessmentId,
   joinedAssessment,
@@ -391,6 +396,8 @@ export const EntityBrowserView = ({
           rows={rows}
           schemaMap={schemaMap}
           activeDateField={activeDateField}
+          sort={sort}
+          onSortChange={onSortChange}
           onEntityClick={onEntityClick}
           onDelete={onDelete}
           onClone={onClone}

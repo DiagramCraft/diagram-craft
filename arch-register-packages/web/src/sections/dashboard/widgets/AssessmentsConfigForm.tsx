@@ -13,7 +13,14 @@ type Props = {
 };
 
 export const AssessmentsConfigForm = ({ config, onChange }: Props) => {
-  const { assessmentTypes } = useWorkspaceContext();
+  const { assessmentTypes, schemas } = useWorkspaceContext();
+  const selectedSchemas = config.schemaNames ?? [];
+  const toggleSchema = (name: string, checked: boolean) => {
+    const next = checked
+      ? [...selectedSchemas, name]
+      : selectedSchemas.filter(existing => existing !== name);
+    onChange({ ...config, schemaNames: next.length === 0 ? undefined : next });
+  };
 
   return (
     <>
@@ -43,8 +50,32 @@ export const AssessmentsConfigForm = ({ config, onChange }: Props) => {
           ))}
         </Select.Root>
       </DialogSection>
+      <DialogSection label="Scoped to entity types" required={false}>
+        <div className={styles.options}>
+          {schemas.map(schema => (
+            <label key={schema.id} className={styles.optionRow}>
+              <input
+                type="checkbox"
+                checked={selectedSchemas.includes(schema.name)}
+                onChange={event => toggleSchema(schema.name, event.currentTarget.checked)}
+              />
+              <span className={styles.optionLabel}>{schema.name}</span>
+            </label>
+          ))}
+        </div>
+      </DialogSection>
       <DialogSection label="Display" required={false}>
         <div className={styles.options}>
+          <label className={styles.optionRow}>
+            <input
+              type="checkbox"
+              checked={config.relativeDue ?? false}
+              onChange={event =>
+                onChange({ ...config, relativeDue: event.currentTarget.checked || undefined })
+              }
+            />
+            <span className={styles.optionLabel}>Day-count due labels and project</span>
+          </label>
           <label className={styles.optionRow}>
             <span className={styles.optionLabel}>Label</span>
             <div className={styles.optionControl}>

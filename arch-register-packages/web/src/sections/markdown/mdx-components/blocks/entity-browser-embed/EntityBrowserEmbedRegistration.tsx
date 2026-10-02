@@ -20,7 +20,9 @@ const isEntityBrowserEmbedConfig = (
   typeof config.sort === 'string' &&
   typeof config.view === 'string' &&
   typeof config.viewConfigs === 'object' &&
-  config.viewConfigs !== null;
+  config.viewConfigs !== null &&
+  (config.title === undefined || typeof config.title === 'string') &&
+  (config.limit === undefined || typeof config.limit === 'number');
 
 export const entityBrowserEmbedSpec = defineMdxComponent<
   EntityBrowserEmbedSlateElement,
@@ -50,7 +52,7 @@ export const entityBrowserEmbedSpec = defineMdxComponent<
       view: 'table',
       viewConfigs: {}
     }),
-    getTitle: () => 'Entity browser',
+    getTitle: (config: EntityBrowserEmbedConfig) => config.title?.trim() || 'Entity browser',
     configForm: EntityBrowserEmbedConfigForm,
     dialogWidth: 'min(1200px, 92vw)'
   },
