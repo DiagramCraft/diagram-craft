@@ -166,8 +166,8 @@ export const DashboardSidebarConfigDialog = ({
                 onChange={event => setOptionsVariableName(event.currentTarget.value)}
               />
               <div className={styles.hint}>
-                Referenced in widget config as <code>${optionsVariableName || '<name>'}</code>;
-                empty when nothing is selected.
+                Referenced in widget config as <code>${optionsVariableName || '<name>'}</code>. It
+                is empty when nothing is selected.
               </div>
             </DialogSection>
             <DialogSection label="List label" required={false}>

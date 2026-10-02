@@ -1,4 +1,5 @@
 import { createPermissionApiTest, expect } from '../helpers/permissionFixtures';
+import { disableEntityApproval } from '../helpers/governancePolicy';
 import { seedIds } from '../helpers/seedHelper';
 
 const test = createPermissionApiTest();
@@ -48,6 +49,10 @@ const restrictedStewardshipTest = test.extend<{ restrictedStewardship: true }>({
         version: (schema.version ?? 1) + 1,
         updated_at: new Date()
       });
+
+      // These tests exercise field-group permissions on direct edits, not the approval flow the
+      // seed requires for Data Entities.
+      await disableEntityApproval(server.db, resources.workspaceId, schema.id);
 
       await use(true);
     },
