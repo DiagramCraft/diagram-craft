@@ -462,6 +462,35 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
         h: 24
       },
       {
+        id: 'seed-coverage-by-control-type',
+        type: 'RatioBarList',
+        config: {
+          schemaName: 'Control',
+          groupByFieldId: 'control_type',
+          numeratorFieldId: 'operating_effectiveness',
+          numeratorValue: 'effective',
+          label: 'Control effectiveness by control type'
+        },
+        x: 6,
+        y: 5,
+        w: 6,
+        h: 12
+      },
+      {
+        id: 'seed-upcoming-reviews',
+        type: 'Assessments',
+        config: {
+          mode: 'active',
+          schemaNames: ['Risk', 'Control'],
+          relativeDue: true,
+          label: 'Upcoming risk and control reviews'
+        },
+        x: 6,
+        y: 17,
+        w: 6,
+        h: 12
+      },
+      {
         id: 'seed-highest-residual-risks',
         type: ENTITY_BROWSER_EMBED_WIDGET_TYPE,
         config: {
@@ -490,39 +519,10 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
             }
           }
         },
-        x: 6,
-        y: 5,
-        w: 6,
-        h: 24
-      },
-      {
-        id: 'seed-coverage-by-control-type',
-        type: 'RatioBarList',
-        config: {
-          schemaName: 'Control',
-          groupByFieldId: 'control_type',
-          numeratorFieldId: 'operating_effectiveness',
-          numeratorValue: 'effective',
-          label: 'Control effectiveness by control type'
-        },
         x: 0,
         y: 29,
         w: 6,
-        h: 16
-      },
-      {
-        id: 'seed-upcoming-reviews',
-        type: 'Assessments',
-        config: {
-          mode: 'active',
-          schemaNames: ['Risk', 'Control'],
-          relativeDue: true,
-          label: 'Upcoming risk and control reviews'
-        },
-        x: 6,
-        y: 29,
-        w: 6,
-        h: 16
+        h: 24
       },
       {
         id: 'seed-weak-control-risks',
@@ -572,10 +572,10 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
             }
           }
         },
-        x: 0,
-        y: 45,
-        w: 12,
-        h: 20
+        x: 6,
+        y: 29,
+        w: 6,
+        h: 24
       }
     ]
   },

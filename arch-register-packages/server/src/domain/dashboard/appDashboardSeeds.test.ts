@@ -150,9 +150,9 @@ describe('APP_DASHBOARD_SEEDS', () => {
       'AggregateStat',
       'AssessmentCount',
       'risk-compliance-risk-matrix',
-      'EntityBrowserEmbed',
       'RatioBarList',
       'Assessments',
+      'EntityBrowserEmbed',
       'EntityBrowserEmbed'
     ]);
     const browsers = seed!.widgets.filter(widget => widget.type === 'EntityBrowserEmbed');
