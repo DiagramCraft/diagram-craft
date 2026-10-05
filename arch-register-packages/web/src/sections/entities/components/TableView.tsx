@@ -1,3 +1,4 @@
+import { Fragment, type CSSProperties, type ReactNode } from 'react';
 import { Chip } from '../../../components/Chip';
 import { DropdownMenu } from '../../../components/DropdownMenu';
 import { EntityNavigationLink } from '../../../components/EntityNavigationLink';
@@ -11,6 +12,7 @@ import {
   type EntityBrowserBaseViewProps,
   projectEntityMenuItems
 } from './entityBrowserViewShared';
+import { nextSort, parseSort } from './entityBrowserSort';
 import { formatDate } from '../../../utils/dateFormat';
 import { useDateTimeFormatPreference } from '../../../hooks/useDateTimeFormatPreference';
 import {
@@ -35,6 +37,9 @@ export type TableViewProps = EntityBrowserBaseViewProps & {
   displayFields: EntityDisplayField[];
   /** Omit the Type column, e.g. when the browser is scoped to a single schema. */
   hideTypeColumn?: boolean;
+  /** Current `sort` string and its setter; when both are given, column headers are sortable. */
+  sort?: string;
+  onSortChange?: (sort: string) => void;
 };
 
 export const TableView = ({
@@ -53,7 +58,9 @@ export const TableView = ({
   readOnly,
   config,
   displayFields,
-  hideTypeColumn
+  hideTypeColumn,
+  sort,
+  onSortChange
 }: TableViewProps) => {
   const dateTimeFormatPreference = useDateTimeFormatPreference();
   const allSelected = !readOnly && rows.length > 0 && selectedIds?.size === rows.length;
@@ -66,6 +73,22 @@ export const TableView = ({
   const columns = fieldIds.map(
     id => displayFields.find(field => field.id === id) ?? { id, label: id, group: 'Fields' }
   );
+
+  const sortState = sort !== undefined ? parseSort(sort) : null;
+  const toggleSort =
+    onSortChange && sort !== undefined ? (key: string) => onSortChange(nextSort(sort, key)) : null;
+  const headerCell = (
+    key: string,
+    label: ReactNode,
+    props: { numeric?: boolean; style?: CSSProperties } = {}
+  ) =>
+    toggleSort ? (
+      <Table.SortableHeaderCell sortKey={key} sort={sortState} onSort={toggleSort} {...props}>
+        {label}
+      </Table.SortableHeaderCell>
+    ) : (
+      <Table.HeaderCell {...props}>{label}</Table.HeaderCell>
+    );
 
   return (
     <Table.Root scroll>
@@ -80,18 +103,18 @@ export const TableView = ({
               onChange={onSelectAll}
             />
           )}
-          <Table.HeaderCell style={{ minWidth: 200 }}>Name</Table.HeaderCell>
+          {headerCell('_name', 'Name', { style: { minWidth: 200 } })}
           {!hideTypeColumn && <Table.HeaderCell>Type</Table.HeaderCell>}
           {columns
             .filter(c => c.id !== '_description')
             .map(c => (
-              <Table.HeaderCell key={c.id} numeric={isNumericDisplayField(c)}>
-                {c.label}
-              </Table.HeaderCell>
+              <Fragment key={c.id}>
+                {headerCell(c.id, c.label, { numeric: isNumericDisplayField(c) })}
+              </Fragment>
             ))}
-          {activeDateField && !fieldIds.includes(activeDateField.id) && (
-            <Table.HeaderCell>{activeDateField.name}</Table.HeaderCell>
-          )}
+          {activeDateField &&
+            !fieldIds.includes(activeDateField.id) &&
+            headerCell(activeDateField.id, activeDateField.name)}
           {!readOnly && <Table.HeaderCell style={{ width: 28 }} />}
         </Table.Row>
       </Table.Head>

@@ -117,3 +117,28 @@ describe('EntityBrowserEmbedCodec', () => {
     expect(decoded).toEqual(withEntityQuery);
   });
 });
+
+describe('title and limit', () => {
+  const base: EntityBrowserEmbedConfig = {
+    q: '',
+    conditions: [],
+    sort: 'name',
+    view: 'table',
+    viewConfigs: {}
+  };
+
+  it('round-trips a title and a row limit', () => {
+    const decoded = decodeEntityBrowserEmbedConfig(
+      encodeEntityBrowserEmbedConfig({ ...base, title: 'Live risks', limit: 10 })
+    );
+    expect(decoded?.title).toBe('Live risks');
+    expect(decoded?.limit).toBe(10);
+  });
+
+  it('drops an invalid limit', () => {
+    const decoded = decodeEntityBrowserEmbedConfig(
+      encodeEntityBrowserEmbedConfig({ ...base, limit: 0 })
+    );
+    expect(decoded?.limit).toBeUndefined();
+  });
+});

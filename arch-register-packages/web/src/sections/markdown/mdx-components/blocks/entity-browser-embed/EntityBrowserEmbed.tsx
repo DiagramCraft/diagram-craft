@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
 import { useMdxContext } from '../../../MdxContext';
 import { useEntityDrawer } from '../../../../entities/entityDrawer/useEntityDrawer';
@@ -13,7 +13,11 @@ import { decodeEntityBrowserEmbedConfig } from './EntityBrowserEmbedCodec';
 import styles from './EntityBrowserEmbed.module.css';
 import { EmptyState } from '../../../../../components/EmptyState';
 import { buildEntityDisplayFields } from '../../../../entities/components/entityDisplayFields';
-import { resolveEntityQuery, resolveTableFieldIds } from './EntityBrowserEmbedFieldResolution';
+import {
+  resolveEntityQuery,
+  resolveSort,
+  resolveTableFieldIds
+} from './EntityBrowserEmbedFieldResolution';
 
 type Props = {
   config?: string;
@@ -64,6 +68,15 @@ export const EntityBrowserEmbed = ({ config: rawConfig }: Props) => {
     });
   }, [config?.entityQuery, rootSchema, typeFilter, schemas, relationSchemas]);
 
+  // The configured sort is only the initial one; a column-header click re-sorts locally without
+  // changing the saved config.
+  const configuredSort = useMemo(
+    () => resolveSort(config?.sort ?? 'name', rootSchema),
+    [config?.sort, rootSchema]
+  );
+  const [sortOverride, setSortOverride] = useState<{ base: string; sort: string } | null>(null);
+  const sort = sortOverride?.base === configuredSort ? sortOverride.sort : configuredSort;
+
   const resolvedActiveViewConfig = useMemo(
     () => resolveTableFieldIds(config?.viewConfigs[config?.view ?? 'table'], rootSchema),
     [config, rootSchema]
@@ -89,7 +102,7 @@ export const EntityBrowserEmbed = ({ config: rawConfig }: Props) => {
     typeFilter,
     ownerFilter,
     statusFilter,
-    sort: config?.sort ?? 'name',
+    sort,
     view: config?.view ?? 'table',
     pageIndex: 0,
     pageSize: 0,
@@ -118,7 +131,8 @@ export const EntityBrowserEmbed = ({ config: rawConfig }: Props) => {
   }
 
   const viewConfig = resolvedActiveViewConfig ?? null;
-  const browserRows = rows as BrowserEntityRecord[];
+  const allRows = rows as BrowserEntityRecord[];
+  const browserRows = config.limit ? allRows.slice(0, config.limit) : allRows;
   const displayFields = buildEntityDisplayFields(
     typeFilter ? schemas.filter(s => s.id === typeFilter) : schemas,
     !!resolvedProjectId,
@@ -144,6 +158,8 @@ export const EntityBrowserEmbed = ({ config: rawConfig }: Props) => {
         ownerFilter={ownerFilter}
         statusFilter={statusFilter}
         activeViewConfig={viewConfig}
+        sort={sort}
+        onSortChange={next => setSortOverride({ base: configuredSort, sort: next })}
         displayFields={displayFields}
         isLoading={isLoading}
         mode={{ kind: 'published', onEntityClick }}
