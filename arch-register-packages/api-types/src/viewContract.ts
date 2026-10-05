@@ -127,7 +127,26 @@ export const matrixViewConfigSchema = z.object({
   colEnumFieldId: z.string().nullable().describe('Enum field identifier for attribute columns'),
   filterFieldName: z.string().nullable().describe('Field name for filtering relationships'),
   hideEmptyRows: z.boolean().describe('Whether to hide rows with no relationships'),
-  hideEmptyCols: z.boolean().describe('Whether to hide columns with no relationships')
+  hideEmptyCols: z.boolean().describe('Whether to hide columns with no relationships'),
+  cellColorSource: z
+    .enum(['relation', 'row', 'column'])
+    .nullable()
+    .optional()
+    .describe(
+      'Where the cell color field lives: the typed relation, the row entity or the column entity ' +
+        '(entity columns only); a missing source with a field id means "relation"'
+    ),
+  cellColorFieldId: z
+    .string()
+    .nullable()
+    .optional()
+    .describe('Select field whose value colors filled cells (entity columns only)'),
+  cellColorTones: z
+    .record(z.string(), z.enum(['good', 'warn', 'bad', 'neutral']))
+    .optional()
+    .describe(
+      'Optional semantic tone per color-field option value; others use a categorical palette'
+    )
 });
 
 export const traceabilityPathConfigSchema = z.object({

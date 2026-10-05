@@ -12,6 +12,7 @@ import {
   DATA_STEWARDSHIP_STEWARDSHIP_APP_KEY,
   RISK_COMPLIANCE_OVERVIEW_APP_KEY,
   RISK_COMPLIANCE_RETENTION_APP_KEY,
+  RISK_COMPLIANCE_CONTROLS_APP_KEY,
   RISK_COMPLIANCE_RISKS_APP_KEY
 } from './appDashboardSeeds';
 
@@ -195,6 +196,42 @@ describe('APP_DASHBOARD_SEEDS', () => {
         { fieldId: 'Category', variableName: 'categories' },
         { fieldId: 'Status', variableName: 'statuses' },
         { fieldId: 'Risk Owner', variableName: 'owners' }
+      ]
+    });
+  });
+
+  it('seeds the controls dashboard with Library/Coverage/traceability tabs and a facets sidebar', () => {
+    const seed = APP_DASHBOARD_SEEDS[RISK_COMPLIANCE_CONTROLS_APP_KEY];
+    expect(seed).toBeDefined();
+    expect(seed!.widgets.map(widget => widget.type)).toEqual(['tabs']);
+    const tabs = seed!.widgets[0]!.config.tabs as Array<{
+      label: string;
+      widgets: Array<{ id: string; type: string; config: Record<string, unknown> }>;
+    }>;
+    expect(tabs.map(tab => tab.label)).toEqual([
+      'Library',
+      'Coverage',
+      'Controls × Risks',
+      'Controls × Data Entities'
+    ]);
+    const ids = tabs.flatMap(tab => tab.widgets.map(widget => widget.id));
+    expect(new Set(ids).size).toBe(ids.length);
+    const traceability = [tabs[2]!.widgets[0]!, tabs[3]!.widgets[0]!];
+    expect(traceability.map(widget => widget.config.view)).toEqual(['matrix', 'matrix']);
+    for (const widget of traceability) {
+      expect(
+        (widget.config.viewConfigs as { matrix: Record<string, unknown> }).matrix
+      ).toMatchObject({
+        cellColorSource: 'row',
+        cellColorFieldId: 'Operating Effectiveness'
+      });
+    }
+    expect(seed!.sidebar).toMatchObject({
+      kind: 'facets',
+      schemaName: 'Control',
+      facets: [
+        { fieldId: 'Type', variableName: 'types' },
+        { fieldId: 'Operating Effectiveness', variableName: 'effectiveness' }
       ]
     });
   });

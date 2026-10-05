@@ -508,43 +508,16 @@
           and the residual-risk band; workspace administrators can configure supported fields, sections, order,
           labels, and item placement.
 
-        - @id:ar.risk-compliance.controls The Controls section has a sortable library table (search; sort by name,
-          risks mitigated, or last verified; columns for Name, Type, Effectiveness — a colour-outlined pill — Risks
-          mitigated, Assets protected, and Last verified) and a Coverage roll-up view. The sidebar's facets (Type,
-          Effectiveness, Framework — the last derived by joining each Control's satisfied Compliance Requirements to
-          their parent Framework, not a schema field) are counts only; it doesn't also list every Control
-          individually, unlike the Risks section's sidebar. The library table has no per-Control coverage
-          percentage — that would require combining one Control's coverage/effectiveness values across its
-          different Risks, which isn't a meaningful number (unlike combining multiple Controls over one Risk, which
-          the Risks section's own Coverage column does); `operating_effectiveness` is the field that actually
-          measures a Control's effectiveness. The Coverage view has three stat tiles scoped to the library's
-          current filters (Effective, Never tested, Uncontrolled risks), a "coverage by risk" bar-list of every live
-          (non-closed) Risk sorted weakest-`risk_coverage`-first (each row: residual score, the names of its
-          mitigating Controls or "no control", and a numeric coverage bar/percentage), and a "coverage by
-          information asset" table,
-          scoped to Data Entities only — asset name, the count of distinct Risks affecting it (`risk-affects`), and
-          the count of distinct Controls directly protecting it (`control-affects`, styled as "none" when zero),
-          sorted fewest-controls-first. `control-affects` ("Control Protection") is schema-constrained to the
-          `information-governance` template's Data Entity schema (a `control-protection` composition extension on
-          the `risk-compliance` template, materializing only when `information-governance` is also selected in the
-          workspace) — unlike `risk-affects` ("Risk Affects"), which stays unrestricted, since a Risk legitimately
-          affects Systems, Vendors, and Technology resources directly, not only information assets. Because
-          `risk-affects` can still surface non-Data-Entity assets, the coverage-by-asset table additionally filters
-          to the resolved Data Entity schema id (the capability's optional `dataEntity` binding role) rather than
-          relying on the relation constraint alone. A third, Traceability view is a dense table: the library's
-          currently filtered Controls as (sticky) rows, and — toggled by a "Controls × risks"/"Controls × assets"
-          switch in the toolbar — either every live Risk or the same Data-Entity-scoped assets as the Coverage
-          view's asset table as (sticky, vertically labelled) columns. A cell is a solid mark for a linked pair
-          whose Control is effective, an outlined mark for a link whose Control isn't, or empty for no link (a
-          legend in the panel header explains all three). Each row ends with its own total; a closing summary row
-          gives each column's total, with a red mark standing in for zero — an uncontrolled Risk or asset — instead
-          of the digit. Control row headers are clickable, opening the shared Control drawer; asset-dimension column
-          headers open the schema-configured generic entity drawer in place, while Risk-dimension column headers are
-          read-only. Selecting a control, a Coverage-view risk row, or a Coverage/Traceability-view asset row all open
-          through the same shared drawer stack, stacking rather than competing: the template-authored
-          default drawer profile preserves the current attributes and `control_type` badge, while registered Risk &
-          Compliance content slots show the Risks it mitigates (with the `coverage`/`effectiveness` it provides each one) and the Data Entities
-          it protects (via `control-affects`).
+        - @id:ar.risk-compliance.controls The Controls section is a configurable dashboard with Library, Coverage,
+          Controls × Risks, and Controls × Data Entities tabs and a facets sidebar (Type, Effectiveness) that narrows
+          the Library and matrix tabs; the active tab is kept in the URL. The Library tab is a Control table (Type, Operating
+          Effectiveness, Last Verified). The Coverage tab has three stat tiles (Effective, Never tested,
+          Uncontrolled risks), a risks table sorted
+          weakest-`risk_coverage`-first, and a Data Entity table with Risks (`risk-affects`) and Controls (`control-affects`) counts,
+          fewest controls first (available when the `information-governance` template is selected).
+          Both matrix tabs colour each filled cell by the Control's operating
+          effectiveness, with a legend. Control drawers show the Risks mitigated
+          (with the `coverage`/`effectiveness` each provides) and the Data Entities protected.
 
         - @id:ar.risk-compliance.retention The Retention section — the first web UI consumer of the workspace-wide
           `retention` capability — is a single register of Assignments ("Subject to Retention Policy" relations),
@@ -1090,6 +1063,9 @@
         - @id:ar.entity-views.matrix Users can inspect relationship density and coverage in a matrix view, filterable
           by a specific relation field where typed relation instances are included alongside generic
           reference/containment relations and marked with their relation schema's colour/icon in the field picker.
+          For entity columns, filled cells can be coloured by a select field of the row entity, the column entity, or
+          the typed relation between them (e.g. a mitigation's effectiveness), with a legend of the field's options;
+          for a relation field where several relations connect a pair, the weakest value is shown.
 
         - @id:ar.entity-views.traceability Users can save a generic, path-configured traceability view that follows
           one or more bounded relationship paths from the current entity query, reports architecture and current

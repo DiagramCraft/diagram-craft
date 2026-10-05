@@ -389,3 +389,23 @@ button.colLabel:hover {
   width: auto;
   border-bottom: 1px solid var(--panel-border);
 }
+
+.legend {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  padding: 6px 12px;
+  font-size: 11px;
+  color: var(--base-fg-dim);
+}
+
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.legendTitle {
+  font-weight: 600;
+}

@@ -4,15 +4,18 @@ import { TbChevronDown, TbRowRemove, TbColumnRemove } from 'react-icons/tb';
 import { TypeBadge } from '../../../components/TypeBadge';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { useEntities, useMultipleEntityRelations } from '../../../hooks/useEntities';
+import { useRelationSchemas } from '../../../hooks/useRelationSchemas';
+import { toneColor } from '../../../components/bandColor';
 import { getRelationDisplayLabel } from '../../../lib/entityRelations';
-import { resolveSchemaColor } from '../../../lib/schemaPresentation';
+import { resolveSchemaColor, schemaColor } from '../../../lib/schemaPresentation';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
-import type { EntityRelation } from '@arch-register/api-types/entityContract';
+import type { EntityRecord, EntityRelation } from '@arch-register/api-types/entityContract';
 import { matrixViewConfigSchema } from '@arch-register/api-types/viewContract';
 import type { EntityBrowserRowViewProps } from './entityBrowserViewTypes';
 import {
   getCategoricalFields,
   getCategoricalFieldValues,
+  getCategoricalValue,
   LIFECYCLE_FIELD_ID,
   OWNER_FIELD_ID,
   type JoinedAssessmentContext
@@ -24,6 +27,9 @@ import { useHydratedEntityRows } from '../../../hooks/useHydratedEntityRows';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
+type ColorSource = 'relation' | 'row' | 'column';
+type ColorTone = 'good' | 'warn' | 'bad' | 'neutral';
+
 export type MatrixConfig = {
   colMode: 'entity' | 'attribute';
   colSchemaId: string | null;
@@ -31,6 +37,9 @@ export type MatrixConfig = {
   filterFieldName: string | null;
   hideEmptyRows: boolean;
   hideEmptyCols: boolean;
+  cellColorSource?: ColorSource | null;
+  cellColorFieldId?: string | null;
+  cellColorTones?: Record<string, ColorTone>;
 };
 
 const DEFAULT_MATRIX_CONFIG: MatrixConfig = {
@@ -39,7 +48,9 @@ const DEFAULT_MATRIX_CONFIG: MatrixConfig = {
   colEnumFieldId: null,
   filterFieldName: null,
   hideEmptyRows: false,
-  hideEmptyCols: false
+  hideEmptyCols: false,
+  cellColorSource: null,
+  cellColorFieldId: null
 };
 
 type MatrixViewProps = EntityBrowserRowViewProps & {
@@ -51,6 +62,21 @@ type MatrixViewProps = EntityBrowserRowViewProps & {
 };
 
 type ColMode = 'entity' | 'attribute';
+
+type ColorFieldOption = {
+  /** `${source}:${fieldId}`, the value of the "color by" select. */
+  key: string;
+  source: ColorSource;
+  fieldId: string;
+  label: string;
+  options: { value: string; label: string }[];
+};
+
+const COLOR_SOURCE_LABEL: Record<ColorSource, string> = {
+  relation: 'relation',
+  row: 'row',
+  column: 'column'
+};
 
 type RelationFieldOption = {
   value: string;
@@ -88,6 +114,13 @@ export const MatrixView = ({
   );
   const [hideEmptyRows, setHideEmptyRows] = useState(parsedConfig.hideEmptyRows);
   const [hideEmptyCols, setHideEmptyCols] = useState(parsedConfig.hideEmptyCols);
+  const [cellColorFieldId, setCellColorFieldId] = useState<string | null>(
+    parsedConfig.cellColorFieldId ?? null
+  );
+  const [cellColorSource, setCellColorSource] = useState<ColorSource | null>(
+    parsedConfig.cellColorSource ?? (parsedConfig.cellColorFieldId ? 'relation' : null)
+  );
+  const cellColorTones = parsedConfig.cellColorTones;
 
   const notifyConfigChange = useCallback(
     (patch: Partial<MatrixConfig>) => {
@@ -98,6 +131,9 @@ export const MatrixView = ({
         filterFieldName,
         hideEmptyRows,
         hideEmptyCols,
+        cellColorSource,
+        cellColorFieldId,
+        cellColorTones,
         ...patch
       });
     },
@@ -108,7 +144,10 @@ export const MatrixView = ({
       colEnumFieldId,
       filterFieldName,
       hideEmptyRows,
-      hideEmptyCols
+      hideEmptyCols,
+      cellColorSource,
+      cellColorFieldId,
+      cellColorTones
     ]
   );
   const [hoveredCol, setHoveredCol] = useState<number | null>(null);
@@ -127,7 +166,11 @@ export const MatrixView = ({
 
   // Fetch full-view entities for each row schema when in attribute mode so
   // custom select field values (absent in summary view) are available.
-  const hydratedRows = useHydratedEntityRows(workspaceId, rows, colMode === 'attribute');
+  const hydratedRows = useHydratedEntityRows(
+    workspaceId,
+    rows,
+    colMode === 'attribute' || cellColorSource === 'row'
+  );
   const fullRowsMap = useMemo(
     () => new Map(hydratedRows.map(row => [row._uid, row])),
     [hydratedRows]
@@ -143,6 +186,12 @@ export const MatrixView = ({
   const { data: colEntitiesRaw = [] } = useEntities(
     workspaceId,
     colMode === 'entity' && effColSchemaId ? { schemaId: effColSchemaId } : {}
+  );
+
+  const colEntities = useHydratedEntityRows(
+    workspaceId,
+    colEntitiesRaw,
+    colMode === 'entity' && cellColorSource === 'column'
   );
 
   const rowSchemas = useMemo(
@@ -215,41 +264,138 @@ export const MatrixView = ({
     return [...options.values()].sort((a, b) => a.label.localeCompare(b.label));
   }, [colMode, rows, relationsMap, effColSchemaId]);
 
+  // Select fields that can color a cell: those of the typed relations seen between the row and
+  // column entities, of the row entities, and of the column entities.
+  const { data: relationSchemas = [] } = useRelationSchemas(workspaceId);
+  const colorFields = useMemo((): ColorFieldOption[] => {
+    if (colMode !== 'entity' || !effColSchemaId) return [];
+    const result: ColorFieldOption[] = [];
+
+    const entityFields = (source: 'row' | 'column', schemasOfSide: EntitySchema[]) =>
+      getCategoricalFields(schemasOfSide, lifecycleStates, teams).forEach(field => {
+        const options = getCategoricalFieldValues(
+          schemasOfSide,
+          field.id,
+          lifecycleStates,
+          teams
+        ).map(o => ({ value: o.id, label: o.label }));
+        if (options.length === 0) return;
+        result.push({
+          key: `${source}:${field.id}`,
+          source,
+          fieldId: field.id,
+          label: field.label,
+          options
+        });
+      });
+    entityFields('row', rowSchemas);
+    const colSchema = schemaMap.get(effColSchemaId)?.schema;
+    if (colSchema) entityFields('column', [colSchema]);
+
+    const seenSchemaIds = new Set<string>();
+    rows.forEach(row => {
+      const rel = relationsMap.get(row._uid);
+      [...(rel?.outgoing ?? []), ...(rel?.incoming ?? [])].forEach(r => {
+        if (r.kind === 'typed' && r.relationSchemaId && r.entitySchemaId === effColSchemaId) {
+          seenSchemaIds.add(r.relationSchemaId);
+        }
+      });
+    });
+    relationSchemas
+      .filter(schema => seenSchemaIds.has(schema.id))
+      .forEach(schema =>
+        schema.fields.forEach(field => {
+          const key = `relation:${field.id}`;
+          if (field.type !== 'select' || result.some(f => f.key === key)) return;
+          result.push({
+            key,
+            source: 'relation',
+            fieldId: field.id,
+            label: field.name,
+            options: (field.options ?? []).filter(o => !o.retired)
+          });
+        })
+      );
+    return result;
+  }, [
+    colMode,
+    effColSchemaId,
+    rows,
+    rowSchemas,
+    schemaMap,
+    relationsMap,
+    relationSchemas,
+    lifecycleStates,
+    teams
+  ]);
+
+  const effColorField =
+    colorFields.find(f => f.source === cellColorSource && f.fieldId === cellColorFieldId) ?? null;
+  const cellColorEntityValue = useMemo(() => {
+    const fieldId = effColorField?.fieldId;
+    if (!fieldId || effColorField.source === 'relation') return undefined;
+    return (entity: EntityRecord): string | null => getCategoricalValue(entity, fieldId);
+  }, [effColorField]);
+  // Semantic tones (from config) win; other options use a categorical palette. The legend shows
+  // exactly these colors.
+  const valueColors = useMemo(() => {
+    const map = new Map<string, string>();
+    effColorField?.options.forEach((o, i) => {
+      const tone = cellColorTones?.[o.value];
+      map.set(o.value, tone ? toneColor(tone) : schemaColor(i));
+    });
+    return map;
+  }, [effColorField, cellColorTones]);
+
   const handleColSchemaChange = (id: string) => {
     setColSchemaId(id);
     setFilterFieldName(null);
-    notifyConfigChange({ colSchemaId: id, filterFieldName: null });
+    setCellColorSource(null);
+    setCellColorFieldId(null);
+    notifyConfigChange({
+      colSchemaId: id,
+      filterFieldName: null,
+      cellColorSource: null,
+      cellColorFieldId: null
+    });
   };
 
   // ── Matrix computation ─────────────────────────────────────────────────────
 
-  const { displayRows, displayCols, cellMatrix, totalFilled, rowCounts, colCounts } = useMemo(
-    () =>
-      buildMatrixData({
+  const { displayRows, displayCols, cellMatrix, cellValues, totalFilled, rowCounts, colCounts } =
+    useMemo(
+      () =>
+        buildMatrixData({
+          rows,
+          colMode,
+          colEntities,
+          attrField: effAttrField,
+          colFieldId: effColFieldId,
+          relationsMap,
+          filterFieldName,
+          hideEmptyRows,
+          hideEmptyCols,
+          fullRowsMap,
+          cellColorSource: effColorField?.source ?? null,
+          cellColorFieldId: effColorField?.fieldId ?? null,
+          cellColorEntityValue,
+          cellColorValueOrder: effColorField?.options.map(o => o.value) ?? []
+        }),
+      [
         rows,
         colMode,
-        colEntities: colEntitiesRaw,
-        attrField: effAttrField,
-        colFieldId: effColFieldId,
+        colEntities,
+        effAttrField,
+        effColFieldId,
         relationsMap,
         filterFieldName,
         hideEmptyRows,
         hideEmptyCols,
-        fullRowsMap
-      }),
-    [
-      rows,
-      colMode,
-      colEntitiesRaw,
-      effAttrField,
-      effColFieldId,
-      relationsMap,
-      filterFieldName,
-      hideEmptyRows,
-      hideEmptyCols,
-      fullRowsMap
-    ]
-  );
+        fullRowsMap,
+        effColorField,
+        cellColorEntityValue
+      ]
+    );
 
   // ── Derived display values ─────────────────────────────────────────────────
 
@@ -368,6 +514,33 @@ export const MatrixView = ({
                   </label>
                 )}
 
+                {colorFields.length > 0 && (
+                  <label className={styles.selectWrap}>
+                    <span className={styles.selectVia}>color by</span>
+                    <select
+                      className={styles.select}
+                      value={effColorField?.key ?? 'none'}
+                      onChange={e => {
+                        const field = colorFields.find(f => f.key === e.target.value) ?? null;
+                        setCellColorSource(field?.source ?? null);
+                        setCellColorFieldId(field?.fieldId ?? null);
+                        notifyConfigChange({
+                          cellColorSource: field?.source ?? null,
+                          cellColorFieldId: field?.fieldId ?? null
+                        });
+                      }}
+                    >
+                      <option value="none">none</option>
+                      {colorFields.map(f => (
+                        <option key={f.key} value={f.key}>
+                          {f.label} ({COLOR_SOURCE_LABEL[f.source]})
+                        </option>
+                      ))}
+                    </select>
+                    <TbChevronDown size={10} />
+                  </label>
+                )}
+
                 {noRelations && (
                   <span className={styles.noRel}>— no relations between these types</span>
                 )}
@@ -432,6 +605,18 @@ export const MatrixView = ({
               <TbColumnRemove size={10} />
             </button>
           </div>
+        </div>
+      )}
+
+      {effColorField && !isEmpty && (
+        <div className={styles.legend}>
+          <span className={styles.legendTitle}>{effColorField.label}</span>
+          {effColorField.options.map(o => (
+            <span key={o.value} className={styles.legendItem}>
+              <span className={styles.pip} style={{ background: valueColors.get(o.value) }} />
+              {o.label}
+            </span>
+          ))}
         </div>
       )}
 
@@ -527,16 +712,22 @@ export const MatrixView = ({
                         </span>
                       </div>
                     </td>
-                    {cellMatrix[ri]!.map((filled, ci) => (
-                      <td
-                        key={ci}
-                        className={`${styles.cell}${filled ? ` ${styles.cellOn}` : ''}${hoveredCol === ci ? ` ${styles.cellColHover}` : ''}`}
-                        onMouseEnter={() => setHoveredCol(ci)}
-                        onMouseLeave={() => setHoveredCol(null)}
-                      >
-                        {filled && <span className={styles.pip} style={{ background: pipColor }} />}
-                      </td>
-                    ))}
+                    {cellMatrix[ri]!.map((filled, ci) => {
+                      const value = cellValues[ri]![ci] ?? null;
+                      const color =
+                        (value != null ? valueColors.get(value) : undefined) ??
+                        (effColorField ? toneColor('neutral') : pipColor);
+                      return (
+                        <td
+                          key={ci}
+                          className={`${styles.cell}${filled ? ` ${styles.cellOn}` : ''}${hoveredCol === ci ? ` ${styles.cellColHover}` : ''}`}
+                          onMouseEnter={() => setHoveredCol(ci)}
+                          onMouseLeave={() => setHoveredCol(null)}
+                        >
+                          {filled && <span className={styles.pip} style={{ background: color }} />}
+                        </td>
+                      );
+                    })}
                     <td className={styles.filler} />
                   </tr>
                 );

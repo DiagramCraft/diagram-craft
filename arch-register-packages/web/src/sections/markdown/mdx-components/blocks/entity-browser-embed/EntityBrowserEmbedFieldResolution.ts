@@ -61,6 +61,42 @@ export const resolveTableFieldIds = (
   return { ...viewConfig, fieldIds };
 };
 
+/** Resolves a matrix view config's seed-authored NAMES to live ids: `colSchemaId` (a schema
+ *  name) and, for a row/column color source, `cellColorFieldId` (a field name on the row schema
+ *  or the resolved column schema). Real ids, null and unknown names pass through unchanged. */
+export const resolveMatrixViewConfig = (
+  viewConfig: unknown,
+  schemas: readonly EntitySchema[],
+  rootSchema: EntitySchema | undefined
+): unknown => {
+  if (viewConfig == null || typeof viewConfig !== 'object') return viewConfig;
+  const config = viewConfig as {
+    colSchemaId?: unknown;
+    cellColorSource?: unknown;
+    cellColorFieldId?: unknown;
+  };
+  let resolved: Record<string, unknown> = { ...config };
+
+  const colSchemaId = config.colSchemaId;
+  if (typeof colSchemaId === 'string' && !schemas.some(schema => schema.id === colSchemaId)) {
+    const match = schemas.find(schema => schema.name === colSchemaId);
+    if (match) resolved = { ...resolved, colSchemaId: match.id };
+  }
+
+  const fieldName = config.cellColorFieldId;
+  const sideSchema =
+    config.cellColorSource === 'row'
+      ? rootSchema
+      : config.cellColorSource === 'column'
+        ? schemas.find(schema => schema.id === resolved.colSchemaId)
+        : undefined;
+  if (typeof fieldName === 'string' && sideSchema) {
+    const field = sideSchema.fields.find(candidate => candidate.name === fieldName);
+    if (field) resolved = { ...resolved, cellColorFieldId: field.id };
+  }
+  return resolved;
+};
+
 const resolvePathFieldName = (path: PathStep[], rootSchema: EntitySchema): PathStep[] => {
   const [step] = path;
   if (path.length !== 1 || step?.kind !== 'forward') return path;
@@ -80,6 +116,19 @@ const resolvePathFieldName = (path: PathStep[], rootSchema: EntitySchema): PathS
   }
   return [{ ...step, fieldId: field.id }];
 };
+
+/** Resolves an `unboundTypedRelation` step's `relationSchemaId` given as a relation schema NAME
+ *  (seeds can't know ids); real ids and unknown names pass through unchanged. */
+const resolveRelationSchemaNames = (
+  path: PathStep[],
+  relationSchemas: readonly RelationSchema[] | undefined
+): PathStep[] =>
+  path.map(step => {
+    if (step.kind !== 'unboundTypedRelation' || !relationSchemas) return step;
+    if (relationSchemas.some(schema => schema.id === step.relationSchemaId)) return step;
+    const match = relationSchemas.find(schema => schema.name === step.relationSchemaId);
+    return match ? { ...step, relationSchemaId: match.id } : step;
+  });
 
 /**
  * An `entity-picker` sidebar leaves its `$variable` placeholder literal when nothing is picked
@@ -147,7 +196,10 @@ const resolveProjectionFieldNames = (
   rootSchema: EntitySchema,
   context: FieldResolutionContext | undefined
 ): ProjectionField => {
-  const path = resolvePathFieldName(projection.path, rootSchema);
+  const path = resolveRelationSchemaNames(
+    resolvePathFieldName(projection.path, rootSchema),
+    context?.relationSchemas
+  );
   const resolved = { ...projection, path } as ProjectionField;
   if (!('fieldId' in resolved) || !resolved.fieldId || resolved.fieldId.startsWith('_')) {
     return resolved;

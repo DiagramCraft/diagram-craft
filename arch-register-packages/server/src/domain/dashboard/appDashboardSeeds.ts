@@ -9,6 +9,7 @@ export const BUSINESS_GLOSSARY_APP_KEY = 'business-glossary';
 export const VENDOR_MANAGEMENT_VENDORS_APP_KEY = 'vendor-management-vendors';
 export const RISK_COMPLIANCE_OVERVIEW_APP_KEY = 'risk-compliance-overview';
 export const RISK_COMPLIANCE_RISKS_APP_KEY = 'risk-compliance-risks';
+export const RISK_COMPLIANCE_CONTROLS_APP_KEY = 'risk-compliance-controls';
 export const RISK_COMPLIANCE_RETENTION_APP_KEY = 'risk-compliance-retention';
 export const DATA_STEWARDSHIP_APP_KEY = 'data-stewardship';
 export const DATA_STEWARDSHIP_ASSESSMENTS_APP_KEY = 'data-stewardship-assessments';
@@ -20,6 +21,74 @@ export const DATA_STEWARDSHIP_CHANGE_CASES_APP_KEY = 'data-stewardship-change-ca
  *  `ENTITY_BROWSER_EMBED_TYPE`). Not re-exported from there to avoid a client package importing
  *  from the server, or vice versa; kept in sync by convention (both are `'EntityBrowserEmbed'`). */
 const ENTITY_BROWSER_EMBED_WIDGET_TYPE = 'EntityBrowserEmbed';
+
+/** Control rows narrowed by the Controls sidebar facets (`$types`, `$effectiveness`). */
+const controlFacetQuery = {
+  root: {
+    kind: 'and' as const,
+    children: [
+      {
+        kind: 'predicate' as const,
+        path: [],
+        fieldId: 'Type',
+        op: 'in' as const,
+        value: ['$types']
+      },
+      {
+        kind: 'predicate' as const,
+        path: [],
+        fieldId: 'Operating Effectiveness',
+        op: 'in' as const,
+        value: ['$effectiveness']
+      }
+    ]
+  }
+};
+
+/** Control × (Risk | Data Entity) traceability matrix, cells colored by the Control's operating
+ *  effectiveness (matching the pre-dashboard screen's "is this control effective" marks). */
+const controlTraceMatrix = (
+  id: string,
+  title: string,
+  colSchemaName: string,
+  y: number
+): DashboardWidget => ({
+  id,
+  type: ENTITY_BROWSER_EMBED_WIDGET_TYPE,
+  config: {
+    title,
+    q: '',
+    conditions: [],
+    sort: 'name',
+    view: 'matrix',
+    viewConfigs: {
+      matrix: {
+        colMode: 'entity',
+        colSchemaId: colSchemaName,
+        colEnumFieldId: null,
+        filterFieldName: null,
+        hideEmptyRows: false,
+        hideEmptyCols: false,
+        // Colored by the Control (row) itself — its operating effectiveness — so a cell reads the
+        // same whichever Risk or Data Entity it links to.
+        cellColorSource: 'row',
+        cellColorFieldId: 'Operating Effectiveness',
+        cellColorTones: {
+          effective: 'good',
+          'partially-effective': 'warn',
+          ineffective: 'bad',
+          'not-tested': 'neutral'
+        }
+      }
+    },
+    schemaName: 'Control',
+    entityQuery: controlFacetQuery
+  },
+  x: 0,
+  y,
+  w: 12,
+  h: 40
+});
 
 export type AppDashboardSeed = {
   name: string;
@@ -693,6 +762,215 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
         { fieldId: 'Category', variableName: 'categories', itemLabel: 'Category' },
         { fieldId: 'Status', variableName: 'statuses', itemLabel: 'Status' },
         { fieldId: 'Risk Owner', variableName: 'owners', itemLabel: 'Owner' }
+      ]
+    }
+  },
+  [RISK_COMPLIANCE_CONTROLS_APP_KEY]: {
+    name: 'Controls',
+    description:
+      'Control library, coverage gaps and Control × Risk / Data Entity traceability, filterable by type and effectiveness.',
+    widgets: [
+      {
+        id: 'seed-controls-tabs',
+        type: 'tabs',
+        config: {
+          tabs: [
+            {
+              id: 'library',
+              label: 'Library',
+              widgets: [
+                {
+                  id: 'seed-controls-library',
+                  type: ENTITY_BROWSER_EMBED_WIDGET_TYPE,
+                  config: {
+                    title: 'Control library',
+                    q: '',
+                    conditions: [],
+                    sort: 'name',
+                    view: 'table',
+                    viewConfigs: {
+                      table: {
+                        fieldIds: ['Type', 'Operating Effectiveness', 'Last Verified']
+                      }
+                    },
+                    schemaName: 'Control',
+                    entityQuery: controlFacetQuery
+                  },
+                  x: 0,
+                  y: 0,
+                  w: 12,
+                  h: 40
+                }
+              ]
+            },
+            {
+              id: 'coverage',
+              label: 'Coverage',
+              widgets: [
+                {
+                  id: 'seed-controls-stat-effective',
+                  type: 'AggregateStat',
+                  config: {
+                    query: 'schema:Control AND operating_effectiveness = "effective"',
+                    denominatorQuery: 'schema:Control',
+                    label: 'Effective',
+                    subtextTemplate: '{count} of {total} controls',
+                    showLink: false
+                  },
+                  x: 0,
+                  y: 0,
+                  w: 4,
+                  h: 5
+                },
+                {
+                  id: 'seed-controls-stat-never-tested',
+                  type: 'AggregateStat',
+                  config: {
+                    query: 'schema:Control AND last_verified = empty',
+                    label: 'Never tested',
+                    subtextTemplate: 'no verification recorded',
+                    severity: { warnAt: 1 },
+                    showLink: false
+                  },
+                  x: 4,
+                  y: 0,
+                  w: 4,
+                  h: 5
+                },
+                {
+                  id: 'seed-controls-stat-uncontrolled-risks',
+                  type: 'AggregateStat',
+                  config: {
+                    query: 'schema:Risk AND status != "closed" AND risk_coverage = empty',
+                    label: 'Uncontrolled risks',
+                    subtextTemplate: 'open risks with no mitigating control',
+                    severity: { warnAt: 1, critAt: 1 },
+                    showLink: false
+                  },
+                  x: 8,
+                  y: 0,
+                  w: 4,
+                  h: 5
+                },
+                {
+                  id: 'seed-controls-coverage-by-risk',
+                  type: ENTITY_BROWSER_EMBED_WIDGET_TYPE,
+                  config: {
+                    title: 'Coverage by risk (weakest first)',
+                    q: '',
+                    conditions: [],
+                    sort: 'field:Risk Coverage:asc',
+                    view: 'table',
+                    viewConfigs: {
+                      table: {
+                        fieldIds: ['Category', 'Residual Risk Score', 'Risk Coverage']
+                      }
+                    },
+                    schemaName: 'Risk',
+                    limit: 25
+                  },
+                  x: 0,
+                  y: 5,
+                  w: 6,
+                  h: 24
+                },
+                {
+                  id: 'seed-controls-coverage-by-asset',
+                  type: ENTITY_BROWSER_EMBED_WIDGET_TYPE,
+                  config: {
+                    title: 'Coverage by information asset (fewest controls first)',
+                    q: '',
+                    conditions: [],
+                    sort: 'field:_projection:Controls:asc',
+                    view: 'table',
+                    viewConfigs: {
+                      table: {
+                        fieldIds: ['_projection:Risks', '_projection:Controls']
+                      }
+                    },
+                    schemaName: 'Data Entity',
+                    entityQuery: {
+                      root: { kind: 'and', children: [] },
+                      // Relation schemas are given by NAME and resolved at render time.
+                      projections: [
+                        {
+                          kind: 'aggregate',
+                          path: [
+                            {
+                              kind: 'unboundTypedRelation',
+                              relationSchemaId: 'Risk Affects',
+                              direction: 'both'
+                            }
+                          ],
+                          reducer: 'countDistinct',
+                          terminal: 'entity',
+                          alias: 'Risks'
+                        },
+                        {
+                          kind: 'aggregate',
+                          path: [
+                            {
+                              kind: 'unboundTypedRelation',
+                              relationSchemaId: 'Control Protection',
+                              direction: 'both'
+                            }
+                          ],
+                          reducer: 'countDistinct',
+                          terminal: 'entity',
+                          alias: 'Controls'
+                        }
+                      ]
+                    }
+                  },
+                  x: 6,
+                  y: 5,
+                  w: 6,
+                  h: 24
+                }
+              ]
+            },
+            {
+              id: 'traceability-risks',
+              label: 'Controls × Risks',
+              widgets: [
+                controlTraceMatrix(
+                  'seed-controls-trace-risks',
+                  'Controls × Risks — colored by control effectiveness',
+                  'Risk',
+                  0
+                )
+              ]
+            },
+            {
+              id: 'traceability-assets',
+              label: 'Controls × Data Entities',
+              widgets: [
+                controlTraceMatrix(
+                  'seed-controls-trace-assets',
+                  'Controls × Data Entities',
+                  'Data Entity',
+                  0
+                )
+              ]
+            }
+          ]
+        },
+        x: 0,
+        y: 0,
+        w: 12,
+        h: 46
+      }
+    ],
+    sidebar: {
+      kind: 'facets',
+      schemaName: 'Control',
+      facets: [
+        { fieldId: 'Type', variableName: 'types', itemLabel: 'Type' },
+        {
+          fieldId: 'Operating Effectiveness',
+          variableName: 'effectiveness',
+          itemLabel: 'Effectiveness'
+        }
       ]
     }
   },
