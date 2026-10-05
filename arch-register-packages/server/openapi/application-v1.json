@@ -102343,6 +102343,49 @@
                                   "hideEmptyCols": {
                                     "type": "boolean",
                                     "description": "Whether to hide columns with no relationships"
+                                  },
+                                  "cellColorSource": {
+                                    "anyOf": [
+                                      {
+                                        "enum": [
+                                          "relation",
+                                          "row",
+                                          "column"
+                                        ],
+                                        "type": "string"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ],
+                                    "description": "Where the cell color field lives: the typed relation, the row entity or the column entity (entity columns only); a missing source with a field id means \"relation\""
+                                  },
+                                  "cellColorFieldId": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ],
+                                    "description": "Select field whose value colors filled cells (entity columns only)"
+                                  },
+                                  "cellColorTones": {
+                                    "type": "object",
+                                    "propertyNames": {
+                                      "type": "string"
+                                    },
+                                    "additionalProperties": {
+                                      "enum": [
+                                        "good",
+                                        "warn",
+                                        "bad",
+                                        "neutral"
+                                      ],
+                                      "type": "string"
+                                    },
+                                    "description": "Optional semantic tone per color-field option value; others use a categorical palette"
                                   }
                                 },
                                 "required": [
@@ -109337,6 +109380,49 @@
                               "hideEmptyCols": {
                                 "type": "boolean",
                                 "description": "Whether to hide columns with no relationships"
+                              },
+                              "cellColorSource": {
+                                "anyOf": [
+                                  {
+                                    "enum": [
+                                      "relation",
+                                      "row",
+                                      "column"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "Where the cell color field lives: the typed relation, the row entity or the column entity (entity columns only); a missing source with a field id means \"relation\""
+                              },
+                              "cellColorFieldId": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "Select field whose value colors filled cells (entity columns only)"
+                              },
+                              "cellColorTones": {
+                                "type": "object",
+                                "propertyNames": {
+                                  "type": "string"
+                                },
+                                "additionalProperties": {
+                                  "enum": [
+                                    "good",
+                                    "warn",
+                                    "bad",
+                                    "neutral"
+                                  ],
+                                  "type": "string"
+                                },
+                                "description": "Optional semantic tone per color-field option value; others use a categorical palette"
                               }
                             },
                             "required": [
@@ -116140,6 +116226,49 @@
                                 "hideEmptyCols": {
                                   "type": "boolean",
                                   "description": "Whether to hide columns with no relationships"
+                                },
+                                "cellColorSource": {
+                                  "anyOf": [
+                                    {
+                                      "enum": [
+                                        "relation",
+                                        "row",
+                                        "column"
+                                      ],
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "Where the cell color field lives: the typed relation, the row entity or the column entity (entity columns only); a missing source with a field id means \"relation\""
+                                },
+                                "cellColorFieldId": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "Select field whose value colors filled cells (entity columns only)"
+                                },
+                                "cellColorTones": {
+                                  "type": "object",
+                                  "propertyNames": {
+                                    "type": "string"
+                                  },
+                                  "additionalProperties": {
+                                    "enum": [
+                                      "good",
+                                      "warn",
+                                      "bad",
+                                      "neutral"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  "description": "Optional semantic tone per color-field option value; others use a categorical palette"
                                 }
                               },
                               "required": [
@@ -124056,6 +124185,49 @@
                               "hideEmptyCols": {
                                 "type": "boolean",
                                 "description": "Whether to hide columns with no relationships"
+                              },
+                              "cellColorSource": {
+                                "anyOf": [
+                                  {
+                                    "enum": [
+                                      "relation",
+                                      "row",
+                                      "column"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "Where the cell color field lives: the typed relation, the row entity or the column entity (entity columns only); a missing source with a field id means \"relation\""
+                              },
+                              "cellColorFieldId": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "Select field whose value colors filled cells (entity columns only)"
+                              },
+                              "cellColorTones": {
+                                "type": "object",
+                                "propertyNames": {
+                                  "type": "string"
+                                },
+                                "additionalProperties": {
+                                  "enum": [
+                                    "good",
+                                    "warn",
+                                    "bad",
+                                    "neutral"
+                                  ],
+                                  "type": "string"
+                                },
+                                "description": "Optional semantic tone per color-field option value; others use a categorical palette"
                               }
                             },
                             "required": [
@@ -130854,6 +131026,49 @@
                                 "hideEmptyCols": {
                                   "type": "boolean",
                                   "description": "Whether to hide columns with no relationships"
+                                },
+                                "cellColorSource": {
+                                  "anyOf": [
+                                    {
+                                      "enum": [
+                                        "relation",
+                                        "row",
+                                        "column"
+                                      ],
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "Where the cell color field lives: the typed relation, the row entity or the column entity (entity columns only); a missing source with a field id means \"relation\""
+                                },
+                                "cellColorFieldId": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "Select field whose value colors filled cells (entity columns only)"
+                                },
+                                "cellColorTones": {
+                                  "type": "object",
+                                  "propertyNames": {
+                                    "type": "string"
+                                  },
+                                  "additionalProperties": {
+                                    "enum": [
+                                      "good",
+                                      "warn",
+                                      "bad",
+                                      "neutral"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  "description": "Optional semantic tone per color-field option value; others use a categorical palette"
                                 }
                               },
                               "required": [

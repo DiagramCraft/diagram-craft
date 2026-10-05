@@ -15,6 +15,7 @@ import { EmptyState } from '../../../../../components/EmptyState';
 import { buildEntityDisplayFields } from '../../../../entities/components/entityDisplayFields';
 import {
   resolveEntityQuery,
+  resolveMatrixViewConfig,
   resolveSort,
   resolveTableFieldIds
 } from './EntityBrowserEmbedFieldResolution';
@@ -78,8 +79,11 @@ export const EntityBrowserEmbed = ({ config: rawConfig }: Props) => {
   const sort = sortOverride?.base === configuredSort ? sortOverride.sort : configuredSort;
 
   const resolvedActiveViewConfig = useMemo(
-    () => resolveTableFieldIds(config?.viewConfigs[config?.view ?? 'table'], rootSchema),
-    [config, rootSchema]
+    () =>
+      config?.view === 'matrix'
+        ? resolveMatrixViewConfig(config.viewConfigs.matrix, schemas, rootSchema)
+        : resolveTableFieldIds(config?.viewConfigs[config?.view ?? 'table'], rootSchema),
+    [config, rootSchema, schemas]
   );
   // `_usageCount` is opt-in server-side (not free per row) — request it only when a shown column
   // actually asks for it.

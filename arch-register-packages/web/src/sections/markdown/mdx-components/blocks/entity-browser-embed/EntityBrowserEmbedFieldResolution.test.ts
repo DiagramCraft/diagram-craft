@@ -3,6 +3,7 @@ import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import {
+  resolveMatrixViewConfig,
   resolveEntityQuery,
   resolveSort,
   resolveTableFieldIds
@@ -285,5 +286,81 @@ describe('resolveSort', () => {
     expect(resolveSort('field:_owner:asc', rootSchema)).toBe('field:_owner:asc');
     expect(resolveSort('field:Unknown:asc', rootSchema)).toBe('field:Unknown:asc');
     expect(resolveSort('field:Categories:asc', undefined)).toBe('field:Categories:asc');
+  });
+});
+
+describe('resolveMatrixViewConfig', () => {
+  const risk = { id: 'uuid-1', name: 'Risk', fields: [{ id: 'f-sev', name: 'Severity' }] };
+  const control = {
+    id: 'uuid-2',
+    name: 'Control',
+    fields: [{ id: 'f-eff', name: 'Effectiveness' }]
+  };
+  const schemas = [risk, control] as unknown as EntitySchema[];
+  const rootSchema = control as unknown as EntitySchema;
+
+  it('resolves a schema name to its id', () => {
+    expect(
+      resolveMatrixViewConfig({ colSchemaId: 'Risk', colMode: 'entity' }, schemas, rootSchema)
+    ).toEqual({ colSchemaId: 'uuid-1', colMode: 'entity' });
+  });
+
+  it('resolves a row or column color field name against the matching schema', () => {
+    expect(
+      resolveMatrixViewConfig(
+        { colSchemaId: 'Risk', cellColorSource: 'row', cellColorFieldId: 'Effectiveness' },
+        schemas,
+        rootSchema
+      )
+    ).toMatchObject({ cellColorFieldId: 'f-eff' });
+    expect(
+      resolveMatrixViewConfig(
+        { colSchemaId: 'Risk', cellColorSource: 'column', cellColorFieldId: 'Severity' },
+        schemas,
+        rootSchema
+      )
+    ).toMatchObject({ cellColorFieldId: 'f-sev' });
+  });
+
+  it('leaves relation color fields, real ids, null and unknown names alone', () => {
+    const relation = { colSchemaId: 'uuid-1', cellColorSource: 'relation', cellColorFieldId: 'x' };
+    expect(resolveMatrixViewConfig(relation, schemas, rootSchema)).toEqual(relation);
+    for (const colSchemaId of [null, 'Nope']) {
+      expect(resolveMatrixViewConfig({ colSchemaId }, schemas, rootSchema)).toEqual({
+        colSchemaId
+      });
+    }
+  });
+});
+
+describe('resolveEntityQuery aggregate projections', () => {
+  it('resolves an unboundTypedRelation relation schema name to its id', () => {
+    const rootSchema = { id: 'asset', name: 'Data Entity', fields: [] } as unknown as EntitySchema;
+    const relationSchemas = [
+      { id: 'rel-1', name: 'Control Protection' }
+    ] as unknown as RelationSchema[];
+    const query = {
+      root: { kind: 'and', children: [] },
+      projections: [
+        {
+          kind: 'aggregate',
+          path: [
+            {
+              kind: 'unboundTypedRelation',
+              relationSchemaId: 'Control Protection',
+              direction: 'both'
+            }
+          ],
+          reducer: 'countDistinct',
+          terminal: 'entity',
+          alias: 'Controls'
+        }
+      ]
+    } as unknown as EntityQuery;
+    const resolved = resolveEntityQuery(query, rootSchema, 'asset', {
+      schemas: [rootSchema],
+      relationSchemas
+    });
+    expect(resolved.projections?.[0]?.path[0]).toMatchObject({ relationSchemaId: 'rel-1' });
   });
 });

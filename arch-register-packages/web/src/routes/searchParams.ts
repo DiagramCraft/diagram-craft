@@ -455,23 +455,13 @@ export type RisksSearchParams = SearchParamsFromSchema<typeof risksSearchSchema>
 export const validateRisksSearch = (raw: Record<string, unknown>): RisksSearchParams =>
   parseSearchParams(risksSearchSchema, raw);
 
-// Risk & Compliance controls params
+// Risk & Compliance controls params — the facets' dashboard sidebar variables (see the
+// `risk-compliance-controls` seed in `appDashboardSeeds.ts`), each a comma-joined value list, plus
+// the active tab of the Library/Coverage/Traceability tabs widget.
 const controlsSearchSchema = defineSearchParamSchema({
-  q: stringCodec,
-  // Control Type (`control_type`) / Operating Effectiveness select-field values, and a Framework
-  // name derived from `satisfied_requirements` → `compliance_requirement` → Framework — set by the
-  // sidebar's facets (`ControlsSidebarContent` in `RiskComplianceSidebar.tsx`), mirroring
-  // `risksSearchSchema` above.
-  type: stringCodec,
+  types: stringCodec,
   effectiveness: stringCodec,
-  framework: stringCodec,
-  // Toggles the section between its sortable library table, the coverage roll-up view
-  // (weakest-covered risks, coverage by information asset), and the control × risk/asset
-  // traceability matrix (#3282); defaults to 'library'.
-  view: enumCodec(['library', 'coverage', 'traceability'] as const),
-  // Toggles the traceability matrix's columns between risks and information assets — set by its
-  // own Risks/Assets toggle, independent of `view`; defaults to 'risks'.
-  dim: enumCodec(['risks', 'assets'] as const)
+  tab: stringCodec
 });
 
 export type ControlsSearchParams = SearchParamsFromSchema<typeof controlsSearchSchema>;

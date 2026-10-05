@@ -9,7 +9,6 @@ import { buildHomeBreadcrumbs } from '../../shell/breadcrumbBuilders';
 import type { WorkspaceShellContext } from '../../layouts/workspaceShellDescriptors';
 import type { AppDefinition, BreadcrumbItem } from '../../shell/shellTypes';
 import { AppDashboardPrimarySidebar } from '../../sections/dashboard/AppDashboardPrimarySidebar';
-import { RiskComplianceSidebar } from './sections/RiskComplianceSidebar';
 import {
   RISK_OVERVIEW_ID,
   RISK_RISKS_ID,
@@ -28,6 +27,7 @@ export const RISK_COMPLIANCE_OVERVIEW_APP_KEY = 'risk-compliance-overview';
 export const RISK_COMPLIANCE_RISKS_APP_KEY = 'risk-compliance-risks';
 
 /** Keys the Retention section's dashboard (seeded server-side in `appDashboardSeeds.ts`). */
+export const RISK_COMPLIANCE_CONTROLS_APP_KEY = 'risk-compliance-controls';
 export const RISK_COMPLIANCE_RETENTION_APP_KEY = 'risk-compliance-retention';
 
 /**
@@ -75,8 +75,14 @@ export const riskComplianceAppDefinition: AppDefinition = {
       icon: TbShieldCheck,
       tooltip: 'Controls',
       route: RISK_RAIL_PATHS[RISK_CONTROLS_ID],
+      // A self-contained dashboard (Library, Coverage and Controls × Risks / Data Entities tabs) with a `facets` sidebar for
+      // narrowing by control type and effectiveness.
+      dashboard: { appKey: RISK_COMPLIANCE_CONTROLS_APP_KEY },
       primarySidebar: ctx => (
-        <RiskComplianceSidebar workspaceSlug={ctx.workspaceSlug} activeSection={RISK_CONTROLS_ID} />
+        <AppDashboardPrimarySidebar
+          workspaceSlug={ctx.workspaceSlug}
+          appKey={RISK_COMPLIANCE_CONTROLS_APP_KEY}
+        />
       )
     },
     {
