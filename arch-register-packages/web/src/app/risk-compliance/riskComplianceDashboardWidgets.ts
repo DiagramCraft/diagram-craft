@@ -3,6 +3,9 @@ import type { DashboardWidgetSpec } from '../../sections/markdown/mdx-components
 import { RiskMatrixConfigForm } from './sections/RiskMatrixConfigForm';
 import { RiskMatrixWidget, type RiskMatrixWidgetConfig } from './sections/RiskMatrixWidget';
 
+const isOptionalStringArray = (value: unknown): boolean =>
+  value === undefined || (Array.isArray(value) && value.every(item => typeof item === 'string'));
+
 export const RISK_MATRIX_TYPE = 'risk-compliance-risk-matrix' as const;
 
 export const riskComplianceDashboardWidgetSpecs: Array<{
@@ -24,7 +27,11 @@ export const riskComplianceDashboardWidgetSpecs: Array<{
         typeof config.schemaName === 'string' &&
         config.schemaName !== '' &&
         (config.axis === undefined || config.axis === 'inherent' || config.axis === 'residual') &&
-        (config.label === undefined || typeof config.label === 'string'),
+        (config.label === undefined || typeof config.label === 'string') &&
+        (config.includeClosed === undefined || typeof config.includeClosed === 'boolean') &&
+        isOptionalStringArray(config.categories) &&
+        isOptionalStringArray(config.statuses) &&
+        isOptionalStringArray(config.owners),
       createDefaultConfig: () => ({ schemaName: '' }),
       getTitle: config => config.label?.trim() || 'Risk matrix',
       configForm: RiskMatrixConfigForm

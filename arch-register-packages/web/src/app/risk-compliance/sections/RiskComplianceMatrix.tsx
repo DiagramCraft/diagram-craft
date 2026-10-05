@@ -34,7 +34,7 @@ export type RiskComplianceMatrixRisk = {
 
 /**
  * Likelihood (columns, 1-5) × impact (rows, 5 down to 1) 5×5 grid, built as a shared component so
- * both the Risks register (#3280) and the Overview landing screen (#3285) can embed it —
+ * both the Risks and Overview dashboards can embed it (via `RiskMatrixWidget`) —
  * mirrors `../../vendor-management/sections/RiskMatrix.tsx`'s bespoke-grid approach (a fixed
  * domain grid doesn't fit the generic `EntityBrowser` heatmap/matrix views).
  *

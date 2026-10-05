@@ -440,24 +440,14 @@ export type RiskSearchParams = SearchParamsFromSchema<typeof riskSearchSchema>;
 export const validateRiskSearch = (raw: Record<string, unknown>): RiskSearchParams =>
   parseSearchParams(riskSearchSchema, raw);
 
-// Risk & Compliance risks params
+// Risk & Compliance risks params — the facets' dashboard sidebar variables (see the
+// `risk-compliance-risks` seed in `appDashboardSeeds.ts`), each a comma-joined value list, plus
+// the active tab of the Register/Matrix tabs widget.
 const risksSearchSchema = defineSearchParamSchema({
-  q: stringCodec,
-  // Risk Category / Status select-field values, and a Risk Owner free-text value — set by the
-  // sidebar's facets (`RisksSidebarContent`), mirroring `vendorsSearchSchema` above.
-  category: stringCodec,
-  status: stringCodec,
-  owner: stringCodec,
-  // Narrows to risks whose residual score bands as high/critical (no schema "risk appetite"
-  // field exists — see `residualRiskBand.ts`); '1' when set, absent otherwise.
-  outsideAppetite: enumCodec(['1'] as const),
-  // Toggles the matrix's likelihood/impact bucketing between the raw inherent score and the
-  // effectiveness-adjusted residual score; defaults to 'inherent'.
-  axis: enumCodec(['inherent', 'residual'] as const),
-  // Toggles the section between its sortable table and the 5×5 matrix (mutually exclusive, not
-  // shown side by side — mirrors the design reference's `RCRiskList` register/matrix toggle);
-  // defaults to 'register'.
-  view: enumCodec(['register', 'matrix'] as const)
+  categories: stringCodec,
+  statuses: stringCodec,
+  owners: stringCodec,
+  tab: stringCodec
 });
 
 export type RisksSearchParams = SearchParamsFromSchema<typeof risksSearchSchema>;

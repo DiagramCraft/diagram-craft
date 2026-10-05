@@ -108,9 +108,9 @@ export const LazyRiskComplianceOverviewDashboardScreen = lazyRouteComponent(
   () => import('../../app/risk-compliance/sections/RiskComplianceOverviewDashboardScreen'),
   'RiskComplianceOverviewDashboardScreen'
 );
-export const LazyRiskComplianceRisksScreen = lazyRouteComponent(
-  () => import('../../app/risk-compliance/sections/RiskComplianceRisksScreen'),
-  'RiskComplianceRisksScreen'
+export const LazyRiskComplianceRisksDashboardScreen = lazyRouteComponent(
+  () => import('../../app/risk-compliance/sections/RiskComplianceRisksDashboardScreen'),
+  'RiskComplianceRisksDashboardScreen'
 );
 export const LazyRiskComplianceControlsScreen = lazyRouteComponent(
   () => import('../../app/risk-compliance/sections/RiskComplianceControlsScreen'),

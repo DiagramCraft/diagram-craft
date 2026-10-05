@@ -54,7 +54,7 @@
           saved-view embeds, entity tables, entity cards, entity graphs, entity changelogs, document browsers, entity
           browsers, diagram previews, wiki-page embeds, lifecycle and activity-trend charts, stale-entity reports, an
           activity feed, configurable Markdown content, API & Integration Catalog statistics and list panels, ratio
-          bar-lists, a risk matrix, and assessment lists and counts scoped to chosen entity types)
+          bar-lists, a risk matrix, tabs that group other widgets, and assessment lists and counts scoped to chosen entity types)
           laid out on a grid; a fresh workspace shows a sensible default layout. The entity table and entity browser
           widgets both show a list of entities but serve different needs: entity table offers quick, flat schema/owner/
           lifecycle/limit filtering with fixed columns, while entity browser exposes the full entity browser experience
@@ -491,10 +491,13 @@
           retention-completeness tile and retention-gaps panel are no longer on Overview; retention assignments are
           reviewed in the Retention section (`ar.risk-compliance.retention`).
 
-        - @id:ar.risk-compliance.risks The Risks section has a sortable register (search; sidebar facets for
-          Category, Status, Owner, and an "outside appetite" toggle for residual scores banding high/critical) and a
-          5×5 likelihood × impact matrix, toggled by an inherent/residual axis switch — mutually exclusive views, not
-          shown side by side. Selecting a risk opens the shared Risk drawer; legacy `risk-compliance/risks/$riskId`
+        - @id:ar.risk-compliance.risks The Risks section is a configurable dashboard with a **Register** tab (a
+          sortable risk table; sort by clicking column headers) and a **Matrix** tab (5×5 likelihood × impact matrix with
+          an inherent/residual axis switch, including closed risks), both narrowed by the sidebar facets for Category,
+          Status and Owner. The active tab is kept in the URL (`tab`). The earlier free-text search, sort dropdown,
+          "outside appetite" toggle, per-risk sidebar list and `view`/`axis`/`category`/`status`/`owner` URL
+          parameters are no longer part of this screen; the register shows the residual score as a number rather than a
+          band pill. Selecting a risk opens the shared Risk drawer; legacy `risk-compliance/risks/$riskId`
           links redirect there. The drawer shows likelihood/impact,
           the existing `inherent_risk_score` and
           `residual_risk_score` and `risk_coverage` derived fields (the latter a numeric 0–100 percentage calculated

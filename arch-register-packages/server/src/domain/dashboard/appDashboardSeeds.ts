@@ -8,6 +8,7 @@ export const API_INTEGRATION_CATALOG_IMPACT_APP_KEY = 'api-integration-catalog-i
 export const BUSINESS_GLOSSARY_APP_KEY = 'business-glossary';
 export const VENDOR_MANAGEMENT_VENDORS_APP_KEY = 'vendor-management-vendors';
 export const RISK_COMPLIANCE_OVERVIEW_APP_KEY = 'risk-compliance-overview';
+export const RISK_COMPLIANCE_RISKS_APP_KEY = 'risk-compliance-risks';
 export const RISK_COMPLIANCE_RETENTION_APP_KEY = 'risk-compliance-retention';
 export const DATA_STEWARDSHIP_APP_KEY = 'data-stewardship';
 export const DATA_STEWARDSHIP_ASSESSMENTS_APP_KEY = 'data-stewardship-assessments';
@@ -578,6 +579,122 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
         h: 24
       }
     ]
+  },
+  [RISK_COMPLIANCE_RISKS_APP_KEY]: {
+    name: 'Risks',
+    description:
+      'Risk register and likelihood × impact matrix, filterable by category, status and owner.',
+    widgets: [
+      {
+        id: 'seed-risks-tabs',
+        type: 'tabs',
+        config: {
+          tabs: [
+            {
+              id: 'register',
+              label: 'Register',
+              widgets: [
+                {
+                  id: 'seed-risks-register',
+                  type: ENTITY_BROWSER_EMBED_WIDGET_TYPE,
+                  config: {
+                    title: 'Risk register',
+                    q: '',
+                    conditions: [],
+                    sort: 'field:Residual Risk Score:desc',
+                    view: 'table',
+                    viewConfigs: {
+                      table: {
+                        fieldIds: [
+                          'Category',
+                          'Risk Owner',
+                          'Status',
+                          'Inherent Risk Score',
+                          'Residual Risk Score',
+                          'Risk Coverage',
+                          'Treatment Target Date'
+                        ]
+                      }
+                    },
+                    // Field NAMES are resolved at render time against the live Risk schema — see
+                    // EntityBrowserEmbedFieldResolution.ts.
+                    schemaName: 'Risk',
+                    entityQuery: {
+                      root: {
+                        kind: 'and',
+                        children: [
+                          {
+                            kind: 'predicate',
+                            path: [],
+                            fieldId: 'Category',
+                            op: 'in',
+                            value: ['$categories']
+                          },
+                          {
+                            kind: 'predicate',
+                            path: [],
+                            fieldId: 'Status',
+                            op: 'in',
+                            value: ['$statuses']
+                          },
+                          {
+                            kind: 'predicate',
+                            path: [],
+                            fieldId: 'Risk Owner',
+                            op: 'in',
+                            value: ['$owners']
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  x: 0,
+                  y: 0,
+                  w: 12,
+                  h: 40
+                }
+              ]
+            },
+            {
+              id: 'matrix',
+              label: 'Matrix',
+              widgets: [
+                {
+                  id: 'seed-risks-matrix',
+                  type: 'risk-compliance-risk-matrix',
+                  config: {
+                    schemaName: 'Risk',
+                    label: 'Risk matrix — likelihood × impact',
+                    axis: 'inherent',
+                    includeClosed: true,
+                    categories: ['$categories'],
+                    statuses: ['$statuses'],
+                    owners: ['$owners']
+                  },
+                  x: 0,
+                  y: 0,
+                  w: 12,
+                  h: 40
+                }
+              ]
+            }
+          ]
+        },
+        x: 0,
+        y: 0,
+        w: 12,
+        h: 46
+      }
+    ],
+    sidebar: {
+      kind: 'facets',
+      schemaName: 'Risk',
+      facets: [
+        { fieldId: 'Category', variableName: 'categories', itemLabel: 'Category' },
+        { fieldId: 'Status', variableName: 'statuses', itemLabel: 'Status' },
+        { fieldId: 'Risk Owner', variableName: 'owners', itemLabel: 'Owner' }
+      ]
+    }
   },
   [RISK_COMPLIANCE_RETENTION_APP_KEY]: {
     name: 'Retention',

@@ -24,6 +24,8 @@ import {
 import { CHANGE_CASE_TABLE_TYPE, changeCaseTableSpec } from './widgets/ChangeCaseTableRegistration';
 import { ASSESSMENT_COUNT_TYPE, assessmentCountSpec } from './widgets/AssessmentCountRegistration';
 import { RATIO_BAR_LIST_TYPE, ratioBarListSpec } from './widgets/RatioBarListRegistration';
+import { registerNestedWidgetResolvers } from './widgets/nestedWidgets';
+import { TABS_TYPE, tabsSpec } from './widgets/TabsRegistration';
 
 const WIKI_PAGE_WIDGET_TYPE = 'wiki-page';
 
@@ -37,7 +39,8 @@ const assessmentDashboardWidgetSpecs: Array<{
   { type: CONFORMANCE_VIOLATIONS_TYPE, spec: conformanceViolationsSpec },
   { type: CHANGE_CASE_TABLE_TYPE, spec: changeCaseTableSpec },
   { type: RATIO_BAR_LIST_TYPE, spec: ratioBarListSpec },
-  { type: ASSESSMENT_COUNT_TYPE, spec: assessmentCountSpec }
+  { type: ASSESSMENT_COUNT_TYPE, spec: assessmentCountSpec },
+  { type: TABS_TYPE, spec: tabsSpec }
 ];
 
 export const getDashboardWidgetSpecs = (): Array<{
@@ -64,3 +67,8 @@ export const getDashboardWidgetSpec = (type: string): DashboardWidgetSpec | unde
   (type === WIKI_PAGE_WIDGET_TYPE
     ? wikiPageWidgetSpec.dashboardWidget
     : getBaseDashboardWidgetSpec(type));
+
+registerNestedWidgetResolvers({
+  getSpec: getDashboardWidgetSpec,
+  getSpecs: getDashboardWidgetSpecs
+});

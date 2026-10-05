@@ -11,7 +11,8 @@ import {
   DATA_STEWARDSHIP_CHANGE_CASES_APP_KEY,
   DATA_STEWARDSHIP_STEWARDSHIP_APP_KEY,
   RISK_COMPLIANCE_OVERVIEW_APP_KEY,
-  RISK_COMPLIANCE_RETENTION_APP_KEY
+  RISK_COMPLIANCE_RETENTION_APP_KEY,
+  RISK_COMPLIANCE_RISKS_APP_KEY
 } from './appDashboardSeeds';
 
 describe('APP_DASHBOARD_SEEDS', () => {
@@ -167,5 +168,34 @@ describe('APP_DASHBOARD_SEEDS', () => {
     ]);
     const ids = seed!.widgets.map(widget => widget.id);
     expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it('seeds the risks dashboard with a Register/Matrix tabs widget and a facets sidebar', () => {
+    const seed = APP_DASHBOARD_SEEDS[RISK_COMPLIANCE_RISKS_APP_KEY];
+    expect(seed).toBeDefined();
+    expect(seed!.widgets.map(widget => widget.type)).toEqual(['tabs']);
+    const tabs = seed!.widgets[0]!.config.tabs as Array<{
+      label: string;
+      widgets: Array<{ id: string; type: string; config: Record<string, unknown> }>;
+    }>;
+    expect(tabs.map(tab => tab.label)).toEqual(['Register', 'Matrix']);
+    expect(tabs.map(tab => tab.widgets.map(widget => widget.type))).toEqual([
+      ['EntityBrowserEmbed'],
+      ['risk-compliance-risk-matrix']
+    ]);
+    expect(
+      tabs.map(tab => tab.widgets.map(widget => widget.config.title ?? widget.config.label))
+    ).toEqual([['Risk register'], ['Risk matrix — likelihood × impact']]);
+    const ids = tabs.flatMap(tab => tab.widgets.map(widget => widget.id));
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(seed!.sidebar).toMatchObject({
+      kind: 'facets',
+      schemaName: 'Risk',
+      facets: [
+        { fieldId: 'Category', variableName: 'categories' },
+        { fieldId: 'Status', variableName: 'statuses' },
+        { fieldId: 'Risk Owner', variableName: 'owners' }
+      ]
+    });
   });
 });

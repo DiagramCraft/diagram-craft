@@ -109,7 +109,7 @@ const AssessmentRow = ({
  * schema (`assessment.scope`). Mirrors the design reference's `RCAssessments` (`rc-views.jsx`): a
  * dense register table (Name, Scope, Progress, Due, Status — "Kind"/"Owner"/"Findings"/"Opened"
  * have no analog on the shipped `Assessment` model, so they're dropped rather than invented, same
- * "closest existing field" approach `RiskComplianceRisksScreen.tsx` took for "next review") plus
+ * "closest existing field" approach the Risks register took for "next review") plus
  * two "due soon" panels below the header.
  *
  * Assessments aren't owned by this app — each belongs to a Project — so authoring/filling one in

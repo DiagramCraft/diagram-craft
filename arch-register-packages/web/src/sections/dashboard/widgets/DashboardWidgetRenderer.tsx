@@ -6,6 +6,8 @@ import { getWidgetTitle } from '../dashboardWidgetDefaults';
 import { useDashboardSidebarVariables } from '../DashboardSidebarContext';
 import { resolveConfigVariables } from '../resolveSidebarVariableReferences';
 
+import { registerNestedWidgetResolvers } from './nestedWidgets';
+
 type Props = {
   widget: DashboardWidget;
   isEditing?: boolean;
@@ -52,3 +54,5 @@ export const DashboardWidgetRenderer = ({ widget, isEditing = false, onEdit, onR
     </WidgetFrame>
   );
 };
+
+registerNestedWidgetResolvers({ Renderer: DashboardWidgetRenderer });

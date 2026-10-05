@@ -1,0 +1,18 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Mirrors the dashboard grid geometry (11px rows, 12px gaps) so nested widgets size the same way. */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-auto-rows: 11px;
+  gap: 12px;
+}
+
+.empty {
+  font-size: 13px;
+  color: var(--cmp-fg-dim, var(--base-fg));
+}
