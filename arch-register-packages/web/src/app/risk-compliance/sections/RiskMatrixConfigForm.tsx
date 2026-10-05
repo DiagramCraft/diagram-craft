@@ -29,14 +29,26 @@ export const RiskMatrixConfigForm = ({ config, onChange }: Props) => {
       <DialogSection label="Initial axis" required={false}>
         <select
           className={styles.labelInput}
-          value={config.axis ?? 'residual'}
+          value={config.axis ?? 'inherent'}
           onChange={event =>
             onChange({ ...config, axis: event.currentTarget.value as RiskMatrixAxis })
           }
         >
-          <option value="residual">Residual</option>
           <option value="inherent">Inherent</option>
+          <option value="residual">Residual</option>
         </select>
+      </DialogSection>
+      <DialogSection label="Closed risks" required={false}>
+        <label className={styles.checkboxRow}>
+          <input
+            type="checkbox"
+            checked={config.includeClosed ?? false}
+            onChange={event =>
+              onChange({ ...config, includeClosed: event.currentTarget.checked || undefined })
+            }
+          />
+          <span className={styles.optionLabel}>Include closed risks</span>
+        </label>
       </DialogSection>
       <DialogSection label="Title" required={false}>
         <input

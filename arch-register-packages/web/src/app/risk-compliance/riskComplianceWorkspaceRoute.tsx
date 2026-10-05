@@ -18,7 +18,7 @@ import { withWorkspaceShell } from '../../routes/workspace/workspaceShellRoute';
 import { railSectionShell } from '../../layouts/workspaceShellDescriptors';
 import {
   LazyRiskComplianceOverviewDashboardScreen,
-  LazyRiskComplianceRisksScreen,
+  LazyRiskComplianceRisksDashboardScreen,
   LazyRiskComplianceControlsScreen,
   LazyRiskComplianceRetentionDashboardScreen,
   LazyRiskComplianceAssessmentsScreen
@@ -66,7 +66,7 @@ export const createRiskComplianceWorkspaceRoutes = <TParentRoute extends AnyRout
           (params as unknown as { workspaceSlug: string }).workspaceSlug,
           'risk-compliance'
         ),
-      component: LazyRiskComplianceRisksScreen
+      component: LazyRiskComplianceRisksDashboardScreen
     }),
     ctx =>
       railSectionShell(ctx, RISK_RISKS_ID, {

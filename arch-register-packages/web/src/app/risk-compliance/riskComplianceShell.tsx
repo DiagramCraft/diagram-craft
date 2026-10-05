@@ -24,6 +24,9 @@ import {
 /** Keys the Overview section's dashboard (seeded server-side in `appDashboardSeeds.ts`). */
 export const RISK_COMPLIANCE_OVERVIEW_APP_KEY = 'risk-compliance-overview';
 
+/** Keys the Risks section's dashboard (seeded server-side in `appDashboardSeeds.ts`). */
+export const RISK_COMPLIANCE_RISKS_APP_KEY = 'risk-compliance-risks';
+
 /** Keys the Retention section's dashboard (seeded server-side in `appDashboardSeeds.ts`). */
 export const RISK_COMPLIANCE_RETENTION_APP_KEY = 'risk-compliance-retention';
 
@@ -57,8 +60,14 @@ export const riskComplianceAppDefinition: AppDefinition = {
       icon: TbAlertTriangle,
       tooltip: 'Risks',
       route: RISK_RAIL_PATHS[RISK_RISKS_ID],
+      // A self-contained dashboard (Register/Matrix tabs) with a `facets` sidebar for narrowing by
+      // category, status and owner.
+      dashboard: { appKey: RISK_COMPLIANCE_RISKS_APP_KEY },
       primarySidebar: ctx => (
-        <RiskComplianceSidebar workspaceSlug={ctx.workspaceSlug} activeSection={RISK_RISKS_ID} />
+        <AppDashboardPrimarySidebar
+          workspaceSlug={ctx.workspaceSlug}
+          appKey={RISK_COMPLIANCE_RISKS_APP_KEY}
+        />
       )
     },
     {

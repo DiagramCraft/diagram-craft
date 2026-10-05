@@ -14,20 +14,40 @@ export type RiskMatrixWidgetConfig = {
   schemaName: string;
   axis?: RiskMatrixAxis;
   label?: string;
+  /** Include closed risks (default: false). */
+  includeClosed?: boolean;
+  /**
+   * Optional facet filters on the Category / Status / Risk Owner fields. Intended to hold
+   * dashboard sidebar references (e.g. `['$categories']`); an empty list, or an unresolved
+   * reference, means "no filter".
+   */
+  categories?: string[];
+  statuses?: string[];
+  owners?: string[];
 };
+
+/** Drops unresolved `$variable` references; an empty result means the facet is not filtering. */
+const activeFilter = (values: string[] | undefined): string[] =>
+  (values ?? []).filter(value => value !== '' && !value.startsWith('$'));
 
 type Props = {
   config: RiskMatrixWidgetConfig;
 };
 
 /**
- * Likelihood × impact matrix over the live (not closed) entities of a Risk-shaped schema, with an
+ * Likelihood × impact matrix over the (by default live, i.e. not closed) entities of a Risk-shaped schema, with an
  * Inherent/Residual axis toggle. Wraps `RiskComplianceMatrix`.
  */
+const matchesFacet = (selected: string[], value: unknown): boolean =>
+  selected.length === 0 || (typeof value === 'string' && selected.includes(value));
+
 export const RiskMatrixWidget = ({ config }: Props) => {
   const { workspaceSlug, schemas } = useWorkspaceContext();
   const { openEntityDrawer } = useEntityDrawer();
-  const [axis, setAxis] = useState<RiskMatrixAxis>(config.axis ?? 'residual');
+  const [axis, setAxis] = useState<RiskMatrixAxis>(config.axis ?? 'inherent');
+  const categories = activeFilter(config.categories);
+  const statuses = activeFilter(config.statuses);
+  const owners = activeFilter(config.owners);
   const schema = schemas.find(candidate => candidate.name === config.schemaName);
 
   const { data: entities = [], isLoading } = useEntities(
@@ -39,7 +59,13 @@ export const RiskMatrixWidget = ({ config }: Props) => {
   const risks = useMemo<RiskComplianceMatrixRisk[]>(
     () =>
       entities
-        .filter(entity => entity.status !== 'closed')
+        .filter(entity => config.includeClosed || entity.status !== 'closed')
+        .filter(
+          entity =>
+            matchesFacet(categories, entity.category) &&
+            matchesFacet(statuses, entity.status) &&
+            matchesFacet(owners, entity.risk_owner)
+        )
         .map(entity => ({
           id: entity._publicId,
           name: entity._name,
@@ -48,7 +74,7 @@ export const RiskMatrixWidget = ({ config }: Props) => {
           residualRiskScore:
             typeof entity.residual_risk_score === 'number' ? entity.residual_risk_score : null
         })),
-    [entities]
+    [entities, config.includeClosed, categories, statuses, owners]
   );
 
   if (!schema) {

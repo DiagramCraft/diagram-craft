@@ -55,7 +55,7 @@ const compareNullable = (a: number | string | null, b: number | string | null): 
  * control × risk/asset matrix from `RiskComplianceTraceMatrix.tsx` (`useControlTraceMatrix.ts`
  * supplies the cell membership; `dim` toggles its columns between risks and assets). Mirrors the
  * design reference's `RCControls`/`RCCoverage`/`rc-trace` (`rc-views.jsx`) and this codebase's own
- * `RiskComplianceRisksScreen.tsx` register/matrix toggle. Every drawer opened from this screen —
+ * Risks dashboard's Register/Matrix tabs. Every drawer opened from this screen —
  * a control row, a Coverage risk row, a Coverage/Traceability asset row — goes through the shared
  * `useEntityDrawer()` stack (`WorkspaceEntityDrawerStack` in `WorkspaceLayout.tsx`), so they stack
  * rather than compete; ISO date formatting for the risk drawer comes from the app-level
