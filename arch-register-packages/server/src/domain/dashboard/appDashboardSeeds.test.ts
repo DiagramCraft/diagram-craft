@@ -99,7 +99,11 @@ describe('APP_DASHBOARD_SEEDS', () => {
     const seed = APP_DASHBOARD_SEEDS[RISK_COMPLIANCE_ASSESSMENTS_APP_KEY];
     expect(seed).toBeDefined();
     expect(seed!.sidebar).toBeUndefined();
-    expect(seed!.widgets.map(widget => widget.type)).toEqual(['Assessments', 'Assessments', 'tabs']);
+    expect(seed!.widgets.map(widget => widget.type)).toEqual([
+      'Assessments',
+      'Assessments',
+      'tabs'
+    ]);
     expect(seed!.widgets.slice(0, 2).map(widget => widget.config.schemaNames)).toEqual([
       ['Risk'],
       ['Control']
