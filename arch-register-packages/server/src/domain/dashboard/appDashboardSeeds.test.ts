@@ -12,6 +12,7 @@ import {
   DATA_STEWARDSHIP_CLASSIFICATION_APP_KEY,
   DATA_STEWARDSHIP_STEWARDSHIP_APP_KEY,
   RISK_COMPLIANCE_ASSESSMENTS_APP_KEY,
+  STRATEGY_OVERVIEW_APP_KEY,
   RISK_COMPLIANCE_OVERVIEW_APP_KEY,
   RISK_COMPLIANCE_RETENTION_APP_KEY,
   RISK_COMPLIANCE_CONTROLS_APP_KEY,
@@ -107,6 +108,19 @@ describe('APP_DASHBOARD_SEEDS', () => {
     expect(seed!.widgets.slice(0, 2).map(widget => widget.config.schemaNames)).toEqual([
       ['Risk'],
       ['Control']
+    ]);
+  });
+
+  it('seeds the strategy Overview dashboard with two breakdowns, two stat tiles and a gaps table, no sidebar', () => {
+    const seed = APP_DASHBOARD_SEEDS[STRATEGY_OVERVIEW_APP_KEY];
+    expect(seed).toBeDefined();
+    expect(seed!.sidebar).toBeUndefined();
+    expect(seed!.widgets.map(widget => widget.type)).toEqual([
+      'CountByField',
+      'CountByField',
+      'AggregateStat',
+      'AggregateStat',
+      'EntityBrowserEmbed'
     ]);
   });
 

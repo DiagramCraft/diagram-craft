@@ -342,6 +342,19 @@ describe('parseKnownDashboardWidget', () => {
     ).toBe('Assessments');
   });
 
+  it('parses a CountByField widget and rejects an incomplete one', () => {
+    const base = { id: 'count', type: 'CountByField', x: 0, y: 0, w: 6, h: 8 };
+    expect(
+      parseKnownDashboardWidget({
+        ...base,
+        config: { schemaName: 'Objective', fieldId: 'status' }
+      })?.type
+    ).toBe('CountByField');
+    expect(
+      parseKnownDashboardWidget({ ...base, config: { schemaName: 'Objective', fieldId: '' } })
+    ).toBeNull();
+  });
+
   it('returns null for unknown widget types', () => {
     expect(
       parseKnownDashboardWidget({
