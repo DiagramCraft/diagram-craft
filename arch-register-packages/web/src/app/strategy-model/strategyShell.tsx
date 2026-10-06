@@ -22,6 +22,8 @@ import {
 
 /** Keys the Overview section's dashboard (seeded server-side in `appDashboardSeeds.ts`). */
 export const STRATEGY_OVERVIEW_APP_KEY = 'strategy-overview';
+/** Keys the Capability map section's dashboard. */
+export const STRATEGY_CAPABILITY_MAP_APP_KEY = 'strategy-capability-map';
 
 /**
  * Strategy & Capability Modelling's workspace-rail identity: its rail-item ids (defined in
@@ -55,12 +57,7 @@ export const strategyAppDefinition: AppDefinition = {
       icon: TbGridDots,
       tooltip: 'Capability map',
       route: STRATEGY_RAIL_PATHS[STRATEGY_CAPABILITY_MAP_ID],
-      primarySidebar: ctx => (
-        <StrategySidebar
-          workspaceSlug={ctx.workspaceSlug}
-          activeSection={STRATEGY_CAPABILITY_MAP_ID}
-        />
-      )
+      dashboard: { appKey: STRATEGY_CAPABILITY_MAP_APP_KEY }
     },
     {
       id: STRATEGY_CAPABILITIES_ID,

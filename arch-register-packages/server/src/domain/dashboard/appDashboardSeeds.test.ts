@@ -12,6 +12,7 @@ import {
   DATA_STEWARDSHIP_CLASSIFICATION_APP_KEY,
   DATA_STEWARDSHIP_STEWARDSHIP_APP_KEY,
   RISK_COMPLIANCE_ASSESSMENTS_APP_KEY,
+  STRATEGY_CAPABILITY_MAP_APP_KEY,
   STRATEGY_OVERVIEW_APP_KEY,
   RISK_COMPLIANCE_OVERVIEW_APP_KEY,
   RISK_COMPLIANCE_RETENTION_APP_KEY,
@@ -122,6 +123,15 @@ describe('APP_DASHBOARD_SEEDS', () => {
       'AggregateStat',
       'EntityBrowserEmbed'
     ]);
+  });
+
+  it('seeds the strategy Capability map dashboard with one map embed and an owner facets sidebar', () => {
+    const seed = APP_DASHBOARD_SEEDS[STRATEGY_CAPABILITY_MAP_APP_KEY];
+    expect(seed).toBeDefined();
+    expect(seed!.widgets.map(widget => widget.type)).toEqual(['EntityBrowserEmbed']);
+    // `isValidConfig` for the embed widget rejects a config without these base fields.
+    expect(seed!.widgets[0]!.config).toMatchObject({ q: '', conditions: [], sort: 'name' });
+    expect(seed!.sidebar).toMatchObject({ kind: 'facets', schemaName: 'Business Capability' });
   });
 
   it('seeds the data stewardship Stewardship dashboard with four coverage tiles and a conformance gaps list, no sidebar', () => {

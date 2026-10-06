@@ -9,12 +9,14 @@ import {
   type BrowserEntityRecord
 } from '../../../../entities/components/entityBrowserState';
 import { useEntityBrowserData } from '../../../../entities/components/useEntityBrowserData';
+import { resolveMapOverlays } from '../../../../entities/components/mapOverlays';
 import { decodeEntityBrowserEmbedConfig } from './EntityBrowserEmbedCodec';
 import styles from './EntityBrowserEmbed.module.css';
 import { EmptyState } from '../../../../../components/EmptyState';
 import { buildEntityDisplayFields } from '../../../../entities/components/entityDisplayFields';
 import {
   resolveEntityQuery,
+  resolveMapViewConfig,
   resolveMatrixViewConfig,
   resolveSort,
   resolveTableFieldIds
@@ -82,7 +84,9 @@ export const EntityBrowserEmbed = ({ config: rawConfig }: Props) => {
     () =>
       config?.view === 'matrix'
         ? resolveMatrixViewConfig(config.viewConfigs.matrix, schemas, rootSchema)
-        : resolveTableFieldIds(config?.viewConfigs[config?.view ?? 'table'], rootSchema),
+        : config?.view === 'map'
+          ? resolveMapViewConfig(config.viewConfigs.map, schemas)
+          : resolveTableFieldIds(config?.viewConfigs[config?.view ?? 'table'], rootSchema),
     [config, rootSchema, schemas]
   );
   // `_usageCount` is opt-in server-side (not free per row) — request it only when a shown column
@@ -92,6 +96,11 @@ export const EntityBrowserEmbed = ({ config: rawConfig }: Props) => {
     typeof resolvedActiveViewConfig === 'object' &&
     Array.isArray((resolvedActiveViewConfig as { fieldIds?: unknown }).fieldIds) &&
     (resolvedActiveViewConfig as { fieldIds: string[] }).fieldIds.includes('_usageCount');
+
+  const mapOverlays = useMemo(
+    () => (config?.view === 'map' ? resolveMapOverlays(config.overlays, rootSchema) : undefined),
+    [config?.view, config?.overlays, rootSchema]
+  );
 
   const resolvedProjectId = projectId;
   const projectScope = resolvedProjectId ? (config?.projectScope ?? 'project') : 'all';
@@ -162,6 +171,13 @@ export const EntityBrowserEmbed = ({ config: rawConfig }: Props) => {
         ownerFilter={ownerFilter}
         statusFilter={statusFilter}
         activeViewConfig={viewConfig}
+        // The map fetches its own (tree) data, so it needs the resolved query and conditions
+        // that the row-based views get through `useEntityBrowserData` above.
+        conditions={config.view === 'map' ? config.conditions : undefined}
+        entityQuery={config.view === 'map' ? resolvedEntityQuery : undefined}
+        executionEntityQuery={config.view === 'map' ? resolvedEntityQuery : undefined}
+        mapOverlays={mapOverlays}
+        mapDimOwnerIds={config.dimOwnerIds}
         sort={sort}
         onSortChange={next => setSortOverride({ base: configuredSort, sort: next })}
         displayFields={displayFields}

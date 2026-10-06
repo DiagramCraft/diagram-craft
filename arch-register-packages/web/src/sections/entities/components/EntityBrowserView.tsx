@@ -14,6 +14,7 @@ import { EntityDiffView } from './EntityDiffView';
 import { ExploreView } from './ExploreView';
 import { HeatmapView } from './HeatmapView';
 import { MapView } from './MapView';
+import type { MapOverlay } from './mapOverlays';
 import { MatrixView } from './MatrixView';
 import { RadarView } from './RadarView';
 import { TableView, type TableViewProps } from './TableView';
@@ -65,6 +66,10 @@ type EntityBrowserViewData = {
   joinedAssessment?: JoinedAssessmentContext | null;
   responsesByEntity?: Map<string, Record<string, string | number | boolean>>;
   onCountChange?: (count: number) => void;
+  /** Map view only: selectable heat overlays (see `MapView`'s `overlays`). */
+  mapOverlays?: MapOverlay[];
+  /** Map view only: dims boxes not owned by one of these owners. */
+  mapDimOwnerIds?: string[];
   diffTargetDate?: string;
   diffIncludePlannedChanges?: boolean;
   diffIncludeOverdueChanges?: boolean;
@@ -142,6 +147,8 @@ export const EntityBrowserView = ({
   joinedAssessment,
   responsesByEntity,
   onCountChange,
+  mapOverlays,
+  mapDimOwnerIds,
   diffTargetDate,
   diffIncludePlannedChanges,
   diffIncludeOverdueChanges,
@@ -224,6 +231,8 @@ export const EntityBrowserView = ({
           joinAssessmentId={joinAssessmentId}
           joinedAssessment={joinedAssessment}
           onCountChange={onCountChange}
+          overlays={mapOverlays}
+          dimOwnerIds={mapDimOwnerIds}
         />
       );
     case 'explore':

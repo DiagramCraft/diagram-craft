@@ -1,5 +1,9 @@
 import type { BrowserView, FilterCondition } from '@arch-register/api-types/viewContract';
 import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
+import {
+  isMapOverlayConfig,
+  type MapOverlayConfig
+} from '../../../../entities/components/mapOverlays';
 import type { BrowserViewConfigMap } from '../../../../entities/components/entityBrowserState';
 import {
   parseViewConfigs,
@@ -38,7 +42,18 @@ export type EntityBrowserEmbedConfig = {
   title?: string;
   /** Shows at most this many rows (after sorting). Unset shows all matching rows. */
   limit?: number;
+  /** Map view only: the heat overlays the viewer can switch between (with find-as-you-type
+   *  search), each a numeric field of the map's schema rolled up and drawn in severity bands.
+   *  Edited as JSON in the config form's Advanced section. */
+  overlays?: MapOverlayConfig[];
+  /** Map view only: boxes whose owner isn't in this list are dimmed; typically
+   *  `['$owners']`, a dashboard sidebar variable. Edited in the Advanced section. */
+  dimOwnerIds?: string[];
 };
+
+/** The config keys edited as JSON in the config form's Advanced section — everything that has no
+ *  dedicated control. */
+export const ADVANCED_CONFIG_KEYS = ['overlays', 'dimOwnerIds'] as const;
 
 const toBase64Url = (input: string): string => {
   const bytes = new TextEncoder().encode(input);
@@ -68,7 +83,9 @@ export const encodeEntityBrowserEmbedConfig = (config: EntityBrowserEmbedConfig)
     entityQuery: config.entityQuery,
     schemaName: config.schemaName,
     title: config.title,
-    limit: config.limit
+    limit: config.limit,
+    overlays: config.overlays,
+    dimOwnerIds: config.dimOwnerIds
   };
   return toBase64Url(JSON.stringify(payload));
 };
@@ -101,6 +118,14 @@ export const decodeEntityBrowserEmbedConfig = (
       limit:
         typeof parsed.limit === 'number' && Number.isInteger(parsed.limit) && parsed.limit > 0
           ? parsed.limit
+          : undefined,
+      overlays:
+        Array.isArray(parsed.overlays) && parsed.overlays.every(isMapOverlayConfig)
+          ? (parsed.overlays as MapOverlayConfig[])
+          : undefined,
+      dimOwnerIds:
+        Array.isArray(parsed.dimOwnerIds) && parsed.dimOwnerIds.every(id => typeof id === 'string')
+          ? (parsed.dimOwnerIds as string[])
           : undefined
     };
   } catch {

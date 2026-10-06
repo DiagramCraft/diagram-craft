@@ -68,6 +68,16 @@ export const parseMetricConfig = (raw: unknown): MetricConfig | null => {
   const worstDirection = candidate.worstDirection;
   const targetCurrency = candidate.targetCurrency;
   const numeratorCondition = parseFilterCondition(candidate.numeratorCondition);
+  const colourBands = Array.isArray(candidate.colourBands)
+    ? (candidate.colourBands.filter(
+        band =>
+          band != null &&
+          typeof band === 'object' &&
+          (typeof (band as { max?: unknown }).max === 'number' ||
+            (band as { max?: unknown }).max === null) &&
+          ['good', 'warn', 'bad'].includes(String((band as { tone?: unknown }).tone))
+      ) as NonNullable<MetricConfig['colourBands']>)
+    : undefined;
   const parsedPath = Array.isArray(path)
     ? (path.filter(step => {
         if (step == null || typeof step !== 'object') return false;
@@ -121,7 +131,8 @@ export const parseMetricConfig = (raw: unknown): MetricConfig | null => {
     ...(typeof targetCurrency === 'string' && /^[A-Z]{3}$/.test(targetCurrency)
       ? { targetCurrency }
       : {}),
-    ...(numeratorCondition ? { numeratorCondition } : {})
+    ...(numeratorCondition ? { numeratorCondition } : {}),
+    ...(colourBands ? { colourBands } : {})
   };
 };
 

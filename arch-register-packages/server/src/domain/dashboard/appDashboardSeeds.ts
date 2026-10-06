@@ -8,6 +8,7 @@ export const API_INTEGRATION_CATALOG_IMPACT_APP_KEY = 'api-integration-catalog-i
 export const BUSINESS_GLOSSARY_APP_KEY = 'business-glossary';
 export const VENDOR_MANAGEMENT_VENDORS_APP_KEY = 'vendor-management-vendors';
 export const STRATEGY_OVERVIEW_APP_KEY = 'strategy-overview';
+export const STRATEGY_CAPABILITY_MAP_APP_KEY = 'strategy-capability-map';
 export const RISK_COMPLIANCE_OVERVIEW_APP_KEY = 'risk-compliance-overview';
 export const RISK_COMPLIANCE_RISKS_APP_KEY = 'risk-compliance-risks';
 export const RISK_COMPLIANCE_CONTROLS_APP_KEY = 'risk-compliance-controls';
@@ -825,6 +826,113 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
         h: 16
       }
     ]
+  },
+  [STRATEGY_CAPABILITY_MAP_APP_KEY]: {
+    name: 'Capability map',
+    description:
+      'Business Capability model over its containment hierarchy, heat-coloured by an overlay.',
+    widgets: [
+      {
+        id: 'seed-capability-map',
+        type: ENTITY_BROWSER_EMBED_WIDGET_TYPE,
+        config: {
+          title: 'Capability map',
+          q: '',
+          conditions: [],
+          sort: 'name',
+          view: 'map',
+          viewConfigs: {
+            map: {
+              // Domains (no parent) → L2 → L3, following the `parent` containment field down.
+              // Schema NAMES are resolved to ids at render time.
+              levelConfigs: [
+                { schemaId: 'Business Capability', columns: 3 },
+                {
+                  schemaId: 'Business Capability',
+                  columns: 2,
+                  step: {
+                    kind: 'backward',
+                    fieldId: 'parent',
+                    ownerSchemaId: 'Business Capability'
+                  }
+                },
+                {
+                  schemaId: 'Business Capability',
+                  columns: 1,
+                  step: {
+                    kind: 'backward',
+                    fieldId: 'parent',
+                    ownerSchemaId: 'Business Capability'
+                  }
+                }
+              ]
+            }
+          },
+          // Heat overlays the viewer picks between: a field's subtree roll-up banded into severity
+          // colours. Field NAMES are resolved against the map's schema at render time.
+          overlays: [
+            {
+              fieldId: 'Maturity',
+              aggregation: 'average',
+              colourBands: [
+                { max: 2.5, tone: 'bad' },
+                { max: 3.5, tone: 'warn' },
+                { max: null, tone: 'good' }
+              ]
+            },
+            {
+              fieldId: 'Maturity Gap',
+              aggregation: 'average',
+              colourBands: [
+                { max: 0, tone: 'good' },
+                { max: 1.5, tone: 'warn' },
+                { max: null, tone: 'bad' }
+              ]
+            },
+            {
+              fieldId: 'Annual Investment',
+              aggregation: 'sum',
+              colourBands: [
+                { max: 200_000, tone: 'good' },
+                { max: 600_000, tone: 'warn' },
+                { max: null, tone: 'bad' }
+              ]
+            },
+            {
+              fieldId: 'Risk',
+              aggregation: 'average',
+              colourBands: [
+                { max: 2.5, tone: 'good' },
+                { max: 3.5, tone: 'warn' },
+                { max: null, tone: 'bad' }
+              ]
+            }
+          ],
+          // Dims capabilities not owned by the Owner facet's selection (none selected = none dimmed).
+          dimOwnerIds: ['$owners'],
+          schemaName: 'Business Capability',
+          entityQuery: {
+            // Level 1 = the domains: capabilities with no parent (derived level 'L1').
+            root: {
+              kind: 'predicate',
+              path: [],
+              fieldId: 'capability_level',
+              op: 'equals',
+              value: 'L1'
+            }
+          }
+        },
+        x: 0,
+        y: 0,
+        w: 12,
+        h: 40
+      }
+    ],
+    sidebar: {
+      kind: 'facets',
+      schemaName: 'Business Capability',
+      facets: [{ fieldId: '_owner', variableName: 'owners', itemLabel: 'Owner' }]
+    }
   },
   [RISK_COMPLIANCE_OVERVIEW_APP_KEY]: {
     name: 'Overview',

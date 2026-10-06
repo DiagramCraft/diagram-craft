@@ -326,15 +326,17 @@
           gap. It no longer reads the workspace view configuration's legacy Dashboard tiles (@id:
           ar.strategy.view-config).
 
-        - @id:ar.strategy.capability-map The Capability map section renders the Business Capability model as a
-          nested L1 → L2 → L3 grid over containment. A toolbar overlay selector colours the leaf tiles by one of the
-          workspace's configured overlays (@id:ar.strategy.view-config) — each a capability field or subtree roll-up
-          banded into heat colours — with a legend; a search box dims tiles whose capability name does not match
-          without removing them, and the
-          sidebar's owner facet dims tiles the same way. Clicking a domain header (or a node in the sidebar's
-          capability tree) focuses the grid on that subtree, with an "All domains" control to clear it (`focus`
-          and `owner` are carried in the URL). Clicking a tile opens the capability's drawer without changing the
-          URL; the drawer's own link-icon action copies a shareable `?drawer=<id>` link.
+        - @id:ar.strategy.capability-map The Capability map section is a configurable dashboard (seeded as the
+          `strategy-capability-map` app dashboard, editable like other app dashboards) whose widget is an entity
+          browser embed in Map view (@id:ar.entity-views.map) over the Business Capability containment hierarchy
+          (L1 domains → L2 → L3). Its toolbar offers an overlay selector that colours the tiles in severity
+          colours — each overlay a capability field rolled up over the subtree and banded into heat colours, listed in
+          the widget's Advanced configuration (seeded with maturity, maturity gap, investment and risk) — with a
+          legend, and a search box that dims tiles whose capability
+          name does not match without removing them. The dashboard's Owner facet dims tiles not owned by the
+          selected team the same way. Clicking a domain header drills into that subtree; clicking a tile opens the
+          capability's drawer without changing the URL; the drawer's own link-icon action copies a shareable
+          `?drawer=<id>` link.
 
         - @id:ar.strategy.capabilities The Capabilities section lists every Business Capability with columns chosen
           by the workspace's view configuration (@id:ar.strategy.view-config) — capability fields, subtree roll-up
@@ -1095,6 +1097,7 @@
 
         - @id:ar.entity-views.map Users can inspect containment hierarchies, including the built-in Vendor-to-Contract
           path, as a nested capability map, colouring boxes by a configurable metric rolled up from descendant entities
+          (a numeric metric can alternatively be drawn in good/warn/bad severity bands, with a band legend)
           (numeric or currency fields, lifecycle state, or assessment fields), using count, leaf-count, sum, average,
           minimum, maximum, dominant-option, worst, or percentage aggregation. Leaf-count counts only descendants
           with no containment children of their own — used, for example, by the Strategy & Capability Modelling

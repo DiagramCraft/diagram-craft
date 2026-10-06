@@ -68,5 +68,9 @@ const relativeLuminance = (hex: string): number => {
  * luminance so it always clears contrast (the one place text may sit directly on a data
  * color, per the data-viz method's map-tile exception).
  */
-export const textColorForFill = (hex: string): string =>
-  relativeLuminance(hex) > 0.5 ? '#0b0b0b' : '#ffffff';
+export const textColorForFill = (hex: string): string => {
+  // A tinted token fill (e.g. a `color-mix(...)` band colour) has no luminance to measure; the
+  // tint is light enough for the regular text colour.
+  if (!hex.startsWith('#')) return 'var(--base-fg)';
+  return relativeLuminance(hex) > 0.5 ? '#0b0b0b' : '#ffffff';
+};

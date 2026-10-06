@@ -20,7 +20,13 @@ import {
   withoutDisplayFieldIds
 } from '../../../../entities/components/entityDisplayFields';
 import { resolveConfigVariables } from '../../../../dashboard/resolveSidebarVariableReferences';
-import { resolveEntityQuery, resolveSort } from './EntityBrowserEmbedFieldResolution';
+import { EntityBrowserEmbedAdvancedConfig } from './EntityBrowserEmbedAdvancedConfig';
+import { resolveMapOverlays } from '../../../../entities/components/mapOverlays';
+import {
+  resolveEntityQuery,
+  resolveMapViewConfig,
+  resolveSort
+} from './EntityBrowserEmbedFieldResolution';
 import dialogStyles from '../../../../dashboard/WidgetConfigDialog.module.css';
 import styles from './EntityBrowserEmbedConfigForm.module.css';
 
@@ -78,7 +84,9 @@ export const EntityBrowserEmbedConfigForm = ({ config, onChange, context }: Prop
       ...(entityQuery ? { entityQuery } : {}),
       ...(config.schemaName ? { schemaName: config.schemaName } : {}),
       ...(config.title ? { title: config.title } : {}),
-      ...(config.limit ? { limit: config.limit } : {})
+      ...(config.limit ? { limit: config.limit } : {}),
+      ...(config.overlays ? { overlays: config.overlays } : {}),
+      ...(config.dimOwnerIds ? { dimOwnerIds: config.dimOwnerIds } : {})
     });
   }, [
     q,
@@ -91,6 +99,8 @@ export const EntityBrowserEmbedConfigForm = ({ config, onChange, context }: Prop
     config.schemaName,
     config.title,
     config.limit,
+    config.overlays,
+    config.dimOwnerIds,
     onChange
   ]);
 
@@ -125,6 +135,23 @@ export const EntityBrowserEmbedConfigForm = ({ config, onChange, context }: Prop
       typeFilter
     );
   }, [entityQuery, schemas, typeFilter]);
+
+  // A seeded map names its level schemas; resolve them to live ids (as the rendered embed does)
+  // so the Hierarchy section shows the selected types. Edits then save the resolved ids.
+  const resolvedActiveViewConfig = useMemo(
+    () => (view === 'map' ? resolveMapViewConfig(activeViewConfig, schemas) : activeViewConfig),
+    [view, activeViewConfig, schemas]
+  );
+  const mapOverlays = useMemo(
+    () =>
+      view === 'map'
+        ? resolveMapOverlays(
+            config.overlays,
+            typeFilter ? schemas.find(schema => schema.id === typeFilter) : undefined
+          )
+        : undefined,
+    [view, config.overlays, typeFilter, schemas]
+  );
 
   const displayFields = useMemo(
     () =>
@@ -201,6 +228,7 @@ export const EntityBrowserEmbedConfigForm = ({ config, onChange, context }: Prop
           />
         </label>
       </div>
+      <EntityBrowserEmbedAdvancedConfig config={config} onChange={onChange} />
       <EntityBrowserToolbar
         workspaceId={workspaceSlug}
         q={q}
@@ -258,7 +286,13 @@ export const EntityBrowserEmbedConfigForm = ({ config, onChange, context }: Prop
           typeFilter={typeFilter}
           ownerFilter={ownerFilter}
           statusFilter={statusFilter}
-          activeViewConfig={activeViewConfig}
+          activeViewConfig={resolvedActiveViewConfig}
+          // The map fetches its own (tree) data, so it needs the resolved query and conditions.
+          conditions={view === 'map' ? conditions : undefined}
+          entityQuery={view === 'map' ? previewEntityQuery : undefined}
+          executionEntityQuery={view === 'map' ? previewEntityQuery : undefined}
+          mapOverlays={mapOverlays}
+          mapDimOwnerIds={config.dimOwnerIds}
           sort={effectiveSort}
           onSortChange={setSort}
           displayFields={displayFields}

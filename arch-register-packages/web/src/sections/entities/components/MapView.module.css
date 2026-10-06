@@ -277,6 +277,16 @@
   color: var(--accent-fg);
 }
 
+/* Name weight/size step down with depth: headings at 500, the innermost level as plain text. */
+.level1Box > .levelHeader .entityLink {
+  font-size: 13px;
+}
+
+.level3Box .entityLink {
+  font-size: 11.5px;
+  font-weight: 400;
+}
+
 .metricValue {
   flex: 0 0 auto;
   max-width: 48%;
@@ -284,7 +294,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 11px;
+  font-size: 10.5px;
   font-variant-numeric: tabular-nums;
   color: var(--base-fg-more-dim);
 }
@@ -313,4 +323,37 @@
   flex: 1 1 60px;
   min-width: 60px;
   overflow: hidden;
+}
+
+/* ── Overlay bar (published maps with selectable overlays) ───── */
+
+.overlayBar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--panel-border);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.searchBox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 8px;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+  color: var(--base-fg-dim);
+}
+
+.searchBox input {
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--base-fg);
+  font: inherit;
+  font-size: 12px;
+  width: 160px;
 }
