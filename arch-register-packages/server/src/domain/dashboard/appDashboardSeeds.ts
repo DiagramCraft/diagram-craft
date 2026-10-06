@@ -751,17 +751,17 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
         },
         x: 0,
         y: 0,
-        w: 6,
-        h: 8
+        w: 3,
+        h: 7
       },
       {
         id: 'seed-objectives-by-status',
         type: 'CountByField',
         config: { schemaName: 'Objective', fieldId: 'status', label: 'Objectives by status' },
-        x: 6,
+        x: 3,
         y: 0,
-        w: 6,
-        h: 8
+        w: 3,
+        h: 7
       },
       {
         id: 'seed-application-coverage',
@@ -774,10 +774,10 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
           subtextTemplate: '{count} of {total} capabilities have ≥1 application',
           showLink: false
         },
-        x: 0,
-        y: 8,
-        w: 6,
-        h: 5
+        x: 6,
+        y: 0,
+        w: 3,
+        h: 7
       },
       {
         id: 'seed-orphan-capabilities',
@@ -789,10 +789,10 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
           severity: { warnAt: 1 },
           showLink: false
         },
-        x: 6,
-        y: 8,
-        w: 6,
-        h: 5
+        x: 9,
+        y: 0,
+        w: 3,
+        h: 7
       },
       {
         id: 'seed-largest-maturity-gaps',
@@ -820,7 +820,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
           }
         },
         x: 0,
-        y: 13,
+        y: 7,
         w: 12,
         h: 16
       }
