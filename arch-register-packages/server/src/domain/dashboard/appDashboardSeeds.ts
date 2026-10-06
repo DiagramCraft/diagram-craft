@@ -10,6 +10,7 @@ export const VENDOR_MANAGEMENT_VENDORS_APP_KEY = 'vendor-management-vendors';
 export const RISK_COMPLIANCE_OVERVIEW_APP_KEY = 'risk-compliance-overview';
 export const RISK_COMPLIANCE_RISKS_APP_KEY = 'risk-compliance-risks';
 export const RISK_COMPLIANCE_CONTROLS_APP_KEY = 'risk-compliance-controls';
+export const RISK_COMPLIANCE_ASSESSMENTS_APP_KEY = 'risk-compliance-assessments';
 export const RISK_COMPLIANCE_RETENTION_APP_KEY = 'risk-compliance-retention';
 export const DATA_STEWARDSHIP_APP_KEY = 'data-stewardship';
 export const DATA_STEWARDSHIP_ASSESSMENTS_APP_KEY = 'data-stewardship-assessments';
@@ -913,6 +914,82 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
         y: 29,
         w: 6,
         h: 24
+      }
+    ]
+  },
+  [RISK_COMPLIANCE_ASSESSMENTS_APP_KEY]: {
+    name: 'Assessments',
+    description: 'Risk reviews and control tests: what is due, and progress across the register.',
+    widgets: [
+      {
+        id: 'seed-risk-reviews-due',
+        type: 'Assessments',
+        config: {
+          mode: 'active',
+          schemaNames: ['Risk'],
+          relativeDue: true,
+          label: 'Risk reviews due'
+        },
+        x: 0,
+        y: 0,
+        w: 6,
+        h: 12
+      },
+      {
+        id: 'seed-control-tests-due',
+        type: 'Assessments',
+        config: {
+          mode: 'active',
+          schemaNames: ['Control'],
+          relativeDue: true,
+          label: 'Control tests due'
+        },
+        x: 6,
+        y: 0,
+        w: 6,
+        h: 12
+      },
+      {
+        id: 'seed-assessments-tabs',
+        type: 'tabs',
+        config: {
+          tabs: [
+            {
+              id: 'risks',
+              label: 'Risks',
+              widgets: [
+                {
+                  id: 'seed-risk-assessments-table',
+                  type: 'AssessmentProgressTable',
+                  config: { schemaName: 'Risk', label: 'Risk assessments' },
+                  x: 0,
+                  y: 0,
+                  w: 12,
+                  h: 20
+                }
+              ]
+            },
+            {
+              id: 'controls',
+              label: 'Controls',
+              widgets: [
+                {
+                  id: 'seed-control-assessments-table',
+                  type: 'AssessmentProgressTable',
+                  config: { schemaName: 'Control', label: 'Control assessments' },
+                  x: 0,
+                  y: 0,
+                  w: 12,
+                  h: 20
+                }
+              ]
+            }
+          ]
+        },
+        x: 0,
+        y: 12,
+        w: 12,
+        h: 26
       }
     ]
   },

@@ -469,12 +469,10 @@ export type ControlsSearchParams = SearchParamsFromSchema<typeof controlsSearchS
 export const validateControlsSearch = (raw: Record<string, unknown>): ControlsSearchParams =>
   parseSearchParams(controlsSearchSchema, raw);
 
-// Risk & Compliance assessments params
+// Risk & Compliance assessments params — just the active tab of the Risks/Controls tabs widget
+// (see the `risk-compliance-assessments` seed in `appDashboardSeeds.ts`).
 const assessmentsSearchSchema = defineSearchParamSchema({
-  q: stringCodec,
-  // Narrows the register to assessments scoped to the Risk schema or the Control schema; unset
-  // shows both — set by the section's own Risk/Control/All toggle.
-  type: enumCodec(['risk', 'control'] as const)
+  tab: stringCodec
 });
 
 export type AssessmentsSearchParams = SearchParamsFromSchema<typeof assessmentsSearchSchema>;
