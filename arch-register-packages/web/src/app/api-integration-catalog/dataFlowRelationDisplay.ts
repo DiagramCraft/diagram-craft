@@ -7,14 +7,11 @@ import { scalarValues } from '../../lib/scalarFieldValues';
 
 /**
  * Display helper for Data Flow relation fields (direction, classification, protocol, and the
- * shared `data-flow-governance` field group). Duplicated from
- * `../data-stewardship/dataFlowClassification.ts`'s `relationFieldValue` rather than imported —
- * there is no cross-`app/*` import precedent between sibling apps in this codebase.
+ * shared `data-flow-governance` field group).
  */
 
 /** The `pii-classification` enum values treated as "restricted" for the stat tile — the enum is
- *  `none | public | non-sensitive | sensitive | highly-sensitive`. Mirrors
- *  `../data-stewardship/dataFlowClassification.ts`'s `RESTRICTED_CLASSIFICATIONS`. */
+ *  `none | public | non-sensitive | sensitive | highly-sensitive`. */
 export const RESTRICTED_CLASSIFICATIONS = ['sensitive', 'highly-sensitive'] as const;
 
 const optionLabel = (

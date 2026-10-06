@@ -262,6 +262,33 @@ describe('parseKnownDashboardWidget', () => {
     ).toBeNull();
   });
 
+  it('parses a RelationTable widget and rejects a missing schema or non-array columns', () => {
+    const base = { id: 'relation-table', type: 'RelationTable', x: 0, y: 0, w: 12, h: 24 };
+    expect(
+      parseKnownDashboardWidget({
+        ...base,
+        config: {
+          relationSchemaName: 'Data Flow',
+          fieldIds: ['protocol'],
+          filter: 'protocol = "https"',
+          limit: 50
+        }
+      })?.type
+    ).toBe('RelationTable');
+    expect(
+      parseKnownDashboardWidget({
+        ...base,
+        config: { relationSchemaName: '', fieldIds: [], limit: 50 }
+      })
+    ).toBeNull();
+    expect(
+      parseKnownDashboardWidget({
+        ...base,
+        config: { relationSchemaName: 'Data Flow', fieldIds: 'protocol', limit: 50 }
+      })
+    ).toBeNull();
+  });
+
   it('parses an Assessments widget with a mode and no assessment type filter', () => {
     const widget = parseKnownDashboardWidget({
       id: 'assessments',

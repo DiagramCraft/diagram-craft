@@ -1,7 +1,5 @@
 /* Mirrors the Claude Design reference's `ICIntegrations` (`ic-views.jsx`) stat-tile row above a
-   searchable register table. Duplicated (rather than imported) from
-   `../../data-stewardship/sections/DataStewardshipStewardshipScreen.module.css`'s tile pattern —
-   no cross-`app/*` import precedent exists in this codebase. The design's inline breakdown/detail
+   searchable register table. The design's inline breakdown/detail
    panels below the table are a slide-over `IntegrationDrawer` instead, matching every other detail
    panel in this app. */
 

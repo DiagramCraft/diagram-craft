@@ -9,7 +9,6 @@ import { buildHomeBreadcrumbs } from '../../shell/breadcrumbBuilders';
 import type { WorkspaceShellContext } from '../../layouts/workspaceShellDescriptors';
 import type { AppDefinition, BreadcrumbItem } from '../../shell/shellTypes';
 import { AppDashboardPrimarySidebar } from '../../sections/dashboard/AppDashboardPrimarySidebar';
-import { DataStewardshipSidebar } from './sections/DataStewardshipSidebar';
 import {
   DS_MY_WORK_ID,
   DS_STEWARDSHIP_ID,
@@ -23,6 +22,7 @@ import {
 
 export const DS_APP_KEY = 'data-stewardship';
 export const DS_STEWARDSHIP_APP_KEY = 'data-stewardship-stewardship';
+export const DS_CLASSIFICATION_APP_KEY = 'data-stewardship-classification';
 export const DS_CHANGE_CASES_APP_KEY = 'data-stewardship-change-cases';
 export const DS_ASSESSMENTS_APP_KEY = 'data-stewardship-assessments';
 
@@ -65,14 +65,17 @@ export const dataStewardshipAppDefinition: AppDefinition = {
       route: DS_RAIL_PATHS[DS_STEWARDSHIP_ID]
     },
     {
+      // The seeded `data-stewardship-classification` app dashboard, with its Classification facet
+      // sidebar rendered through the shell's primary sidebar slot (#3503).
       id: DS_CLASSIFICATION_ID,
+      dashboard: { appKey: DS_CLASSIFICATION_APP_KEY },
       icon: TbTags,
       tooltip: 'Classification',
       route: DS_RAIL_PATHS[DS_CLASSIFICATION_ID],
       primarySidebar: ctx => (
-        <DataStewardshipSidebar
+        <AppDashboardPrimarySidebar
           workspaceSlug={ctx.workspaceSlug}
-          activeSection={DS_CLASSIFICATION_ID}
+          appKey={DS_CLASSIFICATION_APP_KEY}
         />
       )
     },
