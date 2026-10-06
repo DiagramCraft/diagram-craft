@@ -6,6 +6,7 @@ import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
 import { EntityBrowserToolbar } from '../../../../entities/components/EntityBrowserToolbar';
 import { EntityBrowserView } from '../../../../entities/components/EntityBrowserView';
+import { stripEmptyGroups } from '../../../../entities/components/entityBrowserState';
 import { useEntityBrowserLocalState } from '../../../../entities/components/useEntityBrowserLocalState';
 import { useEntityBrowserData } from '../../../../entities/components/useEntityBrowserData';
 import { useEntityBrowserPagination } from '../../../../entities/components/useEntityBrowserPagination';
@@ -126,13 +127,15 @@ export const EntityBrowserEmbedConfigForm = ({ config, onChange, context }: Prop
       [...JSON.stringify(entityQuery).matchAll(/\$(\w+)/g)].map(([, name]) => [name!, ''])
     );
     const rootSchema = typeFilter ? schemas.find(schema => schema.id === typeFilter) : undefined;
-    return resolveEntityQuery(
-      resolveConfigVariables(
-        entityQuery as unknown as Record<string, unknown>,
-        variables
-      ) as typeof entityQuery,
-      rootSchema,
-      typeFilter
+    return stripEmptyGroups(
+      resolveEntityQuery(
+        resolveConfigVariables(
+          entityQuery as unknown as Record<string, unknown>,
+          variables
+        ) as typeof entityQuery,
+        rootSchema,
+        typeFilter
+      )
     );
   }, [entityQuery, schemas, typeFilter]);
 
@@ -287,10 +290,10 @@ export const EntityBrowserEmbedConfigForm = ({ config, onChange, context }: Prop
           ownerFilter={ownerFilter}
           statusFilter={statusFilter}
           activeViewConfig={resolvedActiveViewConfig}
-          // The map fetches its own (tree) data, so it needs the resolved query and conditions.
-          conditions={view === 'map' ? conditions : undefined}
-          entityQuery={view === 'map' ? previewEntityQuery : undefined}
-          executionEntityQuery={view === 'map' ? previewEntityQuery : undefined}
+          // The map and tree fetch their own data, so they need the resolved query and conditions.
+          conditions={view === 'map' || view === 'tree' ? conditions : undefined}
+          entityQuery={view === 'map' || view === 'tree' ? previewEntityQuery : undefined}
+          executionEntityQuery={view === 'map' || view === 'tree' ? previewEntityQuery : undefined}
           mapOverlays={mapOverlays}
           mapDimOwnerIds={config.dimOwnerIds}
           sort={effectiveSort}

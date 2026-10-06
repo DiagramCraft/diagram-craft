@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -7,8 +7,7 @@ import {
   TbListDetails,
   TbRoute,
   TbTargetArrow,
-  TbTemperature,
-  TbUsers
+  TbTemperature
 } from 'react-icons/tb';
 import {
   SidebarGroupLabel,
@@ -16,12 +15,10 @@ import {
 } from '../../../components/sidebar/SidebarPrimitives';
 import { TreeRow } from '../../../components/TreeRow';
 import { TypeBadge } from '../../../components/TypeBadge';
-import { useEntityTree } from '../../../hooks/useEntities';
 import { useSchemas } from '../../../hooks/useSchemas';
 import { entitiesQuery } from '../../../queries/entities';
 import { workspaceCapabilityConfigurationsQuery } from '../../../queries/workspaceConfig';
 import { resolveStrategyModelConfig } from '../strategyQueries';
-import { buildCapabilityTree, type CapabilityTreeItem } from '../capabilityTree';
 import {
   STRATEGY_OVERVIEW_ID,
   STRATEGY_CAPABILITIES_ID,
@@ -34,7 +31,7 @@ import {
   STRATEGY_SECTION_LABELS,
   type StrategyRailItemId
 } from '../strategySections';
-import type { CapabilitiesSearchParams, StrategySearchParams } from '../../../routes/searchParams';
+import type { StrategySearchParams } from '../../../routes/searchParams';
 import styles from '../../../shell/SidePanel.module.css';
 
 // Rail-section icons, matching `strategyShell.tsx`'s `AppDefinition.sections` — so the "Sections"
@@ -78,174 +75,10 @@ const useSchemaBadge = (
   }, [schemas]);
 };
 
-const CapabilityTreeRow = ({
-  item,
-  depth,
-  activeId,
-  expandedIds,
-  icon,
-  onToggle,
-  onSelect
-}: {
-  item: CapabilityTreeItem;
-  depth: number;
-  activeId: string | null;
-  expandedIds: Set<string>;
-  icon: ReactNode;
-  onToggle: (id: string) => void;
-  onSelect: (id: string) => void;
-}) => {
-  const expanded = expandedIds.has(item._uid);
-  const hasChildren = item.children.length > 0;
-  return (
-    <>
-      <TreeRow
-        depth={depth}
-        label={item._name}
-        icon={icon}
-        testId={`strategy-capability-tree-${item._uid}`}
-        active={activeId === item._uid}
-        expandable={hasChildren}
-        expanded={expanded}
-        onExpand={() => onToggle(item._uid)}
-        onClick={() => onSelect(item._uid)}
-      />
-      {expanded &&
-        item.children.map(child => (
-          <CapabilityTreeRow
-            key={child._uid}
-            item={child}
-            depth={depth + 1}
-            activeId={activeId}
-            expandedIds={expandedIds}
-            icon={icon}
-            onToggle={onToggle}
-            onSelect={onSelect}
-          />
-        ))}
-    </>
-  );
-};
-
-/**
- * The Capabilities section's own primary-sidebar content: a capability tree (clicking a node
- * filters the Capabilities table to that subtree, via the `subtreeOf` search param) plus an
- * owner facet, replacing the plain "Sections" nav list for this section only — the app's five
- * sections are already switchable via the outer `NavRail` icon bar
- * (`layouts/WorkspaceLayout.tsx`), so this list was always a secondary nav, not the only one.
- */
-const CapabilitiesSidebarContent = ({ workspaceSlug }: { workspaceSlug: string }) => {
-  const navigate = useNavigate();
-  const search = useSearch({ strict: false }) as CapabilitiesSearchParams;
-  const { data: configurations } = useQuery(workspaceCapabilityConfigurationsQuery(workspaceSlug));
-  const strategyConfig = resolveStrategyModelConfig(configurations);
-  const businessCapabilitySchemaId = strategyConfig?.businessCapabilitySchemaId ?? null;
-  const capabilityIcon = useSchemaBadge(workspaceSlug)(businessCapabilitySchemaId);
-
-  const { data: treeData } = useEntityTree(
-    workspaceSlug,
-    { schemaId: businessCapabilitySchemaId ?? undefined },
-    businessCapabilitySchemaId != null
-  );
-  // Only owner id/name is needed for the facet counts below, so this stays on the cheaper
-  // 'summary' view rather than `StrategyCapabilitiesScreen`'s 'full' fetch (needed there for
-  // `capability_level`) — the two don't share a query-cache entry. Undercounted beyond `limit`
-  // items, same caveat as `GlossarySidebar`'s category counts.
-  const { data: capabilitiesData } = useQuery(
-    entitiesQuery(
-      workspaceSlug,
-      { schemaId: businessCapabilitySchemaId, view: 'summary', limit: 1000 },
-      businessCapabilitySchemaId != null
-    )
-  );
-
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
-  const toggle = (id: string) =>
-    setExpandedIds(previous => {
-      const next = new Set(previous);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
-
-  const tree = useMemo(
-    () => buildCapabilityTree(treeData?.nodes ?? [], treeData?.edges ?? []),
-    [treeData]
-  );
-
-  const capabilities = capabilitiesData?.items ?? [];
-  const ownerCounts = useMemo(() => {
-    const counts = new Map<string, { name: string; count: number }>();
-    for (const capability of capabilities) {
-      if (!capability._owner) continue;
-      const entry = counts.get(capability._owner.id) ?? { name: capability._owner.name, count: 0 };
-      entry.count++;
-      counts.set(capability._owner.id, entry);
-    }
-    return counts;
-  }, [capabilities]);
-
-  const patchSearch = (patch: Partial<CapabilitiesSearchParams>) =>
-    navigate({
-      to: STRATEGY_RAIL_PATHS[STRATEGY_CAPABILITIES_ID],
-      params: { workspaceSlug },
-      search: (previous: Record<string, unknown>) => ({ ...previous, ...patch })
-    });
-
-  const selectSubtree = (id: string) =>
-    patchSearch({ subtreeOf: search.subtreeOf === id ? undefined : id });
-
-  const toggleOwner = (id: string) => patchSearch({ owner: search.owner === id ? undefined : id });
-
-  return (
-    <>
-      <TreeRow
-        label="All capabilities"
-        icon={capabilityIcon}
-        testId="strategy-capability-tree-all"
-        active={!search.subtreeOf}
-        onClick={() => patchSearch({ subtreeOf: undefined })}
-        trailing={<span className="dim mono">{capabilities.length}</span>}
-      />
-      <SidebarGroupLabel>Owner</SidebarGroupLabel>
-      {[...ownerCounts.entries()].map(([ownerId, { name, count }]) => (
-        <TreeRow
-          key={ownerId}
-          label={name}
-          icon={<TbUsers size={14} />}
-          testId={`strategy-capability-owner-${ownerId}`}
-          active={search.owner === ownerId}
-          onClick={() => toggleOwner(ownerId)}
-          trailing={<span className="dim mono">{count}</span>}
-        />
-      ))}
-      {ownerCounts.size === 0 && (
-        <div className={`${styles.emptyState} dim`}>No owners assigned.</div>
-      )}
-      <SidebarGroupLabel>Hierarchy</SidebarGroupLabel>
-      {tree.length === 0 ? (
-        <div className={`${styles.emptyState} dim`}>No capabilities yet.</div>
-      ) : (
-        tree.map(item => (
-          <CapabilityTreeRow
-            key={item._uid}
-            item={item}
-            depth={0}
-            activeId={search.subtreeOf ?? null}
-            expandedIds={expandedIds}
-            icon={capabilityIcon}
-            onToggle={toggle}
-            onSelect={selectSubtree}
-          />
-        ))
-      )}
-    </>
-  );
-};
-
 /**
  * The Strategy section's own primary-sidebar content: the list of objectives that scopes the
  * screen. Clicking one sets the `objective` search param (the same selection the screen's header
- * reflects). Mirrors `CapabilitiesSidebarContent` — a section-specific sidebar replacing the
+ * reflects). A section-specific sidebar replacing the
  * plain "Sections" nav list. Initiatives are not listed: they relate to objectives many-to-many
  * and belong to the selected objective's Initiatives panel, not a flat top-level nav.
  */
@@ -321,8 +154,6 @@ export const StrategySidebar = ({
       <div className={styles.scroll}>
         {!enabled ? (
           <div className={`${styles.emptyState} dim`}>Strategy model is not enabled.</div>
-        ) : activeSection === STRATEGY_CAPABILITIES_ID ? (
-          <CapabilitiesSidebarContent workspaceSlug={workspaceSlug} />
         ) : activeSection === STRATEGY_STRATEGY_ID ? (
           <StrategySidebarContent workspaceSlug={workspaceSlug} />
         ) : (

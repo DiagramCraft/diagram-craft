@@ -8,6 +8,7 @@ import {
 import { buildHomeBreadcrumbs } from '../../shell/breadcrumbBuilders';
 import type { WorkspaceShellContext } from '../../layouts/workspaceShellDescriptors';
 import type { AppDefinition, BreadcrumbItem } from '../../shell/shellTypes';
+import { AppDashboardPrimarySidebar } from '../../sections/dashboard/AppDashboardPrimarySidebar';
 import { StrategySidebar } from './sections/StrategySidebar';
 import {
   STRATEGY_OVERVIEW_ID,
@@ -24,6 +25,8 @@ import {
 export const STRATEGY_OVERVIEW_APP_KEY = 'strategy-overview';
 /** Keys the Capability map section's dashboard. */
 export const STRATEGY_CAPABILITY_MAP_APP_KEY = 'strategy-capability-map';
+/** Keys the Capabilities section's dashboard. */
+export const STRATEGY_CAPABILITIES_APP_KEY = 'strategy-capabilities';
 
 /**
  * Strategy & Capability Modelling's workspace-rail identity: its rail-item ids (defined in
@@ -57,17 +60,26 @@ export const strategyAppDefinition: AppDefinition = {
       icon: TbGridDots,
       tooltip: 'Capability map',
       route: STRATEGY_RAIL_PATHS[STRATEGY_CAPABILITY_MAP_ID],
-      dashboard: { appKey: STRATEGY_CAPABILITY_MAP_APP_KEY }
+      // A dashboard with a `facets` sidebar: Owner facet that dims capabilities not owned by the selection.
+      dashboard: { appKey: STRATEGY_CAPABILITY_MAP_APP_KEY },
+      primarySidebar: ctx => (
+        <AppDashboardPrimarySidebar
+          workspaceSlug={ctx.workspaceSlug}
+          appKey={STRATEGY_CAPABILITY_MAP_APP_KEY}
+        />
+      )
     },
     {
       id: STRATEGY_CAPABILITIES_ID,
       icon: TbListDetails,
       tooltip: 'Capabilities',
       route: STRATEGY_RAIL_PATHS[STRATEGY_CAPABILITIES_ID],
+      // A dashboard with a `facets` sidebar: Owner and Level facets that narrow the tree.
+      dashboard: { appKey: STRATEGY_CAPABILITIES_APP_KEY },
       primarySidebar: ctx => (
-        <StrategySidebar
+        <AppDashboardPrimarySidebar
           workspaceSlug={ctx.workspaceSlug}
-          activeSection={STRATEGY_CAPABILITIES_ID}
+          appKey={STRATEGY_CAPABILITIES_APP_KEY}
         />
       )
     },
