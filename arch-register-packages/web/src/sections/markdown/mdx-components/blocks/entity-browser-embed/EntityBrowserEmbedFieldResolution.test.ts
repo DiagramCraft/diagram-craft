@@ -5,6 +5,7 @@ import type { RelationSchema } from '@arch-register/api-types/relationSchemaCont
 import {
   resolveMatrixViewConfig,
   resolveEntityQuery,
+  resolveMapViewConfig,
   resolveSort,
   resolveTableFieldIds
 } from './EntityBrowserEmbedFieldResolution';
@@ -362,5 +363,40 @@ describe('resolveEntityQuery aggregate projections', () => {
       relationSchemas
     });
     expect(resolved.projections?.[0]?.path[0]).toMatchObject({ relationSchemaId: 'rel-1' });
+  });
+});
+
+describe('resolveMapViewConfig', () => {
+  const schemas = [{ id: 'sch_bc', name: 'Business Capability', fields: [] }] as never;
+
+  it('resolves schema names in levels and backward hops', () => {
+    const resolved = resolveMapViewConfig(
+      {
+        levelConfigs: [
+          { schemaId: 'Business Capability', columns: 3 },
+          {
+            schemaId: 'Business Capability',
+            columns: 2,
+            step: { kind: 'backward', fieldId: 'parent', ownerSchemaId: 'Business Capability' }
+          }
+        ]
+      },
+      schemas
+    ) as { levelConfigs: Array<{ schemaId: string; step?: { ownerSchemaId: string } }> };
+    expect(resolved.levelConfigs[0]!.schemaId).toBe('sch_bc');
+    expect(resolved.levelConfigs[1]!.schemaId).toBe('sch_bc');
+    expect(resolved.levelConfigs[1]!.step!.ownerSchemaId).toBe('sch_bc');
+  });
+
+  it('leaves real ids, null and a config without levels unchanged', () => {
+    expect(
+      resolveMapViewConfig({ levelConfigs: [{ schemaId: 'sch_bc', columns: 3 }] }, schemas)
+    ).toEqual({ levelConfigs: [{ schemaId: 'sch_bc', columns: 3 }] });
+    expect(
+      resolveMapViewConfig({ levelConfigs: [{ schemaId: null, columns: 3 }] }, schemas)
+    ).toEqual({
+      levelConfigs: [{ schemaId: null, columns: 3 }]
+    });
+    expect(resolveMapViewConfig(undefined, schemas)).toBeUndefined();
   });
 });

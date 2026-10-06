@@ -82,6 +82,12 @@ export const metricAggregationSchema = z
       'terminal entities that have no containment children of their own.'
   );
 
+/** A heat-colour band for a numeric metric. `max: null` = open top band; evaluated low-to-high. */
+export const metricColourBandSchema = z.object({
+  max: z.number().nullable().describe('Inclusive upper bound; null for the open top band'),
+  tone: z.enum(['good', 'warn', 'bad']).describe('Severity tone the band is drawn in')
+});
+
 export const metricConfigSchema = z.object({
   sourceSchemaId: z
     .string()
@@ -121,7 +127,14 @@ export const metricConfigSchema = z.object({
     ),
   targetCurrency: currencyCodeSchema
     .optional()
-    .describe('Target currency for currency-field rollups; defaults to the workspace currency')
+    .describe('Target currency for currency-field rollups; defaults to the workspace currency'),
+  colourBands: z
+    .array(metricColourBandSchema)
+    .optional()
+    .describe(
+      'Presentation only: when set on a numeric metric, boxes are drawn in the tone of the band ' +
+        'their value falls in instead of on the sequential colour ramp'
+    )
 });
 
 // ── Request / response ───────────────────────────────────────────────────────

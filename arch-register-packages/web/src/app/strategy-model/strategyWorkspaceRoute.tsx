@@ -13,13 +13,12 @@ import { withWorkspaceShell } from '../../routes/workspace/workspaceShellRoute';
 import { railSectionShell } from '../../layouts/workspaceShellDescriptors';
 import {
   validateCapabilitiesSearch,
-  validateCapabilityMapSearch,
   validateStrategySearch,
   validateTraceabilitySearch
 } from '../../routes/searchParams';
 import {
   LazyStrategyOverviewDashboardScreen,
-  LazyStrategyCapabilityMapScreen,
+  LazyStrategyCapabilityMapDashboardScreen,
   LazyStrategyCapabilitiesScreen,
   LazyStrategyHeatmapsScreen,
   LazyStrategyStrategyScreen,
@@ -55,14 +54,13 @@ export const createStrategyWorkspaceRoutes = <TParentRoute extends AnyRoute>(
     createRoute({
       getParentRoute: () => workspaceRoute,
       path: railPath(STRATEGY_RAIL_PATHS[STRATEGY_CAPABILITY_MAP_ID]),
-      validateSearch: validateCapabilityMapSearch,
       beforeLoad: ({ context, params }) =>
         ensureApplicationAccess(
           context.queryClient,
           (params as unknown as { workspaceSlug: string }).workspaceSlug,
           'strategy-model'
         ),
-      component: LazyStrategyCapabilityMapScreen
+      component: LazyStrategyCapabilityMapDashboardScreen
     }),
     ctx =>
       railSectionShell(ctx, STRATEGY_CAPABILITY_MAP_ID, {

@@ -12,6 +12,7 @@ import type { EntityHoverCardRow } from '../../../components/EntityHoverCardBody
 import { AGGREGATION_OPTIONS, isEnumSource } from './mapMetricConfig';
 import { categoricalColor, NEUTRAL_MISSING_COLOR, numericColor } from './mapColorScales';
 import { formatMetricResultValue, formatMetricSourceValue } from './mapMetricFormatting';
+import { bandedFill } from './mapBandColors';
 import { isRelationMapNode } from './mapViewTraversal';
 
 export const aggregationLabel = (aggregation: MetricAggregation) =>
@@ -68,6 +69,18 @@ export const resolveBoxColor = (
   const directValue = getDirectMetricValue(node, metric, sourceSchema, isLeaf);
   const colorMin = legend.min ?? directMetricRange.min;
   const colorMax = legend.max ?? directMetricRange.max;
+
+  // Banded (severity-tone) colouring replaces the sequential ramp for a numeric metric that
+  // carries `colourBands`: the rolled-up value, falling back to a leaf's own value.
+  if (
+    metric.colourBands?.length &&
+    metric.aggregation !== 'percentage' &&
+    !isEnumSource(metric.source) &&
+    metric.source.kind !== 'lifecycle'
+  ) {
+    const value = result?.value ?? (directValue?.kind === 'number' ? directValue.value : null);
+    return bandedFill(metric.colourBands, value) ?? NEUTRAL_MISSING_COLOR;
+  }
 
   if (metric.aggregation === 'percentage') {
     if (!result || result.value == null || legend.min == null || legend.max == null) {

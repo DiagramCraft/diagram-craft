@@ -229,3 +229,36 @@ export const resolveEntityQuery = (
     )
   };
 };
+
+const resolveSchemaName = (value: unknown, schemas: readonly EntitySchema[]): unknown => {
+  if (typeof value !== 'string' || schemas.some(schema => schema.id === value)) return value;
+  return schemas.find(schema => schema.name === value)?.id ?? value;
+};
+
+/** Resolves a map view config's seed-authored schema NAMES to live ids: each level's `schemaId`
+ *  and `targetSchemaId`, and a `backward` hop's `ownerSchemaId`. Real ids, null and unknown names
+ *  pass through unchanged. (Field ids in hops are the schema template's fixed ids, not names.) */
+export const resolveMapViewConfig = (
+  viewConfig: unknown,
+  schemas: readonly EntitySchema[]
+): unknown => {
+  if (viewConfig == null || typeof viewConfig !== 'object') return viewConfig;
+  const levelConfigs = (viewConfig as { levelConfigs?: unknown }).levelConfigs;
+  if (!Array.isArray(levelConfigs)) return viewConfig;
+  return {
+    ...viewConfig,
+    levelConfigs: levelConfigs.map((level: Record<string, unknown>) => {
+      const step = level.step as { kind?: string; ownerSchemaId?: unknown } | undefined;
+      return {
+        ...level,
+        ...('schemaId' in level ? { schemaId: resolveSchemaName(level.schemaId, schemas) } : {}),
+        ...(typeof level.targetSchemaId === 'string'
+          ? { targetSchemaId: resolveSchemaName(level.targetSchemaId, schemas) }
+          : {}),
+        ...(step?.kind === 'backward'
+          ? { step: { ...step, ownerSchemaId: resolveSchemaName(step.ownerSchemaId, schemas) } }
+          : {})
+      };
+    })
+  };
+};

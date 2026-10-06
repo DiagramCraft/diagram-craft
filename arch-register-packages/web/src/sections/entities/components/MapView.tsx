@@ -1,4 +1,5 @@
-import { useMemo, useCallback, useEffect, useRef } from 'react';
+import { useMemo, useCallback, useEffect, useRef, useState } from 'react';
+import { TbSearch } from 'react-icons/tb';
 import styles from './MapView.module.css';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import type { TreeNode } from '@arch-register/api-types/entityContract';
@@ -45,7 +46,9 @@ import {
 import { textColorForFill } from './mapColorScales';
 import { useMapMetricRollup } from './useMapMetricRollup';
 import { useWorkspaceAuthorization } from '../../../auth/WorkspaceAuthorizationContext';
+import { FilterDropdown } from '../../../components/FilterDropdown';
 import { MapLegend } from './MapLegend';
+import { computeHighlightedIds, NO_OVERLAY_ID, type MapOverlay } from './mapOverlays';
 import { MapConfigControls } from './MapConfigControls';
 import { MapTreeContent } from './MapTreeContent';
 import {
@@ -89,6 +92,11 @@ type MapViewProps = {
   joinAssessmentId?: string | null;
   joinedAssessment?: JoinedAssessmentContext | null;
   onCountChange?: (count: number) => void;
+  /** Selectable heat overlays; when set, the overlay picker and find-as-you-type search render
+   *  (also in the published, toolbar-less mode) and the chosen overlay replaces the saved metric. */
+  overlays?: MapOverlay[];
+  /** When non-empty, boxes whose owner is not in this list are dimmed. */
+  dimOwnerIds?: string[];
 };
 
 // Under include-path traversal, the terminal schema comes from the last hop's resolved candidates (or,
@@ -143,7 +151,9 @@ export const MapView = ({
   lifecycleStates,
   joinAssessmentId,
   joinedAssessment,
-  onCountChange
+  onCountChange,
+  overlays,
+  dimOwnerIds
 }: MapViewProps) => {
   const { schemas, currencies, enums, teams } = useWorkspaceContext();
   const { data: relationSchemas = [] } = useRelationSchemas(workspaceId);
@@ -478,7 +488,13 @@ export const MapView = ({
   const metricTerminalContext: 'entity' | 'relation' = metricTerminalRelationSchema
     ? 'relation'
     : 'entity';
-  const storedMetricConfig = useMemo(() => parseMetricConfig(cfg.metricConfig), [cfg.metricConfig]);
+  const [overlayId, setOverlayId] = useState(NO_OVERLAY_ID);
+  const [searchText, setSearchText] = useState('');
+  const activeOverlay = overlays?.find(overlay => overlay.id === overlayId) ?? null;
+  const storedMetricConfig = useMemo(
+    () => (overlays ? (activeOverlay?.metricConfig ?? null) : parseMetricConfig(cfg.metricConfig)),
+    [activeOverlay, cfg.metricConfig, overlays]
+  );
   const metricConfig =
     storedMetricConfig && !mapTraversalError
       ? {
@@ -504,11 +520,13 @@ export const MapView = ({
   const activeSourceOption = metricConfig
     ? metricSourceOptions.find(o => sourceKey(o.source) === sourceKey(metricConfig.source))
     : undefined;
-  const metricLabel = metricConfig
-    ? isEnumSource(metricConfig.source)
-      ? (activeSourceOption?.label ?? metricConfig.source.kind)
-      : `${activeSourceOption?.label ?? metricConfig.source.kind} (${aggregationLabel(metricConfig.aggregation)})`
-    : '';
+  const metricLabel = activeOverlay
+    ? activeOverlay.label
+    : metricConfig
+      ? isEnumSource(metricConfig.source)
+        ? (activeSourceOption?.label ?? metricConfig.source.kind)
+        : `${activeSourceOption?.label ?? metricConfig.source.kind} (${aggregationLabel(metricConfig.aggregation)})`
+      : '';
 
   const setMetricConfig = useCallback(
     (next: MetricConfig | null) => notify({ metricConfig: next ?? undefined }),
@@ -597,6 +615,17 @@ export const MapView = ({
     };
     return renderTree.map(filter).filter((entry): entry is RenderTreeNode => entry !== null);
   }, [cfg.hideMissingMetricData, metricConfig, metricSourceSchema, renderTree, resultsByBoxId]);
+
+  // Search / owner highlighting dims non-matches in place (the explicit `linkedEntityIds` prop,
+  // when given, takes precedence).
+  const highlightedIds = useMemo(
+    () => computeHighlightedIds(filteredRenderTree, searchText, dimOwnerIds),
+    [filteredRenderTree, searchText, dimOwnerIds]
+  );
+  const dimLinkedIds = linkedEntityIds ?? (highlightedIds ? [...highlightedIds] : undefined);
+  const dimLinkedIdSet = linkedEntityIds
+    ? linkedEntityIdSet
+    : (highlightedIds ?? linkedEntityIdSet);
 
   const boxStyle = useCallback(
     (node: TreeNode, isLeaf: boolean): React.CSSProperties | undefined => {
@@ -706,6 +735,29 @@ export const MapView = ({
         numeratorConditionPopoverRef={numeratorConditionPopoverRef}
       />
 
+      {overlays && (
+        <div className={styles.overlayBar}>
+          <div className={styles.searchBox}>
+            <TbSearch size={12} />
+            <input
+              placeholder="Find…"
+              aria-label="Find"
+              value={searchText}
+              onChange={e => setSearchText(e.target.value)}
+            />
+          </div>
+          <FilterDropdown
+            label="Overlay"
+            value={overlayId}
+            onChange={setOverlayId}
+            options={[
+              { value: NO_OVERLAY_ID, label: 'None' },
+              ...overlays.map(overlay => ({ value: overlay.id, label: overlay.label }))
+            ]}
+          />
+        </div>
+      )}
+
       {isUnconfigured ? (
         <EmptyState
           title="Select a schema for Level 1"
@@ -725,8 +777,8 @@ export const MapView = ({
           level1Items={level1Items}
           schemaMap={schemaMap}
           relationSchemas={relationSchemas}
-          linkedEntityIds={linkedEntityIds}
-          linkedEntityIdSet={linkedEntityIdSet}
+          linkedEntityIds={dimLinkedIds}
+          linkedEntityIdSet={dimLinkedIdSet}
           selectedDisplayFields={selectedDisplayFields}
           metricConfig={metricConfig}
           metricSourceSchema={metricSourceSchema}
@@ -749,6 +801,7 @@ export const MapView = ({
             source={metricConfig.source}
             aggregation={metricConfig.aggregation}
             legend={legend}
+            colourBands={metricConfig.colourBands}
             lifecycleStates={lifecycleStates}
           />
         ))}
