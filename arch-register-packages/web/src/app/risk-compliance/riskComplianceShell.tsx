@@ -28,6 +28,8 @@ export const RISK_COMPLIANCE_RISKS_APP_KEY = 'risk-compliance-risks';
 
 /** Keys the Retention section's dashboard (seeded server-side in `appDashboardSeeds.ts`). */
 export const RISK_COMPLIANCE_CONTROLS_APP_KEY = 'risk-compliance-controls';
+/** Keys the Assessments section's dashboard (seeded server-side in `appDashboardSeeds.ts`). */
+export const RISK_COMPLIANCE_ASSESSMENTS_APP_KEY = 'risk-compliance-assessments';
 export const RISK_COMPLIANCE_RETENTION_APP_KEY = 'risk-compliance-retention';
 
 /**
@@ -101,10 +103,10 @@ export const riskComplianceAppDefinition: AppDefinition = {
       )
     },
     {
-      // No `primarySidebar`: like Overview, Assessments is a self-contained register with its own
-      // due panels and in-page filters rather than a facet/nav sidebar, so the shell renders it
-      // full-width.
+      // No `primarySidebar`: like Overview, Assessments is a self-contained dashboard, so the
+      // shell renders it full-width.
       id: RISK_ASSESSMENTS_ID,
+      dashboard: { appKey: RISK_COMPLIANCE_ASSESSMENTS_APP_KEY },
       icon: TbListCheck,
       tooltip: 'Assessments',
       route: RISK_RAIL_PATHS[RISK_ASSESSMENTS_ID]

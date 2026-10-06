@@ -120,9 +120,9 @@ export const LazyRiskComplianceRetentionDashboardScreen = lazyRouteComponent(
   () => import('../../app/risk-compliance/sections/RiskComplianceRetentionDashboardScreen'),
   'RiskComplianceRetentionDashboardScreen'
 );
-export const LazyRiskComplianceAssessmentsScreen = lazyRouteComponent(
-  () => import('../../app/risk-compliance/sections/RiskComplianceAssessmentsScreen'),
-  'RiskComplianceAssessmentsScreen'
+export const LazyRiskComplianceAssessmentsDashboardScreen = lazyRouteComponent(
+  () => import('../../app/risk-compliance/sections/RiskComplianceAssessmentsDashboardScreen'),
+  'RiskComplianceAssessmentsDashboardScreen'
 );
 export const LazyDataStewardshipDashboardScreen = lazyRouteComponent(
   () => import('../../app/data-stewardship/sections/DataStewardshipDashboardScreen'),

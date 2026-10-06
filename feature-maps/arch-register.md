@@ -538,18 +538,16 @@
           register to one policy's assignments (`policyId` search param). The earlier "Complete" column and
           sidebar "Incomplete" facet were dropped; completeness is still summarised on the Overview.
 
-        - @id:ar.risk-compliance.assessments The Assessments section is a read view over the existing, generic
-          assessment machinery (the same `Assessment` model used by Projects, and by Strategy/Vendor Management's
-          own periodic reviews) — no new case kind — scoped down to whichever workspace assessments target the
-          Risk and/or Control entity schema (`assessment.scope`). Two "due soon" panels ("Risk reviews due",
-          "Control tests due" — the latter only when a Control schema is bound) list open, due-dated assessments in
-          each scope, soonest first, each row's due date shown as a coloured day-count ("18d" / "6d late") rather
-          than a plain date. Below them, a dense register table (a Risk/Control/All toggle, name search, and the
-          same Open-or-Closed/Draft/Archived/All status filter as a project's own Assessments tab) lists matching
-          assessments by Name, Scope (the schema names it targets), Progress (a bar plus completed/in-scope count),
-          Due (the same day-count styling), and a coloured Status pill. Assessments aren't owned by this app — each
-          belongs to a Project — so this section has no create/edit affordance; opening a register row or a
-          due-panel row navigates to the assessment's home project, deep-linked to its Assessments tab.
+        - @id:ar.risk-compliance.assessments The Assessments section is a configurable dashboard (seeded as the
+          `risk-compliance-assessments` app dashboard, editable like other app dashboards) over the existing,
+          generic assessment machinery (the same `Assessment` model used by Projects, and by Strategy/Vendor
+          Management's own periodic reviews) — no new case kind — scoped to whichever workspace assessments target
+          the Risk and/or Control entity schema (`assessment.scope`). It is built from generic dashboard widgets:
+          two "Assessments" lists ("Risk reviews due", "Control tests due") show open, due-dated assessments soonest
+          first with a day-count due label, and a tabbed pair of "Assessment progress" tables (Risks / Controls)
+          list each assessment's progress, due date and status. Assessments aren't owned by this app — each belongs
+          to a Project — so opening a row navigates to the assessment's home project, deep-linked to its
+          Assessments tab.
 
     - @id:ar.data-stewardship Workspaces can optionally enable Data Stewardship as its own workspace application,
       with a dedicated left rail scoped to five sections (My work, Stewardship, Classification, Change cases &
@@ -653,7 +651,7 @@
         - @id:ar.data-stewardship.assessments The Assessments section is a configurable dashboard (seeded as the
           `data-stewardship-assessments` app dashboard, editable like other app dashboards) over the existing, generic
           assessment machinery (the same `Assessment`/`AssessmentResponse` model Projects and `ar.risk-compliance`'s
-          own Assessments screen use), scoped to the assessments that target the Data Entity schema. It is built from
+          Assessments dashboard use), scoped to the assessments that target the Data Entity schema. It is built from
           two generic dashboard widgets that take the entity type as a config option: an "Assessment status" stat
           tile (count of assessments that are Overdue, In progress, Not started or Complete, with a subtext
           template) and an "Assessment progress" table — one row per assessment, not per dataset, with name plus

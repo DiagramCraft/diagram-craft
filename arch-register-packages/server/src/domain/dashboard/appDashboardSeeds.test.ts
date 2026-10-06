@@ -11,6 +11,7 @@ import {
   DATA_STEWARDSHIP_CHANGE_CASES_APP_KEY,
   DATA_STEWARDSHIP_CLASSIFICATION_APP_KEY,
   DATA_STEWARDSHIP_STEWARDSHIP_APP_KEY,
+  RISK_COMPLIANCE_ASSESSMENTS_APP_KEY,
   RISK_COMPLIANCE_OVERVIEW_APP_KEY,
   RISK_COMPLIANCE_RETENTION_APP_KEY,
   RISK_COMPLIANCE_CONTROLS_APP_KEY,
@@ -91,6 +92,21 @@ describe('APP_DASHBOARD_SEEDS', () => {
       'in_progress',
       'not_started',
       'complete'
+    ]);
+  });
+
+  it('seeds the risk & compliance Assessments dashboard with two due lists and a tabbed progress table, no sidebar', () => {
+    const seed = APP_DASHBOARD_SEEDS[RISK_COMPLIANCE_ASSESSMENTS_APP_KEY];
+    expect(seed).toBeDefined();
+    expect(seed!.sidebar).toBeUndefined();
+    expect(seed!.widgets.map(widget => widget.type)).toEqual([
+      'Assessments',
+      'Assessments',
+      'tabs'
+    ]);
+    expect(seed!.widgets.slice(0, 2).map(widget => widget.config.schemaNames)).toEqual([
+      ['Risk'],
+      ['Control']
     ]);
   });
 
