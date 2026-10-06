@@ -338,14 +338,13 @@
           capability's drawer without changing the URL; the drawer's own link-icon action copies a shareable
           `?drawer=<id>` link.
 
-        - @id:ar.strategy.capabilities The Capabilities section lists every Business Capability with columns chosen
-          by the workspace's view configuration (@id:ar.strategy.view-config) — capability fields, subtree roll-up
-          metrics, and structural columns such as level, owner, and supported-application count — plus level and
-          owner filters, and sortable columns. Rows open the
-          capability's drawer (see below) and carry a separate "Open in Entities" action to the Home entity
-          browser. The section's own primary sidebar swaps the app's usual
-          section nav list for a capability hierarchy tree (clicking a node filters the table to that subtree) plus
-          an owner facet with counts.
+        - @id:ar.strategy.capabilities The Capabilities section is a configurable dashboard (seeded as the
+          `strategy-capabilities` app dashboard, editable like other app dashboards) whose widget is an entity
+          browser embed in Tree view (@id:ar.entity-views.tree) over the Business Capability containment hierarchy,
+          showing level and owner. The dashboard's Owner facet narrows the tree (matching capabilities keep
+          their ancestors, shown muted). Rows open the capability's drawer (see below). Subtree roll-up columns
+          (maturity bars, gap, investment, risk, supporting-application count) are not yet shown here; see the
+          column-rendering work for entity browser tables.
 
           The configurable entity drawer shows subtree roll-up stats and a leaf count via the generic drawer
           `rollup`/leaf-count item kinds (seeded from @id:ar.strategy.view-config's roll-up fields by default, but

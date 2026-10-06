@@ -9,6 +9,7 @@ export const BUSINESS_GLOSSARY_APP_KEY = 'business-glossary';
 export const VENDOR_MANAGEMENT_VENDORS_APP_KEY = 'vendor-management-vendors';
 export const STRATEGY_OVERVIEW_APP_KEY = 'strategy-overview';
 export const STRATEGY_CAPABILITY_MAP_APP_KEY = 'strategy-capability-map';
+export const STRATEGY_CAPABILITIES_APP_KEY = 'strategy-capabilities';
 export const RISK_COMPLIANCE_OVERVIEW_APP_KEY = 'risk-compliance-overview';
 export const RISK_COMPLIANCE_RISKS_APP_KEY = 'risk-compliance-risks';
 export const RISK_COMPLIANCE_CONTROLS_APP_KEY = 'risk-compliance-controls';
@@ -919,6 +920,53 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
               fieldId: 'capability_level',
               op: 'equals',
               value: 'L1'
+            }
+          }
+        },
+        x: 0,
+        y: 0,
+        w: 12,
+        h: 40
+      }
+    ],
+    sidebar: {
+      kind: 'facets',
+      schemaName: 'Business Capability',
+      facets: [{ fieldId: '_owner', variableName: 'owners', itemLabel: 'Owner' }]
+    }
+  },
+  [STRATEGY_CAPABILITIES_APP_KEY]: {
+    name: 'Capabilities',
+    description: 'Every Business Capability in its containment hierarchy, filterable by owner.',
+    widgets: [
+      {
+        id: 'seed-capabilities-tree',
+        type: ENTITY_BROWSER_EMBED_WIDGET_TYPE,
+        config: {
+          title: 'Capabilities',
+          q: '',
+          conditions: [],
+          sort: 'name',
+          view: 'tree',
+          viewConfigs: {
+            tree: {
+              fieldIds: ['Capability Level', '_owner']
+            }
+          },
+          schemaName: 'Business Capability',
+          // The sidebar's Owner facet; an unselected facet resolves to [] and is dropped.
+          entityQuery: {
+            root: {
+              kind: 'and',
+              children: [
+                {
+                  kind: 'predicate',
+                  path: [],
+                  fieldId: '_owner',
+                  op: 'in',
+                  value: ['$owners']
+                }
+              ]
             }
           }
         },

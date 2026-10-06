@@ -6,6 +6,7 @@ import { EntityBrowserView } from '../../../../entities/components/EntityBrowser
 import {
   getFilterValue,
   isTreeBasedView,
+  stripEmptyGroups,
   type BrowserEntityRecord
 } from '../../../../entities/components/entityBrowserState';
 import { useEntityBrowserData } from '../../../../entities/components/useEntityBrowserData';
@@ -65,10 +66,15 @@ export const EntityBrowserEmbed = ({ config: rawConfig }: Props) => {
   const rootSchema = typeFilter ? schemas.find(schema => schema.id === typeFilter) : undefined;
   const resolvedEntityQuery = useMemo(() => {
     if (!config?.entityQuery) return null;
-    return resolveEntityQuery(config.entityQuery, rootSchema, typeFilter, {
-      schemas,
-      relationSchemas
-    });
+    // An unselected sidebar facet leaves an empty `in` (see `dashboardSidebarVariables.ts`), which
+    // reads as "no filter" only once stripped; the table path strips it itself, the tree and map
+    // fetch directly and need it done here.
+    return stripEmptyGroups(
+      resolveEntityQuery(config.entityQuery, rootSchema, typeFilter, {
+        schemas,
+        relationSchemas
+      })
+    );
   }, [config?.entityQuery, rootSchema, typeFilter, schemas, relationSchemas]);
 
   // The configured sort is only the initial one; a column-header click re-sorts locally without
@@ -145,6 +151,7 @@ export const EntityBrowserEmbed = ({ config: rawConfig }: Props) => {
 
   const viewConfig = resolvedActiveViewConfig ?? null;
   const allRows = rows as BrowserEntityRecord[];
+  const fetchesOwnTree = config.view === 'map' || config.view === 'tree';
   const browserRows = config.limit ? allRows.slice(0, config.limit) : allRows;
   const displayFields = buildEntityDisplayFields(
     typeFilter ? schemas.filter(s => s.id === typeFilter) : schemas,
@@ -171,11 +178,11 @@ export const EntityBrowserEmbed = ({ config: rawConfig }: Props) => {
         ownerFilter={ownerFilter}
         statusFilter={statusFilter}
         activeViewConfig={viewConfig}
-        // The map fetches its own (tree) data, so it needs the resolved query and conditions
-        // that the row-based views get through `useEntityBrowserData` above.
-        conditions={config.view === 'map' ? config.conditions : undefined}
-        entityQuery={config.view === 'map' ? resolvedEntityQuery : undefined}
-        executionEntityQuery={config.view === 'map' ? resolvedEntityQuery : undefined}
+        // The map and tree fetch their own (tree) data, so they need the resolved query and
+        // conditions that the row-based views get through `useEntityBrowserData` above.
+        conditions={fetchesOwnTree ? config.conditions : undefined}
+        entityQuery={fetchesOwnTree ? resolvedEntityQuery : undefined}
+        executionEntityQuery={fetchesOwnTree ? resolvedEntityQuery : undefined}
         mapOverlays={mapOverlays}
         mapDimOwnerIds={config.dimOwnerIds}
         sort={sort}
