@@ -181537,6 +181537,39 @@
                         "type": "string",
                         "pattern": "^[A-Z]{3}$",
                         "description": "Target currency for currency-field rollups; defaults to the workspace currency"
+                      },
+                      "colourBands": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "max": {
+                              "anyOf": [
+                                {
+                                  "type": "number"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ],
+                              "description": "Inclusive upper bound; null for the open top band"
+                            },
+                            "tone": {
+                              "enum": [
+                                "good",
+                                "warn",
+                                "bad"
+                              ],
+                              "type": "string",
+                              "description": "Severity tone the band is drawn in"
+                            }
+                          },
+                          "required": [
+                            "max",
+                            "tone"
+                          ]
+                        },
+                        "description": "Presentation only: when set on a numeric metric, boxes are drawn in the tone of the band their value falls in instead of on the sequential colour ramp"
                       }
                     },
                     "required": [
