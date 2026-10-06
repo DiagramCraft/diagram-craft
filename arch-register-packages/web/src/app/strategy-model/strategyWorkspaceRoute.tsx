@@ -18,7 +18,7 @@ import {
   validateTraceabilitySearch
 } from '../../routes/searchParams';
 import {
-  LazyStrategyOverviewScreen,
+  LazyStrategyOverviewDashboardScreen,
   LazyStrategyCapabilityMapScreen,
   LazyStrategyCapabilitiesScreen,
   LazyStrategyHeatmapsScreen,
@@ -44,7 +44,7 @@ export const createStrategyWorkspaceRoutes = <TParentRoute extends AnyRoute>(
           (params as unknown as { workspaceSlug: string }).workspaceSlug,
           'strategy-model'
         ),
-      component: LazyStrategyOverviewScreen
+      component: LazyStrategyOverviewDashboardScreen
     }),
     ctx =>
       railSectionShell(ctx, STRATEGY_OVERVIEW_ID, {

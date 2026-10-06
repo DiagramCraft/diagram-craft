@@ -24,6 +24,7 @@ import {
 import { CHANGE_CASE_TABLE_TYPE, changeCaseTableSpec } from './widgets/ChangeCaseTableRegistration';
 import { ASSESSMENT_COUNT_TYPE, assessmentCountSpec } from './widgets/AssessmentCountRegistration';
 import { RATIO_BAR_LIST_TYPE, ratioBarListSpec } from './widgets/RatioBarListRegistration';
+import { COUNT_BY_FIELD_TYPE, countByFieldSpec } from './widgets/CountByFieldRegistration';
 import { RELATION_TABLE_TYPE, relationTableSpec } from './widgets/RelationTableRegistration';
 import { registerNestedWidgetResolvers } from './widgets/nestedWidgets';
 import { TABS_TYPE, tabsSpec } from './widgets/TabsRegistration';
@@ -40,6 +41,7 @@ const assessmentDashboardWidgetSpecs: Array<{
   { type: CONFORMANCE_VIOLATIONS_TYPE, spec: conformanceViolationsSpec },
   { type: CHANGE_CASE_TABLE_TYPE, spec: changeCaseTableSpec },
   { type: RATIO_BAR_LIST_TYPE, spec: ratioBarListSpec },
+  { type: COUNT_BY_FIELD_TYPE, spec: countByFieldSpec },
   { type: ASSESSMENT_COUNT_TYPE, spec: assessmentCountSpec },
   { type: RELATION_TABLE_TYPE, spec: relationTableSpec },
   { type: TABS_TYPE, spec: tabsSpec }

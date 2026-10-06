@@ -54,7 +54,7 @@
           saved-view embeds, entity tables, entity cards, entity graphs, entity changelogs, document browsers, entity
           browsers, diagram previews, wiki-page embeds, lifecycle and activity-trend charts, stale-entity reports, an
           activity feed, configurable Markdown content, API & Integration Catalog statistics and list panels, ratio
-          bar-lists, a risk matrix, tabs that group other widgets, and assessment lists and counts scoped to chosen entity types)
+          bar-lists, count-by-field breakdown bars, a risk matrix, tabs that group other widgets, and assessment lists and counts scoped to chosen entity types)
           laid out on a grid; a fresh workspace shows a sensible default layout. The entity table and entity browser
           widgets both show a list of entities but serve different needs: entity table offers quick, flat schema/owner/
           lifecycle/limit filtering with fixed columns, while entity browser exposes the full entity browser experience
@@ -311,7 +311,7 @@
           or a signed delta), the subtree roll-up (average or sum, plus a number format), the detail drawer, and a
           capability-map overlay (direction plus colour-band thresholds; a roll-up field colours by its subtree
           aggregate, otherwise by the capability's own value). The Capabilities table's Name, Level, Owner, and
-          Applications columns are fixed and always lead. The Dashboard tab configures the landing-screen tiles,
+          Applications columns are fixed and always lead. The Dashboard tab holds legacy landing-screen tiles that the Overview no longer reads,
           the Bindings tab maps the capability roles to schemas as before, and the Access tab carries the
           application's access policy (@id:ar.authorization.application-access). Retiring a field in the schema editor
           drops it from every view (with an advisory diagnostic); the
@@ -319,13 +319,12 @@
           falls back to a built-in default that mirrors the seed schema fields.
 
         - @id:ar.strategy.overview The Overview section is the application's landing screen — where the app switcher
-          opens. It shows read-only summary tiles chosen by the workspace's view configuration (@id:
-          ar.strategy.view-config), derived from the same entity and relation data as the other sections:
-          capability count by level, objective count by a select field, application coverage (share of capabilities
-          with at least one supporting application), an orphan-capability count (capabilities no objective supports),
-          and top-N lists of the largest values of a capability field or roll-up. Each tile links into the section
-          behind it (Capabilities filtered by level, Strategy, Capability map, or Traceability's "No strategy link"
-          tab).
+          opens. It is a configurable dashboard (seeded as the `strategy-overview` app dashboard, editable like other
+          app dashboards) built from generic widgets: "Count by field" breakdowns (capabilities by level, objectives
+          by status), application-coverage and orphan-capability stat tiles (capabilities with at least one supporting
+          application; capabilities no objective supports), and a table of the capabilities with the largest maturity
+          gap. It no longer reads the workspace view configuration's legacy Dashboard tiles (@id:
+          ar.strategy.view-config).
 
         - @id:ar.strategy.capability-map The Capability map section renders the Business Capability model as a
           nested L1 → L2 → L3 grid over containment. A toolbar overlay selector colours the leaf tiles by one of the

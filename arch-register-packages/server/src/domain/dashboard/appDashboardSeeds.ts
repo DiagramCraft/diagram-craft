@@ -7,6 +7,7 @@ export const API_INTEGRATION_CATALOG_APP_KEY = 'api-integration-catalog';
 export const API_INTEGRATION_CATALOG_IMPACT_APP_KEY = 'api-integration-catalog-impact';
 export const BUSINESS_GLOSSARY_APP_KEY = 'business-glossary';
 export const VENDOR_MANAGEMENT_VENDORS_APP_KEY = 'vendor-management-vendors';
+export const STRATEGY_OVERVIEW_APP_KEY = 'strategy-overview';
 export const RISK_COMPLIANCE_OVERVIEW_APP_KEY = 'risk-compliance-overview';
 export const RISK_COMPLIANCE_RISKS_APP_KEY = 'risk-compliance-risks';
 export const RISK_COMPLIANCE_CONTROLS_APP_KEY = 'risk-compliance-controls';
@@ -732,6 +733,96 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
         y: 19,
         w: 12,
         h: 22
+      }
+    ]
+  },
+  [STRATEGY_OVERVIEW_APP_KEY]: {
+    name: 'Overview',
+    description:
+      'Capabilities by level, objectives by status, application coverage, orphan capabilities and the largest maturity gaps.',
+    widgets: [
+      {
+        id: 'seed-capabilities-by-level',
+        type: 'CountByField',
+        config: {
+          schemaName: 'Business Capability',
+          fieldId: 'capability_level',
+          label: 'Capabilities by level'
+        },
+        x: 0,
+        y: 0,
+        w: 3,
+        h: 7
+      },
+      {
+        id: 'seed-objectives-by-status',
+        type: 'CountByField',
+        config: { schemaName: 'Objective', fieldId: 'status', label: 'Objectives by status' },
+        x: 3,
+        y: 0,
+        w: 3,
+        h: 7
+      },
+      {
+        id: 'seed-application-coverage',
+        type: 'AggregateStat',
+        config: {
+          query: 'schema:"Business Capability" AND supported_entities',
+          denominatorQuery: 'schema:"Business Capability"',
+          display: 'percent',
+          label: 'Application coverage',
+          subtextTemplate: '{count} of {total} capabilities have ≥1 application',
+          showLink: false
+        },
+        x: 6,
+        y: 0,
+        w: 3,
+        h: 7
+      },
+      {
+        id: 'seed-orphan-capabilities',
+        type: 'AggregateStat',
+        config: {
+          query: 'schema:"Business Capability" AND NOT supporting_objectives',
+          label: 'Orphan capabilities',
+          subtextTemplate: 'not supported by any objective',
+          severity: { warnAt: 1 },
+          showLink: false
+        },
+        x: 9,
+        y: 0,
+        w: 3,
+        h: 7
+      },
+      {
+        id: 'seed-largest-maturity-gaps',
+        type: ENTITY_BROWSER_EMBED_WIDGET_TYPE,
+        config: {
+          title: 'Largest maturity gaps',
+          limit: 5,
+          q: '',
+          conditions: [],
+          // Largest gap first; field NAMES are resolved to ids at render time.
+          sort: 'field:Maturity Gap:desc',
+          view: 'table',
+          viewConfigs: {
+            table: { fieldIds: ['Maturity', 'Maturity Target', 'Maturity Gap'] }
+          },
+          schemaName: 'Business Capability',
+          entityQuery: {
+            root: {
+              kind: 'predicate',
+              path: [],
+              fieldId: 'Maturity Gap',
+              op: 'gt',
+              value: 0
+            }
+          }
+        },
+        x: 0,
+        y: 7,
+        w: 12,
+        h: 16
       }
     ]
   },

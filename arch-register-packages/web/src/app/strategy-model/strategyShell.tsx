@@ -20,6 +20,9 @@ import {
   type StrategyRailItemId
 } from './strategySections';
 
+/** Keys the Overview section's dashboard (seeded server-side in `appDashboardSeeds.ts`). */
+export const STRATEGY_OVERVIEW_APP_KEY = 'strategy-overview';
+
 /**
  * Strategy & Capability Modelling's workspace-rail identity: its rail-item ids (defined in
  * `./strategySections.ts`, alongside `strategyAppDefinition` and its breadcrumb builder).
@@ -44,7 +47,8 @@ export const strategyAppDefinition: AppDefinition = {
       id: STRATEGY_OVERVIEW_ID,
       icon: TbLayoutDashboard,
       tooltip: 'Overview',
-      route: STRATEGY_RAIL_PATHS[STRATEGY_OVERVIEW_ID]
+      route: STRATEGY_RAIL_PATHS[STRATEGY_OVERVIEW_ID],
+      dashboard: { appKey: STRATEGY_OVERVIEW_APP_KEY }
     },
     {
       id: STRATEGY_CAPABILITY_MAP_ID,
