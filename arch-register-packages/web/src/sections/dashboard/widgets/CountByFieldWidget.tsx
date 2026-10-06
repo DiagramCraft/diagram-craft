@@ -42,7 +42,9 @@ export const CountByFieldWidget = ({ config }: Props) => {
   );
 
   if (!isCountByFieldConfigComplete(config) || (!schema && schemas.length > 0)) {
-    return <div className={`${rowStyles.emptyInline} dim`}>This widget is not fully configured.</div>;
+    return (
+      <div className={`${rowStyles.emptyInline} dim`}>This widget is not fully configured.</div>
+    );
   }
   if (isLoading) {
     return <div className={`${rowStyles.emptyInline} dim`}>Loading…</div>;
