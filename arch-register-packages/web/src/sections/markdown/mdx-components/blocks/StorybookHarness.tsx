@@ -7,6 +7,7 @@ import {
 } from '@tanstack/react-router';
 import { createContext, useContext, type ReactNode } from 'react';
 import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
+import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import { DashboardGrid } from '../../../dashboard/DashboardGrid';
@@ -95,19 +96,22 @@ export const StoryProviders = ({
   client = queryClient,
   permissions,
   projectId,
-  schemas: schemasOverride
+  schemas: schemasOverride,
+  relationSchemas: relationSchemasOverride
 }: {
   children: ReactNode;
   client?: QueryClient;
   permissions?: Partial<WorkspaceContextType['permissions']>;
   projectId?: string;
   schemas?: EntitySchema[];
+  relationSchemas?: RelationSchema[];
 }) => (
   <QueryClientProvider client={client}>
     <WorkspaceContext.Provider
       value={{
         ...workspaceContext,
         schemas: schemasOverride ?? workspaceContext.schemas,
+        relationSchemas: relationSchemasOverride ?? workspaceContext.relationSchemas,
         permissions: { ...workspaceContext.permissions, ...permissions }
       }}
     >

@@ -1,0 +1,26 @@
+.link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent-fg);
+  cursor: pointer;
+  font: inherit;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.chipButton {
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+}

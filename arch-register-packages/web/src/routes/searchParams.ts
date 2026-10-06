@@ -549,39 +549,6 @@ export type HomeSearchParams = SearchParamsFromSchema<typeof homeSearchSchema>;
 export const validateHomeSearch = (raw: Record<string, unknown>): HomeSearchParams =>
   parseSearchParams(homeSearchSchema, raw);
 
-// Data Stewardship classification-section params. Three views (classified data / restricted flows
-// / cross-boundary transfers) live in one screen, switched via the sidebar's own TreeRows
-// (`ClassificationSidebarContent` in `../app/data-stewardship/sections/DataStewardshipSidebar.tsx`)
-// rather than a separate route per view — see `DataStewardshipClassificationScreen.tsx`'s doc
-// comment for why.
-const dataStewardshipClassificationSearchSchema = defineSearchParamSchema({
-  q: stringCodec,
-  view: enumCodec(['classified', 'restricted-flows', 'cross-boundary'] as const),
-  // Classification select-field value — narrows the classified-data view; mirrors
-  // `dataStewardshipStewardshipSearchSchema`'s own `classification`.
-  classification: stringCodec,
-  // Narrows the classified-data view to entities flagged as carrying personal data
-  // (`isPersonalData` in `../app/data-stewardship/dataFlowClassification.ts`); '1' when set,
-  // absent otherwise.
-  personalDataOnly: enumCodec(['1'] as const),
-  // Narrows the classified-data view to datasets with a coverage gap (`computeDatasetCoverage`);
-  // '1' when set, absent otherwise — mirrors `dataStewardshipStewardshipSearchSchema`'s own
-  // `gapsOnly`.
-  gapsOnly: enumCodec(['1'] as const),
-  // Sort keys differ per view ('classification' | 'name' for classified data, 'severity' | 'name'
-  // for the flow views), so this is a loose string rather than a per-view enum union.
-  sort: stringCodec
-});
-
-export type DataStewardshipClassificationSearchParams = SearchParamsFromSchema<
-  typeof dataStewardshipClassificationSearchSchema
->;
-
-export const validateDataStewardshipClassificationSearch = (
-  raw: Record<string, unknown>
-): DataStewardshipClassificationSearchParams =>
-  parseSearchParams(dataStewardshipClassificationSearchSchema, raw);
-
 // Data Stewardship My work-section params — the review queue that's also the app's landing screen
 // (`DataStewardshipDashboardScreen.tsx`, #3298/#3501).
 const dataStewardshipMyWorkSearchSchema = defineSearchParamSchema({

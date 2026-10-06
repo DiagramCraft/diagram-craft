@@ -9,6 +9,7 @@ import {
   DATA_STEWARDSHIP_APP_KEY,
   DATA_STEWARDSHIP_ASSESSMENTS_APP_KEY,
   DATA_STEWARDSHIP_CHANGE_CASES_APP_KEY,
+  DATA_STEWARDSHIP_CLASSIFICATION_APP_KEY,
   DATA_STEWARDSHIP_STEWARDSHIP_APP_KEY,
   RISK_COMPLIANCE_OVERVIEW_APP_KEY,
   RISK_COMPLIANCE_RETENTION_APP_KEY,
@@ -105,6 +106,32 @@ describe('APP_DASHBOARD_SEEDS', () => {
       'ConformanceViolations'
     ]);
     expect(seed!.widgets[4]!.config).toMatchObject({ schemaName: 'Data Entity', limit: 8 });
+  });
+
+  it('seeds the data stewardship Classification dashboard with three tabs and a Classification facets sidebar', () => {
+    const seed = APP_DASHBOARD_SEEDS[DATA_STEWARDSHIP_CLASSIFICATION_APP_KEY];
+    expect(seed).toBeDefined();
+    expect(seed!.sidebar).toEqual({
+      kind: 'facets',
+      schemaName: 'Data Entity',
+      facets: [
+        { fieldId: 'Classification', variableName: 'classifications', itemLabel: 'Classification' }
+      ]
+    });
+    expect(seed!.widgets.map(widget => widget.type)).toEqual(['tabs']);
+    const tabs = (
+      seed!.widgets[0]!.config as {
+        tabs: Array<{ id: string; widgets: Array<{ id: string; type: string }> }>;
+      }
+    ).tabs;
+    expect(tabs.map(tab => tab.id)).toEqual(['classified', 'restricted-flows', 'cross-boundary']);
+    expect(tabs.map(tab => tab.widgets.map(widget => widget.type))).toEqual([
+      ['AggregateStat', 'AggregateStat', 'AggregateStat', 'EntityBrowserEmbed'],
+      ['AggregateStat', 'AggregateStat', 'AggregateStat', 'RelationTable'],
+      ['AggregateStat', 'AggregateStat', 'AggregateStat', 'RelationTable']
+    ]);
+    const ids = tabs.flatMap(tab => tab.widgets.map(widget => widget.id));
+    expect(new Set(ids).size).toBe(ids.length);
   });
 
   it('seeds the data stewardship Change cases dashboard with one change case table and a status options sidebar', () => {

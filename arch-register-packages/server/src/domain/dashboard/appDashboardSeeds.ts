@@ -14,6 +14,7 @@ export const RISK_COMPLIANCE_RETENTION_APP_KEY = 'risk-compliance-retention';
 export const DATA_STEWARDSHIP_APP_KEY = 'data-stewardship';
 export const DATA_STEWARDSHIP_ASSESSMENTS_APP_KEY = 'data-stewardship-assessments';
 export const DATA_STEWARDSHIP_STEWARDSHIP_APP_KEY = 'data-stewardship-stewardship';
+export const DATA_STEWARDSHIP_CLASSIFICATION_APP_KEY = 'data-stewardship-classification';
 export const DATA_STEWARDSHIP_CHANGE_CASES_APP_KEY = 'data-stewardship-change-cases';
 
 /** The `entity-browser-embed` widget type, shared with the markdown/wiki embed block (see
@@ -273,6 +274,272 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
         h: 20
       }
     ]
+  },
+  [DATA_STEWARDSHIP_CLASSIFICATION_APP_KEY]: {
+    name: 'Classification',
+    description:
+      'Datasets by classification, restricted integration flows, and cross-boundary transfers that carry personal data without a recorded safeguard.',
+    widgets: [
+      {
+        id: 'seed-classification-tabs',
+        type: 'tabs',
+        config: {
+          tabs: [
+            {
+              id: 'classified',
+              label: 'Classified data',
+              widgets: [
+                {
+                  id: 'seed-classification-restricted-datasets',
+                  type: 'AggregateStat',
+                  config: {
+                    query:
+                      'schema:"Data Entity" AND classification in ("sensitive", "highly-sensitive")',
+                    label: 'Restricted datasets',
+                    subtextTemplate: 'sensitive or highly sensitive',
+                    severity: { critAt: 1 },
+                    showLink: false
+                  },
+                  x: 0,
+                  y: 0,
+                  w: 4,
+                  h: 5
+                },
+                {
+                  id: 'seed-classification-missing-lawful-basis',
+                  type: 'AggregateStat',
+                  config: {
+                    query:
+                      'schema:"Data Entity" AND regulatory_tags = empty AND processing_purposes = empty',
+                    label: 'Missing lawful-basis proxy',
+                    subtextTemplate: 'no regulatory tags or processing purposes',
+                    showLink: false
+                  },
+                  x: 4,
+                  y: 0,
+                  w: 4,
+                  h: 5
+                },
+                {
+                  id: 'seed-classification-total-datasets',
+                  type: 'AggregateStat',
+                  config: {
+                    query: 'schema:"Data Entity"',
+                    label: 'Total datasets',
+                    subtextTemplate: 'under governance',
+                    showLink: false
+                  },
+                  x: 8,
+                  y: 0,
+                  w: 4,
+                  h: 5
+                },
+                {
+                  id: 'seed-classification-datasets',
+                  type: ENTITY_BROWSER_EMBED_WIDGET_TYPE,
+                  config: {
+                    title: 'Classified datasets',
+                    q: '',
+                    conditions: [],
+                    sort: 'field:Classification:asc',
+                    view: 'table',
+                    viewConfigs: {
+                      table: {
+                        fieldIds: [
+                          'Classification',
+                          'Regulatory Tags',
+                          'Processing Purposes',
+                          'Steward',
+                          '_owner'
+                        ]
+                      }
+                    },
+                    schemaName: 'Data Entity',
+                    entityQuery: {
+                      root: {
+                        kind: 'and',
+                        children: [
+                          {
+                            kind: 'predicate',
+                            path: [],
+                            fieldId: 'Classification',
+                            op: 'in',
+                            value: ['$classifications']
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  x: 0,
+                  y: 5,
+                  w: 12,
+                  h: 40
+                }
+              ]
+            },
+            {
+              id: 'restricted-flows',
+              label: 'Restricted flows',
+              widgets: [
+                {
+                  id: 'seed-classification-restricted-flows',
+                  type: 'AggregateStat',
+                  config: {
+                    query:
+                      'schema:"Data Flow" AND data_classification in ("sensitive", "highly-sensitive")',
+                    label: 'Restricted flows',
+                    subtextTemplate: 'sensitive or highly sensitive',
+                    showLink: false
+                  },
+                  x: 0,
+                  y: 0,
+                  w: 4,
+                  h: 5
+                },
+                {
+                  id: 'seed-classification-highly-sensitive',
+                  type: 'AggregateStat',
+                  config: {
+                    query: 'schema:"Data Flow" AND data_classification = "highly-sensitive"',
+                    label: 'Highly sensitive',
+                    subtextTemplate: 'top classification tier',
+                    severity: { critAt: 1 },
+                    showLink: false
+                  },
+                  x: 4,
+                  y: 0,
+                  w: 4,
+                  h: 5
+                },
+                {
+                  id: 'seed-classification-crossing-boundary',
+                  type: 'AggregateStat',
+                  config: {
+                    query:
+                      'schema:"Data Flow" AND cross_boundary = "cross-boundary" AND data_classification in ("sensitive", "highly-sensitive")',
+                    label: 'Crossing a boundary',
+                    subtextTemplate: 'source and destination regions differ',
+                    severity: { warnAt: 1 },
+                    showLink: false
+                  },
+                  x: 8,
+                  y: 0,
+                  w: 4,
+                  h: 5
+                },
+                {
+                  id: 'seed-classification-restricted-flows-panel',
+                  type: 'RelationTable',
+                  config: {
+                    relationSchemaName: 'Data Flow',
+                    filter: 'data_classification in ("sensitive", "highly-sensitive")',
+                    fieldIds: [
+                      'data_entities',
+                      'data_classification',
+                      'protocol',
+                      'cross_boundary'
+                    ],
+                    sort: 'data_classification',
+                    limit: 200,
+                    label: 'Flows carrying restricted or confidential data'
+                  },
+                  x: 0,
+                  y: 5,
+                  w: 12,
+                  h: 28
+                }
+              ]
+            },
+            {
+              id: 'cross-boundary',
+              label: 'Cross-boundary transfers',
+              widgets: [
+                {
+                  id: 'seed-classification-cross-boundary',
+                  type: 'AggregateStat',
+                  config: {
+                    query: 'schema:"Data Flow" AND cross_boundary = "cross-boundary"',
+                    label: 'Cross-boundary transfers',
+                    subtextTemplate: 'source and destination regions differ',
+                    showLink: false
+                  },
+                  x: 0,
+                  y: 0,
+                  w: 4,
+                  h: 5
+                },
+                {
+                  id: 'seed-classification-carrying-personal-data',
+                  type: 'AggregateStat',
+                  config: {
+                    query:
+                      'schema:"Data Flow" AND cross_boundary = "cross-boundary" AND data_classification in ("sensitive", "highly-sensitive")',
+                    label: 'Carrying personal data',
+                    subtextTemplate: 'classification is sensitive or higher',
+                    severity: { warnAt: 1 },
+                    showLink: false
+                  },
+                  x: 4,
+                  y: 0,
+                  w: 4,
+                  h: 5
+                },
+                {
+                  id: 'seed-classification-unsafeguarded',
+                  type: 'AggregateStat',
+                  config: {
+                    query:
+                      'schema:"Data Flow" AND cross_boundary = "cross-boundary" AND data_classification in ("sensitive", "highly-sensitive")',
+                    label: 'Unsafeguarded personal-data transfers',
+                    subtextTemplate: 'no exception recorded',
+                    severity: { critAt: 1 },
+                    showLink: false
+                  },
+                  x: 8,
+                  y: 0,
+                  w: 4,
+                  h: 5
+                },
+                {
+                  id: 'seed-classification-cross-boundary-panel',
+                  type: 'RelationTable',
+                  config: {
+                    relationSchemaName: 'Data Flow',
+                    filter: 'cross_boundary = "cross-boundary"',
+                    fieldIds: [
+                      'data_classification',
+                      'source_residency_region',
+                      'destination_residency_region',
+                      'protocol',
+                      'data_entities',
+                      '_owner'
+                    ],
+                    sort: 'data_classification',
+                    limit: 200,
+                    label: 'Cross-boundary transfers'
+                  },
+                  x: 0,
+                  y: 5,
+                  w: 12,
+                  h: 28
+                }
+              ]
+            }
+          ]
+        },
+        x: 0,
+        y: 0,
+        w: 12,
+        h: 40
+      }
+    ],
+    sidebar: {
+      kind: 'facets',
+      schemaName: 'Data Entity',
+      facets: [
+        { fieldId: 'Classification', variableName: 'classifications', itemLabel: 'Classification' }
+      ]
+    }
   },
   [DATA_STEWARDSHIP_CHANGE_CASES_APP_KEY]: {
     name: 'Change cases & exceptions',
