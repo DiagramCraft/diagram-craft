@@ -477,14 +477,10 @@ export type RetentionSearchParams = SearchParamsFromSchema<typeof retentionSearc
 export const validateRetentionSearch = (raw: Record<string, unknown>): RetentionSearchParams =>
   parseSearchParams(retentionSearchSchema, raw);
 
-// Strategy traceability params — the hop walker's column selection lives in the URL so a walked
-// Objective → Capability → Application path is deep-linkable, mirroring `focus` on the capability
-// map.
+// Strategy traceability params — just the active tab of the Trace chain / No strategy link tabs
+// widget (see the `strategy-traceability` seed in `appDashboardSeeds.ts`).
 const traceabilitySearchSchema = defineSearchParamSchema({
-  // 'chain' (the hop walker, default) | 'orphans' (the "no strategy link" list).
-  tab: stringCodec,
-  objective: stringCodec,
-  capability: stringCodec
+  tab: stringCodec
 });
 
 export type TraceabilitySearchParams = SearchParamsFromSchema<typeof traceabilitySearchSchema>;

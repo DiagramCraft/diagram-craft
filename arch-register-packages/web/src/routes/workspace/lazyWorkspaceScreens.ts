@@ -80,9 +80,9 @@ export const LazyStrategyStrategyDashboardScreen = lazyRouteComponent(
   () => import('../../app/strategy-model/sections/StrategyStrategyDashboardScreen'),
   'StrategyStrategyDashboardScreen'
 );
-export const LazyStrategyTraceabilityScreen = lazyRouteComponent(
-  () => import('../../app/strategy-model/sections/StrategyTraceabilityScreen'),
-  'StrategyTraceabilityScreen'
+export const LazyStrategyTraceabilityDashboardScreen = lazyRouteComponent(
+  () => import('../../app/strategy-model/sections/StrategyTraceabilityDashboardScreen'),
+  'StrategyTraceabilityDashboardScreen'
 );
 export const LazyVendorOverviewScreen = lazyRouteComponent(
   () => import('../../app/vendor-management/sections/VendorOverviewScreen'),

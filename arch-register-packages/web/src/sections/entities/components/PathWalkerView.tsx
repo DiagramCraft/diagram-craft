@@ -35,6 +35,9 @@ type PathWalkerViewProps = {
   /** Persists a new hop sequence + selection together. Omitted for published embeds, where both
    *  live in local state (hops seeded once from `config`). */
   onWalkChange?: (hops: PathStep[], selection: string[]) => void;
+  /** Fixes the walk to the configured hops: no relation dropdowns on the arrows, and no trailing
+   *  "choose relation" arrow after the last configured hop. */
+  lockHops?: boolean;
 };
 
 export const PathWalkerView = ({
@@ -46,7 +49,8 @@ export const PathWalkerView = ({
   onEntityClick,
   isLoading = false,
   selection: selectionProp,
-  onWalkChange
+  onWalkChange,
+  lockHops = false
 }: PathWalkerViewProps) => {
   const [localHops, setLocalHops] = useState<PathStep[]>(() => pathWalkerHops(config));
   const [localSelection, setLocalSelection] = useState<string[]>([]);
@@ -193,39 +197,42 @@ export const PathWalkerView = ({
       ? hopOptionsFrom({ schemaId: fromSchemaId, schemas, relationSchemas, getFieldGroupAccess })
       : [];
     const currentHop = hops[i];
+    if (lockHops && !currentHop) break;
     const currentKey = currentHop ? pathStepKey(currentHop) : '';
     const hopResolvable = !!currentHop && options.some(o => pathStepKey(o.step) === currentKey);
 
     columns.push(
       <div className={styles.link} key={`arrow-${i}`}>
-        <div className={styles.selectWrap}>
-          <select
-            className={styles.linkSelect}
-            value={currentKey}
-            aria-label={`Relation to follow from column ${i + 1}`}
-            onChange={event => {
-              const option = options.find(o => pathStepKey(o.step) === event.target.value);
-              pickHop(i, option ? option.step : null);
-            }}
-          >
-            <option value="">Choose relation…</option>
-            {currentHop && !hopResolvable && (
-              <option value={currentKey} disabled>
-                Unavailable relation
-              </option>
-            )}
-            {groupPathStepOptions(options).map(({ group, options: opts }) => (
-              <optgroup key={group} label={group}>
-                {opts.map(option => (
-                  <option key={pathStepKey(option.step)} value={pathStepKey(option.step)}>
-                    {hopDirectionGlyph(option.step)} {option.label}
-                  </option>
-                ))}
-              </optgroup>
-            ))}
-          </select>
-          <TbChevronDown size={11} />
-        </div>
+        {!lockHops && (
+          <div className={styles.selectWrap}>
+            <select
+              className={styles.linkSelect}
+              value={currentKey}
+              aria-label={`Relation to follow from column ${i + 1}`}
+              onChange={event => {
+                const option = options.find(o => pathStepKey(o.step) === event.target.value);
+                pickHop(i, option ? option.step : null);
+              }}
+            >
+              <option value="">Choose relation…</option>
+              {currentHop && !hopResolvable && (
+                <option value={currentKey} disabled>
+                  Unavailable relation
+                </option>
+              )}
+              {groupPathStepOptions(options).map(({ group, options: opts }) => (
+                <optgroup key={group} label={group}>
+                  {opts.map(option => (
+                    <option key={pathStepKey(option.step)} value={pathStepKey(option.step)}>
+                      {hopDirectionGlyph(option.step)} {option.label}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
+            <TbChevronDown size={11} />
+          </div>
+        )}
         <span className={styles.linkArrow} />
       </div>
     );

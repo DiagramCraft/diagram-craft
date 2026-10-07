@@ -15,6 +15,7 @@ import {
   STRATEGY_CAPABILITY_MAP_APP_KEY,
   STRATEGY_CAPABILITIES_APP_KEY,
   STRATEGY_STRATEGY_APP_KEY,
+  STRATEGY_TRACEABILITY_APP_KEY,
   STRATEGY_OVERVIEW_APP_KEY,
   RISK_COMPLIANCE_OVERVIEW_APP_KEY,
   RISK_COMPLIANCE_RETENTION_APP_KEY,
@@ -182,6 +183,24 @@ describe('APP_DASHBOARD_SEEDS', () => {
       schemaName: 'Objective',
       variableName: 'objectiveId',
       valueKind: 'id'
+    });
+  });
+
+  it('seeds the strategy Traceability dashboard with a tabs widget holding a relationship walker and an orphan capability table, no sidebar', () => {
+    const seed = APP_DASHBOARD_SEEDS[STRATEGY_TRACEABILITY_APP_KEY];
+    expect(seed).toBeDefined();
+    expect(seed!.sidebar).toBeUndefined();
+    expect(seed!.widgets.map(widget => widget.type)).toEqual(['tabs']);
+    const tabs = (seed!.widgets[0]!.config as { tabs: Array<{ id: string; widgets: unknown[] }> })
+      .tabs;
+    expect(tabs.map(tab => tab.id)).toEqual(['chain', 'orphans']);
+    expect(tabs[0]!.widgets[0]).toMatchObject({
+      type: 'PathWalker',
+      config: { rootSchemaName: 'Objective' }
+    });
+    expect(tabs[1]!.widgets[0]).toMatchObject({
+      type: 'EntityBrowserEmbed',
+      config: { schemaName: 'Business Capability', entityQuery: { root: { kind: 'not' } } }
     });
   });
 

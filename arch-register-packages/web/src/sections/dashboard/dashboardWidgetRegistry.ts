@@ -32,6 +32,7 @@ import {
 } from './widgets/RelatedEntitiesListRegistration';
 import { registerNestedWidgetResolvers } from './widgets/nestedWidgets';
 import { TABS_TYPE, tabsSpec } from './widgets/TabsRegistration';
+import { PATH_WALKER_TYPE, pathWalkerSpec } from './widgets/PathWalkerRegistration';
 
 const WIKI_PAGE_WIDGET_TYPE = 'wiki-page';
 
@@ -49,7 +50,8 @@ const assessmentDashboardWidgetSpecs: Array<{
   { type: ASSESSMENT_COUNT_TYPE, spec: assessmentCountSpec },
   { type: RELATION_TABLE_TYPE, spec: relationTableSpec },
   { type: RELATED_ENTITIES_LIST_TYPE, spec: relatedEntitiesListSpec },
-  { type: TABS_TYPE, spec: tabsSpec }
+  { type: TABS_TYPE, spec: tabsSpec },
+  { type: PATH_WALKER_TYPE, spec: pathWalkerSpec }
 ];
 
 export const getDashboardWidgetSpecs = (): Array<{
