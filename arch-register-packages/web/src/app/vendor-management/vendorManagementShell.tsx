@@ -19,6 +19,7 @@ import {
   VENDOR_SECTION_LABELS,
   type VendorManagementRailItemId
 } from './vendorManagementSections';
+import { resolveVendorManagementConfig } from './vendorManagementQueries';
 
 export const VENDOR_MANAGEMENT_VENDORS_APP_KEY = 'vendor-management-vendors';
 export const VENDOR_MANAGEMENT_CONTRACTS_APP_KEY = 'vendor-management-contracts';
@@ -87,7 +88,7 @@ export const vendorManagementAppDefinition: AppDefinition = {
       route: VENDOR_RAIL_PATHS[VENDOR_SPEND_ID],
       // Stat tiles plus by-vendor / by-cost-centre roll-up tabs with a `facets` sidebar (cost
       // centre/owner).
-      dashboard: { appKey: VENDOR_MANAGEMENT_SPEND_APP_KEY },
+      dashboard: { appKey: VENDOR_MANAGEMENT_SPEND_APP_KEY, loadingMessage: 'Loading spend…' },
       primarySidebar: ctx => (
         <AppDashboardPrimarySidebar
           workspaceSlug={ctx.workspaceSlug}
@@ -102,7 +103,7 @@ export const vendorManagementAppDefinition: AppDefinition = {
       route: VENDOR_RAIL_PATHS[VENDOR_RISK_ID],
       // Stat tiles, a criticality × risk-band matrix, the risk register and a technology EOL table
       // with a `facets` sidebar (tier/category/owner).
-      dashboard: { appKey: VENDOR_MANAGEMENT_RISK_APP_KEY },
+      dashboard: { appKey: VENDOR_MANAGEMENT_RISK_APP_KEY, loadingMessage: 'Loading risk…' },
       primarySidebar: ctx => (
         <AppDashboardPrimarySidebar
           workspaceSlug={ctx.workspaceSlug}
@@ -111,7 +112,8 @@ export const vendorManagementAppDefinition: AppDefinition = {
       )
     }
   ],
-  enablement: { capabilityType: 'vendor-management' }
+  enablement: { capabilityType: 'vendor-management' },
+  resolveConfig: resolveVendorManagementConfig
 };
 
 export const buildVendorManagementBreadcrumbs = (

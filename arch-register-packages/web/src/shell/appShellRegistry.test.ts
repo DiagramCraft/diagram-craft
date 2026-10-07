@@ -65,4 +65,12 @@ describe('appShellRegistry', () => {
     const owned = APP_DEFINITIONS.flatMap(app => app.sections.map(section => section.id));
     expect(new Set(owned).size).toBe(owned.length);
   });
+
+  it('gives every dashboard section a unique, non-empty appKey', () => {
+    const keys = APP_DEFINITIONS.flatMap(app =>
+      app.sections.flatMap(section => (section.dashboard ? [section.dashboard.appKey] : []))
+    );
+    expect(keys.every(key => key.length > 0)).toBe(true);
+    expect(new Set(keys).size).toBe(keys.length);
+  });
 });
