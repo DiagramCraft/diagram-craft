@@ -472,7 +472,7 @@ describe('APP_DASHBOARD_SEEDS', () => {
     const tabs = (seed!.widgets[0]!.config as { tabs: { widgets: DashboardWidget[] }[] }).tabs;
     expect(tabs.map(tab => tab.widgets[0]!.type)).toEqual([
       'RelationTable',
-      'api-integration-catalog-api-pairs'
+      'RelationPairsCoverage'
     ]);
     expect(seed!.sidebar).toMatchObject({
       kind: 'facets',

@@ -161,3 +161,7 @@ export const InvalidFilter: Story = {
 export const UnknownRelationType: Story = {
   render: () => renderDashboard(FLOWS, { relationSchemaName: 'Nonexistent' })
 };
+
+export const WithRowDrawer: Story = {
+  render: () => renderDashboard(FLOWS, { rowDrawer: true, label: 'Click a row for details' })
+};

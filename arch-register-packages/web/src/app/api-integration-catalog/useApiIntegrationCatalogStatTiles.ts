@@ -4,7 +4,10 @@ import { useRelations } from '../../hooks/useRelations';
 import { useResolvedApiIntegrationCatalogConfig } from './useResolvedApiIntegrationCatalogConfig';
 import { useDataFlowConfig } from './useDataFlowConfig';
 import { useApiEndpointRelations } from './apiEndpointRelations';
-import { computeApiPairs, computeApiPairCoverage } from './apiPairCoverage';
+import {
+  computeRelationPairCoverage,
+  computeRelationPairs
+} from '../../sections/dashboard/widgets/relationPairCoverageLogic';
 import { classifyDataFlowRelations } from './apiIntegrationCatalogStatsHelpers';
 import { useNeedsAttentionQueue } from '../../sections/dashboard/widgets/needsAttentionQueue';
 import { IC_QUEUE_CASE_KINDS } from './apiIntegrationCatalogQueue';
@@ -58,10 +61,10 @@ export const useApiIntegrationCatalogStatTiles = (
 
   const { providers, consumers } = useApiEndpointRelations(workspaceId, apiSchema);
   const pairs = useMemo(
-    () => computeApiPairs(providers, consumers, relations.data),
+    () => computeRelationPairs(providers, consumers, relations.data),
     [providers, consumers, relations.data]
   );
-  const coverage = useMemo(() => computeApiPairCoverage(pairs), [pairs]);
+  const coverage = useMemo(() => computeRelationPairCoverage(pairs), [pairs]);
 
   const isLoading =
     config.isLoading ||

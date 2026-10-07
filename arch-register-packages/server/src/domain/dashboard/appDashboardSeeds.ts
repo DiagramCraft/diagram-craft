@@ -505,8 +505,14 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
               widgets: [
                 {
                   id: 'seed-integrations-pairs',
-                  type: 'api-integration-catalog-api-pairs',
-                  config: {},
+                  type: 'RelationPairsCoverage',
+                  config: {
+                    hubSchemaName: 'API',
+                    providerFieldName: 'Provided by',
+                    consumerFieldName: 'Consumed by',
+                    coverageRelationSchemaName: 'Data Flow',
+                    coverageLabel: 'Data Flow'
+                  },
                   x: 0,
                   y: 0,
                   w: 12,

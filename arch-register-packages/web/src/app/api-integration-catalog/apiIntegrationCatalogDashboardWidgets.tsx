@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { TbAffiliate, TbAlertTriangle, TbApi, TbChartBar, TbPlugConnected } from 'react-icons/tb';
 import { DialogSection } from '../../sections/markdown/editor/BlockDialog';
@@ -8,16 +7,12 @@ import { Banner } from '../../components/Banner';
 import { EmptyState } from '../../components/EmptyState';
 import { LoadingState } from '../../components/LoadingState';
 import { useSchemas } from '../../hooks/useSchemas';
-import { useRelations } from '../../hooks/useRelations';
 import { useLifecycleStates } from '../../hooks/useWorkspaceConfig';
 import { useEntity } from '../../hooks/useEntities';
 import { useEntityDrawer } from '../../sections/entities/entityDrawer/useEntityDrawer';
 import { BlastRadiusPanel } from '../../sections/entities/components/BlastRadiusPanel';
 import { IC_APIS_ID, IC_INTEGRATIONS_ID, IC_RAIL_PATHS } from './apiIntegrationCatalogSections';
 import { useResolvedApiIntegrationCatalogConfig } from './useResolvedApiIntegrationCatalogConfig';
-import { ApiPairsTable } from './sections/ApiPairsTable';
-import { useDataFlowConfig } from './useDataFlowConfig';
-import { computeApiPairs } from './apiPairCoverage';
 import { ApiIntegrationCatalogAtRiskPanel } from './sections/ApiIntegrationCatalogAtRiskPanel';
 import { ApiIntegrationCatalogMostConsumedPanel } from './sections/ApiIntegrationCatalogMostConsumedPanel';
 import { ApiIntegrationCatalogStatTiles } from './sections/ApiIntegrationCatalogStatTiles';
@@ -28,8 +23,7 @@ import { IC_QUEUE_CASE_KINDS } from './apiIntegrationCatalogQueue';
 import {
   PROVIDERS_FIELD,
   CONSUMERS_FIELD,
-  resolveTypedRelationSchemaId,
-  useApiEndpointRelations
+  resolveTypedRelationSchemaId
 } from './apiEndpointRelations';
 import {
   API_BLAST_RADIUS_GROUPS,
@@ -284,25 +278,6 @@ const ApiCatalogAtRiskWidget = ({ config }: { config: ListWidgetConfig }) => {
   );
 };
 
-const ApiCatalogPairsWidget = () => {
-  const { workspaceSlug } = useWorkspaceContext();
-  const { apiConfig } = useResolvedApiIntegrationCatalogConfig(workspaceSlug);
-  const schemas = useSchemas(workspaceSlug);
-  const apiSchema = schemas.data?.find(schema => schema.id === apiConfig?.apiSchemaId);
-  const dataFlowConfig = useDataFlowConfig(workspaceSlug);
-  const relations = useRelations(
-    workspaceSlug,
-    { schemaId: dataFlowConfig.data?.relationSchemaId, limit: 500 },
-    { enabled: dataFlowConfig.data != null }
-  );
-  const { providers, consumers } = useApiEndpointRelations(workspaceSlug, apiSchema);
-  const pairs = useMemo(
-    () => computeApiPairs(providers, consumers, relations.data),
-    [providers, consumers, relations.data]
-  );
-  return <ApiPairsTable pairs={pairs} />;
-};
-
 const ApiCatalogNeedsAttentionHeaderActions = () => {
   const { workspaceSlug } = useWorkspaceContext();
   const { apiConfig } = useResolvedApiIntegrationCatalogConfig(workspaceSlug);
@@ -456,24 +431,6 @@ export const apiIntegrationCatalogDashboardWidgetSpecs: Array<{
       createDefaultConfig: () => ({ limit: 8 }),
       getTitle: (config: ListWidgetConfig) => titleFor(config, 'Integrations needing attention'),
       configForm: ListConfigForm
-    }
-  },
-  {
-    type: 'api-integration-catalog-api-pairs',
-    spec: {
-      icon: TbPlugConnected,
-      label: 'API usage coverage',
-      description:
-        'Every provider × consumer pairing of a registered API, and whether a Data Flow covers it.',
-      defaultW: 12,
-      defaultH: 24,
-      surfaces: ['workspace'],
-      component: ApiCatalogPairsWidget,
-      frame: { padded: false, showIcon: false },
-      isValidConfig: isValidTitleConfig,
-      createDefaultConfig: () => ({}),
-      getTitle: (config: TitleWidgetConfig) => titleFor(config, 'API usage'),
-      configForm: TitleConfigForm
     }
   },
   {
