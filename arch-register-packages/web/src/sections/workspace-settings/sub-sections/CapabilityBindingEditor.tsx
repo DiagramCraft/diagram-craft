@@ -327,9 +327,7 @@ export const CapabilityBindingEditor = ({
       {configuration && !configuration.valid && (
         <div className={t.tableIssues}>
           <TbAlertTriangle size={13} style={{ flex: 'none', marginTop: 1 }} />
-          <span>
-            {configuration.diagnostics.map(diagnostic => diagnostic.message).join(' ')}
-          </span>
+          <span>{configuration.diagnostics.map(diagnostic => diagnostic.message).join(' ')}</span>
         </div>
       )}
     </>
