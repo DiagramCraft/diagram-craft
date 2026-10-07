@@ -493,11 +493,10 @@ export const validateTraceabilitySearch = (
   raw: Record<string, unknown>
 ): TraceabilitySearchParams => parseSearchParams(traceabilitySearchSchema, raw);
 
-// Strategy section params — the selected objective card lives in the URL so an objective's
-// outcomes / initiatives / measures view is deep-linkable, and the sidebar's objective list can
-// drive the same selection.
+// Strategy section params — the dashboard sidebar's `objectiveId` variable lives in the URL so an
+// objective's outcomes / initiatives / measures view is deep-linkable.
 const strategySearchSchema = defineSearchParamSchema({
-  objective: stringCodec
+  objectiveId: stringCodec
 });
 
 export type StrategySearchParams = SearchParamsFromSchema<typeof strategySearchSchema>;

@@ -53,9 +53,12 @@ export const renderSchemaFieldValue = (
 
 export const EntityCard = ({ id, fields }: { id: string; fields?: string }) => {
   const { workspaceSlug, schemas, lifecycleStates } = useWorkspaceContext();
-  const { data: entity, isLoading, isError } = useEntity(workspaceSlug, id);
+  // An unresolved dashboard sidebar variable (`$name`) means nothing is selected yet.
+  const unresolved = id.startsWith('$');
+  const { data: entity, isLoading, isError } = useEntity(workspaceSlug, id, !unresolved);
 
   if (!id) return null;
+  if (unresolved) return <div className="dim">No item selected</div>;
 
   if (isLoading) {
     return (

@@ -10,6 +10,7 @@ export const VENDOR_MANAGEMENT_VENDORS_APP_KEY = 'vendor-management-vendors';
 export const STRATEGY_OVERVIEW_APP_KEY = 'strategy-overview';
 export const STRATEGY_CAPABILITY_MAP_APP_KEY = 'strategy-capability-map';
 export const STRATEGY_CAPABILITIES_APP_KEY = 'strategy-capabilities';
+export const STRATEGY_STRATEGY_APP_KEY = 'strategy-strategy';
 export const RISK_COMPLIANCE_OVERVIEW_APP_KEY = 'risk-compliance-overview';
 export const RISK_COMPLIANCE_RISKS_APP_KEY = 'risk-compliance-risks';
 export const RISK_COMPLIANCE_CONTROLS_APP_KEY = 'risk-compliance-controls';
@@ -980,6 +981,113 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
       kind: 'facets',
       schemaName: 'Business Capability',
       facets: [{ fieldId: '_owner', variableName: 'owners', itemLabel: 'Owner' }]
+    }
+  },
+  [STRATEGY_STRATEGY_APP_KEY]: {
+    name: 'Strategy',
+    description:
+      'An objective, the outcomes it promises, the initiatives funding it, the measures that prove it and the capabilities it depends on.',
+    widgets: [
+      {
+        id: 'seed-objective',
+        type: 'EntityCard',
+        config: { entityId: '$objectiveId', fields: 'status,target_date,owner,description' },
+        x: 0,
+        y: 0,
+        w: 12,
+        h: 9
+      },
+      {
+        id: 'seed-outcomes',
+        type: 'RelatedEntitiesList',
+        config: {
+          entityId: '$objectiveId',
+          schemaName: 'Outcome',
+          referenceField: 'objectives',
+          descriptionField: 'description',
+          label: 'Outcomes',
+          emptyMessage: 'No outcome promised by this objective.'
+        },
+        x: 0,
+        y: 9,
+        w: 4,
+        h: 14
+      },
+      {
+        id: 'seed-initiatives',
+        type: 'RelatedEntitiesList',
+        config: {
+          entityId: '$objectiveId',
+          schemaName: 'Initiative',
+          referenceField: 'objectives',
+          statusField: 'status',
+          descriptionField: 'description',
+          label: 'Initiatives',
+          emptyMessage: 'No initiative pursues this objective.'
+        },
+        x: 4,
+        y: 9,
+        w: 4,
+        h: 14
+      },
+      {
+        id: 'seed-measures',
+        type: 'RelatedEntitiesList',
+        config: {
+          entityId: '$objectiveId',
+          schemaName: 'Measure',
+          referenceField: 'outcomes',
+          viaSchemaName: 'Outcome',
+          viaReferenceField: 'objectives',
+          progressBaselineField: 'baseline',
+          progressCurrentField: 'current',
+          progressTargetField: 'target_value',
+          progressUnitField: 'unit',
+          label: 'Measures',
+          emptyMessage: 'No measure tracks this objective’s outcomes.'
+        },
+        x: 8,
+        y: 9,
+        w: 4,
+        h: 14
+      },
+      {
+        id: 'seed-capabilities',
+        type: ENTITY_BROWSER_EMBED_WIDGET_TYPE,
+        config: {
+          title: 'Capabilities this objective depends on',
+          q: '',
+          conditions: [],
+          sort: 'name',
+          view: 'table',
+          viewConfigs: { table: { fieldIds: ['_owner'] } },
+          schemaName: 'Business Capability',
+          // The `Supported by Objectives` hop is resolved to a typed-relation step at render time
+          // (EntityBrowserEmbedFieldResolution.ts); an unpicked `$objectiveId` becomes a plain
+          // "supported by any objective" check.
+          entityQuery: {
+            root: {
+              kind: 'predicate',
+              path: [{ kind: 'forward', fieldId: 'Supported by Objectives' }],
+              fieldId: '_id',
+              op: 'in',
+              value: ['$objectiveId']
+            }
+          }
+        },
+        x: 0,
+        y: 23,
+        w: 12,
+        h: 16
+      }
+    ],
+    sidebar: {
+      kind: 'entity-picker',
+      schemaName: 'Objective',
+      variableName: 'objectiveId',
+      itemLabel: 'Objectives',
+      // The `_id` predicate matches the internal id, not the public id.
+      valueKind: 'id'
     }
   },
   [RISK_COMPLIANCE_OVERVIEW_APP_KEY]: {
