@@ -73,6 +73,16 @@ export const RelationTableConfigForm = ({
       </DialogSection>
       <DialogSection label="Display" required={false}>
         <div className={styles.options}>
+          <label className={styles.checkboxRow}>
+            <input
+              type="checkbox"
+              checked={config.rowDrawer === true}
+              onChange={event =>
+                onChange({ ...config, rowDrawer: event.currentTarget.checked || undefined })
+              }
+            />
+            <span>Open a detail drawer when a row is clicked</span>
+          </label>
           <label className={styles.optionRow}>
             <span className={styles.optionLabel}>Title</span>
             <div className={styles.optionControl}>

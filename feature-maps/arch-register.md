@@ -54,7 +54,7 @@
           saved-view embeds, entity tables, entity cards, entity graphs, entity changelogs, document browsers, entity
           browsers, diagram previews, wiki-page embeds, lifecycle and activity-trend charts, stale-entity reports, an
           activity feed, configurable Markdown content, stat tiles that count or sum a field over a query, API & Integration Catalog statistics and list panels, ratio
-          bar-lists, count-by-field breakdown bars, month-bucketed date bar charts, upcoming-by-date countdown lists, ranked lists with share bars, a risk matrix, tabs that group other widgets, and assessment lists and counts scoped to chosen entity types)
+          bar-lists, count-by-field breakdown bars, month-bucketed date bar charts, upcoming-by-date countdown lists, ranked lists with share bars, a risk matrix, tabs that group other widgets, relation tables with an optional row detail drawer, specification-operation tables, and assessment lists and counts scoped to chosen entity types)
           laid out on a grid; a fresh workspace shows a sensible default layout. The entity table and entity browser
           widgets both show a list of entities but serve different needs: entity table offers quick, flat schema/owner/
           lifecycle/limit filtering with fixed columns, while entity browser exposes the full entity browser experience
@@ -659,58 +659,30 @@
           The section itself is a seeded dashboard built from these widgets; users with dashboard-management permission
           can edit its layout, and it does not appear among the workspace home dashboards.
 
-        - @id:ar.api-integration-catalog.apis The APIs section lists every entity of the workspace's `api` schema (@id:
-          ar.integrations.api-specification-sync) — name, protocol (s), declared API version, lifecycle, owner, and
-          the entities that provide and consume it (via the `Provides API`/`Consumes API` typed relations) —
-          searchable by name and sortable by name, provider count, consumer count, or normalized operations/messages
-          count (read from the entity's primary `api-specification` artifact's current revision, the same
-          normalized-catalog projection the Entities app's API artifact detail view reads; there is no telemetry
-          column, matching the epic's explicit non-goal of not being an API gateway or runtime observability tool).
-          The section's own primary sidebar replaces the app's plain section nav with Protocol, Lifecycle, and
-          Owning team facets over these entities (each option showing its count, state kept in the URL); the facets
-          narrow which APIs are in scope across both of the section's views below, not just the catalog table.
-          A toolbar toggle ("Catalog" / "Operations" / "Deprecated operations") additionally switches the table
-          between the catalog above and two flat, sortable cross-API tables built from the same feed: every
-          operation/message across the APIs in scope, or just the ones flagged deprecated (method, path, API,
-          deprecated flag) — there is no sunset-date countdown, since no such field exists on the normalized
-          operation model. A row click (in any view) opens a deep-linkable spec drawer (deep-linkable via its own
-          link-icon action) shared with any other section that links into a spec: attributes, providers/consumers, and the full specification
-          viewer — source/version picker, revision status notices, normalized operations/messages list,
-          and a raw-source preview dialog — rendered through the configurable entity drawer with the specification
-          viewer supplied by a registered API provider slot, reusing the same viewer as the Entities app's API
-          artifact detail tab rather than a separate implementation. Clicking a row in either operations view opens that operation's
-          parent API at the same drawer, not a per-operation deep link — the drawer has no per-operation addressing
-          to link into. The Deprecated operations view (#3347) was briefly deferred from #3345 after a fan-out
-          across every API's revisions surfaced a pre-existing server defect: `listApiSpecificationRevisions`
-          used to 409 its entire response whenever any revision of an artifact lacked a normalized projection row —
-          now fixed to omit that revision instead, rather than failing the whole list.
+        - @id:ar.api-integration-catalog.apis The APIs section is a seeded, editable dashboard: a tabs widget with a
+          Catalog tab (an entity browser over the workspace's `api` schema — protocols, API version, lifecycle,
+          owner, and the names of the entities that provide and consume each API via the `Provides API`/`Consumes
+          API` typed relations), an Operations tab, and a Deprecated operations tab (flat, sortable "Specification
+          operations" tables listing every operation/message — method, path, API, deprecated flag — read from the
+          APIs' primary `api-specification` artifact; there is no sunset-date countdown, no telemetry and no
+          operations-count column). The section's primary sidebar offers Protocol, Lifecycle, and Owning team facets
+          (each option showing its count, state kept in the URL) that narrow all three tabs. A row click opens the
+          shared spec drawer (deep-linkable through its link-icon action; an old `/apis/<id>` link still redirects
+          to it): attributes, providers/consumers, and the full specification viewer — source/version picker,
+          revision status notices, normalized operations/messages list, and a raw-source preview dialog. Clicking an
+          operation opens its parent API's drawer, not a per-operation deep link.
 
-        - @id:ar.api-integration-catalog.integrations The Integrations section lists every `Data Flow` typed relation
-          in the workspace (the same relation modeled for Data Stewardship's classification views) — source and
-          destination system, protocol, data classification, count of carried Data Entities, whether the flow
-          crosses a residency boundary, owner, and (when resolvable) the registered API either endpoint provides or
-          consumes — rather than a separate integration-relation model. Above the table, four stat tiles summarize
-          relation count and protocols in use, boundary-crossing count, restricted/highly-sensitive classification
-          count, and how many relations resolve to a registered API; the section's own primary sidebar replaces the
-          app's plain section nav with Protocol and Classification facets plus a "crosses a boundary" toggle (each
-          option showing its count, state kept in the URL), and the table itself is additionally searchable by flow,
-          protocol, or classification and sortable by flow, protocol, classification, or boundary. A row click opens
-          a detail drawer with the flow's endpoints (linking to their entity records), direction, protocol,
-          classification, carried Data Entities, owner, and the shared Data Flow governance fields (regulatory tags,
-          processing purposes, source/destination residency); when either endpoint provides or consumes a registered
-          API (via the `Provides API`/`Consumes API` typed relations), the drawer's footer links into the same
-          shared spec drawer the APIs section uses (@id:ar.api-integration-catalog.apis). There are no
-          adapter/health/latency/volume columns and no "relations per adapter" breakdown, matching the epic's
-          explicit non-goal of not being an API gateway or runtime observability tool; there is also no quick-create
-          action for new relations, since no generic schema-pre-filled quick-create flow exists in this codebase to
-          wire it to (the APIs section's own "Register API" action was dropped for the same reason). A fifth stat
-          tile counts `Provides`/`Consumes API` pairs with no matching Data Flow relation between their two
-          endpoints — Component-typed endpoints are excluded from this count as structurally ineligible, since Data
-          Flow relations are System-only. A toolbar toggle ("Data Flows" / "API Usage") switches the table between
-          this Data Flow relation list and a lighter provider/consumer pairs table (Consumer, API, Provider, and a
-          flag for whether a matching Data Flow relation exists), independent of whether a Data Flow relation exists
-          for a pair and without the governance fields (classification, carried data, boundary) that only exist on
-          Data Flow relations.
+        - @id:ar.api-integration-catalog.integrations The Integrations section is a seeded, editable dashboard with a
+          Data flows tab and an API usage tab. Data flows is a relation table over every `Data Flow` typed relation
+          (source and destination system, carried Data Entities, protocol, data classification, whether the flow
+          crosses a residency boundary, owner), with a sidebar of Protocol, Classification, and Boundary facets
+          (counts tallied from the relations themselves, state kept in the URL); a row click opens a generic relation
+          drawer with the flow's endpoints (linking to their entity records) and all populated fields, including the
+          shared Data Flow governance fields. API usage lists every `Provides API` × `Consumes API` pairing of a
+          registered API with a flag for whether a matching Data Flow relation exists (Component-typed endpoints are
+          excluded as structurally ineligible, since Data Flow relations are System-only). There are no
+          adapter/health/latency/volume columns, matching the epic's explicit non-goal of not being an API gateway
+          or runtime observability tool, and no quick-create action for new relations.
 
         - @id:ar.workspace-settings.integration-sync Workspace administrators can open Integration sync from the
           Workspace Settings Administration group. It is an operational control center for manually configured and
@@ -804,7 +776,7 @@
         - @id:ar.entities.business-glossary Workspaces can enable a permission-aware business glossary backed by
           ordinary entity schemas, surfaced as its own application (@id:ar.workspace.applications) as a configurable
           dashboard: a single full-width term table plus a facets sidebar (category, owner, lifecycle, each
-          multi-select with counts) that filters the table live. Administrators can edit the facets sidebar (add, remove, reorder facets) from the dashboard's Edit sidebar dialog. The table shows canonical name, synonyms,
+          multi-select with counts) that filters the table live. Administrators can edit the facets sidebar (add, remove, reorder facets) from the dashboard's Edit sidebar dialog. A facets sidebar can be built over an entity schema or over a relation type (e.g. Data Flow), tallying counts from the relations' own select/text fields. The table shows canonical name, synonyms,
           abbreviations, categories, owner, lifecycle, status, and a usage count (entities, typed relations,
           Markdown, projects, and diagrams referencing the term); clicking a row opens the term's entity drawer.
           There is no free-text search box, column sort, or pagination on this screen yet (tracked as a follow-up),

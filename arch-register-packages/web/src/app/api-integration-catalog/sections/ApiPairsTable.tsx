@@ -6,20 +6,16 @@ import type { ApiPair } from '../apiPairCoverage';
 
 type SortKey = 'consumer';
 
-// Duplicated from `ApiIntegrationCatalogIntegrationsScreen.tsx`'s own `WARN` const rather than
-// imported, to avoid a circular import between the screen and this sub-table.
 const WARN = 'var(--cmp-fg-warning, #eab308)';
 
 /**
  * Every `Provides API` × `Consumes API` pairing for each registered API — Consumer, API, Provider —
  * independent of whether a Data Flow relation exists for it, with a column flagging whether one
- * does (#3340). Deliberately lighter than the Data Flow table above: no owner/classification/
+ * does (#3340). Deliberately lighter than the Data Flow table: no owner/classification/
  * carried-data/boundary columns, since those governance fields only exist on Data Flow relations.
- * Rows are non-interactive in this iteration — neither the shared API `EntityDrawer` (API-scoped) nor
- * `IntegrationDrawer` (expects Data Flow governance fields) fits a 3-entity pair without a new
- * drawer, deferred as a possible follow-up.
+ * Rows are non-interactive — no drawer fits a 3-entity pair.
  */
-export const ApiPairsTable = ({ pairs, q }: { pairs: ApiPair[]; q: string }) => {
+export const ApiPairsTable = ({ pairs, q = '' }: { pairs: ApiPair[]; q?: string }) => {
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
     if (!needle) return pairs;

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { RelationRecord } from '@arch-register/api-types/relationContract';
 import { Chip } from '../../../components/Chip';
@@ -15,12 +15,15 @@ import { formatDateTime } from '../../../utils/dateFormat';
 import { useDateTimeFormatPreference } from '../../../hooks/useDateTimeFormatPreference';
 import { useEntityDrawer } from '../../entities/entityDrawer/useEntityDrawer';
 import {
+  applyRelationFacetFilters,
   buildRelationQueryText,
   compareRelationValues,
   formatRelationFieldValue,
   resolveRelationTableColumns,
+  type RelationFacetFilter,
   type RelationTableColumn
 } from './relationTableLogic';
+import { RelationDrawer } from '../../relations/RelationDrawer';
 import styles from './RelationTableWidget.module.css';
 
 export type RelationTableWidgetConfig = {
@@ -28,12 +31,17 @@ export type RelationTableWidgetConfig = {
   relationSchemaName: string;
   /** Optional entity-query DSL filter, AND-ed with the schema; may reference sidebar `$variables`. */
   filter?: string;
+  /** Multi-select filters on relation fields (ids or names), e.g. `values: ['$protocols']` bound to
+   *  a `facets` sidebar; empty `values` means no constraint. */
+  facetFilters?: RelationFacetFilter[];
   /** Columns after the Flow (In → Out) column: relation field ids/names, or `_owner`, `_lifecycle`, `_updatedAt`. */
   fieldIds: string[];
   /** Initial sort column (a `fieldIds` entry, or `_in`/`_out`); a header click re-sorts locally. */
   sort?: string;
   sortDir?: 'asc' | 'desc';
   limit: number;
+  /** Clicking a row opens a detail drawer for that relation. Default off. */
+  rowDrawer?: boolean;
   label?: string;
 };
 
@@ -55,6 +63,7 @@ export const RelationTableWidget = ({ config }: { config: RelationTableWidgetCon
   const { workspaceSlug, relationSchemas } = useWorkspaceContext();
   const { openEntityDrawer } = useEntityDrawer();
   const dateTimeFormatPreference = useDateTimeFormatPreference();
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const schema = relationSchemas.find(candidate => candidate.name === config.relationSchemaName);
   const queryText = buildRelationQueryText(config.relationSchemaName, config.filter);
@@ -67,7 +76,13 @@ export const RelationTableWidget = ({ config }: { config: RelationTableWidgetCon
       }),
     enabled: schema != null
   });
-  const relationQuery = parsed.data?.ok === true ? parsed.data.query : null;
+  const relationQuery = useMemo(
+    () =>
+      parsed.data?.ok === true
+        ? applyRelationFacetFilters(parsed.data.query, schema, config.facetFilters)
+        : null,
+    [parsed.data, schema, config.facetFilters]
+  );
   const relations = useRelationsQuery(
     workspaceSlug,
     relationQuery,
@@ -153,43 +168,58 @@ export const RelationTableWidget = ({ config }: { config: RelationTableWidgetCon
     </button>
   );
 
+  const selected = sorted.find(relation => relation._uid === selectedId);
+
   return (
-    <Table.Root scroll stickyHeader bordered={false}>
-      <Table.Head>
-        <Table.Row>
-          <Table.SortableHeaderCell sortKey="_in" sort={sort} onSort={toggleSort}>
-            Source
-          </Table.SortableHeaderCell>
-          <Table.SortableHeaderCell sortKey="_out" sort={sort} onSort={toggleSort}>
-            Destination
-          </Table.SortableHeaderCell>
-          {columns.map(column => (
-            <Table.SortableHeaderCell
-              key={column.id}
-              sortKey={column.id}
-              sort={sort}
-              onSort={toggleSort}
-            >
-              {column.label}
+    <>
+      <Table.Root scroll stickyHeader bordered={false}>
+        <Table.Head>
+          <Table.Row>
+            <Table.SortableHeaderCell sortKey="_in" sort={sort} onSort={toggleSort}>
+              Source
             </Table.SortableHeaderCell>
-          ))}
-        </Table.Row>
-      </Table.Head>
-      <Table.Body>
-        {sorted.length === 0 ? (
-          <Table.EmptyRow colSpan={columns.length + 2}>No matching relations.</Table.EmptyRow>
-        ) : (
-          sorted.map(relation => (
-            <Table.Row key={relation._uid}>
-              <Table.Cell>{endpointLink(relation._in)}</Table.Cell>
-              <Table.Cell>{endpointLink(relation._out)}</Table.Cell>
-              {columns.map(column => (
-                <Table.Cell key={column.id}>{renderCell(relation, column)}</Table.Cell>
-              ))}
-            </Table.Row>
-          ))
-        )}
-      </Table.Body>
-    </Table.Root>
+            <Table.SortableHeaderCell sortKey="_out" sort={sort} onSort={toggleSort}>
+              Destination
+            </Table.SortableHeaderCell>
+            {columns.map(column => (
+              <Table.SortableHeaderCell
+                key={column.id}
+                sortKey={column.id}
+                sort={sort}
+                onSort={toggleSort}
+              >
+                {column.label}
+              </Table.SortableHeaderCell>
+            ))}
+          </Table.Row>
+        </Table.Head>
+        <Table.Body>
+          {sorted.length === 0 ? (
+            <Table.EmptyRow colSpan={columns.length + 2}>No matching relations.</Table.EmptyRow>
+          ) : (
+            sorted.map(relation => (
+              <Table.Row
+                key={relation._uid}
+                onClick={config.rowDrawer ? () => setSelectedId(relation._uid) : undefined}
+              >
+                <Table.Cell>{endpointLink(relation._in)}</Table.Cell>
+                <Table.Cell>{endpointLink(relation._out)}</Table.Cell>
+                {columns.map(column => (
+                  <Table.Cell key={column.id}>{renderCell(relation, column)}</Table.Cell>
+                ))}
+              </Table.Row>
+            ))
+          )}
+        </Table.Body>
+      </Table.Root>
+      {selected && (
+        <RelationDrawer
+          workspaceSlug={workspaceSlug}
+          relation={selected}
+          relationSchema={schema}
+          onClose={() => setSelectedId(null)}
+        />
+      )}
+    </>
   );
 };

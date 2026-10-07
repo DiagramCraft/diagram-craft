@@ -1,22 +1,22 @@
 import { useMemo } from 'react';
 import { useQueries } from '@tanstack/react-query';
 import type { ApiSpecificationItem } from '@arch-register/api-types/artifactContract';
-import { apiSpecificationQuery } from '../../queries/artifacts';
-import { useApiSpecificationRevisions } from './useApiOperationsCounts';
+import { apiSpecificationQuery } from '../queries/artifacts';
+import { useSpecificationRevisions } from './useSpecificationRevisions';
 
-export type ApiOperationsFeedRef = { id: string; publicId: string; name: string };
+export type SpecificationItemsFeedRef = { id: string; publicId: string; name: string };
 
-export type ApiOperationRow = {
+export type SpecificationItemRow = {
   key: string;
-  api: ApiOperationsFeedRef;
+  api: SpecificationItemsFeedRef;
   item: ApiSpecificationItem;
 };
 
 /**
  * Flattens every operation/message across a set of API entities into one list — backs the APIs
  * section's cross-API "Operations" and "Deprecated operations" views (#3345). Builds on
- * `useApiSpecificationRevisions`' shared artifact/revision resolution
- * (`useApiOperationsCounts.ts`), adding a third `useQueries` stage that fetches each API's
+ * `useSpecificationRevisions`' shared artifact/revision resolution
+ * (`useSpecificationRevisions.ts`), adding a third `useQueries` stage that fetches each API's
  * normalized projection items. The `deprecated` filter is applied server-side via the existing
  * `ApiSpecificationFilters` support, so the Deprecated view needs no client-side filtering.
  *
@@ -29,14 +29,14 @@ export type ApiOperationRow = {
  * actually selected (the screen calls this once per sub-view, each with its own `enabled`), so
  * switching to the Catalog tab never fires this fan-out.
  */
-export const useApiOperationsFeed = (
+export const useSpecificationItemsFeed = (
   workspaceId: string,
-  apis: readonly ApiOperationsFeedRef[],
+  apis: readonly SpecificationItemsFeedRef[],
   filters: { deprecated?: boolean } = {},
   enabled = true
-): { rows: ApiOperationRow[]; isLoading: boolean } => {
+): { rows: SpecificationItemRow[]; isLoading: boolean } => {
   const apiIds = useMemo(() => apis.map(api => api.id), [apis]);
-  const { entries, isLoading: revisionsLoading } = useApiSpecificationRevisions(
+  const { entries, isLoading: revisionsLoading } = useSpecificationRevisions(
     workspaceId,
     enabled ? apiIds : []
   );
@@ -75,7 +75,7 @@ export const useApiOperationsFeed = (
   const rows = useMemo(() => {
     if (!enabled) return [];
     const apiById = new Map(apis.map(api => [api.id, api]));
-    const result: ApiOperationRow[] = [];
+    const result: SpecificationItemRow[] = [];
     entries.forEach((entry, index) => {
       const api = apiById.get(entry.entityId);
       if (!api) return;

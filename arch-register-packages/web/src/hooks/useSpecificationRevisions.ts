@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
 import { useQueries } from '@tanstack/react-query';
-import { apiSpecificationRevisionListQuery, entityArtifactsQuery } from '../../queries/artifacts';
-import { selectApiSpecificationArtifacts } from '../../hooks/useArtifacts';
+import { apiSpecificationRevisionListQuery, entityArtifactsQuery } from '../queries/artifacts';
+import { selectApiSpecificationArtifacts } from './useArtifacts';
 
-export type ApiSpecificationRevisionEntry = {
+export type SpecificationRevisionEntry = {
   entityId: string;
   artifactId?: string;
   revisionId?: string;
@@ -13,7 +13,7 @@ export type ApiSpecificationRevisionEntry = {
 /**
  * Resolves each API entity's primary `api-specification` artifact and current revision — the
  * shared two-stage `useQueries` fan-out (artifacts, then that artifact's revision list) used by
- * both `useApiOperationsCounts` (below) and `useApiOperationsFeed.ts`'s cross-API operations views
+ * both `useSpecificationItemCounts` (below) and `useSpecificationItemsFeed.ts`'s cross-API operations views
  * (#3345). Extracted so both hooks resolve "which revision is this API's operations coming from"
  * identically, rather than risking drift between two independent copies of this edge-case-heavy
  * logic (unlike the trivial `PROVIDERS_FIELD`/`CONSUMERS_FIELD` constant duplicated elsewhere in
@@ -23,10 +23,10 @@ export type ApiSpecificationRevisionEntry = {
  * `../vendor-management/useVendorSpendRollups.ts`'s per-id batching shape. Acceptable at catalog
  * scale — #3150 is explicitly not a high-throughput API gateway.
  */
-export const useApiSpecificationRevisions = (
+export const useSpecificationRevisions = (
   workspaceId: string,
   apiEntityIds: readonly string[]
-): { entries: ApiSpecificationRevisionEntry[]; isLoading: boolean } => {
+): { entries: SpecificationRevisionEntry[]; isLoading: boolean } => {
   const artifactsQueries = useQueries({
     queries: apiEntityIds.map(entityId => entityArtifactsQuery(workspaceId, entityId))
   });
@@ -79,10 +79,13 @@ export const useApiSpecificationRevisions = (
 /**
  * Resolves each API entity's normalized operations/messages count — its primary
  * `api-specification` artifact's current revision `itemCount` (#3316's "operations count"
- * column). See `useApiSpecificationRevisions` above for the shared resolution this builds on.
+ * column). See `useSpecificationRevisions` above for the shared resolution this builds on.
  */
-export const useApiOperationsCounts = (workspaceId: string, apiEntityIds: readonly string[]) => {
-  const { entries, isLoading } = useApiSpecificationRevisions(workspaceId, apiEntityIds);
+export const useSpecificationItemCounts = (
+  workspaceId: string,
+  apiEntityIds: readonly string[]
+) => {
+  const { entries, isLoading } = useSpecificationRevisions(workspaceId, apiEntityIds);
 
   const byId = useMemo(() => {
     const map = new Map<string, number | null>();

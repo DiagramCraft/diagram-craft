@@ -8,6 +8,7 @@ import type {
 } from '@arch-register/api-types/dashboardContract';
 import { facetKindForField } from './dashboardFacetFields';
 import { useSchemas } from '../../hooks/useSchemas';
+import { useRelationSchemas } from '../../hooks/useRelationSchemas';
 import { DialogContent, DialogSection } from '../markdown/editor/BlockDialog';
 import {
   isFacetsConfigValid,
@@ -42,7 +43,8 @@ export const DashboardSidebarConfigDialog = ({
   const entityPicker = sidebar?.kind === 'entity-picker' ? sidebar : null;
   const facetsSidebar = sidebar?.kind === 'facets' ? sidebar : null;
   const optionsSidebar = sidebar?.kind === 'options' ? sidebar : null;
-  const schemas = useSchemas(workspaceSlug);
+  const entitySchemas = useSchemas(workspaceSlug);
+  const relationSchemas = useRelationSchemas(workspaceSlug);
   const [kind, setKind] = useState<DashboardSidebarConfig['kind']>(
     sidebar?.kind ?? 'entity-picker'
   );
@@ -58,7 +60,17 @@ export const DashboardSidebarConfigDialog = ({
   const [facetsSchemaName, setFacetsSchemaName] = useState(facetsSidebar?.schemaName ?? '');
   const [facets, setFacets] = useState<DashboardFacetConfig[]>(facetsSidebar?.facets ?? []);
 
-  const referenceFieldNames = (schemas.data ?? [])
+  const [facetsSchemaKind, setFacetsSchemaKind] = useState<'entity' | 'relation'>(
+    facetsSidebar?.schemaKind ?? 'entity'
+  );
+  const schemas = facetsSchemaKind === 'relation' ? relationSchemas : entitySchemas;
+  const facetableSchemas = (schemas.data ?? []) as {
+    id: string;
+    name: string;
+    fields: Parameters<typeof facetKindForField>[0][];
+  }[];
+
+  const referenceFieldNames = facetableSchemas
     .find(schema => schema.name === facetsSchemaName)
     ?.fields.filter(field => facetKindForField(field) !== undefined)
     .map(field => field.name);
@@ -66,9 +78,17 @@ export const DashboardSidebarConfigDialog = ({
   const updateFacet = (index: number, patch: Partial<DashboardFacetConfig>) =>
     setFacets(current => current.map((f, i) => (i === index ? { ...f, ...patch } : f)));
 
-  const changeFacetsSchema = (name: string) => {
+  const changeFacetsSchema = (value: string) => {
+    const nextKind = value.startsWith('relation:') ? 'relation' : 'entity';
+    const name = value.replace(/^(entity|relation):/, '');
+    setFacetsSchemaKind(nextKind);
     setFacetsSchemaName(name);
-    const names = (schemas.data ?? [])
+    const names = (
+      ((nextKind === 'relation' ? relationSchemas : entitySchemas).data ?? []) as {
+        name: string;
+        fields: Parameters<typeof facetKindForField>[0][];
+      }[]
+    )
       .find(schema => schema.name === name)
       ?.fields.filter(field => facetKindForField(field) !== undefined)
       .map(field => field.name);
@@ -120,6 +140,7 @@ export const DashboardSidebarConfigDialog = ({
                 ? {
                     kind: 'facets',
                     schemaName: facetsSchemaName.trim(),
+                    ...(facetsSchemaKind === 'relation' ? { schemaKind: 'relation' as const } : {}),
                     facets: normalizeFacets(facets)
                   }
                 : kind === 'options'
@@ -240,18 +261,27 @@ export const DashboardSidebarConfigDialog = ({
           </>
         ) : kind === 'facets' ? (
           <>
-            <DialogSection label="Entity schema">
+            <DialogSection label="Schema">
               <select
                 className={styles.selectInput}
-                value={facetsSchemaName}
+                value={facetsSchemaName ? `${facetsSchemaKind}:${facetsSchemaName}` : ''}
                 onChange={event => changeFacetsSchema(event.currentTarget.value)}
               >
                 <option value="">Select a schema…</option>
-                {(schemas.data ?? []).map(schema => (
-                  <option key={schema.id} value={schema.name}>
-                    {schema.name}
-                  </option>
-                ))}
+                <optgroup label="Entity schemas">
+                  {(entitySchemas.data ?? []).map(schema => (
+                    <option key={schema.id} value={`entity:${schema.name}`}>
+                      {schema.name}
+                    </option>
+                  ))}
+                </optgroup>
+                <optgroup label="Relation types">
+                  {(relationSchemas.data ?? []).map(schema => (
+                    <option key={schema.id} value={`relation:${schema.name}`}>
+                      {schema.name}
+                    </option>
+                  ))}
+                </optgroup>
               </select>
             </DialogSection>
             <DialogSection label="Facets">
@@ -338,7 +368,7 @@ export const DashboardSidebarConfigDialog = ({
                 onChange={event => setSchemaName(event.currentTarget.value)}
               >
                 <option value="">Select a schema…</option>
-                {(schemas.data ?? []).map(schema => (
+                {(entitySchemas.data ?? []).map(schema => (
                   <option key={schema.id} value={schema.name}>
                     {schema.name}
                   </option>

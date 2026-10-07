@@ -40,3 +40,23 @@
   gap: 12px;
   margin-top: 6px;
 }
+
+.linkButton {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent-fg);
+  cursor: pointer;
+  font: inherit;
+}
+
+.linkButton:hover {
+  text-decoration: underline;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: flex-end;
+}

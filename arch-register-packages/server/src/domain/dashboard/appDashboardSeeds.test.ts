@@ -5,6 +5,8 @@ import {
   dashboardWidgetSchema
 } from '@arch-register/api-types/dashboardContract';
 import {
+  API_INTEGRATION_CATALOG_APIS_APP_KEY,
+  API_INTEGRATION_CATALOG_INTEGRATIONS_APP_KEY,
   APP_DASHBOARD_SEEDS,
   BUSINESS_GLOSSARY_APP_KEY,
   DATA_STEWARDSHIP_APP_KEY,
@@ -445,5 +447,37 @@ describe('APP_DASHBOARD_SEEDS', () => {
       rows: [5, 4, 3, 2]
     });
     expect(seed.sidebar).toMatchObject({ kind: 'facets', schemaName: 'Vendor' });
+  });
+
+  it('seeds the API catalog APIs dashboard as catalog / operations / deprecated tabs with API facets', () => {
+    const seed = APP_DASHBOARD_SEEDS[API_INTEGRATION_CATALOG_APIS_APP_KEY];
+    expect(seed).toBeDefined();
+    expect(seed!.widgets.map(widget => widget.type)).toEqual(['tabs']);
+    const tabs = (
+      seed!.widgets[0]!.config as { tabs: { id: string; widgets: DashboardWidget[] }[] }
+    ).tabs;
+    expect(tabs.map(tab => tab.id)).toEqual(['catalog', 'operations', 'deprecated']);
+    expect(tabs.map(tab => tab.widgets[0]!.type)).toEqual([
+      'EntityBrowserEmbed',
+      'SpecItemsTable',
+      'SpecItemsTable'
+    ]);
+    expect(tabs[2]!.widgets[0]!.config.deprecated).toBe(true);
+    expect(seed!.sidebar).toMatchObject({ kind: 'facets', schemaName: 'API' });
+  });
+
+  it('seeds the API catalog Integrations dashboard with a Data Flow table and relation facets', () => {
+    const seed = APP_DASHBOARD_SEEDS[API_INTEGRATION_CATALOG_INTEGRATIONS_APP_KEY];
+    expect(seed).toBeDefined();
+    const tabs = (seed!.widgets[0]!.config as { tabs: { widgets: DashboardWidget[] }[] }).tabs;
+    expect(tabs.map(tab => tab.widgets[0]!.type)).toEqual([
+      'RelationTable',
+      'api-integration-catalog-api-pairs'
+    ]);
+    expect(seed!.sidebar).toMatchObject({
+      kind: 'facets',
+      schemaName: 'Data Flow',
+      schemaKind: 'relation'
+    });
   });
 });

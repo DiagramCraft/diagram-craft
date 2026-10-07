@@ -26,6 +26,7 @@ import { ASSESSMENT_COUNT_TYPE, assessmentCountSpec } from './widgets/Assessment
 import { RATIO_BAR_LIST_TYPE, ratioBarListSpec } from './widgets/RatioBarListRegistration';
 import { COUNT_BY_FIELD_TYPE, countByFieldSpec } from './widgets/CountByFieldRegistration';
 import { RELATION_TABLE_TYPE, relationTableSpec } from './widgets/RelationTableRegistration';
+import { SPEC_ITEMS_TABLE_TYPE, specItemsTableSpec } from './widgets/SpecItemsTableRegistration';
 import {
   RELATED_ENTITIES_LIST_TYPE,
   relatedEntitiesListSpec
@@ -61,6 +62,7 @@ const assessmentDashboardWidgetSpecs: Array<{
   { type: COUNT_BY_FIELD_TYPE, spec: countByFieldSpec },
   { type: ASSESSMENT_COUNT_TYPE, spec: assessmentCountSpec },
   { type: RELATION_TABLE_TYPE, spec: relationTableSpec },
+  { type: SPEC_ITEMS_TABLE_TYPE, spec: specItemsTableSpec },
   { type: RELATED_ENTITIES_LIST_TYPE, spec: relatedEntitiesListSpec },
   { type: TABS_TYPE, spec: tabsSpec },
   { type: PATH_WALKER_TYPE, spec: pathWalkerSpec },

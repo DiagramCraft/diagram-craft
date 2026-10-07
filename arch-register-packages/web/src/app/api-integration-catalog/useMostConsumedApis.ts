@@ -8,7 +8,7 @@ import {
   groupByApiId,
   rankMostConsumedApis
 } from './apiEndpointRelations';
-import { useApiOperationsCounts } from './useApiOperationsCounts';
+import { useSpecificationItemCounts } from '../../hooks/useSpecificationRevisions';
 import { useResolvedApiIntegrationCatalogConfig } from './useResolvedApiIntegrationCatalogConfig';
 
 export type MostConsumedApi = {
@@ -47,7 +47,7 @@ export const useMostConsumedApis = (
   );
   const consumersByApi = useMemo(() => groupByApiId(consumers), [consumers]);
   const apiIds = useMemo(() => allApis.map(entity => entity._uid), [allApis]);
-  const operationsCounts = useApiOperationsCounts(workspaceId, apiIds);
+  const operationsCounts = useSpecificationItemCounts(workspaceId, apiIds);
 
   const ranked = useMemo(
     () => rankMostConsumedApis(allApis, consumersByApi, limit),

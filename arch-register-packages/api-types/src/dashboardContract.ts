@@ -80,8 +80,16 @@ export const dashboardSidebarConfigSchema = z.discriminatedUnion('kind', [
       .literal('facets')
       .describe('One or more independent multi-select facet lists over one schema’s entities'),
     schemaName: dashboardSidebarSchemaNameSchema.describe(
-      'Entity schema display name whose entities are being faceted'
+      'Schema display name whose records are being faceted: an entity schema, or a relation ' +
+        "schema when `schemaKind` is 'relation'"
     ),
+    schemaKind: z
+      .enum(['entity', 'relation'])
+      .optional()
+      .describe(
+        'Whether `schemaName` names an entity schema (default) or a relation schema, in which case ' +
+          "facets are tallied over the relation's own select/text fields and '_owner' / '_lifecycle'"
+      ),
     facets: z
       .array(dashboardFacetConfigSchema)
       .min(1)
