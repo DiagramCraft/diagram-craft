@@ -383,26 +383,6 @@ export type ContractsSearchParams = SearchParamsFromSchema<typeof contractsSearc
 export const validateContractsSearch = (raw: Record<string, unknown>): ContractsSearchParams =>
   parseSearchParams(contractsSearchSchema, raw);
 
-// Vendor Management spend params
-const spendSearchSchema = defineSearchParamSchema({
-  // Toggles the roll-up table's grouping dimension; defaults to 'vendor'. 'capability' is
-  // selectable (matching the design reference's three-way toggle) but shows an explanatory empty
-  // state instead of data — no Contract-to-capability schema link exists yet, see
-  // `VendorSpendScreen.tsx`.
-  group: enumCodec(['vendor', 'costCentre', 'capability'] as const),
-  // Vendor Cost Centre select-field value and a Relationship Owner free-text value — set by the
-  // sidebar's facets (`SpendSidebarContent` in `VendorManagementSidebar.tsx`), narrowing the
-  // vendor/capability roll-ups to a single cost centre or owner (ignored when already grouped by
-  // cost centre, matching the design reference).
-  cc: stringCodec,
-  owner: stringCodec
-});
-
-export type SpendSearchParams = SearchParamsFromSchema<typeof spendSearchSchema>;
-
-export const validateSpendSearch = (raw: Record<string, unknown>): SpendSearchParams =>
-  parseSearchParams(spendSearchSchema, raw);
-
 // Vendor Management risk params
 const riskSearchSchema = defineSearchParamSchema({
   // Vendor risk band, narrowing the matrix, risk register, and EOL table to vendors in that band

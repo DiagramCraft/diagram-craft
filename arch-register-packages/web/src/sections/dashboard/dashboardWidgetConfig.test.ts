@@ -355,6 +355,42 @@ describe('parseKnownDashboardWidget', () => {
     ).toBeNull();
   });
 
+  it('parses a GroupedRollupTable widget and rejects incomplete ones', () => {
+    const base = { id: 'rollup', type: 'GroupedRollupTable', x: 0, y: 0, w: 12, h: 20 };
+    expect(
+      parseKnownDashboardWidget({
+        ...base,
+        config: { query: 'schema:"Vendor"', valueFieldId: 'spend', groupFieldId: 'cost_centre' }
+      })?.type
+    ).toBe('GroupedRollupTable');
+    expect(
+      parseKnownDashboardWidget({ ...base, config: { query: '', valueFieldId: 'spend' } })
+    ).toBeNull();
+    expect(
+      parseKnownDashboardWidget({ ...base, config: { query: 'schema:"Vendor"', valueFieldId: '' } })
+    ).toBeNull();
+  });
+
+  it('accepts a countDistinct AggregateStat only with a distinct field', () => {
+    const base = { id: 'stat', type: 'AggregateStat', x: 0, y: 0, w: 3, h: 2 };
+    expect(
+      parseKnownDashboardWidget({
+        ...base,
+        config: {
+          query: 'schema:"Vendor"',
+          measure: 'countDistinct',
+          distinctFieldId: 'cost_centre'
+        }
+      })?.type
+    ).toBe('AggregateStat');
+    expect(
+      parseKnownDashboardWidget({
+        ...base,
+        config: { query: 'schema:"Vendor"', measure: 'countDistinct' }
+      })
+    ).toBeNull();
+  });
+
   it('parses DateBucketChart and UpcomingByDate widgets and rejects incomplete ones', () => {
     const chart = { id: 'chart', type: 'DateBucketChart', x: 0, y: 0, w: 12, h: 12 };
     expect(

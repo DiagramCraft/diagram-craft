@@ -15,6 +15,7 @@ import {
   RISK_COMPLIANCE_ASSESSMENTS_APP_KEY,
   VENDOR_MANAGEMENT_CONTRACTS_APP_KEY,
   VENDOR_MANAGEMENT_OVERVIEW_APP_KEY,
+  VENDOR_MANAGEMENT_SPEND_APP_KEY,
   STRATEGY_CAPABILITY_MAP_APP_KEY,
   STRATEGY_CAPABILITIES_APP_KEY,
   STRATEGY_STRATEGY_APP_KEY,
@@ -404,5 +405,25 @@ describe('APP_DASHBOARD_SEEDS', () => {
       ['timeline', ['DateRangeTimeline']]
     ]);
     expect(seed.sidebar).toMatchObject({ kind: 'facets', schemaName: 'Contract' });
+  });
+
+  it('seeds the Vendor Management Spend dashboard as stat tiles plus by-vendor/by-cost-centre roll-ups', () => {
+    const seed = APP_DASHBOARD_SEEDS[VENDOR_MANAGEMENT_SPEND_APP_KEY]!;
+    expect(seed.widgets.map(widget => widget.type)).toEqual([
+      'AggregateStat',
+      'AggregateStat',
+      'AggregateStat',
+      'AggregateStat',
+      'tabs'
+    ]);
+    const tabs = (
+      seed.widgets[4]!.config as { tabs: Array<{ id: string; widgets: DashboardWidget[] }> }
+    ).tabs;
+    expect(tabs.map(tab => [tab.id, tab.widgets.map(widget => widget.type)])).toEqual([
+      ['by-vendor', ['GroupedRollupTable']],
+      ['by-cost-centre', ['GroupedRollupTable']]
+    ]);
+    expect(tabs[1]!.widgets[0]!.config).toMatchObject({ groupFieldId: 'cost_centre' });
+    expect(seed.sidebar).toMatchObject({ kind: 'facets', schemaName: 'Vendor' });
   });
 });

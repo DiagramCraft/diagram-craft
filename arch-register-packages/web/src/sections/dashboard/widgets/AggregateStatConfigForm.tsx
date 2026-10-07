@@ -133,14 +133,37 @@ const QueryModeForm = ({ config, onChange }: Props) => {
                 className={styles.labelInput}
                 value={config.measure ?? 'count'}
                 onChange={e =>
-                  onChange({ ...config, measure: e.target.value === 'sum' ? 'sum' : undefined })
+                  onChange({
+                    ...config,
+                    measure:
+                      e.target.value === 'sum' || e.target.value === 'countDistinct'
+                        ? e.target.value
+                        : undefined
+                  })
                 }
               >
                 <option value="count">Count of records</option>
                 <option value="sum">Sum of a field</option>
+                <option value="countDistinct">Count of distinct values</option>
               </select>
             </div>
           </label>
+          {config.measure === 'countDistinct' && (
+            <label className={styles.optionRow}>
+              <span className={styles.optionLabel}>Field to count</span>
+              <div className={styles.optionControl}>
+                <input
+                  type="text"
+                  className={styles.labelInput}
+                  value={config.distinctFieldId ?? ''}
+                  onChange={e =>
+                    onChange({ ...config, distinctFieldId: optionalText(e.target.value) })
+                  }
+                  placeholder="Field id, e.g. cost_centre"
+                />
+              </div>
+            </label>
+          )}
           {(config.measure === 'sum' || config.subtextQuery?.trim()) && (
             <label className={styles.optionRow}>
               <span className={styles.optionLabel}>Field to sum</span>

@@ -51,3 +51,17 @@ export const sumMeasured = (
   }
   return { amount, currency };
 };
+
+/** Number of distinct non-empty scalar values `fieldId` takes across the records. */
+export const countDistinctValues = (
+  records: Array<Record<string, unknown>>,
+  fieldId: string
+): number => {
+  const seen = new Set<string>();
+  for (const record of records) {
+    const value = firstScalarValue(record[fieldId]);
+    if (value === null || value === undefined || value === '') continue;
+    seen.add(typeof value === 'object' ? JSON.stringify(value) : String(value));
+  }
+  return seen.size;
+};
