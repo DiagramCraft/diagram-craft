@@ -1535,8 +1535,7 @@ const informationGovernanceEnums = [
 const retentionPolicySchema: TemplateSchema = {
   symId: 'retention-policy',
   name: 'Retention Policy',
-  description:
-    'A named retention policy defining how long data governed by it may be retained.',
+  description: 'A named retention policy defining how long data governed by it may be retained.',
   category: 'Governance',
   color: AR_COLOR_RED,
   icon: 'clock',

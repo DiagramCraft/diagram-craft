@@ -1881,11 +1881,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
           view: 'table',
           viewConfigs: {
             table: {
-              fieldIds: [
-                '_projection:Policy',
-                '_projection:Period',
-                '_projection:Activated From'
-              ]
+              fieldIds: ['_projection:Policy', '_projection:Period', '_projection:Activated From']
             }
           },
           // A Data Entity category sits under at most one retention policy, so one row per

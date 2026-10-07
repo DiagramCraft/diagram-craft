@@ -132,7 +132,8 @@ export const getSchemaFieldDefs = (
         options = en?.options ?? [];
       } else if (f.type === 'boolean') type = 'boolean';
       // Duration filters compare against days; stored values in other units are normalised.
-      else if (f.type === 'number' || f.type === 'currency' || f.type === 'duration') type = 'number';
+      else if (f.type === 'number' || f.type === 'currency' || f.type === 'duration')
+        type = 'number';
       else if (f.type === 'derived') {
         type =
           f.resultType === 'select'

@@ -286,8 +286,8 @@ export const PropertyRow = ({
                 : field.type === 'duration'
                   ? { amount: undefined, unit: 'years' }
                   : field.type === 'number'
-                  ? ''
-                  : ''
+                    ? ''
+                    : ''
           }
           renderItem={renderItem}
         />

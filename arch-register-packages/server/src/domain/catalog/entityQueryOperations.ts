@@ -702,14 +702,24 @@ const collectEntities = async (
     );
   }
   const collectionEntityIdSet = collectionEntityIds == null ? null : new Set(collectionEntityIds);
-  const customFieldKinds = new Map<string, 'scalar' | 'currency' | 'duration' | 'array' | 'currency-array'>();
+  const customFieldKinds = new Map<
+    string,
+    'scalar' | 'currency' | 'duration' | 'array' | 'currency-array'
+  >();
   const restrictedCustomFieldIds = new Set<string>();
   for (const schema of schemas) {
     for (const field of schema.fields) {
       if (
-        !['text', 'longtext', 'boolean', 'date', 'currency', 'duration', 'number', 'select'].includes(
-          field.type
-        )
+        ![
+          'text',
+          'longtext',
+          'boolean',
+          'date',
+          'currency',
+          'duration',
+          'number',
+          'select'
+        ].includes(field.type)
       ) {
         continue;
       }

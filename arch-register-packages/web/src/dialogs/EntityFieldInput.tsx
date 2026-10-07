@@ -213,8 +213,8 @@ export const EntityFieldInput = ({
                 : field.type === 'duration'
                   ? { amount: undefined, unit: 'years' }
                   : field.type === 'number'
-                  ? ''
-                  : ''
+                    ? ''
+                    : ''
           }
           renderItem={renderItem}
         />

@@ -43,7 +43,9 @@ export const DurationInput = ({
       <Select.Root
         value={unit}
         disabled={disabled}
-        onChange={next => onChange({ amount: duration.amount, unit: (next ?? unit) as DurationUnit })}
+        onChange={next =>
+          onChange({ amount: duration.amount, unit: (next ?? unit) as DurationUnit })
+        }
         placeholder="Unit"
         style={{ width: 130 }}
       >

@@ -142,9 +142,9 @@ describe('EntityQueryDialectAdapter.durationDays', () => {
     const expression = createEntityQueryDialectAdapter('sqlite').durationDays('data', 'period');
     const days = (period: unknown) =>
       (
-        db.prepare(`SELECT ${expression} AS days FROM (SELECT ? AS data)`).get(
-          JSON.stringify({ period })
-        ) as { days: number | null }
+        db
+          .prepare(`SELECT ${expression} AS days FROM (SELECT ? AS data)`)
+          .get(JSON.stringify({ period })) as { days: number | null }
       ).days;
 
     expect(days({ amount: 2, unit: 'weeks' })).toBe(14);

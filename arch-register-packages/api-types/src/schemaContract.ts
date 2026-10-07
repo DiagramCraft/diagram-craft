@@ -77,7 +77,9 @@ const currencyFieldSchema = baseFieldSchema.extend({
 
 const durationFieldSchema = baseFieldSchema.extend({
   ...scalarCardinalitySchema,
-  type: z.literal('duration').describe('Duration field: an amount and a unit (days, weeks, months, years)')
+  type: z
+    .literal('duration')
+    .describe('Duration field: an amount and a unit (days, weeks, months, years)')
 });
 
 const numberFieldSchema = baseFieldSchema.extend({

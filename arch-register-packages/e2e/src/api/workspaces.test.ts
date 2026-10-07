@@ -287,7 +287,7 @@ test.describe('workspace routes', () => {
         'Regulatory Tags',
         'Processing Purposes',
         'Residency Regions',
-          'PII Classification'
+        'PII Classification'
       ])
     );
   });

@@ -366,9 +366,16 @@ const compileFreeTextTerminal = (
       [...state.schemas.values()].flatMap(schema =>
         schema.fields
           .filter(field =>
-            ['text', 'longtext', 'boolean', 'date', 'currency', 'duration', 'number', 'select'].includes(
-              field.type
-            )
+            [
+              'text',
+              'longtext',
+              'boolean',
+              'date',
+              'currency',
+              'duration',
+              'number',
+              'select'
+            ].includes(field.type)
           )
           .map(field => field.id)
       )
