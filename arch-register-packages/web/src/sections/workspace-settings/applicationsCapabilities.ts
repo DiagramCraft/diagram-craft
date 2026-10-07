@@ -29,11 +29,7 @@ const CAPABILITY_ONLY_TYPES = ['retention'] as const;
 
 const bindingTabsFor = (capabilityType: string): ACTab[] =>
   capabilityType === 'strategy-model'
-    ? [
-        { id: 'bindings', label: 'Bindings' },
-        { id: 'fields', label: 'Fields' },
-        { id: 'dashboard', label: 'Dashboard' }
-      ]
+    ? [{ id: 'bindings', label: 'Bindings' }]
     : [{ id: 'bindings', label: 'Binding' }];
 
 export const buildApplicationsCapabilitiesItems = (

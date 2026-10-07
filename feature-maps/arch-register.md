@@ -306,33 +306,12 @@
       until then, or while a section's own capability lookup is still loading, each section shows a
       capability-not-configured empty state instead of its content.
 
-        - @id:ar.strategy.view-config Alongside the schema bindings, workspace administrators configure how the
-          Business Capability attributes are presented across the application. In the "Applications & Capabilities"
-          workspace settings screen — a secondary sidebar grouping the applications (Business Glossary, Strategy
-          & Capability Modelling, Vendor Management, Risk & Compliance, Data Stewardship, API & Integration Catalog)
-          and the remaining capability (Retention policy), each row
-          showing a dot for whether that capability is enabled — the Strategy & Capability Modelling entry splits
-          into Bindings / Fields / Dashboard / Access tabs. The Fields tab lists
-          every capability field in one shared display order (no add or remove — the list follows the schema); each
-          field independently opts into the
-          Capabilities table (with an optional header override and a rendering — plain value, a red/amber/green bar,
-          or a signed delta), the subtree roll-up (average or sum, plus a number format), the detail drawer, and a
-          capability-map overlay (direction plus colour-band thresholds; a roll-up field colours by its subtree
-          aggregate, otherwise by the capability's own value). The Capabilities table's Name, Level, Owner, and
-          Applications columns are fixed and always lead. The Dashboard tab holds legacy landing-screen tiles that the Overview no longer reads,
-          the Bindings tab maps the capability roles to schemas as before, and the Access tab carries the
-          application's access policy (@id:ar.authorization.application-access). Retiring a field in the schema editor
-          drops it from every view (with an advisory diagnostic); the
-          configuration round-trips through workspace export/import, and a workspace with no stored configuration
-          falls back to a built-in default that mirrors the seed schema fields.
-
         - @id:ar.strategy.overview The Overview section is the application's landing screen — where the app switcher
           opens. It is a configurable dashboard (seeded as the `strategy-overview` app dashboard, editable like other
           app dashboards) built from generic widgets: "Count by field" breakdowns (capabilities by level, objectives
           by status), application-coverage and orphan-capability stat tiles (capabilities with at least one supporting
           application; capabilities no objective supports), and a table of the capabilities with the largest maturity
-          gap. It no longer reads the workspace view configuration's legacy Dashboard tiles (@id:
-          ar.strategy.view-config).
+          gap.
 
         - @id:ar.strategy.capability-map The Capability map section is a configurable dashboard (seeded as the
           `strategy-capability-map` app dashboard, editable like other app dashboards) whose widget is an entity
@@ -355,8 +334,8 @@
           column-rendering work for entity browser tables.
 
           The configurable entity drawer shows subtree roll-up stats and a leaf count via the generic drawer
-          `rollup`/leaf-count item kinds (seeded from @id:ar.strategy.view-config's roll-up fields by default, but
-          configurable per drawer profile like any other item — the same reusable mechanism any schema with a
+          `rollup`/leaf-count item kinds (seeded for the standard maturity, gap, investment, and risk fields by
+          default, but configurable per drawer profile like any other item — the same reusable mechanism any schema with a
           containment hierarchy can use), plus capability badges, configured fields, the built-in containment-child
           list, configurable drawer items for linked objectives and initiatives, and a "Realized by" item
           using the generic drawer `query` item kind — a path expression in the text query DSL (see
@@ -370,7 +349,7 @@
 
         - @id:ar.strategy.heatmaps The Heatmaps section is deprioritized and not currently surfaced in the app rail
           or section nav; its route and placeholder screen are retained. The capability-map overlay control already
-          provides configurable heat colouring over any capability field or roll-up (@id:ar.strategy.view-config).
+          provides configurable heat colouring over any capability field or roll-up.
 
         - @id:ar.strategy.strategy The Strategy section is a configurable dashboard (seeded as `strategy-strategy`)
           scoped by an Objective picker in the sidebar. The seed shows an entity card for the objective (status,
@@ -851,8 +830,7 @@
           presentation field groups (Maturity & Performance, Strategic Assessment, Investment & Risk, Lifecycle
           & Review, Reference Models) on the detail screen. Measures carry baseline, current, target, and
           direction values for strategy roll-ups. Which of these attributes each Strategy & Capability Modelling
-          surface shows, and how they are aggregated and coloured, is set per workspace (@id:ar.strategy.view-config);
-          the roll-up metrics it lists are computed over each capability's full recursive containment subtree using
+          surface shows, and how they are aggregated and coloured, is configured on the app's dashboards; the roll-up metrics it lists are computed over each capability's full recursive containment subtree using
           the generic metric roll-up engine (@id:ar.entity-views.map).
 
         - @id:ar.entities.relations Users can create and inspect relationships between entities and navigate related,

@@ -59,8 +59,6 @@ export const ApplicationsCapabilitiesScreen = () => {
   }
 
   const activeTab = resolveApplicationsCapabilitiesTab(item, search.tab);
-  const bindingSubTab =
-    activeTab === 'fields' || activeTab === 'dashboard' ? activeTab : 'bindings';
 
   const description =
     getWorkspaceCapabilityDefinition(item.capabilityType)?.description ??
@@ -106,7 +104,6 @@ export const ApplicationsCapabilitiesScreen = () => {
               capabilityType={item.capabilityType}
               schemas={ctx.schemas}
               relationSchemas={ctx.relationSchemas}
-              subTab={bindingSubTab}
               onActionsChange={setBindingActions}
               onEnabledControlChange={setEnabledControl}
             />

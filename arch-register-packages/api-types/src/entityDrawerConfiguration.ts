@@ -1,10 +1,6 @@
 import { z } from 'zod';
 import { metricTraversalStepSchema, type MetricTraversalStep } from './metricContract';
 import type { RelationSchema } from './relationSchemaContract';
-import {
-  DEFAULT_STRATEGY_VIEW_CONFIG,
-  strategyModelViewConfigSchema
-} from './app/strategy-model/strategyModelViewConfig';
 import { businessGlossaryCapabilityDefinition } from './app/business-glossary/glossaryCapability';
 import { getWorkspaceCapabilityDefinition, resolveCapabilityFieldId } from './integrationCatalog';
 import type { WorkspaceCapabilityBinding } from './workspaceCapabilityContract';
@@ -34,8 +30,7 @@ export const VENDOR_CAPABILITIES_FUNDED_PLACEHOLDER_MESSAGE =
   'Not yet available — no linked capability data yet.';
 
 /** Aggregation and number-format options for a `rollup` drawer item. Kept local to this file
- *  (rather than imported from Strategy's `strategyModelViewConfig.ts`) so the generic drawer item
- *  contract doesn't depend on a specific capability's config model. */
+ *  so the generic drawer item contract doesn't depend on a specific capability's config model. */
 export const entityDrawerRollupAggregationSchema = z.enum(['avg', 'sum', 'count']);
 export const entityDrawerRollupFormatSchema = z.enum(['number', 'decimal1', 'currency', 'percent']);
 export const entityDrawerRollupTraversalSchema = metricTraversalStepSchema;
@@ -296,7 +291,6 @@ export const mergeEntityDrawerProfiles = (
 type CapabilityConfigurationLike = {
   type: string;
   bindings: Record<string, WorkspaceCapabilityBinding>;
-  view_config?: unknown;
 };
 
 export type EntityDrawerRelationSchema = Pick<RelationSchema, 'id' | 'in' | 'out'>;
@@ -412,11 +406,24 @@ const getDefaultProviderItems = (
   return items;
 };
 
+/** Roll-ups seeded for a Business Capability's default drawer profile (the #3202 seed field ids). */
+const DEFAULT_STRATEGY_DRAWER_ROLLUPS: {
+  fieldId: string;
+  aggregation: 'avg' | 'sum';
+  format: z.infer<typeof entityDrawerRollupFormatSchema>;
+}[] = [
+  { fieldId: 'maturity', aggregation: 'avg', format: 'decimal1' },
+  { fieldId: 'maturity_target', aggregation: 'avg', format: 'decimal1' },
+  { fieldId: 'gap', aggregation: 'avg', format: 'decimal1' },
+  { fieldId: 'annual_investment', aggregation: 'sum', format: 'currency' },
+  { fieldId: 'risk', aggregation: 'avg', format: 'decimal1' }
+];
+
 /**
  * Seeds generic `rollup`/`rollup-leaf-count` drawer items for a Business Capability schema from
- * the Strategy view config's `field.rollup` markers — the same fields the Capabilities table rolls
- * up. This only affects freshly-generated default profiles; once a workspace saves its own drawer
- * profile, roll-up items live directly in that profile like any other item.
+ * {@link DEFAULT_STRATEGY_DRAWER_ROLLUPS}. This only affects freshly-generated default profiles;
+ * once a workspace saves its own drawer profile, roll-up items live directly in that profile like
+ * any other item.
  */
 const getStrategyRollupItems = (
   schema: EntityDrawerSchema | undefined,
@@ -432,24 +439,12 @@ const getStrategyRollupItems = (
     candidate => candidate.id === 'parent' && candidate.type === 'containment'
   );
   if (!supportsSubtreeRollup) return [];
-  const parsed = strategyModelViewConfigSchema.safeParse(
-    configuration?.view_config ?? DEFAULT_STRATEGY_VIEW_CONFIG
-  );
-  const view = parsed.success ? parsed.data : DEFAULT_STRATEGY_VIEW_CONFIG;
-  const rollupItems: EntityDrawerItem[] = view.fields.flatMap(field => {
-    if (!field.rollup) return [];
-    const target = schema.fields.find(candidate => candidate.id === field.fieldId);
+  const rollupItems: EntityDrawerItem[] = DEFAULT_STRATEGY_DRAWER_ROLLUPS.flatMap(rollup => {
+    const target = schema.fields.find(candidate => candidate.id === rollup.fieldId);
     if (!target || !fieldIsVisible(target) || !['number', 'currency'].includes(target.type)) {
       return [];
     }
-    return [
-      {
-        kind: 'rollup' as const,
-        fieldId: field.fieldId,
-        aggregation: field.rollup.aggregation,
-        format: field.rollup.format
-      }
-    ];
+    return [{ kind: 'rollup' as const, ...rollup }];
   });
   return rollupItems.length > 0 ? [...rollupItems, { kind: 'rollup-leaf-count' as const }] : [];
 };
