@@ -8,6 +8,7 @@ const field = (overrides: Record<string, unknown>) =>
 describe('facetKindForField', () => {
   it.each([
     [{ type: 'reference' }, 'reference'],
+    [{ type: 'containment' }, 'reference'],
     [{ type: 'select' }, 'select'],
     [{ type: 'text' }, 'text'],
     [{ type: 'derived', resultType: 'select' }, 'select'],

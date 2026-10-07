@@ -378,6 +378,38 @@ describe('parseKnownDashboardWidget', () => {
     ).toBeNull();
   });
 
+  it('parses DateCalendar and DateRangeTimeline widgets and rejects incomplete ones', () => {
+    const calendar = { id: 'cal', type: 'DateCalendar', x: 0, y: 0, w: 12, h: 30 };
+    expect(
+      parseKnownDashboardWidget({
+        ...calendar,
+        config: { query: 'schema:"Contract"', dateFieldId: 'contract_end', period: 'month' }
+      })?.type
+    ).toBe('DateCalendar');
+    expect(
+      parseKnownDashboardWidget({ ...calendar, config: { query: 'x', dateFieldId: '' } })
+    ).toBeNull();
+    expect(
+      parseKnownDashboardWidget({
+        ...calendar,
+        config: { query: 'x', dateFieldId: 'd', period: 'year' }
+      })
+    ).toBeNull();
+    const timeline = { id: 'tl', type: 'DateRangeTimeline', x: 0, y: 0, w: 12, h: 30 };
+    expect(
+      parseKnownDashboardWidget({
+        ...timeline,
+        config: { query: 'x', startFieldId: 'contract_start', endFieldId: 'contract_end' }
+      })?.type
+    ).toBe('DateRangeTimeline');
+    expect(
+      parseKnownDashboardWidget({
+        ...timeline,
+        config: { query: 'x', startFieldId: 'contract_start', endFieldId: '' }
+      })
+    ).toBeNull();
+  });
+
   it('parses a RelatedEntitiesList widget and rejects an incomplete one', () => {
     const base = { id: 'related', type: 'RelatedEntitiesList', x: 0, y: 0, w: 4, h: 14 };
     expect(

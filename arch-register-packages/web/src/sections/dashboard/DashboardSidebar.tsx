@@ -124,7 +124,10 @@ const FacetSection = ({
     const field = schema?.fields.find(candidate => candidate.name === facet.fieldId);
     return {
       resolvedFieldId: field?.id,
-      targetSchemaId: field?.type === 'reference' ? field.schemaId : undefined,
+      targetSchemaId:
+        field && facetKindForField(field) === 'reference' && 'schemaId' in field
+          ? field.schemaId
+          : undefined,
       selectOptions:
         field && facetKindForField(field) === 'select' && 'options' in field
           ? field.options

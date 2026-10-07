@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
 import {
   dashboardSidebarConfigSchema,
   dashboardWidgetSchema
@@ -12,6 +13,7 @@ import {
   DATA_STEWARDSHIP_CLASSIFICATION_APP_KEY,
   DATA_STEWARDSHIP_STEWARDSHIP_APP_KEY,
   RISK_COMPLIANCE_ASSESSMENTS_APP_KEY,
+  VENDOR_MANAGEMENT_CONTRACTS_APP_KEY,
   VENDOR_MANAGEMENT_OVERVIEW_APP_KEY,
   STRATEGY_CAPABILITY_MAP_APP_KEY,
   STRATEGY_CAPABILITIES_APP_KEY,
@@ -388,5 +390,19 @@ describe('APP_DASHBOARD_SEEDS', () => {
       'EntityBrowserEmbed',
       'EntityBrowserEmbed'
     ]);
+  });
+
+  it('seeds the Vendor Management Contracts dashboard as list/calendar/timeline tabs with facets', () => {
+    const seed = APP_DASHBOARD_SEEDS[VENDOR_MANAGEMENT_CONTRACTS_APP_KEY]!;
+    expect(seed.widgets.map(widget => widget.type)).toEqual(['tabs']);
+    const tabs = (
+      seed.widgets[0]!.config as { tabs: Array<{ id: string; widgets: DashboardWidget[] }> }
+    ).tabs;
+    expect(tabs.map(tab => [tab.id, tab.widgets.map(widget => widget.type)])).toEqual([
+      ['list', ['EntityBrowserEmbed']],
+      ['calendar', ['DateCalendar']],
+      ['timeline', ['DateRangeTimeline']]
+    ]);
+    expect(seed.sidebar).toMatchObject({ kind: 'facets', schemaName: 'Contract' });
   });
 });

@@ -22,6 +22,7 @@ import {
 } from './vendorManagementSections';
 
 export const VENDOR_MANAGEMENT_VENDORS_APP_KEY = 'vendor-management-vendors';
+export const VENDOR_MANAGEMENT_CONTRACTS_APP_KEY = 'vendor-management-contracts';
 export const VENDOR_MANAGEMENT_OVERVIEW_APP_KEY = 'vendor-management-overview';
 
 /**
@@ -69,10 +70,12 @@ export const vendorManagementAppDefinition: AppDefinition = {
       icon: TbFileCertificate,
       tooltip: 'Contracts',
       route: VENDOR_RAIL_PATHS[VENDOR_CONTRACTS_ID],
+      // List / renewal calendar / timeline tabs with a `facets` sidebar (type/vendor).
+      dashboard: { appKey: VENDOR_MANAGEMENT_CONTRACTS_APP_KEY },
       primarySidebar: ctx => (
-        <VendorManagementSidebar
+        <AppDashboardPrimarySidebar
           workspaceSlug={ctx.workspaceSlug}
-          activeSection={VENDOR_CONTRACTS_ID}
+          appKey={VENDOR_MANAGEMENT_CONTRACTS_APP_KEY}
         />
       )
     },

@@ -34,6 +34,11 @@ import { registerNestedWidgetResolvers } from './widgets/nestedWidgets';
 import { TABS_TYPE, tabsSpec } from './widgets/TabsRegistration';
 import { PATH_WALKER_TYPE, pathWalkerSpec } from './widgets/PathWalkerRegistration';
 import { DATE_BUCKET_CHART_TYPE, dateBucketChartSpec } from './widgets/DateBucketChartRegistration';
+import { DATE_CALENDAR_TYPE, dateCalendarSpec } from './widgets/DateCalendarRegistration';
+import {
+  DATE_RANGE_TIMELINE_TYPE,
+  dateRangeTimelineSpec
+} from './widgets/DateRangeTimelineRegistration';
 import { UPCOMING_BY_DATE_TYPE, upcomingByDateSpec } from './widgets/UpcomingByDateRegistration';
 
 const WIKI_PAGE_WIDGET_TYPE = 'wiki-page';
@@ -55,7 +60,9 @@ const assessmentDashboardWidgetSpecs: Array<{
   { type: TABS_TYPE, spec: tabsSpec },
   { type: PATH_WALKER_TYPE, spec: pathWalkerSpec },
   { type: DATE_BUCKET_CHART_TYPE, spec: dateBucketChartSpec },
-  { type: UPCOMING_BY_DATE_TYPE, spec: upcomingByDateSpec }
+  { type: UPCOMING_BY_DATE_TYPE, spec: upcomingByDateSpec },
+  { type: DATE_CALENDAR_TYPE, spec: dateCalendarSpec },
+  { type: DATE_RANGE_TIMELINE_TYPE, spec: dateRangeTimelineSpec }
 ];
 
 export const getDashboardWidgetSpecs = (): Array<{

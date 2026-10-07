@@ -371,17 +371,11 @@ export type VendorsSearchParams = SearchParamsFromSchema<typeof vendorsSearchSch
 export const validateVendorsSearch = (raw: Record<string, unknown>): VendorsSearchParams =>
   parseSearchParams(vendorsSearchSchema, raw);
 
-// Vendor Management contracts params
+// Vendor Management contracts params — the facets' dashboard sidebar variables (see the
+// `vendor-management-contracts` seed in `appDashboardSeeds.ts`), each a comma-joined value list.
 const contractsSearchSchema = defineSearchParamSchema({
-  q: stringCodec,
-  // Contract Type select-field value, a Vendor uid, and a RenewalWindow id — set by the sidebar's
-  // facets (`ContractsSidebarContent` in `VendorManagementSidebar.tsx`).
-  type: stringCodec,
-  vendor: stringCodec,
-  renewalWindow: stringCodec,
-  // Toggles the section between its list, 12-month renewal calendar, and Gantt-style contract
-  // timeline; defaults to 'list'.
-  view: enumCodec(['list', 'calendar', 'timeline'] as const)
+  contractTypes: stringCodec,
+  vendorIds: stringCodec
 });
 
 export type ContractsSearchParams = SearchParamsFromSchema<typeof contractsSearchSchema>;

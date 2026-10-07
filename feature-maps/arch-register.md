@@ -420,16 +420,19 @@
           entity-drawer configuration; the composite risk summary remains a compact mini-panel. Capabilities funded
           is not yet available — no Contract-to-capability link exists yet.
 
-        - @id:ar.vendor-management.contracts The Contracts section offers a list view and a 12-month renewal
-          calendar (its timeline view is still pending). The list is a register of Contract entities: free-text
-          search by contract or vendor name, sort by name / vendor / annual cost / renewal date, and a sidebar of
-          Renewal window, Type, and Vendor facets (each showing a count). Renewal window is a computed bucket over
-          `Contract.contract_end` (overdue, next 30/90/365 days, beyond 12 months, or no end date), not a schema
-          field. The calendar shows the current month plus the next 11, one cell per month, with each contract's
-          renewal placed by the calendar month of its `contract_end`; an overdue contract is folded into the
-          current month's cell instead of dropping off the grid, and a contract renewing beyond 12 months out, or
-          with no end date, is excluded from the grid and counted in a caption below it (both remain visible in the
-          list). Selecting a contract, in either view, opens the configurable contract entity drawer (contract and
+        - @id:ar.vendor-management.contracts The Contracts section is a configurable dashboard with three tabs (List,
+          Renewal calendar, Timelines) and a sidebar of multi-select Type and Vendor facets (each showing a count
+          tallied from the first 200 contracts). The List tab is an entity-browser table of Contract entities (Vendor,
+          Type, Annual cost, Auto-renew, Contract End). The Renewal calendar tab is a generic month/week calendar widget
+          (12 months from the current one by default): each contract is placed by the month of its `contract_end`, with
+          the month's total annual cost in its header; an overdue contract is folded into the current month, and a
+          contract beyond the window or with no end date is excluded and counted in a caption. The Timelines tab is a
+          generic date-range timeline widget: a bar from `contract_start` to `contract_end`, a notice marker on
+          auto-renewing contracts with a notice period, and a today line; contracts missing either date are counted in a
+          caption. Both widgets are available to any dashboard (query, date fields, subtitle and value fields are
+          configurable). Compared with the previous bespoke screen, free-text search, sort options, the renewal-window
+          facet and the `q` / `type` / `vendor` / `renewalWindow` / `view` URL parameters are no longer part of this
+          screen (facets are now `contractTypes` / `vendorIds`, comma-joined; the tab is carried in `tab`). Selecting a contract, in either view, opens the configurable contract entity drawer (contract and
           renewal badges, configured terms and cost fields, a link back to the contract's vendor drawer, and the
           `contract.systems-used` content slot). The Vendor link opens a nested Vendor drawer while preserving the
           Contract drawer; Back, Escape, or close returns to the parent, and a direct `drawer=<id>` link opens the

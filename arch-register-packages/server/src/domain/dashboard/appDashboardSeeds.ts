@@ -7,6 +7,7 @@ export const API_INTEGRATION_CATALOG_APP_KEY = 'api-integration-catalog';
 export const API_INTEGRATION_CATALOG_IMPACT_APP_KEY = 'api-integration-catalog-impact';
 export const BUSINESS_GLOSSARY_APP_KEY = 'business-glossary';
 export const VENDOR_MANAGEMENT_VENDORS_APP_KEY = 'vendor-management-vendors';
+export const VENDOR_MANAGEMENT_CONTRACTS_APP_KEY = 'vendor-management-contracts';
 export const VENDOR_MANAGEMENT_OVERVIEW_APP_KEY = 'vendor-management-overview';
 export const STRATEGY_OVERVIEW_APP_KEY = 'strategy-overview';
 export const STRATEGY_CAPABILITY_MAP_APP_KEY = 'strategy-capability-map';
@@ -48,6 +49,38 @@ const controlFacetQuery = {
         fieldId: 'Operating Effectiveness',
         op: 'in' as const,
         value: ['$effectiveness']
+      }
+    ]
+  }
+};
+
+/** Contract rows narrowed by the Contracts sidebar facets (`$contractTypes`, `$vendorIds`). */
+const contractFacetQuery = {
+  root: {
+    kind: 'and' as const,
+    children: [
+      {
+        kind: 'predicate' as const,
+        path: [],
+        fieldId: 'Contract Type',
+        op: 'in' as const,
+        value: ['$contractTypes']
+      },
+      {
+        kind: 'relationExists' as const,
+        path: [
+          {
+            kind: 'forward' as const,
+            fieldId: 'Vendor',
+            filter: {
+              kind: 'predicate' as const,
+              path: [],
+              fieldId: '_id',
+              op: 'in' as const,
+              value: ['$vendorIds']
+            }
+          }
+        ]
       }
     ]
   }
@@ -2016,6 +2049,121 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
         h: 18
       }
     ]
+  },
+  [VENDOR_MANAGEMENT_CONTRACTS_APP_KEY]: {
+    name: 'Contracts',
+    description: 'Vendor contracts as a register, a renewal calendar and a term timeline.',
+    widgets: [
+      {
+        id: 'seed-contracts-tabs',
+        type: 'tabs',
+        config: {
+          tabs: [
+            {
+              id: 'list',
+              label: 'List',
+              widgets: [
+                {
+                  id: 'seed-contracts-list',
+                  type: ENTITY_BROWSER_EMBED_WIDGET_TYPE,
+                  config: {
+                    q: '',
+                    conditions: [],
+                    sort: 'field:Contract End:asc',
+                    view: 'table',
+                    viewConfigs: {
+                      table: {
+                        fieldIds: [
+                          '_projection:Vendor',
+                          'Contract Type',
+                          'Annual Cost',
+                          'Auto Renew',
+                          'Contract End'
+                        ]
+                      }
+                    },
+                    schemaName: 'Contract',
+                    entityQuery: {
+                      ...contractFacetQuery,
+                      projections: [
+                        {
+                          path: [{ kind: 'forward' as const, fieldId: 'Vendor' }],
+                          fieldId: '_name',
+                          alias: 'Vendor'
+                        }
+                      ]
+                    }
+                  },
+                  x: 0,
+                  y: 0,
+                  w: 12,
+                  h: 40
+                }
+              ]
+            },
+            {
+              id: 'calendar',
+              label: 'Renewal calendar',
+              widgets: [
+                {
+                  id: 'seed-contracts-calendar',
+                  type: 'DateCalendar',
+                  config: {
+                    schemaName: 'Contract',
+                    entityQuery: contractFacetQuery,
+                    dateFieldId: 'contract_end',
+                    period: 'month',
+                    periodCount: 12,
+                    sublabelFieldId: 'vendor',
+                    valueFieldId: 'annual_cost'
+                  },
+                  x: 0,
+                  y: 0,
+                  w: 12,
+                  h: 40
+                }
+              ]
+            },
+            {
+              id: 'timeline',
+              label: 'Timelines',
+              widgets: [
+                {
+                  id: 'seed-contracts-timeline',
+                  type: 'DateRangeTimeline',
+                  config: {
+                    schemaName: 'Contract',
+                    entityQuery: contractFacetQuery,
+                    startFieldId: 'contract_start',
+                    endFieldId: 'contract_end',
+                    sublabelFieldId: 'vendor',
+                    valueFieldId: 'annual_cost',
+                    markerOffsetFieldId: 'notice_period_days',
+                    markerWhenFieldId: 'auto_renew'
+                  },
+                  x: 0,
+                  y: 0,
+                  w: 12,
+                  h: 40
+                }
+              ]
+            }
+          ]
+        },
+        x: 0,
+        y: 0,
+        w: 12,
+        h: 44
+      }
+    ],
+    sidebar: {
+      kind: 'facets',
+      schemaName: 'Contract',
+      facets: [
+        { fieldId: 'Contract Type', variableName: 'contractTypes', itemLabel: 'Type' },
+        { fieldId: 'Vendor', variableName: 'vendorIds', itemLabel: 'Vendor' }
+      ]
+    }
   },
   [VENDOR_MANAGEMENT_VENDORS_APP_KEY]: {
     name: 'Vendors',
