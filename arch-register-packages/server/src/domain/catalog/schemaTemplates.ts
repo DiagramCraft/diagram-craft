@@ -97,7 +97,7 @@ type SymbolicFieldVariant =
   | {
       id: string;
       name: string;
-      type: 'text' | 'longtext' | 'boolean' | 'date' | 'currency' | 'principal';
+      type: 'text' | 'longtext' | 'boolean' | 'date' | 'currency' | 'duration' | 'principal';
       minCardinality?: number;
       maxCardinality?: number;
       requirementLevel?: 'required' | 'expected' | 'optional';
@@ -1529,30 +1529,18 @@ const informationGovernanceEnums = [
     ],
     'Data'
   ),
-  enumDefinition(
-    'retention-time-unit',
-    'Retention Time Unit',
-    [
-      { value: 'days', label: 'Days' },
-      { value: 'months', label: 'Months' },
-      { value: 'years', label: 'Years' }
-    ],
-    'Governance'
-  ),
   communicationProtocolEnum
 ];
 
 const retentionPolicySchema: TemplateSchema = {
   symId: 'retention-policy',
   name: 'Retention Policy',
-  description:
-    'A named retention policy defining how long data governed by it may be retained, in a given time unit.',
+  description: 'A named retention policy defining how long data governed by it may be retained.',
   category: 'Governance',
   color: AR_COLOR_RED,
   icon: 'clock',
   fields: [
-    { id: 'duration', name: 'Duration', type: 'number', min: 1 },
-    { id: 'time_unit', name: 'Time Unit', type: 'select', enumId: 'retention-time-unit' },
+    { id: 'period', name: 'Period', type: 'duration' },
     {
       id: 'governed_entities',
       name: 'Governed Entities',
@@ -4832,6 +4820,16 @@ const materializeTemplateFragments = (
             ? resolveDefinitionId('enum', ownerId, field.enumId)
             : undefined,
         recalc_interval: field.recalcInterval
+      };
+    }
+    if (field.type === 'duration') {
+      return {
+        id: field.id,
+        name: field.name,
+        type: 'duration',
+        minCardinality: field.minCardinality,
+        maxCardinality: field.maxCardinality,
+        requirementLevel: field.requirementLevel
       };
     }
     return {

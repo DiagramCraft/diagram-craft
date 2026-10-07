@@ -408,7 +408,6 @@ export const INTEGRATION_SYNC_IDS = {
 } as const;
 
 export const RETENTION_IDS = {
-  timeUnitEnum: '00000000-0000-0000-0042-000000000003',
   policySchema: '00000000-0000-0000-0042-000000000001',
   assignmentRelationSchema: '00000000-0000-0000-0042-000000000002',
   capabilityConfiguration: '00000000-0000-0000-0042-000000000004',
@@ -698,8 +697,7 @@ export const SEED_ENUM_IDS = {
   capabilityReferenceModel: STRATEGY_IDS.capabilityReferenceModelEnum,
   regulatoryTags: INFO_ASSET_IDS.regulatoryTagsEnum,
   processingPurposes: INFO_ASSET_IDS.processingPurposesEnum,
-  residencyRegions: INFO_ASSET_IDS.residencyRegionsEnum,
-  retentionTimeUnit: RETENTION_IDS.timeUnitEnum
+  residencyRegions: INFO_ASSET_IDS.residencyRegionsEnum
 } as const;
 
 export const SEED_RELATION_SCHEMA_IDS = {

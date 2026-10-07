@@ -132,7 +132,7 @@ export const buildConditionClause = (
   cond: FilterCondition,
   addParam: (v: unknown) => string,
   dialect: 'postgres' | 'sqlite',
-  kind: 'scalar' | 'currency' | 'array' | 'currency-array' = 'scalar'
+  kind: 'scalar' | 'currency' | 'duration' | 'array' | 'currency-array' = 'scalar'
 ): string | null => {
   if (kind === 'array' || kind === 'currency-array') {
     return buildArrayConditionClause(col, cond, addParam, dialect, kind === 'currency-array');

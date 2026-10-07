@@ -127,6 +127,7 @@ describe('resolveRetentionConfig', () => {
 describe('resolveRetentionFieldIds', () => {
   it('resolves the default field ids when no explicit field mappings are set', () => {
     expect(resolveRetentionFieldIds([validRetentionConfiguration])).toEqual({
+      periodFieldId: 'period',
       durationFieldId: 'duration',
       timeUnitFieldId: 'time_unit',
       activatedFromFieldId: 'activated_from'
@@ -148,6 +149,7 @@ describe('resolveRetentionFieldIds', () => {
       }
     } as unknown as WorkspaceCapabilityConfiguration;
     expect(resolveRetentionFieldIds([remapped])).toEqual({
+      periodFieldId: 'period',
       durationFieldId: 'retention_length',
       timeUnitFieldId: 'retention_unit',
       activatedFromFieldId: 'subject_since'

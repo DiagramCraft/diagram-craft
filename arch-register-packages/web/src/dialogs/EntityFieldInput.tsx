@@ -9,6 +9,7 @@ import { MultiValueEditor } from '../components/MultiValueEditor';
 import { isMultiValuedScalarField } from '../lib/scalarFieldValues';
 import { selectableEnumOptions } from '../utils/enumOptions';
 import { Chip } from '../components/Chip';
+import { DurationInput } from '../components/DurationInput';
 import { UserGroupPicker } from '../components/UserGroupPicker';
 import { usePrincipalLabel } from '../hooks/usePrincipalLabel';
 
@@ -167,6 +168,9 @@ export const EntityFieldInput = ({
           </div>
         );
       }
+      if (field.type === 'duration') {
+        return <DurationInput value={item} onChange={update} disabled={disabled} />;
+      }
       if (field.type === 'number') {
         return (
           <input
@@ -206,9 +210,11 @@ export const EntityFieldInput = ({
               ? false
               : field.type === 'currency'
                 ? { amount: undefined, currency: defaultCurrency ?? 'USD' }
-                : field.type === 'number'
-                  ? ''
-                  : ''
+                : field.type === 'duration'
+                  ? { amount: undefined, unit: 'years' }
+                  : field.type === 'number'
+                    ? ''
+                    : ''
           }
           renderItem={renderItem}
         />
@@ -277,6 +283,14 @@ export const EntityFieldInput = ({
           onChange={event => onChange(event.target.value)}
           style={{ width: '100%' }}
         />
+      </FormElement>
+    );
+  }
+
+  if (field.type === 'duration') {
+    return (
+      <FormElement label={field.name} required={field.requirementLevel !== 'optional'}>
+        <DurationInput value={value} onChange={onChange} disabled={disabled} />
       </FormElement>
     );
   }

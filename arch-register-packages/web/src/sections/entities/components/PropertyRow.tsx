@@ -1,5 +1,6 @@
 import { MultiSelect, MultiSelectItem } from '@diagram-craft/app-components/MultiSelect';
 import { Select } from '@diagram-craft/app-components/Select';
+import { DurationInput } from '../../../components/DurationInput';
 import { TbX } from 'react-icons/tb';
 import { Chip } from '../../../components/Chip';
 import { UserGroupPicker } from '../../../components/UserGroupPicker';
@@ -208,6 +209,9 @@ export const PropertyRow = ({
             />
           );
         }
+        if (field.type === 'duration') {
+          return <DurationInput className={styles.inputInline} value={item} onChange={update} />;
+        }
         if (field.type === 'currency') {
           const currencyValue =
             typeof item === 'object' && item !== null && !Array.isArray(item)
@@ -279,9 +283,11 @@ export const PropertyRow = ({
               ? false
               : field.type === 'currency'
                 ? { amount: undefined, currency: defaultCurrency }
-                : field.type === 'number'
-                  ? ''
-                  : ''
+                : field.type === 'duration'
+                  ? { amount: undefined, unit: 'years' }
+                  : field.type === 'number'
+                    ? ''
+                    : ''
           }
           renderItem={renderItem}
         />
@@ -326,6 +332,9 @@ export const PropertyRow = ({
           onChange={e => onChange(e.target.value)}
         />
       );
+    }
+    if (field.type === 'duration') {
+      return <DurationInput className={styles.inputInline} value={editValue} onChange={onChange} />;
     }
     if (field.type === 'currency') {
       const currencyValue =

@@ -1881,12 +1881,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
           view: 'table',
           viewConfigs: {
             table: {
-              fieldIds: [
-                '_projection:Policy',
-                '_projection:Duration',
-                '_projection:Time Unit',
-                '_projection:Activated From'
-              ]
+              fieldIds: ['_projection:Policy', '_projection:Period', '_projection:Activated From']
             }
           },
           // A Data Entity category sits under at most one retention policy, so one row per
@@ -1912,13 +1907,8 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
               },
               {
                 path: [{ kind: 'forward', fieldId: 'Retention Policy' }],
-                fieldId: 'Duration',
-                alias: 'Duration'
-              },
-              {
-                path: [{ kind: 'forward', fieldId: 'Retention Policy' }],
-                fieldId: 'Time Unit',
-                alias: 'Time Unit'
+                fieldId: 'Period',
+                alias: 'Period'
               },
               {
                 path: [{ kind: 'forward', fieldId: 'Retention Policy' }],

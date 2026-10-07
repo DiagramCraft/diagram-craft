@@ -1249,7 +1249,7 @@ const seedRetentionPolicyEntities: SeedEntityInput[] = [
     tags: ['governance', 'retention'],
     links: [],
     schema_id: RETENTION_IDS.policySchema,
-    data: { duration: 3, time_unit: 'years' },
+    data: { period: { amount: 3, unit: 'years' } },
     project_id: null,
     created_at: now,
     updated_at: now
@@ -1269,7 +1269,7 @@ const seedRetentionPolicyEntities: SeedEntityInput[] = [
     tags: ['governance', 'retention', 'compliance'],
     links: [],
     schema_id: RETENTION_IDS.policySchema,
-    data: { duration: 7, time_unit: 'years' },
+    data: { period: { amount: 7, unit: 'years' } },
     project_id: null,
     created_at: now,
     updated_at: now

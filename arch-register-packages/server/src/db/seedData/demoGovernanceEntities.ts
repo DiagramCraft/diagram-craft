@@ -970,7 +970,7 @@ export const demoRetentionPolicyEntities: SeedEntityInput[] = [
     tags: ['governance', 'retention', 'payments'],
     links: [],
     schema_id: RETENTION_IDS.policySchema,
-    data: { duration: 7, time_unit: 'years' },
+    data: { period: { amount: 7, unit: 'years' } },
     project_id: null,
     created_at: now,
     updated_at: now
@@ -990,7 +990,7 @@ export const demoRetentionPolicyEntities: SeedEntityInput[] = [
     tags: ['governance', 'retention', 'privacy'],
     links: [],
     schema_id: RETENTION_IDS.policySchema,
-    data: { duration: 3, time_unit: 'years' },
+    data: { period: { amount: 3, unit: 'years' } },
     project_id: null,
     created_at: now,
     updated_at: now
@@ -1010,7 +1010,7 @@ export const demoRetentionPolicyEntities: SeedEntityInput[] = [
     tags: ['governance', 'retention', 'marketing'],
     links: [],
     schema_id: RETENTION_IDS.policySchema,
-    data: { duration: 2, time_unit: 'years' },
+    data: { period: { amount: 2, unit: 'years' } },
     project_id: null,
     created_at: now,
     updated_at: now
@@ -1030,7 +1030,7 @@ export const demoRetentionPolicyEntities: SeedEntityInput[] = [
     tags: ['governance', 'retention', 'fulfillment'],
     links: [],
     schema_id: RETENTION_IDS.policySchema,
-    data: { duration: 5, time_unit: 'years' },
+    data: { period: { amount: 5, unit: 'years' } },
     project_id: null,
     created_at: now,
     updated_at: now
@@ -1050,7 +1050,7 @@ export const demoRetentionPolicyEntities: SeedEntityInput[] = [
     tags: ['governance', 'retention', 'inventory'],
     links: [],
     schema_id: RETENTION_IDS.policySchema,
-    data: { duration: 4, time_unit: 'years' },
+    data: { period: { amount: 4, unit: 'years' } },
     project_id: null,
     created_at: now,
     updated_at: now

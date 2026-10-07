@@ -48,7 +48,7 @@ test.describe('workspace routes', () => {
     expect(templates.find(template => template.id === 'default')?.template_object_count).toBe(24);
     expect(
       templates.find(template => template.id === 'information-governance')?.template_object_count
-    ).toBe(12);
+    ).toBe(11);
     expect(
       templates.filter(template => template.category === 'cross-cutting').map(t => t.id)
     ).toEqual(
@@ -287,7 +287,6 @@ test.describe('workspace routes', () => {
         'Regulatory Tags',
         'Processing Purposes',
         'Residency Regions',
-        'Retention Time Unit',
         'PII Classification'
       ])
     );

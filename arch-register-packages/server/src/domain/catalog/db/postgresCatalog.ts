@@ -39,6 +39,7 @@ import {
   escapeLike,
   buildConditionClause
 } from './filterBuilder';
+import { createEntityQueryDialectAdapter } from '../entityQueryIRDialect';
 
 export class PostgresCatalogDatabase extends PostgresDatabaseBase implements CatalogDatabase {
   async resolveWorkspaceSlug(slug: string) {
@@ -417,6 +418,8 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
         `e.description ILIKE ${addParam(pat)}`
       ];
       for (const [fieldId, kind] of filters.customFieldKinds ?? []) {
+        // Durations are not free-text searchable (the stored value is an amount and a unit).
+        if (kind === 'duration') continue;
         const col =
           kind === 'currency'
             ? `(e.data->'${fieldId}'->>'amount')`
@@ -438,7 +441,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
       // Guard against prototype pollution: only accept own properties from ENTITY_BUILTIN_COLUMNS
       // For custom fields, also verify they don't match Object.prototype property names
       let col: string | null = null;
-      let kind: 'scalar' | 'currency' | 'array' | 'currency-array' =
+      let kind: 'scalar' | 'currency' | 'duration' | 'array' | 'currency-array' =
         filters?.customFieldKinds?.get(cond.fieldId) ?? 'scalar';
       if (Object.hasOwn(ENTITY_BUILTIN_COLUMNS, cond.fieldId)) {
         col = ENTITY_BUILTIN_COLUMNS[cond.fieldId] ?? null;
@@ -453,7 +456,9 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
             ? `(e.data->>'${cond.fieldId}')`
             : kind === 'currency'
               ? `(e.data->'${cond.fieldId}'->>'amount')`
-              : `(e.data->'${cond.fieldId}')`;
+              : kind === 'duration'
+                ? createEntityQueryDialectAdapter('postgres').durationDays('e.data', cond.fieldId)
+                : `(e.data->'${cond.fieldId}')`;
       }
       if (!col) continue;
       const clause = buildConditionClause(col, cond, addParam, 'postgres', kind);

@@ -91,6 +91,8 @@ export const resolveRetentionConfig = (
 };
 
 export type RetentionFieldIds = {
+  /** Duration-typed period field; the legacy duration/time unit pair is used when it is absent. */
+  periodFieldId: string;
   durationFieldId: string;
   timeUnitFieldId: string;
   activatedFromFieldId: string;
@@ -123,12 +125,14 @@ export const resolveRetentionFieldIds = (
 
   const policyRole = definition.bindingRoles.find(role => role.id === 'policy');
   const assignmentRole = definition.bindingRoles.find(role => role.id === 'assignment');
+  const periodRole = policyRole?.fieldRoles.find(role => role.id === 'period');
   const durationRole = policyRole?.fieldRoles.find(role => role.id === 'duration');
   const timeUnitRole = policyRole?.fieldRoles.find(role => role.id === 'timeUnit');
   const activatedFromRole = assignmentRole?.fieldRoles.find(role => role.id === 'activatedFrom');
-  if (!durationRole || !timeUnitRole || !activatedFromRole) return null;
+  if (!periodRole || !durationRole || !timeUnitRole || !activatedFromRole) return null;
 
   return {
+    periodFieldId: resolveCapabilityFieldId(policyBinding, periodRole),
     durationFieldId: resolveCapabilityFieldId(policyBinding, durationRole),
     timeUnitFieldId: resolveCapabilityFieldId(policyBinding, timeUnitRole),
     activatedFromFieldId: resolveCapabilityFieldId(assignmentBinding, activatedFromRole)

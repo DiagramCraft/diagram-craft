@@ -225,7 +225,8 @@ const resolveColumn = (
   fieldId: string,
   state: EntityQuerySqlRenderState,
   kind: 'scalar' | 'array' | 'currency-array' = 'scalar',
-  currencyAmount = false
+  currencyAmount = false,
+  durationDays = false
 ): { col: string; kind: 'scalar' | 'array' | 'currency-array' } | null => {
   if (fieldId === '_id') return { col: `${alias}.id`, kind: 'scalar' };
   if (fieldId === '_conformanceStatus') {
@@ -252,6 +253,9 @@ const resolveColumn = (
       col: state.dialectAdapter.jsonFieldValue(`${alias}.data`, fieldId),
       kind
     };
+  }
+  if (durationDays) {
+    return { col: state.dialectAdapter.durationDays(`${alias}.data`, fieldId), kind: 'scalar' };
   }
   if (currencyAmount) {
     return {
@@ -319,12 +323,14 @@ const compilePredicateTerminal =
       : ('scalar' as const);
     const currencyAmount =
       fieldKind === 'scalar' && scalarFields.some(field => field.type === 'currency');
+    const durationDays =
+      fieldKind === 'scalar' && scalarFields.some(field => field.type === 'duration');
     const resolved = fieldId.startsWith(ASSESSMENT_FIELD_PREFIX)
       ? {
           col: assessmentFieldColumn(alias, fieldId.slice(ASSESSMENT_FIELD_PREFIX.length), state),
           kind: 'scalar' as const
         }
-      : resolveColumn(alias, fieldId, state, fieldKind, currencyAmount);
+      : resolveColumn(alias, fieldId, state, fieldKind, currencyAmount, durationDays);
     if (!resolved) {
       throw new UnsupportedEntityQueryIRError(`Field '${fieldId}' has no SQL translation`);
     }
@@ -360,9 +366,16 @@ const compileFreeTextTerminal = (
       [...state.schemas.values()].flatMap(schema =>
         schema.fields
           .filter(field =>
-            ['text', 'longtext', 'boolean', 'date', 'currency', 'number', 'select'].includes(
-              field.type
-            )
+            [
+              'text',
+              'longtext',
+              'boolean',
+              'date',
+              'currency',
+              'duration',
+              'number',
+              'select'
+            ].includes(field.type)
           )
           .map(field => field.id)
       )

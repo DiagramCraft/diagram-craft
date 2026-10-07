@@ -141,6 +141,29 @@ describe('entity scalar values', () => {
     ).toThrow("Cost uses unsupported currency 'USD'");
   });
 
+  it('normalises duration values and rejects malformed ones', () => {
+    const fields: SchemaField[] = [{ id: 'period', name: 'Period', type: 'duration' }];
+
+    expect(
+      normalizeEntityScalarFields({
+        schemaFields: fields,
+        fields: { period: '3 years' }
+      })
+    ).toEqual({ period: { amount: 3, unit: 'years' } });
+    expect(
+      normalizeEntityScalarFields({
+        schemaFields: fields,
+        fields: { period: { amount: 6, unit: 'months' } }
+      })
+    ).toEqual({ period: { amount: 6, unit: 'months' } });
+    expect(() =>
+      normalizeEntityScalarFields({
+        schemaFields: fields,
+        fields: { period: { amount: 3, unit: 'decades' } }
+      })
+    ).toThrow('Period must contain an amount and a unit');
+  });
+
   it('collapses one-item arrays and rejects lossy multi-to-scalar migration', () => {
     const field = {
       id: 'labels',

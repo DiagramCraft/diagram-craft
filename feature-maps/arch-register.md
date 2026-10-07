@@ -71,7 +71,7 @@
           optional Information Governance cross-cutting template contributes reusable built-in vocabularies for data
           flow direction, regulatory tags, processing purposes, and residency regions without adding a new semantic
           enum type. It
-          also contributes a Retention Policy entity schema (duration and time unit) and a "Subject to Retention
+          also contributes a Retention Policy entity schema (a single Period duration field) and a "Subject to Retention
           Policy" relation schema (an "activated from" date) bound together via the `retention` workspace
           capability, without adding a bespoke retention data model: any governed entity records its retention
           obligation as an ordinary typed-relation assignment to a policy entity, and the assignment's computed
@@ -223,7 +223,8 @@
               keeping them out of new record edits. Removing an unused option deletes it; an option still in use is
               automatically retained as retired. Enum names and field references provide context without a hard-coded
               enum category set.
-              reusable shared fieldgroups, relationships, and schema-specific behavior, including currency fields and
+              reusable shared fieldgroups, relationships, and schema-specific behavior, including currency and duration fields (an amount plus a day, week, month, or year unit,
+              shown as e.g. "3 years" and filtered by its length in days) and
               ordered multi-valued scalar fields (text, long text, boolean, date, number, currency, and select) with
               minimum/maximum cardinality,
               date fields that can generate schema-field-scoped approaching and overdue governance reminders,
@@ -760,7 +761,7 @@
           deep-links to an entity's Discussions tab (which the drawer has no equivalent surface for).
 
         - @id:ar.entities.fields Users can view and edit standard and schema-defined fields, including owners,
-          lifecycle, links, references, typed relations, currency values, ordered multi-valued scalar values, custom
+          lifecycle, links, references, typed relations, currency and duration values, ordered multi-valued scalar values, custom
           values, and principal fields that reference a user or a team (for example, a steward or custodian
           assignment). A schema field marked as externally
           managed (by AI, an integration, or an internal automation) is read-only to users; its current value stays

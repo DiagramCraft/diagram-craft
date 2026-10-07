@@ -131,7 +131,9 @@ export const getSchemaFieldDefs = (
         const en = enums.find(e => e.id === f.enumId);
         options = en?.options ?? [];
       } else if (f.type === 'boolean') type = 'boolean';
-      else if (f.type === 'number' || f.type === 'currency') type = 'number';
+      // Duration filters compare against days; stored values in other units are normalised.
+      else if (f.type === 'number' || f.type === 'currency' || f.type === 'duration')
+        type = 'number';
       else if (f.type === 'derived') {
         type =
           f.resultType === 'select'

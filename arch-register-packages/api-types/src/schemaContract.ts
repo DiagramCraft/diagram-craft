@@ -4,6 +4,7 @@ import {
   ws,
   wsAndUUID,
   currencyValueSchema,
+  durationValueSchema,
   externalFieldSchema,
   assertRefreshModeRequiresExternalKind,
   namedGroupSchema,
@@ -72,6 +73,13 @@ const dateFieldSchema = baseFieldSchema.extend({
 const currencyFieldSchema = baseFieldSchema.extend({
   ...scalarCardinalitySchema,
   type: z.literal('currency').describe('Currency amount and currency code field')
+});
+
+const durationFieldSchema = baseFieldSchema.extend({
+  ...scalarCardinalitySchema,
+  type: z
+    .literal('duration')
+    .describe('Duration field: an amount and a unit (days, weeks, months, years)')
 });
 
 const numberFieldSchema = baseFieldSchema.extend({
@@ -194,6 +202,7 @@ export const schemaFieldInputSchema = z
     booleanFieldSchema,
     dateFieldSchema,
     currencyFieldSchema,
+    durationFieldSchema,
     numberFieldSchema,
     selectFieldInputSchema,
     principalFieldSchema,
@@ -276,6 +285,7 @@ export const schemaFieldResponseSchema = z
     booleanFieldSchema,
     dateFieldSchema,
     currencyFieldSchema,
+    durationFieldSchema,
     numberFieldSchema,
     selectFieldResponseSchema,
     principalFieldSchema,
@@ -311,10 +321,12 @@ const entityTemplateFieldValueSchema = z.union([
   z.number(),
   z.boolean(),
   currencyValueSchema,
+  durationValueSchema,
   z.array(z.string()),
   z.array(z.number()),
   z.array(z.boolean()),
   z.array(currencyValueSchema),
+  z.array(durationValueSchema),
   z.array(typedRelationTemplateDraftSchema)
 ]);
 

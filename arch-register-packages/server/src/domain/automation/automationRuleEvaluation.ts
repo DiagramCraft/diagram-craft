@@ -9,6 +9,7 @@ import type {
   AutomationRuleTrigger
 } from '@arch-register/api-types/automationRuleContract';
 import type { AutomationRuleDbResult } from './db/automationRuleDatabase';
+import { durationToDays, parseDurationValue } from '../../utils/durationValue';
 import { buildUserAuthCtx } from '../auth/authorization';
 import { isAutomationRuleAuthorized } from './automationRuleAuthorization';
 
@@ -82,6 +83,10 @@ const isEmptyValue = (value: unknown) =>
  *  numeric-comparable field (number, derived number/rating) is a plain number. Returns `null` if
  *  the value can't be read as a number, so numeric comparisons fail closed on missing/bad data. */
 const toComparableNumber = (value: unknown): number | null => {
+  // Durations are compared in days, so "1 year" is greater than 11 months. A plain number in a
+  // condition is read as days.
+  const duration = typeof value === 'number' ? null : parseDurationValue(value);
+  if (duration) return durationToDays(duration);
   if (typeof value === 'object' && value !== null && 'amount' in value) {
     value = (value as { amount: unknown }).amount;
   }

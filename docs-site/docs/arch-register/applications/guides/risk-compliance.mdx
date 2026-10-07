@@ -38,8 +38,8 @@ a valid capability binding. See [Workspace Templates and Capabilities](../../adm
 
 **Retention** uses the separate workspace-wide **Retention** capability. Configure its Policy entity schema and
 **Subject to Retention Policy** relation schema under **Applications & Capabilities** to enable that section; it can be
-configured independently of the Risk & Compliance capability. The capability also maps **Duration** to a number field,
-**Time unit** to a select field, and **Activated from** to a date field; the default catalog uses fields with those
+configured independently of the Risk & Compliance capability. The capability also maps **Period** to a duration field and **Activated from** to a date field (workspaces created before
+the duration field type can keep mapping **Duration** to a number field and **Time unit** to a select field); the default catalog uses fields with those
 standard roles, while a custom model can map its own fields.
 
 ## Review risks, controls, and assessments

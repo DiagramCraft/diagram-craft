@@ -18,6 +18,7 @@ import { isReferenceOrContainmentField } from '@arch-register/api-types/schemaCo
 import { buildFallbackEntityDrawerProfile } from '@arch-register/api-types/entityDrawerConfiguration';
 import { DrawerPropertyRow } from './DrawerPropertyRow';
 import { formatCurrencyValue } from '../../../utils/currencyFormat';
+import { formatDurationValue } from '../../../utils/durationFormat';
 import { formatDate } from '../../../utils/dateFormat';
 import { useDateTimeFormatPreference } from '../../../hooks/useDateTimeFormatPreference';
 import { usePrincipalLabel } from '../../../hooks/usePrincipalLabel';
@@ -132,6 +133,7 @@ const formatDrawerFieldValue = (
   if (field.type === 'boolean') return value ? 'Yes' : 'No';
   if (field.type === 'date') return formatDateValue(value);
   if (field.type === 'currency') return formatCurrencyValue(value);
+  if (field.type === 'duration') return formatDurationValue(value);
   if (field.type === 'principal' && typeof value === 'object' && value !== null) {
     const principal = value as { principal_type?: string; principal_id?: string };
     return principal.principal_id

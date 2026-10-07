@@ -2,6 +2,7 @@ import {
   getWorkspaceCapabilityDefinition,
   resolveCapabilityFieldMappings
 } from '@arch-register/api-types/integrationCatalog';
+import { parseDurationValue } from '../../utils/durationValue';
 import type { DatabaseAdapter } from '../../db/database';
 import { getWorkspaceCapabilityConfiguration } from '../workspace/workspaceCapabilityOperations';
 import {
@@ -23,7 +24,7 @@ export type RetentionEvaluation = {
 const RETENTION_APPROACHING_WINDOW_DAYS = 30;
 
 const isRetentionTimeUnit = (value: unknown): value is RetentionTimeUnit =>
-  value === 'days' || value === 'months' || value === 'years';
+  value === 'days' || value === 'weeks' || value === 'months' || value === 'years';
 
 export const computeRetentionExpiry = (
   duration: number | null | undefined,
@@ -95,14 +96,23 @@ const resolveRetentionBindings = async (db: DatabaseAdapter, workspace: string) 
     assignmentSchema.fields
   ).mappings;
 
+  // A duration-typed `period` field wins; workspaces created before the Duration field type keep
+  // the legacy number + select pair.
+  const periodFieldId = policySchema.fields.some(
+    field => field.id === policyMappings['period'] && field.type === 'duration'
+  )
+    ? policyMappings['period']
+    : undefined;
   const durationFieldId = policyMappings['duration'];
   const timeUnitFieldId = policyMappings['timeUnit'];
   const activatedFromFieldId = assignmentMappings['activatedFrom'];
-  if (!durationFieldId || !timeUnitFieldId || !activatedFromFieldId) return null;
+  if (!activatedFromFieldId) return null;
+  if (!periodFieldId && (!durationFieldId || !timeUnitFieldId)) return null;
 
   return {
     policySchemaId: policySchema.id,
     assignmentSchemaId: assignmentSchema.id,
+    periodFieldId,
     durationFieldId,
     timeUnitFieldId,
     activatedFromFieldId
@@ -134,8 +144,15 @@ export const resolveEntityRetentionStatus = async (
   if (!assignment) return { expiryDate: null, status: 'incomplete' };
 
   const policyEntity = await db.catalog.getEntity(workspace, assignment.out_entity_id);
-  const duration = policyEntity?.data[bindings.durationFieldId];
-  const timeUnit = policyEntity?.data[bindings.timeUnitFieldId];
+  const period = bindings.periodFieldId
+    ? parseDurationValue(policyEntity?.data[bindings.periodFieldId])
+    : null;
+  const duration =
+    period?.amount ??
+    (bindings.durationFieldId ? policyEntity?.data[bindings.durationFieldId] : undefined);
+  const timeUnit =
+    period?.unit ??
+    (bindings.timeUnitFieldId ? policyEntity?.data[bindings.timeUnitFieldId] : undefined);
   const activatedFrom = assignment.data[bindings.activatedFromFieldId];
 
   return computeRetentionExpiry(

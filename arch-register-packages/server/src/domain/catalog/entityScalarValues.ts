@@ -1,13 +1,23 @@
-import type { CurrencyValue } from '@arch-register/api-types/common';
+import type { CurrencyValue, DurationValue } from '@arch-register/api-types/common';
 import type { SchemaField } from '@arch-register/api-types/schemaContract';
 import { httpAssert } from '../../utils/httpAssert';
 import { parseCurrencyValue } from '../../utils/currencyValue';
+import { parseDurationValue } from '../../utils/durationValue';
 import type { WorkspaceEnumDbResult } from './db/catalogDatabase';
 
 export type ScalarSchemaField = Extract<
   SchemaField,
   {
-    type: 'text' | 'longtext' | 'boolean' | 'date' | 'currency' | 'number' | 'select' | 'principal';
+    type:
+      | 'text'
+      | 'longtext'
+      | 'boolean'
+      | 'date'
+      | 'currency'
+      | 'duration'
+      | 'number'
+      | 'select'
+      | 'principal';
   }
 >;
 
@@ -32,6 +42,7 @@ export const isScalarSchemaField = (field: SchemaField): field is ScalarSchemaFi
   field.type === 'boolean' ||
   field.type === 'date' ||
   field.type === 'currency' ||
+  field.type === 'duration' ||
   field.type === 'number' ||
   field.type === 'select' ||
   field.type === 'principal';
@@ -110,6 +121,15 @@ const validateCurrency = (
   return parsed;
 };
 
+const validateDuration = (field: ScalarSchemaField, value: unknown): DurationValue => {
+  const parsed = parseDurationValue(value);
+  httpAssert.present(parsed, {
+    status: 400,
+    message: `${field.name} must contain an amount and a unit (days, weeks, months, years)`
+  });
+  return parsed;
+};
+
 /**
  * Validates only the shape of a principal reference (`principal_type`/`principal_id`), matching
  * the existing entity-grant precedent (`buildEntityGrantInputs`) which also does not resolve the
@@ -161,6 +181,8 @@ const normalizeScalarItem = (
       return validateNumber(field, value);
     case 'currency':
       return validateCurrency(field, value, supportedCurrencies);
+    case 'duration':
+      return validateDuration(field, value);
     case 'principal':
       return validatePrincipal(field, value);
   }
@@ -287,6 +309,7 @@ export const normalizeEntityScalarFields = ({
         'boolean',
         'date',
         'currency',
+        'duration',
         'number',
         'select',
         'principal'
