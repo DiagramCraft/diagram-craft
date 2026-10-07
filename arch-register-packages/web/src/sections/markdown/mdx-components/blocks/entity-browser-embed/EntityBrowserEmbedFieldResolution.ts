@@ -119,7 +119,7 @@ const resolvePathFieldName = (path: PathStep[], rootSchema: EntitySchema): PathS
 
 /** Resolves an `unboundTypedRelation` step's `relationSchemaId` given as a relation schema NAME
  *  (seeds can't know ids); real ids and unknown names pass through unchanged. */
-const resolveRelationSchemaNames = (
+export const resolveRelationSchemaNames = (
   path: PathStep[],
   relationSchemas: readonly RelationSchema[] | undefined
 ): PathStep[] =>

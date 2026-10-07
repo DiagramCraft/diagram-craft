@@ -11,6 +11,7 @@ export const STRATEGY_OVERVIEW_APP_KEY = 'strategy-overview';
 export const STRATEGY_CAPABILITY_MAP_APP_KEY = 'strategy-capability-map';
 export const STRATEGY_CAPABILITIES_APP_KEY = 'strategy-capabilities';
 export const STRATEGY_STRATEGY_APP_KEY = 'strategy-strategy';
+export const STRATEGY_TRACEABILITY_APP_KEY = 'strategy-traceability';
 export const RISK_COMPLIANCE_OVERVIEW_APP_KEY = 'risk-compliance-overview';
 export const RISK_COMPLIANCE_RISKS_APP_KEY = 'risk-compliance-risks';
 export const RISK_COMPLIANCE_CONTROLS_APP_KEY = 'risk-compliance-controls';
@@ -1089,6 +1090,89 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
       // The `_id` predicate matches the internal id, not the public id.
       valueKind: 'id'
     }
+  },
+  [STRATEGY_TRACEABILITY_APP_KEY]: {
+    name: 'Traceability',
+    description:
+      'Walk an Objective → Capability → Application chain one hop at a time, and find capabilities no objective supports.',
+    widgets: [
+      {
+        id: 'seed-traceability-tabs',
+        type: 'tabs',
+        config: {
+          tabs: [
+            {
+              id: 'chain',
+              label: 'Trace chain',
+              widgets: [
+                {
+                  id: 'seed-traceability-walker',
+                  type: 'PathWalker',
+                  config: {
+                    rootSchemaName: 'Objective',
+                    // Relation schemas are named, not id'd: a seed can't know workspace ids.
+                    hops: [
+                      {
+                        kind: 'unboundTypedRelation',
+                        relationSchemaId: 'Objective Supports Business Capability',
+                        direction: 'in'
+                      },
+                      {
+                        kind: 'unboundTypedRelation',
+                        relationSchemaId: 'Business Capability Supports Entity',
+                        direction: 'in'
+                      }
+                    ]
+                  },
+                  x: 0,
+                  y: 0,
+                  w: 12,
+                  h: 24
+                }
+              ]
+            },
+            {
+              id: 'orphans',
+              label: 'No strategy link',
+              widgets: [
+                {
+                  id: 'seed-traceability-orphans',
+                  type: ENTITY_BROWSER_EMBED_WIDGET_TYPE,
+                  config: {
+                    title: 'Capabilities no objective supports',
+                    q: '',
+                    conditions: [],
+                    sort: 'name',
+                    view: 'table',
+                    viewConfigs: { table: { fieldIds: ['Capability Level', '_owner'] } },
+                    schemaName: 'Business Capability',
+                    // The `Supported by Objectives` hop is resolved to a typed-relation step at
+                    // render time (EntityBrowserEmbedFieldResolution.ts).
+                    entityQuery: {
+                      root: {
+                        kind: 'not',
+                        child: {
+                          kind: 'relationExists',
+                          path: [{ kind: 'forward', fieldId: 'Supported by Objectives' }]
+                        }
+                      }
+                    }
+                  },
+                  x: 0,
+                  y: 0,
+                  w: 12,
+                  h: 20
+                }
+              ]
+            }
+          ]
+        },
+        x: 0,
+        y: 0,
+        w: 12,
+        h: 30
+      }
+    ]
   },
   [RISK_COMPLIANCE_OVERVIEW_APP_KEY]: {
     name: 'Overview',

@@ -372,12 +372,14 @@
           table (a standard entity browser filtered to the capabilities the objective supports, showing name and
           owner). Selecting a row opens the entity drawer. No objective is selected by default.
 
-        - @id:ar.strategy.traceability The Traceability section has two tabs. **Trace chain** is a three-column
-          hop walker — Objective → Capability → Application — walked one hop at a time over the Objective Supports
-          Business Capability and Business Capability Supports Entity typed relations, with a path summary of the
-          current selection and an initiatives sub-list for the selected objective. **No strategy link** lists the
-          capabilities that no objective supports. Selecting a capability opens the shared capability drawer;
-          selecting an application opens its record in Entities.
+        - @id:ar.strategy.traceability The Traceability section is a configurable dashboard (seeded as
+          `strategy-traceability`) with two tabs. **Trace chain** is a generic "Relationship walker" widget: it lists
+          every entity of a configured type (Objective) and walks a chain of relations column by column — seeded as
+          Objective → Capability → Application over the Objective Supports Business Capability and Business
+          Capability Supports Entity relations — with a path summary of the current selection; viewers can re-pick
+          the relation to follow at each column. **No strategy link** is a standard entity browser filtered to the
+          capabilities no objective supports, showing level and owner. Selecting an entity opens the entity drawer.
+          The walk is local to the widget and not deep-linkable.
 
     - @id:ar.vendor-management Workspaces can optionally enable Vendor Management as its own workspace application,
       with a dedicated left rail scoped to five sections (Overview, Vendors, Contracts, Spend, Risk). The application

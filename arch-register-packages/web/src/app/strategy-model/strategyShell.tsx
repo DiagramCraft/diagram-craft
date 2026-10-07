@@ -28,6 +28,8 @@ export const STRATEGY_CAPABILITY_MAP_APP_KEY = 'strategy-capability-map';
 export const STRATEGY_CAPABILITIES_APP_KEY = 'strategy-capabilities';
 /** Keys the Strategy section's dashboard. */
 export const STRATEGY_STRATEGY_APP_KEY = 'strategy-strategy';
+/** Keys the Traceability section's dashboard. */
+export const STRATEGY_TRACEABILITY_APP_KEY = 'strategy-traceability';
 
 /**
  * Strategy & Capability Modelling's workspace-rail identity: its rail-item ids (defined in
@@ -99,12 +101,13 @@ export const strategyAppDefinition: AppDefinition = {
       )
     },
     {
-      // No `primarySidebar`: the Traceability screen is self-contained (objective/capability
-      // selection lives in its own columns), so the shell renders it full-width.
+      // A self-contained dashboard (Trace chain / No strategy link tabs) with no `primarySidebar`:
+      // the walker's selection lives in its own columns, so the shell renders it full-width.
       id: STRATEGY_TRACEABILITY_ID,
       icon: TbRoute,
       tooltip: 'Traceability',
-      route: STRATEGY_RAIL_PATHS[STRATEGY_TRACEABILITY_ID]
+      route: STRATEGY_RAIL_PATHS[STRATEGY_TRACEABILITY_ID],
+      dashboard: { appKey: STRATEGY_TRACEABILITY_APP_KEY }
     }
   ],
   enablement: { capabilityType: 'strategy-model' }

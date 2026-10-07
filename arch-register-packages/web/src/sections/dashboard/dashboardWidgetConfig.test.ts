@@ -371,6 +371,15 @@ describe('parseKnownDashboardWidget', () => {
     ).toBeNull();
   });
 
+  it('parses a PathWalker widget and rejects an incomplete one', () => {
+    const base = { id: 'walker', type: 'PathWalker', x: 0, y: 0, w: 12, h: 22 };
+    expect(
+      parseKnownDashboardWidget({ ...base, config: { rootSchemaName: 'Objective', hops: [] } })
+        ?.type
+    ).toBe('PathWalker');
+    expect(parseKnownDashboardWidget({ ...base, config: { rootSchemaName: '' } })).toBeNull();
+  });
+
   it('returns null for unknown widget types', () => {
     expect(
       parseKnownDashboardWidget({
