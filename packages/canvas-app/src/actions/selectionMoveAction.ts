@@ -5,7 +5,6 @@ import { ActionContext } from '@diagram-craft/canvas/action';
 import { isNode, transformElements } from '@diagram-craft/model/diagramElement';
 import { $tStr } from '@diagram-craft/utils/localize';
 import type { DiagramNode } from '@diagram-craft/model/diagramNode';
-import { mustExist } from '@diagram-craft/utils/assert';
 import type { Axis } from '@diagram-craft/model/nodeDefinitionLayoutCapable';
 
 declare global {
@@ -57,9 +56,9 @@ export class SelectionMoveAction extends AbstractSelectionAction {
     const offset = this.offset();
 
     // Check if we should attempt sibling swapping in a container layout
-    if (this.shouldAttemptSiblingSwap(selection.nodes, offset)) {
-      const node = selection.elements[0] as DiagramNode;
-      if (this.trySwapWithSibling(node, offset)) {
+    const selectedElement = selection.elements.length === 1 ? selection.elements[0] : undefined;
+    if (isNode(selectedElement) && this.shouldAttemptSiblingSwap(selectedElement, offset)) {
+      if (this.trySwapWithSibling(selectedElement, offset)) {
         this.emit('actionTriggered', {});
         return;
       }
@@ -76,11 +75,7 @@ export class SelectionMoveAction extends AbstractSelectionAction {
   /**
    * Determines if we should attempt to swap siblings in a container layout
    */
-  private shouldAttemptSiblingSwap(nodes: ReadonlyArray<DiagramNode>, offset: Point): boolean {
-    if (nodes.length !== 1) return false;
-
-    const node = mustExist(nodes[0]);
-
+  private shouldAttemptSiblingSwap(node: DiagramNode, offset: Point): boolean {
     // Node must have a parent
     if (!node.parent || !isNode(node.parent)) return false;
 
@@ -118,6 +113,7 @@ export class SelectionMoveAction extends AbstractSelectionAction {
 
     // Find the target sibling based on position
     const targetSibling = this.findSibling(node, siblings, direction, offset);
+    if (!targetSibling) return false;
 
     // Calculate the translation needed to swap with the sibling
     const movingForward = isHorizontal ? offset.x > 0 : offset.y > 0;
@@ -139,7 +135,12 @@ export class SelectionMoveAction extends AbstractSelectionAction {
   /**
    * Finds the sibling to swap with in the specified direction
    */
-  private findSibling(node: DiagramNode, nodes: DiagramNode[], dir: Axis, offset: Point) {
+  private findSibling(
+    node: DiagramNode,
+    nodes: DiagramNode[],
+    dir: Axis,
+    offset: Point
+  ): DiagramNode | undefined {
     const isHorizontal = dir === 'horizontal';
     const movingForward = isHorizontal ? offset.x > 0 : offset.y > 0;
 
@@ -151,8 +152,9 @@ export class SelectionMoveAction extends AbstractSelectionAction {
     });
 
     const idx = sorted.findIndex(s => s.id === node.id);
-    if (idx === -1) return node;
+    if (idx === -1) return undefined;
 
-    return sorted.at(movingForward ? idx + 1 : Math.max(0, idx - 1)) ?? node;
+    const targetIdx = movingForward ? idx + 1 : idx - 1;
+    return sorted[targetIdx];
   }
 }
