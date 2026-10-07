@@ -5,7 +5,7 @@ export type FacetFieldKind = 'reference' | 'select' | 'text';
 
 /** The facet kind a schema field supports, or `undefined` when it cannot be faceted. */
 export const facetKindForField = (field: SchemaField): FacetFieldKind | undefined => {
-  if (field.type === 'reference') return 'reference';
+  if (field.type === 'reference' || field.type === 'containment') return 'reference';
   if (field.type === 'select') return 'select';
   if (field.type === 'text') return 'text';
   if (field.type === 'derived') {

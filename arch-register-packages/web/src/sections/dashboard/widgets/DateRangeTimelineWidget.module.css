@@ -119,7 +119,7 @@
   white-space: nowrap;
 }
 
-.vendor {
+.sublabel {
   font-size: 10px;
   color: var(--cmp-fg-disabled);
   overflow: hidden;

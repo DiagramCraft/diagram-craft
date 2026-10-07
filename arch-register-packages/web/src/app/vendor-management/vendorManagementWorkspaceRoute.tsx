@@ -13,7 +13,7 @@ import { railSectionShell } from '../../layouts/workspaceShellDescriptors';
 import {
   LazyVendorOverviewDashboardScreen,
   LazyVendorVendorsDashboardScreen,
-  LazyVendorContractsScreen,
+  LazyVendorContractsDashboardScreen,
   LazyVendorSpendScreen,
   LazyVendorRiskScreen
 } from '../../routes/workspace/lazyWorkspaceScreens';
@@ -79,7 +79,7 @@ export const createVendorManagementWorkspaceRoutes = <TParentRoute extends AnyRo
           (params as unknown as { workspaceSlug: string }).workspaceSlug,
           'vendor-management'
         ),
-      component: LazyVendorContractsScreen
+      component: LazyVendorContractsDashboardScreen
     }),
     ctx =>
       railSectionShell(ctx, VENDOR_CONTRACTS_ID, {

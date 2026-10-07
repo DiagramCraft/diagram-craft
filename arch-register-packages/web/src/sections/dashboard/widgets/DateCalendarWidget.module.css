@@ -27,7 +27,7 @@
   gap: 8px;
   background: var(--base-bg);
   border: 1px solid var(--panel-border);
-  border-left: 3px solid var(--tone);
+  border-left: 3px solid var(--tone, var(--cmp-fg-success, #22c55e));
   border-radius: var(--r-sm);
   padding: 5px 8px;
   text-align: left;
