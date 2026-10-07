@@ -12,6 +12,7 @@ import {
   DATA_STEWARDSHIP_CLASSIFICATION_APP_KEY,
   DATA_STEWARDSHIP_STEWARDSHIP_APP_KEY,
   RISK_COMPLIANCE_ASSESSMENTS_APP_KEY,
+  VENDOR_MANAGEMENT_OVERVIEW_APP_KEY,
   STRATEGY_CAPABILITY_MAP_APP_KEY,
   STRATEGY_CAPABILITIES_APP_KEY,
   STRATEGY_STRATEGY_APP_KEY,
@@ -371,5 +372,21 @@ describe('APP_DASHBOARD_SEEDS', () => {
         { fieldId: 'Operating Effectiveness', variableName: 'effectiveness' }
       ]
     });
+  });
+
+  it('seeds the Vendor Management Overview from generic widgets', () => {
+    const seed = APP_DASHBOARD_SEEDS[VENDOR_MANAGEMENT_OVERVIEW_APP_KEY];
+    expect(seed!.sidebar).toBeUndefined();
+    expect(seed!.widgets.map(widget => widget.type)).toEqual([
+      'AggregateStat',
+      'AggregateStat',
+      'AggregateStat',
+      'AggregateStat',
+      'DateBucketChart',
+      'UpcomingByDate',
+      'TopEntities',
+      'EntityBrowserEmbed',
+      'EntityBrowserEmbed'
+    ]);
   });
 });

@@ -97,6 +97,28 @@ export const TopEntitiesConfigForm = ({ config, onChange }: Props) => {
             </div>
           </label>
           <label className={styles.optionRow}>
+            <span className={styles.optionLabel}>Catalog link</span>
+            <div className={styles.optionControl}>
+              <input
+                type="checkbox"
+                checked={config.showLink ?? true}
+                onChange={e =>
+                  onChange({ ...config, showLink: e.target.checked ? undefined : false })
+                }
+              />
+            </div>
+          </label>
+          <label className={styles.optionRow}>
+            <span className={styles.optionLabel}>Share bars</span>
+            <div className={styles.optionControl}>
+              <input
+                type="checkbox"
+                checked={config.showShareBar ?? false}
+                onChange={e => onChange({ ...config, showShareBar: e.target.checked || undefined })}
+              />
+            </div>
+          </label>
+          <label className={styles.optionRow}>
             <span className={styles.optionLabel}>Label</span>
             <div className={styles.optionControl}>
               <input

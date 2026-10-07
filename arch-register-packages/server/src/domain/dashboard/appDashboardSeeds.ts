@@ -7,6 +7,7 @@ export const API_INTEGRATION_CATALOG_APP_KEY = 'api-integration-catalog';
 export const API_INTEGRATION_CATALOG_IMPACT_APP_KEY = 'api-integration-catalog-impact';
 export const BUSINESS_GLOSSARY_APP_KEY = 'business-glossary';
 export const VENDOR_MANAGEMENT_VENDORS_APP_KEY = 'vendor-management-vendors';
+export const VENDOR_MANAGEMENT_OVERVIEW_APP_KEY = 'vendor-management-overview';
 export const STRATEGY_OVERVIEW_APP_KEY = 'strategy-overview';
 export const STRATEGY_CAPABILITY_MAP_APP_KEY = 'strategy-capability-map';
 export const STRATEGY_CAPABILITIES_APP_KEY = 'strategy-capabilities';
@@ -1833,6 +1834,188 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
       // The `_id` predicate matches the internal id, not the public id.
       valueKind: 'id'
     }
+  },
+  [VENDOR_MANAGEMENT_OVERVIEW_APP_KEY]: {
+    name: 'Overview',
+    description:
+      'Contracted spend, upcoming renewals, vendors above risk tolerance and technology end-of-life exposure.',
+    widgets: [
+      {
+        id: 'seed-contracted-spend',
+        type: 'AggregateStat',
+        config: {
+          query: 'schema:Vendor',
+          measure: 'sum',
+          sumFieldId: 'spend',
+          label: 'Contracted spend',
+          subtextTemplate: 'across {count} vendors',
+          showLink: false
+        },
+        x: 0,
+        y: 0,
+        w: 3,
+        h: 7
+      },
+      {
+        id: 'seed-renewals-90d',
+        type: 'AggregateStat',
+        config: {
+          query: 'schema:Contract AND contract_end > now(-1) AND contract_end < now(91)',
+          subtextQuery: 'schema:Contract AND contract_end > now(-1) AND contract_end < now(91)',
+          sumFieldId: 'annual_cost',
+          label: 'Renewals in 90 days',
+          subtextTemplate: '{subSum} at stake',
+          severity: { warnAt: 1 },
+          showLink: false
+        },
+        x: 3,
+        y: 0,
+        w: 3,
+        h: 7
+      },
+      {
+        id: 'seed-above-tolerance',
+        type: 'AggregateStat',
+        config: {
+          query: 'schema:Vendor AND risk >= 3',
+          label: 'Vendors above tolerance',
+          subtextTemplate: 'elevated or high risk',
+          severity: { critAt: 1 },
+          showLink: false
+        },
+        x: 6,
+        y: 0,
+        w: 3,
+        h: 7
+      },
+      {
+        id: 'seed-auto-renewing',
+        type: 'AggregateStat',
+        config: {
+          query: 'schema:Contract AND auto_renew = "true"',
+          denominatorQuery: 'schema:Contract',
+          display: 'ofTotal',
+          label: 'Auto-renewing',
+          subtextTemplate: '{count} of {total} contracts · notice periods apply',
+          showLink: false
+        },
+        x: 9,
+        y: 0,
+        w: 3,
+        h: 7
+      },
+      {
+        id: 'seed-renewal-outlook',
+        type: 'DateBucketChart',
+        config: {
+          query: 'schema:Contract',
+          dateFieldId: 'contract_end',
+          measureFieldId: 'annual_cost',
+          bucketCount: 12,
+          foldOverdue: true,
+          urgentWithinDays: 30,
+          label: 'Renewals, next 12 months'
+        },
+        x: 0,
+        y: 7,
+        w: 12,
+        h: 10
+      },
+      {
+        id: 'seed-next-renewals',
+        type: 'UpcomingByDate',
+        config: {
+          query: 'schema:Contract',
+          dateFieldId: 'contract_end',
+          includeOverdue: true,
+          limit: 7,
+          sublabelFieldId: 'vendor',
+          valueFieldId: 'annual_cost',
+          label: 'Next renewals'
+        },
+        x: 0,
+        y: 17,
+        w: 6,
+        h: 16
+      },
+      {
+        id: 'seed-spend-by-vendor',
+        type: 'TopEntities',
+        config: {
+          schema: '',
+          schemaName: 'Vendor',
+          fieldId: 'spend',
+          direction: 'desc',
+          limit: 8,
+          showShareBar: true,
+          showLink: false,
+          label: 'Spend by vendor'
+        },
+        x: 6,
+        y: 17,
+        w: 6,
+        h: 16
+      },
+      {
+        id: 'seed-vendors-above-tolerance',
+        type: ENTITY_BROWSER_EMBED_WIDGET_TYPE,
+        config: {
+          title: 'Vendors above tolerance',
+          limit: 8,
+          q: '',
+          conditions: [],
+          sort: 'field:Risk:desc',
+          view: 'table',
+          viewConfigs: { table: { fieldIds: ['Tier', 'Criticality', 'Risk'] } },
+          schemaName: 'Vendor',
+          entityQuery: {
+            root: { kind: 'predicate', path: [], fieldId: 'Risk', op: 'gte', value: 3 }
+          }
+        },
+        x: 0,
+        y: 33,
+        w: 6,
+        h: 18
+      },
+      {
+        id: 'seed-technology-eol',
+        type: ENTITY_BROWSER_EMBED_WIDGET_TYPE,
+        config: {
+          title: 'Technology end-of-life exposure',
+          limit: 8,
+          q: '',
+          conditions: [],
+          sort: 'field:EOL Date:asc',
+          view: 'table',
+          viewConfigs: {
+            table: { fieldIds: ['_projection:Technology', 'EOL Date', 'Security Support Until'] }
+          },
+          schemaName: 'Technology Release',
+          entityQuery: {
+            root: {
+              kind: 'predicate',
+              path: [],
+              fieldId: 'EOL Date',
+              op: 'before',
+              value: { $now: true, offsetDays: 365 }
+            },
+            // The Technology column is a containment reference, which a plain column renders as
+            // a raw id; project the parent's name instead.
+            projections: [
+              {
+                path: [{ kind: 'forward', fieldId: 'Technology' }],
+                fieldId: '_name',
+                alias: 'Technology'
+              }
+            ]
+          }
+        },
+        x: 6,
+        y: 33,
+        w: 6,
+        h: 18
+      }
+    ]
   },
   [VENDOR_MANAGEMENT_VENDORS_APP_KEY]: {
     name: 'Vendors',

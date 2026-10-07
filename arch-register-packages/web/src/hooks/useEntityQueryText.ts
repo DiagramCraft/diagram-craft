@@ -39,3 +39,35 @@ export const useRunEntityQuery = (workspaceId: string) =>
 
 export const useQueryTextCount = (workspaceId: string, text: string, enabled = true) =>
   useQuery(entityQueryTextCountQuery(workspaceId, text, enabled));
+
+const QUERY_TEXT_ENTITY_LIMIT = 500;
+
+/**
+ * Runs entity-query DSL text and returns the matching records (full view). `ok: false` means the
+ * text did not parse. Capped at {@link QUERY_TEXT_ENTITY_LIMIT} records, which suits dashboard
+ * widgets that aggregate or rank client-side.
+ */
+export const useQueryTextEntities = (workspaceId: string, text: string, enabled = true) =>
+  useQuery({
+    queryKey: ['entities', 'queryText', 'entities', workspaceId, text],
+    queryFn: async ({ signal }) => {
+      const parsed = await orpcClient.entityQueryText.parseText(
+        { params: { workspace: workspaceId }, query: { text } },
+        { signal }
+      );
+      if (!parsed.ok) return { ok: false as const, entities: [] };
+      const result = await orpcClient.entities.list(
+        {
+          params: { workspace: workspaceId },
+          query: {
+            entityQuery: JSON.stringify(parsed.query),
+            view: 'full',
+            limit: QUERY_TEXT_ENTITY_LIMIT
+          }
+        },
+        { signal }
+      );
+      return { ok: true as const, entities: result.items };
+    },
+    enabled: enabled && !!workspaceId && text.trim() !== ''
+  });

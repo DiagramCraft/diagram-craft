@@ -2,7 +2,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { TbArrowRight } from 'react-icons/tb';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
 import { useEntityCount } from '../../../hooks/useEntities';
-import { useQueryTextCount } from '../../../hooks/useEntityQueryText';
+import { useQueryTextCount, useQueryTextEntities } from '../../../hooks/useEntityQueryText';
 import { orpcClient } from '../../../lib/orpcClient';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import {
@@ -14,6 +14,7 @@ import {
   type AggregateStatDisplay,
   type AggregateStatSeverity
 } from './aggregateStatQuery';
+import { formatMeasured, sumMeasured } from './fieldAggregation';
 import styles from './AggregateStatWidget.module.css';
 
 export type AggregateStatWidgetConfig = {
@@ -22,6 +23,13 @@ export type AggregateStatWidgetConfig = {
   /** Query-mode: when set, `percent`/`ofTotal` divide `query`'s count by this query's count. */
   denominatorQuery?: string;
   display?: AggregateStatDisplay;
+  /**
+   * Query-mode: `count` (default) shows the number of matching records; `sum` shows the total of
+   * `sumFieldId` (a number or currency field) across them. Independently, `{subSum}` in
+   * `subtextTemplate` is the `sumFieldId` total over `subtextQuery`'s records.
+   */
+  measure?: 'count' | 'sum';
+  sumFieldId?: string;
   /** Query-mode: optional second count, available as `{sub}` in `subtextTemplate`. */
   subtextQuery?: string;
   subtextTemplate?: string;
@@ -59,7 +67,13 @@ const QueryStat = ({ config }: Props) => {
   const query = config.query ?? '';
   const needsDenominator = display !== 'count' && !!config.denominatorQuery?.trim();
 
+  const isSum = config.measure === 'sum' && !!config.sumFieldId;
+  const subEnabled = !!config.subtextQuery?.trim();
+  const needsSubSum = !!config.sumFieldId && subEnabled;
+
   const matched = useQueryTextCount(workspaceSlug, query);
+  const matchedEntities = useQueryTextEntities(workspaceSlug, query, isSum);
+  const subEntities = useQueryTextEntities(workspaceSlug, config.subtextQuery ?? '', needsSubSum);
   const total = useQueryTextCount(workspaceSlug, config.denominatorQuery ?? '', needsDenominator);
   const sub = useQueryTextCount(
     workspaceSlug,
@@ -67,7 +81,12 @@ const QueryStat = ({ config }: Props) => {
     !!config.subtextQuery?.trim()
   );
 
-  if (matched.isLoading || (needsDenominator && total.isLoading)) {
+  if (
+    matched.isLoading ||
+    (isSum && matchedEntities.isLoading) ||
+    (needsSubSum && subEntities.isLoading) ||
+    (needsDenominator && total.isLoading)
+  ) {
     return (
       <div className={styles.container}>
         <div className={styles.skeleton} />
@@ -82,8 +101,15 @@ const QueryStat = ({ config }: Props) => {
   const totalCount = total.data?.ok === true ? total.data.total : undefined;
   const subCount = sub.data?.ok === true ? sub.data.total : undefined;
   const tone = statTone(statNumericValue(display, matchedCount, totalCount), config.severity);
+  const sumOf = (entities: Array<Record<string, unknown>> | undefined) => {
+    if (!entities || !config.sumFieldId) return undefined;
+    const { amount, currency } = sumMeasured(entities, config.sumFieldId);
+    return formatMeasured(amount, currency);
+  };
+  const matchedSum = isSum ? sumOf(matchedEntities.data?.entities) : undefined;
+  const subSum = needsSubSum ? sumOf(subEntities.data?.entities) : undefined;
   const subtext =
-    renderStatSubtext(config.subtextTemplate, subCount, matchedCount, totalCount) ??
+    renderStatSubtext(config.subtextTemplate, subCount, matchedCount, totalCount, subSum) ??
     (display === 'ofTotal' && totalCount !== undefined ? `of ${totalCount}` : undefined);
 
   const openInBrowser = async () => {
@@ -111,7 +137,7 @@ const QueryStat = ({ config }: Props) => {
   return (
     <div className={styles.card}>
       <div className={styles.number} style={{ color: TONE_COLOR[tone] }}>
-        {formatStatValue(display, matchedCount, totalCount)}
+        {matchedSum ?? formatStatValue(display, matchedCount, totalCount)}
       </div>
       {config.label && <div className={styles.label}>{config.label}</div>}
       {subtext && <div className={styles.sub}>{subtext}</div>}

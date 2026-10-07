@@ -127,6 +127,35 @@ const QueryModeForm = ({ config, onChange }: Props) => {
             }
           />
           <label className={styles.optionRow}>
+            <span className={styles.optionLabel}>Measure</span>
+            <div className={styles.optionControl}>
+              <select
+                className={styles.labelInput}
+                value={config.measure ?? 'count'}
+                onChange={e =>
+                  onChange({ ...config, measure: e.target.value === 'sum' ? 'sum' : undefined })
+                }
+              >
+                <option value="count">Count of records</option>
+                <option value="sum">Sum of a field</option>
+              </select>
+            </div>
+          </label>
+          {(config.measure === 'sum' || config.subtextQuery?.trim()) && (
+            <label className={styles.optionRow}>
+              <span className={styles.optionLabel}>Field to sum</span>
+              <div className={styles.optionControl}>
+                <input
+                  type="text"
+                  className={styles.labelInput}
+                  value={config.sumFieldId ?? ''}
+                  onChange={e => onChange({ ...config, sumFieldId: optionalText(e.target.value) })}
+                  placeholder="Number or currency field id, e.g. annual_cost"
+                />
+              </div>
+            </label>
+          )}
+          <label className={styles.optionRow}>
             <span className={styles.optionLabel}>Subtext</span>
             <div className={styles.optionControl}>
               <input
@@ -136,7 +165,7 @@ const QueryModeForm = ({ config, onChange }: Props) => {
                 onChange={e =>
                   onChange({ ...config, subtextTemplate: optionalText(e.target.value) })
                 }
-                placeholder="e.g. {sub} highly sensitive ({count}, {total} also available)"
+                placeholder="e.g. {sub} highly sensitive ({count}, {total}, {subSum} also available)"
               />
             </div>
           </label>

@@ -32,8 +32,8 @@ export const topEntitiesSpec = defineMdxComponent<
     surfaces: ['workspace', 'project'],
     component: TopEntitiesWidget,
     isValidConfig: (config): config is TopEntitiesWidgetConfig =>
-      typeof config.schema === 'string' &&
-      config.schema.length > 0 &&
+      ((typeof config.schema === 'string' && config.schema.length > 0) ||
+        (typeof config.schemaName === 'string' && config.schemaName.length > 0)) &&
       typeof config.fieldId === 'string' &&
       config.fieldId.length > 0 &&
       isDirection(config.direction) &&
@@ -41,6 +41,8 @@ export const topEntitiesSpec = defineMdxComponent<
       config.limit > 0 &&
       (config.owner === undefined || typeof config.owner === 'string') &&
       (config.lifecycle === undefined || typeof config.lifecycle === 'string') &&
+      (config.showLink === undefined || typeof config.showLink === 'boolean') &&
+      (config.showShareBar === undefined || typeof config.showShareBar === 'boolean') &&
       (config.label === undefined || typeof config.label === 'string'),
     createDefaultConfig: () => ({ schema: '', fieldId: '', direction: 'desc', limit: 5 }),
     getTitle: (config: TopEntitiesWidgetConfig) => config.label?.trim() || 'Ranked list',
