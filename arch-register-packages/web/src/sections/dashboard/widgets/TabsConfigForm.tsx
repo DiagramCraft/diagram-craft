@@ -1,4 +1,4 @@
-import { useState, type ComponentProps } from 'react';
+import { useCallback, useRef, useState, type ComponentProps } from 'react';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TbArrowDown, TbArrowUp, TbPlus, TbTrash } from 'react-icons/tb';
 import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
@@ -26,6 +26,24 @@ const createChildWidget = (type: string): DashboardWidget => {
 const numberOrUndefined = (value: string): number | undefined => {
   const parsed = Number(value);
   return value === '' || !Number.isFinite(parsed) ? undefined : parsed;
+};
+
+type NestedFormProps = {
+  Form: NonNullable<DashboardWidgetSpec['configForm']>;
+  config: Record<string, unknown>;
+  onChange: (config: Record<string, unknown>) => void;
+  context: FormProps['context'];
+};
+
+/**
+ * Gives the child form a stable `onChange`. Some forms (e.g. the entity browser) sync their local
+ * state upward in an effect keyed on `onChange`; an inline callback would re-fire it every render.
+ */
+const NestedConfigForm = ({ Form, config, onChange, context }: NestedFormProps) => {
+  const latest = useRef(onChange);
+  latest.current = onChange;
+  const stableOnChange = useCallback((next: Record<string, unknown>) => latest.current(next), []);
+  return <Form config={config} onChange={stableOnChange} context={context} />;
 };
 
 export const TabsConfigForm = ({ config, onChange, context }: FormProps) => {
@@ -153,7 +171,8 @@ export const TabsConfigForm = ({ config, onChange, context }: FormProps) => {
                     />
                   </div>
                   {isEditing && ChildForm && (
-                    <ChildForm
+                    <NestedConfigForm
+                      Form={ChildForm}
                       config={widget.config}
                       onChange={next => setWidget({ ...widget, config: next })}
                       context={context}
