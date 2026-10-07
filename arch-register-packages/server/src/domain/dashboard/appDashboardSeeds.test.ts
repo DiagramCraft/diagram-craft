@@ -14,6 +14,7 @@ import {
   RISK_COMPLIANCE_ASSESSMENTS_APP_KEY,
   STRATEGY_CAPABILITY_MAP_APP_KEY,
   STRATEGY_CAPABILITIES_APP_KEY,
+  STRATEGY_STRATEGY_APP_KEY,
   STRATEGY_OVERVIEW_APP_KEY,
   RISK_COMPLIANCE_OVERVIEW_APP_KEY,
   RISK_COMPLIANCE_RETENTION_APP_KEY,
@@ -150,6 +151,37 @@ describe('APP_DASHBOARD_SEEDS', () => {
       kind: 'facets',
       schemaName: 'Business Capability',
       facets: [{ variableName: 'owners' }]
+    });
+  });
+
+  it('seeds the strategy Strategy dashboard with an objective card, three related lists and a capability table scoped by an Objective picker', () => {
+    const seed = APP_DASHBOARD_SEEDS[STRATEGY_STRATEGY_APP_KEY];
+    expect(seed).toBeDefined();
+    expect(seed!.widgets.map(widget => widget.type)).toEqual([
+      'EntityCard',
+      'RelatedEntitiesList',
+      'RelatedEntitiesList',
+      'RelatedEntitiesList',
+      'EntityBrowserEmbed'
+    ]);
+    for (const widget of seed!.widgets.slice(0, 4)) {
+      expect(widget.config).toMatchObject({ entityId: '$objectiveId' });
+    }
+    expect(seed!.widgets[4]!.config).toMatchObject({
+      schemaName: 'Business Capability',
+      view: 'table',
+      entityQuery: { root: { fieldId: '_id', value: ['$objectiveId'] } }
+    });
+    expect(seed!.widgets[3]!.config).toMatchObject({
+      schemaName: 'Measure',
+      viaSchemaName: 'Outcome',
+      progressTargetField: 'target_value'
+    });
+    expect(seed!.sidebar).toMatchObject({
+      kind: 'entity-picker',
+      schemaName: 'Objective',
+      variableName: 'objectiveId',
+      valueKind: 'id'
     });
   });
 

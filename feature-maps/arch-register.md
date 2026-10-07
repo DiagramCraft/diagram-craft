@@ -364,14 +364,13 @@
           or section nav; its route and placeholder screen are retained. The capability-map overlay control already
           provides configurable heat colouring over any capability field or roll-up (@id:ar.strategy.view-config).
 
-        - @id:ar.strategy.strategy The Strategy section is scoped to one objective at a time — chosen from the
-          primary sidebar's objective list and shown in a header with its status, target date, owner, capability
-          count, and description. Below it are the
-          objective's Outcomes, Initiatives, and Measures panels plus a "Capabilities this objective depends on"
-          table with maturity, gap, investment, and application roll-ups over each capability's containment subtree.
-          Measures render a baseline → current → target progress bar from the Measure schema's measurement fields. A
-          "New objective" action opens the entity-create dialog pre-set to the Objective schema. Selecting a
-          capability opens the shared capability drawer.
+        - @id:ar.strategy.strategy The Strategy section is a configurable dashboard (seeded as `strategy-strategy`)
+          scoped by an Objective picker in the sidebar. The seed shows an entity card for the objective (status,
+          target date, owner, description), Outcomes, Initiatives, and Measures lists (generic "Related entities"
+          widgets that list entities referencing the picked objective, optionally through an intermediate type;
+          Measures show a baseline → current → target progress bar), and a "Capabilities this objective depends on"
+          table (a standard entity browser filtered to the capabilities the objective supports, showing name and
+          owner). Selecting a row opens the entity drawer. No objective is selected by default.
 
         - @id:ar.strategy.traceability The Traceability section has two tabs. **Trace chain** is a three-column
           hop walker — Objective → Capability → Application — walked one hop at a time over the Objective Supports

@@ -355,6 +355,22 @@ describe('parseKnownDashboardWidget', () => {
     ).toBeNull();
   });
 
+  it('parses a RelatedEntitiesList widget and rejects an incomplete one', () => {
+    const base = { id: 'related', type: 'RelatedEntitiesList', x: 0, y: 0, w: 4, h: 14 };
+    expect(
+      parseKnownDashboardWidget({
+        ...base,
+        config: { schemaName: 'Outcome', referenceField: 'objectives', entityId: '$objectiveId' }
+      })?.type
+    ).toBe('RelatedEntitiesList');
+    expect(
+      parseKnownDashboardWidget({
+        ...base,
+        config: { schemaName: 'Measure', referenceField: 'outcomes', viaSchemaName: 'Outcome' }
+      })
+    ).toBeNull();
+  });
+
   it('returns null for unknown widget types', () => {
     expect(
       parseKnownDashboardWidget({

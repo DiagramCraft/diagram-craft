@@ -9,7 +9,6 @@ import { buildHomeBreadcrumbs } from '../../shell/breadcrumbBuilders';
 import type { WorkspaceShellContext } from '../../layouts/workspaceShellDescriptors';
 import type { AppDefinition, BreadcrumbItem } from '../../shell/shellTypes';
 import { AppDashboardPrimarySidebar } from '../../sections/dashboard/AppDashboardPrimarySidebar';
-import { StrategySidebar } from './sections/StrategySidebar';
 import {
   STRATEGY_OVERVIEW_ID,
   STRATEGY_CAPABILITY_MAP_ID,
@@ -27,6 +26,8 @@ export const STRATEGY_OVERVIEW_APP_KEY = 'strategy-overview';
 export const STRATEGY_CAPABILITY_MAP_APP_KEY = 'strategy-capability-map';
 /** Keys the Capabilities section's dashboard. */
 export const STRATEGY_CAPABILITIES_APP_KEY = 'strategy-capabilities';
+/** Keys the Strategy section's dashboard. */
+export const STRATEGY_STRATEGY_APP_KEY = 'strategy-strategy';
 
 /**
  * Strategy & Capability Modelling's workspace-rail identity: its rail-item ids (defined in
@@ -88,8 +89,13 @@ export const strategyAppDefinition: AppDefinition = {
       icon: TbTargetArrow,
       tooltip: 'Strategy',
       route: STRATEGY_RAIL_PATHS[STRATEGY_STRATEGY_ID],
+      // A dashboard with an `entity-picker` sidebar: the Objective every widget is scoped to.
+      dashboard: { appKey: STRATEGY_STRATEGY_APP_KEY },
       primarySidebar: ctx => (
-        <StrategySidebar workspaceSlug={ctx.workspaceSlug} activeSection={STRATEGY_STRATEGY_ID} />
+        <AppDashboardPrimarySidebar
+          workspaceSlug={ctx.workspaceSlug}
+          appKey={STRATEGY_STRATEGY_APP_KEY}
+        />
       )
     },
     {

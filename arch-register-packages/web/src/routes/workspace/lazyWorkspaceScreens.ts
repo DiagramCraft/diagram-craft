@@ -76,9 +76,9 @@ export const LazyStrategyHeatmapsScreen = lazyRouteComponent(
   () => import('../../app/strategy-model/sections/StrategyHeatmapsScreen'),
   'StrategyHeatmapsScreen'
 );
-export const LazyStrategyStrategyScreen = lazyRouteComponent(
-  () => import('../../app/strategy-model/sections/StrategyStrategyScreen'),
-  'StrategyStrategyScreen'
+export const LazyStrategyStrategyDashboardScreen = lazyRouteComponent(
+  () => import('../../app/strategy-model/sections/StrategyStrategyDashboardScreen'),
+  'StrategyStrategyDashboardScreen'
 );
 export const LazyStrategyTraceabilityScreen = lazyRouteComponent(
   () => import('../../app/strategy-model/sections/StrategyTraceabilityScreen'),

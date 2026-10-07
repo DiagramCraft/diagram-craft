@@ -17,7 +17,7 @@ import {
   LazyStrategyCapabilityMapDashboardScreen,
   LazyStrategyCapabilitiesDashboardScreen,
   LazyStrategyHeatmapsScreen,
-  LazyStrategyStrategyScreen,
+  LazyStrategyStrategyDashboardScreen,
   LazyStrategyTraceabilityScreen
 } from '../../routes/workspace/lazyWorkspaceScreens';
 import { ensureApplicationAccess } from '../../routes/applicationAccess';
@@ -108,7 +108,7 @@ export const createStrategyWorkspaceRoutes = <TParentRoute extends AnyRoute>(
           (params as unknown as { workspaceSlug: string }).workspaceSlug,
           'strategy-model'
         ),
-      component: LazyStrategyStrategyScreen
+      component: LazyStrategyStrategyDashboardScreen
     }),
     ctx =>
       railSectionShell(ctx, STRATEGY_STRATEGY_ID, {
