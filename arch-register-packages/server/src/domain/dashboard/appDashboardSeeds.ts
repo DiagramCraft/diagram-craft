@@ -9,6 +9,7 @@ export const BUSINESS_GLOSSARY_APP_KEY = 'business-glossary';
 export const VENDOR_MANAGEMENT_VENDORS_APP_KEY = 'vendor-management-vendors';
 export const VENDOR_MANAGEMENT_CONTRACTS_APP_KEY = 'vendor-management-contracts';
 export const VENDOR_MANAGEMENT_OVERVIEW_APP_KEY = 'vendor-management-overview';
+export const VENDOR_MANAGEMENT_SPEND_APP_KEY = 'vendor-management-spend';
 export const STRATEGY_OVERVIEW_APP_KEY = 'strategy-overview';
 export const STRATEGY_CAPABILITY_MAP_APP_KEY = 'strategy-capability-map';
 export const STRATEGY_CAPABILITIES_APP_KEY = 'strategy-capabilities';
@@ -85,6 +86,50 @@ const contractFacetQuery = {
     ]
   }
 };
+
+/** Vendor rows narrowed by the Spend sidebar facets (`$costCentres`, `$relationshipOwners`). */
+const vendorSpendFacetQuery = {
+  root: {
+    kind: 'and' as const,
+    children: [
+      {
+        kind: 'predicate' as const,
+        path: [],
+        fieldId: 'Cost Centre',
+        op: 'in' as const,
+        value: ['$costCentres']
+      },
+      {
+        kind: 'predicate' as const,
+        path: [],
+        fieldId: 'Relationship Owner',
+        op: 'in' as const,
+        value: ['$relationshipOwners']
+      }
+    ]
+  }
+};
+
+/** Vendor spend roll-up table, one row per group (or per vendor when `groupFieldId` is omitted). */
+const vendorSpendRollup = (id: string, groupFieldId?: string): DashboardWidget => ({
+  id,
+  type: 'GroupedRollupTable',
+  config: {
+    schemaName: 'Vendor',
+    entityQuery: vendorSpendFacetQuery,
+    ...(groupFieldId ? { groupFieldId } : {}),
+    groupLabel: groupFieldId ? 'Cost centre' : 'Vendor',
+    valueFieldId: 'spend',
+    valueLabel: 'Spend / yr',
+    showBar: true,
+    showPercent: true,
+    showCount: !!groupFieldId
+  },
+  x: 0,
+  y: 0,
+  w: 12,
+  h: 36
+});
 
 /** Control × (Risk | Data Entity) traceability matrix, cells colored by the Control's operating
  *  effectiveness (matching the pre-dashboard screen's "is this control effective" marks). */
@@ -2049,6 +2094,113 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
         h: 18
       }
     ]
+  },
+  [VENDOR_MANAGEMENT_SPEND_APP_KEY]: {
+    name: 'Spend',
+    description:
+      'Annualised vendor spend, fixed-term commitment and spend roll-ups by vendor or cost centre.',
+    widgets: [
+      {
+        id: 'seed-spend-total',
+        type: 'AggregateStat',
+        config: {
+          query: 'schema:Contract',
+          measure: 'sum',
+          sumFieldId: 'annual_cost',
+          label: 'Total annualised',
+          subtextTemplate: '{count} contracts',
+          showLink: false
+        },
+        x: 0,
+        y: 0,
+        w: 3,
+        h: 7
+      },
+      {
+        id: 'seed-spend-fixed-term',
+        type: 'AggregateStat',
+        config: {
+          query: 'schema:Contract AND NOT auto_renew = "true"',
+          measure: 'sum',
+          sumFieldId: 'annual_cost',
+          label: 'Fixed-term commitment',
+          subtextTemplate: 'not auto-renewing',
+          showLink: false
+        },
+        x: 3,
+        y: 0,
+        w: 3,
+        h: 7
+      },
+      {
+        id: 'seed-spend-strategic-share',
+        type: 'AggregateStat',
+        config: {
+          query: 'schema:Vendor AND tier = "strategic"',
+          denominatorQuery: 'schema:Vendor',
+          display: 'percent',
+          measure: 'sum',
+          sumFieldId: 'spend',
+          label: 'Strategic tier',
+          subtextTemplate: 'of annualised spend',
+          showLink: false
+        },
+        x: 6,
+        y: 0,
+        w: 3,
+        h: 7
+      },
+      {
+        id: 'seed-spend-cost-centres',
+        type: 'AggregateStat',
+        config: {
+          query: 'schema:Vendor AND spend = not_empty',
+          measure: 'countDistinct',
+          distinctFieldId: 'cost_centre',
+          label: 'Cost centres',
+          subtextTemplate: 'with vendor spend',
+          showLink: false
+        },
+        x: 9,
+        y: 0,
+        w: 3,
+        h: 7
+      },
+      {
+        id: 'seed-spend-tabs',
+        type: 'tabs',
+        config: {
+          tabs: [
+            {
+              id: 'by-vendor',
+              label: 'By vendor',
+              widgets: [vendorSpendRollup('seed-spend-by-vendor-table')]
+            },
+            {
+              id: 'by-cost-centre',
+              label: 'By cost centre',
+              widgets: [vendorSpendRollup('seed-spend-by-cost-centre-table', 'cost_centre')]
+            }
+          ]
+        },
+        x: 0,
+        y: 7,
+        w: 12,
+        h: 40
+      }
+    ],
+    sidebar: {
+      kind: 'facets',
+      schemaName: 'Vendor',
+      facets: [
+        { fieldId: 'Cost Centre', variableName: 'costCentres', itemLabel: 'Cost centre' },
+        {
+          fieldId: 'Relationship Owner',
+          variableName: 'relationshipOwners',
+          itemLabel: 'Owner'
+        }
+      ]
+    }
   },
   [VENDOR_MANAGEMENT_CONTRACTS_APP_KEY]: {
     name: 'Contracts',

@@ -14,7 +14,7 @@ import {
   type AggregateStatDisplay,
   type AggregateStatSeverity
 } from './aggregateStatQuery';
-import { formatMeasured, sumMeasured } from './fieldAggregation';
+import { countDistinctValues, formatMeasured, sumMeasured } from './fieldAggregation';
 import styles from './AggregateStatWidget.module.css';
 
 export type AggregateStatWidgetConfig = {
@@ -26,10 +26,13 @@ export type AggregateStatWidgetConfig = {
   /**
    * Query-mode: `count` (default) shows the number of matching records; `sum` shows the total of
    * `sumFieldId` (a number or currency field) across them. Independently, `{subSum}` in
-   * `subtextTemplate` is the `sumFieldId` total over `subtextQuery`'s records.
+   * `subtextTemplate` is the `sumFieldId` total over `subtextQuery`'s records. `countDistinct`
+   * shows how many distinct values `distinctFieldId` takes across the matching records. With
+   * `display: 'percent'`, `sum` divides `query`'s sum by `denominatorQuery`'s sum.
    */
-  measure?: 'count' | 'sum';
+  measure?: 'count' | 'sum' | 'countDistinct';
   sumFieldId?: string;
+  distinctFieldId?: string;
   /** Query-mode: optional second count, available as `{sub}` in `subtextTemplate`. */
   subtextQuery?: string;
   subtextTemplate?: string;
@@ -68,11 +71,19 @@ const QueryStat = ({ config }: Props) => {
   const needsDenominator = display !== 'count' && !!config.denominatorQuery?.trim();
 
   const isSum = config.measure === 'sum' && !!config.sumFieldId;
+  const isDistinct = config.measure === 'countDistinct' && !!config.distinctFieldId;
+  const needsMatchedEntities = isSum || isDistinct;
+  const isSumPercent = isSum && display === 'percent';
   const subEnabled = !!config.subtextQuery?.trim();
   const needsSubSum = !!config.sumFieldId && subEnabled;
 
   const matched = useQueryTextCount(workspaceSlug, query);
-  const matchedEntities = useQueryTextEntities(workspaceSlug, query, isSum);
+  const matchedEntities = useQueryTextEntities(workspaceSlug, query, needsMatchedEntities);
+  const totalEntities = useQueryTextEntities(
+    workspaceSlug,
+    config.denominatorQuery ?? '',
+    isSumPercent && needsDenominator
+  );
   const subEntities = useQueryTextEntities(workspaceSlug, config.subtextQuery ?? '', needsSubSum);
   const total = useQueryTextCount(workspaceSlug, config.denominatorQuery ?? '', needsDenominator);
   const sub = useQueryTextCount(
@@ -83,7 +94,8 @@ const QueryStat = ({ config }: Props) => {
 
   if (
     matched.isLoading ||
-    (isSum && matchedEntities.isLoading) ||
+    (needsMatchedEntities && matchedEntities.isLoading) ||
+    (isSumPercent && needsDenominator && totalEntities.isLoading) ||
     (needsSubSum && subEntities.isLoading) ||
     (needsDenominator && total.isLoading)
   ) {
@@ -100,13 +112,21 @@ const QueryStat = ({ config }: Props) => {
   const matchedCount = matched.data.total;
   const totalCount = total.data?.ok === true ? total.data.total : undefined;
   const subCount = sub.data?.ok === true ? sub.data.total : undefined;
-  const tone = statTone(statNumericValue(display, matchedCount, totalCount), config.severity);
   const sumOf = (entities: Array<Record<string, unknown>> | undefined) => {
     if (!entities || !config.sumFieldId) return undefined;
     const { amount, currency } = sumMeasured(entities, config.sumFieldId);
     return formatMeasured(amount, currency);
   };
   const matchedSum = isSum ? sumOf(matchedEntities.data?.entities) : undefined;
+  const sumAmount = (entities: Array<Record<string, unknown>> | undefined) =>
+    entities && config.sumFieldId ? sumMeasured(entities, config.sumFieldId).amount : undefined;
+  // A spend-weighted percent divides sums rather than record counts.
+  const numerator = isSumPercent ? (sumAmount(matchedEntities.data?.entities) ?? 0) : matchedCount;
+  const denominator = isSumPercent ? sumAmount(totalEntities.data?.entities) : totalCount;
+  const tone = statTone(statNumericValue(display, numerator, denominator), config.severity);
+  const distinctCount = isDistinct
+    ? countDistinctValues(matchedEntities.data?.entities ?? [], config.distinctFieldId!)
+    : undefined;
   const subSum = needsSubSum ? sumOf(subEntities.data?.entities) : undefined;
   const subtext =
     renderStatSubtext(config.subtextTemplate, subCount, matchedCount, totalCount, subSum) ??
@@ -137,7 +157,12 @@ const QueryStat = ({ config }: Props) => {
   return (
     <div className={styles.card}>
       <div className={styles.number} style={{ color: TONE_COLOR[tone] }}>
-        {matchedSum ?? formatStatValue(display, matchedCount, totalCount)}
+        {isSumPercent
+          ? formatStatValue(display, numerator, denominator)
+          : (matchedSum ??
+            (distinctCount !== undefined
+              ? String(distinctCount)
+              : formatStatValue(display, matchedCount, totalCount)))}
       </div>
       {config.label && <div className={styles.label}>{config.label}</div>}
       {subtext && <div className={styles.sub}>{subtext}</div>}

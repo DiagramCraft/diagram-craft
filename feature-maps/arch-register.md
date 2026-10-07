@@ -125,8 +125,13 @@
           An "Aggregate stat" widget shows the number of entities or relations matching a query written in the
           entity query language, or a percentage of a second "total" query. It can add a subtext (optionally using a
           second query's count) and highlight the value in warning or critical colours beyond configurable
-          thresholds, and its link opens the matching records in the catalog. Stats that need logic beyond a query
-          count (case queues, provider/consumer coverage, sums, group-by distributions) remain dedicated widgets.
+          thresholds, and its link opens the matching records in the catalog. It can also show the sum of a number or
+          currency field, a spend-weighted percentage (sum over a query divided by sum over a total query), or the
+          number of distinct values of a field. Stats that need logic beyond that (case queues, provider/consumer
+          coverage) remain dedicated widgets.
+          A "Roll-up table" widget sums a number or currency field over the records of a query into ranked rows, per
+          record or grouped by any field (select labels resolved), with optional bars, share-of-total percentage,
+          record count and a total row.
           "Assessment status" and "Assessment progress" widgets summarise assessments that target a chosen entity
           type: a stat tile counting the overdue, in-progress, not-started or complete ones, and a table
           with per-assessment progress, due date and status.
@@ -439,16 +444,12 @@
           linked entity as the stack root. Opening the drawer never changes the URL itself; its own link-icon action
           copies a shareable `drawer=<id>` link, mirroring the Vendors section's shared drawer.
 
-        - @id:ar.vendor-management.spend The Spend section is a portfolio-wide spend roll-up: four header stats (total
-          annualised spend, fixed-term commitment not auto-renewing, the Strategic tier's share of spend,
-          and the number of cost centres charged), a toolbar toggle grouping the roll-up by vendor, by the Vendor
-          schema's Cost Centre field, or by capability, a portfolio-wide share-of-spend strip, and a roll-up table
-          (share bar, spend, % of total, contract count, largest contract) sorted by spend descending. A sidebar
-          of Cost Centre (each row showing that centre's own spend) and Owner facets narrows the roll-up rows (the
-          header stats stay portfolio-wide). Selecting a vendor row or share-strip segment (not available
-          when grouped by cost centre) opens the shared vendor drawer in place. Grouping by capability shows an
-          explanatory empty state instead of
-          data — no Contract-to-capability link exists yet.
+        - @id:ar.vendor-management.spend The Spend section is a configurable dashboard: four stat tiles (total
+          annualised spend, fixed-term commitment not auto-renewing, the Strategic tier's share of spend, and the number
+          of cost centres with vendor spend) above a tabbed roll-up table, By vendor or By cost centre, showing a
+          share bar, spend, % of total and (when grouped) vendor count, sorted by spend descending with a total row. A
+          sidebar of Cost Centre and Owner facets narrows the tables (the stat tiles stay portfolio-wide). Selecting
+          a vendor row opens the shared vendor drawer in place.
 
         - @id:ar.vendor-management.risk The Risk section has four header stats (High risk vendor count, vendors with
           Concentration Risk ≥ 4, technologies nearing end-of-life, and Systems exposed to one), a two-column

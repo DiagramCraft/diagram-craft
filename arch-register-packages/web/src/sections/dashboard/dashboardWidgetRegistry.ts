@@ -34,6 +34,10 @@ import { registerNestedWidgetResolvers } from './widgets/nestedWidgets';
 import { TABS_TYPE, tabsSpec } from './widgets/TabsRegistration';
 import { PATH_WALKER_TYPE, pathWalkerSpec } from './widgets/PathWalkerRegistration';
 import { DATE_BUCKET_CHART_TYPE, dateBucketChartSpec } from './widgets/DateBucketChartRegistration';
+import {
+  GROUPED_ROLLUP_TABLE_TYPE,
+  groupedRollupTableSpec
+} from './widgets/GroupedRollupTableRegistration';
 import { DATE_CALENDAR_TYPE, dateCalendarSpec } from './widgets/DateCalendarRegistration';
 import {
   DATE_RANGE_TIMELINE_TYPE,
@@ -60,6 +64,7 @@ const assessmentDashboardWidgetSpecs: Array<{
   { type: TABS_TYPE, spec: tabsSpec },
   { type: PATH_WALKER_TYPE, spec: pathWalkerSpec },
   { type: DATE_BUCKET_CHART_TYPE, spec: dateBucketChartSpec },
+  { type: GROUPED_ROLLUP_TABLE_TYPE, spec: groupedRollupTableSpec },
   { type: UPCOMING_BY_DATE_TYPE, spec: upcomingByDateSpec },
   { type: DATE_CALENDAR_TYPE, spec: dateCalendarSpec },
   { type: DATE_RANGE_TIMELINE_TYPE, spec: dateRangeTimelineSpec }

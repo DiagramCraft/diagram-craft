@@ -24,6 +24,7 @@ import {
 export const VENDOR_MANAGEMENT_VENDORS_APP_KEY = 'vendor-management-vendors';
 export const VENDOR_MANAGEMENT_CONTRACTS_APP_KEY = 'vendor-management-contracts';
 export const VENDOR_MANAGEMENT_OVERVIEW_APP_KEY = 'vendor-management-overview';
+export const VENDOR_MANAGEMENT_SPEND_APP_KEY = 'vendor-management-spend';
 
 /**
  * Vendor Management's workspace-rail identity: its rail-item ids (defined in
@@ -84,10 +85,13 @@ export const vendorManagementAppDefinition: AppDefinition = {
       icon: TbCoin,
       tooltip: 'Spend',
       route: VENDOR_RAIL_PATHS[VENDOR_SPEND_ID],
+      // Stat tiles plus by-vendor / by-cost-centre roll-up tabs with a `facets` sidebar (cost
+      // centre/owner).
+      dashboard: { appKey: VENDOR_MANAGEMENT_SPEND_APP_KEY },
       primarySidebar: ctx => (
-        <VendorManagementSidebar
+        <AppDashboardPrimarySidebar
           workspaceSlug={ctx.workspaceSlug}
-          activeSection={VENDOR_SPEND_ID}
+          appKey={VENDOR_MANAGEMENT_SPEND_APP_KEY}
         />
       )
     },

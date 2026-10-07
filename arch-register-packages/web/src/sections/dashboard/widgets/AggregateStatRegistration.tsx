@@ -51,8 +51,12 @@ const isValidQueryStatConfig = (config: Record<string, unknown>): boolean => {
   return (
     (measure === undefined ||
       measure === 'count' ||
-      (measure === 'sum' && typeof config.sumFieldId === 'string' && config.sumFieldId !== '')) &&
+      (measure === 'sum' && typeof config.sumFieldId === 'string' && config.sumFieldId !== '') ||
+      (measure === 'countDistinct' &&
+        typeof config.distinctFieldId === 'string' &&
+        config.distinctFieldId !== '')) &&
     optionalString(config.sumFieldId) &&
+    optionalString(config.distinctFieldId) &&
     (display === undefined || display === 'count' || needsDenominator) &&
     optionalString(config.denominatorQuery) &&
     (!needsDenominator ||
