@@ -168,6 +168,7 @@ const SharedFieldRow = ({
       field.type === 'boolean' ||
       field.type === 'date' ||
       field.type === 'currency' ||
+      field.type === 'duration' ||
       field.type === 'number'
     ) {
       return <ScalarCardinalityControls field={field} onUpdate={onUpdate} disabled={!canEdit} />;
@@ -406,6 +407,7 @@ export const FieldGroupEditorScreen = () => {
           case 'longtext':
           case 'date':
           case 'currency':
+          case 'duration':
           case 'boolean':
           case 'number':
           case 'principal':

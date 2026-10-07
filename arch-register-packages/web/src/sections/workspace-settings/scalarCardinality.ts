@@ -3,12 +3,14 @@ import type { SchemaField } from '@arch-register/api-types/schemaContract';
 export type ScalarCardinalityField = Extract<
   SchemaField,
   {
-    type: 'text' | 'longtext' | 'boolean' | 'date' | 'currency' | 'number' | 'select';
+    type: 'text' | 'longtext' | 'boolean' | 'date' | 'currency' | 'duration' | 'number' | 'select';
   }
 >;
 
 export const isScalarCardinalityField = (field: SchemaField): field is ScalarCardinalityField =>
-  ['text', 'longtext', 'boolean', 'date', 'currency', 'number', 'select'].includes(field.type);
+  ['text', 'longtext', 'boolean', 'date', 'currency', 'duration', 'number', 'select'].includes(
+    field.type
+  );
 
 export const scalarCardinalityPatchForRequirement = (
   field: ScalarCardinalityField,

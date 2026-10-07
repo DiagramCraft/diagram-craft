@@ -702,12 +702,12 @@ const collectEntities = async (
     );
   }
   const collectionEntityIdSet = collectionEntityIds == null ? null : new Set(collectionEntityIds);
-  const customFieldKinds = new Map<string, 'scalar' | 'currency' | 'array' | 'currency-array'>();
+  const customFieldKinds = new Map<string, 'scalar' | 'currency' | 'duration' | 'array' | 'currency-array'>();
   const restrictedCustomFieldIds = new Set<string>();
   for (const schema of schemas) {
     for (const field of schema.fields) {
       if (
-        !['text', 'longtext', 'boolean', 'date', 'currency', 'number', 'select'].includes(
+        !['text', 'longtext', 'boolean', 'date', 'currency', 'duration', 'number', 'select'].includes(
           field.type
         )
       ) {
@@ -723,10 +723,16 @@ const collectEntities = async (
           : 'array'
         : field.type === 'currency'
           ? 'currency'
-          : 'scalar';
+          : field.type === 'duration'
+            ? 'duration'
+            : 'scalar';
       const existingKind = customFieldKinds.get(field.id);
       const kindRank = (value: typeof kind): number =>
-        value === 'currency-array' || value === 'array' ? 3 : value === 'currency' ? 2 : 1;
+        value === 'currency-array' || value === 'array'
+          ? 3
+          : value === 'currency' || value === 'duration'
+            ? 2
+            : 1;
       if (existingKind == null || kindRank(kind) > kindRank(existingKind)) {
         customFieldKinds.set(field.id, kind);
       }

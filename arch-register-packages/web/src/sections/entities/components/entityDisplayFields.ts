@@ -13,6 +13,7 @@ import {
 import type { BrowserEntityRecord } from './entityBrowserState';
 import { formatDate, type DateTimeFormatPreference } from '../../../utils/dateFormat';
 import { formatCurrencyValue } from '../../../utils/currencyFormat';
+import { formatDurationValue } from '../../../utils/durationFormat';
 
 export const DISPLAY_FIELD_VIEWS = new Set<BrowserView>([
   'table',
@@ -81,6 +82,7 @@ const SCALAR_TYPES = new Set([
   'date',
   'number',
   'currency',
+  'duration',
   'select',
   'derived'
 ]);
@@ -279,6 +281,9 @@ export const formatEntityDisplayValue = (
     if (field.schemaField?.type === 'currency') {
       return value.map(item => formatCurrencyValue(item)).join(', ');
     }
+    if (field.schemaField?.type === 'duration') {
+      return value.map(item => formatDurationValue(item)).join(', ');
+    }
     return value.map(item => String(item)).join(', ');
   }
   if (
@@ -305,5 +310,6 @@ export const formatEntityDisplayValue = (
   ) {
     return formatCurrencyValue(value);
   }
+  if (field.schemaField?.type === 'duration') return formatDurationValue(value);
   return String(value);
 };

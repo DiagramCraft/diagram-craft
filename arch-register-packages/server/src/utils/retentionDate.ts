@@ -1,4 +1,4 @@
-export type RetentionTimeUnit = 'days' | 'months' | 'years';
+export type RetentionTimeUnit = 'days' | 'weeks' | 'months' | 'years';
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -22,8 +22,9 @@ export const addRetentionDuration = (
   duration: number,
   timeUnit: RetentionTimeUnit
 ): Date => {
-  if (timeUnit === 'days') {
-    return new Date(start.getTime() + duration * 86_400_000);
+  if (timeUnit === 'days' || timeUnit === 'weeks') {
+    const days = timeUnit === 'weeks' ? duration * 7 : duration;
+    return new Date(start.getTime() + days * 86_400_000);
   }
 
   const monthsToAdd = timeUnit === 'years' ? duration * 12 : duration;

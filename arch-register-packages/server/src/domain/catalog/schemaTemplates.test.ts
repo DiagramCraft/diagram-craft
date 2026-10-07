@@ -469,7 +469,6 @@ describe('instantiateTemplate', () => {
       'Regulatory Tags',
       'Processing Purposes',
       'Residency Regions',
-      'Retention Time Unit',
       'Communication Protocol',
       'PII Classification'
     ]);
@@ -514,6 +513,7 @@ describe('instantiateTemplate', () => {
     ]);
 
     const [retentionPolicySchema, dataEntitySchema] = definitions.schemas;
+    expect(retentionPolicySchema!.fields[0]).toMatchObject({ id: 'period', type: 'duration' });
     expect(dataEntitySchema!.shared_field_group_links?.map(link => link.groupId)).toEqual([
       definitions.fieldGroups[0]!.id
     ]);

@@ -18,7 +18,7 @@ describe('computeRetentionExpiry', () => {
       expiryDate: null,
       status: 'incomplete'
     });
-    expect(computeRetentionExpiry(1, 'weeks', '2026-01-01', now)).toEqual({
+    expect(computeRetentionExpiry(1, 'fortnights', '2026-01-01', now)).toEqual({
       expiryDate: null,
       status: 'incomplete'
     });
@@ -63,13 +63,14 @@ const makeDb = (overrides: {
   configuration?: unknown;
   relations?: unknown[];
   policyEntity?: unknown;
+  policySchema?: unknown;
 }) =>
   ({
     workspace: {
       getWorkspaceCapabilityConfiguration: vi.fn(async () => overrides.configuration ?? null)
     },
     catalog: {
-      getSchema: vi.fn(async () => policySchema),
+      getSchema: vi.fn(async () => overrides.policySchema ?? policySchema),
       getEntity: vi.fn(async () => overrides.policyEntity ?? null)
     },
     relation: {
@@ -118,6 +119,19 @@ describe('resolveEntityRetentionStatus', () => {
     expect(await resolveEntityRetentionStatus(db, 'workspace-1', 'entity-1', now)).toEqual({
       expiryDate: '2028-01-01',
       status: 'active'
+    });
+  });
+
+  it('computes status from a duration-typed period field', async () => {
+    const db = makeDb({
+      configuration: validConfiguration,
+      policySchema: { id: 'policy-schema', fields: [{ id: 'period', type: 'duration' }] },
+      relations: [{ out_entity_id: 'policy-entity-1', data: { activated_from: '2026-01-01' } }],
+      policyEntity: { data: { period: { amount: 8, unit: 'weeks' } } }
+    });
+    expect(await resolveEntityRetentionStatus(db, 'workspace-1', 'entity-1', now)).toEqual({
+      expiryDate: '2026-02-26',
+      status: expect.any(String)
     });
   });
 

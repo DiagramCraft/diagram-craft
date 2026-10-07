@@ -36,6 +36,7 @@ export const createSchemaFieldForType = (
     case 'longtext':
     case 'date':
     case 'currency':
+    case 'duration':
       return { ...base, type: newType };
     case 'number':
       return { ...base, type: 'number' };

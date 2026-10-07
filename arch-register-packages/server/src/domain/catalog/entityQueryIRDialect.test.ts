@@ -1,3 +1,4 @@
+import Database from 'better-sqlite3';
 import { describe, expect, it } from 'vitest';
 import { createEntityQueryDialectAdapter } from './entityQueryIRDialect';
 
@@ -126,5 +127,32 @@ describe('EntityQueryDialectAdapter SQL fragments', () => {
       expect(() => adapter.jsonPathText('e.data', ['bad.field'])).toThrow('Invalid field id');
       expect(() => adapter.jsonPathValue('e.data', ['bad.field'])).toThrow('Invalid field id');
     });
+  });
+});
+
+describe('EntityQueryDialectAdapter.durationDays', () => {
+  it('renders the postgres expression over the JSON amount and unit', () => {
+    expect(createEntityQueryDialectAdapter('postgres').durationDays('e.data', 'period')).toBe(
+      `(CAST(e.data->'period'->>'amount' AS NUMERIC) * CASE e.data->'period'->>'unit' WHEN 'weeks' THEN 7 WHEN 'months' THEN 30.4375 WHEN 'years' THEN 365.25 ELSE 1 END)`
+    );
+  });
+
+  it('normalises amounts to days when evaluated by sqlite, so units compare', () => {
+    const db = new Database(':memory:');
+    const expression = createEntityQueryDialectAdapter('sqlite').durationDays('data', 'period');
+    const days = (period: unknown) =>
+      (
+        db.prepare(`SELECT ${expression} AS days FROM (SELECT ? AS data)`).get(
+          JSON.stringify({ period })
+        ) as { days: number | null }
+      ).days;
+
+    expect(days({ amount: 2, unit: 'weeks' })).toBe(14);
+    expect(days({ amount: 1, unit: 'years' })).toBeGreaterThan(
+      days({ amount: 11, unit: 'months' }) ?? 0
+    );
+    expect(days({ amount: 12, unit: 'months' })).toBeCloseTo(365.25, 5);
+    expect(days(undefined)).toBeNull();
+    db.close();
   });
 });

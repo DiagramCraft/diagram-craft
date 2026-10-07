@@ -16,7 +16,8 @@ const capabilityFieldTypeSchema = z.enum([
   'select',
   'reference',
   'number',
-  'date'
+  'date',
+  'duration'
 ]);
 
 /** Integration-owned semantic field role metadata. */
@@ -108,18 +109,28 @@ const apiSpecificationFieldRoles: CapabilityFieldRole[] = [
 
 const retentionPolicyFieldRoles: CapabilityFieldRole[] = [
   {
+    id: 'period',
+    label: 'Period',
+    description: 'The retention period, as a duration field (amount and unit).',
+    required: false,
+    defaultFieldId: 'period',
+    allowedTypes: ['duration']
+  },
+  {
     id: 'duration',
-    label: 'Duration',
-    description: 'The numeric length of the retention period.',
-    required: true,
+    label: 'Duration (legacy)',
+    description:
+      'The numeric length of the retention period. Only used when no duration-typed period field exists.',
+    required: false,
     defaultFieldId: 'duration',
     allowedTypes: ['number']
   },
   {
     id: 'timeUnit',
-    label: 'Time unit',
-    description: 'The unit the duration is measured in (days, months, or years).',
-    required: true,
+    label: 'Time unit (legacy)',
+    description:
+      'The unit the legacy duration is measured in (days, weeks, months, or years). Only used when no duration-typed period field exists.',
+    required: false,
     defaultFieldId: 'time_unit',
     allowedTypes: ['select']
   }

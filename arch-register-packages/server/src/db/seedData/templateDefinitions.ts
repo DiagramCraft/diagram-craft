@@ -91,7 +91,6 @@ const definitionId = (
     'enum:information-governance:regulatory-tags': INFO_ASSET_IDS.regulatoryTagsEnum,
     'enum:information-governance:processing-purposes': INFO_ASSET_IDS.processingPurposesEnum,
     'enum:information-governance:residency-regions': INFO_ASSET_IDS.residencyRegionsEnum,
-    'enum:information-governance:retention-time-unit': RETENTION_IDS.timeUnitEnum,
     'enum:risk-compliance:risk-category': SEED_ENUM_IDS.riskCategory,
     'enum:risk-compliance:risk-status': SEED_ENUM_IDS.riskStatus,
     'enum:risk-compliance:risk-mitigation-effectiveness': SEED_ENUM_IDS.mitigationEffectiveness,
@@ -263,7 +262,6 @@ const enumOrder = [
   SEED_ENUM_IDS.strategicImportance,
   SEED_ENUM_IDS.investmentPriority,
   SEED_ENUM_IDS.capabilityReferenceModel,
-  SEED_ENUM_IDS.retentionTimeUnit,
   SEED_ENUM_IDS.regulatoryTags,
   SEED_ENUM_IDS.processingPurposes,
   SEED_ENUM_IDS.residencyRegions
