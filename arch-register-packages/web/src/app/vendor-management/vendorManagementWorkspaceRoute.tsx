@@ -15,14 +15,10 @@ import {
   LazyVendorVendorsDashboardScreen,
   LazyVendorContractsDashboardScreen,
   LazyVendorSpendDashboardScreen,
-  LazyVendorRiskScreen
+  LazyVendorRiskDashboardScreen
 } from '../../routes/workspace/lazyWorkspaceScreens';
 import { ensureApplicationAccess } from '../../routes/applicationAccess';
-import {
-  validateVendorsSearch,
-  validateContractsSearch,
-  validateRiskSearch
-} from '../../routes/searchParams';
+import { validateVendorsSearch, validateContractsSearch } from '../../routes/searchParams';
 
 const railPath = (path: string) => path.replace('/$workspaceSlug/', '');
 
@@ -106,14 +102,13 @@ export const createVendorManagementWorkspaceRoutes = <TParentRoute extends AnyRo
     createRoute({
       getParentRoute: () => workspaceRoute,
       path: railPath(VENDOR_RAIL_PATHS[VENDOR_RISK_ID]),
-      validateSearch: validateRiskSearch,
       beforeLoad: ({ context, params }) =>
         ensureApplicationAccess(
           context.queryClient,
           (params as unknown as { workspaceSlug: string }).workspaceSlug,
           'vendor-management'
         ),
-      component: LazyVendorRiskScreen
+      component: LazyVendorRiskDashboardScreen
     }),
     ctx =>
       railSectionShell(ctx, VENDOR_RISK_ID, {

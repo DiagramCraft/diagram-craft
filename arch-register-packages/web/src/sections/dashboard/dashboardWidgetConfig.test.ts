@@ -616,3 +616,34 @@ describe('api integration catalog widget frames', () => {
     expect(spec?.headerActionsComponent).toBeDefined();
   });
 });
+
+describe('FieldMatrix widget config', () => {
+  const widget = (config: Record<string, unknown>) =>
+    parseKnownDashboardWidget({
+      id: 'matrix',
+      type: 'FieldMatrix',
+      config,
+      x: 0,
+      y: 0,
+      w: 6,
+      h: 20
+    });
+  const valid = {
+    query: 'schema:Vendor',
+    rowFieldId: 'criticality',
+    rows: [5, 4],
+    valueFieldId: 'risk',
+    bands: [{ label: 'Low', min: 0, tone: 'good' }]
+  };
+
+  it('accepts a complete config', () => {
+    expect(widget(valid)?.type).toBe('FieldMatrix');
+  });
+
+  it('rejects incomplete or malformed configs', () => {
+    expect(widget({ ...valid, rows: [] })).toBeNull();
+    expect(widget({ ...valid, rowFieldId: '' })).toBeNull();
+    expect(widget({ ...valid, bands: [{ label: 'Low', min: 0, tone: 'purple' }] })).toBeNull();
+    expect(widget({ ...valid, query: '' })).toBeNull();
+  });
+});

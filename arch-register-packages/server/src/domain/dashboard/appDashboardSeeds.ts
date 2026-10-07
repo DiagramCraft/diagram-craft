@@ -10,6 +10,7 @@ export const VENDOR_MANAGEMENT_VENDORS_APP_KEY = 'vendor-management-vendors';
 export const VENDOR_MANAGEMENT_CONTRACTS_APP_KEY = 'vendor-management-contracts';
 export const VENDOR_MANAGEMENT_OVERVIEW_APP_KEY = 'vendor-management-overview';
 export const VENDOR_MANAGEMENT_SPEND_APP_KEY = 'vendor-management-spend';
+export const VENDOR_MANAGEMENT_RISK_APP_KEY = 'vendor-management-risk';
 export const STRATEGY_OVERVIEW_APP_KEY = 'strategy-overview';
 export const STRATEGY_CAPABILITY_MAP_APP_KEY = 'strategy-capability-map';
 export const STRATEGY_CAPABILITIES_APP_KEY = 'strategy-capabilities';
@@ -82,6 +83,36 @@ const contractFacetQuery = {
             }
           }
         ]
+      }
+    ]
+  }
+};
+
+/** Vendor rows narrowed by the Risk sidebar facets (`$tiers`, `$categories`, `$relationshipOwners`). */
+const vendorRiskFacetQuery = {
+  root: {
+    kind: 'and' as const,
+    children: [
+      {
+        kind: 'predicate' as const,
+        path: [],
+        fieldId: 'Tier',
+        op: 'in' as const,
+        value: ['$tiers']
+      },
+      {
+        kind: 'predicate' as const,
+        path: [],
+        fieldId: 'Category',
+        op: 'in' as const,
+        value: ['$categories']
+      },
+      {
+        kind: 'predicate' as const,
+        path: [],
+        fieldId: 'Relationship Owner',
+        op: 'in' as const,
+        value: ['$relationshipOwners']
       }
     ]
   }
@@ -2194,6 +2225,181 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
       schemaName: 'Vendor',
       facets: [
         { fieldId: 'Cost Centre', variableName: 'costCentres', itemLabel: 'Cost centre' },
+        {
+          fieldId: 'Relationship Owner',
+          variableName: 'relationshipOwners',
+          itemLabel: 'Owner'
+        }
+      ]
+    }
+  },
+  [VENDOR_MANAGEMENT_RISK_APP_KEY]: {
+    name: 'Risk',
+    description:
+      'Vendor risk by criticality and band, the risk register and technology end-of-life exposure.',
+    widgets: [
+      {
+        id: 'seed-risk-high',
+        type: 'AggregateStat',
+        config: {
+          query: 'schema:Vendor AND risk >= 3.4',
+          label: 'High risk',
+          subtextTemplate: 'vendors in the high band',
+          severity: { critAt: 1 },
+          showLink: false
+        },
+        x: 0,
+        y: 0,
+        w: 3,
+        h: 7
+      },
+      {
+        id: 'seed-risk-concentration',
+        type: 'AggregateStat',
+        config: {
+          query: 'schema:Vendor AND concentration_risk >= 4',
+          label: 'Concentration ≥ 4',
+          subtextTemplate: 'vendors with high concentration risk',
+          severity: { warnAt: 1 },
+          showLink: false
+        },
+        x: 3,
+        y: 0,
+        w: 3,
+        h: 7
+      },
+      {
+        id: 'seed-risk-eol-soon',
+        type: 'AggregateStat',
+        config: {
+          query: 'schema:"Technology Release" AND eol_date < now(366)',
+          label: 'Technologies near EOL',
+          subtextTemplate: 'end of life within 12 months',
+          severity: { warnAt: 1 },
+          showLink: false
+        },
+        x: 6,
+        y: 0,
+        w: 3,
+        h: 7
+      },
+      {
+        id: 'seed-risk-eol-past',
+        type: 'AggregateStat',
+        config: {
+          query: 'schema:"Technology Release" AND eol_date < now(0)',
+          label: 'Past end of life',
+          subtextTemplate: 'releases already unsupported',
+          severity: { critAt: 1 },
+          showLink: false
+        },
+        x: 9,
+        y: 0,
+        w: 3,
+        h: 7
+      },
+      {
+        id: 'seed-risk-matrix',
+        type: 'FieldMatrix',
+        config: {
+          schemaName: 'Vendor',
+          entityQuery: vendorRiskFacetQuery,
+          rowFieldId: 'criticality',
+          rows: [5, 4, 3, 2],
+          valueFieldId: 'risk',
+          // Mirrors the Vendor risk bands (low < 2.0 <= moderate < 2.7 <= elevated < 3.4 <= high).
+          bands: [
+            { label: 'Low', min: 0, tone: 'good' },
+            { label: 'Moderate', min: 2, tone: 'neutral' },
+            { label: 'Elevated', min: 2.7, tone: 'warn', hot: true },
+            { label: 'High', min: 3.4, tone: 'bad', hot: true }
+          ],
+          hotRowMin: 4,
+          cornerLabel: 'criticality ↓ / risk →',
+          label: 'Criticality × risk'
+        },
+        x: 0,
+        y: 7,
+        w: 6,
+        h: 22
+      },
+      {
+        id: 'seed-risk-register',
+        type: ENTITY_BROWSER_EMBED_WIDGET_TYPE,
+        config: {
+          title: 'Risk register',
+          q: '',
+          conditions: [],
+          sort: 'field:Risk:desc',
+          view: 'table',
+          viewConfigs: {
+            table: {
+              fieldIds: [
+                'Security Risk',
+                'Concentration Risk',
+                'Financial Risk',
+                'Compliance Risk',
+                'Risk'
+              ]
+            }
+          },
+          schemaName: 'Vendor',
+          entityQuery: vendorRiskFacetQuery
+        },
+        x: 6,
+        y: 7,
+        w: 6,
+        h: 22
+      },
+      {
+        id: 'seed-risk-technology-eol',
+        type: ENTITY_BROWSER_EMBED_WIDGET_TYPE,
+        config: {
+          title: 'Technology end-of-life',
+          q: '',
+          conditions: [],
+          sort: 'field:EOL Date:asc',
+          view: 'table',
+          viewConfigs: {
+            table: {
+              fieldIds: [
+                '_projection:Technology',
+                'Radar Status',
+                'EOL Date',
+                'Security Support Until'
+              ]
+            }
+          },
+          schemaName: 'Technology Release',
+          entityQuery: {
+            root: {
+              kind: 'predicate',
+              path: [],
+              fieldId: 'EOL Date',
+              op: 'before',
+              value: { $now: true, offsetDays: 365 }
+            },
+            projections: [
+              {
+                path: [{ kind: 'forward', fieldId: 'Technology' }],
+                fieldId: '_name',
+                alias: 'Technology'
+              }
+            ]
+          }
+        },
+        x: 0,
+        y: 29,
+        w: 12,
+        h: 20
+      }
+    ],
+    sidebar: {
+      kind: 'facets',
+      schemaName: 'Vendor',
+      facets: [
+        { fieldId: 'Tier', variableName: 'tiers', itemLabel: 'Tier' },
+        { fieldId: 'Category', variableName: 'categories', itemLabel: 'Category' },
         {
           fieldId: 'Relationship Owner',
           variableName: 'relationshipOwners',

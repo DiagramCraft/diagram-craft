@@ -9,7 +9,6 @@ import { buildHomeBreadcrumbs } from '../../shell/breadcrumbBuilders';
 import type { WorkspaceShellContext } from '../../layouts/workspaceShellDescriptors';
 import type { AppDefinition, BreadcrumbItem } from '../../shell/shellTypes';
 import { AppDashboardPrimarySidebar } from '../../sections/dashboard/AppDashboardPrimarySidebar';
-import { VendorManagementSidebar } from './sections/VendorManagementSidebar';
 import {
   VENDOR_OVERVIEW_ID,
   VENDOR_VENDORS_ID,
@@ -25,6 +24,7 @@ export const VENDOR_MANAGEMENT_VENDORS_APP_KEY = 'vendor-management-vendors';
 export const VENDOR_MANAGEMENT_CONTRACTS_APP_KEY = 'vendor-management-contracts';
 export const VENDOR_MANAGEMENT_OVERVIEW_APP_KEY = 'vendor-management-overview';
 export const VENDOR_MANAGEMENT_SPEND_APP_KEY = 'vendor-management-spend';
+export const VENDOR_MANAGEMENT_RISK_APP_KEY = 'vendor-management-risk';
 
 /**
  * Vendor Management's workspace-rail identity: its rail-item ids (defined in
@@ -100,8 +100,14 @@ export const vendorManagementAppDefinition: AppDefinition = {
       icon: TbAlertTriangle,
       tooltip: 'Risk',
       route: VENDOR_RAIL_PATHS[VENDOR_RISK_ID],
+      // Stat tiles, a criticality × risk-band matrix, the risk register and a technology EOL table
+      // with a `facets` sidebar (tier/category/owner).
+      dashboard: { appKey: VENDOR_MANAGEMENT_RISK_APP_KEY },
       primarySidebar: ctx => (
-        <VendorManagementSidebar workspaceSlug={ctx.workspaceSlug} activeSection={VENDOR_RISK_ID} />
+        <AppDashboardPrimarySidebar
+          workspaceSlug={ctx.workspaceSlug}
+          appKey={VENDOR_MANAGEMENT_RISK_APP_KEY}
+        />
       )
     }
   ],

@@ -1,8 +1,7 @@
 /**
  * Vendor Management's rail-item ids, routes, and labels — split out from `vendorManagementShell.tsx`
- * so both it and `sections/VendorManagementSidebar.tsx` can depend on this leaf module without an
- * import cycle (the sidebar is rendered by `vendorManagementShell.tsx`'s `primarySidebar`
- * factories, and also needs the ids/routes to navigate between sections). Mirrors
+ * so the route and screen modules can depend on this leaf module without an import cycle with the
+ * shell. Mirrors
  * `../strategy-model/strategySections.ts`.
  */
 export const VENDOR_OVERVIEW_ID = 'vendor-overview' as const;

@@ -100,9 +100,9 @@ export const LazyVendorSpendDashboardScreen = lazyRouteComponent(
   () => import('../../app/vendor-management/sections/VendorSpendDashboardScreen'),
   'VendorSpendDashboardScreen'
 );
-export const LazyVendorRiskScreen = lazyRouteComponent(
-  () => import('../../app/vendor-management/sections/VendorRiskScreen'),
-  'VendorRiskScreen'
+export const LazyVendorRiskDashboardScreen = lazyRouteComponent(
+  () => import('../../app/vendor-management/sections/VendorRiskDashboardScreen'),
+  'VendorRiskDashboardScreen'
 );
 export const LazyRiskComplianceOverviewDashboardScreen = lazyRouteComponent(
   () => import('../../app/risk-compliance/sections/RiskComplianceOverviewDashboardScreen'),

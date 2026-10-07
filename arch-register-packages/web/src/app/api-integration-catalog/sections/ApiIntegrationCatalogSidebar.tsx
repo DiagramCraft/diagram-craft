@@ -33,8 +33,7 @@ import styles from '../../../shell/SidePanel.module.css';
 /**
  * The Integrations section's own primary-sidebar content: Protocol / Classification facets plus a
  * "crosses a boundary" toggle over the Data Flow register, replacing the plain "Sections" nav list
- * for this section only — mirrors `../../vendor-management/sections/VendorManagementSidebar.tsx`'s
- * `VendorsSidebarContent`. Facet values come straight off the Data Flow relation schema's own
+ * for this section only . Facet values come straight off the Data Flow relation schema's own
  * `protocol`/`data_classification` select-field options; the Claude Design reference's `ICSidebar`
  * (`ic.jsx`) also facets by Style, Health, and Adapter, but those have no analog on this schema (no
  * backing data source — see `ApiIntegrationCatalogIntegrationsScreen.tsx`'s doc comment).

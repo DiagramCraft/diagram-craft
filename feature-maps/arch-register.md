@@ -132,6 +132,9 @@
           A "Roll-up table" widget sums a number or currency field over the records of a query into ranked rows, per
           record or grouped by any field (select labels resolved), with optional bars, share-of-total percentage,
           record count and a total row.
+          A "Field matrix" widget places the records of a query in a grid of numeric row values against banded
+          numeric values (bands carry a label, lower bound, colour tone and an optional emphasis flag), each cell
+          listing clickable record chips.
           "Assessment status" and "Assessment progress" widgets summarise assessments that target a chosen entity
           type: a stat tile counting the overdue, in-progress, not-started or complete ones, and a table
           with per-assessment progress, due date and status.
@@ -451,26 +454,16 @@
           sidebar of Cost Centre and Owner facets narrows the tables (the stat tiles stay portfolio-wide). Selecting
           a vendor row opens the shared vendor drawer in place.
 
-        - @id:ar.vendor-management.risk The Risk section has four header stats (High risk vendor count, vendors with
-          Concentration Risk ≥ 4, technologies nearing end-of-life, and Systems exposed to one), a two-column
-          criticality × risk-band matrix and risk register, and a technology end-of-life exposure table — layout and
-          composite scoring mirror the Claude Design reference (`vendor-data.jsx`/`vendor-views.jsx`) exactly. The
-          Vendor schema's derived `risk` field is a weighted average of security/concentration/financial/compliance
-          risk fields (weights 0.34 / 0.28 / 0.22 / 0.16) on their native 1-5 scale, linearly lifted by criticality
-          (±6% per point off a criticality of 3), rounded and clamped to [1, 5], then presented as Low (< 2.0) /
-          Moderate (< 2.7) / Elevated (< 3.4) / High.
-          The matrix (criticality 5 down to 2 × the four bands) lists each cell's vendors as clickable name tags (not a
-          count) that open the shared vendor drawer directly — it isn't itself a filter control. The risk
-          register (Vendor, Sec, Conc, Fin, Comp, Score) is sorted by score descending and filterable only by the
-          sidebar's Band facet. A technology end-of-life exposure table cross-references the Systems a vendor's
-          Contracts serve against those Systems' linked Technology Release records (Technology, Radar ring, Vendor,
-          Support ends, Runway in months, Systems affected), one row per vendor-and-technology pair; it depends on
-          the `vendor-management` capability's optional Technology Release entity schema binding (configured in
-          Applications & Capabilities, and auto-bound for a workspace using the default catalog) and on an entity
-          schema — typically Component or Resource — that links a System to that Technology Release schema; the
-          panel is hidden entirely, not shown with an explanatory empty state, when either is missing. The sidebar's
-          "Technology EOL" facet always shows its own group label (with its own empty-state message when there's no
-          exposure data) and lists the same exposed technologies, each opening its vendor.
+        - @id:ar.vendor-management.risk The Risk section is a configurable dashboard: four stat tiles (High risk
+          vendors, vendors with Concentration Risk ≥ 4, technology releases ending support within 12 months, and
+          releases already past end of life), a criticality × risk-band matrix next to the vendor risk register, and a
+          technology end-of-life table listing releases ending support within a year. The Vendor schema's derived
+          `risk` field is a weighted average of security/concentration/financial/compliance risk fields (weights
+          0.34 / 0.28 / 0.22 / 0.16) on their native 1-5 scale, linearly lifted by criticality (±6% per point off a
+          criticality of 3), rounded and clamped to [1, 5], then presented as Low (< 2.0) / Moderate (< 2.7) /
+          Elevated (< 3.4) / High. The matrix lists each cell's vendors as clickable name tags that open the vendor
+          drawer, and emphasises elevated and high cells for criticality 4 and above. The sidebar's Tier, Category and
+          Owner facets narrow the matrix and register; the stat tiles stay portfolio-wide.
 
     - @id:ar.risk-compliance Workspaces can optionally enable Risk & Compliance as its own workspace application,
       with a dedicated left rail scoped to five sections (Overview, Risks, Controls, Retention, Assessments). The
