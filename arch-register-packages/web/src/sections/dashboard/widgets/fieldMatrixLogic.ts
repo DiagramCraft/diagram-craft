@@ -18,10 +18,7 @@ type MatrixRecord = {
 };
 
 /** Index of the band `value` falls in, or null when below every band / not a finite number. */
-export const bandIndexFor = (
-  value: unknown,
-  bands: readonly FieldMatrixBand[]
-): number | null => {
+export const bandIndexFor = (value: unknown, bands: readonly FieldMatrixBand[]): number | null => {
   if (typeof value !== 'number' || !Number.isFinite(value)) return null;
   let result: number | null = null;
   bands.forEach((band, index) => {

@@ -36,7 +36,11 @@ export const fieldMatrixSpec: DashboardWidgetSpec<FieldMatrixWidgetConfig> = {
   defaultH: 20,
   surfaces: ['workspace', 'project'],
   component: FieldMatrixWidget,
-  frame: { hideOutsideEdit: true, padded: false, showIcon: false },
+  frame: {
+    hideOutsideEdit: config => config.showFrame === false,
+    padded: false,
+    showIcon: false
+  },
   isValidConfig: (config): config is FieldMatrixWidgetConfig =>
     typeof config.rowFieldId === 'string' &&
     typeof config.valueFieldId === 'string' &&
@@ -48,6 +52,7 @@ export const fieldMatrixSpec: DashboardWidgetSpec<FieldMatrixWidgetConfig> = {
     optionalString(config.schemaName) &&
     optionalString(config.cornerLabel) &&
     optionalString(config.label) &&
+    (config.showFrame === undefined || typeof config.showFrame === 'boolean') &&
     (config.hotRowMin === undefined || typeof config.hotRowMin === 'number') &&
     isFieldMatrixConfigComplete(config as FieldMatrixWidgetConfig),
   createDefaultConfig: () => ({

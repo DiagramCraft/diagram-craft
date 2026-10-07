@@ -32,6 +32,8 @@ export type FieldMatrixWidgetConfig = {
   /** Corner label, e.g. "criticality ↓ / risk →". */
   cornerLabel?: string;
   label?: string;
+  /** Show the widget frame (border, title) around the matrix; defaults to true. */
+  showFrame?: boolean;
 };
 
 export const isFieldMatrixConfigComplete = (config: FieldMatrixWidgetConfig): boolean =>

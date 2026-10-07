@@ -82,6 +82,33 @@ export const CriticalityByRisk: Story = {
   )
 };
 
+export const WithoutFrame: Story = {
+  render: () => (
+    <StoryProviders client={storyQueryClient} schemas={schemas}>
+      <DashboardStory
+        widgets={[
+          dashboardWidget(
+            'matrix-frameless',
+            'FieldMatrix',
+            {
+              query: QUERY,
+              rowFieldId: 'criticality',
+              rows: [5, 4, 3, 2],
+              valueFieldId: 'risk',
+              bands,
+              showFrame: false
+            },
+            0,
+            0,
+            8,
+            20
+          )
+        ]}
+      />
+    </StoryProviders>
+  )
+};
+
 export const WithoutEmphasis: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient} schemas={schemas}>

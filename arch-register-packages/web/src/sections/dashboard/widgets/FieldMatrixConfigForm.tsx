@@ -85,6 +85,18 @@ export const FieldMatrixConfigForm = ({ config, onChange }: Props) => (
           </div>
         </label>
         <label className={styles.optionRow}>
+          <span className={styles.optionLabel}>Show frame</span>
+          <div className={styles.optionControl}>
+            <input
+              type="checkbox"
+              checked={config.showFrame ?? true}
+              onChange={e =>
+                onChange({ ...config, showFrame: e.target.checked ? undefined : false })
+              }
+            />
+          </div>
+        </label>
+        <label className={styles.optionRow}>
           <span className={styles.optionLabel}>Title</span>
           <div className={styles.optionControl}>
             <input

@@ -59,8 +59,11 @@ export type DashboardWidgetSpec<Config extends Record<string, unknown> = Record<
     /** Extra content (links, counts) at the right of the frame header, before the edit/remove controls. */
     headerActionsComponent?: React.ComponentType<{ config: Config }>;
     frame?: {
-      /** No border, background or header unless the dashboard is being edited. */
-      hideOutsideEdit?: boolean;
+      /**
+       * No border, background or header unless the dashboard is being edited. A function decides
+       * per widget instance from its config.
+       */
+      hideOutsideEdit?: boolean | ((config: Config) => boolean);
       /** Whether the frame body has padding; defaults to true. */
       padded?: boolean;
       /** Whether the widget's icon is shown in the frame header; defaults to true. The picker always shows it. */
