@@ -363,7 +363,11 @@ describe('entity drawer configuration', () => {
 
   const schemaWithParent = {
     ...schema,
-    fields: [...schema.fields, { id: 'parent', name: 'Parent', type: 'containment' }]
+    fields: [
+      ...schema.fields,
+      { id: 'parent', name: 'Parent', type: 'containment' },
+      { id: 'annual_investment', name: 'Annual investment', type: 'currency' }
+    ]
   };
   const initiativeSchema = {
     id: 'initiative',
@@ -394,17 +398,6 @@ describe('entity drawer configuration', () => {
             business_capability_supports_entity: {
               target: { kind: 'relation_schema', id: 'bcse-rel' }
             }
-          },
-          view_config: {
-            fields: [
-              {
-                fieldId: 'score',
-                table: null,
-                rollup: { aggregation: 'sum', format: 'number' },
-                drawer: false,
-                overlay: null
-              }
-            ]
           }
         }
       ]
@@ -428,7 +421,7 @@ describe('entity drawer configuration', () => {
         queryText: '<-"objective-supports-capability".<-"Initiative".objectives',
         label: 'Linked initiatives'
       },
-      { kind: 'rollup', fieldId: 'score', aggregation: 'sum', format: 'number' },
+      { kind: 'rollup', fieldId: 'annual_investment', aggregation: 'sum', format: 'currency' },
       { kind: 'rollup-leaf-count' }
     ]);
 

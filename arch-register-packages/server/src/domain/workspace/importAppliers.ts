@@ -416,7 +416,6 @@ export const importWorkspaceCapabilityConfigurations = async (
       workspace,
       type: configuration.type,
       bindings,
-      view_config: configuration.view_config ?? null,
       created_at: existing?.created_at ?? now,
       updated_at: now
     });

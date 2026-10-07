@@ -15,20 +15,12 @@ import type {
   WorkspaceCapabilityBindings,
   WorkspaceCapabilityTargetKind
 } from '@arch-register/api-types/workspaceCapabilityContract';
-import type { StrategyModelViewConfig } from '@arch-register/api-types/app/strategy-model/strategyModelViewConfig';
 import {
   useDeleteWorkspaceCapabilityConfiguration,
   useUpdateWorkspaceCapabilityConfiguration,
   useWorkspaceCapabilityConfigurations
 } from '../../../hooks/useWorkspaceConfig';
-import {
-  StrategyDashboardEditor,
-  StrategyFieldsEditor
-} from './strategy-view/StrategyModelViewConfigEditor';
-import { toEditableConfig, viewConfigDirty } from './strategy-view/strategyViewConfigState';
 import t from './CapabilityBindingEditor.module.css';
-
-export type CapabilityBindingSubTab = 'bindings' | 'fields' | 'dashboard';
 
 /** A target-kind-agnostic view of the schemas a binding role can pick from and resolve fields on. */
 type BindingTarget = { id: string; name: string; fields: EntitySchema['fields'] };
@@ -45,17 +37,15 @@ const targetsFor = (
 };
 
 /**
- * Per-capability binding editor: the "Enabled" toggle, schema/field role mappings, and — for
- * `strategy-model` — the Fields / Dashboard view-config editors. Which panel renders is driven by
- * the parent via `subTab`; the component stays mounted across sub-tab switches so unsaved edits
- * survive. Save / Cancel are hoisted to the screen header via `onActionsChange`.
+ * Per-capability binding editor: the "Enabled" toggle and schema/field role mappings. The component
+ * stays mounted across tab switches so unsaved edits survive. Save / Cancel are hoisted to the
+ * screen header via `onActionsChange`.
  */
 export const CapabilityBindingEditor = ({
   workspaceSlug,
   capabilityType,
   schemas,
   relationSchemas,
-  subTab,
   onActionsChange,
   onEnabledControlChange
 }: {
@@ -63,7 +53,6 @@ export const CapabilityBindingEditor = ({
   capabilityType: string;
   schemas: EntitySchema[];
   relationSchemas: RelationSchema[];
-  subTab: CapabilityBindingSubTab;
   onActionsChange: (actions: ReactNode | undefined) => void;
   /** Hoists the "Enabled" toggle above the tab strip on the screen. */
   onEnabledControlChange: (control: ReactNode | undefined) => void;
@@ -75,7 +64,6 @@ export const CapabilityBindingEditor = ({
   const configuration = configurations.find(item => item.type === capabilityType);
   const definition = getWorkspaceCapabilityDefinition(capabilityType);
   const [bindings, setBindings] = useState<WorkspaceCapabilityBindings>({});
-  const [viewConfig, setViewConfig] = useState<StrategyModelViewConfig | null>(null);
   const mutation = useUpdateWorkspaceCapabilityConfiguration(workspaceSlug, capabilityType);
   const deleteMutation = useDeleteWorkspaceCapabilityConfiguration(workspaceSlug, capabilityType);
 
@@ -84,34 +72,24 @@ export const CapabilityBindingEditor = ({
     [configuration?.bindings]
   );
 
-  const isStrategyModel = capabilityType === 'strategy-model';
-
   useEffect(() => {
     setEnabled(configuration != null);
     setBindings(configuredBindings);
-    setViewConfig(isStrategyModel ? toEditableConfig(configuration?.view_config) : null);
-  }, [configuredBindings, configuration, isStrategyModel]);
+  }, [configuredBindings, configuration]);
 
   const dirty =
     enabled !== (configuration != null) ||
-    JSON.stringify(bindings) !== JSON.stringify(configuredBindings) ||
-    (isStrategyModel &&
-      viewConfig != null &&
-      viewConfigDirty(viewConfig, configuration?.view_config));
+    JSON.stringify(bindings) !== JSON.stringify(configuredBindings);
 
   const save = useCallback(async () => {
     if (!enabled || !definition) return;
-    await mutation.mutateAsync({
-      bindings,
-      ...(isStrategyModel && viewConfig ? { viewConfig } : {})
-    });
-  }, [bindings, definition, enabled, isStrategyModel, mutation.mutateAsync, viewConfig]);
+    await mutation.mutateAsync({ bindings });
+  }, [bindings, definition, enabled, mutation.mutateAsync]);
 
   const resetDraft = useCallback(() => {
     setEnabled(configuration != null);
     setBindings(configuredBindings);
-    setViewConfig(isStrategyModel ? toEditableConfig(configuration?.view_config) : null);
-  }, [configuredBindings, configuration, isStrategyModel]);
+  }, [configuredBindings, configuration]);
 
   const handleEnabledChange = useCallback(
     (nextEnabled: boolean | undefined) => {
@@ -201,12 +179,6 @@ export const CapabilityBindingEditor = ({
   };
 
   const controlsBusy = mutation.isPending || deleteMutation.isPending;
-  const businessCapabilitySchema = schemas.find(
-    schema => schema.id === bindings['business_capability']?.target.id
-  );
-  const staleViewDiagnostics = (configuration?.diagnostics ?? [])
-    .filter(diagnostic => diagnostic.code === 'stale_view_field')
-    .map(diagnostic => diagnostic.message);
 
   const bindingCount = definition.bindingRoles.length;
 
@@ -355,50 +327,15 @@ export const CapabilityBindingEditor = ({
       {configuration && !configuration.valid && (
         <div className={t.tableIssues}>
           <TbAlertTriangle size={13} style={{ flex: 'none', marginTop: 1 }} />
-          <span>
-            {configuration.diagnostics
-              .filter(diagnostic => diagnostic.code !== 'stale_view_field')
-              .map(diagnostic => diagnostic.message)
-              .join(' ')}
-          </span>
+          <span>{configuration.diagnostics.map(diagnostic => diagnostic.message).join(' ')}</span>
         </div>
       )}
     </>
   );
 
-  const strategyViewUnavailable = (
-    <div className={t.note}>
-      Enable the capability and bind the Business Capability entity schema to configure this view.
-    </div>
-  );
-
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', paddingTop: '1rem' }}>
-      {subTab === 'bindings' && bindingRolesContent}
-      {subTab === 'fields' &&
-        (isStrategyModel && enabled && viewConfig ? (
-          <StrategyFieldsEditor
-            schema={businessCapabilitySchema}
-            value={viewConfig}
-            disabled={controlsBusy}
-            diagnostics={staleViewDiagnostics}
-            onChange={setViewConfig}
-          />
-        ) : (
-          strategyViewUnavailable
-        ))}
-      {subTab === 'dashboard' &&
-        (isStrategyModel && enabled && viewConfig ? (
-          <StrategyDashboardEditor
-            schema={businessCapabilitySchema}
-            value={viewConfig}
-            disabled={controlsBusy}
-            onChange={setViewConfig}
-          />
-        ) : (
-          strategyViewUnavailable
-        ))}
-
+      {bindingRolesContent}
       {confirmDisableOpen && (
         <DeleteConfirmationDialog
           open

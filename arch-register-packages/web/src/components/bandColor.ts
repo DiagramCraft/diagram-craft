@@ -1,7 +1,7 @@
-import type {
-  BandTone,
-  ColourBand
-} from '@arch-register/api-types/app/strategy-model/strategyModelViewConfig';
+export type BandTone = 'good' | 'warn' | 'bad';
+
+/** A colour band: `max: null` = open top band. Evaluated low-to-high. */
+export type ColourBand = { max: number | null; tone: BandTone };
 
 export type ToneOrNeutral = BandTone | 'neutral';
 

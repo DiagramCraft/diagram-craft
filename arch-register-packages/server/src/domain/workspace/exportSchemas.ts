@@ -112,8 +112,7 @@ const exportConfigSchema = z.object({
       z.object({
         id: z.string(),
         type: z.string(),
-        bindings: workspaceCapabilityBindingsSchema,
-        view_config: z.unknown().nullish()
+        bindings: workspaceCapabilityBindingsSchema
       })
     )
     .optional(),

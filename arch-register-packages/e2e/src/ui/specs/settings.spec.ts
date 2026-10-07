@@ -61,8 +61,8 @@ test.describe('settings section', () => {
     await settingsPage.goto('applications-capabilities');
     await page.getByText('Strategy & Capability Modelling', { exact: true }).click();
     await expect(page.getByRole('tab', { name: 'Bindings', exact: true })).toBeVisible();
-    await expect(page.getByRole('tab', { name: 'Fields', exact: true })).toBeVisible();
-    await expect(page.getByRole('tab', { name: 'Dashboard', exact: true })).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'Fields', exact: true })).toHaveCount(0);
+    await expect(page.getByRole('tab', { name: 'Dashboard', exact: true })).toHaveCount(0);
     await expect(page.getByRole('tab', { name: 'Access', exact: true })).toBeVisible();
 
     await page.getByRole('tab', { name: 'Access', exact: true }).click();
