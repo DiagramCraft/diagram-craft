@@ -15,6 +15,7 @@ import {
   RISK_COMPLIANCE_ASSESSMENTS_APP_KEY,
   VENDOR_MANAGEMENT_CONTRACTS_APP_KEY,
   VENDOR_MANAGEMENT_OVERVIEW_APP_KEY,
+  VENDOR_MANAGEMENT_RISK_APP_KEY,
   VENDOR_MANAGEMENT_SPEND_APP_KEY,
   STRATEGY_CAPABILITY_MAP_APP_KEY,
   STRATEGY_CAPABILITIES_APP_KEY,
@@ -424,6 +425,25 @@ describe('APP_DASHBOARD_SEEDS', () => {
       ['by-cost-centre', ['GroupedRollupTable']]
     ]);
     expect(tabs[1]!.widgets[0]!.config).toMatchObject({ groupFieldId: 'cost_centre' });
+    expect(seed.sidebar).toMatchObject({ kind: 'facets', schemaName: 'Vendor' });
+  });
+
+  it('seeds the Vendor Management Risk dashboard as stat tiles, a field matrix, a register and an EOL table', () => {
+    const seed = APP_DASHBOARD_SEEDS[VENDOR_MANAGEMENT_RISK_APP_KEY]!;
+    expect(seed.widgets.map(widget => widget.type)).toEqual([
+      'AggregateStat',
+      'AggregateStat',
+      'AggregateStat',
+      'AggregateStat',
+      'FieldMatrix',
+      'EntityBrowserEmbed',
+      'EntityBrowserEmbed'
+    ]);
+    expect(seed.widgets[4]!.config).toMatchObject({
+      rowFieldId: 'criticality',
+      valueFieldId: 'risk',
+      rows: [5, 4, 3, 2]
+    });
     expect(seed.sidebar).toMatchObject({ kind: 'facets', schemaName: 'Vendor' });
   });
 });

@@ -33,6 +33,11 @@ export const DashboardWidgetRenderer = ({ widget, isEditing = false, onEdit, onR
   );
   const Icon = dashboardWidget?.icon;
   const HeaderActions = dashboardWidget?.headerActionsComponent;
+  const hideOutsideEdit = dashboardWidget?.frame?.hideOutsideEdit;
+  const bareOutsideEdit =
+    typeof hideOutsideEdit === 'function'
+      ? !!knownWidget && hideOutsideEdit(knownWidget.config)
+      : !!hideOutsideEdit;
 
   return (
     <WidgetFrame
@@ -40,7 +45,7 @@ export const DashboardWidgetRenderer = ({ widget, isEditing = false, onEdit, onR
       icon={Icon && dashboardWidget?.frame?.showIcon !== false && <Icon size={14} />}
       headerActions={HeaderActions && knownWidget && <HeaderActions config={knownWidget.config} />}
       padded={dashboardWidget?.frame?.padded !== false}
-      bare={!!dashboardWidget?.frame?.hideOutsideEdit && !isEditing}
+      bare={bareOutsideEdit && !isEditing}
       onEdit={onEdit}
       onRemove={onRemove}
     >

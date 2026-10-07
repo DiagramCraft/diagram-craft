@@ -30,7 +30,7 @@ used by the application.
 In **Workspace Settings → Applications & Capabilities**, configure **Vendor Management** and bind a **Vendor** entity
 schema. The Vendor binding is required. **Contract** and **Technology Release** schemas are optional; without a Contract
 binding, contract, renewal, and spend data are unavailable. Technology Release is only needed for the technology
-end-of-life exposure view in **Risk**. The default catalog binds its Vendor, Contract, and Technology Release schemas
+end-of-life stats and table in **Risk**. The default catalog binds its Vendor, Contract, and Technology Release schemas
 automatically.
 
 Set who can open the application in its **Access** tab. Members need workspace access, a valid capability binding, and
@@ -56,9 +56,10 @@ counted below the timeline.
 
 **Spend** is a configurable dashboard with four stat tiles (total annualized spend, fixed-term commitment, the
 Strategic tier's share, and cost centres with spend) above a roll-up table with By vendor and By cost centre tabs; the
-sidebar's Cost centre and Owner facets narrow the tables. The **Risk** section combines a criticality and risk-band matrix,
-a vendor risk register, and an optional technology end-of-life exposure table. The exposure table requires a Technology
-Release binding and catalog links from Systems to Technology Release records; it is hidden when those are missing.
+sidebar's Cost centre and Owner facets narrow the tables. The **Risk** section is a configurable dashboard with stat tiles for high-risk vendors, high concentration risk and
+technology end-of-life, a criticality and risk-band matrix beside the vendor risk register, and a table of technology
+releases reaching end of life within a year. The sidebar's Tier, Category, and Owner facets narrow the matrix and register.
+The end-of-life stats and table require a Technology Release binding.
 
 ## Current limitations and shared workflows
 

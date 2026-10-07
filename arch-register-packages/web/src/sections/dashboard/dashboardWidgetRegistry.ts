@@ -38,6 +38,7 @@ import {
   GROUPED_ROLLUP_TABLE_TYPE,
   groupedRollupTableSpec
 } from './widgets/GroupedRollupTableRegistration';
+import { FIELD_MATRIX_TYPE, fieldMatrixSpec } from './widgets/FieldMatrixRegistration';
 import { DATE_CALENDAR_TYPE, dateCalendarSpec } from './widgets/DateCalendarRegistration';
 import {
   DATE_RANGE_TIMELINE_TYPE,
@@ -67,7 +68,8 @@ const assessmentDashboardWidgetSpecs: Array<{
   { type: GROUPED_ROLLUP_TABLE_TYPE, spec: groupedRollupTableSpec },
   { type: UPCOMING_BY_DATE_TYPE, spec: upcomingByDateSpec },
   { type: DATE_CALENDAR_TYPE, spec: dateCalendarSpec },
-  { type: DATE_RANGE_TIMELINE_TYPE, spec: dateRangeTimelineSpec }
+  { type: DATE_RANGE_TIMELINE_TYPE, spec: dateRangeTimelineSpec },
+  { type: FIELD_MATRIX_TYPE, spec: fieldMatrixSpec }
 ];
 
 export const getDashboardWidgetSpecs = (): Array<{
