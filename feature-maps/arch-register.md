@@ -53,8 +53,8 @@
           diagrams, and other primary work areas. The home screen shows a composable dashboard of widgets (stat metrics,
           saved-view embeds, entity tables, entity cards, entity graphs, entity changelogs, document browsers, entity
           browsers, diagram previews, wiki-page embeds, lifecycle and activity-trend charts, stale-entity reports, an
-          activity feed, configurable Markdown content, API & Integration Catalog statistics and list panels, ratio
-          bar-lists, count-by-field breakdown bars, a risk matrix, tabs that group other widgets, and assessment lists and counts scoped to chosen entity types)
+          activity feed, configurable Markdown content, stat tiles that count or sum a field over a query, API & Integration Catalog statistics and list panels, ratio
+          bar-lists, count-by-field breakdown bars, month-bucketed date bar charts, upcoming-by-date countdown lists, ranked lists with share bars, a risk matrix, tabs that group other widgets, and assessment lists and counts scoped to chosen entity types)
           laid out on a grid; a fresh workspace shows a sensible default layout. The entity table and entity browser
           widgets both show a list of entities but serve different needs: entity table offers quick, flat schema/owner/
           lifecycle/limit filtering with fixed columns, while entity browser exposes the full entity browser experience
@@ -390,18 +390,16 @@
       instead of its content.
 
         - @id:ar.vendor-management.overview The Overview section is the application's landing screen — where the app
-          switcher opens — and summarizes the other four sections rather than adding new data. Four header stats
-          (contracted spend, renewals due in 90 days with the $ at stake, vendors above risk tolerance, auto-renewing
-          contract count) sit above a 12-month renewal strip — one bar per month, height by that month's contracted
-          $ value, colored red when the month holds a contract due within 30 days or overdue, folding an
-          already-overdue contract into the current month the same way the Contracts section's own calendar does.
-          Below that, a "Next renewals" list (contract, vendor, auto-renew flag, $ value, and a colored day
-          countdown) opens the configurable contract drawer on the Contracts section; a "Spend by vendor" list (top 8, magnitude bar + $ value)
-          opens the vendor drawer on the Spend section. A "Vendors above tolerance" table (Tier, Criticality, the
-          composite risk chip, and applications-supplied count) and a "Technology end-of-life exposure" list (top 5
-          by soonest EOL, hidden — not shown empty — when the optional Technology Release binding is unset or
-          unusable) both open the vendor drawer on the Risk section. A "Renewal calendar" button jumps to the
-          Contracts section's calendar view, and a footnote links back to Entities.
+          switcher opens. It is a configurable dashboard (seeded as the `vendor-management-overview` app dashboard,
+          editable like other app dashboards) built from generic widgets: four stat tiles (contracted spend summed
+          across vendors, contracts renewing within 90 days with the $ at stake, vendors at elevated or high risk, and
+          the auto-renewing share of contracts), a 12-month renewal bar chart (bars sized by contracted $ value, red
+          when a contract is due within 30 days or overdue, with overdue contracts folded into the current month), a
+          "Next renewals" countdown list, a "Spend by vendor" ranked list with share bars, a "Vendors above tolerance"
+          table, and a "Technology end-of-life exposure" table of technology releases reaching end of life within a
+          year. Rows open the standard entity drawer. Compared with the previous bespoke screen, the end-of-life table
+          lists releases rather than vendors with affected-application counts, and there is no applications-supplied
+          column or dedicated renewal-calendar shortcut.
 
         - @id:ar.vendor-management.vendors The Vendors section is a configurable dashboard: one entity-browser table of
           Vendor entities (Tier, Category, Relationship Owner, Annual Spend, Risk, Next Renewal) with a sidebar of

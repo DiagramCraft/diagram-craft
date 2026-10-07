@@ -22,6 +22,7 @@ import {
 } from './vendorManagementSections';
 
 export const VENDOR_MANAGEMENT_VENDORS_APP_KEY = 'vendor-management-vendors';
+export const VENDOR_MANAGEMENT_OVERVIEW_APP_KEY = 'vendor-management-overview';
 
 /**
  * Vendor Management's workspace-rail identity: its rail-item ids (defined in
@@ -45,7 +46,8 @@ export const vendorManagementAppDefinition: AppDefinition = {
       id: VENDOR_OVERVIEW_ID,
       icon: TbLayoutDashboard,
       tooltip: 'Overview',
-      route: VENDOR_RAIL_PATHS[VENDOR_OVERVIEW_ID]
+      route: VENDOR_RAIL_PATHS[VENDOR_OVERVIEW_ID],
+      dashboard: { appKey: VENDOR_MANAGEMENT_OVERVIEW_APP_KEY }
     },
     {
       id: VENDOR_VENDORS_ID,

@@ -36,5 +36,6 @@ describe('aggregateStatQuery', () => {
     );
     expect(renderStatSubtext('{count} of {total} tested', undefined, 4, 9)).toBe('4 of 9 tested');
     expect(renderStatSubtext('', 1, 1, 1)).toBeUndefined();
+    expect(renderStatSubtext('{subSum} at stake', 2, 3, undefined, '$5')).toBe('$5 at stake');
   });
 });

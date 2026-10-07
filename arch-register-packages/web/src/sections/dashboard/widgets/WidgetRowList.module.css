@@ -53,3 +53,29 @@
   white-space: nowrap;
   font-size: 11px;
 }
+
+/* Fixed columns (name | bar | value) so bars line up and share one width across rows. */
+.rowShare {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr) 6.5em;
+  gap: 8px;
+}
+
+.rowShare .rowMeta {
+  margin-left: 0;
+  text-align: right;
+}
+
+.shareTrack {
+  min-width: 24px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--cmp-bg);
+  overflow: hidden;
+}
+
+.shareFill {
+  display: block;
+  height: 100%;
+  background: var(--accent-fg);
+}

@@ -50,11 +50,13 @@ export const renderStatSubtext = (
   template: string | undefined,
   subCount: number | undefined,
   matched: number,
-  total: number | undefined
+  total: number | undefined,
+  subSum?: string
 ): string | undefined => {
   const source = template?.trim();
   if (!source) return undefined;
   return source
+    .replaceAll('{subSum}', subSum ?? '—')
     .replaceAll('{sub}', String(subCount ?? '—'))
     .replaceAll('{count}', String(matched))
     .replaceAll('{total}', String(total ?? '—'));

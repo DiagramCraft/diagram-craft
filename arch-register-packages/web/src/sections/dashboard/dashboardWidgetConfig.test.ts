@@ -355,6 +355,29 @@ describe('parseKnownDashboardWidget', () => {
     ).toBeNull();
   });
 
+  it('parses DateBucketChart and UpcomingByDate widgets and rejects incomplete ones', () => {
+    const chart = { id: 'chart', type: 'DateBucketChart', x: 0, y: 0, w: 12, h: 12 };
+    expect(
+      parseKnownDashboardWidget({
+        ...chart,
+        config: { query: 'schema:"Contract"', dateFieldId: 'contract_end' }
+      })?.type
+    ).toBe('DateBucketChart');
+    expect(
+      parseKnownDashboardWidget({ ...chart, config: { query: '', dateFieldId: 'contract_end' } })
+    ).toBeNull();
+    const upcoming = { id: 'up', type: 'UpcomingByDate', x: 0, y: 0, w: 6, h: 16 };
+    expect(
+      parseKnownDashboardWidget({
+        ...upcoming,
+        config: { query: 'schema:"Contract"', dateFieldId: 'contract_end', limit: 7 }
+      })?.type
+    ).toBe('UpcomingByDate');
+    expect(
+      parseKnownDashboardWidget({ ...upcoming, config: { query: 'x', dateFieldId: '' } })
+    ).toBeNull();
+  });
+
   it('parses a RelatedEntitiesList widget and rejects an incomplete one', () => {
     const base = { id: 'related', type: 'RelatedEntitiesList', x: 0, y: 0, w: 4, h: 14 };
     expect(

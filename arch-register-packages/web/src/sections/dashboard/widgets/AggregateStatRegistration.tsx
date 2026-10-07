@@ -47,7 +47,12 @@ const isValidQueryStatConfig = (config: Record<string, unknown>): boolean => {
   const display = config.display;
   const severity = config.severity;
   const needsDenominator = display === 'percent' || display === 'ofTotal';
+  const measure = config.measure;
   return (
+    (measure === undefined ||
+      measure === 'count' ||
+      (measure === 'sum' && typeof config.sumFieldId === 'string' && config.sumFieldId !== '')) &&
+    optionalString(config.sumFieldId) &&
     (display === undefined || display === 'count' || needsDenominator) &&
     optionalString(config.denominatorQuery) &&
     (!needsDenominator ||
