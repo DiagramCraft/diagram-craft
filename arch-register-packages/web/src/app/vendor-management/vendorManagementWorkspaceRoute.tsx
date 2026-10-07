@@ -1,5 +1,8 @@
 import { createRoute, type AnyRoute } from '@tanstack/react-router';
-import { buildVendorManagementBreadcrumbs } from './vendorManagementShell';
+import {
+  buildVendorManagementBreadcrumbs,
+  vendorManagementAppDefinition
+} from './vendorManagementShell';
 import {
   VENDOR_OVERVIEW_ID,
   VENDOR_VENDORS_ID,
@@ -13,10 +16,9 @@ import { railSectionShell } from '../../layouts/workspaceShellDescriptors';
 import {
   LazyVendorOverviewDashboardScreen,
   LazyVendorVendorsDashboardScreen,
-  LazyVendorContractsDashboardScreen,
-  LazyVendorSpendDashboardScreen,
-  LazyVendorRiskDashboardScreen
+  LazyVendorContractsDashboardScreen
 } from '../../routes/workspace/lazyWorkspaceScreens';
+import { createDashboardSectionRoute } from '../../routes/workspace/createDashboardSectionRoute';
 import { ensureApplicationAccess } from '../../routes/applicationAccess';
 import { validateVendorsSearch, validateContractsSearch } from '../../routes/searchParams';
 
@@ -81,39 +83,19 @@ export const createVendorManagementWorkspaceRoutes = <TParentRoute extends AnyRo
         breadcrumbs: buildVendorManagementBreadcrumbs(ctx, VENDOR_CONTRACTS_ID)
       })
   );
-  const spendRoute = withWorkspaceShell(
-    createRoute({
-      getParentRoute: () => workspaceRoute,
-      path: railPath(VENDOR_RAIL_PATHS[VENDOR_SPEND_ID]),
-      beforeLoad: ({ context, params }) =>
-        ensureApplicationAccess(
-          context.queryClient,
-          (params as unknown as { workspaceSlug: string }).workspaceSlug,
-          'vendor-management'
-        ),
-      component: LazyVendorSpendDashboardScreen
-    }),
-    ctx =>
-      railSectionShell(ctx, VENDOR_SPEND_ID, {
-        breadcrumbs: buildVendorManagementBreadcrumbs(ctx, VENDOR_SPEND_ID)
-      })
+  // Dashboard-only sections (Spend, Risk) need no screen of their own: the factory builds the
+  // route from `vendorManagementAppDefinition.sections`.
+  const spendRoute = createDashboardSectionRoute(
+    workspaceRoute,
+    vendorManagementAppDefinition,
+    VENDOR_SPEND_ID,
+    ctx => buildVendorManagementBreadcrumbs(ctx, VENDOR_SPEND_ID)
   );
-  const riskRoute = withWorkspaceShell(
-    createRoute({
-      getParentRoute: () => workspaceRoute,
-      path: railPath(VENDOR_RAIL_PATHS[VENDOR_RISK_ID]),
-      beforeLoad: ({ context, params }) =>
-        ensureApplicationAccess(
-          context.queryClient,
-          (params as unknown as { workspaceSlug: string }).workspaceSlug,
-          'vendor-management'
-        ),
-      component: LazyVendorRiskDashboardScreen
-    }),
-    ctx =>
-      railSectionShell(ctx, VENDOR_RISK_ID, {
-        breadcrumbs: buildVendorManagementBreadcrumbs(ctx, VENDOR_RISK_ID)
-      })
+  const riskRoute = createDashboardSectionRoute(
+    workspaceRoute,
+    vendorManagementAppDefinition,
+    VENDOR_RISK_ID,
+    ctx => buildVendorManagementBreadcrumbs(ctx, VENDOR_RISK_ID)
   );
 
   return [overviewRoute, vendorsRoute, contractsRoute, spendRoute, riskRoute] as const;

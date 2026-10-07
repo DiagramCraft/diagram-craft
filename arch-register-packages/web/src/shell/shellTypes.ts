@@ -1,5 +1,6 @@
 import type { IconType } from 'react-icons';
 import type { WorkspaceApplicationId } from '@arch-register/api-types/workspaceConfigContract';
+import type { WorkspaceCapabilityConfiguration } from '@arch-register/api-types/workspaceCapabilityContract';
 import type { AppRailItemId } from './appShellRegistry';
 
 export type BreadcrumbItem = {
@@ -39,8 +40,17 @@ export type AppRailSection = {
   icon: IconType;
   tooltip: string;
   route: string;
-  /** Marks the section as rendering the seeded app dashboard stored under this key. */
-  dashboard?: { appKey: string };
+  /**
+   * Marks the section as rendering the seeded app dashboard stored under this key. The generic
+   * route factory (`routes/workspace/createDashboardSectionRoutes.tsx`) creates the route for it.
+   */
+  dashboard?: {
+    appKey: string;
+    /** Defaults to "Loading…". */
+    loadingMessage?: string;
+    /** Defaults to "<app name> is not enabled.". */
+    notEnabledMessage?: string;
+  };
   /** Renders a rail divider before this item. */
   separator?: boolean;
   /** Primary sidebar shown while this section is active; resolved by the section's route. */
@@ -65,4 +75,12 @@ export type AppDefinition = {
   description: string;
   sections: AppRailSection[];
   enablement: 'always' | { capabilityType: string };
+  /**
+   * Resolves the app's capability configuration; `null` means "not configured" and gates its
+   * dashboard sections. When omitted, a valid configuration of `enablement.capabilityType` is
+   * enough (see `shell/appCapabilityGate.ts`).
+   */
+  resolveConfig?: (
+    configurations: readonly WorkspaceCapabilityConfiguration[] | undefined
+  ) => unknown | null;
 };
