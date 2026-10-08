@@ -10,6 +10,9 @@ import { TreeRow } from '../../components/TreeRow';
 import { TypeBadge } from '../../components/TypeBadge';
 import { entitiesQuery } from '../../queries/entities';
 import { useSchemas } from '../../hooks/useSchemas';
+import { useRelationSchemas } from '../../hooks/useRelationSchemas';
+import { useRelations } from '../../hooks/useRelations';
+import type { SchemaField } from '@arch-register/api-types/schemaContract';
 import styles from '../../shell/SidePanel.module.css';
 import { facetKindForField } from './dashboardFacetFields';
 
@@ -87,12 +90,14 @@ const FacetCheckboxRow = ({
 const FacetSection = ({
   workspaceSlug,
   schemaId,
+  schemaKind,
   facet,
   selectedIds,
   onToggle
 }: {
   workspaceSlug: string;
   schemaId: string | undefined;
+  schemaKind: 'entity' | 'relation';
   facet: DashboardFacetConfig;
   selectedIds: Set<string>;
   onToggle: (id: string) => void;
@@ -108,7 +113,10 @@ const FacetSection = ({
   // `resolveCapabilityFieldId`), so it can't be seeded as a fixed id, only matched by name at
   // render time (mirrors `schemaName` on this same config and on `entity-picker`). `_owner` /
   // `_lifecycle` are stable meta-field ids and pass through unchanged.
-  const schemas = useSchemas(workspaceSlug);
+  const isRelation = schemaKind === 'relation';
+  const entitySchemas = useSchemas(workspaceSlug, !isRelation);
+  const relationSchemas = useRelationSchemas(workspaceSlug, isRelation);
+  const schemas = isRelation ? relationSchemas : entitySchemas;
   const { resolvedFieldId, targetSchemaId, selectOptions } = useMemo(() => {
     if (!isFieldFacet) {
       return {
@@ -120,31 +128,41 @@ const FacetSection = ({
     if (!schemaId) {
       return { resolvedFieldId: undefined, targetSchemaId: undefined, selectOptions: undefined };
     }
-    const schema = schemas.data?.find(candidate => candidate.id === schemaId);
+    const schema = (schemas.data as { id: string; fields: SchemaField[] }[] | undefined)?.find(
+      candidate => candidate.id === schemaId
+    );
     const field = schema?.fields.find(candidate => candidate.name === facet.fieldId);
+    const options =
+      field && facetKindForField(field) === 'select' && 'options' in field
+        ? (field.options as { value: string; label: string }[])
+        : undefined;
     return {
       resolvedFieldId: field?.id,
       targetSchemaId:
         field && facetKindForField(field) === 'reference' && 'schemaId' in field
           ? field.schemaId
           : undefined,
-      selectOptions:
-        field && facetKindForField(field) === 'select' && 'options' in field
-          ? field.options
-          : undefined
+      selectOptions: options
     };
   }, [isFieldFacet, schemas.data, schemaId, facet.fieldId]);
 
   // Capped sample of the faceted schema's own entities, used to tally this facet's counts
   // client-side (see FACET_SAMPLE_LIMIT).
-  const sample = useQuery(
+  const entitySample = useQuery(
     entitiesQuery(
       workspaceSlug,
       { schemaId, view: 'full', limit: FACET_SAMPLE_LIMIT },
-      !!schemaId && !!resolvedFieldId
+      !isRelation && !!schemaId && !!resolvedFieldId
     )
   );
-  const sampledItems = sample.data?.items ?? [];
+  const relationSample = useRelations(
+    workspaceSlug,
+    { schemaId, limit: FACET_SAMPLE_LIMIT },
+    { enabled: isRelation && !!schemaId && !!resolvedFieldId }
+  );
+  const sampledItems: object[] = isRelation
+    ? relationSample.data
+    : (entitySample.data?.items ?? []);
 
   const counts = useMemo(() => {
     const tally = new Map<string, number>();
@@ -221,8 +239,12 @@ const FacetsSidebar = ({
   const navigate = useNavigate();
   const search = useSearch({ strict: false }) as Record<string, unknown>;
 
-  const schemas = useSchemas(workspaceSlug);
-  const schemaId = schemas.data?.find(schema => schema.name === sidebar.schemaName)?.id;
+  const schemaKind = sidebar.schemaKind ?? 'entity';
+  const entitySchemas = useSchemas(workspaceSlug, schemaKind === 'entity');
+  const relationSchemas = useRelationSchemas(workspaceSlug, schemaKind === 'relation');
+  const schemaId = (schemaKind === 'relation' ? relationSchemas : entitySchemas).data?.find(
+    schema => schema.name === sidebar.schemaName
+  )?.id;
 
   const selectedByVariable = useMemo(() => {
     const map = new Map<string, Set<string>>();
@@ -257,6 +279,7 @@ const FacetsSidebar = ({
             key={facet.variableName}
             workspaceSlug={workspaceSlug}
             schemaId={schemaId}
+            schemaKind={schemaKind}
             facet={facet}
             selectedIds={selectedByVariable.get(facet.variableName) ?? new Set()}
             onToggle={id => toggle(facet.variableName, id)}

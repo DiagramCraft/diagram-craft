@@ -137975,7 +137975,15 @@
                               },
                               "schemaName": {
                                 "type": "string",
-                                "description": "Entity schema display name whose entities are being faceted"
+                                "description": "Schema display name whose records are being faceted: an entity schema, or a relation schema when `schemaKind` is 'relation'"
+                              },
+                              "schemaKind": {
+                                "enum": [
+                                  "entity",
+                                  "relation"
+                                ],
+                                "type": "string",
+                                "description": "Whether `schemaName` names an entity schema (default) or a relation schema, in which case facets are tallied over the relation's own select/text fields and '_owner' / '_lifecycle'"
                               },
                               "facets": {
                                 "type": "array",
@@ -138287,7 +138295,15 @@
                             },
                             "schemaName": {
                               "type": "string",
-                              "description": "Entity schema display name whose entities are being faceted"
+                              "description": "Schema display name whose records are being faceted: an entity schema, or a relation schema when `schemaKind` is 'relation'"
+                            },
+                            "schemaKind": {
+                              "enum": [
+                                "entity",
+                                "relation"
+                              ],
+                              "type": "string",
+                              "description": "Whether `schemaName` names an entity schema (default) or a relation schema, in which case facets are tallied over the relation's own select/text fields and '_owner' / '_lifecycle'"
                             },
                             "facets": {
                               "type": "array",
@@ -138586,7 +138602,15 @@
                             },
                             "schemaName": {
                               "type": "string",
-                              "description": "Entity schema display name whose entities are being faceted"
+                              "description": "Schema display name whose records are being faceted: an entity schema, or a relation schema when `schemaKind` is 'relation'"
+                            },
+                            "schemaKind": {
+                              "enum": [
+                                "entity",
+                                "relation"
+                              ],
+                              "type": "string",
+                              "description": "Whether `schemaName` names an entity schema (default) or a relation schema, in which case facets are tallied over the relation's own select/text fields and '_owner' / '_lifecycle'"
                             },
                             "facets": {
                               "type": "array",
@@ -138837,7 +138861,15 @@
                               },
                               "schemaName": {
                                 "type": "string",
-                                "description": "Entity schema display name whose entities are being faceted"
+                                "description": "Schema display name whose records are being faceted: an entity schema, or a relation schema when `schemaKind` is 'relation'"
+                              },
+                              "schemaKind": {
+                                "enum": [
+                                  "entity",
+                                  "relation"
+                                ],
+                                "type": "string",
+                                "description": "Whether `schemaName` names an entity schema (default) or a relation schema, in which case facets are tallied over the relation's own select/text fields and '_owner' / '_lifecycle'"
                               },
                               "facets": {
                                 "type": "array",
@@ -139100,7 +139132,15 @@
                             },
                             "schemaName": {
                               "type": "string",
-                              "description": "Entity schema display name whose entities are being faceted"
+                              "description": "Schema display name whose records are being faceted: an entity schema, or a relation schema when `schemaKind` is 'relation'"
+                            },
+                            "schemaKind": {
+                              "enum": [
+                                "entity",
+                                "relation"
+                              ],
+                              "type": "string",
+                              "description": "Whether `schemaName` names an entity schema (default) or a relation schema, in which case facets are tallied over the relation's own select/text fields and '_owner' / '_lifecycle'"
                             },
                             "facets": {
                               "type": "array",
@@ -139447,7 +139487,15 @@
                             },
                             "schemaName": {
                               "type": "string",
-                              "description": "Entity schema display name whose entities are being faceted"
+                              "description": "Schema display name whose records are being faceted: an entity schema, or a relation schema when `schemaKind` is 'relation'"
+                            },
+                            "schemaKind": {
+                              "enum": [
+                                "entity",
+                                "relation"
+                              ],
+                              "type": "string",
+                              "description": "Whether `schemaName` names an entity schema (default) or a relation schema, in which case facets are tallied over the relation's own select/text fields and '_owner' / '_lifecycle'"
                             },
                             "facets": {
                               "type": "array",
@@ -140121,7 +140169,15 @@
                               },
                               "schemaName": {
                                 "type": "string",
-                                "description": "Entity schema display name whose entities are being faceted"
+                                "description": "Schema display name whose records are being faceted: an entity schema, or a relation schema when `schemaKind` is 'relation'"
+                              },
+                              "schemaKind": {
+                                "enum": [
+                                  "entity",
+                                  "relation"
+                                ],
+                                "type": "string",
+                                "description": "Whether `schemaName` names an entity schema (default) or a relation schema, in which case facets are tallied over the relation's own select/text fields and '_owner' / '_lifecycle'"
                               },
                               "facets": {
                                 "type": "array",

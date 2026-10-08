@@ -27,7 +27,7 @@ import {
 import { useWorkspaceAuthorization } from '../../auth/WorkspaceAuthorizationContext';
 import { useTeams } from '../../hooks/useWorkspaceConfig';
 import styles from '../../app/api-integration-catalog/sections/ApiIntegrationCatalogPlaceholderScreen.module.css';
-import tileStyles from '../../app/api-integration-catalog/sections/ApiIntegrationCatalogIntegrationsScreen.module.css';
+import tileStyles from './IntegrationSyncScreenTiles.module.css';
 
 const WARN = 'var(--cmp-fg-warning, #eab308)';
 const DANGER = 'var(--cmp-fg-danger, #ef4444)';

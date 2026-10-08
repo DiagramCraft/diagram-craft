@@ -5,6 +5,8 @@ import type {
 
 export const API_INTEGRATION_CATALOG_APP_KEY = 'api-integration-catalog';
 export const API_INTEGRATION_CATALOG_IMPACT_APP_KEY = 'api-integration-catalog-impact';
+export const API_INTEGRATION_CATALOG_APIS_APP_KEY = 'api-integration-catalog-apis';
+export const API_INTEGRATION_CATALOG_INTEGRATIONS_APP_KEY = 'api-integration-catalog-integrations';
 export const BUSINESS_GLOSSARY_APP_KEY = 'business-glossary';
 export const VENDOR_MANAGEMENT_VENDORS_APP_KEY = 'vendor-management-vendors';
 export const VENDOR_MANAGEMENT_CONTRACTS_APP_KEY = 'vendor-management-contracts';
@@ -32,6 +34,36 @@ export const DATA_STEWARDSHIP_CHANGE_CASES_APP_KEY = 'data-stewardship-change-ca
  *  `ENTITY_BROWSER_EMBED_TYPE`). Not re-exported from there to avoid a client package importing
  *  from the server, or vice versa; kept in sync by convention (both are `'EntityBrowserEmbed'`). */
 const ENTITY_BROWSER_EMBED_WIDGET_TYPE = 'EntityBrowserEmbed';
+
+/** API rows narrowed by the APIs sidebar facets (`$protocols`, `$lifecycles`, `$owners`). */
+const apiFacetQuery = {
+  root: {
+    kind: 'and' as const,
+    children: [
+      {
+        kind: 'predicate' as const,
+        path: [],
+        fieldId: 'Protocols',
+        op: 'in' as const,
+        value: ['$protocols']
+      },
+      {
+        kind: 'predicate' as const,
+        path: [],
+        fieldId: '_lifecycle',
+        op: 'in' as const,
+        value: ['$lifecycles']
+      },
+      {
+        kind: 'predicate' as const,
+        path: [],
+        fieldId: '_owner',
+        op: 'in' as const,
+        value: ['$owners']
+      }
+    ]
+  }
+};
 
 /** Control rows narrowed by the Controls sidebar facets (`$types`, `$effectiveness`). */
 const controlFacetQuery = {
@@ -317,6 +349,202 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
       schemaName: 'API',
       variableName: 'apiEntityId',
       itemLabel: 'APIs'
+    }
+  },
+  [API_INTEGRATION_CATALOG_APIS_APP_KEY]: {
+    name: 'APIs',
+    description: 'Registered APIs, the operations they expose, and which of them are deprecated.',
+    widgets: [
+      {
+        id: 'seed-apis-tabs',
+        type: 'tabs',
+        config: {
+          tabs: [
+            {
+              id: 'catalog',
+              label: 'Catalog',
+              widgets: [
+                {
+                  id: 'seed-apis',
+                  type: ENTITY_BROWSER_EMBED_WIDGET_TYPE,
+                  config: {
+                    q: '',
+                    conditions: [],
+                    sort: 'name',
+                    view: 'table',
+                    viewConfigs: {
+                      table: {
+                        fieldIds: [
+                          'Protocols',
+                          'API Version',
+                          '_lifecycle',
+                          '_owner',
+                          '_projection:Providers',
+                          '_projection:Consumers'
+                        ]
+                      }
+                    },
+                    schemaName: 'API',
+                    entityQuery: {
+                      ...apiFacetQuery,
+                      // The relation-bearing fields are named, and resolved at render time.
+                      projections: [
+                        {
+                          path: [{ kind: 'forward', fieldId: 'Provided by' }],
+                          fieldId: '_name',
+                          alias: 'Providers'
+                        },
+                        {
+                          path: [{ kind: 'forward', fieldId: 'Consumed by' }],
+                          fieldId: '_name',
+                          alias: 'Consumers'
+                        }
+                      ]
+                    }
+                  },
+                  x: 0,
+                  y: 0,
+                  w: 12,
+                  h: 40
+                }
+              ]
+            },
+            {
+              id: 'operations',
+              label: 'Operations',
+              widgets: [
+                {
+                  id: 'seed-apis-operations',
+                  type: 'SpecItemsTable',
+                  config: { schemaName: 'API', entityQuery: apiFacetQuery },
+                  x: 0,
+                  y: 0,
+                  w: 12,
+                  h: 40
+                }
+              ]
+            },
+            {
+              id: 'deprecated',
+              label: 'Deprecated operations',
+              widgets: [
+                {
+                  id: 'seed-apis-deprecated',
+                  type: 'SpecItemsTable',
+                  config: { schemaName: 'API', entityQuery: apiFacetQuery, deprecated: true },
+                  x: 0,
+                  y: 0,
+                  w: 12,
+                  h: 40
+                }
+              ]
+            }
+          ]
+        },
+        x: 0,
+        y: 0,
+        w: 12,
+        h: 44
+      }
+    ],
+    sidebar: {
+      kind: 'facets',
+      schemaName: 'API',
+      facets: [
+        { fieldId: 'Protocols', variableName: 'protocols', itemLabel: 'Protocol' },
+        { fieldId: '_lifecycle', variableName: 'lifecycles', itemLabel: 'Lifecycle' },
+        { fieldId: '_owner', variableName: 'owners', itemLabel: 'Owning team' }
+      ]
+    }
+  },
+  [API_INTEGRATION_CATALOG_INTEGRATIONS_APP_KEY]: {
+    name: 'Integrations',
+    description:
+      'Data flows between systems, and how well registered API usage is covered by them.',
+    widgets: [
+      {
+        id: 'seed-integrations-tabs',
+        type: 'tabs',
+        config: {
+          tabs: [
+            {
+              id: 'flows',
+              label: 'Data flows',
+              widgets: [
+                {
+                  id: 'seed-integrations-flows',
+                  type: 'RelationTable',
+                  config: {
+                    relationSchemaName: 'Data Flow',
+                    facetFilters: [
+                      { fieldId: 'Protocol', values: ['$protocols'] },
+                      { fieldId: 'Data Classification', values: ['$classifications'] },
+                      { fieldId: 'Cross-Boundary Transfer', values: ['$boundaries'] }
+                    ],
+                    fieldIds: [
+                      'data_entities',
+                      'protocol',
+                      'data_classification',
+                      'cross_boundary',
+                      '_owner'
+                    ],
+                    sort: 'data_classification',
+                    limit: 500,
+                    rowDrawer: true
+                  },
+                  x: 0,
+                  y: 0,
+                  w: 12,
+                  h: 40
+                }
+              ]
+            },
+            {
+              id: 'api-usage',
+              label: 'API usage',
+              widgets: [
+                {
+                  id: 'seed-integrations-pairs',
+                  type: 'RelationPairsCoverage',
+                  config: {
+                    hubSchemaName: 'API',
+                    providerFieldName: 'Provided by',
+                    consumerFieldName: 'Consumed by',
+                    coverageRelationSchemaName: 'Data Flow',
+                    coverageLabel: 'Data Flow'
+                  },
+                  x: 0,
+                  y: 0,
+                  w: 12,
+                  h: 40
+                }
+              ]
+            }
+          ]
+        },
+        x: 0,
+        y: 0,
+        w: 12,
+        h: 44
+      }
+    ],
+    sidebar: {
+      kind: 'facets',
+      schemaName: 'Data Flow',
+      schemaKind: 'relation',
+      facets: [
+        { fieldId: 'Protocol', variableName: 'protocols', itemLabel: 'Protocol' },
+        {
+          fieldId: 'Data Classification',
+          variableName: 'classifications',
+          itemLabel: 'Classification'
+        },
+        {
+          fieldId: 'Cross-Boundary Transfer',
+          variableName: 'boundaries',
+          itemLabel: 'Boundary'
+        }
+      ]
     }
   },
   [DATA_STEWARDSHIP_ASSESSMENTS_APP_KEY]: {

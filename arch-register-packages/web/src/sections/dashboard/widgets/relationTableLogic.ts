@@ -1,4 +1,5 @@
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
+import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import { scalarValues } from '../../../lib/scalarFieldValues';
 
 /** Pseudo column ids for relation metadata, alongside the relation schema's own field ids/names. */
@@ -67,4 +68,37 @@ export const compareRelationValues = (a: string | number | null, b: string | num
   if (b == null) return -1;
   if (typeof a === 'number' && typeof b === 'number') return a - b;
   return String(a).localeCompare(String(b));
+};
+
+/** A multi-select filter on one relation field; typically `values: ['$variable']` bound to a
+ *  `facets` sidebar. An empty `values` list means "no constraint". */
+export type RelationFacetFilter = { fieldId: string; values: string[] };
+
+/**
+ * AND-s `in` predicates for each non-empty facet filter onto `query`. `fieldId` is a field id or
+ * name on `schema` (names keep seeds workspace-independent); filters naming an unknown field are
+ * skipped, so a stale seed degrades to "no constraint" instead of emptying the table.
+ */
+export const applyRelationFacetFilters = (
+  query: EntityQuery,
+  schema: RelationSchema | undefined,
+  filters: readonly RelationFacetFilter[] | undefined
+): EntityQuery => {
+  const predicates = (filters ?? []).flatMap(filter => {
+    const field = schema?.fields.find(
+      candidate => candidate.id === filter.fieldId || candidate.name === filter.fieldId
+    );
+    if (!field || filter.values.length === 0) return [];
+    return [
+      {
+        kind: 'predicate' as const,
+        path: [],
+        fieldId: field.id,
+        op: 'in' as const,
+        value: filter.values
+      }
+    ];
+  });
+  if (predicates.length === 0) return query;
+  return { ...query, root: { kind: 'and', children: [query.root, ...predicates] } };
 };

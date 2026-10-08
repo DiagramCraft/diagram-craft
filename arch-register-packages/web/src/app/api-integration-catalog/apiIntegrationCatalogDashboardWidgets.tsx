@@ -151,7 +151,11 @@ const useApiCatalogNavigation = () => {
     navigate({
       to: IC_RAIL_PATHS[IC_INTEGRATIONS_ID],
       params: { workspaceSlug },
-      search: (previous: Record<string, unknown>) => ({ ...previous, boundary: '1' as const })
+      // `boundaries` is the Integrations dashboard's "Cross-Boundary Transfer" facet variable.
+      search: ((previous: Record<string, unknown>) => ({
+        ...previous,
+        boundaries: 'cross-boundary'
+      })) as never
     });
 
   return { workspaceSlug, openApi, viewCatalog, viewIntegrations };

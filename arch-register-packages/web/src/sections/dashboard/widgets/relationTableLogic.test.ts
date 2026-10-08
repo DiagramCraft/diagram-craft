@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
+import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import {
+  applyRelationFacetFilters,
   buildRelationQueryText,
   compareRelationValues,
   formatRelationFieldValue,
@@ -65,5 +67,43 @@ describe('compareRelationValues', () => {
     expect(compareRelationValues(null, 'a')).toBeGreaterThan(0);
     expect(compareRelationValues(2, 10)).toBeLessThan(0);
     expect(compareRelationValues('a', 'b')).toBeLessThan(0);
+  });
+});
+
+describe('applyRelationFacetFilters', () => {
+  const query = { root: { kind: 'and', children: [] } } as EntityQuery;
+
+  it('returns the query unchanged when no filter has values', () => {
+    expect(applyRelationFacetFilters(query, schema, [{ fieldId: 'Protocol', values: [] }])).toBe(
+      query
+    );
+    expect(applyRelationFacetFilters(query, schema, undefined)).toBe(query);
+  });
+
+  it('AND-s an in-predicate per filter, resolving names to ids', () => {
+    const result = applyRelationFacetFilters(query, schema, [
+      { fieldId: 'Protocol', values: ['rest', 'grpc'] },
+      { fieldId: 'data_classification', values: ['sensitive'] }
+    ]);
+    expect(result.root).toEqual({
+      kind: 'and',
+      children: [
+        query.root,
+        { kind: 'predicate', path: [], fieldId: 'protocol', op: 'in', value: ['rest', 'grpc'] },
+        {
+          kind: 'predicate',
+          path: [],
+          fieldId: 'data_classification',
+          op: 'in',
+          value: ['sensitive']
+        }
+      ]
+    });
+  });
+
+  it('skips filters on unknown fields', () => {
+    expect(applyRelationFacetFilters(query, schema, [{ fieldId: 'Nope', values: ['x'] }])).toBe(
+      query
+    );
   });
 });

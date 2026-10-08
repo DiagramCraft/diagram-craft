@@ -1,5 +1,8 @@
 import { createRoute, redirect, type AnyRoute } from '@tanstack/react-router';
-import { buildApiIntegrationCatalogBreadcrumbs } from './apiIntegrationCatalogShell';
+import {
+  apiIntegrationCatalogAppDefinition,
+  buildApiIntegrationCatalogBreadcrumbs
+} from './apiIntegrationCatalogShell';
 import {
   IC_OVERVIEW_ID,
   IC_APIS_ID,
@@ -11,25 +14,18 @@ import { withWorkspaceShell } from '../../routes/workspace/workspaceShellRoute';
 import { railSectionShell } from '../../layouts/workspaceShellDescriptors';
 import {
   LazyApiIntegrationCatalogOverviewDashboard,
-  LazyApiIntegrationCatalogApisScreen,
-  LazyApiIntegrationCatalogIntegrationsScreen,
   LazyApiIntegrationCatalogImpactDashboard
 } from '../../routes/workspace/lazyWorkspaceScreens';
 import { ensureApplicationAccess } from '../../routes/applicationAccess';
-import {
-  validateApiIntegrationCatalogApisSearch,
-  validateApiIntegrationCatalogIntegrationsSearch
-} from '../../routes/searchParams';
+import { createDashboardSectionRoute } from '../../routes/workspace/createDashboardSectionRoute';
 
 const railPath = (path: string) => path.replace('/$workspaceSlug/', '');
 
 /**
- * API & Integration Catalog's workspace routes: one per rail section, plus the APIs section's
- * deep-linkable spec drawer route (#3316). Mirrors `../risk-compliance/riskComplianceWorkspaceRoute.tsx`.
- * Integrations remains a placeholder screen with no detail route yet; it lands alongside its own
- * real content in a later sub-issue of #3150 (#3317). Impact (#3320) is a single-widget dashboard
- * (#3467) — its API picker is the dashboard's own sidebar, its selection carried as an untyped
- * search param (the sidebar's `variableName`), so it needs no `validateSearch`.
+ * API & Integration Catalog's workspace routes: one per rail section, every one a dashboard (APIs
+ * and Integrations through `createDashboardSectionRoute`; their sidebar facets are untyped search
+ * params, so no `validateSearch`), plus a legacy redirect from the old `apis/$apiId` deep link.
+ * Mirrors `../vendor-management/vendorManagementWorkspaceRoute.tsx`.
  */
 export const createApiIntegrationCatalogWorkspaceRoutes = <TParentRoute extends AnyRoute>(
   workspaceRoute: TParentRoute
@@ -54,25 +50,13 @@ export const createApiIntegrationCatalogWorkspaceRoutes = <TParentRoute extends 
         breadcrumbs: buildApiIntegrationCatalogBreadcrumbs(ctx, IC_OVERVIEW_ID)
       })
   );
-  const apisRoute = withWorkspaceShell(
-    createRoute({
-      getParentRoute: () => workspaceRoute,
-      path: railPath(IC_RAIL_PATHS[IC_APIS_ID]),
-      validateSearch: validateApiIntegrationCatalogApisSearch,
-      beforeLoad: ({ context, params }) =>
-        ensureApplicationAccess(
-          context.queryClient,
-          (params as unknown as { workspaceSlug: string }).workspaceSlug,
-          'api-integration-catalog'
-        ),
-      component: LazyApiIntegrationCatalogApisScreen
-    }),
-    ctx =>
-      railSectionShell(ctx, IC_APIS_ID, {
-        breadcrumbs: buildApiIntegrationCatalogBreadcrumbs(ctx, IC_APIS_ID)
-      })
+  const apisRoute = createDashboardSectionRoute(
+    workspaceRoute,
+    apiIntegrationCatalogAppDefinition,
+    IC_APIS_ID,
+    ctx => buildApiIntegrationCatalogBreadcrumbs(ctx, IC_APIS_ID)
   );
-  // Legacy deep link: `ApiIntegrationCatalogApisScreen` now opens the API drawer via the shared
+  // Legacy deep link: the APIs dashboard opens the API drawer via the shared
   // `drawer` search param (see useEntityDrawer.ts) instead of an `$apiId` route, so an old
   // bookmarked `.../apis/$apiId` URL is redirected to the equivalent search param.
   const apisDetailRoute = createRoute({
@@ -90,23 +74,11 @@ export const createApiIntegrationCatalogWorkspaceRoutes = <TParentRoute extends 
       });
     }
   });
-  const integrationsRoute = withWorkspaceShell(
-    createRoute({
-      getParentRoute: () => workspaceRoute,
-      path: railPath(IC_RAIL_PATHS[IC_INTEGRATIONS_ID]),
-      validateSearch: validateApiIntegrationCatalogIntegrationsSearch,
-      beforeLoad: ({ context, params }) =>
-        ensureApplicationAccess(
-          context.queryClient,
-          (params as unknown as { workspaceSlug: string }).workspaceSlug,
-          'api-integration-catalog'
-        ),
-      component: LazyApiIntegrationCatalogIntegrationsScreen
-    }),
-    ctx =>
-      railSectionShell(ctx, IC_INTEGRATIONS_ID, {
-        breadcrumbs: buildApiIntegrationCatalogBreadcrumbs(ctx, IC_INTEGRATIONS_ID)
-      })
+  const integrationsRoute = createDashboardSectionRoute(
+    workspaceRoute,
+    apiIntegrationCatalogAppDefinition,
+    IC_INTEGRATIONS_ID,
+    ctx => buildApiIntegrationCatalogBreadcrumbs(ctx, IC_INTEGRATIONS_ID)
   );
   const impactRoute = withWorkspaceShell(
     createRoute({

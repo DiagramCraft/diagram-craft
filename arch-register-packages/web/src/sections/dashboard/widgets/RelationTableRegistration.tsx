@@ -15,8 +15,16 @@ const isValidConfig = (config: Record<string, unknown>): config is RelationTable
   typeof config.limit === 'number' &&
   config.limit > 0 &&
   (config.filter === undefined || typeof config.filter === 'string') &&
+  (config.facetFilters === undefined ||
+    (Array.isArray(config.facetFilters) &&
+      config.facetFilters.every(
+        filter =>
+          typeof filter?.fieldId === 'string' &&
+          isStringArray((filter as { values?: unknown }).values)
+      ))) &&
   (config.sort === undefined || typeof config.sort === 'string') &&
   (config.sortDir === undefined || config.sortDir === 'asc' || config.sortDir === 'desc') &&
+  (config.rowDrawer === undefined || typeof config.rowDrawer === 'boolean') &&
   (config.label === undefined || typeof config.label === 'string');
 
 export const relationTableSpec: DashboardWidgetSpec<RelationTableWidgetConfig> = {

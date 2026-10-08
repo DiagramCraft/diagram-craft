@@ -2,7 +2,6 @@ import { TbLayoutDashboard, TbApi, TbPlugConnected, TbAffiliate } from 'react-ic
 import { buildHomeBreadcrumbs } from '../../shell/breadcrumbBuilders';
 import type { WorkspaceShellContext } from '../../layouts/workspaceShellDescriptors';
 import type { AppDefinition, BreadcrumbItem } from '../../shell/shellTypes';
-import { ApiIntegrationCatalogSidebar } from './sections/ApiIntegrationCatalogSidebar';
 import { AppDashboardPrimarySidebar } from '../../sections/dashboard/AppDashboardPrimarySidebar';
 import {
   IC_OVERVIEW_ID,
@@ -48,10 +47,11 @@ export const apiIntegrationCatalogAppDefinition: AppDefinition = {
       icon: TbApi,
       tooltip: 'APIs',
       route: IC_RAIL_PATHS[IC_APIS_ID],
+      dashboard: { appKey: 'api-integration-catalog-apis' },
       primarySidebar: ctx => (
-        <ApiIntegrationCatalogSidebar
+        <AppDashboardPrimarySidebar
           workspaceSlug={ctx.workspaceSlug}
-          activeSection={IC_APIS_ID}
+          appKey="api-integration-catalog-apis"
         />
       )
     },
@@ -60,10 +60,11 @@ export const apiIntegrationCatalogAppDefinition: AppDefinition = {
       icon: TbPlugConnected,
       tooltip: 'Integrations',
       route: IC_RAIL_PATHS[IC_INTEGRATIONS_ID],
+      dashboard: { appKey: 'api-integration-catalog-integrations' },
       primarySidebar: ctx => (
-        <ApiIntegrationCatalogSidebar
+        <AppDashboardPrimarySidebar
           workspaceSlug={ctx.workspaceSlug}
-          activeSection={IC_INTEGRATIONS_ID}
+          appKey="api-integration-catalog-integrations"
         />
       )
     },

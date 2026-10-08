@@ -19,10 +19,7 @@ export const resolveTypedRelationSchemaId = (
 
 /**
  * Fetches every `Provides API` / `Consumes API` typed relation in the workspace, once each —
- * shared by the Integrations screen's "API Usage" pairs (`apiPairCoverage.ts`) and the APIs
- * screen's Providers/Consumers columns and cross-API operations views (#3345). Mirrors
- * `ApiIntegrationCatalogIntegrationsScreen.tsx`'s original inline resolution of these same two
- * relation schemas, extracted once a second call site needed the identical ~20-line lookup.
+ * shared by the API usage pairs widget (`apiPairCoverage.ts`).
  */
 export const useApiEndpointRelations = (
   workspaceSlug: string,

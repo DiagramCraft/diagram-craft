@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import type { RelationRecord } from '@arch-register/api-types/relationContract';
-import { computeApiPairCoverage, computeApiPairs } from './apiPairCoverage';
+import type { EntitySchema } from '@arch-register/api-types/schemaContract';
+import {
+  computeRelationPairCoverage,
+  computeRelationPairs,
+  resolveTypedRelationSchemaId
+} from './relationPairCoverageLogic';
 
 const relation = (
   uid: string,
@@ -17,23 +22,23 @@ const system = (id: string, name: string) => ({ id, name, schemaId: 'system' });
 const component = (id: string, name: string) => ({ id, name, schemaId: 'component' });
 const api = (id: string, name: string) => ({ id, name, schemaId: 'api' });
 
-describe('computeApiPairs', () => {
+describe('computeRelationPairs', () => {
   it('pairs a single provider with a single consumer of the same API', () => {
     const providers = [relation('p1', system('sys-a', 'System A'), api('api-1', 'Orders API'))];
     const consumers = [relation('c1', system('sys-b', 'System B'), api('api-1', 'Orders API'))];
 
-    const pairs = computeApiPairs(providers, consumers, []);
+    const pairs = computeRelationPairs(providers, consumers, []);
 
     expect(pairs).toEqual([
       {
         key: 'sys-b:api-1:sys-a',
         consumer: system('sys-b', 'System B'),
         provider: system('sys-a', 'System A'),
-        api: api('api-1', 'Orders API'),
+        hub: api('api-1', 'Orders API'),
         consumerRelationId: 'c1',
         providerRelationId: 'p1',
-        hasDataFlow: false,
-        dataFlowApplicable: true
+        hasCoverage: false,
+        coverageApplicable: true
       }
     ]);
   });
@@ -48,35 +53,35 @@ describe('computeApiPairs', () => {
       relation('c2', system('sys-d', 'System D'), api('api-1', 'Orders API'))
     ];
 
-    const pairs = computeApiPairs(providers, consumers, []);
+    const pairs = computeRelationPairs(providers, consumers, []);
 
     expect(pairs).toHaveLength(4);
   });
 
-  it('flags hasDataFlow true when a Data Flow relation exists between the pair, either direction', () => {
+  it('flags hasCoverage true when a Data Flow relation exists between the pair, either direction', () => {
     const providers = [relation('p1', system('sys-a', 'System A'), api('api-1', 'Orders API'))];
     const consumers = [relation('c1', system('sys-b', 'System B'), api('api-1', 'Orders API'))];
     const dataFlows = [relation('df1', system('sys-b', 'System B'), system('sys-a', 'System A'))];
 
-    const pairs = computeApiPairs(providers, consumers, dataFlows);
+    const pairs = computeRelationPairs(providers, consumers, dataFlows);
     expect(pairs).toHaveLength(1);
     const pair = pairs[0]!;
 
-    expect(pair.hasDataFlow).toBe(true);
-    expect(pair.dataFlowApplicable).toBe(true);
+    expect(pair.hasCoverage).toBe(true);
+    expect(pair.coverageApplicable).toBe(true);
   });
 
-  it('flags hasDataFlow false when no matching Data Flow relation exists (the gap case)', () => {
+  it('flags hasCoverage false when no matching Data Flow relation exists (the gap case)', () => {
     const providers = [relation('p1', system('sys-a', 'System A'), api('api-1', 'Orders API'))];
     const consumers = [relation('c1', system('sys-b', 'System B'), api('api-1', 'Orders API'))];
     const dataFlows = [relation('df1', system('sys-b', 'System B'), system('sys-x', 'System X'))];
 
-    const pairs = computeApiPairs(providers, consumers, dataFlows);
+    const pairs = computeRelationPairs(providers, consumers, dataFlows);
     expect(pairs).toHaveLength(1);
     const pair = pairs[0]!;
 
-    expect(pair.hasDataFlow).toBe(false);
-    expect(pair.dataFlowApplicable).toBe(true);
+    expect(pair.hasCoverage).toBe(false);
+    expect(pair.coverageApplicable).toBe(true);
   });
 
   it('marks a pair not applicable when an endpoint is Component-typed', () => {
@@ -86,11 +91,11 @@ describe('computeApiPairs', () => {
     const consumers = [relation('c1', system('sys-b', 'System B'), api('api-1', 'Orders API'))];
     const dataFlows = [relation('df1', system('sys-b', 'System B'), system('sys-x', 'System X'))];
 
-    const pairs = computeApiPairs(providers, consumers, dataFlows);
+    const pairs = computeRelationPairs(providers, consumers, dataFlows);
     expect(pairs).toHaveLength(1);
     const pair = pairs[0]!;
 
-    expect(pair.dataFlowApplicable).toBe(false);
+    expect(pair.coverageApplicable).toBe(false);
   });
 
   it('treats every pair as applicable when the workspace has no Data Flow relations yet', () => {
@@ -99,19 +104,19 @@ describe('computeApiPairs', () => {
     ];
     const consumers = [relation('c1', system('sys-b', 'System B'), api('api-1', 'Orders API'))];
 
-    const pairs = computeApiPairs(providers, consumers, []);
+    const pairs = computeRelationPairs(providers, consumers, []);
     expect(pairs).toHaveLength(1);
     const pair = pairs[0]!;
 
-    expect(pair.dataFlowApplicable).toBe(true);
-    expect(pair.hasDataFlow).toBe(false);
+    expect(pair.coverageApplicable).toBe(true);
+    expect(pair.hasCoverage).toBe(false);
   });
 
   it('excludes an entity that both provides and consumes the same API from pairing with itself', () => {
     const providers = [relation('p1', system('sys-a', 'System A'), api('api-1', 'Orders API'))];
     const consumers = [relation('c1', system('sys-a', 'System A'), api('api-1', 'Orders API'))];
 
-    const pairs = computeApiPairs(providers, consumers, []);
+    const pairs = computeRelationPairs(providers, consumers, []);
 
     expect(pairs).toHaveLength(0);
   });
@@ -119,20 +124,20 @@ describe('computeApiPairs', () => {
   it('produces no pairs for an API with only providers or only consumers', () => {
     const providers = [relation('p1', system('sys-a', 'System A'), api('api-1', 'Orders API'))];
 
-    expect(computeApiPairs(providers, [], [])).toHaveLength(0);
+    expect(computeRelationPairs(providers, [], [])).toHaveLength(0);
   });
 });
 
-describe('computeApiPairCoverage', () => {
+describe('computeRelationPairCoverage', () => {
   it('reconciles totals across covered, gap, and not-applicable pairs', () => {
     const pairs = [
-      { dataFlowApplicable: true, hasDataFlow: true },
-      { dataFlowApplicable: true, hasDataFlow: false },
-      { dataFlowApplicable: true, hasDataFlow: false },
-      { dataFlowApplicable: false, hasDataFlow: false }
-    ] as ReturnType<typeof computeApiPairs>;
+      { coverageApplicable: true, hasCoverage: true },
+      { coverageApplicable: true, hasCoverage: false },
+      { coverageApplicable: true, hasCoverage: false },
+      { coverageApplicable: false, hasCoverage: false }
+    ] as ReturnType<typeof computeRelationPairs>;
 
-    expect(computeApiPairCoverage(pairs)).toEqual({
+    expect(computeRelationPairCoverage(pairs)).toEqual({
       totalPairs: 4,
       applicablePairs: 3,
       coveredPairs: 1,
@@ -142,12 +147,39 @@ describe('computeApiPairCoverage', () => {
   });
 
   it('returns all-zero summary for an empty pair list', () => {
-    expect(computeApiPairCoverage([])).toEqual({
+    expect(computeRelationPairCoverage([])).toEqual({
       totalPairs: 0,
       applicablePairs: 0,
       coveredPairs: 0,
       gapPairs: 0,
       notApplicablePairs: 0
     });
+  });
+});
+
+describe('resolveTypedRelationSchemaId', () => {
+  const hub = {
+    id: 'api',
+    name: 'API',
+    fields: [
+      {
+        id: 'providers',
+        name: 'Provided by',
+        type: 'typedRelation',
+        relationSchemaId: 'rs-provides'
+      },
+      { id: 'api_version', name: 'API Version', type: 'text' }
+    ]
+  } as unknown as EntitySchema;
+
+  it('matches a typed relation field by id or name', () => {
+    expect(resolveTypedRelationSchemaId(hub, 'providers')).toBe('rs-provides');
+    expect(resolveTypedRelationSchemaId(hub, 'Provided by')).toBe('rs-provides');
+  });
+
+  it('is null for missing or non-relation fields', () => {
+    expect(resolveTypedRelationSchemaId(hub, 'API Version')).toBeNull();
+    expect(resolveTypedRelationSchemaId(hub, 'Nope')).toBeNull();
+    expect(resolveTypedRelationSchemaId(undefined, 'providers')).toBeNull();
   });
 });

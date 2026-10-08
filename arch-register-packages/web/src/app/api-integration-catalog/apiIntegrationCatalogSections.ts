@@ -1,6 +1,6 @@
 /**
  * API & Integration Catalog's rail-item ids, routes, and labels — split out from
- * `apiIntegrationCatalogShell.tsx` so both it and `sections/ApiIntegrationCatalogSidebar.tsx` can
+ * `apiIntegrationCatalogShell.tsx` so both it and the app's dashboard sidebars can
  * depend on this leaf module without an import cycle (the sidebar is rendered by the shell's
  * `primarySidebar` factories, and also needs the ids/routes to navigate between sections). Mirrors
  * `../risk-compliance/riskComplianceSections.ts`.
