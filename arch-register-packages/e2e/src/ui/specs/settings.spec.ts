@@ -37,15 +37,21 @@ test.describe('settings section', () => {
     await dataModelPage.expectLoaded();
   });
 
-  test('lists applications with an access tab', async ({ page }) => {
+  test('separates application access from capability bindings', async ({ page }) => {
     const settingsPage = new SettingsPage(page, defaultWorkspace.slug);
 
     await settingsPage.goto('applications-capabilities');
     await page.getByText('Strategy & Capability Modelling', { exact: true }).click();
     await expect(page.getByRole('tab', { name: 'Access', exact: true })).toBeVisible();
     await expect(page.getByRole('tab', { name: 'Binding', exact: true })).toHaveCount(0);
-    await expect(page.getByRole('tab', { name: 'Bindings', exact: true })).toHaveCount(0);
 
+    // The API specification binding is edited from its own capability entry.
+    await page.getByText('API specification', { exact: true }).click();
+    await expect(page.getByRole('tab', { name: 'Binding', exact: true })).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'Access', exact: true })).toHaveCount(0);
+    await expect(page.getByText('API entity schema', { exact: true })).toBeVisible();
+
+    await page.getByText('API & Integration Catalog', { exact: true }).click();
     await page.getByRole('tab', { name: 'Access', exact: true }).click();
     await expect(
       page.getByRole('checkbox', { name: 'All workspace members', exact: true })

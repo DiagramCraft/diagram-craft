@@ -306,6 +306,5 @@ export const seedTemplateRelationSchemaDefinitions: RelationSchemaDbResult[] =
   seedTemplateDefinitions.relationSchemas;
 
 export const SEED_CAPABILITY_CONFIGURATION_IDS = {
-  'api-specification': '00000000-0000-0000-0000-000000000007',
-  'business-glossary': '00000000-0000-0000-0000-000000000008'
+  'api-specification': '00000000-0000-0000-0000-000000000007'
 } as const;

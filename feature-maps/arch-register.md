@@ -42,8 +42,9 @@
           its accent colour. An application may own several
           rail sections, each with its own icon, tooltip, route, and optionally its own primary sidebar. An
           application appears in the switcher for every member who has access to it. Workspace administrators
-          control application access for ordinary members from the "Applications & Capabilities" workspace settings screen
-          with an all-members or selected-people-and-teams policy;
+          control application access for ordinary members from the "Applications" group of the "Applications &
+          Capabilities" workspace settings screen with an all-members or selected-people-and-teams policy, while the
+          "Capabilities" group edits the schema binding of capabilities with non-dashboard consumers (API specification);
           missing policies deny ordinary members by default while global administrators and workspace role managers
           retain access. Breadcrumbs are relative to the active application, which the switcher represents.
 
@@ -754,8 +755,8 @@
           sources, repeat idempotently without duplicate revisions, and preserve the last successful revision when a
           refresh or completed source scan fails.
 
-        - @id:ar.entities.business-glossary Workspaces can enable a permission-aware business glossary backed by
-          ordinary entity schemas, surfaced as its own application (@id:ar.workspace.applications) as a configurable
+        - @id:ar.entities.business-glossary Workspaces can use a permission-aware business glossary backed by
+          ordinary entity schemas (Term and Term Category, found by the dashboard rather than bound through a capability), surfaced as its own application (@id:ar.workspace.applications) as a configurable
           dashboard: a single full-width term table plus a facets sidebar (category, owner, lifecycle, each
           multi-select with counts) that filters the table live. Administrators can edit the facets sidebar (add, remove, reorder facets) from the dashboard's Edit sidebar dialog. A facets sidebar can be built over an entity schema or over a relation type (e.g. Data Flow), tallying counts from the relations' own select/text fields. The table shows canonical name, synonyms,
           abbreviations, categories, owner, lifecycle, status, and a usage count (entities, typed relations,

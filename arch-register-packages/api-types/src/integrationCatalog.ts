@@ -5,7 +5,6 @@ import {
   type WorkspaceCapabilityType
 } from './workspaceCapabilityContract';
 import { z } from 'zod';
-import { businessGlossaryCapabilityDefinition } from './app/business-glossary/glossaryCapability';
 
 const capabilityFieldTypeSchema = z.enum([
   'text',
@@ -121,8 +120,7 @@ export const workspaceCapabilityDefinitions: WorkspaceCapabilityDefinition[] = [
         fieldRoles: apiSpecificationFieldRoles
       }
     ]
-  },
-  businessGlossaryCapabilityDefinition
+  }
 ];
 
 export const getWorkspaceCapabilityDefinition = (type: WorkspaceCapabilityType | string) =>

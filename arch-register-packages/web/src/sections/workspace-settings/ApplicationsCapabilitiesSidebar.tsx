@@ -1,6 +1,6 @@
 import { getRouteApi } from '@tanstack/react-router';
 import { useMemo } from 'react';
-import { TbApps } from 'react-icons/tb';
+import { TbApps, TbBolt } from 'react-icons/tb';
 import { TreeRow } from '../../components/TreeRow';
 import styles from '../../shell/SidePanel.module.css';
 import { SidebarGroupLabel, SidebarTitleHeader } from '../../components/sidebar/SidebarPrimitives';
@@ -45,7 +45,7 @@ export const ApplicationsCapabilitiesSidebar = ({ workspaceSlug }: { workspaceSl
     canManageBindings: ctx.permissions.canManageWorkspaces,
     canManageAccess: ctx.permissions.canAdministerWorkspace ?? false
   };
-  const applications = buildApplicationsCapabilitiesItems(perms);
+  const { applications, capabilities } = buildApplicationsCapabilitiesItems(perms);
   const activeItem = findApplicationsCapabilitiesItem(perms, search.item);
 
   const select = (id: string) =>
@@ -81,6 +81,7 @@ export const ApplicationsCapabilitiesSidebar = ({ workspaceSlug }: { workspaceSl
       <SidebarTitleHeader title="Applications & Capabilities" />
       <div className={styles.scroll}>
         {renderGroup('Applications', applications, <TbApps size={12} />)}
+        {renderGroup('Capabilities', capabilities, <TbBolt size={12} />)}
       </div>
     </>
   );

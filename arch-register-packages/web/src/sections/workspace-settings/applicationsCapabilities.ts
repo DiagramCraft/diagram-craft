@@ -1,16 +1,14 @@
+import { getWorkspaceCapabilityDefinition } from '@arch-register/api-types/integrationCatalog';
 import { APP_DEFINITIONS } from '../../shell/appShellRegistry';
 
 /**
  * Shared model for the "Applications & Capabilities" settings screen and its secondary sidebar.
- * Each entry is an application with its access-policy tab; applications backed by a capability with
- * non-dashboard consumers also get a binding tab.
+ * An application entry carries its access policy; a capability entry carries a schema binding that
+ * non-dashboard code reads.
  */
 
-/** Applications whose capability binding is still read by non-dashboard code. */
-const BOUND_CAPABILITY_BY_APPLICATION: Record<string, string> = {
-  'business-glossary': 'business-glossary',
-  'api-integration-catalog': 'api-specification'
-};
+/** Capabilities whose binding is read by non-dashboard code and so stays configurable. */
+const CAPABILITY_TYPES = ['api-specification'] as const;
 
 export type ApplicationsCapabilitiesPermissions = {
   /** `canManageWorkspaces` — may edit schema bindings. */
@@ -24,37 +22,45 @@ export type ACTab = { id: string; label: string };
 export type ACItem = {
   id: string;
   label: string;
-  applicationId: string;
-  /** Capability whose binding the application edits; absent when it has none. */
+  kind: 'application' | 'capability';
+  applicationId?: string;
   capabilityType?: string;
   tabs: ACTab[];
 };
 
 export const buildApplicationsCapabilitiesItems = (
   perms: ApplicationsCapabilitiesPermissions
-): ACItem[] =>
-  APP_DEFINITIONS.filter(app => app.applicationId !== 'home').map(app => {
-    const capabilityType = BOUND_CAPABILITY_BY_APPLICATION[app.applicationId];
-    return {
+): { applications: ACItem[]; capabilities: ACItem[] } => {
+  const applications: ACItem[] = APP_DEFINITIONS.filter(app => app.applicationId !== 'home').map(
+    app => ({
       id: app.applicationId,
       label: app.name,
+      kind: 'application' as const,
       applicationId: app.applicationId,
-      capabilityType,
-      tabs: [
-        ...(capabilityType && perms.canManageBindings
-          ? [{ id: 'bindings', label: 'Binding' }]
-          : []),
-        ...(perms.canManageAccess ? [{ id: 'access', label: 'Access' }] : [])
-      ]
-    };
-  });
+      tabs: perms.canManageAccess ? [{ id: 'access', label: 'Access' }] : []
+    })
+  );
+
+  const capabilities: ACItem[] = perms.canManageBindings
+    ? CAPABILITY_TYPES.map(type => ({
+        id: type,
+        label: getWorkspaceCapabilityDefinition(type)?.label ?? type,
+        kind: 'capability' as const,
+        capabilityType: type,
+        tabs: [{ id: 'bindings', label: 'Binding' }]
+      }))
+    : [];
+
+  return { applications, capabilities };
+};
 
 /** Resolve the selected sidebar entry, falling back to the first available one. */
 export const findApplicationsCapabilitiesItem = (
   perms: ApplicationsCapabilitiesPermissions,
   itemId: string | undefined
 ): ACItem | undefined => {
-  const all = buildApplicationsCapabilitiesItems(perms);
+  const { applications, capabilities } = buildApplicationsCapabilitiesItems(perms);
+  const all = [...applications, ...capabilities];
   return all.find(item => item.id === itemId) ?? all[0];
 };
 

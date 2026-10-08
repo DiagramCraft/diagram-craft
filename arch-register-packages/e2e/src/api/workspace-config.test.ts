@@ -870,10 +870,6 @@ test.describe('workspace config routes', () => {
     );
     expect(initial.installed_application_ids).toContain('risk-compliance');
     expect(initial.accessible_application_ids).toEqual(['home']);
-    await expect(
-      memberOrpc.glossary.config({ params: { workspace: 'default' } })
-    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
-
     await orpc.config.applicationAccess.update({
       params: { workspace: 'default', applicationId: 'business-glossary' },
       body: { mode: 'all_members', user_ids: [], team_ids: [] }
@@ -882,12 +878,6 @@ test.describe('workspace config routes', () => {
       params: { workspace: 'default' }
     });
     expect(allMembers.accessible_application_ids).toContain('business-glossary');
-    await expect(
-      memberOrpc.glossary.config({ params: { workspace: 'default' } })
-    ).resolves.toMatchObject({
-      termSchemaId: expect.any(String),
-      categorySchemaId: expect.any(String)
-    });
 
     await orpc.config.applicationAccess.update({
       params: { workspace: 'default', applicationId: 'business-glossary' },

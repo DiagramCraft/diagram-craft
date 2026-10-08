@@ -80,7 +80,7 @@ export const ApplicationsCapabilitiesScreen = () => {
           title={item.label}
           description={description}
           toggleButtons={enabledControl}
-          buttons={activeTab === 'access' ? accessActions : bindingActions}
+          buttons={item.kind === 'application' ? accessActions : bindingActions}
         />
       </div>
 
@@ -95,8 +95,8 @@ export const ApplicationsCapabilitiesScreen = () => {
           </Tabs.List>
         </Tabs.Root>
 
-        {item.capabilityType && perms.canManageBindings && (
-          <div style={{ display: activeTab === 'access' ? 'none' : undefined }}>
+        {item.kind === 'capability' && item.capabilityType && perms.canManageBindings && (
+          <div>
             <CapabilityBindingEditor
               key={item.capabilityType}
               workspaceSlug={workspaceSlug}
@@ -109,7 +109,7 @@ export const ApplicationsCapabilitiesScreen = () => {
           </div>
         )}
 
-        {activeTab === 'access' && (
+        {item.kind === 'application' && item.applicationId && activeTab === 'access' && (
           <ApplicationAccessCard
             workspaceSlug={workspaceSlug}
             applicationId={item.applicationId as Exclude<WorkspaceApplicationId, 'home'>}

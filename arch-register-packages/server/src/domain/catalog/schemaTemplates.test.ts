@@ -85,15 +85,7 @@ describe('instantiateTemplate', () => {
       minCount: 0,
       maxCount: -1
     });
-    expect(definitions.capabilityConfigurations).toEqual([
-      expect.objectContaining({
-        type: 'business-glossary',
-        bindings: expect.objectContaining({
-          term: { target: { kind: 'entity_schema', id: term?.id } },
-          category: { target: { kind: 'entity_schema', id: category?.id } }
-        })
-      })
-    ]);
+    expect(definitions.capabilityConfigurations).toEqual([]);
     expect(definitions.entityDrawerProfiles[term!.id]).toMatchObject({
       header: {
         badges: [

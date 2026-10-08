@@ -84,25 +84,6 @@ const listInstalledApplicationIds = (): WorkspaceApplicationId[] =>
 const hasApplicationAccessAdmin = (authCtx: WorkspaceAuthorizationContext) =>
   checker.hasApplicationAccessAdmin(authCtx);
 
-export const requireApplicationAccess = async (
-  db: DatabaseAdapter,
-  workspace: string,
-  applicationId: Exclude<WorkspaceApplicationId, 'home'>,
-  authCtx: WorkspaceAuthorizationContext,
-  event?: AuthenticatedEvent
-) => {
-  // API tokens retain their explicit capability-based authorization contract. The
-  // application entitlement is the interactive application-surface gate.
-  if (event?.context.apiToken) return;
-
-  const policy = await db.workspace.getWorkspaceApplicationAccessPolicy(workspace, applicationId);
-  httpAssert.true(checker.hasApplicationAccess(authCtx, toPermissionPolicy(policy)), {
-    status: 403,
-    statusText: 'Forbidden',
-    message: 'You do not have access to this application'
-  });
-};
-
 export const listAccessibleApplications = async (
   db: DatabaseAdapter,
   workspace: string,
