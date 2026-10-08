@@ -73,8 +73,7 @@ export const HOME_APP: AppDefinition = {
       separator: true
     },
     { id: 'extract', icon: TbFileAi, tooltip: 'AI Extract', route: '/$workspaceSlug/extract' }
-  ],
-  enablement: 'always'
+  ]
 };
 
 export const APP_DEFINITIONS: AppDefinition[] = [

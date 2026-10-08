@@ -1,10 +1,6 @@
-import { useParams } from '@tanstack/react-router';
-import { useQuery } from '@tanstack/react-query';
-import { AppDashboardSectionScreen } from '../../../sections/dashboard/AppDashboardSectionScreen';
-import { workspaceCapabilityConfigurationsQuery } from '../../../queries/workspaceConfig';
+import { AppDashboardScreen } from '../../../sections/dashboard/AppDashboardScreen';
 import { vendorManagementAppDefinition } from '../vendorManagementShell';
 import { VENDOR_VENDORS_ID } from '../vendorManagementSections';
-import { resolveVendorManagementConfig } from '../vendorManagementQueries';
 
 /**
  * `AppRailSection.dashboard.appKey` (declared once in `vendorManagementShell.tsx`) is the source of
@@ -20,16 +16,5 @@ const sectionDashboardAppKey = (): string => {
 };
 
 export const VendorVendorsDashboardScreen = () => {
-  const { workspaceSlug } = useParams({ strict: false }) as { workspaceSlug: string };
-  const configurations = useQuery(workspaceCapabilityConfigurationsQuery(workspaceSlug));
-  const vendorConfig = resolveVendorManagementConfig(configurations.data);
-  return (
-    <AppDashboardSectionScreen
-      appKey={sectionDashboardAppKey()}
-      isLoading={configurations.isLoading}
-      isEnabled={vendorConfig != null}
-      loadingMessage="Loading vendors…"
-      notEnabledMessage="Vendor Management is not enabled."
-    />
-  );
+  return <AppDashboardScreen appKey={sectionDashboardAppKey()} />;
 };

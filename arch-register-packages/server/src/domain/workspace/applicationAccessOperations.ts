@@ -15,7 +15,6 @@ import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { runAuthorizedOperation } from '../operation';
 import { requireWorkspaceAdmin, requireWorkspaceCapability } from '../auth/authorization';
-import { listWorkspaceCapabilityConfigurations } from './workspaceCapabilityOperations';
 import { httpAssert } from '../../utils/httpAssert';
 import type {
   WorkspaceApplicationAccessPolicyDbResult,
@@ -79,24 +78,8 @@ const runApplicationAccessOperation = <Result>(
     operation: ({ ws, authCtx }) => operation(ws, authCtx)
   });
 
-const listInstalledApplicationIds = async (
-  db: DatabaseAdapter,
-  workspace: string
-): Promise<WorkspaceApplicationId[]> => {
-  const configurations = await listWorkspaceCapabilityConfigurations(db, workspace);
-  const validCapabilityTypes = new Set(
-    configurations
-      .filter(configuration => configuration.valid)
-      .map(configuration => configuration.type)
-  );
-
-  return workspaceApplicationDefinitions
-    .filter(
-      definition =>
-        definition.capabilityType === null || validCapabilityTypes.has(definition.capabilityType)
-    )
-    .map(definition => definition.id);
-};
+const listInstalledApplicationIds = (): WorkspaceApplicationId[] =>
+  workspaceApplicationDefinitions.map(definition => definition.id);
 
 const hasApplicationAccessAdmin = (authCtx: WorkspaceAuthorizationContext) =>
   checker.hasApplicationAccessAdmin(authCtx);
@@ -112,11 +95,6 @@ export const requireApplicationAccess = async (
   // application entitlement is the interactive application-surface gate.
   if (event?.context.apiToken) return;
 
-  const installedApplicationIds = await listInstalledApplicationIds(db, workspace);
-  httpAssert.true(installedApplicationIds.includes(applicationId), {
-    status: 404,
-    message: 'This application is not configured for the workspace'
-  });
   const policy = await db.workspace.getWorkspaceApplicationAccessPolicy(workspace, applicationId);
   httpAssert.true(checker.hasApplicationAccess(authCtx, toPermissionPolicy(policy)), {
     status: 403,
@@ -135,10 +113,8 @@ export const listAccessibleApplications = async (
       requireWorkspaceCapability(authCtx, 'ws.view');
     }
 
-    const [installedApplicationIds, policies] = await Promise.all([
-      listInstalledApplicationIds(db, ws),
-      db.workspace.listWorkspaceApplicationAccessPolicies(ws)
-    ]);
+    const installedApplicationIds = listInstalledApplicationIds();
+    const policies = await db.workspace.listWorkspaceApplicationAccessPolicies(ws);
     const policiesByApplication = new Map(
       policies.map(policy => [policy.application_id, toPermissionPolicy(policy)])
     );

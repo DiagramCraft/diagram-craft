@@ -46,10 +46,7 @@ import {
 } from '../shell/appShellRegistry';
 import type { AppDefinition, AppId, WorkspaceRailItemId } from '../shell/shellTypes';
 import { getWorkspaceShellBuilder } from '../routes/workspace/workspaceShellRoute';
-import {
-  useAccessibleApplications,
-  useWorkspaceCapabilityConfigurations
-} from '../hooks/useWorkspaceConfig';
+import { useAccessibleApplications } from '../hooks/useWorkspaceConfig';
 import { settingsSectionTarget } from '../routes/settingsNavigation';
 import {
   asEntityPublicId,
@@ -103,10 +100,6 @@ export const WorkspaceLayout = () => {
   const { lifecycleStates, teams, projectEntityTypes, assessmentTypes, currencies } =
     useWorkspaceConfig(workspaceSlug, !!workspaceSlug);
   const { data: aiConfig } = useAiConfig(workspaceSlug, !!workspaceSlug);
-  const { data: capabilityConfigurations = [] } = useWorkspaceCapabilityConfigurations(
-    workspaceSlug,
-    !!workspaceSlug
-  );
   const { data: applicationAccess, error: applicationAccessError } = useAccessibleApplications(
     workspaceSlug,
     !!workspaceSlug
@@ -223,14 +216,9 @@ export const WorkspaceLayout = () => {
         const accessibleApplicationIds = new Set(
           applicationAccess?.accessible_application_ids ?? ['home']
         );
-        if (!accessibleApplicationIds.has(app.applicationId)) return false;
-        const enablement = app.enablement;
-        if (enablement === 'always') return true;
-        return capabilityConfigurations.some(
-          configuration => configuration.type === enablement.capabilityType && configuration.valid
-        );
+        return accessibleApplicationIds.has(app.applicationId);
       }),
-    [applicationAccess?.accessible_application_ids, capabilityConfigurations]
+    [applicationAccess?.accessible_application_ids]
   );
 
   const contextValue = useMemo(

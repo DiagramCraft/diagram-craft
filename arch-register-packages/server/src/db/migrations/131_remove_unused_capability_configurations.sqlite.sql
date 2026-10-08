@@ -1,0 +1,4 @@
+-- Bindings are only kept for capabilities with non-dashboard consumers (business-glossary,
+-- api-specification); dashboards no longer read them.
+DELETE FROM workspace_capability_configuration
+WHERE type NOT IN ('business-glossary', 'api-specification');

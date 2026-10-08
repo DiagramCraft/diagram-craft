@@ -99,37 +99,6 @@ describe('workspace capability field mappings', () => {
   });
 });
 
-describe('strategy model capability bindings', () => {
-  it('requires a Business Capability schema for strategy traceability', () => {
-    expect(getWorkspaceCapabilityDefinition('strategy-model')).toMatchObject({
-      bindingRoles: expect.arrayContaining([
-        expect.objectContaining({
-          id: 'business_capability',
-          required: true,
-          targetKind: 'entity_schema'
-        })
-      ])
-    });
-  });
-
-  it('requires the objective/capability and capability/entity relation schemas for roll-ups', () => {
-    expect(getWorkspaceCapabilityDefinition('strategy-model')).toMatchObject({
-      bindingRoles: expect.arrayContaining([
-        expect.objectContaining({
-          id: 'objective_supports_business_capability',
-          required: true,
-          targetKind: 'relation_schema'
-        }),
-        expect.objectContaining({
-          id: 'business_capability_supports_entity',
-          required: true,
-          targetKind: 'relation_schema'
-        })
-      ])
-    });
-  });
-});
-
 describe('workspace capability definitions', () => {
   it('describes API capability roles independently from entity opt-in metadata', () => {
     const definition = getWorkspaceCapabilityDefinition('api-specification');

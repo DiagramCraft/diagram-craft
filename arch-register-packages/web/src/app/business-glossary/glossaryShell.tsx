@@ -38,8 +38,7 @@ export const glossaryAppDefinition: AppDefinition = {
         <AppDashboardPrimarySidebar workspaceSlug={ctx.workspaceSlug} appKey={GLOSSARY_APP_KEY} />
       )
     }
-  ],
-  enablement: { capabilityType: 'business-glossary' }
+  ]
 };
 
 export const buildGlossaryBreadcrumbs = (

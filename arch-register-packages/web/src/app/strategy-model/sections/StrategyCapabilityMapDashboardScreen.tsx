@@ -1,10 +1,6 @@
-import { useParams } from '@tanstack/react-router';
-import { useQuery } from '@tanstack/react-query';
-import { AppDashboardSectionScreen } from '../../../sections/dashboard/AppDashboardSectionScreen';
-import { workspaceCapabilityConfigurationsQuery } from '../../../queries/workspaceConfig';
+import { AppDashboardScreen } from '../../../sections/dashboard/AppDashboardScreen';
 import { strategyAppDefinition } from '../strategyShell';
 import { STRATEGY_CAPABILITY_MAP_ID } from '../strategySections';
-import { resolveStrategyModelConfig } from '../strategyQueries';
 
 /**
  * `AppRailSection.dashboard.appKey` (declared once in `strategyShell.tsx`) is the source of truth
@@ -19,16 +15,5 @@ const sectionDashboardAppKey = (): string => {
 };
 
 export const StrategyCapabilityMapDashboardScreen = () => {
-  const { workspaceSlug } = useParams({ strict: false }) as { workspaceSlug: string };
-  const configurations = useQuery(workspaceCapabilityConfigurationsQuery(workspaceSlug));
-  const isEnabled = resolveStrategyModelConfig(configurations.data) != null;
-  return (
-    <AppDashboardSectionScreen
-      appKey={sectionDashboardAppKey()}
-      isLoading={configurations.isLoading}
-      isEnabled={isEnabled}
-      loadingMessage="Loading strategy model…"
-      notEnabledMessage="Strategy model is not enabled. Configure the strategy-model capability in workspace settings."
-    />
-  );
+  return <AppDashboardScreen appKey={sectionDashboardAppKey()} />;
 };

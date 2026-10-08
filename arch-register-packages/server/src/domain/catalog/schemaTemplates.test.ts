@@ -311,35 +311,7 @@ describe('instantiateTemplate', () => {
     expect(affectsRelation?.in_schema_ids).toEqual([objective?.id]);
     expect(affectsRelation?.out_schema_ids).toBe('any');
 
-    const objectiveSupportsCapability = definitions.relationSchemas.find(
-      schema => schema.name === 'Objective Supports Business Capability'
-    );
-    const capabilitySupportsEntity = definitions.relationSchemas.find(
-      schema => schema.name === 'Business Capability Supports Entity'
-    );
-    expect(definitions.capabilityConfigurations).toEqual([
-      expect.objectContaining({
-        type: 'strategy-model',
-        bindings: expect.objectContaining({
-          objective: { target: { kind: 'entity_schema', id: objective?.id } },
-          outcome: { target: { kind: 'entity_schema', id: outcome?.id } },
-          initiative: { target: { kind: 'entity_schema', id: initiative?.id } },
-          measure: { target: { kind: 'entity_schema', id: measure?.id } },
-          business_capability: {
-            target: { kind: 'entity_schema', id: businessCapability?.id }
-          },
-          // Real relation schema ids, not the template's own `symId` strings - see the roll-up
-          // hooks and `CapabilityDrawer` that query typed relations by this id (#3191 apps count,
-          // "Realized by"/"Linked objectives").
-          objective_supports_business_capability: {
-            target: { kind: 'relation_schema', id: objectiveSupportsCapability?.id }
-          },
-          business_capability_supports_entity: {
-            target: { kind: 'relation_schema', id: capabilitySupportsEntity?.id }
-          }
-        })
-      })
-    ]);
+    expect(definitions.capabilityConfigurations).toEqual([]);
   });
 
   it('materializes the Data Entity drawer profile with stewardship content slots', () => {
@@ -537,23 +509,7 @@ describe('instantiateTemplate', () => {
       expect.objectContaining({ id: 'activated_from', type: 'date' })
     ]);
 
-    expect(definitions.capabilityConfigurations).toEqual([
-      {
-        type: 'retention',
-        bindings: {
-          policy: { target: { kind: 'entity_schema', id: retentionPolicySchema!.id } },
-          assignment: {
-            target: { kind: 'relation_schema', id: assignmentRelationSchema!.id }
-          }
-        }
-      },
-      {
-        type: 'data-stewardship',
-        bindings: {
-          dataEntity: { target: { kind: 'entity_schema', id: dataEntitySchema!.id } }
-        }
-      }
-    ]);
+    expect(definitions.capabilityConfigurations).toEqual([]);
   });
 
   it('materializes the Data Flow composition extension with shared governance fields', () => {
@@ -901,28 +857,17 @@ describe('instantiateTemplate', () => {
     );
   });
 
-  it('materializes the API and vendor-management capabilities as workspace configurations', () => {
+  it('materializes the API capability as a workspace configuration', () => {
     const definitions = instantiateTemplateDefinitions('ws-1', 'default');
     const api = definitions.schemas.find(schema => schema.name === 'API');
     const vendor = definitions.schemas.find(schema => schema.name === 'Vendor');
     const contract = definitions.schemas.find(schema => schema.name === 'Contract');
-    const technologyRelease = definitions.schemas.find(
-      schema => schema.name === 'Technology Release'
-    );
 
     expect(definitions.capabilityConfigurations).toEqual([
       {
         type: 'api-specification',
         bindings: {
           api: { target: { kind: 'entity_schema', id: api?.id } }
-        }
-      },
-      {
-        type: 'vendor-management',
-        bindings: {
-          vendor: { target: { kind: 'entity_schema', id: vendor?.id } },
-          contract: { target: { kind: 'entity_schema', id: contract?.id } },
-          technologyRelease: { target: { kind: 'entity_schema', id: technologyRelease?.id } }
         }
       }
     ]);
@@ -1254,30 +1199,6 @@ describe('instantiateTemplate', () => {
         }
       ]
     });
-  });
-
-  it('materializes the Risk & Compliance capability bindings', () => {
-    const definitions = instantiateTemplateDefinitions('ws-1', 'risk-compliance');
-    const risk = definitions.schemas.find(schema => schema.name === 'Risk');
-    const control = definitions.schemas.find(schema => schema.name === 'Control');
-    const framework = definitions.schemas.find(schema => schema.name === 'Framework');
-    const complianceRequirement = definitions.schemas.find(
-      schema => schema.name === 'Compliance Requirement'
-    );
-
-    expect(definitions.capabilityConfigurations).toEqual([
-      {
-        type: 'risk-compliance',
-        bindings: {
-          risk: { target: { kind: 'entity_schema', id: risk?.id } },
-          control: { target: { kind: 'entity_schema', id: control?.id } },
-          framework: { target: { kind: 'entity_schema', id: framework?.id } },
-          complianceRequirement: {
-            target: { kind: 'entity_schema', id: complianceRequirement?.id }
-          }
-        }
-      }
-    ]);
   });
 
   it('materializes the risk-compliance typed relations with correctly remapped endpoints', () => {

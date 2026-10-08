@@ -1,14 +1,19 @@
 import { APP_DEFINITIONS } from '../../shell/appShellRegistry';
-import { getWorkspaceCapabilityDefinition } from '@arch-register/api-types/integrationCatalog';
 
 /**
  * Shared model for the "Applications & Capabilities" settings screen and its secondary sidebar.
- * An application entry folds its backing capability binding together with its access policy; a
- * capability entry is binding-only.
+ * Each entry is an application with its access-policy tab; applications backed by a capability with
+ * non-dashboard consumers also get a binding tab.
  */
 
+/** Applications whose capability binding is still read by non-dashboard code. */
+const BOUND_CAPABILITY_BY_APPLICATION: Record<string, string> = {
+  'business-glossary': 'business-glossary',
+  'api-integration-catalog': 'api-specification'
+};
+
 export type ApplicationsCapabilitiesPermissions = {
-  /** `canManageWorkspaces` — may edit schema bindings / view config. */
+  /** `canManageWorkspaces` — may edit schema bindings. */
   canManageBindings: boolean;
   /** `canAdministerWorkspace` — may edit the per-application access policy. */
   canManageAccess: boolean;
@@ -19,65 +24,37 @@ export type ACTab = { id: string; label: string };
 export type ACItem = {
   id: string;
   label: string;
-  kind: 'application' | 'capability';
-  capabilityType: string;
-  applicationId?: string;
+  applicationId: string;
+  /** Capability whose binding the application edits; absent when it has none. */
+  capabilityType?: string;
   tabs: ACTab[];
 };
 
-const CAPABILITY_ONLY_TYPES = ['retention'] as const;
-
-const bindingTabsFor = (capabilityType: string): ACTab[] =>
-  capabilityType === 'strategy-model'
-    ? [{ id: 'bindings', label: 'Bindings' }]
-    : [{ id: 'bindings', label: 'Binding' }];
-
 export const buildApplicationsCapabilitiesItems = (
   perms: ApplicationsCapabilitiesPermissions
-): { applications: ACItem[]; capabilities: ACItem[] } => {
-  const applications: ACItem[] = APP_DEFINITIONS.filter(
-    app => app.applicationId !== 'home' && app.enablement !== 'always'
-  ).map(app => {
-    const capabilityType = (app.enablement as { capabilityType: string }).capabilityType;
+): ACItem[] =>
+  APP_DEFINITIONS.filter(app => app.applicationId !== 'home').map(app => {
+    const capabilityType = BOUND_CAPABILITY_BY_APPLICATION[app.applicationId];
     return {
       id: app.applicationId,
       label: app.name,
-      kind: 'application' as const,
-      capabilityType,
       applicationId: app.applicationId,
+      capabilityType,
       tabs: [
-        ...(perms.canManageBindings ? bindingTabsFor(capabilityType) : []),
+        ...(capabilityType && perms.canManageBindings
+          ? [{ id: 'bindings', label: 'Binding' }]
+          : []),
         ...(perms.canManageAccess ? [{ id: 'access', label: 'Access' }] : [])
       ]
     };
   });
-
-  const capabilities: ACItem[] = perms.canManageBindings
-    ? CAPABILITY_ONLY_TYPES.map(type => ({
-        id: type,
-        label: getWorkspaceCapabilityDefinition(type)?.label ?? type,
-        kind: 'capability' as const,
-        capabilityType: type,
-        tabs: bindingTabsFor(type)
-      }))
-    : [];
-
-  return { applications, capabilities };
-};
-
-export const allApplicationsCapabilitiesItems = (
-  perms: ApplicationsCapabilitiesPermissions
-): ACItem[] => {
-  const { applications, capabilities } = buildApplicationsCapabilitiesItems(perms);
-  return [...applications, ...capabilities];
-};
 
 /** Resolve the selected sidebar entry, falling back to the first available one. */
 export const findApplicationsCapabilitiesItem = (
   perms: ApplicationsCapabilitiesPermissions,
   itemId: string | undefined
 ): ACItem | undefined => {
-  const all = allApplicationsCapabilitiesItems(perms);
+  const all = buildApplicationsCapabilitiesItems(perms);
   return all.find(item => item.id === itemId) ?? all[0];
 };
 
@@ -85,4 +62,4 @@ export const findApplicationsCapabilitiesItem = (
 export const resolveApplicationsCapabilitiesTab = (
   item: ACItem,
   tabId: string | undefined
-): string => item.tabs.find(tab => tab.id === tabId)?.id ?? item.tabs[0]?.id ?? 'bindings';
+): string => item.tabs.find(tab => tab.id === tabId)?.id ?? item.tabs[0]?.id ?? 'access';

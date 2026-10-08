@@ -111,8 +111,7 @@ export const riskComplianceAppDefinition: AppDefinition = {
       tooltip: 'Assessments',
       route: RISK_RAIL_PATHS[RISK_ASSESSMENTS_ID]
     }
-  ],
-  enablement: { capabilityType: 'risk-compliance' }
+  ]
 };
 
 export const buildRiskComplianceBreadcrumbs = (

@@ -37,33 +37,14 @@ test.describe('settings section', () => {
     await dataModelPage.expectLoaded();
   });
 
-  test('shows the API specification binding from the Applications & Capabilities sidebar', async ({
-    page
-  }) => {
-    const settingsPage = new SettingsPage(page, defaultWorkspace.slug);
-
-    await settingsPage.goto('applications-capabilities');
-    await page.getByText('API & Integration Catalog', { exact: true }).click();
-    // The API specification binding is configured through its application entry.
-    await expect(page.getByRole('tab', { name: 'Binding', exact: true })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Enabled', exact: true })).toHaveAttribute(
-      'aria-pressed',
-      'true'
-    );
-    await expect(page.getByText('API entity schema', { exact: true })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Cancel', exact: true })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Save changes', exact: true })).toBeVisible();
-  });
-
-  test('groups applications with binding and access tabs', async ({ page }) => {
+  test('lists applications with an access tab', async ({ page }) => {
     const settingsPage = new SettingsPage(page, defaultWorkspace.slug);
 
     await settingsPage.goto('applications-capabilities');
     await page.getByText('Strategy & Capability Modelling', { exact: true }).click();
-    await expect(page.getByRole('tab', { name: 'Bindings', exact: true })).toBeVisible();
-    await expect(page.getByRole('tab', { name: 'Fields', exact: true })).toHaveCount(0);
-    await expect(page.getByRole('tab', { name: 'Dashboard', exact: true })).toHaveCount(0);
     await expect(page.getByRole('tab', { name: 'Access', exact: true })).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'Binding', exact: true })).toHaveCount(0);
+    await expect(page.getByRole('tab', { name: 'Bindings', exact: true })).toHaveCount(0);
 
     await page.getByRole('tab', { name: 'Access', exact: true }).click();
     await expect(

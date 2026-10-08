@@ -19,10 +19,6 @@ import {
  * breadcrumb builder). Registered into core via `../../shell/appShellRegistry.ts`, mirroring
  * `../risk-compliance/riskComplianceShell.tsx`. The Overview section is `sections[0]`, so it is
  * where the app switcher lands (`appRootRoute`).
- *
- * Promotes the existing `api-specification` capability (#2826) — previously configurable only as a
- * capability-only binding — to this app's enablement gate; see
- * `../../sections/workspace-settings/applicationsCapabilities.ts`.
  */
 export const apiIntegrationCatalogAppDefinition: AppDefinition = {
   id: IC_OVERVIEW_ID,
@@ -84,8 +80,7 @@ export const apiIntegrationCatalogAppDefinition: AppDefinition = {
         />
       )
     }
-  ],
-  enablement: { capabilityType: 'api-specification' }
+  ]
 };
 
 export const buildApiIntegrationCatalogBreadcrumbs = (

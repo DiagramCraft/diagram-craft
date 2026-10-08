@@ -27,13 +27,11 @@ project assessment workflow.
 
 ## Enable and configure the application
 
-In **Workspace Settings → Applications & Capabilities**, configure **Risk & Compliance** and bind a **Risk** entity
-schema. **Control**, **Framework**, **Compliance Requirement**, and **Data Entity** bindings are optional. The Data
-Entity binding scopes the asset coverage views; Control and related bindings add control and framework coverage where
-configured. The seeded default workspace has Risk & Compliance configured.
+Risk & Compliance needs no binding; its dashboards read the **Risk**, **Control**, **Framework**, **Compliance
+Requirement**, and **Data Entity** schemas of the workspace by name, and the seeded default workspace includes them.
 
-Application access is configured separately in the capability's **Access** tab. Members also need workspace access and
-a valid capability binding. See [Workspace Templates and Capabilities](../../admin/workspace-templates-capabilities) and
+Application access is configured in the application's **Access** tab in **Workspace Settings → Applications &
+Capabilities**. Members also need workspace access. See [Workspace Templates and Capabilities](../../admin/workspace-templates-capabilities) and
 [Roles and Permissions](../../admin/roles-permissions).
 
 **Retention** uses the separate workspace-wide **Retention** capability. Configure its Policy entity schema and
@@ -51,7 +49,7 @@ risk or control assessments. Use **Risks** to filter by category, status and own
 In **Controls**, filter by type and operating effectiveness in the sidebar and use the **Library** tab to inspect
 controls. Switch to **Coverage** to review coverage by risk or information asset, or to **Controls × Risks** (cells are coloured by the control's
 operating effectiveness) or **Controls × Data Entities** to trace controls. Coverage of
-information assets depends on a Data Entity binding and the corresponding Control Protection relation in the workspace
+information assets depends on a Data Entity schema and the corresponding Control Protection relation in the workspace
 model.
 
 **Retention** lists policy assignments to governed entity categories, including the assigned period and activation
@@ -68,5 +66,5 @@ Risk, Control, Framework, Requirement, and Data Entity records are maintained in
 the schemas and relations described in [Data Modeling and Schemas](../../use/data-modeling-schemas). Use [Entity Views](../../use/entity-views)
 and [Entity Relationship Views](../../use/entity-relationship-views) to inspect the wider catalog. For assessment setup
 and responses, see [Projects](../../use/projects) and [Assessments](../../use/assessments); for approval workflows, see
-[Governance and Approvals](../../use/governance). Administrators configure bindings in [Workspace Settings](../../admin/workspace-settings)
-and access in [Roles and Permissions](../../admin/roles-permissions).
+[Governance and Approvals](../../use/governance). Administrators configure application access in [Workspace Settings](../../admin/workspace-settings)
+and roles in [Roles and Permissions](../../admin/roles-permissions).

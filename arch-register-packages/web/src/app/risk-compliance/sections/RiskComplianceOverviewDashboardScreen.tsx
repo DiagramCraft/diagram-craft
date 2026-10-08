@@ -1,10 +1,6 @@
-import { useParams } from '@tanstack/react-router';
-import { useQuery } from '@tanstack/react-query';
-import { AppDashboardSectionScreen } from '../../../sections/dashboard/AppDashboardSectionScreen';
-import { workspaceCapabilityConfigurationsQuery } from '../../../queries/workspaceConfig';
+import { AppDashboardScreen } from '../../../sections/dashboard/AppDashboardScreen';
 import { riskComplianceAppDefinition } from '../riskComplianceShell';
 import { RISK_OVERVIEW_ID } from '../riskComplianceSections';
-import { resolveRiskComplianceConfig } from '../riskComplianceQueries';
 
 /**
  * `AppRailSection.dashboard.appKey` (declared once in `riskComplianceShell.tsx`) is the source of
@@ -19,16 +15,5 @@ const sectionDashboardAppKey = (): string => {
 };
 
 export const RiskComplianceOverviewDashboardScreen = () => {
-  const { workspaceSlug } = useParams({ strict: false }) as { workspaceSlug: string };
-  const configurations = useQuery(workspaceCapabilityConfigurationsQuery(workspaceSlug));
-  const isEnabled = resolveRiskComplianceConfig(configurations.data) != null;
-  return (
-    <AppDashboardSectionScreen
-      appKey={sectionDashboardAppKey()}
-      isLoading={configurations.isLoading}
-      isEnabled={isEnabled}
-      loadingMessage="Loading risk & compliance…"
-      notEnabledMessage="Risk & Compliance is not enabled. Configure the risk-compliance capability in workspace settings."
-    />
-  );
+  return <AppDashboardScreen appKey={sectionDashboardAppKey()} />;
 };

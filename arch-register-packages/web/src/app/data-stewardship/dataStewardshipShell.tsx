@@ -103,8 +103,7 @@ export const dataStewardshipAppDefinition: AppDefinition = {
       tooltip: 'Assessments',
       route: DS_RAIL_PATHS[DS_ASSESSMENTS_ID]
     }
-  ],
-  enablement: { capabilityType: 'data-stewardship' }
+  ]
 };
 
 export const buildDataStewardshipBreadcrumbs = (
