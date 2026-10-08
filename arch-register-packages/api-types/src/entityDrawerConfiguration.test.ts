@@ -382,7 +382,7 @@ describe('entity drawer configuration', () => {
     ]
   };
 
-  it('builds provider defaults and validates provider options', () => {
+  it('does not derive strategy drawer items from the strategy-model binding', () => {
     const result = buildDefaultEntityDrawerConfiguration(
       [schemaWithParent, initiativeSchema],
       [
@@ -402,29 +402,12 @@ describe('entity drawer configuration', () => {
         }
       ]
     );
-    const applicationSection = result.profiles.service!.sections.find(
-      section => section.id === 'application-content'
-    );
-    expect(applicationSection?.items).toEqual([
-      {
-        kind: 'query',
-        queryText: 'subtree(parent).->"bcse-rel"',
-        label: 'Realized by'
-      },
-      {
-        kind: 'query',
-        queryText: '<-"objective-supports-capability"',
-        label: 'Linked objectives'
-      },
-      {
-        kind: 'query',
-        queryText: '<-"objective-supports-capability".<-"Initiative".objectives',
-        label: 'Linked initiatives'
-      },
-      { kind: 'rollup', fieldId: 'annual_investment', aggregation: 'sum', format: 'currency' },
-      { kind: 'rollup-leaf-count' }
-    ]);
+    expect(
+      result.profiles.service!.sections.some(section => section.id === 'application-content')
+    ).toBe(false);
+  });
 
+  it('validates provider options', () => {
     const invalid = resolveEntityDrawerConfiguration(
       {
         version: 1,
