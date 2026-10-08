@@ -406,163 +406,6 @@ const getDefaultProviderItems = (
   return items;
 };
 
-/** Roll-ups seeded for a Business Capability's default drawer profile (the #3202 seed field ids). */
-const DEFAULT_STRATEGY_DRAWER_ROLLUPS: {
-  fieldId: string;
-  aggregation: 'avg' | 'sum';
-  format: z.infer<typeof entityDrawerRollupFormatSchema>;
-}[] = [
-  { fieldId: 'maturity', aggregation: 'avg', format: 'decimal1' },
-  { fieldId: 'maturity_target', aggregation: 'avg', format: 'decimal1' },
-  { fieldId: 'gap', aggregation: 'avg', format: 'decimal1' },
-  { fieldId: 'annual_investment', aggregation: 'sum', format: 'currency' },
-  { fieldId: 'risk', aggregation: 'avg', format: 'decimal1' }
-];
-
-/**
- * Seeds generic `rollup`/`rollup-leaf-count` drawer items for a Business Capability schema from
- * {@link DEFAULT_STRATEGY_DRAWER_ROLLUPS}. This only affects freshly-generated default profiles;
- * once a workspace saves its own drawer profile, roll-up items live directly in that profile like
- * any other item.
- */
-const getStrategyRollupItems = (
-  schema: EntityDrawerSchema | undefined,
-  capabilityConfigurations: readonly CapabilityConfigurationLike[]
-): EntityDrawerItem[] => {
-  if (!schema) return [];
-  const configuration = capabilityConfigurations.find(
-    candidate => candidate.type === 'strategy-model'
-  );
-  const boundSchemaId = configuration?.bindings['business_capability']?.target;
-  if (boundSchemaId?.kind !== 'entity_schema' || boundSchemaId.id !== schema.id) return [];
-  const supportsSubtreeRollup = schema.fields.some(
-    candidate => candidate.id === 'parent' && candidate.type === 'containment'
-  );
-  if (!supportsSubtreeRollup) return [];
-  const rollupItems: EntityDrawerItem[] = DEFAULT_STRATEGY_DRAWER_ROLLUPS.flatMap(rollup => {
-    const target = schema.fields.find(candidate => candidate.id === rollup.fieldId);
-    if (!target || !fieldIsVisible(target) || !['number', 'currency'].includes(target.type)) {
-      return [];
-    }
-    return [{ kind: 'rollup' as const, ...rollup }];
-  });
-  return rollupItems.length > 0 ? [...rollupItems, { kind: 'rollup-leaf-count' as const }] : [];
-};
-
-/**
- * Seeds the generic `query` drawer item that replaces the old `strategy.realized-by` bespoke slot
- * for a freshly-generated default profile — the flat union of a Business Capability's own and its
- * descendants' `business_capability_supports_entity` links, via a `subtree(parent)` traversal
- * (specs/QUERY_LANGUAGE.md §4). Mirrors `getStrategyRollupItems`'s binding checks; only affects
- * freshly-generated default profiles, not stored ones.
- */
-const getStrategyRealizedByItem = (
-  schema: EntityDrawerSchema | undefined,
-  capabilityConfigurations: readonly CapabilityConfigurationLike[]
-): EntityDrawerItem[] => {
-  if (!schema) return [];
-  const configuration = capabilityConfigurations.find(
-    candidate => candidate.type === 'strategy-model'
-  );
-  const boundSchemaId = configuration?.bindings['business_capability']?.target;
-  if (boundSchemaId?.kind !== 'entity_schema' || boundSchemaId.id !== schema.id) return [];
-  const supportsSubtreeQuery = schema.fields.some(
-    candidate => candidate.id === 'parent' && candidate.type === 'containment'
-  );
-  if (!supportsSubtreeQuery) return [];
-  const relationTarget = configuration?.bindings['business_capability_supports_entity']?.target;
-  if (relationTarget?.kind !== 'relation_schema') return [];
-  return [
-    {
-      kind: 'query' as const,
-      queryText: `subtree(parent).->"${relationTarget.id}"`,
-      label: 'Realized by'
-    }
-  ];
-};
-
-/**
- * Seeds the generic `query` drawer item that replaces the bespoke
- * `strategy.linked-objectives` provider for a freshly-generated default profile. The query
- * follows the bound Objective-to-Business-Capability relation from the current capability to its
- * supporting Objectives.
- */
-const getStrategyLinkedObjectivesItem = (
-  schema: EntityDrawerSchema | undefined,
-  capabilityConfigurations: readonly CapabilityConfigurationLike[]
-): EntityDrawerItem[] => {
-  if (!schema) return [];
-  const configuration = capabilityConfigurations.find(
-    candidate => candidate.type === 'strategy-model'
-  );
-  const businessCapabilityTarget = configuration?.bindings.business_capability?.target;
-  const relationTarget = configuration?.bindings.objective_supports_business_capability?.target;
-  if (
-    businessCapabilityTarget?.kind !== 'entity_schema' ||
-    businessCapabilityTarget.id !== schema.id ||
-    relationTarget?.kind !== 'relation_schema'
-  ) {
-    return [];
-  }
-
-  return [
-    {
-      kind: 'query' as const,
-      queryText: `<-"${escapeQueryStringLiteral(relationTarget.id)}"`,
-      label: 'Linked objectives'
-    }
-  ];
-};
-
-/**
- * Seeds the generic `query` drawer item that replaces the bespoke
- * `strategy.linked-initiatives` provider for a freshly-generated default profile. The query
- * walks from the current Business Capability to its supporting Objectives and then reverses the
- * Initiative `objectives` reference to reach the linked Initiatives.
- */
-const getStrategyLinkedInitiativesItem = (
-  schema: EntityDrawerSchema | undefined,
-  schemas: EntityDrawerSchema[],
-  capabilityConfigurations: readonly CapabilityConfigurationLike[]
-): EntityDrawerItem[] => {
-  if (!schema) return [];
-  const configuration = capabilityConfigurations.find(
-    candidate => candidate.type === 'strategy-model'
-  );
-  const businessCapabilityTarget = configuration?.bindings.business_capability?.target;
-  const objectiveTarget = configuration?.bindings.objective?.target;
-  const initiativeTarget = configuration?.bindings.initiative?.target;
-  const relationTarget = configuration?.bindings.objective_supports_business_capability?.target;
-  if (
-    businessCapabilityTarget?.kind !== 'entity_schema' ||
-    businessCapabilityTarget.id !== schema.id ||
-    objectiveTarget?.kind !== 'entity_schema' ||
-    initiativeTarget?.kind !== 'entity_schema' ||
-    relationTarget?.kind !== 'relation_schema'
-  ) {
-    return [];
-  }
-
-  const initiativeSchema = schemas.find(candidate => candidate.id === initiativeTarget.id);
-  const objectivesField = initiativeSchema?.fields.find(field => field.id === 'objectives');
-  if (
-    !initiativeSchema ||
-    !objectivesField ||
-    !['reference', 'containment'].includes(objectivesField.type) ||
-    (objectivesField.schemaId !== undefined && objectivesField.schemaId !== objectiveTarget.id)
-  ) {
-    return [];
-  }
-
-  return [
-    {
-      kind: 'query' as const,
-      queryText: `<-"${escapeQueryStringLiteral(relationTarget.id)}".<-"${escapeQueryStringLiteral(initiativeSchema.name)}".${objectivesField.id}`,
-      label: 'Linked initiatives'
-    }
-  ];
-};
-
 export type EntityDrawerField = {
   id: string;
   name: string;
@@ -1591,9 +1434,6 @@ export const buildDefaultEntityDrawerConfiguration = (
       );
       const glossaryFieldIds = businessGlossaryFieldIds(schema, capabilityConfigurations);
       const providerItems = [
-        ...getStrategyRealizedByItem(schema, capabilityConfigurations),
-        ...getStrategyLinkedObjectivesItem(schema, capabilityConfigurations),
-        ...getStrategyLinkedInitiativesItem(schema, schemas, capabilityConfigurations),
         ...getDefaultProviderItems(schemas, schema.id, capabilityConfigurations),
         ...(dataStewardshipFieldIdsValue
           ? [{ kind: 'slot' as const, slotId: 'entity.change-cases' }]
@@ -1604,8 +1444,7 @@ export const buildDefaultEntityDrawerConfiguration = (
         ...(dataStewardshipFieldIdsValue
           ? [{ kind: 'slot' as const, slotId: 'entity.assessments' }]
           : []),
-        ...(glossaryFieldIds ? [{ kind: 'slot' as const, slotId: 'entity.usage' }] : []),
-        ...getStrategyRollupItems(schema, capabilityConfigurations)
+        ...(glossaryFieldIds ? [{ kind: 'slot' as const, slotId: 'entity.usage' }] : [])
       ];
       const apiSpecificationFieldIdsValue = apiSpecificationFieldIds(
         schema,
