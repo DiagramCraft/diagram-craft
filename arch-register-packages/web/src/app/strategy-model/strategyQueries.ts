@@ -20,8 +20,7 @@ export type StrategyModelConfig = {
  * Resolve the workspace's `strategy-model` capability configuration into the entity-schema and
  * relation-schema ids the app's sections need. There is no bespoke server endpoint for this
  * capability (unlike Business Glossary's `glossary.config`) — the configuration is generic and
- * resolved client-side, mirroring `resolveAffectedObjectiveConfig` in
- * `../../sections/projects/components/affectedObjectives.ts`.
+ * resolved client-side.
  */
 export const resolveStrategyModelConfig = (
   capabilityConfigurations: readonly WorkspaceCapabilityConfiguration[] | undefined
