@@ -49,9 +49,10 @@
           retain access. Applications are workspace data: users with dashboard-management rights can create, rename,
           recolour, reorder, and delete them through the API (the built-in applications are seeded into every
           workspace). From the left rail of an application the same users can add dashboards, rename them, change
-          their icon, reorder them, and delete them (rail context menu and "Add dashboard" button), and edit the
-          application's name, description, and accent colour or delete the application ("Edit application" button).
-          Breadcrumbs are relative to the active application, which the switcher represents.
+          their icon, reorder them, and delete them (rail context menu and "Add dashboard" button). Applications
+          themselves are added from the "+" button of the "Applications & Capabilities" workspace settings sidebar, and
+          their name, description, accent colour (from the shared colour palette), and deletion live on each
+          application's "General" tab next to its "Access" tab. Breadcrumbs are relative to the active application, which the switcher represents.
 
         - @id:ar.workspace.home Users can use the workspace home to navigate to entities, projects, content, search,
           diagrams, and other primary work areas. The home screen shows a composable dashboard of widgets (stat metrics,

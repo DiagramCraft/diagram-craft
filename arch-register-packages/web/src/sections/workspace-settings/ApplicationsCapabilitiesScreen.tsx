@@ -6,6 +6,7 @@ import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { useApplications } from '../../hooks/useApplications';
 import { CapabilityBindingEditor } from './sub-sections/CapabilityBindingEditor';
 import { ApplicationAccessCard } from './sub-sections/ApplicationAccessCard';
+import { ApplicationGeneralCard } from './sub-sections/ApplicationGeneralCard';
 import {
   findApplicationsCapabilitiesItem,
   resolveApplicationsCapabilitiesTab
@@ -26,11 +27,13 @@ export const ApplicationsCapabilitiesScreen = () => {
 
   const perms = {
     canManageBindings: ctx.permissions.canManageWorkspaces,
-    canManageAccess: ctx.permissions.canAdministerWorkspace ?? false
+    canManageAccess: ctx.permissions.canAdministerWorkspace ?? false,
+    canManageApplications: ctx.permissions.canManageDashboard
   };
 
   const item = findApplicationsCapabilitiesItem(perms, workspaceApplications, search.item);
   const [bindingActions, setBindingActions] = useState<ReactNode>();
+  const [generalActions, setGeneralActions] = useState<ReactNode>();
   const [accessActions, setAccessActions] = useState<ReactNode>();
   const [enabledControl, setEnabledControl] = useState<ReactNode>();
 
@@ -82,7 +85,13 @@ export const ApplicationsCapabilitiesScreen = () => {
           title={item.label}
           description={description}
           toggleButtons={enabledControl}
-          buttons={item.kind === 'application' ? accessActions : bindingActions}
+          buttons={
+            item.kind === 'application'
+              ? activeTab === 'general'
+                ? generalActions
+                : accessActions
+              : bindingActions
+          }
         />
       </div>
 
@@ -109,6 +118,22 @@ export const ApplicationsCapabilitiesScreen = () => {
               onEnabledControlChange={setEnabledControl}
             />
           </div>
+        )}
+
+        {item.kind === 'application' && item.applicationId && activeTab === 'general' && (
+          <ApplicationGeneralCard
+            key={item.applicationId}
+            workspaceSlug={workspaceSlug}
+            applicationKey={item.applicationId}
+            onActionsChange={setGeneralActions}
+            onDeleted={() =>
+              navigate({
+                to: '/$workspaceSlug/settings/applications-capabilities',
+                params: { workspaceSlug },
+                search: {}
+              })
+            }
+          />
         )}
 
         {item.kind === 'application' && item.applicationId && activeTab === 'access' && (

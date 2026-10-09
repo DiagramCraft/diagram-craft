@@ -1,5 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { UpdateApplicationRequest } from '@arch-register/api-types/applicationContract';
+import type {
+  CreateApplicationRequest,
+  UpdateApplicationRequest
+} from '@arch-register/api-types/applicationContract';
 import { invalidateApplicationQueries, workspaceApplicationsQuery } from '../queries/application';
 import { orpcClient } from '../lib/orpcClient';
 
@@ -53,6 +56,15 @@ export const useReorderApplicationDashboards = (workspaceSlug: string) => {
         params: { workspace: workspaceSlug, id: applicationId },
         body: { ids }
       }),
+    onSuccess: () => invalidateApplicationQueries(queryClient, workspaceSlug)
+  });
+};
+
+export const useCreateApplication = (workspaceSlug: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body: CreateApplicationRequest) =>
+      orpcClient.workspaceApplications.create({ params: { workspace: workspaceSlug }, body }),
     onSuccess: () => invalidateApplicationQueries(queryClient, workspaceSlug)
   });
 };
