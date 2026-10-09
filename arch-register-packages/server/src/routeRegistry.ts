@@ -27,6 +27,7 @@ import { createEntityChangeORPCHandler } from './domain/catalog/entityChangeOrpc
 import { createRelationChangeORPCHandler } from './domain/catalog/relationChangeOrpc';
 import { createWorkspaceTemplateORPCHandler } from './domain/catalog/templateOrpc';
 import { createWorkspaceViewORPCHandler } from './domain/catalog/viewOrpc';
+import { createWorkspaceApplicationORPCHandler } from './domain/application/applicationOrpc';
 import { createWorkspaceDashboardORPCHandler } from './domain/dashboard/dashboardOrpc';
 import { createPersonalDashboardORPCHandler } from './domain/personalDashboard/personalDashboardOrpc';
 import { createProjectDashboardORPCHandler } from './domain/dashboard/projectDashboardOrpc';
@@ -399,6 +400,15 @@ const protectedRouteDefinitions = [
     prefix: API_PREFIXES.application,
     surfaces: [API_PREFIXES.application],
     create: ({ db }) => createWorkspaceViewORPCHandler(db)
+  },
+  {
+    id: 'workspace-applications',
+    auth: 'protected',
+    kind: 'orpc',
+    dependencies: ['db'],
+    prefix: API_PREFIXES.application,
+    surfaces: [API_PREFIXES.application],
+    create: ({ db }) => createWorkspaceApplicationORPCHandler(db)
   },
   {
     id: 'workspace-dashboards',

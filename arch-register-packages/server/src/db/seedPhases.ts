@@ -1,4 +1,5 @@
 import type { AiConfigInputDbUpsert } from '../domain/ai/db/aiDatabase';
+import { seedDefaultApplications } from '../domain/application/applicationOperations';
 import type { Entity, SavedViewDbResult } from '../domain/catalog/db/catalogDatabase';
 import type { GlobalRoleAssignmentDbResult, UserDbCreate } from '../domain/auth/db/authDatabase';
 import type {
@@ -143,6 +144,7 @@ export const seedWorkspaceBase = async (
       workspace.id,
       workspace.created_at
     );
+    await seedDefaultApplications(db, workspace.id);
   }
 };
 
