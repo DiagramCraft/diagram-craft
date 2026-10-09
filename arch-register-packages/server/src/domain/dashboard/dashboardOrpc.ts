@@ -7,7 +7,7 @@ import { orpcErrorMiddleware, workspaceScoped } from '../../utils/orpcErrors';
 import {
   createWorkspaceDashboard,
   deleteWorkspaceDashboard,
-  getOrCreateAppDashboard,
+  getAppDashboard,
   getWorkspaceDashboard,
   listWorkspaceDashboards,
   updateWorkspaceDashboard
@@ -49,7 +49,7 @@ export const workspaceDashboardORPCRouter = dashboardRouter.router({
     getApp: dashboardRouter.dashboards.getApp.handler(async ({ input, context }) => {
       const { workspace, authCtx } = context;
       requireWorkspaceCapability(authCtx, 'ws.view');
-      return await getOrCreateAppDashboard(context.db, workspace, input.params.appKey);
+      return await getAppDashboard(context.db, workspace, input.params.appKey);
     }),
     update: dashboardRouter.dashboards.update.handler(async ({ input, context }) => {
       const { workspace, authCtx } = context;

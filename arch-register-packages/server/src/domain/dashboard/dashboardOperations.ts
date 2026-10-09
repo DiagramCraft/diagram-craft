@@ -7,7 +7,6 @@ import type {
 } from '@arch-register/api-types/dashboardContract';
 import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
 import type { WorkspaceDashboardDbResult } from './db/dashboardDatabase';
-import { APP_DASHBOARD_SEEDS } from './appDashboardSeeds';
 import { httpAssert } from '../../utils/httpAssert';
 
 export const toApi = (row: WorkspaceDashboardDbResult): ApiWorkspaceDashboard => ({
@@ -108,32 +107,17 @@ export const listWorkspaceDashboards = async (
   return [toApi(seeded)];
 };
 
-export const getOrCreateAppDashboard = async (
+export const getAppDashboard = async (
   db: DatabaseAdapter,
   workspace: string,
   appKey: string
 ): Promise<ApiWorkspaceDashboard> => {
-  const seed = APP_DASHBOARD_SEEDS[appKey];
-  httpAssert.present(seed, { status: 404, message: 'App dashboard not found' });
-
   const existing = await db.dashboard.getByAppKey(workspace, appKey);
-  if (existing) return toApi(existing);
-
-  const created = await db.dashboard.create({
-    id: randomUUID(),
-    workspace,
-    name: seed!.name,
-    description: seed!.description,
-    sort_order: 0,
-    app_key: appKey,
-    updated_by: null
+  httpAssert.present(existing, {
+    status: 404,
+    message: 'App dashboard not found'
   });
-  const seeded = await db.dashboard.update(workspace, created.id, {
-    layout: seed!.widgets.map(widget => ({ ...widget, config: { ...widget.config } })),
-    sidebar: seed!.sidebar ?? null,
-    updated_by: null
-  });
-  return toApi(seeded!);
+  return toApi(existing!);
 };
 
 export const getWorkspaceDashboard = async (

@@ -359,7 +359,7 @@ export const validateGlossarySearch = (raw: Record<string, unknown>): GlossarySe
   parseSearchParams(glossarySearchSchema, raw);
 
 // Vendor Management vendors params — the facets' dashboard sidebar variables (see the
-// `vendor-management-vendors` seed in `appDashboardSeeds.ts`), each a comma-joined value list.
+// `vendor-management-vendors` seed in `seedData/appDashboards.ts`), each a comma-joined value list.
 const vendorsSearchSchema = defineSearchParamSchema({
   tiers: stringCodec,
   categories: stringCodec,
@@ -372,7 +372,7 @@ export const validateVendorsSearch = (raw: Record<string, unknown>): VendorsSear
   parseSearchParams(vendorsSearchSchema, raw);
 
 // Vendor Management contracts params — the facets' dashboard sidebar variables (see the
-// `vendor-management-contracts` seed in `appDashboardSeeds.ts`), each a comma-joined value list.
+// `vendor-management-contracts` seed in `seedData/appDashboards.ts`), each a comma-joined value list.
 const contractsSearchSchema = defineSearchParamSchema({
   contractTypes: stringCodec,
   vendorIds: stringCodec
@@ -384,7 +384,7 @@ export const validateContractsSearch = (raw: Record<string, unknown>): Contracts
   parseSearchParams(contractsSearchSchema, raw);
 
 // Risk & Compliance risks params — the facets' dashboard sidebar variables (see the
-// `risk-compliance-risks` seed in `appDashboardSeeds.ts`), each a comma-joined value list, plus
+// `risk-compliance-risks` seed in `seedData/appDashboards.ts`), each a comma-joined value list, plus
 // the active tab of the Register/Matrix tabs widget.
 const risksSearchSchema = defineSearchParamSchema({
   categories: stringCodec,
@@ -399,7 +399,7 @@ export const validateRisksSearch = (raw: Record<string, unknown>): RisksSearchPa
   parseSearchParams(risksSearchSchema, raw);
 
 // Risk & Compliance controls params — the facets' dashboard sidebar variables (see the
-// `risk-compliance-controls` seed in `appDashboardSeeds.ts`), each a comma-joined value list, plus
+// `risk-compliance-controls` seed in `seedData/appDashboards.ts`), each a comma-joined value list, plus
 // the active tab of the Library/Coverage/Traceability tabs widget.
 const controlsSearchSchema = defineSearchParamSchema({
   types: stringCodec,
@@ -413,7 +413,7 @@ export const validateControlsSearch = (raw: Record<string, unknown>): ControlsSe
   parseSearchParams(controlsSearchSchema, raw);
 
 // Risk & Compliance assessments params — just the active tab of the Risks/Controls tabs widget
-// (see the `risk-compliance-assessments` seed in `appDashboardSeeds.ts`).
+// (see the `risk-compliance-assessments` seed in `seedData/appDashboards.ts`).
 const assessmentsSearchSchema = defineSearchParamSchema({
   tab: stringCodec
 });
@@ -424,7 +424,7 @@ export const validateAssessmentsSearch = (raw: Record<string, unknown>): Assessm
   parseSearchParams(assessmentsSearchSchema, raw);
 
 // Risk & Compliance retention params. The section is a dashboard (`risk-compliance-retention`
-// seed in `appDashboardSeeds.ts`) whose `entity-picker` sidebar narrows the assignments register to
+// seed in `seedData/appDashboards.ts`) whose `entity-picker` sidebar narrows the assignments register to
 // one Retention Policy via this variable-named param (`resolveSidebarVariableReferences.ts`).
 const retentionSearchSchema = defineSearchParamSchema({
   policyId: stringCodec
@@ -436,7 +436,7 @@ export const validateRetentionSearch = (raw: Record<string, unknown>): Retention
   parseSearchParams(retentionSearchSchema, raw);
 
 // Strategy traceability params — just the active tab of the Trace chain / No strategy link tabs
-// widget (see the `strategy-traceability` seed in `appDashboardSeeds.ts`).
+// widget (see the `strategy-traceability` seed in `seedData/appDashboards.ts`).
 const traceabilitySearchSchema = defineSearchParamSchema({
   tab: stringCodec
 });

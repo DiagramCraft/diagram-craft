@@ -28,7 +28,7 @@ import {
   RISK_COMPLIANCE_RETENTION_APP_KEY,
   RISK_COMPLIANCE_CONTROLS_APP_KEY,
   RISK_COMPLIANCE_RISKS_APP_KEY
-} from './appDashboardSeeds';
+} from './appDashboards';
 
 describe('APP_DASHBOARD_SEEDS', () => {
   it('every seed widget matches the dashboard widget contract', () => {

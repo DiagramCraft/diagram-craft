@@ -20,12 +20,6 @@ import {
   type DataStewardshipRailItemId
 } from './dataStewardshipSections';
 
-export const DS_APP_KEY = 'data-stewardship';
-export const DS_STEWARDSHIP_APP_KEY = 'data-stewardship-stewardship';
-export const DS_CLASSIFICATION_APP_KEY = 'data-stewardship-classification';
-export const DS_CHANGE_CASES_APP_KEY = 'data-stewardship-change-cases';
-export const DS_ASSESSMENTS_APP_KEY = 'data-stewardship-assessments';
-
 /**
  * Data Stewardship's workspace-rail identity: its rail-item ids (defined in
  * `./dataStewardshipSections.ts`, alongside `dataStewardshipAppDefinition` and its breadcrumb
@@ -50,7 +44,7 @@ export const dataStewardshipAppDefinition: AppDefinition = {
       // `riskComplianceAppDefinition`'s Overview). Renders the seeded `data-stewardship` app
       // dashboard (#3501).
       id: DS_MY_WORK_ID,
-      dashboard: { appKey: DS_APP_KEY },
+      dashboard: { appKey: 'data-stewardship' },
       icon: TbClipboardCheck,
       tooltip: 'My work',
       route: DS_RAIL_PATHS[DS_MY_WORK_ID]
@@ -59,7 +53,7 @@ export const dataStewardshipAppDefinition: AppDefinition = {
       // No `primarySidebar`: renders the seeded `data-stewardship-stewardship` app dashboard
       // full-width (#3502).
       id: DS_STEWARDSHIP_ID,
-      dashboard: { appKey: DS_STEWARDSHIP_APP_KEY },
+      dashboard: { appKey: 'data-stewardship-stewardship' },
       icon: TbUserShield,
       tooltip: 'Stewardship',
       route: DS_RAIL_PATHS[DS_STEWARDSHIP_ID]
@@ -68,14 +62,14 @@ export const dataStewardshipAppDefinition: AppDefinition = {
       // The seeded `data-stewardship-classification` app dashboard, with its Classification facet
       // sidebar rendered through the shell's primary sidebar slot (#3503).
       id: DS_CLASSIFICATION_ID,
-      dashboard: { appKey: DS_CLASSIFICATION_APP_KEY },
+      dashboard: { appKey: 'data-stewardship-classification' },
       icon: TbTags,
       tooltip: 'Classification',
       route: DS_RAIL_PATHS[DS_CLASSIFICATION_ID],
       primarySidebar: ctx => (
         <AppDashboardPrimarySidebar
           workspaceSlug={ctx.workspaceSlug}
-          appKey={DS_CLASSIFICATION_APP_KEY}
+          appKey="data-stewardship-classification"
         />
       )
     },
@@ -83,14 +77,14 @@ export const dataStewardshipAppDefinition: AppDefinition = {
       // The seeded `data-stewardship-change-cases` app dashboard, with its `options` status
       // sidebar rendered through the shell's primary sidebar slot (#3504).
       id: DS_CHANGE_CASES_ID,
-      dashboard: { appKey: DS_CHANGE_CASES_APP_KEY },
+      dashboard: { appKey: 'data-stewardship-change-cases' },
       icon: TbGitPullRequest,
       tooltip: 'Change cases & exceptions',
       route: DS_RAIL_PATHS[DS_CHANGE_CASES_ID],
       primarySidebar: ctx => (
         <AppDashboardPrimarySidebar
           workspaceSlug={ctx.workspaceSlug}
-          appKey={DS_CHANGE_CASES_APP_KEY}
+          appKey="data-stewardship-change-cases"
         />
       )
     },
@@ -98,7 +92,7 @@ export const dataStewardshipAppDefinition: AppDefinition = {
       // No `primarySidebar`: renders the seeded `data-stewardship-assessments` app dashboard
       // full-width (#3505).
       id: DS_ASSESSMENTS_ID,
-      dashboard: { appKey: DS_ASSESSMENTS_APP_KEY },
+      dashboard: { appKey: 'data-stewardship-assessments' },
       icon: TbChecklist,
       tooltip: 'Assessments',
       route: DS_RAIL_PATHS[DS_ASSESSMENTS_ID]

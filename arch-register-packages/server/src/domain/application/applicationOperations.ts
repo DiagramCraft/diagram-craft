@@ -8,6 +8,10 @@ import type {
 import type { WorkspaceApplicationDbResult } from './db/applicationDatabase';
 import type { WorkspaceDashboardDbResult } from '../dashboard/db/dashboardDatabase';
 import { httpAssert } from '../../utils/httpAssert';
+import {
+  APP_DASHBOARD_KEYS_BY_APPLICATION,
+  APP_DASHBOARD_SEEDS
+} from '../../db/seedData/appDashboards';
 
 export const toApiApplication = (row: WorkspaceApplicationDbResult): ApiWorkspaceApplication => ({
   id: row.id,
@@ -180,7 +184,7 @@ export const seedDefaultApplications = async (
   workspace: string
 ): Promise<void> => {
   for (const [index, app] of DEFAULT_APPLICATIONS.entries()) {
-    await db.application.create({
+    const application = await db.application.create({
       id: randomUUID(),
       workspace,
       key: app.key,
@@ -189,6 +193,29 @@ export const seedDefaultApplications = async (
       sort_order: index,
       updated_by: null
     });
+    for (const [order, appKey] of (APP_DASHBOARD_KEYS_BY_APPLICATION[app.key] ?? []).entries()) {
+      if (await db.dashboard.getByAppKey(workspace, appKey)) continue;
+      const seed = APP_DASHBOARD_SEEDS[appKey]!;
+      const created = await db.dashboard.create({
+        id: randomUUID(),
+        workspace,
+        name: seed.name,
+        description: seed.description,
+        sort_order: 0,
+        app_key: appKey,
+        application_id: application.id,
+        application_order: order,
+        updated_by: null
+      });
+      await db.dashboard.update(workspace, created.id, {
+        layout: seed.widgets.map(widget => ({
+          ...widget,
+          config: { ...widget.config }
+        })),
+        sidebar: seed.sidebar ?? null,
+        updated_by: null
+      });
+    }
   }
 };
 
