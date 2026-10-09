@@ -79909,31 +79909,15 @@
                     "installed_application_ids": {
                       "type": "array",
                       "items": {
-                        "enum": [
-                          "home",
-                          "business-glossary",
-                          "strategy-model",
-                          "vendor-management",
-                          "risk-compliance",
-                          "data-stewardship",
-                          "api-integration-catalog"
-                        ],
-                        "type": "string"
+                        "type": "string",
+                        "minLength": 1
                       }
                     },
                     "accessible_application_ids": {
                       "type": "array",
                       "items": {
-                        "enum": [
-                          "home",
-                          "business-glossary",
-                          "strategy-model",
-                          "vendor-management",
-                          "risk-compliance",
-                          "data-stewardship",
-                          "api-integration-catalog"
-                        ],
-                        "type": "string"
+                        "type": "string",
+                        "minLength": 1
                       }
                     }
                   },
@@ -80000,16 +79984,8 @@
                             }
                           },
                           "application_id": {
-                            "enum": [
-                              "home",
-                              "business-glossary",
-                              "strategy-model",
-                              "vendor-management",
-                              "risk-compliance",
-                              "data-stewardship",
-                              "api-integration-catalog"
-                            ],
-                            "type": "string"
+                            "type": "string",
+                            "minLength": 1
                           },
                           "created_at": {},
                           "updated_at": {}
@@ -80155,16 +80131,8 @@
             "in": "path",
             "required": true,
             "schema": {
-              "enum": [
-                "home",
-                "business-glossary",
-                "strategy-model",
-                "vendor-management",
-                "risk-compliance",
-                "data-stewardship",
-                "api-integration-catalog"
-              ],
-              "type": "string"
+              "type": "string",
+              "minLength": 1
             }
           }
         ],
@@ -80232,16 +80200,8 @@
                       }
                     },
                     "application_id": {
-                      "enum": [
-                        "home",
-                        "business-glossary",
-                        "strategy-model",
-                        "vendor-management",
-                        "risk-compliance",
-                        "data-stewardship",
-                        "api-integration-catalog"
-                      ],
-                      "type": "string"
+                      "type": "string",
+                      "minLength": 1
                     },
                     "created_at": {},
                     "updated_at": {}
@@ -80280,16 +80240,8 @@
             "in": "path",
             "required": true,
             "schema": {
-              "enum": [
-                "home",
-                "business-glossary",
-                "strategy-model",
-                "vendor-management",
-                "risk-compliance",
-                "data-stewardship",
-                "api-integration-catalog"
-              ],
-              "type": "string"
+              "type": "string",
+              "minLength": 1
             }
           }
         ],
@@ -80323,16 +80275,8 @@
                           }
                         },
                         "application_id": {
-                          "enum": [
-                            "home",
-                            "business-glossary",
-                            "strategy-model",
-                            "vendor-management",
-                            "risk-compliance",
-                            "data-stewardship",
-                            "api-integration-catalog"
-                          ],
-                          "type": "string"
+                          "type": "string",
+                          "minLength": 1
                         },
                         "created_at": {},
                         "updated_at": {}
@@ -135389,6 +135333,552 @@
                   "required": [
                     "success",
                     "message"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{workspace}/workspace-applications": {
+      "get": {
+        "operationId": "workspaceApplications.list",
+        "summary": "List workspace applications",
+        "description": "Retrieves all applications of the workspace in display order.",
+        "tags": [
+          "Application",
+          "Application"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "description": "Unique application identifier"
+                      },
+                      "workspaceId": {
+                        "type": "string",
+                        "description": "Parent workspace identifier"
+                      },
+                      "key": {
+                        "type": "string",
+                        "description": "URL-safe slug, unique within the workspace"
+                      },
+                      "name": {
+                        "type": "string",
+                        "description": "Application name"
+                      },
+                      "description": {
+                        "type": "string",
+                        "description": "Application description; empty when not set"
+                      },
+                      "accentColor": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Accent color; null when not set"
+                      },
+                      "order": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991,
+                        "description": "Position among the workspace applications, ascending"
+                      },
+                      "updatedAt": {
+                        "type": "string",
+                        "description": "ISO 8601 last update timestamp"
+                      },
+                      "updatedBy": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Identifier of the user who last updated the application"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "workspaceId",
+                      "key",
+                      "name",
+                      "description",
+                      "accentColor",
+                      "order",
+                      "updatedAt",
+                      "updatedBy"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "workspaceApplications.create",
+        "summary": "Create workspace application",
+        "description": "Creates an application together with its default Overview dashboard. The key must be a unique lowercase slug.",
+        "tags": [
+          "Application",
+          "Application"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "key": {
+                    "type": "string",
+                    "description": "URL-safe slug, unique within the workspace"
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "Application name"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Application description"
+                  },
+                  "accentColor": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Accent color"
+                  }
+                },
+                "required": [
+                  "key",
+                  "name"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "Unique application identifier"
+                    },
+                    "workspaceId": {
+                      "type": "string",
+                      "description": "Parent workspace identifier"
+                    },
+                    "key": {
+                      "type": "string",
+                      "description": "URL-safe slug, unique within the workspace"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "Application name"
+                    },
+                    "description": {
+                      "type": "string",
+                      "description": "Application description; empty when not set"
+                    },
+                    "accentColor": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Accent color; null when not set"
+                    },
+                    "order": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991,
+                      "description": "Position among the workspace applications, ascending"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "description": "ISO 8601 last update timestamp"
+                    },
+                    "updatedBy": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Identifier of the user who last updated the application"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "workspaceId",
+                    "key",
+                    "name",
+                    "description",
+                    "accentColor",
+                    "order",
+                    "updatedAt",
+                    "updatedBy"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{workspace}/workspace-applications/order": {
+      "put": {
+        "operationId": "workspaceApplications.reorder",
+        "summary": "Reorder workspace applications",
+        "description": "Sets the display order; the body must list every application exactly once.",
+        "tags": [
+          "Application",
+          "Application"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Every application id of the workspace, in the desired order"
+                  }
+                },
+                "required": [
+                  "ids"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "description": "Unique application identifier"
+                      },
+                      "workspaceId": {
+                        "type": "string",
+                        "description": "Parent workspace identifier"
+                      },
+                      "key": {
+                        "type": "string",
+                        "description": "URL-safe slug, unique within the workspace"
+                      },
+                      "name": {
+                        "type": "string",
+                        "description": "Application name"
+                      },
+                      "description": {
+                        "type": "string",
+                        "description": "Application description; empty when not set"
+                      },
+                      "accentColor": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Accent color; null when not set"
+                      },
+                      "order": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991,
+                        "description": "Position among the workspace applications, ascending"
+                      },
+                      "updatedAt": {
+                        "type": "string",
+                        "description": "ISO 8601 last update timestamp"
+                      },
+                      "updatedBy": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Identifier of the user who last updated the application"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "workspaceId",
+                      "key",
+                      "name",
+                      "description",
+                      "accentColor",
+                      "order",
+                      "updatedAt",
+                      "updatedBy"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{workspace}/workspace-applications/{id}": {
+      "patch": {
+        "operationId": "workspaceApplications.update",
+        "summary": "Update workspace application",
+        "description": "Renames or recolors an application. Only provided fields are updated.",
+        "tags": [
+          "Application",
+          "Application"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Application name"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Application description"
+                  },
+                  "accentColor": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Accent color"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "Unique application identifier"
+                    },
+                    "workspaceId": {
+                      "type": "string",
+                      "description": "Parent workspace identifier"
+                    },
+                    "key": {
+                      "type": "string",
+                      "description": "URL-safe slug, unique within the workspace"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "Application name"
+                    },
+                    "description": {
+                      "type": "string",
+                      "description": "Application description; empty when not set"
+                    },
+                    "accentColor": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Accent color; null when not set"
+                    },
+                    "order": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991,
+                      "description": "Position among the workspace applications, ascending"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "description": "ISO 8601 last update timestamp"
+                    },
+                    "updatedBy": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Identifier of the user who last updated the application"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "workspaceId",
+                    "key",
+                    "name",
+                    "description",
+                    "accentColor",
+                    "order",
+                    "updatedAt",
+                    "updatedBy"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "workspaceApplications.remove",
+        "summary": "Delete workspace application",
+        "description": "Deletes an application together with its dashboards and its access policy.",
+        "tags": [
+          "Application",
+          "Application"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "description": "Whether the deletion was successful"
+                    }
+                  },
+                  "required": [
+                    "success"
                   ]
                 }
               }

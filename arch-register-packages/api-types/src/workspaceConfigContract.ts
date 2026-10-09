@@ -28,25 +28,8 @@ const timestampOutputSchema = z
   .union([z.string(), z.date()])
   .transform(value => (typeof value === 'string' ? value : value.toISOString()));
 
-export const workspaceApplicationIdSchema = z.enum([
-  'home',
-  'business-glossary',
-  'strategy-model',
-  'vendor-management',
-  'risk-compliance',
-  'data-stewardship',
-  'api-integration-catalog'
-]);
-
-export const workspaceApplicationDefinitions = [
-  { id: 'home' },
-  { id: 'business-glossary' },
-  { id: 'strategy-model' },
-  { id: 'vendor-management' },
-  { id: 'risk-compliance' },
-  { id: 'data-stewardship' },
-  { id: 'api-integration-catalog' }
-] as const;
+/** `home` is built in; every other id is the `key` of a `workspace_application` row. */
+export const workspaceApplicationIdSchema = z.string().min(1);
 
 export const applicationAccessModeSchema = z.enum(['all_members', 'selected']);
 
@@ -821,7 +804,6 @@ export type WorkspaceRoleCapability = WorkspaceCapability;
 export type WorkspaceTeam = z.infer<typeof teamSchema>;
 export type WorkspaceTeamInput = z.infer<typeof teamInputSchema>;
 export type WorkspaceApplicationId = z.infer<typeof workspaceApplicationIdSchema>;
-export type WorkspaceApplicationDefinition = (typeof workspaceApplicationDefinitions)[number];
 export type ApplicationAccessMode = z.infer<typeof applicationAccessModeSchema>;
 export type ApplicationAccessPolicyInput = z.infer<typeof applicationAccessPolicyInputSchema>;
 export type ApplicationAccessPolicy = z.infer<typeof applicationAccessPolicySchema>;

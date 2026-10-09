@@ -17,6 +17,7 @@ import {
   projectDashboardContract,
   workspaceDashboardContract
 } from './dashboardContract';
+import { workspaceApplicationContract } from './applicationContract';
 import { devContract } from './devContract';
 import { diagramCraftContract } from './diagramCraftContract';
 import { discussionContract } from './discussionContract';
@@ -141,6 +142,7 @@ const applicationEntries = [
   { id: 'workspaceFieldGroupContract', contract: workspaceFieldGroupContract },
   { id: 'workspaceCategoryContract', contract: workspaceCategoryContract },
   { id: 'workspaceViewContract', contract: workspaceViewContract },
+  { id: 'workspaceApplicationContract', contract: workspaceApplicationContract },
   { id: 'workspaceDashboardContract', contract: workspaceDashboardContract },
   { id: 'personalDashboardContract', contract: personalDashboardContract },
   { id: 'projectDashboardContract', contract: projectDashboardContract },

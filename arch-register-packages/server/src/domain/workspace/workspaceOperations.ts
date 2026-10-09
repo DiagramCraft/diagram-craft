@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { seedDefaultApplications } from '../application/applicationOperations';
 import type { DatabaseAdapter } from '../../db/database';
 import type { StorageAdapter } from '../../storage/storage';
 import type { AuthenticatedEvent } from '../../middleware/auth';
@@ -488,6 +489,7 @@ export const createWorkspace = async (
       try {
         await ensureNotificationDeliverySchedule(db, row.id, timestamp);
         await ensureGovernanceDeadlineScanSchedule(db, row.id, timestamp);
+        await seedDefaultApplications(db, row.id);
         await db.workspace.registerPublicIdPrefix(row.short_code, 'workspace', row.id, timestamp);
 
         const { include } = input;

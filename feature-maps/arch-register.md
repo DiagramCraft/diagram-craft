@@ -46,7 +46,9 @@
           Capabilities" workspace settings screen with an all-members or selected-people-and-teams policy, while the
           "Capabilities" group edits the schema binding of capabilities with non-dashboard consumers (API specification);
           missing policies deny ordinary members by default while global administrators and workspace role managers
-          retain access. Breadcrumbs are relative to the active application, which the switcher represents.
+          retain access. Applications are workspace data: users with dashboard-management rights can create, rename,
+          recolour, reorder, and delete them through the API (the built-in applications are seeded into every
+          workspace). Breadcrumbs are relative to the active application, which the switcher represents.
 
         - @id:ar.workspace.home Users can use the workspace home to navigate to entities, projects, content, search,
           diagrams, and other primary work areas. The home screen shows a composable dashboard of widgets (stat metrics,
