@@ -9,6 +9,7 @@ import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import type { WorkspaceApplicationWithDashboards } from '@arch-register/api-types/applicationContract';
+import { ColorPicker } from '../components/ColorPicker';
 import { DashboardNameDialog } from '../sections/dashboard/DashboardNameDialog';
 import {
   useCreateWorkspaceDashboard,
@@ -55,19 +56,21 @@ const ApplicationDialog = ({
         }
       ]}
     >
-      <FormElement label="Name" required>
-        <TextInput value={name} onChange={value => setName(value ?? '')} autoFocus />
-      </FormElement>
-      <FormElement label="Description">
-        <TextInput value={description} onChange={value => setDescription(value ?? '')} />
-      </FormElement>
-      <FormElement label="Accent color">
-        <TextInput
-          value={accentColor}
-          onChange={value => setAccentColor(value ?? '')}
-          placeholder="Any CSS color, e.g. #3b82f6"
-        />
-      </FormElement>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: '16px' }}>
+        <FormElement label="Name" required>
+          <TextInput value={name} onChange={value => setName(value ?? '')} autoFocus />
+        </FormElement>
+        <FormElement label="Description">
+          <TextInput value={description} onChange={value => setDescription(value ?? '')} />
+        </FormElement>
+        <FormElement label="Accent color">
+          <ColorPicker
+            value={accentColor || null}
+            onChange={color => setAccentColor(color ?? '')}
+            size="small"
+          />
+        </FormElement>
+      </div>
     </Dialog>
   );
 };
