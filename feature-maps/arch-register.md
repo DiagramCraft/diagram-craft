@@ -46,7 +46,7 @@
           Capabilities" workspace settings screen with an all-members or selected-people-and-teams policy, while the
           "Capabilities" group edits the schema binding of capabilities with non-dashboard consumers (API specification);
           missing policies deny ordinary members by default while global administrators and workspace role managers
-          retain access. Applications are workspace data: users with dashboard-management rights can create, rename,
+          retain access. Applications are workspace data: users with dashboard-management rights (`ws.manage_dashboard`) can create, rename,
           recolour, reorder, and delete them through the API (the built-in applications are seeded into every
           workspace). From the left rail of an application the same users can add dashboards, rename them, change
           their icon, reorder them, and delete them (rail context menu and "Add dashboard" button). Applications
@@ -300,8 +300,8 @@
         - @id:ar.workspace.analytics Administrators can inspect workspace-wide analytics and completeness-oriented
           views.
 
-    - @id:ar.strategy Workspaces can optionally enable Strategy & Capability Modelling (@id:ar.entities.strategy-model)
-      as its own workspace application, with a dedicated left rail. The application
+    - @id:ar.strategy Workspaces include Strategy & Capability Modelling (@id:ar.entities.strategy-model)
+      as a seeded workspace application, with a dedicated left rail. The application
       needs no capability binding: it is available to every member with application access, and its dashboards
       reference the Business Capability, Objective, Outcome, Initiative, and Measure schemas by name.
 
@@ -367,7 +367,7 @@
           capabilities no objective supports, showing level and owner. Selecting an entity opens the entity drawer.
           The walk is local to the widget and not deep-linkable.
 
-    - @id:ar.vendor-management Workspaces can optionally enable Vendor Management as its own workspace application,
+    - @id:ar.vendor-management Workspaces include Vendor Management as a seeded workspace application,
       with a dedicated left rail scoped to five sections (Overview, Vendors, Contracts, Spend, Risk). The application
       needs no capability binding: it is available to every member with application access, and its dashboards
       reference the Vendor, Contract, and Technology Release schemas by name.
@@ -440,7 +440,7 @@
           drawer, and emphasises elevated and high cells for criticality 4 and above. The sidebar's Tier, Category and
           Owner facets narrow the matrix and register; the stat tiles stay portfolio-wide.
 
-    - @id:ar.risk-compliance Workspaces can optionally enable Risk & Compliance as its own workspace application,
+    - @id:ar.risk-compliance Workspaces include Risk & Compliance as a seeded workspace application,
       with a dedicated left rail scoped to five sections (Overview, Risks, Controls, Retention, Assessments). The
       application needs no capability binding: it is available to every member with application access, and its
       dashboards (including Retention) reference the Risk, Control, Framework, Compliance Requirement, Data Entity,
@@ -516,7 +516,7 @@
           to a Project — so opening a row navigates to the assessment's home project, deep-linked to its
           Assessments tab.
 
-    - @id:ar.data-stewardship Workspaces can optionally enable Data Stewardship as its own workspace application,
+    - @id:ar.data-stewardship Workspaces include Data Stewardship as a seeded workspace application,
       with a dedicated left rail scoped to five sections (My work, Stewardship, Classification, Change cases &
       exceptions, Assessments) — unlike Strategy & Capability Modelling / Vendor Management / Risk & Compliance,
       there is no separate Overview section; My work is both the first rail section and the application's landing
@@ -627,7 +627,7 @@
           started off the same rollup. The per-(assessment, entity) join still backs the shared entity drawer's own
           Assessments section.
 
-    - @id:ar.api-integration-catalog Workspaces can optionally enable API & Integration Catalog as its own workspace
+    - @id:ar.api-integration-catalog Workspaces include API & Integration Catalog as a seeded workspace
       application, with a dedicated left rail scoped to four sections (Overview, APIs, Integrations, Impact).
       Unlike Data Stewardship, Overview is a separate landing section rather than doubling with the first facet
       section. Overview summarizes API statistics, open change and deprecation cases, most-consumed APIs, and at-risk
@@ -1399,9 +1399,10 @@
         - @id:ar.authorization.teams Administrators can create teams, manage memberships, and use team assignments in
           authorization decisions.
 
-        - @id:ar.authorization.application-access Workspace administrators can control access to each installed
-          optional application independently from workspace roles, from the Access tab of that application's entry in
-          the "Applications & Capabilities" settings screen, granting all workspace members or selected people
+        - @id:ar.authorization.application-access Workspace administrators can control access to each
+          application independently from workspace roles, from the Access tab of that application's entry in
+          the "Applications & Capabilities" settings screen (visible to workspace administrators; the General
+          tab is available to users with dashboard-management rights), granting all workspace members or selected people
           and teams. Ordinary members must still have workspace view access; global administrators and workspace role
           managers retain access, and removing a policy returns the application to administrator-only access.
 
@@ -1412,8 +1413,8 @@
       and out of Arch Register.
 
         - @id:ar.import-export.workspace-export Authorized users can export selected or complete workspace data,
-          including supported content, workspace capability configuration, typed relation schemas, and typed relation
-          instances. Exported
+          including supported content, workspace capability configuration, typed relation schemas, typed relation
+          instances, and applications (@id:ar.import-export.workspace-applications). Exported
           entity and relation data is scrubbed of access-restricted field groups per exporting user, mirroring the
           redaction applied when viewing those records directly. Filtered exports omit relations whose endpoint
           entities are not included, report safe diagnostics when field values are omitted, and record those

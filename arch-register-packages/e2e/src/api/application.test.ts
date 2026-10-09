@@ -96,6 +96,18 @@ test.describe('Workspace Application API', () => {
     expect(ids).toHaveLength(2);
     expect(listed!.dashboards[1]).toMatchObject({ name: 'Renamed', icon: 'TbApi' });
 
+    await orpc.dashboard.update({
+      params: { ...params, id: added.id },
+      body: { railLabel: 'Short' }
+    });
+    const relabelled = (await orpc.workspaceApplications.list({ params })).find(
+      candidate => candidate.id === app.id
+    );
+    expect(relabelled!.dashboards.find(d => d.id === added.id)?.railLabel).toBe('Short');
+
+    // Application dashboards never show up in the home dashboard list
+    expect((await orpc.dashboard.list({ params })).map(d => d.id)).not.toContain(added.id);
+
     const reversed = [...ids].reverse();
     const reordered = await orpc.workspaceApplications.reorderDashboards({
       params: appParams,
