@@ -43,6 +43,7 @@ const expectedRouteIds = [
   'baselines',
   'workspace-templates',
   'workspace-views',
+  'workspace-applications',
   'workspace-dashboards',
   'personal-dashboards',
   'project-dashboards',
