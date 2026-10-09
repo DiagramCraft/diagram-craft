@@ -138,6 +138,31 @@ export const workspaceDashboardSchema = z.object({
     .nullable()
     .optional()
     .describe('Set when the dashboard belongs to an app rather than the workspace home'),
+  applicationId: z
+    .string()
+    .nullable()
+    .optional()
+    .describe(
+      'Identifier of the application that owns the dashboard; null for workspace dashboards'
+    ),
+  applicationOrder: z
+    .number()
+    .int()
+    .nullable()
+    .optional()
+    .describe(
+      'Position among the application dashboards, ascending; null for workspace dashboards'
+    ),
+  icon: z
+    .string()
+    .nullable()
+    .optional()
+    .describe('Icon name shown for the dashboard in the app rail'),
+  railLabel: z
+    .string()
+    .nullable()
+    .optional()
+    .describe('Label shown for the dashboard in the app rail'),
   sidebar: dashboardSidebarConfigSchema
     .optional()
     .describe('Optional selection sidebar whose current selection can drive widget config')

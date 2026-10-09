@@ -135539,6 +135539,52 @@
                         ],
                         "description": "Set when the dashboard belongs to an app rather than the workspace home"
                       },
+                      "applicationId": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Identifier of the application that owns the dashboard; null for workspace dashboards"
+                      },
+                      "applicationOrder": {
+                        "anyOf": [
+                          {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Position among the application dashboards, ascending; null for workspace dashboards"
+                      },
+                      "icon": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Icon name shown for the dashboard in the app rail"
+                      },
+                      "railLabel": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Label shown for the dashboard in the app rail"
+                      },
                       "sidebar": {
                         "anyOf": [
                           {
@@ -135859,6 +135905,52 @@
                       ],
                       "description": "Set when the dashboard belongs to an app rather than the workspace home"
                     },
+                    "applicationId": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Identifier of the application that owns the dashboard; null for workspace dashboards"
+                    },
+                    "applicationOrder": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Position among the application dashboards, ascending; null for workspace dashboards"
+                    },
+                    "icon": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Icon name shown for the dashboard in the app rail"
+                    },
+                    "railLabel": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Label shown for the dashboard in the app rail"
+                    },
                     "sidebar": {
                       "anyOf": [
                         {
@@ -136165,6 +136257,52 @@
                         }
                       ],
                       "description": "Set when the dashboard belongs to an app rather than the workspace home"
+                    },
+                    "applicationId": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Identifier of the application that owns the dashboard; null for workspace dashboards"
+                    },
+                    "applicationOrder": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Position among the application dashboards, ascending; null for workspace dashboards"
+                    },
+                    "icon": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Icon name shown for the dashboard in the app rail"
+                    },
+                    "railLabel": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Label shown for the dashboard in the app rail"
                     },
                     "sidebar": {
                       "anyOf": [
@@ -136696,6 +136834,52 @@
                       ],
                       "description": "Set when the dashboard belongs to an app rather than the workspace home"
                     },
+                    "applicationId": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Identifier of the application that owns the dashboard; null for workspace dashboards"
+                    },
+                    "applicationOrder": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Position among the application dashboards, ascending; null for workspace dashboards"
+                    },
+                    "icon": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Icon name shown for the dashboard in the app rail"
+                    },
+                    "railLabel": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Label shown for the dashboard in the app rail"
+                    },
                     "sidebar": {
                       "anyOf": [
                         {
@@ -137050,6 +137234,52 @@
                         }
                       ],
                       "description": "Set when the dashboard belongs to an app rather than the workspace home"
+                    },
+                    "applicationId": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Identifier of the application that owns the dashboard; null for workspace dashboards"
+                    },
+                    "applicationOrder": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Position among the application dashboards, ascending; null for workspace dashboards"
+                    },
+                    "icon": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Icon name shown for the dashboard in the app rail"
+                    },
+                    "railLabel": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Label shown for the dashboard in the app rail"
                     },
                     "sidebar": {
                       "anyOf": [
