@@ -141,7 +141,9 @@ export const WorkspaceLayout = () => {
             'query-console'
           ]
         : []),
-      ...(canManageWorkspaces || canAdministerWorkspace ? ['applications-capabilities'] : []),
+      ...(canManageWorkspaces || canAdministerWorkspace || canManageDashboard
+        ? ['applications-capabilities']
+        : []),
       ...(canManageTeams ? ['lifecycle-owners', 'teams'] : []),
       ...(canViewSchemas ? ['model-overview', 'schemas', 'schema-validation', 'conformance'] : []),
       ...(canManageMembers ? ['roles', 'members'] : []),
@@ -157,7 +159,8 @@ export const WorkspaceLayout = () => {
       canManageMembers,
       canAdministerWorkspace,
       canViewAudit,
-      canManageJobs
+      canManageJobs,
+      canManageDashboard
     ]
   );
 

@@ -15,6 +15,8 @@ export type ApplicationsCapabilitiesPermissions = {
   canManageBindings: boolean;
   /** `canAdministerWorkspace` — may edit the per-application access policy. */
   canManageAccess: boolean;
+  /** `canManageDashboard` — may add, edit and delete applications. */
+  canManageApplications: boolean;
 };
 
 export type ACTab = { id: string; label: string };
@@ -37,7 +39,10 @@ export const buildApplicationsCapabilitiesItems = (
     label: app.name,
     kind: 'application' as const,
     applicationId: app.key,
-    tabs: perms.canManageAccess ? [{ id: 'access', label: 'Access' }] : []
+    tabs: [
+      ...(perms.canManageApplications ? [{ id: 'general', label: 'General' }] : []),
+      ...(perms.canManageAccess ? [{ id: 'access', label: 'Access' }] : [])
+    ]
   }));
 
   const capabilities: ACItem[] = perms.canManageBindings

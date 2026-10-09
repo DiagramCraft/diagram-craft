@@ -1,83 +1,23 @@
 import { useState, type ReactNode } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { TbArrowDown, TbArrowUp, TbPencil, TbPlus, TbSettings, TbTrash } from 'react-icons/tb';
+import { TbArrowDown, TbArrowUp, TbPencil, TbPlus, TbTrash } from 'react-icons/tb';
 import type { NavRailAction } from '@diagram-craft/app-components/NavRail';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
 import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
-import { Dialog } from '@diagram-craft/app-components/Dialog';
-import { FormElement } from '@diagram-craft/app-components/FormElement';
-import { TextInput } from '@diagram-craft/app-components/TextInput';
 import type { WorkspaceApplicationWithDashboards } from '@arch-register/api-types/applicationContract';
-import { ColorPicker } from '../components/ColorPicker';
 import { DashboardNameDialog } from '../sections/dashboard/DashboardNameDialog';
 import {
   useCreateWorkspaceDashboard,
   useDeleteWorkspaceDashboard,
   useUpdateWorkspaceDashboard
 } from '../hooks/useDashboard';
-import {
-  useDeleteApplication,
-  useReorderApplicationDashboards,
-  useUpdateApplication
-} from '../hooks/useApplications';
+import { useReorderApplicationDashboards } from '../hooks/useApplications';
 
 type DashboardRef = WorkspaceApplicationWithDashboards['dashboards'][number];
 
-const ApplicationDialog = ({
-  application,
-  onCancel,
-  onConfirm
-}: {
-  application: WorkspaceApplicationWithDashboards;
-  onCancel: () => void;
-  onConfirm: (body: { name: string; description: string; accentColor: string | null }) => void;
-}) => {
-  const [name, setName] = useState(application.name);
-  const [description, setDescription] = useState(application.description);
-  const [accentColor, setAccentColor] = useState(application.accentColor ?? '');
-  return (
-    <Dialog
-      open
-      onClose={onCancel}
-      title="Edit application"
-      buttons={[
-        { label: 'Cancel', type: 'cancel', onClick: onCancel },
-        {
-          label: 'Save',
-          type: 'default',
-          disabled: !name.trim(),
-          onClick: () =>
-            onConfirm({
-              name: name.trim(),
-              description: description.trim(),
-              accentColor: accentColor.trim() || null
-            })
-        }
-      ]}
-    >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: '16px' }}>
-        <FormElement label="Name" required>
-          <TextInput value={name} onChange={value => setName(value ?? '')} autoFocus />
-        </FormElement>
-        <FormElement label="Description">
-          <TextInput value={description} onChange={value => setDescription(value ?? '')} />
-        </FormElement>
-        <FormElement label="Accent color">
-          <ColorPicker
-            value={accentColor || null}
-            onChange={color => setAccentColor(color ?? '')}
-            size="small"
-          />
-        </FormElement>
-      </div>
-    </Dialog>
-  );
-};
-
 /**
- * Add / rename / re-icon / reorder / delete dashboards of an application, plus edit or delete the
- * application itself, driven from the left rail. Spread `railProps` onto the `NavRail` and render
+ * Add / rename / re-icon / reorder / delete dashboards of an application, driven from the left rail. Spread `railProps` onto the `NavRail` and render
  * `overlays` anywhere in the tree.
  */
 export const useApplicationDashboardManager = (
@@ -95,13 +35,9 @@ export const useApplicationDashboardManager = (
   const createDashboard = useCreateWorkspaceDashboard(workspaceSlug);
   const updateDashboard = useUpdateWorkspaceDashboard(workspaceSlug);
   const deleteDashboard = useDeleteWorkspaceDashboard(workspaceSlug);
-  const updateApplication = useUpdateApplication(workspaceSlug);
-  const deleteApplication = useDeleteApplication(workspaceSlug);
   const reorder = useReorderApplicationDashboards(workspaceSlug);
 
   const [createOpen, setCreateOpen] = useState(false);
-  const [editApplicationOpen, setEditApplicationOpen] = useState(false);
-  const [deleteApplicationOpen, setDeleteApplicationOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<DashboardRef | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<DashboardRef | null>(null);
   const [menu, setMenu] = useState<{ x: number; y: number; dashboardId: string } | null>(null);
@@ -135,12 +71,6 @@ export const useApplicationDashboardManager = (
         icon: TbPlus,
         tooltip: 'Add dashboard',
         onClick: () => setCreateOpen(true)
-      },
-      {
-        id: 'edit-application',
-        icon: TbSettings,
-        tooltip: 'Edit application',
-        onClick: () => setEditApplicationOpen(true)
       }
     ]
   };
@@ -190,16 +120,6 @@ export const useApplicationDashboardManager = (
             }}
           >
             Delete dashboard
-          </Menu.Item>
-          <Menu.Item
-            type="danger"
-            leftSlot={<TbTrash size={13} />}
-            onClick={() => {
-              setDeleteApplicationOpen(true);
-              setMenu(null);
-            }}
-          >
-            Delete application
           </Menu.Item>
         </ContextMenu.Imperative>
       )}
@@ -264,39 +184,6 @@ export const useApplicationDashboardManager = (
             }
           });
         }}
-      />
-
-      {editApplicationOpen && (
-        <ApplicationDialog
-          application={application}
-          onCancel={() => setEditApplicationOpen(false)}
-          onConfirm={body =>
-            updateApplication.mutate(
-              { id: application.id, body },
-              { onSuccess: () => setEditApplicationOpen(false) }
-            )
-          }
-        />
-      )}
-
-      <DeleteConfirmationDialog
-        open={deleteApplicationOpen}
-        title="Delete application?"
-        message={
-          <>
-            The application <b>{application.name}</b> and all of its dashboards will be permanently
-            deleted.
-          </>
-        }
-        onCancel={() => setDeleteApplicationOpen(false)}
-        onConfirm={() =>
-          deleteApplication.mutate(application.id, {
-            onSuccess: () => {
-              setDeleteApplicationOpen(false);
-              void navigate({ to: '/$workspaceSlug', params: { workspaceSlug } });
-            }
-          })
-        }
       />
     </>
   );
