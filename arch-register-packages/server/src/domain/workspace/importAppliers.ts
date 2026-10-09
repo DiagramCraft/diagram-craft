@@ -1319,7 +1319,9 @@ export const importApplications = async (
       });
     }
 
-    if (application.access_policy && mode !== 'merge') {
+    if (!application.access_policy && mode !== 'merge') {
+      await db.workspace.deleteWorkspaceApplicationAccessPolicy(workspace, application.key);
+    } else if (application.access_policy && mode !== 'merge') {
       const teamIds = [
         ...new Set(
           application.access_policy.team_ids.flatMap(teamId => {

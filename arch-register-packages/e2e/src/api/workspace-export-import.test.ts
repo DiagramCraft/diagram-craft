@@ -362,6 +362,108 @@ test.describe('workspace export/import', () => {
     }
   });
 
+  test('application overwrite clears the destination access policy when the archive has none', async ({
+    orpc,
+    server
+  }) => {
+    const suffix = randomUUID();
+    const key = `policy-app-${suffix.slice(0, 8)}`;
+    const source = await orpc.workspaces.create({
+      body: { name: `Policy source ${suffix}`, badge: 'PLS' }
+    });
+    const target = await orpc.workspaces.create({
+      body: { name: `Policy target ${suffix}`, badge: 'PLT' }
+    });
+    for (const workspace of [source, target]) {
+      const application = await server.db.application.create({
+        id: randomUUID(),
+        workspace: workspace.id,
+        key,
+        name: 'Policy App',
+        description: undefined,
+        accent_color: null,
+        sort_order: 50,
+        updated_by: null
+      });
+      await server.db.dashboard.create({
+        id: randomUUID(),
+        workspace: workspace.id,
+        name: 'Main',
+        sort_order: 0,
+        application_id: application.id,
+        application_order: 0,
+        updated_by: null
+      });
+    }
+    await server.db.workspace.upsertWorkspaceApplicationAccessPolicy({
+      workspace: target.id,
+      application_id: key,
+      mode: 'selected',
+      user_ids: [],
+      team_ids: [],
+      created_at: new Date(),
+      updated_at: new Date()
+    });
+
+    const archive = await orpc.workspaces.export({
+      params: { workspace: source.url_slug },
+      body: { include: ['config', 'applications'], options: { include_content: false } }
+    });
+    const parsed = await orpc.workspaces.importParse({
+      params: { workspace: target.url_slug },
+      body: { file: new File([archive.body as Blob], 'policy.zip', { type: 'application/zip' }) }
+    });
+    expect(parsed.valid).toBe(true);
+    const execute = await orpc.workspaces.importExecute({
+      params: { workspace: target.url_slug },
+      body: {
+        import_id: (parsed as any).import_id,
+        include: ['config', 'applications'],
+        conflict_resolutions: suggestedResolutions(parsed as any),
+        options: { preserve_ids: false, update_references: true }
+      }
+    });
+    expect(execute.success).toBe(true);
+
+    await expect(
+      server.db.workspace.getWorkspaceApplicationAccessPolicy(target.id, key)
+    ).resolves.toBeFalsy();
+    const app = await server.db.application.getByKey(target.id, key);
+    expect(
+      (await server.db.dashboard.listByApplication(target.id, app!.id)).length
+    ).toBeGreaterThan(0);
+  });
+
+  test('rejects importing an application without dashboards', async ({ orpc, server }) => {
+    const suffix = randomUUID();
+    const source = await orpc.workspaces.create({
+      body: { name: `Empty app source ${suffix}`, badge: 'EAS' }
+    });
+    await server.db.application.create({
+      id: randomUUID(),
+      workspace: source.id,
+      key: `empty-app-${suffix.slice(0, 8)}`,
+      name: 'Empty App',
+      description: undefined,
+      accent_color: null,
+      sort_order: 50,
+      updated_by: null
+    });
+    const archive = await orpc.workspaces.export({
+      params: { workspace: source.url_slug },
+      body: { include: ['config', 'applications'], options: { include_content: false } }
+    });
+    const target = await orpc.workspaces.create({
+      body: { name: `Empty app target ${suffix}`, badge: 'EAT' }
+    });
+    const parsed = await orpc.workspaces.importParse({
+      params: { workspace: target.url_slug },
+      body: { file: new File([archive.body as Blob], 'empty.zip', { type: 'application/zip' }) }
+    });
+    expect(parsed.valid).toBe(false);
+    expect(JSON.stringify(parsed)).toContain('must contain at least one dashboard');
+  });
+
   test('exports and imports workspace capability bindings with remapped targets', async ({
     orpc,
     server

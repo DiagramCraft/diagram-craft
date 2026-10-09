@@ -869,6 +869,10 @@ const validateApplications = async (
       errors.push(`Application '${application.name}' has an invalid key '${application.key}'`);
       continue;
     }
+    if (application.dashboards.length === 0) {
+      errors.push(`Application '${application.name}' must contain at least one dashboard`);
+      continue;
+    }
     const existing = existingApplications.find(item => item.key === application.key);
     if (existing) {
       conflicts.push({

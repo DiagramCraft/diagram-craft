@@ -1434,7 +1434,8 @@
           their ordered dashboards (widgets, sidebar, icon) and access policies, plus workspace home dashboards.
           Personal and project dashboards are not included. Applications match by key; conflicts can be skipped,
           overwritten, merged, or renamed. Widget schema references follow remapped schema IDs, policy teams follow
-          remapped teams, and policy users are not carried over.
+          remapped teams, and policy users are not carried over. Overwrite replaces the access policy (clearing it
+          when the archive has none), and archives containing an application without dashboards are rejected.
 
         - @id:ar.import-export.workspace-replication Workspace copies preserve schema field groups, shared fieldgroup
           links, field-group access-control semantics, workspace capability bindings, and schema-scoped entity drawer
