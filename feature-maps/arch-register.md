@@ -41,11 +41,10 @@
           an application scopes the left icon rail to only that application's sections and re-skins the shell with
           its accent colour. An application may own several
           rail sections, each with its own icon, tooltip, route, and optionally its own primary sidebar. An
-          application appears in the switcher only when enabled, which is governed by its backing workspace
-          capability configuration (managed from the "Applications & Capabilities" workspace settings screen, which
-          pairs each application's schema binding with its access policy in one tabbed view). Workspace administrators
-          can separately control application access for ordinary members with an all-members or
-          selected-people-and-teams policy;
+          application appears in the switcher for every member who has access to it. Workspace administrators
+          control application access for ordinary members from the "Applications" group of the "Applications &
+          Capabilities" workspace settings screen with an all-members or selected-people-and-teams policy, while the
+          "Capabilities" group edits the schema binding of capabilities with non-dashboard consumers (API specification);
           missing policies deny ordinary members by default while global administrators and workspace role managers
           retain access. Breadcrumbs are relative to the active application, which the switcher represents.
 
@@ -72,21 +71,16 @@
           flow direction, regulatory tags, processing purposes, and residency regions without adding a new semantic
           enum type. It
           also contributes a Retention Policy entity schema (a single Period duration field) and a "Subject to Retention
-          Policy" relation schema (an "activated from" date) bound together via the `retention` workspace
-          capability, without adding a bespoke retention data model: any governed entity records its retention
-          obligation as an ordinary typed-relation assignment to a policy entity, and the assignment's computed
-          expiry status (active, approaching expiry, expired, or incomplete when the policy or activation date is
-          missing) is available to `resolveEntityRetentionStatus` for later surfacing in queries, views, and
-          exports.
+          Policy" relation schema (an "activated from" date), without adding a bespoke retention data model: any
+          governed entity records its retention obligation as an ordinary typed-relation assignment to a policy
+          entity.
           What this actually captures: `activated_from` is a single date on the assignment relation, and the
           governed entity it is usually attached to (a Data Entity) is a *category* of data (e.g. "Customer
           Credentials"), not an individual record — there is no per-record creation-date tracking anywhere in this
           model. So the computed expiry status answers "how long has this policy nominally applied to this
           category, relative to its stated duration", not "which individual records are due for disposal" — the
           records within a governed category don't all share one creation date, so a category showing "expired"
-          does not mean every (or any particular) record in it is actually due. Consumers of
-          `resolveEntityRetentionStatus` should treat it as a policy-governance/review signal (is this category's
-          retention policy stale enough to warrant a compliance check) rather than a disposal action queue; see
+          does not mean every (or any particular) record in it is actually due. See
           `ar.risk-compliance.retention` below, which was scoped down to a plain assignments register for exactly
           this reason.
           The same template also contributes a Data Entity schema and an "Information Asset Stewardship" shared
@@ -302,10 +296,8 @@
 
     - @id:ar.strategy Workspaces can optionally enable Strategy & Capability Modelling (@id:ar.entities.strategy-model)
       as its own workspace application, with a dedicated left rail. The application
-      is enabled only once the workspace's `strategy-model` capability configuration is
-      valid (all five Business Capability, Objective, Outcome, Initiative, and Measure schema bindings resolved);
-      until then, or while a section's own capability lookup is still loading, each section shows a
-      capability-not-configured empty state instead of its content.
+      needs no capability binding: it is available to every member with application access, and its dashboards
+      reference the Business Capability, Objective, Outcome, Initiative, and Measure schemas by name.
 
         - @id:ar.strategy.overview The Overview section is the application's landing screen — where the app switcher
           opens. It is a configurable dashboard (seeded as the `strategy-overview` app dashboard, editable like other
@@ -371,11 +363,8 @@
 
     - @id:ar.vendor-management Workspaces can optionally enable Vendor Management as its own workspace application,
       with a dedicated left rail scoped to five sections (Overview, Vendors, Contracts, Spend, Risk). The application
-      is enabled only once the workspace's `vendor-management` capability configuration is valid (the required Vendor
-      entity schema binding resolved; the Contract and Technology Release entity schema bindings are optional —
-      Technology Release only gates the Risk section's technology EOL exposure table); until then, or while a
-      section's own capability lookup is still loading, each section shows a capability-not-configured empty state
-      instead of its content.
+      needs no capability binding: it is available to every member with application access, and its dashboards
+      reference the Vendor, Contract, and Technology Release schemas by name.
 
         - @id:ar.vendor-management.overview The Overview section is the application's landing screen — where the app
           switcher opens. It is a configurable dashboard (seeded as the `vendor-management-overview` app dashboard,
@@ -447,12 +436,9 @@
 
     - @id:ar.risk-compliance Workspaces can optionally enable Risk & Compliance as its own workspace application,
       with a dedicated left rail scoped to five sections (Overview, Risks, Controls, Retention, Assessments). The
-      default seeded workspace has this capability preconfigured, and the application is enabled once the workspace's
-      `risk-compliance` capability configuration is valid (the required
-      Risk entity schema binding resolved; the Control, Framework, and Compliance Requirement entity schema bindings
-      are optional). The Retention section gates separately, on the existing, workspace-wide `retention` capability
-      (policy entity schema and assignment relation schema bindings), rather than on `risk-compliance` — a workspace
-      can have Retention configured without the rest of Risk & Compliance being enabled, or vice versa.
+      application needs no capability binding: it is available to every member with application access, and its
+      dashboards (including Retention) reference the Risk, Control, Framework, Compliance Requirement, Data Entity,
+      Retention Policy, and retention-assignment schemas by name.
 
         - @id:ar.risk-compliance.overview The Overview section (the app switcher's landing section) is a
           configurable dashboard (the same seeded, editable app dashboard as the Retention section) summarizing risk
@@ -495,13 +481,12 @@
           effectiveness, with a legend. Control drawers show the Risks mitigated
           (with the `coverage`/`effectiveness` each provides) and the Data Entities protected.
 
-        - @id:ar.risk-compliance.retention The Retention section — the first web UI consumer of the workspace-wide
-          `retention` capability — is a single register of Assignments ("Subject to Retention Policy" relations),
+        - @id:ar.risk-compliance.retention The Retention section is a single register of Assignments ("Subject to Retention Policy" relations),
           with no view toggle. It originally followed the Claude Design reference's `RCRetention` more closely (an
           expiry dashboard with Overdue/Next-30/31-60/61-90/Beyond-90 buckets, a separate Policies list, and a
           Holds/exceptions view), but the expiry framing was deliberately removed: a "Subject to Retention Policy"
           assignment links a policy to a Data Entity *category*, not to an individual record (see
-          `ar.workspace.home`'s note on what the `retention` capability actually captures), so a computed "expiry
+          `ar.workspace.home`'s note on what a retention assignment actually captures), so a computed "expiry
           date" per assignment could only ever say "how long this policy has nominally applied to this category" —
           labelling a category "Overdue" implied per-record actionability the data can't support. What remains
           reports what the data actually says as plain, uncoloured facts: each row is a governed entity, its
@@ -529,11 +514,9 @@
       with a dedicated left rail scoped to five sections (My work, Stewardship, Classification, Change cases &
       exceptions, Assessments) — unlike Strategy & Capability Modelling / Vendor Management / Risk & Compliance,
       there is no separate Overview section; My work is both the first rail section and the application's landing
-      screen. The application is enabled once the workspace's `data-stewardship` capability configuration is valid (the
-      required Data Entity schema binding resolved — the same information-asset entities Risk & Compliance's
-      own optional `dataEntity` binding references). The Change cases & exceptions section reuses the existing
-      `entity.change-case` governance-case kind directly rather than a bound schema — Change Case is a built-in
-      governance-case type, not a workspace-defined entity schema, so the capability has only the one binding role.
+      screen. The application needs no capability binding: its dashboards find the Data Entity schema by name. The Change cases &
+      exceptions section reuses the existing `entity.change-case` governance-case kind directly rather than a
+      workspace-defined entity schema.
       A time-bound exception/waiver register was considered for this section (#3301) but removed after review —
       there is no exception/waiver concept anywhere in this application. All five sections have shipped their real
       content.
@@ -643,11 +626,9 @@
       Unlike Data Stewardship, Overview is a separate landing section rather than doubling with the first facet
       section. Overview summarizes API statistics, open change and deprecation cases, most-consumed APIs, and at-risk
       integrations, with links into the APIs and Integrations sections. Its four panels are also available as workspace
-      dashboard widgets. The application is enabled once the workspace's existing `api-specification` capability
-      configuration (@id:ar.integrations.api-specification-sync) is valid (the required API entity schema binding
-      resolves) — this promotes `api-specification` from a capability-only binding (configurable in
-      workspace settings but with no rail of its own) to a full application; it remains the same capability that the
-      Entities app's API artifact detail views already read. Sync remains a scaffolded placeholder pending its own
+      dashboard widgets. The application is available to every member with application access; the
+      `api-specification` capability binding (@id:ar.integrations.api-specification-sync, set up by the workspace
+      template) remains what the Entities app's API artifact detail views read. Sync remains a scaffolded placeholder pending its own
       sub-issue of the API & Integration
       Catalog epic; Overview, APIs, Integrations, and Impact have their real content (below). Integration sync
       operations are available under Workspace Settings rather than in this catalog browsing application.
@@ -774,8 +755,8 @@
           sources, repeat idempotently without duplicate revisions, and preserve the last successful revision when a
           refresh or completed source scan fails.
 
-        - @id:ar.entities.business-glossary Workspaces can enable a permission-aware business glossary backed by
-          ordinary entity schemas, surfaced as its own application (@id:ar.workspace.applications) as a configurable
+        - @id:ar.entities.business-glossary Workspaces can use a permission-aware business glossary backed by
+          ordinary entity schemas (Term and Term Category, found by the dashboard rather than bound through a capability), surfaced as its own application (@id:ar.workspace.applications) as a configurable
           dashboard: a single full-width term table plus a facets sidebar (category, owner, lifecycle, each
           multi-select with counts) that filters the table live. Administrators can edit the facets sidebar (add, remove, reorder facets) from the dashboard's Edit sidebar dialog. A facets sidebar can be built over an entity schema or over a relation type (e.g. Data Flow), tallying counts from the relations' own select/text fields. The table shows canonical name, synonyms,
           abbreviations, categories, owner, lifecycle, status, and a usage count (entities, typed relations,

@@ -1,11 +1,8 @@
-import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
-import { AppDashboardSectionScreen } from '../../../sections/dashboard/AppDashboardSectionScreen';
+import { AppDashboardScreen } from '../../../sections/dashboard/AppDashboardScreen';
 import { EntityDrawer } from '../../../sections/entities/entityDrawer/EntityDrawer';
-import { workspaceCapabilityConfigurationsQuery } from '../../../queries/workspaceConfig';
 import type { DataStewardshipMyWorkSearchParams } from '../../../routes/searchParams';
 import { dataStewardshipAppDefinition } from '../dataStewardshipShell';
-import { resolveDataStewardshipConfig } from '../dataStewardshipQueries';
 import { DS_MY_WORK_ID, DS_RAIL_PATHS } from '../dataStewardshipSections';
 import { GovernanceCaseDrawer } from '../../../sections/governance/GovernanceCaseDrawer';
 
@@ -29,8 +26,6 @@ export const DataStewardshipDashboardScreen = () => {
   const { workspaceSlug } = useParams({ strict: false }) as { workspaceSlug: string };
   const navigate = useNavigate();
   const search = useSearch({ strict: false }) as DataStewardshipMyWorkSearchParams;
-  const configurations = useQuery(workspaceCapabilityConfigurationsQuery(workspaceSlug));
-  const isEnabled = resolveDataStewardshipConfig(configurations.data) != null;
 
   const patchSearch = (patch: Partial<DataStewardshipMyWorkSearchParams>) =>
     navigate({
@@ -41,14 +36,8 @@ export const DataStewardshipDashboardScreen = () => {
 
   return (
     <>
-      <AppDashboardSectionScreen
-        appKey={sectionDashboardAppKey()}
-        isLoading={configurations.isLoading}
-        isEnabled={isEnabled}
-        loadingMessage="Loading data stewardship…"
-        notEnabledMessage="Data stewardship is not enabled. Configure the data stewardship capability in workspace settings."
-      />
-      {isEnabled && search.datasetId && (
+      <AppDashboardScreen appKey={sectionDashboardAppKey()} />
+      {search.datasetId && (
         <EntityDrawer
           workspaceSlug={workspaceSlug}
           entityId={search.datasetId}
@@ -56,7 +45,7 @@ export const DataStewardshipDashboardScreen = () => {
           onOpenGovernanceCase={caseId => patchSearch({ datasetId: undefined, caseId })}
         />
       )}
-      {isEnabled && search.caseId && (
+      {search.caseId && (
         <GovernanceCaseDrawer
           entityNoun="dataset"
           workspaceSlug={workspaceSlug}

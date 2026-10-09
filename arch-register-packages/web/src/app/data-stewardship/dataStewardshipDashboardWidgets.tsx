@@ -1,4 +1,3 @@
-import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import type { CSSProperties } from 'react';
 import { TbAlertTriangle, TbCalendarEvent, TbClipboardCheck, TbListCheck } from 'react-icons/tb';
@@ -8,11 +7,11 @@ import { EmptyState } from '../../components/EmptyState';
 import { LoadingState } from '../../components/LoadingState';
 import { useEntities } from '../../hooks/useEntities';
 import { useDateTimeFormatPreference } from '../../hooks/useDateTimeFormatPreference';
-import { workspaceCapabilityConfigurationsQuery } from '../../queries/workspaceConfig';
 import { dueLabel, dueTone } from '../../utils/assessmentDueTone';
 import { caseKindLabel } from '../../utils/governanceCaseLabels';
 import { formatDate } from '../../utils/dateFormat';
-import { resolveDataStewardshipConfig } from './dataStewardshipQueries';
+/** Name of the schema the Data Stewardship widgets operate on (resolved by name, no capability binding). */
+const DATA_ENTITY_SCHEMA_NAME = 'Data Entity';
 import { DS_MY_WORK_ID, DS_RAIL_PATHS } from './dataStewardshipSections';
 import {
   queueItemPriority,
@@ -102,14 +101,13 @@ const titleFor = (config: TitleConfig, fallback: string): string => {
 };
 
 const useDataStewardshipConfig = () => {
-  const { workspaceSlug } = useWorkspaceContext();
-  const configurations = useQuery(workspaceCapabilityConfigurationsQuery(workspaceSlug));
-  const config = resolveDataStewardshipConfig(configurations.data);
+  const { workspaceSlug, schemas } = useWorkspaceContext();
+  const schemaId = schemas.find(schema => schema.name === DATA_ENTITY_SCHEMA_NAME)?.id ?? null;
   return {
     workspaceSlug,
-    schemaId: config?.dataEntitySchemaId ?? null,
-    isLoading: configurations.isLoading,
-    isConfigured: config != null
+    schemaId,
+    isLoading: false,
+    isConfigured: schemaId != null
   };
 };
 

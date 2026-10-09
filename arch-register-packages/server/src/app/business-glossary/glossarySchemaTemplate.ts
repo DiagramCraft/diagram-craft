@@ -110,14 +110,5 @@ export const glossarySchemaTemplate: SchemaTemplate = {
         }
       ]
     }
-  },
-  capabilityConfigurations: [
-    {
-      type: 'business-glossary',
-      bindings: {
-        term: { target: { kind: 'entity_schema', symId: 'term' } },
-        category: { target: { kind: 'entity_schema', symId: 'term_category' } }
-      }
-    }
-  ]
+  }
 };

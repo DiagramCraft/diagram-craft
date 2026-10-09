@@ -61,10 +61,9 @@ export const ApplicationsCapabilitiesScreen = () => {
   const activeTab = resolveApplicationsCapabilitiesTab(item, search.tab);
 
   const description =
-    getWorkspaceCapabilityDefinition(item.capabilityType)?.description ??
-    (item.kind === 'application'
-      ? 'Configure how this application binds to workspace schemas and who can use it.'
-      : 'Bind this capability to the schemas and fields used by this workspace.');
+    (item.capabilityType
+      ? getWorkspaceCapabilityDefinition(item.capabilityType)?.description
+      : undefined) ?? 'Control who can use this application.';
 
   const selectTab = (tab: string) =>
     navigate({
@@ -81,7 +80,7 @@ export const ApplicationsCapabilitiesScreen = () => {
           title={item.label}
           description={description}
           toggleButtons={enabledControl}
-          buttons={activeTab === 'access' ? accessActions : bindingActions}
+          buttons={item.kind === 'application' ? accessActions : bindingActions}
         />
       </div>
 
@@ -96,8 +95,8 @@ export const ApplicationsCapabilitiesScreen = () => {
           </Tabs.List>
         </Tabs.Root>
 
-        {perms.canManageBindings && (
-          <div style={{ display: activeTab === 'access' ? 'none' : undefined }}>
+        {item.kind === 'capability' && item.capabilityType && perms.canManageBindings && (
+          <div>
             <CapabilityBindingEditor
               key={item.capabilityType}
               workspaceSlug={workspaceSlug}
@@ -110,7 +109,7 @@ export const ApplicationsCapabilitiesScreen = () => {
           </div>
         )}
 
-        {activeTab === 'access' && item.applicationId && (
+        {item.kind === 'application' && item.applicationId && activeTab === 'access' && (
           <ApplicationAccessCard
             workspaceSlug={workspaceSlug}
             applicationId={item.applicationId as Exclude<WorkspaceApplicationId, 'home'>}

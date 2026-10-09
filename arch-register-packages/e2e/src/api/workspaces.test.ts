@@ -334,10 +334,6 @@ test.describe('workspace routes', () => {
       server.db.view.listSavedViews(created.id),
       server.db.catalog.listSchemas(created.id)
     ]);
-    const strategyConfiguration = await server.db.workspace.getWorkspaceCapabilityConfiguration(
-      created.id,
-      'strategy-model'
-    );
     const businessCapability = schemas.find(schema => schema.name === 'Business Capability');
     const objective = schemas.find(schema => schema.name === 'Objective');
     const initiative = schemas.find(schema => schema.name === 'Initiative');
@@ -356,9 +352,6 @@ test.describe('workspace routes', () => {
         })
       ])
     );
-    expect(strategyConfiguration?.bindings.business_capability).toEqual({
-      target: { kind: 'entity_schema', id: businessCapability?.id }
-    });
     const objectivesView = views.find(view => view.name === 'Objectives');
     expect(objectivesView).toMatchObject({
       workspace: created.id,

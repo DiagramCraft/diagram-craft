@@ -33,7 +33,6 @@ import { externalContentContract } from './externalContentContract';
 import { workspaceFieldGroupContract } from './fieldGroupContract';
 import { governanceContract } from './governanceContract';
 import { governanceWorkflowConfigContract } from './governanceWorkflowConfigContract';
-import { glossaryContract } from './app/business-glossary/glossaryContract';
 import { integrationGovernanceContract } from './integrationGovernanceContract';
 import { integrationRelationContract } from './integrationRelationContract';
 import { integrationSyncContract } from './integrationSyncContract';
@@ -135,7 +134,6 @@ const applicationEntries = [
   { id: 'workspaceManagementContract', contract: workspaceManagementContract },
   { id: 'projectContract', contract: projectContract },
   { id: 'workspaceConfigContract', contract: workspaceConfigContract },
-  { id: 'glossaryContract', contract: glossaryContract },
   { id: 'publicCatalogConfigContract', contract: publicCatalogConfigContract },
   { id: 'searchContract', contract: searchContract },
   { id: 'aiContract', contract: aiContract },

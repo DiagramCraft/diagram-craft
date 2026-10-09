@@ -1,8 +1,5 @@
-import { useParams } from '@tanstack/react-router';
-import { useQuery } from '@tanstack/react-query';
-import { AppDashboardSectionScreen } from '../../../sections/dashboard/AppDashboardSectionScreen';
+import { AppDashboardScreen } from '../../../sections/dashboard/AppDashboardScreen';
 import { glossaryAppDefinition, GLOSSARY_RAIL_ITEM_ID } from '../glossaryShell';
-import { glossaryConfigQuery } from '../glossaryQueries';
 
 /**
  * `AppRailSection.dashboard.appKey` (declared once in `glossaryShell.tsx`) is the source of truth
@@ -17,16 +14,6 @@ const sectionDashboardAppKey = (): string => {
   return appKey;
 };
 
-export const GlossaryDashboardScreen = () => {
-  const { workspaceSlug } = useParams({ strict: false }) as { workspaceSlug: string };
-  const config = useQuery(glossaryConfigQuery(workspaceSlug));
-  return (
-    <AppDashboardSectionScreen
-      appKey={sectionDashboardAppKey()}
-      isLoading={config.isLoading}
-      isEnabled={config.data != null}
-      loadingMessage="Loading glossary…"
-      notEnabledMessage="The business glossary is not enabled."
-    />
-  );
-};
+export const GlossaryDashboardScreen = () => (
+  <AppDashboardScreen appKey={sectionDashboardAppKey()} />
+);

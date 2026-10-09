@@ -1816,27 +1816,6 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
     relationSchemas: [retentionAssignmentRelationSchema],
     documentTypes: [],
     documentTemplates: [],
-    capabilityConfigurations: [
-      {
-        type: 'retention',
-        bindings: {
-          policy: { target: { kind: 'entity_schema', symId: 'retention-policy' } },
-          assignment: { target: { kind: 'relation_schema', symId: 'retention-assignment' } }
-        }
-      },
-      {
-        // Auto-binds `dataStewardshipCapabilityDefinition`'s one role
-        // (`../../app/data-stewardship/dataStewardshipCapability.ts`) to this template's own Data
-        // Entity schema by symId — same "auto-bind by default" rationale as the 'default' template's
-        // own 'vendor-management' capability configuration above, so a workspace using the default
-        // catalog gets the Data Stewardship application working without a manual Applications &
-        // Capabilities configuration step.
-        type: 'data-stewardship',
-        bindings: {
-          dataEntity: { target: { kind: 'entity_schema', symId: 'data-entity' } }
-        }
-      }
-    ],
     entityDrawerProfiles: {
       'data-entity': {
         header: {
@@ -2340,20 +2319,6 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           api: {
             target: { kind: 'entity_schema', symId: 'api' }
           }
-        }
-      },
-      {
-        // Mirrors the 'strategy-model' capability configuration below: auto-binds
-        // `vendorManagementCapabilityDefinition`'s roles
-        // (`../../app/vendor-management/vendorManagementCapability.ts`) to this template's own
-        // Vendor/Contract/Technology Release schemas by symId, so a workspace using the default
-        // catalog gets Vendor Management working without a manual Applications & Capabilities
-        // configuration step.
-        type: 'vendor-management',
-        bindings: {
-          vendor: { target: { kind: 'entity_schema', symId: 'vendor' } },
-          contract: { target: { kind: 'entity_schema', symId: 'contract' } },
-          technologyRelease: { target: { kind: 'entity_schema', symId: 'technology_release' } }
         }
       }
     ],
@@ -3530,23 +3495,6 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
       }
     ],
     enums: riskComplianceEnums,
-    capabilityConfigurations: [
-      {
-        // Auto-binds the Risk & Compliance capability to the schemas shipped by this template,
-        // so workspaces using the template get the application without a manual configuration
-        // step. The optional Data Entity binding is added by the default seed composition because
-        // that schema belongs to the Information Governance template.
-        type: 'risk-compliance',
-        bindings: {
-          risk: { target: { kind: 'entity_schema', symId: 'risk' } },
-          control: { target: { kind: 'entity_schema', symId: 'control' } },
-          framework: { target: { kind: 'entity_schema', symId: 'framework' } },
-          complianceRequirement: {
-            target: { kind: 'entity_schema', symId: 'compliance_requirement' }
-          }
-        }
-      }
-    ],
     relationSchemas: [
       {
         symId: 'risk-control',
@@ -3960,31 +3908,6 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
     relationSchemas: strategyRelationSchemas,
     documentTypes: commonDocumentTypes,
     documentTemplates: commonDocumentTemplates,
-    capabilityConfigurations: [
-      {
-        type: 'strategy-model',
-        bindings: {
-          objective: { target: { kind: 'entity_schema', symId: 'objective' } },
-          outcome: { target: { kind: 'entity_schema', symId: 'outcome' } },
-          initiative: { target: { kind: 'entity_schema', symId: 'initiative' } },
-          measure: { target: { kind: 'entity_schema', symId: 'measure' } },
-          business_capability: {
-            target: { kind: 'entity_schema', symId: 'business_capability' }
-          },
-          // Real, per-workspace relation schema ids: consumers (the Capabilities table's "Apps"
-          // roll-up, `CapabilityDrawer`'s "Realized by"/"Linked objectives") need these to query
-          // typed relations by schema id — the schema template's own `symId` strings above
-          // ('objective-supports-business-capability', 'business-capability-supports-entity')
-          // are template-local identifiers, not the ids relation rows are actually stored under.
-          objective_supports_business_capability: {
-            target: { kind: 'relation_schema', symId: 'objective-supports-business-capability' }
-          },
-          business_capability_supports_entity: {
-            target: { kind: 'relation_schema', symId: 'business-capability-supports-entity' }
-          }
-        }
-      }
-    ],
     entityDrawerProfiles: {
       business_capability: {
         header: {

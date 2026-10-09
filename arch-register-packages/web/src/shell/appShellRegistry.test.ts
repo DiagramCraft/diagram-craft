@@ -22,11 +22,10 @@ const railIds = (appId: Parameters<typeof getAppDefinition>[0]) =>
   getAppDefinition(appId).sections.map(section => section.id);
 
 describe('appShellRegistry', () => {
-  it('always includes an always-on Home app that owns the core rail sections', () => {
+  it('always includes an Home app that owns the core rail sections', () => {
     const home = getAppDefinition('home');
     expect(home.id).toBe('home');
     expect(home.applicationId).toBe('home');
-    expect(home.enablement).toBe('always');
     expect(railIds('home')).toContain('entities');
     expect(railIds('home')).not.toContain(GLOSSARY_RAIL_ITEM_ID);
     expect(home.tint).toBeUndefined();

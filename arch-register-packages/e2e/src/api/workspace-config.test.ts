@@ -409,86 +409,14 @@ test.describe('workspace config routes', () => {
     expect(removed.id).toBe(configured.id);
   });
 
-  test('configures a business glossary against custom term and category schemas', async ({
+  test('rejects configuring a capability that no longer exists', async ({
     orpc,
     seededUsers: _
   }) => {
-    const statusEnum = await orpc.enums.create({
-      params: { workspace: 'default' },
-      body: {
-        name: `Glossary status ${crypto.randomUUID()}`,
-        options: [
-          { value: 'draft', label: 'Draft' },
-          { value: 'approved', label: 'Approved' }
-        ]
-      }
-    });
-    const category = await orpc.schemas.create({
-      params: { workspace: 'default' },
-      body: { name: `Term category ${crypto.randomUUID()}`, fields: [] }
-    });
-    const term = await orpc.schemas.create({
-      params: { workspace: 'default' },
-      body: {
-        name: `Business term ${crypto.randomUUID()}`,
-        fields: [
-          { id: 'definition', name: 'Definition', type: 'longtext' },
-          {
-            id: 'synonyms',
-            name: 'Synonyms',
-            type: 'text',
-            minCardinality: 0,
-            maxCardinality: -1
-          },
-          {
-            id: 'abbreviations',
-            name: 'Abbreviations',
-            type: 'text',
-            minCardinality: 0,
-            maxCardinality: -1
-          },
-          {
-            id: 'categories',
-            name: 'Categories',
-            type: 'reference',
-            schemaId: category.id,
-            minCount: 0,
-            maxCount: -1
-          },
-          { id: 'status', name: 'Status', type: 'select', enumId: statusEnum.id }
-        ]
-      }
-    });
-
-    const configured = await orpc.config.capabilityConfigurations.upsert({
-      params: { workspace: 'default', type: 'business-glossary' },
-      body: {
-        bindings: {
-          term: { target: { kind: 'entity_schema', id: term.id } },
-          category: { target: { kind: 'entity_schema', id: category.id } }
-        }
-      }
-    });
-
-    expect(configured).toMatchObject({
-      type: 'business-glossary',
-      valid: true,
-      bindings: {
-        term: { target: { kind: 'entity_schema', id: term.id } },
-        category: { target: { kind: 'entity_schema', id: category.id } }
-      },
-      diagnostics: []
-    });
-
     await expect(
       orpc.config.capabilityConfigurations.upsert({
         params: { workspace: 'default', type: 'business-glossary' },
-        body: {
-          bindings: {
-            term: { target: { kind: 'entity_schema', id: term.id } },
-            category: { target: { kind: 'entity_schema', id: term.id } }
-          }
-        }
+        body: { bindings: {} }
       })
     ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
   });
@@ -870,10 +798,6 @@ test.describe('workspace config routes', () => {
     );
     expect(initial.installed_application_ids).toContain('risk-compliance');
     expect(initial.accessible_application_ids).toEqual(['home']);
-    await expect(
-      memberOrpc.glossary.config({ params: { workspace: 'default' } })
-    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
-
     await orpc.config.applicationAccess.update({
       params: { workspace: 'default', applicationId: 'business-glossary' },
       body: { mode: 'all_members', user_ids: [], team_ids: [] }
@@ -882,12 +806,6 @@ test.describe('workspace config routes', () => {
       params: { workspace: 'default' }
     });
     expect(allMembers.accessible_application_ids).toContain('business-glossary');
-    await expect(
-      memberOrpc.glossary.config({ params: { workspace: 'default' } })
-    ).resolves.toMatchObject({
-      termSchemaId: expect.any(String),
-      categorySchemaId: expect.any(String)
-    });
 
     await orpc.config.applicationAccess.update({
       params: { workspace: 'default', applicationId: 'business-glossary' },

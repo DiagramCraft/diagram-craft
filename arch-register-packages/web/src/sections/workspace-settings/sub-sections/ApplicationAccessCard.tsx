@@ -13,8 +13,7 @@ import type {
 } from '@arch-register/api-types/workspaceConfigContract';
 import {
   useApplicationAccessConfiguration,
-  useUpdateApplicationAccessPolicy,
-  useWorkspaceCapabilityConfigurations
+  useUpdateApplicationAccessPolicy
 } from '../../../hooks/useWorkspaceConfig';
 import styles from './ApplicationAccessSubSection.module.css';
 
@@ -47,7 +46,7 @@ export const ApplicationAccessCard = ({
 }: {
   workspaceSlug: string;
   applicationId: ManagedApplicationId;
-  /** Hoists Cancel / Save changes to the screen header, matching the binding editor. */
+  /** Hoists Cancel / Save changes to the screen header. */
   onActionsChange: (actions: ReactNode | undefined) => void;
 }) => {
   const {
@@ -55,8 +54,6 @@ export const ApplicationAccessCard = ({
     isLoading,
     error
   } = useApplicationAccessConfiguration(workspaceSlug);
-  const { data: capabilityConfigurations = [] } =
-    useWorkspaceCapabilityConfigurations(workspaceSlug);
   const updatePolicy = useUpdateApplicationAccessPolicy(workspaceSlug);
   const [draft, setDraftState] = useState<AccessDraft>(toDraft(undefined));
 
@@ -80,14 +77,6 @@ export const ApplicationAccessCard = ({
 
   const savedDraft = useMemo(() => toDraft(policy), [policy]);
   const dirty = JSON.stringify(draft) !== JSON.stringify(savedDraft);
-
-  const installed = useMemo(() => {
-    const enablement = app?.enablement;
-    if (!enablement || enablement === 'always') return true;
-    return capabilityConfigurations.some(
-      item => item.type === enablement.capabilityType && item.valid
-    );
-  }, [app, capabilityConfigurations]);
 
   const save = useCallback(async () => {
     const next: ApplicationAccessPolicyInput = draft.allMembers
@@ -177,12 +166,6 @@ export const ApplicationAccessCard = ({
           </div>
         )}
       </div>
-
-      {!installed && (
-        <span className={styles.hint}>
-          Configure the app&apos;s capability binding before it can appear in the switcher.
-        </span>
-      )}
     </div>
   );
 };

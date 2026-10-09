@@ -410,7 +410,6 @@ export const INTEGRATION_SYNC_IDS = {
 export const RETENTION_IDS = {
   policySchema: '00000000-0000-0000-0042-000000000001',
   assignmentRelationSchema: '00000000-0000-0000-0042-000000000002',
-  capabilityConfiguration: '00000000-0000-0000-0042-000000000004',
   policies: {
     threeYearOperational: '00000000-0000-0000-0042-000000000101',
     sevenYearFinancial: '00000000-0000-0000-0042-000000000102'

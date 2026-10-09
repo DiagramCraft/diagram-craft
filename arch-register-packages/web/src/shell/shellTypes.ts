@@ -1,6 +1,5 @@
 import type { IconType } from 'react-icons';
 import type { WorkspaceApplicationId } from '@arch-register/api-types/workspaceConfigContract';
-import type { WorkspaceCapabilityConfiguration } from '@arch-register/api-types/workspaceCapabilityContract';
 import type { AppRailItemId } from './appShellRegistry';
 
 export type BreadcrumbItem = {
@@ -46,10 +45,6 @@ export type AppRailSection = {
    */
   dashboard?: {
     appKey: string;
-    /** Defaults to "Loading…". */
-    loadingMessage?: string;
-    /** Defaults to "<app name> is not enabled.". */
-    notEnabledMessage?: string;
   };
   /** Renders a rail divider before this item. */
   separator?: boolean;
@@ -60,8 +55,7 @@ export type AppRailSection = {
 /**
  * A workspace application — the layer above the left rail. Selecting an app in the switcher
  * scopes the rail to `sections` and re-skins the shell with `tint`. `'home'` carries no
- * `shortCode`/`tint` and is always enabled; other apps are enabled iff their backing workspace
- * capability has a valid configuration.
+ * `shortCode`/`tint`.
  */
 export type AppDefinition = {
   id: AppId;
@@ -74,13 +68,4 @@ export type AppDefinition = {
   tint?: string;
   description: string;
   sections: AppRailSection[];
-  enablement: 'always' | { capabilityType: string };
-  /**
-   * Resolves the app's capability configuration; `null` means "not configured" and gates its
-   * dashboard sections. When omitted, a valid configuration of `enablement.capabilityType` is
-   * enough (see `shell/appCapabilityGate.ts`).
-   */
-  resolveConfig?: (
-    configurations: readonly WorkspaceCapabilityConfiguration[] | undefined
-  ) => unknown | null;
 };

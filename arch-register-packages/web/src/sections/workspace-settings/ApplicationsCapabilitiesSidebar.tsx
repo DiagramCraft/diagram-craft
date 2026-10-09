@@ -1,12 +1,12 @@
-import { useMemo } from 'react';
 import { getRouteApi } from '@tanstack/react-router';
+import { useMemo } from 'react';
 import { TbApps, TbBolt } from 'react-icons/tb';
 import { TreeRow } from '../../components/TreeRow';
 import styles from '../../shell/SidePanel.module.css';
-import dotStyles from './ApplicationsCapabilitiesSidebar.module.css';
 import { SidebarGroupLabel, SidebarTitleHeader } from '../../components/sidebar/SidebarPrimitives';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { useWorkspaceCapabilityConfigurations } from '../../hooks/useWorkspaceConfig';
+import dotStyles from './ApplicationsCapabilitiesSidebar.module.css';
 import {
   buildApplicationsCapabilitiesItems,
   findApplicationsCapabilitiesItem,
@@ -22,10 +22,10 @@ const StatusDot = ({ state }: { state: EnabledState }) => (
     className={`${dotStyles.dot} ${dotStyles[state]}`}
     title={
       state === 'on'
-        ? 'Enabled'
+        ? 'Configured'
         : state === 'warn'
-          ? 'Enabled — configuration incomplete'
-          : 'Not enabled'
+          ? 'Configuration incomplete'
+          : 'Not configured'
     }
   />
 );
@@ -35,12 +35,9 @@ export const ApplicationsCapabilitiesSidebar = ({ workspaceSlug }: { workspaceSl
   const search = routeApi.useSearch();
   const ctx = useWorkspaceContext();
   const { data: configurations = [] } = useWorkspaceCapabilityConfigurations(workspaceSlug);
-
   const stateByType = useMemo(() => {
     const map = new Map<string, EnabledState>();
-    for (const config of configurations) {
-      map.set(config.type, config.valid ? 'on' : 'warn');
-    }
+    for (const config of configurations) map.set(config.type, config.valid ? 'on' : 'warn');
     return map;
   }, [configurations]);
 
@@ -69,7 +66,11 @@ export const ApplicationsCapabilitiesSidebar = ({ workspaceSlug }: { workspaceSl
             label={item.label}
             active={activeItem?.id === item.id}
             onClick={() => select(item.id)}
-            trailing={<StatusDot state={stateByType.get(item.capabilityType) ?? 'off'} />}
+            trailing={
+              item.capabilityType ? (
+                <StatusDot state={stateByType.get(item.capabilityType) ?? 'off'} />
+              ) : undefined
+            }
           />
         ))}
       </>

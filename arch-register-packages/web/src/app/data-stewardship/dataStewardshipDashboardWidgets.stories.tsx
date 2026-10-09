@@ -11,7 +11,6 @@ import {
 } from '../../sections/markdown/mdx-components/blocks/StorybookHarness';
 import { governanceCasesQuery } from '../../queries/governance';
 import { entityDetailQuery, entitiesQuery } from '../../queries/entities';
-import { workspaceCapabilityConfigurationsQuery } from '../../queries/workspaceConfig';
 
 const SCHEMA_ID = 'story-data-entity-schema';
 const casesQuery = { status: 'open', subjectType: 'entity' } as const;
@@ -58,26 +57,8 @@ const DATASETS = [
   review_status: review
 })) as unknown as EntityRecord[];
 
-const seededClient = ({
-  cases = CASES,
-  configured = true
-}: {
-  cases?: GovernanceCase[];
-  configured?: boolean;
-} = {}): QueryClient => {
+const seededClient = ({ cases = CASES }: { cases?: GovernanceCase[] } = {}): QueryClient => {
   const client = createStoryQueryClient();
-  client.setQueryData(
-    workspaceCapabilityConfigurationsQuery(WORKSPACE).queryKey,
-    (configured
-      ? [
-          {
-            type: 'data-stewardship',
-            valid: true,
-            bindings: { dataEntity: { target: { kind: 'entity_schema', id: SCHEMA_ID } } }
-          }
-        ]
-      : []) as never
-  );
   client.setQueryData(governanceCasesQuery(WORKSPACE, casesQuery).queryKey, cases);
   for (const dataset of DATASETS) {
     client.setQueryData(entityDetailQuery(WORKSPACE, dataset._uid).queryKey, dataset);
@@ -93,9 +74,19 @@ const widgetStory = (
   type: string,
   config: Record<string, unknown>,
   size: { w: number; h: number },
-  client: QueryClient
+  client: QueryClient,
+  configured = true
 ) => (
-  <StoryProviders client={client}>
+  <StoryProviders
+    client={client}
+    schemas={
+      configured
+        ? ([{ id: SCHEMA_ID, name: 'Data Entity', fields: [] }] as unknown as Parameters<
+            typeof StoryProviders
+          >[0]['schemas'])
+        : []
+    }
+  >
     <DashboardStory widgets={[dashboardWidget(type, type, config, 0, 0, size.w, size.h)]} />
   </StoryProviders>
 );
@@ -139,12 +130,7 @@ export const CaseCountPastDue: Story = {
 
 export const CaseCountNotConfigured: Story = {
   render: () =>
-    widgetStory(
-      'data-stewardship-case-count',
-      COUNT_CONFIG,
-      { w: 3, h: 5 },
-      seededClient({ configured: false })
-    )
+    widgetStory('data-stewardship-case-count', COUNT_CONFIG, { w: 3, h: 5 }, seededClient(), false)
 };
 
 export const ReviewsOverdue: Story = {

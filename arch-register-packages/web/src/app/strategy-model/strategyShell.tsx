@@ -109,8 +109,7 @@ export const strategyAppDefinition: AppDefinition = {
       route: STRATEGY_RAIL_PATHS[STRATEGY_TRACEABILITY_ID],
       dashboard: { appKey: STRATEGY_TRACEABILITY_APP_KEY }
     }
-  ],
-  enablement: { capabilityType: 'strategy-model' }
+  ]
 };
 
 export const buildStrategyBreadcrumbs = (

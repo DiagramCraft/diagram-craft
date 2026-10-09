@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { getWorkspaceCapabilityDefinition } from '@arch-register/api-types/integrationCatalog';
 import type {
   DatabaseAdapter,
   ContentNodeDbUpsert,
@@ -369,6 +370,9 @@ export const importWorkspaceCapabilityConfigurations = async (
   let imported = 0;
   for (const configuration of configurations) {
     if (hasSkipResolution(resolutions, configuration.id)) continue;
+    // Exports from before bindings were removed for dashboard apps may carry configurations for
+    // capabilities that no longer exist; they have no effect, so they are ignored.
+    if (!getWorkspaceCapabilityDefinition(configuration.type)) continue;
 
     const bindings = Object.fromEntries(
       await Promise.all(
