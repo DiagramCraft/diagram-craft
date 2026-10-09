@@ -19,9 +19,12 @@ import type {
   ExportDiagnostic,
   ExportProject,
   ExportContentNode,
+  ExportApplicationData,
   ExportDocumentData,
-  ExportSharedFieldGroup
+  ExportSharedFieldGroup,
+  ExportDashboard
 } from './exportTypes';
+import type { WorkspaceDashboardDbResult } from '../dashboard/db/dashboardDatabase';
 import type { SharedFieldGroupLink } from '@arch-register/api-types/schemaContract';
 import type { SharedFieldGroupDbResult } from '../catalog/db/catalogDatabase';
 import { DOCUMENT_STATUS_CASE_KIND } from '../document/documentWorkflowOperations';
@@ -74,6 +77,7 @@ export const exportWorkspace = async (
     projects?: ExportProject[];
     content_nodes?: ExportContentNode[];
     documents?: ExportDocumentData;
+    applications?: ExportApplicationData;
   };
   contentFiles?: Map<string, Buffer>;
 }> => {
@@ -99,6 +103,7 @@ export const exportWorkspace = async (
     projects?: ExportProject[];
     content_nodes?: ExportContentNode[];
     documents?: ExportDocumentData;
+    applications?: ExportApplicationData;
   } = {};
 
   const statistics = {
@@ -111,7 +116,8 @@ export const exportWorkspace = async (
     total_content_size_bytes: 0,
     document_type_count: 0,
     document_template_count: 0,
-    document_revision_count: 0
+    document_revision_count: 0,
+    application_count: 0
   };
 
   // Export configuration
@@ -209,6 +215,11 @@ export const exportWorkspace = async (
     statistics.document_revision_count = data.documents.revisions.length;
   }
 
+  if (options.include.includes('applications')) {
+    data.applications = await exportApplications(db, workspace);
+    statistics.application_count = data.applications.applications.length;
+  }
+
   const manifest: ExportManifest = {
     version: '1.0',
     format: 'zip-multi-file',
@@ -229,6 +240,7 @@ export const exportWorkspace = async (
       ...(data.projects && { projects: 'projects.json' }),
       ...(data.content_nodes && { content_nodes: 'content-nodes.json' }),
       ...(data.documents && { documents: 'documents.json' }),
+      ...(data.applications && { applications: 'applications.json' }),
       ...(data.content_nodes && options.include_content && { content_directory: 'content/' })
     },
     statistics,
@@ -549,6 +561,64 @@ const exportEntities = async (
   });
 
   return { entities: exportedEntities, diagnostics };
+};
+
+const toExportDashboard = (row: WorkspaceDashboardDbResult): ExportDashboard => ({
+  id: row.id,
+  name: row.name,
+  description: row.description,
+  icon: row.icon,
+  rail_label: row.rail_label,
+  app_key: row.app_key,
+  widgets: row.layout,
+  sidebar: row.sidebar
+});
+
+const exportApplications = async (
+  db: DatabaseAdapter,
+  workspace: string
+): Promise<ExportApplicationData> => {
+  // `dashboard.list` returns only workspace home dashboards; application dashboards are fetched
+  // per application.
+  const [applications, homeDashboards, policies] = await Promise.all([
+    db.application.list(workspace),
+    db.dashboard.list(workspace),
+    db.workspace.listWorkspaceApplicationAccessPolicies(workspace)
+  ]);
+  const applicationDashboards = new Map(
+    await Promise.all(
+      applications.map(
+        async application =>
+          [application.id, await db.dashboard.listByApplication(workspace, application.id)] as const
+      )
+    )
+  );
+  const policyByKey = new Map(policies.map(policy => [policy.application_id, policy]));
+  const byOrder = (a: WorkspaceDashboardDbResult, b: WorkspaceDashboardDbResult) =>
+    (a.application_order ?? a.sort_order) - (b.application_order ?? b.sort_order);
+
+  return {
+    applications: [...applications]
+      .sort((a, b) => a.sort_order - b.sort_order)
+      .map(application => {
+        const policy = policyByKey.get(application.key);
+        return {
+          id: application.key,
+          key: application.key,
+          name: application.name,
+          description: application.description,
+          accent_color: application.accent_color,
+          dashboards: [...(applicationDashboards.get(application.id) ?? [])]
+            .sort(byOrder)
+            .map(toExportDashboard),
+          access_policy: policy ? { mode: policy.mode, team_ids: policy.team_ids } : null
+        };
+      }),
+    home_dashboards: [...homeDashboards]
+      .filter(dashboard => dashboard.application_id == null)
+      .sort((a, b) => a.sort_order - b.sort_order)
+      .map(toExportDashboard)
+  };
 };
 
 const exportProjects = async (

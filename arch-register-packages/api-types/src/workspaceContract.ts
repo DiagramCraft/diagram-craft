@@ -214,7 +214,8 @@ const exportDataTypeSchema = z
     'relations',
     'projects',
     'content_nodes',
-    'documents'
+    'documents',
+    'applications'
   ])
   .describe('Type of data to export/import');
 
@@ -326,7 +327,15 @@ const importParseResponseSchema = z.object({
           conflicts: z.number().int()
         })
         .optional()
-        .describe('Typed document summary')
+        .describe('Typed document summary'),
+      applications: z
+        .object({
+          count: z.number().int(),
+          dashboards: z.number().int(),
+          conflicts: z.number().int()
+        })
+        .optional()
+        .describe('Application and dashboard summary')
     })
     .describe('Summary of import data'),
   conflicts: z
@@ -470,7 +479,15 @@ const importExecuteResponseSchema = z.object({
           revisions: z.number().int()
         })
         .optional()
-        .describe('Typed document import results')
+        .describe('Typed document import results'),
+      applications: z
+        .object({
+          created: z.number().int(),
+          updated: z.number().int(),
+          dashboards: z.number().int()
+        })
+        .optional()
+        .describe('Application and dashboard import results')
     })
     .describe('Summary of imported items'),
   errors: z.array(z.string()).describe('Import execution errors'),

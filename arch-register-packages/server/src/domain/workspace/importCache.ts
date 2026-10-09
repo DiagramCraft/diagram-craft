@@ -8,6 +8,7 @@ import type {
   ExportRelation,
   ExportProject,
   ExportContentNode,
+  ExportApplicationData,
   ExportDocumentData
 } from './exportTypes';
 
@@ -25,6 +26,7 @@ export interface ImportCacheEntry {
     projects?: ExportProject[];
     content_nodes?: ExportContentNode[];
     documents?: ExportDocumentData;
+    applications?: ExportApplicationData;
   };
   content_files?: Record<string, string>; // Map of path -> base64 encoded content
   created_at: Date;

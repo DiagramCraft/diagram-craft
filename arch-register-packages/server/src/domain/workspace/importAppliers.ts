@@ -29,8 +29,12 @@ import type {
   ExportContentNode,
   IdMapping,
   ExportDocumentData,
-  ExportSharedFieldGroup
+  ExportSharedFieldGroup,
+  ExportApplicationData,
+  ExportDashboard
 } from './exportTypes';
+import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
+import { resolveTemplateDashboardWidgets } from '../catalog/schemaTemplates';
 import { requireNoRestrictedFieldWrites } from '../auth/fieldGroupAccessControl';
 import { DOCUMENT_STATUS_CASE_KIND } from '../document/documentWorkflowOperations';
 import { encodeCaseSubkind } from '../governance/governanceCaseSubkind';
@@ -1180,6 +1184,188 @@ export const importProjects = async (
   }
 
   return { created, updated };
+};
+
+// Widgets reference schemas by id in `config.schema`; remap them, including inside nested widget
+// lists, so imported dashboards point at the schemas created in this workspace.
+const remapDashboardWidgets = (
+  widgets: DashboardWidget[],
+  schemaIdMap: ReadonlyMap<string, string>
+): DashboardWidget[] =>
+  resolveTemplateDashboardWidgets(widgets, schemaIdMap).map(widget => {
+    const nested = widget.config['widgets'];
+    return Array.isArray(nested)
+      ? {
+          ...widget,
+          config: {
+            ...widget.config,
+            widgets: remapDashboardWidgets(nested as DashboardWidget[], schemaIdMap)
+          }
+        }
+      : widget;
+  });
+
+const uniqueName = (name: string, taken: Set<string>): string => {
+  const base = name.trim() || 'Dashboard';
+  let candidate = base;
+  let suffix = 2;
+  while (taken.has(candidate.toLocaleLowerCase())) {
+    candidate = `${base} (${suffix})`;
+    suffix += 1;
+  }
+  taken.add(candidate.toLocaleLowerCase());
+  return candidate;
+};
+
+export const importApplications = async (
+  db: DatabaseAdapter,
+  authCtx: WorkspaceAuthorizationContext,
+  workspace: string,
+  data: ExportApplicationData,
+  resolutions: Record<string, ImportResolution>,
+  idMapping: IdMapping
+): Promise<{ created: number; updated: number; dashboards: number; warnings: string[] }> => {
+  const warnings: string[] = [];
+  const now = new Date();
+  let created = 0;
+  let updated = 0;
+  let dashboardCount = 0;
+
+  const writeDashboard = async (
+    dashboard: ExportDashboard,
+    placement: {
+      name: string;
+      sort_order: number;
+      application_id: string | null;
+      application_order: number | null;
+    }
+  ) => {
+    const appKeyTaken =
+      dashboard.app_key != null &&
+      (await db.dashboard.getByAppKey(workspace, dashboard.app_key)) != null;
+    const row = await db.dashboard.create({
+      id: randomUUID(),
+      workspace,
+      name: placement.name,
+      description: dashboard.description,
+      sort_order: placement.sort_order,
+      app_key: appKeyTaken ? null : dashboard.app_key,
+      application_id: placement.application_id,
+      application_order: placement.application_order,
+      icon: dashboard.icon,
+      rail_label: dashboard.rail_label,
+      updated_by: authCtx.userId
+    });
+    await db.dashboard.update(workspace, row.id, {
+      layout: remapDashboardWidgets(dashboard.widgets, idMapping.schemas),
+      sidebar: dashboard.sidebar,
+      updated_by: authCtx.userId
+    });
+    dashboardCount++;
+  };
+
+  const existingTeamIds = new Set((await db.workspace.listTeams(workspace)).map(team => team.id));
+
+  for (const application of data.applications) {
+    if (hasSkipResolution(resolutions, application.id)) continue;
+    const mode = resolutions[application.id]?.action;
+    let row = await db.application.getByKey(workspace, application.key);
+    const dashboardsToWrite = application.dashboards;
+    let baseOrder = 0;
+    const takenNames = new Set<string>();
+
+    if (row) {
+      const existingDashboards = await db.dashboard.listByApplication(workspace, row.id);
+      if (mode === 'merge') {
+        // Keep the existing application and append the imported dashboards.
+        for (const dashboard of existingDashboards) takenNames.add(dashboard.name.toLocaleLowerCase());
+        baseOrder =
+          existingDashboards.reduce((max, d) => Math.max(max, d.application_order ?? -1), -1) + 1;
+      } else {
+        for (const dashboard of existingDashboards) {
+          await db.dashboard.remove(workspace, dashboard.id);
+        }
+        row =
+          (await db.application.update(workspace, row.id, {
+            name: application.name,
+            description: application.description,
+            accent_color: application.accent_color,
+            updated_by: authCtx.userId
+          })) ?? row;
+      }
+      updated++;
+    } else {
+      const existing = await db.application.list(workspace);
+      row = await db.application.create({
+        id: randomUUID(),
+        workspace,
+        key: application.key,
+        name: application.name,
+        description: application.description,
+        accent_color: application.accent_color,
+        sort_order: existing.reduce((max, item) => Math.max(max, item.sort_order), -1) + 1,
+        updated_by: authCtx.userId
+      });
+      created++;
+    }
+
+    for (const [index, dashboard] of dashboardsToWrite.entries()) {
+      await writeDashboard(dashboard, {
+        name: uniqueName(dashboard.name, takenNames),
+        sort_order: baseOrder + index,
+        application_id: row.id,
+        application_order: baseOrder + index
+      });
+    }
+
+    if (application.access_policy && mode !== 'merge') {
+      const teamIds = [
+        ...new Set(
+          application.access_policy.team_ids.flatMap(teamId => {
+            const mapped = idMapping.teams.get(teamId) ?? (existingTeamIds.has(teamId) ? teamId : null);
+            return mapped == null ? [] : [mapped];
+          })
+        )
+      ];
+      if (application.access_policy.mode === 'selected' && teamIds.length === 0) {
+        await db.workspace.deleteWorkspaceApplicationAccessPolicy(workspace, application.key);
+        warnings.push(
+          `Access policy for application '${application.name}' was not imported: no matching teams`
+        );
+      } else {
+        await db.workspace.upsertWorkspaceApplicationAccessPolicy({
+          workspace,
+          application_id: application.key,
+          mode: application.access_policy.mode,
+          user_ids: [],
+          team_ids: application.access_policy.mode === 'selected' ? teamIds : [],
+          created_at: now,
+          updated_at: now
+        });
+      }
+    }
+  }
+
+  if (data.home_dashboards.length > 0) {
+    const existing = await db.dashboard.list(workspace);
+    const taken = new Set(
+      existing.filter(row => row.application_id == null).map(row => row.name.toLocaleLowerCase())
+    );
+    let nextOrder =
+      existing
+        .filter(row => row.application_id == null)
+        .reduce((max, row) => Math.max(max, row.sort_order), -1) + 1;
+    for (const dashboard of data.home_dashboards) {
+      await writeDashboard(dashboard, {
+        name: uniqueName(dashboard.name, taken),
+        sort_order: nextOrder++,
+        application_id: null,
+        application_order: null
+      });
+    }
+  }
+
+  return { created, updated, dashboards: dashboardCount, warnings };
 };
 
 export const importContentNodes = async (
