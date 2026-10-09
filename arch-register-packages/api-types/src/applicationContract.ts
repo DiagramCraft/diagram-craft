@@ -60,6 +60,14 @@ export const reorderApplicationsBodySchema = z.object({
 
 export type ReorderApplicationsRequest = z.infer<typeof reorderApplicationsBodySchema>;
 
+export const reorderApplicationDashboardsBodySchema = z.object({
+  ids: z.array(z.string()).describe('Every dashboard id of the application, in the desired order')
+});
+
+export type ReorderApplicationDashboardsRequest = z.infer<
+  typeof reorderApplicationDashboardsBodySchema
+>;
+
 const deleteApplicationResponseSchema = z.object({
   success: z.boolean().describe('Whether the deletion was successful')
 });
@@ -101,6 +109,18 @@ export const workspaceApplicationContract = oc.tag('Application').router({
       })
       .input(z.object({ params: ws, body: reorderApplicationsBodySchema }))
       .output(z.array(workspaceApplicationSchema)),
+    reorderDashboards: oc
+      .route({
+        method: 'PUT',
+        path: '/{workspace}/workspace-applications/{id}/dashboards/order',
+        inputStructure: 'detailed',
+        summary: 'Reorder application dashboards',
+        description:
+          'Sets the dashboard order within an application; the body must list every dashboard of the application exactly once.',
+        tags: ['Application']
+      })
+      .input(z.object({ params: wsAndUUID, body: reorderApplicationDashboardsBodySchema }))
+      .output(z.array(applicationDashboardSchema)),
     update: oc
       .route({
         method: 'PATCH',

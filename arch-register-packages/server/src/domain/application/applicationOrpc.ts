@@ -8,6 +8,7 @@ import {
   createApplication,
   deleteApplication,
   listApplicationsWithDashboards,
+  reorderApplicationDashboards,
   reorderApplications,
   toApiApplication,
   updateApplication
@@ -52,6 +53,27 @@ export const workspaceApplicationORPCRouter = applicationRouter.router({
         context.event.context.user.id
       );
     }),
+    reorderDashboards: applicationRouter.workspaceApplications.reorderDashboards.handler(
+      async ({ input, context }) => {
+        const { workspace, authCtx } = context;
+        requireWorkspaceCapability(authCtx, 'ws.manage_dashboard');
+        const rows = await reorderApplicationDashboards(
+          context.db,
+          workspace,
+          input.params.id,
+          input.body.ids,
+          context.event.context.user.id
+        );
+        return rows.map(row => ({
+          id: row.id,
+          name: row.name,
+          icon: row.icon,
+          railLabel: row.rail_label,
+          order: row.application_order ?? 0,
+          sidebar: row.sidebar ?? undefined
+        }));
+      }
+    ),
     update: applicationRouter.workspaceApplications.update.handler(async ({ input, context }) => {
       const { workspace, authCtx } = context;
       requireWorkspaceCapability(authCtx, 'ws.manage_dashboard');

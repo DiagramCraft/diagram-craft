@@ -48,7 +48,10 @@
           missing policies deny ordinary members by default while global administrators and workspace role managers
           retain access. Applications are workspace data: users with dashboard-management rights can create, rename,
           recolour, reorder, and delete them through the API (the built-in applications are seeded into every
-          workspace). Breadcrumbs are relative to the active application, which the switcher represents.
+          workspace). From the left rail of an application the same users can add dashboards, rename them, change
+          their icon, reorder them, and delete them (rail context menu and "Add dashboard" button), and edit the
+          application's name, description, and accent colour or delete the application ("Edit application" button).
+          Breadcrumbs are relative to the active application, which the switcher represents.
 
         - @id:ar.workspace.home Users can use the workspace home to navigate to entities, projects, content, search,
           diagrams, and other primary work areas. The home screen shows a composable dashboard of widgets (stat metrics,

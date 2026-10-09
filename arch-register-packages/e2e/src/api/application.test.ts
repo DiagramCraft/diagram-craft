@@ -63,4 +63,54 @@ test.describe('Workspace Application API', () => {
       orpc.workspaceApplications.remove({ params: { ...params, id: created.id } })
     ).rejects.toMatchObject({ code: 'NOT_FOUND' });
   });
+
+  test('add, re-icon, reorder and delete dashboards inside an application', async ({ orpc }) => {
+    const app = await orpc.workspaceApplications.create({
+      params,
+      body: { key: 'dash-app', name: 'Dash app' }
+    });
+    const appParams = { ...params, id: app.id };
+
+    const added = await orpc.dashboard.create({
+      params,
+      body: { name: 'Second', icon: 'TbBook', applicationId: app.id }
+    });
+    expect(added.applicationId).toBe(app.id);
+    expect(added.icon).toBe('TbBook');
+
+    await expect(
+      orpc.dashboard.create({
+        params,
+        body: { name: 'Bad', icon: 'not an icon', applicationId: app.id }
+      })
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+
+    await orpc.dashboard.update({
+      params: { ...params, id: added.id },
+      body: { name: 'Renamed', icon: 'TbApi' }
+    });
+    const [listed] = (await orpc.workspaceApplications.list({ params })).filter(
+      candidate => candidate.id === app.id
+    );
+    const ids = listed!.dashboards.map(d => d.id);
+    expect(ids).toHaveLength(2);
+    expect(listed!.dashboards[1]).toMatchObject({ name: 'Renamed', icon: 'TbApi' });
+
+    const reversed = [...ids].reverse();
+    const reordered = await orpc.workspaceApplications.reorderDashboards({
+      params: appParams,
+      body: { ids: reversed }
+    });
+    expect(reordered.map(d => d.id)).toEqual(reversed);
+    await expect(
+      orpc.workspaceApplications.reorderDashboards({ params: appParams, body: { ids: [ids[0]!] } })
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+
+    await orpc.dashboard.remove({ params: { ...params, id: added.id } });
+    await expect(
+      orpc.dashboard.remove({ params: { ...params, id: ids.find(id => id !== added.id)! } })
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+
+    await orpc.workspaceApplications.remove({ params: appParams });
+  });
 });
