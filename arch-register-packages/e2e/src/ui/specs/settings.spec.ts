@@ -67,23 +67,20 @@ test.describe('settings section', () => {
 
     await settingsPage.goto('applications-capabilities');
     await page.getByTitle('Add application', { exact: true }).click();
-    const dialog = page.getByRole('dialog');
+    const dialog = page.getByRole('alertdialog');
     await dialog.getByLabel('Name').fill(name);
     await dialog.getByRole('button', { name: 'Add application', exact: true }).click();
 
     // The new application is selected and shows its General tab.
     await expect(page.getByText(name, { exact: true })).toBeVisible();
     await page.getByRole('tab', { name: 'General', exact: true }).click();
-    await page.getByLabel('Name').fill(renamed);
+    await page.getByText('Name', { exact: true }).locator('..').getByRole('textbox').fill(renamed);
     await page.getByRole('button', { name: 'Save changes', exact: true }).click();
     await expect(page.getByText(renamed, { exact: true })).toBeVisible();
 
     await page.getByRole('button', { name: 'Delete application', exact: true }).click();
     await expect(page.getByText('Delete application?', { exact: true })).toBeVisible();
-    await page
-      .getByRole('dialog')
-      .getByRole('button', { name: 'Delete', exact: true })
-      .click();
+    await page.getByRole('dialog').getByRole('button', { name: 'Delete', exact: true }).click();
     await expect(page.getByText(renamed, { exact: true })).toHaveCount(0);
   });
 
