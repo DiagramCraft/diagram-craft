@@ -893,7 +893,9 @@ const validateApplications = async (
     }
   }
 
-  if (applicationData.applications.some(application => application.access_policy?.team_ids.length)) {
+  if (
+    applicationData.applications.some(application => application.access_policy?.team_ids.length)
+  ) {
     warnings.push(
       'Application access policies reference teams; teams not included in the import are dropped'
     );

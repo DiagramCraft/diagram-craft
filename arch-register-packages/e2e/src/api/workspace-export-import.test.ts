@@ -339,9 +339,9 @@ test.describe('workspace export/import', () => {
 
     const importedApp = await server.db.application.getByKey(target.id, key);
     expect(importedApp).toMatchObject({ name: 'Imported App', accent_color: '#112233' });
-    const dashboards = (await server.db.dashboard.listByApplication(target.id, importedApp!.id)).sort(
-      (a, b) => (a.application_order ?? 0) - (b.application_order ?? 0)
-    );
+    const dashboards = (
+      await server.db.dashboard.listByApplication(target.id, importedApp!.id)
+    ).sort((a, b) => (a.application_order ?? 0) - (b.application_order ?? 0));
     expect(dashboards.map(d => d.name)).toEqual(['First', 'Second']);
     expect(dashboards[0]).toMatchObject({ icon: 'TbChartBar' });
     const importedSchema = (await server.db.catalog.listSchemas(target.id)).find(

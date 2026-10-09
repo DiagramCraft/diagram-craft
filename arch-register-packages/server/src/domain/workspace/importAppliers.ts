@@ -1278,7 +1278,8 @@ export const importApplications = async (
       const existingDashboards = await db.dashboard.listByApplication(workspace, row.id);
       if (mode === 'merge') {
         // Keep the existing application and append the imported dashboards.
-        for (const dashboard of existingDashboards) takenNames.add(dashboard.name.toLocaleLowerCase());
+        for (const dashboard of existingDashboards)
+          takenNames.add(dashboard.name.toLocaleLowerCase());
         baseOrder =
           existingDashboards.reduce((max, d) => Math.max(max, d.application_order ?? -1), -1) + 1;
       } else {
@@ -1322,7 +1323,8 @@ export const importApplications = async (
       const teamIds = [
         ...new Set(
           application.access_policy.team_ids.flatMap(teamId => {
-            const mapped = idMapping.teams.get(teamId) ?? (existingTeamIds.has(teamId) ? teamId : null);
+            const mapped =
+              idMapping.teams.get(teamId) ?? (existingTeamIds.has(teamId) ? teamId : null);
             return mapped == null ? [] : [mapped];
           })
         )

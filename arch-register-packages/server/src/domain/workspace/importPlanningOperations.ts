@@ -311,7 +311,11 @@ export const applyConflictRenames = <
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-+|-+$/g, '');
-      return { ...item, name: newName, key: key === '' || key === 'home' ? `${item.key}-copy` : key };
+      return {
+        ...item,
+        name: newName,
+        key: key === '' || key === 'home' ? `${item.key}-copy` : key
+      };
     })
   },
   documents: data.documents && {
