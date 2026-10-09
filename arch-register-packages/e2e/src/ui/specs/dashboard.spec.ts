@@ -100,7 +100,7 @@ test.describe('dashboard section', () => {
 
       await page.getByRole('button', { name: 'Catalog', exact: true }).last().click();
       await expect(page).toHaveURL(
-        new RegExp(`/${defaultWorkspace.slug}/api-integration-catalog/apis`)
+        new RegExp(`/${defaultWorkspace.slug}/apps/api-integration-catalog/[^/?]+`)
       );
       await homePage.goto();
       await homePage.switchDashboard(dashboardName);
@@ -110,14 +110,14 @@ test.describe('dashboard section', () => {
       await mostConsumedFrame.getByRole('button', { name: /API/ }).first().click();
       await expect(page).toHaveURL(
         url =>
-          url.pathname.endsWith('/api-integration-catalog/apis') && url.searchParams.has('drawer')
+          url.pathname.includes('/apps/api-integration-catalog/') && url.searchParams.has('drawer')
       );
       await homePage.goto();
       await homePage.switchDashboard(dashboardName);
       await page.getByRole('button', { name: 'All integrations', exact: true }).last().click();
       await expect(page).toHaveURL(
         url =>
-          url.pathname.endsWith('/api-integration-catalog/integrations') &&
+          url.pathname.includes('/apps/api-integration-catalog/') &&
           url.searchParams.get('boundary') === '"1"'
       );
     } finally {

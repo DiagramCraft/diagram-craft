@@ -4,7 +4,7 @@ import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { Banner } from '../../../components/Banner';
 import { LoadingState } from '../../../components/LoadingState';
-import { APP_DEFINITIONS } from '../../../shell/appShellRegistry';
+import { useApplications } from '../../../hooks/useApplications';
 import { PrincipalPicker } from '../../../components/PrincipalPicker';
 import type {
   ApplicationAccessMode,
@@ -57,9 +57,10 @@ export const ApplicationAccessCard = ({
   const updatePolicy = useUpdateApplicationAccessPolicy(workspaceSlug);
   const [draft, setDraftState] = useState<AccessDraft>(toDraft(undefined));
 
+  const { data: applications } = useApplications(workspaceSlug);
   const app = useMemo(
-    () => APP_DEFINITIONS.find(candidate => candidate.applicationId === applicationId),
-    [applicationId]
+    () => applications?.find(candidate => candidate.key === applicationId),
+    [applications, applicationId]
   );
 
   const policy = useMemo(

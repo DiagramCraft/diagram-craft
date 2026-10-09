@@ -5,6 +5,7 @@ import { TreeRow } from '../../components/TreeRow';
 import styles from '../../shell/SidePanel.module.css';
 import { SidebarGroupLabel, SidebarTitleHeader } from '../../components/sidebar/SidebarPrimitives';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
+import { useApplications } from '../../hooks/useApplications';
 import { useWorkspaceCapabilityConfigurations } from '../../hooks/useWorkspaceConfig';
 import dotStyles from './ApplicationsCapabilitiesSidebar.module.css';
 import {
@@ -34,6 +35,7 @@ export const ApplicationsCapabilitiesSidebar = ({ workspaceSlug }: { workspaceSl
   const navigate = routeApi.useNavigate();
   const search = routeApi.useSearch();
   const ctx = useWorkspaceContext();
+  const { data: workspaceApplications = [] } = useApplications(workspaceSlug);
   const { data: configurations = [] } = useWorkspaceCapabilityConfigurations(workspaceSlug);
   const stateByType = useMemo(() => {
     const map = new Map<string, EnabledState>();
@@ -45,8 +47,11 @@ export const ApplicationsCapabilitiesSidebar = ({ workspaceSlug }: { workspaceSl
     canManageBindings: ctx.permissions.canManageWorkspaces,
     canManageAccess: ctx.permissions.canAdministerWorkspace ?? false
   };
-  const { applications, capabilities } = buildApplicationsCapabilitiesItems(perms);
-  const activeItem = findApplicationsCapabilitiesItem(perms, search.item);
+  const { applications, capabilities } = buildApplicationsCapabilitiesItems(
+    perms,
+    workspaceApplications
+  );
+  const activeItem = findApplicationsCapabilitiesItem(perms, workspaceApplications, search.item);
 
   const select = (id: string) =>
     navigate({

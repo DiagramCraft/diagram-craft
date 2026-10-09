@@ -12,7 +12,6 @@ import { caseKindLabel } from '../../utils/governanceCaseLabels';
 import { formatDate } from '../../utils/dateFormat';
 /** Name of the schema the Data Stewardship widgets operate on (resolved by name, no capability binding). */
 const DATA_ENTITY_SCHEMA_NAME = 'Data Entity';
-import { DS_MY_WORK_ID, DS_RAIL_PATHS } from './dataStewardshipSections';
 import {
   queueItemPriority,
   useDataStewardshipQueue,
@@ -127,15 +126,15 @@ const useCaseQueue = (config: CaseConfig) => {
   };
 };
 
-/** Opens the case drawer, hosted by `DataStewardshipDashboardScreen`, via the `caseId` param. */
+/** Opens the case drawer, hosted by `AppDashboardRouteScreen`, via the `caseId` param. */
 const useOpenCase = () => {
-  const { workspaceSlug } = useWorkspaceContext();
   const navigate = useNavigate();
   return (item: DataStewardshipQueueItem) =>
     navigate({
-      to: DS_RAIL_PATHS[DS_MY_WORK_ID],
-      params: { workspaceSlug },
-      search: (previous: Record<string, unknown>) => ({ ...previous, caseId: item.case.id })
+      search: ((previous: Record<string, unknown>) => ({
+        ...previous,
+        caseId: item.case.id
+      })) as never
     });
 };
 

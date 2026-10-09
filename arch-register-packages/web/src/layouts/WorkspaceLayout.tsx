@@ -38,12 +38,12 @@ import {
   resolveWorkspaceShellDescriptor
 } from './workspaceShellDescriptors';
 import {
-  APP_DEFINITIONS,
   appAccentStyle,
+  buildAppDefinitions,
   getAppDefinition,
-  railItemMeta,
   railItemToAppId
 } from '../shell/appShellRegistry';
+import { useApplications } from '../hooks/useApplications';
 import type { AppDefinition, AppId, WorkspaceRailItemId } from '../shell/shellTypes';
 import { getWorkspaceShellBuilder } from '../routes/workspace/workspaceShellRoute';
 import { useAccessibleApplications } from '../hooks/useWorkspaceConfig';
@@ -104,6 +104,11 @@ export const WorkspaceLayout = () => {
     workspaceSlug,
     !!workspaceSlug
   );
+  const { data: applications, error: applicationsError } = useApplications(
+    workspaceSlug,
+    !!workspaceSlug
+  );
+  const apps = useMemo(() => buildAppDefinitions(applications), [applications]);
 
   const {
     canManageWorkspaces,
@@ -159,16 +164,16 @@ export const WorkspaceLayout = () => {
 
   const handleRailPick = useCallback(
     (id: WorkspaceRailItemId) => {
-      navigateFromRailItem(id, { navigate, workspaceSlug, projects });
+      navigateFromRailItem(id, { navigate, workspaceSlug, projects, apps });
     },
-    [navigate, projects, workspaceSlug]
+    [apps, navigate, projects, workspaceSlug]
   );
 
   const handlePickApp = useCallback(
     (id: AppId) => {
-      navigateToApp(id, { navigate, workspaceSlug });
+      navigateToApp(id, { navigate, workspaceSlug, apps });
     },
-    [navigate, workspaceSlug]
+    [apps, navigate, workspaceSlug]
   );
 
   const handlePickWs = useCallback(
@@ -212,13 +217,13 @@ export const WorkspaceLayout = () => {
 
   const enabledApps = useMemo(
     () =>
-      APP_DEFINITIONS.filter(app => {
+      apps.filter(app => {
         const accessibleApplicationIds = new Set(
           applicationAccess?.accessible_application_ids ?? ['home']
         );
         return accessibleApplicationIds.has(app.applicationId);
       }),
-    [applicationAccess?.accessible_application_ids]
+    [apps, applicationAccess?.accessible_application_ids]
   );
 
   const contextValue = useMemo(
@@ -298,6 +303,7 @@ export const WorkspaceLayout = () => {
     navigate,
     workspace: ws,
     workspaceSlug,
+    apps,
     schemas,
     enums,
     projects,
@@ -308,7 +314,7 @@ export const WorkspaceLayout = () => {
 
   const activeRailItem =
     shellDescriptor.variant === 'overlay' ? null : shellDescriptor.activeRailItem;
-  const activeApp = getAppDefinition(railItemToAppId(activeRailItem));
+  const activeApp = getAppDefinition(apps, railItemToAppId(apps, activeRailItem));
 
   useEffect(() => {
     if (!applicationAccess || activeApp.applicationId === 'home') return;
@@ -324,15 +330,13 @@ export const WorkspaceLayout = () => {
     const aiEnabled = aiConfig?.enabled === true;
     const count = governanceTaskCount?.count ?? 0;
     return activeApp.sections
-      .map(section => section.id)
-      .filter(id => aiEnabled || (id !== 'assistant' && id !== 'extract'))
-      .map(id => {
-        const meta = railItemMeta(id);
+      .filter(({ id }) => aiEnabled || (id !== 'assistant' && id !== 'extract'))
+      .map(({ id, icon, tooltip, separator }) => {
         const item: NavRailItem = {
           id,
-          icon: meta.icon,
-          tooltip: meta.tooltip,
-          ...(meta.separator ? { separator: true } : {})
+          icon,
+          tooltip,
+          ...(separator ? { separator: true } : {})
         };
         if (id === 'governance' && count > 0) {
           return {
@@ -368,7 +372,8 @@ export const WorkspaceLayout = () => {
     enumsError ||
     fieldGroupsError ||
     categoriesError ||
-    applicationAccessError
+    applicationAccessError ||
+    applicationsError
   ) {
     const error =
       workspacesError ??
@@ -378,7 +383,8 @@ export const WorkspaceLayout = () => {
       enumsError ??
       fieldGroupsError ??
       categoriesError ??
-      applicationAccessError;
+      applicationAccessError ??
+      applicationsError;
     return (
       <AppErrorState
         fullScreen

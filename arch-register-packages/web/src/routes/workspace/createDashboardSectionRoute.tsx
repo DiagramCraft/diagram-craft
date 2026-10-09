@@ -1,12 +1,13 @@
 import { lazy } from 'react';
-import { createRoute, type AnyRoute } from '@tanstack/react-router';
-import type { AppDefinition, BreadcrumbItem } from '../../shell/shellTypes';
-import type { WorkspaceShellContext } from '../../layouts/workspaceShellDescriptors';
-import { railSectionShell } from '../../layouts/workspaceShellDescriptors';
+import { createRoute, redirect, type AnyRoute } from '@tanstack/react-router';
+import type { WorkspaceApplicationWithDashboards } from '@arch-register/api-types/applicationContract';
+import type { BreadcrumbItem } from '../../shell/shellTypes';
+import { buildHomeBreadcrumbs } from '../../shell/breadcrumbBuilders';
+import { getAppDefinition, getRailSection } from '../../shell/appShellRegistry';
+import { getAllParams, railSectionShell } from '../../layouts/workspaceShellDescriptors';
 import { ensureApplicationAccess } from '../applicationAccess';
+import { workspaceApplicationsQuery } from '../../queries/application';
 import { withWorkspaceShell } from './workspaceShellRoute';
-
-export const railPath = (path: string) => path.replace('/$workspaceSlug/', '');
 
 const LazyAppDashboardRouteScreen = lazy(() =>
   import('../../sections/dashboard/AppDashboardRouteScreen').then(m => ({
@@ -15,30 +16,72 @@ const LazyAppDashboardRouteScreen = lazy(() =>
 );
 
 /**
- * Creates the workspace route for every section of `app` that declares `dashboard`, so a
- * dashboard-only section needs just an `AppDefinition.sections` entry (#3493). Access is gated by
- * `ensureApplicationAccess`; capability gating is rendered by `AppDashboardRouteScreen`.
+ * The generic routes of every workspace application: `apps/$appKey/$dashboardId` renders one of the
+ * application's dashboards, and `apps/$appKey` redirects to its first dashboard. Applications and
+ * their dashboards are fetched (`workspaceApplicationsQuery`), so adding one needs no code. Access
+ * is gated by `ensureApplicationAccess`.
  */
-export const createDashboardSectionRoute = <TParentRoute extends AnyRoute>(
-  workspaceRoute: TParentRoute,
-  app: AppDefinition,
-  sectionId: string,
-  breadcrumbs: (ctx: WorkspaceShellContext) => BreadcrumbItem[]
+export const createApplicationWorkspaceRoutes = <TParentRoute extends AnyRoute>(
+  workspaceRoute: TParentRoute
 ) => {
-  const section = app.sections.find(candidate => candidate.id === sectionId);
-  if (!section?.dashboard) throw new Error(`${app.name} section ${sectionId} has no dashboard`);
-  return withWorkspaceShell(
+  const dashboardRoute = withWorkspaceShell(
     createRoute({
       getParentRoute: () => workspaceRoute,
-      path: railPath(section.route),
-      beforeLoad: ({ context, params }) =>
-        ensureApplicationAccess(
-          context.queryClient,
-          (params as unknown as { workspaceSlug: string }).workspaceSlug,
-          app.applicationId as Exclude<typeof app.applicationId, 'home'>
-        ),
-      component: () => <LazyAppDashboardRouteScreen app={app} sectionId={sectionId} />
+      path: 'apps/$appKey/$dashboardId',
+      // No `validateSearch`: the accepted search params are the dashboard sidebar's variable names,
+      // which are only known once the dashboard is loaded (see `computeSidebarVariables`).
+      beforeLoad: async ({ context, params }) => {
+        const { workspaceSlug, appKey } = params as unknown as {
+          workspaceSlug: string;
+          appKey: string;
+        };
+        await context.queryClient.ensureQueryData(workspaceApplicationsQuery(workspaceSlug));
+        await ensureApplicationAccess(context.queryClient, workspaceSlug, appKey);
+      },
+      component: () => <LazyAppDashboardRouteScreen />
     }),
-    ctx => railSectionShell(ctx, section.id, { breadcrumbs: breadcrumbs(ctx) })
+    ctx => {
+      const { appKey, dashboardId } = getAllParams(ctx.matches);
+      const app = getAppDefinition(ctx.apps, appKey!);
+      const section = getRailSection(ctx.apps, dashboardId!);
+      const breadcrumbs: BreadcrumbItem[] = [
+        ...buildHomeBreadcrumbs(ctx),
+        {
+          label: section?.tooltip ?? app.name,
+          onClick: () =>
+            ctx.navigate({
+              to: '/$workspaceSlug/apps/$appKey/$dashboardId',
+              params: { workspaceSlug: ctx.workspaceSlug, appKey: appKey!, dashboardId: dashboardId! }
+            })
+        }
+      ];
+      return railSectionShell(ctx, dashboardId!, { breadcrumbs });
+    }
   );
+
+  const appIndexRoute = createRoute({
+    getParentRoute: () => workspaceRoute,
+    path: 'apps/$appKey',
+    beforeLoad: async ({ context, params }) => {
+      const { workspaceSlug, appKey } = params as unknown as {
+        workspaceSlug: string;
+        appKey: string;
+      };
+      const applications: WorkspaceApplicationWithDashboards[] =
+        await context.queryClient.ensureQueryData(
+        workspaceApplicationsQuery(workspaceSlug)
+      );
+      await ensureApplicationAccess(context.queryClient, workspaceSlug, appKey);
+      const first = [...(applications.find(app => app.key === appKey)?.dashboards ?? [])].sort(
+        (a, b) => a.order - b.order
+      )[0];
+      if (!first) throw redirect({ to: '/$workspaceSlug', params: { workspaceSlug } });
+      throw redirect({
+        to: '/$workspaceSlug/apps/$appKey/$dashboardId',
+        params: { workspaceSlug, appKey, dashboardId: first.id }
+      });
+    }
+  });
+
+  return [dashboardRoute, appIndexRoute] as const;
 };
