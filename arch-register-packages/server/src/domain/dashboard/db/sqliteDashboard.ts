@@ -15,9 +15,22 @@ export class SqliteDashboardDatabase implements DashboardDatabase {
     try {
       const rows = this.db
         .prepare(
-          'SELECT * FROM workspace_dashboard WHERE workspace = ? AND app_key IS NULL ORDER BY sort_order'
+          'SELECT * FROM workspace_dashboard WHERE workspace = ? AND app_key IS NULL AND application_id IS NULL ORDER BY sort_order'
         )
         .all(workspace) as Record<string, unknown>[];
+      return rows.map(mapWorkspaceDashboardRow);
+    } catch (error) {
+      return normalizeSqliteError(error);
+    }
+  }
+
+  async listByApplication(workspace: string, applicationId: string) {
+    try {
+      const rows = this.db
+        .prepare(
+          'SELECT * FROM workspace_dashboard WHERE workspace = ? AND application_id = ? ORDER BY application_order, sort_order'
+        )
+        .all(workspace, applicationId) as Record<string, unknown>[];
       return rows.map(mapWorkspaceDashboardRow);
     } catch (error) {
       return normalizeSqliteError(error);
@@ -52,8 +65,8 @@ export class SqliteDashboardDatabase implements DashboardDatabase {
     try {
       this.db
         .prepare(
-          `INSERT INTO workspace_dashboard (id, workspace, name, description, sort_order, app_key, layout, updated_at, updated_by)
-           VALUES (?, ?, ?, ?, ?, ?, '[]', ?, ?)`
+          `INSERT INTO workspace_dashboard (id, workspace, name, description, sort_order, app_key, application_id, application_order, icon, rail_label, layout, updated_at, updated_by)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '[]', ?, ?)`
         )
         .run(
           id,
@@ -62,6 +75,10 @@ export class SqliteDashboardDatabase implements DashboardDatabase {
           input.description ?? '',
           input.sort_order,
           input.app_key ?? null,
+          input.application_id ?? null,
+          input.application_order ?? null,
+          input.icon ?? null,
+          input.rail_label ?? null,
           now,
           input.updated_by
         );
@@ -76,17 +93,22 @@ export class SqliteDashboardDatabase implements DashboardDatabase {
     if (!existing) return null;
 
     const sidebar = 'sidebar' in input ? (input.sidebar ?? null) : existing.sidebar;
+    const icon = 'icon' in input ? (input.icon ?? null) : existing.icon;
+    const railLabel = 'rail_label' in input ? (input.rail_label ?? null) : existing.rail_label;
     const now = new Date().toISOString();
     try {
       this.db
         .prepare(
           `UPDATE workspace_dashboard
-           SET name = ?, description = ?, layout = ?, sidebar = ?, updated_at = ?, updated_by = ?
+           SET name = ?, description = ?, application_order = ?, icon = ?, rail_label = ?, layout = ?, sidebar = ?, updated_at = ?, updated_by = ?
            WHERE workspace = ? AND id = ?`
         )
         .run(
           input.name ?? existing.name,
           input.description ?? existing.description,
+          input.application_order ?? existing.application_order,
+          icon,
+          railLabel,
           input.layout ? JSON.stringify(input.layout) : JSON.stringify(existing.layout),
           sidebar ? JSON.stringify(sidebar) : null,
           now,

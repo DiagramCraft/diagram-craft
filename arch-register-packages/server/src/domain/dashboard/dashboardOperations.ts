@@ -20,6 +20,10 @@ export const toApi = (row: WorkspaceDashboardDbResult): ApiWorkspaceDashboard =>
   updatedAt: row.updated_at.toISOString(),
   updatedBy: row.updated_by,
   appKey: row.app_key,
+  applicationId: row.application_id,
+  applicationOrder: row.application_order,
+  icon: row.icon,
+  railLabel: row.rail_label,
   sidebar: row.sidebar ?? undefined
 });
 
@@ -188,6 +192,18 @@ export const deleteWorkspaceDashboard = async (
   workspace: string,
   id: string
 ): Promise<{ success: boolean }> => {
+  const target = await db.dashboard.get(workspace, id);
+  httpAssert.present(target, { status: 404, message: 'Dashboard not found' });
+  if (target!.application_id) {
+    const siblings = await db.dashboard.listByApplication(workspace, target!.application_id);
+    httpAssert.true(siblings.length > 1, {
+      status: 400,
+      message: 'Cannot delete the only dashboard in an application'
+    });
+    await db.dashboard.remove(workspace, id);
+    return { success: true };
+  }
+
   const all = await db.dashboard.list(workspace);
   const existing = all.find(row => row.id === id);
   httpAssert.present(existing, { status: 404, message: 'Dashboard not found' });

@@ -11,6 +11,7 @@ import { SqliteProjectDatabase } from '../domain/project/db/sqliteProject';
 import { SqliteWorkspaceDatabase } from '../domain/workspace/db/sqliteWorkspace';
 import { SqliteAiDatabase } from '../domain/ai/db/sqliteAi';
 import { SqliteViewDatabase } from '../domain/catalog/db/sqliteView';
+import { SqliteApplicationDatabase } from '../domain/application/db/sqliteApplication';
 import { SqliteDashboardDatabase } from '../domain/dashboard/db/sqliteDashboard';
 import { SqlitePersonalDashboardDatabase } from '../domain/personalDashboard/db/sqlitePersonalDashboard';
 import { SqliteProjectDashboardDatabase } from '../domain/dashboard/db/sqliteProjectDashboard';
@@ -55,6 +56,7 @@ export class SqliteDatabase implements DatabaseAdapter {
   readonly catalog;
   readonly view;
   readonly dashboard;
+  readonly application;
   readonly personalDashboard;
   readonly projectDashboard;
   readonly project;
@@ -102,6 +104,7 @@ export class SqliteDatabase implements DatabaseAdapter {
     this.catalog = new SqliteCatalogDatabase(() => this.db);
     this.view = new SqliteViewDatabase(() => this.db);
     this.dashboard = new SqliteDashboardDatabase(() => this.db);
+    this.application = new SqliteApplicationDatabase(() => this.db);
     this.personalDashboard = new SqlitePersonalDashboardDatabase(() => this.db);
     this.projectDashboard = new SqliteProjectDashboardDatabase(() => this.db);
     this.project = new SqliteProjectDatabase(() => this.db);
@@ -204,6 +207,7 @@ export class SqliteDatabase implements DatabaseAdapter {
       catalog: this.catalog,
       view: this.view,
       dashboard: this.dashboard,
+      application: this.application,
       personalDashboard: this.personalDashboard,
       projectDashboard: this.projectDashboard,
       project: this.project,
