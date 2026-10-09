@@ -113,7 +113,10 @@ export const reorderApplicationDashboards = async (
   );
   await db.core.transaction(async tx => {
     for (const [index, id] of orderedDashboardIds.entries()) {
-      await tx.dashboard.update(workspace, id, { application_order: index, updated_by: actorUserId });
+      await tx.dashboard.update(workspace, id, {
+        application_order: index,
+        updated_by: actorUserId
+      });
     }
   });
   return db.dashboard.listByApplication(workspace, applicationId);

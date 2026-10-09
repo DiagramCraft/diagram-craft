@@ -74,7 +74,10 @@ export type DashboardDbUpdate = {
 
 export type DashboardDatabase = {
   list(workspace: string): Promise<WorkspaceDashboardDbResult[]>;
-  listByApplication(workspace: string, applicationId: string): Promise<WorkspaceDashboardDbResult[]>;
+  listByApplication(
+    workspace: string,
+    applicationId: string
+  ): Promise<WorkspaceDashboardDbResult[]>;
   getByAppKey(workspace: string, appKey: string): Promise<WorkspaceDashboardDbResult | null>;
   get(workspace: string, id: string): Promise<WorkspaceDashboardDbResult | null>;
   create(input: DashboardDbCreate): Promise<WorkspaceDashboardDbResult>;

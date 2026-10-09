@@ -79,7 +79,8 @@ export class SqliteApplicationDatabase implements ApplicationDatabase {
     const existing = await this.get(workspace, id);
     if (!existing) return null;
 
-    const accentColor = 'accent_color' in input ? (input.accent_color ?? null) : existing.accent_color;
+    const accentColor =
+      'accent_color' in input ? (input.accent_color ?? null) : existing.accent_color;
     try {
       this.db
         .prepare(

@@ -6,7 +6,10 @@ import type {
 import { mapWorkspaceApplicationRow } from './applicationDatabase';
 import { normalizePostgresError, PostgresDatabaseBase } from '../../../db/postgresBase';
 
-export class PostgresApplicationDatabase extends PostgresDatabaseBase implements ApplicationDatabase {
+export class PostgresApplicationDatabase
+  extends PostgresDatabaseBase
+  implements ApplicationDatabase
+{
   async list(workspace: string) {
     const rows = await this.sql<Record<string, unknown>[]>`
       SELECT * FROM workspace_application WHERE workspace = ${workspace} ORDER BY sort_order
