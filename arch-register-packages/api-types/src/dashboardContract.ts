@@ -172,12 +172,21 @@ export const workspaceDashboardSchema = z.object({
 
 export const createDashboardBodySchema = z.object({
   name: z.string().describe('Dashboard name'),
-  description: z.string().optional().describe('Dashboard description')
+  description: z.string().optional().describe('Dashboard description'),
+  applicationId: z
+    .string()
+    .optional()
+    .describe(
+      'When set, the dashboard is added to the end of this application instead of the home'
+    ),
+  icon: z.string().nullable().optional().describe('Icon name shown in the app rail')
 });
 
 export const updateDashboardBodySchema = z.object({
   name: z.string().optional().describe('Dashboard name'),
   description: z.string().optional().describe('Dashboard description'),
+  icon: z.string().nullable().optional().describe('Icon name shown in the app rail'),
+  railLabel: z.string().nullable().optional().describe('Label shown in the app rail'),
   widgets: z.array(dashboardWidgetSchema).optional().describe('Dashboard widget layout to persist'),
   sidebar: dashboardSidebarConfigSchema
     .nullable()

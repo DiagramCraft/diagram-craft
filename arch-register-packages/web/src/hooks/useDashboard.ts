@@ -12,6 +12,7 @@ import {
   invalidatePersonalDashboardQueries,
   personalDashboardsQuery
 } from '../queries/personalDashboard';
+import { invalidateApplicationQueries } from '../queries/application';
 import { orpcClient } from '../lib/orpcClient';
 
 export const useWorkspaceDashboards = (workspaceSlug: string) =>
@@ -26,7 +27,11 @@ export const useCreateWorkspaceDashboard = (workspaceSlug: string) => {
   return useMutation({
     mutationFn: (body: CreateDashboardRequest) =>
       orpcClient.dashboards.create({ params: { workspace: workspaceSlug }, body }),
-    onSuccess: () => invalidateDashboardQueries(queryClient, workspaceSlug)
+    onSuccess: () =>
+      Promise.all([
+        invalidateDashboardQueries(queryClient, workspaceSlug),
+        invalidateApplicationQueries(queryClient, workspaceSlug)
+      ])
   });
 };
 
@@ -36,7 +41,11 @@ export const useUpdateWorkspaceDashboard = (workspaceSlug: string) => {
   return useMutation({
     mutationFn: ({ id, body }: { id: string; body: UpdateDashboardRequest }) =>
       orpcClient.dashboards.update({ params: { workspace: workspaceSlug, id }, body }),
-    onSuccess: () => invalidateDashboardQueries(queryClient, workspaceSlug)
+    onSuccess: () =>
+      Promise.all([
+        invalidateDashboardQueries(queryClient, workspaceSlug),
+        invalidateApplicationQueries(queryClient, workspaceSlug)
+      ])
   });
 };
 
@@ -46,7 +55,11 @@ export const useDeleteWorkspaceDashboard = (workspaceSlug: string) => {
   return useMutation({
     mutationFn: (id: string) =>
       orpcClient.dashboards.remove({ params: { workspace: workspaceSlug, id } }),
-    onSuccess: () => invalidateDashboardQueries(queryClient, workspaceSlug)
+    onSuccess: () =>
+      Promise.all([
+        invalidateDashboardQueries(queryClient, workspaceSlug),
+        invalidateApplicationQueries(queryClient, workspaceSlug)
+      ])
   });
 };
 

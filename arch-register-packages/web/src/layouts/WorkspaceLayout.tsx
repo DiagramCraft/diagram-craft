@@ -44,6 +44,7 @@ import {
   railItemToAppId
 } from '../shell/appShellRegistry';
 import { useApplications } from '../hooks/useApplications';
+import { useApplicationDashboardManager } from '../shell/ApplicationDashboardManager';
 import type { AppDefinition, AppId, WorkspaceRailItemId } from '../shell/shellTypes';
 import { getWorkspaceShellBuilder } from '../routes/workspace/workspaceShellRoute';
 import { useAccessibleApplications } from '../hooks/useWorkspaceConfig';
@@ -348,14 +349,24 @@ export const WorkspaceLayout = () => {
       });
   })();
 
+  const dashboardManager = useApplicationDashboardManager(
+    workspaceSlug,
+    applications?.find(application => application.key === activeApp.id),
+    canManageDashboard && activeApp.id !== 'home'
+  );
+
   const navRail = (
-    <NavRail
-      items={visibleRailItems}
-      value={activeRailItem}
-      onChange={id => {
-        if (id !== null) handleRailPick(id as WorkspaceRailItemId);
-      }}
-    />
+    <>
+      <NavRail
+        {...dashboardManager.railProps}
+        items={visibleRailItems}
+        value={activeRailItem}
+        onChange={id => {
+          if (id !== null) handleRailPick(id as WorkspaceRailItemId);
+        }}
+      />
+      {dashboardManager.overlays}
+    </>
   );
 
   const routeContent = (

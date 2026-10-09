@@ -48,5 +48,8 @@ const APP_ICONS: Record<string, IconType> = {
   TbUserShield
 };
 
+/** Names selectable in the icon picker. */
+export const APP_ICON_NAMES = Object.keys(APP_ICONS);
+
 export const resolveAppIcon = (name: string | null | undefined): IconType =>
   (name ? APP_ICONS[name] : undefined) ?? TbLayoutDashboard;

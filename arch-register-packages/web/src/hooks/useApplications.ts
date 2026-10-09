@@ -1,5 +1,7 @@
-import { useQuery } from '@tanstack/react-query';
-import { workspaceApplicationsQuery } from '../queries/application';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { UpdateApplicationRequest } from '@arch-register/api-types/applicationContract';
+import { invalidateApplicationQueries, workspaceApplicationsQuery } from '../queries/application';
+import { orpcClient } from '../lib/orpcClient';
 
 export const useApplications = (workspaceSlug: string, enabled = true) =>
   useQuery(workspaceApplicationsQuery(workspaceSlug, enabled));
@@ -23,4 +25,34 @@ export const useApplicationDashboardTarget = (
         params: { workspaceSlug, appKey: applicationKey, dashboardId: dashboard.id }
       }
     : undefined;
+};
+
+export const useUpdateApplication = (workspaceSlug: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, body }: { id: string; body: UpdateApplicationRequest }) =>
+      orpcClient.workspaceApplications.update({ params: { workspace: workspaceSlug, id }, body }),
+    onSuccess: () => invalidateApplicationQueries(queryClient, workspaceSlug)
+  });
+};
+
+export const useDeleteApplication = (workspaceSlug: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) =>
+      orpcClient.workspaceApplications.remove({ params: { workspace: workspaceSlug, id } }),
+    onSuccess: () => invalidateApplicationQueries(queryClient, workspaceSlug)
+  });
+};
+
+export const useReorderApplicationDashboards = (workspaceSlug: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ applicationId, ids }: { applicationId: string; ids: string[] }) =>
+      orpcClient.workspaceApplications.reorderDashboards({
+        params: { workspace: workspaceSlug, id: applicationId },
+        body: { ids }
+      }),
+    onSuccess: () => invalidateApplicationQueries(queryClient, workspaceSlug)
+  });
 };

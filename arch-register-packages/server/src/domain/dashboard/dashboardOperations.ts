@@ -8,6 +8,7 @@ import type {
 import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
 import type { WorkspaceDashboardDbResult } from './db/dashboardDatabase';
 import { httpAssert } from '../../utils/httpAssert';
+import { addDashboardToApplication } from '../application/applicationOperations';
 
 export const toApi = (row: WorkspaceDashboardDbResult): ApiWorkspaceDashboard => ({
   id: row.id,
@@ -130,6 +131,12 @@ export const getWorkspaceDashboard = async (
   return toApi(row!);
 };
 
+const assertValidIcon = (icon: string | null | undefined) =>
+  httpAssert.true(icon == null || /^Tb[A-Za-z0-9]{1,60}$/.test(icon), {
+    status: 400,
+    message: 'Invalid icon name'
+  });
+
 export const createWorkspaceDashboard = async (
   db: DatabaseAdapter,
   workspace: string,
@@ -137,6 +144,23 @@ export const createWorkspaceDashboard = async (
   actorUserId: string | null
 ): Promise<ApiWorkspaceDashboard> => {
   httpAssert.true(body.name, { status: 400, message: 'Name is required' });
+  assertValidIcon(body.icon);
+
+  if (body.applicationId) {
+    const row = await addDashboardToApplication(
+      db,
+      workspace,
+      body.applicationId,
+      { name: body.name, icon: body.icon },
+      actorUserId
+    );
+    if (!body.description) return toApi(row);
+    const described = await db.dashboard.update(workspace, row.id, {
+      description: body.description,
+      updated_by: actorUserId
+    });
+    return toApi(described ?? row);
+  }
 
   const existing = await db.dashboard.list(workspace);
   const row = await db.dashboard.create({
@@ -157,12 +181,15 @@ export const updateWorkspaceDashboard = async (
   body: UpdateDashboardRequest,
   actorUserId: string | null
 ): Promise<ApiWorkspaceDashboard> => {
+  assertValidIcon(body.icon);
   const existing = await db.dashboard.get(workspace, id);
   httpAssert.present(existing, { status: 404, message: 'Dashboard not found' });
 
   const updated = await db.dashboard.update(workspace, id, {
     name: body.name,
     description: body.description,
+    ...('icon' in body ? { icon: body.icon ?? null } : {}),
+    ...('railLabel' in body ? { rail_label: body.railLabel ?? null } : {}),
     layout: body.widgets,
     ...('sidebar' in body ? { sidebar: body.sidebar ?? null } : {}),
     updated_by: actorUserId
