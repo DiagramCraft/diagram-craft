@@ -135345,7 +135345,7 @@
       "get": {
         "operationId": "workspaceApplications.list",
         "summary": "List workspace applications",
-        "description": "Retrieves all applications of the workspace in display order.",
+        "description": "Retrieves all applications of the workspace in display order, each with its ordered dashboards.",
         "tags": [
           "Application",
           "Application"
@@ -135421,6 +135421,198 @@
                           }
                         ],
                         "description": "Identifier of the user who last updated the application"
+                      },
+                      "dashboards": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "description": "Dashboard identifier"
+                            },
+                            "name": {
+                              "type": "string",
+                              "description": "Dashboard name"
+                            },
+                            "icon": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ],
+                              "description": "Rail icon name; null when not set"
+                            },
+                            "railLabel": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ],
+                              "description": "Rail label; null falls back to the name"
+                            },
+                            "order": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                              "description": "Position within the application, ascending"
+                            },
+                            "sidebar": {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "kind": {
+                                      "const": "entity-picker",
+                                      "description": "Single-select list of one schema’s entities"
+                                    },
+                                    "schemaName": {
+                                      "type": "string",
+                                      "description": "Entity schema display name to list in the picker, matched at render time — the schema's actual id is often workspace-configurable, so it cannot be seeded as a fixed id (mirrors AggregateStat widget configs referencing schemas by name in query strings)"
+                                    },
+                                    "variableName": {
+                                      "type": "string",
+                                      "description": "Exposed as $<variableName> for substitution into widget config string values (see resolveSidebarVariableReferences)"
+                                    },
+                                    "itemLabel": {
+                                      "type": "string",
+                                      "description": "Group label shown above the picker list"
+                                    },
+                                    "valueKind": {
+                                      "enum": [
+                                        "publicId",
+                                        "id"
+                                      ],
+                                      "type": "string",
+                                      "description": "Which identifier the selection exposes as $<variableName>: the entity's public id (default) or its internal id, which is what a query's '_id' predicate matches"
+                                    }
+                                  },
+                                  "required": [
+                                    "kind",
+                                    "schemaName",
+                                    "variableName"
+                                  ]
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "kind": {
+                                      "const": "facets",
+                                      "description": "One or more independent multi-select facet lists over one schema’s entities"
+                                    },
+                                    "schemaName": {
+                                      "type": "string",
+                                      "description": "Schema display name whose records are being faceted: an entity schema, or a relation schema when `schemaKind` is 'relation'"
+                                    },
+                                    "schemaKind": {
+                                      "enum": [
+                                        "entity",
+                                        "relation"
+                                      ],
+                                      "type": "string",
+                                      "description": "Whether `schemaName` names an entity schema (default) or a relation schema, in which case facets are tallied over the relation's own select/text fields and '_owner' / '_lifecycle'"
+                                    },
+                                    "facets": {
+                                      "type": "array",
+                                      "minItems": 1,
+                                      "items": {
+                                        "type": "object",
+                                        "properties": {
+                                          "fieldId": {
+                                            "type": "string",
+                                            "description": "Field to facet on: either a reference, select or text field's display NAME on the faceted schema (matched at render time, like `schemaName` — a schema's actual field ids are workspace-specific, resolved via capability field-role binding, so they can't be seeded as fixed ids; its counts are tallied against the referenced schema's entities; select facets use the field's options as labels, text facets the distinct values), or one of the stable standard fields '_owner' / '_lifecycle'"
+                                          },
+                                          "variableName": {
+                                            "type": "string",
+                                            "description": "Exposed as $<variableName>, holding a comma-joined list of the selected ids (multi-select, unlike entity-picker's single id) for substitution into widget config string values (see resolveSidebarVariableReferences)"
+                                          },
+                                          "itemLabel": {
+                                            "type": "string",
+                                            "description": "Group label shown above this facet's list"
+                                          }
+                                        },
+                                        "required": [
+                                          "fieldId",
+                                          "variableName"
+                                        ]
+                                      },
+                                      "description": "Facet sections to render, each its own labeled multi-select list"
+                                    }
+                                  },
+                                  "required": [
+                                    "kind",
+                                    "schemaName",
+                                    "facets"
+                                  ]
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "kind": {
+                                      "const": "options",
+                                      "description": "Single-select list of fixed value/label pairs (no counts, no entity lookup)"
+                                    },
+                                    "variableName": {
+                                      "type": "string",
+                                      "description": "Exposed as $<variableName>, holding the selected option value, or an empty string when nothing is selected, for substitution into widget config string values (see resolveSidebarVariableReferences)"
+                                    },
+                                    "itemLabel": {
+                                      "type": "string",
+                                      "description": "Group label shown above the options list"
+                                    },
+                                    "allLabel": {
+                                      "type": "string",
+                                      "description": "When set, a first row with this label is shown that is active while nothing is selected and clears the selection when clicked"
+                                    },
+                                    "options": {
+                                      "type": "array",
+                                      "minItems": 1,
+                                      "items": {
+                                        "type": "object",
+                                        "properties": {
+                                          "value": {
+                                            "type": "string",
+                                            "minLength": 1,
+                                            "description": "Value exposed as $<variableName> when this option is selected"
+                                          },
+                                          "label": {
+                                            "type": "string",
+                                            "description": "Label shown for this option in the sidebar"
+                                          }
+                                        },
+                                        "required": [
+                                          "value",
+                                          "label"
+                                        ]
+                                      },
+                                      "description": "Fixed options to choose between; re-selecting the active one clears it"
+                                    }
+                                  },
+                                  "required": [
+                                    "kind",
+                                    "variableName",
+                                    "options"
+                                  ]
+                                }
+                              ],
+                              "description": "Primary sidebar configuration"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name",
+                            "icon",
+                            "railLabel",
+                            "order"
+                          ]
+                        },
+                        "description": "Ordered dashboards of the application"
                       }
                     },
                     "required": [
@@ -135432,7 +135624,8 @@
                       "accentColor",
                       "order",
                       "updatedAt",
-                      "updatedBy"
+                      "updatedBy",
+                      "dashboards"
                     ]
                   }
                 }

@@ -51,7 +51,11 @@ export const createApplicationWorkspaceRoutes = <TParentRoute extends AnyRoute>(
           onClick: () =>
             ctx.navigate({
               to: '/$workspaceSlug/apps/$appKey/$dashboardId',
-              params: { workspaceSlug: ctx.workspaceSlug, appKey: appKey!, dashboardId: dashboardId! }
+              params: {
+                workspaceSlug: ctx.workspaceSlug,
+                appKey: appKey!,
+                dashboardId: dashboardId!
+              }
             })
         }
       ];
@@ -68,9 +72,7 @@ export const createApplicationWorkspaceRoutes = <TParentRoute extends AnyRoute>(
         appKey: string;
       };
       const applications: WorkspaceApplicationWithDashboards[] =
-        await context.queryClient.ensureQueryData(
-        workspaceApplicationsQuery(workspaceSlug)
-      );
+        await context.queryClient.ensureQueryData(workspaceApplicationsQuery(workspaceSlug));
       await ensureApplicationAccess(context.queryClient, workspaceSlug, appKey);
       const first = [...(applications.find(app => app.key === appKey)?.dashboards ?? [])].sort(
         (a, b) => a.order - b.order

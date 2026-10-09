@@ -2965,6 +2965,9 @@ export const APP_DASHBOARD_RAIL: Record<string, { icon: string; railLabel: strin
   [DATA_STEWARDSHIP_ASSESSMENTS_APP_KEY]: { icon: 'TbChecklist', railLabel: 'Assessments' },
   [API_INTEGRATION_CATALOG_APP_KEY]: { icon: 'TbLayoutDashboard', railLabel: 'Overview' },
   [API_INTEGRATION_CATALOG_APIS_APP_KEY]: { icon: 'TbApi', railLabel: 'APIs' },
-  [API_INTEGRATION_CATALOG_INTEGRATIONS_APP_KEY]: { icon: 'TbPlugConnected', railLabel: 'Integrations' },
+  [API_INTEGRATION_CATALOG_INTEGRATIONS_APP_KEY]: {
+    icon: 'TbPlugConnected',
+    railLabel: 'Integrations'
+  },
   [API_INTEGRATION_CATALOG_IMPACT_APP_KEY]: { icon: 'TbAffiliate', railLabel: 'Impact' }
 };

@@ -155,7 +155,10 @@ const useApiCatalogNavigation = () => {
 
   const viewCatalog = () => {
     if (!apisTarget) return;
-    void navigate({ ...apisTarget, search: ((previous: Record<string, unknown>) => previous) as never });
+    void navigate({
+      ...apisTarget,
+      search: ((previous: Record<string, unknown>) => previous) as never
+    });
   };
 
   const viewIntegrations = () => {

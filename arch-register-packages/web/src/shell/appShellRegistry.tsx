@@ -82,7 +82,10 @@ const toAppDefinition = (application: WorkspaceApplicationWithDashboards): AppDe
       routeParams: { appKey: application.key, dashboardId: dashboard.id },
       primarySidebar: dashboard.sidebar
         ? ctx => (
-            <AppDashboardPrimarySidebar workspaceSlug={ctx.workspaceSlug} dashboardId={dashboard.id} />
+            <AppDashboardPrimarySidebar
+              workspaceSlug={ctx.workspaceSlug}
+              dashboardId={dashboard.id}
+            />
           )
         : undefined
     }))
@@ -105,7 +108,10 @@ export const getAppDefinition = (apps: AppDefinition[], id: AppId): AppDefinitio
 export const appRootSection = (app: AppDefinition): AppRailSection => app.sections[0]!;
 
 /** Which app owns a rail item; falls back to `'home'` (also used for the chrome-less overlay). */
-export const railItemToAppId = (apps: AppDefinition[], railItemId: WorkspaceRailItemId | null): AppId =>
+export const railItemToAppId = (
+  apps: AppDefinition[],
+  railItemId: WorkspaceRailItemId | null
+): AppId =>
   (railItemId != null
     ? apps.find(app => app.sections.some(section => section.id === railItemId))?.id
     : undefined) ?? 'home';

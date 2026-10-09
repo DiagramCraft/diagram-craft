@@ -72,7 +72,8 @@ export const workspaceApplicationContract = oc.tag('Application').router({
         path: '/{workspace}/workspace-applications',
         inputStructure: 'detailed',
         summary: 'List workspace applications',
-        description: 'Retrieves all applications of the workspace in display order, each with its ordered dashboards.',
+        description:
+          'Retrieves all applications of the workspace in display order, each with its ordered dashboards.',
         tags: ['Application']
       })
       .input(z.object({ params: ws }))
