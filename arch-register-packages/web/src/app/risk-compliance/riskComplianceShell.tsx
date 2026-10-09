@@ -20,18 +20,6 @@ import {
   type RiskComplianceRailItemId
 } from './riskComplianceSections';
 
-/** Keys the Overview section's dashboard (seeded server-side in `appDashboardSeeds.ts`). */
-export const RISK_COMPLIANCE_OVERVIEW_APP_KEY = 'risk-compliance-overview';
-
-/** Keys the Risks section's dashboard (seeded server-side in `appDashboardSeeds.ts`). */
-export const RISK_COMPLIANCE_RISKS_APP_KEY = 'risk-compliance-risks';
-
-/** Keys the Retention section's dashboard (seeded server-side in `appDashboardSeeds.ts`). */
-export const RISK_COMPLIANCE_CONTROLS_APP_KEY = 'risk-compliance-controls';
-/** Keys the Assessments section's dashboard (seeded server-side in `appDashboardSeeds.ts`). */
-export const RISK_COMPLIANCE_ASSESSMENTS_APP_KEY = 'risk-compliance-assessments';
-export const RISK_COMPLIANCE_RETENTION_APP_KEY = 'risk-compliance-retention';
-
 /**
  * Risk & Compliance's workspace-rail identity: its rail-item ids (defined in
  * `./riskComplianceSections.ts`, alongside `riskComplianceAppDefinition` and its breadcrumb
@@ -55,7 +43,7 @@ export const riskComplianceAppDefinition: AppDefinition = {
       icon: TbLayoutDashboard,
       tooltip: 'Overview',
       route: RISK_RAIL_PATHS[RISK_OVERVIEW_ID],
-      dashboard: { appKey: RISK_COMPLIANCE_OVERVIEW_APP_KEY }
+      dashboard: { appKey: 'risk-compliance-overview' }
     },
     {
       id: RISK_RISKS_ID,
@@ -64,11 +52,11 @@ export const riskComplianceAppDefinition: AppDefinition = {
       route: RISK_RAIL_PATHS[RISK_RISKS_ID],
       // A self-contained dashboard (Register/Matrix tabs) with a `facets` sidebar for narrowing by
       // category, status and owner.
-      dashboard: { appKey: RISK_COMPLIANCE_RISKS_APP_KEY },
+      dashboard: { appKey: 'risk-compliance-risks' },
       primarySidebar: ctx => (
         <AppDashboardPrimarySidebar
           workspaceSlug={ctx.workspaceSlug}
-          appKey={RISK_COMPLIANCE_RISKS_APP_KEY}
+          appKey="risk-compliance-risks"
         />
       )
     },
@@ -79,11 +67,11 @@ export const riskComplianceAppDefinition: AppDefinition = {
       route: RISK_RAIL_PATHS[RISK_CONTROLS_ID],
       // A self-contained dashboard (Library, Coverage and Controls × Risks / Data Entities tabs) with a `facets` sidebar for
       // narrowing by control type and effectiveness.
-      dashboard: { appKey: RISK_COMPLIANCE_CONTROLS_APP_KEY },
+      dashboard: { appKey: 'risk-compliance-controls' },
       primarySidebar: ctx => (
         <AppDashboardPrimarySidebar
           workspaceSlug={ctx.workspaceSlug}
-          appKey={RISK_COMPLIANCE_CONTROLS_APP_KEY}
+          appKey="risk-compliance-controls"
         />
       )
     },
@@ -94,11 +82,11 @@ export const riskComplianceAppDefinition: AppDefinition = {
       route: RISK_RAIL_PATHS[RISK_RETENTION_ID],
       // A self-contained dashboard (one retention-assignments table widget) with an
       // `entity-picker` sidebar for narrowing to a single Retention Policy.
-      dashboard: { appKey: RISK_COMPLIANCE_RETENTION_APP_KEY },
+      dashboard: { appKey: 'risk-compliance-retention' },
       primarySidebar: ctx => (
         <AppDashboardPrimarySidebar
           workspaceSlug={ctx.workspaceSlug}
-          appKey={RISK_COMPLIANCE_RETENTION_APP_KEY}
+          appKey="risk-compliance-retention"
         />
       )
     },
@@ -106,7 +94,7 @@ export const riskComplianceAppDefinition: AppDefinition = {
       // No `primarySidebar`: like Overview, Assessments is a self-contained dashboard, so the
       // shell renders it full-width.
       id: RISK_ASSESSMENTS_ID,
-      dashboard: { appKey: RISK_COMPLIANCE_ASSESSMENTS_APP_KEY },
+      dashboard: { appKey: 'risk-compliance-assessments' },
       icon: TbListCheck,
       tooltip: 'Assessments',
       route: RISK_RAIL_PATHS[RISK_ASSESSMENTS_ID]

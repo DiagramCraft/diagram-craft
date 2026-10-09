@@ -7,7 +7,7 @@ const APP_KEY = 'api-integration-catalog';
 test.describe('App Dashboard API', () => {
   let appDashboardId: string;
 
-  test('getApp seeds the default layout on first access', async ({ orpc }) => {
+  test('getApp returns the bootstrap-seeded layout', async ({ orpc }) => {
     const dashboard = await orpc.dashboard.getApp({
       params: { workspace: 'default', appKey: APP_KEY }
     });
@@ -27,7 +27,7 @@ test.describe('App Dashboard API', () => {
     appDashboardId = dashboard.id;
   });
 
-  test('getApp is idempotent and does not overwrite user edits', async ({ orpc }) => {
+  test('getApp returns user edits unchanged', async ({ orpc }) => {
     await orpc.dashboard.update({
       params: { workspace: 'default', id: appDashboardId },
       body: { widgets: [], name: 'Catalog home', description: 'Custom description' }

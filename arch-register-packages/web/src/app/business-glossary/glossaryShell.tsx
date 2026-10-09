@@ -4,8 +4,6 @@ import type { WorkspaceShellContext } from '../../layouts/workspaceShellDescript
 import type { AppDefinition, BreadcrumbItem } from '../../shell/shellTypes';
 import { AppDashboardPrimarySidebar } from '../../sections/dashboard/AppDashboardPrimarySidebar';
 
-export const GLOSSARY_APP_KEY = 'business-glossary';
-
 /**
  * Business Glossary's workspace-rail identity: the rail item id, its route, and its breadcrumb
  * builder. Registered into core via `../../shell/appShellRegistry.ts`, mirroring how
@@ -33,9 +31,9 @@ export const glossaryAppDefinition: AppDefinition = {
       icon: TbBook,
       tooltip: 'Business glossary',
       route: GLOSSARY_RAIL_PATH,
-      dashboard: { appKey: GLOSSARY_APP_KEY },
+      dashboard: { appKey: 'business-glossary' },
       primarySidebar: ctx => (
-        <AppDashboardPrimarySidebar workspaceSlug={ctx.workspaceSlug} appKey={GLOSSARY_APP_KEY} />
+        <AppDashboardPrimarySidebar workspaceSlug={ctx.workspaceSlug} appKey="business-glossary" />
       )
     }
   ]

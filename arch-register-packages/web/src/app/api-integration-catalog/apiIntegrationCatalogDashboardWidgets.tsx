@@ -38,7 +38,7 @@ type TitleWidgetConfig = Record<string, unknown> & { label?: string };
 type ListWidgetConfig = TitleWidgetConfig & { limit: number };
 // `entityId` is meant to be set to a dashboard sidebar variable reference (e.g. `$apiEntityId`),
 // resolved by `DashboardWidgetRenderer` before this config reaches the widget — see
-// `resolveSidebarVariableReferences.ts` and the Impact dashboard's seed in `appDashboardSeeds.ts`.
+// `resolveSidebarVariableReferences.ts` and the Impact dashboard's seed in `seedData/appDashboards.ts`.
 type ImpactWidgetConfig = TitleWidgetConfig & { entityId?: string };
 
 type TitleConfigFormProps = {

@@ -137581,7 +137581,7 @@
       "get": {
         "operationId": "dashboards.getApp",
         "summary": "Get app dashboard",
-        "description": "Retrieves the dashboard backing an app section, seeding the default layout on first access. App dashboards are not part of the workspace home dashboard list and are updated through the regular dashboard update endpoint.",
+        "description": "Retrieves the dashboard backing an app section. App dashboards are not part of the workspace home dashboard list and are updated through the regular dashboard update endpoint.",
         "tags": [
           "Dashboard",
           "Dashboard"

@@ -234,7 +234,7 @@ export const workspaceDashboardContract = oc.tag('Dashboard').router({
         inputStructure: 'detailed',
         summary: 'Get app dashboard',
         description:
-          'Retrieves the dashboard backing an app section, seeding the default layout on first access. App dashboards are not part of the workspace home dashboard list and are updated through the regular dashboard update endpoint.',
+          'Retrieves the dashboard backing an app section. App dashboards are not part of the workspace home dashboard list and are updated through the regular dashboard update endpoint.',
         tags: ['Dashboard']
       })
       .input(z.object({ params: ws.extend({ appKey: z.string() }) }))

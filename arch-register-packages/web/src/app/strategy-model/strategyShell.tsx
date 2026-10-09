@@ -20,17 +20,6 @@ import {
   type StrategyRailItemId
 } from './strategySections';
 
-/** Keys the Overview section's dashboard (seeded server-side in `appDashboardSeeds.ts`). */
-export const STRATEGY_OVERVIEW_APP_KEY = 'strategy-overview';
-/** Keys the Capability map section's dashboard. */
-export const STRATEGY_CAPABILITY_MAP_APP_KEY = 'strategy-capability-map';
-/** Keys the Capabilities section's dashboard. */
-export const STRATEGY_CAPABILITIES_APP_KEY = 'strategy-capabilities';
-/** Keys the Strategy section's dashboard. */
-export const STRATEGY_STRATEGY_APP_KEY = 'strategy-strategy';
-/** Keys the Traceability section's dashboard. */
-export const STRATEGY_TRACEABILITY_APP_KEY = 'strategy-traceability';
-
 /**
  * Strategy & Capability Modelling's workspace-rail identity: its rail-item ids (defined in
  * `./strategySections.ts`, alongside `strategyAppDefinition` and its breadcrumb builder).
@@ -56,7 +45,7 @@ export const strategyAppDefinition: AppDefinition = {
       icon: TbLayoutDashboard,
       tooltip: 'Overview',
       route: STRATEGY_RAIL_PATHS[STRATEGY_OVERVIEW_ID],
-      dashboard: { appKey: STRATEGY_OVERVIEW_APP_KEY }
+      dashboard: { appKey: 'strategy-overview' }
     },
     {
       id: STRATEGY_CAPABILITY_MAP_ID,
@@ -64,11 +53,11 @@ export const strategyAppDefinition: AppDefinition = {
       tooltip: 'Capability map',
       route: STRATEGY_RAIL_PATHS[STRATEGY_CAPABILITY_MAP_ID],
       // A dashboard with a `facets` sidebar: Owner facet that dims capabilities not owned by the selection.
-      dashboard: { appKey: STRATEGY_CAPABILITY_MAP_APP_KEY },
+      dashboard: { appKey: 'strategy-capability-map' },
       primarySidebar: ctx => (
         <AppDashboardPrimarySidebar
           workspaceSlug={ctx.workspaceSlug}
-          appKey={STRATEGY_CAPABILITY_MAP_APP_KEY}
+          appKey="strategy-capability-map"
         />
       )
     },
@@ -78,11 +67,11 @@ export const strategyAppDefinition: AppDefinition = {
       tooltip: 'Capabilities',
       route: STRATEGY_RAIL_PATHS[STRATEGY_CAPABILITIES_ID],
       // A dashboard with a `facets` sidebar: Owner and Level facets that narrow the tree.
-      dashboard: { appKey: STRATEGY_CAPABILITIES_APP_KEY },
+      dashboard: { appKey: 'strategy-capabilities' },
       primarySidebar: ctx => (
         <AppDashboardPrimarySidebar
           workspaceSlug={ctx.workspaceSlug}
-          appKey={STRATEGY_CAPABILITIES_APP_KEY}
+          appKey="strategy-capabilities"
         />
       )
     },
@@ -92,12 +81,9 @@ export const strategyAppDefinition: AppDefinition = {
       tooltip: 'Strategy',
       route: STRATEGY_RAIL_PATHS[STRATEGY_STRATEGY_ID],
       // A dashboard with an `entity-picker` sidebar: the Objective every widget is scoped to.
-      dashboard: { appKey: STRATEGY_STRATEGY_APP_KEY },
+      dashboard: { appKey: 'strategy-strategy' },
       primarySidebar: ctx => (
-        <AppDashboardPrimarySidebar
-          workspaceSlug={ctx.workspaceSlug}
-          appKey={STRATEGY_STRATEGY_APP_KEY}
-        />
+        <AppDashboardPrimarySidebar workspaceSlug={ctx.workspaceSlug} appKey="strategy-strategy" />
       )
     },
     {
@@ -107,7 +93,7 @@ export const strategyAppDefinition: AppDefinition = {
       icon: TbRoute,
       tooltip: 'Traceability',
       route: STRATEGY_RAIL_PATHS[STRATEGY_TRACEABILITY_ID],
-      dashboard: { appKey: STRATEGY_TRACEABILITY_APP_KEY }
+      dashboard: { appKey: 'strategy-traceability' }
     }
   ]
 };

@@ -20,12 +20,6 @@ import {
   type VendorManagementRailItemId
 } from './vendorManagementSections';
 
-export const VENDOR_MANAGEMENT_VENDORS_APP_KEY = 'vendor-management-vendors';
-export const VENDOR_MANAGEMENT_CONTRACTS_APP_KEY = 'vendor-management-contracts';
-export const VENDOR_MANAGEMENT_OVERVIEW_APP_KEY = 'vendor-management-overview';
-export const VENDOR_MANAGEMENT_SPEND_APP_KEY = 'vendor-management-spend';
-export const VENDOR_MANAGEMENT_RISK_APP_KEY = 'vendor-management-risk';
-
 /**
  * Vendor Management's workspace-rail identity: its rail-item ids (defined in
  * `./vendorManagementSections.ts`, alongside `vendorManagementAppDefinition` and its breadcrumb
@@ -49,7 +43,7 @@ export const vendorManagementAppDefinition: AppDefinition = {
       icon: TbLayoutDashboard,
       tooltip: 'Overview',
       route: VENDOR_RAIL_PATHS[VENDOR_OVERVIEW_ID],
-      dashboard: { appKey: VENDOR_MANAGEMENT_OVERVIEW_APP_KEY }
+      dashboard: { appKey: 'vendor-management-overview' }
     },
     {
       id: VENDOR_VENDORS_ID,
@@ -58,11 +52,11 @@ export const vendorManagementAppDefinition: AppDefinition = {
       route: VENDOR_RAIL_PATHS[VENDOR_VENDORS_ID],
       // A self-contained dashboard (single `entity-browser-embed` widget) with its own `facets`
       // sidebar (tier/category/owner) routed through the standard dashboard sidebar slot.
-      dashboard: { appKey: VENDOR_MANAGEMENT_VENDORS_APP_KEY },
+      dashboard: { appKey: 'vendor-management-vendors' },
       primarySidebar: ctx => (
         <AppDashboardPrimarySidebar
           workspaceSlug={ctx.workspaceSlug}
-          appKey={VENDOR_MANAGEMENT_VENDORS_APP_KEY}
+          appKey="vendor-management-vendors"
         />
       )
     },
@@ -72,11 +66,11 @@ export const vendorManagementAppDefinition: AppDefinition = {
       tooltip: 'Contracts',
       route: VENDOR_RAIL_PATHS[VENDOR_CONTRACTS_ID],
       // List / renewal calendar / timeline tabs with a `facets` sidebar (type/vendor).
-      dashboard: { appKey: VENDOR_MANAGEMENT_CONTRACTS_APP_KEY },
+      dashboard: { appKey: 'vendor-management-contracts' },
       primarySidebar: ctx => (
         <AppDashboardPrimarySidebar
           workspaceSlug={ctx.workspaceSlug}
-          appKey={VENDOR_MANAGEMENT_CONTRACTS_APP_KEY}
+          appKey="vendor-management-contracts"
         />
       )
     },
@@ -87,11 +81,11 @@ export const vendorManagementAppDefinition: AppDefinition = {
       route: VENDOR_RAIL_PATHS[VENDOR_SPEND_ID],
       // Stat tiles plus by-vendor / by-cost-centre roll-up tabs with a `facets` sidebar (cost
       // centre/owner).
-      dashboard: { appKey: VENDOR_MANAGEMENT_SPEND_APP_KEY },
+      dashboard: { appKey: 'vendor-management-spend' },
       primarySidebar: ctx => (
         <AppDashboardPrimarySidebar
           workspaceSlug={ctx.workspaceSlug}
-          appKey={VENDOR_MANAGEMENT_SPEND_APP_KEY}
+          appKey="vendor-management-spend"
         />
       )
     },
@@ -102,11 +96,11 @@ export const vendorManagementAppDefinition: AppDefinition = {
       route: VENDOR_RAIL_PATHS[VENDOR_RISK_ID],
       // Stat tiles, a criticality × risk-band matrix, the risk register and a technology EOL table
       // with a `facets` sidebar (tier/category/owner).
-      dashboard: { appKey: VENDOR_MANAGEMENT_RISK_APP_KEY },
+      dashboard: { appKey: 'vendor-management-risk' },
       primarySidebar: ctx => (
         <AppDashboardPrimarySidebar
           workspaceSlug={ctx.workspaceSlug}
-          appKey={VENDOR_MANAGEMENT_RISK_APP_KEY}
+          appKey="vendor-management-risk"
         />
       )
     }
