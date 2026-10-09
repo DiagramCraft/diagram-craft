@@ -8,7 +8,9 @@ import type {
 } from '@arch-register/api-types/applicationContract';
 import type { WorkspaceApplicationDbResult } from './db/applicationDatabase';
 import type { WorkspaceDashboardDbResult } from '../dashboard/db/dashboardDatabase';
+import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
 import { httpAssert } from '../../utils/httpAssert';
+import { filterAccessibleApplicationKeys } from '../workspace/applicationAccessOperations';
 import {
   APP_DASHBOARD_KEYS_BY_APPLICATION,
   APP_DASHBOARD_RAIL,
@@ -239,9 +241,17 @@ export const listApplications = async (
 /** Lists the applications together with their ordered dashboards, for building navigation. */
 export const listApplicationsWithDashboards = async (
   db: DatabaseAdapter,
-  workspace: string
+  workspace: string,
+  authCtx: WorkspaceAuthorizationContext
 ): Promise<WorkspaceApplicationWithDashboards[]> => {
-  const applications = await db.application.list(workspace);
+  const allApplications = await db.application.list(workspace);
+  const accessibleKeys = await filterAccessibleApplicationKeys(
+    db,
+    workspace,
+    authCtx,
+    allApplications.map(application => application.key)
+  );
+  const applications = allApplications.filter(application => accessibleKeys.has(application.key));
   return Promise.all(
     applications.map(async application => ({
       ...toApiApplication(application),

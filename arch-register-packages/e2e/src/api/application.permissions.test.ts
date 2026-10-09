@@ -12,9 +12,15 @@ test.describe('workspace application permission routes', () => {
     });
   });
 
-  test('authorization: viewer can list but not create applications', async ({ personas }) => {
+  test('authorization: viewer cannot create applications and only lists accessible ones', async ({
+    personas
+  }) => {
     const { orpc } = personas.workspaceViewer;
-    expect((await orpc.workspaceApplications.list({ params })).length).toBeGreaterThan(0);
+    // Applications without an access policy are hidden from ordinary members
+    expect(await orpc.workspaceApplications.list({ params })).toEqual([]);
+    expect(
+      (await personas.workspaceAdmin.orpc.workspaceApplications.list({ params })).length
+    ).toBeGreaterThan(0);
     await expect(
       orpc.workspaceApplications.create({ params, body: { key: 'blocked', name: 'Blocked' } })
     ).rejects.toMatchObject({ code: 'FORBIDDEN' });
