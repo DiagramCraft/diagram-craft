@@ -1429,6 +1429,12 @@
           report missing
           relation dependencies.
 
+        - @id:ar.import-export.workspace-applications Workspace exports and imports can include applications with
+          their ordered dashboards (widgets, sidebar, icon) and access policies, plus workspace home dashboards.
+          Personal and project dashboards are not included. Applications match by key; conflicts can be skipped,
+          overwritten, merged, or renamed. Widget schema references follow remapped schema IDs, policy teams follow
+          remapped teams, and policy users are not carried over.
+
         - @id:ar.import-export.workspace-replication Workspace copies preserve schema field groups, shared fieldgroup
           links, field-group access-control semantics, workspace capability bindings, and schema-scoped entity drawer
           profiles while remapping

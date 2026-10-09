@@ -18,7 +18,8 @@ type ImportConflict = {
     | 'relations'
     | 'projects'
     | 'content_nodes'
-    | 'documents';
+    | 'documents'
+    | 'applications';
   item_id: string;
   item_name: string;
   conflict_reason:
@@ -46,6 +47,7 @@ type ImportParseResult = {
     projects?: { count: number; conflicts: number };
     content_nodes?: { count: number; conflicts: number };
     documents?: { count: number; templates: number; revisions: number; conflicts: number };
+    applications?: { count: number; dashboards: number; conflicts: number };
   };
   conflicts: ImportConflict[];
   errors: string[];
@@ -62,6 +64,7 @@ type ExportOptions = {
   include_projects: boolean;
   include_content_nodes: boolean;
   include_documents: boolean;
+  include_applications: boolean;
   include_content: boolean;
 };
 
@@ -81,6 +84,7 @@ export const ExportImportSubSection = () => {
     include_projects: true,
     include_content_nodes: true,
     include_documents: true,
+    include_applications: true,
     include_content: true
   });
   const [isExporting, setIsExporting] = useState(false);
@@ -107,6 +111,7 @@ export const ExportImportSubSection = () => {
       | 'projects'
       | 'content_nodes'
       | 'documents'
+      | 'applications'
     > = [];
     if (exportOptions.include_config) include.push('config');
     if (exportOptions.include_schemas) include.push('schemas');
@@ -116,6 +121,7 @@ export const ExportImportSubSection = () => {
     if (exportOptions.include_projects) include.push('projects');
     if (exportOptions.include_content_nodes) include.push('content_nodes');
     if (exportOptions.include_documents) include.push('documents');
+    if (exportOptions.include_applications) include.push('applications');
 
     if (include.length === 0) {
       setExportError('Please select at least one data type to export');
@@ -240,7 +246,8 @@ export const ExportImportSubSection = () => {
             'relations',
             'projects',
             'content_nodes',
-            'documents'
+            'documents',
+            'applications'
           ],
           conflict_resolutions: conflictResolutions,
           options: { preserve_ids: false, update_references: true }
@@ -391,6 +398,18 @@ export const ExportImportSubSection = () => {
                     <span>Typed documents</span>
                     <span className={styles.checkboxHint}>document types and templates</span>
                   </label>
+                  <label className={styles.checkboxRow}>
+                    <Checkbox
+                      value={exportOptions.include_applications}
+                      onChange={v =>
+                        setExportOptions(prev => ({ ...prev, include_applications: v ?? false }))
+                      }
+                    />
+                    <span>Applications</span>
+                    <span className={styles.checkboxHint}>
+                      applications, dashboards and access policies
+                    </span>
+                  </label>
                   {exportOptions.include_content_nodes && (
                     <label className={`${styles.checkboxRow} ${styles.checkboxRowNested}`}>
                       <Checkbox
@@ -531,6 +550,14 @@ export const ExportImportSubSection = () => {
                           {importSummary.summary.documents.count}
                         </span>
                         <span className={styles.summaryLabel}>document types</span>
+                      </div>
+                    )}
+                    {importSummary.summary.applications && (
+                      <div className={styles.summaryItem}>
+                        <span className={styles.summaryCount}>
+                          {importSummary.summary.applications.count}
+                        </span>
+                        <span className={styles.summaryLabel}>applications</span>
                       </div>
                     )}
                   </div>

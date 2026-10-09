@@ -246,6 +246,122 @@ test.describe('workspace export/import', () => {
     });
   });
 
+  test('exports and imports applications, dashboards and access policies', async ({
+    orpc,
+    server
+  }) => {
+    const suffix = randomUUID();
+    const source = await orpc.workspaces.create({
+      body: { name: `Application source ${suffix}`, badge: 'APS' }
+    });
+    const schema = await orpc.schemas.create({
+      params: { workspace: source.url_slug },
+      body: { name: `App schema ${suffix}`, fields: [{ id: 'f', name: 'F', type: 'text' }] }
+    });
+    const team = (await server.db.workspace.listTeams(source.id))[0];
+    const key = `import-app-${suffix.slice(0, 8)}`;
+    const application = await server.db.application.create({
+      id: randomUUID(),
+      workspace: source.id,
+      key,
+      name: 'Imported App',
+      description: 'desc',
+      accent_color: '#112233',
+      sort_order: 50,
+      updated_by: null
+    });
+    for (const [index, name] of ['Second', 'First'].entries()) {
+      const row = await server.db.dashboard.create({
+        id: randomUUID(),
+        workspace: source.id,
+        name,
+        sort_order: 1 - index,
+        application_id: application.id,
+        application_order: 1 - index,
+        icon: 'TbChartBar',
+        updated_by: null
+      });
+      await server.db.dashboard.update(source.id, row.id, {
+        layout: [
+          { id: 'w1', x: 0, y: 0, w: 4, h: 2, type: 'entity-list', config: { schema: schema.id } }
+        ],
+        updated_by: null
+      });
+    }
+    await server.db.dashboard.create({
+      id: randomUUID(),
+      workspace: source.id,
+      name: 'Custom home',
+      sort_order: 99,
+      updated_by: null
+    });
+    if (team) {
+      await server.db.workspace.upsertWorkspaceApplicationAccessPolicy({
+        workspace: source.id,
+        application_id: key,
+        mode: 'selected',
+        user_ids: [],
+        team_ids: [team.id],
+        created_at: new Date(),
+        updated_at: new Date()
+      });
+    }
+
+    const archive = await orpc.workspaces.export({
+      params: { workspace: source.url_slug },
+      body: {
+        include: ['config', 'schemas', 'applications'],
+        options: { include_content: false }
+      }
+    });
+    const target = await orpc.workspaces.create({
+      body: { name: `Application target ${suffix}`, badge: 'APT' }
+    });
+    const parsed = await orpc.workspaces.importParse({
+      params: { workspace: target.url_slug },
+      body: {
+        file: new File([archive.body as Blob], 'applications-export.zip', {
+          type: 'application/zip'
+        })
+      }
+    });
+    expect(parsed.valid).toBe(true);
+    const execute = await orpc.workspaces.importExecute({
+      params: { workspace: target.url_slug },
+      body: {
+        import_id: (parsed as any).import_id,
+        include: ['config', 'schemas', 'applications'],
+        conflict_resolutions: suggestedResolutions(parsed as any),
+        options: { preserve_ids: false, update_references: true }
+      }
+    });
+    expect(execute.success).toBe(true);
+
+    const importedApp = await server.db.application.getByKey(target.id, key);
+    expect(importedApp).toMatchObject({ name: 'Imported App', accent_color: '#112233' });
+    const dashboards = (
+      await server.db.dashboard.listByApplication(target.id, importedApp!.id)
+    ).sort((a, b) => (a.application_order ?? 0) - (b.application_order ?? 0));
+    expect(dashboards.map(d => d.name)).toEqual(['First', 'Second']);
+    expect(dashboards[0]).toMatchObject({ icon: 'TbChartBar' });
+    const importedSchema = (await server.db.catalog.listSchemas(target.id)).find(
+      item => item.name === schema.name
+    );
+    expect(dashboards[0]!.layout[0]!.config['schema']).toBe(importedSchema!.id);
+    expect(
+      (await server.db.dashboard.list(target.id)).some(
+        d => d.application_id == null && d.name === 'Custom home'
+      )
+    ).toBe(true);
+    if (team) {
+      const policy = await server.db.workspace.getWorkspaceApplicationAccessPolicy(target.id, key);
+      const importedTeam = (await server.db.workspace.listTeams(target.id)).find(
+        item => item.name === team.name
+      );
+      expect(policy).toMatchObject({ mode: 'selected', team_ids: [importedTeam!.id] });
+    }
+  });
+
   test('exports and imports workspace capability bindings with remapped targets', async ({
     orpc,
     server

@@ -15,6 +15,7 @@ import type {
   IdMapping,
   ImportDiagnostic,
   WorkspaceImportPlan,
+  ExportApplicationData,
   ExportDocumentData
 } from './exportTypes';
 
@@ -65,6 +66,7 @@ export const buildImportPlan = async (
     projects?: ExportProject[];
     content_nodes?: ExportContentNode[];
     documents?: ExportDocumentData;
+    applications?: ExportApplicationData;
   },
   contentFiles?: Map<string, Buffer>
 ): Promise<{ plan: WorkspaceImportPlan; mapping: IdMapping; warnings: string[] }> => {
@@ -258,6 +260,7 @@ export const applyConflictRenames = <
     projects?: ExportProject[];
     content_nodes?: ExportContentNode[];
     documents?: ExportDocumentData;
+    applications?: ExportApplicationData;
   }
 >(
   data: T,
@@ -299,6 +302,22 @@ export const applyConflictRenames = <
     ...item,
     name: resolvedName(item.id, item.name, resolutions)
   })),
+  applications: data.applications && {
+    ...data.applications,
+    applications: data.applications.applications.map(item => {
+      if (resolutions[item.id]?.action !== 'rename') return item;
+      const newName = resolvedName(item.id, item.name, resolutions);
+      const key = newName
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+      return {
+        ...item,
+        name: newName,
+        key: key === '' || key === 'home' ? `${item.key}-copy` : key
+      };
+    })
+  },
   documents: data.documents && {
     ...data.documents,
     types: data.documents.types.map(item => ({

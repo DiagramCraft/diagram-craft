@@ -17,6 +17,7 @@ import type {
   ImportParseResult,
   ImportConflict,
   ImportDiagnostic,
+  ExportApplicationData,
   ExportDocumentData
 } from './exportTypes';
 import { findUnresolvedFieldGroupReferences } from '../catalog/schemaHelpers';
@@ -41,6 +42,7 @@ export const parseImport = async (
     projects?: ExportProject[];
     content_nodes?: ExportContentNode[];
     documents?: ExportDocumentData;
+    applications?: ExportApplicationData;
   }
 ): Promise<ImportParseResult> => {
   // Check import permissions
@@ -215,6 +217,23 @@ export const parseImport = async (
     }
   }
 
+  if (data.applications) {
+    if (!hasConfigPermission) errors.push('You do not have permission to import applications');
+    else {
+      const applicationResult = await validateApplications(db, workspace, data.applications);
+      summary.applications = {
+        count: data.applications.applications.length,
+        dashboards:
+          data.applications.home_dashboards.length +
+          data.applications.applications.reduce((sum, app) => sum + app.dashboards.length, 0),
+        conflicts: applicationResult.conflicts.length
+      };
+      conflicts.push(...applicationResult.conflicts);
+      warnings.push(...applicationResult.warnings);
+      errors.push(...applicationResult.errors);
+    }
+  }
+
   if (data.documents) {
     if (!hasConfigPermission) errors.push('You do not have permission to import typed documents');
     else {
@@ -321,6 +340,7 @@ const validateArchiveData = (
     projects?: ExportProject[];
     content_nodes?: ExportContentNode[];
     documents?: ExportDocumentData;
+    applications?: ExportApplicationData;
   }
 ): ImportDiagnostic[] => {
   const diagnostics: ImportDiagnostic[] = [];
@@ -356,6 +376,26 @@ const validateArchiveData = (
         message: `Archive contains ${type} data not declared in its manifest`
       });
     }
+  }
+
+  if (data.applications && !available.has('applications')) {
+    diagnostics.push({
+      code: 'invalid_manifest',
+      item_type: 'applications',
+      message: 'Archive contains applications data not declared in its manifest'
+    });
+  }
+  const applicationKeys = new Set<string>();
+  for (const application of data.applications?.applications ?? []) {
+    if (applicationKeys.has(application.key)) {
+      diagnostics.push({
+        code: 'duplicate_import_item',
+        item_type: 'applications',
+        item_id: application.id,
+        message: `Duplicate application key in import archive: ${application.key}`
+      });
+    }
+    applicationKeys.add(application.key);
   }
 
   if (data.documents && !available.has('documents')) {
@@ -808,6 +848,58 @@ const validateRelations = async (
     }
   }
 
+  return { conflicts, warnings, errors };
+};
+
+const APPLICATION_KEY_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
+const DASHBOARD_ICON_PATTERN = /^Tb[A-Za-z0-9]{1,60}$/;
+
+const validateApplications = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  applicationData: ExportApplicationData
+): Promise<{ conflicts: ImportConflict[]; warnings: string[]; errors: string[] }> => {
+  const conflicts: ImportConflict[] = [];
+  const warnings: string[] = [];
+  const errors: string[] = [];
+
+  const existingApplications = await db.application.list(workspace);
+  for (const application of applicationData.applications) {
+    if (!APPLICATION_KEY_PATTERN.test(application.key) || application.key === 'home') {
+      errors.push(`Application '${application.name}' has an invalid key '${application.key}'`);
+      continue;
+    }
+    const existing = existingApplications.find(item => item.key === application.key);
+    if (existing) {
+      conflicts.push({
+        type: 'applications',
+        item_id: application.id,
+        item_name: application.name,
+        conflict_reason: 'duplicate_identity',
+        existing_item: { id: existing.key, name: existing.name },
+        import_item: application,
+        suggested_resolution: 'overwrite'
+      });
+    }
+  }
+
+  const dashboards = [
+    ...applicationData.home_dashboards,
+    ...applicationData.applications.flatMap(application => application.dashboards)
+  ];
+  for (const dashboard of dashboards) {
+    if (dashboard.icon != null && !DASHBOARD_ICON_PATTERN.test(dashboard.icon)) {
+      errors.push(`Dashboard '${dashboard.name}' has an invalid icon '${dashboard.icon}'`);
+    }
+  }
+
+  if (
+    applicationData.applications.some(application => application.access_policy?.team_ids.length)
+  ) {
+    warnings.push(
+      'Application access policies reference teams; teams not included in the import are dropped'
+    );
+  }
   return { conflicts, warnings, errors };
 };
 

@@ -16,6 +16,7 @@ import type {
   ExportContentNode,
   ImportExecuteOptions,
   ImportExecuteResult,
+  ExportApplicationData,
   ExportDocumentData
 } from './exportTypes';
 
@@ -30,7 +31,8 @@ import {
   importRelations,
   importProjects,
   importContentNodes,
-  importDocuments
+  importDocuments,
+  importApplications
 } from './importAppliers';
 const describeImportPersistenceError = (error: unknown) => {
   if (!(error instanceof Error)) return 'Unknown error during import';
@@ -58,6 +60,7 @@ export const executeImport = async (
     projects?: ExportProject[];
     content_nodes?: ExportContentNode[];
     documents?: ExportDocumentData;
+    applications?: ExportApplicationData;
   },
   contentFiles?: Map<string, Buffer>
 ): Promise<ImportExecuteResult> => {
@@ -183,6 +186,18 @@ export const executeImport = async (
             idMapping,
             resolvedData.entities
           );
+        if (options.include.includes('applications') && resolvedData.applications) {
+          const { warnings, ...counts } = await importApplications(
+            transactionDb,
+            authCtx,
+            workspace,
+            resolvedData.applications,
+            options.conflict_resolutions,
+            idMapping
+          );
+          result.imported.applications = counts;
+          result.warnings.push(...warnings);
+        }
         if (options.include.includes('config') && resolvedData.config?.capability_configurations) {
           result.imported.config = {
             ...(result.imported.config ?? { lifecycle_states: 0, teams: 0, roles: 0 }),

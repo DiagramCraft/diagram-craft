@@ -15,6 +15,10 @@ import type {
   SchemaGroup,
   SharedFieldGroupLink
 } from '@arch-register/api-types/schemaContract';
+import type {
+  DashboardSidebarConfig,
+  DashboardWidget
+} from '@arch-register/api-types/dashboardContract';
 import type { EntityLink } from '@arch-register/api-types/entityContract';
 import type {
   RelationField,
@@ -29,7 +33,8 @@ export type ExportDataType =
   | 'relations'
   | 'projects'
   | 'content_nodes'
-  | 'documents';
+  | 'documents'
+  | 'applications';
 
 export type ExportManifest = {
   version: string;
@@ -51,6 +56,7 @@ export type ExportManifest = {
     projects?: string;
     content_nodes?: string;
     documents?: string;
+    applications?: string;
     content_directory?: string;
   };
   statistics: {
@@ -64,6 +70,7 @@ export type ExportManifest = {
     document_type_count?: number;
     document_template_count?: number;
     document_revision_count?: number;
+    application_count?: number;
   };
   checksums: Record<string, string>;
   export_diagnostics?: ExportDiagnostic[];
@@ -276,6 +283,37 @@ export type ExportDocumentData = {
   }>;
 };
 
+export type ExportDashboard = {
+  id: string;
+  name: string;
+  description: string;
+  icon: string | null;
+  rail_label: string | null;
+  app_key: string | null;
+  widgets: DashboardWidget[];
+  sidebar: DashboardSidebarConfig | null;
+};
+
+/** `id` equals `key`: applications are matched across workspaces by key. */
+export type ExportApplication = {
+  id: string;
+  key: string;
+  name: string;
+  description: string;
+  accent_color: string | null;
+  /** Dashboards in application order. */
+  dashboards: ExportDashboard[];
+  /** User ids are not portable, so only the mode and teams are exported. */
+  access_policy: { mode: 'all_members' | 'selected'; team_ids: string[] } | null;
+};
+
+export type ExportApplicationData = {
+  /** Applications in display order. */
+  applications: ExportApplication[];
+  /** Workspace home dashboards (not bound to an application), in display order. */
+  home_dashboards: ExportDashboard[];
+};
+
 export type ExportOptions = {
   include: ExportDataType[];
   entity_filters?: {
@@ -381,6 +419,11 @@ export type ImportParseResult = {
       revisions: number;
       conflicts: number;
     };
+    applications?: {
+      count: number;
+      dashboards: number;
+      conflicts: number;
+    };
   };
   conflicts: ImportConflict[];
   errors: string[];
@@ -442,6 +485,11 @@ export type ImportExecuteResult = {
       templates: number;
       metadata: number;
       revisions: number;
+    };
+    applications?: {
+      created: number;
+      updated: number;
+      dashboards: number;
     };
   };
   errors: string[];
