@@ -132,7 +132,9 @@ export const reorderApplicationDashboards = async (
   const siblings = await db.dashboard.listByApplication(workspace, applicationId);
   const ids = new Set(siblings.map(row => row.id));
   httpAssert.true(
-    orderedDashboardIds.length === ids.size && orderedDashboardIds.every(id => ids.has(id)),
+    orderedDashboardIds.length === ids.size &&
+      new Set(orderedDashboardIds).size === ids.size &&
+      orderedDashboardIds.every(id => ids.has(id)),
     {
       status: 400,
       message: 'Order must list every dashboard of the application exactly once'
