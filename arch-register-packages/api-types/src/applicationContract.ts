@@ -1,6 +1,7 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
 import { ws, wsAndUUID } from '@arch-register/api-types/common';
+import { dashboardSidebarConfigSchema } from '@arch-register/api-types/dashboardContract';
 
 export const workspaceApplicationSchema = z.object({
   id: z.string().describe('Unique application identifier'),
@@ -18,6 +19,23 @@ export const workspaceApplicationSchema = z.object({
 });
 
 export type WorkspaceApplication = z.infer<typeof workspaceApplicationSchema>;
+
+export const applicationDashboardSchema = z.object({
+  id: z.string().describe('Dashboard identifier'),
+  name: z.string().describe('Dashboard name'),
+  icon: z.string().nullable().describe('Rail icon name; null when not set'),
+  railLabel: z.string().nullable().describe('Rail label; null falls back to the name'),
+  order: z.number().int().describe('Position within the application, ascending'),
+  sidebar: dashboardSidebarConfigSchema.optional().describe('Primary sidebar configuration')
+});
+
+export const workspaceApplicationWithDashboardsSchema = workspaceApplicationSchema.extend({
+  dashboards: z.array(applicationDashboardSchema).describe('Ordered dashboards of the application')
+});
+
+export type WorkspaceApplicationWithDashboards = z.infer<
+  typeof workspaceApplicationWithDashboardsSchema
+>;
 
 export const createApplicationBodySchema = z.object({
   key: z.string().describe('URL-safe slug, unique within the workspace'),
@@ -54,11 +72,12 @@ export const workspaceApplicationContract = oc.tag('Application').router({
         path: '/{workspace}/workspace-applications',
         inputStructure: 'detailed',
         summary: 'List workspace applications',
-        description: 'Retrieves all applications of the workspace in display order.',
+        description:
+          'Retrieves all applications of the workspace in display order, each with its ordered dashboards.',
         tags: ['Application']
       })
       .input(z.object({ params: ws }))
-      .output(z.array(workspaceApplicationSchema)),
+      .output(z.array(workspaceApplicationWithDashboardsSchema)),
     create: oc
       .route({
         method: 'POST',

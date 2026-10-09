@@ -11,7 +11,7 @@ import { useLifecycleStates } from '../../hooks/useWorkspaceConfig';
 import { useEntity } from '../../hooks/useEntities';
 import { useEntityDrawer } from '../../sections/entities/entityDrawer/useEntityDrawer';
 import { BlastRadiusPanel } from '../../sections/entities/components/BlastRadiusPanel';
-import { IC_APIS_ID, IC_INTEGRATIONS_ID, IC_RAIL_PATHS } from './apiIntegrationCatalogSections';
+import { useApplicationDashboardTarget } from '../../hooks/useApplications';
 import { useResolvedApiIntegrationCatalogConfig } from './useResolvedApiIntegrationCatalogConfig';
 import { ApiIntegrationCatalogAtRiskPanel } from './sections/ApiIntegrationCatalogAtRiskPanel';
 import { ApiIntegrationCatalogMostConsumedPanel } from './sections/ApiIntegrationCatalogMostConsumedPanel';
@@ -129,34 +129,49 @@ const ListConfigForm = ({ config, onChange }: ListConfigFormProps) => (
   </DialogSection>
 );
 
+const API_INTEGRATION_CATALOG_KEY = 'api-integration-catalog';
+
 const useApiCatalogNavigation = () => {
   const { workspaceSlug } = useWorkspaceContext();
   const navigate = useNavigate();
+  const apisTarget = useApplicationDashboardTarget(
+    workspaceSlug,
+    API_INTEGRATION_CATALOG_KEY,
+    'APIs'
+  );
+  const integrationsTarget = useApplicationDashboardTarget(
+    workspaceSlug,
+    API_INTEGRATION_CATALOG_KEY,
+    'Integrations'
+  );
 
-  const openApi = (publicId: string) =>
-    navigate({
-      to: IC_RAIL_PATHS[IC_APIS_ID],
-      params: { workspaceSlug },
-      search: (previous: Record<string, unknown>) => ({ ...previous, drawer: publicId })
+  const openApi = (publicId: string) => {
+    if (!apisTarget) return;
+    void navigate({
+      ...apisTarget,
+      search: ((previous: Record<string, unknown>) => ({ ...previous, drawer: publicId })) as never
     });
+  };
 
-  const viewCatalog = () =>
-    navigate({
-      to: IC_RAIL_PATHS[IC_APIS_ID],
-      params: { workspaceSlug },
-      search: (previous: Record<string, unknown>) => previous
+  const viewCatalog = () => {
+    if (!apisTarget) return;
+    void navigate({
+      ...apisTarget,
+      search: ((previous: Record<string, unknown>) => previous) as never
     });
+  };
 
-  const viewIntegrations = () =>
-    navigate({
-      to: IC_RAIL_PATHS[IC_INTEGRATIONS_ID],
-      params: { workspaceSlug },
+  const viewIntegrations = () => {
+    if (!integrationsTarget) return;
+    void navigate({
+      ...integrationsTarget,
       // `boundaries` is the Integrations dashboard's "Cross-Boundary Transfer" facet variable.
       search: ((previous: Record<string, unknown>) => ({
         ...previous,
         boundaries: 'cross-boundary'
       })) as never
     });
+  };
 
   return { workspaceSlug, openApi, viewCatalog, viewIntegrations };
 };

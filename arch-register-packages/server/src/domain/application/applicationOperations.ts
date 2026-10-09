@@ -3,13 +3,15 @@ import type { DatabaseAdapter } from '../../db/database';
 import type {
   CreateApplicationRequest,
   UpdateApplicationRequest,
-  WorkspaceApplication as ApiWorkspaceApplication
+  WorkspaceApplication as ApiWorkspaceApplication,
+  WorkspaceApplicationWithDashboards
 } from '@arch-register/api-types/applicationContract';
 import type { WorkspaceApplicationDbResult } from './db/applicationDatabase';
 import type { WorkspaceDashboardDbResult } from '../dashboard/db/dashboardDatabase';
 import { httpAssert } from '../../utils/httpAssert';
 import {
   APP_DASHBOARD_KEYS_BY_APPLICATION,
+  APP_DASHBOARD_RAIL,
   APP_DASHBOARD_SEEDS
 } from '../../db/seedData/appDashboards';
 
@@ -149,31 +151,37 @@ export const reorderApplicationDashboards = async (
 export const DEFAULT_APPLICATIONS = [
   {
     key: 'business-glossary',
+    accentColor: 'oklch(0.62 0.14 295)',
     name: 'Business Glossary',
     description: 'Managed business terms, aliases, categories, and quality reports.'
   },
   {
     key: 'strategy-model',
+    accentColor: 'oklch(0.64 0.13 200)',
     name: 'Strategy & Capability Modelling',
     description: 'Capability maps, strategy roll-ups, and traceability.'
   },
   {
     key: 'vendor-management',
+    accentColor: 'oklch(0.62 0.15 55)',
     name: 'Vendor Management',
     description: 'Vendor register, contracts and renewals, spend, and vendor risk.'
   },
   {
     key: 'risk-compliance',
+    accentColor: 'oklch(0.6 0.16 25)',
     name: 'Risk & Compliance',
     description: 'Risk register, control library, retention, and compliance assessments.'
   },
   {
     key: 'data-stewardship',
+    accentColor: 'oklch(0.6 0.14 145)',
     name: 'Data Stewardship',
     description: 'Stewardship coverage, data classification, and change cases & exceptions.'
   },
   {
     key: 'api-integration-catalog',
+    accentColor: 'oklch(0.6 0.15 250)',
     name: 'API & Integration Catalog',
     description: 'API specifications, operations, and integration relations.'
   }
@@ -190,6 +198,7 @@ export const seedDefaultApplications = async (
       key: app.key,
       name: app.name,
       description: app.description,
+      accent_color: app.accentColor,
       sort_order: index,
       updated_by: null
     });
@@ -205,6 +214,8 @@ export const seedDefaultApplications = async (
         app_key: appKey,
         application_id: application.id,
         application_order: order,
+        icon: APP_DASHBOARD_RAIL[appKey]?.icon ?? null,
+        rail_label: APP_DASHBOARD_RAIL[appKey]?.railLabel ?? null,
         updated_by: null
       });
       await db.dashboard.update(workspace, created.id, {
@@ -224,6 +235,27 @@ export const listApplications = async (
   workspace: string
 ): Promise<ApiWorkspaceApplication[]> =>
   (await db.application.list(workspace)).map(toApiApplication);
+
+/** Lists the applications together with their ordered dashboards, for building navigation. */
+export const listApplicationsWithDashboards = async (
+  db: DatabaseAdapter,
+  workspace: string
+): Promise<WorkspaceApplicationWithDashboards[]> => {
+  const applications = await db.application.list(workspace);
+  return Promise.all(
+    applications.map(async application => ({
+      ...toApiApplication(application),
+      dashboards: (await db.dashboard.listByApplication(workspace, application.id)).map(row => ({
+        id: row.id,
+        name: row.name,
+        icon: row.icon,
+        railLabel: row.rail_label,
+        order: row.application_order ?? 0,
+        sidebar: row.sidebar ?? undefined
+      }))
+    }))
+  );
+};
 
 export const updateApplication = async (
   db: DatabaseAdapter,

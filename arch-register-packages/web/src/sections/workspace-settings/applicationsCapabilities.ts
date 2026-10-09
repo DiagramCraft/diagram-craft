@@ -1,5 +1,5 @@
 import { getWorkspaceCapabilityDefinition } from '@arch-register/api-types/integrationCatalog';
-import { APP_DEFINITIONS } from '../../shell/appShellRegistry';
+import type { WorkspaceApplication } from '@arch-register/api-types/applicationContract';
 
 /**
  * Shared model for the "Applications & Capabilities" settings screen and its secondary sidebar.
@@ -29,17 +29,16 @@ export type ACItem = {
 };
 
 export const buildApplicationsCapabilitiesItems = (
-  perms: ApplicationsCapabilitiesPermissions
+  perms: ApplicationsCapabilitiesPermissions,
+  workspaceApplications: ReadonlyArray<Pick<WorkspaceApplication, 'key' | 'name'>>
 ): { applications: ACItem[]; capabilities: ACItem[] } => {
-  const applications: ACItem[] = APP_DEFINITIONS.filter(app => app.applicationId !== 'home').map(
-    app => ({
-      id: app.applicationId,
-      label: app.name,
-      kind: 'application' as const,
-      applicationId: app.applicationId,
-      tabs: perms.canManageAccess ? [{ id: 'access', label: 'Access' }] : []
-    })
-  );
+  const applications: ACItem[] = workspaceApplications.map(app => ({
+    id: app.key,
+    label: app.name,
+    kind: 'application' as const,
+    applicationId: app.key,
+    tabs: perms.canManageAccess ? [{ id: 'access', label: 'Access' }] : []
+  }));
 
   const capabilities: ACItem[] = perms.canManageBindings
     ? CAPABILITY_TYPES.map(type => ({
@@ -57,9 +56,13 @@ export const buildApplicationsCapabilitiesItems = (
 /** Resolve the selected sidebar entry, falling back to the first available one. */
 export const findApplicationsCapabilitiesItem = (
   perms: ApplicationsCapabilitiesPermissions,
+  workspaceApplications: ReadonlyArray<Pick<WorkspaceApplication, 'key' | 'name'>>,
   itemId: string | undefined
 ): ACItem | undefined => {
-  const { applications, capabilities } = buildApplicationsCapabilitiesItems(perms);
+  const { applications, capabilities } = buildApplicationsCapabilitiesItems(
+    perms,
+    workspaceApplications
+  );
   const all = [...applications, ...capabilities];
   return all.find(item => item.id === itemId) ?? all[0];
 };

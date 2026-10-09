@@ -7,7 +7,7 @@ import type {
   DashboardWidget
 } from '@arch-register/api-types/dashboardContract';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
-import { useAppDashboard, useUpdateWorkspaceDashboard } from '../../hooks/useDashboard';
+import { useWorkspaceDashboard, useUpdateWorkspaceDashboard } from '../../hooks/useDashboard';
 import { DashboardHeader } from './DashboardHeader';
 import { DashboardGrid } from './DashboardGrid';
 import { DashboardSidebarConfigDialog } from './DashboardSidebarConfigDialog';
@@ -16,11 +16,11 @@ import { computeSidebarVariables } from './dashboardSidebarVariables';
 import { MdxContext } from '../markdown/MdxContext';
 import styles from './DashboardScreen.module.css';
 
-export const AppDashboardScreen = (props: { appKey: string }) => {
+export const AppDashboardScreen = (props: { dashboardId: string }) => {
   const { workspaceSlug, permissions } = useWorkspaceContext();
   const { canManageDashboard } = permissions;
 
-  const { data: dashboard, isLoading } = useAppDashboard(workspaceSlug, props.appKey);
+  const { data: dashboard, isLoading } = useWorkspaceDashboard(workspaceSlug, props.dashboardId);
   const updateDashboard = useUpdateWorkspaceDashboard(workspaceSlug);
   const widgets = useMemo(() => dashboard?.widgets ?? [], [dashboard]);
   const search = useSearch({ strict: false }) as Record<string, unknown>;

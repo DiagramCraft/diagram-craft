@@ -1,12 +1,12 @@
 import { TbDatabase, TbFiles, TbFolders, TbSearch, TbSettings } from 'react-icons/tb';
-import type { AppId, BreadcrumbItem, WorkspaceRailItemId } from '../shell/shellTypes';
+import type {
+  AppDefinition,
+  AppId,
+  BreadcrumbItem,
+  WorkspaceRailItemId
+} from '../shell/shellTypes';
 import { buildHomeBreadcrumbs } from '../shell/breadcrumbBuilders';
-import {
-  appRootRoute,
-  getAppDefinition,
-  getRailSection,
-  RAIL_ROUTES
-} from '../shell/appShellRegistry';
+import { appRootSection, getAppDefinition, getRailSection } from '../shell/appShellRegistry';
 import type { Workspace } from '@arch-register/api-types/workspaceContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
@@ -31,6 +31,8 @@ export type WorkspaceShellContext = {
   navigate: NavigateLike;
   workspace: Workspace | null;
   workspaceSlug: string;
+  /** Home plus the workspace's applications, see `buildAppDefinitions`. */
+  apps: AppDefinition[];
   schemas: EntitySchema[];
   enums: WorkspaceEnum[];
   projects: Project[];
@@ -159,11 +161,13 @@ export const resolveWorkspaceShellDescriptor = (
 
 export const navigateFromRailItem = (
   id: WorkspaceRailItemId,
-  ctx: Pick<WorkspaceShellContext, 'navigate' | 'workspaceSlug' | 'projects'>
+  ctx: Pick<WorkspaceShellContext, 'navigate' | 'workspaceSlug' | 'projects' | 'apps'>
 ) => {
+  const section = getRailSection(ctx.apps, id);
+  if (!section) return 'ignored' as const;
   ctx.navigate({
-    to: RAIL_ROUTES[id],
-    params: { workspaceSlug: ctx.workspaceSlug }
+    to: section.route,
+    params: { workspaceSlug: ctx.workspaceSlug, ...section.routeParams }
   });
   return 'navigated' as const;
 };
@@ -171,11 +175,12 @@ export const navigateFromRailItem = (
 /** Navigate to another application, landing on its first rail section. */
 export const navigateToApp = (
   appId: AppId,
-  ctx: Pick<WorkspaceShellContext, 'navigate' | 'workspaceSlug'>
+  ctx: Pick<WorkspaceShellContext, 'navigate' | 'workspaceSlug' | 'apps'>
 ) => {
+  const section = appRootSection(getAppDefinition(ctx.apps, appId));
   ctx.navigate({
-    to: appRootRoute(getAppDefinition(appId)),
-    params: { workspaceSlug: ctx.workspaceSlug }
+    to: section.route,
+    params: { workspaceSlug: ctx.workspaceSlug, ...section.routeParams }
   });
   return 'navigated' as const;
 };
@@ -194,6 +199,6 @@ export const railSectionShell = (
 ): WorkspaceShellDescriptor => ({
   variant: 'standard',
   activeRailItem: id,
-  primarySidebar: getRailSection(id)?.primarySidebar?.(ctx),
+  primarySidebar: getRailSection(ctx.apps, id)?.primarySidebar?.(ctx),
   ...overrides
 });

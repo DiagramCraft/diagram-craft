@@ -1,13 +1,46 @@
-import type { AppDefinition } from '../../shell/shellTypes';
+import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
+import { EntityDrawer } from '../entities/entityDrawer/EntityDrawer';
+import { GovernanceCaseDrawer } from '../governance/GovernanceCaseDrawer';
 import { AppDashboardScreen } from './AppDashboardScreen';
 
 /**
- * Generic screen for any `AppRailSection` with `dashboard` set: renders the section's dashboard, so a dashboard-only section needs no bespoke screen (#3493).
+ * Generic screen of the `apps/$appKey/$dashboardId` route: renders the dashboard in the URL, plus
+ * the dataset / governance-case drawers that review-queue widgets open through the `datasetId` and
+ * `caseId` search params.
  */
-export const AppDashboardRouteScreen = (props: { app: AppDefinition; sectionId: string }) => {
-  const dashboard = props.app.sections.find(section => section.id === props.sectionId)?.dashboard;
-  if (!dashboard?.appKey) {
-    throw new Error(`${props.app.name} section ${props.sectionId} has no dashboard.appKey`);
-  }
-  return <AppDashboardScreen appKey={dashboard.appKey} />;
+export const AppDashboardRouteScreen = () => {
+  const { workspaceSlug, dashboardId } = useParams({ strict: false }) as {
+    workspaceSlug: string;
+    dashboardId: string;
+  };
+  const navigate = useNavigate();
+  const search = useSearch({ strict: false }) as Record<string, string | undefined>;
+
+  const patchSearch = (patch: Record<string, string | undefined>) =>
+    navigate({
+      search: (previous: Record<string, unknown>) => ({ ...previous, ...patch })
+    } as never);
+
+  return (
+    <>
+      <AppDashboardScreen dashboardId={dashboardId} />
+      {search.datasetId && (
+        <EntityDrawer
+          workspaceSlug={workspaceSlug}
+          entityId={search.datasetId}
+          onClose={() => patchSearch({ datasetId: undefined })}
+          onOpenGovernanceCase={caseId => patchSearch({ datasetId: undefined, caseId })}
+        />
+      )}
+      {search.caseId && (
+        <GovernanceCaseDrawer
+          entityNoun="dataset"
+          workspaceSlug={workspaceSlug}
+          caseId={search.caseId}
+          onClose={() => patchSearch({ caseId: undefined })}
+          onOpenDataset={datasetId => patchSearch({ caseId: undefined, datasetId })}
+        />
+      )}
+    </>
+  );
 };

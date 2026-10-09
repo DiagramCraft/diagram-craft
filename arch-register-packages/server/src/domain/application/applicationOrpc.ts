@@ -7,7 +7,7 @@ import { orpcErrorMiddleware, workspaceScoped } from '../../utils/orpcErrors';
 import {
   createApplication,
   deleteApplication,
-  listApplications,
+  listApplicationsWithDashboards,
   reorderApplications,
   toApiApplication,
   updateApplication
@@ -29,7 +29,7 @@ export const workspaceApplicationORPCRouter = applicationRouter.router({
     list: applicationRouter.workspaceApplications.list.handler(async ({ context }) => {
       const { workspace, authCtx } = context;
       requireWorkspaceCapability(authCtx, 'ws.view');
-      return await listApplications(context.db, workspace);
+      return await listApplicationsWithDashboards(context.db, workspace);
     }),
     create: applicationRouter.workspaceApplications.create.handler(async ({ input, context }) => {
       const { workspace, authCtx } = context;

@@ -3,6 +3,7 @@ import { getRouteApi } from '@tanstack/react-router';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { Title } from '../../components/Title';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
+import { useApplications } from '../../hooks/useApplications';
 import { CapabilityBindingEditor } from './sub-sections/CapabilityBindingEditor';
 import { ApplicationAccessCard } from './sub-sections/ApplicationAccessCard';
 import {
@@ -21,13 +22,14 @@ export const ApplicationsCapabilitiesScreen = () => {
   const search = routeApi.useSearch();
   const ctx = useWorkspaceContext();
   const workspaceSlug = params.workspaceSlug;
+  const { data: workspaceApplications = [] } = useApplications(workspaceSlug);
 
   const perms = {
     canManageBindings: ctx.permissions.canManageWorkspaces,
     canManageAccess: ctx.permissions.canAdministerWorkspace ?? false
   };
 
-  const item = findApplicationsCapabilitiesItem(perms, search.item);
+  const item = findApplicationsCapabilitiesItem(perms, workspaceApplications, search.item);
   const [bindingActions, setBindingActions] = useState<ReactNode>();
   const [accessActions, setAccessActions] = useState<ReactNode>();
   const [enabledControl, setEnabledControl] = useState<ReactNode>();

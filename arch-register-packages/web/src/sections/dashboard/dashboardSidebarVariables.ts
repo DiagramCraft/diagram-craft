@@ -17,6 +17,13 @@ import type { DashboardSidebarVariables } from './DashboardSidebarContext';
  * absent instead would keep a widget's `$variableName` placeholder literal, producing an
  * `in [...]` filter that matches nothing and empties the widget whenever no facet is selected.
  */
+/**
+ * TanStack parses numeric-looking search values (e.g. a `valueKind: 'id'` picker value) into
+ * numbers; sidebar variables are always strings.
+ */
+const searchString = (value: unknown): string | undefined =>
+  typeof value === 'string' ? value : typeof value === 'number' ? String(value) : undefined;
+
 export const computeSidebarVariables = (
   sidebar: DashboardSidebarConfig | undefined,
   search: Record<string, unknown>
@@ -24,18 +31,16 @@ export const computeSidebarVariables = (
   if (!sidebar) return {};
   const variables: DashboardSidebarVariables = {};
   if (sidebar.kind === 'entity-picker') {
-    const value = search[sidebar.variableName];
-    if (typeof value === 'string') variables[sidebar.variableName] = value;
+    const value = searchString(search[sidebar.variableName]);
+    if (value !== undefined) variables[sidebar.variableName] = value;
     return variables;
   }
   if (sidebar.kind === 'options') {
-    const value = search[sidebar.variableName];
-    variables[sidebar.variableName] = typeof value === 'string' ? value : '';
+    variables[sidebar.variableName] = searchString(search[sidebar.variableName]) ?? '';
     return variables;
   }
   for (const facet of sidebar.facets) {
-    const value = search[facet.variableName];
-    variables[facet.variableName] = typeof value === 'string' ? value : '';
+    variables[facet.variableName] = searchString(search[facet.variableName]) ?? '';
   }
   return variables;
 };

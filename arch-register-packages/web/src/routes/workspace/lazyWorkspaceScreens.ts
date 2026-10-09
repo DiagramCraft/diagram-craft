@@ -56,97 +56,9 @@ export const LazySearchScreen = lazyRouteComponent(
   () => import('../../sections/search/SearchScreen'),
   'SearchScreen'
 );
-export const LazyGlossaryDashboardScreen = lazyRouteComponent(
-  () => import('../../app/business-glossary/sections/GlossaryDashboardScreen'),
-  'GlossaryDashboardScreen'
-);
-export const LazyStrategyOverviewDashboardScreen = lazyRouteComponent(
-  () => import('../../app/strategy-model/sections/StrategyOverviewDashboardScreen'),
-  'StrategyOverviewDashboardScreen'
-);
-export const LazyStrategyCapabilityMapDashboardScreen = lazyRouteComponent(
-  () => import('../../app/strategy-model/sections/StrategyCapabilityMapDashboardScreen'),
-  'StrategyCapabilityMapDashboardScreen'
-);
-export const LazyStrategyCapabilitiesDashboardScreen = lazyRouteComponent(
-  () => import('../../app/strategy-model/sections/StrategyCapabilitiesDashboardScreen'),
-  'StrategyCapabilitiesDashboardScreen'
-);
-export const LazyStrategyHeatmapsScreen = lazyRouteComponent(
-  () => import('../../app/strategy-model/sections/StrategyHeatmapsScreen'),
-  'StrategyHeatmapsScreen'
-);
-export const LazyStrategyStrategyDashboardScreen = lazyRouteComponent(
-  () => import('../../app/strategy-model/sections/StrategyStrategyDashboardScreen'),
-  'StrategyStrategyDashboardScreen'
-);
-export const LazyStrategyTraceabilityDashboardScreen = lazyRouteComponent(
-  () => import('../../app/strategy-model/sections/StrategyTraceabilityDashboardScreen'),
-  'StrategyTraceabilityDashboardScreen'
-);
-export const LazyVendorOverviewDashboardScreen = lazyRouteComponent(
-  () => import('../../app/vendor-management/sections/VendorOverviewDashboardScreen'),
-  'VendorOverviewDashboardScreen'
-);
-export const LazyVendorVendorsDashboardScreen = lazyRouteComponent(
-  () => import('../../app/vendor-management/sections/VendorVendorsDashboardScreen'),
-  'VendorVendorsDashboardScreen'
-);
-export const LazyVendorContractsDashboardScreen = lazyRouteComponent(
-  () => import('../../app/vendor-management/sections/VendorContractsDashboardScreen'),
-  'VendorContractsDashboardScreen'
-);
-export const LazyRiskComplianceOverviewDashboardScreen = lazyRouteComponent(
-  () => import('../../app/risk-compliance/sections/RiskComplianceOverviewDashboardScreen'),
-  'RiskComplianceOverviewDashboardScreen'
-);
-export const LazyRiskComplianceRisksDashboardScreen = lazyRouteComponent(
-  () => import('../../app/risk-compliance/sections/RiskComplianceRisksDashboardScreen'),
-  'RiskComplianceRisksDashboardScreen'
-);
-export const LazyRiskComplianceControlsDashboardScreen = lazyRouteComponent(
-  () => import('../../app/risk-compliance/sections/RiskComplianceControlsDashboardScreen'),
-  'RiskComplianceControlsDashboardScreen'
-);
-export const LazyRiskComplianceRetentionDashboardScreen = lazyRouteComponent(
-  () => import('../../app/risk-compliance/sections/RiskComplianceRetentionDashboardScreen'),
-  'RiskComplianceRetentionDashboardScreen'
-);
-export const LazyRiskComplianceAssessmentsDashboardScreen = lazyRouteComponent(
-  () => import('../../app/risk-compliance/sections/RiskComplianceAssessmentsDashboardScreen'),
-  'RiskComplianceAssessmentsDashboardScreen'
-);
-export const LazyDataStewardshipDashboardScreen = lazyRouteComponent(
-  () => import('../../app/data-stewardship/sections/DataStewardshipDashboardScreen'),
-  'DataStewardshipDashboardScreen'
-);
-export const LazyDataStewardshipStewardshipDashboardScreen = lazyRouteComponent(
-  () => import('../../app/data-stewardship/sections/DataStewardshipStewardshipDashboardScreen'),
-  'DataStewardshipStewardshipDashboardScreen'
-);
-export const LazyDataStewardshipClassificationDashboardScreen = lazyRouteComponent(
-  () => import('../../app/data-stewardship/sections/DataStewardshipClassificationDashboardScreen'),
-  'DataStewardshipClassificationDashboardScreen'
-);
-export const LazyDataStewardshipChangeCasesDashboardScreen = lazyRouteComponent(
-  () => import('../../app/data-stewardship/sections/DataStewardshipChangeCasesDashboardScreen'),
-  'DataStewardshipChangeCasesDashboardScreen'
-);
-export const LazyDataStewardshipAssessmentsDashboardScreen = lazyRouteComponent(
-  () => import('../../app/data-stewardship/sections/DataStewardshipAssessmentsDashboardScreen'),
-  'DataStewardshipAssessmentsDashboardScreen'
-);
-export const LazyApiIntegrationCatalogOverviewDashboard = lazyRouteComponent(
-  () => import('../../app/api-integration-catalog/sections/ApiIntegrationCatalogDashboardScreens'),
-  'ApiIntegrationCatalogOverviewDashboard'
-);
 export const LazyIntegrationSyncScreen = lazyRouteComponent(
   () => import('../../sections/workspace-settings/IntegrationSyncScreen'),
   'IntegrationSyncScreen'
-);
-export const LazyApiIntegrationCatalogImpactDashboard = lazyRouteComponent(
-  () => import('../../app/api-integration-catalog/sections/ApiIntegrationCatalogDashboardScreens'),
-  'ApiIntegrationCatalogImpactDashboard'
 );
 export const LazyWorkspaceSettingsScreen = lazyRouteComponent(
   () => import('../../sections/workspace-settings/WorkspaceSettingsScreen'),
