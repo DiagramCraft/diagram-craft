@@ -99,8 +99,7 @@ export const workspaceApplicationContract = oc.tag('Application').router({
         path: '/{workspace}/workspace-applications/{id}',
         inputStructure: 'detailed',
         summary: 'Delete workspace application',
-        description:
-          'Deletes an application together with its dashboards and its access policy.',
+        description: 'Deletes an application together with its dashboards and its access policy.',
         tags: ['Application']
       })
       .input(z.object({ params: wsAndUUID }))

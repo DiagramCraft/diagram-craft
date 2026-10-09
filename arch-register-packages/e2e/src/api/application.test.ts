@@ -51,9 +51,9 @@ test.describe('Workspace Application API', () => {
       params: { ...params, applicationId: 'custom-app' },
       body: { mode: 'all_members', user_ids: [], team_ids: [] }
     });
-    expect(
-      (await orpc.applications.accessible({ params })).installed_application_ids
-    ).toContain('custom-app');
+    expect((await orpc.applications.accessible({ params })).installed_application_ids).toContain(
+      'custom-app'
+    );
 
     await orpc.workspaceApplications.remove({ params: { ...params, id: created.id } });
     expect(
