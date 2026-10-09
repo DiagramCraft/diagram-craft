@@ -30,7 +30,7 @@ export const workspaceApplicationORPCRouter = applicationRouter.router({
     list: applicationRouter.workspaceApplications.list.handler(async ({ context }) => {
       const { workspace, authCtx } = context;
       requireWorkspaceCapability(authCtx, 'ws.view');
-      return await listApplicationsWithDashboards(context.db, workspace);
+      return await listApplicationsWithDashboards(context.db, workspace, authCtx);
     }),
     create: applicationRouter.workspaceApplications.create.handler(async ({ input, context }) => {
       const { workspace, authCtx } = context;

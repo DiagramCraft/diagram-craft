@@ -844,7 +844,7 @@ test.describe('workspace config routes', () => {
       memberOrpc.workspaceApplications.create({ params, body: { key: 'viewer-app', name: 'Nope' } })
     ).rejects.toMatchObject({ code: 'FORBIDDEN' });
 
-    const [first] = await memberOrpc.workspaceApplications.list({ params });
+    const [first] = await orpc.workspaceApplications.list({ params });
     await expect(
       memberOrpc.workspaceApplications.update({
         params: { ...params, id: first!.id },

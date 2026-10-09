@@ -94,6 +94,46 @@ const listInstalledApplicationIds = async (
 const hasApplicationAccessAdmin = (authCtx: WorkspaceAuthorizationContext) =>
   checker.hasApplicationAccessAdmin(authCtx);
 
+/**
+ * Throws 403 unless the caller may access the given application (by UUID). Dashboards that are
+ * not bound to an application (null id) fall back to workspace-level access.
+ */
+export const requireApplicationAccessById = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  authCtx: WorkspaceAuthorizationContext,
+  applicationId: string | null | undefined
+) => {
+  if (applicationId == null || hasApplicationAccessAdmin(authCtx)) return;
+  const application = await db.application.get(workspace, applicationId);
+  if (!application) return;
+  const policy = await db.workspace.getWorkspaceApplicationAccessPolicy(workspace, application.key);
+  httpAssert.true(checker.hasApplicationAccess(authCtx, toPermissionPolicy(policy ?? null)), {
+    status: 403,
+    statusText: 'Forbidden',
+    message: 'You do not have access to this application'
+  });
+};
+
+/** Returns the keys of the given applications that the caller may access. */
+export const filterAccessibleApplicationKeys = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  authCtx: WorkspaceAuthorizationContext,
+  applicationKeys: string[]
+): Promise<Set<string>> => {
+  if (hasApplicationAccessAdmin(authCtx)) return new Set(applicationKeys);
+  const policies = await db.workspace.listWorkspaceApplicationAccessPolicies(workspace);
+  const policiesByApplication = new Map(
+    policies.map(policy => [policy.application_id, toPermissionPolicy(policy)])
+  );
+  return new Set(
+    applicationKeys.filter(key =>
+      checker.hasApplicationAccess(authCtx, policiesByApplication.get(key) ?? null)
+    )
+  );
+};
+
 export const listAccessibleApplications = async (
   db: DatabaseAdapter,
   workspace: string,

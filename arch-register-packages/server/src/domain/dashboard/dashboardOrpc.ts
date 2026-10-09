@@ -1,6 +1,7 @@
 import { implement } from '@orpc/server';
 import type { DatabaseAdapter } from '../../db/database';
 import { requireWorkspaceCapability } from '../auth/authorization';
+import { requireApplicationAccessById } from '../workspace/applicationAccessOperations';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { createOrpcHandler } from '../../utils/orpcHandler';
 import { orpcErrorMiddleware, workspaceScoped } from '../../utils/orpcErrors';
@@ -44,12 +45,16 @@ export const workspaceDashboardORPCRouter = dashboardRouter.router({
     get: dashboardRouter.dashboards.get.handler(async ({ input, context }) => {
       const { workspace, authCtx } = context;
       requireWorkspaceCapability(authCtx, 'ws.view');
-      return await getWorkspaceDashboard(context.db, workspace, input.params.id);
+      const dashboard = await getWorkspaceDashboard(context.db, workspace, input.params.id);
+      await requireApplicationAccessById(context.db, workspace, authCtx, dashboard.applicationId);
+      return dashboard;
     }),
     getApp: dashboardRouter.dashboards.getApp.handler(async ({ input, context }) => {
       const { workspace, authCtx } = context;
       requireWorkspaceCapability(authCtx, 'ws.view');
-      return await getAppDashboard(context.db, workspace, input.params.appKey);
+      const dashboard = await getAppDashboard(context.db, workspace, input.params.appKey);
+      await requireApplicationAccessById(context.db, workspace, authCtx, dashboard.applicationId);
+      return dashboard;
     }),
     update: dashboardRouter.dashboards.update.handler(async ({ input, context }) => {
       const { workspace, authCtx } = context;
