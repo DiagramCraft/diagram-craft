@@ -80,7 +80,10 @@ test.describe('settings section', () => {
 
     await page.getByRole('button', { name: 'Delete application', exact: true }).click();
     await expect(page.getByText('Delete application?', { exact: true })).toBeVisible();
-    await page.getByRole('alertdialog').getByRole('button', { name: 'Delete', exact: true }).click();
+    await page
+      .getByRole('alertdialog')
+      .getByRole('button', { name: 'Delete', exact: true })
+      .click();
     await expect(page.getByText(renamed, { exact: true })).toHaveCount(0);
   });
 

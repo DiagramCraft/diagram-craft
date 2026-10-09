@@ -43,10 +43,11 @@ test.describe('Application dashboard access', () => {
       mode: 'all_members' | 'selected';
       user_ids: string[];
       team_ids: string[];
-    }) => orpc.config.applicationAccess.update({
-      params: { ...params, applicationId: APP_KEY },
-      body
-    });
+    }) =>
+      orpc.config.applicationAccess.update({
+        params: { ...params, applicationId: APP_KEY },
+        body
+      });
     const listedKeys = async (client: typeof orpc) =>
       (await client.workspaceApplications.list({ params })).map(a => a.key);
 
@@ -79,17 +80,17 @@ test.describe('Application dashboard access', () => {
     expect(
       (await memberOrpc.dashboard.get({ params: { ...params, id: appDashboard.id } })).id
     ).toBe(appDashboard.id);
-    expect(
-      (await memberOrpc.dashboard.getApp({ params: { ...params, appKey: APP_KEY } })).id
-    ).toBe(appDashboard.id);
+    expect((await memberOrpc.dashboard.getApp({ params: { ...params, appKey: APP_KEY } })).id).toBe(
+      appDashboard.id
+    );
     const listed = await memberOrpc.workspaceApplications.list({ params });
     expect(listed.find(a => a.id === applicationId)?.dashboards.length).toBeGreaterThan(0);
 
     // All members: allowed
     await setPolicy({ mode: 'all_members', user_ids: [], team_ids: [] });
-    expect(
-      (await memberOrpc.dashboard.getApp({ params: { ...params, appKey: APP_KEY } })).id
-    ).toBe(appDashboard.id);
+    expect((await memberOrpc.dashboard.getApp({ params: { ...params, appKey: APP_KEY } })).id).toBe(
+      appDashboard.id
+    );
 
     await orpc.config.applicationAccess.reset({ params: { ...params, applicationId: APP_KEY } });
   });
@@ -107,8 +108,8 @@ test.describe('Application dashboard access', () => {
 
     const home = await memberOrpc.dashboard.list({ params });
     expect(home.length).toBeGreaterThan(0);
-    expect(
-      (await memberOrpc.dashboard.get({ params: { ...params, id: home[0]!.id } })).id
-    ).toBe(home[0]!.id);
+    expect((await memberOrpc.dashboard.get({ params: { ...params, id: home[0]!.id } })).id).toBe(
+      home[0]!.id
+    );
   });
 });
