@@ -114,9 +114,29 @@ test.describe('Workspace Application API', () => {
       body: { ids: reversed }
     });
     expect(reordered.map(d => d.id)).toEqual(reversed);
-    await expect(
-      orpc.workspaceApplications.reorderDashboards({ params: appParams, body: { ids: [ids[0]!] } })
-    ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+
+    const other = await orpc.workspaceApplications.create({
+      params,
+      body: { key: 'other-dash-app', name: 'Other dash app' }
+    });
+    const foreignId = (await orpc.workspaceApplications.list({ params }))
+      .find(candidate => candidate.id === other.id)!
+      .dashboards.map(d => d.id)[0]!;
+    const invalidOrders = {
+      missing: [reversed[0]!],
+      duplicate: [reversed[0]!, reversed[0]!],
+      foreign: [reversed[0]!, foreignId]
+    };
+    for (const invalid of Object.values(invalidOrders)) {
+      await expect(
+        orpc.workspaceApplications.reorderDashboards({ params: appParams, body: { ids: invalid } })
+      ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+      const current = (await orpc.workspaceApplications.list({ params })).find(
+        candidate => candidate.id === app.id
+      );
+      expect(current!.dashboards.map(d => d.id)).toEqual(reversed);
+    }
+    await orpc.workspaceApplications.remove({ params: { ...params, id: other.id } });
 
     await orpc.dashboard.remove({ params: { ...params, id: added.id } });
     await expect(
