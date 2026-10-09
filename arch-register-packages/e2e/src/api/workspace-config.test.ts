@@ -825,6 +825,37 @@ test.describe('workspace config routes', () => {
     expect(reset.accessible_application_ids).toEqual(['home']);
   });
 
+  test('rejects application management for members without dashboard management', async ({
+    server,
+    orpc,
+    seededUsers
+  }) => {
+    await orpc.config.members.updateRole({
+      params: { workspace: 'default', id: seededUsers.configUserId },
+      body: { roleId: 'viewer' }
+    });
+    const memberOrpc = createTestORPCClient(
+      server.baseUrl,
+      await makeAuthHeader(server.db, seededUsers.configUserId)
+    );
+    const params = { workspace: 'default' };
+
+    await expect(
+      memberOrpc.workspaceApplications.create({ params, body: { key: 'viewer-app', name: 'Nope' } })
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+
+    const [first] = await memberOrpc.workspaceApplications.list({ params });
+    await expect(
+      memberOrpc.workspaceApplications.update({
+        params: { ...params, id: first!.id },
+        body: { name: 'Renamed by viewer' }
+      })
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    await expect(
+      memberOrpc.workspaceApplications.remove({ params: { ...params, id: first!.id } })
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+  });
+
   test('workspace config routes return 401 without auth and 404 for unknown workspaces', async ({
     server,
     orpc,

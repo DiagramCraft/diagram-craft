@@ -31,6 +31,23 @@ The archive format remains version `1.0`. Relation files are optional, so older 
 continue to import. Relation history and approval-case records are not included until relation versioning and approval
 workflow support is delivered.
 
+### Applications
+
+Select **Applications** (applications, dashboards and access policies) to include the workspace's applications in the
+archive. They are written to `applications.json` and contain:
+
+- each application's key, name, description, and accent colour, in order
+- each application's ordered dashboards, including widgets, sidebar, icon, and rail label
+- each application's access policy as a mode (all members or selected) and the selected teams
+- the workspace home dashboards
+
+Individual users are not exported, so imported policies keep only their team grants. Personal and project dashboards
+are not included. The section is optional, so archives without it continue to import.
+
+On import, applications are matched by key. The import preview shows the application and dashboard counts and any
+conflicts; resolve each conflict by skipping, overwriting, merging, or renaming. Schema references in dashboard
+widgets and teams in access policies follow the remapped schemas and teams of the destination workspace.
+
 ## Entity-Level Operations
 
 Entity CSV import and export are documented with the entity workflows because they are narrower operational tools tied

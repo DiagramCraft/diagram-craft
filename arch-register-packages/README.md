@@ -77,8 +77,7 @@ App code lives in a package-local `src/app/<app-name>/` directory, parallel to `
 - `web/src/app/<app-name>/` — screens, routes, and query hooks
 - `e2e/src/app/<app-name>/` — API/UI tests for the app
 
-`server/src/app/business-glossary/` is the current example: `glossaryOrpc.ts`/`glossaryOperations.ts`
-implement `glossaryContract.ts`'s endpoints, and `glossarySchemaTemplate.ts` exports the Term/Term
+`server/src/app/business-glossary/` is the current example: `glossarySchemaTemplate.ts` exports the Term/Term
 Category schemas that get spread into `domain/catalog/schemaTemplates.ts`'s `SCHEMA_TEMPLATES` array
 (see `domain/catalog/schemaTemplateBase.ts` for the small, dependency-free helpers — `enumDefinition`,
 the shared ADR document type/template — that both core and app schema packs import, without an app
@@ -92,19 +91,27 @@ registrant rather than a central switch statement:
 
 - **Workspace capabilities** (`api-types/src/integrationCatalog.ts`'s `workspaceCapabilityDefinitions`)
   bind an app's semantic roles (e.g. "term", "category") to concrete entity/relation schemas in a
-  workspace, so other features can discover them without knowing the app's schema ids. An app exports
-  its `WorkspaceCapabilityDefinition` from `api-types/src/app/<app-name>/` and `integrationCatalog.ts`
-  spreads it into the array — see `glossaryCapability.ts`.
+  workspace, so other features can discover them without knowing the app's schema ids. A pack exports
+  its `WorkspaceCapabilityDefinition` and `integrationCatalog.ts` spreads it into the array.
 - **Governance case kinds** (`server/src/domain/governance/governanceRegistryFactory.ts`) let an app
   register workflow behavior (approvals, reminders, escalation) for a case kind it owns, by exporting a
   `createXGovernanceRegistry()` factory that gets spread into `createApplicationGovernanceRegistry()`.
   No app currently owns a case kind, but this is the pattern to follow if one needs to.
 
-On the web client, an app that needs a workspace-rail entry (icon, route, breadcrumbs) registers it in
-`web/src/shell/appShellRegistry.ts` rather than hardcoding the id in `shell/shellTypes.ts` or
-`layouts/workspaceShellDescriptors.tsx` — see `app/business-glossary/glossaryShell.tsx`.
+### Workspace applications (DB-backed)
 
-This is a step toward a future plugin/extension framework, not a full plugin system yet — apps are
+What users see in the app switcher is separate from the code packs above. Applications are workspace data stored in
+the `workspace_application` table (string id plus a `key` slug), with their dashboards, access policy, and accent
+colour. The built-in applications are seeded into every workspace; administrators can add, edit, and delete them from
+**Workspace Settings → Applications & Capabilities**. CRUD, dashboard add/reorder, and access are exposed as
+`workspaceApplications.*` in `api-types/src/applicationContract.ts` (guarded by `ws.manage_dashboard`; listing needs
+`ws.view`). Applications and their dashboards are included in workspace export/import (`applications.json`).
+
+On the web client the shell is generic: `web/src/shell/appShellRegistry.tsx` keeps only the code-defined `HOME_APP` and
+turns each fetched workspace application into an `AppDefinition`, one rail section per dashboard. Adding an
+application therefore needs no web code. Only `api-specification` remains a workspace capability with a schema binding.
+
+This is a step toward a future plugin/extension framework, not a full plugin system yet — domain packs are
 still first-party code in this repo, registered by import rather than dynamically loaded.
 
 ## 🏗️ Architecture Decisions

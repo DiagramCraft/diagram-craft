@@ -84,7 +84,7 @@ for local account administration.
 
 ## Application Access
 
-Application access is an independent workspace-level gate for optional applications such as Business Glossary and
+Application access is an independent workspace-level gate for applications such as Business Glossary and
 Strategy & Capability Modelling. Workspace administrators can allow all workspace members or select individual people
 and teams. Individual and team grants are additive. An ordinary member also needs `ws.view`; application access does not
 replace the required workspace capabilities for the application's underlying data.
@@ -94,6 +94,10 @@ retain access, and Home is always available.
 
 Applications & Capabilities configures which people may open each application through its access policy. An access
 grant does not replace workspace permissions.
+
+Managing applications uses the `ws.manage_dashboard` capability: it allows creating, renaming, recolouring, and deleting
+applications, managing their dashboards from the rail, and shows the **General** tab. The **Access** tab, and exporting
+or importing applications, require workspace administration.
 
 ## Related Pages
 
