@@ -1428,7 +1428,7 @@ export const seedEntitiesRaw: SeedEntityInput[] = [
       setup_fee: { amount: 15000, currency: 'USD' },
       contract_type: 'licence',
       auto_renew: true,
-      notice_period_days: 90,
+      notice_period: { amount: 90, unit: 'days' },
       contract_owner: 'Head of Platform Engineering'
     },
     project_id: null,
@@ -1458,7 +1458,7 @@ export const seedEntitiesRaw: SeedEntityInput[] = [
       setup_fee: { amount: 0, currency: 'EUR' },
       contract_type: 'support',
       auto_renew: true,
-      notice_period_days: 30,
+      notice_period: { amount: 30, unit: 'days' },
       contract_owner: 'Head of Security'
     },
     project_id: null,
@@ -1488,7 +1488,7 @@ export const seedEntitiesRaw: SeedEntityInput[] = [
       setup_fee: { amount: 0, currency: 'USD' },
       contract_type: 'support',
       auto_renew: false,
-      notice_period_days: 60,
+      notice_period: { amount: 60, unit: 'days' },
       contract_owner: 'Head of Platform Engineering'
     },
     project_id: null,

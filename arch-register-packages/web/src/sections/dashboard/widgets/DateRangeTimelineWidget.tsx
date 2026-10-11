@@ -43,7 +43,7 @@ export type DateRangeTimelineWidgetConfig = {
   sublabelFieldId?: string;
   /** Optional number/currency field shown inside each bar. */
   valueFieldId?: string;
-  /** Number field (days) giving a marker that many days before the end date, e.g. a notice period. */
+  /** Duration field (or number of days) giving a marker that many days before the end date, e.g. a notice period. */
   markerOffsetFieldId?: string;
   /** Boolean field that must be true for the marker to be drawn. */
   markerWhenFieldId?: string;

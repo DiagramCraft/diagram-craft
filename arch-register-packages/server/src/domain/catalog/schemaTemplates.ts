@@ -2109,13 +2109,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             groupId: 'terms'
           },
           { id: 'auto_renew', name: 'Auto-Renew', type: 'boolean', groupId: 'terms' },
-          {
-            id: 'notice_period_days',
-            name: 'Notice Period (Days)',
-            type: 'number',
-            min: 0,
-            groupId: 'terms'
-          },
+          { id: 'notice_period', name: 'Notice Period', type: 'duration', groupId: 'terms' },
           { id: 'contract_owner', name: 'Contract Owner', type: 'text', groupId: 'ownership' }
         ],
         groups: [
@@ -2497,7 +2491,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
               { kind: 'field', fieldId: 'contract_start' },
               { kind: 'field', fieldId: 'contract_end' },
               { kind: 'field', fieldId: 'contract_type' },
-              { kind: 'field', fieldId: 'notice_period_days' },
+              { kind: 'field', fieldId: 'notice_period' },
               { kind: 'field', fieldId: 'auto_renew' },
               { kind: 'field', fieldId: 'contract_owner' }
             ]

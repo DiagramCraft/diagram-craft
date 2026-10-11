@@ -79,7 +79,7 @@ export const DateRangeTimelineConfigForm = ({ config, onChange }: Props) => (
         <TextOption
           label="Marker offset field id"
           value={config.markerOffsetFieldId}
-          placeholder="Days before end, e.g. notice_period_days"
+          placeholder="Duration before end, e.g. notice_period"
           onChange={markerOffsetFieldId => onChange({ ...config, markerOffsetFieldId })}
         />
         <TextOption
