@@ -251,6 +251,9 @@ test.describe('Workspace Dashboard API', () => {
       orpc.dashboard.update({ params: { ...params, id: sameName.id }, body: { key: 'security' } })
     ).rejects.toMatchObject({ code: 'CONFLICT' });
     // Keeping the current key is not a conflict
-    await orpc.dashboard.update({ params: { ...params, id: created.id }, body: { key: 'security' } });
+    await orpc.dashboard.update({
+      params: { ...params, id: created.id },
+      body: { key: 'security' }
+    });
   });
 });

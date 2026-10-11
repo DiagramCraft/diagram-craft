@@ -1,10 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { DatabaseAdapter } from '../../db/database';
-import {
-  dashboardKeyFromName,
-  isValidDashboardKey,
-  uniqueDashboardKey
-} from './dashboardKey';
+import { dashboardKeyFromName, isValidDashboardKey, uniqueDashboardKey } from './dashboardKey';
 
 const dbWithKeys = (taken: Record<string, string>) =>
   ({
@@ -48,8 +44,8 @@ describe('uniqueDashboardKey', () => {
   });
 
   it('does not collide with the dashboard being edited', async () => {
-    expect(await uniqueDashboardKey(dbWithKeys({ overview: 'a' }), 'w', null, 'overview', 'a')).toBe(
-      'overview'
-    );
+    expect(
+      await uniqueDashboardKey(dbWithKeys({ overview: 'a' }), 'w', null, 'overview', 'a')
+    ).toBe('overview');
   });
 });

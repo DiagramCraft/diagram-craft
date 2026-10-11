@@ -83,7 +83,10 @@ describe('appShellRegistry', () => {
     expect(railItemToAppId(apps, 'd2')).toBe('risk');
     expect(railItemToAppId(apps, null)).toBe('home');
     expect(railItemToAppId(apps, 'unknown')).toBe('home');
-    expect(getRailSection(apps, 'd1')?.routeParams).toEqual({ appKey: 'risk', dashboardKey: 'key-d1' });
+    expect(getRailSection(apps, 'd1')?.routeParams).toEqual({
+      appKey: 'risk',
+      dashboardKey: 'key-d1'
+    });
   });
 
   it('produces accent overrides only for apps that define an accent color', () => {

@@ -207,7 +207,8 @@ export const createWorkspaceDashboard = async (
     id: randomUUID(),
     workspace,
     name: body.name,
-    key: body.key ?? (await uniqueDashboardKey(db, workspace, null, dashboardKeyFromName(body.name))),
+    key:
+      body.key ?? (await uniqueDashboardKey(db, workspace, null, dashboardKeyFromName(body.name))),
     description: body.description,
     sort_order: nextSortOrder(existing),
     updated_by: actorUserId

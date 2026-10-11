@@ -61,7 +61,12 @@ export const DashboardNameDialog = ({
       title={title}
       buttons={[
         { label: 'Cancel', type: 'cancel', onClick: onCancel },
-        { label: confirmLabel, type: 'default', onClick: confirm, disabled: !name.trim() || !keyValid }
+        {
+          label: confirmLabel,
+          type: 'default',
+          onClick: confirm,
+          disabled: !name.trim() || !keyValid
+        }
       ]}
     >
       {error && <div role="alert">{error}</div>}

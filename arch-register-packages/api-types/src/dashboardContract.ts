@@ -123,7 +123,11 @@ export const workspaceDashboardSchema = z.object({
   id: z.string().describe('Unique dashboard identifier'),
   workspaceId: z.string().describe('Parent workspace identifier'),
   name: z.string().describe('Dashboard name'),
-  key: z.string().describe('URL-safe slug (lowercase letters, digits and single hyphens), unique within the application or, for home dashboards, within the workspace'),
+  key: z
+    .string()
+    .describe(
+      'URL-safe slug (lowercase letters, digits and single hyphens), unique within the application or, for home dashboards, within the workspace'
+    ),
   description: z.string().describe('Dashboard description; empty when not set'),
   order: z
     .number()
@@ -173,10 +177,7 @@ export const workspaceDashboardSchema = z.object({
 
 export const createDashboardBodySchema = z.object({
   name: z.string().describe('Dashboard name'),
-  key: z
-    .string()
-    .optional()
-    .describe('URL-safe slug; generated from the name when omitted'),
+  key: z.string().optional().describe('URL-safe slug; generated from the name when omitted'),
   description: z.string().optional().describe('Dashboard description'),
   applicationId: z
     .string()

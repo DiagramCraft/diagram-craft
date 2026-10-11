@@ -1,5 +1,9 @@
 import { randomUUID } from 'node:crypto';
-import { dashboardKeyFromName, isValidDashboardKey, uniqueDashboardKey } from '../dashboard/dashboardKey';
+import {
+  dashboardKeyFromName,
+  isValidDashboardKey,
+  uniqueDashboardKey
+} from '../dashboard/dashboardKey';
 import { getWorkspaceCapabilityDefinition } from '@arch-register/api-types/integrationCatalog';
 import type {
   DatabaseAdapter,
