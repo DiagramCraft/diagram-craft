@@ -13,6 +13,7 @@ import {
 const dashboard = (id: string, order: number, overrides = {}) => ({
   id,
   name: `Dashboard ${id}`,
+  key: `key-${id}`,
   icon: null,
   railLabel: null,
   order,
@@ -56,7 +57,7 @@ describe('appShellRegistry', () => {
     expect(risk.sections[1]).toMatchObject({
       tooltip: 'Second',
       route: APP_ROUTE,
-      routeParams: { appKey: 'risk', dashboardId: 'd2' }
+      routeParams: { appKey: 'risk', dashboardKey: 'key-d2' }
     });
     expect(risk.sections[0]!.tooltip).toBe('Dashboard d1');
   });
@@ -82,7 +83,7 @@ describe('appShellRegistry', () => {
     expect(railItemToAppId(apps, 'd2')).toBe('risk');
     expect(railItemToAppId(apps, null)).toBe('home');
     expect(railItemToAppId(apps, 'unknown')).toBe('home');
-    expect(getRailSection(apps, 'd1')?.routeParams).toEqual({ appKey: 'risk', dashboardId: 'd1' });
+    expect(getRailSection(apps, 'd1')?.routeParams).toEqual({ appKey: 'risk', dashboardKey: 'key-d1' });
   });
 
   it('produces accent overrides only for apps that define an accent color', () => {

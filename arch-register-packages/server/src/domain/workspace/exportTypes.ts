@@ -286,6 +286,8 @@ export type ExportDocumentData = {
 export type ExportDashboard = {
   id: string;
   name: string;
+  /** Absent in archives written before dashboard keys existed. */
+  key?: string;
   description: string;
   icon: string | null;
   rail_label: string | null;

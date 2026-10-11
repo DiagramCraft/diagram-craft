@@ -67,6 +67,7 @@ export const workspaceApplicationORPCRouter = applicationRouter.router({
         return rows.map(row => ({
           id: row.id,
           name: row.name,
+          key: row.key,
           icon: row.icon,
           railLabel: row.rail_label,
           order: row.application_order ?? 0,

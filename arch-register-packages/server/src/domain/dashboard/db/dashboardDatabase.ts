@@ -8,6 +8,7 @@ export type WorkspaceDashboardDbResult = {
   id: string;
   workspace: string;
   name: string;
+  key: string;
   description: string;
   sort_order: number;
   app_key: string | null;
@@ -27,6 +28,7 @@ export const mapWorkspaceDashboardRow = (
   id: String(row['id']),
   workspace: String(row['workspace']),
   name: String(row['name']),
+  key: String(row['key']),
   description: String(row['description'] ?? ''),
   sort_order: Number(row['sort_order']),
   app_key: row['app_key'] == null ? null : String(row['app_key']),
@@ -48,6 +50,7 @@ export type DashboardDbCreate = {
   id: string;
   workspace: string;
   name: string;
+  key: string;
   description?: string;
   sort_order: number;
   app_key?: string | null;
@@ -60,6 +63,7 @@ export type DashboardDbCreate = {
 
 export type DashboardDbUpdate = {
   name?: string;
+  key?: string;
   description?: string;
   application_order?: number | null;
   /** Present (including `null`) means "set"; absent means "leave unchanged". */
@@ -79,6 +83,12 @@ export type DashboardDatabase = {
     applicationId: string
   ): Promise<WorkspaceDashboardDbResult[]>;
   getByAppKey(workspace: string, appKey: string): Promise<WorkspaceDashboardDbResult | null>;
+  /** `applicationId` null looks up among workspace home dashboards. */
+  getByKey(
+    workspace: string,
+    applicationId: string | null,
+    key: string
+  ): Promise<WorkspaceDashboardDbResult | null>;
   get(workspace: string, id: string): Promise<WorkspaceDashboardDbResult | null>;
   create(input: DashboardDbCreate): Promise<WorkspaceDashboardDbResult>;
   update(

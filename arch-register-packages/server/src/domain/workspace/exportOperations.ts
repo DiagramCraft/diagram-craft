@@ -566,6 +566,7 @@ const exportEntities = async (
 const toExportDashboard = (row: WorkspaceDashboardDbResult): ExportDashboard => ({
   id: row.id,
   name: row.name,
+  key: row.key,
   description: row.description,
   icon: row.icon,
   rail_label: row.rail_label,

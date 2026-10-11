@@ -31,6 +31,12 @@ Dashboards can combine summary metrics, saved views, entity tables and browsers,
 document browsers, diagram previews, wiki-page embeds, lifecycle and activity charts, stale-entity reports, activity
 feeds, and Markdown content. The dashboard editor saves layout changes to the active shared dashboard.
 
+Each shared dashboard has a **Key**, a lowercase URL slug such as `security-posture`. It is generated from the name when
+you create the dashboard and can be changed in the create and edit dialogs. Keys are unique among the home dashboards of
+a workspace; dashboards inside an application are unique within that application and are opened at
+`/apps/<application key>/<dashboard key>`. Links that use the old dashboard id keep working, but links to a key you
+change stop working.
+
 ## Personal Dashboards
 
 Any workspace member can create one or more personal dashboards from **+ → New personal dashboard**. They appear under

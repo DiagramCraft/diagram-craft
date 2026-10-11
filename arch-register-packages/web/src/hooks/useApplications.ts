@@ -24,8 +24,8 @@ export const useApplicationDashboardTarget = (
     ?.dashboards.find(candidate => candidate.name === dashboardName);
   return dashboard
     ? {
-        to: '/$workspaceSlug/apps/$appKey/$dashboardId',
-        params: { workspaceSlug, appKey: applicationKey, dashboardId: dashboard.id }
+        to: '/$workspaceSlug/apps/$appKey/$dashboardKey',
+        params: { workspaceSlug, appKey: applicationKey, dashboardKey: dashboard.key }
       }
     : undefined;
 };

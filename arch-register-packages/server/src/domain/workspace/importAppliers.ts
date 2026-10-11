@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { dashboardKeyFromName, isValidDashboardKey, uniqueDashboardKey } from '../dashboard/dashboardKey';
 import { getWorkspaceCapabilityDefinition } from '@arch-register/api-types/integrationCatalog';
 import type {
   DatabaseAdapter,
@@ -1247,6 +1248,14 @@ export const importApplications = async (
       id: randomUUID(),
       workspace,
       name: placement.name,
+      key: await uniqueDashboardKey(
+        db,
+        workspace,
+        placement.application_id,
+        dashboard.key && isValidDashboardKey(dashboard.key)
+          ? dashboard.key
+          : dashboardKeyFromName(placement.name)
+      ),
       description: dashboard.description,
       sort_order: placement.sort_order,
       app_key: appKeyTaken ? null : dashboard.app_key,

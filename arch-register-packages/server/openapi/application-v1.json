@@ -135492,6 +135492,10 @@
                               "type": "string",
                               "description": "Dashboard name"
                             },
+                            "key": {
+                              "type": "string",
+                              "description": "URL key, unique within the application"
+                            },
                             "icon": {
                               "anyOf": [
                                 {
@@ -135664,6 +135668,7 @@
                           "required": [
                             "id",
                             "name",
+                            "key",
                             "icon",
                             "railLabel",
                             "order"
@@ -136018,6 +136023,10 @@
                         "type": "string",
                         "description": "Dashboard name"
                       },
+                      "key": {
+                        "type": "string",
+                        "description": "URL key, unique within the application"
+                      },
                       "icon": {
                         "anyOf": [
                           {
@@ -136190,6 +136199,7 @@
                     "required": [
                       "id",
                       "name",
+                      "key",
                       "icon",
                       "railLabel",
                       "order"
@@ -136429,6 +136439,10 @@
                       "name": {
                         "type": "string",
                         "description": "Dashboard name"
+                      },
+                      "key": {
+                        "type": "string",
+                        "description": "URL-safe slug (lowercase letters, digits and single hyphens), unique within the application or, for home dashboards, within the workspace"
                       },
                       "description": {
                         "type": "string",
@@ -136722,6 +136736,7 @@
                       "id",
                       "workspaceId",
                       "name",
+                      "key",
                       "description",
                       "order",
                       "widgets",
@@ -136763,6 +136778,10 @@
                   "name": {
                     "type": "string",
                     "description": "Dashboard name"
+                  },
+                  "key": {
+                    "type": "string",
+                    "description": "URL-safe slug; generated from the name when omitted"
                   },
                   "description": {
                     "type": "string",
@@ -136810,6 +136829,10 @@
                     "name": {
                       "type": "string",
                       "description": "Dashboard name"
+                    },
+                    "key": {
+                      "type": "string",
+                      "description": "URL-safe slug (lowercase letters, digits and single hyphens), unique within the application or, for home dashboards, within the workspace"
                     },
                     "description": {
                       "type": "string",
@@ -137103,6 +137126,7 @@
                     "id",
                     "workspaceId",
                     "name",
+                    "key",
                     "description",
                     "order",
                     "widgets",
@@ -137164,6 +137188,10 @@
                       "type": "string",
                       "description": "Dashboard name"
                     },
+                    "key": {
+                      "type": "string",
+                      "description": "URL-safe slug (lowercase letters, digits and single hyphens), unique within the application or, for home dashboards, within the workspace"
+                    },
                     "description": {
                       "type": "string",
                       "description": "Dashboard description; empty when not set"
@@ -137456,6 +137484,7 @@
                     "id",
                     "workspaceId",
                     "name",
+                    "key",
                     "description",
                     "order",
                     "widgets",
@@ -137505,6 +137534,10 @@
                   "name": {
                     "type": "string",
                     "description": "Dashboard name"
+                  },
+                  "key": {
+                    "type": "string",
+                    "description": "URL-safe slug; must stay unique in its scope"
                   },
                   "description": {
                     "type": "string",
@@ -137762,6 +137795,10 @@
                       "type": "string",
                       "description": "Dashboard name"
                     },
+                    "key": {
+                      "type": "string",
+                      "description": "URL-safe slug (lowercase letters, digits and single hyphens), unique within the application or, for home dashboards, within the workspace"
+                    },
                     "description": {
                       "type": "string",
                       "description": "Dashboard description; empty when not set"
@@ -138054,6 +138091,7 @@
                     "id",
                     "workspaceId",
                     "name",
+                    "key",
                     "description",
                     "order",
                     "widgets",
@@ -138163,6 +138201,10 @@
                       "type": "string",
                       "description": "Dashboard name"
                     },
+                    "key": {
+                      "type": "string",
+                      "description": "URL-safe slug (lowercase letters, digits and single hyphens), unique within the application or, for home dashboards, within the workspace"
+                    },
                     "description": {
                       "type": "string",
                       "description": "Dashboard description; empty when not set"
@@ -138455,6 +138497,7 @@
                     "id",
                     "workspaceId",
                     "name",
+                    "key",
                     "description",
                     "order",
                     "widgets",

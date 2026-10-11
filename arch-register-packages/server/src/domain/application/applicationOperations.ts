@@ -11,6 +11,7 @@ import type { WorkspaceDashboardDbResult } from '../dashboard/db/dashboardDataba
 import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
 import { httpAssert } from '../../utils/httpAssert';
 import { filterAccessibleApplicationKeys } from '../workspace/applicationAccessOperations';
+import { dashboardKeyFromName, uniqueDashboardKey } from '../dashboard/dashboardKey';
 import {
   APP_DASHBOARD_KEYS_BY_APPLICATION,
   APP_DASHBOARD_RAIL,
@@ -67,6 +68,7 @@ export const createApplication = async (
       id: randomUUID(),
       workspace,
       name: 'Overview',
+      key: 'overview',
       sort_order: 0,
       application_id: application.id,
       application_order: 0,
@@ -80,7 +82,7 @@ export const addDashboardToApplication = async (
   db: DatabaseAdapter,
   workspace: string,
   applicationId: string,
-  input: { name: string; icon?: string | null; railLabel?: string | null },
+  input: { name: string; key?: string; icon?: string | null; railLabel?: string | null },
   actorUserId: string | null
 ): Promise<WorkspaceDashboardDbResult> => {
   const application = await db.application.get(workspace, applicationId);
@@ -91,10 +93,19 @@ export const addDashboardToApplication = async (
 
   const siblings = await db.dashboard.listByApplication(workspace, applicationId);
   const next = siblings.reduce((max, row) => Math.max(max, row.application_order ?? -1), -1) + 1;
+  if (input.key) {
+    httpAssert.true(!(await db.dashboard.getByKey(workspace, applicationId, input.key)), {
+      status: 409,
+      message: `A dashboard with key '${input.key}' already exists`
+    });
+  }
   return db.dashboard.create({
     id: randomUUID(),
     workspace,
     name: input.name,
+    key:
+      input.key ??
+      (await uniqueDashboardKey(db, workspace, applicationId, dashboardKeyFromName(input.name))),
     sort_order: next,
     application_id: applicationId,
     application_order: next,
@@ -191,6 +202,19 @@ export const DEFAULT_APPLICATIONS = [
   }
 ] as const;
 
+/**
+ * Seeded dashboards are keyed by the part of their `app_key` that follows the application key,
+ * or its first segment (`strategy-model` owns `strategy-capability-map`); the dashboard named after
+ * the application itself is the `overview`.
+ */
+const dashboardKeyFromSeedAppKey = (applicationKey: string, appKey: string): string => {
+  if (appKey === applicationKey) return 'overview';
+  for (const prefix of [applicationKey, applicationKey.split('-')[0]!]) {
+    if (appKey.startsWith(`${prefix}-`)) return appKey.slice(prefix.length + 1);
+  }
+  return 'overview';
+};
+
 export const seedDefaultApplications = async (
   db: DatabaseAdapter,
   workspace: string
@@ -213,6 +237,7 @@ export const seedDefaultApplications = async (
         id: randomUUID(),
         workspace,
         name: seed.name,
+        key: dashboardKeyFromSeedAppKey(app.key, appKey),
         description: seed.description,
         sort_order: 0,
         app_key: appKey,
@@ -260,6 +285,7 @@ export const listApplicationsWithDashboards = async (
       dashboards: (await db.dashboard.listByApplication(workspace, application.id)).map(row => ({
         id: row.id,
         name: row.name,
+        key: row.key,
         icon: row.icon,
         railLabel: row.rail_label,
         order: row.application_order ?? 0,

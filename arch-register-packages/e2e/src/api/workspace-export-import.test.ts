@@ -275,6 +275,7 @@ test.describe('workspace export/import', () => {
         id: randomUUID(),
         workspace: source.id,
         name,
+        key: name.toLowerCase(),
         sort_order: 1 - index,
         application_id: application.id,
         application_order: 1 - index,
@@ -292,6 +293,7 @@ test.describe('workspace export/import', () => {
       id: randomUUID(),
       workspace: source.id,
       name: 'Custom home',
+      key: 'custom-home',
       sort_order: 99,
       updated_by: null
     });
@@ -389,6 +391,7 @@ test.describe('workspace export/import', () => {
         id: randomUUID(),
         workspace: workspace.id,
         name: 'Main',
+        key: 'main',
         sort_order: 0,
         application_id: application.id,
         application_order: 0,
