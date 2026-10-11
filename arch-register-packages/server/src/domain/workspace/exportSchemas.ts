@@ -287,6 +287,7 @@ const exportDashboardSchema = z
   .object({
     id: z.string(),
     name: z.string(),
+    key: z.string().optional(),
     description: z.string(),
     icon: z.string().nullable(),
     rail_label: z.string().nullable(),

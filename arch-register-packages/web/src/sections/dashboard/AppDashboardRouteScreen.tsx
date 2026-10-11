@@ -2,17 +2,25 @@ import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { EntityDrawer } from '../entities/entityDrawer/EntityDrawer';
 import { GovernanceCaseDrawer } from '../governance/GovernanceCaseDrawer';
 import { AppDashboardScreen } from './AppDashboardScreen';
+import { useApplications } from '../../hooks/useApplications';
+import { findDashboardByKeyOrId } from '../../lib/applicationDashboards';
 
 /**
- * Generic screen of the `apps/$appKey/$dashboardId` route: renders the dashboard in the URL, plus
+ * Generic screen of the `apps/$appKey/$dashboardKey` route: renders the dashboard in the URL, plus
  * the dataset / governance-case drawers that review-queue widgets open through the `datasetId` and
  * `caseId` search params.
  */
 export const AppDashboardRouteScreen = () => {
-  const { workspaceSlug, dashboardId } = useParams({ strict: false }) as {
+  const { workspaceSlug, appKey, dashboardKey } = useParams({ strict: false }) as {
     workspaceSlug: string;
-    dashboardId: string;
+    appKey: string;
+    dashboardKey: string;
   };
+  const { data: applications } = useApplications(workspaceSlug);
+  const dashboard = findDashboardByKeyOrId(
+    applications?.find(application => application.key === appKey)?.dashboards,
+    dashboardKey
+  );
   const navigate = useNavigate();
   const search = useSearch({ strict: false }) as Record<string, string | undefined>;
 
@@ -23,7 +31,7 @@ export const AppDashboardRouteScreen = () => {
 
   return (
     <>
-      <AppDashboardScreen dashboardId={dashboardId} />
+      {dashboard && <AppDashboardScreen dashboardId={dashboard.id} />}
       {search.datasetId && (
         <EntityDrawer
           workspaceSlug={workspaceSlug}

@@ -48,6 +48,27 @@ export class SqliteDashboardDatabase implements DashboardDatabase {
     }
   }
 
+  async getByKey(workspace: string, applicationId: string | null, key: string) {
+    try {
+      const row = (
+        applicationId === null
+          ? this.db
+              .prepare(
+                'SELECT * FROM workspace_dashboard WHERE workspace = ? AND application_id IS NULL AND key = ?'
+              )
+              .get(workspace, key)
+          : this.db
+              .prepare(
+                'SELECT * FROM workspace_dashboard WHERE workspace = ? AND application_id = ? AND key = ?'
+              )
+              .get(workspace, applicationId, key)
+      ) as Record<string, unknown> | undefined;
+      return row ? mapWorkspaceDashboardRow(row) : null;
+    } catch (error) {
+      return normalizeSqliteError(error);
+    }
+  }
+
   async get(workspace: string, id: string) {
     try {
       const row = this.db
@@ -65,13 +86,14 @@ export class SqliteDashboardDatabase implements DashboardDatabase {
     try {
       this.db
         .prepare(
-          `INSERT INTO workspace_dashboard (id, workspace, name, description, sort_order, app_key, application_id, application_order, icon, rail_label, layout, updated_at, updated_by)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '[]', ?, ?)`
+          `INSERT INTO workspace_dashboard (id, workspace, name, key, description, sort_order, app_key, application_id, application_order, icon, rail_label, layout, updated_at, updated_by)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '[]', ?, ?)`
         )
         .run(
           id,
           input.workspace,
           input.name,
+          input.key,
           input.description ?? '',
           input.sort_order,
           input.app_key ?? null,
@@ -100,11 +122,12 @@ export class SqliteDashboardDatabase implements DashboardDatabase {
       this.db
         .prepare(
           `UPDATE workspace_dashboard
-           SET name = ?, description = ?, application_order = ?, icon = ?, rail_label = ?, layout = ?, sidebar = ?, updated_at = ?, updated_by = ?
+           SET name = ?, key = ?, description = ?, application_order = ?, icon = ?, rail_label = ?, layout = ?, sidebar = ?, updated_at = ?, updated_by = ?
            WHERE workspace = ? AND id = ?`
         )
         .run(
           input.name ?? existing.name,
+          input.key ?? existing.key,
           input.description ?? existing.description,
           input.application_order ?? existing.application_order,
           icon,

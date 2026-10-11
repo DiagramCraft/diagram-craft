@@ -31,6 +31,7 @@ import {
   useUpdatePersonalDashboard,
   usePersonalDashboards
 } from '../../hooks/useDashboard';
+import { resolveHomeDashboardId } from '../../lib/applicationDashboards';
 import { DashboardNameDialog } from '../dashboard/DashboardNameDialog';
 
 const getSidebarProjectGroups = (projects: Project[]) => {
@@ -71,6 +72,7 @@ export const HomeSidebar = ({
   const [renameTarget, setRenameTarget] = useState<{
     id: string;
     name: string;
+    key: string;
     description: string;
   } | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
@@ -95,7 +97,7 @@ export const HomeSidebar = ({
     dashboardId: string;
   } | null>(null);
 
-  const activeDashboardId = search.dashboard ?? dashboards?.[0]?.id;
+  const activeDashboardId = resolveHomeDashboardId(dashboards, search.dashboard);
   const contextMenuDashboard = dashboards?.find(d => d.id === contextMenu?.dashboardId) ?? null;
   const canDeleteDashboard = (dashboards?.length ?? 0) > 1;
 
@@ -164,7 +166,7 @@ export const HomeSidebar = ({
                 icon={<TbLayoutDashboard size={12} />}
                 label={dashboard.name}
                 active={dashboard.id === activeDashboardId}
-                onClick={() => selectDashboard(dashboard.id)}
+                onClick={() => selectDashboard(dashboard.key)}
                 onContextMenu={
                   canManageDashboard
                     ? event => {
@@ -297,13 +299,15 @@ export const HomeSidebar = ({
         confirmLabel="Create dashboard"
         onCancel={() => setCreateDialogOpen(false)}
         initialDescription=""
-        onConfirm={(name, description) => {
+        initialKey=""
+        error={createDashboard.error?.message}
+        onConfirm={(name, description, _icon, key) => {
           createDashboard.mutate(
-            { name, description },
+            { name, description, key },
             {
               onSuccess: created => {
                 setCreateDialogOpen(false);
-                selectDashboard(created.id);
+                selectDashboard(created.key);
               }
             }
           );
@@ -318,11 +322,21 @@ export const HomeSidebar = ({
           confirmLabel="Save"
           initialName={renameTarget.name}
           initialDescription={renameTarget.description}
+          initialKey={renameTarget.key}
+          error={updateDashboard.error?.message}
           onCancel={() => setRenameTarget(null)}
-          onConfirm={(name, description) => {
+          onConfirm={(name, description, _icon, key) => {
             updateDashboard.mutate(
-              { id: renameTarget.id, body: { name, description } },
-              { onSuccess: () => setRenameTarget(null) }
+              { id: renameTarget.id, body: { name, description, key } },
+              {
+                onSuccess: updated => {
+                  setRenameTarget(null);
+                  // The URL holds the key, so follow it when the open dashboard's key changes
+                  if (renameTarget.id === activeDashboardId && updated.key !== renameTarget.key) {
+                    selectDashboard(updated.key);
+                  }
+                }
+              }
             );
           }}
         />

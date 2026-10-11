@@ -54,7 +54,7 @@ export const HOME_APP: AppDefinition = {
   ]
 };
 
-export const APP_ROUTE = '/$workspaceSlug/apps/$appKey/$dashboardId';
+export const APP_ROUTE = '/$workspaceSlug/apps/$appKey/$dashboardKey';
 
 /** Initials of the application name, used as the switcher badge (e.g. "Risk & Compliance" → "RC"). */
 export const applicationShortCode = (name: string): string =>
@@ -79,7 +79,7 @@ const toAppDefinition = (application: WorkspaceApplicationWithDashboards): AppDe
       icon: resolveAppIcon(dashboard.icon),
       tooltip: dashboard.railLabel ?? dashboard.name,
       route: APP_ROUTE,
-      routeParams: { appKey: application.key, dashboardId: dashboard.id },
+      routeParams: { appKey: application.key, dashboardKey: dashboard.key },
       primarySidebar: dashboard.sidebar
         ? ctx => (
             <AppDashboardPrimarySidebar
@@ -122,6 +122,22 @@ export const getRailSection = (
   id: WorkspaceRailItemId
 ): AppRailSection | undefined =>
   apps.flatMap(app => app.sections).find(section => section.id === id);
+
+/**
+ * The rail section of the application dashboard a URL refers to. `keyOrId` is the dashboard key,
+ * or its id for links created before dashboards had keys.
+ */
+export const findAppDashboardSection = (
+  apps: AppDefinition[],
+  appKey: AppId,
+  keyOrId: string
+): AppRailSection | undefined => {
+  const sections = apps.find(app => app.id === appKey)?.sections;
+  return (
+    sections?.find(section => section.routeParams?.['dashboardKey'] === keyOrId) ??
+    sections?.find(section => section.id === keyOrId)
+  );
+};
 
 /** CSS custom-property overrides that re-skin the shell accent while `app` is active. */
 export const appAccentStyle = (app: AppDefinition): CSSProperties => {

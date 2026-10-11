@@ -49,7 +49,11 @@
           retain access. Applications are workspace data: users with dashboard-management rights (`ws.manage_dashboard`) can create, rename,
           recolour, reorder, and delete them through the API (the built-in applications are seeded into every
           workspace). From the left rail of an application the same users can add dashboards, rename them, change
-          their icon, reorder them, and delete them (rail context menu and "Add dashboard" button). Applications
+          their icon and URL key, reorder them, and delete them (rail context menu and "Add dashboard" button). Every shared
+          dashboard has a human-readable URL key (a lowercase slug, unique within its application or, for home
+          dashboards, within the workspace), generated from the name and editable; application dashboards are
+          addressed as `/apps/<application key>/<dashboard key>`, and links using the dashboard id keep working.
+          Applications
           themselves are added from the "+" button of the "Applications & Capabilities" workspace settings sidebar, and
           their name, description, accent colour (from the shared colour palette), and deletion live on each
           application's "General" tab next to its "Access" tab. Breadcrumbs are relative to the active application, which the switcher represents.
@@ -70,7 +74,8 @@
           named dashboards, listed in order in a "Dashboards" section of the home sidebar and switchable by selecting
           one; the first dashboard in that order is shown at the workspace home, and a workspace always retains at
           least one dashboard. Administrators can create a dashboard from the sidebar (added at the end of the order),
-          and rename or delete a dashboard via its context menu. Administrators can also enter edit mode to add,
+          and rename it, change its URL key, or delete it via its context menu; the selected dashboard is addressed by
+          its key in the `?dashboard=` URL parameter. Administrators can also enter edit mode to add,
           remove, resize, and reposition widgets and save the layout; other users see the active dashboard read-only.
           Schema templates can seed a complete default dashboard layout when a workspace adopts the template. The
           optional Information Governance cross-cutting template contributes reusable built-in vocabularies for data

@@ -23,6 +23,7 @@ export type WorkspaceApplication = z.infer<typeof workspaceApplicationSchema>;
 export const applicationDashboardSchema = z.object({
   id: z.string().describe('Dashboard identifier'),
   name: z.string().describe('Dashboard name'),
+  key: z.string().describe('URL key, unique within the application'),
   icon: z.string().nullable().describe('Rail icon name; null when not set'),
   railLabel: z.string().nullable().describe('Rail label; null falls back to the name'),
   order: z.number().int().describe('Position within the application, ascending'),

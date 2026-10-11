@@ -123,6 +123,11 @@ export const workspaceDashboardSchema = z.object({
   id: z.string().describe('Unique dashboard identifier'),
   workspaceId: z.string().describe('Parent workspace identifier'),
   name: z.string().describe('Dashboard name'),
+  key: z
+    .string()
+    .describe(
+      'URL-safe slug (lowercase letters, digits and single hyphens), unique within the application or, for home dashboards, within the workspace'
+    ),
   description: z.string().describe('Dashboard description; empty when not set'),
   order: z
     .number()
@@ -172,6 +177,7 @@ export const workspaceDashboardSchema = z.object({
 
 export const createDashboardBodySchema = z.object({
   name: z.string().describe('Dashboard name'),
+  key: z.string().optional().describe('URL-safe slug; generated from the name when omitted'),
   description: z.string().optional().describe('Dashboard description'),
   applicationId: z
     .string()
@@ -184,6 +190,7 @@ export const createDashboardBodySchema = z.object({
 
 export const updateDashboardBodySchema = z.object({
   name: z.string().optional().describe('Dashboard name'),
+  key: z.string().optional().describe('URL-safe slug; must stay unique in its scope'),
   description: z.string().optional().describe('Dashboard description'),
   icon: z.string().nullable().optional().describe('Icon name shown in the app rail'),
   railLabel: z.string().nullable().optional().describe('Label shown in the app rail'),
@@ -328,7 +335,7 @@ export const personalDashboardContract = oc.tag('PersonalDashboard').router({
         description: 'Creates a new, empty personal dashboard for the caller in this workspace.',
         tags: ['PersonalDashboard']
       })
-      .input(z.object({ params: ws, body: createDashboardBodySchema }))
+      .input(z.object({ params: ws, body: createDashboardBodySchema.omit({ key: true }) }))
       .output(personalDashboardSchema),
     get: oc
       .route({
@@ -351,7 +358,7 @@ export const personalDashboardContract = oc.tag('PersonalDashboard').router({
           'Updates an existing personal dashboard owned by the caller. Only provided fields will be updated; widgets, when provided, wholesale replace the existing layout.',
         tags: ['PersonalDashboard']
       })
-      .input(z.object({ params: wsAndUUID, body: updateDashboardBodySchema }))
+      .input(z.object({ params: wsAndUUID, body: updateDashboardBodySchema.omit({ key: true }) }))
       .output(personalDashboardSchema),
     remove: oc
       .route({

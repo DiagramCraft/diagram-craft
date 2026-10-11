@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { useNavigate } from '@tanstack/react-router';
+import { useNavigate, useParams } from '@tanstack/react-router';
 import { TbArrowDown, TbArrowUp, TbPencil, TbPlus, TbTrash } from 'react-icons/tb';
 import type { NavRailAction } from '@diagram-craft/app-components/NavRail';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
@@ -32,6 +32,8 @@ export const useApplicationDashboardManager = (
   overlays: ReactNode;
 } => {
   const navigate = useNavigate();
+  const currentDashboardKey = (useParams({ strict: false }) as { dashboardKey?: string })
+    .dashboardKey;
   const createDashboard = useCreateWorkspaceDashboard(workspaceSlug);
   const updateDashboard = useUpdateWorkspaceDashboard(workspaceSlug);
   const deleteDashboard = useDeleteWorkspaceDashboard(workspaceSlug);
@@ -48,10 +50,10 @@ export const useApplicationDashboardManager = (
   const menuIndex = dashboards.findIndex(d => d.id === menu?.dashboardId);
   const menuDashboard = menuIndex >= 0 ? dashboards[menuIndex] : null;
 
-  const goToDashboard = (dashboardId: string) =>
+  const goToDashboard = (dashboardKey: string) =>
     navigate({
-      to: '/$workspaceSlug/apps/$appKey/$dashboardId',
-      params: { workspaceSlug, appKey: application.key, dashboardId }
+      to: '/$workspaceSlug/apps/$appKey/$dashboardKey',
+      params: { workspaceSlug, appKey: application.key, dashboardKey }
     });
 
   const move = (index: number, delta: -1 | 1) => {
@@ -131,14 +133,16 @@ export const useApplicationDashboardManager = (
         confirmLabel="Create dashboard"
         initialDescription=""
         initialIcon={null}
+        initialKey=""
+        error={createDashboard.error?.message}
         onCancel={() => setCreateOpen(false)}
-        onConfirm={(name, description, icon) =>
+        onConfirm={(name, description, icon, key) =>
           createDashboard.mutate(
-            { name, description, icon, applicationId: application.id },
+            { name, description, icon, key, applicationId: application.id },
             {
               onSuccess: created => {
                 setCreateOpen(false);
-                void goToDashboard(created.id);
+                void goToDashboard(created.key);
               }
             }
           )
@@ -153,11 +157,21 @@ export const useApplicationDashboardManager = (
           confirmLabel="Save"
           initialName={editTarget.name}
           initialIcon={editTarget.icon}
+          initialKey={editTarget.key}
+          error={updateDashboard.error?.message}
           onCancel={() => setEditTarget(null)}
-          onConfirm={(name, _description, icon) =>
+          onConfirm={(name, _description, icon, key) =>
             updateDashboard.mutate(
-              { id: editTarget.id, body: { name, icon } },
-              { onSuccess: () => setEditTarget(null) }
+              { id: editTarget.id, body: { name, icon, key } },
+              {
+                onSuccess: updated => {
+                  setEditTarget(null);
+                  // The URL holds the key, so follow it when the open dashboard's key changes
+                  if (updated.key !== editTarget.key && currentDashboardKey === editTarget.key) {
+                    void goToDashboard(updated.key);
+                  }
+                }
+              }
             )
           }
         />
@@ -180,7 +194,7 @@ export const useApplicationDashboardManager = (
           deleteDashboard.mutate(deleteTarget.id, {
             onSuccess: () => {
               setDeleteTarget(null);
-              if (remaining[0]) void goToDashboard(remaining[0].id);
+              if (remaining[0]) void goToDashboard(remaining[0].key);
             }
           });
         }}

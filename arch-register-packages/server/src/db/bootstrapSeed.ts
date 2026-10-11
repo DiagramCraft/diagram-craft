@@ -316,6 +316,7 @@ export const seedBootstrapData = async (
       id: dashboard.id,
       workspace: dashboard.workspace,
       name: dashboard.name,
+      key: 'overview',
       sort_order: dashboard.sort_order,
       updated_by: null
     });

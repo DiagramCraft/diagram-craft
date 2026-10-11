@@ -26,6 +26,15 @@ export class PostgresDashboardDatabase extends PostgresDatabaseBase implements D
     return row ? mapWorkspaceDashboardRow(row) : null;
   }
 
+  async getByKey(workspace: string, applicationId: string | null, key: string) {
+    const [row] = await this.sql<Record<string, unknown>[]>`
+      SELECT * FROM workspace_dashboard
+      WHERE workspace = ${workspace} AND key = ${key}
+        AND ${applicationId === null ? this.sql`application_id IS NULL` : this.sql`application_id = ${applicationId}`}
+    `;
+    return row ? mapWorkspaceDashboardRow(row) : null;
+  }
+
   async get(workspace: string, id: string) {
     const [row] = await this.sql<Record<string, unknown>[]>`
       SELECT * FROM workspace_dashboard WHERE workspace = ${workspace} AND id = ${id}
@@ -36,8 +45,8 @@ export class PostgresDashboardDatabase extends PostgresDatabaseBase implements D
   async create(input: DashboardDbCreate) {
     try {
       const [row] = await this.sql<Record<string, unknown>[]>`
-        INSERT INTO workspace_dashboard (id, workspace, name, description, sort_order, app_key, application_id, application_order, icon, rail_label, layout, updated_at, updated_by)
-        VALUES (${input.id}, ${input.workspace}, ${input.name}, ${input.description ?? ''}, ${input.sort_order}, ${input.app_key ?? null}, ${input.application_id ?? null}, ${input.application_order ?? null}, ${input.icon ?? null}, ${input.rail_label ?? null}, '[]', NOW(), ${input.updated_by})
+        INSERT INTO workspace_dashboard (id, workspace, name, key, description, sort_order, app_key, application_id, application_order, icon, rail_label, layout, updated_at, updated_by)
+        VALUES (${input.id}, ${input.workspace}, ${input.name}, ${input.key}, ${input.description ?? ''}, ${input.sort_order}, ${input.app_key ?? null}, ${input.application_id ?? null}, ${input.application_order ?? null}, ${input.icon ?? null}, ${input.rail_label ?? null}, '[]', NOW(), ${input.updated_by})
         RETURNING *
       `;
       return mapWorkspaceDashboardRow(row!);
@@ -54,6 +63,7 @@ export class PostgresDashboardDatabase extends PostgresDatabaseBase implements D
       const [row] = await this.sql<Record<string, unknown>[]>`
         UPDATE workspace_dashboard
         SET name = COALESCE(${input.name ?? null}, name),
+            key = COALESCE(${input.key ?? null}, key),
             description = COALESCE(${input.description ?? null}, description),
             application_order = COALESCE(${input.application_order ?? null}, application_order),
             icon = ${touchesIcon ? (input.icon ?? null) : this.sql`icon`},
