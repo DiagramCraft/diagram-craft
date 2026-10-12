@@ -6,7 +6,7 @@ export default defineConfig({
     include: ['**/*.contract.test.ts'],
     testTimeout: 20000,
     hookTimeout: 20000,
-    fileParallelism: false
+    fileParallelism: true
   },
   resolve: {
     tsconfigPaths: true
