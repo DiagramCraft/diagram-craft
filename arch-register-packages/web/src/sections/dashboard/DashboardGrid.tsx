@@ -1,23 +1,14 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import type { Layout } from 'react-grid-layout';
-import ReactGridLayout from 'react-grid-layout/legacy';
-import 'react-grid-layout/css/styles.css';
+import { useEffect, useState, type ReactNode } from 'react';
 import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TbPlus, TbCheck, TbX } from 'react-icons/tb';
 import { LoadingState } from '../../components/LoadingState';
-import { DashboardWidgetRenderer } from './widgets/DashboardWidgetRenderer';
+import './TabContentsEditorDialog'; // registers the tab contents editor
+import { DashboardGridCanvas } from './DashboardGridCanvas';
 import { WidgetPickerDialog } from './WidgetPickerDialog';
 import { WidgetConfigDialog } from './WidgetConfigDialog';
-import { MdxContext, useMdxContext } from '../markdown/MdxContext';
 import type { WidgetSurface } from './dashboardWidgetDefaults';
-import { parseKnownDashboardWidget } from './dashboardWidgetConfig';
 import styles from './DashboardGrid.module.css';
-
-const GRID_COLS = 12;
-// Fine-grained rows: with the 12px margin, 4 rows span exactly what 1 row of the former 80px grid did.
-const GRID_ROW_HEIGHT = 11;
-const FALLBACK_WIDTH = 1200;
 
 type Props = {
   widgets: DashboardWidget[];
@@ -43,7 +34,6 @@ export const DashboardGrid = ({
   surface = 'workspace',
   extraActions
 }: Props) => {
-  const ambientMdxContext = useMdxContext();
   const [localWidgets, setLocalWidgets] = useState<DashboardWidget[]>(widgets);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [editingWidgetId, setEditingWidgetId] = useState<string | null>(null);
@@ -51,37 +41,6 @@ export const DashboardGrid = ({
   useEffect(() => {
     if (!isEditing) setLocalWidgets(widgets);
   }, [widgets, isEditing]);
-
-  const [gridContainerEl, setGridContainerEl] = useState<HTMLDivElement | null>(null);
-  const [width, setWidth] = useState(FALLBACK_WIDTH);
-
-  useEffect(() => {
-    if (!gridContainerEl || typeof ResizeObserver === 'undefined') return;
-
-    const observer = new ResizeObserver(entries => {
-      const entry = entries[0];
-      if (entry) setWidth(entry.contentRect.width);
-    });
-    observer.observe(gridContainerEl);
-    setWidth(gridContainerEl.clientWidth || FALLBACK_WIDTH);
-
-    return () => observer.disconnect();
-  }, [gridContainerEl]);
-
-  const layout: Layout = useMemo(
-    () => localWidgets.map(w => ({ i: w.id, x: w.x, y: w.y, w: w.w, h: w.h })),
-    [localWidgets]
-  );
-
-  const handleLayoutChange = (nextLayout: Layout) => {
-    setLocalWidgets(current =>
-      current.map(widget => {
-        const item = nextLayout.find(l => l.i === widget.id);
-        if (!item) return widget;
-        return { ...widget, x: item.x, y: item.y, w: item.w, h: item.h };
-      })
-    );
-  };
 
   const handleSave = () => {
     onSave(localWidgets);
@@ -124,45 +83,13 @@ export const DashboardGrid = ({
       {isLoading ? (
         <LoadingState text="Loading dashboard…" />
       ) : (
-        <div className={styles.gridContainer} ref={setGridContainerEl}>
-          <MdxContext.Provider
-            value={{ ...ambientMdxContext, renderMode: 'dashboard', dashboardSurface: surface }}
-          >
-            <ReactGridLayout
-              width={width}
-              cols={GRID_COLS}
-              rowHeight={GRID_ROW_HEIGHT}
-              layout={layout}
-              isDraggable={canEditGrid}
-              isResizable={canEditGrid}
-              onLayoutChange={handleLayoutChange}
-              compactType={null}
-              preventCollision={true}
-              margin={[12, 12]}
-              containerPadding={[0, 0]}
-              draggableCancel=".widgetControls"
-            >
-              {localWidgets.map(widget => (
-                <div key={widget.id} className={styles.gridItem}>
-                  <DashboardWidgetRenderer
-                    widget={widget}
-                    isEditing={canEditGrid}
-                    onEdit={
-                      canEditGrid && parseKnownDashboardWidget(widget)
-                        ? () => setEditingWidgetId(widget.id)
-                        : undefined
-                    }
-                    onRemove={
-                      canEditGrid
-                        ? () => setLocalWidgets(current => current.filter(w => w.id !== widget.id))
-                        : undefined
-                    }
-                  />
-                </div>
-              ))}
-            </ReactGridLayout>
-          </MdxContext.Provider>
-        </div>
+        <DashboardGridCanvas
+          widgets={localWidgets}
+          onWidgetsChange={updater => setLocalWidgets(updater)}
+          isEditing={canEditGrid}
+          onEditWidget={setEditingWidgetId}
+          surface={surface}
+        />
       )}
 
       {canEdit && (

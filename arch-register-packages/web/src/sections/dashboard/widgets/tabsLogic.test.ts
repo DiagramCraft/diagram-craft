@@ -1,12 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
-import {
-  createTab,
-  flowLayout,
-  isValidTabsConfig,
-  moveItem,
-  resolveActiveTabId
-} from './tabsLogic';
+import { createTab, isValidTabsConfig, moveItem, resolveActiveTabId } from './tabsLogic';
 
 const widget = (id: string, w: number, h: number, type = 'x'): DashboardWidget => ({
   id,
@@ -16,21 +10,6 @@ const widget = (id: string, w: number, h: number, type = 'x'): DashboardWidget =
   y: 0,
   w,
   h
-});
-
-describe('flowLayout', () => {
-  it('places widgets side by side and wraps on overflow', () => {
-    const result = flowLayout([widget('a', 6, 4), widget('b', 6, 8), widget('c', 6, 3)]);
-    expect(result.map(r => [r.x, r.y])).toEqual([
-      [0, 0],
-      [6, 0],
-      [0, 8]
-    ]);
-  });
-
-  it('clamps width to the grid', () => {
-    expect(flowLayout([widget('a', 20, 4)])[0]!.w).toBe(12);
-  });
 });
 
 describe('isValidTabsConfig', () => {

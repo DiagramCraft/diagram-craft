@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { NestedWidgetRenderer } from './nestedWidgets';
-import { flowLayout, resolveActiveTabId, type TabsWidgetConfig } from './tabsLogic';
+import { resolveActiveTabId, type TabsWidgetConfig } from './tabsLogic';
 import styles from './TabsWidget.module.css';
 
 /** Search param that keeps the active tab across reloads and in shared links. */
@@ -40,7 +40,7 @@ export const TabsWidget = ({ config }: { config: TabsWidgetConfig }) => {
               <div className={styles.empty}>This tab has no widgets.</div>
             ) : (
               <div className={styles.grid}>
-                {flowLayout(tab.widgets).map(widget => (
+                {tab.widgets.map(widget => (
                   <div
                     key={widget.id}
                     style={{

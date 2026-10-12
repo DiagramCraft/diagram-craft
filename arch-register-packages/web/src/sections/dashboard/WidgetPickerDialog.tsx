@@ -15,6 +15,8 @@ type Props = {
   surface?: WidgetSurface;
   widgets: DashboardWidget[];
   onAdd: (widget: DashboardWidget) => void;
+  /** Widget types that must not be offered (e.g. `tabs` inside a tab). */
+  exclude?: string[];
 };
 
 export const WidgetPickerDialog = ({
@@ -23,7 +25,8 @@ export const WidgetPickerDialog = ({
   workspaceSlug,
   surface = 'workspace',
   widgets,
-  onAdd
+  onAdd,
+  exclude = []
 }: Props) => {
   const [pendingType, setPendingType] = useState<string | null>(null);
   const [selectedViewId, setSelectedViewId] = useState('');
@@ -34,7 +37,9 @@ export const WidgetPickerDialog = ({
     projectId,
     includeWorkspace: true
   });
-  const options = getDashboardWidgetSpecs().filter(({ spec }) => spec.surfaces.includes(surface));
+  const options = getDashboardWidgetSpecs().filter(
+    ({ type, spec }) => spec.surfaces.includes(surface) && !exclude.includes(type)
+  );
 
   const handleClose = () => {
     setPendingType(null);
