@@ -1108,7 +1108,9 @@
           segment's `[...]` scope — `technology_releases[eol_date < date("2026-06-30") columns eol_date as "TR EOL"]`,
           or a capture-only bracket for an unfiltered traversal — covering entity- and relation-rooted queries,
           `relationForward` hops, and whole-path (`path`, `includePath` in the IR) captures; each column binds to
-          that scope's match witness. an empty group is treated as no filter rather than matching nothing, and a blank
+          that scope's match witness. Duration fields filter by unit-aware literals in the Advanced text field (`notice_period > 3y`,
+          `term < "6 months"`; a bare number is days) and by an amount-and-unit input in the filter builder, and a multi-valued Duration field
+          matches when any of its values satisfies the comparison. an empty group is treated as no filter rather than matching nothing, and a blank
           free-text row as no
           filter rather than an error. A free-text clause is normally the dedicated search box, but a "Free text"
           entry in any condition row's field dropdown places one inside the boolean tree for the "text OR a field

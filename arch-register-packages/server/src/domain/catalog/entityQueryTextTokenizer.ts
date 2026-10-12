@@ -92,6 +92,16 @@ export const tokenize = (input: string): Token[] => {
         j += 1;
         while (j < input.length && /[0-9]/.test(input[j]!)) j += 1;
       }
+      if (/[A-Za-z]/.test(input[j] ?? '')) {
+        // A number directly followed by a unit (`3y`, `1.5w`) is a duration literal; the
+        // resolver interprets the text against Duration fields.
+        let k = j;
+        while (k < input.length && /[A-Za-z]/.test(input[k]!)) k += 1;
+        const literal = input.slice(i, k);
+        tokens.push({ kind: 'STRING', text: literal, value: literal, offset });
+        i = k;
+        continue;
+      }
       const text = input.slice(i, j);
       tokens.push({ kind: 'NUMBER', text, value: Number(text), offset });
       i = j;

@@ -57,7 +57,7 @@ export type EntityListDbFilters = {
   /** Schema-aware custom scalar field shapes used by SQL filtering and free-text search. */
   customFieldKinds?: ReadonlyMap<
     string,
-    'scalar' | 'currency' | 'duration' | 'array' | 'currency-array'
+    'scalar' | 'currency' | 'duration' | 'array' | 'currency-array' | 'duration-array'
   >;
   // With a projectId, 'project' returns project-owned or project_entity-linked entities, while
   // 'all' returns global entities plus entities owned by the selected project. Without a projectId,

@@ -43,26 +43,38 @@ const buildArrayConditionClause = (
   cond: FilterCondition,
   addParam: (v: unknown) => string,
   dialect: 'postgres' | 'sqlite',
-  currencyValues = false
+  elementKind: 'text' | 'currency' | 'duration' = 'text'
 ): string | null => {
+  const currencyValues = elementKind === 'currency';
+  const durationValues = elementKind === 'duration';
   const safeArray =
     dialect === 'postgres'
       ? `CASE WHEN jsonb_typeof(${col}) = 'array' THEN ${col} ELSE '[]'::jsonb END`
       : `CASE WHEN json_type(${col}) = 'array' THEN ${col} ELSE json('[]') END`;
-  const from = currencyValues
+  const from =
+    currencyValues || durationValues
+      ? dialect === 'postgres'
+        ? `jsonb_array_elements(${safeArray}) item`
+        : `json_each(${safeArray})`
+      : dialect === 'postgres'
+        ? `jsonb_array_elements_text(${safeArray}) t`
+        : `json_each(${safeArray})`;
+  // Keep the factors in sync with DAYS_PER_UNIT in utils/durationValue.ts.
+  const durationCase = (unit: string) =>
+    `CASE ${unit} WHEN 'weeks' THEN 7 WHEN 'months' THEN 30.4375 WHEN 'years' THEN 365.25 ELSE 1 END`;
+  const element = durationValues
     ? dialect === 'postgres'
-      ? `jsonb_array_elements(${safeArray}) item`
-      : `json_each(${safeArray})`
-    : dialect === 'postgres'
-      ? `jsonb_array_elements_text(${safeArray}) t`
-      : `json_each(${safeArray})`;
-  const element = currencyValues
-    ? dialect === 'postgres'
-      ? "item->>'amount'"
-      : "json_extract(value, '$.amount')"
-    : dialect === 'postgres'
-      ? 't'
-      : 'value';
+      ? `(CAST(item->>'amount' AS NUMERIC) * ${durationCase("item->>'unit'")})`
+      : `(json_extract(value, '$.amount') * ${durationCase("json_extract(value, '$.unit')")})`
+    : currencyValues
+      ? dialect === 'postgres'
+        ? "item->>'amount'"
+        : "json_extract(value, '$.amount')"
+      : dialect === 'postgres'
+        ? 't'
+        : 'value';
+  const arrayParam = (value: unknown) =>
+    durationValues ? `CAST(${addParam(value ?? 0)} AS NUMERIC)` : addParam(String(value ?? ''));
   const exists = (predicate: string) => `EXISTS (SELECT 1 FROM ${from} WHERE ${predicate})`;
   const ilike = (ph: string) =>
     dialect === 'postgres' ? `${element} ILIKE ${ph}` : `LOWER(${element}) LIKE LOWER(${ph})`;
@@ -77,9 +89,9 @@ const buildArrayConditionClause = (
     case 'not_empty':
       return `(${col} IS NOT NULL AND ${arrayLength} > 0)`;
     case 'equals':
-      return exists(`${element} = ${addParam(String(cond.value ?? ''))}`);
+      return exists(`${element} = ${arrayParam(cond.value)}`);
     case 'not_equals':
-      return `NOT ${exists(`${element} = ${addParam(String(cond.value ?? ''))}`)}`;
+      return `NOT ${exists(`${element} = ${arrayParam(cond.value)}`)}`;
     case 'contains':
       return exists(ilike(addParam(`%${escapeLike(String(cond.value ?? ''))}%`)));
     case 'starts_with':
@@ -105,9 +117,7 @@ const buildArrayConditionClause = (
       // Empty membership is intentional IR and matches no rows. Invalid or oversized values are
       // fail-closed here as a second line of defence for internal callers that bypass Zod.
       if (!isValidFilterInValue(values) || values.length === 0) return '1=0';
-      return exists(
-        `${element} IN (${values.map(value => addParam(String(value ?? ''))).join(', ')})`
-      );
+      return exists(`${element} IN (${values.map(value => arrayParam(value)).join(', ')})`);
     }
     default:
       return null;
@@ -125,17 +135,30 @@ const buildArrayConditionClause = (
  * @param kind     - 'currency' is a scalar currency object projected to its amount;
  *                   'array' matches against any element of a JSON array column;
  *                   'currency-array' matches against each element's amount
- *                   (see ENTITY_ARRAY_COLUMNS); defaults to 'scalar'
+ *                   (see ENTITY_ARRAY_COLUMNS); 'duration-array' matches each element
+ *                   converted to days; defaults to 'scalar'
  */
 export const buildConditionClause = (
   col: string,
   cond: FilterCondition,
   addParam: (v: unknown) => string,
   dialect: 'postgres' | 'sqlite',
-  kind: 'scalar' | 'currency' | 'duration' | 'array' | 'currency-array' = 'scalar'
+  kind:
+    | 'scalar'
+    | 'currency'
+    | 'duration'
+    | 'array'
+    | 'currency-array'
+    | 'duration-array' = 'scalar'
 ): string | null => {
-  if (kind === 'array' || kind === 'currency-array') {
-    return buildArrayConditionClause(col, cond, addParam, dialect, kind === 'currency-array');
+  if (kind === 'array' || kind === 'currency-array' || kind === 'duration-array') {
+    return buildArrayConditionClause(
+      col,
+      cond,
+      addParam,
+      dialect,
+      kind === 'currency-array' ? 'currency' : kind === 'duration-array' ? 'duration' : 'text'
+    );
   }
 
   const ilike = (ph: string) =>

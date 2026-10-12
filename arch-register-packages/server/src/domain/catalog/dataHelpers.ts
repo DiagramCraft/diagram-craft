@@ -6,6 +6,7 @@ import { Entity, type SchemaDbResult as InternalEntitySchema } from './db/catalo
 import type { EntityDbResult } from './db/catalogDatabase';
 import { handleDbError, slugify } from '../../utils/http';
 import { httpAssert } from '../../utils/httpAssert';
+import { durationToDays, parseDurationValue } from '../../utils/durationValue';
 import {
   ContainmentField,
   SchemaField,
@@ -51,6 +52,11 @@ const includesQuery = (value: unknown, query: string) =>
     .includes(query);
 
 const comparableFilterValue = (value: unknown): unknown => {
+  // Durations (`{ amount, unit }`) compare in days, matching the SQL path.
+  if (value != null && typeof value === 'object' && !Array.isArray(value) && 'unit' in value) {
+    const duration = parseDurationValue(value);
+    if (duration) return durationToDays(duration);
+  }
   if (value != null && typeof value === 'object' && !Array.isArray(value) && 'amount' in value) {
     return (value as Record<string, unknown>).amount;
   }

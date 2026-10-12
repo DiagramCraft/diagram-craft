@@ -1,3 +1,4 @@
+import Database from 'better-sqlite3';
 import { describe, it, expect } from 'vitest';
 import {
   ENTITY_BUILTIN_COLUMNS,
@@ -455,5 +456,40 @@ describe('filterBuilder', () => {
         );
       });
     });
+  });
+});
+
+describe('buildConditionClause duration-array kind', () => {
+  const matches = (op: 'gt' | 'lt' | 'equals' | 'not_equals', value: number, terms: unknown) => {
+    const db = new Database(':memory:');
+    const params: unknown[] = [];
+    const clause = buildConditionClause(
+      "json_extract(data, '$.terms')",
+      { fieldId: 'terms', op, value },
+      v => {
+        params.push(v);
+        return '?';
+      },
+      'sqlite',
+      'duration-array'
+    );
+    const row = db
+      .prepare(`SELECT ${clause} AS hit FROM (SELECT ? AS data)`)
+      .get(...params, JSON.stringify({ terms })) as { hit: number };
+    db.close();
+    return row.hit === 1;
+  };
+
+  const terms = [
+    { amount: 2, unit: 'weeks' },
+    { amount: 1, unit: 'years' }
+  ];
+
+  it('compares each element in days', () => {
+    expect(matches('gt', 300, terms)).toBe(true);
+    expect(matches('gt', 400, terms)).toBe(false);
+    expect(matches('lt', 20, terms)).toBe(true);
+    expect(matches('equals', 14, terms)).toBe(true);
+    expect(matches('not_equals', 14, terms)).toBe(false);
   });
 });

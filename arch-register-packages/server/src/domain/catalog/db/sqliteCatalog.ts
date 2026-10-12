@@ -426,7 +426,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
       ];
       for (const [fieldId, kind] of filters.customFieldKinds ?? []) {
         // Durations are not free-text searchable (the stored value is an amount and a unit).
-        if (kind === 'duration') continue;
+        if (kind === 'duration' || kind === 'duration-array') continue;
         const col =
           kind === 'currency'
             ? `json_extract(e.data, '$.${fieldId}.amount')`
@@ -446,7 +446,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
       // Guard against prototype pollution: only accept own properties from ENTITY_BUILTIN_COLUMNS
       // For custom fields, also verify they don't match Object.prototype property names
       let col: string | null = null;
-      let kind: 'scalar' | 'currency' | 'duration' | 'array' | 'currency-array' =
+      let kind: 'scalar' | 'currency' | 'duration' | 'array' | 'currency-array' | 'duration-array' =
         filters?.customFieldKinds?.get(cond.fieldId) ?? 'scalar';
       if (Object.hasOwn(ENTITY_BUILTIN_COLUMNS, cond.fieldId)) {
         col = ENTITY_BUILTIN_COLUMNS[cond.fieldId] ?? null;
