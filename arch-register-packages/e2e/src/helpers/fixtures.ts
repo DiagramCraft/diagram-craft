@@ -5,6 +5,7 @@ import { seedMinimal, makeAuthHeader } from './seedHelper';
 import { createTestORPCClient, type TestORPCClient } from './orpcTestClient';
 import { seedBootstrapData } from '@arch-register/server/db/bootstrapSeed';
 import { createStorage } from '@arch-register/server/storage/storage';
+import { inject } from 'vitest';
 
 interface Fixtures {
   server: TestServer;
@@ -23,9 +24,20 @@ export const createApiTest = (options: CreateApiTestOptions = {}) =>
     server: [
       // biome-ignore lint/correctness/noEmptyPattern: ok
       async ({}, use) => {
-        const server = await startTestServer({ appOptions: options.appOptions });
+        // With postgres, the globalSetup provides prebuilt templates (schema + migrations, and
+        // additionally the minimal seed). Bootstrap and custom seeds start from the empty template
+        // since bootstrap writes to per-server storage.
+        const templates =
+          process.env['E2E_DB_DRIVER'] === 'postgres' ? inject('pgTemplates') : undefined;
+        const isMinimal = options.seed === undefined || options.seed === 'minimal';
+        const server = await startTestServer({
+          appOptions: options.appOptions,
+          postgresTemplate: isMinimal ? templates?.minimal : templates?.empty
+        });
         if (options.seed === 'empty') {
           // Intentionally leave the isolated database empty for fixture-focused tests.
+        } else if (isMinimal && templates) {
+          // Already seeded by the template.
         } else if (typeof options.seed === 'function') {
           await options.seed(server.db);
         } else if (options.seed === 'bootstrap') {

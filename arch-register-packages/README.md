@@ -262,10 +262,20 @@ pnpm --filter @arch-register/server test:db-contract
 
 E2E tests live in `e2e/` and are split into two suites.
 
-**API tests** — start a real h3 server with an in-memory SQLite database and test endpoints directly. No browser required.
+**API tests** — start a real h3 server with an isolated SQLite database per test file and test endpoints directly. No browser required.
 
 ```bash
 pnpm --filter @arch-register/e2e test:api
+```
+
+To run them against PostgreSQL instead, set `E2E_DB_DRIVER=postgres` and `DATABASE_URL`. A vitest `globalSetup` builds
+template databases (migrations + minimal seed) once per run, and each test file clones one with
+`CREATE DATABASE ... TEMPLATE`. The role in `DATABASE_URL` therefore needs `CREATEDB`, and PostgreSQL 13+ is required.
+A killed run can leave `db_test_*` / `ar_tpl_*` databases behind; `ar_tpl_*` is swept on the next run.
+
+```bash
+E2E_DB_DRIVER=postgres DATABASE_URL=postgresql://local:local@localhost:5432/artest \
+  pnpm --filter @arch-register/e2e test:api
 ```
 
 **UI tests** — Playwright tests that auto-start both the server and the web dev server before running. The quick suite provides broad, fast feedback across the main workspace features; the full suite includes complete UI validation, including detailed history, failure-mode, export, and state-mutation coverage.

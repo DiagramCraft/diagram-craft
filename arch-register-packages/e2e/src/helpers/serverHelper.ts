@@ -20,6 +20,8 @@ export type TestServer = {
 
 type StartTestServerOptions = {
   appOptions?: Parameters<typeof createApp>[2];
+  /** Postgres only: clone this template database instead of building a schema from scratch. */
+  postgresTemplate?: string;
 };
 
 export async function startTestServer(options: StartTestServerOptions = {}): Promise<TestServer> {
@@ -28,7 +30,9 @@ export async function startTestServer(options: StartTestServerOptions = {}): Pro
   const driver = process.env['E2E_DB_DRIVER'] ?? 'sqlite';
 
   const { db, teardown: teardownDb } =
-    driver === 'postgres' ? await provisionPostgresDatabase() : await provisionSqliteDatabase();
+    driver === 'postgres'
+      ? await provisionPostgresDatabase({ template: options.postgresTemplate })
+      : await provisionSqliteDatabase();
 
   const tmpDir = await mkdtemp(join(tmpdir(), 'ar-e2e-api-'));
 
