@@ -1,6 +1,6 @@
 import type { ComponentType } from 'react';
 import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
-import type { DashboardWidgetSpec } from '../../markdown/mdx-components/types';
+import type { DashboardWidgetSpec, WidgetSurface } from '../../markdown/mdx-components/types';
 
 /**
  * Late-bound access to the widget registry and the widget renderer for container widgets (Tabs).
@@ -8,10 +8,18 @@ import type { DashboardWidgetSpec } from '../../markdown/mdx-components/types';
  * children needs the registry and `DashboardWidgetRenderer` back, so importing them directly would
  * form an import cycle. The registry and the renderer register themselves here when loaded.
  */
+export type TabContentsEditorProps = {
+  widgets: DashboardWidget[];
+  onChange: (widgets: DashboardWidget[]) => void;
+  workspaceSlug: string;
+  surface: WidgetSurface;
+};
+
 type Resolvers = {
   getSpec?: (type: string) => DashboardWidgetSpec | undefined;
   getSpecs?: () => Array<{ type: string; spec: DashboardWidgetSpec }>;
   Renderer?: ComponentType<{ widget: DashboardWidget }>;
+  TabContentsEditor?: ComponentType<TabContentsEditorProps>;
 };
 
 const resolvers: Resolvers = {};
@@ -29,4 +37,9 @@ export const getNestedWidgetSpecs = (): Array<{ type: string; spec: DashboardWid
 export const NestedWidgetRenderer = ({ widget }: { widget: DashboardWidget }) => {
   const Renderer = resolvers.Renderer;
   return Renderer ? <Renderer widget={widget} /> : null;
+};
+
+export const NestedTabContentsEditor = (props: TabContentsEditorProps) => {
+  const Editor = resolvers.TabContentsEditor;
+  return Editor ? <Editor {...props} /> : null;
 };

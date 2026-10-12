@@ -76,7 +76,7 @@
           least one dashboard. Administrators can create a dashboard from the sidebar (added at the end of the order),
           and rename it, change its URL key, or delete it via its context menu; the selected dashboard is addressed by
           its key in the `?dashboard=` URL parameter. Administrators can also enter edit mode to add,
-          remove, resize, and reposition widgets and save the layout; other users see the active dashboard read-only.
+          remove, resize, and reposition widgets and save the layout (the contents of each tab in a Tabs widget are laid out the same way, in a large editor dialog opened from the widget's configuration); other users see the active dashboard read-only.
           Schema templates can seed a complete default dashboard layout when a workspace adopts the template. The
           optional Information Governance cross-cutting template contributes reusable built-in vocabularies for data
           flow direction, regulatory tags, processing purposes, and residency regions without adding a new semantic

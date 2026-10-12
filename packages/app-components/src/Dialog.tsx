@@ -4,7 +4,8 @@ import React, {
   ReactNode,
   useContext,
   useEffect,
-  useRef
+  useRef,
+  useState
 } from 'react';
 import { usePortal } from './PortalContext';
 import { assert } from '@diagram-craft/utils/assert';
@@ -15,6 +16,10 @@ type DialogContextType = {
   onDialogShow: () => void;
   onDialogHide: () => void;
 };
+
+// Number of currently open dialogs. A dialog opened on top of another gets a higher stacking
+// level so that its backdrop is painted above the underlying dialog.
+let openDialogCount = 0;
 
 const DialogContext = createContext<DialogContextType | undefined>(undefined);
 
@@ -82,6 +87,16 @@ export const Dialog = ({
   const portal = usePortal();
   const dialogContext = useDialogContext();
   const isOpenRef = useRef(false);
+  const [level, setLevel] = useState(0);
+
+  useEffect(() => {
+    if (!open) return;
+    openDialogCount++;
+    setLevel(openDialogCount - 1);
+    return () => {
+      openDialogCount--;
+    };
+  }, [open]);
 
   // Notify context when dialog opens/closes via onOpenChange
   const handleOpenChange = (open: boolean) => {
@@ -129,8 +144,15 @@ export const Dialog = ({
   return (
     <BaseUIAlertDialog.Root open={open} defaultOpen={open} onOpenChange={handleOpenChange}>
       <BaseUIAlertDialog.Portal container={portal}>
-        <BaseUIAlertDialog.Backdrop className={styles.cDialogBackdrop} />
-        <BaseUIAlertDialog.Viewport className={styles.cDialogViewport}>
+        <BaseUIAlertDialog.Backdrop
+          forceRender
+          className={styles.cDialogBackdrop}
+          style={level > 0 ? { zIndex: 999 + level * 2 } : undefined}
+        />
+        <BaseUIAlertDialog.Viewport
+          className={styles.cDialogViewport}
+          style={level > 0 ? { zIndex: 1000 + level * 2 } : undefined}
+        >
           <BaseUIAlertDialog.Popup
             className={`${styles.cDialog}${className ? ` ${className}` : ''}`}
             style={width != null ? { width } : undefined}

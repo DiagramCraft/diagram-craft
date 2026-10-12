@@ -1,7 +1,6 @@
 import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
 
 export const TABS_TYPE = 'tabs' as const;
-export const TABS_GRID_COLS = 12;
 
 export type TabsWidgetTab = {
   id: string;
@@ -50,29 +49,6 @@ export const isValidTabsConfig = (
       tab.widgets.every(w => isWidget(w) && w.type !== TABS_TYPE && isValidChildWidget(w))
   ) &&
   new Set(config.tabs.map(tab => (tab as TabsWidgetTab).id)).size === config.tabs.length;
-
-/**
- * Flows widgets left to right, wrapping to a new row when the next one does not fit.
- * Row height is the tallest widget in the row. Positions are recomputed whenever a tab's
- * widget list or sizes change, so tab contents never need manual placement.
- */
-export const flowLayout = (widgets: DashboardWidget[]): DashboardWidget[] => {
-  let x = 0;
-  let y = 0;
-  let rowHeight = 0;
-  return widgets.map(widget => {
-    const w = Math.min(Math.max(widget.w, 1), TABS_GRID_COLS);
-    if (x + w > TABS_GRID_COLS) {
-      x = 0;
-      y += rowHeight;
-      rowHeight = 0;
-    }
-    const placed = { ...widget, x, y, w };
-    x += w;
-    rowHeight = Math.max(rowHeight, widget.h);
-    return placed;
-  });
-};
 
 export const createTab = (existing: TabsWidgetTab[], label = 'Tab'): TabsWidgetTab => ({
   id: `tab-${crypto.randomUUID()}`,
