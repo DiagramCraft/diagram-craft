@@ -9,12 +9,10 @@ import type { DashboardWidgetSpec, WidgetSurface } from '../../markdown/mdx-comp
  * form an import cycle. The registry and the renderer register themselves here when loaded.
  */
 export type TabContentsEditorProps = {
-  title: string;
   widgets: DashboardWidget[];
+  onChange: (widgets: DashboardWidget[]) => void;
   workspaceSlug: string;
   surface: WidgetSurface;
-  onClose: () => void;
-  onSave: (widgets: DashboardWidget[]) => void;
 };
 
 type Resolvers = {

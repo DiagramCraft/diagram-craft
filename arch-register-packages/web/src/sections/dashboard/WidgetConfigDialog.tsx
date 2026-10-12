@@ -63,7 +63,8 @@ const WidgetConfigDialogContent = ({
       open={open}
       onClose={onClose}
       title={spec.label}
-      width={spec.dialogWidth ?? 460}
+      width={spec.dialogSize === 'large' ? '90vw' : (spec.dialogWidth ?? 460)}
+      className={spec.dialogSize === 'large' ? styles.largeDialog : undefined}
       buttons={[
         { label: 'Cancel', type: 'cancel', onClick: onClose },
         {

@@ -3,7 +3,7 @@ import type { DashboardWidget } from '@arch-register/api-types/dashboardContract
 import { Button } from '@diagram-craft/app-components/Button';
 import { TbPlus, TbCheck, TbX } from 'react-icons/tb';
 import { LoadingState } from '../../components/LoadingState';
-import './TabContentsEditorDialog'; // registers the tab contents editor
+import './TabContentsEditor'; // registers the tab contents editor
 import { DashboardGridCanvas } from './DashboardGridCanvas';
 import { WidgetPickerDialog } from './WidgetPickerDialog';
 import { WidgetConfigDialog } from './WidgetConfigDialog';

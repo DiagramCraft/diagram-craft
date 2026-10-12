@@ -1,0 +1,48 @@
+.layout {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: 16px;
+  /* Fill the large dialog body (viewport minus dialog margins, header, footer and padding) so the divider spans the full height. */
+  min-height: calc(100vh - 12vh - 150px);
+}
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-right: 16px;
+  border-right: 1px solid var(--panel-border);
+}
+
+.tabItem {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid transparent;
+  border-radius: var(--r);
+  cursor: pointer;
+}
+
+.tabItem[data-selected='true'] {
+  border-color: var(--accent-fg);
+  background: var(--cmp-bg);
+}
+
+.tabActions {
+  display: flex;
+  gap: 0;
+}
+
+.handle {
+  display: flex;
+  align-items: center;
+  align-self: stretch;
+  padding: 0 2px;
+  color: var(--cmp-fg-dim, var(--base-fg));
+  cursor: grab;
+}
+
+.content {
+  min-width: 0;
+}

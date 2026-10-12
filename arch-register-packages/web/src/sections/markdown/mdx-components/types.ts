@@ -94,6 +94,8 @@ export type DashboardWidgetSpec<Config extends Record<string, unknown> = Record<
     }>;
     /** WidgetConfigDialog width override; defaults to 460. */
     dialogWidth?: number | string;
+    /** `large` makes WidgetConfigDialog fill ~90% of the viewport (overrides dialogWidth). */
+    dialogSize?: 'large';
   };
 
 export type MdxComponentSpec = {

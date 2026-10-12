@@ -91,3 +91,14 @@
 .markdownInput::placeholder {
   color: var(--cmp-fg-disabled);
 }
+
+/* Config dialogs that need the whole screen (e.g. Tabs); the body scrolls inside the fixed-height popup. */
+.largeDialog {
+  height: calc(100vh - 12vh);
+}
+
+.largeDialog > div:nth-child(2) {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}

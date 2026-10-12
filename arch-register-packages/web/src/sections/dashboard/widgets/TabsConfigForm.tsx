@@ -1,17 +1,28 @@
 import { useState, type ComponentProps } from 'react';
 import { Button } from '@diagram-craft/app-components/Button';
-import { TbArrowDown, TbArrowUp, TbPlus, TbTrash } from 'react-icons/tb';
+import { TbArrowDown, TbArrowUp, TbGripVertical, TbPlus, TbTrash } from 'react-icons/tb';
 import type { DashboardWidgetSpec } from '../../markdown/mdx-components/types';
-import { DialogSection } from '../../markdown/editor/BlockDialog';
 import { NestedTabContentsEditor } from './nestedWidgets';
-import { createTab, moveItem, type TabsWidgetConfig } from './tabsLogic';
-import styles from '../WidgetConfigDialog.module.css';
+import { createTab, moveItem, resolveActiveTabId, type TabsWidgetConfig } from './tabsLogic';
+import formStyles from '../WidgetConfigDialog.module.css';
+import styles from './TabsConfigForm.module.css';
 
 type FormProps = ComponentProps<NonNullable<DashboardWidgetSpec<TabsWidgetConfig>['configForm']>>;
 
+/** Tab list in a sidebar; the selected tab's contents are edited in a grid on the right. */
 export const TabsConfigForm = ({ config, onChange, context }: FormProps) => {
-  const [editingTabId, setEditingTabId] = useState<string | null>(null);
-  const editingTab = config.tabs.find(tab => tab.id === editingTabId);
+  const [selectedId, setSelectedId] = useState<string | undefined>();
+  const activeId = resolveActiveTabId(config.tabs, selectedId);
+  const activeIndex = config.tabs.findIndex(tab => tab.id === activeId);
+  const activeTab = config.tabs[activeIndex];
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+
+  const moveTab = (from: number, to: number) => {
+    if (from === to) return;
+    const tabs = [...config.tabs];
+    tabs.splice(to, 0, tabs.splice(from, 1)[0]!);
+    onChange({ tabs });
+  };
 
   const updateTab = (index: number, patch: Partial<TabsWidgetConfig['tabs'][number]>) =>
     onChange({
@@ -19,70 +30,87 @@ export const TabsConfigForm = ({ config, onChange, context }: FormProps) => {
     });
 
   return (
-    <>
-      {config.tabs.map((tab, tabIndex) => (
-        <DialogSection key={tab.id} label={`Tab ${tabIndex + 1}`} required>
-          <div className={styles.options}>
-            <div className={styles.optionRow}>
-              <input
-                type="text"
-                className={styles.labelInput}
-                value={tab.label}
-                aria-label="Tab label"
-                onChange={event => updateTab(tabIndex, { label: event.currentTarget.value })}
-              />
+    <div className={styles.layout}>
+      <div className={styles.sidebar}>
+        {config.tabs.map((tab, tabIndex) => (
+          <div
+            key={tab.id}
+            className={styles.tabItem}
+            data-selected={tab.id === activeId}
+            onClick={() => setSelectedId(tab.id)}
+            draggable={dragIndex === tabIndex}
+            onDragOver={event => dragIndex !== null && event.preventDefault()}
+            onDrop={() => {
+              if (dragIndex !== null) moveTab(dragIndex, tabIndex);
+              setDragIndex(null);
+            }}
+            onDragEnd={() => setDragIndex(null)}
+          >
+            <span
+              className={styles.handle}
+              title="Select or drag to reorder"
+              onMouseDown={() => setDragIndex(tabIndex)}
+              onMouseUp={() => setDragIndex(null)}
+            >
+              <TbGripVertical size={14} />
+            </span>
+            <input
+              type="text"
+              className={formStyles.labelInput}
+              value={tab.label}
+              aria-label="Tab label"
+              onFocus={() => setSelectedId(tab.id)}
+              onChange={event => updateTab(tabIndex, { label: event.currentTarget.value })}
+            />
+            <div className={styles.tabActions}>
               <Button
-                variant="secondary"
+                variant="icon-only"
+                size="sm"
                 icon={<TbArrowUp size={12} />}
+                disabled={tabIndex === 0}
                 onClick={() => onChange({ tabs: moveItem(config.tabs, tabIndex, -1) })}
               />
               <Button
-                variant="secondary"
+                variant="icon-only"
+                size="sm"
                 icon={<TbArrowDown size={12} />}
+                disabled={tabIndex === config.tabs.length - 1}
                 onClick={() => onChange({ tabs: moveItem(config.tabs, tabIndex, 1) })}
               />
               <Button
-                variant="secondary"
+                variant="icon-only"
+                size="sm"
                 icon={<TbTrash size={12} />}
                 disabled={config.tabs.length === 1}
                 onClick={() => onChange({ tabs: config.tabs.filter((_, i) => i !== tabIndex) })}
               />
             </div>
-
-            <div className={styles.optionRow}>
-              <span className={styles.optionLabel}>
-                {tab.widgets.length === 1 ? '1 widget' : `${tab.widgets.length} widgets`}
-              </span>
-              <Button variant="secondary" onClick={() => setEditingTabId(tab.id)}>
-                Edit contents
-              </Button>
-            </div>
           </div>
-        </DialogSection>
-      ))}
-      <Button
-        variant="secondary"
-        icon={<TbPlus size={12} />}
-        onClick={() => onChange({ tabs: [...config.tabs, createTab(config.tabs)] })}
-      >
-        Add tab
-      </Button>
-      {editingTab && (
-        <NestedTabContentsEditor
-          title={`Edit contents – ${editingTab.label}`}
-          widgets={editingTab.widgets}
-          workspaceSlug={context.workspaceSlug}
-          surface={context.surface}
-          onClose={() => setEditingTabId(null)}
-          onSave={widgets => {
-            updateTab(
-              config.tabs.findIndex(tab => tab.id === editingTab.id),
-              { widgets }
-            );
-            setEditingTabId(null);
+        ))}
+        <Button
+          variant="secondary"
+          icon={<TbPlus size={12} />}
+          onClick={() => {
+            const tab = createTab(config.tabs);
+            onChange({ tabs: [...config.tabs, tab] });
+            setSelectedId(tab.id);
           }}
-        />
-      )}
-    </>
+        >
+          Add tab
+        </Button>
+      </div>
+
+      <div className={styles.content}>
+        {activeTab && (
+          <NestedTabContentsEditor
+            key={activeTab.id}
+            widgets={activeTab.widgets}
+            onChange={widgets => updateTab(activeIndex, { widgets })}
+            workspaceSlug={context.workspaceSlug}
+            surface={context.surface}
+          />
+        )}
+      </div>
+    </div>
   );
 };

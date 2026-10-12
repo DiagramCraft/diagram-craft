@@ -24,5 +24,5 @@ export const tabsSpec: DashboardWidgetSpec<TabsWidgetConfig> = {
   createDefaultConfig: () => ({ tabs: [createTab([], 'Tab')] }),
   getTitle: () => 'Tabs',
   configForm: TabsConfigForm,
-  dialogWidth: 640
+  dialogSize: 'large'
 };
