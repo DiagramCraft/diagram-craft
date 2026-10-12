@@ -105,7 +105,7 @@ test.describe('assistant section', () => {
                   interrupts: [
                     {
                       id: 'approval-1',
-                      reason: 'tool_call',
+                      reason: 'approval_required',
                       message: 'Approval required to create this entity.',
                       toolCallId: 'approval-call-1',
                       responseSchema: {
