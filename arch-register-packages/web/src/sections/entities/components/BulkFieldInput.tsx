@@ -210,9 +210,9 @@ export const BulkFieldInput = ({
               ? { amount: undefined, currency: defaultCurrency }
               : schemaField.type === 'duration'
                 ? { amount: undefined, unit: 'years' }
-              : schemaField.type === 'number'
-                ? ''
-                : ''
+                : schemaField.type === 'number'
+                  ? ''
+                  : ''
         }
         renderItem={renderItem}
         addLabel="Add"

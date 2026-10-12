@@ -52,5 +52,7 @@ export const decodeDurationText = (text: string): { amount: number; unit: Durati
     return null;
   }
   const parsed = Number(amount);
-  return Number.isFinite(parsed) && parsed >= 0 ? { amount: parsed, unit: unit as DurationUnit } : null;
+  return Number.isFinite(parsed) && parsed >= 0
+    ? { amount: parsed, unit: unit as DurationUnit }
+    : null;
 };
