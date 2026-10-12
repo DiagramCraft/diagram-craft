@@ -1574,4 +1574,14 @@ describe('instantiateTemplate', () => {
       }
     });
   });
+
+  it('models team-topologies Expected Duration as a duration field', () => {
+    const template = SCHEMA_TEMPLATES.find(t => t.id === 'team-topologies')!;
+    const interaction = [...template.schemas, ...(template.relationSchemas ?? [])].find(
+      schema => schema.symId === 'interaction'
+    )!;
+    expect(interaction.fields.find(field => field.id === 'expected_duration')).toMatchObject({
+      type: 'duration'
+    });
+  });
 });

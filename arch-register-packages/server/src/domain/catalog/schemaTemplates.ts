@@ -2983,7 +2983,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             minCount: 1,
             maxCount: 1
           },
-          { id: 'expected_duration', name: 'Expected Duration', type: 'text' }
+          { id: 'expected_duration', name: 'Expected Duration', type: 'duration' }
         ]
       }
     ],
