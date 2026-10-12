@@ -5,6 +5,7 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
+  '@tanstack/openai-base': 0.12.4
   '@types/node': 26.4.0
   ws: ^8.20.1
   braces: ^3.0.3
@@ -244,7 +245,7 @@ importers:
         version: 0.65.1(zod@4.4.3)
       '@tanstack/ai-openai':
         specifier: 0.27.0
-        version: 0.27.0(@tanstack/ai@0.65.1(zod@4.4.3))(undici@7.29.1)(ws@8.21.3)(zod@4.4.3)
+        version: 0.27.0(@tanstack/ai@0.65.1(zod@4.4.3))(ws@8.21.3)(zod@4.4.3)
       '@tanstack/ai-openrouter':
         specifier: 0.21.1
         version: 0.21.1(@tanstack/ai@0.65.1(zod@4.4.3))
@@ -420,9 +421,12 @@ importers:
       '@radix-ui/colors':
         specifier: ^3.0.0
         version: 3.0.0
+      '@tanstack/ai':
+        specifier: ^0.65.1
+        version: 0.65.1(zod@4.4.3)
       '@tanstack/ai-react':
         specifier: 0.30.0
-        version: 0.30.0(@tanstack/ai@0.68.0(zod@4.4.3))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(zod@4.4.3)
+        version: 0.30.0(@tanstack/ai@0.65.1(zod@4.4.3))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(zod@4.4.3)
       '@tanstack/react-query':
         specifier: ^5.102.7
         version: 5.102.8(react@19.2.8)
@@ -4178,15 +4182,6 @@ packages:
       '@opentelemetry/api':
         optional: true
 
-  '@tanstack/ai@0.68.0':
-    resolution: {integrity: sha512-l++ORsrL5dAC/nNJ2ZyQiTkDmxNo2Xh0lsS4m0QbWzUVyvmSmFriDemqQmAiko+zMvVeeQ8QlTXUMOLLPfZyEQ==}
-    engines: {node: '>=18'}
-    peerDependencies:
-      '@opentelemetry/api': '>=1.9.0'
-    peerDependenciesMeta:
-      '@opentelemetry/api':
-        optional: true
-
   '@tanstack/devtools-event-client@0.4.4':
     resolution: {integrity: sha512-6T5Yop/793YI+H+5J8Hsyj4kCih9sl4t3ElLgKioW5hk3ocn+ZdSJ94tT7vL7uabxSugWYBZlOTMPzEw2puvQw==}
     engines: {node: '>=18'}
@@ -4207,10 +4202,10 @@ packages:
       react:
         optional: true
 
-  '@tanstack/openai-base@0.12.6':
-    resolution: {integrity: sha512-mXNvpWzRfbFyz7gsobRTF10FMf6451h7W8hvLHzVdZC4HAYIQNsyDpuxC4ptrdTVwML4uO8Ld2tU30MIM2vb6g==}
+  '@tanstack/openai-base@0.12.4':
+    resolution: {integrity: sha512-Z82PgFWyTmcsVHPuAcFTnbwfXtlh4/0PK8NDFACUBZm+ekSsQTzInzOLL7enW49vgEmbUrvH/V/jtWeKaE6pcw==}
     peerDependencies:
-      '@tanstack/ai': ^0.66.0
+      '@tanstack/ai': ^0.65.0
 
   '@tanstack/query-core@5.102.8':
     resolution: {integrity: sha512-ZNjkJ33CqvPNec/6lZBnHqLc3EVGPZ9ySLhYahU9TcuRFdmwXewuj0c4hwSWcGHqEUwcSrKeZ+oGcvPBqXcQcg==}
@@ -8261,30 +8256,6 @@ packages:
       '@smithy/hash-node':
         optional: true
       '@smithy/signature-v4':
-        optional: true
-      ws:
-        optional: true
-      zod:
-        optional: true
-
-  openai@7.32.0:
-    resolution: {integrity: sha512-avqxu/jl1gsVBCBgFNPr9sTh+wZppQphuhhFy1zEvAJxEaJ4t0ery6hZdOT9kws/EcNTARoQcZs2IT3bliE1SA==}
-    engines: {node: '>=22.0.0'}
-    peerDependencies:
-      '@aws-sdk/credential-provider-node': '>=3.972.0 <4'
-      '@smithy/hash-node': '>=4.3.0 <5'
-      '@smithy/signature-v4': '>=5.4.0 <6'
-      undici: 7.29.1
-      ws: ^8.20.1
-      zod: ^3.25 || ^4.0
-    peerDependenciesMeta:
-      '@aws-sdk/credential-provider-node':
-        optional: true
-      '@smithy/hash-node':
-        optional: true
-      '@smithy/signature-v4':
-        optional: true
-      undici:
         optional: true
       ws:
         optional: true
@@ -15274,17 +15245,16 @@ snapshots:
     dependencies:
       '@tanstack/devtools-event-client': 0.4.4
 
-  '@tanstack/ai-openai@0.27.0(@tanstack/ai@0.65.1(zod@4.4.3))(undici@7.29.1)(ws@8.21.3)(zod@4.4.3)':
+  '@tanstack/ai-openai@0.27.0(@tanstack/ai@0.65.1(zod@4.4.3))(ws@8.21.3)(zod@4.4.3)':
     dependencies:
       '@tanstack/ai': 0.65.1(zod@4.4.3)
       '@tanstack/ai-utils': 0.4.1
-      '@tanstack/openai-base': 0.12.6(@tanstack/ai@0.65.1(zod@4.4.3))(undici@7.29.1)(ws@8.21.3)(zod@4.4.3)
+      '@tanstack/openai-base': 0.12.4(@tanstack/ai@0.65.1(zod@4.4.3))(ws@8.21.3)(zod@4.4.3)
       openai: 6.49.0(ws@8.21.3)(zod@4.4.3)
     transitivePeerDependencies:
       - '@aws-sdk/credential-provider-node'
       - '@smithy/hash-node'
       - '@smithy/signature-v4'
-      - undici
       - ws
       - zod
 
@@ -15294,9 +15264,9 @@ snapshots:
       '@tanstack/ai': 0.65.1(zod@4.4.3)
       '@tanstack/ai-utils': 0.4.1
 
-  '@tanstack/ai-react@0.30.0(@tanstack/ai@0.68.0(zod@4.4.3))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(zod@4.4.3)':
+  '@tanstack/ai-react@0.30.0(@tanstack/ai@0.65.1(zod@4.4.3))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(zod@4.4.3)':
     dependencies:
-      '@tanstack/ai': 0.68.0(zod@4.4.3)
+      '@tanstack/ai': 0.65.1(zod@4.4.3)
       '@tanstack/ai-client': 0.38.0(zod@4.4.3)
       '@tanstack/markdown': 0.0.13(react@19.2.8)
       '@types/react': 19.2.18
@@ -15321,17 +15291,6 @@ snapshots:
     transitivePeerDependencies:
       - zod
 
-  '@tanstack/ai@0.68.0(zod@4.4.3)':
-    dependencies:
-      '@ag-ui/core': 1.0.0(zod@4.4.3)
-      '@standard-schema/spec': 1.1.0
-      '@tanstack/ai-event-client': 0.13.1
-      '@tanstack/ai-utils': 0.4.1
-      fast-json-patch: 3.1.1
-      partial-json: 0.1.7
-    transitivePeerDependencies:
-      - zod
-
   '@tanstack/devtools-event-client@0.4.4': {}
 
   '@tanstack/history@1.162.4': {}
@@ -15340,16 +15299,15 @@ snapshots:
     optionalDependencies:
       react: 19.2.8
 
-  '@tanstack/openai-base@0.12.6(@tanstack/ai@0.65.1(zod@4.4.3))(undici@7.29.1)(ws@8.21.3)(zod@4.4.3)':
+  '@tanstack/openai-base@0.12.4(@tanstack/ai@0.65.1(zod@4.4.3))(ws@8.21.3)(zod@4.4.3)':
     dependencies:
       '@tanstack/ai': 0.65.1(zod@4.4.3)
       '@tanstack/ai-utils': 0.4.1
-      openai: 7.32.0(undici@7.29.1)(ws@8.21.3)(zod@4.4.3)
+      openai: 6.49.0(ws@8.21.3)(zod@4.4.3)
     transitivePeerDependencies:
       - '@aws-sdk/credential-provider-node'
       - '@smithy/hash-node'
       - '@smithy/signature-v4'
-      - undici
       - ws
       - zod
 
@@ -20135,12 +20093,6 @@ snapshots:
 
   openai@6.49.0(ws@8.21.3)(zod@4.4.3):
     optionalDependencies:
-      ws: 8.21.3
-      zod: 4.4.3
-
-  openai@7.32.0(undici@7.29.1)(ws@8.21.3)(zod@4.4.3):
-    optionalDependencies:
-      undici: 7.29.1
       ws: 8.21.3
       zod: 4.4.3
 

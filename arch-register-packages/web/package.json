@@ -34,6 +34,7 @@
     "@orpc/client": "^1.15.0",
     "@orpc/contract": "^1.15.0",
     "@orpc/openapi-client": "^1.15.0",
+    "@tanstack/ai": "^0.65.1",
     "@platejs/core": "^53.3.11",
     "@platejs/dnd": "^53.3.8",
     "@platejs/floating": "^53.0.0",
