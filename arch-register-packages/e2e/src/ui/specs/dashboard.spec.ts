@@ -126,7 +126,7 @@ test.describe('dashboard section', () => {
       await expect(page).toHaveURL(
         url =>
           url.pathname.includes('/apps/api-integration-catalog/') &&
-          url.searchParams.get('boundary') === '"1"'
+          url.searchParams.get('boundaries') === 'cross-boundary'
       );
     } finally {
       if (dashboardCreated && !page.isClosed()) {
