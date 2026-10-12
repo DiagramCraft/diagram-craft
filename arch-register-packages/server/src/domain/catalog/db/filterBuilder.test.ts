@@ -105,7 +105,7 @@ describe('filterBuilder', () => {
           mockAddParam,
           'postgres'
         );
-        expect(result).toBe('e.name ILIKE $%test%');
+        expect(result).toBe('e.name::text ILIKE $%test%');
       });
 
       it('should build empty condition with type cast', () => {

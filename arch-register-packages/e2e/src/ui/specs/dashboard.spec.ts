@@ -42,21 +42,28 @@ test.describe('dashboard section', () => {
       await homePage.enterEditMode();
 
       const widgets = [
-        { pickerName: /API catalog stats/, title: 'Pilot API stats' },
+        {
+          pickerName: /API catalog stats/,
+          title: 'Pilot API stats',
+          titleVisibleOutsideEdit: false
+        },
         {
           pickerName: /Open API change and deprecation cases/,
           title: 'Pilot decision queue',
-          limit: 4
+          limit: 4,
+          titleVisibleOutsideEdit: true
         },
         {
           pickerName: /APIs with the most registered consumers/,
           title: 'Pilot most consumed',
-          limit: 5
+          limit: 5,
+          titleVisibleOutsideEdit: true
         },
         {
           pickerName: /Data flows that cross a boundary/,
           title: 'Pilot at-risk integrations',
-          limit: 7
+          limit: 7,
+          titleVisibleOutsideEdit: true
         }
       ];
 
@@ -77,7 +84,8 @@ test.describe('dashboard section', () => {
       await homePage.saveDashboard();
       await page.reload();
       await homePage.expectLoaded(defaultWorkspace.name);
-      for (const widget of widgets) {
+      // The stat tiles render without their widget frame outside edit mode.
+      for (const widget of widgets.filter(widget => widget.titleVisibleOutsideEdit)) {
         await expect(page.getByText(widget.title, { exact: true })).toBeVisible();
       }
       await expect(page.getByText(/Unsupported dashboard widget/)).toHaveCount(0);

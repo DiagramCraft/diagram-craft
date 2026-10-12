@@ -56,6 +56,9 @@ const buildConformanceStatusCte = (state: EntityQuerySqlRenderState): string => 
   );
   const falseValue = state.dialectAdapter.falseLiteral;
   const trueValue = state.dialectAdapter.trueLiteral;
+  // The aggregate CTEs are MATERIALIZED so Postgres evaluates each once. Inlined, the planner
+  // turns them into correlated nested loops that re-run the aggregation per outer entity row,
+  // which is quadratic in the number of entities.
   // Scope every aggregate CTE to the query's own workspace up front, rather than aggregating
   // across every workspace in the deployment and relying on the outer join to discard the rest.
   // A fresh addParam() call per occurrence — not one placeholder string reused — because SQLite's
@@ -66,7 +69,7 @@ const buildConformanceStatusCte = (state: EntityQuerySqlRenderState): string => 
   const statusWorkspaceParam = addParam(state, state.workspace);
 
   return `
-    conformance_violation_aggregate AS (
+    conformance_violation_aggregate AS MATERIALIZED (
       SELECT v.workspace, v.entity_id,
         SUM(CASE WHEN ${effectiveStatus} = 'active' THEN 1 ELSE 0 END) AS active_count,
         SUM(CASE WHEN ${effectiveStatus} = 'acknowledged' THEN 1 ELSE 0 END) AS acknowledged_count,
@@ -84,7 +87,7 @@ const buildConformanceStatusCte = (state: EntityQuerySqlRenderState): string => 
         AND ${conformanceApplicableCheckClause('c', 'e', state)}
       GROUP BY v.workspace, v.entity_id
     ),
-    conformance_evaluation_aggregate AS (
+    conformance_evaluation_aggregate AS MATERIALIZED (
       SELECT e.workspace, e.id AS entity_id,
         COUNT(DISTINCT c.id) AS applicable_check_count,
         COUNT(DISTINCT CASE WHEN ee.entity_id IS NOT NULL THEN c.id END) AS covered_check_count,
