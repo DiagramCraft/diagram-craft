@@ -1,21 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { durationUnitLabel, formatDurationValue } from './durationFormat';
+import { durationToDays } from './durationFormat';
 
-describe('formatDurationValue', () => {
-  it('formats with singular and plural units', () => {
-    expect(formatDurationValue({ amount: 3, unit: 'years' })).toBe('3 years');
-    expect(formatDurationValue({ amount: 1, unit: 'months' })).toBe('1 month');
-    expect(formatDurationValue({ amount: 0, unit: 'days' })).toBe('0 days');
+describe('durationToDays', () => {
+  it('converts each unit', () => {
+    expect(durationToDays({ amount: 3, unit: 'days' })).toBe(3);
+    expect(durationToDays({ amount: 2, unit: 'weeks' })).toBe(14);
+    expect(durationToDays({ amount: 1, unit: 'months' })).toBe(30.4375);
+    expect(durationToDays({ amount: 1, unit: 'years' })).toBe(365.25);
   });
 
-  it('falls back to the raw value for malformed input', () => {
-    expect(formatDurationValue({ amount: 3, unit: 'decades' })).toBe('[object Object]');
-    expect(formatDurationValue('3 years')).toBe('3 years');
-  });
-});
-
-describe('durationUnitLabel', () => {
-  it('capitalises the plural unit name', () => {
-    expect(durationUnitLabel('weeks')).toBe('Weeks');
+  it('returns null for non-durations', () => {
+    expect(durationToDays(30)).toBeNull();
+    expect(durationToDays(null)).toBeNull();
+    expect(durationToDays({ amount: 1, unit: 'decades' })).toBeNull();
   });
 });

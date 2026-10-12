@@ -168,7 +168,7 @@ export const demoContractEntities: SeedEntityInput[] = [
       setup_fee: { amount: 8000, currency: 'USD' },
       contract_type: 'licence',
       auto_renew: true,
-      notice_period_days: 90,
+      notice_period: { amount: 90, unit: 'days' },
       contract_owner: 'Head of Payments Engineering'
     },
     project_id: null,
@@ -198,7 +198,7 @@ export const demoContractEntities: SeedEntityInput[] = [
       setup_fee: { amount: 0, currency: 'USD' },
       contract_type: 'support',
       auto_renew: true,
-      notice_period_days: 30,
+      notice_period: { amount: 30, unit: 'days' },
       contract_owner: 'Head of Payments Engineering'
     },
     project_id: null,
@@ -228,7 +228,7 @@ export const demoContractEntities: SeedEntityInput[] = [
       setup_fee: { amount: 5000, currency: 'USD' },
       contract_type: 'licence',
       auto_renew: false,
-      notice_period_days: 60,
+      notice_period: { amount: 60, unit: 'days' },
       contract_owner: 'Head of Platform Engineering'
     },
     project_id: null,
@@ -258,7 +258,7 @@ export const demoContractEntities: SeedEntityInput[] = [
       setup_fee: { amount: 2500, currency: 'GBP' },
       contract_type: 'subscription',
       auto_renew: true,
-      notice_period_days: 30,
+      notice_period: { amount: 30, unit: 'days' },
       contract_owner: 'Head of Marketing'
     },
     project_id: null,
@@ -288,7 +288,7 @@ export const demoContractEntities: SeedEntityInput[] = [
       setup_fee: { amount: 0, currency: 'USD' },
       contract_type: 'subscription',
       auto_renew: false,
-      notice_period_days: 45,
+      notice_period: { amount: 45, unit: 'days' },
       contract_owner: 'Head of Data Platform'
     },
     project_id: null,

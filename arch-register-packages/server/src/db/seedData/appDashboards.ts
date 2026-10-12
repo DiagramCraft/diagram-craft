@@ -2714,7 +2714,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
                     endFieldId: 'contract_end',
                     sublabelFieldId: 'vendor',
                     valueFieldId: 'annual_cost',
-                    markerOffsetFieldId: 'notice_period_days',
+                    markerOffsetFieldId: 'notice_period',
                     markerWhenFieldId: 'auto_renew'
                   },
                   x: 0,

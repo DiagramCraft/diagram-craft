@@ -27,7 +27,7 @@ const contracts = [
   contract_start: monthsFromNow(start as number),
   contract_end: monthsFromNow(end as number),
   auto_renew: auto,
-  notice_period_days: notice,
+  notice_period: { amount: notice, unit: 'days' },
   annual_cost: { amount: cost, currency: 'SEK' }
 }));
 
@@ -59,7 +59,7 @@ export const ContractTerms: Story = {
               endFieldId: 'contract_end',
               sublabelFieldId: 'vendor',
               valueFieldId: 'annual_cost',
-              markerOffsetFieldId: 'notice_period_days',
+              markerOffsetFieldId: 'notice_period',
               markerWhenFieldId: 'auto_renew'
             },
             0,

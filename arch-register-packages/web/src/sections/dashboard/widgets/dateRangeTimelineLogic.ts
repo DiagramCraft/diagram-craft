@@ -1,4 +1,5 @@
 import { parseTimelineDate } from '../../../components/timeline/timelineUtils';
+import { durationToDays } from '../../../utils/durationFormat';
 
 export type PositionedRange<T> = {
   record: T;
@@ -45,7 +46,8 @@ export const buildPositionedRanges = <T extends Record<string, unknown>>(
       : undefined;
     const markerApplies =
       !options.markerWhenFieldId || firstValue(record[options.markerWhenFieldId]) === true;
-    const markerDays = typeof offset === 'number' && markerApplies ? offset : null;
+    const offsetDays = typeof offset === 'number' ? offset : durationToDays(offset);
+    const markerDays = markerApplies ? offsetDays : null;
     positioned.push({
       record,
       start,

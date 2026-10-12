@@ -36,4 +36,22 @@ describe('buildPositionedRanges', () => {
     expect(positioned[1]!.markerDate).toBeNull();
     expect(positioned[2]!.markerDate).toBeNull();
   });
+
+  it('converts duration offsets to days', () => {
+    const { positioned } = buildPositionedRanges(
+      [
+        {
+          _uid: 'a',
+          start: '2026-01-01',
+          end: '2026-12-31',
+          notice: { amount: 2, unit: 'weeks' },
+          auto: true
+        },
+        { _uid: 'b', start: '2026-01-01', end: '2026-12-31', notice: { amount: 'x' }, auto: true }
+      ],
+      options
+    );
+    expect(positioned[0]!.markerDays).toBe(14);
+    expect(positioned[1]!.markerDate).toBeNull();
+  });
 });

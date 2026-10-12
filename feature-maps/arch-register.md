@@ -416,7 +416,7 @@
           the month's total annual cost in its header; an overdue contract is folded into the current month, and a
           contract beyond the window or with no end date is excluded and counted in a caption. The Timelines tab is a
           generic date-range timeline widget: a bar from `contract_start` to `contract_end`, a notice marker on
-          auto-renewing contracts with a notice period, and a today line; contracts missing either date are counted in a
+          auto-renewing contracts with a notice period (a Duration field, converted to days), and a today line; contracts missing either date are counted in a
           caption. Both widgets are available to any dashboard (query, date fields, subtitle and value fields are
           configurable). Compared with the previous bespoke screen, free-text search, sort options, the renewal-window
           facet and the `q` / `type` / `vendor` / `renewalWindow` / `view` URL parameters are no longer part of this
