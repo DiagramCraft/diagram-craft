@@ -1213,7 +1213,8 @@
                                     "currency",
                                     "select",
                                     "boolean",
-                                    "rating"
+                                    "rating",
+                                    "duration"
                                   ],
                                   "type": "string",
                                   "description": "Underlying type of the calculated value"
@@ -2935,7 +2936,8 @@
                                 "currency",
                                 "select",
                                 "boolean",
-                                "rating"
+                                "rating",
+                                "duration"
                               ],
                               "type": "string",
                               "description": "Underlying type of the calculated value"
@@ -4629,7 +4631,8 @@
                                   "currency",
                                   "select",
                                   "boolean",
-                                  "rating"
+                                  "rating",
+                                  "duration"
                                 ],
                                 "type": "string",
                                 "description": "Underlying type of the calculated value"
@@ -6425,7 +6428,8 @@
                                   "currency",
                                   "select",
                                   "boolean",
-                                  "rating"
+                                  "rating",
+                                  "duration"
                                 ],
                                 "type": "string",
                                 "description": "Underlying type of the calculated value"
@@ -8155,7 +8159,8 @@
                                 "currency",
                                 "select",
                                 "boolean",
-                                "rating"
+                                "rating",
+                                "duration"
                               ],
                               "type": "string",
                               "description": "Underlying type of the calculated value"
@@ -9878,7 +9883,8 @@
                                   "currency",
                                   "select",
                                   "boolean",
-                                  "rating"
+                                  "rating",
+                                  "duration"
                                 ],
                                 "type": "string",
                                 "description": "Underlying type of the calculated value"
@@ -11869,7 +11875,8 @@
                                     "currency",
                                     "select",
                                     "boolean",
-                                    "rating"
+                                    "rating",
+                                    "duration"
                                   ],
                                   "type": "string",
                                   "description": "Underlying type of the calculated value"
@@ -13043,7 +13050,8 @@
                                     "currency",
                                     "select",
                                     "boolean",
-                                    "rating"
+                                    "rating",
+                                    "duration"
                                   ],
                                   "type": "string",
                                   "description": "Underlying type of the calculated value"
@@ -13968,7 +13976,8 @@
                                 "currency",
                                 "select",
                                 "boolean",
-                                "rating"
+                                "rating",
+                                "duration"
                               ],
                               "type": "string",
                               "description": "Underlying type of the calculated value"
@@ -14863,7 +14872,8 @@
                                   "currency",
                                   "select",
                                   "boolean",
-                                  "rating"
+                                  "rating",
+                                  "duration"
                                 ],
                                 "type": "string",
                                 "description": "Underlying type of the calculated value"
@@ -15862,7 +15872,8 @@
                                   "currency",
                                   "select",
                                   "boolean",
-                                  "rating"
+                                  "rating",
+                                  "duration"
                                 ],
                                 "type": "string",
                                 "description": "Underlying type of the calculated value"
@@ -16795,7 +16806,8 @@
                                 "currency",
                                 "select",
                                 "boolean",
-                                "rating"
+                                "rating",
+                                "duration"
                               ],
                               "type": "string",
                               "description": "Underlying type of the calculated value"
@@ -17719,7 +17731,8 @@
                                   "currency",
                                   "select",
                                   "boolean",
-                                  "rating"
+                                  "rating",
+                                  "duration"
                                 ],
                                 "type": "string",
                                 "description": "Underlying type of the calculated value"
@@ -18758,7 +18771,8 @@
                                     "currency",
                                     "select",
                                     "boolean",
-                                    "rating"
+                                    "rating",
+                                    "duration"
                                   ],
                                   "type": "string",
                                   "description": "Underlying type of the calculated value"
@@ -91324,7 +91338,8 @@
                                     "currency",
                                     "select",
                                     "boolean",
-                                    "rating"
+                                    "rating",
+                                    "duration"
                                   ],
                                   "type": "string",
                                   "description": "Underlying type of the calculated value"
@@ -92559,7 +92574,8 @@
                                 "currency",
                                 "select",
                                 "boolean",
-                                "rating"
+                                "rating",
+                                "duration"
                               ],
                               "type": "string",
                               "description": "Underlying type of the calculated value"
@@ -93783,7 +93799,8 @@
                                   "currency",
                                   "select",
                                   "boolean",
-                                  "rating"
+                                  "rating",
+                                  "duration"
                                 ],
                                 "type": "string",
                                 "description": "Underlying type of the calculated value"
@@ -95092,7 +95109,8 @@
                                   "currency",
                                   "select",
                                   "boolean",
-                                  "rating"
+                                  "rating",
+                                  "duration"
                                 ],
                                 "type": "string",
                                 "description": "Underlying type of the calculated value"
@@ -96335,7 +96353,8 @@
                                 "currency",
                                 "select",
                                 "boolean",
-                                "rating"
+                                "rating",
+                                "duration"
                               ],
                               "type": "string",
                               "description": "Underlying type of the calculated value"
@@ -97588,7 +97607,8 @@
                                   "currency",
                                   "select",
                                   "boolean",
-                                  "rating"
+                                  "rating",
+                                  "duration"
                                 ],
                                 "type": "string",
                                 "description": "Underlying type of the calculated value"

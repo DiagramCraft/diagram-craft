@@ -152,7 +152,8 @@ const derivedResultTypeSchema = z.enum([
   'currency',
   'select',
   'boolean',
-  'rating'
+  'rating',
+  'duration'
 ]);
 
 const derivedFieldBaseSchema = baseFieldSchema

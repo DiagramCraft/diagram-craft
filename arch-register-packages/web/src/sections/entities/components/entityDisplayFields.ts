@@ -310,6 +310,11 @@ export const formatEntityDisplayValue = (
   ) {
     return formatCurrencyValue(value);
   }
-  if (field.schemaField?.type === 'duration') return formatDurationValue(value);
+  if (
+    field.schemaField?.type === 'duration' ||
+    (field.schemaField?.type === 'derived' && field.schemaField.resultType === 'duration')
+  ) {
+    return formatDurationValue(value);
+  }
   return String(value);
 };

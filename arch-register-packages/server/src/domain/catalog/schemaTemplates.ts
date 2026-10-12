@@ -125,7 +125,7 @@ type SymbolicFieldVariant =
       name: string;
       type: 'derived';
       expression: string;
-      resultType: 'text' | 'number' | 'currency' | 'select' | 'boolean' | 'rating';
+      resultType: 'text' | 'number' | 'currency' | 'select' | 'boolean' | 'rating' | 'duration';
       enumId?: SymbolicReference;
       recalcInterval?: 'hourly' | 'daily';
     }

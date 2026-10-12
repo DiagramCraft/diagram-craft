@@ -284,6 +284,7 @@ export const SchemaFieldRow = ({
               <Select.Item value="select">Select</Select.Item>
               <Select.Item value="boolean">Boolean</Select.Item>
               <Select.Item value="rating">Rating</Select.Item>
+              <Select.Item value="duration">Duration</Select.Item>
             </Select.Root>
           </FormElement>
           {field.resultType === 'select' && (

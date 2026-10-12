@@ -140,7 +140,7 @@ export const getSchemaFieldDefs = (
             ? 'select'
             : f.resultType === 'rating'
               ? 'rating'
-              : f.resultType === 'currency'
+              : f.resultType === 'currency' || f.resultType === 'duration'
                 ? 'number'
                 : f.resultType;
         if (type === 'select') options = f.options ?? [];
