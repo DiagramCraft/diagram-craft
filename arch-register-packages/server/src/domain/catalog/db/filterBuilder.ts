@@ -161,8 +161,9 @@ export const buildConditionClause = (
     );
   }
 
+  // The text cast lets substring operators run on numeric expressions (e.g. duration days).
   const ilike = (ph: string) =>
-    dialect === 'postgres' ? `${col} ILIKE ${ph}` : `LOWER(${col}) LIKE LOWER(${ph})`;
+    dialect === 'postgres' ? `${col}::text ILIKE ${ph}` : `LOWER(${col}) LIKE LOWER(${ph})`;
 
   switch (cond.op) {
     case 'empty':
