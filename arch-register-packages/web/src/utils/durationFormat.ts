@@ -40,3 +40,19 @@ export const formatDurationValue = (value: unknown): string => {
   const [singular, plural] = UNIT_LABELS[unit as DurationUnit];
   return `${amount} ${amount === 1 ? singular : plural}`;
 };
+
+/** Encodes a partially filled duration as an editable "<amount> <unit>" string; '' if no amount. */
+export const encodeDurationText = (value: { amount?: number; unit?: DurationUnit }): string =>
+  value.amount === undefined ? '' : `${value.amount} ${value.unit ?? 'years'}`;
+
+/** Parses the "<amount> <unit>" string produced by encodeDurationText; null if incomplete. */
+export const decodeDurationText = (text: string): { amount: number; unit: DurationUnit } | null => {
+  const [amount, unit] = text.trim().split(/\s+/, 2);
+  if (amount === undefined || amount === '' || unit === undefined || !(unit in UNIT_LABELS)) {
+    return null;
+  }
+  const parsed = Number(amount);
+  return Number.isFinite(parsed) && parsed >= 0
+    ? { amount: parsed, unit: unit as DurationUnit }
+    : null;
+};
