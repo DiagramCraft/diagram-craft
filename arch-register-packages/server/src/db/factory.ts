@@ -9,6 +9,8 @@ import { assert } from '@diagram-craft/utils/assert';
 type CreateDatabaseOptions = {
   initialize?: boolean;
   postgresSchema?: string;
+  /** Overrides DATABASE_URL, e.g. to connect to a per-test cloned database. */
+  postgresUrl?: string;
 };
 
 export const createDatabase = async (
@@ -18,7 +20,7 @@ export const createDatabase = async (
   const initialize = options.initialize ?? true;
   switch (driver) {
     case 'postgres': {
-      const connectionString = process.env['DATABASE_URL'];
+      const connectionString = options.postgresUrl ?? process.env['DATABASE_URL'];
       if (!connectionString) throw new Error('DATABASE_URL environment variable is not set');
       const db = new PostgresDatabase(connectionString, options.postgresSchema);
       if (initialize) {

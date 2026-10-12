@@ -32,15 +32,79 @@ export const provisionSqliteDatabase = async (): Promise<ProvisionedDatabase> =>
   };
 };
 
-export const provisionPostgresDatabase = async (): Promise<ProvisionedDatabase> => {
+/** Returns `url` with its database name replaced by `name`. */
+export const withDatabaseName = (url: string, name: string): string => {
+  const parsed = new URL(url);
+  parsed.pathname = `/${name}`;
+  return parsed.toString();
+};
+
+const quoteIdent = (name: string) => `"${name.replaceAll('"', '""')}"`;
+
+/** Creates an empty database (no schema applied) using the server in `adminUrl`. */
+export const createPostgresDatabase = async (
+  adminUrl: string,
+  name: string,
+  template?: string
+): Promise<void> => {
+  const sql = postgres(adminUrl, { max: 1, onnotice: () => undefined });
+  try {
+    await sql.unsafe(
+      `CREATE DATABASE ${quoteIdent(name)}${template ? ` TEMPLATE ${quoteIdent(template)}` : ''}`
+    );
+  } finally {
+    await sql.end();
+  }
+};
+
+export const dropPostgresDatabase = async (adminUrl: string, name: string): Promise<void> => {
+  const sql = postgres(adminUrl, { max: 1, onnotice: () => undefined });
+  try {
+    await sql.unsafe(`DROP DATABASE IF EXISTS ${quoteIdent(name)} WITH (FORCE)`);
+  } finally {
+    await sql.end();
+  }
+};
+
+type ProvisionPostgresOptions = {
+  /**
+   * Name of a template database (same server as DATABASE_URL) to clone. When set, a
+   * dedicated database is created from it instead of a schema being built from scratch.
+   */
+  template?: string;
+};
+
+export const provisionPostgresDatabase = async (
+  options: ProvisionPostgresOptions = {}
+): Promise<ProvisionedDatabase> => {
   const baseUrl = process.env['DATABASE_URL'];
   if (!baseUrl) throw new Error('DATABASE_URL is required to provision a postgres database');
+
+  process.env['DB_DRIVER'] = 'postgres';
+
+  if (options.template) {
+    const name = `db_test_${randomBytes(8).toString('hex')}`;
+    await createPostgresDatabase(baseUrl, name, options.template);
+
+    const db = await createDatabase({
+      initialize: false,
+      postgresUrl: withDatabaseName(baseUrl, name)
+    });
+
+    return {
+      driver: 'postgres',
+      db,
+      teardown: async () => {
+        await db.core.close();
+        await dropPostgresDatabase(baseUrl, name);
+      }
+    };
+  }
 
   const schema = `db_test_${randomBytes(8).toString('hex')}`;
 
   await recreatePostgresSchema(baseUrl, schema);
 
-  process.env['DB_DRIVER'] = 'postgres';
   process.env['DATABASE_URL'] = baseUrl;
 
   const db = await createDatabase({ initialize: false, postgresSchema: schema });
