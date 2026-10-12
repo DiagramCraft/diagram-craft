@@ -397,7 +397,11 @@ test.describe('ai chat routes', () => {
 
     expect(res.status).toBe(200);
     expect(res.headers.get('content-type')).toContain('text/event-stream');
-    expect(await res.text()).toContain('Tool call reply');
+    const streamBody = await res.text();
+    expect(streamBody).toContain('Tool call reply');
+    expect(streamBody).toContain('TOOL_CALL_START');
+    expect(streamBody).toContain('call-a');
+    expect(streamBody).toContain('TOOL_CALL_RESULT');
 
     const messages = await server.db.ai.listMessages(conversationId);
     const assistantMessage = messages.find(message => message.role === 'assistant');

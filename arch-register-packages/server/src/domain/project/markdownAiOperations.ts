@@ -272,8 +272,7 @@ export const testDocumentAiAction = async (
                 modelOptions: { temperature: aiConfig.temperature },
                 stream: false
               });
-              rawOutput =
-                typeof legacyAnswer === 'string' ? legacyAnswer : JSON.stringify(legacyAnswer);
+              rawOutput = legacyAnswer;
               generatedResponse = parseGeneratedResponse(outputField, rawOutput);
               if (!generatedResponse.ok) throw new Error(generatedResponse.error);
             }
