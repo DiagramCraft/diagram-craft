@@ -41,6 +41,7 @@ The available result types are:
 - `select` — also requires an `enumId`
 - `boolean`
 - `rating` — an integer from 1 to 5
+- `duration` — an object with a non-negative `amount` and a `unit` (`days`, `weeks`, `months`, `years`); a string such as `"3 years"` is also accepted
 
 Derived fields are always optional and cannot be written directly by entity or assessment
 mutations. The server recalculates them from the submitted source values.

@@ -247,6 +247,7 @@ export const renderEntityFieldDisplayValue = (
   if (field.type === 'derived') {
     if (field.resultType === 'boolean') return <span>{value ? 'Yes' : 'No'}</span>;
     if (field.resultType === 'currency') return <span>{formatCurrencyValue(value)}</span>;
+    if (field.resultType === 'duration') return <span>{formatDurationValue(value)}</span>;
     if (field.resultType === 'select')
       return formatSelectOption(field.options, String(value), asChip);
     return <span>{String(value)}</span>;

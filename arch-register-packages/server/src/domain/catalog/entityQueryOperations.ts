@@ -733,7 +733,8 @@ const collectEntities = async (
           : 'array'
         : field.type === 'currency'
           ? 'currency'
-          : field.type === 'duration'
+          : field.type === 'duration' ||
+              (field.type === 'derived' && field.resultType === 'duration')
             ? 'duration'
             : 'scalar';
       const existingKind = customFieldKinds.get(field.id);

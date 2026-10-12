@@ -109,6 +109,29 @@ describe('derived fields', () => {
     });
   });
 
+  it('coerces duration results from objects and strings and drops invalid ones', () => {
+    const durationField = (id: string, expression: string): SchemaField => ({
+      id,
+      name: id,
+      type: 'derived',
+      requirementLevel: 'optional',
+      expression,
+      resultType: 'duration'
+    });
+    const fields: SchemaField[] = [
+      durationField('as_object', "{ amount: 3, unit: 'years' }"),
+      durationField('as_string', "'6m'"),
+      durationField('negative', "{ amount: -1, unit: 'days' }"),
+      durationField('bad_unit', "{ amount: 1, unit: 'decades' }"),
+      durationField('empty', "''")
+    ];
+
+    expect(materializeDerivedFields(fields, {}, entityContext, [])).toEqual({
+      as_object: { amount: 3, unit: 'years' },
+      as_string: { amount: 6, unit: 'months' }
+    });
+  });
+
   it('supports multiplicative relation aggregates with null filtering and integer results', () => {
     const fields: SchemaField[] = [
       {

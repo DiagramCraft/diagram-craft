@@ -99,7 +99,8 @@ const derivedRelationResultTypeSchema = z.enum([
   'currency',
   'select',
   'boolean',
-  'rating'
+  'rating',
+  'duration'
 ]);
 
 const derivedRelationFieldBaseSchema = baseRelationFieldSchema

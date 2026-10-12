@@ -9,6 +9,7 @@ import {
 import type { RelationField } from '@arch-register/api-types/relationSchemaContract';
 import { currencyValueSchema } from '@arch-register/api-types/common';
 import { createLogger } from '../../utils/logger';
+import { parseDurationValue } from '../../utils/durationValue';
 import { httpAssert } from '../../utils/httpAssert';
 
 export type DerivedRecalcInterval = 'hourly' | 'daily';
@@ -16,7 +17,7 @@ export type DerivedRecalcInterval = 'hourly' | 'daily';
 export type DerivedFieldDefinition = {
   id: string;
   expression: string;
-  resultType: 'text' | 'number' | 'currency' | 'select' | 'boolean' | 'rating';
+  resultType: 'text' | 'number' | 'currency' | 'select' | 'boolean' | 'rating' | 'duration';
   /**
    * Cadence at which the recurring `derived-fields.recalculate-scan` job recomputes this value.
    * Only meaningful for expressions that read `<root>.now`; `buildDerivedPlan` defaults such a
@@ -483,6 +484,11 @@ const coerceResult = (field: DerivedFieldDefinition, value: unknown): unknown =>
       const parsed = currencyValueSchema.safeParse(value);
       if (!parsed.success) throw new Error('Expected a finite amount and three-letter currency');
       return parsed.data;
+    }
+    case 'duration': {
+      const parsed = parseDurationValue(value);
+      if (!parsed) throw new Error('Expected a duration with a non-negative amount and a unit');
+      return parsed;
     }
     case 'boolean':
       if (typeof value !== 'boolean') throw new Error(`Expected boolean, received ${typeof value}`);
