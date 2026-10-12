@@ -25,6 +25,18 @@ export const durationToDays = (value: unknown): number | null => {
   return amount * DAYS_PER_UNIT[unit as DurationUnit];
 };
 
+/** Picks the largest unit that represents `days` exactly, for showing a stored day count. */
+export const daysToDuration = (days: number): { amount: number; unit: DurationUnit } => {
+  const units: DurationUnit[] = ['years', 'months', 'weeks'];
+  for (const unit of units) {
+    const amount = days / DAYS_PER_UNIT[unit];
+    if (amount >= 1 && Math.abs(amount - Math.round(amount)) < 1e-9) {
+      return { amount: Math.round(amount), unit };
+    }
+  }
+  return { amount: days, unit: 'days' };
+};
+
 export const durationUnitLabel = (unit: DurationUnit): string => {
   const [, plural] = UNIT_LABELS[unit];
   return plural.charAt(0).toUpperCase() + plural.slice(1);

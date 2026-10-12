@@ -7,6 +7,8 @@ import type { FilterCondition } from '@arch-register/api-types/viewContract';
 import { isNowDateLiteral } from '@arch-register/api-types/nowDateLiteral';
 import styles from './FilterBuilder.module.css';
 import { EmptyState } from './EmptyState';
+import { DurationInput, type DurationInputValue } from './DurationInput';
+import { daysToDuration, durationToDays } from '../utils/durationFormat';
 import { EntitySchema } from '@arch-register/api-types/schemaContract';
 import {
   WorkspaceLifecycleState,
@@ -98,7 +100,16 @@ export type FieldDef = {
   // 'freetext' is not a real schema field - the visual query builder injects one synthetic
   // 'freetext' entry so a condition row's field picker can also switch the row to a root
   // free-text clause. It has no operator; the row collapses to a single text input.
-  type: 'text' | 'date' | 'select' | 'boolean' | 'number' | 'rating' | 'presence' | 'freetext';
+  type:
+    | 'text'
+    | 'date'
+    | 'select'
+    | 'boolean'
+    | 'number'
+    | 'duration'
+    | 'rating'
+    | 'presence'
+    | 'freetext';
   options?: { value: string; label: string }[];
 };
 
@@ -131,9 +142,10 @@ export const getSchemaFieldDefs = (
         const en = enums.find(e => e.id === f.enumId);
         options = en?.options ?? [];
       } else if (f.type === 'boolean') type = 'boolean';
-      // Duration filters compare against days; stored values in other units are normalised.
-      else if (f.type === 'number' || f.type === 'currency' || f.type === 'duration')
-        type = 'number';
+      // Duration filters are stored as a number of days; stored values in other units are
+      // normalised by the server.
+      else if (f.type === 'duration') type = 'duration';
+      else if (f.type === 'number' || f.type === 'currency') type = 'number';
       else if (f.type === 'derived') {
         type =
           f.resultType === 'select'
@@ -337,7 +349,8 @@ export const FilterBuilder = ({
       const field = fields.find(f => f.id === updates.fieldId);
       if (field) {
         if (field.type === 'date') updated.op = 'on';
-        else if (field.type === 'select' || field.type === 'number') updated.op = 'equals';
+        else if (field.type === 'select' || field.type === 'number' || field.type === 'duration')
+          updated.op = 'equals';
         else if (field.type === 'rating') updated.op = 'gte';
         else if (field.type === 'presence') updated.op = 'not_empty';
         else updated.op = 'contains';
@@ -419,6 +432,24 @@ export const FilterRow = ({
     setLocalTextValue(toDraft(condition.value));
   }, [condition.fieldId, condition.value]);
 
+  // Duration filters store a day count; the draft keeps the chosen unit, which the day count
+  // alone cannot (12 months and 1 year are the same number of days).
+  const [durationDraft, setDurationDraft] = React.useState<DurationInputValue>(() =>
+    typeof condition.value === 'number' ? daysToDuration(condition.value) : {}
+  );
+  // biome-ignore lint/correctness/useExhaustiveDependencies: only re-derive the draft when the stored value no longer matches it
+  React.useEffect(() => {
+    const draftDays =
+      durationDraft.amount === undefined
+        ? undefined
+        : durationDraft.amount *
+          (durationToDays({ amount: 1, unit: durationDraft.unit ?? 'years' }) ?? 1);
+    const stored = typeof condition.value === 'number' ? condition.value : undefined;
+    if (stored !== draftDays) {
+      setDurationDraft(stored === undefined ? {} : daysToDuration(stored));
+    }
+  }, [condition.fieldId, condition.value]);
+
   const commitTextValue = () =>
     isIn
       ? onUpdate({ value: parseInValue(localTextValue) })
@@ -434,7 +465,7 @@ export const FilterRow = ({
   const operators = React.useMemo(() => {
     if (field.type === 'date') return DATE_OPERATORS;
     if (field.type === 'select') return allowIn ? withIn(SELECT_OPERATORS) : SELECT_OPERATORS;
-    if (field.type === 'number') return NUMBER_OPERATORS;
+    if (field.type === 'number' || field.type === 'duration') return NUMBER_OPERATORS;
     if (field.type === 'rating') return RATING_OPERATORS;
     if (field.type === 'presence') return PRESENCE_OPERATORS;
     return allowIn ? withIn(TEXT_OPERATORS) : TEXT_OPERATORS;
@@ -561,6 +592,20 @@ export const FilterRow = ({
                 </button>
               </div>
             )
+          ) : field.type === 'duration' ? (
+            <DurationInput
+              value={durationDraft}
+              onChange={next => {
+                setDurationDraft(next);
+                onUpdate({
+                  value:
+                    next.amount === undefined
+                      ? ''
+                      : next.amount *
+                        (durationToDays({ amount: 1, unit: next.unit ?? 'years' }) ?? 1)
+                });
+              }}
+            />
           ) : field.type === 'number' || field.type === 'rating' ? (
             <TextInput
               type="number"

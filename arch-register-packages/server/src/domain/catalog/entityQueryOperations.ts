@@ -704,7 +704,7 @@ const collectEntities = async (
   const collectionEntityIdSet = collectionEntityIds == null ? null : new Set(collectionEntityIds);
   const customFieldKinds = new Map<
     string,
-    'scalar' | 'currency' | 'duration' | 'array' | 'currency-array'
+    'scalar' | 'currency' | 'duration' | 'array' | 'currency-array' | 'duration-array'
   >();
   const restrictedCustomFieldIds = new Set<string>();
   for (const schema of schemas) {
@@ -730,7 +730,9 @@ const collectEntities = async (
       const kind = isMultiValuedScalarField(field)
         ? field.type === 'currency'
           ? 'currency-array'
-          : 'array'
+          : field.type === 'duration'
+            ? 'duration-array'
+            : 'array'
         : field.type === 'currency'
           ? 'currency'
           : field.type === 'duration' ||
@@ -739,7 +741,7 @@ const collectEntities = async (
             : 'scalar';
       const existingKind = customFieldKinds.get(field.id);
       const kindRank = (value: typeof kind): number =>
-        value === 'currency-array' || value === 'array'
+        value === 'currency-array' || value === 'duration-array' || value === 'array'
           ? 3
           : value === 'currency' || value === 'duration'
             ? 2

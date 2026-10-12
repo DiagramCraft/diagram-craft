@@ -224,10 +224,10 @@ const resolveColumn = (
   alias: string,
   fieldId: string,
   state: EntityQuerySqlRenderState,
-  kind: 'scalar' | 'array' | 'currency-array' = 'scalar',
+  kind: 'scalar' | 'array' | 'currency-array' | 'duration-array' = 'scalar',
   currencyAmount = false,
   durationDays = false
-): { col: string; kind: 'scalar' | 'array' | 'currency-array' } | null => {
+): { col: string; kind: 'scalar' | 'array' | 'currency-array' | 'duration-array' } | null => {
   if (fieldId === '_id') return { col: `${alias}.id`, kind: 'scalar' };
   if (fieldId === '_conformanceStatus') {
     return { col: `${alias}.conformance_status`, kind: 'scalar' };
@@ -248,7 +248,7 @@ const resolveColumn = (
     return { col: `${alias}.${ENTITY_ARRAY_COLUMNS[fieldId]!.slice('e.'.length)}`, kind: 'array' };
   }
   if (!isValidFieldId(fieldId)) return null;
-  if (kind === 'array' || kind === 'currency-array') {
+  if (kind === 'array' || kind === 'currency-array' || kind === 'duration-array') {
     return {
       col: state.dialectAdapter.jsonFieldValue(`${alias}.data`, fieldId),
       kind
@@ -319,7 +319,9 @@ const compilePredicateTerminal =
     const fieldKind = multiField
       ? multiField.type === 'currency'
         ? ('currency-array' as const)
-        : ('array' as const)
+        : multiField.type === 'duration'
+          ? ('duration-array' as const)
+          : ('array' as const)
       : ('scalar' as const);
     const currencyAmount =
       fieldKind === 'scalar' && scalarFields.some(field => field.type === 'currency');
