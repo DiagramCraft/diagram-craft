@@ -65,4 +65,91 @@ test.describe('assistant section', () => {
       messages: [{ role: 'user', content: 'Say hello' }]
     });
   });
+
+  test('shows and responds to a streamed tool approval', async ({ page }) => {
+    const requestBodies: Array<Record<string, unknown>> = [];
+
+    await page.route('**/api/application/v1/default/ai/chat', async route => {
+      const requestBody = route.request().postDataJSON() as Record<string, unknown>;
+      requestBodies.push(requestBody);
+      const threadId = String(requestBody['threadId']);
+      const runId = String(requestBody['runId']);
+      const messageId = `mock-assistant-message-${requestBodies.length}`;
+      const events =
+        requestBodies.length === 1
+          ? [
+              { type: 'RUN_STARTED', threadId, runId },
+              { type: 'TEXT_MESSAGE_START', messageId, role: 'assistant' },
+              {
+                type: 'TOOL_CALL_START',
+                messageId,
+                toolCallId: 'approval-call-1',
+                toolCallName: 'create_entity'
+              },
+              {
+                type: 'TOOL_CALL_ARGS',
+                toolCallId: 'approval-call-1',
+                delta: '{"name":"Review Service"}'
+              },
+              {
+                type: 'TOOL_CALL_END',
+                toolCallId: 'approval-call-1',
+                input: { name: 'Review Service' }
+              },
+              {
+                type: 'RUN_FINISHED',
+                threadId,
+                runId,
+                outcome: {
+                  type: 'interrupt',
+                  interrupts: [
+                    {
+                      id: 'approval-1',
+                      reason: 'tool_call',
+                      message: 'Approval required to create this entity.',
+                      toolCallId: 'approval-call-1',
+                      responseSchema: {
+                        type: 'object',
+                        properties: { approved: { type: 'boolean' } },
+                        required: ['approved']
+                      },
+                      metadata: {
+                        kind: 'approval',
+                        toolName: 'create_entity',
+                        input: { name: 'Review Service' }
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          : [
+              { type: 'RUN_STARTED', threadId, runId },
+              { type: 'TEXT_MESSAGE_START', messageId, role: 'assistant' },
+              { type: 'TEXT_MESSAGE_CONTENT', messageId, delta: 'Entity created.' },
+              { type: 'TEXT_MESSAGE_END', messageId },
+              { type: 'RUN_FINISHED', threadId, runId, outcome: { type: 'success' } }
+            ];
+
+      await route.fulfill({
+        status: 200,
+        headers: { 'content-type': 'text/event-stream' },
+        body: events.map(event => `data: ${JSON.stringify(event)}\n\n`).join('')
+      });
+    });
+
+    await page.goto(`/${defaultWorkspace.slug}/assistant`);
+    await page.getByRole('button', { name: 'New chat' }).first().click();
+    await expect.poll(() => new URL(page.url()).searchParams.get('conversation')).not.toBeNull();
+    await page.getByPlaceholder('Ask a question, or describe a change...').fill('Create a service');
+    await page.getByTitle('Send (Enter)').click();
+
+    await expect(page.getByText('Create entity', { exact: true })).toBeVisible();
+    await expect(page.getByText('Review Service', { exact: true })).toBeVisible();
+    await page.getByRole('button', { name: 'Approve' }).click();
+
+    await expect(page.getByText('Approved', { exact: true })).toBeVisible();
+    await expect(page.getByText('Entity created.', { exact: true })).toBeVisible();
+    await expect.poll(() => requestBodies.length).toBe(2);
+  });
 });
