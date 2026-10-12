@@ -13,6 +13,8 @@ import type { BulkEditableField } from './bulkEditFields';
 import styles from './BulkEditToolbar.module.css';
 import { MultiValueEditor } from '../../../components/MultiValueEditor';
 import { isMultiValuedScalarField } from '../../../lib/scalarFieldValues';
+import { DurationInput } from '../../../components/DurationInput';
+import { decodeDurationText, encodeDurationText } from '../../../utils/durationFormat';
 import { selectableEnumOptions } from '../../../utils/enumOptions';
 
 export type BulkFieldInputProps = {
@@ -184,6 +186,9 @@ export const BulkFieldInput = ({
           </span>
         );
       }
+      if (schemaField.type === 'duration') {
+        return <DurationInput value={item} onChange={update} />;
+      }
       if (schemaField.type === 'longtext') {
         return (
           <TextArea value={typeof item === 'string' ? item : ''} onChange={v => update(v ?? '')} />
@@ -203,6 +208,8 @@ export const BulkFieldInput = ({
             ? false
             : schemaField.type === 'currency'
               ? { amount: undefined, currency: defaultCurrency }
+              : schemaField.type === 'duration'
+                ? { amount: undefined, unit: 'years' }
               : schemaField.type === 'number'
                 ? ''
                 : ''
@@ -288,6 +295,15 @@ export const BulkFieldInput = ({
           ))}
         </Select.Root>
       </span>
+    );
+  }
+
+  if (schemaField.type === 'duration') {
+    return (
+      <DurationInput
+        value={decodeDurationText(value) ?? {}}
+        onChange={next => onValue(encodeDurationText(next))}
+      />
     );
   }
 
