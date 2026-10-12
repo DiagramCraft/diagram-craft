@@ -24,7 +24,7 @@
   cursor: pointer;
 }
 
-.tabItem[data-selected='true'] {
+.tabItem[data-selected="true"] {
   border-color: var(--accent-fg);
   background: var(--cmp-bg);
 }

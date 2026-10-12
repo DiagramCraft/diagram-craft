@@ -5,7 +5,10 @@ import type { DashboardWidget } from '@arch-register/api-types/dashboardContract
 import { DashboardGridCanvas } from './DashboardGridCanvas';
 import { WidgetPickerDialog } from './WidgetPickerDialog';
 import { WidgetConfigDialog } from './WidgetConfigDialog';
-import { registerNestedWidgetResolvers, type TabContentsEditorProps } from './widgets/nestedWidgets';
+import {
+  registerNestedWidgetResolvers,
+  type TabContentsEditorProps
+} from './widgets/nestedWidgets';
 import { TABS_TYPE } from './widgets/tabsLogic';
 import styles from './TabContentsEditor.module.css';
 
