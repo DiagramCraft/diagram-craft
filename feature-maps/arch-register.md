@@ -69,7 +69,8 @@
           lifecycle/limit filtering with fixed columns, while entity browser exposes the full entity browser experience
           (arbitrary filter conditions, sort, and table/cards/tree/map views) for users who need finer-grained control.
           Table column headers are clickable to sort by any column, ascending or descending, and an entity browser
-          widget can have its own title and a maximum number of rows.
+          widget can have its own title and a maximum number of rows, or be switched to an interactive mode with a
+          search box and pagination (table and cards views).
           A workspace can have multiple
           named dashboards, listed in order in a "Dashboards" section of the home sidebar and switchable by selecting
           one; the first dashboard in that order is shown at the workspace home, and a workspace always retains at
@@ -772,7 +773,7 @@
           multi-select with counts) that filters the table live. Administrators can edit the facets sidebar (add, remove, reorder facets) from the dashboard's Edit sidebar dialog. A facets sidebar can be built over an entity schema or over a relation type (e.g. Data Flow), tallying counts from the relations' own select/text fields. The table shows canonical name, synonyms,
           abbreviations, categories, owner, lifecycle, status, and a usage count (entities, typed relations,
           Markdown, projects, and diagrams referencing the term); clicking a row opens the term's entity drawer.
-          There is no free-text search box, column sort, or pagination on this screen yet (tracked as a follow-up),
+          The table has sortable column headers but no free-text search box or pagination on this screen yet,
           and unused/conflicting/deprecated/ownerless quality reporting is no longer surfaced here. Term drawers use
           the workspace's configurable schema-scoped entity drawer for declarative term fields, metadata, ordering,
           and the generic `entity.usage` slot. Term definitions, aliases, category changes, ownership, lifecycle,

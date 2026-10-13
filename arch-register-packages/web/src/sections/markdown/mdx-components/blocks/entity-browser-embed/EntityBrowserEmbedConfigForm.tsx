@@ -1,3 +1,4 @@
+import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { useEffect, useMemo } from 'react';
 import { TbChevronLeft, TbChevronRight } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
@@ -88,6 +89,7 @@ export const EntityBrowserEmbedConfigForm = ({ config, onChange, context }: Prop
       ...(config.schemaName ? { schemaName: config.schemaName } : {}),
       ...(config.title ? { title: config.title } : {}),
       ...(config.limit ? { limit: config.limit } : {}),
+      ...(config.interactive ? { interactive: true } : {}),
       ...(config.overlays ? { overlays: config.overlays } : {}),
       ...(config.dimOwnerIds ? { dimOwnerIds: config.dimOwnerIds } : {})
     });
@@ -102,6 +104,7 @@ export const EntityBrowserEmbedConfigForm = ({ config, onChange, context }: Prop
     config.schemaName,
     config.title,
     config.limit,
+    config.interactive,
     config.overlays,
     config.dimOwnerIds,
     onChange
@@ -232,6 +235,15 @@ export const EntityBrowserEmbedConfigForm = ({ config, onChange, context }: Prop
             }
           />
         </label>
+        {(view === 'table' || view === 'cards') && (
+          <label className={dialogStyles.optionRow}>
+            <span className={dialogStyles.optionLabel}>Search &amp; pagination</span>
+            <Checkbox
+              value={config.interactive ?? false}
+              onChange={value => onChange({ ...config, interactive: value ? true : undefined })}
+            />
+          </label>
+        )}
       </div>
       <EntityBrowserEmbedAdvancedConfig config={config} onChange={onChange} />
       <EntityBrowserToolbar

@@ -22,7 +22,8 @@ const isEntityBrowserEmbedConfig = (
   typeof config.viewConfigs === 'object' &&
   config.viewConfigs !== null &&
   (config.title === undefined || typeof config.title === 'string') &&
-  (config.limit === undefined || typeof config.limit === 'number');
+  (config.limit === undefined || typeof config.limit === 'number') &&
+  (config.interactive === undefined || typeof config.interactive === 'boolean');
 
 export const entityBrowserEmbedSpec = defineMdxComponent<
   EntityBrowserEmbedSlateElement,
