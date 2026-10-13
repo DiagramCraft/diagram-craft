@@ -39,6 +39,37 @@ describe('schema presentation categories', () => {
   });
 });
 
+describe('field descriptions', () => {
+  const isBlank = (description: string | undefined) => !description || description.trim() === '';
+
+  it('describes every field of every seeded entity schema', () => {
+    const missing = seedSchemas.flatMap(schema =>
+      schema.fields
+        .filter(field => isBlank(field.description))
+        .map(field => `${schema.name}.${field.id}`)
+    );
+    expect(missing).toEqual([]);
+  });
+
+  it('describes every field of every seeded relation schema', () => {
+    const missing = seedRelationSchemas.flatMap(schema =>
+      schema.fields
+        .filter(field => isBlank(field.description))
+        .map(field => `${schema.name}.${field.id}`)
+    );
+    expect(missing).toEqual([]);
+  });
+
+  it('describes every field of every seeded shared field group', () => {
+    const missing = seedSharedFieldGroups.flatMap(group =>
+      group.fields
+        .filter(field => isBlank(field.description))
+        .map(field => `${group.name}.${field.id}`)
+    );
+    expect(missing).toEqual([]);
+  });
+});
+
 describe('template-backed catalog seed data', () => {
   it('uses the composed templates for every default-workspace definition', () => {
     const defaultSchemas = seedSchemas.filter(schema => schema.workspace === WORKSPACE_ID);

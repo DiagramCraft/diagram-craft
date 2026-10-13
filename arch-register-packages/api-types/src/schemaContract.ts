@@ -21,6 +21,10 @@ const requirementLevelSchema = z
 const baseFieldSchema = z.object({
   id: z.string().describe('Unique field identifier'),
   name: z.string().describe('Field name'),
+  description: z
+    .string()
+    .optional()
+    .describe('User-facing description of what the field holds, shown alongside the field label'),
   requirementLevel: requirementLevelSchema.describe(
     'Whether the field is required, expected, or optional'
   ),

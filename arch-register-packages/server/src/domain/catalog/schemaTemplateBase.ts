@@ -33,6 +33,8 @@ export const ADR_DOCUMENT_TYPE_DEFINITION: SymbolicDocumentType = {
     {
       id: 'status',
       name: 'Status',
+      description:
+        'Where the decision stands in its lifecycle, for example proposed, accepted or superseded.',
       type: 'enum',
       requirement: 'required',
       enumOptions: [
@@ -46,6 +48,7 @@ export const ADR_DOCUMENT_TYPE_DEFINITION: SymbolicDocumentType = {
     {
       id: 'decision_date',
       name: 'Decision date',
+      description: 'The date the decision was made.',
       type: 'date',
       requirement: 'expected',
       retired: false
@@ -53,6 +56,7 @@ export const ADR_DOCUMENT_TYPE_DEFINITION: SymbolicDocumentType = {
     {
       id: 'affected_entities',
       name: 'Affected entities',
+      description: 'The catalog entities this decision applies to or impacts.',
       type: 'entity_link',
       requirement: 'optional',
       minCardinality: 0,
@@ -61,6 +65,7 @@ export const ADR_DOCUMENT_TYPE_DEFINITION: SymbolicDocumentType = {
     {
       id: 'supersedes',
       name: 'Supersedes',
+      description: 'An earlier decision record that this one replaces.',
       type: 'document_link',
       requirement: 'optional',
       minCardinality: 0,

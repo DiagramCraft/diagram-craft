@@ -41,7 +41,11 @@ export const RelationFieldInput = ({
       label: entity._name ?? entity._slug
     }));
     return (
-      <FormElement label={field.name} required={field.requirementLevel !== 'optional'}>
+      <FormElement
+        label={field.name}
+        hint={field.description}
+        required={field.requirementLevel !== 'optional'}
+      >
         <MultiSelect
           selectedValues={relationIds(value)}
           availableItems={availableItems}
@@ -61,7 +65,11 @@ export const RelationFieldInput = ({
       option => ({ value: option.value, label: option.label })
     );
     return (
-      <FormElement label={field.name} required={field.requirementLevel !== 'optional'}>
+      <FormElement
+        label={field.name}
+        hint={field.description}
+        required={field.requirementLevel !== 'optional'}
+      >
         <MultiSelect
           selectedValues={relationIds(value)}
           availableItems={availableItems}
@@ -76,7 +84,11 @@ export const RelationFieldInput = ({
 
   if (field.type === 'select') {
     return (
-      <FormElement label={field.name} required={field.requirementLevel !== 'optional'}>
+      <FormElement
+        label={field.name}
+        hint={field.description}
+        required={field.requirementLevel !== 'optional'}
+      >
         <Select.Root
           value={stringValue ?? undefined}
           disabled={disabled}
@@ -96,7 +108,11 @@ export const RelationFieldInput = ({
 
   if (field.type === 'longtext') {
     return (
-      <FormElement label={field.name} required={field.requirementLevel !== 'optional'}>
+      <FormElement
+        label={field.name}
+        hint={field.description}
+        required={field.requirementLevel !== 'optional'}
+      >
         <TextArea
           value={stringValue}
           disabled={disabled}
@@ -110,7 +126,11 @@ export const RelationFieldInput = ({
 
   if (field.type === 'boolean') {
     return (
-      <FormElement label={field.name} required={field.requirementLevel !== 'optional'}>
+      <FormElement
+        label={field.name}
+        hint={field.description}
+        required={field.requirementLevel !== 'optional'}
+      >
         <Select.Root
           value={stringValue ?? undefined}
           disabled={disabled}
@@ -127,7 +147,11 @@ export const RelationFieldInput = ({
 
   if (field.type === 'date') {
     return (
-      <FormElement label={field.name} required={field.requirementLevel !== 'optional'}>
+      <FormElement
+        label={field.name}
+        hint={field.description}
+        required={field.requirementLevel !== 'optional'}
+      >
         <input
           type="date"
           disabled={disabled}
@@ -141,7 +165,11 @@ export const RelationFieldInput = ({
 
   if (field.type === 'number') {
     return (
-      <FormElement label={field.name} required={field.requirementLevel !== 'optional'}>
+      <FormElement
+        label={field.name}
+        hint={field.description}
+        required={field.requirementLevel !== 'optional'}
+      >
         <NumberInput
           value={stringValue}
           numberOfDecimals={0}
@@ -157,7 +185,11 @@ export const RelationFieldInput = ({
   }
 
   return (
-    <FormElement label={field.name} required={field.requirementLevel !== 'optional'}>
+    <FormElement
+      label={field.name}
+      hint={field.description}
+      required={field.requirementLevel !== 'optional'}
+    >
       <TextInput
         value={stringValue}
         disabled={disabled}

@@ -1,3 +1,4 @@
+import { FieldDescriptionIcon } from '../../components/FieldDescriptionIcon';
 import type { RelationRecord } from '@arch-register/api-types/relationContract';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import { Chip } from '../../components/Chip';
@@ -70,7 +71,10 @@ export const RelationDrawer = ({
           if (ids.length === 0) return null;
           return (
             <div key={field.id} className={styles.attributeRow}>
-              <span className={styles.attributeLabel}>{field.name}</span>
+              <span className={styles.attributeLabel}>
+                {field.name}
+                <FieldDescriptionIcon description={field.description} />
+              </span>
               <span className={styles.chips}>
                 {ids.map(id => (
                   <button
@@ -90,7 +94,10 @@ export const RelationDrawer = ({
         if (text === '') return null;
         return (
           <div key={field.id} className={styles.attributeRow}>
-            <span className={styles.attributeLabel}>{field.name}</span>
+            <span className={styles.attributeLabel}>
+              {field.name}
+              <FieldDescriptionIcon description={field.description} />
+            </span>
             <span>{text}</span>
           </div>
         );

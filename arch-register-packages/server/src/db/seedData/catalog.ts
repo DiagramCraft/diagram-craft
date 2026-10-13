@@ -85,6 +85,7 @@ const secondWorkspaceSchemas: SchemaDbResult[] = [
       {
         id: 'platform',
         name: 'Platform',
+        description: 'The platform the application runs on, such as iOS, Android or web.',
         type: 'select',
         enumId: SEED_ENUM_IDS.platform
       }
@@ -102,7 +103,14 @@ const secondWorkspaceSchemas: SchemaDbResult[] = [
     name: 'Service',
     category_id: SEED_CATEGORY_IDS.architecture,
     description: 'A backend service or microservice.',
-    fields: [{ id: 'technology', name: 'Technology', type: 'text' }],
+    fields: [
+      {
+        id: 'technology',
+        name: 'Technology',
+        description: 'The main technology or framework the service is built with.',
+        type: 'text'
+      }
+    ],
     color: AR_COLOR_CYAN,
     icon: 'layers',
     default_owner: null,

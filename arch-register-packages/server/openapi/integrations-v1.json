@@ -99,6 +99,10 @@
                                   "type": "string",
                                   "description": "Field name"
                                 },
+                                "description": {
+                                  "type": "string",
+                                  "description": "User-facing description of what the field holds, shown alongside the field label"
+                                },
                                 "requirementLevel": {
                                   "anyOf": [
                                     {
@@ -180,6 +184,10 @@
                                 "name": {
                                   "type": "string",
                                   "description": "Field name"
+                                },
+                                "description": {
+                                  "type": "string",
+                                  "description": "User-facing description of what the field holds, shown alongside the field label"
                                 },
                                 "requirementLevel": {
                                   "anyOf": [
@@ -263,6 +271,10 @@
                                   "type": "string",
                                   "description": "Field name"
                                 },
+                                "description": {
+                                  "type": "string",
+                                  "description": "User-facing description of what the field holds, shown alongside the field label"
+                                },
                                 "requirementLevel": {
                                   "anyOf": [
                                     {
@@ -344,6 +356,10 @@
                                 "name": {
                                   "type": "string",
                                   "description": "Field name"
+                                },
+                                "description": {
+                                  "type": "string",
+                                  "description": "User-facing description of what the field holds, shown alongside the field label"
                                 },
                                 "requirementLevel": {
                                   "anyOf": [
@@ -427,6 +443,10 @@
                                   "type": "string",
                                   "description": "Field name"
                                 },
+                                "description": {
+                                  "type": "string",
+                                  "description": "User-facing description of what the field holds, shown alongside the field label"
+                                },
                                 "requirementLevel": {
                                   "anyOf": [
                                     {
@@ -509,6 +529,10 @@
                                   "type": "string",
                                   "description": "Field name"
                                 },
+                                "description": {
+                                  "type": "string",
+                                  "description": "User-facing description of what the field holds, shown alongside the field label"
+                                },
                                 "requirementLevel": {
                                   "anyOf": [
                                     {
@@ -590,6 +614,10 @@
                                 "name": {
                                   "type": "string",
                                   "description": "Field name"
+                                },
+                                "description": {
+                                  "type": "string",
+                                  "description": "User-facing description of what the field holds, shown alongside the field label"
                                 },
                                 "requirementLevel": {
                                   "anyOf": [
@@ -684,6 +712,10 @@
                                 "name": {
                                   "type": "string",
                                   "description": "Field name"
+                                },
+                                "description": {
+                                  "type": "string",
+                                  "description": "User-facing description of what the field holds, shown alongside the field label"
                                 },
                                 "requirementLevel": {
                                   "anyOf": [
@@ -813,6 +845,10 @@
                                   "type": "string",
                                   "description": "Field name"
                                 },
+                                "description": {
+                                  "type": "string",
+                                  "description": "User-facing description of what the field holds, shown alongside the field label"
+                                },
                                 "requirementLevel": {
                                   "anyOf": [
                                     {
@@ -894,6 +930,10 @@
                                 "name": {
                                   "type": "string",
                                   "description": "Field name"
+                                },
+                                "description": {
+                                  "type": "string",
+                                  "description": "User-facing description of what the field holds, shown alongside the field label"
                                 },
                                 "requirementLevel": {
                                   "anyOf": [
@@ -990,6 +1030,10 @@
                                   "type": "string",
                                   "description": "Field name"
                                 },
+                                "description": {
+                                  "type": "string",
+                                  "description": "User-facing description of what the field holds, shown alongside the field label"
+                                },
                                 "requirementLevel": {
                                   "anyOf": [
                                     {
@@ -1080,6 +1124,10 @@
                                 "name": {
                                   "type": "string",
                                   "description": "Field name"
+                                },
+                                "description": {
+                                  "type": "string",
+                                  "description": "User-facing description of what the field holds, shown alongside the field label"
                                 },
                                 "requirementLevel": {
                                   "anyOf": [
@@ -1178,6 +1226,10 @@
                                 "name": {
                                   "type": "string",
                                   "description": "Field name"
+                                },
+                                "description": {
+                                  "type": "string",
+                                  "description": "User-facing description of what the field holds, shown alongside the field label"
                                 },
                                 "requirementLevel": {
                                   "const": "optional",
@@ -1944,6 +1996,10 @@
                                   "type": "string",
                                   "description": "Field name"
                                 },
+                                "description": {
+                                  "type": "string",
+                                  "description": "User-facing description of what the field holds, shown alongside the field label"
+                                },
                                 "requirementLevel": {
                                   "anyOf": [
                                     {
@@ -2006,6 +2062,10 @@
                                 "name": {
                                   "type": "string",
                                   "description": "Field name"
+                                },
+                                "description": {
+                                  "type": "string",
+                                  "description": "User-facing description of what the field holds, shown alongside the field label"
                                 },
                                 "requirementLevel": {
                                   "anyOf": [
@@ -2070,6 +2130,10 @@
                                   "type": "string",
                                   "description": "Field name"
                                 },
+                                "description": {
+                                  "type": "string",
+                                  "description": "User-facing description of what the field holds, shown alongside the field label"
+                                },
                                 "requirementLevel": {
                                   "anyOf": [
                                     {
@@ -2133,6 +2197,10 @@
                                   "type": "string",
                                   "description": "Field name"
                                 },
+                                "description": {
+                                  "type": "string",
+                                  "description": "User-facing description of what the field holds, shown alongside the field label"
+                                },
                                 "requirementLevel": {
                                   "anyOf": [
                                     {
@@ -2195,6 +2263,10 @@
                                 "name": {
                                   "type": "string",
                                   "description": "Field name"
+                                },
+                                "description": {
+                                  "type": "string",
+                                  "description": "User-facing description of what the field holds, shown alongside the field label"
                                 },
                                 "requirementLevel": {
                                   "anyOf": [
@@ -2270,6 +2342,10 @@
                                 "name": {
                                   "type": "string",
                                   "description": "Field name"
+                                },
+                                "description": {
+                                  "type": "string",
+                                  "description": "User-facing description of what the field holds, shown alongside the field label"
                                 },
                                 "requirementLevel": {
                                   "anyOf": [
@@ -2399,6 +2475,10 @@
                                   "type": "string",
                                   "description": "Field name"
                                 },
+                                "description": {
+                                  "type": "string",
+                                  "description": "User-facing description of what the field holds, shown alongside the field label"
+                                },
                                 "requirementLevel": {
                                   "anyOf": [
                                     {
@@ -2493,6 +2573,10 @@
                                 "name": {
                                   "type": "string",
                                   "description": "Field name"
+                                },
+                                "description": {
+                                  "type": "string",
+                                  "description": "User-facing description of what the field holds, shown alongside the field label"
                                 },
                                 "requirementLevel": {
                                   "const": "optional",
@@ -2944,6 +3028,10 @@
                                 "type": "string",
                                 "description": "Field name"
                               },
+                              "description": {
+                                "type": "string",
+                                "description": "User-facing description of what the field holds, shown alongside the field label"
+                              },
                               "requirementLevel": {
                                 "anyOf": [
                                   {
@@ -3006,6 +3094,10 @@
                               "name": {
                                 "type": "string",
                                 "description": "Field name"
+                              },
+                              "description": {
+                                "type": "string",
+                                "description": "User-facing description of what the field holds, shown alongside the field label"
                               },
                               "requirementLevel": {
                                 "anyOf": [
@@ -3070,6 +3162,10 @@
                                 "type": "string",
                                 "description": "Field name"
                               },
+                              "description": {
+                                "type": "string",
+                                "description": "User-facing description of what the field holds, shown alongside the field label"
+                              },
                               "requirementLevel": {
                                 "anyOf": [
                                   {
@@ -3133,6 +3229,10 @@
                                 "type": "string",
                                 "description": "Field name"
                               },
+                              "description": {
+                                "type": "string",
+                                "description": "User-facing description of what the field holds, shown alongside the field label"
+                              },
                               "requirementLevel": {
                                 "anyOf": [
                                   {
@@ -3195,6 +3295,10 @@
                               "name": {
                                 "type": "string",
                                 "description": "Field name"
+                              },
+                              "description": {
+                                "type": "string",
+                                "description": "User-facing description of what the field holds, shown alongside the field label"
                               },
                               "requirementLevel": {
                                 "anyOf": [
@@ -3270,6 +3374,10 @@
                               "name": {
                                 "type": "string",
                                 "description": "Field name"
+                              },
+                              "description": {
+                                "type": "string",
+                                "description": "User-facing description of what the field holds, shown alongside the field label"
                               },
                               "requirementLevel": {
                                 "anyOf": [
@@ -3399,6 +3507,10 @@
                                 "type": "string",
                                 "description": "Field name"
                               },
+                              "description": {
+                                "type": "string",
+                                "description": "User-facing description of what the field holds, shown alongside the field label"
+                              },
                               "requirementLevel": {
                                 "anyOf": [
                                   {
@@ -3493,6 +3605,10 @@
                               "name": {
                                 "type": "string",
                                 "description": "Field name"
+                              },
+                              "description": {
+                                "type": "string",
+                                "description": "User-facing description of what the field holds, shown alongside the field label"
                               },
                               "requirementLevel": {
                                 "const": "optional",

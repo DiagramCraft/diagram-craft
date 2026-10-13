@@ -33,7 +33,11 @@ export const EntityFieldInput = ({
   if (field.type === 'reference') {
     const candidates = referenceOptions?.[field.schemaId] ?? [];
     return (
-      <FormElement label={field.name} required={field.requirementLevel !== 'optional'}>
+      <FormElement
+        label={field.name}
+        hint={field.description}
+        required={field.requirementLevel !== 'optional'}
+      >
         <select
           multiple
           disabled={disabled}
@@ -57,7 +61,11 @@ export const EntityFieldInput = ({
     const candidates = referenceOptions?.[field.schemaId] ?? [];
     const selected = Array.isArray(value) ? (value[0] ?? '') : '';
     return (
-      <FormElement label={field.name} required={field.requirementLevel !== 'optional'}>
+      <FormElement
+        label={field.name}
+        hint={field.description}
+        required={field.requirementLevel !== 'optional'}
+      >
         <Select.Root
           value={selected ?? undefined}
           disabled={disabled}
@@ -201,7 +209,11 @@ export const EntityFieldInput = ({
     };
 
     return (
-      <FormElement label={field.name} required={field.requirementLevel !== 'optional'}>
+      <FormElement
+        label={field.name}
+        hint={field.description}
+        required={field.requirementLevel !== 'optional'}
+      >
         <MultiValueEditor
           value={value}
           onChange={onChange}
@@ -224,7 +236,11 @@ export const EntityFieldInput = ({
 
   if (field.type === 'select') {
     return (
-      <FormElement label={field.name} required={field.requirementLevel !== 'optional'}>
+      <FormElement
+        label={field.name}
+        hint={field.description}
+        required={field.requirementLevel !== 'optional'}
+      >
         <Select.Root
           value={typeof value === 'string' ? (value ?? undefined) : undefined}
           disabled={disabled}
@@ -244,7 +260,11 @@ export const EntityFieldInput = ({
 
   if (field.type === 'longtext') {
     return (
-      <FormElement label={field.name} required={field.requirementLevel !== 'optional'}>
+      <FormElement
+        label={field.name}
+        hint={field.description}
+        required={field.requirementLevel !== 'optional'}
+      >
         <TextArea
           value={typeof value === 'string' ? value : ''}
           disabled={disabled}
@@ -258,7 +278,11 @@ export const EntityFieldInput = ({
 
   if (field.type === 'boolean') {
     return (
-      <FormElement label={field.name} required={field.requirementLevel !== 'optional'}>
+      <FormElement
+        label={field.name}
+        hint={field.description}
+        required={field.requirementLevel !== 'optional'}
+      >
         <Select.Root
           value={typeof value === 'string' ? (value ?? undefined) : undefined}
           disabled={disabled}
@@ -275,7 +299,11 @@ export const EntityFieldInput = ({
 
   if (field.type === 'date') {
     return (
-      <FormElement label={field.name} required={field.requirementLevel !== 'optional'}>
+      <FormElement
+        label={field.name}
+        hint={field.description}
+        required={field.requirementLevel !== 'optional'}
+      >
         <input
           type="date"
           disabled={disabled}
@@ -289,7 +317,11 @@ export const EntityFieldInput = ({
 
   if (field.type === 'duration') {
     return (
-      <FormElement label={field.name} required={field.requirementLevel !== 'optional'}>
+      <FormElement
+        label={field.name}
+        hint={field.description}
+        required={field.requirementLevel !== 'optional'}
+      >
         <DurationInput value={value} onChange={onChange} disabled={disabled} />
       </FormElement>
     );
@@ -301,7 +333,11 @@ export const EntityFieldInput = ({
         ? (value as { amount?: number; currency?: string })
         : {};
     return (
-      <FormElement label={field.name} required={field.requirementLevel !== 'optional'}>
+      <FormElement
+        label={field.name}
+        hint={field.description}
+        required={field.requirementLevel !== 'optional'}
+      >
         <div style={{ display: 'flex', gap: 6 }}>
           <input
             type="number"
@@ -341,7 +377,11 @@ export const EntityFieldInput = ({
 
   if (field.type === 'number') {
     return (
-      <FormElement label={field.name} required={field.requirementLevel !== 'optional'}>
+      <FormElement
+        label={field.name}
+        hint={field.description}
+        required={field.requirementLevel !== 'optional'}
+      >
         <input
           type="number"
           step="1"
@@ -358,14 +398,22 @@ export const EntityFieldInput = ({
 
   if (field.type === 'principal') {
     return (
-      <FormElement label={field.name} required={field.requirementLevel !== 'optional'}>
+      <FormElement
+        label={field.name}
+        hint={field.description}
+        required={field.requirementLevel !== 'optional'}
+      >
         <PrincipalInput value={value} onChange={onChange} disabled={disabled} />
       </FormElement>
     );
   }
 
   return (
-    <FormElement label={field.name} required={field.requirementLevel !== 'optional'}>
+    <FormElement
+      label={field.name}
+      hint={field.description}
+      required={field.requirementLevel !== 'optional'}
+    >
       <TextInput
         value={typeof value === 'string' ? value : ''}
         disabled={disabled}

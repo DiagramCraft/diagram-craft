@@ -29,6 +29,33 @@ describe('instantiateTemplate', () => {
     }
   });
 
+  it('describes every field in every built-in template', () => {
+    const missing: string[] = [];
+    const check = (owner: string, fields: Array<{ id: string; description?: string }>) => {
+      for (const field of fields) {
+        if (!field.description?.trim()) missing.push(`${owner}.${field.id}`);
+      }
+    };
+
+    for (const template of SCHEMA_TEMPLATES) {
+      const definitions = instantiateTemplateDefinitions('ws-1', template.id);
+      for (const schema of definitions.schemas) {
+        check(`${template.id}/${schema.name}`, schema.fields);
+      }
+      for (const schema of definitions.relationSchemas) {
+        check(`${template.id}/${schema.name}`, schema.fields);
+      }
+      for (const group of definitions.fieldGroups) {
+        check(`${template.id}/${group.name}`, group.fields);
+      }
+      for (const documentType of template.documentTypes) {
+        check(`${template.id}/${documentType.name}`, documentType.fields);
+      }
+    }
+
+    expect(missing).toEqual([]);
+  });
+
   it('classifies built-ins and composes one full model with multiple concerns', () => {
     expect(
       SCHEMA_TEMPLATES.filter(template => template.category === 'full').map(t => t.id)
@@ -341,21 +368,27 @@ describe('instantiateTemplate', () => {
     const control = schemas.find(schema => schema.name === 'Control');
     const risk = schemas.find(schema => schema.name === 'Risk');
 
-    expect(threat?.fields).toContainEqual({
-      id: 'discovered_on',
-      name: 'Discovered On',
-      type: 'date'
-    });
-    expect(control?.fields).toContainEqual({
-      id: 'last_verified',
-      name: 'Last Verified',
-      type: 'date'
-    });
-    expect(risk?.fields).toContainEqual({
-      id: 'review_due',
-      name: 'Review Due',
-      type: 'date'
-    });
+    expect(threat?.fields).toContainEqual(
+      expect.objectContaining({
+        id: 'discovered_on',
+        name: 'Discovered On',
+        type: 'date'
+      })
+    );
+    expect(control?.fields).toContainEqual(
+      expect.objectContaining({
+        id: 'last_verified',
+        name: 'Last Verified',
+        type: 'date'
+      })
+    );
+    expect(risk?.fields).toContainEqual(
+      expect.objectContaining({
+        id: 'review_due',
+        name: 'Review Due',
+        type: 'date'
+      })
+    );
   });
 
   it('keeps reference field resolution working alongside date fields', () => {
@@ -363,11 +396,13 @@ describe('instantiateTemplate', () => {
     const dataProduct = schemas.find(schema => schema.name === 'Data Product');
     const sourceSystem = schemas.find(schema => schema.name === 'Source System');
 
-    expect(dataProduct?.fields).toContainEqual({
-      id: 'review_date',
-      name: 'Review Date',
-      type: 'date'
-    });
+    expect(dataProduct?.fields).toContainEqual(
+      expect.objectContaining({
+        id: 'review_date',
+        name: 'Review Date',
+        type: 'date'
+      })
+    );
 
     const sourceSystemsField = dataProduct?.fields.find(field => field.id === 'source_systems');
     expect(sourceSystemsField).toMatchObject({
@@ -702,16 +737,18 @@ describe('instantiateTemplate', () => {
       'spend',
       'next_renewal'
     ]);
-    expect(contract?.fields).toContainEqual({
-      id: 'vendor',
-      name: 'Vendor',
-      predicate: 'provided by',
-      type: 'containment',
-      schemaId: vendor?.id,
-      minCount: 1,
-      maxCount: 1,
-      requirementLevel: 'required'
-    });
+    expect(contract?.fields).toContainEqual(
+      expect.objectContaining({
+        id: 'vendor',
+        name: 'Vendor',
+        predicate: 'provided by',
+        type: 'containment',
+        schemaId: vendor?.id,
+        minCount: 1,
+        maxCount: 1,
+        requirementLevel: 'required'
+      })
+    );
     expect(contract?.fields).not.toContainEqual(expect.objectContaining({ id: 'vendor_name' }));
     expect(relation?.in_schema_ids).toEqual([system?.id]);
     expect(relation?.out_schema_ids).toEqual([contract?.id]);
@@ -986,7 +1023,7 @@ describe('instantiateTemplate', () => {
         type: 'select',
         enumId: expect.any(String)
       }),
-      { id: 'pii_scope', name: 'PII Scope', type: 'text' }
+      expect.objectContaining({ id: 'pii_scope', name: 'PII Scope', type: 'text' })
     ]);
     const classificationField = fieldGroup?.fields.find(field => field.id === 'pii_classification');
     expect(classificationField?.type === 'select' && enumIds.has(classificationField.enumId)).toBe(
@@ -1013,20 +1050,24 @@ describe('instantiateTemplate', () => {
     expect(framework).toBeDefined();
     expect(complianceRequirement).toBeDefined();
 
-    expect(risk?.fields).toContainEqual({
-      id: 'likelihood',
-      name: 'Likelihood',
-      type: 'number',
-      min: 1,
-      max: 5
-    });
-    expect(risk?.fields).toContainEqual({
-      id: 'impact',
-      name: 'Impact',
-      type: 'number',
-      min: 1,
-      max: 5
-    });
+    expect(risk?.fields).toContainEqual(
+      expect.objectContaining({
+        id: 'likelihood',
+        name: 'Likelihood',
+        type: 'number',
+        min: 1,
+        max: 5
+      })
+    );
+    expect(risk?.fields).toContainEqual(
+      expect.objectContaining({
+        id: 'impact',
+        name: 'Impact',
+        type: 'number',
+        min: 1,
+        max: 5
+      })
+    );
     expect(risk?.fields).toContainEqual(
       expect.objectContaining({ id: 'category', type: 'select', enumId: expect.any(String) })
     );
@@ -1064,16 +1105,18 @@ describe('instantiateTemplate', () => {
       })
     );
 
-    expect(complianceRequirement?.fields).toContainEqual({
-      id: 'framework',
-      name: 'Framework',
-      predicate: 'belongs to',
-      type: 'containment',
-      schemaId: framework?.id,
-      minCount: 1,
-      maxCount: 1,
-      requirementLevel: 'required'
-    });
+    expect(complianceRequirement?.fields).toContainEqual(
+      expect.objectContaining({
+        id: 'framework',
+        name: 'Framework',
+        predicate: 'belongs to',
+        type: 'containment',
+        schemaId: framework?.id,
+        minCount: 1,
+        maxCount: 1,
+        requirementLevel: 'required'
+      })
+    );
 
     expect(definitions.dashboardWidgets).toHaveLength(10);
     expect(

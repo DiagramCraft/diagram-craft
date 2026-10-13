@@ -1,0 +1,17 @@
+.icon {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  display: inline-flex;
+  align-items: center;
+  margin-left: 4px;
+  color: var(--cmp-fg-disabled);
+  cursor: help;
+  vertical-align: middle;
+}
+
+.icon:hover,
+.icon:focus-visible {
+  color: var(--cmp-fg);
+}

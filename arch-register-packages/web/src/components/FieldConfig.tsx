@@ -8,16 +8,34 @@ type FieldConfigProps = {
   dragHandleRef: RefCallback<HTMLElement>;
   menu?: ReactNode;
   options?: ReactNode;
+  /**
+   * A tall cell (typically a description text area) shown to the right of the other cells. When
+   * set, the remaining cells wrap into a three-column grid and this one spans both rows.
+   */
+  description?: ReactNode;
   children: ReactNode;
 };
 
-export const FieldConfig = ({ dragHandleRef, menu, options, children }: FieldConfigProps) => (
+export const FieldConfig = ({
+  dragHandleRef,
+  menu,
+  options,
+  description,
+  children
+}: FieldConfigProps) => (
   <div className={styles.card}>
     <div className={styles.head}>
       <span className={styles.handle} ref={dragHandleRef}>
         <TbGripVertical size={14} />
       </span>
-      {children}
+      {description === undefined ? (
+        children
+      ) : (
+        <div className={styles.grid}>
+          {children}
+          <div className={styles.description}>{description}</div>
+        </div>
+      )}
       {menu && <span className={styles.menu}>{menu}</span>}
     </div>
     {options != null && <div className={styles.options}>{options}</div>}
