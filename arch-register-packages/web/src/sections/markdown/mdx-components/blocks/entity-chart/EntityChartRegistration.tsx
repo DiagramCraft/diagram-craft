@@ -24,8 +24,9 @@ export const entityChartSpec = defineMdxComponent<
     mdxRule: entityChartMdxRule,
     slashCommand: {
       key: 'entity-chart',
-      label: 'Entity Chart',
-      description: 'Display a live chart of entities by field',
+      label: 'Entity chart',
+      description:
+        'A live chart of entities grouped by a field. Use it to show distribution, e.g. by lifecycle or owner.',
       icon: <TbChartDonut size={14} />,
       keywords: ['entity', 'chart', 'donut', 'bar', 'graph', 'visualize', 'analytics'],
       onSelect: (editor, { insertOrReplaceBlock }) => {

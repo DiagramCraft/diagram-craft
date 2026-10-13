@@ -398,7 +398,7 @@ export const apiIntegrationCatalogDashboardWidgetSpecs: Array<{
     type: 'api-integration-catalog-needs-attention',
     spec: {
       icon: TbAlertTriangle,
-      label: 'Needs attention',
+      label: 'API needs attention',
       description: 'Open API change and deprecation cases awaiting a decision.',
       defaultW: 6,
       defaultH: 16,
@@ -408,7 +408,7 @@ export const apiIntegrationCatalogDashboardWidgetSpecs: Array<{
       frame: { padded: false, showIcon: false },
       isValidConfig: isValidListConfig,
       createDefaultConfig: () => ({ limit: 8 }),
-      getTitle: (config: ListWidgetConfig) => titleFor(config, 'Needs attention'),
+      getTitle: (config: ListWidgetConfig) => titleFor(config, 'API needs attention'),
       configForm: ListConfigForm
     }
   },

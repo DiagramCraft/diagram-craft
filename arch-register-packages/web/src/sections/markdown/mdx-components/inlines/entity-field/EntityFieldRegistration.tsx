@@ -18,8 +18,8 @@ export const entityFieldSpec = defineMdxComponent<
     mdxRule: entityFieldMdxRule,
     slashCommand: {
       key: 'entity-field',
-      label: 'Field Embed',
-      description: 'Embed a live entity field value',
+      label: 'Entity field',
+      description: 'Show a live field value from an entity inside a sentence',
       icon: <TbHash size={14} />,
       keywords: ['field', 'entity', 'value', 'embed', 'inline'],
       onSelect: (editor, { insertOrReplaceInline }) => {

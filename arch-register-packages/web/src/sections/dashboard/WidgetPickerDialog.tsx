@@ -1,10 +1,16 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
 import { useSavedViews } from '../../hooks/useSavedViews';
 import { useMdxContext } from '../markdown/MdxContext';
 import { createDefaultWidget, type WidgetSurface } from './dashboardWidgetDefaults';
 import { getDashboardWidgetSpecs } from './dashboardWidgetRegistry';
+import {
+  getWidgetCategory,
+  WIDGET_CATEGORIES,
+  type WidgetCategory,
+  matchesWidgetSearch
+} from '../markdown/mdx-components/widgetCategories';
 import { WikiPagePicker } from './widgets/WikiPagePicker';
 import styles from './WidgetPickerDialog.module.css';
 
@@ -31,20 +37,39 @@ export const WidgetPickerDialog = ({
   const [pendingType, setPendingType] = useState<string | null>(null);
   const [selectedViewId, setSelectedViewId] = useState('');
   const [selectedWikiPageId, setSelectedWikiPageId] = useState('');
+  const [search, setSearch] = useState('');
+  const [activeCategory, setActiveCategory] = useState<WidgetCategory | 'all'>('all');
 
   const { projectId } = useMdxContext();
   const { data: savedViews = [] } = useSavedViews(workspaceSlug, {
     projectId,
     includeWorkspace: true
   });
-  const options = getDashboardWidgetSpecs().filter(
-    ({ type, spec }) => spec.surfaces.includes(surface) && !exclude.includes(type)
+  const matching = useMemo(
+    () =>
+      getDashboardWidgetSpecs()
+        .filter(
+          ({ type, spec }) =>
+            spec.surfaces.includes(surface) &&
+            !exclude.includes(type) &&
+            matchesWidgetSearch(search, spec)
+        )
+        .sort((a, b) => a.spec.label.localeCompare(b.spec.label)),
+    [surface, exclude, search]
   );
+  const countByCategory = (category: WidgetCategory) =>
+    matching.filter(({ type }) => getWidgetCategory(type) === category).length;
+  const visible =
+    activeCategory === 'all'
+      ? matching
+      : matching.filter(({ type }) => getWidgetCategory(type) === activeCategory);
 
   const handleClose = () => {
     setPendingType(null);
     setSelectedViewId('');
     setSelectedWikiPageId('');
+    setSearch('');
+    setActiveCategory('all');
     onClose();
   };
 
@@ -83,7 +108,7 @@ export const WidgetPickerDialog = ({
       open={open}
       onClose={handleClose}
       title="Add widget"
-      width={420}
+      width={pendingType ? 420 : 860}
       buttons={
         pendingType === 'EntityViewEmbed' || isSelectingWikiPage
           ? [
@@ -124,18 +149,57 @@ export const WidgetPickerDialog = ({
           />
         </div>
       ) : (
-        <div className={styles.list}>
-          {options.map(({ type, spec }) => (
+        <div className={styles.picker}>
+          <nav className={styles.sidebar} aria-label="Widget categories">
             <button
-              key={type}
               type="button"
-              className={styles.option}
-              onClick={() => handlePick(type)}
+              className={`${styles.category} ${activeCategory === 'all' ? styles.categoryActive : ''}`}
+              onClick={() => setActiveCategory('all')}
             >
-              <span className={styles.optionLabel}>{spec.label}</span>
-              <span className={styles.optionDescription}>{spec.description}</span>
+              All <span className={styles.count}>{matching.length}</span>
             </button>
-          ))}
+            {WIDGET_CATEGORIES.map(category => (
+              <button
+                key={category.id}
+                type="button"
+                title={category.description}
+                className={`${styles.category} ${
+                  activeCategory === category.id ? styles.categoryActive : ''
+                }`}
+                onClick={() => setActiveCategory(category.id)}
+              >
+                {category.label}{' '}
+                <span className={styles.count}>{countByCategory(category.id)}</span>
+              </button>
+            ))}
+          </nav>
+          <div className={styles.main}>
+            <input
+              type="search"
+              className={styles.search}
+              placeholder="Search widgets…"
+              aria-label="Search widgets"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              autoFocus
+            />
+            <div className={styles.grid}>
+              {visible.length === 0 && (
+                <div className={styles.empty}>No widgets match your search</div>
+              )}
+              {visible.map(({ type, spec }) => (
+                <button
+                  key={type}
+                  type="button"
+                  className={styles.option}
+                  onClick={() => handlePick(type)}
+                >
+                  <span className={styles.optionLabel}>{spec.label}</span>
+                  <span className={styles.optionDescription}>{spec.description}</span>
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       )}
     </Dialog>

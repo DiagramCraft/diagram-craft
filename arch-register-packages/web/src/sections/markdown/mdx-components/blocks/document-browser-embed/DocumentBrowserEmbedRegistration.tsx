@@ -34,7 +34,8 @@ export const documentBrowserEmbedSpec = defineMdxComponent<
   dashboardWidget: {
     icon: TbFileSearch,
     label: 'Document browser',
-    description: 'A filterable list of documents in this workspace or project.',
+    description:
+      'A filterable list of documents in this workspace or project. Use it to find and open files.',
     defaultW: 6,
     defaultH: 16,
     surfaces: ['workspace', 'project'],
@@ -61,8 +62,9 @@ export const documentBrowserEmbedSpec = defineMdxComponent<
     mdxRule: documentBrowserEmbedMdxRule,
     slashCommand: {
       key: 'document-browser-embed',
-      label: 'Document Browser',
-      description: 'Embed a filterable list of documents from this location',
+      label: 'Document browser',
+      description:
+        'A filterable list of documents in this workspace or project. Use it to find and open files.',
       icon: <TbFileSearch size={14} />,
       keywords: ['document', 'browser', 'markdown', 'wiki', 'list', 'filter', 'search'],
       onSelect: (editor, { insertOrReplaceBlock }) => {

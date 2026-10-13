@@ -22,7 +22,8 @@ export const diagramEmbedSpec = defineMdxComponent<
   dashboardWidget: {
     icon: TbChartLine,
     label: 'Diagram',
-    description: 'A read-only preview of a selected architecture diagram.',
+    description:
+      'A read-only preview of an architecture diagram. Use it to show a system picture alongside the text.',
     defaultW: 6,
     defaultH: 16,
     surfaces: ['workspace', 'project'],
@@ -44,8 +45,9 @@ export const diagramEmbedSpec = defineMdxComponent<
     mdxRule: diagramEmbedMdxRule,
     slashCommand: {
       key: 'diagram-embed',
-      label: 'Diagram Embed',
-      description: 'Embed a read-only diagram preview',
+      label: 'Diagram',
+      description:
+        'A read-only preview of an architecture diagram. Use it to show a system picture alongside the text.',
       icon: <TbChartLine size={14} />,
       keywords: ['diagram', 'embed', 'preview', 'svg', 'flow'],
       onSelect: (editor, { insertOrReplaceBlock }) => {

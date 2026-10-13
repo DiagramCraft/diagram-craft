@@ -30,7 +30,7 @@ export const needsAttentionSpec = defineMdxComponent<
   allowedProps: [],
   dashboardWidget: {
     icon: TbAlertTriangle,
-    label: 'Needs attention',
+    label: 'Needs attention queue',
     description: 'Open governance cases against entities of a chosen type, awaiting a decision.',
     defaultW: 6,
     defaultH: 16,

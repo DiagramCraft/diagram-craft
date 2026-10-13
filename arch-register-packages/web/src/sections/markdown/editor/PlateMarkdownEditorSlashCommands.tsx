@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { PlateElement, useEditorRef } from 'platejs/react';
@@ -6,7 +6,12 @@ import type { PlateElementProps } from 'platejs/react';
 import type { TElement } from 'platejs';
 import { toggleList } from '@platejs/list';
 import { getNodeText } from './EditorBlock';
-import { MDX_COMPONENTS } from '../mdx-components/mdxRegistry';
+import { getMdxSpecsForSurface } from '../mdx-components/mdxRegistry';
+import {
+  getWidgetCategory,
+  WIDGET_CATEGORIES,
+  matchesWidgetSearch
+} from '../mdx-components/widgetCategories';
 import styles from './PlateMarkdownEditor.module.css';
 
 type PlateEditor = ReturnType<typeof useEditorRef>;
@@ -63,13 +68,18 @@ export type SlashCommandItem = {
   description: string;
   icon: ReactNode;
   keywords?: string[];
+  /** Heading the item is listed under in the menu. */
+  group: string;
   onSelect: (editor: PlateEditor) => void;
 };
+
+export const BASIC_BLOCKS_GROUP = 'Basic blocks';
 
 // Built-in (non-MDX) slash commands
 export const BUILTIN_SLASH_COMMANDS: SlashCommandItem[] = [
   {
     key: 'h1',
+    group: BASIC_BLOCKS_GROUP,
     label: 'Heading 1',
     description: 'Large section heading',
     icon: (
@@ -82,6 +92,7 @@ export const BUILTIN_SLASH_COMMANDS: SlashCommandItem[] = [
   },
   {
     key: 'h2',
+    group: BASIC_BLOCKS_GROUP,
     label: 'Heading 2',
     description: 'Medium section heading',
     icon: (
@@ -94,6 +105,7 @@ export const BUILTIN_SLASH_COMMANDS: SlashCommandItem[] = [
   },
   {
     key: 'h3',
+    group: BASIC_BLOCKS_GROUP,
     label: 'Heading 3',
     description: 'Small section heading',
     icon: (
@@ -106,6 +118,7 @@ export const BUILTIN_SLASH_COMMANDS: SlashCommandItem[] = [
   },
   {
     key: 'p',
+    group: BASIC_BLOCKS_GROUP,
     label: 'Paragraph',
     description: 'Plain text paragraph',
     icon: <span className={styles.slashIcon}>¶</span>,
@@ -114,6 +127,7 @@ export const BUILTIN_SLASH_COMMANDS: SlashCommandItem[] = [
   },
   {
     key: 'ul',
+    group: BASIC_BLOCKS_GROUP,
     label: 'Bulleted List',
     description: 'Unordered list',
     icon: <span className={styles.slashIcon}>•</span>,
@@ -122,6 +136,7 @@ export const BUILTIN_SLASH_COMMANDS: SlashCommandItem[] = [
   },
   {
     key: 'ol',
+    group: BASIC_BLOCKS_GROUP,
     label: 'Numbered List',
     description: 'Ordered list',
     icon: <span className={styles.slashIcon}>1.</span>,
@@ -130,6 +145,7 @@ export const BUILTIN_SLASH_COMMANDS: SlashCommandItem[] = [
   },
   {
     key: 'checklist',
+    group: BASIC_BLOCKS_GROUP,
     label: 'Checklist',
     description: 'List of tasks with checkboxes',
     icon: <span className={styles.slashIcon}>☑</span>,
@@ -138,6 +154,7 @@ export const BUILTIN_SLASH_COMMANDS: SlashCommandItem[] = [
   },
   {
     key: 'code',
+    group: BASIC_BLOCKS_GROUP,
     label: 'Code Block',
     description: 'Fenced code block',
     icon: (
@@ -154,6 +171,7 @@ export const BUILTIN_SLASH_COMMANDS: SlashCommandItem[] = [
   },
   {
     key: 'blockquote',
+    group: BASIC_BLOCKS_GROUP,
     label: 'Quote',
     description: 'Blockquote callout',
     icon: <span className={styles.slashIcon}>"</span>,
@@ -163,6 +181,7 @@ export const BUILTIN_SLASH_COMMANDS: SlashCommandItem[] = [
   },
   {
     key: 'table',
+    group: BASIC_BLOCKS_GROUP,
     label: 'Table',
     description: 'Insert a table',
     icon: <span className={styles.slashIcon}>⊞</span>,
@@ -190,6 +209,7 @@ export const BUILTIN_SLASH_COMMANDS: SlashCommandItem[] = [
   },
   {
     key: 'hr',
+    group: BASIC_BLOCKS_GROUP,
     label: 'Divider',
     description: 'Horizontal rule',
     icon: <span className={styles.slashIcon}>—</span>,
@@ -222,8 +242,11 @@ export const BUILTIN_SLASH_COMMANDS: SlashCommandItem[] = [
 ];
 
 // MDX component slash commands — derived from the registry
-export const MDX_SLASH_COMMANDS: SlashCommandItem[] = Object.entries(MDX_COMPONENTS).flatMap(
-  ([, spec]) => {
+// Only components that may appear on the wiki surface are offered; commands are
+// listed category by category in the shared WIDGET_CATEGORIES order.
+export const MDX_SLASH_COMMANDS: SlashCommandItem[] = WIDGET_CATEGORIES.flatMap(category =>
+  Object.entries(getMdxSpecsForSurface('wiki')).flatMap(([type, spec]) => {
+    if (getWidgetCategory(type) !== category.id) return [];
     const cmd = spec.editorSpec?.slashCommand;
     if (!cmd) return [];
     return [
@@ -233,11 +256,12 @@ export const MDX_SLASH_COMMANDS: SlashCommandItem[] = Object.entries(MDX_COMPONE
         description: cmd.description,
         icon: <span className={styles.slashIcon}>{cmd.icon}</span>,
         keywords: cmd.keywords,
+        group: category.label,
         onSelect: (editor: PlateEditor) =>
           cmd.onSelect(editor, { insertOrReplaceBlock, insertOrReplaceInline })
       }
     ];
-  }
+  })
 );
 
 export const SLASH_COMMANDS: SlashCommandItem[] = [
@@ -255,19 +279,14 @@ export const SlashInputElement = ({ element, children, ...props }: PlateElementP
   const [searchText, setSearchText] = useState('');
 
   const filteredCommands = useMemo(
-    () =>
-      SLASH_COMMANDS.filter(cmd => {
-        if (!searchText) return true;
-        const q = searchText.toLowerCase();
-        return (
-          cmd.label.toLowerCase().includes(q) ?? cmd.keywords?.some(k => k.includes(q)) ?? false
-        );
-      }),
+    () => SLASH_COMMANDS.filter(cmd => matchesWidgetSearch(searchText, cmd)),
     [searchText]
   );
 
   useEffect(() => {
-    const item = dropdownRef.current?.children[selectedIndex] as HTMLElement | undefined;
+    const item = dropdownRef.current?.querySelector<HTMLElement>(
+      `[data-slash-index="${selectedIndex}"]`
+    );
     item?.scrollIntoView({ block: 'nearest' });
   }, [selectedIndex]);
 
@@ -396,21 +415,26 @@ export const SlashInputElement = ({ element, children, ...props }: PlateElementP
             onMouseDown={event => event.preventDefault()}
           >
             {filteredCommands.map((cmd, i) => (
-              <button
-                type="button"
-                key={cmd.key}
-                className={`${styles.slashItem} ${
-                  i === selectedIndex ? styles.slashItemActive : ''
-                }`}
-                onClick={() => executeCommand(cmd)}
-                onMouseEnter={() => setSelectedIndex(i)}
-              >
-                {cmd.icon}
-                <div className={styles.slashItemText}>
-                  <div className={styles.slashItemLabel}>{cmd.label}</div>
-                  <div className={styles.slashItemDesc}>{cmd.description}</div>
-                </div>
-              </button>
+              <Fragment key={cmd.key}>
+                {cmd.group !== filteredCommands[i - 1]?.group && (
+                  <div className={styles.slashGroupHeading}>{cmd.group}</div>
+                )}
+                <button
+                  type="button"
+                  data-slash-index={i}
+                  className={`${styles.slashItem} ${
+                    i === selectedIndex ? styles.slashItemActive : ''
+                  }`}
+                  onClick={() => executeCommand(cmd)}
+                  onMouseEnter={() => setSelectedIndex(i)}
+                >
+                  {cmd.icon}
+                  <div className={styles.slashItemText}>
+                    <div className={styles.slashItemLabel}>{cmd.label}</div>
+                    <div className={styles.slashItemDesc}>{cmd.description}</div>
+                  </div>
+                </button>
+              </Fragment>
             ))}
           </div>,
           document.body

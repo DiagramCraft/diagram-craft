@@ -24,7 +24,8 @@ export const entityTableSpec = defineMdxComponent<
   dashboardWidget: {
     icon: TbTable,
     label: 'Entity table',
-    description: 'A filtered table of entities.',
+    description:
+      'A table of entities matching filters you define. Use it for a fixed, readable list.',
     defaultW: 6,
     defaultH: 24,
     surfaces: ['workspace', 'project'],
@@ -48,8 +49,9 @@ export const entityTableSpec = defineMdxComponent<
     mdxRule: entityTableMdxRule,
     slashCommand: {
       key: 'entity-table',
-      label: 'Entity Table',
-      description: 'Embed a live entity table from inline filters',
+      label: 'Entity table',
+      description:
+        'A table of entities matching filters you define. Use it for a fixed, readable list.',
       icon: <TbTable size={14} />,
       keywords: ['entity', 'table', 'catalog', 'list', 'filter'],
       onSelect: (editor, { insertOrReplaceBlock }) => {

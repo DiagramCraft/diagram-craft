@@ -22,7 +22,8 @@ export const entityViewEmbedSpec = defineMdxComponent<
   dashboardWidget: {
     icon: TbLayoutDashboard,
     label: 'Saved view',
-    description: 'Embed one of the workspace saved views.',
+    description:
+      'A live copy of a saved entity view. Use it to reuse a view someone already set up.',
     defaultW: 6,
     defaultH: 24,
     surfaces: ['workspace', 'project'],
@@ -43,8 +44,9 @@ export const entityViewEmbedSpec = defineMdxComponent<
     mdxRule: entityViewEmbedMdxRule,
     slashCommand: {
       key: 'entity-view-embed',
-      label: 'Entity View',
-      description: 'Embed a live entity view from a saved view',
+      label: 'Saved view',
+      description:
+        'A live copy of a saved entity view. Use it to reuse a view someone already set up.',
       icon: <TbLayoutGrid size={14} />,
       keywords: ['entity', 'view', 'embed', 'saved', 'catalog'],
       onSelect: (editor, { insertOrReplaceBlock }) => {

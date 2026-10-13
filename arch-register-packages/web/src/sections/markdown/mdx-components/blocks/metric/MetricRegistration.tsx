@@ -37,8 +37,9 @@ export const metricSpec = defineMdxComponent<
   surfaces: ['wiki', 'dashboard'],
   dashboardWidget: {
     icon: TbChartBar,
-    label: 'Stat metric',
-    description: 'A single number, such as entity count or completeness percentage.',
+    label: 'Metric',
+    description:
+      'A single live count, such as the number of entities, projects or diagrams. Use it for a headline number.',
     defaultW: 3,
     defaultH: 8,
     surfaces: ['workspace', 'project'],
@@ -69,7 +70,8 @@ export const metricSpec = defineMdxComponent<
     slashCommand: {
       key: 'metric',
       label: 'Metric',
-      description: 'Display a live count of entities, projects, or diagrams',
+      description:
+        'A single live count, such as the number of entities, projects or diagrams. Use it for a headline number.',
       icon: <TbHash size={14} />,
       keywords: ['entity', 'metric', 'count', 'number', 'stat', 'kpi'],
       onSelect: (editor, { insertOrReplaceBlock }) => {

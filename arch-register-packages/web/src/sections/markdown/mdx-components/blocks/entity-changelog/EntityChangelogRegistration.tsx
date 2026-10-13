@@ -32,7 +32,8 @@ export const entityChangelogSpec = defineMdxComponent<
   dashboardWidget: {
     icon: TbHistory,
     label: 'Entity changelog',
-    description: 'A recent-changes feed for one entity or a filtered set.',
+    description:
+      'A feed of recent changes to one entity or a filtered set. Use it to see what changed lately.',
     defaultW: 6,
     defaultH: 16,
     surfaces: ['workspace', 'project'],
@@ -65,8 +66,9 @@ export const entityChangelogSpec = defineMdxComponent<
     mdxRule: entityChangelogMdxRule,
     slashCommand: {
       key: 'entity-changelog',
-      label: 'Entity Changelog',
-      description: 'Embed a live feed of recent entity changes',
+      label: 'Entity changelog',
+      description:
+        'A feed of recent changes to one entity or a filtered set. Use it to see what changed lately.',
       icon: <TbHistory size={14} />,
       keywords: ['changelog', 'audit', 'history', 'changes', 'entity'],
       onSelect: (editor, { insertOrReplaceBlock }) => {

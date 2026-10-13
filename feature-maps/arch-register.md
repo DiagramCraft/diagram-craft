@@ -71,6 +71,10 @@
           Table column headers are clickable to sort by any column, ascending or descending, and an entity browser
           widget can have its own title and a maximum number of rows, or be switched to an interactive mode with a
           search box and pagination (table and cards views).
+          The Add widget dialog groups the catalog into Metrics, Data views, Visualizations, and Content & layout,
+          gives each widget a one-line description of what it shows, and has a search box; the wiki editor's `/`
+          insert menu groups the wiki-supported blocks and inline items the same way, with the same names and
+          descriptions, and can be searched by name, description, or keyword.
           A workspace can have multiple
           named dashboards, listed in order in a "Dashboards" section of the home sidebar and switchable by selecting
           one; the first dashboard in that order is shown at the workspace home, and a workspace always retains at

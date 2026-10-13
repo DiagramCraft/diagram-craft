@@ -14,8 +14,8 @@ import {
 import { handleTableKeyDown } from './PlateMarkdownEditorTable';
 import { editorPlugins, mdxRules } from './PlateMarkdownEditorPlugins';
 
-vi.mock('../mdx-components/mdxRegistry', () => ({
-  MDX_COMPONENTS: {
+vi.mock('../mdx-components/mdxRegistry', () => {
+  const MDX_COMPONENTS = {
     TestBlock: {
       editorSpec: {
         editableComponent: () => null,
@@ -41,8 +41,9 @@ vi.mock('../mdx-components/mdxRegistry', () => ({
         }
       }
     }
-  }
-}));
+  };
+  return { MDX_COMPONENTS, getMdxSpecsForSurface: () => MDX_COMPONENTS };
+});
 
 const createMarkdownTestEditor = () =>
   createPlateEditor({

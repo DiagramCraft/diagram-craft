@@ -37,7 +37,8 @@ export const entityBrowserEmbedSpec = defineMdxComponent<
   dashboardWidget: {
     icon: TbListSearch,
     label: 'Entity browser',
-    description: 'A fully configurable, live entity browser (arbitrary filters, sort, and views).',
+    description:
+      'A live, searchable list of entities with your own filters, sorting and columns. Use it for a flexible catalog view.',
     defaultW: 6,
     defaultH: 24,
     surfaces: ['workspace', 'project'],
@@ -63,8 +64,9 @@ export const entityBrowserEmbedSpec = defineMdxComponent<
     mdxRule: entityBrowserEmbedMdxRule,
     slashCommand: {
       key: 'entity-browser-embed',
-      label: 'Entity Browser',
-      description: 'Embed a fully configurable, live entity browser',
+      label: 'Entity browser',
+      description:
+        'A live, searchable list of entities with your own filters, sorting and columns. Use it for a flexible catalog view.',
       icon: <TbListSearch size={14} />,
       keywords: ['entity', 'browser', 'embed', 'search', 'filter', 'catalog'],
       onSelect: (editor, { insertOrReplaceBlock }) => {
