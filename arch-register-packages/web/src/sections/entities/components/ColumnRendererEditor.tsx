@@ -13,10 +13,10 @@ const TONES: { value: BandTone; label: string }[] = [
 ];
 
 const RangeInput = ({
-                      label,
-                      value,
-                      onChange
-                    }: {
+  label,
+  value,
+  onChange
+}: {
   label: string;
   value: number | undefined;
   onChange: (value: number | undefined) => void;
@@ -24,7 +24,7 @@ const RangeInput = ({
   <div className={styles.rendererRow}>
     <span className={styles.rendererOptionLabel}>{label}</span>
     <div className={styles.rendererInput}>
-      <NumberInput value={value ?? ''} onChange={onChange}/>
+      <NumberInput value={value ?? ''} onChange={onChange} />
     </div>
   </div>
 );
@@ -35,9 +35,9 @@ const TONE_ORDER_NORMAL: BandTone[] = ['bad', 'warn', 'good'];
 const TONE_ORDER_REVERSED: BandTone[] = ['good', 'warn', 'bad'];
 
 const ToneSelect = ({
-                      value,
-                      onChange
-                    }: {
+  value,
+  onChange
+}: {
   value: BandTone;
   onChange: (tone: BandTone) => void;
 }) => (
@@ -52,10 +52,10 @@ const ToneSelect = ({
 
 /** Per-column "render as" picker plus the settings of the chosen renderer. */
 export const ColumnRendererEditor = ({
-                                       field,
-                                       config,
-                                       onChange
-                                     }: {
+  field,
+  config,
+  onChange
+}: {
   field: EntityDisplayField;
   config: ColumnRenderConfig;
   onChange: (config: ColumnRenderConfig) => void;
@@ -118,16 +118,16 @@ export const ColumnRendererEditor = ({
       )}
 
       {config.type === 'colorBand' && !config.options && (
-        <ThresholdEditor config={config} onChange={onChange}/>
+        <ThresholdEditor config={config} onChange={onChange} />
       )}
     </div>
   );
 };
 
 const ThresholdEditor = ({
-                           config,
-                           onChange
-                         }: {
+  config,
+  onChange
+}: {
   config: Extract<ColumnRenderConfig, { type: 'colorBand' }>;
   onChange: (config: ColumnRenderConfig) => void;
 }) => {
