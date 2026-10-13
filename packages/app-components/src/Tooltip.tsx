@@ -25,7 +25,11 @@ export const Tooltip = (props: Props) => {
       <BaseUITooltip.Root>
         <BaseUITooltip.Trigger render={props.element} />
         <BaseUITooltip.Portal>
-          <BaseUITooltip.Positioner sideOffset={5} side={'bottom'}>
+          <BaseUITooltip.Positioner
+            className={styles.cTooltipPositioner}
+            sideOffset={5}
+            side={'bottom'}
+          >
             <BaseUITooltip.Popup className={styles.cTooltip}>
               {props.message}
               <BaseUITooltip.Arrow className={styles.eArrow} />

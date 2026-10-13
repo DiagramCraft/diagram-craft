@@ -5,6 +5,7 @@ import { relationIds } from '../../../lib/entityEditState';
 import { useEntitiesByIds } from '../../../hooks/useEntities';
 import { EntityNavigationLink } from '../../../components/EntityNavigationLink';
 import { ExternalMetadataIndicator } from '../../../components/ExternalMetadataIndicator';
+import { FieldDescriptionIcon } from '../../../components/FieldDescriptionIcon';
 import {
   formatRelationFieldValue,
   renderEntityRelationFieldValue
@@ -179,7 +180,10 @@ export const DrawerPropertyRow = ({
 
   return (
     <div className={rowClass}>
-      <span className={labelClass}>{label ?? field.name}</span>
+      <span className={labelClass}>
+        {label ?? field.name}
+        <FieldDescriptionIcon description={field.description} />
+      </span>
       <span className={valueClass}>
         {display}
         {isExternal && (

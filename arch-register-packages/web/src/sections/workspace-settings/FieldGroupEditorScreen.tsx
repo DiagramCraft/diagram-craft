@@ -226,7 +226,21 @@ const SharedFieldRow = ({
   };
 
   return (
-    <FieldConfig dragHandleRef={dragHandleRef} options={options()}>
+    <FieldConfig
+      description={
+        <FieldConfig.Cell label="Description">
+          <TextArea
+            rows={5}
+            value={field.description ?? ''}
+            disabled={!canEdit}
+            allowMaximize={false}
+            onChange={value => onUpdate({ description: value?.trim() ? value : undefined })}
+          />
+        </FieldConfig.Cell>
+      }
+      dragHandleRef={dragHandleRef}
+      options={options()}
+    >
       <FieldConfig.Cell label="Id" mono flexBasis={160}>
         <TextInput
           value={field.id}

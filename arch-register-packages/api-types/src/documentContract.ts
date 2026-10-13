@@ -75,6 +75,7 @@ export const documentFieldSchema = z
   .object({
     id: z.string().min(1),
     name: z.string().min(1),
+    description: z.string().optional(),
     type: documentFieldTypeSchema,
     requirement: documentRequirementSchema,
     minCardinality: z.number().int().nonnegative().optional(),

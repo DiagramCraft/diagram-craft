@@ -32,10 +32,16 @@ const businessGlossarySchemas: TemplateSchema[] = [
     color: AR_COLOR_BLUE,
     icon: 'book',
     fields: [
-      { id: 'definition', name: 'Definition', type: 'longtext' },
+      {
+        id: 'definition',
+        name: 'Definition',
+        description: 'The agreed meaning of the term, written for a reader outside the team.',
+        type: 'longtext'
+      },
       {
         id: 'synonyms',
         name: 'Synonyms',
+        description: 'Other words people use for the same concept.',
         type: 'text',
         minCardinality: 0,
         maxCardinality: -1
@@ -43,6 +49,7 @@ const businessGlossarySchemas: TemplateSchema[] = [
       {
         id: 'abbreviations',
         name: 'Abbreviations',
+        description: 'Short forms or acronyms for the term.',
         type: 'text',
         minCardinality: 0,
         maxCardinality: -1
@@ -50,13 +57,20 @@ const businessGlossarySchemas: TemplateSchema[] = [
       {
         id: 'categories',
         name: 'Categories',
+        description: 'Glossary categories this term belongs to, used for grouping and browsing.',
         predicate: 'categorized as',
         type: 'reference',
         symSchemaId: 'term_category',
         minCount: 0,
         maxCount: -1
       },
-      { id: 'status', name: 'Status', type: 'select', enumId: 'glossary-status' }
+      {
+        id: 'status',
+        name: 'Status',
+        description: 'Whether the term is a draft, approved or retired.',
+        type: 'select',
+        enumId: 'glossary-status'
+      }
     ]
   },
   {

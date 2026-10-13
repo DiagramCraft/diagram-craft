@@ -265,7 +265,11 @@
               on-change or scheduled. Derived values are materialized and synchronously recalculated for affected
               entities and relations when inputs, relations, or definitions change (a relation's derived
               values also re-materialize when a connected or carried entity's fields change), and are excluded
-              from required-field completeness. Fields can be organized into named, presentation-only groups (with an
+              from required-field completeness. Every field (on entity schemas, relation types, shared field groups
+              and document types) can carry an optional user-facing description, authored in the schema editors and
+              shown as an (i) icon or hint next to the field label on entity detail, drawer, create and edit forms,
+              relation views, and table column headers; every field in the built-in templates ships with one, and
+              fields without a description render as before. Fields can be organized into named, presentation-only groups (with an
               optional description) that render as labeled sections wherever fields appear as a form or list; this has
               no
               effect on validation, required-ness, or completeness. A group — a schema-local group, or a schema's

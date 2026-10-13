@@ -1,3 +1,4 @@
+import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { useState, type RefCallback } from 'react';
 import { Select } from '@diagram-craft/app-components/Select';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
@@ -203,7 +204,22 @@ export const RelationFieldRow = ({
   ) : undefined;
 
   return (
-    <FieldConfig dragHandleRef={dragHandleRef} options={optionsDisplay()} menu={menu}>
+    <FieldConfig
+      description={
+        <FieldConfig.Cell label="Description">
+          <TextArea
+            rows={5}
+            value={field.description ?? ''}
+            disabled={!canEdit}
+            allowMaximize={false}
+            onChange={value => onUpdate({ description: value?.trim() ? value : undefined })}
+          />
+        </FieldConfig.Cell>
+      }
+      dragHandleRef={dragHandleRef}
+      options={optionsDisplay()}
+      menu={menu}
+    >
       <FieldConfig.Cell label="Id" mono flexBasis={160}>
         <TextInput
           value={field.id}

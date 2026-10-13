@@ -162,7 +162,9 @@ type SymbolicFieldVariant =
 // declared in `TemplateSchema.groups`. It is threaded straight onto the compiled `SchemaField`
 // and drives the default detail-screen layout (one panel per group); it never affects storage
 // or validation.
-export type SymbolicField = SymbolicFieldVariant & { groupId?: string };
+// `description` (optional on every variant) is the user-facing explanation shown next to the
+// field label in schema-driven screens.
+export type SymbolicField = SymbolicFieldVariant & { groupId?: string; description?: string };
 
 export type TemplateSchemaGroup = {
   id: string;
@@ -247,6 +249,7 @@ export type SymbolicRelationSchema = {
     | {
         id: string;
         name: string;
+        description?: string;
         type: 'select';
         enumId: SymbolicReference;
         requirementLevel?: 'required' | 'expected' | 'optional' | null;
@@ -256,18 +259,21 @@ export type SymbolicRelationSchema = {
     | {
         id: string;
         name: string;
+        description?: string;
         type: 'date';
         requirementLevel?: 'required' | 'expected' | 'optional' | null;
       }
     | {
         id: string;
         name: string;
+        description?: string;
         type: 'text' | 'longtext' | 'boolean';
         requirementLevel?: 'required' | 'expected' | 'optional' | null;
       }
     | {
         id: string;
         name: string;
+        description?: string;
         type: 'number';
         min?: number;
         max?: number;
@@ -276,6 +282,7 @@ export type SymbolicRelationSchema = {
     | {
         id: string;
         name: string;
+        description?: string;
         type: 'entityRelation';
         predicate?: string;
         schemaId: SymbolicReference;
@@ -448,6 +455,13 @@ const apiConsumerRelationSchema: SymbolicRelationSchema = {
 
 const apiParticipationRelationSchemas = [apiProviderRelationSchema, apiConsumerRelationSchema];
 
+const API_PARTICIPATION_DESCRIPTIONS: Record<string, string> = {
+  provides_apis: 'The APIs this entity exposes to other systems and components.',
+  consumes_apis: 'The APIs this entity calls or depends on.',
+  providers: 'The components that implement and expose this API.',
+  consumers: 'The components that call this API.'
+};
+
 const apiParticipationField = (
   id: string,
   name: string,
@@ -456,6 +470,7 @@ const apiParticipationField = (
 ): SymbolicField => ({
   id,
   name,
+  description: API_PARTICIPATION_DESCRIPTIONS[id],
   type: 'typedRelation',
   symRelationSchemaId: relationSchemaId,
   direction,
@@ -581,10 +596,17 @@ const piiClassificationFieldGroup: SymbolicFieldGroup = {
     {
       id: 'pii_classification',
       name: 'PII Classification',
+      description: 'Whether and how the entity handles personally identifiable information.',
       type: 'select',
       enumId: 'pii-classification'
     },
-    { id: 'pii_scope', name: 'PII Scope', type: 'text' }
+    {
+      id: 'pii_scope',
+      name: 'PII Scope',
+      description:
+        'Which personal data is handled and for whom, for example customer email addresses.',
+      type: 'text'
+    }
   ]
 };
 
@@ -611,6 +633,8 @@ export const LADR_DOCUMENT_TYPE_DEFINITION: SymbolicDocumentType = {
     {
       id: 'status',
       name: 'Status',
+      description:
+        'Where the decision stands in its lifecycle, for example proposed, accepted or superseded.',
       type: 'enum',
       requirement: 'required',
       enumOptions: [
@@ -624,6 +648,7 @@ export const LADR_DOCUMENT_TYPE_DEFINITION: SymbolicDocumentType = {
     {
       id: 'decision_date',
       name: 'Decision date',
+      description: 'The date the decision was made.',
       type: 'date',
       requirement: 'expected',
       retired: false
@@ -842,10 +867,34 @@ const technologySchema: TemplateSchema = {
   color: AR_COLOR_BLUE,
   icon: 'chip',
   fields: [
-    { id: 'product', name: 'Product', type: 'text' },
-    { id: 'provider_product', name: 'Provider Product Key', type: 'text' },
-    { id: 'category', name: 'Category', type: 'select', enumId: 'technology-category' },
-    { id: 'radar_status', name: 'Radar Status', type: 'select', enumId: 'technology-radar-status' }
+    {
+      id: 'product',
+      name: 'Product',
+      description: 'The name of the product or technology.',
+      type: 'text'
+    },
+    {
+      id: 'provider_product',
+      name: 'Provider Product Key',
+      description:
+        'The key identifying this product at the release data provider, used for automatic synchronization.',
+      type: 'text'
+    },
+    {
+      id: 'category',
+      name: 'Category',
+      description: 'The kind of technology, such as language, database or framework.',
+      type: 'select',
+      enumId: 'technology-category'
+    },
+    {
+      id: 'radar_status',
+      name: 'Radar Status',
+      description:
+        'Where the technology sits on the technology radar: adopt, trial, assess or hold.',
+      type: 'select',
+      enumId: 'technology-radar-status'
+    }
   ]
 };
 
@@ -861,29 +910,88 @@ const technologyReleaseSchema: TemplateSchema = {
     {
       id: 'technology',
       name: 'Technology',
+      description: 'The technology this release is a version of.',
       predicate: 'belongs to',
       type: 'containment',
       symSchemaId: 'technology',
       minCount: 1,
       maxCount: 1
     },
-    { id: 'provider_product', name: 'Provider Product Key', type: 'text' },
-    { id: 'release_cycle', name: 'Release Cycle', type: 'text' },
-    { id: 'latest_version', name: 'Latest Version', type: 'text' },
-    { id: 'release_date', name: 'Release Date', type: 'date' },
-    { id: 'active_support_until', name: 'Active Support Until', type: 'date' },
-    { id: 'security_support_until', name: 'Security Support Until', type: 'date' },
-    { id: 'eol_date', name: 'EOL Date', type: 'date' },
-    { id: 'source_url', name: 'Source URL', type: 'text' },
-    { id: 'last_synchronized', name: 'Last Synchronized', type: 'date' },
-    { id: 'category', name: 'Category', type: 'select', enumId: 'technology-category' },
-    { id: 'radar_status', name: 'Radar Status', type: 'select', enumId: 'technology-radar-status' }
+    {
+      id: 'provider_product',
+      name: 'Provider Product Key',
+      description: 'The key identifying the product at the release data provider.',
+      type: 'text'
+    },
+    {
+      id: 'release_cycle',
+      name: 'Release Cycle',
+      description: 'The release line this version belongs to, such as 3.2 or 2024 LTS.',
+      type: 'text'
+    },
+    {
+      id: 'latest_version',
+      name: 'Latest Version',
+      description: 'The newest patch version within this release cycle.',
+      type: 'text'
+    },
+    {
+      id: 'release_date',
+      name: 'Release Date',
+      description: 'The date this release became generally available.',
+      type: 'date'
+    },
+    {
+      id: 'active_support_until',
+      name: 'Active Support Until',
+      description: 'The date the vendor stops providing active support and fixes.',
+      type: 'date'
+    },
+    {
+      id: 'security_support_until',
+      name: 'Security Support Until',
+      description: 'The date the vendor stops providing security patches.',
+      type: 'date'
+    },
+    {
+      id: 'eol_date',
+      name: 'EOL Date',
+      description: 'The date the release reaches end of life and is no longer supported.',
+      type: 'date'
+    },
+    {
+      id: 'source_url',
+      name: 'Source URL',
+      description: 'A link to the page the release information was taken from.',
+      type: 'text'
+    },
+    {
+      id: 'last_synchronized',
+      name: 'Last Synchronized',
+      description: 'The date the release information was last refreshed from its source.',
+      type: 'date'
+    },
+    {
+      id: 'category',
+      name: 'Category',
+      description: 'The kind of technology this release belongs to.',
+      type: 'select',
+      enumId: 'technology-category'
+    },
+    {
+      id: 'radar_status',
+      name: 'Radar Status',
+      description: 'Where this release sits on the technology radar: adopt, trial, assess or hold.',
+      type: 'select',
+      enumId: 'technology-radar-status'
+    }
   ]
 };
 
 const technologyReleaseReference = (): SymbolicField => ({
   id: 'technology_releases',
   name: 'Technology Releases',
+  description: 'The technology releases this entity is built on or runs on.',
   predicate: 'uses',
   type: 'reference',
   symSchemaId: 'technology_release',
@@ -1010,6 +1118,7 @@ const strategySchemas: TemplateSchema[] = [
       {
         id: 'parent',
         name: 'Parent Capability',
+        description: 'The broader capability this capability is a part of.',
         type: 'containment',
         symSchemaId: 'business_capability',
         minCount: 0,
@@ -1018,14 +1127,22 @@ const strategySchemas: TemplateSchema[] = [
       {
         id: 'capability_type',
         name: 'Capability Type',
+        description: 'The role of the capability, such as strategic, core or supporting.',
         type: 'select',
         enumId: 'capability-type',
         requirementLevel: 'optional'
       },
-      { id: 'value_stream', name: 'Value Stream', type: 'text' },
+      {
+        id: 'value_stream',
+        name: 'Value Stream',
+        description: 'The value stream the capability contributes to.',
+        type: 'text'
+      },
       {
         id: 'capability_level',
         name: 'Capability Level',
+        description:
+          'Calculated: the depth of the capability in the hierarchy, where L1 is top-level.',
         type: 'derived',
         expression:
           "entity.parent == null ? 'L1' : 'L' + ((entity.parent.capability_level |> replace('L', '') |> toNumber) + 1)",
@@ -1034,6 +1151,7 @@ const strategySchemas: TemplateSchema[] = [
       {
         id: 'stakeholders',
         name: 'Stakeholders',
+        description: 'The people with an interest in or responsibility for this capability.',
         type: 'principal',
         minCardinality: 0,
         maxCardinality: -1,
@@ -1042,6 +1160,7 @@ const strategySchemas: TemplateSchema[] = [
       {
         id: 'maturity',
         name: 'Maturity',
+        description: 'The current maturity of the capability, from 1 (initial) to 5 (optimized).',
         type: 'number',
         min: 1,
         max: 5,
@@ -1050,6 +1169,7 @@ const strategySchemas: TemplateSchema[] = [
       {
         id: 'maturity_target',
         name: 'Maturity Target',
+        description: 'The maturity level the capability should reach.',
         type: 'number',
         min: 1,
         max: 5,
@@ -1058,6 +1178,7 @@ const strategySchemas: TemplateSchema[] = [
       {
         id: 'health',
         name: 'Health',
+        description: 'An overall assessment of how well the capability is performing.',
         type: 'select',
         enumId: 'capability-health',
         requirementLevel: 'optional',
@@ -1066,6 +1187,7 @@ const strategySchemas: TemplateSchema[] = [
       {
         id: 'criticality',
         name: 'Business Criticality',
+        description: 'How important the capability is to the business, from 1 (low) to 5 (high).',
         type: 'number',
         min: 1,
         max: 5,
@@ -1074,6 +1196,7 @@ const strategySchemas: TemplateSchema[] = [
       {
         id: 'strategic_importance',
         name: 'Strategic Importance',
+        description: "How much the capability matters to the organization's strategy.",
         type: 'select',
         enumId: 'strategic-importance',
         requirementLevel: 'optional',
@@ -1082,6 +1205,8 @@ const strategySchemas: TemplateSchema[] = [
       {
         id: 'investment_priority',
         name: 'Investment Priority',
+        description:
+          'How the capability should be prioritized for investment, for example invest, maintain or divest.',
         type: 'select',
         enumId: 'investment-priority',
         requirementLevel: 'optional',
@@ -1090,33 +1215,44 @@ const strategySchemas: TemplateSchema[] = [
       {
         id: 'target_state',
         name: 'Target State',
+        description: 'A description of where the capability should be in the future.',
         type: 'longtext',
         groupId: 'strategic-assessment'
       },
       {
         id: 'annual_investment',
         name: 'Annual Investment',
+        description: 'The yearly amount invested in the capability.',
         type: 'currency',
         groupId: 'investment-risk'
       },
       {
         id: 'risk',
         name: 'Risk',
+        description: 'The level of risk associated with the capability, from 1 (low) to 5 (high).',
         type: 'number',
         min: 1,
         max: 5,
         groupId: 'investment-risk'
       },
-      { id: 'target_date', name: 'Target Date', type: 'date', groupId: 'lifecycle-review' },
+      {
+        id: 'target_date',
+        name: 'Target Date',
+        description: 'The date by which the capability is planned to reach its target state.',
+        type: 'date',
+        groupId: 'lifecycle-review'
+      },
       {
         id: 'last_assessed',
         name: 'Last Assessed',
+        description: 'The date the capability was last assessed.',
         type: 'date',
         groupId: 'lifecycle-review'
       },
       {
         id: 'reference_model',
         name: 'Reference Model',
+        description: 'The industry reference model this capability is mapped to.',
         type: 'select',
         enumId: 'capability-reference-model',
         requirementLevel: 'optional',
@@ -1125,12 +1261,14 @@ const strategySchemas: TemplateSchema[] = [
       {
         id: 'reference_code',
         name: 'Reference Code',
+        description: "The capability's identifier within the reference model.",
         type: 'text',
         groupId: 'reference-models'
       },
       {
         id: 'gap',
         name: 'Maturity Gap',
+        description: 'Calculated: the target maturity minus the current maturity.',
         type: 'derived',
         groupId: 'maturity-performance',
         // `==` in this expression language is strict (`===`), so `entity.maturity == null` only
@@ -1145,6 +1283,7 @@ const strategySchemas: TemplateSchema[] = [
       {
         id: 'supporting_objectives',
         name: 'Supported by Objectives',
+        description: 'The objectives this capability helps to achieve.',
         type: 'typedRelation',
         symRelationSchemaId: 'objective-supports-business-capability',
         direction: 'out',
@@ -1154,6 +1293,7 @@ const strategySchemas: TemplateSchema[] = [
       {
         id: 'supported_entities',
         name: 'Supports Entities',
+        description: 'The entities that rely on this capability.',
         type: 'typedRelation',
         symRelationSchemaId: 'business-capability-supports-entity',
         direction: 'in',
@@ -1189,12 +1329,29 @@ const strategySchemas: TemplateSchema[] = [
     color: AR_COLOR_PURPLE,
     icon: 'target',
     fields: [
-      { id: 'description', name: 'Description', type: 'longtext' },
-      { id: 'status', name: 'Status', type: 'select', enumId: 'strategy-status' },
-      { id: 'target_date', name: 'Target Date', type: 'date' },
+      {
+        id: 'description',
+        name: 'Description',
+        description: 'A short summary of what this is and why it matters.',
+        type: 'longtext'
+      },
+      {
+        id: 'status',
+        name: 'Status',
+        description: 'Where the objective stands, for example planned, in progress or achieved.',
+        type: 'select',
+        enumId: 'strategy-status'
+      },
+      {
+        id: 'target_date',
+        name: 'Target Date',
+        description: 'The date the objective should be achieved.',
+        type: 'date'
+      },
       {
         id: 'supported_capabilities',
         name: 'Supports',
+        description: 'The capabilities that support this objective.',
         type: 'typedRelation',
         symRelationSchemaId: 'objective-supports-business-capability',
         direction: 'in',
@@ -1204,6 +1361,7 @@ const strategySchemas: TemplateSchema[] = [
       {
         id: 'affected_entities',
         name: 'Affects',
+        description: 'The entities that are affected by or contribute to this objective.',
         type: 'typedRelation',
         symRelationSchemaId: 'objective-affects-entity',
         direction: 'in',
@@ -1220,10 +1378,16 @@ const strategySchemas: TemplateSchema[] = [
     color: AR_COLOR_BLUE,
     icon: 'flag',
     fields: [
-      { id: 'description', name: 'Description', type: 'longtext' },
+      {
+        id: 'description',
+        name: 'Description',
+        description: 'A short summary of what this is and why it matters.',
+        type: 'longtext'
+      },
       {
         id: 'objectives',
         name: 'Objectives',
+        description: 'The objectives this outcome contributes to.',
         predicate: 'supports',
         type: 'reference',
         symSchemaId: 'objective',
@@ -1240,11 +1404,23 @@ const strategySchemas: TemplateSchema[] = [
     color: AR_COLOR_GREEN,
     icon: 'rocket',
     fields: [
-      { id: 'description', name: 'Description', type: 'longtext' },
-      { id: 'status', name: 'Status', type: 'select', enumId: 'strategy-status' },
+      {
+        id: 'description',
+        name: 'Description',
+        description: 'A short summary of what this is and why it matters.',
+        type: 'longtext'
+      },
+      {
+        id: 'status',
+        name: 'Status',
+        description: 'Where the initiative is, for example proposed, in progress or complete.',
+        type: 'select',
+        enumId: 'strategy-status'
+      },
       {
         id: 'objectives',
         name: 'Objectives',
+        description: 'The objectives this initiative is meant to advance.',
         predicate: 'pursues',
         type: 'reference',
         symSchemaId: 'objective',
@@ -1254,6 +1430,7 @@ const strategySchemas: TemplateSchema[] = [
       {
         id: 'outcomes',
         name: 'Outcomes',
+        description: 'The outcomes this initiative is expected to deliver.',
         predicate: 'pursues',
         type: 'reference',
         symSchemaId: 'outcome',
@@ -1270,20 +1447,47 @@ const strategySchemas: TemplateSchema[] = [
     color: AR_COLOR_ORANGE,
     icon: 'chart-bar',
     fields: [
-      { id: 'description', name: 'Description', type: 'longtext' },
-      { id: 'unit', name: 'Unit', type: 'text' },
-      { id: 'baseline', name: 'Baseline', type: 'number' },
-      { id: 'current', name: 'Current', type: 'number' },
-      { id: 'target_value', name: 'Target Value', type: 'number' },
+      {
+        id: 'description',
+        name: 'Description',
+        description: 'A short summary of what this is and why it matters.',
+        type: 'longtext'
+      },
+      {
+        id: 'unit',
+        name: 'Unit',
+        description: 'The unit the measure is expressed in, such as percent or milliseconds.',
+        type: 'text'
+      },
+      {
+        id: 'baseline',
+        name: 'Baseline',
+        description: 'The value at the start, before any change.',
+        type: 'number'
+      },
+      {
+        id: 'current',
+        name: 'Current',
+        description: 'The most recent measured value.',
+        type: 'number'
+      },
+      {
+        id: 'target_value',
+        name: 'Target Value',
+        description: 'The value the measure should reach.',
+        type: 'number'
+      },
       {
         id: 'direction',
         name: 'Direction',
+        description: 'Whether a higher or a lower value is better.',
         type: 'select',
         enumId: 'measure-direction'
       },
       {
         id: 'outcomes',
         name: 'Outcomes',
+        description: 'The outcomes this measure is used to track.',
         predicate: 'measures',
         type: 'reference',
         symSchemaId: 'outcome',
@@ -1540,10 +1744,16 @@ const retentionPolicySchema: TemplateSchema = {
   color: AR_COLOR_RED,
   icon: 'clock',
   fields: [
-    { id: 'period', name: 'Period', type: 'duration' },
+    {
+      id: 'period',
+      name: 'Period',
+      description: 'How long records governed by this policy must be kept before disposal.',
+      type: 'duration'
+    },
     {
       id: 'governed_entities',
       name: 'Governed Entities',
+      description: 'The entities that must follow this retention policy.',
       type: 'typedRelation',
       symRelationSchemaId: 'retention-assignment',
       direction: 'out',
@@ -1572,7 +1782,13 @@ const retentionAssignmentRelationSchema: SymbolicRelationSchema = {
   inSymSchemaIds: ['data-entity'],
   outSymSchemaIds: ['retention-policy'],
   fields: [
-    { id: 'activated_from', name: 'Activated From', type: 'date', requirementLevel: 'required' }
+    {
+      id: 'activated_from',
+      name: 'Activated From',
+      description: 'The date the retention policy started to apply.',
+      type: 'date',
+      requirementLevel: 'required'
+    }
   ],
   color: AR_COLOR_RED,
   icon: 'clock'
@@ -1586,12 +1802,31 @@ const informationAssetFieldGroup: SymbolicFieldGroup = {
     'Accountable people and handling metadata for a governed information asset: steward, ' +
     'custodian, review date, regulatory tags, processing purposes, and permitted residency regions.',
   fields: [
-    { id: 'steward', name: 'Steward', type: 'principal', requirementLevel: 'expected' },
-    { id: 'custodian', name: 'Custodian', type: 'principal', requirementLevel: 'expected' },
-    { id: 'review_date', name: 'Review Date', type: 'date', requirementLevel: 'expected' },
+    {
+      id: 'steward',
+      name: 'Steward',
+      description: 'The person accountable for the quality and correct use of this asset.',
+      type: 'principal',
+      requirementLevel: 'expected'
+    },
+    {
+      id: 'custodian',
+      name: 'Custodian',
+      description: 'The person or team responsible for the technical safekeeping of this asset.',
+      type: 'principal',
+      requirementLevel: 'expected'
+    },
+    {
+      id: 'review_date',
+      name: 'Review Date',
+      description: "The date the asset's stewardship details are next due to be reviewed.",
+      type: 'date',
+      requirementLevel: 'expected'
+    },
     {
       id: 'regulatory_tags',
       name: 'Regulatory Tags',
+      description: 'Regulations or standards that apply to this asset, such as GDPR or HIPAA.',
       type: 'select',
       enumId: 'regulatory-tags',
       minCardinality: 0,
@@ -1600,6 +1835,7 @@ const informationAssetFieldGroup: SymbolicFieldGroup = {
     {
       id: 'processing_purposes',
       name: 'Processing Purposes',
+      description: 'The reasons this asset is processed, used to check processing is lawful.',
       type: 'select',
       enumId: 'processing-purposes',
       minCardinality: 0,
@@ -1608,6 +1844,7 @@ const informationAssetFieldGroup: SymbolicFieldGroup = {
     {
       id: 'permitted_residency_regions',
       name: 'Permitted Residency Regions',
+      description: 'Regions where this asset is allowed to be stored or processed.',
       type: 'select',
       enumId: 'residency-regions',
       minCardinality: 0,
@@ -1616,6 +1853,7 @@ const informationAssetFieldGroup: SymbolicFieldGroup = {
     {
       id: 'review_status',
       name: 'Review Status',
+      description: 'Calculated from the review date: incomplete, overdue, due soon or current.',
       type: 'derived',
       // 'incomplete' when no review date is set; otherwise bucketed against the current date
       // (entity.now, injected by the derived-field engine) with a 30-day "approaching" window.
@@ -1630,6 +1868,7 @@ const informationAssetFieldGroup: SymbolicFieldGroup = {
     {
       id: 'stewardship_status',
       name: 'Stewardship Status',
+      description: 'Complete once a steward, a custodian and a review date are all recorded.',
       type: 'derived',
       // 'complete' only when a steward, custodian and review date are all recorded. Owner is a
       // built-in field (not reachable from derived expressions) and is already queryable via
@@ -1657,6 +1896,7 @@ const dataFlowGovernanceFieldGroup: SymbolicFieldGroup = {
     {
       id: 'regulatory_tags',
       name: 'Regulatory Tags',
+      description: 'Regulations or standards that apply to this data flow.',
       type: 'select',
       enumId: 'regulatory-tags',
       minCardinality: 0,
@@ -1665,6 +1905,7 @@ const dataFlowGovernanceFieldGroup: SymbolicFieldGroup = {
     {
       id: 'processing_purposes',
       name: 'Processing Purposes',
+      description: 'The reasons data is transferred in this flow.',
       type: 'select',
       enumId: 'processing-purposes',
       minCardinality: 0,
@@ -1673,6 +1914,7 @@ const dataFlowGovernanceFieldGroup: SymbolicFieldGroup = {
     {
       id: 'source_residency_region',
       name: 'Source Residency Region',
+      description: 'The region the data leaves from.',
       type: 'select',
       enumId: 'residency-regions',
       requirementLevel: 'optional'
@@ -1680,6 +1922,7 @@ const dataFlowGovernanceFieldGroup: SymbolicFieldGroup = {
     {
       id: 'destination_residency_region',
       name: 'Destination Residency Region',
+      description: 'The region the data arrives in.',
       type: 'select',
       enumId: 'residency-regions',
       requirementLevel: 'optional'
@@ -1687,6 +1930,8 @@ const dataFlowGovernanceFieldGroup: SymbolicFieldGroup = {
     {
       id: 'cross_boundary',
       name: 'Cross-Boundary Transfer',
+      description:
+        'Calculated: whether the data moves between regions, stays within one, or is incomplete.',
       type: 'derived',
       // Mirrors dataFlowResidency.ts's computeCrossBoundary. A missing region is never treated as
       // compliant — it is reported as 'incomplete', distinct from 'same-region'.
@@ -1697,6 +1942,8 @@ const dataFlowGovernanceFieldGroup: SymbolicFieldGroup = {
     {
       id: 'residency_invalid',
       name: 'Residency-Invalid Transfer',
+      description:
+        'Calculated: whether the destination region is allowed by the data carried in this flow.',
       type: 'derived',
       // Mirrors dataFlowResidency.ts's computeResidencyInvalid. 'not-applicable' when no carried
       // Data Entity declares any permitted regions; 'incomplete' when the destination region
@@ -1722,6 +1969,7 @@ const dataEntitySchema: TemplateSchema = {
     {
       id: 'classification',
       name: 'Classification',
+      description: 'The sensitivity level of the data, which determines how it must be handled.',
       type: 'select',
       enumId: 'pii-classification',
       requirementLevel: 'optional'
@@ -1735,6 +1983,7 @@ const dataEntitySchema: TemplateSchema = {
     {
       id: 'retention_policy',
       name: 'Retention Policy',
+      description: 'The retention policy that governs how long this data is kept.',
       type: 'typedRelation',
       symRelationSchemaId: 'retention-assignment',
       direction: 'in',
@@ -1767,6 +2016,7 @@ const dataFlowRelationSchema: SymbolicRelationSchema = {
     {
       id: 'direction',
       name: 'Direction',
+      description: 'Whether data moves one way or both ways between the two ends of the flow.',
       type: 'select',
       enumId: { templateId: 'information-governance', symId: 'data-flow-direction' },
       requirementLevel: 'required'
@@ -1774,6 +2024,7 @@ const dataFlowRelationSchema: SymbolicRelationSchema = {
     {
       id: 'data_classification',
       name: 'Data Classification',
+      description: 'The sensitivity of the data carried by this flow.',
       type: 'select',
       enumId: { templateId: 'information-governance', symId: 'pii-classification' },
       requirementLevel: 'required'
@@ -1781,6 +2032,7 @@ const dataFlowRelationSchema: SymbolicRelationSchema = {
     {
       id: 'protocol',
       name: 'Protocol',
+      description: 'The communication protocol or transfer mechanism the flow uses.',
       type: 'select',
       enumId: { templateId: 'information-governance', symId: 'communication-protocol' },
       requirementLevel: 'optional'
@@ -1788,6 +2040,7 @@ const dataFlowRelationSchema: SymbolicRelationSchema = {
     {
       id: 'data_entities',
       name: 'Data',
+      description: 'The data entities carried by this flow.',
       type: 'entityRelation',
       predicate: 'carries',
       schemaId: { templateId: 'information-governance', symId: 'data-entity' },
@@ -1890,6 +2143,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
               {
                 id: 'data_flows_out',
                 name: 'Sends data to',
+                description: 'Data flows that send data from this entity to others.',
                 type: 'typedRelation',
                 symRelationSchemaId: {
                   templateId: dataFlowExtensionTemplateId,
@@ -1903,6 +2157,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
               {
                 id: 'data_flows_in',
                 name: 'Receives data from',
+                description: 'Data flows that deliver data to this entity from others.',
                 type: 'typedRelation',
                 symRelationSchemaId: {
                   templateId: dataFlowExtensionTemplateId,
@@ -1947,6 +2202,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           {
             id: 'domain',
             name: 'Domain',
+            description: 'The domain this system belongs to.',
             predicate: 'belongs to',
             type: 'containment',
             symSchemaId: 'domain',
@@ -1958,6 +2214,8 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           {
             id: 'contracts',
             name: 'Uses',
+            description:
+              'Contracts that cover the use of this system, such as licences and support agreements.',
             type: 'typedRelation',
             symRelationSchemaId: 'system-contract',
             direction: 'in',
@@ -1968,6 +2226,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           {
             id: 'budget',
             name: 'Budget',
+            description: "Calculated: this system's share of the annual cost of its contracts.",
             type: 'derived',
             expression:
               'entity.contracts.map(.allocation * .entity.annual_cost.amount / 100) |> sum',
@@ -1988,6 +2247,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           {
             id: 'system',
             name: 'System',
+            description: 'The system this component is part of.',
             predicate: 'belongs to',
             type: 'containment',
             symSchemaId: 'system',
@@ -1999,6 +2259,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           {
             id: 'depends_on',
             name: 'Depends On',
+            description: 'Other components this component needs in order to work.',
             predicate: 'depends on',
             type: 'reference',
             symSchemaId: 'component',
@@ -2016,10 +2277,17 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: AR_COLOR_BLUE,
         icon: 'api',
         fields: [
-          { id: 'api_type', name: 'Type', type: 'select', enumId: 'api-type' },
+          {
+            id: 'api_type',
+            name: 'Type',
+            description: 'The style of API, such as REST, GraphQL or event stream.',
+            type: 'select',
+            enumId: 'api-type'
+          },
           {
             id: 'protocols',
             name: 'Protocols',
+            description: 'The communication protocols the API can be reached over.',
             type: 'select',
             enumId: 'communication-protocol',
             requirementLevel: 'required',
@@ -2029,13 +2297,19 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           {
             id: 'system',
             name: 'System',
+            description: 'The system that owns this API.',
             predicate: 'belongs to',
             type: 'containment',
             symSchemaId: 'system',
             minCount: 1,
             maxCount: 1
           },
-          { id: 'api_version', name: 'API Version', type: 'text' },
+          {
+            id: 'api_version',
+            name: 'API Version',
+            description: 'The version identifier of the API.',
+            type: 'text'
+          },
           apiParticipationField('providers', 'Provided by', 'provides-api', 'out'),
           apiParticipationField('consumers', 'Consumed by', 'consumes-api', 'out')
         ],
@@ -2050,11 +2324,17 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: AR_COLOR_ORANGE,
         icon: 'database',
         fields: [
-          { id: 'resource_type', name: 'Type', type: 'text' },
+          {
+            id: 'resource_type',
+            name: 'Type',
+            description: 'The kind of resource, such as database, queue or storage bucket.',
+            type: 'text'
+          },
           technologyReleaseReference(),
           {
             id: 'system',
             name: 'System',
+            description: 'The system this resource belongs to.',
             predicate: 'belongs to',
             type: 'containment',
             symSchemaId: 'system',
@@ -2074,19 +2354,42 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           {
             id: 'vendor',
             name: 'Vendor',
+            description: 'The vendor the contract is made with.',
             predicate: 'provided by',
             type: 'containment',
             symSchemaId: 'vendor',
             minCount: 1,
             maxCount: 1
           },
-          { id: 'contract_start', name: 'Contract Start', type: 'date' },
-          { id: 'contract_end', name: 'Contract End', type: 'date' },
-          { id: 'annual_cost', name: 'Annual Cost', type: 'currency' },
-          { id: 'setup_fee', name: 'Setup Fee', type: 'currency' },
+          {
+            id: 'contract_start',
+            name: 'Contract Start',
+            description: 'The date the contract takes effect.',
+            type: 'date'
+          },
+          {
+            id: 'contract_end',
+            name: 'Contract End',
+            description: 'The date the contract expires.',
+            type: 'date'
+          },
+          {
+            id: 'annual_cost',
+            name: 'Annual Cost',
+            description: 'The yearly recurring cost of the contract.',
+            type: 'currency'
+          },
+          {
+            id: 'setup_fee',
+            name: 'Setup Fee',
+            description: 'A one-off fee paid when the contract is started.',
+            type: 'currency'
+          },
           {
             id: 'allocated',
             name: 'Allocated',
+            description:
+              'Calculated: the total share of the contract that has been assigned to systems.',
             type: 'derived',
             expression: 'entity.system.map(.allocation) |> sum',
             resultType: 'number'
@@ -2094,6 +2397,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           {
             id: 'system',
             name: 'Used by',
+            description: 'The systems that use this contract and how much of it each takes.',
             type: 'typedRelation',
             symRelationSchemaId: 'system-contract',
             direction: 'out',
@@ -2104,13 +2408,33 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           {
             id: 'contract_type',
             name: 'Contract Type',
+            description: 'The kind of contract, such as licence, support or subscription.',
             type: 'select',
             enumId: 'contract-type',
             groupId: 'terms'
           },
-          { id: 'auto_renew', name: 'Auto-Renew', type: 'boolean', groupId: 'terms' },
-          { id: 'notice_period', name: 'Notice Period', type: 'duration', groupId: 'terms' },
-          { id: 'contract_owner', name: 'Contract Owner', type: 'text', groupId: 'ownership' }
+          {
+            id: 'auto_renew',
+            name: 'Auto-Renew',
+            description: 'Whether the contract renews automatically at the end of its term.',
+            type: 'boolean',
+            groupId: 'terms'
+          },
+          {
+            id: 'notice_period',
+            name: 'Notice Period',
+            description:
+              'How long before the end date notice must be given to cancel or change the contract.',
+            type: 'duration',
+            groupId: 'terms'
+          },
+          {
+            id: 'contract_owner',
+            name: 'Contract Owner',
+            description: 'The person responsible for managing this contract.',
+            type: 'text',
+            groupId: 'ownership'
+          }
         ],
         groups: [
           { id: 'terms', name: 'Terms' },
@@ -2139,6 +2463,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           {
             id: 'category',
             name: 'Category',
+            description: 'The type of product or service the vendor supplies.',
             type: 'select',
             enumId: 'vendor-category',
             groupId: 'classification'
@@ -2146,6 +2471,8 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           {
             id: 'tier',
             name: 'Tier',
+            description:
+              'How important the vendor is to the business, used to decide the level of oversight.',
             type: 'select',
             enumId: 'vendor-tier',
             groupId: 'classification'
@@ -2153,6 +2480,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           {
             id: 'status',
             name: 'Status',
+            description: 'Where the vendor stands, for example prospective, active or exiting.',
             type: 'select',
             enumId: 'vendor-status',
             groupId: 'classification'
@@ -2160,12 +2488,14 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           {
             id: 'relationship_owner',
             name: 'Relationship Owner',
+            description: 'The person who manages the relationship with this vendor.',
             type: 'text',
             groupId: 'ownership'
           },
           {
             id: 'cost_centre',
             name: 'Cost Centre',
+            description: 'The cost centre that pays for this vendor.',
             type: 'select',
             enumId: 'vendor-cost-centre',
             groupId: 'ownership'
@@ -2173,6 +2503,8 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           {
             id: 'security_risk',
             name: 'Security Risk',
+            description:
+              'Assessed security risk of relying on this vendor, from 1 (low) to 5 (high).',
             type: 'number',
             min: 1,
             max: 5,
@@ -2181,6 +2513,8 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           {
             id: 'concentration_risk',
             name: 'Concentration Risk',
+            description:
+              'Risk from depending too heavily on this vendor, from 1 (low) to 5 (high).',
             type: 'number',
             min: 1,
             max: 5,
@@ -2189,6 +2523,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           {
             id: 'financial_risk',
             name: 'Financial Risk',
+            description: 'Risk that the vendor is financially unstable, from 1 (low) to 5 (high).',
             type: 'number',
             min: 1,
             max: 5,
@@ -2197,6 +2532,8 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           {
             id: 'compliance_risk',
             name: 'Compliance Risk',
+            description:
+              'Risk that the vendor causes regulatory or compliance problems, from 1 (low) to 5 (high).',
             type: 'number',
             min: 1,
             max: 5,
@@ -2205,6 +2542,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           {
             id: 'criticality',
             name: 'Criticality',
+            description: 'How critical the vendor is to the business, from 1 (low) to 5 (high).',
             type: 'number',
             min: 1,
             max: 5,
@@ -2213,6 +2551,8 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           {
             id: 'risk',
             name: 'Risk',
+            description:
+              'Calculated: a weighted score of the four risk ratings, adjusted by criticality.',
             type: 'derived',
             groupId: 'risk',
             expression:
@@ -2226,6 +2566,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           {
             id: 'spend',
             name: 'Annual Spend',
+            description: 'Calculated: the total annual cost of all contracts with this vendor.',
             type: 'derived',
             groupId: 'ownership',
             // Sum of annual_cost across the vendor's Contracts (entity.referrers are the entities
@@ -2240,6 +2581,8 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           {
             id: 'next_renewal',
             name: 'Next Renewal',
+            description:
+              "Calculated: the earliest upcoming contract end date among this vendor's contracts.",
             type: 'derived',
             groupId: 'ownership',
             // Earliest upcoming Contract.contract_end. Kept current by the daily recalculation scan.
@@ -2287,6 +2630,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           {
             id: 'purpose',
             name: 'Purpose',
+            description: 'What the contract is used for within the system.',
             type: 'select',
             enumId: 'contract-purpose',
             requirementLevel: 'required'
@@ -2294,6 +2638,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           {
             id: 'allocation',
             name: 'Allocation',
+            description: "The percentage of the contract's cost that is attributed to this system.",
             type: 'number',
             min: 0,
             max: 100,
@@ -2550,6 +2895,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           {
             id: 'domain',
             name: 'Domain',
+            description: 'The domain this system belongs to.',
             predicate: 'belongs to',
             type: 'containment',
             symSchemaId: 'domain',
@@ -2568,17 +2914,29 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: AR_COLOR_BLUE,
         icon: 'api',
         fields: [
-          { id: 'api_type', name: 'Type', type: 'select', enumId: 'api-type' },
+          {
+            id: 'api_type',
+            name: 'Type',
+            description: 'The style of API, such as REST, GraphQL or event stream.',
+            type: 'select',
+            enumId: 'api-type'
+          },
           {
             id: 'system',
             name: 'System',
+            description: 'The system that owns this API.',
             predicate: 'belongs to',
             type: 'containment',
             symSchemaId: 'system',
             minCount: 0,
             maxCount: 1
           },
-          { id: 'api_version', name: 'API Version', type: 'text' },
+          {
+            id: 'api_version',
+            name: 'API Version',
+            description: 'The version identifier of the API.',
+            type: 'text'
+          },
           apiParticipationField('providers', 'Provided by', 'provides-api', 'out'),
           apiParticipationField('consumers', 'Consumed by', 'consumes-api', 'out')
         ]
@@ -2591,12 +2949,29 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: AR_COLOR_GREEN,
         icon: 'box',
         fields: [
-          { id: 'kind', name: 'Kind', type: 'select', enumId: 'component-kind' },
-          { id: 'technology', name: 'Technology', type: 'text' },
-          { id: 'go_live_date', name: 'Go Live Date', type: 'date' },
+          {
+            id: 'kind',
+            name: 'Kind',
+            description: 'The type of component, such as service, library or website.',
+            type: 'select',
+            enumId: 'component-kind'
+          },
+          {
+            id: 'technology',
+            name: 'Technology',
+            description: 'The main technology or framework the component is built with.',
+            type: 'text'
+          },
+          {
+            id: 'go_live_date',
+            name: 'Go Live Date',
+            description: 'The date the component entered production.',
+            type: 'date'
+          },
           {
             id: 'system',
             name: 'System',
+            description: 'The system this component is part of.',
             predicate: 'belongs to',
             type: 'containment',
             symSchemaId: 'system',
@@ -2616,11 +2991,23 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: AR_COLOR_ORANGE,
         icon: 'database',
         fields: [
-          { id: 'kind', name: 'Kind', type: 'select', enumId: 'resource-kind' },
-          { id: 'planned_decommission', name: 'Planned Decommission', type: 'date' },
+          {
+            id: 'kind',
+            name: 'Kind',
+            description: 'The kind of resource, such as database, queue or storage bucket.',
+            type: 'select',
+            enumId: 'resource-kind'
+          },
+          {
+            id: 'planned_decommission',
+            name: 'Planned Decommission',
+            description: 'The date the resource is planned to be shut down.',
+            type: 'date'
+          },
           {
             id: 'system',
             name: 'System',
+            description: 'The system this resource belongs to.',
             predicate: 'belongs to',
             type: 'containment',
             symSchemaId: 'system',
@@ -2658,7 +3045,14 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         category: 'Organization',
         color: AR_COLOR_YELLOW,
         icon: 'user',
-        fields: [{ id: 'description', name: 'Description', type: 'longtext' }]
+        fields: [
+          {
+            id: 'description',
+            name: 'Description',
+            description: 'A short summary of who this person or role is and what they do.',
+            type: 'longtext'
+          }
+        ]
       },
       {
         symId: 'software_system',
@@ -2667,7 +3061,14 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         category: 'Architecture',
         color: AR_COLOR_PURPLE,
         icon: 'layers',
-        fields: [{ id: 'description', name: 'Description', type: 'longtext' }]
+        fields: [
+          {
+            id: 'description',
+            name: 'Description',
+            description: 'A short summary of what the software system does.',
+            type: 'longtext'
+          }
+        ]
       },
       {
         symId: 'container',
@@ -2678,11 +3079,22 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: AR_COLOR_GREEN,
         icon: 'box',
         fields: [
-          { id: 'technology', name: 'Technology', type: 'text' },
-          { id: 'description', name: 'Description', type: 'longtext' },
+          {
+            id: 'technology',
+            name: 'Technology',
+            description: 'The main technology the container is built with.',
+            type: 'text'
+          },
+          {
+            id: 'description',
+            name: 'Description',
+            description: 'A short summary of what the container does.',
+            type: 'longtext'
+          },
           {
             id: 'system',
             name: 'Software System',
+            description: 'The software system this container is part of.',
             predicate: 'belongs to',
             type: 'containment',
             symSchemaId: 'software_system',
@@ -2699,10 +3111,16 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: AR_COLOR_BLUE,
         icon: 'settings',
         fields: [
-          { id: 'technology', name: 'Technology', type: 'text' },
+          {
+            id: 'technology',
+            name: 'Technology',
+            description: 'The main technology or framework the component is built with.',
+            type: 'text'
+          },
           {
             id: 'container',
             name: 'Container',
+            description: 'The container this component runs in.',
             predicate: 'belongs to',
             type: 'containment',
             symSchemaId: 'container',
@@ -2712,6 +3130,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           {
             id: 'depends_on',
             name: 'Depends On',
+            description: 'Other components this component needs in order to work.',
             predicate: 'depends on',
             type: 'reference',
             symSchemaId: 'component',
@@ -2753,6 +3172,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           {
             id: 'organization',
             name: 'Organization',
+            description: 'The organization that provides this service.',
             type: 'containment',
             symSchemaId: 'organization',
             minCount: 0,
@@ -2768,12 +3188,30 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: AR_COLOR_GREEN,
         icon: 'box',
         fields: [
-          { id: 'technology', name: 'Technology', type: 'text' },
-          { id: 'tier', name: 'Tier', type: 'select', enumId: 'application-tier' },
-          { id: 'sunset_date', name: 'Sunset Date', type: 'date' },
+          {
+            id: 'technology',
+            name: 'Technology',
+            description: 'The main technology the application is built with.',
+            type: 'text'
+          },
+          {
+            id: 'tier',
+            name: 'Tier',
+            description:
+              'How critical the application is, which sets its support and recovery expectations.',
+            type: 'select',
+            enumId: 'application-tier'
+          },
+          {
+            id: 'sunset_date',
+            name: 'Sunset Date',
+            description: 'The date the application is planned to be retired.',
+            type: 'date'
+          },
           {
             id: 'service',
             name: 'Business Service',
+            description: 'The business service this application supports.',
             type: 'containment',
             symSchemaId: 'business_service',
             minCount: 0,
@@ -2789,10 +3227,16 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: AR_COLOR_PURPLE,
         icon: 'database',
         fields: [
-          { id: 'technology', name: 'Technology', type: 'text' },
+          {
+            id: 'technology',
+            name: 'Technology',
+            description: 'The database product or engine in use.',
+            type: 'text'
+          },
           {
             id: 'application',
             name: 'Application',
+            description: 'The application that uses this database.',
             type: 'reference',
             symSchemaId: 'application',
             minCount: 0,
@@ -2808,12 +3252,31 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: AR_COLOR_ORANGE,
         icon: 'server',
         fields: [
-          { id: 'host_type', name: 'Type', type: 'select', enumId: 'host-type' },
-          { id: 'environment', name: 'Environment', type: 'select', enumId: 'environment' },
-          { id: 'patch_deadline', name: 'Patch Deadline', type: 'date' },
+          {
+            id: 'host_type',
+            name: 'Type',
+            description:
+              'The kind of host, such as physical server, virtual machine or container host.',
+            type: 'select',
+            enumId: 'host-type'
+          },
+          {
+            id: 'environment',
+            name: 'Environment',
+            description: 'The environment the host belongs to, such as production or test.',
+            type: 'select',
+            enumId: 'environment'
+          },
+          {
+            id: 'patch_deadline',
+            name: 'Patch Deadline',
+            description: 'The date by which the host must have its pending patches applied.',
+            type: 'date'
+          },
           {
             id: 'applications',
             name: 'Applications',
+            description: 'Applications running on this host.',
             type: 'reference',
             symSchemaId: 'application',
             minCount: 0,
@@ -2822,6 +3285,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           {
             id: 'databases',
             name: 'Databases',
+            description: 'Databases running on this host.',
             type: 'reference',
             symSchemaId: 'database',
             minCount: 0,
@@ -2866,11 +3330,23 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: AR_COLOR_GREEN,
         icon: 'box',
         fields: [
-          { id: 'kind', name: 'Kind', type: 'select', enumId: 'service-kind' },
-          { id: 'technology', name: 'Technology', type: 'text' },
+          {
+            id: 'kind',
+            name: 'Kind',
+            description: 'The type of service.',
+            type: 'select',
+            enumId: 'service-kind'
+          },
+          {
+            id: 'technology',
+            name: 'Technology',
+            description: 'The main technology the service is built with.',
+            type: 'text'
+          },
           {
             id: 'domain',
             name: 'Domain',
+            description: 'The domain this service belongs to.',
             type: 'containment',
             symSchemaId: 'domain',
             minCount: 0,
@@ -2879,6 +3355,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           {
             id: 'depends_on',
             name: 'Depends On',
+            description: 'Other services this service needs in order to work.',
             type: 'reference',
             symSchemaId: 'service',
             minCount: 0,
@@ -2895,10 +3372,17 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: AR_COLOR_BLUE,
         icon: 'zap',
         fields: [
-          { id: 'event_type', name: 'Type', type: 'select', enumId: 'event-type' },
+          {
+            id: 'event_type',
+            name: 'Type',
+            description: 'The kind of event, such as domain event, integration event or command.',
+            type: 'select',
+            enumId: 'event-type'
+          },
           {
             id: 'producer',
             name: 'Producer',
+            description: 'The service that publishes this event.',
             type: 'reference',
             symSchemaId: 'service',
             minCount: 0,
@@ -2907,6 +3391,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           {
             id: 'consumers',
             name: 'Consumers',
+            description: 'The services that react to this event.',
             type: 'reference',
             symSchemaId: 'service',
             minCount: 0,
@@ -2934,8 +3419,20 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: AR_COLOR_YELLOW,
         icon: 'users',
         fields: [
-          { id: 'team_type', name: 'Type', type: 'select', enumId: 'team-type' },
-          { id: 'cognitive_load', name: 'Cognitive Load Notes', type: 'longtext' }
+          {
+            id: 'team_type',
+            name: 'Type',
+            description:
+              'The Team Topologies type of the team, such as stream-aligned or platform.',
+            type: 'select',
+            enumId: 'team-type'
+          },
+          {
+            id: 'cognitive_load',
+            name: 'Cognitive Load Notes',
+            description: 'Notes on how much the team is asked to handle and where it is stretched.',
+            type: 'longtext'
+          }
         ]
       },
       {
@@ -2949,12 +3446,18 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           {
             id: 'owning_team',
             name: 'Owning Team',
+            description: 'The team that owns and is accountable for this system.',
             type: 'containment',
             symSchemaId: 'team',
             minCount: 0,
             maxCount: 1
           },
-          { id: 'description', name: 'Description', type: 'longtext' }
+          {
+            id: 'description',
+            name: 'Description',
+            description: 'A short summary of what the system does.',
+            type: 'longtext'
+          }
         ]
       },
       {
@@ -2966,10 +3469,18 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: AR_COLOR_BLUE,
         icon: 'arrow-right',
         fields: [
-          { id: 'mode', name: 'Mode', type: 'select', enumId: 'interaction-mode' },
+          {
+            id: 'mode',
+            name: 'Mode',
+            description:
+              'The interaction mode between the teams: collaboration, X-as-a-service or facilitating.',
+            type: 'select',
+            enumId: 'interaction-mode'
+          },
           {
             id: 'from_team',
             name: 'From Team',
+            description: 'The team that initiates the interaction.',
             type: 'reference',
             symSchemaId: 'team',
             minCount: 1,
@@ -2978,12 +3489,18 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           {
             id: 'to_team',
             name: 'To Team',
+            description: 'The team the interaction is directed at.',
             type: 'reference',
             symSchemaId: 'team',
             minCount: 1,
             maxCount: 1
           },
-          { id: 'expected_duration', name: 'Expected Duration', type: 'duration' }
+          {
+            id: 'expected_duration',
+            name: 'Expected Duration',
+            description: 'How long the interaction is expected to last.',
+            type: 'duration'
+          }
         ]
       }
     ],
@@ -3015,10 +3532,16 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: AR_COLOR_PURPLE,
         icon: 'database',
         fields: [
-          { id: 'technology', name: 'Technology', type: 'text' },
+          {
+            id: 'technology',
+            name: 'Technology',
+            description: 'The main technology the source system is built with.',
+            type: 'text'
+          },
           {
             id: 'domain',
             name: 'Domain',
+            description: 'The business domain that owns this source system.',
             type: 'containment',
             symSchemaId: 'domain',
             minCount: 0,
@@ -3034,12 +3557,31 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: AR_COLOR_GREEN,
         icon: 'box',
         fields: [
-          { id: 'dp_type', name: 'Type', type: 'select', enumId: 'data-product-type' },
-          { id: 'slo', name: 'SLOs', type: 'longtext' },
-          { id: 'review_date', name: 'Review Date', type: 'date' },
+          {
+            id: 'dp_type',
+            name: 'Type',
+            description:
+              'The kind of data product, such as source-aligned, aggregate or consumer-aligned.',
+            type: 'select',
+            enumId: 'data-product-type'
+          },
+          {
+            id: 'slo',
+            name: 'SLOs',
+            description:
+              'The service level objectives the data product commits to, such as freshness and availability.',
+            type: 'longtext'
+          },
+          {
+            id: 'review_date',
+            name: 'Review Date',
+            description: 'The date the data product is next due to be reviewed.',
+            type: 'date'
+          },
           {
             id: 'domain',
             name: 'Domain',
+            description: 'The business domain that owns this data product.',
             type: 'containment',
             symSchemaId: 'domain',
             minCount: 1,
@@ -3048,6 +3590,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           {
             id: 'source_systems',
             name: 'Source Systems',
+            description: 'The systems this data product gets its data from.',
             type: 'reference',
             symSchemaId: 'source_system',
             minCount: 0,
@@ -3063,12 +3606,29 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: AR_COLOR_BLUE,
         icon: 'table',
         fields: [
-          { id: 'format', name: 'Format', type: 'select', enumId: 'dataset-format' },
-          { id: 'schema_url', name: 'Schema URL', type: 'text' },
-          { id: 'deprecation_date', name: 'Deprecation Date', type: 'date' },
+          {
+            id: 'format',
+            name: 'Format',
+            description: 'The file or storage format of the dataset, such as Parquet or CSV.',
+            type: 'select',
+            enumId: 'dataset-format'
+          },
+          {
+            id: 'schema_url',
+            name: 'Schema URL',
+            description: "A link to the schema that describes the dataset's structure.",
+            type: 'text'
+          },
+          {
+            id: 'deprecation_date',
+            name: 'Deprecation Date',
+            description: 'The date the dataset is scheduled to be withdrawn.',
+            type: 'date'
+          },
           {
             id: 'data_product',
             name: 'Data Product',
+            description: 'The data product this dataset is published as part of.',
             type: 'containment',
             symSchemaId: 'data_product',
             minCount: 1,
@@ -3084,10 +3644,16 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: AR_COLOR_ORANGE,
         icon: 'git-branch',
         fields: [
-          { id: 'technology', name: 'Technology', type: 'text' },
+          {
+            id: 'technology',
+            name: 'Technology',
+            description: 'The tool or framework the pipeline runs on.',
+            type: 'text'
+          },
           {
             id: 'inputs',
             name: 'Inputs',
+            description: 'The datasets or systems the pipeline reads from.',
             type: 'reference',
             symSchemaId: 'dataset',
             minCount: 0,
@@ -3096,6 +3662,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           {
             id: 'outputs',
             name: 'Outputs',
+            description: 'The datasets the pipeline writes to.',
             type: 'reference',
             symSchemaId: 'dataset',
             minCount: 0,
@@ -3125,12 +3692,18 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           {
             id: 'parent',
             name: 'Parent Capability',
+            description: 'The broader capability this capability is a part of.',
             type: 'containment',
             symSchemaId: 'business_capability',
             minCount: 0,
             maxCount: 1
           },
-          { id: 'target_date', name: 'Target Date', type: 'date' }
+          {
+            id: 'target_date',
+            name: 'Target Date',
+            description: 'The date by which the capability is planned to reach its target state.',
+            type: 'date'
+          }
         ]
       },
       {
@@ -3144,6 +3717,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           {
             id: 'capability',
             name: 'Capability',
+            description: 'The business capability this process realizes.',
             type: 'containment',
             symSchemaId: 'business_capability',
             minCount: 0,
@@ -3159,12 +3733,29 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: AR_COLOR_GREEN,
         icon: 'box',
         fields: [
-          { id: 'technology', name: 'Technology', type: 'text' },
-          { id: 'layer', name: 'Layer', type: 'select', enumId: 'layer' },
-          { id: 'retirement_date', name: 'Retirement Date', type: 'date' },
+          {
+            id: 'technology',
+            name: 'Technology',
+            description: 'The main technology the application component is built with.',
+            type: 'text'
+          },
+          {
+            id: 'layer',
+            name: 'Layer',
+            description: 'The architectural layer the component sits in.',
+            type: 'select',
+            enumId: 'layer'
+          },
+          {
+            id: 'retirement_date',
+            name: 'Retirement Date',
+            description: 'The date the component is planned to be retired.',
+            type: 'date'
+          },
           {
             id: 'realises',
             name: 'Realises Process',
+            description: 'The business processes this component supports.',
             type: 'reference',
             symSchemaId: 'business_process',
             minCount: 0,
@@ -3183,6 +3774,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           {
             id: 'component',
             name: 'Component',
+            description: 'The application component that provides this service.',
             type: 'containment',
             symSchemaId: 'application_component',
             minCount: 0,
@@ -3199,12 +3791,30 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: AR_COLOR_PURPLE,
         icon: 'server',
         fields: [
-          { id: 'technology', name: 'Technology', type: 'text' },
-          { id: 'kind', name: 'Kind', type: 'select', enumId: 'technology-kind' },
-          { id: 'end_of_support', name: 'End of Support', type: 'date' },
+          {
+            id: 'technology',
+            name: 'Technology',
+            description: 'The product or platform used.',
+            type: 'text'
+          },
+          {
+            id: 'kind',
+            name: 'Kind',
+            description:
+              'The kind of technology component, such as node, device or system software.',
+            type: 'select',
+            enumId: 'technology-kind'
+          },
+          {
+            id: 'end_of_support',
+            name: 'End of Support',
+            description: 'The date vendor support for this component ends.',
+            type: 'date'
+          },
           {
             id: 'hosts',
             name: 'Hosts',
+            description: 'The application components that run on this technology component.',
             type: 'reference',
             symSchemaId: 'application_component',
             minCount: 0,
@@ -3235,10 +3845,17 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           {
             id: 'classification',
             name: 'Classification',
+            description: 'The sensitivity level of the asset, which sets how it must be protected.',
             type: 'select',
             enumId: 'classification'
           },
-          { id: 'asset_type', name: 'Type', type: 'select', enumId: 'asset-type' }
+          {
+            id: 'asset_type',
+            name: 'Type',
+            description: 'The kind of asset, such as data, system or facility.',
+            type: 'select',
+            enumId: 'asset-type'
+          }
         ]
       },
       {
@@ -3252,19 +3869,33 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           {
             id: 'stride_category',
             name: 'STRIDE Category',
+            description:
+              'The STRIDE category of the threat: spoofing, tampering, repudiation, information disclosure, denial of service or elevation of privilege.',
             type: 'select',
             enumId: 'stride-category'
           },
-          { id: 'discovered_on', name: 'Discovered On', type: 'date' },
+          {
+            id: 'discovered_on',
+            name: 'Discovered On',
+            description: 'The date the threat was identified.',
+            type: 'date'
+          },
           {
             id: 'affected_assets',
             name: 'Affected Assets',
+            description: 'The assets this threat could harm.',
             type: 'reference',
             symSchemaId: 'asset',
             minCount: 0,
             maxCount: -1
           },
-          { id: 'description', name: 'Description', type: 'longtext' }
+          {
+            id: 'description',
+            name: 'Description',
+            description:
+              'A description of how the threat could materialize and what it would affect.',
+            type: 'longtext'
+          }
         ]
       },
       {
@@ -3275,11 +3906,23 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: AR_COLOR_GREEN,
         icon: 'check-circle',
         fields: [
-          { id: 'control_type', name: 'Type', type: 'select', enumId: 'control-type' },
-          { id: 'last_verified', name: 'Last Verified', type: 'date' },
+          {
+            id: 'control_type',
+            name: 'Type',
+            description: 'The kind of control, such as preventive, detective or corrective.',
+            type: 'select',
+            enumId: 'control-type'
+          },
+          {
+            id: 'last_verified',
+            name: 'Last Verified',
+            description: 'The date the control was last checked to be in place and working.',
+            type: 'date'
+          },
           {
             id: 'mitigates',
             name: 'Mitigates',
+            description: 'The risks or threats this control reduces.',
             type: 'reference',
             symSchemaId: 'threat',
             minCount: 0,
@@ -3288,6 +3931,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           {
             id: 'protects',
             name: 'Protects',
+            description: 'The assets this control protects.',
             type: 'reference',
             symSchemaId: 'asset',
             minCount: 0,
@@ -3304,12 +3948,30 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: AR_COLOR_YELLOW,
         icon: 'zap',
         fields: [
-          { id: 'likelihood', name: 'Likelihood', type: 'select', enumId: 'likelihood' },
-          { id: 'impact', name: 'Impact', type: 'select', enumId: 'impact' },
-          { id: 'review_due', name: 'Review Due', type: 'date' },
+          {
+            id: 'likelihood',
+            name: 'Likelihood',
+            description: 'How likely the risk is to occur.',
+            type: 'select',
+            enumId: 'likelihood'
+          },
+          {
+            id: 'impact',
+            name: 'Impact',
+            description: 'How severe the consequences would be if the risk occurs.',
+            type: 'select',
+            enumId: 'impact'
+          },
+          {
+            id: 'review_due',
+            name: 'Review Due',
+            description: 'The date the risk is next due to be reviewed.',
+            type: 'date'
+          },
           {
             id: 'threat',
             name: 'Threat',
+            description: 'The threat this risk stems from.',
             type: 'reference',
             symSchemaId: 'threat',
             minCount: 0,
@@ -3318,6 +3980,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           {
             id: 'controls',
             name: 'Controls',
+            description: 'The controls in place to reduce this risk.',
             type: 'reference',
             symSchemaId: 'control',
             minCount: 0,
@@ -3344,12 +4007,35 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: AR_COLOR_RED,
         icon: 'alert-octagon',
         fields: [
-          { id: 'likelihood', name: 'Likelihood', type: 'number', min: 1, max: 5 },
-          { id: 'impact', name: 'Impact', type: 'number', min: 1, max: 5 },
-          { id: 'category', name: 'Category', type: 'select', enumId: 'risk-category' },
+          {
+            id: 'likelihood',
+            name: 'Likelihood',
+            description: 'How likely the risk is to occur, from 1 (rare) to 5 (almost certain).',
+            type: 'number',
+            min: 1,
+            max: 5
+          },
+          {
+            id: 'impact',
+            name: 'Impact',
+            description:
+              'How severe the consequences would be if the risk occurs, from 1 (minor) to 5 (severe).',
+            type: 'number',
+            min: 1,
+            max: 5
+          },
+          {
+            id: 'category',
+            name: 'Category',
+            description: 'The type of risk, such as operational, financial or security.',
+            type: 'select',
+            enumId: 'risk-category'
+          },
           {
             id: 'inherent_risk_score',
             name: 'Inherent Risk Score',
+            description:
+              'Calculated: likelihood multiplied by impact, before any controls are applied.',
             type: 'derived',
             expression: 'entity.likelihood * entity.impact',
             resultType: 'number'
@@ -3357,12 +4043,15 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           {
             id: 'mitigation_effectiveness',
             name: 'Mitigation Effectiveness',
+            description: 'How much the existing mitigations reduce the impact of the risk.',
             type: 'select',
             enumId: 'risk-mitigation-effectiveness'
           },
           {
             id: 'residual_risk_score',
             name: 'Residual Risk Score',
+            description:
+              'Calculated: the risk score remaining after taking mitigation into account.',
             type: 'derived',
             expression:
               "entity.likelihood * (entity.mitigation_effectiveness == 'full' ? 0 : entity.mitigation_effectiveness == 'substantial' ? (entity.impact - 2 < 1 ? 1 : entity.impact - 2) : entity.mitigation_effectiveness == 'partial' ? (entity.impact - 1 < 1 ? 1 : entity.impact - 1) : entity.impact)",
@@ -3371,17 +4060,37 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           {
             id: 'risk_coverage',
             name: 'Risk Coverage',
+            description:
+              'Calculated: the combined percentage of the risk covered by its mitigating controls.',
             type: 'derived',
             expression:
               "entity.mitigating_controls.filter(.coverage != null && (.effectiveness == 'none' || .effectiveness == 'partial' || .effectiveness == 'substantial' || .effectiveness == 'full')) |> count == 0 ? null : ((entity.mitigating_controls.filter(.coverage != null && (.effectiveness == 'none' || .effectiveness == 'partial' || .effectiveness == 'substantial' || .effectiveness == 'full')).map(.coverage * (.effectiveness == 'none' ? 0 : .effectiveness == 'partial' ? 0.5 : .effectiveness == 'substantial' ? 0.75 : 1) / -100 + 1) |> product) * -100 + 100) |> round",
             resultType: 'number'
           },
-          { id: 'risk_owner', name: 'Risk Owner', type: 'text' },
-          { id: 'status', name: 'Status', type: 'select', enumId: 'risk-status' },
-          { id: 'treatment_target_date', name: 'Treatment Target Date', type: 'date' },
+          {
+            id: 'risk_owner',
+            name: 'Risk Owner',
+            description: 'The person accountable for managing this risk.',
+            type: 'text'
+          },
+          {
+            id: 'status',
+            name: 'Status',
+            description:
+              'Where the risk is in its handling, for example open, mitigated or accepted.',
+            type: 'select',
+            enumId: 'risk-status'
+          },
+          {
+            id: 'treatment_target_date',
+            name: 'Treatment Target Date',
+            description: 'The date by which the chosen treatment of the risk should be in place.',
+            type: 'date'
+          },
           {
             id: 'affected_entities',
             name: 'Affects',
+            description: 'The entities that would be affected if the risk occurs.',
             type: 'typedRelation',
             symRelationSchemaId: 'risk-affects',
             direction: 'in',
@@ -3391,6 +4100,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           {
             id: 'mitigating_controls',
             name: 'Mitigated by',
+            description: 'The controls that mitigate this risk.',
             type: 'typedRelation',
             symRelationSchemaId: 'risk-control',
             direction: 'in',
@@ -3407,23 +4117,37 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: AR_COLOR_GREEN,
         icon: 'check-circle',
         fields: [
-          { id: 'control_type', name: 'Type', type: 'select', enumId: 'rc-control-type' },
+          {
+            id: 'control_type',
+            name: 'Type',
+            description: 'The kind of control, such as preventive, detective or corrective.',
+            type: 'select',
+            enumId: 'rc-control-type'
+          },
           {
             id: 'design_effectiveness',
             name: 'Design Effectiveness',
+            description: 'How well the control is designed to achieve its objective.',
             type: 'select',
             enumId: 'control-effectiveness'
           },
           {
             id: 'operating_effectiveness',
             name: 'Operating Effectiveness',
+            description: 'How well the control works in practice.',
             type: 'select',
             enumId: 'control-effectiveness'
           },
-          { id: 'last_verified', name: 'Last Verified', type: 'date' },
+          {
+            id: 'last_verified',
+            name: 'Last Verified',
+            description: 'The date the control was last checked to be in place and working.',
+            type: 'date'
+          },
           {
             id: 'mitigated_risks',
             name: 'Mitigates',
+            description: 'The risks this control helps mitigate.',
             type: 'typedRelation',
             symRelationSchemaId: 'risk-control',
             direction: 'out',
@@ -3433,6 +4157,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           {
             id: 'satisfied_requirements',
             name: 'Satisfies',
+            description: 'The compliance requirements this control satisfies.',
             type: 'typedRelation',
             symRelationSchemaId: 'control-requirement',
             direction: 'in',
@@ -3452,8 +4177,19 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: AR_COLOR_BLUE,
         icon: 'book',
         fields: [
-          { id: 'framework_kind', name: 'Kind', type: 'select', enumId: 'framework-kind' },
-          { id: 'description', name: 'Description', type: 'longtext' }
+          {
+            id: 'framework_kind',
+            name: 'Kind',
+            description: 'The kind of framework, such as regulation, standard or internal policy.',
+            type: 'select',
+            enumId: 'framework-kind'
+          },
+          {
+            id: 'description',
+            name: 'Description',
+            description: 'A short summary of what this is and why it matters.',
+            type: 'longtext'
+          }
         ]
       },
       {
@@ -3464,12 +4200,29 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: AR_COLOR_PURPLE,
         icon: 'file-check',
         fields: [
-          { id: 'requirement_code', name: 'Requirement Code', type: 'text' },
-          { id: 'description', name: 'Description', type: 'longtext' },
-          { id: 'status', name: 'Status', type: 'select', enumId: 'requirement-status' },
+          {
+            id: 'requirement_code',
+            name: 'Requirement Code',
+            description: 'The identifier of the requirement within its framework, such as A.5.1.',
+            type: 'text'
+          },
+          {
+            id: 'description',
+            name: 'Description',
+            description: 'A short summary of what this is and why it matters.',
+            type: 'longtext'
+          },
+          {
+            id: 'status',
+            name: 'Status',
+            description: 'How far the requirement has been met.',
+            type: 'select',
+            enumId: 'requirement-status'
+          },
           {
             id: 'framework',
             name: 'Framework',
+            description: 'The framework this requirement comes from.',
             predicate: 'belongs to',
             type: 'containment',
             symSchemaId: 'framework',
@@ -3479,6 +4232,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           {
             id: 'satisfying_controls',
             name: 'Satisfied by',
+            description: 'The controls that satisfy this requirement.',
             type: 'typedRelation',
             symRelationSchemaId: 'control-requirement',
             direction: 'out',
@@ -3503,6 +4257,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           {
             id: 'effectiveness',
             name: 'Effectiveness',
+            description: 'How well the control reduces this risk.',
             type: 'select',
             enumId: 'risk-mitigation-effectiveness',
             requirementLevel: 'required'
@@ -3510,12 +4265,18 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           {
             id: 'coverage',
             name: 'Coverage',
+            description: 'The percentage of the risk the control is expected to cover.',
             type: 'number',
             min: 0,
             max: 100,
             requirementLevel: 'required'
           },
-          { id: 'reviewed_on', name: 'Reviewed On', type: 'date' }
+          {
+            id: 'reviewed_on',
+            name: 'Reviewed On',
+            description: 'The date the link between risk and control was last reviewed.',
+            type: 'date'
+          }
         ],
         color: AR_COLOR_RED,
         icon: 'shield-check'
@@ -3533,12 +4294,24 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           {
             id: 'status',
             name: 'Status',
+            description: 'How far the control has been shown to satisfy the requirement.',
             type: 'select',
             enumId: 'requirement-status',
             requirementLevel: 'required'
           },
-          { id: 'evidence', name: 'Evidence', type: 'text' },
-          { id: 'verified_on', name: 'Verified On', type: 'date' }
+          {
+            id: 'evidence',
+            name: 'Evidence',
+            description:
+              'Where the evidence that the control satisfies the requirement can be found.',
+            type: 'text'
+          },
+          {
+            id: 'verified_on',
+            name: 'Verified On',
+            description: 'The date the evidence was last verified.',
+            type: 'date'
+          }
         ],
         color: AR_COLOR_GREEN,
         icon: 'check-circle'
@@ -3851,6 +4624,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
               {
                 id: 'protected_entities',
                 name: 'Protects',
+                description: 'The entities this control protects.',
                 type: 'typedRelation',
                 symRelationSchemaId: {
                   templateId: controlProtectionExtensionTemplateId,
@@ -3868,6 +4642,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
               {
                 id: 'protecting_controls',
                 name: 'Protected by',
+                description: 'The controls that protect this entity.',
                 type: 'typedRelation',
                 symRelationSchemaId: {
                   templateId: controlProtectionExtensionTemplateId,
@@ -4662,7 +5437,11 @@ const materializeTemplateFragments = (
 
   const resolveField = (ownerId: string, field: SymbolicField): SchemaField => {
     const resolved = resolveFieldInner(ownerId, field);
-    return field.groupId ? { ...resolved, groupId: field.groupId } : resolved;
+    return {
+      ...resolved,
+      ...(field.description ? { description: field.description } : {}),
+      ...(field.groupId ? { groupId: field.groupId } : {})
+    };
   };
 
   const resolveFieldInner = (ownerId: string, field: SymbolicField): SchemaField => {
@@ -4760,6 +5539,14 @@ const materializeTemplateFragments = (
   };
 
   const resolveRelationField = (
+    ownerId: string,
+    field: SymbolicRelationSchema['fields'][number]
+  ): RelationField => {
+    const resolved = resolveRelationFieldInner(ownerId, field);
+    return field.description ? { ...resolved, description: field.description } : resolved;
+  };
+
+  const resolveRelationFieldInner = (
     ownerId: string,
     field: SymbolicRelationSchema['fields'][number]
   ) => {

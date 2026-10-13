@@ -1,3 +1,4 @@
+import { FieldDescriptionIcon } from '../../../components/FieldDescriptionIcon';
 import { Fragment, type CSSProperties, type ReactNode } from 'react';
 import { Chip } from '../../../components/Chip';
 import { DropdownMenu } from '../../../components/DropdownMenu';
@@ -112,7 +113,14 @@ export const TableView = ({
             .filter(c => c.id !== '_description')
             .map(c => (
               <Fragment key={c.id}>
-                {headerCell(c.id, c.label, { numeric: isNumericDisplayField(c) })}
+                {headerCell(
+                  c.id,
+                  <>
+                    {c.label}
+                    <FieldDescriptionIcon description={c.schemaField?.description} inline />
+                  </>,
+                  { numeric: isNumericDisplayField(c) }
+                )}
               </Fragment>
             ))}
           {activeDateField &&
