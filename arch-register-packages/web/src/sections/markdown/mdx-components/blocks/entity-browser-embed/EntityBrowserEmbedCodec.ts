@@ -42,6 +42,9 @@ export type EntityBrowserEmbedConfig = {
   title?: string;
   /** Shows at most this many rows (after sorting). Unset shows all matching rows. */
   limit?: number;
+  /** Opt-in: shows a search box and real pagination (table and cards views). Unset keeps the
+   *  static published rendering used by wiki embeds; `limit` is ignored when set. */
+  interactive?: boolean;
   /** Map view only: the heat overlays the viewer can switch between (with find-as-you-type
    *  search), each a numeric field of the map's schema rolled up and drawn in severity bands.
    *  Edited as JSON in the config form's Advanced section. */
@@ -84,6 +87,7 @@ export const encodeEntityBrowserEmbedConfig = (config: EntityBrowserEmbedConfig)
     schemaName: config.schemaName,
     title: config.title,
     limit: config.limit,
+    interactive: config.interactive,
     overlays: config.overlays,
     dimOwnerIds: config.dimOwnerIds
   };
@@ -119,6 +123,7 @@ export const decodeEntityBrowserEmbedConfig = (
         typeof parsed.limit === 'number' && Number.isInteger(parsed.limit) && parsed.limit > 0
           ? parsed.limit
           : undefined,
+      interactive: parsed.interactive === true ? true : undefined,
       overlays:
         Array.isArray(parsed.overlays) && parsed.overlays.every(isMapOverlayConfig)
           ? (parsed.overlays as MapOverlayConfig[])

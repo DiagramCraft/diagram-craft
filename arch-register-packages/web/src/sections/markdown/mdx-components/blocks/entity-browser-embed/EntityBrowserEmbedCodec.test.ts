@@ -141,6 +141,16 @@ describe('title and limit', () => {
     );
     expect(decoded?.limit).toBeUndefined();
   });
+
+  it('round-trips interactive and leaves it unset by default', () => {
+    expect(
+      decodeEntityBrowserEmbedConfig(encodeEntityBrowserEmbedConfig({ ...base, interactive: true }))
+        ?.interactive
+    ).toBe(true);
+    expect(
+      decodeEntityBrowserEmbedConfig(encodeEntityBrowserEmbedConfig(base))?.interactive
+    ).toBeUndefined();
+  });
 });
 
 describe('column renderers', () => {

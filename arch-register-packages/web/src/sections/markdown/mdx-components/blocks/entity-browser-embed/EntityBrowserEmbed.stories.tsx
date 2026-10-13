@@ -73,6 +73,11 @@ storyQueryClient.setQueryData(entityKeys.list(WORKSPACE, entityQueryOptions), {
   items: entities,
   total: entities.length
 });
+// The interactive embed pages server-side by name (default page size 200, first page).
+storyQueryClient.setQueryData(
+  entityKeys.list(WORKSPACE, { ...entityQueryOptions, limit: 200, offset: 0 }),
+  { items: entities, total: entities.length }
+);
 storyQueryClient.setQueryData(entityKeys.facets(WORKSPACE), {
   owner: [],
   lifecycle: [],
@@ -106,12 +111,42 @@ export const WikiNoViewConfigured: Story = {
   )
 };
 
+export const WikiInteractive: Story = {
+  render: () => (
+    <StoryProviders client={storyQueryClient}>
+      <EntityBrowserEmbed
+        config={encodeEntityBrowserEmbedConfig({ ...browserConfig, interactive: true })}
+      />
+    </StoryProviders>
+  )
+};
+
 export const DashboardDefault: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
       <DashboardStory
         widgets={[
           dashboardWidget('entity-browser-embed', 'EntityBrowserEmbed', browserConfig, 0, 0, 6, 6)
+        ]}
+      />
+    </StoryProviders>
+  )
+};
+
+export const DashboardInteractive: Story = {
+  render: () => (
+    <StoryProviders client={storyQueryClient}>
+      <DashboardStory
+        widgets={[
+          dashboardWidget(
+            'entity-browser-embed',
+            'EntityBrowserEmbed',
+            { ...browserConfig, interactive: true },
+            0,
+            0,
+            6,
+            6
+          )
         ]}
       />
     </StoryProviders>

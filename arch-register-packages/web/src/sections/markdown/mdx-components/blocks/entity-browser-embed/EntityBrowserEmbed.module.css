@@ -31,3 +31,7 @@ div[data-frame="true"] {
     border-width: 0;
   }
 }
+
+.searchRow {
+  padding: 0 0 8px;
+}
