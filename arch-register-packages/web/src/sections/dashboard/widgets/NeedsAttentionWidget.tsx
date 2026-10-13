@@ -13,7 +13,6 @@ export type NeedsAttentionWidgetConfig = {
   scope: NeedsAttentionScope;
   severity: NeedsAttentionSeverity;
   limit: number;
-  label?: string;
 };
 
 type Props = {

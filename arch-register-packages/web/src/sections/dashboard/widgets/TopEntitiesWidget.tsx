@@ -22,7 +22,6 @@ export type TopEntitiesWidgetConfig = {
   showShareBar?: boolean;
   /** Show the "View in catalog" footer link. Default true. */
   showLink?: boolean;
-  label?: string;
 };
 
 type Props = {

@@ -265,11 +265,12 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
         type: 'AggregateStat',
         config: {
           query: 'schema:"Data Flow" AND cross_boundary = "cross-boundary"',
-          label: 'Crossing a boundary',
+
           subtextTemplate: 'source and destination regions differ',
           severity: { warnAt: 1 },
           showLink: false
         },
+        frame: { title: 'Crossing a boundary' },
         x: 3,
         y: 0,
         w: 3,
@@ -280,12 +281,13 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
         type: 'AggregateStat',
         config: {
           query: 'schema:"Data Flow" AND data_classification in ("sensitive", "highly-sensitive")',
-          label: 'Carrying restricted data',
+
           subtextQuery: 'schema:"Data Flow" AND data_classification = "highly-sensitive"',
           subtextTemplate: '{sub} highly sensitive',
           severity: { critAt: 1 },
           showLink: false
         },
+        frame: { title: 'Carrying restricted data' },
         x: 6,
         y: 0,
         w: 3,
@@ -558,9 +560,10 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
         config: {
           schemaName: 'Data Entity',
           status: 'overdue',
-          label: 'Overdue',
+
           subtextTemplate: 'past the scheduled date'
         },
+        frame: { title: 'Overdue' },
         x: 0,
         y: 0,
         w: 3,
@@ -572,9 +575,10 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
         config: {
           schemaName: 'Data Entity',
           status: 'in_progress',
-          label: 'In progress',
+
           subtextTemplate: '{notStarted} not started'
         },
+        frame: { title: 'In progress' },
         x: 3,
         y: 0,
         w: 3,
@@ -586,9 +590,10 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
         config: {
           schemaName: 'Data Entity',
           status: 'not_started',
-          label: 'Not started',
+
           subtextTemplate: 'no response recorded yet'
         },
+        frame: { title: 'Not started' },
         x: 6,
         y: 0,
         w: 3,
@@ -600,9 +605,10 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
         config: {
           schemaName: 'Data Entity',
           status: 'complete',
-          label: 'Complete',
+
           subtextTemplate: 'of {total} assessments'
         },
+        frame: { title: 'Complete' },
         x: 9,
         y: 0,
         w: 3,
@@ -611,7 +617,8 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
       {
         id: 'seed-assessments-table',
         type: 'AssessmentProgressTable',
-        config: { schemaName: 'Data Entity', label: 'Assessments' },
+        config: { schemaName: 'Data Entity' },
+        frame: { title: 'Assessments' },
         x: 0,
         y: 5,
         w: 12,
@@ -639,11 +646,12 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
                   config: {
                     query:
                       'schema:"Data Entity" AND classification in ("sensitive", "highly-sensitive")',
-                    label: 'Restricted datasets',
+
                     subtextTemplate: 'sensitive or highly sensitive',
                     severity: { critAt: 1 },
                     showLink: false
                   },
+                  frame: { title: 'Restricted datasets' },
                   x: 0,
                   y: 0,
                   w: 4,
@@ -655,10 +663,11 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
                   config: {
                     query:
                       'schema:"Data Entity" AND regulatory_tags = empty AND processing_purposes = empty',
-                    label: 'Missing lawful-basis proxy',
+
                     subtextTemplate: 'no regulatory tags or processing purposes',
                     showLink: false
                   },
+                  frame: { title: 'Missing lawful-basis proxy' },
                   x: 4,
                   y: 0,
                   w: 4,
@@ -669,10 +678,11 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
                   type: 'AggregateStat',
                   config: {
                     query: 'schema:"Data Entity"',
-                    label: 'Total datasets',
+
                     subtextTemplate: 'under governance',
                     showLink: false
                   },
+                  frame: { title: 'Total datasets' },
                   x: 8,
                   y: 0,
                   w: 4,
@@ -682,7 +692,6 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
                   id: 'seed-classification-datasets',
                   type: ENTITY_BROWSER_EMBED_WIDGET_TYPE,
                   config: {
-                    title: 'Classified datasets',
                     q: '',
                     conditions: [],
                     sort: 'field:Classification:asc',
@@ -714,6 +723,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
                       }
                     }
                   },
+                  frame: { title: 'Classified datasets' },
                   x: 0,
                   y: 5,
                   w: 12,
@@ -731,10 +741,11 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
                   config: {
                     query:
                       'schema:"Data Flow" AND data_classification in ("sensitive", "highly-sensitive")',
-                    label: 'Restricted flows',
+
                     subtextTemplate: 'sensitive or highly sensitive',
                     showLink: false
                   },
+                  frame: { title: 'Restricted flows' },
                   x: 0,
                   y: 0,
                   w: 4,
@@ -745,11 +756,12 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
                   type: 'AggregateStat',
                   config: {
                     query: 'schema:"Data Flow" AND data_classification = "highly-sensitive"',
-                    label: 'Highly sensitive',
+
                     subtextTemplate: 'top classification tier',
                     severity: { critAt: 1 },
                     showLink: false
                   },
+                  frame: { title: 'Highly sensitive' },
                   x: 4,
                   y: 0,
                   w: 4,
@@ -761,11 +773,12 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
                   config: {
                     query:
                       'schema:"Data Flow" AND cross_boundary = "cross-boundary" AND data_classification in ("sensitive", "highly-sensitive")',
-                    label: 'Crossing a boundary',
+
                     subtextTemplate: 'source and destination regions differ',
                     severity: { warnAt: 1 },
                     showLink: false
                   },
+                  frame: { title: 'Crossing a boundary' },
                   x: 8,
                   y: 0,
                   w: 4,
@@ -784,9 +797,9 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
                       'cross_boundary'
                     ],
                     sort: 'data_classification',
-                    limit: 200,
-                    label: 'Flows carrying restricted or confidential data'
+                    limit: 200
                   },
+                  frame: { title: 'Flows carrying restricted or confidential data' },
                   x: 0,
                   y: 5,
                   w: 12,
@@ -803,10 +816,11 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
                   type: 'AggregateStat',
                   config: {
                     query: 'schema:"Data Flow" AND cross_boundary = "cross-boundary"',
-                    label: 'Cross-boundary transfers',
+
                     subtextTemplate: 'source and destination regions differ',
                     showLink: false
                   },
+                  frame: { title: 'Cross-boundary transfers' },
                   x: 0,
                   y: 0,
                   w: 4,
@@ -818,11 +832,12 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
                   config: {
                     query:
                       'schema:"Data Flow" AND cross_boundary = "cross-boundary" AND data_classification in ("sensitive", "highly-sensitive")',
-                    label: 'Carrying personal data',
+
                     subtextTemplate: 'classification is sensitive or higher',
                     severity: { warnAt: 1 },
                     showLink: false
                   },
+                  frame: { title: 'Carrying personal data' },
                   x: 4,
                   y: 0,
                   w: 4,
@@ -834,11 +849,12 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
                   config: {
                     query:
                       'schema:"Data Flow" AND cross_boundary = "cross-boundary" AND data_classification in ("sensitive", "highly-sensitive")',
-                    label: 'Unsafeguarded personal-data transfers',
+
                     subtextTemplate: 'no exception recorded',
                     severity: { critAt: 1 },
                     showLink: false
                   },
+                  frame: { title: 'Unsafeguarded personal-data transfers' },
                   x: 8,
                   y: 0,
                   w: 4,
@@ -859,9 +875,9 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
                       '_owner'
                     ],
                     sort: 'data_classification',
-                    limit: 200,
-                    label: 'Cross-boundary transfers'
+                    limit: 200
                   },
+                  frame: { title: 'Cross-boundary transfers' },
                   x: 0,
                   y: 5,
                   w: 12,
@@ -896,9 +912,9 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
           schemaName: 'Data Entity',
           caseKinds: ['entity.change-case'],
           severity: 'due-date',
-          status: '$status',
-          label: 'Change cases'
+          status: '$status'
         },
+        frame: { title: 'Change cases' },
         x: 0,
         y: 0,
         w: 12,
@@ -930,10 +946,11 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
           denominatorQuery: 'schema:"Data Entity"',
           display: 'percent',
           subtextTemplate: '{count} of {total} datasets clean',
-          label: 'Fully covered',
+
           severity: { warnAt: 60, direction: 'below' },
           showLink: false
         },
+        frame: { title: 'Fully covered' },
         x: 0,
         y: 0,
         w: 3,
@@ -947,9 +964,10 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
           subtextQuery: 'schema:"Data Entity" AND steward = empty',
           subtextTemplate: '{sub} missing a steward',
           severity: { critAt: 1 },
-          label: 'Missing an owner',
+
           showLink: false
         },
+        frame: { title: 'Missing an owner' },
         x: 3,
         y: 0,
         w: 3,
@@ -962,9 +980,10 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
           query: 'schema:"Data Entity" AND review_status = "overdue"',
           subtextTemplate: 'scheduled date passed',
           severity: { warnAt: 1 },
-          label: 'Reviews overdue',
+
           showLink: false
         },
+        frame: { title: 'Reviews overdue' },
         x: 6,
         y: 0,
         w: 3,
@@ -978,9 +997,10 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
           subtextQuery: 'schema:"Data Entity" AND _owner = empty',
           subtextTemplate: '{sub} missing an owner',
           severity: { critAt: 1 },
-          label: 'Missing a steward',
+
           showLink: false
         },
+        frame: { title: 'Missing a steward' },
         x: 9,
         y: 0,
         w: 3,
@@ -989,7 +1009,8 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
       {
         id: 'seed-gaps-to-close',
         type: 'ConformanceViolations',
-        config: { schemaName: 'Data Entity', limit: 8, label: 'Gaps to close' },
+        config: { schemaName: 'Data Entity', limit: 8 },
+        frame: { title: 'Gaps to close' },
         x: 0,
         y: 5,
         w: 12,
@@ -1005,13 +1026,13 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
         id: 'seed-stat-assigned',
         type: 'data-stewardship-case-count',
         config: {
-          label: 'Assigned to me',
           scope: 'mine',
           caseKinds: [],
           tone: 'none',
           subtextTemplate: '{due} due within a week',
           dueWithinDays: 7
         },
+        frame: { title: 'Assigned to me' },
         x: 0,
         y: 0,
         w: 3,
@@ -1021,13 +1042,13 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
         id: 'seed-stat-past-due',
         type: 'data-stewardship-case-count',
         config: {
-          label: 'Past due',
           scope: 'late',
           caseKinds: [],
           tone: 'danger',
           subtextTemplate: 'across all assignees',
           dueWithinDays: 7
         },
+        frame: { title: 'Past due' },
         x: 3,
         y: 0,
         w: 3,
@@ -1037,13 +1058,13 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
         id: 'seed-stat-awaiting-decision',
         type: 'data-stewardship-case-count',
         config: {
-          label: 'Cases awaiting a decision',
           scope: 'workspace',
           caseKinds: ['entity.change-case', 'entity.deprecation'],
           tone: 'warning',
           subtextTemplate: 'change-case & deprecation approvals',
           dueWithinDays: 7
         },
+        frame: { title: 'Cases awaiting a decision' },
         x: 6,
         y: 0,
         w: 3,
@@ -1061,7 +1082,8 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
       {
         id: 'seed-calendar',
         type: 'data-stewardship-case-calendar',
-        config: { label: 'Next six weeks', scope: 'mine', caseKinds: [] },
+        config: { scope: 'mine', caseKinds: [] },
+        frame: { title: 'Next six weeks' },
         x: 0,
         y: 5,
         w: 12,
@@ -1070,7 +1092,8 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
       {
         id: 'seed-queue',
         type: 'data-stewardship-case-queue',
-        config: { label: 'Assigned to me', scope: 'mine', caseKinds: [] },
+        config: { scope: 'mine', caseKinds: [] },
+        frame: { title: 'Assigned to me' },
         x: 0,
         y: 19,
         w: 12,
@@ -1088,9 +1111,9 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
         type: 'CountByField',
         config: {
           schemaName: 'Business Capability',
-          fieldId: 'capability_level',
-          label: 'Capabilities by level'
+          fieldId: 'capability_level'
         },
+        frame: { title: 'Capabilities by level' },
         x: 0,
         y: 0,
         w: 3,
@@ -1099,7 +1122,8 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
       {
         id: 'seed-objectives-by-status',
         type: 'CountByField',
-        config: { schemaName: 'Objective', fieldId: 'status', label: 'Objectives by status' },
+        config: { schemaName: 'Objective', fieldId: 'status' },
+        frame: { title: 'Objectives by status' },
         x: 3,
         y: 0,
         w: 3,
@@ -1112,10 +1136,11 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
           query: 'schema:"Business Capability" AND supported_entities',
           denominatorQuery: 'schema:"Business Capability"',
           display: 'percent',
-          label: 'Application coverage',
+
           subtextTemplate: '{count} of {total} capabilities have ≥1 application',
           showLink: false
         },
+        frame: { title: 'Application coverage' },
         x: 6,
         y: 0,
         w: 3,
@@ -1126,11 +1151,12 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
         type: 'AggregateStat',
         config: {
           query: 'schema:"Business Capability" AND NOT supporting_objectives',
-          label: 'Orphan capabilities',
+
           subtextTemplate: 'not supported by any objective',
           severity: { warnAt: 1 },
           showLink: false
         },
+        frame: { title: 'Orphan capabilities' },
         x: 9,
         y: 0,
         w: 3,
@@ -1140,7 +1166,6 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
         id: 'seed-largest-maturity-gaps',
         type: ENTITY_BROWSER_EMBED_WIDGET_TYPE,
         config: {
-          title: 'Largest maturity gaps',
           limit: 5,
           q: '',
           conditions: [],
@@ -1161,6 +1186,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
             }
           }
         },
+        frame: { title: 'Largest maturity gaps' },
         x: 0,
         y: 7,
         w: 12,
@@ -1177,7 +1203,6 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
         id: 'seed-capability-map',
         type: ENTITY_BROWSER_EMBED_WIDGET_TYPE,
         config: {
-          title: 'Capability map',
           q: '',
           conditions: [],
           sort: 'name',
@@ -1263,6 +1288,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
             }
           }
         },
+        frame: { title: 'Capability map' },
         x: 0,
         y: 0,
         w: 12,
@@ -1283,7 +1309,6 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
         id: 'seed-capabilities-tree',
         type: ENTITY_BROWSER_EMBED_WIDGET_TYPE,
         config: {
-          title: 'Capabilities',
           q: '',
           conditions: [],
           sort: 'name',
@@ -1310,6 +1335,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
             }
           }
         },
+        frame: { title: 'Capabilities' },
         x: 0,
         y: 0,
         w: 12,
@@ -1344,9 +1370,10 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
           schemaName: 'Outcome',
           referenceField: 'objectives',
           descriptionField: 'description',
-          label: 'Outcomes',
+
           emptyMessage: 'No outcome promised by this objective.'
         },
+        frame: { title: 'Outcomes' },
         x: 0,
         y: 9,
         w: 4,
@@ -1361,9 +1388,10 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
           referenceField: 'objectives',
           statusField: 'status',
           descriptionField: 'description',
-          label: 'Initiatives',
+
           emptyMessage: 'No initiative pursues this objective.'
         },
+        frame: { title: 'Initiatives' },
         x: 4,
         y: 9,
         w: 4,
@@ -1382,9 +1410,10 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
           progressCurrentField: 'current',
           progressTargetField: 'target_value',
           progressUnitField: 'unit',
-          label: 'Measures',
+
           emptyMessage: 'No measure tracks this objective’s outcomes.'
         },
+        frame: { title: 'Measures' },
         x: 8,
         y: 9,
         w: 4,
@@ -1394,7 +1423,6 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
         id: 'seed-capabilities',
         type: ENTITY_BROWSER_EMBED_WIDGET_TYPE,
         config: {
-          title: 'Capabilities this objective depends on',
           q: '',
           conditions: [],
           sort: 'name',
@@ -1414,6 +1442,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
             }
           }
         },
+        frame: { title: 'Capabilities this objective depends on' },
         x: 0,
         y: 23,
         w: 12,
@@ -1477,7 +1506,6 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
                   id: 'seed-traceability-orphans',
                   type: ENTITY_BROWSER_EMBED_WIDGET_TYPE,
                   config: {
-                    title: 'Capabilities no objective supports',
                     q: '',
                     conditions: [],
                     sort: 'name',
@@ -1496,6 +1524,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
                       }
                     }
                   },
+                  frame: { title: 'Capabilities no objective supports' },
                   x: 0,
                   y: 0,
                   w: 12,
@@ -1521,11 +1550,12 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
         type: 'AggregateStat',
         config: {
           query: 'schema:Risk AND status != "closed" AND residual_risk_score >= 10',
-          label: 'Outside appetite',
+
           subtextTemplate: 'residual banded high or critical',
           severity: { warnAt: 1 },
           showLink: false
         },
+        frame: { title: 'Outside appetite' },
         x: 0,
         y: 0,
         w: 4,
@@ -1538,11 +1568,12 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
           query: 'schema:Control AND operating_effectiveness = "effective"',
           denominatorQuery: 'schema:Control',
           display: 'percent',
-          label: 'Control coverage',
+
           subtextTemplate: '{count} of {total} tested effective',
           severity: { warnAt: 80, critAt: 50, direction: 'below' },
           showLink: false
         },
+        frame: { title: 'Control coverage' },
         x: 4,
         y: 0,
         w: 4,
@@ -1555,9 +1586,10 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
           mode: 'active',
           schemaNames: ['Risk', 'Control'],
           dueWithinDays: 30,
-          label: 'Due in 30 days',
+
           subtext: 'open risk reviews and control tests'
         },
+        frame: { title: 'Due in 30 days' },
         x: 8,
         y: 0,
         w: 4,
@@ -1568,9 +1600,9 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
         type: 'risk-compliance-risk-matrix',
         config: {
           schemaName: 'Risk',
-          axis: 'residual',
-          label: 'Risk matrix — likelihood × impact'
+          axis: 'residual'
         },
+        frame: { title: 'Risk matrix — likelihood × impact' },
         x: 0,
         y: 5,
         w: 6,
@@ -1583,9 +1615,9 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
           schemaName: 'Control',
           groupByFieldId: 'control_type',
           numeratorFieldId: 'operating_effectiveness',
-          numeratorValue: 'effective',
-          label: 'Control effectiveness by control type'
+          numeratorValue: 'effective'
         },
+        frame: { title: 'Control effectiveness by control type' },
         x: 6,
         y: 5,
         w: 6,
@@ -1597,9 +1629,9 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
         config: {
           mode: 'active',
           schemaNames: ['Risk', 'Control'],
-          relativeDue: true,
-          label: 'Upcoming risk and control reviews'
+          relativeDue: true
         },
+        frame: { title: 'Upcoming risk and control reviews' },
         x: 6,
         y: 17,
         w: 6,
@@ -1609,7 +1641,6 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
         id: 'seed-highest-residual-risks',
         type: ENTITY_BROWSER_EMBED_WIDGET_TYPE,
         config: {
-          title: 'Highest residual risks',
           limit: 7,
           q: '',
           conditions: [],
@@ -1634,6 +1665,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
             }
           }
         },
+        frame: { title: 'Highest residual risks' },
         x: 0,
         y: 29,
         w: 6,
@@ -1643,7 +1675,6 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
         id: 'seed-weak-control-risks',
         type: ENTITY_BROWSER_EMBED_WIDGET_TYPE,
         config: {
-          title: 'Risks with weak or missing control',
           q: '',
           conditions: [],
           sort: 'field:Residual Risk Score:desc',
@@ -1687,6 +1718,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
             }
           }
         },
+        frame: { title: 'Risks with weak or missing control' },
         x: 6,
         y: 29,
         w: 6,
@@ -1704,9 +1736,9 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
         config: {
           mode: 'active',
           schemaNames: ['Risk'],
-          relativeDue: true,
-          label: 'Risk reviews due'
+          relativeDue: true
         },
+        frame: { title: 'Risk reviews due' },
         x: 0,
         y: 0,
         w: 6,
@@ -1718,9 +1750,9 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
         config: {
           mode: 'active',
           schemaNames: ['Control'],
-          relativeDue: true,
-          label: 'Control tests due'
+          relativeDue: true
         },
+        frame: { title: 'Control tests due' },
         x: 6,
         y: 0,
         w: 6,
@@ -1738,7 +1770,8 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
                 {
                   id: 'seed-risk-assessments-table',
                   type: 'AssessmentProgressTable',
-                  config: { schemaName: 'Risk', label: 'Risk assessments' },
+                  config: { schemaName: 'Risk' },
+                  frame: { title: 'Risk assessments' },
                   x: 0,
                   y: 0,
                   w: 12,
@@ -1753,7 +1786,8 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
                 {
                   id: 'seed-control-assessments-table',
                   type: 'AssessmentProgressTable',
-                  config: { schemaName: 'Control', label: 'Control assessments' },
+                  config: { schemaName: 'Control' },
+                  frame: { title: 'Control assessments' },
                   x: 0,
                   y: 0,
                   w: 12,
@@ -1788,7 +1822,6 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
                   id: 'seed-risks-register',
                   type: ENTITY_BROWSER_EMBED_WIDGET_TYPE,
                   config: {
-                    title: 'Risk register',
                     q: '',
                     conditions: [],
                     sort: 'field:Residual Risk Score:desc',
@@ -1838,6 +1871,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
                       }
                     }
                   },
+                  frame: { title: 'Risk register' },
                   x: 0,
                   y: 0,
                   w: 12,
@@ -1854,13 +1888,14 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
                   type: 'risk-compliance-risk-matrix',
                   config: {
                     schemaName: 'Risk',
-                    label: 'Risk matrix — likelihood × impact',
+
                     axis: 'inherent',
                     includeClosed: true,
                     categories: ['$categories'],
                     statuses: ['$statuses'],
                     owners: ['$owners']
                   },
+                  frame: { title: 'Risk matrix — likelihood × impact' },
                   x: 0,
                   y: 0,
                   w: 12,
@@ -1904,7 +1939,6 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
                   id: 'seed-controls-library',
                   type: ENTITY_BROWSER_EMBED_WIDGET_TYPE,
                   config: {
-                    title: 'Control library',
                     q: '',
                     conditions: [],
                     sort: 'name',
@@ -1917,6 +1951,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
                     schemaName: 'Control',
                     entityQuery: controlFacetQuery
                   },
+                  frame: { title: 'Control library' },
                   x: 0,
                   y: 0,
                   w: 12,
@@ -1934,10 +1969,11 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
                   config: {
                     query: 'schema:Control AND operating_effectiveness = "effective"',
                     denominatorQuery: 'schema:Control',
-                    label: 'Effective',
+
                     subtextTemplate: '{count} of {total} controls',
                     showLink: false
                   },
+                  frame: { title: 'Effective' },
                   x: 0,
                   y: 0,
                   w: 4,
@@ -1948,11 +1984,12 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
                   type: 'AggregateStat',
                   config: {
                     query: 'schema:Control AND last_verified = empty',
-                    label: 'Never tested',
+
                     subtextTemplate: 'no verification recorded',
                     severity: { warnAt: 1 },
                     showLink: false
                   },
+                  frame: { title: 'Never tested' },
                   x: 4,
                   y: 0,
                   w: 4,
@@ -1963,11 +2000,12 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
                   type: 'AggregateStat',
                   config: {
                     query: 'schema:Risk AND status != "closed" AND risk_coverage = empty',
-                    label: 'Uncontrolled risks',
+
                     subtextTemplate: 'open risks with no mitigating control',
                     severity: { warnAt: 1, critAt: 1 },
                     showLink: false
                   },
+                  frame: { title: 'Uncontrolled risks' },
                   x: 8,
                   y: 0,
                   w: 4,
@@ -1977,7 +2015,6 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
                   id: 'seed-controls-coverage-by-risk',
                   type: ENTITY_BROWSER_EMBED_WIDGET_TYPE,
                   config: {
-                    title: 'Coverage by risk (weakest first)',
                     q: '',
                     conditions: [],
                     sort: 'field:Risk Coverage:asc',
@@ -1990,6 +2027,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
                     schemaName: 'Risk',
                     limit: 25
                   },
+                  frame: { title: 'Coverage by risk (weakest first)' },
                   x: 0,
                   y: 5,
                   w: 6,
@@ -1999,7 +2037,6 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
                   id: 'seed-controls-coverage-by-asset',
                   type: ENTITY_BROWSER_EMBED_WIDGET_TYPE,
                   config: {
-                    title: 'Coverage by information asset (fewest controls first)',
                     q: '',
                     conditions: [],
                     sort: 'field:_projection:Controls:asc',
@@ -2043,6 +2080,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
                       ]
                     }
                   },
+                  frame: { title: 'Coverage by information asset (fewest controls first)' },
                   x: 6,
                   y: 5,
                   w: 6,
@@ -2174,10 +2212,11 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
           query: 'schema:Vendor',
           measure: 'sum',
           sumFieldId: 'spend',
-          label: 'Contracted spend',
+
           subtextTemplate: 'across {count} vendors',
           showLink: false
         },
+        frame: { title: 'Contracted spend' },
         x: 0,
         y: 0,
         w: 3,
@@ -2190,11 +2229,12 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
           query: 'schema:Contract AND contract_end > now(-1) AND contract_end < now(91)',
           subtextQuery: 'schema:Contract AND contract_end > now(-1) AND contract_end < now(91)',
           sumFieldId: 'annual_cost',
-          label: 'Renewals in 90 days',
+
           subtextTemplate: '{subSum} at stake',
           severity: { warnAt: 1 },
           showLink: false
         },
+        frame: { title: 'Renewals in 90 days' },
         x: 3,
         y: 0,
         w: 3,
@@ -2205,11 +2245,12 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
         type: 'AggregateStat',
         config: {
           query: 'schema:Vendor AND risk >= 3',
-          label: 'Vendors above tolerance',
+
           subtextTemplate: 'elevated or high risk',
           severity: { critAt: 1 },
           showLink: false
         },
+        frame: { title: 'Vendors above tolerance' },
         x: 6,
         y: 0,
         w: 3,
@@ -2222,10 +2263,11 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
           query: 'schema:Contract AND auto_renew = "true"',
           denominatorQuery: 'schema:Contract',
           display: 'ofTotal',
-          label: 'Auto-renewing',
+
           subtextTemplate: '{count} of {total} contracts · notice periods apply',
           showLink: false
         },
+        frame: { title: 'Auto-renewing' },
         x: 9,
         y: 0,
         w: 3,
@@ -2240,9 +2282,9 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
           measureFieldId: 'annual_cost',
           bucketCount: 12,
           foldOverdue: true,
-          urgentWithinDays: 30,
-          label: 'Renewals, next 12 months'
+          urgentWithinDays: 30
         },
+        frame: { title: 'Renewals, next 12 months' },
         x: 0,
         y: 7,
         w: 12,
@@ -2257,9 +2299,9 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
           includeOverdue: true,
           limit: 7,
           sublabelFieldId: 'vendor',
-          valueFieldId: 'annual_cost',
-          label: 'Next renewals'
+          valueFieldId: 'annual_cost'
         },
+        frame: { title: 'Next renewals' },
         x: 0,
         y: 17,
         w: 6,
@@ -2275,9 +2317,9 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
           direction: 'desc',
           limit: 8,
           showShareBar: true,
-          showLink: false,
-          label: 'Spend by vendor'
+          showLink: false
         },
+        frame: { title: 'Spend by vendor' },
         x: 6,
         y: 17,
         w: 6,
@@ -2287,7 +2329,6 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
         id: 'seed-vendors-above-tolerance',
         type: ENTITY_BROWSER_EMBED_WIDGET_TYPE,
         config: {
-          title: 'Vendors above tolerance',
           limit: 8,
           q: '',
           conditions: [],
@@ -2299,6 +2340,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
             root: { kind: 'predicate', path: [], fieldId: 'Risk', op: 'gte', value: 3 }
           }
         },
+        frame: { title: 'Vendors above tolerance' },
         x: 0,
         y: 33,
         w: 6,
@@ -2308,7 +2350,6 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
         id: 'seed-technology-eol',
         type: ENTITY_BROWSER_EMBED_WIDGET_TYPE,
         config: {
-          title: 'Technology end-of-life exposure',
           limit: 8,
           q: '',
           conditions: [],
@@ -2337,6 +2378,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
             ]
           }
         },
+        frame: { title: 'Technology end-of-life exposure' },
         x: 6,
         y: 33,
         w: 6,
@@ -2356,10 +2398,11 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
           query: 'schema:Contract',
           measure: 'sum',
           sumFieldId: 'annual_cost',
-          label: 'Total annualised',
+
           subtextTemplate: '{count} contracts',
           showLink: false
         },
+        frame: { title: 'Total annualised' },
         x: 0,
         y: 0,
         w: 3,
@@ -2372,10 +2415,11 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
           query: 'schema:Contract AND NOT auto_renew = "true"',
           measure: 'sum',
           sumFieldId: 'annual_cost',
-          label: 'Fixed-term commitment',
+
           subtextTemplate: 'not auto-renewing',
           showLink: false
         },
+        frame: { title: 'Fixed-term commitment' },
         x: 3,
         y: 0,
         w: 3,
@@ -2390,10 +2434,11 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
           display: 'percent',
           measure: 'sum',
           sumFieldId: 'spend',
-          label: 'Strategic tier',
+
           subtextTemplate: 'of annualised spend',
           showLink: false
         },
+        frame: { title: 'Strategic tier' },
         x: 6,
         y: 0,
         w: 3,
@@ -2406,10 +2451,11 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
           query: 'schema:Vendor AND spend = not_empty',
           measure: 'countDistinct',
           distinctFieldId: 'cost_centre',
-          label: 'Cost centres',
+
           subtextTemplate: 'with vendor spend',
           showLink: false
         },
+        frame: { title: 'Cost centres' },
         x: 9,
         y: 0,
         w: 3,
@@ -2461,11 +2507,12 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
         type: 'AggregateStat',
         config: {
           query: 'schema:Vendor AND risk >= 3.4',
-          label: 'High risk',
+
           subtextTemplate: 'vendors in the high band',
           severity: { critAt: 1 },
           showLink: false
         },
+        frame: { title: 'High risk' },
         x: 0,
         y: 0,
         w: 3,
@@ -2476,11 +2523,12 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
         type: 'AggregateStat',
         config: {
           query: 'schema:Vendor AND concentration_risk >= 4',
-          label: 'Concentration ≥ 4',
+
           subtextTemplate: 'vendors with high concentration risk',
           severity: { warnAt: 1 },
           showLink: false
         },
+        frame: { title: 'Concentration ≥ 4' },
         x: 3,
         y: 0,
         w: 3,
@@ -2491,11 +2539,12 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
         type: 'AggregateStat',
         config: {
           query: 'schema:"Technology Release" AND eol_date < now(366)',
-          label: 'Technologies near EOL',
+
           subtextTemplate: 'end of life within 12 months',
           severity: { warnAt: 1 },
           showLink: false
         },
+        frame: { title: 'Technologies near EOL' },
         x: 6,
         y: 0,
         w: 3,
@@ -2506,11 +2555,12 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
         type: 'AggregateStat',
         config: {
           query: 'schema:"Technology Release" AND eol_date < now(0)',
-          label: 'Past end of life',
+
           subtextTemplate: 'releases already unsupported',
           severity: { critAt: 1 },
           showLink: false
         },
+        frame: { title: 'Past end of life' },
         x: 9,
         y: 0,
         w: 3,
@@ -2533,9 +2583,9 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
             { label: 'High', min: 3.4, tone: 'bad', hot: true }
           ],
           hotRowMin: 4,
-          cornerLabel: 'criticality ↓ / risk →',
-          label: 'Criticality × risk'
+          cornerLabel: 'criticality ↓ / risk →'
         },
+        frame: { title: 'Criticality × risk' },
         x: 0,
         y: 7,
         w: 6,
@@ -2545,7 +2595,6 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
         id: 'seed-risk-register',
         type: ENTITY_BROWSER_EMBED_WIDGET_TYPE,
         config: {
-          title: 'Risk register',
           q: '',
           conditions: [],
           sort: 'field:Risk:desc',
@@ -2564,6 +2613,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
           schemaName: 'Vendor',
           entityQuery: vendorRiskFacetQuery
         },
+        frame: { title: 'Risk register' },
         x: 6,
         y: 7,
         w: 6,
@@ -2573,7 +2623,6 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
         id: 'seed-risk-technology-eol',
         type: ENTITY_BROWSER_EMBED_WIDGET_TYPE,
         config: {
-          title: 'Technology end-of-life',
           q: '',
           conditions: [],
           sort: 'field:EOL Date:asc',
@@ -2606,6 +2655,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
             ]
           }
         },
+        frame: { title: 'Technology end-of-life' },
         x: 0,
         y: 29,
         w: 12,

@@ -14,7 +14,6 @@ export type PathWalkerWidgetConfig = {
   /** The relationship chain the walker opens with; each step may name its relation schema by
    *  name, since a seed can't know workspace-specific ids. Viewers can still re-pick hops. */
   hops?: PathStep[];
-  label?: string;
 };
 
 export const isPathWalkerConfigValid = (

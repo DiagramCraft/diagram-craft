@@ -4,6 +4,7 @@ import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { filterAssessments, type AssessmentWidgetMode } from './assessmentsWidgetLogic';
 import { resolveScopeSchemaIds } from './AssessmentsWidget';
 import styles from './AggregateStatWidget.module.css';
+import { useWidgetBodyTitle } from './WidgetBodyTitle';
 
 export type AssessmentCountWidgetConfig = {
   mode: AssessmentWidgetMode;
@@ -12,7 +13,6 @@ export type AssessmentCountWidgetConfig = {
   schemaNames?: string[];
   /** Counts open assessments due within this many days, overdue ones included. */
   dueWithinDays?: number;
-  label?: string;
   subtext?: string;
 };
 
@@ -22,6 +22,7 @@ type Props = {
 
 /** Stat tile counting assessments (workspace-wide) by scope, mode and due window. */
 export const AssessmentCountWidget = ({ config }: Props) => {
+  const title = useWidgetBodyTitle();
   const { workspaceSlug, schemas } = useWorkspaceContext();
   const { data: assessments = [], isLoading } = useAssessments(workspaceSlug, true);
 
@@ -54,7 +55,7 @@ export const AssessmentCountWidget = ({ config }: Props) => {
   return (
     <div className={styles.card}>
       <div className={styles.number}>{count}</div>
-      {config.label && <div className={styles.label}>{config.label}</div>}
+      {title && <div className={styles.label}>{title}</div>}
       {config.subtext && <div className={styles.sub}>{config.subtext}</div>}
     </div>
   );

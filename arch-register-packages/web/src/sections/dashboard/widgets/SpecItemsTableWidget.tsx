@@ -26,7 +26,6 @@ export type SpecItemsTableWidgetConfig = {
   deprecated?: boolean;
   /** Maximum number of entities whose specifications are read. Default 200. */
   entityLimit?: number;
-  label?: string;
 };
 
 const DEFAULT_ENTITY_LIMIT = 200;

@@ -37,7 +37,6 @@ export type GroupedRollupTableWidgetConfig = {
   /** Show a total row at the bottom. */
   showTotal?: boolean;
   limit?: number;
-  label?: string;
 };
 
 export const isGroupedRollupTableConfigComplete = (

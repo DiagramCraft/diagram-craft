@@ -76,24 +76,12 @@ describe('parseKnownDashboardWidget', () => {
     ).toBeNull();
   });
 
-  it('uses the configured Markdown title without deriving it from content', () => {
+  it('titles a Markdown widget with its label without deriving it from content', () => {
     expect(
       getWidgetTitle({
         id: 'markdown',
         type: 'markdown',
-        config: { title: 'Project notes', markdown: '# Different heading' },
-        x: 0,
-        y: 0,
-        w: 6,
-        h: 4
-      })
-    ).toBe('Project notes');
-
-    expect(
-      getWidgetTitle({
-        id: 'markdown',
-        type: 'markdown',
-        config: { title: '  ', markdown: '# Heading' },
+        config: { markdown: '# Different heading' },
         x: 0,
         y: 0,
         w: 6,
@@ -317,23 +305,12 @@ describe('parseKnownDashboardWidget', () => {
     ).toBeNull();
   });
 
-  it('uses the configured assessment label and falls back to Assessments', () => {
+  it('titles an Assessments widget with its label', () => {
     expect(
       getWidgetTitle({
         id: 'assessments',
         type: 'Assessments',
-        config: { mode: 'active', label: 'Reviews' },
-        x: 0,
-        y: 0,
-        w: 3,
-        h: 3
-      })
-    ).toBe('Reviews');
-    expect(
-      getWidgetTitle({
-        id: 'assessments',
-        type: 'Assessments',
-        config: { mode: 'active', label: '  ' },
+        config: { mode: 'active' },
         x: 0,
         y: 0,
         w: 3,
@@ -506,39 +483,44 @@ describe('parseKnownDashboardWidget', () => {
         title: 'API catalog stats',
         config: {},
         width: 12,
-        height: 5
+        height: 5,
+        hasForm: false
       },
       {
         type: 'api-integration-catalog-needs-attention',
         title: 'API needs attention',
         config: { limit: 8 },
         width: 6,
-        height: 16
+        height: 16,
+        hasForm: true
       },
       {
         type: 'api-integration-catalog-most-consumed',
         title: 'Most consumed APIs',
         config: { limit: 6 },
         width: 6,
-        height: 16
+        height: 16,
+        hasForm: true
       },
       {
         type: 'api-integration-catalog-at-risk',
         title: 'Integrations needing attention',
         config: { limit: 8 },
         width: 6,
-        height: 16
+        height: 16,
+        hasForm: true
       },
       {
         type: 'blast-radius',
         title: 'Blast radius',
         config: {},
         width: 6,
-        height: 16
+        height: 16,
+        hasForm: true
       }
     ];
 
-    for (const { type, title, config, width, height } of pilotWidgets) {
+    for (const { type, title, config, width, height, hasForm } of pilotWidgets) {
       const spec = getDashboardWidgetSpec(type);
       expect(spec).toBeDefined();
       expect(spec?.surfaces).toEqual(['workspace']);
@@ -546,7 +528,7 @@ describe('parseKnownDashboardWidget', () => {
       expect(spec?.label).toBe(title);
       expect(spec?.defaultW).toBe(width);
       expect(spec?.defaultH).toBe(height);
-      expect(spec?.configForm).toBeDefined();
+      expect(spec?.configForm !== undefined).toBe(hasForm);
       expect(spec?.createDefaultConfig({})).toEqual(config);
       expect(spec?.isValidConfig(config)).toBe(true);
       expect(getWidgetTitle({ id: type, type, config, x: 0, y: 0, w: 6, h: 4 })).toBe(title);
@@ -556,7 +538,7 @@ describe('parseKnownDashboardWidget', () => {
     }
   });
 
-  it('validates API Catalog widget titles and visible-item limits', () => {
+  it('validates API Catalog visible-item limits', () => {
     expect(
       parseKnownDashboardWidget({
         id: 'needs-attention',
@@ -582,18 +564,6 @@ describe('parseKnownDashboardWidget', () => {
         })
       ).toBeNull();
     }
-
-    expect(
-      parseKnownDashboardWidget({
-        id: 'stats',
-        type: 'api-integration-catalog-stats',
-        config: { label: 42 },
-        x: 0,
-        y: 0,
-        w: 12,
-        h: 2
-      })
-    ).toBeNull();
   });
 });
 

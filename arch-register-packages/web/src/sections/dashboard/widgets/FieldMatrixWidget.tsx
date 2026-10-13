@@ -31,7 +31,6 @@ export type FieldMatrixWidgetConfig = {
   hotRowMin?: number;
   /** Corner label, e.g. "criticality ↓ / risk →". */
   cornerLabel?: string;
-  label?: string;
   /** Show the widget frame (border, title) around the matrix; defaults to true. */
   showFrame?: boolean;
 };

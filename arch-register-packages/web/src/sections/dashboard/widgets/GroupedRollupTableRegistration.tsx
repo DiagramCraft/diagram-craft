@@ -32,7 +32,6 @@ export const groupedRollupTableSpec: DashboardWidgetSpec<GroupedRollupTableWidge
     optionalString(config.groupFieldId) &&
     optionalString(config.groupLabel) &&
     optionalString(config.valueLabel) &&
-    optionalString(config.label) &&
     optionalBoolean(config.showBar) &&
     optionalBoolean(config.showPercent) &&
     optionalBoolean(config.showCount) &&
@@ -40,6 +39,5 @@ export const groupedRollupTableSpec: DashboardWidgetSpec<GroupedRollupTableWidge
     (config.limit === undefined || (typeof config.limit === 'number' && config.limit > 0)) &&
     isGroupedRollupTableConfigComplete(config as GroupedRollupTableWidgetConfig),
   createDefaultConfig: () => ({ query: '', valueFieldId: '' }),
-  getTitle: config => config.label?.trim() || 'Roll-up table',
   configForm: GroupedRollupTableConfigForm
 };

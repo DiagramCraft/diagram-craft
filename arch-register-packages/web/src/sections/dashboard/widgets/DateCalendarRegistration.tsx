@@ -35,9 +35,7 @@ export const dateCalendarSpec: DashboardWidgetSpec<DateCalendarWidgetConfig> = {
     optionalNumber(config.warnWithinDays) &&
     optionalString(config.sublabelFieldId) &&
     optionalString(config.valueFieldId) &&
-    optionalString(config.label) &&
     isDateCalendarConfigComplete(config as DateCalendarWidgetConfig),
   createDefaultConfig: () => ({ query: '', dateFieldId: '' }),
-  getTitle: config => config.label?.trim() || 'Calendar',
   configForm: DateCalendarConfigForm
 };

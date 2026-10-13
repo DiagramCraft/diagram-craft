@@ -44,8 +44,7 @@ export const needsAttentionSpec = defineMdxComponent<
       isScope(config.scope) &&
       isSeverity(config.severity) &&
       typeof config.limit === 'number' &&
-      config.limit > 0 &&
-      (config.label === undefined || typeof config.label === 'string'),
+      config.limit > 0,
     createDefaultConfig: () => ({
       schema: '',
       caseKinds: ['entity.change-case', 'entity.deprecation'],
@@ -53,7 +52,6 @@ export const needsAttentionSpec = defineMdxComponent<
       severity: 'due-date',
       limit: 8
     }),
-    getTitle: (config: NeedsAttentionWidgetConfig) => config.label?.trim() || 'Needs attention',
     configForm: NeedsAttentionConfigForm
   }
 });

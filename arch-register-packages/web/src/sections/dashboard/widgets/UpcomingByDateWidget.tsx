@@ -28,7 +28,6 @@ export type UpcomingByDateWidgetConfig = {
   /** Countdown turns red within this many days (default 30) and orange within `warnWithinDays`. */
   critWithinDays?: number;
   warnWithinDays?: number;
-  label?: string;
 };
 
 export const isUpcomingByDateConfigComplete = (config: UpcomingByDateWidgetConfig): boolean =>

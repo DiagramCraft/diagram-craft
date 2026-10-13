@@ -7,6 +7,9 @@ import { useDashboardSidebarVariables } from '../DashboardSidebarContext';
 import { resolveConfigVariables } from '../resolveSidebarVariableReferences';
 
 import { registerNestedWidgetResolvers } from './nestedWidgets';
+import { WidgetBodyTitleProvider } from './WidgetBodyTitle';
+import { resolveWidgetFrame } from './widgetFrameSettings';
+import { resolveAppIcon } from '../../../shell/appIcons';
 
 type Props = {
   widget: DashboardWidget;
@@ -22,35 +25,39 @@ export const DashboardWidgetRenderer = ({ widget, isEditing = false, onEdit, onR
     ? { ...parsedWidget, config: resolveConfigVariables(parsedWidget.config, sidebarVariables) }
     : null;
   const dashboardWidget = knownWidget ? getDashboardWidgetSpec(knownWidget.type) : undefined;
-  const title = knownWidget ? (
-    dashboardWidget?.titleComponent ? (
-      <dashboardWidget.titleComponent config={knownWidget.config} />
-    ) : (
-      getWidgetTitle(knownWidget)
-    )
-  ) : (
-    widget.type
+  const frame = resolveWidgetFrame(
+    dashboardWidget,
+    widget.frame,
+    knownWidget?.config ?? widget.config
   );
-  const Icon = dashboardWidget?.icon;
+  const title =
+    frame.title ??
+    (knownWidget ? (
+      dashboardWidget?.titleComponent ? (
+        <dashboardWidget.titleComponent config={knownWidget.config} />
+      ) : (
+        getWidgetTitle(knownWidget)
+      )
+    ) : (
+      widget.type
+    ));
+  const Icon = frame.iconName ? resolveAppIcon(frame.iconName) : dashboardWidget?.icon;
   const HeaderActions = dashboardWidget?.headerActionsComponent;
-  const hideOutsideEdit = dashboardWidget?.frame?.hideOutsideEdit;
-  const bareOutsideEdit =
-    typeof hideOutsideEdit === 'function'
-      ? !!knownWidget && hideOutsideEdit(knownWidget.config)
-      : !!hideOutsideEdit;
 
   return (
     <WidgetFrame
       title={title}
-      icon={Icon && dashboardWidget?.frame?.showIcon !== false && <Icon size={14} />}
+      icon={Icon && frame.showIcon && <Icon size={14} />}
       headerActions={HeaderActions && knownWidget && <HeaderActions config={knownWidget.config} />}
-      padded={dashboardWidget?.frame?.padded !== false}
-      bare={bareOutsideEdit && !isEditing}
+      padded={frame.padded}
+      bare={!frame.showFrame && !isEditing}
       onEdit={onEdit}
       onRemove={onRemove}
     >
       {knownWidget && dashboardWidget ? (
-        <dashboardWidget.component config={knownWidget.config} />
+        <WidgetBodyTitleProvider value={!frame.showFrame && !isEditing ? frame.title : undefined}>
+          <dashboardWidget.component config={knownWidget.config} />
+        </WidgetBodyTitleProvider>
       ) : (
         <div>
           Unsupported dashboard widget: <code>{widget.type}</code>

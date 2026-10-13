@@ -24,8 +24,7 @@ const isValidConfig = (config: Record<string, unknown>): config is RelationTable
       ))) &&
   (config.sort === undefined || typeof config.sort === 'string') &&
   (config.sortDir === undefined || config.sortDir === 'asc' || config.sortDir === 'desc') &&
-  (config.rowDrawer === undefined || typeof config.rowDrawer === 'boolean') &&
-  (config.label === undefined || typeof config.label === 'string');
+  (config.rowDrawer === undefined || typeof config.rowDrawer === 'boolean');
 
 export const relationTableSpec: DashboardWidgetSpec<RelationTableWidgetConfig> = {
   icon: TbTable,
@@ -38,6 +37,6 @@ export const relationTableSpec: DashboardWidgetSpec<RelationTableWidgetConfig> =
   frame: { padded: false, showIcon: false },
   isValidConfig,
   createDefaultConfig: () => ({ relationSchemaName: '', fieldIds: [], limit: 100 }),
-  getTitle: config => config.label?.trim() || config.relationSchemaName || 'Relation table',
+  getTitle: config => config.relationSchemaName || 'Relation table',
   configForm: RelationTableConfigForm
 };

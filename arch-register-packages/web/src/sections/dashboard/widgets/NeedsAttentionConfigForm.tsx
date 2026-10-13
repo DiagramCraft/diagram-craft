@@ -7,9 +7,6 @@ import type { NeedsAttentionWidgetConfig } from './NeedsAttentionWidget';
 import type { NeedsAttentionScope, NeedsAttentionSeverity } from './needsAttentionQueue';
 import styles from '../WidgetConfigDialog.module.css';
 
-const optionalText = (value: string): string | undefined =>
-  value.trim() === '' ? undefined : value;
-
 /** Case kinds with a real backing case model in this codebase — not an enum, just known ones to
  * offer without requiring a user to type a raw case-kind string from scratch. */
 export const KNOWN_CASE_KINDS = ['entity.change-case', 'entity.deprecation', 'field-date-reminder'];
@@ -152,20 +149,6 @@ export const NeedsAttentionConfigForm = ({ config, onChange }: Props) => {
                     limit: Math.max(1, Number(event.currentTarget.value) || 8)
                   })
                 }
-              />
-            </div>
-          </label>
-          <label className={styles.optionRow}>
-            <span className={styles.optionLabel}>Label</span>
-            <div className={styles.optionControl}>
-              <input
-                type="text"
-                className={styles.labelInput}
-                value={config.label ?? ''}
-                onChange={event =>
-                  onChange({ ...config, label: optionalText(event.currentTarget.value) })
-                }
-                placeholder="Needs attention"
               />
             </div>
           </label>

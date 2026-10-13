@@ -28,7 +28,6 @@ export type RelatedEntitiesListWidgetConfig = {
   progressCurrentField?: string;
   progressTargetField?: string;
   progressUnitField?: string;
-  label?: string;
   emptyMessage?: string;
 };
 

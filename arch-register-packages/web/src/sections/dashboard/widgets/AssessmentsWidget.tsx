@@ -21,7 +21,6 @@ export type AssessmentsWidgetConfig = {
   /** Shows a day-count due label ("18d" / "6d late") and the owning project, and hides undated
    *  assessments. */
   relativeDue?: boolean;
-  label?: string;
 };
 
 type Props = {

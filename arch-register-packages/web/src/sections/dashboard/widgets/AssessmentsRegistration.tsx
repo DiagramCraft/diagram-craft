@@ -33,13 +33,8 @@ export const assessmentsSpec = defineMdxComponent<
       (config.schemaNames === undefined ||
         (Array.isArray(config.schemaNames) &&
           config.schemaNames.every(name => typeof name === 'string'))) &&
-      (config.relativeDue === undefined || typeof config.relativeDue === 'boolean') &&
-      (config.label === undefined || typeof config.label === 'string'),
+      (config.relativeDue === undefined || typeof config.relativeDue === 'boolean'),
     createDefaultConfig: () => ({ mode: 'active' }),
-    getTitle: (config: AssessmentsWidgetConfig) => {
-      const label = config.label?.trim();
-      return label === '' || label === undefined ? 'Assessments' : label;
-    },
     configForm: AssessmentsConfigForm
   }
 });

@@ -27,13 +27,11 @@ export const changeCaseTableSpec: DashboardWidgetSpec<ChangeCaseTableConfig> = {
     Array.isArray(config.caseKinds) &&
     config.caseKinds.every(kind => typeof kind === 'string') &&
     (config.severity === 'none' || config.severity === 'due-date') &&
-    isOptionalString(config.status) &&
-    isOptionalString(config.label),
+    isOptionalString(config.status),
   createDefaultConfig: () => ({
     schemaName: '',
     caseKinds: ['entity.change-case'],
     severity: 'due-date'
   }),
-  getTitle: config => config.label?.trim() || 'Change cases',
   configForm: ChangeCaseTableConfigForm
 };

@@ -28,7 +28,6 @@ export type RelationPairsCoverageWidgetConfig = {
   providerLabel?: string;
   consumerLabel?: string;
   coverageLabel?: string;
-  label?: string;
 };
 
 type SortKey = 'consumer';

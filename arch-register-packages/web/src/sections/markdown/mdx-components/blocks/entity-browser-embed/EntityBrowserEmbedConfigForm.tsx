@@ -3,7 +3,6 @@ import { useEffect, useMemo } from 'react';
 import { TbChevronLeft, TbChevronRight } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
-import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
 import { EntityBrowserToolbar } from '../../../../entities/components/EntityBrowserToolbar';
 import { EntityBrowserView } from '../../../../entities/components/EntityBrowserView';
@@ -87,7 +86,6 @@ export const EntityBrowserEmbedConfigForm = ({ config, onChange, context }: Prop
       projectScope,
       ...(entityQuery ? { entityQuery } : {}),
       ...(config.schemaName ? { schemaName: config.schemaName } : {}),
-      ...(config.title ? { title: config.title } : {}),
       ...(config.limit ? { limit: config.limit } : {}),
       ...(config.interactive ? { interactive: true } : {}),
       ...(config.overlays ? { overlays: config.overlays } : {}),
@@ -102,7 +100,6 @@ export const EntityBrowserEmbedConfigForm = ({ config, onChange, context }: Prop
     projectScope,
     entityQuery,
     config.schemaName,
-    config.title,
     config.limit,
     config.interactive,
     config.overlays,
@@ -211,14 +208,6 @@ export const EntityBrowserEmbedConfigForm = ({ config, onChange, context }: Prop
   return (
     <div className={styles.body}>
       <div className={styles.options}>
-        <label className={dialogStyles.optionRow}>
-          <span className={dialogStyles.optionLabel}>Title</span>
-          <TextInput
-            value={config.title ?? ''}
-            placeholder="Entity browser"
-            onChange={value => onChange({ ...config, title: value })}
-          />
-        </label>
         <label className={dialogStyles.optionRow}>
           <span className={dialogStyles.optionLabel}>Max rows</span>
           <NumberInput

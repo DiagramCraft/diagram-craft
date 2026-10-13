@@ -22,6 +22,5 @@ export const pathWalkerSpec: DashboardWidgetSpec<PathWalkerWidgetConfig> = {
   isValidConfig: (config): config is PathWalkerWidgetConfig =>
     isPathWalkerConfigValid(config) && isPathWalkerConfigComplete(config as PathWalkerWidgetConfig),
   createDefaultConfig: () => ({ rootSchemaName: '' }),
-  getTitle: config => config.label?.trim() || 'Relationship walker',
   configForm: PathWalkerConfigForm
 };

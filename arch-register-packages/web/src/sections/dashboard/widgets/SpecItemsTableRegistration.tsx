@@ -10,8 +10,7 @@ const isValidConfig = (config: Record<string, unknown>): config is SpecItemsTabl
   config.schemaName.length > 0 &&
   (config.entityQuery === undefined || typeof config.entityQuery === 'object') &&
   (config.deprecated === undefined || typeof config.deprecated === 'boolean') &&
-  (config.entityLimit === undefined || typeof config.entityLimit === 'number') &&
-  (config.label === undefined || typeof config.label === 'string');
+  (config.entityLimit === undefined || typeof config.entityLimit === 'number');
 
 export const specItemsTableSpec: DashboardWidgetSpec<SpecItemsTableWidgetConfig> = {
   icon: TbListDetails,
@@ -25,6 +24,5 @@ export const specItemsTableSpec: DashboardWidgetSpec<SpecItemsTableWidgetConfig>
   frame: { padded: false, showIcon: false },
   isValidConfig,
   createDefaultConfig: () => ({ schemaName: '' }),
-  getTitle: config => config.label?.trim() || 'Operations',
   configForm: SpecItemsTableConfigForm
 };

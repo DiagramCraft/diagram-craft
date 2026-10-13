@@ -76,18 +76,6 @@ export const AssessmentsConfigForm = ({ config, onChange }: Props) => {
             />
             <span className={styles.optionLabel}>Day-count due labels and project</span>
           </label>
-          <label className={styles.optionRow}>
-            <span className={styles.optionLabel}>Label</span>
-            <div className={styles.optionControl}>
-              <input
-                type="text"
-                className={styles.labelInput}
-                value={config.label ?? ''}
-                onChange={e => onChange({ ...config, label: optionalText(e.target.value) })}
-                placeholder="e.g. Risk and compliance reviews"
-              />
-            </div>
-          </label>
         </div>
       </DialogSection>
     </>

@@ -84,21 +84,6 @@ export const RelationTableConfigForm = ({
             <span>Open a detail drawer when a row is clicked</span>
           </label>
           <label className={styles.optionRow}>
-            <span className={styles.optionLabel}>Title</span>
-            <div className={styles.optionControl}>
-              <input
-                type="text"
-                className={styles.labelInput}
-                value={config.label ?? ''}
-                placeholder="Relations"
-                onChange={event => {
-                  const value = event.currentTarget.value;
-                  onChange({ ...config, label: value.trim() === '' ? undefined : value });
-                }}
-              />
-            </div>
-          </label>
-          <label className={styles.optionRow}>
             <span className={styles.optionLabel}>Max rows</span>
             <div className={styles.optionControl}>
               <input

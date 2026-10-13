@@ -102,10 +102,8 @@ export const aggregateStatSpec = defineMdxComponent<
       (isQueryStatConfig(config) ? isValidQueryStatConfig(config) : isValidLegacyCore(config)) &&
       (config.owner === undefined || typeof config.owner === 'string') &&
       (config.lifecycle === undefined || typeof config.lifecycle === 'string') &&
-      (config.label === undefined || typeof config.label === 'string') &&
       (config.showLink === undefined || typeof config.showLink === 'boolean'),
     createDefaultConfig: () => ({ query: '', display: 'count' as const }),
-    getTitle: (config: AggregateStatWidgetConfig) => config.label?.trim() || 'Aggregate stat',
     configForm: AggregateStatConfigForm
   }
 });

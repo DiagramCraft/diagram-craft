@@ -23,7 +23,6 @@ export type AssessmentProgressTableConfig = {
   schemaName: string;
   /** Optional: only list assessments in this derived status. */
   status?: EntityAssessmentStatus;
-  label?: string;
 };
 
 export const AssessmentProgressTableWidget = ({

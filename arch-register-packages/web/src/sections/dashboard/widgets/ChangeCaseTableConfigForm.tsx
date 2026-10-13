@@ -114,14 +114,7 @@ export const ChangeCaseTableConfigForm = ({ config, onChange }: Props) => {
         </div>
       </DialogSection>
       <DialogSection label="Display" required={false}>
-        <div className={styles.options}>
-          <TextOption
-            label="Title"
-            value={config.label}
-            placeholder="Change cases"
-            onChange={label => onChange({ ...config, label })}
-          />
-        </div>
+        <div className={styles.options}></div>
       </DialogSection>
     </>
   );

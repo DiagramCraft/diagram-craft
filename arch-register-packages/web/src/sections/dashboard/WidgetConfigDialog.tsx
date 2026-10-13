@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
 import type { DashboardWidgetSpec } from '../markdown/mdx-components/types';
@@ -6,6 +7,9 @@ import type { WidgetSurface } from './dashboardWidgetDefaults';
 import { DialogContent, DialogSection } from '../markdown/editor/BlockDialog';
 import { useMdxContext } from '../markdown/MdxContext';
 import { getDashboardWidgetSpec } from './dashboardWidgetRegistry';
+import type { DashboardWidgetFrame } from '@arch-register/api-types/dashboardContract';
+import { WidgetFrameSettingsForm } from './widgets/WidgetFrameSettingsForm';
+import { defaultShowFrame, normalizeFrame } from './widgets/widgetFrameSettings';
 import styles from './WidgetConfigDialog.module.css';
 
 type Props = {
@@ -43,6 +47,9 @@ export const WidgetConfigDialog = ({
   );
 };
 
+// Tabs.Content defaults to a fixed 12rem height; let it follow the form instead (and fill large dialogs)
+const tabContentStyle = { height: 'auto', minHeight: 0, flex: 1, overflow: 'auto' } as const;
+
 const WidgetConfigDialogContent = ({
   widget,
   spec,
@@ -54,6 +61,8 @@ const WidgetConfigDialogContent = ({
 }: Props & { widget: DashboardWidget; spec: DashboardWidgetSpec; surface: WidgetSurface }) => {
   const { projectId } = useMdxContext();
   const [config, setConfig] = useState<Record<string, unknown>>(widget.config);
+
+  const [frame, setFrame] = useState<DashboardWidgetFrame>(widget.frame ?? {});
 
   const canSave = spec.isValidConfig(config);
   const ConfigForm = spec.configForm;
@@ -71,25 +80,47 @@ const WidgetConfigDialogContent = ({
           label: 'Save',
           type: 'default',
           disabled: !canSave,
-          onClick: () => onSave({ ...widget, config })
+          onClick: () => onSave({ ...widget, config, frame: normalizeFrame(frame) })
         }
       ]}
     >
-      <DialogContent>
-        {ConfigForm ? (
-          <ConfigForm
-            config={config}
-            onChange={setConfig}
-            context={{ mode: 'dashboard', workspaceSlug, projectId, surface }}
-          />
-        ) : (
-          <DialogSection label="Options" required={false}>
-            <div className={styles.optionRow}>
-              <span className={styles.optionLabel}>This widget has no configurable options.</span>
-            </div>
-          </DialogSection>
-        )}
-      </DialogContent>
+      <div className={styles.tabs}>
+        <Tabs.Root defaultValue="settings">
+          <Tabs.List>
+            <Tabs.Trigger value="settings">Settings</Tabs.Trigger>
+            <Tabs.Trigger value="appearance">Appearance</Tabs.Trigger>
+          </Tabs.List>
+          <Tabs.Content value="settings" style={tabContentStyle}>
+            <DialogContent>
+              {ConfigForm ? (
+                <ConfigForm
+                  config={config}
+                  onChange={setConfig}
+                  context={{ mode: 'dashboard', workspaceSlug, projectId, surface }}
+                />
+              ) : (
+                <DialogSection label="Options" required={false}>
+                  <div className={styles.optionRow}>
+                    <span className={styles.optionLabel}>
+                      This widget has no configurable options.
+                    </span>
+                  </div>
+                </DialogSection>
+              )}
+            </DialogContent>
+          </Tabs.Content>
+          <Tabs.Content value="appearance" style={tabContentStyle}>
+            <DialogContent>
+              <WidgetFrameSettingsForm
+                frame={frame}
+                onChange={setFrame}
+                defaultTitle={spec.getTitle?.(config as never) ?? spec.label}
+                defaultShowFrame={defaultShowFrame(spec, config)}
+              />
+            </DialogContent>
+          </Tabs.Content>
+        </Tabs.Root>
+      </div>
     </Dialog>
   );
 };

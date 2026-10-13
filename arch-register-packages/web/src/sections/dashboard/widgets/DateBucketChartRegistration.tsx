@@ -30,9 +30,7 @@ export const dateBucketChartSpec: DashboardWidgetSpec<DateBucketChartWidgetConfi
     optionalNumber(config.bucketCount) &&
     optionalNumber(config.urgentWithinDays) &&
     (config.foldOverdue === undefined || typeof config.foldOverdue === 'boolean') &&
-    (config.label === undefined || typeof config.label === 'string') &&
     isDateBucketChartConfigComplete(config as DateBucketChartWidgetConfig),
   createDefaultConfig: () => ({ query: '', dateFieldId: '' }),
-  getTitle: config => config.label?.trim() || 'Date bar chart',
   configForm: DateBucketChartConfigForm
 };

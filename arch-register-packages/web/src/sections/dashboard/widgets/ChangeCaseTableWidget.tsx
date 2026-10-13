@@ -24,7 +24,6 @@ export type ChangeCaseTableConfig = {
    * including an unresolved or empty `$variable` from a dashboard sidebar — means no filter.
    */
   status?: string;
-  label?: string;
 };
 
 const PRIORITY_LABEL: Record<NeedsAttentionPriority, string> = {

@@ -9,15 +9,6 @@ type Props = {
 
 export const MarkdownDashboardConfigForm = ({ config, onChange }: Props) => (
   <>
-    <DialogSection label="Title">
-      <input
-        type="text"
-        className={styles.labelInput}
-        value={config.title}
-        onChange={e => onChange({ ...config, title: e.target.value })}
-        placeholder="Markdown"
-      />
-    </DialogSection>
     <DialogSection label="Markdown">
       <textarea
         className={styles.markdownInput}

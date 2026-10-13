@@ -22,7 +22,6 @@ export const ratioBarListSpec: DashboardWidgetSpec<RatioBarListWidgetConfig> = {
     typeof config.groupByFieldId === 'string' &&
     typeof config.numeratorFieldId === 'string' &&
     typeof config.numeratorValue === 'string' &&
-    (config.label === undefined || typeof config.label === 'string') &&
     isRatioBarListConfigComplete(config as RatioBarListWidgetConfig),
   createDefaultConfig: () => ({
     schemaName: '',
@@ -30,6 +29,5 @@ export const ratioBarListSpec: DashboardWidgetSpec<RatioBarListWidgetConfig> = {
     numeratorFieldId: '',
     numeratorValue: ''
   }),
-  getTitle: config => config.label?.trim() || 'Ratio bars',
   configForm: RatioBarListConfigForm
 };

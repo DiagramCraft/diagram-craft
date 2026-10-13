@@ -15,7 +15,6 @@ export type RatioBarListWidgetConfig = {
   /** A bar's filled share is the entities with `numeratorFieldId = numeratorValue`. */
   numeratorFieldId: string;
   numeratorValue: string;
-  label?: string;
 };
 
 type Props = {

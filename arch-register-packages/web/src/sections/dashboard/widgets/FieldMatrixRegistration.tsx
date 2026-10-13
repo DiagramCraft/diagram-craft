@@ -51,7 +51,6 @@ export const fieldMatrixSpec: DashboardWidgetSpec<FieldMatrixWidgetConfig> = {
     optionalString(config.query) &&
     optionalString(config.schemaName) &&
     optionalString(config.cornerLabel) &&
-    optionalString(config.label) &&
     (config.showFrame === undefined || typeof config.showFrame === 'boolean') &&
     (config.hotRowMin === undefined || typeof config.hotRowMin === 'number') &&
     isFieldMatrixConfigComplete(config as FieldMatrixWidgetConfig),
@@ -65,6 +64,5 @@ export const fieldMatrixSpec: DashboardWidgetSpec<FieldMatrixWidgetConfig> = {
       { label: 'High', min: 3, tone: 'bad' }
     ]
   }),
-  getTitle: config => config.label?.trim() || 'Field matrix',
   configForm: FieldMatrixConfigForm
 };

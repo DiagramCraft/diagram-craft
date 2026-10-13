@@ -118,18 +118,6 @@ export const TopEntitiesConfigForm = ({ config, onChange }: Props) => {
               />
             </div>
           </label>
-          <label className={styles.optionRow}>
-            <span className={styles.optionLabel}>Label</span>
-            <div className={styles.optionControl}>
-              <input
-                type="text"
-                className={styles.labelInput}
-                value={config.label ?? ''}
-                onChange={e => onChange({ ...config, label: optionalText(e.target.value) })}
-                placeholder="e.g. Top risks by score"
-              />
-            </div>
-          </label>
         </div>
       </DialogSection>
     </>

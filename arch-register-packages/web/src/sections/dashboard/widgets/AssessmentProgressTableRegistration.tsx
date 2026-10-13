@@ -25,9 +25,7 @@ export const assessmentProgressTableSpec: DashboardWidgetSpec<AssessmentProgress
   isValidConfig: (config): config is AssessmentProgressTableConfig =>
     typeof config.schemaName === 'string' &&
     config.schemaName.length > 0 &&
-    (config.status === undefined || isAssessmentStatus(config.status)) &&
-    (config.label === undefined || typeof config.label === 'string'),
+    (config.status === undefined || isAssessmentStatus(config.status)),
   createDefaultConfig: () => ({ schemaName: '' }),
-  getTitle: config => config.label?.trim() || 'Assessments',
   configForm: props => <AssessmentSchemaConfigForm {...props} statusRequired={false} />
 };

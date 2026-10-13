@@ -127,9 +127,10 @@
           redaction stays consistent, and queryable/filterable through the standard query engine like any other
           field.
           The home sidebar's Data model section groups schema links by schema category.
-          Every widget shows a title bar (an icon and a title, separated from the widget's content by a divider); the
-          stat-metric and API & Integration Catalog widgets have configurable titles; the catalog's list panels also
-          let users choose how many items to show. Other widget types show a fixed title naming the widget type. In
+          Every widget shows a title bar (an icon and a title, separated from the widget's content by a divider). Any
+          widget's configuration dialog has an Appearance section to override the title, show or hide the frame
+          (each widget type has its own default), and pick an icon; the catalog's list panels also
+          let users choose how many items to show. In
           edit mode, the per-widget edit and remove controls appear within the title bar rather than overlapping the
           content.
           An "Aggregate stat" widget shows the number of entities or relations matching a query written in the

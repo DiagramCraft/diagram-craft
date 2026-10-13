@@ -9,17 +9,18 @@ import {
 } from './assessmentSummaryLogic';
 import { useSchemaAssessmentSummaries } from './useSchemaAssessmentSummaries';
 import styles from './AssessmentStatusStatWidget.module.css';
+import { useWidgetBodyTitle } from './WidgetBodyTitle';
 
 export type AssessmentStatusStatConfig = {
   /** Name of the entity schema the assessments must target (`assessment.scope`). */
   schemaName: string;
   status: EntityAssessmentStatus;
-  label?: string;
   /** May contain `{count}`, `{total}` and `{notStarted}`. */
   subtextTemplate?: string;
 };
 
 export const AssessmentStatusStatWidget = ({ config }: { config: AssessmentStatusStatConfig }) => {
+  const title = useWidgetBodyTitle();
   const { schemaFound, summaries, isLoading } = useSchemaAssessmentSummaries(config.schemaName);
   const counts = useMemo(() => countByStatus(summaries), [summaries]);
 
@@ -34,9 +35,7 @@ export const AssessmentStatusStatWidget = ({ config }: { config: AssessmentStatu
   const tinted = count > 0 && TINTED_ASSESSMENT_STATUSES.includes(config.status);
   return (
     <div className={styles.tile}>
-      <div className={styles.label}>
-        {config.label?.trim() || ASSESSMENT_STATUS_LABEL[config.status]}
-      </div>
+      <div className={styles.label}>{title ?? ASSESSMENT_STATUS_LABEL[config.status]}</div>
       <div
         className={styles.value}
         style={tinted ? { color: ASSESSMENT_STATUS_TONE[config.status] } : undefined}

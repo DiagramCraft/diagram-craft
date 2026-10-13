@@ -23,6 +23,5 @@ export const relatedEntitiesListSpec: DashboardWidgetSpec<RelatedEntitiesListWid
     isRelatedEntitiesListConfigValid(config) &&
     isRelatedEntitiesListConfigComplete(config as RelatedEntitiesListWidgetConfig),
   createDefaultConfig: () => ({ schemaName: '', referenceField: '' }),
-  getTitle: config => config.label?.trim() || 'Related entities',
   configForm: RelatedEntitiesListConfigForm
 };

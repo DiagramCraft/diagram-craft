@@ -16,6 +16,7 @@ import {
 } from './aggregateStatQuery';
 import { countDistinctValues, formatMeasured, sumMeasured } from './fieldAggregation';
 import styles from './AggregateStatWidget.module.css';
+import { useWidgetBodyTitle } from './WidgetBodyTitle';
 
 export type AggregateStatWidgetConfig = {
   /** Query-mode: entity-query DSL text whose matching-record count is the stat's value. */
@@ -41,7 +42,6 @@ export type AggregateStatWidgetConfig = {
   owner?: string;
   lifecycle?: string;
   numeratorCondition?: FilterCondition;
-  label?: string;
   showLink?: boolean;
 };
 
@@ -63,6 +63,7 @@ const TONE_COLOR = {
 } as const;
 
 const QueryStat = ({ config }: Props) => {
+  const title = useWidgetBodyTitle();
   const navigate = useNavigate();
   const { workspaceSlug } = useWorkspaceContext();
   const showLink = config.showLink ?? true;
@@ -164,7 +165,7 @@ const QueryStat = ({ config }: Props) => {
               ? String(distinctCount)
               : formatStatValue(display, matchedCount, totalCount)))}
       </div>
-      {config.label && <div className={styles.label}>{config.label}</div>}
+      {title && <div className={styles.label}>{title}</div>}
       {subtext && <div className={styles.sub}>{subtext}</div>}
       {showLink && (
         <button type="button" className={styles.viewLink} onClick={() => void openInBrowser()}>
@@ -176,6 +177,7 @@ const QueryStat = ({ config }: Props) => {
 };
 
 const LegacyAggregateStat = ({ config }: Props) => {
+  const title = useWidgetBodyTitle();
   const navigate = useNavigate();
   const { workspaceSlug, schemas } = useWorkspaceContext();
   const showLink = config.showLink ?? true;
@@ -213,7 +215,7 @@ const LegacyAggregateStat = ({ config }: Props) => {
   const matched = numerator?.total ?? 0;
   const percent = total > 0 ? Math.round((matched / total) * 100) : 0;
   const schemaName = schemas.find(s => s.id === config.schema)?.name ?? config.schema;
-  const displayLabel = config.label ?? schemaName;
+  const displayLabel = title ?? schemaName;
 
   return (
     <div className={styles.card}>

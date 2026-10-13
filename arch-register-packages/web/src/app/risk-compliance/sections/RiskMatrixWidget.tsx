@@ -13,7 +13,6 @@ export type RiskMatrixAxis = 'inherent' | 'residual';
 export type RiskMatrixWidgetConfig = {
   schemaName: string;
   axis?: RiskMatrixAxis;
-  label?: string;
   /** Include closed risks (default: false). */
   includeClosed?: boolean;
   /**

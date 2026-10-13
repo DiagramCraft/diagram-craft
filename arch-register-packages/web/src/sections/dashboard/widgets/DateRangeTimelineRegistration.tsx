@@ -36,9 +36,7 @@ export const dateRangeTimelineSpec: DashboardWidgetSpec<DateRangeTimelineWidgetC
     optionalString(config.valueFieldId) &&
     optionalString(config.markerOffsetFieldId) &&
     optionalString(config.markerWhenFieldId) &&
-    optionalString(config.label) &&
     isDateRangeTimelineConfigComplete(config as DateRangeTimelineWidgetConfig),
   createDefaultConfig: () => ({ query: '', startFieldId: '', endFieldId: '' }),
-  getTitle: config => config.label?.trim() || 'Date range timeline',
   configForm: DateRangeTimelineConfigForm
 };

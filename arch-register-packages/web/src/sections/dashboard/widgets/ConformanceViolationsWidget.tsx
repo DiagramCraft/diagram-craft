@@ -12,7 +12,6 @@ export type ConformanceViolationsWidgetConfig = {
   /** Only show violations raised by these checks (all checks when empty). */
   checkNames?: string[];
   limit: number;
-  label?: string;
 };
 
 const FETCH_LIMIT = 200;

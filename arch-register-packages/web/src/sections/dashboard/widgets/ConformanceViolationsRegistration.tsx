@@ -19,8 +19,7 @@ const isValidConfig = (
   config.schemaName.length > 0 &&
   typeof config.limit === 'number' &&
   config.limit > 0 &&
-  (config.checkNames === undefined || isStringArray(config.checkNames)) &&
-  (config.label === undefined || typeof config.label === 'string');
+  (config.checkNames === undefined || isStringArray(config.checkNames));
 
 export const conformanceViolationsSpec: DashboardWidgetSpec<ConformanceViolationsWidgetConfig> = {
   icon: TbShieldExclamation,
@@ -35,6 +34,5 @@ export const conformanceViolationsSpec: DashboardWidgetSpec<ConformanceViolation
   frame: { padded: false, showIcon: false },
   isValidConfig,
   createDefaultConfig: () => ({ schemaName: '', limit: 8 }),
-  getTitle: config => config.label?.trim() || 'Conformance violations',
   configForm: ConformanceViolationsConfigForm
 };

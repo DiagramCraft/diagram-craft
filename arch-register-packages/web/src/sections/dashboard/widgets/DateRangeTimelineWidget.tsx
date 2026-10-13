@@ -50,7 +50,6 @@ export type DateRangeTimelineWidgetConfig = {
   /** Bar turns red when ended (or ending within `critWithinDays`) and orange within `warnWithinDays`. */
   critWithinDays?: number;
   warnWithinDays?: number;
-  label?: string;
 };
 
 export const isDateRangeTimelineConfigComplete = (config: DateRangeTimelineWidgetConfig): boolean =>

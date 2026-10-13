@@ -302,7 +302,7 @@ describe('APP_DASHBOARD_SEEDS', () => {
       'EntityBrowserEmbed'
     ]);
     const browsers = seed!.widgets.filter(widget => widget.type === 'EntityBrowserEmbed');
-    expect(browsers.map(widget => widget.config.title)).toEqual([
+    expect(browsers.map(widget => widget.frame?.title)).toEqual([
       'Highest residual risks',
       'Risks with weak or missing control'
     ]);
@@ -321,16 +321,22 @@ describe('APP_DASHBOARD_SEEDS', () => {
     expect(seed!.widgets.map(widget => widget.type)).toEqual(['tabs']);
     const tabs = seed!.widgets[0]!.config.tabs as Array<{
       label: string;
-      widgets: Array<{ id: string; type: string; config: Record<string, unknown> }>;
+      widgets: Array<{
+        id: string;
+        type: string;
+        config: Record<string, unknown>;
+        frame?: { title?: string };
+      }>;
     }>;
     expect(tabs.map(tab => tab.label)).toEqual(['Register', 'Matrix']);
     expect(tabs.map(tab => tab.widgets.map(widget => widget.type))).toEqual([
       ['EntityBrowserEmbed'],
       ['risk-compliance-risk-matrix']
     ]);
-    expect(
-      tabs.map(tab => tab.widgets.map(widget => widget.config.title ?? widget.config.label))
-    ).toEqual([['Risk register'], ['Risk matrix — likelihood × impact']]);
+    expect(tabs.map(tab => tab.widgets.map(widget => widget.frame?.title))).toEqual([
+      ['Risk register'],
+      ['Risk matrix — likelihood × impact']
+    ]);
     const ids = tabs.flatMap(tab => tab.widgets.map(widget => widget.id));
     expect(new Set(ids).size).toBe(ids.length);
     expect(seed!.sidebar).toMatchObject({
