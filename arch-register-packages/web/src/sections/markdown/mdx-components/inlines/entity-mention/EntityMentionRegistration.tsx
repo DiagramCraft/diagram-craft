@@ -22,8 +22,8 @@ export const entityMentionSpec = defineMdxComponent<
     mdxRule: entityMentionMdxRule,
     slashCommand: {
       key: 'entity-mention',
-      label: 'Entity Mention',
-      description: 'Mention an entity with live name and status',
+      label: 'Entity mention',
+      description: 'Mention an entity with its live name and status',
       icon: <TbAt size={14} />,
       keywords: ['mention', 'entity', '@', 'reference', 'link'],
       onSelect: (editor, { insertOrReplaceInline }) => {

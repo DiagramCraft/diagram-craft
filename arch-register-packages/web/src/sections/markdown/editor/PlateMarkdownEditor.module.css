@@ -72,6 +72,15 @@
   overflow-y: auto;
 }
 
+.slashGroupHeading {
+  padding: 8px 10px 4px;
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--cmp-fg-disabled);
+}
+
 .slashItem {
   display: flex;
   align-items: center;

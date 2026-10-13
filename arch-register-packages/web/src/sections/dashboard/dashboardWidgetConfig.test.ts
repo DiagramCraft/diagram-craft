@@ -510,7 +510,7 @@ describe('parseKnownDashboardWidget', () => {
       },
       {
         type: 'api-integration-catalog-needs-attention',
-        title: 'Needs attention',
+        title: 'API needs attention',
         config: { limit: 8 },
         width: 6,
         height: 16

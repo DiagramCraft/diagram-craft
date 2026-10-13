@@ -24,7 +24,7 @@ export const entityGraphSpec = defineMdxComponent<
     icon: TbVectorTriangle,
     label: 'Entity graph',
     description:
-      'A clickable dependency and relationship graph for one entity. Works best at 6x4 or larger.',
+      'A clickable graph of the dependencies and relations around one entity. Works best at 6x4 or larger.',
     defaultW: 6,
     defaultH: 16,
     surfaces: ['workspace', 'project'],
@@ -45,8 +45,9 @@ export const entityGraphSpec = defineMdxComponent<
     mdxRule: entityGraphMdxRule,
     slashCommand: {
       key: 'entity-graph',
-      label: 'Entity Graph',
-      description: 'Embed a clickable dependency or impact graph for one entity',
+      label: 'Entity graph',
+      description:
+        'A clickable graph of the dependencies and relations around one entity. Works best at 6x4 or larger.',
       icon: <TbVectorTriangle size={14} />,
       keywords: ['entity', 'graph', 'dependency', 'impact', 'relations'],
       onSelect: (editor, { insertOrReplaceBlock }) => {

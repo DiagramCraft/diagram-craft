@@ -14,8 +14,8 @@ export const entityLinkSpec = defineMdxComponent<EntityLinkSlateElement, { id: s
     mdxRule: entityLinkMdxRule,
     slashCommand: {
       key: 'entity-link',
-      label: 'Entity Link',
-      description: 'Simple link to an entity',
+      label: 'Entity link',
+      description: 'A plain link to an entity page',
       icon: <TbLink size={14} />,
       keywords: ['link', 'entity', 'reference', 'href'],
       onSelect: (editor, { insertOrReplaceInline }) => {

@@ -21,7 +21,8 @@ export const entityCardSpec = defineMdxComponent<
   dashboardWidget: {
     icon: TbId,
     label: 'Entity card',
-    description: 'A focused summary card for a single entity.',
+    description:
+      'A summary card for one entity with its key fields. Use it to spotlight a single system or owner.',
     defaultW: 3,
     defaultH: 8,
     surfaces: ['workspace', 'project'],
@@ -43,8 +44,9 @@ export const entityCardSpec = defineMdxComponent<
     mdxRule: entityCardMdxRule,
     slashCommand: {
       key: 'entity-card',
-      label: 'Entity Card',
-      description: 'Embed entity metadata inline',
+      label: 'Entity card',
+      description:
+        'A summary card for one entity with its key fields. Use it to spotlight a single system or owner.',
       icon: <TbId size={14} />,
       keywords: ['entity', 'card', 'catalog', 'service'],
       onSelect: (editor, { insertOrReplaceBlock }) => {
