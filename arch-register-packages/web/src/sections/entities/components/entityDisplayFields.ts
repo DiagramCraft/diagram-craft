@@ -2,7 +2,7 @@ import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { EntityConformanceStatus } from '@arch-register/api-types/conformanceContract';
 import type { ProjectionField } from '@arch-register/api-types/entityQueryIR';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
-import type { BrowserView } from '@arch-register/api-types/viewContract';
+import type { BrowserView, ColumnRenderConfig } from '@arch-register/api-types/viewContract';
 import type { Assessment } from '@arch-register/api-types/assessmentContract';
 import { getAssessmentEnumOptions } from '@arch-register/api-types/assessmentFieldOptions';
 import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
@@ -197,17 +197,30 @@ export const filterDisplayFieldIdsForContext = (
 ): string[] =>
   projectContext ? fieldIds : fieldIds.filter(fieldId => !PROJECT_DISPLAY_FIELD_IDS.has(fieldId));
 
-export const withDisplayFieldIds = (config: unknown, fieldIds: string[]) => ({
-  ...(config && typeof config === 'object' ? config : {}),
-  fieldIds
-});
+export const withDisplayFieldIds = (config: unknown, fieldIds: string[]) => {
+  const base = (config && typeof config === 'object' ? config : {}) as {
+    columnRenderers?: Record<string, ColumnRenderConfig>;
+  };
+  const columnRenderers = base.columnRenderers
+    ? Object.fromEntries(
+        Object.entries(base.columnRenderers).filter(([id]) => fieldIds.includes(id))
+      )
+    : undefined;
+  const { columnRenderers: _previous, ...rest } = base;
+  return {
+    ...rest,
+    ...(columnRenderers && Object.keys(columnRenderers).length > 0 ? { columnRenderers } : {}),
+    fieldIds
+  };
+};
 
 export const withoutDisplayFieldIds = (config: unknown): unknown => {
   if (config == null || typeof config !== 'object') return null;
-  const { fieldIds: _fieldIds, ...rest } = config as { fieldIds?: unknown } & Record<
-    string,
-    unknown
-  >;
+  const {
+    fieldIds: _fieldIds,
+    columnRenderers: _columnRenderers,
+    ...rest
+  } = config as { fieldIds?: unknown; columnRenderers?: unknown } & Record<string, unknown>;
   return Object.keys(rest).length === 0 ? null : rest;
 };
 
@@ -317,4 +330,48 @@ export const formatEntityDisplayValue = (
     return formatDurationValue(value);
   }
   return String(value);
+};
+
+/**
+ * The unformatted value of a column, for renderers that need the underlying number or option
+ * value rather than the display string. Multi-valued columns yield their first value.
+ */
+export const getEntityDisplayRawValue = (
+  entity: EntityRecord,
+  field: EntityDisplayField
+): string | number | null => {
+  let value: unknown;
+  if (field.assessmentField)
+    value = resolveAssessmentValue(entity as BrowserEntityRecord, field.id);
+  else if (field.id === '_completeness') value = entity._completeness;
+  else if (field.id === '_usageCount') value = entity._usageCount;
+  else if (field.id.startsWith(PROJECTION_FIELD_PREFIX))
+    value = entity._projections?.[field.id.slice(PROJECTION_FIELD_PREFIX.length)];
+  else if (field.id.startsWith('_')) return null;
+  else value = entity[field.id];
+
+  if (Array.isArray(value)) value = value[0];
+  if (value == null || value === '') return null;
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+  return String(value);
+};
+
+/** Returns `config` with the per-column renderer map replaced; an empty map removes the key. */
+export const withColumnRenderers = (
+  config: unknown,
+  columnRenderers: Record<string, ColumnRenderConfig>
+) => {
+  const { columnRenderers: _previous, ...rest } = (
+    config && typeof config === 'object' ? config : {}
+  ) as Record<string, unknown>;
+  return Object.keys(columnRenderers).length === 0 ? rest : { ...rest, columnRenderers };
+};
+
+/** The renderer configured for `fieldId`, tolerating missing or malformed config (plain). */
+export const getColumnRenderer = (config: unknown, fieldId: string): ColumnRenderConfig => {
+  const renderers =
+    config && typeof config === 'object'
+      ? (config as { columnRenderers?: Record<string, ColumnRenderConfig> }).columnRenderers
+      : undefined;
+  return renderers?.[fieldId] ?? { type: 'plain' };
 };

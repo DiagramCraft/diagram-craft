@@ -5,6 +5,7 @@ import {
   exploreViewConfigSchema,
   filterConditionSchema,
   savedViewQuerySchema,
+  tableViewConfigSchema,
   traceabilityViewConfigSchema
 } from './viewContract';
 
@@ -150,5 +151,36 @@ describe('traceability view configuration', () => {
         showOrphanProjects: true
       }).success
     ).toBe(false);
+  });
+});
+
+describe('table view column renderers', () => {
+  it('parses configs without columnRenderers unchanged', () => {
+    expect(tableViewConfigSchema.parse({ fieldIds: ['a'] })).toEqual({ fieldIds: ['a'] });
+  });
+
+  it('accepts plain, colorBand and bar renderers', () => {
+    const config = {
+      fieldIds: ['a', 'b', '_projection:x'],
+      columnRenderers: {
+        a: { type: 'bar', min: 0, max: 10 },
+        b: { type: 'colorBand', options: { high: 'bad' } },
+        '_projection:x': {
+          type: 'colorBand',
+          bands: [
+            { max: 5, tone: 'good' },
+            { max: null, tone: 'bad' }
+          ]
+        }
+      }
+    };
+    expect(tableViewConfigSchema.parse(config)).toEqual(config);
+  });
+
+  it('falls back to plain for invalid renderer entries', () => {
+    const parsed = tableViewConfigSchema.parse({
+      columnRenderers: { a: { type: 'sparkline' }, b: { type: 'bar' } }
+    });
+    expect(parsed.columnRenderers).toEqual({ a: { type: 'plain' }, b: { type: 'bar' } });
   });
 });

@@ -34,6 +34,18 @@ fields such as project role and project status.
   }}
 />
 
+#### Render columns as color bands or bars
+
+In **Manage fields**, a selected number, date, select or query-projection column has a **Render as** setting:
+
+- **Plain** shows the value as text (default).
+- **Color band** shows a colored dot next to the value. For select fields, pick a color per option. For numbers, set
+  the two upper limits of the first two bands and optionally mark high values as bad. Dates are banded by days from
+  today.
+- **Bar** shows a horizontal bar between a minimum and maximum (default 0 to 100) with the value as a label.
+
+The setting is saved with saved views and with entity browser embeds. Cards, tree and other views are unchanged.
+
 ### Cards
 
 Use cards to scan entity summaries when comparing a few key details matters more than fitting many rows on screen.

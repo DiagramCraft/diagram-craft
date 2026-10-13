@@ -19,10 +19,13 @@ import {
   filterDisplayFieldIdsForContext,
   findEntityDisplayField,
   formatEntityDisplayValue,
+  getColumnRenderer,
   getDisplayFieldIds,
+  getEntityDisplayRawValue,
   isNumericDisplayField,
   type EntityDisplayField
 } from './entityDisplayFields';
+import { renderColumnValue } from './columnRenderers';
 import { isEntityInProject } from './entityBrowserState';
 import styles from './TableView.module.css';
 
@@ -182,9 +185,14 @@ export const TableView = ({
                     findEntityDisplayField(column.id, entity, schemaMap, displayFields) ?? column;
                   return (
                     <Table.Cell key={column.id} numeric={isNumericDisplayField(field)}>
-                      <span className="dim">
-                        {formatEntityDisplayValue(entity, field, dateTimeFormatPreference) ?? '—'}
-                      </span>
+                      {renderColumnValue(
+                        {
+                          value: getEntityDisplayRawValue(entity, field),
+                          text: formatEntityDisplayValue(entity, field, dateTimeFormatPreference),
+                          field
+                        },
+                        getColumnRenderer(config, field.id)
+                      )}
                     </Table.Cell>
                   );
                 })}

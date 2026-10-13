@@ -61,6 +61,7 @@
   position: relative !important;
   z-index: 1100 !important;
 }
+
 /* Same stacking fix as .filterPopover: this popover is also used inside the
    EntityBrowserEmbedConfigForm dialog, whose viewport would otherwise intercept pointer events. */
 .fieldsPopover {
@@ -72,16 +73,41 @@
   padding: 10px;
   font-family: var(--font-sans);
 }
+
 .fieldsGroup + .fieldsGroup {
   margin-top: 12px;
 }
+
 .fieldsGroupLabel {
   color: var(--base-fg-dim);
   font-size: 11px;
   font-weight: 600;
   margin-bottom: 4px;
 }
+
+.fieldsRow {
+  display: flex;
+  align-items: center;
+}
+
+.fieldsConfigure {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px;
+  border: none;
+  border-radius: 4px;
+  background: none;
+  color: var(--base-fg-dim);
+  cursor: pointer;
+}
+
+.fieldsConfigure:hover,
+.fieldsConfigure[data-active="true"] {
+  color: var(--accent-fg);
+}
+
 .fieldsOption {
+  flex: 1;
   display: flex;
   align-items: center;
   gap: 7px;
@@ -89,16 +115,19 @@
   font-size: 12px;
   cursor: pointer;
 }
+
 .fieldsFooter {
   margin-top: 10px;
   padding-top: 8px;
   border-top: 1px solid var(--panel-border);
 }
+
 .assessmentList {
   padding: 8px 12px;
   max-height: min(360px, 60vh);
   overflow: auto;
 }
+
 .assessmentOption {
   display: flex;
   align-items: center;
@@ -113,14 +142,17 @@
   color: var(--base-fg);
   cursor: pointer;
 }
+
 .assessmentOption:hover {
   background: var(--cmp-bg-hover);
 }
+
 .assessmentOptionActive {
   background: var(--base-bg-hover);
   color: var(--accent-fg);
   font-weight: 600;
 }
+
 .assessmentOptionCheck {
   display: inline-flex;
   align-items: center;
@@ -128,4 +160,39 @@
   width: 14px;
   flex-shrink: 0;
   color: var(--accent-fg);
+}
+
+.rendererEditor {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 2px 0 6px 31px;
+  padding-bottom: 4px;
+}
+
+.rendererRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.rendererInput {
+  width: 140px;
+  flex: none;
+}
+
+.rendererCheckbox {
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.rendererOptionLabel {
+  flex: 1;
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  align-self: center;
 }

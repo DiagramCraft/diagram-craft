@@ -6,6 +6,7 @@ import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { Select } from '@diagram-craft/app-components/Select';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
+import type { ColumnRenderConfig } from '@arch-register/api-types/viewContract';
 import { Pagination } from '../../../components/Pagination';
 import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
@@ -35,6 +36,7 @@ import {
   DISPLAY_FIELD_VIEWS,
   filterDisplayFieldIdsForContext,
   getDisplayFieldIds,
+  withColumnRenderers,
   withDisplayFieldIds,
   withoutDisplayFieldIds
 } from './entityDisplayFields';
@@ -535,6 +537,17 @@ export const EntityBrowser = ({
         onDisplayFieldsChange={
           displayView && !readOnly
             ? fieldIds => setActiveViewConfig(withDisplayFieldIds(activeViewConfig, fieldIds))
+            : undefined
+        }
+        columnRenderers={
+          view === 'table' && !readOnly
+            ? (activeViewConfig as { columnRenderers?: Record<string, ColumnRenderConfig> } | null)
+                ?.columnRenderers
+            : undefined
+        }
+        onColumnRenderersChange={
+          view === 'table' && !readOnly
+            ? renderers => setActiveViewConfig(withColumnRenderers(activeViewConfig, renderers))
             : undefined
         }
         onDisplayFieldsReset={

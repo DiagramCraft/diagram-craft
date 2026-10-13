@@ -101142,6 +101142,104 @@
                                       "type": "string"
                                     },
                                     "description": "Ordered fields displayed for each entity"
+                                  },
+                                  "columnRenderers": {
+                                    "type": "object",
+                                    "propertyNames": {
+                                      "type": "string"
+                                    },
+                                    "additionalProperties": {
+                                      "anyOf": [
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "type": {
+                                              "const": "plain"
+                                            }
+                                          },
+                                          "required": [
+                                            "type"
+                                          ]
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "type": {
+                                              "const": "colorBand"
+                                            },
+                                            "bands": {
+                                              "type": "array",
+                                              "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "max": {
+                                                    "anyOf": [
+                                                      {
+                                                        "type": "number"
+                                                      },
+                                                      {
+                                                        "type": "null"
+                                                      }
+                                                    ]
+                                                  },
+                                                  "tone": {
+                                                    "enum": [
+                                                      "good",
+                                                      "warn",
+                                                      "bad"
+                                                    ],
+                                                    "type": "string"
+                                                  }
+                                                },
+                                                "required": [
+                                                  "max",
+                                                  "tone"
+                                                ]
+                                              },
+                                              "description": "Ascending upper bounds (null = unbounded) mapped to tones, for numbers and dates"
+                                            },
+                                            "options": {
+                                              "type": "object",
+                                              "propertyNames": {
+                                                "type": "string"
+                                              },
+                                              "additionalProperties": {
+                                                "enum": [
+                                                  "good",
+                                                  "warn",
+                                                  "bad"
+                                                ],
+                                                "type": "string"
+                                              },
+                                              "description": "Option value to tone mapping, for select fields"
+                                            }
+                                          },
+                                          "required": [
+                                            "type"
+                                          ]
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "type": {
+                                              "const": "bar"
+                                            },
+                                            "min": {
+                                              "type": "number",
+                                              "description": "Value at which the bar is empty (default 0)"
+                                            },
+                                            "max": {
+                                              "type": "number",
+                                              "description": "Value at which the bar is full (default 100)"
+                                            }
+                                          },
+                                          "required": [
+                                            "type"
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    "description": "How individual columns are rendered, keyed by field id; absent means plain"
                                   }
                                 },
                                 "description": "Configuration for table view"
@@ -108179,6 +108277,104 @@
                                   "type": "string"
                                 },
                                 "description": "Ordered fields displayed for each entity"
+                              },
+                              "columnRenderers": {
+                                "type": "object",
+                                "propertyNames": {
+                                  "type": "string"
+                                },
+                                "additionalProperties": {
+                                  "anyOf": [
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "type": {
+                                          "const": "plain"
+                                        }
+                                      },
+                                      "required": [
+                                        "type"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "type": {
+                                          "const": "colorBand"
+                                        },
+                                        "bands": {
+                                          "type": "array",
+                                          "items": {
+                                            "type": "object",
+                                            "properties": {
+                                              "max": {
+                                                "anyOf": [
+                                                  {
+                                                    "type": "number"
+                                                  },
+                                                  {
+                                                    "type": "null"
+                                                  }
+                                                ]
+                                              },
+                                              "tone": {
+                                                "enum": [
+                                                  "good",
+                                                  "warn",
+                                                  "bad"
+                                                ],
+                                                "type": "string"
+                                              }
+                                            },
+                                            "required": [
+                                              "max",
+                                              "tone"
+                                            ]
+                                          },
+                                          "description": "Ascending upper bounds (null = unbounded) mapped to tones, for numbers and dates"
+                                        },
+                                        "options": {
+                                          "type": "object",
+                                          "propertyNames": {
+                                            "type": "string"
+                                          },
+                                          "additionalProperties": {
+                                            "enum": [
+                                              "good",
+                                              "warn",
+                                              "bad"
+                                            ],
+                                            "type": "string"
+                                          },
+                                          "description": "Option value to tone mapping, for select fields"
+                                        }
+                                      },
+                                      "required": [
+                                        "type"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "type": {
+                                          "const": "bar"
+                                        },
+                                        "min": {
+                                          "type": "number",
+                                          "description": "Value at which the bar is empty (default 0)"
+                                        },
+                                        "max": {
+                                          "type": "number",
+                                          "description": "Value at which the bar is full (default 100)"
+                                        }
+                                      },
+                                      "required": [
+                                        "type"
+                                      ]
+                                    }
+                                  ]
+                                },
+                                "description": "How individual columns are rendered, keyed by field id; absent means plain"
                               }
                             },
                             "description": "Configuration for table view"
@@ -115025,6 +115221,104 @@
                                     "type": "string"
                                   },
                                   "description": "Ordered fields displayed for each entity"
+                                },
+                                "columnRenderers": {
+                                  "type": "object",
+                                  "propertyNames": {
+                                    "type": "string"
+                                  },
+                                  "additionalProperties": {
+                                    "anyOf": [
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "type": {
+                                            "const": "plain"
+                                          }
+                                        },
+                                        "required": [
+                                          "type"
+                                        ]
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "type": {
+                                            "const": "colorBand"
+                                          },
+                                          "bands": {
+                                            "type": "array",
+                                            "items": {
+                                              "type": "object",
+                                              "properties": {
+                                                "max": {
+                                                  "anyOf": [
+                                                    {
+                                                      "type": "number"
+                                                    },
+                                                    {
+                                                      "type": "null"
+                                                    }
+                                                  ]
+                                                },
+                                                "tone": {
+                                                  "enum": [
+                                                    "good",
+                                                    "warn",
+                                                    "bad"
+                                                  ],
+                                                  "type": "string"
+                                                }
+                                              },
+                                              "required": [
+                                                "max",
+                                                "tone"
+                                              ]
+                                            },
+                                            "description": "Ascending upper bounds (null = unbounded) mapped to tones, for numbers and dates"
+                                          },
+                                          "options": {
+                                            "type": "object",
+                                            "propertyNames": {
+                                              "type": "string"
+                                            },
+                                            "additionalProperties": {
+                                              "enum": [
+                                                "good",
+                                                "warn",
+                                                "bad"
+                                              ],
+                                              "type": "string"
+                                            },
+                                            "description": "Option value to tone mapping, for select fields"
+                                          }
+                                        },
+                                        "required": [
+                                          "type"
+                                        ]
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "type": {
+                                            "const": "bar"
+                                          },
+                                          "min": {
+                                            "type": "number",
+                                            "description": "Value at which the bar is empty (default 0)"
+                                          },
+                                          "max": {
+                                            "type": "number",
+                                            "description": "Value at which the bar is full (default 100)"
+                                          }
+                                        },
+                                        "required": [
+                                          "type"
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  "description": "How individual columns are rendered, keyed by field id; absent means plain"
                                 }
                               },
                               "description": "Configuration for table view"
@@ -122984,6 +123278,104 @@
                                   "type": "string"
                                 },
                                 "description": "Ordered fields displayed for each entity"
+                              },
+                              "columnRenderers": {
+                                "type": "object",
+                                "propertyNames": {
+                                  "type": "string"
+                                },
+                                "additionalProperties": {
+                                  "anyOf": [
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "type": {
+                                          "const": "plain"
+                                        }
+                                      },
+                                      "required": [
+                                        "type"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "type": {
+                                          "const": "colorBand"
+                                        },
+                                        "bands": {
+                                          "type": "array",
+                                          "items": {
+                                            "type": "object",
+                                            "properties": {
+                                              "max": {
+                                                "anyOf": [
+                                                  {
+                                                    "type": "number"
+                                                  },
+                                                  {
+                                                    "type": "null"
+                                                  }
+                                                ]
+                                              },
+                                              "tone": {
+                                                "enum": [
+                                                  "good",
+                                                  "warn",
+                                                  "bad"
+                                                ],
+                                                "type": "string"
+                                              }
+                                            },
+                                            "required": [
+                                              "max",
+                                              "tone"
+                                            ]
+                                          },
+                                          "description": "Ascending upper bounds (null = unbounded) mapped to tones, for numbers and dates"
+                                        },
+                                        "options": {
+                                          "type": "object",
+                                          "propertyNames": {
+                                            "type": "string"
+                                          },
+                                          "additionalProperties": {
+                                            "enum": [
+                                              "good",
+                                              "warn",
+                                              "bad"
+                                            ],
+                                            "type": "string"
+                                          },
+                                          "description": "Option value to tone mapping, for select fields"
+                                        }
+                                      },
+                                      "required": [
+                                        "type"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "type": {
+                                          "const": "bar"
+                                        },
+                                        "min": {
+                                          "type": "number",
+                                          "description": "Value at which the bar is empty (default 0)"
+                                        },
+                                        "max": {
+                                          "type": "number",
+                                          "description": "Value at which the bar is full (default 100)"
+                                        }
+                                      },
+                                      "required": [
+                                        "type"
+                                      ]
+                                    }
+                                  ]
+                                },
+                                "description": "How individual columns are rendered, keyed by field id; absent means plain"
                               }
                             },
                             "description": "Configuration for table view"
@@ -129825,6 +130217,104 @@
                                     "type": "string"
                                   },
                                   "description": "Ordered fields displayed for each entity"
+                                },
+                                "columnRenderers": {
+                                  "type": "object",
+                                  "propertyNames": {
+                                    "type": "string"
+                                  },
+                                  "additionalProperties": {
+                                    "anyOf": [
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "type": {
+                                            "const": "plain"
+                                          }
+                                        },
+                                        "required": [
+                                          "type"
+                                        ]
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "type": {
+                                            "const": "colorBand"
+                                          },
+                                          "bands": {
+                                            "type": "array",
+                                            "items": {
+                                              "type": "object",
+                                              "properties": {
+                                                "max": {
+                                                  "anyOf": [
+                                                    {
+                                                      "type": "number"
+                                                    },
+                                                    {
+                                                      "type": "null"
+                                                    }
+                                                  ]
+                                                },
+                                                "tone": {
+                                                  "enum": [
+                                                    "good",
+                                                    "warn",
+                                                    "bad"
+                                                  ],
+                                                  "type": "string"
+                                                }
+                                              },
+                                              "required": [
+                                                "max",
+                                                "tone"
+                                              ]
+                                            },
+                                            "description": "Ascending upper bounds (null = unbounded) mapped to tones, for numbers and dates"
+                                          },
+                                          "options": {
+                                            "type": "object",
+                                            "propertyNames": {
+                                              "type": "string"
+                                            },
+                                            "additionalProperties": {
+                                              "enum": [
+                                                "good",
+                                                "warn",
+                                                "bad"
+                                              ],
+                                              "type": "string"
+                                            },
+                                            "description": "Option value to tone mapping, for select fields"
+                                          }
+                                        },
+                                        "required": [
+                                          "type"
+                                        ]
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "type": {
+                                            "const": "bar"
+                                          },
+                                          "min": {
+                                            "type": "number",
+                                            "description": "Value at which the bar is empty (default 0)"
+                                          },
+                                          "max": {
+                                            "type": "number",
+                                            "description": "Value at which the bar is full (default 100)"
+                                          }
+                                        },
+                                        "required": [
+                                          "type"
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  "description": "How individual columns are rendered, keyed by field id; absent means plain"
                                 }
                               },
                               "description": "Configuration for table view"

@@ -6,7 +6,11 @@ import type {
   WorkspaceOwnerOption
 } from '@arch-register/api-types/workspaceContract';
 import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
-import type { BrowserView, FilterCondition } from '@arch-register/api-types/viewContract';
+import type {
+  BrowserView,
+  ColumnRenderConfig,
+  FilterCondition
+} from '@arch-register/api-types/viewContract';
 import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import type { Assessment } from '@arch-register/api-types/assessmentContract';
 import { FilterDropdown } from '../../../components/FilterDropdown';
@@ -45,6 +49,8 @@ type EntityBrowserToolbarProps = {
   displayFields?: EntityDisplayField[];
   selectedDisplayFieldIds?: string[];
   onDisplayFieldsChange?: (fieldIds: string[]) => void;
+  columnRenderers?: Record<string, ColumnRenderConfig>;
+  onColumnRenderersChange?: (columnRenderers: Record<string, ColumnRenderConfig>) => void;
   onDisplayFieldsReset?: () => void;
   joinOptions?: AssessmentJoinOption[];
   joinAssessmentId?: string | null;
@@ -83,6 +89,8 @@ export const EntityBrowserToolbar = ({
   asOf,
   displayFields,
   selectedDisplayFieldIds,
+  columnRenderers,
+  onColumnRenderersChange,
   onDisplayFieldsChange,
   onDisplayFieldsReset,
   joinOptions,
@@ -163,6 +171,8 @@ export const EntityBrowserToolbar = ({
         selectedIds={selectedDisplayFieldIds ?? []}
         onChange={onDisplayFieldsChange ?? (() => {})}
         onReset={onDisplayFieldsReset}
+        columnRenderers={columnRenderers}
+        onColumnRenderersChange={onColumnRenderersChange}
         disabled={!displayFields || !selectedDisplayFieldIds || !onDisplayFieldsChange}
       />
       {onToggleTimeline && (

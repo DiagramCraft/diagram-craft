@@ -42,23 +42,42 @@ export const resolveSort = (sort: string, rootSchema: EntitySchema | undefined):
   return field ? encodeFieldSort(field.id, parsed.dir) : sort;
 };
 
+/** Resolves seed-authored field NAMES in a table view config to live ids, in both `fieldIds` and
+ *  the `columnRenderers` keys. Standard/projection ids and unknown names pass through unchanged. */
 export const resolveTableFieldIds = (
   viewConfig: unknown,
   rootSchema: EntitySchema | undefined
 ): unknown => {
-  if (
-    !rootSchema ||
-    viewConfig == null ||
-    typeof viewConfig !== 'object' ||
-    !Array.isArray((viewConfig as { fieldIds?: unknown }).fieldIds)
-  ) {
-    return viewConfig;
-  }
-  const fieldIds = (viewConfig as { fieldIds: string[] }).fieldIds.map(id => {
+  if (!rootSchema || viewConfig == null || typeof viewConfig !== 'object') return viewConfig;
+  const { fieldIds, columnRenderers } = viewConfig as {
+    fieldIds?: unknown;
+    columnRenderers?: unknown;
+  };
+  const hasFieldIds = Array.isArray(fieldIds);
+  const hasRenderers =
+    columnRenderers != null &&
+    typeof columnRenderers === 'object' &&
+    !Array.isArray(columnRenderers);
+  if (!hasFieldIds && !hasRenderers) return viewConfig;
+
+  const resolveId = (id: string) => {
     if (id.startsWith('_')) return id;
     return rootSchema.fields.find(field => field.name === id)?.id ?? id;
-  });
-  return { ...viewConfig, fieldIds };
+  };
+  return {
+    ...viewConfig,
+    ...(hasFieldIds ? { fieldIds: (fieldIds as string[]).map(resolveId) } : {}),
+    ...(hasRenderers
+      ? {
+          columnRenderers: Object.fromEntries(
+            Object.entries(columnRenderers as Record<string, unknown>).map(([id, config]) => [
+              resolveId(id),
+              config
+            ])
+          )
+        }
+      : {})
+  };
 };
 
 /** Resolves a matrix view config's seed-authored NAMES to live ids: `colSchemaId` (a schema

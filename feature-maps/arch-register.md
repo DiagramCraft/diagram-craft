@@ -334,8 +334,8 @@
           browser embed in Tree view (@id:ar.entity-views.tree) over the Business Capability containment hierarchy,
           showing level and owner. The dashboard's Owner facet narrows the tree (matching capabilities keep
           their ancestors, shown muted). Rows open the capability's drawer (see below). Subtree roll-up columns
-          (maturity bars, gap, investment, risk, supporting-application count) are not yet shown here; see the
-          column-rendering work for entity browser tables.
+          (maturity bars, gap, investment, risk, supporting-application count) are not yet shown here; the
+          table's per-column renderers (@id:ar.entity-views.table.column-rendering) are the building block.
 
           The configurable entity drawer shows subtree roll-up stats and a leaf count via the generic drawer
           `rollup`/leaf-count item kinds (seeded for the standard maturity, gap, investment, and risk fields by
@@ -938,6 +938,12 @@
           filtering, selection, and bulk actions. Project-only fields such as project role and project status are shown
           when the browser is in project context. Scalar-array filters use any-element matching for positive operators,
           while emptiness checks the list and sorting/chart metrics use its first value.
+
+          - @id:ar.entity-views.table.column-rendering Users can choose how each table column is rendered: plain text
+            (default), a color band (select options or number/date ranges mapped to green/amber/red), or a bar
+            against a min/max range with the value as label. This applies to schema fields and query-projection
+            columns, is set from Manage fields in the entity browser and in entity browser embeds, is saved with saved
+            views and embed configs, and seeds can set it by field name. Other views are unaffected.
 
           Entity lists also expose an aggregate Conformance status field that can be displayed and filtered in
           browser queries and saved views. The status distinguishes conformant, violating, acknowledged, exempt, and

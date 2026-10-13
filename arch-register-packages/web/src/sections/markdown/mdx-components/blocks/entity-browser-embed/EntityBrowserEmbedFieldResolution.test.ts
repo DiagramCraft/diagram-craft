@@ -40,6 +40,30 @@ describe('resolveTableFieldIds', () => {
     expect(resolveTableFieldIds(config, undefined)).toBe(config);
   });
 
+  it('resolves columnRenderers keys like fieldIds, keeping projection keys and renderer configs', () => {
+    const bar = { type: 'bar' as const, max: 5 };
+    const resolved = resolveTableFieldIds(
+      {
+        fieldIds: ['Status', '_projection:Count'],
+        columnRenderers: { Status: { type: 'colorBand' }, '_projection:Count': bar }
+      },
+      rootSchema
+    );
+    expect(resolved).toEqual({
+      fieldIds: ['field-status-real-id', '_projection:Count'],
+      columnRenderers: { 'field-status-real-id': { type: 'colorBand' }, '_projection:Count': bar }
+    });
+  });
+
+  it('resolves columnRenderers even without fieldIds, and leaves configs without it untouched', () => {
+    expect(
+      resolveTableFieldIds({ columnRenderers: { Categories: { type: 'bar' } } }, rootSchema)
+    ).toEqual({ columnRenderers: { 'field-categories-real-id': { type: 'bar' } } });
+    expect(resolveTableFieldIds({ fieldIds: ['_owner'] }, rootSchema)).toEqual({
+      fieldIds: ['_owner']
+    });
+  });
+
   it('passes through a config with no fieldIds array', () => {
     const config = { xAxis: 'impact' };
     expect(resolveTableFieldIds(config, rootSchema)).toBe(config);
