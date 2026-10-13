@@ -42,7 +42,6 @@ export type RelationTableWidgetConfig = {
   limit: number;
   /** Clicking a row opens a detail drawer for that relation. Default off. */
   rowDrawer?: boolean;
-  label?: string;
 };
 
 const cellSortValue = (

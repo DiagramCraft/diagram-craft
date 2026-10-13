@@ -10,19 +10,14 @@ import { useEntity } from '../../../hooks/useEntities';
 import { useSchemas } from '../../../hooks/useSchemas';
 import { useLifecycleStates } from '../../../hooks/useWorkspaceConfig';
 import { BlastRadiusPanel } from '../../entities/components/BlastRadiusPanel';
-import styles from '../WidgetConfigDialog.module.css';
 
 export const BLAST_RADIUS_WIDGET_TYPE = 'blast-radius';
 
 // `entityId` is the entity's public id, as chosen in the EntityPicker.
-type BlastRadiusWidgetConfig = Record<string, unknown> & { label?: string; entityId?: string };
+type BlastRadiusWidgetConfig = Record<string, unknown> & { entityId?: string };
 
 const isValidConfig = (config: Record<string, unknown>): config is BlastRadiusWidgetConfig =>
-  (config.label === undefined || typeof config.label === 'string') &&
-  (config.entityId === undefined || typeof config.entityId === 'string');
-
-const titleFor = (config: BlastRadiusWidgetConfig) =>
-  config.label?.trim() ? config.label.trim() : 'Blast radius';
+  config.entityId === undefined || typeof config.entityId === 'string';
 
 const BlastRadiusWidget = ({ config }: { config: BlastRadiusWidgetConfig }) => {
   const { workspaceSlug } = useWorkspaceContext();
@@ -87,30 +82,6 @@ const BlastRadiusConfigForm = ({
           }}
         />
       </DialogSection>
-      <DialogSection label="Display" required={false}>
-        <div className={styles.options}>
-          <label className={styles.optionRow}>
-            <span className={styles.optionLabel}>Title</span>
-            <div className={styles.optionControl}>
-              <input
-                type="text"
-                className={styles.labelInput}
-                value={config.label ?? ''}
-                placeholder="Use the widget name"
-                onChange={event =>
-                  commit({
-                    ...config,
-                    label:
-                      event.currentTarget.value.trim() === ''
-                        ? undefined
-                        : event.currentTarget.value
-                  })
-                }
-              />
-            </div>
-          </label>
-        </div>
-      </DialogSection>
     </>
   );
 };
@@ -135,7 +106,6 @@ export const blastRadiusDashboardWidgetSpec: {
     frame: { padded: false },
     isValidConfig,
     createDefaultConfig: () => ({}),
-    getTitle: titleFor,
     configForm: BlastRadiusConfigForm
   }
 };

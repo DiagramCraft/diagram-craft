@@ -42,10 +42,8 @@ export const topEntitiesSpec = defineMdxComponent<
       (config.owner === undefined || typeof config.owner === 'string') &&
       (config.lifecycle === undefined || typeof config.lifecycle === 'string') &&
       (config.showLink === undefined || typeof config.showLink === 'boolean') &&
-      (config.showShareBar === undefined || typeof config.showShareBar === 'boolean') &&
-      (config.label === undefined || typeof config.label === 'string'),
+      (config.showShareBar === undefined || typeof config.showShareBar === 'boolean'),
     createDefaultConfig: () => ({ schema: '', fieldId: '', direction: 'desc', limit: 5 }),
-    getTitle: (config: TopEntitiesWidgetConfig) => config.label?.trim() || 'Ranked list',
     configForm: TopEntitiesConfigForm
   }
 });

@@ -38,8 +38,6 @@ export type EntityBrowserEmbedConfig = {
    * condition already in `conditions`. Not authorable via the embed's own config form yet.
    */
   schemaName?: string;
-  /** Title shown in the dashboard widget's title bar; falls back to "Entity browser". */
-  title?: string;
   /** Shows at most this many rows (after sorting). Unset shows all matching rows. */
   limit?: number;
   /** Opt-in: shows a search box and real pagination (table and cards views). Unset keeps the
@@ -85,7 +83,6 @@ export const encodeEntityBrowserEmbedConfig = (config: EntityBrowserEmbedConfig)
     projectScope: config.projectScope,
     entityQuery: config.entityQuery,
     schemaName: config.schemaName,
-    title: config.title,
     limit: config.limit,
     interactive: config.interactive,
     overlays: config.overlays,
@@ -118,7 +115,6 @@ export const decodeEntityBrowserEmbedConfig = (
           ? (parsed.entityQuery as EntityQuery)
           : undefined,
       schemaName: typeof parsed.schemaName === 'string' ? parsed.schemaName : undefined,
-      title: typeof parsed.title === 'string' ? parsed.title : undefined,
       limit:
         typeof parsed.limit === 'number' && Number.isInteger(parsed.limit) && parsed.limit > 0
           ? parsed.limit

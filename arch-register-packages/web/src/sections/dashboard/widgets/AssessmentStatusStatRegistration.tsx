@@ -61,9 +61,7 @@ export const assessmentStatusStatSpec: DashboardWidgetSpec<AssessmentStatusStatC
     typeof config.schemaName === 'string' &&
     config.schemaName.length > 0 &&
     isAssessmentStatus(config.status) &&
-    (config.label === undefined || typeof config.label === 'string') &&
     (config.subtextTemplate === undefined || typeof config.subtextTemplate === 'string'),
   createDefaultConfig: () => ({ schemaName: '', status: 'overdue' }),
-  getTitle: config => config.label?.trim() || 'Assessment status',
   configForm: ConfigForm
 };

@@ -21,7 +21,7 @@ const optionalText = (value: string): string | undefined =>
 type Props = {
   config: StatMetricWidgetConfig;
   onChange: (config: StatMetricWidgetConfig) => void;
-  context: { projectId?: string };
+  context: { projectId?: string; mode?: 'mdx' | 'dashboard' };
 };
 
 export const MetricConfigForm = ({ config, onChange, context }: Props) => {
@@ -67,18 +67,21 @@ export const MetricConfigForm = ({ config, onChange, context }: Props) => {
       )}
       <DialogSection label="Display" required={false}>
         <div className={styles.options}>
-          <label className={styles.optionRow}>
-            <span className={styles.optionLabel}>Label</span>
-            <div className={styles.optionControl}>
-              <input
-                type="text"
-                className={styles.labelInput}
-                value={config.label ?? ''}
-                onChange={e => onChange({ ...config, label: optionalText(e.target.value) })}
-                placeholder="e.g. Services in production"
-              />
-            </div>
-          </label>
+          {/* On a dashboard the label is the widget title, set under Appearance. */}
+          {context.mode !== 'dashboard' && (
+            <label className={styles.optionRow}>
+              <span className={styles.optionLabel}>Label</span>
+              <div className={styles.optionControl}>
+                <input
+                  type="text"
+                  className={styles.labelInput}
+                  value={config.label ?? ''}
+                  onChange={e => onChange({ ...config, label: optionalText(e.target.value) })}
+                  placeholder="e.g. Services in production"
+                />
+              </div>
+            </label>
+          )}
           <label className={styles.optionRow}>
             <span className={styles.optionLabel}>Show link</span>
             <div className={styles.optionControl}>

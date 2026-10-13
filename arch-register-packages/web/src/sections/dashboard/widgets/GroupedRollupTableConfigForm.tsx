@@ -105,18 +105,6 @@ export const GroupedRollupTableConfigForm = ({ config, onChange }: Props) => (
           checked={config.showTotal ?? true}
           onChange={checked => onChange({ ...config, showTotal: checked ? undefined : false })}
         />
-        <label className={styles.optionRow}>
-          <span className={styles.optionLabel}>Title</span>
-          <div className={styles.optionControl}>
-            <input
-              type="text"
-              className={styles.labelInput}
-              value={config.label ?? ''}
-              placeholder="Use the widget name"
-              onChange={e => onChange({ ...config, label: optionalText(e.target.value) })}
-            />
-          </div>
-        </label>
       </div>
     </DialogSection>
   </>

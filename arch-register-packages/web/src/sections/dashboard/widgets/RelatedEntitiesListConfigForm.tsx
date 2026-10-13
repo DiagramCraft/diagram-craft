@@ -145,20 +145,6 @@ export const RelatedEntitiesListConfigForm = ({ config, onChange }: Props) => {
       <DialogSection label="Display" required={false}>
         <div className={styles.options}>
           <label className={styles.optionRow}>
-            <span className={styles.optionLabel}>Title</span>
-            <div className={styles.optionControl}>
-              <input
-                type="text"
-                className={styles.labelInput}
-                value={config.label ?? ''}
-                placeholder="Use the entity type name"
-                onChange={event =>
-                  onChange({ ...config, label: clean(event.currentTarget.value.trim()) })
-                }
-              />
-            </div>
-          </label>
-          <label className={styles.optionRow}>
             <span className={styles.optionLabel}>Empty message</span>
             <div className={styles.optionControl}>
               <input

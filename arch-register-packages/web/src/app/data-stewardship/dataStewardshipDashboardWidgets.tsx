@@ -33,6 +33,7 @@ import {
 import { DataStewardshipReviewCalendar } from './sections/DataStewardshipReviewCalendar';
 import type { DashboardWidgetSpec } from '../../sections/markdown/mdx-components/types';
 import styles from './sections/DataStewardshipQueueWidget.module.css';
+import { useWidgetBodyTitle } from '../../sections/dashboard/widgets/WidgetBodyTitle';
 import formStyles from '../../sections/dashboard/WidgetConfigDialog.module.css';
 
 const DANGER = 'var(--cmp-fg-danger, #ef4444)';
@@ -67,7 +68,7 @@ const TONE_COLOR: Record<CaseCountTone, string | undefined> = {
  * so they can later serve other case kinds; today they resolve the schema to join against from
  * the Data Stewardship capability config, so seeds don't need a workspace-specific schema id.
  */
-type TitleConfig = Record<string, unknown> & { label?: string };
+type TitleConfig = Record<string, unknown>;
 type CaseConfig = TitleConfig & { scope: CaseWidgetScope; caseKinds: string[] };
 type CaseCountConfig = CaseConfig & {
   tone: CaseCountTone;
@@ -78,7 +79,7 @@ type CaseCountConfig = CaseConfig & {
 type ReviewsOverdueConfig = TitleConfig & { subtextTemplate: string };
 
 const isTitleConfig = (config: Record<string, unknown>): config is TitleConfig =>
-  config.label === undefined || typeof config.label === 'string';
+  typeof config === 'object';
 
 const isCaseConfig = (config: Record<string, unknown>): config is CaseConfig =>
   isTitleConfig(config) &&
@@ -93,11 +94,6 @@ const isCaseCountConfig = (config: Record<string, unknown>): config is CaseCount
 
 const isReviewsOverdueConfig = (config: Record<string, unknown>): config is ReviewsOverdueConfig =>
   isTitleConfig(config) && typeof config.subtextTemplate === 'string';
-
-const titleFor = (config: TitleConfig, fallback: string): string => {
-  const label = config.label?.trim();
-  return label === undefined || label.length === 0 ? fallback : label;
-};
 
 const useDataStewardshipConfig = () => {
   const { workspaceSlug, schemas } = useWorkspaceContext();
@@ -156,6 +152,7 @@ const StatTile = (props: {
 );
 
 const CaseCountWidget = ({ config }: { config: CaseCountConfig }) => {
+  const title = useWidgetBodyTitle();
   const queue = useCaseQueue(config);
   if (queue.isLoading) return <LoadingState text="Loading…" size="sm" />;
   if (!queue.isConfigured) return <NotConfigured />;
@@ -163,7 +160,7 @@ const CaseCountWidget = ({ config }: { config: CaseCountConfig }) => {
   const due = countDueWithin(queue.items, config.dueWithinDays);
   return (
     <StatTile
-      label={titleFor(config, 'Cases')}
+      label={title ?? 'Cases'}
       value={count}
       sub={renderSubtext(config.subtextTemplate, count, due)}
       color={count > 0 ? TONE_COLOR[config.tone] : undefined}
@@ -172,6 +169,7 @@ const CaseCountWidget = ({ config }: { config: CaseCountConfig }) => {
 };
 
 const ReviewsOverdueWidget = ({ config }: { config: ReviewsOverdueConfig }) => {
+  const title = useWidgetBodyTitle();
   const ds = useDataStewardshipConfig();
   const datasets = useEntities(
     ds.workspaceSlug,
@@ -183,7 +181,7 @@ const ReviewsOverdueWidget = ({ config }: { config: ReviewsOverdueConfig }) => {
   const count = datasets.data.filter(entity => entity.review_status === 'overdue').length;
   return (
     <StatTile
-      label={titleFor(config, 'Reviews overdue')}
+      label={title ?? 'Reviews overdue'}
       value={count}
       sub={renderSubtext(config.subtextTemplate, count, 0)}
       color={count > 0 ? WARN : undefined}
@@ -256,27 +254,6 @@ const CaseCalendarWidget = ({ config }: { config: CaseConfig }) => {
 
 const CaseCalendarHeaderActions = () => <span className="dim mono">queue items by due week</span>;
 
-const TitleField = (props: { config: TitleConfig; onChange: (config: never) => void }) => (
-  <label className={formStyles.optionRow}>
-    <span className={formStyles.optionLabel}>Title</span>
-    <div className={formStyles.optionControl}>
-      <input
-        type="text"
-        className={formStyles.labelInput}
-        value={props.config.label ?? ''}
-        placeholder="Use the widget name"
-        onChange={event => {
-          const value = event.currentTarget.value;
-          props.onChange({
-            ...props.config,
-            label: value.trim() === '' ? undefined : value
-          } as never);
-        }}
-      />
-    </div>
-  </label>
-);
-
 const ScopeField = (props: { config: CaseConfig; onChange: (config: CaseConfig) => void }) => (
   <label className={formStyles.optionRow}>
     <span className={formStyles.optionLabel}>Items</span>
@@ -298,20 +275,6 @@ const ScopeField = (props: { config: CaseConfig; onChange: (config: CaseConfig) 
   </label>
 );
 
-const TitleConfigForm = ({
-  config,
-  onChange
-}: {
-  config: TitleConfig;
-  onChange: (config: TitleConfig) => void;
-}) => (
-  <DialogSection label="Display" required={false}>
-    <div className={formStyles.options}>
-      <TitleField config={config} onChange={onChange} />
-    </div>
-  </DialogSection>
-);
-
 const CaseConfigForm = ({
   config,
   onChange
@@ -321,7 +284,6 @@ const CaseConfigForm = ({
 }) => (
   <DialogSection label="Display" required={false}>
     <div className={formStyles.options}>
-      <TitleField config={config} onChange={onChange} />
       <ScopeField config={config} onChange={onChange} />
     </div>
   </DialogSection>
@@ -349,12 +311,10 @@ export const dataStewardshipDashboardWidgetSpecs: Array<{
       createDefaultConfig: (): CaseCountConfig => ({
         ...DS_CASE_DEFAULTS,
         scope: 'mine',
-        label: 'Assigned to me',
         tone: 'none',
         subtextTemplate: '{due} due within a week',
         dueWithinDays: 7
       }),
-      getTitle: (config: CaseCountConfig) => titleFor(config, 'Case count'),
       configForm: CaseConfigForm
     }
   },
@@ -372,9 +332,7 @@ export const dataStewardshipDashboardWidgetSpecs: Array<{
       isValidConfig: isReviewsOverdueConfig,
       createDefaultConfig: (): ReviewsOverdueConfig => ({
         subtextTemplate: 'scheduled review date passed'
-      }),
-      getTitle: (config: ReviewsOverdueConfig) => titleFor(config, 'Reviews overdue'),
-      configForm: TitleConfigForm
+      })
     }
   },
   {
@@ -392,10 +350,9 @@ export const dataStewardshipDashboardWidgetSpecs: Array<{
       isValidConfig: isCaseConfig,
       createDefaultConfig: (): CaseConfig => ({
         ...DS_CASE_DEFAULTS,
-        scope: 'mine',
-        label: 'Next six weeks'
+        scope: 'mine'
       }),
-      getTitle: (config: CaseConfig) => titleFor(config, 'Next six weeks'),
+      getTitle: () => 'Next six weeks',
       configForm: CaseConfigForm
     }
   },
@@ -414,10 +371,9 @@ export const dataStewardshipDashboardWidgetSpecs: Array<{
       isValidConfig: isCaseConfig,
       createDefaultConfig: (): CaseConfig => ({
         ...DS_CASE_DEFAULTS,
-        scope: 'mine',
-        label: 'Assigned to me'
+        scope: 'mine'
       }),
-      getTitle: (config: CaseConfig) => titleFor(config, 'Case queue'),
+      getTitle: () => 'Case queue',
       configForm: CaseConfigForm
     }
   }

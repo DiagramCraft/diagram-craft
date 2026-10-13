@@ -22,7 +22,6 @@ export type DateBucketChartWidgetConfig = {
   foldOverdue?: boolean;
   /** Buckets with a record due within this many days (or overdue) are drawn in the urgent colour. */
   urgentWithinDays?: number;
-  label?: string;
 };
 
 export const isDateBucketChartConfigComplete = (config: DateBucketChartWidgetConfig): boolean =>

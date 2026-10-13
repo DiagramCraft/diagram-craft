@@ -40,7 +40,6 @@ export type DateCalendarWidgetConfig = {
   /** Entry border turns red when overdue (or within this many days) and orange within `warnWithinDays`. */
   critWithinDays?: number;
   warnWithinDays?: number;
-  label?: string;
 };
 
 export const isDateCalendarConfigComplete = (config: DateCalendarWidgetConfig): boolean =>

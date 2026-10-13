@@ -83,7 +83,6 @@ export const RelationPairsCoverageConfigForm = ({
         <div className={styles.options}>
           {(
             [
-              ['label', 'Title', 'Pair coverage'],
               ['consumerLabel', 'Consumer heading', 'Consumer'],
               ['hubLabel', 'Hub heading', config.hubSchemaName],
               ['providerLabel', 'Provider heading', 'Provider'],

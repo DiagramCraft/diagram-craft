@@ -26,13 +26,8 @@ export const markdownWidgetSpec = defineMdxComponent<
     defaultH: 16,
     surfaces: ['workspace', 'project'],
     component: MarkdownWidget,
-    isValidConfig: (config): config is MarkdownWidgetConfig =>
-      typeof config.title === 'string' && typeof config.markdown === 'string',
-    createDefaultConfig: () => ({ title: 'Markdown', markdown: '' }),
-    getTitle: (config: MarkdownWidgetConfig) => {
-      const title = config.title.trim();
-      return title.length > 0 ? title : 'Markdown';
-    },
+    isValidConfig: (config): config is MarkdownWidgetConfig => typeof config.markdown === 'string',
+    createDefaultConfig: () => ({ markdown: '' }),
     configForm: MarkdownDashboardConfigForm
   }
 });

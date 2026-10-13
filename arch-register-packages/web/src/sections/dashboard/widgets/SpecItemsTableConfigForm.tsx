@@ -39,21 +39,6 @@ export const SpecItemsTableConfigForm = ({
             />
             <span>Only deprecated operations</span>
           </label>
-          <label className={styles.optionRow}>
-            <span className={styles.optionLabel}>Title</span>
-            <div className={styles.optionControl}>
-              <input
-                type="text"
-                className={styles.labelInput}
-                value={config.label ?? ''}
-                placeholder="Operations"
-                onChange={event => {
-                  const value = event.currentTarget.value;
-                  onChange({ ...config, label: value.trim() === '' ? undefined : value });
-                }}
-              />
-            </div>
-          </label>
         </div>
       </DialogSection>
     </>

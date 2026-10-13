@@ -76,17 +76,6 @@ export const PathWalkerConfigForm = ({ config, onChange }: Props) => {
           );
         })}
       </DialogSection>
-      <DialogSection label="Title" required={false}>
-        <input
-          type="text"
-          className={styles.labelInput}
-          value={config.label ?? ''}
-          placeholder="Relationship walker"
-          onChange={event =>
-            onChange({ ...config, label: event.currentTarget.value.trim() || undefined })
-          }
-        />
-      </DialogSection>
     </>
   );
 };

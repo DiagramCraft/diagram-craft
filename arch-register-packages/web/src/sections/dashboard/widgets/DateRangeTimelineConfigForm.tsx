@@ -88,12 +88,6 @@ export const DateRangeTimelineConfigForm = ({ config, onChange }: Props) => (
           placeholder="Boolean field, e.g. auto_renew"
           onChange={markerWhenFieldId => onChange({ ...config, markerWhenFieldId })}
         />
-        <TextOption
-          label="Title"
-          value={config.label}
-          placeholder="Use the widget name"
-          onChange={label => onChange({ ...config, label })}
-        />
       </div>
     </DialogSection>
   </>

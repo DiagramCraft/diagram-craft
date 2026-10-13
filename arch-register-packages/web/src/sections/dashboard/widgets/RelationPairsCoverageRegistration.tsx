@@ -23,8 +23,7 @@ const isValidConfig = (
   isOptionalString(config.hubLabel) &&
   isOptionalString(config.providerLabel) &&
   isOptionalString(config.consumerLabel) &&
-  isOptionalString(config.coverageLabel) &&
-  isOptionalString(config.label);
+  isOptionalString(config.coverageLabel);
 
 export const relationPairsCoverageSpec: DashboardWidgetSpec<RelationPairsCoverageWidgetConfig> = {
   icon: TbArrowsJoin,
@@ -43,6 +42,5 @@ export const relationPairsCoverageSpec: DashboardWidgetSpec<RelationPairsCoverag
     consumerFieldName: '',
     coverageRelationSchemaName: ''
   }),
-  getTitle: config => config.label?.trim() || 'Pair coverage',
   configForm: RelationPairsCoverageConfigForm
 };

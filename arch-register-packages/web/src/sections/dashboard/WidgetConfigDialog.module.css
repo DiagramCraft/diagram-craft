@@ -101,4 +101,34 @@
   flex: 1;
   min-height: 0;
   overflow: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.tabs {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.tabs > :global(.cTabs) {
+  flex: 1;
+  min-height: 0;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.titleRow .labelInput {
+  flex: 1;
+  min-width: 0;
+}
+
+.titleRow .checkboxRow {
+  flex-shrink: 0;
+  white-space: nowrap;
 }

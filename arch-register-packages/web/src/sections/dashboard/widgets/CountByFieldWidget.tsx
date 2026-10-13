@@ -14,7 +14,6 @@ export type CountByFieldWidgetConfig = {
   schemaName: string;
   /** Field whose distinct values define the bar segments. */
   fieldId: string;
-  label?: string;
 };
 
 type Props = {

@@ -20,9 +20,7 @@ export const countByFieldSpec: DashboardWidgetSpec<CountByFieldWidgetConfig> = {
   isValidConfig: (config): config is CountByFieldWidgetConfig =>
     typeof config.schemaName === 'string' &&
     typeof config.fieldId === 'string' &&
-    (config.label === undefined || typeof config.label === 'string') &&
     isCountByFieldConfigComplete(config as CountByFieldWidgetConfig),
   createDefaultConfig: () => ({ schemaName: '', fieldId: '' }),
-  getTitle: config => config.label?.trim() || 'Count by field',
   configForm: CountByFieldConfigForm
 };

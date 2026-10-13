@@ -3,7 +3,6 @@ import typography from '../../markdown/articleTypography.module.css';
 import styles from './MarkdownWidget.module.css';
 
 export type MarkdownWidgetConfig = {
-  title: string;
   markdown: string;
 };
 

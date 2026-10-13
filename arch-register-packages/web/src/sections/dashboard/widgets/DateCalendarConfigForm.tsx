@@ -104,18 +104,6 @@ export const DateCalendarConfigForm = ({ config, onChange }: Props) => (
             />
           </div>
         </label>
-        <label className={styles.optionRow}>
-          <span className={styles.optionLabel}>Title</span>
-          <div className={styles.optionControl}>
-            <input
-              type="text"
-              className={styles.labelInput}
-              value={config.label ?? ''}
-              placeholder="Use the widget name"
-              onChange={e => onChange({ ...config, label: optionalText(e.target.value) })}
-            />
-          </div>
-        </label>
       </div>
     </DialogSection>
   </>

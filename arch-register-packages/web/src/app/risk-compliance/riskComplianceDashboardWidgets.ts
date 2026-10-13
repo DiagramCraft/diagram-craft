@@ -27,13 +27,11 @@ export const riskComplianceDashboardWidgetSpecs: Array<{
         typeof config.schemaName === 'string' &&
         config.schemaName !== '' &&
         (config.axis === undefined || config.axis === 'inherent' || config.axis === 'residual') &&
-        (config.label === undefined || typeof config.label === 'string') &&
         (config.includeClosed === undefined || typeof config.includeClosed === 'boolean') &&
         isOptionalStringArray(config.categories) &&
         isOptionalStringArray(config.statuses) &&
         isOptionalStringArray(config.owners),
       createDefaultConfig: () => ({ schemaName: '' }),
-      getTitle: config => config.label?.trim() || 'Risk matrix',
       configForm: RiskMatrixConfigForm
     }
   }

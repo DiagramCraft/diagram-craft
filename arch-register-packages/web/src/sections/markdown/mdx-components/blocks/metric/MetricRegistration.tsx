@@ -59,8 +59,7 @@ export const metricSpec = defineMdxComponent<
       (config.label === undefined || typeof config.label === 'string') &&
       (config.showLink === undefined || typeof config.showLink === 'boolean'),
     createDefaultConfig: () => ({ metricType: 'entity-count' }),
-    getTitle: (config: StatMetricWidgetConfig) =>
-      config.label?.trim() || METRIC_TYPE_DEFAULT_LABEL[config.metricType],
+    getTitle: (config: StatMetricWidgetConfig) => METRIC_TYPE_DEFAULT_LABEL[config.metricType],
     configForm: MetricConfigForm
   },
   editorSpec: {

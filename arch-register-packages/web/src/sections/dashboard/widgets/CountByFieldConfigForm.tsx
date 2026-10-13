@@ -45,23 +45,7 @@ export const CountByFieldConfigForm = ({ config, onChange }: Props) => {
         </select>
       </DialogSection>
       <DialogSection label="Display" required={false}>
-        <div className={styles.options}>
-          <label className={styles.optionRow}>
-            <span className={styles.optionLabel}>Title</span>
-            <div className={styles.optionControl}>
-              <input
-                type="text"
-                className={styles.labelInput}
-                value={config.label ?? ''}
-                placeholder="Use the widget name"
-                onChange={event => {
-                  const value = event.currentTarget.value;
-                  onChange({ ...config, label: value.trim() === '' ? undefined : value });
-                }}
-              />
-            </div>
-          </label>
-        </div>
+        <div className={styles.options}></div>
       </DialogSection>
     </>
   );

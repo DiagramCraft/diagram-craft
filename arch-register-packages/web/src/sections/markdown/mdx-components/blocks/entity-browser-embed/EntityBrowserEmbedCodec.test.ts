@@ -118,7 +118,7 @@ describe('EntityBrowserEmbedCodec', () => {
   });
 });
 
-describe('title and limit', () => {
+describe('limit', () => {
   const base: EntityBrowserEmbedConfig = {
     q: '',
     conditions: [],
@@ -127,11 +127,10 @@ describe('title and limit', () => {
     viewConfigs: {}
   };
 
-  it('round-trips a title and a row limit', () => {
+  it('round-trips a row limit', () => {
     const decoded = decodeEntityBrowserEmbedConfig(
-      encodeEntityBrowserEmbedConfig({ ...base, title: 'Live risks', limit: 10 })
+      encodeEntityBrowserEmbedConfig({ ...base, limit: 10 })
     );
-    expect(decoded?.title).toBe('Live risks');
     expect(decoded?.limit).toBe(10);
   });
 

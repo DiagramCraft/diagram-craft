@@ -74,19 +74,6 @@ const AssessmentCountConfigForm = ({
             </div>
           </label>
           <label className={styles.optionRow}>
-            <span className={styles.optionLabel}>Label</span>
-            <div className={styles.optionControl}>
-              <input
-                type="text"
-                className={styles.labelInput}
-                value={config.label ?? ''}
-                onChange={event =>
-                  onChange({ ...config, label: optionalText(event.currentTarget.value) })
-                }
-              />
-            </div>
-          </label>
-          <label className={styles.optionRow}>
             <span className={styles.optionLabel}>Subtext</span>
             <div className={styles.optionControl}>
               <input
@@ -127,9 +114,7 @@ export const assessmentCountSpec: DashboardWidgetSpec<AssessmentCountWidgetConfi
       (Array.isArray(config.schemaNames) &&
         config.schemaNames.every(name => typeof name === 'string'))) &&
     (config.dueWithinDays === undefined || typeof config.dueWithinDays === 'number') &&
-    isOptionalString(config.label) &&
     isOptionalString(config.subtext),
   createDefaultConfig: () => ({ mode: 'active' }),
-  getTitle: config => config.label?.trim() || 'Assessment count',
   configForm: AssessmentCountConfigForm
 };

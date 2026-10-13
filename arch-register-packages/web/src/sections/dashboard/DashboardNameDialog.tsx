@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
-import { APP_ICON_NAMES, resolveAppIcon } from '../../shell/appIcons';
+import { IconPicker } from '../../components/IconPicker';
 import { slugifyEntityName } from '../../lib/entityEditState';
 
 const KEY_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
@@ -95,30 +95,7 @@ export const DashboardNameDialog = ({
       )}
       {initialIcon !== undefined && (
         <FormElement label="Icon">
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-            {APP_ICON_NAMES.map(candidate => {
-              const Icon = resolveAppIcon(candidate);
-              return (
-                <button
-                  key={candidate}
-                  type="button"
-                  aria-pressed={icon === candidate}
-                  aria-label={candidate.replace(/^Tb/, '')}
-                  title={candidate.replace(/^Tb/, '')}
-                  onClick={() => setIcon(candidate)}
-                  style={{
-                    padding: 6,
-                    borderRadius: 6,
-                    border: `1px solid ${icon === candidate ? 'var(--accent, currentColor)' : 'transparent'}`,
-                    background: 'transparent',
-                    cursor: 'pointer'
-                  }}
-                >
-                  <Icon size={16} />
-                </button>
-              );
-            })}
-          </div>
+          <IconPicker value={icon ?? undefined} onChange={value => value && setIcon(value)} />
         </FormElement>
       )}
     </Dialog>

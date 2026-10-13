@@ -14,9 +14,18 @@ const gridPositionShape = {
   h: z.number().int().describe('Grid height in rows')
 };
 
+export const dashboardWidgetFrameSchema = z.object({
+  title: z.string().optional().describe('Title overriding the widget default'),
+  showFrame: z.boolean().optional().describe('Whether to show the frame; omit for widget default'),
+  icon: z.string().optional().describe('Icon name overriding the widget default icon')
+});
+
 export const dashboardWidgetSchema = z.object({
   ...gridPositionShape,
   type: dashboardWidgetTypeSchema,
+  frame: dashboardWidgetFrameSchema
+    .optional()
+    .describe('Per-instance frame settings; omitted values fall back to the widget defaults'),
   config: z
     .record(z.string(), z.unknown())
     .describe('Widget-specific configuration; interpreted by the widget implementation')
@@ -283,6 +292,8 @@ export const workspaceDashboardContract = oc.tag('Dashboard').router({
 });
 
 export type DashboardWidgetType = z.infer<typeof dashboardWidgetTypeSchema>;
+
+export type DashboardWidgetFrame = z.infer<typeof dashboardWidgetFrameSchema>;
 
 export type DashboardWidget = z.infer<typeof dashboardWidgetSchema>;
 

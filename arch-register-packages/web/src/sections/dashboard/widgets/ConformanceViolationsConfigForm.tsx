@@ -30,21 +30,6 @@ export const ConformanceViolationsConfigForm = ({
       <DialogSection label="Display" required={false}>
         <div className={styles.options}>
           <label className={styles.optionRow}>
-            <span className={styles.optionLabel}>Title</span>
-            <div className={styles.optionControl}>
-              <input
-                type="text"
-                className={styles.labelInput}
-                value={config.label ?? ''}
-                placeholder="Conformance violations"
-                onChange={event => {
-                  const value = event.currentTarget.value;
-                  onChange({ ...config, label: value.trim() === '' ? undefined : value });
-                }}
-              />
-            </div>
-          </label>
-          <label className={styles.optionRow}>
             <span className={styles.optionLabel}>Max rows</span>
             <div className={styles.optionControl}>
               <input

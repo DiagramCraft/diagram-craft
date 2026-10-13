@@ -33,10 +33,8 @@ export const upcomingByDateSpec: DashboardWidgetSpec<UpcomingByDateWidgetConfig>
     optionalNumber(config.warnWithinDays) &&
     optionalString(config.sublabelFieldId) &&
     optionalString(config.valueFieldId) &&
-    optionalString(config.label) &&
     (config.includeOverdue === undefined || typeof config.includeOverdue === 'boolean') &&
     isUpcomingByDateConfigComplete(config as UpcomingByDateWidgetConfig),
   createDefaultConfig: () => ({ query: '', dateFieldId: '' }),
-  getTitle: config => config.label?.trim() || 'Upcoming by date',
   configForm: UpcomingByDateConfigForm
 };

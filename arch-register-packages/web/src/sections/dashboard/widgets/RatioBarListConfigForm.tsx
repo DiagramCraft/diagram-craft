@@ -3,9 +3,6 @@ import { DialogSection } from '../../markdown/editor/BlockDialog';
 import type { RatioBarListWidgetConfig } from './RatioBarListWidget';
 import styles from '../WidgetConfigDialog.module.css';
 
-const optionalText = (value: string): string | undefined =>
-  value.trim() === '' ? undefined : value;
-
 type Props = {
   config: RatioBarListWidgetConfig;
   onChange: (config: RatioBarListWidgetConfig) => void;
@@ -100,22 +97,7 @@ export const RatioBarListConfigForm = ({ config, onChange }: Props) => {
         </div>
       </DialogSection>
       <DialogSection label="Display" required={false}>
-        <div className={styles.options}>
-          <label className={styles.optionRow}>
-            <span className={styles.optionLabel}>Title</span>
-            <div className={styles.optionControl}>
-              <input
-                type="text"
-                className={styles.labelInput}
-                value={config.label ?? ''}
-                placeholder="Use the widget name"
-                onChange={event =>
-                  onChange({ ...config, label: optionalText(event.currentTarget.value) })
-                }
-              />
-            </div>
-          </label>
-        </div>
+        <div className={styles.options}></div>
       </DialogSection>
     </>
   );

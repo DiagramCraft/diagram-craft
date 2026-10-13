@@ -34,83 +34,35 @@ import {
 import panelStyles from './sections/ApiIntegrationCatalogPanels.module.css';
 import styles from '../../sections/dashboard/WidgetConfigDialog.module.css';
 
-type TitleWidgetConfig = Record<string, unknown> & { label?: string };
-type ListWidgetConfig = TitleWidgetConfig & { limit: number };
+type BaseWidgetConfig = Record<string, unknown>;
+type ListWidgetConfig = BaseWidgetConfig & { limit: number };
 // `entityId` is meant to be set to a dashboard sidebar variable reference (e.g. `$apiEntityId`),
 // resolved by `DashboardWidgetRenderer` before this config reaches the widget — see
 // `resolveSidebarVariableReferences.ts` and the Impact dashboard's seed in `seedData/appDashboards.ts`.
-type ImpactWidgetConfig = TitleWidgetConfig & { entityId?: string };
-
-type TitleConfigFormProps = {
-  config: TitleWidgetConfig;
-  onChange: (config: TitleWidgetConfig) => void;
-};
+type ImpactWidgetConfig = BaseWidgetConfig & { entityId?: string };
 
 type ListConfigFormProps = {
   config: ListWidgetConfig;
   onChange: (config: ListWidgetConfig) => void;
 };
 
-const optionalLabel = (value: string): string | undefined =>
-  value.trim() === '' ? undefined : value;
-
-const isValidTitleConfig = (config: Record<string, unknown>): config is TitleWidgetConfig =>
-  config.label === undefined || typeof config.label === 'string';
+const isValidBaseConfig = (config: Record<string, unknown>): config is BaseWidgetConfig =>
+  config !== null;
 
 const isValidListConfig = (config: Record<string, unknown>): config is ListWidgetConfig =>
-  isValidTitleConfig(config) &&
+  isValidBaseConfig(config) &&
   typeof config.limit === 'number' &&
   Number.isInteger(config.limit) &&
   config.limit >= 1 &&
   config.limit <= 20;
 
 const isValidImpactConfig = (config: Record<string, unknown>): config is ImpactWidgetConfig =>
-  isValidTitleConfig(config) &&
+  isValidBaseConfig(config) &&
   (config.entityId === undefined || typeof config.entityId === 'string');
-
-const titleFor = (config: TitleWidgetConfig, fallback: string): string => {
-  const label = config.label?.trim();
-  return label === undefined || label.length === 0 ? fallback : label;
-};
-
-const TitleConfigForm = ({ config, onChange }: TitleConfigFormProps) => (
-  <DialogSection label="Display" required={false}>
-    <div className={styles.options}>
-      <label className={styles.optionRow}>
-        <span className={styles.optionLabel}>Title</span>
-        <div className={styles.optionControl}>
-          <input
-            type="text"
-            className={styles.labelInput}
-            value={config.label ?? ''}
-            placeholder="Use the widget name"
-            onChange={event =>
-              onChange({ ...config, label: optionalLabel(event.currentTarget.value) })
-            }
-          />
-        </div>
-      </label>
-    </div>
-  </DialogSection>
-);
 
 const ListConfigForm = ({ config, onChange }: ListConfigFormProps) => (
   <DialogSection label="Display" required={false}>
     <div className={styles.options}>
-      <label className={styles.optionRow}>
-        <span className={styles.optionLabel}>Title</span>
-        <div className={styles.optionControl}>
-          <input
-            type="text"
-            className={styles.labelInput}
-            value={config.label ?? ''}
-            placeholder="Use the widget name"
-            onChange={event =>
-              onChange({ ...config, label: optionalLabel(event.currentTarget.value) })
-            }
-          />
-        </div>
-      </label>
       <label className={styles.optionRow}>
         <span className={styles.optionLabel}>Maximum visible items</span>
         <div className={styles.optionControl}>
@@ -176,21 +128,17 @@ const useApiCatalogNavigation = () => {
   return { workspaceSlug, openApi, viewCatalog, viewIntegrations };
 };
 
-const ApiCatalogStatsWidget = ({ config: _config }: { config: TitleWidgetConfig }) => {
+const ApiCatalogStatsWidget = ({ config: _config }: { config: BaseWidgetConfig }) => {
   const { workspaceSlug } = useWorkspaceContext();
   return <ApiIntegrationCatalogStatTiles workspaceId={workspaceSlug} />;
 };
 
-const ApiCatalogNeedsAttentionCountWidget = ({
-  config: _config
-}: {
-  config: TitleWidgetConfig;
-}) => {
+const ApiCatalogNeedsAttentionCountWidget = ({ config: _config }: { config: BaseWidgetConfig }) => {
   const { workspaceSlug } = useWorkspaceContext();
   return <ApiIntegrationCatalogSingleStatTile workspaceId={workspaceSlug} kind="needs-attention" />;
 };
 
-const ApiCatalogPairGapsWidget = ({ config: _config }: { config: TitleWidgetConfig }) => {
+const ApiCatalogPairGapsWidget = ({ config: _config }: { config: BaseWidgetConfig }) => {
   const { workspaceSlug } = useWorkspaceContext();
   return <ApiIntegrationCatalogSingleStatTile workspaceId={workspaceSlug} kind="pair-gaps" />;
 };
@@ -354,10 +302,8 @@ export const apiIntegrationCatalogDashboardWidgetSpecs: Array<{
       surfaces: ['workspace'],
       component: ApiCatalogStatsWidget,
       frame: { hideOutsideEdit: true, padded: false, showIcon: false },
-      isValidConfig: isValidTitleConfig,
-      createDefaultConfig: () => ({}),
-      getTitle: (config: TitleWidgetConfig) => titleFor(config, 'API catalog stats'),
-      configForm: TitleConfigForm
+      isValidConfig: isValidBaseConfig,
+      createDefaultConfig: () => ({})
     }
   },
   {
@@ -371,10 +317,8 @@ export const apiIntegrationCatalogDashboardWidgetSpecs: Array<{
       surfaces: ['workspace'],
       component: ApiCatalogNeedsAttentionCountWidget,
       frame: { hideOutsideEdit: true, padded: false, showIcon: false },
-      isValidConfig: isValidTitleConfig,
-      createDefaultConfig: () => ({}),
-      getTitle: (config: TitleWidgetConfig) => titleFor(config, 'Needs attention (count)'),
-      configForm: TitleConfigForm
+      isValidConfig: isValidBaseConfig,
+      createDefaultConfig: () => ({})
     }
   },
   {
@@ -388,10 +332,8 @@ export const apiIntegrationCatalogDashboardWidgetSpecs: Array<{
       surfaces: ['workspace'],
       component: ApiCatalogPairGapsWidget,
       frame: { hideOutsideEdit: true, padded: false, showIcon: false },
-      isValidConfig: isValidTitleConfig,
-      createDefaultConfig: () => ({}),
-      getTitle: (config: TitleWidgetConfig) => titleFor(config, 'Provider/consumer gaps'),
-      configForm: TitleConfigForm
+      isValidConfig: isValidBaseConfig,
+      createDefaultConfig: () => ({})
     }
   },
   {
@@ -408,7 +350,6 @@ export const apiIntegrationCatalogDashboardWidgetSpecs: Array<{
       frame: { padded: false, showIcon: false },
       isValidConfig: isValidListConfig,
       createDefaultConfig: () => ({ limit: 8 }),
-      getTitle: (config: ListWidgetConfig) => titleFor(config, 'API needs attention'),
       configForm: ListConfigForm
     }
   },
@@ -426,7 +367,6 @@ export const apiIntegrationCatalogDashboardWidgetSpecs: Array<{
       frame: { padded: false, showIcon: false },
       isValidConfig: isValidListConfig,
       createDefaultConfig: () => ({ limit: 6 }),
-      getTitle: (config: ListWidgetConfig) => titleFor(config, 'Most consumed APIs'),
       configForm: ListConfigForm
     }
   },
@@ -444,7 +384,6 @@ export const apiIntegrationCatalogDashboardWidgetSpecs: Array<{
       frame: { padded: false, showIcon: false },
       isValidConfig: isValidListConfig,
       createDefaultConfig: () => ({ limit: 8 }),
-      getTitle: (config: ListWidgetConfig) => titleFor(config, 'Integrations needing attention'),
       configForm: ListConfigForm
     }
   },
@@ -466,7 +405,7 @@ export const apiIntegrationCatalogDashboardWidgetSpecs: Array<{
       frame: { padded: false },
       isValidConfig: isValidImpactConfig,
       createDefaultConfig: () => ({ entityId: '$apiEntityId' }),
-      getTitle: (config: ImpactWidgetConfig) => titleFor(config, 'Blast radius')
+      getTitle: () => 'Blast radius'
     }
   }
 ];

@@ -26,7 +26,7 @@ const overlay = {
 describe('advanced widget config', () => {
   it('shows only the keys without a dedicated control', () => {
     expect(advancedConfigOf(base)).toEqual({});
-    expect(advancedConfigOf({ ...base, title: 'x', overlays: [overlay] })).toEqual({
+    expect(advancedConfigOf({ ...base, overlays: [overlay] })).toEqual({
       overlays: [overlay]
     });
   });

@@ -50,15 +50,6 @@ export const RiskMatrixConfigForm = ({ config, onChange }: Props) => {
           <span className={styles.optionLabel}>Include closed risks</span>
         </label>
       </DialogSection>
-      <DialogSection label="Title" required={false}>
-        <input
-          type="text"
-          className={styles.labelInput}
-          value={config.label ?? ''}
-          placeholder="Risk matrix"
-          onChange={event => onChange({ ...config, label: event.currentTarget.value || undefined })}
-        />
-      </DialogSection>
     </>
   );
 };
