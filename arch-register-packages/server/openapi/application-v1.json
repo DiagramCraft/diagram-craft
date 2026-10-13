@@ -61151,6 +61151,24 @@
                               "type": "string",
                               "description": "Extensible widget type identifier"
                             },
+                            "frame": {
+                              "type": "object",
+                              "properties": {
+                                "title": {
+                                  "type": "string",
+                                  "description": "Title overriding the widget default"
+                                },
+                                "showFrame": {
+                                  "type": "boolean",
+                                  "description": "Whether to show the frame; omit for widget default"
+                                },
+                                "icon": {
+                                  "type": "string",
+                                  "description": "Icon name overriding the widget default icon"
+                                }
+                              },
+                              "description": "Per-instance frame settings; omitted values fall back to the widget defaults"
+                            },
                             "config": {
                               "type": "object",
                               "propertyNames": {
@@ -61786,6 +61804,24 @@
                             "type": "string",
                             "description": "Extensible widget type identifier"
                           },
+                          "frame": {
+                            "type": "object",
+                            "properties": {
+                              "title": {
+                                "type": "string",
+                                "description": "Title overriding the widget default"
+                              },
+                              "showFrame": {
+                                "type": "boolean",
+                                "description": "Whether to show the frame; omit for widget default"
+                              },
+                              "icon": {
+                                "type": "string",
+                                "description": "Icon name overriding the widget default icon"
+                              }
+                            },
+                            "description": "Per-instance frame settings; omitted values fall back to the widget defaults"
+                          },
                           "config": {
                             "type": "object",
                             "propertyNames": {
@@ -62279,6 +62315,24 @@
                         "type": {
                           "type": "string",
                           "description": "Extensible widget type identifier"
+                        },
+                        "frame": {
+                          "type": "object",
+                          "properties": {
+                            "title": {
+                              "type": "string",
+                              "description": "Title overriding the widget default"
+                            },
+                            "showFrame": {
+                              "type": "boolean",
+                              "description": "Whether to show the frame; omit for widget default"
+                            },
+                            "icon": {
+                              "type": "string",
+                              "description": "Icon name overriding the widget default icon"
+                            }
+                          },
+                          "description": "Per-instance frame settings; omitted values fall back to the widget defaults"
                         },
                         "config": {
                           "type": "object",
@@ -137001,6 +137055,24 @@
                               "type": "string",
                               "description": "Extensible widget type identifier"
                             },
+                            "frame": {
+                              "type": "object",
+                              "properties": {
+                                "title": {
+                                  "type": "string",
+                                  "description": "Title overriding the widget default"
+                                },
+                                "showFrame": {
+                                  "type": "boolean",
+                                  "description": "Whether to show the frame; omit for widget default"
+                                },
+                                "icon": {
+                                  "type": "string",
+                                  "description": "Icon name overriding the widget default icon"
+                                }
+                              },
+                              "description": "Per-instance frame settings; omitted values fall back to the widget defaults"
+                            },
                             "config": {
                               "type": "object",
                               "propertyNames": {
@@ -137391,6 +137463,24 @@
                             "type": "string",
                             "description": "Extensible widget type identifier"
                           },
+                          "frame": {
+                            "type": "object",
+                            "properties": {
+                              "title": {
+                                "type": "string",
+                                "description": "Title overriding the widget default"
+                              },
+                              "showFrame": {
+                                "type": "boolean",
+                                "description": "Whether to show the frame; omit for widget default"
+                              },
+                              "icon": {
+                                "type": "string",
+                                "description": "Icon name overriding the widget default icon"
+                              }
+                            },
+                            "description": "Per-instance frame settings; omitted values fall back to the widget defaults"
+                          },
                           "config": {
                             "type": "object",
                             "propertyNames": {
@@ -137748,6 +137838,24 @@
                           "type": {
                             "type": "string",
                             "description": "Extensible widget type identifier"
+                          },
+                          "frame": {
+                            "type": "object",
+                            "properties": {
+                              "title": {
+                                "type": "string",
+                                "description": "Title overriding the widget default"
+                              },
+                              "showFrame": {
+                                "type": "boolean",
+                                "description": "Whether to show the frame; omit for widget default"
+                              },
+                              "icon": {
+                                "type": "string",
+                                "description": "Icon name overriding the widget default icon"
+                              }
+                            },
+                            "description": "Per-instance frame settings; omitted values fall back to the widget defaults"
                           },
                           "config": {
                             "type": "object",
@@ -138112,6 +138220,24 @@
                           "type": "string",
                           "description": "Extensible widget type identifier"
                         },
+                        "frame": {
+                          "type": "object",
+                          "properties": {
+                            "title": {
+                              "type": "string",
+                              "description": "Title overriding the widget default"
+                            },
+                            "showFrame": {
+                              "type": "boolean",
+                              "description": "Whether to show the frame; omit for widget default"
+                            },
+                            "icon": {
+                              "type": "string",
+                              "description": "Icon name overriding the widget default icon"
+                            }
+                          },
+                          "description": "Per-instance frame settings; omitted values fall back to the widget defaults"
+                        },
                         "config": {
                           "type": "object",
                           "propertyNames": {
@@ -138355,6 +138481,24 @@
                           "type": {
                             "type": "string",
                             "description": "Extensible widget type identifier"
+                          },
+                          "frame": {
+                            "type": "object",
+                            "properties": {
+                              "title": {
+                                "type": "string",
+                                "description": "Title overriding the widget default"
+                              },
+                              "showFrame": {
+                                "type": "boolean",
+                                "description": "Whether to show the frame; omit for widget default"
+                              },
+                              "icon": {
+                                "type": "string",
+                                "description": "Icon name overriding the widget default icon"
+                              }
+                            },
+                            "description": "Per-instance frame settings; omitted values fall back to the widget defaults"
                           },
                           "config": {
                             "type": "object",
@@ -138762,6 +138906,24 @@
                             "type": "string",
                             "description": "Extensible widget type identifier"
                           },
+                          "frame": {
+                            "type": "object",
+                            "properties": {
+                              "title": {
+                                "type": "string",
+                                "description": "Title overriding the widget default"
+                              },
+                              "showFrame": {
+                                "type": "boolean",
+                                "description": "Whether to show the frame; omit for widget default"
+                              },
+                              "icon": {
+                                "type": "string",
+                                "description": "Icon name overriding the widget default icon"
+                              }
+                            },
+                            "description": "Per-instance frame settings; omitted values fall back to the widget defaults"
+                          },
                           "config": {
                             "type": "object",
                             "propertyNames": {
@@ -139105,6 +139267,24 @@
                               "type": "string",
                               "description": "Extensible widget type identifier"
                             },
+                            "frame": {
+                              "type": "object",
+                              "properties": {
+                                "title": {
+                                  "type": "string",
+                                  "description": "Title overriding the widget default"
+                                },
+                                "showFrame": {
+                                  "type": "boolean",
+                                  "description": "Whether to show the frame; omit for widget default"
+                                },
+                                "icon": {
+                                  "type": "string",
+                                  "description": "Icon name overriding the widget default icon"
+                                }
+                              },
+                              "description": "Per-instance frame settings; omitted values fall back to the widget defaults"
+                            },
                             "config": {
                               "type": "object",
                               "propertyNames": {
@@ -139272,6 +139452,24 @@
                             "type": "string",
                             "description": "Extensible widget type identifier"
                           },
+                          "frame": {
+                            "type": "object",
+                            "properties": {
+                              "title": {
+                                "type": "string",
+                                "description": "Title overriding the widget default"
+                              },
+                              "showFrame": {
+                                "type": "boolean",
+                                "description": "Whether to show the frame; omit for widget default"
+                              },
+                              "icon": {
+                                "type": "string",
+                                "description": "Icon name overriding the widget default icon"
+                              }
+                            },
+                            "description": "Per-instance frame settings; omitted values fall back to the widget defaults"
+                          },
                           "config": {
                             "type": "object",
                             "propertyNames": {
@@ -139410,6 +139608,24 @@
                           "type": {
                             "type": "string",
                             "description": "Extensible widget type identifier"
+                          },
+                          "frame": {
+                            "type": "object",
+                            "properties": {
+                              "title": {
+                                "type": "string",
+                                "description": "Title overriding the widget default"
+                              },
+                              "showFrame": {
+                                "type": "boolean",
+                                "description": "Whether to show the frame; omit for widget default"
+                              },
+                              "icon": {
+                                "type": "string",
+                                "description": "Icon name overriding the widget default icon"
+                              }
+                            },
+                            "description": "Per-instance frame settings; omitted values fall back to the widget defaults"
                           },
                           "config": {
                             "type": "object",
@@ -139558,6 +139774,24 @@
                         "type": {
                           "type": "string",
                           "description": "Extensible widget type identifier"
+                        },
+                        "frame": {
+                          "type": "object",
+                          "properties": {
+                            "title": {
+                              "type": "string",
+                              "description": "Title overriding the widget default"
+                            },
+                            "showFrame": {
+                              "type": "boolean",
+                              "description": "Whether to show the frame; omit for widget default"
+                            },
+                            "icon": {
+                              "type": "string",
+                              "description": "Icon name overriding the widget default icon"
+                            }
+                          },
+                          "description": "Per-instance frame settings; omitted values fall back to the widget defaults"
                         },
                         "config": {
                           "type": "object",
@@ -139795,6 +140029,24 @@
                             "type": "string",
                             "description": "Extensible widget type identifier"
                           },
+                          "frame": {
+                            "type": "object",
+                            "properties": {
+                              "title": {
+                                "type": "string",
+                                "description": "Title overriding the widget default"
+                              },
+                              "showFrame": {
+                                "type": "boolean",
+                                "description": "Whether to show the frame; omit for widget default"
+                              },
+                              "icon": {
+                                "type": "string",
+                                "description": "Icon name overriding the widget default icon"
+                              }
+                            },
+                            "description": "Per-instance frame settings; omitted values fall back to the widget defaults"
+                          },
                           "config": {
                             "type": "object",
                             "propertyNames": {
@@ -139976,6 +140228,24 @@
                             "type": "string",
                             "description": "Extensible widget type identifier"
                           },
+                          "frame": {
+                            "type": "object",
+                            "properties": {
+                              "title": {
+                                "type": "string",
+                                "description": "Title overriding the widget default"
+                              },
+                              "showFrame": {
+                                "type": "boolean",
+                                "description": "Whether to show the frame; omit for widget default"
+                              },
+                              "icon": {
+                                "type": "string",
+                                "description": "Icon name overriding the widget default icon"
+                              }
+                            },
+                            "description": "Per-instance frame settings; omitted values fall back to the widget defaults"
+                          },
                           "config": {
                             "type": "object",
                             "propertyNames": {
@@ -140104,6 +140374,24 @@
                           "type": "string",
                           "description": "Extensible widget type identifier"
                         },
+                        "frame": {
+                          "type": "object",
+                          "properties": {
+                            "title": {
+                              "type": "string",
+                              "description": "Title overriding the widget default"
+                            },
+                            "showFrame": {
+                              "type": "boolean",
+                              "description": "Whether to show the frame; omit for widget default"
+                            },
+                            "icon": {
+                              "type": "string",
+                              "description": "Icon name overriding the widget default icon"
+                            }
+                          },
+                          "description": "Per-instance frame settings; omitted values fall back to the widget defaults"
+                        },
                         "config": {
                           "type": "object",
                           "propertyNames": {
@@ -140189,6 +140477,24 @@
                           "type": {
                             "type": "string",
                             "description": "Extensible widget type identifier"
+                          },
+                          "frame": {
+                            "type": "object",
+                            "properties": {
+                              "title": {
+                                "type": "string",
+                                "description": "Title overriding the widget default"
+                              },
+                              "showFrame": {
+                                "type": "boolean",
+                                "description": "Whether to show the frame; omit for widget default"
+                              },
+                              "icon": {
+                                "type": "string",
+                                "description": "Icon name overriding the widget default icon"
+                              }
+                            },
+                            "description": "Per-instance frame settings; omitted values fall back to the widget defaults"
                           },
                           "config": {
                             "type": "object",
