@@ -142,3 +142,24 @@ describe('title and limit', () => {
     expect(decoded?.limit).toBeUndefined();
   });
 });
+
+describe('column renderers', () => {
+  it('round-trips columnRenderers inside table viewConfigs', () => {
+    const config: EntityBrowserEmbedConfig = {
+      q: '',
+      conditions: [],
+      sort: 'name',
+      view: 'table',
+      viewConfigs: {
+        table: {
+          fieldIds: ['Spend', '_projection:Count'],
+          columnRenderers: {
+            Spend: { type: 'bar', min: 0, max: 1000 },
+            '_projection:Count': { type: 'colorBand', bands: [{ max: null, tone: 'good' }] }
+          }
+        }
+      }
+    };
+    expect(decodeEntityBrowserEmbedConfig(encodeEntityBrowserEmbedConfig(config))).toEqual(config);
+  });
+});

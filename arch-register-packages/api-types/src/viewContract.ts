@@ -234,7 +234,36 @@ export const heatmapViewConfigSchema = z.object({
 const fieldDisplayConfigShape = {
   fieldIds: z.array(z.string()).optional().describe('Ordered fields displayed for each entity')
 };
-export const tableViewConfigSchema = z.object(fieldDisplayConfigShape);
+
+const bandToneSchema = z.enum(['good', 'warn', 'bad']);
+
+export const columnRenderConfigSchema = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('plain') }),
+  z.object({
+    type: z.literal('colorBand'),
+    bands: z
+      .array(z.object({ max: z.number().nullable(), tone: bandToneSchema }))
+      .optional()
+      .describe('Ascending upper bounds (null = unbounded) mapped to tones, for numbers and dates'),
+    options: z
+      .record(z.string(), bandToneSchema)
+      .optional()
+      .describe('Option value to tone mapping, for select fields')
+  }),
+  z.object({
+    type: z.literal('bar'),
+    min: z.number().optional().describe('Value at which the bar is empty (default 0)'),
+    max: z.number().optional().describe('Value at which the bar is full (default 100)')
+  })
+]);
+
+export const tableViewConfigSchema = z.object({
+  ...fieldDisplayConfigShape,
+  columnRenderers: z
+    .record(z.string(), columnRenderConfigSchema.catch({ type: 'plain' }))
+    .optional()
+    .describe('How individual columns are rendered, keyed by field id; absent means plain')
+});
 export const cardsViewConfigSchema = z.object(fieldDisplayConfigShape);
 export const treeViewConfigSchema = z.object(fieldDisplayConfigShape);
 
@@ -636,6 +665,7 @@ export type MatrixViewConfig = z.infer<typeof matrixViewConfigSchema>;
 export type TraceabilityPathConfig = z.infer<typeof traceabilityPathConfigSchema>;
 export type TraceabilityViewConfig = z.infer<typeof traceabilityViewConfigSchema>;
 export type PathWalkerViewConfig = z.infer<typeof pathWalkerViewConfigSchema>;
+export type ColumnRenderConfig = z.infer<typeof columnRenderConfigSchema>;
 export type TableViewConfig = z.infer<typeof tableViewConfigSchema>;
 export type CardsViewConfig = z.infer<typeof cardsViewConfigSchema>;
 export type TreeViewConfig = z.infer<typeof treeViewConfigSchema>;

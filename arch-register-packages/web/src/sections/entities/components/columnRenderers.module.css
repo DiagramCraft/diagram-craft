@@ -1,0 +1,41 @@
+.band {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: none;
+}
+
+.bar {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 90px;
+}
+
+.track {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--panel-border);
+  overflow: hidden;
+}
+
+.fill {
+  display: block;
+  height: 100%;
+  background: var(--accent-fg, var(--green));
+}
+
+.barLabel {
+  flex: none;
+  min-width: 3ch;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}

@@ -11,12 +11,14 @@ import { useEntityBrowserLocalState } from '../../../../entities/components/useE
 import { useEntityBrowserData } from '../../../../entities/components/useEntityBrowserData';
 import { useEntityBrowserPagination } from '../../../../entities/components/useEntityBrowserPagination';
 import { FilterDropdown } from '../../../../../components/FilterDropdown';
+import type { ColumnRenderConfig } from '@arch-register/api-types/viewContract';
 import type { EntityBrowserEmbedConfig } from './EntityBrowserEmbedCodec';
 import {
   buildEntityDisplayFields,
   DISPLAY_FIELD_VIEWS,
   filterDisplayFieldIdsForContext,
   getDisplayFieldIds,
+  withColumnRenderers,
   withDisplayFieldIds,
   withoutDisplayFieldIds
 } from '../../../../entities/components/entityDisplayFields';
@@ -265,6 +267,17 @@ export const EntityBrowserEmbedConfigForm = ({ config, onChange, context }: Prop
         onDisplayFieldsChange={
           displayView
             ? ids => setActiveViewConfig(withDisplayFieldIds(activeViewConfig, ids))
+            : undefined
+        }
+        columnRenderers={
+          view === 'table'
+            ? (activeViewConfig as { columnRenderers?: Record<string, ColumnRenderConfig> } | null)
+                ?.columnRenderers
+            : undefined
+        }
+        onColumnRenderersChange={
+          view === 'table'
+            ? renderers => setActiveViewConfig(withColumnRenderers(activeViewConfig, renderers))
             : undefined
         }
         onDisplayFieldsReset={
