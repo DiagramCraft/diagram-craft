@@ -1,7 +1,7 @@
 import { PlateElement, type PlateElementProps } from 'platejs/react';
 import { getPluginType } from 'platejs';
 import { parseAttributes, propsToAttributes } from '@platejs/markdown';
-import type { MdxRuleDef } from '../../defineComponent';
+import type { MdxRuleDef } from '../../types';
 import { EntityLink } from './EntityLink';
 import { EntityLinkDialog } from './EntityLinkDialog';
 import { BaseInlineEditable } from '../BaseInlineEditable';
@@ -47,9 +47,7 @@ export const EntityLinkEditable = ({
       <BaseInlineEditable
         hasValue={!!entityId}
         type={element.type}
-        placeholder={
-          <span>link…</span>
-        }
+        placeholder={<span>link…</span>}
         dialog={(open, onClose) => (
           <EntityLinkDialog element={element} open={open} onClose={onClose} isNew={isNew} />
         )}

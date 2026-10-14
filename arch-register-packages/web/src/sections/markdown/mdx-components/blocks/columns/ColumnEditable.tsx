@@ -5,7 +5,7 @@ import {
   convertNodesSerialize,
   type MdMdxJsxFlowElement
 } from '@platejs/markdown';
-import type { MdxRuleDef } from '../../defineComponent';
+import type { MdxRuleDef } from '../../types';
 import { EditorBlock } from '../../../editor/EditorBlock';
 import type { ColumnSlateElement } from './types';
 import styles from './Column.module.css';

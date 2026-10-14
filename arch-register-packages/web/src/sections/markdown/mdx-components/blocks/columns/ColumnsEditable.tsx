@@ -7,7 +7,7 @@ import {
   propsToAttributes,
   type MdMdxJsxFlowElement
 } from '@platejs/markdown';
-import type { MdxRuleDef } from '../../defineComponent';
+import type { MdxRuleDef } from '../../types';
 import { EditorBlock, getNodeText } from '../../../editor/EditorBlock';
 import { COLUMN_TYPE } from './ColumnEditable';
 import type { ColumnsSlateElement } from './types';

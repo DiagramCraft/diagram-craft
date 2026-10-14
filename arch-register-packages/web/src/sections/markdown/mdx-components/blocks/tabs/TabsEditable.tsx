@@ -7,7 +7,7 @@ import {
   type MdMdxJsxFlowElement
 } from '@platejs/markdown';
 import { TbChevronLeft, TbChevronRight, TbPlus, TbX } from 'react-icons/tb';
-import type { MdxRuleDef } from '../../defineComponent';
+import type { MdxRuleDef } from '../../types';
 import { EditorBlock } from '../../../editor/EditorBlock';
 import { TAB_TYPE } from './TabEditable';
 import type { TabSlateElement, TabsSlateElement } from './types';

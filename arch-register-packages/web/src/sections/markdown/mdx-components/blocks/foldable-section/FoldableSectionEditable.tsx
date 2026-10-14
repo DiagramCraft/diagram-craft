@@ -8,7 +8,7 @@ import {
   propsToAttributes,
   type MdMdxJsxFlowElement
 } from '@platejs/markdown';
-import type { MdxRuleDef } from '../../defineComponent';
+import type { MdxRuleDef } from '../../types';
 import { EditorBlock } from '../../../editor/EditorBlock';
 import type { FoldableSectionSlateElement } from './types';
 import styles from './FoldableSection.module.css';

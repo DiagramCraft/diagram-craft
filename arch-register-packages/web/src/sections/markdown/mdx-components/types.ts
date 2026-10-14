@@ -1,5 +1,12 @@
 import type React from 'react';
-import type { useEditorRef } from 'platejs/react';
+import type { PlateElementProps, useEditorRef } from 'platejs/react';
+import type {
+  DeserializeMdOptions,
+  SerializeMdOptions,
+  MdDecoration,
+  MdMdxJsxFlowElement,
+  MdMdxJsxTextElement
+} from '@platejs/markdown';
 import type { TElement } from 'platejs';
 import type { ComponentCategory } from './componentCategories';
 
@@ -7,37 +14,79 @@ export type ComponentSurface = 'wiki' | 'dashboard';
 
 export type ComponentIcon = React.ComponentType<{ size?: number }>;
 
-export type SlashCommandDef = {
+export type MdxMode = 'block' | 'inline';
+
+type MdxAstNode<Mode extends MdxMode> = Mode extends 'block'
+  ? MdMdxJsxFlowElement
+  : MdMdxJsxTextElement;
+
+/**
+ * Keys of a preview component's own props that may be exposed as external MDX
+ * attribute names. Deliberately independent of the Slate element's field names
+ * (e.g. ImageEmbed's preview prop is `id`, its Slate field is `fileId`).
+ */
+export type AllowedPropKey<P> = Exclude<Extract<keyof P, string>, 'children'>;
+
+export type MdxRuleDef<E extends TElement, Mode extends MdxMode> = {
+  deserialize: (
+    mdastNode: MdxAstNode<Mode>,
+    deco: MdDecoration,
+    options: DeserializeMdOptions
+  ) => E;
+  serialize: (slateNode: E, options: SerializeMdOptions) => MdxAstNode<Mode>;
+};
+
+export type SlashCommandDef<E extends TElement = TElement> = {
   label: string;
   description: string;
   keywords?: string[];
   onSelect: (
     editor: ReturnType<typeof useEditorRef>,
     helpers: {
-      insertOrReplaceBlock: (editor: ReturnType<typeof useEditorRef>, node: TElement) => void;
-      insertOrReplaceInline: (editor: ReturnType<typeof useEditorRef>, node: TElement) => void;
+      insertOrReplaceBlock: (editor: ReturnType<typeof useEditorRef>, node: E) => void;
+      insertOrReplaceInline: (editor: ReturnType<typeof useEditorRef>, node: E) => void;
     }
   ) => void;
 };
 
-export type EditorSpec = {
+/** Label and description come from the owning registration's name and description. */
+export type SlashCommandRegistrationDef<E extends TElement = TElement> = Omit<
+  SlashCommandDef<E>,
+  'label' | 'description'
+>;
+
+type EditorSpecBase<E extends TElement, Mode extends MdxMode> = {
   /** The Plate element component used in the editor */
-  editableComponent: React.ComponentType<Record<string, unknown>>;
+  editableComponent: React.FC<PlateElementProps<E>>;
   /** Plate plugin node options */
   nodeOptions: {
     isVoid?: true;
     isInline?: true;
   };
-  // biome-ignore lint/suspicious/noExplicitAny: MDX plugin API requires flexible typing
-  mdxRule: Record<string, any>;
-  /** Slash command registration; omit to hide from the slash menu */
-  slashCommand?: SlashCommandDef;
+  mdxRule: MdxRuleDef<E, Mode>;
   /**
    * Only meaningful when the owning spec has acceptsChildren: true. Builds a
    * wrapper node around an existing node being promoted into it (used by the
    * block context menu's "Wrap with" action).
    */
-  createWrapper?: (child: TElement) => TElement;
+  createWrapper?: (child: TElement) => E;
+};
+
+/** Editor registration as authored; the slash command lacks label and description. */
+export type MdxEditorSpecDef<
+  E extends TElement = TElement,
+  Mode extends MdxMode = MdxMode
+> = EditorSpecBase<E, Mode> & {
+  /** Slash command registration; omit to hide from the slash menu */
+  slashCommand?: SlashCommandRegistrationDef<E>;
+};
+
+/** Editor registration as stored in the registry, with the slash command completed. */
+export type EditorSpec<
+  E extends TElement = TElement,
+  Mode extends MdxMode = MdxMode
+> = EditorSpecBase<E, Mode> & {
+  slashCommand?: SlashCommandDef<E>;
 };
 
 export type WidgetSurface = 'workspace' | 'project';
@@ -94,15 +143,15 @@ export type ConfigFormProps<Config extends Record<string, unknown>> = {
   context: ConfigFormContext;
 };
 
-export type MdxComponentSpec = {
-  mode: 'block' | 'inline';
-  allowedProps: ReadonlyArray<string>;
-  /** Adapts authored string attributes to the component's props using component defaults. */
+type MdxComponentSpecBase<P extends Record<string, unknown>, Mode extends MdxMode> = {
+  mode: Mode;
+  allowedProps: ReadonlyArray<AllowedPropKey<P>>;
+  /** Converts authored MDX string attributes to the shared component's props using defaults. */
   mapProps?: (
     props: Record<string, string>,
     defaultProps: Record<string, unknown>
   ) => Record<string, unknown>;
-  /** Normalizes string props before they are exposed to the preview renderer. */
+  /** Normalizes string props parsed from authored MDX. */
   normalizeProps?: (props: Record<string, string>) => Record<string, string>;
   /**
    * Marks a block-level component as a wrapper that accepts exactly one other
@@ -116,8 +165,25 @@ export type MdxComponentSpec = {
    * Distinct from `acceptsChildren`'s single-MDX-component wrapper semantics.
    */
   acceptsRichContent?: boolean;
+};
+
+/** MDX registration as authored on a component. */
+export type MdxComponentRegistrationDef<
+  E extends TElement = TElement,
+  P extends Record<string, unknown> = Record<string, unknown>,
+  Mode extends MdxMode = MdxMode
+> = MdxComponentSpecBase<P, Mode> & {
   /** Editor-mode registration; present for all components that support rich editing */
-  editorSpec?: EditorSpec;
+  editorSpec?: MdxEditorSpecDef<E, Mode>;
+};
+
+/**
+ * MDX registration as stored in the registry. The element type is erased (`any`) because the
+ * registry holds components with different Slate elements.
+ */
+export type MdxComponentSpec = MdxComponentSpecBase<Record<string, unknown>, MdxMode> & {
+  // biome-ignore lint/suspicious/noExplicitAny: see above
+  editorSpec?: EditorSpec<any, MdxMode>;
 };
 
 /** A complete registration shared by the wiki and dashboard catalogs. */

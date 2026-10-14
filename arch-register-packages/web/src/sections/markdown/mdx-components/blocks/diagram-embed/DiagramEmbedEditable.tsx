@@ -1,7 +1,7 @@
 import { type PlateElementProps } from 'platejs/react';
 import { getPluginType } from 'platejs';
 import { parseAttributes, propsToAttributes } from '@platejs/markdown';
-import type { MdxRuleDef } from '../../defineComponent';
+import type { MdxRuleDef } from '../../types';
 import { BaseBlockEditable } from '../BaseBlockEditable';
 import { MdxComponentPreview } from '../../MdxComponentPreview';
 import { DiagramEmbedDialog } from './DiagramEmbedDialog';

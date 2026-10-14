@@ -8,8 +8,6 @@ export type {
   ComponentDefinition,
   DashboardWidgetComponentDefinition,
   MdxComponentDefinition,
-  SlashCommandDef,
-  EditorSpec,
   MdxComponentSpec,
   DashboardWidgetSpec,
   ComponentIcon

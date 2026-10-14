@@ -1,7 +1,7 @@
 import { PlateElement, type PlateElementProps } from 'platejs/react';
 import { getPluginType } from 'platejs';
 import { parseAttributes, propsToAttributes } from '@platejs/markdown';
-import type { MdxRuleDef } from '../../defineComponent';
+import type { MdxRuleDef } from '../../types';
 import { EntityField } from './EntityField';
 import { EntityFieldDialog } from './EntityFieldDialog';
 import { BaseInlineEditable } from '../BaseInlineEditable';
@@ -50,9 +50,7 @@ export const EntityFieldEditable = ({
       <BaseInlineEditable
         hasValue={!!(entityId && field)}
         type={element.type}
-        placeholder={
-          <span>field…</span>
-        }
+        placeholder={<span>field…</span>}
         dialog={(open, onClose) => (
           <EntityFieldDialog element={element} open={open} onClose={onClose} isNew={isNew} />
         )}
