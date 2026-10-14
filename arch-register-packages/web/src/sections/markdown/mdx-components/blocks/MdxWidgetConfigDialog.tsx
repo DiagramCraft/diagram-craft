@@ -95,7 +95,12 @@ export const MdxWidgetConfigDialog = <E extends TElement, Config extends Record<
         <ConfigForm
           config={config}
           onChange={setConfig}
-          context={{ mode: 'mdx', workspaceSlug, projectId }}
+          context={{
+            mode: 'mdx',
+            workspaceSlug,
+            projectId,
+            surface: projectId ? 'project' : 'workspace'
+          }}
         />
       </DialogContent>
     </Dialog>

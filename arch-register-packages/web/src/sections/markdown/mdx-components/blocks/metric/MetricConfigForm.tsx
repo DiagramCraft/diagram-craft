@@ -1,4 +1,5 @@
 import { Select } from '@diagram-craft/app-components/Select';
+import type { ConfigFormProps } from '../../types';
 import {
   EntityFilterPanel,
   type EntityFilterValue
@@ -18,16 +19,13 @@ const METRIC_TYPE_OPTIONS: { value: MetricType; label: string; surfaces: WidgetS
 const optionalText = (value: string): string | undefined =>
   value.trim() === '' ? undefined : value;
 
-type Props = {
-  config: StatMetricWidgetConfig;
-  onChange: (config: StatMetricWidgetConfig) => void;
-  context: { projectId?: string; mode?: 'mdx' | 'dashboard' };
-};
+type Props = ConfigFormProps<StatMetricWidgetConfig>;
 
 export const MetricConfigForm = ({ config, onChange, context }: Props) => {
   const metricType = config.metricType ?? 'entity-count';
-  const surface: WidgetSurface = context.projectId ? 'project' : 'workspace';
-  const metricTypeOptions = METRIC_TYPE_OPTIONS.filter(option => option.surfaces.includes(surface));
+  const metricTypeOptions = METRIC_TYPE_OPTIONS.filter(option =>
+    option.surfaces.includes(context.surface)
+  );
   const filter: EntityFilterValue = {
     schemaId: config.schema ?? '',
     owner: config.owner ?? '',

@@ -1,4 +1,5 @@
 import { LoadingState } from '../../../components/LoadingState';
+import type { ConfigFormProps } from '../../markdown/mdx-components/types';
 import { useContentFile } from '../../../hooks/useContentScope';
 import { useMarkdownContent } from '../../../hooks/useMarkdownContent';
 import { useMdxContext } from '../../markdown/MdxContext';
@@ -71,11 +72,7 @@ export const WikiPageDashboardConfigForm = ({
   config,
   onChange,
   context
-}: {
-  config: WikiPageWidgetConfig;
-  onChange: (config: WikiPageWidgetConfig) => void;
-  context: { workspaceSlug: string; projectId?: string; surface: WidgetSurface };
-}) => (
+}: ConfigFormProps<WikiPageWidgetConfig>) => (
   <DialogSection label="Wiki page">
     <WikiPagePicker
       workspaceSlug={context.workspaceSlug}

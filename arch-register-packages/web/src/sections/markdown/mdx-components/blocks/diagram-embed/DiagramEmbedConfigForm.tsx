@@ -1,4 +1,5 @@
 import { useParams } from '@tanstack/react-router';
+import type { ConfigFormProps } from '../../types';
 import { DiagramPicker } from '../../../../../components/DiagramPicker';
 import { DialogSection } from '../../../editor/BlockDialog';
 import { useContentTree, type ContentScope } from '../../../../../hooks/useContentScope';
@@ -6,12 +7,7 @@ import type { ProjectFile } from '@arch-register/api-types/projectContentContrac
 import type { DiagramEmbedWidgetConfig } from './types';
 import styles from '../../../../dashboard/WidgetConfigDialog.module.css';
 
-type Props = {
-  config: DiagramEmbedWidgetConfig;
-  onChange: (config: DiagramEmbedWidgetConfig) => void;
-  context: { mode: 'mdx' | 'dashboard'; workspaceSlug: string; projectId?: string };
-  showPicker?: boolean;
-};
+type Props = ConfigFormProps<DiagramEmbedWidgetConfig> & { showPicker?: boolean };
 
 export const DiagramEmbedConfigForm = ({ config, onChange, context, showPicker = true }: Props) => {
   const params = useParams({ strict: false });

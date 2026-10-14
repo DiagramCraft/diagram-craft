@@ -1,4 +1,5 @@
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
+import type { ConfigFormProps } from '../../types';
 import { useEffect, useMemo } from 'react';
 import { TbChevronLeft, TbChevronRight } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
@@ -33,11 +34,7 @@ import {
 import dialogStyles from '../../../../dashboard/WidgetConfigDialog.module.css';
 import styles from './EntityBrowserEmbedConfigForm.module.css';
 
-type Props = {
-  config: EntityBrowserEmbedConfig;
-  onChange: (config: EntityBrowserEmbedConfig) => void;
-  context: { projectId?: string };
-};
+type Props = ConfigFormProps<EntityBrowserEmbedConfig>;
 
 export const EntityBrowserEmbedConfigForm = ({ config, onChange, context }: Props) => {
   const { projectId } = context;

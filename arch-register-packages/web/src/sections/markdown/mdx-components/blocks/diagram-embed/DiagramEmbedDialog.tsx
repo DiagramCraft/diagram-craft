@@ -130,7 +130,12 @@ export const DiagramEmbedDialog = ({
         <DiagramEmbedConfigForm
           config={config}
           onChange={setConfig}
-          context={{ mode: 'mdx', workspaceSlug, projectId }}
+          context={{
+            mode: 'mdx',
+            workspaceSlug,
+            projectId,
+            surface: projectId ? 'project' : 'workspace'
+          }}
           showPicker={mode === 'existing'}
         />
       </DialogContent>

@@ -1,4 +1,5 @@
 import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
+import type { ConfigFormProps } from '../../types';
 import { useEntity } from '../../../../../hooks/useEntities';
 import { EntityPicker } from '../../../../../components/EntityPicker';
 import { DialogSection } from '../../../editor/BlockDialog';
@@ -6,11 +7,7 @@ import { DEFAULT_FIELDS, filterSchemaFields } from './EntityCard';
 import { EntityCardFieldsPicker } from './EntityCardFieldsPicker';
 import type { EntityCardWidgetConfig } from './types';
 
-type Props = {
-  config: EntityCardWidgetConfig;
-  onChange: (config: EntityCardWidgetConfig) => void;
-  context: { workspaceSlug: string };
-};
+type Props = ConfigFormProps<EntityCardWidgetConfig>;
 
 export const EntityCardConfigForm = ({ config, onChange, context }: Props) => {
   const { schemas } = useWorkspaceContext();

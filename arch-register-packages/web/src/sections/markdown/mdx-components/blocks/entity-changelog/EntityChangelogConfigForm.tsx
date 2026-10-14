@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { ConfigFormProps } from '../../types';
 import { EntityPicker } from '../../../../../components/EntityPicker';
 import {
   EntityFilterPanel,
@@ -46,11 +47,7 @@ const buildConfig = (
   };
 };
 
-type Props = {
-  config: EntityChangelogWidgetConfig;
-  onChange: (config: EntityChangelogWidgetConfig) => void;
-  context: { workspaceSlug: string };
-};
+type Props = ConfigFormProps<EntityChangelogWidgetConfig>;
 
 export const EntityChangelogConfigForm = ({ config, onChange, context }: Props) => {
   const [mode, setMode] = useState<Mode>(config.entityId ? 'single' : 'filtered');
