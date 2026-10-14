@@ -11,9 +11,10 @@ import { WikiPagePicker } from './WikiPagePicker';
 import styles from './WikiPageWidget.module.css';
 import type { WidgetSurface } from '../dashboardWidgetDefaults';
 import { z } from 'zod';
+import { withInitial } from '../../markdown/mdx-components/configSchema';
 
 export const wikiPageWidgetConfigSchema = z.object({
-  nodeId: z.string().min(1)
+  nodeId: withInitial(z.string().min(1), '')
 });
 
 export type WikiPageWidgetConfig = z.infer<typeof wikiPageWidgetConfigSchema>;

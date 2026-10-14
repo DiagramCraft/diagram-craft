@@ -13,19 +13,20 @@ import {
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import configFormStyles from '../WidgetConfigDialog.module.css';
 import { z } from 'zod';
+import { withInitial } from '../../markdown/mdx-components/configSchema';
 
 const WARN = 'var(--cmp-fg-warning, #eab308)';
 const RELATION_LIMIT = 500;
 
 export const relationPairsCoverageWidgetConfigSchema = z.object({
   /** Display name of the hub entity schema (e.g. `API`) that providers and consumers attach to. */
-  hubSchemaName: z.string().min(1),
+  hubSchemaName: withInitial(z.string().min(1), ''),
   /** Typed-relation field (id or name) on the hub schema listing its providers. */
-  providerFieldName: z.string().min(1),
+  providerFieldName: withInitial(z.string().min(1), ''),
   /** Typed-relation field (id or name) on the hub schema listing its consumers. */
-  consumerFieldName: z.string().min(1),
+  consumerFieldName: withInitial(z.string().min(1), ''),
   /** Relation type (by name) whose instances between a provider and a consumer count as coverage. */
-  coverageRelationSchemaName: z.string().min(1),
+  coverageRelationSchemaName: withInitial(z.string().min(1), ''),
   /** Column headings; default to the schema/field names. */
   hubLabel: z.string().optional(),
   providerLabel: z.string().optional(),

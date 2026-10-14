@@ -1,6 +1,7 @@
 import {
   decodeConfigAttribute,
   encodeConfigAttribute,
+  initialConfigOf,
   parseConfigFields
 } from '../../configSchema';
 import {
@@ -9,14 +10,8 @@ import {
   type DocumentBrowserEmbedConfig
 } from './types';
 
-export const createDefaultDocumentBrowserEmbedConfig = (): DocumentBrowserEmbedConfig => ({
-  q: '',
-  conditions: [],
-  sort: 'updated_at',
-  sortDir: 'desc',
-  visibleBaseColumnIds: [...DOCUMENT_BROWSER_BASE_COLUMN_IDS],
-  visibleFieldIds: []
-});
+export const createDefaultDocumentBrowserEmbedConfig = (): DocumentBrowserEmbedConfig =>
+  initialConfigOf(documentBrowserEmbedConfigSchema) as DocumentBrowserEmbedConfig;
 
 export const encodeDocumentBrowserEmbedConfig = (config: DocumentBrowserEmbedConfig): string =>
   encodeConfigAttribute(config);

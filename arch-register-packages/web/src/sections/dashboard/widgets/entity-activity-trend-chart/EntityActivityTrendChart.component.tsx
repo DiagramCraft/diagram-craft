@@ -17,7 +17,6 @@ export default defineComponent({
   icon: TbChartLine,
   component: EntityActivityTrendChart,
   configForm: EntityActivityTrendChartDashboardConfigForm,
-  createDefaultProps: () => ({ config: {} }),
   configSchema: entityActivityTrendChartPropsSchema,
   dashboardWidget: {
     defaultW: 6,

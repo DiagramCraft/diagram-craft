@@ -9,10 +9,11 @@ import {
   type PathStepOption
 } from '../../entities/components/pathBuilder/pathBuilderState';
 import { pathWalkerViewConfigSchema } from '@arch-register/api-types/viewContract';
+import { withInitial } from '../../markdown/mdx-components/configSchema';
 
 export const pathWalkerWidgetConfigSchema = z.object({
   /** Name (or id) of the entity type listed in the first column. */
-  rootSchemaName: z.string().min(1),
+  rootSchemaName: withInitial(z.string().min(1), ''),
   /** The relationship chain the walker opens with; each step may name its relation schema by
    *  name, since a seed can't know workspace-specific ids. Viewers can still re-pick hops. */
   hops: pathWalkerViewConfigSchema.shape.hops

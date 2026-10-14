@@ -1,5 +1,6 @@
 import type { TElement } from 'platejs';
 import { z } from 'zod';
+import { withInitial } from '../../configSchema';
 
 export interface EntityChangelogSlateElement extends TElement {
   entityId?: string;
@@ -16,8 +17,8 @@ export const entityChangelogWidgetConfigSchema = z
     schema: z.string().optional(),
     owner: z.string().optional(),
     lifecycle: z.string().optional(),
-    limit: z.string().optional(),
-    since: z.string().optional()
+    limit: withInitial(z.string().optional(), '10'),
+    since: withInitial(z.string().optional(), '30d')
   })
   .refine(config => !!(config.entityId || config.schema || config.owner || config.lifecycle), {
     message: 'Needs an entity or at least one filter'

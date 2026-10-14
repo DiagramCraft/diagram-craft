@@ -1,10 +1,7 @@
 import { TbFileSearch } from 'react-icons/tb';
 import { defineComponent } from '../../defineComponent';
 import { DocumentBrowserEmbed } from './DocumentBrowserEmbed';
-import {
-  createDefaultDocumentBrowserEmbedConfig,
-  decodeDocumentBrowserEmbedConfig
-} from './DocumentBrowserEmbedCodec';
+import { decodeDocumentBrowserEmbedConfig } from './DocumentBrowserEmbedCodec';
 import {
   DOCUMENT_BROWSER_EMBED_TYPE,
   DocumentBrowserEmbedEditable,
@@ -27,7 +24,6 @@ export default defineComponent({
     dialogWidth: 'min(1200px, 92vw)'
   },
   component: DocumentBrowserEmbed,
-  createDefaultProps: () => ({ config: createDefaultDocumentBrowserEmbedConfig() }),
   configForm: DocumentBrowserEmbedConfigForm,
   icon: TbFileSearch,
   mdxComponent: {

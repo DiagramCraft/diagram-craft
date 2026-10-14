@@ -1,10 +1,6 @@
 import { TbCalendarEvent } from 'react-icons/tb';
 import { defineComponent } from '../../../sections/markdown/mdx-components/defineComponent';
-import {
-  CaseConfigForm,
-  DS_CASE_DEFAULTS,
-  caseConfigSchema
-} from '../dataStewardshipWidgetSupport';
+import { CaseConfigForm, caseConfigSchema } from '../dataStewardshipWidgetSupport';
 import { CaseCalendarHeaderActions, CaseCalendarWidget } from './CaseCalendarWidget';
 export default defineComponent({
   type: 'data-stewardship-case-calendar',
@@ -13,7 +9,6 @@ export default defineComponent({
   description: 'Open governance cases bucketed by due week.',
   icon: TbCalendarEvent,
   component: CaseCalendarWidget,
-  createDefaultProps: () => ({ config: { ...DS_CASE_DEFAULTS, scope: 'mine' } }),
   configForm: CaseConfigForm,
   configSchema: caseConfigSchema,
   dashboardWidget: {

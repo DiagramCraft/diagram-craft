@@ -9,7 +9,6 @@ export default defineComponent({
   description: 'Number of open API change and deprecation cases.',
   icon: TbAlertTriangle,
   component: ApiCatalogNeedsAttentionCountWidget,
-  createDefaultProps: () => ({ config: {} }),
   configSchema: baseWidgetConfigSchema,
   dashboardWidget: {
     defaultW: 3,

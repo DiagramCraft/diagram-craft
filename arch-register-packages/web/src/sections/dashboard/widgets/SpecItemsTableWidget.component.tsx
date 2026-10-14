@@ -15,7 +15,6 @@ export default defineComponent({
     'Operations and messages across the API specifications of every entity of a type, optionally only deprecated ones.',
   icon: TbListDetails,
   component: SpecItemsTableWidget,
-  createDefaultProps: () => ({ config: { schemaName: '' } }),
   configForm: SpecItemsTableConfigForm,
   configSchema: specItemsTableWidgetConfigSchema,
   dashboardWidget: {

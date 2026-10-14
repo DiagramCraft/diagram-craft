@@ -15,7 +15,6 @@ export default defineComponent({
     'Records summed into ranked rows, per record or grouped by a field, with optional bars, share and count.',
   icon: TbTable,
   component: GroupedRollupTableWidget,
-  createDefaultProps: () => ({ config: { query: '', valueFieldId: '' } }),
   configForm: GroupedRollupTableConfigForm,
   configSchema: groupedRollupTableWidgetConfigSchema,
   dashboardWidget: {

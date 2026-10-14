@@ -22,7 +22,6 @@ export default defineComponent({
     surfaces: ['workspace', 'project']
   },
   component: EntityChangelog,
-  createDefaultProps: () => ({ config: { since: '30d', limit: '10' } }),
   configForm: EntityChangelogConfigForm,
   icon: TbHistory,
   mdxComponent: {

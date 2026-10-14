@@ -14,13 +14,14 @@ import { DialogSection } from '../../markdown/editor/BlockDialog';
 import type { NeedsAttentionScope, NeedsAttentionSeverity } from './needsAttentionQueue';
 import configFormStyles from '../WidgetConfigDialog.module.css';
 import { z } from 'zod';
+import { withInitial } from '../../markdown/mdx-components/configSchema';
 
 export const needsAttentionWidgetConfigSchema = z.object({
-  schema: z.string(),
-  caseKinds: z.array(z.string()),
-  scope: needsAttentionScopeSchema,
-  severity: needsAttentionSeveritySchema,
-  limit: z.number().positive()
+  schema: withInitial(z.string(), ''),
+  caseKinds: withInitial(z.array(z.string()), ['entity.change-case', 'entity.deprecation']),
+  scope: withInitial(needsAttentionScopeSchema, 'workspace'),
+  severity: withInitial(needsAttentionSeveritySchema, 'due-date'),
+  limit: withInitial(z.number().positive(), 8)
 });
 
 export type NeedsAttentionWidgetConfig = z.infer<typeof needsAttentionWidgetConfigSchema>;

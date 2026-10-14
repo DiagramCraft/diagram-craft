@@ -10,6 +10,7 @@ import rowStyles from './WidgetRowList.module.css';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import configFormStyles from '../WidgetConfigDialog.module.css';
 import { z } from 'zod';
+import { withInitial } from '../../markdown/mdx-components/configSchema';
 
 const FETCH_LIMIT = 1000;
 
@@ -18,9 +19,9 @@ export const relatedEntitiesListWidgetConfigSchema = z
     /** Public id of the entity the list is scoped to; usually a sidebar variable reference. */
     entityId: z.string().optional(),
     /** Entity type listed. */
-    schemaName: z.string().min(1),
+    schemaName: withInitial(z.string().min(1), ''),
     /** Reference field on `schemaName` pointing at the scoping entity (or at the `via` entities). */
-    referenceField: z.string().min(1),
+    referenceField: withInitial(z.string().min(1), ''),
     /** Optional intermediate hop: entities of this type reference the scoping entity through
      *  `viaReferenceField`, and the listed entities reference those. */
     viaSchemaName: z.string().optional(),

@@ -15,14 +15,6 @@ export default defineComponent({
     'Every provider × consumer pair around a shared entity, and whether a chosen relation type connects the two.',
   icon: TbArrowsJoin,
   component: RelationPairsCoverageWidget,
-  createDefaultProps: () => ({
-    config: {
-      hubSchemaName: '',
-      providerFieldName: '',
-      consumerFieldName: '',
-      coverageRelationSchemaName: ''
-    }
-  }),
   configForm: RelationPairsCoverageConfigForm,
   configSchema: relationPairsCoverageWidgetConfigSchema,
   dashboardWidget: {

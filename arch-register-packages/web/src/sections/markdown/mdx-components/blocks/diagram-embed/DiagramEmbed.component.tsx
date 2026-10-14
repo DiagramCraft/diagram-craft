@@ -21,7 +21,6 @@ export default defineComponent({
     surfaces: ['workspace', 'project']
   },
   component: DiagramEmbed,
-  createDefaultProps: () => ({ config: { fileId: '' } }),
   configForm: DiagramEmbedConfigForm,
   icon: TbChartLine,
   mdxComponent: {

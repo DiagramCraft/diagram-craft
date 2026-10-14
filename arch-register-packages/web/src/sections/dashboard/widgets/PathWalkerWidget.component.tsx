@@ -11,7 +11,6 @@ export default defineComponent({
     'Walk from every entity of one type through a chain of relations, one column per hop.',
   icon: TbArrowsSplit2,
   component: PathWalkerWidget,
-  createDefaultProps: () => ({ config: { rootSchemaName: '' } }),
   configForm: PathWalkerConfigForm,
   configSchema: pathWalkerWidgetConfigSchema,
   dashboardWidget: {

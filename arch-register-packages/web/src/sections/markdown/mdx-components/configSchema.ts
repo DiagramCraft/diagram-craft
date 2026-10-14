@@ -1,5 +1,39 @@
 import { z } from 'zod';
 
+declare module 'zod' {
+  interface GlobalMeta {
+    /** The value a new instance of a component starts with for this config field. */
+    initial?: unknown;
+  }
+}
+
+/**
+ * Declares the value a new instance of the component starts with for this field. It has no effect
+ * on validation: a placeholder such as `''` for a required selection stays invalid until the user
+ * picks something. Pass a function for values that must be generated per instance (ids).
+ *
+ * Wraps the whole field expression because `.meta()` must be the last call in the chain: wrappers
+ * such as `.optional()` applied afterwards would not carry it.
+ */
+export const withInitial = <S extends z.ZodType>(
+  schema: S,
+  value: z.input<S> | (() => z.input<S>)
+): S => schema.meta({ initial: value });
+
+/** The starting config a schema declares through `withInitial`. */
+export const initialConfigOf = (schema: z.ZodType): Record<string, unknown> => {
+  const shape = (schema as unknown as { shape?: Record<string, z.ZodType> }).shape ?? {};
+  return Object.fromEntries(
+    Object.entries(shape).flatMap(([key, field]) => {
+      const meta = z.globalRegistry.get(field);
+      if (!meta || !('initial' in meta)) return [];
+      const { initial } = meta;
+      // Cloned so that instances never share one array or object.
+      return [[key, typeof initial === 'function' ? initial() : structuredClone(initial)]];
+    })
+  );
+};
+
 /** Config of a widget without options of its own; any stored keys are ignored. */
 export const noOptionsConfigSchema = z.object({});
 

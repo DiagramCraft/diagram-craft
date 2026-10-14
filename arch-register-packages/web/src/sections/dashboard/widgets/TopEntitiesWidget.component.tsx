@@ -17,7 +17,6 @@ export default defineComponent({
   description: 'The top entities of a type, ranked by a numeric field.',
   icon: TbListNumbers,
   component: TopEntitiesWidget,
-  createDefaultProps: () => ({ config: { schema: '', fieldId: '', direction: 'desc', limit: 5 } }),
   configForm: TopEntitiesConfigForm,
   configSchema: topEntitiesWidgetConfigSchema,
   dashboardWidget: {

@@ -12,7 +12,6 @@ export default defineComponent({
   description: 'Open API change and deprecation cases awaiting a decision.',
   icon: TbAlertTriangle,
   component: ApiCatalogNeedsAttentionWidget,
-  createDefaultProps: () => ({ config: { limit: 8 } }),
   configForm: ListConfigForm,
   configSchema: listWidgetConfigSchema,
   dashboardWidget: {

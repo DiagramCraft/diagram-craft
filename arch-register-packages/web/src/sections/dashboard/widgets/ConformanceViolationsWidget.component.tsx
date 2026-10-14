@@ -16,7 +16,6 @@ export default defineComponent({
     'Entities of a schema with active conformance violations, with the failing checks, worst first.',
   icon: TbShieldExclamation,
   component: ConformanceViolationsWidget,
-  createDefaultProps: () => ({ config: { schemaName: '', limit: 8 } }),
   configForm: ConformanceViolationsConfigForm,
   configSchema: conformanceViolationsWidgetConfigSchema,
   dashboardWidget: {

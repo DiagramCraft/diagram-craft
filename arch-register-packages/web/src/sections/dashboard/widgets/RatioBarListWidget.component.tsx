@@ -14,14 +14,6 @@ export default defineComponent({
   description: 'One coverage bar per value of a field, filled by the share matching a field value.',
   icon: TbChartBar,
   component: RatioBarListWidget,
-  createDefaultProps: () => ({
-    config: {
-      schemaName: '',
-      groupByFieldId: '',
-      numeratorFieldId: '',
-      numeratorValue: ''
-    }
-  }),
   configForm: RatioBarListConfigForm,
   configSchema: ratioBarListWidgetConfigSchema,
   dashboardWidget: {

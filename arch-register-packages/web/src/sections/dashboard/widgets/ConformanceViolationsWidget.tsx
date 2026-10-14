@@ -9,12 +9,13 @@ import styles from './ConformanceViolationsWidget.module.css';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import configFormStyles from '../WidgetConfigDialog.module.css';
 import { z } from 'zod';
+import { withInitial } from '../../markdown/mdx-components/configSchema';
 
 export const conformanceViolationsWidgetConfigSchema = z.object({
-  schemaName: z.string().min(1),
+  schemaName: withInitial(z.string().min(1), ''),
   /** Only show violations raised by these checks (all checks when empty). */
   checkNames: z.array(z.string()).optional(),
-  limit: z.number().positive()
+  limit: withInitial(z.number().positive(), 8)
 });
 
 export type ConformanceViolationsWidgetConfig = z.infer<

@@ -15,7 +15,6 @@ export default defineComponent({
     'Number of assessments on an entity type that are overdue, in progress, not started or complete.',
   icon: TbChecklist,
   component: AssessmentStatusStatWidget,
-  createDefaultProps: () => ({ config: { schemaName: '', status: 'overdue' } }),
   configForm: ConfigForm,
   configSchema: assessmentStatusStatConfigSchema,
   dashboardWidget: {

@@ -19,7 +19,6 @@ export default defineComponent({
     'A count or percentage of records matching a query, e.g. coverage, compliance or items needing attention.',
   icon: TbPercentage,
   component: AggregateStatWidget,
-  createDefaultProps: () => ({ config: { query: '', display: 'count' as const } }),
   configForm: AggregateStatConfigForm,
   configSchema: aggregateStatWidgetConfigSchema,
   dashboardWidget: {

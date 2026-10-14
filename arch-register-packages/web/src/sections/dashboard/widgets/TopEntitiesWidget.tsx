@@ -12,20 +12,21 @@ import { getMetricSourceOptions } from '../../entities/components/mapMetricConfi
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import configFormStyles from '../WidgetConfigDialog.module.css';
 import { z } from 'zod';
+import { withInitial } from '../../markdown/mdx-components/configSchema';
 
 const FETCH_LIMIT = 500;
 
 export const topEntitiesWidgetConfigSchema = z
   .object({
     /** Schema id. Either this or `schemaName` identifies the ranked entity type. */
-    schema: z.string().default(''),
+    schema: withInitial(z.string().default(''), ''),
     /** Schema name, resolved against the live workspace schemas (used by seeded dashboards). */
     schemaName: z.string().optional().optional(),
     owner: z.string().optional(),
     lifecycle: z.string().optional(),
-    fieldId: z.string().min(1),
-    direction: z.enum(['asc', 'desc']),
-    limit: z.number().positive(),
+    fieldId: withInitial(z.string().min(1), ''),
+    direction: withInitial(z.enum(['asc', 'desc']), 'desc'),
+    limit: withInitial(z.number().positive(), 5),
     /** Draw each row's share of the listed total as a bar under the name. */
     showShareBar: z.boolean().optional(),
     /** Show the "View in catalog" footer link. Default true. */

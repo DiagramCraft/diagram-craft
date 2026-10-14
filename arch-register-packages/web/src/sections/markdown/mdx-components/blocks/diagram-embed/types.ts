@@ -1,5 +1,6 @@
 import type { TElement } from 'platejs';
 import { z } from 'zod';
+import { withInitial } from '../../configSchema';
 
 export interface DiagramEmbedSlateElement extends TElement {
   fileId: string;
@@ -7,7 +8,7 @@ export interface DiagramEmbedSlateElement extends TElement {
 }
 
 export const diagramEmbedWidgetConfigSchema = z.object({
-  fileId: z.string().min(1),
+  fileId: withInitial(z.string().min(1), ''),
   caption: z.string().optional()
 });
 

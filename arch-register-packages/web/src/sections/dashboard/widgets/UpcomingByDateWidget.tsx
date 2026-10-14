@@ -11,14 +11,15 @@ import styles from './UpcomingByDateWidget.module.css';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import configFormStyles from '../WidgetConfigDialog.module.css';
 import { z } from 'zod';
+import { withInitial } from '../../markdown/mdx-components/configSchema';
 
 const DEFAULT_LIMIT = 7;
 
 export const upcomingByDateWidgetConfigSchema = z.object({
   /** Entity-query DSL text selecting the records to list. */
-  query: z.string().trim().min(1),
+  query: withInitial(z.string().trim().min(1), ''),
   /** Date field the list is ordered by. */
-  dateFieldId: z.string().trim().min(1),
+  dateFieldId: withInitial(z.string().trim().min(1), ''),
   /** Only show records due within this many days. */
   windowDays: z.number().optional(),
   /** Also show records whose date has passed. */

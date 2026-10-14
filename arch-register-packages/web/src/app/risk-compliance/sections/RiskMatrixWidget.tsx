@@ -8,6 +8,7 @@ import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { useEntityDrawer } from '../../../sections/entities/entityDrawer/useEntityDrawer';
 import { RiskComplianceMatrix, type RiskComplianceMatrixRisk } from './RiskComplianceMatrix';
 import styles from '../../../sections/dashboard/widgets/WidgetRowList.module.css';
+import { withInitial } from '../../../sections/markdown/mdx-components/configSchema';
 
 const FETCH_LIMIT = 500;
 
@@ -16,7 +17,7 @@ export const riskMatrixAxisSchema = z.enum(['inherent', 'residual']);
 export type RiskMatrixAxis = z.infer<typeof riskMatrixAxisSchema>;
 
 export const riskMatrixWidgetConfigSchema = z.object({
-  schemaName: z.string().min(1),
+  schemaName: withInitial(z.string().min(1), ''),
   axis: riskMatrixAxisSchema.optional(),
   /** Include closed risks (default: false). */
   includeClosed: z.boolean().optional(),

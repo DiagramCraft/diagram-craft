@@ -16,10 +16,11 @@ import {
 import { useSchemaAssessmentSummaries } from './useSchemaAssessmentSummaries';
 import styles from './AssessmentProgressTableWidget.module.css';
 import { z } from 'zod';
+import { withInitial } from '../../markdown/mdx-components/configSchema';
 
 export const assessmentProgressTableConfigSchema = z.object({
   /** Name of the entity schema the assessments must target (`assessment.scope`). */
-  schemaName: z.string().min(1),
+  schemaName: withInitial(z.string().min(1), ''),
   /** Optional: only list assessments in this derived status. */
   status: z.enum(ASSESSMENT_STATUSES).optional()
 });

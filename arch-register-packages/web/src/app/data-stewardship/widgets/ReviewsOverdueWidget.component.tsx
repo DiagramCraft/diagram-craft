@@ -9,7 +9,6 @@ export default defineComponent({
   description: 'Datasets whose scheduled review date has passed.',
   icon: TbListCheck,
   component: ReviewsOverdueWidget,
-  createDefaultProps: () => ({ config: { subtextTemplate: 'scheduled review date passed' } }),
   configSchema: reviewsOverdueConfigSchema,
   dashboardWidget: {
     defaultW: 3,

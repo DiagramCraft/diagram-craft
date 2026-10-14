@@ -3,7 +3,7 @@ import {
   getComponentDefinition,
   isValidComponentConfig
 } from '../../markdown/mdx-components/componentRegistry';
-import { createTab, createTabsConfigSchema, TABS_TYPE } from './tabsLogic';
+import { createTabsConfigSchema, TABS_TYPE } from './tabsLogic';
 import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import { TabsConfigForm, TabsWidget } from './TabsWidget';
 
@@ -14,7 +14,6 @@ export default defineComponent({
   description: 'Groups other widgets into switchable tabs.',
   icon: TbLayoutList,
   component: TabsWidget,
-  createDefaultProps: () => ({ config: { tabs: [createTab([], 'Tab')] } }),
   configSchema: createTabsConfigSchema(child => {
     const definition = getComponentDefinition(child.type, 'dashboardWidget');
     return !!definition && isValidComponentConfig(definition, child.config);

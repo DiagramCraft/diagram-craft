@@ -18,7 +18,6 @@ export default defineComponent({
   description: 'A live feed of recent audit log activity.',
   icon: TbActivity,
   component: ActivityFeedWidget,
-  createDefaultProps: () => ({ config: {} }),
   configForm: ActivityFeedDashboardConfigForm,
   configSchema: activityFeedWidgetConfigSchema,
   dashboardWidget: {

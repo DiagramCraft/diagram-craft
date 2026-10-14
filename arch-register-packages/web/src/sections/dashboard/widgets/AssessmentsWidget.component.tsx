@@ -13,7 +13,6 @@ export default defineComponent({
   description: 'Open or all assessments filtered by mode, assessment type and entity type scope.',
   icon: TbClipboardCheck,
   component: AssessmentsWidget,
-  createDefaultProps: () => ({ config: { mode: 'active' } }),
   configForm: AssessmentsConfigForm,
   configSchema: assessmentsWidgetConfigSchema,
   dashboardWidget: {

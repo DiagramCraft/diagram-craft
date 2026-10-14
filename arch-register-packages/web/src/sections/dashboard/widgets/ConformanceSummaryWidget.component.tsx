@@ -12,7 +12,6 @@ export default defineComponent({
   description: 'Current conformance violations grouped by severity, check, and schema.',
   icon: TbShieldCheck,
   component: ConformanceSummaryWidget,
-  createDefaultProps: () => ({ config: {} }),
   configSchema: conformanceSummaryWidgetConfigSchema,
   dashboardWidget: {
     defaultW: 5,

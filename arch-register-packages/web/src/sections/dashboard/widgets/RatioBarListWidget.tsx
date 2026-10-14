@@ -8,16 +8,17 @@ import styles from './WidgetRowList.module.css';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import configFormStyles from '../WidgetConfigDialog.module.css';
 import { z } from 'zod';
+import { withInitial } from '../../markdown/mdx-components/configSchema';
 
 const FETCH_LIMIT = 500;
 
 export const ratioBarListWidgetConfigSchema = z.object({
-  schemaName: z.string().min(1),
+  schemaName: withInitial(z.string().min(1), ''),
   /** Field whose value defines a bar (one bar per distinct value). */
-  groupByFieldId: z.string().min(1),
+  groupByFieldId: withInitial(z.string().min(1), ''),
   /** A bar's filled share is the entities with `numeratorFieldId = numeratorValue`. */
-  numeratorFieldId: z.string().min(1),
-  numeratorValue: z.string().min(1)
+  numeratorFieldId: withInitial(z.string().min(1), ''),
+  numeratorValue: withInitial(z.string().min(1), '')
 });
 
 export type RatioBarListWidgetConfig = z.infer<typeof ratioBarListWidgetConfigSchema>;

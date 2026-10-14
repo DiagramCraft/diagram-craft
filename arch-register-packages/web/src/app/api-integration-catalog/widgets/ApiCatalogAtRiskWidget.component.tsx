@@ -9,7 +9,6 @@ export default defineComponent({
   description: 'Data flows that cross a boundary or carry restricted data.',
   icon: TbPlugConnected,
   component: ApiCatalogAtRiskWidget,
-  createDefaultProps: () => ({ config: { limit: 8 } }),
   configForm: ListConfigForm,
   configSchema: listWidgetConfigSchema,
   dashboardWidget: {

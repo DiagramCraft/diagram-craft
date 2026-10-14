@@ -14,7 +14,6 @@ export default defineComponent({
   description: 'Display simple Markdown content on the dashboard.',
   icon: TbMarkdown,
   component: MarkdownWidget,
-  createDefaultProps: () => ({ config: { markdown: '' } }),
   configForm: MarkdownDashboardConfigForm,
   configSchema: markdownWidgetConfigSchema,
   dashboardWidget: {

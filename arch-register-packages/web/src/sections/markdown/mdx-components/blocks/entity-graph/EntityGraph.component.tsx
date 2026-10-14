@@ -22,7 +22,6 @@ export default defineComponent({
     surfaces: ['workspace', 'project']
   },
   component: EntityGraph,
-  createDefaultProps: () => ({ config: { entityId: '', depth: 1, direction: 'both' } }),
   configForm: EntityGraphConfigForm,
   icon: TbVectorTriangle,
   mdxComponent: {

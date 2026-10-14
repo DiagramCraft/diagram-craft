@@ -13,7 +13,6 @@ export default defineComponent({
   description: 'The most recently completed milestone and up to three upcoming ones.',
   icon: TbFlag3,
   component: UpcomingMilestonesWidget,
-  createDefaultProps: () => ({ config: {} }),
   configSchema: noOptionsConfigSchema,
   dashboardWidget: {
     defaultW: 3,

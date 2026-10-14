@@ -18,10 +18,11 @@ import { DialogSection } from '../../markdown/editor/BlockDialog';
 import configFormStyles from '../WidgetConfigDialog.module.css';
 import { z } from 'zod';
 import { entityQuerySchema } from '@arch-register/api-types/entityQueryIR';
+import { withInitial } from '../../markdown/mdx-components/configSchema';
 
 export const specItemsTableWidgetConfigSchema = z.object({
   /** Display name of the entity schema whose specification artifacts are listed. */
-  schemaName: z.string().min(1),
+  schemaName: withInitial(z.string().min(1), ''),
   /** Optional structured filter on those entities (field NAMEs are resolved at render time); may
    *  reference sidebar `$variables` — an empty multi-select means no constraint. */
   entityQuery: entityQuerySchema.optional(),

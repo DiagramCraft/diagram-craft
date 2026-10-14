@@ -1,10 +1,6 @@
 import { TbAlertTriangle } from 'react-icons/tb';
 import { defineComponent } from '../../../sections/markdown/mdx-components/defineComponent';
-import {
-  CaseConfigForm,
-  DS_CASE_DEFAULTS,
-  caseCountConfigSchema
-} from '../dataStewardshipWidgetSupport';
+import { CaseConfigForm, caseCountConfigSchema } from '../dataStewardshipWidgetSupport';
 import { CaseCountWidget } from './CaseCountWidget';
 export default defineComponent({
   type: 'data-stewardship-case-count',
@@ -13,15 +9,6 @@ export default defineComponent({
   description: 'Number of open governance cases, filtered by scope and case kind.',
   icon: TbAlertTriangle,
   component: CaseCountWidget,
-  createDefaultProps: () => ({
-    config: {
-      ...DS_CASE_DEFAULTS,
-      scope: 'mine',
-      tone: 'none',
-      subtextTemplate: '{due} due within a week',
-      dueWithinDays: 7
-    }
-  }),
   configForm: CaseConfigForm,
   configSchema: caseCountConfigSchema,
   dashboardWidget: {

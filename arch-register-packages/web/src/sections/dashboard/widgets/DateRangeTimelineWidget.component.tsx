@@ -15,7 +15,6 @@ export default defineComponent({
     'Records as a Gantt chart from a start to an end date, e.g. contract terms or project phases.',
   icon: TbTimeline,
   component: DateRangeTimelineWidget,
-  createDefaultProps: () => ({ config: { query: '', startFieldId: '', endFieldId: '' } }),
   configForm: DateRangeTimelineConfigForm,
   configSchema: dateRangeTimelineWidgetConfigSchema,
   dashboardWidget: {

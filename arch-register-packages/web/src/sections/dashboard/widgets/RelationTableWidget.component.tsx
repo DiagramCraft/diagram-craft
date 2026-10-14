@@ -14,7 +14,6 @@ export default defineComponent({
   description: 'Instances of a relation type, with a chosen set of columns and an optional filter.',
   icon: TbTable,
   component: RelationTableWidget,
-  createDefaultProps: () => ({ config: { relationSchemaName: '', fieldIds: [], limit: 100 } }),
   configForm: RelationTableConfigForm,
   configSchema: relationTableWidgetConfigSchema,
   dashboardWidget: {

@@ -18,7 +18,6 @@ export default defineComponent({
     surfaces: ['workspace', 'project']
   },
   component: EntityCard,
-  createDefaultProps: () => ({ config: { entityId: '' } }),
   configForm: EntityCardConfigForm,
   icon: TbId,
   mdxComponent: {

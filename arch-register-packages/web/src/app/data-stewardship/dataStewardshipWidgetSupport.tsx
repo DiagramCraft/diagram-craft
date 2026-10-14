@@ -18,6 +18,7 @@ import {
 } from './dataStewardshipDashboardLogic';
 import styles from './sections/DataStewardshipQueueWidget.module.css';
 import formStyles from '../../sections/dashboard/WidgetConfigDialog.module.css';
+import { withInitial } from '../../sections/markdown/mdx-components/configSchema';
 
 /** Schema name used by these widgets; no capability-specific schema id is stored in config. */
 const DATA_ENTITY_SCHEMA_NAME = 'Data Entity';
@@ -54,16 +55,18 @@ export const TONE_COLOR: Record<CaseCountTone, string | undefined> = {
  * against is resolved by name so dashboard configs remain portable.
  */
 export const caseConfigSchema = z.looseObject({
-  scope: z.enum(CASE_WIDGET_SCOPES),
-  caseKinds: z.array(z.string())
+  scope: withInitial(z.enum(CASE_WIDGET_SCOPES), 'mine'),
+  caseKinds: withInitial(z.array(z.string()), () => [])
 });
 export const caseCountConfigSchema = caseConfigSchema.extend({
-  tone: z.enum(CASE_COUNT_TONES),
+  tone: withInitial(z.enum(CASE_COUNT_TONES), 'none'),
   /** May contain `{count}` and `{due}` (items due within `dueWithinDays`). */
-  subtextTemplate: z.string(),
-  dueWithinDays: z.number()
+  subtextTemplate: withInitial(z.string(), '{due} due within a week'),
+  dueWithinDays: withInitial(z.number(), 7)
 });
-export const reviewsOverdueConfigSchema = z.looseObject({ subtextTemplate: z.string() });
+export const reviewsOverdueConfigSchema = z.looseObject({
+  subtextTemplate: withInitial(z.string(), 'scheduled review date passed')
+});
 
 export type CaseConfig = z.infer<typeof caseConfigSchema>;
 export type CaseCountConfig = z.infer<typeof caseCountConfigSchema>;
@@ -156,5 +159,3 @@ export const CaseConfigForm = ({
     </div>
   </DialogSection>
 );
-
-export const DS_CASE_DEFAULTS = { caseKinds: [] as string[] };

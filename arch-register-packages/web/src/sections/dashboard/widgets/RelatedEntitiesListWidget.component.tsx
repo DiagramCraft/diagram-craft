@@ -15,7 +15,6 @@ export default defineComponent({
     'Entities of one type that reference a chosen entity, optionally with a progress bar per row.',
   icon: TbListDetails,
   component: RelatedEntitiesListWidget,
-  createDefaultProps: () => ({ config: { schemaName: '', referenceField: '' } }),
   configForm: RelatedEntitiesListConfigForm,
   configSchema: relatedEntitiesListWidgetConfigSchema,
   dashboardWidget: {

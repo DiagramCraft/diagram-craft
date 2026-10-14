@@ -12,8 +12,9 @@ export default defineComponent({
   description: 'APIs with the most registered consumers.',
   icon: TbApi,
   component: ApiCatalogMostConsumedWidget,
-  createDefaultProps: () => ({ config: { limit: 6 } }),
   configForm: ListConfigForm,
+  // This list is shorter than the other lists, which share the schema's starting limit.
+  createDefaultProps: () => ({ config: { limit: 6 } }),
   configSchema: listWidgetConfigSchema,
   dashboardWidget: {
     defaultW: 6,

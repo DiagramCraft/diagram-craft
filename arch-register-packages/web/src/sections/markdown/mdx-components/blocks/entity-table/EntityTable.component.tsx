@@ -18,7 +18,6 @@ export default defineComponent({
     surfaces: ['workspace', 'project']
   },
   component: EntityTable,
-  createDefaultProps: () => ({ config: {} }),
   configForm: EntityTableConfigForm,
   icon: TbTable,
   mdxComponent: {

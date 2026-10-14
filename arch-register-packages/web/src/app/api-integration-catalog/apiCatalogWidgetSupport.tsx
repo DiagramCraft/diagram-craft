@@ -4,14 +4,17 @@ import { DialogSection } from '../../sections/markdown/editor/BlockDialog';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { useApplicationDashboardTarget } from '../../hooks/useApplications';
 import styles from '../../sections/dashboard/WidgetConfigDialog.module.css';
+import { withInitial } from '../../sections/markdown/mdx-components/configSchema';
 
 /** Widgets without options of their own still tolerate extra keys such as a custom title. */
 export const baseWidgetConfigSchema = z.looseObject({});
 export const listWidgetConfigSchema = z.looseObject({
   /** Number of rows shown. */
-  limit: z.number().int().min(1).max(20)
+  limit: withInitial(z.number().int().min(1).max(20), 8)
 });
-export const impactWidgetConfigSchema = z.looseObject({ entityId: z.string().optional() });
+export const impactWidgetConfigSchema = z.looseObject({
+  entityId: withInitial(z.string().optional(), '$apiEntityId')
+});
 
 export type BaseWidgetConfig = z.infer<typeof baseWidgetConfigSchema>;
 export type ListWidgetConfig = z.infer<typeof listWidgetConfigSchema>;

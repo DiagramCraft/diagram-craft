@@ -15,7 +15,6 @@ export default defineComponent({
   description: 'Breakdown of entities by lifecycle state.',
   icon: TbChartDonut2,
   component: EntityLifecycleChart,
-  createDefaultProps: () => ({ config: {} }),
   configSchema: noOptionsConfigSchema,
   dashboardWidget: {
     defaultW: 6,

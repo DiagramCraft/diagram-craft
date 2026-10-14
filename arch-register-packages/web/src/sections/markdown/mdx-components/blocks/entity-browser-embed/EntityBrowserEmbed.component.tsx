@@ -2,7 +2,6 @@ import { TbListSearch } from 'react-icons/tb';
 import { defineComponent } from '../../defineComponent';
 import { EntityBrowserEmbed } from './EntityBrowserEmbed';
 import {
-  createDefaultEntityBrowserEmbedConfig,
   decodeEntityBrowserEmbedConfig,
   entityBrowserEmbedConfigSchema,
   type EntityBrowserEmbedConfig
@@ -28,9 +27,6 @@ export default defineComponent({
     dialogWidth: 'min(1200px, 92vw)'
   },
   component: EntityBrowserEmbed,
-  createDefaultProps: () => ({
-    config: createDefaultEntityBrowserEmbedConfig()
-  }),
   configForm: EntityBrowserEmbedConfigForm,
   icon: TbListSearch,
   mdxComponent: {

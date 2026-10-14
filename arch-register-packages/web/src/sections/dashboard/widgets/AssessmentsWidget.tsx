@@ -17,13 +17,14 @@ import { Select } from '@diagram-craft/app-components/Select';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import configFormStyles from '../WidgetConfigDialog.module.css';
 import { z } from 'zod';
+import { withInitial } from '../../markdown/mdx-components/configSchema';
 
 const MAX_ITEMS = 4;
 
 export type { AssessmentWidgetMode } from './assessmentsWidgetLogic';
 
 export const assessmentsWidgetConfigSchema = z.object({
-  mode: assessmentWidgetModeSchema,
+  mode: withInitial(assessmentWidgetModeSchema, 'active'),
   assessmentTypeId: z.string().optional(),
   /** Entity schema names; keeps assessments scoped to any of them. */
   schemaNames: z.array(z.string()).optional(),

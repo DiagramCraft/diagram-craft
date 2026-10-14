@@ -1,5 +1,6 @@
 import type { TElement } from 'platejs';
 import { z } from 'zod';
+import { withInitial } from '../../configSchema';
 
 export interface EntityCardSlateElement extends TElement {
   entityId: string;
@@ -7,7 +8,7 @@ export interface EntityCardSlateElement extends TElement {
 }
 
 export const entityCardWidgetConfigSchema = z.object({
-  entityId: z.string().min(1),
+  entityId: withInitial(z.string().min(1), ''),
   fields: z.string().optional()
 });
 

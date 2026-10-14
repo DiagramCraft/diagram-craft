@@ -10,9 +10,10 @@ import { DialogSection } from '../../markdown/editor/BlockDialog';
 import type { AssessmentWidgetMode } from './assessmentsWidgetLogic';
 import registrationStyles from '../WidgetConfigDialog.module.css';
 import { z } from 'zod';
+import { withInitial } from '../../markdown/mdx-components/configSchema';
 
 export const assessmentCountWidgetConfigSchema = z.object({
-  mode: assessmentWidgetModeSchema,
+  mode: withInitial(assessmentWidgetModeSchema, 'active'),
   assessmentTypeId: z.string().optional(),
   /** Entity schema names; counts assessments scoped to any of them. */
   schemaNames: z.array(z.string()).optional(),

@@ -33,7 +33,6 @@ export default defineComponent({
     getTitle: (config: StatMetricWidgetConfig) => METRIC_TYPE_DEFAULT_LABEL[config.metricType]
   },
   component: Metric,
-  createDefaultProps: () => ({ config: { metricType: 'entity-count' } }),
   configForm: MetricConfigForm,
   icon: TbChartBar,
   mdxComponent: {

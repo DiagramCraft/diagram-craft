@@ -19,15 +19,6 @@ export default defineComponent({
   description: 'Open governance cases against entities of a chosen type, awaiting a decision.',
   icon: TbAlertTriangle,
   component: NeedsAttentionWidget,
-  createDefaultProps: () => ({
-    config: {
-      schema: '',
-      caseKinds: ['entity.change-case', 'entity.deprecation'],
-      scope: 'workspace',
-      severity: 'due-date',
-      limit: 8
-    }
-  }),
   configForm: NeedsAttentionConfigForm,
   configSchema: needsAttentionWidgetConfigSchema,
   dashboardWidget: {

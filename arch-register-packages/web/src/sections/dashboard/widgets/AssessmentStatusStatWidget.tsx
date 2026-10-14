@@ -14,11 +14,12 @@ import { DialogSection } from '../../markdown/editor/BlockDialog';
 import { AssessmentSchemaConfigForm } from './AssessmentSchemaConfigForm';
 import registrationStyles from '../WidgetConfigDialog.module.css';
 import { z } from 'zod';
+import { withInitial } from '../../markdown/mdx-components/configSchema';
 
 export const assessmentStatusStatConfigSchema = z.object({
   /** Name of the entity schema the assessments must target (`assessment.scope`). */
-  schemaName: z.string().min(1),
-  status: z.enum(ASSESSMENT_STATUSES),
+  schemaName: withInitial(z.string().min(1), ''),
+  status: withInitial(z.enum(ASSESSMENT_STATUSES), 'overdue'),
   /** May contain `{count}`, `{total}` and `{notStarted}`. */
   subtextTemplate: z.string().optional()
 });

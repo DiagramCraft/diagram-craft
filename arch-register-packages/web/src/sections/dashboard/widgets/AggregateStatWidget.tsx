@@ -27,14 +27,15 @@ import type { AggregateStatDisplay } from './aggregateStatQuery';
 import configFormStyles from '../WidgetConfigDialog.module.css';
 import { z } from 'zod';
 import { filterConditionSchema } from '@arch-register/api-types/viewContract';
+import { withInitial } from '../../markdown/mdx-components/configSchema';
 
 export const aggregateStatWidgetConfigSchema = z
   .object({
     /** Query-mode: entity-query DSL text whose matching-record count is the stat's value. */
-    query: z.string().optional(),
+    query: withInitial(z.string().optional(), ''),
     /** Query-mode: when set, `percent`/`ofTotal` divide `query`'s count by this query's count. */
     denominatorQuery: z.string().optional(),
-    display: aggregateStatDisplaySchema.optional(),
+    display: withInitial(aggregateStatDisplaySchema.optional(), 'count'),
     /**
      * Query-mode: `count` (default) shows the number of matching records; `sum` shows the total of
      * `sumFieldId` (a number or currency field) across them. Independently, `{subSum}` in

@@ -1,5 +1,6 @@
 import type { TElement } from 'platejs';
 import { z } from 'zod';
+import { withInitial } from '../../configSchema';
 
 /**
  * What the metric counts. Absent (or `'entity-count'`) preserves the original
@@ -24,7 +25,7 @@ export interface MetricSlateElement extends TElement {
 }
 
 export const statMetricWidgetConfigSchema = z.object({
-  metricType: metricTypeSchema,
+  metricType: withInitial(metricTypeSchema, 'entity-count'),
   schema: z.string().optional(),
   owner: z.string().optional(),
   lifecycle: z.string().optional(),

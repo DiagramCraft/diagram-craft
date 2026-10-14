@@ -8,15 +8,16 @@ import rowStyles from './WidgetRowList.module.css';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import configFormStyles from '../WidgetConfigDialog.module.css';
 import { z } from 'zod';
+import { withInitial } from '../../markdown/mdx-components/configSchema';
 
 const FETCH_LIMIT = 1000;
 
 const PALETTE = ['var(--accent-fg)', 'var(--green)', 'var(--warning-fg)', 'var(--text-muted)'];
 
 export const countByFieldWidgetConfigSchema = z.object({
-  schemaName: z.string().min(1),
+  schemaName: withInitial(z.string().min(1), ''),
   /** Field whose distinct values define the bar segments. */
-  fieldId: z.string().min(1)
+  fieldId: withInitial(z.string().min(1), '')
 });
 
 export type CountByFieldWidgetConfig = z.infer<typeof countByFieldWidgetConfigSchema>;

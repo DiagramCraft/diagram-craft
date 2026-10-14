@@ -14,7 +14,6 @@ export default defineComponent({
   description: 'Entity count with a stacked bar per value of a field.',
   icon: TbChartBar,
   component: CountByFieldWidget,
-  createDefaultProps: () => ({ config: { schemaName: '', fieldId: '' } }),
   configForm: CountByFieldConfigForm,
   configSchema: countByFieldWidgetConfigSchema,
   dashboardWidget: {

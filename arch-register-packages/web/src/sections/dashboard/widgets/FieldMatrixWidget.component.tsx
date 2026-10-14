@@ -15,18 +15,6 @@ export default defineComponent({
     'Records placed in a grid of numeric row values against banded numeric values, with clickable record chips.',
   icon: TbGrid4X4,
   component: FieldMatrixWidget,
-  createDefaultProps: () => ({
-    config: {
-      query: '',
-      rowFieldId: '',
-      rows: [3, 2, 1],
-      valueFieldId: '',
-      bands: [
-        { label: 'Low', min: 0, tone: 'good' },
-        { label: 'High', min: 3, tone: 'bad' }
-      ]
-    }
-  }),
   configForm: FieldMatrixConfigForm,
   configSchema: fieldMatrixWidgetConfigSchema,
   dashboardWidget: {

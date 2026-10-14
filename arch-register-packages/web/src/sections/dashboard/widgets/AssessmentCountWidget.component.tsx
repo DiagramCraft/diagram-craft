@@ -14,7 +14,6 @@ export default defineComponent({
   description: 'Number of assessments by mode, entity type scope and due window.',
   icon: TbClipboardCheck,
   component: AssessmentCountWidget,
-  createDefaultProps: () => ({ config: { mode: 'active' } }),
   configForm: AssessmentCountConfigForm,
   configSchema: assessmentCountWidgetConfigSchema,
   dashboardWidget: {

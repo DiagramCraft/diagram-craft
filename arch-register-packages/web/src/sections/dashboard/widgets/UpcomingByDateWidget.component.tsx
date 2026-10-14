@@ -15,7 +15,6 @@ export default defineComponent({
     'Records ordered by an upcoming date with a countdown, e.g. renewals, expiries or reviews due.',
   icon: TbCalendarTime,
   component: UpcomingByDateWidget,
-  createDefaultProps: () => ({ config: { query: '', dateFieldId: '' } }),
   configForm: UpcomingByDateConfigForm,
   configSchema: upcomingByDateWidgetConfigSchema,
   dashboardWidget: {

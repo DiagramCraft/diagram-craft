@@ -9,16 +9,18 @@ import {
 import {
   decodeConfigAttribute,
   encodeConfigAttribute,
-  parseConfigFields
+  initialConfigOf,
+  parseConfigFields,
+  withInitial
 } from '../../configSchema';
 
 export const entityBrowserEmbedConfigSchema = z.object({
-  q: z.string(),
-  conditions: z.array(filterConditionSchema),
-  sort: z.string(),
-  view: browserViewSchema,
+  q: withInitial(z.string(), ''),
+  conditions: withInitial(z.array(filterConditionSchema), () => []),
+  sort: withInitial(z.string(), 'name'),
+  view: withInitial(browserViewSchema, 'table'),
   /** Per-view settings, keyed by view; each view validates its own shape when rendered. */
-  viewConfigs: z.partialRecord(browserViewSchema, z.unknown()),
+  viewConfigs: withInitial(z.partialRecord(browserViewSchema, z.unknown()), () => ({})),
   projectScope: z.enum(['project', 'all']).optional(),
   /**
    * An advanced, structured query (the same `EntityQuery` shape saved views store — filter tree,
@@ -57,13 +59,8 @@ export const entityBrowserEmbedConfigSchema = z.object({
 
 export type EntityBrowserEmbedConfig = z.infer<typeof entityBrowserEmbedConfigSchema>;
 
-export const createDefaultEntityBrowserEmbedConfig = (): EntityBrowserEmbedConfig => ({
-  q: '',
-  conditions: [],
-  sort: 'name',
-  view: 'table',
-  viewConfigs: {}
-});
+export const createDefaultEntityBrowserEmbedConfig = (): EntityBrowserEmbedConfig =>
+  initialConfigOf(entityBrowserEmbedConfigSchema) as EntityBrowserEmbedConfig;
 
 /** The config keys edited as JSON in the config form's Advanced section — everything that has no
  *  dedicated control. */

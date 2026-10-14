@@ -1,6 +1,7 @@
 import type { TElement } from 'platejs';
 import type { EntityGraphDirection } from '../../../../entities/components/entityGraphState';
 import { z } from 'zod';
+import { withInitial } from '../../configSchema';
 
 export type { EntityGraphDirection };
 
@@ -11,9 +12,9 @@ export interface EntityGraphSlateElement extends TElement {
 }
 
 export const entityGraphWidgetConfigSchema = z.object({
-  entityId: z.string().min(1),
-  depth: z.number().optional(),
-  direction: z.enum(['upstream', 'downstream', 'both']).optional()
+  entityId: withInitial(z.string().min(1), ''),
+  depth: withInitial(z.number().optional(), 1),
+  direction: withInitial(z.enum(['upstream', 'downstream', 'both']).optional(), 'both')
 });
 
 export type EntityGraphWidgetConfig = z.infer<typeof entityGraphWidgetConfigSchema>;

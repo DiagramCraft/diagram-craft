@@ -1,10 +1,21 @@
 import { z } from 'zod';
+import { withInitial } from '../../markdown/mdx-components/configSchema';
 import {
   dashboardWidgetSchema,
   type DashboardWidget
 } from '@arch-register/api-types/dashboardContract';
 
 export const TABS_TYPE = 'tabs' as const;
+
+// Declared with explicit types: the tabs schema's starting value calls this, so inferring the tab
+// type from the schema here would be circular.
+type NewTab = { id: string; label: string; widgets: DashboardWidget[] };
+
+export const createTab = (existing: ReadonlyArray<{ label: string }>, label = 'Tab'): NewTab => ({
+  id: `tab-${crypto.randomUUID()}`,
+  label: existing.some(tab => tab.label === label) ? `${label} ${existing.length + 1}` : label,
+  widgets: []
+});
 
 /**
  * Builds the tabs config schema. Whether each child's own config is valid is decided by
@@ -15,20 +26,23 @@ export const createTabsConfigSchema = (
 ) =>
   z
     .object({
-      tabs: z
-        .array(
-          z.object({
-            id: z.string(),
-            label: z.string().trim().min(1),
-            widgets: z.array(
-              dashboardWidgetSchema.refine(
-                widget => widget.type !== TABS_TYPE && isValidChildWidget(widget),
-                { message: 'A tab cannot hold another tabs widget or an invalid widget' }
+      tabs: withInitial(
+        z
+          .array(
+            z.object({
+              id: z.string(),
+              label: z.string().trim().min(1),
+              widgets: z.array(
+                dashboardWidgetSchema.refine(
+                  widget => widget.type !== TABS_TYPE && isValidChildWidget(widget),
+                  { message: 'A tab cannot hold another tabs widget or an invalid widget' }
+                )
               )
-            )
-          })
-        )
-        .min(1)
+            })
+          )
+          .min(1),
+        () => [createTab([], 'Tab')]
+      )
     })
     .refine(config => new Set(config.tabs.map(tab => tab.id)).size === config.tabs.length, {
       message: 'Tab ids must be unique'
@@ -38,12 +52,6 @@ export const tabsWidgetConfigSchema = createTabsConfigSchema();
 
 export type TabsWidgetConfig = z.infer<typeof tabsWidgetConfigSchema>;
 export type TabsWidgetTab = TabsWidgetConfig['tabs'][number];
-
-export const createTab = (existing: TabsWidgetTab[], label = 'Tab'): TabsWidgetTab => ({
-  id: `tab-${crypto.randomUUID()}`,
-  label: existing.some(tab => tab.label === label) ? `${label} ${existing.length + 1}` : label,
-  widgets: []
-});
 
 export const moveItem = <T>(items: T[], index: number, delta: -1 | 1): T[] => {
   const target = index + delta;

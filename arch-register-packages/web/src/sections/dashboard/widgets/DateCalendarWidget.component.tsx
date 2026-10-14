@@ -15,7 +15,6 @@ export default defineComponent({
     'Records placed on a month or week calendar by a date field, e.g. renewals or reviews.',
   icon: TbCalendarMonth,
   component: DateCalendarWidget,
-  createDefaultProps: () => ({ config: { query: '', dateFieldId: '' } }),
   configForm: DateCalendarConfigForm,
   configSchema: dateCalendarWidgetConfigSchema,
   dashboardWidget: {

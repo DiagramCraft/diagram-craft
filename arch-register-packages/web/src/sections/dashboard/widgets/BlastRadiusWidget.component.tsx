@@ -14,7 +14,6 @@ export default defineComponent({
   description: 'Entities reachable from a chosen entity, with depth and owner filters.',
   icon: TbTopologyStar3,
   component: BlastRadiusWidget,
-  createDefaultProps: () => ({ config: {} }),
   configForm: BlastRadiusConfigForm,
   configSchema: blastRadiusWidgetConfigSchema,
   dashboardWidget: {

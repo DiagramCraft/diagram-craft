@@ -17,7 +17,6 @@ export default defineComponent({
   icon: TbClockExclamation,
   component: EntityStaleReport,
   configForm: EntityStaleReportDashboardConfigForm,
-  createDefaultProps: () => ({ config: {} }),
   configSchema: entityStaleReportPropsSchema,
   dashboardWidget: {
     defaultW: 6,

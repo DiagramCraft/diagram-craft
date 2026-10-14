@@ -18,19 +18,20 @@ import { DialogSection } from '../../markdown/editor/BlockDialog';
 import configFormStyles from '../WidgetConfigDialog.module.css';
 import { z } from 'zod';
 import { entityQuerySchema } from '@arch-register/api-types/entityQueryIR';
+import { withInitial } from '../../markdown/mdx-components/configSchema';
 
 const DEFAULT_PERIOD_COUNT = 12;
 
 export const dateCalendarWidgetConfigSchema = z
   .object({
     /** Entity-query DSL text selecting the records to place on the calendar. */
-    query: z.string().optional(),
+    query: withInitial(z.string().optional(), ''),
     /** Structured alternative to `query`; may reference dashboard sidebar `$variables`. */
     entityQuery: entityQuerySchema.optional(),
     /** Root schema name `entityQuery`'s field names resolve against. */
     schemaName: z.string().optional(),
     /** Date field that decides which month/week a record lands in. */
-    dateFieldId: z.string().trim().min(1),
+    dateFieldId: withInitial(z.string().trim().min(1), ''),
     period: calendarPeriodSchema.optional(),
     periodCount: z.number().optional(),
     /** Optional field shown under the name; a reference/containment field shows the target's name. */

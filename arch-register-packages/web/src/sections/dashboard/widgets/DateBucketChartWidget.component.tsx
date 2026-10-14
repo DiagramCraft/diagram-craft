@@ -16,7 +16,6 @@ export default defineComponent({
     'Bars per month for a date field - record counts or a summed amount, e.g. renewals, expiries or reviews due.',
   icon: TbChartBar,
   component: DateBucketChartWidget,
-  createDefaultProps: () => ({ config: { query: '', dateFieldId: '' } }),
   configForm: DateBucketChartConfigForm,
   configSchema: dateBucketChartWidgetConfigSchema,
   dashboardWidget: {

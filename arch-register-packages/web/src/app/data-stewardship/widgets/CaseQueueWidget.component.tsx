@@ -1,10 +1,6 @@
 import { TbClipboardCheck } from 'react-icons/tb';
 import { defineComponent } from '../../../sections/markdown/mdx-components/defineComponent';
-import {
-  CaseConfigForm,
-  DS_CASE_DEFAULTS,
-  caseConfigSchema
-} from '../dataStewardshipWidgetSupport';
+import { CaseConfigForm, caseConfigSchema } from '../dataStewardshipWidgetSupport';
 import { CaseQueueHeaderActions, CaseQueueWidget } from './CaseQueueWidget';
 export default defineComponent({
   type: 'data-stewardship-case-queue',
@@ -13,7 +9,6 @@ export default defineComponent({
   description: 'Open governance cases, oldest deadline first, with derived priority.',
   icon: TbClipboardCheck,
   component: CaseQueueWidget,
-  createDefaultProps: () => ({ config: { ...DS_CASE_DEFAULTS, scope: 'mine' } }),
   configForm: CaseConfigForm,
   configSchema: caseConfigSchema,
   dashboardWidget: {

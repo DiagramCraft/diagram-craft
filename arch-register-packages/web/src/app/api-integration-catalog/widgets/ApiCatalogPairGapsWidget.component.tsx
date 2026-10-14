@@ -9,7 +9,6 @@ export default defineComponent({
   description: 'API provider/consumer pairs without a matching Data Flow.',
   icon: TbChartBar,
   component: ApiCatalogPairGapsWidget,
-  createDefaultProps: () => ({ config: {} }),
   configSchema: baseWidgetConfigSchema,
   dashboardWidget: {
     defaultW: 3,

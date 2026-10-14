@@ -14,13 +14,6 @@ export default defineComponent({
   description: 'Register of governance cases against entities of a chosen type, in any status.',
   icon: TbGitPullRequest,
   component: ChangeCaseTableWidget,
-  createDefaultProps: () => ({
-    config: {
-      schemaName: '',
-      caseKinds: ['entity.change-case'],
-      severity: 'due-date'
-    }
-  }),
   configForm: ChangeCaseTableConfigForm,
   configSchema: changeCaseTableConfigSchema,
   dashboardWidget: {

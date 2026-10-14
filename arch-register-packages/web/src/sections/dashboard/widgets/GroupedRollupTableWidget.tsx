@@ -11,11 +11,12 @@ import { DialogSection } from '../../markdown/editor/BlockDialog';
 import configFormStyles from '../WidgetConfigDialog.module.css';
 import { z } from 'zod';
 import { entityQuerySchema } from '@arch-register/api-types/entityQueryIR';
+import { withInitial } from '../../markdown/mdx-components/configSchema';
 
 export const groupedRollupTableWidgetConfigSchema = z
   .object({
     /** Entity-query DSL text selecting the records to roll up. */
-    query: z.string().optional(),
+    query: withInitial(z.string().optional(), ''),
     /** Structured alternative to `query`; may reference dashboard sidebar `$variables`. */
     entityQuery: entityQuerySchema.optional(),
     /** Root schema name `entityQuery`'s field names resolve against. */
@@ -23,7 +24,7 @@ export const groupedRollupTableWidgetConfigSchema = z
     /** Field to group by. Blank lists one row per record. */
     groupFieldId: z.string().optional(),
     /** Number or currency field summed per row. */
-    valueFieldId: z.string().trim().min(1),
+    valueFieldId: withInitial(z.string().trim().min(1), ''),
     /** Column header for the group/name column. */
     groupLabel: z.string().optional(),
     /** Column header for the value column. */

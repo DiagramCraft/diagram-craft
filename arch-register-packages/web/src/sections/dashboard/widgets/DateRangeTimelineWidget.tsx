@@ -23,6 +23,7 @@ import { DialogSection } from '../../markdown/editor/BlockDialog';
 import configFormStyles from '../WidgetConfigDialog.module.css';
 import { z } from 'zod';
 import { entityQuerySchema } from '@arch-register/api-types/entityQueryIR';
+import { withInitial } from '../../markdown/mdx-components/configSchema';
 
 const LABEL_WIDTH = 220;
 const COLUMN_WIDTHS: TimelineColumnWidths = { month: 72, quarter: 100, year: 136 };
@@ -32,13 +33,13 @@ const MIN_BAR_WIDTH = 6;
 export const dateRangeTimelineWidgetConfigSchema = z
   .object({
     /** Entity-query DSL text selecting the records to plot. */
-    query: z.string().optional(),
+    query: withInitial(z.string().optional(), ''),
     /** Structured alternative to `query`; may reference dashboard sidebar `$variables`. */
     entityQuery: entityQuerySchema.optional(),
     /** Root schema name `entityQuery`'s field names resolve against. */
     schemaName: z.string().optional(),
-    startFieldId: z.string().trim().min(1),
-    endFieldId: z.string().trim().min(1),
+    startFieldId: withInitial(z.string().trim().min(1), ''),
+    endFieldId: withInitial(z.string().trim().min(1), ''),
     /** Optional field shown under the name; a reference/containment field shows the target's name. */
     sublabelFieldId: z.string().optional(),
     /** Optional number/currency field shown inside each bar. */

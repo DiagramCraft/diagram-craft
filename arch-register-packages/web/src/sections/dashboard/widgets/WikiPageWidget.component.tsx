@@ -13,7 +13,6 @@ export default defineComponent({
   description: 'Display a selected wiki page on the dashboard.',
   icon: TbBook,
   component: WikiPageWidget,
-  createDefaultProps: () => ({ config: { nodeId: '' } }),
   configForm: WikiPageDashboardConfigForm,
   configSchema: wikiPageWidgetConfigSchema,
   dashboardWidget: {

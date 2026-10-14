@@ -14,7 +14,6 @@ export default defineComponent({
   description: 'Assessments on an entity type with progress, due date and status.',
   icon: TbChecklist,
   component: AssessmentProgressTableWidget,
-  createDefaultProps: () => ({ config: { schemaName: '' } }),
   configForm: props => <AssessmentSchemaConfigForm {...props} statusRequired={false} />,
   configSchema: assessmentProgressTableConfigSchema,
   dashboardWidget: {

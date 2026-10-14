@@ -8,15 +8,16 @@ import styles from './DateBucketChartWidget.module.css';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import configFormStyles from '../WidgetConfigDialog.module.css';
 import { z } from 'zod';
+import { withInitial } from '../../markdown/mdx-components/configSchema';
 
 const DEFAULT_BUCKET_COUNT = 12;
 const MONTH_LABEL = new Intl.DateTimeFormat(undefined, { month: 'short' });
 
 export const dateBucketChartWidgetConfigSchema = z.object({
   /** Entity-query DSL text selecting the records to chart. */
-  query: z.string().trim().min(1),
+  query: withInitial(z.string().trim().min(1), ''),
   /** Date field whose month decides the bucket. */
-  dateFieldId: z.string().trim().min(1),
+  dateFieldId: withInitial(z.string().trim().min(1), ''),
   /** Number/currency field summed per bucket; omit to chart record counts. */
   measureFieldId: z.string().optional(),
   /** Number of months shown, starting at the current month. Default 12. */

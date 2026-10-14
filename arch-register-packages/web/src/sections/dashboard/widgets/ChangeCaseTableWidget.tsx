@@ -21,12 +21,13 @@ import type { NeedsAttentionSeverity } from './needsAttentionQueue';
 import configFormStyles from '../WidgetConfigDialog.module.css';
 import { z } from 'zod';
 import { needsAttentionSeveritySchema } from './needsAttentionQueue';
+import { withInitial } from '../../markdown/mdx-components/configSchema';
 
 export const changeCaseTableConfigSchema = z.object({
   /** Name of the entity schema the cases' subject entities must belong to. */
-  schemaName: z.string(),
-  caseKinds: z.array(z.string()),
-  severity: needsAttentionSeveritySchema,
+  schemaName: withInitial(z.string(), ''),
+  caseKinds: withInitial(z.array(z.string()), ['entity.change-case']),
+  severity: withInitial(needsAttentionSeveritySchema, 'due-date'),
   /**
    * Only list cases in this status (`open`, `completed` or `cancelled`). Any other value —
    * including an unresolved or empty `$variable` from a dashboard sidebar — means no filter.

@@ -29,21 +29,22 @@ import { DialogSection } from '../../markdown/editor/BlockDialog';
 import { RELATION_TABLE_META_COLUMNS } from './relationTableLogic';
 import configFormStyles from '../WidgetConfigDialog.module.css';
 import { z } from 'zod';
+import { withInitial } from '../../markdown/mdx-components/configSchema';
 
 export const relationTableWidgetConfigSchema = z.object({
   /** Name of the relation schema whose instances are listed. */
-  relationSchemaName: z.string().min(1),
+  relationSchemaName: withInitial(z.string().min(1), ''),
   /** Optional entity-query DSL filter, AND-ed with the schema; may reference sidebar `$variables`. */
   filter: z.string().optional(),
   /** Multi-select filters on relation fields (ids or names), e.g. `values: ['$protocols']` bound to
    *  a `facets` sidebar; empty `values` means no constraint. */
   facetFilters: z.array(relationFacetFilterSchema).optional(),
   /** Columns after the Flow (In → Out) column: relation field ids/names, or `_owner`, `_lifecycle`, `_updatedAt`. */
-  fieldIds: z.array(z.string()),
+  fieldIds: withInitial(z.array(z.string()), []),
   /** Initial sort column (a `fieldIds` entry, or `_in`/`_out`); a header click re-sorts locally. */
   sort: z.string().optional(),
   sortDir: z.enum(['asc', 'desc']).optional(),
-  limit: z.number().positive(),
+  limit: withInitial(z.number().positive(), 100),
   /** Clicking a row opens a detail drawer for that relation. Default off. */
   rowDrawer: z.boolean().optional()
 });
