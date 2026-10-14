@@ -3,8 +3,12 @@ import { TbArrowRight } from 'react-icons/tb';
 import { useConformanceSummary } from '../../../hooks/useConformance';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import styles from './ConformanceSummaryWidget.module.css';
+import { z } from 'zod';
 
-export type ConformanceSummaryWidgetConfig = Record<string, never>;
+/** The summary has no options; a stored config must be empty. */
+export const conformanceSummaryWidgetConfigSchema = z.strictObject({});
+
+export type ConformanceSummaryWidgetConfig = z.infer<typeof conformanceSummaryWidgetConfigSchema>;
 
 export const ConformanceSummaryWidget = ({
   config: _config

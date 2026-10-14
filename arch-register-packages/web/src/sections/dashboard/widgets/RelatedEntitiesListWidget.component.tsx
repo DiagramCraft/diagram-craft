@@ -4,10 +4,9 @@ import {
   RELATED_ENTITIES_LIST_TYPE,
   RelatedEntitiesListConfigForm,
   RelatedEntitiesListWidget,
-  RelatedEntitiesListWidgetConfig,
-  isRelatedEntitiesListConfigComplete,
-  isRelatedEntitiesListConfigValid
+  relatedEntitiesListWidgetConfigSchema
 } from './RelatedEntitiesListWidget';
+import { schemaGuard } from '../../markdown/mdx-components/configSchema';
 
 export default defineComponent({
   type: RELATED_ENTITIES_LIST_TYPE,
@@ -23,8 +22,6 @@ export default defineComponent({
     defaultW: 4,
     defaultH: 14,
     surfaces: ['workspace'],
-    isValidConfig: (config): config is RelatedEntitiesListWidgetConfig =>
-      isRelatedEntitiesListConfigValid(config) &&
-      isRelatedEntitiesListConfigComplete(config as RelatedEntitiesListWidgetConfig)
+    isValidConfig: schemaGuard(relatedEntitiesListWidgetConfigSchema)
   }
 });

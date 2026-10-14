@@ -7,33 +7,33 @@ import rowStyles from './WidgetRowList.module.css';
 import styles from './DateBucketChartWidget.module.css';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import configFormStyles from '../WidgetConfigDialog.module.css';
+import { z } from 'zod';
 
 const DEFAULT_BUCKET_COUNT = 12;
 const MONTH_LABEL = new Intl.DateTimeFormat(undefined, { month: 'short' });
 
-export type DateBucketChartWidgetConfig = {
+export const dateBucketChartWidgetConfigSchema = z.object({
   /** Entity-query DSL text selecting the records to chart. */
-  query: string;
+  query: z.string().trim().min(1),
   /** Date field whose month decides the bucket. */
-  dateFieldId: string;
+  dateFieldId: z.string().trim().min(1),
   /** Number/currency field summed per bucket; omit to chart record counts. */
-  measureFieldId?: string;
+  measureFieldId: z.string().optional(),
   /** Number of months shown, starting at the current month. Default 12. */
-  bucketCount?: number;
+  bucketCount: z.number().optional(),
   /** Count past-dated records in the current month instead of dropping them. */
-  foldOverdue?: boolean;
+  foldOverdue: z.boolean().optional(),
   /** Buckets with a record due within this many days (or overdue) are drawn in the urgent colour. */
-  urgentWithinDays?: number;
-};
+  urgentWithinDays: z.number().optional()
+});
 
-export const isDateBucketChartConfigComplete = (config: DateBucketChartWidgetConfig): boolean =>
-  config.query.trim() !== '' && config.dateFieldId.trim() !== '';
+export type DateBucketChartWidgetConfig = z.infer<typeof dateBucketChartWidgetConfigSchema>;
 
 type Props = { config: DateBucketChartWidgetConfig };
 
 const useDateBuckets = (config: DateBucketChartWidgetConfig) => {
   const { workspaceSlug } = useWorkspaceContext();
-  const complete = isDateBucketChartConfigComplete(config);
+  const complete = dateBucketChartWidgetConfigSchema.safeParse(config).success;
   const { data, isLoading } = useQueryTextEntities(workspaceSlug, config.query, complete);
   const buckets = useMemo(
     () =>

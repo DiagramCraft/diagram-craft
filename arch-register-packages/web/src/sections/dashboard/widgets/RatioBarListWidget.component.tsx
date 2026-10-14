@@ -4,9 +4,9 @@ import {
   RATIO_BAR_LIST_TYPE,
   RatioBarListConfigForm,
   RatioBarListWidget,
-  RatioBarListWidgetConfig,
-  isRatioBarListConfigComplete
+  ratioBarListWidgetConfigSchema
 } from './RatioBarListWidget';
+import { schemaGuard } from '../../markdown/mdx-components/configSchema';
 
 export default defineComponent({
   type: RATIO_BAR_LIST_TYPE,
@@ -28,11 +28,6 @@ export default defineComponent({
     defaultW: 6,
     defaultH: 16,
     surfaces: ['workspace'],
-    isValidConfig: (config): config is RatioBarListWidgetConfig =>
-      typeof config.schemaName === 'string' &&
-      typeof config.groupByFieldId === 'string' &&
-      typeof config.numeratorFieldId === 'string' &&
-      typeof config.numeratorValue === 'string' &&
-      isRatioBarListConfigComplete(config as RatioBarListWidgetConfig)
+    isValidConfig: schemaGuard(ratioBarListWidgetConfigSchema)
   }
 });

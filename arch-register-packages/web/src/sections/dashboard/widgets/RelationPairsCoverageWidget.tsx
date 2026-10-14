@@ -12,26 +12,30 @@ import {
 } from './relationPairCoverageLogic';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import configFormStyles from '../WidgetConfigDialog.module.css';
-import { isOptionalString } from '../../markdown/mdx-components/configGuards';
+import { z } from 'zod';
 
 const WARN = 'var(--cmp-fg-warning, #eab308)';
 const RELATION_LIMIT = 500;
 
-export type RelationPairsCoverageWidgetConfig = {
+export const relationPairsCoverageWidgetConfigSchema = z.object({
   /** Display name of the hub entity schema (e.g. `API`) that providers and consumers attach to. */
-  hubSchemaName: string;
+  hubSchemaName: z.string().min(1),
   /** Typed-relation field (id or name) on the hub schema listing its providers. */
-  providerFieldName: string;
+  providerFieldName: z.string().min(1),
   /** Typed-relation field (id or name) on the hub schema listing its consumers. */
-  consumerFieldName: string;
+  consumerFieldName: z.string().min(1),
   /** Relation type (by name) whose instances between a provider and a consumer count as coverage. */
-  coverageRelationSchemaName: string;
+  coverageRelationSchemaName: z.string().min(1),
   /** Column headings; default to the schema/field names. */
-  hubLabel?: string;
-  providerLabel?: string;
-  consumerLabel?: string;
-  coverageLabel?: string;
-};
+  hubLabel: z.string().optional(),
+  providerLabel: z.string().optional(),
+  consumerLabel: z.string().optional(),
+  coverageLabel: z.string().optional()
+});
+
+export type RelationPairsCoverageWidgetConfig = z.infer<
+  typeof relationPairsCoverageWidgetConfigSchema
+>;
 
 type SortKey = 'consumer';
 
@@ -251,18 +255,3 @@ export const RelationPairsCoverageConfigForm = ({
 };
 
 export const RELATION_PAIRS_COVERAGE_TYPE = 'RelationPairsCoverage' as const;
-
-const isNonEmptyString = (value: unknown): value is string =>
-  typeof value === 'string' && value.length > 0;
-
-export const isValidConfig = (
-  config: Record<string, unknown>
-): config is RelationPairsCoverageWidgetConfig =>
-  isNonEmptyString(config.hubSchemaName) &&
-  isNonEmptyString(config.providerFieldName) &&
-  isNonEmptyString(config.consumerFieldName) &&
-  isNonEmptyString(config.coverageRelationSchemaName) &&
-  isOptionalString(config.hubLabel) &&
-  isOptionalString(config.providerLabel) &&
-  isOptionalString(config.consumerLabel) &&
-  isOptionalString(config.coverageLabel);

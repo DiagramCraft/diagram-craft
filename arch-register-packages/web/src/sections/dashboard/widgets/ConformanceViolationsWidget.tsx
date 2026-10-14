@@ -8,13 +8,18 @@ import { groupViolationsByEntity } from './conformanceViolationsLogic';
 import styles from './ConformanceViolationsWidget.module.css';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import configFormStyles from '../WidgetConfigDialog.module.css';
+import { z } from 'zod';
 
-export type ConformanceViolationsWidgetConfig = {
-  schemaName: string;
+export const conformanceViolationsWidgetConfigSchema = z.object({
+  schemaName: z.string().min(1),
   /** Only show violations raised by these checks (all checks when empty). */
-  checkNames?: string[];
-  limit: number;
-};
+  checkNames: z.array(z.string()).optional(),
+  limit: z.number().positive()
+});
+
+export type ConformanceViolationsWidgetConfig = z.infer<
+  typeof conformanceViolationsWidgetConfigSchema
+>;
 
 const FETCH_LIMIT = 200;
 
@@ -151,15 +156,3 @@ export const ConformanceViolationsConfigForm = ({
 };
 
 export const CONFORMANCE_VIOLATIONS_TYPE = 'ConformanceViolations' as const;
-
-const isStringArray = (value: unknown): value is string[] =>
-  Array.isArray(value) && value.every(item => typeof item === 'string');
-
-export const isValidConfig = (
-  config: Record<string, unknown>
-): config is ConformanceViolationsWidgetConfig =>
-  typeof config.schemaName === 'string' &&
-  config.schemaName.length > 0 &&
-  typeof config.limit === 'number' &&
-  config.limit > 0 &&
-  (config.checkNames === undefined || isStringArray(config.checkNames));

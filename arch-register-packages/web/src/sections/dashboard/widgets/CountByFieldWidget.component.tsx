@@ -4,9 +4,9 @@ import {
   COUNT_BY_FIELD_TYPE,
   CountByFieldConfigForm,
   CountByFieldWidget,
-  CountByFieldWidgetConfig,
-  isCountByFieldConfigComplete
+  countByFieldWidgetConfigSchema
 } from './CountByFieldWidget';
+import { schemaGuard } from '../../markdown/mdx-components/configSchema';
 
 export default defineComponent({
   type: COUNT_BY_FIELD_TYPE,
@@ -21,9 +21,6 @@ export default defineComponent({
     defaultW: 6,
     defaultH: 8,
     surfaces: ['workspace'],
-    isValidConfig: (config): config is CountByFieldWidgetConfig =>
-      typeof config.schemaName === 'string' &&
-      typeof config.fieldId === 'string' &&
-      isCountByFieldConfigComplete(config as CountByFieldWidgetConfig)
+    isValidConfig: schemaGuard(countByFieldWidgetConfigSchema)
   }
 });

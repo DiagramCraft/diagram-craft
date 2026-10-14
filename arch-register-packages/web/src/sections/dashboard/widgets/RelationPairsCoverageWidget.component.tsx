@@ -1,10 +1,11 @@
 import { TbArrowsJoin } from 'react-icons/tb';
+import { schemaGuard } from '../../markdown/mdx-components/configSchema';
 import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import {
   RELATION_PAIRS_COVERAGE_TYPE,
   RelationPairsCoverageConfigForm,
   RelationPairsCoverageWidget,
-  isValidConfig
+  relationPairsCoverageWidgetConfigSchema
 } from './RelationPairsCoverageWidget';
 
 export default defineComponent({
@@ -29,6 +30,6 @@ export default defineComponent({
     defaultH: 24,
     surfaces: ['workspace'],
     frame: { padded: false, showIcon: false },
-    isValidConfig
+    isValidConfig: schemaGuard(relationPairsCoverageWidgetConfigSchema)
   }
 });

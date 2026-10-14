@@ -1,6 +1,7 @@
 import { TbApi } from 'react-icons/tb';
+import { schemaGuard } from '../../../sections/markdown/mdx-components/configSchema';
 import { defineComponent } from '../../../sections/markdown/mdx-components/defineComponent';
-import { isValidListConfig, ListConfigForm } from '../apiCatalogWidgetSupport';
+import { listWidgetConfigSchema, ListConfigForm } from '../apiCatalogWidgetSupport';
 import {
   ApiCatalogMostConsumedHeaderActions,
   ApiCatalogMostConsumedWidget
@@ -20,6 +21,6 @@ export default defineComponent({
     surfaces: ['workspace'],
     headerActionsComponent: ApiCatalogMostConsumedHeaderActions,
     frame: { padded: false, showIcon: false },
-    isValidConfig: isValidListConfig
+    isValidConfig: schemaGuard(listWidgetConfigSchema)
   }
 });

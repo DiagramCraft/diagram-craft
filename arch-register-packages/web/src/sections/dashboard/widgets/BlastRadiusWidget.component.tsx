@@ -1,10 +1,11 @@
 import { TbTopologyStar3 } from 'react-icons/tb';
+import { schemaGuard } from '../../markdown/mdx-components/configSchema';
 import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import {
   BLAST_RADIUS_WIDGET_TYPE,
   BlastRadiusConfigForm,
   BlastRadiusWidget,
-  isValidConfig
+  blastRadiusWidgetConfigSchema
 } from './BlastRadiusWidget';
 
 export default defineComponent({
@@ -24,6 +25,6 @@ export default defineComponent({
     // since it's shared with non-widget contexts (the entity drawer); WidgetFrame's own padding on
     // top of that doubled up the spacing, so it's turned off here.
     frame: { padded: false },
-    isValidConfig
+    isValidConfig: schemaGuard(blastRadiusWidgetConfigSchema)
   }
 });

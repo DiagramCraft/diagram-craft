@@ -4,13 +4,13 @@
  */
 import { TbActivity } from 'react-icons/tb';
 import { defineComponent } from '../../markdown/mdx-components/defineComponent';
-import type { ActivityFeedWidgetConfig } from './ActivityFeedWidget';
 import {
   ACTIVITY_FEED_TYPE,
   ActivityFeedDashboardConfigForm,
-  ActivityFeedWidget
+  ActivityFeedWidget,
+  activityFeedWidgetConfigSchema
 } from './ActivityFeedWidget';
-import { hasOptionalInteger } from '../../markdown/mdx-components/configGuards';
+import { schemaGuard } from '../../markdown/mdx-components/configSchema';
 
 export default defineComponent({
   type: ACTIVITY_FEED_TYPE,
@@ -25,7 +25,6 @@ export default defineComponent({
     defaultW: 12,
     defaultH: 24,
     surfaces: ['workspace'],
-    isValidConfig: (config): config is ActivityFeedWidgetConfig =>
-      hasOptionalInteger(config, 'limit')
+    isValidConfig: schemaGuard(activityFeedWidgetConfigSchema)
   }
 });

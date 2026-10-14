@@ -1,10 +1,16 @@
-export type AggregateStatDisplay = 'count' | 'percent' | 'ofTotal';
+import { z } from 'zod';
 
-export type AggregateStatSeverity = {
-  warnAt?: number;
-  critAt?: number;
-  direction?: 'above' | 'below';
-};
+export const aggregateStatDisplaySchema = z.enum(['count', 'percent', 'ofTotal']);
+
+export type AggregateStatDisplay = z.infer<typeof aggregateStatDisplaySchema>;
+
+export const aggregateStatSeveritySchema = z.object({
+  warnAt: z.number().optional(),
+  critAt: z.number().optional(),
+  direction: z.enum(['above', 'below']).optional()
+});
+
+export type AggregateStatSeverity = z.infer<typeof aggregateStatSeveritySchema>;
 
 export type AggregateStatTone = 'normal' | 'warn' | 'crit';
 

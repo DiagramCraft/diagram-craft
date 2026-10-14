@@ -1,6 +1,10 @@
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { useEntityDrawer } from '../../entities/entityDrawer/useEntityDrawer';
-import { useNeedsAttentionQueue } from './needsAttentionQueue';
+import {
+  useNeedsAttentionQueue,
+  needsAttentionScopeSchema,
+  needsAttentionSeveritySchema
+} from './needsAttentionQueue';
 import { NeedsAttentionList } from './NeedsAttentionList';
 
 import { useState } from 'react';
@@ -9,14 +13,17 @@ import { humanizeCaseKind } from '../../../utils/governanceCaseLabels';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import type { NeedsAttentionScope, NeedsAttentionSeverity } from './needsAttentionQueue';
 import configFormStyles from '../WidgetConfigDialog.module.css';
+import { z } from 'zod';
 
-export type NeedsAttentionWidgetConfig = {
-  schema: string;
-  caseKinds: string[];
-  scope: NeedsAttentionScope;
-  severity: NeedsAttentionSeverity;
-  limit: number;
-};
+export const needsAttentionWidgetConfigSchema = z.object({
+  schema: z.string(),
+  caseKinds: z.array(z.string()),
+  scope: needsAttentionScopeSchema,
+  severity: needsAttentionSeveritySchema,
+  limit: z.number().positive()
+});
+
+export type NeedsAttentionWidgetConfig = z.infer<typeof needsAttentionWidgetConfigSchema>;
 
 type Props = {
   config: NeedsAttentionWidgetConfig;

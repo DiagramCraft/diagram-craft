@@ -1,12 +1,12 @@
 import { TbChecklist } from 'react-icons/tb';
-import { isAssessmentStatus } from './assessmentSummaryLogic';
 import { AssessmentSchemaConfigForm } from './AssessmentSchemaConfigForm';
 import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import {
   ASSESSMENT_PROGRESS_TABLE_TYPE,
-  AssessmentProgressTableConfig,
-  AssessmentProgressTableWidget
+  AssessmentProgressTableWidget,
+  assessmentProgressTableConfigSchema
 } from './AssessmentProgressTableWidget';
+import { schemaGuard } from '../../markdown/mdx-components/configSchema';
 
 export default defineComponent({
   type: ASSESSMENT_PROGRESS_TABLE_TYPE,
@@ -22,9 +22,6 @@ export default defineComponent({
     defaultH: 20,
     surfaces: ['workspace'],
     frame: { hideOutsideEdit: true, padded: false, showIcon: false },
-    isValidConfig: (config): config is AssessmentProgressTableConfig =>
-      typeof config.schemaName === 'string' &&
-      config.schemaName.length > 0 &&
-      (config.status === undefined || isAssessmentStatus(config.status))
+    isValidConfig: schemaGuard(assessmentProgressTableConfigSchema)
   }
 });

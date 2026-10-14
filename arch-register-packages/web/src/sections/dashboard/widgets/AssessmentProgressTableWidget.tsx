@@ -6,24 +6,25 @@ import { Table } from '../../../components/table/Table';
 import { projectsQuery } from '../../../queries/projects';
 import { dueLabel, dueTone } from '../../../utils/assessmentDueTone';
 import { asProjectPublicId, projectDetailRoute } from '../../../routes/publicObjectRoutes';
-import type {
-  EntityAssessmentStatus,
-  EntityAssessmentSummary
-} from '../../entities/entityDrawer/entityAssessments';
+import type { EntityAssessmentSummary } from '../../entities/entityDrawer/entityAssessments';
 import {
   ASSESSMENT_STATUS_LABEL,
   ASSESSMENT_STATUS_TONE,
-  filterAssessmentSummaries
+  filterAssessmentSummaries,
+  ASSESSMENT_STATUSES
 } from './assessmentSummaryLogic';
 import { useSchemaAssessmentSummaries } from './useSchemaAssessmentSummaries';
 import styles from './AssessmentProgressTableWidget.module.css';
+import { z } from 'zod';
 
-export type AssessmentProgressTableConfig = {
+export const assessmentProgressTableConfigSchema = z.object({
   /** Name of the entity schema the assessments must target (`assessment.scope`). */
-  schemaName: string;
+  schemaName: z.string().min(1),
   /** Optional: only list assessments in this derived status. */
-  status?: EntityAssessmentStatus;
-};
+  status: z.enum(ASSESSMENT_STATUSES).optional()
+});
+
+export type AssessmentProgressTableConfig = z.infer<typeof assessmentProgressTableConfigSchema>;
 
 export const AssessmentProgressTableWidget = ({
   config

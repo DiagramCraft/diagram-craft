@@ -1,11 +1,8 @@
 import { TbArrowsSplit2 } from 'react-icons/tb';
-import {
-  isPathWalkerConfigComplete,
-  isPathWalkerConfigValid,
-  type PathWalkerWidgetConfig
-} from './pathWalkerWidgetLogic';
+import { pathWalkerWidgetConfigSchema } from './pathWalkerWidgetLogic';
 import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import { PATH_WALKER_TYPE, PathWalkerConfigForm, PathWalkerWidget } from './PathWalkerWidget';
+import { schemaGuard } from '../../markdown/mdx-components/configSchema';
 
 export default defineComponent({
   type: PATH_WALKER_TYPE,
@@ -21,8 +18,6 @@ export default defineComponent({
     defaultW: 12,
     defaultH: 22,
     surfaces: ['workspace'],
-    isValidConfig: (config): config is PathWalkerWidgetConfig =>
-      isPathWalkerConfigValid(config) &&
-      isPathWalkerConfigComplete(config as PathWalkerWidgetConfig)
+    isValidConfig: schemaGuard(pathWalkerWidgetConfigSchema)
   }
 });

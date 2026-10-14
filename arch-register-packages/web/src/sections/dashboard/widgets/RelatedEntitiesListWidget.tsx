@@ -9,29 +9,36 @@ import styles from './RelatedEntitiesListWidget.module.css';
 import rowStyles from './WidgetRowList.module.css';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import configFormStyles from '../WidgetConfigDialog.module.css';
+import { z } from 'zod';
 
 const FETCH_LIMIT = 1000;
 
-export type RelatedEntitiesListWidgetConfig = {
-  /** Public id of the entity the list is scoped to; usually a sidebar variable reference. */
-  entityId?: string;
-  /** Entity type listed. */
-  schemaName: string;
-  /** Reference field on `schemaName` pointing at the scoping entity (or at the `via` entities). */
-  referenceField: string;
-  /** Optional intermediate hop: entities of this type reference the scoping entity through
-   *  `viaReferenceField`, and the listed entities reference those. */
-  viaSchemaName?: string;
-  viaReferenceField?: string;
-  descriptionField?: string;
-  statusField?: string;
-  /** When all three are set, each row shows a baseline → current → target progress bar. */
-  progressBaselineField?: string;
-  progressCurrentField?: string;
-  progressTargetField?: string;
-  progressUnitField?: string;
-  emptyMessage?: string;
-};
+export const relatedEntitiesListWidgetConfigSchema = z
+  .object({
+    /** Public id of the entity the list is scoped to; usually a sidebar variable reference. */
+    entityId: z.string().optional(),
+    /** Entity type listed. */
+    schemaName: z.string().min(1),
+    /** Reference field on `schemaName` pointing at the scoping entity (or at the `via` entities). */
+    referenceField: z.string().min(1),
+    /** Optional intermediate hop: entities of this type reference the scoping entity through
+     *  `viaReferenceField`, and the listed entities reference those. */
+    viaSchemaName: z.string().optional(),
+    viaReferenceField: z.string().optional(),
+    descriptionField: z.string().optional(),
+    statusField: z.string().optional(),
+    /** When all three are set, each row shows a baseline → current → target progress bar. */
+    progressBaselineField: z.string().optional(),
+    progressCurrentField: z.string().optional(),
+    progressTargetField: z.string().optional(),
+    progressUnitField: z.string().optional(),
+    emptyMessage: z.string().optional()
+  })
+  .refine(config => !config.viaSchemaName === !config.viaReferenceField, {
+    message: 'A via schema and its reference field must be set together'
+  });
+
+export type RelatedEntitiesListWidgetConfig = z.infer<typeof relatedEntitiesListWidgetConfigSchema>;
 
 const OPTIONAL_STRING_KEYS = [
   'entityId',
@@ -53,13 +60,6 @@ export const isRelatedEntitiesListConfigValid = (
   typeof config.schemaName === 'string' &&
   typeof config.referenceField === 'string' &&
   OPTIONAL_STRING_KEYS.every(key => config[key] === undefined || typeof config[key] === 'string');
-
-export const isRelatedEntitiesListConfigComplete = (
-  config: RelatedEntitiesListWidgetConfig
-): boolean =>
-  !!config.schemaName &&
-  !!config.referenceField &&
-  !config.viaSchemaName === !config.viaReferenceField;
 
 const hasProgress = (config: RelatedEntitiesListWidgetConfig): boolean =>
   !!config.progressBaselineField && !!config.progressCurrentField && !!config.progressTargetField;
@@ -95,7 +95,7 @@ export const RelatedEntitiesListWidget = ({
   config: RelatedEntitiesListWidgetConfig;
 }) => {
   const { workspaceSlug, schemas } = useWorkspaceContext();
-  const complete = isRelatedEntitiesListConfigComplete(config);
+  const complete = relatedEntitiesListWidgetConfigSchema.safeParse(config).success;
   const unresolved = isUnresolved(config.entityId);
 
   const schema = schemas.find(candidate => candidate.name === config.schemaName);

@@ -1,6 +1,9 @@
+import { z } from 'zod';
 import type { Assessment } from '@arch-register/api-types/assessmentContract';
 
-export type AssessmentWidgetMode = 'active' | 'upcoming' | 'overdue' | 'all';
+export const assessmentWidgetModeSchema = z.enum(['active', 'upcoming', 'overdue', 'all']);
+
+export type AssessmentWidgetMode = z.infer<typeof assessmentWidgetModeSchema>;
 
 export type AssessmentFilterOptions = {
   mode: AssessmentWidgetMode;

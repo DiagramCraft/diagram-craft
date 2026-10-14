@@ -11,7 +11,7 @@ import { pathStepKey } from '../../entities/components/pathBuilder/pathBuilderSt
 import { hopDirectionGlyph } from '../../entities/components/pathWalkerViewState';
 import { findRootSchema, hopChainOptions, resolveWalkerHops } from './pathWalkerWidgetLogic';
 import configFormStyles from '../WidgetConfigDialog.module.css';
-import { isPathWalkerConfigComplete, type PathWalkerWidgetConfig } from './pathWalkerWidgetLogic';
+import { pathWalkerWidgetConfigSchema, type PathWalkerWidgetConfig } from './pathWalkerWidgetLogic';
 
 const FETCH_LIMIT = 1000;
 
@@ -24,7 +24,7 @@ const FETCH_LIMIT = 1000;
 export const PathWalkerWidget = ({ config }: { config: PathWalkerWidgetConfig }) => {
   const { workspaceSlug, schemas, relationSchemas } = useWorkspaceContext();
   const { openEntityDrawer } = useEntityDrawer();
-  const complete = isPathWalkerConfigComplete(config);
+  const complete = pathWalkerWidgetConfigSchema.safeParse(config).success;
   const rootSchema = findRootSchema(config, schemas);
 
   const roots = useEntities(

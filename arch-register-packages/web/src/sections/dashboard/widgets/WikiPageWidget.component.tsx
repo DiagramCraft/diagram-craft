@@ -4,8 +4,9 @@ import {
   WikiPageDashboardConfigForm,
   WikiPageWidget,
   WikiPageWidgetTitle,
-  isWikiPageWidgetConfig
+  wikiPageWidgetConfigSchema
 } from './WikiPageWidget';
+import { schemaGuard } from '../../markdown/mdx-components/configSchema';
 export default defineComponent({
   type: 'wiki-page',
   category: 'content-layout',
@@ -20,7 +21,7 @@ export default defineComponent({
     defaultH: 24,
     surfaces: ['workspace', 'project'],
     titleComponent: WikiPageWidgetTitle,
-    isValidConfig: isWikiPageWidgetConfig,
+    isValidConfig: schemaGuard(wikiPageWidgetConfigSchema),
     dialogWidth: 520
   }
 });

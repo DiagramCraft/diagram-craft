@@ -4,10 +4,9 @@ import {
   GROUPED_ROLLUP_TABLE_TYPE,
   GroupedRollupTableConfigForm,
   GroupedRollupTableWidget,
-  GroupedRollupTableWidgetConfig,
-  isGroupedRollupTableConfigComplete
+  groupedRollupTableWidgetConfigSchema
 } from './GroupedRollupTableWidget';
-import { isOptionalBoolean, isOptionalString } from '../../markdown/mdx-components/configGuards';
+import { schemaGuard } from '../../markdown/mdx-components/configSchema';
 
 export default defineComponent({
   type: GROUPED_ROLLUP_TABLE_TYPE,
@@ -24,18 +23,6 @@ export default defineComponent({
     defaultH: 20,
     surfaces: ['workspace', 'project'],
     frame: { hideOutsideEdit: true, padded: false, showIcon: false },
-    isValidConfig: (config): config is GroupedRollupTableWidgetConfig =>
-      typeof config.valueFieldId === 'string' &&
-      isOptionalString(config.query) &&
-      isOptionalString(config.schemaName) &&
-      isOptionalString(config.groupFieldId) &&
-      isOptionalString(config.groupLabel) &&
-      isOptionalString(config.valueLabel) &&
-      isOptionalBoolean(config.showBar) &&
-      isOptionalBoolean(config.showPercent) &&
-      isOptionalBoolean(config.showCount) &&
-      isOptionalBoolean(config.showTotal) &&
-      (config.limit === undefined || (typeof config.limit === 'number' && config.limit > 0)) &&
-      isGroupedRollupTableConfigComplete(config as GroupedRollupTableWidgetConfig)
+    isValidConfig: schemaGuard(groupedRollupTableWidgetConfigSchema)
   }
 });

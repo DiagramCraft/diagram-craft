@@ -1,7 +1,11 @@
 import { TbShieldCheck } from 'react-icons/tb';
 import { defineComponent } from '../../markdown/mdx-components/defineComponent';
-import type { ConformanceSummaryWidgetConfig } from './ConformanceSummaryWidget';
-import { CONFORMANCE_SUMMARY_TYPE, ConformanceSummaryWidget } from './ConformanceSummaryWidget';
+import {
+  CONFORMANCE_SUMMARY_TYPE,
+  ConformanceSummaryWidget,
+  conformanceSummaryWidgetConfigSchema
+} from './ConformanceSummaryWidget';
+import { schemaGuard } from '../../markdown/mdx-components/configSchema';
 export default defineComponent({
   type: CONFORMANCE_SUMMARY_TYPE,
   category: 'data-views',
@@ -14,7 +18,6 @@ export default defineComponent({
     defaultW: 5,
     defaultH: 16,
     surfaces: ['workspace'],
-    isValidConfig: (config): config is ConformanceSummaryWidgetConfig =>
-      Object.keys(config).length === 0
+    isValidConfig: schemaGuard(conformanceSummaryWidgetConfigSchema)
   }
 });

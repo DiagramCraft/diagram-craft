@@ -1,11 +1,11 @@
 import { useMemo } from 'react';
-import type { EntityAssessmentStatus } from '../../entities/entityDrawer/entityAssessments';
 import {
   ASSESSMENT_STATUS_LABEL,
   ASSESSMENT_STATUS_TONE,
   TINTED_ASSESSMENT_STATUSES,
   countByStatus,
-  renderAssessmentSubtext
+  renderAssessmentSubtext,
+  ASSESSMENT_STATUSES
 } from './assessmentSummaryLogic';
 import { useSchemaAssessmentSummaries } from './useSchemaAssessmentSummaries';
 import styles from './AssessmentStatusStatWidget.module.css';
@@ -13,14 +13,17 @@ import { useWidgetBodyTitle } from './WidgetBodyTitle';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import { AssessmentSchemaConfigForm } from './AssessmentSchemaConfigForm';
 import registrationStyles from '../WidgetConfigDialog.module.css';
+import { z } from 'zod';
 
-export type AssessmentStatusStatConfig = {
+export const assessmentStatusStatConfigSchema = z.object({
   /** Name of the entity schema the assessments must target (`assessment.scope`). */
-  schemaName: string;
-  status: EntityAssessmentStatus;
+  schemaName: z.string().min(1),
+  status: z.enum(ASSESSMENT_STATUSES),
   /** May contain `{count}`, `{total}` and `{notStarted}`. */
-  subtextTemplate?: string;
-};
+  subtextTemplate: z.string().optional()
+});
+
+export type AssessmentStatusStatConfig = z.infer<typeof assessmentStatusStatConfigSchema>;
 
 export const AssessmentStatusStatWidget = ({ config }: { config: AssessmentStatusStatConfig }) => {
   const title = useWidgetBodyTitle();

@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import { useMemo, useState } from 'react';
 
 import { ToggleButtonGroup } from '@diagram-craft/app-components/ToggleButtonGroup';
@@ -10,22 +11,26 @@ import styles from '../../../sections/dashboard/widgets/WidgetRowList.module.css
 
 const FETCH_LIMIT = 500;
 
-export type RiskMatrixAxis = 'inherent' | 'residual';
+export const riskMatrixAxisSchema = z.enum(['inherent', 'residual']);
 
-export type RiskMatrixWidgetConfig = {
-  schemaName: string;
-  axis?: RiskMatrixAxis;
+export type RiskMatrixAxis = z.infer<typeof riskMatrixAxisSchema>;
+
+export const riskMatrixWidgetConfigSchema = z.object({
+  schemaName: z.string().min(1),
+  axis: riskMatrixAxisSchema.optional(),
   /** Include closed risks (default: false). */
-  includeClosed?: boolean;
+  includeClosed: z.boolean().optional(),
   /**
    * Optional facet filters on the Category / Status / Risk Owner fields. Intended to hold
    * dashboard sidebar references (e.g. `['$categories']`); an empty list, or an unresolved
    * reference, means "no filter".
    */
-  categories?: string[];
-  statuses?: string[];
-  owners?: string[];
-};
+  categories: z.array(z.string()).optional(),
+  statuses: z.array(z.string()).optional(),
+  owners: z.array(z.string()).optional()
+});
+
+export type RiskMatrixWidgetConfig = z.infer<typeof riskMatrixWidgetConfigSchema>;
 
 export const RISK_MATRIX_TYPE = 'risk-compliance-risk-matrix' as const;
 

@@ -7,7 +7,9 @@ import {
   diagramEmbedMdxRule
 } from './DiagramEmbedEditable';
 import { DiagramEmbedConfigForm } from './DiagramEmbedConfigForm';
-import type { DiagramEmbedSlateElement, DiagramEmbedWidgetConfig } from './types';
+import type { DiagramEmbedSlateElement } from './types';
+import { schemaGuard } from '../../configSchema';
+import { diagramEmbedWidgetConfigSchema } from './types';
 export default defineComponent<DiagramEmbedSlateElement, { id: string; caption?: string }, 'block'>(
   {
     type: DIAGRAM_EMBED_TYPE,
@@ -19,10 +21,7 @@ export default defineComponent<DiagramEmbedSlateElement, { id: string; caption?:
       defaultW: 6,
       defaultH: 16,
       surfaces: ['workspace', 'project'],
-      isValidConfig: (config): config is DiagramEmbedWidgetConfig =>
-        typeof config.fileId === 'string' &&
-        config.fileId.length > 0 &&
-        (config.caption === undefined || typeof config.caption === 'string')
+      isValidConfig: schemaGuard(diagramEmbedWidgetConfigSchema)
     },
     component: DiagramEmbed,
     createDefaultProps: () => ({ config: { fileId: '' } }),

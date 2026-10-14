@@ -1,10 +1,5 @@
 import { useMemo } from 'react';
-import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
-import {
-  hasWidgetRecordSource,
-  useWidgetRecords,
-  type WidgetRecordSource
-} from '../../../hooks/useEntityQueryText';
+import { hasWidgetRecordSource, useWidgetRecords } from '../../../hooks/useEntityQueryText';
 import { Table } from '../../../components/table/Table';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { useEntityDrawer } from '../../entities/entityDrawer/useEntityDrawer';
@@ -14,37 +9,38 @@ import rowStyles from './WidgetRowList.module.css';
 import styles from './GroupedRollupTableWidget.module.css';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import configFormStyles from '../WidgetConfigDialog.module.css';
+import { z } from 'zod';
+import { entityQuerySchema } from '@arch-register/api-types/entityQueryIR';
 
-export type GroupedRollupTableWidgetConfig = {
-  /** Entity-query DSL text selecting the records to roll up. */
-  query?: string;
-  /** Structured alternative to `query`; may reference dashboard sidebar `$variables`. */
-  entityQuery?: EntityQuery;
-  /** Root schema name `entityQuery`'s field names resolve against. */
-  schemaName?: string;
-  /** Field to group by. Blank lists one row per record. */
-  groupFieldId?: string;
-  /** Number or currency field summed per row. */
-  valueFieldId: string;
-  /** Column header for the group/name column. */
-  groupLabel?: string;
-  /** Column header for the value column. */
-  valueLabel?: string;
-  /** Draw each row's value relative to the largest row. */
-  showBar?: boolean;
-  /** Show each row's share of the total as a percentage. */
-  showPercent?: boolean;
-  /** Show how many records each row covers. */
-  showCount?: boolean;
-  /** Show a total row at the bottom. */
-  showTotal?: boolean;
-  limit?: number;
-};
+export const groupedRollupTableWidgetConfigSchema = z
+  .object({
+    /** Entity-query DSL text selecting the records to roll up. */
+    query: z.string().optional(),
+    /** Structured alternative to `query`; may reference dashboard sidebar `$variables`. */
+    entityQuery: entityQuerySchema.optional(),
+    /** Root schema name `entityQuery`'s field names resolve against. */
+    schemaName: z.string().optional(),
+    /** Field to group by. Blank lists one row per record. */
+    groupFieldId: z.string().optional(),
+    /** Number or currency field summed per row. */
+    valueFieldId: z.string().trim().min(1),
+    /** Column header for the group/name column. */
+    groupLabel: z.string().optional(),
+    /** Column header for the value column. */
+    valueLabel: z.string().optional(),
+    /** Draw each row's value relative to the largest row. */
+    showBar: z.boolean().optional(),
+    /** Show each row's share of the total as a percentage. */
+    showPercent: z.boolean().optional(),
+    /** Show how many records each row covers. */
+    showCount: z.boolean().optional(),
+    /** Show a total row at the bottom. */
+    showTotal: z.boolean().optional(),
+    limit: z.number().positive().optional()
+  })
+  .refine(hasWidgetRecordSource, { message: 'Needs a query or an entity query' });
 
-export const isGroupedRollupTableConfigComplete = (
-  config: GroupedRollupTableWidgetConfig
-): boolean =>
-  hasWidgetRecordSource(config as WidgetRecordSource) && config.valueFieldId.trim() !== '';
+export type GroupedRollupTableWidgetConfig = z.infer<typeof groupedRollupTableWidgetConfigSchema>;
 
 type Props = { config: GroupedRollupTableWidgetConfig };
 
@@ -52,7 +48,7 @@ type Props = { config: GroupedRollupTableWidgetConfig };
 export const GroupedRollupTableWidget = ({ config }: Props) => {
   const { workspaceSlug, schemas } = useWorkspaceContext();
   const { openEntityDrawer } = useEntityDrawer();
-  const complete = isGroupedRollupTableConfigComplete(config);
+  const complete = groupedRollupTableWidgetConfigSchema.safeParse(config).success;
   const { data, isLoading } = useWidgetRecords(workspaceSlug, complete ? config : {});
 
   const result = useMemo(() => {

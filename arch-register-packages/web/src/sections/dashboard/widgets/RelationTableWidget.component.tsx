@@ -1,10 +1,11 @@
 import { TbTable } from 'react-icons/tb';
+import { schemaGuard } from '../../markdown/mdx-components/configSchema';
 import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import {
   RELATION_TABLE_TYPE,
   RelationTableConfigForm,
   RelationTableWidget,
-  isValidConfig
+  relationTableWidgetConfigSchema
 } from './RelationTableWidget';
 
 export default defineComponent({
@@ -21,7 +22,7 @@ export default defineComponent({
     defaultH: 24,
     surfaces: ['workspace'],
     frame: { padded: false, showIcon: false },
-    isValidConfig,
+    isValidConfig: schemaGuard(relationTableWidgetConfigSchema),
     getTitle: config => config.relationSchemaName || 'Relation table'
   }
 });

@@ -1,28 +1,21 @@
+import { z } from 'zod';
 import { useNavigate } from '@tanstack/react-router';
 import { DialogSection } from '../../sections/markdown/editor/BlockDialog';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { useApplicationDashboardTarget } from '../../hooks/useApplications';
 import styles from '../../sections/dashboard/WidgetConfigDialog.module.css';
 
-export type BaseWidgetConfig = Record<string, unknown>;
-export type ListWidgetConfig = BaseWidgetConfig & { limit: number };
-export type ImpactWidgetConfig = BaseWidgetConfig & { entityId?: string };
+/** Widgets without options of their own still tolerate extra keys such as a custom title. */
+export const baseWidgetConfigSchema = z.looseObject({});
+export const listWidgetConfigSchema = z.looseObject({
+  /** Number of rows shown. */
+  limit: z.number().int().min(1).max(20)
+});
+export const impactWidgetConfigSchema = z.looseObject({ entityId: z.string().optional() });
 
-export const isValidBaseConfig = (config: Record<string, unknown>): config is BaseWidgetConfig =>
-  config !== null;
-
-export const isValidListConfig = (config: Record<string, unknown>): config is ListWidgetConfig =>
-  isValidBaseConfig(config) &&
-  typeof config.limit === 'number' &&
-  Number.isInteger(config.limit) &&
-  config.limit >= 1 &&
-  config.limit <= 20;
-
-export const isValidImpactConfig = (
-  config: Record<string, unknown>
-): config is ImpactWidgetConfig =>
-  isValidBaseConfig(config) &&
-  (config.entityId === undefined || typeof config.entityId === 'string');
+export type BaseWidgetConfig = z.infer<typeof baseWidgetConfigSchema>;
+export type ListWidgetConfig = z.infer<typeof listWidgetConfigSchema>;
+export type ImpactWidgetConfig = z.infer<typeof impactWidgetConfigSchema>;
 
 export const ListConfigForm = ({
   config,

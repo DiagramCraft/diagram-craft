@@ -10,30 +10,30 @@ import rowStyles from './WidgetRowList.module.css';
 import styles from './UpcomingByDateWidget.module.css';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import configFormStyles from '../WidgetConfigDialog.module.css';
+import { z } from 'zod';
 
 const DEFAULT_LIMIT = 7;
 
-export type UpcomingByDateWidgetConfig = {
+export const upcomingByDateWidgetConfigSchema = z.object({
   /** Entity-query DSL text selecting the records to list. */
-  query: string;
+  query: z.string().trim().min(1),
   /** Date field the list is ordered by. */
-  dateFieldId: string;
+  dateFieldId: z.string().trim().min(1),
   /** Only show records due within this many days. */
-  windowDays?: number;
+  windowDays: z.number().optional(),
   /** Also show records whose date has passed. */
-  includeOverdue?: boolean;
-  limit?: number;
+  includeOverdue: z.boolean().optional(),
+  limit: z.number().optional(),
   /** Optional field shown under the name; a reference/containment field shows the target's name. */
-  sublabelFieldId?: string;
+  sublabelFieldId: z.string().optional(),
   /** Optional number/currency field shown on the right. */
-  valueFieldId?: string;
+  valueFieldId: z.string().optional(),
   /** Countdown turns red within this many days (default 30) and orange within `warnWithinDays`. */
-  critWithinDays?: number;
-  warnWithinDays?: number;
-};
+  critWithinDays: z.number().optional(),
+  warnWithinDays: z.number().optional()
+});
 
-export const isUpcomingByDateConfigComplete = (config: UpcomingByDateWidgetConfig): boolean =>
-  config.query.trim() !== '' && config.dateFieldId.trim() !== '';
+export type UpcomingByDateWidgetConfig = z.infer<typeof upcomingByDateWidgetConfigSchema>;
 
 const TONE_COLOR = {
   normal: undefined,
@@ -47,7 +47,7 @@ type Props = { config: UpcomingByDateWidgetConfig };
 export const UpcomingByDateWidget = ({ config }: Props) => {
   const { workspaceSlug, schemas } = useWorkspaceContext();
   const { openEntityDrawer } = useEntityDrawer();
-  const complete = isUpcomingByDateConfigComplete(config);
+  const complete = upcomingByDateWidgetConfigSchema.safeParse(config).success;
   const { data, isLoading } = useQueryTextEntities(workspaceSlug, config.query, complete);
 
   const rows = useMemo(

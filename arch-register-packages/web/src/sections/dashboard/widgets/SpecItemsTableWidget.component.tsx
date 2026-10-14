@@ -1,10 +1,11 @@
 import { TbListDetails } from 'react-icons/tb';
+import { schemaGuard } from '../../markdown/mdx-components/configSchema';
 import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import {
   SPEC_ITEMS_TABLE_TYPE,
   SpecItemsTableConfigForm,
   SpecItemsTableWidget,
-  isValidConfig
+  specItemsTableWidgetConfigSchema
 } from './SpecItemsTableWidget';
 
 export default defineComponent({
@@ -22,6 +23,6 @@ export default defineComponent({
     defaultH: 24,
     surfaces: ['workspace'],
     frame: { padded: false, showIcon: false },
-    isValidConfig
+    isValidConfig: schemaGuard(specItemsTableWidgetConfigSchema)
   }
 });

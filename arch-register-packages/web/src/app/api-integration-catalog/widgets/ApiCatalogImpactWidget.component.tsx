@@ -1,6 +1,7 @@
 import { TbAffiliate } from 'react-icons/tb';
+import { schemaGuard } from '../../../sections/markdown/mdx-components/configSchema';
 import { defineComponent } from '../../../sections/markdown/mdx-components/defineComponent';
-import { isValidImpactConfig } from '../apiCatalogWidgetSupport';
+import { impactWidgetConfigSchema } from '../apiCatalogWidgetSupport';
 import { ApiCatalogImpactHeaderActions, ApiCatalogImpactWidget } from './ApiCatalogImpactWidget';
 export default defineComponent({
   type: 'api-integration-catalog-impact',
@@ -18,7 +19,7 @@ export default defineComponent({
     headerActionsComponent: ApiCatalogImpactHeaderActions,
     // BlastRadiusPanel owns its padding because it is also shared with the entity drawer.
     frame: { padded: false },
-    isValidConfig: isValidImpactConfig,
+    isValidConfig: schemaGuard(impactWidgetConfigSchema),
     getTitle: () => 'Blast radius'
   }
 });

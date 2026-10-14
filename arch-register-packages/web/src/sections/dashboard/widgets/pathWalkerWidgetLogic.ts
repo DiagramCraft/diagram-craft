@@ -1,33 +1,24 @@
+import { z } from 'zod';
 import { MAX_PATH_HOPS, type PathStep } from '@arch-register/api-types/entityQueryIR';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import { resolveRelationSchemaNames } from '../../markdown/mdx-components/blocks/entity-browser-embed/EntityBrowserEmbedFieldResolution';
-import { pathWalkerHops, hopOptionsFrom } from '../../entities/components/pathWalkerViewState';
+import { hopOptionsFrom } from '../../entities/components/pathWalkerViewState';
 import {
   pathStepKey,
   type PathStepOption
 } from '../../entities/components/pathBuilder/pathBuilderState';
+import { pathWalkerViewConfigSchema } from '@arch-register/api-types/viewContract';
 
-export type PathWalkerWidgetConfig = {
+export const pathWalkerWidgetConfigSchema = z.object({
   /** Name (or id) of the entity type listed in the first column. */
-  rootSchemaName: string;
+  rootSchemaName: z.string().min(1),
   /** The relationship chain the walker opens with; each step may name its relation schema by
    *  name, since a seed can't know workspace-specific ids. Viewers can still re-pick hops. */
-  hops?: PathStep[];
-};
+  hops: pathWalkerViewConfigSchema.shape.hops
+});
 
-export const isPathWalkerConfigValid = (
-  config: Record<string, unknown>
-): config is PathWalkerWidgetConfig =>
-  typeof config.rootSchemaName === 'string' &&
-  (config.label === undefined || typeof config.label === 'string') &&
-  (config.hops === undefined ||
-    (Array.isArray(config.hops) &&
-      config.hops.length <= MAX_PATH_HOPS &&
-      pathWalkerHops({ hops: config.hops }).length === config.hops.length));
-
-export const isPathWalkerConfigComplete = (config: PathWalkerWidgetConfig): boolean =>
-  config.rootSchemaName.length > 0;
+export type PathWalkerWidgetConfig = z.infer<typeof pathWalkerWidgetConfigSchema>;
 
 export const findRootSchema = (
   config: PathWalkerWidgetConfig,

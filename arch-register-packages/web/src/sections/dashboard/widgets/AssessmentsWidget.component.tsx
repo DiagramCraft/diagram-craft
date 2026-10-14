@@ -1,7 +1,12 @@
 import { TbClipboardCheck } from 'react-icons/tb';
 import { defineComponent } from '../../markdown/mdx-components/defineComponent';
-import type { AssessmentsWidgetConfig } from './AssessmentsWidget';
-import { ASSESSMENTS_TYPE, AssessmentsConfigForm, AssessmentsWidget } from './AssessmentsWidget';
+import {
+  ASSESSMENTS_TYPE,
+  AssessmentsConfigForm,
+  AssessmentsWidget,
+  assessmentsWidgetConfigSchema
+} from './AssessmentsWidget';
+import { schemaGuard } from '../../markdown/mdx-components/configSchema';
 export default defineComponent({
   type: ASSESSMENTS_TYPE,
   category: 'metrics',
@@ -15,15 +20,6 @@ export default defineComponent({
     defaultW: 3,
     defaultH: 12,
     surfaces: ['workspace', 'project'],
-    isValidConfig: (config): config is AssessmentsWidgetConfig =>
-      (config.mode === 'active' ||
-        config.mode === 'upcoming' ||
-        config.mode === 'overdue' ||
-        config.mode === 'all') &&
-      (config.assessmentTypeId === undefined || typeof config.assessmentTypeId === 'string') &&
-      (config.schemaNames === undefined ||
-        (Array.isArray(config.schemaNames) &&
-          config.schemaNames.every(name => typeof name === 'string'))) &&
-      (config.relativeDue === undefined || typeof config.relativeDue === 'boolean')
+    isValidConfig: schemaGuard(assessmentsWidgetConfigSchema)
   }
 });

@@ -7,7 +7,9 @@ import {
   entityViewEmbedMdxRule
 } from './EntityViewEmbedEditable';
 import { EntityViewEmbedConfigForm } from './EntityViewEmbedConfigForm';
-import type { EntityViewEmbedSlateElement, SavedViewEmbedWidgetConfig } from './types';
+import type { EntityViewEmbedSlateElement } from './types';
+import { schemaGuard } from '../../configSchema';
+import { savedViewEmbedWidgetConfigSchema } from './types';
 export default defineComponent<EntityViewEmbedSlateElement, { viewId?: string }, 'block'>({
   type: ENTITY_VIEW_EMBED_TYPE,
   category: 'data-views',
@@ -17,8 +19,7 @@ export default defineComponent<EntityViewEmbedSlateElement, { viewId?: string },
     defaultW: 6,
     defaultH: 24,
     surfaces: ['workspace', 'project'],
-    isValidConfig: (config): config is SavedViewEmbedWidgetConfig =>
-      typeof config.viewId === 'string' && config.viewId.length > 0
+    isValidConfig: schemaGuard(savedViewEmbedWidgetConfigSchema)
   },
   component: EntityViewEmbed,
   createDefaultProps: context => ({ config: { viewId: context.viewId ?? '' } }),

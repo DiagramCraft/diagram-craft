@@ -11,24 +11,31 @@ import { EntityFilterPanel, type EntityFilterValue } from '../../../components/E
 import { getMetricSourceOptions } from '../../entities/components/mapMetricConfig';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import configFormStyles from '../WidgetConfigDialog.module.css';
+import { z } from 'zod';
 
 const FETCH_LIMIT = 500;
 
-export type TopEntitiesWidgetConfig = {
-  /** Schema id. Either this or `schemaName` identifies the ranked entity type. */
-  schema: string;
-  /** Schema name, resolved against the live workspace schemas (used by seeded dashboards). */
-  schemaName?: string;
-  owner?: string;
-  lifecycle?: string;
-  fieldId: string;
-  direction: 'asc' | 'desc';
-  limit: number;
-  /** Draw each row's share of the listed total as a bar under the name. */
-  showShareBar?: boolean;
-  /** Show the "View in catalog" footer link. Default true. */
-  showLink?: boolean;
-};
+export const topEntitiesWidgetConfigSchema = z
+  .object({
+    /** Schema id. Either this or `schemaName` identifies the ranked entity type. */
+    schema: z.string().default(''),
+    /** Schema name, resolved against the live workspace schemas (used by seeded dashboards). */
+    schemaName: z.string().optional().optional(),
+    owner: z.string().optional(),
+    lifecycle: z.string().optional(),
+    fieldId: z.string().min(1),
+    direction: z.enum(['asc', 'desc']),
+    limit: z.number().positive(),
+    /** Draw each row's share of the listed total as a bar under the name. */
+    showShareBar: z.boolean().optional(),
+    /** Show the "View in catalog" footer link. Default true. */
+    showLink: z.boolean().optional()
+  })
+  .refine(config => config.schema.length > 0 || !!config.schemaName, {
+    message: 'Needs a schema or a schema name'
+  });
+
+export type TopEntitiesWidgetConfig = z.infer<typeof topEntitiesWidgetConfigSchema>;
 
 type Props = {
   config: TopEntitiesWidgetConfig;

@@ -5,15 +5,13 @@
  */
 import { TbPercentage } from 'react-icons/tb';
 import { defineComponent } from '../../markdown/mdx-components/defineComponent';
-import { isQueryStatConfig } from './aggregateStatQuery';
-import type { AggregateStatWidgetConfig } from './AggregateStatWidget';
 import {
   AGGREGATE_STAT_TYPE,
   AggregateStatConfigForm,
   AggregateStatWidget,
-  isValidLegacyCore,
-  isValidQueryStatConfig
+  aggregateStatWidgetConfigSchema
 } from './AggregateStatWidget';
+import { schemaGuard } from '../../markdown/mdx-components/configSchema';
 export default defineComponent({
   type: AGGREGATE_STAT_TYPE,
   category: 'metrics',
@@ -29,10 +27,6 @@ export default defineComponent({
     defaultH: 8,
     surfaces: ['workspace', 'project'],
     frame: { hideOutsideEdit: true, padded: false, showIcon: false },
-    isValidConfig: (config): config is AggregateStatWidgetConfig =>
-      (isQueryStatConfig(config) ? isValidQueryStatConfig(config) : isValidLegacyCore(config)) &&
-      (config.owner === undefined || typeof config.owner === 'string') &&
-      (config.lifecycle === undefined || typeof config.lifecycle === 'string') &&
-      (config.showLink === undefined || typeof config.showLink === 'boolean')
+    isValidConfig: schemaGuard(aggregateStatWidgetConfigSchema)
   }
 });

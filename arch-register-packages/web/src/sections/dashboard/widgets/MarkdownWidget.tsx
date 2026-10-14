@@ -4,10 +4,13 @@ import styles from './MarkdownWidget.module.css';
 
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import configFormStyles from '../WidgetConfigDialog.module.css';
+import { z } from 'zod';
 
-export type MarkdownWidgetConfig = {
-  markdown: string;
-};
+export const markdownWidgetConfigSchema = z.object({
+  markdown: z.string()
+});
+
+export type MarkdownWidgetConfig = z.infer<typeof markdownWidgetConfigSchema>;
 
 type Props = {
   config: MarkdownWidgetConfig;

@@ -1,7 +1,10 @@
+import { z } from 'zod';
 import { bucketByPeriod } from '../../../utils/calendarBuckets';
 import { sumMeasured } from './fieldAggregation';
 
-export type CalendarPeriod = 'month' | 'week';
+export const calendarPeriodSchema = z.enum(['month', 'week']);
+
+export type CalendarPeriod = z.infer<typeof calendarPeriodSchema>;
 
 export type DateCalendarCell<T> = {
   key: string;

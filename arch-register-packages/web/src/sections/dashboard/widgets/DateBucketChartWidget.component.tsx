@@ -5,10 +5,9 @@ import {
   DateBucketChartConfigForm,
   DateBucketChartHeaderActions,
   DateBucketChartWidget,
-  DateBucketChartWidgetConfig,
-  isDateBucketChartConfigComplete
+  dateBucketChartWidgetConfigSchema
 } from './DateBucketChartWidget';
-import { isOptionalNumber } from '../../markdown/mdx-components/configGuards';
+import { schemaGuard } from '../../markdown/mdx-components/configSchema';
 
 export default defineComponent({
   type: DATE_BUCKET_CHART_TYPE,
@@ -25,13 +24,6 @@ export default defineComponent({
     defaultH: 12,
     surfaces: ['workspace'],
     headerActionsComponent: DateBucketChartHeaderActions,
-    isValidConfig: (config): config is DateBucketChartWidgetConfig =>
-      typeof config.query === 'string' &&
-      typeof config.dateFieldId === 'string' &&
-      (config.measureFieldId === undefined || typeof config.measureFieldId === 'string') &&
-      isOptionalNumber(config.bucketCount) &&
-      isOptionalNumber(config.urgentWithinDays) &&
-      (config.foldOverdue === undefined || typeof config.foldOverdue === 'boolean') &&
-      isDateBucketChartConfigComplete(config as DateBucketChartWidgetConfig)
+    isValidConfig: schemaGuard(dateBucketChartWidgetConfigSchema)
   }
 });

@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import { scalarValues } from '../../../lib/scalarFieldValues';
@@ -72,7 +73,12 @@ export const compareRelationValues = (a: string | number | null, b: string | num
 
 /** A multi-select filter on one relation field; typically `values: ['$variable']` bound to a
  *  `facets` sidebar. An empty `values` list means "no constraint". */
-export type RelationFacetFilter = { fieldId: string; values: string[] };
+export const relationFacetFilterSchema = z.object({
+  fieldId: z.string(),
+  values: z.array(z.string())
+});
+
+export type RelationFacetFilter = z.infer<typeof relationFacetFilterSchema>;
 
 /**
  * AND-s `in` predicates for each non-empty facet filter onto `query`. `fieldId` is a field id or

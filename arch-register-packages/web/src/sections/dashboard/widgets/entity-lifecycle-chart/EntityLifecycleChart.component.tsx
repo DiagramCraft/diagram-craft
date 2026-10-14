@@ -1,4 +1,5 @@
 import { TbChartDonut2 } from 'react-icons/tb';
+import { noOptionsConfigSchema, schemaGuard } from '../../../markdown/mdx-components/configSchema';
 import { defineComponent } from '../../../markdown/mdx-components/defineComponent';
 import { EntityLifecycleChart } from './EntityLifecycleChart';
 
@@ -19,6 +20,6 @@ export default defineComponent({
     defaultW: 6,
     defaultH: 24,
     surfaces: ['workspace'],
-    isValidConfig: (_config): _config is Record<string, never> => true
+    isValidConfig: schemaGuard(noOptionsConfigSchema)
   }
 });

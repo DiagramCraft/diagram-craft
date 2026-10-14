@@ -4,10 +4,9 @@ import {
   UPCOMING_BY_DATE_TYPE,
   UpcomingByDateConfigForm,
   UpcomingByDateWidget,
-  UpcomingByDateWidgetConfig,
-  isUpcomingByDateConfigComplete
+  upcomingByDateWidgetConfigSchema
 } from './UpcomingByDateWidget';
-import { isOptionalNumber, isOptionalString } from '../../markdown/mdx-components/configGuards';
+import { schemaGuard } from '../../markdown/mdx-components/configSchema';
 
 export default defineComponent({
   type: UPCOMING_BY_DATE_TYPE,
@@ -23,16 +22,6 @@ export default defineComponent({
     defaultW: 6,
     defaultH: 16,
     surfaces: ['workspace'],
-    isValidConfig: (config): config is UpcomingByDateWidgetConfig =>
-      typeof config.query === 'string' &&
-      typeof config.dateFieldId === 'string' &&
-      isOptionalNumber(config.windowDays) &&
-      isOptionalNumber(config.limit) &&
-      isOptionalNumber(config.critWithinDays) &&
-      isOptionalNumber(config.warnWithinDays) &&
-      isOptionalString(config.sublabelFieldId) &&
-      isOptionalString(config.valueFieldId) &&
-      (config.includeOverdue === undefined || typeof config.includeOverdue === 'boolean') &&
-      isUpcomingByDateConfigComplete(config as UpcomingByDateWidgetConfig)
+    isValidConfig: schemaGuard(upcomingByDateWidgetConfigSchema)
   }
 });

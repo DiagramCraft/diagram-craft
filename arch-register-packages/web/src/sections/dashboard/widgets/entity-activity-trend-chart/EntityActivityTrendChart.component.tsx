@@ -2,8 +2,8 @@ import { TbChartLine } from 'react-icons/tb';
 import { defineComponent } from '../../../markdown/mdx-components/defineComponent';
 import { EntityActivityTrendChart } from './EntityActivityTrendChart';
 import { EntityActivityTrendChartDashboardConfigForm } from './EntityActivityTrendChartDashboardConfigForm';
-import type { EntityActivityTrendChartProps } from './types';
-import { hasOptionalInteger } from '../../../markdown/mdx-components/configGuards';
+import { schemaGuard } from '../../../markdown/mdx-components/configSchema';
+import { entityActivityTrendChartPropsSchema } from './types';
 
 export const ENTITY_ACTIVITY_TREND_CHART_TYPE = 'entity-activity-trend-chart' as const;
 
@@ -23,7 +23,6 @@ export default defineComponent({
     defaultW: 6,
     defaultH: 24,
     surfaces: ['workspace'],
-    isValidConfig: (config): config is EntityActivityTrendChartProps =>
-      hasOptionalInteger(config, 'lookbackDays')
+    isValidConfig: schemaGuard(entityActivityTrendChartPropsSchema)
   }
 });

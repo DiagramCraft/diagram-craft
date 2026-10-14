@@ -4,13 +4,13 @@
  */
 import { TbListNumbers } from 'react-icons/tb';
 import { defineComponent } from '../../markdown/mdx-components/defineComponent';
-import type { TopEntitiesWidgetConfig } from './TopEntitiesWidget';
 import {
   TOP_ENTITIES_TYPE,
   TopEntitiesConfigForm,
   TopEntitiesWidget,
-  isDirection
+  topEntitiesWidgetConfigSchema
 } from './TopEntitiesWidget';
+import { schemaGuard } from '../../markdown/mdx-components/configSchema';
 export default defineComponent({
   type: TOP_ENTITIES_TYPE,
   category: 'data-views',
@@ -24,17 +24,6 @@ export default defineComponent({
     defaultW: 4,
     defaultH: 16,
     surfaces: ['workspace', 'project'],
-    isValidConfig: (config): config is TopEntitiesWidgetConfig =>
-      ((typeof config.schema === 'string' && config.schema.length > 0) ||
-        (typeof config.schemaName === 'string' && config.schemaName.length > 0)) &&
-      typeof config.fieldId === 'string' &&
-      config.fieldId.length > 0 &&
-      isDirection(config.direction) &&
-      typeof config.limit === 'number' &&
-      config.limit > 0 &&
-      (config.owner === undefined || typeof config.owner === 'string') &&
-      (config.lifecycle === undefined || typeof config.lifecycle === 'string') &&
-      (config.showLink === undefined || typeof config.showLink === 'boolean') &&
-      (config.showShareBar === undefined || typeof config.showShareBar === 'boolean')
+    isValidConfig: schemaGuard(topEntitiesWidgetConfigSchema)
   }
 });

@@ -10,7 +10,8 @@ import {
   renderStatSubtext,
   statNumericValue,
   statTone,
-  type AggregateStatSeverity
+  aggregateStatDisplaySchema,
+  aggregateStatSeveritySchema
 } from './aggregateStatQuery';
 import { countDistinctValues, formatMeasured, sumMeasured } from './fieldAggregation';
 import styles from './AggregateStatWidget.module.css';
@@ -24,34 +25,57 @@ import { useQueryTextCount } from '../../../hooks/useEntityQueryText';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import type { AggregateStatDisplay } from './aggregateStatQuery';
 import configFormStyles from '../WidgetConfigDialog.module.css';
-import { isOptionalString } from '../../markdown/mdx-components/configGuards';
+import { z } from 'zod';
+import { filterConditionSchema } from '@arch-register/api-types/viewContract';
 
-export type AggregateStatWidgetConfig = {
-  /** Query-mode: entity-query DSL text whose matching-record count is the stat's value. */
-  query?: string;
-  /** Query-mode: when set, `percent`/`ofTotal` divide `query`'s count by this query's count. */
-  denominatorQuery?: string;
-  display?: AggregateStatDisplay;
-  /**
-   * Query-mode: `count` (default) shows the number of matching records; `sum` shows the total of
-   * `sumFieldId` (a number or currency field) across them. Independently, `{subSum}` in
-   * `subtextTemplate` is the `sumFieldId` total over `subtextQuery`'s records. `countDistinct`
-   * shows how many distinct values `distinctFieldId` takes across the matching records. With
-   * `display: 'percent'`, `sum` divides `query`'s sum by `denominatorQuery`'s sum.
-   */
-  measure?: 'count' | 'sum' | 'countDistinct';
-  sumFieldId?: string;
-  distinctFieldId?: string;
-  /** Query-mode: optional second count, available as `{sub}` in `subtextTemplate`. */
-  subtextQuery?: string;
-  subtextTemplate?: string;
-  severity?: AggregateStatSeverity;
-  schema?: string;
-  owner?: string;
-  lifecycle?: string;
-  numeratorCondition?: FilterCondition;
-  showLink?: boolean;
-};
+export const aggregateStatWidgetConfigSchema = z
+  .object({
+    /** Query-mode: entity-query DSL text whose matching-record count is the stat's value. */
+    query: z.string().optional(),
+    /** Query-mode: when set, `percent`/`ofTotal` divide `query`'s count by this query's count. */
+    denominatorQuery: z.string().optional(),
+    display: aggregateStatDisplaySchema.optional(),
+    /**
+     * Query-mode: `count` (default) shows the number of matching records; `sum` shows the total of
+     * `sumFieldId` (a number or currency field) across them. Independently, `{subSum}` in
+     * `subtextTemplate` is the `sumFieldId` total over `subtextQuery`'s records. `countDistinct`
+     * shows how many distinct values `distinctFieldId` takes across the matching records. With
+     * `display: 'percent'`, `sum` divides `query`'s sum by `denominatorQuery`'s sum.
+     */
+    measure: z.enum(['count', 'sum', 'countDistinct']).optional(),
+    sumFieldId: z.string().optional(),
+    distinctFieldId: z.string().optional(),
+    /** Query-mode: optional second count, available as `{sub}` in `subtextTemplate`. */
+    subtextQuery: z.string().optional(),
+    subtextTemplate: z.string().optional(),
+    severity: aggregateStatSeveritySchema.optional(),
+    /** Legacy mode: the schema whose entities are counted. */
+    schema: z.string().optional(),
+    owner: z.string().optional(),
+    lifecycle: z.string().optional(),
+    /** Legacy mode: the entities matching this condition form the numerator. */
+    numeratorCondition: filterConditionSchema.optional(),
+    showLink: z.boolean().optional()
+  })
+  .superRefine((config, ctx) => {
+    const require = (condition: boolean, path: string, message: string) => {
+      if (!condition) ctx.addIssue({ code: 'custom', path: [path], message });
+    };
+
+    if (isQueryStatConfig(config)) {
+      require(config.measure !== 'sum' || !!config.sumFieldId, 'sumFieldId', 'A sum needs a field');
+      require(config.measure !== 'countDistinct' ||
+        !!config.distinctFieldId, 'distinctFieldId', 'A distinct count needs a field');
+      const needsDenominator = config.display === 'percent' || config.display === 'ofTotal';
+      require(!needsDenominator ||
+        !!config.denominatorQuery?.trim(), 'denominatorQuery', 'A percentage needs a denominator query');
+    } else {
+      require(!!config.schema, 'schema', 'Needs a schema or a query');
+      require(!!config.numeratorCondition?.fieldId, 'numeratorCondition', 'Needs a numerator');
+    }
+  });
+
+export type AggregateStatWidgetConfig = z.infer<typeof aggregateStatWidgetConfigSchema>;
 
 type Props = {
   config: AggregateStatWidgetConfig;
@@ -574,66 +598,3 @@ const LegacyAggregateStatConfigForm = ({ config, onChange }: AggregateStatConfig
 };
 
 export const AGGREGATE_STAT_TYPE = 'AggregateStat' as const;
-
-const FILTER_OPS = [
-  'equals',
-  'not_equals',
-  'contains',
-  'starts_with',
-  'ends_with',
-  'empty',
-  'not_empty',
-  'before',
-  'after',
-  'on',
-  'gt',
-  'lt',
-  'gte',
-  'lte'
-];
-
-const isValidNumeratorCondition = (value: unknown): boolean => {
-  if (value == null || typeof value !== 'object') return false;
-  const candidate = value as Record<string, unknown>;
-  return (
-    typeof candidate.fieldId === 'string' &&
-    candidate.fieldId.length > 0 &&
-    typeof candidate.op === 'string' &&
-    FILTER_OPS.includes(candidate.op)
-  );
-};
-
-export const isValidLegacyCore = (config: Record<string, unknown>): boolean =>
-  typeof config.schema === 'string' &&
-  config.schema.length > 0 &&
-  isValidNumeratorCondition(config.numeratorCondition);
-
-export const isValidQueryStatConfig = (config: Record<string, unknown>): boolean => {
-  const display = config.display;
-  const severity = config.severity;
-  const needsDenominator = display === 'percent' || display === 'ofTotal';
-  const measure = config.measure;
-  return (
-    (measure === undefined ||
-      measure === 'count' ||
-      (measure === 'sum' && typeof config.sumFieldId === 'string' && config.sumFieldId !== '') ||
-      (measure === 'countDistinct' &&
-        typeof config.distinctFieldId === 'string' &&
-        config.distinctFieldId !== '')) &&
-    isOptionalString(config.sumFieldId) &&
-    isOptionalString(config.distinctFieldId) &&
-    (display === undefined || display === 'count' || needsDenominator) &&
-    isOptionalString(config.denominatorQuery) &&
-    (!needsDenominator ||
-      (typeof config.denominatorQuery === 'string' && config.denominatorQuery.trim() !== '')) &&
-    isOptionalString(config.subtextQuery) &&
-    isOptionalString(config.subtextTemplate) &&
-    (severity === undefined ||
-      (typeof severity === 'object' &&
-        severity !== null &&
-        ['warnAt', 'critAt'].every(key => {
-          const v = (severity as Record<string, unknown>)[key];
-          return v === undefined || typeof v === 'number';
-        })))
-  );
-};

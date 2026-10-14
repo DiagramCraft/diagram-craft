@@ -3,8 +3,9 @@ import { defineComponent } from '../../defineComponent';
 import { EntityCard } from './EntityCard';
 import { ENTITY_CARD_TYPE, EntityCardEditable, entityCardMdxRule } from './EntityCardEditable';
 import { EntityCardConfigForm } from './EntityCardConfigForm';
-import type { EntityCardSlateElement, EntityCardWidgetConfig } from './types';
-import { hasOptionalString } from '../../configGuards';
+import type { EntityCardSlateElement } from './types';
+import { schemaGuard } from '../../configSchema';
+import { entityCardWidgetConfigSchema } from './types';
 
 export default defineComponent<EntityCardSlateElement, { id: string; fields?: string }, 'block'>({
   type: ENTITY_CARD_TYPE,
@@ -16,10 +17,7 @@ export default defineComponent<EntityCardSlateElement, { id: string; fields?: st
     defaultW: 3,
     defaultH: 8,
     surfaces: ['workspace', 'project'],
-    isValidConfig: (config): config is EntityCardWidgetConfig =>
-      typeof config.entityId === 'string' &&
-      config.entityId.length > 0 &&
-      hasOptionalString(config, 'fields')
+    isValidConfig: schemaGuard(entityCardWidgetConfigSchema)
   },
   component: EntityCard,
   createDefaultProps: () => ({ config: { entityId: '' } }),

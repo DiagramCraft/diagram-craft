@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import { useNavigate } from '@tanstack/react-router';
 import { DialogSection } from '../../sections/markdown/editor/BlockDialog';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
@@ -12,7 +13,6 @@ import {
   CASE_WIDGET_SCOPES,
   effectiveCaseKinds,
   filterByCaseKinds,
-  isStringArray,
   type CaseCountTone,
   type CaseWidgetScope
 } from './dataStewardshipDashboardLogic';
@@ -53,31 +53,21 @@ export const TONE_COLOR: Record<CaseCountTone, string | undefined> = {
  * Governance-case widgets share scope and case-kind filters. The schema to join
  * against is resolved by name so dashboard configs remain portable.
  */
-export type TitleConfig = Record<string, unknown>;
-export type CaseConfig = TitleConfig & { scope: CaseWidgetScope; caseKinds: string[] };
-export type CaseCountConfig = CaseConfig & {
-  tone: CaseCountTone;
+export const caseConfigSchema = z.looseObject({
+  scope: z.enum(CASE_WIDGET_SCOPES),
+  caseKinds: z.array(z.string())
+});
+export const caseCountConfigSchema = caseConfigSchema.extend({
+  tone: z.enum(CASE_COUNT_TONES),
   /** May contain `{count}` and `{due}` (items due within `dueWithinDays`). */
-  subtextTemplate: string;
-  dueWithinDays: number;
-};
-export type ReviewsOverdueConfig = TitleConfig & { subtextTemplate: string };
+  subtextTemplate: z.string(),
+  dueWithinDays: z.number()
+});
+export const reviewsOverdueConfigSchema = z.looseObject({ subtextTemplate: z.string() });
 
-export const isCaseConfig = (config: Record<string, unknown>): config is CaseConfig =>
-  typeof config === 'object' &&
-  CASE_WIDGET_SCOPES.includes(config.scope as CaseWidgetScope) &&
-  isStringArray(config.caseKinds);
-
-export const isCaseCountConfig = (config: Record<string, unknown>): config is CaseCountConfig =>
-  isCaseConfig(config) &&
-  CASE_COUNT_TONES.includes(config.tone as CaseCountTone) &&
-  typeof config.subtextTemplate === 'string' &&
-  typeof config.dueWithinDays === 'number';
-
-export const isReviewsOverdueConfig = (
-  config: Record<string, unknown>
-): config is ReviewsOverdueConfig =>
-  typeof config === 'object' && typeof config.subtextTemplate === 'string';
+export type CaseConfig = z.infer<typeof caseConfigSchema>;
+export type CaseCountConfig = z.infer<typeof caseCountConfigSchema>;
+export type ReviewsOverdueConfig = z.infer<typeof reviewsOverdueConfigSchema>;
 
 export const useDataStewardshipConfig = () => {
   const { workspaceSlug, schemas } = useWorkspaceContext();

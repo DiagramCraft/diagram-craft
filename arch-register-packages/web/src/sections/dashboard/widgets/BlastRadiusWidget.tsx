@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { z } from 'zod';
 
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import { EmptyState } from '../../../components/EmptyState';
@@ -13,10 +14,12 @@ import { BlastRadiusPanel } from '../../entities/components/BlastRadiusPanel';
 export const BLAST_RADIUS_WIDGET_TYPE = 'blast-radius';
 
 // `entityId` is the entity's public id, as chosen in the EntityPicker.
-type BlastRadiusWidgetConfig = Record<string, unknown> & { entityId?: string };
+export const blastRadiusWidgetConfigSchema = z.object({
+  /** Public id of the entity to start from; usually a sidebar variable reference. */
+  entityId: z.string().optional()
+});
 
-export const isValidConfig = (config: Record<string, unknown>): config is BlastRadiusWidgetConfig =>
-  config.entityId === undefined || typeof config.entityId === 'string';
+type BlastRadiusWidgetConfig = z.infer<typeof blastRadiusWidgetConfigSchema>;
 
 export const BlastRadiusWidget = ({ config }: { config: BlastRadiusWidgetConfig }) => {
   const { workspaceSlug } = useWorkspaceContext();

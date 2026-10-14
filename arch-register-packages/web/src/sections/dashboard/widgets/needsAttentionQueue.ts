@@ -7,6 +7,7 @@ import type {
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import { useGovernanceCases, useGovernanceTasks } from '../../../hooks/useGovernance';
 import { entityDetailQuery } from '../../../queries/entities';
+import { z } from 'zod';
 
 /**
  * The join/filter/severity logic shared by every "needs attention" governance-case queue in the
@@ -15,14 +16,18 @@ import { entityDetailQuery } from '../../../queries/entities';
  * built queues (#3466) — both joined each case's `subjectId` against its full entity detail via
  * `entityDetailQuery` and filtered to `entity._schema?.id === schemaId` the same way.
  */
-export type NeedsAttentionScope = 'workspace' | 'mine' | 'late';
+export const needsAttentionScopeSchema = z.enum(['workspace', 'mine', 'late']);
+
+export type NeedsAttentionScope = z.infer<typeof needsAttentionScopeSchema>;
 
 /**
  * `'none'` — no derived priority (a bare list of open cases). `'due-date'` — priority derived from
  * a case's `dueAt`/`escalatedAt`, since `governanceCaseSchema` has no priority/severity field of
  * its own.
  */
-export type NeedsAttentionSeverity = 'none' | 'due-date';
+export const needsAttentionSeveritySchema = z.enum(['none', 'due-date']);
+
+export type NeedsAttentionSeverity = z.infer<typeof needsAttentionSeveritySchema>;
 
 export type NeedsAttentionPriority = 'high' | 'medium' | 'low';
 

@@ -3,8 +3,7 @@ import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import {
   findRootSchema,
-  isPathWalkerConfigComplete,
-  isPathWalkerConfigValid,
+  pathWalkerWidgetConfigSchema,
   resolveWalkerHops
 } from './pathWalkerWidgetLogic';
 
@@ -14,26 +13,22 @@ const hop = (relationSchemaId: string) => ({
   direction: 'in' as const
 });
 
-describe('isPathWalkerConfigValid', () => {
+const isValid = (config: unknown) => pathWalkerWidgetConfigSchema.safeParse(config).success;
+
+describe('pathWalkerWidgetConfigSchema', () => {
   it('accepts a root schema with or without hops', () => {
-    expect(isPathWalkerConfigValid({ rootSchemaName: 'Objective' })).toBe(true);
-    expect(isPathWalkerConfigValid({ rootSchemaName: 'Objective', hops: [hop('Rel')] })).toBe(true);
+    expect(isValid({ rootSchemaName: 'Objective' })).toBe(true);
+    expect(isValid({ rootSchemaName: 'Objective', hops: [hop('Rel')] })).toBe(true);
   });
 
   it('rejects wrong types and malformed hops', () => {
-    expect(isPathWalkerConfigValid({})).toBe(false);
-    expect(isPathWalkerConfigValid({ rootSchemaName: 'Objective', hops: 'x' })).toBe(false);
-    expect(isPathWalkerConfigValid({ rootSchemaName: 'Objective', hops: [{ kind: 'nope' }] })).toBe(
-      false
-    );
-    expect(isPathWalkerConfigValid({ rootSchemaName: 'Objective', label: 3 })).toBe(false);
+    expect(isValid({})).toBe(false);
+    expect(isValid({ rootSchemaName: 'Objective', hops: 'x' })).toBe(false);
+    expect(isValid({ rootSchemaName: 'Objective', hops: [{ kind: 'nope' }] })).toBe(false);
   });
-});
 
-describe('isPathWalkerConfigComplete', () => {
   it('requires a root schema', () => {
-    expect(isPathWalkerConfigComplete({ rootSchemaName: '' })).toBe(false);
-    expect(isPathWalkerConfigComplete({ rootSchemaName: 'Objective' })).toBe(true);
+    expect(isValid({ rootSchemaName: '' })).toBe(false);
   });
 });
 

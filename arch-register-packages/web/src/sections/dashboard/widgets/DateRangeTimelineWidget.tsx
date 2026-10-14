@@ -8,12 +8,7 @@ import {
   type TimelineColumnWidths
 } from '../../../components/timeline/timelineUtils';
 import { useDateTimeFormatPreference } from '../../../hooks/useDateTimeFormatPreference';
-import {
-  hasWidgetRecordSource,
-  useWidgetRecords,
-  type WidgetRecordSource
-} from '../../../hooks/useEntityQueryText';
-import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
+import { hasWidgetRecordSource, useWidgetRecords } from '../../../hooks/useEntityQueryText';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { formatDate } from '../../../utils/dateFormat';
 import { useEntityDrawer } from '../../entities/entityDrawer/useEntityDrawer';
@@ -26,38 +21,39 @@ import rowStyles from './WidgetRowList.module.css';
 import styles from './DateRangeTimelineWidget.module.css';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import configFormStyles from '../WidgetConfigDialog.module.css';
+import { z } from 'zod';
+import { entityQuerySchema } from '@arch-register/api-types/entityQueryIR';
 
 const LABEL_WIDTH = 220;
 const COLUMN_WIDTHS: TimelineColumnWidths = { month: 72, quarter: 100, year: 136 };
 // Minimum on-screen bar width (px) so a very short range is still clickable/visible.
 const MIN_BAR_WIDTH = 6;
 
-export type DateRangeTimelineWidgetConfig = {
-  /** Entity-query DSL text selecting the records to plot. */
-  query?: string;
-  /** Structured alternative to `query`; may reference dashboard sidebar `$variables`. */
-  entityQuery?: EntityQuery;
-  /** Root schema name `entityQuery`'s field names resolve against. */
-  schemaName?: string;
-  startFieldId: string;
-  endFieldId: string;
-  /** Optional field shown under the name; a reference/containment field shows the target's name. */
-  sublabelFieldId?: string;
-  /** Optional number/currency field shown inside each bar. */
-  valueFieldId?: string;
-  /** Duration field (or number of days) giving a marker that many days before the end date, e.g. a notice period. */
-  markerOffsetFieldId?: string;
-  /** Boolean field that must be true for the marker to be drawn. */
-  markerWhenFieldId?: string;
-  /** Bar turns red when ended (or ending within `critWithinDays`) and orange within `warnWithinDays`. */
-  critWithinDays?: number;
-  warnWithinDays?: number;
-};
+export const dateRangeTimelineWidgetConfigSchema = z
+  .object({
+    /** Entity-query DSL text selecting the records to plot. */
+    query: z.string().optional(),
+    /** Structured alternative to `query`; may reference dashboard sidebar `$variables`. */
+    entityQuery: entityQuerySchema.optional(),
+    /** Root schema name `entityQuery`'s field names resolve against. */
+    schemaName: z.string().optional(),
+    startFieldId: z.string().trim().min(1),
+    endFieldId: z.string().trim().min(1),
+    /** Optional field shown under the name; a reference/containment field shows the target's name. */
+    sublabelFieldId: z.string().optional(),
+    /** Optional number/currency field shown inside each bar. */
+    valueFieldId: z.string().optional(),
+    /** Duration field (or number of days) giving a marker that many days before the end date, e.g. a notice period. */
+    markerOffsetFieldId: z.string().optional(),
+    /** Boolean field that must be true for the marker to be drawn. */
+    markerWhenFieldId: z.string().optional(),
+    /** Bar turns red when ended (or ending within `critWithinDays`) and orange within `warnWithinDays`. */
+    critWithinDays: z.number().optional(),
+    warnWithinDays: z.number().optional()
+  })
+  .refine(hasWidgetRecordSource, { message: 'Needs a query or an entity query' });
 
-export const isDateRangeTimelineConfigComplete = (config: DateRangeTimelineWidgetConfig): boolean =>
-  hasWidgetRecordSource(config as WidgetRecordSource) &&
-  config.startFieldId.trim() !== '' &&
-  config.endFieldId.trim() !== '';
+export type DateRangeTimelineWidgetConfig = z.infer<typeof dateRangeTimelineWidgetConfigSchema>;
 
 const TONE_COLOR = {
   normal: 'var(--cmp-fg-success, #22c55e)',
@@ -72,7 +68,7 @@ export const DateRangeTimelineWidget = ({ config }: Props) => {
   const { workspaceSlug } = useWorkspaceContext();
   const { openEntityDrawer } = useEntityDrawer();
   const dateTimeFormatPreference = useDateTimeFormatPreference();
-  const complete = isDateRangeTimelineConfigComplete(config);
+  const complete = dateRangeTimelineWidgetConfigSchema.safeParse(config).success;
   const { data, isLoading } = useWidgetRecords(workspaceSlug, complete ? config : {});
   const today = useMemo(() => new Date(), []);
 

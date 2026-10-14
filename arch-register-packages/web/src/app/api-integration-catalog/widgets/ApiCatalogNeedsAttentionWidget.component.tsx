@@ -1,6 +1,7 @@
 import { TbAlertTriangle } from 'react-icons/tb';
+import { schemaGuard } from '../../../sections/markdown/mdx-components/configSchema';
 import { defineComponent } from '../../../sections/markdown/mdx-components/defineComponent';
-import { isValidListConfig, ListConfigForm } from '../apiCatalogWidgetSupport';
+import { listWidgetConfigSchema, ListConfigForm } from '../apiCatalogWidgetSupport';
 import {
   ApiCatalogNeedsAttentionHeaderActions,
   ApiCatalogNeedsAttentionWidget
@@ -20,6 +21,6 @@ export default defineComponent({
     surfaces: ['workspace'],
     headerActionsComponent: ApiCatalogNeedsAttentionHeaderActions,
     frame: { padded: false, showIcon: false },
-    isValidConfig: isValidListConfig
+    isValidConfig: schemaGuard(listWidgetConfigSchema)
   }
 });

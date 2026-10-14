@@ -1,6 +1,7 @@
 import { TbPlugConnected } from 'react-icons/tb';
+import { schemaGuard } from '../../../sections/markdown/mdx-components/configSchema';
 import { defineComponent } from '../../../sections/markdown/mdx-components/defineComponent';
-import { isValidListConfig, ListConfigForm } from '../apiCatalogWidgetSupport';
+import { listWidgetConfigSchema, ListConfigForm } from '../apiCatalogWidgetSupport';
 import { ApiCatalogAtRiskHeaderActions, ApiCatalogAtRiskWidget } from './ApiCatalogAtRiskWidget';
 export default defineComponent({
   type: 'api-integration-catalog-at-risk',
@@ -17,6 +18,6 @@ export default defineComponent({
     surfaces: ['workspace'],
     headerActionsComponent: ApiCatalogAtRiskHeaderActions,
     frame: { padded: false, showIcon: false },
-    isValidConfig: isValidListConfig
+    isValidConfig: schemaGuard(listWidgetConfigSchema)
   }
 });

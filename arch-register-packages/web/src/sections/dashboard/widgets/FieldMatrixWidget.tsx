@@ -1,48 +1,42 @@
 import { useMemo } from 'react';
-import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
-import {
-  hasWidgetRecordSource,
-  useWidgetRecords,
-  type WidgetRecordSource
-} from '../../../hooks/useEntityQueryText';
+import { hasWidgetRecordSource, useWidgetRecords } from '../../../hooks/useEntityQueryText';
 import { MatrixGrid } from '../../../components/MatrixGrid';
 import { toneColor } from '../../../components/bandColor';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { useEntityDrawer } from '../../entities/entityDrawer/useEntityDrawer';
-import { buildFieldMatrixCells, type FieldMatrixBand } from './fieldMatrixLogic';
+import { buildFieldMatrixCells, fieldMatrixBandSchema } from './fieldMatrixLogic';
 import rowStyles from './WidgetRowList.module.css';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import configFormStyles from '../WidgetConfigDialog.module.css';
+import { z } from 'zod';
+import { entityQuerySchema } from '@arch-register/api-types/entityQueryIR';
 
-export type FieldMatrixWidgetConfig = {
-  /** Entity-query DSL text selecting the records to place. */
-  query?: string;
-  /** Structured alternative to `query`; may reference dashboard sidebar `$variables`. */
-  entityQuery?: EntityQuery;
-  /** Root schema name `entityQuery`'s field names resolve against. */
-  schemaName?: string;
-  /** Numeric field whose value picks the row. */
-  rowFieldId: string;
-  /** Row values, in display order (top to bottom). */
-  rows: number[];
-  /** Numeric field whose value picks the column band. */
-  valueFieldId: string;
-  /** Column bands, ascending by `min`. */
-  bands: FieldMatrixBand[];
-  /** Emphasise cells in `hot` bands for rows at or above this value. */
-  hotRowMin?: number;
-  /** Corner label, e.g. "criticality ↓ / risk →". */
-  cornerLabel?: string;
-  /** Show the widget frame (border, title) around the matrix; defaults to true. */
-  showFrame?: boolean;
-};
+export const fieldMatrixWidgetConfigSchema = z
+  .object({
+    /** Entity-query DSL text selecting the records to place. */
+    query: z.string().optional(),
+    /** Structured alternative to `query`; may reference dashboard sidebar `$variables`. */
+    entityQuery: entityQuerySchema.optional(),
+    /** Root schema name `entityQuery`'s field names resolve against. */
+    schemaName: z.string().optional(),
+    /** Numeric field whose value picks the row. */
+    rowFieldId: z.string().trim().min(1),
+    /** Row values, in display order (top to bottom). */
+    rows: z.array(z.number()).min(1),
+    /** Numeric field whose value picks the column band. */
+    valueFieldId: z.string().trim().min(1),
+    /** Column bands, ascending by `min`. */
+    bands: z.array(fieldMatrixBandSchema).min(1),
+    /** Emphasise cells in `hot` bands for rows at or above this value. */
+    hotRowMin: z.number().optional(),
+    /** Corner label, e.g. "criticality ↓ / risk →". */
+    cornerLabel: z.string().optional(),
+    /** Show the widget frame (border, title) around the matrix; defaults to true. */
+    showFrame: z.boolean().optional()
+  })
+  .refine(hasWidgetRecordSource, { message: 'Needs a query or an entity query' });
 
-export const isFieldMatrixConfigComplete = (config: FieldMatrixWidgetConfig): boolean =>
-  hasWidgetRecordSource(config as WidgetRecordSource) &&
-  config.rowFieldId.trim() !== '' &&
-  config.valueFieldId.trim() !== '' &&
-  config.rows.length > 0 &&
-  config.bands.length > 0;
+export type FieldMatrixWidgetConfig = z.infer<typeof fieldMatrixWidgetConfigSchema>;
 
 type Props = { config: FieldMatrixWidgetConfig };
 
@@ -50,7 +44,7 @@ type Props = { config: FieldMatrixWidgetConfig };
 export const FieldMatrixWidget = ({ config }: Props) => {
   const { workspaceSlug } = useWorkspaceContext();
   const { openEntityDrawer } = useEntityDrawer();
-  const complete = isFieldMatrixConfigComplete(config);
+  const complete = fieldMatrixWidgetConfigSchema.safeParse(config).success;
   const { data, isLoading } = useWidgetRecords(workspaceSlug, complete ? config : {});
 
   const cells = useMemo(

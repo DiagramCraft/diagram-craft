@@ -10,8 +10,13 @@ import { DialogSection } from '../../markdown/editor/BlockDialog';
 import { WikiPagePicker } from './WikiPagePicker';
 import styles from './WikiPageWidget.module.css';
 import type { WidgetSurface } from '../dashboardWidgetDefaults';
+import { z } from 'zod';
 
-export type WikiPageWidgetConfig = { nodeId: string };
+export const wikiPageWidgetConfigSchema = z.object({
+  nodeId: z.string().min(1)
+});
+
+export type WikiPageWidgetConfig = z.infer<typeof wikiPageWidgetConfigSchema>;
 
 export const isWikiPageWidgetConfig = (
   config: Record<string, unknown>

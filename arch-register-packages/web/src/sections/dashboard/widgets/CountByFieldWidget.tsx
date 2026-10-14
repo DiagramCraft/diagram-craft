@@ -7,29 +7,30 @@ import styles from './CountByFieldWidget.module.css';
 import rowStyles from './WidgetRowList.module.css';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import configFormStyles from '../WidgetConfigDialog.module.css';
+import { z } from 'zod';
 
 const FETCH_LIMIT = 1000;
 
 const PALETTE = ['var(--accent-fg)', 'var(--green)', 'var(--warning-fg)', 'var(--text-muted)'];
 
-export type CountByFieldWidgetConfig = {
-  schemaName: string;
+export const countByFieldWidgetConfigSchema = z.object({
+  schemaName: z.string().min(1),
   /** Field whose distinct values define the bar segments. */
-  fieldId: string;
-};
+  fieldId: z.string().min(1)
+});
+
+export type CountByFieldWidgetConfig = z.infer<typeof countByFieldWidgetConfigSchema>;
 
 type Props = {
   config: CountByFieldWidgetConfig;
 };
 
-export const isCountByFieldConfigComplete = (config: CountByFieldWidgetConfig): boolean =>
-  !!config.schemaName && !!config.fieldId;
-
 /** Generic breakdown: total entity count plus a stacked bar and legend per value of a field. */
 export const CountByFieldWidget = ({ config }: Props) => {
   const { workspaceSlug, schemas } = useWorkspaceContext();
   const schema = schemas.find(candidate => candidate.name === config.schemaName);
-  const enabled = !!workspaceSlug && !!schema && isCountByFieldConfigComplete(config);
+  const enabled =
+    !!workspaceSlug && !!schema && countByFieldWidgetConfigSchema.safeParse(config).success;
 
   const { data: entities = [], isLoading } = useEntities(
     workspaceSlug,
@@ -42,7 +43,10 @@ export const CountByFieldWidget = ({ config }: Props) => {
     [entities, schema, config.fieldId]
   );
 
-  if (!isCountByFieldConfigComplete(config) || (!schema && schemas.length > 0)) {
+  if (
+    !countByFieldWidgetConfigSchema.safeParse(config).success ||
+    (!schema && schemas.length > 0)
+  ) {
     return (
       <div className={`${rowStyles.emptyInline} dim`}>This widget is not fully configured.</div>
     );

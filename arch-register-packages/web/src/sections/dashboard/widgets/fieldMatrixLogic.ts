@@ -1,15 +1,18 @@
+import { z } from 'zod';
 import type { MatrixGridItem } from '../../../components/MatrixGrid';
 import { matrixCellKey } from '../../../components/MatrixGrid';
 import type { ToneOrNeutral } from '../../../components/bandColor';
 
-export type FieldMatrixBand = {
-  label: string;
+export const fieldMatrixBandSchema = z.object({
+  label: z.string(),
   /** Lower bound (inclusive) of the band; a record falls in the last band whose `min` it meets. */
-  min: number;
-  tone: ToneOrNeutral;
+  min: z.number(),
+  tone: z.enum(['good', 'warn', 'bad', 'neutral']) satisfies z.ZodType<ToneOrNeutral>,
   /** Cells in this band are emphasised for rows at or above `hotRowMin`. */
-  hot?: boolean;
-};
+  hot: z.boolean().optional()
+});
+
+export type FieldMatrixBand = z.infer<typeof fieldMatrixBandSchema>;
 
 type MatrixRecord = {
   _publicId: string;

@@ -6,14 +6,13 @@
  */
 import { TbAlertTriangle } from 'react-icons/tb';
 import { defineComponent } from '../../markdown/mdx-components/defineComponent';
-import type { NeedsAttentionWidgetConfig } from './NeedsAttentionWidget';
 import {
   NEEDS_ATTENTION_TYPE,
   NeedsAttentionConfigForm,
   NeedsAttentionWidget,
-  isScope,
-  isSeverity
+  needsAttentionWidgetConfigSchema
 } from './NeedsAttentionWidget';
+import { schemaGuard } from '../../markdown/mdx-components/configSchema';
 export default defineComponent({
   type: NEEDS_ATTENTION_TYPE,
   category: 'data-views',
@@ -36,13 +35,6 @@ export default defineComponent({
     defaultH: 16,
     surfaces: ['workspace', 'project'],
     frame: { padded: false, showIcon: false },
-    isValidConfig: (config): config is NeedsAttentionWidgetConfig =>
-      typeof config.schema === 'string' &&
-      Array.isArray(config.caseKinds) &&
-      config.caseKinds.every(kind => typeof kind === 'string') &&
-      isScope(config.scope) &&
-      isSeverity(config.severity) &&
-      typeof config.limit === 'number' &&
-      config.limit > 0
+    isValidConfig: schemaGuard(needsAttentionWidgetConfigSchema)
   }
 });

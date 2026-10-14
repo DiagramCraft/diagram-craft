@@ -8,8 +8,9 @@ import {
   normalizeEntityGraphDirection,
   normalizeEntityGraphProps,
   type EntityGraphSlateElement,
-  type EntityGraphWidgetConfig
+  entityGraphWidgetConfigSchema
 } from './types';
+import { schemaGuard } from '../../configSchema';
 export default defineComponent<
   EntityGraphSlateElement,
   { id: string; depth?: string; direction?: string },
@@ -24,8 +25,7 @@ export default defineComponent<
     defaultW: 6,
     defaultH: 16,
     surfaces: ['workspace', 'project'],
-    isValidConfig: (config): config is EntityGraphWidgetConfig =>
-      typeof config.entityId === 'string' && config.entityId.length > 0
+    isValidConfig: schemaGuard(entityGraphWidgetConfigSchema)
   },
   component: EntityGraph,
   createDefaultProps: () => ({ config: { entityId: '', depth: 1, direction: 'both' } }),

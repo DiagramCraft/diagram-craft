@@ -3,8 +3,9 @@ import { defineComponent } from '../../defineComponent';
 import { EntityTable } from './EntityTable';
 import { ENTITY_TABLE_TYPE, EntityTableEditable, entityTableMdxRule } from './EntityTableEditable';
 import { EntityTableConfigForm } from './EntityTableConfigForm';
-import type { EntityTableSlateElement, EntityTableWidgetConfig } from './types';
-import { hasOptionalInteger, hasOptionalString } from '../../configGuards';
+import type { EntityTableSlateElement } from './types';
+import { schemaGuard } from '../../configSchema';
+import { entityTableWidgetConfigSchema } from './types';
 
 export default defineComponent<
   EntityTableSlateElement,
@@ -20,11 +21,7 @@ export default defineComponent<
     defaultW: 6,
     defaultH: 24,
     surfaces: ['workspace', 'project'],
-    isValidConfig: (config): config is EntityTableWidgetConfig =>
-      hasOptionalString(config, 'schema') &&
-      hasOptionalString(config, 'owner') &&
-      hasOptionalString(config, 'lifecycle') &&
-      hasOptionalInteger(config, 'limit')
+    isValidConfig: schemaGuard(entityTableWidgetConfigSchema)
   },
   component: EntityTable,
   createDefaultProps: () => ({ config: {} }),

@@ -3,6 +3,7 @@
  * slash-command menu or MDX round-trip. Not authorable in wiki markdown.
  */
 import { TbFlag3 } from 'react-icons/tb';
+import { noOptionsConfigSchema, schemaGuard } from '../../markdown/mdx-components/configSchema';
 import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import { UPCOMING_MILESTONES_TYPE, UpcomingMilestonesWidget } from './UpcomingMilestonesWidget';
 export default defineComponent({
@@ -17,6 +18,6 @@ export default defineComponent({
     defaultW: 3,
     defaultH: 8,
     surfaces: ['project'],
-    isValidConfig: (_config): _config is Record<string, never> => true
+    isValidConfig: schemaGuard(noOptionsConfigSchema)
   }
 });

@@ -2,11 +2,11 @@ import { TbGitPullRequest } from 'react-icons/tb';
 import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import {
   CHANGE_CASE_TABLE_TYPE,
-  ChangeCaseTableConfig,
   ChangeCaseTableConfigForm,
-  ChangeCaseTableWidget
+  ChangeCaseTableWidget,
+  changeCaseTableConfigSchema
 } from './ChangeCaseTableWidget';
-import { isOptionalString } from '../../markdown/mdx-components/configGuards';
+import { schemaGuard } from '../../markdown/mdx-components/configSchema';
 
 export default defineComponent({
   type: CHANGE_CASE_TABLE_TYPE,
@@ -28,11 +28,6 @@ export default defineComponent({
     defaultH: 20,
     surfaces: ['workspace'],
     frame: { hideOutsideEdit: true, padded: false, showIcon: false },
-    isValidConfig: (config): config is ChangeCaseTableConfig =>
-      typeof config.schemaName === 'string' &&
-      Array.isArray(config.caseKinds) &&
-      config.caseKinds.every(kind => typeof kind === 'string') &&
-      (config.severity === 'none' || config.severity === 'due-date') &&
-      isOptionalString(config.status)
+    isValidConfig: schemaGuard(changeCaseTableConfigSchema)
   }
 });

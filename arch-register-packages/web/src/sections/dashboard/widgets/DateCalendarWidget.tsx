@@ -1,18 +1,13 @@
 import { useMemo } from 'react';
 import { CalendarGrid } from '../../../components/CalendarGrid';
-import {
-  hasWidgetRecordSource,
-  useWidgetRecords,
-  type WidgetRecordSource
-} from '../../../hooks/useEntityQueryText';
-import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
+import { hasWidgetRecordSource, useWidgetRecords } from '../../../hooks/useEntityQueryText';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { useEntityDrawer } from '../../entities/entityDrawer/useEntityDrawer';
 import {
   buildDateCalendar,
   daysFromToday,
   parseCalendarDate,
-  type CalendarPeriod
+  calendarPeriodSchema
 } from './dateCalendarLogic';
 import { formatMeasured, measuredValue } from './fieldAggregation';
 import { countdownTone } from './upcomingByDateLogic';
@@ -21,31 +16,34 @@ import rowStyles from './WidgetRowList.module.css';
 import styles from './DateCalendarWidget.module.css';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import configFormStyles from '../WidgetConfigDialog.module.css';
+import { z } from 'zod';
+import { entityQuerySchema } from '@arch-register/api-types/entityQueryIR';
 
 const DEFAULT_PERIOD_COUNT = 12;
 
-export type DateCalendarWidgetConfig = {
-  /** Entity-query DSL text selecting the records to place on the calendar. */
-  query?: string;
-  /** Structured alternative to `query`; may reference dashboard sidebar `$variables`. */
-  entityQuery?: EntityQuery;
-  /** Root schema name `entityQuery`'s field names resolve against. */
-  schemaName?: string;
-  /** Date field that decides which month/week a record lands in. */
-  dateFieldId: string;
-  period?: CalendarPeriod;
-  periodCount?: number;
-  /** Optional field shown under the name; a reference/containment field shows the target's name. */
-  sublabelFieldId?: string;
-  /** Optional number/currency field shown on each entry and summed in each cell header. */
-  valueFieldId?: string;
-  /** Entry border turns red when overdue (or within this many days) and orange within `warnWithinDays`. */
-  critWithinDays?: number;
-  warnWithinDays?: number;
-};
+export const dateCalendarWidgetConfigSchema = z
+  .object({
+    /** Entity-query DSL text selecting the records to place on the calendar. */
+    query: z.string().optional(),
+    /** Structured alternative to `query`; may reference dashboard sidebar `$variables`. */
+    entityQuery: entityQuerySchema.optional(),
+    /** Root schema name `entityQuery`'s field names resolve against. */
+    schemaName: z.string().optional(),
+    /** Date field that decides which month/week a record lands in. */
+    dateFieldId: z.string().trim().min(1),
+    period: calendarPeriodSchema.optional(),
+    periodCount: z.number().optional(),
+    /** Optional field shown under the name; a reference/containment field shows the target's name. */
+    sublabelFieldId: z.string().optional(),
+    /** Optional number/currency field shown on each entry and summed in each cell header. */
+    valueFieldId: z.string().optional(),
+    /** Entry border turns red when overdue (or within this many days) and orange within `warnWithinDays`. */
+    critWithinDays: z.number().optional(),
+    warnWithinDays: z.number().optional()
+  })
+  .refine(hasWidgetRecordSource, { message: 'Needs a query or an entity query' });
 
-export const isDateCalendarConfigComplete = (config: DateCalendarWidgetConfig): boolean =>
-  hasWidgetRecordSource(config as WidgetRecordSource) && config.dateFieldId.trim() !== '';
+export type DateCalendarWidgetConfig = z.infer<typeof dateCalendarWidgetConfigSchema>;
 
 const TONE_COLOR = {
   normal: undefined,
@@ -59,7 +57,7 @@ type Props = { config: DateCalendarWidgetConfig };
 export const DateCalendarWidget = ({ config }: Props) => {
   const { workspaceSlug } = useWorkspaceContext();
   const { openEntityDrawer } = useEntityDrawer();
-  const complete = isDateCalendarConfigComplete(config);
+  const complete = dateCalendarWidgetConfigSchema.safeParse(config).success;
   const { data, isLoading } = useWidgetRecords(workspaceSlug, complete ? config : {});
   const today = useMemo(() => new Date(), []);
   const period = config.period ?? 'month';

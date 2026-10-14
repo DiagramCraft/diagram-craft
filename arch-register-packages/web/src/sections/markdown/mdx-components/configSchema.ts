@@ -1,4 +1,7 @@
-import type { z } from 'zod';
+import { z } from 'zod';
+
+/** Config of a widget without options of its own; any stored keys are ignored. */
+export const noOptionsConfigSchema = z.object({});
 
 /** The `isValidConfig` of a component whose config is described by a zod object schema. */
 export const schemaGuard =

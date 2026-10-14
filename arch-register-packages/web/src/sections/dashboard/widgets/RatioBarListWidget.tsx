@@ -7,27 +7,24 @@ import { buildRatioBarRows } from './ratioBarListLogic';
 import styles from './WidgetRowList.module.css';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import configFormStyles from '../WidgetConfigDialog.module.css';
+import { z } from 'zod';
 
 const FETCH_LIMIT = 500;
 
-export type RatioBarListWidgetConfig = {
-  schemaName: string;
+export const ratioBarListWidgetConfigSchema = z.object({
+  schemaName: z.string().min(1),
   /** Field whose value defines a bar (one bar per distinct value). */
-  groupByFieldId: string;
+  groupByFieldId: z.string().min(1),
   /** A bar's filled share is the entities with `numeratorFieldId = numeratorValue`. */
-  numeratorFieldId: string;
-  numeratorValue: string;
-};
+  numeratorFieldId: z.string().min(1),
+  numeratorValue: z.string().min(1)
+});
+
+export type RatioBarListWidgetConfig = z.infer<typeof ratioBarListWidgetConfigSchema>;
 
 type Props = {
   config: RatioBarListWidgetConfig;
 };
-
-export const isRatioBarListConfigComplete = (config: RatioBarListWidgetConfig): boolean =>
-  !!config.schemaName &&
-  !!config.groupByFieldId &&
-  !!config.numeratorFieldId &&
-  !!config.numeratorValue;
 
 /**
  * Generic ratio/coverage bar-list: one bar per distinct value of a field, filled to the share of
@@ -36,7 +33,8 @@ export const isRatioBarListConfigComplete = (config: RatioBarListWidgetConfig): 
 export const RatioBarListWidget = ({ config }: Props) => {
   const { workspaceSlug, schemas } = useWorkspaceContext();
   const schema = schemas.find(candidate => candidate.name === config.schemaName);
-  const enabled = !!workspaceSlug && !!schema && isRatioBarListConfigComplete(config);
+  const enabled =
+    !!workspaceSlug && !!schema && ratioBarListWidgetConfigSchema.safeParse(config).success;
 
   const { data: entities = [], isLoading } = useEntities(
     workspaceSlug,
@@ -54,7 +52,10 @@ export const RatioBarListWidget = ({ config }: Props) => {
     [entities, schema, config.groupByFieldId, config.numeratorFieldId, config.numeratorValue]
   );
 
-  if (!isRatioBarListConfigComplete(config) || (!schema && schemas.length > 0)) {
+  if (
+    !ratioBarListWidgetConfigSchema.safeParse(config).success ||
+    (!schema && schemas.length > 0)
+  ) {
     return <div className={`${styles.emptyInline} dim`}>This widget is not fully configured.</div>;
   }
   if (isLoading) {

@@ -1,6 +1,7 @@
 import { TbListCheck } from 'react-icons/tb';
+import { schemaGuard } from '../../../sections/markdown/mdx-components/configSchema';
 import { defineComponent } from '../../../sections/markdown/mdx-components/defineComponent';
-import { isReviewsOverdueConfig } from '../dataStewardshipWidgetSupport';
+import { reviewsOverdueConfigSchema } from '../dataStewardshipWidgetSupport';
 import { ReviewsOverdueWidget } from './ReviewsOverdueWidget';
 export default defineComponent({
   type: 'data-stewardship-reviews-overdue',
@@ -15,6 +16,6 @@ export default defineComponent({
     defaultH: 5,
     surfaces: ['workspace'],
     frame: { hideOutsideEdit: true, padded: false, showIcon: false },
-    isValidConfig: isReviewsOverdueConfig
+    isValidConfig: schemaGuard(reviewsOverdueConfigSchema)
   }
 });

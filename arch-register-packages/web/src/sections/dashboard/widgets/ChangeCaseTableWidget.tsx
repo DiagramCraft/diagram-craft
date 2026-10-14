@@ -19,18 +19,22 @@ import { DialogSection } from '../../markdown/editor/BlockDialog';
 import { KNOWN_CASE_KINDS } from './NeedsAttentionWidget';
 import type { NeedsAttentionSeverity } from './needsAttentionQueue';
 import configFormStyles from '../WidgetConfigDialog.module.css';
+import { z } from 'zod';
+import { needsAttentionSeveritySchema } from './needsAttentionQueue';
 
-export type ChangeCaseTableConfig = {
+export const changeCaseTableConfigSchema = z.object({
   /** Name of the entity schema the cases' subject entities must belong to. */
-  schemaName: string;
-  caseKinds: string[];
-  severity: NeedsAttentionSeverity;
+  schemaName: z.string(),
+  caseKinds: z.array(z.string()),
+  severity: needsAttentionSeveritySchema,
   /**
    * Only list cases in this status (`open`, `completed` or `cancelled`). Any other value —
    * including an unresolved or empty `$variable` from a dashboard sidebar — means no filter.
    */
-  status?: string;
-};
+  status: z.string().optional()
+});
+
+export type ChangeCaseTableConfig = z.infer<typeof changeCaseTableConfigSchema>;
 
 const PRIORITY_LABEL: Record<NeedsAttentionPriority, string> = {
   high: 'High',

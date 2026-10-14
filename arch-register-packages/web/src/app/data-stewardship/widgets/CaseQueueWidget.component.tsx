@@ -1,6 +1,11 @@
 import { TbClipboardCheck } from 'react-icons/tb';
+import { schemaGuard } from '../../../sections/markdown/mdx-components/configSchema';
 import { defineComponent } from '../../../sections/markdown/mdx-components/defineComponent';
-import { CaseConfigForm, DS_CASE_DEFAULTS, isCaseConfig } from '../dataStewardshipWidgetSupport';
+import {
+  CaseConfigForm,
+  DS_CASE_DEFAULTS,
+  caseConfigSchema
+} from '../dataStewardshipWidgetSupport';
 import { CaseQueueHeaderActions, CaseQueueWidget } from './CaseQueueWidget';
 export default defineComponent({
   type: 'data-stewardship-case-queue',
@@ -17,6 +22,6 @@ export default defineComponent({
     surfaces: ['workspace'],
     headerActionsComponent: CaseQueueHeaderActions,
     frame: { padded: false, showIcon: false },
-    isValidConfig: isCaseConfig
+    isValidConfig: schemaGuard(caseConfigSchema)
   }
 });

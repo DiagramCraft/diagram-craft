@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import { Chip } from '../../../components/Chip';
 import { EmptyState } from '../../../components/EmptyState';
 import { Table } from '../../../components/table/Table';
@@ -17,18 +16,22 @@ import { resolveEntityQuery } from '../../markdown/mdx-components/blocks/entity-
 import { specItemsEmptyLabel, specItemTone, specItemSortValue } from './specItemsTableLogic';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import configFormStyles from '../WidgetConfigDialog.module.css';
+import { z } from 'zod';
+import { entityQuerySchema } from '@arch-register/api-types/entityQueryIR';
 
-export type SpecItemsTableWidgetConfig = {
+export const specItemsTableWidgetConfigSchema = z.object({
   /** Display name of the entity schema whose specification artifacts are listed. */
-  schemaName: string;
+  schemaName: z.string().min(1),
   /** Optional structured filter on those entities (field NAMEs are resolved at render time); may
    *  reference sidebar `$variables` — an empty multi-select means no constraint. */
-  entityQuery?: EntityQuery;
+  entityQuery: entityQuerySchema.optional(),
   /** Only list deprecated items. */
-  deprecated?: boolean;
+  deprecated: z.boolean().optional(),
   /** Maximum number of entities whose specifications are read. Default 200. */
-  entityLimit?: number;
-};
+  entityLimit: z.number().optional()
+});
+
+export type SpecItemsTableWidgetConfig = z.infer<typeof specItemsTableWidgetConfigSchema>;
 
 const DEFAULT_ENTITY_LIMIT = 200;
 
@@ -186,12 +189,3 @@ export const SpecItemsTableConfigForm = ({
 };
 
 export const SPEC_ITEMS_TABLE_TYPE = 'SpecItemsTable' as const;
-
-export const isValidConfig = (
-  config: Record<string, unknown>
-): config is SpecItemsTableWidgetConfig =>
-  typeof config.schemaName === 'string' &&
-  config.schemaName.length > 0 &&
-  (config.entityQuery === undefined || typeof config.entityQuery === 'object') &&
-  (config.deprecated === undefined || typeof config.deprecated === 'boolean') &&
-  (config.entityLimit === undefined || typeof config.entityLimit === 'number');

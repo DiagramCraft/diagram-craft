@@ -6,26 +6,33 @@ import { useMdxContext } from '../../markdown/MdxContext';
 import { asProjectPublicId, projectDetailRoute } from '../../../routes/publicObjectRoutes';
 import { formatDate } from '../../../utils/dateFormat';
 import { dueLabel, dueTone } from '../../../utils/assessmentDueTone';
-import { filterAssessments, type AssessmentWidgetMode } from './assessmentsWidgetLogic';
+import {
+  filterAssessments,
+  type AssessmentWidgetMode,
+  assessmentWidgetModeSchema
+} from './assessmentsWidgetLogic';
 import styles from './WidgetRowList.module.css';
 
 import { Select } from '@diagram-craft/app-components/Select';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import configFormStyles from '../WidgetConfigDialog.module.css';
+import { z } from 'zod';
 
 const MAX_ITEMS = 4;
 
 export type { AssessmentWidgetMode } from './assessmentsWidgetLogic';
 
-export type AssessmentsWidgetConfig = {
-  mode: AssessmentWidgetMode;
-  assessmentTypeId?: string;
+export const assessmentsWidgetConfigSchema = z.object({
+  mode: assessmentWidgetModeSchema,
+  assessmentTypeId: z.string().optional(),
   /** Entity schema names; keeps assessments scoped to any of them. */
-  schemaNames?: string[];
+  schemaNames: z.array(z.string()).optional(),
   /** Shows a day-count due label ("18d" / "6d late") and the owning project, and hides undated
    *  assessments. */
-  relativeDue?: boolean;
-};
+  relativeDue: z.boolean().optional()
+});
+
+export type AssessmentsWidgetConfig = z.infer<typeof assessmentsWidgetConfigSchema>;
 
 type Props = {
   config: AssessmentsWidgetConfig;

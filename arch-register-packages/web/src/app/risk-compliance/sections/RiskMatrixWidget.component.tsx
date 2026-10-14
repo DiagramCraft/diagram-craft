@@ -1,9 +1,12 @@
 import { TbGridDots } from 'react-icons/tb';
 import { defineComponent } from '../../../sections/markdown/mdx-components/defineComponent';
 import { RiskMatrixConfigForm } from './RiskMatrixConfigForm';
-import type { RiskMatrixWidgetConfig } from './RiskMatrixWidget';
-import { RISK_MATRIX_TYPE, RiskMatrixWidget } from './RiskMatrixWidget';
-import { isOptionalStringArray } from '../../../sections/markdown/mdx-components/configGuards';
+import {
+  RISK_MATRIX_TYPE,
+  RiskMatrixWidget,
+  riskMatrixWidgetConfigSchema
+} from './RiskMatrixWidget';
+import { schemaGuard } from '../../../sections/markdown/mdx-components/configSchema';
 export default defineComponent({
   type: RISK_MATRIX_TYPE,
   category: 'visualizations',
@@ -17,13 +20,6 @@ export default defineComponent({
     defaultW: 6,
     defaultH: 24,
     surfaces: ['workspace'],
-    isValidConfig: (config): config is RiskMatrixWidgetConfig =>
-      typeof config.schemaName === 'string' &&
-      config.schemaName !== '' &&
-      (config.axis === undefined || config.axis === 'inherent' || config.axis === 'residual') &&
-      (config.includeClosed === undefined || typeof config.includeClosed === 'boolean') &&
-      isOptionalStringArray(config.categories) &&
-      isOptionalStringArray(config.statuses) &&
-      isOptionalStringArray(config.owners)
+    isValidConfig: schemaGuard(riskMatrixWidgetConfigSchema)
   }
 });

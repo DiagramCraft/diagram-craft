@@ -12,8 +12,11 @@ import { DialogSection } from '../../markdown/editor/BlockDialog';
 
 import styles from './ActivityFeedWidget.module.css';
 import formStyles from '../WidgetConfigDialog.module.css';
+import { z } from 'zod';
 
-export type ActivityFeedWidgetConfig = { limit?: number };
+export const activityFeedWidgetConfigSchema = z.object({ limit: z.number().int().optional() });
+
+export type ActivityFeedWidgetConfig = z.infer<typeof activityFeedWidgetConfigSchema>;
 
 const DEFAULT_ACTIVITY_LIMIT = 15;
 

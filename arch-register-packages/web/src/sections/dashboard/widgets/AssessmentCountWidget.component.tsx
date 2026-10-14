@@ -4,9 +4,9 @@ import {
   ASSESSMENT_COUNT_TYPE,
   AssessmentCountConfigForm,
   AssessmentCountWidget,
-  AssessmentCountWidgetConfig
+  assessmentCountWidgetConfigSchema
 } from './AssessmentCountWidget';
-import { isOptionalString } from '../../markdown/mdx-components/configGuards';
+import { schemaGuard } from '../../markdown/mdx-components/configSchema';
 
 export default defineComponent({
   type: ASSESSMENT_COUNT_TYPE,
@@ -22,16 +22,6 @@ export default defineComponent({
     defaultH: 5,
     surfaces: ['workspace'],
     frame: { hideOutsideEdit: true, padded: false, showIcon: false },
-    isValidConfig: (config): config is AssessmentCountWidgetConfig =>
-      (config.mode === 'active' ||
-        config.mode === 'upcoming' ||
-        config.mode === 'overdue' ||
-        config.mode === 'all') &&
-      isOptionalString(config.assessmentTypeId) &&
-      (config.schemaNames === undefined ||
-        (Array.isArray(config.schemaNames) &&
-          config.schemaNames.every(name => typeof name === 'string'))) &&
-      (config.dueWithinDays === undefined || typeof config.dueWithinDays === 'number') &&
-      isOptionalString(config.subtext)
+    isValidConfig: schemaGuard(assessmentCountWidgetConfigSchema)
   }
 });

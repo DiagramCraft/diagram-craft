@@ -7,8 +7,9 @@ import {
   entityChangelogMdxRule
 } from './EntityChangelogEditable';
 import { EntityChangelogConfigForm } from './EntityChangelogConfigForm';
-import type { EntityChangelogSlateElement, EntityChangelogWidgetConfig } from './types';
-import { hasOptionalString } from '../../configGuards';
+import type { EntityChangelogSlateElement } from './types';
+import { schemaGuard } from '../../configSchema';
+import { entityChangelogWidgetConfigSchema } from './types';
 
 export default defineComponent<
   EntityChangelogSlateElement,
@@ -31,14 +32,7 @@ export default defineComponent<
     defaultW: 6,
     defaultH: 16,
     surfaces: ['workspace', 'project'],
-    isValidConfig: (config): config is EntityChangelogWidgetConfig =>
-      hasOptionalString(config, 'entityId') &&
-      hasOptionalString(config, 'schema') &&
-      hasOptionalString(config, 'owner') &&
-      hasOptionalString(config, 'lifecycle') &&
-      hasOptionalString(config, 'limit') &&
-      hasOptionalString(config, 'since') &&
-      !!(config.entityId || config.schema || config.owner || config.lifecycle)
+    isValidConfig: schemaGuard(entityChangelogWidgetConfigSchema)
   },
   component: EntityChangelog,
   createDefaultProps: () => ({ config: { since: '30d', limit: '10' } }),

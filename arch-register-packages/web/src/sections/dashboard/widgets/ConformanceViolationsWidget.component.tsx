@@ -1,11 +1,12 @@
 import { TbShieldExclamation } from 'react-icons/tb';
+import { schemaGuard } from '../../markdown/mdx-components/configSchema';
 import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import {
   CONFORMANCE_VIOLATIONS_TYPE,
   ConformanceViolationsConfigForm,
   ConformanceViolationsHeaderActions,
   ConformanceViolationsWidget,
-  isValidConfig
+  conformanceViolationsWidgetConfigSchema
 } from './ConformanceViolationsWidget';
 
 export default defineComponent({
@@ -24,6 +25,6 @@ export default defineComponent({
     surfaces: ['workspace'],
     headerActionsComponent: ConformanceViolationsHeaderActions,
     frame: { padded: false, showIcon: false },
-    isValidConfig
+    isValidConfig: schemaGuard(conformanceViolationsWidgetConfigSchema)
   }
 });

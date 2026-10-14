@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useAssessments } from '../../../hooks/useAssessments';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
-import { filterAssessments } from './assessmentsWidgetLogic';
+import { filterAssessments, assessmentWidgetModeSchema } from './assessmentsWidgetLogic';
 import { resolveScopeSchemaIds } from './AssessmentsWidget';
 import styles from './AggregateStatWidget.module.css';
 import { useWidgetBodyTitle } from './WidgetBodyTitle';
@@ -9,16 +9,19 @@ import { Select } from '@diagram-craft/app-components/Select';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import type { AssessmentWidgetMode } from './assessmentsWidgetLogic';
 import registrationStyles from '../WidgetConfigDialog.module.css';
+import { z } from 'zod';
 
-export type AssessmentCountWidgetConfig = {
-  mode: AssessmentWidgetMode;
-  assessmentTypeId?: string;
+export const assessmentCountWidgetConfigSchema = z.object({
+  mode: assessmentWidgetModeSchema,
+  assessmentTypeId: z.string().optional(),
   /** Entity schema names; counts assessments scoped to any of them. */
-  schemaNames?: string[];
+  schemaNames: z.array(z.string()).optional(),
   /** Counts open assessments due within this many days, overdue ones included. */
-  dueWithinDays?: number;
-  subtext?: string;
-};
+  dueWithinDays: z.number().optional(),
+  subtext: z.string().optional()
+});
+
+export type AssessmentCountWidgetConfig = z.infer<typeof assessmentCountWidgetConfigSchema>;
 
 type Props = {
   config: AssessmentCountWidgetConfig;
