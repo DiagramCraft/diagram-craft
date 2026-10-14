@@ -25,11 +25,10 @@ const CaseCalendarHeaderActions = () => <span className="dim mono">queue items b
 export const caseCalendarSpec = defineComponent({
   type: 'data-stewardship-case-calendar',
   category: 'visualizations',
-  surfaces: ['dashboard'],
+  name: 'Next six weeks',
+  description: 'Open governance cases bucketed by due week.',
   dashboardWidget: {
     icon: TbCalendarEvent,
-    label: 'Next six weeks',
-    description: 'Open governance cases bucketed by due week.',
     defaultW: 12,
     defaultH: 14,
     surfaces: ['workspace'],

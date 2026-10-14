@@ -42,18 +42,6 @@ import { TABS_TYPE } from './blocks/tabs/TabsEditable';
 import { tabsSpec } from './blocks/tabs/TabsRegistration';
 import { TAB_TYPE } from './blocks/tabs/TabEditable';
 import { tabSpec } from './blocks/tabs/TabRegistration';
-import {
-  ENTITY_LIFECYCLE_CHART_TYPE,
-  entityLifecycleChartSpec
-} from './widgets/entity-lifecycle-chart/EntityLifecycleChartRegistration';
-import {
-  ENTITY_ACTIVITY_TREND_CHART_TYPE,
-  entityActivityTrendChartSpec
-} from './widgets/entity-activity-trend-chart/EntityActivityTrendChartRegistration';
-import {
-  ENTITY_STALE_REPORT_TYPE,
-  entityStaleReportSpec
-} from './widgets/entity-stale-report/EntityStaleReportRegistration';
 import type { ComponentDefinition, MdxComponentSpec } from './types';
 export type { SlashCommandDef, EditorSpec, MdxComponentSpec, DashboardWidgetSpec } from './types';
 
@@ -79,10 +67,7 @@ export const MDX_COMPONENT_DEFINITIONS = {
   [COLUMNS_TYPE]: columnsSpec,
   [COLUMN_TYPE]: columnSpec,
   [TABS_TYPE]: tabsSpec,
-  [TAB_TYPE]: tabSpec,
-  [ENTITY_LIFECYCLE_CHART_TYPE]: entityLifecycleChartSpec,
-  [ENTITY_ACTIVITY_TREND_CHART_TYPE]: entityActivityTrendChartSpec,
-  [ENTITY_STALE_REPORT_TYPE]: entityStaleReportSpec
+  [TAB_TYPE]: tabSpec
 } satisfies Record<string, ComponentDefinition>;
 
 export type MdxComponentName = keyof typeof MDX_COMPONENT_DEFINITIONS;
@@ -92,13 +77,17 @@ export const MDX_COMPONENTS = Object.fromEntries(
   Object.values(MDX_COMPONENT_DEFINITIONS).flatMap(definition =>
     definition.mdx ? [[definition.type, definition.mdx] as const] : []
   )
-) as Record<MdxComponentName, MdxComponentSpec>;
+) as Partial<Record<MdxComponentName, MdxComponentSpec>>;
 
-export const getMdxSpec = (name: MdxComponentName): MdxComponentSpec => MDX_COMPONENTS[name]!;
+export const getMdxSpec = (name: MdxComponentName): MdxComponentSpec => {
+  const spec = MDX_COMPONENTS[name];
+  if (!spec) throw new Error(`No MDX component spec registered for "${name}"`);
+  return spec;
+};
 
 /** Safe accessor for an arbitrary MDX component name. */
 export const getMdxSpecSafe = (name: string): MdxComponentSpec | undefined =>
-  (MDX_COMPONENTS as Record<string, MdxComponentSpec>)[name];
+  (MDX_COMPONENTS as Partial<Record<string, MdxComponentSpec>>)[name];
 
 /** MDX specs available on the requested content surface. */
 export const getMdxSpecsForSurface = (

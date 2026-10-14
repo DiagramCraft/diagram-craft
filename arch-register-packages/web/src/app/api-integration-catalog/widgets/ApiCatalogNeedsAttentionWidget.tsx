@@ -55,11 +55,10 @@ const ApiCatalogNeedsAttentionHeaderActions = () => {
 export const apiCatalogNeedsAttentionSpec = defineComponent({
   type: 'api-integration-catalog-needs-attention',
   category: 'data-views',
-  surfaces: ['dashboard'],
+  name: 'API needs attention',
+  description: 'Open API change and deprecation cases awaiting a decision.',
   dashboardWidget: {
     icon: TbAlertTriangle,
-    label: 'API needs attention',
-    description: 'Open API change and deprecation cases awaiting a decision.',
     defaultW: 6,
     defaultH: 16,
     surfaces: ['workspace'],

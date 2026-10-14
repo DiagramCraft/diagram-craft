@@ -17,15 +17,9 @@ export const entityGraphSpec = defineComponent<
 >({
   type: ENTITY_GRAPH_TYPE,
   category: 'visualizations',
-  label: 'Entity graph',
+  name: 'Entity graph',
   description:
     'A clickable graph of the dependencies and relations around one entity. Works best at 6x4 or larger.',
-
-  component: EntityGraph,
-  mode: 'block',
-  allowedProps: ['id', 'depth', 'direction'],
-  normalizeProps: normalizeEntityGraphProps,
-  surfaces: ['wiki', 'dashboard'],
   dashboardWidget: {
     icon: TbVectorTriangle,
     defaultW: 6,
@@ -42,21 +36,27 @@ export const entityGraphSpec = defineComponent<
     getTitle: () => 'Entity graph',
     configForm: EntityGraphConfigForm
   },
-  editorSpec: {
-    editableComponent: EntityGraphEditable,
-    nodeOptions: { isVoid: true },
-    mdxRule: entityGraphMdxRule,
-    slashCommand: {
-      icon: <TbVectorTriangle size={14} />,
-      keywords: ['entity', 'graph', 'dependency', 'impact', 'relations'],
-      onSelect: (editor, { insertOrReplaceBlock }) => {
-        insertOrReplaceBlock(editor, {
-          type: ENTITY_GRAPH_TYPE,
-          entityId: '',
-          depth: 1,
-          direction: 'both',
-          children: [{ text: '' }]
-        });
+  mdxComponent: {
+    component: EntityGraph,
+    mode: 'block',
+    allowedProps: ['id', 'depth', 'direction'],
+    normalizeProps: normalizeEntityGraphProps,
+    editorSpec: {
+      editableComponent: EntityGraphEditable,
+      nodeOptions: { isVoid: true },
+      mdxRule: entityGraphMdxRule,
+      slashCommand: {
+        icon: <TbVectorTriangle size={14} />,
+        keywords: ['entity', 'graph', 'dependency', 'impact', 'relations'],
+        onSelect: (editor, { insertOrReplaceBlock }) => {
+          insertOrReplaceBlock(editor, {
+            type: ENTITY_GRAPH_TYPE,
+            entityId: '',
+            depth: 1,
+            direction: 'both',
+            children: [{ text: '' }]
+          });
+        }
       }
     }
   }

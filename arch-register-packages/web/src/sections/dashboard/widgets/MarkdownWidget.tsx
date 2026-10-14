@@ -55,11 +55,10 @@ export const MARKDOWN_WIDGET_TYPE = 'markdown' as const;
 export const markdownWidgetSpec = defineComponent({
   type: MARKDOWN_WIDGET_TYPE,
   category: 'content-layout',
-  surfaces: ['dashboard'],
+  name: 'Markdown',
+  description: 'Display simple Markdown content on the dashboard.',
   dashboardWidget: {
     icon: TbMarkdown,
-    label: 'Markdown',
-    description: 'Display simple Markdown content on the dashboard.',
     defaultW: 6,
     defaultH: 16,
     surfaces: ['workspace', 'project'],

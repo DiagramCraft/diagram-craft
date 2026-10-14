@@ -12,34 +12,35 @@ export const captionSpec = defineComponent<
 >({
   type: CAPTION_TYPE,
   category: 'content-layout',
-  surfaces: ['wiki'],
-  component: Caption,
-  mode: 'block',
-  allowedProps: ['caption', 'numbered'],
-  acceptsChildren: true,
-  editorSpec: {
-    editableComponent: CaptionEditable,
-    nodeOptions: {},
-    mdxRule: captionMdxRule,
-    slashCommand: {
-      label: 'Caption',
-      description: 'Wrap a block with a figure caption',
-      icon: <TbFrame size={14} />,
-      keywords: ['caption', 'figure', 'figcaption'],
-      onSelect: (editor, { insertOrReplaceBlock }) => {
-        insertOrReplaceBlock(editor, {
-          type: CAPTION_TYPE,
-          caption: '',
-          numbered: false,
-          children: [{ type: 'p', children: [{ text: '' }] }]
-        });
-      }
-    },
-    createWrapper: child => ({
-      type: CAPTION_TYPE,
-      caption: '',
-      numbered: false,
-      children: [child]
-    })
+  name: 'Caption',
+  description: 'Wrap a block with a figure caption',
+  mdxComponent: {
+    component: Caption,
+    mode: 'block',
+    allowedProps: ['caption', 'numbered'],
+    acceptsChildren: true,
+    editorSpec: {
+      editableComponent: CaptionEditable,
+      nodeOptions: {},
+      mdxRule: captionMdxRule,
+      slashCommand: {
+        icon: <TbFrame size={14} />,
+        keywords: ['caption', 'figure', 'figcaption'],
+        onSelect: (editor, { insertOrReplaceBlock }) => {
+          insertOrReplaceBlock(editor, {
+            type: CAPTION_TYPE,
+            caption: '',
+            numbered: false,
+            children: [{ type: 'p', children: [{ text: '' }] }]
+          });
+        }
+      },
+      createWrapper: child => ({
+        type: CAPTION_TYPE,
+        caption: '',
+        numbered: false,
+        children: [child]
+      })
+    }
   }
 });

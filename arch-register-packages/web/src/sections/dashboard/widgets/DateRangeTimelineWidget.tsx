@@ -301,11 +301,11 @@ const optionalNumber = (value: unknown): boolean =>
 const optionalString = (value: unknown): boolean =>
   value === undefined || typeof value === 'string';
 
-const _dateRangeTimelineSpecData: DashboardWidgetSpec<DateRangeTimelineWidgetConfig> = {
+const _dateRangeTimelineSpecData: Omit<
+  DashboardWidgetSpec<DateRangeTimelineWidgetConfig>,
+  'label' | 'description'
+> = {
   icon: TbTimeline,
-  label: 'Date range timeline',
-  description:
-    'Records as a Gantt chart from a start to an end date, e.g. contract terms or project phases.',
   defaultW: 12,
   defaultH: 30,
   surfaces: ['workspace'],
@@ -330,6 +330,8 @@ const _dateRangeTimelineSpecData: DashboardWidgetSpec<DateRangeTimelineWidgetCon
 export const dateRangeTimelineSpec = defineComponent({
   type: DATE_RANGE_TIMELINE_TYPE,
   category: 'visualizations',
-  surfaces: ['dashboard'],
+  name: 'Date range timeline',
+  description:
+    'Records as a Gantt chart from a start to an end date, e.g. contract terms or project phases.',
   dashboardWidget: _dateRangeTimelineSpecData
 });

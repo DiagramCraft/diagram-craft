@@ -20,11 +20,11 @@ describe('getMdxSpecsForSurface', () => {
     expect(wiki['markdown']).toBeUndefined();
   });
 
-  it('includes only components that explicitly opt in via surfaces for "dashboard"', () => {
+  it('includes MDX components that are also available as dashboard widgets', () => {
     const dashboard = getMdxSpecsForSurface('dashboard');
-    expect(dashboard['entity-lifecycle-chart']).toBeDefined();
-    expect(dashboard['entity-activity-trend-chart']).toBeDefined();
-    expect(dashboard['entity-stale-report']).toBeDefined();
+    expect(dashboard['entity-lifecycle-chart']).toBeUndefined();
+    expect(dashboard['entity-activity-trend-chart']).toBeUndefined();
+    expect(dashboard['entity-stale-report']).toBeUndefined();
     expect(dashboard['EntityViewEmbed']).toBeDefined();
     expect(dashboard['markdown']).toBeUndefined();
   });

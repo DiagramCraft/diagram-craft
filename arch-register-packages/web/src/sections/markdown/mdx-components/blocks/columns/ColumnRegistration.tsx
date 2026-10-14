@@ -11,15 +11,17 @@ import type { ColumnSlateElement } from './types';
 export const columnSpec = defineComponent<ColumnSlateElement, { children?: ReactNode }, 'block'>({
   type: COLUMN_TYPE,
   category: 'content-layout',
-  surfaces: ['wiki'],
-
-  component: Column,
-  mode: 'block',
-  allowedProps: [],
-  acceptsRichContent: true,
-  editorSpec: {
-    editableComponent: ColumnEditable,
-    nodeOptions: {},
-    mdxRule: columnMdxRule
+  name: 'Column',
+  description: 'A column within a multi-column layout.',
+  mdxComponent: {
+    component: Column,
+    mode: 'block',
+    allowedProps: [],
+    acceptsRichContent: true,
+    editorSpec: {
+      editableComponent: ColumnEditable,
+      nodeOptions: {},
+      mdxRule: columnMdxRule
+    }
   }
 });

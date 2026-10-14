@@ -12,11 +12,10 @@ export const ApiCatalogStatsWidget = ({ config: _config }: { config: BaseWidgetC
 export const apiCatalogStatsSpec = defineComponent({
   type: 'api-integration-catalog-stats',
   category: 'metrics',
-  surfaces: ['dashboard'],
+  name: 'API catalog stats',
+  description: 'Workspace API, governance, and integration health metrics.',
   dashboardWidget: {
     icon: TbChartBar,
-    label: 'API catalog stats',
-    description: 'Workspace API, governance, and integration health metrics.',
     defaultW: 12,
     defaultH: 5,
     surfaces: ['workspace'],

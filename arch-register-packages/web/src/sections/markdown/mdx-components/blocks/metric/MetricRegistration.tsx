@@ -33,14 +33,9 @@ export const metricSpec = defineComponent<
 >({
   type: METRIC_TYPE,
   category: 'metrics',
-  label: 'Metric',
+  name: 'Metric',
   description:
     'A single live count, such as the number of entities, projects or diagrams. Use it for a headline number.',
-
-  component: Metric,
-  mode: 'block',
-  allowedProps: ['schema', 'owner', 'lifecycle', 'label', 'metricType', 'showLink'],
-  surfaces: ['wiki', 'dashboard'],
   dashboardWidget: {
     icon: TbChartBar,
     defaultW: 3,
@@ -65,22 +60,27 @@ export const metricSpec = defineComponent<
     getTitle: (config: StatMetricWidgetConfig) => METRIC_TYPE_DEFAULT_LABEL[config.metricType],
     configForm: MetricConfigForm
   },
-  editorSpec: {
-    editableComponent: MetricEditable,
-    nodeOptions: { isVoid: true },
-    mdxRule: metricMdxRule,
-    slashCommand: {
-      icon: <TbHash size={14} />,
-      keywords: ['entity', 'metric', 'count', 'number', 'stat', 'kpi'],
-      onSelect: (editor, { insertOrReplaceBlock }) => {
-        insertOrReplaceBlock(editor, {
-          type: METRIC_TYPE,
-          schema: '',
-          owner: '',
-          lifecycle: '',
-          label: '',
-          children: [{ text: '' }]
-        });
+  mdxComponent: {
+    component: Metric,
+    mode: 'block',
+    allowedProps: ['schema', 'owner', 'lifecycle', 'label', 'metricType', 'showLink'],
+    editorSpec: {
+      editableComponent: MetricEditable,
+      nodeOptions: { isVoid: true },
+      mdxRule: metricMdxRule,
+      slashCommand: {
+        icon: <TbHash size={14} />,
+        keywords: ['entity', 'metric', 'count', 'number', 'stat', 'kpi'],
+        onSelect: (editor, { insertOrReplaceBlock }) => {
+          insertOrReplaceBlock(editor, {
+            type: METRIC_TYPE,
+            schema: '',
+            owner: '',
+            lifecycle: '',
+            label: '',
+            children: [{ text: '' }]
+          });
+        }
       }
     }
   }

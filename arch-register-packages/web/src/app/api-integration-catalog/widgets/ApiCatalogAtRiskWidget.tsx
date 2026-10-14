@@ -34,11 +34,10 @@ const ApiCatalogAtRiskHeaderActions = () => {
 export const apiCatalogAtRiskSpec = defineComponent({
   type: 'api-integration-catalog-at-risk',
   category: 'data-views',
-  surfaces: ['dashboard'],
+  name: 'Integrations needing attention',
+  description: 'Data flows that cross a boundary or carry restricted data.',
   dashboardWidget: {
     icon: TbPlugConnected,
-    label: 'Integrations needing attention',
-    description: 'Data flows that cross a boundary or carry restricted data.',
     defaultW: 6,
     defaultH: 16,
     surfaces: ['workspace'],

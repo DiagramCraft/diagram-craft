@@ -3,7 +3,7 @@ import { defineComponent } from '../../defineComponent';
 import { EntityStaleReport } from './EntityStaleReport';
 import { createDashboardWidgetAdapter } from '../../../../dashboard/widgets/createDashboardWidgetAdapter';
 import { EntityStaleReportDashboardConfigForm } from './EntityStaleReportDashboardConfigForm';
-import type { EntityStaleReportProps, EntityStaleReportSlateElement } from './types';
+import type { EntityStaleReportProps } from './types';
 
 export const ENTITY_STALE_REPORT_TYPE = 'entity-stale-report' as const;
 
@@ -11,25 +11,15 @@ const hasOptionalInteger = (config: Record<string, unknown>, key: string): boole
   config[key] === undefined || (typeof config[key] === 'number' && Number.isInteger(config[key]));
 
 /**
- * Dashboard-only analytics widget: no editorSpec, so it never appears in the
- * wiki slash-command menu or MDX round-trip, regardless of `surfaces`.
+ * Dashboard-only analytics widget: no MDX component or editor registration.
  */
-export const entityStaleReportSpec = defineComponent<
-  EntityStaleReportSlateElement,
-  EntityStaleReportProps,
-  'block'
->({
+export const entityStaleReportSpec = defineComponent({
   type: ENTITY_STALE_REPORT_TYPE,
   category: 'data-views',
-
-  component: EntityStaleReport,
-  mode: 'block',
-  allowedProps: ['staleAfterDays'],
-  surfaces: ['dashboard'],
+  name: 'Stale entity report',
+  description: 'Entities that have not been updated recently.',
   dashboardWidget: {
     icon: TbClockExclamation,
-    label: 'Stale entity report',
-    description: 'Entities that have not been updated recently.',
     defaultW: 6,
     defaultH: 24,
     surfaces: ['workspace'],

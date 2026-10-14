@@ -31,14 +31,9 @@ export const entityBrowserEmbedSpec = defineComponent<
 >({
   type: ENTITY_BROWSER_EMBED_TYPE,
   category: 'data-views',
-  label: 'Entity browser',
+  name: 'Entity browser',
   description:
     'A live, searchable list of entities with your own filters, sorting and columns. Use it for a flexible catalog view.',
-
-  component: EntityBrowserEmbed,
-  mode: 'block',
-  allowedProps: ['config'],
-  surfaces: ['wiki', 'dashboard'],
   dashboardWidget: {
     icon: TbListSearch,
     defaultW: 6,
@@ -60,19 +55,24 @@ export const entityBrowserEmbedSpec = defineComponent<
     configForm: EntityBrowserEmbedConfigForm,
     dialogWidth: 'min(1200px, 92vw)'
   },
-  editorSpec: {
-    editableComponent: EntityBrowserEmbedEditable,
-    nodeOptions: { isVoid: true },
-    mdxRule: entityBrowserEmbedMdxRule,
-    slashCommand: {
-      icon: <TbListSearch size={14} />,
-      keywords: ['entity', 'browser', 'embed', 'search', 'filter', 'catalog'],
-      onSelect: (editor, { insertOrReplaceBlock }) => {
-        insertOrReplaceBlock(editor, {
-          type: ENTITY_BROWSER_EMBED_TYPE,
-          config: '',
-          children: [{ text: '' }]
-        });
+  mdxComponent: {
+    component: EntityBrowserEmbed,
+    mode: 'block',
+    allowedProps: ['config'],
+    editorSpec: {
+      editableComponent: EntityBrowserEmbedEditable,
+      nodeOptions: { isVoid: true },
+      mdxRule: entityBrowserEmbedMdxRule,
+      slashCommand: {
+        icon: <TbListSearch size={14} />,
+        keywords: ['entity', 'browser', 'embed', 'search', 'filter', 'catalog'],
+        onSelect: (editor, { insertOrReplaceBlock }) => {
+          insertOrReplaceBlock(editor, {
+            type: ENTITY_BROWSER_EMBED_TYPE,
+            config: '',
+            children: [{ text: '' }]
+          });
+        }
       }
     }
   }

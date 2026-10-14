@@ -11,27 +11,27 @@ export const entityFieldSpec = defineComponent<
 >({
   type: ENTITY_FIELD_TYPE,
   category: 'metrics',
-  surfaces: ['wiki'],
-
-  component: EntityField,
-  mode: 'inline',
-  allowedProps: ['id', 'field'],
-  editorSpec: {
-    editableComponent: EntityFieldEditable,
-    nodeOptions: { isVoid: true, isInline: true },
-    mdxRule: entityFieldMdxRule,
-    slashCommand: {
-      label: 'Entity field',
-      description: 'Show a live field value from an entity inside a sentence',
-      icon: <TbHash size={14} />,
-      keywords: ['field', 'entity', 'value', 'embed', 'inline'],
-      onSelect: (editor, { insertOrReplaceInline }) => {
-        insertOrReplaceInline(editor, {
-          type: ENTITY_FIELD_TYPE,
-          entityId: '',
-          field: '',
-          children: [{ text: '' }]
-        });
+  name: 'Entity field',
+  description: 'Show a live field value from an entity inside a sentence',
+  mdxComponent: {
+    component: EntityField,
+    mode: 'inline',
+    allowedProps: ['id', 'field'],
+    editorSpec: {
+      editableComponent: EntityFieldEditable,
+      nodeOptions: { isVoid: true, isInline: true },
+      mdxRule: entityFieldMdxRule,
+      slashCommand: {
+        icon: <TbHash size={14} />,
+        keywords: ['field', 'entity', 'value', 'embed', 'inline'],
+        onSelect: (editor, { insertOrReplaceInline }) => {
+          insertOrReplaceInline(editor, {
+            type: ENTITY_FIELD_TYPE,
+            entityId: '',
+            field: '',
+            children: [{ text: '' }]
+          });
+        }
       }
     }
   }

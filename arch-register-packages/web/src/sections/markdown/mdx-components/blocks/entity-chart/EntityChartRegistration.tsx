@@ -16,31 +16,31 @@ export const entityChartSpec = defineComponent<
 >({
   type: ENTITY_CHART_TYPE,
   category: 'visualizations',
-
-  component: EntityChart,
-  mode: 'block',
-  allowedProps: ['schema', 'owner', 'lifecycle', 'groupBy', 'type'],
-  surfaces: ['wiki', 'dashboard'],
-  editorSpec: {
-    editableComponent: EntityChartEditable,
-    nodeOptions: { isVoid: true },
-    mdxRule: entityChartMdxRule,
-    slashCommand: {
-      label: 'Entity chart',
-      description:
-        'A live chart of entities grouped by a field. Use it to show distribution, e.g. by lifecycle or owner.',
-      icon: <TbChartDonut size={14} />,
-      keywords: ['entity', 'chart', 'donut', 'bar', 'graph', 'visualize', 'analytics'],
-      onSelect: (editor, { insertOrReplaceBlock }) => {
-        insertOrReplaceBlock(editor, {
-          type: ENTITY_CHART_TYPE,
-          schema: '',
-          owner: '',
-          lifecycle: '',
-          groupBy: 'lifecycle',
-          chartType: 'donut',
-          children: [{ text: '' }]
-        });
+  name: 'Entity chart',
+  description:
+    'A live chart of entities grouped by a field. Use it to show distribution, e.g. by lifecycle or owner.',
+  mdxComponent: {
+    component: EntityChart,
+    mode: 'block',
+    allowedProps: ['schema', 'owner', 'lifecycle', 'groupBy', 'type'],
+    editorSpec: {
+      editableComponent: EntityChartEditable,
+      nodeOptions: { isVoid: true },
+      mdxRule: entityChartMdxRule,
+      slashCommand: {
+        icon: <TbChartDonut size={14} />,
+        keywords: ['entity', 'chart', 'donut', 'bar', 'graph', 'visualize', 'analytics'],
+        onSelect: (editor, { insertOrReplaceBlock }) => {
+          insertOrReplaceBlock(editor, {
+            type: ENTITY_CHART_TYPE,
+            schema: '',
+            owner: '',
+            lifecycle: '',
+            groupBy: 'lifecycle',
+            chartType: 'donut',
+            children: [{ text: '' }]
+          });
+        }
       }
     }
   }

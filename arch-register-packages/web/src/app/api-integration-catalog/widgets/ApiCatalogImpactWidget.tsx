@@ -85,12 +85,11 @@ const ApiCatalogImpactHeaderActions = ({ config }: { config: ImpactWidgetConfig 
 export const apiCatalogImpactSpec = defineComponent({
   type: 'api-integration-catalog-impact',
   category: 'visualizations',
-  surfaces: ['dashboard'],
+  name: 'API impact',
+  description:
+    'Blast radius (providers, direct consumers, second order) for the API selected in the dashboard sidebar.',
   dashboardWidget: {
     icon: TbAffiliate,
-    label: 'API impact',
-    description:
-      'Blast radius (providers, direct consumers, second order) for the API selected in the dashboard sidebar.',
     defaultW: 12,
     defaultH: 30,
     surfaces: ['workspace'],

@@ -17,13 +17,8 @@ export const entityViewEmbedSpec = defineComponent<
 >({
   type: ENTITY_VIEW_EMBED_TYPE,
   category: 'data-views',
-  label: 'Saved view',
+  name: 'Saved view',
   description: 'A live copy of a saved entity view. Use it to reuse a view someone already set up.',
-
-  component: EntityViewEmbed,
-  mode: 'block',
-  allowedProps: ['viewId'],
-  surfaces: ['wiki', 'dashboard'],
   dashboardWidget: {
     icon: TbLayoutDashboard,
     defaultW: 6,
@@ -40,19 +35,24 @@ export const entityViewEmbedSpec = defineComponent<
     createDefaultConfig: context => ({ viewId: context.viewId ?? '' }),
     configForm: EntityViewEmbedConfigForm
   },
-  editorSpec: {
-    editableComponent: EntityViewEmbedEditable,
-    nodeOptions: { isVoid: true },
-    mdxRule: entityViewEmbedMdxRule,
-    slashCommand: {
-      icon: <TbLayoutGrid size={14} />,
-      keywords: ['entity', 'view', 'embed', 'saved', 'catalog'],
-      onSelect: (editor, { insertOrReplaceBlock }) => {
-        insertOrReplaceBlock(editor, {
-          type: ENTITY_VIEW_EMBED_TYPE,
-          viewId: '',
-          children: [{ text: '' }]
-        });
+  mdxComponent: {
+    component: EntityViewEmbed,
+    mode: 'block',
+    allowedProps: ['viewId'],
+    editorSpec: {
+      editableComponent: EntityViewEmbedEditable,
+      nodeOptions: { isVoid: true },
+      mdxRule: entityViewEmbedMdxRule,
+      slashCommand: {
+        icon: <TbLayoutGrid size={14} />,
+        keywords: ['entity', 'view', 'embed', 'saved', 'catalog'],
+        onSelect: (editor, { insertOrReplaceBlock }) => {
+          insertOrReplaceBlock(editor, {
+            type: ENTITY_VIEW_EMBED_TYPE,
+            viewId: '',
+            children: [{ text: '' }]
+          });
+        }
       }
     }
   }

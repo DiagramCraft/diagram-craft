@@ -149,10 +149,11 @@ export const ASSESSMENT_PROGRESS_TABLE_TYPE = 'AssessmentProgressTable' as const
  * Dashboard-only table: one row per assessment targeting an entity type, with aggregate progress
  * (in-scope entities with a complete response), due date and derived status.
  */
-const _assessmentProgressTableSpecData: DashboardWidgetSpec<AssessmentProgressTableConfig> = {
+const _assessmentProgressTableSpecData: Omit<
+  DashboardWidgetSpec<AssessmentProgressTableConfig>,
+  'label' | 'description'
+> = {
   icon: TbChecklist,
-  label: 'Assessment progress',
-  description: 'Assessments on an entity type with progress, due date and status.',
   defaultW: 12,
   defaultH: 20,
   surfaces: ['workspace'],
@@ -169,6 +170,7 @@ const _assessmentProgressTableSpecData: DashboardWidgetSpec<AssessmentProgressTa
 export const assessmentProgressTableSpec = defineComponent({
   type: ASSESSMENT_PROGRESS_TABLE_TYPE,
   category: 'data-views',
-  surfaces: ['dashboard'],
+  name: 'Assessment progress',
+  description: 'Assessments on an entity type with progress, due date and status.',
   dashboardWidget: _assessmentProgressTableSpecData
 });

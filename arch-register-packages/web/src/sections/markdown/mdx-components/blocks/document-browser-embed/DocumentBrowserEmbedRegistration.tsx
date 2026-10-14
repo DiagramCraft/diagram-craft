@@ -29,14 +29,9 @@ export const documentBrowserEmbedSpec = defineComponent<
 >({
   type: DOCUMENT_BROWSER_EMBED_TYPE,
   category: 'data-views',
-  label: 'Document browser',
+  name: 'Document browser',
   description:
     'A filterable list of documents in this workspace or project. Use it to find and open files.',
-
-  component: DocumentBrowserEmbed,
-  mode: 'block',
-  allowedProps: ['config'],
-  surfaces: ['wiki', 'dashboard'],
   dashboardWidget: {
     icon: TbFileSearch,
     defaultW: 6,
@@ -59,19 +54,24 @@ export const documentBrowserEmbedSpec = defineComponent<
     configForm: DocumentBrowserEmbedConfigForm,
     dialogWidth: 'min(1200px, 92vw)'
   },
-  editorSpec: {
-    editableComponent: DocumentBrowserEmbedEditable,
-    nodeOptions: { isVoid: true },
-    mdxRule: documentBrowserEmbedMdxRule,
-    slashCommand: {
-      icon: <TbFileSearch size={14} />,
-      keywords: ['document', 'browser', 'markdown', 'wiki', 'list', 'filter', 'search'],
-      onSelect: (editor, { insertOrReplaceBlock }) => {
-        insertOrReplaceBlock(editor, {
-          type: DOCUMENT_BROWSER_EMBED_TYPE,
-          config: '',
-          children: [{ text: '' }]
-        });
+  mdxComponent: {
+    component: DocumentBrowserEmbed,
+    mode: 'block',
+    allowedProps: ['config'],
+    editorSpec: {
+      editableComponent: DocumentBrowserEmbedEditable,
+      nodeOptions: { isVoid: true },
+      mdxRule: documentBrowserEmbedMdxRule,
+      slashCommand: {
+        icon: <TbFileSearch size={14} />,
+        keywords: ['document', 'browser', 'markdown', 'wiki', 'list', 'filter', 'search'],
+        onSelect: (editor, { insertOrReplaceBlock }) => {
+          insertOrReplaceBlock(editor, {
+            type: DOCUMENT_BROWSER_EMBED_TYPE,
+            config: '',
+            children: [{ text: '' }]
+          });
+        }
       }
     }
   }

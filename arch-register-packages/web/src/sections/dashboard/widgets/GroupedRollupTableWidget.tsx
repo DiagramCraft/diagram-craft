@@ -280,11 +280,11 @@ const optionalBoolean = (value: unknown): boolean =>
 const optionalString = (value: unknown): boolean =>
   value === undefined || typeof value === 'string';
 
-const _groupedRollupTableSpecData: DashboardWidgetSpec<GroupedRollupTableWidgetConfig> = {
+const _groupedRollupTableSpecData: Omit<
+  DashboardWidgetSpec<GroupedRollupTableWidgetConfig>,
+  'label' | 'description'
+> = {
   icon: TbTable,
-  label: 'Roll-up table',
-  description:
-    'Records summed into ranked rows, per record or grouped by a field, with optional bars, share and count.',
   defaultW: 12,
   defaultH: 20,
   surfaces: ['workspace', 'project'],
@@ -310,6 +310,8 @@ const _groupedRollupTableSpecData: DashboardWidgetSpec<GroupedRollupTableWidgetC
 export const groupedRollupTableSpec = defineComponent({
   type: GROUPED_ROLLUP_TABLE_TYPE,
   category: 'data-views',
-  surfaces: ['dashboard'],
+  name: 'Roll-up table',
+  description:
+    'Records summed into ranked rows, per record or grouped by a field, with optional bars, share and count.',
   dashboardWidget: _groupedRollupTableSpecData
 });

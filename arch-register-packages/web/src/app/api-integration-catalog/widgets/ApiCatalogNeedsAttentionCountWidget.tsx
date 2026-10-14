@@ -16,11 +16,10 @@ export const ApiCatalogNeedsAttentionCountWidget = ({
 export const apiCatalogNeedsAttentionCountSpec = defineComponent({
   type: 'api-integration-catalog-needs-attention-count',
   category: 'metrics',
-  surfaces: ['dashboard'],
+  name: 'Needs attention (count)',
+  description: 'Number of open API change and deprecation cases.',
   dashboardWidget: {
     icon: TbAlertTriangle,
-    label: 'Needs attention (count)',
-    description: 'Number of open API change and deprecation cases.',
     defaultW: 3,
     defaultH: 5,
     surfaces: ['workspace'],

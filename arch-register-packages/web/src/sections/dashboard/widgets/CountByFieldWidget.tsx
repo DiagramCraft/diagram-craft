@@ -128,10 +128,11 @@ export const CountByFieldConfigForm = ({ config, onChange }: CountByFieldConfigF
 
 export const COUNT_BY_FIELD_TYPE = 'CountByField' as const;
 
-const _countByFieldSpecData: DashboardWidgetSpec<CountByFieldWidgetConfig> = {
+const _countByFieldSpecData: Omit<
+  DashboardWidgetSpec<CountByFieldWidgetConfig>,
+  'label' | 'description'
+> = {
   icon: TbChartBar,
-  label: 'Count by field',
-  description: 'Entity count with a stacked bar per value of a field.',
   defaultW: 6,
   defaultH: 8,
   surfaces: ['workspace'],
@@ -147,6 +148,7 @@ const _countByFieldSpecData: DashboardWidgetSpec<CountByFieldWidgetConfig> = {
 export const countByFieldSpec = defineComponent({
   type: COUNT_BY_FIELD_TYPE,
   category: 'metrics',
-  surfaces: ['dashboard'],
+  name: 'Count by field',
+  description: 'Entity count with a stacked bar per value of a field.',
   dashboardWidget: _countByFieldSpecData
 });

@@ -11,27 +11,27 @@ export const labelSpec = defineComponent<
 >({
   type: LABEL_TYPE,
   category: 'content-layout',
-  surfaces: ['wiki'],
-
-  component: Label,
-  mode: 'inline',
-  allowedProps: ['text', 'color'],
-  editorSpec: {
-    editableComponent: LabelEditable,
-    nodeOptions: { isVoid: true, isInline: true },
-    mdxRule: labelMdxRule,
-    slashCommand: {
-      label: 'Label',
-      description: 'Insert a free-standing colored status label',
-      icon: <TbTag size={14} />,
-      keywords: ['label', 'status', 'chip', 'tag', 'badge'],
-      onSelect: (editor, { insertOrReplaceInline }) => {
-        insertOrReplaceInline(editor, {
-          type: LABEL_TYPE,
-          content: '',
-          color: '',
-          children: [{ text: '' }]
-        });
+  name: 'Label',
+  description: 'Insert a free-standing colored status label',
+  mdxComponent: {
+    component: Label,
+    mode: 'inline',
+    allowedProps: ['text', 'color'],
+    editorSpec: {
+      editableComponent: LabelEditable,
+      nodeOptions: { isVoid: true, isInline: true },
+      mdxRule: labelMdxRule,
+      slashCommand: {
+        icon: <TbTag size={14} />,
+        keywords: ['label', 'status', 'chip', 'tag', 'badge'],
+        onSelect: (editor, { insertOrReplaceInline }) => {
+          insertOrReplaceInline(editor, {
+            type: LABEL_TYPE,
+            content: '',
+            color: '',
+            children: [{ text: '' }]
+          });
+        }
       }
     }
   }

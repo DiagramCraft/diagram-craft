@@ -12,27 +12,27 @@ export const calloutSpec = defineComponent<
 >({
   type: CALLOUT_TYPE,
   category: 'content-layout',
-  surfaces: ['wiki'],
-
-  component: Callout,
-  mode: 'block',
-  allowedProps: ['variant'],
-  acceptsRichContent: true,
-  editorSpec: {
-    editableComponent: CalloutEditable,
-    nodeOptions: {},
-    mdxRule: calloutMdxRule,
-    slashCommand: {
-      label: 'Callout',
-      description: 'Highlight a note, warning, or tip',
-      icon: <TbInfoCircle size={14} />,
-      keywords: ['callout', 'note', 'warning', 'tip', 'info', 'danger', 'success', 'admonition'],
-      onSelect: (editor, { insertOrReplaceBlock }) => {
-        insertOrReplaceBlock(editor, {
-          type: CALLOUT_TYPE,
-          variant: 'info',
-          children: [{ type: 'p', children: [{ text: '' }] }]
-        });
+  name: 'Callout',
+  description: 'Highlight a note, warning, or tip',
+  mdxComponent: {
+    component: Callout,
+    mode: 'block',
+    allowedProps: ['variant'],
+    acceptsRichContent: true,
+    editorSpec: {
+      editableComponent: CalloutEditable,
+      nodeOptions: {},
+      mdxRule: calloutMdxRule,
+      slashCommand: {
+        icon: <TbInfoCircle size={14} />,
+        keywords: ['callout', 'note', 'warning', 'tip', 'info', 'danger', 'success', 'admonition'],
+        onSelect: (editor, { insertOrReplaceBlock }) => {
+          insertOrReplaceBlock(editor, {
+            type: CALLOUT_TYPE,
+            variant: 'info',
+            children: [{ type: 'p', children: [{ text: '' }] }]
+          });
+        }
       }
     }
   }

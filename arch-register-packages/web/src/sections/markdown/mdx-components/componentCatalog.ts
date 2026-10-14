@@ -41,6 +41,9 @@ import { caseCountSpec } from '../../../app/data-stewardship/widgets/CaseCountWi
 import { caseQueueSpec } from '../../../app/data-stewardship/widgets/CaseQueueWidget';
 import { reviewsOverdueSpec } from '../../../app/data-stewardship/widgets/ReviewsOverdueWidget';
 import { riskMatrixSpec } from '../../../app/risk-compliance/sections/RiskMatrixWidget';
+import { entityLifecycleChartSpec } from './widgets/entity-lifecycle-chart/EntityLifecycleChartRegistration';
+import { entityActivityTrendChartSpec } from './widgets/entity-activity-trend-chart/EntityActivityTrendChartRegistration';
+import { entityStaleReportSpec } from './widgets/entity-stale-report/EntityStaleReportRegistration';
 
 const dashboardOnlyDefinitions: ReadonlyArray<ComponentDefinition> = [
   activityFeedSpec,
@@ -60,6 +63,9 @@ const dashboardOnlyDefinitions: ReadonlyArray<ComponentDefinition> = [
   caseCalendarSpec,
   caseCountSpec,
   caseQueueSpec,
+  entityActivityTrendChartSpec,
+  entityLifecycleChartSpec,
+  entityStaleReportSpec,
   changeCaseTableSpec,
   conformanceSummarySpec,
   conformanceViolationsSpec,

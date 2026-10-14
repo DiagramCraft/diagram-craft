@@ -220,11 +220,11 @@ const isBand = (band: unknown): boolean => {
   );
 };
 
-const _fieldMatrixSpecData: DashboardWidgetSpec<FieldMatrixWidgetConfig> = {
+const _fieldMatrixSpecData: Omit<
+  DashboardWidgetSpec<FieldMatrixWidgetConfig>,
+  'label' | 'description'
+> = {
   icon: TbGrid4X4,
-  label: 'Field matrix',
-  description:
-    'Records placed in a grid of numeric row values against banded numeric values, with clickable record chips.',
   defaultW: 6,
   defaultH: 20,
   surfaces: ['workspace', 'project'],
@@ -263,6 +263,8 @@ const _fieldMatrixSpecData: DashboardWidgetSpec<FieldMatrixWidgetConfig> = {
 export const fieldMatrixSpec = defineComponent({
   type: FIELD_MATRIX_TYPE,
   category: 'data-views',
-  surfaces: ['dashboard'],
+  name: 'Field matrix',
+  description:
+    'Records placed in a grid of numeric row values against banded numeric values, with clickable record chips.',
   dashboardWidget: _fieldMatrixSpecData
 });

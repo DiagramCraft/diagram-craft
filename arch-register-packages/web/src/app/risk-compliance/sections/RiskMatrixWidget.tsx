@@ -112,11 +112,10 @@ const isOptionalStringArray = (value: unknown): boolean =>
 export const riskMatrixSpec = defineComponent({
   type: RISK_MATRIX_TYPE,
   category: 'visualizations',
-  surfaces: ['dashboard'],
+  name: 'Risk matrix',
+  description: 'Likelihood × impact matrix of live risks, with an inherent/residual toggle.',
   dashboardWidget: {
     icon: TbGridDots,
-    label: 'Risk matrix',
-    description: 'Likelihood × impact matrix of live risks, with an inherent/residual toggle.',
     defaultW: 6,
     defaultH: 24,
     surfaces: ['workspace'],

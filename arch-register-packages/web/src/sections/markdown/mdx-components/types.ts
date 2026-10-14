@@ -126,6 +126,8 @@ export type MdxComponentSpec = {
 /** A complete registration shared by the wiki and dashboard catalogs. */
 export type ComponentDefinition = {
   type: string;
+  name: string;
+  description: string;
   category: ComponentCategory;
   surfaces: ReadonlyArray<ComponentSurface>;
   /** Present for components rendered through the MDX preview pipeline. */

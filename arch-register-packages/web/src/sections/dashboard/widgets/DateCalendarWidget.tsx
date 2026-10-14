@@ -279,11 +279,11 @@ const isOptionalNumber = (value: unknown): boolean =>
 const optionalString = (value: unknown): boolean =>
   value === undefined || typeof value === 'string';
 
-const _dateCalendarSpecData: DashboardWidgetSpec<DateCalendarWidgetConfig> = {
+const _dateCalendarSpecData: Omit<
+  DashboardWidgetSpec<DateCalendarWidgetConfig>,
+  'label' | 'description'
+> = {
   icon: TbCalendarMonth,
-  label: 'Calendar',
-  description:
-    'Records placed on a month or week calendar by a date field, e.g. renewals or reviews.',
   defaultW: 12,
   defaultH: 30,
   surfaces: ['workspace'],
@@ -307,6 +307,8 @@ const _dateCalendarSpecData: DashboardWidgetSpec<DateCalendarWidgetConfig> = {
 export const dateCalendarSpec = defineComponent({
   type: DATE_CALENDAR_TYPE,
   category: 'visualizations',
-  surfaces: ['dashboard'],
+  name: 'Calendar',
+  description:
+    'Records placed on a month or week calendar by a date field, e.g. renewals or reviews.',
   dashboardWidget: _dateCalendarSpecData
 });

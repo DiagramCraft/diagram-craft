@@ -373,11 +373,11 @@ export const RelatedEntitiesListConfigForm = ({
 
 export const RELATED_ENTITIES_LIST_TYPE = 'RelatedEntitiesList' as const;
 
-const _relatedEntitiesListSpecData: DashboardWidgetSpec<RelatedEntitiesListWidgetConfig> = {
+const _relatedEntitiesListSpecData: Omit<
+  DashboardWidgetSpec<RelatedEntitiesListWidgetConfig>,
+  'label' | 'description'
+> = {
   icon: TbListDetails,
-  label: 'Related entities',
-  description:
-    'Entities of one type that reference a chosen entity, optionally with a progress bar per row.',
   defaultW: 4,
   defaultH: 14,
   surfaces: ['workspace'],
@@ -392,6 +392,8 @@ const _relatedEntitiesListSpecData: DashboardWidgetSpec<RelatedEntitiesListWidge
 export const relatedEntitiesListSpec = defineComponent({
   type: RELATED_ENTITIES_LIST_TYPE,
   category: 'data-views',
-  surfaces: ['dashboard'],
+  name: 'Related entities',
+  description:
+    'Entities of one type that reference a chosen entity, optionally with a progress bar per row.',
   dashboardWidget: _relatedEntitiesListSpecData
 });

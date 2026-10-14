@@ -279,10 +279,11 @@ const isOptionalString = (value: unknown): boolean =>
  * schema, restricted to a chosen set of case kinds — not tied to any particular app. Generalized
  * from Data Stewardship's former Change cases screen (#3504).
  */
-const _changeCaseTableSpecData: DashboardWidgetSpec<ChangeCaseTableConfig> = {
+const _changeCaseTableSpecData: Omit<
+  DashboardWidgetSpec<ChangeCaseTableConfig>,
+  'label' | 'description'
+> = {
   icon: TbGitPullRequest,
-  label: 'Change case table',
-  description: 'Register of governance cases against entities of a chosen type, in any status.',
   defaultW: 12,
   defaultH: 20,
   surfaces: ['workspace'],
@@ -305,6 +306,7 @@ const _changeCaseTableSpecData: DashboardWidgetSpec<ChangeCaseTableConfig> = {
 export const changeCaseTableSpec = defineComponent({
   type: CHANGE_CASE_TABLE_TYPE,
   category: 'data-views',
-  surfaces: ['dashboard'],
+  name: 'Change case table',
+  description: 'Register of governance cases against entities of a chosen type, in any status.',
   dashboardWidget: _changeCaseTableSpecData
 });

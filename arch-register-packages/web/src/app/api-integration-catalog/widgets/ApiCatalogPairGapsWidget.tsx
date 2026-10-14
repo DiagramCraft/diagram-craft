@@ -12,11 +12,10 @@ export const ApiCatalogPairGapsWidget = ({ config: _config }: { config: BaseWidg
 export const apiCatalogPairGapsSpec = defineComponent({
   type: 'api-integration-catalog-pair-gaps',
   category: 'data-views',
-  surfaces: ['dashboard'],
+  name: 'Provider/consumer gaps',
+  description: 'API provider/consumer pairs without a matching Data Flow.',
   dashboardWidget: {
     icon: TbChartBar,
-    label: 'Provider/consumer gaps',
-    description: 'API provider/consumer pairs without a matching Data Flow.',
     defaultW: 3,
     defaultH: 5,
     surfaces: ['workspace'],

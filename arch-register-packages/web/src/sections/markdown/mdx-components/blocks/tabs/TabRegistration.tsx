@@ -12,17 +12,19 @@ export const tabSpec = defineComponent<
 >({
   type: TAB_TYPE,
   category: 'content-layout',
-  surfaces: ['wiki'],
-
-  component: Tab,
-  mode: 'block',
-  allowedProps: ['label'],
-  acceptsRichContent: true,
-  editorSpec: {
-    editableComponent: TabEditable,
-    nodeOptions: {},
-    mdxRule: tabMdxRule
-    // No slashCommand — Tab is only ever created via Tabs' own add/insert logic,
-    // not directly from the slash menu (mirrors Column's own registration).
+  name: 'Tab',
+  description: 'A tab within a tabbed content block.',
+  mdxComponent: {
+    component: Tab,
+    mode: 'block',
+    allowedProps: ['label'],
+    acceptsRichContent: true,
+    editorSpec: {
+      editableComponent: TabEditable,
+      nodeOptions: {},
+      mdxRule: tabMdxRule
+      // No slashCommand — Tab is only ever created via Tabs' own add/insert logic,
+      // not directly from the slash menu (mirrors Column's own registration).
+    }
   }
 });

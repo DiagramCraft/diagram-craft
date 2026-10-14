@@ -96,11 +96,11 @@ const ConfigForm = ({
  * in progress, not started or complete (the statuses are derived from the responses recorded
  * against the in-scope entities, which an entity-query `AggregateStat` cannot express).
  */
-const _assessmentStatusStatSpecData: DashboardWidgetSpec<AssessmentStatusStatConfig> = {
+const _assessmentStatusStatSpecData: Omit<
+  DashboardWidgetSpec<AssessmentStatusStatConfig>,
+  'label' | 'description'
+> = {
   icon: TbChecklist,
-  label: 'Assessment status',
-  description:
-    'Number of assessments on an entity type that are overdue, in progress, not started or complete.',
   defaultW: 3,
   defaultH: 5,
   surfaces: ['workspace'],
@@ -118,6 +118,8 @@ const _assessmentStatusStatSpecData: DashboardWidgetSpec<AssessmentStatusStatCon
 export const assessmentStatusStatSpec = defineComponent({
   type: ASSESSMENT_STATUS_STAT_TYPE,
   category: 'metrics',
-  surfaces: ['dashboard'],
+  name: 'Assessment status',
+  description:
+    'Number of assessments on an entity type that are overdue, in progress, not started or complete.',
   dashboardWidget: _assessmentStatusStatSpecData
 });

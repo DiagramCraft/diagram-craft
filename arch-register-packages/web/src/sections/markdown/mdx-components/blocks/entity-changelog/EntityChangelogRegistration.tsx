@@ -27,14 +27,9 @@ export const entityChangelogSpec = defineComponent<
 >({
   type: ENTITY_CHANGELOG_TYPE,
   category: 'data-views',
-  label: 'Entity changelog',
+  name: 'Entity changelog',
   description:
     'A feed of recent changes to one entity or a filtered set. Use it to see what changed lately.',
-
-  component: EntityChangelog,
-  mode: 'block',
-  allowedProps: ['id', 'schema', 'owner', 'lifecycle', 'limit', 'since'],
-  surfaces: ['wiki', 'dashboard'],
   dashboardWidget: {
     icon: TbHistory,
     defaultW: 6,
@@ -63,24 +58,29 @@ export const entityChangelogSpec = defineComponent<
     getTitle: () => 'Entity changelog',
     configForm: EntityChangelogConfigForm
   },
-  editorSpec: {
-    editableComponent: EntityChangelogEditable,
-    nodeOptions: { isVoid: true },
-    mdxRule: entityChangelogMdxRule,
-    slashCommand: {
-      icon: <TbHistory size={14} />,
-      keywords: ['changelog', 'audit', 'history', 'changes', 'entity'],
-      onSelect: (editor, { insertOrReplaceBlock }) => {
-        insertOrReplaceBlock(editor, {
-          type: ENTITY_CHANGELOG_TYPE,
-          entityId: '',
-          schema: '',
-          owner: '',
-          lifecycle: '',
-          limit: '',
-          since: '30d',
-          children: [{ text: '' }]
-        });
+  mdxComponent: {
+    component: EntityChangelog,
+    mode: 'block',
+    allowedProps: ['id', 'schema', 'owner', 'lifecycle', 'limit', 'since'],
+    editorSpec: {
+      editableComponent: EntityChangelogEditable,
+      nodeOptions: { isVoid: true },
+      mdxRule: entityChangelogMdxRule,
+      slashCommand: {
+        icon: <TbHistory size={14} />,
+        keywords: ['changelog', 'audit', 'history', 'changes', 'entity'],
+        onSelect: (editor, { insertOrReplaceBlock }) => {
+          insertOrReplaceBlock(editor, {
+            type: ENTITY_CHANGELOG_TYPE,
+            entityId: '',
+            schema: '',
+            owner: '',
+            lifecycle: '',
+            limit: '',
+            since: '30d',
+            children: [{ text: '' }]
+          });
+        }
       }
     }
   }

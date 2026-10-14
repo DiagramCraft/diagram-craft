@@ -218,11 +218,10 @@ const isSeverity = (value: unknown): value is NeedsAttentionWidgetConfig['severi
 export const needsAttentionSpec = defineComponent({
   type: NEEDS_ATTENTION_TYPE,
   category: 'data-views',
-  surfaces: ['dashboard'],
+  name: 'Needs attention queue',
+  description: 'Open governance cases against entities of a chosen type, awaiting a decision.',
   dashboardWidget: {
     icon: TbAlertTriangle,
-    label: 'Needs attention queue',
-    description: 'Open governance cases against entities of a chosen type, awaiting a decision.',
     defaultW: 6,
     defaultH: 16,
     surfaces: ['workspace', 'project'],

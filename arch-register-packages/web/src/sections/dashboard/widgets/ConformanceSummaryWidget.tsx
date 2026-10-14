@@ -94,11 +94,10 @@ export const CONFORMANCE_SUMMARY_TYPE = 'conformance-violation-summary' as const
 export const conformanceSummarySpec = defineComponent({
   type: CONFORMANCE_SUMMARY_TYPE,
   category: 'data-views',
-  surfaces: ['dashboard'],
+  name: 'Conformance summary',
+  description: 'Current conformance violations grouped by severity, check, and schema.',
   dashboardWidget: {
     icon: TbShieldCheck,
-    label: 'Conformance summary',
-    description: 'Current conformance violations grouped by severity, check, and schema.',
     defaultW: 5,
     defaultH: 16,
     surfaces: ['workspace'],

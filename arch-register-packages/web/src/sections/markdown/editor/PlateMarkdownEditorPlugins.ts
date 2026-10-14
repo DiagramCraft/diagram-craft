@@ -71,9 +71,9 @@ export const HeadingBreakPlugin = createPlatePlugin({
 });
 
 export const mdxRules: MdRules = Object.fromEntries(
-  Object.entries(MDX_COMPONENTS)
-    .filter(([, spec]) => spec.editorSpec?.mdxRule)
-    .map(([name, spec]) => [name, spec.editorSpec!.mdxRule])
+  Object.entries(MDX_COMPONENTS).flatMap(([name, spec]) =>
+    spec?.editorSpec?.mdxRule ? [[name, spec.editorSpec.mdxRule] as const] : []
+  )
 );
 
 /**
@@ -93,7 +93,7 @@ const createMdxElementPlugin = (name: string, editorSpec: EditorSpec) =>
   }).withComponent(toPlateElementComponent(editorSpec.editableComponent));
 
 const mdxElementPlugins = Object.entries(MDX_COMPONENTS).flatMap(([name, spec]) => {
-  if (!spec.editorSpec) return [];
+  if (!spec?.editorSpec) return [];
   return [createMdxElementPlugin(name, spec.editorSpec)];
 });
 

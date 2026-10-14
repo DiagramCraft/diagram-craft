@@ -16,27 +16,27 @@ export const foldableSectionSpec = defineComponent<
 >({
   type: FOLDABLE_SECTION_TYPE,
   category: 'content-layout',
-  surfaces: ['wiki'],
-
-  component: FoldableSection,
-  mode: 'block',
-  allowedProps: ['label'],
-  acceptsRichContent: true,
-  editorSpec: {
-    editableComponent: FoldableSectionEditable,
-    nodeOptions: {},
-    mdxRule: foldableSectionMdxRule,
-    slashCommand: {
-      label: 'Foldable section',
-      description: 'Collapse content behind a summary label',
-      icon: <TbChevronsDown size={14} />,
-      keywords: ['fold', 'foldable', 'collapse', 'expand', 'details', 'summary', 'toggle'],
-      onSelect: (editor, { insertOrReplaceBlock }) => {
-        insertOrReplaceBlock(editor, {
-          type: FOLDABLE_SECTION_TYPE,
-          label: '',
-          children: [{ type: 'p', children: [{ text: '' }] }]
-        });
+  name: 'Foldable section',
+  description: 'Collapse content behind a summary label',
+  mdxComponent: {
+    component: FoldableSection,
+    mode: 'block',
+    allowedProps: ['label'],
+    acceptsRichContent: true,
+    editorSpec: {
+      editableComponent: FoldableSectionEditable,
+      nodeOptions: {},
+      mdxRule: foldableSectionMdxRule,
+      slashCommand: {
+        icon: <TbChevronsDown size={14} />,
+        keywords: ['fold', 'foldable', 'collapse', 'expand', 'details', 'summary', 'toggle'],
+        onSelect: (editor, { insertOrReplaceBlock }) => {
+          insertOrReplaceBlock(editor, {
+            type: FOLDABLE_SECTION_TYPE,
+            label: '',
+            children: [{ type: 'p', children: [{ text: '' }] }]
+          });
+        }
       }
     }
   }

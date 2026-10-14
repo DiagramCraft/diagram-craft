@@ -259,11 +259,11 @@ const isOptionalNumber = (value: unknown): boolean =>
 const optionalString = (value: unknown): boolean =>
   value === undefined || typeof value === 'string';
 
-const _upcomingByDateSpecData: DashboardWidgetSpec<UpcomingByDateWidgetConfig> = {
+const _upcomingByDateSpecData: Omit<
+  DashboardWidgetSpec<UpcomingByDateWidgetConfig>,
+  'label' | 'description'
+> = {
   icon: TbCalendarTime,
-  label: 'Upcoming by date',
-  description:
-    'Records ordered by an upcoming date with a countdown, e.g. renewals, expiries or reviews due.',
   defaultW: 6,
   defaultH: 16,
   surfaces: ['workspace'],
@@ -286,6 +286,8 @@ const _upcomingByDateSpecData: DashboardWidgetSpec<UpcomingByDateWidgetConfig> =
 export const upcomingByDateSpec = defineComponent({
   type: UPCOMING_BY_DATE_TYPE,
   category: 'data-views',
-  surfaces: ['dashboard'],
+  name: 'Upcoming by date',
+  description:
+    'Records ordered by an upcoming date with a countdown, e.g. renewals, expiries or reviews due.',
   dashboardWidget: _upcomingByDateSpecData
 });

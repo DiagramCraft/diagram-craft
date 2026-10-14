@@ -81,11 +81,10 @@ export const UPCOMING_MILESTONES_TYPE = 'upcoming-milestones' as const;
 export const upcomingMilestonesSpec = defineComponent({
   type: UPCOMING_MILESTONES_TYPE,
   category: 'metrics',
-  surfaces: ['dashboard'],
+  name: 'Upcoming milestones',
+  description: 'The most recently completed milestone and up to three upcoming ones.',
   dashboardWidget: {
     icon: TbFlag3,
-    label: 'Upcoming milestones',
-    description: 'The most recently completed milestone and up to three upcoming ones.',
     defaultW: 3,
     defaultH: 8,
     surfaces: ['project'],

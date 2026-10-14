@@ -19,14 +19,9 @@ export const entityTableSpec = defineComponent<
 >({
   type: ENTITY_TABLE_TYPE,
   category: 'data-views',
-  label: 'Entity table',
+  name: 'Entity table',
   description:
     'A table of entities matching filters you define. Use it for a fixed, readable list.',
-
-  component: EntityTable,
-  mode: 'block',
-  allowedProps: ['schema', 'owner', 'lifecycle', 'limit'],
-  surfaces: ['wiki', 'dashboard'],
   dashboardWidget: {
     icon: TbTable,
     defaultW: 6,
@@ -46,22 +41,27 @@ export const entityTableSpec = defineComponent<
     createDefaultConfig: () => ({}),
     configForm: EntityTableConfigForm
   },
-  editorSpec: {
-    editableComponent: EntityTableEditable,
-    nodeOptions: { isVoid: true },
-    mdxRule: entityTableMdxRule,
-    slashCommand: {
-      icon: <TbTable size={14} />,
-      keywords: ['entity', 'table', 'catalog', 'list', 'filter'],
-      onSelect: (editor, { insertOrReplaceBlock }) => {
-        insertOrReplaceBlock(editor, {
-          type: ENTITY_TABLE_TYPE,
-          schema: '',
-          owner: '',
-          lifecycle: '',
-          limit: '10',
-          children: [{ text: '' }]
-        });
+  mdxComponent: {
+    component: EntityTable,
+    mode: 'block',
+    allowedProps: ['schema', 'owner', 'lifecycle', 'limit'],
+    editorSpec: {
+      editableComponent: EntityTableEditable,
+      nodeOptions: { isVoid: true },
+      mdxRule: entityTableMdxRule,
+      slashCommand: {
+        icon: <TbTable size={14} />,
+        keywords: ['entity', 'table', 'catalog', 'list', 'filter'],
+        onSelect: (editor, { insertOrReplaceBlock }) => {
+          insertOrReplaceBlock(editor, {
+            type: ENTITY_TABLE_TYPE,
+            schema: '',
+            owner: '',
+            lifecycle: '',
+            limit: '10',
+            children: [{ text: '' }]
+          });
+        }
       }
     }
   }

@@ -197,11 +197,11 @@ const isValidConfig = (config: Record<string, unknown>): config is SpecItemsTabl
   (config.deprecated === undefined || typeof config.deprecated === 'boolean') &&
   (config.entityLimit === undefined || typeof config.entityLimit === 'number');
 
-const _specItemsTableSpecData: DashboardWidgetSpec<SpecItemsTableWidgetConfig> = {
+const _specItemsTableSpecData: Omit<
+  DashboardWidgetSpec<SpecItemsTableWidgetConfig>,
+  'label' | 'description'
+> = {
   icon: TbListDetails,
-  label: 'Specification operations',
-  description:
-    'Operations and messages across the API specifications of every entity of a type, optionally only deprecated ones.',
   defaultW: 12,
   defaultH: 24,
   surfaces: ['workspace'],
@@ -215,6 +215,8 @@ const _specItemsTableSpecData: DashboardWidgetSpec<SpecItemsTableWidgetConfig> =
 export const specItemsTableSpec = defineComponent({
   type: SPEC_ITEMS_TABLE_TYPE,
   category: 'data-views',
-  surfaces: ['dashboard'],
+  name: 'Specification operations',
+  description:
+    'Operations and messages across the API specifications of every entity of a type, optionally only deprecated ones.',
   dashboardWidget: _specItemsTableSpecData
 });

@@ -80,11 +80,10 @@ const CaseQueueHeaderActions = ({ config }: { config: CaseConfig }) => {
 export const caseQueueSpec = defineComponent({
   type: 'data-stewardship-case-queue',
   category: 'data-views',
-  surfaces: ['dashboard'],
+  name: 'Case queue',
+  description: 'Open governance cases, oldest deadline first, with derived priority.',
   dashboardWidget: {
     icon: TbClipboardCheck,
-    label: 'Case queue',
-    description: 'Open governance cases, oldest deadline first, with derived priority.',
     defaultW: 12,
     defaultH: 22,
     surfaces: ['workspace'],

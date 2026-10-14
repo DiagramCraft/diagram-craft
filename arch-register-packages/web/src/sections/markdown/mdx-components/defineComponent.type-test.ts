@@ -22,25 +22,28 @@ const FooEditable = (_props: PlateElementProps<FooSlateElement>) => null;
 defineComponent<FooSlateElement, FooProps, 'block'>({
   type: 'Foo',
   category: 'data-views',
-  surfaces: ['wiki'],
-  component: FooPreview,
-  mode: 'block',
-  allowedProps: ['id'],
-  editorSpec: {
-    editableComponent: FooEditable,
-    nodeOptions: { isVoid: true },
-    mdxRule: {
-      deserialize: (_mdastNode, _deco, _options) => ({
-        type: 'Foo',
-        fooId: '',
-        children: [{ text: '' }]
-      }),
-      serialize: _slateNode => ({
-        type: 'mdxJsxFlowElement',
-        name: 'Foo',
-        children: [],
-        attributes: []
-      })
+  name: 'Foo',
+  description: 'A Foo component.',
+  mdxComponent: {
+    component: FooPreview,
+    mode: 'block',
+    allowedProps: ['id'],
+    editorSpec: {
+      editableComponent: FooEditable,
+      nodeOptions: { isVoid: true },
+      mdxRule: {
+        deserialize: (_mdastNode, _deco, _options) => ({
+          type: 'Foo',
+          fooId: '',
+          children: [{ text: '' }]
+        }),
+        serialize: _slateNode => ({
+          type: 'mdxJsxFlowElement',
+          name: 'Foo',
+          children: [],
+          attributes: []
+        })
+      }
     }
   }
 });
@@ -49,36 +52,42 @@ defineComponent<FooSlateElement, FooProps, 'block'>({
 defineComponent<FooSlateElement, FooProps, 'block'>({
   type: 'Foo',
   category: 'data-views',
-  surfaces: ['wiki'],
-  component: FooPreview,
-  mode: 'block',
-  // @ts-expect-error 'bogus' is not a key of FooProps
-  allowedProps: ['bogus']
+  name: 'Foo',
+  description: 'A Foo component.',
+  mdxComponent: {
+    component: FooPreview,
+    mode: 'block',
+    // @ts-expect-error 'bogus' is not a key of FooProps
+    allowedProps: ['bogus']
+  }
 });
 
 // deserialize returning a shape missing a required field of E (`fooId`).
 defineComponent<FooSlateElement, FooProps, 'block'>({
   type: 'Foo',
   category: 'data-views',
-  surfaces: ['wiki'],
-  component: FooPreview,
-  mode: 'block',
-  allowedProps: ['id'],
-  editorSpec: {
-    editableComponent: FooEditable,
-    nodeOptions: { isVoid: true },
-    mdxRule: {
-      // @ts-expect-error missing required `fooId` field of FooSlateElement
-      deserialize: (_mdastNode, _deco, _options) => ({
-        type: 'Foo',
-        children: [{ text: '' }]
-      }),
-      serialize: _slateNode => ({
-        type: 'mdxJsxFlowElement',
-        name: 'Foo',
-        children: [],
-        attributes: []
-      })
+  name: 'Foo',
+  description: 'A Foo component.',
+  mdxComponent: {
+    component: FooPreview,
+    mode: 'block',
+    allowedProps: ['id'],
+    editorSpec: {
+      editableComponent: FooEditable,
+      nodeOptions: { isVoid: true },
+      mdxRule: {
+        // @ts-expect-error missing required `fooId` field of FooSlateElement
+        deserialize: (_mdastNode, _deco, _options) => ({
+          type: 'Foo',
+          children: [{ text: '' }]
+        }),
+        serialize: _slateNode => ({
+          type: 'mdxJsxFlowElement',
+          name: 'Foo',
+          children: [],
+          attributes: []
+        })
+      }
     }
   }
 });
@@ -92,26 +101,29 @@ const WrongEditable = (_props: PlateElementProps<OtherSlateElement>) => null;
 defineComponent<FooSlateElement, FooProps, 'block'>({
   type: 'Foo',
   category: 'data-views',
-  surfaces: ['wiki'],
-  component: FooPreview,
-  mode: 'block',
-  allowedProps: ['id'],
-  editorSpec: {
-    // @ts-expect-error WrongEditable expects OtherSlateElement, not FooSlateElement
-    editableComponent: WrongEditable,
-    nodeOptions: { isVoid: true },
-    mdxRule: {
-      deserialize: (_mdastNode, _deco, _options) => ({
-        type: 'Foo',
-        fooId: '',
-        children: [{ text: '' }]
-      }),
-      serialize: _slateNode => ({
-        type: 'mdxJsxFlowElement',
-        name: 'Foo',
-        children: [],
-        attributes: []
-      })
+  name: 'Foo',
+  description: 'A Foo component.',
+  mdxComponent: {
+    component: FooPreview,
+    mode: 'block',
+    allowedProps: ['id'],
+    editorSpec: {
+      // @ts-expect-error WrongEditable expects OtherSlateElement, not FooSlateElement
+      editableComponent: WrongEditable,
+      nodeOptions: { isVoid: true },
+      mdxRule: {
+        deserialize: (_mdastNode, _deco, _options) => ({
+          type: 'Foo',
+          fooId: '',
+          children: [{ text: '' }]
+        }),
+        serialize: _slateNode => ({
+          type: 'mdxJsxFlowElement',
+          name: 'Foo',
+          children: [],
+          attributes: []
+        })
+      }
     }
   }
 });

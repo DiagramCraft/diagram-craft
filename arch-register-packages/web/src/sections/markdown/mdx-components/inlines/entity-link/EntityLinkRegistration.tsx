@@ -7,26 +7,26 @@ import type { EntityLinkSlateElement } from './types';
 export const entityLinkSpec = defineComponent<EntityLinkSlateElement, { id: string }, 'inline'>({
   type: ENTITY_LINK_TYPE,
   category: 'data-views',
-  surfaces: ['wiki'],
-
-  component: EntityLink,
-  mode: 'inline',
-  allowedProps: ['id'],
-  editorSpec: {
-    editableComponent: EntityLinkEditable,
-    nodeOptions: { isVoid: true, isInline: true },
-    mdxRule: entityLinkMdxRule,
-    slashCommand: {
-      label: 'Entity link',
-      description: 'A plain link to an entity page',
-      icon: <TbLink size={14} />,
-      keywords: ['link', 'entity', 'reference', 'href'],
-      onSelect: (editor, { insertOrReplaceInline }) => {
-        insertOrReplaceInline(editor, {
-          type: ENTITY_LINK_TYPE,
-          entityId: '',
-          children: [{ text: '' }]
-        });
+  name: 'Entity link',
+  description: 'A plain link to an entity page',
+  mdxComponent: {
+    component: EntityLink,
+    mode: 'inline',
+    allowedProps: ['id'],
+    editorSpec: {
+      editableComponent: EntityLinkEditable,
+      nodeOptions: { isVoid: true, isInline: true },
+      mdxRule: entityLinkMdxRule,
+      slashCommand: {
+        icon: <TbLink size={14} />,
+        keywords: ['link', 'entity', 'reference', 'href'],
+        onSelect: (editor, { insertOrReplaceInline }) => {
+          insertOrReplaceInline(editor, {
+            type: ENTITY_LINK_TYPE,
+            entityId: '',
+            children: [{ text: '' }]
+          });
+        }
       }
     }
   }

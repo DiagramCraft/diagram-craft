@@ -13,30 +13,30 @@ export const columnsSpec = defineComponent<
 >({
   type: COLUMNS_TYPE,
   category: 'content-layout',
-  surfaces: ['wiki'],
-
-  component: Columns,
-  mode: 'block',
-  allowedProps: ['count'],
-  acceptsRichContent: true,
-  editorSpec: {
-    editableComponent: ColumnsEditable,
-    nodeOptions: {},
-    mdxRule: columnsMdxRule,
-    slashCommand: {
-      label: 'Columns',
-      description: 'Lay out content side by side',
-      icon: <TbColumns size={14} />,
-      keywords: ['columns', 'layout', 'grid', 'side-by-side'],
-      onSelect: (editor, { insertOrReplaceBlock }) => {
-        insertOrReplaceBlock(editor, {
-          type: COLUMNS_TYPE,
-          count: '2',
-          children: [
-            { type: COLUMN_TYPE, children: [{ type: 'p', children: [{ text: '' }] }] },
-            { type: COLUMN_TYPE, children: [{ type: 'p', children: [{ text: '' }] }] }
-          ]
-        });
+  name: 'Columns',
+  description: 'Lay out content side by side',
+  mdxComponent: {
+    component: Columns,
+    mode: 'block',
+    allowedProps: ['count'],
+    acceptsRichContent: true,
+    editorSpec: {
+      editableComponent: ColumnsEditable,
+      nodeOptions: {},
+      mdxRule: columnsMdxRule,
+      slashCommand: {
+        icon: <TbColumns size={14} />,
+        keywords: ['columns', 'layout', 'grid', 'side-by-side'],
+        onSelect: (editor, { insertOrReplaceBlock }) => {
+          insertOrReplaceBlock(editor, {
+            type: COLUMNS_TYPE,
+            count: '2',
+            children: [
+              { type: COLUMN_TYPE, children: [{ type: 'p', children: [{ text: '' }] }] },
+              { type: COLUMN_TYPE, children: [{ type: 'p', children: [{ text: '' }] }] }
+            ]
+          });
+        }
       }
     }
   }

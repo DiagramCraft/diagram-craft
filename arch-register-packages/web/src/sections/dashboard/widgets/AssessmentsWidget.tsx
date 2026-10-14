@@ -230,11 +230,10 @@ export const ASSESSMENTS_TYPE = 'Assessments' as const;
 export const assessmentsSpec = defineComponent({
   type: ASSESSMENTS_TYPE,
   category: 'metrics',
-  surfaces: ['dashboard'],
+  name: 'Assessments',
+  description: 'Open or all assessments filtered by mode, assessment type and entity type scope.',
   dashboardWidget: {
     icon: TbClipboardCheck,
-    label: 'Assessments',
-    description: 'Open or all assessments filtered by mode, assessment type and entity type scope.',
     defaultW: 3,
     defaultH: 12,
     surfaces: ['workspace', 'project'],

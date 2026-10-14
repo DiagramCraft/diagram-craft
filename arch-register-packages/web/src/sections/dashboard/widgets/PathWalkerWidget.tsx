@@ -135,11 +135,11 @@ export const PathWalkerConfigForm = ({ config, onChange }: PathWalkerConfigFormP
 
 export const PATH_WALKER_TYPE = 'PathWalker' as const;
 
-const _pathWalkerSpecData: DashboardWidgetSpec<PathWalkerWidgetConfig> = {
+const _pathWalkerSpecData: Omit<
+  DashboardWidgetSpec<PathWalkerWidgetConfig>,
+  'label' | 'description'
+> = {
   icon: TbArrowsSplit2,
-  label: 'Relationship walker',
-  description:
-    'Walk from every entity of one type through a chain of relations, one column per hop.',
   defaultW: 12,
   defaultH: 22,
   surfaces: ['workspace'],
@@ -153,6 +153,8 @@ const _pathWalkerSpecData: DashboardWidgetSpec<PathWalkerWidgetConfig> = {
 export const pathWalkerSpec = defineComponent({
   type: PATH_WALKER_TYPE,
   category: 'data-views',
-  surfaces: ['dashboard'],
+  name: 'Relationship walker',
+  description:
+    'Walk from every entity of one type through a chain of relations, one column per hop.',
   dashboardWidget: _pathWalkerSpecData
 });

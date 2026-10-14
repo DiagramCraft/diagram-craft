@@ -16,14 +16,9 @@ export const entityCardSpec = defineComponent<
 >({
   type: ENTITY_CARD_TYPE,
   category: 'data-views',
-  label: 'Entity card',
+  name: 'Entity card',
   description:
     'A summary card for one entity with its key fields. Use it to spotlight a single system or owner.',
-
-  component: EntityCard,
-  mode: 'block',
-  allowedProps: ['id', 'fields'],
-  surfaces: ['wiki', 'dashboard'],
   dashboardWidget: {
     icon: TbId,
     defaultW: 3,
@@ -41,19 +36,24 @@ export const entityCardSpec = defineComponent<
     getTitle: () => 'Entity card',
     configForm: EntityCardConfigForm
   },
-  editorSpec: {
-    editableComponent: EntityCardEditable,
-    nodeOptions: { isVoid: true },
-    mdxRule: entityCardMdxRule,
-    slashCommand: {
-      icon: <TbId size={14} />,
-      keywords: ['entity', 'card', 'catalog', 'service'],
-      onSelect: (editor, { insertOrReplaceBlock }) => {
-        insertOrReplaceBlock(editor, {
-          type: ENTITY_CARD_TYPE,
-          entityId: '',
-          children: [{ text: '' }]
-        });
+  mdxComponent: {
+    component: EntityCard,
+    mode: 'block',
+    allowedProps: ['id', 'fields'],
+    editorSpec: {
+      editableComponent: EntityCardEditable,
+      nodeOptions: { isVoid: true },
+      mdxRule: entityCardMdxRule,
+      slashCommand: {
+        icon: <TbId size={14} />,
+        keywords: ['entity', 'card', 'catalog', 'service'],
+        onSelect: (editor, { insertOrReplaceBlock }) => {
+          insertOrReplaceBlock(editor, {
+            type: ENTITY_CARD_TYPE,
+            entityId: '',
+            children: [{ text: '' }]
+          });
+        }
       }
     }
   }

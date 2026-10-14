@@ -200,11 +200,11 @@ export const DATE_BUCKET_CHART_TYPE = 'DateBucketChart' as const;
 const isOptionalNumber = (value: unknown): boolean =>
   value === undefined || (typeof value === 'number' && Number.isFinite(value));
 
-const _dateBucketChartSpecData: DashboardWidgetSpec<DateBucketChartWidgetConfig> = {
+const _dateBucketChartSpecData: Omit<
+  DashboardWidgetSpec<DateBucketChartWidgetConfig>,
+  'label' | 'description'
+> = {
   icon: TbChartBar,
-  label: 'Date bar chart',
-  description:
-    'Bars per month for a date field - record counts or a summed amount, e.g. renewals, expiries or reviews due.',
   defaultW: 12,
   defaultH: 12,
   surfaces: ['workspace'],
@@ -225,6 +225,8 @@ const _dateBucketChartSpecData: DashboardWidgetSpec<DateBucketChartWidgetConfig>
 export const dateBucketChartSpec = defineComponent({
   type: DATE_BUCKET_CHART_TYPE,
   category: 'visualizations',
-  surfaces: ['dashboard'],
+  name: 'Date bar chart',
+  description:
+    'Bars per month for a date field - record counts or a summed amount, e.g. renewals, expiries or reviews due.',
   dashboardWidget: _dateBucketChartSpecData
 });

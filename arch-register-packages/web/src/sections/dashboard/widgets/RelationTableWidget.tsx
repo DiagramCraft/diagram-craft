@@ -355,10 +355,11 @@ const isValidConfig = (config: Record<string, unknown>): config is RelationTable
   (config.sortDir === undefined || config.sortDir === 'asc' || config.sortDir === 'desc') &&
   (config.rowDrawer === undefined || typeof config.rowDrawer === 'boolean');
 
-const _relationTableSpecData: DashboardWidgetSpec<RelationTableWidgetConfig> = {
+const _relationTableSpecData: Omit<
+  DashboardWidgetSpec<RelationTableWidgetConfig>,
+  'label' | 'description'
+> = {
   icon: TbTable,
-  label: 'Relation table',
-  description: 'Instances of a relation type, with a chosen set of columns and an optional filter.',
   defaultW: 12,
   defaultH: 24,
   surfaces: ['workspace'],
@@ -373,6 +374,7 @@ const _relationTableSpecData: DashboardWidgetSpec<RelationTableWidgetConfig> = {
 export const relationTableSpec = defineComponent({
   type: RELATION_TABLE_TYPE,
   category: 'data-views',
-  surfaces: ['dashboard'],
+  name: 'Relation table',
+  description: 'Instances of a relation type, with a chosen set of columns and an optional filter.',
   dashboardWidget: _relationTableSpecData
 });

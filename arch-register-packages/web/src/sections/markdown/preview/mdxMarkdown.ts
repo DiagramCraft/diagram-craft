@@ -8,7 +8,6 @@ import {
 } from '@diagram-craft/markdown';
 import { markdownEngine } from './markdownAstUtils';
 import {
-  MDX_COMPONENTS,
   getMdxSpec,
   getMdxSpecsForSurface,
   type MdxComponentName
@@ -51,7 +50,7 @@ const validateProps = (
   props: Record<string, string>
 ): Record<string, string> => {
   const validated: Record<string, string> = {};
-  const allowedProps = MDX_COMPONENTS[name].allowedProps;
+  const allowedProps = getMdxSpec(name).allowedProps;
   for (const [key, value] of Object.entries(props)) {
     if (
       SAFE_PROP_NAME.test(key) &&
@@ -89,12 +88,13 @@ const makeComponentNode = (
   source: string,
   children?: ASTNode[]
 ): ASTNode => {
+  const spec = getMdxSpec(name);
   const props = validateProps(name, parseJsxProps(rawProps ?? '', parser));
   return {
     type: 'component',
     subtype,
     name,
-    props: MDX_COMPONENTS[name].normalizeProps?.(props) ?? props,
+    props: spec.normalizeProps?.(props) ?? props,
     source,
     ...(children ? { children } : {})
   };
@@ -191,7 +191,7 @@ class MdxComponentBlockHandler implements BlockParser {
 
     const name = match[1];
     if (!name || !isKnownComponent(name)) return false;
-    if (MDX_COMPONENTS[name].mode !== 'block') return false;
+    if (getMdxSpec(name).mode !== 'block') return false;
 
     ast.push(makeComponentNode(parser, 'block', name, match[2], parser.unescape(line)));
     stream.consume();

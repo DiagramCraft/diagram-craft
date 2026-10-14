@@ -34,11 +34,10 @@ export const CaseCountWidget = ({ config }: { config: CaseCountConfig }) => {
 export const caseCountSpec = defineComponent({
   type: 'data-stewardship-case-count',
   category: 'metrics',
-  surfaces: ['dashboard'],
+  name: 'Case count',
+  description: 'Number of open governance cases, filtered by scope and case kind.',
   dashboardWidget: {
     icon: TbAlertTriangle,
-    label: 'Case count',
-    description: 'Number of open governance cases, filtered by scope and case kind.',
     defaultW: 3,
     defaultH: 5,
     surfaces: ['workspace'],

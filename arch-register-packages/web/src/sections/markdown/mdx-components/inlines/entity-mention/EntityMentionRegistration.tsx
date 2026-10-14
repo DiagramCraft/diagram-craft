@@ -15,26 +15,26 @@ export const entityMentionSpec = defineComponent<
 >({
   type: ENTITY_MENTION_TYPE,
   category: 'data-views',
-  surfaces: ['wiki'],
-
-  component: EntityMention,
-  mode: 'inline',
-  allowedProps: ['id'],
-  editorSpec: {
-    editableComponent: EntityMentionEditable,
-    nodeOptions: { isVoid: true, isInline: true },
-    mdxRule: entityMentionMdxRule,
-    slashCommand: {
-      label: 'Entity mention',
-      description: 'Mention an entity with its live name and status',
-      icon: <TbAt size={14} />,
-      keywords: ['mention', 'entity', '@', 'reference', 'link'],
-      onSelect: (editor, { insertOrReplaceInline }) => {
-        insertOrReplaceInline(editor, {
-          type: ENTITY_MENTION_TYPE,
-          entityId: '',
-          children: [{ text: '' }]
-        });
+  name: 'Entity mention',
+  description: 'Mention an entity with its live name and status',
+  mdxComponent: {
+    component: EntityMention,
+    mode: 'inline',
+    allowedProps: ['id'],
+    editorSpec: {
+      editableComponent: EntityMentionEditable,
+      nodeOptions: { isVoid: true, isInline: true },
+      mdxRule: entityMentionMdxRule,
+      slashCommand: {
+        icon: <TbAt size={14} />,
+        keywords: ['mention', 'entity', '@', 'reference', 'link'],
+        onSelect: (editor, { insertOrReplaceInline }) => {
+          insertOrReplaceInline(editor, {
+            type: ENTITY_MENTION_TYPE,
+            entityId: '',
+            children: [{ text: '' }]
+          });
+        }
       }
     }
   }

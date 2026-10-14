@@ -37,11 +37,10 @@ export const ReviewsOverdueWidget = ({ config }: { config: ReviewsOverdueConfig 
 export const reviewsOverdueSpec = defineComponent({
   type: 'data-stewardship-reviews-overdue',
   category: 'metrics',
-  surfaces: ['dashboard'],
+  name: 'Reviews overdue',
+  description: 'Datasets whose scheduled review date has passed.',
   dashboardWidget: {
     icon: TbListCheck,
-    label: 'Reviews overdue',
-    description: 'Datasets whose scheduled review date has passed.',
     defaultW: 3,
     defaultH: 5,
     surfaces: ['workspace'],

@@ -175,10 +175,11 @@ export const RatioBarListConfigForm = ({ config, onChange }: RatioBarListConfigF
 
 export const RATIO_BAR_LIST_TYPE = 'RatioBarList' as const;
 
-const _ratioBarListSpecData: DashboardWidgetSpec<RatioBarListWidgetConfig> = {
+const _ratioBarListSpecData: Omit<
+  DashboardWidgetSpec<RatioBarListWidgetConfig>,
+  'label' | 'description'
+> = {
   icon: TbChartBar,
-  label: 'Ratio bars',
-  description: 'One coverage bar per value of a field, filled by the share matching a field value.',
   defaultW: 6,
   defaultH: 16,
   surfaces: ['workspace'],
@@ -201,6 +202,7 @@ const _ratioBarListSpecData: DashboardWidgetSpec<RatioBarListWidgetConfig> = {
 export const ratioBarListSpec = defineComponent({
   type: RATIO_BAR_LIST_TYPE,
   category: 'metrics',
-  surfaces: ['dashboard'],
+  name: 'Ratio bars',
+  description: 'One coverage bar per value of a field, filled by the share matching a field value.',
   dashboardWidget: _ratioBarListSpecData
 });

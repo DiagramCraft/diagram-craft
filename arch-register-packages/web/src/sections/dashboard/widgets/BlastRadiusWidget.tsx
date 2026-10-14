@@ -85,10 +85,11 @@ const BlastRadiusConfigForm = ({
   );
 };
 
-const blastRadiusDashboardSpec: DashboardWidgetSpec<BlastRadiusWidgetConfig> = {
+const blastRadiusDashboardSpec: Omit<
+  DashboardWidgetSpec<BlastRadiusWidgetConfig>,
+  'label' | 'description'
+> = {
   icon: TbTopologyStar3,
-  label: 'Blast radius',
-  description: 'Entities reachable from a chosen entity, with depth and owner filters.',
   defaultW: 6,
   defaultH: 16,
   surfaces: ['workspace'],
@@ -105,6 +106,7 @@ const blastRadiusDashboardSpec: DashboardWidgetSpec<BlastRadiusWidgetConfig> = {
 export const blastRadiusSpec = defineComponent({
   type: BLAST_RADIUS_WIDGET_TYPE,
   category: 'visualizations',
-  surfaces: ['dashboard'],
+  name: 'Blast radius',
+  description: 'Entities reachable from a chosen entity, with depth and owner filters.',
   dashboardWidget: blastRadiusDashboardSpec
 });

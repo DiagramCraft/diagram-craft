@@ -156,10 +156,11 @@ const AssessmentCountConfigForm = ({
 const isOptionalString = (value: unknown): boolean =>
   value === undefined || typeof value === 'string';
 
-const _assessmentCountSpecData: DashboardWidgetSpec<AssessmentCountWidgetConfig> = {
+const _assessmentCountSpecData: Omit<
+  DashboardWidgetSpec<AssessmentCountWidgetConfig>,
+  'label' | 'description'
+> = {
   icon: TbClipboardCheck,
-  label: 'Assessment count',
-  description: 'Number of assessments by mode, entity type scope and due window.',
   defaultW: 3,
   defaultH: 5,
   surfaces: ['workspace'],
@@ -183,6 +184,7 @@ const _assessmentCountSpecData: DashboardWidgetSpec<AssessmentCountWidgetConfig>
 export const assessmentCountSpec = defineComponent({
   type: ASSESSMENT_COUNT_TYPE,
   category: 'metrics',
-  surfaces: ['dashboard'],
+  name: 'Assessment count',
+  description: 'Number of assessments by mode, entity type scope and due window.',
   dashboardWidget: _assessmentCountSpecData
 });

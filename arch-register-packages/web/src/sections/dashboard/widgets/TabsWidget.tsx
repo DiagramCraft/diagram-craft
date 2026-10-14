@@ -181,10 +181,8 @@ export const TabsConfigForm = ({ config, onChange, context }: FormProps) => {
 
 export { TABS_TYPE };
 
-const _tabsSpecData: DashboardWidgetSpec<TabsWidgetConfig> = {
+const _tabsSpecData: Omit<DashboardWidgetSpec<TabsWidgetConfig>, 'label' | 'description'> = {
   icon: TbLayoutList,
-  label: 'Tabs',
-  description: 'Groups other widgets into switchable tabs.',
   defaultW: 12,
   defaultH: 24,
   surfaces: ['workspace', 'project'],
@@ -204,6 +202,7 @@ const _tabsSpecData: DashboardWidgetSpec<TabsWidgetConfig> = {
 export const tabsSpec = defineComponent({
   type: TABS_TYPE,
   category: 'content-layout',
-  surfaces: ['dashboard'],
+  name: 'Tabs',
+  description: 'Groups other widgets into switchable tabs.',
   dashboardWidget: _tabsSpecData
 });

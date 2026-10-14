@@ -649,12 +649,11 @@ const isValidQueryStatConfig = (config: Record<string, unknown>): boolean => {
 export const aggregateStatSpec = defineComponent({
   type: AGGREGATE_STAT_TYPE,
   category: 'metrics',
-  surfaces: ['dashboard'],
+  name: 'Aggregate stat',
+  description:
+    'A count or percentage of records matching a query, e.g. coverage, compliance or items needing attention.',
   dashboardWidget: {
     icon: TbPercentage,
-    label: 'Aggregate stat',
-    description:
-      'A count or percentage of records matching a query, e.g. coverage, compliance or items needing attention.',
     defaultW: 3,
     defaultH: 8,
     surfaces: ['workspace', 'project'],

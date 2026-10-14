@@ -271,11 +271,11 @@ const isValidConfig = (
   isOptionalString(config.consumerLabel) &&
   isOptionalString(config.coverageLabel);
 
-const _relationPairsCoverageSpecData: DashboardWidgetSpec<RelationPairsCoverageWidgetConfig> = {
+const _relationPairsCoverageSpecData: Omit<
+  DashboardWidgetSpec<RelationPairsCoverageWidgetConfig>,
+  'label' | 'description'
+> = {
   icon: TbArrowsJoin,
-  label: 'Pair coverage',
-  description:
-    'Every provider × consumer pair around a shared entity, and whether a chosen relation type connects the two.',
   defaultW: 12,
   defaultH: 24,
   surfaces: ['workspace'],
@@ -294,6 +294,8 @@ const _relationPairsCoverageSpecData: DashboardWidgetSpec<RelationPairsCoverageW
 export const relationPairsCoverageSpec = defineComponent({
   type: RELATION_PAIRS_COVERAGE_TYPE,
   category: 'data-views',
-  surfaces: ['dashboard'],
+  name: 'Pair coverage',
+  description:
+    'Every provider × consumer pair around a shared entity, and whether a chosen relation type connects the two.',
   dashboardWidget: _relationPairsCoverageSpecData
 });

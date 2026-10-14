@@ -131,11 +131,10 @@ const hasOptionalInteger = (config: Record<string, unknown>, key: string): boole
 export const activityFeedSpec = defineComponent({
   type: ACTIVITY_FEED_TYPE,
   category: 'data-views',
-  surfaces: ['dashboard'],
+  name: 'Activity feed',
+  description: 'A live feed of recent audit log activity.',
   dashboardWidget: {
     icon: TbActivity,
-    label: 'Activity feed',
-    description: 'A live feed of recent audit log activity.',
     defaultW: 12,
     defaultH: 24,
     surfaces: ['workspace'],

@@ -255,11 +255,10 @@ const isDirection = (value: unknown): value is 'asc' | 'desc' =>
 export const topEntitiesSpec = defineComponent({
   type: TOP_ENTITIES_TYPE,
   category: 'data-views',
-  surfaces: ['dashboard'],
+  name: 'Ranked list',
+  description: 'The top entities of a type, ranked by a numeric field.',
   dashboardWidget: {
     icon: TbListNumbers,
-    label: 'Ranked list',
-    description: 'The top entities of a type, ranked by a numeric field.',
     defaultW: 4,
     defaultH: 16,
     surfaces: ['workspace', 'project'],

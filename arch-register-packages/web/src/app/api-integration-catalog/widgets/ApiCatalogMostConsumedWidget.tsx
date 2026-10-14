@@ -36,11 +36,10 @@ const ApiCatalogMostConsumedHeaderActions = () => {
 export const apiCatalogMostConsumedSpec = defineComponent({
   type: 'api-integration-catalog-most-consumed',
   category: 'data-views',
-  surfaces: ['dashboard'],
+  name: 'Most consumed APIs',
+  description: 'APIs with the most registered consumers.',
   dashboardWidget: {
     icon: TbApi,
-    label: 'Most consumed APIs',
-    description: 'APIs with the most registered consumers.',
     defaultW: 6,
     defaultH: 16,
     surfaces: ['workspace'],

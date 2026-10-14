@@ -167,11 +167,11 @@ const isValidConfig = (
   config.limit > 0 &&
   (config.checkNames === undefined || isStringArray(config.checkNames));
 
-const _conformanceViolationsSpecData: DashboardWidgetSpec<ConformanceViolationsWidgetConfig> = {
+const _conformanceViolationsSpecData: Omit<
+  DashboardWidgetSpec<ConformanceViolationsWidgetConfig>,
+  'label' | 'description'
+> = {
   icon: TbShieldExclamation,
-  label: 'Conformance violations',
-  description:
-    'Entities of a schema with active conformance violations, with the failing checks, worst first.',
   defaultW: 12,
   defaultH: 14,
   surfaces: ['workspace'],
@@ -186,6 +186,8 @@ const _conformanceViolationsSpecData: DashboardWidgetSpec<ConformanceViolationsW
 export const conformanceViolationsSpec = defineComponent({
   type: CONFORMANCE_VIOLATIONS_TYPE,
   category: 'data-views',
-  surfaces: ['dashboard'],
+  name: 'Conformance violations',
+  description:
+    'Entities of a schema with active conformance violations, with the failing checks, worst first.',
   dashboardWidget: _conformanceViolationsSpecData
 });

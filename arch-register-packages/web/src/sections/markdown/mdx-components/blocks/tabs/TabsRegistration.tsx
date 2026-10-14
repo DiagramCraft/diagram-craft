@@ -9,29 +9,29 @@ import type { TabsSlateElement } from './types';
 export const tabsSpec = defineComponent<TabsSlateElement, { children?: React.ReactNode }, 'block'>({
   type: TABS_TYPE,
   category: 'content-layout',
-  surfaces: ['wiki'],
-
-  component: Tabs,
-  mode: 'block',
-  allowedProps: [],
-  acceptsRichContent: true,
-  editorSpec: {
-    editableComponent: TabsEditable,
-    nodeOptions: {},
-    mdxRule: tabsMdxRule,
-    slashCommand: {
-      label: 'Tabs',
-      description: 'Present alternative content under selectable tabs',
-      icon: <TbLayoutNavbar size={14} />,
-      keywords: ['tabs', 'tab', 'switch', 'toggle'],
-      onSelect: (editor, { insertOrReplaceBlock }) => {
-        insertOrReplaceBlock(editor, {
-          type: TABS_TYPE,
-          children: [
-            { type: TAB_TYPE, label: '', children: [{ type: 'p', children: [{ text: '' }] }] },
-            { type: TAB_TYPE, label: '', children: [{ type: 'p', children: [{ text: '' }] }] }
-          ]
-        });
+  name: 'Tabs',
+  description: 'Present alternative content under selectable tabs',
+  mdxComponent: {
+    component: Tabs,
+    mode: 'block',
+    allowedProps: [],
+    acceptsRichContent: true,
+    editorSpec: {
+      editableComponent: TabsEditable,
+      nodeOptions: {},
+      mdxRule: tabsMdxRule,
+      slashCommand: {
+        icon: <TbLayoutNavbar size={14} />,
+        keywords: ['tabs', 'tab', 'switch', 'toggle'],
+        onSelect: (editor, { insertOrReplaceBlock }) => {
+          insertOrReplaceBlock(editor, {
+            type: TABS_TYPE,
+            children: [
+              { type: TAB_TYPE, label: '', children: [{ type: 'p', children: [{ text: '' }] }] },
+              { type: TAB_TYPE, label: '', children: [{ type: 'p', children: [{ text: '' }] }] }
+            ]
+          });
+        }
       }
     }
   }

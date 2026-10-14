@@ -11,29 +11,29 @@ export const imageEmbedSpec = defineComponent<
 >({
   type: IMAGE_EMBED_TYPE,
   category: 'content-layout',
-  surfaces: ['wiki'],
-
-  component: ImageEmbed,
-  mode: 'block',
-  allowedProps: ['id', 'alt', 'size', 'align'],
-  editorSpec: {
-    editableComponent: ImageEmbedEditable,
-    nodeOptions: { isVoid: true },
-    mdxRule: imageEmbedMdxRule,
-    slashCommand: {
-      label: 'Image',
-      description: 'Embed an uploaded image attachment',
-      icon: <TbPhoto size={14} />,
-      keywords: ['image', 'photo', 'attachment', 'picture'],
-      onSelect: (editor, { insertOrReplaceBlock }) => {
-        insertOrReplaceBlock(editor, {
-          type: IMAGE_EMBED_TYPE,
-          fileId: '',
-          alt: '',
-          size: '100',
-          align: 'center',
-          children: [{ text: '' }]
-        });
+  name: 'Image',
+  description: 'Embed an uploaded image attachment',
+  mdxComponent: {
+    component: ImageEmbed,
+    mode: 'block',
+    allowedProps: ['id', 'alt', 'size', 'align'],
+    editorSpec: {
+      editableComponent: ImageEmbedEditable,
+      nodeOptions: { isVoid: true },
+      mdxRule: imageEmbedMdxRule,
+      slashCommand: {
+        icon: <TbPhoto size={14} />,
+        keywords: ['image', 'photo', 'attachment', 'picture'],
+        onSelect: (editor, { insertOrReplaceBlock }) => {
+          insertOrReplaceBlock(editor, {
+            type: IMAGE_EMBED_TYPE,
+            fileId: '',
+            alt: '',
+            size: '100',
+            align: 'center',
+            children: [{ text: '' }]
+          });
+        }
       }
     }
   }
