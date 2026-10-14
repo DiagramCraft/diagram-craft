@@ -266,10 +266,4 @@ export const ChangeCaseTableConfigForm = ({ config, onChange }: ChangeCaseTableC
       </DialogSection>
     </>
   );
-};
-
-/**
- * Dashboard-only table of governance cases (every status) against entities of a chosen
- * schema, restricted to a chosen set of case kinds — not tied to any particular app. Generalized
- * from Data Stewardship's former Change cases screen (#3504).
- */
+};\n

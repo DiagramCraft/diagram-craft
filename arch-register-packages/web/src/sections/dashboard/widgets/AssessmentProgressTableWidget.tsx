@@ -138,9 +138,4 @@ export const AssessmentProgressTableWidget = ({
       </Table.Root>
     </div>
   );
-};
-
-/**
- * Dashboard-only table: one row per assessment targeting an entity type, with aggregate progress
- * (in-scope entities with a complete response), due date and derived status.
- */
+};\n

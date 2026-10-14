@@ -87,10 +87,4 @@ export const ConfigForm = ({
       </div>
     </DialogSection>
   </>
-);
-
-/**
- * Dashboard-only stat tile: the number of assessments targeting an entity type that are overdue,
- * in progress, not started or complete (the statuses are derived from the responses recorded
- * against the in-scope entities, which an entity-query `AggregateStat` cannot express).
- */
+);\n
