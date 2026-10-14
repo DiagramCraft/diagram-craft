@@ -15,10 +15,9 @@ export const MdxComponentPreview = ({ type, props, children }: Props) => {
   const Component = definition.component as ComponentType<
     Record<string, unknown> & { children?: ReactNode }
   >;
-  const defaultProps = definition.createDefaultProps?.({}) ?? {};
   const componentProps = definition.mdx.mapProps
-    ? definition.mdx.mapProps(props, defaultProps)
-    : { ...defaultProps, ...props };
+    ? definition.mdx.mapProps(props, definition.createDefaultConfig?.({}) ?? {})
+    : props;
 
   return <Component {...componentProps}>{children}</Component>;
 };

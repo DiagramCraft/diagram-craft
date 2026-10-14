@@ -19,7 +19,7 @@ export default defineComponent({
     defaultW: 6,
     defaultH: 24,
     surfaces: ['workspace', 'project'],
-    titleComponent: WikiPageWidgetTitle,
-    dialogWidth: 520
-  }
+    titleComponent: WikiPageWidgetTitle
+  },
+  configDialog: { width: 520 }
 });

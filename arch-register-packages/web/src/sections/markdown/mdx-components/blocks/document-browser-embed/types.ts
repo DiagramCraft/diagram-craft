@@ -1,4 +1,3 @@
-import type { TElement } from 'platejs';
 import { z } from 'zod';
 import { withInitial } from '../../configSchema';
 import { filterConditionSchema } from '@arch-register/api-types/viewContract';
@@ -26,10 +25,6 @@ export const documentBrowserEmbedConfigSchema = z.object({
 });
 
 export type DocumentBrowserEmbedConfig = z.infer<typeof documentBrowserEmbedConfigSchema>;
-
-export interface DocumentBrowserEmbedSlateElement extends TElement {
-  config?: string;
-}
 
 export type DocumentBrowserScope = {
   scope: 'workspace' | 'project' | 'entity';

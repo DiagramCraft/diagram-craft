@@ -264,9 +264,6 @@ export const ChangeCaseTableConfigForm = ({ config, onChange }: ChangeCaseTableC
           />
         </div>
       </DialogSection>
-      <DialogSection label="Display" required={false}>
-        <div className={configFormStyles.options}></div>
-      </DialogSection>
     </>
   );
 };

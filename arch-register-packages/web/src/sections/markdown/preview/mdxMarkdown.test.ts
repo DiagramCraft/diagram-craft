@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { ASTNode } from '@diagram-craft/markdown';
-import { normalizeEntityGraphProps } from '../mdx-components/blocks/entity-graph/types';
 
 // Stub the component registry so this test only exercises the parser grammar,
 // independent of each component's own (heavy) implementation modules.
@@ -10,39 +9,27 @@ vi.mock('../mdx-components/componentRegistry', () => {
     {
       mode: string;
       allowedProps: string[];
-      normalizeProps?: (props: Record<string, string>) => Record<string, string>;
       acceptsChildren?: boolean;
       acceptsRichContent?: boolean;
-      surfaces?: string[];
+      dashboardOnly?: boolean;
     }
   > = {
     DiagramEmbed: { mode: 'block', allowedProps: ['id'] },
     EntityCard: { mode: 'block', allowedProps: ['id'] },
-    EntityGraph: {
-      mode: 'block',
-      allowedProps: ['id', 'depth', 'direction'],
-      normalizeProps: normalizeEntityGraphProps
-    },
+    EntityGraph: { mode: 'block', allowedProps: ['id', 'depth', 'direction'] },
     EntityMention: { mode: 'inline', allowedProps: ['id'] },
     Caption: { mode: 'block', allowedProps: ['caption'], acceptsChildren: true },
     Callout: { mode: 'block', allowedProps: ['variant'], acceptsRichContent: true },
-    EntityLifecycleChart: { mode: 'block', allowedProps: [], surfaces: ['dashboard'] }
+    EntityLifecycleChart: { mode: 'block', allowedProps: [], dashboardOnly: true }
   };
-  const forSurface = (surface: 'wiki' | 'dashboard') =>
-    Object.fromEntries(
-      Object.entries(mdxSpecs).filter(([, spec]) =>
-        surface === 'wiki'
-          ? spec.surfaces === undefined || spec.surfaces.includes('wiki')
-          : !!spec.surfaces?.includes('dashboard')
-      )
-    );
+  const forWiki = () =>
+    Object.fromEntries(Object.entries(mdxSpecs).filter(([, spec]) => !spec.dashboardOnly));
   return {
     getComponentDefinition: (name: string) => {
       const mdx = mdxSpecs[name];
       return mdx ? { type: name, mdx } : undefined;
     },
-    getMdxComponentDefinitionsForSurface: forSurface,
-    getWikiMdxComponents: () => forSurface('wiki')
+    getWikiMdxComponents: forWiki
   };
 });
 
@@ -190,19 +177,5 @@ describe('parseMarkdownWithComponents', () => {
   it('does not parse a dashboard-only component as a component node in wiki content', () => {
     const ast = parseMarkdownWithComponents('<EntityLifecycleChart />');
     expect(ast.every(n => n.type !== 'component')).toBe(true);
-  });
-
-  it('normalizes EntityGraph depth and direction props while parsing', () => {
-    expect(
-      parseMarkdownWithComponents('<EntityGraph id="APP-001" depth="4.8" direction="sideways" />')
-    ).toEqual([
-      {
-        type: 'component',
-        subtype: 'block',
-        name: 'EntityGraph',
-        props: { id: 'APP-001', depth: '3', direction: 'both' },
-        source: '<EntityGraph id="APP-001" depth="4.8" direction="sideways" />'
-      }
-    ]);
   });
 });

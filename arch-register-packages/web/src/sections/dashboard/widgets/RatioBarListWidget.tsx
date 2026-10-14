@@ -165,9 +165,6 @@ export const RatioBarListConfigForm = ({ config, onChange }: RatioBarListConfigF
           )}
         </div>
       </DialogSection>
-      <DialogSection label="Display" required={false}>
-        <div className={configFormStyles.options}></div>
-      </DialogSection>
     </>
   );
 };

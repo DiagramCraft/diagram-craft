@@ -1,4 +1,5 @@
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
+import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
 import type { ConfigFormProps } from '../../types';
 import { Select } from '@diagram-craft/app-components/Select';
 import { EntityPicker } from '../../../../../components/EntityPicker';
@@ -10,8 +11,9 @@ import styles from '../../../../dashboard/WidgetConfigDialog.module.css';
 
 type Props = ConfigFormProps<EntityGraphWidgetConfig>;
 
-export const EntityGraphConfigForm = ({ config, onChange, context }: Props) => {
-  const { data: entity } = useEntity(context.workspaceSlug, config.entityId);
+export const EntityGraphConfigForm = ({ config, onChange }: Props) => {
+  const { workspaceSlug } = useWorkspaceContext();
+  const { data: entity } = useEntity(workspaceSlug, config.entityId);
   const depth = normalizeEntityGraphDepth(config.depth);
   const direction = normalizeEntityGraphDirection(config.direction);
 

@@ -11,8 +11,6 @@ import type {
 import type { TElement } from 'platejs';
 import type { ComponentCategory } from './componentCategories';
 
-export type ComponentSurface = 'wiki' | 'dashboard';
-
 export type ComponentIcon = React.ComponentType<{ size?: number }>;
 
 export type MdxMode = 'block' | 'inline';
@@ -110,17 +108,19 @@ export type DashboardWidgetSpec<Config extends Record<string, unknown> = Record<
     };
     /** Per-instance title; falls back to `label` when omitted. */
     getTitle?: (config: Config) => string;
-    /** WidgetConfigDialog width override; defaults to 460. */
-    dialogWidth?: number | string;
-    /** `large` makes WidgetConfigDialog fill ~90% of the viewport (overrides dialogWidth). */
-    dialogSize?: 'large';
   };
+
+/** The dialog hosting a component's config form, in the wiki editor and on a dashboard. */
+export type ConfigDialogSpec = {
+  /** Width override; defaults to 460. */
+  width?: number | string;
+  /** `large` makes the dialog fill ~90% of the viewport (overrides `width`). */
+  size?: 'large';
+};
 
 /** Context handed to a component's config form by whichever surface is editing it. */
 export type ConfigFormContext = {
   mode: 'mdx' | 'dashboard';
-  workspaceSlug: string;
-  projectId?: string;
   surface: WidgetSurface;
 };
 
@@ -135,13 +135,14 @@ type MdxComponentSpecBase<Mode extends MdxMode> = {
   mode: Mode;
   /** The authored MDX attribute names that reach the shared component. */
   allowedProps: ReadonlyArray<string>;
-  /** Converts authored MDX string attributes to the shared component's props using defaults. */
+  /**
+   * Converts authored MDX string attributes to the shared component's props. `defaultConfig` is
+   * the component's starting config, for filling in whatever the attributes leave out.
+   */
   mapProps?: (
     props: Record<string, string>,
-    defaultProps: Record<string, unknown>
+    defaultConfig: Record<string, unknown>
   ) => Record<string, unknown>;
-  /** Normalizes string props parsed from authored MDX. */
-  normalizeProps?: (props: Record<string, string>) => Record<string, string>;
   /**
    * Marks a block-level component as a wrapper that accepts exactly one other
    * block-level (non-wrapper) MDX component as its child, e.g. Caption. Depth is
@@ -174,6 +175,14 @@ export type MdxComponentSpec = MdxComponentSpecBase<MdxMode> & {
   editorSpec?: EditorSpec<any, MdxMode>;
 };
 
+/** What a new instance's starting config may depend on. */
+export type DefaultConfigContext = {
+  /** The saved view a dashboard widget is being created from. */
+  viewId?: string;
+  projectId?: string;
+  workspaceSlug?: string;
+};
+
 /** A zod object schema describing a component's config. */
 export type ConfigSchema = z.ZodType<Record<string, unknown>>;
 
@@ -183,20 +192,21 @@ export type ComponentDefinition = {
   name: string;
   description: string;
   category: ComponentCategory;
-  surfaces: ReadonlyArray<ComponentSurface>;
   /** Shared icon for all surfaces that expose this component. */
   icon?: ComponentIcon;
   /** Shared renderer used by every surface that exposes this component. */
   // biome-ignore lint/suspicious/noExplicitAny: component props are typed by each surface adapter
   component: React.ComponentType<any>;
-  /** Creates fresh default props for the shared renderer. */
-  createDefaultProps?: (context: { viewId?: string }) => Record<string, unknown>;
+  /** Creates the starting config of a new instance. */
+  createDefaultConfig?: (context: DefaultConfigContext) => Record<string, unknown>;
   /**
    * Describes this component's config. Also decides whether a stored or edited config is valid,
    * so it should reject configs missing required selections (e.g. an empty entity id), not just
    * wrong types: the same rule gates both loading a dashboard widget and the dialogs' Save.
    */
   configSchema?: ConfigSchema;
+  /** Size of the dialog hosting `configForm`. */
+  configDialog?: ConfigDialogSpec;
   /** Shared configuration form used by every surface that exposes this component. */
   // biome-ignore lint/suspicious/noExplicitAny: config types are erased in the shared registry
   configForm?: React.ComponentType<any>;
@@ -213,5 +223,5 @@ export type DashboardWidgetComponentDefinition = ComponentDefinition & {
   icon: ComponentIcon;
   dashboardWidget: DashboardWidgetSpec;
   configSchema: ConfigSchema;
-  createDefaultProps: (context: { viewId?: string }) => { config: Record<string, unknown> };
+  createDefaultConfig: (context: DefaultConfigContext) => Record<string, unknown>;
 };

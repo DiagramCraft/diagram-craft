@@ -107,7 +107,6 @@ export const DashboardGrid = ({
         <WidgetConfigDialog
           widget={editingWidget}
           open={editingWidget !== null}
-          workspaceSlug={workspaceSlug}
           surface={surface}
           onClose={() => setEditingWidgetId(null)}
           onSave={updated => {

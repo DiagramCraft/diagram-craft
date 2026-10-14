@@ -9,9 +9,9 @@ import type { EntityCardWidgetConfig } from './types';
 
 type Props = ConfigFormProps<EntityCardWidgetConfig>;
 
-export const EntityCardConfigForm = ({ config, onChange, context }: Props) => {
-  const { schemas } = useWorkspaceContext();
-  const { data: entity } = useEntity(context.workspaceSlug, config.entityId);
+export const EntityCardConfigForm = ({ config, onChange }: Props) => {
+  const { workspaceSlug, schemas } = useWorkspaceContext();
+  const { data: entity } = useEntity(workspaceSlug, config.entityId);
   const schema = schemas.find(s => s.id === entity?._schema?.id);
   const schemaFields = filterSchemaFields(schema?.fields ?? []);
   const fields = config.fields ? config.fields.split(',').filter(Boolean) : DEFAULT_FIELDS;

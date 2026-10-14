@@ -37,7 +37,6 @@ describe('defineComponent config schema requirements', () => {
       defineComponent({
         ...baseDefinition,
         icon: () => null,
-        createDefaultProps: () => ({ config: {} }),
         dashboardWidget: { defaultW: 1, defaultH: 1, surfaces: ['workspace'] }
       } as never)
     ).toThrow('Dashboard component "NoIcon" must define configSchema');

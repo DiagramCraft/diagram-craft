@@ -1,17 +1,13 @@
 import { TbFileSearch } from 'react-icons/tb';
 import { defineComponent } from '../../defineComponent';
+import { configBlockMdx } from '../configBlock';
 import { DocumentBrowserEmbed } from './DocumentBrowserEmbed';
-import { decodeDocumentBrowserEmbedConfig } from './DocumentBrowserEmbedCodec';
-import {
-  DOCUMENT_BROWSER_EMBED_TYPE,
-  DocumentBrowserEmbedEditable,
-  documentBrowserEmbedMdxRule
-} from './DocumentBrowserEmbedEditable';
+import { documentBrowserEmbedCodec } from './DocumentBrowserEmbedCodec';
 import { DocumentBrowserEmbedConfigForm } from './DocumentBrowserEmbedConfigForm';
-import { documentBrowserEmbedConfigSchema, type DocumentBrowserEmbedConfig } from './types';
+import { documentBrowserEmbedConfigSchema } from './types';
 
 export default defineComponent({
-  type: DOCUMENT_BROWSER_EMBED_TYPE,
+  type: 'DocumentBrowserEmbed',
   category: 'data-views',
   name: 'Document browser',
   description:
@@ -20,35 +16,17 @@ export default defineComponent({
   dashboardWidget: {
     defaultW: 6,
     defaultH: 16,
-    surfaces: ['workspace', 'project'],
-    dialogWidth: 'min(1200px, 92vw)'
+    surfaces: ['workspace', 'project']
   },
+  configDialog: { width: 'min(1200px, 92vw)' },
   component: DocumentBrowserEmbed,
   configForm: DocumentBrowserEmbedConfigForm,
   icon: TbFileSearch,
-  mdxComponent: {
-    mode: 'block',
-    allowedProps: ['config'],
-    mapProps: (props, defaultProps) => ({
-      ...defaultProps,
-      config:
-        decodeDocumentBrowserEmbedConfig(props.config) ??
-        (defaultProps.config as DocumentBrowserEmbedConfig)
-    }),
-    editorSpec: {
-      editableComponent: DocumentBrowserEmbedEditable,
-      nodeOptions: { isVoid: true },
-      mdxRule: documentBrowserEmbedMdxRule,
-      slashCommand: {
-        keywords: ['document', 'browser', 'markdown', 'wiki', 'list', 'filter', 'search'],
-        onSelect: (editor, { insertOrReplaceBlock }) => {
-          insertOrReplaceBlock(editor, {
-            type: DOCUMENT_BROWSER_EMBED_TYPE,
-            config: '',
-            children: [{ text: '' }]
-          });
-        }
-      }
-    }
-  }
+  mdxComponent: configBlockMdx({
+    type: 'DocumentBrowserEmbed',
+    codec: documentBrowserEmbedCodec.codec,
+    placeholder: 'Configure a document browser…',
+    fullWidth: true,
+    keywords: ['document', 'browser', 'markdown', 'wiki', 'list', 'filter', 'search']
+  })
 });

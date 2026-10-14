@@ -1,17 +1,14 @@
 import { TbChartBar } from 'react-icons/tb';
 import { defineComponent } from '../../defineComponent';
+import { flatConfigCodec } from '../../configSchema';
+import { configBlockMdx } from '../configBlock';
 import { Metric } from './Metric';
-import { METRIC_TYPE, MetricEditable, metricMdxRule } from './MetricEditable';
 import { MetricConfigForm } from './MetricConfigForm';
 import {
-  metricTypeSchema,
   statMetricWidgetConfigSchema,
   type MetricType,
   type StatMetricWidgetConfig
 } from './types';
-
-const isMetricType = (value: unknown): value is MetricType =>
-  metricTypeSchema.safeParse(value).success;
 
 const METRIC_TYPE_DEFAULT_LABEL: Record<MetricType, string> = {
   'entity-count': 'Entities',
@@ -19,8 +16,9 @@ const METRIC_TYPE_DEFAULT_LABEL: Record<MetricType, string> = {
   'diagram-count': 'Diagrams',
   'completeness-percent': 'Well documented'
 };
+
 export default defineComponent({
-  type: METRIC_TYPE,
+  type: 'Metric',
   category: 'metrics',
   name: 'Metric',
   description:
@@ -35,36 +33,10 @@ export default defineComponent({
   component: Metric,
   configForm: MetricConfigForm,
   icon: TbChartBar,
-  mdxComponent: {
-    mode: 'block',
-    allowedProps: ['schema', 'owner', 'lifecycle', 'label', 'metricType', 'showLink'],
-    mapProps: props => ({
-      config: {
-        schema: props.schema,
-        owner: props.owner,
-        lifecycle: props.lifecycle,
-        label: props.label,
-        metricType: isMetricType(props.metricType) ? props.metricType : 'entity-count',
-        showLink: props.showLink === undefined ? true : props.showLink !== 'false'
-      }
-    }),
-    editorSpec: {
-      editableComponent: MetricEditable,
-      nodeOptions: { isVoid: true },
-      mdxRule: metricMdxRule,
-      slashCommand: {
-        keywords: ['entity', 'metric', 'count', 'number', 'stat', 'kpi'],
-        onSelect: (editor, { insertOrReplaceBlock }) => {
-          insertOrReplaceBlock(editor, {
-            type: METRIC_TYPE,
-            schema: '',
-            owner: '',
-            lifecycle: '',
-            label: '',
-            children: [{ text: '' }]
-          });
-        }
-      }
-    }
-  }
+  mdxComponent: configBlockMdx({
+    type: 'Metric',
+    codec: flatConfigCodec(statMetricWidgetConfigSchema),
+    placeholder: 'Configure metric…',
+    keywords: ['entity', 'metric', 'count', 'number', 'stat', 'kpi']
+  })
 });

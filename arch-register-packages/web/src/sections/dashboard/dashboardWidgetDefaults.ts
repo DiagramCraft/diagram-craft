@@ -30,7 +30,7 @@ export const createDefaultWidget = (
     w: dashboardWidget.defaultW,
     h: dashboardWidget.defaultH,
     type,
-    config: definition.createDefaultProps({ viewId }).config as DashboardWidget['config']
+    config: definition.createDefaultConfig({ viewId }) as DashboardWidget['config']
   };
 };
 

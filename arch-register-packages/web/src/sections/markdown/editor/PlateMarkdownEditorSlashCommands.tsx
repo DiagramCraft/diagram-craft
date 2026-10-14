@@ -240,10 +240,9 @@ export const BUILTIN_SLASH_COMMANDS: SlashCommandItem[] = [
 ];
 
 // MDX component slash commands are read from the same categorized definitions
-// as dashboard widgets. Components without wiki surface access stay out.
+// as dashboard widgets.
 export const MDX_SLASH_COMMANDS: SlashCommandItem[] = getComponentDefinitions('mdx').flatMap(
   definition => {
-    if (!definition.surfaces.includes('wiki')) return [];
     const cmd = definition.mdx.editorSpec?.slashCommand;
     const Icon = definition.icon;
     if (!cmd || !Icon) return [];

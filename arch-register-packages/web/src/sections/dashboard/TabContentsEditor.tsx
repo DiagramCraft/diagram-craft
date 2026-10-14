@@ -51,7 +51,6 @@ export const TabContentsEditor = ({
       <WidgetConfigDialog
         widget={editingWidget}
         open={editingWidget !== null}
-        workspaceSlug={workspaceSlug}
         surface={surface}
         onClose={() => setEditingWidgetId(null)}
         onSave={updated => {

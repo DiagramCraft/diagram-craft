@@ -6,13 +6,7 @@ import {
   parseViewConfigs,
   serializeViewConfigs
 } from '../../../../entities/components/entityBrowserState';
-import {
-  decodeConfigAttribute,
-  encodeConfigAttribute,
-  initialConfigOf,
-  parseConfigFields,
-  withInitial
-} from '../../configSchema';
+import { createBlobConfigCodec, withInitial } from '../../configSchema';
 
 export const entityBrowserEmbedConfigSchema = z.object({
   q: withInitial(z.string(), ''),
@@ -59,33 +53,22 @@ export const entityBrowserEmbedConfigSchema = z.object({
 
 export type EntityBrowserEmbedConfig = z.infer<typeof entityBrowserEmbedConfigSchema>;
 
-export const createDefaultEntityBrowserEmbedConfig = (): EntityBrowserEmbedConfig =>
-  initialConfigOf(entityBrowserEmbedConfigSchema) as EntityBrowserEmbedConfig;
-
 /** The config keys edited as JSON in the config form's Advanced section — everything that has no
  *  dedicated control. */
 export const ADVANCED_CONFIG_KEYS = ['overlays', 'dimOwnerIds'] as const;
 
-export const encodeEntityBrowserEmbedConfig = (config: EntityBrowserEmbedConfig): string =>
-  encodeConfigAttribute({
-    ...config,
-    // The per-view settings travel as one JSON string so the attribute stays compact.
-    viewConfigs: serializeViewConfigs(config.viewConfigs)
-  });
+export const entityBrowserEmbedCodec = createBlobConfigCodec(entityBrowserEmbedConfigSchema, {
+  // The per-view settings travel as one JSON string so the attribute stays compact.
+  preDecode: payload => ({
+    ...payload,
+    viewConfigs:
+      typeof payload.viewConfigs === 'string' ? parseViewConfigs(payload.viewConfigs) : undefined
+  }),
+  postEncode: config => ({ ...config, viewConfigs: serializeViewConfigs(config.viewConfigs) })
+});
 
-export const decodeEntityBrowserEmbedConfig = (
-  raw: string | undefined,
-  defaults: EntityBrowserEmbedConfig = createDefaultEntityBrowserEmbedConfig()
-): EntityBrowserEmbedConfig | null => {
-  const payload = decodeConfigAttribute(raw);
-  if (!payload) return null;
-  return parseConfigFields(
-    entityBrowserEmbedConfigSchema,
-    {
-      ...payload,
-      viewConfigs:
-        typeof payload.viewConfigs === 'string' ? parseViewConfigs(payload.viewConfigs) : undefined
-    },
-    defaults
-  );
-};
+export const {
+  createDefault: createDefaultEntityBrowserEmbedConfig,
+  encode: encodeEntityBrowserEmbedConfig,
+  decode: decodeEntityBrowserEmbedConfig
+} = entityBrowserEmbedCodec;

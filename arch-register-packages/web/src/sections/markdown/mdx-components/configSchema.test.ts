@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import { decodeConfigAttribute, encodeConfigAttribute, parseConfigFields } from './configSchema';
+import {
+  decodeConfigAttribute,
+  encodeConfigAttribute,
+  flatConfigCodec,
+  parseConfigFields
+} from './configSchema';
 import {
   decodeDocumentBrowserEmbedConfig,
   encodeDocumentBrowserEmbedConfig,
@@ -79,5 +84,35 @@ describe('entity browser config schema', () => {
   it('rejects a non-positive limit', () => {
     const config = createDefaultEntityBrowserEmbedConfig();
     expect(entityBrowserEmbedConfigSchema.safeParse({ ...config, limit: 0 }).success).toBe(false);
+  });
+});
+
+describe('flatConfigCodec', () => {
+  const flatSchema = z.object({
+    entityId: z.string().min(1),
+    limit: z.number().int().optional(),
+    showLink: z.boolean().optional()
+  });
+  const codec = flatConfigCodec(flatSchema, { attributeNames: { entityId: 'id' } });
+  const defaults = { entityId: '', limit: 10, showLink: true };
+
+  it('coerces attribute strings by field type', () => {
+    expect(codec.decode({ entityId: 'A', limit: '5', showLink: 'false' }, defaults)).toEqual({
+      entityId: 'A',
+      limit: 5,
+      showLink: false
+    });
+  });
+
+  it('falls back to defaults for missing or invalid values', () => {
+    expect(codec.decode({ entityId: '', limit: 'x', showLink: '' }, defaults)).toEqual(defaults);
+  });
+
+  it('writes every key, using an empty string for unset values', () => {
+    expect(codec.encode({ entityId: 'A', limit: undefined, showLink: false })).toEqual({
+      entityId: 'A',
+      limit: '',
+      showLink: 'false'
+    });
   });
 });

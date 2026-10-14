@@ -4,9 +4,10 @@ import type { TElement } from 'platejs';
 import type {
   ComponentDefinition,
   ComponentIcon,
-  ComponentSurface,
+  ConfigDialogSpec,
   ConfigSchema,
   DashboardWidgetSpec,
+  DefaultConfigContext,
   MdxComponentRegistrationDef,
   MdxComponentSpec,
   MdxMode
@@ -45,6 +46,8 @@ export type ComponentRegistration<
    * Also types the dashboard callbacks below.
    */
   configSchema?: Schema;
+  /** Size of the dialog hosting `configForm`. */
+  configDialog?: ConfigDialogSpec;
   /** Shared config editor, when this component has editable options. */
   // biome-ignore lint/suspicious/noExplicitAny: component config types are erased in the registry
   configForm?: React.ComponentType<any>;
@@ -53,11 +56,10 @@ export type ComponentRegistration<
   /** Present when this component can be added as a dashboard widget; requires `configSchema`. */
   dashboardWidget?: DashboardWidgetRegistrationDef<z.infer<Schema>>;
   /**
-   * Extra default props for a new instance, for what a schema can't declare: values that depend
-   * on the creation context. The config's starting values are declared on `configSchema` with
-   * `withInitial`.
+   * Starting config values that depend on the creation context, which a schema can't declare.
+   * The other starting values are declared on `configSchema` with `withInitial`.
    */
-  createDefaultProps?: (context: { viewId?: string }) => Record<string, unknown>;
+  defaultConfig?: (context: DefaultConfigContext) => Record<string, unknown>;
 };
 
 /** Completes the authored slash command with the registration's catalog text. */
@@ -77,34 +79,27 @@ const toMdxSpec = <E extends TElement, Mode extends MdxMode>(
   };
 };
 
+/** The starting config: the values declared on the schema, with the context-dependent ones over it. */
+const toCreateDefaultConfig = (
+  configSchema: ConfigSchema | undefined,
+  extra: ((context: DefaultConfigContext) => Record<string, unknown>) | undefined
+): ComponentDefinition['createDefaultConfig'] => {
+  if (!configSchema) return undefined;
+  return context => ({ ...initialConfigOf(configSchema), ...extra?.(context) });
+};
+
 /**
  * Declares one component registration with shared identity, renderer and form.
  * Content surfaces are derived from the presence of `mdxComponent` and
  * `dashboardWidget`. Their editor/serialization and dashboard details stay
  * nested under the registration they belong to.
  */
-/**
- * Default props for a new instance: the starting config declared on the schema fields, with the
- * registration's own (context-dependent) props layered over it.
- */
-const toCreateDefaultProps = (
-  configSchema: ConfigSchema | undefined,
-  extra: ComponentRegistration<TElement, MdxMode, ConfigSchema>['createDefaultProps']
-): ComponentDefinition['createDefaultProps'] => {
-  if (!configSchema) return extra;
-  return context => {
-    const props = extra?.(context) ?? {};
-    const config = (props.config ?? {}) as Record<string, unknown>;
-    return { ...props, config: { ...initialConfigOf(configSchema), ...config } };
-  };
-};
-
 export function defineComponent<
   E extends TElement = TElement,
   Mode extends MdxMode = MdxMode,
   Schema extends ConfigSchema = ConfigSchema
 >(def: ComponentRegistration<E, Mode, Schema>): ComponentDefinition {
-  const { type, name, description, category, icon, component, configForm } = def;
+  const { type, name, description, category, icon, component, configForm, configDialog } = def;
   const { mdxComponent, dashboardWidget, configSchema } = def;
 
   if ((dashboardWidget || mdxComponent?.editorSpec?.slashCommand) && !icon) {
@@ -114,23 +109,19 @@ export function defineComponent<
     throw new Error(`Dashboard component "${type}" must define configSchema`);
   }
 
-  const createDefaultProps = toCreateDefaultProps(configSchema, def.createDefaultProps);
-
-  const surfaces: ComponentSurface[] = [];
-  if (mdxComponent) surfaces.push('wiki');
-  if (dashboardWidget) surfaces.push('dashboard');
+  const createDefaultConfig = toCreateDefaultConfig(configSchema, def.defaultConfig);
 
   return {
     type,
     name,
     description,
     category,
-    surfaces,
     component,
     ...(icon ? { icon } : {}),
-    ...(createDefaultProps ? { createDefaultProps } : {}),
+    ...(createDefaultConfig ? { createDefaultConfig } : {}),
     ...(configSchema ? { configSchema } : {}),
     ...(configForm ? { configForm } : {}),
+    ...(configDialog ? { configDialog } : {}),
     ...(mdxComponent ? { mdx: toMdxSpec(mdxComponent, name, description) } : {}),
     ...(dashboardWidget
       ? { dashboardWidget: { ...dashboardWidget, label: name, description } }

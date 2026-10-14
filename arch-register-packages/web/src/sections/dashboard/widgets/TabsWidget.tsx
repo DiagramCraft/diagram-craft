@@ -4,6 +4,7 @@ import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { NestedWidgetRenderer } from './nestedWidgets';
 import styles from './TabsWidget.module.css';
 import { useState } from 'react';
+import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TbArrowDown, TbArrowUp, TbGripVertical, TbPlus, TbTrash } from 'react-icons/tb';
 import { NestedTabContentsEditor } from './nestedWidgets';
@@ -72,6 +73,7 @@ type FormProps = ConfigFormProps<TabsWidgetConfig>;
 
 /** Tab list in a sidebar; the selected tab's contents are edited in a grid on the right. */
 export const TabsConfigForm = ({ config, onChange, context }: FormProps) => {
+  const { workspaceSlug } = useWorkspaceContext();
   const [selectedId, setSelectedId] = useState<string | undefined>();
   const activeId = resolveActiveTabId(config.tabs, selectedId);
   const activeIndex = config.tabs.findIndex(tab => tab.id === activeId);
@@ -167,7 +169,7 @@ export const TabsConfigForm = ({ config, onChange, context }: FormProps) => {
             key={activeTab.id}
             widgets={activeTab.widgets}
             onChange={widgets => updateTab(activeIndex, { widgets })}
-            workspaceSlug={context.workspaceSlug}
+            workspaceSlug={workspaceSlug}
             surface={context.surface}
           />
         )}

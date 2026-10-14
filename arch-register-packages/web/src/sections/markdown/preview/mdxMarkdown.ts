@@ -85,13 +85,12 @@ const makeComponentNode = (
   children?: ASTNode[]
 ): ASTNode => {
   const name = definition.type;
-  const spec = definition.mdx;
   const props = validateProps(definition, parseJsxProps(rawProps ?? '', parser));
   return {
     type: 'component',
     subtype,
     name,
-    props: spec.normalizeProps?.(props) ?? props,
+    props,
     source,
     ...(children ? { children } : {})
   };

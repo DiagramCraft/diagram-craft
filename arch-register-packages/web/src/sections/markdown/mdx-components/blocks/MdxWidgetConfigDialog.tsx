@@ -6,19 +6,12 @@ import { DialogContent } from '../../editor/BlockDialog';
 import { useWorkspaceContext } from '../../../../layouts/WorkspaceContext';
 import { useMdxContext } from '../../MdxContext';
 import { getConfigDialogWidth } from '../configDialog';
-import {
-  getComponentDefinition,
-  isValidComponentConfig,
-  type ComponentDefinition
-} from '../componentRegistry';
+import { getComponentDefinition, isValidComponentConfig } from '../componentRegistry';
 
 export type MdxConfigSpec<E extends TElement, Config extends Record<string, unknown>> = {
-  fromElement: (el: E, definition: ComponentDefinition | undefined) => Config;
+  /** Reads the element's config; `defaults` fills in anything the element doesn't carry. */
+  fromElement: (el: E, defaults: Config) => Config;
   toElement: (config: Config) => Partial<E>;
-  defaultConfig?: (
-    context: { workspaceSlug: string; projectId?: string },
-    definition: ComponentDefinition | undefined
-  ) => Config;
 };
 
 type Props<E extends TElement, Config extends Record<string, unknown>> = {
@@ -42,15 +35,11 @@ export const MdxWidgetConfigDialog = <E extends TElement, Config extends Record<
   const definition = getComponentDefinition(element.type);
 
   const [config, setConfig] = useState<Config>(() => {
-    if (!isNew) return spec.fromElement(element, definition);
-
-    const defaultConfig =
-      spec.defaultConfig?.({ workspaceSlug, projectId }, definition) ??
-      definition?.createDefaultProps?.({}).config;
-    if (defaultConfig === undefined) {
-      throw new Error(`Component "${element.type}" must define default props or MDX defaults`);
+    const defaults = definition?.createDefaultConfig?.({ workspaceSlug, projectId });
+    if (defaults === undefined) {
+      throw new Error(`Component "${element.type}" must define a config schema`);
     }
-    return defaultConfig as Config;
+    return isNew ? (defaults as Config) : spec.fromElement(element, defaults as Config);
   });
 
   // The component's own validity rule (structure and completeness) is shared with the dashboard.
@@ -89,7 +78,7 @@ export const MdxWidgetConfigDialog = <E extends TElement, Config extends Record<
       open={open}
       onClose={handleClose}
       title={definition?.name ?? element.type}
-      width={getConfigDialogWidth(definition?.dashboardWidget)}
+      width={getConfigDialogWidth(definition?.configDialog)}
       buttons={[
         { label: 'Cancel', type: 'cancel', onClick: handleClose },
         { label: 'Save', type: 'default', disabled: !canSave, onClick: handleConfirm }
@@ -99,12 +88,7 @@ export const MdxWidgetConfigDialog = <E extends TElement, Config extends Record<
         <ConfigForm
           config={config}
           onChange={setConfig}
-          context={{
-            mode: 'mdx',
-            workspaceSlug,
-            projectId,
-            surface: projectId ? 'project' : 'workspace'
-          }}
+          context={{ mode: 'mdx', surface: projectId ? 'project' : 'workspace' }}
         />
       </DialogContent>
     </Dialog>

@@ -534,7 +534,7 @@ describe('parseKnownDashboardWidget', () => {
       expect(spec?.defaultW).toBe(width);
       expect(spec?.defaultH).toBe(height);
       expect(definition?.configForm !== undefined).toBe(hasForm);
-      expect(definition?.createDefaultProps({}).config).toEqual(config);
+      expect(definition?.createDefaultConfig({})).toEqual(config);
       expect(isValidComponentConfig(definition, config)).toBe(true);
       expect(getWidgetTitle({ id: type, type, config, x: 0, y: 0, w: 6, h: 4 })).toBe(title);
       expect(

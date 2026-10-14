@@ -1,12 +1,13 @@
 import { TbTable } from 'react-icons/tb';
 import { defineComponent } from '../../defineComponent';
+import { flatConfigCodec } from '../../configSchema';
+import { configBlockMdx } from '../configBlock';
 import { EntityTable } from './EntityTable';
-import { ENTITY_TABLE_TYPE, EntityTableEditable, entityTableMdxRule } from './EntityTableEditable';
 import { EntityTableConfigForm } from './EntityTableConfigForm';
 import { entityTableWidgetConfigSchema } from './types';
 
 export default defineComponent({
-  type: ENTITY_TABLE_TYPE,
+  type: 'EntityTable',
   category: 'data-views',
   name: 'Entity table',
   description:
@@ -20,34 +21,11 @@ export default defineComponent({
   component: EntityTable,
   configForm: EntityTableConfigForm,
   icon: TbTable,
-  mdxComponent: {
-    mode: 'block',
-    allowedProps: ['schema', 'owner', 'lifecycle', 'limit'],
-    mapProps: props => ({
-      config: {
-        schema: props.schema,
-        owner: props.owner,
-        lifecycle: props.lifecycle,
-        limit: props.limit === undefined ? undefined : Number(props.limit)
-      }
-    }),
-    editorSpec: {
-      editableComponent: EntityTableEditable,
-      nodeOptions: { isVoid: true },
-      mdxRule: entityTableMdxRule,
-      slashCommand: {
-        keywords: ['entity', 'table', 'catalog', 'list', 'filter'],
-        onSelect: (editor, { insertOrReplaceBlock }) => {
-          insertOrReplaceBlock(editor, {
-            type: ENTITY_TABLE_TYPE,
-            schema: '',
-            owner: '',
-            lifecycle: '',
-            limit: '10',
-            children: [{ text: '' }]
-          });
-        }
-      }
-    }
-  }
+  mdxComponent: configBlockMdx({
+    type: 'EntityTable',
+    codec: flatConfigCodec(entityTableWidgetConfigSchema),
+    placeholder: 'Configure entity table…',
+    fullWidth: true,
+    keywords: ['entity', 'table', 'catalog', 'list', 'filter']
+  })
 });

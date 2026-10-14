@@ -1,5 +1,7 @@
 import { useParams } from '@tanstack/react-router';
 import type { ConfigFormProps } from '../../types';
+import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
+import { useMdxContext } from '../../../MdxContext';
 import { DiagramPicker } from '../../../../../components/DiagramPicker';
 import { DialogSection } from '../../../editor/BlockDialog';
 import { useContentTree, type ContentScope } from '../../../../../hooks/useContentScope';
@@ -11,13 +13,15 @@ type Props = ConfigFormProps<DiagramEmbedWidgetConfig> & { showPicker?: boolean 
 
 export const DiagramEmbedConfigForm = ({ config, onChange, context, showPicker = true }: Props) => {
   const params = useParams({ strict: false });
-  const projectId = context.projectId ?? params.projectId;
+  const { workspaceSlug } = useWorkspaceContext();
+  const { projectId: contextProjectId } = useMdxContext();
+  const projectId = contextProjectId ?? params.projectId;
   const entityId = context.mode === 'mdx' ? params.entityId : undefined;
   const scope: ContentScope = projectId
-    ? { kind: 'project', workspaceId: context.workspaceSlug, projectId }
+    ? { kind: 'project', workspaceId: workspaceSlug, projectId }
     : entityId
-      ? { kind: 'entity', workspaceId: context.workspaceSlug, entityId }
-      : { kind: 'workspace', workspaceId: context.workspaceSlug };
+      ? { kind: 'entity', workspaceId: workspaceSlug, entityId }
+      : { kind: 'workspace', workspaceId: workspaceSlug };
   const { data: fileTree } = useContentTree(scope);
 
   return (

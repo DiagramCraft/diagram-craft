@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
 import type { ConfigFormProps } from '../../types';
 import { EntityPicker } from '../../../../../components/EntityPicker';
 import {
@@ -49,7 +50,8 @@ const buildConfig = (
 
 type Props = ConfigFormProps<EntityChangelogWidgetConfig>;
 
-export const EntityChangelogConfigForm = ({ config, onChange, context }: Props) => {
+export const EntityChangelogConfigForm = ({ config, onChange }: Props) => {
+  const { workspaceSlug } = useWorkspaceContext();
   const [mode, setMode] = useState<Mode>(config.entityId ? 'single' : 'filtered');
   const [entityId, setEntityId] = useState(config.entityId ?? '');
   const [filter, setFilter] = useState<EntityFilterValue>({
@@ -60,7 +62,7 @@ export const EntityChangelogConfigForm = ({ config, onChange, context }: Props) 
   const [limit, setLimit] = useState(config.limit ?? '10');
   const [since, setSince] = useState(config.since ?? '30d');
 
-  const { data: entity } = useEntity(context.workspaceSlug, entityId);
+  const { data: entity } = useEntity(workspaceSlug, entityId);
 
   const commit = (next: {
     mode?: Mode;

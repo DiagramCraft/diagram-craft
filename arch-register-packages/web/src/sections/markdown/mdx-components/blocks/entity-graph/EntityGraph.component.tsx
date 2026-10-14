@@ -1,16 +1,17 @@
 import { TbVectorTriangle } from 'react-icons/tb';
 import { defineComponent } from '../../defineComponent';
+import { flatConfigCodec } from '../../configSchema';
+import { configBlockMdx } from '../configBlock';
 import { EntityGraph } from './EntityGraph';
-import { ENTITY_GRAPH_TYPE, EntityGraphEditable, entityGraphMdxRule } from './EntityGraphEditable';
 import { EntityGraphConfigForm } from './EntityGraphConfigForm';
 import {
+  entityGraphWidgetConfigSchema,
   normalizeEntityGraphDepth,
-  normalizeEntityGraphDirection,
-  normalizeEntityGraphProps,
-  entityGraphWidgetConfigSchema
+  normalizeEntityGraphDirection
 } from './types';
+
 export default defineComponent({
-  type: ENTITY_GRAPH_TYPE,
+  type: 'EntityGraph',
   category: 'visualizations',
   name: 'Entity graph',
   description:
@@ -24,33 +25,18 @@ export default defineComponent({
   component: EntityGraph,
   configForm: EntityGraphConfigForm,
   icon: TbVectorTriangle,
-  mdxComponent: {
-    mode: 'block',
-    allowedProps: ['id', 'depth', 'direction'],
-    normalizeProps: normalizeEntityGraphProps,
-    mapProps: props => ({
-      config: {
-        entityId: props.id ?? '',
-        depth: normalizeEntityGraphDepth(props.depth),
-        direction: normalizeEntityGraphDirection(props.direction)
-      }
+  mdxComponent: configBlockMdx({
+    type: 'EntityGraph',
+    codec: flatConfigCodec(entityGraphWidgetConfigSchema, {
+      attributeNames: { entityId: 'id' },
+      normalize: config => ({
+        ...config,
+        depth: normalizeEntityGraphDepth(config.depth),
+        direction: normalizeEntityGraphDirection(config.direction)
+      })
     }),
-    editorSpec: {
-      editableComponent: EntityGraphEditable,
-      nodeOptions: { isVoid: true },
-      mdxRule: entityGraphMdxRule,
-      slashCommand: {
-        keywords: ['entity', 'graph', 'dependency', 'impact', 'relations'],
-        onSelect: (editor, { insertOrReplaceBlock }) => {
-          insertOrReplaceBlock(editor, {
-            type: ENTITY_GRAPH_TYPE,
-            entityId: '',
-            depth: 1,
-            direction: 'both',
-            children: [{ text: '' }]
-          });
-        }
-      }
-    }
-  }
+    placeholder: 'Choose entity graph…',
+    fullWidth: true,
+    keywords: ['entity', 'graph', 'dependency', 'impact', 'relations']
+  })
 });

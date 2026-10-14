@@ -121,9 +121,6 @@ export const CountByFieldConfigForm = ({ config, onChange }: CountByFieldConfigF
           ))}
         </select>
       </DialogSection>
-      <DialogSection label="Display" required={false}>
-        <div className={configFormStyles.options}></div>
-      </DialogSection>
     </>
   );
 };

@@ -23,7 +23,7 @@ export default defineComponent({
     defaultW: 12,
     defaultH: 24,
     surfaces: ['workspace', 'project'],
-    frame: { hideOutsideEdit: true, padded: false, showIcon: false },
-    dialogSize: 'large'
-  }
+    frame: { hideOutsideEdit: true, padded: false, showIcon: false }
+  },
+  configDialog: { size: 'large' }
 });

@@ -5,7 +5,6 @@ import type { DashboardWidget } from '@arch-register/api-types/dashboardContract
 import type { DashboardWidgetComponentDefinition } from '../markdown/mdx-components/types';
 import type { WidgetSurface } from './dashboardWidgetDefaults';
 import { DialogContent, DialogSection } from '../markdown/editor/BlockDialog';
-import { useMdxContext } from '../markdown/MdxContext';
 import './dashboardWidgetRegistry';
 import { getConfigDialogWidth } from '../markdown/mdx-components/configDialog';
 import {
@@ -20,7 +19,6 @@ import styles from './WidgetConfigDialog.module.css';
 type Props = {
   widget: DashboardWidget | null;
   open: boolean;
-  workspaceSlug: string;
   surface?: WidgetSurface;
   onClose: () => void;
   onSave: (widget: DashboardWidget) => void;
@@ -29,7 +27,6 @@ type Props = {
 export const WidgetConfigDialog = ({
   widget,
   open,
-  workspaceSlug,
   surface = 'workspace',
   onClose,
   onSave
@@ -44,7 +41,6 @@ export const WidgetConfigDialog = ({
       widget={widget}
       definition={definition}
       open={open}
-      workspaceSlug={workspaceSlug}
       surface={surface}
       onClose={onClose}
       onSave={onSave}
@@ -59,7 +55,6 @@ const WidgetConfigDialogContent = ({
   widget,
   definition,
   open,
-  workspaceSlug,
   surface,
   onClose,
   onSave
@@ -69,7 +64,6 @@ const WidgetConfigDialogContent = ({
   surface: WidgetSurface;
 }) => {
   const { dashboardWidget: spec, configForm: ConfigForm } = definition;
-  const { projectId } = useMdxContext();
   const [config, setConfig] = useState<Record<string, unknown>>(widget.config);
 
   const [frame, setFrame] = useState<DashboardWidgetFrame>(widget.frame ?? {});
@@ -81,8 +75,8 @@ const WidgetConfigDialogContent = ({
       open={open}
       onClose={onClose}
       title={spec.label}
-      width={getConfigDialogWidth(spec)}
-      className={spec.dialogSize === 'large' ? styles.largeDialog : undefined}
+      width={getConfigDialogWidth(definition.configDialog)}
+      className={definition.configDialog?.size === 'large' ? styles.largeDialog : undefined}
       buttons={[
         { label: 'Cancel', type: 'cancel', onClick: onClose },
         {
@@ -105,7 +99,7 @@ const WidgetConfigDialogContent = ({
                 <ConfigForm
                   config={config}
                   onChange={setConfig}
-                  context={{ mode: 'dashboard', workspaceSlug, projectId, surface }}
+                  context={{ mode: 'dashboard', surface }}
                 />
               ) : (
                 <DialogSection label="Options" required={false}>

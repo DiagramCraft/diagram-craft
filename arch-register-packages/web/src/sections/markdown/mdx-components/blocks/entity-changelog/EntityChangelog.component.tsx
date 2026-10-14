@@ -1,16 +1,13 @@
 import { TbHistory } from 'react-icons/tb';
 import { defineComponent } from '../../defineComponent';
+import { flatConfigCodec } from '../../configSchema';
+import { configBlockMdx } from '../configBlock';
 import { EntityChangelog } from './EntityChangelog';
-import {
-  ENTITY_CHANGELOG_TYPE,
-  EntityChangelogEditable,
-  entityChangelogMdxRule
-} from './EntityChangelogEditable';
 import { EntityChangelogConfigForm } from './EntityChangelogConfigForm';
 import { entityChangelogWidgetConfigSchema } from './types';
 
 export default defineComponent({
-  type: ENTITY_CHANGELOG_TYPE,
+  type: 'EntityChangelog',
   category: 'data-views',
   name: 'Entity changelog',
   description:
@@ -24,38 +21,13 @@ export default defineComponent({
   component: EntityChangelog,
   configForm: EntityChangelogConfigForm,
   icon: TbHistory,
-  mdxComponent: {
-    mode: 'block',
-    allowedProps: ['id', 'schema', 'owner', 'lifecycle', 'limit', 'since'],
-    mapProps: props => ({
-      config: {
-        entityId: props.id,
-        schema: props.schema,
-        owner: props.owner,
-        lifecycle: props.lifecycle,
-        limit: props.limit,
-        since: props.since
-      }
+  mdxComponent: configBlockMdx({
+    type: 'EntityChangelog',
+    codec: flatConfigCodec(entityChangelogWidgetConfigSchema, {
+      attributeNames: { entityId: 'id' }
     }),
-    editorSpec: {
-      editableComponent: EntityChangelogEditable,
-      nodeOptions: { isVoid: true },
-      mdxRule: entityChangelogMdxRule,
-      slashCommand: {
-        keywords: ['changelog', 'audit', 'history', 'changes', 'entity'],
-        onSelect: (editor, { insertOrReplaceBlock }) => {
-          insertOrReplaceBlock(editor, {
-            type: ENTITY_CHANGELOG_TYPE,
-            entityId: '',
-            schema: '',
-            owner: '',
-            lifecycle: '',
-            limit: '',
-            since: '30d',
-            children: [{ text: '' }]
-          });
-        }
-      }
-    }
-  }
+    placeholder: 'Configure entity changelog…',
+    fullWidth: true,
+    keywords: ['changelog', 'audit', 'history', 'changes', 'entity']
+  })
 });

@@ -5,7 +5,7 @@ import {
   BUILTIN_SLASH_COMMANDS,
   SLASH_COMMANDS
 } from '../editor/PlateMarkdownEditorSlashCommands';
-import { getComponentDefinitions, getMdxComponentDefinitionsForSurface } from './componentRegistry';
+import { getComponentDefinitions, getWikiMdxComponents } from './componentRegistry';
 import {
   COMPONENT_CATEGORIES,
   groupByCategory,
@@ -34,7 +34,7 @@ describe('component catalog', () => {
 
   it('offers only wiki-eligible MDX components in the slash menu', () => {
     const wikiLabels = new Set(
-      Object.values(getMdxComponentDefinitionsForSurface('wiki')).map(
+      Object.values(getWikiMdxComponents()).map(
         definition => definition.mdx.editorSpec?.slashCommand?.label
       )
     );

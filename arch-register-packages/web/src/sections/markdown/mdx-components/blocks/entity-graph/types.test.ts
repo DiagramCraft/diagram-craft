@@ -1,9 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  normalizeEntityGraphDepth,
-  normalizeEntityGraphDirection,
-  normalizeEntityGraphProps
-} from './types';
+import { normalizeEntityGraphDepth, normalizeEntityGraphDirection } from './types';
 
 describe('EntityGraph props', () => {
   it('defaults and clamps depth to the supported range', () => {
@@ -18,14 +14,5 @@ describe('EntityGraph props', () => {
     expect(normalizeEntityGraphDirection('UPSTREAM')).toBe('upstream');
     expect(normalizeEntityGraphDirection('downstream')).toBe('downstream');
     expect(normalizeEntityGraphDirection('unknown')).toBe('both');
-  });
-
-  it('does not add default attributes that were not authored', () => {
-    expect(normalizeEntityGraphProps({ id: 'APP-001' })).toEqual({ id: 'APP-001' });
-    expect(normalizeEntityGraphProps({ id: 'APP-001', depth: '1', direction: 'both' })).toEqual({
-      id: 'APP-001',
-      depth: '1',
-      direction: 'both'
-    });
   });
 });

@@ -1,15 +1,8 @@
-import type { TElement } from 'platejs';
 import type { EntityGraphDirection } from '../../../../entities/components/entityGraphState';
 import { z } from 'zod';
 import { withInitial } from '../../configSchema';
 
 export type { EntityGraphDirection };
-
-export interface EntityGraphSlateElement extends TElement {
-  entityId?: string;
-  depth?: number;
-  direction?: EntityGraphDirection;
-}
 
 export const entityGraphWidgetConfigSchema = z.object({
   entityId: withInitial(z.string().min(1), ''),
@@ -37,15 +30,3 @@ export const normalizeEntityGraphDirection = (value: unknown): EntityGraphDirect
   }
   return 'both';
 };
-
-export const normalizeEntityGraphProps = (
-  props: Record<string, string>
-): Record<string, string> => ({
-  ...props,
-  ...(Object.hasOwn(props, 'depth')
-    ? { depth: String(normalizeEntityGraphDepth(props.depth)) }
-    : {}),
-  ...(Object.hasOwn(props, 'direction')
-    ? { direction: normalizeEntityGraphDirection(props.direction) }
-    : {})
-});

@@ -4,6 +4,7 @@ import { useEffect, useMemo } from 'react';
 import { TbChevronLeft, TbChevronRight } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
+import { useMdxContext } from '../../../MdxContext';
 import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
 import { EntityBrowserToolbar } from '../../../../entities/components/EntityBrowserToolbar';
 import { EntityBrowserView } from '../../../../entities/components/EntityBrowserView';
@@ -36,8 +37,8 @@ import styles from './EntityBrowserEmbedConfigForm.module.css';
 
 type Props = ConfigFormProps<EntityBrowserEmbedConfig>;
 
-export const EntityBrowserEmbedConfigForm = ({ config, onChange, context }: Props) => {
-  const { projectId } = context;
+export const EntityBrowserEmbedConfigForm = ({ config, onChange }: Props) => {
+  const { projectId } = useMdxContext();
   const { workspaceSlug, schemas, relationSchemas, enums, lifecycleStates, projects } =
     useWorkspaceContext();
 

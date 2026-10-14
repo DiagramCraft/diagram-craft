@@ -1,12 +1,13 @@
 import { TbId } from 'react-icons/tb';
 import { defineComponent } from '../../defineComponent';
+import { flatConfigCodec } from '../../configSchema';
+import { configBlockMdx } from '../configBlock';
 import { EntityCard } from './EntityCard';
-import { ENTITY_CARD_TYPE, EntityCardEditable, entityCardMdxRule } from './EntityCardEditable';
 import { EntityCardConfigForm } from './EntityCardConfigForm';
 import { entityCardWidgetConfigSchema } from './types';
 
 export default defineComponent({
-  type: ENTITY_CARD_TYPE,
+  type: 'EntityCard',
   category: 'data-views',
   name: 'Entity card',
   description:
@@ -20,26 +21,10 @@ export default defineComponent({
   component: EntityCard,
   configForm: EntityCardConfigForm,
   icon: TbId,
-  mdxComponent: {
-    mode: 'block',
-    allowedProps: ['id', 'fields'],
-    mapProps: props => ({
-      config: { entityId: props.id ?? '', fields: props.fields }
-    }),
-    editorSpec: {
-      editableComponent: EntityCardEditable,
-      nodeOptions: { isVoid: true },
-      mdxRule: entityCardMdxRule,
-      slashCommand: {
-        keywords: ['entity', 'card', 'catalog', 'service'],
-        onSelect: (editor, { insertOrReplaceBlock }) => {
-          insertOrReplaceBlock(editor, {
-            type: ENTITY_CARD_TYPE,
-            entityId: '',
-            children: [{ text: '' }]
-          });
-        }
-      }
-    }
-  }
+  mdxComponent: configBlockMdx({
+    type: 'EntityCard',
+    codec: flatConfigCodec(entityCardWidgetConfigSchema, { attributeNames: { entityId: 'id' } }),
+    placeholder: 'Choose entity…',
+    keywords: ['entity', 'card', 'catalog', 'service']
+  })
 });

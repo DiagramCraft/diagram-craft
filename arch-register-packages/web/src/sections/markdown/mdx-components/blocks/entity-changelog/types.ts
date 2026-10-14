@@ -1,15 +1,5 @@
-import type { TElement } from 'platejs';
 import { z } from 'zod';
 import { withInitial } from '../../configSchema';
-
-export interface EntityChangelogSlateElement extends TElement {
-  entityId?: string;
-  schema?: string;
-  owner?: string;
-  lifecycle?: string;
-  limit?: string;
-  since?: string;
-}
 
 export const entityChangelogWidgetConfigSchema = z
   .object({

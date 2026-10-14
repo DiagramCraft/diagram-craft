@@ -1,15 +1,13 @@
 import { TbLayoutDashboard } from 'react-icons/tb';
 import { defineComponent } from '../../defineComponent';
+import { flatConfigCodec } from '../../configSchema';
+import { configBlockMdx } from '../configBlock';
 import { EntityViewEmbed } from './EntityViewEmbed';
-import {
-  ENTITY_VIEW_EMBED_TYPE,
-  EntityViewEmbedEditable,
-  entityViewEmbedMdxRule
-} from './EntityViewEmbedEditable';
 import { EntityViewEmbedConfigForm } from './EntityViewEmbedConfigForm';
 import { savedViewEmbedWidgetConfigSchema } from './types';
+
 export default defineComponent({
-  type: ENTITY_VIEW_EMBED_TYPE,
+  type: 'EntityViewEmbed',
   category: 'data-views',
   name: 'Saved view',
   description: 'A live copy of a saved entity view. Use it to reuse a view someone already set up.',
@@ -20,27 +18,14 @@ export default defineComponent({
     surfaces: ['workspace', 'project']
   },
   component: EntityViewEmbed,
-  createDefaultProps: context => ({ config: { viewId: context.viewId ?? '' } }),
+  defaultConfig: context => ({ viewId: context.viewId ?? '' }),
   configForm: EntityViewEmbedConfigForm,
   icon: TbLayoutDashboard,
-  mdxComponent: {
-    mode: 'block',
-    allowedProps: ['viewId'],
-    mapProps: props => ({ config: { viewId: props.viewId ?? '' } }),
-    editorSpec: {
-      editableComponent: EntityViewEmbedEditable,
-      nodeOptions: { isVoid: true },
-      mdxRule: entityViewEmbedMdxRule,
-      slashCommand: {
-        keywords: ['entity', 'view', 'embed', 'saved', 'catalog'],
-        onSelect: (editor, { insertOrReplaceBlock }) => {
-          insertOrReplaceBlock(editor, {
-            type: ENTITY_VIEW_EMBED_TYPE,
-            viewId: '',
-            children: [{ text: '' }]
-          });
-        }
-      }
-    }
-  }
+  mdxComponent: configBlockMdx({
+    type: 'EntityViewEmbed',
+    codec: flatConfigCodec(savedViewEmbedWidgetConfigSchema),
+    placeholder: 'Select a saved view…',
+    fullWidth: true,
+    keywords: ['entity', 'view', 'embed', 'saved', 'catalog']
+  })
 });

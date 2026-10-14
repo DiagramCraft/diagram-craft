@@ -1,10 +1,8 @@
 import { z } from 'zod';
-import type { TElement } from 'platejs';
+import { withInitial } from '../../configSchema';
 
-export interface EntityViewEmbedSlateElement extends TElement {
-  viewId?: string;
-}
-
-export const savedViewEmbedWidgetConfigSchema = z.object({ viewId: z.string().min(1) });
+export const savedViewEmbedWidgetConfigSchema = z.object({
+  viewId: withInitial(z.string().min(1), '')
+});
 
 export type SavedViewEmbedWidgetConfig = z.infer<typeof savedViewEmbedWidgetConfigSchema>;

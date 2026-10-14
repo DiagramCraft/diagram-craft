@@ -3,6 +3,7 @@ import type { ConfigFormProps } from '../../markdown/mdx-components/types';
 import { useContentFile } from '../../../hooks/useContentScope';
 import { useMarkdownContent } from '../../../hooks/useMarkdownContent';
 import { useMdxContext } from '../../markdown/MdxContext';
+import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { MdxPreview } from '../../markdown/preview/MdxPreview';
 import typography from '../../markdown/articleTypography.module.css';
 
@@ -78,14 +79,18 @@ export const WikiPageDashboardConfigForm = ({
   config,
   onChange,
   context
-}: ConfigFormProps<WikiPageWidgetConfig>) => (
-  <DialogSection label="Wiki page">
-    <WikiPagePicker
-      workspaceSlug={context.workspaceSlug}
-      projectId={context.projectId}
-      surface={context.surface}
-      value={config.nodeId}
-      onChange={nodeId => onChange({ ...config, nodeId })}
-    />
-  </DialogSection>
-);
+}: ConfigFormProps<WikiPageWidgetConfig>) => {
+  const { workspaceSlug } = useWorkspaceContext();
+  const { projectId } = useMdxContext();
+  return (
+    <DialogSection label="Wiki page">
+      <WikiPagePicker
+        workspaceSlug={workspaceSlug}
+        projectId={projectId}
+        surface={context.surface}
+        value={config.nodeId}
+        onChange={nodeId => onChange({ ...config, nodeId })}
+      />
+    </DialogSection>
+  );
+};

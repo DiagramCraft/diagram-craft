@@ -14,7 +14,7 @@ export default defineComponent({
   component: ApiCatalogMostConsumedWidget,
   configForm: ListConfigForm,
   // This list is shorter than the other lists, which share the schema's starting limit.
-  createDefaultProps: () => ({ config: { limit: 6 } }),
+  defaultConfig: () => ({ limit: 6 }),
   configSchema: listWidgetConfigSchema,
   dashboardWidget: {
     defaultW: 6,

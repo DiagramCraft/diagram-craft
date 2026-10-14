@@ -4,12 +4,20 @@ import '../../../componentDiscovery';
 import {
   getComponentDefinition,
   getComponentDefinitions,
-  getMdxComponentDefinitionsForSurface
+  getWikiMdxComponents
 } from './componentRegistry';
 
-describe('getMdxComponentDefinitionsForSurface', () => {
-  it('includes wiki-eligible components (surfaces unset or including "wiki") for "wiki"', () => {
-    const wiki = getMdxComponentDefinitionsForSurface('wiki');
+/** MDX components that can also be added to a dashboard. */
+const dashboardMdxComponents = () =>
+  Object.fromEntries(
+    getComponentDefinitions('mdx')
+      .filter(definition => definition.dashboardWidget)
+      .map(definition => [definition.type, definition])
+  );
+
+describe('wiki and dashboard component availability', () => {
+  it('includes components with an MDX registration for "wiki"', () => {
+    const wiki = getWikiMdxComponents();
     expect(wiki['EntityViewEmbed']).toBeDefined();
     expect(wiki['EntityChart']).toBeDefined();
     expect(wiki['Metric']).toBeDefined();
@@ -18,7 +26,7 @@ describe('getMdxComponentDefinitionsForSurface', () => {
   });
 
   it('excludes dashboard-only components for "wiki"', () => {
-    const wiki = getMdxComponentDefinitionsForSurface('wiki');
+    const wiki = getWikiMdxComponents();
     expect(wiki['entity-lifecycle-chart']).toBeUndefined();
     expect(wiki['entity-activity-trend-chart']).toBeUndefined();
     expect(wiki['entity-stale-report']).toBeUndefined();
@@ -26,7 +34,7 @@ describe('getMdxComponentDefinitionsForSurface', () => {
   });
 
   it('includes MDX components that are also available as dashboard widgets', () => {
-    const dashboard = getMdxComponentDefinitionsForSurface('dashboard');
+    const dashboard = dashboardMdxComponents();
     expect(dashboard['entity-lifecycle-chart']).toBeUndefined();
     expect(dashboard['entity-activity-trend-chart']).toBeUndefined();
     expect(dashboard['entity-stale-report']).toBeUndefined();
@@ -35,12 +43,12 @@ describe('getMdxComponentDefinitionsForSurface', () => {
   });
 
   it('excludes wiki-only components for "dashboard"', () => {
-    const dashboard = getMdxComponentDefinitionsForSurface('dashboard');
+    const dashboard = dashboardMdxComponents();
     expect(dashboard['Callout']).toBeUndefined();
   });
 
   it('keeps the dashboard-only wiki page widget out of wiki rendering', () => {
-    expect(getMdxComponentDefinitionsForSurface('wiki')['wiki-page']).toBeUndefined();
+    expect(getWikiMdxComponents()['wiki-page']).toBeUndefined();
   });
 
   it('keeps one shared icon on every dashboard widget and slash-command definition', () => {
@@ -73,12 +81,12 @@ describe('getMdxComponentDefinitionsForSurface', () => {
   });
 
   it('never returns more entries than the full registry', () => {
-    expect(Object.keys(getMdxComponentDefinitionsForSurface('wiki')).length).toBeLessThanOrEqual(
+    expect(Object.keys(getWikiMdxComponents()).length).toBeLessThanOrEqual(
       getComponentDefinitions('mdx').length
     );
-    expect(
-      Object.keys(getMdxComponentDefinitionsForSurface('dashboard')).length
-    ).toBeLessThanOrEqual(getComponentDefinitions('mdx').length);
+    expect(Object.keys(dashboardMdxComponents()).length).toBeLessThanOrEqual(
+      getComponentDefinitions('mdx').length
+    );
   });
 
   it('keeps the shared renderer and config form at the definition root', () => {
@@ -109,7 +117,7 @@ describe('getMdxComponentDefinitionsForSurface', () => {
     const definition = getComponentDefinition('EntityBrowserEmbed', 'mdx');
 
     expect(
-      definition?.mdx.mapProps?.({ config: 'invalid' }, definition?.createDefaultProps?.({}) ?? {})
+      definition?.mdx.mapProps?.({ config: 'invalid' }, definition?.createDefaultConfig?.({}) ?? {})
     ).toEqual({
       config: {
         q: '',
@@ -125,8 +133,8 @@ describe('getMdxComponentDefinitionsForSurface', () => {
     const staleReport = getComponentDefinition('entity-stale-report', 'dashboardWidget');
     const activityTrend = getComponentDefinition('entity-activity-trend-chart', 'dashboardWidget');
 
-    expect(staleReport?.createDefaultProps({})).toEqual({ config: {} });
-    expect(activityTrend?.createDefaultProps({})).toEqual({ config: {} });
+    expect(staleReport?.createDefaultConfig({})).toEqual({});
+    expect(activityTrend?.createDefaultConfig({})).toEqual({});
     expect(Object.hasOwn(staleReport?.dashboardWidget ?? {}, 'mapConfigToProps')).toBe(false);
     expect(Object.hasOwn(activityTrend?.dashboardWidget ?? {}, 'mapConfigToProps')).toBe(false);
   });
