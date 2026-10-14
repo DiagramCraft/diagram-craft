@@ -6,7 +6,6 @@ import {
   DateCalendarWidget,
   dateCalendarWidgetConfigSchema
 } from './DateCalendarWidget';
-import { schemaGuard } from '../../markdown/mdx-components/configSchema';
 
 export default defineComponent({
   type: DATE_CALENDAR_TYPE,
@@ -18,10 +17,10 @@ export default defineComponent({
   component: DateCalendarWidget,
   createDefaultProps: () => ({ config: { query: '', dateFieldId: '' } }),
   configForm: DateCalendarConfigForm,
+  configSchema: dateCalendarWidgetConfigSchema,
   dashboardWidget: {
     defaultW: 12,
     defaultH: 30,
-    surfaces: ['workspace'],
-    isValidConfig: schemaGuard(dateCalendarWidgetConfigSchema)
+    surfaces: ['workspace']
   }
 });

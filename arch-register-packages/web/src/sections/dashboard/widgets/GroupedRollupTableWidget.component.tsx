@@ -6,7 +6,6 @@ import {
   GroupedRollupTableWidget,
   groupedRollupTableWidgetConfigSchema
 } from './GroupedRollupTableWidget';
-import { schemaGuard } from '../../markdown/mdx-components/configSchema';
 
 export default defineComponent({
   type: GROUPED_ROLLUP_TABLE_TYPE,
@@ -18,11 +17,11 @@ export default defineComponent({
   component: GroupedRollupTableWidget,
   createDefaultProps: () => ({ config: { query: '', valueFieldId: '' } }),
   configForm: GroupedRollupTableConfigForm,
+  configSchema: groupedRollupTableWidgetConfigSchema,
   dashboardWidget: {
     defaultW: 12,
     defaultH: 20,
     surfaces: ['workspace', 'project'],
-    frame: { hideOutsideEdit: true, padded: false, showIcon: false },
-    isValidConfig: schemaGuard(groupedRollupTableWidgetConfigSchema)
+    frame: { hideOutsideEdit: true, padded: false, showIcon: false }
   }
 });

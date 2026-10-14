@@ -2,7 +2,6 @@ import { TbClockExclamation } from 'react-icons/tb';
 import { defineComponent } from '../../../markdown/mdx-components/defineComponent';
 import { EntityStaleReport } from './EntityStaleReport';
 import { EntityStaleReportDashboardConfigForm } from './EntityStaleReportDashboardConfigForm';
-import { schemaGuard } from '../../../markdown/mdx-components/configSchema';
 import { entityStaleReportPropsSchema } from './types';
 
 export const ENTITY_STALE_REPORT_TYPE = 'entity-stale-report' as const;
@@ -19,10 +18,10 @@ export default defineComponent({
   component: EntityStaleReport,
   configForm: EntityStaleReportDashboardConfigForm,
   createDefaultProps: () => ({ config: {} }),
+  configSchema: entityStaleReportPropsSchema,
   dashboardWidget: {
     defaultW: 6,
     defaultH: 24,
-    surfaces: ['workspace'],
-    isValidConfig: schemaGuard(entityStaleReportPropsSchema)
+    surfaces: ['workspace']
   }
 });

@@ -30,3 +30,16 @@ describe('defineComponent icon requirements', () => {
     ).toThrow('Component "NoIcon" must define an icon for its catalog entry');
   });
 });
+
+describe('defineComponent config schema requirements', () => {
+  it('requires a config schema for dashboard widgets', () => {
+    expect(() =>
+      defineComponent({
+        ...baseDefinition,
+        icon: () => null,
+        createDefaultProps: () => ({ config: {} }),
+        dashboardWidget: { defaultW: 1, defaultH: 1, surfaces: ['workspace'] }
+      } as never)
+    ).toThrow('Dashboard component "NoIcon" must define configSchema');
+  });
+});

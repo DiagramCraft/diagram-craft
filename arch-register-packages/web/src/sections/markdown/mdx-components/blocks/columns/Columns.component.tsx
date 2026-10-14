@@ -1,15 +1,9 @@
-import type React from 'react';
 import { TbColumns } from 'react-icons/tb';
 import { defineComponent } from '../../defineComponent';
 import { Columns } from './Columns';
 import { COLUMN_TYPE } from './ColumnEditable';
 import { COLUMNS_TYPE, ColumnsEditable, columnsMdxRule } from './ColumnsEditable';
-import type { ColumnsSlateElement } from './types';
-export default defineComponent<
-  ColumnsSlateElement,
-  { count?: string; children?: React.ReactNode },
-  'block'
->({
+export default defineComponent({
   type: COLUMNS_TYPE,
   category: 'content-layout',
   name: 'Columns',

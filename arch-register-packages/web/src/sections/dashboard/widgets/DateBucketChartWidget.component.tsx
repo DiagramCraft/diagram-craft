@@ -7,7 +7,6 @@ import {
   DateBucketChartWidget,
   dateBucketChartWidgetConfigSchema
 } from './DateBucketChartWidget';
-import { schemaGuard } from '../../markdown/mdx-components/configSchema';
 
 export default defineComponent({
   type: DATE_BUCKET_CHART_TYPE,
@@ -19,11 +18,11 @@ export default defineComponent({
   component: DateBucketChartWidget,
   createDefaultProps: () => ({ config: { query: '', dateFieldId: '' } }),
   configForm: DateBucketChartConfigForm,
+  configSchema: dateBucketChartWidgetConfigSchema,
   dashboardWidget: {
     defaultW: 12,
     defaultH: 12,
     surfaces: ['workspace'],
-    headerActionsComponent: DateBucketChartHeaderActions,
-    isValidConfig: schemaGuard(dateBucketChartWidgetConfigSchema)
+    headerActionsComponent: DateBucketChartHeaderActions
   }
 });

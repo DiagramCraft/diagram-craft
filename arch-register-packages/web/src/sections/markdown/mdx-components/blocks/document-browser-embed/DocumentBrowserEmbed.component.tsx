@@ -11,24 +11,19 @@ import {
   documentBrowserEmbedMdxRule
 } from './DocumentBrowserEmbedEditable';
 import { DocumentBrowserEmbedConfigForm } from './DocumentBrowserEmbedConfigForm';
-import { schemaGuard } from '../../configSchema';
-import {
-  documentBrowserEmbedConfigSchema,
-  type DocumentBrowserEmbedConfig,
-  type DocumentBrowserEmbedSlateElement
-} from './types';
+import { documentBrowserEmbedConfigSchema, type DocumentBrowserEmbedConfig } from './types';
 
-export default defineComponent<DocumentBrowserEmbedSlateElement, { config?: string }, 'block'>({
+export default defineComponent({
   type: DOCUMENT_BROWSER_EMBED_TYPE,
   category: 'data-views',
   name: 'Document browser',
   description:
     'A filterable list of documents in this workspace or project. Use it to find and open files.',
+  configSchema: documentBrowserEmbedConfigSchema,
   dashboardWidget: {
     defaultW: 6,
     defaultH: 16,
     surfaces: ['workspace', 'project'],
-    isValidConfig: schemaGuard(documentBrowserEmbedConfigSchema),
     dialogWidth: 'min(1200px, 92vw)'
   },
   component: DocumentBrowserEmbed,

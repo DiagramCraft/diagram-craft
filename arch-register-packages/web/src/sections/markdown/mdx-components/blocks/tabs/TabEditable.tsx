@@ -38,8 +38,7 @@ export const tabMdxRule: MdxRuleDef<TabSlateElement, 'block'> = {
     attributes: propsToAttributes({ label: slateNode.label ?? '' }),
     // convertNodesSerialize returns generic unist nodes; the mdast-mdx typings
     // don't narrow that to MdxJsxFlowElement's own child union, so this cast
-    // is the one framework-seam assertion this rule needs (see AllowedPropKey
-    // design notes in defineComponent.ts).
+    // is the one framework-seam assertion this rule needs.
     children: convertNodesSerialize(
       slateNode.children ?? [],
       options

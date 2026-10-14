@@ -7,19 +7,17 @@ import {
   entityViewEmbedMdxRule
 } from './EntityViewEmbedEditable';
 import { EntityViewEmbedConfigForm } from './EntityViewEmbedConfigForm';
-import type { EntityViewEmbedSlateElement } from './types';
-import { schemaGuard } from '../../configSchema';
 import { savedViewEmbedWidgetConfigSchema } from './types';
-export default defineComponent<EntityViewEmbedSlateElement, { viewId?: string }, 'block'>({
+export default defineComponent({
   type: ENTITY_VIEW_EMBED_TYPE,
   category: 'data-views',
   name: 'Saved view',
   description: 'A live copy of a saved entity view. Use it to reuse a view someone already set up.',
+  configSchema: savedViewEmbedWidgetConfigSchema,
   dashboardWidget: {
     defaultW: 6,
     defaultH: 24,
-    surfaces: ['workspace', 'project'],
-    isValidConfig: schemaGuard(savedViewEmbedWidgetConfigSchema)
+    surfaces: ['workspace', 'project']
   },
   component: EntityViewEmbed,
   createDefaultProps: context => ({ config: { viewId: context.viewId ?? '' } }),

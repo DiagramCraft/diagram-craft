@@ -10,7 +10,6 @@ import {
   TopEntitiesWidget,
   topEntitiesWidgetConfigSchema
 } from './TopEntitiesWidget';
-import { schemaGuard } from '../../markdown/mdx-components/configSchema';
 export default defineComponent({
   type: TOP_ENTITIES_TYPE,
   category: 'data-views',
@@ -20,10 +19,10 @@ export default defineComponent({
   component: TopEntitiesWidget,
   createDefaultProps: () => ({ config: { schema: '', fieldId: '', direction: 'desc', limit: 5 } }),
   configForm: TopEntitiesConfigForm,
+  configSchema: topEntitiesWidgetConfigSchema,
   dashboardWidget: {
     defaultW: 4,
     defaultH: 16,
-    surfaces: ['workspace', 'project'],
-    isValidConfig: schemaGuard(topEntitiesWidgetConfigSchema)
+    surfaces: ['workspace', 'project']
   }
 });

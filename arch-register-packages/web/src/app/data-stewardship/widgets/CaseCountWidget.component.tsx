@@ -1,5 +1,4 @@
 import { TbAlertTriangle } from 'react-icons/tb';
-import { schemaGuard } from '../../../sections/markdown/mdx-components/configSchema';
 import { defineComponent } from '../../../sections/markdown/mdx-components/defineComponent';
 import {
   CaseConfigForm,
@@ -24,11 +23,11 @@ export default defineComponent({
     }
   }),
   configForm: CaseConfigForm,
+  configSchema: caseCountConfigSchema,
   dashboardWidget: {
     defaultW: 3,
     defaultH: 5,
     surfaces: ['workspace'],
-    frame: { hideOutsideEdit: true, padded: false, showIcon: false },
-    isValidConfig: schemaGuard(caseCountConfigSchema)
+    frame: { hideOutsideEdit: true, padded: false, showIcon: false }
   }
 });

@@ -1,4 +1,5 @@
 import type { TElement } from 'platejs';
+import { z } from 'zod';
 import type { PlateElementProps } from 'platejs/react';
 import { defineComponent } from './defineComponent';
 
@@ -16,10 +17,12 @@ type FooProps = { id: string };
 
 const FooPreview = (_props: FooProps) => null;
 
+const fooConfigSchema = z.object({ name: z.string() });
+
 const FooEditable = (_props: PlateElementProps<FooSlateElement>) => null;
 
 // Valid call: compiles cleanly.
-defineComponent<FooSlateElement, FooProps, 'block'>({
+defineComponent<FooSlateElement, 'block'>({
   type: 'Foo',
   category: 'data-views',
   name: 'Foo',
@@ -48,22 +51,8 @@ defineComponent<FooSlateElement, FooProps, 'block'>({
   }
 });
 
-// allowedProps containing a key that isn't a prop of the preview component.
-defineComponent<FooSlateElement, FooProps, 'block'>({
-  type: 'Foo',
-  category: 'data-views',
-  name: 'Foo',
-  description: 'A Foo component.',
-  component: FooPreview,
-  mdxComponent: {
-    mode: 'block',
-    // @ts-expect-error 'bogus' is not a key of FooProps
-    allowedProps: ['bogus']
-  }
-});
-
 // deserialize returning a shape missing a required field of E (`fooId`).
-defineComponent<FooSlateElement, FooProps, 'block'>({
+defineComponent<FooSlateElement, 'block'>({
   type: 'Foo',
   category: 'data-views',
   name: 'Foo',
@@ -98,7 +87,7 @@ interface OtherSlateElement extends TElement {
 }
 const WrongEditable = (_props: PlateElementProps<OtherSlateElement>) => null;
 
-defineComponent<FooSlateElement, FooProps, 'block'>({
+defineComponent<FooSlateElement, 'block'>({
   type: 'Foo',
   category: 'data-views',
   name: 'Foo',
@@ -125,5 +114,38 @@ defineComponent<FooSlateElement, FooProps, 'block'>({
         })
       }
     }
+  }
+});
+
+// Dashboard callbacks receive the config inferred from `configSchema`.
+defineComponent({
+  type: 'Foo',
+  category: 'data-views',
+  name: 'Foo',
+  description: 'A Foo component.',
+  component: FooPreview,
+  configSchema: fooConfigSchema,
+  dashboardWidget: {
+    defaultW: 1,
+    defaultH: 1,
+    surfaces: ['workspace'],
+    getTitle: config => config.name,
+    frame: { hideOutsideEdit: config => config.name === '' }
+  }
+});
+
+defineComponent({
+  type: 'Foo',
+  category: 'data-views',
+  name: 'Foo',
+  description: 'A Foo component.',
+  component: FooPreview,
+  configSchema: fooConfigSchema,
+  dashboardWidget: {
+    defaultW: 1,
+    defaultH: 1,
+    surfaces: ['workspace'],
+    // @ts-expect-error 'missing' is not a field of the config
+    getTitle: config => config.missing
   }
 });

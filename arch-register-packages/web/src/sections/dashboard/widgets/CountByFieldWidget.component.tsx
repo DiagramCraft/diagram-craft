@@ -6,7 +6,6 @@ import {
   CountByFieldWidget,
   countByFieldWidgetConfigSchema
 } from './CountByFieldWidget';
-import { schemaGuard } from '../../markdown/mdx-components/configSchema';
 
 export default defineComponent({
   type: COUNT_BY_FIELD_TYPE,
@@ -17,10 +16,10 @@ export default defineComponent({
   component: CountByFieldWidget,
   createDefaultProps: () => ({ config: { schemaName: '', fieldId: '' } }),
   configForm: CountByFieldConfigForm,
+  configSchema: countByFieldWidgetConfigSchema,
   dashboardWidget: {
     defaultW: 6,
     defaultH: 8,
-    surfaces: ['workspace'],
-    isValidConfig: schemaGuard(countByFieldWidgetConfigSchema)
+    surfaces: ['workspace']
   }
 });

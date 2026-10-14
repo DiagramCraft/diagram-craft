@@ -1,5 +1,4 @@
 import { TbApi } from 'react-icons/tb';
-import { schemaGuard } from '../../../sections/markdown/mdx-components/configSchema';
 import { defineComponent } from '../../../sections/markdown/mdx-components/defineComponent';
 import { listWidgetConfigSchema, ListConfigForm } from '../apiCatalogWidgetSupport';
 import {
@@ -15,12 +14,12 @@ export default defineComponent({
   component: ApiCatalogMostConsumedWidget,
   createDefaultProps: () => ({ config: { limit: 6 } }),
   configForm: ListConfigForm,
+  configSchema: listWidgetConfigSchema,
   dashboardWidget: {
     defaultW: 6,
     defaultH: 16,
     surfaces: ['workspace'],
     headerActionsComponent: ApiCatalogMostConsumedHeaderActions,
-    frame: { padded: false, showIcon: false },
-    isValidConfig: schemaGuard(listWidgetConfigSchema)
+    frame: { padded: false, showIcon: false }
   }
 });

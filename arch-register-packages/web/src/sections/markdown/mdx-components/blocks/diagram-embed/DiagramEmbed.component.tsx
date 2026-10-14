@@ -7,48 +7,44 @@ import {
   diagramEmbedMdxRule
 } from './DiagramEmbedEditable';
 import { DiagramEmbedConfigForm } from './DiagramEmbedConfigForm';
-import type { DiagramEmbedSlateElement } from './types';
-import { schemaGuard } from '../../configSchema';
 import { diagramEmbedWidgetConfigSchema } from './types';
-export default defineComponent<DiagramEmbedSlateElement, { id: string; caption?: string }, 'block'>(
-  {
-    type: DIAGRAM_EMBED_TYPE,
-    category: 'visualizations',
-    name: 'Diagram',
-    description:
-      'A read-only preview of an architecture diagram. Use it to show a system picture alongside the text.',
-    dashboardWidget: {
-      defaultW: 6,
-      defaultH: 16,
-      surfaces: ['workspace', 'project'],
-      isValidConfig: schemaGuard(diagramEmbedWidgetConfigSchema)
-    },
-    component: DiagramEmbed,
-    createDefaultProps: () => ({ config: { fileId: '' } }),
-    configForm: DiagramEmbedConfigForm,
-    icon: TbChartLine,
-    mdxComponent: {
-      mode: 'block',
-      allowedProps: ['id', 'caption'],
-      mapProps: props => ({
-        config: { fileId: props.id ?? '', caption: props.caption }
-      }),
-      editorSpec: {
-        editableComponent: DiagramEmbedEditable,
-        nodeOptions: { isVoid: true },
-        mdxRule: diagramEmbedMdxRule,
-        slashCommand: {
-          keywords: ['diagram', 'embed', 'preview', 'svg', 'flow'],
-          onSelect: (editor, { insertOrReplaceBlock }) => {
-            insertOrReplaceBlock(editor, {
-              type: DIAGRAM_EMBED_TYPE,
-              fileId: '',
-              caption: '',
-              children: [{ text: '' }]
-            });
-          }
+export default defineComponent({
+  type: DIAGRAM_EMBED_TYPE,
+  category: 'visualizations',
+  name: 'Diagram',
+  description:
+    'A read-only preview of an architecture diagram. Use it to show a system picture alongside the text.',
+  configSchema: diagramEmbedWidgetConfigSchema,
+  dashboardWidget: {
+    defaultW: 6,
+    defaultH: 16,
+    surfaces: ['workspace', 'project']
+  },
+  component: DiagramEmbed,
+  createDefaultProps: () => ({ config: { fileId: '' } }),
+  configForm: DiagramEmbedConfigForm,
+  icon: TbChartLine,
+  mdxComponent: {
+    mode: 'block',
+    allowedProps: ['id', 'caption'],
+    mapProps: props => ({
+      config: { fileId: props.id ?? '', caption: props.caption }
+    }),
+    editorSpec: {
+      editableComponent: DiagramEmbedEditable,
+      nodeOptions: { isVoid: true },
+      mdxRule: diagramEmbedMdxRule,
+      slashCommand: {
+        keywords: ['diagram', 'embed', 'preview', 'svg', 'flow'],
+        onSelect: (editor, { insertOrReplaceBlock }) => {
+          insertOrReplaceBlock(editor, {
+            type: DIAGRAM_EMBED_TYPE,
+            fileId: '',
+            caption: '',
+            children: [{ text: '' }]
+          });
         }
       }
     }
   }
-);
+});

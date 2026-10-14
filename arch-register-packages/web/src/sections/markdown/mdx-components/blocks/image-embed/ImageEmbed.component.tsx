@@ -2,12 +2,7 @@ import { TbPhoto } from 'react-icons/tb';
 import { defineComponent } from '../../defineComponent';
 import { ImageEmbed } from './ImageEmbed';
 import { IMAGE_EMBED_TYPE, ImageEmbedEditable, imageEmbedMdxRule } from './ImageEmbedEditable';
-import type { ImageEmbedSlateElement } from './types';
-export default defineComponent<
-  ImageEmbedSlateElement,
-  { id: string; alt?: string; size?: string; align?: string },
-  'block'
->({
+export default defineComponent({
   type: IMAGE_EMBED_TYPE,
   category: 'content-layout',
   name: 'Image',

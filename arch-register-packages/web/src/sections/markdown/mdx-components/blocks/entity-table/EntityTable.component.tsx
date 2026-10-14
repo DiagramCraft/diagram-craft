@@ -3,25 +3,19 @@ import { defineComponent } from '../../defineComponent';
 import { EntityTable } from './EntityTable';
 import { ENTITY_TABLE_TYPE, EntityTableEditable, entityTableMdxRule } from './EntityTableEditable';
 import { EntityTableConfigForm } from './EntityTableConfigForm';
-import type { EntityTableSlateElement } from './types';
-import { schemaGuard } from '../../configSchema';
 import { entityTableWidgetConfigSchema } from './types';
 
-export default defineComponent<
-  EntityTableSlateElement,
-  { schema?: string; owner?: string; lifecycle?: string; limit?: string },
-  'block'
->({
+export default defineComponent({
   type: ENTITY_TABLE_TYPE,
   category: 'data-views',
   name: 'Entity table',
   description:
     'A table of entities matching filters you define. Use it for a fixed, readable list.',
+  configSchema: entityTableWidgetConfigSchema,
   dashboardWidget: {
     defaultW: 6,
     defaultH: 24,
-    surfaces: ['workspace', 'project'],
-    isValidConfig: schemaGuard(entityTableWidgetConfigSchema)
+    surfaces: ['workspace', 'project']
   },
   component: EntityTable,
   createDefaultProps: () => ({ config: {} }),

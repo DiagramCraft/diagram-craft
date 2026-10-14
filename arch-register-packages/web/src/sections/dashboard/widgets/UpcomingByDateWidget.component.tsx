@@ -6,7 +6,6 @@ import {
   UpcomingByDateWidget,
   upcomingByDateWidgetConfigSchema
 } from './UpcomingByDateWidget';
-import { schemaGuard } from '../../markdown/mdx-components/configSchema';
 
 export default defineComponent({
   type: UPCOMING_BY_DATE_TYPE,
@@ -18,10 +17,10 @@ export default defineComponent({
   component: UpcomingByDateWidget,
   createDefaultProps: () => ({ config: { query: '', dateFieldId: '' } }),
   configForm: UpcomingByDateConfigForm,
+  configSchema: upcomingByDateWidgetConfigSchema,
   dashboardWidget: {
     defaultW: 6,
     defaultH: 16,
-    surfaces: ['workspace'],
-    isValidConfig: schemaGuard(upcomingByDateWidgetConfigSchema)
+    surfaces: ['workspace']
   }
 });

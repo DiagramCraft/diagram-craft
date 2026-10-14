@@ -7,32 +7,19 @@ import {
   entityChangelogMdxRule
 } from './EntityChangelogEditable';
 import { EntityChangelogConfigForm } from './EntityChangelogConfigForm';
-import type { EntityChangelogSlateElement } from './types';
-import { schemaGuard } from '../../configSchema';
 import { entityChangelogWidgetConfigSchema } from './types';
 
-export default defineComponent<
-  EntityChangelogSlateElement,
-  {
-    id?: string;
-    schema?: string;
-    owner?: string;
-    lifecycle?: string;
-    limit?: string;
-    since?: string;
-  },
-  'block'
->({
+export default defineComponent({
   type: ENTITY_CHANGELOG_TYPE,
   category: 'data-views',
   name: 'Entity changelog',
   description:
     'A feed of recent changes to one entity or a filtered set. Use it to see what changed lately.',
+  configSchema: entityChangelogWidgetConfigSchema,
   dashboardWidget: {
     defaultW: 6,
     defaultH: 16,
-    surfaces: ['workspace', 'project'],
-    isValidConfig: schemaGuard(entityChangelogWidgetConfigSchema)
+    surfaces: ['workspace', 'project']
   },
   component: EntityChangelog,
   createDefaultProps: () => ({ config: { since: '30d', limit: '10' } }),

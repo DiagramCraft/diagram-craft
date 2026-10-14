@@ -3,11 +3,9 @@ import { defineComponent } from '../../defineComponent';
 import { Metric } from './Metric';
 import { METRIC_TYPE, MetricEditable, metricMdxRule } from './MetricEditable';
 import { MetricConfigForm } from './MetricConfigForm';
-import { schemaGuard } from '../../configSchema';
 import {
   metricTypeSchema,
   statMetricWidgetConfigSchema,
-  type MetricSlateElement,
   type MetricType,
   type StatMetricWidgetConfig
 } from './types';
@@ -21,28 +19,17 @@ const METRIC_TYPE_DEFAULT_LABEL: Record<MetricType, string> = {
   'diagram-count': 'Diagrams',
   'completeness-percent': 'Well documented'
 };
-export default defineComponent<
-  MetricSlateElement,
-  {
-    schema?: string;
-    owner?: string;
-    lifecycle?: string;
-    label?: string;
-    metricType?: MetricType;
-    showLink?: boolean;
-  },
-  'block'
->({
+export default defineComponent({
   type: METRIC_TYPE,
   category: 'metrics',
   name: 'Metric',
   description:
     'A single live count, such as the number of entities, projects or diagrams. Use it for a headline number.',
+  configSchema: statMetricWidgetConfigSchema,
   dashboardWidget: {
     defaultW: 3,
     defaultH: 8,
     surfaces: ['workspace', 'project'],
-    isValidConfig: schemaGuard(statMetricWidgetConfigSchema),
     getTitle: (config: StatMetricWidgetConfig) => METRIC_TYPE_DEFAULT_LABEL[config.metricType]
   },
   component: Metric,

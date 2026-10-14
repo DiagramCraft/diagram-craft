@@ -1,14 +1,8 @@
-import type React from 'react';
 import { TbFrame } from 'react-icons/tb';
 import { defineComponent } from '../../defineComponent';
 import { Caption } from './Caption';
 import { CAPTION_TYPE, CaptionEditable, captionMdxRule } from './CaptionEditable';
-import type { CaptionSlateElement } from './types';
-export default defineComponent<
-  CaptionSlateElement,
-  { caption?: string; numbered?: string; children?: React.ReactNode },
-  'block'
->({
+export default defineComponent({
   type: CAPTION_TYPE,
   category: 'content-layout',
   name: 'Caption',

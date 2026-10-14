@@ -1,5 +1,4 @@
 import { TbPlugConnected } from 'react-icons/tb';
-import { schemaGuard } from '../../../sections/markdown/mdx-components/configSchema';
 import { defineComponent } from '../../../sections/markdown/mdx-components/defineComponent';
 import { listWidgetConfigSchema, ListConfigForm } from '../apiCatalogWidgetSupport';
 import { ApiCatalogAtRiskHeaderActions, ApiCatalogAtRiskWidget } from './ApiCatalogAtRiskWidget';
@@ -12,12 +11,12 @@ export default defineComponent({
   component: ApiCatalogAtRiskWidget,
   createDefaultProps: () => ({ config: { limit: 8 } }),
   configForm: ListConfigForm,
+  configSchema: listWidgetConfigSchema,
   dashboardWidget: {
     defaultW: 6,
     defaultH: 16,
     surfaces: ['workspace'],
     headerActionsComponent: ApiCatalogAtRiskHeaderActions,
-    frame: { padded: false, showIcon: false },
-    isValidConfig: schemaGuard(listWidgetConfigSchema)
+    frame: { padded: false, showIcon: false }
   }
 });

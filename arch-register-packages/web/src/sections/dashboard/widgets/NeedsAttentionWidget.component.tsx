@@ -12,7 +12,6 @@ import {
   NeedsAttentionWidget,
   needsAttentionWidgetConfigSchema
 } from './NeedsAttentionWidget';
-import { schemaGuard } from '../../markdown/mdx-components/configSchema';
 export default defineComponent({
   type: NEEDS_ATTENTION_TYPE,
   category: 'data-views',
@@ -30,11 +29,11 @@ export default defineComponent({
     }
   }),
   configForm: NeedsAttentionConfigForm,
+  configSchema: needsAttentionWidgetConfigSchema,
   dashboardWidget: {
     defaultW: 6,
     defaultH: 16,
     surfaces: ['workspace', 'project'],
-    frame: { padded: false, showIcon: false },
-    isValidConfig: schemaGuard(needsAttentionWidgetConfigSchema)
+    frame: { padded: false, showIcon: false }
   }
 });

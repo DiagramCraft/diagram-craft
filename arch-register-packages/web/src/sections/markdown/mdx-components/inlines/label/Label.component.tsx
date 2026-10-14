@@ -2,8 +2,7 @@ import { TbTag } from 'react-icons/tb';
 import { defineComponent } from '../../defineComponent';
 import { Label } from './Label';
 import { LABEL_TYPE, LabelEditable, labelMdxRule } from './LabelEditable';
-import type { LabelSlateElement } from './types';
-export default defineComponent<LabelSlateElement, { text: string; color: string }, 'inline'>({
+export default defineComponent({
   type: LABEL_TYPE,
   category: 'content-layout',
   name: 'Label',

@@ -10,7 +10,6 @@ import {
   ActivityFeedWidget,
   activityFeedWidgetConfigSchema
 } from './ActivityFeedWidget';
-import { schemaGuard } from '../../markdown/mdx-components/configSchema';
 
 export default defineComponent({
   type: ACTIVITY_FEED_TYPE,
@@ -21,10 +20,10 @@ export default defineComponent({
   component: ActivityFeedWidget,
   createDefaultProps: () => ({ config: {} }),
   configForm: ActivityFeedDashboardConfigForm,
+  configSchema: activityFeedWidgetConfigSchema,
   dashboardWidget: {
     defaultW: 12,
     defaultH: 24,
-    surfaces: ['workspace'],
-    isValidConfig: schemaGuard(activityFeedWidgetConfigSchema)
+    surfaces: ['workspace']
   }
 });

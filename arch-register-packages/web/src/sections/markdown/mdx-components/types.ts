@@ -1,4 +1,5 @@
 import type React from 'react';
+import type { z } from 'zod';
 import type { PlateElementProps, useEditorRef } from 'platejs/react';
 import type {
   DeserializeMdOptions,
@@ -19,13 +20,6 @@ export type MdxMode = 'block' | 'inline';
 type MdxAstNode<Mode extends MdxMode> = Mode extends 'block'
   ? MdMdxJsxFlowElement
   : MdMdxJsxTextElement;
-
-/**
- * Keys of a preview component's own props that may be exposed as external MDX
- * attribute names. Deliberately independent of the Slate element's field names
- * (e.g. ImageEmbed's preview prop is `id`, its Slate field is `fileId`).
- */
-export type AllowedPropKey<P> = Exclude<Extract<keyof P, string>, 'children'>;
 
 export type MdxRuleDef<E extends TElement, Mode extends MdxMode> = {
   deserialize: (
@@ -114,12 +108,6 @@ export type DashboardWidgetSpec<Config extends Record<string, unknown> = Record<
       /** Whether the component icon is shown in the frame header; defaults to true. */
       showIcon?: boolean;
     };
-    /**
-     * Structural validity AND save-completeness: also gates the dialog's Save
-     * button, so this should reject configs missing required selections (e.g. an
-     * empty entity id), not just wrong types.
-     */
-    isValidConfig: (config: Record<string, unknown>) => config is Config;
     /** Per-instance title; falls back to `label` when omitted. */
     getTitle?: (config: Config) => string;
     /** WidgetConfigDialog width override; defaults to 460. */
@@ -143,9 +131,10 @@ export type ConfigFormProps<Config extends Record<string, unknown>> = {
   context: ConfigFormContext;
 };
 
-type MdxComponentSpecBase<P extends Record<string, unknown>, Mode extends MdxMode> = {
+type MdxComponentSpecBase<Mode extends MdxMode> = {
   mode: Mode;
-  allowedProps: ReadonlyArray<AllowedPropKey<P>>;
+  /** The authored MDX attribute names that reach the shared component. */
+  allowedProps: ReadonlyArray<string>;
   /** Converts authored MDX string attributes to the shared component's props using defaults. */
   mapProps?: (
     props: Record<string, string>,
@@ -170,9 +159,8 @@ type MdxComponentSpecBase<P extends Record<string, unknown>, Mode extends MdxMod
 /** MDX registration as authored on a component. */
 export type MdxComponentRegistrationDef<
   E extends TElement = TElement,
-  P extends Record<string, unknown> = Record<string, unknown>,
   Mode extends MdxMode = MdxMode
-> = MdxComponentSpecBase<P, Mode> & {
+> = MdxComponentSpecBase<Mode> & {
   /** Editor-mode registration; present for all components that support rich editing */
   editorSpec?: MdxEditorSpecDef<E, Mode>;
 };
@@ -181,10 +169,13 @@ export type MdxComponentRegistrationDef<
  * MDX registration as stored in the registry. The element type is erased (`any`) because the
  * registry holds components with different Slate elements.
  */
-export type MdxComponentSpec = MdxComponentSpecBase<Record<string, unknown>, MdxMode> & {
+export type MdxComponentSpec = MdxComponentSpecBase<MdxMode> & {
   // biome-ignore lint/suspicious/noExplicitAny: see above
   editorSpec?: EditorSpec<any, MdxMode>;
 };
+
+/** A zod object schema describing a component's config. */
+export type ConfigSchema = z.ZodType<Record<string, unknown>>;
 
 /** A complete registration shared by the wiki and dashboard catalogs. */
 export type ComponentDefinition = {
@@ -200,6 +191,12 @@ export type ComponentDefinition = {
   component: React.ComponentType<any>;
   /** Creates fresh default props for the shared renderer. */
   createDefaultProps?: (context: { viewId?: string }) => Record<string, unknown>;
+  /**
+   * Describes this component's config. Also decides whether a stored or edited config is valid,
+   * so it should reject configs missing required selections (e.g. an empty entity id), not just
+   * wrong types: the same rule gates both loading a dashboard widget and the dialogs' Save.
+   */
+  configSchema?: ConfigSchema;
   /** Shared configuration form used by every surface that exposes this component. */
   // biome-ignore lint/suspicious/noExplicitAny: config types are erased in the shared registry
   configForm?: React.ComponentType<any>;
@@ -215,5 +212,6 @@ export type MdxComponentDefinition = ComponentDefinition & { mdx: MdxComponentSp
 export type DashboardWidgetComponentDefinition = ComponentDefinition & {
   icon: ComponentIcon;
   dashboardWidget: DashboardWidgetSpec;
+  configSchema: ConfigSchema;
   createDefaultProps: (context: { viewId?: string }) => { config: Record<string, unknown> };
 };

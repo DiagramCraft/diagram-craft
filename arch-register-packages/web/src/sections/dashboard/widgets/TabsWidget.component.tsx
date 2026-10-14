@@ -1,6 +1,9 @@
 import { TbLayoutList } from 'react-icons/tb';
-import { createTab, isValidTabsConfig, TABS_TYPE, type TabsWidgetConfig } from './tabsLogic';
-import { getNestedWidgetSpec } from './nestedWidgets';
+import {
+  getComponentDefinition,
+  isValidComponentConfig
+} from '../../markdown/mdx-components/componentRegistry';
+import { createTab, createTabsConfigSchema, TABS_TYPE } from './tabsLogic';
 import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import { TabsConfigForm, TabsWidget } from './TabsWidget';
 
@@ -12,17 +15,16 @@ export default defineComponent({
   icon: TbLayoutList,
   component: TabsWidget,
   createDefaultProps: () => ({ config: { tabs: [createTab([], 'Tab')] } }),
+  configSchema: createTabsConfigSchema(child => {
+    const definition = getComponentDefinition(child.type, 'dashboardWidget');
+    return !!definition && isValidComponentConfig(definition, child.config);
+  }),
   configForm: TabsConfigForm,
   dashboardWidget: {
     defaultW: 12,
     defaultH: 24,
     surfaces: ['workspace', 'project'],
     frame: { hideOutsideEdit: true, padded: false, showIcon: false },
-    isValidConfig: (config): config is TabsWidgetConfig =>
-      isValidTabsConfig(config, child => {
-        const spec = getNestedWidgetSpec(child.type);
-        return !!spec && spec.isValidConfig(child.config);
-      }),
     dialogSize: 'large'
   }
 });

@@ -3,12 +3,6 @@ import { z } from 'zod';
 /** Config of a widget without options of its own; any stored keys are ignored. */
 export const noOptionsConfigSchema = z.object({});
 
-/** The `isValidConfig` of a component whose config is described by a zod object schema. */
-export const schemaGuard =
-  <S extends z.ZodType<Record<string, unknown>>>(schema: S) =>
-  (config: Record<string, unknown>): config is z.infer<S> =>
-    schema.safeParse(config).success;
-
 /**
  * Parses `input` field by field, falling back to the matching default for any field that is
  * missing or invalid. This keeps authored content readable when one attribute has gone stale,

@@ -1,4 +1,3 @@
-import type React from 'react';
 import { TbChevronsDown } from 'react-icons/tb';
 import { defineComponent } from '../../defineComponent';
 import { FoldableSection } from './FoldableSection';
@@ -7,12 +6,7 @@ import {
   FoldableSectionEditable,
   foldableSectionMdxRule
 } from './FoldableSectionEditable';
-import type { FoldableSectionSlateElement } from './types';
-export default defineComponent<
-  FoldableSectionSlateElement,
-  { label?: string; children?: React.ReactNode },
-  'block'
->({
+export default defineComponent({
   type: FOLDABLE_SECTION_TYPE,
   category: 'content-layout',
   name: 'Foldable section',

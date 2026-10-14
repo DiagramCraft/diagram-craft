@@ -5,7 +5,6 @@ import {
   ConformanceSummaryWidget,
   conformanceSummaryWidgetConfigSchema
 } from './ConformanceSummaryWidget';
-import { schemaGuard } from '../../markdown/mdx-components/configSchema';
 export default defineComponent({
   type: CONFORMANCE_SUMMARY_TYPE,
   category: 'data-views',
@@ -14,10 +13,10 @@ export default defineComponent({
   icon: TbShieldCheck,
   component: ConformanceSummaryWidget,
   createDefaultProps: () => ({ config: {} }),
+  configSchema: conformanceSummaryWidgetConfigSchema,
   dashboardWidget: {
     defaultW: 5,
     defaultH: 16,
-    surfaces: ['workspace'],
-    isValidConfig: schemaGuard(conformanceSummaryWidgetConfigSchema)
+    surfaces: ['workspace']
   }
 });

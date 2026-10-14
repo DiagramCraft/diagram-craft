@@ -6,7 +6,6 @@ import {
   FieldMatrixWidget,
   fieldMatrixWidgetConfigSchema
 } from './FieldMatrixWidget';
-import { schemaGuard } from '../../markdown/mdx-components/configSchema';
 
 export default defineComponent({
   type: FIELD_MATRIX_TYPE,
@@ -29,6 +28,7 @@ export default defineComponent({
     }
   }),
   configForm: FieldMatrixConfigForm,
+  configSchema: fieldMatrixWidgetConfigSchema,
   dashboardWidget: {
     defaultW: 6,
     defaultH: 20,
@@ -37,7 +37,6 @@ export default defineComponent({
       hideOutsideEdit: config => config.showFrame === false,
       padded: false,
       showIcon: false
-    },
-    isValidConfig: schemaGuard(fieldMatrixWidgetConfigSchema)
+    }
   }
 });

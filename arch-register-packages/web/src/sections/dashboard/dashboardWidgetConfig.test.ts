@@ -2,7 +2,10 @@ import { describe, expect, it } from 'vitest';
 import '../../componentDiscovery';
 import { parseKnownDashboardWidget } from './dashboardWidgetConfig';
 import { getWidgetTitle } from './dashboardWidgetDefaults';
-import { getComponentDefinition } from '../markdown/mdx-components/componentRegistry';
+import {
+  getComponentDefinition,
+  isValidComponentConfig
+} from '../markdown/mdx-components/componentRegistry';
 
 describe('parseKnownDashboardWidget', () => {
   it('parses a built-in widget with nested config', () => {
@@ -532,7 +535,7 @@ describe('parseKnownDashboardWidget', () => {
       expect(spec?.defaultH).toBe(height);
       expect(definition?.configForm !== undefined).toBe(hasForm);
       expect(definition?.createDefaultProps({}).config).toEqual(config);
-      expect(spec?.isValidConfig(config)).toBe(true);
+      expect(isValidComponentConfig(definition, config)).toBe(true);
       expect(getWidgetTitle({ id: type, type, config, x: 0, y: 0, w: 6, h: 4 })).toBe(title);
       expect(
         parseKnownDashboardWidget({ id: type, type, config, x: 0, y: 0, w: 6, h: 4 })

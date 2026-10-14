@@ -6,7 +6,6 @@ import {
   AssessmentsWidget,
   assessmentsWidgetConfigSchema
 } from './AssessmentsWidget';
-import { schemaGuard } from '../../markdown/mdx-components/configSchema';
 export default defineComponent({
   type: ASSESSMENTS_TYPE,
   category: 'metrics',
@@ -16,10 +15,10 @@ export default defineComponent({
   component: AssessmentsWidget,
   createDefaultProps: () => ({ config: { mode: 'active' } }),
   configForm: AssessmentsConfigForm,
+  configSchema: assessmentsWidgetConfigSchema,
   dashboardWidget: {
     defaultW: 3,
     defaultH: 12,
-    surfaces: ['workspace', 'project'],
-    isValidConfig: schemaGuard(assessmentsWidgetConfigSchema)
+    surfaces: ['workspace', 'project']
   }
 });

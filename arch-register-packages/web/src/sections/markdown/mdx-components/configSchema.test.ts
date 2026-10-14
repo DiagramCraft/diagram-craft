@@ -1,11 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import {
-  decodeConfigAttribute,
-  encodeConfigAttribute,
-  parseConfigFields,
-  schemaGuard
-} from './configSchema';
+import { decodeConfigAttribute, encodeConfigAttribute, parseConfigFields } from './configSchema';
 import {
   decodeDocumentBrowserEmbedConfig,
   encodeDocumentBrowserEmbedConfig,
@@ -17,15 +12,6 @@ import {
 } from './blocks/entity-browser-embed/EntityBrowserEmbedCodec';
 
 const schema = z.object({ name: z.string(), count: z.number().int().optional() });
-
-describe('schemaGuard', () => {
-  it('accepts matching configs and rejects the rest', () => {
-    const guard = schemaGuard(schema);
-    expect(guard({ name: 'a' })).toBe(true);
-    expect(guard({ name: 'a', count: 1.5 })).toBe(false);
-    expect(guard({})).toBe(false);
-  });
-});
 
 describe('parseConfigFields', () => {
   it('falls back to the default for each missing or invalid field only', () => {

@@ -1,5 +1,4 @@
 import { TbAlertTriangle } from 'react-icons/tb';
-import { schemaGuard } from '../../../sections/markdown/mdx-components/configSchema';
 import { defineComponent } from '../../../sections/markdown/mdx-components/defineComponent';
 import { baseWidgetConfigSchema } from '../apiCatalogWidgetSupport';
 import { ApiCatalogNeedsAttentionCountWidget } from './ApiCatalogNeedsAttentionCountWidget';
@@ -11,11 +10,11 @@ export default defineComponent({
   icon: TbAlertTriangle,
   component: ApiCatalogNeedsAttentionCountWidget,
   createDefaultProps: () => ({ config: {} }),
+  configSchema: baseWidgetConfigSchema,
   dashboardWidget: {
     defaultW: 3,
     defaultH: 5,
     surfaces: ['workspace'],
-    frame: { hideOutsideEdit: true, padded: false, showIcon: false },
-    isValidConfig: schemaGuard(baseWidgetConfigSchema)
+    frame: { hideOutsideEdit: true, padded: false, showIcon: false }
   }
 });

@@ -6,8 +6,7 @@ import {
   EntityMentionEditable,
   entityMentionMdxRule
 } from './EntityMentionEditable';
-import type { EntityMentionSlateElement } from './types';
-export default defineComponent<EntityMentionSlateElement, { id: string }, 'inline'>({
+export default defineComponent({
   type: ENTITY_MENTION_TYPE,
   category: 'data-views',
   name: 'Entity mention',

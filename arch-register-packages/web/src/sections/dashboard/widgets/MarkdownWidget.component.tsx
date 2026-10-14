@@ -7,7 +7,6 @@ import {
   MarkdownWidget,
   markdownWidgetConfigSchema
 } from './MarkdownWidget';
-import { schemaGuard } from '../../markdown/mdx-components/configSchema';
 export default defineComponent({
   type: MARKDOWN_WIDGET_TYPE,
   category: 'content-layout',
@@ -17,10 +16,10 @@ export default defineComponent({
   component: MarkdownWidget,
   createDefaultProps: () => ({ config: { markdown: '' } }),
   configForm: MarkdownDashboardConfigForm,
+  configSchema: markdownWidgetConfigSchema,
   dashboardWidget: {
     defaultW: 6,
     defaultH: 16,
-    surfaces: ['workspace', 'project'],
-    isValidConfig: schemaGuard(markdownWidgetConfigSchema)
+    surfaces: ['workspace', 'project']
   }
 });

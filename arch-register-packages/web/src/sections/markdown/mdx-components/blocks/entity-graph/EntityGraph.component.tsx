@@ -7,25 +7,19 @@ import {
   normalizeEntityGraphDepth,
   normalizeEntityGraphDirection,
   normalizeEntityGraphProps,
-  type EntityGraphSlateElement,
   entityGraphWidgetConfigSchema
 } from './types';
-import { schemaGuard } from '../../configSchema';
-export default defineComponent<
-  EntityGraphSlateElement,
-  { id: string; depth?: string; direction?: string },
-  'block'
->({
+export default defineComponent({
   type: ENTITY_GRAPH_TYPE,
   category: 'visualizations',
   name: 'Entity graph',
   description:
     'A clickable graph of the dependencies and relations around one entity. Works best at 6x4 or larger.',
+  configSchema: entityGraphWidgetConfigSchema,
   dashboardWidget: {
     defaultW: 6,
     defaultH: 16,
-    surfaces: ['workspace', 'project'],
-    isValidConfig: schemaGuard(entityGraphWidgetConfigSchema)
+    surfaces: ['workspace', 'project']
   },
   component: EntityGraph,
   createDefaultProps: () => ({ config: { entityId: '', depth: 1, direction: 'both' } }),

@@ -6,7 +6,6 @@ import {
   AssessmentCountWidget,
   assessmentCountWidgetConfigSchema
 } from './AssessmentCountWidget';
-import { schemaGuard } from '../../markdown/mdx-components/configSchema';
 
 export default defineComponent({
   type: ASSESSMENT_COUNT_TYPE,
@@ -17,11 +16,11 @@ export default defineComponent({
   component: AssessmentCountWidget,
   createDefaultProps: () => ({ config: { mode: 'active' } }),
   configForm: AssessmentCountConfigForm,
+  configSchema: assessmentCountWidgetConfigSchema,
   dashboardWidget: {
     defaultW: 3,
     defaultH: 5,
     surfaces: ['workspace'],
-    frame: { hideOutsideEdit: true, padded: false, showIcon: false },
-    isValidConfig: schemaGuard(assessmentCountWidgetConfigSchema)
+    frame: { hideOutsideEdit: true, padded: false, showIcon: false }
   }
 });

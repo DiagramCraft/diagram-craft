@@ -1,9 +1,11 @@
 import type React from 'react';
+import type { z } from 'zod';
 import type { TElement } from 'platejs';
 import type {
   ComponentDefinition,
   ComponentIcon,
   ComponentSurface,
+  ConfigSchema,
   DashboardWidgetSpec,
   MdxComponentRegistrationDef,
   MdxComponentSpec,
@@ -31,33 +33,31 @@ type DashboardWidgetRegistrationDef<Config extends Record<string, unknown>> = Om
 
 export type ComponentRegistration<
   E extends TElement,
-  P extends Record<string, unknown>,
-  Mode extends MdxMode
+  Mode extends MdxMode,
+  Schema extends ConfigSchema
 > = ComponentRegistrationBase & {
   /** Shared renderer for the component, independent of the surface using it. */
   // biome-ignore lint/suspicious/noExplicitAny: component props vary by registration and are typed by each surface adapter
   component: React.ComponentType<any>;
+  /**
+   * The component's config: its shape, and which configs are valid (and complete enough to save).
+   * Also types the dashboard callbacks below.
+   */
+  configSchema?: Schema;
   /** Shared config editor, when this component has editable options. */
   // biome-ignore lint/suspicious/noExplicitAny: component config types are erased in the registry
   configForm?: React.ComponentType<any>;
   /** Present when this component can be authored in wiki content. */
-  mdxComponent?: MdxComponentRegistrationDef<E, P, Mode>;
-  /** Present when this component can be added as a dashboard widget. */
-  // biome-ignore lint/suspicious/noExplicitAny: registrations erase per-widget config types here
-  dashboardWidget?: DashboardWidgetRegistrationDef<any>;
+  mdxComponent?: MdxComponentRegistrationDef<E, Mode>;
+  /** Present when this component can be added as a dashboard widget; requires `configSchema`. */
+  dashboardWidget?: DashboardWidgetRegistrationDef<z.infer<Schema>>;
   /** Creates fresh default props for the shared renderer. */
   createDefaultProps?: (context: { viewId?: string }) => Record<string, unknown>;
 };
 
-/**
- * Declares one component registration with shared identity, renderer and form.
- * Content surfaces are derived from the presence of `mdxComponent` and
- * `dashboardWidget`. Their editor/serialization and dashboard details stay
- * nested under the registration they belong to.
- */
 /** Completes the authored slash command with the registration's catalog text. */
-const toMdxSpec = <E extends TElement, P extends Record<string, unknown>, Mode extends MdxMode>(
-  { editorSpec, ...rest }: MdxComponentRegistrationDef<E, P, Mode>,
+const toMdxSpec = <E extends TElement, Mode extends MdxMode>(
+  { editorSpec, ...rest }: MdxComponentRegistrationDef<E, Mode>,
   name: string,
   description: string
 ): MdxComponentSpec => {
@@ -72,16 +72,25 @@ const toMdxSpec = <E extends TElement, P extends Record<string, unknown>, Mode e
   };
 };
 
+/**
+ * Declares one component registration with shared identity, renderer and form.
+ * Content surfaces are derived from the presence of `mdxComponent` and
+ * `dashboardWidget`. Their editor/serialization and dashboard details stay
+ * nested under the registration they belong to.
+ */
 export function defineComponent<
   E extends TElement = TElement,
-  P extends Record<string, unknown> = Record<string, unknown>,
-  Mode extends MdxMode = MdxMode
->(def: ComponentRegistration<E, P, Mode>): ComponentDefinition {
+  Mode extends MdxMode = MdxMode,
+  Schema extends ConfigSchema = ConfigSchema
+>(def: ComponentRegistration<E, Mode, Schema>): ComponentDefinition {
   const { type, name, description, category, icon, component, configForm } = def;
-  const { mdxComponent, dashboardWidget, createDefaultProps } = def;
+  const { mdxComponent, dashboardWidget, createDefaultProps, configSchema } = def;
 
   if ((dashboardWidget || mdxComponent?.editorSpec?.slashCommand) && !icon) {
     throw new Error(`Component "${type}" must define an icon for its catalog entry`);
+  }
+  if (dashboardWidget && !configSchema) {
+    throw new Error(`Dashboard component "${type}" must define configSchema`);
   }
   if (dashboardWidget && !createDefaultProps) {
     throw new Error(`Dashboard component "${type}" must define createDefaultProps`);
@@ -100,6 +109,7 @@ export function defineComponent<
     component,
     ...(icon ? { icon } : {}),
     ...(createDefaultProps ? { createDefaultProps } : {}),
+    ...(configSchema ? { configSchema } : {}),
     ...(configForm ? { configForm } : {}),
     ...(mdxComponent ? { mdx: toMdxSpec(mdxComponent, name, description) } : {}),
     ...(dashboardWidget

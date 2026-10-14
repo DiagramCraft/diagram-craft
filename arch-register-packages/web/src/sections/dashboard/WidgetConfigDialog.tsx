@@ -1,14 +1,17 @@
-import { useState, type ComponentType } from 'react';
+import { useState } from 'react';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
-import type { DashboardWidgetSpec } from '../markdown/mdx-components/types';
+import type { DashboardWidgetComponentDefinition } from '../markdown/mdx-components/types';
 import type { WidgetSurface } from './dashboardWidgetDefaults';
 import { DialogContent, DialogSection } from '../markdown/editor/BlockDialog';
 import { useMdxContext } from '../markdown/MdxContext';
 import './dashboardWidgetRegistry';
 import { getConfigDialogWidth } from '../markdown/mdx-components/configDialog';
-import { getComponentDefinition } from '../markdown/mdx-components/componentRegistry';
+import {
+  getComponentDefinition,
+  isValidComponentConfig
+} from '../markdown/mdx-components/componentRegistry';
 import type { DashboardWidgetFrame } from '@arch-register/api-types/dashboardContract';
 import { WidgetFrameSettingsForm } from './widgets/WidgetFrameSettingsForm';
 import { defaultShowFrame, normalizeFrame } from './widgets/widgetFrameSettings';
@@ -33,15 +36,13 @@ export const WidgetConfigDialog = ({
 }: Props) => {
   if (!widget) return null;
   const definition = getComponentDefinition(widget.type, 'dashboardWidget');
-  const spec = definition?.dashboardWidget;
-  if (!spec) return null;
+  if (!definition) return null;
 
   return (
     <WidgetConfigDialogContent
       key={widget.id}
       widget={widget}
-      spec={spec}
-      ConfigForm={definition.configForm}
+      definition={definition}
       open={open}
       workspaceSlug={workspaceSlug}
       surface={surface}
@@ -56,26 +57,24 @@ const tabContentStyle = { height: 'auto', minHeight: 0, flex: 1, overflow: 'auto
 
 const WidgetConfigDialogContent = ({
   widget,
-  spec,
+  definition,
   open,
   workspaceSlug,
   surface,
   onClose,
-  onSave,
-  ConfigForm
+  onSave
 }: Props & {
   widget: DashboardWidget;
-  spec: DashboardWidgetSpec;
+  definition: DashboardWidgetComponentDefinition;
   surface: WidgetSurface;
-  // biome-ignore lint/suspicious/noExplicitAny: root forms have widget-specific config types erased in the registry
-  ConfigForm?: ComponentType<any>;
 }) => {
+  const { dashboardWidget: spec, configForm: ConfigForm } = definition;
   const { projectId } = useMdxContext();
   const [config, setConfig] = useState<Record<string, unknown>>(widget.config);
 
   const [frame, setFrame] = useState<DashboardWidgetFrame>(widget.frame ?? {});
 
-  const canSave = spec.isValidConfig(config);
+  const canSave = isValidComponentConfig(definition, config);
 
   return (
     <Dialog

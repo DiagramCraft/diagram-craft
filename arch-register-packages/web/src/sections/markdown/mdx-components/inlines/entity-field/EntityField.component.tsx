@@ -2,8 +2,7 @@ import { TbHash } from 'react-icons/tb';
 import { defineComponent } from '../../defineComponent';
 import { EntityField } from './EntityField';
 import { ENTITY_FIELD_TYPE, EntityFieldEditable, entityFieldMdxRule } from './EntityFieldEditable';
-import type { EntityFieldSlateElement } from './types';
-export default defineComponent<EntityFieldSlateElement, { id: string; field: string }, 'inline'>({
+export default defineComponent({
   type: ENTITY_FIELD_TYPE,
   category: 'metrics',
   name: 'Entity field',

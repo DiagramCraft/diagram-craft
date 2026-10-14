@@ -1,5 +1,4 @@
 import { TbListDetails } from 'react-icons/tb';
-import { schemaGuard } from '../../markdown/mdx-components/configSchema';
 import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import {
   SPEC_ITEMS_TABLE_TYPE,
@@ -18,11 +17,11 @@ export default defineComponent({
   component: SpecItemsTableWidget,
   createDefaultProps: () => ({ config: { schemaName: '' } }),
   configForm: SpecItemsTableConfigForm,
+  configSchema: specItemsTableWidgetConfigSchema,
   dashboardWidget: {
     defaultW: 12,
     defaultH: 24,
     surfaces: ['workspace'],
-    frame: { padded: false, showIcon: false },
-    isValidConfig: schemaGuard(specItemsTableWidgetConfigSchema)
+    frame: { padded: false, showIcon: false }
   }
 });

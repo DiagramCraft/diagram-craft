@@ -6,7 +6,6 @@ import {
   DateRangeTimelineWidget,
   dateRangeTimelineWidgetConfigSchema
 } from './DateRangeTimelineWidget';
-import { schemaGuard } from '../../markdown/mdx-components/configSchema';
 
 export default defineComponent({
   type: DATE_RANGE_TIMELINE_TYPE,
@@ -18,10 +17,10 @@ export default defineComponent({
   component: DateRangeTimelineWidget,
   createDefaultProps: () => ({ config: { query: '', startFieldId: '', endFieldId: '' } }),
   configForm: DateRangeTimelineConfigForm,
+  configSchema: dateRangeTimelineWidgetConfigSchema,
   dashboardWidget: {
     defaultW: 12,
     defaultH: 30,
-    surfaces: ['workspace'],
-    isValidConfig: schemaGuard(dateRangeTimelineWidgetConfigSchema)
+    surfaces: ['workspace']
   }
 });

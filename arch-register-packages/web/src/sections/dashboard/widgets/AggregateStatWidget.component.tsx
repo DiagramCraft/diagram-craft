@@ -11,7 +11,6 @@ import {
   AggregateStatWidget,
   aggregateStatWidgetConfigSchema
 } from './AggregateStatWidget';
-import { schemaGuard } from '../../markdown/mdx-components/configSchema';
 export default defineComponent({
   type: AGGREGATE_STAT_TYPE,
   category: 'metrics',
@@ -22,11 +21,11 @@ export default defineComponent({
   component: AggregateStatWidget,
   createDefaultProps: () => ({ config: { query: '', display: 'count' as const } }),
   configForm: AggregateStatConfigForm,
+  configSchema: aggregateStatWidgetConfigSchema,
   dashboardWidget: {
     defaultW: 3,
     defaultH: 8,
     surfaces: ['workspace', 'project'],
-    frame: { hideOutsideEdit: true, padded: false, showIcon: false },
-    isValidConfig: schemaGuard(aggregateStatWidgetConfigSchema)
+    frame: { hideOutsideEdit: true, padded: false, showIcon: false }
   }
 });

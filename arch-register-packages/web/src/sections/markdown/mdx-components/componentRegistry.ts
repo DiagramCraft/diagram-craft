@@ -121,3 +121,12 @@ export const getWikiMdxComponents = (): Record<string, MdxComponentDefinition> =
   wikiMdxComponents ??= getMdxComponentDefinitionsForSurface('wiki');
   return wikiMdxComponents;
 };
+
+/**
+ * Whether `config` is a valid (and complete) config for the component. Components without a
+ * `configSchema` accept anything.
+ */
+export const isValidComponentConfig = (
+  definition: Pick<ComponentDefinition, 'configSchema'> | undefined,
+  config: Record<string, unknown>
+): boolean => definition?.configSchema?.safeParse(config).success ?? true;

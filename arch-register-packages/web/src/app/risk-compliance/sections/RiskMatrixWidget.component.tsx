@@ -6,7 +6,6 @@ import {
   RiskMatrixWidget,
   riskMatrixWidgetConfigSchema
 } from './RiskMatrixWidget';
-import { schemaGuard } from '../../../sections/markdown/mdx-components/configSchema';
 export default defineComponent({
   type: RISK_MATRIX_TYPE,
   category: 'visualizations',
@@ -16,10 +15,10 @@ export default defineComponent({
   component: RiskMatrixWidget,
   createDefaultProps: () => ({ config: { schemaName: '' } }),
   configForm: RiskMatrixConfigForm,
+  configSchema: riskMatrixWidgetConfigSchema,
   dashboardWidget: {
     defaultW: 6,
     defaultH: 24,
-    surfaces: ['workspace'],
-    isValidConfig: schemaGuard(riskMatrixWidgetConfigSchema)
+    surfaces: ['workspace']
   }
 });

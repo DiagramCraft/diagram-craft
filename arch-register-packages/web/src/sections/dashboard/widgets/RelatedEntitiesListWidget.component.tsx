@@ -6,7 +6,6 @@ import {
   RelatedEntitiesListWidget,
   relatedEntitiesListWidgetConfigSchema
 } from './RelatedEntitiesListWidget';
-import { schemaGuard } from '../../markdown/mdx-components/configSchema';
 
 export default defineComponent({
   type: RELATED_ENTITIES_LIST_TYPE,
@@ -18,10 +17,10 @@ export default defineComponent({
   component: RelatedEntitiesListWidget,
   createDefaultProps: () => ({ config: { schemaName: '', referenceField: '' } }),
   configForm: RelatedEntitiesListConfigForm,
+  configSchema: relatedEntitiesListWidgetConfigSchema,
   dashboardWidget: {
     defaultW: 4,
     defaultH: 14,
-    surfaces: ['workspace'],
-    isValidConfig: schemaGuard(relatedEntitiesListWidgetConfigSchema)
+    surfaces: ['workspace']
   }
 });

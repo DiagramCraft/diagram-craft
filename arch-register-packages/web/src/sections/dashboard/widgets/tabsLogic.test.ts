@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
-import { createTab, isValidTabsConfig, moveItem, resolveActiveTabId } from './tabsLogic';
+import {
+  createTab,
+  createTabsConfigSchema,
+  moveItem,
+  resolveActiveTabId,
+  tabsWidgetConfigSchema
+} from './tabsLogic';
 
 const widget = (id: string, w: number, h: number, type = 'x'): DashboardWidget => ({
   id,
@@ -12,7 +18,14 @@ const widget = (id: string, w: number, h: number, type = 'x'): DashboardWidget =
   h
 });
 
-describe('isValidTabsConfig', () => {
+describe('tabs config schema', () => {
+  const isValidTabsConfig = (
+    config: unknown,
+    isValidChild?: (widget: DashboardWidget) => boolean
+  ) =>
+    (isValidChild ? createTabsConfigSchema(isValidChild) : tabsWidgetConfigSchema).safeParse(config)
+      .success;
+
   const tab = (id: string, label: string, widgets: DashboardWidget[] = []) => ({
     id,
     label,

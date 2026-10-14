@@ -6,7 +6,6 @@ import {
   RatioBarListWidget,
   ratioBarListWidgetConfigSchema
 } from './RatioBarListWidget';
-import { schemaGuard } from '../../markdown/mdx-components/configSchema';
 
 export default defineComponent({
   type: RATIO_BAR_LIST_TYPE,
@@ -24,10 +23,10 @@ export default defineComponent({
     }
   }),
   configForm: RatioBarListConfigForm,
+  configSchema: ratioBarListWidgetConfigSchema,
   dashboardWidget: {
     defaultW: 6,
     defaultH: 16,
-    surfaces: ['workspace'],
-    isValidConfig: schemaGuard(ratioBarListWidgetConfigSchema)
+    surfaces: ['workspace']
   }
 });

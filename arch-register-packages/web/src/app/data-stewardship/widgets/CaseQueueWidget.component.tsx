@@ -1,5 +1,4 @@
 import { TbClipboardCheck } from 'react-icons/tb';
-import { schemaGuard } from '../../../sections/markdown/mdx-components/configSchema';
 import { defineComponent } from '../../../sections/markdown/mdx-components/defineComponent';
 import {
   CaseConfigForm,
@@ -16,12 +15,12 @@ export default defineComponent({
   component: CaseQueueWidget,
   createDefaultProps: () => ({ config: { ...DS_CASE_DEFAULTS, scope: 'mine' } }),
   configForm: CaseConfigForm,
+  configSchema: caseConfigSchema,
   dashboardWidget: {
     defaultW: 12,
     defaultH: 22,
     surfaces: ['workspace'],
     headerActionsComponent: CaseQueueHeaderActions,
-    frame: { padded: false, showIcon: false },
-    isValidConfig: schemaGuard(caseConfigSchema)
+    frame: { padded: false, showIcon: false }
   }
 });

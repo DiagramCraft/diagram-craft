@@ -6,7 +6,11 @@ import { DialogContent } from '../../editor/BlockDialog';
 import { useWorkspaceContext } from '../../../../layouts/WorkspaceContext';
 import { useMdxContext } from '../../MdxContext';
 import { getConfigDialogWidth } from '../configDialog';
-import { getComponentDefinition, type ComponentDefinition } from '../componentRegistry';
+import {
+  getComponentDefinition,
+  isValidComponentConfig,
+  type ComponentDefinition
+} from '../componentRegistry';
 
 export type MdxConfigSpec<E extends TElement, Config extends Record<string, unknown>> = {
   fromElement: (el: E, definition: ComponentDefinition | undefined) => Config;
@@ -50,7 +54,7 @@ export const MdxWidgetConfigDialog = <E extends TElement, Config extends Record<
   });
 
   // The component's own validity rule (structure and completeness) is shared with the dashboard.
-  const canSave = definition?.dashboardWidget?.isValidConfig(config) ?? true;
+  const canSave = isValidComponentConfig(definition, config);
   const ConfigForm = definition?.configForm;
 
   const handleConfirm = () => {

@@ -6,7 +6,6 @@ import {
   AssessmentProgressTableWidget,
   assessmentProgressTableConfigSchema
 } from './AssessmentProgressTableWidget';
-import { schemaGuard } from '../../markdown/mdx-components/configSchema';
 
 export default defineComponent({
   type: ASSESSMENT_PROGRESS_TABLE_TYPE,
@@ -17,11 +16,11 @@ export default defineComponent({
   component: AssessmentProgressTableWidget,
   createDefaultProps: () => ({ config: { schemaName: '' } }),
   configForm: props => <AssessmentSchemaConfigForm {...props} statusRequired={false} />,
+  configSchema: assessmentProgressTableConfigSchema,
   dashboardWidget: {
     defaultW: 12,
     defaultH: 20,
     surfaces: ['workspace'],
-    frame: { hideOutsideEdit: true, padded: false, showIcon: false },
-    isValidConfig: schemaGuard(assessmentProgressTableConfigSchema)
+    frame: { hideOutsideEdit: true, padded: false, showIcon: false }
   }
 });

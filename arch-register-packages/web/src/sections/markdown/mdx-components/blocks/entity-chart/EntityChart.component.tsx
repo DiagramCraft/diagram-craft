@@ -2,16 +2,12 @@ import { TbChartDonut } from 'react-icons/tb';
 import { defineComponent } from '../../defineComponent';
 import { EntityChart } from './EntityChart';
 import { ENTITY_CHART_TYPE, EntityChartEditable, entityChartMdxRule } from './EntityChartEditable';
-import type { EntityChartSlateElement } from './types'; /**
+import type {} from './types'; /**
  * `type` is the wire/MDX attribute name for the chart type; the preview
  * component's own prop is `chartType`. Preserves the pre-existing external
  * (`type`) vs internal (`chartType`) naming split without changing behavior.
  */
-export default defineComponent<
-  EntityChartSlateElement,
-  { schema?: string; owner?: string; lifecycle?: string; groupBy?: string; type?: string },
-  'block'
->({
+export default defineComponent({
   type: ENTITY_CHART_TYPE,
   category: 'visualizations',
   name: 'Entity chart',

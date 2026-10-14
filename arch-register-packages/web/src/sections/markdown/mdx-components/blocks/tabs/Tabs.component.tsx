@@ -1,11 +1,9 @@
-import type React from 'react';
 import { TbLayoutNavbar } from 'react-icons/tb';
 import { defineComponent } from '../../defineComponent';
 import { Tabs } from './Tabs';
 import { TAB_TYPE } from './TabEditable';
 import { TABS_TYPE, TabsEditable, tabsMdxRule } from './TabsEditable';
-import type { TabsSlateElement } from './types';
-export default defineComponent<TabsSlateElement, { children?: React.ReactNode }, 'block'>({
+export default defineComponent({
   type: TABS_TYPE,
   category: 'content-layout',
   name: 'Tabs',

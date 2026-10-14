@@ -6,7 +6,6 @@ import {
   ChangeCaseTableWidget,
   changeCaseTableConfigSchema
 } from './ChangeCaseTableWidget';
-import { schemaGuard } from '../../markdown/mdx-components/configSchema';
 
 export default defineComponent({
   type: CHANGE_CASE_TABLE_TYPE,
@@ -23,11 +22,11 @@ export default defineComponent({
     }
   }),
   configForm: ChangeCaseTableConfigForm,
+  configSchema: changeCaseTableConfigSchema,
   dashboardWidget: {
     defaultW: 12,
     defaultH: 20,
     surfaces: ['workspace'],
-    frame: { hideOutsideEdit: true, padded: false, showIcon: false },
-    isValidConfig: schemaGuard(changeCaseTableConfigSchema)
+    frame: { hideOutsideEdit: true, padded: false, showIcon: false }
   }
 });

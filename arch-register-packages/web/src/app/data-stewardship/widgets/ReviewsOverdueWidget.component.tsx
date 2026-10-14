@@ -1,5 +1,4 @@
 import { TbListCheck } from 'react-icons/tb';
-import { schemaGuard } from '../../../sections/markdown/mdx-components/configSchema';
 import { defineComponent } from '../../../sections/markdown/mdx-components/defineComponent';
 import { reviewsOverdueConfigSchema } from '../dataStewardshipWidgetSupport';
 import { ReviewsOverdueWidget } from './ReviewsOverdueWidget';
@@ -11,11 +10,11 @@ export default defineComponent({
   icon: TbListCheck,
   component: ReviewsOverdueWidget,
   createDefaultProps: () => ({ config: { subtextTemplate: 'scheduled review date passed' } }),
+  configSchema: reviewsOverdueConfigSchema,
   dashboardWidget: {
     defaultW: 3,
     defaultH: 5,
     surfaces: ['workspace'],
-    frame: { hideOutsideEdit: true, padded: false, showIcon: false },
-    isValidConfig: schemaGuard(reviewsOverdueConfigSchema)
+    frame: { hideOutsideEdit: true, padded: false, showIcon: false }
   }
 });

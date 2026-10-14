@@ -1,7 +1,6 @@
 import { TbListSearch } from 'react-icons/tb';
 import { defineComponent } from '../../defineComponent';
 import { EntityBrowserEmbed } from './EntityBrowserEmbed';
-import { schemaGuard } from '../../configSchema';
 import {
   createDefaultEntityBrowserEmbedConfig,
   decodeEntityBrowserEmbedConfig,
@@ -14,19 +13,18 @@ import {
   entityBrowserEmbedMdxRule
 } from './EntityBrowserEmbedEditable';
 import { EntityBrowserEmbedConfigForm } from './EntityBrowserEmbedConfigForm';
-import type { EntityBrowserEmbedSlateElement } from './types';
 
-export default defineComponent<EntityBrowserEmbedSlateElement, { config?: string }, 'block'>({
+export default defineComponent({
   type: ENTITY_BROWSER_EMBED_TYPE,
   category: 'data-views',
   name: 'Entity browser',
   description:
     'A live, searchable list of entities with your own filters, sorting and columns. Use it for a flexible catalog view.',
+  configSchema: entityBrowserEmbedConfigSchema,
   dashboardWidget: {
     defaultW: 6,
     defaultH: 24,
     surfaces: ['workspace', 'project'],
-    isValidConfig: schemaGuard(entityBrowserEmbedConfigSchema),
     dialogWidth: 'min(1200px, 92vw)'
   },
   component: EntityBrowserEmbed,

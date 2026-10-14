@@ -1,5 +1,4 @@
 import { TbShieldExclamation } from 'react-icons/tb';
-import { schemaGuard } from '../../markdown/mdx-components/configSchema';
 import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import {
   CONFORMANCE_VIOLATIONS_TYPE,
@@ -19,12 +18,12 @@ export default defineComponent({
   component: ConformanceViolationsWidget,
   createDefaultProps: () => ({ config: { schemaName: '', limit: 8 } }),
   configForm: ConformanceViolationsConfigForm,
+  configSchema: conformanceViolationsWidgetConfigSchema,
   dashboardWidget: {
     defaultW: 12,
     defaultH: 14,
     surfaces: ['workspace'],
     headerActionsComponent: ConformanceViolationsHeaderActions,
-    frame: { padded: false, showIcon: false },
-    isValidConfig: schemaGuard(conformanceViolationsWidgetConfigSchema)
+    frame: { padded: false, showIcon: false }
   }
 });

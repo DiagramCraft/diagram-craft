@@ -1,14 +1,8 @@
-import type React from 'react';
 import { defineComponent } from '../../defineComponent';
 import { Tab } from './Tab';
 import { TAB_TYPE } from './TabEditable';
 import { TabEditable, tabMdxRule } from './TabEditable';
-import type { TabSlateElement } from './types';
-export default defineComponent<
-  TabSlateElement,
-  { label?: string; children?: React.ReactNode },
-  'block'
->({
+export default defineComponent({
   type: TAB_TYPE,
   category: 'content-layout',
   name: 'Tab',

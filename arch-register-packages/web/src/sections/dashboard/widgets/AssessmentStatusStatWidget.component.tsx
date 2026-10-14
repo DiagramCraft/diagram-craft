@@ -6,7 +6,6 @@ import {
   ConfigForm,
   assessmentStatusStatConfigSchema
 } from './AssessmentStatusStatWidget';
-import { schemaGuard } from '../../markdown/mdx-components/configSchema';
 
 export default defineComponent({
   type: ASSESSMENT_STATUS_STAT_TYPE,
@@ -18,11 +17,11 @@ export default defineComponent({
   component: AssessmentStatusStatWidget,
   createDefaultProps: () => ({ config: { schemaName: '', status: 'overdue' } }),
   configForm: ConfigForm,
+  configSchema: assessmentStatusStatConfigSchema,
   dashboardWidget: {
     defaultW: 3,
     defaultH: 5,
     surfaces: ['workspace'],
-    frame: { hideOutsideEdit: true, padded: false, showIcon: false },
-    isValidConfig: schemaGuard(assessmentStatusStatConfigSchema)
+    frame: { hideOutsideEdit: true, padded: false, showIcon: false }
   }
 });

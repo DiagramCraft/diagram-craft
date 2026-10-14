@@ -1,54 +1,43 @@
-import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
+import { z } from 'zod';
+import {
+  dashboardWidgetSchema,
+  type DashboardWidget
+} from '@arch-register/api-types/dashboardContract';
 
 export const TABS_TYPE = 'tabs' as const;
 
-export type TabsWidgetTab = {
-  id: string;
-  label: string;
-  widgets: DashboardWidget[];
-};
-
-export type TabsWidgetConfig = {
-  tabs: TabsWidgetTab[];
-};
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
-
-const isNumber = (value: unknown): value is number =>
-  typeof value === 'number' && Number.isFinite(value);
-
-const isWidget = (value: unknown): value is DashboardWidget =>
-  isRecord(value) &&
-  typeof value.id === 'string' &&
-  typeof value.type === 'string' &&
-  isRecord(value.config) &&
-  isNumber(value.x) &&
-  isNumber(value.y) &&
-  isNumber(value.w) &&
-  isNumber(value.h);
-
 /**
- * Structural validity of the tabs config. Whether each child's own config is valid is
- * decided per-child at render/save time through its spec (see `isValidChildWidget`), so
- * that this module does not depend on the widget registry.
+ * Builds the tabs config schema. Whether each child's own config is valid is decided by
+ * `isValidChildWidget`, so this module does not depend on the widget registry.
  */
-export const isValidTabsConfig = (
-  config: Record<string, unknown>,
+export const createTabsConfigSchema = (
   isValidChildWidget: (widget: DashboardWidget) => boolean = () => true
-): config is TabsWidgetConfig =>
-  Array.isArray(config.tabs) &&
-  config.tabs.length > 0 &&
-  config.tabs.every(
-    tab =>
-      isRecord(tab) &&
-      typeof tab.id === 'string' &&
-      typeof tab.label === 'string' &&
-      tab.label.trim() !== '' &&
-      Array.isArray(tab.widgets) &&
-      tab.widgets.every(w => isWidget(w) && w.type !== TABS_TYPE && isValidChildWidget(w))
-  ) &&
-  new Set(config.tabs.map(tab => (tab as TabsWidgetTab).id)).size === config.tabs.length;
+) =>
+  z
+    .object({
+      tabs: z
+        .array(
+          z.object({
+            id: z.string(),
+            label: z.string().trim().min(1),
+            widgets: z.array(
+              dashboardWidgetSchema.refine(
+                widget => widget.type !== TABS_TYPE && isValidChildWidget(widget),
+                { message: 'A tab cannot hold another tabs widget or an invalid widget' }
+              )
+            )
+          })
+        )
+        .min(1)
+    })
+    .refine(config => new Set(config.tabs.map(tab => tab.id)).size === config.tabs.length, {
+      message: 'Tab ids must be unique'
+    });
+
+export const tabsWidgetConfigSchema = createTabsConfigSchema();
+
+export type TabsWidgetConfig = z.infer<typeof tabsWidgetConfigSchema>;
+export type TabsWidgetTab = TabsWidgetConfig['tabs'][number];
 
 export const createTab = (existing: TabsWidgetTab[], label = 'Tab'): TabsWidgetTab => ({
   id: `tab-${crypto.randomUUID()}`,
