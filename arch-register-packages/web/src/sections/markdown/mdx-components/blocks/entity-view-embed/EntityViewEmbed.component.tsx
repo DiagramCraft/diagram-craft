@@ -19,7 +19,7 @@ export default defineComponent<EntityViewEmbedSlateElement, { viewId?: string },
     defaultH: 24,
     surfaces: ['workspace', 'project'],
     isValidConfig: (config): config is SavedViewEmbedWidgetConfig =>
-      typeof config.viewId === 'string' && config.viewId.length > 0,
+      typeof config.viewId === 'string' && config.viewId.length > 0
   },
   component: EntityViewEmbed,
   createDefaultProps: context => ({ config: { viewId: context.viewId ?? '' } }),

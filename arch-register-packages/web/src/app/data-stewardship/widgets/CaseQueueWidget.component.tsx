@@ -17,6 +17,6 @@ export default defineComponent({
     surfaces: ['workspace'],
     headerActionsComponent: CaseQueueHeaderActions,
     frame: { padded: false, showIcon: false },
-    isValidConfig: isCaseConfig,
+    isValidConfig: isCaseConfig
   }
 });

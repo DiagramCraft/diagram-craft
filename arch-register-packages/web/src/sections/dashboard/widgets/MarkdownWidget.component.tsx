@@ -20,6 +20,6 @@ export default defineComponent({
     defaultW: 6,
     defaultH: 16,
     surfaces: ['workspace', 'project'],
-    isValidConfig: (config): config is MarkdownWidgetConfig => typeof config.markdown === 'string',
+    isValidConfig: (config): config is MarkdownWidgetConfig => typeof config.markdown === 'string'
   }
 });

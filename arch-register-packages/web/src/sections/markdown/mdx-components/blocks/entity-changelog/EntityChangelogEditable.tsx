@@ -63,7 +63,7 @@ export const entityChangelogMdxConfigSpec: MdxConfigSpec<
     since: config.since
   }),
   defaultConfig: () => ({ since: '30d', limit: '10' }),
-  isValidConfig: config => !!(config.entityId || config.schema || config.owner || config.lifecycle),
+  isValidConfig: config => !!(config.entityId || config.schema || config.owner || config.lifecycle)
 };
 
 export const EntityChangelogEditable = ({

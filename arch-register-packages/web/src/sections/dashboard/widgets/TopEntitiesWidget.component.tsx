@@ -35,6 +35,6 @@ export default defineComponent({
       (config.owner === undefined || typeof config.owner === 'string') &&
       (config.lifecycle === undefined || typeof config.lifecycle === 'string') &&
       (config.showLink === undefined || typeof config.showLink === 'boolean') &&
-      (config.showShareBar === undefined || typeof config.showShareBar === 'boolean'),
+      (config.showShareBar === undefined || typeof config.showShareBar === 'boolean')
   }
 });

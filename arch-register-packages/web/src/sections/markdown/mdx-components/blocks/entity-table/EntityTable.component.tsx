@@ -29,7 +29,7 @@ export default defineComponent<
       hasOptionalString(config, 'schema') &&
       hasOptionalString(config, 'owner') &&
       hasOptionalString(config, 'lifecycle') &&
-      hasOptionalInteger(config, 'limit'),
+      hasOptionalInteger(config, 'limit')
   },
   component: EntityTable,
   createDefaultProps: () => ({ config: {} }),

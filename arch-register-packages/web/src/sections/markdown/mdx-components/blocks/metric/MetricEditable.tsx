@@ -65,7 +65,7 @@ export const metricMdxConfigSpec: MdxConfigSpec<MetricSlateElement, StatMetricWi
     showLink: config.showLink
   }),
   defaultConfig: () => ({ metricType: 'entity-count' }),
-  isValidConfig: () => true,
+  isValidConfig: () => true
 };
 
 export const MetricEditable = ({

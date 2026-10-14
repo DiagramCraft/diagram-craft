@@ -70,7 +70,9 @@ export const TabsWidget = ({ config }: { config: TabsWidgetConfig }) => {
   );
 };
 
-type FormProps = ComponentProps<NonNullable<DashboardWidgetRegistrationSpec<TabsWidgetConfig>['configForm']>>;
+type FormProps = ComponentProps<
+  NonNullable<DashboardWidgetRegistrationSpec<TabsWidgetConfig>['configForm']>
+>;
 
 /** Tab list in a sidebar; the selected tab's contents are edited in a grid on the right. */
 export const TabsConfigForm = ({ config, onChange, context }: FormProps) => {
@@ -178,7 +180,10 @@ export const TabsConfigForm = ({ config, onChange, context }: FormProps) => {
   );
 };
 
-export const _tabsSpecData: Omit<DashboardWidgetRegistrationSpec<TabsWidgetConfig>, 'label' | 'description'> = {
+export const _tabsSpecData: Omit<
+  DashboardWidgetRegistrationSpec<TabsWidgetConfig>,
+  'label' | 'description'
+> = {
   icon: TbLayoutList,
   defaultW: 12,
   defaultH: 24,

@@ -23,6 +23,6 @@ export default defineComponent({
       (config.includeClosed === undefined || typeof config.includeClosed === 'boolean') &&
       isOptionalStringArray(config.categories) &&
       isOptionalStringArray(config.statuses) &&
-      isOptionalStringArray(config.owners),
+      isOptionalStringArray(config.owners)
   }
 });

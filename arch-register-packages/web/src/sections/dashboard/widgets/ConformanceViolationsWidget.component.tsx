@@ -4,7 +4,8 @@ import {
   _conformanceViolationsSpecData
 } from './ConformanceViolationsWidget';
 
-const { component, configForm, createDefaultProps, ...dashboardWidget } = _conformanceViolationsSpecData;
+const { component, configForm, createDefaultProps, ...dashboardWidget } =
+  _conformanceViolationsSpecData;
 export default defineComponent({
   type: CONFORMANCE_VIOLATIONS_TYPE,
   category: 'data-views',

@@ -21,7 +21,7 @@ export default defineComponent<EntityCardSlateElement, { id: string; fields?: st
     isValidConfig: (config): config is EntityCardWidgetConfig =>
       typeof config.entityId === 'string' &&
       config.entityId.length > 0 &&
-      hasOptionalString(config, 'fields'),
+      hasOptionalString(config, 'fields')
   },
   component: EntityCard,
   createDefaultProps: () => ({ config: { entityId: '' } }),

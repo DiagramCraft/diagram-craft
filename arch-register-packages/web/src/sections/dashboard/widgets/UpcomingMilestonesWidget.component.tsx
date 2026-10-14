@@ -17,6 +17,6 @@ export default defineComponent({
     defaultW: 3,
     defaultH: 8,
     surfaces: ['project'],
-    isValidConfig: (_config): _config is Record<string, never> => true,
+    isValidConfig: (_config): _config is Record<string, never> => true
   }
 });

@@ -7,8 +7,7 @@ import type { EntityStaleReportProps } from './types';
 export const ENTITY_STALE_REPORT_TYPE = 'entity-stale-report' as const;
 
 const hasOptionalInteger = (config: Record<string, unknown>, key: string): boolean =>
-  config[key] === undefined ||
-  (typeof config[key] === 'number' && Number.isInteger(config[key]));
+  config[key] === undefined || (typeof config[key] === 'number' && Number.isInteger(config[key]));
 
 /**
  * Dashboard-only analytics widget: no MDX component or editor registration.

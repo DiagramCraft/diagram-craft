@@ -281,11 +281,13 @@ export const _relationPairsCoverageSpecData: Omit<
   component: RelationPairsCoverageWidget,
   frame: { padded: false, showIcon: false },
   isValidConfig,
-  createDefaultProps: () => ({ config: {
-    hubSchemaName: '',
-    providerFieldName: '',
-    consumerFieldName: '',
-    coverageRelationSchemaName: ''
-  } }),
+  createDefaultProps: () => ({
+    config: {
+      hubSchemaName: '',
+      providerFieldName: '',
+      consumerFieldName: '',
+      coverageRelationSchemaName: ''
+    }
+  }),
   configForm: RelationPairsCoverageConfigForm
 };

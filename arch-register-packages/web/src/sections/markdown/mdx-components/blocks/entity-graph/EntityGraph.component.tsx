@@ -26,7 +26,7 @@ export default defineComponent<
     defaultH: 16,
     surfaces: ['workspace', 'project'],
     isValidConfig: (config): config is EntityGraphWidgetConfig =>
-      typeof config.entityId === 'string' && config.entityId.length > 0,
+      typeof config.entityId === 'string' && config.entityId.length > 0
   },
   component: EntityGraph,
   createDefaultProps: () => ({ config: { entityId: '', depth: 1, direction: 'both' } }),

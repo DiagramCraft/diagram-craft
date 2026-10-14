@@ -115,7 +115,11 @@ const renderNode = (node: ASTNode, key: string, ctx?: RenderCtx): ReactNode[] =>
       const definition = getWikiMdxComponents()[node.name];
       if (!definition) return [];
       const kids = node.children?.length ? renderNodes(node.children, key, ctx) : undefined;
-      return [<MdxComponentPreview key={key} type={node.name} props={node.props}>{kids}</MdxComponentPreview>];
+      return [
+        <MdxComponentPreview key={key} type={node.name} props={node.props}>
+          {kids}
+        </MdxComponentPreview>
+      ];
     }
 
     case 'heading': {

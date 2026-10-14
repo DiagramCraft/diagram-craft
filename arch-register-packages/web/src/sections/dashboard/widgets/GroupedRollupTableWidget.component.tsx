@@ -1,7 +1,8 @@
 import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import { GROUPED_ROLLUP_TABLE_TYPE, _groupedRollupTableSpecData } from './GroupedRollupTableWidget';
 
-const { component, configForm, createDefaultProps, ...dashboardWidget } = _groupedRollupTableSpecData;
+const { component, configForm, createDefaultProps, ...dashboardWidget } =
+  _groupedRollupTableSpecData;
 export default defineComponent({
   type: GROUPED_ROLLUP_TABLE_TYPE,
   category: 'data-views',

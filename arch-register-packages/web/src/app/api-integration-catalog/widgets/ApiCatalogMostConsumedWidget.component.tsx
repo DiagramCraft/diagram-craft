@@ -20,6 +20,6 @@ export default defineComponent({
     surfaces: ['workspace'],
     headerActionsComponent: ApiCatalogMostConsumedHeaderActions,
     frame: { padded: false, showIcon: false },
-    isValidConfig: isValidListConfig,
+    isValidConfig: isValidListConfig
   }
 });

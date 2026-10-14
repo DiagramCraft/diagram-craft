@@ -52,9 +52,7 @@ export const DiagramEmbedEditable = ({
           <span>Choose diagram…</span>
         </>
       }
-      content={
-        <MdxComponentPreview type={DIAGRAM_EMBED_TYPE} props={{ id: fileId, caption }} />
-      }
+      content={<MdxComponentPreview type={DIAGRAM_EMBED_TYPE} props={{ id: fileId, caption }} />}
       dialog={(open, onClose) => (
         <DiagramEmbedDialog element={element} open={open} onClose={onClose} isNew={isNew} />
       )}

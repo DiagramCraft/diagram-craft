@@ -46,7 +46,7 @@ export default defineComponent<
       (config.lifecycle === undefined || typeof config.lifecycle === 'string') &&
       (config.label === undefined || typeof config.label === 'string') &&
       (config.showLink === undefined || typeof config.showLink === 'boolean'),
-    getTitle: (config: StatMetricWidgetConfig) => METRIC_TYPE_DEFAULT_LABEL[config.metricType],
+    getTitle: (config: StatMetricWidgetConfig) => METRIC_TYPE_DEFAULT_LABEL[config.metricType]
   },
   component: Metric,
   createDefaultProps: () => ({ config: { metricType: 'entity-count' } }),

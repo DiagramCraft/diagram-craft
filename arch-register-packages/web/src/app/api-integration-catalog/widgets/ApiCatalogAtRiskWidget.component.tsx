@@ -17,6 +17,6 @@ export default defineComponent({
     surfaces: ['workspace'],
     headerActionsComponent: ApiCatalogAtRiskHeaderActions,
     frame: { padded: false, showIcon: false },
-    isValidConfig: isValidListConfig,
+    isValidConfig: isValidListConfig
   }
 });

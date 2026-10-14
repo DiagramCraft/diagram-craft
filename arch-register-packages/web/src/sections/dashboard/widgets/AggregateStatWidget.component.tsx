@@ -33,6 +33,6 @@ export default defineComponent({
       (isQueryStatConfig(config) ? isValidQueryStatConfig(config) : isValidLegacyCore(config)) &&
       (config.owner === undefined || typeof config.owner === 'string') &&
       (config.lifecycle === undefined || typeof config.lifecycle === 'string') &&
-      (config.showLink === undefined || typeof config.showLink === 'boolean'),
+      (config.showLink === undefined || typeof config.showLink === 'boolean')
   }
 });

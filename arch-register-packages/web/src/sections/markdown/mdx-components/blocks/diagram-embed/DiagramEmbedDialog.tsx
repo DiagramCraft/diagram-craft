@@ -95,7 +95,8 @@ export const DiagramEmbedDialog = ({
     onClose();
   };
 
-  const isSaveDisabled = createDiagramAttachment.isPending || (mode === 'existing' && !config.fileId);
+  const isSaveDisabled =
+    createDiagramAttachment.isPending || (mode === 'existing' && !config.fileId);
 
   return (
     <Dialog

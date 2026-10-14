@@ -15,6 +15,6 @@ export default defineComponent({
     defaultH: 5,
     surfaces: ['workspace'],
     frame: { hideOutsideEdit: true, padded: false, showIcon: false },
-    isValidConfig: isReviewsOverdueConfig,
+    isValidConfig: isReviewsOverdueConfig
   }
 });

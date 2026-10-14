@@ -4,7 +4,8 @@ import {
   _relatedEntitiesListSpecData
 } from './RelatedEntitiesListWidget';
 
-const { component, configForm, createDefaultProps, ...dashboardWidget } = _relatedEntitiesListSpecData;
+const { component, configForm, createDefaultProps, ...dashboardWidget } =
+  _relatedEntitiesListSpecData;
 export default defineComponent({
   type: RELATED_ENTITIES_LIST_TYPE,
   category: 'data-views',

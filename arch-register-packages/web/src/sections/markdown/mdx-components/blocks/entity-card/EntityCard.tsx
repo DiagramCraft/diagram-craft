@@ -137,7 +137,10 @@ export const EntityCard = ({ config }: { config: EntityCardWidgetConfig }) => {
         </dl>
       )}
 
-      <Link {...entityDetailRoute(workspaceSlug, asEntityPublicId(entityId))} className={styles.link}>
+      <Link
+        {...entityDetailRoute(workspaceSlug, asEntityPublicId(entityId))}
+        className={styles.link}
+      >
         View in catalog →
       </Link>
     </div>

@@ -60,7 +60,7 @@ export const documentBrowserEmbedMdxConfigSpec: MdxConfigSpec<
     decodeDocumentBrowserEmbedConfig(el.config) ?? defaultDocumentBrowserEmbedConfig(),
   toElement: config => ({ config: encodeDocumentBrowserEmbedConfig(config) }),
   defaultConfig: defaultDocumentBrowserEmbedConfig,
-  isValidConfig: () => true,
+  isValidConfig: () => true
 };
 
 export const DocumentBrowserEmbedEditable = ({

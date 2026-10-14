@@ -1,7 +1,7 @@
 import type {
   ComponentDefinition,
   DashboardWidgetComponentDefinition,
-  MdxComponentDefinition,
+  MdxComponentDefinition
 } from './types';
 
 export type {

@@ -24,6 +24,6 @@ export default defineComponent({
       (config.schemaNames === undefined ||
         (Array.isArray(config.schemaNames) &&
           config.schemaNames.every(name => typeof name === 'string'))) &&
-      (config.relativeDue === undefined || typeof config.relativeDue === 'boolean'),
+      (config.relativeDue === undefined || typeof config.relativeDue === 'boolean')
   }
 });

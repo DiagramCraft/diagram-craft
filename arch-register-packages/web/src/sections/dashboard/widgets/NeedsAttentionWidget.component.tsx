@@ -43,6 +43,6 @@ export default defineComponent({
       isScope(config.scope) &&
       isSeverity(config.severity) &&
       typeof config.limit === 'number' &&
-      config.limit > 0,
+      config.limit > 0
   }
 });

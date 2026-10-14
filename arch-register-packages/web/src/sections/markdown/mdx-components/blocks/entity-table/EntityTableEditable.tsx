@@ -58,7 +58,7 @@ export const entityTableMdxConfigSpec: MdxConfigSpec<
     limit: String(config.limit ?? 10)
   }),
   defaultConfig: () => ({}),
-  isValidConfig: () => true,
+  isValidConfig: () => true
 };
 
 export const EntityTableEditable = ({
@@ -84,10 +84,7 @@ export const EntityTableEditable = ({
         </>
       }
       content={
-        <MdxComponentPreview
-          type={ENTITY_TABLE_TYPE}
-          props={{ schema, owner, lifecycle, limit }}
-        />
+        <MdxComponentPreview type={ENTITY_TABLE_TYPE} props={{ schema, owner, lifecycle, limit }} />
       }
       dialog={(open, onClose) => (
         <MdxWidgetConfigDialog

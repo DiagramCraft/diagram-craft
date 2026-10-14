@@ -40,7 +40,7 @@ export default defineComponent<
       hasOptionalString(config, 'lifecycle') &&
       hasOptionalString(config, 'limit') &&
       hasOptionalString(config, 'since') &&
-      !!(config.entityId || config.schema || config.owner || config.lifecycle),
+      !!(config.entityId || config.schema || config.owner || config.lifecycle)
   },
   component: EntityChangelog,
   createDefaultProps: () => ({ config: { since: '30d', limit: '10' } }),

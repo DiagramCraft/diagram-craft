@@ -31,9 +31,7 @@ export const DashboardWidgetRenderer = ({ widget, isEditing = false, onEdit, onR
   const dashboardWidget = definition?.dashboardWidget;
   const WidgetComponent = definition?.component;
   const componentProps =
-    knownWidget && dashboardWidget
-      ? { config: knownWidget.config }
-      : undefined;
+    knownWidget && dashboardWidget ? { config: knownWidget.config } : undefined;
   const frame = resolveWidgetFrame(
     dashboardWidget,
     widget.frame,

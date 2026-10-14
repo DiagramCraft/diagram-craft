@@ -54,9 +54,9 @@ describe('getMdxComponentDefinitionsForSurface', () => {
     expect(Object.keys(getMdxComponentDefinitionsForSurface('wiki')).length).toBeLessThanOrEqual(
       getComponentDefinitions('mdx').length
     );
-    expect(Object.keys(getMdxComponentDefinitionsForSurface('dashboard')).length).toBeLessThanOrEqual(
-      getComponentDefinitions('mdx').length
-    );
+    expect(
+      Object.keys(getMdxComponentDefinitionsForSurface('dashboard')).length
+    ).toBeLessThanOrEqual(getComponentDefinitions('mdx').length);
   });
 
   it('keeps the shared renderer and config form at the definition root', () => {

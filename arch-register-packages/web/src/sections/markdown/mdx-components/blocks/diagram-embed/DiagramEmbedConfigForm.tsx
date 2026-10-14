@@ -13,12 +13,7 @@ type Props = {
   showPicker?: boolean;
 };
 
-export const DiagramEmbedConfigForm = ({
-  config,
-  onChange,
-  context,
-  showPicker = true
-}: Props) => {
+export const DiagramEmbedConfigForm = ({ config, onChange, context, showPicker = true }: Props) => {
   const params = useParams({ strict: false });
   const projectId = context.projectId ?? params.projectId;
   const entityId = context.mode === 'mdx' ? params.entityId : undefined;

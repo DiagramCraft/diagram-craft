@@ -2,7 +2,10 @@ import { TbListSearch } from 'react-icons/tb';
 import { defineComponent } from '../../defineComponent';
 import { EntityBrowserEmbed } from './EntityBrowserEmbed';
 import type { EntityBrowserEmbedConfig } from './EntityBrowserEmbedCodec';
-import { createDefaultEntityBrowserEmbedConfig, decodeEntityBrowserEmbedConfig } from './EntityBrowserEmbedCodec';
+import {
+  createDefaultEntityBrowserEmbedConfig,
+  decodeEntityBrowserEmbedConfig
+} from './EntityBrowserEmbedCodec';
 import {
   ENTITY_BROWSER_EMBED_TYPE,
   EntityBrowserEmbedEditable,
@@ -56,7 +59,7 @@ export default defineComponent<EntityBrowserEmbedSlateElement, { config?: string
       nodeOptions: { isVoid: true },
       mdxRule: entityBrowserEmbedMdxRule,
       slashCommand: {
-        icon: <TbListSearch size={14}/>,
+        icon: <TbListSearch size={14} />,
         keywords: ['entity', 'browser', 'embed', 'search', 'filter', 'catalog'],
         onSelect: (editor, { insertOrReplaceBlock }) => {
           insertOrReplaceBlock(editor, {

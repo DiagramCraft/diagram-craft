@@ -15,6 +15,6 @@ export default defineComponent({
     defaultH: 16,
     surfaces: ['workspace'],
     isValidConfig: (config): config is ConformanceSummaryWidgetConfig =>
-      Object.keys(config).length === 0,
+      Object.keys(config).length === 0
   }
 });

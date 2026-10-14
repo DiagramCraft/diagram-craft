@@ -53,7 +53,7 @@ export const entityBrowserEmbedMdxConfigSpec: MdxConfigSpec<
   fromElement: el => decodeEntityBrowserEmbedConfig(el.config) ?? emptyConfig({}),
   toElement: config => ({ config: encodeEntityBrowserEmbedConfig(config) }),
   defaultConfig: emptyConfig,
-  isValidConfig: () => true,
+  isValidConfig: () => true
 };
 
 export const EntityBrowserEmbedEditable = ({

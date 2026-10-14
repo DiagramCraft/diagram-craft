@@ -23,11 +23,11 @@ export default defineComponent<DiagramEmbedSlateElement, { id: string; caption?:
       isValidConfig: (config): config is DiagramEmbedWidgetConfig =>
         typeof config.fileId === 'string' &&
         config.fileId.length > 0 &&
-        (config.caption === undefined || typeof config.caption === 'string'),
+        (config.caption === undefined || typeof config.caption === 'string')
     },
     component: DiagramEmbed,
     createDefaultProps: () => ({ config: { fileId: '' } }),
-  configForm: DiagramEmbedConfigForm,
+    configForm: DiagramEmbedConfigForm,
     mdxComponent: {
       mode: 'block',
       allowedProps: ['id', 'caption'],

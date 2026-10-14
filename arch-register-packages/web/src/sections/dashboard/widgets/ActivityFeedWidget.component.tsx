@@ -26,6 +26,6 @@ export default defineComponent({
     defaultH: 24,
     surfaces: ['workspace'],
     isValidConfig: (config): config is ActivityFeedWidgetConfig =>
-      hasOptionalInteger(config, 'limit'),
+      hasOptionalInteger(config, 'limit')
   }
 });

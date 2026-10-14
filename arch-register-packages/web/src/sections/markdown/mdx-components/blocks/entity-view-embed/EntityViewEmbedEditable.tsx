@@ -42,7 +42,7 @@ export const entityViewEmbedMdxConfigSpec: MdxConfigSpec<
   fromElement: el => ({ viewId: el.viewId ?? '' }),
   toElement: config => ({ viewId: config.viewId }),
   defaultConfig: () => ({ viewId: '' }),
-  isValidConfig: config => !!config.viewId,
+  isValidConfig: config => !!config.viewId
 };
 
 export const EntityViewEmbedEditable = ({
