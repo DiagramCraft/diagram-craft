@@ -1,9 +1,8 @@
 import { SafeMarkdown } from '../../../components/SafeMarkdown';
 import typography from '../../markdown/articleTypography.module.css';
 import styles from './MarkdownWidget.module.css';
-import type { TElement } from 'platejs';
 import { TbMarkdown } from 'react-icons/tb';
-import { defineMdxComponent } from '../../markdown/mdx-components/defineMdxComponent';
+import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import configFormStyles from '../WidgetConfigDialog.module.css';
 
@@ -52,17 +51,10 @@ export const MarkdownDashboardConfigForm = ({
 
 export const MARKDOWN_WIDGET_TYPE = 'markdown' as const;
 
-interface MarkdownSlateElement extends TElement {}
-
 /** Dashboard-only widget; editing is handled by the dashboard config dialog. */
-export const markdownWidgetSpec = defineMdxComponent<
-  MarkdownSlateElement,
-  { config: MarkdownWidgetConfig },
-  'block'
->({
-  component: MarkdownWidget,
-  mode: 'block',
-  allowedProps: [],
+export const markdownWidgetSpec = defineComponent({
+  type: MARKDOWN_WIDGET_TYPE,
+  category: 'content-layout',
   surfaces: ['dashboard'],
   dashboardWidget: {
     icon: TbMarkdown,

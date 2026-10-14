@@ -1,5 +1,7 @@
 import { TbGridDots } from 'react-icons/tb';
+import { defineComponent } from '../../sections/markdown/mdx-components/defineComponent';
 import type { DashboardWidgetSpec } from '../../sections/markdown/mdx-components/types';
+import type { ComponentCategory } from '../../sections/markdown/mdx-components/componentCategories';
 import { RiskMatrixConfigForm } from './sections/RiskMatrixConfigForm';
 import { RiskMatrixWidget, type RiskMatrixWidgetConfig } from './sections/RiskMatrixWidget';
 
@@ -8,13 +10,15 @@ const isOptionalStringArray = (value: unknown): boolean =>
 
 export const RISK_MATRIX_TYPE = 'risk-compliance-risk-matrix' as const;
 
-export const riskComplianceDashboardWidgetSpecs: Array<{
+const riskComplianceWidgetSpecs: Array<{
   type: string;
+  category: ComponentCategory;
   // biome-ignore lint/suspicious/noExplicitAny: this registry intentionally erases per-widget config types
   spec: DashboardWidgetSpec<any>;
 }> = [
   {
     type: RISK_MATRIX_TYPE,
+    category: 'visualizations',
     spec: {
       icon: TbGridDots,
       label: 'Risk matrix',
@@ -36,3 +40,8 @@ export const riskComplianceDashboardWidgetSpecs: Array<{
     }
   }
 ];
+
+export const riskComplianceDashboardWidgetSpecs = riskComplianceWidgetSpecs.map(
+  ({ type, category, spec }) =>
+    defineComponent({ type, category, surfaces: ['dashboard'], dashboardWidget: spec })
+);

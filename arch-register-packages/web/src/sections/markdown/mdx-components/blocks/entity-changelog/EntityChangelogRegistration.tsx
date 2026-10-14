@@ -1,5 +1,5 @@
 import { TbHistory } from 'react-icons/tb';
-import { defineMdxComponent } from '../../defineMdxComponent';
+import { defineComponent } from '../../defineComponent';
 import { EntityChangelog } from './EntityChangelog';
 import { createDashboardWidgetAdapter } from '../../../../dashboard/widgets/createDashboardWidgetAdapter';
 import {
@@ -13,7 +13,7 @@ import type { EntityChangelogSlateElement, EntityChangelogWidgetConfig } from '.
 const hasOptionalString = (config: Record<string, unknown>, key: string): boolean =>
   config[key] === undefined || typeof config[key] === 'string';
 
-export const entityChangelogSpec = defineMdxComponent<
+export const entityChangelogSpec = defineComponent<
   EntityChangelogSlateElement,
   {
     id?: string;
@@ -25,6 +25,9 @@ export const entityChangelogSpec = defineMdxComponent<
   },
   'block'
 >({
+  type: ENTITY_CHANGELOG_TYPE,
+  category: 'data-views',
+
   component: EntityChangelog,
   mode: 'block',
   allowedProps: ['id', 'schema', 'owner', 'lifecycle', 'limit', 'since'],

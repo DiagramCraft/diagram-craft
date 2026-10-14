@@ -1,6 +1,6 @@
 import type React from 'react';
 import { TbChevronsDown } from 'react-icons/tb';
-import { defineMdxComponent } from '../../defineMdxComponent';
+import { defineComponent } from '../../defineComponent';
 import { FoldableSection } from './FoldableSection';
 import {
   FOLDABLE_SECTION_TYPE,
@@ -9,11 +9,15 @@ import {
 } from './FoldableSectionEditable';
 import type { FoldableSectionSlateElement } from './types';
 
-export const foldableSectionSpec = defineMdxComponent<
+export const foldableSectionSpec = defineComponent<
   FoldableSectionSlateElement,
   { label?: string; children?: React.ReactNode },
   'block'
 >({
+  type: FOLDABLE_SECTION_TYPE,
+  category: 'content-layout',
+  surfaces: ['wiki'],
+
   component: FoldableSection,
   mode: 'block',
   allowedProps: ['label'],

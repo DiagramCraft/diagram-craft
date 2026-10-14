@@ -5,13 +5,12 @@ import { useMarkdownContent } from '../../../hooks/useMarkdownContent';
 import { useMdxContext } from '../../markdown/MdxContext';
 import { MdxPreview } from '../../markdown/preview/MdxPreview';
 import typography from '../../markdown/articleTypography.module.css';
-import { defineMdxComponent } from '../../markdown/mdx-components/defineMdxComponent';
+import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import type { DashboardWidgetSpec } from '../../markdown/mdx-components/types';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import { WikiPagePicker } from './WikiPagePicker';
 import styles from './WikiPageWidget.module.css';
 import type { WidgetSurface } from '../dashboardWidgetDefaults';
-import type { TElement } from 'platejs';
 
 export type WikiPageWidgetConfig = { nodeId: string };
 
@@ -89,16 +88,9 @@ export const WikiPageDashboardConfigForm = ({
   </DialogSection>
 );
 
-interface WikiPageSlateElement extends TElement {}
-
-export const wikiPageWidgetSpec = defineMdxComponent<
-  WikiPageSlateElement,
-  { config: WikiPageWidgetConfig },
-  'block'
->({
-  component: WikiPageWidget,
-  mode: 'block',
-  allowedProps: [],
+export const wikiPageWidgetSpec = defineComponent({
+  type: 'wiki-page',
+  category: 'content-layout',
   surfaces: ['dashboard'],
   dashboardWidget: {
     icon: TbBook,

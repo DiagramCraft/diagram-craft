@@ -1,5 +1,5 @@
 import { TbClockExclamation } from 'react-icons/tb';
-import { defineMdxComponent } from '../../defineMdxComponent';
+import { defineComponent } from '../../defineComponent';
 import { EntityStaleReport } from './EntityStaleReport';
 import { createDashboardWidgetAdapter } from '../../../../dashboard/widgets/createDashboardWidgetAdapter';
 import { EntityStaleReportDashboardConfigForm } from './EntityStaleReportDashboardConfigForm';
@@ -14,11 +14,14 @@ const hasOptionalInteger = (config: Record<string, unknown>, key: string): boole
  * Dashboard-only analytics widget: no editorSpec, so it never appears in the
  * wiki slash-command menu or MDX round-trip, regardless of `surfaces`.
  */
-export const entityStaleReportSpec = defineMdxComponent<
+export const entityStaleReportSpec = defineComponent<
   EntityStaleReportSlateElement,
   EntityStaleReportProps,
   'block'
 >({
+  type: ENTITY_STALE_REPORT_TYPE,
+  category: 'data-views',
+
   component: EntityStaleReport,
   mode: 'block',
   allowedProps: ['staleAfterDays'],

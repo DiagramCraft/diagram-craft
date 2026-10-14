@@ -1,15 +1,18 @@
 import type React from 'react';
 import { TbFrame } from 'react-icons/tb';
-import { defineMdxComponent } from '../../defineMdxComponent';
+import { defineComponent } from '../../defineComponent';
 import { Caption } from './Caption';
 import { CAPTION_TYPE, CaptionEditable, captionMdxRule } from './CaptionEditable';
 import type { CaptionSlateElement } from './types';
 
-export const captionSpec = defineMdxComponent<
+export const captionSpec = defineComponent<
   CaptionSlateElement,
   { caption?: string; numbered?: string; children?: React.ReactNode },
   'block'
 >({
+  type: CAPTION_TYPE,
+  category: 'content-layout',
+  surfaces: ['wiki'],
   component: Caption,
   mode: 'block',
   allowedProps: ['caption', 'numbered'],

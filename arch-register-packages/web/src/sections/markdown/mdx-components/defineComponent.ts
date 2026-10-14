@@ -8,7 +8,13 @@ import type {
   MdMdxJsxFlowElement,
   MdMdxJsxTextElement
 } from '@platejs/markdown';
-import type { DashboardWidgetSpec, MdxComponentSpec } from './types';
+import type {
+  ComponentDefinition,
+  ComponentSurface,
+  DashboardWidgetSpec,
+  MdxComponentSpec
+} from './types';
+import type { ComponentCategory } from './componentCategories';
 
 export type MdxMode = 'block' | 'inline';
 
@@ -66,14 +72,19 @@ export type MdxEditorSpecDef<E extends TElement, Mode extends MdxMode> = {
   createWrapper?: (child: TElement) => E;
 };
 
-/** Surfaces an MDX component may render on; `undefined` means wiki only (default, matches all prior behavior). */
-export type MdxSurface = 'wiki' | 'dashboard';
+export type MdxSurface = ComponentSurface;
 
 export type MdxComponentDef<
   E extends TElement,
   P extends Record<string, unknown>,
   Mode extends MdxMode
 > = {
+  /** Stable key used by MDX and persisted dashboard widget instances. */
+  type: string;
+  /** Shared category shown in the wiki and dashboard catalogs. */
+  category: ComponentCategory;
+  /** Content surfaces where the component may be rendered. */
+  surfaces: ReadonlyArray<ComponentSurface>;
   /** Preview-mode React component */
   component: React.ComponentType<P>;
   mode: Mode;
@@ -94,26 +105,40 @@ export type MdxComponentDef<
   acceptsRichContent?: boolean;
   /** Editor-mode registration; present for all components that support rich editing */
   editorSpec?: MdxEditorSpecDef<E, Mode>;
-  /** Surfaces this component may render on; `undefined` means wiki only (default, matches all prior behavior). */
-  surfaces?: ReadonlyArray<MdxSurface>;
   /** Present when this component can also be added as a dashboard widget. */
   // biome-ignore lint/suspicious/noExplicitAny: registry entries have per-component Config types, erased here
   dashboardWidget?: DashboardWidgetSpec<any>;
 };
 
+export type DashboardOnlyComponentDef = {
+  type: string;
+  category: ComponentCategory;
+  surfaces: ReadonlyArray<'dashboard'>;
+  // biome-ignore lint/suspicious/noExplicitAny: dashboard config types are erased in the shared catalog
+  dashboardWidget: DashboardWidgetSpec<any>;
+};
+
 /**
- * Declares one MDX component's registration with its Slate element shape (E),
- * preview component props (P), and mode checked against each other at compile
- * time — `allowedProps` against `keyof P`, `mdxRule`/`editableComponent`
- * against `E`. Returns the existing, deliberately loose `MdxComponentSpec` so
- * the registry (mdxRegistry.tsx) and its consumers keep working against a
- * homogeneous map; the cast below is the single, intentional erasure boundary
- * that replaces the per-registration `as unknown as` casts this helper removes.
+ * Declares one component registration with shared identity, category and
+ * surfaces. MDX-specific editor and serialization details and dashboard widget
+ * details are optional, allowing dashboard-only components to use the same
+ * catalog without pretending to be editable MDX nodes.
  */
-export function defineMdxComponent<
+export function defineComponent<
   E extends TElement,
   P extends Record<string, unknown>,
   Mode extends MdxMode
->(def: MdxComponentDef<E, P, Mode>): MdxComponentSpec {
-  return def as unknown as MdxComponentSpec;
+>(def: MdxComponentDef<E, P, Mode>): ComponentDefinition;
+export function defineComponent(def: DashboardOnlyComponentDef): ComponentDefinition;
+export function defineComponent(
+  def: MdxComponentDef<TElement, Record<string, unknown>, MdxMode> | DashboardOnlyComponentDef
+): ComponentDefinition {
+  const { type, category, surfaces, dashboardWidget, ...mdx } = def;
+  return {
+    type,
+    category,
+    surfaces,
+    ...('component' in mdx ? { mdx: mdx as unknown as MdxComponentSpec } : {}),
+    ...(dashboardWidget ? { dashboardWidget } : {})
+  };
 }

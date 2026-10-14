@@ -1,5 +1,5 @@
 import { TbChartLine } from 'react-icons/tb';
-import { defineMdxComponent } from '../../defineMdxComponent';
+import { defineComponent } from '../../defineComponent';
 import { EntityActivityTrendChart } from './EntityActivityTrendChart';
 import { createDashboardWidgetAdapter } from '../../../../dashboard/widgets/createDashboardWidgetAdapter';
 import { EntityActivityTrendChartDashboardConfigForm } from './EntityActivityTrendChartDashboardConfigForm';
@@ -14,11 +14,14 @@ const hasOptionalInteger = (config: Record<string, unknown>, key: string): boole
  * Dashboard-only analytics widget: no editorSpec, so it never appears in the
  * wiki slash-command menu or MDX round-trip, regardless of `surfaces`.
  */
-export const entityActivityTrendChartSpec = defineMdxComponent<
+export const entityActivityTrendChartSpec = defineComponent<
   EntityActivityTrendChartSlateElement,
   EntityActivityTrendChartProps,
   'block'
 >({
+  type: ENTITY_ACTIVITY_TREND_CHART_TYPE,
+  category: 'visualizations',
+
   component: EntityActivityTrendChart,
   mode: 'block',
   allowedProps: ['lookbackDays'],

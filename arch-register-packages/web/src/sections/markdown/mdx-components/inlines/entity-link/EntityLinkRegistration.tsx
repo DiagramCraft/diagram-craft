@@ -1,10 +1,14 @@
 import { TbLink } from 'react-icons/tb';
-import { defineMdxComponent } from '../../defineMdxComponent';
+import { defineComponent } from '../../defineComponent';
 import { EntityLink } from './EntityLink';
 import { ENTITY_LINK_TYPE, EntityLinkEditable, entityLinkMdxRule } from './EntityLinkEditable';
 import type { EntityLinkSlateElement } from './types';
 
-export const entityLinkSpec = defineMdxComponent<EntityLinkSlateElement, { id: string }, 'inline'>({
+export const entityLinkSpec = defineComponent<EntityLinkSlateElement, { id: string }, 'inline'>({
+  type: ENTITY_LINK_TYPE,
+  category: 'data-views',
+  surfaces: ['wiki'],
+
   component: EntityLink,
   mode: 'inline',
   allowedProps: ['id'],

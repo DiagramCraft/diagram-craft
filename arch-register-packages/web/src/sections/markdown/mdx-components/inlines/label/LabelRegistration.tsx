@@ -1,14 +1,18 @@
 import { TbTag } from 'react-icons/tb';
-import { defineMdxComponent } from '../../defineMdxComponent';
+import { defineComponent } from '../../defineComponent';
 import { Label } from './Label';
 import { LABEL_TYPE, LabelEditable, labelMdxRule } from './LabelEditable';
 import type { LabelSlateElement } from './types';
 
-export const labelSpec = defineMdxComponent<
+export const labelSpec = defineComponent<
   LabelSlateElement,
   { text: string; color: string },
   'inline'
 >({
+  type: LABEL_TYPE,
+  category: 'content-layout',
+  surfaces: ['wiki'],
+
   component: Label,
   mode: 'inline',
   allowedProps: ['text', 'color'],

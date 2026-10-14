@@ -1,15 +1,19 @@
 import type React from 'react';
 import { TbInfoCircle } from 'react-icons/tb';
-import { defineMdxComponent } from '../../defineMdxComponent';
+import { defineComponent } from '../../defineComponent';
 import { Callout } from './Callout';
 import { CALLOUT_TYPE, CalloutEditable, calloutMdxRule } from './CalloutEditable';
 import type { CalloutSlateElement } from './types';
 
-export const calloutSpec = defineMdxComponent<
+export const calloutSpec = defineComponent<
   CalloutSlateElement,
   { variant?: string; children?: React.ReactNode },
   'block'
 >({
+  type: CALLOUT_TYPE,
+  category: 'content-layout',
+  surfaces: ['wiki'],
+
   component: Callout,
   mode: 'block',
   allowedProps: ['variant'],

@@ -1,16 +1,20 @@
 import type React from 'react';
 import { TbColumns } from 'react-icons/tb';
-import { defineMdxComponent } from '../../defineMdxComponent';
+import { defineComponent } from '../../defineComponent';
 import { Columns } from './Columns';
 import { COLUMN_TYPE } from './ColumnEditable';
 import { COLUMNS_TYPE, ColumnsEditable, columnsMdxRule } from './ColumnsEditable';
 import type { ColumnsSlateElement } from './types';
 
-export const columnsSpec = defineMdxComponent<
+export const columnsSpec = defineComponent<
   ColumnsSlateElement,
   { count?: string; children?: React.ReactNode },
   'block'
 >({
+  type: COLUMNS_TYPE,
+  category: 'content-layout',
+  surfaces: ['wiki'],
+
   component: Columns,
   mode: 'block',
   allowedProps: ['count'],

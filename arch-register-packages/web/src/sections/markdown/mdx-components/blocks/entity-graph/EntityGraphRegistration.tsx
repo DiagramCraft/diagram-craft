@@ -1,5 +1,5 @@
 import { TbVectorTriangle } from 'react-icons/tb';
-import { defineMdxComponent } from '../../defineMdxComponent';
+import { defineComponent } from '../../defineComponent';
 import { EntityGraph } from './EntityGraph';
 import { createDashboardWidgetAdapter } from '../../../../dashboard/widgets/createDashboardWidgetAdapter';
 import { ENTITY_GRAPH_TYPE, EntityGraphEditable, entityGraphMdxRule } from './EntityGraphEditable';
@@ -10,11 +10,14 @@ import {
   type EntityGraphWidgetConfig
 } from './types';
 
-export const entityGraphSpec = defineMdxComponent<
+export const entityGraphSpec = defineComponent<
   EntityGraphSlateElement,
   { id: string; depth?: string; direction?: string },
   'block'
 >({
+  type: ENTITY_GRAPH_TYPE,
+  category: 'visualizations',
+
   component: EntityGraph,
   mode: 'block',
   allowedProps: ['id', 'depth', 'direction'],

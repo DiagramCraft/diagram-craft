@@ -1,5 +1,5 @@
 import { TbLayoutDashboard, TbLayoutGrid } from 'react-icons/tb';
-import { defineMdxComponent } from '../../defineMdxComponent';
+import { defineComponent } from '../../defineComponent';
 import { EntityViewEmbed } from './EntityViewEmbed';
 import { createDashboardWidgetAdapter } from '../../../../dashboard/widgets/createDashboardWidgetAdapter';
 import {
@@ -10,11 +10,14 @@ import {
 import { EntityViewEmbedConfigForm } from './EntityViewEmbedConfigForm';
 import type { EntityViewEmbedSlateElement, SavedViewEmbedWidgetConfig } from './types';
 
-export const entityViewEmbedSpec = defineMdxComponent<
+export const entityViewEmbedSpec = defineComponent<
   EntityViewEmbedSlateElement,
   { viewId?: string },
   'block'
 >({
+  type: ENTITY_VIEW_EMBED_TYPE,
+  category: 'data-views',
+
   component: EntityViewEmbed,
   mode: 'block',
   allowedProps: ['viewId'],

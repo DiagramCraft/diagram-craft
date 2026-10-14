@@ -8,9 +8,8 @@ import { formatDate } from '../../../utils/dateFormat';
 import { dueLabel, dueTone } from '../../../utils/assessmentDueTone';
 import { filterAssessments, type AssessmentWidgetMode } from './assessmentsWidgetLogic';
 import styles from './WidgetRowList.module.css';
-import type { TElement } from 'platejs';
 import { TbClipboardCheck } from 'react-icons/tb';
-import { defineMdxComponent } from '../../markdown/mdx-components/defineMdxComponent';
+import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import { Select } from '@diagram-craft/app-components/Select';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import configFormStyles from '../WidgetConfigDialog.module.css';
@@ -228,16 +227,10 @@ export const AssessmentsConfigForm = ({ config, onChange }: AssessmentsConfigFor
 
 export const ASSESSMENTS_TYPE = 'Assessments' as const;
 
-interface AssessmentsSlateElement extends TElement {}
-
-export const assessmentsSpec = defineMdxComponent<
-  AssessmentsSlateElement,
-  { config: AssessmentsWidgetConfig },
-  'block'
->({
-  component: AssessmentsWidget,
-  mode: 'block',
-  allowedProps: [],
+export const assessmentsSpec = defineComponent({
+  type: ASSESSMENTS_TYPE,
+  category: 'metrics',
+  surfaces: ['dashboard'],
   dashboardWidget: {
     icon: TbClipboardCheck,
     label: 'Assessments',

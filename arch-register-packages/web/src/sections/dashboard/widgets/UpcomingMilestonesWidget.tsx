@@ -7,9 +7,8 @@ import { useMdxContext } from '../../markdown/MdxContext';
 import { asProjectPublicId, projectDetailRoute } from '../../../routes/publicObjectRoutes';
 import { formatDate } from '../../../utils/dateFormat';
 import styles from './WidgetRowList.module.css';
-import type { TElement } from 'platejs';
 import { TbFlag3 } from 'react-icons/tb';
-import { defineMdxComponent } from '../../markdown/mdx-components/defineMdxComponent';
+import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 
 const MAX_UPCOMING = 3;
 
@@ -75,20 +74,14 @@ export const UpcomingMilestonesWidget = () => {
 
 export const UPCOMING_MILESTONES_TYPE = 'upcoming-milestones' as const;
 
-interface UpcomingMilestonesSlateElement extends TElement {}
-
 /**
  * Dashboard-only widget: no editorSpec, so it never appears in the wiki
  * slash-command menu or MDX round-trip. Not authorable in wiki markdown.
  */
-export const upcomingMilestonesSpec = defineMdxComponent<
-  UpcomingMilestonesSlateElement,
-  Record<string, never>,
-  'block'
->({
-  component: UpcomingMilestonesWidget,
-  mode: 'block',
-  allowedProps: [],
+export const upcomingMilestonesSpec = defineComponent({
+  type: UPCOMING_MILESTONES_TYPE,
+  category: 'metrics',
+  surfaces: ['dashboard'],
   dashboardWidget: {
     icon: TbFlag3,
     label: 'Upcoming milestones',

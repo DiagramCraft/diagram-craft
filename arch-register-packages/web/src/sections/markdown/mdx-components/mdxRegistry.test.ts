@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { getDashboardWidgetSpec, getDashboardWidgetSpecs } from './componentCatalog';
 import { getMdxSpecsForSurface, MDX_COMPONENTS } from './mdxRegistry';
 
 describe('getMdxSpecsForSurface', () => {
@@ -25,7 +26,7 @@ describe('getMdxSpecsForSurface', () => {
     expect(dashboard['entity-activity-trend-chart']).toBeDefined();
     expect(dashboard['entity-stale-report']).toBeDefined();
     expect(dashboard['EntityViewEmbed']).toBeDefined();
-    expect(dashboard['markdown']).toBeDefined();
+    expect(dashboard['markdown']).toBeUndefined();
   });
 
   it('excludes wiki-only components for "dashboard"', () => {
@@ -35,6 +36,14 @@ describe('getMdxSpecsForSurface', () => {
 
   it('keeps the dashboard-only wiki page widget out of wiki rendering', () => {
     expect(getMdxSpecsForSurface('wiki')['wiki-page']).toBeUndefined();
+  });
+
+  it('keeps dashboard-only widgets in the dashboard catalog', () => {
+    const widgets = getDashboardWidgetSpecs();
+    expect(widgets.some(widget => widget.type === 'markdown')).toBe(true);
+    expect(widgets.some(widget => widget.type === 'wiki-page')).toBe(true);
+    expect(getDashboardWidgetSpec('markdown')).toBeDefined();
+    expect(getDashboardWidgetSpec('Callout')).toBeUndefined();
   });
 
   it('never returns more entries than the full registry', () => {

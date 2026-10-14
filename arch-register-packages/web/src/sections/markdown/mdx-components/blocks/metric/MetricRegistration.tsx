@@ -1,5 +1,5 @@
 import { TbChartBar, TbHash } from 'react-icons/tb';
-import { defineMdxComponent } from '../../defineMdxComponent';
+import { defineComponent } from '../../defineComponent';
 import { Metric } from './Metric';
 import { createDashboardWidgetAdapter } from '../../../../dashboard/widgets/createDashboardWidgetAdapter';
 import { METRIC_TYPE, MetricEditable, metricMdxRule } from './MetricEditable';
@@ -19,7 +19,7 @@ const METRIC_TYPE_DEFAULT_LABEL: Record<MetricType, string> = {
   'completeness-percent': 'Well documented'
 };
 
-export const metricSpec = defineMdxComponent<
+export const metricSpec = defineComponent<
   MetricSlateElement,
   {
     schema?: string;
@@ -31,6 +31,9 @@ export const metricSpec = defineMdxComponent<
   },
   'block'
 >({
+  type: METRIC_TYPE,
+  category: 'metrics',
+
   component: Metric,
   mode: 'block',
   allowedProps: ['schema', 'owner', 'lifecycle', 'label', 'metricType', 'showLink'],

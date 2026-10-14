@@ -1,9 +1,9 @@
 import type { TElement } from 'platejs';
 import type { PlateElementProps } from 'platejs/react';
-import { defineMdxComponent } from './defineMdxComponent';
+import { defineComponent } from './defineComponent';
 
 /**
- * Compile-time-only checks for defineMdxComponent's generic constraints.
+ * Compile-time-only checks for defineComponent's generic constraints.
  * Not run by vitest — verified by `tsc --noEmit` picking up this file (it's
  * included via the same tsconfig `include` as the rest of the package).
  */
@@ -19,7 +19,10 @@ const FooPreview = (_props: FooProps) => null;
 const FooEditable = (_props: PlateElementProps<FooSlateElement>) => null;
 
 // Valid call: compiles cleanly.
-defineMdxComponent<FooSlateElement, FooProps, 'block'>({
+defineComponent<FooSlateElement, FooProps, 'block'>({
+  type: 'Foo',
+  category: 'data-views',
+  surfaces: ['wiki'],
   component: FooPreview,
   mode: 'block',
   allowedProps: ['id'],
@@ -43,7 +46,10 @@ defineMdxComponent<FooSlateElement, FooProps, 'block'>({
 });
 
 // allowedProps containing a key that isn't a prop of the preview component.
-defineMdxComponent<FooSlateElement, FooProps, 'block'>({
+defineComponent<FooSlateElement, FooProps, 'block'>({
+  type: 'Foo',
+  category: 'data-views',
+  surfaces: ['wiki'],
   component: FooPreview,
   mode: 'block',
   // @ts-expect-error 'bogus' is not a key of FooProps
@@ -51,7 +57,10 @@ defineMdxComponent<FooSlateElement, FooProps, 'block'>({
 });
 
 // deserialize returning a shape missing a required field of E (`fooId`).
-defineMdxComponent<FooSlateElement, FooProps, 'block'>({
+defineComponent<FooSlateElement, FooProps, 'block'>({
+  type: 'Foo',
+  category: 'data-views',
+  surfaces: ['wiki'],
   component: FooPreview,
   mode: 'block',
   allowedProps: ['id'],
@@ -80,7 +89,10 @@ interface OtherSlateElement extends TElement {
 }
 const WrongEditable = (_props: PlateElementProps<OtherSlateElement>) => null;
 
-defineMdxComponent<FooSlateElement, FooProps, 'block'>({
+defineComponent<FooSlateElement, FooProps, 'block'>({
+  type: 'Foo',
+  category: 'data-views',
+  surfaces: ['wiki'],
   component: FooPreview,
   mode: 'block',
   allowedProps: ['id'],

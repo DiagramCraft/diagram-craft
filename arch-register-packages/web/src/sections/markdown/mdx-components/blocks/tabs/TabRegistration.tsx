@@ -1,14 +1,19 @@
 import type React from 'react';
-import { defineMdxComponent } from '../../defineMdxComponent';
+import { defineComponent } from '../../defineComponent';
 import { Tab } from './Tab';
+import { TAB_TYPE } from './TabEditable';
 import { TabEditable, tabMdxRule } from './TabEditable';
 import type { TabSlateElement } from './types';
 
-export const tabSpec = defineMdxComponent<
+export const tabSpec = defineComponent<
   TabSlateElement,
   { label?: string; children?: React.ReactNode },
   'block'
 >({
+  type: TAB_TYPE,
+  category: 'content-layout',
+  surfaces: ['wiki'],
+
   component: Tab,
   mode: 'block',
   allowedProps: ['label'],

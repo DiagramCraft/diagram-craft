@@ -1,14 +1,18 @@
 import { TbPhoto } from 'react-icons/tb';
-import { defineMdxComponent } from '../../defineMdxComponent';
+import { defineComponent } from '../../defineComponent';
 import { ImageEmbed } from './ImageEmbed';
 import { IMAGE_EMBED_TYPE, ImageEmbedEditable, imageEmbedMdxRule } from './ImageEmbedEditable';
 import type { ImageEmbedSlateElement } from './types';
 
-export const imageEmbedSpec = defineMdxComponent<
+export const imageEmbedSpec = defineComponent<
   ImageEmbedSlateElement,
   { id: string; alt?: string; size?: string; align?: string },
   'block'
 >({
+  type: IMAGE_EMBED_TYPE,
+  category: 'content-layout',
+  surfaces: ['wiki'],
+
   component: ImageEmbed,
   mode: 'block',
   allowedProps: ['id', 'alt', 'size', 'align'],

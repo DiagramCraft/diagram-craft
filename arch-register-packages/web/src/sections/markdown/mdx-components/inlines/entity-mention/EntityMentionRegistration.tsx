@@ -1,5 +1,5 @@
 import { TbAt } from 'react-icons/tb';
-import { defineMdxComponent } from '../../defineMdxComponent';
+import { defineComponent } from '../../defineComponent';
 import { EntityMention } from './EntityMention';
 import {
   ENTITY_MENTION_TYPE,
@@ -8,11 +8,15 @@ import {
 } from './EntityMentionEditable';
 import type { EntityMentionSlateElement } from './types';
 
-export const entityMentionSpec = defineMdxComponent<
+export const entityMentionSpec = defineComponent<
   EntityMentionSlateElement,
   { id: string },
   'inline'
 >({
+  type: ENTITY_MENTION_TYPE,
+  category: 'data-views',
+  surfaces: ['wiki'],
+
   component: EntityMention,
   mode: 'inline',
   allowedProps: ['id'],

@@ -15,9 +15,8 @@ import {
 import { countDistinctValues, formatMeasured, sumMeasured } from './fieldAggregation';
 import styles from './AggregateStatWidget.module.css';
 import { useWidgetBodyTitle } from './WidgetBodyTitle';
-import type { TElement } from 'platejs';
 import { TbPercentage } from 'react-icons/tb';
-import { defineMdxComponent } from '../../markdown/mdx-components/defineMdxComponent';
+import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import { isQueryStatConfig } from './aggregateStatQuery';
 import { useEffect, useState } from 'react';
 import { getSchemaFieldDefs, FilterRow } from '../../../components/FilterBuilder';
@@ -642,21 +641,15 @@ const isValidQueryStatConfig = (config: Record<string, unknown>): boolean => {
   );
 };
 
-interface AggregateStatSlateElement extends TElement {}
-
 /**
  * Dashboard-only widget: a percentage/coverage stat computed as (entities matching a configured
  * condition) / (entities matching the base schema/owner/lifecycle filter), scoped to whatever
  * entity schema the widget is configured against - not tied to any particular schema.
  */
-export const aggregateStatSpec = defineMdxComponent<
-  AggregateStatSlateElement,
-  { config: AggregateStatWidgetConfig },
-  'block'
->({
-  component: AggregateStatWidget,
-  mode: 'block',
-  allowedProps: [],
+export const aggregateStatSpec = defineComponent({
+  type: AGGREGATE_STAT_TYPE,
+  category: 'metrics',
+  surfaces: ['dashboard'],
   dashboardWidget: {
     icon: TbPercentage,
     label: 'Aggregate stat',

@@ -7,7 +7,7 @@ import {
   type MdMdxJsxFlowElement
 } from '@platejs/markdown';
 import { TbChevronLeft, TbChevronRight, TbPlus, TbX } from 'react-icons/tb';
-import type { MdxRuleDef } from '../../defineMdxComponent';
+import type { MdxRuleDef } from '../../defineComponent';
 import { EditorBlock } from '../../../editor/EditorBlock';
 import { TAB_TYPE } from './TabEditable';
 import type { TabSlateElement, TabsSlateElement } from './types';
@@ -42,7 +42,7 @@ export const tabsMdxRule: MdxRuleDef<TabsSlateElement, 'block'> = {
     // convertNodesSerialize returns generic unist nodes; the mdast-mdx typings
     // don't narrow that to MdxJsxFlowElement's own child union, so this cast
     // is the one framework-seam assertion this rule needs (see AllowedPropKey
-    // design notes in defineMdxComponent.ts).
+    // design notes in defineComponent.ts).
     children: convertNodesSerialize(
       slateNode.children ?? [],
       options

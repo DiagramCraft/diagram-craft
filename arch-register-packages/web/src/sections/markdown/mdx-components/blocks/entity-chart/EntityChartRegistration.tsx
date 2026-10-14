@@ -1,5 +1,5 @@
 import { TbChartDonut } from 'react-icons/tb';
-import { defineMdxComponent } from '../../defineMdxComponent';
+import { defineComponent } from '../../defineComponent';
 import { EntityChart } from './EntityChart';
 import { ENTITY_CHART_TYPE, EntityChartEditable, entityChartMdxRule } from './EntityChartEditable';
 import type { EntityChartSlateElement } from './types';
@@ -9,11 +9,14 @@ import type { EntityChartSlateElement } from './types';
  * component's own prop is `chartType`. Preserves the pre-existing external
  * (`type`) vs internal (`chartType`) naming split without changing behavior.
  */
-export const entityChartSpec = defineMdxComponent<
+export const entityChartSpec = defineComponent<
   EntityChartSlateElement,
   { schema?: string; owner?: string; lifecycle?: string; groupBy?: string; type?: string },
   'block'
 >({
+  type: ENTITY_CHART_TYPE,
+  category: 'visualizations',
+
   component: EntityChart,
   mode: 'block',
   allowedProps: ['schema', 'owner', 'lifecycle', 'groupBy', 'type'],

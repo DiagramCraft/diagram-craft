@@ -42,7 +42,18 @@ vi.mock('../mdx-components/mdxRegistry', () => {
       }
     }
   };
-  return { MDX_COMPONENTS, getMdxSpecsForSurface: () => MDX_COMPONENTS };
+  return {
+    MDX_COMPONENTS,
+    MDX_COMPONENT_DEFINITIONS: {
+      TestBlock: {
+        type: 'TestBlock',
+        category: 'data-views',
+        surfaces: ['wiki'],
+        mdx: MDX_COMPONENTS.TestBlock
+      }
+    },
+    getMdxSpecsForSurface: () => MDX_COMPONENTS
+  };
 });
 
 const createMarkdownTestEditor = () =>

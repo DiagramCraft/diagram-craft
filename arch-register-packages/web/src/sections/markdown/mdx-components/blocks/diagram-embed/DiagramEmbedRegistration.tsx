@@ -1,5 +1,5 @@
 import { TbChartLine } from 'react-icons/tb';
-import { defineMdxComponent } from '../../defineMdxComponent';
+import { defineComponent } from '../../defineComponent';
 import { DiagramEmbed } from './DiagramEmbed';
 import { createDashboardWidgetAdapter } from '../../../../dashboard/widgets/createDashboardWidgetAdapter';
 import {
@@ -10,11 +10,14 @@ import {
 import { DiagramEmbedDashboardConfigForm } from './DiagramEmbedDashboardConfigForm';
 import type { DiagramEmbedSlateElement, DiagramEmbedWidgetConfig } from './types';
 
-export const diagramEmbedSpec = defineMdxComponent<
+export const diagramEmbedSpec = defineComponent<
   DiagramEmbedSlateElement,
   { id: string; caption?: string },
   'block'
 >({
+  type: DIAGRAM_EMBED_TYPE,
+  category: 'visualizations',
+
   component: DiagramEmbed,
   mode: 'block',
   allowedProps: ['id', 'caption'],

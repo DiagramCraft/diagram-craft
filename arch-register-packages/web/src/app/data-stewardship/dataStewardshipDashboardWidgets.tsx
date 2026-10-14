@@ -32,6 +32,8 @@ import {
 } from './dataStewardshipDashboardLogic';
 import { DataStewardshipReviewCalendar } from './sections/DataStewardshipReviewCalendar';
 import type { DashboardWidgetSpec } from '../../sections/markdown/mdx-components/types';
+import type { ComponentCategory } from '../../sections/markdown/mdx-components/componentCategories';
+import { defineComponent } from '../../sections/markdown/mdx-components/defineComponent';
 import styles from './sections/DataStewardshipQueueWidget.module.css';
 import { useWidgetBodyTitle } from '../../sections/dashboard/widgets/WidgetBodyTitle';
 import formStyles from '../../sections/dashboard/WidgetConfigDialog.module.css';
@@ -291,13 +293,15 @@ const CaseConfigForm = ({
 
 const DS_CASE_DEFAULTS = { caseKinds: [] as string[] };
 
-export const dataStewardshipDashboardWidgetSpecs: Array<{
+const dataStewardshipWidgetSpecs: Array<{
   type: string;
+  category: ComponentCategory;
   // biome-ignore lint/suspicious/noExplicitAny: this registry intentionally erases per-widget config types
   spec: DashboardWidgetSpec<any>;
 }> = [
   {
     type: 'data-stewardship-case-count',
+    category: 'metrics',
     spec: {
       icon: TbAlertTriangle,
       label: 'Case count',
@@ -320,6 +324,7 @@ export const dataStewardshipDashboardWidgetSpecs: Array<{
   },
   {
     type: 'data-stewardship-reviews-overdue',
+    category: 'metrics',
     spec: {
       icon: TbListCheck,
       label: 'Reviews overdue',
@@ -337,6 +342,7 @@ export const dataStewardshipDashboardWidgetSpecs: Array<{
   },
   {
     type: 'data-stewardship-case-calendar',
+    category: 'visualizations',
     spec: {
       icon: TbCalendarEvent,
       label: 'Next six weeks',
@@ -358,6 +364,7 @@ export const dataStewardshipDashboardWidgetSpecs: Array<{
   },
   {
     type: 'data-stewardship-case-queue',
+    category: 'data-views',
     spec: {
       icon: TbClipboardCheck,
       label: 'Case queue',
@@ -378,3 +385,8 @@ export const dataStewardshipDashboardWidgetSpecs: Array<{
     }
   }
 ];
+
+export const dataStewardshipDashboardWidgetSpecs = dataStewardshipWidgetSpecs.map(
+  ({ type, category, spec }) =>
+    defineComponent({ type, category, surfaces: ['dashboard'], dashboardWidget: spec })
+);

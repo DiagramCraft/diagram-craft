@@ -8,7 +8,7 @@ import {
   propsToAttributes,
   type MdMdxJsxFlowElement
 } from '@platejs/markdown';
-import type { MdxRuleDef } from '../../defineMdxComponent';
+import type { MdxRuleDef } from '../../defineComponent';
 import { EditorBlock, getNodeText } from '../../../editor/EditorBlock';
 import type { CaptionSlateElement } from './types';
 import styles from './Caption.module.css';
@@ -52,7 +52,7 @@ export const captionMdxRule: MdxRuleDef<CaptionSlateElement, 'block'> = {
     // convertNodesSerialize returns generic unist nodes; the mdast-mdx typings
     // don't narrow that to MdxJsxFlowElement's own child union, so this cast
     // is the one framework-seam assertion this rule needs (see AllowedPropKey
-    // design notes in defineMdxComponent.ts).
+    // design notes in defineComponent.ts).
     children: convertNodesSerialize(
       slateNode.children ?? [],
       options

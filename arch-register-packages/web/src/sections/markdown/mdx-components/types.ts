@@ -1,6 +1,9 @@
 import type React from 'react';
 import type { useEditorRef } from 'platejs/react';
 import type { TElement } from 'platejs';
+import type { ComponentCategory } from './componentCategories';
+
+export type ComponentSurface = 'wiki' | 'dashboard';
 
 export type SlashCommandDef = {
   key: string;
@@ -119,9 +122,16 @@ export type MdxComponentSpec = {
   acceptsRichContent?: boolean;
   /** Editor-mode registration; present for all components that support rich editing */
   editorSpec?: EditorSpec;
-  /** Surfaces this component may render on; `undefined` means wiki only (default, matches all prior behavior). */
-  surfaces?: ReadonlyArray<'wiki' | 'dashboard'>;
-  /** Present when this component can also be added as a dashboard widget. */
-  // biome-ignore lint/suspicious/noExplicitAny: registry entries have per-component Config types, erased here
+};
+
+/** A complete registration shared by the wiki and dashboard catalogs. */
+export type ComponentDefinition = {
+  type: string;
+  category: ComponentCategory;
+  surfaces: ReadonlyArray<ComponentSurface>;
+  /** Present for components rendered through the MDX preview pipeline. */
+  mdx?: MdxComponentSpec;
+  /** Present for components that can be added to a dashboard. */
+  // biome-ignore lint/suspicious/noExplicitAny: dashboard config types are erased in the shared catalog
   dashboardWidget?: DashboardWidgetSpec<any>;
 };

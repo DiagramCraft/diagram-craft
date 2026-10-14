@@ -5,9 +5,8 @@ import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { useEntityDrawer } from '../../entities/entityDrawer/useEntityDrawer';
 import { formatMeasured, measuredValue, type MeasuredValue } from './fieldAggregation';
 import styles from './WidgetRowList.module.css';
-import type { TElement } from 'platejs';
 import { TbListNumbers } from 'react-icons/tb';
-import { defineMdxComponent } from '../../markdown/mdx-components/defineMdxComponent';
+import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import { Select } from '@diagram-craft/app-components/Select';
 import { EntityFilterPanel, type EntityFilterValue } from '../../../components/EntityFilterPanel';
 import { getMetricSourceOptions } from '../../entities/components/mapMetricConfig';
@@ -249,20 +248,14 @@ export const TOP_ENTITIES_TYPE = 'TopEntities' as const;
 const isDirection = (value: unknown): value is 'asc' | 'desc' =>
   value === 'asc' || value === 'desc';
 
-interface TopEntitiesSlateElement extends TElement {}
-
 /**
  * Dashboard-only widget: a ranked list of entities of a chosen schema, sorted by a chosen numeric
  * (or derived-numeric) field - not tied to any particular schema or field name.
  */
-export const topEntitiesSpec = defineMdxComponent<
-  TopEntitiesSlateElement,
-  { config: TopEntitiesWidgetConfig },
-  'block'
->({
-  component: TopEntitiesWidget,
-  mode: 'block',
-  allowedProps: [],
+export const topEntitiesSpec = defineComponent({
+  type: TOP_ENTITIES_TYPE,
+  category: 'data-views',
+  surfaces: ['dashboard'],
   dashboardWidget: {
     icon: TbListNumbers,
     label: 'Ranked list',

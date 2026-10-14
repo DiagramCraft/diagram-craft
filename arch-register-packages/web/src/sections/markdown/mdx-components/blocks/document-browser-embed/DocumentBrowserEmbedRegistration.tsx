@@ -1,5 +1,5 @@
 import { TbFileSearch } from 'react-icons/tb';
-import { defineMdxComponent } from '../../defineMdxComponent';
+import { defineComponent } from '../../defineComponent';
 import { DocumentBrowserEmbed } from './DocumentBrowserEmbed';
 import { createDashboardWidgetAdapter } from '../../../../dashboard/widgets/createDashboardWidgetAdapter';
 import { encodeDocumentBrowserEmbedConfig } from './DocumentBrowserEmbedCodec';
@@ -22,11 +22,14 @@ const isDocumentBrowserEmbedConfig = (
   Array.isArray(config.visibleBaseColumnIds) &&
   Array.isArray(config.visibleFieldIds);
 
-export const documentBrowserEmbedSpec = defineMdxComponent<
+export const documentBrowserEmbedSpec = defineComponent<
   DocumentBrowserEmbedSlateElement,
   { config?: string },
   'block'
 >({
+  type: DOCUMENT_BROWSER_EMBED_TYPE,
+  category: 'data-views',
+
   component: DocumentBrowserEmbed,
   mode: 'block',
   allowedProps: ['config'],

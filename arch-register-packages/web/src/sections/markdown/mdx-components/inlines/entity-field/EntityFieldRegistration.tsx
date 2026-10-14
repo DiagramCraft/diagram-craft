@@ -1,14 +1,18 @@
 import { TbHash } from 'react-icons/tb';
-import { defineMdxComponent } from '../../defineMdxComponent';
+import { defineComponent } from '../../defineComponent';
 import { EntityField } from './EntityField';
 import { ENTITY_FIELD_TYPE, EntityFieldEditable, entityFieldMdxRule } from './EntityFieldEditable';
 import type { EntityFieldSlateElement } from './types';
 
-export const entityFieldSpec = defineMdxComponent<
+export const entityFieldSpec = defineComponent<
   EntityFieldSlateElement,
   { id: string; field: string },
   'inline'
 >({
+  type: ENTITY_FIELD_TYPE,
+  category: 'metrics',
+  surfaces: ['wiki'],
+
   component: EntityField,
   mode: 'inline',
   allowedProps: ['id', 'field'],

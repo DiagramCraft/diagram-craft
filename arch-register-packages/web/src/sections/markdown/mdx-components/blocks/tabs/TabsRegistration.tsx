@@ -1,16 +1,16 @@
 import type React from 'react';
 import { TbLayoutNavbar } from 'react-icons/tb';
-import { defineMdxComponent } from '../../defineMdxComponent';
+import { defineComponent } from '../../defineComponent';
 import { Tabs } from './Tabs';
 import { TAB_TYPE } from './TabEditable';
 import { TABS_TYPE, TabsEditable, tabsMdxRule } from './TabsEditable';
 import type { TabsSlateElement } from './types';
 
-export const tabsSpec = defineMdxComponent<
-  TabsSlateElement,
-  { children?: React.ReactNode },
-  'block'
->({
+export const tabsSpec = defineComponent<TabsSlateElement, { children?: React.ReactNode }, 'block'>({
+  type: TABS_TYPE,
+  category: 'content-layout',
+  surfaces: ['wiki'],
+
   component: Tabs,
   mode: 'block',
   allowedProps: [],

@@ -2,9 +2,8 @@ import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { useEntityDrawer } from '../../entities/entityDrawer/useEntityDrawer';
 import { useNeedsAttentionQueue } from './needsAttentionQueue';
 import { NeedsAttentionList } from './NeedsAttentionList';
-import type { TElement } from 'platejs';
 import { TbAlertTriangle } from 'react-icons/tb';
-import { defineMdxComponent } from '../../markdown/mdx-components/defineMdxComponent';
+import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import { useState } from 'react';
 import { Select } from '@diagram-craft/app-components/Select';
 import { humanizeCaseKind } from '../../../utils/governanceCaseLabels';
@@ -210,22 +209,16 @@ const isScope = (value: unknown): value is NeedsAttentionWidgetConfig['scope'] =
 const isSeverity = (value: unknown): value is NeedsAttentionWidgetConfig['severity'] =>
   value === 'none' || value === 'due-date';
 
-interface NeedsAttentionSlateElement extends TElement {}
-
 /**
  * Dashboard-only widget: a queue of open governance cases against entities of a chosen schema,
  * restricted to a chosen set of case kinds — not tied to any particular app. Generalized from
  * API & Integration Catalog's and Data Stewardship's independently-built "needs attention" queues
  * (#3466); see `needsAttentionQueue.ts` for the shared query/join/severity logic.
  */
-export const needsAttentionSpec = defineMdxComponent<
-  NeedsAttentionSlateElement,
-  { config: NeedsAttentionWidgetConfig },
-  'block'
->({
-  component: NeedsAttentionWidget,
-  mode: 'block',
-  allowedProps: [],
+export const needsAttentionSpec = defineComponent({
+  type: NEEDS_ATTENTION_TYPE,
+  category: 'data-views',
+  surfaces: ['dashboard'],
   dashboardWidget: {
     icon: TbAlertTriangle,
     label: 'Needs attention queue',

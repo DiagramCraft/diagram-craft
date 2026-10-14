@@ -54,30 +54,10 @@ import {
   ENTITY_STALE_REPORT_TYPE,
   entityStaleReportSpec
 } from './widgets/entity-stale-report/EntityStaleReportRegistration';
-import { ACTIVITY_FEED_TYPE, activityFeedSpec } from '../../dashboard/widgets/ActivityFeedWidget';
-import { ASSESSMENTS_TYPE, assessmentsSpec } from '../../dashboard/widgets/AssessmentsWidget';
-import {
-  UPCOMING_MILESTONES_TYPE,
-  upcomingMilestonesSpec
-} from '../../dashboard/widgets/UpcomingMilestonesWidget';
-import { MARKDOWN_WIDGET_TYPE, markdownWidgetSpec } from '../../dashboard/widgets/MarkdownWidget';
-import {
-  AGGREGATE_STAT_TYPE,
-  aggregateStatSpec
-} from '../../dashboard/widgets/AggregateStatWidget';
-import { TOP_ENTITIES_TYPE, topEntitiesSpec } from '../../dashboard/widgets/TopEntitiesWidget';
-import {
-  CONFORMANCE_SUMMARY_TYPE,
-  conformanceSummarySpec
-} from '../../dashboard/widgets/ConformanceSummaryWidget';
-import {
-  NEEDS_ATTENTION_TYPE,
-  needsAttentionSpec
-} from '../../dashboard/widgets/NeedsAttentionWidget';
-import type { DashboardWidgetSpec, MdxComponentSpec } from './types';
+import type { ComponentDefinition, MdxComponentSpec } from './types';
 export type { SlashCommandDef, EditorSpec, MdxComponentSpec, DashboardWidgetSpec } from './types';
 
-export const MDX_COMPONENTS = {
+export const MDX_COMPONENT_DEFINITIONS = {
   [DIAGRAM_EMBED_TYPE]: diagramEmbedSpec,
   [IMAGE_EMBED_TYPE]: imageEmbedSpec,
   [ENTITY_BROWSER_EMBED_TYPE]: entityBrowserEmbedSpec,
@@ -102,62 +82,32 @@ export const MDX_COMPONENTS = {
   [TAB_TYPE]: tabSpec,
   [ENTITY_LIFECYCLE_CHART_TYPE]: entityLifecycleChartSpec,
   [ENTITY_ACTIVITY_TREND_CHART_TYPE]: entityActivityTrendChartSpec,
-  [ENTITY_STALE_REPORT_TYPE]: entityStaleReportSpec,
-  [ACTIVITY_FEED_TYPE]: activityFeedSpec,
-  [ASSESSMENTS_TYPE]: assessmentsSpec,
-  [UPCOMING_MILESTONES_TYPE]: upcomingMilestonesSpec,
-  [MARKDOWN_WIDGET_TYPE]: markdownWidgetSpec,
-  [AGGREGATE_STAT_TYPE]: aggregateStatSpec,
-  [TOP_ENTITIES_TYPE]: topEntitiesSpec,
-  [CONFORMANCE_SUMMARY_TYPE]: conformanceSummarySpec,
-  [NEEDS_ATTENTION_TYPE]: needsAttentionSpec
-} satisfies Record<string, MdxComponentSpec>;
+  [ENTITY_STALE_REPORT_TYPE]: entityStaleReportSpec
+} satisfies Record<string, ComponentDefinition>;
 
-export type MdxComponentName = keyof typeof MDX_COMPONENTS;
+export type MdxComponentName = keyof typeof MDX_COMPONENT_DEFINITIONS;
 
-/**
- * Typed accessor for a registry entry. `MDX_COMPONENTS[name]` alone resolves to
- * the union of each component's own literal spec type (since `satisfies` doesn't
- * widen), so optional fields not present on every entry (e.g. `acceptsChildren`)
- * aren't visible without this cast.
- */
-export const getMdxSpec = (name: MdxComponentName): MdxComponentSpec => MDX_COMPONENTS[name];
+/** MDX render/editor specs projected from categorized component definitions. */
+export const MDX_COMPONENTS = Object.fromEntries(
+  Object.values(MDX_COMPONENT_DEFINITIONS).flatMap(definition =>
+    definition.mdx ? [[definition.type, definition.mdx] as const] : []
+  )
+) as Record<MdxComponentName, MdxComponentSpec>;
 
-/** Safe accessor for an arbitrary, untyped string (e.g. a persisted `widget.type`). */
+export const getMdxSpec = (name: MdxComponentName): MdxComponentSpec => MDX_COMPONENTS[name]!;
+
+/** Safe accessor for an arbitrary MDX component name. */
 export const getMdxSpecSafe = (name: string): MdxComponentSpec | undefined =>
   (MDX_COMPONENTS as Record<string, MdxComponentSpec>)[name];
 
-/**
- * A spec is eligible for `'wiki'` when `surfaces` is unset (defaults to wiki-only,
- * matching prior behavior) or explicitly includes `'wiki'`; eligible for `'dashboard'`
- * only when it explicitly opts in via `surfaces`.
- */
-const isEligibleForSurface = (spec: MdxComponentSpec, surface: 'wiki' | 'dashboard'): boolean =>
-  surface === 'wiki'
-    ? spec.surfaces === undefined || spec.surfaces.includes('wiki')
-    : !!spec.surfaces?.includes('dashboard');
-
-/**
- * Filters the registry by rendering surface: wiki sees components that are
- * wiki-eligible (`surfaces` unset or including `'wiki'`); dashboard sees only
- * components that explicitly opt in via `spec.surfaces`.
- */
+/** MDX specs available on the requested content surface. */
 export const getMdxSpecsForSurface = (
   surface: 'wiki' | 'dashboard'
 ): Record<string, MdxComponentSpec> =>
   Object.fromEntries(
-    Object.entries(MDX_COMPONENTS).filter(([, spec]) => isEligibleForSurface(spec, surface))
+    Object.values(MDX_COMPONENT_DEFINITIONS).flatMap(definition =>
+      definition.mdx && definition.surfaces.includes(surface)
+        ? [[definition.type, definition.mdx] as const]
+        : []
+    )
   );
-
-/** True when the given `widget.type` string carries a `dashboardWidget` block, i.e. is addable to a dashboard. */
-export const isKnownWidgetType = (type: string): boolean => !!getMdxSpecSafe(type)?.dashboardWidget;
-
-/** All dashboard-widget specs in the registry, keyed by their MDX type. */
-export const getDashboardWidgetSpecs = (): Array<{ type: string; spec: DashboardWidgetSpec }> =>
-  Object.entries(MDX_COMPONENTS)
-    .filter((entry): entry is [string, MdxComponentSpec] => !!entry[1].dashboardWidget)
-    .map(([type, spec]) => ({ type, spec: spec.dashboardWidget! }));
-
-/** Looks up a single dashboard-widget spec by type, if it has one. */
-export const getDashboardWidgetSpec = (type: string): DashboardWidgetSpec | undefined =>
-  getMdxSpecSafe(type)?.dashboardWidget;

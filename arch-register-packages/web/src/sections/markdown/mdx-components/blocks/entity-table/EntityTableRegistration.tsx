@@ -1,5 +1,5 @@
 import { TbTable } from 'react-icons/tb';
-import { defineMdxComponent } from '../../defineMdxComponent';
+import { defineComponent } from '../../defineComponent';
 import { EntityTable } from './EntityTable';
 import { createDashboardWidgetAdapter } from '../../../../dashboard/widgets/createDashboardWidgetAdapter';
 import { ENTITY_TABLE_TYPE, EntityTableEditable, entityTableMdxRule } from './EntityTableEditable';
@@ -12,11 +12,14 @@ const hasOptionalString = (config: Record<string, unknown>, key: string): boolea
 const hasOptionalInteger = (config: Record<string, unknown>, key: string): boolean =>
   config[key] === undefined || (typeof config[key] === 'number' && Number.isInteger(config[key]));
 
-export const entityTableSpec = defineMdxComponent<
+export const entityTableSpec = defineComponent<
   EntityTableSlateElement,
   { schema?: string; owner?: string; lifecycle?: string; limit?: string },
   'block'
 >({
+  type: ENTITY_TABLE_TYPE,
+  category: 'data-views',
+
   component: EntityTable,
   mode: 'block',
   allowedProps: ['schema', 'owner', 'lifecycle', 'limit'],

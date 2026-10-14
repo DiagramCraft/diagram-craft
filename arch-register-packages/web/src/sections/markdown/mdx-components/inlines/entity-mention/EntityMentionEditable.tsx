@@ -2,7 +2,7 @@ import { PlateElement, type PlateElementProps } from 'platejs/react';
 import { getPluginType } from 'platejs';
 import { parseAttributes, propsToAttributes } from '@platejs/markdown';
 import { TbAt } from 'react-icons/tb';
-import type { MdxRuleDef } from '../../defineMdxComponent';
+import type { MdxRuleDef } from '../../defineComponent';
 import { EntityMention } from './EntityMention';
 import { EntityMentionDialog } from './EntityMentionDialog';
 import { BaseInlineEditable } from '../BaseInlineEditable';

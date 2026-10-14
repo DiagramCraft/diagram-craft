@@ -1,5 +1,5 @@
 import { TbChartDonut2 } from 'react-icons/tb';
-import { defineMdxComponent } from '../../defineMdxComponent';
+import { defineComponent } from '../../defineComponent';
 import { EntityLifecycleChart } from './EntityLifecycleChart';
 import { EntityLifecycleChartWidget } from '../../../../dashboard/widgets/EntityLifecycleChartWidget';
 import type { EntityLifecycleChartProps, EntityLifecycleChartSlateElement } from './types';
@@ -10,11 +10,14 @@ export const ENTITY_LIFECYCLE_CHART_TYPE = 'entity-lifecycle-chart' as const;
  * Dashboard-only analytics widget: no editorSpec, so it never appears in the
  * wiki slash-command menu or MDX round-trip, regardless of `surfaces`.
  */
-export const entityLifecycleChartSpec = defineMdxComponent<
+export const entityLifecycleChartSpec = defineComponent<
   EntityLifecycleChartSlateElement,
   EntityLifecycleChartProps,
   'block'
 >({
+  type: ENTITY_LIFECYCLE_CHART_TYPE,
+  category: 'visualizations',
+
   component: EntityLifecycleChart,
   mode: 'block',
   allowedProps: [],

@@ -2,6 +2,8 @@ import { useNavigate } from '@tanstack/react-router';
 import { TbAffiliate, TbAlertTriangle, TbApi, TbChartBar, TbPlugConnected } from 'react-icons/tb';
 import { DialogSection } from '../../sections/markdown/editor/BlockDialog';
 import type { DashboardWidgetSpec } from '../../sections/markdown/mdx-components/types';
+import type { ComponentCategory } from '../../sections/markdown/mdx-components/componentCategories';
+import { defineComponent } from '../../sections/markdown/mdx-components/defineComponent';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { Banner } from '../../components/Banner';
 import { EmptyState } from '../../components/EmptyState';
@@ -286,13 +288,15 @@ const ApiCatalogImpactHeaderActions = ({ config }: { config: ImpactWidgetConfig 
   );
 };
 
-export const apiIntegrationCatalogDashboardWidgetSpecs: Array<{
+const apiIntegrationCatalogWidgetSpecs: Array<{
   type: string;
+  category: ComponentCategory;
   // biome-ignore lint/suspicious/noExplicitAny: this registry intentionally erases per-widget config types
   spec: DashboardWidgetSpec<any>;
 }> = [
   {
     type: 'api-integration-catalog-stats',
+    category: 'metrics',
     spec: {
       icon: TbChartBar,
       label: 'API catalog stats',
@@ -308,6 +312,7 @@ export const apiIntegrationCatalogDashboardWidgetSpecs: Array<{
   },
   {
     type: 'api-integration-catalog-needs-attention-count',
+    category: 'metrics',
     spec: {
       icon: TbAlertTriangle,
       label: 'Needs attention (count)',
@@ -323,6 +328,7 @@ export const apiIntegrationCatalogDashboardWidgetSpecs: Array<{
   },
   {
     type: 'api-integration-catalog-pair-gaps',
+    category: 'data-views',
     spec: {
       icon: TbChartBar,
       label: 'Provider/consumer gaps',
@@ -338,6 +344,7 @@ export const apiIntegrationCatalogDashboardWidgetSpecs: Array<{
   },
   {
     type: 'api-integration-catalog-needs-attention',
+    category: 'data-views',
     spec: {
       icon: TbAlertTriangle,
       label: 'API needs attention',
@@ -355,6 +362,7 @@ export const apiIntegrationCatalogDashboardWidgetSpecs: Array<{
   },
   {
     type: 'api-integration-catalog-most-consumed',
+    category: 'data-views',
     spec: {
       icon: TbApi,
       label: 'Most consumed APIs',
@@ -372,6 +380,7 @@ export const apiIntegrationCatalogDashboardWidgetSpecs: Array<{
   },
   {
     type: 'api-integration-catalog-at-risk',
+    category: 'data-views',
     spec: {
       icon: TbPlugConnected,
       label: 'Integrations needing attention',
@@ -389,6 +398,7 @@ export const apiIntegrationCatalogDashboardWidgetSpecs: Array<{
   },
   {
     type: 'api-integration-catalog-impact',
+    category: 'visualizations',
     spec: {
       icon: TbAffiliate,
       label: 'API impact',
@@ -409,3 +419,8 @@ export const apiIntegrationCatalogDashboardWidgetSpecs: Array<{
     }
   }
 ];
+
+export const apiIntegrationCatalogDashboardWidgetSpecs = apiIntegrationCatalogWidgetSpecs.map(
+  ({ type, category, spec }) =>
+    defineComponent({ type, category, surfaces: ['dashboard'], dashboardWidget: spec })
+);

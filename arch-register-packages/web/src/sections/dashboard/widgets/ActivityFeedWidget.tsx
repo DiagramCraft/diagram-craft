@@ -1,5 +1,4 @@
 import { useNavigate } from '@tanstack/react-router';
-import type { TElement } from 'platejs';
 import { TbActivity } from 'react-icons/tb';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { AuditLogEntry } from '@arch-register/api-types/auditContract';
@@ -10,7 +9,7 @@ import { asProjectPublicId, projectDetailRoute } from '../../../routes/publicObj
 import { ENTITY_TYPE_LABELS, OPERATION_LABELS } from '../../../utils/auditLabels';
 import { formatRelativeTime } from '../../../utils/dateFormat';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
-import { defineMdxComponent } from '../../markdown/mdx-components/defineMdxComponent';
+import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import styles from './ActivityFeedWidget.module.css';
 import formStyles from '../WidgetConfigDialog.module.css';
 
@@ -98,9 +97,9 @@ type ActivityFeedConfigFormProps = {
 };
 
 export const ActivityFeedDashboardConfigForm = ({
-                                                  config,
-                                                  onChange
-                                                }: ActivityFeedConfigFormProps) => (
+  config,
+  onChange
+}: ActivityFeedConfigFormProps) => (
   <DialogSection label="Options" required={false}>
     <div className={formStyles.options}>
       <label className={formStyles.optionRow}>
@@ -122,9 +121,6 @@ export const ActivityFeedDashboardConfigForm = ({
 
 export const ACTIVITY_FEED_TYPE = 'activity-feed' as const;
 
-interface ActivityFeedSlateElement extends TElement {
-}
-
 const hasOptionalInteger = (config: Record<string, unknown>, key: string): boolean =>
   config[key] === undefined || (typeof config[key] === 'number' && Number.isInteger(config[key]));
 
@@ -132,14 +128,10 @@ const hasOptionalInteger = (config: Record<string, unknown>, key: string): boole
  * Dashboard-only widget: no editorSpec, so it never appears in the wiki
  * slash-command menu or MDX round-trip. Not authorable in wiki markdown.
  */
-export const activityFeedSpec = defineMdxComponent<
-  ActivityFeedSlateElement,
-  { config: ActivityFeedWidgetConfig },
-  'block'
->({
-  component: ActivityFeedWidget,
-  mode: 'block',
-  allowedProps: [],
+export const activityFeedSpec = defineComponent({
+  type: ACTIVITY_FEED_TYPE,
+  category: 'data-views',
+  surfaces: ['dashboard'],
   dashboardWidget: {
     icon: TbActivity,
     label: 'Activity feed',

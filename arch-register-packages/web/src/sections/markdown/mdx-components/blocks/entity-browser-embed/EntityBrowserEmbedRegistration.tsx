@@ -1,5 +1,5 @@
 import { TbListSearch } from 'react-icons/tb';
-import { defineMdxComponent } from '../../defineMdxComponent';
+import { defineComponent } from '../../defineComponent';
 import { EntityBrowserEmbed } from './EntityBrowserEmbed';
 import { createDashboardWidgetAdapter } from '../../../../dashboard/widgets/createDashboardWidgetAdapter';
 import { encodeEntityBrowserEmbedConfig } from './EntityBrowserEmbedCodec';
@@ -24,11 +24,14 @@ const isEntityBrowserEmbedConfig = (
   (config.limit === undefined || typeof config.limit === 'number') &&
   (config.interactive === undefined || typeof config.interactive === 'boolean');
 
-export const entityBrowserEmbedSpec = defineMdxComponent<
+export const entityBrowserEmbedSpec = defineComponent<
   EntityBrowserEmbedSlateElement,
   { config?: string },
   'block'
 >({
+  type: ENTITY_BROWSER_EMBED_TYPE,
+  category: 'data-views',
+
   component: EntityBrowserEmbed,
   mode: 'block',
   allowedProps: ['config'],

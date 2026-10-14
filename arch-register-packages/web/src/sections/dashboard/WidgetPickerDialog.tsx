@@ -6,11 +6,10 @@ import { useMdxContext } from '../markdown/MdxContext';
 import { createDefaultWidget, type WidgetSurface } from './dashboardWidgetDefaults';
 import { getDashboardWidgetSpecs } from './dashboardWidgetRegistry';
 import {
-  getWidgetCategory,
-  WIDGET_CATEGORIES,
-  type WidgetCategory,
-  matchesWidgetSearch
-} from '../markdown/mdx-components/widgetCategories';
+  COMPONENT_CATEGORIES,
+  type ComponentCategory,
+  matchesCatalogSearch
+} from '../markdown/mdx-components/componentCategories';
 import { WikiPagePicker } from './widgets/WikiPagePicker';
 import styles from './WidgetPickerDialog.module.css';
 
@@ -38,7 +37,7 @@ export const WidgetPickerDialog = ({
   const [selectedViewId, setSelectedViewId] = useState('');
   const [selectedWikiPageId, setSelectedWikiPageId] = useState('');
   const [search, setSearch] = useState('');
-  const [activeCategory, setActiveCategory] = useState<WidgetCategory | 'all'>('all');
+  const [activeCategory, setActiveCategory] = useState<ComponentCategory | 'all'>('all');
 
   const { projectId } = useMdxContext();
   const { data: savedViews = [] } = useSavedViews(workspaceSlug, {
@@ -52,17 +51,20 @@ export const WidgetPickerDialog = ({
           ({ type, spec }) =>
             spec.surfaces.includes(surface) &&
             !exclude.includes(type) &&
-            matchesWidgetSearch(search, spec)
+            matchesCatalogSearch(search, spec)
         )
         .sort((a, b) => a.spec.label.localeCompare(b.spec.label)),
     [surface, exclude, search]
   );
-  const countByCategory = (category: WidgetCategory) =>
-    matching.filter(({ type }) => getWidgetCategory(type) === category).length;
+  const countByCategory = (category: ComponentCategory) =>
+    matching.filter(widget => widget.category === category).length;
+  const availableCategories = COMPONENT_CATEGORIES.filter(category =>
+    matching.some(widget => widget.category === category.id)
+  );
   const visible =
     activeCategory === 'all'
       ? matching
-      : matching.filter(({ type }) => getWidgetCategory(type) === activeCategory);
+      : matching.filter(widget => widget.category === activeCategory);
 
   const handleClose = () => {
     setPendingType(null);
@@ -158,7 +160,7 @@ export const WidgetPickerDialog = ({
             >
               All <span className={styles.count}>{matching.length}</span>
             </button>
-            {WIDGET_CATEGORIES.map(category => (
+            {availableCategories.map(category => (
               <button
                 key={category.id}
                 type="button"
