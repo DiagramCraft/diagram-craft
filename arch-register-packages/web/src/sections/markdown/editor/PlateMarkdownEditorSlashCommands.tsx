@@ -6,7 +6,7 @@ import type { PlateElementProps } from 'platejs/react';
 import type { TElement } from 'platejs';
 import { toggleList } from '@platejs/list';
 import { getNodeText } from './EditorBlock';
-import { MDX_COMPONENT_DEFINITIONS } from '../mdx-components/mdxRegistry';
+import { getMdxComponentDefinitions } from '../mdx-components/componentRegistry';
 import {
   COMPONENT_CATEGORIES,
   type ComponentCategory,
@@ -241,25 +241,25 @@ export const BUILTIN_SLASH_COMMANDS: SlashCommandItem[] = [
 
 // MDX component slash commands are read from the same categorized definitions
 // as dashboard widgets. Components without wiki surface access stay out.
-export const MDX_SLASH_COMMANDS: SlashCommandItem[] = Object.values(
-  MDX_COMPONENT_DEFINITIONS
-).flatMap(definition => {
-  if (!definition.surfaces.includes('wiki')) return [];
-  const cmd = definition.mdx?.editorSpec?.slashCommand;
-  if (!cmd) return [];
-  return [
-    {
-      key: definition.type,
-      label: cmd.label,
-      description: cmd.description,
-      icon: <span className={styles.slashIcon}>{cmd.icon}</span>,
-      keywords: cmd.keywords,
-      category: definition.category,
-      onSelect: (editor: PlateEditor) =>
-        cmd.onSelect(editor, { insertOrReplaceBlock, insertOrReplaceInline })
-    }
-  ];
-});
+export const MDX_SLASH_COMMANDS: SlashCommandItem[] = getMdxComponentDefinitions().flatMap(
+  definition => {
+    if (!definition.surfaces.includes('wiki')) return [];
+    const cmd = definition.mdx.editorSpec?.slashCommand;
+    if (!cmd) return [];
+    return [
+      {
+        key: definition.type,
+        label: cmd.label,
+        description: cmd.description,
+        icon: <span className={styles.slashIcon}>{cmd.icon}</span>,
+        keywords: cmd.keywords,
+        category: definition.category,
+        onSelect: (editor: PlateEditor) =>
+          cmd.onSelect(editor, { insertOrReplaceBlock, insertOrReplaceInline })
+      }
+    ];
+  }
+);
 
 export const SLASH_COMMANDS: SlashCommandItem[] = COMPONENT_CATEGORIES.flatMap(category => [
   ...BUILTIN_SLASH_COMMANDS.filter(command => command.category === category.id),

@@ -6,11 +6,9 @@ import { Plate, PlateContent, usePlateEditor } from 'platejs/react';
 import type { Value } from 'platejs';
 import { deserializeMd, serializeMd } from '@platejs/markdown';
 import { DndScroller } from '@platejs/dnd';
-import { MdxBlockRegistryProvider } from './MdxBlockRegistryContext';
 import { handleTableKeyDown } from './PlateMarkdownEditorTable';
 import { FloatingToolbar } from './PlateMarkdownEditorToolbar';
 import { editorPlugins } from './PlateMarkdownEditorPlugins';
-import { MDX_COMPONENTS } from '../mdx-components/mdxRegistry';
 import styles from './PlateMarkdownEditor.module.css';
 
 interface PlateMarkdownEditorProps {
@@ -50,21 +48,19 @@ export const PlateMarkdownEditor = ({ value, onChange }: PlateMarkdownEditorProp
   );
 
   return (
-    <MdxBlockRegistryProvider value={MDX_COMPONENTS}>
-      <DndProvider backend={HTML5Backend}>
-        <div className={styles.editor}>
-          <Plate editor={editor} onChange={handleChange}>
-            <PlateContent
-              className={styles.plateContent}
-              placeholder="Start writing, or type / for commands…"
-              spellCheck
-              onKeyDown={onKeyDown}
-            />
-            <FloatingToolbar />
-            <DndScroller />
-          </Plate>
-        </div>
-      </DndProvider>
-    </MdxBlockRegistryProvider>
+    <DndProvider backend={HTML5Backend}>
+      <div className={styles.editor}>
+        <Plate editor={editor} onChange={handleChange}>
+          <PlateContent
+            className={styles.plateContent}
+            placeholder="Start writing, or type / for commands…"
+            spellCheck
+            onKeyDown={onKeyDown}
+          />
+          <FloatingToolbar />
+          <DndScroller />
+        </Plate>
+      </div>
+    </DndProvider>
   );
 };

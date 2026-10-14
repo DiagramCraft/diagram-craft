@@ -14,9 +14,12 @@ import {
 import { handleTableKeyDown } from './PlateMarkdownEditorTable';
 import { editorPlugins, mdxRules } from './PlateMarkdownEditorPlugins';
 
-vi.mock('../mdx-components/mdxRegistry', () => {
-  const MDX_COMPONENTS = {
-    TestBlock: {
+vi.mock('../mdx-components/componentRegistry', () => {
+  const definition = {
+    type: 'TestBlock',
+    category: 'data-views',
+    surfaces: ['wiki'],
+    mdx: {
       editorSpec: {
         editableComponent: () => null,
         nodeOptions: { isVoid: true },
@@ -42,16 +45,9 @@ vi.mock('../mdx-components/mdxRegistry', () => {
     }
   };
   return {
-    MDX_COMPONENTS,
-    MDX_COMPONENT_DEFINITIONS: {
-      TestBlock: {
-        type: 'TestBlock',
-        category: 'data-views',
-        surfaces: ['wiki'],
-        mdx: MDX_COMPONENTS.TestBlock
-      }
-    },
-    getMdxSpecsForSurface: () => MDX_COMPONENTS
+    getMdxComponentDefinitions: () => [definition],
+    getMdxComponentDefinition: (type: string) => (type === 'TestBlock' ? definition : undefined),
+    getMdxSpecsForSurface: () => ({ TestBlock: definition.mdx })
   };
 });
 

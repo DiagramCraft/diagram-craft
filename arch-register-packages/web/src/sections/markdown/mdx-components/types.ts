@@ -136,3 +136,5 @@ export type ComponentDefinition = {
   // biome-ignore lint/suspicious/noExplicitAny: dashboard config types are erased in the shared catalog
   dashboardWidget?: DashboardWidgetSpec<any>;
 };
+
+export type MdxComponentDefinition = ComponentDefinition & { mdx: MdxComponentSpec };

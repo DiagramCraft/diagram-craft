@@ -7,11 +7,7 @@ import {
   type ParserState
 } from '@diagram-craft/markdown';
 import { markdownEngine } from './markdownAstUtils';
-import {
-  getMdxSpec,
-  getMdxSpecsForSurface,
-  type MdxComponentName
-} from '../mdx-components/mdxRegistry';
+import { getMdxSpec, getMdxSpecsForSurface } from '../mdx-components/componentRegistry';
 
 const JSX_BLOCK_RE = /^\s*<([A-Z][A-Za-z0-9]*)(\s[^>]*)?\s*\/>\s*$/;
 const INLINE_JSX_RE = /<([A-Z][A-Za-z0-9]*)(\s[^>]*)?\s*\/>/g;
@@ -24,9 +20,14 @@ const SAFE_PROP_VALUE = /^[a-zA-Z0-9_\-.,()%\s]*$/;
 // This module's parsing pipeline is used only for wiki content, so components
 // that opt out of the 'wiki' surface (e.g. dashboard-only widgets) must never
 // be recognized here, regardless of their presence in the full registry.
-const WIKI_MDX_COMPONENTS = getMdxSpecsForSurface('wiki');
+let wikiMdxComponents: ReturnType<typeof getMdxSpecsForSurface> | undefined;
 
-const isKnownComponent = (name: string): name is MdxComponentName => name in WIKI_MDX_COMPONENTS;
+const getWikiMdxComponents = () => {
+  wikiMdxComponents ??= getMdxSpecsForSurface('wiki');
+  return wikiMdxComponents;
+};
+
+const isKnownComponent = (name: string): boolean => name in getWikiMdxComponents();
 
 /**
  * Strips the common leading whitespace the markdown serializer adds to a JSX
@@ -45,10 +46,7 @@ const dedent = (lines: string[]): string[] => {
   return lines.map(line => (line.trim() === '' ? line : line.slice(minIndent)));
 };
 
-const validateProps = (
-  name: MdxComponentName,
-  props: Record<string, string>
-): Record<string, string> => {
+const validateProps = (name: string, props: Record<string, string>): Record<string, string> => {
   const validated: Record<string, string> = {};
   const allowedProps = getMdxSpec(name).allowedProps;
   for (const [key, value] of Object.entries(props)) {
@@ -83,7 +81,7 @@ const parseJsxProps = (rawProps: string, parser: Parser): Record<string, string>
 const makeComponentNode = (
   parser: Parser,
   subtype: 'inline' | 'block',
-  name: MdxComponentName,
+  name: string,
   rawProps: string | undefined,
   source: string,
   children?: ASTNode[]

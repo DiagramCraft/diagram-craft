@@ -1,5 +1,25 @@
-import { MDX_COMPONENT_DEFINITIONS } from './mdxRegistry';
-import type { ComponentDefinition, DashboardWidgetSpec } from './types';
+import { diagramEmbedSpec } from './blocks/diagram-embed/DiagramEmbedRegistration';
+import { imageEmbedSpec } from './blocks/image-embed/ImageEmbedRegistration';
+import { entityBrowserEmbedSpec } from './blocks/entity-browser-embed/EntityBrowserEmbedRegistration';
+import { entityCardSpec } from './blocks/entity-card/EntityCardRegistration';
+import { entityChangelogSpec } from './blocks/entity-changelog/EntityChangelogRegistration';
+import { entityChartSpec } from './blocks/entity-chart/EntityChartRegistration';
+import { metricSpec } from './blocks/metric/MetricRegistration';
+import { entityTableSpec } from './blocks/entity-table/EntityTableRegistration';
+import { entityViewEmbedSpec } from './blocks/entity-view-embed/EntityViewEmbedRegistration';
+import { entityGraphSpec } from './blocks/entity-graph/EntityGraphRegistration';
+import { documentBrowserEmbedSpec } from './blocks/document-browser-embed/DocumentBrowserEmbedRegistration';
+import { entityFieldSpec } from './inlines/entity-field/EntityFieldRegistration';
+import { entityMentionSpec } from './inlines/entity-mention/EntityMentionRegistration';
+import { entityLinkSpec } from './inlines/entity-link/EntityLinkRegistration';
+import { labelSpec } from './inlines/label/LabelRegistration';
+import { captionSpec } from './blocks/caption/CaptionRegistration';
+import { calloutSpec } from './blocks/callout/CalloutRegistration';
+import { foldableSectionSpec } from './blocks/foldable-section/FoldableSectionRegistration';
+import { columnsSpec } from './blocks/columns/ColumnsRegistration';
+import { columnSpec } from './blocks/columns/ColumnRegistration';
+import { tabsSpec } from './blocks/tabs/TabsRegistration';
+import { tabSpec } from './blocks/tabs/TabRegistration';
 import { activityFeedSpec } from '../../dashboard/widgets/ActivityFeedWidget';
 import { aggregateStatSpec } from '../../dashboard/widgets/AggregateStatWidget';
 import { assessmentCountSpec } from '../../dashboard/widgets/AssessmentCountWidget';
@@ -24,7 +44,7 @@ import { relatedEntitiesListSpec } from '../../dashboard/widgets/RelatedEntities
 import { relationPairsCoverageSpec } from '../../dashboard/widgets/RelationPairsCoverageWidget';
 import { relationTableSpec } from '../../dashboard/widgets/RelationTableWidget';
 import { specItemsTableSpec } from '../../dashboard/widgets/SpecItemsTableWidget';
-import { tabsSpec } from '../../dashboard/widgets/TabsWidget';
+import { tabsSpec as dashboardTabsSpec } from '../../dashboard/widgets/TabsWidget';
 import { topEntitiesSpec } from '../../dashboard/widgets/TopEntitiesWidget';
 import { upcomingByDateSpec } from '../../dashboard/widgets/UpcomingByDateWidget';
 import { upcomingMilestonesSpec } from '../../dashboard/widgets/UpcomingMilestonesWidget';
@@ -44,6 +64,33 @@ import { riskMatrixSpec } from '../../../app/risk-compliance/sections/RiskMatrix
 import { entityLifecycleChartSpec } from './widgets/entity-lifecycle-chart/EntityLifecycleChartRegistration';
 import { entityActivityTrendChartSpec } from './widgets/entity-activity-trend-chart/EntityActivityTrendChartRegistration';
 import { entityStaleReportSpec } from './widgets/entity-stale-report/EntityStaleReportRegistration';
+import { registerComponentDefinitions } from './componentRegistry';
+import type { ComponentDefinition } from './types';
+
+const mdxDefinitions: ReadonlyArray<ComponentDefinition> = [
+  diagramEmbedSpec,
+  imageEmbedSpec,
+  entityBrowserEmbedSpec,
+  entityCardSpec,
+  entityChangelogSpec,
+  entityChartSpec,
+  metricSpec,
+  entityTableSpec,
+  entityViewEmbedSpec,
+  entityGraphSpec,
+  documentBrowserEmbedSpec,
+  entityFieldSpec,
+  entityMentionSpec,
+  entityLinkSpec,
+  labelSpec,
+  captionSpec,
+  calloutSpec,
+  foldableSectionSpec,
+  columnsSpec,
+  columnSpec,
+  tabsSpec,
+  tabSpec
+];
 
 const dashboardOnlyDefinitions: ReadonlyArray<ComponentDefinition> = [
   activityFeedSpec,
@@ -85,42 +132,11 @@ const dashboardOnlyDefinitions: ReadonlyArray<ComponentDefinition> = [
   reviewsOverdueSpec,
   riskMatrixSpec,
   specItemsTableSpec,
-  tabsSpec,
+  dashboardTabsSpec,
   topEntitiesSpec,
   upcomingByDateSpec,
   upcomingMilestonesSpec,
   wikiPageWidgetSpec
 ];
 
-/** The single catalog for component identity, category and available surfaces. */
-export const COMPONENT_DEFINITIONS: ReadonlyArray<ComponentDefinition> = [
-  ...Object.values(MDX_COMPONENT_DEFINITIONS),
-  ...dashboardOnlyDefinitions
-];
-
-const componentsByType = Object.fromEntries(
-  COMPONENT_DEFINITIONS.map(definition => [definition.type, definition])
-) as Record<string, ComponentDefinition>;
-
-export const getComponentDefinition = (type: string): ComponentDefinition | undefined =>
-  componentsByType[type];
-
-export const isKnownWidgetType = (type: string): boolean =>
-  !!componentsByType[type]?.surfaces.includes('dashboard') &&
-  !!componentsByType[type]?.dashboardWidget;
-
-export const getDashboardWidgetSpecs = (): Array<{
-  type: string;
-  category: ComponentDefinition['category'];
-  spec: DashboardWidgetSpec;
-}> =>
-  COMPONENT_DEFINITIONS.flatMap(definition =>
-    definition.surfaces.includes('dashboard') && definition.dashboardWidget
-      ? [{ type: definition.type, category: definition.category, spec: definition.dashboardWidget }]
-      : []
-  );
-
-export const getDashboardWidgetSpec = (type: string): DashboardWidgetSpec | undefined => {
-  const definition = getComponentDefinition(type);
-  return definition?.surfaces.includes('dashboard') ? definition.dashboardWidget : undefined;
-};
+registerComponentDefinitions([...mdxDefinitions, ...dashboardOnlyDefinitions]);

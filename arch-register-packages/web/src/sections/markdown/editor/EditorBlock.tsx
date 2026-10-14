@@ -6,7 +6,10 @@ import { deserializeMd, serializeMd } from '@platejs/markdown';
 import { TbChevronDown, TbChevronUp, TbGripVertical, TbTrash } from 'react-icons/tb';
 import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
-import { useMdxBlockRegistry } from './MdxBlockRegistryContext';
+import {
+  getMdxComponentDefinition,
+  getMdxComponentDefinitions
+} from '../mdx-components/componentRegistry';
 import { useCancellableTimeout } from '../../../hooks/useCancellableTimeout';
 import styles from './EditorBlock.module.css';
 
@@ -220,7 +223,7 @@ const BlockContextMenu = ({
   extraItems?: (onClose: () => void) => React.ReactNode;
 }) => {
   const editor = useEditorRef();
-  const mdxRegistry = useMdxBlockRegistry();
+  const mdxDefinitions = getMdxComponentDefinitions();
   const { schedule } = useCancellableTimeout();
 
   const currentIdx = () => {
@@ -231,12 +234,12 @@ const BlockContextMenu = ({
   const blockType = element.type as string;
   const isConvertible = CONVERTIBLE_TYPES.has(blockType);
 
-  const currentSpec = mdxRegistry[blockType];
+  const currentSpec = getMdxComponentDefinition(blockType)?.mdx;
   const isWrapperBlock = !!currentSpec?.acceptsChildren;
   const isNonWrapperMdxBlock =
     !!currentSpec && currentSpec.mode === 'block' && !currentSpec.acceptsChildren;
-  const wrapperOptions = Object.entries(mdxRegistry).flatMap(([type, spec]) =>
-    spec?.acceptsChildren ? [{ type, label: spec.editorSpec?.slashCommand?.label ?? type }] : []
+  const wrapperOptions = mdxDefinitions.flatMap(({ type, mdx }) =>
+    mdx.acceptsChildren ? [{ type, label: mdx.editorSpec?.slashCommand?.label ?? type }] : []
   );
 
   const handleRemove = () => {
@@ -327,7 +330,7 @@ const BlockContextMenu = ({
   const handleWrapWith = (wrapperType: string) => {
     const idx = currentIdx();
     if (idx !== null) {
-      const wrapperSpec = mdxRegistry[wrapperType];
+      const wrapperSpec = getMdxComponentDefinition(wrapperType)?.mdx;
       const createWrapper =
         wrapperSpec?.editorSpec?.createWrapper ??
         ((child: TElement) => ({ type: wrapperType, children: [child] }));

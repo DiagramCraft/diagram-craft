@@ -1,7 +1,8 @@
+import '../markdown/mdx-components/componentRegistrations';
 import {
   getDashboardWidgetSpec as getCatalogDashboardWidgetSpec,
   getDashboardWidgetSpecs as getCatalogDashboardWidgetSpecs
-} from '../markdown/mdx-components/componentCatalog';
+} from '../markdown/mdx-components/componentRegistry';
 import { registerNestedWidgetResolvers } from './widgets/nestedWidgets';
 
 export const getDashboardWidgetSpecs = getCatalogDashboardWidgetSpecs;

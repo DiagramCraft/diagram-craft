@@ -9,7 +9,7 @@ import { NodeIdPlugin, type TElement } from 'platejs';
 import { createPlatePlugin } from 'platejs/react';
 import type { PlateElementProps } from 'platejs/react';
 import type { EditorSpec } from '../mdx-components/types';
-import { MDX_COMPONENTS } from '../mdx-components/mdxRegistry';
+import { getMdxComponentDefinitions } from '../mdx-components/componentRegistry';
 import { CaptionNormalizePlugin } from '../mdx-components/blocks/caption/CaptionEditable';
 import { ColumnsNormalizePlugin } from '../mdx-components/blocks/columns/ColumnsEditable';
 import { TabsNormalizePlugin } from '../mdx-components/blocks/tabs/TabsEditable';
@@ -40,6 +40,7 @@ import {
 import { SlashInputElement } from './PlateMarkdownEditorSlashCommands';
 
 const HEADING_TYPES = new Set(['h1', 'h2', 'h3']);
+const mdxDefinitions = getMdxComponentDefinitions();
 
 export const HeadingBreakPlugin = createPlatePlugin({
   key: 'heading-break',
@@ -71,14 +72,14 @@ export const HeadingBreakPlugin = createPlatePlugin({
 });
 
 export const mdxRules: MdRules = Object.fromEntries(
-  Object.entries(MDX_COMPONENTS).flatMap(([name, spec]) =>
-    spec?.editorSpec?.mdxRule ? [[name, spec.editorSpec.mdxRule] as const] : []
+  mdxDefinitions.flatMap(({ type, mdx }) =>
+    mdx.editorSpec?.mdxRule ? [[type, mdx.editorSpec.mdxRule] as const] : []
   )
 );
 
 /**
  * The registry intentionally erases each component's Slate element type so it
- * can expose one homogeneous map. Adapt that erased component once at the
+ * can expose one homogeneous list. Adapt that erased component once at the
  * Plate boundary instead of spreading `any` casts across plugin assembly.
  */
 const toPlateElementComponent =
@@ -92,9 +93,9 @@ const createMdxElementPlugin = (name: string, editorSpec: EditorSpec) =>
     node: { isElement: true, ...editorSpec.nodeOptions }
   }).withComponent(toPlateElementComponent(editorSpec.editableComponent));
 
-const mdxElementPlugins = Object.entries(MDX_COMPONENTS).flatMap(([name, spec]) => {
-  if (!spec?.editorSpec) return [];
-  return [createMdxElementPlugin(name, spec.editorSpec)];
+const mdxElementPlugins = mdxDefinitions.flatMap(({ type, mdx }) => {
+  if (!mdx.editorSpec) return [];
+  return [createMdxElementPlugin(type, mdx.editorSpec)];
 });
 
 export const editorPlugins = [

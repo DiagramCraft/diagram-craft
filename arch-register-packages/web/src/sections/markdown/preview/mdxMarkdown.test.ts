@@ -4,8 +4,8 @@ import { normalizeEntityGraphProps } from '../mdx-components/blocks/entity-graph
 
 // Stub the component registry so this test only exercises the parser grammar,
 // independent of each component's own (heavy) implementation modules.
-vi.mock('../mdx-components/mdxRegistry', () => {
-  const MDX_COMPONENTS: Record<
+vi.mock('../mdx-components/componentRegistry', () => {
+  const mdxSpecs: Record<
     string,
     {
       mode: string;
@@ -29,11 +29,10 @@ vi.mock('../mdx-components/mdxRegistry', () => {
     EntityLifecycleChart: { mode: 'block', allowedProps: [], surfaces: ['dashboard'] }
   };
   return {
-    MDX_COMPONENTS,
-    getMdxSpec: (name: string) => MDX_COMPONENTS[name as keyof typeof MDX_COMPONENTS],
+    getMdxSpec: (name: string) => mdxSpecs[name],
     getMdxSpecsForSurface: (surface: 'wiki' | 'dashboard') =>
       Object.fromEntries(
-        Object.entries(MDX_COMPONENTS).filter(([, spec]) =>
+        Object.entries(mdxSpecs).filter(([, spec]) =>
           surface === 'wiki'
             ? spec.surfaces === undefined || spec.surfaces.includes('wiki')
             : !!spec.surfaces?.includes('dashboard')

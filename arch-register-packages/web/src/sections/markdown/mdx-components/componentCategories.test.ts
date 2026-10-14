@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
+import './componentRegistrations';
 import { getDashboardWidgetSpecs } from '../../dashboard/dashboardWidgetRegistry';
 import {
   MDX_SLASH_COMMANDS,
   BUILTIN_SLASH_COMMANDS,
   SLASH_COMMANDS
 } from '../editor/PlateMarkdownEditorSlashCommands';
-import { COMPONENT_DEFINITIONS } from './componentCatalog';
-import { getMdxSpecsForSurface } from './mdxRegistry';
+import { getComponentDefinitions, getMdxSpecsForSurface } from './componentRegistry';
 import {
   COMPONENT_CATEGORIES,
   groupByCategory,
@@ -18,10 +18,9 @@ const categoryIds = new Set(COMPONENT_CATEGORIES.map(category => category.id));
 
 describe('component catalog', () => {
   it('has a valid category and unique type for every component definition', () => {
-    expect(COMPONENT_DEFINITIONS.every(definition => categoryIds.has(definition.category))).toBe(
-      true
-    );
-    const types = COMPONENT_DEFINITIONS.map(definition => definition.type);
+    const definitions = getComponentDefinitions();
+    expect(definitions.every(definition => categoryIds.has(definition.category))).toBe(true);
+    const types = definitions.map(definition => definition.type);
     expect(new Set(types).size).toBe(types.length);
   });
 

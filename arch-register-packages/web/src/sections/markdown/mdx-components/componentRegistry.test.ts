@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { getDashboardWidgetSpec, getDashboardWidgetSpecs } from './componentCatalog';
-import { getMdxSpecsForSurface, MDX_COMPONENTS } from './mdxRegistry';
+import './componentRegistrations';
+import {
+  getDashboardWidgetSpec,
+  getDashboardWidgetSpecs,
+  getMdxComponentDefinitions,
+  getMdxSpecsForSurface
+} from './componentRegistry';
 
 describe('getMdxSpecsForSurface', () => {
   it('includes wiki-eligible components (surfaces unset or including "wiki") for "wiki"', () => {
@@ -48,10 +53,10 @@ describe('getMdxSpecsForSurface', () => {
 
   it('never returns more entries than the full registry', () => {
     expect(Object.keys(getMdxSpecsForSurface('wiki')).length).toBeLessThanOrEqual(
-      Object.keys(MDX_COMPONENTS).length
+      getMdxComponentDefinitions().length
     );
     expect(Object.keys(getMdxSpecsForSurface('dashboard')).length).toBeLessThanOrEqual(
-      Object.keys(MDX_COMPONENTS).length
+      getMdxComponentDefinitions().length
     );
   });
 });
