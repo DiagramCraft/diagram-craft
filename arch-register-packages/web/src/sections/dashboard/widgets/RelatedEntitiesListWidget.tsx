@@ -96,12 +96,11 @@ export const RelatedEntitiesListWidget = ({
   config: RelatedEntitiesListWidgetConfig;
 }) => {
   const { workspaceSlug, schemas } = useWorkspaceContext();
-  const complete = relatedEntitiesListWidgetConfigSchema.safeParse(config).success;
   const unresolved = isUnresolved(config.entityId);
 
   const schema = schemas.find(candidate => candidate.name === config.schemaName);
   const viaSchema = schemas.find(candidate => candidate.name === config.viaSchemaName);
-  const enabled = !!workspaceSlug && complete && !unresolved;
+  const enabled = !!workspaceSlug && !unresolved;
 
   const target = useEntity(workspaceSlug, config.entityId ?? '', enabled);
   const listed = useEntities(
@@ -134,7 +133,7 @@ export const RelatedEntitiesListWidget = ({
     config.viaReferenceField
   ]);
 
-  if (!complete || (!schema && schemas.length > 0)) {
+  if (!schema && schemas.length > 0) {
     return (
       <div className={`${rowStyles.emptyInline} dim`}>This widget is not fully configured.</div>
     );

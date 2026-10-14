@@ -34,8 +34,7 @@ type Props = {
 export const RatioBarListWidget = ({ config }: Props) => {
   const { workspaceSlug, schemas } = useWorkspaceContext();
   const schema = schemas.find(candidate => candidate.name === config.schemaName);
-  const enabled =
-    !!workspaceSlug && !!schema && ratioBarListWidgetConfigSchema.safeParse(config).success;
+  const enabled = !!workspaceSlug && !!schema;
 
   const { data: entities = [], isLoading } = useEntities(
     workspaceSlug,
@@ -53,10 +52,7 @@ export const RatioBarListWidget = ({ config }: Props) => {
     [entities, schema, config.groupByFieldId, config.numeratorFieldId, config.numeratorValue]
   );
 
-  if (
-    !ratioBarListWidgetConfigSchema.safeParse(config).success ||
-    (!schema && schemas.length > 0)
-  ) {
+  if (!schema && schemas.length > 0) {
     return <div className={`${styles.emptyInline} dim`}>This widget is not fully configured.</div>;
   }
   if (isLoading) {

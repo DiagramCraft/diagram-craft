@@ -69,8 +69,7 @@ export const DateRangeTimelineWidget = ({ config }: Props) => {
   const { workspaceSlug } = useWorkspaceContext();
   const { openEntityDrawer } = useEntityDrawer();
   const dateTimeFormatPreference = useDateTimeFormatPreference();
-  const complete = dateRangeTimelineWidgetConfigSchema.safeParse(config).success;
-  const { data, isLoading } = useWidgetRecords(workspaceSlug, complete ? config : {});
+  const { data, isLoading } = useWidgetRecords(workspaceSlug, config);
   const today = useMemo(() => new Date(), []);
 
   const records = useMemo(() => data?.entities ?? [], [data]);
@@ -92,11 +91,6 @@ export const DateRangeTimelineWidget = ({ config }: Props) => {
   const dates = useMemo(() => positioned.flatMap(({ start, end }) => [start, end]), [positioned]);
   const timeline = useSnapshotTimeline({ dates, zoom: 'year', columnWidths: COLUMN_WIDTHS, today });
 
-  if (!complete) {
-    return (
-      <div className={`${rowStyles.emptyInline} dim`}>This widget is not fully configured.</div>
-    );
-  }
   if (isLoading) return <div className={`${rowStyles.emptyInline} dim`}>Loading…</div>;
   if (data?.ok === false) {
     return <div className={`${rowStyles.emptyInline} dim`}>This widget's query is not valid.</div>;

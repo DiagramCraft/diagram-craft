@@ -30,8 +30,7 @@ type Props = {
 export const CountByFieldWidget = ({ config }: Props) => {
   const { workspaceSlug, schemas } = useWorkspaceContext();
   const schema = schemas.find(candidate => candidate.name === config.schemaName);
-  const enabled =
-    !!workspaceSlug && !!schema && countByFieldWidgetConfigSchema.safeParse(config).success;
+  const enabled = !!workspaceSlug && !!schema;
 
   const { data: entities = [], isLoading } = useEntities(
     workspaceSlug,
@@ -44,10 +43,7 @@ export const CountByFieldWidget = ({ config }: Props) => {
     [entities, schema, config.fieldId]
   );
 
-  if (
-    !countByFieldWidgetConfigSchema.safeParse(config).success ||
-    (!schema && schemas.length > 0)
-  ) {
+  if (!schema && schemas.length > 0) {
     return (
       <div className={`${rowStyles.emptyInline} dim`}>This widget is not fully configured.</div>
     );

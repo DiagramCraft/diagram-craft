@@ -48,8 +48,7 @@ type Props = { config: UpcomingByDateWidgetConfig };
 export const UpcomingByDateWidget = ({ config }: Props) => {
   const { workspaceSlug, schemas } = useWorkspaceContext();
   const { openEntityDrawer } = useEntityDrawer();
-  const complete = upcomingByDateWidgetConfigSchema.safeParse(config).success;
-  const { data, isLoading } = useQueryTextEntities(workspaceSlug, config.query, complete);
+  const { data, isLoading } = useQueryTextEntities(workspaceSlug, config.query);
 
   const rows = useMemo(
     () =>
@@ -86,11 +85,6 @@ export const UpcomingByDateWidget = ({ config }: Props) => {
   );
   const referenced = useEntitiesByIds(workspaceSlug, referencedIds);
 
-  if (!complete) {
-    return (
-      <div className={`${rowStyles.emptyInline} dim`}>This widget is not fully configured.</div>
-    );
-  }
   if (isLoading) return <div className={`${rowStyles.emptyInline} dim`}>Loading…</div>;
   if (data?.ok === false) {
     return <div className={`${rowStyles.emptyInline} dim`}>This widget's query is not valid.</div>;

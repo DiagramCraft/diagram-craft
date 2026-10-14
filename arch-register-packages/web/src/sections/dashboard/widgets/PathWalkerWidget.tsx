@@ -11,7 +11,7 @@ import { pathStepKey } from '../../entities/components/pathBuilder/pathBuilderSt
 import { hopDirectionGlyph } from '../../entities/components/pathWalkerViewState';
 import { findRootSchema, hopChainOptions, resolveWalkerHops } from './pathWalkerWidgetLogic';
 import configFormStyles from '../WidgetConfigDialog.module.css';
-import { pathWalkerWidgetConfigSchema, type PathWalkerWidgetConfig } from './pathWalkerWidgetLogic';
+import type { PathWalkerWidgetConfig } from './pathWalkerWidgetLogic';
 
 const FETCH_LIMIT = 1000;
 
@@ -24,13 +24,12 @@ const FETCH_LIMIT = 1000;
 export const PathWalkerWidget = ({ config }: { config: PathWalkerWidgetConfig }) => {
   const { workspaceSlug, schemas, relationSchemas } = useWorkspaceContext();
   const { openEntityDrawer } = useEntityDrawer();
-  const complete = pathWalkerWidgetConfigSchema.safeParse(config).success;
   const rootSchema = findRootSchema(config, schemas);
 
   const roots = useEntities(
     workspaceSlug,
     { schemaId: rootSchema?.id, view: 'summary', limit: FETCH_LIMIT },
-    { enabled: !!workspaceSlug && complete && !!rootSchema }
+    { enabled: !!workspaceSlug && !!rootSchema }
   );
 
   const walkerConfig = useMemo(
@@ -38,7 +37,7 @@ export const PathWalkerWidget = ({ config }: { config: PathWalkerWidgetConfig })
     [config, relationSchemas]
   );
 
-  if (!complete || (!rootSchema && schemas.length > 0)) {
+  if (!rootSchema && schemas.length > 0) {
     return <div className={`${styles.message} dim`}>This widget is not fully configured.</div>;
   }
 

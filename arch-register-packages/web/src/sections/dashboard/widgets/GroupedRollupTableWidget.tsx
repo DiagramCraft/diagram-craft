@@ -49,8 +49,7 @@ type Props = { config: GroupedRollupTableWidgetConfig };
 export const GroupedRollupTableWidget = ({ config }: Props) => {
   const { workspaceSlug, schemas } = useWorkspaceContext();
   const { openEntityDrawer } = useEntityDrawer();
-  const complete = groupedRollupTableWidgetConfigSchema.safeParse(config).success;
-  const { data, isLoading } = useWidgetRecords(workspaceSlug, complete ? config : {});
+  const { data, isLoading } = useWidgetRecords(workspaceSlug, config);
 
   const result = useMemo(() => {
     const records = data?.entities ?? [];
@@ -71,11 +70,6 @@ export const GroupedRollupTableWidget = ({ config }: Props) => {
     });
   }, [data, schemas, config.groupFieldId, config.valueFieldId]);
 
-  if (!complete) {
-    return (
-      <div className={`${rowStyles.emptyInline} dim`}>This widget is not fully configured.</div>
-    );
-  }
   if (isLoading) return <div className={`${rowStyles.emptyInline} dim`}>Loading…</div>;
   if (data?.ok === false) {
     return <div className={`${rowStyles.emptyInline} dim`}>This widget's query is not valid.</div>;

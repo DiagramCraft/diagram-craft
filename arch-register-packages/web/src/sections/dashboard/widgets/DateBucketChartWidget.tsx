@@ -34,8 +34,7 @@ type Props = { config: DateBucketChartWidgetConfig };
 
 const useDateBuckets = (config: DateBucketChartWidgetConfig) => {
   const { workspaceSlug } = useWorkspaceContext();
-  const complete = dateBucketChartWidgetConfigSchema.safeParse(config).success;
-  const { data, isLoading } = useQueryTextEntities(workspaceSlug, config.query, complete);
+  const { data, isLoading } = useQueryTextEntities(workspaceSlug, config.query);
   const buckets = useMemo(
     () =>
       buildDateBuckets(data?.entities ?? [], {
@@ -47,26 +46,21 @@ const useDateBuckets = (config: DateBucketChartWidgetConfig) => {
       }),
     [data, config]
   );
-  return { complete, isLoading, valid: data?.ok !== false, buckets };
+  return { isLoading, valid: data?.ok !== false, buckets };
 };
 
 /** Frame-header count of the records that fall inside the charted range. */
 export const DateBucketChartHeaderActions = ({ config }: Props) => {
-  const { buckets, isLoading, complete, valid } = useDateBuckets(config);
-  if (!complete || !valid || isLoading) return null;
+  const { buckets, isLoading, valid } = useDateBuckets(config);
+  if (!valid || isLoading) return null;
   const total = buckets.reduce((sum, bucket) => sum + bucket.count, 0);
   return <span className="dim mono">{total} in range</span>;
 };
 
 /** Month-bucketed bar chart of a date field: record counts or a summed measure per month. */
 export const DateBucketChartWidget = ({ config }: Props) => {
-  const { complete, isLoading, valid, buckets } = useDateBuckets(config);
+  const { isLoading, valid, buckets } = useDateBuckets(config);
 
-  if (!complete) {
-    return (
-      <div className={`${rowStyles.emptyInline} dim`}>This widget is not fully configured.</div>
-    );
-  }
   if (isLoading) return <div className={`${rowStyles.emptyInline} dim`}>Loading…</div>;
   if (!valid) {
     return <div className={`${rowStyles.emptyInline} dim`}>This widget's query is not valid.</div>;

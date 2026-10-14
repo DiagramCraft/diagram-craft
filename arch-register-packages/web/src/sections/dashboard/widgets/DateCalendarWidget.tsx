@@ -58,8 +58,7 @@ type Props = { config: DateCalendarWidgetConfig };
 export const DateCalendarWidget = ({ config }: Props) => {
   const { workspaceSlug } = useWorkspaceContext();
   const { openEntityDrawer } = useEntityDrawer();
-  const complete = dateCalendarWidgetConfigSchema.safeParse(config).success;
-  const { data, isLoading } = useWidgetRecords(workspaceSlug, complete ? config : {});
+  const { data, isLoading } = useWidgetRecords(workspaceSlug, config);
   const today = useMemo(() => new Date(), []);
   const period = config.period ?? 'month';
   const monthly = period === 'month';
@@ -78,11 +77,6 @@ export const DateCalendarWidget = ({ config }: Props) => {
   );
   const sublabelOf = useRecordSublabels(records, config.sublabelFieldId);
 
-  if (!complete) {
-    return (
-      <div className={`${rowStyles.emptyInline} dim`}>This widget is not fully configured.</div>
-    );
-  }
   if (isLoading) return <div className={`${rowStyles.emptyInline} dim`}>Loading…</div>;
   if (data?.ok === false) {
     return <div className={`${rowStyles.emptyInline} dim`}>This widget's query is not valid.</div>;
