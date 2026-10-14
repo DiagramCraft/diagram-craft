@@ -52,8 +52,12 @@ import { wikiPageWidgetSpec } from '../../dashboard/widgets/WikiPageWidget';
 import { apiCatalogAtRiskSpec } from '../../../app/api-integration-catalog/widgets/ApiCatalogAtRiskWidget';
 import { apiCatalogImpactSpec } from '../../../app/api-integration-catalog/widgets/ApiCatalogImpactWidget';
 import { apiCatalogMostConsumedSpec } from '../../../app/api-integration-catalog/widgets/ApiCatalogMostConsumedWidget';
-import { apiCatalogNeedsAttentionCountSpec } from '../../../app/api-integration-catalog/widgets/ApiCatalogNeedsAttentionCountWidget';
-import { apiCatalogNeedsAttentionSpec } from '../../../app/api-integration-catalog/widgets/ApiCatalogNeedsAttentionWidget';
+import {
+  apiCatalogNeedsAttentionCountSpec
+} from '../../../app/api-integration-catalog/widgets/ApiCatalogNeedsAttentionCountWidget';
+import {
+  apiCatalogNeedsAttentionSpec
+} from '../../../app/api-integration-catalog/widgets/ApiCatalogNeedsAttentionWidget';
 import { apiCatalogPairGapsSpec } from '../../../app/api-integration-catalog/widgets/ApiCatalogPairGapsWidget';
 import { apiCatalogStatsSpec } from '../../../app/api-integration-catalog/widgets/ApiCatalogStatsWidget';
 import { caseCalendarSpec } from '../../../app/data-stewardship/widgets/CaseCalendarWidget';
@@ -62,12 +66,13 @@ import { caseQueueSpec } from '../../../app/data-stewardship/widgets/CaseQueueWi
 import { reviewsOverdueSpec } from '../../../app/data-stewardship/widgets/ReviewsOverdueWidget';
 import { riskMatrixSpec } from '../../../app/risk-compliance/sections/RiskMatrixWidget';
 import { entityLifecycleChartSpec } from './widgets/entity-lifecycle-chart/EntityLifecycleChartRegistration';
-import { entityActivityTrendChartSpec } from './widgets/entity-activity-trend-chart/EntityActivityTrendChartRegistration';
+import {
+  entityActivityTrendChartSpec
+} from './widgets/entity-activity-trend-chart/EntityActivityTrendChartRegistration';
 import { entityStaleReportSpec } from './widgets/entity-stale-report/EntityStaleReportRegistration';
 import { registerComponentDefinitions } from './componentRegistry';
-import type { ComponentDefinition } from './types';
 
-const mdxDefinitions: ReadonlyArray<ComponentDefinition> = [
+registerComponentDefinitions([
   diagramEmbedSpec,
   imageEmbedSpec,
   entityBrowserEmbedSpec,
@@ -89,10 +94,7 @@ const mdxDefinitions: ReadonlyArray<ComponentDefinition> = [
   columnsSpec,
   columnSpec,
   tabsSpec,
-  tabSpec
-];
-
-const dashboardOnlyDefinitions: ReadonlyArray<ComponentDefinition> = [
+  tabSpec,
   activityFeedSpec,
   aggregateStatSpec,
   apiCatalogAtRiskSpec,
@@ -137,6 +139,4 @@ const dashboardOnlyDefinitions: ReadonlyArray<ComponentDefinition> = [
   upcomingByDateSpec,
   upcomingMilestonesSpec,
   wikiPageWidgetSpec
-];
-
-registerComponentDefinitions([...mdxDefinitions, ...dashboardOnlyDefinitions]);
+]);
