@@ -1,7 +1,5 @@
 import { PlateElement, type PlateElementProps } from 'platejs/react';
-import { getPluginType } from 'platejs';
-import { parseAttributes, propsToAttributes } from '@platejs/markdown';
-import type { MdxRuleDef } from '../../types';
+import { defineLeafMdxRule } from '../../leafMdxRule';
 import { EntityField } from './EntityField';
 import { EntityFieldDialog } from './EntityFieldDialog';
 import { BaseInlineEditable } from '../BaseInlineEditable';
@@ -9,30 +7,16 @@ import type { EntityFieldSlateElement } from './types';
 
 export const ENTITY_FIELD_TYPE = 'EntityField' as const;
 
-const stringProp = (value: unknown) => (value == null ? '' : String(value));
-
 // ── MDX serialization rule ────────────────────────────────────────────────────
 
-export const entityFieldMdxRule: MdxRuleDef<EntityFieldSlateElement, 'inline'> = {
-  deserialize: (mdastNode, _deco, options) => {
-    const attrs = parseAttributes(mdastNode.attributes ?? []) as Record<string, unknown>;
-    return {
-      children: [{ text: '' }],
-      type: getPluginType(options.editor!, ENTITY_FIELD_TYPE),
-      entityId: stringProp(attrs['id']),
-      field: stringProp(attrs['field'])
-    };
-  },
-  serialize: slateNode => ({
-    attributes: propsToAttributes({
-      id: slateNode.entityId ?? '',
-      field: slateNode.field ?? ''
-    }),
-    children: [],
-    name: ENTITY_FIELD_TYPE,
-    type: 'mdxJsxTextElement'
-  })
-};
+export const entityFieldMdxRule = defineLeafMdxRule<EntityFieldSlateElement, 'inline'>({
+  name: ENTITY_FIELD_TYPE,
+  mode: 'inline',
+  fields: [
+    { key: 'entityId', attr: 'id', required: true },
+    { key: 'field', required: true }
+  ]
+});
 
 // ── Plate element ─────────────────────────────────────────────────────────────
 

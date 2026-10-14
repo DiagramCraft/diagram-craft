@@ -1,7 +1,5 @@
 import { type PlateElementProps } from 'platejs/react';
-import { getPluginType } from 'platejs';
-import { parseAttributes, propsToAttributes } from '@platejs/markdown';
-import type { MdxRuleDef } from '../../types';
+import { defineLeafMdxRule } from '../../leafMdxRule';
 import { BaseBlockEditable } from '../BaseBlockEditable';
 import { MdxWidgetConfigDialog, type MdxConfigSpec } from '../MdxWidgetConfigDialog';
 import { MdxComponentPreview } from '../../MdxComponentPreview';
@@ -9,30 +7,13 @@ import type { EntityCardSlateElement, EntityCardWidgetConfig } from './types';
 
 export const ENTITY_CARD_TYPE = 'EntityCard' as const;
 
-const stringProp = (value: unknown) => (value == null ? '' : String(value));
-
 // ── MDX serialization rule (consumed by PlateMarkdownEditor) ─────────────────
 
-export const entityCardMdxRule: MdxRuleDef<EntityCardSlateElement, 'block'> = {
-  deserialize: (mdastNode, _deco, options) => {
-    const attrs = parseAttributes(mdastNode.attributes ?? []) as Record<string, unknown>;
-    return {
-      children: [{ text: '' }],
-      type: getPluginType(options.editor!, ENTITY_CARD_TYPE),
-      entityId: stringProp(attrs['id']),
-      fields: stringProp(attrs['fields'])
-    };
-  },
-  serialize: slateNode => ({
-    attributes: propsToAttributes({
-      id: slateNode.entityId ?? '',
-      ...(slateNode.fields ? { fields: slateNode.fields } : {})
-    }),
-    children: [],
-    name: ENTITY_CARD_TYPE,
-    type: 'mdxJsxFlowElement'
-  })
-};
+export const entityCardMdxRule = defineLeafMdxRule<EntityCardSlateElement, 'block'>({
+  name: ENTITY_CARD_TYPE,
+  mode: 'block',
+  fields: [{ key: 'entityId', attr: 'id', required: true }, { key: 'fields' }]
+});
 
 // ── Config editing ────────────────────────────────────────────────────────────
 

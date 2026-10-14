@@ -1,6 +1,7 @@
 import { type PlateElementProps } from 'platejs/react';
 import { getPluginType } from 'platejs';
 import { parseAttributes, propsToAttributes } from '@platejs/markdown';
+import { readStringAttr } from '../../leafMdxRule';
 import type { MdxRuleDef } from '../../types';
 import { BaseBlockEditable } from '../BaseBlockEditable';
 import { MdxWidgetConfigDialog, type MdxConfigSpec } from '../MdxWidgetConfigDialog';
@@ -9,23 +10,18 @@ import type { MetricSlateElement, StatMetricWidgetConfig } from './types';
 
 export const METRIC_TYPE = 'Metric' as const;
 
-const readAttr = (attrs: Record<string, unknown>, key: string) => {
-  const value = attrs[key];
-  return value == null ? '' : String(value);
-};
-
 export const metricMdxRule: MdxRuleDef<MetricSlateElement, 'block'> = {
   deserialize: (mdastNode, _deco, options) => {
     const attrs = parseAttributes(mdastNode.attributes ?? []) as Record<string, unknown>;
-    const metricType = readAttr(attrs, 'metricType');
-    const showLink = readAttr(attrs, 'showLink');
+    const metricType = readStringAttr(attrs, 'metricType');
+    const showLink = readStringAttr(attrs, 'showLink');
     return {
       children: [{ text: '' }],
       type: getPluginType(options.editor!, METRIC_TYPE),
-      schema: readAttr(attrs, 'schema'),
-      owner: readAttr(attrs, 'owner'),
-      lifecycle: readAttr(attrs, 'lifecycle'),
-      label: readAttr(attrs, 'label'),
+      schema: readStringAttr(attrs, 'schema'),
+      owner: readStringAttr(attrs, 'owner'),
+      lifecycle: readStringAttr(attrs, 'lifecycle'),
+      label: readStringAttr(attrs, 'label'),
       ...(metricType ? { metricType: metricType as MetricSlateElement['metricType'] } : {}),
       ...(showLink !== '' ? { showLink: showLink !== 'false' } : {})
     };

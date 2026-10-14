@@ -1,7 +1,5 @@
 import { type PlateElementProps } from 'platejs/react';
-import { getPluginType } from 'platejs';
-import { parseAttributes, propsToAttributes } from '@platejs/markdown';
-import type { MdxRuleDef } from '../../types';
+import { defineLeafMdxRule } from '../../leafMdxRule';
 import { BaseBlockEditable } from '../BaseBlockEditable';
 import { MdxComponentPreview } from '../../MdxComponentPreview';
 import { DiagramEmbedDialog } from './DiagramEmbedDialog';
@@ -9,28 +7,11 @@ import type { DiagramEmbedSlateElement } from './types';
 
 export const DIAGRAM_EMBED_TYPE = 'DiagramEmbed' as const;
 
-const stringProp = (value: unknown) => (value == null ? '' : String(value));
-
-export const diagramEmbedMdxRule: MdxRuleDef<DiagramEmbedSlateElement, 'block'> = {
-  deserialize: (mdastNode, _deco, options) => {
-    const attrs = parseAttributes(mdastNode.attributes ?? []) as Record<string, unknown>;
-    return {
-      children: [{ text: '' }],
-      type: getPluginType(options.editor!, DIAGRAM_EMBED_TYPE),
-      fileId: stringProp(attrs['id']),
-      caption: stringProp(attrs['caption'])
-    };
-  },
-  serialize: slateNode => ({
-    attributes: propsToAttributes({
-      id: slateNode.fileId ?? '',
-      ...(slateNode.caption ? { caption: slateNode.caption } : {})
-    }),
-    children: [],
-    name: DIAGRAM_EMBED_TYPE,
-    type: 'mdxJsxFlowElement'
-  })
-};
+export const diagramEmbedMdxRule = defineLeafMdxRule<DiagramEmbedSlateElement, 'block'>({
+  name: DIAGRAM_EMBED_TYPE,
+  mode: 'block',
+  fields: [{ key: 'fileId', attr: 'id', required: true }, { key: 'caption' }]
+});
 
 export const DiagramEmbedEditable = ({
   element,

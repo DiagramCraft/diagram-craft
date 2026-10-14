@@ -1,7 +1,5 @@
 import { PlateElement, type PlateElementProps } from 'platejs/react';
-import { getPluginType } from 'platejs';
-import { parseAttributes, propsToAttributes } from '@platejs/markdown';
-import type { MdxRuleDef } from '../../types';
+import { defineLeafMdxRule } from '../../leafMdxRule';
 import { EntityLink } from './EntityLink';
 import { EntityLinkDialog } from './EntityLinkDialog';
 import { BaseInlineEditable } from '../BaseInlineEditable';
@@ -9,28 +7,13 @@ import type { EntityLinkSlateElement } from './types';
 
 export const ENTITY_LINK_TYPE = 'EntityLink' as const;
 
-const stringProp = (value: unknown) => (value == null ? '' : String(value));
-
 // ── MDX serialization rule ────────────────────────────────────────────────────
 
-export const entityLinkMdxRule: MdxRuleDef<EntityLinkSlateElement, 'inline'> = {
-  deserialize: (mdastNode, _deco, options) => {
-    const attrs = parseAttributes(mdastNode.attributes ?? []) as Record<string, unknown>;
-    return {
-      children: [{ text: '' }],
-      type: getPluginType(options.editor!, ENTITY_LINK_TYPE),
-      entityId: stringProp(attrs['id'])
-    };
-  },
-  serialize: slateNode => ({
-    attributes: propsToAttributes({
-      id: slateNode.entityId ?? ''
-    }),
-    children: [],
-    name: ENTITY_LINK_TYPE,
-    type: 'mdxJsxTextElement'
-  })
-};
+export const entityLinkMdxRule = defineLeafMdxRule<EntityLinkSlateElement, 'inline'>({
+  name: ENTITY_LINK_TYPE,
+  mode: 'inline',
+  fields: [{ key: 'entityId', attr: 'id', required: true }]
+});
 
 // ── Plate element ─────────────────────────────────────────────────────────────
 

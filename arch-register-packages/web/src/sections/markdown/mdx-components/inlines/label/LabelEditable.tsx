@@ -1,7 +1,5 @@
 import { PlateElement, type PlateElementProps } from 'platejs/react';
-import { getPluginType } from 'platejs';
-import { parseAttributes, propsToAttributes } from '@platejs/markdown';
-import type { MdxRuleDef } from '../../types';
+import { defineLeafMdxRule } from '../../leafMdxRule';
 import { Label } from './Label';
 import { LabelDialog } from './LabelDialog';
 import { BaseInlineEditable } from '../BaseInlineEditable';
@@ -9,30 +7,16 @@ import type { LabelSlateElement } from './types';
 
 export const LABEL_TYPE = 'Label' as const;
 
-const stringProp = (value: unknown) => (value == null ? '' : String(value));
-
 // ── MDX serialization rule ────────────────────────────────────────────────────
 
-export const labelMdxRule: MdxRuleDef<LabelSlateElement, 'inline'> = {
-  deserialize: (mdastNode, _deco, options) => {
-    const attrs = parseAttributes(mdastNode.attributes ?? []) as Record<string, unknown>;
-    return {
-      children: [{ text: '' }],
-      type: getPluginType(options.editor!, LABEL_TYPE),
-      content: stringProp(attrs['text']),
-      color: stringProp(attrs['color'])
-    };
-  },
-  serialize: slateNode => ({
-    attributes: propsToAttributes({
-      text: slateNode.content ?? '',
-      color: slateNode.color ?? ''
-    }),
-    children: [],
-    name: LABEL_TYPE,
-    type: 'mdxJsxTextElement'
-  })
-};
+export const labelMdxRule = defineLeafMdxRule<LabelSlateElement, 'inline'>({
+  name: LABEL_TYPE,
+  mode: 'inline',
+  fields: [
+    { key: 'content', attr: 'text', required: true },
+    { key: 'color', required: true }
+  ]
+});
 
 // ── Plate element ─────────────────────────────────────────────────────────────
 

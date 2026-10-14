@@ -1,7 +1,5 @@
 import { type PlateElementProps } from 'platejs/react';
-import { getPluginType } from 'platejs';
-import { parseAttributes, propsToAttributes } from '@platejs/markdown';
-import type { MdxRuleDef } from '../../types';
+import { defineLeafMdxRule } from '../../leafMdxRule';
 import { BaseBlockEditable } from '../BaseBlockEditable';
 import { MdxWidgetConfigDialog, type MdxConfigSpec } from '../MdxWidgetConfigDialog';
 import { MdxComponentPreview } from '../../MdxComponentPreview';
@@ -9,29 +7,11 @@ import type { EntityViewEmbedSlateElement, SavedViewEmbedWidgetConfig } from './
 
 export const ENTITY_VIEW_EMBED_TYPE = 'EntityViewEmbed' as const;
 
-const readAttr = (attrs: Record<string, unknown>, key: string) => {
-  const value = attrs[key];
-  return value == null ? '' : String(value);
-};
-
-export const entityViewEmbedMdxRule: MdxRuleDef<EntityViewEmbedSlateElement, 'block'> = {
-  deserialize: (mdastNode, _deco, options) => {
-    const attrs = parseAttributes(mdastNode.attributes ?? []) as Record<string, unknown>;
-    return {
-      children: [{ text: '' }],
-      type: getPluginType(options.editor!, ENTITY_VIEW_EMBED_TYPE),
-      viewId: readAttr(attrs, 'viewId')
-    };
-  },
-  serialize: slateNode => ({
-    attributes: propsToAttributes({
-      ...(slateNode.viewId ? { viewId: slateNode.viewId } : {})
-    }),
-    children: [],
-    name: ENTITY_VIEW_EMBED_TYPE,
-    type: 'mdxJsxFlowElement'
-  })
-};
+export const entityViewEmbedMdxRule = defineLeafMdxRule<EntityViewEmbedSlateElement, 'block'>({
+  name: ENTITY_VIEW_EMBED_TYPE,
+  mode: 'block',
+  fields: [{ key: 'viewId' }]
+});
 
 export const entityViewEmbedMdxConfigSpec: MdxConfigSpec<
   EntityViewEmbedSlateElement,

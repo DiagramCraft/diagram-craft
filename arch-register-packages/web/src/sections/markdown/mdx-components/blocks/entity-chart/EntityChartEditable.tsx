@@ -1,7 +1,5 @@
 import { type PlateElementProps } from 'platejs/react';
-import { getPluginType } from 'platejs';
-import { parseAttributes, propsToAttributes } from '@platejs/markdown';
-import type { MdxRuleDef } from '../../types';
+import { defineLeafMdxRule } from '../../leafMdxRule';
 import { BaseBlockEditable } from '../BaseBlockEditable';
 import { EntityChart } from './EntityChart';
 import { EntityChartDialog } from './EntityChartDialog';
@@ -9,41 +7,17 @@ import type { EntityChartSlateElement } from './types';
 
 export const ENTITY_CHART_TYPE = 'EntityChart' as const;
 
-const readAttr = (attrs: Record<string, unknown>, key: string) => {
-  const value = attrs[key];
-  return value == null ? '' : String(value);
-};
-
-export const entityChartMdxRule: MdxRuleDef<EntityChartSlateElement, 'block'> = {
-  deserialize: (mdastNode, _deco, options) => {
-    const attrs = parseAttributes(mdastNode.attributes ?? []) as Record<string, unknown>;
-    return {
-      children: [{ text: '' }],
-      type: getPluginType(options.editor!, ENTITY_CHART_TYPE),
-      schema: readAttr(attrs, 'schema'),
-      owner: readAttr(attrs, 'owner'),
-      lifecycle: readAttr(attrs, 'lifecycle'),
-      groupBy: readAttr(attrs, 'groupBy'),
-      chartType: readAttr(attrs, 'type')
-    };
-  },
-  serialize: slateNode => ({
-    attributes: propsToAttributes({
-      ...(slateNode.schema ? { schema: slateNode.schema } : {}),
-      ...(slateNode.owner ? { owner: slateNode.owner } : {}),
-      ...(slateNode.lifecycle ? { lifecycle: slateNode.lifecycle } : {}),
-      ...(slateNode.groupBy && slateNode.groupBy !== 'lifecycle'
-        ? { groupBy: slateNode.groupBy }
-        : {}),
-      ...(slateNode.chartType && slateNode.chartType !== 'donut'
-        ? { type: slateNode.chartType }
-        : {})
-    }),
-    children: [],
-    name: ENTITY_CHART_TYPE,
-    type: 'mdxJsxFlowElement'
-  })
-};
+export const entityChartMdxRule = defineLeafMdxRule<EntityChartSlateElement, 'block'>({
+  name: ENTITY_CHART_TYPE,
+  mode: 'block',
+  fields: [
+    { key: 'schema' },
+    { key: 'owner' },
+    { key: 'lifecycle' },
+    { key: 'groupBy', default: 'lifecycle' },
+    { key: 'chartType', attr: 'type', default: 'donut' }
+  ]
+});
 
 export const EntityChartEditable = ({
   element,

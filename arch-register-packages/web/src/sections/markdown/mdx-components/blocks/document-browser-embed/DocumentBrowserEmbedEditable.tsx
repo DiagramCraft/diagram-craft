@@ -1,7 +1,5 @@
 import { type PlateElementProps } from 'platejs/react';
-import { getPluginType } from 'platejs';
-import { parseAttributes, propsToAttributes } from '@platejs/markdown';
-import type { MdxRuleDef } from '../../types';
+import { defineLeafMdxRule } from '../../leafMdxRule';
 import { BaseBlockEditable } from '../BaseBlockEditable';
 import { MdxWidgetConfigDialog, type MdxConfigSpec } from '../MdxWidgetConfigDialog';
 import { MdxComponentPreview } from '../../MdxComponentPreview';
@@ -14,29 +12,14 @@ import type { DocumentBrowserEmbedConfig, DocumentBrowserEmbedSlateElement } fro
 
 export const DOCUMENT_BROWSER_EMBED_TYPE = 'DocumentBrowserEmbed' as const;
 
-const readAttr = (attrs: Record<string, unknown>, key: string) => {
-  const value = attrs[key];
-  return value == null ? '' : String(value);
-};
-
-export const documentBrowserEmbedMdxRule: MdxRuleDef<DocumentBrowserEmbedSlateElement, 'block'> = {
-  deserialize: (mdastNode, _deco, options) => {
-    const attrs = parseAttributes(mdastNode.attributes ?? []) as Record<string, unknown>;
-    return {
-      children: [{ text: '' }],
-      type: getPluginType(options.editor!, DOCUMENT_BROWSER_EMBED_TYPE),
-      config: readAttr(attrs, 'config')
-    };
-  },
-  serialize: slateNode => ({
-    attributes: propsToAttributes({
-      ...(slateNode.config ? { config: slateNode.config } : {})
-    }),
-    children: [],
-    name: DOCUMENT_BROWSER_EMBED_TYPE,
-    type: 'mdxJsxFlowElement'
-  })
-};
+export const documentBrowserEmbedMdxRule = defineLeafMdxRule<
+  DocumentBrowserEmbedSlateElement,
+  'block'
+>({
+  name: DOCUMENT_BROWSER_EMBED_TYPE,
+  mode: 'block',
+  fields: [{ key: 'config' }]
+});
 
 export const documentBrowserEmbedMdxConfigSpec: MdxConfigSpec<
   DocumentBrowserEmbedSlateElement,
