@@ -118,7 +118,7 @@ export const ChangeCaseTableWidget = ({ config }: { config: ChangeCaseTableConfi
             rows.map(row => (
               <Table.Row key={row.case.id} onClick={() => patchCaseId(row.case.id)}>
                 <Table.Cell>{caseKindLabel(row.case.caseKind, row.case.payload)}</Table.Cell>
-                <Table.NameCell title={row.entity._name} subtitle={row.entity._publicId} />
+                <Table.NameCell title={row.entity._name} subtitle={row.entity._publicId}/>
                 <Table.Cell className={row.requesterName == null ? 'dim' : undefined}>
                   {row.requesterName ?? 'unknown'}
                 </Table.Cell>
@@ -172,11 +172,11 @@ type ChangeCaseTableConfigFormProps = {
 };
 
 const TextOption = ({
-  label,
-  value,
-  placeholder,
-  onChange
-}: {
+                      label,
+                      value,
+                      placeholder,
+                      onChange
+                    }: {
   label: string;
   value: string | undefined;
   placeholder?: string;
@@ -266,4 +266,4 @@ export const ChangeCaseTableConfigForm = ({ config, onChange }: ChangeCaseTableC
       </DialogSection>
     </>
   );
-};\n
+};
