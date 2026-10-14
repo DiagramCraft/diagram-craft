@@ -1,5 +1,5 @@
 import { LoadingState } from '../../../components/LoadingState';
-import type { ConfigFormProps } from '../../markdown/mdx-components/types';
+import type { ConfigFormProps, WidgetSurface } from '../../markdown/mdx-components/types';
 import { useContentFile } from '../../../hooks/useContentScope';
 import { useMarkdownContent } from '../../../hooks/useMarkdownContent';
 import { useMdxContext } from '../../markdown/MdxContext';
@@ -10,7 +10,6 @@ import typography from '../../markdown/articleTypography.module.css';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import { WikiPagePicker } from './WikiPagePicker';
 import styles from './WikiPageWidget.module.css';
-import type { WidgetSurface } from '../dashboardWidgetDefaults';
 import { z } from 'zod';
 import { withInitial } from '../../markdown/mdx-components/configSchema';
 

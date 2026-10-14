@@ -1,10 +1,9 @@
 import type { ReactNode } from 'react';
 import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
 import { WidgetFrame } from './WidgetFrame';
-import '../dashboardWidgetRegistry';
 import { getComponentDefinition } from '../../markdown/mdx-components/componentRegistry';
-import { parseKnownDashboardWidget } from '../dashboardWidgetConfig';
-import { getWidgetTitle } from '../dashboardWidgetDefaults';
+import { parseKnownDashboardWidget } from '../dashboardWidgets';
+import { getWidgetTitle } from '../dashboardWidgets';
 import { useDashboardSidebarVariables } from '../DashboardSidebarContext';
 import { resolveConfigVariables } from '../resolveSidebarVariableReferences';
 

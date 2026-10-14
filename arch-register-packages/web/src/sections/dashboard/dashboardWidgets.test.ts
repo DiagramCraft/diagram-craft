@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import '../../componentDiscovery';
-import { parseKnownDashboardWidget } from './dashboardWidgetConfig';
-import { getWidgetTitle } from './dashboardWidgetDefaults';
+import { parseKnownDashboardWidget } from './dashboardWidgets';
+import { getWidgetTitle } from './dashboardWidgets';
 import {
   getComponentDefinition,
   isValidComponentConfig

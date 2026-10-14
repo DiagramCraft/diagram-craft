@@ -2,10 +2,11 @@ import { useState } from 'react';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
-import type { DashboardWidgetComponentDefinition } from '../markdown/mdx-components/types';
-import type { WidgetSurface } from './dashboardWidgetDefaults';
+import type {
+  DashboardWidgetComponentDefinition,
+  WidgetSurface
+} from '../markdown/mdx-components/types';
 import { DialogContent, DialogSection } from '../markdown/editor/BlockDialog';
-import './dashboardWidgetRegistry';
 import { getConfigDialogWidth } from '../markdown/mdx-components/configDialog';
 import {
   getComponentDefinition,

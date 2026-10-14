@@ -1,10 +1,27 @@
+import '../../componentDiscovery';
 import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
 import { GENERIC_STARTER_DASHBOARD_WIDGETS } from '@arch-register/api-types/dashboardWidgetSeeds';
-import './dashboardWidgetRegistry';
-import { getComponentDefinition } from '../markdown/mdx-components/componentRegistry';
-import type { KnownDashboardWidget } from './dashboardWidgetConfig';
+import {
+  getComponentDefinition,
+  isValidComponentConfig
+} from '../markdown/mdx-components/componentRegistry';
 
-export type { WidgetSurface } from '../markdown/mdx-components/types';
+export type KnownDashboardWidget = DashboardWidget & { config: Record<string, unknown> };
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
+export const parseKnownDashboardWidget = (widget: DashboardWidget): KnownDashboardWidget | null => {
+  const definition = getComponentDefinition(widget.type, 'dashboardWidget');
+  if (
+    !definition ||
+    !isRecord(widget.config) ||
+    !isValidComponentConfig(definition, widget.config)
+  ) {
+    return null;
+  }
+  return widget as KnownDashboardWidget;
+};
 
 export const getWidgetTitle = (widget: KnownDashboardWidget): string => {
   const dashboardWidget = getComponentDefinition(widget.type, 'dashboardWidget')?.dashboardWidget;

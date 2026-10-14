@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import type { ProjectFile } from '@arch-register/api-types/projectContentContract';
 import { useContentTree, type ContentScope } from '../../../hooks/useContentScope';
-import type { WidgetSurface } from '../dashboardWidgetDefaults';
+import type { WidgetSurface } from '../../markdown/mdx-components/types';
 import styles from '../WidgetConfigDialog.module.css';
 
 type Props = {

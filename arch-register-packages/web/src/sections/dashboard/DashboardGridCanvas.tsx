@@ -5,8 +5,8 @@ import 'react-grid-layout/css/styles.css';
 import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
 import { DashboardWidgetRenderer } from './widgets/DashboardWidgetRenderer';
 import { MdxContext, useMdxContext } from '../markdown/MdxContext';
-import type { WidgetSurface } from './dashboardWidgetDefaults';
-import { parseKnownDashboardWidget } from './dashboardWidgetConfig';
+import type { WidgetSurface } from '../markdown/mdx-components/types';
+import { parseKnownDashboardWidget } from './dashboardWidgets';
 import styles from './DashboardGrid.module.css';
 
 const GRID_COLS = 12;

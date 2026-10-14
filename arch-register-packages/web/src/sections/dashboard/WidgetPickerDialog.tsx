@@ -3,8 +3,8 @@ import { Dialog } from '@diagram-craft/app-components/Dialog';
 import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
 import { useSavedViews } from '../../hooks/useSavedViews';
 import { useMdxContext } from '../markdown/MdxContext';
-import { createDefaultWidget, type WidgetSurface } from './dashboardWidgetDefaults';
-import './dashboardWidgetRegistry';
+import { createDefaultWidget } from './dashboardWidgets';
+import type { WidgetSurface } from '../markdown/mdx-components/types';
 import { getComponentDefinitions } from '../markdown/mdx-components/componentRegistry';
 import {
   COMPONENT_CATEGORIES,
