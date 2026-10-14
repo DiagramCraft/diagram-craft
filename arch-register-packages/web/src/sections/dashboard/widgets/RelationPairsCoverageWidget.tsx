@@ -254,5 +254,3 @@ export const RelationPairsCoverageConfigForm = ({
     </>
   );
 };
-
-export const RELATION_PAIRS_COVERAGE_TYPE = 'RelationPairsCoverage' as const;

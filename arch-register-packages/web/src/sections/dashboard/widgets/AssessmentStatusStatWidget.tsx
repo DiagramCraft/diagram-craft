@@ -58,8 +58,6 @@ export const AssessmentStatusStatWidget = ({ config }: { config: AssessmentStatu
   );
 };
 
-export const ASSESSMENT_STATUS_STAT_TYPE = 'AssessmentStatusStat' as const;
-
 export const ConfigForm = ({
   config,
   onChange

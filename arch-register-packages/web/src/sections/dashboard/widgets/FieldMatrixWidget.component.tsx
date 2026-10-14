@@ -1,14 +1,13 @@
 import { TbGrid4X4 } from 'react-icons/tb';
 import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import {
-  FIELD_MATRIX_TYPE,
   FieldMatrixConfigForm,
   FieldMatrixWidget,
   fieldMatrixWidgetConfigSchema
 } from './FieldMatrixWidget';
 
 export default defineComponent({
-  type: FIELD_MATRIX_TYPE,
+  type: 'FieldMatrix',
   category: 'data-views',
   name: 'Field matrix',
   description:

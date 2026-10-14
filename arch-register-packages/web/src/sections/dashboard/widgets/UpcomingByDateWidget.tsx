@@ -242,5 +242,3 @@ export const UpcomingByDateConfigForm = ({ config, onChange }: UpcomingByDateCon
     </DialogSection>
   </>
 );
-
-export const UPCOMING_BY_DATE_TYPE = 'UpcomingByDate' as const;

@@ -5,14 +5,13 @@
 import { TbActivity } from 'react-icons/tb';
 import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import {
-  ACTIVITY_FEED_TYPE,
   ActivityFeedDashboardConfigForm,
   ActivityFeedWidget,
   activityFeedWidgetConfigSchema
 } from './ActivityFeedWidget';
 
 export default defineComponent({
-  type: ACTIVITY_FEED_TYPE,
+  type: 'activity-feed',
   category: 'data-views',
   name: 'Activity feed',
   description: 'A live feed of recent audit log activity.',

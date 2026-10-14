@@ -5,13 +5,12 @@
 import { TbListNumbers } from 'react-icons/tb';
 import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import {
-  TOP_ENTITIES_TYPE,
   TopEntitiesConfigForm,
   TopEntitiesWidget,
   topEntitiesWidgetConfigSchema
 } from './TopEntitiesWidget';
 export default defineComponent({
-  type: TOP_ENTITIES_TYPE,
+  type: 'TopEntities',
   category: 'data-views',
   name: 'Ranked list',
   description: 'The top entities of a type, ranked by a numeric field.',

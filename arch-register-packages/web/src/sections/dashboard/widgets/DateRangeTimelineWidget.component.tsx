@@ -1,14 +1,13 @@
 import { TbTimeline } from 'react-icons/tb';
 import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import {
-  DATE_RANGE_TIMELINE_TYPE,
   DateRangeTimelineConfigForm,
   DateRangeTimelineWidget,
   dateRangeTimelineWidgetConfigSchema
 } from './DateRangeTimelineWidget';
 
 export default defineComponent({
-  type: DATE_RANGE_TIMELINE_TYPE,
+  type: 'DateRangeTimeline',
   category: 'visualizations',
   name: 'Date range timeline',
   description:

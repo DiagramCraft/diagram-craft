@@ -1,14 +1,13 @@
 import { TbListDetails } from 'react-icons/tb';
 import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import {
-  RELATED_ENTITIES_LIST_TYPE,
   RelatedEntitiesListConfigForm,
   RelatedEntitiesListWidget,
   relatedEntitiesListWidgetConfigSchema
 } from './RelatedEntitiesListWidget';
 
 export default defineComponent({
-  type: RELATED_ENTITIES_LIST_TYPE,
+  type: 'RelatedEntitiesList',
   category: 'data-views',
   name: 'Related entities',
   description:

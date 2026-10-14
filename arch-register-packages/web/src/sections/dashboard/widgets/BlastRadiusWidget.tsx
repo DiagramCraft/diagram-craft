@@ -11,8 +11,6 @@ import { useSchemas } from '../../../hooks/useSchemas';
 import { useLifecycleStates } from '../../../hooks/useWorkspaceConfig';
 import { BlastRadiusPanel } from '../../entities/components/BlastRadiusPanel';
 
-export const BLAST_RADIUS_WIDGET_TYPE = 'blast-radius';
-
 // `entityId` is the entity's public id, as chosen in the EntityPicker.
 export const blastRadiusWidgetConfigSchema = z.object({
   /** Public id of the entity to start from; usually a sidebar variable reference. */

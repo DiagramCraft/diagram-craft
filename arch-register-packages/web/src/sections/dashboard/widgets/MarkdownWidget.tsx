@@ -51,5 +51,3 @@ export const MarkdownDashboardConfigForm = ({
     </DialogSection>
   </>
 );
-
-export const MARKDOWN_WIDGET_TYPE = 'markdown' as const;

@@ -124,5 +124,3 @@ export const PathWalkerConfigForm = ({ config, onChange }: PathWalkerConfigFormP
     </>
   );
 };
-
-export const PATH_WALKER_TYPE = 'PathWalker' as const;

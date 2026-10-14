@@ -2,13 +2,12 @@
 import { TbMarkdown } from 'react-icons/tb';
 import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import {
-  MARKDOWN_WIDGET_TYPE,
   MarkdownDashboardConfigForm,
   MarkdownWidget,
   markdownWidgetConfigSchema
 } from './MarkdownWidget';
 export default defineComponent({
-  type: MARKDOWN_WIDGET_TYPE,
+  type: 'markdown',
   category: 'content-layout',
   name: 'Markdown',
   description: 'Display simple Markdown content on the dashboard.',

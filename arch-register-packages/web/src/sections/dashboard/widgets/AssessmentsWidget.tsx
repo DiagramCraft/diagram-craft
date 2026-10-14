@@ -231,5 +231,3 @@ export const AssessmentsConfigForm = ({ config, onChange }: AssessmentsConfigFor
     </>
   );
 };
-
-export const ASSESSMENTS_TYPE = 'Assessments' as const;

@@ -250,7 +250,5 @@ export const TopEntitiesConfigForm = ({ config, onChange }: TopEntitiesConfigFor
   );
 };
 
-export const TOP_ENTITIES_TYPE = 'TopEntities' as const;
-
 export const isDirection = (value: unknown): value is 'asc' | 'desc' =>
   value === 'asc' || value === 'desc';

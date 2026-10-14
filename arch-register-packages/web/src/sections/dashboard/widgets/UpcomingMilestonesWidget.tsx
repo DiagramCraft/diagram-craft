@@ -69,5 +69,3 @@ export const UpcomingMilestonesWidget = () => {
     </div>
   );
 };
-
-export const UPCOMING_MILESTONES_TYPE = 'upcoming-milestones' as const;

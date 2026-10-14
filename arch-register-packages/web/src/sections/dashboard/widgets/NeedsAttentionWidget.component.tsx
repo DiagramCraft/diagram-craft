@@ -7,13 +7,12 @@
 import { TbAlertTriangle } from 'react-icons/tb';
 import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import {
-  NEEDS_ATTENTION_TYPE,
   NeedsAttentionConfigForm,
   NeedsAttentionWidget,
   needsAttentionWidgetConfigSchema
 } from './NeedsAttentionWidget';
 export default defineComponent({
-  type: NEEDS_ATTENTION_TYPE,
+  type: 'NeedsAttentionQueue',
   category: 'data-views',
   name: 'Needs attention queue',
   description: 'Open governance cases against entities of a chosen type, awaiting a decision.',

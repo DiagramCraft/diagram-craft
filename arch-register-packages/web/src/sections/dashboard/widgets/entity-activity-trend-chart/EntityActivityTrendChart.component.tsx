@@ -4,13 +4,11 @@ import { EntityActivityTrendChart } from './EntityActivityTrendChart';
 import { EntityActivityTrendChartDashboardConfigForm } from './EntityActivityTrendChartDashboardConfigForm';
 import { entityActivityTrendChartPropsSchema } from './types';
 
-export const ENTITY_ACTIVITY_TREND_CHART_TYPE = 'entity-activity-trend-chart' as const;
-
 /**
  * Dashboard-only analytics widget: no MDX component or editor registration.
  */
 export default defineComponent({
-  type: ENTITY_ACTIVITY_TREND_CHART_TYPE,
+  type: 'entity-activity-trend-chart',
   category: 'visualizations',
   name: 'Activity trend chart',
   description: 'Recent activity volume over time.',

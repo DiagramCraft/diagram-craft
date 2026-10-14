@@ -189,8 +189,6 @@ export const FieldMatrixConfigForm = ({ config, onChange }: FieldMatrixConfigFor
   </>
 );
 
-export const FIELD_MATRIX_TYPE = 'FieldMatrix' as const;
-
 const TONES = ['good', 'warn', 'bad', 'neutral'];
 
 export const isBand = (band: unknown): boolean => {

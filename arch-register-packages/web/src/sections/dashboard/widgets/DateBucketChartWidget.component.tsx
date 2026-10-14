@@ -1,7 +1,6 @@
 import { TbChartBar } from 'react-icons/tb';
 import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import {
-  DATE_BUCKET_CHART_TYPE,
   DateBucketChartConfigForm,
   DateBucketChartHeaderActions,
   DateBucketChartWidget,
@@ -9,7 +8,7 @@ import {
 } from './DateBucketChartWidget';
 
 export default defineComponent({
-  type: DATE_BUCKET_CHART_TYPE,
+  type: 'DateBucketChart',
   category: 'visualizations',
   name: 'Date bar chart',
   description:

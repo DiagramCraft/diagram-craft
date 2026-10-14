@@ -208,8 +208,6 @@ export const NeedsAttentionConfigForm = ({ config, onChange }: NeedsAttentionCon
   );
 };
 
-export const NEEDS_ATTENTION_TYPE = 'NeedsAttentionQueue' as const;
-
 export const isScope = (value: unknown): value is NeedsAttentionWidgetConfig['scope'] =>
   value === 'workspace' || value === 'mine' || value === 'late';
 

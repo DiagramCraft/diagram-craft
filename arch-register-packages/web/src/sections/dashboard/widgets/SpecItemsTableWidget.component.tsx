@@ -1,14 +1,13 @@
 import { TbListDetails } from 'react-icons/tb';
 import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import {
-  SPEC_ITEMS_TABLE_TYPE,
   SpecItemsTableConfigForm,
   SpecItemsTableWidget,
   specItemsTableWidgetConfigSchema
 } from './SpecItemsTableWidget';
 
 export default defineComponent({
-  type: SPEC_ITEMS_TABLE_TYPE,
+  type: 'SpecItemsTable',
   category: 'data-views',
   name: 'Specification operations',
   description:

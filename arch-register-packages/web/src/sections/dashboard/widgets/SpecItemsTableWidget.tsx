@@ -188,5 +188,3 @@ export const SpecItemsTableConfigForm = ({
     </>
   );
 };
-
-export const SPEC_ITEMS_TABLE_TYPE = 'SpecItemsTable' as const;

@@ -3,13 +3,11 @@ import { noOptionsConfigSchema } from '../../../markdown/mdx-components/configSc
 import { defineComponent } from '../../../markdown/mdx-components/defineComponent';
 import { EntityLifecycleChart } from './EntityLifecycleChart';
 
-export const ENTITY_LIFECYCLE_CHART_TYPE = 'entity-lifecycle-chart' as const;
-
 /**
  * Dashboard-only analytics widget: no MDX component or editor registration.
  */
 export default defineComponent({
-  type: ENTITY_LIFECYCLE_CHART_TYPE,
+  type: 'entity-lifecycle-chart',
   category: 'visualizations',
   name: 'Lifecycle chart',
   description: 'Breakdown of entities by lifecycle state.',

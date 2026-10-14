@@ -140,8 +140,6 @@ export const AssessmentProgressTableWidget = ({
   );
 };
 
-export const ASSESSMENT_PROGRESS_TABLE_TYPE = 'AssessmentProgressTable' as const;
-
 /**
  * Dashboard-only table: one row per assessment targeting an entity type, with aggregate progress
  * (in-scope entities with a complete response), due date and derived status.

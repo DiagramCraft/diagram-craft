@@ -367,5 +367,3 @@ export const RelatedEntitiesListConfigForm = ({
     </>
   );
 };
-
-export const RELATED_ENTITIES_LIST_TYPE = 'RelatedEntitiesList' as const;

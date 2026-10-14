@@ -1,14 +1,13 @@
 import { TbTopologyStar3 } from 'react-icons/tb';
 import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import {
-  BLAST_RADIUS_WIDGET_TYPE,
   BlastRadiusConfigForm,
   BlastRadiusWidget,
   blastRadiusWidgetConfigSchema
 } from './BlastRadiusWidget';
 
 export default defineComponent({
-  type: BLAST_RADIUS_WIDGET_TYPE,
+  type: 'blast-radius',
   category: 'visualizations',
   name: 'Blast radius',
   description: 'Entities reachable from a chosen entity, with depth and owner filters.',

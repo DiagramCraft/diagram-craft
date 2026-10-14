@@ -69,8 +69,6 @@ export const AssessmentCountWidget = ({ config }: Props) => {
   );
 };
 
-export const ASSESSMENT_COUNT_TYPE = 'AssessmentCount' as const;
-
 const optionalText = (value: string): string | undefined =>
   value.trim() === '' ? undefined : value;
 

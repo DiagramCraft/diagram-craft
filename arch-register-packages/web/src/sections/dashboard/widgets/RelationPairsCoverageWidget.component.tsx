@@ -1,14 +1,13 @@
 import { TbArrowsJoin } from 'react-icons/tb';
 import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import {
-  RELATION_PAIRS_COVERAGE_TYPE,
   RelationPairsCoverageConfigForm,
   RelationPairsCoverageWidget,
   relationPairsCoverageWidgetConfigSchema
 } from './RelationPairsCoverageWidget';
 
 export default defineComponent({
-  type: RELATION_PAIRS_COVERAGE_TYPE,
+  type: 'RelationPairsCoverage',
   category: 'data-views',
   name: 'Pair coverage',
   description:

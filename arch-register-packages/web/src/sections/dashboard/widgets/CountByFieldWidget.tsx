@@ -120,5 +120,3 @@ export const CountByFieldConfigForm = ({ config, onChange }: CountByFieldConfigF
     </>
   );
 };
-
-export const COUNT_BY_FIELD_TYPE = 'CountByField' as const;

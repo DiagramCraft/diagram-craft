@@ -259,5 +259,3 @@ export const GroupedRollupTableConfigForm = ({
     </DialogSection>
   </>
 );
-
-export const GROUPED_ROLLUP_TABLE_TYPE = 'GroupedRollupTable' as const;

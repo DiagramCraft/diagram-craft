@@ -1,14 +1,13 @@
 import { TbTable } from 'react-icons/tb';
 import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import {
-  GROUPED_ROLLUP_TABLE_TYPE,
   GroupedRollupTableConfigForm,
   GroupedRollupTableWidget,
   groupedRollupTableWidgetConfigSchema
 } from './GroupedRollupTableWidget';
 
 export default defineComponent({
-  type: GROUPED_ROLLUP_TABLE_TYPE,
+  type: 'GroupedRollupTable',
   category: 'data-views',
   name: 'Roll-up table',
   description:

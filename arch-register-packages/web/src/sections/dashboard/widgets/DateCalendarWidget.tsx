@@ -260,5 +260,3 @@ export const DateCalendarConfigForm = ({ config, onChange }: DateCalendarConfigF
     </DialogSection>
   </>
 );
-
-export const DATE_CALENDAR_TYPE = 'DateCalendar' as const;

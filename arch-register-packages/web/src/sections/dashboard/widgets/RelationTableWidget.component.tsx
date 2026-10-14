@@ -1,14 +1,13 @@
 import { TbTable } from 'react-icons/tb';
 import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import {
-  RELATION_TABLE_TYPE,
   RelationTableConfigForm,
   RelationTableWidget,
   relationTableWidgetConfigSchema
 } from './RelationTableWidget';
 
 export default defineComponent({
-  type: RELATION_TABLE_TYPE,
+  type: 'RelationTable',
   category: 'data-views',
   name: 'Relation table',
   description: 'Instances of a relation type, with a chosen set of columns and an optional filter.',

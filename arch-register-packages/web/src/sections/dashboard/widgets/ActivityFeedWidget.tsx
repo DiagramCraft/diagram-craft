@@ -121,5 +121,3 @@ export const ActivityFeedDashboardConfigForm = ({
     </div>
   </DialogSection>
 );
-
-export const ACTIVITY_FEED_TYPE = 'activity-feed' as const;

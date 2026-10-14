@@ -332,5 +332,3 @@ export const RelationTableConfigForm = ({
     </>
   );
 };
-
-export const RELATION_TABLE_TYPE = 'RelationTable' as const;

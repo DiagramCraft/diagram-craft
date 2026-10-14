@@ -164,5 +164,3 @@ export const RatioBarListConfigForm = ({ config, onChange }: RatioBarListConfigF
     </>
   );
 };
-
-export const RATIO_BAR_LIST_TYPE = 'RatioBarList' as const;

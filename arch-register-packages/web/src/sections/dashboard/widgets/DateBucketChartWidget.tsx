@@ -186,5 +186,3 @@ export const DateBucketChartConfigForm = ({ config, onChange }: DateBucketChartC
     </DialogSection>
   </>
 );
-
-export const DATE_BUCKET_CHART_TYPE = 'DateBucketChart' as const;

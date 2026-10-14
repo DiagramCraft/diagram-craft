@@ -1,14 +1,13 @@
 import { TbChecklist } from 'react-icons/tb';
 import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import {
-  ASSESSMENT_STATUS_STAT_TYPE,
   AssessmentStatusStatWidget,
   ConfigForm,
   assessmentStatusStatConfigSchema
 } from './AssessmentStatusStatWidget';
 
 export default defineComponent({
-  type: ASSESSMENT_STATUS_STAT_TYPE,
+  type: 'AssessmentStatusStat',
   category: 'metrics',
   name: 'Assessment status',
   description:

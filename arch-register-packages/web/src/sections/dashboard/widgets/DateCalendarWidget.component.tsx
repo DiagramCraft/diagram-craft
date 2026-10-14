@@ -1,14 +1,13 @@
 import { TbCalendarMonth } from 'react-icons/tb';
 import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import {
-  DATE_CALENDAR_TYPE,
   DateCalendarConfigForm,
   DateCalendarWidget,
   dateCalendarWidgetConfigSchema
 } from './DateCalendarWidget';
 
 export default defineComponent({
-  type: DATE_CALENDAR_TYPE,
+  type: 'DateCalendar',
   category: 'visualizations',
   name: 'Calendar',
   description:

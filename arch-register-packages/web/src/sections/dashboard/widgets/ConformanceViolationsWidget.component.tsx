@@ -1,7 +1,6 @@
 import { TbShieldExclamation } from 'react-icons/tb';
 import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import {
-  CONFORMANCE_VIOLATIONS_TYPE,
   ConformanceViolationsConfigForm,
   ConformanceViolationsHeaderActions,
   ConformanceViolationsWidget,
@@ -9,7 +8,7 @@ import {
 } from './ConformanceViolationsWidget';
 
 export default defineComponent({
-  type: CONFORMANCE_VIOLATIONS_TYPE,
+  type: 'ConformanceViolations',
   category: 'data-views',
   name: 'Conformance violations',
   description:

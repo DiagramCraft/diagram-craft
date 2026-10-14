@@ -1,14 +1,13 @@
 import { TbCalendarTime } from 'react-icons/tb';
 import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import {
-  UPCOMING_BY_DATE_TYPE,
   UpcomingByDateConfigForm,
   UpcomingByDateWidget,
   upcomingByDateWidgetConfigSchema
 } from './UpcomingByDateWidget';
 
 export default defineComponent({
-  type: UPCOMING_BY_DATE_TYPE,
+  type: 'UpcomingByDate',
   category: 'data-views',
   name: 'Upcoming by date',
   description:

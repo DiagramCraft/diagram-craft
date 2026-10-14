@@ -1,14 +1,13 @@
 import { TbGitPullRequest } from 'react-icons/tb';
 import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import {
-  CHANGE_CASE_TABLE_TYPE,
   ChangeCaseTableConfigForm,
   ChangeCaseTableWidget,
   changeCaseTableConfigSchema
 } from './ChangeCaseTableWidget';
 
 export default defineComponent({
-  type: CHANGE_CASE_TABLE_TYPE,
+  type: 'ChangeCaseTable',
   category: 'data-views',
   name: 'Change case table',
   description: 'Register of governance cases against entities of a chosen type, in any status.',

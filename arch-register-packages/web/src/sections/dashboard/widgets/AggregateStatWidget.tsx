@@ -597,5 +597,3 @@ const LegacyAggregateStatConfigForm = ({ config, onChange }: AggregateStatConfig
     </>
   );
 };
-
-export const AGGREGATE_STAT_TYPE = 'AggregateStat' as const;

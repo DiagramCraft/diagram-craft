@@ -6,13 +6,12 @@
 import { TbPercentage } from 'react-icons/tb';
 import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import {
-  AGGREGATE_STAT_TYPE,
   AggregateStatConfigForm,
   AggregateStatWidget,
   aggregateStatWidgetConfigSchema
 } from './AggregateStatWidget';
 export default defineComponent({
-  type: AGGREGATE_STAT_TYPE,
+  type: 'AggregateStat',
   category: 'metrics',
   name: 'Aggregate stat',
   description:

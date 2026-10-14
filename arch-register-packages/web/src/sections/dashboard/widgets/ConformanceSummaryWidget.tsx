@@ -90,5 +90,3 @@ export const ConformanceSummaryWidget = ({
     </div>
   );
 };
-
-export const CONFORMANCE_SUMMARY_TYPE = 'conformance-violation-summary' as const;

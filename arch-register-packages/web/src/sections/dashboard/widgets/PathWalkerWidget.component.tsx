@@ -1,10 +1,10 @@
 import { TbArrowsSplit2 } from 'react-icons/tb';
 import { pathWalkerWidgetConfigSchema } from './pathWalkerWidgetLogic';
 import { defineComponent } from '../../markdown/mdx-components/defineComponent';
-import { PATH_WALKER_TYPE, PathWalkerConfigForm, PathWalkerWidget } from './PathWalkerWidget';
+import { PathWalkerConfigForm, PathWalkerWidget } from './PathWalkerWidget';
 
 export default defineComponent({
-  type: PATH_WALKER_TYPE,
+  type: 'PathWalker',
   category: 'data-views',
   name: 'Relationship walker',
   description:

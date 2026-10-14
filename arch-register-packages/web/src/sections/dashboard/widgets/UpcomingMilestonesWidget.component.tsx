@@ -5,9 +5,9 @@
 import { TbFlag3 } from 'react-icons/tb';
 import { noOptionsConfigSchema } from '../../markdown/mdx-components/configSchema';
 import { defineComponent } from '../../markdown/mdx-components/defineComponent';
-import { UPCOMING_MILESTONES_TYPE, UpcomingMilestonesWidget } from './UpcomingMilestonesWidget';
+import { UpcomingMilestonesWidget } from './UpcomingMilestonesWidget';
 export default defineComponent({
-  type: UPCOMING_MILESTONES_TYPE,
+  type: 'upcoming-milestones',
   category: 'metrics',
   name: 'Upcoming milestones',
   description: 'The most recently completed milestone and up to three upcoming ones.',

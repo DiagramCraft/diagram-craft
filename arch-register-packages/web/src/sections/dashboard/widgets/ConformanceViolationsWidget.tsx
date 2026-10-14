@@ -155,5 +155,3 @@ export const ConformanceViolationsConfigForm = ({
     </>
   );
 };
-
-export const CONFORMANCE_VIOLATIONS_TYPE = 'ConformanceViolations' as const;

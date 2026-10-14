@@ -280,5 +280,3 @@ export const DateRangeTimelineConfigForm = ({
     </DialogSection>
   </>
 );
-
-export const DATE_RANGE_TIMELINE_TYPE = 'DateRangeTimeline' as const;

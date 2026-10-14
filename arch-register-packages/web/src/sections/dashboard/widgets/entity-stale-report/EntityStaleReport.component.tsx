@@ -4,13 +4,11 @@ import { EntityStaleReport } from './EntityStaleReport';
 import { EntityStaleReportDashboardConfigForm } from './EntityStaleReportDashboardConfigForm';
 import { entityStaleReportPropsSchema } from './types';
 
-export const ENTITY_STALE_REPORT_TYPE = 'entity-stale-report' as const;
-
 /**
  * Dashboard-only analytics widget: no MDX component or editor registration.
  */
 export default defineComponent({
-  type: ENTITY_STALE_REPORT_TYPE,
+  type: 'entity-stale-report',
   category: 'data-views',
   name: 'Stale entity report',
   description: 'Entities that have not been updated recently.',

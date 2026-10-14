@@ -33,8 +33,6 @@ export const riskMatrixWidgetConfigSchema = z.object({
 
 export type RiskMatrixWidgetConfig = z.infer<typeof riskMatrixWidgetConfigSchema>;
 
-export const RISK_MATRIX_TYPE = 'risk-compliance-risk-matrix' as const;
-
 /** Drops unresolved `$variable` references; an empty result means the facet is not filtering. */
 const activeFilter = (values: string[] | undefined): string[] =>
   (values ?? []).filter(value => value !== '' && !value.startsWith('$'));
