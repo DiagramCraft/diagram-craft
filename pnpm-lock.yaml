@@ -467,6 +467,9 @@ importers:
       remark-gfm:
         specifier: ^4.0.1
         version: 4.0.1
+      zod:
+        specifier: ^4.1.12
+        version: 4.4.3
     devDependencies:
       '@rollup/plugin-yaml':
         specifier: ^5.0.0

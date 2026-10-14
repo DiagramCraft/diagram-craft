@@ -11,17 +11,13 @@ import {
   documentBrowserEmbedMdxRule
 } from './DocumentBrowserEmbedEditable';
 import { DocumentBrowserEmbedConfigForm } from './DocumentBrowserEmbedConfigForm';
-import type { DocumentBrowserEmbedConfig, DocumentBrowserEmbedSlateElement } from './types';
+import { schemaGuard } from '../../configSchema';
+import {
+  documentBrowserEmbedConfigSchema,
+  type DocumentBrowserEmbedConfig,
+  type DocumentBrowserEmbedSlateElement
+} from './types';
 
-const isDocumentBrowserEmbedConfig = (
-  config: Record<string, unknown>
-): config is DocumentBrowserEmbedConfig =>
-  typeof config.q === 'string' &&
-  Array.isArray(config.conditions) &&
-  typeof config.sort === 'string' &&
-  (config.sortDir === 'asc' || config.sortDir === 'desc') &&
-  Array.isArray(config.visibleBaseColumnIds) &&
-  Array.isArray(config.visibleFieldIds);
 export default defineComponent<DocumentBrowserEmbedSlateElement, { config?: string }, 'block'>({
   type: DOCUMENT_BROWSER_EMBED_TYPE,
   category: 'data-views',
@@ -32,7 +28,7 @@ export default defineComponent<DocumentBrowserEmbedSlateElement, { config?: stri
     defaultW: 6,
     defaultH: 16,
     surfaces: ['workspace', 'project'],
-    isValidConfig: isDocumentBrowserEmbedConfig,
+    isValidConfig: schemaGuard(documentBrowserEmbedConfigSchema),
     dialogWidth: 'min(1200px, 92vw)'
   },
   component: DocumentBrowserEmbed,

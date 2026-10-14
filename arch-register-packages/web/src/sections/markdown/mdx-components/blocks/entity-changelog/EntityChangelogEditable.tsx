@@ -40,8 +40,7 @@ export const entityChangelogMdxConfigSpec: MdxConfigSpec<
     lifecycle: config.lifecycle ?? '',
     limit: config.limit,
     since: config.since
-  }),
-  isValidConfig: config => !!(config.entityId || config.schema || config.owner || config.lifecycle)
+  })
 };
 
 export const EntityChangelogEditable = ({

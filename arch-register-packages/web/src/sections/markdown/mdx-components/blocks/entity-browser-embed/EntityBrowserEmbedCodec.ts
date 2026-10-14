@@ -1,22 +1,25 @@
-import type { BrowserView, FilterCondition } from '@arch-register/api-types/viewContract';
-import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
-import {
-  isMapOverlayConfig,
-  type MapOverlayConfig
-} from '../../../../entities/components/mapOverlays';
-import type { BrowserViewConfigMap } from '../../../../entities/components/entityBrowserState';
+import { z } from 'zod';
+import { browserViewSchema, filterConditionSchema } from '@arch-register/api-types/viewContract';
+import { entityQuerySchema } from '@arch-register/api-types/entityQueryIR';
+import { mapOverlayConfigSchema } from '../../../../entities/components/mapOverlays';
 import {
   parseViewConfigs,
   serializeViewConfigs
 } from '../../../../entities/components/entityBrowserState';
+import {
+  decodeConfigAttribute,
+  encodeConfigAttribute,
+  parseConfigFields
+} from '../../configSchema';
 
-export type EntityBrowserEmbedConfig = {
-  q: string;
-  conditions: FilterCondition[];
-  sort: string;
-  view: BrowserView;
-  viewConfigs: BrowserViewConfigMap;
-  projectScope?: 'project' | 'all';
+export const entityBrowserEmbedConfigSchema = z.object({
+  q: z.string(),
+  conditions: z.array(filterConditionSchema),
+  sort: z.string(),
+  view: browserViewSchema,
+  /** Per-view settings, keyed by view; each view validates its own shape when rendered. */
+  viewConfigs: z.partialRecord(browserViewSchema, z.unknown()),
+  projectScope: z.enum(['project', 'all']).optional(),
   /**
    * An advanced, structured query (the same `EntityQuery` shape saved views store — filter tree,
    * relation-path conditions, and projected columns) alongside the embed's "Basic" `conditions`/`q`
@@ -30,27 +33,29 @@ export type EntityBrowserEmbedConfig = {
    * deeper multi-hop paths are used as-is (assumed to already carry real ids). Takes effect instead
    * of the `conditions`-built query when present; `q` still applies as live free-text search on top.
    */
-  entityQuery?: EntityQuery;
+  entityQuery: entityQuerySchema.optional(),
   /**
    * Schema display NAME to scope the browser to, resolved to a schema id at render time (mirrors
    * `dashboardSidebarConfigSchema.schemaName`) — for a seeded, cross-workspace config, where the
    * actual schema id isn't stable. Takes effect alongside (not instead of) any `_schemaId`
    * condition already in `conditions`. Not authorable via the embed's own config form yet.
    */
-  schemaName?: string;
+  schemaName: z.string().optional(),
   /** Shows at most this many rows (after sorting). Unset shows all matching rows. */
-  limit?: number;
+  limit: z.number().int().positive().optional(),
   /** Opt-in: shows a search box and real pagination (table and cards views). Unset keeps the
    *  static published rendering used by wiki embeds; `limit` is ignored when set. */
-  interactive?: boolean;
+  interactive: z.boolean().optional(),
   /** Map view only: the heat overlays the viewer can switch between (with find-as-you-type
    *  search), each a numeric field of the map's schema rolled up and drawn in severity bands.
    *  Edited as JSON in the config form's Advanced section. */
-  overlays?: MapOverlayConfig[];
+  overlays: z.array(mapOverlayConfigSchema).optional(),
   /** Map view only: boxes whose owner isn't in this list are dimmed; typically
    *  `['$owners']`, a dashboard sidebar variable. Edited in the Advanced section. */
-  dimOwnerIds?: string[];
-};
+  dimOwnerIds: z.array(z.string()).optional()
+});
+
+export type EntityBrowserEmbedConfig = z.infer<typeof entityBrowserEmbedConfigSchema>;
 
 export const createDefaultEntityBrowserEmbedConfig = (): EntityBrowserEmbedConfig => ({
   q: '',
@@ -64,84 +69,26 @@ export const createDefaultEntityBrowserEmbedConfig = (): EntityBrowserEmbedConfi
  *  dedicated control. */
 export const ADVANCED_CONFIG_KEYS = ['overlays', 'dimOwnerIds'] as const;
 
-const toBase64Url = (input: string): string => {
-  const bytes = new TextEncoder().encode(input);
-  let binary = '';
-  bytes.forEach(byte => {
-    binary += String.fromCharCode(byte);
+export const encodeEntityBrowserEmbedConfig = (config: EntityBrowserEmbedConfig): string =>
+  encodeConfigAttribute({
+    ...config,
+    // The per-view settings travel as one JSON string so the attribute stays compact.
+    viewConfigs: serializeViewConfigs(config.viewConfigs)
   });
-  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-};
-
-const fromBase64Url = (input: string): string => {
-  const base64 = input.replace(/-/g, '+').replace(/_/g, '/');
-  const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
-  const binary = atob(padded);
-  const bytes = Uint8Array.from(binary, char => char.charCodeAt(0));
-  return new TextDecoder().decode(bytes);
-};
-
-export const encodeEntityBrowserEmbedConfig = (config: EntityBrowserEmbedConfig): string => {
-  const payload = {
-    q: config.q,
-    conditions: config.conditions,
-    sort: config.sort,
-    view: config.view,
-    viewConfigs: serializeViewConfigs(config.viewConfigs),
-    projectScope: config.projectScope,
-    entityQuery: config.entityQuery,
-    schemaName: config.schemaName,
-    limit: config.limit,
-    interactive: config.interactive,
-    overlays: config.overlays,
-    dimOwnerIds: config.dimOwnerIds
-  };
-  return toBase64Url(JSON.stringify(payload));
-};
 
 export const decodeEntityBrowserEmbedConfig = (
   raw: string | undefined,
   defaults: EntityBrowserEmbedConfig = createDefaultEntityBrowserEmbedConfig()
 ): EntityBrowserEmbedConfig | null => {
-  if (!raw) return null;
-  try {
-    const parsed = JSON.parse(fromBase64Url(raw)) as Record<string, unknown>;
-    if (parsed == null || typeof parsed !== 'object') return null;
-    return {
-      q: typeof parsed.q === 'string' ? parsed.q : defaults.q,
-      conditions: Array.isArray(parsed.conditions)
-        ? (parsed.conditions as FilterCondition[])
-        : defaults.conditions,
-      sort: typeof parsed.sort === 'string' ? parsed.sort : defaults.sort,
-      view: (typeof parsed.view === 'string' ? parsed.view : defaults.view) as BrowserView,
+  const payload = decodeConfigAttribute(raw);
+  if (!payload) return null;
+  return parseConfigFields(
+    entityBrowserEmbedConfigSchema,
+    {
+      ...payload,
       viewConfigs:
-        typeof parsed.viewConfigs === 'string'
-          ? parseViewConfigs(parsed.viewConfigs)
-          : defaults.viewConfigs,
-      projectScope:
-        parsed.projectScope === 'project' || parsed.projectScope === 'all'
-          ? parsed.projectScope
-          : defaults.projectScope,
-      entityQuery:
-        parsed.entityQuery != null && typeof parsed.entityQuery === 'object'
-          ? (parsed.entityQuery as EntityQuery)
-          : defaults.entityQuery,
-      schemaName: typeof parsed.schemaName === 'string' ? parsed.schemaName : defaults.schemaName,
-      limit:
-        typeof parsed.limit === 'number' && Number.isInteger(parsed.limit) && parsed.limit > 0
-          ? parsed.limit
-          : defaults.limit,
-      interactive: parsed.interactive === true ? true : defaults.interactive,
-      overlays:
-        Array.isArray(parsed.overlays) && parsed.overlays.every(isMapOverlayConfig)
-          ? (parsed.overlays as MapOverlayConfig[])
-          : defaults.overlays,
-      dimOwnerIds:
-        Array.isArray(parsed.dimOwnerIds) && parsed.dimOwnerIds.every(id => typeof id === 'string')
-          ? (parsed.dimOwnerIds as string[])
-          : defaults.dimOwnerIds
-    };
-  } catch {
-    return null;
-  }
+        typeof payload.viewConfigs === 'string' ? parseViewConfigs(payload.viewConfigs) : undefined
+    },
+    defaults
+  );
 };

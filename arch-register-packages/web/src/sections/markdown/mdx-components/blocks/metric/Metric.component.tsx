@@ -3,13 +3,17 @@ import { defineComponent } from '../../defineComponent';
 import { Metric } from './Metric';
 import { METRIC_TYPE, MetricEditable, metricMdxRule } from './MetricEditable';
 import { MetricConfigForm } from './MetricConfigForm';
-import type { MetricSlateElement, MetricType, StatMetricWidgetConfig } from './types';
+import { schemaGuard } from '../../configSchema';
+import {
+  metricTypeSchema,
+  statMetricWidgetConfigSchema,
+  type MetricSlateElement,
+  type MetricType,
+  type StatMetricWidgetConfig
+} from './types';
 
 const isMetricType = (value: unknown): value is MetricType =>
-  value === 'entity-count' ||
-  value === 'project-count' ||
-  value === 'diagram-count' ||
-  value === 'completeness-percent';
+  metricTypeSchema.safeParse(value).success;
 
 const METRIC_TYPE_DEFAULT_LABEL: Record<MetricType, string> = {
   'entity-count': 'Entities',
@@ -38,13 +42,7 @@ export default defineComponent<
     defaultW: 3,
     defaultH: 8,
     surfaces: ['workspace', 'project'],
-    isValidConfig: (config): config is StatMetricWidgetConfig =>
-      isMetricType(config.metricType) &&
-      (config.schema === undefined || typeof config.schema === 'string') &&
-      (config.owner === undefined || typeof config.owner === 'string') &&
-      (config.lifecycle === undefined || typeof config.lifecycle === 'string') &&
-      (config.label === undefined || typeof config.label === 'string') &&
-      (config.showLink === undefined || typeof config.showLink === 'boolean'),
+    isValidConfig: schemaGuard(statMetricWidgetConfigSchema),
     getTitle: (config: StatMetricWidgetConfig) => METRIC_TYPE_DEFAULT_LABEL[config.metricType]
   },
   component: Metric,

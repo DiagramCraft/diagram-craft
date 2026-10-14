@@ -62,8 +62,7 @@ export const entityGraphMdxConfigSpec: MdxConfigSpec<
     entityId: config.entityId,
     depth: config.depth,
     direction: config.direction
-  }),
-  isValidConfig: config => !!config.entityId
+  })
 };
 
 export const EntityGraphEditable = ({

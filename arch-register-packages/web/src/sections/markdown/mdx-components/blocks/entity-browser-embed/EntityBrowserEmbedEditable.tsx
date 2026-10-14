@@ -47,8 +47,7 @@ export const entityBrowserEmbedMdxConfigSpec: MdxConfigSpec<
       definition?.createDefaultProps?.({}).config as EntityBrowserEmbedConfig | undefined
     ) ?? emptyConfig({}, definition),
   toElement: config => ({ config: encodeEntityBrowserEmbedConfig(config) }),
-  defaultConfig: (context, definition) => emptyConfig(context, definition),
-  isValidConfig: () => true
+  defaultConfig: (context, definition) => emptyConfig(context, definition)
 };
 
 export const EntityBrowserEmbedEditable = ({

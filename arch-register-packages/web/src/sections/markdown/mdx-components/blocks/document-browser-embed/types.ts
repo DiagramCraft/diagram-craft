@@ -1,5 +1,6 @@
 import type { TElement } from 'platejs';
-import type { FilterCondition } from '@arch-register/api-types/viewContract';
+import { z } from 'zod';
+import { filterConditionSchema } from '@arch-register/api-types/viewContract';
 
 export type DocumentBrowserSort = 'title' | 'updated_at' | string;
 
@@ -11,15 +12,17 @@ export const DOCUMENT_BROWSER_BASE_COLUMN_IDS = [
 
 export type DocumentBrowserBaseColumnId = (typeof DOCUMENT_BROWSER_BASE_COLUMN_IDS)[number];
 
-export type DocumentBrowserEmbedConfig = {
-  q: string;
-  documentTypeId?: string;
-  conditions: FilterCondition[];
-  sort: DocumentBrowserSort;
-  sortDir: 'asc' | 'desc';
-  visibleBaseColumnIds: DocumentBrowserBaseColumnId[];
-  visibleFieldIds: string[];
-};
+export const documentBrowserEmbedConfigSchema = z.object({
+  q: z.string(),
+  documentTypeId: z.string().min(1).optional(),
+  conditions: z.array(filterConditionSchema),
+  sort: z.string().min(1),
+  sortDir: z.enum(['asc', 'desc']),
+  visibleBaseColumnIds: z.array(z.enum(DOCUMENT_BROWSER_BASE_COLUMN_IDS)),
+  visibleFieldIds: z.array(z.string())
+});
+
+export type DocumentBrowserEmbedConfig = z.infer<typeof documentBrowserEmbedConfigSchema>;
 
 export interface DocumentBrowserEmbedSlateElement extends TElement {
   config?: string;

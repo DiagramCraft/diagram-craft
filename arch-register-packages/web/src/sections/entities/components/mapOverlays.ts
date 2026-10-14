@@ -1,4 +1,5 @@
-import type { MetricConfig } from '@arch-register/api-types/metricContract';
+import { z } from 'zod';
+import { metricColourBandSchema, type MetricConfig } from '@arch-register/api-types/metricContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { RenderTreeNode } from './mapViewTraversal';
 
@@ -15,41 +16,23 @@ export type MapOverlay = {
 
 export const NO_OVERLAY_ID = 'none';
 
-const OVERLAY_AGGREGATIONS = ['average', 'sum', 'minimum', 'maximum'] as const;
-type OverlayAggregation = (typeof OVERLAY_AGGREGATIONS)[number];
-
 /**
  * A heat overlay as authored in a widget's config: a numeric field of the map's schema, rolled
  * up over each box's subtree and drawn in severity bands (`max: null` = open top band, bands
  * evaluated low-to-high). `fieldId` is a field NAME or id; a seeded, cross-workspace config
  * uses the name.
  */
-export type MapOverlayConfig = {
-  fieldId: string;
-  label?: string;
-  aggregation: OverlayAggregation;
-  colourBands: NonNullable<MetricConfig['colourBands']>;
-};
+export const mapOverlayConfigSchema = z.object({
+  fieldId: z.string().min(1),
+  label: z.string().optional(),
+  aggregation: z.enum(['average', 'sum', 'minimum', 'maximum']),
+  colourBands: z.array(metricColourBandSchema)
+});
 
-export const isMapOverlayConfig = (value: unknown): value is MapOverlayConfig => {
-  if (value === null || typeof value !== 'object') return false;
-  const overlay = value as Record<string, unknown>;
-  return (
-    typeof overlay.fieldId === 'string' &&
-    overlay.fieldId !== '' &&
-    (overlay.label === undefined || typeof overlay.label === 'string') &&
-    OVERLAY_AGGREGATIONS.includes(overlay.aggregation as OverlayAggregation) &&
-    Array.isArray(overlay.colourBands) &&
-    overlay.colourBands.every(
-      (band: unknown) =>
-        band !== null &&
-        typeof band === 'object' &&
-        (typeof (band as { max?: unknown }).max === 'number' ||
-          (band as { max?: unknown }).max === null) &&
-        ['good', 'warn', 'bad'].includes(String((band as { tone?: unknown }).tone))
-    )
-  );
-};
+export type MapOverlayConfig = z.infer<typeof mapOverlayConfigSchema>;
+
+export const isMapOverlayConfig = (value: unknown): value is MapOverlayConfig =>
+  mapOverlayConfigSchema.safeParse(value).success;
 
 /** Resolves authored overlays against the map's `schema`, dropping those naming no such field. */
 export const resolveMapOverlays = (

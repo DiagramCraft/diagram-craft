@@ -58,8 +58,7 @@ export const metricMdxConfigSpec: MdxConfigSpec<MetricSlateElement, StatMetricWi
     label: config.label ?? '',
     metricType: config.metricType,
     showLink: config.showLink
-  }),
-  isValidConfig: () => true
+  })
 };
 
 export const MetricEditable = ({

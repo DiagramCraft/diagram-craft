@@ -29,8 +29,7 @@ export const entityTableMdxConfigSpec: MdxConfigSpec<
     owner: config.owner ?? '',
     lifecycle: config.lifecycle ?? '',
     limit: String(config.limit ?? 10)
-  }),
-  isValidConfig: () => true
+  })
 };
 
 export const EntityTableEditable = ({

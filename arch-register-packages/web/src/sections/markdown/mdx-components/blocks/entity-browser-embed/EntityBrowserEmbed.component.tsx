@@ -1,10 +1,12 @@
 import { TbListSearch } from 'react-icons/tb';
 import { defineComponent } from '../../defineComponent';
 import { EntityBrowserEmbed } from './EntityBrowserEmbed';
-import type { EntityBrowserEmbedConfig } from './EntityBrowserEmbedCodec';
+import { schemaGuard } from '../../configSchema';
 import {
   createDefaultEntityBrowserEmbedConfig,
-  decodeEntityBrowserEmbedConfig
+  decodeEntityBrowserEmbedConfig,
+  entityBrowserEmbedConfigSchema,
+  type EntityBrowserEmbedConfig
 } from './EntityBrowserEmbedCodec';
 import {
   ENTITY_BROWSER_EMBED_TYPE,
@@ -13,18 +15,6 @@ import {
 } from './EntityBrowserEmbedEditable';
 import { EntityBrowserEmbedConfigForm } from './EntityBrowserEmbedConfigForm';
 import type { EntityBrowserEmbedSlateElement } from './types';
-
-const isEntityBrowserEmbedConfig = (
-  config: Record<string, unknown>
-): config is EntityBrowserEmbedConfig =>
-  typeof config.q === 'string' &&
-  Array.isArray(config.conditions) &&
-  typeof config.sort === 'string' &&
-  typeof config.view === 'string' &&
-  typeof config.viewConfigs === 'object' &&
-  config.viewConfigs !== null &&
-  (config.limit === undefined || typeof config.limit === 'number') &&
-  (config.interactive === undefined || typeof config.interactive === 'boolean');
 
 export default defineComponent<EntityBrowserEmbedSlateElement, { config?: string }, 'block'>({
   type: ENTITY_BROWSER_EMBED_TYPE,
@@ -36,7 +26,7 @@ export default defineComponent<EntityBrowserEmbedSlateElement, { config?: string
     defaultW: 6,
     defaultH: 24,
     surfaces: ['workspace', 'project'],
-    isValidConfig: isEntityBrowserEmbedConfig,
+    isValidConfig: schemaGuard(entityBrowserEmbedConfigSchema),
     dialogWidth: 'min(1200px, 92vw)'
   },
   component: EntityBrowserEmbed,
@@ -54,8 +44,7 @@ export default defineComponent<EntityBrowserEmbedSlateElement, { config?: string
         decodeEntityBrowserEmbedConfig(
           props.config,
           defaultProps.config as EntityBrowserEmbedConfig
-        ) ??
-        (defaultProps.config as EntityBrowserEmbedConfig)
+        ) ?? (defaultProps.config as EntityBrowserEmbedConfig)
     }),
     editorSpec: {
       editableComponent: EntityBrowserEmbedEditable,

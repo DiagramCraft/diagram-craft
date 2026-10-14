@@ -15,7 +15,6 @@ export type MdxConfigSpec<E extends TElement, Config extends Record<string, unkn
     context: { workspaceSlug: string; projectId?: string },
     definition: ComponentDefinition | undefined
   ) => Config;
-  isValidConfig: (config: Config) => boolean;
 };
 
 type Props<E extends TElement, Config extends Record<string, unknown>> = {
@@ -50,7 +49,8 @@ export const MdxWidgetConfigDialog = <E extends TElement, Config extends Record<
     return defaultConfig as Config;
   });
 
-  const canSave = spec.isValidConfig(config);
+  // The component's own validity rule (structure and completeness) is shared with the dashboard.
+  const canSave = definition?.dashboardWidget?.isValidConfig(config) ?? true;
   const ConfigForm = definition?.configForm;
 
   const handleConfirm = () => {

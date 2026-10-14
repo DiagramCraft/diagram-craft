@@ -1,14 +1,18 @@
 import type { TElement } from 'platejs';
+import { z } from 'zod';
 
 /**
  * What the metric counts. Absent (or `'entity-count'`) preserves the original
  * behavior: counting entities filtered by schema/owner/lifecycle.
  */
-export type MetricType =
-  | 'entity-count'
-  | 'project-count'
-  | 'diagram-count'
-  | 'completeness-percent';
+export const metricTypeSchema = z.enum([
+  'entity-count',
+  'project-count',
+  'diagram-count',
+  'completeness-percent'
+]);
+
+export type MetricType = z.infer<typeof metricTypeSchema>;
 
 export interface MetricSlateElement extends TElement {
   schema?: string;
@@ -19,11 +23,13 @@ export interface MetricSlateElement extends TElement {
   showLink?: boolean;
 }
 
-export type StatMetricWidgetConfig = {
-  metricType: MetricType;
-  schema?: string;
-  owner?: string;
-  lifecycle?: string;
-  label?: string;
-  showLink?: boolean;
-};
+export const statMetricWidgetConfigSchema = z.object({
+  metricType: metricTypeSchema,
+  schema: z.string().optional(),
+  owner: z.string().optional(),
+  lifecycle: z.string().optional(),
+  label: z.string().optional(),
+  showLink: z.boolean().optional()
+});
+
+export type StatMetricWidgetConfig = z.infer<typeof statMetricWidgetConfigSchema>;
