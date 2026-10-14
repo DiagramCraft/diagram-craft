@@ -14,7 +14,7 @@ export type ResolvedWidgetFrame = {
 
 /** Frame visibility the widget has when the instance does not override it. */
 export const defaultShowFrame = (
-  spec: DashboardWidgetSpec<any> | undefined,
+  spec: DashboardWidgetSpec | undefined,
   config: Record<string, unknown>
 ): boolean => {
   const hide = spec?.frame?.hideOutsideEdit;
@@ -23,7 +23,7 @@ export const defaultShowFrame = (
 
 /** Combines per-instance overrides with the defaults declared by the widget spec. */
 export const resolveWidgetFrame = (
-  spec: DashboardWidgetSpec<any> | undefined,
+  spec: DashboardWidgetSpec | undefined,
   frame: DashboardWidgetFrame | undefined,
   config: Record<string, unknown>
 ): ResolvedWidgetFrame => ({

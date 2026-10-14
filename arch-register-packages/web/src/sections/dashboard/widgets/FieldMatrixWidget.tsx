@@ -1,4 +1,3 @@
-import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import { useMemo } from 'react';
 import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import {
@@ -220,7 +219,7 @@ const isBand = (band: unknown): boolean => {
   );
 };
 
-const _fieldMatrixSpecData: Omit<
+export const _fieldMatrixSpecData: Omit<
   DashboardWidgetSpec<FieldMatrixWidgetConfig>,
   'label' | 'description'
 > = {
@@ -259,12 +258,3 @@ const _fieldMatrixSpecData: Omit<
   }),
   configForm: FieldMatrixConfigForm
 };
-
-export const fieldMatrixSpec = defineComponent({
-  type: FIELD_MATRIX_TYPE,
-  category: 'data-views',
-  name: 'Field matrix',
-  description:
-    'Records placed in a grid of numeric row values against banded numeric values, with clickable record chips.',
-  dashboardWidget: _fieldMatrixSpecData
-});

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { TbTopologyStar3 } from 'react-icons/tb';
 import type { DashboardWidgetSpec } from '../../markdown/mdx-components/types';
-import { defineComponent } from '../../markdown/mdx-components/defineComponent';
+
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import { EmptyState } from '../../../components/EmptyState';
 import { EntityPicker } from '../../../components/EntityPicker';
@@ -85,7 +85,7 @@ const BlastRadiusConfigForm = ({
   );
 };
 
-const blastRadiusDashboardSpec: Omit<
+export const blastRadiusDashboardSpec: Omit<
   DashboardWidgetSpec<BlastRadiusWidgetConfig>,
   'label' | 'description'
 > = {
@@ -102,11 +102,3 @@ const blastRadiusDashboardSpec: Omit<
   createDefaultConfig: () => ({}),
   configForm: BlastRadiusConfigForm
 };
-
-export const blastRadiusSpec = defineComponent({
-  type: BLAST_RADIUS_WIDGET_TYPE,
-  category: 'visualizations',
-  name: 'Blast radius',
-  description: 'Entities reachable from a chosen entity, with depth and owner filters.',
-  dashboardWidget: blastRadiusDashboardSpec
-});

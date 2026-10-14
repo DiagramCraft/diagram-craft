@@ -3,8 +3,6 @@ import { TbArrowRight } from 'react-icons/tb';
 import { useConformanceSummary } from '../../../hooks/useConformance';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import styles from './ConformanceSummaryWidget.module.css';
-import { TbShieldCheck } from 'react-icons/tb';
-import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 
 export type ConformanceSummaryWidgetConfig = Record<string, never>;
 
@@ -90,20 +88,3 @@ export const ConformanceSummaryWidget = ({
 };
 
 export const CONFORMANCE_SUMMARY_TYPE = 'conformance-violation-summary' as const;
-
-export const conformanceSummarySpec = defineComponent({
-  type: CONFORMANCE_SUMMARY_TYPE,
-  category: 'data-views',
-  name: 'Conformance summary',
-  description: 'Current conformance violations grouped by severity, check, and schema.',
-  dashboardWidget: {
-    icon: TbShieldCheck,
-    defaultW: 5,
-    defaultH: 16,
-    surfaces: ['workspace'],
-    component: ConformanceSummaryWidget,
-    isValidConfig: (config): config is ConformanceSummaryWidgetConfig =>
-      Object.keys(config).length === 0,
-    createDefaultConfig: () => ({})
-  }
-});

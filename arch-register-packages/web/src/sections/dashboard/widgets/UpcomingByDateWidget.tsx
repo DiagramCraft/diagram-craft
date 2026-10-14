@@ -1,4 +1,3 @@
-import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import { useMemo } from 'react';
 import { useQueryTextEntities } from '../../../hooks/useEntityQueryText';
 import { useEntitiesByIds } from '../../../hooks/useEntities';
@@ -259,7 +258,7 @@ const isOptionalNumber = (value: unknown): boolean =>
 const optionalString = (value: unknown): boolean =>
   value === undefined || typeof value === 'string';
 
-const _upcomingByDateSpecData: Omit<
+export const _upcomingByDateSpecData: Omit<
   DashboardWidgetSpec<UpcomingByDateWidgetConfig>,
   'label' | 'description'
 > = {
@@ -282,12 +281,3 @@ const _upcomingByDateSpecData: Omit<
   createDefaultConfig: () => ({ query: '', dateFieldId: '' }),
   configForm: UpcomingByDateConfigForm
 };
-
-export const upcomingByDateSpec = defineComponent({
-  type: UPCOMING_BY_DATE_TYPE,
-  category: 'data-views',
-  name: 'Upcoming by date',
-  description:
-    'Records ordered by an upcoming date with a countdown, e.g. renewals, expiries or reviews due.',
-  dashboardWidget: _upcomingByDateSpecData
-});

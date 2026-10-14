@@ -1,4 +1,3 @@
-import { TbAffiliate } from 'react-icons/tb';
 import { EmptyState } from '../../../components/EmptyState';
 import { LoadingState } from '../../../components/LoadingState';
 import { useSchemas } from '../../../hooks/useSchemas';
@@ -20,8 +19,8 @@ import {
   buildApiBlastRadiusPaths
 } from '../sections/apiBlastRadiusConfig';
 import panelStyles from '../sections/ApiIntegrationCatalogPanels.module.css';
-import { defineComponent } from '../../../sections/markdown/mdx-components/defineComponent';
-import { isValidImpactConfig, type ImpactWidgetConfig } from '../apiCatalogWidgetSupport';
+
+import { type ImpactWidgetConfig } from '../apiCatalogWidgetSupport';
 
 export const ApiCatalogImpactWidget = ({ config }: { config: ImpactWidgetConfig }) => {
   const { workspaceSlug } = useWorkspaceContext();
@@ -67,7 +66,7 @@ export const ApiCatalogImpactWidget = ({ config }: { config: ImpactWidgetConfig 
   );
 };
 
-const ApiCatalogImpactHeaderActions = ({ config }: { config: ImpactWidgetConfig }) => {
+export const ApiCatalogImpactHeaderActions = ({ config }: { config: ImpactWidgetConfig }) => {
   const { openEntityDrawer } = useEntityDrawer();
   const entityId = config.entityId ?? '';
   if (entityId === '') return null;
@@ -81,24 +80,3 @@ const ApiCatalogImpactHeaderActions = ({ config }: { config: ImpactWidgetConfig 
     </button>
   );
 };
-
-export const apiCatalogImpactSpec = defineComponent({
-  type: 'api-integration-catalog-impact',
-  category: 'visualizations',
-  name: 'API impact',
-  description:
-    'Blast radius (providers, direct consumers, second order) for the API selected in the dashboard sidebar.',
-  dashboardWidget: {
-    icon: TbAffiliate,
-    defaultW: 12,
-    defaultH: 30,
-    surfaces: ['workspace'],
-    component: ApiCatalogImpactWidget,
-    headerActionsComponent: ApiCatalogImpactHeaderActions,
-    // BlastRadiusPanel owns its padding because it is also shared with the entity drawer.
-    frame: { padded: false },
-    isValidConfig: isValidImpactConfig,
-    createDefaultConfig: () => ({ entityId: '$apiEntityId' }),
-    getTitle: () => 'Blast radius'
-  }
-});

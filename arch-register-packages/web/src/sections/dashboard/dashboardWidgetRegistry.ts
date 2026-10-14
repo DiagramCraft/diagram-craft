@@ -1,4 +1,4 @@
-import '../markdown/mdx-components/componentRegistrations';
+import '../../componentDiscovery';
 import {
   getComponentDefinition,
   getComponentDefinitions

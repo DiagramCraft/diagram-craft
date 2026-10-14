@@ -8,6 +8,7 @@ import { deserializeDiagramDocument } from '@diagram-craft/model/serialization/d
 import type { SerializedDiagramDocument } from '@diagram-craft/model/serialization/serializedTypes';
 import type { Diagram } from '@diagram-craft/model/diagram';
 import { model } from '@diagram-craft/canvas/modelState';
+
 import { Observable } from '@diagram-craft/canvas/component/component';
 import { Marquee } from '@diagram-craft/canvas/marquee';
 import type { Context } from '@diagram-craft/canvas/context';

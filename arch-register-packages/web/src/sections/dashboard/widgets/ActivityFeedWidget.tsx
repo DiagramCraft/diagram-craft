@@ -1,5 +1,5 @@
 import { useNavigate } from '@tanstack/react-router';
-import { TbActivity } from 'react-icons/tb';
+
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { AuditLogEntry } from '@arch-register/api-types/auditContract';
 import { useAuditLog } from '../../../hooks/useAudit';
@@ -9,7 +9,7 @@ import { asProjectPublicId, projectDetailRoute } from '../../../routes/publicObj
 import { ENTITY_TYPE_LABELS, OPERATION_LABELS } from '../../../utils/auditLabels';
 import { formatRelativeTime } from '../../../utils/dateFormat';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
-import { defineComponent } from '../../markdown/mdx-components/defineComponent';
+
 import styles from './ActivityFeedWidget.module.css';
 import formStyles from '../WidgetConfigDialog.module.css';
 
@@ -121,27 +121,5 @@ export const ActivityFeedDashboardConfigForm = ({
 
 export const ACTIVITY_FEED_TYPE = 'activity-feed' as const;
 
-const hasOptionalInteger = (config: Record<string, unknown>, key: string): boolean =>
+export const hasOptionalInteger = (config: Record<string, unknown>, key: string): boolean =>
   config[key] === undefined || (typeof config[key] === 'number' && Number.isInteger(config[key]));
-
-/**
- * Dashboard-only widget: no editorSpec, so it never appears in the wiki
- * slash-command menu or MDX round-trip. Not authorable in wiki markdown.
- */
-export const activityFeedSpec = defineComponent({
-  type: ACTIVITY_FEED_TYPE,
-  category: 'data-views',
-  name: 'Activity feed',
-  description: 'A live feed of recent audit log activity.',
-  dashboardWidget: {
-    icon: TbActivity,
-    defaultW: 12,
-    defaultH: 24,
-    surfaces: ['workspace'],
-    component: ActivityFeedWidget,
-    isValidConfig: (config): config is ActivityFeedWidgetConfig =>
-      hasOptionalInteger(config, 'limit'),
-    createDefaultConfig: () => ({}),
-    configForm: ActivityFeedDashboardConfigForm
-  }
-});

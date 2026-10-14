@@ -1,4 +1,3 @@
-import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import { useMemo } from 'react';
 import { Chip } from '../../../components/Chip';
 import { EmptyState } from '../../../components/EmptyState';
@@ -271,7 +270,7 @@ const isValidConfig = (
   isOptionalString(config.consumerLabel) &&
   isOptionalString(config.coverageLabel);
 
-const _relationPairsCoverageSpecData: Omit<
+export const _relationPairsCoverageSpecData: Omit<
   DashboardWidgetSpec<RelationPairsCoverageWidgetConfig>,
   'label' | 'description'
 > = {
@@ -290,12 +289,3 @@ const _relationPairsCoverageSpecData: Omit<
   }),
   configForm: RelationPairsCoverageConfigForm
 };
-
-export const relationPairsCoverageSpec = defineComponent({
-  type: RELATION_PAIRS_COVERAGE_TYPE,
-  category: 'data-views',
-  name: 'Pair coverage',
-  description:
-    'Every provider × consumer pair around a shared entity, and whether a chosen relation type connects the two.',
-  dashboardWidget: _relationPairsCoverageSpecData
-});

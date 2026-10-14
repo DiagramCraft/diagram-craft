@@ -1,4 +1,3 @@
-import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import { useMemo } from 'react';
 import { useQueryTextEntities } from '../../../hooks/useEntityQueryText';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
@@ -200,7 +199,7 @@ export const DATE_BUCKET_CHART_TYPE = 'DateBucketChart' as const;
 const isOptionalNumber = (value: unknown): boolean =>
   value === undefined || (typeof value === 'number' && Number.isFinite(value));
 
-const _dateBucketChartSpecData: Omit<
+export const _dateBucketChartSpecData: Omit<
   DashboardWidgetSpec<DateBucketChartWidgetConfig>,
   'label' | 'description'
 > = {
@@ -221,12 +220,3 @@ const _dateBucketChartSpecData: Omit<
   createDefaultConfig: () => ({ query: '', dateFieldId: '' }),
   configForm: DateBucketChartConfigForm
 };
-
-export const dateBucketChartSpec = defineComponent({
-  type: DATE_BUCKET_CHART_TYPE,
-  category: 'visualizations',
-  name: 'Date bar chart',
-  description:
-    'Bars per month for a date field - record counts or a summed amount, e.g. renewals, expiries or reviews due.',
-  dashboardWidget: _dateBucketChartSpecData
-});

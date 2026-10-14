@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import './componentRegistrations';
+import '../../../componentDiscovery';
 import {
   MDX_SLASH_COMMANDS,
   BUILTIN_SLASH_COMMANDS,

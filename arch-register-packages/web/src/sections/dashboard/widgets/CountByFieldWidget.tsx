@@ -1,4 +1,3 @@
-import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import { useMemo } from 'react';
 import { useEntities } from '../../../hooks/useEntities';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
@@ -128,7 +127,7 @@ export const CountByFieldConfigForm = ({ config, onChange }: CountByFieldConfigF
 
 export const COUNT_BY_FIELD_TYPE = 'CountByField' as const;
 
-const _countByFieldSpecData: Omit<
+export const _countByFieldSpecData: Omit<
   DashboardWidgetSpec<CountByFieldWidgetConfig>,
   'label' | 'description'
 > = {
@@ -144,11 +143,3 @@ const _countByFieldSpecData: Omit<
   createDefaultConfig: () => ({ schemaName: '', fieldId: '' }),
   configForm: CountByFieldConfigForm
 };
-
-export const countByFieldSpec = defineComponent({
-  type: COUNT_BY_FIELD_TYPE,
-  category: 'metrics',
-  name: 'Count by field',
-  description: 'Entity count with a stacked bar per value of a field.',
-  dashboardWidget: _countByFieldSpecData
-});

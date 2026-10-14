@@ -1,4 +1,3 @@
-import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import { useMemo } from 'react';
 import { bandTone, toneColor } from '../../../components/bandColor';
 import { EntityHoverCard } from '../../../components/EntityHoverCard';
@@ -373,7 +372,7 @@ export const RelatedEntitiesListConfigForm = ({
 
 export const RELATED_ENTITIES_LIST_TYPE = 'RelatedEntitiesList' as const;
 
-const _relatedEntitiesListSpecData: Omit<
+export const _relatedEntitiesListSpecData: Omit<
   DashboardWidgetSpec<RelatedEntitiesListWidgetConfig>,
   'label' | 'description'
 > = {
@@ -388,12 +387,3 @@ const _relatedEntitiesListSpecData: Omit<
   createDefaultConfig: () => ({ schemaName: '', referenceField: '' }),
   configForm: RelatedEntitiesListConfigForm
 };
-
-export const relatedEntitiesListSpec = defineComponent({
-  type: RELATED_ENTITIES_LIST_TYPE,
-  category: 'data-views',
-  name: 'Related entities',
-  description:
-    'Entities of one type that reference a chosen entity, optionally with a progress bar per row.',
-  dashboardWidget: _relatedEntitiesListSpecData
-});

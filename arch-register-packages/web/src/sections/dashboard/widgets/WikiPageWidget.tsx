@@ -1,11 +1,10 @@
-import { TbBook } from 'react-icons/tb';
 import { LoadingState } from '../../../components/LoadingState';
 import { useContentFile } from '../../../hooks/useContentScope';
 import { useMarkdownContent } from '../../../hooks/useMarkdownContent';
 import { useMdxContext } from '../../markdown/MdxContext';
 import { MdxPreview } from '../../markdown/preview/MdxPreview';
 import typography from '../../markdown/articleTypography.module.css';
-import { defineComponent } from '../../markdown/mdx-components/defineComponent';
+
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import { WikiPagePicker } from './WikiPagePicker';
 import styles from './WikiPageWidget.module.css';
@@ -13,8 +12,9 @@ import type { WidgetSurface } from '../dashboardWidgetDefaults';
 
 export type WikiPageWidgetConfig = { nodeId: string };
 
-const isWikiPageWidgetConfig = (config: Record<string, unknown>): config is WikiPageWidgetConfig =>
-  typeof config.nodeId === 'string' && config.nodeId.length > 0;
+export const isWikiPageWidgetConfig = (
+  config: Record<string, unknown>
+): config is WikiPageWidgetConfig => typeof config.nodeId === 'string' && config.nodeId.length > 0;
 
 export const isInDashboardScope = (
   projectId: string | undefined,
@@ -86,23 +86,3 @@ export const WikiPageDashboardConfigForm = ({
     />
   </DialogSection>
 );
-
-export const wikiPageWidgetSpec = defineComponent({
-  type: 'wiki-page',
-  category: 'content-layout',
-  name: 'Wiki page',
-  description: 'Display a selected wiki page on the dashboard.',
-  dashboardWidget: {
-    icon: TbBook,
-    defaultW: 6,
-    defaultH: 24,
-    surfaces: ['workspace', 'project'],
-    component: WikiPageWidget,
-    titleComponent: WikiPageWidgetTitle,
-    isValidConfig: isWikiPageWidgetConfig,
-    createDefaultConfig: () => ({ nodeId: '' }),
-    getTitle: () => 'Wiki page',
-    configForm: WikiPageDashboardConfigForm,
-    dialogWidth: 520
-  }
-});

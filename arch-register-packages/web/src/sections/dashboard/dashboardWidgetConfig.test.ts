@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import '../markdown/mdx-components/componentRegistrations';
+import '../../componentDiscovery';
 import { parseKnownDashboardWidget } from './dashboardWidgetConfig';
 import { getWidgetTitle } from './dashboardWidgetDefaults';
 import { getComponentDefinition } from '../markdown/mdx-components/componentRegistry';

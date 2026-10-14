@@ -15,8 +15,7 @@ import {
 import { countDistinctValues, formatMeasured, sumMeasured } from './fieldAggregation';
 import styles from './AggregateStatWidget.module.css';
 import { useWidgetBodyTitle } from './WidgetBodyTitle';
-import { TbPercentage } from 'react-icons/tb';
-import { defineComponent } from '../../markdown/mdx-components/defineComponent';
+
 import { isQueryStatConfig } from './aggregateStatQuery';
 import { useEffect, useState } from 'react';
 import { getSchemaFieldDefs, FilterRow } from '../../../components/FilterBuilder';
@@ -603,7 +602,7 @@ const isValidNumeratorCondition = (value: unknown): boolean => {
   );
 };
 
-const isValidLegacyCore = (config: Record<string, unknown>): boolean =>
+export const isValidLegacyCore = (config: Record<string, unknown>): boolean =>
   typeof config.schema === 'string' &&
   config.schema.length > 0 &&
   isValidNumeratorCondition(config.numeratorCondition);
@@ -611,7 +610,7 @@ const isValidLegacyCore = (config: Record<string, unknown>): boolean =>
 const optionalString = (value: unknown): boolean =>
   value === undefined || typeof value === 'string';
 
-const isValidQueryStatConfig = (config: Record<string, unknown>): boolean => {
+export const isValidQueryStatConfig = (config: Record<string, unknown>): boolean => {
   const display = config.display;
   const severity = config.severity;
   const needsDenominator = display === 'percent' || display === 'ofTotal';
@@ -640,31 +639,3 @@ const isValidQueryStatConfig = (config: Record<string, unknown>): boolean => {
         })))
   );
 };
-
-/**
- * Dashboard-only widget: a percentage/coverage stat computed as (entities matching a configured
- * condition) / (entities matching the base schema/owner/lifecycle filter), scoped to whatever
- * entity schema the widget is configured against - not tied to any particular schema.
- */
-export const aggregateStatSpec = defineComponent({
-  type: AGGREGATE_STAT_TYPE,
-  category: 'metrics',
-  name: 'Aggregate stat',
-  description:
-    'A count or percentage of records matching a query, e.g. coverage, compliance or items needing attention.',
-  dashboardWidget: {
-    icon: TbPercentage,
-    defaultW: 3,
-    defaultH: 8,
-    surfaces: ['workspace', 'project'],
-    component: AggregateStatWidget,
-    frame: { hideOutsideEdit: true, padded: false, showIcon: false },
-    isValidConfig: (config): config is AggregateStatWidgetConfig =>
-      (isQueryStatConfig(config) ? isValidQueryStatConfig(config) : isValidLegacyCore(config)) &&
-      (config.owner === undefined || typeof config.owner === 'string') &&
-      (config.lifecycle === undefined || typeof config.lifecycle === 'string') &&
-      (config.showLink === undefined || typeof config.showLink === 'boolean'),
-    createDefaultConfig: () => ({ query: '', display: 'count' as const }),
-    configForm: AggregateStatConfigForm
-  }
-});

@@ -1,18 +1,15 @@
 import type { CSSProperties } from 'react';
-import { TbClipboardCheck } from 'react-icons/tb';
+
 import { EmptyState } from '../../../components/EmptyState';
 import { LoadingState } from '../../../components/LoadingState';
 import { useDateTimeFormatPreference } from '../../../hooks/useDateTimeFormatPreference';
-import { defineComponent } from '../../../sections/markdown/mdx-components/defineComponent';
+
 import { dueLabel, dueTone } from '../../../utils/assessmentDueTone';
 import { caseKindLabel } from '../../../utils/governanceCaseLabels';
 import { formatDate } from '../../../utils/dateFormat';
 import { queueItemPriority } from '../dataStewardshipQueue';
 import { sortByDueDate } from '../dataStewardshipDashboardLogic';
 import {
-  CaseConfigForm,
-  DS_CASE_DEFAULTS,
-  isCaseConfig,
   NotConfigured,
   PRIORITY_LABEL,
   PRIORITY_TONE,
@@ -72,26 +69,7 @@ export const CaseQueueWidget = ({ config }: { config: CaseConfig }) => {
   );
 };
 
-const CaseQueueHeaderActions = ({ config }: { config: CaseConfig }) => {
+export const CaseQueueHeaderActions = ({ config }: { config: CaseConfig }) => {
   const queue = useCaseQueue(config);
   return <span className="dim mono">{queue.isLoading ? '' : queue.items.length}</span>;
 };
-
-export const caseQueueSpec = defineComponent({
-  type: 'data-stewardship-case-queue',
-  category: 'data-views',
-  name: 'Case queue',
-  description: 'Open governance cases, oldest deadline first, with derived priority.',
-  dashboardWidget: {
-    icon: TbClipboardCheck,
-    defaultW: 12,
-    defaultH: 22,
-    surfaces: ['workspace'],
-    component: CaseQueueWidget,
-    headerActionsComponent: CaseQueueHeaderActions,
-    frame: { padded: false, showIcon: false },
-    isValidConfig: isCaseConfig,
-    createDefaultConfig: () => ({ ...DS_CASE_DEFAULTS, scope: 'mine' }),
-    configForm: CaseConfigForm
-  }
-});

@@ -1,4 +1,3 @@
-import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { NestedWidgetRenderer } from './nestedWidgets';
@@ -13,7 +12,7 @@ import { NestedTabContentsEditor } from './nestedWidgets';
 import { moveItem, resolveActiveTabId } from './tabsLogic';
 import formStyles from '../WidgetConfigDialog.module.css';
 import configFormStyles from './TabsConfigForm.module.css';
-import { createTab, isValidTabsConfig, TABS_TYPE, type TabsWidgetConfig } from './tabsLogic';
+import { createTab, isValidTabsConfig, type TabsWidgetConfig } from './tabsLogic';
 
 /** Search param that keeps the active tab across reloads and in shared links. */
 export const TABS_SEARCH_PARAM = 'tab';
@@ -179,9 +178,7 @@ export const TabsConfigForm = ({ config, onChange, context }: FormProps) => {
   );
 };
 
-export { TABS_TYPE };
-
-const _tabsSpecData: Omit<DashboardWidgetSpec<TabsWidgetConfig>, 'label' | 'description'> = {
+export const _tabsSpecData: Omit<DashboardWidgetSpec<TabsWidgetConfig>, 'label' | 'description'> = {
   icon: TbLayoutList,
   defaultW: 12,
   defaultH: 24,
@@ -198,11 +195,3 @@ const _tabsSpecData: Omit<DashboardWidgetSpec<TabsWidgetConfig>, 'label' | 'desc
   configForm: TabsConfigForm,
   dialogSize: 'large'
 };
-
-export const tabsSpec = defineComponent({
-  type: TABS_TYPE,
-  category: 'content-layout',
-  name: 'Tabs',
-  description: 'Groups other widgets into switchable tabs.',
-  dashboardWidget: _tabsSpecData
-});

@@ -1,4 +1,3 @@
-import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { RelationRecord } from '@arch-register/api-types/relationContract';
@@ -355,7 +354,7 @@ const isValidConfig = (config: Record<string, unknown>): config is RelationTable
   (config.sortDir === undefined || config.sortDir === 'asc' || config.sortDir === 'desc') &&
   (config.rowDrawer === undefined || typeof config.rowDrawer === 'boolean');
 
-const _relationTableSpecData: Omit<
+export const _relationTableSpecData: Omit<
   DashboardWidgetSpec<RelationTableWidgetConfig>,
   'label' | 'description'
 > = {
@@ -370,11 +369,3 @@ const _relationTableSpecData: Omit<
   getTitle: config => config.relationSchemaName || 'Relation table',
   configForm: RelationTableConfigForm
 };
-
-export const relationTableSpec = defineComponent({
-  type: RELATION_TABLE_TYPE,
-  category: 'data-views',
-  name: 'Relation table',
-  description: 'Instances of a relation type, with a chosen set of columns and an optional filter.',
-  dashboardWidget: _relationTableSpecData
-});

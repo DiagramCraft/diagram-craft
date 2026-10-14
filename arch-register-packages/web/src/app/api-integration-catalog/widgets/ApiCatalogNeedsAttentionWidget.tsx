@@ -1,4 +1,3 @@
-import { TbAlertTriangle } from 'react-icons/tb';
 import { Banner } from '../../../components/Banner';
 import { EmptyState } from '../../../components/EmptyState';
 import { LoadingState } from '../../../components/LoadingState';
@@ -6,13 +5,8 @@ import { useResolvedApiIntegrationCatalogConfig } from '../useResolvedApiIntegra
 import { useNeedsAttentionQueue } from '../../../sections/dashboard/widgets/needsAttentionQueue';
 import { NeedsAttentionList } from '../../../sections/dashboard/widgets/NeedsAttentionList';
 import { IC_QUEUE_CASE_KINDS } from '../apiIntegrationCatalogQueue';
-import { defineComponent } from '../../../sections/markdown/mdx-components/defineComponent';
-import {
-  isValidListConfig,
-  ListConfigForm,
-  useApiCatalogNavigation,
-  type ListWidgetConfig
-} from '../apiCatalogWidgetSupport';
+
+import { useApiCatalogNavigation, type ListWidgetConfig } from '../apiCatalogWidgetSupport';
 
 export const ApiCatalogNeedsAttentionWidget = ({ config }: { config: ListWidgetConfig }) => {
   const { workspaceSlug, openApi } = useApiCatalogNavigation();
@@ -40,7 +34,7 @@ export const ApiCatalogNeedsAttentionWidget = ({ config }: { config: ListWidgetC
   );
 };
 
-const ApiCatalogNeedsAttentionHeaderActions = () => {
+export const ApiCatalogNeedsAttentionHeaderActions = () => {
   const { workspaceSlug } = useApiCatalogNavigation();
   const { apiConfig } = useResolvedApiIntegrationCatalogConfig(workspaceSlug);
   const apiSchemaId = apiConfig?.apiSchemaId ?? null;
@@ -51,22 +45,3 @@ const ApiCatalogNeedsAttentionHeaderActions = () => {
   );
   return <span className="dim mono">{queue.items.length}</span>;
 };
-
-export const apiCatalogNeedsAttentionSpec = defineComponent({
-  type: 'api-integration-catalog-needs-attention',
-  category: 'data-views',
-  name: 'API needs attention',
-  description: 'Open API change and deprecation cases awaiting a decision.',
-  dashboardWidget: {
-    icon: TbAlertTriangle,
-    defaultW: 6,
-    defaultH: 16,
-    surfaces: ['workspace'],
-    component: ApiCatalogNeedsAttentionWidget,
-    headerActionsComponent: ApiCatalogNeedsAttentionHeaderActions,
-    frame: { padded: false, showIcon: false },
-    isValidConfig: isValidListConfig,
-    createDefaultConfig: () => ({ limit: 8 }),
-    configForm: ListConfigForm
-  }
-});

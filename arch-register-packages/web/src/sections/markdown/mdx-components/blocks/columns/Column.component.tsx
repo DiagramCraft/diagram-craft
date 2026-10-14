@@ -1,0 +1,25 @@
+import type { ReactNode } from 'react';
+import { defineComponent } from '../../defineComponent';
+import { Column } from './Column';
+import { COLUMN_TYPE } from './ColumnEditable';
+import { ColumnEditable, columnMdxRule } from './ColumnEditable';
+import type { ColumnSlateElement } from './types'; // Column is never inserted on its own — it's only ever created (and destroyed)
+// by Columns' own slash-command insertion and preset-switch logic, so this spec
+// deliberately has no slashCommand.
+export default defineComponent<ColumnSlateElement, { children?: ReactNode }, 'block'>({
+  type: COLUMN_TYPE,
+  category: 'content-layout',
+  name: 'Column',
+  description: 'A column within a multi-column layout.',
+  mdxComponent: {
+    component: Column,
+    mode: 'block',
+    allowedProps: [],
+    acceptsRichContent: true,
+    editorSpec: {
+      editableComponent: ColumnEditable,
+      nodeOptions: {},
+      mdxRule: columnMdxRule
+    }
+  }
+});

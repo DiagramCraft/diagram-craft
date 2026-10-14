@@ -1,4 +1,3 @@
-import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import { useMemo } from 'react';
 import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import {
@@ -280,7 +279,7 @@ const optionalBoolean = (value: unknown): boolean =>
 const optionalString = (value: unknown): boolean =>
   value === undefined || typeof value === 'string';
 
-const _groupedRollupTableSpecData: Omit<
+export const _groupedRollupTableSpecData: Omit<
   DashboardWidgetSpec<GroupedRollupTableWidgetConfig>,
   'label' | 'description'
 > = {
@@ -306,12 +305,3 @@ const _groupedRollupTableSpecData: Omit<
   createDefaultConfig: () => ({ query: '', valueFieldId: '' }),
   configForm: GroupedRollupTableConfigForm
 };
-
-export const groupedRollupTableSpec = defineComponent({
-  type: GROUPED_ROLLUP_TABLE_TYPE,
-  category: 'data-views',
-  name: 'Roll-up table',
-  description:
-    'Records summed into ranked rows, per record or grouped by a field, with optional bars, share and count.',
-  dashboardWidget: _groupedRollupTableSpecData
-});

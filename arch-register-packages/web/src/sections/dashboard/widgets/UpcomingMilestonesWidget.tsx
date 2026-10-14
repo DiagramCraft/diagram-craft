@@ -7,8 +7,6 @@ import { useMdxContext } from '../../markdown/MdxContext';
 import { asProjectPublicId, projectDetailRoute } from '../../../routes/publicObjectRoutes';
 import { formatDate } from '../../../utils/dateFormat';
 import styles from './WidgetRowList.module.css';
-import { TbFlag3 } from 'react-icons/tb';
-import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 
 const MAX_UPCOMING = 3;
 
@@ -73,23 +71,3 @@ export const UpcomingMilestonesWidget = () => {
 };
 
 export const UPCOMING_MILESTONES_TYPE = 'upcoming-milestones' as const;
-
-/**
- * Dashboard-only widget: no editorSpec, so it never appears in the wiki
- * slash-command menu or MDX round-trip. Not authorable in wiki markdown.
- */
-export const upcomingMilestonesSpec = defineComponent({
-  type: UPCOMING_MILESTONES_TYPE,
-  category: 'metrics',
-  name: 'Upcoming milestones',
-  description: 'The most recently completed milestone and up to three upcoming ones.',
-  dashboardWidget: {
-    icon: TbFlag3,
-    defaultW: 3,
-    defaultH: 8,
-    surfaces: ['project'],
-    component: UpcomingMilestonesWidget,
-    isValidConfig: (_config): _config is Record<string, never> => true,
-    createDefaultConfig: () => ({})
-  }
-});

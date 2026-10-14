@@ -1,8 +1,7 @@
 import { SafeMarkdown } from '../../../components/SafeMarkdown';
 import typography from '../../markdown/articleTypography.module.css';
 import styles from './MarkdownWidget.module.css';
-import { TbMarkdown } from 'react-icons/tb';
-import { defineComponent } from '../../markdown/mdx-components/defineComponent';
+
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import configFormStyles from '../WidgetConfigDialog.module.css';
 
@@ -50,21 +49,3 @@ export const MarkdownDashboardConfigForm = ({
 );
 
 export const MARKDOWN_WIDGET_TYPE = 'markdown' as const;
-
-/** Dashboard-only widget; editing is handled by the dashboard config dialog. */
-export const markdownWidgetSpec = defineComponent({
-  type: MARKDOWN_WIDGET_TYPE,
-  category: 'content-layout',
-  name: 'Markdown',
-  description: 'Display simple Markdown content on the dashboard.',
-  dashboardWidget: {
-    icon: TbMarkdown,
-    defaultW: 6,
-    defaultH: 16,
-    surfaces: ['workspace', 'project'],
-    component: MarkdownWidget,
-    isValidConfig: (config): config is MarkdownWidgetConfig => typeof config.markdown === 'string',
-    createDefaultConfig: () => ({ markdown: '' }),
-    configForm: MarkdownDashboardConfigForm
-  }
-});

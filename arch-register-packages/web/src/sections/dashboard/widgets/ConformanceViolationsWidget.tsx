@@ -1,4 +1,3 @@
-import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import { useMemo } from 'react';
 import { EmptyState } from '../../../components/EmptyState';
 import { LoadingState } from '../../../components/LoadingState';
@@ -167,7 +166,7 @@ const isValidConfig = (
   config.limit > 0 &&
   (config.checkNames === undefined || isStringArray(config.checkNames));
 
-const _conformanceViolationsSpecData: Omit<
+export const _conformanceViolationsSpecData: Omit<
   DashboardWidgetSpec<ConformanceViolationsWidgetConfig>,
   'label' | 'description'
 > = {
@@ -182,12 +181,3 @@ const _conformanceViolationsSpecData: Omit<
   createDefaultConfig: () => ({ schemaName: '', limit: 8 }),
   configForm: ConformanceViolationsConfigForm
 };
-
-export const conformanceViolationsSpec = defineComponent({
-  type: CONFORMANCE_VIOLATIONS_TYPE,
-  category: 'data-views',
-  name: 'Conformance violations',
-  description:
-    'Entities of a schema with active conformance violations, with the failing checks, worst first.',
-  dashboardWidget: _conformanceViolationsSpecData
-});

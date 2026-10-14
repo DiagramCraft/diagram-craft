@@ -8,8 +8,7 @@ import { formatDate } from '../../../utils/dateFormat';
 import { dueLabel, dueTone } from '../../../utils/assessmentDueTone';
 import { filterAssessments, type AssessmentWidgetMode } from './assessmentsWidgetLogic';
 import styles from './WidgetRowList.module.css';
-import { TbClipboardCheck } from 'react-icons/tb';
-import { defineComponent } from '../../markdown/mdx-components/defineComponent';
+
 import { Select } from '@diagram-craft/app-components/Select';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import configFormStyles from '../WidgetConfigDialog.module.css';
@@ -226,29 +225,3 @@ export const AssessmentsConfigForm = ({ config, onChange }: AssessmentsConfigFor
 };
 
 export const ASSESSMENTS_TYPE = 'Assessments' as const;
-
-export const assessmentsSpec = defineComponent({
-  type: ASSESSMENTS_TYPE,
-  category: 'metrics',
-  name: 'Assessments',
-  description: 'Open or all assessments filtered by mode, assessment type and entity type scope.',
-  dashboardWidget: {
-    icon: TbClipboardCheck,
-    defaultW: 3,
-    defaultH: 12,
-    surfaces: ['workspace', 'project'],
-    component: AssessmentsWidget,
-    isValidConfig: (config): config is AssessmentsWidgetConfig =>
-      (config.mode === 'active' ||
-        config.mode === 'upcoming' ||
-        config.mode === 'overdue' ||
-        config.mode === 'all') &&
-      (config.assessmentTypeId === undefined || typeof config.assessmentTypeId === 'string') &&
-      (config.schemaNames === undefined ||
-        (Array.isArray(config.schemaNames) &&
-          config.schemaNames.every(name => typeof name === 'string'))) &&
-      (config.relativeDue === undefined || typeof config.relativeDue === 'boolean'),
-    createDefaultConfig: () => ({ mode: 'active' }),
-    configForm: AssessmentsConfigForm
-  }
-});

@@ -1,4 +1,3 @@
-import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import { useMemo } from 'react';
 import {
   SnapshotTimelineShell,
@@ -301,7 +300,7 @@ const optionalNumber = (value: unknown): boolean =>
 const optionalString = (value: unknown): boolean =>
   value === undefined || typeof value === 'string';
 
-const _dateRangeTimelineSpecData: Omit<
+export const _dateRangeTimelineSpecData: Omit<
   DashboardWidgetSpec<DateRangeTimelineWidgetConfig>,
   'label' | 'description'
 > = {
@@ -326,12 +325,3 @@ const _dateRangeTimelineSpecData: Omit<
   createDefaultConfig: () => ({ query: '', startFieldId: '', endFieldId: '' }),
   configForm: DateRangeTimelineConfigForm
 };
-
-export const dateRangeTimelineSpec = defineComponent({
-  type: DATE_RANGE_TIMELINE_TYPE,
-  category: 'visualizations',
-  name: 'Date range timeline',
-  description:
-    'Records as a Gantt chart from a start to an end date, e.g. contract terms or project phases.',
-  dashboardWidget: _dateRangeTimelineSpecData
-});

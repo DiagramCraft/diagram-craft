@@ -1,4 +1,3 @@
-import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import { useMemo } from 'react';
 import { useEntities } from '../../../hooks/useEntities';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
@@ -175,7 +174,7 @@ export const RatioBarListConfigForm = ({ config, onChange }: RatioBarListConfigF
 
 export const RATIO_BAR_LIST_TYPE = 'RatioBarList' as const;
 
-const _ratioBarListSpecData: Omit<
+export const _ratioBarListSpecData: Omit<
   DashboardWidgetSpec<RatioBarListWidgetConfig>,
   'label' | 'description'
 > = {
@@ -198,11 +197,3 @@ const _ratioBarListSpecData: Omit<
   }),
   configForm: RatioBarListConfigForm
 };
-
-export const ratioBarListSpec = defineComponent({
-  type: RATIO_BAR_LIST_TYPE,
-  category: 'metrics',
-  name: 'Ratio bars',
-  description: 'One coverage bar per value of a field, filled by the share matching a field value.',
-  dashboardWidget: _ratioBarListSpecData
-});

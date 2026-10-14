@@ -1,11 +1,9 @@
-import { TbListCheck } from 'react-icons/tb';
 import { LoadingState } from '../../../components/LoadingState';
 import { useEntities } from '../../../hooks/useEntities';
 import { useWidgetBodyTitle } from '../../../sections/dashboard/widgets/WidgetBodyTitle';
-import { defineComponent } from '../../../sections/markdown/mdx-components/defineComponent';
+
 import { renderSubtext } from '../dataStewardshipDashboardLogic';
 import {
-  isReviewsOverdueConfig,
   NotConfigured,
   StatTile,
   useDataStewardshipConfig,
@@ -33,20 +31,3 @@ export const ReviewsOverdueWidget = ({ config }: { config: ReviewsOverdueConfig 
     />
   );
 };
-
-export const reviewsOverdueSpec = defineComponent({
-  type: 'data-stewardship-reviews-overdue',
-  category: 'metrics',
-  name: 'Reviews overdue',
-  description: 'Datasets whose scheduled review date has passed.',
-  dashboardWidget: {
-    icon: TbListCheck,
-    defaultW: 3,
-    defaultH: 5,
-    surfaces: ['workspace'],
-    component: ReviewsOverdueWidget,
-    frame: { hideOutsideEdit: true, padded: false, showIcon: false },
-    isValidConfig: isReviewsOverdueConfig,
-    createDefaultConfig: () => ({ subtextTemplate: 'scheduled review date passed' })
-  }
-});

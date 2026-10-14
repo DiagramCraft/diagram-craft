@@ -1,5 +1,5 @@
 import './tokens.css';
-import './sections/markdown/mdx-components/componentRegistrations';
+import './componentDiscovery';
 import { applyTheme, migrateTheme } from './hooks/useTheme';
 
 // Apply saved theme immediately to avoid flash of wrong theme
