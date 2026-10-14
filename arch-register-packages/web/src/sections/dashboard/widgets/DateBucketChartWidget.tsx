@@ -1,3 +1,4 @@
+import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import { useMemo } from 'react';
 import { useQueryTextEntities } from '../../../hooks/useEntityQueryText';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
@@ -199,7 +200,7 @@ export const DATE_BUCKET_CHART_TYPE = 'DateBucketChart' as const;
 const isOptionalNumber = (value: unknown): boolean =>
   value === undefined || (typeof value === 'number' && Number.isFinite(value));
 
-export const dateBucketChartSpec: DashboardWidgetSpec<DateBucketChartWidgetConfig> = {
+const _dateBucketChartSpecData: DashboardWidgetSpec<DateBucketChartWidgetConfig> = {
   icon: TbChartBar,
   label: 'Date bar chart',
   description:
@@ -220,3 +221,10 @@ export const dateBucketChartSpec: DashboardWidgetSpec<DateBucketChartWidgetConfi
   createDefaultConfig: () => ({ query: '', dateFieldId: '' }),
   configForm: DateBucketChartConfigForm
 };
+
+export const dateBucketChartSpec = defineComponent({
+  type: DATE_BUCKET_CHART_TYPE,
+  category: 'visualizations',
+  surfaces: ['dashboard'],
+  dashboardWidget: _dateBucketChartSpecData
+});

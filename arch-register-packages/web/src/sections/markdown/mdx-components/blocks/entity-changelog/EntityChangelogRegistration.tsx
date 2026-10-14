@@ -27,6 +27,9 @@ export const entityChangelogSpec = defineComponent<
 >({
   type: ENTITY_CHANGELOG_TYPE,
   category: 'data-views',
+  label: 'Entity changelog',
+  description:
+    'A feed of recent changes to one entity or a filtered set. Use it to see what changed lately.',
 
   component: EntityChangelog,
   mode: 'block',
@@ -34,9 +37,6 @@ export const entityChangelogSpec = defineComponent<
   surfaces: ['wiki', 'dashboard'],
   dashboardWidget: {
     icon: TbHistory,
-    label: 'Entity changelog',
-    description:
-      'A feed of recent changes to one entity or a filtered set. Use it to see what changed lately.',
     defaultW: 6,
     defaultH: 16,
     surfaces: ['workspace', 'project'],
@@ -68,10 +68,6 @@ export const entityChangelogSpec = defineComponent<
     nodeOptions: { isVoid: true },
     mdxRule: entityChangelogMdxRule,
     slashCommand: {
-      key: 'entity-changelog',
-      label: 'Entity changelog',
-      description:
-        'A feed of recent changes to one entity or a filtered set. Use it to see what changed lately.',
       icon: <TbHistory size={14} />,
       keywords: ['changelog', 'audit', 'history', 'changes', 'entity'],
       onSelect: (editor, { insertOrReplaceBlock }) => {

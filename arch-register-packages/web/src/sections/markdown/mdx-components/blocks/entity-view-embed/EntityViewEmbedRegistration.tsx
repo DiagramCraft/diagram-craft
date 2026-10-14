@@ -17,6 +17,8 @@ export const entityViewEmbedSpec = defineComponent<
 >({
   type: ENTITY_VIEW_EMBED_TYPE,
   category: 'data-views',
+  label: 'Saved view',
+  description: 'A live copy of a saved entity view. Use it to reuse a view someone already set up.',
 
   component: EntityViewEmbed,
   mode: 'block',
@@ -24,9 +26,6 @@ export const entityViewEmbedSpec = defineComponent<
   surfaces: ['wiki', 'dashboard'],
   dashboardWidget: {
     icon: TbLayoutDashboard,
-    label: 'Saved view',
-    description:
-      'A live copy of a saved entity view. Use it to reuse a view someone already set up.',
     defaultW: 6,
     defaultH: 24,
     surfaces: ['workspace', 'project'],
@@ -46,10 +45,6 @@ export const entityViewEmbedSpec = defineComponent<
     nodeOptions: { isVoid: true },
     mdxRule: entityViewEmbedMdxRule,
     slashCommand: {
-      key: 'entity-view-embed',
-      label: 'Saved view',
-      description:
-        'A live copy of a saved entity view. Use it to reuse a view someone already set up.',
       icon: <TbLayoutGrid size={14} />,
       keywords: ['entity', 'view', 'embed', 'saved', 'catalog'],
       onSelect: (editor, { insertOrReplaceBlock }) => {

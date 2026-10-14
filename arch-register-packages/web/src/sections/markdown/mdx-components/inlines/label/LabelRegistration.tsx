@@ -21,7 +21,6 @@ export const labelSpec = defineComponent<
     nodeOptions: { isVoid: true, isInline: true },
     mdxRule: labelMdxRule,
     slashCommand: {
-      key: 'label',
       label: 'Label',
       description: 'Insert a free-standing colored status label',
       icon: <TbTag size={14} />,

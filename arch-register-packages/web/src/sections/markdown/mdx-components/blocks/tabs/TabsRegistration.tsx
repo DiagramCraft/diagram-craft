@@ -20,7 +20,6 @@ export const tabsSpec = defineComponent<TabsSlateElement, { children?: React.Rea
     nodeOptions: {},
     mdxRule: tabsMdxRule,
     slashCommand: {
-      key: 'tabs',
       label: 'Tabs',
       description: 'Present alternative content under selectable tabs',
       icon: <TbLayoutNavbar size={14} />,

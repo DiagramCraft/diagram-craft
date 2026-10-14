@@ -6,7 +6,6 @@ import type { ComponentCategory } from './componentCategories';
 export type ComponentSurface = 'wiki' | 'dashboard';
 
 export type SlashCommandDef = {
-  key: string;
   label: string;
   description: string;
   icon: React.ReactNode;

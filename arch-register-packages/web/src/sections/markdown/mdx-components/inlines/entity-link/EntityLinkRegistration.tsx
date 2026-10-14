@@ -17,7 +17,6 @@ export const entityLinkSpec = defineComponent<EntityLinkSlateElement, { id: stri
     nodeOptions: { isVoid: true, isInline: true },
     mdxRule: entityLinkMdxRule,
     slashCommand: {
-      key: 'entity-link',
       label: 'Entity link',
       description: 'A plain link to an entity page',
       icon: <TbLink size={14} />,

@@ -26,7 +26,6 @@ export const entityChartSpec = defineComponent<
     nodeOptions: { isVoid: true },
     mdxRule: entityChartMdxRule,
     slashCommand: {
-      key: 'entity-chart',
       label: 'Entity chart',
       description:
         'A live chart of entities grouped by a field. Use it to show distribution, e.g. by lifecycle or owner.',

@@ -1,3 +1,4 @@
+import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import { useMemo } from 'react';
 import {
   SnapshotTimelineShell,
@@ -300,7 +301,7 @@ const optionalNumber = (value: unknown): boolean =>
 const optionalString = (value: unknown): boolean =>
   value === undefined || typeof value === 'string';
 
-export const dateRangeTimelineSpec: DashboardWidgetSpec<DateRangeTimelineWidgetConfig> = {
+const _dateRangeTimelineSpecData: DashboardWidgetSpec<DateRangeTimelineWidgetConfig> = {
   icon: TbTimeline,
   label: 'Date range timeline',
   description:
@@ -325,3 +326,10 @@ export const dateRangeTimelineSpec: DashboardWidgetSpec<DateRangeTimelineWidgetC
   createDefaultConfig: () => ({ query: '', startFieldId: '', endFieldId: '' }),
   configForm: DateRangeTimelineConfigForm
 };
+
+export const dateRangeTimelineSpec = defineComponent({
+  type: DATE_RANGE_TIMELINE_TYPE,
+  category: 'visualizations',
+  surfaces: ['dashboard'],
+  dashboardWidget: _dateRangeTimelineSpecData
+});

@@ -2,8 +2,8 @@ import type { DataStewardshipQueueItem } from './dataStewardshipQueue';
 import { DS_QUEUE_CASE_KINDS } from './dataStewardshipQueue';
 
 /**
- * Pure logic behind the My work dashboard widgets (`dataStewardshipDashboardWidgets.tsx`), kept
- * separate so it can be unit tested without rendering.
+ * Pure logic behind the My work dashboard widgets in `widgets/`, kept separate so it can be unit
+ * tested without rendering.
  */
 
 export type CaseWidgetScope = 'mine' | 'workspace' | 'late';

@@ -25,7 +25,6 @@ export const entityMentionSpec = defineComponent<
     nodeOptions: { isVoid: true, isInline: true },
     mdxRule: entityMentionMdxRule,
     slashCommand: {
-      key: 'entity-mention',
       label: 'Entity mention',
       description: 'Mention an entity with its live name and status',
       icon: <TbAt size={14} />,

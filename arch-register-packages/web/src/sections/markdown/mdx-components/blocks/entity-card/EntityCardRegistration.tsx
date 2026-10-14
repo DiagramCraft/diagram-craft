@@ -16,6 +16,9 @@ export const entityCardSpec = defineComponent<
 >({
   type: ENTITY_CARD_TYPE,
   category: 'data-views',
+  label: 'Entity card',
+  description:
+    'A summary card for one entity with its key fields. Use it to spotlight a single system or owner.',
 
   component: EntityCard,
   mode: 'block',
@@ -23,9 +26,6 @@ export const entityCardSpec = defineComponent<
   surfaces: ['wiki', 'dashboard'],
   dashboardWidget: {
     icon: TbId,
-    label: 'Entity card',
-    description:
-      'A summary card for one entity with its key fields. Use it to spotlight a single system or owner.',
     defaultW: 3,
     defaultH: 8,
     surfaces: ['workspace', 'project'],
@@ -46,10 +46,6 @@ export const entityCardSpec = defineComponent<
     nodeOptions: { isVoid: true },
     mdxRule: entityCardMdxRule,
     slashCommand: {
-      key: 'entity-card',
-      label: 'Entity card',
-      description:
-        'A summary card for one entity with its key fields. Use it to spotlight a single system or owner.',
       icon: <TbId size={14} />,
       keywords: ['entity', 'card', 'catalog', 'service'],
       onSelect: (editor, { insertOrReplaceBlock }) => {

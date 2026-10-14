@@ -1,5 +1,8 @@
 import { useMemo, useState } from 'react';
+import { TbGridDots } from 'react-icons/tb';
 import { ToggleButtonGroup } from '@diagram-craft/app-components/ToggleButtonGroup';
+import { defineComponent } from '../../../sections/markdown/mdx-components/defineComponent';
+import { RiskMatrixConfigForm } from './RiskMatrixConfigForm';
 import { useEntities } from '../../../hooks/useEntities';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { useEntityDrawer } from '../../../sections/entities/entityDrawer/useEntityDrawer';
@@ -24,6 +27,8 @@ export type RiskMatrixWidgetConfig = {
   statuses?: string[];
   owners?: string[];
 };
+
+export const RISK_MATRIX_TYPE = 'risk-compliance-risk-matrix' as const;
 
 /** Drops unresolved `$variable` references; an empty result means the facet is not filtering. */
 const activeFilter = (values: string[] | undefined): string[] =>
@@ -100,3 +105,31 @@ export const RiskMatrixWidget = ({ config }: Props) => {
     </div>
   );
 };
+
+const isOptionalStringArray = (value: unknown): boolean =>
+  value === undefined || (Array.isArray(value) && value.every(item => typeof item === 'string'));
+
+export const riskMatrixSpec = defineComponent({
+  type: RISK_MATRIX_TYPE,
+  category: 'visualizations',
+  surfaces: ['dashboard'],
+  dashboardWidget: {
+    icon: TbGridDots,
+    label: 'Risk matrix',
+    description: 'Likelihood × impact matrix of live risks, with an inherent/residual toggle.',
+    defaultW: 6,
+    defaultH: 24,
+    surfaces: ['workspace'],
+    component: RiskMatrixWidget,
+    isValidConfig: (config): config is RiskMatrixWidgetConfig =>
+      typeof config.schemaName === 'string' &&
+      config.schemaName !== '' &&
+      (config.axis === undefined || config.axis === 'inherent' || config.axis === 'residual') &&
+      (config.includeClosed === undefined || typeof config.includeClosed === 'boolean') &&
+      isOptionalStringArray(config.categories) &&
+      isOptionalStringArray(config.statuses) &&
+      isOptionalStringArray(config.owners),
+    createDefaultConfig: () => ({ schemaName: '' }),
+    configForm: RiskMatrixConfigForm
+  }
+});

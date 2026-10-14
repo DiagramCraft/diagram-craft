@@ -36,6 +36,5 @@ that today.
 panels above: its query/join/severity logic and row rendering were generalized into
 `sections/dashboard/widgets/needsAttentionQueue.ts` / `NeedsAttentionList.tsx`, shared with Data
 Stewardship's "My work" queue and available as its own placeable `NeedsAttentionQueue` dashboard
-widget. This app's `api-integration-catalog-needs-attention` registry adapter
-(`apiIntegrationCatalogDashboardWidgets.tsx`) now just supplies its resolved schema/case-kinds to
+widget. This app's `ApiCatalogNeedsAttentionWidget.tsx` supplies its resolved schema/case-kinds to
 that shared hook/component, rather than owning a standalone panel.

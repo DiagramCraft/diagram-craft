@@ -1,3 +1,4 @@
+import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import { useMemo } from 'react';
 import { Chip } from '../../../components/Chip';
 import { EmptyState } from '../../../components/EmptyState';
@@ -270,7 +271,7 @@ const isValidConfig = (
   isOptionalString(config.consumerLabel) &&
   isOptionalString(config.coverageLabel);
 
-export const relationPairsCoverageSpec: DashboardWidgetSpec<RelationPairsCoverageWidgetConfig> = {
+const _relationPairsCoverageSpecData: DashboardWidgetSpec<RelationPairsCoverageWidgetConfig> = {
   icon: TbArrowsJoin,
   label: 'Pair coverage',
   description:
@@ -289,3 +290,10 @@ export const relationPairsCoverageSpec: DashboardWidgetSpec<RelationPairsCoverag
   }),
   configForm: RelationPairsCoverageConfigForm
 };
+
+export const relationPairsCoverageSpec = defineComponent({
+  type: RELATION_PAIRS_COVERAGE_TYPE,
+  category: 'data-views',
+  surfaces: ['dashboard'],
+  dashboardWidget: _relationPairsCoverageSpecData
+});

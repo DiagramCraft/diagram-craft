@@ -1,3 +1,4 @@
+import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import { useMemo } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { Chip } from '../../../components/Chip';
@@ -278,7 +279,7 @@ const isOptionalString = (value: unknown): boolean =>
  * schema, restricted to a chosen set of case kinds — not tied to any particular app. Generalized
  * from Data Stewardship's former Change cases screen (#3504).
  */
-export const changeCaseTableSpec: DashboardWidgetSpec<ChangeCaseTableConfig> = {
+const _changeCaseTableSpecData: DashboardWidgetSpec<ChangeCaseTableConfig> = {
   icon: TbGitPullRequest,
   label: 'Change case table',
   description: 'Register of governance cases against entities of a chosen type, in any status.',
@@ -300,3 +301,10 @@ export const changeCaseTableSpec: DashboardWidgetSpec<ChangeCaseTableConfig> = {
   }),
   configForm: ChangeCaseTableConfigForm
 };
+
+export const changeCaseTableSpec = defineComponent({
+  type: CHANGE_CASE_TABLE_TYPE,
+  category: 'data-views',
+  surfaces: ['dashboard'],
+  dashboardWidget: _changeCaseTableSpecData
+});

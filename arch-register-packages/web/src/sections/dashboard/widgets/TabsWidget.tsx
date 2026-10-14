@@ -1,3 +1,4 @@
+import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { NestedWidgetRenderer } from './nestedWidgets';
@@ -180,7 +181,7 @@ export const TabsConfigForm = ({ config, onChange, context }: FormProps) => {
 
 export { TABS_TYPE };
 
-export const tabsSpec: DashboardWidgetSpec<TabsWidgetConfig> = {
+const _tabsSpecData: DashboardWidgetSpec<TabsWidgetConfig> = {
   icon: TbLayoutList,
   label: 'Tabs',
   description: 'Groups other widgets into switchable tabs.',
@@ -199,3 +200,10 @@ export const tabsSpec: DashboardWidgetSpec<TabsWidgetConfig> = {
   configForm: TabsConfigForm,
   dialogSize: 'large'
 };
+
+export const tabsSpec = defineComponent({
+  type: TABS_TYPE,
+  category: 'content-layout',
+  surfaces: ['dashboard'],
+  dashboardWidget: _tabsSpecData
+});

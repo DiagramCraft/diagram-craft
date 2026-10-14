@@ -19,6 +19,9 @@ export const entityTableSpec = defineComponent<
 >({
   type: ENTITY_TABLE_TYPE,
   category: 'data-views',
+  label: 'Entity table',
+  description:
+    'A table of entities matching filters you define. Use it for a fixed, readable list.',
 
   component: EntityTable,
   mode: 'block',
@@ -26,9 +29,6 @@ export const entityTableSpec = defineComponent<
   surfaces: ['wiki', 'dashboard'],
   dashboardWidget: {
     icon: TbTable,
-    label: 'Entity table',
-    description:
-      'A table of entities matching filters you define. Use it for a fixed, readable list.',
     defaultW: 6,
     defaultH: 24,
     surfaces: ['workspace', 'project'],
@@ -51,10 +51,6 @@ export const entityTableSpec = defineComponent<
     nodeOptions: { isVoid: true },
     mdxRule: entityTableMdxRule,
     slashCommand: {
-      key: 'entity-table',
-      label: 'Entity table',
-      description:
-        'A table of entities matching filters you define. Use it for a fixed, readable list.',
       icon: <TbTable size={14} />,
       keywords: ['entity', 'table', 'catalog', 'list', 'filter'],
       onSelect: (editor, { insertOrReplaceBlock }) => {

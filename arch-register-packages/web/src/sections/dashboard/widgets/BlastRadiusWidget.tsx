@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { TbTopologyStar3 } from 'react-icons/tb';
 import type { DashboardWidgetSpec } from '../../markdown/mdx-components/types';
+import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import { EmptyState } from '../../../components/EmptyState';
 import { EntityPicker } from '../../../components/EntityPicker';
@@ -67,45 +68,43 @@ const BlastRadiusConfigForm = ({
   const commit = (next: BlastRadiusWidgetConfig) => onChange(next);
 
   return (
-    <>
-      <DialogSection label="Entity">
-        <EntityPicker
-          selectedEntityId={entityId}
-          selectedEntity={entity}
-          onSelectEntity={selected => {
-            setEntityId(selected._publicId);
-            commit({ ...config, entityId: selected._publicId });
-          }}
-          onClearEntity={() => {
-            setEntityId('');
-            commit({ ...config, entityId: undefined });
-          }}
-        />
-      </DialogSection>
-    </>
+    <DialogSection label="Entity">
+      <EntityPicker
+        selectedEntityId={entityId}
+        selectedEntity={entity}
+        onSelectEntity={selected => {
+          setEntityId(selected._publicId);
+          commit({ ...config, entityId: selected._publicId });
+        }}
+        onClearEntity={() => {
+          setEntityId('');
+          commit({ ...config, entityId: undefined });
+        }}
+      />
+    </DialogSection>
   );
 };
 
-export const blastRadiusDashboardWidgetSpec: {
-  type: string;
-  // biome-ignore lint/suspicious/noExplicitAny: this registry intentionally erases per-widget config types
-  spec: DashboardWidgetSpec<any>;
-} = {
-  type: BLAST_RADIUS_WIDGET_TYPE,
-  spec: {
-    icon: TbTopologyStar3,
-    label: 'Blast radius',
-    description: 'Entities reachable from a chosen entity, with depth and owner filters.',
-    defaultW: 6,
-    defaultH: 16,
-    surfaces: ['workspace'],
-    component: BlastRadiusWidget,
-    // BlastRadiusPanel renders its own page-level padding (`.panel` in BlastRadiusPanel.module.css)
-    // since it's shared with non-widget contexts (the entity drawer); WidgetFrame's own padding on
-    // top of that doubled up the spacing, so it's turned off here.
-    frame: { padded: false },
-    isValidConfig,
-    createDefaultConfig: () => ({}),
-    configForm: BlastRadiusConfigForm
-  }
+const blastRadiusDashboardSpec: DashboardWidgetSpec<BlastRadiusWidgetConfig> = {
+  icon: TbTopologyStar3,
+  label: 'Blast radius',
+  description: 'Entities reachable from a chosen entity, with depth and owner filters.',
+  defaultW: 6,
+  defaultH: 16,
+  surfaces: ['workspace'],
+  component: BlastRadiusWidget,
+  // BlastRadiusPanel renders its own page-level padding (`.panel` in BlastRadiusPanel.module.css)
+  // since it's shared with non-widget contexts (the entity drawer); WidgetFrame's own padding on
+  // top of that doubled up the spacing, so it's turned off here.
+  frame: { padded: false },
+  isValidConfig,
+  createDefaultConfig: () => ({}),
+  configForm: BlastRadiusConfigForm
 };
+
+export const blastRadiusSpec = defineComponent({
+  type: BLAST_RADIUS_WIDGET_TYPE,
+  category: 'visualizations',
+  surfaces: ['dashboard'],
+  dashboardWidget: blastRadiusDashboardSpec
+});

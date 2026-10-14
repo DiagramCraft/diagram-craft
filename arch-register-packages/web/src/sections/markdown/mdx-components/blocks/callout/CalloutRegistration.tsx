@@ -23,7 +23,6 @@ export const calloutSpec = defineComponent<
     nodeOptions: {},
     mdxRule: calloutMdxRule,
     slashCommand: {
-      key: 'callout',
       label: 'Callout',
       description: 'Highlight a note, warning, or tip',
       icon: <TbInfoCircle size={14} />,

@@ -1,3 +1,4 @@
+import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
@@ -196,7 +197,7 @@ const isValidConfig = (config: Record<string, unknown>): config is SpecItemsTabl
   (config.deprecated === undefined || typeof config.deprecated === 'boolean') &&
   (config.entityLimit === undefined || typeof config.entityLimit === 'number');
 
-export const specItemsTableSpec: DashboardWidgetSpec<SpecItemsTableWidgetConfig> = {
+const _specItemsTableSpecData: DashboardWidgetSpec<SpecItemsTableWidgetConfig> = {
   icon: TbListDetails,
   label: 'Specification operations',
   description:
@@ -210,3 +211,10 @@ export const specItemsTableSpec: DashboardWidgetSpec<SpecItemsTableWidgetConfig>
   createDefaultConfig: () => ({ schemaName: '' }),
   configForm: SpecItemsTableConfigForm
 };
+
+export const specItemsTableSpec = defineComponent({
+  type: SPEC_ITEMS_TABLE_TYPE,
+  category: 'data-views',
+  surfaces: ['dashboard'],
+  dashboardWidget: _specItemsTableSpecData
+});

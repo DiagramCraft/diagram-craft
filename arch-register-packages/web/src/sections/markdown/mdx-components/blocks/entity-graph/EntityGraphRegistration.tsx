@@ -17,6 +17,9 @@ export const entityGraphSpec = defineComponent<
 >({
   type: ENTITY_GRAPH_TYPE,
   category: 'visualizations',
+  label: 'Entity graph',
+  description:
+    'A clickable graph of the dependencies and relations around one entity. Works best at 6x4 or larger.',
 
   component: EntityGraph,
   mode: 'block',
@@ -25,9 +28,6 @@ export const entityGraphSpec = defineComponent<
   surfaces: ['wiki', 'dashboard'],
   dashboardWidget: {
     icon: TbVectorTriangle,
-    label: 'Entity graph',
-    description:
-      'A clickable graph of the dependencies and relations around one entity. Works best at 6x4 or larger.',
     defaultW: 6,
     defaultH: 16,
     surfaces: ['workspace', 'project'],
@@ -47,10 +47,6 @@ export const entityGraphSpec = defineComponent<
     nodeOptions: { isVoid: true },
     mdxRule: entityGraphMdxRule,
     slashCommand: {
-      key: 'entity-graph',
-      label: 'Entity graph',
-      description:
-        'A clickable graph of the dependencies and relations around one entity. Works best at 6x4 or larger.',
       icon: <TbVectorTriangle size={14} />,
       keywords: ['entity', 'graph', 'dependency', 'impact', 'relations'],
       onSelect: (editor, { insertOrReplaceBlock }) => {

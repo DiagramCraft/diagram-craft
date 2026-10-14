@@ -21,7 +21,6 @@ export const imageEmbedSpec = defineComponent<
     nodeOptions: { isVoid: true },
     mdxRule: imageEmbedMdxRule,
     slashCommand: {
-      key: 'image-embed',
       label: 'Image',
       description: 'Embed an uploaded image attachment',
       icon: <TbPhoto size={14} />,

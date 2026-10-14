@@ -1,3 +1,4 @@
+import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import { useMemo } from 'react';
 import { CalendarGrid } from '../../../components/CalendarGrid';
 import {
@@ -278,7 +279,7 @@ const isOptionalNumber = (value: unknown): boolean =>
 const optionalString = (value: unknown): boolean =>
   value === undefined || typeof value === 'string';
 
-export const dateCalendarSpec: DashboardWidgetSpec<DateCalendarWidgetConfig> = {
+const _dateCalendarSpecData: DashboardWidgetSpec<DateCalendarWidgetConfig> = {
   icon: TbCalendarMonth,
   label: 'Calendar',
   description:
@@ -302,3 +303,10 @@ export const dateCalendarSpec: DashboardWidgetSpec<DateCalendarWidgetConfig> = {
   createDefaultConfig: () => ({ query: '', dateFieldId: '' }),
   configForm: DateCalendarConfigForm
 };
+
+export const dateCalendarSpec = defineComponent({
+  type: DATE_CALENDAR_TYPE,
+  category: 'visualizations',
+  surfaces: ['dashboard'],
+  dashboardWidget: _dateCalendarSpecData
+});

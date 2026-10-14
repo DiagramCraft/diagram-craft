@@ -17,6 +17,9 @@ export const diagramEmbedSpec = defineComponent<
 >({
   type: DIAGRAM_EMBED_TYPE,
   category: 'visualizations',
+  label: 'Diagram',
+  description:
+    'A read-only preview of an architecture diagram. Use it to show a system picture alongside the text.',
 
   component: DiagramEmbed,
   mode: 'block',
@@ -24,9 +27,6 @@ export const diagramEmbedSpec = defineComponent<
   surfaces: ['wiki', 'dashboard'],
   dashboardWidget: {
     icon: TbChartLine,
-    label: 'Diagram',
-    description:
-      'A read-only preview of an architecture diagram. Use it to show a system picture alongside the text.',
     defaultW: 6,
     defaultH: 16,
     surfaces: ['workspace', 'project'],
@@ -47,10 +47,6 @@ export const diagramEmbedSpec = defineComponent<
     nodeOptions: { isVoid: true },
     mdxRule: diagramEmbedMdxRule,
     slashCommand: {
-      key: 'diagram-embed',
-      label: 'Diagram',
-      description:
-        'A read-only preview of an architecture diagram. Use it to show a system picture alongside the text.',
       icon: <TbChartLine size={14} />,
       keywords: ['diagram', 'embed', 'preview', 'svg', 'flow'],
       onSelect: (editor, { insertOrReplaceBlock }) => {

@@ -1,3 +1,4 @@
+import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import { useMemo } from 'react';
 import { bandTone, toneColor } from '../../../components/bandColor';
 import { EntityHoverCard } from '../../../components/EntityHoverCard';
@@ -372,7 +373,7 @@ export const RelatedEntitiesListConfigForm = ({
 
 export const RELATED_ENTITIES_LIST_TYPE = 'RelatedEntitiesList' as const;
 
-export const relatedEntitiesListSpec: DashboardWidgetSpec<RelatedEntitiesListWidgetConfig> = {
+const _relatedEntitiesListSpecData: DashboardWidgetSpec<RelatedEntitiesListWidgetConfig> = {
   icon: TbListDetails,
   label: 'Related entities',
   description:
@@ -387,3 +388,10 @@ export const relatedEntitiesListSpec: DashboardWidgetSpec<RelatedEntitiesListWid
   createDefaultConfig: () => ({ schemaName: '', referenceField: '' }),
   configForm: RelatedEntitiesListConfigForm
 };
+
+export const relatedEntitiesListSpec = defineComponent({
+  type: RELATED_ENTITIES_LIST_TYPE,
+  category: 'data-views',
+  surfaces: ['dashboard'],
+  dashboardWidget: _relatedEntitiesListSpecData
+});

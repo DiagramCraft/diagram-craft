@@ -30,7 +30,6 @@ vi.mock('../mdx-components/mdxRegistry', () => {
           })
         },
         slashCommand: {
-          key: 'test-block',
           label: 'Test block',
           description: 'Test block',
           icon: 'T',
@@ -220,7 +219,7 @@ describe('slash command insertion helpers', () => {
   });
 
   it('includes registry-backed commands in the slash command list', () => {
-    const command = SLASH_COMMANDS.find(item => item.key === 'test-block');
+    const command = SLASH_COMMANDS.find(item => item.key === 'TestBlock');
 
     expect(command).toBeDefined();
     const editor = makeSlashEditor([{ type: 'p', children: [{ text: '' }] }]);

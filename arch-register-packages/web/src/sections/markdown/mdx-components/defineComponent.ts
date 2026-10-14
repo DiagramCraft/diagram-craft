@@ -39,7 +39,6 @@ export type MdxRuleDef<E extends TElement, Mode extends MdxMode> = {
 };
 
 export type SlashCommandDef<E extends TElement = TElement> = {
-  key: string;
   label: string;
   description: string;
   icon: React.ReactNode;
@@ -53,6 +52,18 @@ export type SlashCommandDef<E extends TElement = TElement> = {
   ) => void;
 };
 
+type SlashCommandRegistrationDef<E extends TElement> = Omit<
+  SlashCommandDef<E>,
+  'label' | 'description'
+> &
+  Partial<Pick<SlashCommandDef<E>, 'label' | 'description'>>;
+
+type DashboardWidgetRegistrationDef<Config extends Record<string, unknown>> = Omit<
+  DashboardWidgetSpec<Config>,
+  'label' | 'description'
+> &
+  Partial<Pick<DashboardWidgetSpec<Config>, 'label' | 'description'>>;
+
 export type MdxEditorSpecDef<E extends TElement, Mode extends MdxMode> = {
   /** The Plate element component used in the editor */
   editableComponent: React.ComponentType<PlateElementProps<E>>;
@@ -63,7 +74,7 @@ export type MdxEditorSpecDef<E extends TElement, Mode extends MdxMode> = {
   };
   mdxRule: MdxRuleDef<E, Mode>;
   /** Slash command registration; omit to hide from the slash menu */
-  slashCommand?: SlashCommandDef<E>;
+  slashCommand?: SlashCommandRegistrationDef<E>;
   /**
    * Only meaningful when the owning spec has acceptsChildren: true. Builds a
    * wrapper node around an existing node being promoted into it (used by the
@@ -83,6 +94,9 @@ export type MdxComponentDef<
   type: string;
   /** Shared category shown in the wiki and dashboard catalogs. */
   category: ComponentCategory;
+  /** Shared display name and description for dashboard and slash command catalogs. */
+  label?: string;
+  description?: string;
   /** Content surfaces where the component may be rendered. */
   surfaces: ReadonlyArray<ComponentSurface>;
   /** Preview-mode React component */
@@ -106,8 +120,8 @@ export type MdxComponentDef<
   /** Editor-mode registration; present for all components that support rich editing */
   editorSpec?: MdxEditorSpecDef<E, Mode>;
   /** Present when this component can also be added as a dashboard widget. */
-  // biome-ignore lint/suspicious/noExplicitAny: registry entries have per-component Config types, erased here
-  dashboardWidget?: DashboardWidgetSpec<any>;
+  // biome-ignore lint/suspicious/noExplicitAny: registrations erase per-widget config types here
+  dashboardWidget?: DashboardWidgetRegistrationDef<any>;
 };
 
 export type DashboardOnlyComponentDef = {
@@ -134,11 +148,65 @@ export function defineComponent(
   def: MdxComponentDef<TElement, Record<string, unknown>, MdxMode> | DashboardOnlyComponentDef
 ): ComponentDefinition {
   const { type, category, surfaces, dashboardWidget, ...mdx } = def;
+  const label = 'label' in def ? def.label : undefined;
+  const description = 'description' in def ? def.description : undefined;
+  const mdxSpec = 'component' in mdx ? (mdx as unknown as MdxComponentSpec) : undefined;
+  const slashCommand = mdxSpec?.editorSpec?.slashCommand;
+  const resolveMetadata = (
+    field: 'label' | 'description',
+    ...values: Array<string | undefined>
+  ) => {
+    const value = values.find(candidate => candidate !== undefined);
+    if (value === undefined) {
+      throw new Error(`Component ${type} is missing ${field} metadata`);
+    }
+    return value;
+  };
+
+  const normalizedDashboardWidget = dashboardWidget
+    ? {
+        ...dashboardWidget,
+        label: resolveMetadata('label', label, dashboardWidget.label, slashCommand?.label),
+        description: resolveMetadata(
+          'description',
+          description,
+          dashboardWidget.description,
+          slashCommand?.description
+        )
+      }
+    : undefined;
+  const normalizedSlashCommand = slashCommand
+    ? {
+        ...slashCommand,
+        label: resolveMetadata('label', label, slashCommand.label, dashboardWidget?.label),
+        description: resolveMetadata(
+          'description',
+          description,
+          slashCommand.description,
+          dashboardWidget?.description
+        )
+      }
+    : undefined;
+
+  const normalizedMdxSpec = mdxSpec
+    ? {
+        ...mdxSpec,
+        ...(mdxSpec.editorSpec
+          ? {
+              editorSpec: {
+                ...mdxSpec.editorSpec,
+                ...(normalizedSlashCommand ? { slashCommand: normalizedSlashCommand } : {})
+              }
+            }
+          : {})
+      }
+    : undefined;
+
   return {
     type,
     category,
     surfaces,
-    ...('component' in mdx ? { mdx: mdx as unknown as MdxComponentSpec } : {}),
-    ...(dashboardWidget ? { dashboardWidget } : {})
+    ...(normalizedMdxSpec ? { mdx: normalizedMdxSpec } : {}),
+    ...(normalizedDashboardWidget ? { dashboardWidget: normalizedDashboardWidget } : {})
   };
 }

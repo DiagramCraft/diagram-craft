@@ -1,3 +1,4 @@
+import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import { useMemo } from 'react';
 import { EmptyState } from '../../../components/EmptyState';
 import { LoadingState } from '../../../components/LoadingState';
@@ -166,7 +167,7 @@ const isValidConfig = (
   config.limit > 0 &&
   (config.checkNames === undefined || isStringArray(config.checkNames));
 
-export const conformanceViolationsSpec: DashboardWidgetSpec<ConformanceViolationsWidgetConfig> = {
+const _conformanceViolationsSpecData: DashboardWidgetSpec<ConformanceViolationsWidgetConfig> = {
   icon: TbShieldExclamation,
   label: 'Conformance violations',
   description:
@@ -181,3 +182,10 @@ export const conformanceViolationsSpec: DashboardWidgetSpec<ConformanceViolation
   createDefaultConfig: () => ({ schemaName: '', limit: 8 }),
   configForm: ConformanceViolationsConfigForm
 };
+
+export const conformanceViolationsSpec = defineComponent({
+  type: CONFORMANCE_VIOLATIONS_TYPE,
+  category: 'data-views',
+  surfaces: ['dashboard'],
+  dashboardWidget: _conformanceViolationsSpecData
+});

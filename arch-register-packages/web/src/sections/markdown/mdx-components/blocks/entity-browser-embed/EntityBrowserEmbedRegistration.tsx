@@ -31,6 +31,9 @@ export const entityBrowserEmbedSpec = defineComponent<
 >({
   type: ENTITY_BROWSER_EMBED_TYPE,
   category: 'data-views',
+  label: 'Entity browser',
+  description:
+    'A live, searchable list of entities with your own filters, sorting and columns. Use it for a flexible catalog view.',
 
   component: EntityBrowserEmbed,
   mode: 'block',
@@ -38,9 +41,6 @@ export const entityBrowserEmbedSpec = defineComponent<
   surfaces: ['wiki', 'dashboard'],
   dashboardWidget: {
     icon: TbListSearch,
-    label: 'Entity browser',
-    description:
-      'A live, searchable list of entities with your own filters, sorting and columns. Use it for a flexible catalog view.',
     defaultW: 6,
     defaultH: 24,
     surfaces: ['workspace', 'project'],
@@ -65,10 +65,6 @@ export const entityBrowserEmbedSpec = defineComponent<
     nodeOptions: { isVoid: true },
     mdxRule: entityBrowserEmbedMdxRule,
     slashCommand: {
-      key: 'entity-browser-embed',
-      label: 'Entity browser',
-      description:
-        'A live, searchable list of entities with your own filters, sorting and columns. Use it for a flexible catalog view.',
       icon: <TbListSearch size={14} />,
       keywords: ['entity', 'browser', 'embed', 'search', 'filter', 'catalog'],
       onSelect: (editor, { insertOrReplaceBlock }) => {

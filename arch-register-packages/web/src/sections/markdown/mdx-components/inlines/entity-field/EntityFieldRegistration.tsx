@@ -21,7 +21,6 @@ export const entityFieldSpec = defineComponent<
     nodeOptions: { isVoid: true, isInline: true },
     mdxRule: entityFieldMdxRule,
     slashCommand: {
-      key: 'entity-field',
       label: 'Entity field',
       description: 'Show a live field value from an entity inside a sentence',
       icon: <TbHash size={14} />,

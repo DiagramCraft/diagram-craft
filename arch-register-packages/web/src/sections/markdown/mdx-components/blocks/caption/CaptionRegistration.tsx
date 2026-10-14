@@ -22,7 +22,6 @@ export const captionSpec = defineComponent<
     nodeOptions: {},
     mdxRule: captionMdxRule,
     slashCommand: {
-      key: 'caption',
       label: 'Caption',
       description: 'Wrap a block with a figure caption',
       icon: <TbFrame size={14} />,

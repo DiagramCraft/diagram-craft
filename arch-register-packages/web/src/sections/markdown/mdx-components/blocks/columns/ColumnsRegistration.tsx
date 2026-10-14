@@ -24,7 +24,6 @@ export const columnsSpec = defineComponent<
     nodeOptions: {},
     mdxRule: columnsMdxRule,
     slashCommand: {
-      key: 'columns',
       label: 'Columns',
       description: 'Lay out content side by side',
       icon: <TbColumns size={14} />,

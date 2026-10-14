@@ -29,6 +29,9 @@ export const documentBrowserEmbedSpec = defineComponent<
 >({
   type: DOCUMENT_BROWSER_EMBED_TYPE,
   category: 'data-views',
+  label: 'Document browser',
+  description:
+    'A filterable list of documents in this workspace or project. Use it to find and open files.',
 
   component: DocumentBrowserEmbed,
   mode: 'block',
@@ -36,9 +39,6 @@ export const documentBrowserEmbedSpec = defineComponent<
   surfaces: ['wiki', 'dashboard'],
   dashboardWidget: {
     icon: TbFileSearch,
-    label: 'Document browser',
-    description:
-      'A filterable list of documents in this workspace or project. Use it to find and open files.',
     defaultW: 6,
     defaultH: 16,
     surfaces: ['workspace', 'project'],
@@ -64,10 +64,6 @@ export const documentBrowserEmbedSpec = defineComponent<
     nodeOptions: { isVoid: true },
     mdxRule: documentBrowserEmbedMdxRule,
     slashCommand: {
-      key: 'document-browser-embed',
-      label: 'Document browser',
-      description:
-        'A filterable list of documents in this workspace or project. Use it to find and open files.',
       icon: <TbFileSearch size={14} />,
       keywords: ['document', 'browser', 'markdown', 'wiki', 'list', 'filter', 'search'],
       onSelect: (editor, { insertOrReplaceBlock }) => {

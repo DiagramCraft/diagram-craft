@@ -1,3 +1,4 @@
+import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import { useMemo } from 'react';
 import { useAssessments } from '../../../hooks/useAssessments';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
@@ -155,7 +156,7 @@ const AssessmentCountConfigForm = ({
 const isOptionalString = (value: unknown): boolean =>
   value === undefined || typeof value === 'string';
 
-export const assessmentCountSpec: DashboardWidgetSpec<AssessmentCountWidgetConfig> = {
+const _assessmentCountSpecData: DashboardWidgetSpec<AssessmentCountWidgetConfig> = {
   icon: TbClipboardCheck,
   label: 'Assessment count',
   description: 'Number of assessments by mode, entity type scope and due window.',
@@ -178,3 +179,10 @@ export const assessmentCountSpec: DashboardWidgetSpec<AssessmentCountWidgetConfi
   createDefaultConfig: () => ({ mode: 'active' }),
   configForm: AssessmentCountConfigForm
 };
+
+export const assessmentCountSpec = defineComponent({
+  type: ASSESSMENT_COUNT_TYPE,
+  category: 'metrics',
+  surfaces: ['dashboard'],
+  dashboardWidget: _assessmentCountSpecData
+});

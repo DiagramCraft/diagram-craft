@@ -1,3 +1,4 @@
+import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
@@ -148,7 +149,7 @@ export const ASSESSMENT_PROGRESS_TABLE_TYPE = 'AssessmentProgressTable' as const
  * Dashboard-only table: one row per assessment targeting an entity type, with aggregate progress
  * (in-scope entities with a complete response), due date and derived status.
  */
-export const assessmentProgressTableSpec: DashboardWidgetSpec<AssessmentProgressTableConfig> = {
+const _assessmentProgressTableSpecData: DashboardWidgetSpec<AssessmentProgressTableConfig> = {
   icon: TbChecklist,
   label: 'Assessment progress',
   description: 'Assessments on an entity type with progress, due date and status.',
@@ -164,3 +165,10 @@ export const assessmentProgressTableSpec: DashboardWidgetSpec<AssessmentProgress
   createDefaultConfig: () => ({ schemaName: '' }),
   configForm: props => <AssessmentSchemaConfigForm {...props} statusRequired={false} />
 };
+
+export const assessmentProgressTableSpec = defineComponent({
+  type: ASSESSMENT_PROGRESS_TABLE_TYPE,
+  category: 'data-views',
+  surfaces: ['dashboard'],
+  dashboardWidget: _assessmentProgressTableSpecData
+});

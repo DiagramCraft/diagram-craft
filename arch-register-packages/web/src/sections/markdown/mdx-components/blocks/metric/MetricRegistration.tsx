@@ -33,6 +33,9 @@ export const metricSpec = defineComponent<
 >({
   type: METRIC_TYPE,
   category: 'metrics',
+  label: 'Metric',
+  description:
+    'A single live count, such as the number of entities, projects or diagrams. Use it for a headline number.',
 
   component: Metric,
   mode: 'block',
@@ -40,9 +43,6 @@ export const metricSpec = defineComponent<
   surfaces: ['wiki', 'dashboard'],
   dashboardWidget: {
     icon: TbChartBar,
-    label: 'Metric',
-    description:
-      'A single live count, such as the number of entities, projects or diagrams. Use it for a headline number.',
     defaultW: 3,
     defaultH: 8,
     surfaces: ['workspace', 'project'],
@@ -70,10 +70,6 @@ export const metricSpec = defineComponent<
     nodeOptions: { isVoid: true },
     mdxRule: metricMdxRule,
     slashCommand: {
-      key: 'metric',
-      label: 'Metric',
-      description:
-        'A single live count, such as the number of entities, projects or diagrams. Use it for a headline number.',
       icon: <TbHash size={14} />,
       keywords: ['entity', 'metric', 'count', 'number', 'stat', 'kpi'],
       onSelect: (editor, { insertOrReplaceBlock }) => {

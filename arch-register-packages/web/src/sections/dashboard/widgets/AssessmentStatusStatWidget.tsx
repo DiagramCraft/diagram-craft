@@ -1,3 +1,4 @@
+import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import { useMemo } from 'react';
 import type { EntityAssessmentStatus } from '../../entities/entityDrawer/entityAssessments';
 import {
@@ -95,7 +96,7 @@ const ConfigForm = ({
  * in progress, not started or complete (the statuses are derived from the responses recorded
  * against the in-scope entities, which an entity-query `AggregateStat` cannot express).
  */
-export const assessmentStatusStatSpec: DashboardWidgetSpec<AssessmentStatusStatConfig> = {
+const _assessmentStatusStatSpecData: DashboardWidgetSpec<AssessmentStatusStatConfig> = {
   icon: TbChecklist,
   label: 'Assessment status',
   description:
@@ -113,3 +114,10 @@ export const assessmentStatusStatSpec: DashboardWidgetSpec<AssessmentStatusStatC
   createDefaultConfig: () => ({ schemaName: '', status: 'overdue' }),
   configForm: ConfigForm
 };
+
+export const assessmentStatusStatSpec = defineComponent({
+  type: ASSESSMENT_STATUS_STAT_TYPE,
+  category: 'metrics',
+  surfaces: ['dashboard'],
+  dashboardWidget: _assessmentStatusStatSpecData
+});

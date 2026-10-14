@@ -27,7 +27,6 @@ export const foldableSectionSpec = defineComponent<
     nodeOptions: {},
     mdxRule: foldableSectionMdxRule,
     slashCommand: {
-      key: 'foldable-section',
       label: 'Foldable section',
       description: 'Collapse content behind a summary label',
       icon: <TbChevronsDown size={14} />,

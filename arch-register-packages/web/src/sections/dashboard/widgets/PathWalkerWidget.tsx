@@ -1,3 +1,4 @@
+import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import { useMemo } from 'react';
 import { useEntities } from '../../../hooks/useEntities';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
@@ -134,7 +135,7 @@ export const PathWalkerConfigForm = ({ config, onChange }: PathWalkerConfigFormP
 
 export const PATH_WALKER_TYPE = 'PathWalker' as const;
 
-export const pathWalkerSpec: DashboardWidgetSpec<PathWalkerWidgetConfig> = {
+const _pathWalkerSpecData: DashboardWidgetSpec<PathWalkerWidgetConfig> = {
   icon: TbArrowsSplit2,
   label: 'Relationship walker',
   description:
@@ -148,3 +149,10 @@ export const pathWalkerSpec: DashboardWidgetSpec<PathWalkerWidgetConfig> = {
   createDefaultConfig: () => ({ rootSchemaName: '' }),
   configForm: PathWalkerConfigForm
 };
+
+export const pathWalkerSpec = defineComponent({
+  type: PATH_WALKER_TYPE,
+  category: 'data-views',
+  surfaces: ['dashboard'],
+  dashboardWidget: _pathWalkerSpecData
+});

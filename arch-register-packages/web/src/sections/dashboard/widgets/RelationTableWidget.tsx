@@ -1,3 +1,4 @@
+import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { RelationRecord } from '@arch-register/api-types/relationContract';
@@ -354,7 +355,7 @@ const isValidConfig = (config: Record<string, unknown>): config is RelationTable
   (config.sortDir === undefined || config.sortDir === 'asc' || config.sortDir === 'desc') &&
   (config.rowDrawer === undefined || typeof config.rowDrawer === 'boolean');
 
-export const relationTableSpec: DashboardWidgetSpec<RelationTableWidgetConfig> = {
+const _relationTableSpecData: DashboardWidgetSpec<RelationTableWidgetConfig> = {
   icon: TbTable,
   label: 'Relation table',
   description: 'Instances of a relation type, with a chosen set of columns and an optional filter.',
@@ -368,3 +369,10 @@ export const relationTableSpec: DashboardWidgetSpec<RelationTableWidgetConfig> =
   getTitle: config => config.relationSchemaName || 'Relation table',
   configForm: RelationTableConfigForm
 };
+
+export const relationTableSpec = defineComponent({
+  type: RELATION_TABLE_TYPE,
+  category: 'data-views',
+  surfaces: ['dashboard'],
+  dashboardWidget: _relationTableSpecData
+});

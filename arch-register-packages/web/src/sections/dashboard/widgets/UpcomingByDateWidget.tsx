@@ -1,3 +1,4 @@
+import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import { useMemo } from 'react';
 import { useQueryTextEntities } from '../../../hooks/useEntityQueryText';
 import { useEntitiesByIds } from '../../../hooks/useEntities';
@@ -258,7 +259,7 @@ const isOptionalNumber = (value: unknown): boolean =>
 const optionalString = (value: unknown): boolean =>
   value === undefined || typeof value === 'string';
 
-export const upcomingByDateSpec: DashboardWidgetSpec<UpcomingByDateWidgetConfig> = {
+const _upcomingByDateSpecData: DashboardWidgetSpec<UpcomingByDateWidgetConfig> = {
   icon: TbCalendarTime,
   label: 'Upcoming by date',
   description:
@@ -281,3 +282,10 @@ export const upcomingByDateSpec: DashboardWidgetSpec<UpcomingByDateWidgetConfig>
   createDefaultConfig: () => ({ query: '', dateFieldId: '' }),
   configForm: UpcomingByDateConfigForm
 };
+
+export const upcomingByDateSpec = defineComponent({
+  type: UPCOMING_BY_DATE_TYPE,
+  category: 'data-views',
+  surfaces: ['dashboard'],
+  dashboardWidget: _upcomingByDateSpecData
+});

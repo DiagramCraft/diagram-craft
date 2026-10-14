@@ -249,7 +249,7 @@ export const MDX_SLASH_COMMANDS: SlashCommandItem[] = Object.values(
   if (!cmd) return [];
   return [
     {
-      key: cmd.key,
+      key: definition.type,
       label: cmd.label,
       description: cmd.description,
       icon: <span className={styles.slashIcon}>{cmd.icon}</span>,
