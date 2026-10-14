@@ -45,10 +45,7 @@ import {
 } from './widgets/GroupedRollupTableWidget';
 import { FIELD_MATRIX_TYPE, fieldMatrixSpec } from './widgets/FieldMatrixWidget';
 import { DATE_CALENDAR_TYPE, dateCalendarSpec } from './widgets/DateCalendarWidget';
-import {
-  DATE_RANGE_TIMELINE_TYPE,
-  dateRangeTimelineSpec
-} from './widgets/DateRangeTimelineWidget';
+import { DATE_RANGE_TIMELINE_TYPE, dateRangeTimelineSpec } from './widgets/DateRangeTimelineWidget';
 import { UPCOMING_BY_DATE_TYPE, upcomingByDateSpec } from './widgets/UpcomingByDateWidget';
 
 const WIKI_PAGE_WIDGET_TYPE = 'wiki-page';

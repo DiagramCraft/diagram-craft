@@ -98,9 +98,9 @@ type ActivityFeedConfigFormProps = {
 };
 
 export const ActivityFeedDashboardConfigForm = ({
-  config,
-  onChange
-}: ActivityFeedConfigFormProps) => (
+                                                  config,
+                                                  onChange
+                                                }: ActivityFeedConfigFormProps) => (
   <DialogSection label="Options" required={false}>
     <div className={formStyles.options}>
       <label className={formStyles.optionRow}>
@@ -122,7 +122,8 @@ export const ActivityFeedDashboardConfigForm = ({
 
 export const ACTIVITY_FEED_TYPE = 'activity-feed' as const;
 
-interface ActivityFeedSlateElement extends TElement {}
+interface ActivityFeedSlateElement extends TElement {
+}
 
 const hasOptionalInteger = (config: Record<string, unknown>, key: string): boolean =>
   config[key] === undefined || (typeof config[key] === 'number' && Number.isInteger(config[key]));
