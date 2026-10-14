@@ -1,7 +1,7 @@
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
-import { DialogSection } from '../../../editor/BlockDialog';
+import { DialogSection } from '../../../markdown/editor/BlockDialog';
 import type { EntityActivityTrendChartProps } from './types';
-import styles from '../../../../dashboard/WidgetConfigDialog.module.css';
+import styles from '../../WidgetConfigDialog.module.css';
 
 type Props = {
   config: EntityActivityTrendChartProps;

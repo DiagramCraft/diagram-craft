@@ -5,10 +5,9 @@ import {
   DateCalendarConfigForm,
   DateCalendarWidget,
   DateCalendarWidgetConfig,
-  isDateCalendarConfigComplete,
-  isOptionalNumber,
-  optionalString
+  isDateCalendarConfigComplete
 } from './DateCalendarWidget';
+import { isOptionalNumber, isOptionalString } from '../../markdown/mdx-components/configGuards';
 
 export default defineComponent({
   type: DATE_CALENDAR_TYPE,
@@ -25,16 +24,16 @@ export default defineComponent({
     defaultH: 30,
     surfaces: ['workspace'],
     isValidConfig: (config): config is DateCalendarWidgetConfig =>
-      optionalString(config.query) &&
-      optionalString(config.schemaName) &&
+      isOptionalString(config.query) &&
+      isOptionalString(config.schemaName) &&
       (config.entityQuery === undefined || typeof config.entityQuery === 'object') &&
       typeof config.dateFieldId === 'string' &&
       (config.period === undefined || config.period === 'month' || config.period === 'week') &&
       isOptionalNumber(config.periodCount) &&
       isOptionalNumber(config.critWithinDays) &&
       isOptionalNumber(config.warnWithinDays) &&
-      optionalString(config.sublabelFieldId) &&
-      optionalString(config.valueFieldId) &&
+      isOptionalString(config.sublabelFieldId) &&
+      isOptionalString(config.valueFieldId) &&
       isDateCalendarConfigComplete(config as DateCalendarWidgetConfig)
   }
 });

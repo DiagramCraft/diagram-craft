@@ -9,7 +9,7 @@ import {
 import { markdownEngine } from './markdownAstUtils';
 import {
   getComponentDefinition,
-  getMdxComponentDefinitionsForSurface,
+  getWikiMdxComponents,
   type MdxComponentDefinition
 } from '../mdx-components/componentRegistry';
 
@@ -20,16 +20,6 @@ const jsxCloseRe = (name: string) => new RegExp(`^\\s*</${name}>\\s*$`);
 const SAFE_PROP_NAME = /^[a-zA-Z0-9_-]+$/;
 // Allows parens so CSS color functions (e.g. `oklch(0.62 0.13 145)`) survive as prop values.
 const SAFE_PROP_VALUE = /^[a-zA-Z0-9_\-.,()%\s]*$/;
-
-// This module's parsing pipeline is used only for wiki content, so components
-// that opt out of the 'wiki' surface (e.g. dashboard-only widgets) must never
-// be recognized here, regardless of their presence in the full registry.
-let wikiMdxComponents: ReturnType<typeof getMdxComponentDefinitionsForSurface> | undefined;
-
-const getWikiMdxComponents = () => {
-  wikiMdxComponents ??= getMdxComponentDefinitionsForSurface('wiki');
-  return wikiMdxComponents;
-};
 
 const isKnownComponent = (name: string): boolean => name in getWikiMdxComponents();
 

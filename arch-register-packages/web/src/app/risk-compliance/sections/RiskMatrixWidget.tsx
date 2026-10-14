@@ -104,6 +104,3 @@ export const RiskMatrixWidget = ({ config }: Props) => {
     </div>
   );
 };
-
-export const isOptionalStringArray = (value: unknown): boolean =>
-  value === undefined || (Array.isArray(value) && value.every(item => typeof item === 'string'));

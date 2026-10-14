@@ -12,6 +12,7 @@ import {
 } from './relationPairCoverageLogic';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import configFormStyles from '../WidgetConfigDialog.module.css';
+import { isOptionalString } from '../../markdown/mdx-components/configGuards';
 
 const WARN = 'var(--cmp-fg-warning, #eab308)';
 const RELATION_LIMIT = 500;
@@ -253,8 +254,6 @@ export const RELATION_PAIRS_COVERAGE_TYPE = 'RelationPairsCoverage' as const;
 
 const isNonEmptyString = (value: unknown): value is string =>
   typeof value === 'string' && value.length > 0;
-
-const isOptionalString = (value: unknown) => value === undefined || typeof value === 'string';
 
 export const isValidConfig = (
   config: Record<string, unknown>

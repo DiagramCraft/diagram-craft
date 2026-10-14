@@ -1,13 +1,11 @@
 import { TbClockExclamation } from 'react-icons/tb';
-import { defineComponent } from '../../defineComponent';
+import { defineComponent } from '../../../markdown/mdx-components/defineComponent';
 import { EntityStaleReport } from './EntityStaleReport';
 import { EntityStaleReportDashboardConfigForm } from './EntityStaleReportDashboardConfigForm';
 import type { EntityStaleReportProps } from './types';
+import { hasOptionalInteger } from '../../../markdown/mdx-components/configGuards';
 
 export const ENTITY_STALE_REPORT_TYPE = 'entity-stale-report' as const;
-
-const hasOptionalInteger = (config: Record<string, unknown>, key: string): boolean =>
-  config[key] === undefined || (typeof config[key] === 'number' && Number.isInteger(config[key]));
 
 /**
  * Dashboard-only analytics widget: no MDX component or editor registration.

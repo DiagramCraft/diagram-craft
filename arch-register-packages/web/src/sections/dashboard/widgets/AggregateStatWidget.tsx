@@ -24,6 +24,7 @@ import { useQueryTextCount } from '../../../hooks/useEntityQueryText';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import type { AggregateStatDisplay } from './aggregateStatQuery';
 import configFormStyles from '../WidgetConfigDialog.module.css';
+import { isOptionalString } from '../../markdown/mdx-components/configGuards';
 
 export type AggregateStatWidgetConfig = {
   /** Query-mode: entity-query DSL text whose matching-record count is the stat's value. */
@@ -607,9 +608,6 @@ export const isValidLegacyCore = (config: Record<string, unknown>): boolean =>
   config.schema.length > 0 &&
   isValidNumeratorCondition(config.numeratorCondition);
 
-const optionalString = (value: unknown): boolean =>
-  value === undefined || typeof value === 'string';
-
 export const isValidQueryStatConfig = (config: Record<string, unknown>): boolean => {
   const display = config.display;
   const severity = config.severity;
@@ -622,14 +620,14 @@ export const isValidQueryStatConfig = (config: Record<string, unknown>): boolean
       (measure === 'countDistinct' &&
         typeof config.distinctFieldId === 'string' &&
         config.distinctFieldId !== '')) &&
-    optionalString(config.sumFieldId) &&
-    optionalString(config.distinctFieldId) &&
+    isOptionalString(config.sumFieldId) &&
+    isOptionalString(config.distinctFieldId) &&
     (display === undefined || display === 'count' || needsDenominator) &&
-    optionalString(config.denominatorQuery) &&
+    isOptionalString(config.denominatorQuery) &&
     (!needsDenominator ||
       (typeof config.denominatorQuery === 'string' && config.denominatorQuery.trim() !== '')) &&
-    optionalString(config.subtextQuery) &&
-    optionalString(config.subtextTemplate) &&
+    isOptionalString(config.subtextQuery) &&
+    isOptionalString(config.subtextTemplate) &&
     (severity === undefined ||
       (typeof severity === 'object' &&
         severity !== null &&

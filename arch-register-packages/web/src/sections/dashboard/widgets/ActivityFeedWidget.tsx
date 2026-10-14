@@ -120,6 +120,3 @@ export const ActivityFeedDashboardConfigForm = ({
 );
 
 export const ACTIVITY_FEED_TYPE = 'activity-feed' as const;
-
-export const hasOptionalInteger = (config: Record<string, unknown>, key: string): boolean =>
-  config[key] === undefined || (typeof config[key] === 'number' && Number.isInteger(config[key]));

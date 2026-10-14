@@ -4,12 +4,8 @@ import { EntityTable } from './EntityTable';
 import { ENTITY_TABLE_TYPE, EntityTableEditable, entityTableMdxRule } from './EntityTableEditable';
 import { EntityTableConfigForm } from './EntityTableConfigForm';
 import type { EntityTableSlateElement, EntityTableWidgetConfig } from './types';
+import { hasOptionalInteger, hasOptionalString } from '../../configGuards';
 
-const hasOptionalString = (config: Record<string, unknown>, key: string): boolean =>
-  config[key] === undefined || typeof config[key] === 'string';
-
-const hasOptionalInteger = (config: Record<string, unknown>, key: string): boolean =>
-  config[key] === undefined || (typeof config[key] === 'number' && Number.isInteger(config[key]));
 export default defineComponent<
   EntityTableSlateElement,
   { schema?: string; owner?: string; lifecycle?: string; limit?: string },

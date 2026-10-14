@@ -149,6 +149,3 @@ export const AssessmentCountConfigForm = ({
     </>
   );
 };
-
-export const isOptionalString = (value: unknown): boolean =>
-  value === undefined || typeof value === 'string';

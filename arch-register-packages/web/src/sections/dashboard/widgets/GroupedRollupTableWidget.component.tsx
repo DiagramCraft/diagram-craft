@@ -5,10 +5,9 @@ import {
   GroupedRollupTableConfigForm,
   GroupedRollupTableWidget,
   GroupedRollupTableWidgetConfig,
-  isGroupedRollupTableConfigComplete,
-  optionalBoolean,
-  optionalString
+  isGroupedRollupTableConfigComplete
 } from './GroupedRollupTableWidget';
+import { isOptionalBoolean, isOptionalString } from '../../markdown/mdx-components/configGuards';
 
 export default defineComponent({
   type: GROUPED_ROLLUP_TABLE_TYPE,
@@ -27,15 +26,15 @@ export default defineComponent({
     frame: { hideOutsideEdit: true, padded: false, showIcon: false },
     isValidConfig: (config): config is GroupedRollupTableWidgetConfig =>
       typeof config.valueFieldId === 'string' &&
-      optionalString(config.query) &&
-      optionalString(config.schemaName) &&
-      optionalString(config.groupFieldId) &&
-      optionalString(config.groupLabel) &&
-      optionalString(config.valueLabel) &&
-      optionalBoolean(config.showBar) &&
-      optionalBoolean(config.showPercent) &&
-      optionalBoolean(config.showCount) &&
-      optionalBoolean(config.showTotal) &&
+      isOptionalString(config.query) &&
+      isOptionalString(config.schemaName) &&
+      isOptionalString(config.groupFieldId) &&
+      isOptionalString(config.groupLabel) &&
+      isOptionalString(config.valueLabel) &&
+      isOptionalBoolean(config.showBar) &&
+      isOptionalBoolean(config.showPercent) &&
+      isOptionalBoolean(config.showCount) &&
+      isOptionalBoolean(config.showTotal) &&
       (config.limit === undefined || (typeof config.limit === 'number' && config.limit > 0)) &&
       isGroupedRollupTableConfigComplete(config as GroupedRollupTableWidgetConfig)
   }

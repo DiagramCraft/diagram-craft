@@ -6,8 +6,8 @@ import {
   WORKSPACE,
   dashboardWidget,
   createStoryQueryClient
-} from '../../blocks/StorybookHarness';
-import { workspaceAnalyticsKeys } from '../../../../../queries/workspaceAnalytics';
+} from '../../../markdown/mdx-components/blocks/StorybookHarness';
+import { workspaceAnalyticsKeys } from '../../../../queries/workspaceAnalytics';
 
 const analytics = {
   lifecycleBreakdown: [

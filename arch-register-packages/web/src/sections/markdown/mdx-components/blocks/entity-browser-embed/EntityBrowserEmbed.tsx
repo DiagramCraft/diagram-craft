@@ -36,20 +36,18 @@ export const EntityBrowserEmbed = ({ config }: Props) => {
     useWorkspaceContext();
   const { projectId } = useMdxContext();
 
-  const isTreeBased = !!config && isTreeBasedView(config.view);
+  const isTreeBased = isTreeBasedView(config.view);
 
   // `schemaName` (a seeded, cross-workspace config's only safe way to reference a schema — its
   // actual id is workspace-specific) resolves to an id here at render time, same as
   // `dashboardSidebarConfigSchema.schemaName` does; an explicit `_schemaId` condition still wins if
   // both are present.
-  const schemaNameId = config?.schemaName
+  const schemaNameId = config.schemaName
     ? schemas.find(schema => schema.name === config.schemaName)?.id
     : undefined;
-  const typeFilter = config
-    ? (getFilterValue(config.conditions, '_schemaId') ?? schemaNameId ?? null)
-    : null;
-  const ownerFilter = config ? getFilterValue(config.conditions, '_owner') : null;
-  const statusFilter = config ? getFilterValue(config.conditions, '_lifecycle') : null;
+  const typeFilter = getFilterValue(config.conditions, '_schemaId') ?? schemaNameId ?? null;
+  const ownerFilter = getFilterValue(config.conditions, '_owner');
+  const statusFilter = getFilterValue(config.conditions, '_lifecycle');
 
   const schemaMap = useMemo(
     () => new Map(schemas.map((s, i) => [s.id, { schema: s, index: i }])),
@@ -66,7 +64,7 @@ export const EntityBrowserEmbed = ({ config }: Props) => {
   // used as a raw id directly.
   const rootSchema = typeFilter ? schemas.find(schema => schema.id === typeFilter) : undefined;
   const resolvedEntityQuery = useMemo(() => {
-    if (!config?.entityQuery) return null;
+    if (!config.entityQuery) return null;
     // An unselected sidebar facet leaves an empty `in` (see `dashboardSidebarVariables.ts`), which
     // reads as "no filter" only once stripped; the table path strips it itself, the tree and map
     // fetch directly and need it done here.
@@ -76,24 +74,24 @@ export const EntityBrowserEmbed = ({ config }: Props) => {
         relationSchemas
       })
     );
-  }, [config?.entityQuery, rootSchema, typeFilter, schemas, relationSchemas]);
+  }, [config.entityQuery, rootSchema, typeFilter, schemas, relationSchemas]);
 
   // The configured sort is only the initial one; a column-header click re-sorts locally without
   // changing the saved config.
   const configuredSort = useMemo(
-    () => resolveSort(config?.sort ?? 'name', rootSchema),
-    [config?.sort, rootSchema]
+    () => resolveSort(config.sort, rootSchema),
+    [config.sort, rootSchema]
   );
   const [sortOverride, setSortOverride] = useState<{ base: string; sort: string } | null>(null);
   const sort = sortOverride?.base === configuredSort ? sortOverride.sort : configuredSort;
 
   const resolvedActiveViewConfig = useMemo(
     () =>
-      config?.view === 'matrix'
+      config.view === 'matrix'
         ? resolveMatrixViewConfig(config.viewConfigs.matrix, schemas, rootSchema)
-        : config?.view === 'map'
+        : config.view === 'map'
           ? resolveMapViewConfig(config.viewConfigs.map, schemas)
-          : resolveTableFieldIds(config?.viewConfigs[config?.view ?? 'table'], rootSchema),
+          : resolveTableFieldIds(config.viewConfigs[config.view], rootSchema),
     [config, rootSchema, schemas]
   );
   // `_usageCount` is opt-in server-side (not free per row) — request it only when a shown column
@@ -105,18 +103,18 @@ export const EntityBrowserEmbed = ({ config }: Props) => {
     (resolvedActiveViewConfig as { fieldIds: string[] }).fieldIds.includes('_usageCount');
 
   const mapOverlays = useMemo(
-    () => (config?.view === 'map' ? resolveMapOverlays(config.overlays, rootSchema) : undefined),
-    [config?.view, config?.overlays, rootSchema]
+    () => (config.view === 'map' ? resolveMapOverlays(config.overlays, rootSchema) : undefined),
+    [config.view, config.overlays, rootSchema]
   );
 
   const hasLoaded = useRef(false);
   const resolvedProjectId = projectId;
-  const projectScope = resolvedProjectId ? (config?.projectScope ?? 'project') : 'all';
+  const projectScope = resolvedProjectId ? (config.projectScope ?? 'project') : 'all';
 
   // Opt-in (config.interactive): a search box and real pagination for the row-based views.
-  const interactive = !!config?.interactive && (config.view === 'table' || config.view === 'cards');
-  const [searchText, setSearchText] = useState(config?.q ?? '');
-  const q = interactive ? searchText : (config?.q ?? '');
+  const interactive = !!config.interactive && (config.view === 'table' || config.view === 'cards');
+  const [searchText, setSearchText] = useState(config.q);
+  const q = interactive ? searchText : config.q;
   const serverPaged = interactive && sort === 'name';
   const {
     pageIndex,
@@ -128,7 +126,7 @@ export const EntityBrowserEmbed = ({ config }: Props) => {
   } = useEntityBrowserPagination({
     isPagedBrowse: interactive,
     q,
-    conditions: config?.conditions ?? [],
+    conditions: config.conditions,
     entityQuery: resolvedEntityQuery,
     typeFilter,
     ownerFilter,
@@ -150,30 +148,22 @@ export const EntityBrowserEmbed = ({ config }: Props) => {
     projectScope,
     schemas,
     q,
-    conditions: config?.conditions ?? [],
+    conditions: config.conditions,
     entityQuery: resolvedEntityQuery,
     typeFilter,
     ownerFilter,
     statusFilter,
     sort,
-    view: config?.view ?? 'table',
+    view: config.view,
     pageIndex: interactive ? pageIndex : 0,
     pageSize: interactive ? pageSize : 0,
     disablePaging: !interactive,
-    enabled: !!workspaceSlug && !!config && !isTreeBased,
+    enabled: !!workspaceSlug && !isTreeBased,
     activeViewConfig: resolvedActiveViewConfig,
     includeUsageCount
   });
 
   if (!isLoading) hasLoaded.current = true;
-
-  if (!config) {
-    return (
-      <div className={styles.container}>
-        <EmptyState compact title="No view configured." />
-      </div>
-    );
-  }
 
   // In interactive mode the search box must survive reloads, so only the first load is a skeleton.
   if (isLoading && !isTreeBased && !(interactive && hasLoaded.current)) {

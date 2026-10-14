@@ -1,9 +1,9 @@
 import { useNavigate } from '@tanstack/react-router';
-import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
-import { useWorkspaceAnalytics } from '../../../../../hooks/useWorkspaceAnalytics';
-import { EmptyState } from '../../../../../components/EmptyState';
-import { LoadingState } from '../../../../../components/LoadingState';
-import { LifecycleSection } from '../../../../workspace-settings/sub-sections/analytics/LifecycleSection';
+import { useWorkspaceContext } from '../../../../layouts/WorkspaceContext';
+import { useWorkspaceAnalytics } from '../../../../hooks/useWorkspaceAnalytics';
+import { EmptyState } from '../../../../components/EmptyState';
+import { LoadingState } from '../../../../components/LoadingState';
+import { LifecycleSection } from '../../../workspace-settings/sub-sections/analytics/LifecycleSection';
 
 const DEFAULT_STALE_AFTER_DAYS = 90;
 

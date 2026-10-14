@@ -4,9 +4,9 @@ import {
   ASSESSMENT_COUNT_TYPE,
   AssessmentCountConfigForm,
   AssessmentCountWidget,
-  AssessmentCountWidgetConfig,
-  isOptionalString
+  AssessmentCountWidgetConfig
 } from './AssessmentCountWidget';
+import { isOptionalString } from '../../markdown/mdx-components/configGuards';
 
 export default defineComponent({
   type: ASSESSMENT_COUNT_TYPE,

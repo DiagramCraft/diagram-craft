@@ -268,9 +268,6 @@ export const ChangeCaseTableConfigForm = ({ config, onChange }: ChangeCaseTableC
 
 export const CHANGE_CASE_TABLE_TYPE = 'ChangeCaseTable' as const;
 
-export const isOptionalString = (value: unknown): boolean =>
-  value === undefined || typeof value === 'string';
-
 /**
  * Dashboard-only table of governance cases (every status) against entities of a chosen
  * schema, restricted to a chosen set of case kinds — not tied to any particular app. Generalized

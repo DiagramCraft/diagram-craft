@@ -2,7 +2,8 @@ import { TbGridDots } from 'react-icons/tb';
 import { defineComponent } from '../../../sections/markdown/mdx-components/defineComponent';
 import { RiskMatrixConfigForm } from './RiskMatrixConfigForm';
 import type { RiskMatrixWidgetConfig } from './RiskMatrixWidget';
-import { RISK_MATRIX_TYPE, RiskMatrixWidget, isOptionalStringArray } from './RiskMatrixWidget';
+import { RISK_MATRIX_TYPE, RiskMatrixWidget } from './RiskMatrixWidget';
+import { isOptionalStringArray } from '../../../sections/markdown/mdx-components/configGuards';
 export default defineComponent({
   type: RISK_MATRIX_TYPE,
   category: 'visualizations',

@@ -4,9 +4,9 @@ import {
   CHANGE_CASE_TABLE_TYPE,
   ChangeCaseTableConfig,
   ChangeCaseTableConfigForm,
-  ChangeCaseTableWidget,
-  isOptionalString
+  ChangeCaseTableWidget
 } from './ChangeCaseTableWidget';
+import { isOptionalString } from '../../markdown/mdx-components/configGuards';
 
 export default defineComponent({
   type: CHANGE_CASE_TABLE_TYPE,

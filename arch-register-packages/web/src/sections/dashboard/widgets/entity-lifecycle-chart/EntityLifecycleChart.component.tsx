@@ -1,8 +1,10 @@
 import { TbChartDonut2 } from 'react-icons/tb';
-import { defineComponent } from '../../defineComponent';
-import { EntityLifecycleChartWidget } from '../../../../dashboard/widgets/EntityLifecycleChartWidget';
+import { defineComponent } from '../../../markdown/mdx-components/defineComponent';
+import { EntityLifecycleChart } from './EntityLifecycleChart';
 
-export const ENTITY_LIFECYCLE_CHART_TYPE = 'entity-lifecycle-chart' as const; /**
+export const ENTITY_LIFECYCLE_CHART_TYPE = 'entity-lifecycle-chart' as const;
+
+/**
  * Dashboard-only analytics widget: no MDX component or editor registration.
  */
 export default defineComponent({
@@ -11,7 +13,7 @@ export default defineComponent({
   name: 'Lifecycle chart',
   description: 'Breakdown of entities by lifecycle state.',
   icon: TbChartDonut2,
-  component: EntityLifecycleChartWidget,
+  component: EntityLifecycleChart,
   createDefaultProps: () => ({ config: {} }),
   dashboardWidget: {
     defaultW: 6,

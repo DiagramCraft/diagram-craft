@@ -193,6 +193,3 @@ export const DateBucketChartConfigForm = ({ config, onChange }: DateBucketChartC
 );
 
 export const DATE_BUCKET_CHART_TYPE = 'DateBucketChart' as const;
-
-export const isOptionalNumber = (value: unknown): boolean =>
-  value === undefined || (typeof value === 'number' && Number.isFinite(value));

@@ -270,9 +270,3 @@ export const GroupedRollupTableConfigForm = ({
 );
 
 export const GROUPED_ROLLUP_TABLE_TYPE = 'GroupedRollupTable' as const;
-
-export const optionalBoolean = (value: unknown): boolean =>
-  value === undefined || typeof value === 'boolean';
-
-export const optionalString = (value: unknown): boolean =>
-  value === undefined || typeof value === 'string';

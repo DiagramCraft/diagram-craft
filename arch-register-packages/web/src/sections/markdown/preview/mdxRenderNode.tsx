@@ -1,17 +1,7 @@
 import React, { type ReactNode } from 'react';
 import { type ASTNode } from '@diagram-craft/markdown';
-import { getMdxComponentDefinitionsForSurface } from '../mdx-components/componentRegistry';
+import { getWikiMdxComponents } from '../mdx-components/componentRegistry';
 import { MdxComponentPreview } from '../mdx-components/MdxComponentPreview';
-
-// This renderer is used only for wiki content, so components that opt out of
-// the 'wiki' surface (e.g. dashboard-only widgets) must never render here,
-// even if a stored/persisted AST node still names one.
-let wikiMdxComponents: ReturnType<typeof getMdxComponentDefinitionsForSurface> | undefined;
-
-const getWikiMdxComponents = () => {
-  wikiMdxComponents ??= getMdxComponentDefinitionsForSurface('wiki');
-  return wikiMdxComponents;
-};
 
 /** A highlighted comment anchor, in the same plain-text offset space as `renderText`. Ranges must be sorted and non-overlapping. */
 export type HighlightRange = { commentId: string; start: number; end: number; resolved?: boolean };

@@ -1,13 +1,11 @@
 import { TbChartLine } from 'react-icons/tb';
-import { defineComponent } from '../../defineComponent';
+import { defineComponent } from '../../../markdown/mdx-components/defineComponent';
 import { EntityActivityTrendChart } from './EntityActivityTrendChart';
 import { EntityActivityTrendChartDashboardConfigForm } from './EntityActivityTrendChartDashboardConfigForm';
 import type { EntityActivityTrendChartProps } from './types';
+import { hasOptionalInteger } from '../../../markdown/mdx-components/configGuards';
 
 export const ENTITY_ACTIVITY_TREND_CHART_TYPE = 'entity-activity-trend-chart' as const;
-
-const hasOptionalInteger = (config: Record<string, unknown>, key: string): boolean =>
-  config[key] === undefined || (typeof config[key] === 'number' && Number.isInteger(config[key]));
 
 /**
  * Dashboard-only analytics widget: no MDX component or editor registration.

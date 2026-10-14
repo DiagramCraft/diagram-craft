@@ -6,8 +6,8 @@ import {
   WORKSPACE,
   dashboardWidget,
   createStoryQueryClient
-} from '../../blocks/StorybookHarness';
-import { workspaceAnalyticsKeys } from '../../../../../queries/workspaceAnalytics';
+} from '../../../markdown/mdx-components/blocks/StorybookHarness';
+import { workspaceAnalyticsKeys } from '../../../../queries/workspaceAnalytics';
 
 const staleAfterDays = 90;
 const staleCutoffAt = '2026-04-30T00:00:00.000Z';

@@ -6,9 +6,9 @@ import {
   FieldMatrixWidget,
   FieldMatrixWidgetConfig,
   isBand,
-  isFieldMatrixConfigComplete,
-  optionalString
+  isFieldMatrixConfigComplete
 } from './FieldMatrixWidget';
+import { isOptionalString } from '../../markdown/mdx-components/configGuards';
 
 export default defineComponent({
   type: FIELD_MATRIX_TYPE,
@@ -47,9 +47,9 @@ export default defineComponent({
       config.rows.every(row => typeof row === 'number') &&
       Array.isArray(config.bands) &&
       config.bands.every(isBand) &&
-      optionalString(config.query) &&
-      optionalString(config.schemaName) &&
-      optionalString(config.cornerLabel) &&
+      isOptionalString(config.query) &&
+      isOptionalString(config.schemaName) &&
+      isOptionalString(config.cornerLabel) &&
       (config.showFrame === undefined || typeof config.showFrame === 'boolean') &&
       (config.hotRowMin === undefined || typeof config.hotRowMin === 'number') &&
       isFieldMatrixConfigComplete(config as FieldMatrixWidgetConfig)

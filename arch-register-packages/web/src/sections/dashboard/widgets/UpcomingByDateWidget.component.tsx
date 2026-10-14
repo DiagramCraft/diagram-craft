@@ -5,10 +5,9 @@ import {
   UpcomingByDateConfigForm,
   UpcomingByDateWidget,
   UpcomingByDateWidgetConfig,
-  isOptionalNumber,
-  isUpcomingByDateConfigComplete,
-  optionalString
+  isUpcomingByDateConfigComplete
 } from './UpcomingByDateWidget';
+import { isOptionalNumber, isOptionalString } from '../../markdown/mdx-components/configGuards';
 
 export default defineComponent({
   type: UPCOMING_BY_DATE_TYPE,
@@ -31,8 +30,8 @@ export default defineComponent({
       isOptionalNumber(config.limit) &&
       isOptionalNumber(config.critWithinDays) &&
       isOptionalNumber(config.warnWithinDays) &&
-      optionalString(config.sublabelFieldId) &&
-      optionalString(config.valueFieldId) &&
+      isOptionalString(config.sublabelFieldId) &&
+      isOptionalString(config.valueFieldId) &&
       (config.includeOverdue === undefined || typeof config.includeOverdue === 'boolean') &&
       isUpcomingByDateConfigComplete(config as UpcomingByDateWidgetConfig)
   }

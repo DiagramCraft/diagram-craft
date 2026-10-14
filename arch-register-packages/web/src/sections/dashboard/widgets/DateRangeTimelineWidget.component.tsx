@@ -5,10 +5,9 @@ import {
   DateRangeTimelineConfigForm,
   DateRangeTimelineWidget,
   DateRangeTimelineWidgetConfig,
-  isDateRangeTimelineConfigComplete,
-  optionalNumber,
-  optionalString
+  isDateRangeTimelineConfigComplete
 } from './DateRangeTimelineWidget';
+import { isOptionalNumber, isOptionalString } from '../../markdown/mdx-components/configGuards';
 
 export default defineComponent({
   type: DATE_RANGE_TIMELINE_TYPE,
@@ -25,17 +24,17 @@ export default defineComponent({
     defaultH: 30,
     surfaces: ['workspace'],
     isValidConfig: (config): config is DateRangeTimelineWidgetConfig =>
-      optionalString(config.query) &&
-      optionalString(config.schemaName) &&
+      isOptionalString(config.query) &&
+      isOptionalString(config.schemaName) &&
       (config.entityQuery === undefined || typeof config.entityQuery === 'object') &&
       typeof config.startFieldId === 'string' &&
       typeof config.endFieldId === 'string' &&
-      optionalNumber(config.critWithinDays) &&
-      optionalNumber(config.warnWithinDays) &&
-      optionalString(config.sublabelFieldId) &&
-      optionalString(config.valueFieldId) &&
-      optionalString(config.markerOffsetFieldId) &&
-      optionalString(config.markerWhenFieldId) &&
+      isOptionalNumber(config.critWithinDays) &&
+      isOptionalNumber(config.warnWithinDays) &&
+      isOptionalString(config.sublabelFieldId) &&
+      isOptionalString(config.valueFieldId) &&
+      isOptionalString(config.markerOffsetFieldId) &&
+      isOptionalString(config.markerWhenFieldId) &&
       isDateRangeTimelineConfigComplete(config as DateRangeTimelineWidgetConfig)
   }
 });

@@ -109,3 +109,15 @@ export const getMdxComponentDefinitionsForSurface = (
       definition.surfaces.includes(surface) ? [[definition.type, definition] as const] : []
     )
   );
+
+let wikiMdxComponents: Record<string, MdxComponentDefinition> | undefined;
+
+/**
+ * The MDX components that may appear in wiki content. The wiki parser and renderer must use this
+ * rather than the whole registry, so dashboard-only widgets are never recognized there even if
+ * stored content names one. Resolved once, after registration has completed.
+ */
+export const getWikiMdxComponents = (): Record<string, MdxComponentDefinition> => {
+  wikiMdxComponents ??= getMdxComponentDefinitionsForSurface('wiki');
+  return wikiMdxComponents;
+};

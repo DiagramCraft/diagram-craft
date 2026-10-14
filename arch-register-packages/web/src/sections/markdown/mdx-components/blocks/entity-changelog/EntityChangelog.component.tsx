@@ -8,9 +8,8 @@ import {
 } from './EntityChangelogEditable';
 import { EntityChangelogConfigForm } from './EntityChangelogConfigForm';
 import type { EntityChangelogSlateElement, EntityChangelogWidgetConfig } from './types';
+import { hasOptionalString } from '../../configGuards';
 
-const hasOptionalString = (config: Record<string, unknown>, key: string): boolean =>
-  config[key] === undefined || typeof config[key] === 'string';
 export default defineComponent<
   EntityChangelogSlateElement,
   {

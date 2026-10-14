@@ -28,19 +28,21 @@ vi.mock('../mdx-components/componentRegistry', () => {
     Callout: { mode: 'block', allowedProps: ['variant'], acceptsRichContent: true },
     EntityLifecycleChart: { mode: 'block', allowedProps: [], surfaces: ['dashboard'] }
   };
+  const forSurface = (surface: 'wiki' | 'dashboard') =>
+    Object.fromEntries(
+      Object.entries(mdxSpecs).filter(([, spec]) =>
+        surface === 'wiki'
+          ? spec.surfaces === undefined || spec.surfaces.includes('wiki')
+          : !!spec.surfaces?.includes('dashboard')
+      )
+    );
   return {
     getComponentDefinition: (name: string) => {
       const mdx = mdxSpecs[name];
       return mdx ? { type: name, mdx } : undefined;
     },
-    getMdxComponentDefinitionsForSurface: (surface: 'wiki' | 'dashboard') =>
-      Object.fromEntries(
-        Object.entries(mdxSpecs).filter(([, spec]) =>
-          surface === 'wiki'
-            ? spec.surfaces === undefined || spec.surfaces.includes('wiki')
-            : !!spec.surfaces?.includes('dashboard')
-        )
-      )
+    getMdxComponentDefinitionsForSurface: forSurface,
+    getWikiMdxComponents: () => forSurface('wiki')
   };
 });
 

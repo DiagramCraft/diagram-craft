@@ -1,10 +1,10 @@
 import { useNavigate } from '@tanstack/react-router';
-import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
-import { useWorkspaceAnalytics } from '../../../../../hooks/useWorkspaceAnalytics';
-import { EmptyState } from '../../../../../components/EmptyState';
-import { LoadingState } from '../../../../../components/LoadingState';
-import { ActivityTrendsSection } from '../../../../workspace-settings/sub-sections/analytics/ActivityTrendsSection';
-import { activityAuditSearch } from '../../../../workspace-settings/sub-sections/analytics/workspaceAnalyticsHelpers';
+import { useWorkspaceContext } from '../../../../layouts/WorkspaceContext';
+import { useWorkspaceAnalytics } from '../../../../hooks/useWorkspaceAnalytics';
+import { EmptyState } from '../../../../components/EmptyState';
+import { LoadingState } from '../../../../components/LoadingState';
+import { ActivityTrendsSection } from '../../../workspace-settings/sub-sections/analytics/ActivityTrendsSection';
+import { activityAuditSearch } from '../../../workspace-settings/sub-sections/analytics/workspaceAnalyticsHelpers';
 import type { EntityActivityTrendChartProps } from './types';
 
 const DEFAULT_STALE_AFTER_DAYS = 90;

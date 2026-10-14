@@ -4,9 +4,8 @@ import { EntityCard } from './EntityCard';
 import { ENTITY_CARD_TYPE, EntityCardEditable, entityCardMdxRule } from './EntityCardEditable';
 import { EntityCardConfigForm } from './EntityCardConfigForm';
 import type { EntityCardSlateElement, EntityCardWidgetConfig } from './types';
+import { hasOptionalString } from '../../configGuards';
 
-const hasOptionalString = (config: Record<string, unknown>, key: string): boolean =>
-  config[key] === undefined || typeof config[key] === 'string';
 export default defineComponent<EntityCardSlateElement, { id: string; fields?: string }, 'block'>({
   type: ENTITY_CARD_TYPE,
   category: 'data-views',

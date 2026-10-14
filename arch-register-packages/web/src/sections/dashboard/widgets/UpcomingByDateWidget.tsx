@@ -249,9 +249,3 @@ export const UpcomingByDateConfigForm = ({ config, onChange }: UpcomingByDateCon
 );
 
 export const UPCOMING_BY_DATE_TYPE = 'UpcomingByDate' as const;
-
-export const isOptionalNumber = (value: unknown): boolean =>
-  value === undefined || (typeof value === 'number' && Number.isFinite(value));
-
-export const optionalString = (value: unknown): boolean =>
-  value === undefined || typeof value === 'string';

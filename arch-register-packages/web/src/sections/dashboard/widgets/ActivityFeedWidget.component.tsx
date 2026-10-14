@@ -8,9 +8,9 @@ import type { ActivityFeedWidgetConfig } from './ActivityFeedWidget';
 import {
   ACTIVITY_FEED_TYPE,
   ActivityFeedDashboardConfigForm,
-  ActivityFeedWidget,
-  hasOptionalInteger
+  ActivityFeedWidget
 } from './ActivityFeedWidget';
+import { hasOptionalInteger } from '../../markdown/mdx-components/configGuards';
 
 export default defineComponent({
   type: ACTIVITY_FEED_TYPE,

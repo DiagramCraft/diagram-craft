@@ -291,9 +291,3 @@ export const DateRangeTimelineConfigForm = ({
 );
 
 export const DATE_RANGE_TIMELINE_TYPE = 'DateRangeTimeline' as const;
-
-export const optionalNumber = (value: unknown): boolean =>
-  value === undefined || (typeof value === 'number' && Number.isFinite(value));
-
-export const optionalString = (value: unknown): boolean =>
-  value === undefined || typeof value === 'string';

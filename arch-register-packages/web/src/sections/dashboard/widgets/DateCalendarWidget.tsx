@@ -269,9 +269,3 @@ export const DateCalendarConfigForm = ({ config, onChange }: DateCalendarConfigF
 );
 
 export const DATE_CALENDAR_TYPE = 'DateCalendar' as const;
-
-export const isOptionalNumber = (value: unknown): boolean =>
-  value === undefined || (typeof value === 'number' && Number.isFinite(value));
-
-export const optionalString = (value: unknown): boolean =>
-  value === undefined || typeof value === 'string';

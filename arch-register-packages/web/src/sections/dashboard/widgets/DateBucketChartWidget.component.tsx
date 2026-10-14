@@ -6,9 +6,9 @@ import {
   DateBucketChartHeaderActions,
   DateBucketChartWidget,
   DateBucketChartWidgetConfig,
-  isDateBucketChartConfigComplete,
-  isOptionalNumber
+  isDateBucketChartConfigComplete
 } from './DateBucketChartWidget';
+import { isOptionalNumber } from '../../markdown/mdx-components/configGuards';
 
 export default defineComponent({
   type: DATE_BUCKET_CHART_TYPE,
