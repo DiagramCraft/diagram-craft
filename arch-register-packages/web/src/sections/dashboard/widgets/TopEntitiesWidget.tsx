@@ -48,7 +48,7 @@ export const TopEntitiesWidget = ({ config }: Props) => {
   const { workspaceSlug, schemas } = useWorkspaceContext();
   const schemaId =
     config.schema || schemas.find(candidate => candidate.name === config.schemaName)?.id || '';
-  const hasConfig = !!schemaId && !!config.fieldId;
+  const hasConfig = !!schemaId;
 
   const { data: entities = [], isLoading } = useEntities(
     workspaceSlug,

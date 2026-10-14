@@ -220,21 +220,15 @@ const LegacyAggregateStat = ({ config }: Props) => {
     owner: config.owner || undefined,
     lifecycle: config.lifecycle || undefined
   };
-  const hasSchema = !!config.schema;
-  const hasCondition = !!config.numeratorCondition;
 
   const { data: denominator, isLoading: loadingTotal } = useEntityCount(workspaceSlug, baseFilter, {
-    enabled: !!workspaceSlug && hasSchema
+    enabled: !!workspaceSlug
   });
   const { data: numerator, isLoading: loadingMatch } = useEntityCount(
     workspaceSlug,
     { ...baseFilter, conditions: config.numeratorCondition ? [config.numeratorCondition] : [] },
-    { enabled: !!workspaceSlug && hasSchema && hasCondition }
+    { enabled: !!workspaceSlug }
   );
-
-  if (!hasSchema || !hasCondition) {
-    return <div className={`${styles.message} dim`}>This widget is not fully configured.</div>;
-  }
 
   if (loadingTotal || loadingMatch) {
     return (

@@ -25,8 +25,8 @@ import { withInitial } from '../../markdown/mdx-components/configSchema';
 
 export const changeCaseTableConfigSchema = z.object({
   /** Name of the entity schema the cases' subject entities must belong to. */
-  schemaName: withInitial(z.string(), ''),
-  caseKinds: withInitial(z.array(z.string()), ['entity.change-case']),
+  schemaName: withInitial(z.string().min(1), ''),
+  caseKinds: withInitial(z.array(z.string()).min(1), ['entity.change-case']),
   severity: withInitial(needsAttentionSeveritySchema, 'due-date'),
   /**
    * Only list cases in this status (`open`, `completed` or `cancelled`). Any other value —
@@ -65,12 +65,7 @@ export const ChangeCaseTableWidget = ({ config }: { config: ChangeCaseTableConfi
   const status = isChangeCaseStatus(config.status) ? config.status : undefined;
 
   const schemaId = schemas.find(schema => schema.name === config.schemaName)?.id ?? null;
-  const hasConfig = !!config.schemaName && config.caseKinds.length > 0;
-  const register = useEntityCaseRegister(
-    workspaceSlug,
-    { schemaId, caseKinds: config.caseKinds },
-    hasConfig
-  );
+  const register = useEntityCaseRegister(workspaceSlug, { schemaId, caseKinds: config.caseKinds });
 
   const rows = useMemo(() => filterByStatus(register.rows, status), [register.rows, status]);
 
@@ -79,9 +74,6 @@ export const ChangeCaseTableWidget = ({ config }: { config: ChangeCaseTableConfi
       search: (previous: Record<string, unknown>) => ({ ...previous, caseId })
     } as Parameters<typeof navigate>[0]);
 
-  if (!hasConfig) {
-    return <div className={`${styles.message} dim`}>This widget is not fully configured.</div>;
-  }
   if (schemaId == null) {
     return (
       <div className={`${styles.message} dim`}>Entity type “{config.schemaName}” not found.</div>
@@ -118,7 +110,7 @@ export const ChangeCaseTableWidget = ({ config }: { config: ChangeCaseTableConfi
             rows.map(row => (
               <Table.Row key={row.case.id} onClick={() => patchCaseId(row.case.id)}>
                 <Table.Cell>{caseKindLabel(row.case.caseKind, row.case.payload)}</Table.Cell>
-                <Table.NameCell title={row.entity._name} subtitle={row.entity._publicId}/>
+                <Table.NameCell title={row.entity._name} subtitle={row.entity._publicId} />
                 <Table.Cell className={row.requesterName == null ? 'dim' : undefined}>
                   {row.requesterName ?? 'unknown'}
                 </Table.Cell>
@@ -172,11 +164,11 @@ type ChangeCaseTableConfigFormProps = {
 };
 
 const TextOption = ({
-                      label,
-                      value,
-                      placeholder,
-                      onChange
-                    }: {
+  label,
+  value,
+  placeholder,
+  onChange
+}: {
   label: string;
   value: string | undefined;
   placeholder?: string;

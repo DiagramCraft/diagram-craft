@@ -138,4 +138,4 @@ export const AssessmentProgressTableWidget = ({
       </Table.Root>
     </div>
   );
-};\n
+};

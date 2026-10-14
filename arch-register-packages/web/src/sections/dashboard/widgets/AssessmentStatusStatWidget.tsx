@@ -87,4 +87,4 @@ export const ConfigForm = ({
       </div>
     </DialogSection>
   </>
-);\n
+);

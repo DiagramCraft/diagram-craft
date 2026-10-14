@@ -17,8 +17,8 @@ import { z } from 'zod';
 import { withInitial } from '../../markdown/mdx-components/configSchema';
 
 export const needsAttentionWidgetConfigSchema = z.object({
-  schema: withInitial(z.string(), ''),
-  caseKinds: withInitial(z.array(z.string()), ['entity.change-case', 'entity.deprecation']),
+  schema: withInitial(z.string().min(1), ''),
+  caseKinds: withInitial(z.array(z.string()).min(1), ['entity.change-case', 'entity.deprecation']),
   scope: withInitial(needsAttentionScopeSchema, 'workspace'),
   severity: withInitial(needsAttentionSeveritySchema, 'due-date'),
   limit: withInitial(z.number().positive(), 8)
@@ -33,17 +33,12 @@ type Props = {
 export const NeedsAttentionWidget = ({ config }: Props) => {
   const { workspaceSlug } = useWorkspaceContext();
   const { openEntityDrawer } = useEntityDrawer();
-  const hasConfig = !!config.schema && config.caseKinds.length > 0;
 
-  const queue = useNeedsAttentionQueue(
-    workspaceSlug,
-    { schemaId: config.schema || null, caseKinds: config.caseKinds, scope: config.scope },
-    hasConfig
-  );
-
-  if (!hasConfig) {
-    return <div className="dim">This widget is not fully configured.</div>;
-  }
+  const queue = useNeedsAttentionQueue(workspaceSlug, {
+    schemaId: config.schema,
+    caseKinds: config.caseKinds,
+    scope: config.scope
+  });
 
   return (
     <NeedsAttentionList
