@@ -1,9 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import './componentRegistrations';
 import {
-  getDashboardWidgetSpec,
-  getDashboardWidgetSpecs,
-  getMdxComponentDefinitions,
+  getComponentDefinition,
+  getComponentDefinitions,
   getMdxSpecsForSurface
 } from './componentRegistry';
 
@@ -44,19 +43,19 @@ describe('getMdxSpecsForSurface', () => {
   });
 
   it('keeps dashboard-only widgets in the dashboard catalog', () => {
-    const widgets = getDashboardWidgetSpecs();
+    const widgets = getComponentDefinitions('dashboardWidget');
     expect(widgets.some(widget => widget.type === 'markdown')).toBe(true);
     expect(widgets.some(widget => widget.type === 'wiki-page')).toBe(true);
-    expect(getDashboardWidgetSpec('markdown')).toBeDefined();
-    expect(getDashboardWidgetSpec('Callout')).toBeUndefined();
+    expect(getComponentDefinition('markdown', 'dashboardWidget')?.dashboardWidget).toBeDefined();
+    expect(getComponentDefinition('Callout', 'dashboardWidget')).toBeUndefined();
   });
 
   it('never returns more entries than the full registry', () => {
     expect(Object.keys(getMdxSpecsForSurface('wiki')).length).toBeLessThanOrEqual(
-      getMdxComponentDefinitions().length
+      getComponentDefinitions('mdx').length
     );
     expect(Object.keys(getMdxSpecsForSurface('dashboard')).length).toBeLessThanOrEqual(
-      getMdxComponentDefinitions().length
+      getComponentDefinitions('mdx').length
     );
   });
 });

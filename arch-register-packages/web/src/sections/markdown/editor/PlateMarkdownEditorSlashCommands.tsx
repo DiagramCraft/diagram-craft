@@ -6,7 +6,7 @@ import type { PlateElementProps } from 'platejs/react';
 import type { TElement } from 'platejs';
 import { toggleList } from '@platejs/list';
 import { getNodeText } from './EditorBlock';
-import { getMdxComponentDefinitions } from '../mdx-components/componentRegistry';
+import { getComponentDefinitions } from '../mdx-components/componentRegistry';
 import {
   COMPONENT_CATEGORIES,
   type ComponentCategory,
@@ -241,7 +241,7 @@ export const BUILTIN_SLASH_COMMANDS: SlashCommandItem[] = [
 
 // MDX component slash commands are read from the same categorized definitions
 // as dashboard widgets. Components without wiki surface access stay out.
-export const MDX_SLASH_COMMANDS: SlashCommandItem[] = getMdxComponentDefinitions().flatMap(
+export const MDX_SLASH_COMMANDS: SlashCommandItem[] = getComponentDefinitions('mdx').flatMap(
   definition => {
     if (!definition.surfaces.includes('wiki')) return [];
     const cmd = definition.mdx.editorSpec?.slashCommand;

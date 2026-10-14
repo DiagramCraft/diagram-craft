@@ -1,14 +1,15 @@
 import '../markdown/mdx-components/componentRegistrations';
 import {
-  getDashboardWidgetSpec as getCatalogDashboardWidgetSpec,
-  getDashboardWidgetSpecs as getCatalogDashboardWidgetSpecs
+  getComponentDefinition,
+  getComponentDefinitions
 } from '../markdown/mdx-components/componentRegistry';
 import { registerNestedWidgetResolvers } from './widgets/nestedWidgets';
 
-export const getDashboardWidgetSpecs = getCatalogDashboardWidgetSpecs;
-export const getDashboardWidgetSpec = getCatalogDashboardWidgetSpec;
-
 registerNestedWidgetResolvers({
-  getSpec: getDashboardWidgetSpec,
-  getSpecs: getDashboardWidgetSpecs
+  getSpec: type => getComponentDefinition(type, 'dashboardWidget')?.dashboardWidget,
+  getSpecs: () =>
+    getComponentDefinitions('dashboardWidget').map(({ type, dashboardWidget }) => ({
+      type,
+      spec: dashboardWidget
+    }))
 });

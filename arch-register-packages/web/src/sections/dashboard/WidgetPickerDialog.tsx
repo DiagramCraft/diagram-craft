@@ -4,7 +4,8 @@ import type { DashboardWidget } from '@arch-register/api-types/dashboardContract
 import { useSavedViews } from '../../hooks/useSavedViews';
 import { useMdxContext } from '../markdown/MdxContext';
 import { createDefaultWidget, type WidgetSurface } from './dashboardWidgetDefaults';
-import { getDashboardWidgetSpecs } from './dashboardWidgetRegistry';
+import './dashboardWidgetRegistry';
+import { getComponentDefinitions } from '../markdown/mdx-components/componentRegistry';
 import {
   COMPONENT_CATEGORIES,
   type ComponentCategory,
@@ -46,7 +47,8 @@ export const WidgetPickerDialog = ({
   });
   const matching = useMemo(
     () =>
-      getDashboardWidgetSpecs()
+      getComponentDefinitions('dashboardWidget')
+        .map(({ type, category, dashboardWidget: spec }) => ({ type, category, spec }))
         .filter(
           ({ type, spec }) =>
             spec.surfaces.includes(surface) &&

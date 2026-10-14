@@ -1,6 +1,7 @@
 import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
 import { WidgetFrame } from './WidgetFrame';
-import { getDashboardWidgetSpec } from '../dashboardWidgetRegistry';
+import '../dashboardWidgetRegistry';
+import { getComponentDefinition } from '../../markdown/mdx-components/componentRegistry';
 import { parseKnownDashboardWidget } from '../dashboardWidgetConfig';
 import { getWidgetTitle } from '../dashboardWidgetDefaults';
 import { useDashboardSidebarVariables } from '../DashboardSidebarContext';
@@ -24,7 +25,9 @@ export const DashboardWidgetRenderer = ({ widget, isEditing = false, onEdit, onR
   const knownWidget = parsedWidget
     ? { ...parsedWidget, config: resolveConfigVariables(parsedWidget.config, sidebarVariables) }
     : null;
-  const dashboardWidget = knownWidget ? getDashboardWidgetSpec(knownWidget.type) : undefined;
+  const dashboardWidget = knownWidget
+    ? getComponentDefinition(knownWidget.type, 'dashboardWidget')?.dashboardWidget
+    : undefined;
   const frame = resolveWidgetFrame(
     dashboardWidget,
     widget.frame,

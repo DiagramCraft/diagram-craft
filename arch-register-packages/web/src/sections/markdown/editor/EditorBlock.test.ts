@@ -16,13 +16,13 @@ vi.mock('../mdx-components/componentRegistry', () => {
     { type: 'EntityField', mdx: { mode: 'inline' } }
   ];
   return {
-    getMdxComponentDefinitions: () => definitions,
-    getMdxComponentDefinition: (type: string) =>
+    getComponentDefinitions: () => definitions,
+    getComponentDefinition: (type: string) =>
       definitions.find(definition => definition.type === type)
   };
 });
 
-const { getMdxComponentDefinitions } = await import('../mdx-components/componentRegistry');
+const { getComponentDefinitions } = await import('../mdx-components/componentRegistry');
 
 vi.mock('@platejs/markdown', () => ({
   serializeMd: vi.fn(() => 'serialized-md'),
@@ -189,7 +189,7 @@ describe('pasteBlockFromClipboard', () => {
 });
 
 describe('wrapper/non-wrapper classification', () => {
-  const definitions = getMdxComponentDefinitions();
+  const definitions = getComponentDefinitions('mdx');
 
   it('Caption is the only wrapper (acceptsChildren: true)', () => {
     const wrapperTypes = definitions

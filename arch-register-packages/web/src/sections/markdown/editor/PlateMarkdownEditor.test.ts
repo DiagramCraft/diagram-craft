@@ -45,8 +45,8 @@ vi.mock('../mdx-components/componentRegistry', () => {
     }
   };
   return {
-    getMdxComponentDefinitions: () => [definition],
-    getMdxComponentDefinition: (type: string) => (type === 'TestBlock' ? definition : undefined),
+    getComponentDefinitions: () => [definition],
+    getComponentDefinition: (type: string) => (type === 'TestBlock' ? definition : undefined),
     getMdxSpecsForSurface: () => ({ TestBlock: definition.mdx })
   };
 });

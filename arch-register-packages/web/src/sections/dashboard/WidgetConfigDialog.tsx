@@ -6,7 +6,8 @@ import type { DashboardWidgetSpec } from '../markdown/mdx-components/types';
 import type { WidgetSurface } from './dashboardWidgetDefaults';
 import { DialogContent, DialogSection } from '../markdown/editor/BlockDialog';
 import { useMdxContext } from '../markdown/MdxContext';
-import { getDashboardWidgetSpec } from './dashboardWidgetRegistry';
+import './dashboardWidgetRegistry';
+import { getComponentDefinition } from '../markdown/mdx-components/componentRegistry';
 import type { DashboardWidgetFrame } from '@arch-register/api-types/dashboardContract';
 import { WidgetFrameSettingsForm } from './widgets/WidgetFrameSettingsForm';
 import { defaultShowFrame, normalizeFrame } from './widgets/widgetFrameSettings';
@@ -30,7 +31,7 @@ export const WidgetConfigDialog = ({
   onSave
 }: Props) => {
   if (!widget) return null;
-  const spec = getDashboardWidgetSpec(widget.type);
+  const spec = getComponentDefinition(widget.type, 'dashboardWidget')?.dashboardWidget;
   if (!spec) return null;
 
   return (

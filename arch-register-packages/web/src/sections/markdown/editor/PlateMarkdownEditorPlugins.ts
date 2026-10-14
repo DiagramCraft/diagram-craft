@@ -9,7 +9,7 @@ import { NodeIdPlugin, type TElement } from 'platejs';
 import { createPlatePlugin } from 'platejs/react';
 import type { PlateElementProps } from 'platejs/react';
 import type { EditorSpec } from '../mdx-components/types';
-import { getMdxComponentDefinitions } from '../mdx-components/componentRegistry';
+import { getComponentDefinitions } from '../mdx-components/componentRegistry';
 import { CaptionNormalizePlugin } from '../mdx-components/blocks/caption/CaptionEditable';
 import { ColumnsNormalizePlugin } from '../mdx-components/blocks/columns/ColumnsEditable';
 import { TabsNormalizePlugin } from '../mdx-components/blocks/tabs/TabsEditable';
@@ -40,7 +40,7 @@ import {
 import { SlashInputElement } from './PlateMarkdownEditorSlashCommands';
 
 const HEADING_TYPES = new Set(['h1', 'h2', 'h3']);
-const mdxDefinitions = getMdxComponentDefinitions();
+const mdxDefinitions = getComponentDefinitions('mdx');
 
 export const HeadingBreakPlugin = createPlatePlugin({
   key: 'heading-break',

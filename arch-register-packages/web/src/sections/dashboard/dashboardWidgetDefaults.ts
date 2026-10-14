@@ -1,12 +1,13 @@
 import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
 import { GENERIC_STARTER_DASHBOARD_WIDGETS } from '@arch-register/api-types/dashboardWidgetSeeds';
-import { getDashboardWidgetSpec } from './dashboardWidgetRegistry';
+import './dashboardWidgetRegistry';
+import { getComponentDefinition } from '../markdown/mdx-components/componentRegistry';
 import type { KnownDashboardWidget } from './dashboardWidgetConfig';
 
 export type { WidgetSurface } from '../markdown/mdx-components/types';
 
 export const getWidgetTitle = (widget: KnownDashboardWidget): string => {
-  const dashboardWidget = getDashboardWidgetSpec(widget.type);
+  const dashboardWidget = getComponentDefinition(widget.type, 'dashboardWidget')?.dashboardWidget;
   if (!dashboardWidget) return 'Widget';
   return dashboardWidget.getTitle?.(widget.config) ?? dashboardWidget.label;
 };
@@ -19,7 +20,7 @@ export const createDefaultWidget = (
   widgets: DashboardWidget[],
   viewId?: string
 ): DashboardWidget => {
-  const dashboardWidget = getDashboardWidgetSpec(type)!;
+  const dashboardWidget = getComponentDefinition(type, 'dashboardWidget')!.dashboardWidget;
   const id = `widget-${crypto.randomUUID()}`;
   return {
     id,

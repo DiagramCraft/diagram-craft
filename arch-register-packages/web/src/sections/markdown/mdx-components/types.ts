@@ -138,3 +138,7 @@ export type ComponentDefinition = {
 };
 
 export type MdxComponentDefinition = ComponentDefinition & { mdx: MdxComponentSpec };
+
+export type DashboardWidgetComponentDefinition = ComponentDefinition & {
+  dashboardWidget: DashboardWidgetSpec;
+};

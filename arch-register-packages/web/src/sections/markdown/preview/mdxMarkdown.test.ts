@@ -29,7 +29,10 @@ vi.mock('../mdx-components/componentRegistry', () => {
     EntityLifecycleChart: { mode: 'block', allowedProps: [], surfaces: ['dashboard'] }
   };
   return {
-    getMdxSpec: (name: string) => mdxSpecs[name],
+    getComponentDefinition: (name: string) => {
+      const mdx = mdxSpecs[name];
+      return mdx ? { type: name, mdx } : undefined;
+    },
     getMdxSpecsForSurface: (surface: 'wiki' | 'dashboard') =>
       Object.fromEntries(
         Object.entries(mdxSpecs).filter(([, spec]) =>

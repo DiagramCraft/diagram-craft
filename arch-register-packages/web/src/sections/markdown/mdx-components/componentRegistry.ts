@@ -1,12 +1,13 @@
 import type {
   ComponentDefinition,
-  DashboardWidgetSpec,
+  DashboardWidgetComponentDefinition,
   MdxComponentDefinition,
   MdxComponentSpec
 } from './types';
 
 export type {
   ComponentDefinition,
+  DashboardWidgetComponentDefinition,
   MdxComponentDefinition,
   SlashCommandDef,
   EditorSpec,
@@ -17,22 +18,65 @@ export type {
 const componentDefinitions: ComponentDefinition[] = [];
 const componentsByType = new Map<string, ComponentDefinition>();
 
+/** Narrows component definitions to registrations that provide this surface. */
+export type ComponentDefinitionFilter = 'mdx' | 'dashboardWidget';
+
+type ComponentDefinitionFor<Filter extends ComponentDefinitionFilter | undefined> =
+  Filter extends 'mdx'
+    ? MdxComponentDefinition
+    : Filter extends 'dashboardWidget'
+      ? DashboardWidgetComponentDefinition
+      : ComponentDefinition;
+
 const isMdxComponentDefinition = (
   definition: ComponentDefinition
 ): definition is MdxComponentDefinition => definition.mdx !== undefined;
 
-/** All component registrations, populated by componentRegistrations.ts. */
-export const getComponentDefinitions = (): ReadonlyArray<ComponentDefinition> => [
-  ...componentDefinitions
-];
+const isDashboardWidgetComponentDefinition = (
+  definition: ComponentDefinition
+): definition is DashboardWidgetComponentDefinition =>
+  definition.surfaces.includes('dashboard') && definition.dashboardWidget !== undefined;
 
-/** MDX-capable component definitions, including their MDX-specific spec. */
-export const getMdxComponentDefinitions = (): ReadonlyArray<MdxComponentDefinition> =>
-  componentDefinitions.filter(isMdxComponentDefinition);
+/** Return all registrations, or narrow them to definitions with the selected spec. */
+export const getComponentDefinitions = <
+  Filter extends ComponentDefinitionFilter | undefined = undefined
+>(
+  filter?: Filter
+): ReadonlyArray<ComponentDefinitionFor<Filter>> => {
+  if (filter === 'mdx') {
+    return componentDefinitions.filter(isMdxComponentDefinition) as unknown as ReadonlyArray<
+      ComponentDefinitionFor<Filter>
+    >;
+  }
+  if (filter === 'dashboardWidget') {
+    return componentDefinitions.filter(
+      isDashboardWidgetComponentDefinition
+    ) as unknown as ReadonlyArray<ComponentDefinitionFor<Filter>>;
+  }
+  return [...componentDefinitions] as unknown as ReadonlyArray<ComponentDefinitionFor<Filter>>;
+};
 
-export const getMdxComponentDefinition = (type: string): MdxComponentDefinition | undefined => {
-  const definition = componentsByType.get(type);
-  return definition && isMdxComponentDefinition(definition) ? definition : undefined;
+/** Look up a registration by id, optionally requiring a particular spec. */
+export const getComponentDefinition = <
+  Filter extends ComponentDefinitionFilter | undefined = undefined
+>(
+  id: string,
+  filter?: Filter
+): ComponentDefinitionFor<Filter> | undefined => {
+  const definition = componentsByType.get(id);
+  if (!definition) return undefined;
+
+  if (filter === 'mdx') {
+    return isMdxComponentDefinition(definition)
+      ? (definition as ComponentDefinitionFor<Filter>)
+      : undefined;
+  }
+  if (filter === 'dashboardWidget') {
+    return isDashboardWidgetComponentDefinition(definition)
+      ? (definition as ComponentDefinitionFor<Filter>)
+      : undefined;
+  }
+  return definition as ComponentDefinitionFor<Filter>;
 };
 
 /** Add the complete set of component registrations. */
@@ -55,34 +99,12 @@ export const registerComponentDefinitions = (
   }
 };
 
-export const getDashboardWidgetSpecs = (): Array<{
-  type: string;
-  category: ComponentDefinition['category'];
-  spec: DashboardWidgetSpec;
-}> =>
-  componentDefinitions.flatMap(definition =>
-    definition.surfaces.includes('dashboard') && definition.dashboardWidget
-      ? [{ type: definition.type, category: definition.category, spec: definition.dashboardWidget }]
-      : []
-  );
-
-export const getDashboardWidgetSpec = (type: string): DashboardWidgetSpec | undefined => {
-  const definition = componentsByType.get(type);
-  return definition?.surfaces.includes('dashboard') ? definition.dashboardWidget : undefined;
-};
-
-export const getMdxSpec = (name: string): MdxComponentSpec => {
-  const spec = getMdxComponentDefinition(name)?.mdx;
-  if (!spec) throw new Error(`No MDX component spec registered for "${name}"`);
-  return spec;
-};
-
 /** MDX specs available on the requested content surface. */
 export const getMdxSpecsForSurface = (
   surface: 'wiki' | 'dashboard'
 ): Record<string, MdxComponentSpec> =>
   Object.fromEntries(
-    getMdxComponentDefinitions().flatMap(definition =>
+    getComponentDefinitions('mdx').flatMap(definition =>
       definition.surfaces.includes(surface) ? [[definition.type, definition.mdx] as const] : []
     )
   );

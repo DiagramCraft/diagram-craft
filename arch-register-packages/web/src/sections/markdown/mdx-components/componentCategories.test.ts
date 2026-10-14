@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import './componentRegistrations';
-import { getDashboardWidgetSpecs } from '../../dashboard/dashboardWidgetRegistry';
 import {
   MDX_SLASH_COMMANDS,
   BUILTIN_SLASH_COMMANDS,
@@ -25,11 +24,12 @@ describe('component catalog', () => {
   });
 
   it('categorises every dashboard widget', () => {
-    const widgets = getDashboardWidgetSpecs();
+    const widgets = getComponentDefinitions('dashboardWidget');
     expect(widgets.every(widget => categoryIds.has(widget.category))).toBe(true);
-    const labels = widgets.map(widget => widget.spec.label);
+    const labels = widgets.map(widget => widget.dashboardWidget.label);
     expect(new Set(labels).size).toBe(labels.length);
-    for (const { spec } of widgets) expect(spec.description.trim()).not.toBe('');
+    for (const { dashboardWidget } of widgets)
+      expect(dashboardWidget.description.trim()).not.toBe('');
   });
 
   it('offers only wiki-eligible MDX components in the slash menu', () => {
