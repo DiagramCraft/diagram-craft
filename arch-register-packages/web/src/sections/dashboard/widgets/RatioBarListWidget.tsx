@@ -5,8 +5,6 @@ import { BarList } from '../../../components/BarList';
 import { ratioColor } from '../../../components/bandColor';
 import { buildRatioBarRows } from './ratioBarListLogic';
 import styles from './WidgetRowList.module.css';
-import { TbChartBar } from 'react-icons/tb';
-import type { DashboardWidgetRegistrationSpec } from '../../markdown/mdx-components/types';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import configFormStyles from '../WidgetConfigDialog.module.css';
 
@@ -173,29 +171,3 @@ export const RatioBarListConfigForm = ({ config, onChange }: RatioBarListConfigF
 };
 
 export const RATIO_BAR_LIST_TYPE = 'RatioBarList' as const;
-
-export const _ratioBarListSpecData: Omit<
-  DashboardWidgetRegistrationSpec<RatioBarListWidgetConfig>,
-  'label' | 'description'
-> = {
-  icon: TbChartBar,
-  defaultW: 6,
-  defaultH: 16,
-  surfaces: ['workspace'],
-  component: RatioBarListWidget,
-  isValidConfig: (config): config is RatioBarListWidgetConfig =>
-    typeof config.schemaName === 'string' &&
-    typeof config.groupByFieldId === 'string' &&
-    typeof config.numeratorFieldId === 'string' &&
-    typeof config.numeratorValue === 'string' &&
-    isRatioBarListConfigComplete(config as RatioBarListWidgetConfig),
-  createDefaultProps: () => ({
-    config: {
-      schemaName: '',
-      groupByFieldId: '',
-      numeratorFieldId: '',
-      numeratorValue: ''
-    }
-  }),
-  configForm: RatioBarListConfigForm
-};

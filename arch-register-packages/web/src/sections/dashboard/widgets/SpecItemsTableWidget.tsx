@@ -15,8 +15,6 @@ import { stripEmptyGroups } from '../../entities/components/entityBrowserState';
 import { useEntityDrawer } from '../../entities/entityDrawer/useEntityDrawer';
 import { resolveEntityQuery } from '../../markdown/mdx-components/blocks/entity-browser-embed/EntityBrowserEmbedFieldResolution';
 import { specItemsEmptyLabel, specItemTone, specItemSortValue } from './specItemsTableLogic';
-import { TbListDetails } from 'react-icons/tb';
-import type { DashboardWidgetRegistrationSpec } from '../../markdown/mdx-components/types';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import configFormStyles from '../WidgetConfigDialog.module.css';
 
@@ -189,24 +187,11 @@ export const SpecItemsTableConfigForm = ({
 
 export const SPEC_ITEMS_TABLE_TYPE = 'SpecItemsTable' as const;
 
-const isValidConfig = (config: Record<string, unknown>): config is SpecItemsTableWidgetConfig =>
+export const isValidConfig = (
+  config: Record<string, unknown>
+): config is SpecItemsTableWidgetConfig =>
   typeof config.schemaName === 'string' &&
   config.schemaName.length > 0 &&
   (config.entityQuery === undefined || typeof config.entityQuery === 'object') &&
   (config.deprecated === undefined || typeof config.deprecated === 'boolean') &&
   (config.entityLimit === undefined || typeof config.entityLimit === 'number');
-
-export const _specItemsTableSpecData: Omit<
-  DashboardWidgetRegistrationSpec<SpecItemsTableWidgetConfig>,
-  'label' | 'description'
-> = {
-  icon: TbListDetails,
-  defaultW: 12,
-  defaultH: 24,
-  surfaces: ['workspace'],
-  component: SpecItemsTableWidget,
-  frame: { padded: false, showIcon: false },
-  isValidConfig,
-  createDefaultProps: () => ({ config: { schemaName: '' } }),
-  configForm: SpecItemsTableConfigForm
-};

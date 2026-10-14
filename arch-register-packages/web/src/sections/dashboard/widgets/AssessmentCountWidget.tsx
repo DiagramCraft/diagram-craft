@@ -5,9 +5,7 @@ import { filterAssessments } from './assessmentsWidgetLogic';
 import { resolveScopeSchemaIds } from './AssessmentsWidget';
 import styles from './AggregateStatWidget.module.css';
 import { useWidgetBodyTitle } from './WidgetBodyTitle';
-import { TbClipboardCheck } from 'react-icons/tb';
 import { Select } from '@diagram-craft/app-components/Select';
-import type { DashboardWidgetRegistrationSpec } from '../../markdown/mdx-components/types';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import type { AssessmentWidgetMode } from './assessmentsWidgetLogic';
 import registrationStyles from '../WidgetConfigDialog.module.css';
@@ -72,7 +70,7 @@ export const ASSESSMENT_COUNT_TYPE = 'AssessmentCount' as const;
 const optionalText = (value: string): string | undefined =>
   value.trim() === '' ? undefined : value;
 
-const AssessmentCountConfigForm = ({
+export const AssessmentCountConfigForm = ({
   config,
   onChange
 }: {
@@ -152,30 +150,5 @@ const AssessmentCountConfigForm = ({
   );
 };
 
-const isOptionalString = (value: unknown): boolean =>
+export const isOptionalString = (value: unknown): boolean =>
   value === undefined || typeof value === 'string';
-
-export const _assessmentCountSpecData: Omit<
-  DashboardWidgetRegistrationSpec<AssessmentCountWidgetConfig>,
-  'label' | 'description'
-> = {
-  icon: TbClipboardCheck,
-  defaultW: 3,
-  defaultH: 5,
-  surfaces: ['workspace'],
-  component: AssessmentCountWidget,
-  frame: { hideOutsideEdit: true, padded: false, showIcon: false },
-  isValidConfig: (config): config is AssessmentCountWidgetConfig =>
-    (config.mode === 'active' ||
-      config.mode === 'upcoming' ||
-      config.mode === 'overdue' ||
-      config.mode === 'all') &&
-    isOptionalString(config.assessmentTypeId) &&
-    (config.schemaNames === undefined ||
-      (Array.isArray(config.schemaNames) &&
-        config.schemaNames.every(name => typeof name === 'string'))) &&
-    (config.dueWithinDays === undefined || typeof config.dueWithinDays === 'number') &&
-    isOptionalString(config.subtext),
-  createDefaultProps: () => ({ config: { mode: 'active' } }),
-  configForm: AssessmentCountConfigForm
-};

@@ -1,20 +1,34 @@
+import { TbArrowsJoin } from 'react-icons/tb';
 import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import {
   RELATION_PAIRS_COVERAGE_TYPE,
-  _relationPairsCoverageSpecData
+  RelationPairsCoverageConfigForm,
+  RelationPairsCoverageWidget,
+  isValidConfig
 } from './RelationPairsCoverageWidget';
 
-const { icon, component, configForm, createDefaultProps, ...dashboardWidget } =
-  _relationPairsCoverageSpecData;
 export default defineComponent({
   type: RELATION_PAIRS_COVERAGE_TYPE,
   category: 'data-views',
   name: 'Pair coverage',
   description:
     'Every provider × consumer pair around a shared entity, and whether a chosen relation type connects the two.',
-  component: component!,
-  configForm,
-  createDefaultProps,
-  icon,
-  dashboardWidget
+  icon: TbArrowsJoin,
+  component: RelationPairsCoverageWidget,
+  createDefaultProps: () => ({
+    config: {
+      hubSchemaName: '',
+      providerFieldName: '',
+      consumerFieldName: '',
+      coverageRelationSchemaName: ''
+    }
+  }),
+  configForm: RelationPairsCoverageConfigForm,
+  dashboardWidget: {
+    defaultW: 12,
+    defaultH: 24,
+    surfaces: ['workspace'],
+    frame: { padded: false, showIcon: false },
+    isValidConfig
+  }
 });

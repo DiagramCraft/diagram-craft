@@ -6,8 +6,6 @@ import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { useEntityDrawer } from '../../entities/entityDrawer/useEntityDrawer';
 import { groupViolationsByEntity } from './conformanceViolationsLogic';
 import styles from './ConformanceViolationsWidget.module.css';
-import { TbShieldExclamation } from 'react-icons/tb';
-import type { DashboardWidgetRegistrationSpec } from '../../markdown/mdx-components/types';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import configFormStyles from '../WidgetConfigDialog.module.css';
 
@@ -157,7 +155,7 @@ export const CONFORMANCE_VIOLATIONS_TYPE = 'ConformanceViolations' as const;
 const isStringArray = (value: unknown): value is string[] =>
   Array.isArray(value) && value.every(item => typeof item === 'string');
 
-const isValidConfig = (
+export const isValidConfig = (
   config: Record<string, unknown>
 ): config is ConformanceViolationsWidgetConfig =>
   typeof config.schemaName === 'string' &&
@@ -165,19 +163,3 @@ const isValidConfig = (
   typeof config.limit === 'number' &&
   config.limit > 0 &&
   (config.checkNames === undefined || isStringArray(config.checkNames));
-
-export const _conformanceViolationsSpecData: Omit<
-  DashboardWidgetRegistrationSpec<ConformanceViolationsWidgetConfig>,
-  'label' | 'description'
-> = {
-  icon: TbShieldExclamation,
-  defaultW: 12,
-  defaultH: 14,
-  surfaces: ['workspace'],
-  component: ConformanceViolationsWidget,
-  headerActionsComponent: ConformanceViolationsHeaderActions,
-  frame: { padded: false, showIcon: false },
-  isValidConfig,
-  createDefaultProps: () => ({ config: { schemaName: '', limit: 8 } }),
-  configForm: ConformanceViolationsConfigForm
-};

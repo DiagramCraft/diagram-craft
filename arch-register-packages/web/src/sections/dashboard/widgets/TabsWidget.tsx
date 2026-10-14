@@ -1,18 +1,16 @@
 import { useNavigate, useSearch } from '@tanstack/react-router';
+import type { ConfigFormProps } from '../../markdown/mdx-components/types';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { NestedWidgetRenderer } from './nestedWidgets';
 import styles from './TabsWidget.module.css';
-import { TbLayoutList } from 'react-icons/tb';
-import type { DashboardWidgetRegistrationSpec } from '../../markdown/mdx-components/types';
-import { getNestedWidgetSpec } from './nestedWidgets';
-import { useState, type ComponentProps } from 'react';
+import { useState } from 'react';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TbArrowDown, TbArrowUp, TbGripVertical, TbPlus, TbTrash } from 'react-icons/tb';
 import { NestedTabContentsEditor } from './nestedWidgets';
 import { moveItem, resolveActiveTabId } from './tabsLogic';
 import formStyles from '../WidgetConfigDialog.module.css';
 import configFormStyles from './TabsConfigForm.module.css';
-import { createTab, isValidTabsConfig, type TabsWidgetConfig } from './tabsLogic';
+import { createTab, type TabsWidgetConfig } from './tabsLogic';
 
 /** Search param that keeps the active tab across reloads and in shared links. */
 export const TABS_SEARCH_PARAM = 'tab';
@@ -70,9 +68,7 @@ export const TabsWidget = ({ config }: { config: TabsWidgetConfig }) => {
   );
 };
 
-type FormProps = ComponentProps<
-  NonNullable<DashboardWidgetRegistrationSpec<TabsWidgetConfig>['configForm']>
->;
+type FormProps = ConfigFormProps<TabsWidgetConfig>;
 
 /** Tab list in a sidebar; the selected tab's contents are edited in a grid on the right. */
 export const TabsConfigForm = ({ config, onChange, context }: FormProps) => {
@@ -178,24 +174,4 @@ export const TabsConfigForm = ({ config, onChange, context }: FormProps) => {
       </div>
     </div>
   );
-};
-
-export const _tabsSpecData: Omit<
-  DashboardWidgetRegistrationSpec<TabsWidgetConfig>,
-  'label' | 'description'
-> = {
-  icon: TbLayoutList,
-  defaultW: 12,
-  defaultH: 24,
-  surfaces: ['workspace', 'project'],
-  component: TabsWidget,
-  frame: { hideOutsideEdit: true, padded: false, showIcon: false },
-  isValidConfig: (config): config is TabsWidgetConfig =>
-    isValidTabsConfig(config, child => {
-      const spec = getNestedWidgetSpec(child.type);
-      return !!spec && spec.isValidConfig(child.config);
-    }),
-  createDefaultProps: () => ({ config: { tabs: [createTab([], 'Tab')] } }),
-  configForm: TabsConfigForm,
-  dialogSize: 'large'
 };

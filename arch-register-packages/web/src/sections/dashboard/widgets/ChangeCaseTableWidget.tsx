@@ -13,8 +13,6 @@ import type { NeedsAttentionPriority } from './needsAttentionQueue';
 import { useEntityCaseRegister } from './entityCaseRegister';
 import { filterByStatus, isChangeCaseStatus } from './changeCaseTableLogic';
 import styles from './ChangeCaseTableWidget.module.css';
-import { TbGitPullRequest } from 'react-icons/tb';
-import type { DashboardWidgetRegistrationSpec } from '../../markdown/mdx-components/types';
 import { Select } from '@diagram-craft/app-components/Select';
 import { humanizeCaseKind } from '../../../utils/governanceCaseLabels';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
@@ -270,7 +268,7 @@ export const ChangeCaseTableConfigForm = ({ config, onChange }: ChangeCaseTableC
 
 export const CHANGE_CASE_TABLE_TYPE = 'ChangeCaseTable' as const;
 
-const isOptionalString = (value: unknown): boolean =>
+export const isOptionalString = (value: unknown): boolean =>
   value === undefined || typeof value === 'string';
 
 /**
@@ -278,28 +276,3 @@ const isOptionalString = (value: unknown): boolean =>
  * schema, restricted to a chosen set of case kinds — not tied to any particular app. Generalized
  * from Data Stewardship's former Change cases screen (#3504).
  */
-export const _changeCaseTableSpecData: Omit<
-  DashboardWidgetRegistrationSpec<ChangeCaseTableConfig>,
-  'label' | 'description'
-> = {
-  icon: TbGitPullRequest,
-  defaultW: 12,
-  defaultH: 20,
-  surfaces: ['workspace'],
-  component: ChangeCaseTableWidget,
-  frame: { hideOutsideEdit: true, padded: false, showIcon: false },
-  isValidConfig: (config): config is ChangeCaseTableConfig =>
-    typeof config.schemaName === 'string' &&
-    Array.isArray(config.caseKinds) &&
-    config.caseKinds.every(kind => typeof kind === 'string') &&
-    (config.severity === 'none' || config.severity === 'due-date') &&
-    isOptionalString(config.status),
-  createDefaultProps: () => ({
-    config: {
-      schemaName: '',
-      caseKinds: ['entity.change-case'],
-      severity: 'due-date'
-    }
-  }),
-  configForm: ChangeCaseTableConfigForm
-};

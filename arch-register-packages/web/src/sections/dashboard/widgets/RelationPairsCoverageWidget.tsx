@@ -10,8 +10,6 @@ import {
   resolveTypedRelationSchemaId,
   type RelationPair
 } from './relationPairCoverageLogic';
-import { TbArrowsJoin } from 'react-icons/tb';
-import type { DashboardWidgetRegistrationSpec } from '../../markdown/mdx-components/types';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import configFormStyles from '../WidgetConfigDialog.module.css';
 
@@ -258,7 +256,7 @@ const isNonEmptyString = (value: unknown): value is string =>
 
 const isOptionalString = (value: unknown) => value === undefined || typeof value === 'string';
 
-const isValidConfig = (
+export const isValidConfig = (
   config: Record<string, unknown>
 ): config is RelationPairsCoverageWidgetConfig =>
   isNonEmptyString(config.hubSchemaName) &&
@@ -269,25 +267,3 @@ const isValidConfig = (
   isOptionalString(config.providerLabel) &&
   isOptionalString(config.consumerLabel) &&
   isOptionalString(config.coverageLabel);
-
-export const _relationPairsCoverageSpecData: Omit<
-  DashboardWidgetRegistrationSpec<RelationPairsCoverageWidgetConfig>,
-  'label' | 'description'
-> = {
-  icon: TbArrowsJoin,
-  defaultW: 12,
-  defaultH: 24,
-  surfaces: ['workspace'],
-  component: RelationPairsCoverageWidget,
-  frame: { padded: false, showIcon: false },
-  isValidConfig,
-  createDefaultProps: () => ({
-    config: {
-      hubSchemaName: '',
-      providerFieldName: '',
-      consumerFieldName: '',
-      coverageRelationSchemaName: ''
-    }
-  }),
-  configForm: RelationPairsCoverageConfigForm
-};

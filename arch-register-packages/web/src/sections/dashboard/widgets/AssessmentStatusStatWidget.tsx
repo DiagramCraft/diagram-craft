@@ -10,11 +10,8 @@ import {
 import { useSchemaAssessmentSummaries } from './useSchemaAssessmentSummaries';
 import styles from './AssessmentStatusStatWidget.module.css';
 import { useWidgetBodyTitle } from './WidgetBodyTitle';
-import { TbChecklist } from 'react-icons/tb';
-import type { DashboardWidgetRegistrationSpec } from '../../markdown/mdx-components/types';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import { AssessmentSchemaConfigForm } from './AssessmentSchemaConfigForm';
-import { isAssessmentStatus } from './assessmentSummaryLogic';
 import registrationStyles from '../WidgetConfigDialog.module.css';
 
 export type AssessmentStatusStatConfig = {
@@ -59,7 +56,7 @@ export const AssessmentStatusStatWidget = ({ config }: { config: AssessmentStatu
 
 export const ASSESSMENT_STATUS_STAT_TYPE = 'AssessmentStatusStat' as const;
 
-const ConfigForm = ({
+export const ConfigForm = ({
   config,
   onChange
 }: {
@@ -95,21 +92,3 @@ const ConfigForm = ({
  * in progress, not started or complete (the statuses are derived from the responses recorded
  * against the in-scope entities, which an entity-query `AggregateStat` cannot express).
  */
-export const _assessmentStatusStatSpecData: Omit<
-  DashboardWidgetRegistrationSpec<AssessmentStatusStatConfig>,
-  'label' | 'description'
-> = {
-  icon: TbChecklist,
-  defaultW: 3,
-  defaultH: 5,
-  surfaces: ['workspace'],
-  component: AssessmentStatusStatWidget,
-  frame: { hideOutsideEdit: true, padded: false, showIcon: false },
-  isValidConfig: (config): config is AssessmentStatusStatConfig =>
-    typeof config.schemaName === 'string' &&
-    config.schemaName.length > 0 &&
-    isAssessmentStatus(config.status) &&
-    (config.subtextTemplate === undefined || typeof config.subtextTemplate === 'string'),
-  createDefaultProps: () => ({ config: { schemaName: '', status: 'overdue' } }),
-  configForm: ConfigForm
-};

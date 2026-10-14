@@ -1,20 +1,29 @@
+import { TbShieldExclamation } from 'react-icons/tb';
 import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import {
   CONFORMANCE_VIOLATIONS_TYPE,
-  _conformanceViolationsSpecData
+  ConformanceViolationsConfigForm,
+  ConformanceViolationsHeaderActions,
+  ConformanceViolationsWidget,
+  isValidConfig
 } from './ConformanceViolationsWidget';
 
-const { icon, component, configForm, createDefaultProps, ...dashboardWidget } =
-  _conformanceViolationsSpecData;
 export default defineComponent({
   type: CONFORMANCE_VIOLATIONS_TYPE,
   category: 'data-views',
   name: 'Conformance violations',
   description:
     'Entities of a schema with active conformance violations, with the failing checks, worst first.',
-  component: component!,
-  configForm,
-  createDefaultProps,
-  icon,
-  dashboardWidget
+  icon: TbShieldExclamation,
+  component: ConformanceViolationsWidget,
+  createDefaultProps: () => ({ config: { schemaName: '', limit: 8 } }),
+  configForm: ConformanceViolationsConfigForm,
+  dashboardWidget: {
+    defaultW: 12,
+    defaultH: 14,
+    surfaces: ['workspace'],
+    headerActionsComponent: ConformanceViolationsHeaderActions,
+    frame: { padded: false, showIcon: false },
+    isValidConfig
+  }
 });

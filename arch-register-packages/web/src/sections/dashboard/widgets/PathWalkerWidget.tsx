@@ -5,19 +5,13 @@ import { useEntityDrawer } from '../../entities/entityDrawer/useEntityDrawer';
 import { PathWalkerView } from '../../entities/components/PathWalkerView';
 import type { BrowserEntityRecord } from '../../entities/components/entityBrowserState';
 import styles from './PathWalkerWidget.module.css';
-import { TbArrowsSplit2 } from 'react-icons/tb';
-import type { DashboardWidgetRegistrationSpec } from '../../markdown/mdx-components/types';
 import type { PathStep } from '@arch-register/api-types/entityQueryIR';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import { pathStepKey } from '../../entities/components/pathBuilder/pathBuilderState';
 import { hopDirectionGlyph } from '../../entities/components/pathWalkerViewState';
 import { findRootSchema, hopChainOptions, resolveWalkerHops } from './pathWalkerWidgetLogic';
 import configFormStyles from '../WidgetConfigDialog.module.css';
-import {
-  isPathWalkerConfigComplete,
-  isPathWalkerConfigValid,
-  type PathWalkerWidgetConfig
-} from './pathWalkerWidgetLogic';
+import { isPathWalkerConfigComplete, type PathWalkerWidgetConfig } from './pathWalkerWidgetLogic';
 
 const FETCH_LIMIT = 1000;
 
@@ -133,18 +127,3 @@ export const PathWalkerConfigForm = ({ config, onChange }: PathWalkerConfigFormP
 };
 
 export const PATH_WALKER_TYPE = 'PathWalker' as const;
-
-export const _pathWalkerSpecData: Omit<
-  DashboardWidgetRegistrationSpec<PathWalkerWidgetConfig>,
-  'label' | 'description'
-> = {
-  icon: TbArrowsSplit2,
-  defaultW: 12,
-  defaultH: 22,
-  surfaces: ['workspace'],
-  component: PathWalkerWidget,
-  isValidConfig: (config): config is PathWalkerWidgetConfig =>
-    isPathWalkerConfigValid(config) && isPathWalkerConfigComplete(config as PathWalkerWidgetConfig),
-  createDefaultProps: () => ({ config: { rootSchemaName: '' } }),
-  configForm: PathWalkerConfigForm
-};

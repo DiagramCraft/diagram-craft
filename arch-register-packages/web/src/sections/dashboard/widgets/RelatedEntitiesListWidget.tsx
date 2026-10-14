@@ -7,8 +7,6 @@ import { renderSchemaFieldValue } from '../../markdown/mdx-components/blocks/ent
 import { computeProgress, resolveRelatedEntities } from './relatedEntitiesLogic';
 import styles from './RelatedEntitiesListWidget.module.css';
 import rowStyles from './WidgetRowList.module.css';
-import { TbListDetails } from 'react-icons/tb';
-import type { DashboardWidgetRegistrationSpec } from '../../markdown/mdx-components/types';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import configFormStyles from '../WidgetConfigDialog.module.css';
 
@@ -371,19 +369,3 @@ export const RelatedEntitiesListConfigForm = ({
 };
 
 export const RELATED_ENTITIES_LIST_TYPE = 'RelatedEntitiesList' as const;
-
-export const _relatedEntitiesListSpecData: Omit<
-  DashboardWidgetRegistrationSpec<RelatedEntitiesListWidgetConfig>,
-  'label' | 'description'
-> = {
-  icon: TbListDetails,
-  defaultW: 4,
-  defaultH: 14,
-  surfaces: ['workspace'],
-  component: RelatedEntitiesListWidget,
-  isValidConfig: (config): config is RelatedEntitiesListWidgetConfig =>
-    isRelatedEntitiesListConfigValid(config) &&
-    isRelatedEntitiesListConfigComplete(config as RelatedEntitiesListWidgetConfig),
-  createDefaultProps: () => ({ config: { schemaName: '', referenceField: '' } }),
-  configForm: RelatedEntitiesListConfigForm
-};

@@ -19,8 +19,6 @@ import { countdownTone } from './upcomingByDateLogic';
 import { useRecordSublabels } from './useRecordSublabels';
 import rowStyles from './WidgetRowList.module.css';
 import styles from './DateCalendarWidget.module.css';
-import { TbCalendarMonth } from 'react-icons/tb';
-import type { DashboardWidgetRegistrationSpec } from '../../markdown/mdx-components/types';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import configFormStyles from '../WidgetConfigDialog.module.css';
 
@@ -272,33 +270,8 @@ export const DateCalendarConfigForm = ({ config, onChange }: DateCalendarConfigF
 
 export const DATE_CALENDAR_TYPE = 'DateCalendar' as const;
 
-const isOptionalNumber = (value: unknown): boolean =>
+export const isOptionalNumber = (value: unknown): boolean =>
   value === undefined || (typeof value === 'number' && Number.isFinite(value));
 
-const optionalString = (value: unknown): boolean =>
+export const optionalString = (value: unknown): boolean =>
   value === undefined || typeof value === 'string';
-
-export const _dateCalendarSpecData: Omit<
-  DashboardWidgetRegistrationSpec<DateCalendarWidgetConfig>,
-  'label' | 'description'
-> = {
-  icon: TbCalendarMonth,
-  defaultW: 12,
-  defaultH: 30,
-  surfaces: ['workspace'],
-  component: DateCalendarWidget,
-  isValidConfig: (config): config is DateCalendarWidgetConfig =>
-    optionalString(config.query) &&
-    optionalString(config.schemaName) &&
-    (config.entityQuery === undefined || typeof config.entityQuery === 'object') &&
-    typeof config.dateFieldId === 'string' &&
-    (config.period === undefined || config.period === 'month' || config.period === 'week') &&
-    isOptionalNumber(config.periodCount) &&
-    isOptionalNumber(config.critWithinDays) &&
-    isOptionalNumber(config.warnWithinDays) &&
-    optionalString(config.sublabelFieldId) &&
-    optionalString(config.valueFieldId) &&
-    isDateCalendarConfigComplete(config as DateCalendarWidgetConfig),
-  createDefaultProps: () => ({ config: { query: '', dateFieldId: '' } }),
-  configForm: DateCalendarConfigForm
-};

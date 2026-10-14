@@ -1,20 +1,30 @@
+import { TbListDetails } from 'react-icons/tb';
 import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import {
   RELATED_ENTITIES_LIST_TYPE,
-  _relatedEntitiesListSpecData
+  RelatedEntitiesListConfigForm,
+  RelatedEntitiesListWidget,
+  RelatedEntitiesListWidgetConfig,
+  isRelatedEntitiesListConfigComplete,
+  isRelatedEntitiesListConfigValid
 } from './RelatedEntitiesListWidget';
 
-const { icon, component, configForm, createDefaultProps, ...dashboardWidget } =
-  _relatedEntitiesListSpecData;
 export default defineComponent({
   type: RELATED_ENTITIES_LIST_TYPE,
   category: 'data-views',
   name: 'Related entities',
   description:
     'Entities of one type that reference a chosen entity, optionally with a progress bar per row.',
-  component: component!,
-  configForm,
-  createDefaultProps,
-  icon,
-  dashboardWidget
+  icon: TbListDetails,
+  component: RelatedEntitiesListWidget,
+  createDefaultProps: () => ({ config: { schemaName: '', referenceField: '' } }),
+  configForm: RelatedEntitiesListConfigForm,
+  dashboardWidget: {
+    defaultW: 4,
+    defaultH: 14,
+    surfaces: ['workspace'],
+    isValidConfig: (config): config is RelatedEntitiesListWidgetConfig =>
+      isRelatedEntitiesListConfigValid(config) &&
+      isRelatedEntitiesListConfigComplete(config as RelatedEntitiesListWidgetConfig)
+  }
 });

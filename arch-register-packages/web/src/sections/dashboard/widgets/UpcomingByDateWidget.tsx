@@ -8,8 +8,6 @@ import { formatMeasured, measuredValue } from './fieldAggregation';
 import { buildUpcomingRows, countdownTone, formatCountdown } from './upcomingByDateLogic';
 import rowStyles from './WidgetRowList.module.css';
 import styles from './UpcomingByDateWidget.module.css';
-import { TbCalendarTime } from 'react-icons/tb';
-import type { DashboardWidgetRegistrationSpec } from '../../markdown/mdx-components/types';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import configFormStyles from '../WidgetConfigDialog.module.css';
 
@@ -252,32 +250,8 @@ export const UpcomingByDateConfigForm = ({ config, onChange }: UpcomingByDateCon
 
 export const UPCOMING_BY_DATE_TYPE = 'UpcomingByDate' as const;
 
-const isOptionalNumber = (value: unknown): boolean =>
+export const isOptionalNumber = (value: unknown): boolean =>
   value === undefined || (typeof value === 'number' && Number.isFinite(value));
 
-const optionalString = (value: unknown): boolean =>
+export const optionalString = (value: unknown): boolean =>
   value === undefined || typeof value === 'string';
-
-export const _upcomingByDateSpecData: Omit<
-  DashboardWidgetRegistrationSpec<UpcomingByDateWidgetConfig>,
-  'label' | 'description'
-> = {
-  icon: TbCalendarTime,
-  defaultW: 6,
-  defaultH: 16,
-  surfaces: ['workspace'],
-  component: UpcomingByDateWidget,
-  isValidConfig: (config): config is UpcomingByDateWidgetConfig =>
-    typeof config.query === 'string' &&
-    typeof config.dateFieldId === 'string' &&
-    isOptionalNumber(config.windowDays) &&
-    isOptionalNumber(config.limit) &&
-    isOptionalNumber(config.critWithinDays) &&
-    isOptionalNumber(config.warnWithinDays) &&
-    optionalString(config.sublabelFieldId) &&
-    optionalString(config.valueFieldId) &&
-    (config.includeOverdue === undefined || typeof config.includeOverdue === 'boolean') &&
-    isUpcomingByDateConfigComplete(config as UpcomingByDateWidgetConfig),
-  createDefaultProps: () => ({ config: { query: '', dateFieldId: '' } }),
-  configForm: UpcomingByDateConfigForm
-};

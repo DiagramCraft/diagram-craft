@@ -5,8 +5,6 @@ import { buildDateBuckets } from './dateBucketLogic';
 import { formatMeasured } from './fieldAggregation';
 import rowStyles from './WidgetRowList.module.css';
 import styles from './DateBucketChartWidget.module.css';
-import { TbChartBar } from 'react-icons/tb';
-import type { DashboardWidgetRegistrationSpec } from '../../markdown/mdx-components/types';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import configFormStyles from '../WidgetConfigDialog.module.css';
 
@@ -196,27 +194,5 @@ export const DateBucketChartConfigForm = ({ config, onChange }: DateBucketChartC
 
 export const DATE_BUCKET_CHART_TYPE = 'DateBucketChart' as const;
 
-const isOptionalNumber = (value: unknown): boolean =>
+export const isOptionalNumber = (value: unknown): boolean =>
   value === undefined || (typeof value === 'number' && Number.isFinite(value));
-
-export const _dateBucketChartSpecData: Omit<
-  DashboardWidgetRegistrationSpec<DateBucketChartWidgetConfig>,
-  'label' | 'description'
-> = {
-  icon: TbChartBar,
-  defaultW: 12,
-  defaultH: 12,
-  surfaces: ['workspace'],
-  component: DateBucketChartWidget,
-  headerActionsComponent: DateBucketChartHeaderActions,
-  isValidConfig: (config): config is DateBucketChartWidgetConfig =>
-    typeof config.query === 'string' &&
-    typeof config.dateFieldId === 'string' &&
-    (config.measureFieldId === undefined || typeof config.measureFieldId === 'string') &&
-    isOptionalNumber(config.bucketCount) &&
-    isOptionalNumber(config.urgentWithinDays) &&
-    (config.foldOverdue === undefined || typeof config.foldOverdue === 'boolean') &&
-    isDateBucketChartConfigComplete(config as DateBucketChartWidgetConfig),
-  createDefaultProps: () => ({ config: { query: '', dateFieldId: '' } }),
-  configForm: DateBucketChartConfigForm
-};

@@ -1,6 +1,4 @@
 import { useState } from 'react';
-import { TbTopologyStar3 } from 'react-icons/tb';
-import type { DashboardWidgetRegistrationSpec } from '../../markdown/mdx-components/types';
 
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import { EmptyState } from '../../../components/EmptyState';
@@ -17,10 +15,10 @@ export const BLAST_RADIUS_WIDGET_TYPE = 'blast-radius';
 // `entityId` is the entity's public id, as chosen in the EntityPicker.
 type BlastRadiusWidgetConfig = Record<string, unknown> & { entityId?: string };
 
-const isValidConfig = (config: Record<string, unknown>): config is BlastRadiusWidgetConfig =>
+export const isValidConfig = (config: Record<string, unknown>): config is BlastRadiusWidgetConfig =>
   config.entityId === undefined || typeof config.entityId === 'string';
 
-const BlastRadiusWidget = ({ config }: { config: BlastRadiusWidgetConfig }) => {
+export const BlastRadiusWidget = ({ config }: { config: BlastRadiusWidgetConfig }) => {
   const { workspaceSlug } = useWorkspaceContext();
   const entityId = config.entityId ?? '';
   const { data: entity, isLoading } = useEntity(workspaceSlug, entityId, entityId !== '');
@@ -54,7 +52,7 @@ const BlastRadiusWidget = ({ config }: { config: BlastRadiusWidgetConfig }) => {
   );
 };
 
-const BlastRadiusConfigForm = ({
+export const BlastRadiusConfigForm = ({
   config,
   onChange
 }: {
@@ -83,22 +81,4 @@ const BlastRadiusConfigForm = ({
       />
     </DialogSection>
   );
-};
-
-export const blastRadiusDashboardSpec: Omit<
-  DashboardWidgetRegistrationSpec<BlastRadiusWidgetConfig>,
-  'label' | 'description'
-> = {
-  icon: TbTopologyStar3,
-  defaultW: 6,
-  defaultH: 16,
-  surfaces: ['workspace'],
-  component: BlastRadiusWidget,
-  // BlastRadiusPanel renders its own page-level padding (`.panel` in BlastRadiusPanel.module.css)
-  // since it's shared with non-widget contexts (the entity drawer); WidgetFrame's own padding on
-  // top of that doubled up the spacing, so it's turned off here.
-  frame: { padded: false },
-  isValidConfig,
-  createDefaultProps: () => ({ config: {} }),
-  configForm: BlastRadiusConfigForm
 };

@@ -1,16 +1,28 @@
+import { TbLayoutList } from 'react-icons/tb';
+import { createTab, isValidTabsConfig, TABS_TYPE, type TabsWidgetConfig } from './tabsLogic';
+import { getNestedWidgetSpec } from './nestedWidgets';
 import { defineComponent } from '../../markdown/mdx-components/defineComponent';
-import { TABS_TYPE } from './tabsLogic';
-import { _tabsSpecData } from './TabsWidget';
+import { TabsConfigForm, TabsWidget } from './TabsWidget';
 
-const { icon, component, configForm, createDefaultProps, ...dashboardWidget } = _tabsSpecData;
 export default defineComponent({
   type: TABS_TYPE,
   category: 'content-layout',
   name: 'Tabs',
   description: 'Groups other widgets into switchable tabs.',
-  component: component!,
-  configForm,
-  createDefaultProps,
-  icon,
-  dashboardWidget
+  icon: TbLayoutList,
+  component: TabsWidget,
+  createDefaultProps: () => ({ config: { tabs: [createTab([], 'Tab')] } }),
+  configForm: TabsConfigForm,
+  dashboardWidget: {
+    defaultW: 12,
+    defaultH: 24,
+    surfaces: ['workspace', 'project'],
+    frame: { hideOutsideEdit: true, padded: false, showIcon: false },
+    isValidConfig: (config): config is TabsWidgetConfig =>
+      isValidTabsConfig(config, child => {
+        const spec = getNestedWidgetSpec(child.type);
+        return !!spec && spec.isValidConfig(child.config);
+      }),
+    dialogSize: 'large'
+  }
 });

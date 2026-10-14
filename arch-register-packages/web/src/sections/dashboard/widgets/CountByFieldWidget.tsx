@@ -5,8 +5,6 @@ import { StackedBar } from '../../workspace-settings/sub-sections/analytics/anal
 import { buildCountBuckets } from './countByFieldLogic';
 import styles from './CountByFieldWidget.module.css';
 import rowStyles from './WidgetRowList.module.css';
-import { TbChartBar } from 'react-icons/tb';
-import type { DashboardWidgetRegistrationSpec } from '../../markdown/mdx-components/types';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import configFormStyles from '../WidgetConfigDialog.module.css';
 
@@ -126,20 +124,3 @@ export const CountByFieldConfigForm = ({ config, onChange }: CountByFieldConfigF
 };
 
 export const COUNT_BY_FIELD_TYPE = 'CountByField' as const;
-
-export const _countByFieldSpecData: Omit<
-  DashboardWidgetRegistrationSpec<CountByFieldWidgetConfig>,
-  'label' | 'description'
-> = {
-  icon: TbChartBar,
-  defaultW: 6,
-  defaultH: 8,
-  surfaces: ['workspace'],
-  component: CountByFieldWidget,
-  isValidConfig: (config): config is CountByFieldWidgetConfig =>
-    typeof config.schemaName === 'string' &&
-    typeof config.fieldId === 'string' &&
-    isCountByFieldConfigComplete(config as CountByFieldWidgetConfig),
-  createDefaultProps: () => ({ config: { schemaName: '', fieldId: '' } }),
-  configForm: CountByFieldConfigForm
-};

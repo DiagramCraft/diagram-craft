@@ -25,8 +25,6 @@ import {
 } from './relationTableLogic';
 import { RelationDrawer } from '../../relations/RelationDrawer';
 import styles from './RelationTableWidget.module.css';
-import { TbTable } from 'react-icons/tb';
-import type { DashboardWidgetRegistrationSpec } from '../../markdown/mdx-components/types';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import { RELATION_TABLE_META_COLUMNS } from './relationTableLogic';
 import configFormStyles from '../WidgetConfigDialog.module.css';
@@ -336,7 +334,9 @@ export const RELATION_TABLE_TYPE = 'RelationTable' as const;
 const isStringArray = (value: unknown): value is string[] =>
   Array.isArray(value) && value.every(item => typeof item === 'string');
 
-const isValidConfig = (config: Record<string, unknown>): config is RelationTableWidgetConfig =>
+export const isValidConfig = (
+  config: Record<string, unknown>
+): config is RelationTableWidgetConfig =>
   typeof config.relationSchemaName === 'string' &&
   config.relationSchemaName.length > 0 &&
   isStringArray(config.fieldIds) &&
@@ -353,19 +353,3 @@ const isValidConfig = (config: Record<string, unknown>): config is RelationTable
   (config.sort === undefined || typeof config.sort === 'string') &&
   (config.sortDir === undefined || config.sortDir === 'asc' || config.sortDir === 'desc') &&
   (config.rowDrawer === undefined || typeof config.rowDrawer === 'boolean');
-
-export const _relationTableSpecData: Omit<
-  DashboardWidgetRegistrationSpec<RelationTableWidgetConfig>,
-  'label' | 'description'
-> = {
-  icon: TbTable,
-  defaultW: 12,
-  defaultH: 24,
-  surfaces: ['workspace'],
-  component: RelationTableWidget,
-  frame: { padded: false, showIcon: false },
-  isValidConfig,
-  createDefaultProps: () => ({ config: { relationSchemaName: '', fieldIds: [], limit: 100 } }),
-  getTitle: config => config.relationSchemaName || 'Relation table',
-  configForm: RelationTableConfigForm
-};

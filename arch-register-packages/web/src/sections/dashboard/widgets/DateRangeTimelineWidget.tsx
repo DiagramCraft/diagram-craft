@@ -24,8 +24,6 @@ import { countdownTone } from './upcomingByDateLogic';
 import { useRecordSublabels } from './useRecordSublabels';
 import rowStyles from './WidgetRowList.module.css';
 import styles from './DateRangeTimelineWidget.module.css';
-import { TbTimeline } from 'react-icons/tb';
-import type { DashboardWidgetRegistrationSpec } from '../../markdown/mdx-components/types';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import configFormStyles from '../WidgetConfigDialog.module.css';
 
@@ -294,34 +292,8 @@ export const DateRangeTimelineConfigForm = ({
 
 export const DATE_RANGE_TIMELINE_TYPE = 'DateRangeTimeline' as const;
 
-const optionalNumber = (value: unknown): boolean =>
+export const optionalNumber = (value: unknown): boolean =>
   value === undefined || (typeof value === 'number' && Number.isFinite(value));
 
-const optionalString = (value: unknown): boolean =>
+export const optionalString = (value: unknown): boolean =>
   value === undefined || typeof value === 'string';
-
-export const _dateRangeTimelineSpecData: Omit<
-  DashboardWidgetRegistrationSpec<DateRangeTimelineWidgetConfig>,
-  'label' | 'description'
-> = {
-  icon: TbTimeline,
-  defaultW: 12,
-  defaultH: 30,
-  surfaces: ['workspace'],
-  component: DateRangeTimelineWidget,
-  isValidConfig: (config): config is DateRangeTimelineWidgetConfig =>
-    optionalString(config.query) &&
-    optionalString(config.schemaName) &&
-    (config.entityQuery === undefined || typeof config.entityQuery === 'object') &&
-    typeof config.startFieldId === 'string' &&
-    typeof config.endFieldId === 'string' &&
-    optionalNumber(config.critWithinDays) &&
-    optionalNumber(config.warnWithinDays) &&
-    optionalString(config.sublabelFieldId) &&
-    optionalString(config.valueFieldId) &&
-    optionalString(config.markerOffsetFieldId) &&
-    optionalString(config.markerWhenFieldId) &&
-    isDateRangeTimelineConfigComplete(config as DateRangeTimelineWidgetConfig),
-  createDefaultProps: () => ({ config: { query: '', startFieldId: '', endFieldId: '' } }),
-  configForm: DateRangeTimelineConfigForm
-};

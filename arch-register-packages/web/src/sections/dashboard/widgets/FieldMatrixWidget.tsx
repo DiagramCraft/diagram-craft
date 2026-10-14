@@ -11,8 +11,6 @@ import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { useEntityDrawer } from '../../entities/entityDrawer/useEntityDrawer';
 import { buildFieldMatrixCells, type FieldMatrixBand } from './fieldMatrixLogic';
 import rowStyles from './WidgetRowList.module.css';
-import { TbGrid4X4 } from 'react-icons/tb';
-import type { DashboardWidgetRegistrationSpec } from '../../markdown/mdx-components/types';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import configFormStyles from '../WidgetConfigDialog.module.css';
 
@@ -201,12 +199,12 @@ export const FieldMatrixConfigForm = ({ config, onChange }: FieldMatrixConfigFor
 
 export const FIELD_MATRIX_TYPE = 'FieldMatrix' as const;
 
-const optionalString = (value: unknown): boolean =>
+export const optionalString = (value: unknown): boolean =>
   value === undefined || typeof value === 'string';
 
 const TONES = ['good', 'warn', 'bad', 'neutral'];
 
-const isBand = (band: unknown): boolean => {
+export const isBand = (band: unknown): boolean => {
   const value = band as Record<string, unknown> | null;
   return (
     typeof value === 'object' &&
@@ -217,46 +215,4 @@ const isBand = (band: unknown): boolean => {
     TONES.includes(value.tone) &&
     (value.hot === undefined || typeof value.hot === 'boolean')
   );
-};
-
-export const _fieldMatrixSpecData: Omit<
-  DashboardWidgetRegistrationSpec<FieldMatrixWidgetConfig>,
-  'label' | 'description'
-> = {
-  icon: TbGrid4X4,
-  defaultW: 6,
-  defaultH: 20,
-  surfaces: ['workspace', 'project'],
-  component: FieldMatrixWidget,
-  frame: {
-    hideOutsideEdit: config => config.showFrame === false,
-    padded: false,
-    showIcon: false
-  },
-  isValidConfig: (config): config is FieldMatrixWidgetConfig =>
-    typeof config.rowFieldId === 'string' &&
-    typeof config.valueFieldId === 'string' &&
-    Array.isArray(config.rows) &&
-    config.rows.every(row => typeof row === 'number') &&
-    Array.isArray(config.bands) &&
-    config.bands.every(isBand) &&
-    optionalString(config.query) &&
-    optionalString(config.schemaName) &&
-    optionalString(config.cornerLabel) &&
-    (config.showFrame === undefined || typeof config.showFrame === 'boolean') &&
-    (config.hotRowMin === undefined || typeof config.hotRowMin === 'number') &&
-    isFieldMatrixConfigComplete(config as FieldMatrixWidgetConfig),
-  createDefaultProps: () => ({
-    config: {
-      query: '',
-      rowFieldId: '',
-      rows: [3, 2, 1],
-      valueFieldId: '',
-      bands: [
-        { label: 'Low', min: 0, tone: 'good' },
-        { label: 'High', min: 3, tone: 'bad' }
-      ]
-    }
-  }),
-  configForm: FieldMatrixConfigForm
 };

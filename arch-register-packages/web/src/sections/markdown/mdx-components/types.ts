@@ -79,24 +79,19 @@ export type DashboardWidgetSpec<Config extends Record<string, unknown> = Record<
     dialogSize?: 'large';
   };
 
-/** Dashboard registration input before the shared component/form are hoisted. */
-export type DashboardWidgetRegistrationSpec<
-  Config extends Record<string, unknown> = Record<string, unknown>
-> = DashboardWidgetSpec<Config> & {
-  /** Shared icon shown anywhere this component is represented. */
-  icon: ComponentIcon;
-  component?: React.ComponentType<{ config: Config }>;
-  createDefaultProps: (context: { viewId?: string }) => { config: Config };
-  configForm?: React.ComponentType<{
-    config: Config;
-    onChange: (config: Config) => void;
-    context: {
-      mode: 'mdx' | 'dashboard';
-      workspaceSlug: string;
-      projectId?: string;
-      surface: WidgetSurface;
-    };
-  }>;
+/** Context handed to a component's config form by whichever surface is editing it. */
+export type ConfigFormContext = {
+  mode: 'mdx' | 'dashboard';
+  workspaceSlug: string;
+  projectId?: string;
+  surface: WidgetSurface;
+};
+
+/** Props of a shared config form, typed by the component's config. */
+export type ConfigFormProps<Config extends Record<string, unknown>> = {
+  config: Config;
+  onChange: (config: Config) => void;
+  context: ConfigFormContext;
 };
 
 export type MdxComponentSpec = {
