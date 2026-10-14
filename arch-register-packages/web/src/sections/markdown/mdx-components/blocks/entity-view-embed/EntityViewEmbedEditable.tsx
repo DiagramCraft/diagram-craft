@@ -41,7 +41,6 @@ export const entityViewEmbedMdxConfigSpec: MdxConfigSpec<
   width: 460,
   fromElement: el => ({ viewId: el.viewId ?? '' }),
   toElement: config => ({ viewId: config.viewId }),
-  defaultConfig: () => ({ viewId: '' }),
   isValidConfig: config => !!config.viewId
 };
 

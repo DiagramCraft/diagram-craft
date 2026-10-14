@@ -100,42 +100,46 @@ export const encodeEntityBrowserEmbedConfig = (config: EntityBrowserEmbedConfig)
 };
 
 export const decodeEntityBrowserEmbedConfig = (
-  raw: string | undefined
+  raw: string | undefined,
+  defaults: EntityBrowserEmbedConfig = createDefaultEntityBrowserEmbedConfig()
 ): EntityBrowserEmbedConfig | null => {
   if (!raw) return null;
   try {
     const parsed = JSON.parse(fromBase64Url(raw)) as Record<string, unknown>;
     if (parsed == null || typeof parsed !== 'object') return null;
     return {
-      q: typeof parsed.q === 'string' ? parsed.q : '',
-      conditions: Array.isArray(parsed.conditions) ? (parsed.conditions as FilterCondition[]) : [],
-      sort: typeof parsed.sort === 'string' ? parsed.sort : 'name',
-      view: (typeof parsed.view === 'string' ? parsed.view : 'table') as BrowserView,
-      viewConfigs: parseViewConfigs(
-        typeof parsed.viewConfigs === 'string' ? parsed.viewConfigs : undefined
-      ),
+      q: typeof parsed.q === 'string' ? parsed.q : defaults.q,
+      conditions: Array.isArray(parsed.conditions)
+        ? (parsed.conditions as FilterCondition[])
+        : defaults.conditions,
+      sort: typeof parsed.sort === 'string' ? parsed.sort : defaults.sort,
+      view: (typeof parsed.view === 'string' ? parsed.view : defaults.view) as BrowserView,
+      viewConfigs:
+        typeof parsed.viewConfigs === 'string'
+          ? parseViewConfigs(parsed.viewConfigs)
+          : defaults.viewConfigs,
       projectScope:
         parsed.projectScope === 'project' || parsed.projectScope === 'all'
           ? parsed.projectScope
-          : undefined,
+          : defaults.projectScope,
       entityQuery:
         parsed.entityQuery != null && typeof parsed.entityQuery === 'object'
           ? (parsed.entityQuery as EntityQuery)
-          : undefined,
-      schemaName: typeof parsed.schemaName === 'string' ? parsed.schemaName : undefined,
+          : defaults.entityQuery,
+      schemaName: typeof parsed.schemaName === 'string' ? parsed.schemaName : defaults.schemaName,
       limit:
         typeof parsed.limit === 'number' && Number.isInteger(parsed.limit) && parsed.limit > 0
           ? parsed.limit
-          : undefined,
-      interactive: parsed.interactive === true ? true : undefined,
+          : defaults.limit,
+      interactive: parsed.interactive === true ? true : defaults.interactive,
       overlays:
         Array.isArray(parsed.overlays) && parsed.overlays.every(isMapOverlayConfig)
           ? (parsed.overlays as MapOverlayConfig[])
-          : undefined,
+          : defaults.overlays,
       dimOwnerIds:
         Array.isArray(parsed.dimOwnerIds) && parsed.dimOwnerIds.every(id => typeof id === 'string')
           ? (parsed.dimOwnerIds as string[])
-          : undefined
+          : defaults.dimOwnerIds
     };
   } catch {
     return null;

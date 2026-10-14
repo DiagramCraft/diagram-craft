@@ -51,7 +51,10 @@ export default defineComponent<EntityBrowserEmbedSlateElement, { config?: string
     mapProps: (props, defaultProps) => ({
       ...defaultProps,
       config:
-        decodeEntityBrowserEmbedConfig(props.config) ??
+        decodeEntityBrowserEmbedConfig(
+          props.config,
+          defaultProps.config as EntityBrowserEmbedConfig
+        ) ??
         (defaultProps.config as EntityBrowserEmbedConfig)
     }),
     editorSpec: {

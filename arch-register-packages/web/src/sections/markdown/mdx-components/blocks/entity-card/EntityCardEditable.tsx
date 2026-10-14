@@ -44,7 +44,6 @@ export const entityCardMdxConfigSpec: MdxConfigSpec<
   width: 440,
   fromElement: el => ({ entityId: el.entityId ?? '', fields: el.fields }),
   toElement: config => ({ entityId: config.entityId, fields: config.fields }),
-  defaultConfig: () => ({ entityId: '' }),
   isValidConfig: config => !!config.entityId
 };
 

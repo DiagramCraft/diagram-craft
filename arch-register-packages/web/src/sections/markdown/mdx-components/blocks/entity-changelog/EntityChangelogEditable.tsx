@@ -62,7 +62,6 @@ export const entityChangelogMdxConfigSpec: MdxConfigSpec<
     limit: config.limit,
     since: config.since
   }),
-  defaultConfig: () => ({ since: '30d', limit: '10' }),
   isValidConfig: config => !!(config.entityId || config.schema || config.owner || config.lifecycle)
 };
 

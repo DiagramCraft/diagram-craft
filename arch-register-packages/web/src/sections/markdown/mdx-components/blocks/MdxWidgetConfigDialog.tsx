@@ -5,13 +5,16 @@ import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { DialogContent } from '../../editor/BlockDialog';
 import { useWorkspaceContext } from '../../../../layouts/WorkspaceContext';
 import { useMdxContext } from '../../MdxContext';
-import { getComponentDefinition } from '../componentRegistry';
+import { getComponentDefinition, type ComponentDefinition } from '../componentRegistry';
 
 export type MdxConfigSpec<E extends TElement, Config extends Record<string, unknown>> = {
   width?: number | string;
-  fromElement: (el: E) => Config;
+  fromElement: (el: E, definition: ComponentDefinition | undefined) => Config;
   toElement: (config: Config) => Partial<E>;
-  defaultConfig: (context: { workspaceSlug: string; projectId?: string }) => Config;
+  defaultConfig?: (
+    context: { workspaceSlug: string; projectId?: string },
+    definition: ComponentDefinition | undefined
+  ) => Config;
   isValidConfig: (config: Config) => boolean;
 };
 
@@ -33,13 +36,21 @@ export const MdxWidgetConfigDialog = <E extends TElement, Config extends Record<
   const editor = useEditorRef();
   const { workspaceSlug } = useWorkspaceContext();
   const { projectId } = useMdxContext();
+  const definition = getComponentDefinition(element.type);
 
-  const [config, setConfig] = useState<Config>(() =>
-    isNew ? spec.defaultConfig({ workspaceSlug, projectId }) : spec.fromElement(element)
-  );
+  const [config, setConfig] = useState<Config>(() => {
+    if (!isNew) return spec.fromElement(element, definition);
+
+    const defaultConfig =
+      spec.defaultConfig?.({ workspaceSlug, projectId }, definition) ??
+      definition?.createDefaultProps?.({}).config;
+    if (defaultConfig === undefined) {
+      throw new Error(`Component "${element.type}" must define default props or MDX defaults`);
+    }
+    return defaultConfig as Config;
+  });
 
   const canSave = spec.isValidConfig(config);
-  const definition = getComponentDefinition(element.type);
   const ConfigForm = definition?.configForm;
 
   const handleConfirm = () => {

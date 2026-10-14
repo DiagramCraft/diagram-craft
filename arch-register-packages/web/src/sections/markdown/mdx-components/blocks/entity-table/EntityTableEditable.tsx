@@ -57,7 +57,6 @@ export const entityTableMdxConfigSpec: MdxConfigSpec<
     lifecycle: config.lifecycle ?? '',
     limit: String(config.limit ?? 10)
   }),
-  defaultConfig: () => ({}),
   isValidConfig: () => true
 };
 

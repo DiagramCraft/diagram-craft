@@ -6,6 +6,7 @@ import type { MdxRuleDef } from '../../defineComponent';
 import { BaseBlockEditable } from '../BaseBlockEditable';
 import { MdxWidgetConfigDialog, type MdxConfigSpec } from '../MdxWidgetConfigDialog';
 import { MdxComponentPreview } from '../../MdxComponentPreview';
+import type { ComponentDefinition } from '../../componentRegistry';
 import {
   createDefaultEntityBrowserEmbedConfig,
   decodeEntityBrowserEmbedConfig,
@@ -40,19 +41,32 @@ export const entityBrowserEmbedMdxRule: MdxRuleDef<EntityBrowserEmbedSlateElemen
   })
 };
 
-const emptyConfig = (context: { projectId?: string }): EntityBrowserEmbedConfig => ({
-  ...createDefaultEntityBrowserEmbedConfig(),
-  projectScope: context.projectId ? 'project' : 'all'
-});
+const emptyConfig = (
+  context: { projectId?: string },
+  definition: ComponentDefinition | undefined
+): EntityBrowserEmbedConfig => {
+  const defaultConfig = definition?.createDefaultProps?.({}).config as
+    | EntityBrowserEmbedConfig
+    | undefined;
+
+  return {
+    ...(defaultConfig ?? createDefaultEntityBrowserEmbedConfig()),
+    projectScope: context.projectId ? 'project' : 'all'
+  };
+};
 
 export const entityBrowserEmbedMdxConfigSpec: MdxConfigSpec<
   EntityBrowserEmbedSlateElement,
   EntityBrowserEmbedConfig
 > = {
   width: 'min(1200px, 92vw)',
-  fromElement: el => decodeEntityBrowserEmbedConfig(el.config) ?? emptyConfig({}),
+  fromElement: (el, definition) =>
+    decodeEntityBrowserEmbedConfig(
+      el.config,
+      definition?.createDefaultProps?.({}).config as EntityBrowserEmbedConfig | undefined
+    ) ?? emptyConfig({}, definition),
   toElement: config => ({ config: encodeEntityBrowserEmbedConfig(config) }),
-  defaultConfig: emptyConfig,
+  defaultConfig: (context, definition) => emptyConfig(context, definition),
   isValidConfig: () => true
 };
 
