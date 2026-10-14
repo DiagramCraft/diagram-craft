@@ -39,7 +39,6 @@ export const entityBrowserEmbedMdxConfigSpec: MdxConfigSpec<
   EntityBrowserEmbedSlateElement,
   EntityBrowserEmbedConfig
 > = {
-  width: 'min(1200px, 92vw)',
   fromElement: (el, definition) =>
     decodeEntityBrowserEmbedConfig(
       el.config,

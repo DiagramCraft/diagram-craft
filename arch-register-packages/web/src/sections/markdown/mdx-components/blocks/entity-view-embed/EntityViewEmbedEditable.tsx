@@ -16,7 +16,6 @@ export const entityViewEmbedMdxConfigSpec: MdxConfigSpec<
   EntityViewEmbedSlateElement,
   SavedViewEmbedWidgetConfig
 > = {
-  width: 460,
   fromElement: el => ({ viewId: el.viewId ?? '' }),
   toElement: config => ({ viewId: config.viewId })
 };

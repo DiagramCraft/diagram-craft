@@ -7,6 +7,7 @@ import type { WidgetSurface } from './dashboardWidgetDefaults';
 import { DialogContent, DialogSection } from '../markdown/editor/BlockDialog';
 import { useMdxContext } from '../markdown/MdxContext';
 import './dashboardWidgetRegistry';
+import { getConfigDialogWidth } from '../markdown/mdx-components/configDialog';
 import { getComponentDefinition } from '../markdown/mdx-components/componentRegistry';
 import type { DashboardWidgetFrame } from '@arch-register/api-types/dashboardContract';
 import { WidgetFrameSettingsForm } from './widgets/WidgetFrameSettingsForm';
@@ -81,7 +82,7 @@ const WidgetConfigDialogContent = ({
       open={open}
       onClose={onClose}
       title={spec.label}
-      width={spec.dialogSize === 'large' ? '90vw' : (spec.dialogWidth ?? 460)}
+      width={getConfigDialogWidth(spec)}
       className={spec.dialogSize === 'large' ? styles.largeDialog : undefined}
       buttons={[
         { label: 'Cancel', type: 'cancel', onClick: onClose },

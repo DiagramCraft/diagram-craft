@@ -16,7 +16,6 @@ export const entityTableMdxConfigSpec: MdxConfigSpec<
   EntityTableSlateElement,
   EntityTableWidgetConfig
 > = {
-  width: 460,
   fromElement: el => ({
     schema: el.schema,
     owner: el.owner,

@@ -51,7 +51,6 @@ export const entityGraphMdxConfigSpec: MdxConfigSpec<
   EntityGraphSlateElement,
   EntityGraphWidgetConfig
 > = {
-  width: 440,
   fromElement: el => ({
     entityId: el.entityId ?? '',
     depth: normalizeEntityGraphDepth(el.depth),

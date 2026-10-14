@@ -24,7 +24,6 @@ export const documentBrowserEmbedMdxConfigSpec: MdxConfigSpec<
   DocumentBrowserEmbedSlateElement,
   DocumentBrowserEmbedConfig
 > = {
-  width: 'min(1200px, 92vw)',
   fromElement: el =>
     decodeDocumentBrowserEmbedConfig(el.config) ?? createDefaultDocumentBrowserEmbedConfig(),
   toElement: config => ({ config: encodeDocumentBrowserEmbedConfig(config) })

@@ -5,10 +5,10 @@ import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { DialogContent } from '../../editor/BlockDialog';
 import { useWorkspaceContext } from '../../../../layouts/WorkspaceContext';
 import { useMdxContext } from '../../MdxContext';
+import { getConfigDialogWidth } from '../configDialog';
 import { getComponentDefinition, type ComponentDefinition } from '../componentRegistry';
 
 export type MdxConfigSpec<E extends TElement, Config extends Record<string, unknown>> = {
-  width?: number | string;
   fromElement: (el: E, definition: ComponentDefinition | undefined) => Config;
   toElement: (config: Config) => Partial<E>;
   defaultConfig?: (
@@ -85,7 +85,7 @@ export const MdxWidgetConfigDialog = <E extends TElement, Config extends Record<
       open={open}
       onClose={handleClose}
       title={definition?.name ?? element.type}
-      width={spec.width ?? 460}
+      width={getConfigDialogWidth(definition?.dashboardWidget)}
       buttons={[
         { label: 'Cancel', type: 'cancel', onClick: handleClose },
         { label: 'Save', type: 'default', disabled: !canSave, onClick: handleConfirm }

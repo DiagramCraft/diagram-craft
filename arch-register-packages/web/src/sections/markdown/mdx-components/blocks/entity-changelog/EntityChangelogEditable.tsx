@@ -23,7 +23,6 @@ export const entityChangelogMdxConfigSpec: MdxConfigSpec<
   EntityChangelogSlateElement,
   EntityChangelogWidgetConfig
 > = {
-  width: 460,
   fromElement: el => ({
     entityId: el.entityId,
     schema: el.schema,

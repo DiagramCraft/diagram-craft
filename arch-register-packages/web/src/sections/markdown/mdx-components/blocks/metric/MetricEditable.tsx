@@ -41,7 +41,6 @@ export const metricMdxRule: MdxRuleDef<MetricSlateElement, 'block'> = {
 };
 
 export const metricMdxConfigSpec: MdxConfigSpec<MetricSlateElement, StatMetricWidgetConfig> = {
-  width: 460,
   fromElement: el => ({
     metricType: el.metricType ?? 'entity-count',
     schema: el.schema,
