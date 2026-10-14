@@ -9,7 +9,7 @@ import {
 import { markdownEngine } from './markdownAstUtils';
 import {
   getComponentDefinition,
-  getMdxSpecsForSurface,
+  getMdxComponentDefinitionsForSurface,
   type MdxComponentDefinition
 } from '../mdx-components/componentRegistry';
 
@@ -24,10 +24,10 @@ const SAFE_PROP_VALUE = /^[a-zA-Z0-9_\-.,()%\s]*$/;
 // This module's parsing pipeline is used only for wiki content, so components
 // that opt out of the 'wiki' surface (e.g. dashboard-only widgets) must never
 // be recognized here, regardless of their presence in the full registry.
-let wikiMdxComponents: ReturnType<typeof getMdxSpecsForSurface> | undefined;
+let wikiMdxComponents: ReturnType<typeof getMdxComponentDefinitionsForSurface> | undefined;
 
 const getWikiMdxComponents = () => {
-  wikiMdxComponents ??= getMdxSpecsForSurface('wiki');
+  wikiMdxComponents ??= getMdxComponentDefinitionsForSurface('wiki');
   return wikiMdxComponents;
 };
 

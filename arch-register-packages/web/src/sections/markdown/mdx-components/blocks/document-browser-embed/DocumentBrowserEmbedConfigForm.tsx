@@ -15,7 +15,6 @@ import { useDocumentTypes } from '../../../../../hooks/useDocuments';
 import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
 import { DialogSection } from '../../../editor/BlockDialog';
 import { DocumentBrowserEmbed } from './DocumentBrowserEmbed';
-import { encodeDocumentBrowserEmbedConfig } from './DocumentBrowserEmbedCodec';
 import type { DocumentBrowserBaseColumnId, DocumentBrowserEmbedConfig } from './types';
 import styles from './DocumentBrowserEmbedConfigForm.module.css';
 
@@ -453,7 +452,7 @@ export const DocumentBrowserEmbedConfigForm = ({ config: value, onChange }: Prop
         </div>
       </DialogSection>
       <div className={styles.preview}>
-        <DocumentBrowserEmbed config={encodeDocumentBrowserEmbedConfig(value)} />
+        <DocumentBrowserEmbed config={value} />
       </div>
     </>
   );

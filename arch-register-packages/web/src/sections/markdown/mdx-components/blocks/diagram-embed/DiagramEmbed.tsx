@@ -28,6 +28,7 @@ import { Banner } from '../../../../../components/Banner';
 import { EmptyState } from '../../../../../components/EmptyState';
 import { LoadingState } from '../../../../../components/LoadingState';
 import styles from './DiagramEmbed.module.css';
+import type { DiagramEmbedWidgetConfig } from './types';
 
 const boundsViewbox = (diagram: Diagram): string => {
   const b = diagram.bounds;
@@ -49,10 +50,11 @@ const VIEWER_CONTEXT: Context = {
   commentVisibility: new Observable<CommentVisibility>('all')
 };
 
-export const DiagramEmbed = ({ id, caption }: { id: string; caption?: string }) => {
+export const DiagramEmbed = ({ config }: { config: DiagramEmbedWidgetConfig }) => {
+  const { fileId, caption } = config;
   const { workspaceSlug } = useWorkspaceContext();
-  const { data: file, isLoading, isError } = useContentFile(workspaceSlug, id);
-  const { data: rawContent } = useContentFileContent(workspaceSlug, id);
+  const { data: file, isLoading, isError } = useContentFile(workspaceSlug, fileId);
+  const { data: rawContent } = useContentFileContent(workspaceSlug, fileId);
   const [diagram, setDiagram] = useState<Diagram | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
@@ -74,7 +76,7 @@ export const DiagramEmbed = ({ id, caption }: { id: string; caption?: string }) 
       .catch(() => setDiagram(null));
   }, [rawContent, workspaceSlug]);
 
-  if (!id) return null;
+  if (!fileId) return null;
 
   const handleClick = () => {
     if (!file) return;
@@ -115,14 +117,14 @@ export const DiagramEmbed = ({ id, caption }: { id: string; caption?: string }) 
   }
 
   if (isError || !file) {
-    return <Banner variant="error">Diagram not found: {id}</Banner>;
+    return <Banner variant="error">Diagram not found: {fileId}</Banner>;
   }
 
   if (diagram) {
     return (
       <figure className={`${styles.container} ${styles.clickable}`} onClick={handleClick}>
         <Canvas<StaticCanvasComponent, StaticCanvasProps>
-          id={`diagram-embed-${id}`}
+          id={`diagram-embed-${fileId}`}
           context={VIEWER_CONTEXT}
           diagram={diagram}
           viewbox={boundsViewbox(diagram)}

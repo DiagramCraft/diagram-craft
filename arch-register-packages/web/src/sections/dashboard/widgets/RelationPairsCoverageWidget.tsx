@@ -11,7 +11,7 @@ import {
   type RelationPair
 } from './relationPairCoverageLogic';
 import { TbArrowsJoin } from 'react-icons/tb';
-import type { DashboardWidgetSpec } from '../../markdown/mdx-components/types';
+import type { DashboardWidgetRegistrationSpec } from '../../markdown/mdx-components/types';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import configFormStyles from '../WidgetConfigDialog.module.css';
 
@@ -271,7 +271,7 @@ const isValidConfig = (
   isOptionalString(config.coverageLabel);
 
 export const _relationPairsCoverageSpecData: Omit<
-  DashboardWidgetSpec<RelationPairsCoverageWidgetConfig>,
+  DashboardWidgetRegistrationSpec<RelationPairsCoverageWidgetConfig>,
   'label' | 'description'
 > = {
   icon: TbArrowsJoin,
@@ -281,11 +281,11 @@ export const _relationPairsCoverageSpecData: Omit<
   component: RelationPairsCoverageWidget,
   frame: { padded: false, showIcon: false },
   isValidConfig,
-  createDefaultConfig: () => ({
+  createDefaultProps: () => ({ config: {
     hubSchemaName: '',
     providerFieldName: '',
     consumerFieldName: '',
     coverageRelationSchemaName: ''
-  }),
+  } }),
   configForm: RelationPairsCoverageConfigForm
 };

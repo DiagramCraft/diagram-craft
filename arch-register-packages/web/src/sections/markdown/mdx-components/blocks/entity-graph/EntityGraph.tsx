@@ -9,17 +9,13 @@ import { EntityGraphView } from '../../../../entities/components/EntityGraphView
 import {
   normalizeEntityGraphDepth,
   normalizeEntityGraphDirection,
-  type EntityGraphDirection
+  type EntityGraphDirection,
+  type EntityGraphWidgetConfig
 } from './types';
 import styles from './EntityGraph.module.css';
 
-type Props = {
-  id: string;
-  depth?: string;
-  direction?: string;
-};
-
-export const EntityGraph = ({ id, depth, direction }: Props) => {
+export const EntityGraph = ({ config }: { config: EntityGraphWidgetConfig }) => {
+  const { entityId: id, depth, direction } = config;
   const { openEntityDrawer } = useEntityDrawer();
   const { workspaceSlug, schemas } = useWorkspaceContext();
   const normalizedDepth = normalizeEntityGraphDepth(depth);

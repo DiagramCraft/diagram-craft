@@ -2,10 +2,13 @@ import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
 import { StaleEntityReport } from '../../../../workspace-settings/sub-sections/analytics/StaleEntityReport';
 import type { EntityStaleReportProps } from './types';
 
-export const EntityStaleReport = ({ staleAfterDays }: EntityStaleReportProps) => {
+export const EntityStaleReport = ({ config }: { config: EntityStaleReportProps }) => {
   const { workspaceSlug } = useWorkspaceContext();
 
   return (
-    <StaleEntityReport workspaceSlug={workspaceSlug} initialStaleAfterDays={staleAfterDays ?? 90} />
+    <StaleEntityReport
+      workspaceSlug={workspaceSlug}
+      initialStaleAfterDays={config.staleAfterDays ?? 90}
+    />
   );
 };

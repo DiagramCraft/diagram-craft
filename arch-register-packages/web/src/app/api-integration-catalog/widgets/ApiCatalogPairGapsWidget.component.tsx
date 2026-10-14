@@ -7,14 +7,14 @@ export default defineComponent({
   category: 'data-views',
   name: 'Provider/consumer gaps',
   description: 'API provider/consumer pairs without a matching Data Flow.',
+  component: ApiCatalogPairGapsWidget,
+  createDefaultProps: () => ({ config: {} }),
   dashboardWidget: {
     icon: TbChartBar,
     defaultW: 3,
     defaultH: 5,
     surfaces: ['workspace'],
-    component: ApiCatalogPairGapsWidget,
     frame: { hideOutsideEdit: true, padded: false, showIcon: false },
     isValidConfig: isValidBaseConfig,
-    createDefaultConfig: () => ({})
   }
 });

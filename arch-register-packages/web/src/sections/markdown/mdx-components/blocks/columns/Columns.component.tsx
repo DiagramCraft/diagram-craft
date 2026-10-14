@@ -14,8 +14,8 @@ export default defineComponent<
   category: 'content-layout',
   name: 'Columns',
   description: 'Lay out content side by side',
+  component: Columns,
   mdxComponent: {
-    component: Columns,
     mode: 'block',
     allowedProps: ['count'],
     acceptsRichContent: true,

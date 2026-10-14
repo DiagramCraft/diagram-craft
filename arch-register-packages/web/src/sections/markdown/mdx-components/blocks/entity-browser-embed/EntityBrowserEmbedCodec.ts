@@ -52,6 +52,14 @@ export type EntityBrowserEmbedConfig = {
   dimOwnerIds?: string[];
 };
 
+export const createDefaultEntityBrowserEmbedConfig = (): EntityBrowserEmbedConfig => ({
+  q: '',
+  conditions: [],
+  sort: 'name',
+  view: 'table',
+  viewConfigs: {}
+});
+
 /** The config keys edited as JSON in the config form's Advanced section — everything that has no
  *  dedicated control. */
 export const ADVANCED_CONFIG_KEYS = ['overlays', 'dimOwnerIds'] as const;

@@ -14,6 +14,7 @@ import { entityDetailRoute, asEntityPublicId } from '../../../../../routes/publi
 import { LoadingState } from '../../../../../components/LoadingState';
 import styles from './EntityCard.module.css';
 import { formatDate } from '../../../../../utils/dateFormat';
+import type { EntityCardWidgetConfig } from './types';
 
 export const filterSchemaFields = <T extends { type: string }>(fields: T[]): T[] =>
   fields.filter(
@@ -51,13 +52,14 @@ export const renderSchemaFieldValue = (
   return String(value);
 };
 
-export const EntityCard = ({ id, fields }: { id: string; fields?: string }) => {
+export const EntityCard = ({ config }: { config: EntityCardWidgetConfig }) => {
+  const { entityId, fields } = config;
   const { workspaceSlug, schemas, lifecycleStates } = useWorkspaceContext();
   // An unresolved dashboard sidebar variable (`$name`) means nothing is selected yet.
-  const unresolved = id.startsWith('$');
-  const { data: entity, isLoading, isError } = useEntity(workspaceSlug, id, !unresolved);
+  const unresolved = entityId.startsWith('$');
+  const { data: entity, isLoading, isError } = useEntity(workspaceSlug, entityId, !unresolved);
 
-  if (!id) return null;
+  if (!entityId) return null;
   if (unresolved) return <div className="dim">No item selected</div>;
 
   if (isLoading) {
@@ -69,7 +71,7 @@ export const EntityCard = ({ id, fields }: { id: string; fields?: string }) => {
   }
 
   if (isError || !entity) {
-    return <Banner variant="error">Entity not found: {id}</Banner>;
+    return <Banner variant="error">Entity not found: {entityId}</Banner>;
   }
 
   const schemaIdx = schemas.findIndex(s => s.id === entity._schema?.id);
@@ -135,7 +137,7 @@ export const EntityCard = ({ id, fields }: { id: string; fields?: string }) => {
         </dl>
       )}
 
-      <Link {...entityDetailRoute(workspaceSlug, asEntityPublicId(id))} className={styles.link}>
+      <Link {...entityDetailRoute(workspaceSlug, asEntityPublicId(entityId))} className={styles.link}>
         View in catalog →
       </Link>
     </div>

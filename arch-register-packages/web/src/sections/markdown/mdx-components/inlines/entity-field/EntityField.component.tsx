@@ -8,8 +8,8 @@ export default defineComponent<EntityFieldSlateElement, { id: string; field: str
   category: 'metrics',
   name: 'Entity field',
   description: 'Show a live field value from an entity inside a sentence',
+  component: EntityField,
   mdxComponent: {
-    component: EntityField,
     mode: 'inline',
     allowedProps: ['id', 'field'],
     editorSpec: {

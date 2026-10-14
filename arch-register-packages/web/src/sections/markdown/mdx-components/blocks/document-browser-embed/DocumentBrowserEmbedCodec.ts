@@ -14,6 +14,13 @@ const DEFAULT_CONFIG: DocumentBrowserEmbedConfig = {
   visibleFieldIds: []
 };
 
+export const createDefaultDocumentBrowserEmbedConfig = (): DocumentBrowserEmbedConfig => ({
+  ...DEFAULT_CONFIG,
+  conditions: [],
+  visibleBaseColumnIds: [...DEFAULT_CONFIG.visibleBaseColumnIds],
+  visibleFieldIds: []
+});
+
 const toBase64Url = (input: string): string => {
   const bytes = new TextEncoder().encode(input);
   let binary = '';
@@ -68,7 +75,7 @@ export const decodeDocumentBrowserEmbedConfig = (
       : [...DOCUMENT_BROWSER_BASE_COLUMN_IDS];
 
     return {
-      ...DEFAULT_CONFIG,
+      ...createDefaultDocumentBrowserEmbedConfig(),
       q: typeof parsed.q === 'string' ? parsed.q : '',
       documentTypeId:
         typeof parsed.documentTypeId === 'string' && parsed.documentTypeId !== ''

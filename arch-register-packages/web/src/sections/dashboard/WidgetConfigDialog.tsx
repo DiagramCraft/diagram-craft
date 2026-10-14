@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ComponentType } from 'react';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
@@ -31,7 +31,8 @@ export const WidgetConfigDialog = ({
   onSave
 }: Props) => {
   if (!widget) return null;
-  const spec = getComponentDefinition(widget.type, 'dashboardWidget')?.dashboardWidget;
+  const definition = getComponentDefinition(widget.type, 'dashboardWidget');
+  const spec = definition?.dashboardWidget;
   if (!spec) return null;
 
   return (
@@ -39,6 +40,7 @@ export const WidgetConfigDialog = ({
       key={widget.id}
       widget={widget}
       spec={spec}
+      ConfigForm={definition.configForm}
       open={open}
       workspaceSlug={workspaceSlug}
       surface={surface}
@@ -58,15 +60,21 @@ const WidgetConfigDialogContent = ({
   workspaceSlug,
   surface,
   onClose,
-  onSave
-}: Props & { widget: DashboardWidget; spec: DashboardWidgetSpec; surface: WidgetSurface }) => {
+  onSave,
+  ConfigForm
+}: Props & {
+  widget: DashboardWidget;
+  spec: DashboardWidgetSpec;
+  surface: WidgetSurface;
+  // biome-ignore lint/suspicious/noExplicitAny: root forms have widget-specific config types erased in the registry
+  ConfigForm?: ComponentType<any>;
+}) => {
   const { projectId } = useMdxContext();
   const [config, setConfig] = useState<Record<string, unknown>>(widget.config);
 
   const [frame, setFrame] = useState<DashboardWidgetFrame>(widget.frame ?? {});
 
   const canSave = spec.isValidConfig(config);
-  const ConfigForm = spec.configForm;
 
   return (
     <Dialog

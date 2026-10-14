@@ -7,12 +7,14 @@ export default defineComponent({
   category: 'metrics',
   name: 'Assessments',
   description: 'Open or all assessments filtered by mode, assessment type and entity type scope.',
+  component: AssessmentsWidget,
+  createDefaultProps: () => ({ config: { mode: 'active' } }),
+  configForm: AssessmentsConfigForm,
   dashboardWidget: {
     icon: TbClipboardCheck,
     defaultW: 3,
     defaultH: 12,
     surfaces: ['workspace', 'project'],
-    component: AssessmentsWidget,
     isValidConfig: (config): config is AssessmentsWidgetConfig =>
       (config.mode === 'active' ||
         config.mode === 'upcoming' ||
@@ -23,7 +25,5 @@ export default defineComponent({
         (Array.isArray(config.schemaNames) &&
           config.schemaNames.every(name => typeof name === 'string'))) &&
       (config.relativeDue === undefined || typeof config.relativeDue === 'boolean'),
-    createDefaultConfig: () => ({ mode: 'active' }),
-    configForm: AssessmentsConfigForm
   }
 });

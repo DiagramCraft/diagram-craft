@@ -14,7 +14,7 @@ import {
 import { useEntityBrowserPagination } from '../../../../entities/components/useEntityBrowserPagination';
 import { useEntityBrowserData } from '../../../../entities/components/useEntityBrowserData';
 import { resolveMapOverlays } from '../../../../entities/components/mapOverlays';
-import { decodeEntityBrowserEmbedConfig } from './EntityBrowserEmbedCodec';
+import type { EntityBrowserEmbedConfig } from './EntityBrowserEmbedCodec';
 import styles from './EntityBrowserEmbed.module.css';
 import { EmptyState } from '../../../../../components/EmptyState';
 import { buildEntityDisplayFields } from '../../../../entities/components/entityDisplayFields';
@@ -27,16 +27,14 @@ import {
 } from './EntityBrowserEmbedFieldResolution';
 
 type Props = {
-  config?: string;
+  config: EntityBrowserEmbedConfig;
 };
 
-export const EntityBrowserEmbed = ({ config: rawConfig }: Props) => {
+export const EntityBrowserEmbed = ({ config }: Props) => {
   const { openEntityDrawer } = useEntityDrawer();
   const { workspaceSlug, schemas, relationSchemas, lifecycleStates, projects } =
     useWorkspaceContext();
   const { projectId } = useMdxContext();
-
-  const config = useMemo(() => decodeEntityBrowserEmbedConfig(rawConfig), [rawConfig]);
 
   const isTreeBased = !!config && isTreeBasedView(config.view);
 

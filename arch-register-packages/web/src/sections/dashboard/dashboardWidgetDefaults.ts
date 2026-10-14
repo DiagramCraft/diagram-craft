@@ -20,7 +20,8 @@ export const createDefaultWidget = (
   widgets: DashboardWidget[],
   viewId?: string
 ): DashboardWidget => {
-  const dashboardWidget = getComponentDefinition(type, 'dashboardWidget')!.dashboardWidget;
+  const definition = getComponentDefinition(type, 'dashboardWidget')!;
+  const dashboardWidget = definition.dashboardWidget;
   const id = `widget-${crypto.randomUUID()}`;
   return {
     id,
@@ -29,7 +30,7 @@ export const createDefaultWidget = (
     w: dashboardWidget.defaultW,
     h: dashboardWidget.defaultH,
     type,
-    config: dashboardWidget.createDefaultConfig({ viewId })
+    config: definition.createDefaultProps({ viewId }).config as DashboardWidget['config']
   };
 };
 

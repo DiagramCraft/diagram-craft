@@ -8,12 +8,14 @@ export default defineComponent({
   category: 'visualizations',
   name: 'Risk matrix',
   description: 'Likelihood × impact matrix of live risks, with an inherent/residual toggle.',
+  component: RiskMatrixWidget,
+  createDefaultProps: () => ({ config: { schemaName: '' } }),
+  configForm: RiskMatrixConfigForm,
   dashboardWidget: {
     icon: TbGridDots,
     defaultW: 6,
     defaultH: 24,
     surfaces: ['workspace'],
-    component: RiskMatrixWidget,
     isValidConfig: (config): config is RiskMatrixWidgetConfig =>
       typeof config.schemaName === 'string' &&
       config.schemaName !== '' &&
@@ -22,7 +24,5 @@ export default defineComponent({
       isOptionalStringArray(config.categories) &&
       isOptionalStringArray(config.statuses) &&
       isOptionalStringArray(config.owners),
-    createDefaultConfig: () => ({ schemaName: '' }),
-    configForm: RiskMatrixConfigForm
   }
 });

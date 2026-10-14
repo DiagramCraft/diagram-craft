@@ -1,13 +1,12 @@
 import { TbChartLine } from 'react-icons/tb';
 import { defineComponent } from '../../defineComponent';
 import { DiagramEmbed } from './DiagramEmbed';
-import { createDashboardWidgetAdapter } from '../../../../dashboard/widgets/createDashboardWidgetAdapter';
 import {
   DIAGRAM_EMBED_TYPE,
   DiagramEmbedEditable,
   diagramEmbedMdxRule
 } from './DiagramEmbedEditable';
-import { DiagramEmbedDashboardConfigForm } from './DiagramEmbedDashboardConfigForm';
+import { DiagramEmbedConfigForm } from './DiagramEmbedConfigForm';
 import type { DiagramEmbedSlateElement, DiagramEmbedWidgetConfig } from './types';
 export default defineComponent<DiagramEmbedSlateElement, { id: string; caption?: string }, 'block'>(
   {
@@ -21,21 +20,20 @@ export default defineComponent<DiagramEmbedSlateElement, { id: string; caption?:
       defaultW: 6,
       defaultH: 16,
       surfaces: ['workspace', 'project'],
-      component: createDashboardWidgetAdapter(DiagramEmbed, (config: DiagramEmbedWidgetConfig) => ({
-        id: config.fileId,
-        caption: config.caption
-      })),
       isValidConfig: (config): config is DiagramEmbedWidgetConfig =>
         typeof config.fileId === 'string' &&
         config.fileId.length > 0 &&
         (config.caption === undefined || typeof config.caption === 'string'),
-      createDefaultConfig: () => ({ fileId: '' }),
-      configForm: DiagramEmbedDashboardConfigForm
     },
+    component: DiagramEmbed,
+    createDefaultProps: () => ({ config: { fileId: '' } }),
+  configForm: DiagramEmbedConfigForm,
     mdxComponent: {
-      component: DiagramEmbed,
       mode: 'block',
       allowedProps: ['id', 'caption'],
+      mapProps: props => ({
+        config: { fileId: props.id ?? '', caption: props.caption }
+      }),
       editorSpec: {
         editableComponent: DiagramEmbedEditable,
         nodeOptions: { isVoid: true },

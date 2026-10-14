@@ -1,7 +1,6 @@
 import { TbHistory } from 'react-icons/tb';
 import { defineComponent } from '../../defineComponent';
 import { EntityChangelog } from './EntityChangelog';
-import { createDashboardWidgetAdapter } from '../../../../dashboard/widgets/createDashboardWidgetAdapter';
 import {
   ENTITY_CHANGELOG_TYPE,
   EntityChangelogEditable,
@@ -34,17 +33,6 @@ export default defineComponent<
     defaultW: 6,
     defaultH: 16,
     surfaces: ['workspace', 'project'],
-    component: createDashboardWidgetAdapter(
-      EntityChangelog,
-      (config: EntityChangelogWidgetConfig) => ({
-        id: config.entityId,
-        schema: config.schema,
-        owner: config.owner,
-        lifecycle: config.lifecycle,
-        limit: config.limit,
-        since: config.since
-      })
-    ),
     isValidConfig: (config): config is EntityChangelogWidgetConfig =>
       hasOptionalString(config, 'entityId') &&
       hasOptionalString(config, 'schema') &&
@@ -53,13 +41,23 @@ export default defineComponent<
       hasOptionalString(config, 'limit') &&
       hasOptionalString(config, 'since') &&
       !!(config.entityId || config.schema || config.owner || config.lifecycle),
-    createDefaultConfig: () => ({ since: '30d', limit: '10' }),
-    configForm: EntityChangelogConfigForm
   },
+  component: EntityChangelog,
+  createDefaultProps: () => ({ config: { since: '30d', limit: '10' } }),
+  configForm: EntityChangelogConfigForm,
   mdxComponent: {
-    component: EntityChangelog,
     mode: 'block',
     allowedProps: ['id', 'schema', 'owner', 'lifecycle', 'limit', 'since'],
+    mapProps: props => ({
+      config: {
+        entityId: props.id,
+        schema: props.schema,
+        owner: props.owner,
+        lifecycle: props.lifecycle,
+        limit: props.limit,
+        since: props.since
+      }
+    }),
     editorSpec: {
       editableComponent: EntityChangelogEditable,
       nodeOptions: { isVoid: true },

@@ -16,7 +16,7 @@ import { useEntityDrawer } from '../../entities/entityDrawer/useEntityDrawer';
 import { resolveEntityQuery } from '../../markdown/mdx-components/blocks/entity-browser-embed/EntityBrowserEmbedFieldResolution';
 import { specItemsEmptyLabel, specItemTone, specItemSortValue } from './specItemsTableLogic';
 import { TbListDetails } from 'react-icons/tb';
-import type { DashboardWidgetSpec } from '../../markdown/mdx-components/types';
+import type { DashboardWidgetRegistrationSpec } from '../../markdown/mdx-components/types';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import configFormStyles from '../WidgetConfigDialog.module.css';
 
@@ -197,7 +197,7 @@ const isValidConfig = (config: Record<string, unknown>): config is SpecItemsTabl
   (config.entityLimit === undefined || typeof config.entityLimit === 'number');
 
 export const _specItemsTableSpecData: Omit<
-  DashboardWidgetSpec<SpecItemsTableWidgetConfig>,
+  DashboardWidgetRegistrationSpec<SpecItemsTableWidgetConfig>,
   'label' | 'description'
 > = {
   icon: TbListDetails,
@@ -207,6 +207,6 @@ export const _specItemsTableSpecData: Omit<
   component: SpecItemsTableWidget,
   frame: { padded: false, showIcon: false },
   isValidConfig,
-  createDefaultConfig: () => ({ schemaName: '' }),
+  createDefaultProps: () => ({ config: { schemaName: '' } }),
   configForm: SpecItemsTableConfigForm
 };

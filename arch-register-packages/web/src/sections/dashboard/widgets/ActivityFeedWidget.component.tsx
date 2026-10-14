@@ -17,15 +17,15 @@ export default defineComponent({
   category: 'data-views',
   name: 'Activity feed',
   description: 'A live feed of recent audit log activity.',
+  component: ActivityFeedWidget,
+  createDefaultProps: () => ({ config: {} }),
+  configForm: ActivityFeedDashboardConfigForm,
   dashboardWidget: {
     icon: TbActivity,
     defaultW: 12,
     defaultH: 24,
     surfaces: ['workspace'],
-    component: ActivityFeedWidget,
     isValidConfig: (config): config is ActivityFeedWidgetConfig =>
       hasOptionalInteger(config, 'limit'),
-    createDefaultConfig: () => ({}),
-    configForm: ActivityFeedDashboardConfigForm
   }
 });

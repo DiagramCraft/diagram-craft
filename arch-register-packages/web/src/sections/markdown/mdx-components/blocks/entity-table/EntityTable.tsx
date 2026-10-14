@@ -9,12 +9,13 @@ import { resolveSchemaColor } from '../../../../../lib/schemaPresentation';
 import { Table } from '../../../../../components/table/Table';
 import styles from './EntityTable.module.css';
 import { EmptyState } from '../../../../../components/EmptyState';
+import type { EntityTableWidgetConfig } from './types';
 
 const DEFAULT_LIMIT = 10;
 const MAX_LIMIT = 50;
 
-export const normalizeEntityTableLimit = (limit: string | undefined): number => {
-  const parsed = limit ? parseInt(limit, 10) : DEFAULT_LIMIT;
+export const normalizeEntityTableLimit = (limit: string | number | undefined): number => {
+  const parsed = typeof limit === 'number' ? limit : limit ? parseInt(limit, 10) : DEFAULT_LIMIT;
   const value = Number.isFinite(parsed) ? parsed : DEFAULT_LIMIT;
   return Math.min(Math.max(value, 1), MAX_LIMIT);
 };
@@ -25,14 +26,8 @@ export const hasEntityTableFilter = (props: {
   lifecycle?: string;
 }): boolean => !!(props.schema || props.owner || props.lifecycle);
 
-type Props = {
-  schema?: string;
-  owner?: string;
-  lifecycle?: string;
-  limit?: string;
-};
-
-export const EntityTable = ({ schema, owner, lifecycle, limit }: Props) => {
+export const EntityTable = ({ config }: { config: EntityTableWidgetConfig }) => {
+  const { schema, owner, lifecycle, limit } = config;
   const { workspaceSlug, schemas, lifecycleStates } = useWorkspaceContext();
   const { projectId } = useMdxContext();
 

@@ -16,12 +16,10 @@ import styles from './EntityViewEmbed.module.css';
 import { Banner } from '../../../../../components/Banner';
 import { EmptyState } from '../../../../../components/EmptyState';
 import { buildEntityDisplayFields } from '../../../../entities/components/entityDisplayFields';
+import type { SavedViewEmbedWidgetConfig } from './types';
 
-type Props = {
-  viewId?: string;
-};
-
-export const EntityViewEmbed = ({ viewId }: Props) => {
+export const EntityViewEmbed = ({ config }: { config: SavedViewEmbedWidgetConfig }) => {
+  const { viewId } = config;
   const { openEntityDrawer } = useEntityDrawer();
   const { workspaceSlug, schemas, relationSchemas, lifecycleStates, projects } =
     useWorkspaceContext();

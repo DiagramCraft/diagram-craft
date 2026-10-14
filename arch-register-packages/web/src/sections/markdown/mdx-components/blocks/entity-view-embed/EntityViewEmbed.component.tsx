@@ -1,7 +1,6 @@
 import { TbLayoutDashboard, TbLayoutGrid } from 'react-icons/tb';
 import { defineComponent } from '../../defineComponent';
 import { EntityViewEmbed } from './EntityViewEmbed';
-import { createDashboardWidgetAdapter } from '../../../../dashboard/widgets/createDashboardWidgetAdapter';
 import {
   ENTITY_VIEW_EMBED_TYPE,
   EntityViewEmbedEditable,
@@ -19,21 +18,16 @@ export default defineComponent<EntityViewEmbedSlateElement, { viewId?: string },
     defaultW: 6,
     defaultH: 24,
     surfaces: ['workspace', 'project'],
-    component: createDashboardWidgetAdapter(
-      EntityViewEmbed,
-      (config: SavedViewEmbedWidgetConfig) => ({
-        viewId: config.viewId
-      })
-    ),
     isValidConfig: (config): config is SavedViewEmbedWidgetConfig =>
       typeof config.viewId === 'string' && config.viewId.length > 0,
-    createDefaultConfig: context => ({ viewId: context.viewId ?? '' }),
-    configForm: EntityViewEmbedConfigForm
   },
+  component: EntityViewEmbed,
+  createDefaultProps: context => ({ config: { viewId: context.viewId ?? '' } }),
+  configForm: EntityViewEmbedConfigForm,
   mdxComponent: {
-    component: EntityViewEmbed,
     mode: 'block',
     allowedProps: ['viewId'],
+    mapProps: props => ({ config: { viewId: props.viewId ?? '' } }),
     editorSpec: {
       editableComponent: EntityViewEmbedEditable,
       nodeOptions: { isVoid: true },

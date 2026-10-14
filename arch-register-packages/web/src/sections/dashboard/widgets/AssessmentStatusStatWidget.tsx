@@ -11,7 +11,7 @@ import { useSchemaAssessmentSummaries } from './useSchemaAssessmentSummaries';
 import styles from './AssessmentStatusStatWidget.module.css';
 import { useWidgetBodyTitle } from './WidgetBodyTitle';
 import { TbChecklist } from 'react-icons/tb';
-import type { DashboardWidgetSpec } from '../../markdown/mdx-components/types';
+import type { DashboardWidgetRegistrationSpec } from '../../markdown/mdx-components/types';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import { AssessmentSchemaConfigForm } from './AssessmentSchemaConfigForm';
 import { isAssessmentStatus } from './assessmentSummaryLogic';
@@ -96,7 +96,7 @@ const ConfigForm = ({
  * against the in-scope entities, which an entity-query `AggregateStat` cannot express).
  */
 export const _assessmentStatusStatSpecData: Omit<
-  DashboardWidgetSpec<AssessmentStatusStatConfig>,
+  DashboardWidgetRegistrationSpec<AssessmentStatusStatConfig>,
   'label' | 'description'
 > = {
   icon: TbChecklist,
@@ -110,6 +110,6 @@ export const _assessmentStatusStatSpecData: Omit<
     config.schemaName.length > 0 &&
     isAssessmentStatus(config.status) &&
     (config.subtextTemplate === undefined || typeof config.subtextTemplate === 'string'),
-  createDefaultConfig: () => ({ schemaName: '', status: 'overdue' }),
+  createDefaultProps: () => ({ config: { schemaName: '', status: 'overdue' } }),
   configForm: ConfigForm
 };

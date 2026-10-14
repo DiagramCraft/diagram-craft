@@ -85,7 +85,7 @@ type Story = StoryObj<typeof meta>;
 export const WikiBothDirections: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
-      <EntityGraph id={rootEntityId} depth="2" direction="both" />
+      <EntityGraph config={{ entityId: rootEntityId, depth: 2, direction: 'both' }} />
     </StoryProviders>
   )
 };
@@ -93,7 +93,7 @@ export const WikiBothDirections: Story = {
 export const WikiUpstreamOnly: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
-      <EntityGraph id={rootEntityId} depth="1" direction="upstream" />
+      <EntityGraph config={{ entityId: rootEntityId, depth: 1, direction: 'upstream' }} />
     </StoryProviders>
   )
 };
@@ -101,7 +101,7 @@ export const WikiUpstreamOnly: Story = {
 export const WikiMissingId: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
-      <EntityGraph id="" />
+      <EntityGraph config={{ entityId: '' }} />
     </StoryProviders>
   )
 };

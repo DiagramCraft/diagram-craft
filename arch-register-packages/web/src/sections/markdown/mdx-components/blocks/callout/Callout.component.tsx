@@ -13,8 +13,8 @@ export default defineComponent<
   category: 'content-layout',
   name: 'Callout',
   description: 'Highlight a note, warning, or tip',
+  component: Callout,
   mdxComponent: {
-    component: Callout,
     mode: 'block',
     allowedProps: ['variant'],
     acceptsRichContent: true,

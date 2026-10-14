@@ -3,7 +3,7 @@ import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { NestedWidgetRenderer } from './nestedWidgets';
 import styles from './TabsWidget.module.css';
 import { TbLayoutList } from 'react-icons/tb';
-import type { DashboardWidgetSpec } from '../../markdown/mdx-components/types';
+import type { DashboardWidgetRegistrationSpec } from '../../markdown/mdx-components/types';
 import { getNestedWidgetSpec } from './nestedWidgets';
 import { useState, type ComponentProps } from 'react';
 import { Button } from '@diagram-craft/app-components/Button';
@@ -70,7 +70,7 @@ export const TabsWidget = ({ config }: { config: TabsWidgetConfig }) => {
   );
 };
 
-type FormProps = ComponentProps<NonNullable<DashboardWidgetSpec<TabsWidgetConfig>['configForm']>>;
+type FormProps = ComponentProps<NonNullable<DashboardWidgetRegistrationSpec<TabsWidgetConfig>['configForm']>>;
 
 /** Tab list in a sidebar; the selected tab's contents are edited in a grid on the right. */
 export const TabsConfigForm = ({ config, onChange, context }: FormProps) => {
@@ -178,7 +178,7 @@ export const TabsConfigForm = ({ config, onChange, context }: FormProps) => {
   );
 };
 
-export const _tabsSpecData: Omit<DashboardWidgetSpec<TabsWidgetConfig>, 'label' | 'description'> = {
+export const _tabsSpecData: Omit<DashboardWidgetRegistrationSpec<TabsWidgetConfig>, 'label' | 'description'> = {
   icon: TbLayoutList,
   defaultW: 12,
   defaultH: 24,
@@ -190,7 +190,7 @@ export const _tabsSpecData: Omit<DashboardWidgetSpec<TabsWidgetConfig>, 'label' 
       const spec = getNestedWidgetSpec(child.type);
       return !!spec && spec.isValidConfig(child.config);
     }),
-  createDefaultConfig: () => ({ tabs: [createTab([], 'Tab')] }),
+  createDefaultProps: () => ({ config: { tabs: [createTab([], 'Tab')] } }),
   configForm: TabsConfigForm,
   dialogSize: 'large'
 };

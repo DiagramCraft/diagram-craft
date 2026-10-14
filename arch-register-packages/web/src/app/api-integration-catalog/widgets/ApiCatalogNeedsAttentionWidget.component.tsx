@@ -10,16 +10,16 @@ export default defineComponent({
   category: 'data-views',
   name: 'API needs attention',
   description: 'Open API change and deprecation cases awaiting a decision.',
+  component: ApiCatalogNeedsAttentionWidget,
+  createDefaultProps: () => ({ config: { limit: 8 } }),
+  configForm: ListConfigForm,
   dashboardWidget: {
     icon: TbAlertTriangle,
     defaultW: 6,
     defaultH: 16,
     surfaces: ['workspace'],
-    component: ApiCatalogNeedsAttentionWidget,
     headerActionsComponent: ApiCatalogNeedsAttentionHeaderActions,
     frame: { padded: false, showIcon: false },
     isValidConfig: isValidListConfig,
-    createDefaultConfig: () => ({ limit: 8 }),
-    configForm: ListConfigForm
   }
 });

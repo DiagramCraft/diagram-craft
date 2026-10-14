@@ -56,7 +56,7 @@ type Story = StoryObj<typeof meta>;
 export const WikiWithPreview: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
-      <DiagramEmbed id={previewFileId} caption="System context diagram" />
+      <DiagramEmbed config={{ fileId: previewFileId, caption: 'System context diagram' }} />
     </StoryProviders>
   )
 };
@@ -64,7 +64,7 @@ export const WikiWithPreview: Story = {
 export const WikiNoPreview: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
-      <DiagramEmbed id={emptyFileId} caption="Preview pending" />
+      <DiagramEmbed config={{ fileId: emptyFileId, caption: 'Preview pending' }} />
     </StoryProviders>
   )
 };
@@ -72,7 +72,7 @@ export const WikiNoPreview: Story = {
 export const WikiMissingId: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
-      <DiagramEmbed id="" />
+      <DiagramEmbed config={{ fileId: '' }} />
     </StoryProviders>
   )
 };

@@ -6,12 +6,12 @@ import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { ModeSwitcher } from '@diagram-craft/app-components/ModeSwitcher';
 import { DialogContent, DialogSection } from '../../../editor/BlockDialog';
 import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
-import { useContentTree, type ContentScope } from '../../../../../hooks/useContentScope';
+import type { ContentScope } from '../../../../../hooks/useContentScope';
 import { useCreateMarkdownDiagramAttachment } from '../../../../../hooks/useAttachments';
 import { emptyDiagram } from '../../../../../lib/diagramDocuments';
-import type { ProjectFile } from '@arch-register/api-types/projectContentContract';
-import { DiagramPicker } from '../../../../../components/DiagramPicker';
 import { useMarkdownDiagramSession } from '../../../MarkdownDiagramSessionContext';
+import { DiagramEmbedConfigForm } from './DiagramEmbedConfigForm';
+import type { DiagramEmbedWidgetConfig } from './types';
 import type { DiagramEmbedSlateElement } from './types';
 import styles from './DiagramEmbedDialog.module.css';
 
@@ -42,21 +42,18 @@ export const DiagramEmbedDialog = ({
   const el = element as DiagramEmbedSlateElement;
   const hasExisting = !!el.fileId;
   const [mode, setMode] = useState<EmbedMode>(nodeId && !hasExisting ? 'new' : 'existing');
-  const [fileId, setFileId] = useState(el.fileId ?? '');
   const [diagramName, setDiagramName] = useState('Diagram');
-  const [caption, setCaption] = useState(el.caption ?? '');
 
   const contentScope: ContentScope = projectId
     ? { kind: 'project', workspaceId: workspaceSlug, projectId }
     : entityId
       ? { kind: 'entity', workspaceId: workspaceSlug, entityId }
       : { kind: 'workspace', workspaceId: workspaceSlug };
-  const { data: fileTree } = useContentTree(contentScope);
   const createDiagramAttachment = useCreateMarkdownDiagramAttachment(contentScope, nodeId ?? '');
-
-  const handleSelectFile = (file: ProjectFile) => {
-    setFileId(file.id);
-  };
+  const [config, setConfig] = useState<DiagramEmbedWidgetConfig>(() => ({
+    fileId: el.fileId ?? '',
+    caption: el.caption ?? ''
+  }));
 
   const handleConfirm = async () => {
     const path = editor.api.findPath(element);
@@ -65,7 +62,7 @@ export const DiagramEmbedDialog = ({
       return;
     }
 
-    let resolvedFileId = fileId;
+    let resolvedFileId = config.fileId;
     if (mode === 'new') {
       const trimmedName = diagramName.trim();
       const name = trimmedName === '' ? 'Diagram' : trimmedName;
@@ -83,7 +80,10 @@ export const DiagramEmbedDialog = ({
       return;
     }
 
-    editor.tf.setNodes({ fileId: resolvedFileId, caption: caption.trim() }, { at: path });
+    editor.tf.setNodes(
+      { fileId: resolvedFileId, caption: config.caption?.trim() ?? '' },
+      { at: path }
+    );
     onClose();
   };
 
@@ -95,7 +95,7 @@ export const DiagramEmbedDialog = ({
     onClose();
   };
 
-  const isSaveDisabled = createDiagramAttachment.isPending || (mode === 'existing' && !fileId);
+  const isSaveDisabled = createDiagramAttachment.isPending || (mode === 'existing' && !config.fileId);
 
   return (
     <Dialog
@@ -114,7 +114,7 @@ export const DiagramEmbedDialog = ({
             <ModeSwitcher modes={EMBED_MODES} value={mode} onChange={setMode} />
           </div>
         )}
-        {mode === 'new' ? (
+        {mode === 'new' && (
           <DialogSection label="Name">
             <input
               className={styles.input}
@@ -125,20 +125,13 @@ export const DiagramEmbedDialog = ({
               autoFocus
             />
           </DialogSection>
-        ) : (
-          <DialogSection label="Diagram">
-            <DiagramPicker fileTree={fileTree} selectedId={fileId} onSelect={handleSelectFile} />
-          </DialogSection>
         )}
-        <DialogSection label="Caption" required={false}>
-          <input
-            className={styles.input}
-            type="text"
-            placeholder="Add a caption…"
-            value={caption}
-            onChange={e => setCaption(e.target.value)}
-          />
-        </DialogSection>
+        <DiagramEmbedConfigForm
+          config={config}
+          onChange={setConfig}
+          context={{ mode: 'mdx', workspaceSlug, projectId }}
+          showPicker={mode === 'existing'}
+        />
       </DialogContent>
     </Dialog>
   );

@@ -40,10 +40,10 @@ export const WikiVariants: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16 }}>
-        <Metric metricType="entity-count" />
-        <Metric metricType="project-count" />
-        <Metric metricType="diagram-count" />
-        <Metric metricType="completeness-percent" />
+        <Metric config={{ metricType: 'entity-count' }} />
+        <Metric config={{ metricType: 'project-count' }} />
+        <Metric config={{ metricType: 'diagram-count' }} />
+        <Metric config={{ metricType: 'completeness-percent' }} />
       </div>
     </StoryProviders>
   )

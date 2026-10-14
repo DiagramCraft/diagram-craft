@@ -70,7 +70,7 @@ type Story = StoryObj<typeof meta>;
 export const WikiFiltered: Story = {
   render: () => (
     <StoryProviders>
-      <EntityTable schema="service" limit="10" />
+      <EntityTable config={{ schema: 'service', limit: 10 }} />
     </StoryProviders>
   )
 };
@@ -78,7 +78,7 @@ export const WikiFiltered: Story = {
 export const WikiEmpty: Story = {
   render: () => (
     <StoryProviders>
-      <EntityTable />
+      <EntityTable config={{}} />
     </StoryProviders>
   )
 };

@@ -24,8 +24,8 @@ defineComponent<FooSlateElement, FooProps, 'block'>({
   category: 'data-views',
   name: 'Foo',
   description: 'A Foo component.',
+  component: FooPreview,
   mdxComponent: {
-    component: FooPreview,
     mode: 'block',
     allowedProps: ['id'],
     editorSpec: {
@@ -54,8 +54,8 @@ defineComponent<FooSlateElement, FooProps, 'block'>({
   category: 'data-views',
   name: 'Foo',
   description: 'A Foo component.',
+  component: FooPreview,
   mdxComponent: {
-    component: FooPreview,
     mode: 'block',
     // @ts-expect-error 'bogus' is not a key of FooProps
     allowedProps: ['bogus']
@@ -68,8 +68,8 @@ defineComponent<FooSlateElement, FooProps, 'block'>({
   category: 'data-views',
   name: 'Foo',
   description: 'A Foo component.',
+  component: FooPreview,
   mdxComponent: {
-    component: FooPreview,
     mode: 'block',
     allowedProps: ['id'],
     editorSpec: {
@@ -103,8 +103,8 @@ defineComponent<FooSlateElement, FooProps, 'block'>({
   category: 'data-views',
   name: 'Foo',
   description: 'A Foo component.',
+  component: FooPreview,
   mdxComponent: {
-    component: FooPreview,
     mode: 'block',
     allowedProps: ['id'],
     editorSpec: {

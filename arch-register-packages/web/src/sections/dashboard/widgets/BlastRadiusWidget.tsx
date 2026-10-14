@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { TbTopologyStar3 } from 'react-icons/tb';
-import type { DashboardWidgetSpec } from '../../markdown/mdx-components/types';
+import type { DashboardWidgetRegistrationSpec } from '../../markdown/mdx-components/types';
 
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import { EmptyState } from '../../../components/EmptyState';
@@ -86,7 +86,7 @@ const BlastRadiusConfigForm = ({
 };
 
 export const blastRadiusDashboardSpec: Omit<
-  DashboardWidgetSpec<BlastRadiusWidgetConfig>,
+  DashboardWidgetRegistrationSpec<BlastRadiusWidgetConfig>,
   'label' | 'description'
 > = {
   icon: TbTopologyStar3,
@@ -99,6 +99,6 @@ export const blastRadiusDashboardSpec: Omit<
   // top of that doubled up the spacing, so it's turned off here.
   frame: { padded: false },
   isValidConfig,
-  createDefaultConfig: () => ({}),
+  createDefaultProps: () => ({ config: {} }),
   configForm: BlastRadiusConfigForm
 };

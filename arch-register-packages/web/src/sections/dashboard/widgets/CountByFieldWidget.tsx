@@ -6,7 +6,7 @@ import { buildCountBuckets } from './countByFieldLogic';
 import styles from './CountByFieldWidget.module.css';
 import rowStyles from './WidgetRowList.module.css';
 import { TbChartBar } from 'react-icons/tb';
-import type { DashboardWidgetSpec } from '../../markdown/mdx-components/types';
+import type { DashboardWidgetRegistrationSpec } from '../../markdown/mdx-components/types';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import configFormStyles from '../WidgetConfigDialog.module.css';
 
@@ -128,7 +128,7 @@ export const CountByFieldConfigForm = ({ config, onChange }: CountByFieldConfigF
 export const COUNT_BY_FIELD_TYPE = 'CountByField' as const;
 
 export const _countByFieldSpecData: Omit<
-  DashboardWidgetSpec<CountByFieldWidgetConfig>,
+  DashboardWidgetRegistrationSpec<CountByFieldWidgetConfig>,
   'label' | 'description'
 > = {
   icon: TbChartBar,
@@ -140,6 +140,6 @@ export const _countByFieldSpecData: Omit<
     typeof config.schemaName === 'string' &&
     typeof config.fieldId === 'string' &&
     isCountByFieldConfigComplete(config as CountByFieldWidgetConfig),
-  createDefaultConfig: () => ({ schemaName: '', fieldId: '' }),
+  createDefaultProps: () => ({ config: { schemaName: '', fieldId: '' } }),
   configForm: CountByFieldConfigForm
 };

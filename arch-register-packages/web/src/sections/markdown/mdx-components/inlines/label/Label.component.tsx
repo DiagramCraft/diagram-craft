@@ -8,8 +8,8 @@ export default defineComponent<LabelSlateElement, { text: string; color: string 
   category: 'content-layout',
   name: 'Label',
   description: 'Insert a free-standing colored status label',
+  component: Label,
   mdxComponent: {
-    component: Label,
     mode: 'inline',
     allowedProps: ['text', 'color'],
     editorSpec: {

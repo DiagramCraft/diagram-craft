@@ -5,9 +5,9 @@ import { TbListSearch } from 'react-icons/tb';
 import type { MdxRuleDef } from '../../defineComponent';
 import { BaseBlockEditable } from '../BaseBlockEditable';
 import { MdxWidgetConfigDialog, type MdxConfigSpec } from '../MdxWidgetConfigDialog';
-import { EntityBrowserEmbed } from './EntityBrowserEmbed';
-import { EntityBrowserEmbedConfigForm } from './EntityBrowserEmbedConfigForm';
+import { MdxComponentPreview } from '../../MdxComponentPreview';
 import {
+  createDefaultEntityBrowserEmbedConfig,
   decodeEntityBrowserEmbedConfig,
   encodeEntityBrowserEmbedConfig,
   type EntityBrowserEmbedConfig
@@ -41,11 +41,7 @@ export const entityBrowserEmbedMdxRule: MdxRuleDef<EntityBrowserEmbedSlateElemen
 };
 
 const emptyConfig = (context: { projectId?: string }): EntityBrowserEmbedConfig => ({
-  q: '',
-  conditions: [],
-  sort: 'name',
-  view: 'table',
-  viewConfigs: {},
+  ...createDefaultEntityBrowserEmbedConfig(),
   projectScope: context.projectId ? 'project' : 'all'
 });
 
@@ -53,13 +49,11 @@ export const entityBrowserEmbedMdxConfigSpec: MdxConfigSpec<
   EntityBrowserEmbedSlateElement,
   EntityBrowserEmbedConfig
 > = {
-  title: 'Entity browser',
   width: 'min(1200px, 92vw)',
   fromElement: el => decodeEntityBrowserEmbedConfig(el.config) ?? emptyConfig({}),
   toElement: config => ({ config: encodeEntityBrowserEmbedConfig(config) }),
   defaultConfig: emptyConfig,
   isValidConfig: () => true,
-  ConfigForm: EntityBrowserEmbedConfigForm
 };
 
 export const EntityBrowserEmbedEditable = ({
@@ -81,7 +75,7 @@ export const EntityBrowserEmbedEditable = ({
           <span>Configure an entity browser…</span>
         </>
       }
-      content={<EntityBrowserEmbed config={config === '' ? undefined : config} />}
+      content={<MdxComponentPreview type={ENTITY_BROWSER_EMBED_TYPE} props={{ config }} />}
       dialog={(open, onClose) => (
         <MdxWidgetConfigDialog
           element={element}

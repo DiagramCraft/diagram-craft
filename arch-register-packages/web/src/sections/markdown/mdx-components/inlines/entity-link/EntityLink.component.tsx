@@ -8,8 +8,8 @@ export default defineComponent<EntityLinkSlateElement, { id: string }, 'inline'>
   category: 'data-views',
   name: 'Entity link',
   description: 'A plain link to an entity page',
+  component: EntityLink,
   mdxComponent: {
-    component: EntityLink,
     mode: 'inline',
     allowedProps: ['id'],
     editorSpec: {

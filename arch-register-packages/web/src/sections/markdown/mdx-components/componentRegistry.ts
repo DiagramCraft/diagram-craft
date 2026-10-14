@@ -2,7 +2,6 @@ import type {
   ComponentDefinition,
   DashboardWidgetComponentDefinition,
   MdxComponentDefinition,
-  MdxComponentSpec
 } from './types';
 
 export type {
@@ -35,7 +34,9 @@ const isMdxComponentDefinition = (
 const isDashboardWidgetComponentDefinition = (
   definition: ComponentDefinition
 ): definition is DashboardWidgetComponentDefinition =>
-  definition.surfaces.includes('dashboard') && definition.dashboardWidget !== undefined;
+  definition.surfaces.includes('dashboard') &&
+  definition.dashboardWidget !== undefined &&
+  definition.createDefaultProps !== undefined;
 
 /** Return all registrations, or narrow them to definitions with the selected spec. */
 export const getComponentDefinitions = <
@@ -100,11 +101,11 @@ export const registerComponentDefinitions = (
 };
 
 /** MDX specs available on the requested content surface. */
-export const getMdxSpecsForSurface = (
+export const getMdxComponentDefinitionsForSurface = (
   surface: 'wiki' | 'dashboard'
-): Record<string, MdxComponentSpec> =>
+): Record<string, MdxComponentDefinition> =>
   Object.fromEntries(
     getComponentDefinitions('mdx').flatMap(definition =>
-      definition.surfaces.includes(surface) ? [[definition.type, definition.mdx] as const] : []
+      definition.surfaces.includes(surface) ? [[definition.type, definition] as const] : []
     )
   );

@@ -38,7 +38,7 @@ type Story = StoryObj<typeof meta>;
 export const WikiDefault: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
-      <EntityCard id={entityId} />
+      <EntityCard config={{ entityId }} />
     </StoryProviders>
   )
 };
@@ -46,7 +46,7 @@ export const WikiDefault: Story = {
 export const WikiExpanded: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
-      <EntityCard id={entityId} fields="owner,description,tags" />
+      <EntityCard config={{ entityId, fields: 'owner,description,tags' }} />
     </StoryProviders>
   )
 };

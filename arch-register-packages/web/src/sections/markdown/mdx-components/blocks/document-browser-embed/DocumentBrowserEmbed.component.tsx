@@ -1,15 +1,16 @@
 import { TbFileSearch } from 'react-icons/tb';
 import { defineComponent } from '../../defineComponent';
 import { DocumentBrowserEmbed } from './DocumentBrowserEmbed';
-import { createDashboardWidgetAdapter } from '../../../../dashboard/widgets/createDashboardWidgetAdapter';
-import { encodeDocumentBrowserEmbedConfig } from './DocumentBrowserEmbedCodec';
+import {
+  createDefaultDocumentBrowserEmbedConfig,
+  decodeDocumentBrowserEmbedConfig
+} from './DocumentBrowserEmbedCodec';
 import {
   DOCUMENT_BROWSER_EMBED_TYPE,
   DocumentBrowserEmbedEditable,
   documentBrowserEmbedMdxRule
 } from './DocumentBrowserEmbedEditable';
 import { DocumentBrowserEmbedConfigForm } from './DocumentBrowserEmbedConfigForm';
-import { DOCUMENT_BROWSER_BASE_COLUMN_IDS } from './types';
 import type { DocumentBrowserEmbedConfig, DocumentBrowserEmbedSlateElement } from './types';
 
 const isDocumentBrowserEmbedConfig = (
@@ -32,26 +33,21 @@ export default defineComponent<DocumentBrowserEmbedSlateElement, { config?: stri
     defaultW: 6,
     defaultH: 16,
     surfaces: ['workspace', 'project'],
-    component: createDashboardWidgetAdapter(
-      DocumentBrowserEmbed,
-      (config: DocumentBrowserEmbedConfig) => ({ config: encodeDocumentBrowserEmbedConfig(config) })
-    ),
     isValidConfig: isDocumentBrowserEmbedConfig,
-    createDefaultConfig: () => ({
-      q: '',
-      conditions: [],
-      sort: 'updated_at',
-      sortDir: 'desc',
-      visibleBaseColumnIds: [...DOCUMENT_BROWSER_BASE_COLUMN_IDS],
-      visibleFieldIds: []
-    }),
-    configForm: DocumentBrowserEmbedConfigForm,
     dialogWidth: 'min(1200px, 92vw)'
   },
+  component: DocumentBrowserEmbed,
+  createDefaultProps: () => ({ config: createDefaultDocumentBrowserEmbedConfig() }),
+  configForm: DocumentBrowserEmbedConfigForm,
   mdxComponent: {
-    component: DocumentBrowserEmbed,
     mode: 'block',
     allowedProps: ['config'],
+    mapProps: (props, defaultProps) => ({
+      ...defaultProps,
+      config:
+        decodeDocumentBrowserEmbedConfig(props.config) ??
+        (defaultProps.config as DocumentBrowserEmbedConfig)
+    }),
     editorSpec: {
       editableComponent: DocumentBrowserEmbedEditable,
       nodeOptions: { isVoid: true },

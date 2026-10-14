@@ -7,16 +7,16 @@ export default defineComponent({
   category: 'data-views',
   name: 'Integrations needing attention',
   description: 'Data flows that cross a boundary or carry restricted data.',
+  component: ApiCatalogAtRiskWidget,
+  createDefaultProps: () => ({ config: { limit: 8 } }),
+  configForm: ListConfigForm,
   dashboardWidget: {
     icon: TbPlugConnected,
     defaultW: 6,
     defaultH: 16,
     surfaces: ['workspace'],
-    component: ApiCatalogAtRiskWidget,
     headerActionsComponent: ApiCatalogAtRiskHeaderActions,
     frame: { padded: false, showIcon: false },
     isValidConfig: isValidListConfig,
-    createDefaultConfig: () => ({ limit: 8 }),
-    configForm: ListConfigForm
   }
 });

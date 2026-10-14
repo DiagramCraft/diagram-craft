@@ -26,7 +26,7 @@ import {
 import { RelationDrawer } from '../../relations/RelationDrawer';
 import styles from './RelationTableWidget.module.css';
 import { TbTable } from 'react-icons/tb';
-import type { DashboardWidgetSpec } from '../../markdown/mdx-components/types';
+import type { DashboardWidgetRegistrationSpec } from '../../markdown/mdx-components/types';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import { RELATION_TABLE_META_COLUMNS } from './relationTableLogic';
 import configFormStyles from '../WidgetConfigDialog.module.css';
@@ -355,7 +355,7 @@ const isValidConfig = (config: Record<string, unknown>): config is RelationTable
   (config.rowDrawer === undefined || typeof config.rowDrawer === 'boolean');
 
 export const _relationTableSpecData: Omit<
-  DashboardWidgetSpec<RelationTableWidgetConfig>,
+  DashboardWidgetRegistrationSpec<RelationTableWidgetConfig>,
   'label' | 'description'
 > = {
   icon: TbTable,
@@ -365,7 +365,7 @@ export const _relationTableSpecData: Omit<
   component: RelationTableWidget,
   frame: { padded: false, showIcon: false },
   isValidConfig,
-  createDefaultConfig: () => ({ relationSchemaName: '', fieldIds: [], limit: 100 }),
+  createDefaultProps: () => ({ config: { relationSchemaName: '', fieldIds: [], limit: 100 } }),
   getTitle: config => config.relationSchemaName || 'Relation table',
   configForm: RelationTableConfigForm
 };

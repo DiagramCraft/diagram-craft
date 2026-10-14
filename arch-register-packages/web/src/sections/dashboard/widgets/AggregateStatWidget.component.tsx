@@ -20,19 +20,19 @@ export default defineComponent({
   name: 'Aggregate stat',
   description:
     'A count or percentage of records matching a query, e.g. coverage, compliance or items needing attention.',
+  component: AggregateStatWidget,
+  createDefaultProps: () => ({ config: { query: '', display: 'count' as const } }),
+  configForm: AggregateStatConfigForm,
   dashboardWidget: {
     icon: TbPercentage,
     defaultW: 3,
     defaultH: 8,
     surfaces: ['workspace', 'project'],
-    component: AggregateStatWidget,
     frame: { hideOutsideEdit: true, padded: false, showIcon: false },
     isValidConfig: (config): config is AggregateStatWidgetConfig =>
       (isQueryStatConfig(config) ? isValidQueryStatConfig(config) : isValidLegacyCore(config)) &&
       (config.owner === undefined || typeof config.owner === 'string') &&
       (config.lifecycle === undefined || typeof config.lifecycle === 'string') &&
       (config.showLink === undefined || typeof config.showLink === 'boolean'),
-    createDefaultConfig: () => ({ query: '', display: 'count' as const }),
-    configForm: AggregateStatConfigForm
   }
 });

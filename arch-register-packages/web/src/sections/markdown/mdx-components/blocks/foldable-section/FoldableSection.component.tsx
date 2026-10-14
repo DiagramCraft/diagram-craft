@@ -17,8 +17,8 @@ export default defineComponent<
   category: 'content-layout',
   name: 'Foldable section',
   description: 'Collapse content behind a summary label',
+  component: FoldableSection,
   mdxComponent: {
-    component: FoldableSection,
     mode: 'block',
     allowedProps: ['label'],
     acceptsRichContent: true,

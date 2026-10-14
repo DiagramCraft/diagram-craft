@@ -6,7 +6,7 @@ import { ratioColor } from '../../../components/bandColor';
 import { buildRatioBarRows } from './ratioBarListLogic';
 import styles from './WidgetRowList.module.css';
 import { TbChartBar } from 'react-icons/tb';
-import type { DashboardWidgetSpec } from '../../markdown/mdx-components/types';
+import type { DashboardWidgetRegistrationSpec } from '../../markdown/mdx-components/types';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import configFormStyles from '../WidgetConfigDialog.module.css';
 
@@ -175,7 +175,7 @@ export const RatioBarListConfigForm = ({ config, onChange }: RatioBarListConfigF
 export const RATIO_BAR_LIST_TYPE = 'RatioBarList' as const;
 
 export const _ratioBarListSpecData: Omit<
-  DashboardWidgetSpec<RatioBarListWidgetConfig>,
+  DashboardWidgetRegistrationSpec<RatioBarListWidgetConfig>,
   'label' | 'description'
 > = {
   icon: TbChartBar,
@@ -189,11 +189,13 @@ export const _ratioBarListSpecData: Omit<
     typeof config.numeratorFieldId === 'string' &&
     typeof config.numeratorValue === 'string' &&
     isRatioBarListConfigComplete(config as RatioBarListWidgetConfig),
-  createDefaultConfig: () => ({
-    schemaName: '',
-    groupByFieldId: '',
-    numeratorFieldId: '',
-    numeratorValue: ''
+  createDefaultProps: () => ({
+    config: {
+      schemaName: '',
+      groupByFieldId: '',
+      numeratorFieldId: '',
+      numeratorValue: ''
+    }
   }),
   configForm: RatioBarListConfigForm
 };

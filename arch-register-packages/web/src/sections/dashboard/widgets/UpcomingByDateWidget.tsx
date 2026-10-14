@@ -9,7 +9,7 @@ import { buildUpcomingRows, countdownTone, formatCountdown } from './upcomingByD
 import rowStyles from './WidgetRowList.module.css';
 import styles from './UpcomingByDateWidget.module.css';
 import { TbCalendarTime } from 'react-icons/tb';
-import type { DashboardWidgetSpec } from '../../markdown/mdx-components/types';
+import type { DashboardWidgetRegistrationSpec } from '../../markdown/mdx-components/types';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import configFormStyles from '../WidgetConfigDialog.module.css';
 
@@ -259,7 +259,7 @@ const optionalString = (value: unknown): boolean =>
   value === undefined || typeof value === 'string';
 
 export const _upcomingByDateSpecData: Omit<
-  DashboardWidgetSpec<UpcomingByDateWidgetConfig>,
+  DashboardWidgetRegistrationSpec<UpcomingByDateWidgetConfig>,
   'label' | 'description'
 > = {
   icon: TbCalendarTime,
@@ -278,6 +278,6 @@ export const _upcomingByDateSpecData: Omit<
     optionalString(config.valueFieldId) &&
     (config.includeOverdue === undefined || typeof config.includeOverdue === 'boolean') &&
     isUpcomingByDateConfigComplete(config as UpcomingByDateWidgetConfig),
-  createDefaultConfig: () => ({ query: '', dateFieldId: '' }),
+  createDefaultProps: () => ({ config: { query: '', dateFieldId: '' } }),
   configForm: UpcomingByDateConfigForm
 };

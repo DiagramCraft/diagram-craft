@@ -33,7 +33,7 @@ vi.mock('../mdx-components/componentRegistry', () => {
       const mdx = mdxSpecs[name];
       return mdx ? { type: name, mdx } : undefined;
     },
-    getMdxSpecsForSurface: (surface: 'wiki' | 'dashboard') =>
+    getMdxComponentDefinitionsForSurface: (surface: 'wiki' | 'dashboard') =>
       Object.fromEntries(
         Object.entries(mdxSpecs).filter(([, spec]) =>
           surface === 'wiki'

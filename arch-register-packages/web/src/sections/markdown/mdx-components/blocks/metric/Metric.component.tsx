@@ -1,7 +1,6 @@
 import { TbChartBar, TbHash } from 'react-icons/tb';
 import { defineComponent } from '../../defineComponent';
 import { Metric } from './Metric';
-import { createDashboardWidgetAdapter } from '../../../../dashboard/widgets/createDashboardWidgetAdapter';
 import { METRIC_TYPE, MetricEditable, metricMdxRule } from './MetricEditable';
 import { MetricConfigForm } from './MetricConfigForm';
 import type { MetricSlateElement, MetricType, StatMetricWidgetConfig } from './types';
@@ -40,14 +39,6 @@ export default defineComponent<
     defaultW: 3,
     defaultH: 8,
     surfaces: ['workspace', 'project'],
-    component: createDashboardWidgetAdapter(Metric, (config: StatMetricWidgetConfig) => ({
-      metricType: config.metricType,
-      schema: config.schema,
-      owner: config.owner,
-      lifecycle: config.lifecycle,
-      label: config.label,
-      showLink: config.showLink
-    })),
     isValidConfig: (config): config is StatMetricWidgetConfig =>
       isMetricType(config.metricType) &&
       (config.schema === undefined || typeof config.schema === 'string') &&
@@ -55,14 +46,24 @@ export default defineComponent<
       (config.lifecycle === undefined || typeof config.lifecycle === 'string') &&
       (config.label === undefined || typeof config.label === 'string') &&
       (config.showLink === undefined || typeof config.showLink === 'boolean'),
-    createDefaultConfig: () => ({ metricType: 'entity-count' }),
     getTitle: (config: StatMetricWidgetConfig) => METRIC_TYPE_DEFAULT_LABEL[config.metricType],
-    configForm: MetricConfigForm
   },
+  component: Metric,
+  createDefaultProps: () => ({ config: { metricType: 'entity-count' } }),
+  configForm: MetricConfigForm,
   mdxComponent: {
-    component: Metric,
     mode: 'block',
     allowedProps: ['schema', 'owner', 'lifecycle', 'label', 'metricType', 'showLink'],
+    mapProps: props => ({
+      config: {
+        schema: props.schema,
+        owner: props.owner,
+        lifecycle: props.lifecycle,
+        label: props.label,
+        metricType: isMetricType(props.metricType) ? props.metricType : 'entity-count',
+        showLink: props.showLink === undefined ? true : props.showLink !== 'false'
+      }
+    }),
     editorSpec: {
       editableComponent: MetricEditable,
       nodeOptions: { isVoid: true },

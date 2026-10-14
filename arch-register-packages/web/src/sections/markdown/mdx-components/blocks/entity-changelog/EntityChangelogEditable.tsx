@@ -5,8 +5,7 @@ import { TbHistory } from 'react-icons/tb';
 import type { MdxRuleDef } from '../../defineComponent';
 import { BaseBlockEditable } from '../BaseBlockEditable';
 import { MdxWidgetConfigDialog, type MdxConfigSpec } from '../MdxWidgetConfigDialog';
-import { EntityChangelog } from './EntityChangelog';
-import { EntityChangelogConfigForm } from './EntityChangelogConfigForm';
+import { MdxComponentPreview } from '../../MdxComponentPreview';
 import type { EntityChangelogSlateElement, EntityChangelogWidgetConfig } from './types';
 
 export const ENTITY_CHANGELOG_TYPE = 'EntityChangelog' as const;
@@ -46,7 +45,6 @@ export const entityChangelogMdxConfigSpec: MdxConfigSpec<
   EntityChangelogSlateElement,
   EntityChangelogWidgetConfig
 > = {
-  title: 'Entity changelog',
   width: 460,
   fromElement: el => ({
     entityId: el.entityId,
@@ -66,7 +64,6 @@ export const entityChangelogMdxConfigSpec: MdxConfigSpec<
   }),
   defaultConfig: () => ({ since: '30d', limit: '10' }),
   isValidConfig: config => !!(config.entityId || config.schema || config.owner || config.lifecycle),
-  ConfigForm: EntityChangelogConfigForm
 };
 
 export const EntityChangelogEditable = ({
@@ -96,13 +93,16 @@ export const EntityChangelogEditable = ({
         </>
       }
       content={
-        <EntityChangelog
-          id={entityId ?? undefined}
-          schema={schema ?? undefined}
-          owner={owner ?? undefined}
-          lifecycle={lifecycle ?? undefined}
-          limit={limit ?? undefined}
-          since={since ?? undefined}
+        <MdxComponentPreview
+          type={ENTITY_CHANGELOG_TYPE}
+          props={{
+            id: entityId ?? '',
+            schema: schema ?? '',
+            owner: owner ?? '',
+            lifecycle: lifecycle ?? '',
+            limit: limit ?? '',
+            since: since ?? ''
+          }}
         />
       }
       dialog={(open, onClose) => (

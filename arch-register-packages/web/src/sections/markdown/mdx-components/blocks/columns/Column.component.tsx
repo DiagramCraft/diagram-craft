@@ -11,8 +11,8 @@ export default defineComponent<ColumnSlateElement, { children?: ReactNode }, 'bl
   category: 'content-layout',
   name: 'Column',
   description: 'A column within a multi-column layout.',
+  component: Column,
   mdxComponent: {
-    component: Column,
     mode: 'block',
     allowedProps: [],
     acceptsRichContent: true,

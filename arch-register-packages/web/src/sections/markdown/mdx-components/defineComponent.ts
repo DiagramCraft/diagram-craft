@@ -88,10 +88,13 @@ export type MdxComponentRegistrationDef<
   P extends Record<string, unknown>,
   Mode extends MdxMode
 > = {
-  /** Preview-mode React component */
-  component: React.ComponentType<P>;
   mode: Mode;
   allowedProps: ReadonlyArray<AllowedPropKey<P>>;
+  /** Converts authored MDX string attributes to the shared component's props using defaults. */
+  mapProps?: (
+    props: Record<string, string>,
+    defaultProps: Record<string, unknown>
+  ) => Record<string, unknown>;
   /** Normalizes string props parsed from authored MDX. */
   normalizeProps?: (props: Record<string, string>) => Record<string, string>;
   /**
@@ -125,15 +128,23 @@ export type ComponentRegistration<
   P extends Record<string, unknown>,
   Mode extends MdxMode
 > = ComponentRegistrationBase & {
+  /** Shared renderer for the component, independent of the surface using it. */
+  // biome-ignore lint/suspicious/noExplicitAny: component props vary by registration and are typed by each surface adapter
+  component: React.ComponentType<any>;
+  /** Shared config editor, when this component has editable options. */
+  // biome-ignore lint/suspicious/noExplicitAny: component config types are erased in the registry
+  configForm?: React.ComponentType<any>;
   /** Present when this component can be authored in wiki content. */
   mdxComponent?: MdxComponentRegistrationDef<E, P, Mode>;
   /** Present when this component can be added as a dashboard widget. */
   // biome-ignore lint/suspicious/noExplicitAny: registrations erase per-widget config types here
   dashboardWidget?: DashboardWidgetRegistrationDef<any>;
+  /** Creates fresh default props for the shared renderer. */
+  createDefaultProps?: (context: { viewId?: string }) => Record<string, unknown>;
 };
 
 /**
- * Declares one component registration with shared identity and category.
+ * Declares one component registration with shared identity, renderer and form.
  * Content surfaces are derived from the presence of `mdxComponent` and
  * `dashboardWidget`. Their editor/serialization and dashboard details stay
  * nested under the registration they belong to.
@@ -143,11 +154,23 @@ export function defineComponent<
   P extends Record<string, unknown> = Record<string, unknown>,
   Mode extends MdxMode = MdxMode
 >(def: ComponentRegistration<E, P, Mode>): ComponentDefinition {
-  const { type, name, description, category, dashboardWidget } = def;
+  const {
+    type,
+    name,
+    description,
+    category,
+    component,
+    configForm,
+    dashboardWidget,
+    createDefaultProps
+  } = def;
   const mdxComponent = 'mdxComponent' in def ? def.mdxComponent : undefined;
   const surfaces: ComponentSurface[] = [];
   if (mdxComponent) surfaces.push('wiki');
   if (dashboardWidget) surfaces.push('dashboard');
+  if (dashboardWidget && !createDefaultProps) {
+    throw new Error(`Dashboard component "${type}" must define createDefaultProps`);
+  }
   const normalizedDashboardWidget = dashboardWidget
     ? { ...dashboardWidget, label: name, description }
     : undefined;
@@ -179,6 +202,9 @@ export function defineComponent<
     description,
     category,
     surfaces,
+    component,
+    ...(createDefaultProps ? { createDefaultProps } : {}),
+    ...(configForm ? { configForm } : {}),
     ...(normalizedMdxComponent
       ? { mdx: normalizedMdxComponent as unknown as MdxComponentSpec }
       : {}),

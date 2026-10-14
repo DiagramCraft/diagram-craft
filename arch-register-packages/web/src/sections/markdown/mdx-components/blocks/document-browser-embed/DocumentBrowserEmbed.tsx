@@ -17,14 +17,15 @@ import {
   projectMarkdownRoute,
   workspaceMarkdownRoute
 } from '../../../../../routes/publicObjectRoutes';
-import { decodeDocumentBrowserEmbedConfig } from './DocumentBrowserEmbedCodec';
-import { DOCUMENT_BROWSER_BASE_COLUMN_IDS, type DocumentBrowserScope } from './types';
+import {
+  DOCUMENT_BROWSER_BASE_COLUMN_IDS,
+  type DocumentBrowserEmbedConfig,
+  type DocumentBrowserScope
+} from './types';
 import { formatDate } from '../../../../../utils/dateFormat';
 import styles from './DocumentBrowserEmbed.module.css';
 
-type Props = {
-  config?: string;
-};
+type Props = { config: DocumentBrowserEmbedConfig };
 
 export const resolveDocumentBrowserScope = (
   projectId?: string,
@@ -68,11 +69,10 @@ const fieldsById = (documentTypes: DocumentType[]) => {
   return result;
 };
 
-export const DocumentBrowserEmbed = ({ config: rawConfig }: Props) => {
+export const DocumentBrowserEmbed = ({ config }: Props) => {
   const navigate = useNavigate();
   const { workspaceSlug, projects } = useWorkspaceContext();
   const { projectId, entityId } = useMdxContext();
-  const config = useMemo(() => decodeDocumentBrowserEmbedConfig(rawConfig), [rawConfig]);
   const scope = useMemo(
     () => resolveDocumentBrowserScope(projectId, entityId),
     [projectId, entityId]

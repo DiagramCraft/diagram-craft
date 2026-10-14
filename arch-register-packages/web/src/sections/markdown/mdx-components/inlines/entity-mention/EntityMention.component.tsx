@@ -12,8 +12,8 @@ export default defineComponent<EntityMentionSlateElement, { id: string }, 'inlin
   category: 'data-views',
   name: 'Entity mention',
   description: 'Mention an entity with its live name and status',
+  component: EntityMention,
   mdxComponent: {
-    component: EntityMention,
     mode: 'inline',
     allowedProps: ['id'],
     editorSpec: {

@@ -5,8 +5,7 @@ import { TbFileSearch } from 'react-icons/tb';
 import type { MdxRuleDef } from '../../defineComponent';
 import { BaseBlockEditable } from '../BaseBlockEditable';
 import { MdxWidgetConfigDialog, type MdxConfigSpec } from '../MdxWidgetConfigDialog';
-import { DocumentBrowserEmbed } from './DocumentBrowserEmbed';
-import { DocumentBrowserEmbedConfigForm } from './DocumentBrowserEmbedConfigForm';
+import { MdxComponentPreview } from '../../MdxComponentPreview';
 import {
   decodeDocumentBrowserEmbedConfig,
   encodeDocumentBrowserEmbedConfig
@@ -56,14 +55,12 @@ export const documentBrowserEmbedMdxConfigSpec: MdxConfigSpec<
   DocumentBrowserEmbedSlateElement,
   DocumentBrowserEmbedConfig
 > = {
-  title: 'Document browser',
   width: 'min(1200px, 92vw)',
   fromElement: el =>
     decodeDocumentBrowserEmbedConfig(el.config) ?? defaultDocumentBrowserEmbedConfig(),
   toElement: config => ({ config: encodeDocumentBrowserEmbedConfig(config) }),
   defaultConfig: defaultDocumentBrowserEmbedConfig,
   isValidConfig: () => true,
-  ConfigForm: DocumentBrowserEmbedConfigForm
 };
 
 export const DocumentBrowserEmbedEditable = ({
@@ -85,7 +82,7 @@ export const DocumentBrowserEmbedEditable = ({
           <span>Configure a document browser…</span>
         </>
       }
-      content={<DocumentBrowserEmbed config={config === '' ? undefined : config} />}
+      content={<MdxComponentPreview type={DOCUMENT_BROWSER_EMBED_TYPE} props={{ config }} />}
       dialog={(open, onClose) => (
         <MdxWidgetConfigDialog
           element={element}

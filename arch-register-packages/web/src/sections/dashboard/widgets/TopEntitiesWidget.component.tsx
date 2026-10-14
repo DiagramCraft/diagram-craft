@@ -16,12 +16,14 @@ export default defineComponent({
   category: 'data-views',
   name: 'Ranked list',
   description: 'The top entities of a type, ranked by a numeric field.',
+  component: TopEntitiesWidget,
+  createDefaultProps: () => ({ config: { schema: '', fieldId: '', direction: 'desc', limit: 5 } }),
+  configForm: TopEntitiesConfigForm,
   dashboardWidget: {
     icon: TbListNumbers,
     defaultW: 4,
     defaultH: 16,
     surfaces: ['workspace', 'project'],
-    component: TopEntitiesWidget,
     isValidConfig: (config): config is TopEntitiesWidgetConfig =>
       ((typeof config.schema === 'string' && config.schema.length > 0) ||
         (typeof config.schemaName === 'string' && config.schemaName.length > 0)) &&
@@ -34,7 +36,5 @@ export default defineComponent({
       (config.lifecycle === undefined || typeof config.lifecycle === 'string') &&
       (config.showLink === undefined || typeof config.showLink === 'boolean') &&
       (config.showShareBar === undefined || typeof config.showShareBar === 'boolean'),
-    createDefaultConfig: () => ({ schema: '', fieldId: '', direction: 'desc', limit: 5 }),
-    configForm: TopEntitiesConfigForm
   }
 });

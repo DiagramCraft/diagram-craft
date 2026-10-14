@@ -13,7 +13,7 @@ import { buildRollupRows } from './groupedRollupTableLogic';
 import rowStyles from './WidgetRowList.module.css';
 import styles from './GroupedRollupTableWidget.module.css';
 import { TbTable } from 'react-icons/tb';
-import type { DashboardWidgetSpec } from '../../markdown/mdx-components/types';
+import type { DashboardWidgetRegistrationSpec } from '../../markdown/mdx-components/types';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import configFormStyles from '../WidgetConfigDialog.module.css';
 
@@ -280,7 +280,7 @@ const optionalString = (value: unknown): boolean =>
   value === undefined || typeof value === 'string';
 
 export const _groupedRollupTableSpecData: Omit<
-  DashboardWidgetSpec<GroupedRollupTableWidgetConfig>,
+  DashboardWidgetRegistrationSpec<GroupedRollupTableWidgetConfig>,
   'label' | 'description'
 > = {
   icon: TbTable,
@@ -302,6 +302,6 @@ export const _groupedRollupTableSpecData: Omit<
     optionalBoolean(config.showTotal) &&
     (config.limit === undefined || (typeof config.limit === 'number' && config.limit > 0)) &&
     isGroupedRollupTableConfigComplete(config as GroupedRollupTableWidgetConfig),
-  createDefaultConfig: () => ({ query: '', valueFieldId: '' }),
+  createDefaultProps: () => ({ config: { query: '', valueFieldId: '' } }),
   configForm: GroupedRollupTableConfigForm
 };

@@ -10,16 +10,16 @@ export default defineComponent({
   category: 'data-views',
   name: 'Most consumed APIs',
   description: 'APIs with the most registered consumers.',
+  component: ApiCatalogMostConsumedWidget,
+  createDefaultProps: () => ({ config: { limit: 6 } }),
+  configForm: ListConfigForm,
   dashboardWidget: {
     icon: TbApi,
     defaultW: 6,
     defaultH: 16,
     surfaces: ['workspace'],
-    component: ApiCatalogMostConsumedWidget,
     headerActionsComponent: ApiCatalogMostConsumedHeaderActions,
     frame: { padded: false, showIcon: false },
     isValidConfig: isValidListConfig,
-    createDefaultConfig: () => ({ limit: 6 }),
-    configForm: ListConfigForm
   }
 });

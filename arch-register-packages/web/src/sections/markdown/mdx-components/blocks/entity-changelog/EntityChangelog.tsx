@@ -7,6 +7,7 @@ import styles from './EntityChangelog.module.css';
 import { formatRelativeTime } from '../../../../../utils/dateFormat';
 import { Table } from '../../../../../components/table/Table';
 import { EmptyState } from '../../../../../components/EmptyState';
+import type { EntityChangelogWidgetConfig } from './types';
 
 const OPERATION_LABELS: Record<string, string> = {
   create: 'created',
@@ -38,16 +39,8 @@ const changedFields = (entry: AuditLogEntry): string[] => {
   });
 };
 
-type Props = {
-  id?: string;
-  schema?: string;
-  owner?: string;
-  lifecycle?: string;
-  limit?: string;
-  since?: string;
-};
-
-export const EntityChangelog = ({ id, schema, owner, lifecycle, limit, since }: Props) => {
+export const EntityChangelog = ({ config }: { config: EntityChangelogWidgetConfig }) => {
+  const { entityId: id, schema, owner, lifecycle, limit, since } = config;
   const { workspaceSlug } = useWorkspaceContext();
 
   const hasFilter = !!(id || schema || owner || lifecycle);

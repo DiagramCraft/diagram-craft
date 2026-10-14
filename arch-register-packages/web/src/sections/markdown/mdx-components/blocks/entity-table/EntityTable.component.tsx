@@ -1,7 +1,6 @@
 import { TbTable } from 'react-icons/tb';
 import { defineComponent } from '../../defineComponent';
 import { EntityTable } from './EntityTable';
-import { createDashboardWidgetAdapter } from '../../../../dashboard/widgets/createDashboardWidgetAdapter';
 import { ENTITY_TABLE_TYPE, EntityTableEditable, entityTableMdxRule } from './EntityTableEditable';
 import { EntityTableConfigForm } from './EntityTableConfigForm';
 import type { EntityTableSlateElement, EntityTableWidgetConfig } from './types';
@@ -26,24 +25,26 @@ export default defineComponent<
     defaultW: 6,
     defaultH: 24,
     surfaces: ['workspace', 'project'],
-    component: createDashboardWidgetAdapter(EntityTable, (config: EntityTableWidgetConfig) => ({
-      schema: config.schema,
-      owner: config.owner,
-      lifecycle: config.lifecycle,
-      limit: config.limit != null ? String(config.limit) : undefined
-    })),
     isValidConfig: (config): config is EntityTableWidgetConfig =>
       hasOptionalString(config, 'schema') &&
       hasOptionalString(config, 'owner') &&
       hasOptionalString(config, 'lifecycle') &&
       hasOptionalInteger(config, 'limit'),
-    createDefaultConfig: () => ({}),
-    configForm: EntityTableConfigForm
   },
+  component: EntityTable,
+  createDefaultProps: () => ({ config: {} }),
+  configForm: EntityTableConfigForm,
   mdxComponent: {
-    component: EntityTable,
     mode: 'block',
     allowedProps: ['schema', 'owner', 'lifecycle', 'limit'],
+    mapProps: props => ({
+      config: {
+        schema: props.schema,
+        owner: props.owner,
+        lifecycle: props.lifecycle,
+        limit: props.limit === undefined ? undefined : Number(props.limit)
+      }
+    }),
     editorSpec: {
       editableComponent: EntityTableEditable,
       nodeOptions: { isVoid: true },

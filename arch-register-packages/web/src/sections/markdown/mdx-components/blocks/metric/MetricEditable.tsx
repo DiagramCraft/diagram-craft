@@ -5,8 +5,7 @@ import { TbHash } from 'react-icons/tb';
 import type { MdxRuleDef } from '../../defineComponent';
 import { BaseBlockEditable } from '../BaseBlockEditable';
 import { MdxWidgetConfigDialog, type MdxConfigSpec } from '../MdxWidgetConfigDialog';
-import { Metric } from './Metric';
-import { MetricConfigForm } from './MetricConfigForm';
+import { MdxComponentPreview } from '../../MdxComponentPreview';
 import type { MetricSlateElement, StatMetricWidgetConfig } from './types';
 
 export const METRIC_TYPE = 'Metric' as const;
@@ -48,7 +47,6 @@ export const metricMdxRule: MdxRuleDef<MetricSlateElement, 'block'> = {
 };
 
 export const metricMdxConfigSpec: MdxConfigSpec<MetricSlateElement, StatMetricWidgetConfig> = {
-  title: 'Metric',
   width: 460,
   fromElement: el => ({
     metricType: el.metricType ?? 'entity-count',
@@ -68,7 +66,6 @@ export const metricMdxConfigSpec: MdxConfigSpec<MetricSlateElement, StatMetricWi
   }),
   defaultConfig: () => ({ metricType: 'entity-count' }),
   isValidConfig: () => true,
-  ConfigForm: MetricConfigForm
 };
 
 export const MetricEditable = ({
@@ -94,13 +91,16 @@ export const MetricEditable = ({
         </>
       }
       content={
-        <Metric
-          schema={schema === '' ? undefined : schema}
-          owner={owner === '' ? undefined : owner}
-          lifecycle={lifecycle === '' ? undefined : lifecycle}
-          label={label === '' ? undefined : label}
-          metricType={metricType}
-          showLink={element.showLink}
+        <MdxComponentPreview
+          type={METRIC_TYPE}
+          props={{
+            schema,
+            owner,
+            lifecycle,
+            label,
+            metricType: metricType ?? '',
+            showLink: element.showLink === undefined ? '' : String(element.showLink)
+          }}
         />
       }
       dialog={(open, onClose) => (

@@ -14,7 +14,7 @@ import { useEntityCaseRegister } from './entityCaseRegister';
 import { filterByStatus, isChangeCaseStatus } from './changeCaseTableLogic';
 import styles from './ChangeCaseTableWidget.module.css';
 import { TbGitPullRequest } from 'react-icons/tb';
-import type { DashboardWidgetSpec } from '../../markdown/mdx-components/types';
+import type { DashboardWidgetRegistrationSpec } from '../../markdown/mdx-components/types';
 import { Select } from '@diagram-craft/app-components/Select';
 import { humanizeCaseKind } from '../../../utils/governanceCaseLabels';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
@@ -279,7 +279,7 @@ const isOptionalString = (value: unknown): boolean =>
  * from Data Stewardship's former Change cases screen (#3504).
  */
 export const _changeCaseTableSpecData: Omit<
-  DashboardWidgetSpec<ChangeCaseTableConfig>,
+  DashboardWidgetRegistrationSpec<ChangeCaseTableConfig>,
   'label' | 'description'
 > = {
   icon: TbGitPullRequest,
@@ -294,10 +294,12 @@ export const _changeCaseTableSpecData: Omit<
     config.caseKinds.every(kind => typeof kind === 'string') &&
     (config.severity === 'none' || config.severity === 'due-date') &&
     isOptionalString(config.status),
-  createDefaultConfig: () => ({
-    schemaName: '',
-    caseKinds: ['entity.change-case'],
-    severity: 'due-date'
+  createDefaultProps: () => ({
+    config: {
+      schemaName: '',
+      caseKinds: ['entity.change-case'],
+      severity: 'due-date'
+    }
   }),
   configForm: ChangeCaseTableConfigForm
 };

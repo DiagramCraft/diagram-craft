@@ -6,7 +6,7 @@ import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
 import { useMdxContext } from '../../../MdxContext';
 import { asProjectPublicId, projectDetailRoute } from '../../../../../routes/publicObjectRoutes';
 import styles from './Metric.module.css';
-import type { MetricType } from './types';
+import type { StatMetricWidgetConfig } from './types';
 
 export const hasMetricFilter = (props: {
   schema?: string;
@@ -14,23 +14,14 @@ export const hasMetricFilter = (props: {
   lifecycle?: string;
 }): boolean => !!(props.schema || props.owner || props.lifecycle);
 
-type Props = {
-  schema?: string;
-  owner?: string;
-  lifecycle?: string;
-  label?: string;
-  metricType?: MetricType;
-  /** Whether to show a link to the relevant list/catalog. Defaults to true. */
-  showLink?: boolean;
-};
-
 const ViewLink = ({ onClick, children }: { onClick: () => void; children: string }) => (
   <button type="button" className={styles.viewLink} onClick={onClick}>
     {children} <TbArrowRight size={12} />
   </button>
 );
 
-export const Metric = ({ schema, owner, lifecycle, label, metricType, showLink }: Props) => {
+export const Metric = ({ config }: { config: StatMetricWidgetConfig }) => {
+  const { schema, owner, lifecycle, label, metricType, showLink } = config;
   const navigate = useNavigate();
   const { workspaceSlug, schemas } = useWorkspaceContext();
   const { projectId, renderMode } = useMdxContext();

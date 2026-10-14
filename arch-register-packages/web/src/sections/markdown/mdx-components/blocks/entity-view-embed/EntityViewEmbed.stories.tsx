@@ -76,7 +76,7 @@ type Story = StoryObj<typeof meta>;
 export const WikiConfigured: Story = {
   render: () => (
     <StoryProviders>
-      <EntityViewEmbed viewId="view-services" />
+      <EntityViewEmbed config={{ viewId: 'view-services' }} />
     </StoryProviders>
   )
 };
@@ -84,7 +84,7 @@ export const WikiConfigured: Story = {
 export const WikiNoView: Story = {
   render: () => (
     <StoryProviders>
-      <EntityViewEmbed />
+      <EntityViewEmbed config={{ viewId: '' }} />
     </StoryProviders>
   )
 };
@@ -92,7 +92,7 @@ export const WikiNoView: Story = {
 export const WikiMissingView: Story = {
   render: () => (
     <StoryProviders>
-      <EntityViewEmbed viewId="deleted-view" />
+      <EntityViewEmbed config={{ viewId: 'deleted-view' }} />
     </StoryProviders>
   )
 };

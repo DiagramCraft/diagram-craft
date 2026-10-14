@@ -7,7 +7,7 @@ import { useEntityDrawer } from '../../entities/entityDrawer/useEntityDrawer';
 import { groupViolationsByEntity } from './conformanceViolationsLogic';
 import styles from './ConformanceViolationsWidget.module.css';
 import { TbShieldExclamation } from 'react-icons/tb';
-import type { DashboardWidgetSpec } from '../../markdown/mdx-components/types';
+import type { DashboardWidgetRegistrationSpec } from '../../markdown/mdx-components/types';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import configFormStyles from '../WidgetConfigDialog.module.css';
 
@@ -167,7 +167,7 @@ const isValidConfig = (
   (config.checkNames === undefined || isStringArray(config.checkNames));
 
 export const _conformanceViolationsSpecData: Omit<
-  DashboardWidgetSpec<ConformanceViolationsWidgetConfig>,
+  DashboardWidgetRegistrationSpec<ConformanceViolationsWidgetConfig>,
   'label' | 'description'
 > = {
   icon: TbShieldExclamation,
@@ -178,6 +178,6 @@ export const _conformanceViolationsSpecData: Omit<
   headerActionsComponent: ConformanceViolationsHeaderActions,
   frame: { padded: false, showIcon: false },
   isValidConfig,
-  createDefaultConfig: () => ({ schemaName: '', limit: 8 }),
+  createDefaultProps: () => ({ config: { schemaName: '', limit: 8 } }),
   configForm: ConformanceViolationsConfigForm
 };

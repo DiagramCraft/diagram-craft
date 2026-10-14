@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import type { DocumentListItem } from '@arch-register/api-types/projectDocumentDiscoveryContract';
 import { DocumentBrowserEmbed } from './DocumentBrowserEmbed';
-import { encodeDocumentBrowserEmbedConfig } from './DocumentBrowserEmbedCodec';
-import { DOCUMENT_BROWSER_BASE_COLUMN_IDS } from './types';
+import { createDefaultDocumentBrowserEmbedConfig } from './DocumentBrowserEmbedCodec';
+import { DOCUMENT_BROWSER_BASE_COLUMN_IDS, type DocumentBrowserEmbedConfig } from './types';
 import {
   createStoryQueryClient,
   DashboardStory,
@@ -71,14 +71,14 @@ const documents: DocumentListItem[] = [
   }
 ];
 
-const configured = encodeDocumentBrowserEmbedConfig({
+const configured: DocumentBrowserEmbedConfig = {
   q: '',
   conditions: [],
   sort: 'updated_at',
   sortDir: 'desc',
   visibleBaseColumnIds: [...DOCUMENT_BROWSER_BASE_COLUMN_IDS],
   visibleFieldIds: []
-});
+};
 
 const storyQueryClient = createStoryQueryClient();
 storyQueryClient.setQueryData(documentKeys.types(WORKSPACE), []);
@@ -105,7 +105,7 @@ export const WikiConfigured: Story = {
 export const WikiNoConfiguration: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
-      <DocumentBrowserEmbed />
+      <DocumentBrowserEmbed config={createDefaultDocumentBrowserEmbedConfig()} />
     </StoryProviders>
   )
 };

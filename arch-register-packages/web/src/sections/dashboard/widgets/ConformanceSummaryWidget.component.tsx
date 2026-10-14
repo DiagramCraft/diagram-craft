@@ -7,14 +7,14 @@ export default defineComponent({
   category: 'data-views',
   name: 'Conformance summary',
   description: 'Current conformance violations grouped by severity, check, and schema.',
+  component: ConformanceSummaryWidget,
+  createDefaultProps: () => ({ config: {} }),
   dashboardWidget: {
     icon: TbShieldCheck,
     defaultW: 5,
     defaultH: 16,
     surfaces: ['workspace'],
-    component: ConformanceSummaryWidget,
     isValidConfig: (config): config is ConformanceSummaryWidgetConfig =>
       Object.keys(config).length === 0,
-    createDefaultConfig: () => ({})
   }
 });

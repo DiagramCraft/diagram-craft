@@ -13,8 +13,8 @@ export default defineComponent<
   category: 'content-layout',
   name: 'Caption',
   description: 'Wrap a block with a figure caption',
+  component: Caption,
   mdxComponent: {
-    component: Caption,
     mode: 'block',
     allowedProps: ['caption', 'numbered'],
     acceptsChildren: true,

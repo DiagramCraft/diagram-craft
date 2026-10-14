@@ -5,8 +5,7 @@ import { TbLayoutGrid } from 'react-icons/tb';
 import type { MdxRuleDef } from '../../defineComponent';
 import { BaseBlockEditable } from '../BaseBlockEditable';
 import { MdxWidgetConfigDialog, type MdxConfigSpec } from '../MdxWidgetConfigDialog';
-import { EntityViewEmbed } from './EntityViewEmbed';
-import { EntityViewEmbedConfigForm } from './EntityViewEmbedConfigForm';
+import { MdxComponentPreview } from '../../MdxComponentPreview';
 import type { EntityViewEmbedSlateElement, SavedViewEmbedWidgetConfig } from './types';
 
 export const ENTITY_VIEW_EMBED_TYPE = 'EntityViewEmbed' as const;
@@ -39,13 +38,11 @@ export const entityViewEmbedMdxConfigSpec: MdxConfigSpec<
   EntityViewEmbedSlateElement,
   SavedViewEmbedWidgetConfig
 > = {
-  title: 'Entity view',
   width: 460,
   fromElement: el => ({ viewId: el.viewId ?? '' }),
   toElement: config => ({ viewId: config.viewId }),
   defaultConfig: () => ({ viewId: '' }),
   isValidConfig: config => !!config.viewId,
-  ConfigForm: EntityViewEmbedConfigForm
 };
 
 export const EntityViewEmbedEditable = ({
@@ -67,7 +64,7 @@ export const EntityViewEmbedEditable = ({
           <span>Select a saved view…</span>
         </>
       }
-      content={<EntityViewEmbed viewId={viewId === '' ? undefined : viewId} />}
+      content={<MdxComponentPreview type={ENTITY_VIEW_EMBED_TYPE} props={{ viewId }} />}
       dialog={(open, onClose) => (
         <MdxWidgetConfigDialog
           element={element}

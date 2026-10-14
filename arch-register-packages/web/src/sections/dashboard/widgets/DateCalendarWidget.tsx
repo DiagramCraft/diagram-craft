@@ -20,7 +20,7 @@ import { useRecordSublabels } from './useRecordSublabels';
 import rowStyles from './WidgetRowList.module.css';
 import styles from './DateCalendarWidget.module.css';
 import { TbCalendarMonth } from 'react-icons/tb';
-import type { DashboardWidgetSpec } from '../../markdown/mdx-components/types';
+import type { DashboardWidgetRegistrationSpec } from '../../markdown/mdx-components/types';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import configFormStyles from '../WidgetConfigDialog.module.css';
 
@@ -279,7 +279,7 @@ const optionalString = (value: unknown): boolean =>
   value === undefined || typeof value === 'string';
 
 export const _dateCalendarSpecData: Omit<
-  DashboardWidgetSpec<DateCalendarWidgetConfig>,
+  DashboardWidgetRegistrationSpec<DateCalendarWidgetConfig>,
   'label' | 'description'
 > = {
   icon: TbCalendarMonth,
@@ -299,6 +299,6 @@ export const _dateCalendarSpecData: Omit<
     optionalString(config.sublabelFieldId) &&
     optionalString(config.valueFieldId) &&
     isDateCalendarConfigComplete(config as DateCalendarWidgetConfig),
-  createDefaultConfig: () => ({ query: '', dateFieldId: '' }),
+  createDefaultProps: () => ({ config: { query: '', dateFieldId: '' } }),
   configForm: DateCalendarConfigForm
 };

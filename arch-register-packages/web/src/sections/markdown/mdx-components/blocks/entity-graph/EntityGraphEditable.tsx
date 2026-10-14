@@ -5,14 +5,13 @@ import { TbVectorTriangle } from 'react-icons/tb';
 import type { MdxRuleDef } from '../../defineComponent';
 import { BaseBlockEditable } from '../BaseBlockEditable';
 import { MdxWidgetConfigDialog, type MdxConfigSpec } from '../MdxWidgetConfigDialog';
-import { EntityGraph } from './EntityGraph';
+import { MdxComponentPreview } from '../../MdxComponentPreview';
 import {
   normalizeEntityGraphDepth,
   normalizeEntityGraphDirection,
   type EntityGraphSlateElement,
   type EntityGraphWidgetConfig
 } from './types';
-import { EntityGraphConfigForm } from './EntityGraphConfigForm';
 
 export const ENTITY_GRAPH_TYPE = 'EntityGraph' as const;
 
@@ -54,7 +53,6 @@ export const entityGraphMdxConfigSpec: MdxConfigSpec<
   EntityGraphSlateElement,
   EntityGraphWidgetConfig
 > = {
-  title: 'Entity graph',
   width: 440,
   fromElement: el => ({
     entityId: el.entityId ?? '',
@@ -68,7 +66,6 @@ export const entityGraphMdxConfigSpec: MdxConfigSpec<
   }),
   defaultConfig: () => ({ entityId: '', depth: 1, direction: 'both' }),
   isValidConfig: config => !!config.entityId,
-  ConfigForm: EntityGraphConfigForm
 };
 
 export const EntityGraphEditable = ({
@@ -91,7 +88,12 @@ export const EntityGraphEditable = ({
           <span>Choose entity graph…</span>
         </>
       }
-      content={<EntityGraph id={entityId} depth={String(depth)} direction={direction} />}
+      content={
+        <MdxComponentPreview
+          type={ENTITY_GRAPH_TYPE}
+          props={{ id: entityId, depth: String(depth), direction }}
+        />
+      }
       dialog={(open, onClose) => (
         <MdxWidgetConfigDialog
           element={element}

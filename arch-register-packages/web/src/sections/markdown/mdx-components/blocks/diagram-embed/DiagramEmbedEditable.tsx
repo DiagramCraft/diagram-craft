@@ -4,7 +4,7 @@ import { parseAttributes, propsToAttributes } from '@platejs/markdown';
 import { TbChartLine } from 'react-icons/tb';
 import type { MdxRuleDef } from '../../defineComponent';
 import { BaseBlockEditable } from '../BaseBlockEditable';
-import { DiagramEmbed } from './DiagramEmbed';
+import { MdxComponentPreview } from '../../MdxComponentPreview';
 import { DiagramEmbedDialog } from './DiagramEmbedDialog';
 import type { DiagramEmbedSlateElement } from './types';
 
@@ -52,7 +52,9 @@ export const DiagramEmbedEditable = ({
           <span>Choose diagram…</span>
         </>
       }
-      content={<DiagramEmbed id={fileId} caption={caption ?? undefined} />}
+      content={
+        <MdxComponentPreview type={DIAGRAM_EMBED_TYPE} props={{ id: fileId, caption }} />
+      }
       dialog={(open, onClose) => (
         <DiagramEmbedDialog element={element} open={open} onClose={onClose} isNew={isNew} />
       )}

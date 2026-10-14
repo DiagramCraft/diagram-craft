@@ -12,7 +12,7 @@ import { useEntityDrawer } from '../../entities/entityDrawer/useEntityDrawer';
 import { buildFieldMatrixCells, type FieldMatrixBand } from './fieldMatrixLogic';
 import rowStyles from './WidgetRowList.module.css';
 import { TbGrid4X4 } from 'react-icons/tb';
-import type { DashboardWidgetSpec } from '../../markdown/mdx-components/types';
+import type { DashboardWidgetRegistrationSpec } from '../../markdown/mdx-components/types';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import configFormStyles from '../WidgetConfigDialog.module.css';
 
@@ -220,7 +220,7 @@ const isBand = (band: unknown): boolean => {
 };
 
 export const _fieldMatrixSpecData: Omit<
-  DashboardWidgetSpec<FieldMatrixWidgetConfig>,
+  DashboardWidgetRegistrationSpec<FieldMatrixWidgetConfig>,
   'label' | 'description'
 > = {
   icon: TbGrid4X4,
@@ -246,15 +246,17 @@ export const _fieldMatrixSpecData: Omit<
     (config.showFrame === undefined || typeof config.showFrame === 'boolean') &&
     (config.hotRowMin === undefined || typeof config.hotRowMin === 'number') &&
     isFieldMatrixConfigComplete(config as FieldMatrixWidgetConfig),
-  createDefaultConfig: () => ({
-    query: '',
-    rowFieldId: '',
-    rows: [3, 2, 1],
-    valueFieldId: '',
-    bands: [
-      { label: 'Low', min: 0, tone: 'good' },
-      { label: 'High', min: 3, tone: 'bad' }
-    ]
+  createDefaultProps: () => ({
+    config: {
+      query: '',
+      rowFieldId: '',
+      rows: [3, 2, 1],
+      valueFieldId: '',
+      bands: [
+        { label: 'Low', min: 0, tone: 'good' },
+        { label: 'High', min: 3, tone: 'bad' }
+      ]
+    }
   }),
   configForm: FieldMatrixConfigForm
 };

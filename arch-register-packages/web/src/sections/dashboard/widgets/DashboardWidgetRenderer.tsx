@@ -25,9 +25,15 @@ export const DashboardWidgetRenderer = ({ widget, isEditing = false, onEdit, onR
   const knownWidget = parsedWidget
     ? { ...parsedWidget, config: resolveConfigVariables(parsedWidget.config, sidebarVariables) }
     : null;
-  const dashboardWidget = knownWidget
-    ? getComponentDefinition(knownWidget.type, 'dashboardWidget')?.dashboardWidget
+  const definition = knownWidget
+    ? getComponentDefinition(knownWidget.type, 'dashboardWidget')
     : undefined;
+  const dashboardWidget = definition?.dashboardWidget;
+  const WidgetComponent = definition?.component;
+  const componentProps =
+    knownWidget && dashboardWidget
+      ? { config: knownWidget.config }
+      : undefined;
   const frame = resolveWidgetFrame(
     dashboardWidget,
     widget.frame,
@@ -57,9 +63,9 @@ export const DashboardWidgetRenderer = ({ widget, isEditing = false, onEdit, onR
       onEdit={onEdit}
       onRemove={onRemove}
     >
-      {knownWidget && dashboardWidget ? (
+      {knownWidget && dashboardWidget && WidgetComponent && componentProps ? (
         <WidgetBodyTitleProvider value={!frame.showFrame && !isEditing ? frame.title : undefined}>
-          <dashboardWidget.component config={knownWidget.config} />
+          <WidgetComponent {...componentProps} />
         </WidgetBodyTitleProvider>
       ) : (
         <div>

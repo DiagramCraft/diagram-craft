@@ -17,8 +17,8 @@ export default defineComponent<
   name: 'Entity chart',
   description:
     'A live chart of entities grouped by a field. Use it to show distribution, e.g. by lifecycle or owner.',
+  component: EntityChart,
   mdxComponent: {
-    component: EntityChart,
     mode: 'block',
     allowedProps: ['schema', 'owner', 'lifecycle', 'groupBy', 'type'],
     editorSpec: {

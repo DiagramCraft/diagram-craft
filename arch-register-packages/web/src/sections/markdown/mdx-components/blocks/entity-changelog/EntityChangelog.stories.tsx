@@ -105,7 +105,7 @@ type Story = StoryObj<typeof meta>;
 export const WikiEntityHistory: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
-      <EntityChangelog id={entityId} limit="10" />
+      <EntityChangelog config={{ entityId, limit: '10' }} />
     </StoryProviders>
   )
 };
@@ -113,7 +113,7 @@ export const WikiEntityHistory: Story = {
 export const WikiSchemaHistory: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
-      <EntityChangelog schema="service" limit="10" />
+      <EntityChangelog config={{ schema: 'service', limit: '10' }} />
     </StoryProviders>
   )
 };
@@ -121,7 +121,7 @@ export const WikiSchemaHistory: Story = {
 export const WikiNoFilter: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
-      <EntityChangelog />
+      <EntityChangelog config={{}} />
     </StoryProviders>
   )
 };

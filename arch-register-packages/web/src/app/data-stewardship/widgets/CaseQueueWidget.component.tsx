@@ -7,16 +7,16 @@ export default defineComponent({
   category: 'data-views',
   name: 'Case queue',
   description: 'Open governance cases, oldest deadline first, with derived priority.',
+  component: CaseQueueWidget,
+  createDefaultProps: () => ({ config: { ...DS_CASE_DEFAULTS, scope: 'mine' } }),
+  configForm: CaseConfigForm,
   dashboardWidget: {
     icon: TbClipboardCheck,
     defaultW: 12,
     defaultH: 22,
     surfaces: ['workspace'],
-    component: CaseQueueWidget,
     headerActionsComponent: CaseQueueHeaderActions,
     frame: { padded: false, showIcon: false },
     isValidConfig: isCaseConfig,
-    createDefaultConfig: () => ({ ...DS_CASE_DEFAULTS, scope: 'mine' }),
-    configForm: CaseConfigForm
   }
 });

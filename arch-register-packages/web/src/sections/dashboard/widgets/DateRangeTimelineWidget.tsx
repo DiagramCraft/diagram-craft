@@ -25,7 +25,7 @@ import { useRecordSublabels } from './useRecordSublabels';
 import rowStyles from './WidgetRowList.module.css';
 import styles from './DateRangeTimelineWidget.module.css';
 import { TbTimeline } from 'react-icons/tb';
-import type { DashboardWidgetSpec } from '../../markdown/mdx-components/types';
+import type { DashboardWidgetRegistrationSpec } from '../../markdown/mdx-components/types';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import configFormStyles from '../WidgetConfigDialog.module.css';
 
@@ -301,7 +301,7 @@ const optionalString = (value: unknown): boolean =>
   value === undefined || typeof value === 'string';
 
 export const _dateRangeTimelineSpecData: Omit<
-  DashboardWidgetSpec<DateRangeTimelineWidgetConfig>,
+  DashboardWidgetRegistrationSpec<DateRangeTimelineWidgetConfig>,
   'label' | 'description'
 > = {
   icon: TbTimeline,
@@ -322,6 +322,6 @@ export const _dateRangeTimelineSpecData: Omit<
     optionalString(config.markerOffsetFieldId) &&
     optionalString(config.markerWhenFieldId) &&
     isDateRangeTimelineConfigComplete(config as DateRangeTimelineWidgetConfig),
-  createDefaultConfig: () => ({ query: '', startFieldId: '', endFieldId: '' }),
+  createDefaultProps: () => ({ config: { query: '', startFieldId: '', endFieldId: '' } }),
   configForm: DateRangeTimelineConfigForm
 };

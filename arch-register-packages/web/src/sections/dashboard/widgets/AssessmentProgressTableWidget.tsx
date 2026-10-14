@@ -18,7 +18,7 @@ import {
 import { useSchemaAssessmentSummaries } from './useSchemaAssessmentSummaries';
 import styles from './AssessmentProgressTableWidget.module.css';
 import { TbChecklist } from 'react-icons/tb';
-import type { DashboardWidgetSpec } from '../../markdown/mdx-components/types';
+import type { DashboardWidgetRegistrationSpec } from '../../markdown/mdx-components/types';
 import { AssessmentSchemaConfigForm } from './AssessmentSchemaConfigForm';
 import { isAssessmentStatus } from './assessmentSummaryLogic';
 
@@ -149,7 +149,7 @@ export const ASSESSMENT_PROGRESS_TABLE_TYPE = 'AssessmentProgressTable' as const
  * (in-scope entities with a complete response), due date and derived status.
  */
 export const _assessmentProgressTableSpecData: Omit<
-  DashboardWidgetSpec<AssessmentProgressTableConfig>,
+  DashboardWidgetRegistrationSpec<AssessmentProgressTableConfig>,
   'label' | 'description'
 > = {
   icon: TbChecklist,
@@ -162,6 +162,6 @@ export const _assessmentProgressTableSpecData: Omit<
     typeof config.schemaName === 'string' &&
     config.schemaName.length > 0 &&
     (config.status === undefined || isAssessmentStatus(config.status)),
-  createDefaultConfig: () => ({ schemaName: '' }),
+  createDefaultProps: () => ({ config: { schemaName: '' } }),
   configForm: props => <AssessmentSchemaConfigForm {...props} statusRequired={false} />
 };

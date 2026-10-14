@@ -5,8 +5,7 @@ import { TbId } from 'react-icons/tb';
 import type { MdxRuleDef } from '../../defineComponent';
 import { BaseBlockEditable } from '../BaseBlockEditable';
 import { MdxWidgetConfigDialog, type MdxConfigSpec } from '../MdxWidgetConfigDialog';
-import { EntityCard } from './EntityCard';
-import { EntityCardConfigForm } from './EntityCardConfigForm';
+import { MdxComponentPreview } from '../../MdxComponentPreview';
 import type { EntityCardSlateElement, EntityCardWidgetConfig } from './types';
 
 export const ENTITY_CARD_TYPE = 'EntityCard' as const;
@@ -42,13 +41,11 @@ export const entityCardMdxConfigSpec: MdxConfigSpec<
   EntityCardSlateElement,
   EntityCardWidgetConfig
 > = {
-  title: 'Entity card',
   width: 440,
   fromElement: el => ({ entityId: el.entityId ?? '', fields: el.fields }),
   toElement: config => ({ entityId: config.entityId, fields: config.fields }),
   defaultConfig: () => ({ entityId: '' }),
   isValidConfig: config => !!config.entityId,
-  ConfigForm: EntityCardConfigForm
 };
 
 // ── Plate element ─────────────────────────────────────────────────────────────
@@ -72,7 +69,7 @@ export const EntityCardEditable = ({
           <span>Choose entity…</span>
         </>
       }
-      content={<EntityCard id={entityId} fields={fields} />}
+      content={<MdxComponentPreview type={ENTITY_CARD_TYPE} props={{ id: entityId, fields }} />}
       dialog={(open, onClose) => (
         <MdxWidgetConfigDialog
           element={element}

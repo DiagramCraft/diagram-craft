@@ -11,21 +11,23 @@ export default defineComponent({
   category: 'metrics',
   name: 'Case count',
   description: 'Number of open governance cases, filtered by scope and case kind.',
-  dashboardWidget: {
-    icon: TbAlertTriangle,
-    defaultW: 3,
-    defaultH: 5,
-    surfaces: ['workspace'],
-    component: CaseCountWidget,
-    frame: { hideOutsideEdit: true, padded: false, showIcon: false },
-    isValidConfig: isCaseCountConfig,
-    createDefaultConfig: () => ({
+  component: CaseCountWidget,
+  createDefaultProps: () => ({
+    config: {
       ...DS_CASE_DEFAULTS,
       scope: 'mine',
       tone: 'none',
       subtextTemplate: '{due} due within a week',
       dueWithinDays: 7
-    }),
-    configForm: CaseConfigForm
+    }
+  }),
+  configForm: CaseConfigForm,
+  dashboardWidget: {
+    icon: TbAlertTriangle,
+    defaultW: 3,
+    defaultH: 5,
+    surfaces: ['workspace'],
+    frame: { hideOutsideEdit: true, padded: false, showIcon: false },
+    isValidConfig: isCaseCountConfig,
   }
 });

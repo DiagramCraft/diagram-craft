@@ -1,3 +1,4 @@
+import { useParams } from '@tanstack/react-router';
 import { DiagramPicker } from '../../../../../components/DiagramPicker';
 import { DialogSection } from '../../../editor/BlockDialog';
 import { useContentTree, type ContentScope } from '../../../../../hooks/useContentScope';
@@ -9,23 +10,36 @@ type Props = {
   config: DiagramEmbedWidgetConfig;
   onChange: (config: DiagramEmbedWidgetConfig) => void;
   context: { mode: 'mdx' | 'dashboard'; workspaceSlug: string; projectId?: string };
+  showPicker?: boolean;
 };
 
-export const DiagramEmbedDashboardConfigForm = ({ config, onChange, context }: Props) => {
-  const scope: ContentScope = context.projectId
-    ? { kind: 'project', workspaceId: context.workspaceSlug, projectId: context.projectId }
-    : { kind: 'workspace', workspaceId: context.workspaceSlug };
+export const DiagramEmbedConfigForm = ({
+  config,
+  onChange,
+  context,
+  showPicker = true
+}: Props) => {
+  const params = useParams({ strict: false });
+  const projectId = context.projectId ?? params.projectId;
+  const entityId = context.mode === 'mdx' ? params.entityId : undefined;
+  const scope: ContentScope = projectId
+    ? { kind: 'project', workspaceId: context.workspaceSlug, projectId }
+    : entityId
+      ? { kind: 'entity', workspaceId: context.workspaceSlug, entityId }
+      : { kind: 'workspace', workspaceId: context.workspaceSlug };
   const { data: fileTree } = useContentTree(scope);
 
   return (
     <>
-      <DialogSection label="Diagram">
-        <DiagramPicker
-          fileTree={fileTree}
-          selectedId={config.fileId}
-          onSelect={(file: ProjectFile) => onChange({ ...config, fileId: file.id })}
-        />
-      </DialogSection>
+      {showPicker && (
+        <DialogSection label="Diagram">
+          <DiagramPicker
+            fileTree={fileTree}
+            selectedId={config.fileId}
+            onSelect={(file: ProjectFile) => onChange({ ...config, fileId: file.id })}
+          />
+        </DialogSection>
+      )}
       <DialogSection label="Caption" required={false}>
         <input
           type="text"

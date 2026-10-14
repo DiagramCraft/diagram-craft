@@ -8,17 +8,17 @@ export default defineComponent({
   name: 'API impact',
   description:
     'Blast radius (providers, direct consumers, second order) for the API selected in the dashboard sidebar.',
+  component: ApiCatalogImpactWidget,
+  createDefaultProps: () => ({ config: { entityId: '$apiEntityId' } }),
   dashboardWidget: {
     icon: TbAffiliate,
     defaultW: 12,
     defaultH: 30,
     surfaces: ['workspace'],
-    component: ApiCatalogImpactWidget,
     headerActionsComponent: ApiCatalogImpactHeaderActions,
     // BlastRadiusPanel owns its padding because it is also shared with the entity drawer.
     frame: { padded: false },
     isValidConfig: isValidImpactConfig,
-    createDefaultConfig: () => ({ entityId: '$apiEntityId' }),
     getTitle: () => 'Blast radius'
   }
 });

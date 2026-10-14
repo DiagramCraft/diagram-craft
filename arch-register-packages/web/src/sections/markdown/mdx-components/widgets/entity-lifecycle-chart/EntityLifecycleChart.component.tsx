@@ -10,13 +10,13 @@ export default defineComponent({
   category: 'visualizations',
   name: 'Lifecycle chart',
   description: 'Breakdown of entities by lifecycle state.',
+  component: EntityLifecycleChartWidget,
+  createDefaultProps: () => ({ config: {} }),
   dashboardWidget: {
     icon: TbChartDonut2,
     defaultW: 6,
     defaultH: 24,
     surfaces: ['workspace'],
-    component: EntityLifecycleChartWidget,
     isValidConfig: (_config): _config is Record<string, never> => true,
-    createDefaultConfig: () => ({})
   }
 });

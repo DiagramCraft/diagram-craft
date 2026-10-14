@@ -12,14 +12,14 @@ export default defineComponent({
   category: 'content-layout',
   name: 'Markdown',
   description: 'Display simple Markdown content on the dashboard.',
+  component: MarkdownWidget,
+  createDefaultProps: () => ({ config: { markdown: '' } }),
+  configForm: MarkdownDashboardConfigForm,
   dashboardWidget: {
     icon: TbMarkdown,
     defaultW: 6,
     defaultH: 16,
     surfaces: ['workspace', 'project'],
-    component: MarkdownWidget,
     isValidConfig: (config): config is MarkdownWidgetConfig => typeof config.markdown === 'string',
-    createDefaultConfig: () => ({ markdown: '' }),
-    configForm: MarkdownDashboardConfigForm
   }
 });

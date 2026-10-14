@@ -1,10 +1,11 @@
 import { TbVectorTriangle } from 'react-icons/tb';
 import { defineComponent } from '../../defineComponent';
 import { EntityGraph } from './EntityGraph';
-import { createDashboardWidgetAdapter } from '../../../../dashboard/widgets/createDashboardWidgetAdapter';
 import { ENTITY_GRAPH_TYPE, EntityGraphEditable, entityGraphMdxRule } from './EntityGraphEditable';
 import { EntityGraphConfigForm } from './EntityGraphConfigForm';
 import {
+  normalizeEntityGraphDepth,
+  normalizeEntityGraphDirection,
   normalizeEntityGraphProps,
   type EntityGraphSlateElement,
   type EntityGraphWidgetConfig
@@ -24,21 +25,23 @@ export default defineComponent<
     defaultW: 6,
     defaultH: 16,
     surfaces: ['workspace', 'project'],
-    component: createDashboardWidgetAdapter(EntityGraph, (config: EntityGraphWidgetConfig) => ({
-      id: config.entityId,
-      depth: config.depth != null ? String(config.depth) : undefined,
-      direction: config.direction
-    })),
     isValidConfig: (config): config is EntityGraphWidgetConfig =>
       typeof config.entityId === 'string' && config.entityId.length > 0,
-    createDefaultConfig: () => ({ entityId: '', depth: 1, direction: 'both' }),
-    configForm: EntityGraphConfigForm
   },
+  component: EntityGraph,
+  createDefaultProps: () => ({ config: { entityId: '', depth: 1, direction: 'both' } }),
+  configForm: EntityGraphConfigForm,
   mdxComponent: {
-    component: EntityGraph,
     mode: 'block',
     allowedProps: ['id', 'depth', 'direction'],
     normalizeProps: normalizeEntityGraphProps,
+    mapProps: props => ({
+      config: {
+        entityId: props.id ?? '',
+        depth: normalizeEntityGraphDepth(props.depth),
+        direction: normalizeEntityGraphDirection(props.direction)
+      }
+    }),
     editorSpec: {
       editableComponent: EntityGraphEditable,
       nodeOptions: { isVoid: true },

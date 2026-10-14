@@ -7,7 +7,7 @@ import styles from './AggregateStatWidget.module.css';
 import { useWidgetBodyTitle } from './WidgetBodyTitle';
 import { TbClipboardCheck } from 'react-icons/tb';
 import { Select } from '@diagram-craft/app-components/Select';
-import type { DashboardWidgetSpec } from '../../markdown/mdx-components/types';
+import type { DashboardWidgetRegistrationSpec } from '../../markdown/mdx-components/types';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import type { AssessmentWidgetMode } from './assessmentsWidgetLogic';
 import registrationStyles from '../WidgetConfigDialog.module.css';
@@ -156,7 +156,7 @@ const isOptionalString = (value: unknown): boolean =>
   value === undefined || typeof value === 'string';
 
 export const _assessmentCountSpecData: Omit<
-  DashboardWidgetSpec<AssessmentCountWidgetConfig>,
+  DashboardWidgetRegistrationSpec<AssessmentCountWidgetConfig>,
   'label' | 'description'
 > = {
   icon: TbClipboardCheck,
@@ -176,6 +176,6 @@ export const _assessmentCountSpecData: Omit<
         config.schemaNames.every(name => typeof name === 'string'))) &&
     (config.dueWithinDays === undefined || typeof config.dueWithinDays === 'number') &&
     isOptionalString(config.subtext),
-  createDefaultConfig: () => ({ mode: 'active' }),
+  createDefaultProps: () => ({ config: { mode: 'active' } }),
   configForm: AssessmentCountConfigForm
 };

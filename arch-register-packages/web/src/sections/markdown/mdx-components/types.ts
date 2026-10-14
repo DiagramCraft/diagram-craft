@@ -51,11 +51,6 @@ export type DashboardWidgetSpec<Config extends Record<string, unknown> = Record<
     defaultH: number;
     /** Which dashboard surfaces this widget may be added to. */
     surfaces: ReadonlyArray<WidgetSurface>;
-    /**
-     * Renders the widget body from persisted config. Distinct from the MDX
-     * `component` field, which takes flat string props authored in wiki markdown.
-     */
-    component: React.ComponentType<{ config: Config }>;
     /** Optional live title renderer for widgets whose title comes from fetched data. */
     titleComponent?: React.ComponentType<{ config: Config }>;
     /** Extra content (links, counts) at the right of the frame header, before the edit/remove controls. */
@@ -77,34 +72,40 @@ export type DashboardWidgetSpec<Config extends Record<string, unknown> = Record<
      * empty entity id), not just wrong types.
      */
     isValidConfig: (config: Record<string, unknown>) => config is Config;
-    createDefaultConfig: (context: { viewId?: string }) => Config;
     /** Per-instance title; falls back to `label` when omitted. */
     getTitle?: (config: Config) => string;
-    /**
-     * Renders this widget's config editor in the dashboard's WidgetConfigDialog.
-     * Omit for widgets with no configurable options.
-     */
-    configForm?: React.ComponentType<{
-      config: Config;
-      onChange: (config: Config) => void;
-      context: {
-        mode: 'mdx' | 'dashboard';
-        workspaceSlug: string;
-        projectId?: string;
-        surface: WidgetSurface;
-      };
-    }>;
     /** WidgetConfigDialog width override; defaults to 460. */
     dialogWidth?: number | string;
     /** `large` makes WidgetConfigDialog fill ~90% of the viewport (overrides dialogWidth). */
     dialogSize?: 'large';
   };
 
+/** Dashboard registration input before the shared component/form are hoisted. */
+export type DashboardWidgetRegistrationSpec<
+  Config extends Record<string, unknown> = Record<string, unknown>
+> = DashboardWidgetSpec<Config> & {
+  component?: React.ComponentType<{ config: Config }>;
+  createDefaultProps: (context: { viewId?: string }) => { config: Config };
+  configForm?: React.ComponentType<{
+    config: Config;
+    onChange: (config: Config) => void;
+    context: {
+      mode: 'mdx' | 'dashboard';
+      workspaceSlug: string;
+      projectId?: string;
+      surface: WidgetSurface;
+    };
+  }>;
+};
+
 export type MdxComponentSpec = {
-  /** Preview-mode React component */
-  component: React.ComponentType<Record<string, string>>;
   mode: 'block' | 'inline';
   allowedProps: ReadonlyArray<string>;
+  /** Adapts authored string attributes to the component's props using component defaults. */
+  mapProps?: (
+    props: Record<string, string>,
+    defaultProps: Record<string, unknown>
+  ) => Record<string, unknown>;
   /** Normalizes string props before they are exposed to the preview renderer. */
   normalizeProps?: (props: Record<string, string>) => Record<string, string>;
   /**
@@ -130,6 +131,14 @@ export type ComponentDefinition = {
   description: string;
   category: ComponentCategory;
   surfaces: ReadonlyArray<ComponentSurface>;
+  /** Shared renderer used by every surface that exposes this component. */
+  // biome-ignore lint/suspicious/noExplicitAny: component props are typed by each surface adapter
+  component: React.ComponentType<any>;
+  /** Creates fresh default props for the shared renderer. */
+  createDefaultProps?: (context: { viewId?: string }) => Record<string, unknown>;
+  /** Shared configuration form used by every surface that exposes this component. */
+  // biome-ignore lint/suspicious/noExplicitAny: config types are erased in the shared registry
+  configForm?: React.ComponentType<any>;
   /** Present for components rendered through the MDX preview pipeline. */
   mdx?: MdxComponentSpec;
   /** Present for components that can be added to a dashboard. */
@@ -141,4 +150,5 @@ export type MdxComponentDefinition = ComponentDefinition & { mdx: MdxComponentSp
 
 export type DashboardWidgetComponentDefinition = ComponentDefinition & {
   dashboardWidget: DashboardWidgetSpec;
+  createDefaultProps: (context: { viewId?: string }) => { config: Record<string, unknown> };
 };

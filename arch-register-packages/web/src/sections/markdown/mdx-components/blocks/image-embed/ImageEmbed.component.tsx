@@ -12,8 +12,8 @@ export default defineComponent<
   category: 'content-layout',
   name: 'Image',
   description: 'Embed an uploaded image attachment',
+  component: ImageEmbed,
   mdxComponent: {
-    component: ImageEmbed,
     mode: 'block',
     allowedProps: ['id', 'alt', 'size', 'align'],
     editorSpec: {

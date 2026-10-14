@@ -19,12 +19,22 @@ export default defineComponent({
   category: 'data-views',
   name: 'Needs attention queue',
   description: 'Open governance cases against entities of a chosen type, awaiting a decision.',
+  component: NeedsAttentionWidget,
+  createDefaultProps: () => ({
+    config: {
+      schema: '',
+      caseKinds: ['entity.change-case', 'entity.deprecation'],
+      scope: 'workspace',
+      severity: 'due-date',
+      limit: 8
+    }
+  }),
+  configForm: NeedsAttentionConfigForm,
   dashboardWidget: {
     icon: TbAlertTriangle,
     defaultW: 6,
     defaultH: 16,
     surfaces: ['workspace', 'project'],
-    component: NeedsAttentionWidget,
     frame: { padded: false, showIcon: false },
     isValidConfig: (config): config is NeedsAttentionWidgetConfig =>
       typeof config.schema === 'string' &&
@@ -34,13 +44,5 @@ export default defineComponent({
       isSeverity(config.severity) &&
       typeof config.limit === 'number' &&
       config.limit > 0,
-    createDefaultConfig: () => ({
-      schema: '',
-      caseKinds: ['entity.change-case', 'entity.deprecation'],
-      scope: 'workspace',
-      severity: 'due-date',
-      limit: 8
-    }),
-    configForm: NeedsAttentionConfigForm
   }
 });

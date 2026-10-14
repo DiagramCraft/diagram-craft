@@ -1,9 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { EntityBrowserEmbed } from './EntityBrowserEmbed';
-import {
-  encodeEntityBrowserEmbedConfig,
-  type EntityBrowserEmbedConfig
-} from './EntityBrowserEmbedCodec';
+import type { EntityBrowserEmbedConfig } from './EntityBrowserEmbedCodec';
 import {
   StoryProviders,
   WORKSPACE,
@@ -22,7 +19,6 @@ const browserConfig: EntityBrowserEmbedConfig = {
   viewConfigs: {},
   projectScope: 'all'
 };
-const encodedConfig = encodeEntityBrowserEmbedConfig(browserConfig);
 const entityQueryOptions = {
   schemaId: null,
   owner: null,
@@ -98,7 +94,7 @@ type Story = StoryObj<typeof meta>;
 export const WikiFiltered: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
-      <EntityBrowserEmbed config={encodedConfig} />
+      <EntityBrowserEmbed config={browserConfig} />
     </StoryProviders>
   )
 };
@@ -106,7 +102,7 @@ export const WikiFiltered: Story = {
 export const WikiNoViewConfigured: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
-      <EntityBrowserEmbed />
+      <EntityBrowserEmbed config={browserConfig} />
     </StoryProviders>
   )
 };
@@ -114,9 +110,7 @@ export const WikiNoViewConfigured: Story = {
 export const WikiInteractive: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
-      <EntityBrowserEmbed
-        config={encodeEntityBrowserEmbedConfig({ ...browserConfig, interactive: true })}
-      />
+      <EntityBrowserEmbed config={{ ...browserConfig, interactive: true }} />
     </StoryProviders>
   )
 };

@@ -7,14 +7,14 @@ export default defineComponent({
   category: 'metrics',
   name: 'Reviews overdue',
   description: 'Datasets whose scheduled review date has passed.',
+  component: ReviewsOverdueWidget,
+  createDefaultProps: () => ({ config: { subtextTemplate: 'scheduled review date passed' } }),
   dashboardWidget: {
     icon: TbListCheck,
     defaultW: 3,
     defaultH: 5,
     surfaces: ['workspace'],
-    component: ReviewsOverdueWidget,
     frame: { hideOutsideEdit: true, padded: false, showIcon: false },
     isValidConfig: isReviewsOverdueConfig,
-    createDefaultConfig: () => ({ subtextTemplate: 'scheduled review date passed' })
   }
 });

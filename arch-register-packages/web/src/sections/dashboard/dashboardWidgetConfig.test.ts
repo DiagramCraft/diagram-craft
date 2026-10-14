@@ -522,15 +522,16 @@ describe('parseKnownDashboardWidget', () => {
     ];
 
     for (const { type, title, config, width, height, hasForm } of pilotWidgets) {
-      const spec = getComponentDefinition(type, 'dashboardWidget')?.dashboardWidget;
+      const definition = getComponentDefinition(type, 'dashboardWidget');
+      const spec = definition?.dashboardWidget;
       expect(spec).toBeDefined();
       expect(spec?.surfaces).toEqual(['workspace']);
       expect(spec?.icon).toBeDefined();
       expect(spec?.label).toBe(title);
       expect(spec?.defaultW).toBe(width);
       expect(spec?.defaultH).toBe(height);
-      expect(spec?.configForm !== undefined).toBe(hasForm);
-      expect(spec?.createDefaultConfig({})).toEqual(config);
+      expect(definition?.configForm !== undefined).toBe(hasForm);
+      expect(definition?.createDefaultProps({}).config).toEqual(config);
       expect(spec?.isValidConfig(config)).toBe(true);
       expect(getWidgetTitle({ id: type, type, config, x: 0, y: 0, w: 6, h: 4 })).toBe(title);
       expect(

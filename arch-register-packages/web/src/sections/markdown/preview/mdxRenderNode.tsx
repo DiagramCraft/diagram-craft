@@ -1,14 +1,15 @@
 import React, { type ReactNode } from 'react';
 import { type ASTNode } from '@diagram-craft/markdown';
-import { getMdxSpecsForSurface } from '../mdx-components/componentRegistry';
+import { getMdxComponentDefinitionsForSurface } from '../mdx-components/componentRegistry';
+import { MdxComponentPreview } from '../mdx-components/MdxComponentPreview';
 
 // This renderer is used only for wiki content, so components that opt out of
 // the 'wiki' surface (e.g. dashboard-only widgets) must never render here,
 // even if a stored/persisted AST node still names one.
-let wikiMdxComponents: ReturnType<typeof getMdxSpecsForSurface> | undefined;
+let wikiMdxComponents: ReturnType<typeof getMdxComponentDefinitionsForSurface> | undefined;
 
 const getWikiMdxComponents = () => {
-  wikiMdxComponents ??= getMdxSpecsForSurface('wiki');
+  wikiMdxComponents ??= getMdxComponentDefinitionsForSurface('wiki');
   return wikiMdxComponents;
 };
 
@@ -111,17 +112,10 @@ const renderNode = (node: ASTNode, key: string, ctx?: RenderCtx): ReactNode[] =>
       return renderLiteral(node.value, key, ctx);
 
     case 'component': {
-      const spec = getWikiMdxComponents()[node.name];
-      if (!spec) return [];
-      const Component = spec.component as unknown as React.ComponentType<
-        Record<string, unknown> & { children?: ReactNode }
-      >;
+      const definition = getWikiMdxComponents()[node.name];
+      if (!definition) return [];
       const kids = node.children?.length ? renderNodes(node.children, key, ctx) : undefined;
-      return [
-        <Component key={key} {...node.props}>
-          {kids}
-        </Component>
-      ];
+      return [<MdxComponentPreview key={key} type={node.name} props={node.props}>{kids}</MdxComponentPreview>];
     }
 
     case 'heading': {

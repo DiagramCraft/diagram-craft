@@ -1,7 +1,6 @@
 import { TbId } from 'react-icons/tb';
 import { defineComponent } from '../../defineComponent';
 import { EntityCard } from './EntityCard';
-import { createDashboardWidgetAdapter } from '../../../../dashboard/widgets/createDashboardWidgetAdapter';
 import { ENTITY_CARD_TYPE, EntityCardEditable, entityCardMdxRule } from './EntityCardEditable';
 import { EntityCardConfigForm } from './EntityCardConfigForm';
 import type { EntityCardSlateElement, EntityCardWidgetConfig } from './types';
@@ -19,21 +18,20 @@ export default defineComponent<EntityCardSlateElement, { id: string; fields?: st
     defaultW: 3,
     defaultH: 8,
     surfaces: ['workspace', 'project'],
-    component: createDashboardWidgetAdapter(EntityCard, (config: EntityCardWidgetConfig) => ({
-      id: config.entityId,
-      fields: config.fields
-    })),
     isValidConfig: (config): config is EntityCardWidgetConfig =>
       typeof config.entityId === 'string' &&
       config.entityId.length > 0 &&
       hasOptionalString(config, 'fields'),
-    createDefaultConfig: () => ({ entityId: '' }),
-    configForm: EntityCardConfigForm
   },
+  component: EntityCard,
+  createDefaultProps: () => ({ config: { entityId: '' } }),
+  configForm: EntityCardConfigForm,
   mdxComponent: {
-    component: EntityCard,
     mode: 'block',
     allowedProps: ['id', 'fields'],
+    mapProps: props => ({
+      config: { entityId: props.id ?? '', fields: props.fields }
+    }),
     editorSpec: {
       editableComponent: EntityCardEditable,
       nodeOptions: { isVoid: true },

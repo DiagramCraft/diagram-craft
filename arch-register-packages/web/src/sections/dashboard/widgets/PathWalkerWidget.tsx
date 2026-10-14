@@ -6,7 +6,7 @@ import { PathWalkerView } from '../../entities/components/PathWalkerView';
 import type { BrowserEntityRecord } from '../../entities/components/entityBrowserState';
 import styles from './PathWalkerWidget.module.css';
 import { TbArrowsSplit2 } from 'react-icons/tb';
-import type { DashboardWidgetSpec } from '../../markdown/mdx-components/types';
+import type { DashboardWidgetRegistrationSpec } from '../../markdown/mdx-components/types';
 import type { PathStep } from '@arch-register/api-types/entityQueryIR';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
 import { pathStepKey } from '../../entities/components/pathBuilder/pathBuilderState';
@@ -135,7 +135,7 @@ export const PathWalkerConfigForm = ({ config, onChange }: PathWalkerConfigFormP
 export const PATH_WALKER_TYPE = 'PathWalker' as const;
 
 export const _pathWalkerSpecData: Omit<
-  DashboardWidgetSpec<PathWalkerWidgetConfig>,
+  DashboardWidgetRegistrationSpec<PathWalkerWidgetConfig>,
   'label' | 'description'
 > = {
   icon: TbArrowsSplit2,
@@ -145,6 +145,6 @@ export const _pathWalkerSpecData: Omit<
   component: PathWalkerWidget,
   isValidConfig: (config): config is PathWalkerWidgetConfig =>
     isPathWalkerConfigValid(config) && isPathWalkerConfigComplete(config as PathWalkerWidgetConfig),
-  createDefaultConfig: () => ({ rootSchemaName: '' }),
+  createDefaultProps: () => ({ config: { rootSchemaName: '' } }),
   configForm: PathWalkerConfigForm
 };

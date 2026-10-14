@@ -9,10 +9,10 @@ import type { EntityActivityTrendChartProps } from './types';
 
 const DEFAULT_STALE_AFTER_DAYS = 90;
 
-export const EntityActivityTrendChart = ({ lookbackDays }: EntityActivityTrendChartProps) => {
+export const EntityActivityTrendChart = ({ config }: { config: EntityActivityTrendChartProps }) => {
   const navigate = useNavigate();
   const { workspaceSlug } = useWorkspaceContext();
-  const initialWindowDays = lookbackDays === 90 ? 90 : 30;
+  const initialWindowDays = config.lookbackDays === 90 ? 90 : 30;
 
   const {
     data: analytics,

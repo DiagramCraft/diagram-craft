@@ -5,8 +5,7 @@ import { TbTable } from 'react-icons/tb';
 import type { MdxRuleDef } from '../../defineComponent';
 import { BaseBlockEditable } from '../BaseBlockEditable';
 import { MdxWidgetConfigDialog, type MdxConfigSpec } from '../MdxWidgetConfigDialog';
-import { EntityTable } from './EntityTable';
-import { EntityTableConfigForm } from './EntityTableConfigForm';
+import { MdxComponentPreview } from '../../MdxComponentPreview';
 import type { EntityTableSlateElement, EntityTableWidgetConfig } from './types';
 
 export const ENTITY_TABLE_TYPE = 'EntityTable' as const;
@@ -45,7 +44,6 @@ export const entityTableMdxConfigSpec: MdxConfigSpec<
   EntityTableSlateElement,
   EntityTableWidgetConfig
 > = {
-  title: 'Entity table',
   width: 460,
   fromElement: el => ({
     schema: el.schema,
@@ -61,7 +59,6 @@ export const entityTableMdxConfigSpec: MdxConfigSpec<
   }),
   defaultConfig: () => ({}),
   isValidConfig: () => true,
-  ConfigForm: EntityTableConfigForm
 };
 
 export const EntityTableEditable = ({
@@ -87,11 +84,9 @@ export const EntityTableEditable = ({
         </>
       }
       content={
-        <EntityTable
-          schema={schema === '' ? undefined : schema}
-          owner={owner === '' ? undefined : owner}
-          lifecycle={lifecycle === '' ? undefined : lifecycle}
-          limit={limit === '' ? undefined : limit}
+        <MdxComponentPreview
+          type={ENTITY_TABLE_TYPE}
+          props={{ schema, owner, lifecycle, limit }}
         />
       }
       dialog={(open, onClose) => (
