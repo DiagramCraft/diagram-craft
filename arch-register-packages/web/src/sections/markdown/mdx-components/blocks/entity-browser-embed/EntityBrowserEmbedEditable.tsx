@@ -1,8 +1,7 @@
 import { type PlateElementProps } from 'platejs/react';
 import { defineLeafMdxRule } from '../../leafMdxRule';
-import { BaseBlockEditable } from '../BaseBlockEditable';
-import { MdxWidgetConfigDialog, type MdxConfigSpec } from '../MdxWidgetConfigDialog';
-import { MdxComponentPreview } from '../../MdxComponentPreview';
+import { ConfigurableBlockEditable } from '../ConfigurableBlockEditable';
+import type { MdxConfigSpec } from '../MdxWidgetConfigDialog';
 import type { ComponentDefinition } from '../../componentRegistry';
 import {
   createDefaultEntityBrowserEmbedConfig,
@@ -50,33 +49,16 @@ export const entityBrowserEmbedMdxConfigSpec: MdxConfigSpec<
   defaultConfig: (context, definition) => emptyConfig(context, definition)
 };
 
-export const EntityBrowserEmbedEditable = ({
-  element,
-  children,
-  ...props
-}: PlateElementProps<EntityBrowserEmbedSlateElement>) => {
-  const config = element.config ?? '';
-  const hasValue = !!config;
-
-  return (
-    <BaseBlockEditable
-      element={element}
-      hasValue={hasValue}
-      fullWidth
-      placeholder={<span>Configure an entity browser…</span>}
-      content={<MdxComponentPreview type={ENTITY_BROWSER_EMBED_TYPE} props={{ config }} />}
-      dialog={(open, onClose) => (
-        <MdxWidgetConfigDialog
-          element={element}
-          open={open}
-          onClose={onClose}
-          isNew={!hasValue}
-          spec={entityBrowserEmbedMdxConfigSpec}
-        />
-      )}
-      {...props}
-    >
-      {children}
-    </BaseBlockEditable>
-  );
-};
+export const EntityBrowserEmbedEditable = (
+  props: PlateElementProps<EntityBrowserEmbedSlateElement>
+) => (
+  <ConfigurableBlockEditable
+    {...props}
+    componentType={ENTITY_BROWSER_EMBED_TYPE}
+    placeholder="Configure an entity browser…"
+    fullWidth
+    configSpec={entityBrowserEmbedMdxConfigSpec}
+    hasValue={el => !!el.config}
+    previewProps={el => ({ config: el.config ?? '' })}
+  />
+);

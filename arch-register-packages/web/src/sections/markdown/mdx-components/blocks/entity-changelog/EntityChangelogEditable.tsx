@@ -1,8 +1,7 @@
 import { type PlateElementProps } from 'platejs/react';
 import { defineLeafMdxRule } from '../../leafMdxRule';
-import { BaseBlockEditable } from '../BaseBlockEditable';
-import { MdxWidgetConfigDialog, type MdxConfigSpec } from '../MdxWidgetConfigDialog';
-import { MdxComponentPreview } from '../../MdxComponentPreview';
+import { ConfigurableBlockEditable } from '../ConfigurableBlockEditable';
+import type { MdxConfigSpec } from '../MdxWidgetConfigDialog';
 import type { EntityChangelogSlateElement, EntityChangelogWidgetConfig } from './types';
 
 export const ENTITY_CHANGELOG_TYPE = 'EntityChangelog' as const;
@@ -43,52 +42,21 @@ export const entityChangelogMdxConfigSpec: MdxConfigSpec<
   })
 };
 
-export const EntityChangelogEditable = ({
-  element,
-  children,
-  ...props
-}: PlateElementProps<EntityChangelogSlateElement>) => {
-  const entityId = element.entityId ?? '';
-  const schema = element.schema ?? '';
-  const owner = element.owner ?? '';
-  const lifecycle = element.lifecycle ?? '';
-  const limit = element.limit ?? '';
-  const since = element.since ?? '';
-
-  const hasValue = !!(entityId || schema || owner || lifecycle);
-  const isNew = !hasValue;
-
-  return (
-    <BaseBlockEditable
-      element={element}
-      hasValue={hasValue}
-      fullWidth
-      placeholder={<span>Configure entity changelog…</span>}
-      content={
-        <MdxComponentPreview
-          type={ENTITY_CHANGELOG_TYPE}
-          props={{
-            id: entityId ?? '',
-            schema: schema ?? '',
-            owner: owner ?? '',
-            lifecycle: lifecycle ?? '',
-            limit: limit ?? '',
-            since: since ?? ''
-          }}
-        />
-      }
-      dialog={(open, onClose) => (
-        <MdxWidgetConfigDialog
-          element={element}
-          open={open}
-          onClose={onClose}
-          isNew={isNew}
-          spec={entityChangelogMdxConfigSpec}
-        />
-      )}
-      {...props}
-    >
-      {children}
-    </BaseBlockEditable>
-  );
-};
+export const EntityChangelogEditable = (props: PlateElementProps<EntityChangelogSlateElement>) => (
+  <ConfigurableBlockEditable
+    {...props}
+    componentType={ENTITY_CHANGELOG_TYPE}
+    placeholder="Configure entity changelog…"
+    fullWidth
+    configSpec={entityChangelogMdxConfigSpec}
+    hasValue={el => !!(el.entityId || el.schema || el.owner || el.lifecycle)}
+    previewProps={el => ({
+      id: el.entityId ?? '',
+      schema: el.schema ?? '',
+      owner: el.owner ?? '',
+      lifecycle: el.lifecycle ?? '',
+      limit: el.limit ?? '',
+      since: el.since ?? ''
+    })}
+  />
+);

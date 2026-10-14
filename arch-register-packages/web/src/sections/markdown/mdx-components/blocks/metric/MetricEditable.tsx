@@ -3,9 +3,8 @@ import { getPluginType } from 'platejs';
 import { parseAttributes, propsToAttributes } from '@platejs/markdown';
 import { readStringAttr } from '../../leafMdxRule';
 import type { MdxRuleDef } from '../../types';
-import { BaseBlockEditable } from '../BaseBlockEditable';
-import { MdxWidgetConfigDialog, type MdxConfigSpec } from '../MdxWidgetConfigDialog';
-import { MdxComponentPreview } from '../../MdxComponentPreview';
+import { ConfigurableBlockEditable } from '../ConfigurableBlockEditable';
+import type { MdxConfigSpec } from '../MdxWidgetConfigDialog';
 import type { MetricSlateElement, StatMetricWidgetConfig } from './types';
 
 export const METRIC_TYPE = 'Metric' as const;
@@ -61,48 +60,20 @@ export const metricMdxConfigSpec: MdxConfigSpec<MetricSlateElement, StatMetricWi
   })
 };
 
-export const MetricEditable = ({
-  element,
-  children,
-  ...props
-}: PlateElementProps<MetricSlateElement>) => {
-  const schema = element.schema ?? '';
-  const owner = element.owner ?? '';
-  const lifecycle = element.lifecycle ?? '';
-  const label = element.label ?? '';
-  const metricType = element.metricType;
-  const hasValue = !!(schema || owner || lifecycle || label || metricType);
-
-  return (
-    <BaseBlockEditable
-      element={element}
-      hasValue={hasValue}
-      placeholder={<span>Configure metric…</span>}
-      content={
-        <MdxComponentPreview
-          type={METRIC_TYPE}
-          props={{
-            schema,
-            owner,
-            lifecycle,
-            label,
-            metricType: metricType ?? '',
-            showLink: element.showLink === undefined ? '' : String(element.showLink)
-          }}
-        />
-      }
-      dialog={(open, onClose) => (
-        <MdxWidgetConfigDialog
-          element={element}
-          open={open}
-          onClose={onClose}
-          isNew={!hasValue}
-          spec={metricMdxConfigSpec}
-        />
-      )}
-      {...props}
-    >
-      {children}
-    </BaseBlockEditable>
-  );
-};
+export const MetricEditable = (props: PlateElementProps<MetricSlateElement>) => (
+  <ConfigurableBlockEditable
+    {...props}
+    componentType={METRIC_TYPE}
+    placeholder="Configure metric…"
+    configSpec={metricMdxConfigSpec}
+    hasValue={el => !!(el.schema || el.owner || el.lifecycle || el.label || el.metricType)}
+    previewProps={el => ({
+      schema: el.schema ?? '',
+      owner: el.owner ?? '',
+      lifecycle: el.lifecycle ?? '',
+      label: el.label ?? '',
+      metricType: el.metricType ?? '',
+      showLink: el.showLink === undefined ? '' : String(el.showLink)
+    })}
+  />
+);

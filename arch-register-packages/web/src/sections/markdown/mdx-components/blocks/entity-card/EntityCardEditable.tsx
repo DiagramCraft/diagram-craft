@@ -1,8 +1,7 @@
 import { type PlateElementProps } from 'platejs/react';
 import { defineLeafMdxRule } from '../../leafMdxRule';
-import { BaseBlockEditable } from '../BaseBlockEditable';
-import { MdxWidgetConfigDialog, type MdxConfigSpec } from '../MdxWidgetConfigDialog';
-import { MdxComponentPreview } from '../../MdxComponentPreview';
+import { ConfigurableBlockEditable } from '../ConfigurableBlockEditable';
+import type { MdxConfigSpec } from '../MdxWidgetConfigDialog';
 import type { EntityCardSlateElement, EntityCardWidgetConfig } from './types';
 
 export const ENTITY_CARD_TYPE = 'EntityCard' as const;
@@ -28,33 +27,13 @@ export const entityCardMdxConfigSpec: MdxConfigSpec<
 
 // ── Plate element ─────────────────────────────────────────────────────────────
 
-export const EntityCardEditable = ({
-  element,
-  children,
-  ...props
-}: PlateElementProps<EntityCardSlateElement>) => {
-  const entityId = element.entityId ?? '';
-  const fields = element.fields ?? '';
-  const isNew = !entityId;
-
-  return (
-    <BaseBlockEditable
-      element={element}
-      hasValue={!!entityId}
-      placeholder={<span>Choose entity…</span>}
-      content={<MdxComponentPreview type={ENTITY_CARD_TYPE} props={{ id: entityId, fields }} />}
-      dialog={(open, onClose) => (
-        <MdxWidgetConfigDialog
-          element={element}
-          open={open}
-          onClose={onClose}
-          isNew={isNew}
-          spec={entityCardMdxConfigSpec}
-        />
-      )}
-      {...props}
-    >
-      {children}
-    </BaseBlockEditable>
-  );
-};
+export const EntityCardEditable = (props: PlateElementProps<EntityCardSlateElement>) => (
+  <ConfigurableBlockEditable
+    {...props}
+    componentType={ENTITY_CARD_TYPE}
+    placeholder="Choose entity…"
+    configSpec={entityCardMdxConfigSpec}
+    hasValue={el => !!el.entityId}
+    previewProps={el => ({ id: el.entityId ?? '', fields: el.fields ?? '' })}
+  />
+);

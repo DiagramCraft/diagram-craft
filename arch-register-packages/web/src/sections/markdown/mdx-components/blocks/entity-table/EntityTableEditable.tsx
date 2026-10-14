@@ -1,8 +1,7 @@
 import { type PlateElementProps } from 'platejs/react';
 import { defineLeafMdxRule } from '../../leafMdxRule';
-import { BaseBlockEditable } from '../BaseBlockEditable';
-import { MdxWidgetConfigDialog, type MdxConfigSpec } from '../MdxWidgetConfigDialog';
-import { MdxComponentPreview } from '../../MdxComponentPreview';
+import { ConfigurableBlockEditable } from '../ConfigurableBlockEditable';
+import type { MdxConfigSpec } from '../MdxWidgetConfigDialog';
 import type { EntityTableSlateElement, EntityTableWidgetConfig } from './types';
 
 export const ENTITY_TABLE_TYPE = 'EntityTable' as const;
@@ -32,38 +31,19 @@ export const entityTableMdxConfigSpec: MdxConfigSpec<
   })
 };
 
-export const EntityTableEditable = ({
-  element,
-  children,
-  ...props
-}: PlateElementProps<EntityTableSlateElement>) => {
-  const schema = element.schema ?? '';
-  const owner = element.owner ?? '';
-  const lifecycle = element.lifecycle ?? '';
-  const limit = element.limit ?? '';
-  const hasValue = !!(schema || owner || lifecycle);
-
-  return (
-    <BaseBlockEditable
-      element={element}
-      hasValue={hasValue}
-      fullWidth
-      placeholder={<span>Configure entity table…</span>}
-      content={
-        <MdxComponentPreview type={ENTITY_TABLE_TYPE} props={{ schema, owner, lifecycle, limit }} />
-      }
-      dialog={(open, onClose) => (
-        <MdxWidgetConfigDialog
-          element={element}
-          open={open}
-          onClose={onClose}
-          isNew={!hasValue}
-          spec={entityTableMdxConfigSpec}
-        />
-      )}
-      {...props}
-    >
-      {children}
-    </BaseBlockEditable>
-  );
-};
+export const EntityTableEditable = (props: PlateElementProps<EntityTableSlateElement>) => (
+  <ConfigurableBlockEditable
+    {...props}
+    componentType={ENTITY_TABLE_TYPE}
+    placeholder="Configure entity table…"
+    fullWidth
+    configSpec={entityTableMdxConfigSpec}
+    hasValue={el => !!(el.schema || el.owner || el.lifecycle)}
+    previewProps={el => ({
+      schema: el.schema ?? '',
+      owner: el.owner ?? '',
+      lifecycle: el.lifecycle ?? '',
+      limit: el.limit ?? ''
+    })}
+  />
+);

@@ -1,8 +1,7 @@
 import { type PlateElementProps } from 'platejs/react';
 import { defineLeafMdxRule } from '../../leafMdxRule';
-import { BaseBlockEditable } from '../BaseBlockEditable';
-import { MdxWidgetConfigDialog, type MdxConfigSpec } from '../MdxWidgetConfigDialog';
-import { MdxComponentPreview } from '../../MdxComponentPreview';
+import { ConfigurableBlockEditable } from '../ConfigurableBlockEditable';
+import type { MdxConfigSpec } from '../MdxWidgetConfigDialog';
 import type { EntityViewEmbedSlateElement, SavedViewEmbedWidgetConfig } from './types';
 
 export const ENTITY_VIEW_EMBED_TYPE = 'EntityViewEmbed' as const;
@@ -22,33 +21,14 @@ export const entityViewEmbedMdxConfigSpec: MdxConfigSpec<
   toElement: config => ({ viewId: config.viewId })
 };
 
-export const EntityViewEmbedEditable = ({
-  element,
-  children,
-  ...props
-}: PlateElementProps<EntityViewEmbedSlateElement>) => {
-  const viewId = element.viewId ?? '';
-  const hasValue = !!viewId;
-
-  return (
-    <BaseBlockEditable
-      element={element}
-      hasValue={hasValue}
-      fullWidth
-      placeholder={<span>Select a saved view…</span>}
-      content={<MdxComponentPreview type={ENTITY_VIEW_EMBED_TYPE} props={{ viewId }} />}
-      dialog={(open, onClose) => (
-        <MdxWidgetConfigDialog
-          element={element}
-          open={open}
-          onClose={onClose}
-          isNew={!hasValue}
-          spec={entityViewEmbedMdxConfigSpec}
-        />
-      )}
-      {...props}
-    >
-      {children}
-    </BaseBlockEditable>
-  );
-};
+export const EntityViewEmbedEditable = (props: PlateElementProps<EntityViewEmbedSlateElement>) => (
+  <ConfigurableBlockEditable
+    {...props}
+    componentType={ENTITY_VIEW_EMBED_TYPE}
+    placeholder="Select a saved view…"
+    fullWidth
+    configSpec={entityViewEmbedMdxConfigSpec}
+    hasValue={el => !!el.viewId}
+    previewProps={el => ({ viewId: el.viewId ?? '' })}
+  />
+);

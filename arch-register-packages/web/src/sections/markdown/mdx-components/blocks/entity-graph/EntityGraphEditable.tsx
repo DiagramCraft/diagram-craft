@@ -2,9 +2,8 @@ import { type PlateElementProps } from 'platejs/react';
 import { getPluginType } from 'platejs';
 import { parseAttributes, propsToAttributes } from '@platejs/markdown';
 import type { MdxRuleDef } from '../../types';
-import { BaseBlockEditable } from '../BaseBlockEditable';
-import { MdxWidgetConfigDialog, type MdxConfigSpec } from '../MdxWidgetConfigDialog';
-import { MdxComponentPreview } from '../../MdxComponentPreview';
+import { ConfigurableBlockEditable } from '../ConfigurableBlockEditable';
+import type { MdxConfigSpec } from '../MdxWidgetConfigDialog';
 import {
   normalizeEntityGraphDepth,
   normalizeEntityGraphDirection,
@@ -65,39 +64,18 @@ export const entityGraphMdxConfigSpec: MdxConfigSpec<
   })
 };
 
-export const EntityGraphEditable = ({
-  element,
-  children,
-  ...props
-}: PlateElementProps<EntityGraphSlateElement>) => {
-  const entityId = element.entityId ?? '';
-  const depth = normalizeEntityGraphDepth(element.depth);
-  const direction = normalizeEntityGraphDirection(element.direction);
-
-  return (
-    <BaseBlockEditable
-      element={element}
-      hasValue={!!entityId}
-      fullWidth
-      placeholder={<span>Choose entity graph…</span>}
-      content={
-        <MdxComponentPreview
-          type={ENTITY_GRAPH_TYPE}
-          props={{ id: entityId, depth: String(depth), direction }}
-        />
-      }
-      dialog={(open, onClose) => (
-        <MdxWidgetConfigDialog
-          element={element}
-          open={open}
-          onClose={onClose}
-          isNew={!entityId}
-          spec={entityGraphMdxConfigSpec}
-        />
-      )}
-      {...props}
-    >
-      {children}
-    </BaseBlockEditable>
-  );
-};
+export const EntityGraphEditable = (props: PlateElementProps<EntityGraphSlateElement>) => (
+  <ConfigurableBlockEditable
+    {...props}
+    componentType={ENTITY_GRAPH_TYPE}
+    placeholder="Choose entity graph…"
+    fullWidth
+    configSpec={entityGraphMdxConfigSpec}
+    hasValue={el => !!el.entityId}
+    previewProps={el => ({
+      id: el.entityId ?? '',
+      depth: String(normalizeEntityGraphDepth(el.depth)),
+      direction: normalizeEntityGraphDirection(el.direction)
+    })}
+  />
+);
