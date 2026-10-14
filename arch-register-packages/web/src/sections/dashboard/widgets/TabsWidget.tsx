@@ -191,7 +191,6 @@ export const _tabsSpecData: Omit<DashboardWidgetSpec<TabsWidgetConfig>, 'label' 
       return !!spec && spec.isValidConfig(child.config);
     }),
   createDefaultConfig: () => ({ tabs: [createTab([], 'Tab')] }),
-  getTitle: () => 'Tabs',
   configForm: TabsConfigForm,
   dialogSize: 'large'
 };

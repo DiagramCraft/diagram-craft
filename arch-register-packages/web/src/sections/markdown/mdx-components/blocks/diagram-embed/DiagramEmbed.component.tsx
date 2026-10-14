@@ -30,7 +30,6 @@ export default defineComponent<DiagramEmbedSlateElement, { id: string; caption?:
         config.fileId.length > 0 &&
         (config.caption === undefined || typeof config.caption === 'string'),
       createDefaultConfig: () => ({ fileId: '' }),
-      getTitle: () => 'Diagram',
       configForm: DiagramEmbedDashboardConfigForm
     },
     mdxComponent: {

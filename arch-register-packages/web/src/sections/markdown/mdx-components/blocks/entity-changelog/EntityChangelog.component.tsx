@@ -54,7 +54,6 @@ export default defineComponent<
       hasOptionalString(config, 'since') &&
       !!(config.entityId || config.schema || config.owner || config.lifecycle),
     createDefaultConfig: () => ({ since: '30d', limit: '10' }),
-    getTitle: () => 'Entity changelog',
     configForm: EntityChangelogConfigForm
   },
   mdxComponent: {

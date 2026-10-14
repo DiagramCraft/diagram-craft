@@ -17,7 +17,6 @@ export default defineComponent({
     frame: { padded: false, showIcon: false },
     isValidConfig: isCaseConfig,
     createDefaultConfig: () => ({ ...DS_CASE_DEFAULTS, scope: 'mine' }),
-    getTitle: () => 'Next six weeks',
     configForm: CaseConfigForm
   }
 });

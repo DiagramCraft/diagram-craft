@@ -45,7 +45,6 @@ export default defineComponent<DocumentBrowserEmbedSlateElement, { config?: stri
       visibleBaseColumnIds: [...DOCUMENT_BROWSER_BASE_COLUMN_IDS],
       visibleFieldIds: []
     }),
-    getTitle: () => 'Document browser',
     configForm: DocumentBrowserEmbedConfigForm,
     dialogWidth: 'min(1200px, 92vw)'
   },

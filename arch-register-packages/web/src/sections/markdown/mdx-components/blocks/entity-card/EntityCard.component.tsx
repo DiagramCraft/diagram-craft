@@ -28,7 +28,6 @@ export default defineComponent<EntityCardSlateElement, { id: string; fields?: st
       config.entityId.length > 0 &&
       hasOptionalString(config, 'fields'),
     createDefaultConfig: () => ({ entityId: '' }),
-    getTitle: () => 'Entity card',
     configForm: EntityCardConfigForm
   },
   mdxComponent: {

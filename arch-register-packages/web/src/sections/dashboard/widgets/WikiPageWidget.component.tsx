@@ -20,7 +20,6 @@ export default defineComponent({
     titleComponent: WikiPageWidgetTitle,
     isValidConfig: isWikiPageWidgetConfig,
     createDefaultConfig: () => ({ nodeId: '' }),
-    getTitle: () => 'Wiki page',
     configForm: WikiPageDashboardConfigForm,
     dialogWidth: 520
   }

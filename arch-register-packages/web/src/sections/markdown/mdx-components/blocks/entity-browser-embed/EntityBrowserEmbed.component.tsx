@@ -23,6 +23,7 @@ const isEntityBrowserEmbedConfig = (
   config.viewConfigs !== null &&
   (config.limit === undefined || typeof config.limit === 'number') &&
   (config.interactive === undefined || typeof config.interactive === 'boolean');
+
 export default defineComponent<EntityBrowserEmbedSlateElement, { config?: string }, 'block'>({
   type: ENTITY_BROWSER_EMBED_TYPE,
   category: 'data-views',
@@ -46,7 +47,6 @@ export default defineComponent<EntityBrowserEmbedSlateElement, { config?: string
       view: 'table',
       viewConfigs: {}
     }),
-    getTitle: () => 'Entity browser',
     configForm: EntityBrowserEmbedConfigForm,
     dialogWidth: 'min(1200px, 92vw)'
   },
@@ -59,7 +59,7 @@ export default defineComponent<EntityBrowserEmbedSlateElement, { config?: string
       nodeOptions: { isVoid: true },
       mdxRule: entityBrowserEmbedMdxRule,
       slashCommand: {
-        icon: <TbListSearch size={14} />,
+        icon: <TbListSearch size={14}/>,
         keywords: ['entity', 'browser', 'embed', 'search', 'filter', 'catalog'],
         onSelect: (editor, { insertOrReplaceBlock }) => {
           insertOrReplaceBlock(editor, {

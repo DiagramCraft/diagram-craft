@@ -32,7 +32,6 @@ export default defineComponent<
     isValidConfig: (config): config is EntityGraphWidgetConfig =>
       typeof config.entityId === 'string' && config.entityId.length > 0,
     createDefaultConfig: () => ({ entityId: '', depth: 1, direction: 'both' }),
-    getTitle: () => 'Entity graph',
     configForm: EntityGraphConfigForm
   },
   mdxComponent: {
