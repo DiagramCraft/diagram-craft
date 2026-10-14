@@ -19,6 +19,10 @@ import { countdownTone } from './upcomingByDateLogic';
 import { useRecordSublabels } from './useRecordSublabels';
 import rowStyles from './WidgetRowList.module.css';
 import styles from './DateCalendarWidget.module.css';
+import { TbCalendarMonth } from 'react-icons/tb';
+import type { DashboardWidgetSpec } from '../../markdown/mdx-components/types';
+import { DialogSection } from '../../markdown/editor/BlockDialog';
+import configFormStyles from '../WidgetConfigDialog.module.css';
 
 const DEFAULT_PERIOD_COUNT = 12;
 
@@ -157,4 +161,144 @@ export const DateCalendarWidget = ({ config }: Props) => {
       )}
     </div>
   );
+};
+
+type DateCalendarConfigFormProps = {
+  config: DateCalendarWidgetConfig;
+  onChange: (config: DateCalendarWidgetConfig) => void;
+};
+
+const optionalText = (value: string): string | undefined =>
+  value.trim() === '' ? undefined : value;
+
+const optionalNumber = (value: string): number | undefined =>
+  value.trim() === '' || Number.isNaN(Number(value)) ? undefined : Number(value);
+
+export const DateCalendarConfigForm = ({ config, onChange }: DateCalendarConfigFormProps) => (
+  <>
+    <DialogSection label="Records (query)" required={config.entityQuery === undefined}>
+      <input
+        type="text"
+        className={configFormStyles.labelInput}
+        value={config.query ?? ''}
+        placeholder='e.g. schema:"Contract"'
+        onChange={e => onChange({ ...config, query: e.target.value })}
+      />
+    </DialogSection>
+    <DialogSection label="Date field id" required>
+      <input
+        type="text"
+        className={configFormStyles.labelInput}
+        value={config.dateFieldId}
+        placeholder="e.g. contract_end"
+        onChange={e => onChange({ ...config, dateFieldId: e.target.value })}
+      />
+    </DialogSection>
+    <DialogSection label="Display" required={false}>
+      <div className={configFormStyles.options}>
+        <label className={configFormStyles.optionRow}>
+          <span className={configFormStyles.optionLabel}>Period</span>
+          <div className={configFormStyles.optionControl}>
+            <select
+              value={config.period ?? 'month'}
+              onChange={e =>
+                onChange({ ...config, period: e.target.value === 'week' ? 'week' : 'month' })
+              }
+            >
+              <option value="month">Month</option>
+              <option value="week">Week</option>
+            </select>
+          </div>
+        </label>
+        <label className={configFormStyles.optionRow}>
+          <span className={configFormStyles.optionLabel}>Number of periods</span>
+          <div className={configFormStyles.optionControl}>
+            <input
+              type="number"
+              min={1}
+              max={36}
+              className={configFormStyles.labelInput}
+              value={config.periodCount ?? 12}
+              onChange={e =>
+                onChange({
+                  ...config,
+                  periodCount: Math.max(1, optionalNumber(e.target.value) ?? 12)
+                })
+              }
+            />
+          </div>
+        </label>
+        <label className={configFormStyles.optionRow}>
+          <span className={configFormStyles.optionLabel}>Subtitle field id</span>
+          <div className={configFormStyles.optionControl}>
+            <input
+              type="text"
+              className={configFormStyles.labelInput}
+              value={config.sublabelFieldId ?? ''}
+              onChange={e => onChange({ ...config, sublabelFieldId: optionalText(e.target.value) })}
+            />
+          </div>
+        </label>
+        <label className={configFormStyles.optionRow}>
+          <span className={configFormStyles.optionLabel}>Value field id</span>
+          <div className={configFormStyles.optionControl}>
+            <input
+              type="text"
+              className={configFormStyles.labelInput}
+              value={config.valueFieldId ?? ''}
+              onChange={e => onChange({ ...config, valueFieldId: optionalText(e.target.value) })}
+            />
+          </div>
+        </label>
+        <label className={configFormStyles.optionRow}>
+          <span className={configFormStyles.optionLabel}>Warn within (days)</span>
+          <div className={configFormStyles.optionControl}>
+            <input
+              type="number"
+              min={0}
+              className={configFormStyles.labelInput}
+              value={config.warnWithinDays ?? ''}
+              placeholder="30"
+              onChange={e =>
+                onChange({ ...config, warnWithinDays: optionalNumber(e.target.value) })
+              }
+            />
+          </div>
+        </label>
+      </div>
+    </DialogSection>
+  </>
+);
+
+export const DATE_CALENDAR_TYPE = 'DateCalendar' as const;
+
+const isOptionalNumber = (value: unknown): boolean =>
+  value === undefined || (typeof value === 'number' && Number.isFinite(value));
+
+const optionalString = (value: unknown): boolean =>
+  value === undefined || typeof value === 'string';
+
+export const dateCalendarSpec: DashboardWidgetSpec<DateCalendarWidgetConfig> = {
+  icon: TbCalendarMonth,
+  label: 'Calendar',
+  description:
+    'Records placed on a month or week calendar by a date field, e.g. renewals or reviews.',
+  defaultW: 12,
+  defaultH: 30,
+  surfaces: ['workspace'],
+  component: DateCalendarWidget,
+  isValidConfig: (config): config is DateCalendarWidgetConfig =>
+    optionalString(config.query) &&
+    optionalString(config.schemaName) &&
+    (config.entityQuery === undefined || typeof config.entityQuery === 'object') &&
+    typeof config.dateFieldId === 'string' &&
+    (config.period === undefined || config.period === 'month' || config.period === 'week') &&
+    isOptionalNumber(config.periodCount) &&
+    isOptionalNumber(config.critWithinDays) &&
+    isOptionalNumber(config.warnWithinDays) &&
+    optionalString(config.sublabelFieldId) &&
+    optionalString(config.valueFieldId) &&
+    isDateCalendarConfigComplete(config as DateCalendarWidgetConfig),
+  createDefaultConfig: () => ({ query: '', dateFieldId: '' }),
+  configForm: DateCalendarConfigForm
 };

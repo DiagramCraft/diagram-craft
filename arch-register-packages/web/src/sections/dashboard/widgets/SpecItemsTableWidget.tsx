@@ -15,6 +15,10 @@ import { stripEmptyGroups } from '../../entities/components/entityBrowserState';
 import { useEntityDrawer } from '../../entities/entityDrawer/useEntityDrawer';
 import { resolveEntityQuery } from '../../markdown/mdx-components/blocks/entity-browser-embed/EntityBrowserEmbedFieldResolution';
 import { specItemsEmptyLabel, specItemTone, specItemSortValue } from './specItemsTableLogic';
+import { TbListDetails } from 'react-icons/tb';
+import type { DashboardWidgetSpec } from '../../markdown/mdx-components/types';
+import { DialogSection } from '../../markdown/editor/BlockDialog';
+import configFormStyles from '../WidgetConfigDialog.module.css';
 
 export type SpecItemsTableWidgetConfig = {
   /** Display name of the entity schema whose specification artifacts are listed. */
@@ -139,4 +143,70 @@ export const SpecItemsTableWidget = ({ config }: { config: SpecItemsTableWidgetC
       </Table.Body>
     </Table.Root>
   );
+};
+
+export const SpecItemsTableConfigForm = ({
+  config,
+  onChange
+}: {
+  config: SpecItemsTableWidgetConfig;
+  onChange: (config: SpecItemsTableWidgetConfig) => void;
+}) => {
+  const { schemas } = useWorkspaceContext();
+  return (
+    <>
+      <DialogSection label="Entity type" required>
+        <select
+          className={configFormStyles.labelInput}
+          value={config.schemaName}
+          onChange={event => onChange({ ...config, schemaName: event.currentTarget.value })}
+        >
+          <option value="">Select an entity type…</option>
+          {schemas.map(candidate => (
+            <option key={candidate.id} value={candidate.name}>
+              {candidate.name}
+            </option>
+          ))}
+        </select>
+      </DialogSection>
+      <DialogSection label="Display" required={false}>
+        <div className={configFormStyles.options}>
+          <label className={configFormStyles.checkboxRow}>
+            <input
+              type="checkbox"
+              checked={config.deprecated === true}
+              onChange={event =>
+                onChange({ ...config, deprecated: event.currentTarget.checked || undefined })
+              }
+            />
+            <span>Only deprecated operations</span>
+          </label>
+        </div>
+      </DialogSection>
+    </>
+  );
+};
+
+export const SPEC_ITEMS_TABLE_TYPE = 'SpecItemsTable' as const;
+
+const isValidConfig = (config: Record<string, unknown>): config is SpecItemsTableWidgetConfig =>
+  typeof config.schemaName === 'string' &&
+  config.schemaName.length > 0 &&
+  (config.entityQuery === undefined || typeof config.entityQuery === 'object') &&
+  (config.deprecated === undefined || typeof config.deprecated === 'boolean') &&
+  (config.entityLimit === undefined || typeof config.entityLimit === 'number');
+
+export const specItemsTableSpec: DashboardWidgetSpec<SpecItemsTableWidgetConfig> = {
+  icon: TbListDetails,
+  label: 'Specification operations',
+  description:
+    'Operations and messages across the API specifications of every entity of a type, optionally only deprecated ones.',
+  defaultW: 12,
+  defaultH: 24,
+  surfaces: ['workspace'],
+  component: SpecItemsTableWidget,
+  frame: { padded: false, showIcon: false },
+  isValidConfig,
+  createDefaultConfig: () => ({ schemaName: '' }),
+  configForm: SpecItemsTableConfigForm
 };

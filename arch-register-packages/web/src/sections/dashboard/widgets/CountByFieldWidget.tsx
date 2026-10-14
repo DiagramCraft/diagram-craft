@@ -5,6 +5,10 @@ import { StackedBar } from '../../workspace-settings/sub-sections/analytics/anal
 import { buildCountBuckets } from './countByFieldLogic';
 import styles from './CountByFieldWidget.module.css';
 import rowStyles from './WidgetRowList.module.css';
+import { TbChartBar } from 'react-icons/tb';
+import type { DashboardWidgetSpec } from '../../markdown/mdx-components/types';
+import { DialogSection } from '../../markdown/editor/BlockDialog';
+import configFormStyles from '../WidgetConfigDialog.module.css';
 
 const FETCH_LIMIT = 1000;
 
@@ -71,4 +75,70 @@ export const CountByFieldWidget = ({ config }: Props) => {
       </div>
     </div>
   );
+};
+
+type CountByFieldConfigFormProps = {
+  config: CountByFieldWidgetConfig;
+  onChange: (config: CountByFieldWidgetConfig) => void;
+};
+
+export const CountByFieldConfigForm = ({ config, onChange }: CountByFieldConfigFormProps) => {
+  const { schemas } = useWorkspaceContext();
+  const schema = schemas.find(candidate => candidate.name === config.schemaName);
+
+  return (
+    <>
+      <DialogSection label="Entity type" required>
+        <select
+          className={configFormStyles.labelInput}
+          value={config.schemaName}
+          onChange={event =>
+            onChange({ ...config, schemaName: event.currentTarget.value, fieldId: '' })
+          }
+        >
+          <option value="">Select an entity type…</option>
+          {schemas.map(candidate => (
+            <option key={candidate.id} value={candidate.name}>
+              {candidate.name}
+            </option>
+          ))}
+        </select>
+      </DialogSection>
+      <DialogSection label="Count by field" required>
+        <select
+          className={configFormStyles.labelInput}
+          value={config.fieldId}
+          onChange={event => onChange({ ...config, fieldId: event.currentTarget.value })}
+        >
+          <option value="">Select a field…</option>
+          {(schema?.fields ?? []).map(field => (
+            <option key={field.id} value={field.id}>
+              {field.name}
+            </option>
+          ))}
+        </select>
+      </DialogSection>
+      <DialogSection label="Display" required={false}>
+        <div className={configFormStyles.options}></div>
+      </DialogSection>
+    </>
+  );
+};
+
+export const COUNT_BY_FIELD_TYPE = 'CountByField' as const;
+
+export const countByFieldSpec: DashboardWidgetSpec<CountByFieldWidgetConfig> = {
+  icon: TbChartBar,
+  label: 'Count by field',
+  description: 'Entity count with a stacked bar per value of a field.',
+  defaultW: 6,
+  defaultH: 8,
+  surfaces: ['workspace'],
+  component: CountByFieldWidget,
+  isValidConfig: (config): config is CountByFieldWidgetConfig =>
+    typeof config.schemaName === 'string' &&
+    typeof config.fieldId === 'string' &&
+    isCountByFieldConfigComplete(config as CountByFieldWidgetConfig),
+  createDefaultConfig: () => ({ schemaName: '', fieldId: '' }),
+  configForm: CountByFieldConfigForm
 };

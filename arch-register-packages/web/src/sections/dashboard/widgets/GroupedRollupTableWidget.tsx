@@ -12,6 +12,10 @@ import { formatMeasured } from './fieldAggregation';
 import { buildRollupRows } from './groupedRollupTableLogic';
 import rowStyles from './WidgetRowList.module.css';
 import styles from './GroupedRollupTableWidget.module.css';
+import { TbTable } from 'react-icons/tb';
+import type { DashboardWidgetSpec } from '../../markdown/mdx-components/types';
+import { DialogSection } from '../../markdown/editor/BlockDialog';
+import configFormStyles from '../WidgetConfigDialog.module.css';
 
 export type GroupedRollupTableWidgetConfig = {
   /** Entity-query DSL text selecting the records to roll up. */
@@ -154,4 +158,150 @@ export const GroupedRollupTableWidget = ({ config }: Props) => {
       </Table.Body>
     </Table.Root>
   );
+};
+
+type GroupedRollupTableConfigFormProps = {
+  config: GroupedRollupTableWidgetConfig;
+  onChange: (config: GroupedRollupTableWidgetConfig) => void;
+};
+
+const optionalText = (value: string): string | undefined =>
+  value.trim() === '' ? undefined : value;
+
+const Toggle = ({
+  label,
+  checked,
+  onChange
+}: {
+  label: string;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+}) => (
+  <label className={configFormStyles.optionRow}>
+    <span className={configFormStyles.optionLabel}>{label}</span>
+    <div className={configFormStyles.optionControl}>
+      <input type="checkbox" checked={checked} onChange={e => onChange(e.target.checked)} />
+    </div>
+  </label>
+);
+
+export const GroupedRollupTableConfigForm = ({
+  config,
+  onChange
+}: GroupedRollupTableConfigFormProps) => (
+  <>
+    <DialogSection label="Records (query)" required>
+      <input
+        type="text"
+        className={configFormStyles.labelInput}
+        value={config.query ?? ''}
+        placeholder='e.g. schema:"Vendor"'
+        onChange={e => onChange({ ...config, query: e.target.value })}
+      />
+    </DialogSection>
+    <DialogSection label="Sum field id" required>
+      <input
+        type="text"
+        className={configFormStyles.labelInput}
+        value={config.valueFieldId}
+        placeholder="e.g. spend"
+        onChange={e => onChange({ ...config, valueFieldId: e.target.value })}
+      />
+    </DialogSection>
+    <DialogSection label="Display" required={false}>
+      <div className={configFormStyles.options}>
+        <label className={configFormStyles.optionRow}>
+          <span className={configFormStyles.optionLabel}>Group by field id</span>
+          <div className={configFormStyles.optionControl}>
+            <input
+              type="text"
+              className={configFormStyles.labelInput}
+              value={config.groupFieldId ?? ''}
+              placeholder="Blank = one row per record"
+              onChange={e => onChange({ ...config, groupFieldId: optionalText(e.target.value) })}
+            />
+          </div>
+        </label>
+        <label className={configFormStyles.optionRow}>
+          <span className={configFormStyles.optionLabel}>Group column title</span>
+          <div className={configFormStyles.optionControl}>
+            <input
+              type="text"
+              className={configFormStyles.labelInput}
+              value={config.groupLabel ?? ''}
+              placeholder="Name"
+              onChange={e => onChange({ ...config, groupLabel: optionalText(e.target.value) })}
+            />
+          </div>
+        </label>
+        <label className={configFormStyles.optionRow}>
+          <span className={configFormStyles.optionLabel}>Value column title</span>
+          <div className={configFormStyles.optionControl}>
+            <input
+              type="text"
+              className={configFormStyles.labelInput}
+              value={config.valueLabel ?? ''}
+              placeholder="Total"
+              onChange={e => onChange({ ...config, valueLabel: optionalText(e.target.value) })}
+            />
+          </div>
+        </label>
+        <Toggle
+          label="Bars"
+          checked={config.showBar ?? false}
+          onChange={checked => onChange({ ...config, showBar: checked || undefined })}
+        />
+        <Toggle
+          label="Share %"
+          checked={config.showPercent ?? false}
+          onChange={checked => onChange({ ...config, showPercent: checked || undefined })}
+        />
+        <Toggle
+          label="Record count"
+          checked={config.showCount ?? false}
+          onChange={checked => onChange({ ...config, showCount: checked || undefined })}
+        />
+        <Toggle
+          label="Total row"
+          checked={config.showTotal ?? true}
+          onChange={checked => onChange({ ...config, showTotal: checked ? undefined : false })}
+        />
+      </div>
+    </DialogSection>
+  </>
+);
+
+export const GROUPED_ROLLUP_TABLE_TYPE = 'GroupedRollupTable' as const;
+
+const optionalBoolean = (value: unknown): boolean =>
+  value === undefined || typeof value === 'boolean';
+
+const optionalString = (value: unknown): boolean =>
+  value === undefined || typeof value === 'string';
+
+export const groupedRollupTableSpec: DashboardWidgetSpec<GroupedRollupTableWidgetConfig> = {
+  icon: TbTable,
+  label: 'Roll-up table',
+  description:
+    'Records summed into ranked rows, per record or grouped by a field, with optional bars, share and count.',
+  defaultW: 12,
+  defaultH: 20,
+  surfaces: ['workspace', 'project'],
+  component: GroupedRollupTableWidget,
+  frame: { hideOutsideEdit: true, padded: false, showIcon: false },
+  isValidConfig: (config): config is GroupedRollupTableWidgetConfig =>
+    typeof config.valueFieldId === 'string' &&
+    optionalString(config.query) &&
+    optionalString(config.schemaName) &&
+    optionalString(config.groupFieldId) &&
+    optionalString(config.groupLabel) &&
+    optionalString(config.valueLabel) &&
+    optionalBoolean(config.showBar) &&
+    optionalBoolean(config.showPercent) &&
+    optionalBoolean(config.showCount) &&
+    optionalBoolean(config.showTotal) &&
+    (config.limit === undefined || (typeof config.limit === 'number' && config.limit > 0)) &&
+    isGroupedRollupTableConfigComplete(config as GroupedRollupTableWidgetConfig),
+  createDefaultConfig: () => ({ query: '', valueFieldId: '' }),
+  configForm: GroupedRollupTableConfigForm
 };

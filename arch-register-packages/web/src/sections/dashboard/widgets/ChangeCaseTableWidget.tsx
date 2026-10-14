@@ -9,10 +9,18 @@ import { formatDate } from '../../../utils/dateFormat';
 import { caseKindLabel } from '../../../utils/governanceCaseLabels';
 import { GovernanceCaseDrawer } from '../../governance/GovernanceCaseDrawer';
 import { useEntityDrawer } from '../../entities/entityDrawer/useEntityDrawer';
-import type { NeedsAttentionPriority, NeedsAttentionSeverity } from './needsAttentionQueue';
+import type { NeedsAttentionPriority } from './needsAttentionQueue';
 import { useEntityCaseRegister } from './entityCaseRegister';
 import { filterByStatus, isChangeCaseStatus } from './changeCaseTableLogic';
 import styles from './ChangeCaseTableWidget.module.css';
+import { TbGitPullRequest } from 'react-icons/tb';
+import type { DashboardWidgetSpec } from '../../markdown/mdx-components/types';
+import { Select } from '@diagram-craft/app-components/Select';
+import { humanizeCaseKind } from '../../../utils/governanceCaseLabels';
+import { DialogSection } from '../../markdown/editor/BlockDialog';
+import { KNOWN_CASE_KINDS } from './NeedsAttentionWidget';
+import type { NeedsAttentionSeverity } from './needsAttentionQueue';
+import configFormStyles from '../WidgetConfigDialog.module.css';
 
 export type ChangeCaseTableConfig = {
   /** Name of the entity schema the cases' subject entities must belong to. */
@@ -145,4 +153,150 @@ export const ChangeCaseTableWidget = ({ config }: { config: ChangeCaseTableConfi
       )}
     </div>
   );
+};
+
+const optionalText = (value: string): string | undefined =>
+  value.trim() === '' ? undefined : value;
+
+const SEVERITY_LABEL: Record<NeedsAttentionSeverity, string> = {
+  none: 'None',
+  'due-date': 'Derived from due date'
+};
+
+type ChangeCaseTableConfigFormProps = {
+  config: ChangeCaseTableConfig;
+  onChange: (config: ChangeCaseTableConfig) => void;
+};
+
+const TextOption = ({
+  label,
+  value,
+  placeholder,
+  onChange
+}: {
+  label: string;
+  value: string | undefined;
+  placeholder?: string;
+  onChange: (value: string | undefined) => void;
+}) => (
+  <label className={configFormStyles.optionRow}>
+    <span className={configFormStyles.optionLabel}>{label}</span>
+    <div className={configFormStyles.optionControl}>
+      <input
+        type="text"
+        className={configFormStyles.labelInput}
+        value={value ?? ''}
+        placeholder={placeholder}
+        onChange={event => onChange(optionalText(event.currentTarget.value))}
+      />
+    </div>
+  </label>
+);
+
+export const ChangeCaseTableConfigForm = ({ config, onChange }: ChangeCaseTableConfigFormProps) => {
+  const { schemas } = useWorkspaceContext();
+
+  const toggleKind = (kind: string, checked: boolean) =>
+    onChange({
+      ...config,
+      caseKinds: checked
+        ? [...config.caseKinds, kind]
+        : config.caseKinds.filter(existing => existing !== kind)
+    });
+
+  return (
+    <>
+      <DialogSection label="Entity type" required>
+        <select
+          className={configFormStyles.labelInput}
+          value={config.schemaName}
+          onChange={event => onChange({ ...config, schemaName: event.currentTarget.value })}
+        >
+          <option value="">Select an entity type…</option>
+          {schemas.map(schema => (
+            <option key={schema.id} value={schema.name}>
+              {schema.name}
+            </option>
+          ))}
+        </select>
+      </DialogSection>
+      <DialogSection label="Case kinds" required>
+        <div className={configFormStyles.options}>
+          {[
+            ...KNOWN_CASE_KINDS,
+            ...config.caseKinds.filter(kind => !KNOWN_CASE_KINDS.includes(kind))
+          ].map(kind => (
+            <label key={kind} className={configFormStyles.checkboxRow}>
+              <input
+                type="checkbox"
+                checked={config.caseKinds.includes(kind)}
+                onChange={event => toggleKind(kind, event.currentTarget.checked)}
+              />
+              <span className={configFormStyles.optionLabel}>{humanizeCaseKind(kind)}</span>
+            </label>
+          ))}
+        </div>
+      </DialogSection>
+      <DialogSection label="Priority" required={false}>
+        <Select.Root
+          value={config.severity}
+          onChange={value =>
+            onChange({ ...config, severity: (value as NeedsAttentionSeverity) ?? 'none' })
+          }
+        >
+          {(Object.keys(SEVERITY_LABEL) as NeedsAttentionSeverity[]).map(severity => (
+            <Select.Item key={severity} value={severity}>
+              {SEVERITY_LABEL[severity]}
+            </Select.Item>
+          ))}
+        </Select.Root>
+      </DialogSection>
+      <DialogSection label="Status filter" required={false}>
+        <div className={configFormStyles.options}>
+          <TextOption
+            label="Status"
+            value={config.status}
+            placeholder="open, completed, cancelled or $variable"
+            onChange={status => onChange({ ...config, status })}
+          />
+        </div>
+      </DialogSection>
+      <DialogSection label="Display" required={false}>
+        <div className={configFormStyles.options}></div>
+      </DialogSection>
+    </>
+  );
+};
+
+export const CHANGE_CASE_TABLE_TYPE = 'ChangeCaseTable' as const;
+
+const isOptionalString = (value: unknown): boolean =>
+  value === undefined || typeof value === 'string';
+
+/**
+ * Dashboard-only table of governance cases (every status) against entities of a chosen
+ * schema, restricted to a chosen set of case kinds — not tied to any particular app. Generalized
+ * from Data Stewardship's former Change cases screen (#3504).
+ */
+export const changeCaseTableSpec: DashboardWidgetSpec<ChangeCaseTableConfig> = {
+  icon: TbGitPullRequest,
+  label: 'Change case table',
+  description: 'Register of governance cases against entities of a chosen type, in any status.',
+  defaultW: 12,
+  defaultH: 20,
+  surfaces: ['workspace'],
+  component: ChangeCaseTableWidget,
+  frame: { hideOutsideEdit: true, padded: false, showIcon: false },
+  isValidConfig: (config): config is ChangeCaseTableConfig =>
+    typeof config.schemaName === 'string' &&
+    Array.isArray(config.caseKinds) &&
+    config.caseKinds.every(kind => typeof kind === 'string') &&
+    (config.severity === 'none' || config.severity === 'due-date') &&
+    isOptionalString(config.status),
+  createDefaultConfig: () => ({
+    schemaName: '',
+    caseKinds: ['entity.change-case'],
+    severity: 'due-date'
+  }),
+  configForm: ChangeCaseTableConfigForm
 };

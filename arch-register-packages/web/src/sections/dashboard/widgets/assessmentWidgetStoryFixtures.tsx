@@ -1,4 +1,3 @@
-import type { Meta, StoryObj } from '@storybook/react-vite';
 import type { QueryClient } from '@tanstack/react-query';
 import type { Assessment } from '@arch-register/api-types/assessmentContract';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
@@ -49,7 +48,7 @@ const assessment = (
   completed_entity_count: completed
 });
 
-// Two datasets are in scope for every assessment (see `seededClient`).
+// Two datasets are in scope for every assessment.
 const ASSESSMENTS = [
   assessment('a-overdue', 'Customer data impact assessment', 'impact', -5, 1),
   assessment('a-progress', 'Cross-border transfer assessment', 'transfer', 14, 1),
@@ -64,7 +63,9 @@ const DATASETS = ['Customer master', 'Order events'].map((name, index) => ({
   _schema: { id: SCHEMA_ID, name: 'Data Entity' }
 })) as unknown as EntityRecord[];
 
-const seededClient = (assessments: Assessment[] = ASSESSMENTS): QueryClient => {
+export const seededAssessmentWidgetClient = (
+  assessments: Assessment[] = ASSESSMENTS
+): QueryClient => {
   const client = createStoryQueryClient();
   client.setQueryData(assessmentKeys.list(WORKSPACE), assessments);
   client.setQueryData(workspaceConfigKeys.assessmentTypes(WORKSPACE), [
@@ -91,82 +92,13 @@ const seededClient = (assessments: Assessment[] = ASSESSMENTS): QueryClient => {
   return client;
 };
 
-const widgetStory = (
+export const assessmentWidgetStory = (
   type: string,
   config: Record<string, unknown>,
   size: { w: number; h: number },
-  client: QueryClient = seededClient()
+  client: QueryClient = seededAssessmentWidgetClient()
 ) => (
   <StoryProviders client={client} schemas={SCHEMAS}>
     <DashboardStory widgets={[dashboardWidget(type, type, config, 0, 0, size.w, size.h)]} />
   </StoryProviders>
 );
-
-/**
- * Generic assessment widgets (#3505): both take the entity type whose assessments they summarise
- * as `schemaName` config; statuses are derived from each assessment's completed-entity rollup.
- */
-const meta = {
-  title: 'Dashboard Widgets/Assessment status and progress',
-  parameters: { layout: 'padded' }
-} satisfies Meta;
-
-export default meta;
-type Story = StoryObj<typeof meta>;
-
-const STAT = { schemaName: 'Data Entity' };
-
-export const StatOverdue: Story = {
-  render: () =>
-    widgetStory(
-      'AssessmentStatusStat',
-      { ...STAT, status: 'overdue', label: 'Overdue', subtextTemplate: 'past the scheduled date' },
-      { w: 3, h: 5 }
-    )
-};
-
-export const StatInProgress: Story = {
-  render: () =>
-    widgetStory(
-      'AssessmentStatusStat',
-      {
-        ...STAT,
-        status: 'in_progress',
-        label: 'In progress',
-        subtextTemplate: '{notStarted} not started'
-      },
-      { w: 3, h: 5 }
-    )
-};
-
-export const StatComplete: Story = {
-  render: () =>
-    widgetStory(
-      'AssessmentStatusStat',
-      {
-        ...STAT,
-        status: 'complete',
-        label: 'Complete',
-        subtextTemplate: 'of {total} assessments'
-      },
-      { w: 3, h: 5 }
-    )
-};
-
-export const StatUnknownSchema: Story = {
-  render: () =>
-    widgetStory('AssessmentStatusStat', { schemaName: 'Nope', status: 'overdue' }, { w: 3, h: 5 })
-};
-
-export const ProgressTable: Story = {
-  render: () => widgetStory('AssessmentProgressTable', STAT, { w: 12, h: 14 })
-};
-
-export const ProgressTableOverdueOnly: Story = {
-  render: () =>
-    widgetStory('AssessmentProgressTable', { ...STAT, status: 'overdue' }, { w: 12, h: 8 })
-};
-
-export const ProgressTableEmpty: Story = {
-  render: () => widgetStory('AssessmentProgressTable', STAT, { w: 12, h: 8 }, seededClient([]))
-};

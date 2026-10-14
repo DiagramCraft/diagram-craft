@@ -6,6 +6,10 @@ import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { useEntityDrawer } from '../../entities/entityDrawer/useEntityDrawer';
 import { groupViolationsByEntity } from './conformanceViolationsLogic';
 import styles from './ConformanceViolationsWidget.module.css';
+import { TbShieldExclamation } from 'react-icons/tb';
+import type { DashboardWidgetSpec } from '../../markdown/mdx-components/types';
+import { DialogSection } from '../../markdown/editor/BlockDialog';
+import configFormStyles from '../WidgetConfigDialog.module.css';
 
 export type ConformanceViolationsWidgetConfig = {
   schemaName: string;
@@ -96,4 +100,84 @@ export const ConformanceViolationsHeaderActions = ({
     permissions.canViewSchemas && schemaId != null
   );
   return <span className="dim mono">{violations.data?.total ?? ''}</span>;
+};
+
+export const ConformanceViolationsConfigForm = ({
+  config,
+  onChange
+}: {
+  config: ConformanceViolationsWidgetConfig;
+  onChange: (config: ConformanceViolationsWidgetConfig) => void;
+}) => {
+  const { schemas } = useWorkspaceContext();
+  return (
+    <>
+      <DialogSection label="Entity type" required>
+        <select
+          className={configFormStyles.labelInput}
+          value={config.schemaName}
+          onChange={event => onChange({ ...config, schemaName: event.currentTarget.value })}
+        >
+          <option value="">Select an entity type…</option>
+          {schemas.map(schema => (
+            <option key={schema.id} value={schema.name}>
+              {schema.name}
+            </option>
+          ))}
+        </select>
+      </DialogSection>
+      <DialogSection label="Display" required={false}>
+        <div className={configFormStyles.options}>
+          <label className={configFormStyles.optionRow}>
+            <span className={configFormStyles.optionLabel}>Max rows</span>
+            <div className={configFormStyles.optionControl}>
+              <input
+                type="number"
+                min={1}
+                max={50}
+                className={configFormStyles.labelInput}
+                value={config.limit}
+                onChange={event =>
+                  onChange({
+                    ...config,
+                    limit: Math.max(1, Number(event.currentTarget.value) || 1)
+                  })
+                }
+              />
+            </div>
+          </label>
+        </div>
+      </DialogSection>
+    </>
+  );
+};
+
+export const CONFORMANCE_VIOLATIONS_TYPE = 'ConformanceViolations' as const;
+
+const isStringArray = (value: unknown): value is string[] =>
+  Array.isArray(value) && value.every(item => typeof item === 'string');
+
+const isValidConfig = (
+  config: Record<string, unknown>
+): config is ConformanceViolationsWidgetConfig =>
+  typeof config.schemaName === 'string' &&
+  config.schemaName.length > 0 &&
+  typeof config.limit === 'number' &&
+  config.limit > 0 &&
+  (config.checkNames === undefined || isStringArray(config.checkNames));
+
+export const conformanceViolationsSpec: DashboardWidgetSpec<ConformanceViolationsWidgetConfig> = {
+  icon: TbShieldExclamation,
+  label: 'Conformance violations',
+  description:
+    'Entities of a schema with active conformance violations, with the failing checks, worst first.',
+  defaultW: 12,
+  defaultH: 14,
+  surfaces: ['workspace'],
+  component: ConformanceViolationsWidget,
+  headerActionsComponent: ConformanceViolationsHeaderActions,
+  frame: { padded: false, showIcon: false },
+  isValidConfig,
+  createDefaultConfig: () => ({ schemaName: '', limit: 8 }),
+  configForm: ConformanceViolationsConfigForm
 };

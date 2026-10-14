@@ -2,21 +2,30 @@ import { useNavigate } from '@tanstack/react-router';
 import { TbArrowRight } from 'react-icons/tb';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
 import { useEntityCount } from '../../../hooks/useEntities';
-import { useQueryTextCount, useQueryTextEntities } from '../../../hooks/useEntityQueryText';
+import { useQueryTextEntities } from '../../../hooks/useEntityQueryText';
 import { orpcClient } from '../../../lib/orpcClient';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import {
   formatStatValue,
-  isQueryStatConfig,
   renderStatSubtext,
   statNumericValue,
   statTone,
-  type AggregateStatDisplay,
   type AggregateStatSeverity
 } from './aggregateStatQuery';
 import { countDistinctValues, formatMeasured, sumMeasured } from './fieldAggregation';
 import styles from './AggregateStatWidget.module.css';
 import { useWidgetBodyTitle } from './WidgetBodyTitle';
+import type { TElement } from 'platejs';
+import { TbPercentage } from 'react-icons/tb';
+import { defineMdxComponent } from '../../markdown/mdx-components/defineMdxComponent';
+import { isQueryStatConfig } from './aggregateStatQuery';
+import { useEffect, useState } from 'react';
+import { getSchemaFieldDefs, FilterRow } from '../../../components/FilterBuilder';
+import { EntityFilterPanel, type EntityFilterValue } from '../../../components/EntityFilterPanel';
+import { useQueryTextCount } from '../../../hooks/useEntityQueryText';
+import { DialogSection } from '../../markdown/editor/BlockDialog';
+import type { AggregateStatDisplay } from './aggregateStatQuery';
+import configFormStyles from '../WidgetConfigDialog.module.css';
 
 export type AggregateStatWidgetConfig = {
   /** Query-mode: entity-query DSL text whose matching-record count is the stat's value. */
@@ -243,3 +252,427 @@ const LegacyAggregateStat = ({ config }: Props) => {
     </div>
   );
 };
+
+const optionalText = (value: string): string | undefined =>
+  value.trim() === '' ? undefined : value;
+
+type AggregateStatConfigFormProps = {
+  config: AggregateStatWidgetConfig;
+  onChange: (config: AggregateStatWidgetConfig) => void;
+};
+
+const useDebounced = (value: string, delayMs = 400): string => {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const handle = setTimeout(() => setDebounced(value), delayMs);
+    return () => clearTimeout(handle);
+  }, [value, delayMs]);
+  return debounced;
+};
+
+const QueryField = ({
+  label,
+  value,
+  placeholder,
+  onChange
+}: {
+  label: string;
+  value: string;
+  placeholder: string;
+  onChange: (value: string) => void;
+}) => {
+  const { workspaceSlug } = useWorkspaceContext();
+  const debounced = useDebounced(value);
+  const result = useQueryTextCount(workspaceSlug, debounced);
+  const status =
+    debounced.trim() === '' || result.isLoading
+      ? undefined
+      : result.data?.ok === true
+        ? `Matches ${result.data.total} record${result.data.total === 1 ? '' : 's'}`
+        : (result.data?.errors[0]?.message ?? 'Invalid query');
+  return (
+    <label className={configFormStyles.optionRow}>
+      <span className={configFormStyles.optionLabel}>{label}</span>
+      <div className={configFormStyles.optionControl}>
+        <textarea
+          className={configFormStyles.labelInput}
+          rows={2}
+          value={value}
+          placeholder={placeholder}
+          onChange={e => onChange(e.target.value)}
+        />
+        {status && <div className={`${configFormStyles.hint} dim`}>{status}</div>}
+      </div>
+    </label>
+  );
+};
+
+const QueryModeForm = ({ config, onChange }: AggregateStatConfigFormProps) => {
+  const display = config.display ?? 'count';
+  const showLink = config.showLink ?? true;
+  const needsDenominator = display !== 'count';
+  const numberOrUndefined = (value: string): number | undefined =>
+    value.trim() === '' || Number.isNaN(Number(value)) ? undefined : Number(value);
+  return (
+    <>
+      <DialogSection label="Query">
+        <div className={configFormStyles.options}>
+          <QueryField
+            label="Count records matching"
+            value={config.query ?? ''}
+            placeholder='e.g. schema:"Data Flow" AND cross_boundary = cross-boundary'
+            onChange={query => onChange({ ...config, query })}
+          />
+          <label className={configFormStyles.optionRow}>
+            <span className={configFormStyles.optionLabel}>Show as</span>
+            <div className={configFormStyles.optionControl}>
+              <select
+                value={display}
+                onChange={e =>
+                  onChange({ ...config, display: e.target.value as AggregateStatDisplay })
+                }
+              >
+                <option value="count">Count</option>
+                <option value="percent">Percent of total</option>
+                <option value="ofTotal">Count, with "of total"</option>
+              </select>
+            </div>
+          </label>
+          {needsDenominator && (
+            <QueryField
+              label="Total records"
+              value={config.denominatorQuery ?? ''}
+              placeholder='e.g. schema:"Control"'
+              onChange={denominatorQuery => onChange({ ...config, denominatorQuery })}
+            />
+          )}
+        </div>
+      </DialogSection>
+      <DialogSection label="Display" required={false}>
+        <div className={configFormStyles.options}>
+          <QueryField
+            label="Subtext count"
+            value={config.subtextQuery ?? ''}
+            placeholder="Optional second query, available as {sub}"
+            onChange={subtextQuery =>
+              onChange({ ...config, subtextQuery: optionalText(subtextQuery) })
+            }
+          />
+          <label className={configFormStyles.optionRow}>
+            <span className={configFormStyles.optionLabel}>Measure</span>
+            <div className={configFormStyles.optionControl}>
+              <select
+                className={configFormStyles.labelInput}
+                value={config.measure ?? 'count'}
+                onChange={e =>
+                  onChange({
+                    ...config,
+                    measure:
+                      e.target.value === 'sum' || e.target.value === 'countDistinct'
+                        ? e.target.value
+                        : undefined
+                  })
+                }
+              >
+                <option value="count">Count of records</option>
+                <option value="sum">Sum of a field</option>
+                <option value="countDistinct">Count of distinct values</option>
+              </select>
+            </div>
+          </label>
+          {config.measure === 'countDistinct' && (
+            <label className={configFormStyles.optionRow}>
+              <span className={configFormStyles.optionLabel}>Field to count</span>
+              <div className={configFormStyles.optionControl}>
+                <input
+                  type="text"
+                  className={configFormStyles.labelInput}
+                  value={config.distinctFieldId ?? ''}
+                  onChange={e =>
+                    onChange({ ...config, distinctFieldId: optionalText(e.target.value) })
+                  }
+                  placeholder="Field id, e.g. cost_centre"
+                />
+              </div>
+            </label>
+          )}
+          {(config.measure === 'sum' || config.subtextQuery?.trim()) && (
+            <label className={configFormStyles.optionRow}>
+              <span className={configFormStyles.optionLabel}>Field to sum</span>
+              <div className={configFormStyles.optionControl}>
+                <input
+                  type="text"
+                  className={configFormStyles.labelInput}
+                  value={config.sumFieldId ?? ''}
+                  onChange={e => onChange({ ...config, sumFieldId: optionalText(e.target.value) })}
+                  placeholder="Number or currency field id, e.g. annual_cost"
+                />
+              </div>
+            </label>
+          )}
+          <label className={configFormStyles.optionRow}>
+            <span className={configFormStyles.optionLabel}>Subtext</span>
+            <div className={configFormStyles.optionControl}>
+              <input
+                type="text"
+                className={configFormStyles.labelInput}
+                value={config.subtextTemplate ?? ''}
+                onChange={e =>
+                  onChange({ ...config, subtextTemplate: optionalText(e.target.value) })
+                }
+                placeholder="e.g. {sub} highly sensitive ({count}, {total}, {subSum} also available)"
+              />
+            </div>
+          </label>
+          <label className={configFormStyles.optionRow}>
+            <span className={configFormStyles.optionLabel}>Warn at</span>
+            <div className={configFormStyles.optionControl}>
+              <input
+                type="number"
+                className={configFormStyles.labelInput}
+                value={config.severity?.warnAt ?? ''}
+                onChange={e =>
+                  onChange({
+                    ...config,
+                    severity: { ...config.severity, warnAt: numberOrUndefined(e.target.value) }
+                  })
+                }
+              />
+            </div>
+          </label>
+          <label className={configFormStyles.optionRow}>
+            <span className={configFormStyles.optionLabel}>Critical at</span>
+            <div className={configFormStyles.optionControl}>
+              <input
+                type="number"
+                className={configFormStyles.labelInput}
+                value={config.severity?.critAt ?? ''}
+                onChange={e =>
+                  onChange({
+                    ...config,
+                    severity: { ...config.severity, critAt: numberOrUndefined(e.target.value) }
+                  })
+                }
+              />
+            </div>
+          </label>
+          <label className={configFormStyles.optionRow}>
+            <span className={configFormStyles.optionLabel}>Highlight when</span>
+            <div className={configFormStyles.optionControl}>
+              <select
+                value={config.severity?.direction ?? 'above'}
+                onChange={e =>
+                  onChange({
+                    ...config,
+                    severity: {
+                      ...config.severity,
+                      direction: e.target.value === 'below' ? 'below' : 'above'
+                    }
+                  })
+                }
+              >
+                <option value="above">Value is at or above the threshold</option>
+                <option value="below">Value is at or below the threshold</option>
+              </select>
+            </div>
+          </label>
+          <label className={configFormStyles.optionRow}>
+            <span className={configFormStyles.optionLabel}>Show link</span>
+            <div className={configFormStyles.optionControl}>
+              <input
+                type="checkbox"
+                checked={showLink}
+                onChange={e => onChange({ ...config, showLink: e.target.checked })}
+              />
+            </div>
+          </label>
+        </div>
+      </DialogSection>
+    </>
+  );
+};
+
+export const AggregateStatConfigForm = ({ config, onChange }: AggregateStatConfigFormProps) => {
+  if (typeof config.query === 'string')
+    return <QueryModeForm config={config} onChange={onChange} />;
+  return <LegacyAggregateStatConfigForm config={config} onChange={onChange} />;
+};
+
+const LegacyAggregateStatConfigForm = ({ config, onChange }: AggregateStatConfigFormProps) => {
+  const { schemas, enums } = useWorkspaceContext();
+  const schema = schemas.find(s => s.id === config.schema);
+  const fields = getSchemaFieldDefs(schema, enums);
+  const showLink = config.showLink ?? true;
+
+  const filter: EntityFilterValue = {
+    schemaId: config.schema ?? '',
+    owner: config.owner ?? '',
+    lifecycle: config.lifecycle ?? ''
+  };
+
+  const defaultCondition: FilterCondition = {
+    fieldId: fields[0]?.id ?? '',
+    op: fields[0]?.type === 'select' ? 'equals' : 'not_empty',
+    value: ''
+  };
+
+  return (
+    <>
+      <DialogSection label="Entity type">
+        <EntityFilterPanel
+          value={filter}
+          onChange={update => {
+            const next = { ...filter, ...update };
+            onChange({
+              ...config,
+              schema: next.schemaId,
+              owner: optionalText(next.owner),
+              lifecycle: optionalText(next.lifecycle),
+              // The numerator condition is scoped to the previously selected schema's fields -
+              // reset it when the schema changes so it doesn't reference a stale field id.
+              numeratorCondition:
+                next.schemaId === config.schema ? config.numeratorCondition : undefined
+            });
+          }}
+        />
+      </DialogSection>
+      <DialogSection label="Counts as met when">
+        {!config.schema ? (
+          <div className={`${configFormStyles.hint} dim`}>Choose an entity type first.</div>
+        ) : (
+          <FilterRow
+            condition={config.numeratorCondition ?? defaultCondition}
+            fields={fields}
+            onUpdate={updates =>
+              onChange({
+                ...config,
+                numeratorCondition: {
+                  ...(config.numeratorCondition ?? defaultCondition),
+                  ...updates
+                }
+              })
+            }
+            onRemove={() => onChange({ ...config, numeratorCondition: undefined })}
+          />
+        )}
+      </DialogSection>
+      <DialogSection label="Display" required={false}>
+        <div className={configFormStyles.options}>
+          <label className={configFormStyles.optionRow}>
+            <span className={configFormStyles.optionLabel}>Show link</span>
+            <div className={configFormStyles.optionControl}>
+              <input
+                type="checkbox"
+                checked={showLink}
+                onChange={e => onChange({ ...config, showLink: e.target.checked })}
+              />
+            </div>
+          </label>
+        </div>
+      </DialogSection>
+    </>
+  );
+};
+
+export const AGGREGATE_STAT_TYPE = 'AggregateStat' as const;
+
+const FILTER_OPS = [
+  'equals',
+  'not_equals',
+  'contains',
+  'starts_with',
+  'ends_with',
+  'empty',
+  'not_empty',
+  'before',
+  'after',
+  'on',
+  'gt',
+  'lt',
+  'gte',
+  'lte'
+];
+
+const isValidNumeratorCondition = (value: unknown): boolean => {
+  if (value == null || typeof value !== 'object') return false;
+  const candidate = value as Record<string, unknown>;
+  return (
+    typeof candidate.fieldId === 'string' &&
+    candidate.fieldId.length > 0 &&
+    typeof candidate.op === 'string' &&
+    FILTER_OPS.includes(candidate.op)
+  );
+};
+
+const isValidLegacyCore = (config: Record<string, unknown>): boolean =>
+  typeof config.schema === 'string' &&
+  config.schema.length > 0 &&
+  isValidNumeratorCondition(config.numeratorCondition);
+
+const optionalString = (value: unknown): boolean =>
+  value === undefined || typeof value === 'string';
+
+const isValidQueryStatConfig = (config: Record<string, unknown>): boolean => {
+  const display = config.display;
+  const severity = config.severity;
+  const needsDenominator = display === 'percent' || display === 'ofTotal';
+  const measure = config.measure;
+  return (
+    (measure === undefined ||
+      measure === 'count' ||
+      (measure === 'sum' && typeof config.sumFieldId === 'string' && config.sumFieldId !== '') ||
+      (measure === 'countDistinct' &&
+        typeof config.distinctFieldId === 'string' &&
+        config.distinctFieldId !== '')) &&
+    optionalString(config.sumFieldId) &&
+    optionalString(config.distinctFieldId) &&
+    (display === undefined || display === 'count' || needsDenominator) &&
+    optionalString(config.denominatorQuery) &&
+    (!needsDenominator ||
+      (typeof config.denominatorQuery === 'string' && config.denominatorQuery.trim() !== '')) &&
+    optionalString(config.subtextQuery) &&
+    optionalString(config.subtextTemplate) &&
+    (severity === undefined ||
+      (typeof severity === 'object' &&
+        severity !== null &&
+        ['warnAt', 'critAt'].every(key => {
+          const v = (severity as Record<string, unknown>)[key];
+          return v === undefined || typeof v === 'number';
+        })))
+  );
+};
+
+interface AggregateStatSlateElement extends TElement {}
+
+/**
+ * Dashboard-only widget: a percentage/coverage stat computed as (entities matching a configured
+ * condition) / (entities matching the base schema/owner/lifecycle filter), scoped to whatever
+ * entity schema the widget is configured against - not tied to any particular schema.
+ */
+export const aggregateStatSpec = defineMdxComponent<
+  AggregateStatSlateElement,
+  { config: AggregateStatWidgetConfig },
+  'block'
+>({
+  component: AggregateStatWidget,
+  mode: 'block',
+  allowedProps: [],
+  dashboardWidget: {
+    icon: TbPercentage,
+    label: 'Aggregate stat',
+    description:
+      'A count or percentage of records matching a query, e.g. coverage, compliance or items needing attention.',
+    defaultW: 3,
+    defaultH: 8,
+    surfaces: ['workspace', 'project'],
+    component: AggregateStatWidget,
+    frame: { hideOutsideEdit: true, padded: false, showIcon: false },
+    isValidConfig: (config): config is AggregateStatWidgetConfig =>
+      (isQueryStatConfig(config) ? isValidQueryStatConfig(config) : isValidLegacyCore(config)) &&
+      (config.owner === undefined || typeof config.owner === 'string') &&
+      (config.lifecycle === undefined || typeof config.lifecycle === 'string') &&
+      (config.showLink === undefined || typeof config.showLink === 'boolean'),
+    createDefaultConfig: () => ({ query: '', display: 'count' as const }),
+    configForm: AggregateStatConfigForm
+  }
+});

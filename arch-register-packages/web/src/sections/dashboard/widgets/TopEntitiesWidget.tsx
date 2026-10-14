@@ -5,6 +5,14 @@ import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { useEntityDrawer } from '../../entities/entityDrawer/useEntityDrawer';
 import { formatMeasured, measuredValue, type MeasuredValue } from './fieldAggregation';
 import styles from './WidgetRowList.module.css';
+import type { TElement } from 'platejs';
+import { TbListNumbers } from 'react-icons/tb';
+import { defineMdxComponent } from '../../markdown/mdx-components/defineMdxComponent';
+import { Select } from '@diagram-craft/app-components/Select';
+import { EntityFilterPanel, type EntityFilterValue } from '../../../components/EntityFilterPanel';
+import { getMetricSourceOptions } from '../../entities/components/mapMetricConfig';
+import { DialogSection } from '../../markdown/editor/BlockDialog';
+import configFormStyles from '../WidgetConfigDialog.module.css';
 
 const FETCH_LIMIT = 500;
 
@@ -117,3 +125,165 @@ export const TopEntitiesWidget = ({ config }: Props) => {
     </div>
   );
 };
+
+const optionalText = (value: string): string | undefined =>
+  value.trim() === '' ? undefined : value;
+
+type TopEntitiesConfigFormProps = {
+  config: TopEntitiesWidgetConfig;
+  onChange: (config: TopEntitiesWidgetConfig) => void;
+};
+
+export const TopEntitiesConfigForm = ({ config, onChange }: TopEntitiesConfigFormProps) => {
+  const { schemas } = useWorkspaceContext();
+  const schema = schemas.find(s => s.id === config.schema);
+  const fieldOptions = getMetricSourceOptions(schema).filter(
+    option => option.source.kind === 'field'
+  );
+
+  const filter: EntityFilterValue = {
+    schemaId: config.schema ?? '',
+    owner: config.owner ?? '',
+    lifecycle: config.lifecycle ?? ''
+  };
+
+  return (
+    <>
+      <DialogSection label="Entity type">
+        <EntityFilterPanel
+          value={filter}
+          onChange={update => {
+            const next = { ...filter, ...update };
+            onChange({
+              ...config,
+              schema: next.schemaId,
+              owner: optionalText(next.owner),
+              lifecycle: optionalText(next.lifecycle),
+              fieldId: next.schemaId === config.schema ? config.fieldId : ''
+            });
+          }}
+        />
+      </DialogSection>
+      <DialogSection label="Sort by field">
+        {fieldOptions.length === 0 ? (
+          <div className={`${configFormStyles.hint} dim`}>
+            {config.schema
+              ? 'This entity type has no numeric fields.'
+              : 'Choose an entity type first.'}
+          </div>
+        ) : (
+          <Select.Root
+            value={config.fieldId}
+            onChange={value => onChange({ ...config, fieldId: value ?? '' })}
+          >
+            {fieldOptions.map(option => (
+              <Select.Item
+                key={option.source.kind === 'field' ? option.source.fieldId : ''}
+                value={option.source.kind === 'field' ? option.source.fieldId : ''}
+              >
+                {option.label}
+              </Select.Item>
+            ))}
+          </Select.Root>
+        )}
+      </DialogSection>
+      <DialogSection label="Display" required={false}>
+        <div className={configFormStyles.options}>
+          <label className={configFormStyles.optionRow}>
+            <span className={configFormStyles.optionLabel}>Order</span>
+            <div className={configFormStyles.optionControl}>
+              <Select.Root
+                value={config.direction ?? 'desc'}
+                onChange={value => onChange({ ...config, direction: value as 'asc' | 'desc' })}
+              >
+                <Select.Item value="desc">Highest first</Select.Item>
+                <Select.Item value="asc">Lowest first</Select.Item>
+              </Select.Root>
+            </div>
+          </label>
+          <label className={configFormStyles.optionRow}>
+            <span className={configFormStyles.optionLabel}>Show</span>
+            <div className={configFormStyles.optionControl}>
+              <input
+                type="number"
+                min={1}
+                max={50}
+                className={configFormStyles.labelInput}
+                value={config.limit ?? 5}
+                onChange={e =>
+                  onChange({ ...config, limit: Math.max(1, Number(e.target.value) || 5) })
+                }
+              />
+            </div>
+          </label>
+          <label className={configFormStyles.optionRow}>
+            <span className={configFormStyles.optionLabel}>Catalog link</span>
+            <div className={configFormStyles.optionControl}>
+              <input
+                type="checkbox"
+                checked={config.showLink ?? true}
+                onChange={e =>
+                  onChange({ ...config, showLink: e.target.checked ? undefined : false })
+                }
+              />
+            </div>
+          </label>
+          <label className={configFormStyles.optionRow}>
+            <span className={configFormStyles.optionLabel}>Share bars</span>
+            <div className={configFormStyles.optionControl}>
+              <input
+                type="checkbox"
+                checked={config.showShareBar ?? false}
+                onChange={e => onChange({ ...config, showShareBar: e.target.checked || undefined })}
+              />
+            </div>
+          </label>
+        </div>
+      </DialogSection>
+    </>
+  );
+};
+
+export const TOP_ENTITIES_TYPE = 'TopEntities' as const;
+
+const isDirection = (value: unknown): value is 'asc' | 'desc' =>
+  value === 'asc' || value === 'desc';
+
+interface TopEntitiesSlateElement extends TElement {}
+
+/**
+ * Dashboard-only widget: a ranked list of entities of a chosen schema, sorted by a chosen numeric
+ * (or derived-numeric) field - not tied to any particular schema or field name.
+ */
+export const topEntitiesSpec = defineMdxComponent<
+  TopEntitiesSlateElement,
+  { config: TopEntitiesWidgetConfig },
+  'block'
+>({
+  component: TopEntitiesWidget,
+  mode: 'block',
+  allowedProps: [],
+  dashboardWidget: {
+    icon: TbListNumbers,
+    label: 'Ranked list',
+    description: 'The top entities of a type, ranked by a numeric field.',
+    defaultW: 4,
+    defaultH: 16,
+    surfaces: ['workspace', 'project'],
+    component: TopEntitiesWidget,
+    isValidConfig: (config): config is TopEntitiesWidgetConfig =>
+      ((typeof config.schema === 'string' && config.schema.length > 0) ||
+        (typeof config.schemaName === 'string' && config.schemaName.length > 0)) &&
+      typeof config.fieldId === 'string' &&
+      config.fieldId.length > 0 &&
+      isDirection(config.direction) &&
+      typeof config.limit === 'number' &&
+      config.limit > 0 &&
+      (config.owner === undefined || typeof config.owner === 'string') &&
+      (config.lifecycle === undefined || typeof config.lifecycle === 'string') &&
+      (config.showLink === undefined || typeof config.showLink === 'boolean') &&
+      (config.showShareBar === undefined || typeof config.showShareBar === 'boolean'),
+    createDefaultConfig: () => ({ schema: '', fieldId: '', direction: 'desc', limit: 5 }),
+    configForm: TopEntitiesConfigForm
+  }
+});

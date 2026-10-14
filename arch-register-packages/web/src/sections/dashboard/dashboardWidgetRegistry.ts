@@ -11,45 +11,45 @@ import { blastRadiusDashboardWidgetSpec } from './widgets/BlastRadiusWidget';
 import {
   ASSESSMENT_STATUS_STAT_TYPE,
   assessmentStatusStatSpec
-} from './widgets/AssessmentStatusStatRegistration';
+} from './widgets/AssessmentStatusStatWidget';
 import {
   ASSESSMENT_PROGRESS_TABLE_TYPE,
   assessmentProgressTableSpec
-} from './widgets/AssessmentProgressTableRegistration';
+} from './widgets/AssessmentProgressTableWidget';
 
 import {
   CONFORMANCE_VIOLATIONS_TYPE,
   conformanceViolationsSpec
-} from './widgets/ConformanceViolationsRegistration';
-import { CHANGE_CASE_TABLE_TYPE, changeCaseTableSpec } from './widgets/ChangeCaseTableRegistration';
-import { ASSESSMENT_COUNT_TYPE, assessmentCountSpec } from './widgets/AssessmentCountRegistration';
-import { RATIO_BAR_LIST_TYPE, ratioBarListSpec } from './widgets/RatioBarListRegistration';
-import { COUNT_BY_FIELD_TYPE, countByFieldSpec } from './widgets/CountByFieldRegistration';
-import { RELATION_TABLE_TYPE, relationTableSpec } from './widgets/RelationTableRegistration';
+} from './widgets/ConformanceViolationsWidget';
+import { CHANGE_CASE_TABLE_TYPE, changeCaseTableSpec } from './widgets/ChangeCaseTableWidget';
+import { ASSESSMENT_COUNT_TYPE, assessmentCountSpec } from './widgets/AssessmentCountWidget';
+import { RATIO_BAR_LIST_TYPE, ratioBarListSpec } from './widgets/RatioBarListWidget';
+import { COUNT_BY_FIELD_TYPE, countByFieldSpec } from './widgets/CountByFieldWidget';
+import { RELATION_TABLE_TYPE, relationTableSpec } from './widgets/RelationTableWidget';
 import {
   RELATION_PAIRS_COVERAGE_TYPE,
   relationPairsCoverageSpec
-} from './widgets/RelationPairsCoverageRegistration';
-import { SPEC_ITEMS_TABLE_TYPE, specItemsTableSpec } from './widgets/SpecItemsTableRegistration';
+} from './widgets/RelationPairsCoverageWidget';
+import { SPEC_ITEMS_TABLE_TYPE, specItemsTableSpec } from './widgets/SpecItemsTableWidget';
 import {
   RELATED_ENTITIES_LIST_TYPE,
   relatedEntitiesListSpec
-} from './widgets/RelatedEntitiesListRegistration';
+} from './widgets/RelatedEntitiesListWidget';
 import { registerNestedWidgetResolvers } from './widgets/nestedWidgets';
-import { TABS_TYPE, tabsSpec } from './widgets/TabsRegistration';
-import { PATH_WALKER_TYPE, pathWalkerSpec } from './widgets/PathWalkerRegistration';
-import { DATE_BUCKET_CHART_TYPE, dateBucketChartSpec } from './widgets/DateBucketChartRegistration';
+import { TABS_TYPE, tabsSpec } from './widgets/TabsWidget';
+import { PATH_WALKER_TYPE, pathWalkerSpec } from './widgets/PathWalkerWidget';
+import { DATE_BUCKET_CHART_TYPE, dateBucketChartSpec } from './widgets/DateBucketChartWidget';
 import {
   GROUPED_ROLLUP_TABLE_TYPE,
   groupedRollupTableSpec
-} from './widgets/GroupedRollupTableRegistration';
-import { FIELD_MATRIX_TYPE, fieldMatrixSpec } from './widgets/FieldMatrixRegistration';
-import { DATE_CALENDAR_TYPE, dateCalendarSpec } from './widgets/DateCalendarRegistration';
+} from './widgets/GroupedRollupTableWidget';
+import { FIELD_MATRIX_TYPE, fieldMatrixSpec } from './widgets/FieldMatrixWidget';
+import { DATE_CALENDAR_TYPE, dateCalendarSpec } from './widgets/DateCalendarWidget';
 import {
   DATE_RANGE_TIMELINE_TYPE,
   dateRangeTimelineSpec
-} from './widgets/DateRangeTimelineRegistration';
-import { UPCOMING_BY_DATE_TYPE, upcomingByDateSpec } from './widgets/UpcomingByDateRegistration';
+} from './widgets/DateRangeTimelineWidget';
+import { UPCOMING_BY_DATE_TYPE, upcomingByDateSpec } from './widgets/UpcomingByDateWidget';
 
 const WIKI_PAGE_WIDGET_TYPE = 'wiki-page';
 

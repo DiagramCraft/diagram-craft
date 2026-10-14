@@ -1,4 +1,7 @@
 import { useNavigate } from '@tanstack/react-router';
+import type { TElement } from 'platejs';
+import { TbActivity } from 'react-icons/tb';
+import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { AuditLogEntry } from '@arch-register/api-types/auditContract';
 import { useAuditLog } from '../../../hooks/useAudit';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
@@ -6,7 +9,10 @@ import { useEntityDrawer } from '../../entities/entityDrawer/useEntityDrawer';
 import { asProjectPublicId, projectDetailRoute } from '../../../routes/publicObjectRoutes';
 import { ENTITY_TYPE_LABELS, OPERATION_LABELS } from '../../../utils/auditLabels';
 import { formatRelativeTime } from '../../../utils/dateFormat';
+import { DialogSection } from '../../markdown/editor/BlockDialog';
+import { defineMdxComponent } from '../../markdown/mdx-components/defineMdxComponent';
 import styles from './ActivityFeedWidget.module.css';
+import formStyles from '../WidgetConfigDialog.module.css';
 
 export type ActivityFeedWidgetConfig = { limit?: number };
 
@@ -85,3 +91,65 @@ export const ActivityFeedWidget = ({ config }: Props) => {
     </div>
   );
 };
+
+type ActivityFeedConfigFormProps = {
+  config: ActivityFeedWidgetConfig;
+  onChange: (config: ActivityFeedWidgetConfig) => void;
+};
+
+export const ActivityFeedDashboardConfigForm = ({
+  config,
+  onChange
+}: ActivityFeedConfigFormProps) => (
+  <DialogSection label="Options" required={false}>
+    <div className={formStyles.options}>
+      <label className={formStyles.optionRow}>
+        <span className={formStyles.optionLabel}>Item limit</span>
+        <div className={formStyles.optionControl}>
+          <NumberInput
+            value={config.limit ?? ''}
+            min={1}
+            max={50}
+            step={1}
+            onChange={value => onChange({ ...config, limit: value })}
+            style={{ width: '80px' }}
+          />
+        </div>
+      </label>
+    </div>
+  </DialogSection>
+);
+
+export const ACTIVITY_FEED_TYPE = 'activity-feed' as const;
+
+interface ActivityFeedSlateElement extends TElement {}
+
+const hasOptionalInteger = (config: Record<string, unknown>, key: string): boolean =>
+  config[key] === undefined || (typeof config[key] === 'number' && Number.isInteger(config[key]));
+
+/**
+ * Dashboard-only widget: no editorSpec, so it never appears in the wiki
+ * slash-command menu or MDX round-trip. Not authorable in wiki markdown.
+ */
+export const activityFeedSpec = defineMdxComponent<
+  ActivityFeedSlateElement,
+  { config: ActivityFeedWidgetConfig },
+  'block'
+>({
+  component: ActivityFeedWidget,
+  mode: 'block',
+  allowedProps: [],
+  dashboardWidget: {
+    icon: TbActivity,
+    label: 'Activity feed',
+    description: 'A live feed of recent audit log activity.',
+    defaultW: 12,
+    defaultH: 24,
+    surfaces: ['workspace'],
+    component: ActivityFeedWidget,
+    isValidConfig: (config): config is ActivityFeedWidgetConfig =>
+      hasOptionalInteger(config, 'limit'),
+    createDefaultConfig: () => ({}),
+    configForm: ActivityFeedDashboardConfigForm
+  }
+});

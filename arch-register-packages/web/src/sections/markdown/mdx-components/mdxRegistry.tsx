@@ -54,35 +54,26 @@ import {
   ENTITY_STALE_REPORT_TYPE,
   entityStaleReportSpec
 } from './widgets/entity-stale-report/EntityStaleReportRegistration';
-import {
-  ACTIVITY_FEED_TYPE,
-  activityFeedSpec
-} from '../../dashboard/widgets/ActivityFeedRegistration';
-import { ASSESSMENTS_TYPE, assessmentsSpec } from '../../dashboard/widgets/AssessmentsRegistration';
+import { ACTIVITY_FEED_TYPE, activityFeedSpec } from '../../dashboard/widgets/ActivityFeedWidget';
+import { ASSESSMENTS_TYPE, assessmentsSpec } from '../../dashboard/widgets/AssessmentsWidget';
 import {
   UPCOMING_MILESTONES_TYPE,
   upcomingMilestonesSpec
-} from '../../dashboard/widgets/UpcomingMilestonesRegistration';
-import {
-  MARKDOWN_WIDGET_TYPE,
-  markdownWidgetSpec
-} from '../../dashboard/widgets/MarkdownRegistration';
+} from '../../dashboard/widgets/UpcomingMilestonesWidget';
+import { MARKDOWN_WIDGET_TYPE, markdownWidgetSpec } from '../../dashboard/widgets/MarkdownWidget';
 import {
   AGGREGATE_STAT_TYPE,
   aggregateStatSpec
-} from '../../dashboard/widgets/AggregateStatRegistration';
-import {
-  TOP_ENTITIES_TYPE,
-  topEntitiesSpec
-} from '../../dashboard/widgets/TopEntitiesRegistration';
+} from '../../dashboard/widgets/AggregateStatWidget';
+import { TOP_ENTITIES_TYPE, topEntitiesSpec } from '../../dashboard/widgets/TopEntitiesWidget';
 import {
   CONFORMANCE_SUMMARY_TYPE,
   conformanceSummarySpec
-} from '../../dashboard/widgets/ConformanceSummaryRegistration';
+} from '../../dashboard/widgets/ConformanceSummaryWidget';
 import {
   NEEDS_ATTENTION_TYPE,
   needsAttentionSpec
-} from '../../dashboard/widgets/NeedsAttentionRegistration';
+} from '../../dashboard/widgets/NeedsAttentionWidget';
 import type { DashboardWidgetSpec, MdxComponentSpec } from './types';
 export type { SlashCommandDef, EditorSpec, MdxComponentSpec, DashboardWidgetSpec } from './types';
 

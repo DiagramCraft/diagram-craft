@@ -8,6 +8,10 @@ import { formatMeasured, measuredValue } from './fieldAggregation';
 import { buildUpcomingRows, countdownTone, formatCountdown } from './upcomingByDateLogic';
 import rowStyles from './WidgetRowList.module.css';
 import styles from './UpcomingByDateWidget.module.css';
+import { TbCalendarTime } from 'react-icons/tb';
+import type { DashboardWidgetSpec } from '../../markdown/mdx-components/types';
+import { DialogSection } from '../../markdown/editor/BlockDialog';
+import configFormStyles from '../WidgetConfigDialog.module.css';
 
 const DEFAULT_LIMIT = 7;
 
@@ -146,4 +150,134 @@ export const UpcomingByDateWidget = ({ config }: Props) => {
       })}
     </div>
   );
+};
+
+type UpcomingByDateConfigFormProps = {
+  config: UpcomingByDateWidgetConfig;
+  onChange: (config: UpcomingByDateWidgetConfig) => void;
+};
+
+const optionalText = (value: string): string | undefined =>
+  value.trim() === '' ? undefined : value;
+
+const optionalNumber = (value: string): number | undefined =>
+  value.trim() === '' || Number.isNaN(Number(value)) ? undefined : Number(value);
+
+export const UpcomingByDateConfigForm = ({ config, onChange }: UpcomingByDateConfigFormProps) => (
+  <>
+    <DialogSection label="Records (query)" required>
+      <input
+        type="text"
+        className={configFormStyles.labelInput}
+        value={config.query}
+        placeholder='e.g. schema:"Contract"'
+        onChange={e => onChange({ ...config, query: e.target.value })}
+      />
+    </DialogSection>
+    <DialogSection label="Date field id" required>
+      <input
+        type="text"
+        className={configFormStyles.labelInput}
+        value={config.dateFieldId}
+        placeholder="e.g. contract_end"
+        onChange={e => onChange({ ...config, dateFieldId: e.target.value })}
+      />
+    </DialogSection>
+    <DialogSection label="Display" required={false}>
+      <div className={configFormStyles.options}>
+        <label className={configFormStyles.optionRow}>
+          <span className={configFormStyles.optionLabel}>Within (days)</span>
+          <div className={configFormStyles.optionControl}>
+            <input
+              type="number"
+              min={0}
+              className={configFormStyles.labelInput}
+              value={config.windowDays ?? ''}
+              placeholder="No limit"
+              onChange={e => onChange({ ...config, windowDays: optionalNumber(e.target.value) })}
+            />
+          </div>
+        </label>
+        <label className={configFormStyles.optionRow}>
+          <span className={configFormStyles.optionLabel}>Show</span>
+          <div className={configFormStyles.optionControl}>
+            <input
+              type="number"
+              min={1}
+              max={50}
+              className={configFormStyles.labelInput}
+              value={config.limit ?? 7}
+              onChange={e =>
+                onChange({ ...config, limit: Math.max(1, optionalNumber(e.target.value) ?? 7) })
+              }
+            />
+          </div>
+        </label>
+        <label className={configFormStyles.optionRow}>
+          <span className={configFormStyles.optionLabel}>Include overdue</span>
+          <div className={configFormStyles.optionControl}>
+            <input
+              type="checkbox"
+              checked={config.includeOverdue ?? false}
+              onChange={e => onChange({ ...config, includeOverdue: e.target.checked || undefined })}
+            />
+          </div>
+        </label>
+        <label className={configFormStyles.optionRow}>
+          <span className={configFormStyles.optionLabel}>Subtitle field id</span>
+          <div className={configFormStyles.optionControl}>
+            <input
+              type="text"
+              className={configFormStyles.labelInput}
+              value={config.sublabelFieldId ?? ''}
+              onChange={e => onChange({ ...config, sublabelFieldId: optionalText(e.target.value) })}
+            />
+          </div>
+        </label>
+        <label className={configFormStyles.optionRow}>
+          <span className={configFormStyles.optionLabel}>Value field id</span>
+          <div className={configFormStyles.optionControl}>
+            <input
+              type="text"
+              className={configFormStyles.labelInput}
+              value={config.valueFieldId ?? ''}
+              onChange={e => onChange({ ...config, valueFieldId: optionalText(e.target.value) })}
+            />
+          </div>
+        </label>
+      </div>
+    </DialogSection>
+  </>
+);
+
+export const UPCOMING_BY_DATE_TYPE = 'UpcomingByDate' as const;
+
+const isOptionalNumber = (value: unknown): boolean =>
+  value === undefined || (typeof value === 'number' && Number.isFinite(value));
+
+const optionalString = (value: unknown): boolean =>
+  value === undefined || typeof value === 'string';
+
+export const upcomingByDateSpec: DashboardWidgetSpec<UpcomingByDateWidgetConfig> = {
+  icon: TbCalendarTime,
+  label: 'Upcoming by date',
+  description:
+    'Records ordered by an upcoming date with a countdown, e.g. renewals, expiries or reviews due.',
+  defaultW: 6,
+  defaultH: 16,
+  surfaces: ['workspace'],
+  component: UpcomingByDateWidget,
+  isValidConfig: (config): config is UpcomingByDateWidgetConfig =>
+    typeof config.query === 'string' &&
+    typeof config.dateFieldId === 'string' &&
+    isOptionalNumber(config.windowDays) &&
+    isOptionalNumber(config.limit) &&
+    isOptionalNumber(config.critWithinDays) &&
+    isOptionalNumber(config.warnWithinDays) &&
+    optionalString(config.sublabelFieldId) &&
+    optionalString(config.valueFieldId) &&
+    (config.includeOverdue === undefined || typeof config.includeOverdue === 'boolean') &&
+    isUpcomingByDateConfigComplete(config as UpcomingByDateWidgetConfig),
+  createDefaultConfig: () => ({ query: '', dateFieldId: '' }),
+  configForm: UpcomingByDateConfigForm
 };
