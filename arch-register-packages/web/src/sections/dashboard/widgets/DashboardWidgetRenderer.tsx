@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
 import { WidgetFrame } from './WidgetFrame';
 import '../dashboardWidgetRegistry';
@@ -30,24 +31,22 @@ export const DashboardWidgetRenderer = ({ widget, isEditing = false, onEdit, onR
     : undefined;
   const dashboardWidget = definition?.dashboardWidget;
   const WidgetComponent = definition?.component;
-  const componentProps =
-    knownWidget && dashboardWidget ? { config: knownWidget.config } : undefined;
   const frame = resolveWidgetFrame(
     dashboardWidget,
     widget.frame,
     knownWidget?.config ?? widget.config
   );
-  const title =
-    frame.title ??
-    (knownWidget ? (
-      dashboardWidget?.titleComponent ? (
-        <dashboardWidget.titleComponent config={knownWidget.config} />
-      ) : (
-        getWidgetTitle(knownWidget)
-      )
+
+  const TitleComponent = dashboardWidget?.titleComponent;
+  let defaultTitle: ReactNode = widget.type;
+  if (knownWidget) {
+    defaultTitle = TitleComponent ? (
+      <TitleComponent config={knownWidget.config} />
     ) : (
-      widget.type
-    ));
+      getWidgetTitle(knownWidget)
+    );
+  }
+  const title = frame.title ?? defaultTitle;
   const Icon = frame.iconName ? resolveAppIcon(frame.iconName) : definition?.icon;
   const HeaderActions = dashboardWidget?.headerActionsComponent;
 
@@ -61,9 +60,9 @@ export const DashboardWidgetRenderer = ({ widget, isEditing = false, onEdit, onR
       onEdit={onEdit}
       onRemove={onRemove}
     >
-      {knownWidget && dashboardWidget && WidgetComponent && componentProps ? (
+      {knownWidget && WidgetComponent ? (
         <WidgetBodyTitleProvider value={!frame.showFrame && !isEditing ? frame.title : undefined}>
-          <WidgetComponent {...componentProps} />
+          <WidgetComponent config={knownWidget.config} />
         </WidgetBodyTitleProvider>
       ) : (
         <div>
