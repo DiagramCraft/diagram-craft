@@ -4,7 +4,7 @@ import {
   _relationPairsCoverageSpecData
 } from './RelationPairsCoverageWidget';
 
-const { component, configForm, createDefaultProps, ...dashboardWidget } =
+const { icon, component, configForm, createDefaultProps, ...dashboardWidget } =
   _relationPairsCoverageSpecData;
 export default defineComponent({
   type: RELATION_PAIRS_COVERAGE_TYPE,
@@ -15,5 +15,6 @@ export default defineComponent({
   component: component!,
   configForm,
   createDefaultProps,
+  icon,
   dashboardWidget
 });

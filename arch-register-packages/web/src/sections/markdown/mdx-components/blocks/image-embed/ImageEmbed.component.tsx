@@ -13,6 +13,7 @@ export default defineComponent<
   name: 'Image',
   description: 'Embed an uploaded image attachment',
   component: ImageEmbed,
+  icon: TbPhoto,
   mdxComponent: {
     mode: 'block',
     allowedProps: ['id', 'alt', 'size', 'align'],
@@ -21,7 +22,6 @@ export default defineComponent<
       nodeOptions: { isVoid: true },
       mdxRule: imageEmbedMdxRule,
       slashCommand: {
-        icon: <TbPhoto size={14} />,
         keywords: ['image', 'photo', 'attachment', 'picture'],
         onSelect: (editor, { insertOrReplaceBlock }) => {
           insertOrReplaceBlock(editor, {

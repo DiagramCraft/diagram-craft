@@ -1,7 +1,6 @@
 import { type PlateElementProps } from 'platejs/react';
 import { getPluginType } from 'platejs';
 import { parseAttributes, propsToAttributes } from '@platejs/markdown';
-import { TbHash } from 'react-icons/tb';
 import type { MdxRuleDef } from '../../defineComponent';
 import { BaseBlockEditable } from '../BaseBlockEditable';
 import { MdxWidgetConfigDialog, type MdxConfigSpec } from '../MdxWidgetConfigDialog';
@@ -83,12 +82,7 @@ export const MetricEditable = ({
     <BaseBlockEditable
       element={element}
       hasValue={hasValue}
-      placeholder={
-        <>
-          <TbHash size={16} />
-          <span>Configure metric…</span>
-        </>
-      }
+      placeholder={<span>Configure metric…</span>}
       content={
         <MdxComponentPreview
           type={METRIC_TYPE}

@@ -48,7 +48,7 @@ export const DashboardWidgetRenderer = ({ widget, isEditing = false, onEdit, onR
     ) : (
       widget.type
     ));
-  const Icon = frame.iconName ? resolveAppIcon(frame.iconName) : dashboardWidget?.icon;
+  const Icon = frame.iconName ? resolveAppIcon(frame.iconName) : definition?.icon;
   const HeaderActions = dashboardWidget?.headerActionsComponent;
 
   return (

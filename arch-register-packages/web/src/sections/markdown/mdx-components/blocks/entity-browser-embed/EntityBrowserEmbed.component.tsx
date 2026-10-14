@@ -33,7 +33,6 @@ export default defineComponent<EntityBrowserEmbedSlateElement, { config?: string
   description:
     'A live, searchable list of entities with your own filters, sorting and columns. Use it for a flexible catalog view.',
   dashboardWidget: {
-    icon: TbListSearch,
     defaultW: 6,
     defaultH: 24,
     surfaces: ['workspace', 'project'],
@@ -45,6 +44,7 @@ export default defineComponent<EntityBrowserEmbedSlateElement, { config?: string
     config: createDefaultEntityBrowserEmbedConfig()
   }),
   configForm: EntityBrowserEmbedConfigForm,
+  icon: TbListSearch,
   mdxComponent: {
     mode: 'block',
     allowedProps: ['config'],
@@ -62,7 +62,6 @@ export default defineComponent<EntityBrowserEmbedSlateElement, { config?: string
       nodeOptions: { isVoid: true },
       mdxRule: entityBrowserEmbedMdxRule,
       slashCommand: {
-        icon: <TbListSearch size={14} />,
         keywords: ['entity', 'browser', 'embed', 'search', 'filter', 'catalog'],
         onSelect: (editor, { insertOrReplaceBlock }) => {
           insertOrReplaceBlock(editor, {

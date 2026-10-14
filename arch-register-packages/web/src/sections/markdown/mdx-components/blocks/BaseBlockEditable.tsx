@@ -4,6 +4,7 @@ import { TbPencil } from 'react-icons/tb';
 import type { PlateElementProps } from 'platejs/react';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
 import { EditorBlock } from '../../editor/EditorBlock';
+import { RegisteredComponentIcon } from '../RegisteredComponentIcon';
 import styles from './BaseBlockEditable.module.css';
 
 export const BaseBlockEditable = ({
@@ -58,6 +59,7 @@ export const BaseBlockEditable = ({
           </>
         ) : (
           <div onClick={() => setDialogOpen(true)} className={styles.placeholder}>
+            <RegisteredComponentIcon type={element.type} size={16} />
             {placeholder}
           </div>
         )}

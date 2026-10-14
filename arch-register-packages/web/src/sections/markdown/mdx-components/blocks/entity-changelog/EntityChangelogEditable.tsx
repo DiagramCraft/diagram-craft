@@ -1,7 +1,6 @@
 import { type PlateElementProps } from 'platejs/react';
 import { getPluginType } from 'platejs';
 import { parseAttributes, propsToAttributes } from '@platejs/markdown';
-import { TbHistory } from 'react-icons/tb';
 import type { MdxRuleDef } from '../../defineComponent';
 import { BaseBlockEditable } from '../BaseBlockEditable';
 import { MdxWidgetConfigDialog, type MdxConfigSpec } from '../MdxWidgetConfigDialog';
@@ -85,12 +84,7 @@ export const EntityChangelogEditable = ({
       element={element}
       hasValue={hasValue}
       fullWidth
-      placeholder={
-        <>
-          <TbHistory size={16} />
-          <span>Configure entity changelog…</span>
-        </>
-      }
+      placeholder={<span>Configure entity changelog…</span>}
       content={
         <MdxComponentPreview
           type={ENTITY_CHANGELOG_TYPE}

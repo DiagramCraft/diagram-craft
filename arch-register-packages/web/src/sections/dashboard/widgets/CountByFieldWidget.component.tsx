@@ -1,7 +1,7 @@
 import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import { COUNT_BY_FIELD_TYPE, _countByFieldSpecData } from './CountByFieldWidget';
 
-const { component, configForm, createDefaultProps, ...dashboardWidget } = _countByFieldSpecData;
+const { icon, component, configForm, createDefaultProps, ...dashboardWidget } = _countByFieldSpecData;
 export default defineComponent({
   type: COUNT_BY_FIELD_TYPE,
   category: 'metrics',
@@ -10,5 +10,6 @@ export default defineComponent({
   component: component!,
   configForm,
   createDefaultProps,
+  icon,
   dashboardWidget
 });

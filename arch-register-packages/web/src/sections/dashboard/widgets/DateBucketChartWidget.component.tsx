@@ -1,7 +1,7 @@
 import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import { DATE_BUCKET_CHART_TYPE, _dateBucketChartSpecData } from './DateBucketChartWidget';
 
-const { component, configForm, createDefaultProps, ...dashboardWidget } = _dateBucketChartSpecData;
+const { icon, component, configForm, createDefaultProps, ...dashboardWidget } = _dateBucketChartSpecData;
 export default defineComponent({
   type: DATE_BUCKET_CHART_TYPE,
   category: 'visualizations',
@@ -11,5 +11,6 @@ export default defineComponent({
   component: component!,
   configForm,
   createDefaultProps,
+  icon,
   dashboardWidget
 });

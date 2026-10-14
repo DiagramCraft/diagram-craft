@@ -8,11 +8,11 @@ export default defineComponent({
   category: 'visualizations',
   name: 'Risk matrix',
   description: 'Likelihood × impact matrix of live risks, with an inherent/residual toggle.',
+  icon: TbGridDots,
   component: RiskMatrixWidget,
   createDefaultProps: () => ({ config: { schemaName: '' } }),
   configForm: RiskMatrixConfigForm,
   dashboardWidget: {
-    icon: TbGridDots,
     defaultW: 6,
     defaultH: 24,
     surfaces: ['workspace'],

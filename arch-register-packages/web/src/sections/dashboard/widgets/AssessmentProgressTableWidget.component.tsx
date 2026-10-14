@@ -4,7 +4,7 @@ import {
   _assessmentProgressTableSpecData
 } from './AssessmentProgressTableWidget';
 
-const { component, configForm, createDefaultProps, ...dashboardWidget } =
+const { icon, component, configForm, createDefaultProps, ...dashboardWidget } =
   _assessmentProgressTableSpecData;
 export default defineComponent({
   type: ASSESSMENT_PROGRESS_TABLE_TYPE,
@@ -14,5 +14,6 @@ export default defineComponent({
   component: component!,
   configForm,
   createDefaultProps,
+  icon,
   dashboardWidget
 });

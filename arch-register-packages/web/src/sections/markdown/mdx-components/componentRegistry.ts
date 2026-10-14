@@ -11,7 +11,8 @@ export type {
   SlashCommandDef,
   EditorSpec,
   MdxComponentSpec,
-  DashboardWidgetSpec
+  DashboardWidgetSpec,
+  ComponentIcon
 } from './types';
 
 const componentDefinitions: ComponentDefinition[] = [];
@@ -34,6 +35,7 @@ const isMdxComponentDefinition = (
 const isDashboardWidgetComponentDefinition = (
   definition: ComponentDefinition
 ): definition is DashboardWidgetComponentDefinition =>
+  definition.icon !== undefined &&
   definition.surfaces.includes('dashboard') &&
   definition.dashboardWidget !== undefined &&
   definition.createDefaultProps !== undefined;

@@ -17,11 +17,11 @@ export default defineComponent({
   category: 'data-views',
   name: 'Activity feed',
   description: 'A live feed of recent audit log activity.',
+  icon: TbActivity,
   component: ActivityFeedWidget,
   createDefaultProps: () => ({ config: {} }),
   configForm: ActivityFeedDashboardConfigForm,
   dashboardWidget: {
-    icon: TbActivity,
     defaultW: 12,
     defaultH: 24,
     surfaces: ['workspace'],

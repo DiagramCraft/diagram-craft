@@ -29,7 +29,6 @@ export default defineComponent<
   description:
     'A feed of recent changes to one entity or a filtered set. Use it to see what changed lately.',
   dashboardWidget: {
-    icon: TbHistory,
     defaultW: 6,
     defaultH: 16,
     surfaces: ['workspace', 'project'],
@@ -45,6 +44,7 @@ export default defineComponent<
   component: EntityChangelog,
   createDefaultProps: () => ({ config: { since: '30d', limit: '10' } }),
   configForm: EntityChangelogConfigForm,
+  icon: TbHistory,
   mdxComponent: {
     mode: 'block',
     allowedProps: ['id', 'schema', 'owner', 'lifecycle', 'limit', 'since'],
@@ -63,7 +63,6 @@ export default defineComponent<
       nodeOptions: { isVoid: true },
       mdxRule: entityChangelogMdxRule,
       slashCommand: {
-        icon: <TbHistory size={14} />,
         keywords: ['changelog', 'audit', 'history', 'changes', 'entity'],
         onSelect: (editor, { insertOrReplaceBlock }) => {
           insertOrReplaceBlock(editor, {

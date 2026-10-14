@@ -1,4 +1,4 @@
-import { TbLayoutDashboard, TbLayoutGrid } from 'react-icons/tb';
+import { TbLayoutDashboard } from 'react-icons/tb';
 import { defineComponent } from '../../defineComponent';
 import { EntityViewEmbed } from './EntityViewEmbed';
 import {
@@ -14,7 +14,6 @@ export default defineComponent<EntityViewEmbedSlateElement, { viewId?: string },
   name: 'Saved view',
   description: 'A live copy of a saved entity view. Use it to reuse a view someone already set up.',
   dashboardWidget: {
-    icon: TbLayoutDashboard,
     defaultW: 6,
     defaultH: 24,
     surfaces: ['workspace', 'project'],
@@ -24,6 +23,7 @@ export default defineComponent<EntityViewEmbedSlateElement, { viewId?: string },
   component: EntityViewEmbed,
   createDefaultProps: context => ({ config: { viewId: context.viewId ?? '' } }),
   configForm: EntityViewEmbedConfigForm,
+  icon: TbLayoutDashboard,
   mdxComponent: {
     mode: 'block',
     allowedProps: ['viewId'],
@@ -33,7 +33,6 @@ export default defineComponent<EntityViewEmbedSlateElement, { viewId?: string },
       nodeOptions: { isVoid: true },
       mdxRule: entityViewEmbedMdxRule,
       slashCommand: {
-        icon: <TbLayoutGrid size={14} />,
         keywords: ['entity', 'view', 'embed', 'saved', 'catalog'],
         onSelect: (editor, { insertOrReplaceBlock }) => {
           insertOrReplaceBlock(editor, {

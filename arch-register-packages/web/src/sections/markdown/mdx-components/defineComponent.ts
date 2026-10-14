@@ -10,6 +10,7 @@ import type {
 } from '@platejs/markdown';
 import type {
   ComponentDefinition,
+  ComponentIcon,
   ComponentSurface,
   DashboardWidgetSpec,
   MdxComponentSpec
@@ -41,7 +42,6 @@ export type MdxRuleDef<E extends TElement, Mode extends MdxMode> = {
 export type SlashCommandDef<E extends TElement = TElement> = {
   label: string;
   description: string;
-  icon: React.ReactNode;
   keywords?: string[];
   onSelect: (
     editor: ReturnType<typeof useEditorRef>,
@@ -121,6 +121,8 @@ type ComponentRegistrationBase = {
   description: string;
   /** Shared category shown in the wiki and dashboard catalogs. */
   category: ComponentCategory;
+  /** One icon reused by dashboard, MDX, and editor surfaces. */
+  icon?: ComponentIcon;
 };
 
 export type ComponentRegistration<
@@ -159,12 +161,16 @@ export function defineComponent<
     name,
     description,
     category,
+    icon,
     component,
     configForm,
     dashboardWidget,
     createDefaultProps
   } = def;
   const mdxComponent = 'mdxComponent' in def ? def.mdxComponent : undefined;
+  if ((dashboardWidget || mdxComponent?.editorSpec?.slashCommand) && !icon) {
+    throw new Error(`Component "${type}" must define an icon for its catalog entry`);
+  }
   const surfaces: ComponentSurface[] = [];
   if (mdxComponent) surfaces.push('wiki');
   if (dashboardWidget) surfaces.push('dashboard');
@@ -203,6 +209,7 @@ export function defineComponent<
     category,
     surfaces,
     component,
+    ...(icon ? { icon } : {}),
     ...(createDefaultProps ? { createDefaultProps } : {}),
     ...(configForm ? { configForm } : {}),
     ...(normalizedMdxComponent

@@ -15,6 +15,7 @@ export default defineComponent<
   name: 'Columns',
   description: 'Lay out content side by side',
   component: Columns,
+  icon: TbColumns,
   mdxComponent: {
     mode: 'block',
     allowedProps: ['count'],
@@ -24,7 +25,6 @@ export default defineComponent<
       nodeOptions: {},
       mdxRule: columnsMdxRule,
       slashCommand: {
-        icon: <TbColumns size={14} />,
         keywords: ['columns', 'layout', 'grid', 'side-by-side'],
         onSelect: (editor, { insertOrReplaceBlock }) => {
           insertOrReplaceBlock(editor, {

@@ -1,7 +1,6 @@
 import { type PlateElementProps } from 'platejs/react';
 import { getPluginType } from 'platejs';
 import { parseAttributes, propsToAttributes } from '@platejs/markdown';
-import { TbChartLine } from 'react-icons/tb';
 import type { MdxRuleDef } from '../../defineComponent';
 import { BaseBlockEditable } from '../BaseBlockEditable';
 import { MdxComponentPreview } from '../../MdxComponentPreview';
@@ -46,12 +45,7 @@ export const DiagramEmbedEditable = ({
     <BaseBlockEditable
       element={element}
       hasValue={!!fileId}
-      placeholder={
-        <>
-          <TbChartLine size={16} />
-          <span>Choose diagram…</span>
-        </>
-      }
+      placeholder={<span>Choose diagram…</span>}
       content={<MdxComponentPreview type={DIAGRAM_EMBED_TYPE} props={{ id: fileId, caption }} />}
       dialog={(open, onClose) => (
         <DiagramEmbedDialog element={element} open={open} onClose={onClose} isNew={isNew} />

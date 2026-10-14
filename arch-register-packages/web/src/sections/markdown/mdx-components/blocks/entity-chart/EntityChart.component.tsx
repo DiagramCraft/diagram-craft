@@ -18,6 +18,7 @@ export default defineComponent<
   description:
     'A live chart of entities grouped by a field. Use it to show distribution, e.g. by lifecycle or owner.',
   component: EntityChart,
+  icon: TbChartDonut,
   mdxComponent: {
     mode: 'block',
     allowedProps: ['schema', 'owner', 'lifecycle', 'groupBy', 'type'],
@@ -26,7 +27,6 @@ export default defineComponent<
       nodeOptions: { isVoid: true },
       mdxRule: entityChartMdxRule,
       slashCommand: {
-        icon: <TbChartDonut size={14} />,
         keywords: ['entity', 'chart', 'donut', 'bar', 'graph', 'visualize', 'analytics'],
         onSelect: (editor, { insertOrReplaceBlock }) => {
           insertOrReplaceBlock(editor, {

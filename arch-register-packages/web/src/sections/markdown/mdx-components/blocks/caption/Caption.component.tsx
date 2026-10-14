@@ -14,6 +14,7 @@ export default defineComponent<
   name: 'Caption',
   description: 'Wrap a block with a figure caption',
   component: Caption,
+  icon: TbFrame,
   mdxComponent: {
     mode: 'block',
     allowedProps: ['caption', 'numbered'],
@@ -23,7 +24,6 @@ export default defineComponent<
       nodeOptions: {},
       mdxRule: captionMdxRule,
       slashCommand: {
-        icon: <TbFrame size={14} />,
         keywords: ['caption', 'figure', 'figcaption'],
         onSelect: (editor, { insertOrReplaceBlock }) => {
           insertOrReplaceBlock(editor, {

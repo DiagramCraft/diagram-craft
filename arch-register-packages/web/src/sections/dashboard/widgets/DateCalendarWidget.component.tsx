@@ -1,7 +1,7 @@
 import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import { DATE_CALENDAR_TYPE, _dateCalendarSpecData } from './DateCalendarWidget';
 
-const { component, configForm, createDefaultProps, ...dashboardWidget } = _dateCalendarSpecData;
+const { icon, component, configForm, createDefaultProps, ...dashboardWidget } = _dateCalendarSpecData;
 export default defineComponent({
   type: DATE_CALENDAR_TYPE,
   category: 'visualizations',
@@ -11,5 +11,6 @@ export default defineComponent({
   component: component!,
   configForm,
   createDefaultProps,
+  icon,
   dashboardWidget
 });

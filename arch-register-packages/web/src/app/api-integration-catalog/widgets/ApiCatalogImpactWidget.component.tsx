@@ -8,10 +8,10 @@ export default defineComponent({
   name: 'API impact',
   description:
     'Blast radius (providers, direct consumers, second order) for the API selected in the dashboard sidebar.',
+  icon: TbAffiliate,
   component: ApiCatalogImpactWidget,
   createDefaultProps: () => ({ config: { entityId: '$apiEntityId' } }),
   dashboardWidget: {
-    icon: TbAffiliate,
     defaultW: 12,
     defaultH: 30,
     surfaces: ['workspace'],

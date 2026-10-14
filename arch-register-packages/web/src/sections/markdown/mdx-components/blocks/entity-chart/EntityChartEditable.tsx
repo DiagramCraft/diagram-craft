@@ -1,7 +1,6 @@
 import { type PlateElementProps } from 'platejs/react';
 import { getPluginType } from 'platejs';
 import { parseAttributes, propsToAttributes } from '@platejs/markdown';
-import { TbChartDonut } from 'react-icons/tb';
 import type { MdxRuleDef } from '../../defineComponent';
 import { BaseBlockEditable } from '../BaseBlockEditable';
 import { EntityChart } from './EntityChart';
@@ -62,12 +61,7 @@ export const EntityChartEditable = ({
     <BaseBlockEditable
       element={element}
       hasValue={hasValue}
-      placeholder={
-        <>
-          <TbChartDonut size={16} />
-          <span>Configure entity chart…</span>
-        </>
-      }
+      placeholder={<span>Configure entity chart…</span>}
       content={
         <EntityChart
           schema={schema === '' ? undefined : schema}

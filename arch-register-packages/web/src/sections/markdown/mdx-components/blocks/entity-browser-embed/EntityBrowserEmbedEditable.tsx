@@ -1,7 +1,6 @@
 import { type PlateElementProps } from 'platejs/react';
 import { getPluginType } from 'platejs';
 import { parseAttributes, propsToAttributes } from '@platejs/markdown';
-import { TbListSearch } from 'react-icons/tb';
 import type { MdxRuleDef } from '../../defineComponent';
 import { BaseBlockEditable } from '../BaseBlockEditable';
 import { MdxWidgetConfigDialog, type MdxConfigSpec } from '../MdxWidgetConfigDialog';
@@ -83,12 +82,7 @@ export const EntityBrowserEmbedEditable = ({
       element={element}
       hasValue={hasValue}
       fullWidth
-      placeholder={
-        <>
-          <TbListSearch size={16} />
-          <span>Configure an entity browser…</span>
-        </>
-      }
+      placeholder={<span>Configure an entity browser…</span>}
       content={<MdxComponentPreview type={ENTITY_BROWSER_EMBED_TYPE} props={{ config }} />}
       dialog={(open, onClose) => (
         <MdxWidgetConfigDialog

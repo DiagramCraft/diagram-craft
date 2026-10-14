@@ -1,4 +1,4 @@
-import { TbChartBar, TbHash } from 'react-icons/tb';
+import { TbChartBar } from 'react-icons/tb';
 import { defineComponent } from '../../defineComponent';
 import { Metric } from './Metric';
 import { METRIC_TYPE, MetricEditable, metricMdxRule } from './MetricEditable';
@@ -35,7 +35,6 @@ export default defineComponent<
   description:
     'A single live count, such as the number of entities, projects or diagrams. Use it for a headline number.',
   dashboardWidget: {
-    icon: TbChartBar,
     defaultW: 3,
     defaultH: 8,
     surfaces: ['workspace', 'project'],
@@ -51,6 +50,7 @@ export default defineComponent<
   component: Metric,
   createDefaultProps: () => ({ config: { metricType: 'entity-count' } }),
   configForm: MetricConfigForm,
+  icon: TbChartBar,
   mdxComponent: {
     mode: 'block',
     allowedProps: ['schema', 'owner', 'lifecycle', 'label', 'metricType', 'showLink'],
@@ -69,7 +69,6 @@ export default defineComponent<
       nodeOptions: { isVoid: true },
       mdxRule: metricMdxRule,
       slashCommand: {
-        icon: <TbHash size={14} />,
         keywords: ['entity', 'metric', 'count', 'number', 'stat', 'kpi'],
         onSelect: (editor, { insertOrReplaceBlock }) => {
           insertOrReplaceBlock(editor, {

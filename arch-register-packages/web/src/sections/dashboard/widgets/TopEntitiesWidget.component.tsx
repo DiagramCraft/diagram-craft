@@ -16,11 +16,11 @@ export default defineComponent({
   category: 'data-views',
   name: 'Ranked list',
   description: 'The top entities of a type, ranked by a numeric field.',
+  icon: TbListNumbers,
   component: TopEntitiesWidget,
   createDefaultProps: () => ({ config: { schema: '', fieldId: '', direction: 'desc', limit: 5 } }),
   configForm: TopEntitiesConfigForm,
   dashboardWidget: {
-    icon: TbListNumbers,
     defaultW: 4,
     defaultH: 16,
     surfaces: ['workspace', 'project'],

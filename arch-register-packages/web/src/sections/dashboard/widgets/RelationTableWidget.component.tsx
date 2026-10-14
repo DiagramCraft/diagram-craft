@@ -1,7 +1,7 @@
 import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import { RELATION_TABLE_TYPE, _relationTableSpecData } from './RelationTableWidget';
 
-const { component, configForm, createDefaultProps, ...dashboardWidget } = _relationTableSpecData;
+const { icon, component, configForm, createDefaultProps, ...dashboardWidget } = _relationTableSpecData;
 export default defineComponent({
   type: RELATION_TABLE_TYPE,
   category: 'data-views',
@@ -10,5 +10,6 @@ export default defineComponent({
   component: component!,
   configForm,
   createDefaultProps,
+  icon,
   dashboardWidget
 });

@@ -1,7 +1,6 @@
 import { type PlateElementProps } from 'platejs/react';
 import { getPluginType } from 'platejs';
 import { parseAttributes, propsToAttributes } from '@platejs/markdown';
-import { TbPhoto } from 'react-icons/tb';
 import type { MdxRuleDef } from '../../defineComponent';
 import { BaseBlockEditable } from '../BaseBlockEditable';
 import { ImageEmbed } from './ImageEmbed';
@@ -52,12 +51,7 @@ export const ImageEmbedEditable = ({
     <BaseBlockEditable
       element={element}
       hasValue={!!fileId}
-      placeholder={
-        <>
-          <TbPhoto size={16} />
-          <span>Choose image…</span>
-        </>
-      }
+      placeholder={<span>Choose image…</span>}
       content={
         <ImageEmbed
           id={fileId}

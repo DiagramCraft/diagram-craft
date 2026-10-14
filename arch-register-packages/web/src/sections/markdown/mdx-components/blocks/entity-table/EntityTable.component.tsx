@@ -21,7 +21,6 @@ export default defineComponent<
   description:
     'A table of entities matching filters you define. Use it for a fixed, readable list.',
   dashboardWidget: {
-    icon: TbTable,
     defaultW: 6,
     defaultH: 24,
     surfaces: ['workspace', 'project'],
@@ -34,6 +33,7 @@ export default defineComponent<
   component: EntityTable,
   createDefaultProps: () => ({ config: {} }),
   configForm: EntityTableConfigForm,
+  icon: TbTable,
   mdxComponent: {
     mode: 'block',
     allowedProps: ['schema', 'owner', 'lifecycle', 'limit'],
@@ -50,7 +50,6 @@ export default defineComponent<
       nodeOptions: { isVoid: true },
       mdxRule: entityTableMdxRule,
       slashCommand: {
-        icon: <TbTable size={14} />,
         keywords: ['entity', 'table', 'catalog', 'list', 'filter'],
         onSelect: (editor, { insertOrReplaceBlock }) => {
           insertOrReplaceBlock(editor, {

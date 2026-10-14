@@ -19,6 +19,7 @@ export default defineComponent({
   category: 'data-views',
   name: 'Needs attention queue',
   description: 'Open governance cases against entities of a chosen type, awaiting a decision.',
+  icon: TbAlertTriangle,
   component: NeedsAttentionWidget,
   createDefaultProps: () => ({
     config: {
@@ -31,7 +32,6 @@ export default defineComponent({
   }),
   configForm: NeedsAttentionConfigForm,
   dashboardWidget: {
-    icon: TbAlertTriangle,
     defaultW: 6,
     defaultH: 16,
     surfaces: ['workspace', 'project'],

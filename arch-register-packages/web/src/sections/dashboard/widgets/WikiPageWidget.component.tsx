@@ -11,11 +11,11 @@ export default defineComponent({
   category: 'content-layout',
   name: 'Wiki page',
   description: 'Display a selected wiki page on the dashboard.',
+  icon: TbBook,
   component: WikiPageWidget,
   createDefaultProps: () => ({ config: { nodeId: '' } }),
   configForm: WikiPageDashboardConfigForm,
   dashboardWidget: {
-    icon: TbBook,
     defaultW: 6,
     defaultH: 24,
     surfaces: ['workspace', 'project'],

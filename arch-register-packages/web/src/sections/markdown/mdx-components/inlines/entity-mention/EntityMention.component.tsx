@@ -13,6 +13,7 @@ export default defineComponent<EntityMentionSlateElement, { id: string }, 'inlin
   name: 'Entity mention',
   description: 'Mention an entity with its live name and status',
   component: EntityMention,
+  icon: TbAt,
   mdxComponent: {
     mode: 'inline',
     allowedProps: ['id'],
@@ -21,7 +22,6 @@ export default defineComponent<EntityMentionSlateElement, { id: string }, 'inlin
       nodeOptions: { isVoid: true, isInline: true },
       mdxRule: entityMentionMdxRule,
       slashCommand: {
-        icon: <TbAt size={14} />,
         keywords: ['mention', 'entity', '@', 'reference', 'link'],
         onSelect: (editor, { insertOrReplaceInline }) => {
           insertOrReplaceInline(editor, {

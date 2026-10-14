@@ -1,7 +1,6 @@
 import { type PlateElementProps } from 'platejs/react';
 import { getPluginType } from 'platejs';
 import { parseAttributes, propsToAttributes } from '@platejs/markdown';
-import { TbVectorTriangle } from 'react-icons/tb';
 import type { MdxRuleDef } from '../../defineComponent';
 import { BaseBlockEditable } from '../BaseBlockEditable';
 import { MdxWidgetConfigDialog, type MdxConfigSpec } from '../MdxWidgetConfigDialog';
@@ -81,12 +80,7 @@ export const EntityGraphEditable = ({
       element={element}
       hasValue={!!entityId}
       fullWidth
-      placeholder={
-        <>
-          <TbVectorTriangle size={16} />
-          <span>Choose entity graph…</span>
-        </>
-      }
+      placeholder={<span>Choose entity graph…</span>}
       content={
         <MdxComponentPreview
           type={ENTITY_GRAPH_TYPE}

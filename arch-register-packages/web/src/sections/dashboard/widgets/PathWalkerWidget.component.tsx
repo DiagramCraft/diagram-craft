@@ -1,7 +1,7 @@
 import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import { PATH_WALKER_TYPE, _pathWalkerSpecData } from './PathWalkerWidget';
 
-const { component, configForm, createDefaultProps, ...dashboardWidget } = _pathWalkerSpecData;
+const { icon, component, configForm, createDefaultProps, ...dashboardWidget } = _pathWalkerSpecData;
 export default defineComponent({
   type: PATH_WALKER_TYPE,
   category: 'data-views',
@@ -11,5 +11,6 @@ export default defineComponent({
   component: component!,
   configForm,
   createDefaultProps,
+  icon,
   dashboardWidget
 });

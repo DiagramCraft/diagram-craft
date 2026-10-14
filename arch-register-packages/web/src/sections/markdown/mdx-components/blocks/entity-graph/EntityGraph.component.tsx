@@ -21,7 +21,6 @@ export default defineComponent<
   description:
     'A clickable graph of the dependencies and relations around one entity. Works best at 6x4 or larger.',
   dashboardWidget: {
-    icon: TbVectorTriangle,
     defaultW: 6,
     defaultH: 16,
     surfaces: ['workspace', 'project'],
@@ -31,6 +30,7 @@ export default defineComponent<
   component: EntityGraph,
   createDefaultProps: () => ({ config: { entityId: '', depth: 1, direction: 'both' } }),
   configForm: EntityGraphConfigForm,
+  icon: TbVectorTriangle,
   mdxComponent: {
     mode: 'block',
     allowedProps: ['id', 'depth', 'direction'],
@@ -47,7 +47,6 @@ export default defineComponent<
       nodeOptions: { isVoid: true },
       mdxRule: entityGraphMdxRule,
       slashCommand: {
-        icon: <TbVectorTriangle size={14} />,
         keywords: ['entity', 'graph', 'dependency', 'impact', 'relations'],
         onSelect: (editor, { insertOrReplaceBlock }) => {
           insertOrReplaceBlock(editor, {

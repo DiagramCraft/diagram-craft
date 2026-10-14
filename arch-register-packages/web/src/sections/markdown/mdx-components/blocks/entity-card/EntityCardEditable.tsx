@@ -1,7 +1,6 @@
 import { type PlateElementProps } from 'platejs/react';
 import { getPluginType } from 'platejs';
 import { parseAttributes, propsToAttributes } from '@platejs/markdown';
-import { TbId } from 'react-icons/tb';
 import type { MdxRuleDef } from '../../defineComponent';
 import { BaseBlockEditable } from '../BaseBlockEditable';
 import { MdxWidgetConfigDialog, type MdxConfigSpec } from '../MdxWidgetConfigDialog';
@@ -62,12 +61,7 @@ export const EntityCardEditable = ({
     <BaseBlockEditable
       element={element}
       hasValue={!!entityId}
-      placeholder={
-        <>
-          <TbId size={16} />
-          <span>Choose entity…</span>
-        </>
-      }
+      placeholder={<span>Choose entity…</span>}
       content={<MdxComponentPreview type={ENTITY_CARD_TYPE} props={{ id: entityId, fields }} />}
       dialog={(open, onClose) => (
         <MdxWidgetConfigDialog

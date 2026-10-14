@@ -1,15 +1,18 @@
 import { useState } from 'react';
 import type React from 'react';
 import { TbPencil } from 'react-icons/tb';
+import { RegisteredComponentIcon } from '../RegisteredComponentIcon';
 import styles from './BaseInlineEditable.module.css';
 
 export const BaseInlineEditable = ({
   hasValue,
+  type,
   placeholder,
   dialog,
   children
 }: {
   hasValue: boolean;
+  type: string;
   placeholder: React.ReactNode;
   dialog: (open: boolean, onClose: () => void) => React.ReactNode;
   children?: React.ReactNode;
@@ -27,7 +30,10 @@ export const BaseInlineEditable = ({
             </span>
           </>
         ) : (
-          <span className={styles.placeholder}>{placeholder}</span>
+          <span className={styles.placeholder}>
+            <RegisteredComponentIcon type={type} size={12} />
+            {placeholder}
+          </span>
         )}
       </span>
       {dialog(dialogOpen, () => setDialogOpen(false))}

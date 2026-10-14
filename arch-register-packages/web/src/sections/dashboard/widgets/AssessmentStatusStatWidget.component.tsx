@@ -4,7 +4,7 @@ import {
   _assessmentStatusStatSpecData
 } from './AssessmentStatusStatWidget';
 
-const { component, configForm, createDefaultProps, ...dashboardWidget } =
+const { icon, component, configForm, createDefaultProps, ...dashboardWidget } =
   _assessmentStatusStatSpecData;
 export default defineComponent({
   type: ASSESSMENT_STATUS_STAT_TYPE,
@@ -15,5 +15,6 @@ export default defineComponent({
   component: component!,
   configForm,
   createDefaultProps,
+  icon,
   dashboardWidget
 });

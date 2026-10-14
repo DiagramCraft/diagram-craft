@@ -5,10 +5,11 @@ import type { ComponentCategory } from './componentCategories';
 
 export type ComponentSurface = 'wiki' | 'dashboard';
 
+export type ComponentIcon = React.ComponentType<{ size?: number }>;
+
 export type SlashCommandDef = {
   label: string;
   description: string;
-  icon: React.ReactNode;
   keywords?: string[];
   onSelect: (
     editor: ReturnType<typeof useEditorRef>,
@@ -43,8 +44,6 @@ export type WidgetSurface = 'workspace' | 'project';
 
 export type DashboardWidgetSpec<Config extends Record<string, unknown> = Record<string, unknown>> =
   {
-    /** Icon shown in the widget picker and the widget frame header. */
-    icon: React.ComponentType<{ size?: number }>;
     label: string;
     description: string;
     defaultW: number;
@@ -63,7 +62,7 @@ export type DashboardWidgetSpec<Config extends Record<string, unknown> = Record<
       hideOutsideEdit?: boolean | ((config: Config) => boolean);
       /** Whether the frame body has padding; defaults to true. */
       padded?: boolean;
-      /** Whether the widget's icon is shown in the frame header; defaults to true. The picker always shows it. */
+      /** Whether the component icon is shown in the frame header; defaults to true. */
       showIcon?: boolean;
     };
     /**
@@ -84,6 +83,8 @@ export type DashboardWidgetSpec<Config extends Record<string, unknown> = Record<
 export type DashboardWidgetRegistrationSpec<
   Config extends Record<string, unknown> = Record<string, unknown>
 > = DashboardWidgetSpec<Config> & {
+  /** Shared icon shown anywhere this component is represented. */
+  icon: ComponentIcon;
   component?: React.ComponentType<{ config: Config }>;
   createDefaultProps: (context: { viewId?: string }) => { config: Config };
   configForm?: React.ComponentType<{
@@ -131,6 +132,8 @@ export type ComponentDefinition = {
   description: string;
   category: ComponentCategory;
   surfaces: ReadonlyArray<ComponentSurface>;
+  /** Shared icon for all surfaces that expose this component. */
+  icon?: ComponentIcon;
   /** Shared renderer used by every surface that exposes this component. */
   // biome-ignore lint/suspicious/noExplicitAny: component props are typed by each surface adapter
   component: React.ComponentType<any>;
@@ -149,6 +152,7 @@ export type ComponentDefinition = {
 export type MdxComponentDefinition = ComponentDefinition & { mdx: MdxComponentSpec };
 
 export type DashboardWidgetComponentDefinition = ComponentDefinition & {
+  icon: ComponentIcon;
   dashboardWidget: DashboardWidgetSpec;
   createDefaultProps: (context: { viewId?: string }) => { config: Record<string, unknown> };
 };

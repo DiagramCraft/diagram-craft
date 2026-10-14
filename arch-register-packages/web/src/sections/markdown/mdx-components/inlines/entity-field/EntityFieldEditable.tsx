@@ -1,7 +1,6 @@
 import { PlateElement, type PlateElementProps } from 'platejs/react';
 import { getPluginType } from 'platejs';
 import { parseAttributes, propsToAttributes } from '@platejs/markdown';
-import { TbHash } from 'react-icons/tb';
 import type { MdxRuleDef } from '../../defineComponent';
 import { EntityField } from './EntityField';
 import { EntityFieldDialog } from './EntityFieldDialog';
@@ -50,11 +49,9 @@ export const EntityFieldEditable = ({
     <PlateElement element={element} as="span" {...props}>
       <BaseInlineEditable
         hasValue={!!(entityId && field)}
+        type={element.type}
         placeholder={
-          <>
-            <TbHash size={12} />
-            <span>field…</span>
-          </>
+          <span>field…</span>
         }
         dialog={(open, onClose) => (
           <EntityFieldDialog element={element} open={open} onClose={onClose} isNew={isNew} />

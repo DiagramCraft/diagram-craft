@@ -1,7 +1,7 @@
 import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import { RATIO_BAR_LIST_TYPE, _ratioBarListSpecData } from './RatioBarListWidget';
 
-const { component, configForm, createDefaultProps, ...dashboardWidget } = _ratioBarListSpecData;
+const { icon, component, configForm, createDefaultProps, ...dashboardWidget } = _ratioBarListSpecData;
 export default defineComponent({
   type: RATIO_BAR_LIST_TYPE,
   category: 'metrics',
@@ -10,5 +10,6 @@ export default defineComponent({
   component: component!,
   configForm,
   createDefaultProps,
+  icon,
   dashboardWidget
 });

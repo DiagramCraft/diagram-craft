@@ -7,11 +7,11 @@ export default defineComponent({
   category: 'visualizations',
   name: 'Next six weeks',
   description: 'Open governance cases bucketed by due week.',
+  icon: TbCalendarEvent,
   component: CaseCalendarWidget,
   createDefaultProps: () => ({ config: { ...DS_CASE_DEFAULTS, scope: 'mine' } }),
   configForm: CaseConfigForm,
   dashboardWidget: {
-    icon: TbCalendarEvent,
     defaultW: 12,
     defaultH: 14,
     surfaces: ['workspace'],

@@ -1,7 +1,7 @@
 import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import { UPCOMING_BY_DATE_TYPE, _upcomingByDateSpecData } from './UpcomingByDateWidget';
 
-const { component, configForm, createDefaultProps, ...dashboardWidget } = _upcomingByDateSpecData;
+const { icon, component, configForm, createDefaultProps, ...dashboardWidget } = _upcomingByDateSpecData;
 export default defineComponent({
   type: UPCOMING_BY_DATE_TYPE,
   category: 'data-views',
@@ -11,5 +11,6 @@ export default defineComponent({
   component: component!,
   configForm,
   createDefaultProps,
+  icon,
   dashboardWidget
 });

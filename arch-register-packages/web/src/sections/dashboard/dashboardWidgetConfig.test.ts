@@ -526,7 +526,7 @@ describe('parseKnownDashboardWidget', () => {
       const spec = definition?.dashboardWidget;
       expect(spec).toBeDefined();
       expect(spec?.surfaces).toEqual(['workspace']);
-      expect(spec?.icon).toBeDefined();
+      expect(definition?.icon).toBeDefined();
       expect(spec?.label).toBe(title);
       expect(spec?.defaultW).toBe(width);
       expect(spec?.defaultH).toBe(height);

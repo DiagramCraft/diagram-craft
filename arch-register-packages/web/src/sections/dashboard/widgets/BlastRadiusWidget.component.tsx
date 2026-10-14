@@ -1,7 +1,7 @@
 import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import { BLAST_RADIUS_WIDGET_TYPE, blastRadiusDashboardSpec } from './BlastRadiusWidget';
 
-const { component, configForm, createDefaultProps, ...dashboardWidget } = blastRadiusDashboardSpec;
+const { icon, component, configForm, createDefaultProps, ...dashboardWidget } = blastRadiusDashboardSpec;
 export default defineComponent({
   type: BLAST_RADIUS_WIDGET_TYPE,
   category: 'visualizations',
@@ -10,5 +10,6 @@ export default defineComponent({
   component: component!,
   configForm,
   createDefaultProps,
+  icon,
   dashboardWidget
 });

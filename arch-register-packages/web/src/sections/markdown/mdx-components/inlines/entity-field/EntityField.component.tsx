@@ -9,6 +9,7 @@ export default defineComponent<EntityFieldSlateElement, { id: string; field: str
   name: 'Entity field',
   description: 'Show a live field value from an entity inside a sentence',
   component: EntityField,
+  icon: TbHash,
   mdxComponent: {
     mode: 'inline',
     allowedProps: ['id', 'field'],
@@ -17,7 +18,6 @@ export default defineComponent<EntityFieldSlateElement, { id: string; field: str
       nodeOptions: { isVoid: true, isInline: true },
       mdxRule: entityFieldMdxRule,
       slashCommand: {
-        icon: <TbHash size={14} />,
         keywords: ['field', 'entity', 'value', 'embed', 'inline'],
         onSelect: (editor, { insertOrReplaceInline }) => {
           insertOrReplaceInline(editor, {

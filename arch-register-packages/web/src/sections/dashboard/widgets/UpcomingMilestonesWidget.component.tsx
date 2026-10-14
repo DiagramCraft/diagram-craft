@@ -10,10 +10,10 @@ export default defineComponent({
   category: 'metrics',
   name: 'Upcoming milestones',
   description: 'The most recently completed milestone and up to three upcoming ones.',
+  icon: TbFlag3,
   component: UpcomingMilestonesWidget,
   createDefaultProps: () => ({ config: {} }),
   dashboardWidget: {
-    icon: TbFlag3,
     defaultW: 3,
     defaultH: 8,
     surfaces: ['project'],

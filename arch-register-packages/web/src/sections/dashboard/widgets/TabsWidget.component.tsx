@@ -2,7 +2,7 @@ import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import { TABS_TYPE } from './tabsLogic';
 import { _tabsSpecData } from './TabsWidget';
 
-const { component, configForm, createDefaultProps, ...dashboardWidget } = _tabsSpecData;
+const { icon, component, configForm, createDefaultProps, ...dashboardWidget } = _tabsSpecData;
 export default defineComponent({
   type: TABS_TYPE,
   category: 'content-layout',
@@ -11,5 +11,6 @@ export default defineComponent({
   component: component!,
   configForm,
   createDefaultProps,
+  icon,
   dashboardWidget
 });

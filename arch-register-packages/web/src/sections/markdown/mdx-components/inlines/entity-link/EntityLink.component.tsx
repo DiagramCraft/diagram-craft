@@ -9,6 +9,7 @@ export default defineComponent<EntityLinkSlateElement, { id: string }, 'inline'>
   name: 'Entity link',
   description: 'A plain link to an entity page',
   component: EntityLink,
+  icon: TbLink,
   mdxComponent: {
     mode: 'inline',
     allowedProps: ['id'],
@@ -17,7 +18,6 @@ export default defineComponent<EntityLinkSlateElement, { id: string }, 'inline'>
       nodeOptions: { isVoid: true, isInline: true },
       mdxRule: entityLinkMdxRule,
       slashCommand: {
-        icon: <TbLink size={14} />,
         keywords: ['link', 'entity', 'reference', 'href'],
         onSelect: (editor, { insertOrReplaceInline }) => {
           insertOrReplaceInline(editor, {

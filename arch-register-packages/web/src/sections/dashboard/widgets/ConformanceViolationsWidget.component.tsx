@@ -4,7 +4,7 @@ import {
   _conformanceViolationsSpecData
 } from './ConformanceViolationsWidget';
 
-const { component, configForm, createDefaultProps, ...dashboardWidget } =
+const { icon, component, configForm, createDefaultProps, ...dashboardWidget } =
   _conformanceViolationsSpecData;
 export default defineComponent({
   type: CONFORMANCE_VIOLATIONS_TYPE,
@@ -15,5 +15,6 @@ export default defineComponent({
   component: component!,
   configForm,
   createDefaultProps,
+  icon,
   dashboardWidget
 });

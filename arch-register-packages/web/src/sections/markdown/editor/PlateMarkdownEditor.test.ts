@@ -19,6 +19,7 @@ vi.mock('../mdx-components/componentRegistry', () => {
     type: 'TestBlock',
     category: 'data-views',
     surfaces: ['wiki'],
+    icon: () => null,
     mdx: {
       editorSpec: {
         editableComponent: () => null,
@@ -35,7 +36,6 @@ vi.mock('../mdx-components/componentRegistry', () => {
         slashCommand: {
           label: 'Test block',
           description: 'Test block',
-          icon: 'T',
           onSelect: (
             editor: Parameters<typeof insertOrReplaceBlock>[0],
             helpers: { insertOrReplaceBlock: typeof insertOrReplaceBlock }

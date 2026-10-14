@@ -29,7 +29,6 @@ export default defineComponent<DocumentBrowserEmbedSlateElement, { config?: stri
   description:
     'A filterable list of documents in this workspace or project. Use it to find and open files.',
   dashboardWidget: {
-    icon: TbFileSearch,
     defaultW: 6,
     defaultH: 16,
     surfaces: ['workspace', 'project'],
@@ -39,6 +38,7 @@ export default defineComponent<DocumentBrowserEmbedSlateElement, { config?: stri
   component: DocumentBrowserEmbed,
   createDefaultProps: () => ({ config: createDefaultDocumentBrowserEmbedConfig() }),
   configForm: DocumentBrowserEmbedConfigForm,
+  icon: TbFileSearch,
   mdxComponent: {
     mode: 'block',
     allowedProps: ['config'],
@@ -53,7 +53,6 @@ export default defineComponent<DocumentBrowserEmbedSlateElement, { config?: stri
       nodeOptions: { isVoid: true },
       mdxRule: documentBrowserEmbedMdxRule,
       slashCommand: {
-        icon: <TbFileSearch size={14} />,
         keywords: ['document', 'browser', 'markdown', 'wiki', 'list', 'filter', 'search'],
         onSelect: (editor, { insertOrReplaceBlock }) => {
           insertOrReplaceBlock(editor, {

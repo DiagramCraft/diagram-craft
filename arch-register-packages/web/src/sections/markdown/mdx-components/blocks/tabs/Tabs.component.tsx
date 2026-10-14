@@ -11,6 +11,7 @@ export default defineComponent<TabsSlateElement, { children?: React.ReactNode },
   name: 'Tabs',
   description: 'Present alternative content under selectable tabs',
   component: Tabs,
+  icon: TbLayoutNavbar,
   mdxComponent: {
     mode: 'block',
     allowedProps: [],
@@ -20,7 +21,6 @@ export default defineComponent<TabsSlateElement, { children?: React.ReactNode },
       nodeOptions: {},
       mdxRule: tabsMdxRule,
       slashCommand: {
-        icon: <TbLayoutNavbar size={14} />,
         keywords: ['tabs', 'tab', 'switch', 'toggle'],
         onSelect: (editor, { insertOrReplaceBlock }) => {
           insertOrReplaceBlock(editor, {

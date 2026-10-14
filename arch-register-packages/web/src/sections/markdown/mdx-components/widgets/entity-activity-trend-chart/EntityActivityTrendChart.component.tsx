@@ -17,11 +17,11 @@ export default defineComponent({
   category: 'visualizations',
   name: 'Activity trend chart',
   description: 'Recent activity volume over time.',
+  icon: TbChartLine,
   component: EntityActivityTrendChart,
   configForm: EntityActivityTrendChartDashboardConfigForm,
   createDefaultProps: () => ({ config: {} }),
   dashboardWidget: {
-    icon: TbChartLine,
     defaultW: 6,
     defaultH: 24,
     surfaces: ['workspace'],

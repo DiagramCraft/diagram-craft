@@ -7,10 +7,10 @@ export default defineComponent({
   category: 'metrics',
   name: 'API catalog stats',
   description: 'Workspace API, governance, and integration health metrics.',
+  icon: TbChartBar,
   component: ApiCatalogStatsWidget,
   createDefaultProps: () => ({ config: {} }),
   dashboardWidget: {
-    icon: TbChartBar,
     defaultW: 12,
     defaultH: 5,
     surfaces: ['workspace'],

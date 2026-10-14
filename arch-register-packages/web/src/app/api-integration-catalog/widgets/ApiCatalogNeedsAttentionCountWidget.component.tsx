@@ -7,10 +7,10 @@ export default defineComponent({
   category: 'metrics',
   name: 'Needs attention (count)',
   description: 'Number of open API change and deprecation cases.',
+  icon: TbAlertTriangle,
   component: ApiCatalogNeedsAttentionCountWidget,
   createDefaultProps: () => ({ config: {} }),
   dashboardWidget: {
-    icon: TbAlertTriangle,
     defaultW: 3,
     defaultH: 5,
     surfaces: ['workspace'],

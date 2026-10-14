@@ -9,6 +9,7 @@ export default defineComponent<LabelSlateElement, { text: string; color: string 
   name: 'Label',
   description: 'Insert a free-standing colored status label',
   component: Label,
+  icon: TbTag,
   mdxComponent: {
     mode: 'inline',
     allowedProps: ['text', 'color'],
@@ -17,7 +18,6 @@ export default defineComponent<LabelSlateElement, { text: string; color: string 
       nodeOptions: { isVoid: true, isInline: true },
       mdxRule: labelMdxRule,
       slashCommand: {
-        icon: <TbTag size={14} />,
         keywords: ['label', 'status', 'chip', 'tag', 'badge'],
         onSelect: (editor, { insertOrReplaceInline }) => {
           insertOrReplaceInline(editor, {

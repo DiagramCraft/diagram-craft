@@ -14,7 +14,6 @@ export default defineComponent<EntityCardSlateElement, { id: string; fields?: st
   description:
     'A summary card for one entity with its key fields. Use it to spotlight a single system or owner.',
   dashboardWidget: {
-    icon: TbId,
     defaultW: 3,
     defaultH: 8,
     surfaces: ['workspace', 'project'],
@@ -26,6 +25,7 @@ export default defineComponent<EntityCardSlateElement, { id: string; fields?: st
   component: EntityCard,
   createDefaultProps: () => ({ config: { entityId: '' } }),
   configForm: EntityCardConfigForm,
+  icon: TbId,
   mdxComponent: {
     mode: 'block',
     allowedProps: ['id', 'fields'],
@@ -37,7 +37,6 @@ export default defineComponent<EntityCardSlateElement, { id: string; fields?: st
       nodeOptions: { isVoid: true },
       mdxRule: entityCardMdxRule,
       slashCommand: {
-        icon: <TbId size={14} />,
         keywords: ['entity', 'card', 'catalog', 'service'],
         onSelect: (editor, { insertOrReplaceBlock }) => {
           insertOrReplaceBlock(editor, {

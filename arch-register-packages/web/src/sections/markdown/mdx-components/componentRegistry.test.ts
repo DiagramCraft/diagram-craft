@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { TbChartBar, TbLayoutDashboard } from 'react-icons/tb';
 import '../../../componentDiscovery';
 import {
   getComponentDefinition,
@@ -40,6 +41,27 @@ describe('getMdxComponentDefinitionsForSurface', () => {
 
   it('keeps the dashboard-only wiki page widget out of wiki rendering', () => {
     expect(getMdxComponentDefinitionsForSurface('wiki')['wiki-page']).toBeUndefined();
+  });
+
+  it('keeps one shared icon on every dashboard widget and slash-command definition', () => {
+    const catalogued = getComponentDefinitions().filter(
+      definition => definition.dashboardWidget || definition.mdx?.editorSpec?.slashCommand
+    );
+
+    expect(catalogued.length).toBeGreaterThan(0);
+    for (const definition of catalogued) {
+      expect(definition.icon, definition.type).toBeDefined();
+      if (definition.dashboardWidget) {
+        expect(definition.dashboardWidget, definition.type).not.toHaveProperty('icon');
+      }
+      const slashCommand = definition.mdx?.editorSpec?.slashCommand;
+      if (slashCommand) expect(slashCommand, definition.type).not.toHaveProperty('icon');
+    }
+  });
+
+  it('uses the dashboard icons for components that previously differed by surface', () => {
+    expect(getComponentDefinition('Metric')?.icon).toBe(TbChartBar);
+    expect(getComponentDefinition('EntityViewEmbed')?.icon).toBe(TbLayoutDashboard);
   });
 
   it('keeps dashboard-only widgets in the dashboard catalog', () => {

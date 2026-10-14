@@ -20,11 +20,11 @@ export default defineComponent({
   name: 'Aggregate stat',
   description:
     'A count or percentage of records matching a query, e.g. coverage, compliance or items needing attention.',
+  icon: TbPercentage,
   component: AggregateStatWidget,
   createDefaultProps: () => ({ config: { query: '', display: 'count' as const } }),
   configForm: AggregateStatConfigForm,
   dashboardWidget: {
-    icon: TbPercentage,
     defaultW: 3,
     defaultH: 8,
     surfaces: ['workspace', 'project'],

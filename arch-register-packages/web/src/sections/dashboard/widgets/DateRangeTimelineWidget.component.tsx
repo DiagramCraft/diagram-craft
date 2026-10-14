@@ -1,7 +1,7 @@
 import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import { DATE_RANGE_TIMELINE_TYPE, _dateRangeTimelineSpecData } from './DateRangeTimelineWidget';
 
-const { component, configForm, createDefaultProps, ...dashboardWidget } =
+const { icon, component, configForm, createDefaultProps, ...dashboardWidget } =
   _dateRangeTimelineSpecData;
 export default defineComponent({
   type: DATE_RANGE_TIMELINE_TYPE,
@@ -12,5 +12,6 @@ export default defineComponent({
   component: component!,
   configForm,
   createDefaultProps,
+  icon,
   dashboardWidget
 });

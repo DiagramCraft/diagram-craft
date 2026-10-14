@@ -17,11 +17,11 @@ export default defineComponent({
   category: 'data-views',
   name: 'Stale entity report',
   description: 'Entities that have not been updated recently.',
+  icon: TbClockExclamation,
   component: EntityStaleReport,
   configForm: EntityStaleReportDashboardConfigForm,
   createDefaultProps: () => ({ config: {} }),
   dashboardWidget: {
-    icon: TbClockExclamation,
     defaultW: 6,
     defaultH: 24,
     surfaces: ['workspace'],

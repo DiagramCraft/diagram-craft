@@ -7,11 +7,11 @@ export default defineComponent({
   category: 'metrics',
   name: 'Assessments',
   description: 'Open or all assessments filtered by mode, assessment type and entity type scope.',
+  icon: TbClipboardCheck,
   component: AssessmentsWidget,
   createDefaultProps: () => ({ config: { mode: 'active' } }),
   configForm: AssessmentsConfigForm,
   dashboardWidget: {
-    icon: TbClipboardCheck,
     defaultW: 3,
     defaultH: 12,
     surfaces: ['workspace', 'project'],

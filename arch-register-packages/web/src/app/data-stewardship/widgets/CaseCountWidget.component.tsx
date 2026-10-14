@@ -11,6 +11,7 @@ export default defineComponent({
   category: 'metrics',
   name: 'Case count',
   description: 'Number of open governance cases, filtered by scope and case kind.',
+  icon: TbAlertTriangle,
   component: CaseCountWidget,
   createDefaultProps: () => ({
     config: {
@@ -23,7 +24,6 @@ export default defineComponent({
   }),
   configForm: CaseConfigForm,
   dashboardWidget: {
-    icon: TbAlertTriangle,
     defaultW: 3,
     defaultH: 5,
     surfaces: ['workspace'],

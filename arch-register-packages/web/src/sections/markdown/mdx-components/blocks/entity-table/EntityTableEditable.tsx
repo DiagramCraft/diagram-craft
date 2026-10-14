@@ -1,7 +1,6 @@
 import { type PlateElementProps } from 'platejs/react';
 import { getPluginType } from 'platejs';
 import { parseAttributes, propsToAttributes } from '@platejs/markdown';
-import { TbTable } from 'react-icons/tb';
 import type { MdxRuleDef } from '../../defineComponent';
 import { BaseBlockEditable } from '../BaseBlockEditable';
 import { MdxWidgetConfigDialog, type MdxConfigSpec } from '../MdxWidgetConfigDialog';
@@ -76,12 +75,7 @@ export const EntityTableEditable = ({
       element={element}
       hasValue={hasValue}
       fullWidth
-      placeholder={
-        <>
-          <TbTable size={16} />
-          <span>Configure entity table…</span>
-        </>
-      }
+      placeholder={<span>Configure entity table…</span>}
       content={
         <MdxComponentPreview type={ENTITY_TABLE_TYPE} props={{ schema, owner, lifecycle, limit }} />
       }

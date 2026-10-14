@@ -1,7 +1,7 @@
 import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import { FIELD_MATRIX_TYPE, _fieldMatrixSpecData } from './FieldMatrixWidget';
 
-const { component, configForm, createDefaultProps, ...dashboardWidget } = _fieldMatrixSpecData;
+const { icon, component, configForm, createDefaultProps, ...dashboardWidget } = _fieldMatrixSpecData;
 export default defineComponent({
   type: FIELD_MATRIX_TYPE,
   category: 'data-views',
@@ -11,5 +11,6 @@ export default defineComponent({
   component: component!,
   configForm,
   createDefaultProps,
+  icon,
   dashboardWidget
 });

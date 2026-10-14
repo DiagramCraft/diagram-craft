@@ -16,7 +16,6 @@ export default defineComponent<DiagramEmbedSlateElement, { id: string; caption?:
     description:
       'A read-only preview of an architecture diagram. Use it to show a system picture alongside the text.',
     dashboardWidget: {
-      icon: TbChartLine,
       defaultW: 6,
       defaultH: 16,
       surfaces: ['workspace', 'project'],
@@ -28,6 +27,7 @@ export default defineComponent<DiagramEmbedSlateElement, { id: string; caption?:
     component: DiagramEmbed,
     createDefaultProps: () => ({ config: { fileId: '' } }),
     configForm: DiagramEmbedConfigForm,
+    icon: TbChartLine,
     mdxComponent: {
       mode: 'block',
       allowedProps: ['id', 'caption'],
@@ -39,7 +39,6 @@ export default defineComponent<DiagramEmbedSlateElement, { id: string; caption?:
         nodeOptions: { isVoid: true },
         mdxRule: diagramEmbedMdxRule,
         slashCommand: {
-          icon: <TbChartLine size={14} />,
           keywords: ['diagram', 'embed', 'preview', 'svg', 'flow'],
           onSelect: (editor, { insertOrReplaceBlock }) => {
             insertOrReplaceBlock(editor, {

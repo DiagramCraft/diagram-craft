@@ -1,7 +1,7 @@
 import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import { SPEC_ITEMS_TABLE_TYPE, _specItemsTableSpecData } from './SpecItemsTableWidget';
 
-const { component, configForm, createDefaultProps, ...dashboardWidget } = _specItemsTableSpecData;
+const { icon, component, configForm, createDefaultProps, ...dashboardWidget } = _specItemsTableSpecData;
 export default defineComponent({
   type: SPEC_ITEMS_TABLE_TYPE,
   category: 'data-views',
@@ -11,5 +11,6 @@ export default defineComponent({
   component: component!,
   configForm,
   createDefaultProps,
+  icon,
   dashboardWidget
 });

@@ -1,7 +1,6 @@
 import { type PlateElementProps } from 'platejs/react';
 import { getPluginType } from 'platejs';
 import { parseAttributes, propsToAttributes } from '@platejs/markdown';
-import { TbFileSearch } from 'react-icons/tb';
 import type { MdxRuleDef } from '../../defineComponent';
 import { BaseBlockEditable } from '../BaseBlockEditable';
 import { MdxWidgetConfigDialog, type MdxConfigSpec } from '../MdxWidgetConfigDialog';
@@ -63,12 +62,7 @@ export const DocumentBrowserEmbedEditable = ({
       element={element}
       hasValue={hasValue}
       fullWidth
-      placeholder={
-        <>
-          <TbFileSearch size={16} />
-          <span>Configure a document browser…</span>
-        </>
-      }
+      placeholder={<span>Configure a document browser…</span>}
       content={<MdxComponentPreview type={DOCUMENT_BROWSER_EMBED_TYPE} props={{ config }} />}
       dialog={(open, onClose) => (
         <MdxWidgetConfigDialog

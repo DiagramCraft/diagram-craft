@@ -1,7 +1,6 @@
 import { type PlateElementProps } from 'platejs/react';
 import { getPluginType } from 'platejs';
 import { parseAttributes, propsToAttributes } from '@platejs/markdown';
-import { TbLayoutGrid } from 'react-icons/tb';
 import type { MdxRuleDef } from '../../defineComponent';
 import { BaseBlockEditable } from '../BaseBlockEditable';
 import { MdxWidgetConfigDialog, type MdxConfigSpec } from '../MdxWidgetConfigDialog';
@@ -57,12 +56,7 @@ export const EntityViewEmbedEditable = ({
       element={element}
       hasValue={hasValue}
       fullWidth
-      placeholder={
-        <>
-          <TbLayoutGrid size={16} />
-          <span>Select a saved view…</span>
-        </>
-      }
+      placeholder={<span>Select a saved view…</span>}
       content={<MdxComponentPreview type={ENTITY_VIEW_EMBED_TYPE} props={{ viewId }} />}
       dialog={(open, onClose) => (
         <MdxWidgetConfigDialog

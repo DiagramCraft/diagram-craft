@@ -1,7 +1,7 @@
 import { defineComponent } from '../../markdown/mdx-components/defineComponent';
 import { CHANGE_CASE_TABLE_TYPE, _changeCaseTableSpecData } from './ChangeCaseTableWidget';
 
-const { component, configForm, createDefaultProps, ...dashboardWidget } = _changeCaseTableSpecData;
+const { icon, component, configForm, createDefaultProps, ...dashboardWidget } = _changeCaseTableSpecData;
 export default defineComponent({
   type: CHANGE_CASE_TABLE_TYPE,
   category: 'data-views',
@@ -10,5 +10,6 @@ export default defineComponent({
   component: component!,
   configForm,
   createDefaultProps,
+  icon,
   dashboardWidget
 });

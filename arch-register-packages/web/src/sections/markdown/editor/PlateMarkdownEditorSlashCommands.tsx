@@ -245,13 +245,18 @@ export const MDX_SLASH_COMMANDS: SlashCommandItem[] = getComponentDefinitions('m
   definition => {
     if (!definition.surfaces.includes('wiki')) return [];
     const cmd = definition.mdx.editorSpec?.slashCommand;
-    if (!cmd) return [];
+    const Icon = definition.icon;
+    if (!cmd || !Icon) return [];
     return [
       {
         key: definition.type,
         label: cmd.label,
         description: cmd.description,
-        icon: <span className={styles.slashIcon}>{cmd.icon}</span>,
+        icon: (
+          <span className={styles.slashIcon}>
+            <Icon size={14} />
+          </span>
+        ),
         keywords: cmd.keywords,
         category: definition.category,
         onSelect: (editor: PlateEditor) =>

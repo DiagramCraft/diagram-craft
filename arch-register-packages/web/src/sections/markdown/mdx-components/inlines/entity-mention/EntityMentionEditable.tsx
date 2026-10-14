@@ -1,7 +1,6 @@
 import { PlateElement, type PlateElementProps } from 'platejs/react';
 import { getPluginType } from 'platejs';
 import { parseAttributes, propsToAttributes } from '@platejs/markdown';
-import { TbAt } from 'react-icons/tb';
 import type { MdxRuleDef } from '../../defineComponent';
 import { EntityMention } from './EntityMention';
 import { EntityMentionDialog } from './EntityMentionDialog';
@@ -47,11 +46,9 @@ export const EntityMentionEditable = ({
     <PlateElement element={element} as="span" {...props}>
       <BaseInlineEditable
         hasValue={!!entityId}
+        type={element.type}
         placeholder={
-          <>
-            <TbAt size={12} />
-            <span>mention…</span>
-          </>
+          <span>mention…</span>
         }
         dialog={(open, onClose) => (
           <EntityMentionDialog element={element} open={open} onClose={onClose} isNew={isNew} />
