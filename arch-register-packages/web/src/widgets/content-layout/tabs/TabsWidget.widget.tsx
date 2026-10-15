@@ -2,7 +2,8 @@ import { TbLayoutList } from 'react-icons/tb';
 import { getWidgetDefinition, isValidComponentConfig } from '../../shared/widgetRegistry';
 import { createTabsConfigSchema, TABS_TYPE } from './tabsLogic';
 import { defineWidget } from '../../shared/defineWidget';
-import { TabsConfigForm, TabsWidget } from './TabsWidget';
+import { TabsConfigForm } from './TabsConfigForm';
+import { TabsWidget } from './TabsWidget';
 
 export default defineWidget({
   type: TABS_TYPE,

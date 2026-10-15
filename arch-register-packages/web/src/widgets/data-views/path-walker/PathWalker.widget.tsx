@@ -1,7 +1,8 @@
 import { TbArrowsSplit2 } from 'react-icons/tb';
 import { pathWalkerWidgetConfigSchema } from './pathWalkerWidgetLogic';
 import { defineWidget } from '../../shared/defineWidget';
-import { PathWalkerConfigForm, PathWalkerWidget } from './PathWalker';
+import { PathWalkerConfigForm } from './PathWalkerConfigForm';
+import { PathWalkerWidget } from './PathWalker';
 
 export default defineWidget({
   type: 'PathWalker',

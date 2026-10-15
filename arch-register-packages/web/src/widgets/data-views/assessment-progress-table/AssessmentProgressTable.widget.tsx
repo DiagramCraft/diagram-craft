@@ -1,10 +1,8 @@
 import { TbChecklist } from 'react-icons/tb';
 import { AssessmentSchemaConfigForm } from '../../shared/data/AssessmentSchemaConfigForm';
 import { defineWidget } from '../../shared/defineWidget';
-import {
-  AssessmentProgressTableWidget,
-  assessmentProgressTableConfigSchema
-} from './AssessmentProgressTable';
+import { AssessmentProgressTableWidget } from './AssessmentProgressTable';
+import { assessmentProgressTableConfigSchema } from './types';
 
 export default defineWidget({
   type: 'AssessmentProgressTable',
