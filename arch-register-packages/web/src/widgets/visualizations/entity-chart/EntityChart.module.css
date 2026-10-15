@@ -11,6 +11,14 @@
   margin: 0 0 var(--article-block-gap) 0;
 }
 
+.card.framed {
+  width: auto;
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
+
 .chartArea {
   display: flex;
   align-items: flex-start;

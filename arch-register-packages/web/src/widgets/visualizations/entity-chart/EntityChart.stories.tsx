@@ -2,8 +2,11 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { EntityChart } from './EntityChart';
 import {
   createStoryQueryClient,
+  DashboardStory,
   StoryProviders,
-  WORKSPACE
+  WORKSPACE,
+  dashboardWidget,
+  frameControls
 } from '../../shared/mdx/StorybookHarness';
 import { entityKeys } from '../../../queries/entities';
 
@@ -88,13 +91,14 @@ storyQueryClient.setQueryData(
 
 const meta = {
   title: 'Widgets/Visualizations/Entity chart',
-  tags: ['mdx', 'block'],
+  tags: ['mdx', 'block', 'dashboard', 'workspace-surface'],
+  ...frameControls,
   parameters: {
     layout: 'padded',
     docs: {
       description: {
         component:
-          'Wiki pages only: A live chart of entities grouped by a field (lifecycle, owner or schema), shown as a donut or a bar chart. Filter the entities by schema, owner and lifecycle. Use it to show the distribution of the catalog in a wiki page.'
+          'Wiki pages and workspace dashboards: A live chart of entities grouped by a field (lifecycle, owner or schema), shown as a donut or a bar chart. Filter the entities by schema, owner and lifecycle. Use it to show the distribution of the catalog on a wiki page or a dashboard.'
       }
     }
   }
@@ -135,4 +139,25 @@ export const NoFilters: Story = {
       <EntityChart config={{ groupBy: 'lifecycle', chartType: 'donut' }} />
     </StoryProviders>
   )
+};
+
+export const WithFrame: Story = {
+  render: () => (
+    <StoryProviders client={storyQueryClient}>
+      <DashboardStory
+        widgets={[
+          dashboardWidget(
+            'entity-chart',
+            'EntityChart',
+            { schema: 'service', groupBy: 'lifecycle', chartType: 'donut' },
+            0,
+            0,
+            6,
+            24
+          )
+        ]}
+      />
+    </StoryProviders>
+  ),
+  args: { showFrame: true }
 };

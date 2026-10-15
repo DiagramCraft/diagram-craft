@@ -1,5 +1,4 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Metric } from './Metric';
 import {
   createStoryQueryClient,
   DashboardStory,
@@ -45,53 +44,26 @@ storyQueryClient.setQueryData(entityKeys.facets(WORKSPACE), {
   completeness: { below50: 2, below80: 3, above80: 5 }
 });
 
-export const Variants: Story = {
+const metricStory = (id: string, metricType: string): Story => ({
   render: () => (
     <StoryProviders client={storyQueryClient}>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16 }}>
-        <Metric config={{ metricType: 'entity-count' }} />
-        <Metric config={{ metricType: 'project-count' }} />
-        <Metric config={{ metricType: 'diagram-count' }} />
-        <Metric config={{ metricType: 'completeness-percent' }} />
-      </div>
+      <DashboardStory widgets={[dashboardWidget(id, 'Metric', { metricType }, 0, 0, 3, 8)]} />
     </StoryProviders>
   )
-};
+});
 
-export const VariantTiles: Story = {
-  render: () => (
-    <StoryProviders client={storyQueryClient}>
-      <DashboardStory
-        widgets={[
-          dashboardWidget('entity-count', 'Metric', { metricType: 'entity-count' }, 0, 0, 3, 2),
-          dashboardWidget('project-count', 'Metric', { metricType: 'project-count' }, 3, 0, 3, 2),
-          dashboardWidget('diagram-count', 'Metric', { metricType: 'diagram-count' }, 6, 0, 3, 2),
-          dashboardWidget(
-            'completeness',
-            'Metric',
-            { metricType: 'completeness-percent' },
-            9,
-            0,
-            3,
-            2
-          )
-        ]}
-      />
-    </StoryProviders>
-  )
-};
+export const EntityCount: Story = metricStory('entity-count', 'entity-count');
 
-export const Default: Story = {
-  render: () => (
-    <StoryProviders>
-      <DashboardStory
-        widgets={[dashboardWidget('large', 'Metric', { metricType: 'entity-count' }, 0, 0, 12, 6)]}
-      />
-    </StoryProviders>
-  )
-};
+export const ProjectCount: Story = metricStory('project-count', 'project-count');
+
+export const DiagramCount: Story = metricStory('diagram-count', 'diagram-count');
+
+export const CompletenessPercent: Story = metricStory(
+  'completeness-percent',
+  'completeness-percent'
+);
 
 export const WithFrame: Story = {
-  ...Default,
+  ...EntityCount,
   args: { showFrame: true }
 };

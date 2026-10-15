@@ -58,7 +58,7 @@ export const ComplianceCoverage: Story = {
             0,
             0,
             3,
-            2
+            8
           )
         ]}
       />

@@ -86,7 +86,7 @@ export const Default: Story = {
             0,
             0,
             12,
-            6
+            12
           )
         ]}
       />

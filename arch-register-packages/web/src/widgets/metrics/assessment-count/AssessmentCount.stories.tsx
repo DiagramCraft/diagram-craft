@@ -25,7 +25,7 @@ export const Active: Story = {
     assessmentWidgetStory(
       'AssessmentCount',
       { mode: 'active', label: 'Active assessments', subtext: 'currently open' },
-      { w: 3, h: 5 }
+      { w: 3, h: 8 }
     )
 };
 
@@ -34,7 +34,7 @@ export const Overdue: Story = {
     assessmentWidgetStory(
       'AssessmentCount',
       { mode: 'overdue', label: 'Overdue assessments', subtext: 'past the due date' },
-      { w: 3, h: 5 }
+      { w: 3, h: 8 }
     )
 };
 
@@ -48,7 +48,7 @@ export const DueWithinMonth: Story = {
         label: 'Due within 30 days',
         subtext: 'including overdue'
       },
-      { w: 3, h: 5 }
+      { w: 3, h: 8 }
     )
 };
 

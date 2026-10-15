@@ -18,6 +18,7 @@ import {
 } from '../../shared/data/fieldAggregation';
 import styles from './AggregateStat.module.css';
 import { useWidgetBodyTitle } from '../../shared/dashboard/WidgetBodyTitle';
+import { useWidgetFramed } from '../../shared/dashboard/WidgetFramed';
 import { AggregateStatWidgetConfig } from './types';
 
 type Props = {
@@ -39,6 +40,7 @@ const TONE_COLOR = {
 
 const QueryStat = ({ config }: Props) => {
   const title = useWidgetBodyTitle();
+  const framed = useWidgetFramed();
   const navigate = useNavigate();
   const { workspaceSlug } = useWorkspaceContext();
   const showLink = config.showLink ?? true;
@@ -131,7 +133,7 @@ const QueryStat = ({ config }: Props) => {
   };
 
   return (
-    <div className={styles.card}>
+    <div className={`${styles.card} ${framed ? styles.framed : ''}`}>
       <div className={styles.number} style={{ color: TONE_COLOR[tone] }}>
         {isSumPercent
           ? formatStatValue(display, numerator, denominator)
@@ -153,6 +155,7 @@ const QueryStat = ({ config }: Props) => {
 
 const LegacyAggregateStat = ({ config }: Props) => {
   const title = useWidgetBodyTitle();
+  const framed = useWidgetFramed();
   const navigate = useNavigate();
   const { workspaceSlug, schemas } = useWorkspaceContext();
   const showLink = config.showLink ?? true;
@@ -187,7 +190,7 @@ const LegacyAggregateStat = ({ config }: Props) => {
   const displayLabel = title ?? schemaName;
 
   return (
-    <div className={styles.card}>
+    <div className={`${styles.card} ${framed ? styles.framed : ''}`}>
       <div className={styles.number}>{percent}%</div>
       <div className={styles.label}>{displayLabel}</div>
       {showLink && (

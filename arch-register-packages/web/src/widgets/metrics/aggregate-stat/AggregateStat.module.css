@@ -23,6 +23,12 @@ div[data-frame="true"] .card {
   min-width: 0;
 }
 
+.card.framed {
+  border: none;
+  background: transparent;
+  border-radius: 0;
+}
+
 .number {
   font-size: 42px;
   font-weight: 700;

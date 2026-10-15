@@ -9,10 +9,12 @@ import {
 import { useSchemaAssessmentSummaries } from '../../shared/data/useSchemaAssessmentSummaries';
 import styles from './AssessmentStatusStat.module.css';
 import { useWidgetBodyTitle } from '../../shared/dashboard/WidgetBodyTitle';
+import { useWidgetFramed } from '../../shared/dashboard/WidgetFramed';
 import { AssessmentStatusStatConfig } from './types';
 
 export const AssessmentStatusStatWidget = ({ config }: { config: AssessmentStatusStatConfig }) => {
   const title = useWidgetBodyTitle();
+  const framed = useWidgetFramed();
   const { schemaFound, summaries, isLoading } = useSchemaAssessmentSummaries(config.schemaName);
   const counts = useMemo(() => countByStatus(summaries), [summaries]);
 
@@ -26,7 +28,7 @@ export const AssessmentStatusStatWidget = ({ config }: { config: AssessmentStatu
   const count = counts[config.status];
   const tinted = count > 0 && TINTED_ASSESSMENT_STATUSES.includes(config.status);
   return (
-    <div className={styles.tile}>
+    <div className={`${styles.tile} ${framed ? styles.framed : ''}`}>
       <div className={styles.label}>{title ?? ASSESSMENT_STATUS_LABEL[config.status]}</div>
       <div
         className={styles.value}

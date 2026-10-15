@@ -74,7 +74,7 @@ const storyQueryClient = createStoryQueryClient();
 storyQueryClient.setQueryData(milestoneKeys.list(WORKSPACE, PROJECT_ID), milestones);
 
 const meta = {
-  title: 'Widgets/Metrics/Upcoming milestones',
+  title: 'Widgets/Data views/Upcoming milestones',
   tags: ['dashboard', 'project-surface'],
   ...frameControls,
   parameters: {

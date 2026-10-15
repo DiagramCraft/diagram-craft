@@ -28,7 +28,7 @@ export const Overdue: Story = {
     assessmentWidgetStory(
       'AssessmentStatusStat',
       { ...STAT, status: 'overdue', label: 'Overdue', subtextTemplate: 'past the scheduled date' },
-      { w: 3, h: 5 }
+      { w: 3, h: 8 }
     )
 };
 
@@ -42,7 +42,7 @@ export const InProgress: Story = {
         label: 'In progress',
         subtextTemplate: '{notStarted} not started'
       },
-      { w: 3, h: 5 }
+      { w: 3, h: 8 }
     )
 };
 
@@ -56,7 +56,7 @@ export const Complete: Story = {
         label: 'Complete',
         subtextTemplate: 'of {total} assessments'
       },
-      { w: 3, h: 5 }
+      { w: 3, h: 8 }
     )
 };
 
@@ -65,7 +65,7 @@ export const UnknownSchema: Story = {
     assessmentWidgetStory(
       'AssessmentStatusStat',
       { schemaName: 'Nope', status: 'overdue' },
-      { w: 3, h: 5 }
+      { w: 3, h: 8 }
     )
 };
 

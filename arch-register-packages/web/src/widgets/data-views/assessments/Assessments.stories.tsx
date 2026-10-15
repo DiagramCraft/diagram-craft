@@ -74,7 +74,7 @@ const storyQueryClient = createStoryQueryClient();
 storyQueryClient.setQueryData(assessmentKeys.list(WORKSPACE), assessments);
 
 const meta = {
-  title: 'Widgets/Metrics/Assessments',
+  title: 'Widgets/Data views/Assessments',
   tags: ['dashboard', 'workspace-surface', 'project-surface'],
   ...frameControls,
   parameters: {
@@ -93,7 +93,7 @@ type Story = StoryObj<typeof meta>;
 
 const renderDashboard = (config: Record<string, unknown>) => (
   <StoryProviders client={storyQueryClient}>
-    <DashboardStory widgets={[dashboardWidget('assessments', 'Assessments', config, 0, 0, 4, 3)]} />
+    <DashboardStory widgets={[dashboardWidget('assessments', 'Assessments', config, 0, 0, 4, 8)]} />
   </StoryProviders>
 );
 

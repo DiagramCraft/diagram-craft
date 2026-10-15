@@ -59,7 +59,7 @@ const render = (config: Record<string, unknown>, cases: GovernanceCase[] = CASES
             0,
             0,
             3,
-            5
+            8
           )
         ]}
       />

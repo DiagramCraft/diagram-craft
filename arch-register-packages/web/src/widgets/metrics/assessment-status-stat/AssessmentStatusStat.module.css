@@ -34,3 +34,9 @@
   padding: 8px 0;
   font-size: 12px;
 }
+
+.tile.framed {
+  border: none;
+  background: transparent;
+  border-radius: 0;
+}

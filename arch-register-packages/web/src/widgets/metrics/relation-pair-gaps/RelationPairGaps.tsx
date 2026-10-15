@@ -1,5 +1,6 @@
 import { EmptyState } from '../../../components/EmptyState';
 import { useWidgetBodyTitle } from '../../shared/dashboard/WidgetBodyTitle';
+import { useWidgetFramed } from '../../shared/dashboard/WidgetFramed';
 import { computeRelationPairCoverage } from '../../data-views/relation-pairs-coverage/relationPairCoverageLogic';
 import { useRelationPairCoverage } from '../../data-views/relation-pairs-coverage/useRelationPairCoverage';
 import styles from './RelationPairGaps.module.css';
@@ -14,6 +15,7 @@ const DANGER = 'var(--cmp-fg-danger, #ef4444)';
  */
 export const RelationPairGapsWidget = ({ config }: { config: RelationPairGapsWidgetConfig }) => {
   const title = useWidgetBodyTitle();
+  const framed = useWidgetFramed();
   const { hubSchema, providerSchemaId, consumerSchemaId, coverageSchemaId, pairs, isLoading } =
     useRelationPairCoverage(config);
 
@@ -37,7 +39,7 @@ export const RelationPairGapsWidget = ({ config }: { config: RelationPairGapsWid
 
   const summary = computeRelationPairCoverage(pairs);
   return (
-    <div className={styles.tile}>
+    <div className={`${styles.tile} ${framed ? styles.framed : ''}`}>
       <div className={styles.label}>{title ?? 'Coverage gaps'}</div>
       <div className={styles.value} style={summary.gapPairs > 0 ? { color: DANGER } : undefined}>
         {isLoading ? '…' : summary.gapPairs}

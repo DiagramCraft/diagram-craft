@@ -5,6 +5,7 @@ import { useEntities } from '../../../hooks/useEntities';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { resolveSchemaColor, schemaColor } from '../../../lib/schemaPresentation';
 import styles from './EntityChart.module.css';
+import { useWidgetFramed } from '../../shared/dashboard/WidgetFramed';
 import { EmptyState } from '../../../components/EmptyState';
 import type { EntityChartWidgetConfig } from './types';
 
@@ -99,6 +100,7 @@ const BarChart = ({ groups }: { groups: ChartGroup[] }) => {
 export const EntityChart = ({ config }: { config: EntityChartWidgetConfig }) => {
   const { schema, owner, lifecycle, groupBy, chartType } = config;
   const navigate = useNavigate();
+  const framed = useWidgetFramed();
   const { workspaceSlug, schemas, lifecycleStates } = useWorkspaceContext();
 
   const hasFilter = !!(schema || owner || lifecycle);
@@ -186,7 +188,7 @@ export const EntityChart = ({ config }: { config: EntityChartWidgetConfig }) => 
   const total = groups.reduce((sum, g) => sum + g.count, 0);
 
   return (
-    <div className={styles.card}>
+    <div className={`${styles.card} ${framed ? styles.framed : ''}`}>
       <div className={styles.chartArea}>
         {chartType === 'bar' ? (
           <BarChart groups={groups} />

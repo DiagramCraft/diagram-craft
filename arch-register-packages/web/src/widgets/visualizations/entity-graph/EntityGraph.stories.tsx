@@ -115,27 +115,29 @@ export const MissingId: Story = {
   )
 };
 
+const renderDashboard = (height: number) => (
+  <StoryProviders client={storyQueryClient}>
+    <DashboardStory
+      widgets={[
+        dashboardWidget(
+          'entity-graph-large',
+          'EntityGraph',
+          { entityId: rootEntityId, depth: 2, direction: 'both' },
+          0,
+          0,
+          12,
+          height
+        )
+      ]}
+    />
+  </StoryProviders>
+);
+
 export const Default: Story = {
-  render: () => (
-    <StoryProviders client={storyQueryClient}>
-      <DashboardStory
-        widgets={[
-          dashboardWidget(
-            'entity-graph-large',
-            'EntityGraph',
-            { entityId: rootEntityId, depth: 2, direction: 'both' },
-            0,
-            0,
-            12,
-            6
-          )
-        ]}
-      />
-    </StoryProviders>
-  )
+  render: () => renderDashboard(6)
 };
 
 export const WithFrame: Story = {
-  ...Default,
+  render: () => renderDashboard(18),
   args: { showFrame: true }
 };

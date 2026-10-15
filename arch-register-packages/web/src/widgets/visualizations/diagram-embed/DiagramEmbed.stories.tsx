@@ -86,27 +86,29 @@ export const MissingId: Story = {
   )
 };
 
+const renderDashboard = (height: number) => (
+  <StoryProviders client={storyQueryClient}>
+    <DashboardStory
+      widgets={[
+        dashboardWidget(
+          'diagram-embed-large',
+          'DiagramEmbed',
+          { fileId: previewFileId, caption: 'System context diagram' },
+          0,
+          0,
+          12,
+          height
+        )
+      ]}
+    />
+  </StoryProviders>
+);
+
 export const Default: Story = {
-  render: () => (
-    <StoryProviders client={storyQueryClient}>
-      <DashboardStory
-        widgets={[
-          dashboardWidget(
-            'diagram-embed-large',
-            'DiagramEmbed',
-            { fileId: previewFileId, caption: 'System context diagram' },
-            0,
-            0,
-            12,
-            6
-          )
-        ]}
-      />
-    </StoryProviders>
-  )
+  render: () => renderDashboard(6)
 };
 
 export const WithFrame: Story = {
-  ...Default,
+  render: () => renderDashboard(24),
   args: { showFrame: true }
 };
