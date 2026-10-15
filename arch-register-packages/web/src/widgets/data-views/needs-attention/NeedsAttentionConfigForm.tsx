@@ -108,7 +108,10 @@ export const NeedsAttentionConfigForm = ({ config, onChange }: NeedsAttentionCon
         <Select.Root
           value={config.scope}
           onChange={value =>
-            onChange({ ...config, scope: (value as NeedsAttentionScope) ?? 'workspace' })
+            onChange({
+              ...config,
+              scope: (value as NeedsAttentionScope) ?? 'workspace'
+            })
           }
         >
           {(Object.keys(SCOPE_LABEL) as NeedsAttentionScope[]).map(scope => (
@@ -122,7 +125,10 @@ export const NeedsAttentionConfigForm = ({ config, onChange }: NeedsAttentionCon
         <Select.Root
           value={config.severity}
           onChange={value =>
-            onChange({ ...config, severity: (value as NeedsAttentionSeverity) ?? 'none' })
+            onChange({
+              ...config,
+              severity: (value as NeedsAttentionSeverity) ?? 'none'
+            })
           }
         >
           {(Object.keys(SEVERITY_LABEL) as NeedsAttentionSeverity[]).map(severity => (

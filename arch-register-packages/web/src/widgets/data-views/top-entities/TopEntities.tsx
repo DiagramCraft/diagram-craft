@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useEntities } from '../../../hooks/useEntities';
+import { useRelations } from '../../../hooks/useRelations';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { useEntityDrawer } from '../../../sections/entities/entityDrawer/useEntityDrawer';
 import {
@@ -36,21 +37,50 @@ export const TopEntitiesWidget = ({ config }: Props) => {
     { enabled: !!workspaceSlug && hasConfig }
   );
 
+  const relationSchemaId = useMemo(() => {
+    if (!config.relationFieldName) return undefined;
+    const field = schemas
+      .find(candidate => candidate.id === schemaId)
+      ?.fields.find(
+        candidate =>
+          candidate.id === config.relationFieldName || candidate.name === config.relationFieldName
+      );
+    return field?.type === 'typedRelation' ? field.relationSchemaId : undefined;
+  }, [schemas, schemaId, config.relationFieldName]);
+  const relations = useRelations(
+    workspaceSlug,
+    { schemaId: relationSchemaId, limit: FETCH_LIMIT },
+    { enabled: !!workspaceSlug && relationSchemaId != null }
+  );
+  const isLoadingRelations = relationSchemaId != null && relations.isLoading;
+
   const direction = config.direction ?? 'desc';
   const limit = config.limit ?? 5;
 
   const ranked = useMemo(() => {
+    const relationCounts = new Map<string, number>();
+    for (const relation of relations.data) {
+      relationCounts.set(relation._out.id, (relationCounts.get(relation._out.id) ?? 0) + 1);
+    }
+    const valueOf = (entity: (typeof entities)[number]): MeasuredValue | undefined =>
+      config.relationFieldName
+        ? { amount: relationCounts.get(entity._uid) ?? 0 }
+        : measuredValue(entity[config.fieldId]);
     const withValue = entities
-      .map(entity => ({ entity, value: measuredValue(entity[config.fieldId]) }))
+      .map(entity => ({ entity, value: valueOf(entity) }))
       .filter(
-        (item): item is { entity: (typeof entities)[number]; value: MeasuredValue } =>
-          item.value !== undefined
+        (
+          item
+        ): item is {
+          entity: (typeof entities)[number];
+          value: MeasuredValue;
+        } => item.value !== undefined
       );
     withValue.sort((a, b) =>
       direction === 'desc' ? b.value.amount - a.value.amount : a.value.amount - b.value.amount
     );
     return withValue.slice(0, limit);
-  }, [entities, config.fieldId, direction, limit]);
+  }, [entities, relations.data, config.fieldId, config.relationFieldName, direction, limit]);
 
   const shareTotal = ranked.reduce((sum, item) => sum + Math.max(item.value.amount, 0), 0);
 
@@ -58,7 +88,7 @@ export const TopEntitiesWidget = ({ config }: Props) => {
     return <div className={`${styles.emptyInline} dim`}>This widget is not fully configured.</div>;
   }
 
-  if (isLoading) {
+  if (isLoading || isLoadingRelations) {
     return <div className={`${styles.emptyInline} dim`}>Loading…</div>;
   }
 

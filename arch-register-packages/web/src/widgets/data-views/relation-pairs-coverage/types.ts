@@ -10,6 +10,8 @@ export const relationPairsCoverageWidgetConfigSchema = z.object({
   consumerFieldName: withInitial(z.string().min(1), ''),
   /** Relation type (by name) whose instances between a provider and a consumer count as coverage. */
   coverageRelationSchemaName: withInitial(z.string().min(1), ''),
+  /** `table` lists every pair; `stat` shows a single tile with the number of pairs lacking coverage. */
+  display: z.enum(['table', 'stat']).optional(),
   /** Column headings; default to the schema/field names. */
   hubLabel: z.string().optional(),
   providerLabel: z.string().optional(),

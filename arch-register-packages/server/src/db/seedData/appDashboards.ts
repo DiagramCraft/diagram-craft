@@ -27,6 +27,13 @@ export const DATA_STEWARDSHIP_APP_KEY = 'data-stewardship';
 export const DATA_STEWARDSHIP_ASSESSMENTS_APP_KEY = 'data-stewardship-assessments';
 export const DATA_STEWARDSHIP_STEWARDSHIP_APP_KEY = 'data-stewardship-stewardship';
 export const DATA_STEWARDSHIP_CLASSIFICATION_APP_KEY = 'data-stewardship-classification';
+/** Governance case kinds the Data Stewardship "My work" dashboard draws on. */
+const DATA_STEWARDSHIP_CASE_KINDS = [
+  'field-date-reminder',
+  'entity.change-case',
+  'entity.deprecation'
+];
+
 export const DATA_STEWARDSHIP_CHANGE_CASES_APP_KEY = 'data-stewardship-change-cases';
 
 /** The `entity-browser-embed` widget type, shared with the markdown/wiki embed block (see
@@ -253,8 +260,15 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
     widgets: [
       {
         id: 'seed-stat-needs-attention',
-        type: 'api-integration-catalog-needs-attention-count',
-        config: {},
+        type: 'CaseCount',
+        config: {
+          schemaName: 'API',
+          caseKinds: ['entity.change-case', 'entity.deprecation'],
+          scope: 'workspace',
+          tone: 'warning',
+          subtextTemplate: 'open change & deprecation cases'
+        },
+        frame: { title: 'Needs attention' },
         x: 0,
         y: 0,
         w: 3,
@@ -295,8 +309,15 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
       },
       {
         id: 'seed-stat-pair-gaps',
-        type: 'api-integration-catalog-pair-gaps',
-        config: {},
+        type: 'RelationPairsCoverage',
+        config: {
+          display: 'stat',
+          hubSchemaName: 'API',
+          providerFieldName: 'Provided by',
+          consumerFieldName: 'Consumed by',
+          coverageRelationSchemaName: 'Data Flow'
+        },
+        frame: { title: 'Provider/consumer gaps' },
         x: 9,
         y: 0,
         w: 3,
@@ -304,8 +325,15 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
       },
       {
         id: 'seed-needs-attention',
-        type: 'api-integration-catalog-needs-attention',
-        config: { limit: 8 },
+        type: 'NeedsAttentionQueue',
+        config: {
+          schemaName: 'API',
+          caseKinds: ['entity.change-case', 'entity.deprecation'],
+          scope: 'workspace',
+          severity: 'due-date',
+          limit: 8
+        },
+        frame: { title: 'API needs attention' },
         x: 0,
         y: 5,
         w: 6,
@@ -313,8 +341,15 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
       },
       {
         id: 'seed-most-consumed',
-        type: 'api-integration-catalog-most-consumed',
-        config: { limit: 6 },
+        type: 'TopEntities',
+        config: {
+          schemaName: 'API',
+          relationFieldName: 'Consumed by',
+          direction: 'desc',
+          limit: 6,
+          showLink: false
+        },
+        frame: { title: 'Most consumed APIs' },
         x: 6,
         y: 5,
         w: 6,
@@ -322,8 +357,16 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
       },
       {
         id: 'seed-at-risk',
-        type: 'api-integration-catalog-at-risk',
-        config: { limit: 8 },
+        type: 'RelationTable',
+        config: {
+          relationSchemaName: 'Data Flow',
+          filter:
+            'cross_boundary = "cross-boundary" OR data_classification in ("sensitive", "highly-sensitive")',
+          fieldIds: ['data_entities', 'data_classification', 'cross_boundary', 'protocol'],
+          sort: 'data_classification',
+          limit: 8
+        },
+        frame: { title: 'Integrations needing attention' },
         x: 0,
         y: 25,
         w: 12,
@@ -338,8 +381,24 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
     widgets: [
       {
         id: 'seed-impact',
-        type: 'api-integration-catalog-impact',
-        config: { entityId: '$apiEntityId' },
+        type: 'blast-radius',
+        config: {
+          entityId: '$apiEntityId',
+          maxDepth: 2,
+          groups: [
+            {
+              fieldName: 'Provided by',
+              label: 'Providers',
+              emptyText: 'No provider relation recorded.'
+            },
+            {
+              fieldName: 'Consumed by',
+              label: 'Direct consumers',
+              emptyText: 'No consumer registered against this API.'
+            }
+          ]
+        },
+        frame: { title: 'Blast radius' },
         x: 0,
         y: 0,
         w: 12,
@@ -433,7 +492,11 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
                 {
                   id: 'seed-apis-deprecated',
                   type: 'SpecItemsTable',
-                  config: { schemaName: 'API', entityQuery: apiFacetQuery, deprecated: true },
+                  config: {
+                    schemaName: 'API',
+                    entityQuery: apiFacetQuery,
+                    deprecated: true
+                  },
                   x: 0,
                   y: 0,
                   w: 12,
@@ -453,8 +516,16 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
       kind: 'facets',
       schemaName: 'API',
       facets: [
-        { fieldId: 'Protocols', variableName: 'protocols', itemLabel: 'Protocol' },
-        { fieldId: '_lifecycle', variableName: 'lifecycles', itemLabel: 'Lifecycle' },
+        {
+          fieldId: 'Protocols',
+          variableName: 'protocols',
+          itemLabel: 'Protocol'
+        },
+        {
+          fieldId: '_lifecycle',
+          variableName: 'lifecycles',
+          itemLabel: 'Lifecycle'
+        },
         { fieldId: '_owner', variableName: 'owners', itemLabel: 'Owning team' }
       ]
     }
@@ -480,8 +551,14 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
                     relationSchemaName: 'Data Flow',
                     facetFilters: [
                       { fieldId: 'Protocol', values: ['$protocols'] },
-                      { fieldId: 'Data Classification', values: ['$classifications'] },
-                      { fieldId: 'Cross-Boundary Transfer', values: ['$boundaries'] }
+                      {
+                        fieldId: 'Data Classification',
+                        values: ['$classifications']
+                      },
+                      {
+                        fieldId: 'Cross-Boundary Transfer',
+                        values: ['$boundaries']
+                      }
                     ],
                     fieldIds: [
                       'data_entities',
@@ -535,7 +612,11 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
       schemaName: 'Data Flow',
       schemaKind: 'relation',
       facets: [
-        { fieldId: 'Protocol', variableName: 'protocols', itemLabel: 'Protocol' },
+        {
+          fieldId: 'Protocol',
+          variableName: 'protocols',
+          itemLabel: 'Protocol'
+        },
         {
           fieldId: 'Data Classification',
           variableName: 'classifications',
@@ -799,7 +880,9 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
                     sort: 'data_classification',
                     limit: 200
                   },
-                  frame: { title: 'Flows carrying restricted or confidential data' },
+                  frame: {
+                    title: 'Flows carrying restricted or confidential data'
+                  },
                   x: 0,
                   y: 5,
                   w: 12,
@@ -897,7 +980,11 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
       kind: 'facets',
       schemaName: 'Data Entity',
       facets: [
-        { fieldId: 'Classification', variableName: 'classifications', itemLabel: 'Classification' }
+        {
+          fieldId: 'Classification',
+          variableName: 'classifications',
+          itemLabel: 'Classification'
+        }
       ]
     }
   },
@@ -1024,10 +1111,11 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
     widgets: [
       {
         id: 'seed-stat-assigned',
-        type: 'data-stewardship-case-count',
+        type: 'CaseCount',
         config: {
+          schemaName: 'Data Entity',
           scope: 'mine',
-          caseKinds: [],
+          caseKinds: DATA_STEWARDSHIP_CASE_KINDS,
           tone: 'none',
           subtextTemplate: '{due} due within a week',
           dueWithinDays: 7
@@ -1040,10 +1128,11 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
       },
       {
         id: 'seed-stat-past-due',
-        type: 'data-stewardship-case-count',
+        type: 'CaseCount',
         config: {
+          schemaName: 'Data Entity',
           scope: 'late',
-          caseKinds: [],
+          caseKinds: DATA_STEWARDSHIP_CASE_KINDS,
           tone: 'danger',
           subtextTemplate: 'across all assignees',
           dueWithinDays: 7
@@ -1056,8 +1145,9 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
       },
       {
         id: 'seed-stat-awaiting-decision',
-        type: 'data-stewardship-case-count',
+        type: 'CaseCount',
         config: {
+          schemaName: 'Data Entity',
           scope: 'workspace',
           caseKinds: ['entity.change-case', 'entity.deprecation'],
           tone: 'warning',
@@ -1072,8 +1162,14 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
       },
       {
         id: 'seed-stat-reviews-overdue',
-        type: 'data-stewardship-reviews-overdue',
-        config: { subtextTemplate: 'scheduled review date passed' },
+        type: 'AggregateStat',
+        config: {
+          query: 'schema:"Data Entity" AND review_status = "overdue"',
+          subtextTemplate: 'scheduled review date passed',
+          severity: { warnAt: 1 },
+          showLink: false
+        },
+        frame: { title: 'Reviews overdue' },
         x: 9,
         y: 0,
         w: 3,
@@ -1081,8 +1177,16 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
       },
       {
         id: 'seed-calendar',
-        type: 'data-stewardship-case-calendar',
-        config: { scope: 'mine', caseKinds: [] },
+        type: 'DateCalendar',
+        config: {
+          cases: {
+            schemaName: 'Data Entity',
+            caseKinds: DATA_STEWARDSHIP_CASE_KINDS,
+            scope: 'mine'
+          },
+          period: 'week',
+          periodCount: 6
+        },
         frame: { title: 'Next six weeks' },
         x: 0,
         y: 5,
@@ -1091,8 +1195,14 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
       },
       {
         id: 'seed-queue',
-        type: 'data-stewardship-case-queue',
-        config: { scope: 'mine', caseKinds: [] },
+        type: 'NeedsAttentionQueue',
+        config: {
+          schemaName: 'Data Entity',
+          caseKinds: DATA_STEWARDSHIP_CASE_KINDS,
+          scope: 'mine',
+          severity: 'due-date',
+          limit: 20
+        },
         frame: { title: 'Assigned to me' },
         x: 0,
         y: 19,
@@ -1173,7 +1283,9 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
           sort: 'field:Maturity Gap:desc',
           view: 'table',
           viewConfigs: {
-            table: { fieldIds: ['Maturity', 'Maturity Target', 'Maturity Gap'] }
+            table: {
+              fieldIds: ['Maturity', 'Maturity Target', 'Maturity Gap']
+            }
           },
           schemaName: 'Business Capability',
           entityQuery: {
@@ -1356,7 +1468,10 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
       {
         id: 'seed-objective',
         type: 'EntityCard',
-        config: { entityId: '$objectiveId', fields: 'status,target_date,owner,description' },
+        config: {
+          entityId: '$objectiveId',
+          fields: 'status,target_date,owner,description'
+        },
         x: 0,
         y: 0,
         w: 12,
@@ -1510,7 +1625,9 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
                     conditions: [],
                     sort: 'name',
                     view: 'table',
-                    viewConfigs: { table: { fieldIds: ['Capability Level', '_owner'] } },
+                    viewConfigs: {
+                      table: { fieldIds: ['Capability Level', '_owner'] }
+                    },
                     schemaName: 'Business Capability',
                     // The `Supported by Objectives` hop is resolved to a typed-relation step at
                     // render time (EntityBrowserEmbedFieldResolution.ts).
@@ -1519,7 +1636,12 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
                         kind: 'not',
                         child: {
                           kind: 'relationExists',
-                          path: [{ kind: 'forward', fieldId: 'Supported by Objectives' }]
+                          path: [
+                            {
+                              kind: 'forward',
+                              fieldId: 'Supported by Objectives'
+                            }
+                          ]
                         }
                       }
                     }
@@ -1680,7 +1802,9 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
           sort: 'field:Residual Risk Score:desc',
           view: 'table',
           viewConfigs: {
-            table: { fieldIds: ['Category', 'Risk Coverage', 'Residual Risk Score'] }
+            table: {
+              fieldIds: ['Category', 'Risk Coverage', 'Residual Risk Score']
+            }
           },
           // Live risks whose coverage is missing or below 40%.
           schemaName: 'Risk',
@@ -1915,7 +2039,11 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
       kind: 'facets',
       schemaName: 'Risk',
       facets: [
-        { fieldId: 'Category', variableName: 'categories', itemLabel: 'Category' },
+        {
+          fieldId: 'Category',
+          variableName: 'categories',
+          itemLabel: 'Category'
+        },
         { fieldId: 'Status', variableName: 'statuses', itemLabel: 'Status' },
         { fieldId: 'Risk Owner', variableName: 'owners', itemLabel: 'Owner' }
       ]
@@ -2080,7 +2208,9 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
                       ]
                     }
                   },
-                  frame: { title: 'Coverage by information asset (fewest controls first)' },
+                  frame: {
+                    title: 'Coverage by information asset (fewest controls first)'
+                  },
                   x: 6,
                   y: 5,
                   w: 6,
@@ -2337,7 +2467,13 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
           viewConfigs: { table: { fieldIds: ['Tier', 'Criticality', 'Risk'] } },
           schemaName: 'Vendor',
           entityQuery: {
-            root: { kind: 'predicate', path: [], fieldId: 'Risk', op: 'gte', value: 3 }
+            root: {
+              kind: 'predicate',
+              path: [],
+              fieldId: 'Risk',
+              op: 'gte',
+              value: 3
+            }
           }
         },
         frame: { title: 'Vendors above tolerance' },
@@ -2356,7 +2492,9 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
           sort: 'field:EOL Date:asc',
           view: 'table',
           viewConfigs: {
-            table: { fieldIds: ['_projection:Technology', 'EOL Date', 'Security Support Until'] }
+            table: {
+              fieldIds: ['_projection:Technology', 'EOL Date', 'Security Support Until']
+            }
           },
           schemaName: 'Technology Release',
           entityQuery: {
@@ -2488,7 +2626,11 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
       kind: 'facets',
       schemaName: 'Vendor',
       facets: [
-        { fieldId: 'Cost Centre', variableName: 'costCentres', itemLabel: 'Cost centre' },
+        {
+          fieldId: 'Cost Centre',
+          variableName: 'costCentres',
+          itemLabel: 'Cost centre'
+        },
         {
           fieldId: 'Relationship Owner',
           variableName: 'relationshipOwners',
@@ -2667,7 +2809,11 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
       schemaName: 'Vendor',
       facets: [
         { fieldId: 'Tier', variableName: 'tiers', itemLabel: 'Tier' },
-        { fieldId: 'Category', variableName: 'categories', itemLabel: 'Category' },
+        {
+          fieldId: 'Category',
+          variableName: 'categories',
+          itemLabel: 'Category'
+        },
         {
           fieldId: 'Relationship Owner',
           variableName: 'relationshipOwners',
@@ -2786,7 +2932,11 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
       kind: 'facets',
       schemaName: 'Contract',
       facets: [
-        { fieldId: 'Contract Type', variableName: 'contractTypes', itemLabel: 'Type' },
+        {
+          fieldId: 'Contract Type',
+          variableName: 'contractTypes',
+          itemLabel: 'Type'
+        },
         { fieldId: 'Vendor', variableName: 'vendorIds', itemLabel: 'Vendor' }
       ]
     }
@@ -2823,7 +2973,13 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
             root: {
               kind: 'and',
               children: [
-                { kind: 'predicate', path: [], fieldId: 'Tier', op: 'in', value: ['$tiers'] },
+                {
+                  kind: 'predicate',
+                  path: [],
+                  fieldId: 'Tier',
+                  op: 'in',
+                  value: ['$tiers']
+                },
                 {
                   kind: 'predicate',
                   path: [],
@@ -2853,7 +3009,11 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
       schemaName: 'Vendor',
       facets: [
         { fieldId: 'Tier', variableName: 'tiers', itemLabel: 'Tier' },
-        { fieldId: 'Category', variableName: 'categories', itemLabel: 'Category' },
+        {
+          fieldId: 'Category',
+          variableName: 'categories',
+          itemLabel: 'Category'
+        },
         {
           fieldId: 'Relationship Owner',
           variableName: 'relationshipOwners',
@@ -2911,7 +3071,13 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
                     }
                   ]
                 },
-                { kind: 'predicate', path: [], fieldId: '_owner', op: 'in', value: ['$ownerIds'] },
+                {
+                  kind: 'predicate',
+                  path: [],
+                  fieldId: '_owner',
+                  op: 'in',
+                  value: ['$ownerIds']
+                },
                 {
                   kind: 'predicate',
                   path: [],
@@ -2940,9 +3106,17 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
       kind: 'facets',
       schemaName: 'Term',
       facets: [
-        { fieldId: 'Categories', variableName: 'categoryIds', itemLabel: 'Category' },
+        {
+          fieldId: 'Categories',
+          variableName: 'categoryIds',
+          itemLabel: 'Category'
+        },
         { fieldId: '_owner', variableName: 'ownerIds', itemLabel: 'Owner' },
-        { fieldId: '_lifecycle', variableName: 'lifecycleIds', itemLabel: 'Lifecycle' }
+        {
+          fieldId: '_lifecycle',
+          variableName: 'lifecycleIds',
+          itemLabel: 'Lifecycle'
+        }
       ]
     }
   }
@@ -2989,35 +3163,95 @@ export const APP_DASHBOARD_KEYS_BY_APPLICATION: Record<string, string[]> = {
 
 /** Rail icon (react-icons/tb component name) and label of each default application dashboard. */
 export const APP_DASHBOARD_RAIL: Record<string, { icon: string; railLabel: string }> = {
-  [BUSINESS_GLOSSARY_APP_KEY]: { icon: 'TbBook', railLabel: 'Business glossary' },
-  [STRATEGY_OVERVIEW_APP_KEY]: { icon: 'TbLayoutDashboard', railLabel: 'Overview' },
-  [STRATEGY_CAPABILITY_MAP_APP_KEY]: { icon: 'TbGridDots', railLabel: 'Capability map' },
-  [STRATEGY_CAPABILITIES_APP_KEY]: { icon: 'TbListDetails', railLabel: 'Capabilities' },
+  [BUSINESS_GLOSSARY_APP_KEY]: {
+    icon: 'TbBook',
+    railLabel: 'Business glossary'
+  },
+  [STRATEGY_OVERVIEW_APP_KEY]: {
+    icon: 'TbLayoutDashboard',
+    railLabel: 'Overview'
+  },
+  [STRATEGY_CAPABILITY_MAP_APP_KEY]: {
+    icon: 'TbGridDots',
+    railLabel: 'Capability map'
+  },
+  [STRATEGY_CAPABILITIES_APP_KEY]: {
+    icon: 'TbListDetails',
+    railLabel: 'Capabilities'
+  },
   [STRATEGY_STRATEGY_APP_KEY]: { icon: 'TbTargetArrow', railLabel: 'Strategy' },
-  [STRATEGY_TRACEABILITY_APP_KEY]: { icon: 'TbRoute', railLabel: 'Traceability' },
-  [VENDOR_MANAGEMENT_OVERVIEW_APP_KEY]: { icon: 'TbLayoutDashboard', railLabel: 'Overview' },
-  [VENDOR_MANAGEMENT_VENDORS_APP_KEY]: { icon: 'TbBuilding', railLabel: 'Vendors' },
-  [VENDOR_MANAGEMENT_CONTRACTS_APP_KEY]: { icon: 'TbFileCertificate', railLabel: 'Contracts' },
+  [STRATEGY_TRACEABILITY_APP_KEY]: {
+    icon: 'TbRoute',
+    railLabel: 'Traceability'
+  },
+  [VENDOR_MANAGEMENT_OVERVIEW_APP_KEY]: {
+    icon: 'TbLayoutDashboard',
+    railLabel: 'Overview'
+  },
+  [VENDOR_MANAGEMENT_VENDORS_APP_KEY]: {
+    icon: 'TbBuilding',
+    railLabel: 'Vendors'
+  },
+  [VENDOR_MANAGEMENT_CONTRACTS_APP_KEY]: {
+    icon: 'TbFileCertificate',
+    railLabel: 'Contracts'
+  },
   [VENDOR_MANAGEMENT_SPEND_APP_KEY]: { icon: 'TbCoin', railLabel: 'Spend' },
-  [VENDOR_MANAGEMENT_RISK_APP_KEY]: { icon: 'TbAlertTriangle', railLabel: 'Risk' },
-  [RISK_COMPLIANCE_OVERVIEW_APP_KEY]: { icon: 'TbLayoutDashboard', railLabel: 'Overview' },
-  [RISK_COMPLIANCE_RISKS_APP_KEY]: { icon: 'TbAlertTriangle', railLabel: 'Risks' },
-  [RISK_COMPLIANCE_CONTROLS_APP_KEY]: { icon: 'TbShieldCheck', railLabel: 'Controls' },
-  [RISK_COMPLIANCE_RETENTION_APP_KEY]: { icon: 'TbArchive', railLabel: 'Retention' },
-  [RISK_COMPLIANCE_ASSESSMENTS_APP_KEY]: { icon: 'TbListCheck', railLabel: 'Assessments' },
-  [DATA_STEWARDSHIP_APP_KEY]: { icon: 'TbClipboardCheck', railLabel: 'My work' },
-  [DATA_STEWARDSHIP_STEWARDSHIP_APP_KEY]: { icon: 'TbUserShield', railLabel: 'Stewardship' },
-  [DATA_STEWARDSHIP_CLASSIFICATION_APP_KEY]: { icon: 'TbTags', railLabel: 'Classification' },
+  [VENDOR_MANAGEMENT_RISK_APP_KEY]: {
+    icon: 'TbAlertTriangle',
+    railLabel: 'Risk'
+  },
+  [RISK_COMPLIANCE_OVERVIEW_APP_KEY]: {
+    icon: 'TbLayoutDashboard',
+    railLabel: 'Overview'
+  },
+  [RISK_COMPLIANCE_RISKS_APP_KEY]: {
+    icon: 'TbAlertTriangle',
+    railLabel: 'Risks'
+  },
+  [RISK_COMPLIANCE_CONTROLS_APP_KEY]: {
+    icon: 'TbShieldCheck',
+    railLabel: 'Controls'
+  },
+  [RISK_COMPLIANCE_RETENTION_APP_KEY]: {
+    icon: 'TbArchive',
+    railLabel: 'Retention'
+  },
+  [RISK_COMPLIANCE_ASSESSMENTS_APP_KEY]: {
+    icon: 'TbListCheck',
+    railLabel: 'Assessments'
+  },
+  [DATA_STEWARDSHIP_APP_KEY]: {
+    icon: 'TbClipboardCheck',
+    railLabel: 'My work'
+  },
+  [DATA_STEWARDSHIP_STEWARDSHIP_APP_KEY]: {
+    icon: 'TbUserShield',
+    railLabel: 'Stewardship'
+  },
+  [DATA_STEWARDSHIP_CLASSIFICATION_APP_KEY]: {
+    icon: 'TbTags',
+    railLabel: 'Classification'
+  },
   [DATA_STEWARDSHIP_CHANGE_CASES_APP_KEY]: {
     icon: 'TbGitPullRequest',
     railLabel: 'Change cases & exceptions'
   },
-  [DATA_STEWARDSHIP_ASSESSMENTS_APP_KEY]: { icon: 'TbChecklist', railLabel: 'Assessments' },
-  [API_INTEGRATION_CATALOG_APP_KEY]: { icon: 'TbLayoutDashboard', railLabel: 'Overview' },
+  [DATA_STEWARDSHIP_ASSESSMENTS_APP_KEY]: {
+    icon: 'TbChecklist',
+    railLabel: 'Assessments'
+  },
+  [API_INTEGRATION_CATALOG_APP_KEY]: {
+    icon: 'TbLayoutDashboard',
+    railLabel: 'Overview'
+  },
   [API_INTEGRATION_CATALOG_APIS_APP_KEY]: { icon: 'TbApi', railLabel: 'APIs' },
   [API_INTEGRATION_CATALOG_INTEGRATIONS_APP_KEY]: {
     icon: 'TbPlugConnected',
     railLabel: 'Integrations'
   },
-  [API_INTEGRATION_CATALOG_IMPACT_APP_KEY]: { icon: 'TbAffiliate', railLabel: 'Impact' }
+  [API_INTEGRATION_CATALOG_IMPACT_APP_KEY]: {
+    icon: 'TbAffiliate',
+    railLabel: 'Impact'
+  }
 };

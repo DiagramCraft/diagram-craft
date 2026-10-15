@@ -19,7 +19,11 @@ const relation = (
   }) as unknown as RelationRecord;
 
 const system = (id: string, name: string) => ({ id, name, schemaId: 'system' });
-const component = (id: string, name: string) => ({ id, name, schemaId: 'component' });
+const component = (id: string, name: string) => ({
+  id,
+  name,
+  schemaId: 'component'
+});
 const api = (id: string, name: string) => ({ id, name, schemaId: 'api' });
 
 describe('computeRelationPairs', () => {

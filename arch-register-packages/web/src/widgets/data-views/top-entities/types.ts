@@ -9,7 +9,13 @@ export const topEntitiesWidgetConfigSchema = z
     schemaName: z.string().optional().optional(),
     owner: z.string().optional(),
     lifecycle: z.string().optional(),
-    fieldId: withInitial(z.string().min(1), ''),
+    /** Numeric field the entities are ranked by. */
+    fieldId: withInitial(z.string(), ''),
+    /**
+     * Typed-relation field (id or name) on the schema; when set, entities are ranked by how many
+     * relations of that field point from them, instead of by `fieldId`.
+     */
+    relationFieldName: z.string().optional(),
     direction: withInitial(z.enum(['asc', 'desc']), 'desc'),
     limit: withInitial(z.number().positive(), 5),
     /** Draw each row's share of the listed total as a bar under the name. */
@@ -19,6 +25,9 @@ export const topEntitiesWidgetConfigSchema = z
   })
   .refine(config => config.schema.length > 0 || !!config.schemaName, {
     message: 'Needs a schema or a schema name'
+  })
+  .refine(config => config.fieldId.length > 0 || !!config.relationFieldName, {
+    message: 'Needs a field or a relation field to rank by'
   });
 
 export type TopEntitiesWidgetConfig = z.infer<typeof topEntitiesWidgetConfigSchema>;

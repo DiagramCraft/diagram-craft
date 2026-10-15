@@ -44,6 +44,26 @@ export const TopEntitiesConfigForm = ({ config, onChange }: TopEntitiesConfigFor
           }}
         />
       </DialogSection>
+      <DialogSection label="Sort by number of related records" required={false}>
+        <Select.Root
+          value={config.relationFieldName ?? ''}
+          onChange={value =>
+            onChange({
+              ...config,
+              relationFieldName: optionalText(value ?? '')
+            })
+          }
+        >
+          <Select.Item value="">Don't rank by relations</Select.Item>
+          {(schema?.fields ?? [])
+            .filter(field => field.type === 'typedRelation')
+            .map(field => (
+              <Select.Item key={field.id} value={field.id}>
+                {field.name}
+              </Select.Item>
+            ))}
+        </Select.Root>
+      </DialogSection>
       <DialogSection label="Sort by field">
         {fieldOptions.length === 0 ? (
           <div className={`${configFormStyles.hint} dim`}>
@@ -91,7 +111,10 @@ export const TopEntitiesConfigForm = ({ config, onChange }: TopEntitiesConfigFor
                 className={configFormStyles.labelInput}
                 value={config.limit ?? 5}
                 onChange={e =>
-                  onChange({ ...config, limit: Math.max(1, Number(e.target.value) || 5) })
+                  onChange({
+                    ...config,
+                    limit: Math.max(1, Number(e.target.value) || 5)
+                  })
                 }
               />
             </div>
@@ -103,7 +126,10 @@ export const TopEntitiesConfigForm = ({ config, onChange }: TopEntitiesConfigFor
                 type="checkbox"
                 checked={config.showLink ?? true}
                 onChange={e =>
-                  onChange({ ...config, showLink: e.target.checked ? undefined : false })
+                  onChange({
+                    ...config,
+                    showLink: e.target.checked ? undefined : false
+                  })
                 }
               />
             </div>
@@ -114,7 +140,12 @@ export const TopEntitiesConfigForm = ({ config, onChange }: TopEntitiesConfigFor
               <input
                 type="checkbox"
                 checked={config.showShareBar ?? false}
-                onChange={e => onChange({ ...config, showShareBar: e.target.checked || undefined })}
+                onChange={e =>
+                  onChange({
+                    ...config,
+                    showShareBar: e.target.checked || undefined
+                  })
+                }
               />
             </div>
           </label>

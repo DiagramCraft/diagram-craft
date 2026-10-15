@@ -41,7 +41,11 @@ const RELATION_SCHEMAS = [
 ] as unknown as RelationSchema[];
 
 const system = (id: string, name: string) => ({ id, name, schemaId: 'system' });
-const component = (id: string, name: string) => ({ id, name, schemaId: 'component' });
+const component = (id: string, name: string) => ({
+  id,
+  name,
+  schemaId: 'component'
+});
 const api = (id: string, name: string) => ({ id, name, schemaId: 'story-api' });
 
 const relation = (
@@ -114,7 +118,9 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 /** Checkout → CRM is covered by a Data Flow; Billing → CRM is a gap; the Component provider is n/a. */
-export const LinkedGapAndNotApplicable: Story = { render: () => renderDashboard() };
+export const LinkedGapAndNotApplicable: Story = {
+  render: () => renderDashboard()
+};
 
 export const CustomHeadings: Story = {
   render: () =>
@@ -125,6 +131,11 @@ export const CustomHeadings: Story = {
       consumerLabel: 'Used by',
       coverageLabel: 'Documented flow'
     })
+};
+
+/** Compact tile: the number of applicable pairs without a matching coverage relation. */
+export const GapCountTile: Story = {
+  render: () => renderDashboard({ display: 'stat', label: 'Provider/consumer gaps' })
 };
 
 export const NoPairs: Story = {

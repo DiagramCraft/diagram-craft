@@ -16,13 +16,13 @@ test.describe('App Dashboard API', () => {
     expect(dashboard.name).toBe('Overview');
     expect(dashboard.description).not.toBe('');
     expect(dashboard.widgets.map(w => w.type)).toEqual([
-      'api-integration-catalog-needs-attention-count',
+      'CaseCount',
       'AggregateStat',
       'AggregateStat',
-      'api-integration-catalog-pair-gaps',
-      'api-integration-catalog-needs-attention',
-      'api-integration-catalog-most-consumed',
-      'api-integration-catalog-at-risk'
+      'RelationPairsCoverage',
+      'NeedsAttentionQueue',
+      'TopEntities',
+      'RelationTable'
     ]);
     appDashboardId = dashboard.id;
   });
@@ -68,7 +68,7 @@ test.describe('App Dashboard sidebar', () => {
       variableName: 'apiEntityId',
       itemLabel: 'APIs'
     });
-    expect(dashboard.widgets.map(w => w.type)).toEqual(['api-integration-catalog-impact']);
+    expect(dashboard.widgets.map(w => w.type)).toEqual(['blast-radius']);
   });
 
   test('the seeded sidebar is still returned after the dashboard has been edited', async ({

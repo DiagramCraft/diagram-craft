@@ -5,6 +5,11 @@ import { useEntity } from '../../../hooks/useEntities';
 import { useSchemas } from '../../../hooks/useSchemas';
 import { useLifecycleStates } from '../../../hooks/useWorkspaceConfig';
 import { BlastRadiusPanel } from '../../../sections/entities/components/BlastRadiusPanel';
+import {
+  BLAST_RADIUS_DEFAULT_MAX_DEPTH,
+  buildBlastRadiusGroupPaths,
+  buildBlastRadiusGroups
+} from './blastRadiusGroups';
 import { BlastRadiusWidgetConfig } from './types';
 
 export const BlastRadiusWidget = ({ config }: { config: BlastRadiusWidgetConfig }) => {
@@ -30,10 +35,27 @@ export const BlastRadiusWidget = ({ config }: { config: BlastRadiusWidgetConfig 
     );
   }
 
+  const groups = config.groups && config.groups.length > 0 ? config.groups : undefined;
+  const entitySchema = (schemas.data ?? []).find(schema => schema.id === entity._schema?.id);
+
   return (
     <BlastRadiusPanel
       workspaceId={workspaceSlug}
       subject={{ kind: 'entity', entityId: entity._uid }}
+      {...(groups
+        ? {
+            paths: buildBlastRadiusGroupPaths(entitySchema, groups),
+            groups: buildBlastRadiusGroups(groups),
+            showFilters: false,
+            maxDepth: config.maxDepth ?? BLAST_RADIUS_DEFAULT_MAX_DEPTH,
+            noPathsState: {
+              title: 'Impact cannot be computed',
+              subtitle: `This entity type has none of the configured relation fields (${groups
+                .map(group => group.fieldName)
+                .join(', ')}).`
+            }
+          }
+        : {})}
       schemas={schemas.data ?? []}
       lifecycleStates={lifecycleStates}
       embedded

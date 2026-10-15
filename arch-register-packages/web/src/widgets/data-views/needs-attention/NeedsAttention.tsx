@@ -9,11 +9,12 @@ type Props = {
 };
 
 export const NeedsAttentionWidget = ({ config }: Props) => {
-  const { workspaceSlug } = useWorkspaceContext();
+  const { workspaceSlug, schemas } = useWorkspaceContext();
   const { openEntityDrawer } = useEntityDrawer();
 
   const queue = useNeedsAttentionQueue(workspaceSlug, {
-    schemaId: config.schema,
+    schemaId:
+      config.schema || schemas.find(candidate => candidate.name === config.schemaName)?.id || null,
     caseKinds: config.caseKinds,
     scope: config.scope
   });

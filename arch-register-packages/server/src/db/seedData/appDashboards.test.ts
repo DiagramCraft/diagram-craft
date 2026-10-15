@@ -79,12 +79,12 @@ describe('APP_DASHBOARD_SEEDS', () => {
     expect(seed).toBeDefined();
     expect(seed!.sidebar).toBeUndefined();
     expect(seed!.widgets.map(widget => widget.type)).toEqual([
-      'data-stewardship-case-count',
-      'data-stewardship-case-count',
-      'data-stewardship-case-count',
-      'data-stewardship-reviews-overdue',
-      'data-stewardship-case-calendar',
-      'data-stewardship-case-queue'
+      'CaseCount',
+      'CaseCount',
+      'CaseCount',
+      'AggregateStat',
+      'DateCalendar',
+      'NeedsAttentionQueue'
     ]);
   });
 

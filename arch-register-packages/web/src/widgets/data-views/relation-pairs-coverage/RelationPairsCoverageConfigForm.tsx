@@ -68,7 +68,10 @@ export const RelationPairsCoverageConfigForm = ({
           className={configFormStyles.labelInput}
           value={config.coverageRelationSchemaName}
           onChange={event =>
-            onChange({ ...config, coverageRelationSchemaName: event.currentTarget.value })
+            onChange({
+              ...config,
+              coverageRelationSchemaName: event.currentTarget.value
+            })
           }
         >
           <option value="">Select a relation type…</option>
@@ -81,6 +84,24 @@ export const RelationPairsCoverageConfigForm = ({
       </DialogSection>
       <DialogSection label="Display" required={false}>
         <div className={configFormStyles.options}>
+          <label className={configFormStyles.optionRow}>
+            <span className={configFormStyles.optionLabel}>Show as</span>
+            <div className={configFormStyles.optionControl}>
+              <select
+                className={configFormStyles.labelInput}
+                value={config.display ?? 'table'}
+                onChange={event =>
+                  onChange({
+                    ...config,
+                    display: event.currentTarget.value === 'stat' ? 'stat' : 'table'
+                  })
+                }
+              >
+                <option value="table">Table of pairs</option>
+                <option value="stat">Gap count tile</option>
+              </select>
+            </div>
+          </label>
           {(
             [
               ['consumerLabel', 'Consumer heading', 'Consumer'],
@@ -98,7 +119,10 @@ export const RelationPairsCoverageConfigForm = ({
                   value={config[key] ?? ''}
                   placeholder={placeholder}
                   onChange={event =>
-                    onChange({ ...config, [key]: optionalText(event.currentTarget.value) })
+                    onChange({
+                      ...config,
+                      [key]: optionalText(event.currentTarget.value)
+                    })
                   }
                 />
               </div>
