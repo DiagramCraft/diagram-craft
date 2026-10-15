@@ -56,7 +56,14 @@ export const Numbered: Story = {
 export const NumberedSequence: Story = {
   render: () => (
     <StoryProviders>
-      <div style={{ counterReset: 'figure-counter', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      <div
+        style={{
+          counterReset: 'figure-counter',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '1rem'
+        }}
+      >
         <Caption caption="Request flow across the platform" numbered="true">
           {architectureDiagram}
         </Caption>
