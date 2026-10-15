@@ -100,7 +100,7 @@ type Story = StoryObj<typeof meta>;
 export const WikiDonutByLifecycle: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
-      <EntityChart schema="service" groupBy="lifecycle" chartType="donut" />
+      <EntityChart config={{ schema: 'service', groupBy: 'lifecycle', chartType: 'donut' }} />
     </StoryProviders>
   )
 };
@@ -108,7 +108,7 @@ export const WikiDonutByLifecycle: Story = {
 export const WikiBarByOwner: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
-      <EntityChart schema="service" groupBy="owner" chartType="bar" />
+      <EntityChart config={{ schema: 'service', groupBy: 'owner', chartType: 'bar' }} />
     </StoryProviders>
   )
 };
@@ -116,7 +116,9 @@ export const WikiBarByOwner: Story = {
 export const WikiFilteredByLifecycle: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
-      <EntityChart schema="service" lifecycle="active" groupBy="owner" />
+      <EntityChart
+        config={{ schema: 'service', lifecycle: 'active', groupBy: 'owner', chartType: 'donut' }}
+      />
     </StoryProviders>
   )
 };
@@ -124,7 +126,7 @@ export const WikiFilteredByLifecycle: Story = {
 export const WikiNoFilters: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
-      <EntityChart />
+      <EntityChart config={{ groupBy: 'lifecycle', chartType: 'donut' }} />
     </StoryProviders>
   )
 };

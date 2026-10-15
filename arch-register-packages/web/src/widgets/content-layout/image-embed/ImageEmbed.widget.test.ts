@@ -1,7 +1,19 @@
 import { describe, expect, it } from 'vitest';
-import { imageEmbedMdxRule } from './ImageEmbedEditable';
+import { isValidComponentConfig } from '../../shared/widgetRegistry';
+import widget from './ImageEmbed.widget';
 
-describe('ImageEmbedEditable', () => {
+const imageEmbedMdxRule = widget.mdx!.editorSpec!.mdxRule;
+
+describe('ImageEmbed widget', () => {
+  it('requires a file', () => {
+    expect(isValidComponentConfig(widget, { fileId: '', size: '100', align: 'center' })).toBe(
+      false
+    );
+    expect(isValidComponentConfig(widget, { fileId: 'f', size: '100', align: 'center' })).toBe(
+      true
+    );
+  });
+
   it('deserializes mdx props into the slate node shape', () => {
     const node = imageEmbedMdxRule.deserialize(
       {

@@ -103,11 +103,23 @@ export type ConfigFormContext = {
   surface: WidgetSurface;
 };
 
+/**
+ * Lets a config form take part in saving: `ready` makes an otherwise invalid config saveable (the
+ * form completes it in `prepare`), and `prepare` may do async work, such as creating an attachment,
+ * and returns the config that is written.
+ */
+export type ConfigFormSaveHook<Config extends Record<string, unknown>> = {
+  ready?: boolean;
+  prepare?: (config: Config) => Promise<Config>;
+};
+
 /** Props of a shared config form, typed by the component's config. */
 export type ConfigFormProps<Config extends Record<string, unknown>> = {
   config: Config;
   onChange: (config: Config) => void;
   context: ConfigFormContext;
+  /** Provided by hosts that save asynchronously (the wiki editor); other hosts omit it. */
+  registerSaveHook?: (hook: ConfigFormSaveHook<Config> | null) => void;
 };
 
 /** How a component is authored in, parsed from and rendered for wiki MDX content. */

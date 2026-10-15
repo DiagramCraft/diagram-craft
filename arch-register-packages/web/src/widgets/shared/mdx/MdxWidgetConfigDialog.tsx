@@ -6,6 +6,7 @@ import { DialogContent } from '../../../sections/markdown/editor/BlockDialog';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { useMdxContext } from '../../../sections/markdown/MdxContext';
 import { getConfigDialogWidth } from '../configDialog';
+import type { ConfigFormSaveHook } from '../types';
 import {
   createDefaultConfig,
   getWidgetDefinition,
@@ -46,11 +47,14 @@ export const MdxWidgetConfigDialog = <E extends TElement, Config extends Record<
     return isNew ? (defaults as Config) : spec.fromElement(element, defaults as Config);
   });
 
+  const [saveHook, setSaveHook] = useState<ConfigFormSaveHook<Config> | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+
   // The component's own validity rule (structure and completeness) is shared with the dashboard.
-  const canSave = isValidComponentConfig(definition, config);
+  const canSave = isValidComponentConfig(definition, config) || !!saveHook?.ready;
   const ConfigForm = definition?.configForm;
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     const path = editor.api.findPath(element);
     if (!path) {
       onClose();
@@ -63,7 +67,22 @@ export const MdxWidgetConfigDialog = <E extends TElement, Config extends Record<
       return;
     }
 
-    editor.tf.setNodes(spec.toElement(config), { at: path });
+    let finalConfig = config;
+    if (saveHook?.prepare) {
+      setIsSaving(true);
+      try {
+        finalConfig = await saveHook.prepare(config);
+      } finally {
+        setIsSaving(false);
+      }
+      if (!isValidComponentConfig(definition, finalConfig)) {
+        if (isNew) editor.tf.removeNodes({ at: path });
+        onClose();
+        return;
+      }
+    }
+
+    editor.tf.setNodes(spec.toElement(finalConfig), { at: path });
     onClose();
   };
 
@@ -85,7 +104,12 @@ export const MdxWidgetConfigDialog = <E extends TElement, Config extends Record<
       width={getConfigDialogWidth(definition?.configDialog)}
       buttons={[
         { label: 'Cancel', type: 'cancel', onClick: handleClose },
-        { label: 'Save', type: 'default', disabled: !canSave, onClick: handleConfirm }
+        {
+          label: 'Save',
+          type: 'default',
+          disabled: !canSave || isSaving,
+          onClick: () => void handleConfirm()
+        }
       ]}
     >
       <DialogContent>
@@ -93,6 +117,7 @@ export const MdxWidgetConfigDialog = <E extends TElement, Config extends Record<
           config={config}
           onChange={setConfig}
           context={{ mode: 'mdx', surface: projectId ? 'project' : 'workspace' }}
+          registerSaveHook={setSaveHook}
         />
       </DialogContent>
     </Dialog>

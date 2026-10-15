@@ -79,7 +79,9 @@ type Story = StoryObj<typeof meta>;
 export const WikiUnsupportedAttachment: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
-      <ImageEmbed id={attachmentId} alt="Architecture notes" size="75" align="right" />
+      <ImageEmbed
+        config={{ fileId: attachmentId, alt: 'Architecture notes', size: '75', align: 'right' }}
+      />
     </StoryProviders>
   )
 };
@@ -102,7 +104,14 @@ export const WikiWithImage: Story = {
   },
   render: () => (
     <StoryProviders client={storyQueryClient}>
-      <ImageEmbed id={imageAttachmentId} alt="Architecture overview" size="75" align="center" />
+      <ImageEmbed
+        config={{
+          fileId: imageAttachmentId,
+          alt: 'Architecture overview',
+          size: '75',
+          align: 'center'
+        }}
+      />
     </StoryProviders>
   )
 };
@@ -110,7 +119,7 @@ export const WikiWithImage: Story = {
 export const WikiMissingId: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
-      <ImageEmbed id="" />
+      <ImageEmbed config={{ fileId: '', size: '100', align: 'center' }} />
     </StoryProviders>
   )
 };
