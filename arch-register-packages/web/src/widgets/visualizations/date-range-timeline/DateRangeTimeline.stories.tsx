@@ -40,7 +40,15 @@ storyQueryClient.setQueryData(['entities', 'queryText', 'entities', WORKSPACE, Q
 const meta = {
   title: 'Widgets/Visualizations/Date range timeline',
   tags: ['dashboard', 'workspace-surface'],
-  parameters: { layout: 'padded' }
+  parameters: {
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'A Gantt chart with one bar per record from a start date to an end date. Bars can show a value, turn orange or red as the end approaches, and carry a marker at a number of days before the end (for example a notice period). Use it for contract terms, project phases or licence periods.'
+      }
+    }
+  }
 } satisfies Meta;
 
 export default meta;

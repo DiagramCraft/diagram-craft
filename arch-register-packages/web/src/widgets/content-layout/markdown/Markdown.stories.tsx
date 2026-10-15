@@ -5,7 +5,13 @@ const meta = {
   title: 'Widgets/Content & layout/Markdown',
   tags: ['dashboard', 'workspace-surface', 'project-surface'],
   parameters: {
-    layout: 'padded'
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'Free-form Markdown text on a dashboard. Use it for headings, explanations, links to other pages or a short note that gives the surrounding widgets context. It is the simplest way to add static narrative to a dashboard; for content that should be versioned and shared use the Wiki page widget instead.'
+      }
+    }
   }
 } satisfies Meta;
 

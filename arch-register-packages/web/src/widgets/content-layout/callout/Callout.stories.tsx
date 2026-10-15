@@ -6,7 +6,13 @@ const meta = {
   title: 'Widgets/Content & layout/Callout',
   tags: ['mdx', 'block'],
   parameters: {
-    layout: 'padded'
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'A highlighted block for a note, warning, tip or success message inside a wiki page. Pick a variant (`info`, `warning`, `danger`, `success`, `note`) to set the colour and icon; the body is ordinary wiki content, so it can hold text, lists and other widgets. Use it to make one important point stand out from the surrounding prose. Available in wiki pages only.'
+      }
+    }
   }
 } satisfies Meta;
 

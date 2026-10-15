@@ -7,7 +7,13 @@ const meta = {
   title: 'Widgets/Content & layout/Tabs (MDX)',
   tags: ['mdx', 'block'],
   parameters: {
-    layout: 'padded'
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'Groups several blocks of content under selectable tabs in a wiki page. Each tab has a label and its own content, and only one tab is shown at a time. Use it to offer alternative views of the same subject (for example logical and physical) without making the page long. For dashboards use the dashboard Tabs widget.'
+      }
+    }
   }
 } satisfies Meta;
 

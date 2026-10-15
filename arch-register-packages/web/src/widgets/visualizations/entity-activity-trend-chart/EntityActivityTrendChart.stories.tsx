@@ -59,7 +59,13 @@ const meta = {
   title: 'Widgets/Visualizations/Activity trend chart',
   tags: ['dashboard', 'workspace-surface'],
   parameters: {
-    layout: 'padded'
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'A line chart of recent activity volume over time, based on the audit log. Use it next to the Activity feed to see whether the catalog is being kept up to date.'
+      }
+    }
   }
 } satisfies Meta;
 

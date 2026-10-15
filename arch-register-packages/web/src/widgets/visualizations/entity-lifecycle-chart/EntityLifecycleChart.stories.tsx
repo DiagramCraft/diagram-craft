@@ -24,7 +24,13 @@ const meta = {
   title: 'Widgets/Visualizations/Lifecycle chart',
   tags: ['dashboard', 'workspace-surface'],
   parameters: {
-    layout: 'padded'
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'A donut chart that breaks down the entities of the workspace by lifecycle state (for example proposed, active and retired). It has no options of its own; use Entity chart on a wiki page if you need to filter.'
+      }
+    }
   }
 } satisfies Meta;
 

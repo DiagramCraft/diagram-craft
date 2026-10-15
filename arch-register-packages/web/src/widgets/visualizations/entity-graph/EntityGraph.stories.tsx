@@ -76,7 +76,13 @@ const meta = {
   title: 'Widgets/Visualizations/Entity graph',
   tags: ['mdx', 'block', 'dashboard', 'workspace-surface', 'project-surface'],
   parameters: {
-    layout: 'padded'
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'A clickable graph of the dependencies and relations around one entity. Choose how many hops (`depth`) and which `direction` to follow: upstream, downstream or both. Works best at 6x4 or larger. Available in wiki pages and on dashboards.'
+      }
+    }
   }
 } satisfies Meta;
 

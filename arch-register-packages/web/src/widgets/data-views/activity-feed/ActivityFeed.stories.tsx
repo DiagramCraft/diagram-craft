@@ -67,7 +67,13 @@ const meta = {
   title: 'Widgets/Data views/Activity feed',
   tags: ['dashboard', 'workspace-surface'],
   parameters: {
-    layout: 'padded'
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'A live feed of recent activity from the audit log: who changed what, and when. The `limit` option sets how many entries are listed. Use it on an overview dashboard to give a feel for how active the catalog is. It requires access to the audit log, and is available on workspace dashboards.'
+      }
+    }
   }
 } satisfies Meta;
 

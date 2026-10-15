@@ -6,7 +6,13 @@ const meta = {
   title: 'Widgets/Content & layout/Label',
   tags: ['mdx', 'inline'],
   parameters: {
-    layout: 'padded'
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'A small inline, coloured status label (chip) for use inside a sentence or a table cell, for example to flag something as Approved or Deprecated. The colour is optional and defaults to a neutral tone. Available in wiki pages only.'
+      }
+    }
   }
 } satisfies Meta;
 
@@ -36,6 +42,14 @@ export const WikiWithoutColor: Story = {
 };
 
 export const WikiEmptyText: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'A label with no text renders an empty placeholder so it can still be selected and edited.'
+      }
+    }
+  },
   render: () => (
     <StoryProviders>
       <p>

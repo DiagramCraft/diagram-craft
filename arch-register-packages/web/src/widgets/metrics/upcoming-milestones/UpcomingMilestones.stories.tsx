@@ -76,7 +76,13 @@ const meta = {
   title: 'Widgets/Metrics/Upcoming milestones',
   tags: ['dashboard', 'project-surface'],
   parameters: {
-    layout: 'padded'
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'Shows the most recently completed milestone and up to three upcoming ones for the current project, with their dates. It has no options of its own. Available on project dashboards.'
+      }
+    }
   }
 } satisfies Meta;
 

@@ -14,7 +14,13 @@ const meta = {
   title: 'Widgets/Metrics/Metric',
   tags: ['mdx', 'block', 'dashboard', 'workspace-surface', 'project-surface'],
   parameters: {
-    layout: 'padded'
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'A single live count, such as the number of entities, projects or diagrams, optionally filtered by schema, owner and lifecycle. Use it for a headline number. A link to the corresponding list can be shown below it. Available in wiki pages and on dashboards.'
+      }
+    }
   }
 } satisfies Meta;
 

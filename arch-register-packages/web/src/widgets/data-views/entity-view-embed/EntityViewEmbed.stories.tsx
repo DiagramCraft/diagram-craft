@@ -67,7 +67,13 @@ const meta = {
   title: 'Widgets/Data views/Saved view',
   tags: ['mdx', 'block', 'dashboard', 'workspace-surface', 'project-surface'],
   parameters: {
-    layout: 'padded'
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'A live copy of a saved entity view. The embed always shows the view as it is currently defined, so a view that someone has already set up can be reused in a page or on a dashboard without being rebuilt. Available in wiki pages and on dashboards.'
+      }
+    }
   }
 } satisfies Meta;
 

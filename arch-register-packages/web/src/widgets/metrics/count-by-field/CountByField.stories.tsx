@@ -56,7 +56,13 @@ const meta = {
   title: 'Widgets/Metrics/Count by field',
   tags: ['dashboard', 'workspace-surface'],
   parameters: {
-    layout: 'padded'
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'The number of entities of a type, shown as one stacked bar divided by the values of a field, with a legend. Use it for a quick distribution such as objectives by status or applications by lifecycle.'
+      }
+    }
   }
 } satisfies Meta;
 

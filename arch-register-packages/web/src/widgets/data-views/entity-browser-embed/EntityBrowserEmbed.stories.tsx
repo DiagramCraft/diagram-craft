@@ -85,7 +85,13 @@ const meta = {
   title: 'Widgets/Data views/Entity browser',
   tags: ['mdx', 'block', 'dashboard', 'workspace-surface', 'project-surface'],
   parameters: {
-    layout: 'padded'
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'A live list of entities with your own filters, sorting and columns, shown as a table, cards, or a map. In its static form it renders a fixed result, which is what wiki pages publish; with `interactive` set it also provides search and pagination. Use it for flexible catalog views that would otherwise need a saved view. Available in wiki pages and on dashboards.'
+      }
+    }
   }
 } satisfies Meta;
 

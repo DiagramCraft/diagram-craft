@@ -101,15 +101,27 @@ const renderDashboard = (config: Record<string, unknown> = {}, apis = APIS) => {
 const meta = {
   title: 'Widgets/Data views/Specification operations',
   tags: ['dashboard', 'workspace-surface'],
-  parameters: { layout: 'padded' }
+  parameters: {
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'Lists the operations and messages from the API specifications attached to the entities of one type, optionally only deprecated ones. Use it to get an overview of the API surface across systems, or to track down deprecated operations that consumers still depend on.'
+      }
+    }
+  }
 } satisfies Meta;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const AllOperations: Story = { render: () => renderDashboard() };
+export const AllOperations: Story = {
+  render: () => renderDashboard()
+};
 
-export const DeprecatedOnly: Story = { render: () => renderDashboard({ deprecated: true }) };
+export const DeprecatedOnly: Story = {
+  render: () => renderDashboard({ deprecated: true })
+};
 
 export const NoSpecifications: Story = {
   render: () => renderDashboard({}, [{ uid: 'api-legacy', name: 'Legacy API', operations: null }])

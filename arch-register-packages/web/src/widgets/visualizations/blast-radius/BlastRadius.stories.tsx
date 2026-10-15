@@ -135,7 +135,15 @@ const render = (config: Record<string, unknown>, entities: BlastRadiusReached[])
 const meta = {
   title: 'Widgets/Visualizations/Blast radius',
   tags: ['dashboard', 'workspace-surface'],
-  parameters: { layout: 'padded' }
+  parameters: {
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'Shows what is affected if one entity changes or fails: the entities reachable through relations, up to `maxDepth` hops away. Either every relation is walked, or specific relation fields are listed as separate columns with a second-order column for what lies behind them. The entity is usually supplied by a dashboard sidebar variable.'
+      }
+    }
+  }
 } satisfies Meta;
 
 export default meta;

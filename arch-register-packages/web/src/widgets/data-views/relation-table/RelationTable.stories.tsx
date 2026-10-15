@@ -98,7 +98,15 @@ const FLOWS = [
 const meta = {
   title: 'Widgets/Data views/Relation table',
   tags: ['dashboard', 'workspace-surface'],
-  parameters: { layout: 'padded' }
+  parameters: {
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'Lists instances of a relation type, with the flow (in to out) and a chosen set of columns such as relation fields, owner or last update. Narrow it with an entity query or facet filters bound to sidebar variables, and optionally open a detail drawer when a row is clicked. Use it for registers of data flows, integrations and dependencies.'
+      }
+    }
+  }
 } satisfies Meta;
 
 export default meta;
@@ -142,7 +150,9 @@ const renderDashboard = (
   );
 };
 
-export const RestrictedFlows: Story = { render: () => renderDashboard(FLOWS) };
+export const RestrictedFlows: Story = {
+  render: () => renderDashboard(FLOWS)
+};
 
 export const OwnerAndUpdatedColumns: Story = {
   render: () =>
@@ -153,7 +163,9 @@ export const OwnerAndUpdatedColumns: Story = {
     })
 };
 
-export const NoMatches: Story = { render: () => renderDashboard([]) };
+export const NoMatches: Story = {
+  render: () => renderDashboard([])
+};
 
 export const InvalidFilter: Story = {
   render: () => renderDashboard([], { filter: 'data_classification in (' }, { parseOk: false })

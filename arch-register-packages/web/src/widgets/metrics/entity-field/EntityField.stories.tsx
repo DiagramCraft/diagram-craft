@@ -26,7 +26,13 @@ const meta = {
   title: 'Widgets/Metrics/Entity field',
   tags: ['mdx', 'inline'],
   parameters: {
-    layout: 'padded'
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'Shows the live value of one field of an entity inline in text, so that the value never goes out of date in documentation. Works with text, numbers, references and tags. Available in wiki pages only.'
+      }
+    }
   }
 } satisfies Meta;
 

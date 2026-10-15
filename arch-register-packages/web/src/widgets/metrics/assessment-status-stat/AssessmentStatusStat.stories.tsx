@@ -5,7 +5,15 @@ import { assessmentWidgetStory } from '../../shared/data/assessmentWidgetStoryFi
 const meta = {
   title: 'Widgets/Metrics/Assessment status',
   tags: ['dashboard', 'workspace-surface'],
-  parameters: { layout: 'padded' }
+  parameters: {
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'The number of assessments on an entity type that are in one chosen status: overdue, in progress, not started or complete. A subtext template can use `{count}`, `{total}` and `{notStarted}`. Use it as a KPI tile above an assessment table.'
+      }
+    }
+  }
 } satisfies Meta;
 
 export default meta;

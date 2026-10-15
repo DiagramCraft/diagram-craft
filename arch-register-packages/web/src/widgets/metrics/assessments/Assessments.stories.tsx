@@ -75,7 +75,15 @@ storyQueryClient.setQueryData(assessmentKeys.list(WORKSPACE), assessments);
 const meta = {
   title: 'Widgets/Metrics/Assessments',
   tags: ['dashboard', 'workspace-surface', 'project-surface'],
-  parameters: { layout: 'padded' }
+  parameters: {
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'A list of assessments filtered by mode (active, upcoming, overdue or all), assessment type and the entity types they cover. With `relativeDue` it shows a compact due label such as "18d" or "6d late" and the owning project. Use it on a personal or project dashboard as a work list.'
+      }
+    }
+  }
 } satisfies Meta;
 
 export default meta;

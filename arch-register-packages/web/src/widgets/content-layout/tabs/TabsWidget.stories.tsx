@@ -5,7 +5,13 @@ const meta = {
   title: 'Widgets/Content & layout/Tabs (Dashboard)',
   tags: ['dashboard', 'workspace-surface', 'project-surface'],
   parameters: {
-    layout: 'padded'
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'Groups other dashboard widgets under switchable tabs. Every tab holds its own set of widgets with their own grid layout, which lets one dashboard host several themed views in the same space. Widgets in inactive tabs are not rendered until the tab is opened. Tabs can be edited in the dashboard editor.'
+      }
+    }
   }
 } satisfies Meta;
 

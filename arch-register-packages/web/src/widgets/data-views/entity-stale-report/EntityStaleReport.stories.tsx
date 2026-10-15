@@ -70,7 +70,13 @@ const meta = {
   title: 'Widgets/Data views/Stale entity report',
   tags: ['dashboard', 'workspace-surface'],
   parameters: {
-    layout: 'padded'
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'Lists entities that have not been updated for a while, oldest first, so that stale information can be found and refreshed. Use it as a maintenance list on a governance or ownership dashboard.'
+      }
+    }
   }
 } satisfies Meta;
 

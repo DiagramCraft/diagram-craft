@@ -22,7 +22,15 @@ const casesQuery = { status: 'open', subjectType: 'entity' } as const;
 const meta = {
   title: 'Widgets/Data views/Needs attention queue',
   tags: ['dashboard', 'workspace-surface', 'project-surface'],
-  parameters: { layout: 'padded' }
+  parameters: {
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'A queue of open governance cases against entities of a chosen type that are waiting for a decision. Scope it to `workspace`, `mine` (assigned to the viewer) or `late`, and optionally derive a priority from the due date. Use it as the main to-do list for stewards and owners.'
+      }
+    }
+  }
 } satisfies Meta;
 
 export default meta;

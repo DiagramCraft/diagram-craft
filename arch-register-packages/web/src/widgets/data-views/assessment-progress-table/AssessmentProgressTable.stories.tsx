@@ -8,7 +8,15 @@ import {
 const meta = {
   title: 'Widgets/Data views/Assessment progress',
   tags: ['dashboard', 'workspace-surface'],
-  parameters: { layout: 'padded' }
+  parameters: {
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'A table of assessments that target a chosen entity type, with progress, due date and derived status (not started, in progress, overdue or complete) for each. Optionally restrict it to one status. Use it to follow how a review campaign is going across the entities of one type.'
+      }
+    }
+  }
 } satisfies Meta;
 
 export default meta;

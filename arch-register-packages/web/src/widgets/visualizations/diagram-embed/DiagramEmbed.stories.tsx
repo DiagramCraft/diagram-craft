@@ -47,7 +47,13 @@ const meta = {
   title: 'Widgets/Visualizations/Diagram',
   tags: ['mdx', 'block', 'dashboard', 'workspace-surface', 'project-surface'],
   parameters: {
-    layout: 'padded'
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'A read-only preview of an architecture diagram, with an optional caption, that links through to the diagram. Use it to show a system picture alongside text. Available in wiki pages and on dashboards.'
+      }
+    }
   }
 } satisfies Meta;
 

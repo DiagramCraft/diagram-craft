@@ -90,7 +90,13 @@ const meta = {
   title: 'Widgets/Visualizations/Entity chart',
   tags: ['mdx', 'block'],
   parameters: {
-    layout: 'padded'
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'A live chart of entities grouped by a field (lifecycle, owner or schema), shown as a donut or a bar chart. Filter the entities by schema, owner and lifecycle. Use it to show the distribution of the catalog in a wiki page. Available in wiki pages only.'
+      }
+    }
   }
 } satisfies Meta;
 

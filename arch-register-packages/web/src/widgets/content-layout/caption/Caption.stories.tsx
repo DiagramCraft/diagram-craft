@@ -6,7 +6,13 @@ const meta = {
   title: 'Widgets/Content & layout/Caption',
   tags: ['mdx', 'block'],
   parameters: {
-    layout: 'padded'
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'Wraps a block (an image, diagram, table or any other widget) in a figure with a caption underneath. With `numbered` set, the caption is prefixed with an automatic running number (Figure 1, Figure 2, ...) that follows the order in the page. Use it so that figures can be referred to from the text. Available in wiki pages only.'
+      }
+    }
   }
 } satisfies Meta;
 
@@ -48,6 +54,14 @@ export const WikiNumbered: Story = {
 };
 
 export const WikiWithoutCaption: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Without caption text the figure renders just its content, with no empty caption row.'
+      }
+    }
+  },
   render: () => (
     <StoryProviders>
       <Caption>{architectureDiagram}</Caption>

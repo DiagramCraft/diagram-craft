@@ -7,7 +7,13 @@ const meta = {
   title: 'Widgets/Content & layout/Columns',
   tags: ['mdx', 'block'],
   parameters: {
-    layout: 'padded'
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'Lays content out side by side in two or three columns. Each column is a child block that holds its own content, and the `count` option (2 or 3) sets how many columns it has. Use it to place text next to a diagram or to build a compact comparison. On narrow screens the columns stack. Available in wiki pages only.'
+      }
+    }
   }
 } satisfies Meta;
 

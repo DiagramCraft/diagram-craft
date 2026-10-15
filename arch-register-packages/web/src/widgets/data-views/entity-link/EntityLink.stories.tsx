@@ -29,7 +29,13 @@ const meta = {
   title: 'Widgets/Data views/Entity link',
   tags: ['mdx', 'inline'],
   parameters: {
-    layout: 'padded'
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'A plain inline link to an entity page that uses the entity name as text. Use it where the link should read as normal prose; use Entity mention if you also want the live status. Available in wiki pages only.'
+      }
+    }
   }
 } satisfies Meta;
 

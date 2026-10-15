@@ -61,7 +61,13 @@ const meta = {
   title: 'Widgets/Data views/Entity table',
   tags: ['mdx', 'block', 'dashboard', 'workspace-surface', 'project-surface'],
   parameters: {
-    layout: 'padded'
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'A table of entities matching filters you define (schema, owner and lifecycle), with a `limit` on the number of rows. It is the simplest way to show a fixed, readable list of entities. For richer filtering, sorting and columns use the Entity browser. Available in wiki pages and on dashboards.'
+      }
+    }
   }
 } satisfies Meta;
 

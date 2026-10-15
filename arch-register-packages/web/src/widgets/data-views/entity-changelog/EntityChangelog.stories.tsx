@@ -96,7 +96,13 @@ const meta = {
   title: 'Widgets/Data views/Entity changelog',
   tags: ['mdx', 'block', 'dashboard', 'workspace-surface', 'project-surface'],
   parameters: {
-    layout: 'padded'
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'A feed of recent changes. Scope it to one entity with `entityId`, or to a set of entities by schema, owner and lifecycle; `since` and `limit` control the time window and the number of entries. Use it to answer "what has changed lately?" on an entity page or an overview. Available in wiki pages and on dashboards.'
+      }
+    }
   }
 } satisfies Meta;
 

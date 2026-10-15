@@ -69,7 +69,13 @@ const meta = {
   title: 'Widgets/Content & layout/Image',
   tags: ['mdx', 'block'],
   parameters: {
-    layout: 'padded'
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'Embeds an image that has been uploaded as an attachment in the workspace. The widget stores the attachment id and always shows the latest uploaded file. If the id is missing, or the attachment is not an image, an explanatory placeholder is shown instead. Available in wiki pages only.'
+      }
+    }
   }
 } satisfies Meta;
 

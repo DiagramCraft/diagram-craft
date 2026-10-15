@@ -6,7 +6,13 @@ const meta = {
   title: 'Widgets/Content & layout/Foldable section',
   tags: ['mdx', 'block'],
   parameters: {
-    layout: 'padded'
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'A collapsible section with a summary label. The content stays hidden until the reader expands it, which keeps long reference material (notes, appendices, full tables) out of the way of the main narrative. Available in wiki pages only.'
+      }
+    }
   }
 } satisfies Meta;
 

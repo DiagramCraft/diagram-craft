@@ -29,7 +29,13 @@ const meta = {
   title: 'Widgets/Data views/Entity card',
   tags: ['mdx', 'block', 'dashboard', 'workspace-surface', 'project-surface'],
   parameters: {
-    layout: 'padded'
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'A summary card for one entity: its name, type, status and a chosen set of fields (comma-separated field ids in `fields`). Use it to put one important system or owner in the spotlight, or to give a quick reference inside text. Available in wiki pages and on dashboards.'
+      }
+    }
   }
 } satisfies Meta;
 

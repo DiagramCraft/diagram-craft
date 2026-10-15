@@ -58,7 +58,15 @@ const entitiesWithGaps = (
 const meta = {
   title: 'Widgets/Data views/Conformance violations',
   tags: ['dashboard', 'workspace-surface'],
-  parameters: { layout: 'padded' }
+  parameters: {
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'Lists the entities of one schema that have active conformance violations, together with the checks they fail, worst first. Limit it to specific checks with `checkNames`, and cap the length with `limit`. Use it as a to-do list for data quality work on one entity type.'
+      }
+    }
+  }
 } satisfies Meta;
 
 export default meta;
@@ -109,9 +117,19 @@ const GAPS = entitiesWithGaps({
   'Support Tickets': [OWNER]
 });
 
-export const WithGaps: Story = { render: () => renderDashboard(GAPS) };
+export const WithGaps: Story = {
+  render: () => renderDashboard(GAPS)
+};
 
 export const MoreThanLimit: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'More violating entities than `limit`, so the list is truncated and the remainder is counted.'
+      }
+    }
+  },
   render: () => renderDashboard(GAPS, { limit: 3 })
 };
 
@@ -119,7 +137,9 @@ export const FilteredByCheck: Story = {
   render: () => renderDashboard(GAPS, { checkNames: ['Dataset has no steward'] })
 };
 
-export const NoGaps: Story = { render: () => renderDashboard([]) };
+export const NoGaps: Story = {
+  render: () => renderDashboard([])
+};
 
 export const UnknownSchema: Story = {
   render: () => renderDashboard(GAPS, { schemaName: 'Nonexistent' })

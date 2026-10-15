@@ -69,7 +69,15 @@ const render = (config: Record<string, unknown>, cases: GovernanceCase[] = CASES
 const meta = {
   title: 'Widgets/Metrics/Case count',
   tags: ['dashboard', 'workspace-surface'],
-  parameters: { layout: 'padded' }
+  parameters: {
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'The number of open governance cases against entities of a chosen type, filtered by case kind and scope. The number can be coloured when it is above zero, and a subtext template can use `{count}` and `{due}` (cases due within `dueWithinDays`). Use it as a KPI tile above a Needs attention queue.'
+      }
+    }
+  }
 } satisfies Meta;
 
 export default meta;

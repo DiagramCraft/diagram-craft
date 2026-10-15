@@ -44,7 +44,15 @@ storyQueryClient.setQueryData(['entities', 'queryText', 'entities', WORKSPACE, Q
 const meta = {
   title: 'Widgets/Visualizations/Calendar',
   tags: ['dashboard', 'workspace-surface'],
-  parameters: { layout: 'padded' }
+  parameters: {
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'Places records on a month or week calendar by a date field. Each entry can show a sublabel and a value, whose sum is shown in the cell header, and entries turn orange or red as their date approaches. As an alternative to a query it can plot open governance cases by due date. Use it for renewals, reviews and deadlines.'
+      }
+    }
+  }
 } satisfies Meta;
 
 export default meta;
@@ -145,6 +153,14 @@ const DATA_ENTITY_SCHEMAS = [
 
 /** Open governance cases placed on a six-week calendar by due date; overdue folds into this week. */
 export const GovernanceCasesByDueWeek: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Open governance cases placed on a six-week calendar by due date; overdue cases fold into the current week.'
+      }
+    }
+  },
   render: () => (
     <StoryProviders client={caseClient} schemas={DATA_ENTITY_SCHEMAS}>
       <DashboardStory

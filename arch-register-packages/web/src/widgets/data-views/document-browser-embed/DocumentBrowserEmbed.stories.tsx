@@ -88,7 +88,13 @@ const meta = {
   title: 'Widgets/Data views/Document browser',
   tags: ['mdx', 'block', 'dashboard', 'workspace-surface', 'project-surface'],
   parameters: {
-    layout: 'padded'
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'A filterable list of documents in the workspace or project. Narrow it by free-text search, document type or field conditions, choose the sort order and pick which columns are shown. Use it to give readers a curated entry point to files, for example all policies or all contracts for one project. Available in wiki pages and on dashboards.'
+      }
+    }
   }
 } satisfies Meta;
 
