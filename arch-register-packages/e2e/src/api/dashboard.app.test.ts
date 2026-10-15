@@ -19,7 +19,7 @@ test.describe('App Dashboard API', () => {
       'CaseCount',
       'AggregateStat',
       'AggregateStat',
-      'RelationPairsCoverage',
+      'RelationPairGaps',
       'NeedsAttentionQueue',
       'TopEntities',
       'RelationTable'
