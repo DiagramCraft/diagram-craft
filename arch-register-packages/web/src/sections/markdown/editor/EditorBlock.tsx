@@ -9,7 +9,7 @@ import { Menu } from '@diagram-craft/app-components/src/Menu';
 import {
   getWidgetDefinition,
   getWidgetDefinitions
-} from '../mdx-components/widgetRegistry';
+} from '../../../widgets/shared/widgetRegistry';
 import { useCancellableTimeout } from '../../../hooks/useCancellableTimeout';
 import styles from './EditorBlock.module.css';
 

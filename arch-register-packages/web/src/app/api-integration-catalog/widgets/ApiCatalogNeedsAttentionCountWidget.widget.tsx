@@ -1,5 +1,5 @@
 import { TbAlertTriangle } from 'react-icons/tb';
-import { defineWidget } from '../../../sections/markdown/mdx-components/defineWidget';
+import { defineWidget } from '../../../widgets/shared/defineWidget';
 import { baseWidgetConfigSchema } from '../apiCatalogWidgetSupport';
 import { ApiCatalogNeedsAttentionCountWidget } from './ApiCatalogNeedsAttentionCountWidget';
 export default defineWidget({

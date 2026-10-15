@@ -6,11 +6,11 @@ import { SlashPlugin, SlashInputPlugin } from '@platejs/slash-command/react';
 import remarkGfm from 'remark-gfm';
 import { NodeIdPlugin, type TElement } from 'platejs';
 import { createPlatePlugin } from 'platejs/react';
-import type { EditorSpec } from '../mdx-components/types';
-import { getWidgetDefinitions } from '../mdx-components/widgetRegistry';
-import { CaptionNormalizePlugin } from '../mdx-components/blocks/caption/CaptionEditable';
-import { ColumnsNormalizePlugin } from '../mdx-components/blocks/columns/ColumnsEditable';
-import { TabsNormalizePlugin } from '../mdx-components/blocks/tabs/TabsEditable';
+import type { EditorSpec } from '../../../widgets/shared/types';
+import { getWidgetDefinitions } from '../../../widgets/shared/widgetRegistry';
+import { CaptionNormalizePlugin } from '../../../widgets/content-layout/caption/CaptionEditable';
+import { ColumnsNormalizePlugin } from '../../../widgets/content-layout/columns/ColumnsEditable';
+import { TabsNormalizePlugin } from '../../../widgets/content-layout/tabs/TabsEditable';
 import {
   BlockquoteElement,
   BoldLeaf,

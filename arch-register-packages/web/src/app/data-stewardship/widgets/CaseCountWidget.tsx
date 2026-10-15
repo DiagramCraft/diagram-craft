@@ -1,5 +1,5 @@
 import { LoadingState } from '../../../components/LoadingState';
-import { useWidgetBodyTitle } from '../../../sections/dashboard/widgets/WidgetBodyTitle';
+import { useWidgetBodyTitle } from '../../../widgets/shared/dashboard/WidgetBodyTitle';
 
 import { countDueWithin, renderSubtext } from '../dataStewardshipDashboardLogic';
 import {

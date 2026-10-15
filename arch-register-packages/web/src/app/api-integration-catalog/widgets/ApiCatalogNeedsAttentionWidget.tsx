@@ -2,8 +2,8 @@ import { Banner } from '../../../components/Banner';
 import { EmptyState } from '../../../components/EmptyState';
 import { LoadingState } from '../../../components/LoadingState';
 import { useResolvedApiIntegrationCatalogConfig } from '../useResolvedApiIntegrationCatalogConfig';
-import { useNeedsAttentionQueue } from '../../../sections/dashboard/widgets/needsAttentionQueue';
-import { NeedsAttentionList } from '../../../sections/dashboard/widgets/NeedsAttentionList';
+import { useNeedsAttentionQueue } from '../../../widgets/data-views/needs-attention/needsAttentionQueue';
+import { NeedsAttentionList } from '../../../widgets/data-views/needs-attention/NeedsAttentionList';
 import { IC_QUEUE_CASE_KINDS } from '../apiIntegrationCatalogQueue';
 
 import { useApiCatalogNavigation, type ListWidgetConfig } from '../apiCatalogWidgetSupport';

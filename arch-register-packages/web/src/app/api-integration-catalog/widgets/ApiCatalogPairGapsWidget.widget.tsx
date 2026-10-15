@@ -1,5 +1,5 @@
 import { TbChartBar } from 'react-icons/tb';
-import { defineWidget } from '../../../sections/markdown/mdx-components/defineWidget';
+import { defineWidget } from '../../../widgets/shared/defineWidget';
 import { baseWidgetConfigSchema } from '../apiCatalogWidgetSupport';
 import { ApiCatalogPairGapsWidget } from './ApiCatalogPairGapsWidget';
 export default defineWidget({

@@ -1,7 +1,7 @@
 import React, { type ReactNode } from 'react';
 import { type ASTNode } from '@diagram-craft/markdown';
-import { getWikiMdxComponents } from '../mdx-components/widgetRegistry';
-import { MdxComponentPreview } from '../mdx-components/MdxComponentPreview';
+import { getWikiMdxComponents } from '../../../widgets/shared/widgetRegistry';
+import { MdxWidgetPreview } from '../../../widgets/shared/mdx/MdxWidgetPreview';
 
 /** A highlighted comment anchor, in the same plain-text offset space as `renderText`. Ranges must be sorted and non-overlapping. */
 export type HighlightRange = { commentId: string; start: number; end: number; resolved?: boolean };
@@ -106,9 +106,9 @@ const renderNode = (node: ASTNode, key: string, ctx?: RenderCtx): ReactNode[] =>
       if (!definition) return [];
       const kids = node.children?.length ? renderNodes(node.children, key, ctx) : undefined;
       return [
-        <MdxComponentPreview key={key} type={node.name} props={node.props}>
+        <MdxWidgetPreview key={key} type={node.name} props={node.props}>
           {kids}
-        </MdxComponentPreview>
+        </MdxWidgetPreview>
       ];
     }
 

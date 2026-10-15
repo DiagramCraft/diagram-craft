@@ -39,7 +39,7 @@ There are three places that render these view components, each with different co
 1. **`EntityBrowser.tsx`** — the full interactive browser. Passes real mutation handlers
    (`onDelete`, `onClone`, row selection), a real `onConfigChange` that persists to the URL/saved
    view, and lets users freely reconfigure a view via its internal toolbar.
-2. **`EntityBrowserEmbedConfigForm.tsx`** (`markdown/mdx-components/blocks/entity-browser-embed/`) —
+2. **`EntityBrowserEmbedConfigForm.tsx`** (`widgets/data-views/entity-browser-embed/`) —
    the shared config-editing form for the `entity-browser-embed` MDX block/dashboard widget, rendered
    inside the generic `MdxWidgetConfigDialog`/`WidgetConfigDialog` chrome. Reuses
    `useEntityBrowserLocalState` and `EntityBrowserToolbar` so the same search/filter/sort/view UI

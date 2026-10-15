@@ -1,5 +1,5 @@
 import { TbAffiliate } from 'react-icons/tb';
-import { defineWidget } from '../../../sections/markdown/mdx-components/defineWidget';
+import { defineWidget } from '../../../widgets/shared/defineWidget';
 import { impactWidgetConfigSchema } from '../apiCatalogWidgetSupport';
 import { ApiCatalogImpactHeaderActions, ApiCatalogImpactWidget } from './ApiCatalogImpactWidget';
 export default defineWidget({

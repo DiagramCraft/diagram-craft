@@ -5,16 +5,16 @@ import type { DashboardWidget } from '@arch-register/api-types/dashboardContract
 import type {
   DashboardWidgetWidgetDefinition,
   WidgetSurface
-} from '../markdown/mdx-components/types';
+} from '../../widgets/shared/types';
 import { DialogContent, DialogSection } from '../markdown/editor/BlockDialog';
-import { getConfigDialogWidth } from '../markdown/mdx-components/configDialog';
+import { getConfigDialogWidth } from '../../widgets/shared/configDialog';
 import {
   getWidgetDefinition,
   isValidComponentConfig
-} from '../markdown/mdx-components/widgetRegistry';
+} from '../../widgets/shared/widgetRegistry';
 import type { DashboardWidgetFrame } from '@arch-register/api-types/dashboardContract';
-import { WidgetFrameSettingsForm } from './widgets/WidgetFrameSettingsForm';
-import { defaultShowFrame, normalizeFrame } from './widgets/widgetFrameSettings';
+import { WidgetFrameSettingsForm } from '../../widgets/shared/dashboard/WidgetFrameSettingsForm';
+import { defaultShowFrame, normalizeFrame } from '../../widgets/shared/dashboard/widgetFrameSettings';
 import styles from './WidgetConfigDialog.module.css';
 
 type Props = {

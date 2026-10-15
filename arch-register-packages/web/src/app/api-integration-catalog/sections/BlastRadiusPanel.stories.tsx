@@ -6,7 +6,7 @@ import {
   StoryProviders,
   WORKSPACE,
   createStoryQueryClient
-} from '../../../sections/markdown/mdx-components/blocks/StorybookHarness';
+} from '../../../widgets/shared/mdx/StorybookHarness';
 import { entityBlastRadiusAggregateQuery } from '../../../queries/entityTraversal';
 import { entityDetailQuery } from '../../../queries/entities';
 import { BlastRadiusPanel } from '../../../sections/entities/components/BlastRadiusPanel';

@@ -1,5 +1,5 @@
-import type { WidgetDefinition } from './sections/markdown/mdx-components/types';
-import { registerWidgetDefinitions } from './sections/markdown/mdx-components/widgetRegistry';
+import type { WidgetDefinition } from './widgets/shared/types';
+import { registerWidgetDefinitions } from './widgets/shared/widgetRegistry';
 
 const compare = (left: string, right: string): number => (left < right ? -1 : left > right ? 1 : 0);
 

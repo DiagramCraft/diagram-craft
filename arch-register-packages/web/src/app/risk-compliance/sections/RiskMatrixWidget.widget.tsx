@@ -1,5 +1,5 @@
 import { TbGridDots } from 'react-icons/tb';
-import { defineWidget } from '../../../sections/markdown/mdx-components/defineWidget';
+import { defineWidget } from '../../../widgets/shared/defineWidget';
 import { RiskMatrixConfigForm } from './RiskMatrixConfigForm';
 import { RiskMatrixWidget, riskMatrixWidgetConfigSchema } from './RiskMatrixWidget';
 export default defineWidget({

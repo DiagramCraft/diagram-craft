@@ -1,5 +1,5 @@
 import { TbListCheck } from 'react-icons/tb';
-import { defineWidget } from '../../../sections/markdown/mdx-components/defineWidget';
+import { defineWidget } from '../../../widgets/shared/defineWidget';
 import { reviewsOverdueConfigSchema } from '../dataStewardshipWidgetSupport';
 import { ReviewsOverdueWidget } from './ReviewsOverdueWidget';
 export default defineWidget({

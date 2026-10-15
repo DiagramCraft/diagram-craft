@@ -8,8 +8,8 @@ import { WidgetConfigDialog } from './WidgetConfigDialog';
 import {
   registerNestedWidgetResolvers,
   type TabContentsEditorProps
-} from './widgets/nestedWidgets';
-import { TABS_TYPE } from './widgets/tabsLogic';
+} from '../../widgets/shared/dashboard/nestedWidgets';
+import { TABS_TYPE } from '../../widgets/content-layout/tabs/tabsLogic';
 import styles from './TabContentsEditor.module.css';
 
 /** Edits one tab's widgets with the same grid editor as the top-level dashboard. */

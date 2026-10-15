@@ -30,7 +30,7 @@ import {
   projectMarkdownRoute,
   workspaceMarkdownRoute
 } from '../../routes/publicObjectRoutes';
-import { EntityLink } from './mdx-components/inlines/entity-link/EntityLink';
+import { EntityLink } from '../../widgets/data-views/entity-link/EntityLink';
 import { MarkdownEntityLinkDialog } from './MarkdownEntityLinkDialog';
 import { MarkdownDocumentLinkDialog } from './MarkdownDocumentLinkDialog';
 import styles from './MarkdownPropertiesPanel.module.css';

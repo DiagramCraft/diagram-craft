@@ -1,0 +1,150 @@
+import { useCallback, useMemo } from 'react';
+import { useEntities } from '../../../hooks/useEntities';
+import { useSavedViews } from '../../../hooks/useSavedViews';
+import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
+import { useMdxContext } from '../../../sections/markdown/MdxContext';
+import { useEntityDrawer } from '../../../sections/entities/entityDrawer/useEntityDrawer';
+import { EntityBrowserView } from '../../../sections/entities/components/EntityBrowserView';
+import {
+  getSavedViewConfig,
+  isTreeBasedView,
+  toSavedViewSearch,
+  type BrowserEntityRecord
+} from '../../../sections/entities/components/entityBrowserState';
+import { buildTraceabilityEntityQuery } from '../../../sections/entities/components/traceabilityViewState';
+import styles from './EntityViewEmbed.module.css';
+import { Banner } from '../../../components/Banner';
+import { EmptyState } from '../../../components/EmptyState';
+import { buildEntityDisplayFields } from '../../../sections/entities/components/entityDisplayFields';
+import type { SavedViewEmbedWidgetConfig } from './types';
+
+export const EntityViewEmbed = ({ config }: { config: SavedViewEmbedWidgetConfig }) => {
+  const { viewId } = config;
+  const { openEntityDrawer } = useEntityDrawer();
+  const { workspaceSlug, schemas, relationSchemas, lifecycleStates, projects } =
+    useWorkspaceContext();
+  const { projectId } = useMdxContext();
+
+  const { data: savedViews = [], isLoading: viewsLoading } = useSavedViews(
+    workspaceSlug,
+    projectId ? { projectId, includeWorkspace: true } : undefined
+  );
+
+  const savedView = viewId ? savedViews.find(v => v.id === viewId) : undefined;
+  const savedViewConfig = savedView ? getSavedViewConfig(savedView) : null;
+
+  const isTreeBased = !!savedView && isTreeBasedView(savedView.viewMode);
+
+  const filters = savedView?.filters;
+  const savedViewSearch = savedView ? toSavedViewSearch(savedView) : {};
+  const resolvedProjectId = savedView?.projectId ?? projectId;
+  const projectScope = savedView?.projectScope ?? 'all';
+  const entityQuery =
+    filters == null
+      ? undefined
+      : {
+          ...filters,
+          ...(resolvedProjectId ? { projectId: resolvedProjectId, projectScope } : {})
+        };
+  const executionEntityQuery =
+    savedView?.viewMode === 'traceability'
+      ? buildTraceabilityEntityQuery(entityQuery, savedViewConfig).query
+      : entityQuery;
+  const { data: entities = [], isLoading: entitiesLoading } = useEntities(
+    workspaceSlug,
+    {
+      entityQuery: executionEntityQuery,
+      view: 'full',
+      limit:
+        savedView?.viewMode === 'graph' ||
+        savedView?.viewMode === 'traceability' ||
+        savedView?.viewMode === 'path-walker'
+          ? undefined
+          : 100
+    },
+    { enabled: !!workspaceSlug && !!savedView && !isTreeBased }
+  );
+
+  const schemaMap = useMemo(
+    () => new Map(schemas.map((s, i) => [s.id, { schema: s, index: i }])),
+    [schemas]
+  );
+
+  const onEntityClick = useCallback(
+    (publicId: string) => openEntityDrawer(publicId),
+    [openEntityDrawer]
+  );
+
+  const isLoading = viewsLoading || (!isTreeBased && entitiesLoading);
+
+  if (!viewId) {
+    return (
+      <div className={styles.container}>
+        <EmptyState compact title="No view configured." />
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className={styles.container}>
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className={styles.skeleton} />
+        ))}
+      </div>
+    );
+  }
+
+  if (!savedView) {
+    return (
+      <div className={styles.container}>
+        <Banner variant="error">Saved view not found or was deleted.</Banner>
+      </div>
+    );
+  }
+
+  const rows = entities as BrowserEntityRecord[];
+  const viewConfig = savedViewConfig;
+  const typeFilter = savedView.filters.schemaId ?? null;
+  const ownerFilter = savedViewSearch.owner ?? null;
+  const statusFilter = savedViewSearch.status ?? null;
+  const q = savedViewSearch.q ?? '';
+  const displayFields = buildEntityDisplayFields(
+    typeFilter ? schemas.filter(s => s.id === typeFilter) : schemas,
+    !!resolvedProjectId,
+    null,
+    savedView.filters.projections ?? []
+  );
+
+  return (
+    <div className={styles.entityBrowserViewWrapper}>
+      <EntityBrowserView
+        view={savedView.viewMode}
+        rows={rows}
+        schemaMap={schemaMap}
+        schemas={schemas}
+        relationSchemas={relationSchemas}
+        lifecycleStates={lifecycleStates}
+        projects={projects}
+        workspaceId={workspaceSlug}
+        projectId={resolvedProjectId ?? undefined}
+        projectScope={projectScope}
+        q={q}
+        typeFilter={typeFilter}
+        ownerFilter={ownerFilter}
+        statusFilter={statusFilter}
+        activeViewConfig={viewConfig}
+        entityQuery={entityQuery}
+        executionEntityQuery={executionEntityQuery}
+        displayFields={displayFields}
+        isLoading={entitiesLoading}
+        mode={{ kind: 'published', onEntityClick }}
+        unsupportedView={
+          <div className={styles.container}>
+            <EmptyState compact title="Unsupported view mode." />
+          </div>
+        }
+      />
+    </div>
+  );
+};

@@ -6,7 +6,7 @@ import {
   createDefaultConfig,
   getWidgetDefinition,
   isValidComponentConfig
-} from '../markdown/mdx-components/widgetRegistry';
+} from '../../widgets/shared/widgetRegistry';
 
 describe('parseKnownDashboardWidget', () => {
   it('parses a built-in widget with nested config', () => {

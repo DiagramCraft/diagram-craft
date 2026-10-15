@@ -5,7 +5,7 @@ import {
   createDefaultConfig,
   getWidgetDefinition,
   isValidComponentConfig
-} from '../markdown/mdx-components/widgetRegistry';
+} from '../../widgets/shared/widgetRegistry';
 
 export type KnownDashboardWidget = DashboardWidget & { config: Record<string, unknown> };
 

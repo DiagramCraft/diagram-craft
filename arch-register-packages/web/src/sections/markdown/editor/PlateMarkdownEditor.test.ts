@@ -14,7 +14,7 @@ import {
 import { handleTableKeyDown } from './PlateMarkdownEditorTable';
 import { editorPlugins, mdxRules } from './PlateMarkdownEditorPlugins';
 
-vi.mock('../mdx-components/widgetRegistry', () => {
+vi.mock('../../../widgets/shared/widgetRegistry', () => {
   const definition = {
     type: 'TestBlock',
     category: 'data-views',

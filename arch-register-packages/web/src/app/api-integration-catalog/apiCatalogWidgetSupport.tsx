@@ -4,7 +4,7 @@ import { DialogSection } from '../../sections/markdown/editor/BlockDialog';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { useApplicationDashboardTarget } from '../../hooks/useApplications';
 import styles from '../../sections/dashboard/WidgetConfigDialog.module.css';
-import { withInitial } from '../../sections/markdown/mdx-components/configSchema';
+import { withInitial } from '../../widgets/shared/configSchema';
 
 /** Widgets without options of their own still tolerate extra keys such as a custom title. */
 export const baseWidgetConfigSchema = z.looseObject({});

@@ -7,7 +7,7 @@ import './TabContentsEditor'; // registers the tab contents editor
 import { DashboardGridCanvas } from './DashboardGridCanvas';
 import { WidgetPickerDialog } from './WidgetPickerDialog';
 import { WidgetConfigDialog } from './WidgetConfigDialog';
-import type { WidgetSurface } from '../markdown/mdx-components/types';
+import type { WidgetSurface } from '../../widgets/shared/types';
 import styles from './DashboardGrid.module.css';
 
 type Props = {

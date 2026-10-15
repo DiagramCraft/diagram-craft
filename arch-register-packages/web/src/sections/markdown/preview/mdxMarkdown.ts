@@ -7,8 +7,8 @@ import {
   type ParserState
 } from '@diagram-craft/markdown';
 import { markdownEngine } from './markdownAstUtils';
-import { getWidgetDefinition, getWikiMdxComponents } from '../mdx-components/widgetRegistry';
-import type { MdxWidgetDefinition } from '../mdx-components/types';
+import { getWidgetDefinition, getWikiMdxComponents } from '../../../widgets/shared/widgetRegistry';
+import type { MdxWidgetDefinition } from '../../../widgets/shared/types';
 
 const JSX_BLOCK_RE = /^\s*<([A-Z][A-Za-z0-9]*)(\s[^>]*)?\s*\/>\s*$/;
 const INLINE_JSX_RE = /<([A-Z][A-Za-z0-9]*)(\s[^>]*)?\s*\/>/g;

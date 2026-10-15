@@ -1,5 +1,5 @@
 import { TbPlugConnected } from 'react-icons/tb';
-import { defineWidget } from '../../../sections/markdown/mdx-components/defineWidget';
+import { defineWidget } from '../../../widgets/shared/defineWidget';
 import { listWidgetConfigSchema, ListConfigForm } from '../apiCatalogWidgetSupport';
 import { ApiCatalogAtRiskHeaderActions, ApiCatalogAtRiskWidget } from './ApiCatalogAtRiskWidget';
 export default defineWidget({

@@ -30,7 +30,7 @@ export const DATA_STEWARDSHIP_CLASSIFICATION_APP_KEY = 'data-stewardship-classif
 export const DATA_STEWARDSHIP_CHANGE_CASES_APP_KEY = 'data-stewardship-change-cases';
 
 /** The `entity-browser-embed` widget type, shared with the markdown/wiki embed block (see
- *  `web/src/sections/markdown/mdx-components/blocks/entity-browser-embed/EntityBrowserEmbedEditable.tsx`'s
+ *  `web/src/widgets/data-views/entity-browser-embed/EntityBrowserEmbedEditable.tsx`'s
  *  `ENTITY_BROWSER_EMBED_TYPE`). Not re-exported from there to avoid a client package importing
  *  from the server, or vice versa; kept in sync by convention (both are `'EntityBrowserEmbed'`). */
 const ENTITY_BROWSER_EMBED_WIDGET_TYPE = 'EntityBrowserEmbed';

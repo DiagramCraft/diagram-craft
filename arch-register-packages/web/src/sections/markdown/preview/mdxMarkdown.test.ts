@@ -3,7 +3,7 @@ import type { ASTNode } from '@diagram-craft/markdown';
 
 // Stub the component registry so this test only exercises the parser grammar,
 // independent of each component's own (heavy) implementation modules.
-vi.mock('../mdx-components/widgetRegistry', () => {
+vi.mock('../../../widgets/shared/widgetRegistry', () => {
   const mdxSpecs: Record<
     string,
     {

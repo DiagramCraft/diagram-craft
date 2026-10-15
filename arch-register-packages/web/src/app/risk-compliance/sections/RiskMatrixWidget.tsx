@@ -7,8 +7,8 @@ import { useEntities } from '../../../hooks/useEntities';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { useEntityDrawer } from '../../../sections/entities/entityDrawer/useEntityDrawer';
 import { RiskComplianceMatrix, type RiskComplianceMatrixRisk } from './RiskComplianceMatrix';
-import styles from '../../../sections/dashboard/widgets/WidgetRowList.module.css';
-import { withInitial } from '../../../sections/markdown/mdx-components/configSchema';
+import styles from '../../../widgets/shared/dashboard/WidgetRowList.module.css';
+import { withInitial } from '../../../widgets/shared/configSchema';
 
 const FETCH_LIMIT = 500;
 

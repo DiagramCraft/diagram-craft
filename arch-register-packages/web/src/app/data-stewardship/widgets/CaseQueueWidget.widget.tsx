@@ -1,5 +1,5 @@
 import { TbClipboardCheck } from 'react-icons/tb';
-import { defineWidget } from '../../../sections/markdown/mdx-components/defineWidget';
+import { defineWidget } from '../../../widgets/shared/defineWidget';
 import { CaseConfigForm, caseConfigSchema } from '../dataStewardshipWidgetSupport';
 import { CaseQueueHeaderActions, CaseQueueWidget } from './CaseQueueWidget';
 export default defineWidget({

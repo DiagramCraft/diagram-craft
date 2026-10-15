@@ -8,7 +8,7 @@ import {
   isCaseOverdue,
   useNeedsAttentionQueue,
   type NeedsAttentionPriority
-} from '../../sections/dashboard/widgets/needsAttentionQueue';
+} from '../../widgets/data-views/needs-attention/needsAttentionQueue';
 
 /**
  * Governance case kinds Data Stewardship's "My work" (#3298) queue draws on — the case-reminder

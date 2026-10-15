@@ -5,7 +5,7 @@ import {
   StoryProviders,
   WORKSPACE,
   createStoryQueryClient
-} from '../markdown/mdx-components/blocks/StorybookHarness';
+} from '../../widgets/shared/mdx/StorybookHarness';
 import { entityKeys } from '../../queries/entities';
 import { RelationDrawer } from './RelationDrawer';
 

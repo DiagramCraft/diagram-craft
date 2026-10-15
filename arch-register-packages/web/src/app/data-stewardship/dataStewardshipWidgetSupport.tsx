@@ -18,7 +18,7 @@ import {
 } from './dataStewardshipDashboardLogic';
 import styles from './sections/DataStewardshipQueueWidget.module.css';
 import formStyles from '../../sections/dashboard/WidgetConfigDialog.module.css';
-import { withInitial } from '../../sections/markdown/mdx-components/configSchema';
+import { withInitial } from '../../widgets/shared/configSchema';
 
 /** Schema name used by these widgets; no capability-specific schema id is stored in config. */
 const DATA_ENTITY_SCHEMA_NAME = 'Data Entity';

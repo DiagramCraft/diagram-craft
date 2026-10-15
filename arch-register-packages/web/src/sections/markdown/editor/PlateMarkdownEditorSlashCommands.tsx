@@ -6,12 +6,12 @@ import type { PlateElementProps } from 'platejs/react';
 import type { TElement } from 'platejs';
 import { toggleList } from '@platejs/list';
 import { getNodeText } from './EditorBlock';
-import { getWidgetDefinitions } from '../mdx-components/widgetRegistry';
+import { getWidgetDefinitions } from '../../../widgets/shared/widgetRegistry';
 import {
   WIDGET_CATEGORIES,
   type WidgetCategory,
   matchesCatalogSearch
-} from '../mdx-components/widgetCategories';
+} from '../../../widgets/shared/widgetCategories';
 import styles from './PlateMarkdownEditor.module.css';
 
 type PlateEditor = ReturnType<typeof useEditorRef>;

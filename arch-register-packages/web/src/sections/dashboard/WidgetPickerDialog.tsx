@@ -4,14 +4,14 @@ import type { DashboardWidget } from '@arch-register/api-types/dashboardContract
 import { useSavedViews } from '../../hooks/useSavedViews';
 import { useMdxContext } from '../markdown/MdxContext';
 import { createDefaultWidget } from './dashboardWidgets';
-import type { WidgetSurface } from '../markdown/mdx-components/types';
-import { getWidgetDefinitions } from '../markdown/mdx-components/widgetRegistry';
+import type { WidgetSurface } from '../../widgets/shared/types';
+import { getWidgetDefinitions } from '../../widgets/shared/widgetRegistry';
 import {
   WIDGET_CATEGORIES,
   type WidgetCategory,
   matchesCatalogSearch
-} from '../markdown/mdx-components/widgetCategories';
-import { WikiPagePicker } from './widgets/WikiPagePicker';
+} from '../../widgets/shared/widgetCategories';
+import { WikiPagePicker } from '../../widgets/content-layout/wiki-page/WikiPagePicker';
 import styles from './WidgetPickerDialog.module.css';
 
 type Props = {

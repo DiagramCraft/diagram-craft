@@ -7,7 +7,7 @@ import {
   WORKSPACE,
   createStoryQueryClient,
   dashboardWidget
-} from '../../sections/markdown/mdx-components/blocks/StorybookHarness';
+} from '../../widgets/shared/mdx/StorybookHarness';
 import { governanceCasesQuery } from '../../queries/governance';
 import { entityDetailQuery, entitiesQuery } from '../../queries/entities';
 

@@ -5,7 +5,7 @@ import { Chip } from '../../components/Chip';
 import { Drawer } from '../../components/Drawer';
 import { useEntitiesByIds } from '../../hooks/useEntities';
 import { relationIds } from '../../lib/entityEditState';
-import { formatRelationFieldValue } from '../dashboard/widgets/relationTableLogic';
+import { formatRelationFieldValue } from '../../widgets/data-views/relation-table/relationTableLogic';
 import { useEntityDrawer } from '../entities/entityDrawer/useEntityDrawer';
 import styles from './RelationDrawer.module.css';
 

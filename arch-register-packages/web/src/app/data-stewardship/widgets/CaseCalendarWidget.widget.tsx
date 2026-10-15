@@ -1,5 +1,5 @@
 import { TbCalendarEvent } from 'react-icons/tb';
-import { defineWidget } from '../../../sections/markdown/mdx-components/defineWidget';
+import { defineWidget } from '../../../widgets/shared/defineWidget';
 import { CaseConfigForm, caseConfigSchema } from '../dataStewardshipWidgetSupport';
 import { CaseCalendarHeaderActions, CaseCalendarWidget } from './CaseCalendarWidget';
 export default defineWidget({

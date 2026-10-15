@@ -1,6 +1,6 @@
 import { LoadingState } from '../../../components/LoadingState';
 import { useEntities } from '../../../hooks/useEntities';
-import { useWidgetBodyTitle } from '../../../sections/dashboard/widgets/WidgetBodyTitle';
+import { useWidgetBodyTitle } from '../../../widgets/shared/dashboard/WidgetBodyTitle';
 
 import { renderSubtext } from '../dataStewardshipDashboardLogic';
 import {

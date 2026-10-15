@@ -8,7 +8,7 @@ import {
 
 // Mock a representative registry slice so these tests exercise wrapper and mode
 // behavior without loading every component registration.
-vi.mock('../mdx-components/widgetRegistry', () => {
+vi.mock('../../../widgets/shared/widgetRegistry', () => {
   const definitions = [
     { type: 'Caption', mdx: { mode: 'block', acceptsChildren: true } },
     { type: 'ImageEmbed', mdx: { mode: 'block' } },
@@ -22,7 +22,7 @@ vi.mock('../mdx-components/widgetRegistry', () => {
   };
 });
 
-const { getWidgetDefinitions } = await import('../mdx-components/widgetRegistry');
+const { getWidgetDefinitions } = await import('../../../widgets/shared/widgetRegistry');
 
 vi.mock('@platejs/markdown', () => ({
   serializeMd: vi.fn(() => 'serialized-md'),
