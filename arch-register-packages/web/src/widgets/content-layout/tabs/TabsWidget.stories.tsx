@@ -24,12 +24,17 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const note = (id: string, title: string, markdown: string, w = 12, h = 8) => ({
+const note = (
+  id: string,
+  title: string,
+  markdown: string,
+  { x = 0, y = 0, w = 12, h = 8 }: { x?: number; y?: number; w?: number; h?: number } = {}
+) => ({
   id,
   type: 'markdown',
   config: { title, markdown },
-  x: 0,
-  y: 0,
+  x,
+  y,
   w,
   h
 });
@@ -83,9 +88,9 @@ export const MultipleWidgetsPerTab: Story = {
                   id: 'overview',
                   label: 'Overview',
                   widgets: [
-                    note('left', 'Left', 'Half-width widget.', 6),
-                    note('right', 'Right', 'Half-width widget.', 6),
-                    note('wide', 'Full width', 'Wraps to a second row.', 12)
+                    note('left', 'Left', 'Half-width widget.', { w: 6 }),
+                    note('right', 'Right', 'Half-width widget.', { x: 6, w: 6 }),
+                    note('wide', 'Full width', 'Sits on a second row.', { y: 8 })
                   ]
                 },
                 {

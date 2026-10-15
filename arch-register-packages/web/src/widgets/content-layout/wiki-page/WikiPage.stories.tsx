@@ -45,7 +45,7 @@ export const Default: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
       <DashboardStory
-        widgets={[dashboardWidget('wiki-page', 'WikiPage', { nodeId: NODE_ID }, 0, 0, 6, 10)]}
+        widgets={[dashboardWidget('wiki-page', 'wiki-page', { nodeId: NODE_ID }, 0, 0, 12, 15)]}
       />
     </StoryProviders>
   )
@@ -55,7 +55,7 @@ export const UnavailablePage: Story = {
   render: () => (
     <StoryProviders client={createStoryQueryClient()}>
       <DashboardStory
-        widgets={[dashboardWidget('wiki-page', 'WikiPage', { nodeId: 'missing' }, 0, 0, 6, 6)]}
+        widgets={[dashboardWidget('wiki-page', 'wiki-page', { nodeId: 'missing' }, 0, 0, 12, 10)]}
       />
     </StoryProviders>
   )

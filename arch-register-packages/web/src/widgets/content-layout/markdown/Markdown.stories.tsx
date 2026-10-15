@@ -42,7 +42,7 @@ export const Default: Story = {
     <StoryProviders>
       <DashboardStory
         widgets={[
-          dashboardWidget('markdown', 'markdown', { title: 'Release notes', markdown }, 0, 0, 6, 6)
+          dashboardWidget('markdown', 'markdown', { title: 'Release notes', markdown }, 0, 0, 12, 15)
         ]}
       />
     </StoryProviders>
@@ -60,8 +60,8 @@ export const Empty: Story = {
             { title: 'Notes', markdown: '' },
             0,
             0,
-            6,
-            4
+            12,
+            10
           )
         ]}
       />

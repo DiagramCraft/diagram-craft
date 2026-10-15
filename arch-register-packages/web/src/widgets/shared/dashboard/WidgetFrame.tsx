@@ -59,7 +59,7 @@ export const WidgetFrame = ({
         )}
       </div>
     )}
-    <div className={styles.body} data-frame={'true'} data-padded={padded}>
+    <div className={styles.body} data-frame={'true'} data-padded={padded} data-framed={!bare}>
       <div className={styles.innerBody}>{children}</div>
     </div>
   </div>
