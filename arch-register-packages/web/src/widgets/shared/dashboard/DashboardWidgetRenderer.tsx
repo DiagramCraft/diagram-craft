@@ -7,7 +7,6 @@ import { getWidgetTitle } from '../../../sections/dashboard/dashboardWidgets';
 import { useDashboardSidebarVariables } from '../../../sections/dashboard/DashboardSidebarContext';
 import { resolveConfigVariables } from '../../../sections/dashboard/resolveSidebarVariableReferences';
 
-import { registerNestedWidgetResolvers } from './nestedWidgets';
 import { WidgetBodyTitleProvider } from './WidgetBodyTitle';
 import { resolveWidgetFrame } from './widgetFrameSettings';
 import { resolveAppIcon } from '../../../shell/appIcons';
@@ -65,5 +64,3 @@ export const DashboardWidgetRenderer = ({ widget, isEditing = false, onEdit, onR
     </WidgetFrame>
   );
 };
-
-registerNestedWidgetResolvers({ Renderer: DashboardWidgetRenderer });

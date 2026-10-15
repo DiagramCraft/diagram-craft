@@ -1,4 +1,3 @@
-import '../../widgetDiscovery';
 import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
 import { GENERIC_STARTER_DASHBOARD_WIDGETS } from '@arch-register/api-types/dashboardWidgetSeeds';
 import {

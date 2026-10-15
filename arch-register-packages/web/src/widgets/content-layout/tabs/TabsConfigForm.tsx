@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TbArrowDown, TbArrowUp, TbGripVertical, TbPlus, TbTrash } from 'react-icons/tb';
-import { NestedTabContentsEditor } from '../../shared/dashboard/nestedWidgets';
+import { TabContentsEditor } from '../../../sections/dashboard/TabContentsEditor';
 import { moveItem, resolveActiveTabId, createTab, type TabsWidgetConfig } from './tabsLogic';
 import formStyles from '../../../sections/dashboard/WidgetConfigDialog.module.css';
 import configFormStyles from './TabsConfigForm.module.css';
@@ -104,7 +104,7 @@ export const TabsConfigForm = ({ config, onChange, context }: FormProps) => {
 
       <div className={configFormStyles.content}>
         {activeTab && (
-          <NestedTabContentsEditor
+          <TabContentsEditor
             key={activeTab.id}
             widgets={activeTab.widgets}
             onChange={widgets => updateTab(activeIndex, { widgets })}

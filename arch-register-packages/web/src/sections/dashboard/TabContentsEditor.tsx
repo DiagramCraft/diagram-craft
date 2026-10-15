@@ -5,12 +5,16 @@ import type { DashboardWidget } from '@arch-register/api-types/dashboardContract
 import { DashboardGridCanvas } from './DashboardGridCanvas';
 import { WidgetPickerDialog } from './WidgetPickerDialog';
 import { WidgetConfigDialog } from './WidgetConfigDialog';
-import {
-  registerNestedWidgetResolvers,
-  type TabContentsEditorProps
-} from '../../widgets/shared/dashboard/nestedWidgets';
+import type { WidgetSurface } from '../../widgets/shared/types';
 import { TABS_TYPE } from '../../widgets/content-layout/tabs/tabsLogic';
 import styles from './TabContentsEditor.module.css';
+
+export type TabContentsEditorProps = {
+  widgets: DashboardWidget[];
+  onChange: (widgets: DashboardWidget[]) => void;
+  workspaceSlug: string;
+  surface: WidgetSurface;
+};
 
 /** Edits one tab's widgets with the same grid editor as the top-level dashboard. */
 export const TabContentsEditor = ({
@@ -61,5 +65,3 @@ export const TabContentsEditor = ({
     </>
   );
 };
-
-registerNestedWidgetResolvers({ TabContentsEditor });
