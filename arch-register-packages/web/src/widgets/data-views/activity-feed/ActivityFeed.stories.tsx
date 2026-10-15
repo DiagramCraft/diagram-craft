@@ -5,7 +5,8 @@ import {
   StoryProviders,
   WORKSPACE,
   createStoryQueryClient,
-  dashboardWidget
+  dashboardWidget,
+  frameControls
 } from '../../shared/mdx/StorybookHarness';
 import { auditKeys } from '../../../queries/audit';
 
@@ -66,12 +67,13 @@ storyQueryClient.setQueryData(auditKeys.log(WORKSPACE, { limit: 15 }), auditEntr
 const meta = {
   title: 'Widgets/Data views/Activity feed',
   tags: ['dashboard', 'workspace-surface'],
+  ...frameControls,
   parameters: {
     layout: 'padded',
     docs: {
       description: {
         component:
-          'A live feed of recent activity from the audit log: who changed what, and when. The `limit` option sets how many entries are listed. Use it on an overview dashboard to give a feel for how active the catalog is. It requires access to the audit log, and is available on workspace dashboards.'
+          'Workspace dashboards only: A live feed of recent activity from the audit log: who changed what, and when. The `limit` option sets how many entries are listed. Use it on an overview dashboard to give a feel for how active the catalog is. It requires access to the audit log, and is available on workspace dashboards.'
       }
     }
   }
@@ -86,14 +88,11 @@ const renderDashboard = (w: number, h: number, id: string) => (
   </StoryProviders>
 );
 
-export const DashboardDefault: Story = {
-  render: () => renderDashboard(3, 2, 'activity-feed')
-};
-
-export const DashboardWide: Story = {
-  render: () => renderDashboard(6, 4, 'activity-feed-wide')
-};
-
-export const DashboardLarge: Story = {
+export const Default: Story = {
   render: () => renderDashboard(12, 6, 'activity-feed-large')
+};
+
+export const WithFrame: Story = {
+  ...Default,
+  args: { showFrame: true }
 };

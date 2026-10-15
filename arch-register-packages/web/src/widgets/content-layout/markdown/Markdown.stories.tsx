@@ -1,15 +1,21 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { DashboardStory, StoryProviders, dashboardWidget } from '../../shared/mdx/StorybookHarness';
+import {
+  DashboardStory,
+  StoryProviders,
+  dashboardWidget,
+  frameControls
+} from '../../shared/mdx/StorybookHarness';
 
 const meta = {
   title: 'Widgets/Content & layout/Markdown',
   tags: ['dashboard', 'workspace-surface', 'project-surface'],
+  ...frameControls,
   parameters: {
     layout: 'padded',
     docs: {
       description: {
         component:
-          'Free-form Markdown text on a dashboard. Use it for headings, explanations, links to other pages or a short note that gives the surrounding widgets context. It is the simplest way to add static narrative to a dashboard; for content that should be versioned and shared use the Wiki page widget instead.'
+          'Workspace and project dashboards only: Free-form Markdown text on a dashboard. Use it for headings, explanations, links to other pages or a short note that gives the surrounding widgets context. It is the simplest way to add static narrative to a dashboard; for content that should be versioned and shared use the Wiki page widget instead.'
       }
     }
   }
@@ -31,7 +37,7 @@ The **July release** includes:
 - [x] Review the release
 - [ ] Share it with the team`;
 
-export const DashboardDefault: Story = {
+export const Default: Story = {
   render: () => (
     <StoryProviders>
       <DashboardStory
@@ -61,4 +67,9 @@ export const Empty: Story = {
       />
     </StoryProviders>
   )
+};
+
+export const WithFrame: Story = {
+  ...Default,
+  args: { showFrame: true }
 };

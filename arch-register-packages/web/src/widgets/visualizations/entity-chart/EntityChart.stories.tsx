@@ -94,7 +94,7 @@ const meta = {
     docs: {
       description: {
         component:
-          'A live chart of entities grouped by a field (lifecycle, owner or schema), shown as a donut or a bar chart. Filter the entities by schema, owner and lifecycle. Use it to show the distribution of the catalog in a wiki page. Available in wiki pages only.'
+          'Wiki pages only: A live chart of entities grouped by a field (lifecycle, owner or schema), shown as a donut or a bar chart. Filter the entities by schema, owner and lifecycle. Use it to show the distribution of the catalog in a wiki page.'
       }
     }
   }
@@ -103,7 +103,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const WikiDonutByLifecycle: Story = {
+export const DonutByLifecycle: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
       <EntityChart config={{ schema: 'service', groupBy: 'lifecycle', chartType: 'donut' }} />
@@ -111,7 +111,7 @@ export const WikiDonutByLifecycle: Story = {
   )
 };
 
-export const WikiBarByOwner: Story = {
+export const BarByOwner: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
       <EntityChart config={{ schema: 'service', groupBy: 'owner', chartType: 'bar' }} />
@@ -119,7 +119,7 @@ export const WikiBarByOwner: Story = {
   )
 };
 
-export const WikiFilteredByLifecycle: Story = {
+export const FilteredByLifecycle: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
       <EntityChart
@@ -129,7 +129,7 @@ export const WikiFilteredByLifecycle: Story = {
   )
 };
 
-export const WikiNoFilters: Story = {
+export const NoFilters: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
       <EntityChart config={{ groupBy: 'lifecycle', chartType: 'donut' }} />

@@ -33,7 +33,7 @@ const meta = {
     docs: {
       description: {
         component:
-          'A plain inline link to an entity page that uses the entity name as text. Use it where the link should read as normal prose; use Entity mention if you also want the live status. Available in wiki pages only.'
+          'Wiki pages only: A plain inline link to an entity page that uses the entity name as text. Use it where the link should read as normal prose; use Entity mention if you also want the live status.'
       }
     }
   }
@@ -42,7 +42,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const WikiLink: Story = {
+export const Link: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
       <p>
@@ -52,7 +52,7 @@ export const WikiLink: Story = {
   )
 };
 
-export const WikiUnavailable: Story = {
+export const Unavailable: Story = {
   render: () => (
     <StoryProviders client={missingEntityQueryClient}>
       <p>

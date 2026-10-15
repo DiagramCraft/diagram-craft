@@ -10,7 +10,7 @@ const meta = {
     docs: {
       description: {
         component:
-          'Wraps a block (an image, diagram, table or any other widget) in a figure with a caption underneath. With `numbered` set, the caption is prefixed with an automatic running number (Figure 1, Figure 2, ...) that follows the order in the page. Use it so that figures can be referred to from the text. Available in wiki pages only.'
+          'Wiki pages only: Wraps a block (an image, diagram, table or any other widget) in a figure with a caption underneath. With `numbered` set, the caption is prefixed with an automatic running number (Figure 1, Figure 2, ...) that follows the order in the page. Use it so that figures can be referred to from the text.'
       }
     }
   }
@@ -43,7 +43,7 @@ const architectureDiagram = (
   </div>
 );
 
-export const WikiNumbered: Story = {
+export const Numbered: Story = {
   render: () => (
     <StoryProviders>
       <Caption caption="Request flow across the platform" numbered="true">
@@ -53,7 +53,7 @@ export const WikiNumbered: Story = {
   )
 };
 
-export const WikiWithoutCaption: Story = {
+export const WithoutCaption: Story = {
   parameters: {
     docs: {
       description: {
@@ -69,7 +69,7 @@ export const WikiWithoutCaption: Story = {
   )
 };
 
-export const WikiNumberedSequence: Story = {
+export const NumberedSequence: Story = {
   render: () => (
     <StoryProviders>
       <div style={{ counterReset: 'figure-counter' }}>

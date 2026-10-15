@@ -4,7 +4,8 @@ import {
   StoryProviders,
   WORKSPACE,
   createStoryQueryClient,
-  dashboardWidget
+  dashboardWidget,
+  frameControls
 } from '../../shared/mdx/StorybookHarness';
 import { projectFileKeys } from '../../../queries/content';
 import { markdownContentKeys } from '../../../queries/markdownContent';
@@ -25,12 +26,13 @@ storyQueryClient.setQueryData(markdownContentKeys.detail(WORKSPACE, NODE_ID), {
 const meta = {
   title: 'Widgets/Content & layout/Wiki page',
   tags: ['dashboard', 'workspace-surface', 'project-surface'],
+  ...frameControls,
   parameters: {
     layout: 'padded',
     docs: {
       description: {
         component:
-          "Shows the content of a selected wiki page directly on a dashboard, including any widgets embedded in the page. The title defaults to the page name. Use it to keep long-form guidance next to the live data it describes; the page itself is edited in the wiki. A workspace dashboard can show workspace pages and a project dashboard can show that project's pages."
+          "Workspace and project dashboards only: Shows the content of a selected wiki page directly on a dashboard, including any widgets embedded in the page. The title defaults to the page name. Use it to keep long-form guidance next to the live data it describes; the page itself is edited in the wiki. A workspace dashboard shows workspace pages, and a project dashboard shows that project's pages."
       }
     }
   }
@@ -39,7 +41,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const DashboardDefault: Story = {
+export const Default: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
       <DashboardStory
@@ -57,4 +59,9 @@ export const UnavailablePage: Story = {
       />
     </StoryProviders>
   )
+};
+
+export const WithFrame: Story = {
+  ...Default,
+  args: { showFrame: true }
 };

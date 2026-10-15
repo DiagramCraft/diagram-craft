@@ -1,15 +1,17 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { frameControls } from '../../shared/mdx/StorybookHarness';
 import { assessmentWidgetStory } from '../../shared/data/assessmentWidgetStoryFixtures';
 
 const meta = {
   title: 'Widgets/Metrics/Assessment count',
   tags: ['dashboard', 'workspace-surface'],
+  ...frameControls,
   parameters: {
     layout: 'padded',
     docs: {
       description: {
         component:
-          'The number of assessments that match a mode (active, upcoming, overdue or all), an optional assessment type and the entity types they cover. With `dueWithinDays` it counts open assessments due within that window, overdue ones included. Use it as a KPI tile above an assessment list.'
+          'Workspace dashboards only: The number of assessments that match a mode (active, upcoming, overdue or all), an optional assessment type and the entity types they cover. With `dueWithinDays` it counts open assessments due within that window, overdue ones included. Use it as a KPI tile above an assessment list.'
       }
     }
   }
@@ -48,4 +50,9 @@ export const DueWithinMonth: Story = {
       },
       { w: 3, h: 5 }
     )
+};
+
+export const WithFrame: Story = {
+  ...Active,
+  args: { showFrame: true }
 };

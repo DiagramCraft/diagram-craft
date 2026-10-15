@@ -6,7 +6,8 @@ import {
   StoryProviders,
   WORKSPACE,
   createStoryQueryClient,
-  dashboardWidget
+  dashboardWidget,
+  frameControls
 } from '../../shared/mdx/StorybookHarness';
 import { entityKeys } from '../../../queries/entities';
 import { relationKeys } from '../../../queries/relations';
@@ -98,12 +99,13 @@ const FLOWS = [
 const meta = {
   title: 'Widgets/Data views/Relation table',
   tags: ['dashboard', 'workspace-surface'],
+  ...frameControls,
   parameters: {
     layout: 'padded',
     docs: {
       description: {
         component:
-          'Lists instances of a relation type, with the flow (in to out) and a chosen set of columns such as relation fields, owner or last update. Narrow it with an entity query or facet filters bound to sidebar variables, and optionally open a detail drawer when a row is clicked. Use it for registers of data flows, integrations and dependencies.'
+          'Workspace dashboards only: Lists instances of a relation type, with the flow (in to out) and a chosen set of columns such as relation fields, owner or last update. Narrow it with an entity query or facet filters bound to sidebar variables, and optionally open a detail drawer when a row is clicked. Use it for registers of data flows, integrations and dependencies.'
       }
     }
   }
@@ -177,4 +179,9 @@ export const UnknownRelationType: Story = {
 
 export const WithRowDrawer: Story = {
   render: () => renderDashboard(FLOWS, { rowDrawer: true, label: 'Click a row for details' })
+};
+
+export const WithFrame: Story = {
+  ...RestrictedFlows,
+  args: { showFrame: true }
 };

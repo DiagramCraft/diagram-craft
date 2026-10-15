@@ -5,7 +5,8 @@ import {
   StoryProviders,
   WORKSPACE,
   createStoryQueryClient,
-  dashboardWidget
+  dashboardWidget,
+  frameControls
 } from '../../shared/mdx/StorybookHarness';
 
 const QUERY = 'schema:"Vendor"';
@@ -56,12 +57,13 @@ storyQueryClient.setQueryData(['entities', 'queryText', 'entities', WORKSPACE, Q
 const meta = {
   title: 'Widgets/Data views/Roll-up table',
   tags: ['dashboard', 'workspace-surface', 'project-surface'],
+  ...frameControls,
   parameters: {
     layout: 'padded',
     docs: {
       description: {
         component:
-          'Sums a number or currency field over the records of a query and ranks the result, either one row per record or grouped by another field. Rows can show a bar relative to the largest row, the share of the total and the number of records, and a total row can be added. Use it for "spend by vendor" or "cost by cost centre" style questions.'
+          'Workspace and project dashboards only: Sums a number or currency field over the records of a query and ranks the result, either one row per record or grouped by another field. Rows can show a bar relative to the largest row, the share of the total and the number of records, and a total row can be added. Use it for "spend by vendor" or "cost by cost centre" style questions.'
       }
     }
   }
@@ -142,4 +144,9 @@ export const Minimal: Story = {
       />
     </StoryProviders>
   )
+};
+
+export const WithFrame: Story = {
+  ...SpendByVendor,
+  args: { showFrame: true }
 };

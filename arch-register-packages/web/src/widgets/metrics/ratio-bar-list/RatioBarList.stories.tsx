@@ -5,7 +5,8 @@ import {
   StoryProviders,
   WORKSPACE,
   createStoryQueryClient,
-  dashboardWidget
+  dashboardWidget,
+  frameControls
 } from '../../shared/mdx/StorybookHarness';
 import { entityKeys } from '../../../queries/entities';
 
@@ -65,12 +66,13 @@ storyQueryClient.setQueryData(entityKeys.list(WORKSPACE, { schemaId: 'service', 
 const meta = {
   title: 'Widgets/Metrics/Ratio bars',
   tags: ['dashboard', 'workspace-surface'],
+  ...frameControls,
   parameters: {
     layout: 'padded',
     docs: {
       description: {
         component:
-          'One coverage bar per value of a field, filled by the share of entities in that group that have a chosen value in another field, and coloured by how complete it is. Use it to compare coverage across teams or domains, for example the share of services that are documented per owning team.'
+          'Workspace dashboards only: One coverage bar per value of a field, filled by the share of entities in that group that have a chosen value in another field, and coloured by how complete it is. Use it to compare coverage across teams or domains, for example the share of services that are documented per owning team.'
       }
     }
   }
@@ -103,4 +105,9 @@ export const DocumentedByTeam: Story = {
       />
     </StoryProviders>
   )
+};
+
+export const WithFrame: Story = {
+  ...DocumentedByTeam,
+  args: { showFrame: true }
 };

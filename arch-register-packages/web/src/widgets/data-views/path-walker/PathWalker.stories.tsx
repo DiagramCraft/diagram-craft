@@ -5,7 +5,8 @@ import {
   StoryProviders,
   WORKSPACE,
   createStoryQueryClient,
-  dashboardWidget
+  dashboardWidget,
+  frameControls
 } from '../../shared/mdx/StorybookHarness';
 import { entityKeys } from '../../../queries/entities';
 
@@ -35,12 +36,13 @@ storyQueryClient.setQueryData(
 const meta = {
   title: 'Widgets/Data views/Relationship walker',
   tags: ['dashboard', 'workspace-surface'],
+  ...frameControls,
   parameters: {
     layout: 'padded',
     docs: {
       description: {
         component:
-          'Walks from every entity of one type through a chain of relations, with one column per hop, so that an end-to-end path such as capability to application to infrastructure can be read in a single view. The author sets up the starting chain, which can be locked, and viewers select an entity in a column to see what it connects to in the next one.'
+          'Workspace dashboards only: Walks from every entity of one type through a chain of relations, with one column per hop, so that an end-to-end path such as capability to application to infrastructure can be read in a single view. The author sets up the starting chain, which can be locked, and viewers select an entity in a column to see what it connects to in the next one.'
       }
     }
   }
@@ -67,4 +69,9 @@ export const FromCapabilities: Story = {
       />
     </StoryProviders>
   )
+};
+
+export const WithFrame: Story = {
+  ...FromCapabilities,
+  args: { showFrame: true }
 };

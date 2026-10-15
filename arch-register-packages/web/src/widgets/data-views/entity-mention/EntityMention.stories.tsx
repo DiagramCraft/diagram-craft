@@ -33,7 +33,7 @@ const meta = {
     docs: {
       description: {
         component:
-          'An inline mention of an entity that shows its live name and lifecycle status, and links to the entity page. Use it in text to refer to a system or owner so that the reference stays current when the entity is renamed or retired. Available in wiki pages only.'
+          'Wiki pages only: An inline mention of an entity that shows its live name and lifecycle status, and links to the entity page. Use it in text to refer to a system or owner so that the reference stays current when the entity is renamed or retired.'
       }
     }
   }
@@ -42,7 +42,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const WikiMention: Story = {
+export const Mention: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
       <p>
@@ -52,7 +52,7 @@ export const WikiMention: Story = {
   )
 };
 
-export const WikiUnavailable: Story = {
+export const Unavailable: Story = {
   render: () => (
     <StoryProviders client={missingEntityQueryClient}>
       <p>

@@ -8,7 +8,8 @@ import {
   DashboardStory,
   StoryProviders,
   WORKSPACE,
-  dashboardWidget
+  dashboardWidget,
+  frameControls
 } from '../../shared/mdx/StorybookHarness';
 import { documentKeys } from '../../../queries/documents';
 
@@ -87,12 +88,13 @@ storyQueryClient.setQueryData(documentKeys.list(WORKSPACE, documentOptions), doc
 const meta = {
   title: 'Widgets/Data views/Document browser',
   tags: ['mdx', 'block', 'dashboard', 'workspace-surface', 'project-surface'],
+  ...frameControls,
   parameters: {
     layout: 'padded',
     docs: {
       description: {
         component:
-          'A filterable list of documents in the workspace or project. Narrow it by free-text search, document type or field conditions, choose the sort order and pick which columns are shown. Use it to give readers a curated entry point to files, for example all policies or all contracts for one project. Available in wiki pages and on dashboards.'
+          'Wiki pages and dashboards (workspace and project): A filterable list of documents in the workspace or project. Narrow it by free-text search, document type or field conditions, choose the sort order and pick which columns are shown. Use it to give readers a curated entry point to files, for example all policies or all contracts for one project.'
       }
     }
   }
@@ -101,7 +103,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const WikiConfigured: Story = {
+export const Configured: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
       <DocumentBrowserEmbed config={configured} />
@@ -109,7 +111,7 @@ export const WikiConfigured: Story = {
   )
 };
 
-export const WikiNoConfiguration: Story = {
+export const NoConfiguration: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
       <DocumentBrowserEmbed config={documentBrowserEmbedCodec.createDefault()} />
@@ -126,7 +128,7 @@ const dashboardConfig = {
   visibleFieldIds: []
 };
 
-export const DashboardDefault: Story = {
+export const Default: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
       <DashboardStory
@@ -144,4 +146,9 @@ export const DashboardDefault: Story = {
       />
     </StoryProviders>
   )
+};
+
+export const WithFrame: Story = {
+  ...Default,
+  args: { showFrame: true }
 };

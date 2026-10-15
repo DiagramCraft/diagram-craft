@@ -4,7 +4,8 @@ import {
   StoryProviders,
   WORKSPACE,
   createStoryQueryClient,
-  dashboardWidget
+  dashboardWidget,
+  frameControls
 } from '../../shared/mdx/StorybookHarness';
 
 const QUERY = 'schema:"Contract"';
@@ -40,12 +41,13 @@ storyQueryClient.setQueryData(['entities', 'queryText', 'entities', WORKSPACE, Q
 const meta = {
   title: 'Widgets/Visualizations/Date range timeline',
   tags: ['dashboard', 'workspace-surface'],
+  ...frameControls,
   parameters: {
     layout: 'padded',
     docs: {
       description: {
         component:
-          'A Gantt chart with one bar per record from a start date to an end date. Bars can show a value, turn orange or red as the end approaches, and carry a marker at a number of days before the end (for example a notice period). Use it for contract terms, project phases or licence periods.'
+          'Workspace dashboards only: A Gantt chart with one bar per record from a start date to an end date. Bars can show a value, turn orange or red as the end approaches, and carry a marker at a number of days before the end (for example a notice period). Use it for contract terms, project phases or licence periods.'
       }
     }
   }
@@ -80,4 +82,9 @@ export const ContractTerms: Story = {
       />
     </StoryProviders>
   )
+};
+
+export const WithFrame: Story = {
+  ...ContractTerms,
+  args: { showFrame: true }
 };

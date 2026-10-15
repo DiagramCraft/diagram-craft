@@ -5,7 +5,8 @@ import {
   StoryProviders,
   WORKSPACE,
   dashboardWidget,
-  queryClient
+  queryClient,
+  frameControls
 } from '../../shared/mdx/StorybookHarness';
 import { entityKeys } from '../../../queries/entities';
 
@@ -60,12 +61,13 @@ queryClient.setQueryData(entityKeys.list(WORKSPACE, tableQueryOptions), {
 const meta = {
   title: 'Widgets/Data views/Entity table',
   tags: ['mdx', 'block', 'dashboard', 'workspace-surface', 'project-surface'],
+  ...frameControls,
   parameters: {
     layout: 'padded',
     docs: {
       description: {
         component:
-          'A table of entities matching filters you define (schema, owner and lifecycle), with a `limit` on the number of rows. It is the simplest way to show a fixed, readable list of entities. For richer filtering, sorting and columns use the Entity browser. Available in wiki pages and on dashboards.'
+          'Wiki pages and dashboards (workspace and project): A table of entities matching filters you define (schema, owner and lifecycle), with a `limit` on the number of rows. It is the simplest way to show a fixed, readable list of entities. For richer filtering, sorting and columns use the Entity browser.'
       }
     }
   }
@@ -74,7 +76,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const WikiFiltered: Story = {
+export const Filtered: Story = {
   render: () => (
     <StoryProviders>
       <EntityTable config={{ schema: 'service', limit: 10 }} />
@@ -82,7 +84,7 @@ export const WikiFiltered: Story = {
   )
 };
 
-export const WikiEmpty: Story = {
+export const Empty: Story = {
   render: () => (
     <StoryProviders>
       <EntityTable config={{}} />
@@ -90,47 +92,7 @@ export const WikiEmpty: Story = {
   )
 };
 
-export const DashboardDefault: Story = {
-  render: () => (
-    <StoryProviders>
-      <DashboardStory
-        widgets={[
-          dashboardWidget(
-            'entity-table',
-            'EntityTable',
-            { schema: 'service', limit: 10 },
-            0,
-            0,
-            3,
-            2
-          )
-        ]}
-      />
-    </StoryProviders>
-  )
-};
-
-export const DashboardWide: Story = {
-  render: () => (
-    <StoryProviders>
-      <DashboardStory
-        widgets={[
-          dashboardWidget(
-            'entity-table-wide',
-            'EntityTable',
-            { schema: 'service', limit: 10 },
-            0,
-            0,
-            6,
-            4
-          )
-        ]}
-      />
-    </StoryProviders>
-  )
-};
-
-export const DashboardLarge: Story = {
+export const Default: Story = {
   render: () => (
     <StoryProviders>
       <DashboardStory
@@ -148,4 +110,9 @@ export const DashboardLarge: Story = {
       />
     </StoryProviders>
   )
+};
+
+export const WithFrame: Story = {
+  ...Default,
+  args: { showFrame: true }
 };

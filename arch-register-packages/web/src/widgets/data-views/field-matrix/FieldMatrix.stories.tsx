@@ -5,7 +5,8 @@ import {
   StoryProviders,
   WORKSPACE,
   createStoryQueryClient,
-  dashboardWidget
+  dashboardWidget,
+  frameControls
 } from '../../shared/mdx/StorybookHarness';
 
 const QUERY = 'schema:"Vendor"';
@@ -48,12 +49,13 @@ const bands = [
 const meta = {
   title: 'Widgets/Data views/Field matrix',
   tags: ['dashboard', 'workspace-surface', 'project-surface'],
+  ...frameControls,
   parameters: {
     layout: 'padded',
     docs: {
       description: {
         component:
-          'Places records in a grid: rows are values of one numeric field (for example criticality) and columns are bands of another (for example risk score). Each cell shows the records that land in it as clickable chips, and cells in `hot` bands at or above `hotRowMin` can be emphasised. Use it for classic matrices such as a criticality-by-risk heat map. Records are selected with an entity query.'
+          'Workspace and project dashboards only: Places records in a grid: rows are values of one numeric field (for example criticality) and columns are bands of another (for example risk score). Each cell shows the records that land in it as clickable chips, and cells in `hot` bands at or above `hotRowMin` can be emphasised. Use it for classic matrices such as a criticality-by-risk heat map. Records are selected with an entity query.'
       }
     }
   }
@@ -158,4 +160,9 @@ export const WithoutEmphasis: Story = {
       />
     </StoryProviders>
   )
+};
+
+export const WithFrame: Story = {
+  ...CriticalityByRisk,
+  args: { showFrame: true }
 };

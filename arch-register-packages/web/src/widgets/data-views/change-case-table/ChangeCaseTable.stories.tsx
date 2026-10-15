@@ -7,7 +7,8 @@ import {
   StoryProviders,
   WORKSPACE,
   createStoryQueryClient,
-  dashboardWidget
+  dashboardWidget,
+  frameControls
 } from '../../shared/mdx/StorybookHarness';
 import { governanceCasesQuery } from '../../../queries/governance';
 import { entityDetailQuery } from '../../../queries/entities';
@@ -32,12 +33,13 @@ const config = {
 const meta = {
   title: 'Widgets/Data views/Change case table',
   tags: ['dashboard', 'workspace-surface'],
+  ...frameControls,
   parameters: {
     layout: 'padded',
     docs: {
       description: {
         component:
-          'A register of governance cases (change cases, deprecations and other case kinds) raised against entities of a chosen type. Unlike the Needs attention queue it can show cases in any status, and a status filter narrows it to `open`, `completed` or `cancelled`. Each row links to the case and the entity it concerns. Use it as a history or audit view of governance work.'
+          'Workspace dashboards only: A register of governance cases (change cases, deprecations and other case kinds) raised against entities of a chosen type. Unlike the Needs attention queue it can show cases in any status, and a status filter narrows it to `open`, `completed` or `cancelled`. Each row links to the case and the entity it concerns. Use it as a history or audit view of governance work.'
       }
     }
   }
@@ -106,4 +108,9 @@ export const Empty: Story = {
       </StoryProviders>
     );
   }
+};
+
+export const WithFrame: Story = {
+  ...Populated,
+  args: { showFrame: true }
 };

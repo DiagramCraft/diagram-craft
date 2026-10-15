@@ -11,7 +11,7 @@ const meta = {
     docs: {
       description: {
         component:
-          'Lays content out side by side in two or three columns. Each column is a child block that holds its own content, and the `count` option (2 or 3) sets how many columns it has. Use it to place text next to a diagram or to build a compact comparison. On narrow screens the columns stack. Available in wiki pages only.'
+          'Wiki pages only: Lays content out side by side in two or three columns. Each column is a child block that holds its own content, and the `count` option (2 or 3) sets how many columns it has. Use it to place text next to a diagram or to build a compact comparison. On narrow screens the columns stack.'
       }
     }
   }
@@ -20,7 +20,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const WikiTwoColumns: Story = {
+export const TwoColumns: Story = {
   render: () => (
     <StoryProviders>
       <Columns count="2">
@@ -37,7 +37,7 @@ export const WikiTwoColumns: Story = {
   )
 };
 
-export const WikiThreeColumns: Story = {
+export const ThreeColumns: Story = {
   render: () => (
     <StoryProviders>
       <Columns count="3">
@@ -58,7 +58,7 @@ export const WikiThreeColumns: Story = {
   )
 };
 
-export const WikiDefaultCount: Story = {
+export const DefaultCount: Story = {
   render: () => (
     <StoryProviders>
       <Columns count="4">

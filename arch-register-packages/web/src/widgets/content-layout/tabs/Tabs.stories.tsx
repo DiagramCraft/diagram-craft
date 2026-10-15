@@ -11,7 +11,7 @@ const meta = {
     docs: {
       description: {
         component:
-          'Groups several blocks of content under selectable tabs in a wiki page. Each tab has a label and its own content, and only one tab is shown at a time. Use it to offer alternative views of the same subject (for example logical and physical) without making the page long. For dashboards use the dashboard Tabs widget.'
+          'Wiki pages only: Groups several blocks of content under selectable tabs in a wiki page. Each tab has a label and its own content, and only one tab is shown at a time. Use it to offer alternative views of the same subject (for example logical and physical) without making the page long. For dashboards use the dashboard Tabs widget.'
       }
     }
   }
@@ -20,7 +20,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const WikiArchitectureViews: Story = {
+export const ArchitectureViews: Story = {
   render: () => (
     <StoryProviders>
       <Tabs>
@@ -41,7 +41,7 @@ export const WikiArchitectureViews: Story = {
   )
 };
 
-export const WikiDefaultTabLabels: Story = {
+export const DefaultTabLabels: Story = {
   render: () => (
     <StoryProviders>
       <Tabs>
@@ -56,7 +56,7 @@ export const WikiDefaultTabLabels: Story = {
   )
 };
 
-export const WikiEmpty: Story = {
+export const Empty: Story = {
   render: () => (
     <StoryProviders>
       <Tabs />

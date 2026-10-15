@@ -142,14 +142,41 @@ export const dashboardWidget = (
   h
 });
 
-export const DashboardStory = ({ widgets }: { widgets: DashboardWidget[] }) => (
-  <DashboardGrid
-    widgets={widgets}
-    canEdit={false}
-    isEditing={false}
-    onEditingChange={() => {}}
-    onSave={() => {}}
-    isLoading={false}
-    workspaceSlug={WORKSPACE}
-  />
-);
+const WidgetFrameContext = createContext(false);
+
+/**
+ * Meta fragment for stories of dashboard widgets: adds a `showFrame` control that shows the
+ * dashboard widget frame (border and header) around the widgets of `DashboardStory`. Without it
+ * stories render the widget bare, as it appears on a dashboard with the frame hidden.
+ */
+export const frameControls = {
+  args: { showFrame: false },
+  argTypes: {
+    showFrame: {
+      control: 'boolean' as const,
+      description: 'Show the dashboard widget frame around the widget'
+    }
+  },
+  decorators: [
+    (Story: () => ReactNode, context: { args: { showFrame?: boolean } }) => (
+      <WidgetFrameContext.Provider value={!!context.args.showFrame}>
+        <Story />
+      </WidgetFrameContext.Provider>
+    )
+  ]
+};
+
+export const DashboardStory = ({ widgets }: { widgets: DashboardWidget[] }) => {
+  const showFrame = useContext(WidgetFrameContext);
+  return (
+    <DashboardGrid
+      widgets={widgets.map(widget => ({ ...widget, frame: { ...widget.frame, showFrame } }))}
+      canEdit={false}
+      isEditing={false}
+      onEditingChange={() => {}}
+      onSave={() => {}}
+      isLoading={false}
+      workspaceSlug={WORKSPACE}
+    />
+  );
+};

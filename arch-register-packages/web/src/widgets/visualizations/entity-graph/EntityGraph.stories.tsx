@@ -5,7 +5,8 @@ import {
   DashboardStory,
   StoryProviders,
   WORKSPACE,
-  dashboardWidget
+  dashboardWidget,
+  frameControls
 } from '../../shared/mdx/StorybookHarness';
 import { entityKeys } from '../../../queries/entities';
 
@@ -75,12 +76,13 @@ storyQueryClient.setQueryData(
 const meta = {
   title: 'Widgets/Visualizations/Entity graph',
   tags: ['mdx', 'block', 'dashboard', 'workspace-surface', 'project-surface'],
+  ...frameControls,
   parameters: {
     layout: 'padded',
     docs: {
       description: {
         component:
-          'A clickable graph of the dependencies and relations around one entity. Choose how many hops (`depth`) and which `direction` to follow: upstream, downstream or both. Works best at 6x4 or larger. Available in wiki pages and on dashboards.'
+          'Wiki pages and dashboards (workspace and project): A clickable graph of the dependencies and relations around one entity. Choose how many hops (`depth`) and which `direction` to follow: upstream, downstream or both. Works best at 6x4 or larger.'
       }
     }
   }
@@ -89,7 +91,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const WikiBothDirections: Story = {
+export const BothDirections: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
       <EntityGraph config={{ entityId: rootEntityId, depth: 2, direction: 'both' }} />
@@ -97,7 +99,7 @@ export const WikiBothDirections: Story = {
   )
 };
 
-export const WikiUpstreamOnly: Story = {
+export const UpstreamOnly: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
       <EntityGraph config={{ entityId: rootEntityId, depth: 1, direction: 'upstream' }} />
@@ -105,7 +107,7 @@ export const WikiUpstreamOnly: Story = {
   )
 };
 
-export const WikiMissingId: Story = {
+export const MissingId: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
       <EntityGraph config={{ entityId: '' }} />
@@ -113,27 +115,7 @@ export const WikiMissingId: Story = {
   )
 };
 
-export const DashboardDefault: Story = {
-  render: () => (
-    <StoryProviders client={storyQueryClient}>
-      <DashboardStory
-        widgets={[
-          dashboardWidget(
-            'entity-graph',
-            'EntityGraph',
-            { entityId: rootEntityId, depth: 2, direction: 'both' },
-            0,
-            0,
-            6,
-            4
-          )
-        ]}
-      />
-    </StoryProviders>
-  )
-};
-
-export const DashboardLarge: Story = {
+export const Default: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
       <DashboardStory
@@ -151,4 +133,9 @@ export const DashboardLarge: Story = {
       />
     </StoryProviders>
   )
+};
+
+export const WithFrame: Story = {
+  ...Default,
+  args: { showFrame: true }
 };

@@ -5,7 +5,8 @@ import {
   StoryProviders,
   WORKSPACE,
   dashboardWidget,
-  queryClient
+  queryClient,
+  frameControls
 } from '../../shared/mdx/StorybookHarness';
 import { entityKeys } from '../../../queries/entities';
 import { viewKeys } from '../../../queries/views';
@@ -66,12 +67,13 @@ queryClient.setQueryData(
 const meta = {
   title: 'Widgets/Data views/Saved view',
   tags: ['mdx', 'block', 'dashboard', 'workspace-surface', 'project-surface'],
+  ...frameControls,
   parameters: {
     layout: 'padded',
     docs: {
       description: {
         component:
-          'A live copy of a saved entity view. The embed always shows the view as it is currently defined, so a view that someone has already set up can be reused in a page or on a dashboard without being rebuilt. Available in wiki pages and on dashboards.'
+          'Wiki pages and dashboards (workspace and project): A live copy of a saved entity view. The embed always shows the view as it is currently defined, so a view that someone has already set up can be reused in a page or on a dashboard without being rebuilt.'
       }
     }
   }
@@ -80,7 +82,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const WikiConfigured: Story = {
+export const Configured: Story = {
   render: () => (
     <StoryProviders>
       <EntityViewEmbed config={{ viewId: 'view-services' }} />
@@ -88,7 +90,7 @@ export const WikiConfigured: Story = {
   )
 };
 
-export const WikiNoView: Story = {
+export const NoView: Story = {
   render: () => (
     <StoryProviders>
       <EntityViewEmbed config={{ viewId: '' }} />
@@ -96,7 +98,7 @@ export const WikiNoView: Story = {
   )
 };
 
-export const WikiMissingView: Story = {
+export const MissingView: Story = {
   render: () => (
     <StoryProviders>
       <EntityViewEmbed config={{ viewId: 'deleted-view' }} />
@@ -104,39 +106,7 @@ export const WikiMissingView: Story = {
   )
 };
 
-export const DashboardDefault: Story = {
-  render: () => (
-    <StoryProviders>
-      <DashboardStory
-        widgets={[
-          dashboardWidget('saved-view', 'EntityViewEmbed', { viewId: 'view-services' }, 0, 0, 3, 2)
-        ]}
-      />
-    </StoryProviders>
-  )
-};
-
-export const DashboardWide: Story = {
-  render: () => (
-    <StoryProviders>
-      <DashboardStory
-        widgets={[
-          dashboardWidget(
-            'saved-view-wide',
-            'EntityViewEmbed',
-            { viewId: 'view-services' },
-            0,
-            0,
-            6,
-            4
-          )
-        ]}
-      />
-    </StoryProviders>
-  )
-};
-
-export const DashboardLarge: Story = {
+export const Default: Story = {
   render: () => (
     <StoryProviders>
       <DashboardStory
@@ -154,4 +124,9 @@ export const DashboardLarge: Story = {
       />
     </StoryProviders>
   )
+};
+
+export const WithFrame: Story = {
+  ...Default,
+  args: { showFrame: true }
 };

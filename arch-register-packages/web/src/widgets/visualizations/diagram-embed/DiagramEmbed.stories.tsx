@@ -6,7 +6,8 @@ import {
   DashboardStory,
   StoryProviders,
   WORKSPACE,
-  dashboardWidget
+  dashboardWidget,
+  frameControls
 } from '../../shared/mdx/StorybookHarness';
 import { projectFileKeys } from '../../../queries/content';
 
@@ -46,12 +47,13 @@ storyQueryClient.setQueryData(projectFileKeys.content(WORKSPACE, emptyFileId), n
 const meta = {
   title: 'Widgets/Visualizations/Diagram',
   tags: ['mdx', 'block', 'dashboard', 'workspace-surface', 'project-surface'],
+  ...frameControls,
   parameters: {
     layout: 'padded',
     docs: {
       description: {
         component:
-          'A read-only preview of an architecture diagram, with an optional caption, that links through to the diagram. Use it to show a system picture alongside text. Available in wiki pages and on dashboards.'
+          'Wiki pages and dashboards (workspace and project): A read-only preview of an architecture diagram, with an optional caption, that links through to the diagram. Use it to show a system picture alongside text.'
       }
     }
   }
@@ -60,7 +62,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const WikiWithPreview: Story = {
+export const WithPreview: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
       <DiagramEmbed config={{ fileId: previewFileId, caption: 'System context diagram' }} />
@@ -68,7 +70,7 @@ export const WikiWithPreview: Story = {
   )
 };
 
-export const WikiNoPreview: Story = {
+export const NoPreview: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
       <DiagramEmbed config={{ fileId: emptyFileId, caption: 'Preview pending' }} />
@@ -76,7 +78,7 @@ export const WikiNoPreview: Story = {
   )
 };
 
-export const WikiMissingId: Story = {
+export const MissingId: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
       <DiagramEmbed config={{ fileId: '' }} />
@@ -84,27 +86,7 @@ export const WikiMissingId: Story = {
   )
 };
 
-export const DashboardDefault: Story = {
-  render: () => (
-    <StoryProviders client={storyQueryClient}>
-      <DashboardStory
-        widgets={[
-          dashboardWidget(
-            'diagram-embed',
-            'DiagramEmbed',
-            { fileId: previewFileId, caption: 'System context diagram' },
-            0,
-            0,
-            6,
-            4
-          )
-        ]}
-      />
-    </StoryProviders>
-  )
-};
-
-export const DashboardLarge: Story = {
+export const Default: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
       <DashboardStory
@@ -122,4 +104,9 @@ export const DashboardLarge: Story = {
       />
     </StoryProviders>
   )
+};
+
+export const WithFrame: Story = {
+  ...Default,
+  args: { showFrame: true }
 };

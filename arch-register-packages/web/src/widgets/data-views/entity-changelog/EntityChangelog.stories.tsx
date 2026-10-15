@@ -6,7 +6,8 @@ import {
   DashboardStory,
   StoryProviders,
   WORKSPACE,
-  dashboardWidget
+  dashboardWidget,
+  frameControls
 } from '../../shared/mdx/StorybookHarness';
 import { auditKeys } from '../../../queries/audit';
 
@@ -95,12 +96,13 @@ storyQueryClient.setQueryData(auditKeys.log(WORKSPACE, schemaQueryOptions), enti
 const meta = {
   title: 'Widgets/Data views/Entity changelog',
   tags: ['mdx', 'block', 'dashboard', 'workspace-surface', 'project-surface'],
+  ...frameControls,
   parameters: {
     layout: 'padded',
     docs: {
       description: {
         component:
-          'A feed of recent changes. Scope it to one entity with `entityId`, or to a set of entities by schema, owner and lifecycle; `since` and `limit` control the time window and the number of entries. Use it to answer "what has changed lately?" on an entity page or an overview. Available in wiki pages and on dashboards.'
+          'Wiki pages and dashboards (workspace and project): A feed of recent changes. Scope it to one entity with `entityId`, or to a set of entities by schema, owner and lifecycle; `since` and `limit` control the time window and the number of entries. Use it to answer "what has changed lately?" on an entity page or an overview.'
       }
     }
   }
@@ -109,7 +111,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const WikiEntityHistory: Story = {
+export const EntityHistory: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
       <EntityChangelog config={{ entityId, limit: '10' }} />
@@ -117,7 +119,7 @@ export const WikiEntityHistory: Story = {
   )
 };
 
-export const WikiSchemaHistory: Story = {
+export const SchemaHistory: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
       <EntityChangelog config={{ schema: 'service', limit: '10' }} />
@@ -125,7 +127,7 @@ export const WikiSchemaHistory: Story = {
   )
 };
 
-export const WikiNoFilter: Story = {
+export const NoFilter: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
       <EntityChangelog config={{}} />
@@ -133,7 +135,7 @@ export const WikiNoFilter: Story = {
   )
 };
 
-export const DashboardDefault: Story = {
+export const Default: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
       <DashboardStory
@@ -153,7 +155,7 @@ export const DashboardDefault: Story = {
   )
 };
 
-export const DashboardEmpty: Story = {
+export const Empty: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
       <DashboardStory
@@ -161,4 +163,9 @@ export const DashboardEmpty: Story = {
       />
     </StoryProviders>
   )
+};
+
+export const WithFrame: Story = {
+  ...Default,
+  args: { showFrame: true }
 };

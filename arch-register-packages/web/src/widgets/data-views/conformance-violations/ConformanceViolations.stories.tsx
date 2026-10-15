@@ -9,7 +9,8 @@ import {
   StoryProviders,
   WORKSPACE,
   createStoryQueryClient,
-  dashboardWidget
+  dashboardWidget,
+  frameControls
 } from '../../shared/mdx/StorybookHarness';
 import { conformanceKeys } from '../../../queries/conformance';
 
@@ -58,12 +59,13 @@ const entitiesWithGaps = (
 const meta = {
   title: 'Widgets/Data views/Conformance violations',
   tags: ['dashboard', 'workspace-surface'],
+  ...frameControls,
   parameters: {
     layout: 'padded',
     docs: {
       description: {
         component:
-          'Lists the entities of one schema that have active conformance violations, together with the checks they fail, worst first. Limit it to specific checks with `checkNames`, and cap the length with `limit`. Use it as a to-do list for data quality work on one entity type.'
+          'Workspace dashboards only: Lists the entities of one schema that have active conformance violations, together with the checks they fail, worst first. Limit it to specific checks with `checkNames`, and cap the length with `limit`. Use it as a to-do list for data quality work on one entity type.'
       }
     }
   }
@@ -147,4 +149,9 @@ export const UnknownSchema: Story = {
 
 export const NoAccess: Story = {
   render: () => renderDashboard(GAPS, {}, { canViewSchemas: false })
+};
+
+export const WithFrame: Story = {
+  ...WithGaps,
+  args: { showFrame: true }
 };

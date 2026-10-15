@@ -5,7 +5,8 @@ import {
   StoryProviders,
   WORKSPACE,
   dashboardWidget,
-  createStoryQueryClient
+  createStoryQueryClient,
+  frameControls
 } from '../../shared/mdx/StorybookHarness';
 import { entityKeys } from '../../../queries/entities';
 import { workspaceAnalyticsKeys } from '../../../queries/workspaceAnalytics';
@@ -69,12 +70,13 @@ storyQueryClient.setQueryData(entityKeys.list(WORKSPACE, staleQueryOptions), {
 const meta = {
   title: 'Widgets/Data views/Stale entity report',
   tags: ['dashboard', 'workspace-surface'],
+  ...frameControls,
   parameters: {
     layout: 'padded',
     docs: {
       description: {
         component:
-          'Lists entities that have not been updated for a while, oldest first, so that stale information can be found and refreshed. Use it as a maintenance list on a governance or ownership dashboard.'
+          'Workspace dashboards only: Lists entities that have not been updated for a while, oldest first, so that stale information can be found and refreshed. Use it as a maintenance list on a governance or ownership dashboard.'
       }
     }
   }
@@ -83,39 +85,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const DashboardDefault: Story = {
-  render: () => (
-    <StoryProviders client={storyQueryClient}>
-      <DashboardStory
-        widgets={[
-          dashboardWidget('stale-report', 'entity-stale-report', { staleAfterDays }, 0, 0, 3, 2)
-        ]}
-      />
-    </StoryProviders>
-  )
-};
-
-export const DashboardWide: Story = {
-  render: () => (
-    <StoryProviders client={storyQueryClient}>
-      <DashboardStory
-        widgets={[
-          dashboardWidget(
-            'stale-report-wide',
-            'entity-stale-report',
-            { staleAfterDays },
-            0,
-            0,
-            6,
-            4
-          )
-        ]}
-      />
-    </StoryProviders>
-  )
-};
-
-export const DashboardLarge: Story = {
+export const Default: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
       <DashboardStory
@@ -133,4 +103,9 @@ export const DashboardLarge: Story = {
       />
     </StoryProviders>
   )
+};
+
+export const WithFrame: Story = {
+  ...Default,
+  args: { showFrame: true }
 };

@@ -10,7 +10,7 @@ const meta = {
     docs: {
       description: {
         component:
-          'A small inline, coloured status label (chip) for use inside a sentence or a table cell, for example to flag something as Approved or Deprecated. The colour is optional and defaults to a neutral tone. Available in wiki pages only.'
+          'Wiki pages only: A small inline, coloured status label (chip) for use inside a sentence or a table cell, for example to flag something as Approved or Deprecated. The colour is optional and defaults to a neutral tone.'
       }
     }
   }
@@ -19,7 +19,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const WikiStatusLabels: Story = {
+export const StatusLabels: Story = {
   render: () => (
     <StoryProviders>
       <p>
@@ -31,7 +31,7 @@ export const WikiStatusLabels: Story = {
   )
 };
 
-export const WikiWithoutColor: Story = {
+export const WithoutColor: Story = {
   render: () => (
     <StoryProviders>
       <p>
@@ -41,7 +41,7 @@ export const WikiWithoutColor: Story = {
   )
 };
 
-export const WikiEmptyText: Story = {
+export const EmptyText: Story = {
   parameters: {
     docs: {
       description: {

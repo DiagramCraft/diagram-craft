@@ -9,7 +9,8 @@ import {
   StoryProviders,
   WORKSPACE,
   createStoryQueryClient,
-  dashboardWidget
+  dashboardWidget,
+  frameControls
 } from '../../shared/mdx/StorybookHarness';
 
 const QUERY = 'schema:"Contract"';
@@ -44,12 +45,13 @@ storyQueryClient.setQueryData(['entities', 'queryText', 'entities', WORKSPACE, Q
 const meta = {
   title: 'Widgets/Visualizations/Calendar',
   tags: ['dashboard', 'workspace-surface'],
+  ...frameControls,
   parameters: {
     layout: 'padded',
     docs: {
       description: {
         component:
-          'Places records on a month or week calendar by a date field. Each entry can show a sublabel and a value, whose sum is shown in the cell header, and entries turn orange or red as their date approaches. As an alternative to a query it can plot open governance cases by due date. Use it for renewals, reviews and deadlines.'
+          'Workspace dashboards only: Places records on a month or week calendar by a date field. Each entry can show a sublabel and a value, whose sum is shown in the cell header, and entries turn orange or red as their date approaches. As an alternative to a query it can plot open governance cases by due date. Use it for renewals, reviews and deadlines.'
       }
     }
   }
@@ -186,4 +188,9 @@ export const GovernanceCasesByDueWeek: Story = {
       />
     </StoryProviders>
   )
+};
+
+export const WithFrame: Story = {
+  ...MonthlyRenewals,
+  args: { showFrame: true }
 };

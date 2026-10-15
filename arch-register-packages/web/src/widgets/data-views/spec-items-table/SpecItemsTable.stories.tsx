@@ -5,7 +5,8 @@ import {
   StoryProviders,
   WORKSPACE,
   createStoryQueryClient,
-  dashboardWidget
+  dashboardWidget,
+  frameControls
 } from '../../shared/mdx/StorybookHarness';
 import { artifactKeys } from '../../../queries/artifacts';
 import { entityKeys } from '../../../queries/entities';
@@ -101,12 +102,13 @@ const renderDashboard = (config: Record<string, unknown> = {}, apis = APIS) => {
 const meta = {
   title: 'Widgets/Data views/Specification operations',
   tags: ['dashboard', 'workspace-surface'],
+  ...frameControls,
   parameters: {
     layout: 'padded',
     docs: {
       description: {
         component:
-          'Lists the operations and messages from the API specifications attached to the entities of one type, optionally only deprecated ones. Use it to get an overview of the API surface across systems, or to track down deprecated operations that consumers still depend on.'
+          'Workspace dashboards only: Lists the operations and messages from the API specifications attached to the entities of one type, optionally only deprecated ones. Use it to get an overview of the API surface across systems, or to track down deprecated operations that consumers still depend on.'
       }
     }
   }
@@ -129,4 +131,9 @@ export const NoSpecifications: Story = {
 
 export const UnknownSchema: Story = {
   render: () => renderDashboard({ schemaName: 'Nonexistent' })
+};
+
+export const WithFrame: Story = {
+  ...AllOperations,
+  args: { showFrame: true }
 };

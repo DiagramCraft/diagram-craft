@@ -7,7 +7,8 @@ import {
   StoryProviders,
   WORKSPACE,
   createStoryQueryClient,
-  dashboardWidget
+  dashboardWidget,
+  frameControls
 } from '../../shared/mdx/StorybookHarness';
 import { relationKeys } from '../../../queries/relations';
 
@@ -111,12 +112,13 @@ const renderDashboard = (
 const meta = {
   title: 'Widgets/Data views/Pair coverage',
   tags: ['dashboard', 'workspace-surface'],
+  ...frameControls,
   parameters: {
     layout: 'padded',
     docs: {
       description: {
         component:
-          'Checks coverage around a shared hub entity. Every provider and consumer pair attached to the hub is listed together with whether a chosen relation type connects the two, so missing links stand out as gaps. In `stat` mode it collapses to a single tile with the number of pairs that lack coverage. Use it to verify, for example, that every consumer of an API has a documented data flow to its provider.'
+          'Workspace dashboards only: Checks coverage around a shared hub entity. Every provider and consumer pair attached to the hub is listed together with whether a chosen relation type connects the two, so missing links stand out as gaps. In `stat` mode it collapses to a single tile with the number of pairs that lack coverage. Use it to verify, for example, that every consumer of an API has a documented data flow to its provider.'
       }
     }
   }
@@ -164,4 +166,9 @@ export const MissingRelationFields: Story = {
 
 export const UnknownCoverageRelation: Story = {
   render: () => renderDashboard({ coverageRelationSchemaName: 'Nonexistent' })
+};
+
+export const WithFrame: Story = {
+  ...LinkedGapAndNotApplicable,
+  args: { showFrame: true }
 };

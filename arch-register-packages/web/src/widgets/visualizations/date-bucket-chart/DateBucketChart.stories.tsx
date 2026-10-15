@@ -4,7 +4,8 @@ import {
   StoryProviders,
   WORKSPACE,
   createStoryQueryClient,
-  dashboardWidget
+  dashboardWidget,
+  frameControls
 } from '../../shared/mdx/StorybookHarness';
 
 const QUERY = 'schema:"Contract"';
@@ -39,12 +40,13 @@ storyQueryClient.setQueryData(['entities', 'queryText', 'entities', WORKSPACE, Q
 const meta = {
   title: 'Widgets/Visualizations/Date bar chart',
   tags: ['dashboard', 'workspace-surface'],
+  ...frameControls,
   parameters: {
     layout: 'padded',
     docs: {
       description: {
         component:
-          'A bar chart with one bar per month for a date field, showing either record counts or the sum of a number or currency field. Use it to see when renewals, expiries or reviews are concentrated. Overdue records can be folded into the current month, and months with something due soon are drawn in an urgent colour.'
+          'Workspace dashboards only: A bar chart with one bar per month for a date field, showing either record counts or the sum of a number or currency field. Use it to see when renewals, expiries or reviews are concentrated. Overdue records can be folded into the current month, and months with something due soon are drawn in an urgent colour.'
       }
     }
   }
@@ -97,4 +99,9 @@ export const RecordCounts: Story = {
       />
     </StoryProviders>
   )
+};
+
+export const WithFrame: Story = {
+  ...ContractCostByEndMonth,
+  args: { showFrame: true }
 };

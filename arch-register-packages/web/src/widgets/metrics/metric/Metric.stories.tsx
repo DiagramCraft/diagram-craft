@@ -5,7 +5,8 @@ import {
   DashboardStory,
   StoryProviders,
   WORKSPACE,
-  dashboardWidget
+  dashboardWidget,
+  frameControls
 } from '../../shared/mdx/StorybookHarness';
 import { entityKeys } from '../../../queries/entities';
 import { projectKeys } from '../../../queries/projectKeys';
@@ -13,12 +14,13 @@ import { projectKeys } from '../../../queries/projectKeys';
 const meta = {
   title: 'Widgets/Metrics/Metric',
   tags: ['mdx', 'block', 'dashboard', 'workspace-surface', 'project-surface'],
+  ...frameControls,
   parameters: {
     layout: 'padded',
     docs: {
       description: {
         component:
-          'A single live count, such as the number of entities, projects or diagrams, optionally filtered by schema, owner and lifecycle. Use it for a headline number. A link to the corresponding list can be shown below it. Available in wiki pages and on dashboards.'
+          'Wiki pages and dashboards (workspace and project): A single live count, such as the number of entities, projects or diagrams, optionally filtered by schema, owner and lifecycle. Use it for a headline number. A link to the corresponding list can be shown below it.'
       }
     }
   }
@@ -43,7 +45,7 @@ storyQueryClient.setQueryData(entityKeys.facets(WORKSPACE), {
   completeness: { below50: 2, below80: 3, above80: 5 }
 });
 
-export const WikiVariants: Story = {
+export const Variants: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16 }}>
@@ -56,7 +58,7 @@ export const WikiVariants: Story = {
   )
 };
 
-export const DashboardVariants: Story = {
+export const VariantTiles: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
       <DashboardStory
@@ -79,27 +81,7 @@ export const DashboardVariants: Story = {
   )
 };
 
-export const DashboardDefault: Story = {
-  render: () => (
-    <StoryProviders>
-      <DashboardStory
-        widgets={[dashboardWidget('default', 'Metric', { metricType: 'entity-count' }, 0, 0, 3, 2)]}
-      />
-    </StoryProviders>
-  )
-};
-
-export const DashboardWide: Story = {
-  render: () => (
-    <StoryProviders>
-      <DashboardStory
-        widgets={[dashboardWidget('wide', 'Metric', { metricType: 'entity-count' }, 0, 0, 6, 4)]}
-      />
-    </StoryProviders>
-  )
-};
-
-export const DashboardLarge: Story = {
+export const Default: Story = {
   render: () => (
     <StoryProviders>
       <DashboardStory
@@ -107,4 +89,9 @@ export const DashboardLarge: Story = {
       />
     </StoryProviders>
   )
+};
+
+export const WithFrame: Story = {
+  ...Default,
+  args: { showFrame: true }
 };

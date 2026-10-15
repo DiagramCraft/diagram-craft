@@ -4,7 +4,8 @@ import {
   StoryProviders,
   WORKSPACE,
   createStoryQueryClient,
-  dashboardWidget
+  dashboardWidget,
+  frameControls
 } from '../../shared/mdx/StorybookHarness';
 
 const QUERY = 'schema:"Contract"';
@@ -39,12 +40,13 @@ storyQueryClient.setQueryData(['entities', 'queryText', 'entities', WORKSPACE, Q
 const meta = {
   title: 'Widgets/Data views/Upcoming by date',
   tags: ['dashboard', 'workspace-surface'],
+  ...frameControls,
   parameters: {
     layout: 'padded',
     docs: {
       description: {
         component:
-          'Lists records ordered by an upcoming date, each with a countdown that turns orange and then red as the date approaches. Optionally show a sublabel and a value, restrict the list to a window of days, and include records that are already overdue. Use it for renewals, expiries and reviews that are due.'
+          'Workspace dashboards only: Lists records ordered by an upcoming date, each with a countdown that turns orange and then red as the date approaches. Optionally show a sublabel and a value, restrict the list to a window of days, and include records that are already overdue. Use it for renewals, expiries and reviews that are due.'
       }
     }
   }
@@ -79,4 +81,9 @@ export const ContractRenewals: Story = {
       />
     </StoryProviders>
   )
+};
+
+export const WithFrame: Story = {
+  ...ContractRenewals,
+  args: { showFrame: true }
 };
