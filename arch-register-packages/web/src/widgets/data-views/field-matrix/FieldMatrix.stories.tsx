@@ -46,7 +46,8 @@ const bands = [
 ];
 
 const meta = {
-  title: 'Dashboard Widgets/FieldMatrix',
+  title: 'Widgets/Data views/Field matrix',
+  tags: ['dashboard', 'workspace-surface', 'project-surface'],
   parameters: { layout: 'padded' }
 } satisfies Meta;
 

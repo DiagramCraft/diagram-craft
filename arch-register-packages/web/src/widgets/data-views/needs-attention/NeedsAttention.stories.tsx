@@ -20,7 +20,8 @@ const casesQuery = { status: 'open', subjectType: 'entity' } as const;
  * config (schema/case-kinds/scope/severity) rather than app-specific wiring.
  */
 const meta = {
-  title: 'Dashboard Widgets/NeedsAttention',
+  title: 'Widgets/Data views/Needs attention queue',
+  tags: ['dashboard', 'workspace-surface', 'project-surface'],
   parameters: { layout: 'padded' }
 } satisfies Meta;
 

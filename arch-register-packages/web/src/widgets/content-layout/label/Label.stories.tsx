@@ -3,7 +3,8 @@ import { Label } from './Label';
 import { StoryProviders } from '../../shared/mdx/StorybookHarness';
 
 const meta = {
-  title: 'MDX Inlines/Label',
+  title: 'Widgets/Content & layout/Label',
+  tags: ['mdx', 'inline'],
   parameters: {
     layout: 'padded'
   }

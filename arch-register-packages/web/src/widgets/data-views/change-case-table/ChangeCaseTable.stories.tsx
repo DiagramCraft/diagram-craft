@@ -30,7 +30,8 @@ const config = {
  * one schema, optionally narrowed to a status.
  */
 const meta = {
-  title: 'Dashboard Widgets/ChangeCaseTable',
+  title: 'Widgets/Data views/Change case table',
+  tags: ['dashboard', 'workspace-surface'],
   parameters: { layout: 'padded' }
 } satisfies Meta;
 

@@ -64,7 +64,8 @@ queryClient.setQueryData(
 );
 
 const meta = {
-  title: 'MDX Blocks/EntityViewEmbed',
+  title: 'Widgets/Data views/Saved view',
+  tags: ['mdx', 'block', 'dashboard', 'workspace-surface', 'project-surface'],
   parameters: {
     layout: 'padded'
   }

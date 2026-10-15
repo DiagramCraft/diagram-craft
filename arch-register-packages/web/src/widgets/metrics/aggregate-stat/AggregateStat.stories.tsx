@@ -24,7 +24,8 @@ storyQueryClient.setQueryData(
 );
 
 const meta = {
-  title: 'Dashboard Widgets/AggregateStat',
+  title: 'Widgets/Metrics/Aggregate stat',
+  tags: ['dashboard', 'workspace-surface', 'project-surface'],
   parameters: {
     layout: 'padded'
   }

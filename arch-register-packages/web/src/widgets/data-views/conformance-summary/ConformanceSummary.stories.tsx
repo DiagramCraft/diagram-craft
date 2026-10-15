@@ -39,7 +39,8 @@ const mixedResults: ConformanceSummary = {
 };
 
 const meta = {
-  title: 'Dashboard Widgets/ConformanceSummary',
+  title: 'Widgets/Data views/Conformance summary',
+  tags: ['dashboard', 'workspace-surface'],
   parameters: {
     layout: 'padded'
   }

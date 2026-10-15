@@ -56,7 +56,8 @@ const entitiesWithGaps = (
   );
 
 const meta = {
-  title: 'Dashboard Widgets/ConformanceViolations',
+  title: 'Widgets/Data views/Conformance violations',
+  tags: ['dashboard', 'workspace-surface'],
   parameters: { layout: 'padded' }
 } satisfies Meta;
 

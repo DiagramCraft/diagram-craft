@@ -26,7 +26,8 @@ const missingEntityQueryClient = createStoryQueryClient();
 missingEntityQueryClient.setQueryData(entityKeys.detail(WORKSPACE, 'entity-missing'), null);
 
 const meta = {
-  title: 'MDX Inlines/EntityMention',
+  title: 'Widgets/Data views/Entity mention',
+  tags: ['mdx', 'inline'],
   parameters: {
     layout: 'padded'
   }

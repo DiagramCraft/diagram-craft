@@ -26,7 +26,8 @@ const storyQueryClient = createStoryQueryClient();
 storyQueryClient.setQueryData(entityKeys.detail(WORKSPACE, entityId), entity);
 
 const meta = {
-  title: 'MDX Blocks/EntityCard',
+  title: 'Widgets/Data views/Entity card',
+  tags: ['mdx', 'block', 'dashboard', 'workspace-surface', 'project-surface'],
   parameters: {
     layout: 'padded'
   }

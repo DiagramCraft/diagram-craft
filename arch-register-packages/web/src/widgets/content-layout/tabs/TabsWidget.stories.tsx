@@ -2,7 +2,8 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { DashboardStory, StoryProviders, dashboardWidget } from '../../shared/mdx/StorybookHarness';
 
 const meta = {
-  title: 'Dashboard Widgets/Tabs',
+  title: 'Widgets/Content & layout/Tabs (Dashboard)',
+  tags: ['dashboard', 'workspace-surface', 'project-surface'],
   parameters: {
     layout: 'padded'
   }

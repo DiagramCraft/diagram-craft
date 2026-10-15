@@ -105,7 +105,8 @@ const renderDashboard = (
 };
 
 const meta = {
-  title: 'Dashboard Widgets/RelationPairsCoverage',
+  title: 'Widgets/Data views/Pair coverage',
+  tags: ['dashboard', 'workspace-surface'],
   parameters: { layout: 'padded' }
 } satisfies Meta;
 

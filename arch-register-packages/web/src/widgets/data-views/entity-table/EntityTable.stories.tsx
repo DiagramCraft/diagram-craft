@@ -58,7 +58,8 @@ queryClient.setQueryData(entityKeys.list(WORKSPACE, tableQueryOptions), {
 });
 
 const meta = {
-  title: 'MDX Blocks/EntityTable',
+  title: 'Widgets/Data views/Entity table',
+  tags: ['mdx', 'block', 'dashboard', 'workspace-surface', 'project-surface'],
   parameters: {
     layout: 'padded'
   }

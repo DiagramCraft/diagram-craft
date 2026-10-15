@@ -127,7 +127,8 @@ storyQueryClient.setQueryData(listKey('measure'), {
 });
 
 const meta = {
-  title: 'Dashboard Widgets/RelatedEntitiesList',
+  title: 'Widgets/Data views/Related entities',
+  tags: ['dashboard', 'workspace-surface'],
   parameters: {
     layout: 'padded'
   }

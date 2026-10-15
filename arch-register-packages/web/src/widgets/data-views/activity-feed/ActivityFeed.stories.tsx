@@ -64,7 +64,8 @@ const storyQueryClient = createStoryQueryClient();
 storyQueryClient.setQueryData(auditKeys.log(WORKSPACE, { limit: 15 }), auditEntries);
 
 const meta = {
-  title: 'Dashboard Widgets/ActivityFeed',
+  title: 'Widgets/Data views/Activity feed',
+  tags: ['dashboard', 'workspace-surface'],
   parameters: {
     layout: 'padded'
   }

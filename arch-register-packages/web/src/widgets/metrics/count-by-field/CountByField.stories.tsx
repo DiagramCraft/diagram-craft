@@ -53,7 +53,8 @@ storyQueryClient.setQueryData(entityKeys.list(WORKSPACE, { schemaId: 'objective'
 });
 
 const meta = {
-  title: 'Dashboard Widgets/CountByField',
+  title: 'Widgets/Metrics/Count by field',
+  tags: ['dashboard', 'workspace-surface'],
   parameters: {
     layout: 'padded'
   }
