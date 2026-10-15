@@ -15,8 +15,14 @@ export type DateCalendarCell<T> = {
   total?: { amount: number; currency?: string };
 };
 
-const MONTH_LABEL = new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric' });
-const WEEK_LABEL = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' });
+const MONTH_LABEL = new Intl.DateTimeFormat(undefined, {
+  month: 'long',
+  year: 'numeric'
+});
+const WEEK_LABEL = new Intl.DateTimeFormat(undefined, {
+  month: 'short',
+  day: 'numeric'
+});
 
 const pad = (value: number): string => String(value).padStart(2, '0');
 const dayKey = (date: Date): string =>
@@ -56,7 +62,11 @@ export const buildDateCalendar = <T extends Record<string, unknown>>(
     valueFieldId?: string;
     today?: Date;
   }
-): { cells: DateCalendarCell<T>[]; beyondCount: number; undatedCount: number } => {
+): {
+  cells: DateCalendarCell<T>[];
+  beyondCount: number;
+  undatedCount: number;
+} => {
   const today = options.today ?? new Date();
   const monthly = options.period === 'month';
   const startOfPeriod = monthly ? startOfMonth : startOfWeek;

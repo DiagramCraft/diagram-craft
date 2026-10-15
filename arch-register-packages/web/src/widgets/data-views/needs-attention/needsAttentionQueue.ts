@@ -75,7 +75,11 @@ export const useNeedsAttentionQueue = (
   workspaceSlug: string,
   { schemaId, caseKinds, scope }: NeedsAttentionQueueConfig,
   enabled = true
-): { items: NeedsAttentionQueueItem[]; isLoading: boolean; isError: boolean } => {
+): {
+  items: NeedsAttentionQueueItem[];
+  isLoading: boolean;
+  isError: boolean;
+} => {
   const now = useMemo(() => new Date(), []);
 
   const tasks = useGovernanceTasks(
@@ -89,10 +93,19 @@ export const useNeedsAttentionQueue = (
     enabled && !!schemaId && scope !== 'mine'
   );
 
-  const rawEntries: { case: GovernanceCase; assignment: GovernanceAssignment | null }[] =
+  const rawEntries: {
+    case: GovernanceCase;
+    assignment: GovernanceAssignment | null;
+  }[] =
     scope === 'mine'
-      ? (tasks.data ?? []).map(task => ({ case: task.case, assignment: task.assignment }))
-      : (cases.data ?? []).map(governanceCase => ({ case: governanceCase, assignment: null }));
+      ? (tasks.data ?? []).map(task => ({
+          case: task.case,
+          assignment: task.assignment
+        }))
+      : (cases.data ?? []).map(governanceCase => ({
+          case: governanceCase,
+          assignment: null
+        }));
 
   const relevant = rawEntries.filter(entry => isRelevantCase(entry.case, caseKinds));
   const scoped =
@@ -105,7 +118,10 @@ export const useNeedsAttentionQueue = (
   const entityById = new Map(entityIds.map((id, index) => [id, entityQueries[index]?.data]));
 
   const items: NeedsAttentionQueueItem[] = scoped
-    .map(entry => ({ ...entry, entity: entityById.get(entry.case.subjectId) }))
+    .map(entry => ({
+      ...entry,
+      entity: entityById.get(entry.case.subjectId)
+    }))
     .filter(
       (entry): entry is NeedsAttentionQueueItem =>
         entry.entity != null && entry.entity._schema?.id === schemaId

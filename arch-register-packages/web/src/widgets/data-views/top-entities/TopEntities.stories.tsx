@@ -6,7 +6,10 @@ import {
   createStoryQueryClient,
   dashboardWidget
 } from '../../shared/mdx/StorybookHarness';
+import type { EntitySchema } from '@arch-register/api-types/schemaContract';
+import type { RelationRecord } from '@arch-register/api-types/relationContract';
 import { entityKeys } from '../../../queries/entities';
+import { relationKeys } from '../../../queries/relations';
 
 const listOptions = {
   schemaId: 'risk',
@@ -24,7 +27,12 @@ storyQueryClient.setQueryData(entityKeys.list(WORKSPACE, listOptions), {
       _name: 'Unpatched edge gateway',
       residual_risk_score: 20
     },
-    { _uid: 'risk-2', _publicId: 'RISK-002', _name: 'Vendor data export', residual_risk_score: 12 },
+    {
+      _uid: 'risk-2',
+      _publicId: 'RISK-002',
+      _name: 'Vendor data export',
+      residual_risk_score: 12
+    },
     {
       _uid: 'risk-3',
       _publicId: 'RISK-003',
@@ -71,6 +79,86 @@ export const TopRisksByScore: Story = {
             0,
             4,
             4
+          )
+        ]}
+      />
+    </StoryProviders>
+  )
+};
+
+const API_SCHEMAS = [
+  {
+    id: 'story-api',
+    name: 'API',
+    icon: 'api',
+    entity_count: 3,
+    fields: [
+      {
+        id: 'consumers',
+        name: 'Consumed by',
+        type: 'typedRelation',
+        relationSchemaId: 'rs-consumes'
+      }
+    ]
+  }
+] as unknown as EntitySchema[];
+
+const consumption = (uid: string, apiId: string) =>
+  ({
+    _uid: uid,
+    _in: { id: `consumer-${uid}`, name: `Consumer ${uid}`, schemaId: 'system' },
+    _out: { id: apiId, name: apiId, schemaId: 'story-api' }
+  }) as unknown as RelationRecord;
+
+const apiClient = createStoryQueryClient();
+apiClient.setQueryData(
+  entityKeys.list(WORKSPACE, {
+    schemaId: 'story-api',
+    owner: undefined,
+    lifecycle: undefined,
+    limit: 500
+  }),
+  {
+    items: [
+      { _uid: 'api-orders', _publicId: 'API-001', _name: 'Orders API' },
+      { _uid: 'api-customers', _publicId: 'API-002', _name: 'Customers API' },
+      { _uid: 'api-legacy', _publicId: 'API-003', _name: 'Legacy API' }
+    ],
+    total: 3
+  }
+);
+const consumptions = [
+  consumption('1', 'api-orders'),
+  consumption('2', 'api-orders'),
+  consumption('3', 'api-orders'),
+  consumption('4', 'api-customers')
+];
+apiClient.setQueryData(relationKeys.list(WORKSPACE, { schemaId: 'rs-consumes', limit: 500 }), {
+  items: consumptions,
+  total: consumptions.length
+});
+
+/** Ranked by the number of relations in a typed-relation field rather than by a numeric field. */
+export const MostConsumedApis: Story = {
+  render: () => (
+    <StoryProviders client={apiClient} schemas={API_SCHEMAS}>
+      <DashboardStory
+        widgets={[
+          dashboardWidget(
+            'most-consumed',
+            'TopEntities',
+            {
+              schemaName: 'API',
+              relationFieldName: 'Consumed by',
+              direction: 'desc',
+              limit: 6,
+              showLink: false,
+              label: 'Most consumed APIs'
+            },
+            0,
+            0,
+            6,
+            8
           )
         ]}
       />

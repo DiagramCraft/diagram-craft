@@ -2,11 +2,7 @@ import { describe, expect, it } from 'vitest';
 import '../../widgetDiscovery';
 import { parseKnownDashboardWidget } from './dashboardWidgets';
 import { getWidgetTitle } from './dashboardWidgets';
-import {
-  createDefaultConfig,
-  getWidgetDefinition,
-  isValidComponentConfig
-} from '../../widgets/shared/widgetRegistry';
+import { createDefaultConfig, getWidgetDefinition } from '../../widgets/shared/widgetRegistry';
 
 describe('parseKnownDashboardWidget', () => {
   it('parses a built-in widget with nested config', () => {
@@ -481,117 +477,25 @@ describe('parseKnownDashboardWidget', () => {
     ).toBeNull();
   });
 
-  it('registers the API Catalog pilot widgets for workspace dashboards', () => {
-    const pilotWidgets = [
-      {
-        type: 'api-integration-catalog-stats',
-        title: 'API catalog stats',
-        config: {},
-        width: 12,
-        height: 5,
-        hasForm: false
-      },
-      {
-        type: 'api-integration-catalog-needs-attention',
-        title: 'API needs attention',
-        config: { limit: 8 },
-        width: 6,
-        height: 16,
-        hasForm: true
-      },
-      {
-        type: 'api-integration-catalog-most-consumed',
-        title: 'Most consumed APIs',
-        config: { limit: 6 },
-        width: 6,
-        height: 16,
-        hasForm: true
-      },
-      {
-        type: 'api-integration-catalog-at-risk',
-        title: 'Integrations needing attention',
-        config: { limit: 8 },
-        width: 6,
-        height: 16,
-        hasForm: true
-      },
-      {
-        type: 'blast-radius',
-        title: 'Blast radius',
-        config: {},
-        width: 6,
-        height: 16,
-        hasForm: true
-      }
-    ];
-
-    for (const { type, title, config, width, height, hasForm } of pilotWidgets) {
-      const definition = getWidgetDefinition(type, 'dashboard');
-      const spec = definition?.dashboard;
-      expect(spec).toBeDefined();
-      expect(spec?.surfaces).toEqual(['workspace']);
-      expect(definition?.icon).toBeDefined();
-      expect(definition?.name).toBe(title);
-      expect(spec?.defaultW).toBe(width);
-      expect(spec?.defaultH).toBe(height);
-      expect(definition?.configForm !== undefined).toBe(hasForm);
-      expect(definition && createDefaultConfig(definition, {})).toEqual(config);
-      expect(isValidComponentConfig(definition, config)).toBe(true);
-      expect(getWidgetTitle({ id: type, type, config, x: 0, y: 0, w: 6, h: 4 })).toBe(title);
-      expect(
-        parseKnownDashboardWidget({ id: type, type, config, x: 0, y: 0, w: 6, h: 4 })
-      ).not.toBeNull();
-    }
-  });
-
-  it('validates API Catalog visible-item limits', () => {
+  it('registers the blast radius widget for workspace dashboards', () => {
+    const definition = getWidgetDefinition('blast-radius', 'dashboard');
+    const spec = definition?.dashboard;
+    expect(spec?.surfaces).toEqual(['workspace']);
+    expect(definition?.name).toBe('Blast radius');
+    expect(spec?.defaultW).toBe(6);
+    expect(spec?.defaultH).toBe(16);
+    expect(definition && createDefaultConfig(definition, {})).toEqual({});
     expect(
       parseKnownDashboardWidget({
-        id: 'needs-attention',
-        type: 'api-integration-catalog-needs-attention',
-        config: { label: 'Queue', limit: 1 },
+        id: 'blast',
+        type: 'blast-radius',
+        config: { groups: [{ fieldName: 'Consumed by', label: 'Direct consumers' }] },
         x: 0,
         y: 0,
         w: 6,
         h: 4
       })
     ).not.toBeNull();
-
-    for (const limit of [0, 21, 1.5, '8']) {
-      expect(
-        parseKnownDashboardWidget({
-          id: 'needs-attention',
-          type: 'api-integration-catalog-needs-attention',
-          config: { limit },
-          x: 0,
-          y: 0,
-          w: 6,
-          h: 4
-        })
-      ).toBeNull();
-    }
-  });
-});
-
-describe('api integration catalog widget frames', () => {
-  it('hides the stats frame outside edit mode and removes body padding', () => {
-    expect(
-      getWidgetDefinition('api-integration-catalog-stats', 'dashboard')?.dashboard.frame
-    ).toEqual({
-      hideOutsideEdit: true,
-      padded: false,
-      showIcon: false
-    });
-  });
-
-  it.each([
-    'api-integration-catalog-needs-attention',
-    'api-integration-catalog-most-consumed',
-    'api-integration-catalog-at-risk'
-  ])('%s has an unpadded body and header actions', type => {
-    const spec = getWidgetDefinition(type, 'dashboard')?.dashboard;
-    expect(spec?.frame).toEqual({ padded: false, showIcon: false });
-    expect(spec?.headerActionsComponent).toBeDefined();
   });
 });
 

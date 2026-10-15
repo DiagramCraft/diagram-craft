@@ -1,4 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import type { EntityRecord } from '@arch-register/api-types/entityContract';
+import type { GovernanceCase } from '@arch-register/api-types/governanceContract';
+import type { EntitySchema } from '@arch-register/api-types/schemaContract';
+import { entityDetailQuery } from '../../../queries/entities';
+import { governanceCasesQuery } from '../../../queries/governance';
 import {
   DashboardStory,
   StoryProviders,
@@ -80,11 +85,86 @@ export const WeeklyReviews: Story = {
           dashboardWidget(
             'renewals-calendar-weeks',
             'DateCalendar',
-            { query: QUERY, dateFieldId: 'contract_end', period: 'week', periodCount: 6 },
+            {
+              query: QUERY,
+              dateFieldId: 'contract_end',
+              period: 'week',
+              periodCount: 6
+            },
             0,
             0,
             12,
             20
+          )
+        ]}
+      />
+    </StoryProviders>
+  )
+};
+
+const daysFromNow = (days: number): string =>
+  new Date(Date.now() + days * 86_400_000).toISOString();
+
+const caseClient = createStoryQueryClient();
+const governanceCases = [
+  ['case-1', 'entity.change-case', -2],
+  ['case-2', 'entity.deprecation', 4],
+  ['case-3', 'entity.change-case', 12],
+  ['case-4', 'entity.change-case', 25]
+].map(([id, caseKind, days], index) => ({
+  id,
+  caseKind,
+  subjectType: 'entity',
+  subjectId: `dataset-${index}`,
+  status: 'open',
+  payload: {},
+  dueAt: daysFromNow(days as number)
+})) as unknown as GovernanceCase[];
+caseClient.setQueryData(
+  governanceCasesQuery(WORKSPACE, { status: 'open', subjectType: 'entity' }).queryKey,
+  governanceCases
+);
+governanceCases.forEach((governanceCase, index) =>
+  caseClient.setQueryData(entityDetailQuery(WORKSPACE, governanceCase.subjectId).queryKey, {
+    _uid: governanceCase.subjectId,
+    _publicId: `DATA-00${index}`,
+    _name: ['Customer master', 'Order history', 'Product catalogue', 'Payment events'][index],
+    _schema: { id: 'story-data-entity', name: 'Data Entity' }
+  } as unknown as EntityRecord)
+);
+
+const DATA_ENTITY_SCHEMAS = [
+  {
+    id: 'story-data-entity',
+    name: 'Data Entity',
+    icon: 'database',
+    entity_count: 4,
+    fields: []
+  }
+] as unknown as EntitySchema[];
+
+/** Open governance cases placed on a six-week calendar by due date; overdue folds into this week. */
+export const GovernanceCasesByDueWeek: Story = {
+  render: () => (
+    <StoryProviders client={caseClient} schemas={DATA_ENTITY_SCHEMAS}>
+      <DashboardStory
+        widgets={[
+          dashboardWidget(
+            'case-calendar',
+            'DateCalendar',
+            {
+              cases: {
+                schemaName: 'Data Entity',
+                caseKinds: ['entity.change-case', 'entity.deprecation'],
+                scope: 'workspace'
+              },
+              period: 'week',
+              periodCount: 6
+            },
+            0,
+            0,
+            12,
+            14
           )
         ]}
       />

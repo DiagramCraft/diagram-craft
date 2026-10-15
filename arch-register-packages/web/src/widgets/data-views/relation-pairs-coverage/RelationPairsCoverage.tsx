@@ -5,14 +5,18 @@ import { Table } from '../../../components/table/Table';
 import { useTableSort } from '../../../components/table/useTableSort';
 import { useRelations } from '../../../hooks/useRelations';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
+import { useWidgetBodyTitle } from '../../shared/dashboard/WidgetBodyTitle';
 import {
+  computeRelationPairCoverage,
   computeRelationPairs,
   resolveTypedRelationSchemaId,
   type RelationPair
 } from './relationPairCoverageLogic';
+import styles from './RelationPairsCoverage.module.css';
 import { RelationPairsCoverageWidgetConfig } from './types';
 
 const WARN = 'var(--cmp-fg-warning, #eab308)';
+const DANGER = 'var(--cmp-fg-danger, #ef4444)';
 
 const RELATION_LIMIT = 500;
 
@@ -29,6 +33,7 @@ export const RelationPairsCoverageWidget = ({
 }: {
   config: RelationPairsCoverageWidgetConfig;
 }) => {
+  const title = useWidgetBodyTitle();
   const { workspaceSlug, schemas, relationSchemas } = useWorkspaceContext();
   const hubSchema = schemas.find(candidate => candidate.name === config.hubSchemaName);
   const providerSchemaId = resolveTypedRelationSchemaId(hubSchema, config.providerFieldName);
@@ -82,6 +87,20 @@ export const RelationPairsCoverageWidget = ({
   }
 
   const isLoading = providers.isLoading || consumers.isLoading || coverage.isLoading;
+  if (config.display === 'stat') {
+    const summary = computeRelationPairCoverage(pairs);
+    return (
+      <div className={styles.tile}>
+        <div className={styles.label}>{title ?? 'Coverage gaps'}</div>
+        <div className={styles.value} style={summary.gapPairs > 0 ? { color: DANGER } : undefined}>
+          {isLoading ? '…' : summary.gapPairs}
+        </div>
+        <div className={styles.sub}>
+          {summary.coveredPairs} of {summary.applicablePairs} covered
+        </div>
+      </div>
+    );
+  }
   return (
     <Table.Root scroll stickyHeader bordered={false}>
       <Table.Head>

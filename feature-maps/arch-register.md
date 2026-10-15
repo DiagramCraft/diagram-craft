@@ -151,6 +151,11 @@
           with per-assessment progress, due date and status.
           A "Blast radius" widget can be added to workspace dashboards: users pick an entity in the widget's
           configuration and it shows the same depth- and owner-filterable blast-radius list as the entity detail tab.
+          The widget can also be configured with named typed-relation fields (for example Providers and Direct
+          consumers) to show one column per field plus a second-order column. A "Case count" widget shows the number
+          of open governance cases against a chosen entity type, filtered by case kind and scope, and the "Pair
+          coverage", "Top entities" and "Date calendar" widgets can respectively show a compact gap-count tile, rank
+          entities by their number of related records, and place governance cases on the calendar by due date.
 
         - @id:ar.workspace.home.personal-dashboards Any workspace member can optionally create one or more personal
           dashboards for themselves, separate from the shared workspace dashboard (s). Personal dashboards are listed
@@ -545,7 +550,7 @@
         - @id:ar.data-stewardship.my-work The My work section (the app switcher's landing section) is the review
           queue over the workspace's existing governance-case/reminder machinery — not a new queue model — scoped
           down to cases against Data Entities. The section renders a seeded, user-editable app dashboard (`data-stewardship`,
-          full-width, no sidebar) built from Data Stewardship widgets: a four-tile stat strip (Assigned to me, Past
+          full-width, no sidebar) built from generic dashboard widgets configured for Data Entities: a four-tile stat strip (Assigned to me, Past
           due, Cases awaiting a decision, Reviews overdue — substituting the design reference's "Exceptions lapsed or
           expiring" stat, since there is no exception/waiver register in this application), a six-week due-date
           calendar (weekly buckets, an already-overdue item folded into the current week rather than dropped off the

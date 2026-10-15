@@ -19,7 +19,13 @@ describe('buildDateCalendar', () => {
         rec('d', '2030-01-01'),
         rec('e', undefined)
       ],
-      { dateFieldId: 'due', period: 'month', periodCount: 3, valueFieldId: 'cost', today }
+      {
+        dateFieldId: 'due',
+        period: 'month',
+        periodCount: 3,
+        valueFieldId: 'cost',
+        today
+      }
     );
     expect(cells.map(cell => cell.records.map(r => r._uid))).toEqual([['a', 'b'], [], ['c']]);
     expect(cells[0]!.current).toBe(true);
