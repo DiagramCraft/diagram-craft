@@ -85,7 +85,11 @@ export const RiskMatrixWidget = ({ config }: Props) => {
   );
 
   if (!schema) {
-    return <div className={`${styles.emptyInline} dim`}>This widget is not fully configured.</div>;
+    return (
+      <div className={`${styles.emptyInline} dim`}>
+        Schema "{config.schemaName}" was not found in this workspace.
+      </div>
+    );
   }
   if (isLoading) {
     return <div className={`${styles.emptyInline} dim`}>Loading risks…</div>;
