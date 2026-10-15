@@ -8,6 +8,7 @@ import type {
   ConfigSchema,
   DashboardWidgetSpec,
   DefaultConfigContext,
+  MdxComponentFactory,
   MdxComponentRegistrationDef,
   MdxComponentSpec,
   MdxMode
@@ -52,7 +53,7 @@ export type ComponentRegistration<
   // biome-ignore lint/suspicious/noExplicitAny: component config types are erased in the registry
   configForm?: React.ComponentType<any>;
   /** Present when this component can be authored in wiki content. */
-  mdxComponent?: MdxComponentRegistrationDef<E, Mode>;
+  mdxComponent?: MdxComponentRegistrationDef<E, Mode> | MdxComponentFactory;
   /** Present when this component can be added as a dashboard widget; requires `configSchema`. */
   dashboardWidget?: DashboardWidgetRegistrationDef<z.infer<Schema>>;
   /**
@@ -100,7 +101,11 @@ export function defineComponent<
   Schema extends ConfigSchema = ConfigSchema
 >(def: ComponentRegistration<E, Mode, Schema>): ComponentDefinition {
   const { type, name, description, category, icon, component, configForm, configDialog } = def;
-  const { mdxComponent, dashboardWidget, configSchema } = def;
+  const { dashboardWidget, configSchema } = def;
+  const mdxComponent =
+    typeof def.mdxComponent === 'function'
+      ? (def.mdxComponent(type) as MdxComponentRegistrationDef<E, Mode>)
+      : def.mdxComponent;
 
   if ((dashboardWidget || mdxComponent?.editorSpec?.slashCommand) && !icon) {
     throw new Error(`Component "${type}" must define an icon for its catalog entry`);
@@ -122,7 +127,11 @@ export function defineComponent<
     ...(configSchema ? { configSchema } : {}),
     ...(configForm ? { configForm } : {}),
     ...(configDialog ? { configDialog } : {}),
-    ...(mdxComponent ? { mdx: toMdxSpec(mdxComponent, name, description) } : {}),
+    ...(mdxComponent
+      ? {
+          mdx: toMdxSpec(mdxComponent, name, description)
+        }
+      : {}),
     ...(dashboardWidget
       ? { dashboardWidget: { ...dashboardWidget, label: name, description } }
       : {})

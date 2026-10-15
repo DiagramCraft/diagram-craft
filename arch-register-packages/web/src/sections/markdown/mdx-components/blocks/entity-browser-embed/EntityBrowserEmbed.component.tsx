@@ -24,7 +24,6 @@ export default defineComponent({
   configForm: EntityBrowserEmbedConfigForm,
   icon: TbListSearch,
   mdxComponent: configBlockMdx({
-    type: 'EntityBrowserEmbed',
     codec: entityBrowserEmbedCodec.codec,
     placeholder: 'Configure an entity browser…',
     fullWidth: true,

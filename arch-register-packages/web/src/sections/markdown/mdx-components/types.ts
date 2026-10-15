@@ -167,6 +167,12 @@ export type MdxComponentRegistrationDef<
 };
 
 /**
+ * MDX registration that depends on the owning component's `type` (the JSX element name), which
+ * `defineComponent` supplies.
+ */
+export type MdxComponentFactory = (type: string) => MdxComponentRegistrationDef;
+
+/**
  * MDX registration as stored in the registry. The element type is erased (`any`) because the
  * registry holds components with different Slate elements.
  */

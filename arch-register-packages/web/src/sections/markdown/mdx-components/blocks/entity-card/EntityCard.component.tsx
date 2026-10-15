@@ -22,7 +22,6 @@ export default defineComponent({
   configForm: EntityCardConfigForm,
   icon: TbId,
   mdxComponent: configBlockMdx({
-    type: 'EntityCard',
     codec: flatConfigCodec(entityCardWidgetConfigSchema, { attributeNames: { entityId: 'id' } }),
     placeholder: 'Choose entity…',
     keywords: ['entity', 'card', 'catalog', 'service']

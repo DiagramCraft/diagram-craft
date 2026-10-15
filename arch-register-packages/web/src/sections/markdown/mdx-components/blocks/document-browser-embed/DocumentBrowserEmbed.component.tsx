@@ -23,7 +23,6 @@ export default defineComponent({
   configForm: DocumentBrowserEmbedConfigForm,
   icon: TbFileSearch,
   mdxComponent: configBlockMdx({
-    type: 'DocumentBrowserEmbed',
     codec: documentBrowserEmbedCodec.codec,
     placeholder: 'Configure a document browser…',
     fullWidth: true,

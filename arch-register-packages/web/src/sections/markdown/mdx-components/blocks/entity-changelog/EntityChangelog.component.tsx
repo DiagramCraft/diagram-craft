@@ -22,7 +22,6 @@ export default defineComponent({
   configForm: EntityChangelogConfigForm,
   icon: TbHistory,
   mdxComponent: configBlockMdx({
-    type: 'EntityChangelog',
     codec: flatConfigCodec(entityChangelogWidgetConfigSchema, {
       attributeNames: { entityId: 'id' }
     }),
