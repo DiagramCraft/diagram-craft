@@ -8,7 +8,7 @@ import {
 
 // Mock a representative registry slice so these tests exercise wrapper and mode
 // behavior without loading every component registration.
-vi.mock('../mdx-components/componentRegistry', () => {
+vi.mock('../mdx-components/widgetRegistry', () => {
   const definitions = [
     { type: 'Caption', mdx: { mode: 'block', acceptsChildren: true } },
     { type: 'ImageEmbed', mdx: { mode: 'block' } },
@@ -16,13 +16,13 @@ vi.mock('../mdx-components/componentRegistry', () => {
     { type: 'EntityField', mdx: { mode: 'inline' } }
   ];
   return {
-    getComponentDefinitions: () => definitions,
-    getComponentDefinition: (type: string) =>
+    getWidgetDefinitions: () => definitions,
+    getWidgetDefinition: (type: string) =>
       definitions.find(definition => definition.type === type)
   };
 });
 
-const { getComponentDefinitions } = await import('../mdx-components/componentRegistry');
+const { getWidgetDefinitions } = await import('../mdx-components/widgetRegistry');
 
 vi.mock('@platejs/markdown', () => ({
   serializeMd: vi.fn(() => 'serialized-md'),
@@ -189,7 +189,7 @@ describe('pasteBlockFromClipboard', () => {
 });
 
 describe('wrapper/non-wrapper classification', () => {
-  const definitions = getComponentDefinitions('mdx');
+  const definitions = getWidgetDefinitions('mdx');
 
   it('Caption is the only wrapper (acceptsChildren: true)', () => {
     const wrapperTypes = definitions

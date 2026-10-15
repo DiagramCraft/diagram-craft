@@ -1,5 +1,5 @@
 import './tokens.css';
-import './componentDiscovery';
+import './widgetDiscovery';
 import { applyTheme, migrateTheme } from './hooks/useTheme';
 
 // Apply saved theme immediately to avoid flash of wrong theme

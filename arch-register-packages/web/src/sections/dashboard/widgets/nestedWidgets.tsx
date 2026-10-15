@@ -4,7 +4,7 @@ import type { WidgetSurface } from '../../markdown/mdx-components/types';
 
 /**
  * Late-bound access to the widget renderer and tab-contents editor for container widgets (Tabs).
- * A container is itself registered through `componentDiscovery`, and rendering or editing its
+ * A container is itself registered through `widgetDiscovery`, and rendering or editing its
  * children needs `DashboardWidgetRenderer` / `TabContentsEditor` back, so importing them directly
  * would form an import cycle. They register themselves here when loaded.
  */

@@ -1,11 +1,11 @@
-import '../../componentDiscovery';
+import '../../widgetDiscovery';
 import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
 import { GENERIC_STARTER_DASHBOARD_WIDGETS } from '@arch-register/api-types/dashboardWidgetSeeds';
 import {
   createDefaultConfig,
-  getComponentDefinition,
+  getWidgetDefinition,
   isValidComponentConfig
-} from '../markdown/mdx-components/componentRegistry';
+} from '../markdown/mdx-components/widgetRegistry';
 
 export type KnownDashboardWidget = DashboardWidget & { config: Record<string, unknown> };
 
@@ -13,7 +13,7 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
 export const parseKnownDashboardWidget = (widget: DashboardWidget): KnownDashboardWidget | null => {
-  const definition = getComponentDefinition(widget.type, 'dashboardWidget');
+  const definition = getWidgetDefinition(widget.type, 'dashboard');
   if (
     !definition ||
     !isRecord(widget.config) ||
@@ -25,9 +25,9 @@ export const parseKnownDashboardWidget = (widget: DashboardWidget): KnownDashboa
 };
 
 export const getWidgetTitle = (widget: KnownDashboardWidget): string => {
-  const definition = getComponentDefinition(widget.type, 'dashboardWidget');
+  const definition = getWidgetDefinition(widget.type, 'dashboard');
   if (!definition) return 'Widget';
-  return definition.dashboardWidget.getTitle?.(widget.config) ?? definition.name;
+  return definition.dashboard.getTitle?.(widget.config) ?? definition.name;
 };
 
 const nextRowY = (widgets: DashboardWidget[]): number =>
@@ -38,8 +38,8 @@ export const createDefaultWidget = (
   widgets: DashboardWidget[],
   viewId?: string
 ): DashboardWidget => {
-  const definition = getComponentDefinition(type, 'dashboardWidget')!;
-  const dashboardWidget = definition.dashboardWidget;
+  const definition = getWidgetDefinition(type, 'dashboard')!;
+  const dashboardWidget = definition.dashboard;
   const id = `widget-${crypto.randomUUID()}`;
   return {
     id,

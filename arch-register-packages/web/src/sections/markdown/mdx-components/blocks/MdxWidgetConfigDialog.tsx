@@ -8,9 +8,9 @@ import { useMdxContext } from '../../MdxContext';
 import { getConfigDialogWidth } from '../configDialog';
 import {
   createDefaultConfig,
-  getComponentDefinition,
+  getWidgetDefinition,
   isValidComponentConfig
-} from '../componentRegistry';
+} from '../widgetRegistry';
 
 export type MdxConfigSpec<E extends TElement, Config extends Record<string, unknown>> = {
   /** Reads the element's config; `defaults` fills in anything the element doesn't carry. */
@@ -36,7 +36,7 @@ export const MdxWidgetConfigDialog = <E extends TElement, Config extends Record<
   const editor = useEditorRef();
   const { workspaceSlug } = useWorkspaceContext();
   const { projectId } = useMdxContext();
-  const definition = getComponentDefinition(element.type);
+  const definition = getWidgetDefinition(element.type);
 
   const [config, setConfig] = useState<Config>(() => {
     if (!definition?.configSchema) {

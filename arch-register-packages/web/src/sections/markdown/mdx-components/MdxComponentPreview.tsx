@@ -1,5 +1,5 @@
 import type { ComponentType, ReactNode } from 'react';
-import { createDefaultConfig, getComponentDefinition } from './componentRegistry';
+import { createDefaultConfig, getWidgetDefinition } from './widgetRegistry';
 
 type Props = {
   type: string;
@@ -9,7 +9,7 @@ type Props = {
 
 /** Applies the MDX surface adapter before rendering the shared component. */
 export const MdxComponentPreview = ({ type, props, children }: Props) => {
-  const definition = getComponentDefinition(type, 'mdx');
+  const definition = getWidgetDefinition(type, 'mdx');
   if (!definition) return null;
 
   const Component = definition.component as ComponentType<

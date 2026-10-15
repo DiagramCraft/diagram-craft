@@ -7,9 +7,9 @@ import { TbChevronDown, TbChevronUp, TbGripVertical, TbTrash } from 'react-icons
 import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
 import {
-  getComponentDefinition,
-  getComponentDefinitions
-} from '../mdx-components/componentRegistry';
+  getWidgetDefinition,
+  getWidgetDefinitions
+} from '../mdx-components/widgetRegistry';
 import { useCancellableTimeout } from '../../../hooks/useCancellableTimeout';
 import styles from './EditorBlock.module.css';
 
@@ -223,7 +223,7 @@ const BlockContextMenu = ({
   extraItems?: (onClose: () => void) => React.ReactNode;
 }) => {
   const editor = useEditorRef();
-  const mdxDefinitions = getComponentDefinitions('mdx');
+  const mdxDefinitions = getWidgetDefinitions('mdx');
   const { schedule } = useCancellableTimeout();
 
   const currentIdx = () => {
@@ -234,7 +234,7 @@ const BlockContextMenu = ({
   const blockType = element.type as string;
   const isConvertible = CONVERTIBLE_TYPES.has(blockType);
 
-  const currentSpec = getComponentDefinition(blockType, 'mdx')?.mdx;
+  const currentSpec = getWidgetDefinition(blockType, 'mdx')?.mdx;
   const isWrapperBlock = !!currentSpec?.acceptsChildren;
   const isNonWrapperMdxBlock =
     !!currentSpec && currentSpec.mode === 'block' && !currentSpec.acceptsChildren;
@@ -330,7 +330,7 @@ const BlockContextMenu = ({
   const handleWrapWith = (wrapperType: string) => {
     const idx = currentIdx();
     if (idx !== null) {
-      const wrapperSpec = getComponentDefinition(wrapperType, 'mdx')?.mdx;
+      const wrapperSpec = getWidgetDefinition(wrapperType, 'mdx')?.mdx;
       const createWrapper =
         wrapperSpec?.editorSpec?.createWrapper ??
         ((child: TElement) => ({ type: wrapperType, children: [child] }));

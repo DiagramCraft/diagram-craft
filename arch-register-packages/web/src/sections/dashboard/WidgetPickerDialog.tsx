@@ -5,12 +5,12 @@ import { useSavedViews } from '../../hooks/useSavedViews';
 import { useMdxContext } from '../markdown/MdxContext';
 import { createDefaultWidget } from './dashboardWidgets';
 import type { WidgetSurface } from '../markdown/mdx-components/types';
-import { getComponentDefinitions } from '../markdown/mdx-components/componentRegistry';
+import { getWidgetDefinitions } from '../markdown/mdx-components/widgetRegistry';
 import {
-  COMPONENT_CATEGORIES,
-  type ComponentCategory,
+  WIDGET_CATEGORIES,
+  type WidgetCategory,
   matchesCatalogSearch
-} from '../markdown/mdx-components/componentCategories';
+} from '../markdown/mdx-components/widgetCategories';
 import { WikiPagePicker } from './widgets/WikiPagePicker';
 import styles from './WidgetPickerDialog.module.css';
 
@@ -38,7 +38,7 @@ export const WidgetPickerDialog = ({
   const [selectedViewId, setSelectedViewId] = useState('');
   const [selectedWikiPageId, setSelectedWikiPageId] = useState('');
   const [search, setSearch] = useState('');
-  const [activeCategory, setActiveCategory] = useState<ComponentCategory | 'all'>('all');
+  const [activeCategory, setActiveCategory] = useState<WidgetCategory | 'all'>('all');
 
   const { projectId } = useMdxContext();
   const { data: savedViews = [] } = useSavedViews(workspaceSlug, {
@@ -47,8 +47,8 @@ export const WidgetPickerDialog = ({
   });
   const matching = useMemo(
     () =>
-      getComponentDefinitions('dashboardWidget')
-        .map(({ type, category, name, description, keywords, dashboardWidget: spec }) => ({
+      getWidgetDefinitions('dashboard')
+        .map(({ type, category, name, description, keywords, dashboard: spec }) => ({
           type,
           category,
           spec,
@@ -65,9 +65,9 @@ export const WidgetPickerDialog = ({
         .sort((a, b) => a.label.localeCompare(b.label)),
     [surface, exclude, search]
   );
-  const countByCategory = (category: ComponentCategory) =>
+  const countByCategory = (category: WidgetCategory) =>
     matching.filter(widget => widget.category === category).length;
-  const availableCategories = COMPONENT_CATEGORIES.filter(category =>
+  const availableCategories = WIDGET_CATEGORIES.filter(category =>
     matching.some(widget => widget.category === category.id)
   );
   const visible =

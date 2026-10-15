@@ -6,12 +6,12 @@ import type { PlateElementProps } from 'platejs/react';
 import type { TElement } from 'platejs';
 import { toggleList } from '@platejs/list';
 import { getNodeText } from './EditorBlock';
-import { getComponentDefinitions } from '../mdx-components/componentRegistry';
+import { getWidgetDefinitions } from '../mdx-components/widgetRegistry';
 import {
-  COMPONENT_CATEGORIES,
-  type ComponentCategory,
+  WIDGET_CATEGORIES,
+  type WidgetCategory,
   matchesCatalogSearch
-} from '../mdx-components/componentCategories';
+} from '../mdx-components/widgetCategories';
 import styles from './PlateMarkdownEditor.module.css';
 
 type PlateEditor = ReturnType<typeof useEditorRef>;
@@ -69,7 +69,7 @@ export type SlashCommandItem = {
   icon: ReactNode;
   keywords?: string[];
   /** Shared catalog category shown above the item in the menu. */
-  category: ComponentCategory;
+  category: WidgetCategory;
   onSelect: (editor: PlateEditor) => void;
 };
 
@@ -241,7 +241,7 @@ export const BUILTIN_SLASH_COMMANDS: SlashCommandItem[] = [
 
 // MDX component slash commands are read from the same categorized definitions
 // as dashboard widgets.
-export const MDX_SLASH_COMMANDS: SlashCommandItem[] = getComponentDefinitions('mdx').flatMap(
+export const MDX_SLASH_COMMANDS: SlashCommandItem[] = getWidgetDefinitions('mdx').flatMap(
   definition => {
     const cmd = definition.mdx.editorSpec?.slashCommand;
     const Icon = definition.icon;
@@ -265,7 +265,7 @@ export const MDX_SLASH_COMMANDS: SlashCommandItem[] = getComponentDefinitions('m
   }
 );
 
-export const SLASH_COMMANDS: SlashCommandItem[] = COMPONENT_CATEGORIES.flatMap(category => [
+export const SLASH_COMMANDS: SlashCommandItem[] = WIDGET_CATEGORIES.flatMap(category => [
   ...BUILTIN_SLASH_COMMANDS.filter(command => command.category === category.id),
   ...MDX_SLASH_COMMANDS.filter(command => command.category === category.id)
 ]);
@@ -419,7 +419,7 @@ export const SlashInputElement = ({ element, children, ...props }: PlateElementP
               <Fragment key={cmd.key}>
                 {cmd.category !== filteredCommands[i - 1]?.category && (
                   <div className={styles.slashGroupHeading}>
-                    {COMPONENT_CATEGORIES.find(category => category.id === cmd.category)?.label}
+                    {WIDGET_CATEGORIES.find(category => category.id === cmd.category)?.label}
                   </div>
                 )}
                 <button

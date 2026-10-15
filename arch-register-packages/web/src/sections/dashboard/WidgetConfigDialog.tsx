@@ -3,15 +3,15 @@ import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
 import type {
-  DashboardWidgetComponentDefinition,
+  DashboardWidgetWidgetDefinition,
   WidgetSurface
 } from '../markdown/mdx-components/types';
 import { DialogContent, DialogSection } from '../markdown/editor/BlockDialog';
 import { getConfigDialogWidth } from '../markdown/mdx-components/configDialog';
 import {
-  getComponentDefinition,
+  getWidgetDefinition,
   isValidComponentConfig
-} from '../markdown/mdx-components/componentRegistry';
+} from '../markdown/mdx-components/widgetRegistry';
 import type { DashboardWidgetFrame } from '@arch-register/api-types/dashboardContract';
 import { WidgetFrameSettingsForm } from './widgets/WidgetFrameSettingsForm';
 import { defaultShowFrame, normalizeFrame } from './widgets/widgetFrameSettings';
@@ -33,7 +33,7 @@ export const WidgetConfigDialog = ({
   onSave
 }: Props) => {
   if (!widget) return null;
-  const definition = getComponentDefinition(widget.type, 'dashboardWidget');
+  const definition = getWidgetDefinition(widget.type, 'dashboard');
   if (!definition) return null;
 
   return (
@@ -61,10 +61,10 @@ const WidgetConfigDialogContent = ({
   onSave
 }: Props & {
   widget: DashboardWidget;
-  definition: DashboardWidgetComponentDefinition;
+  definition: DashboardWidgetWidgetDefinition;
   surface: WidgetSurface;
 }) => {
-  const { dashboardWidget: spec, configForm: ConfigForm } = definition;
+  const { dashboard: spec, configForm: ConfigForm } = definition;
   const [config, setConfig] = useState<Record<string, unknown>>(widget.config);
 
   const [frame, setFrame] = useState<DashboardWidgetFrame>(widget.frame ?? {});

@@ -14,7 +14,7 @@ import {
 import { handleTableKeyDown } from './PlateMarkdownEditorTable';
 import { editorPlugins, mdxRules } from './PlateMarkdownEditorPlugins';
 
-vi.mock('../mdx-components/componentRegistry', () => {
+vi.mock('../mdx-components/widgetRegistry', () => {
   const definition = {
     type: 'TestBlock',
     category: 'data-views',
@@ -45,8 +45,8 @@ vi.mock('../mdx-components/componentRegistry', () => {
     }
   };
   return {
-    getComponentDefinitions: () => [definition],
-    getComponentDefinition: (type: string) => (type === 'TestBlock' ? definition : undefined)
+    getWidgetDefinitions: () => [definition],
+    getWidgetDefinition: (type: string) => (type === 'TestBlock' ? definition : undefined)
   };
 });
 

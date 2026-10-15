@@ -18,7 +18,7 @@ type ConfigBlockOptions = {
  * MDX spec for a void block that is configured through its shared config form and whose
  * config is described by `codec`: the allowed attributes, MDX rule, editor element, slash command
  * and the string⇄config mapping are all derived from it. The JSX element name (and Plate plugin
- * key) is the owning component's `type`, supplied by `defineComponent`.
+ * key) is the owning component's `type`, supplied by `defineWidget`.
  */
 export const configBlockMdx =
   ({ codec, placeholder, fullWidth }: ConfigBlockOptions): MdxSpecFactory =>

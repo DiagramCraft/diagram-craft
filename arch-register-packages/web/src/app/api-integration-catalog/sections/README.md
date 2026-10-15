@@ -18,7 +18,7 @@ data-fetching.
 This was chosen over a `WorkspaceContext`/`MdxContext`-style context provider
 (`web/src/layouts/WorkspaceContext.ts`, `web/src/sections/markdown/MdxContext.ts`) because those
 exist to serve existing dashboard **widgets**, which are dynamically selected at render time by a
-config-driven registry (`componentRegistry.ts`) — the renderer can't statically type-check per-widget
+config-driven registry (`widgetRegistry.ts`) — the renderer can't statically type-check per-widget
 props, so ambient context is the established way to give those widgets their workspace data. App
 panels keep the opposite contract: each standalone Screen and dashboard adapter statically imports
 the known panel and supplies an explicit props object, so there's no prop-drilling problem to solve.

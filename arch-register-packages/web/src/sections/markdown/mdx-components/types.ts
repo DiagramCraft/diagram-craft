@@ -9,7 +9,7 @@ import type {
   MdMdxJsxTextElement
 } from '@platejs/markdown';
 import type { TElement } from 'platejs';
-import type { ComponentCategory } from './componentCategories';
+import type { WidgetCategory } from './widgetCategories';
 
 export type ComponentIcon = React.ComponentType<{ size?: number }>;
 
@@ -141,7 +141,7 @@ export type MdxSpec<E extends TElement = TElement, Mode extends MdxMode = MdxMod
 
 /**
  * An `MdxSpec` that depends on the owning component's `type` (the JSX element name), which
- * `defineComponent` supplies.
+ * `defineWidget` supplies.
  */
 export type MdxSpecFactory = (type: string) => MdxSpec;
 
@@ -160,7 +160,7 @@ export type ConfigSchema = z.ZodType<Record<string, unknown>>;
  * A component, shared by the wiki and dashboard catalogs. The generics type what an author writes
  * (the config, Slate element and MDX mode); the registry stores the erased default instantiation.
  */
-export type ComponentDefinition<
+export type WidgetDefinition<
   Config extends Record<string, unknown> = Record<string, unknown>,
   E extends TElement = TElement,
   Mode extends MdxMode = MdxMode
@@ -172,7 +172,7 @@ export type ComponentDefinition<
   description: string;
   /** Extra search terms for the slash menu, beyond the name and description. */
   keywords?: string[];
-  category: ComponentCategory;
+  category: WidgetCategory;
   /** Shared icon for all surfaces that expose this component. */
   icon?: ComponentIcon;
   /** Shared renderer used by every surface that exposes this component. */
@@ -198,13 +198,13 @@ export type ComponentDefinition<
   /** Present for components that can be authored in wiki content. */
   mdx?: MdxSpec<E, Mode>;
   /** Present for components that can be added to a dashboard; requires `configSchema`. */
-  dashboardWidget?: DashboardWidgetSpec<Config>;
+  dashboard?: DashboardWidgetSpec<Config>;
 };
 
-export type MdxComponentDefinition = ComponentDefinition & { mdx: MdxSpec };
+export type MdxWidgetDefinition = WidgetDefinition & { mdx: MdxSpec };
 
-export type DashboardWidgetComponentDefinition = ComponentDefinition & {
+export type DashboardWidgetWidgetDefinition = WidgetDefinition & {
   icon: ComponentIcon;
-  dashboardWidget: DashboardWidgetSpec;
+  dashboard: DashboardWidgetSpec;
   configSchema: ConfigSchema;
 };

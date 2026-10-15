@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
 import { WidgetFrame } from './WidgetFrame';
-import { getComponentDefinition } from '../../markdown/mdx-components/componentRegistry';
+import { getWidgetDefinition } from '../../markdown/mdx-components/widgetRegistry';
 import { parseKnownDashboardWidget } from '../dashboardWidgets';
 import { getWidgetTitle } from '../dashboardWidgets';
 import { useDashboardSidebarVariables } from '../DashboardSidebarContext';
@@ -26,17 +26,17 @@ export const DashboardWidgetRenderer = ({ widget, isEditing = false, onEdit, onR
     ? { ...parsedWidget, config: resolveConfigVariables(parsedWidget.config, sidebarVariables) }
     : null;
   const definition = knownWidget
-    ? getComponentDefinition(knownWidget.type, 'dashboardWidget')
+    ? getWidgetDefinition(knownWidget.type, 'dashboard')
     : undefined;
-  const dashboardWidget = definition?.dashboardWidget;
+  const dashboard = definition?.dashboard;
   const WidgetComponent = definition?.component;
   const frame = resolveWidgetFrame(
-    dashboardWidget,
+    dashboard,
     widget.frame,
     knownWidget?.config ?? widget.config
   );
 
-  const TitleComponent = dashboardWidget?.titleComponent;
+  const TitleComponent = dashboard?.titleComponent;
   let defaultTitle: ReactNode = widget.type;
   if (knownWidget) {
     defaultTitle = TitleComponent ? (
@@ -47,7 +47,7 @@ export const DashboardWidgetRenderer = ({ widget, isEditing = false, onEdit, onR
   }
   const title = frame.title ?? defaultTitle;
   const Icon = frame.iconName ? resolveAppIcon(frame.iconName) : definition?.icon;
-  const HeaderActions = dashboardWidget?.headerActionsComponent;
+  const HeaderActions = dashboard?.headerActionsComponent;
 
   return (
     <WidgetFrame

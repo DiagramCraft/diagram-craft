@@ -7,7 +7,7 @@ import remarkGfm from 'remark-gfm';
 import { NodeIdPlugin, type TElement } from 'platejs';
 import { createPlatePlugin } from 'platejs/react';
 import type { EditorSpec } from '../mdx-components/types';
-import { getComponentDefinitions } from '../mdx-components/componentRegistry';
+import { getWidgetDefinitions } from '../mdx-components/widgetRegistry';
 import { CaptionNormalizePlugin } from '../mdx-components/blocks/caption/CaptionEditable';
 import { ColumnsNormalizePlugin } from '../mdx-components/blocks/columns/ColumnsEditable';
 import { TabsNormalizePlugin } from '../mdx-components/blocks/tabs/TabsEditable';
@@ -38,7 +38,7 @@ import {
 import { SlashInputElement } from './PlateMarkdownEditorSlashCommands';
 
 const HEADING_TYPES = new Set(['h1', 'h2', 'h3']);
-const mdxDefinitions = getComponentDefinitions('mdx');
+const mdxDefinitions = getWidgetDefinitions('mdx');
 
 export const HeadingBreakPlugin = createPlatePlugin({
   key: 'heading-break',

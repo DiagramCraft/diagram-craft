@@ -1,6 +1,6 @@
 import React, { type ReactNode } from 'react';
 import { type ASTNode } from '@diagram-craft/markdown';
-import { getWikiMdxComponents } from '../mdx-components/componentRegistry';
+import { getWikiMdxComponents } from '../mdx-components/widgetRegistry';
 import { MdxComponentPreview } from '../mdx-components/MdxComponentPreview';
 
 /** A highlighted comment anchor, in the same plain-text offset space as `renderText`. Ranges must be sorted and non-overlapping. */

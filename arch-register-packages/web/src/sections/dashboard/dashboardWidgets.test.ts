@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import '../../componentDiscovery';
+import '../../widgetDiscovery';
 import { parseKnownDashboardWidget } from './dashboardWidgets';
 import { getWidgetTitle } from './dashboardWidgets';
 import {
   createDefaultConfig,
-  getComponentDefinition,
+  getWidgetDefinition,
   isValidComponentConfig
-} from '../markdown/mdx-components/componentRegistry';
+} from '../markdown/mdx-components/widgetRegistry';
 
 describe('parseKnownDashboardWidget', () => {
   it('parses a built-in widget with nested config', () => {
@@ -526,8 +526,8 @@ describe('parseKnownDashboardWidget', () => {
     ];
 
     for (const { type, title, config, width, height, hasForm } of pilotWidgets) {
-      const definition = getComponentDefinition(type, 'dashboardWidget');
-      const spec = definition?.dashboardWidget;
+      const definition = getWidgetDefinition(type, 'dashboard');
+      const spec = definition?.dashboard;
       expect(spec).toBeDefined();
       expect(spec?.surfaces).toEqual(['workspace']);
       expect(definition?.icon).toBeDefined();
@@ -576,7 +576,7 @@ describe('parseKnownDashboardWidget', () => {
 describe('api integration catalog widget frames', () => {
   it('hides the stats frame outside edit mode and removes body padding', () => {
     expect(
-      getComponentDefinition('api-integration-catalog-stats', 'dashboardWidget')?.dashboardWidget
+      getWidgetDefinition('api-integration-catalog-stats', 'dashboard')?.dashboard
         .frame
     ).toEqual({
       hideOutsideEdit: true,
@@ -590,7 +590,7 @@ describe('api integration catalog widget frames', () => {
     'api-integration-catalog-most-consumed',
     'api-integration-catalog-at-risk'
   ])('%s has an unpadded body and header actions', type => {
-    const spec = getComponentDefinition(type, 'dashboardWidget')?.dashboardWidget;
+    const spec = getWidgetDefinition(type, 'dashboard')?.dashboard;
     expect(spec?.frame).toEqual({ padded: false, showIcon: false });
     expect(spec?.headerActionsComponent).toBeDefined();
   });

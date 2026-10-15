@@ -1,0 +1,41 @@
+import { TbVectorTriangle } from 'react-icons/tb';
+import { defineWidget } from '../../defineWidget';
+import { flatConfigCodec } from '../../configSchema';
+import { configBlockMdx } from '../configBlock';
+import { EntityGraph } from './EntityGraph';
+import { EntityGraphConfigForm } from './EntityGraphConfigForm';
+import {
+  entityGraphWidgetConfigSchema,
+  normalizeEntityGraphDepth,
+  normalizeEntityGraphDirection
+} from './types';
+
+export default defineWidget({
+  type: 'EntityGraph',
+  category: 'visualizations',
+  name: 'Entity graph',
+  description:
+    'A clickable graph of the dependencies and relations around one entity. Works best at 6x4 or larger.',
+  configSchema: entityGraphWidgetConfigSchema,
+  dashboard: {
+    defaultW: 6,
+    defaultH: 16,
+    surfaces: ['workspace', 'project']
+  },
+  keywords: ['entity', 'graph', 'dependency', 'impact', 'relations'],
+  component: EntityGraph,
+  configForm: EntityGraphConfigForm,
+  icon: TbVectorTriangle,
+  mdx: configBlockMdx({
+    codec: flatConfigCodec(entityGraphWidgetConfigSchema, {
+      attributeNames: { entityId: 'id' },
+      normalize: config => ({
+        ...config,
+        depth: normalizeEntityGraphDepth(config.depth),
+        direction: normalizeEntityGraphDirection(config.direction)
+      })
+    }),
+    placeholder: 'Choose entity graph…',
+    fullWidth: true
+  })
+});

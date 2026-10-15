@@ -7,8 +7,8 @@ import {
   type ParserState
 } from '@diagram-craft/markdown';
 import { markdownEngine } from './markdownAstUtils';
-import { getComponentDefinition, getWikiMdxComponents } from '../mdx-components/componentRegistry';
-import type { MdxComponentDefinition } from '../mdx-components/types';
+import { getWidgetDefinition, getWikiMdxComponents } from '../mdx-components/widgetRegistry';
+import type { MdxWidgetDefinition } from '../mdx-components/types';
 
 const JSX_BLOCK_RE = /^\s*<([A-Z][A-Za-z0-9]*)(\s[^>]*)?\s*\/>\s*$/;
 const INLINE_JSX_RE = /<([A-Z][A-Za-z0-9]*)(\s[^>]*)?\s*\/>/g;
@@ -38,7 +38,7 @@ const dedent = (lines: string[]): string[] => {
 };
 
 const validateProps = (
-  definition: MdxComponentDefinition,
+  definition: MdxWidgetDefinition,
   props: Record<string, string>
 ): Record<string, string> => {
   const name = definition.type;
@@ -76,7 +76,7 @@ const parseJsxProps = (rawProps: string, parser: Parser): Record<string, string>
 const makeComponentNode = (
   parser: Parser,
   subtype: 'inline' | 'block',
-  definition: MdxComponentDefinition,
+  definition: MdxWidgetDefinition,
   rawProps: string | undefined,
   source: string,
   children?: ASTNode[]
@@ -112,7 +112,7 @@ class MdxComponentWrapperBlockHandler implements BlockParser {
 
     const name = match[1];
     if (!name || !isKnownComponent(name)) return false;
-    const definition = getComponentDefinition(name, 'mdx');
+    const definition = getWidgetDefinition(name, 'mdx');
     if (!definition) return false;
     const spec = definition.mdx;
     if (spec.mode !== 'block' || (!spec.acceptsChildren && !spec.acceptsRichContent)) return false;
@@ -161,7 +161,7 @@ class MdxComponentWrapperBlockHandler implements BlockParser {
     );
 
     const child = componentChildren[0];
-    const childDefinition = child ? getComponentDefinition(child.name, 'mdx') : undefined;
+    const childDefinition = child ? getWidgetDefinition(child.name, 'mdx') : undefined;
     const isValidChild =
       componentChildren.length === 1 &&
       otherContent.length === 0 &&
@@ -195,7 +195,7 @@ class MdxComponentBlockHandler implements BlockParser {
 
     const name = match[1];
     if (!name || !isKnownComponent(name)) return false;
-    const definition = getComponentDefinition(name, 'mdx');
+    const definition = getWidgetDefinition(name, 'mdx');
     if (definition?.mdx.mode !== 'block') return false;
 
     ast.push(makeComponentNode(parser, 'block', definition, match[2], parser.unescape(line)));
@@ -217,7 +217,7 @@ class MdxComponentInlineHandler extends InlineParser {
     return this.applyInlineRegExp(parser, parserState, s, INLINE_JSX_RE, match => {
       const name = match[1];
       if (!name || !isKnownComponent(name)) return null;
-      const definition = getComponentDefinition(name, 'mdx');
+      const definition = getWidgetDefinition(name, 'mdx');
       if (!definition) return null;
       return makeComponentNode(parser, 'inline', definition, match[2], parser.unescape(match[0]));
     });
