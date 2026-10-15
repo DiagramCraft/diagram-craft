@@ -40,23 +40,3 @@ export const WithoutColor: Story = {
     </StoryProviders>
   )
 };
-
-export const EmptyText: Story = {
-  parameters: {
-    docs: {
-      description: {
-        story:
-          'A label with no text renders an empty placeholder so it can still be selected and edited.'
-      }
-    }
-  },
-  render: () => (
-    <StoryProviders>
-      <p>
-        Empty labels render nothing between these markers: <span>[</span>
-        <Label text="" color="#ef4444" />
-        <span>]</span>
-      </p>
-    </StoryProviders>
-  )
-};

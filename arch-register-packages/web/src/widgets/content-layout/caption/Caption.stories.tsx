@@ -53,22 +53,6 @@ export const Numbered: Story = {
   )
 };
 
-export const WithoutCaption: Story = {
-  parameters: {
-    docs: {
-      description: {
-        story:
-          'Without caption text the figure renders just its content, with no empty caption row.'
-      }
-    }
-  },
-  render: () => (
-    <StoryProviders>
-      <Caption>{architectureDiagram}</Caption>
-    </StoryProviders>
-  )
-};
-
 export const NumberedSequence: Story = {
   render: () => (
     <StoryProviders>

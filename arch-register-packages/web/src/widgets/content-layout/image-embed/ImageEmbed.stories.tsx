@@ -73,7 +73,7 @@ const meta = {
     docs: {
       description: {
         component:
-          'Wiki pages only: Embeds an image that has been uploaded as an attachment in the workspace. The widget stores the attachment id and always shows the latest uploaded file. If the id is missing, or the attachment is not an image, an explanatory placeholder is shown instead.'
+          'Wiki pages only: Embeds an image that has been uploaded as an attachment in the workspace. The widget stores the attachment id and always shows the latest uploaded file. If the attachment is not found or is not an image, an explanatory placeholder is shown instead.'
       }
     }
   }
@@ -118,14 +118,6 @@ export const WithImage: Story = {
           align: 'center'
         }}
       />
-    </StoryProviders>
-  )
-};
-
-export const MissingId: Story = {
-  render: () => (
-    <StoryProviders client={storyQueryClient}>
-      <ImageEmbed config={{ fileId: '', size: '100', align: 'center' }} />
     </StoryProviders>
   )
 };
