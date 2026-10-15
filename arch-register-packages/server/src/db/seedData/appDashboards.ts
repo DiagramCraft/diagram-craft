@@ -309,9 +309,8 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
       },
       {
         id: 'seed-stat-pair-gaps',
-        type: 'RelationPairsCoverage',
+        type: 'RelationPairGaps',
         config: {
-          display: 'stat',
           hubSchemaName: 'API',
           providerFieldName: 'Provided by',
           consumerFieldName: 'Consumed by',

@@ -118,7 +118,7 @@ const meta = {
     docs: {
       description: {
         component:
-          'Workspace dashboards only: Checks coverage around a shared hub entity. Every provider and consumer pair attached to the hub is listed together with whether a chosen relation type connects the two, so missing links stand out as gaps. In `stat` mode it collapses to a single tile with the number of pairs that lack coverage. Use it to verify, for example, that every consumer of an API has a documented data flow to its provider.'
+          'Workspace dashboards only: Checks coverage around a shared hub entity. Every provider and consumer pair attached to the hub is listed together with whether a chosen relation type connects the two, so missing links stand out as gaps. Use it to verify, for example, that every consumer of an API has a documented data flow to its provider.'
       }
     }
   }
@@ -149,11 +149,6 @@ export const CustomHeadings: Story = {
       consumerLabel: 'Used by',
       coverageLabel: 'Documented flow'
     })
-};
-
-/** Compact tile: the number of applicable pairs without a matching coverage relation. */
-export const GapCountTile: Story = {
-  render: () => renderDashboard({ display: 'stat', label: 'Provider/consumer gaps' })
 };
 
 export const NoPairs: Story = {

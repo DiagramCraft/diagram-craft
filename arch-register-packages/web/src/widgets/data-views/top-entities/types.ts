@@ -9,8 +9,8 @@ export const topEntitiesWidgetConfigSchema = z
     schemaName: z.string().optional().optional(),
     owner: z.string().optional(),
     lifecycle: z.string().optional(),
-    /** Numeric field the entities are ranked by. */
-    fieldId: withInitial(z.string(), ''),
+    /** Numeric field the entities are ranked by; may be omitted when `relationFieldName` is set. */
+    fieldId: withInitial(z.string().default(''), ''),
     /**
      * Typed-relation field (id or name) on the schema; when set, entities are ranked by how many
      * relations of that field point from them, instead of by `fieldId`.

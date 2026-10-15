@@ -85,8 +85,8 @@ export const TopRisksByScore: Story = {
             },
             0,
             0,
-            4,
-            4
+            12,
+            12
           )
         ]}
       />
@@ -165,8 +165,8 @@ export const MostConsumedApis: Story = {
             },
             0,
             0,
-            6,
-            8
+            12,
+            24
           )
         ]}
       />

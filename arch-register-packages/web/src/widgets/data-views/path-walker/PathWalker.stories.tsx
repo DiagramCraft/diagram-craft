@@ -17,7 +17,8 @@ const STORY_SCHEMAS = [
 const capability = (id: string, name: string) => ({
   _uid: id,
   _publicId: id.toUpperCase(),
-  _name: name
+  _name: name,
+  _schema: { id: 'capability', name: 'Capability' }
 });
 
 const storyQueryClient = createStoryQueryClient();

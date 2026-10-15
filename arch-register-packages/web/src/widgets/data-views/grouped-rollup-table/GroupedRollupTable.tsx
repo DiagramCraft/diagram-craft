@@ -3,6 +3,7 @@ import { useWidgetRecords } from '../../../hooks/useEntityQueryText';
 import { Table } from '../../../components/table/Table';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { useEntityDrawer } from '../../../sections/entities/entityDrawer/useEntityDrawer';
+import { useWidgetFramed } from '../../shared/dashboard/WidgetFramed';
 import { formatMeasured } from '../../shared/data/fieldAggregation';
 import { buildRollupRows } from './groupedRollupTableLogic';
 import rowStyles from '../../shared/dashboard/WidgetRowList.module.css';
@@ -15,6 +16,7 @@ type Props = { config: GroupedRollupTableWidgetConfig };
 export const GroupedRollupTableWidget = ({ config }: Props) => {
   const { workspaceSlug, schemas } = useWorkspaceContext();
   const { openEntityDrawer } = useEntityDrawer();
+  const framed = useWidgetFramed();
   const { data, isLoading } = useWidgetRecords(workspaceSlug, config);
 
   const result = useMemo(() => {
@@ -47,7 +49,7 @@ export const GroupedRollupTableWidget = ({ config }: Props) => {
     2 + (showBar ? 1 : 0) + (config.showPercent ? 1 : 0) + (config.showCount ? 1 : 0);
 
   return (
-    <Table.Root scroll stickyHeader>
+    <Table.Root scroll stickyHeader bordered={!framed}>
       <Table.Head>
         <Table.Row>
           <Table.HeaderCell>

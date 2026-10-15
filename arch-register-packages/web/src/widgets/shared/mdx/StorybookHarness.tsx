@@ -5,11 +5,16 @@ import {
   createRouter,
   RouterProvider
 } from '@tanstack/react-router';
+import { CapabilityEvaluator, PermissionChecker } from '@arch-register/permissions';
 import { createContext, useContext, type ReactNode } from 'react';
 import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
+import {
+  WorkspaceAuthorizationSourceContext,
+  type WorkspaceAuthorizationSource
+} from '../../../auth/WorkspaceAuthorizationContext';
 import { DashboardGrid } from '../../../sections/dashboard/DashboardGrid';
 import { MdxContext } from '../../../sections/markdown/MdxContext';
 import { WorkspaceContext, type WorkspaceContextType } from '../../../layouts/WorkspaceContext';
@@ -85,6 +90,13 @@ queryClient.setQueryData(entityKeys.facets(WORKSPACE), {
   completeness: { below50: 2, below80: 3, above80: 5 }
 });
 
+// No signed-in user: workspace checks fail closed and field group access defaults to editable.
+const storyAuthorizationSource: WorkspaceAuthorizationSource = {
+  getContext: () => null,
+  checker: new PermissionChecker(),
+  capabilities: new CapabilityEvaluator()
+};
+
 const StoryContentContext = createContext<ReactNode>(null);
 const StoryRoot = () => useContext(StoryContentContext);
 
@@ -118,11 +130,13 @@ export const StoryProviders = ({
         permissions: { ...workspaceContext.permissions, ...permissions }
       }}
     >
-      <MdxContext.Provider value={{ workspaceSlug: WORKSPACE, projectId, renderMode: 'wiki' }}>
-        <StoryContentContext.Provider value={children}>
-          <RouterProvider router={storyRouter} />
-        </StoryContentContext.Provider>
-      </MdxContext.Provider>
+      <WorkspaceAuthorizationSourceContext.Provider value={storyAuthorizationSource}>
+        <MdxContext.Provider value={{ workspaceSlug: WORKSPACE, projectId, renderMode: 'wiki' }}>
+          <StoryContentContext.Provider value={children}>
+            <RouterProvider router={storyRouter} />
+          </StoryContentContext.Provider>
+        </MdxContext.Provider>
+      </WorkspaceAuthorizationSourceContext.Provider>
     </WorkspaceContext.Provider>
   </QueryClientProvider>
 );
