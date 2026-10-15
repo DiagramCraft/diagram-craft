@@ -64,6 +64,9 @@ export const createStoryQueryClient = () =>
   new QueryClient({
     defaultOptions: {
       queries: {
+        // Stories seed data with setQueryData when their module loads; without an observer that
+        // data is garbage collected after the default 5 minutes, leaving the story empty.
+        gcTime: Infinity,
         retry: false,
         refetchOnMount: false,
         refetchOnWindowFocus: false

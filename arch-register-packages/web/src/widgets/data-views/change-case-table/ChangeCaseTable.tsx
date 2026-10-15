@@ -12,6 +12,7 @@ import { useEntityDrawer } from '../../../sections/entities/entityDrawer/useEnti
 import { type NeedsAttentionPriority } from '../needs-attention/needsAttentionQueue';
 import { useEntityCaseRegister } from '../../shared/data/entityCaseRegister';
 import { filterByStatus, isChangeCaseStatus } from './changeCaseTableLogic';
+import { useWidgetFramed } from '../../shared/dashboard/WidgetFramed';
 import styles from './ChangeCaseTable.module.css';
 import { ChangeCaseTableConfig } from './types';
 
@@ -34,6 +35,7 @@ const PRIORITY_COLOR: Record<NeedsAttentionPriority, string | undefined> = {
  * `GovernanceCaseDrawer` through the `caseId` search param, which this widget also hosts.
  */
 export const ChangeCaseTableWidget = ({ config }: { config: ChangeCaseTableConfig }) => {
+  const framed = useWidgetFramed();
   const { workspaceSlug, schemas } = useWorkspaceContext();
   const navigate = useNavigate();
   const { openEntityDrawer } = useEntityDrawer();
@@ -63,7 +65,7 @@ export const ChangeCaseTableWidget = ({ config }: { config: ChangeCaseTableConfi
 
   return (
     <div className={styles.root}>
-      <Table.Root scroll stickyHeader>
+      <Table.Root scroll stickyHeader bordered={!framed}>
         <Table.Head>
           <Table.Row>
             <Table.HeaderCell>Kind</Table.HeaderCell>

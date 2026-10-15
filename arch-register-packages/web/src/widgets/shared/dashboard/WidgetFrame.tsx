@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { TbEdit, TbX } from 'react-icons/tb';
 import styles from './WidgetFrame.module.css';
+import { WidgetFramedProvider } from './WidgetFramed';
 
 type Props = {
   title: ReactNode;
@@ -60,7 +61,9 @@ export const WidgetFrame = ({
       </div>
     )}
     <div className={styles.body} data-frame={'true'} data-padded={padded} data-framed={!bare}>
-      <div className={styles.innerBody}>{children}</div>
+      <div className={styles.innerBody}>
+        <WidgetFramedProvider value={!bare}>{children}</WidgetFramedProvider>
+      </div>
     </div>
   </div>
 );

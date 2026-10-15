@@ -28,6 +28,12 @@ div[data-frame="true"] {
   .entityBrowserWrapper > div {
     margin: calc(-1 * var(--_frame-top-padding)) calc(-1 * var(--_frame-left-padding));
     overflow: visible;
+  }
+}
+
+/* Only the visible widget frame supplies a border; without it the table keeps its own. */
+div[data-frame="true"][data-framed="true"] {
+  .entityBrowserWrapper > div {
     border-width: 0;
   }
 }

@@ -82,15 +82,10 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Configured: Story = {
-  render: () => (
-    <StoryProviders>
-      <EntityViewEmbed config={{ viewId: 'view-services' }} />
-    </StoryProviders>
-  )
-};
-
+// An empty viewId is not a valid dashboard config, so this state only occurs in a wiki block and
+// is rendered bare, without a frame to toggle.
 export const NoView: Story = {
+  argTypes: { showFrame: { control: false } },
   render: () => (
     <StoryProviders>
       <EntityViewEmbed config={{ viewId: '' }} />
@@ -101,7 +96,19 @@ export const NoView: Story = {
 export const MissingView: Story = {
   render: () => (
     <StoryProviders>
-      <EntityViewEmbed config={{ viewId: 'deleted-view' }} />
+      <DashboardStory
+        widgets={[
+          dashboardWidget(
+            'saved-view-missing',
+            'EntityViewEmbed',
+            { viewId: 'deleted-view' },
+            0,
+            0,
+            12,
+            6
+          )
+        ]}
+      />
     </StoryProviders>
   )
 };
@@ -118,7 +125,7 @@ export const Default: Story = {
             0,
             0,
             12,
-            6
+            18
           )
         ]}
       />

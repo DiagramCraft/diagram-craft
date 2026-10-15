@@ -72,7 +72,7 @@ export const Wide: Story = {
             0,
             0,
             6,
-            4
+            8
           )
         ]}
       />

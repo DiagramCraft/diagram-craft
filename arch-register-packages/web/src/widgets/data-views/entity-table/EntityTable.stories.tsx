@@ -1,5 +1,4 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { EntityTable } from './EntityTable';
 import {
   DashboardStory,
   StoryProviders,
@@ -76,18 +75,12 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Filtered: Story = {
-  render: () => (
-    <StoryProviders>
-      <EntityTable config={{ schema: 'service', limit: 10 }} />
-    </StoryProviders>
-  )
-};
-
 export const Empty: Story = {
   render: () => (
     <StoryProviders>
-      <EntityTable config={{}} />
+      <DashboardStory
+        widgets={[dashboardWidget('entity-table-empty', 'EntityTable', {}, 0, 0, 12, 6)]}
+      />
     </StoryProviders>
   )
 };
@@ -104,7 +97,7 @@ export const Default: Story = {
             0,
             0,
             12,
-            6
+            18
           )
         ]}
       />

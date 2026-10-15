@@ -1,4 +1,26 @@
+/* On a dashboard the card fills the whole widget area. */
 div[data-frame="true"] {
+  .card {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    max-width: none;
+    margin: 0;
+  }
+}
+
+/* Without the frame the card draws its own surface, so it also covers the body padding. */
+div[data-frame="true"][data-framed="false"] {
+  .card {
+    width: calc(100% + 2 * var(--_frame-left-padding));
+    height: calc(100% + 2 * var(--_frame-top-padding));
+    margin: calc(-1 * var(--_frame-top-padding)) calc(-1 * var(--_frame-left-padding));
+  }
+}
+
+/* The visible frame supplies the border and padding. */
+div[data-frame="true"][data-framed="true"] {
   .card {
     padding: 0;
     border-width: 0;

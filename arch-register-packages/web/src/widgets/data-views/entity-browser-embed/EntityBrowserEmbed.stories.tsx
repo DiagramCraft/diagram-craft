@@ -35,7 +35,8 @@ const entityQueryOptions = {
   limit: undefined,
   offset: undefined,
   asOf: undefined,
-  includePlannedChanges: true
+  includePlannedChanges: true,
+  includeUsageCount: false
 };
 
 const entities = [
@@ -100,15 +101,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Filtered: Story = {
-  render: () => (
-    <StoryProviders client={storyQueryClient}>
-      <EntityBrowserEmbed config={browserConfig} />
-    </StoryProviders>
-  )
-};
-
-export const NoViewConfigured: Story = {
+export const Embedded: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
       <EntityBrowserEmbed config={browserConfig} />
@@ -129,7 +122,7 @@ export const Default: Story = {
     <StoryProviders client={storyQueryClient}>
       <DashboardStory
         widgets={[
-          dashboardWidget('entity-browser-embed', 'EntityBrowserEmbed', browserConfig, 0, 0, 6, 6)
+          dashboardWidget('entity-browser-embed', 'EntityBrowserEmbed', browserConfig, 0, 0, 12, 12)
         ]}
       />
     </StoryProviders>
@@ -147,8 +140,8 @@ export const InteractiveTile: Story = {
             { ...browserConfig, interactive: true },
             0,
             0,
-            6,
-            6
+            12,
+            12
           )
         ]}
       />

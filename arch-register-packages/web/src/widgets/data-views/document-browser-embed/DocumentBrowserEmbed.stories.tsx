@@ -128,7 +128,7 @@ const dashboardConfig = {
   visibleFieldIds: []
 };
 
-export const Default: Story = {
+export const WithFrame: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
       <DashboardStory
@@ -139,16 +139,12 @@ export const Default: Story = {
             dashboardConfig,
             0,
             0,
-            6,
-            4
+            12,
+            16
           )
         ]}
       />
     </StoryProviders>
-  )
-};
-
-export const WithFrame: Story = {
-  ...Default,
+  ),
   args: { showFrame: true }
 };

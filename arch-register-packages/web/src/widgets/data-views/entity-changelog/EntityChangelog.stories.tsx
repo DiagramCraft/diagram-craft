@@ -87,11 +87,16 @@ const schemaQueryOptions = {
   limit: 10
 };
 
+// A dashboard widget needs a filter (see the config schema), so the empty state uses a valid
+// config - limit 5 - whose seeded result is empty.
+const emptyQueryOptions = { ...schemaQueryOptions, limit: 5 };
+
 const entityHistoryEntries = entityEntries.filter(entry => entry.entity_id === entityId);
 
 const storyQueryClient = createStoryQueryClient();
 storyQueryClient.setQueryData(auditKeys.log(WORKSPACE, entityQueryOptions), entityHistoryEntries);
 storyQueryClient.setQueryData(auditKeys.log(WORKSPACE, schemaQueryOptions), entityEntries);
+storyQueryClient.setQueryData(auditKeys.log(WORKSPACE, emptyQueryOptions), []);
 
 const meta = {
   title: 'Widgets/Data views/Entity changelog',
@@ -146,8 +151,8 @@ export const Default: Story = {
             { entityId, limit: '10' },
             0,
             0,
-            6,
-            4
+            12,
+            12
           )
         ]}
       />
@@ -159,7 +164,17 @@ export const Empty: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
       <DashboardStory
-        widgets={[dashboardWidget('entity-changelog-empty', 'EntityChangelog', {}, 0, 0, 6, 4)]}
+        widgets={[
+          dashboardWidget(
+            'entity-changelog-empty',
+            'EntityChangelog',
+            { schema: 'service', limit: '5' },
+            0,
+            0,
+            12,
+            12
+          )
+        ]}
       />
     </StoryProviders>
   )
