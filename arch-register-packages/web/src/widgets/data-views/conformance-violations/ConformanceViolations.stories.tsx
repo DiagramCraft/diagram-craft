@@ -9,7 +9,8 @@ import {
   StoryProviders,
   WORKSPACE,
   createStoryQueryClient,
-  dashboardWidget
+  dashboardWidget,
+  frameControls
 } from '../../shared/mdx/StorybookHarness';
 import { conformanceKeys } from '../../../queries/conformance';
 
@@ -58,7 +59,16 @@ const entitiesWithGaps = (
 const meta = {
   title: 'Widgets/Data views/Conformance violations',
   tags: ['dashboard', 'workspace-surface'],
-  parameters: { layout: 'padded' }
+  ...frameControls,
+  parameters: {
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'Workspace dashboards only: Lists the entities of one schema that have active conformance violations, together with the checks they fail, worst first. Limit it to specific checks with `checkNames`, and cap the length with `limit`. Use it as a to-do list for data quality work on one entity type.'
+      }
+    }
+  }
 } satisfies Meta;
 
 export default meta;
@@ -109,9 +119,19 @@ const GAPS = entitiesWithGaps({
   'Support Tickets': [OWNER]
 });
 
-export const WithGaps: Story = { render: () => renderDashboard(GAPS) };
+export const WithGaps: Story = {
+  render: () => renderDashboard(GAPS)
+};
 
 export const MoreThanLimit: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'More violating entities than `limit`, so the list is truncated and the remainder is counted.'
+      }
+    }
+  },
   render: () => renderDashboard(GAPS, { limit: 3 })
 };
 
@@ -119,7 +139,9 @@ export const FilteredByCheck: Story = {
   render: () => renderDashboard(GAPS, { checkNames: ['Dataset has no steward'] })
 };
 
-export const NoGaps: Story = { render: () => renderDashboard([]) };
+export const NoGaps: Story = {
+  render: () => renderDashboard([])
+};
 
 export const UnknownSchema: Story = {
   render: () => renderDashboard(GAPS, { schemaName: 'Nonexistent' })
@@ -127,4 +149,9 @@ export const UnknownSchema: Story = {
 
 export const NoAccess: Story = {
   render: () => renderDashboard(GAPS, {}, { canViewSchemas: false })
+};
+
+export const WithFrame: Story = {
+  ...WithGaps,
+  args: { showFrame: true }
 };

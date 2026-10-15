@@ -6,14 +6,20 @@ const meta = {
   title: 'Widgets/Content & layout/Label',
   tags: ['mdx', 'inline'],
   parameters: {
-    layout: 'padded'
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'Wiki pages only: A small inline, coloured status label (chip) for use inside a sentence or a table cell, for example to flag something as Approved or Deprecated. The colour is optional and defaults to a neutral tone.'
+      }
+    }
   }
 } satisfies Meta;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const WikiStatusLabels: Story = {
+export const StatusLabels: Story = {
   render: () => (
     <StoryProviders>
       <p>
@@ -25,23 +31,11 @@ export const WikiStatusLabels: Story = {
   )
 };
 
-export const WikiWithoutColor: Story = {
+export const WithoutColor: Story = {
   render: () => (
     <StoryProviders>
       <p>
         A neutral label: <Label text="Internal" color="" />
-      </p>
-    </StoryProviders>
-  )
-};
-
-export const WikiEmptyText: Story = {
-  render: () => (
-    <StoryProviders>
-      <p>
-        Empty labels render nothing between these markers: <span>[</span>
-        <Label text="" color="#ef4444" />
-        <span>]</span>
       </p>
     </StoryProviders>
   )

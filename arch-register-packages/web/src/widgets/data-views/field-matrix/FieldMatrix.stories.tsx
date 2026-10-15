@@ -5,7 +5,8 @@ import {
   StoryProviders,
   WORKSPACE,
   createStoryQueryClient,
-  dashboardWidget
+  dashboardWidget,
+  frameControls
 } from '../../shared/mdx/StorybookHarness';
 
 const QUERY = 'schema:"Vendor"';
@@ -48,13 +49,30 @@ const bands = [
 const meta = {
   title: 'Widgets/Data views/Field matrix',
   tags: ['dashboard', 'workspace-surface', 'project-surface'],
-  parameters: { layout: 'padded' }
+  ...frameControls,
+  parameters: {
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'Workspace and project dashboards only: Places records in a grid: rows are values of one numeric field (for example criticality) and columns are bands of another (for example risk score). Each cell shows the records that land in it as clickable chips, and cells in `hot` bands at or above `hotRowMin` can be emphasised. Use it for classic matrices such as a criticality-by-risk heat map. Records are selected with an entity query.'
+      }
+    }
+  }
 } satisfies Meta;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const CriticalityByRisk: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Applications placed by criticality (rows) and risk score band (columns), with the dangerous corner emphasised.'
+      }
+    }
+  },
   render: () => (
     <StoryProviders client={storyQueryClient} schemas={schemas}>
       <DashboardStory
@@ -76,33 +94,6 @@ export const CriticalityByRisk: Story = {
             0,
             8,
             22
-          )
-        ]}
-      />
-    </StoryProviders>
-  )
-};
-
-export const WithoutFrame: Story = {
-  render: () => (
-    <StoryProviders client={storyQueryClient} schemas={schemas}>
-      <DashboardStory
-        widgets={[
-          dashboardWidget(
-            'matrix-frameless',
-            'FieldMatrix',
-            {
-              query: QUERY,
-              rowFieldId: 'criticality',
-              rows: [5, 4, 3, 2],
-              valueFieldId: 'risk',
-              bands,
-              showFrame: false
-            },
-            0,
-            0,
-            8,
-            20
           )
         ]}
       />
@@ -134,4 +125,9 @@ export const WithoutEmphasis: Story = {
       />
     </StoryProviders>
   )
+};
+
+export const WithFrame: Story = {
+  ...CriticalityByRisk,
+  args: { showFrame: true }
 };

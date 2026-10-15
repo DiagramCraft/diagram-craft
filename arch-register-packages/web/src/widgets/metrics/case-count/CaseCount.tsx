@@ -3,9 +3,10 @@ import { LoadingState } from '../../../components/LoadingState';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { useNeedsAttentionQueue } from '../../data-views/needs-attention/needsAttentionQueue';
 import { useWidgetBodyTitle } from '../../shared/dashboard/WidgetBodyTitle';
+import { useWidgetFramed } from '../../shared/dashboard/WidgetFramed';
 import { countDueWithin, renderCaseCountSubtext } from './caseCountLogic';
 import styles from './CaseCount.module.css';
-import { CaseCountWidgetConfig } from './types';
+import { CaseCountWidgetConfig, caseCountWidgetConfigSchema } from './types';
 
 const TONE_COLOR = {
   none: undefined,
@@ -14,8 +15,11 @@ const TONE_COLOR = {
 } as const;
 
 /** Number of open governance cases against entities of one schema, e.g. awaiting a decision. */
-export const CaseCountWidget = ({ config }: { config: CaseCountWidgetConfig }) => {
+export const CaseCountWidget = ({ config: rawConfig }: { config: CaseCountWidgetConfig }) => {
+  // Stored configs may omit fields that have defaults (the dashboard accepts them as valid).
+  const config = caseCountWidgetConfigSchema.parse(rawConfig);
   const title = useWidgetBodyTitle();
+  const framed = useWidgetFramed();
   const { workspaceSlug, schemas } = useWorkspaceContext();
   const schemaId =
     config.schema || schemas.find(candidate => candidate.name === config.schemaName)?.id || null;
@@ -36,7 +40,7 @@ export const CaseCountWidget = ({ config }: { config: CaseCountWidgetConfig }) =
     config.dueWithinDays
   );
   return (
-    <div className={styles.tile}>
+    <div className={`${styles.tile} ${framed ? styles.framed : ''}`}>
       <div className={styles.label}>{title ?? 'Cases'}</div>
       <div
         className={styles.value}

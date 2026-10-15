@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { frameControls } from '../../shared/mdx/StorybookHarness';
 import {
   assessmentWidgetStory,
   seededAssessmentWidgetClient
@@ -8,7 +9,16 @@ import {
 const meta = {
   title: 'Widgets/Data views/Assessment progress',
   tags: ['dashboard', 'workspace-surface'],
-  parameters: { layout: 'padded' }
+  ...frameControls,
+  parameters: {
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'Workspace dashboards only: A table of assessments that target a chosen entity type, with progress, due date and derived status (not started, in progress, overdue or complete) for each. Optionally restrict it to one status. Use it to follow how a review campaign is going across the entities of one type.'
+      }
+    }
+  }
 } satisfies Meta;
 
 export default meta;
@@ -37,4 +47,9 @@ export const Empty: Story = {
       { w: 12, h: 8 },
       seededAssessmentWidgetClient([])
     )
+};
+
+export const WithFrame: Story = {
+  ...Default,
+  args: { showFrame: true }
 };

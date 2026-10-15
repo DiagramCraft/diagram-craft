@@ -5,7 +5,8 @@ import {
   StoryProviders,
   WORKSPACE,
   createStoryQueryClient,
-  dashboardWidget
+  dashboardWidget,
+  frameControls
 } from '../../shared/mdx/StorybookHarness';
 import { entityKeys } from '../../../queries/entities';
 
@@ -129,8 +130,15 @@ storyQueryClient.setQueryData(listKey('measure'), {
 const meta = {
   title: 'Widgets/Data views/Related entities',
   tags: ['dashboard', 'workspace-surface'],
+  ...frameControls,
   parameters: {
-    layout: 'padded'
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'Workspace dashboards only: Lists the entities of one type that reference a chosen entity, optionally through an intermediate hop. Each row can show a description, a status and, when baseline, current and target fields are all configured, a progress bar. The scoping entity is normally supplied by a dashboard sidebar variable, which makes it suitable for project or product dashboards.'
+      }
+    }
   }
 } satisfies Meta;
 
@@ -245,4 +253,9 @@ export const NoItemSelected: Story = {
       />
     </StoryProviders>
   )
+};
+
+export const WithFrame: Story = {
+  ...Outcomes,
+  args: { showFrame: true }
 };

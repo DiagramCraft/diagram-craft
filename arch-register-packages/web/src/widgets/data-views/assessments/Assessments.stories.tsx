@@ -5,7 +5,8 @@ import {
   StoryProviders,
   WORKSPACE,
   createStoryQueryClient,
-  dashboardWidget
+  dashboardWidget,
+  frameControls
 } from '../../shared/mdx/StorybookHarness';
 import { assessmentKeys } from '../../../queries/assessments';
 
@@ -73,9 +74,18 @@ const storyQueryClient = createStoryQueryClient();
 storyQueryClient.setQueryData(assessmentKeys.list(WORKSPACE), assessments);
 
 const meta = {
-  title: 'Widgets/Metrics/Assessments',
+  title: 'Widgets/Data views/Assessments',
   tags: ['dashboard', 'workspace-surface', 'project-surface'],
-  parameters: { layout: 'padded' }
+  ...frameControls,
+  parameters: {
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'Workspace and project dashboards only: A list of assessments filtered by mode (active, upcoming, overdue or all), assessment type and the entity types they cover. With `relativeDue` it shows a compact due label such as "18d" or "6d late" and the owning project. Use it on a personal or project dashboard as a work list.'
+      }
+    }
+  }
 } satisfies Meta;
 
 export default meta;
@@ -83,7 +93,7 @@ type Story = StoryObj<typeof meta>;
 
 const renderDashboard = (config: Record<string, unknown>) => (
   <StoryProviders client={storyQueryClient}>
-    <DashboardStory widgets={[dashboardWidget('assessments', 'Assessments', config, 0, 0, 4, 3)]} />
+    <DashboardStory widgets={[dashboardWidget('assessments', 'Assessments', config, 0, 0, 4, 8)]} />
   </StoryProviders>
 );
 
@@ -105,4 +115,9 @@ export const All: Story = {
 
 export const FilteredByAssessmentType: Story = {
   render: () => renderDashboard({ mode: 'all', assessmentTypeId: 'quality-review' })
+};
+
+export const WithFrame: Story = {
+  ...Active,
+  args: { showFrame: true }
 };

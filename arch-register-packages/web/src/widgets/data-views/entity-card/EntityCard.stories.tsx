@@ -5,7 +5,8 @@ import {
   StoryProviders,
   WORKSPACE,
   createStoryQueryClient,
-  dashboardWidget
+  dashboardWidget,
+  frameControls
 } from '../../shared/mdx/StorybookHarness';
 import { entityKeys } from '../../../queries/entities';
 
@@ -28,15 +29,22 @@ storyQueryClient.setQueryData(entityKeys.detail(WORKSPACE, entityId), entity);
 const meta = {
   title: 'Widgets/Data views/Entity card',
   tags: ['mdx', 'block', 'dashboard', 'workspace-surface', 'project-surface'],
+  ...frameControls,
   parameters: {
-    layout: 'padded'
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'Wiki pages and dashboards (workspace and project): A summary card for one entity: its name, type, status and a chosen set of fields (comma-separated field ids in `fields`). Use it to put one important system or owner in the spotlight, or to give a quick reference inside text.'
+      }
+    }
   }
 } satisfies Meta;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const WikiDefault: Story = {
+export const Default: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
       <EntityCard config={{ entityId }} />
@@ -44,7 +52,7 @@ export const WikiDefault: Story = {
   )
 };
 
-export const WikiExpanded: Story = {
+export const Expanded: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
       <EntityCard config={{ entityId, fields: 'owner,description,tags' }} />
@@ -52,17 +60,7 @@ export const WikiExpanded: Story = {
   )
 };
 
-export const DashboardDefault: Story = {
-  render: () => (
-    <StoryProviders client={storyQueryClient}>
-      <DashboardStory
-        widgets={[dashboardWidget('entity-card', 'EntityCard', { entityId }, 0, 0, 3, 2)]}
-      />
-    </StoryProviders>
-  )
-};
-
-export const DashboardWide: Story = {
+export const Wide: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
       <DashboardStory
@@ -74,10 +72,15 @@ export const DashboardWide: Story = {
             0,
             0,
             6,
-            4
+            8
           )
         ]}
       />
     </StoryProviders>
   )
+};
+
+export const WithFrame: Story = {
+  ...Wide,
+  args: { showFrame: true }
 };

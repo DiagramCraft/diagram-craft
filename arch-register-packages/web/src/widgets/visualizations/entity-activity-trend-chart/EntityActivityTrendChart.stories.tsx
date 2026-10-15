@@ -5,7 +5,8 @@ import {
   StoryProviders,
   WORKSPACE,
   dashboardWidget,
-  createStoryQueryClient
+  createStoryQueryClient,
+  frameControls
 } from '../../shared/mdx/StorybookHarness';
 import { workspaceAnalyticsKeys } from '../../../queries/workspaceAnalytics';
 
@@ -58,55 +59,22 @@ storyQueryClient.setQueryData(workspaceAnalyticsKeys.detail(WORKSPACE, staleAfte
 const meta = {
   title: 'Widgets/Visualizations/Activity trend chart',
   tags: ['dashboard', 'workspace-surface'],
+  ...frameControls,
   parameters: {
-    layout: 'padded'
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'Workspace dashboards only: A line chart of recent activity volume over time, based on the audit log. Use it next to the Activity feed to see whether the catalog is being kept up to date.'
+      }
+    }
   }
 } satisfies Meta;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const DashboardDefault: Story = {
-  render: () => (
-    <StoryProviders client={storyQueryClient}>
-      <DashboardStory
-        widgets={[
-          dashboardWidget(
-            'activity-trend',
-            'entity-activity-trend-chart',
-            { lookbackDays: 30 },
-            0,
-            0,
-            3,
-            2
-          )
-        ]}
-      />
-    </StoryProviders>
-  )
-};
-
-export const DashboardWide: Story = {
-  render: () => (
-    <StoryProviders client={storyQueryClient}>
-      <DashboardStory
-        widgets={[
-          dashboardWidget(
-            'activity-trend-wide',
-            'entity-activity-trend-chart',
-            { lookbackDays: 90 },
-            0,
-            0,
-            6,
-            4
-          )
-        ]}
-      />
-    </StoryProviders>
-  )
-};
-
-export const DashboardLarge: Story = {
+export const Default: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
       <DashboardStory
@@ -118,10 +86,15 @@ export const DashboardLarge: Story = {
             0,
             0,
             12,
-            6
+            12
           )
         ]}
       />
     </StoryProviders>
   )
+};
+
+export const WithFrame: Story = {
+  ...Default,
+  args: { showFrame: true }
 };

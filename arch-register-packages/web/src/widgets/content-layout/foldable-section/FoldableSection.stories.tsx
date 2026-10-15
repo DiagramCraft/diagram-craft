@@ -6,14 +6,20 @@ const meta = {
   title: 'Widgets/Content & layout/Foldable section',
   tags: ['mdx', 'block'],
   parameters: {
-    layout: 'padded'
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'Wiki pages only: A collapsible section with a summary label. The content stays hidden until the reader expands it, which keeps long reference material (notes, appendices, full tables) out of the way of the main narrative.'
+      }
+    }
   }
 } satisfies Meta;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const WikiArchitectureNotes: Story = {
+export const ArchitectureNotes: Story = {
   render: () => (
     <StoryProviders>
       <FoldableSection label="Architecture notes">
@@ -27,7 +33,7 @@ export const WikiArchitectureNotes: Story = {
   )
 };
 
-export const WikiDefaultLabel: Story = {
+export const DefaultLabel: Story = {
   render: () => (
     <StoryProviders>
       <FoldableSection>

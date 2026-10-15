@@ -5,7 +5,8 @@ import {
   StoryProviders,
   WORKSPACE,
   createStoryQueryClient,
-  dashboardWidget
+  dashboardWidget,
+  frameControls
 } from '../../shared/mdx/StorybookHarness';
 import { milestoneKeys } from '../../../queries/milestones';
 
@@ -73,10 +74,17 @@ const storyQueryClient = createStoryQueryClient();
 storyQueryClient.setQueryData(milestoneKeys.list(WORKSPACE, PROJECT_ID), milestones);
 
 const meta = {
-  title: 'Widgets/Metrics/Upcoming milestones',
+  title: 'Widgets/Data views/Upcoming milestones',
   tags: ['dashboard', 'project-surface'],
+  ...frameControls,
   parameters: {
-    layout: 'padded'
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'Project dashboards only: Shows the most recently completed milestone and up to three upcoming ones for the current project, with their dates. It has no options of its own.'
+      }
+    }
   }
 } satisfies Meta;
 
@@ -89,14 +97,11 @@ const renderDashboard = (w: number, h: number, id: string) => (
   </StoryProviders>
 );
 
-export const DashboardDefault: Story = {
-  render: () => renderDashboard(3, 2, 'upcoming-milestones')
-};
-
-export const DashboardWide: Story = {
-  render: () => renderDashboard(6, 4, 'upcoming-milestones-wide')
-};
-
-export const DashboardLarge: Story = {
+export const Default: Story = {
   render: () => renderDashboard(12, 6, 'upcoming-milestones-large')
+};
+
+export const WithFrame: Story = {
+  ...Default,
+  args: { showFrame: true }
 };

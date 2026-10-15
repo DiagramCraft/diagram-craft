@@ -8,7 +8,7 @@ import { defineWidget } from '../../shared/defineWidget';
 import { UpcomingMilestonesWidget } from './UpcomingMilestones';
 export default defineWidget({
   type: 'upcoming-milestones',
-  category: 'metrics',
+  category: 'data-views',
   name: 'Upcoming milestones',
   description: 'The most recently completed milestone and up to three upcoming ones.',
   icon: TbFlag3,

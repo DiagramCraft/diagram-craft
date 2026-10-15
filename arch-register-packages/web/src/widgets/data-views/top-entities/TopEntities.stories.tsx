@@ -4,7 +4,8 @@ import {
   StoryProviders,
   WORKSPACE,
   createStoryQueryClient,
-  dashboardWidget
+  dashboardWidget,
+  frameControls
 } from '../../shared/mdx/StorybookHarness';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { RelationRecord } from '@arch-register/api-types/relationContract';
@@ -52,8 +53,15 @@ storyQueryClient.setQueryData(entityKeys.list(WORKSPACE, listOptions), {
 const meta = {
   title: 'Widgets/Data views/Ranked list',
   tags: ['dashboard', 'workspace-surface', 'project-surface'],
+  ...frameControls,
   parameters: {
-    layout: 'padded'
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'Workspace and project dashboards only: A ranked list of the entities of a type, ordered by a numeric field or by how many relations of a chosen field point from them. Choose ascending or descending order, the number of rows, and whether each row shows a bar for its share of the listed total. Use it for "top risks" or "most consumed APIs".'
+      }
+    }
   }
 } satisfies Meta;
 
@@ -77,8 +85,8 @@ export const TopRisksByScore: Story = {
             },
             0,
             0,
-            4,
-            4
+            12,
+            12
           )
         ]}
       />
@@ -157,11 +165,16 @@ export const MostConsumedApis: Story = {
             },
             0,
             0,
-            6,
-            8
+            12,
+            24
           )
         ]}
       />
     </StoryProviders>
   )
+};
+
+export const WithFrame: Story = {
+  ...TopRisksByScore,
+  args: { showFrame: true }
 };

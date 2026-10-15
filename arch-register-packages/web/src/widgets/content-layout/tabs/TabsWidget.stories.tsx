@@ -1,23 +1,40 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { DashboardStory, StoryProviders, dashboardWidget } from '../../shared/mdx/StorybookHarness';
+import {
+  DashboardStory,
+  StoryProviders,
+  dashboardWidget,
+  frameControls
+} from '../../shared/mdx/StorybookHarness';
 
 const meta = {
   title: 'Widgets/Content & layout/Tabs (Dashboard)',
   tags: ['dashboard', 'workspace-surface', 'project-surface'],
+  ...frameControls,
   parameters: {
-    layout: 'padded'
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'Workspace and project dashboards only: Groups other dashboard widgets under switchable tabs. Every tab holds its own set of widgets with their own grid layout, which lets one dashboard host several themed views in the same space. Widgets in inactive tabs are not rendered until the tab is opened. Tabs can be edited in the dashboard editor.'
+      }
+    }
   }
 } satisfies Meta;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const note = (id: string, title: string, markdown: string, w = 12, h = 8) => ({
+const note = (
+  id: string,
+  title: string,
+  markdown: string,
+  { x = 0, y = 0, w = 12, h = 8 }: { x?: number; y?: number; w?: number; h?: number } = {}
+) => ({
   id,
   type: 'markdown',
   config: { title, markdown },
-  x: 0,
-  y: 0,
+  x,
+  y,
   w,
   h
 });
@@ -71,9 +88,9 @@ export const MultipleWidgetsPerTab: Story = {
                   id: 'overview',
                   label: 'Overview',
                   widgets: [
-                    note('left', 'Left', 'Half-width widget.', 6),
-                    note('right', 'Right', 'Half-width widget.', 6),
-                    note('wide', 'Full width', 'Wraps to a second row.', 12)
+                    note('left', 'Left', 'Half-width widget.', { w: 6 }),
+                    note('right', 'Right', 'Half-width widget.', { x: 6, w: 6 }),
+                    note('wide', 'Full width', 'Sits on a second row.', { y: 8 })
                   ]
                 },
                 {
@@ -112,4 +129,9 @@ export const EmptyTab: Story = {
       />
     </StoryProviders>
   )
+};
+
+export const WithFrame: Story = {
+  ...RegisterAndMatrix,
+  args: { showFrame: true }
 };

@@ -13,6 +13,7 @@ import {
   filterAssessmentSummaries
 } from '../../shared/data/assessmentSummaryLogic';
 import { useSchemaAssessmentSummaries } from '../../shared/data/useSchemaAssessmentSummaries';
+import { useWidgetFramed } from '../../shared/dashboard/WidgetFramed';
 import styles from './AssessmentProgressTable.module.css';
 import { AssessmentProgressTableConfig } from './types';
 
@@ -22,6 +23,7 @@ export const AssessmentProgressTableWidget = ({
   config: AssessmentProgressTableConfig;
 }) => {
   const navigate = useNavigate();
+  const framed = useWidgetFramed();
   const { workspaceSlug, schemaFound, summaries, isLoading } = useSchemaAssessmentSummaries(
     config.schemaName
   );
@@ -64,7 +66,7 @@ export const AssessmentProgressTableWidget = ({
 
   return (
     <div>
-      <Table.Root scroll stickyHeader>
+      <Table.Root scroll stickyHeader bordered={!framed}>
         <Table.Head>
           <Table.Row>
             <Table.HeaderCell>Assessment</Table.HeaderCell>

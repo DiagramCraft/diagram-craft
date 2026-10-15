@@ -2,8 +2,11 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { EntityChart } from './EntityChart';
 import {
   createStoryQueryClient,
+  DashboardStory,
   StoryProviders,
-  WORKSPACE
+  WORKSPACE,
+  dashboardWidget,
+  frameControls
 } from '../../shared/mdx/StorybookHarness';
 import { entityKeys } from '../../../queries/entities';
 
@@ -88,16 +91,23 @@ storyQueryClient.setQueryData(
 
 const meta = {
   title: 'Widgets/Visualizations/Entity chart',
-  tags: ['mdx', 'block'],
+  tags: ['mdx', 'block', 'dashboard', 'workspace-surface'],
+  ...frameControls,
   parameters: {
-    layout: 'padded'
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'Wiki pages and workspace dashboards: A live chart of entities grouped by a field (lifecycle, owner or schema), shown as a donut or a bar chart. Filter the entities by schema, owner and lifecycle. Use it to show the distribution of the catalog on a wiki page or a dashboard.'
+      }
+    }
   }
 } satisfies Meta;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const WikiDonutByLifecycle: Story = {
+export const DonutByLifecycle: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
       <EntityChart config={{ schema: 'service', groupBy: 'lifecycle', chartType: 'donut' }} />
@@ -105,7 +115,7 @@ export const WikiDonutByLifecycle: Story = {
   )
 };
 
-export const WikiBarByOwner: Story = {
+export const BarByOwner: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
       <EntityChart config={{ schema: 'service', groupBy: 'owner', chartType: 'bar' }} />
@@ -113,7 +123,7 @@ export const WikiBarByOwner: Story = {
   )
 };
 
-export const WikiFilteredByLifecycle: Story = {
+export const FilteredByLifecycle: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
       <EntityChart
@@ -123,10 +133,31 @@ export const WikiFilteredByLifecycle: Story = {
   )
 };
 
-export const WikiNoFilters: Story = {
+export const NoFilters: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
       <EntityChart config={{ groupBy: 'lifecycle', chartType: 'donut' }} />
     </StoryProviders>
   )
+};
+
+export const WithFrame: Story = {
+  render: () => (
+    <StoryProviders client={storyQueryClient}>
+      <DashboardStory
+        widgets={[
+          dashboardWidget(
+            'entity-chart',
+            'EntityChart',
+            { schema: 'service', groupBy: 'lifecycle', chartType: 'donut' },
+            0,
+            0,
+            6,
+            24
+          )
+        ]}
+      />
+    </StoryProviders>
+  ),
+  args: { showFrame: true }
 };

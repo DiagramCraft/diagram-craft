@@ -6,7 +6,8 @@ import {
   StoryProviders,
   WORKSPACE,
   createStoryQueryClient,
-  dashboardWidget
+  dashboardWidget,
+  frameControls
 } from '../../shared/mdx/StorybookHarness';
 import { entityDetailQuery } from '../../../queries/entities';
 import { entityBlastRadiusAggregateQuery } from '../../../queries/entityTraversal';
@@ -135,7 +136,16 @@ const render = (config: Record<string, unknown>, entities: BlastRadiusReached[])
 const meta = {
   title: 'Widgets/Visualizations/Blast radius',
   tags: ['dashboard', 'workspace-surface'],
-  parameters: { layout: 'padded' }
+  ...frameControls,
+  parameters: {
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'Workspace dashboards only: Shows what is affected if one entity changes or fails: the entities reachable through relations, up to `maxDepth` hops away. Either every relation is walked, or specific relation fields are listed as separate columns with a second-order column for what lies behind them. The entity is usually supplied by a dashboard sidebar variable.'
+      }
+    }
+  }
 } satisfies Meta;
 
 export default meta;
@@ -153,4 +163,9 @@ export const GroupedByRelationField: Story = {
 
 export const NoConfiguredRelationFields: Story = {
   render: () => render({ groups: [{ fieldName: 'Nonexistent', label: 'Things' }], maxDepth: 2 }, [])
+};
+
+export const WithFrame: Story = {
+  ...GroupedByRelationField,
+  args: { showFrame: true }
 };

@@ -69,14 +69,20 @@ const meta = {
   title: 'Widgets/Content & layout/Image',
   tags: ['mdx', 'block'],
   parameters: {
-    layout: 'padded'
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'Wiki pages only: Embeds an image that has been uploaded as an attachment in the workspace. The widget stores the attachment id and always shows the latest uploaded file. If the attachment is not found or is not an image, an explanatory placeholder is shown instead.'
+      }
+    }
   }
 } satisfies Meta;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const WikiUnsupportedAttachment: Story = {
+export const UnsupportedAttachment: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
       <ImageEmbed
@@ -86,7 +92,7 @@ export const WikiUnsupportedAttachment: Story = {
   )
 };
 
-export const WikiWithImage: Story = {
+export const WithImage: Story = {
   beforeEach: () => {
     const originalFetch = globalThis.fetch;
     globalThis.fetch = async (input, init) => {
@@ -112,14 +118,6 @@ export const WikiWithImage: Story = {
           align: 'center'
         }}
       />
-    </StoryProviders>
-  )
-};
-
-export const WikiMissingId: Story = {
-  render: () => (
-    <StoryProviders client={storyQueryClient}>
-      <ImageEmbed config={{ fileId: '', size: '100', align: 'center' }} />
     </StoryProviders>
   )
 };

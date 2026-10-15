@@ -4,7 +4,8 @@ import {
   StoryProviders,
   WORKSPACE,
   createStoryQueryClient,
-  dashboardWidget
+  dashboardWidget,
+  frameControls
 } from '../../shared/mdx/StorybookHarness';
 import { entityKeys } from '../../../queries/entities';
 
@@ -26,8 +27,15 @@ storyQueryClient.setQueryData(
 const meta = {
   title: 'Widgets/Metrics/Aggregate stat',
   tags: ['dashboard', 'workspace-surface', 'project-surface'],
+  ...frameControls,
   parameters: {
-    layout: 'padded'
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'Workspace and project dashboards only: A single headline number computed from an entity query: a count, a sum of a number or currency field, or the number of distinct values. With a denominator query it can show a percentage, which makes it suitable for coverage and compliance figures. An optional second query provides a subtext such as "12 of 40", and a severity colours the value.'
+      }
+    }
   }
 } satisfies Meta;
 
@@ -50,10 +58,15 @@ export const ComplianceCoverage: Story = {
             0,
             0,
             3,
-            2
+            8
           )
         ]}
       />
     </StoryProviders>
   )
+};
+
+export const WithFrame: Story = {
+  ...ComplianceCoverage,
+  args: { showFrame: true }
 };

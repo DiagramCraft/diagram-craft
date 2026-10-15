@@ -42,7 +42,7 @@ export type WorkspaceAuthorization = {
   canOverrideEntityApproval: boolean;
 };
 
-type WorkspaceAuthorizationSource = {
+export type WorkspaceAuthorizationSource = {
   getContext: (
     workspaceId: string | null | undefined
   ) => NormalizedWorkspaceAuthorizationContext | null;
@@ -50,9 +50,8 @@ type WorkspaceAuthorizationSource = {
   capabilities: CapabilityEvaluator;
 };
 
-const WorkspaceAuthorizationSourceContext = createContext<WorkspaceAuthorizationSource | null>(
-  null
-);
+export const WorkspaceAuthorizationSourceContext =
+  createContext<WorkspaceAuthorizationSource | null>(null);
 
 /**
  * Builds a `getContext(workspaceId)` resolver caching one normalized context per workspace id for

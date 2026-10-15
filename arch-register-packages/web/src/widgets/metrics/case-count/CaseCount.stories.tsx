@@ -6,7 +6,8 @@ import {
   StoryProviders,
   WORKSPACE,
   createStoryQueryClient,
-  dashboardWidget
+  dashboardWidget,
+  frameControls
 } from '../../shared/mdx/StorybookHarness';
 import { entityDetailQuery } from '../../../queries/entities';
 import { governanceCasesQuery } from '../../../queries/governance';
@@ -58,7 +59,7 @@ const render = (config: Record<string, unknown>, cases: GovernanceCase[] = CASES
             0,
             0,
             3,
-            5
+            8
           )
         ]}
       />
@@ -69,7 +70,16 @@ const render = (config: Record<string, unknown>, cases: GovernanceCase[] = CASES
 const meta = {
   title: 'Widgets/Metrics/Case count',
   tags: ['dashboard', 'workspace-surface'],
-  parameters: { layout: 'padded' }
+  ...frameControls,
+  parameters: {
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'Workspace dashboards only: The number of open governance cases against entities of a chosen type, filtered by case kind and scope. The number can be coloured when it is above zero, and a subtext template can use `{count}` and `{due}` (cases due within `dueWithinDays`). Use it as a KPI tile above a Needs attention queue.'
+      }
+    }
+  }
 } satisfies Meta;
 
 export default meta;
@@ -96,4 +106,9 @@ export const PastDue: Story = {
 
 export const Empty: Story = {
   render: () => render({ label: 'Cases awaiting a decision', tone: 'warning' }, [])
+};
+
+export const WithFrame: Story = {
+  ...AwaitingDecision,
+  args: { showFrame: true }
 };

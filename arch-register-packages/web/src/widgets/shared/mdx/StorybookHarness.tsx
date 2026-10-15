@@ -5,11 +5,16 @@ import {
   createRouter,
   RouterProvider
 } from '@tanstack/react-router';
+import { CapabilityEvaluator, PermissionChecker } from '@arch-register/permissions';
 import { createContext, useContext, type ReactNode } from 'react';
 import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
+import {
+  WorkspaceAuthorizationSourceContext,
+  type WorkspaceAuthorizationSource
+} from '../../../auth/WorkspaceAuthorizationContext';
 import { DashboardGrid } from '../../../sections/dashboard/DashboardGrid';
 import { MdxContext } from '../../../sections/markdown/MdxContext';
 import { WorkspaceContext, type WorkspaceContextType } from '../../../layouts/WorkspaceContext';
@@ -64,6 +69,9 @@ export const createStoryQueryClient = () =>
   new QueryClient({
     defaultOptions: {
       queries: {
+        // Stories seed data with setQueryData when their module loads; without an observer that
+        // data is garbage collected after the default 5 minutes, leaving the story empty.
+        gcTime: Infinity,
         retry: false,
         refetchOnMount: false,
         refetchOnWindowFocus: false
@@ -81,6 +89,13 @@ queryClient.setQueryData(projectKeys.list(WORKSPACE), [
 queryClient.setQueryData(entityKeys.facets(WORKSPACE), {
   completeness: { below50: 2, below80: 3, above80: 5 }
 });
+
+// No signed-in user: workspace checks fail closed and field group access defaults to editable.
+const storyAuthorizationSource: WorkspaceAuthorizationSource = {
+  getContext: () => null,
+  checker: new PermissionChecker(),
+  capabilities: new CapabilityEvaluator()
+};
 
 const StoryContentContext = createContext<ReactNode>(null);
 const StoryRoot = () => useContext(StoryContentContext);
@@ -115,11 +130,13 @@ export const StoryProviders = ({
         permissions: { ...workspaceContext.permissions, ...permissions }
       }}
     >
-      <MdxContext.Provider value={{ workspaceSlug: WORKSPACE, projectId, renderMode: 'wiki' }}>
-        <StoryContentContext.Provider value={children}>
-          <RouterProvider router={storyRouter} />
-        </StoryContentContext.Provider>
-      </MdxContext.Provider>
+      <WorkspaceAuthorizationSourceContext.Provider value={storyAuthorizationSource}>
+        <MdxContext.Provider value={{ workspaceSlug: WORKSPACE, projectId, renderMode: 'wiki' }}>
+          <StoryContentContext.Provider value={children}>
+            <RouterProvider router={storyRouter} />
+          </StoryContentContext.Provider>
+        </MdxContext.Provider>
+      </WorkspaceAuthorizationSourceContext.Provider>
     </WorkspaceContext.Provider>
   </QueryClientProvider>
 );
@@ -142,14 +159,41 @@ export const dashboardWidget = (
   h
 });
 
-export const DashboardStory = ({ widgets }: { widgets: DashboardWidget[] }) => (
-  <DashboardGrid
-    widgets={widgets}
-    canEdit={false}
-    isEditing={false}
-    onEditingChange={() => {}}
-    onSave={() => {}}
-    isLoading={false}
-    workspaceSlug={WORKSPACE}
-  />
-);
+const WidgetFrameContext = createContext(false);
+
+/**
+ * Meta fragment for stories of dashboard widgets: adds a `showFrame` control that shows the
+ * dashboard widget frame (border and header) around the widgets of `DashboardStory`. Without it
+ * stories render the widget bare, as it appears on a dashboard with the frame hidden.
+ */
+export const frameControls = {
+  args: { showFrame: false },
+  argTypes: {
+    showFrame: {
+      control: 'boolean' as const,
+      description: 'Show the dashboard widget frame around the widget'
+    }
+  },
+  decorators: [
+    (Story: () => ReactNode, context: { args: { showFrame?: boolean } }) => (
+      <WidgetFrameContext.Provider value={!!context.args.showFrame}>
+        <Story />
+      </WidgetFrameContext.Provider>
+    )
+  ]
+};
+
+export const DashboardStory = ({ widgets }: { widgets: DashboardWidget[] }) => {
+  const showFrame = useContext(WidgetFrameContext);
+  return (
+    <DashboardGrid
+      widgets={widgets.map(widget => ({ ...widget, frame: { ...widget.frame, showFrame } }))}
+      canEdit={false}
+      isEditing={false}
+      onEditingChange={() => {}}
+      onSave={() => {}}
+      isLoading={false}
+      workspaceSlug={WORKSPACE}
+    />
+  );
+};

@@ -26,14 +26,20 @@ const meta = {
   title: 'Widgets/Metrics/Entity field',
   tags: ['mdx', 'inline'],
   parameters: {
-    layout: 'padded'
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'Wiki pages only: Shows the live value of one field of an entity inline in text, so that the value never goes out of date in documentation. Works with text, numbers, references and tags.'
+      }
+    }
   }
 } satisfies Meta;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const WikiOwner: Story = {
+export const Owner: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
       <p>
@@ -43,7 +49,7 @@ export const WikiOwner: Story = {
   )
 };
 
-export const WikiDescription: Story = {
+export const Description: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
       <p>
@@ -53,7 +59,7 @@ export const WikiDescription: Story = {
   )
 };
 
-export const WikiTags: Story = {
+export const Tags: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
       <p>
@@ -63,7 +69,7 @@ export const WikiTags: Story = {
   )
 };
 
-export const WikiUnavailableField: Story = {
+export const UnavailableField: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
       <p>

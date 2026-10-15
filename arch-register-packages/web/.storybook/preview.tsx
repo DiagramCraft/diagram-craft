@@ -1,5 +1,6 @@
 import { Preview } from '@storybook/react-vite';
 import '../src/tokens.css';
+import '../src/widgetDiscovery';
 
 const preview: Preview = {
   parameters: {

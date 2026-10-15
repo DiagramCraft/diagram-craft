@@ -6,7 +6,8 @@ import {
   DashboardStory,
   StoryProviders,
   WORKSPACE,
-  dashboardWidget
+  dashboardWidget,
+  frameControls
 } from '../../shared/mdx/StorybookHarness';
 import { auditKeys } from '../../../queries/audit';
 
@@ -86,24 +87,36 @@ const schemaQueryOptions = {
   limit: 10
 };
 
+// A dashboard widget needs a filter (see the config schema), so the empty state uses a valid
+// config - limit 5 - whose seeded result is empty.
+const emptyQueryOptions = { ...schemaQueryOptions, limit: 5 };
+
 const entityHistoryEntries = entityEntries.filter(entry => entry.entity_id === entityId);
 
 const storyQueryClient = createStoryQueryClient();
 storyQueryClient.setQueryData(auditKeys.log(WORKSPACE, entityQueryOptions), entityHistoryEntries);
 storyQueryClient.setQueryData(auditKeys.log(WORKSPACE, schemaQueryOptions), entityEntries);
+storyQueryClient.setQueryData(auditKeys.log(WORKSPACE, emptyQueryOptions), []);
 
 const meta = {
   title: 'Widgets/Data views/Entity changelog',
   tags: ['mdx', 'block', 'dashboard', 'workspace-surface', 'project-surface'],
+  ...frameControls,
   parameters: {
-    layout: 'padded'
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'Wiki pages and dashboards (workspace and project): A feed of recent changes. Scope it to one entity with `entityId`, or to a set of entities by schema, owner and lifecycle; `since` and `limit` control the time window and the number of entries. Use it to answer "what has changed lately?" on an entity page or an overview.'
+      }
+    }
   }
 } satisfies Meta;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const WikiEntityHistory: Story = {
+export const EntityHistory: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
       <EntityChangelog config={{ entityId, limit: '10' }} />
@@ -111,7 +124,7 @@ export const WikiEntityHistory: Story = {
   )
 };
 
-export const WikiSchemaHistory: Story = {
+export const SchemaHistory: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
       <EntityChangelog config={{ schema: 'service', limit: '10' }} />
@@ -119,7 +132,7 @@ export const WikiSchemaHistory: Story = {
   )
 };
 
-export const WikiNoFilter: Story = {
+export const NoFilter: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
       <EntityChangelog config={{}} />
@@ -127,7 +140,7 @@ export const WikiNoFilter: Story = {
   )
 };
 
-export const DashboardDefault: Story = {
+export const Default: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
       <DashboardStory
@@ -138,8 +151,8 @@ export const DashboardDefault: Story = {
             { entityId, limit: '10' },
             0,
             0,
-            6,
-            4
+            12,
+            12
           )
         ]}
       />
@@ -147,12 +160,27 @@ export const DashboardDefault: Story = {
   )
 };
 
-export const DashboardEmpty: Story = {
+export const Empty: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
       <DashboardStory
-        widgets={[dashboardWidget('entity-changelog-empty', 'EntityChangelog', {}, 0, 0, 6, 4)]}
+        widgets={[
+          dashboardWidget(
+            'entity-changelog-empty',
+            'EntityChangelog',
+            { schema: 'service', limit: '5' },
+            0,
+            0,
+            12,
+            12
+          )
+        ]}
       />
     </StoryProviders>
   )
+};
+
+export const WithFrame: Story = {
+  ...Default,
+  args: { showFrame: true }
 };

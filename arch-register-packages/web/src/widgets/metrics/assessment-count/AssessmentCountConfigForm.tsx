@@ -1,7 +1,7 @@
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { Select } from '@diagram-craft/app-components/Select';
 import { DialogSection } from '../../../sections/markdown/editor/BlockDialog';
-import { type AssessmentWidgetMode } from '../assessments/assessmentsWidgetLogic';
+import { type AssessmentWidgetMode } from '../../data-views/assessments/assessmentsWidgetLogic';
 import registrationStyles from '../../../sections/dashboard/WidgetConfigDialog.module.css';
 import { AssessmentCountWidgetConfig } from './types';
 

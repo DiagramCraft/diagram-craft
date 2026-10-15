@@ -5,7 +5,8 @@ import {
   StoryProviders,
   WORKSPACE,
   createStoryQueryClient,
-  dashboardWidget
+  dashboardWidget,
+  frameControls
 } from '../../shared/mdx/StorybookHarness';
 import { entityKeys } from '../../../queries/entities';
 
@@ -55,8 +56,15 @@ storyQueryClient.setQueryData(entityKeys.list(WORKSPACE, { schemaId: 'objective'
 const meta = {
   title: 'Widgets/Metrics/Count by field',
   tags: ['dashboard', 'workspace-surface'],
+  ...frameControls,
   parameters: {
-    layout: 'padded'
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'Workspace dashboards only: The number of entities of a type, shown as one stacked bar divided by the values of a field, with a legend. Use it for a quick distribution such as objectives by status or applications by lifecycle.'
+      }
+    }
   }
 } satisfies Meta;
 
@@ -81,4 +89,9 @@ export const ObjectivesByStatus: Story = {
       />
     </StoryProviders>
   )
+};
+
+export const WithFrame: Story = {
+  ...ObjectivesByStatus,
+  args: { showFrame: true }
 };

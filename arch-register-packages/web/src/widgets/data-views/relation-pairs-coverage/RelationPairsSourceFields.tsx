@@ -1,0 +1,87 @@
+import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
+import { DialogSection } from '../../../sections/markdown/editor/BlockDialog';
+import configFormStyles from '../../../sections/dashboard/WidgetConfigDialog.module.css';
+import type { RelationPairsSourceConfig } from './types';
+
+/** The hub, provider, consumer and coverage-relation pickers shared by both pair widgets. */
+export const RelationPairsSourceFields = <T extends RelationPairsSourceConfig>({
+  config,
+  onChange
+}: {
+  config: T;
+  onChange: (config: T) => void;
+}) => {
+  const { schemas, relationSchemas } = useWorkspaceContext();
+  const hub = schemas.find(candidate => candidate.name === config.hubSchemaName);
+  const relationFields = hub?.fields.filter(field => field.type === 'typedRelation') ?? [];
+
+  const fieldSelect = (value: string, onValue: (value: string) => void) => (
+    <select
+      className={configFormStyles.labelInput}
+      value={value}
+      onChange={event => onValue(event.currentTarget.value)}
+    >
+      <option value="">Select a relation field…</option>
+      {relationFields.map(field => (
+        <option key={field.id} value={field.name}>
+          {field.name}
+        </option>
+      ))}
+    </select>
+  );
+
+  return (
+    <>
+      <DialogSection label="Hub entity type" required>
+        <select
+          className={configFormStyles.labelInput}
+          value={config.hubSchemaName}
+          onChange={event =>
+            onChange({
+              ...config,
+              hubSchemaName: event.currentTarget.value,
+              providerFieldName: '',
+              consumerFieldName: ''
+            })
+          }
+        >
+          <option value="">Select an entity type…</option>
+          {schemas.map(candidate => (
+            <option key={candidate.id} value={candidate.name}>
+              {candidate.name}
+            </option>
+          ))}
+        </select>
+      </DialogSection>
+      <DialogSection label="Providers" required>
+        {fieldSelect(config.providerFieldName, value =>
+          onChange({ ...config, providerFieldName: value })
+        )}
+      </DialogSection>
+      <DialogSection label="Consumers" required>
+        {fieldSelect(config.consumerFieldName, value =>
+          onChange({ ...config, consumerFieldName: value })
+        )}
+      </DialogSection>
+      <DialogSection label="Coverage relation type" required>
+        <select
+          className={configFormStyles.labelInput}
+          value={config.coverageRelationSchemaName}
+          onChange={event =>
+            onChange({
+              ...config,
+              coverageRelationSchemaName: event.currentTarget.value
+            })
+          }
+        >
+          <option value="">Select a relation type…</option>
+          {relationSchemas.map(candidate => (
+            <option key={candidate.id} value={candidate.name}>
+              {candidate.name}
+            </option>
+          ))}
+        </select>
+      </DialogSection>
+    </>
+  );
+};

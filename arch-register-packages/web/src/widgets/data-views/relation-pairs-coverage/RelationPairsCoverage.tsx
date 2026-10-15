@@ -1,31 +1,20 @@
-import { useMemo } from 'react';
 import { Chip } from '../../../components/Chip';
 import { EmptyState } from '../../../components/EmptyState';
 import { Table } from '../../../components/table/Table';
 import { useTableSort } from '../../../components/table/useTableSort';
-import { useRelations } from '../../../hooks/useRelations';
-import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
-import { useWidgetBodyTitle } from '../../shared/dashboard/WidgetBodyTitle';
-import {
-  computeRelationPairCoverage,
-  computeRelationPairs,
-  resolveTypedRelationSchemaId,
-  type RelationPair
-} from './relationPairCoverageLogic';
-import styles from './RelationPairsCoverage.module.css';
+import { useWidgetFramed } from '../../shared/dashboard/WidgetFramed';
+import { type RelationPair } from './relationPairCoverageLogic';
+import { useRelationPairCoverage } from './useRelationPairCoverage';
 import { RelationPairsCoverageWidgetConfig } from './types';
 
 const WARN = 'var(--cmp-fg-warning, #eab308)';
-const DANGER = 'var(--cmp-fg-danger, #ef4444)';
-
-const RELATION_LIMIT = 500;
 
 type SortKey = 'consumer';
 
 /**
  * Every provider × consumer pairing around each hub entity (e.g. every System providing × every
  * System consuming a given API), with a flag for whether a coverage relation (e.g. a Data Flow)
- * exists between the two. Not tied to any application: any hub schema with two typed-relation
+ * exists between the two (the gap count alone is the `RelationPairGaps` metric). Not tied to any application: any hub schema with two typed-relation
  * fields and any relation type can be configured.
  */
 export const RelationPairsCoverageWidget = ({
@@ -33,35 +22,9 @@ export const RelationPairsCoverageWidget = ({
 }: {
   config: RelationPairsCoverageWidgetConfig;
 }) => {
-  const title = useWidgetBodyTitle();
-  const { workspaceSlug, schemas, relationSchemas } = useWorkspaceContext();
-  const hubSchema = schemas.find(candidate => candidate.name === config.hubSchemaName);
-  const providerSchemaId = resolveTypedRelationSchemaId(hubSchema, config.providerFieldName);
-  const consumerSchemaId = resolveTypedRelationSchemaId(hubSchema, config.consumerFieldName);
-  const coverageSchemaId = relationSchemas.find(
-    candidate => candidate.name === config.coverageRelationSchemaName
-  )?.id;
-
-  const providers = useRelations(
-    workspaceSlug,
-    { schemaId: providerSchemaId ?? undefined, limit: RELATION_LIMIT },
-    { enabled: providerSchemaId != null }
-  );
-  const consumers = useRelations(
-    workspaceSlug,
-    { schemaId: consumerSchemaId ?? undefined, limit: RELATION_LIMIT },
-    { enabled: consumerSchemaId != null }
-  );
-  const coverage = useRelations(
-    workspaceSlug,
-    { schemaId: coverageSchemaId, limit: RELATION_LIMIT },
-    { enabled: coverageSchemaId != null }
-  );
-
-  const pairs = useMemo(
-    () => computeRelationPairs(providers.data, consumers.data, coverage.data),
-    [providers.data, consumers.data, coverage.data]
-  );
+  const framed = useWidgetFramed();
+  const { hubSchema, providerSchemaId, consumerSchemaId, coverageSchemaId, pairs, isLoading } =
+    useRelationPairCoverage(config);
   const { sorted, sort, toggleSort } = useTableSort<RelationPair, SortKey>(
     pairs,
     { consumer: (a, b) => a.consumer.name.localeCompare(b.consumer.name) },
@@ -86,23 +49,8 @@ export const RelationPairsCoverageWidget = ({
     );
   }
 
-  const isLoading = providers.isLoading || consumers.isLoading || coverage.isLoading;
-  if (config.display === 'stat') {
-    const summary = computeRelationPairCoverage(pairs);
-    return (
-      <div className={styles.tile}>
-        <div className={styles.label}>{title ?? 'Coverage gaps'}</div>
-        <div className={styles.value} style={summary.gapPairs > 0 ? { color: DANGER } : undefined}>
-          {isLoading ? '…' : summary.gapPairs}
-        </div>
-        <div className={styles.sub}>
-          {summary.coveredPairs} of {summary.applicablePairs} covered
-        </div>
-      </div>
-    );
-  }
   return (
-    <Table.Root scroll stickyHeader bordered={false}>
+    <Table.Root scroll stickyHeader bordered={!framed}>
       <Table.Head>
         <Table.Row>
           <Table.SortableHeaderCell sortKey="consumer" sort={sort} onSort={toggleSort}>

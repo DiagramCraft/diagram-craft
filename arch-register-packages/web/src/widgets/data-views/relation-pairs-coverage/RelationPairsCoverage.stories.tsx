@@ -7,7 +7,8 @@ import {
   StoryProviders,
   WORKSPACE,
   createStoryQueryClient,
-  dashboardWidget
+  dashboardWidget,
+  frameControls
 } from '../../shared/mdx/StorybookHarness';
 import { relationKeys } from '../../../queries/relations';
 
@@ -111,7 +112,16 @@ const renderDashboard = (
 const meta = {
   title: 'Widgets/Data views/Pair coverage',
   tags: ['dashboard', 'workspace-surface'],
-  parameters: { layout: 'padded' }
+  ...frameControls,
+  parameters: {
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'Workspace dashboards only: Checks coverage around a shared hub entity. Every provider and consumer pair attached to the hub is listed together with whether a chosen relation type connects the two, so missing links stand out as gaps. Use it to verify, for example, that every consumer of an API has a documented data flow to its provider.'
+      }
+    }
+  }
 } satisfies Meta;
 
 export default meta;
@@ -119,6 +129,14 @@ type Story = StoryObj<typeof meta>;
 
 /** Checkout → CRM is covered by a Data Flow; Billing → CRM is a gap; the Component provider is n/a. */
 export const LinkedGapAndNotApplicable: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Pairs that are linked, pairs that are gaps, and pairs where coverage does not apply.'
+      }
+    }
+  },
   render: () => renderDashboard()
 };
 
@@ -133,11 +151,6 @@ export const CustomHeadings: Story = {
     })
 };
 
-/** Compact tile: the number of applicable pairs without a matching coverage relation. */
-export const GapCountTile: Story = {
-  render: () => renderDashboard({ display: 'stat', label: 'Provider/consumer gaps' })
-};
-
 export const NoPairs: Story = {
   render: () => renderDashboard({}, { providers: [], consumers: [], flows: [] })
 };
@@ -148,4 +161,9 @@ export const MissingRelationFields: Story = {
 
 export const UnknownCoverageRelation: Story = {
   render: () => renderDashboard({ coverageRelationSchemaName: 'Nonexistent' })
+};
+
+export const WithFrame: Story = {
+  ...LinkedGapAndNotApplicable,
+  args: { showFrame: true }
 };

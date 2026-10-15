@@ -5,7 +5,8 @@ import {
   StoryProviders,
   WORKSPACE,
   createStoryQueryClient,
-  dashboardWidget
+  dashboardWidget,
+  frameControls
 } from '../../shared/mdx/StorybookHarness';
 import { conformanceKeys } from '../../../queries/conformance';
 
@@ -41,8 +42,15 @@ const mixedResults: ConformanceSummary = {
 const meta = {
   title: 'Widgets/Data views/Conformance summary',
   tags: ['dashboard', 'workspace-surface'],
+  ...frameControls,
   parameters: {
-    layout: 'padded'
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'Workspace dashboards only: A compact summary of the current conformance violations in the workspace, grouped by severity, by check and by schema. Use it as the entry point to conformance work: the numbers show how big the problem is and where it is concentrated. It needs permission to read conformance results.'
+      }
+    }
   }
 } satisfies Meta;
 
@@ -60,7 +68,7 @@ const renderDashboard = (
     <StoryProviders client={client} permissions={permissions}>
       <DashboardStory
         widgets={[
-          dashboardWidget('conformance-summary', 'conformance-violation-summary', {}, 0, 0, 5, 4)
+          dashboardWidget('conformance-summary', 'conformance-violation-summary', {}, 0, 0, 12, 12)
         ]}
       />
     </StoryProviders>
@@ -76,5 +84,18 @@ export const MixedResults: Story = {
 };
 
 export const NoAccess: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'The viewer lacks permission, so the widget explains that instead of showing numbers.'
+      }
+    }
+  },
   render: () => renderDashboard(noViolations, { canViewSchemas: false })
+};
+
+export const WithFrame: Story = {
+  ...NoViolations,
+  args: { showFrame: true }
 };

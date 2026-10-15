@@ -22,6 +22,7 @@ import {
   resolveRelationTableColumns,
   type RelationTableColumn
 } from './relationTableLogic';
+import { useWidgetFramed } from '../../shared/dashboard/WidgetFramed';
 import { RelationDrawer } from '../../../sections/relations/RelationDrawer';
 import styles from './RelationTable.module.css';
 import { RelationTableWidgetConfig } from './types';
@@ -43,6 +44,7 @@ const cellSortValue = (
 export const RelationTableWidget = ({ config }: { config: RelationTableWidgetConfig }) => {
   const { workspaceSlug, relationSchemas } = useWorkspaceContext();
   const { openEntityDrawer } = useEntityDrawer();
+  const framed = useWidgetFramed();
   const dateTimeFormatPreference = useDateTimeFormatPreference();
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
@@ -153,7 +155,7 @@ export const RelationTableWidget = ({ config }: { config: RelationTableWidgetCon
 
   return (
     <>
-      <Table.Root scroll stickyHeader bordered={false}>
+      <Table.Root scroll stickyHeader bordered={!framed}>
         <Table.Head>
           <Table.Row>
             <Table.SortableHeaderCell sortKey="_in" sort={sort} onSort={toggleSort}>

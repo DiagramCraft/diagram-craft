@@ -5,7 +5,8 @@ import {
   StoryProviders,
   WORKSPACE,
   dashboardWidget,
-  createStoryQueryClient
+  createStoryQueryClient,
+  frameControls
 } from '../../shared/mdx/StorybookHarness';
 import { workspaceAnalyticsKeys } from '../../../queries/workspaceAnalytics';
 
@@ -23,37 +24,22 @@ storyQueryClient.setQueryData(workspaceAnalyticsKeys.detail(WORKSPACE, 90), anal
 const meta = {
   title: 'Widgets/Visualizations/Lifecycle chart',
   tags: ['dashboard', 'workspace-surface'],
+  ...frameControls,
   parameters: {
-    layout: 'padded'
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'Workspace dashboards only: A donut chart that breaks down the entities of the workspace by lifecycle state (for example proposed, active and retired). It has no options of its own; use Entity chart on a wiki page if you need to filter.'
+      }
+    }
   }
 } satisfies Meta;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const DashboardDefault: Story = {
-  render: () => (
-    <StoryProviders client={storyQueryClient}>
-      <DashboardStory
-        widgets={[dashboardWidget('lifecycle-chart', 'entity-lifecycle-chart', {}, 0, 0, 3, 2)]}
-      />
-    </StoryProviders>
-  )
-};
-
-export const DashboardWide: Story = {
-  render: () => (
-    <StoryProviders client={storyQueryClient}>
-      <DashboardStory
-        widgets={[
-          dashboardWidget('lifecycle-chart-wide', 'entity-lifecycle-chart', {}, 0, 0, 6, 4)
-        ]}
-      />
-    </StoryProviders>
-  )
-};
-
-export const DashboardLarge: Story = {
+export const Default: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
       <DashboardStory
@@ -63,4 +49,9 @@ export const DashboardLarge: Story = {
       />
     </StoryProviders>
   )
+};
+
+export const WithFrame: Story = {
+  ...Default,
+  args: { showFrame: true }
 };

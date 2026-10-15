@@ -6,7 +6,8 @@ import {
   WORKSPACE,
   createStoryQueryClient,
   DashboardStory,
-  dashboardWidget
+  dashboardWidget,
+  frameControls
 } from '../../shared/mdx/StorybookHarness';
 import { entityKeys } from '../../../queries/entities';
 
@@ -34,7 +35,8 @@ const entityQueryOptions = {
   limit: undefined,
   offset: undefined,
   asOf: undefined,
-  includePlannedChanges: true
+  includePlannedChanges: true,
+  includeUsageCount: false
 };
 
 const entities = [
@@ -84,15 +86,22 @@ storyQueryClient.setQueryData(entityKeys.facets(WORKSPACE), {
 const meta = {
   title: 'Widgets/Data views/Entity browser',
   tags: ['mdx', 'block', 'dashboard', 'workspace-surface', 'project-surface'],
+  ...frameControls,
   parameters: {
-    layout: 'padded'
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'Wiki pages and dashboards (workspace and project): A live list of entities with your own filters, sorting and columns, shown as a table, cards, or a map. In its static form it renders a fixed result, which is what wiki pages publish; with `interactive` set it also provides search and pagination. Use it for flexible catalog views that would otherwise need a saved view.'
+      }
+    }
   }
 } satisfies Meta;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const WikiFiltered: Story = {
+export const Embedded: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
       <EntityBrowserEmbed config={browserConfig} />
@@ -100,15 +109,7 @@ export const WikiFiltered: Story = {
   )
 };
 
-export const WikiNoViewConfigured: Story = {
-  render: () => (
-    <StoryProviders client={storyQueryClient}>
-      <EntityBrowserEmbed config={browserConfig} />
-    </StoryProviders>
-  )
-};
-
-export const WikiInteractive: Story = {
+export const Interactive: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
       <EntityBrowserEmbed config={{ ...browserConfig, interactive: true }} />
@@ -116,19 +117,19 @@ export const WikiInteractive: Story = {
   )
 };
 
-export const DashboardDefault: Story = {
+export const Default: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
       <DashboardStory
         widgets={[
-          dashboardWidget('entity-browser-embed', 'EntityBrowserEmbed', browserConfig, 0, 0, 6, 6)
+          dashboardWidget('entity-browser-embed', 'EntityBrowserEmbed', browserConfig, 0, 0, 12, 12)
         ]}
       />
     </StoryProviders>
   )
 };
 
-export const DashboardInteractive: Story = {
+export const InteractiveTile: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
       <DashboardStory
@@ -139,11 +140,16 @@ export const DashboardInteractive: Story = {
             { ...browserConfig, interactive: true },
             0,
             0,
-            6,
-            6
+            12,
+            12
           )
         ]}
       />
     </StoryProviders>
   )
+};
+
+export const WithFrame: Story = {
+  ...Default,
+  args: { showFrame: true }
 };

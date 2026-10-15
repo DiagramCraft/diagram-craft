@@ -25,7 +25,7 @@ export const dateCalendarWidgetConfigSchema = z
       })
       .optional(),
     /** Date field that decides which month/week a record lands in. */
-    dateFieldId: withInitial(z.string().trim(), ''),
+    dateFieldId: withInitial(z.string().trim().default(''), ''),
     period: calendarPeriodSchema.optional(),
     periodCount: z.number().optional(),
     /** Optional field shown under the name; a reference/containment field shows the target's name. */

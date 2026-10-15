@@ -1,4 +1,4 @@
-import { assessmentWidgetModeSchema } from '../assessments/assessmentsWidgetLogic';
+import { assessmentWidgetModeSchema } from '../../data-views/assessments/assessmentsWidgetLogic';
 import { z } from 'zod';
 import { withInitial } from '../../shared/configSchema';
 

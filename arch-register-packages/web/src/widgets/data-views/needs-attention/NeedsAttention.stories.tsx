@@ -6,7 +6,8 @@ import {
   StoryProviders,
   WORKSPACE,
   createStoryQueryClient,
-  dashboardWidget
+  dashboardWidget,
+  frameControls
 } from '../../shared/mdx/StorybookHarness';
 import { governanceCasesQuery } from '../../../queries/governance';
 import { entityDetailQuery } from '../../../queries/entities';
@@ -22,7 +23,16 @@ const casesQuery = { status: 'open', subjectType: 'entity' } as const;
 const meta = {
   title: 'Widgets/Data views/Needs attention queue',
   tags: ['dashboard', 'workspace-surface', 'project-surface'],
-  parameters: { layout: 'padded' }
+  ...frameControls,
+  parameters: {
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'Workspace and project dashboards only: A queue of open governance cases against entities of a chosen type that are waiting for a decision. Scope it to `workspace`, `mine` (assigned to the viewer) or `late`, and optionally derive a priority from the due date. Use it as the main to-do list for stewards and owners.'
+      }
+    }
+  }
 } satisfies Meta;
 
 export default meta;
@@ -121,4 +131,9 @@ export const Empty: Story = {
       </StoryProviders>
     );
   }
+};
+
+export const WithFrame: Story = {
+  ...Populated,
+  args: { showFrame: true }
 };

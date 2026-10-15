@@ -62,11 +62,7 @@ export const EntityChangelog = ({ config }: { config: EntityChangelogWidgetConfi
   );
 
   if (!hasFilter) {
-    return (
-      <div className={styles.container}>
-        <EmptyState compact title="No entity or filter configured." />
-      </div>
-    );
+    return <EmptyState compact title="No entity or filter configured." />;
   }
 
   if (isLoading) {
@@ -80,11 +76,7 @@ export const EntityChangelog = ({ config }: { config: EntityChangelogWidgetConfi
   }
 
   if (!entries || entries.length === 0) {
-    return (
-      <div className={styles.container}>
-        <EmptyState compact title="No recent changes." />
-      </div>
-    );
+    return <EmptyState compact title="No recent changes." />;
   }
 
   return (

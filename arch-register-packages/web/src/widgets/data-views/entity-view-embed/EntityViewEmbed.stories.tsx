@@ -5,7 +5,8 @@ import {
   StoryProviders,
   WORKSPACE,
   dashboardWidget,
-  queryClient
+  queryClient,
+  frameControls
 } from '../../shared/mdx/StorybookHarness';
 import { entityKeys } from '../../../queries/entities';
 import { viewKeys } from '../../../queries/views';
@@ -66,23 +67,25 @@ queryClient.setQueryData(
 const meta = {
   title: 'Widgets/Data views/Saved view',
   tags: ['mdx', 'block', 'dashboard', 'workspace-surface', 'project-surface'],
+  ...frameControls,
   parameters: {
-    layout: 'padded'
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'Wiki pages and dashboards (workspace and project): A live copy of a saved entity view. The embed always shows the view as it is currently defined, so a view that someone has already set up can be reused in a page or on a dashboard without being rebuilt.'
+      }
+    }
   }
 } satisfies Meta;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const WikiConfigured: Story = {
-  render: () => (
-    <StoryProviders>
-      <EntityViewEmbed config={{ viewId: 'view-services' }} />
-    </StoryProviders>
-  )
-};
-
-export const WikiNoView: Story = {
+// An empty viewId is not a valid dashboard config, so this state only occurs in a wiki block and
+// is rendered bare, without a frame to toggle.
+export const NoView: Story = {
+  argTypes: { showFrame: { control: false } },
   render: () => (
     <StoryProviders>
       <EntityViewEmbed config={{ viewId: '' }} />
@@ -90,39 +93,19 @@ export const WikiNoView: Story = {
   )
 };
 
-export const WikiMissingView: Story = {
-  render: () => (
-    <StoryProviders>
-      <EntityViewEmbed config={{ viewId: 'deleted-view' }} />
-    </StoryProviders>
-  )
-};
-
-export const DashboardDefault: Story = {
-  render: () => (
-    <StoryProviders>
-      <DashboardStory
-        widgets={[
-          dashboardWidget('saved-view', 'EntityViewEmbed', { viewId: 'view-services' }, 0, 0, 3, 2)
-        ]}
-      />
-    </StoryProviders>
-  )
-};
-
-export const DashboardWide: Story = {
+export const MissingView: Story = {
   render: () => (
     <StoryProviders>
       <DashboardStory
         widgets={[
           dashboardWidget(
-            'saved-view-wide',
+            'saved-view-missing',
             'EntityViewEmbed',
-            { viewId: 'view-services' },
+            { viewId: 'deleted-view' },
             0,
             0,
-            6,
-            4
+            12,
+            6
           )
         ]}
       />
@@ -130,7 +113,7 @@ export const DashboardWide: Story = {
   )
 };
 
-export const DashboardLarge: Story = {
+export const Default: Story = {
   render: () => (
     <StoryProviders>
       <DashboardStory
@@ -142,10 +125,15 @@ export const DashboardLarge: Story = {
             0,
             0,
             12,
-            6
+            18
           )
         ]}
       />
     </StoryProviders>
   )
+};
+
+export const WithFrame: Story = {
+  ...Default,
+  args: { showFrame: true }
 };

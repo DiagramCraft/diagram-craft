@@ -1,11 +1,21 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { frameControls } from '../../shared/mdx/StorybookHarness';
 import { assessmentWidgetStory } from '../../shared/data/assessmentWidgetStoryFixtures';
 
 /** Assessment status stat widget; status is derived from each assessment's completed-entity rollup. */
 const meta = {
   title: 'Widgets/Metrics/Assessment status',
   tags: ['dashboard', 'workspace-surface'],
-  parameters: { layout: 'padded' }
+  ...frameControls,
+  parameters: {
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'Workspace dashboards only: The number of assessments on an entity type that are in one chosen status: overdue, in progress, not started or complete. A subtext template can use `{count}`, `{total}` and `{notStarted}`. Use it as a KPI tile above an assessment table.'
+      }
+    }
+  }
 } satisfies Meta;
 
 export default meta;
@@ -18,7 +28,7 @@ export const Overdue: Story = {
     assessmentWidgetStory(
       'AssessmentStatusStat',
       { ...STAT, status: 'overdue', label: 'Overdue', subtextTemplate: 'past the scheduled date' },
-      { w: 3, h: 5 }
+      { w: 3, h: 8 }
     )
 };
 
@@ -32,7 +42,7 @@ export const InProgress: Story = {
         label: 'In progress',
         subtextTemplate: '{notStarted} not started'
       },
-      { w: 3, h: 5 }
+      { w: 3, h: 8 }
     )
 };
 
@@ -46,7 +56,7 @@ export const Complete: Story = {
         label: 'Complete',
         subtextTemplate: 'of {total} assessments'
       },
-      { w: 3, h: 5 }
+      { w: 3, h: 8 }
     )
 };
 
@@ -55,6 +65,11 @@ export const UnknownSchema: Story = {
     assessmentWidgetStory(
       'AssessmentStatusStat',
       { schemaName: 'Nope', status: 'overdue' },
-      { w: 3, h: 5 }
+      { w: 3, h: 8 }
     )
+};
+
+export const WithFrame: Story = {
+  ...Overdue,
+  args: { showFrame: true }
 };

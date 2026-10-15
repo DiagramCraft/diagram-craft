@@ -17,6 +17,11 @@ export default defineWidget({
   component: EntityChart,
   configForm: EntityChartConfigForm,
   icon: TbChartDonut,
+  dashboard: {
+    defaultW: 6,
+    defaultH: 24,
+    surfaces: ['workspace']
+  },
   mdx: configBlockMdx({
     codec: flatConfigCodec(entityChartWidgetConfigSchema),
     placeholder: 'Configure entity chart…'

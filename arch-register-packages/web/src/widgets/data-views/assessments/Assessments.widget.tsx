@@ -5,7 +5,7 @@ import { AssessmentsWidget } from './Assessments';
 import { assessmentsWidgetConfigSchema } from './types';
 export default defineWidget({
   type: 'Assessments',
-  category: 'metrics',
+  category: 'data-views',
   name: 'Assessments',
   description: 'Open or all assessments filtered by mode, assessment type and entity type scope.',
   icon: TbClipboardCheck,

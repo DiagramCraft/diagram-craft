@@ -1,7 +1,8 @@
 import { z } from 'zod';
 import { withInitial } from '../../shared/configSchema';
 
-export const relationPairsCoverageWidgetConfigSchema = z.object({
+/** The hub, its provider/consumer fields and the coverage relation: what both widgets compute from. */
+export const relationPairsSourceShape = {
   /** Display name of the hub entity schema (e.g. `API`) that providers and consumers attach to. */
   hubSchemaName: withInitial(z.string().min(1), ''),
   /** Typed-relation field (id or name) on the hub schema listing its providers. */
@@ -9,9 +10,13 @@ export const relationPairsCoverageWidgetConfigSchema = z.object({
   /** Typed-relation field (id or name) on the hub schema listing its consumers. */
   consumerFieldName: withInitial(z.string().min(1), ''),
   /** Relation type (by name) whose instances between a provider and a consumer count as coverage. */
-  coverageRelationSchemaName: withInitial(z.string().min(1), ''),
-  /** `table` lists every pair; `stat` shows a single tile with the number of pairs lacking coverage. */
-  display: z.enum(['table', 'stat']).optional(),
+  coverageRelationSchemaName: withInitial(z.string().min(1), '')
+};
+
+export type RelationPairsSourceConfig = z.infer<z.ZodObject<typeof relationPairsSourceShape>>;
+
+export const relationPairsCoverageWidgetConfigSchema = z.object({
+  ...relationPairsSourceShape,
   /** Column headings; default to the schema/field names. */
   hubLabel: z.string().optional(),
   providerLabel: z.string().optional(),

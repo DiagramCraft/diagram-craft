@@ -6,7 +6,13 @@ const meta = {
   title: 'Widgets/Content & layout/Caption',
   tags: ['mdx', 'block'],
   parameters: {
-    layout: 'padded'
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'Wiki pages only: Wraps a block (an image, diagram, table or any other widget) in a figure with a caption underneath. With `numbered` set, the caption is prefixed with an automatic running number (Figure 1, Figure 2, ...) that follows the order in the page. Use it so that figures can be referred to from the text.'
+      }
+    }
   }
 } satisfies Meta;
 
@@ -37,7 +43,7 @@ const architectureDiagram = (
   </div>
 );
 
-export const WikiNumbered: Story = {
+export const Numbered: Story = {
   render: () => (
     <StoryProviders>
       <Caption caption="Request flow across the platform" numbered="true">
@@ -47,18 +53,17 @@ export const WikiNumbered: Story = {
   )
 };
 
-export const WikiWithoutCaption: Story = {
+export const NumberedSequence: Story = {
   render: () => (
     <StoryProviders>
-      <Caption>{architectureDiagram}</Caption>
-    </StoryProviders>
-  )
-};
-
-export const WikiNumberedSequence: Story = {
-  render: () => (
-    <StoryProviders>
-      <div style={{ counterReset: 'figure-counter' }}>
+      <div
+        style={{
+          counterReset: 'figure-counter',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '1rem'
+        }}
+      >
         <Caption caption="Request flow across the platform" numbered="true">
           {architectureDiagram}
         </Caption>

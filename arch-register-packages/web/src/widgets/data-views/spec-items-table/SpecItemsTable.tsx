@@ -13,6 +13,7 @@ import { entitiesQuery } from '../../../queries/entities';
 import { stripEmptyGroups } from '../../../sections/entities/components/entityBrowserState';
 import { useEntityDrawer } from '../../../sections/entities/entityDrawer/useEntityDrawer';
 import { resolveEntityQuery } from '../entity-browser-embed/EntityBrowserEmbedFieldResolution';
+import { useWidgetFramed } from '../../shared/dashboard/WidgetFramed';
 import { specItemsEmptyLabel, specItemTone, specItemSortValue } from './specItemsTableLogic';
 import { SpecItemsTableWidgetConfig } from './types';
 
@@ -27,6 +28,7 @@ type SortKey = 'method' | 'path' | 'entity';
  */
 export const SpecItemsTableWidget = ({ config }: { config: SpecItemsTableWidgetConfig }) => {
   const { workspaceSlug, schemas, relationSchemas } = useWorkspaceContext();
+  const framed = useWidgetFramed();
   const { openEntityDrawer } = useEntityDrawer();
   const schema = schemas.find(candidate => candidate.name === config.schemaName);
 
@@ -87,7 +89,7 @@ export const SpecItemsTableWidget = ({ config }: { config: SpecItemsTableWidgetC
 
   const isLoading = entities.isLoading || feed.isLoading;
   return (
-    <Table.Root scroll stickyHeader bordered={false}>
+    <Table.Root scroll stickyHeader bordered={!framed}>
       <Table.Head>
         <Table.Row>
           <Table.SortableHeaderCell sortKey="method" sort={sort} onSort={toggleSort}>
