@@ -23,7 +23,8 @@ const storyQueryClient = createStoryQueryClient();
 storyQueryClient.setQueryData(entityKeys.detail(WORKSPACE, entityId), entity);
 
 const meta = {
-  title: 'MDX Inlines/EntityField',
+  title: 'Widgets/Metrics/Entity field',
+  tags: ['mdx', 'inline'],
   parameters: {
     layout: 'padded'
   }

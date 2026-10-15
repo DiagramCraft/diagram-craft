@@ -4,7 +4,8 @@ import { Columns } from './Columns';
 import { StoryProviders } from '../../shared/mdx/StorybookHarness';
 
 const meta = {
-  title: 'MDX Blocks/Columns',
+  title: 'Widgets/Content & layout/Columns',
+  tags: ['mdx', 'block'],
   parameters: {
     layout: 'padded'
   }

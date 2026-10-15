@@ -56,7 +56,8 @@ const storyQueryClient = createStoryQueryClient();
 storyQueryClient.setQueryData(workspaceAnalyticsKeys.detail(WORKSPACE, staleAfterDays), analytics);
 
 const meta = {
-  title: 'Dashboard Widgets/EntityActivityTrendChart',
+  title: 'Widgets/Visualizations/Activity trend chart',
+  tags: ['dashboard', 'workspace-surface'],
   parameters: {
     layout: 'padded'
   }

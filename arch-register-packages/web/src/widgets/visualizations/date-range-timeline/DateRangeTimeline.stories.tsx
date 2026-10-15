@@ -38,7 +38,8 @@ storyQueryClient.setQueryData(['entities', 'queryText', 'entities', WORKSPACE, Q
 });
 
 const meta = {
-  title: 'Dashboard Widgets/DateRangeTimeline',
+  title: 'Widgets/Visualizations/Date range timeline',
+  tags: ['dashboard', 'workspace-surface'],
   parameters: { layout: 'padded' }
 } satisfies Meta;
 

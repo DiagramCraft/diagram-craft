@@ -87,7 +87,8 @@ storyQueryClient.setQueryData(
 );
 
 const meta = {
-  title: 'MDX Blocks/EntityChart',
+  title: 'Widgets/Visualizations/Entity chart',
+  tags: ['mdx', 'block'],
   parameters: {
     layout: 'padded'
   }

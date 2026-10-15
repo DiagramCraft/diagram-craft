@@ -54,7 +54,8 @@ storyQueryClient.setQueryData(['entities', 'queryText', 'entities', WORKSPACE, Q
 });
 
 const meta = {
-  title: 'Dashboard Widgets/GroupedRollupTable',
+  title: 'Widgets/Data views/Roll-up table',
+  tags: ['dashboard', 'workspace-surface', 'project-surface'],
   parameters: { layout: 'padded' }
 } satisfies Meta;
 

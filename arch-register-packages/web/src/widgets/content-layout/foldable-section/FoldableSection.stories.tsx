@@ -3,7 +3,8 @@ import { FoldableSection } from './FoldableSection';
 import { StoryProviders } from '../../shared/mdx/StorybookHarness';
 
 const meta = {
-  title: 'MDX Blocks/FoldableSection',
+  title: 'Widgets/Content & layout/Foldable section',
+  tags: ['mdx', 'block'],
   parameters: {
     layout: 'padded'
   }

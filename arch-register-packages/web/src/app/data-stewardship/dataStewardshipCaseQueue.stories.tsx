@@ -2,7 +2,8 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { dataStewardshipWidgetStory } from './dataStewardshipDashboardWidgetStoryFixtures';
 
 const meta = {
-  title: 'Dashboard Widgets/Case Queue',
+  title: 'Widgets/Data views/Case queue',
+  tags: ['dashboard', 'workspace-surface'],
   parameters: { layout: 'padded' }
 } satisfies Meta;
 

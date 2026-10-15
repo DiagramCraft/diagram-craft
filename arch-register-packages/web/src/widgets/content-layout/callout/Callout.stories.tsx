@@ -3,7 +3,8 @@ import { Callout } from './Callout';
 import { StoryProviders } from '../../shared/mdx/StorybookHarness';
 
 const meta = {
-  title: 'MDX Blocks/Callout',
+  title: 'Widgets/Content & layout/Callout',
+  tags: ['mdx', 'block'],
   parameters: {
     layout: 'padded'
   }

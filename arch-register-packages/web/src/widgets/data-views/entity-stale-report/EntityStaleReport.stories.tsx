@@ -67,7 +67,8 @@ storyQueryClient.setQueryData(entityKeys.list(WORKSPACE, staleQueryOptions), {
 });
 
 const meta = {
-  title: 'Dashboard Widgets/EntityStaleReport',
+  title: 'Widgets/Data views/Stale entity report',
+  tags: ['dashboard', 'workspace-surface'],
   parameters: {
     layout: 'padded'
   }

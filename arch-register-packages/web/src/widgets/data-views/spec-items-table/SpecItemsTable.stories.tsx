@@ -99,7 +99,8 @@ const renderDashboard = (config: Record<string, unknown> = {}, apis = APIS) => {
 };
 
 const meta = {
-  title: 'Dashboard Widgets/SpecItemsTable',
+  title: 'Widgets/Data views/Specification operations',
+  tags: ['dashboard', 'workspace-surface'],
   parameters: { layout: 'padded' }
 } satisfies Meta;
 

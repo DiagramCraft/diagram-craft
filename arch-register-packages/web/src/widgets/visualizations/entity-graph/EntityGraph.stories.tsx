@@ -73,7 +73,8 @@ storyQueryClient.setQueryData(
 );
 
 const meta = {
-  title: 'MDX Blocks/EntityGraph',
+  title: 'Widgets/Visualizations/Entity graph',
+  tags: ['mdx', 'block', 'dashboard', 'workspace-surface', 'project-surface'],
   parameters: {
     layout: 'padded'
   }

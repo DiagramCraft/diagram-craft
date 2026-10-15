@@ -66,7 +66,8 @@ storyQueryClient.setQueryData(
 storyQueryClient.setQueryData(projectFileKeys.detail(WORKSPACE, attachmentId), attachment);
 
 const meta = {
-  title: 'MDX Blocks/ImageEmbed',
+  title: 'Widgets/Content & layout/Image',
+  tags: ['mdx', 'block'],
   parameters: {
     layout: 'padded'
   }

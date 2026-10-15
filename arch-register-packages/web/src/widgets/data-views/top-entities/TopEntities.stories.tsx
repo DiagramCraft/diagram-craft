@@ -42,7 +42,8 @@ storyQueryClient.setQueryData(entityKeys.list(WORKSPACE, listOptions), {
 });
 
 const meta = {
-  title: 'Dashboard Widgets/TopEntities',
+  title: 'Widgets/Data views/Ranked list',
+  tags: ['dashboard', 'workspace-surface', 'project-surface'],
   parameters: {
     layout: 'padded'
   }

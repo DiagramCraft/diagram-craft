@@ -3,7 +3,8 @@ import { assessmentWidgetStory } from '../../shared/data/assessmentWidgetStoryFi
 
 /** Assessment status stat widget; status is derived from each assessment's completed-entity rollup. */
 const meta = {
-  title: 'Dashboard Widgets/AssessmentStatusStat',
+  title: 'Widgets/Metrics/Assessment status',
+  tags: ['dashboard', 'workspace-surface'],
   parameters: { layout: 'padded' }
 } satisfies Meta;
 

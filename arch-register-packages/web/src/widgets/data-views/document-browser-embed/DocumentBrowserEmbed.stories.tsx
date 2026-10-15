@@ -85,7 +85,8 @@ storyQueryClient.setQueryData(documentKeys.types(WORKSPACE), []);
 storyQueryClient.setQueryData(documentKeys.list(WORKSPACE, documentOptions), documents);
 
 const meta = {
-  title: 'MDX Blocks/DocumentBrowserEmbed',
+  title: 'Widgets/Data views/Document browser',
+  tags: ['mdx', 'block', 'dashboard', 'workspace-surface', 'project-surface'],
   parameters: {
     layout: 'padded'
   }

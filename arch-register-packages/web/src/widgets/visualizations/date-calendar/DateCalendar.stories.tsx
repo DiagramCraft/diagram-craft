@@ -37,7 +37,8 @@ storyQueryClient.setQueryData(['entities', 'queryText', 'entities', WORKSPACE, Q
 });
 
 const meta = {
-  title: 'Dashboard Widgets/DateCalendar',
+  title: 'Widgets/Visualizations/Calendar',
+  tags: ['dashboard', 'workspace-surface'],
   parameters: { layout: 'padded' }
 } satisfies Meta;
 

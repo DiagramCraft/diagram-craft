@@ -96,7 +96,8 @@ const FLOWS = [
 ];
 
 const meta = {
-  title: 'Dashboard Widgets/RelationTable',
+  title: 'Widgets/Data views/Relation table',
+  tags: ['dashboard', 'workspace-surface'],
   parameters: { layout: 'padded' }
 } satisfies Meta;
 

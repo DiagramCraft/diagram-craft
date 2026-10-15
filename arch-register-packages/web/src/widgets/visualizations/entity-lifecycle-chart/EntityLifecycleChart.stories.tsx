@@ -21,7 +21,8 @@ const storyQueryClient = createStoryQueryClient();
 storyQueryClient.setQueryData(workspaceAnalyticsKeys.detail(WORKSPACE, 90), analytics);
 
 const meta = {
-  title: 'Dashboard Widgets/EntityLifecycleChart',
+  title: 'Widgets/Visualizations/Lifecycle chart',
+  tags: ['dashboard', 'workspace-surface'],
   parameters: {
     layout: 'padded'
   }

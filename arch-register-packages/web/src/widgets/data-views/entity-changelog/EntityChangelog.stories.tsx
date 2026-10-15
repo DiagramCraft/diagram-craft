@@ -93,7 +93,8 @@ storyQueryClient.setQueryData(auditKeys.log(WORKSPACE, entityQueryOptions), enti
 storyQueryClient.setQueryData(auditKeys.log(WORKSPACE, schemaQueryOptions), entityEntries);
 
 const meta = {
-  title: 'MDX Blocks/EntityChangelog',
+  title: 'Widgets/Data views/Entity changelog',
+  tags: ['mdx', 'block', 'dashboard', 'workspace-surface', 'project-surface'],
   parameters: {
     layout: 'padded'
   }

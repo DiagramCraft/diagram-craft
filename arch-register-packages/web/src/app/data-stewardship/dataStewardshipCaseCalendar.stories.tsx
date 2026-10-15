@@ -2,7 +2,8 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { dataStewardshipWidgetStory } from './dataStewardshipDashboardWidgetStoryFixtures';
 
 const meta = {
-  title: 'Dashboard Widgets/Case Calendar',
+  title: 'Widgets/Visualizations/Next six weeks',
+  tags: ['dashboard', 'workspace-surface'],
   parameters: { layout: 'padded' }
 } satisfies Meta;
 

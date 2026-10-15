@@ -73,7 +73,8 @@ const storyQueryClient = createStoryQueryClient();
 storyQueryClient.setQueryData(assessmentKeys.list(WORKSPACE), assessments);
 
 const meta = {
-  title: 'Dashboard Widgets/Assessments',
+  title: 'Widgets/Metrics/Assessments',
+  tags: ['dashboard', 'workspace-surface', 'project-surface'],
   parameters: { layout: 'padded' }
 } satisfies Meta;
 

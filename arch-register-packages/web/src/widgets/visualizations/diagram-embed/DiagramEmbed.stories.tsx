@@ -44,7 +44,8 @@ storyQueryClient.setQueryData(projectFileKeys.content(WORKSPACE, previewFileId),
 storyQueryClient.setQueryData(projectFileKeys.content(WORKSPACE, emptyFileId), null);
 
 const meta = {
-  title: 'MDX Blocks/DiagramEmbed',
+  title: 'Widgets/Visualizations/Diagram',
+  tags: ['mdx', 'block', 'dashboard', 'workspace-surface', 'project-surface'],
   parameters: {
     layout: 'padded'
   }

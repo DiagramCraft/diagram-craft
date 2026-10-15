@@ -6,7 +6,8 @@ import {
 
 /** Assessment progress table; statuses are derived from each assessment's completed-entity rollup. */
 const meta = {
-  title: 'Dashboard Widgets/AssessmentProgressTable',
+  title: 'Widgets/Data views/Assessment progress',
+  tags: ['dashboard', 'workspace-surface'],
   parameters: { layout: 'padded' }
 } satisfies Meta;
 

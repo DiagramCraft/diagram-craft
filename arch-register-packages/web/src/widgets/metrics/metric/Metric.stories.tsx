@@ -11,7 +11,8 @@ import { entityKeys } from '../../../queries/entities';
 import { projectKeys } from '../../../queries/projectKeys';
 
 const meta = {
-  title: 'MDX Blocks/Metric',
+  title: 'Widgets/Metrics/Metric',
+  tags: ['mdx', 'block', 'dashboard', 'workspace-surface', 'project-surface'],
   parameters: {
     layout: 'padded'
   }

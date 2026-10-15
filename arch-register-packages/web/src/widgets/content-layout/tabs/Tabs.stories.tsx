@@ -4,7 +4,8 @@ import { Tabs } from './Tabs';
 import { StoryProviders } from '../../shared/mdx/StorybookHarness';
 
 const meta = {
-  title: 'MDX Blocks/Tabs',
+  title: 'Widgets/Content & layout/Tabs (MDX)',
+  tags: ['mdx', 'block'],
   parameters: {
     layout: 'padded'
   }

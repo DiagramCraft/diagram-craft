@@ -82,7 +82,8 @@ storyQueryClient.setQueryData(entityKeys.facets(WORKSPACE), {
 });
 
 const meta = {
-  title: 'MDX Blocks/EntityBrowserEmbed',
+  title: 'Widgets/Data views/Entity browser',
+  tags: ['mdx', 'block', 'dashboard', 'workspace-surface', 'project-surface'],
   parameters: {
     layout: 'padded'
   }
