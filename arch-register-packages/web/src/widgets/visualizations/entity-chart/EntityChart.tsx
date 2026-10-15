@@ -6,6 +6,7 @@ import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { resolveSchemaColor, schemaColor } from '../../../lib/schemaPresentation';
 import styles from './EntityChart.module.css';
 import { EmptyState } from '../../../components/EmptyState';
+import type { EntityChartWidgetConfig } from './types';
 
 type ChartGroup = { key: string; label: string; count: number; color: string };
 
@@ -95,21 +96,8 @@ const BarChart = ({ groups }: { groups: ChartGroup[] }) => {
   );
 };
 
-type Props = {
-  schema?: string;
-  owner?: string;
-  lifecycle?: string;
-  groupBy?: string;
-  chartType?: string;
-};
-
-export const EntityChart = ({
-  schema,
-  owner,
-  lifecycle,
-  groupBy = 'lifecycle',
-  chartType = 'donut'
-}: Props) => {
+export const EntityChart = ({ config }: { config: EntityChartWidgetConfig }) => {
+  const { schema, owner, lifecycle, groupBy, chartType } = config;
   const navigate = useNavigate();
   const { workspaceSlug, schemas, lifecycleStates } = useWorkspaceContext();
 

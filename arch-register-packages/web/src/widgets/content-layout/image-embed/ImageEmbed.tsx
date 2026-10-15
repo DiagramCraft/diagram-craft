@@ -7,6 +7,7 @@ import { useContentFile } from '../../../hooks/useContentScope';
 import { useMdxContext } from '../../../sections/markdown/MdxContext';
 import { getMarkdownAttachmentDownloadUrl, isImageMimeType } from './imageEmbedUtils';
 import styles from './ImageEmbed.module.css';
+import type { ImageEmbedWidgetConfig } from './types';
 
 const normalizeSize = (value?: string) => {
   if (!value) return undefined;
@@ -37,17 +38,8 @@ const imageStyle = (size?: string, align?: string): CSSProperties => {
   return { width, marginLeft: 'auto', marginRight: 'auto' };
 };
 
-export const ImageEmbed = ({
-  id,
-  alt,
-  size,
-  align
-}: {
-  id: string;
-  alt?: string;
-  size?: string;
-  align?: string;
-}) => {
+export const ImageEmbed = ({ config }: { config: ImageEmbedWidgetConfig }) => {
+  const { fileId: id, alt, size, align } = config;
   const { workspaceSlug, projectId, entityId } = useMdxContext();
   const { data: file, isLoading, isError } = useContentFile(workspaceSlug ?? '', id);
   const [imageUrl, setImageUrl] = useState<string | null>(null);

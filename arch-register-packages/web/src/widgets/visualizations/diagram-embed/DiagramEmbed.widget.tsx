@@ -1,15 +1,13 @@
 import { TbChartLine } from 'react-icons/tb';
 import { defineWidget } from '../../shared/defineWidget';
+import { flatConfigCodec } from '../../shared/configSchema';
+import { configBlockMdx } from '../../shared/mdx/configBlock';
 import { DiagramEmbed } from './DiagramEmbed';
-import {
-  DIAGRAM_EMBED_TYPE,
-  DiagramEmbedEditable,
-  diagramEmbedMdxRule
-} from './DiagramEmbedEditable';
 import { DiagramEmbedConfigForm } from './DiagramEmbedConfigForm';
 import { diagramEmbedWidgetConfigSchema } from './types';
+
 export default defineWidget({
-  type: DIAGRAM_EMBED_TYPE,
+  type: 'DiagramEmbed',
   category: 'visualizations',
   name: 'Diagram',
   description:
@@ -24,26 +22,11 @@ export default defineWidget({
   component: DiagramEmbed,
   configForm: DiagramEmbedConfigForm,
   icon: TbChartLine,
-  mdx: {
-    mode: 'block',
-    allowedProps: ['id', 'caption'],
-    mapProps: props => ({
-      config: { fileId: props.id ?? '', caption: props.caption }
+  mdx: configBlockMdx({
+    codec: flatConfigCodec(diagramEmbedWidgetConfigSchema, {
+      attributeNames: { fileId: 'id' }
     }),
-    editorSpec: {
-      editableComponent: DiagramEmbedEditable,
-      nodeOptions: { isVoid: true },
-      mdxRule: diagramEmbedMdxRule,
-      slashCommand: {
-        onSelect: (editor, { insertOrReplaceBlock }) => {
-          insertOrReplaceBlock(editor, {
-            type: DIAGRAM_EMBED_TYPE,
-            fileId: '',
-            caption: '',
-            children: [{ text: '' }]
-          });
-        }
-      }
-    }
-  }
+    placeholder: 'Choose diagram…',
+    fullWidth: true
+  })
 });
