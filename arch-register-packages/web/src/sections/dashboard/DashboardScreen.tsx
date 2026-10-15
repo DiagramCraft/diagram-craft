@@ -12,7 +12,7 @@ import {
 import { DashboardHeader } from './DashboardHeader';
 import { DashboardGrid } from './DashboardGrid';
 import { MdxContext } from '../markdown/MdxContext';
-import { DEFAULT_SEEDED_WIDGETS } from './dashboardWidgetDefaults';
+import { DEFAULT_SEEDED_WIDGETS } from './dashboardWidgets';
 import styles from './DashboardScreen.module.css';
 
 export const DashboardScreen = () => {

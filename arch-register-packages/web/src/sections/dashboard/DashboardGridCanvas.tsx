@@ -3,10 +3,10 @@ import type { Layout } from 'react-grid-layout';
 import ReactGridLayout from 'react-grid-layout/legacy';
 import 'react-grid-layout/css/styles.css';
 import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
-import { DashboardWidgetRenderer } from './widgets/DashboardWidgetRenderer';
+import { DashboardWidgetRenderer } from '../../widgets/shared/dashboard/DashboardWidgetRenderer';
 import { MdxContext, useMdxContext } from '../markdown/MdxContext';
-import type { WidgetSurface } from './dashboardWidgetDefaults';
-import { parseKnownDashboardWidget } from './dashboardWidgetConfig';
+import type { WidgetSurface } from '../../widgets/shared/types';
+import { parseKnownDashboardWidget } from './dashboardWidgets';
 import styles from './DashboardGrid.module.css';
 
 const GRID_COLS = 12;

@@ -7,7 +7,7 @@ import './TabContentsEditor'; // registers the tab contents editor
 import { DashboardGridCanvas } from './DashboardGridCanvas';
 import { WidgetPickerDialog } from './WidgetPickerDialog';
 import { WidgetConfigDialog } from './WidgetConfigDialog';
-import type { WidgetSurface } from './dashboardWidgetDefaults';
+import type { WidgetSurface } from '../../widgets/shared/types';
 import styles from './DashboardGrid.module.css';
 
 type Props = {
@@ -107,7 +107,6 @@ export const DashboardGrid = ({
         <WidgetConfigDialog
           widget={editingWidget}
           open={editingWidget !== null}
-          workspaceSlug={workspaceSlug}
           surface={surface}
           onClose={() => setEditingWidgetId(null)}
           onSave={updated => {

@@ -2,7 +2,7 @@ import type { QueryClient } from '@tanstack/react-query';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import type { WorkspaceCapabilityConfiguration } from '@arch-register/api-types/workspaceCapabilityContract';
-import { WORKSPACE } from '../../../sections/markdown/mdx-components/blocks/StorybookHarness';
+import { WORKSPACE } from '../../../widgets/shared/mdx/StorybookHarness';
 import { workspaceCapabilityConfigurationsQuery } from '../../../queries/workspaceConfig';
 import { schemasQuery } from '../../../queries/schemas';
 import { relationSchemasQuery } from '../../../queries/relationSchemas';

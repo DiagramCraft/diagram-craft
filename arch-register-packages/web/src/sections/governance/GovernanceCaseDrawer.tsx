@@ -19,7 +19,7 @@ import { useDateTimeFormatPreference } from '../../hooks/useDateTimeFormatPrefer
 import {
   deriveDueDatePriority,
   type NeedsAttentionPriority
-} from '../dashboard/widgets/needsAttentionQueue';
+} from '../../widgets/data-views/needs-attention/needsAttentionQueue';
 import styles from './GovernanceCaseDrawer.module.css';
 
 const PRIORITY_LABEL: Record<NeedsAttentionPriority, string> = {

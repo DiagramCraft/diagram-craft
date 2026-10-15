@@ -6,7 +6,7 @@ import {
   StoryProviders,
   WORKSPACE,
   createStoryQueryClient
-} from '../../../sections/markdown/mdx-components/blocks/StorybookHarness';
+} from '../../../widgets/shared/mdx/StorybookHarness';
 import { entityBlastRadiusAggregateQuery } from '../../../queries/entityTraversal';
 import { entityDetailQuery } from '../../../queries/entities';
 import { BlastRadiusPanel } from '../../../sections/entities/components/BlastRadiusPanel';
@@ -34,9 +34,8 @@ const lifecycleStates = [
 /**
  * Proves the unified `BlastRadiusPanel` (#3320/#3461), here in its API-catalog column configuration, renders from a
  * plain prop object with zero router involvement — see #3459. `workspaceId`/`apiId`/relation-schema
- * ids/`schemas`/`lifecycleStates` all arrive as props; the Impact dashboard widget
- * (`apiIntegrationCatalogDashboardWidgets.tsx`'s `ApiCatalogImpactWidget`, #3467) is the one that
- * resolves the selected API (via the dashboard sidebar) and passes them down.
+ * ids/`schemas`/`lifecycleStates` all arrive as props; `ApiCatalogImpactWidget` (#3467) resolves
+ * the selected API (via the dashboard sidebar) and passes them down.
  */
 const meta = {
   title: 'API & Integration Catalog/BlastRadiusPanel',

@@ -101,21 +101,19 @@ export const ColumnRendererEditor = ({
         </>
       )}
 
-      {config.type === 'colorBand' && config.options && (
-        <>
-          {Object.entries(config.options).map(([option, tone]) => (
-            <div key={option} className={styles.rendererRow}>
-              <span className={styles.rendererOptionLabel}>{option}</span>
-              <ToneSelect
-                value={tone}
-                onChange={next =>
-                  onChange({ ...config, options: { ...config.options, [option]: next } })
-                }
-              />
-            </div>
-          ))}
-        </>
-      )}
+      {config.type === 'colorBand' &&
+        config.options &&
+        Object.entries(config.options).map(([option, tone]) => (
+          <div key={option} className={styles.rendererRow}>
+            <span className={styles.rendererOptionLabel}>{option}</span>
+            <ToneSelect
+              value={tone}
+              onChange={next =>
+                onChange({ ...config, options: { ...config.options, [option]: next } })
+              }
+            />
+          </div>
+        ))}
 
       {config.type === 'colorBand' && !config.options && (
         <ThresholdEditor config={config} onChange={onChange} />

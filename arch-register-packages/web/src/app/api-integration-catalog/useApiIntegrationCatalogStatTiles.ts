@@ -7,9 +7,9 @@ import { useApiEndpointRelations } from './apiEndpointRelations';
 import {
   computeRelationPairCoverage,
   computeRelationPairs
-} from '../../sections/dashboard/widgets/relationPairCoverageLogic';
+} from '../../widgets/data-views/relation-pairs-coverage/relationPairCoverageLogic';
 import { classifyDataFlowRelations } from './apiIntegrationCatalogStatsHelpers';
-import { useNeedsAttentionQueue } from '../../sections/dashboard/widgets/needsAttentionQueue';
+import { useNeedsAttentionQueue } from '../../widgets/data-views/needs-attention/needsAttentionQueue';
 import { IC_QUEUE_CASE_KINDS } from './apiIntegrationCatalogQueue';
 
 export type ApiIntegrationCatalogStatTiles = {

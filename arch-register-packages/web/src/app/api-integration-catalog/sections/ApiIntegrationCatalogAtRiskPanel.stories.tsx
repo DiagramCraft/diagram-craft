@@ -4,7 +4,7 @@ import {
   StoryProviders,
   WORKSPACE,
   createStoryQueryClient
-} from '../../../sections/markdown/mdx-components/blocks/StorybookHarness';
+} from '../../../widgets/shared/mdx/StorybookHarness';
 import { relationsQuery } from '../../../queries/relations';
 import { ApiIntegrationCatalogAtRiskPanel } from './ApiIntegrationCatalogAtRiskPanel';
 import {

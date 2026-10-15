@@ -18,7 +18,7 @@ data-fetching.
 This was chosen over a `WorkspaceContext`/`MdxContext`-style context provider
 (`web/src/layouts/WorkspaceContext.ts`, `web/src/sections/markdown/MdxContext.ts`) because those
 exist to serve existing dashboard **widgets**, which are dynamically selected at render time by a
-config-driven registry (`mdxRegistry.tsx`) — the renderer can't statically type-check per-widget
+config-driven registry (`widgetRegistry.ts`) — the renderer can't statically type-check per-widget
 props, so ambient context is the established way to give those widgets their workspace data. App
 panels keep the opposite contract: each standalone Screen and dashboard adapter statically imports
 the known panel and supplies an explicit props object, so there's no prop-drilling problem to solve.
@@ -34,8 +34,7 @@ that today.
 
 **The "Needs attention" panel outgrew this pattern (#3466).** It's no longer one of the app-local
 panels above: its query/join/severity logic and row rendering were generalized into
-`sections/dashboard/widgets/needsAttentionQueue.ts` / `NeedsAttentionList.tsx`, shared with Data
+`widgets/data-views/needs-attention/needsAttentionQueue.ts` / `NeedsAttentionList.tsx`, shared with Data
 Stewardship's "My work" queue and available as its own placeable `NeedsAttentionQueue` dashboard
-widget. This app's `api-integration-catalog-needs-attention` registry adapter
-(`apiIntegrationCatalogDashboardWidgets.tsx`) now just supplies its resolved schema/case-kinds to
+widget. This app's `ApiCatalogNeedsAttentionWidget.tsx` supplies its resolved schema/case-kinds to
 that shared hook/component, rather than owning a standalone panel.

@@ -3,15 +3,15 @@ import { Dialog } from '@diagram-craft/app-components/Dialog';
 import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
 import { useSavedViews } from '../../hooks/useSavedViews';
 import { useMdxContext } from '../markdown/MdxContext';
-import { createDefaultWidget, type WidgetSurface } from './dashboardWidgetDefaults';
-import { getDashboardWidgetSpecs } from './dashboardWidgetRegistry';
+import { createDefaultWidget } from './dashboardWidgets';
+import type { WidgetSurface } from '../../widgets/shared/types';
+import { getWidgetDefinitions } from '../../widgets/shared/widgetRegistry';
 import {
-  getWidgetCategory,
   WIDGET_CATEGORIES,
   type WidgetCategory,
-  matchesWidgetSearch
-} from '../markdown/mdx-components/widgetCategories';
-import { WikiPagePicker } from './widgets/WikiPagePicker';
+  matchesCatalogSearch
+} from '../../widgets/shared/widgetCategories';
+import { WikiPagePicker } from '../../widgets/content-layout/wiki-page/WikiPagePicker';
 import styles from './WidgetPickerDialog.module.css';
 
 type Props = {
@@ -47,22 +47,33 @@ export const WidgetPickerDialog = ({
   });
   const matching = useMemo(
     () =>
-      getDashboardWidgetSpecs()
+      getWidgetDefinitions('dashboard')
+        .map(({ type, category, name, description, keywords, dashboard: spec }) => ({
+          type,
+          category,
+          spec,
+          label: name,
+          description,
+          keywords
+        }))
         .filter(
-          ({ type, spec }) =>
-            spec.surfaces.includes(surface) &&
-            !exclude.includes(type) &&
-            matchesWidgetSearch(search, spec)
+          widget =>
+            widget.spec.surfaces.includes(surface) &&
+            !exclude.includes(widget.type) &&
+            matchesCatalogSearch(search, widget)
         )
-        .sort((a, b) => a.spec.label.localeCompare(b.spec.label)),
+        .sort((a, b) => a.label.localeCompare(b.label)),
     [surface, exclude, search]
   );
   const countByCategory = (category: WidgetCategory) =>
-    matching.filter(({ type }) => getWidgetCategory(type) === category).length;
+    matching.filter(widget => widget.category === category).length;
+  const availableCategories = WIDGET_CATEGORIES.filter(category =>
+    matching.some(widget => widget.category === category.id)
+  );
   const visible =
     activeCategory === 'all'
       ? matching
-      : matching.filter(({ type }) => getWidgetCategory(type) === activeCategory);
+      : matching.filter(widget => widget.category === activeCategory);
 
   const handleClose = () => {
     setPendingType(null);
@@ -158,7 +169,7 @@ export const WidgetPickerDialog = ({
             >
               All <span className={styles.count}>{matching.length}</span>
             </button>
-            {WIDGET_CATEGORIES.map(category => (
+            {availableCategories.map(category => (
               <button
                 key={category.id}
                 type="button"
@@ -187,15 +198,15 @@ export const WidgetPickerDialog = ({
               {visible.length === 0 && (
                 <div className={styles.empty}>No widgets match your search</div>
               )}
-              {visible.map(({ type, spec }) => (
+              {visible.map(({ type, label, description }) => (
                 <button
                   key={type}
                   type="button"
                   className={styles.option}
                   onClick={() => handlePick(type)}
                 >
-                  <span className={styles.optionLabel}>{spec.label}</span>
-                  <span className={styles.optionDescription}>{spec.description}</span>
+                  <span className={styles.optionLabel}>{label}</span>
+                  <span className={styles.optionDescription}>{description}</span>
                 </button>
               ))}
             </div>

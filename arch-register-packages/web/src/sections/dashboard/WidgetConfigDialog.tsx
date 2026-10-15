@@ -2,20 +2,21 @@ import { useState } from 'react';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
-import type { DashboardWidgetSpec } from '../markdown/mdx-components/types';
-import type { WidgetSurface } from './dashboardWidgetDefaults';
+import type { DashboardWidgetWidgetDefinition, WidgetSurface } from '../../widgets/shared/types';
 import { DialogContent, DialogSection } from '../markdown/editor/BlockDialog';
-import { useMdxContext } from '../markdown/MdxContext';
-import { getDashboardWidgetSpec } from './dashboardWidgetRegistry';
+import { getConfigDialogWidth } from '../../widgets/shared/configDialog';
+import { getWidgetDefinition, isValidComponentConfig } from '../../widgets/shared/widgetRegistry';
 import type { DashboardWidgetFrame } from '@arch-register/api-types/dashboardContract';
-import { WidgetFrameSettingsForm } from './widgets/WidgetFrameSettingsForm';
-import { defaultShowFrame, normalizeFrame } from './widgets/widgetFrameSettings';
+import { WidgetFrameSettingsForm } from '../../widgets/shared/dashboard/WidgetFrameSettingsForm';
+import {
+  defaultShowFrame,
+  normalizeFrame
+} from '../../widgets/shared/dashboard/widgetFrameSettings';
 import styles from './WidgetConfigDialog.module.css';
 
 type Props = {
   widget: DashboardWidget | null;
   open: boolean;
-  workspaceSlug: string;
   surface?: WidgetSurface;
   onClose: () => void;
   onSave: (widget: DashboardWidget) => void;
@@ -24,22 +25,20 @@ type Props = {
 export const WidgetConfigDialog = ({
   widget,
   open,
-  workspaceSlug,
   surface = 'workspace',
   onClose,
   onSave
 }: Props) => {
   if (!widget) return null;
-  const spec = getDashboardWidgetSpec(widget.type);
-  if (!spec) return null;
+  const definition = getWidgetDefinition(widget.type, 'dashboard');
+  if (!definition) return null;
 
   return (
     <WidgetConfigDialogContent
       key={widget.id}
       widget={widget}
-      spec={spec}
+      definition={definition}
       open={open}
-      workspaceSlug={workspaceSlug}
       surface={surface}
       onClose={onClose}
       onSave={onSave}
@@ -52,28 +51,30 @@ const tabContentStyle = { height: 'auto', minHeight: 0, flex: 1, overflow: 'auto
 
 const WidgetConfigDialogContent = ({
   widget,
-  spec,
+  definition,
   open,
-  workspaceSlug,
   surface,
   onClose,
   onSave
-}: Props & { widget: DashboardWidget; spec: DashboardWidgetSpec; surface: WidgetSurface }) => {
-  const { projectId } = useMdxContext();
+}: Props & {
+  widget: DashboardWidget;
+  definition: DashboardWidgetWidgetDefinition;
+  surface: WidgetSurface;
+}) => {
+  const { dashboard: spec, configForm: ConfigForm } = definition;
   const [config, setConfig] = useState<Record<string, unknown>>(widget.config);
 
   const [frame, setFrame] = useState<DashboardWidgetFrame>(widget.frame ?? {});
 
-  const canSave = spec.isValidConfig(config);
-  const ConfigForm = spec.configForm;
+  const canSave = isValidComponentConfig(definition, config);
 
   return (
     <Dialog
       open={open}
       onClose={onClose}
-      title={spec.label}
-      width={spec.dialogSize === 'large' ? '90vw' : (spec.dialogWidth ?? 460)}
-      className={spec.dialogSize === 'large' ? styles.largeDialog : undefined}
+      title={definition.name}
+      width={getConfigDialogWidth(definition.configDialog)}
+      className={definition.configDialog?.size === 'large' ? styles.largeDialog : undefined}
       buttons={[
         { label: 'Cancel', type: 'cancel', onClick: onClose },
         {
@@ -96,7 +97,7 @@ const WidgetConfigDialogContent = ({
                 <ConfigForm
                   config={config}
                   onChange={setConfig}
-                  context={{ mode: 'dashboard', workspaceSlug, projectId, surface }}
+                  context={{ mode: 'dashboard', surface }}
                 />
               ) : (
                 <DialogSection label="Options" required={false}>
@@ -114,7 +115,7 @@ const WidgetConfigDialogContent = ({
               <WidgetFrameSettingsForm
                 frame={frame}
                 onChange={setFrame}
-                defaultTitle={spec.getTitle?.(config as never) ?? spec.label}
+                defaultTitle={spec.getTitle?.(config as never) ?? definition.name}
                 defaultShowFrame={defaultShowFrame(spec, config)}
               />
             </DialogContent>

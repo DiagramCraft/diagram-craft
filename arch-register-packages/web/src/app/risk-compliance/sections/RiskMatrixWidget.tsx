@@ -1,29 +1,37 @@
+import { z } from 'zod';
 import { useMemo, useState } from 'react';
+
 import { ToggleButtonGroup } from '@diagram-craft/app-components/ToggleButtonGroup';
+
 import { useEntities } from '../../../hooks/useEntities';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { useEntityDrawer } from '../../../sections/entities/entityDrawer/useEntityDrawer';
 import { RiskComplianceMatrix, type RiskComplianceMatrixRisk } from './RiskComplianceMatrix';
-import styles from '../../../sections/dashboard/widgets/WidgetRowList.module.css';
+import styles from '../../../widgets/shared/dashboard/WidgetRowList.module.css';
+import { withInitial } from '../../../widgets/shared/configSchema';
 
 const FETCH_LIMIT = 500;
 
-export type RiskMatrixAxis = 'inherent' | 'residual';
+export const riskMatrixAxisSchema = z.enum(['inherent', 'residual']);
 
-export type RiskMatrixWidgetConfig = {
-  schemaName: string;
-  axis?: RiskMatrixAxis;
+export type RiskMatrixAxis = z.infer<typeof riskMatrixAxisSchema>;
+
+export const riskMatrixWidgetConfigSchema = z.object({
+  schemaName: withInitial(z.string().min(1), ''),
+  axis: riskMatrixAxisSchema.optional(),
   /** Include closed risks (default: false). */
-  includeClosed?: boolean;
+  includeClosed: z.boolean().optional(),
   /**
    * Optional facet filters on the Category / Status / Risk Owner fields. Intended to hold
    * dashboard sidebar references (e.g. `['$categories']`); an empty list, or an unresolved
    * reference, means "no filter".
    */
-  categories?: string[];
-  statuses?: string[];
-  owners?: string[];
-};
+  categories: z.array(z.string()).optional(),
+  statuses: z.array(z.string()).optional(),
+  owners: z.array(z.string()).optional()
+});
+
+export type RiskMatrixWidgetConfig = z.infer<typeof riskMatrixWidgetConfigSchema>;
 
 /** Drops unresolved `$variable` references; an empty result means the facet is not filtering. */
 const activeFilter = (values: string[] | undefined): string[] =>

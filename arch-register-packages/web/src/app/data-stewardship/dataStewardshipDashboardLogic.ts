@@ -2,15 +2,23 @@ import type { DataStewardshipQueueItem } from './dataStewardshipQueue';
 import { DS_QUEUE_CASE_KINDS } from './dataStewardshipQueue';
 
 /**
- * Pure logic behind the My work dashboard widgets (`dataStewardshipDashboardWidgets.tsx`), kept
- * separate so it can be unit tested without rendering.
+ * Pure logic behind the My work dashboard widgets in `widgets/`, kept separate so it can be unit
+ * tested without rendering.
  */
 
 export type CaseWidgetScope = 'mine' | 'workspace' | 'late';
 export type CaseCountTone = 'none' | 'warning' | 'danger';
 
-export const CASE_WIDGET_SCOPES: readonly CaseWidgetScope[] = ['mine', 'workspace', 'late'];
-export const CASE_COUNT_TONES: readonly CaseCountTone[] = ['none', 'warning', 'danger'];
+export const CASE_WIDGET_SCOPES = [
+  'mine',
+  'workspace',
+  'late'
+] as const satisfies readonly CaseWidgetScope[];
+export const CASE_COUNT_TONES = [
+  'none',
+  'warning',
+  'danger'
+] as const satisfies readonly CaseCountTone[];
 
 /** An empty `caseKinds` list means "every kind the Data Stewardship queue draws on". */
 export const effectiveCaseKinds = (caseKinds: readonly string[]): readonly string[] =>

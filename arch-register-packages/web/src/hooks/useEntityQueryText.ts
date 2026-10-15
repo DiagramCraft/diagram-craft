@@ -4,7 +4,7 @@ import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import { orpcClient } from '../lib/orpcClient';
 import { entityQueryTextCountQuery } from '../queries/entities';
 import { useWorkspaceContext } from '../layouts/WorkspaceContext';
-import { resolveEntityQuery } from '../sections/markdown/mdx-components/blocks/entity-browser-embed/EntityBrowserEmbedFieldResolution';
+import { resolveEntityQuery } from '../widgets/data-views/entity-browser-embed/EntityBrowserEmbedFieldResolution';
 import { stripEmptyGroups } from '../sections/entities/components/entityBrowserState';
 
 // Wraps entityQuery.{parseText,printText} (specs/QUERY_LANGUAGE.md §4) — mutations rather than
