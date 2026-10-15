@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
-import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import {
   DashboardStory,
   StoryProviders,
@@ -14,6 +13,8 @@ import { entityBlastRadiusAggregateQuery } from '../../../queries/entityTraversa
 import { schemasQuery } from '../../../queries/schemas';
 import { lifecycleStatesQuery } from '../../../queries/workspaceConfig';
 import { buildBlastRadiusGroupPaths } from './blastRadiusGroups';
+
+type BlastRadiusReached = { entityId: string; entityName: string } & Record<string, unknown>;
 
 const API_UID = 'api-1';
 const API_PUBLIC_ID = 'API-001';
@@ -48,9 +49,7 @@ const SCHEMAS = [
   }
 ] as unknown as EntitySchema[];
 
-const LIFECYCLE_STATES = [
-  { id: 'active', label: 'Active', color: '#22c55e' }
-] as unknown as WorkspaceLifecycleState[];
+const LIFECYCLE_STATES = [{ id: 'active', label: 'Active', color: '#22c55e' }];
 
 const GROUPS = [
   {
@@ -61,7 +60,7 @@ const GROUPS = [
   { fieldName: 'Consumed by', label: 'Direct consumers' }
 ];
 
-const reached = (id: string, name: string, pathId: string, depth: number) => ({
+const reached = (id: string, name: string, pathId: string, depth: number): BlastRadiusReached => ({
   entityId: id,
   entityName: name,
   entitySlug: id,
@@ -88,7 +87,7 @@ const reached = (id: string, name: string, pathId: string, depth: number) => ({
 const render = (config: Record<string, unknown>, entities: BlastRadiusReached[]) => {
   const client = createStoryQueryClient();
   client.setQueryData(schemasQuery(WORKSPACE).queryKey, SCHEMAS);
-  client.setQueryData(lifecycleStatesQuery(WORKSPACE).queryKey, LIFECYCLE_STATES);
+  client.setQueryData(lifecycleStatesQuery(WORKSPACE).queryKey, LIFECYCLE_STATES as never);
   client.setQueryData(entityDetailQuery(WORKSPACE, API_PUBLIC_ID).queryKey, {
     _uid: API_UID,
     _publicId: API_PUBLIC_ID,
@@ -110,7 +109,7 @@ const render = (config: Record<string, unknown>, entities: BlastRadiusReached[])
       2
     ).queryKey,
     {
-      entities,
+      entities: entities as never,
       groups: { lifecycle: [], owner: [], schema: [], criticality: [] }
     }
   );
