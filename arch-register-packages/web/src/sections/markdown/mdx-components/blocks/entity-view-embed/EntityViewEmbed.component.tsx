@@ -17,6 +17,7 @@ export default defineComponent({
     defaultH: 24,
     surfaces: ['workspace', 'project']
   },
+  keywords: ['entity', 'view', 'embed', 'saved', 'catalog'],
   component: EntityViewEmbed,
   defaultConfig: context => ({ viewId: context.viewId ?? '' }),
   configForm: EntityViewEmbedConfigForm,
@@ -24,7 +25,6 @@ export default defineComponent({
   mdxComponent: configBlockMdx({
     codec: flatConfigCodec(savedViewEmbedWidgetConfigSchema),
     placeholder: 'Select a saved view…',
-    fullWidth: true,
-    keywords: ['entity', 'view', 'embed', 'saved', 'catalog']
+    fullWidth: true
   })
 });

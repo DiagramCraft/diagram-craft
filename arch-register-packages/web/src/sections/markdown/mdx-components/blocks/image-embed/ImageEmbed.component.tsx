@@ -7,6 +7,7 @@ export default defineComponent({
   category: 'content-layout',
   name: 'Image',
   description: 'Embed an uploaded image attachment',
+  keywords: ['image', 'photo', 'attachment', 'picture'],
   component: ImageEmbed,
   icon: TbPhoto,
   mdxComponent: {
@@ -17,7 +18,6 @@ export default defineComponent({
       nodeOptions: { isVoid: true },
       mdxRule: imageEmbedMdxRule,
       slashCommand: {
-        keywords: ['image', 'photo', 'attachment', 'picture'],
         onSelect: (editor, { insertOrReplaceBlock }) => {
           insertOrReplaceBlock(editor, {
             type: IMAGE_EMBED_TYPE,

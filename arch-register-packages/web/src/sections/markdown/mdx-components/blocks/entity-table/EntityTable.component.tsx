@@ -18,13 +18,13 @@ export default defineComponent({
     defaultH: 24,
     surfaces: ['workspace', 'project']
   },
+  keywords: ['entity', 'table', 'catalog', 'list', 'filter'],
   component: EntityTable,
   configForm: EntityTableConfigForm,
   icon: TbTable,
   mdxComponent: configBlockMdx({
     codec: flatConfigCodec(entityTableWidgetConfigSchema),
     placeholder: 'Configure entity table…',
-    fullWidth: true,
-    keywords: ['entity', 'table', 'catalog', 'list', 'filter']
+    fullWidth: true
   })
 });

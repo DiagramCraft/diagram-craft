@@ -20,6 +20,7 @@ export default defineComponent({
     defaultH: 16,
     surfaces: ['workspace', 'project']
   },
+  keywords: ['diagram', 'embed', 'preview', 'svg', 'flow'],
   component: DiagramEmbed,
   configForm: DiagramEmbedConfigForm,
   icon: TbChartLine,
@@ -34,7 +35,6 @@ export default defineComponent({
       nodeOptions: { isVoid: true },
       mdxRule: diagramEmbedMdxRule,
       slashCommand: {
-        keywords: ['diagram', 'embed', 'preview', 'svg', 'flow'],
         onSelect: (editor, { insertOrReplaceBlock }) => {
           insertOrReplaceBlock(editor, {
             type: DIAGRAM_EMBED_TYPE,

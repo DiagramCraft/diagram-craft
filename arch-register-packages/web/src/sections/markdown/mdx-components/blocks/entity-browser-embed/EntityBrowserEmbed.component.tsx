@@ -20,13 +20,13 @@ export default defineComponent({
     surfaces: ['workspace', 'project']
   },
   configDialog: { width: 'min(1200px, 92vw)' },
+  keywords: ['entity', 'browser', 'embed', 'search', 'filter', 'catalog'],
   component: EntityBrowserEmbed,
   configForm: EntityBrowserEmbedConfigForm,
   icon: TbListSearch,
   mdxComponent: configBlockMdx({
     codec: entityBrowserEmbedCodec.codec,
     placeholder: 'Configure an entity browser…',
-    fullWidth: true,
-    keywords: ['entity', 'browser', 'embed', 'search', 'filter', 'catalog']
+    fullWidth: true
   })
 });

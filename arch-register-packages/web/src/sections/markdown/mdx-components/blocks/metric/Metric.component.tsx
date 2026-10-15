@@ -30,12 +30,12 @@ export default defineComponent({
     surfaces: ['workspace', 'project'],
     getTitle: (config: StatMetricWidgetConfig) => METRIC_TYPE_DEFAULT_LABEL[config.metricType]
   },
+  keywords: ['entity', 'metric', 'count', 'number', 'stat', 'kpi'],
   component: Metric,
   configForm: MetricConfigForm,
   icon: TbChartBar,
   mdxComponent: configBlockMdx({
     codec: flatConfigCodec(statMetricWidgetConfigSchema),
-    placeholder: 'Configure metric…',
-    keywords: ['entity', 'metric', 'count', 'number', 'stat', 'kpi']
+    placeholder: 'Configure metric…'
   })
 });

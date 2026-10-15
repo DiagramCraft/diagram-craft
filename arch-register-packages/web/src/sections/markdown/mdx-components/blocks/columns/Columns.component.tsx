@@ -8,6 +8,7 @@ export default defineComponent({
   category: 'content-layout',
   name: 'Columns',
   description: 'Lay out content side by side',
+  keywords: ['columns', 'layout', 'grid', 'side-by-side'],
   component: Columns,
   icon: TbColumns,
   mdxComponent: {
@@ -19,7 +20,6 @@ export default defineComponent({
       nodeOptions: {},
       mdxRule: columnsMdxRule,
       slashCommand: {
-        keywords: ['columns', 'layout', 'grid', 'side-by-side'],
         onSelect: (editor, { insertOrReplaceBlock }) => {
           insertOrReplaceBlock(editor, {
             type: COLUMNS_TYPE,

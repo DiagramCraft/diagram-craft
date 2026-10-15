@@ -18,12 +18,12 @@ export default defineComponent({
     defaultH: 8,
     surfaces: ['workspace', 'project']
   },
+  keywords: ['entity', 'card', 'catalog', 'service'],
   component: EntityCard,
   configForm: EntityCardConfigForm,
   icon: TbId,
   mdxComponent: configBlockMdx({
     codec: flatConfigCodec(entityCardWidgetConfigSchema, { attributeNames: { entityId: 'id' } }),
-    placeholder: 'Choose entity…',
-    keywords: ['entity', 'card', 'catalog', 'service']
+    placeholder: 'Choose entity…'
   })
 });

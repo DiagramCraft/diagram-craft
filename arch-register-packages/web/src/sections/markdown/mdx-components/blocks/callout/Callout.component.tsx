@@ -7,6 +7,7 @@ export default defineComponent({
   category: 'content-layout',
   name: 'Callout',
   description: 'Highlight a note, warning, or tip',
+  keywords: ['callout', 'note', 'warning', 'tip', 'info', 'danger', 'success', 'admonition'],
   component: Callout,
   icon: TbInfoCircle,
   mdxComponent: {
@@ -18,7 +19,6 @@ export default defineComponent({
       nodeOptions: {},
       mdxRule: calloutMdxRule,
       slashCommand: {
-        keywords: ['callout', 'note', 'warning', 'tip', 'info', 'danger', 'success', 'admonition'],
         onSelect: (editor, { insertOrReplaceBlock }) => {
           insertOrReplaceBlock(editor, {
             type: CALLOUT_TYPE,

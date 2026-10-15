@@ -22,6 +22,7 @@ export default defineComponent({
     defaultH: 16,
     surfaces: ['workspace', 'project']
   },
+  keywords: ['entity', 'graph', 'dependency', 'impact', 'relations'],
   component: EntityGraph,
   configForm: EntityGraphConfigForm,
   icon: TbVectorTriangle,
@@ -35,7 +36,6 @@ export default defineComponent({
       })
     }),
     placeholder: 'Choose entity graph…',
-    fullWidth: true,
-    keywords: ['entity', 'graph', 'dependency', 'impact', 'relations']
+    fullWidth: true
   })
 });

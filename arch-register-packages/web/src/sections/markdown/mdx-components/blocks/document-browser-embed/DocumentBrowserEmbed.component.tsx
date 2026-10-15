@@ -19,13 +19,13 @@ export default defineComponent({
     surfaces: ['workspace', 'project']
   },
   configDialog: { width: 'min(1200px, 92vw)' },
+  keywords: ['document', 'browser', 'markdown', 'wiki', 'list', 'filter', 'search'],
   component: DocumentBrowserEmbed,
   configForm: DocumentBrowserEmbedConfigForm,
   icon: TbFileSearch,
   mdxComponent: configBlockMdx({
     codec: documentBrowserEmbedCodec.codec,
     placeholder: 'Configure a document browser…',
-    fullWidth: true,
-    keywords: ['document', 'browser', 'markdown', 'wiki', 'list', 'filter', 'search']
+    fullWidth: true
   })
 });

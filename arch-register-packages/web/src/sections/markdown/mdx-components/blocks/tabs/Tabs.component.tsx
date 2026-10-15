@@ -8,6 +8,7 @@ export default defineComponent({
   category: 'content-layout',
   name: 'Tabs',
   description: 'Present alternative content under selectable tabs',
+  keywords: ['tabs', 'tab', 'switch', 'toggle'],
   component: Tabs,
   icon: TbLayoutNavbar,
   mdxComponent: {
@@ -19,7 +20,6 @@ export default defineComponent({
       nodeOptions: {},
       mdxRule: tabsMdxRule,
       slashCommand: {
-        keywords: ['tabs', 'tab', 'switch', 'toggle'],
         onSelect: (editor, { insertOrReplaceBlock }) => {
           insertOrReplaceBlock(editor, {
             type: TABS_TYPE,

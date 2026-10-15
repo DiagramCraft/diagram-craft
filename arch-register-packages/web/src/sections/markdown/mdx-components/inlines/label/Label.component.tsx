@@ -7,6 +7,7 @@ export default defineComponent({
   category: 'content-layout',
   name: 'Label',
   description: 'Insert a free-standing colored status label',
+  keywords: ['label', 'status', 'chip', 'tag', 'badge'],
   component: Label,
   icon: TbTag,
   mdxComponent: {
@@ -17,7 +18,6 @@ export default defineComponent({
       nodeOptions: { isVoid: true, isInline: true },
       mdxRule: labelMdxRule,
       slashCommand: {
-        keywords: ['label', 'status', 'chip', 'tag', 'badge'],
         onSelect: (editor, { insertOrReplaceInline }) => {
           insertOrReplaceInline(editor, {
             type: LABEL_TYPE,

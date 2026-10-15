@@ -7,6 +7,7 @@ export default defineComponent({
   category: 'content-layout',
   name: 'Caption',
   description: 'Wrap a block with a figure caption',
+  keywords: ['caption', 'figure', 'figcaption'],
   component: Caption,
   icon: TbFrame,
   mdxComponent: {
@@ -18,7 +19,6 @@ export default defineComponent({
       nodeOptions: {},
       mdxRule: captionMdxRule,
       slashCommand: {
-        keywords: ['caption', 'figure', 'figcaption'],
         onSelect: (editor, { insertOrReplaceBlock }) => {
           insertOrReplaceBlock(editor, {
             type: CAPTION_TYPE,

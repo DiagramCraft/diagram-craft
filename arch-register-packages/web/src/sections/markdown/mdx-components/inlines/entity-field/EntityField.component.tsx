@@ -7,6 +7,7 @@ export default defineComponent({
   category: 'metrics',
   name: 'Entity field',
   description: 'Show a live field value from an entity inside a sentence',
+  keywords: ['field', 'entity', 'value', 'embed', 'inline'],
   component: EntityField,
   icon: TbHash,
   mdxComponent: {
@@ -17,7 +18,6 @@ export default defineComponent({
       nodeOptions: { isVoid: true, isInline: true },
       mdxRule: entityFieldMdxRule,
       slashCommand: {
-        keywords: ['field', 'entity', 'value', 'embed', 'inline'],
         onSelect: (editor, { insertOrReplaceInline }) => {
           insertOrReplaceInline(editor, {
             type: ENTITY_FIELD_TYPE,

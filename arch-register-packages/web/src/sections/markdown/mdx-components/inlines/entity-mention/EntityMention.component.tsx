@@ -11,6 +11,7 @@ export default defineComponent({
   category: 'data-views',
   name: 'Entity mention',
   description: 'Mention an entity with its live name and status',
+  keywords: ['mention', 'entity', '@', 'reference', 'link'],
   component: EntityMention,
   icon: TbAt,
   mdxComponent: {
@@ -21,7 +22,6 @@ export default defineComponent({
       nodeOptions: { isVoid: true, isInline: true },
       mdxRule: entityMentionMdxRule,
       slashCommand: {
-        keywords: ['mention', 'entity', '@', 'reference', 'link'],
         onSelect: (editor, { insertOrReplaceInline }) => {
           insertOrReplaceInline(editor, {
             type: ENTITY_MENTION_TYPE,

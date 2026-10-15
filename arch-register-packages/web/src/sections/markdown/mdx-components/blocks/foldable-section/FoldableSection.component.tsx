@@ -11,6 +11,7 @@ export default defineComponent({
   category: 'content-layout',
   name: 'Foldable section',
   description: 'Collapse content behind a summary label',
+  keywords: ['fold', 'foldable', 'collapse', 'expand', 'details', 'summary', 'toggle'],
   component: FoldableSection,
   icon: TbChevronsDown,
   mdxComponent: {
@@ -22,7 +23,6 @@ export default defineComponent({
       nodeOptions: {},
       mdxRule: foldableSectionMdxRule,
       slashCommand: {
-        keywords: ['fold', 'foldable', 'collapse', 'expand', 'details', 'summary', 'toggle'],
         onSelect: (editor, { insertOrReplaceBlock }) => {
           insertOrReplaceBlock(editor, {
             type: FOLDABLE_SECTION_TYPE,

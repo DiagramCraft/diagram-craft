@@ -44,7 +44,7 @@ export type SlashCommandDef<E extends TElement = TElement> = {
 /** Label and description come from the owning registration's name and description. */
 export type SlashCommandRegistrationDef<E extends TElement = TElement> = Omit<
   SlashCommandDef<E>,
-  'label' | 'description'
+  'label' | 'description' | 'keywords'
 >;
 
 type EditorSpecBase<E extends TElement, Mode extends MdxMode> = {

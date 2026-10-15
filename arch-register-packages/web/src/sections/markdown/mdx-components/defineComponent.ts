@@ -22,6 +22,8 @@ type ComponentRegistrationBase = {
   /** Shared display name and description for component catalogs. */
   name: string;
   description: string;
+  /** Extra search terms for the slash menu, beyond the name and description. */
+  keywords?: string[];
   /** Shared category shown in the wiki and dashboard catalogs. */
   category: ComponentCategory;
   /** One icon reused by dashboard, MDX, and editor surfaces. */
@@ -67,7 +69,8 @@ export type ComponentRegistration<
 const toMdxSpec = <E extends TElement, Mode extends MdxMode>(
   { editorSpec, ...rest }: MdxComponentRegistrationDef<E, Mode>,
   name: string,
-  description: string
+  description: string,
+  keywords: string[] | undefined
 ): MdxComponentSpec => {
   if (!editorSpec) return rest;
   const { slashCommand, ...editorRest } = editorSpec;
@@ -75,7 +78,9 @@ const toMdxSpec = <E extends TElement, Mode extends MdxMode>(
     ...rest,
     editorSpec: {
       ...editorRest,
-      ...(slashCommand ? { slashCommand: { ...slashCommand, label: name, description } } : {})
+      ...(slashCommand
+        ? { slashCommand: { ...slashCommand, label: name, description, keywords } }
+        : {})
     }
   };
 };
@@ -100,7 +105,8 @@ export function defineComponent<
   Mode extends MdxMode = MdxMode,
   Schema extends ConfigSchema = ConfigSchema
 >(def: ComponentRegistration<E, Mode, Schema>): ComponentDefinition {
-  const { type, name, description, category, icon, component, configForm, configDialog } = def;
+  const { type, name, description, keywords, category, icon, component, configForm, configDialog } =
+    def;
   const { dashboardWidget, configSchema } = def;
   const mdxComponent =
     typeof def.mdxComponent === 'function'
@@ -129,7 +135,7 @@ export function defineComponent<
     ...(configDialog ? { configDialog } : {}),
     ...(mdxComponent
       ? {
-          mdx: toMdxSpec(mdxComponent, name, description)
+          mdx: toMdxSpec(mdxComponent, name, description, keywords)
         }
       : {}),
     ...(dashboardWidget

@@ -18,6 +18,7 @@ export default defineComponent({
     defaultH: 16,
     surfaces: ['workspace', 'project']
   },
+  keywords: ['changelog', 'audit', 'history', 'changes', 'entity'],
   component: EntityChangelog,
   configForm: EntityChangelogConfigForm,
   icon: TbHistory,
@@ -26,7 +27,6 @@ export default defineComponent({
       attributeNames: { entityId: 'id' }
     }),
     placeholder: 'Configure entity changelog…',
-    fullWidth: true,
-    keywords: ['changelog', 'audit', 'history', 'changes', 'entity']
+    fullWidth: true
   })
 });

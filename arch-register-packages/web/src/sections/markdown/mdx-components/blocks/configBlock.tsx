@@ -10,7 +10,6 @@ type ConfigBlockOptions = {
   codec: ConfigCodec;
   /** Shown while the block has no configuration yet. */
   placeholder: string;
-  keywords: string[];
   /** Stretches the preview to the full editor width. */
   fullWidth?: boolean;
 };
@@ -22,7 +21,7 @@ type ConfigBlockOptions = {
  * key) is the owning component's `type`, supplied by `defineComponent`.
  */
 export const configBlockMdx =
-  ({ codec, placeholder, keywords, fullWidth }: ConfigBlockOptions): MdxComponentFactory =>
+  ({ codec, placeholder, fullWidth }: ConfigBlockOptions): MdxComponentFactory =>
   (type): MdxComponentRegistrationDef => {
     const attributeOf = (key: string): string => codec.attributeNames[key] ?? key;
     const fieldsOf = (element: TElement): Record<string, string> =>
@@ -72,7 +71,6 @@ export const configBlockMdx =
           fields: codec.keys.map(key => ({ key, attr: attributeOf(key) }))
         }),
         slashCommand: {
-          keywords,
           onSelect: (editor, { insertOrReplaceBlock }) =>
             insertOrReplaceBlock(editor, { type, children: [{ text: '' }] })
         }
