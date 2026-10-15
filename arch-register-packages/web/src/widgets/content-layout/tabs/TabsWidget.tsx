@@ -1,6 +1,6 @@
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
-import { NestedWidgetRenderer } from '../../shared/dashboard/nestedWidgets';
+import { DashboardWidgetRenderer } from '../../shared/dashboard/DashboardWidgetRenderer';
 import styles from './TabsWidget.module.css';
 import { useState } from 'react';
 import { resolveActiveTabId, type TabsWidgetConfig } from './tabsLogic';
@@ -49,7 +49,7 @@ export const TabsWidget = ({ config }: { config: TabsWidgetConfig }) => {
                       minWidth: 0
                     }}
                   >
-                    <NestedWidgetRenderer widget={widget} />
+                    <DashboardWidgetRenderer widget={widget} />
                   </div>
                 ))}
               </div>
