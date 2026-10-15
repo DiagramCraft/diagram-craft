@@ -1,10 +1,8 @@
 import { TbArrowsJoin } from 'react-icons/tb';
 import { defineWidget } from '../../shared/defineWidget';
-import {
-  RelationPairsCoverageConfigForm,
-  RelationPairsCoverageWidget,
-  relationPairsCoverageWidgetConfigSchema
-} from './RelationPairsCoverage';
+import { RelationPairsCoverageConfigForm } from './RelationPairsCoverageConfigForm';
+import { RelationPairsCoverageWidget } from './RelationPairsCoverage';
+import { relationPairsCoverageWidgetConfigSchema } from './types';
 
 export default defineWidget({
   type: 'RelationPairsCoverage',

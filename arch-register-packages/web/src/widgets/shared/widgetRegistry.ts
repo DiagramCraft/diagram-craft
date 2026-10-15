@@ -12,12 +12,11 @@ const definitionsByType = new Map<string, WidgetDefinition>();
 /** Narrows component definitions to registrations that provide this surface. */
 export type WidgetDefinitionFilter = 'mdx' | 'dashboard';
 
-type WidgetDefinitionFor<Filter extends WidgetDefinitionFilter | undefined> =
-  Filter extends 'mdx'
-    ? MdxWidgetDefinition
-    : Filter extends 'dashboard'
-      ? DashboardWidgetWidgetDefinition
-      : WidgetDefinition;
+type WidgetDefinitionFor<Filter extends WidgetDefinitionFilter | undefined> = Filter extends 'mdx'
+  ? MdxWidgetDefinition
+  : Filter extends 'dashboard'
+    ? DashboardWidgetWidgetDefinition
+    : WidgetDefinition;
 
 /**
  * `defineWidget` guarantees that a dashboard widget has an icon, a config schema and so a
@@ -27,9 +26,7 @@ const provides = (definition: WidgetDefinition, filter: WidgetDefinitionFilter):
   (filter === 'mdx' ? definition.mdx : definition.dashboard) !== undefined;
 
 /** Return all registrations, or narrow them to definitions with the selected spec. */
-export const getWidgetDefinitions = <
-  Filter extends WidgetDefinitionFilter | undefined = undefined
->(
+export const getWidgetDefinitions = <Filter extends WidgetDefinitionFilter | undefined = undefined>(
   filter?: Filter
 ): ReadonlyArray<WidgetDefinitionFor<Filter>> => {
   const all = [...definitionsByType.values()];
@@ -38,9 +35,7 @@ export const getWidgetDefinitions = <
 };
 
 /** Look up a registration by id, optionally requiring a particular spec. */
-export const getWidgetDefinition = <
-  Filter extends WidgetDefinitionFilter | undefined = undefined
->(
+export const getWidgetDefinition = <Filter extends WidgetDefinitionFilter | undefined = undefined>(
   id: string,
   filter?: Filter
 ): WidgetDefinitionFor<Filter> | undefined => {
@@ -50,9 +45,7 @@ export const getWidgetDefinition = <
 };
 
 /** Add component registrations; a type may only be registered once. */
-export const registerWidgetDefinitions = (
-  definitions: ReadonlyArray<WidgetDefinition>
-): void => {
+export const registerWidgetDefinitions = (definitions: ReadonlyArray<WidgetDefinition>): void => {
   for (const definition of definitions) {
     if (definitionsByType.has(definition.type)) {
       throw new Error(`Duplicate component registration for "${definition.type}"`);

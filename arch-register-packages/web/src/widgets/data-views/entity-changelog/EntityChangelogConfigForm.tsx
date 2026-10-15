@@ -2,10 +2,7 @@ import { useState } from 'react';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import type { ConfigFormProps } from '../../shared/types';
 import { EntityPicker } from '../../../components/EntityPicker';
-import {
-  EntityFilterPanel,
-  type EntityFilterValue
-} from '../../../components/EntityFilterPanel';
+import { EntityFilterPanel, type EntityFilterValue } from '../../../components/EntityFilterPanel';
 import { DialogSection } from '../../../sections/markdown/editor/BlockDialog';
 import { useEntity } from '../../../hooks/useEntities';
 import type { EntityChangelogWidgetConfig } from './types';

@@ -1,6 +1,10 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { EntityChart } from './EntityChart';
-import { createStoryQueryClient, StoryProviders, WORKSPACE } from '../../shared/mdx/StorybookHarness';
+import {
+  createStoryQueryClient,
+  StoryProviders,
+  WORKSPACE
+} from '../../shared/mdx/StorybookHarness';
 import { entityKeys } from '../../../queries/entities';
 
 const storyQueryClient = createStoryQueryClient();

@@ -1,10 +1,8 @@
 import { TbCalendarTime } from 'react-icons/tb';
 import { defineWidget } from '../../shared/defineWidget';
-import {
-  UpcomingByDateConfigForm,
-  UpcomingByDateWidget,
-  upcomingByDateWidgetConfigSchema
-} from './UpcomingByDate';
+import { UpcomingByDateConfigForm } from './UpcomingByDateConfigForm';
+import { UpcomingByDateWidget } from './UpcomingByDate';
+import { upcomingByDateWidgetConfigSchema } from './types';
 
 export default defineWidget({
   type: 'UpcomingByDate',

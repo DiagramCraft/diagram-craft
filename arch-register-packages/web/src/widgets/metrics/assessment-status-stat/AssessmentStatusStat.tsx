@@ -4,27 +4,12 @@ import {
   ASSESSMENT_STATUS_TONE,
   TINTED_ASSESSMENT_STATUSES,
   countByStatus,
-  renderAssessmentSubtext,
-  ASSESSMENT_STATUSES
+  renderAssessmentSubtext
 } from '../../shared/data/assessmentSummaryLogic';
 import { useSchemaAssessmentSummaries } from '../../shared/data/useSchemaAssessmentSummaries';
 import styles from './AssessmentStatusStat.module.css';
 import { useWidgetBodyTitle } from '../../shared/dashboard/WidgetBodyTitle';
-import { DialogSection } from '../../../sections/markdown/editor/BlockDialog';
-import { AssessmentSchemaConfigForm } from '../../shared/data/AssessmentSchemaConfigForm';
-import registrationStyles from '../../../sections/dashboard/WidgetConfigDialog.module.css';
-import { z } from 'zod';
-import { withInitial } from '../../shared/configSchema';
-
-export const assessmentStatusStatConfigSchema = z.object({
-  /** Name of the entity schema the assessments must target (`assessment.scope`). */
-  schemaName: withInitial(z.string().min(1), ''),
-  status: withInitial(z.enum(ASSESSMENT_STATUSES), 'overdue'),
-  /** May contain `{count}`, `{total}` and `{notStarted}`. */
-  subtextTemplate: z.string().optional()
-});
-
-export type AssessmentStatusStatConfig = z.infer<typeof assessmentStatusStatConfigSchema>;
+import { AssessmentStatusStatConfig } from './types';
 
 export const AssessmentStatusStatWidget = ({ config }: { config: AssessmentStatusStatConfig }) => {
   const title = useWidgetBodyTitle();
@@ -57,34 +42,3 @@ export const AssessmentStatusStatWidget = ({ config }: { config: AssessmentStatu
     </div>
   );
 };
-
-export const ConfigForm = ({
-  config,
-  onChange
-}: {
-  config: AssessmentStatusStatConfig;
-  onChange: (config: AssessmentStatusStatConfig) => void;
-}) => (
-  <>
-    <AssessmentSchemaConfigForm config={config} onChange={onChange} statusRequired />
-    <DialogSection label="Subtext" required={false}>
-      <div className={registrationStyles.options}>
-        <label className={registrationStyles.optionRow}>
-          <span className={registrationStyles.optionLabel}>Template</span>
-          <div className={registrationStyles.optionControl}>
-            <input
-              type="text"
-              className={registrationStyles.labelInput}
-              value={config.subtextTemplate ?? ''}
-              placeholder="e.g. of {total} assessments"
-              onChange={event => {
-                const value = event.currentTarget.value;
-                onChange({ ...config, subtextTemplate: value.trim() === '' ? undefined : value });
-              }}
-            />
-          </div>
-        </label>
-      </div>
-    </DialogSection>
-  </>
-);

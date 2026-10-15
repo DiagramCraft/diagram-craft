@@ -1,10 +1,8 @@
 import { TbGitPullRequest } from 'react-icons/tb';
 import { defineWidget } from '../../shared/defineWidget';
-import {
-  ChangeCaseTableConfigForm,
-  ChangeCaseTableWidget,
-  changeCaseTableConfigSchema
-} from './ChangeCaseTable';
+import { ChangeCaseTableConfigForm } from './ChangeCaseTableConfigForm';
+import { ChangeCaseTableWidget } from './ChangeCaseTable';
+import { changeCaseTableConfigSchema } from './types';
 
 export default defineWidget({
   type: 'ChangeCaseTable',

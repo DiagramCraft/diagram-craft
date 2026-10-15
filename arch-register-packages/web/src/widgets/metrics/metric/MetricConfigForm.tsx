@@ -1,9 +1,6 @@
 import { Select } from '@diagram-craft/app-components/Select';
 import type { ConfigFormProps } from '../../shared/types';
-import {
-  EntityFilterPanel,
-  type EntityFilterValue
-} from '../../../components/EntityFilterPanel';
+import { EntityFilterPanel, type EntityFilterValue } from '../../../components/EntityFilterPanel';
 import { DialogSection } from '../../../sections/markdown/editor/BlockDialog';
 import type { WidgetSurface } from '../../shared/types';
 import type { MetricType, StatMetricWidgetConfig } from './types';

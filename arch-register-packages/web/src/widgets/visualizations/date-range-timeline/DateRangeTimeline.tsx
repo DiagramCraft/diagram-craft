@@ -8,7 +8,7 @@ import {
   type TimelineColumnWidths
 } from '../../../components/timeline/timelineUtils';
 import { useDateTimeFormatPreference } from '../../../hooks/useDateTimeFormatPreference';
-import { hasWidgetRecordSource, useWidgetRecords } from '../../../hooks/useEntityQueryText';
+import { useWidgetRecords } from '../../../hooks/useEntityQueryText';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { formatDate } from '../../../utils/dateFormat';
 import { useEntityDrawer } from '../../../sections/entities/entityDrawer/useEntityDrawer';
@@ -19,42 +19,14 @@ import { countdownTone } from '../../data-views/upcoming-by-date/upcomingByDateL
 import { useRecordSublabels } from '../../shared/data/useRecordSublabels';
 import rowStyles from '../../shared/dashboard/WidgetRowList.module.css';
 import styles from './DateRangeTimeline.module.css';
-import { DialogSection } from '../../../sections/markdown/editor/BlockDialog';
-import configFormStyles from '../../../sections/dashboard/WidgetConfigDialog.module.css';
-import { z } from 'zod';
-import { entityQuerySchema } from '@arch-register/api-types/entityQueryIR';
-import { withInitial } from '../../shared/configSchema';
+import { DateRangeTimelineWidgetConfig } from './types';
 
 const LABEL_WIDTH = 220;
+
 const COLUMN_WIDTHS: TimelineColumnWidths = { month: 72, quarter: 100, year: 136 };
+
 // Minimum on-screen bar width (px) so a very short range is still clickable/visible.
 const MIN_BAR_WIDTH = 6;
-
-export const dateRangeTimelineWidgetConfigSchema = z
-  .object({
-    /** Entity-query DSL text selecting the records to plot. */
-    query: withInitial(z.string().optional(), ''),
-    /** Structured alternative to `query`; may reference dashboard sidebar `$variables`. */
-    entityQuery: entityQuerySchema.optional(),
-    /** Root schema name `entityQuery`'s field names resolve against. */
-    schemaName: z.string().optional(),
-    startFieldId: withInitial(z.string().trim().min(1), ''),
-    endFieldId: withInitial(z.string().trim().min(1), ''),
-    /** Optional field shown under the name; a reference/containment field shows the target's name. */
-    sublabelFieldId: z.string().optional(),
-    /** Optional number/currency field shown inside each bar. */
-    valueFieldId: z.string().optional(),
-    /** Duration field (or number of days) giving a marker that many days before the end date, e.g. a notice period. */
-    markerOffsetFieldId: z.string().optional(),
-    /** Boolean field that must be true for the marker to be drawn. */
-    markerWhenFieldId: z.string().optional(),
-    /** Bar turns red when ended (or ending within `critWithinDays`) and orange within `warnWithinDays`. */
-    critWithinDays: z.number().optional(),
-    warnWithinDays: z.number().optional()
-  })
-  .refine(hasWidgetRecordSource, { message: 'Needs a query or an entity query' });
-
-export type DateRangeTimelineWidgetConfig = z.infer<typeof dateRangeTimelineWidgetConfigSchema>;
 
 const TONE_COLOR = {
   normal: 'var(--cmp-fg-success, #22c55e)',
@@ -186,97 +158,3 @@ export const DateRangeTimelineWidget = ({ config }: Props) => {
     </div>
   );
 };
-
-type DateRangeTimelineConfigFormProps = {
-  config: DateRangeTimelineWidgetConfig;
-  onChange: (config: DateRangeTimelineWidgetConfig) => void;
-};
-
-const optionalText = (value: string): string | undefined =>
-  value.trim() === '' ? undefined : value;
-
-const TextOption = ({
-  label,
-  value,
-  placeholder,
-  onChange
-}: {
-  label: string;
-  value: string | undefined;
-  placeholder?: string;
-  onChange: (value: string | undefined) => void;
-}) => (
-  <label className={configFormStyles.optionRow}>
-    <span className={configFormStyles.optionLabel}>{label}</span>
-    <div className={configFormStyles.optionControl}>
-      <input
-        type="text"
-        className={configFormStyles.labelInput}
-        value={value ?? ''}
-        placeholder={placeholder}
-        onChange={e => onChange(optionalText(e.target.value))}
-      />
-    </div>
-  </label>
-);
-
-export const DateRangeTimelineConfigForm = ({
-  config,
-  onChange
-}: DateRangeTimelineConfigFormProps) => (
-  <>
-    <DialogSection label="Records (query)" required={config.entityQuery === undefined}>
-      <input
-        type="text"
-        className={configFormStyles.labelInput}
-        value={config.query ?? ''}
-        placeholder='e.g. schema:"Contract"'
-        onChange={e => onChange({ ...config, query: e.target.value })}
-      />
-    </DialogSection>
-    <DialogSection label="Start field id" required>
-      <input
-        type="text"
-        className={configFormStyles.labelInput}
-        value={config.startFieldId}
-        placeholder="e.g. contract_start"
-        onChange={e => onChange({ ...config, startFieldId: e.target.value })}
-      />
-    </DialogSection>
-    <DialogSection label="End field id" required>
-      <input
-        type="text"
-        className={configFormStyles.labelInput}
-        value={config.endFieldId}
-        placeholder="e.g. contract_end"
-        onChange={e => onChange({ ...config, endFieldId: e.target.value })}
-      />
-    </DialogSection>
-    <DialogSection label="Display" required={false}>
-      <div className={configFormStyles.options}>
-        <TextOption
-          label="Subtitle field id"
-          value={config.sublabelFieldId}
-          onChange={sublabelFieldId => onChange({ ...config, sublabelFieldId })}
-        />
-        <TextOption
-          label="Value field id"
-          value={config.valueFieldId}
-          onChange={valueFieldId => onChange({ ...config, valueFieldId })}
-        />
-        <TextOption
-          label="Marker offset field id"
-          value={config.markerOffsetFieldId}
-          placeholder="Duration before end, e.g. notice_period"
-          onChange={markerOffsetFieldId => onChange({ ...config, markerOffsetFieldId })}
-        />
-        <TextOption
-          label="Marker only when field id"
-          value={config.markerWhenFieldId}
-          placeholder="Boolean field, e.g. auto_renew"
-          onChange={markerWhenFieldId => onChange({ ...config, markerWhenFieldId })}
-        />
-      </div>
-    </DialogSection>
-  </>
-);

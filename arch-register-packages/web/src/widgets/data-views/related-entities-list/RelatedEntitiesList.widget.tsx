@@ -1,10 +1,8 @@
 import { TbListDetails } from 'react-icons/tb';
 import { defineWidget } from '../../shared/defineWidget';
-import {
-  RelatedEntitiesListConfigForm,
-  RelatedEntitiesListWidget,
-  relatedEntitiesListWidgetConfigSchema
-} from './RelatedEntitiesList';
+import { RelatedEntitiesListConfigForm } from './RelatedEntitiesListConfigForm';
+import { RelatedEntitiesListWidget } from './RelatedEntitiesList';
+import { relatedEntitiesListWidgetConfigSchema } from './types';
 
 export default defineWidget({
   type: 'RelatedEntitiesList',

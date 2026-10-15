@@ -1,10 +1,8 @@
 import { TbClipboardCheck } from 'react-icons/tb';
 import { defineWidget } from '../../shared/defineWidget';
-import {
-  AssessmentCountConfigForm,
-  AssessmentCountWidget,
-  assessmentCountWidgetConfigSchema
-} from './AssessmentCount';
+import { AssessmentCountConfigForm } from './AssessmentCountConfigForm';
+import { AssessmentCountWidget } from './AssessmentCount';
+import { assessmentCountWidgetConfigSchema } from './types';
 
 export default defineWidget({
   type: 'AssessmentCount',

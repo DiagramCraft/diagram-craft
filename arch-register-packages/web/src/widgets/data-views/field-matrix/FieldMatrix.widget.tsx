@@ -1,10 +1,8 @@
 import { TbGrid4X4 } from 'react-icons/tb';
 import { defineWidget } from '../../shared/defineWidget';
-import {
-  FieldMatrixConfigForm,
-  FieldMatrixWidget,
-  fieldMatrixWidgetConfigSchema
-} from './FieldMatrix';
+import { FieldMatrixConfigForm } from './FieldMatrixConfigForm';
+import { FieldMatrixWidget } from './FieldMatrix';
+import { fieldMatrixWidgetConfigSchema } from './types';
 
 export default defineWidget({
   type: 'FieldMatrix',

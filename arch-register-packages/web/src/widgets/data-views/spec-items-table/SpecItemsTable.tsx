@@ -14,25 +14,7 @@ import { stripEmptyGroups } from '../../../sections/entities/components/entityBr
 import { useEntityDrawer } from '../../../sections/entities/entityDrawer/useEntityDrawer';
 import { resolveEntityQuery } from '../entity-browser-embed/EntityBrowserEmbedFieldResolution';
 import { specItemsEmptyLabel, specItemTone, specItemSortValue } from './specItemsTableLogic';
-import { DialogSection } from '../../../sections/markdown/editor/BlockDialog';
-import configFormStyles from '../../../sections/dashboard/WidgetConfigDialog.module.css';
-import { z } from 'zod';
-import { entityQuerySchema } from '@arch-register/api-types/entityQueryIR';
-import { withInitial } from '../../shared/configSchema';
-
-export const specItemsTableWidgetConfigSchema = z.object({
-  /** Display name of the entity schema whose specification artifacts are listed. */
-  schemaName: withInitial(z.string().min(1), ''),
-  /** Optional structured filter on those entities (field NAMEs are resolved at render time); may
-   *  reference sidebar `$variables` — an empty multi-select means no constraint. */
-  entityQuery: entityQuerySchema.optional(),
-  /** Only list deprecated items. */
-  deprecated: z.boolean().optional(),
-  /** Maximum number of entities whose specifications are read. Default 200. */
-  entityLimit: z.number().optional()
-});
-
-export type SpecItemsTableWidgetConfig = z.infer<typeof specItemsTableWidgetConfigSchema>;
+import { SpecItemsTableWidgetConfig } from './types';
 
 const DEFAULT_ENTITY_LIMIT = 200;
 
@@ -144,47 +126,5 @@ export const SpecItemsTableWidget = ({ config }: { config: SpecItemsTableWidgetC
         )}
       </Table.Body>
     </Table.Root>
-  );
-};
-
-export const SpecItemsTableConfigForm = ({
-  config,
-  onChange
-}: {
-  config: SpecItemsTableWidgetConfig;
-  onChange: (config: SpecItemsTableWidgetConfig) => void;
-}) => {
-  const { schemas } = useWorkspaceContext();
-  return (
-    <>
-      <DialogSection label="Entity type" required>
-        <select
-          className={configFormStyles.labelInput}
-          value={config.schemaName}
-          onChange={event => onChange({ ...config, schemaName: event.currentTarget.value })}
-        >
-          <option value="">Select an entity type…</option>
-          {schemas.map(candidate => (
-            <option key={candidate.id} value={candidate.name}>
-              {candidate.name}
-            </option>
-          ))}
-        </select>
-      </DialogSection>
-      <DialogSection label="Display" required={false}>
-        <div className={configFormStyles.options}>
-          <label className={configFormStyles.checkboxRow}>
-            <input
-              type="checkbox"
-              checked={config.deprecated === true}
-              onChange={event =>
-                onChange({ ...config, deprecated: event.currentTarget.checked || undefined })
-              }
-            />
-            <span>Only deprecated operations</span>
-          </label>
-        </div>
-      </DialogSection>
-    </>
   );
 };

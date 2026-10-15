@@ -1,10 +1,8 @@
 import { TbTable } from 'react-icons/tb';
 import { defineWidget } from '../../shared/defineWidget';
-import {
-  RelationTableConfigForm,
-  RelationTableWidget,
-  relationTableWidgetConfigSchema
-} from './RelationTable';
+import { RelationTableConfigForm } from './RelationTableConfigForm';
+import { RelationTableWidget } from './RelationTable';
+import { relationTableWidgetConfigSchema } from './types';
 
 export default defineWidget({
   type: 'RelationTable',

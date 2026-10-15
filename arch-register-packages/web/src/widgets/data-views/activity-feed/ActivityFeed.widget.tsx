@@ -4,11 +4,9 @@
  */
 import { TbActivity } from 'react-icons/tb';
 import { defineWidget } from '../../shared/defineWidget';
-import {
-  ActivityFeedDashboardConfigForm,
-  ActivityFeedWidget,
-  activityFeedWidgetConfigSchema
-} from './ActivityFeed';
+import { ActivityFeedDashboardConfigForm } from './ActivityFeedConfigForm';
+import { ActivityFeedWidget } from './ActivityFeed';
+import { activityFeedWidgetConfigSchema } from './types';
 
 export default defineWidget({
   type: 'activity-feed',

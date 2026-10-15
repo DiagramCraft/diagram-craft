@@ -1,10 +1,8 @@
 import { TbListDetails } from 'react-icons/tb';
 import { defineWidget } from '../../shared/defineWidget';
-import {
-  SpecItemsTableConfigForm,
-  SpecItemsTableWidget,
-  specItemsTableWidgetConfigSchema
-} from './SpecItemsTable';
+import { SpecItemsTableConfigForm } from './SpecItemsTableConfigForm';
+import { SpecItemsTableWidget } from './SpecItemsTable';
+import { specItemsTableWidgetConfigSchema } from './types';
 
 export default defineWidget({
   type: 'SpecItemsTable',

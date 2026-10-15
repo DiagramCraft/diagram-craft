@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { hasWidgetRecordSource, useWidgetRecords } from '../../../hooks/useEntityQueryText';
+import { useWidgetRecords } from '../../../hooks/useEntityQueryText';
 import { Table } from '../../../components/table/Table';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { useEntityDrawer } from '../../../sections/entities/entityDrawer/useEntityDrawer';
@@ -7,41 +7,7 @@ import { formatMeasured } from '../../shared/data/fieldAggregation';
 import { buildRollupRows } from './groupedRollupTableLogic';
 import rowStyles from '../../shared/dashboard/WidgetRowList.module.css';
 import styles from './GroupedRollupTable.module.css';
-import { DialogSection } from '../../../sections/markdown/editor/BlockDialog';
-import configFormStyles from '../../../sections/dashboard/WidgetConfigDialog.module.css';
-import { z } from 'zod';
-import { entityQuerySchema } from '@arch-register/api-types/entityQueryIR';
-import { withInitial } from '../../shared/configSchema';
-
-export const groupedRollupTableWidgetConfigSchema = z
-  .object({
-    /** Entity-query DSL text selecting the records to roll up. */
-    query: withInitial(z.string().optional(), ''),
-    /** Structured alternative to `query`; may reference dashboard sidebar `$variables`. */
-    entityQuery: entityQuerySchema.optional(),
-    /** Root schema name `entityQuery`'s field names resolve against. */
-    schemaName: z.string().optional(),
-    /** Field to group by. Blank lists one row per record. */
-    groupFieldId: z.string().optional(),
-    /** Number or currency field summed per row. */
-    valueFieldId: withInitial(z.string().trim().min(1), ''),
-    /** Column header for the group/name column. */
-    groupLabel: z.string().optional(),
-    /** Column header for the value column. */
-    valueLabel: z.string().optional(),
-    /** Draw each row's value relative to the largest row. */
-    showBar: z.boolean().optional(),
-    /** Show each row's share of the total as a percentage. */
-    showPercent: z.boolean().optional(),
-    /** Show how many records each row covers. */
-    showCount: z.boolean().optional(),
-    /** Show a total row at the bottom. */
-    showTotal: z.boolean().optional(),
-    limit: z.number().positive().optional()
-  })
-  .refine(hasWidgetRecordSource, { message: 'Needs a query or an entity query' });
-
-export type GroupedRollupTableWidgetConfig = z.infer<typeof groupedRollupTableWidgetConfigSchema>;
+import { GroupedRollupTableWidgetConfig } from './types';
 
 type Props = { config: GroupedRollupTableWidgetConfig };
 
@@ -148,114 +114,3 @@ export const GroupedRollupTableWidget = ({ config }: Props) => {
     </Table.Root>
   );
 };
-
-type GroupedRollupTableConfigFormProps = {
-  config: GroupedRollupTableWidgetConfig;
-  onChange: (config: GroupedRollupTableWidgetConfig) => void;
-};
-
-const optionalText = (value: string): string | undefined =>
-  value.trim() === '' ? undefined : value;
-
-const Toggle = ({
-  label,
-  checked,
-  onChange
-}: {
-  label: string;
-  checked: boolean;
-  onChange: (checked: boolean) => void;
-}) => (
-  <label className={configFormStyles.optionRow}>
-    <span className={configFormStyles.optionLabel}>{label}</span>
-    <div className={configFormStyles.optionControl}>
-      <input type="checkbox" checked={checked} onChange={e => onChange(e.target.checked)} />
-    </div>
-  </label>
-);
-
-export const GroupedRollupTableConfigForm = ({
-  config,
-  onChange
-}: GroupedRollupTableConfigFormProps) => (
-  <>
-    <DialogSection label="Records (query)" required>
-      <input
-        type="text"
-        className={configFormStyles.labelInput}
-        value={config.query ?? ''}
-        placeholder='e.g. schema:"Vendor"'
-        onChange={e => onChange({ ...config, query: e.target.value })}
-      />
-    </DialogSection>
-    <DialogSection label="Sum field id" required>
-      <input
-        type="text"
-        className={configFormStyles.labelInput}
-        value={config.valueFieldId}
-        placeholder="e.g. spend"
-        onChange={e => onChange({ ...config, valueFieldId: e.target.value })}
-      />
-    </DialogSection>
-    <DialogSection label="Display" required={false}>
-      <div className={configFormStyles.options}>
-        <label className={configFormStyles.optionRow}>
-          <span className={configFormStyles.optionLabel}>Group by field id</span>
-          <div className={configFormStyles.optionControl}>
-            <input
-              type="text"
-              className={configFormStyles.labelInput}
-              value={config.groupFieldId ?? ''}
-              placeholder="Blank = one row per record"
-              onChange={e => onChange({ ...config, groupFieldId: optionalText(e.target.value) })}
-            />
-          </div>
-        </label>
-        <label className={configFormStyles.optionRow}>
-          <span className={configFormStyles.optionLabel}>Group column title</span>
-          <div className={configFormStyles.optionControl}>
-            <input
-              type="text"
-              className={configFormStyles.labelInput}
-              value={config.groupLabel ?? ''}
-              placeholder="Name"
-              onChange={e => onChange({ ...config, groupLabel: optionalText(e.target.value) })}
-            />
-          </div>
-        </label>
-        <label className={configFormStyles.optionRow}>
-          <span className={configFormStyles.optionLabel}>Value column title</span>
-          <div className={configFormStyles.optionControl}>
-            <input
-              type="text"
-              className={configFormStyles.labelInput}
-              value={config.valueLabel ?? ''}
-              placeholder="Total"
-              onChange={e => onChange({ ...config, valueLabel: optionalText(e.target.value) })}
-            />
-          </div>
-        </label>
-        <Toggle
-          label="Bars"
-          checked={config.showBar ?? false}
-          onChange={checked => onChange({ ...config, showBar: checked || undefined })}
-        />
-        <Toggle
-          label="Share %"
-          checked={config.showPercent ?? false}
-          onChange={checked => onChange({ ...config, showPercent: checked || undefined })}
-        />
-        <Toggle
-          label="Record count"
-          checked={config.showCount ?? false}
-          onChange={checked => onChange({ ...config, showCount: checked || undefined })}
-        />
-        <Toggle
-          label="Total row"
-          checked={config.showTotal ?? true}
-          onChange={checked => onChange({ ...config, showTotal: checked ? undefined : false })}
-        />
-      </div>
-    </DialogSection>
-  </>
-);

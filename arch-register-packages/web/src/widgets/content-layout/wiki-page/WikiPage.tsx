@@ -1,23 +1,12 @@
 import { LoadingState } from '../../../components/LoadingState';
-import type { ConfigFormProps, WidgetSurface } from '../../shared/types';
+import { type WidgetSurface } from '../../shared/types';
 import { useContentFile } from '../../../hooks/useContentScope';
 import { useMarkdownContent } from '../../../hooks/useMarkdownContent';
 import { useMdxContext } from '../../../sections/markdown/MdxContext';
-import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { MdxPreview } from '../../../sections/markdown/preview/MdxPreview';
 import typography from '../../../sections/markdown/articleTypography.module.css';
-
-import { DialogSection } from '../../../sections/markdown/editor/BlockDialog';
-import { WikiPagePicker } from './WikiPagePicker';
 import styles from './WikiPage.module.css';
-import { z } from 'zod';
-import { withInitial } from '../../shared/configSchema';
-
-export const wikiPageWidgetConfigSchema = z.object({
-  nodeId: withInitial(z.string().min(1), '')
-});
-
-export type WikiPageWidgetConfig = z.infer<typeof wikiPageWidgetConfigSchema>;
+import { WikiPageWidgetConfig } from './types';
 
 export const isWikiPageWidgetConfig = (
   config: Record<string, unknown>
@@ -72,24 +61,4 @@ export const WikiPageWidgetTitle = ({ config }: { config: WikiPageWidgetConfig }
     isInDashboardScope(projectId, dashboardSurface, file.project_id)
     ? file.name
     : 'Wiki page';
-};
-
-export const WikiPageDashboardConfigForm = ({
-  config,
-  onChange,
-  context
-}: ConfigFormProps<WikiPageWidgetConfig>) => {
-  const { workspaceSlug } = useWorkspaceContext();
-  const { projectId } = useMdxContext();
-  return (
-    <DialogSection label="Wiki page">
-      <WikiPagePicker
-        workspaceSlug={workspaceSlug}
-        projectId={projectId}
-        surface={context.surface}
-        value={config.nodeId}
-        onChange={nodeId => onChange({ ...config, nodeId })}
-      />
-    </DialogSection>
-  );
 };

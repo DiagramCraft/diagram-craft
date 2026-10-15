@@ -1,10 +1,8 @@
 import { TbChartBar } from 'react-icons/tb';
 import { defineWidget } from '../../shared/defineWidget';
-import {
-  CountByFieldConfigForm,
-  CountByFieldWidget,
-  countByFieldWidgetConfigSchema
-} from './CountByField';
+import { CountByFieldConfigForm } from './CountByFieldConfigForm';
+import { CountByFieldWidget } from './CountByField';
+import { countByFieldWidgetConfigSchema } from './types';
 
 export default defineWidget({
   type: 'CountByField',

@@ -1,10 +1,8 @@
 import { TbTopologyStar3 } from 'react-icons/tb';
 import { defineWidget } from '../../shared/defineWidget';
-import {
-  BlastRadiusConfigForm,
-  BlastRadiusWidget,
-  blastRadiusWidgetConfigSchema
-} from './BlastRadius';
+import { BlastRadiusConfigForm } from './BlastRadiusConfigForm';
+import { BlastRadiusWidget } from './BlastRadius';
+import { blastRadiusWidgetConfigSchema } from './types';
 
 export default defineWidget({
   type: 'blast-radius',

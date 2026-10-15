@@ -6,11 +6,9 @@
  */
 import { TbAlertTriangle } from 'react-icons/tb';
 import { defineWidget } from '../../shared/defineWidget';
-import {
-  NeedsAttentionConfigForm,
-  NeedsAttentionWidget,
-  needsAttentionWidgetConfigSchema
-} from './NeedsAttention';
+import { NeedsAttentionConfigForm } from './NeedsAttentionConfigForm';
+import { NeedsAttentionWidget } from './NeedsAttention';
+import { needsAttentionWidgetConfigSchema } from './types';
 export default defineWidget({
   type: 'NeedsAttentionQueue',
   category: 'data-views',

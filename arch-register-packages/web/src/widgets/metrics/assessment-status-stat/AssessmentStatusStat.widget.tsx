@@ -1,10 +1,8 @@
 import { TbChecklist } from 'react-icons/tb';
 import { defineWidget } from '../../shared/defineWidget';
-import {
-  AssessmentStatusStatWidget,
-  ConfigForm,
-  assessmentStatusStatConfigSchema
-} from './AssessmentStatusStat';
+import { AssessmentStatusStatWidget } from './AssessmentStatusStat';
+import { ConfigForm } from './AssessmentStatusStatConfigForm';
+import { assessmentStatusStatConfigSchema } from './types';
 
 export default defineWidget({
   type: 'AssessmentStatusStat',

@@ -5,7 +5,10 @@ import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import { useGovernanceCases } from '../../../hooks/useGovernance';
 import { useWorkspaceMembers } from '../../../hooks/useWorkspaceMembers';
 import { entityDetailQuery } from '../../../queries/entities';
-import { deriveDueDatePriority, type NeedsAttentionPriority } from '../../data-views/needs-attention/needsAttentionQueue';
+import {
+  deriveDueDatePriority,
+  type NeedsAttentionPriority
+} from '../../data-views/needs-attention/needsAttentionQueue';
 
 export type EntityCaseRegisterRow = {
   case: GovernanceCase;

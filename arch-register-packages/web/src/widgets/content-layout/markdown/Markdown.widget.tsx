@@ -1,11 +1,9 @@
 /** Dashboard-only widget; editing is handled by the dashboard config dialog. */
 import { TbMarkdown } from 'react-icons/tb';
 import { defineWidget } from '../../shared/defineWidget';
-import {
-  MarkdownDashboardConfigForm,
-  MarkdownWidget,
-  markdownWidgetConfigSchema
-} from './Markdown';
+import { MarkdownDashboardConfigForm } from './MarkdownConfigForm';
+import { MarkdownWidget } from './Markdown';
+import { markdownWidgetConfigSchema } from './types';
 export default defineWidget({
   type: 'markdown',
   category: 'content-layout',

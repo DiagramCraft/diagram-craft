@@ -1,6 +1,4 @@
 import { useNavigate } from '@tanstack/react-router';
-
-import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { AuditLogEntry } from '@arch-register/api-types/auditContract';
 import { useAuditLog } from '../../../hooks/useAudit';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
@@ -8,15 +6,8 @@ import { useEntityDrawer } from '../../../sections/entities/entityDrawer/useEnti
 import { asProjectPublicId, projectDetailRoute } from '../../../routes/publicObjectRoutes';
 import { ENTITY_TYPE_LABELS, OPERATION_LABELS } from '../../../utils/auditLabels';
 import { formatRelativeTime } from '../../../utils/dateFormat';
-import { DialogSection } from '../../../sections/markdown/editor/BlockDialog';
-
 import styles from './ActivityFeed.module.css';
-import formStyles from '../../../sections/dashboard/WidgetConfigDialog.module.css';
-import { z } from 'zod';
-
-export const activityFeedWidgetConfigSchema = z.object({ limit: z.number().int().optional() });
-
-export type ActivityFeedWidgetConfig = z.infer<typeof activityFeedWidgetConfigSchema>;
+import { ActivityFeedWidgetConfig } from './types';
 
 const DEFAULT_ACTIVITY_LIMIT = 15;
 
@@ -93,31 +84,3 @@ export const ActivityFeedWidget = ({ config }: Props) => {
     </div>
   );
 };
-
-type ActivityFeedConfigFormProps = {
-  config: ActivityFeedWidgetConfig;
-  onChange: (config: ActivityFeedWidgetConfig) => void;
-};
-
-export const ActivityFeedDashboardConfigForm = ({
-  config,
-  onChange
-}: ActivityFeedConfigFormProps) => (
-  <DialogSection label="Options" required={false}>
-    <div className={formStyles.options}>
-      <label className={formStyles.optionRow}>
-        <span className={formStyles.optionLabel}>Item limit</span>
-        <div className={formStyles.optionControl}>
-          <NumberInput
-            value={config.limit ?? ''}
-            min={1}
-            max={50}
-            step={1}
-            onChange={value => onChange({ ...config, limit: value })}
-            style={{ width: '80px' }}
-          />
-        </div>
-      </label>
-    </div>
-  </DialogSection>
-);

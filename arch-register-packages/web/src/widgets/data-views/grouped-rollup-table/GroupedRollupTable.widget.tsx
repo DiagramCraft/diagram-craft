@@ -1,10 +1,8 @@
 import { TbTable } from 'react-icons/tb';
 import { defineWidget } from '../../shared/defineWidget';
-import {
-  GroupedRollupTableConfigForm,
-  GroupedRollupTableWidget,
-  groupedRollupTableWidgetConfigSchema
-} from './GroupedRollupTable';
+import { GroupedRollupTableConfigForm } from './GroupedRollupTableConfigForm';
+import { GroupedRollupTableWidget } from './GroupedRollupTable';
+import { groupedRollupTableWidgetConfigSchema } from './types';
 
 export default defineWidget({
   type: 'GroupedRollupTable',

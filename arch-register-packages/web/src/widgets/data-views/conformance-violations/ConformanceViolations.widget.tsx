@@ -1,11 +1,11 @@
 import { TbShieldExclamation } from 'react-icons/tb';
 import { defineWidget } from '../../shared/defineWidget';
+import { ConformanceViolationsConfigForm } from './ConformanceViolationsConfigForm';
 import {
-  ConformanceViolationsConfigForm,
   ConformanceViolationsHeaderActions,
-  ConformanceViolationsWidget,
-  conformanceViolationsWidgetConfigSchema
+  ConformanceViolationsWidget
 } from './ConformanceViolations';
+import { conformanceViolationsWidgetConfigSchema } from './types';
 
 export default defineWidget({
   type: 'ConformanceViolations',

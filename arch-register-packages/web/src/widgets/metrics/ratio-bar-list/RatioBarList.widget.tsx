@@ -1,10 +1,8 @@
 import { TbChartBar } from 'react-icons/tb';
 import { defineWidget } from '../../shared/defineWidget';
-import {
-  RatioBarListConfigForm,
-  RatioBarListWidget,
-  ratioBarListWidgetConfigSchema
-} from './RatioBarList';
+import { RatioBarListConfigForm } from './RatioBarListConfigForm';
+import { RatioBarListWidget } from './RatioBarList';
+import { ratioBarListWidgetConfigSchema } from './types';
 
 export default defineWidget({
   type: 'RatioBarList',

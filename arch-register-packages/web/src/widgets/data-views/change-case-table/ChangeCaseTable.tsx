@@ -9,33 +9,11 @@ import { formatDate } from '../../../utils/dateFormat';
 import { caseKindLabel } from '../../../utils/governanceCaseLabels';
 import { GovernanceCaseDrawer } from '../../../sections/governance/GovernanceCaseDrawer';
 import { useEntityDrawer } from '../../../sections/entities/entityDrawer/useEntityDrawer';
-import type { NeedsAttentionPriority } from '../needs-attention/needsAttentionQueue';
+import { type NeedsAttentionPriority } from '../needs-attention/needsAttentionQueue';
 import { useEntityCaseRegister } from '../../shared/data/entityCaseRegister';
 import { filterByStatus, isChangeCaseStatus } from './changeCaseTableLogic';
 import styles from './ChangeCaseTable.module.css';
-import { Select } from '@diagram-craft/app-components/Select';
-import { humanizeCaseKind } from '../../../utils/governanceCaseLabels';
-import { DialogSection } from '../../../sections/markdown/editor/BlockDialog';
-import { KNOWN_CASE_KINDS } from '../needs-attention/NeedsAttention';
-import type { NeedsAttentionSeverity } from '../needs-attention/needsAttentionQueue';
-import configFormStyles from '../../../sections/dashboard/WidgetConfigDialog.module.css';
-import { z } from 'zod';
-import { needsAttentionSeveritySchema } from '../needs-attention/needsAttentionQueue';
-import { withInitial } from '../../shared/configSchema';
-
-export const changeCaseTableConfigSchema = z.object({
-  /** Name of the entity schema the cases' subject entities must belong to. */
-  schemaName: withInitial(z.string().min(1), ''),
-  caseKinds: withInitial(z.array(z.string()).min(1), ['entity.change-case']),
-  severity: withInitial(needsAttentionSeveritySchema, 'due-date'),
-  /**
-   * Only list cases in this status (`open`, `completed` or `cancelled`). Any other value —
-   * including an unresolved or empty `$variable` from a dashboard sidebar — means no filter.
-   */
-  status: z.string().optional()
-});
-
-export type ChangeCaseTableConfig = z.infer<typeof changeCaseTableConfigSchema>;
+import { ChangeCaseTableConfig } from './types';
 
 const PRIORITY_LABEL: Record<NeedsAttentionPriority, string> = {
   high: 'High',
@@ -147,115 +125,5 @@ export const ChangeCaseTableWidget = ({ config }: { config: ChangeCaseTableConfi
         />
       )}
     </div>
-  );
-};
-
-const optionalText = (value: string): string | undefined =>
-  value.trim() === '' ? undefined : value;
-
-const SEVERITY_LABEL: Record<NeedsAttentionSeverity, string> = {
-  none: 'None',
-  'due-date': 'Derived from due date'
-};
-
-type ChangeCaseTableConfigFormProps = {
-  config: ChangeCaseTableConfig;
-  onChange: (config: ChangeCaseTableConfig) => void;
-};
-
-const TextOption = ({
-  label,
-  value,
-  placeholder,
-  onChange
-}: {
-  label: string;
-  value: string | undefined;
-  placeholder?: string;
-  onChange: (value: string | undefined) => void;
-}) => (
-  <label className={configFormStyles.optionRow}>
-    <span className={configFormStyles.optionLabel}>{label}</span>
-    <div className={configFormStyles.optionControl}>
-      <input
-        type="text"
-        className={configFormStyles.labelInput}
-        value={value ?? ''}
-        placeholder={placeholder}
-        onChange={event => onChange(optionalText(event.currentTarget.value))}
-      />
-    </div>
-  </label>
-);
-
-export const ChangeCaseTableConfigForm = ({ config, onChange }: ChangeCaseTableConfigFormProps) => {
-  const { schemas } = useWorkspaceContext();
-
-  const toggleKind = (kind: string, checked: boolean) =>
-    onChange({
-      ...config,
-      caseKinds: checked
-        ? [...config.caseKinds, kind]
-        : config.caseKinds.filter(existing => existing !== kind)
-    });
-
-  return (
-    <>
-      <DialogSection label="Entity type" required>
-        <select
-          className={configFormStyles.labelInput}
-          value={config.schemaName}
-          onChange={event => onChange({ ...config, schemaName: event.currentTarget.value })}
-        >
-          <option value="">Select an entity type…</option>
-          {schemas.map(schema => (
-            <option key={schema.id} value={schema.name}>
-              {schema.name}
-            </option>
-          ))}
-        </select>
-      </DialogSection>
-      <DialogSection label="Case kinds" required>
-        <div className={configFormStyles.options}>
-          {[
-            ...KNOWN_CASE_KINDS,
-            ...config.caseKinds.filter(kind => !KNOWN_CASE_KINDS.includes(kind))
-          ].map(kind => (
-            <label key={kind} className={configFormStyles.checkboxRow}>
-              <input
-                type="checkbox"
-                checked={config.caseKinds.includes(kind)}
-                onChange={event => toggleKind(kind, event.currentTarget.checked)}
-              />
-              <span className={configFormStyles.optionLabel}>{humanizeCaseKind(kind)}</span>
-            </label>
-          ))}
-        </div>
-      </DialogSection>
-      <DialogSection label="Priority" required={false}>
-        <Select.Root
-          value={config.severity}
-          onChange={value =>
-            onChange({ ...config, severity: (value as NeedsAttentionSeverity) ?? 'none' })
-          }
-        >
-          {(Object.keys(SEVERITY_LABEL) as NeedsAttentionSeverity[]).map(severity => (
-            <Select.Item key={severity} value={severity}>
-              {SEVERITY_LABEL[severity]}
-            </Select.Item>
-          ))}
-        </Select.Root>
-      </DialogSection>
-      <DialogSection label="Status filter" required={false}>
-        <div className={configFormStyles.options}>
-          <TextOption
-            label="Status"
-            value={config.status}
-            placeholder="open, completed, cancelled or $variable"
-            onChange={status => onChange({ ...config, status })}
-          />
-        </div>
-      </DialogSection>
-    </>
   );
 };

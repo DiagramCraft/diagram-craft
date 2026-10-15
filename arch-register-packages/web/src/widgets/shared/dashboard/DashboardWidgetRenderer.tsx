@@ -25,16 +25,10 @@ export const DashboardWidgetRenderer = ({ widget, isEditing = false, onEdit, onR
   const knownWidget = parsedWidget
     ? { ...parsedWidget, config: resolveConfigVariables(parsedWidget.config, sidebarVariables) }
     : null;
-  const definition = knownWidget
-    ? getWidgetDefinition(knownWidget.type, 'dashboard')
-    : undefined;
+  const definition = knownWidget ? getWidgetDefinition(knownWidget.type, 'dashboard') : undefined;
   const dashboard = definition?.dashboard;
   const WidgetComponent = definition?.component;
-  const frame = resolveWidgetFrame(
-    dashboard,
-    widget.frame,
-    knownWidget?.config ?? widget.config
-  );
+  const frame = resolveWidgetFrame(dashboard, widget.frame, knownWidget?.config ?? widget.config);
 
   const TitleComponent = dashboard?.titleComponent;
   let defaultTitle: ReactNode = widget.type;

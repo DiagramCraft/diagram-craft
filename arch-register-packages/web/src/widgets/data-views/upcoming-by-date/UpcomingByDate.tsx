@@ -8,33 +8,9 @@ import { formatMeasured, measuredValue } from '../../shared/data/fieldAggregatio
 import { buildUpcomingRows, countdownTone, formatCountdown } from './upcomingByDateLogic';
 import rowStyles from '../../shared/dashboard/WidgetRowList.module.css';
 import styles from './UpcomingByDate.module.css';
-import { DialogSection } from '../../../sections/markdown/editor/BlockDialog';
-import configFormStyles from '../../../sections/dashboard/WidgetConfigDialog.module.css';
-import { z } from 'zod';
-import { withInitial } from '../../shared/configSchema';
+import { UpcomingByDateWidgetConfig } from './types';
 
 const DEFAULT_LIMIT = 7;
-
-export const upcomingByDateWidgetConfigSchema = z.object({
-  /** Entity-query DSL text selecting the records to list. */
-  query: withInitial(z.string().trim().min(1), ''),
-  /** Date field the list is ordered by. */
-  dateFieldId: withInitial(z.string().trim().min(1), ''),
-  /** Only show records due within this many days. */
-  windowDays: z.number().optional(),
-  /** Also show records whose date has passed. */
-  includeOverdue: z.boolean().optional(),
-  limit: z.number().optional(),
-  /** Optional field shown under the name; a reference/containment field shows the target's name. */
-  sublabelFieldId: z.string().optional(),
-  /** Optional number/currency field shown on the right. */
-  valueFieldId: z.string().optional(),
-  /** Countdown turns red within this many days (default 30) and orange within `warnWithinDays`. */
-  critWithinDays: z.number().optional(),
-  warnWithinDays: z.number().optional()
-});
-
-export type UpcomingByDateWidgetConfig = z.infer<typeof upcomingByDateWidgetConfigSchema>;
 
 const TONE_COLOR = {
   normal: undefined,
@@ -144,101 +120,3 @@ export const UpcomingByDateWidget = ({ config }: Props) => {
     </div>
   );
 };
-
-type UpcomingByDateConfigFormProps = {
-  config: UpcomingByDateWidgetConfig;
-  onChange: (config: UpcomingByDateWidgetConfig) => void;
-};
-
-const optionalText = (value: string): string | undefined =>
-  value.trim() === '' ? undefined : value;
-
-const optionalNumber = (value: string): number | undefined =>
-  value.trim() === '' || Number.isNaN(Number(value)) ? undefined : Number(value);
-
-export const UpcomingByDateConfigForm = ({ config, onChange }: UpcomingByDateConfigFormProps) => (
-  <>
-    <DialogSection label="Records (query)" required>
-      <input
-        type="text"
-        className={configFormStyles.labelInput}
-        value={config.query}
-        placeholder='e.g. schema:"Contract"'
-        onChange={e => onChange({ ...config, query: e.target.value })}
-      />
-    </DialogSection>
-    <DialogSection label="Date field id" required>
-      <input
-        type="text"
-        className={configFormStyles.labelInput}
-        value={config.dateFieldId}
-        placeholder="e.g. contract_end"
-        onChange={e => onChange({ ...config, dateFieldId: e.target.value })}
-      />
-    </DialogSection>
-    <DialogSection label="Display" required={false}>
-      <div className={configFormStyles.options}>
-        <label className={configFormStyles.optionRow}>
-          <span className={configFormStyles.optionLabel}>Within (days)</span>
-          <div className={configFormStyles.optionControl}>
-            <input
-              type="number"
-              min={0}
-              className={configFormStyles.labelInput}
-              value={config.windowDays ?? ''}
-              placeholder="No limit"
-              onChange={e => onChange({ ...config, windowDays: optionalNumber(e.target.value) })}
-            />
-          </div>
-        </label>
-        <label className={configFormStyles.optionRow}>
-          <span className={configFormStyles.optionLabel}>Show</span>
-          <div className={configFormStyles.optionControl}>
-            <input
-              type="number"
-              min={1}
-              max={50}
-              className={configFormStyles.labelInput}
-              value={config.limit ?? 7}
-              onChange={e =>
-                onChange({ ...config, limit: Math.max(1, optionalNumber(e.target.value) ?? 7) })
-              }
-            />
-          </div>
-        </label>
-        <label className={configFormStyles.optionRow}>
-          <span className={configFormStyles.optionLabel}>Include overdue</span>
-          <div className={configFormStyles.optionControl}>
-            <input
-              type="checkbox"
-              checked={config.includeOverdue ?? false}
-              onChange={e => onChange({ ...config, includeOverdue: e.target.checked || undefined })}
-            />
-          </div>
-        </label>
-        <label className={configFormStyles.optionRow}>
-          <span className={configFormStyles.optionLabel}>Subtitle field id</span>
-          <div className={configFormStyles.optionControl}>
-            <input
-              type="text"
-              className={configFormStyles.labelInput}
-              value={config.sublabelFieldId ?? ''}
-              onChange={e => onChange({ ...config, sublabelFieldId: optionalText(e.target.value) })}
-            />
-          </div>
-        </label>
-        <label className={configFormStyles.optionRow}>
-          <span className={configFormStyles.optionLabel}>Value field id</span>
-          <div className={configFormStyles.optionControl}>
-            <input
-              type="text"
-              className={configFormStyles.labelInput}
-              value={config.valueFieldId ?? ''}
-              onChange={e => onChange({ ...config, valueFieldId: optionalText(e.target.value) })}
-            />
-          </div>
-        </label>
-      </div>
-    </DialogSection>
-  </>
-);

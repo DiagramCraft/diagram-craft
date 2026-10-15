@@ -3,10 +3,7 @@ import { useEditorRef } from 'platejs/react';
 import type { TElement } from 'platejs';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { Select } from '@diagram-craft/app-components/Select';
-import {
-  EntityFilterPanel,
-  type EntityFilterValue
-} from '../../../components/EntityFilterPanel';
+import { EntityFilterPanel, type EntityFilterValue } from '../../../components/EntityFilterPanel';
 import { DialogContent, DialogSection } from '../../../sections/markdown/editor/BlockDialog';
 import type { EntityChartSlateElement } from './types';
 import styles from './EntityChartDialog.module.css';

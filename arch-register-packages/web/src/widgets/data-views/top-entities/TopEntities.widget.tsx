@@ -4,11 +4,9 @@
  */
 import { TbListNumbers } from 'react-icons/tb';
 import { defineWidget } from '../../shared/defineWidget';
-import {
-  TopEntitiesConfigForm,
-  TopEntitiesWidget,
-  topEntitiesWidgetConfigSchema
-} from './TopEntities';
+import { TopEntitiesConfigForm } from './TopEntitiesConfigForm';
+import { TopEntitiesWidget } from './TopEntities';
+import { topEntitiesWidgetConfigSchema } from './types';
 export default defineWidget({
   type: 'TopEntities',
   category: 'data-views',

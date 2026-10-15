@@ -5,11 +5,9 @@
  */
 import { TbPercentage } from 'react-icons/tb';
 import { defineWidget } from '../../shared/defineWidget';
-import {
-  AggregateStatConfigForm,
-  AggregateStatWidget,
-  aggregateStatWidgetConfigSchema
-} from './AggregateStat';
+import { AggregateStatConfigForm } from './AggregateStatConfigForm';
+import { AggregateStatWidget } from './AggregateStat';
+import { aggregateStatWidgetConfigSchema } from './types';
 export default defineWidget({
   type: 'AggregateStat',
   category: 'metrics',

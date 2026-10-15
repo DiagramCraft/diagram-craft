@@ -1,10 +1,8 @@
 import { TbCalendarMonth } from 'react-icons/tb';
 import { defineWidget } from '../../shared/defineWidget';
-import {
-  DateCalendarConfigForm,
-  DateCalendarWidget,
-  dateCalendarWidgetConfigSchema
-} from './DateCalendar';
+import { DateCalendarConfigForm } from './DateCalendarConfigForm';
+import { DateCalendarWidget } from './DateCalendar';
+import { dateCalendarWidgetConfigSchema } from './types';
 
 export default defineWidget({
   type: 'DateCalendar',

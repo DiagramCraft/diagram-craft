@@ -1,10 +1,8 @@
 import { TbTimeline } from 'react-icons/tb';
 import { defineWidget } from '../../shared/defineWidget';
-import {
-  DateRangeTimelineConfigForm,
-  DateRangeTimelineWidget,
-  dateRangeTimelineWidgetConfigSchema
-} from './DateRangeTimeline';
+import { DateRangeTimelineConfigForm } from './DateRangeTimelineConfigForm';
+import { DateRangeTimelineWidget } from './DateRangeTimeline';
+import { dateRangeTimelineWidgetConfigSchema } from './types';
 
 export default defineWidget({
   type: 'DateRangeTimeline',

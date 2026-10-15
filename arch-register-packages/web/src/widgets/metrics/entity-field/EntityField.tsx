@@ -1,6 +1,9 @@
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { useEntity } from '../../../hooks/useEntities';
-import { renderSchemaFieldValue, STANDARD_FIELD_IDS } from '../../data-views/entity-card/EntityCard';
+import {
+  renderSchemaFieldValue,
+  STANDARD_FIELD_IDS
+} from '../../data-views/entity-card/EntityCard';
 import styles from './EntityField.module.css';
 
 const resolveFieldValue = (

@@ -1,11 +1,8 @@
 import { TbBook } from 'react-icons/tb';
 import { defineWidget } from '../../shared/defineWidget';
-import {
-  WikiPageDashboardConfigForm,
-  WikiPageWidget,
-  WikiPageWidgetTitle,
-  wikiPageWidgetConfigSchema
-} from './WikiPage';
+import { WikiPageDashboardConfigForm } from './WikiPageConfigForm';
+import { WikiPageWidget, WikiPageWidgetTitle } from './WikiPage';
+import { wikiPageWidgetConfigSchema } from './types';
 export default defineWidget({
   type: 'wiki-page',
   category: 'content-layout',

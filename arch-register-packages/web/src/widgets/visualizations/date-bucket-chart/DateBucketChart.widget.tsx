@@ -1,11 +1,8 @@
 import { TbChartBar } from 'react-icons/tb';
 import { defineWidget } from '../../shared/defineWidget';
-import {
-  DateBucketChartConfigForm,
-  DateBucketChartHeaderActions,
-  DateBucketChartWidget,
-  dateBucketChartWidgetConfigSchema
-} from './DateBucketChart';
+import { DateBucketChartConfigForm } from './DateBucketChartConfigForm';
+import { DateBucketChartHeaderActions, DateBucketChartWidget } from './DateBucketChart';
+import { dateBucketChartWidgetConfigSchema } from './types';
 
 export default defineWidget({
   type: 'DateBucketChart',

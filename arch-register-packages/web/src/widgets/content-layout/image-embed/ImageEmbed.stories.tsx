@@ -1,7 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import type { ProjectFile } from '@arch-register/api-types/projectContentContract';
 import { ImageEmbed } from './ImageEmbed';
-import { createStoryQueryClient, StoryProviders, WORKSPACE } from '../../shared/mdx/StorybookHarness';
+import {
+  createStoryQueryClient,
+  StoryProviders,
+  WORKSPACE
+} from '../../shared/mdx/StorybookHarness';
 import { projectFileKeys } from '../../../queries/content';
 
 const imageAttachmentId = 'attachment-architecture-overview';

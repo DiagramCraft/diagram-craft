@@ -5,22 +5,11 @@ import { StackedBar } from '../../../sections/workspace-settings/sub-sections/an
 import { buildCountBuckets } from './countByFieldLogic';
 import styles from './CountByField.module.css';
 import rowStyles from '../../shared/dashboard/WidgetRowList.module.css';
-import { DialogSection } from '../../../sections/markdown/editor/BlockDialog';
-import configFormStyles from '../../../sections/dashboard/WidgetConfigDialog.module.css';
-import { z } from 'zod';
-import { withInitial } from '../../shared/configSchema';
+import { CountByFieldWidgetConfig } from './types';
 
 const FETCH_LIMIT = 1000;
 
 const PALETTE = ['var(--accent-fg)', 'var(--green)', 'var(--warning-fg)', 'var(--text-muted)'];
-
-export const countByFieldWidgetConfigSchema = z.object({
-  schemaName: withInitial(z.string().min(1), ''),
-  /** Field whose distinct values define the bar segments. */
-  fieldId: withInitial(z.string().min(1), '')
-});
-
-export type CountByFieldWidgetConfig = z.infer<typeof countByFieldWidgetConfigSchema>;
 
 type Props = {
   config: CountByFieldWidgetConfig;
@@ -73,50 +62,5 @@ export const CountByFieldWidget = ({ config }: Props) => {
         ))}
       </div>
     </div>
-  );
-};
-
-type CountByFieldConfigFormProps = {
-  config: CountByFieldWidgetConfig;
-  onChange: (config: CountByFieldWidgetConfig) => void;
-};
-
-export const CountByFieldConfigForm = ({ config, onChange }: CountByFieldConfigFormProps) => {
-  const { schemas } = useWorkspaceContext();
-  const schema = schemas.find(candidate => candidate.name === config.schemaName);
-
-  return (
-    <>
-      <DialogSection label="Entity type" required>
-        <select
-          className={configFormStyles.labelInput}
-          value={config.schemaName}
-          onChange={event =>
-            onChange({ ...config, schemaName: event.currentTarget.value, fieldId: '' })
-          }
-        >
-          <option value="">Select an entity type…</option>
-          {schemas.map(candidate => (
-            <option key={candidate.id} value={candidate.name}>
-              {candidate.name}
-            </option>
-          ))}
-        </select>
-      </DialogSection>
-      <DialogSection label="Count by field" required>
-        <select
-          className={configFormStyles.labelInput}
-          value={config.fieldId}
-          onChange={event => onChange({ ...config, fieldId: event.currentTarget.value })}
-        >
-          <option value="">Select a field…</option>
-          {(schema?.fields ?? []).map(field => (
-            <option key={field.id} value={field.id}>
-              {field.name}
-            </option>
-          ))}
-        </select>
-      </DialogSection>
-    </>
   );
 };

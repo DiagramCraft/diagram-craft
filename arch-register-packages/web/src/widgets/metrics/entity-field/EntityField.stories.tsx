@@ -1,6 +1,10 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { EntityField } from './EntityField';
-import { StoryProviders, WORKSPACE, createStoryQueryClient } from '../../shared/mdx/StorybookHarness';
+import {
+  StoryProviders,
+  WORKSPACE,
+  createStoryQueryClient
+} from '../../shared/mdx/StorybookHarness';
 import { entityKeys } from '../../../queries/entities';
 
 const entityId = 'entity-payments';

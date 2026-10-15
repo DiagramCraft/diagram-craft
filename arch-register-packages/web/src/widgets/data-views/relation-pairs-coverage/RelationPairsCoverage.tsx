@@ -10,33 +10,11 @@ import {
   resolveTypedRelationSchemaId,
   type RelationPair
 } from './relationPairCoverageLogic';
-import { DialogSection } from '../../../sections/markdown/editor/BlockDialog';
-import configFormStyles from '../../../sections/dashboard/WidgetConfigDialog.module.css';
-import { z } from 'zod';
-import { withInitial } from '../../shared/configSchema';
+import { RelationPairsCoverageWidgetConfig } from './types';
 
 const WARN = 'var(--cmp-fg-warning, #eab308)';
+
 const RELATION_LIMIT = 500;
-
-export const relationPairsCoverageWidgetConfigSchema = z.object({
-  /** Display name of the hub entity schema (e.g. `API`) that providers and consumers attach to. */
-  hubSchemaName: withInitial(z.string().min(1), ''),
-  /** Typed-relation field (id or name) on the hub schema listing its providers. */
-  providerFieldName: withInitial(z.string().min(1), ''),
-  /** Typed-relation field (id or name) on the hub schema listing its consumers. */
-  consumerFieldName: withInitial(z.string().min(1), ''),
-  /** Relation type (by name) whose instances between a provider and a consumer count as coverage. */
-  coverageRelationSchemaName: withInitial(z.string().min(1), ''),
-  /** Column headings; default to the schema/field names. */
-  hubLabel: z.string().optional(),
-  providerLabel: z.string().optional(),
-  consumerLabel: z.string().optional(),
-  coverageLabel: z.string().optional()
-});
-
-export type RelationPairsCoverageWidgetConfig = z.infer<
-  typeof relationPairsCoverageWidgetConfigSchema
->;
 
 type SortKey = 'consumer';
 
@@ -145,112 +123,5 @@ export const RelationPairsCoverageWidget = ({
         )}
       </Table.Body>
     </Table.Root>
-  );
-};
-
-export const RelationPairsCoverageConfigForm = ({
-  config,
-  onChange
-}: {
-  config: RelationPairsCoverageWidgetConfig;
-  onChange: (config: RelationPairsCoverageWidgetConfig) => void;
-}) => {
-  const { schemas, relationSchemas } = useWorkspaceContext();
-  const hub = schemas.find(candidate => candidate.name === config.hubSchemaName);
-  const relationFields = hub?.fields.filter(field => field.type === 'typedRelation') ?? [];
-  const optionalText = (value: string) => (value.trim() === '' ? undefined : value);
-
-  const fieldSelect = (value: string, onValue: (value: string) => void) => (
-    <select
-      className={configFormStyles.labelInput}
-      value={value}
-      onChange={event => onValue(event.currentTarget.value)}
-    >
-      <option value="">Select a relation field…</option>
-      {relationFields.map(field => (
-        <option key={field.id} value={field.name}>
-          {field.name}
-        </option>
-      ))}
-    </select>
-  );
-
-  return (
-    <>
-      <DialogSection label="Hub entity type" required>
-        <select
-          className={configFormStyles.labelInput}
-          value={config.hubSchemaName}
-          onChange={event =>
-            onChange({
-              ...config,
-              hubSchemaName: event.currentTarget.value,
-              providerFieldName: '',
-              consumerFieldName: ''
-            })
-          }
-        >
-          <option value="">Select an entity type…</option>
-          {schemas.map(candidate => (
-            <option key={candidate.id} value={candidate.name}>
-              {candidate.name}
-            </option>
-          ))}
-        </select>
-      </DialogSection>
-      <DialogSection label="Providers" required>
-        {fieldSelect(config.providerFieldName, value =>
-          onChange({ ...config, providerFieldName: value })
-        )}
-      </DialogSection>
-      <DialogSection label="Consumers" required>
-        {fieldSelect(config.consumerFieldName, value =>
-          onChange({ ...config, consumerFieldName: value })
-        )}
-      </DialogSection>
-      <DialogSection label="Coverage relation type" required>
-        <select
-          className={configFormStyles.labelInput}
-          value={config.coverageRelationSchemaName}
-          onChange={event =>
-            onChange({ ...config, coverageRelationSchemaName: event.currentTarget.value })
-          }
-        >
-          <option value="">Select a relation type…</option>
-          {relationSchemas.map(candidate => (
-            <option key={candidate.id} value={candidate.name}>
-              {candidate.name}
-            </option>
-          ))}
-        </select>
-      </DialogSection>
-      <DialogSection label="Display" required={false}>
-        <div className={configFormStyles.options}>
-          {(
-            [
-              ['consumerLabel', 'Consumer heading', 'Consumer'],
-              ['hubLabel', 'Hub heading', config.hubSchemaName],
-              ['providerLabel', 'Provider heading', 'Provider'],
-              ['coverageLabel', 'Coverage heading', config.coverageRelationSchemaName]
-            ] as const
-          ).map(([key, label, placeholder]) => (
-            <label key={key} className={configFormStyles.optionRow}>
-              <span className={configFormStyles.optionLabel}>{label}</span>
-              <div className={configFormStyles.optionControl}>
-                <input
-                  type="text"
-                  className={configFormStyles.labelInput}
-                  value={config[key] ?? ''}
-                  placeholder={placeholder}
-                  onChange={event =>
-                    onChange({ ...config, [key]: optionalText(event.currentTarget.value) })
-                  }
-                />
-              </div>
-            </label>
-          ))}
-        </div>
-      </DialogSection>
-    </>
   );
 };
