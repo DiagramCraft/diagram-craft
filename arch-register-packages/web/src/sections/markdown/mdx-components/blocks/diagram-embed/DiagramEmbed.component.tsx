@@ -24,7 +24,7 @@ export default defineComponent({
   component: DiagramEmbed,
   configForm: DiagramEmbedConfigForm,
   icon: TbChartLine,
-  mdxComponent: {
+  mdx: {
     mode: 'block',
     allowedProps: ['id', 'caption'],
     mapProps: props => ({

@@ -2,7 +2,7 @@ import type { TElement } from 'platejs';
 import type { PlateElementProps } from 'platejs/react';
 import { defineLeafMdxRule } from '../leafMdxRule';
 import type { ConfigCodec } from '../configSchema';
-import type { MdxComponentFactory, MdxComponentRegistrationDef } from '../types';
+import type { MdxSpec, MdxSpecFactory } from '../types';
 import { ConfigurableBlockEditable } from './ConfigurableBlockEditable';
 import type { MdxConfigSpec } from './MdxWidgetConfigDialog';
 
@@ -15,14 +15,14 @@ type ConfigBlockOptions = {
 };
 
 /**
- * MDX registration for a void block that is configured through its shared config form and whose
+ * MDX spec for a void block that is configured through its shared config form and whose
  * config is described by `codec`: the allowed attributes, MDX rule, editor element, slash command
  * and the string⇄config mapping are all derived from it. The JSX element name (and Plate plugin
  * key) is the owning component's `type`, supplied by `defineComponent`.
  */
 export const configBlockMdx =
-  ({ codec, placeholder, fullWidth }: ConfigBlockOptions): MdxComponentFactory =>
-  (type): MdxComponentRegistrationDef => {
+  ({ codec, placeholder, fullWidth }: ConfigBlockOptions): MdxSpecFactory =>
+  (type): MdxSpec => {
     const attributeOf = (key: string): string => codec.attributeNames[key] ?? key;
     const fieldsOf = (element: TElement): Record<string, string> =>
       Object.fromEntries(

@@ -22,7 +22,7 @@ export default defineComponent({
   component: EntityCard,
   configForm: EntityCardConfigForm,
   icon: TbId,
-  mdxComponent: configBlockMdx({
+  mdx: configBlockMdx({
     codec: flatConfigCodec(entityCardWidgetConfigSchema, { attributeNames: { entityId: 'id' } }),
     placeholder: 'Choose entity…'
   })

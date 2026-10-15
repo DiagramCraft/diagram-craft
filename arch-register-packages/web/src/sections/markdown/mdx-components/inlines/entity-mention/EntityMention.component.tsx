@@ -14,7 +14,7 @@ export default defineComponent({
   keywords: ['mention', 'entity', '@', 'reference', 'link'],
   component: EntityMention,
   icon: TbAt,
-  mdxComponent: {
+  mdx: {
     mode: 'inline',
     allowedProps: ['id'],
     editorSpec: {

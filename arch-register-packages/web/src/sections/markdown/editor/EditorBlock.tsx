@@ -238,8 +238,8 @@ const BlockContextMenu = ({
   const isWrapperBlock = !!currentSpec?.acceptsChildren;
   const isNonWrapperMdxBlock =
     !!currentSpec && currentSpec.mode === 'block' && !currentSpec.acceptsChildren;
-  const wrapperOptions = mdxDefinitions.flatMap(({ type, mdx }) =>
-    mdx.acceptsChildren ? [{ type, label: mdx.editorSpec?.slashCommand?.label ?? type }] : []
+  const wrapperOptions = mdxDefinitions.flatMap(({ type, name, mdx }) =>
+    mdx.acceptsChildren ? [{ type, label: name }] : []
   );
 
   const handleRemove = () => {

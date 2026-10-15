@@ -10,7 +10,7 @@ export default defineComponent({
   keywords: ['field', 'entity', 'value', 'embed', 'inline'],
   component: EntityField,
   icon: TbHash,
-  mdxComponent: {
+  mdx: {
     mode: 'inline',
     allowedProps: ['id', 'field'],
     editorSpec: {

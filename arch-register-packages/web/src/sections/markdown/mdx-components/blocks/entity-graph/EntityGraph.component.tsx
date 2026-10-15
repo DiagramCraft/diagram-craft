@@ -26,7 +26,7 @@ export default defineComponent({
   component: EntityGraph,
   configForm: EntityGraphConfigForm,
   icon: TbVectorTriangle,
-  mdxComponent: configBlockMdx({
+  mdx: configBlockMdx({
     codec: flatConfigCodec(entityGraphWidgetConfigSchema, {
       attributeNames: { entityId: 'id' },
       normalize: config => ({

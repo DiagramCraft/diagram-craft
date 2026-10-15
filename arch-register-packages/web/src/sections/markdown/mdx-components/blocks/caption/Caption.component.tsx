@@ -10,7 +10,7 @@ export default defineComponent({
   keywords: ['caption', 'figure', 'figcaption'],
   component: Caption,
   icon: TbFrame,
-  mdxComponent: {
+  mdx: {
     mode: 'block',
     allowedProps: ['caption', 'numbered'],
     acceptsChildren: true,

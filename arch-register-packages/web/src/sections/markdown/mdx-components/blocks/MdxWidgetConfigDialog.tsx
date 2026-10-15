@@ -6,7 +6,11 @@ import { DialogContent } from '../../editor/BlockDialog';
 import { useWorkspaceContext } from '../../../../layouts/WorkspaceContext';
 import { useMdxContext } from '../../MdxContext';
 import { getConfigDialogWidth } from '../configDialog';
-import { getComponentDefinition, isValidComponentConfig } from '../componentRegistry';
+import {
+  createDefaultConfig,
+  getComponentDefinition,
+  isValidComponentConfig
+} from '../componentRegistry';
 
 export type MdxConfigSpec<E extends TElement, Config extends Record<string, unknown>> = {
   /** Reads the element's config; `defaults` fills in anything the element doesn't carry. */
@@ -35,10 +39,10 @@ export const MdxWidgetConfigDialog = <E extends TElement, Config extends Record<
   const definition = getComponentDefinition(element.type);
 
   const [config, setConfig] = useState<Config>(() => {
-    const defaults = definition?.createDefaultConfig?.({ workspaceSlug, projectId });
-    if (defaults === undefined) {
+    if (!definition?.configSchema) {
       throw new Error(`Component "${element.type}" must define a config schema`);
     }
+    const defaults = createDefaultConfig(definition, { workspaceSlug, projectId });
     return isNew ? (defaults as Config) : spec.fromElement(element, defaults as Config);
   });
 

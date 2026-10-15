@@ -10,7 +10,7 @@ export default defineComponent({
   keywords: ['label', 'status', 'chip', 'tag', 'badge'],
   component: Label,
   icon: TbTag,
-  mdxComponent: {
+  mdx: {
     mode: 'inline',
     allowedProps: ['text', 'color'],
     editorSpec: {

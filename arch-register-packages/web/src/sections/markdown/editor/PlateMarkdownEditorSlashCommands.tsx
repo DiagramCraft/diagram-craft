@@ -249,14 +249,14 @@ export const MDX_SLASH_COMMANDS: SlashCommandItem[] = getComponentDefinitions('m
     return [
       {
         key: definition.type,
-        label: cmd.label,
-        description: cmd.description,
+        label: definition.name,
+        description: definition.description,
         icon: (
           <span className={styles.slashIcon}>
             <Icon size={14} />
           </span>
         ),
-        keywords: cmd.keywords,
+        keywords: definition.keywords,
         category: definition.category,
         onSelect: (editor: PlateEditor) =>
           cmd.onSelect(editor, { insertOrReplaceBlock, insertOrReplaceInline })

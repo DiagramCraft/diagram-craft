@@ -2,6 +2,7 @@ import '../../componentDiscovery';
 import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
 import { GENERIC_STARTER_DASHBOARD_WIDGETS } from '@arch-register/api-types/dashboardWidgetSeeds';
 import {
+  createDefaultConfig,
   getComponentDefinition,
   isValidComponentConfig
 } from '../markdown/mdx-components/componentRegistry';
@@ -24,9 +25,9 @@ export const parseKnownDashboardWidget = (widget: DashboardWidget): KnownDashboa
 };
 
 export const getWidgetTitle = (widget: KnownDashboardWidget): string => {
-  const dashboardWidget = getComponentDefinition(widget.type, 'dashboardWidget')?.dashboardWidget;
-  if (!dashboardWidget) return 'Widget';
-  return dashboardWidget.getTitle?.(widget.config) ?? dashboardWidget.label;
+  const definition = getComponentDefinition(widget.type, 'dashboardWidget');
+  if (!definition) return 'Widget';
+  return definition.dashboardWidget.getTitle?.(widget.config) ?? definition.name;
 };
 
 const nextRowY = (widgets: DashboardWidget[]): number =>
@@ -47,7 +48,7 @@ export const createDefaultWidget = (
     w: dashboardWidget.defaultW,
     h: dashboardWidget.defaultH,
     type,
-    config: definition.createDefaultConfig({ viewId }) as DashboardWidget['config']
+    config: createDefaultConfig(definition, { viewId }) as DashboardWidget['config']
   };
 };
 

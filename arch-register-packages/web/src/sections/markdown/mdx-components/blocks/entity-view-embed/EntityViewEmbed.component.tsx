@@ -22,7 +22,7 @@ export default defineComponent({
   defaultConfig: context => ({ viewId: context.viewId ?? '' }),
   configForm: EntityViewEmbedConfigForm,
   icon: TbLayoutDashboard,
-  mdxComponent: configBlockMdx({
+  mdx: configBlockMdx({
     codec: flatConfigCodec(savedViewEmbedWidgetConfigSchema),
     placeholder: 'Select a saved view…',
     fullWidth: true

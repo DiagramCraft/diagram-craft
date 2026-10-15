@@ -26,17 +26,14 @@ describe('component catalog', () => {
   it('categorises every dashboard widget', () => {
     const widgets = getComponentDefinitions('dashboardWidget');
     expect(widgets.every(widget => categoryIds.has(widget.category))).toBe(true);
-    const labels = widgets.map(widget => widget.dashboardWidget.label);
+    const labels = widgets.map(widget => widget.name);
     expect(new Set(labels).size).toBe(labels.length);
-    for (const { dashboardWidget } of widgets)
-      expect(dashboardWidget.description.trim()).not.toBe('');
+    for (const { description } of widgets) expect(description.trim()).not.toBe('');
   });
 
   it('offers only wiki-eligible MDX components in the slash menu', () => {
     const wikiLabels = new Set(
-      Object.values(getWikiMdxComponents()).map(
-        definition => definition.mdx.editorSpec?.slashCommand?.label
-      )
+      Object.values(getWikiMdxComponents()).map(definition => definition.name)
     );
     for (const command of MDX_SLASH_COMMANDS) expect(wikiLabels.has(command.label)).toBe(true);
     expect(MDX_SLASH_COMMANDS.every(command => categoryIds.has(command.category))).toBe(true);

@@ -10,7 +10,7 @@ export default defineComponent({
   keywords: ['image', 'photo', 'attachment', 'picture'],
   component: ImageEmbed,
   icon: TbPhoto,
-  mdxComponent: {
+  mdx: {
     mode: 'block',
     allowedProps: ['id', 'alt', 'size', 'align'],
     editorSpec: {

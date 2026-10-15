@@ -11,7 +11,7 @@ export default defineComponent({
   name: 'Column',
   description: 'A column within a multi-column layout.',
   component: Column,
-  mdxComponent: {
+  mdx: {
     mode: 'block',
     allowedProps: [],
     acceptsRichContent: true,

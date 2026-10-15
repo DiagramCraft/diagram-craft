@@ -16,7 +16,7 @@ export default defineComponent({
   keywords: ['entity', 'chart', 'donut', 'bar', 'graph', 'visualize', 'analytics'],
   component: EntityChart,
   icon: TbChartDonut,
-  mdxComponent: {
+  mdx: {
     mode: 'block',
     allowedProps: ['schema', 'owner', 'lifecycle', 'groupBy', 'type'],
     editorSpec: {

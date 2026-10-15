@@ -10,7 +10,7 @@ export default defineComponent({
   keywords: ['link', 'entity', 'reference', 'href'],
   component: EntityLink,
   icon: TbLink,
-  mdxComponent: {
+  mdx: {
     mode: 'inline',
     allowedProps: ['id'],
     editorSpec: {

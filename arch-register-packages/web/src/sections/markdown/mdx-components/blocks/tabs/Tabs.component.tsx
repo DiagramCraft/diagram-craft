@@ -11,7 +11,7 @@ export default defineComponent({
   keywords: ['tabs', 'tab', 'switch', 'toggle'],
   component: Tabs,
   icon: TbLayoutNavbar,
-  mdxComponent: {
+  mdx: {
     mode: 'block',
     allowedProps: [],
     acceptsRichContent: true,

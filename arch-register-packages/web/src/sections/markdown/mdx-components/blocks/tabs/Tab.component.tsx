@@ -8,7 +8,7 @@ export default defineComponent({
   name: 'Tab',
   description: 'A tab within a tabbed content block.',
   component: Tab,
-  mdxComponent: {
+  mdx: {
     mode: 'block',
     allowedProps: ['label'],
     acceptsRichContent: true,

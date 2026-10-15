@@ -14,7 +14,7 @@ export default defineComponent({
   keywords: ['fold', 'foldable', 'collapse', 'expand', 'details', 'summary', 'toggle'],
   component: FoldableSection,
   icon: TbChevronsDown,
-  mdxComponent: {
+  mdx: {
     mode: 'block',
     allowedProps: ['label'],
     acceptsRichContent: true,

@@ -11,7 +11,7 @@ export default defineComponent({
   keywords: ['columns', 'layout', 'grid', 'side-by-side'],
   component: Columns,
   icon: TbColumns,
-  mdxComponent: {
+  mdx: {
     mode: 'block',
     allowedProps: ['count'],
     acceptsRichContent: true,

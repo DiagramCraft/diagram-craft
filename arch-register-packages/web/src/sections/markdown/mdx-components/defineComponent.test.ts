@@ -23,7 +23,7 @@ describe('defineComponent icon requirements', () => {
     expect(() =>
       defineComponent({
         ...baseDefinition,
-        mdxComponent: {
+        mdx: {
           editorSpec: { slashCommand: {} }
         }
       } as never)

@@ -48,14 +48,21 @@ export const WidgetPickerDialog = ({
   const matching = useMemo(
     () =>
       getComponentDefinitions('dashboardWidget')
-        .map(({ type, category, dashboardWidget: spec }) => ({ type, category, spec }))
+        .map(({ type, category, name, description, keywords, dashboardWidget: spec }) => ({
+          type,
+          category,
+          spec,
+          label: name,
+          description,
+          keywords
+        }))
         .filter(
-          ({ type, spec }) =>
-            spec.surfaces.includes(surface) &&
-            !exclude.includes(type) &&
-            matchesCatalogSearch(search, spec)
+          widget =>
+            widget.spec.surfaces.includes(surface) &&
+            !exclude.includes(widget.type) &&
+            matchesCatalogSearch(search, widget)
         )
-        .sort((a, b) => a.spec.label.localeCompare(b.spec.label)),
+        .sort((a, b) => a.label.localeCompare(b.label)),
     [surface, exclude, search]
   );
   const countByCategory = (category: ComponentCategory) =>
@@ -191,15 +198,15 @@ export const WidgetPickerDialog = ({
               {visible.length === 0 && (
                 <div className={styles.empty}>No widgets match your search</div>
               )}
-              {visible.map(({ type, spec }) => (
+              {visible.map(({ type, label, description }) => (
                 <button
                   key={type}
                   type="button"
                   className={styles.option}
                   onClick={() => handlePick(type)}
                 >
-                  <span className={styles.optionLabel}>{spec.label}</span>
-                  <span className={styles.optionDescription}>{spec.description}</span>
+                  <span className={styles.optionLabel}>{label}</span>
+                  <span className={styles.optionDescription}>{description}</span>
                 </button>
               ))}
             </div>

@@ -10,7 +10,7 @@ export default defineComponent({
   keywords: ['callout', 'note', 'warning', 'tip', 'info', 'danger', 'success', 'admonition'],
   component: Callout,
   icon: TbInfoCircle,
-  mdxComponent: {
+  mdx: {
     mode: 'block',
     allowedProps: ['variant'],
     acceptsRichContent: true,

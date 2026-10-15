@@ -28,7 +28,7 @@ defineComponent<FooSlateElement, 'block'>({
   name: 'Foo',
   description: 'A Foo component.',
   component: FooPreview,
-  mdxComponent: {
+  mdx: {
     mode: 'block',
     allowedProps: ['id'],
     editorSpec: {
@@ -58,7 +58,7 @@ defineComponent<FooSlateElement, 'block'>({
   name: 'Foo',
   description: 'A Foo component.',
   component: FooPreview,
-  mdxComponent: {
+  mdx: {
     mode: 'block',
     allowedProps: ['id'],
     editorSpec: {
@@ -93,7 +93,7 @@ defineComponent<FooSlateElement, 'block'>({
   name: 'Foo',
   description: 'A Foo component.',
   component: FooPreview,
-  mdxComponent: {
+  mdx: {
     mode: 'block',
     allowedProps: ['id'],
     editorSpec: {

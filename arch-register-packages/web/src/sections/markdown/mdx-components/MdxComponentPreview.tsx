@@ -1,5 +1,5 @@
 import type { ComponentType, ReactNode } from 'react';
-import { getComponentDefinition } from './componentRegistry';
+import { createDefaultConfig, getComponentDefinition } from './componentRegistry';
 
 type Props = {
   type: string;
@@ -16,7 +16,7 @@ export const MdxComponentPreview = ({ type, props, children }: Props) => {
     Record<string, unknown> & { children?: ReactNode }
   >;
   const componentProps = definition.mdx.mapProps
-    ? definition.mdx.mapProps(props, definition.createDefaultConfig?.({}) ?? {})
+    ? definition.mdx.mapProps(props, createDefaultConfig(definition, {}))
     : props;
 
   return <Component {...componentProps}>{children}</Component>;

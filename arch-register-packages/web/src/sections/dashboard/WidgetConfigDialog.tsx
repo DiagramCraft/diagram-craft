@@ -75,7 +75,7 @@ const WidgetConfigDialogContent = ({
     <Dialog
       open={open}
       onClose={onClose}
-      title={spec.label}
+      title={definition.name}
       width={getConfigDialogWidth(definition.configDialog)}
       className={definition.configDialog?.size === 'large' ? styles.largeDialog : undefined}
       buttons={[
@@ -118,7 +118,7 @@ const WidgetConfigDialogContent = ({
               <WidgetFrameSettingsForm
                 frame={frame}
                 onChange={setFrame}
-                defaultTitle={spec.getTitle?.(config as never) ?? spec.label}
+                defaultTitle={spec.getTitle?.(config as never) ?? definition.name}
                 defaultShowFrame={defaultShowFrame(spec, config)}
               />
             </DialogContent>

@@ -34,7 +34,7 @@ export default defineComponent({
   component: Metric,
   configForm: MetricConfigForm,
   icon: TbChartBar,
-  mdxComponent: configBlockMdx({
+  mdx: configBlockMdx({
     codec: flatConfigCodec(statMetricWidgetConfigSchema),
     placeholder: 'Configure metric…'
   })

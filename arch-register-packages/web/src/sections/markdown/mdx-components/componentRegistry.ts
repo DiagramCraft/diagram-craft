@@ -1,14 +1,16 @@
 import type {
   ComponentDefinition,
   DashboardWidgetComponentDefinition,
+  DefaultConfigContext,
   MdxComponentDefinition
 } from './types';
+import { initialConfigOf } from './configSchema';
 
 export type {
   ComponentDefinition,
   DashboardWidgetComponentDefinition,
   MdxComponentDefinition,
-  MdxComponentSpec,
+  MdxSpec,
   DashboardWidgetSpec,
   ComponentIcon
 } from './types';
@@ -90,3 +92,15 @@ export const isValidComponentConfig = (
   definition: Pick<ComponentDefinition, 'configSchema'> | undefined,
   config: Record<string, unknown>
 ): boolean => definition?.configSchema?.safeParse(config).success ?? true;
+
+/**
+ * The complete starting config of a new instance: the values declared on the schema, with the
+ * context-dependent `defaultConfig` over them.
+ */
+export const createDefaultConfig = (
+  definition: Pick<ComponentDefinition, 'configSchema' | 'defaultConfig'>,
+  context: DefaultConfigContext
+): Record<string, unknown> => ({
+  ...(definition.configSchema ? initialConfigOf(definition.configSchema) : {}),
+  ...definition.defaultConfig?.(context)
+});

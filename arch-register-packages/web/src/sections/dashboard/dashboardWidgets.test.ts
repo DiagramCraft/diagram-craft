@@ -3,6 +3,7 @@ import '../../componentDiscovery';
 import { parseKnownDashboardWidget } from './dashboardWidgets';
 import { getWidgetTitle } from './dashboardWidgets';
 import {
+  createDefaultConfig,
   getComponentDefinition,
   isValidComponentConfig
 } from '../markdown/mdx-components/componentRegistry';
@@ -530,11 +531,11 @@ describe('parseKnownDashboardWidget', () => {
       expect(spec).toBeDefined();
       expect(spec?.surfaces).toEqual(['workspace']);
       expect(definition?.icon).toBeDefined();
-      expect(spec?.label).toBe(title);
+      expect(definition?.name).toBe(title);
       expect(spec?.defaultW).toBe(width);
       expect(spec?.defaultH).toBe(height);
       expect(definition?.configForm !== undefined).toBe(hasForm);
-      expect(definition?.createDefaultConfig({})).toEqual(config);
+      expect(definition && createDefaultConfig(definition, {})).toEqual(config);
       expect(isValidComponentConfig(definition, config)).toBe(true);
       expect(getWidgetTitle({ id: type, type, config, x: 0, y: 0, w: 6, h: 4 })).toBe(title);
       expect(

@@ -22,7 +22,7 @@ export default defineComponent({
   component: EntityTable,
   configForm: EntityTableConfigForm,
   icon: TbTable,
-  mdxComponent: configBlockMdx({
+  mdx: configBlockMdx({
     codec: flatConfigCodec(entityTableWidgetConfigSchema),
     placeholder: 'Configure entity table…',
     fullWidth: true

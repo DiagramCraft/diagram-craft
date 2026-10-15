@@ -28,10 +28,11 @@ export type MdxRuleDef<E extends TElement, Mode extends MdxMode> = {
   serialize: (slateNode: E, options: SerializeMdOptions) => MdxAstNode<Mode>;
 };
 
+/**
+ * Slash menu entry. Its label, description and keywords come from the owning component's `name`,
+ * `description` and `keywords`.
+ */
 export type SlashCommandDef<E extends TElement = TElement> = {
-  label: string;
-  description: string;
-  keywords?: string[];
   onSelect: (
     editor: ReturnType<typeof useEditorRef>,
     helpers: {
@@ -41,13 +42,8 @@ export type SlashCommandDef<E extends TElement = TElement> = {
   ) => void;
 };
 
-/** Label and description come from the owning registration's name and description. */
-export type SlashCommandRegistrationDef<E extends TElement = TElement> = Omit<
-  SlashCommandDef<E>,
-  'label' | 'description' | 'keywords'
->;
-
-type EditorSpecBase<E extends TElement, Mode extends MdxMode> = {
+/** Rich-editor registration of an MDX component. */
+export type EditorSpec<E extends TElement = TElement, Mode extends MdxMode = MdxMode> = {
   /** The Plate element component used in the editor */
   editableComponent: React.FC<PlateElementProps<E>>;
   /** Plate plugin node options */
@@ -62,22 +58,7 @@ type EditorSpecBase<E extends TElement, Mode extends MdxMode> = {
    * block context menu's "Wrap with" action).
    */
   createWrapper?: (child: TElement) => E;
-};
-
-/** Editor registration as authored; the slash command lacks label and description. */
-export type MdxEditorSpecDef<
-  E extends TElement = TElement,
-  Mode extends MdxMode = MdxMode
-> = EditorSpecBase<E, Mode> & {
   /** Slash command registration; omit to hide from the slash menu */
-  slashCommand?: SlashCommandRegistrationDef<E>;
-};
-
-/** Editor registration as stored in the registry, with the slash command completed. */
-export type EditorSpec<
-  E extends TElement = TElement,
-  Mode extends MdxMode = MdxMode
-> = EditorSpecBase<E, Mode> & {
   slashCommand?: SlashCommandDef<E>;
 };
 
@@ -85,8 +66,6 @@ export type WidgetSurface = 'workspace' | 'project';
 
 export type DashboardWidgetSpec<Config extends Record<string, unknown> = Record<string, unknown>> =
   {
-    label: string;
-    description: string;
     defaultW: number;
     defaultH: number;
     /** Which dashboard surfaces this widget may be added to. */
@@ -106,7 +85,7 @@ export type DashboardWidgetSpec<Config extends Record<string, unknown> = Record<
       /** Whether the component icon is shown in the frame header; defaults to true. */
       showIcon?: boolean;
     };
-    /** Per-instance title; falls back to `label` when omitted. */
+    /** Per-instance title; falls back to the component's `name` when omitted. */
     getTitle?: (config: Config) => string;
   };
 
@@ -131,7 +110,8 @@ export type ConfigFormProps<Config extends Record<string, unknown>> = {
   context: ConfigFormContext;
 };
 
-type MdxComponentSpecBase<Mode extends MdxMode> = {
+/** How a component is authored in, parsed from and rendered for wiki MDX content. */
+export type MdxSpec<E extends TElement = TElement, Mode extends MdxMode = MdxMode> = {
   mode: Mode;
   /** The authored MDX attribute names that reach the shared component. */
   allowedProps: ReadonlyArray<string>;
@@ -155,31 +135,15 @@ type MdxComponentSpecBase<Mode extends MdxMode> = {
    * Distinct from `acceptsChildren`'s single-MDX-component wrapper semantics.
    */
   acceptsRichContent?: boolean;
-};
-
-/** MDX registration as authored on a component. */
-export type MdxComponentRegistrationDef<
-  E extends TElement = TElement,
-  Mode extends MdxMode = MdxMode
-> = MdxComponentSpecBase<Mode> & {
   /** Editor-mode registration; present for all components that support rich editing */
-  editorSpec?: MdxEditorSpecDef<E, Mode>;
+  editorSpec?: EditorSpec<E, Mode>;
 };
 
 /**
- * MDX registration that depends on the owning component's `type` (the JSX element name), which
+ * An `MdxSpec` that depends on the owning component's `type` (the JSX element name), which
  * `defineComponent` supplies.
  */
-export type MdxComponentFactory = (type: string) => MdxComponentRegistrationDef;
-
-/**
- * MDX registration as stored in the registry. The element type is erased (`any`) because the
- * registry holds components with different Slate elements.
- */
-export type MdxComponentSpec = MdxComponentSpecBase<MdxMode> & {
-  // biome-ignore lint/suspicious/noExplicitAny: see above
-  editorSpec?: EditorSpec<any, MdxMode>;
-};
+export type MdxSpecFactory = (type: string) => MdxSpec;
 
 /** What a new instance's starting config may depend on. */
 export type DefaultConfigContext = {
@@ -192,42 +156,55 @@ export type DefaultConfigContext = {
 /** A zod object schema describing a component's config. */
 export type ConfigSchema = z.ZodType<Record<string, unknown>>;
 
-/** A complete registration shared by the wiki and dashboard catalogs. */
-export type ComponentDefinition = {
+/**
+ * A component, shared by the wiki and dashboard catalogs. The generics type what an author writes
+ * (the config, Slate element and MDX mode); the registry stores the erased default instantiation.
+ */
+export type ComponentDefinition<
+  Config extends Record<string, unknown> = Record<string, unknown>,
+  E extends TElement = TElement,
+  Mode extends MdxMode = MdxMode
+> = {
+  /** Stable identity: the MDX element name and the `type` of persisted dashboard widgets. */
   type: string;
+  /** Display name and description shown in every catalog. */
   name: string;
   description: string;
+  /** Extra search terms for the slash menu, beyond the name and description. */
+  keywords?: string[];
   category: ComponentCategory;
   /** Shared icon for all surfaces that expose this component. */
   icon?: ComponentIcon;
   /** Shared renderer used by every surface that exposes this component. */
   // biome-ignore lint/suspicious/noExplicitAny: component props are typed by each surface adapter
   component: React.ComponentType<any>;
-  /** Creates the starting config of a new instance. */
-  createDefaultConfig?: (context: DefaultConfigContext) => Record<string, unknown>;
   /**
-   * Describes this component's config. Also decides whether a stored or edited config is valid,
-   * so it should reject configs missing required selections (e.g. an empty entity id), not just
-   * wrong types: the same rule gates both loading a dashboard widget and the dialogs' Save.
+   * Describes this component's config, including its starting values (`withInitial`). Also decides
+   * whether a stored or edited config is valid, so it should reject configs missing required
+   * selections (e.g. an empty entity id), not just wrong types: the same rule gates both loading a
+   * dashboard widget and the dialogs' Save.
    */
   configSchema?: ConfigSchema;
+  /**
+   * Starting config values that depend on the creation context, which a schema can't declare.
+   * Use `createDefaultConfig` to get the complete starting config.
+   */
+  defaultConfig?: (context: DefaultConfigContext) => Record<string, unknown>;
   /** Size of the dialog hosting `configForm`. */
   configDialog?: ConfigDialogSpec;
   /** Shared configuration form used by every surface that exposes this component. */
   // biome-ignore lint/suspicious/noExplicitAny: config types are erased in the shared registry
   configForm?: React.ComponentType<any>;
-  /** Present for components rendered through the MDX preview pipeline. */
-  mdx?: MdxComponentSpec;
-  /** Present for components that can be added to a dashboard. */
-  // biome-ignore lint/suspicious/noExplicitAny: dashboard config types are erased in the shared catalog
-  dashboardWidget?: DashboardWidgetSpec<any>;
+  /** Present for components that can be authored in wiki content. */
+  mdx?: MdxSpec<E, Mode>;
+  /** Present for components that can be added to a dashboard; requires `configSchema`. */
+  dashboardWidget?: DashboardWidgetSpec<Config>;
 };
 
-export type MdxComponentDefinition = ComponentDefinition & { mdx: MdxComponentSpec };
+export type MdxComponentDefinition = ComponentDefinition & { mdx: MdxSpec };
 
 export type DashboardWidgetComponentDefinition = ComponentDefinition & {
   icon: ComponentIcon;
   dashboardWidget: DashboardWidgetSpec;
   configSchema: ConfigSchema;
-  createDefaultConfig: (context: DefaultConfigContext) => Record<string, unknown>;
 };

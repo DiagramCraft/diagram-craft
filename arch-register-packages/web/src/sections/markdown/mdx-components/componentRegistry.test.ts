@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { TbChartBar, TbLayoutDashboard } from 'react-icons/tb';
 import '../../../componentDiscovery';
 import {
+  createDefaultConfig,
   getComponentDefinition,
   getComponentDefinitions,
   getWikiMdxComponents
@@ -117,7 +118,7 @@ describe('wiki and dashboard component availability', () => {
     const definition = getComponentDefinition('EntityBrowserEmbed', 'mdx');
 
     expect(
-      definition?.mdx.mapProps?.({ config: 'invalid' }, definition?.createDefaultConfig?.({}) ?? {})
+      definition?.mdx.mapProps?.({ config: 'invalid' }, createDefaultConfig(definition, {}))
     ).toEqual({
       config: {
         q: '',
@@ -133,8 +134,8 @@ describe('wiki and dashboard component availability', () => {
     const staleReport = getComponentDefinition('entity-stale-report', 'dashboardWidget');
     const activityTrend = getComponentDefinition('entity-activity-trend-chart', 'dashboardWidget');
 
-    expect(staleReport?.createDefaultConfig({})).toEqual({});
-    expect(activityTrend?.createDefaultConfig({})).toEqual({});
+    expect(createDefaultConfig(staleReport!, {})).toEqual({});
+    expect(createDefaultConfig(activityTrend!, {})).toEqual({});
     expect(Object.hasOwn(staleReport?.dashboardWidget ?? {}, 'mapConfigToProps')).toBe(false);
     expect(Object.hasOwn(activityTrend?.dashboardWidget ?? {}, 'mapConfigToProps')).toBe(false);
   });
