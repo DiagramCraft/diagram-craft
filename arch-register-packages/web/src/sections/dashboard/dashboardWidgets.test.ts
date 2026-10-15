@@ -576,8 +576,7 @@ describe('parseKnownDashboardWidget', () => {
 describe('api integration catalog widget frames', () => {
   it('hides the stats frame outside edit mode and removes body padding', () => {
     expect(
-      getWidgetDefinition('api-integration-catalog-stats', 'dashboard')?.dashboard
-        .frame
+      getWidgetDefinition('api-integration-catalog-stats', 'dashboard')?.dashboard.frame
     ).toEqual({
       hideOutsideEdit: true,
       padded: false,

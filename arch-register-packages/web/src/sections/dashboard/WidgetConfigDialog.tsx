@@ -2,19 +2,16 @@ import { useState } from 'react';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
-import type {
-  DashboardWidgetWidgetDefinition,
-  WidgetSurface
-} from '../../widgets/shared/types';
+import type { DashboardWidgetWidgetDefinition, WidgetSurface } from '../../widgets/shared/types';
 import { DialogContent, DialogSection } from '../markdown/editor/BlockDialog';
 import { getConfigDialogWidth } from '../../widgets/shared/configDialog';
-import {
-  getWidgetDefinition,
-  isValidComponentConfig
-} from '../../widgets/shared/widgetRegistry';
+import { getWidgetDefinition, isValidComponentConfig } from '../../widgets/shared/widgetRegistry';
 import type { DashboardWidgetFrame } from '@arch-register/api-types/dashboardContract';
 import { WidgetFrameSettingsForm } from '../../widgets/shared/dashboard/WidgetFrameSettingsForm';
-import { defaultShowFrame, normalizeFrame } from '../../widgets/shared/dashboard/widgetFrameSettings';
+import {
+  defaultShowFrame,
+  normalizeFrame
+} from '../../widgets/shared/dashboard/widgetFrameSettings';
 import styles from './WidgetConfigDialog.module.css';
 
 type Props = {

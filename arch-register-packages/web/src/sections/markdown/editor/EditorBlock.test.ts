@@ -17,8 +17,7 @@ vi.mock('../../../widgets/shared/widgetRegistry', () => {
   ];
   return {
     getWidgetDefinitions: () => definitions,
-    getWidgetDefinition: (type: string) =>
-      definitions.find(definition => definition.type === type)
+    getWidgetDefinition: (type: string) => definitions.find(definition => definition.type === type)
   };
 });
 

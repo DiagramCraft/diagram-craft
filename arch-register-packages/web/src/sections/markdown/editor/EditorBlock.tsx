@@ -6,10 +6,7 @@ import { deserializeMd, serializeMd } from '@platejs/markdown';
 import { TbChevronDown, TbChevronUp, TbGripVertical, TbTrash } from 'react-icons/tb';
 import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
-import {
-  getWidgetDefinition,
-  getWidgetDefinitions
-} from '../../../widgets/shared/widgetRegistry';
+import { getWidgetDefinition, getWidgetDefinitions } from '../../../widgets/shared/widgetRegistry';
 import { useCancellableTimeout } from '../../../hooks/useCancellableTimeout';
 import styles from './EditorBlock.module.css';
 
