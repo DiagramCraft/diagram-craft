@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import type { DocumentListItem } from '@arch-register/api-types/projectDocumentDiscoveryContract';
 import { DocumentBrowserEmbed } from './DocumentBrowserEmbed';
-import { createDefaultDocumentBrowserEmbedConfig } from './DocumentBrowserEmbedCodec';
+import { documentBrowserEmbedCodec } from './DocumentBrowserEmbedCodec';
 import { DOCUMENT_BROWSER_BASE_COLUMN_IDS, type DocumentBrowserEmbedConfig } from './types';
 import {
   createStoryQueryClient,
@@ -105,7 +105,7 @@ export const WikiConfigured: Story = {
 export const WikiNoConfiguration: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
-      <DocumentBrowserEmbed config={createDefaultDocumentBrowserEmbedConfig()} />
+      <DocumentBrowserEmbed config={documentBrowserEmbedCodec.createDefault()} />
     </StoryProviders>
   )
 };

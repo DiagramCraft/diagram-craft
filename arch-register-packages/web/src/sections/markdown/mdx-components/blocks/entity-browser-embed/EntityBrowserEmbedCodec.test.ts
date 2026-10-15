@@ -1,9 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  decodeEntityBrowserEmbedConfig,
-  encodeEntityBrowserEmbedConfig,
-  type EntityBrowserEmbedConfig
-} from './EntityBrowserEmbedCodec';
+import { entityBrowserEmbedCodec, type EntityBrowserEmbedConfig } from './EntityBrowserEmbedCodec';
 
 const SAFE_PROP_VALUE = /^[a-zA-Z0-9_\-.,\s]*$/;
 
@@ -58,8 +54,8 @@ const fullConfig: EntityBrowserEmbedConfig = {
 
 describe('EntityBrowserEmbedCodec', () => {
   it('round-trips a full config', () => {
-    const encoded = encodeEntityBrowserEmbedConfig(fullConfig);
-    const decoded = decodeEntityBrowserEmbedConfig(encoded);
+    const encoded = entityBrowserEmbedCodec.encode(fullConfig);
+    const decoded = entityBrowserEmbedCodec.decode(encoded);
     expect(decoded).toEqual(fullConfig);
   });
 
@@ -71,21 +67,21 @@ describe('EntityBrowserEmbedCodec', () => {
       view: 'table',
       viewConfigs: {}
     };
-    const encoded = encodeEntityBrowserEmbedConfig(minimal);
-    const decoded = decodeEntityBrowserEmbedConfig(encoded);
+    const encoded = entityBrowserEmbedCodec.encode(minimal);
+    const decoded = entityBrowserEmbedCodec.decode(encoded);
     expect(decoded).toEqual({ ...minimal, projectScope: undefined });
   });
 
   it('returns null for undefined input', () => {
-    expect(decodeEntityBrowserEmbedConfig(undefined)).toBeNull();
+    expect(entityBrowserEmbedCodec.decode(undefined)).toBeNull();
   });
 
   it('returns null for malformed input', () => {
-    expect(decodeEntityBrowserEmbedConfig('not-valid-base64url-json!!!')).toBeNull();
+    expect(entityBrowserEmbedCodec.decode('not-valid-base64url-json!!!')).toBeNull();
   });
 
   it('produces an encoded string matching the MDX prop sanitizer regex', () => {
-    const encoded = encodeEntityBrowserEmbedConfig(fullConfig);
+    const encoded = entityBrowserEmbedCodec.encode(fullConfig);
     expect(SAFE_PROP_VALUE.test(encoded)).toBe(true);
   });
 
@@ -112,8 +108,8 @@ describe('EntityBrowserEmbedCodec', () => {
         ]
       }
     };
-    const encoded = encodeEntityBrowserEmbedConfig(withEntityQuery);
-    const decoded = decodeEntityBrowserEmbedConfig(encoded);
+    const encoded = entityBrowserEmbedCodec.encode(withEntityQuery);
+    const decoded = entityBrowserEmbedCodec.decode(encoded);
     expect(decoded).toEqual(withEntityQuery);
   });
 });
@@ -128,26 +124,26 @@ describe('limit', () => {
   };
 
   it('round-trips a row limit', () => {
-    const decoded = decodeEntityBrowserEmbedConfig(
-      encodeEntityBrowserEmbedConfig({ ...base, limit: 10 })
+    const decoded = entityBrowserEmbedCodec.decode(
+      entityBrowserEmbedCodec.encode({ ...base, limit: 10 })
     );
     expect(decoded?.limit).toBe(10);
   });
 
   it('drops an invalid limit', () => {
-    const decoded = decodeEntityBrowserEmbedConfig(
-      encodeEntityBrowserEmbedConfig({ ...base, limit: 0 })
+    const decoded = entityBrowserEmbedCodec.decode(
+      entityBrowserEmbedCodec.encode({ ...base, limit: 0 })
     );
     expect(decoded?.limit).toBeUndefined();
   });
 
   it('round-trips interactive and leaves it unset by default', () => {
     expect(
-      decodeEntityBrowserEmbedConfig(encodeEntityBrowserEmbedConfig({ ...base, interactive: true }))
+      entityBrowserEmbedCodec.decode(entityBrowserEmbedCodec.encode({ ...base, interactive: true }))
         ?.interactive
     ).toBe(true);
     expect(
-      decodeEntityBrowserEmbedConfig(encodeEntityBrowserEmbedConfig(base))?.interactive
+      entityBrowserEmbedCodec.decode(entityBrowserEmbedCodec.encode(base))?.interactive
     ).toBeUndefined();
   });
 });
@@ -169,6 +165,6 @@ describe('column renderers', () => {
         }
       }
     };
-    expect(decodeEntityBrowserEmbedConfig(encodeEntityBrowserEmbedConfig(config))).toEqual(config);
+    expect(entityBrowserEmbedCodec.decode(entityBrowserEmbedCodec.encode(config))).toEqual(config);
   });
 });

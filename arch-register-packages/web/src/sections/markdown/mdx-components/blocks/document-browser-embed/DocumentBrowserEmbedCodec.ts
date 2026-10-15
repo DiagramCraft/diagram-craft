@@ -14,9 +14,3 @@ export const documentBrowserEmbedCodec = createBlobConfigCodec(documentBrowserEm
     visibleFieldIds: keepValid(payload.visibleFieldIds, item => typeof item === 'string')
   })
 });
-
-export const {
-  createDefault: createDefaultDocumentBrowserEmbedConfig,
-  encode: encodeDocumentBrowserEmbedConfig,
-  decode: decodeDocumentBrowserEmbedConfig
-} = documentBrowserEmbedCodec;

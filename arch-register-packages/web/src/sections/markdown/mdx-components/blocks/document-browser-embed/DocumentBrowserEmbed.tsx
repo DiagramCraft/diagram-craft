@@ -232,5 +232,3 @@ export const DocumentBrowserEmbed = ({ config }: Props) => {
     </div>
   );
 };
-
-export type { DocumentBrowserEmbedConfig } from './types';

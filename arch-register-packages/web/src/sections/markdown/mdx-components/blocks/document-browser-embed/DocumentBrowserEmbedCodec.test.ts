@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  decodeDocumentBrowserEmbedConfig,
-  encodeDocumentBrowserEmbedConfig
-} from './DocumentBrowserEmbedCodec';
+import { documentBrowserEmbedCodec } from './DocumentBrowserEmbedCodec';
 import type { DocumentBrowserEmbedConfig } from './types';
 
 const SAFE_PROP_VALUE = /^[a-zA-Z0-9_\-.,\s]*$/;
@@ -22,14 +19,14 @@ const fullConfig: DocumentBrowserEmbedConfig = {
 
 describe('DocumentBrowserEmbedCodec', () => {
   it('round-trips a full config', () => {
-    expect(decodeDocumentBrowserEmbedConfig(encodeDocumentBrowserEmbedConfig(fullConfig))).toEqual(
+    expect(documentBrowserEmbedCodec.decode(documentBrowserEmbedCodec.encode(fullConfig))).toEqual(
       fullConfig
     );
   });
 
   it('applies safe defaults to partial payloads', () => {
     const encoded = btoa(JSON.stringify({ q: 'docs', documentTypeId: 'none' }));
-    expect(decodeDocumentBrowserEmbedConfig(encoded)).toEqual({
+    expect(documentBrowserEmbedCodec.decode(encoded)).toEqual({
       q: 'docs',
       documentTypeId: 'none',
       conditions: [],
@@ -41,11 +38,11 @@ describe('DocumentBrowserEmbedCodec', () => {
   });
 
   it('returns null for undefined or malformed input', () => {
-    expect(decodeDocumentBrowserEmbedConfig(undefined)).toBeNull();
-    expect(decodeDocumentBrowserEmbedConfig('not-valid-base64url-json!!!')).toBeNull();
+    expect(documentBrowserEmbedCodec.decode(undefined)).toBeNull();
+    expect(documentBrowserEmbedCodec.decode('not-valid-base64url-json!!!')).toBeNull();
   });
 
   it('produces a value accepted by the MDX prop sanitizer', () => {
-    expect(SAFE_PROP_VALUE.test(encodeDocumentBrowserEmbedConfig(fullConfig))).toBe(true);
+    expect(SAFE_PROP_VALUE.test(documentBrowserEmbedCodec.encode(fullConfig))).toBe(true);
   });
 });

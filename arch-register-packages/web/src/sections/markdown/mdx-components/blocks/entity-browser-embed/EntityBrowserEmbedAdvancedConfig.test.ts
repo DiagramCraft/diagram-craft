@@ -1,10 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { advancedConfigOf, parseAdvancedConfig } from './EntityBrowserEmbedAdvancedConfig';
-import {
-  decodeEntityBrowserEmbedConfig,
-  encodeEntityBrowserEmbedConfig,
-  type EntityBrowserEmbedConfig
-} from './EntityBrowserEmbedCodec';
+import { entityBrowserEmbedCodec, type EntityBrowserEmbedConfig } from './EntityBrowserEmbedCodec';
 
 const base: EntityBrowserEmbedConfig = {
   q: '',
@@ -49,7 +45,7 @@ describe('advanced widget config', () => {
 
   it('round-trips through the codec', () => {
     const config = { ...base, overlays: [overlay], dimOwnerIds: ['a'] };
-    expect(decodeEntityBrowserEmbedConfig(encodeEntityBrowserEmbedConfig(config))).toMatchObject({
+    expect(entityBrowserEmbedCodec.decode(entityBrowserEmbedCodec.encode(config))).toMatchObject({
       overlays: [overlay],
       dimOwnerIds: ['a']
     });

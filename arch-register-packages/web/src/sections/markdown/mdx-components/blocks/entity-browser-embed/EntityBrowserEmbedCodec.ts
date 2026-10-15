@@ -66,9 +66,3 @@ export const entityBrowserEmbedCodec = createBlobConfigCodec(entityBrowserEmbedC
   }),
   postEncode: config => ({ ...config, viewConfigs: serializeViewConfigs(config.viewConfigs) })
 });
-
-export const {
-  createDefault: createDefaultEntityBrowserEmbedConfig,
-  encode: encodeEntityBrowserEmbedConfig,
-  decode: decodeEntityBrowserEmbedConfig
-} = entityBrowserEmbedCodec;

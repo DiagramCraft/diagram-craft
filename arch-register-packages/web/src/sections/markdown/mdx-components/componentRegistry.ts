@@ -6,15 +6,6 @@ import type {
 } from './types';
 import { initialConfigOf } from './configSchema';
 
-export type {
-  ComponentDefinition,
-  DashboardWidgetComponentDefinition,
-  MdxComponentDefinition,
-  MdxSpec,
-  DashboardWidgetSpec,
-  ComponentIcon
-} from './types';
-
 /** Registrations by type, in registration order. */
 const definitionsByType = new Map<string, ComponentDefinition>();
 

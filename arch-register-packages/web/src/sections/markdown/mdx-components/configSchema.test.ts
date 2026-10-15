@@ -6,14 +6,10 @@ import {
   flatConfigCodec,
   parseConfigFields
 } from './configSchema';
+import { documentBrowserEmbedCodec } from './blocks/document-browser-embed/DocumentBrowserEmbedCodec';
 import {
-  decodeDocumentBrowserEmbedConfig,
-  encodeDocumentBrowserEmbedConfig,
-  createDefaultDocumentBrowserEmbedConfig
-} from './blocks/document-browser-embed/DocumentBrowserEmbedCodec';
-import {
-  entityBrowserEmbedConfigSchema,
-  createDefaultEntityBrowserEmbedConfig
+  entityBrowserEmbedCodec,
+  entityBrowserEmbedConfigSchema
 } from './blocks/entity-browser-embed/EntityBrowserEmbedCodec';
 
 const schema = z.object({ name: z.string(), count: z.number().int().optional() });
@@ -53,8 +49,8 @@ describe('document browser config', () => {
       visibleFieldIds: ['a', 7],
       sortDir: 'sideways'
     });
-    expect(decodeDocumentBrowserEmbedConfig(raw)).toEqual({
-      ...createDefaultDocumentBrowserEmbedConfig(),
+    expect(documentBrowserEmbedCodec.decode(raw)).toEqual({
+      ...documentBrowserEmbedCodec.createDefault(),
       visibleBaseColumnIds: ['location'],
       visibleFieldIds: ['a']
     });
@@ -62,11 +58,11 @@ describe('document browser config', () => {
 
   it('round-trips a config', () => {
     const config = {
-      ...createDefaultDocumentBrowserEmbedConfig(),
+      ...documentBrowserEmbedCodec.createDefault(),
       q: 'x',
       sortDir: 'asc' as const
     };
-    expect(decodeDocumentBrowserEmbedConfig(encodeDocumentBrowserEmbedConfig(config))).toEqual(
+    expect(documentBrowserEmbedCodec.decode(documentBrowserEmbedCodec.encode(config))).toEqual(
       config
     );
   });
@@ -74,7 +70,7 @@ describe('document browser config', () => {
 
 describe('entity browser config schema', () => {
   it('accepts the default config and rejects an unknown view', () => {
-    const config = createDefaultEntityBrowserEmbedConfig();
+    const config = entityBrowserEmbedCodec.createDefault();
     expect(entityBrowserEmbedConfigSchema.safeParse(config).success).toBe(true);
     expect(entityBrowserEmbedConfigSchema.safeParse({ ...config, view: 'nope' }).success).toBe(
       false
@@ -82,7 +78,7 @@ describe('entity browser config schema', () => {
   });
 
   it('rejects a non-positive limit', () => {
-    const config = createDefaultEntityBrowserEmbedConfig();
+    const config = entityBrowserEmbedCodec.createDefault();
     expect(entityBrowserEmbedConfigSchema.safeParse({ ...config, limit: 0 }).success).toBe(false);
   });
 });

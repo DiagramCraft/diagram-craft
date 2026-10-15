@@ -21,8 +21,6 @@ import { withInitial } from '../../markdown/mdx-components/configSchema';
 
 const MAX_ITEMS = 4;
 
-export type { AssessmentWidgetMode } from './assessmentsWidgetLogic';
-
 export const assessmentsWidgetConfigSchema = z.object({
   mode: withInitial(assessmentWidgetModeSchema, 'active'),
   assessmentTypeId: z.string().optional(),

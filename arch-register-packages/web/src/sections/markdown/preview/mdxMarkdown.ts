@@ -7,11 +7,8 @@ import {
   type ParserState
 } from '@diagram-craft/markdown';
 import { markdownEngine } from './markdownAstUtils';
-import {
-  getComponentDefinition,
-  getWikiMdxComponents,
-  type MdxComponentDefinition
-} from '../mdx-components/componentRegistry';
+import { getComponentDefinition, getWikiMdxComponents } from '../mdx-components/componentRegistry';
+import type { MdxComponentDefinition } from '../mdx-components/types';
 
 const JSX_BLOCK_RE = /^\s*<([A-Z][A-Za-z0-9]*)(\s[^>]*)?\s*\/>\s*$/;
 const INLINE_JSX_RE = /<([A-Z][A-Za-z0-9]*)(\s[^>]*)?\s*\/>/g;
