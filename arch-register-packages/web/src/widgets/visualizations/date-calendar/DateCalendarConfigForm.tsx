@@ -1,9 +1,9 @@
-import { useWorkspaceContext } from "../../../layouts/WorkspaceContext";
-import { DialogSection } from "../../../sections/markdown/editor/BlockDialog";
-import { humanizeCaseKind } from "../../../utils/governanceCaseLabels";
-import { KNOWN_CASE_KINDS } from "../../data-views/needs-attention/NeedsAttentionConfigForm";
-import configFormStyles from "../../../sections/dashboard/WidgetConfigDialog.module.css";
-import { DateCalendarWidgetConfig } from "./types";
+import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
+import { DialogSection } from '../../../sections/markdown/editor/BlockDialog';
+import { humanizeCaseKind } from '../../../utils/governanceCaseLabels';
+import { KNOWN_CASE_KINDS } from '../../data-views/needs-attention/NeedsAttentionConfigForm';
+import configFormStyles from '../../../sections/dashboard/WidgetConfigDialog.module.css';
+import { DateCalendarWidgetConfig } from './types';
 
 type DateCalendarConfigFormProps = {
   config: DateCalendarWidgetConfig;
@@ -11,29 +11,26 @@ type DateCalendarConfigFormProps = {
 };
 
 const optionalText = (value: string): string | undefined =>
-  value.trim() === "" ? undefined : value;
+  value.trim() === '' ? undefined : value;
 
 const optionalNumber = (value: string): number | undefined =>
-  value.trim() === "" || Number.isNaN(Number(value))
-    ? undefined
-    : Number(value);
+  value.trim() === '' || Number.isNaN(Number(value)) ? undefined : Number(value);
 
 const CaseSourceForm = ({ config, onChange }: DateCalendarConfigFormProps) => {
   const { schemas } = useWorkspaceContext();
   const cases = config.cases!;
-  const patch = (
-    next: Partial<NonNullable<DateCalendarWidgetConfig["cases"]>>,
-  ) => onChange({ ...config, cases: { ...cases, ...next } });
+  const patch = (next: Partial<NonNullable<DateCalendarWidgetConfig['cases']>>) =>
+    onChange({ ...config, cases: { ...cases, ...next } });
   return (
     <>
       <DialogSection label="Entity type">
         <select
           className={configFormStyles.labelInput}
           value={cases.schemaName}
-          onChange={(e) => patch({ schemaName: e.target.value })}
+          onChange={e => patch({ schemaName: e.target.value })}
         >
           <option value="">Choose an entity type…</option>
-          {schemas.map((schema) => (
+          {schemas.map(schema => (
             <option key={schema.id} value={schema.name}>
               {schema.name}
             </option>
@@ -42,22 +39,20 @@ const CaseSourceForm = ({ config, onChange }: DateCalendarConfigFormProps) => {
       </DialogSection>
       <DialogSection label="Case kinds">
         <div className={configFormStyles.options}>
-          {KNOWN_CASE_KINDS.map((kind) => (
+          {KNOWN_CASE_KINDS.map(kind => (
             <label key={kind} className={configFormStyles.checkboxRow}>
               <input
                 type="checkbox"
                 checked={cases.caseKinds.includes(kind)}
-                onChange={(e) =>
+                onChange={e =>
                   patch({
                     caseKinds: e.target.checked
                       ? [...cases.caseKinds, kind]
-                      : cases.caseKinds.filter((existing) => existing !== kind),
+                      : cases.caseKinds.filter(existing => existing !== kind)
                   })
                 }
               />
-              <span className={configFormStyles.optionLabel}>
-                {humanizeCaseKind(kind)}
-              </span>
+              <span className={configFormStyles.optionLabel}>{humanizeCaseKind(kind)}</span>
             </label>
           ))}
         </div>
@@ -65,10 +60,8 @@ const CaseSourceForm = ({ config, onChange }: DateCalendarConfigFormProps) => {
       <DialogSection label="Scope" required={false}>
         <select
           className={configFormStyles.labelInput}
-          value={cases.scope ?? "workspace"}
-          onChange={(e) =>
-            patch({ scope: e.target.value as "workspace" | "mine" | "late" })
-          }
+          value={cases.scope ?? 'workspace'}
+          onChange={e => patch({ scope: e.target.value as 'workspace' | 'mine' | 'late' })}
         >
           <option value="workspace">Workspace-wide</option>
           <option value="mine">Assigned to me</option>
@@ -79,25 +72,22 @@ const CaseSourceForm = ({ config, onChange }: DateCalendarConfigFormProps) => {
   );
 };
 
-export const DateCalendarConfigForm = ({
-  config,
-  onChange,
-}: DateCalendarConfigFormProps) => (
+export const DateCalendarConfigForm = ({ config, onChange }: DateCalendarConfigFormProps) => (
   <>
     <DialogSection label="Source" required={false}>
       <select
         className={configFormStyles.labelInput}
-        value={config.cases ? "cases" : "query"}
-        onChange={(e) =>
+        value={config.cases ? 'cases' : 'query'}
+        onChange={e =>
           onChange({
             ...config,
             cases:
-              e.target.value === "cases"
+              e.target.value === 'cases'
                 ? {
-                    schemaName: "",
-                    caseKinds: ["entity.change-case", "entity.deprecation"],
+                    schemaName: '',
+                    caseKinds: ['entity.change-case', 'entity.deprecation']
                   }
-                : undefined,
+                : undefined
           })
         }
       >
@@ -109,16 +99,13 @@ export const DateCalendarConfigForm = ({
       <CaseSourceForm config={config} onChange={onChange} />
     ) : (
       <>
-        <DialogSection
-          label="Records (query)"
-          required={config.entityQuery === undefined}
-        >
+        <DialogSection label="Records (query)" required={config.entityQuery === undefined}>
           <input
             type="text"
             className={configFormStyles.labelInput}
-            value={config.query ?? ""}
+            value={config.query ?? ''}
             placeholder='e.g. schema:"Contract"'
-            onChange={(e) => onChange({ ...config, query: e.target.value })}
+            onChange={e => onChange({ ...config, query: e.target.value })}
           />
         </DialogSection>
         <DialogSection label="Date field id" required>
@@ -127,9 +114,7 @@ export const DateCalendarConfigForm = ({
             className={configFormStyles.labelInput}
             value={config.dateFieldId}
             placeholder="e.g. contract_end"
-            onChange={(e) =>
-              onChange({ ...config, dateFieldId: e.target.value })
-            }
+            onChange={e => onChange({ ...config, dateFieldId: e.target.value })}
           />
         </DialogSection>
       </>
@@ -140,11 +125,11 @@ export const DateCalendarConfigForm = ({
           <span className={configFormStyles.optionLabel}>Period</span>
           <div className={configFormStyles.optionControl}>
             <select
-              value={config.period ?? "month"}
-              onChange={(e) =>
+              value={config.period ?? 'month'}
+              onChange={e =>
                 onChange({
                   ...config,
-                  period: e.target.value === "week" ? "week" : "month",
+                  period: e.target.value === 'week' ? 'week' : 'month'
                 })
               }
             >
@@ -154,9 +139,7 @@ export const DateCalendarConfigForm = ({
           </div>
         </label>
         <label className={configFormStyles.optionRow}>
-          <span className={configFormStyles.optionLabel}>
-            Number of periods
-          </span>
+          <span className={configFormStyles.optionLabel}>Number of periods</span>
           <div className={configFormStyles.optionControl}>
             <input
               type="number"
@@ -164,31 +147,26 @@ export const DateCalendarConfigForm = ({
               max={36}
               className={configFormStyles.labelInput}
               value={config.periodCount ?? 12}
-              onChange={(e) =>
+              onChange={e =>
                 onChange({
                   ...config,
-                  periodCount: Math.max(
-                    1,
-                    optionalNumber(e.target.value) ?? 12,
-                  ),
+                  periodCount: Math.max(1, optionalNumber(e.target.value) ?? 12)
                 })
               }
             />
           </div>
         </label>
         <label className={configFormStyles.optionRow}>
-          <span className={configFormStyles.optionLabel}>
-            Subtitle field id
-          </span>
+          <span className={configFormStyles.optionLabel}>Subtitle field id</span>
           <div className={configFormStyles.optionControl}>
             <input
               type="text"
               className={configFormStyles.labelInput}
-              value={config.sublabelFieldId ?? ""}
-              onChange={(e) =>
+              value={config.sublabelFieldId ?? ''}
+              onChange={e =>
                 onChange({
                   ...config,
-                  sublabelFieldId: optionalText(e.target.value),
+                  sublabelFieldId: optionalText(e.target.value)
                 })
               }
             />
@@ -200,31 +178,29 @@ export const DateCalendarConfigForm = ({
             <input
               type="text"
               className={configFormStyles.labelInput}
-              value={config.valueFieldId ?? ""}
-              onChange={(e) =>
+              value={config.valueFieldId ?? ''}
+              onChange={e =>
                 onChange({
                   ...config,
-                  valueFieldId: optionalText(e.target.value),
+                  valueFieldId: optionalText(e.target.value)
                 })
               }
             />
           </div>
         </label>
         <label className={configFormStyles.optionRow}>
-          <span className={configFormStyles.optionLabel}>
-            Warn within (days)
-          </span>
+          <span className={configFormStyles.optionLabel}>Warn within (days)</span>
           <div className={configFormStyles.optionControl}>
             <input
               type="number"
               min={0}
               className={configFormStyles.labelInput}
-              value={config.warnWithinDays ?? ""}
+              value={config.warnWithinDays ?? ''}
               placeholder="30"
-              onChange={(e) =>
+              onChange={e =>
                 onChange({
                   ...config,
-                  warnWithinDays: optionalNumber(e.target.value),
+                  warnWithinDays: optionalNumber(e.target.value)
                 })
               }
             />
