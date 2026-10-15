@@ -62,12 +62,12 @@ export const TopEntitiesWidget = ({ config }: Props) => {
     for (const relation of relations.data) {
       relationCounts.set(relation._out.id, (relationCounts.get(relation._out.id) ?? 0) + 1);
     }
-    const valueOf = (entity: (typeof entities)[number]): MeasuredValue | undefined =>
+    const rankValue = (entity: (typeof entities)[number]): MeasuredValue | undefined =>
       config.relationFieldName
         ? { amount: relationCounts.get(entity._uid) ?? 0 }
         : measuredValue(entity[config.fieldId]);
     const withValue = entities
-      .map(entity => ({ entity, value: valueOf(entity) }))
+      .map(entity => ({ entity, value: rankValue(entity) }))
       .filter(
         (
           item
