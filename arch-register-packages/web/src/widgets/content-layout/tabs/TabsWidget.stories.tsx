@@ -3,7 +3,8 @@ import {
   DashboardStory,
   StoryProviders,
   dashboardWidget,
-  frameControls
+  frameControls,
+  configDialogStory
 } from '../../shared/mdx/StorybookHarness';
 
 const meta = {
@@ -89,8 +90,13 @@ export const MultipleWidgetsPerTab: Story = {
                   label: 'Overview',
                   widgets: [
                     note('left', 'Left', 'Half-width widget.', { w: 6 }),
-                    note('right', 'Right', 'Half-width widget.', { x: 6, w: 6 }),
-                    note('wide', 'Full width', 'Sits on a second row.', { y: 8 })
+                    note('right', 'Right', 'Half-width widget.', {
+                      x: 6,
+                      w: 6
+                    }),
+                    note('wide', 'Full width', 'Sits on a second row.', {
+                      y: 8
+                    })
                   ]
                 },
                 {
@@ -135,3 +141,5 @@ export const WithFrame: Story = {
   ...RegisterAndMatrix,
   args: { showFrame: true }
 };
+
+export const ConfigDialog = configDialogStory('tabs');

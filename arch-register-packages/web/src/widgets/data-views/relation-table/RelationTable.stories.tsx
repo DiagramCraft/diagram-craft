@@ -7,7 +7,8 @@ import {
   WORKSPACE,
   createStoryQueryClient,
   dashboardWidget,
-  frameControls
+  frameControls,
+  configDialogStory
 } from '../../shared/mdx/StorybookHarness';
 import { entityKeys } from '../../../queries/entities';
 import { relationKeys } from '../../../queries/relations';
@@ -137,11 +138,19 @@ const renderDashboard = (
     parseOk ? { ok: true, query: relationQuery } : { ok: false }
   );
   client.setQueryData(
-    relationKeys.list(WORKSPACE, { relationQuery, view: 'full', limit: merged.limit }),
+    relationKeys.list(WORKSPACE, {
+      relationQuery,
+      view: 'full',
+      limit: merged.limit
+    }),
     { items: relations, total: relations.length }
   );
   for (const [id, name] of Object.entries(DATASETS)) {
-    client.setQueryData(entityKeys.detail(WORKSPACE, id), { _uid: id, _name: name, _publicId: id });
+    client.setQueryData(entityKeys.detail(WORKSPACE, id), {
+      _uid: id,
+      _name: name,
+      _publicId: id
+    });
   }
   return (
     <StoryProviders client={client} relationSchemas={RELATION_SCHEMAS}>
@@ -178,10 +187,16 @@ export const UnknownRelationType: Story = {
 };
 
 export const WithRowDrawer: Story = {
-  render: () => renderDashboard(FLOWS, { rowDrawer: true, label: 'Click a row for details' })
+  render: () =>
+    renderDashboard(FLOWS, {
+      rowDrawer: true,
+      label: 'Click a row for details'
+    })
 };
 
 export const WithFrame: Story = {
   ...RestrictedFlows,
   args: { showFrame: true }
 };
+
+export const ConfigDialog = configDialogStory('RelationTable');

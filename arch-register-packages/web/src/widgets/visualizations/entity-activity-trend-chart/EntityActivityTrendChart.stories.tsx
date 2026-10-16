@@ -6,7 +6,8 @@ import {
   WORKSPACE,
   dashboardWidget,
   createStoryQueryClient,
-  frameControls
+  frameControls,
+  configDialogStory
 } from '../../shared/mdx/StorybookHarness';
 import { workspaceAnalyticsKeys } from '../../../queries/workspaceAnalytics';
 
@@ -28,9 +29,27 @@ const createActivityBuckets = (days: number) =>
 
 const analytics = {
   lifecycleBreakdown: [
-    { lifecycleId: 'active', label: 'Active', color: '#22c55e', count: 64, percent: 50 },
-    { lifecycleId: 'planned', label: 'Planned', color: '#f59e0b', count: 32, percent: 25 },
-    { lifecycleId: null, label: 'Unassigned', color: null, count: 32, percent: 25 }
+    {
+      lifecycleId: 'active',
+      label: 'Active',
+      color: '#22c55e',
+      count: 64,
+      percent: 50
+    },
+    {
+      lifecycleId: 'planned',
+      label: 'Planned',
+      color: '#f59e0b',
+      count: 32,
+      percent: 25
+    },
+    {
+      lifecycleId: null,
+      label: 'Unassigned',
+      color: null,
+      count: 32,
+      percent: 25
+    }
   ],
   activityTrends: {
     days30: createActivityBuckets(30),
@@ -98,3 +117,5 @@ export const WithFrame: Story = {
   ...Default,
   args: { showFrame: true }
 };
+
+export const ConfigDialog = configDialogStory('entity-activity-trend-chart');

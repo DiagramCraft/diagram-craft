@@ -7,7 +7,8 @@ import {
   createStoryQueryClient,
   DashboardStory,
   dashboardWidget,
-  frameControls
+  frameControls,
+  configDialogStory
 } from '../../shared/mdx/StorybookHarness';
 import { entityKeys } from '../../../queries/entities';
 
@@ -153,3 +154,5 @@ export const WithFrame: Story = {
   ...Default,
   args: { showFrame: true }
 };
+
+export const ConfigDialog = configDialogStory('EntityBrowserEmbed');

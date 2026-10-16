@@ -6,12 +6,19 @@ import {
   WORKSPACE,
   createStoryQueryClient,
   dashboardWidget,
-  frameControls
+  frameControls,
+  configDialogStory
 } from '../../shared/mdx/StorybookHarness';
 import { entityKeys } from '../../../queries/entities';
 
 const STORY_SCHEMAS = [
-  { id: 'capability', name: 'Capability', icon: 'target', entity_count: 3, fields: [] }
+  {
+    id: 'capability',
+    name: 'Capability',
+    icon: 'target',
+    entity_count: 3,
+    fields: []
+  }
 ] as unknown as EntitySchema[];
 
 const capability = (id: string, name: string) => ({
@@ -23,7 +30,11 @@ const capability = (id: string, name: string) => ({
 
 const storyQueryClient = createStoryQueryClient();
 storyQueryClient.setQueryData(
-  entityKeys.list(WORKSPACE, { schemaId: 'capability', view: 'summary', limit: 1000 }),
+  entityKeys.list(WORKSPACE, {
+    schemaId: 'capability',
+    view: 'summary',
+    limit: 1000
+  }),
   {
     items: [
       capability('c1', 'Order management'),
@@ -76,3 +87,5 @@ export const WithFrame: Story = {
   ...FromCapabilities,
   args: { showFrame: true }
 };
+
+export const ConfigDialog = configDialogStory('PathWalker');

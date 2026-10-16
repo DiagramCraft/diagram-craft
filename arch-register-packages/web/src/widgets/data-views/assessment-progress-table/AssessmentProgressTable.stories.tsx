@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { frameControls } from '../../shared/mdx/StorybookHarness';
+import { configDialogStory, frameControls } from '../../shared/mdx/StorybookHarness';
 import {
   assessmentWidgetStory,
   seededAssessmentWidgetClient
@@ -53,3 +53,5 @@ export const WithFrame: Story = {
   ...Default,
   args: { showFrame: true }
 };
+
+export const ConfigDialog = configDialogStory('AssessmentProgressTable');

@@ -5,11 +5,16 @@ import {
   WORKSPACE,
   createStoryQueryClient,
   dashboardWidget,
-  frameControls
+  frameControls,
+  configDialogStory
 } from '../../shared/mdx/StorybookHarness';
 import { entityKeys } from '../../../queries/entities';
 
-const numeratorCondition = { fieldId: 'status', op: 'equals' as const, value: 'met' };
+const numeratorCondition = {
+  fieldId: 'status',
+  op: 'equals' as const,
+  value: 'met'
+};
 
 const baseFilter = {
   schemaId: 'compliance_requirement',
@@ -18,9 +23,14 @@ const baseFilter = {
 };
 
 const storyQueryClient = createStoryQueryClient();
-storyQueryClient.setQueryData(entityKeys.count(WORKSPACE, baseFilter), { total: 40 });
+storyQueryClient.setQueryData(entityKeys.count(WORKSPACE, baseFilter), {
+  total: 40
+});
 storyQueryClient.setQueryData(
-  entityKeys.count(WORKSPACE, { ...baseFilter, conditions: [numeratorCondition] }),
+  entityKeys.count(WORKSPACE, {
+    ...baseFilter,
+    conditions: [numeratorCondition]
+  }),
   { total: 27 }
 );
 
@@ -70,3 +80,5 @@ export const WithFrame: Story = {
   ...ComplianceCoverage,
   args: { showFrame: true }
 };
+
+export const ConfigDialog = configDialogStory('AggregateStat');

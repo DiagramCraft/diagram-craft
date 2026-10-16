@@ -10,13 +10,20 @@ import {
   WORKSPACE,
   createStoryQueryClient,
   dashboardWidget,
-  frameControls
+  frameControls,
+  configDialogStory
 } from '../../shared/mdx/StorybookHarness';
 import { conformanceKeys } from '../../../queries/conformance';
 
 const SCHEMA_ID = 'story-data-entity-schema';
 const SCHEMAS = [
-  { id: SCHEMA_ID, name: 'Data Entity', icon: 'database', entity_count: 12, fields: [] }
+  {
+    id: SCHEMA_ID,
+    name: 'Data Entity',
+    icon: 'database',
+    entity_count: 12,
+    fields: []
+  }
 ] as unknown as EntitySchema[];
 
 const CHECKS = [
@@ -24,7 +31,11 @@ const CHECKS = [
   ['check-steward', 'Dataset has no steward', 'error'],
   ['check-classification', 'Dataset classification not confirmed', 'warning'],
   ['check-review', 'Dataset review not current', 'warning']
-].map(([id, name, severity]) => ({ id, name, severity })) as unknown as ConformanceCheck[];
+].map(([id, name, severity]) => ({
+  id,
+  name,
+  severity
+})) as unknown as ConformanceCheck[];
 
 const violation = (
   entity: string,
@@ -99,7 +110,12 @@ const renderDashboard = (
           dashboardWidget(
             'gaps',
             'ConformanceViolations',
-            { schemaName: 'Data Entity', limit: 8, label: 'Gaps to close', ...config },
+            {
+              schemaName: 'Data Entity',
+              limit: 8,
+              label: 'Gaps to close',
+              ...config
+            },
             0,
             0,
             12,
@@ -155,3 +171,5 @@ export const WithFrame: Story = {
   ...WithGaps,
   args: { showFrame: true }
 };
+
+export const ConfigDialog = configDialogStory('ConformanceViolations');

@@ -6,7 +6,8 @@ import {
   WORKSPACE,
   createStoryQueryClient,
   dashboardWidget,
-  frameControls
+  frameControls,
+  configDialogStory
 } from '../../shared/mdx/StorybookHarness';
 import { assessmentKeys } from '../../../queries/assessments';
 
@@ -121,3 +122,5 @@ export const WithFrame: Story = {
   ...Active,
   args: { showFrame: true }
 };
+
+export const ConfigDialog = configDialogStory('Assessments');

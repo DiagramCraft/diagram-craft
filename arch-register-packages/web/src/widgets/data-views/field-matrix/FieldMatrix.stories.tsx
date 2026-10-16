@@ -6,13 +6,20 @@ import {
   WORKSPACE,
   createStoryQueryClient,
   dashboardWidget,
-  frameControls
+  frameControls,
+  configDialogStory
 } from '../../shared/mdx/StorybookHarness';
 
 const QUERY = 'schema:"Vendor"';
 
 const schemas = [
-  { id: 'vendor', name: 'Vendor', icon: 'building', entity_count: 8, fields: [] }
+  {
+    id: 'vendor',
+    name: 'Vendor',
+    icon: 'building',
+    entity_count: 8,
+    fields: []
+  }
 ] as unknown as EntitySchema[];
 
 const vendors = [
@@ -131,3 +138,5 @@ export const WithFrame: Story = {
   ...CriticalityByRisk,
   args: { showFrame: true }
 };
+
+export const ConfigDialog = configDialogStory('FieldMatrix');

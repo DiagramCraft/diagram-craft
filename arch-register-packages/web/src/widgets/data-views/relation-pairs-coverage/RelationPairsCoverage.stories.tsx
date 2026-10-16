@@ -8,7 +8,8 @@ import {
   WORKSPACE,
   createStoryQueryClient,
   dashboardWidget,
-  frameControls
+  frameControls,
+  configDialogStory
 } from '../../shared/mdx/StorybookHarness';
 import { relationKeys } from '../../../queries/relations';
 
@@ -167,3 +168,5 @@ export const WithFrame: Story = {
   ...LinkedGapAndNotApplicable,
   args: { showFrame: true }
 };
+
+export const ConfigDialog = configDialogStory('RelationPairsCoverage');

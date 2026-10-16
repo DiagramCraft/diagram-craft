@@ -10,7 +10,8 @@ import {
   WORKSPACE,
   createStoryQueryClient,
   dashboardWidget,
-  frameControls
+  frameControls,
+  configDialogStory
 } from '../../shared/mdx/StorybookHarness';
 
 const QUERY = 'schema:"Contract"';
@@ -194,3 +195,5 @@ export const WithFrame: Story = {
   ...MonthlyRenewals,
   args: { showFrame: true }
 };
+
+export const ConfigDialog = configDialogStory('DateCalendar');

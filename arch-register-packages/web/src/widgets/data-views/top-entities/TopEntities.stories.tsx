@@ -5,7 +5,8 @@ import {
   WORKSPACE,
   createStoryQueryClient,
   dashboardWidget,
-  frameControls
+  frameControls,
+  configDialogStory
 } from '../../shared/mdx/StorybookHarness';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { RelationRecord } from '@arch-register/api-types/relationContract';
@@ -178,3 +179,5 @@ export const WithFrame: Story = {
   ...TopRisksByScore,
   args: { showFrame: true }
 };
+
+export const ConfigDialog = configDialogStory('TopEntities');

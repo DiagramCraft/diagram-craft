@@ -6,7 +6,8 @@ import {
   StoryProviders,
   WORKSPACE,
   dashboardWidget,
-  frameControls
+  frameControls,
+  configDialogStory
 } from '../../shared/mdx/StorybookHarness';
 import { entityKeys } from '../../../queries/entities';
 
@@ -127,7 +128,12 @@ export const FilteredByLifecycle: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
       <EntityChart
-        config={{ schema: 'service', lifecycle: 'active', groupBy: 'owner', chartType: 'donut' }}
+        config={{
+          schema: 'service',
+          lifecycle: 'active',
+          groupBy: 'owner',
+          chartType: 'donut'
+        }}
       />
     </StoryProviders>
   )
@@ -161,3 +167,5 @@ export const WithFrame: Story = {
   ),
   args: { showFrame: true }
 };
+
+export const ConfigDialog = configDialogStory('EntityChart');

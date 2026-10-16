@@ -6,7 +6,8 @@ import {
   WORKSPACE,
   createStoryQueryClient,
   dashboardWidget,
-  frameControls
+  frameControls,
+  configDialogStory
 } from '../../shared/mdx/StorybookHarness';
 import { entityKeys } from '../../../queries/entities';
 
@@ -18,7 +19,13 @@ const reference = (id: string, name: string, schemaId: string) => ({
 });
 
 const STORY_SCHEMAS = [
-  { id: 'objective', name: 'Objective', icon: 'target', entity_count: 1, fields: [] },
+  {
+    id: 'objective',
+    name: 'Objective',
+    icon: 'target',
+    entity_count: 1,
+    fields: []
+  },
   {
     id: 'outcome',
     name: 'Outcome',
@@ -259,3 +266,5 @@ export const WithFrame: Story = {
   ...Outcomes,
   args: { showFrame: true }
 };
+
+export const ConfigDialog = configDialogStory('RelatedEntitiesList');

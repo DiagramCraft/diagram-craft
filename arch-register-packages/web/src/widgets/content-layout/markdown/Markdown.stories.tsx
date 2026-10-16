@@ -3,7 +3,8 @@ import {
   DashboardStory,
   StoryProviders,
   dashboardWidget,
-  frameControls
+  frameControls,
+  configDialogStory
 } from '../../shared/mdx/StorybookHarness';
 
 const meta = {
@@ -81,3 +82,5 @@ export const WithFrame: Story = {
   ...Default,
   args: { showFrame: true }
 };
+
+export const ConfigDialog = configDialogStory('markdown');

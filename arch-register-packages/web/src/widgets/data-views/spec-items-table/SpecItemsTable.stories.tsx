@@ -6,7 +6,8 @@ import {
   WORKSPACE,
   createStoryQueryClient,
   dashboardWidget,
-  frameControls
+  frameControls,
+  configDialogStory
 } from '../../shared/mdx/StorybookHarness';
 import { artifactKeys } from '../../../queries/artifacts';
 import { entityKeys } from '../../../queries/entities';
@@ -15,7 +16,12 @@ const SCHEMAS = [
   { id: 'story-api', name: 'API', icon: 'api', entity_count: 3, fields: [] }
 ] as unknown as EntitySchema[];
 
-type Operation = { id: string; action: string; path: string; deprecated: boolean };
+type Operation = {
+  id: string;
+  action: string;
+  path: string;
+  deprecated: boolean;
+};
 
 const APIS: { uid: string; name: string; operations: Operation[] | null }[] = [
   {
@@ -35,13 +41,20 @@ const APIS: { uid: string; name: string; operations: Operation[] | null }[] = [
       { id: 'c2', action: 'put', path: '/customers/{id}', deprecated: true }
     ]
   },
-  { uid: 'api-legacy', name: 'Legacy API (no specification)', operations: null }
+  {
+    uid: 'api-legacy',
+    name: 'Legacy API (no specification)',
+    operations: null
+  }
 ];
 
 const DEFAULT_CONFIG = { schemaName: 'API' };
 
 const renderDashboard = (config: Record<string, unknown> = {}, apis = APIS) => {
-  const merged = { ...DEFAULT_CONFIG, ...config } as { schemaName: string; deprecated?: boolean };
+  const merged = { ...DEFAULT_CONFIG, ...config } as {
+    schemaName: string;
+    deprecated?: boolean;
+  };
   const client = createStoryQueryClient();
   client.setQueryData(
     entityKeys.list(WORKSPACE, {
@@ -51,7 +64,11 @@ const renderDashboard = (config: Record<string, unknown> = {}, apis = APIS) => {
       entityQuery: null
     }),
     {
-      items: apis.map(api => ({ _uid: api.uid, _publicId: api.uid, _name: api.name })),
+      items: apis.map(api => ({
+        _uid: api.uid,
+        _publicId: api.uid,
+        _name: api.name
+      })),
       total: apis.length
     }
   );
@@ -72,7 +89,11 @@ const renderDashboard = (config: Record<string, unknown> = {}, apis = APIS) => {
     });
     if (api.operations == null) continue;
     client.setQueryData(artifactKeys.apiSpecificationRevisions(WORKSPACE, api.uid, artifactId), [
-      { isCurrent: true, itemCount: api.operations.length, revision: { id: 'rev-1' } }
+      {
+        isCurrent: true,
+        itemCount: api.operations.length,
+        revision: { id: 'rev-1' }
+      }
     ]);
     const items = api.operations
       .filter(operation => !merged.deprecated || operation.deprecated)
@@ -137,3 +158,5 @@ export const WithFrame: Story = {
   ...AllOperations,
   args: { showFrame: true }
 };
+
+export const ConfigDialog = configDialogStory('SpecItemsTable');

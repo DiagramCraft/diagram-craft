@@ -7,7 +7,8 @@ import {
   StoryProviders,
   WORKSPACE,
   dashboardWidget,
-  frameControls
+  frameControls,
+  configDialogStory
 } from '../../shared/mdx/StorybookHarness';
 import { projectFileKeys } from '../../../queries/content';
 
@@ -112,3 +113,5 @@ export const WithFrame: Story = {
   render: () => renderDashboard(24),
   args: { showFrame: true }
 };
+
+export const ConfigDialog = configDialogStory('DiagramEmbed');

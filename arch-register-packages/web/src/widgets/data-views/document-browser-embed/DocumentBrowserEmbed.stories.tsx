@@ -9,7 +9,8 @@ import {
   StoryProviders,
   WORKSPACE,
   dashboardWidget,
-  frameControls
+  frameControls,
+  configDialogStory
 } from '../../shared/mdx/StorybookHarness';
 import { documentKeys } from '../../../queries/documents';
 
@@ -148,3 +149,5 @@ export const WithFrame: Story = {
   ),
   args: { showFrame: true }
 };
+
+export const ConfigDialog = configDialogStory('DocumentBrowserEmbed');
