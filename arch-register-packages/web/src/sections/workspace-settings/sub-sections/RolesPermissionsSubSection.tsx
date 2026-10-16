@@ -15,7 +15,7 @@ import { useAuth } from '../../../auth/AuthContext';
 import { ColorPicker } from '../../../components/ColorPicker';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { Dialog, KbdHints } from '@diagram-craft/app-components/Dialog';
-import { FormGroup } from '@diagram-craft/app-components/FormGroup';
+import { FormGroup } from '../../../components/FormGroup';
 import { Table } from '../../../components/table/Table';
 import { useWorkspaceMembers } from '../../../hooks/useWorkspaceMembers';
 import {
@@ -417,6 +417,7 @@ const RoleEditorDialog = ({
               const GroupIcon = CAPABILITY_GROUP_ICONS[group.label];
               return (
                 <FormGroup
+                  variant="border"
                   key={group.label}
                   label={group.label}
                   icon={GroupIcon ? <GroupIcon size={12} /> : undefined}
