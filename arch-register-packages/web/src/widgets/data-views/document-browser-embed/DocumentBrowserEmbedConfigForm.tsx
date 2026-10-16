@@ -13,7 +13,7 @@ import filterStyles from '../../../components/FilterBuilder.module.css';
 import { SearchInput } from '../../../components/SearchInput';
 import { useDocumentTypes } from '../../../hooks/useDocuments';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
-import { DialogSection } from '../../../sections/markdown/editor/BlockDialog';
+import { FormGroup } from '../../../components/FormGroup';
 import { DocumentBrowserEmbed } from './DocumentBrowserEmbed';
 import type { DocumentBrowserBaseColumnId, DocumentBrowserEmbedConfig } from './types';
 import styles from './DocumentBrowserEmbedConfigForm.module.css';
@@ -382,7 +382,7 @@ export const DocumentBrowserEmbedConfigForm = ({ config: value, onChange }: Prop
 
   return (
     <>
-      <DialogSection label="Filters" required={false}>
+      <FormGroup label="Filters" supplementaryLabel="(optional)" variant="simple">
         <div className={styles.toolbar}>
           <SearchInput
             size="sm"
@@ -450,7 +450,7 @@ export const DocumentBrowserEmbedConfigForm = ({ config: value, onChange }: Prop
             onChange={visibleFieldIds => onChange({ ...value, visibleFieldIds })}
           />
         </div>
-      </DialogSection>
+      </FormGroup>
       <div className={styles.preview}>
         <DocumentBrowserEmbed config={value} />
       </div>

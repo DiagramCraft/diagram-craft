@@ -1,6 +1,8 @@
+import { Select } from '@diagram-craft/app-components/Select';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
-import { DialogSection } from '../../../sections/markdown/editor/BlockDialog';
-import configFormStyles from '../../../sections/dashboard/WidgetConfigDialog.module.css';
+import { FormGroup } from '../../../components/FormGroup';
+import { FormGrid } from '../../../components/FormGrid';
 import { RelatedEntitiesListWidgetConfig } from './types';
 
 type RelatedEntitiesListConfigFormProps = {
@@ -8,7 +10,7 @@ type RelatedEntitiesListConfigFormProps = {
   onChange: (config: RelatedEntitiesListWidgetConfig) => void;
 };
 
-const clean = (value: string): string | undefined => (value === '' ? undefined : value);
+const clean = (value: string | undefined): string | undefined => (value === '' ? undefined : value);
 
 export const RelatedEntitiesListConfigForm = ({
   config,
@@ -27,18 +29,14 @@ export const RelatedEntitiesListConfigForm = ({
     options: ReadonlyArray<{ id: string; name: string }>,
     placeholder: string
   ) => (
-    <select
-      className={configFormStyles.labelInput}
-      value={value ?? ''}
-      onChange={event => set(clean(event.currentTarget.value))}
-    >
-      <option value="">{placeholder}</option>
+    <Select.Root value={value ?? ''} onChange={v => set(clean(v))}>
+      <Select.Item value="">{placeholder}</Select.Item>
       {options.map(field => (
-        <option key={field.id} value={field.id}>
+        <Select.Item key={field.id} value={field.id}>
           {field.name}
-        </option>
+        </Select.Item>
       ))}
-    </select>
+    </Select.Root>
   );
 
   const schemaSelect = (
@@ -46,47 +44,42 @@ export const RelatedEntitiesListConfigForm = ({
     set: (value: string | undefined) => void,
     placeholder: string
   ) => (
-    <select
-      className={configFormStyles.labelInput}
-      value={value ?? ''}
-      onChange={event => set(clean(event.currentTarget.value))}
-    >
-      <option value="">{placeholder}</option>
+    <Select.Root value={value ?? ''} onChange={v => set(clean(v))}>
+      <Select.Item value="">{placeholder}</Select.Item>
       {schemas.map(candidate => (
-        <option key={candidate.id} value={candidate.name}>
+        <Select.Item key={candidate.id} value={candidate.name}>
           {candidate.name}
-        </option>
+        </Select.Item>
       ))}
-    </select>
+    </Select.Root>
   );
 
   return (
     <>
-      <DialogSection label="Entity to scope by" required={false}>
-        <input
-          type="text"
-          className={configFormStyles.labelInput}
+      <FormGroup label="Entity to scope by" supplementaryLabel="(optional)" variant="simple">
+        <TextInput
           value={config.entityId ?? ''}
           placeholder="Sidebar variable, e.g. $objectiveId"
-          onChange={event => onChange({ ...config, entityId: clean(event.currentTarget.value) })}
+          style={{ width: '100%' }}
+          onChange={value => onChange({ ...config, entityId: clean(value) })}
         />
-      </DialogSection>
-      <DialogSection label="Listed entity type" required>
+      </FormGroup>
+      <FormGroup label="Listed entity type" variant="simple">
         {schemaSelect(
           config.schemaName,
           value => onChange({ ...config, schemaName: value ?? '', referenceField: '' }),
           'Select an entity type…'
         )}
-      </DialogSection>
-      <DialogSection label="Reference field" required>
+      </FormGroup>
+      <FormGroup label="Reference field" variant="simple">
         {fieldSelect(
           config.referenceField,
           value => onChange({ ...config, referenceField: value ?? '' }),
           referenceFields,
           'Select a reference field…'
         )}
-      </DialogSection>
-      <DialogSection label="Via entity type (optional)" required={false}>
+      </FormGroup>
+      <FormGroup label="Via entity type" supplementaryLabel="(optional)" variant="simple">
         {schemaSelect(
           config.viaSchemaName,
           value =>
@@ -104,8 +97,8 @@ export const RelatedEntitiesListConfigForm = ({
             viaReferenceFields,
             'Select the via type’s reference field…'
           )}
-      </DialogSection>
-      <DialogSection label="Row details" required={false}>
+      </FormGroup>
+      <FormGroup label="Row details" supplementaryLabel="(optional)" variant="simple">
         {fieldSelect(
           config.statusField,
           value => onChange({ ...config, statusField: value }),
@@ -118,8 +111,8 @@ export const RelatedEntitiesListConfigForm = ({
           fields,
           'No description field'
         )}
-      </DialogSection>
-      <DialogSection label="Progress bar (optional)" required={false}>
+      </FormGroup>
+      <FormGroup label="Progress bar" supplementaryLabel="(optional)" variant="simple">
         {fieldSelect(
           config.progressBaselineField,
           value => onChange({ ...config, progressBaselineField: value }),
@@ -144,24 +137,18 @@ export const RelatedEntitiesListConfigForm = ({
           fields,
           'Unit field'
         )}
-      </DialogSection>
-      <DialogSection label="Display" required={false}>
-        <div className={configFormStyles.options}>
-          <label className={configFormStyles.optionRow}>
-            <span className={configFormStyles.optionLabel}>Empty message</span>
-            <div className={configFormStyles.optionControl}>
-              <input
-                type="text"
-                className={configFormStyles.labelInput}
-                value={config.emptyMessage ?? ''}
-                onChange={event =>
-                  onChange({ ...config, emptyMessage: clean(event.currentTarget.value) })
-                }
-              />
-            </div>
-          </label>
-        </div>
-      </DialogSection>
+      </FormGroup>
+      <FormGroup label="Display" supplementaryLabel="(optional)" variant="simple">
+        <FormGrid>
+          <FormGrid.Row label="Empty message">
+            <TextInput
+              value={config.emptyMessage ?? ''}
+              style={{ width: '100%' }}
+              onChange={value => onChange({ ...config, emptyMessage: clean(value) })}
+            />
+          </FormGrid.Row>
+        </FormGrid>
+      </FormGroup>
     </>
   );
 };

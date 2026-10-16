@@ -2,7 +2,7 @@ import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import type { ConfigFormProps } from '../../shared/types';
 import { useEntity } from '../../../hooks/useEntities';
 import { EntityPicker } from '../../../components/EntityPicker';
-import { DialogSection } from '../../../sections/markdown/editor/BlockDialog';
+import { FormGroup } from '../../../components/FormGroup';
 import { DEFAULT_FIELDS, filterSchemaFields } from './EntityCard';
 import { EntityCardFieldsPicker } from './EntityCardFieldsPicker';
 import type { EntityCardWidgetConfig } from './types';
@@ -25,7 +25,7 @@ export const EntityCardConfigForm = ({ config, onChange }: Props) => {
 
   return (
     <>
-      <DialogSection label="Entity">
+      <FormGroup label="Entity" variant="simple">
         <EntityPicker
           selectedEntityId={config.entityId}
           selectedEntity={entity}
@@ -37,15 +37,15 @@ export const EntityCardConfigForm = ({ config, onChange }: Props) => {
           }
           onClearEntity={() => onChange({ ...config, entityId: '' })}
         />
-      </DialogSection>
+      </FormGroup>
       {config.entityId && (
-        <DialogSection label="Fields" required={false}>
+        <FormGroup label="Fields" supplementaryLabel="(optional)" variant="simple">
           <EntityCardFieldsPicker
             schemaFields={schemaFields}
             selectedFields={fields}
             onToggleField={toggleField}
           />
-        </DialogSection>
+        </FormGroup>
       )}
     </>
   );

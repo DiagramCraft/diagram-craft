@@ -1,6 +1,6 @@
+import { Select } from '@diagram-craft/app-components/Select';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
-import { DialogSection } from '../../../sections/markdown/editor/BlockDialog';
-import configFormStyles from '../../../sections/dashboard/WidgetConfigDialog.module.css';
+import { FormGroup } from '../../../components/FormGroup';
 import type { RelationPairsSourceConfig } from './types';
 
 /** The hub, provider, consumer and coverage-relation pickers shared by both pair widgets. */
@@ -16,72 +16,61 @@ export const RelationPairsSourceFields = <T extends RelationPairsSourceConfig>({
   const relationFields = hub?.fields.filter(field => field.type === 'typedRelation') ?? [];
 
   const fieldSelect = (value: string, onValue: (value: string) => void) => (
-    <select
-      className={configFormStyles.labelInput}
-      value={value}
-      onChange={event => onValue(event.currentTarget.value)}
-    >
-      <option value="">Select a relation field…</option>
+    <Select.Root value={value} onChange={v => onValue(v ?? '')}>
+      <Select.Item value="">Select a relation field…</Select.Item>
       {relationFields.map(field => (
-        <option key={field.id} value={field.name}>
+        <Select.Item key={field.id} value={field.name}>
           {field.name}
-        </option>
+        </Select.Item>
       ))}
-    </select>
+    </Select.Root>
   );
 
   return (
     <>
-      <DialogSection label="Hub entity type" required>
-        <select
-          className={configFormStyles.labelInput}
+      <FormGroup label="Hub entity type" variant="simple">
+        <Select.Root
           value={config.hubSchemaName}
-          onChange={event =>
+          onChange={value =>
             onChange({
               ...config,
-              hubSchemaName: event.currentTarget.value,
+              hubSchemaName: value ?? '',
               providerFieldName: '',
               consumerFieldName: ''
             })
           }
         >
-          <option value="">Select an entity type…</option>
+          <Select.Item value="">Select an entity type…</Select.Item>
           {schemas.map(candidate => (
-            <option key={candidate.id} value={candidate.name}>
+            <Select.Item key={candidate.id} value={candidate.name}>
               {candidate.name}
-            </option>
+            </Select.Item>
           ))}
-        </select>
-      </DialogSection>
-      <DialogSection label="Providers" required>
+        </Select.Root>
+      </FormGroup>
+      <FormGroup label="Providers" variant="simple">
         {fieldSelect(config.providerFieldName, value =>
           onChange({ ...config, providerFieldName: value })
         )}
-      </DialogSection>
-      <DialogSection label="Consumers" required>
+      </FormGroup>
+      <FormGroup label="Consumers" variant="simple">
         {fieldSelect(config.consumerFieldName, value =>
           onChange({ ...config, consumerFieldName: value })
         )}
-      </DialogSection>
-      <DialogSection label="Coverage relation type" required>
-        <select
-          className={configFormStyles.labelInput}
+      </FormGroup>
+      <FormGroup label="Coverage relation type" variant="simple">
+        <Select.Root
           value={config.coverageRelationSchemaName}
-          onChange={event =>
-            onChange({
-              ...config,
-              coverageRelationSchemaName: event.currentTarget.value
-            })
-          }
+          onChange={value => onChange({ ...config, coverageRelationSchemaName: value ?? '' })}
         >
-          <option value="">Select a relation type…</option>
+          <Select.Item value="">Select a relation type…</Select.Item>
           {relationSchemas.map(candidate => (
-            <option key={candidate.id} value={candidate.name}>
+            <Select.Item key={candidate.id} value={candidate.name}>
               {candidate.name}
-            </option>
+            </Select.Item>
           ))}
-        </select>
-      </DialogSection>
+        </Select.Root>
+      </FormGroup>
     </>
   );
 };

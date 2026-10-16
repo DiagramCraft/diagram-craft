@@ -1,5 +1,9 @@
 import { useState } from 'react';
-import { DialogSection } from '../../../sections/markdown/editor/BlockDialog';
+import { Button } from '@diagram-craft/app-components/Button';
+import { NumberInput } from '@diagram-craft/app-components/NumberInput';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
+import { FormGroup } from '../../../components/FormGroup';
+import { FormGrid } from '../../../components/FormGrid';
 import { EntityPicker } from '../../../components/EntityPicker';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { useEntity } from '../../../hooks/useEntities';
@@ -29,7 +33,7 @@ export const BlastRadiusConfigForm = ({
 
   return (
     <>
-      <DialogSection label="Entity">
+      <FormGroup label="Entity" variant="simple">
         <EntityPicker
           selectedEntityId={entityId}
           selectedEntity={entity}
@@ -42,66 +46,57 @@ export const BlastRadiusConfigForm = ({
             commit({ ...config, entityId: undefined });
           }}
         />
-      </DialogSection>
-      <DialogSection label="Relation groups" required={false}>
-        <div className={configFormStyles.options}>
-          <div className={`${configFormStyles.hint} dim`}>
-            Optional. Limit the radius to typed-relation fields and show one column per field.
+      </FormGroup>
+      <FormGroup label="Relation groups" supplementaryLabel="(optional)" variant="simple">
+        <div className={`${configFormStyles.hint} dim`}>
+          Optional. Limit the radius to typed-relation fields and show one column per field.
+        </div>
+        {groups.map((group, index) => (
+          <div key={index} style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <TextInput
+              value={group.fieldName}
+              placeholder="Relation field"
+              style={{ flex: 1 }}
+              onChange={value => patchGroup(index, { fieldName: value ?? '' })}
+            />
+            <TextInput
+              value={group.label}
+              placeholder="Column heading"
+              style={{ flex: 1 }}
+              onChange={value => patchGroup(index, { label: value ?? '' })}
+            />
+            <Button
+              variant="secondary"
+              onClick={() => setGroups(groups.filter((_, i) => i !== index))}
+            >
+              Remove
+            </Button>
           </div>
-          {groups.map((group, index) => (
-            <div key={index} className={configFormStyles.optionRow}>
-              <input
-                type="text"
-                className={configFormStyles.labelInput}
-                value={group.fieldName}
-                placeholder="Relation field"
-                onChange={event => patchGroup(index, { fieldName: event.currentTarget.value })}
-              />
-              <input
-                type="text"
-                className={configFormStyles.labelInput}
-                value={group.label}
-                placeholder="Column heading"
-                onChange={event => patchGroup(index, { label: event.currentTarget.value })}
-              />
-              <button
-                type="button"
-                className={configFormStyles.labelInput}
-                onClick={() => setGroups(groups.filter((_, i) => i !== index))}
-              >
-                Remove
-              </button>
-            </div>
-          ))}
-          <button
-            type="button"
-            className={configFormStyles.labelInput}
+        ))}
+        <div>
+          <Button
+            variant="secondary"
             onClick={() => setGroups([...groups, { fieldName: '', label: '' }])}
           >
             Add group
-          </button>
-          {groups.length > 0 && (
-            <label className={configFormStyles.optionRow}>
-              <span className={configFormStyles.optionLabel}>Depth</span>
-              <div className={configFormStyles.optionControl}>
-                <input
-                  type="number"
-                  min={1}
-                  max={3}
-                  className={configFormStyles.labelInput}
-                  value={config.maxDepth ?? 2}
-                  onChange={event =>
-                    commit({
-                      ...config,
-                      maxDepth: Math.min(3, Math.max(1, Number(event.currentTarget.value) || 2))
-                    })
-                  }
-                />
-              </div>
-            </label>
-          )}
+          </Button>
         </div>
-      </DialogSection>
+        {groups.length > 0 && (
+          <FormGrid>
+            <FormGrid.Row label="Depth">
+              <NumberInput
+                min={1}
+                max={3}
+                value={config.maxDepth ?? 2}
+                style={{ width: '80px' }}
+                onChange={value =>
+                  commit({ ...config, maxDepth: Math.min(3, Math.max(1, value || 2)) })
+                }
+              />
+            </FormGrid.Row>
+          </FormGrid>
+        )}
+      </FormGroup>
     </>
   );
 };

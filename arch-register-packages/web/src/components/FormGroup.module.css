@@ -1,0 +1,130 @@
+/**
+ * FormGroup - .cFormGroup
+ * | Head - .eHead
+ * |   | Icon - .eIcon
+ * |   | Step - .eTextIcon
+ * |   | Label - .eLabel
+ * |   | Action - .eAction
+ * | Body - .eBody
+ */
+
+.cFormGroup {
+  display: flex;
+  flex-direction: column;
+
+  .eHead {
+    display: flex;
+    align-items: center;
+
+    .eIcon {
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .eTextIcon {
+      width: 18px;
+      height: 18px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--base-bg);
+      border: 1px solid var(--cmp-border);
+      border-radius: var(--r-sm);
+      font-size: 10.5px;
+      flex-shrink: 0;
+    }
+
+    .eLabel {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.025em;
+      color: var(--base-fg-dim);
+    }
+
+    .eSupplementaryLabel {
+      font-weight: 300;
+      margin-left: 1ch;
+    }
+
+    .eAction {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+  }
+
+  .eBody {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  &[data-variant="simple"] {
+    .eHead {
+      .eLabel {
+        color: var(--cmp-fg-disabled);
+        margin-bottom: 8px;
+      }
+    }
+  }
+
+  &[data-variant="border"] {
+    --cmp-bg: var(--gray-2);
+
+    background: var(--base-bg);
+    border: 1px solid var(--cmp-border);
+    border-radius: 8px;
+    padding: 10px 12px;
+
+    .eHead {
+      gap: 6px;
+      padding-bottom: 8px;
+      margin-bottom: 8px;
+      border-bottom: 1px solid var(--cmp-border);
+
+      .eIcon {
+        color: var(--base-fg-dim);
+      }
+
+      .eTextIcon {
+        color: var(--base-fg-more-dim);
+      }
+
+      .eAction {
+        margin-left: auto;
+      }
+    }
+  }
+
+  &[data-variant="section"] {
+    padding: 11px 0;
+
+    .eHead {
+      gap: 8px;
+      margin-bottom: 9px;
+
+      &::after {
+        content: "";
+        order: 1;
+        flex: 1;
+        height: 1px;
+        background: var(--panel-border);
+        margin-left: 4px;
+      }
+
+      .eIcon {
+        color: var(--base-fg-dim);
+      }
+
+      .eTextIcon {
+        color: var(--base-fg-more-dim);
+      }
+
+      .eAction {
+        order: 2;
+      }
+    }
+  }
+}

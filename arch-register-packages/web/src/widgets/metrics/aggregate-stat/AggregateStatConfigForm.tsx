@@ -4,7 +4,13 @@ import { useEffect, useState } from 'react';
 import { getSchemaFieldDefs, FilterRow } from '../../../components/FilterBuilder';
 import { EntityFilterPanel, type EntityFilterValue } from '../../../components/EntityFilterPanel';
 import { useQueryTextCount } from '../../../hooks/useEntityQueryText';
-import { DialogSection } from '../../../sections/markdown/editor/BlockDialog';
+import { Select } from '@diagram-craft/app-components/Select';
+import { TextArea } from '@diagram-craft/app-components/TextArea';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
+import { NumberInput } from '@diagram-craft/app-components/NumberInput';
+import { FormGroup } from '../../../components/FormGroup';
+import { FormGrid } from '../../../components/FormGrid';
+import { FormCheckboxList } from '../../../components/FormCheckboxList';
 import { type AggregateStatDisplay } from './aggregateStatQuery';
 import configFormStyles from '../../../sections/dashboard/WidgetConfigDialog.module.css';
 import { AggregateStatWidgetConfig } from './types';
@@ -47,19 +53,16 @@ const QueryField = ({
         ? `Matches ${result.data.total} record${result.data.total === 1 ? '' : 's'}`
         : (result.data?.errors[0]?.message ?? 'Invalid query');
   return (
-    <label className={configFormStyles.optionRow}>
-      <span className={configFormStyles.optionLabel}>{label}</span>
-      <div className={configFormStyles.optionControl}>
-        <textarea
-          className={configFormStyles.labelInput}
-          rows={2}
-          value={value}
-          placeholder={placeholder}
-          onChange={e => onChange(e.target.value)}
-        />
-        {status && <div className={`${configFormStyles.hint} dim`}>{status}</div>}
-      </div>
-    </label>
+    <FormGrid.Row label={label}>
+      <TextArea
+        rows={2}
+        value={value}
+        placeholder={placeholder}
+        style={{ width: '100%' }}
+        onChange={v => onChange(v ?? '')}
+      />
+      {status && <div className={`${configFormStyles.hint} dim`}>{status}</div>}
+    </FormGrid.Row>
   );
 };
 
@@ -67,33 +70,29 @@ const QueryModeForm = ({ config, onChange }: AggregateStatConfigFormProps) => {
   const display = config.display ?? 'count';
   const showLink = config.showLink ?? true;
   const needsDenominator = display !== 'count';
-  const numberOrUndefined = (value: string): number | undefined =>
-    value.trim() === '' || Number.isNaN(Number(value)) ? undefined : Number(value);
   return (
     <>
-      <DialogSection label="Query">
-        <div className={configFormStyles.options}>
+      <FormGroup label="Query" variant="simple">
+        <FormGrid>
           <QueryField
             label="Count records matching"
             value={config.query ?? ''}
             placeholder='e.g. schema:"Data Flow" AND cross_boundary = cross-boundary'
             onChange={query => onChange({ ...config, query })}
           />
-          <label className={configFormStyles.optionRow}>
-            <span className={configFormStyles.optionLabel}>Show as</span>
-            <div className={configFormStyles.optionControl}>
-              <select
-                value={display}
-                onChange={e =>
-                  onChange({ ...config, display: e.target.value as AggregateStatDisplay })
-                }
-              >
-                <option value="count">Count</option>
-                <option value="percent">Percent of total</option>
-                <option value="ofTotal">Count, with "of total"</option>
-              </select>
-            </div>
-          </label>
+          <FormGrid.Row label="Show as">
+            <Select.Root
+              value={display}
+              onChange={value =>
+                onChange({ ...config, display: (value ?? 'count') as AggregateStatDisplay })
+              }
+              style={{ width: '100%' }}
+            >
+              <Select.Item value="count">Count</Select.Item>
+              <Select.Item value="percent">Percent of total</Select.Item>
+              <Select.Item value="ofTotal">Count, with "of total"</Select.Item>
+            </Select.Root>
+          </FormGrid.Row>
           {needsDenominator && (
             <QueryField
               label="Total records"
@@ -102,10 +101,10 @@ const QueryModeForm = ({ config, onChange }: AggregateStatConfigFormProps) => {
               onChange={denominatorQuery => onChange({ ...config, denominatorQuery })}
             />
           )}
-        </div>
-      </DialogSection>
-      <DialogSection label="Display" required={false}>
-        <div className={configFormStyles.options}>
+        </FormGrid>
+      </FormGroup>
+      <FormGroup label="Display" supplementaryLabel="(optional)" variant="simple">
+        <FormGrid>
           <QueryField
             label="Subtext count"
             value={config.subtextQuery ?? ''}
@@ -114,136 +113,101 @@ const QueryModeForm = ({ config, onChange }: AggregateStatConfigFormProps) => {
               onChange({ ...config, subtextQuery: optionalText(subtextQuery) })
             }
           />
-          <label className={configFormStyles.optionRow}>
-            <span className={configFormStyles.optionLabel}>Measure</span>
-            <div className={configFormStyles.optionControl}>
-              <select
-                className={configFormStyles.labelInput}
-                value={config.measure ?? 'count'}
-                onChange={e =>
-                  onChange({
-                    ...config,
-                    measure:
-                      e.target.value === 'sum' || e.target.value === 'countDistinct'
-                        ? e.target.value
-                        : undefined
-                  })
-                }
-              >
-                <option value="count">Count of records</option>
-                <option value="sum">Sum of a field</option>
-                <option value="countDistinct">Count of distinct values</option>
-              </select>
-            </div>
-          </label>
+          <FormGrid.Row label="Measure">
+            <Select.Root
+              value={config.measure ?? 'count'}
+              onChange={value =>
+                onChange({
+                  ...config,
+                  measure: value === 'sum' || value === 'countDistinct' ? value : undefined
+                })
+              }
+              style={{ width: '100%' }}
+            >
+              <Select.Item value="count">Count of records</Select.Item>
+              <Select.Item value="sum">Sum of a field</Select.Item>
+              <Select.Item value="countDistinct">Count of distinct values</Select.Item>
+            </Select.Root>
+          </FormGrid.Row>
           {config.measure === 'countDistinct' && (
-            <label className={configFormStyles.optionRow}>
-              <span className={configFormStyles.optionLabel}>Field to count</span>
-              <div className={configFormStyles.optionControl}>
-                <input
-                  type="text"
-                  className={configFormStyles.labelInput}
-                  value={config.distinctFieldId ?? ''}
-                  onChange={e =>
-                    onChange({ ...config, distinctFieldId: optionalText(e.target.value) })
-                  }
-                  placeholder="Field id, e.g. cost_centre"
-                />
-              </div>
-            </label>
+            <FormGrid.Row label="Field to count">
+              <TextInput
+                value={config.distinctFieldId ?? ''}
+                onChange={value =>
+                  onChange({ ...config, distinctFieldId: optionalText(value ?? '') })
+                }
+                placeholder="Field id, e.g. cost_centre"
+                style={{ width: '100%' }}
+              />
+            </FormGrid.Row>
           )}
           {(config.measure === 'sum' || config.subtextQuery?.trim()) && (
-            <label className={configFormStyles.optionRow}>
-              <span className={configFormStyles.optionLabel}>Field to sum</span>
-              <div className={configFormStyles.optionControl}>
-                <input
-                  type="text"
-                  className={configFormStyles.labelInput}
-                  value={config.sumFieldId ?? ''}
-                  onChange={e => onChange({ ...config, sumFieldId: optionalText(e.target.value) })}
-                  placeholder="Number or currency field id, e.g. annual_cost"
-                />
-              </div>
-            </label>
+            <FormGrid.Row label="Field to sum">
+              <TextInput
+                value={config.sumFieldId ?? ''}
+                onChange={value => onChange({ ...config, sumFieldId: optionalText(value ?? '') })}
+                placeholder="Number or currency field id, e.g. annual_cost"
+                style={{ width: '100%' }}
+              />
+            </FormGrid.Row>
           )}
-          <label className={configFormStyles.optionRow}>
-            <span className={configFormStyles.optionLabel}>Subtext</span>
-            <div className={configFormStyles.optionControl}>
-              <input
-                type="text"
-                className={configFormStyles.labelInput}
-                value={config.subtextTemplate ?? ''}
-                onChange={e =>
-                  onChange({ ...config, subtextTemplate: optionalText(e.target.value) })
-                }
-                placeholder="e.g. {sub} highly sensitive ({count}, {total}, {subSum} also available)"
-              />
-            </div>
-          </label>
-          <label className={configFormStyles.optionRow}>
-            <span className={configFormStyles.optionLabel}>Warn at</span>
-            <div className={configFormStyles.optionControl}>
-              <input
-                type="number"
-                className={configFormStyles.labelInput}
-                value={config.severity?.warnAt ?? ''}
-                onChange={e =>
-                  onChange({
-                    ...config,
-                    severity: { ...config.severity, warnAt: numberOrUndefined(e.target.value) }
-                  })
-                }
-              />
-            </div>
-          </label>
-          <label className={configFormStyles.optionRow}>
-            <span className={configFormStyles.optionLabel}>Critical at</span>
-            <div className={configFormStyles.optionControl}>
-              <input
-                type="number"
-                className={configFormStyles.labelInput}
-                value={config.severity?.critAt ?? ''}
-                onChange={e =>
-                  onChange({
-                    ...config,
-                    severity: { ...config.severity, critAt: numberOrUndefined(e.target.value) }
-                  })
-                }
-              />
-            </div>
-          </label>
-          <label className={configFormStyles.optionRow}>
-            <span className={configFormStyles.optionLabel}>Highlight when</span>
-            <div className={configFormStyles.optionControl}>
-              <select
-                value={config.severity?.direction ?? 'above'}
-                onChange={e =>
-                  onChange({
-                    ...config,
-                    severity: {
-                      ...config.severity,
-                      direction: e.target.value === 'below' ? 'below' : 'above'
-                    }
-                  })
-                }
-              >
-                <option value="above">Value is at or above the threshold</option>
-                <option value="below">Value is at or below the threshold</option>
-              </select>
-            </div>
-          </label>
-          <label className={configFormStyles.optionRow}>
-            <span className={configFormStyles.optionLabel}>Show link</span>
-            <div className={configFormStyles.optionControl}>
-              <input
-                type="checkbox"
-                checked={showLink}
-                onChange={e => onChange({ ...config, showLink: e.target.checked })}
-              />
-            </div>
-          </label>
-        </div>
-      </DialogSection>
+          <FormGrid.Row label="Subtext">
+            <TextInput
+              value={config.subtextTemplate ?? ''}
+              onChange={value =>
+                onChange({ ...config, subtextTemplate: optionalText(value ?? '') })
+              }
+              placeholder="e.g. {sub} highly sensitive ({count}, {total}, {subSum} also available)"
+              style={{ width: '100%' }}
+            />
+          </FormGrid.Row>
+          <FormGrid.Row label="Warn at">
+            <NumberInput
+              value={config.severity?.warnAt ?? ''}
+              onChange={value =>
+                onChange({ ...config, severity: { ...config.severity, warnAt: value } })
+              }
+              style={{ width: '80px' }}
+            />
+          </FormGrid.Row>
+          <FormGrid.Row label="Critical at">
+            <NumberInput
+              value={config.severity?.critAt ?? ''}
+              onChange={value =>
+                onChange({ ...config, severity: { ...config.severity, critAt: value } })
+              }
+              style={{ width: '80px' }}
+            />
+          </FormGrid.Row>
+          <FormGrid.Row label="Highlight when">
+            <Select.Root
+              value={config.severity?.direction ?? 'above'}
+              onChange={value =>
+                onChange({
+                  ...config,
+                  severity: {
+                    ...config.severity,
+                    direction: value === 'below' ? 'below' : 'above'
+                  }
+                })
+              }
+              style={{ width: '100%' }}
+            >
+              <Select.Item value="above">Value is at or above the threshold</Select.Item>
+              <Select.Item value="below">Value is at or below the threshold</Select.Item>
+            </Select.Root>
+          </FormGrid.Row>
+        </FormGrid>
+        <FormCheckboxList>
+          <FormCheckboxList.Row label="Show link">
+            <input
+              type="checkbox"
+              checked={showLink}
+              onChange={e => onChange({ ...config, showLink: e.target.checked })}
+            />
+          </FormCheckboxList.Row>
+        </FormCheckboxList>
+      </FormGroup>
     </>
   );
 };
@@ -274,7 +238,7 @@ const LegacyAggregateStatConfigForm = ({ config, onChange }: AggregateStatConfig
 
   return (
     <>
-      <DialogSection label="Entity type">
+      <FormGroup label="Entity type" variant="simple">
         <EntityFilterPanel
           value={filter}
           onChange={update => {
@@ -291,8 +255,8 @@ const LegacyAggregateStatConfigForm = ({ config, onChange }: AggregateStatConfig
             });
           }}
         />
-      </DialogSection>
-      <DialogSection label="Counts as met when">
+      </FormGroup>
+      <FormGroup label="Counts as met when" variant="simple">
         {!config.schema ? (
           <div className={`${configFormStyles.hint} dim`}>Choose an entity type first.</div>
         ) : (
@@ -311,21 +275,18 @@ const LegacyAggregateStatConfigForm = ({ config, onChange }: AggregateStatConfig
             onRemove={() => onChange({ ...config, numeratorCondition: undefined })}
           />
         )}
-      </DialogSection>
-      <DialogSection label="Display" required={false}>
-        <div className={configFormStyles.options}>
-          <label className={configFormStyles.optionRow}>
-            <span className={configFormStyles.optionLabel}>Show link</span>
-            <div className={configFormStyles.optionControl}>
-              <input
-                type="checkbox"
-                checked={showLink}
-                onChange={e => onChange({ ...config, showLink: e.target.checked })}
-              />
-            </div>
-          </label>
-        </div>
-      </DialogSection>
+      </FormGroup>
+      <FormGroup label="Display" supplementaryLabel="(optional)" variant="simple">
+        <FormCheckboxList>
+          <FormCheckboxList.Row label="Show link">
+            <input
+              type="checkbox"
+              checked={showLink}
+              onChange={e => onChange({ ...config, showLink: e.target.checked })}
+            />
+          </FormCheckboxList.Row>
+        </FormCheckboxList>
+      </FormGroup>
     </>
   );
 };

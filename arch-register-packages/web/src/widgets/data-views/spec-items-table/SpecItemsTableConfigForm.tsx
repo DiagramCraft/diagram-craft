@@ -1,6 +1,7 @@
+import { Select } from '@diagram-craft/app-components/Select';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
-import { DialogSection } from '../../../sections/markdown/editor/BlockDialog';
-import configFormStyles from '../../../sections/dashboard/WidgetConfigDialog.module.css';
+import { FormGroup } from '../../../components/FormGroup';
+import { FormCheckboxList } from '../../../components/FormCheckboxList';
 import { SpecItemsTableWidgetConfig } from './types';
 
 export const SpecItemsTableConfigForm = ({
@@ -13,23 +14,22 @@ export const SpecItemsTableConfigForm = ({
   const { schemas } = useWorkspaceContext();
   return (
     <>
-      <DialogSection label="Entity type" required>
-        <select
-          className={configFormStyles.labelInput}
+      <FormGroup label="Entity type" variant="simple">
+        <Select.Root
           value={config.schemaName}
-          onChange={event => onChange({ ...config, schemaName: event.currentTarget.value })}
+          onChange={value => onChange({ ...config, schemaName: value ?? '' })}
         >
-          <option value="">Select an entity type…</option>
+          <Select.Item value="">Select an entity type…</Select.Item>
           {schemas.map(candidate => (
-            <option key={candidate.id} value={candidate.name}>
+            <Select.Item key={candidate.id} value={candidate.name}>
               {candidate.name}
-            </option>
+            </Select.Item>
           ))}
-        </select>
-      </DialogSection>
-      <DialogSection label="Display" required={false}>
-        <div className={configFormStyles.options}>
-          <label className={configFormStyles.checkboxRow}>
+        </Select.Root>
+      </FormGroup>
+      <FormGroup label="Display" supplementaryLabel="(optional)" variant="simple">
+        <FormCheckboxList>
+          <FormCheckboxList.Row label="Only deprecated operations">
             <input
               type="checkbox"
               checked={config.deprecated === true}
@@ -37,10 +37,9 @@ export const SpecItemsTableConfigForm = ({
                 onChange({ ...config, deprecated: event.currentTarget.checked || undefined })
               }
             />
-            <span>Only deprecated operations</span>
-          </label>
-        </div>
-      </DialogSection>
+          </FormCheckboxList.Row>
+        </FormCheckboxList>
+      </FormGroup>
     </>
   );
 };

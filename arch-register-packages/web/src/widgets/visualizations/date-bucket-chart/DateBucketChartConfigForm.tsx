@@ -1,5 +1,8 @@
-import { DialogSection } from '../../../sections/markdown/editor/BlockDialog';
-import configFormStyles from '../../../sections/dashboard/WidgetConfigDialog.module.css';
+import { NumberInput } from '@diagram-craft/app-components/NumberInput';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
+import { FormGroup } from '../../../components/FormGroup';
+import { FormGrid } from '../../../components/FormGrid';
+import { FormCheckboxList } from '../../../components/FormCheckboxList';
 import { DateBucketChartWidgetConfig } from './types';
 
 type DateBucketChartConfigFormProps = {
@@ -7,84 +10,64 @@ type DateBucketChartConfigFormProps = {
   onChange: (config: DateBucketChartWidgetConfig) => void;
 };
 
-const optionalText = (value: string): string | undefined =>
-  value.trim() === '' ? undefined : value;
-
-const optionalNumber = (value: string): number | undefined =>
-  value.trim() === '' || Number.isNaN(Number(value)) ? undefined : Number(value);
+const optionalText = (value: string | undefined): string | undefined =>
+  (value ?? '').trim() === '' ? undefined : value;
 
 export const DateBucketChartConfigForm = ({ config, onChange }: DateBucketChartConfigFormProps) => (
   <>
-    <DialogSection label="Records (query)" required>
-      <input
-        type="text"
-        className={configFormStyles.labelInput}
+    <FormGroup label="Records (query)" variant="simple">
+      <TextInput
         value={config.query}
         placeholder='e.g. schema:"Contract"'
-        onChange={e => onChange({ ...config, query: e.target.value })}
+        style={{ width: '100%' }}
+        onChange={value => onChange({ ...config, query: value ?? '' })}
       />
-    </DialogSection>
-    <DialogSection label="Date field id" required>
-      <input
-        type="text"
-        className={configFormStyles.labelInput}
+    </FormGroup>
+    <FormGroup label="Date field id" variant="simple">
+      <TextInput
         value={config.dateFieldId}
         placeholder="e.g. contract_end"
-        onChange={e => onChange({ ...config, dateFieldId: e.target.value })}
+        style={{ width: '100%' }}
+        onChange={value => onChange({ ...config, dateFieldId: value ?? '' })}
       />
-    </DialogSection>
-    <DialogSection label="Display" required={false}>
-      <div className={configFormStyles.options}>
-        <label className={configFormStyles.optionRow}>
-          <span className={configFormStyles.optionLabel}>Sum field id</span>
-          <div className={configFormStyles.optionControl}>
-            <input
-              type="text"
-              className={configFormStyles.labelInput}
-              value={config.measureFieldId ?? ''}
-              placeholder="Blank = count records"
-              onChange={e => onChange({ ...config, measureFieldId: optionalText(e.target.value) })}
-            />
-          </div>
-        </label>
-        <label className={configFormStyles.optionRow}>
-          <span className={configFormStyles.optionLabel}>Months</span>
-          <div className={configFormStyles.optionControl}>
-            <input
-              type="number"
-              min={1}
-              max={36}
-              className={configFormStyles.labelInput}
-              value={config.bucketCount ?? 12}
-              onChange={e => onChange({ ...config, bucketCount: optionalNumber(e.target.value) })}
-            />
-          </div>
-        </label>
-        <label className={configFormStyles.optionRow}>
-          <span className={configFormStyles.optionLabel}>Urgent within (days)</span>
-          <div className={configFormStyles.optionControl}>
-            <input
-              type="number"
-              min={0}
-              className={configFormStyles.labelInput}
-              value={config.urgentWithinDays ?? ''}
-              onChange={e =>
-                onChange({ ...config, urgentWithinDays: optionalNumber(e.target.value) })
-              }
-            />
-          </div>
-        </label>
-        <label className={configFormStyles.optionRow}>
-          <span className={configFormStyles.optionLabel}>Include overdue</span>
-          <div className={configFormStyles.optionControl}>
-            <input
-              type="checkbox"
-              checked={config.foldOverdue ?? false}
-              onChange={e => onChange({ ...config, foldOverdue: e.target.checked || undefined })}
-            />
-          </div>
-        </label>
-      </div>
-    </DialogSection>
+    </FormGroup>
+    <FormGroup label="Display" supplementaryLabel="(optional)" variant="simple">
+      <FormGrid>
+        <FormGrid.Row label="Sum field id">
+          <TextInput
+            value={config.measureFieldId ?? ''}
+            placeholder="Blank = count records"
+            style={{ width: '100%' }}
+            onChange={value => onChange({ ...config, measureFieldId: optionalText(value) })}
+          />
+        </FormGrid.Row>
+        <FormGrid.Row label="Months">
+          <NumberInput
+            min={1}
+            max={36}
+            value={config.bucketCount ?? 12}
+            style={{ width: '80px' }}
+            onChange={value => onChange({ ...config, bucketCount: value })}
+          />
+        </FormGrid.Row>
+        <FormGrid.Row label="Urgent within (days)">
+          <NumberInput
+            min={0}
+            value={config.urgentWithinDays ?? ''}
+            style={{ width: '80px' }}
+            onChange={value => onChange({ ...config, urgentWithinDays: value })}
+          />
+        </FormGrid.Row>
+      </FormGrid>
+      <FormCheckboxList>
+        <FormCheckboxList.Row label="Include overdue">
+          <input
+            type="checkbox"
+            checked={config.foldOverdue ?? false}
+            onChange={e => onChange({ ...config, foldOverdue: e.target.checked || undefined })}
+          />
+        </FormCheckboxList.Row>
+      </FormCheckboxList>
+    </FormGroup>
   </>
 );

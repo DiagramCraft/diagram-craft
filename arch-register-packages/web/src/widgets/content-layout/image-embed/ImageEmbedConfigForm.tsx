@@ -4,7 +4,9 @@ import { useMarkdownContent } from '../../../hooks/useMarkdownContent';
 import { useUploadMarkdownAttachment } from '../../../hooks/useAttachments';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { useMdxContext } from '../../../sections/markdown/MdxContext';
-import { DialogSection } from '../../../sections/markdown/editor/BlockDialog';
+import { Button } from '@diagram-craft/app-components/Button';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
+import { FormGroup } from '../../../components/FormGroup';
 import { EmptyState } from '../../../components/EmptyState';
 import type { ContentScope } from '../../../hooks/useContentScope';
 import type { ConfigFormProps } from '../../shared/types';
@@ -85,21 +87,20 @@ export const ImageEmbedConfigForm = ({
       </div>
 
       {mode === 'upload' ? (
-        <DialogSection label="Image">
+        <FormGroup label="Image" variant="simple">
           <div className={styles.uploadActions}>
-            <button
-              type="button"
-              className={styles.button}
+            <Button
+              variant="secondary"
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading}
             >
               {isUploading ? 'Uploading…' : 'Choose image…'}
-            </button>
+            </Button>
             <span className={styles.helperText}>Upload an image attachment for this document.</span>
           </div>
-        </DialogSection>
+        </FormGroup>
       ) : (
-        <DialogSection label="Image">
+        <FormGroup label="Image" variant="simple">
           {imageAttachments.length === 0 ? (
             <EmptyState compact title="No image attachments found." />
           ) : (
@@ -121,36 +122,34 @@ export const ImageEmbedConfigForm = ({
               ))}
             </div>
           )}
-        </DialogSection>
+        </FormGroup>
       )}
 
-      <DialogSection label="Alt text" required={false}>
-        <input
-          className={styles.input}
-          type="text"
+      <FormGroup label="Alt text" supplementaryLabel="(optional)" variant="simple">
+        <TextInput
           placeholder="Describe the image…"
           value={config.alt ?? ''}
-          onChange={event => onChange({ ...config, alt: event.target.value })}
+          style={{ width: '100%' }}
+          onChange={value => onChange({ ...config, alt: value ?? '' })}
         />
-      </DialogSection>
+      </FormGroup>
 
-      <DialogSection label="Size (percent)">
-        <input
-          className={styles.input}
-          type="text"
+      <FormGroup label="Size (percent)" variant="simple">
+        <TextInput
           placeholder="100"
           value={config.size}
-          onChange={event => onChange({ ...config, size: event.target.value })}
+          style={{ width: '100%' }}
+          onChange={value => onChange({ ...config, size: value ?? '' })}
         />
-      </DialogSection>
+      </FormGroup>
 
-      <DialogSection label="Align">
+      <FormGroup label="Align" variant="simple">
         <ModeSwitcher
           modes={ALIGN_MODES}
           value={config.align}
           onChange={value => onChange({ ...config, align: value as ImageAlign })}
         />
-      </DialogSection>
+      </FormGroup>
     </>
   );
 };

@@ -6,14 +6,14 @@ import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { useMdxContext } from '../../../sections/markdown/MdxContext';
 import { useMarkdownDiagramSession } from '../../../sections/markdown/MarkdownDiagramSessionContext';
 import { DiagramPicker } from '../../../components/DiagramPicker';
-import { DialogSection } from '../../../sections/markdown/editor/BlockDialog';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
+import { FormGroup } from '../../../components/FormGroup';
 import { useContentTree, type ContentScope } from '../../../hooks/useContentScope';
 import { useCreateMarkdownDiagramAttachment } from '../../../hooks/useAttachments';
 import { emptyDiagram } from '../../../lib/diagramDocuments';
 import type { ProjectFile } from '@arch-register/api-types/projectContentContract';
 import type { DiagramEmbedWidgetConfig } from './types';
 import styles from './DiagramEmbedConfigForm.module.css';
-import dialogStyles from '../../../sections/dashboard/WidgetConfigDialog.module.css';
 
 type EmbedMode = 'new' | 'existing';
 
@@ -77,40 +77,38 @@ export const DiagramEmbedConfigForm = ({
         </div>
       )}
       {isCreating && (
-        <DialogSection label="Name">
-          <input
-            className={styles.input}
-            type="text"
+        <FormGroup label="Name" variant="simple">
+          <TextInput
             placeholder="Diagram name…"
             value={diagramName}
-            onChange={e => setDiagramName(e.target.value)}
+            style={{ width: '100%' }}
+            onChange={value => setDiagramName(value ?? '')}
             autoFocus
           />
-        </DialogSection>
+        </FormGroup>
       )}
       {!isCreating && (
-        <DialogSection label="Diagram">
+        <FormGroup label="Diagram" variant="simple">
           <DiagramPicker
             fileTree={fileTree}
             selectedId={config.fileId}
             onSelect={(file: ProjectFile) => onChange({ ...config, fileId: file.id })}
           />
-        </DialogSection>
+        </FormGroup>
       )}
-      <DialogSection label="Caption" required={false}>
-        <input
-          type="text"
-          className={dialogStyles.labelInput}
+      <FormGroup label="Caption" supplementaryLabel="(optional)" variant="simple">
+        <TextInput
           value={config.caption ?? ''}
-          onChange={e =>
+          style={{ width: '100%' }}
+          onChange={value =>
             onChange({
               ...config,
-              caption: e.target.value.trim() === '' ? undefined : e.target.value
+              caption: (value ?? '').trim() === '' ? undefined : value
             })
           }
           placeholder="Add a caption…"
         />
-      </DialogSection>
+      </FormGroup>
     </>
   );
 };

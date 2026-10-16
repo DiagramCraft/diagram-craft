@@ -1,7 +1,7 @@
 import { type ConfigFormProps } from '../../shared/types';
 import { useMdxContext } from '../../../sections/markdown/MdxContext';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
-import { DialogSection } from '../../../sections/markdown/editor/BlockDialog';
+import { FormGroup } from '../../../components/FormGroup';
 import { WikiPagePicker } from './WikiPagePicker';
 import { WikiPageWidgetConfig } from './types';
 
@@ -13,7 +13,7 @@ export const WikiPageDashboardConfigForm = ({
   const { workspaceSlug } = useWorkspaceContext();
   const { projectId } = useMdxContext();
   return (
-    <DialogSection label="Wiki page">
+    <FormGroup label="Wiki page" variant="simple">
       <WikiPagePicker
         workspaceSlug={workspaceSlug}
         projectId={projectId}
@@ -21,6 +21,6 @@ export const WikiPageDashboardConfigForm = ({
         value={config.nodeId}
         onChange={nodeId => onChange({ ...config, nodeId })}
       />
-    </DialogSection>
+    </FormGroup>
   );
 };

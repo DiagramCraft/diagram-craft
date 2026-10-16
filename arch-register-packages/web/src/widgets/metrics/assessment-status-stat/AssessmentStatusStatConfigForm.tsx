@@ -1,6 +1,7 @@
-import { DialogSection } from '../../../sections/markdown/editor/BlockDialog';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
+import { FormGroup } from '../../../components/FormGroup';
+import { FormGrid } from '../../../components/FormGrid';
 import { AssessmentSchemaConfigForm } from '../../shared/data/AssessmentSchemaConfigForm';
-import registrationStyles from '../../../sections/dashboard/WidgetConfigDialog.module.css';
 import { AssessmentStatusStatConfig } from './types';
 
 export const ConfigForm = ({
@@ -12,24 +13,22 @@ export const ConfigForm = ({
 }) => (
   <>
     <AssessmentSchemaConfigForm config={config} onChange={onChange} statusRequired />
-    <DialogSection label="Subtext" required={false}>
-      <div className={registrationStyles.options}>
-        <label className={registrationStyles.optionRow}>
-          <span className={registrationStyles.optionLabel}>Template</span>
-          <div className={registrationStyles.optionControl}>
-            <input
-              type="text"
-              className={registrationStyles.labelInput}
-              value={config.subtextTemplate ?? ''}
-              placeholder="e.g. of {total} assessments"
-              onChange={event => {
-                const value = event.currentTarget.value;
-                onChange({ ...config, subtextTemplate: value.trim() === '' ? undefined : value });
-              }}
-            />
-          </div>
-        </label>
-      </div>
-    </DialogSection>
+    <FormGroup label="Subtext" supplementaryLabel="(optional)" variant="simple">
+      <FormGrid>
+        <FormGrid.Row label="Template">
+          <TextInput
+            value={config.subtextTemplate ?? ''}
+            placeholder="e.g. of {total} assessments"
+            style={{ width: '100%' }}
+            onChange={value =>
+              onChange({
+                ...config,
+                subtextTemplate: (value ?? '').trim() === '' ? undefined : value
+              })
+            }
+          />
+        </FormGrid.Row>
+      </FormGrid>
+    </FormGroup>
   </>
 );

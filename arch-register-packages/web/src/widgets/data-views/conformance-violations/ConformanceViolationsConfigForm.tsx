@@ -1,6 +1,8 @@
+import { NumberInput } from '@diagram-craft/app-components/NumberInput';
+import { Select } from '@diagram-craft/app-components/Select';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
-import { DialogSection } from '../../../sections/markdown/editor/BlockDialog';
-import configFormStyles from '../../../sections/dashboard/WidgetConfigDialog.module.css';
+import { FormGroup } from '../../../components/FormGroup';
+import { FormGrid } from '../../../components/FormGrid';
 import { ConformanceViolationsWidgetConfig } from './types';
 
 export const ConformanceViolationsConfigForm = ({
@@ -13,42 +15,32 @@ export const ConformanceViolationsConfigForm = ({
   const { schemas } = useWorkspaceContext();
   return (
     <>
-      <DialogSection label="Entity type" required>
-        <select
-          className={configFormStyles.labelInput}
+      <FormGroup label="Entity type" variant="simple">
+        <Select.Root
           value={config.schemaName}
-          onChange={event => onChange({ ...config, schemaName: event.currentTarget.value })}
+          onChange={value => onChange({ ...config, schemaName: value ?? '' })}
         >
-          <option value="">Select an entity type…</option>
+          <Select.Item value="">Select an entity type…</Select.Item>
           {schemas.map(schema => (
-            <option key={schema.id} value={schema.name}>
+            <Select.Item key={schema.id} value={schema.name}>
               {schema.name}
-            </option>
+            </Select.Item>
           ))}
-        </select>
-      </DialogSection>
-      <DialogSection label="Display" required={false}>
-        <div className={configFormStyles.options}>
-          <label className={configFormStyles.optionRow}>
-            <span className={configFormStyles.optionLabel}>Max rows</span>
-            <div className={configFormStyles.optionControl}>
-              <input
-                type="number"
-                min={1}
-                max={50}
-                className={configFormStyles.labelInput}
-                value={config.limit}
-                onChange={event =>
-                  onChange({
-                    ...config,
-                    limit: Math.max(1, Number(event.currentTarget.value) || 1)
-                  })
-                }
-              />
-            </div>
-          </label>
-        </div>
-      </DialogSection>
+        </Select.Root>
+      </FormGroup>
+      <FormGroup label="Display" supplementaryLabel="(optional)" variant="simple">
+        <FormGrid>
+          <FormGrid.Row label="Max rows">
+            <NumberInput
+              min={1}
+              max={50}
+              value={config.limit}
+              style={{ width: '80px' }}
+              onChange={value => onChange({ ...config, limit: Math.max(1, value ?? 1) })}
+            />
+          </FormGrid.Row>
+        </FormGrid>
+      </FormGroup>
     </>
   );
 };

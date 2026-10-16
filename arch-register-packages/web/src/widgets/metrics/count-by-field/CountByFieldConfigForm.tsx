@@ -1,6 +1,6 @@
+import { Select } from '@diagram-craft/app-components/Select';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
-import { DialogSection } from '../../../sections/markdown/editor/BlockDialog';
-import configFormStyles from '../../../sections/dashboard/WidgetConfigDialog.module.css';
+import { FormGroup } from '../../../components/FormGroup';
 import { CountByFieldWidgetConfig } from './types';
 
 type CountByFieldConfigFormProps = {
@@ -14,36 +14,32 @@ export const CountByFieldConfigForm = ({ config, onChange }: CountByFieldConfigF
 
   return (
     <>
-      <DialogSection label="Entity type" required>
-        <select
-          className={configFormStyles.labelInput}
+      <FormGroup label="Entity type" variant="simple">
+        <Select.Root
           value={config.schemaName}
-          onChange={event =>
-            onChange({ ...config, schemaName: event.currentTarget.value, fieldId: '' })
-          }
+          onChange={value => onChange({ ...config, schemaName: value ?? '', fieldId: '' })}
         >
-          <option value="">Select an entity type…</option>
+          <Select.Item value="">Select an entity type…</Select.Item>
           {schemas.map(candidate => (
-            <option key={candidate.id} value={candidate.name}>
+            <Select.Item key={candidate.id} value={candidate.name}>
               {candidate.name}
-            </option>
+            </Select.Item>
           ))}
-        </select>
-      </DialogSection>
-      <DialogSection label="Count by field" required>
-        <select
-          className={configFormStyles.labelInput}
+        </Select.Root>
+      </FormGroup>
+      <FormGroup label="Count by field" variant="simple">
+        <Select.Root
           value={config.fieldId}
-          onChange={event => onChange({ ...config, fieldId: event.currentTarget.value })}
+          onChange={value => onChange({ ...config, fieldId: value ?? '' })}
         >
-          <option value="">Select a field…</option>
+          <Select.Item value="">Select a field…</Select.Item>
           {(schema?.fields ?? []).map(field => (
-            <option key={field.id} value={field.id}>
+            <Select.Item key={field.id} value={field.id}>
               {field.name}
-            </option>
+            </Select.Item>
           ))}
-        </select>
-      </DialogSection>
+        </Select.Root>
+      </FormGroup>
     </>
   );
 };

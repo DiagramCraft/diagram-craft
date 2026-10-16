@@ -3,7 +3,9 @@ import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import type { ConfigFormProps } from '../../shared/types';
 import { EntityPicker } from '../../../components/EntityPicker';
 import { EntityFilterPanel, type EntityFilterValue } from '../../../components/EntityFilterPanel';
-import { DialogSection } from '../../../sections/markdown/editor/BlockDialog';
+import { Select } from '@diagram-craft/app-components/Select';
+import { FormGroup } from '../../../components/FormGroup';
+import { FormGrid } from '../../../components/FormGrid';
 import { useEntity } from '../../../hooks/useEntities';
 import type { EntityChangelogWidgetConfig } from './types';
 import styles from './EntityChangelogConfigForm.module.css';
@@ -83,7 +85,7 @@ export const EntityChangelogConfigForm = ({ config, onChange }: Props) => {
 
   return (
     <>
-      <DialogSection label="Source">
+      <FormGroup label="Source" variant="simple">
         <div className={styles.modeTabs}>
           <button
             type="button"
@@ -116,40 +118,30 @@ export const EntityChangelogConfigForm = ({ config, onChange }: Props) => {
             onChange={update => commit({ filter: { ...filter, ...update } })}
           />
         )}
-      </DialogSection>
+      </FormGroup>
 
-      <DialogSection label="Options" required={false}>
-        <div className={styles.options}>
-          <label className={styles.optionRow}>
-            <span className={styles.optionLabel}>Limit</span>
-            <select
-              className={styles.optionSelect}
-              value={limit}
-              onChange={e => commit({ limit: e.target.value })}
-            >
+      <FormGroup label="Options" supplementaryLabel="(optional)" variant="simple">
+        <FormGrid>
+          <FormGrid.Row label="Limit">
+            <Select.Root value={limit} onChange={value => commit({ limit: value ?? '10' })}>
               {LIMIT_OPTIONS.map(o => (
-                <option key={o.value} value={o.value}>
+                <Select.Item key={o.value} value={o.value}>
                   {o.label}
-                </option>
+                </Select.Item>
               ))}
-            </select>
-          </label>
-          <label className={styles.optionRow}>
-            <span className={styles.optionLabel}>Since</span>
-            <select
-              className={styles.optionSelect}
-              value={since}
-              onChange={e => commit({ since: e.target.value })}
-            >
+            </Select.Root>
+          </FormGrid.Row>
+          <FormGrid.Row label="Since">
+            <Select.Root value={since} onChange={value => commit({ since: value ?? '' })}>
               {SINCE_OPTIONS.map(o => (
-                <option key={o.value} value={o.value}>
+                <Select.Item key={o.value} value={o.value}>
                   {o.label}
-                </option>
+                </Select.Item>
               ))}
-            </select>
-          </label>
-        </div>
-      </DialogSection>
+            </Select.Root>
+          </FormGrid.Row>
+        </FormGrid>
+      </FormGroup>
     </>
   );
 };

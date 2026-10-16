@@ -17,12 +17,6 @@
   padding: 10px 0 0 0;
 }
 
-.options {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-
 .advanced summary {
   cursor: pointer;
   font-size: 12px;

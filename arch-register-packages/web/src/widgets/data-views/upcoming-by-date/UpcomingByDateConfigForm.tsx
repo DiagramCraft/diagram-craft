@@ -1,5 +1,8 @@
-import { DialogSection } from '../../../sections/markdown/editor/BlockDialog';
-import configFormStyles from '../../../sections/dashboard/WidgetConfigDialog.module.css';
+import { NumberInput } from '@diagram-craft/app-components/NumberInput';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
+import { FormGroup } from '../../../components/FormGroup';
+import { FormGrid } from '../../../components/FormGrid';
+import { FormCheckboxList } from '../../../components/FormCheckboxList';
 import { UpcomingByDateWidgetConfig } from './types';
 
 type UpcomingByDateConfigFormProps = {
@@ -7,95 +10,71 @@ type UpcomingByDateConfigFormProps = {
   onChange: (config: UpcomingByDateWidgetConfig) => void;
 };
 
-const optionalText = (value: string): string | undefined =>
-  value.trim() === '' ? undefined : value;
-
-const optionalNumber = (value: string): number | undefined =>
-  value.trim() === '' || Number.isNaN(Number(value)) ? undefined : Number(value);
+const optionalText = (value: string | undefined): string | undefined =>
+  (value ?? '').trim() === '' ? undefined : value;
 
 export const UpcomingByDateConfigForm = ({ config, onChange }: UpcomingByDateConfigFormProps) => (
   <>
-    <DialogSection label="Records (query)" required>
-      <input
-        type="text"
-        className={configFormStyles.labelInput}
+    <FormGroup label="Records (query)" variant="simple">
+      <TextInput
         value={config.query}
         placeholder='e.g. schema:"Contract"'
-        onChange={e => onChange({ ...config, query: e.target.value })}
+        style={{ width: '100%' }}
+        onChange={value => onChange({ ...config, query: value ?? '' })}
       />
-    </DialogSection>
-    <DialogSection label="Date field id" required>
-      <input
-        type="text"
-        className={configFormStyles.labelInput}
+    </FormGroup>
+    <FormGroup label="Date field id" variant="simple">
+      <TextInput
         value={config.dateFieldId}
         placeholder="e.g. contract_end"
-        onChange={e => onChange({ ...config, dateFieldId: e.target.value })}
+        style={{ width: '100%' }}
+        onChange={value => onChange({ ...config, dateFieldId: value ?? '' })}
       />
-    </DialogSection>
-    <DialogSection label="Display" required={false}>
-      <div className={configFormStyles.options}>
-        <label className={configFormStyles.optionRow}>
-          <span className={configFormStyles.optionLabel}>Within (days)</span>
-          <div className={configFormStyles.optionControl}>
-            <input
-              type="number"
-              min={0}
-              className={configFormStyles.labelInput}
-              value={config.windowDays ?? ''}
-              placeholder="No limit"
-              onChange={e => onChange({ ...config, windowDays: optionalNumber(e.target.value) })}
-            />
-          </div>
-        </label>
-        <label className={configFormStyles.optionRow}>
-          <span className={configFormStyles.optionLabel}>Show</span>
-          <div className={configFormStyles.optionControl}>
-            <input
-              type="number"
-              min={1}
-              max={50}
-              className={configFormStyles.labelInput}
-              value={config.limit ?? 7}
-              onChange={e =>
-                onChange({ ...config, limit: Math.max(1, optionalNumber(e.target.value) ?? 7) })
-              }
-            />
-          </div>
-        </label>
-        <label className={configFormStyles.optionRow}>
-          <span className={configFormStyles.optionLabel}>Include overdue</span>
-          <div className={configFormStyles.optionControl}>
-            <input
-              type="checkbox"
-              checked={config.includeOverdue ?? false}
-              onChange={e => onChange({ ...config, includeOverdue: e.target.checked || undefined })}
-            />
-          </div>
-        </label>
-        <label className={configFormStyles.optionRow}>
-          <span className={configFormStyles.optionLabel}>Subtitle field id</span>
-          <div className={configFormStyles.optionControl}>
-            <input
-              type="text"
-              className={configFormStyles.labelInput}
-              value={config.sublabelFieldId ?? ''}
-              onChange={e => onChange({ ...config, sublabelFieldId: optionalText(e.target.value) })}
-            />
-          </div>
-        </label>
-        <label className={configFormStyles.optionRow}>
-          <span className={configFormStyles.optionLabel}>Value field id</span>
-          <div className={configFormStyles.optionControl}>
-            <input
-              type="text"
-              className={configFormStyles.labelInput}
-              value={config.valueFieldId ?? ''}
-              onChange={e => onChange({ ...config, valueFieldId: optionalText(e.target.value) })}
-            />
-          </div>
-        </label>
-      </div>
-    </DialogSection>
+    </FormGroup>
+    <FormGroup label="Display" supplementaryLabel="(optional)" variant="simple">
+      <FormGrid>
+        <FormGrid.Row label="Within (days)">
+          <NumberInput
+            min={0}
+            value={config.windowDays ?? ''}
+            placeholder="No limit"
+            style={{ width: '80px' }}
+            onChange={value => onChange({ ...config, windowDays: value })}
+          />
+        </FormGrid.Row>
+        <FormGrid.Row label="Show">
+          <NumberInput
+            min={1}
+            max={50}
+            value={config.limit ?? 7}
+            style={{ width: '80px' }}
+            onChange={value => onChange({ ...config, limit: Math.max(1, value ?? 7) })}
+          />
+        </FormGrid.Row>
+        <FormGrid.Row label="Subtitle field id">
+          <TextInput
+            value={config.sublabelFieldId ?? ''}
+            style={{ width: '100%' }}
+            onChange={value => onChange({ ...config, sublabelFieldId: optionalText(value) })}
+          />
+        </FormGrid.Row>
+        <FormGrid.Row label="Value field id">
+          <TextInput
+            value={config.valueFieldId ?? ''}
+            style={{ width: '100%' }}
+            onChange={value => onChange({ ...config, valueFieldId: optionalText(value) })}
+          />
+        </FormGrid.Row>
+      </FormGrid>
+      <FormCheckboxList>
+        <FormCheckboxList.Row label="Include overdue">
+          <input
+            type="checkbox"
+            checked={config.includeOverdue ?? false}
+            onChange={e => onChange({ ...config, includeOverdue: e.target.checked || undefined })}
+          />
+        </FormCheckboxList.Row>
+      </FormCheckboxList>
+    </FormGroup>
   </>
 );

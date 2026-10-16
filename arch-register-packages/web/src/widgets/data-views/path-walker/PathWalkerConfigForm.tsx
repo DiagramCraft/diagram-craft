@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { type PathStep } from '@arch-register/api-types/entityQueryIR';
-import { DialogSection } from '../../../sections/markdown/editor/BlockDialog';
+import { Select } from '@diagram-craft/app-components/Select';
+import { FormGroup } from '../../../components/FormGroup';
 import { pathStepKey } from '../../../sections/entities/components/pathBuilder/pathBuilderState';
 import { hopDirectionGlyph } from '../../../sections/entities/components/pathWalkerViewState';
 import {
@@ -10,7 +11,6 @@ import {
   resolveWalkerHops,
   type PathWalkerWidgetConfig
 } from './pathWalkerWidgetLogic';
-import configFormStyles from '../../../sections/dashboard/WidgetConfigDialog.module.css';
 
 type PathWalkerConfigFormProps = {
   config: PathWalkerWidgetConfig;
@@ -33,49 +33,44 @@ export const PathWalkerConfigForm = ({ config, onChange }: PathWalkerConfigFormP
 
   return (
     <>
-      <DialogSection label="Starting entity type" required>
-        <select
-          className={configFormStyles.labelInput}
+      <FormGroup label="Starting entity type" variant="simple">
+        <Select.Root
           value={rootSchema?.name ?? ''}
-          onChange={event =>
-            onChange({ ...config, rootSchemaName: event.currentTarget.value, hops: [] })
-          }
+          onChange={value => onChange({ ...config, rootSchemaName: value ?? '', hops: [] })}
         >
-          <option value="">Select an entity type…</option>
+          <Select.Item value="">Select an entity type…</Select.Item>
           {schemas.map(schema => (
-            <option key={schema.id} value={schema.name}>
+            <Select.Item key={schema.id} value={schema.name}>
               {schema.name}
-            </option>
+            </Select.Item>
           ))}
-        </select>
-      </DialogSection>
-      <DialogSection label="Relationship path" required={false}>
+        </Select.Root>
+      </FormGroup>
+      <FormGroup label="Relationship path" supplementaryLabel="(optional)" variant="simple">
         {chain.map(({ options }, index) => {
           const current = hops[index];
           const currentKey = current ? pathStepKey(current) : '';
           return (
-            <select
+            <Select.Root
               key={index}
-              className={configFormStyles.labelInput}
-              aria-label={`Relation to follow from column ${index + 1}`}
               value={currentKey}
-              onChange={event => {
-                const option = options.find(o => pathStepKey(o.step) === event.currentTarget.value);
+              onChange={value => {
+                const option = options.find(o => pathStepKey(o.step) === value);
                 setHops(option ? [...hops.slice(0, index), option.step] : hops.slice(0, index));
               }}
             >
-              <option value="">
+              <Select.Item value="">
                 {index === 0 ? 'No relation (start unexpanded)' : 'Stop here'}
-              </option>
+              </Select.Item>
               {options.map(option => (
-                <option key={pathStepKey(option.step)} value={pathStepKey(option.step)}>
+                <Select.Item key={pathStepKey(option.step)} value={pathStepKey(option.step)}>
                   {hopDirectionGlyph(option.step)} {option.label}
-                </option>
+                </Select.Item>
               ))}
-            </select>
+            </Select.Root>
           );
         })}
-      </DialogSection>
+      </FormGroup>
     </>
   );
 };

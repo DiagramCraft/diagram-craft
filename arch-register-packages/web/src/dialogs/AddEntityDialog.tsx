@@ -1,13 +1,13 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
-import { FormGroup } from '@diagram-craft/app-components/FormGroup';
 import { Select } from '@diagram-craft/app-components/Select';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { orpcClient } from '../lib/orpcClient';
 import { ApiError } from '../lib/http';
 import { Banner } from '../components/Banner';
+import { FormGroup } from '../components/FormGroup';
 import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
 import { useWorkspaceAuthorization } from '../auth/WorkspaceAuthorizationContext';
 import { useEntitiesBySchema } from '../hooks/useEntities';
@@ -402,9 +402,9 @@ export const AddEntityDialog = ({
 
         <div className={styles.contentGrid}>
           {/* Schema-specific fields */}
-          <FormGroup label="Properties" icon={<TbAdjustments size={12} />}>
+          <FormGroup variant="border" label="Properties" icon={<TbAdjustments size={12} />}>
             {selectedSchema && (
-              <div className={styles.propertiesList}>
+              <div>
                 {selectedSchema.fields
                   .filter(
                     f =>
@@ -438,7 +438,7 @@ export const AddEntityDialog = ({
           </FormGroup>
 
           {/* Metadata */}
-          <FormGroup label="Metadata" icon={<TbInfoCircle size={11} />}>
+          <FormGroup variant="border" label="Metadata" icon={<TbInfoCircle size={11} />}>
             <FormElement label="Description" required={false}>
               <TextArea
                 value={meta.description}

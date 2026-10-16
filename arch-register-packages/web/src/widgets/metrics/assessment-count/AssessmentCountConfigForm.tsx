@@ -1,8 +1,11 @@
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { Select } from '@diagram-craft/app-components/Select';
-import { DialogSection } from '../../../sections/markdown/editor/BlockDialog';
+import { NumberInput } from '@diagram-craft/app-components/NumberInput';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
+import { FormGroup } from '../../../components/FormGroup';
+import { FormGrid } from '../../../components/FormGrid';
+import { FormCheckboxList } from '../../../components/FormCheckboxList';
 import { type AssessmentWidgetMode } from '../../data-views/assessments/assessmentsWidgetLogic';
-import registrationStyles from '../../../sections/dashboard/WidgetConfigDialog.module.css';
 import { AssessmentCountWidgetConfig } from './types';
 
 const optionalText = (value: string): string | undefined =>
@@ -24,7 +27,7 @@ export const AssessmentCountConfigForm = ({
 
   return (
     <>
-      <DialogSection label="Mode" required>
+      <FormGroup label="Mode" variant="simple">
         <Select.Root
           value={config.mode}
           onChange={value =>
@@ -36,54 +39,40 @@ export const AssessmentCountConfigForm = ({
           <Select.Item value="overdue">Overdue</Select.Item>
           <Select.Item value="all">All</Select.Item>
         </Select.Root>
-      </DialogSection>
-      <DialogSection label="Scoped to entity types" required={false}>
-        <div className={registrationStyles.options}>
+      </FormGroup>
+      <FormGroup label="Scoped to entity types" supplementaryLabel="(optional)" variant="simple">
+        <FormCheckboxList>
           {schemas.map(schema => (
-            <label key={schema.id} className={registrationStyles.optionRow}>
+            <FormCheckboxList.Row key={schema.id} label={schema.name}>
               <input
                 type="checkbox"
                 checked={selected.includes(schema.name)}
                 onChange={event => toggleSchema(schema.name, event.currentTarget.checked)}
               />
-              <span className={registrationStyles.optionLabel}>{schema.name}</span>
-            </label>
+            </FormCheckboxList.Row>
           ))}
-        </div>
-      </DialogSection>
-      <DialogSection label="Display" required={false}>
-        <div className={registrationStyles.options}>
-          <label className={registrationStyles.optionRow}>
-            <span className={registrationStyles.optionLabel}>Due within (days)</span>
-            <div className={registrationStyles.optionControl}>
-              <input
-                type="number"
-                min={0}
-                className={registrationStyles.labelInput}
-                value={config.dueWithinDays ?? ''}
-                placeholder="Any"
-                onChange={event => {
-                  const value = event.currentTarget.value;
-                  onChange({ ...config, dueWithinDays: value === '' ? undefined : Number(value) });
-                }}
-              />
-            </div>
-          </label>
-          <label className={registrationStyles.optionRow}>
-            <span className={registrationStyles.optionLabel}>Subtext</span>
-            <div className={registrationStyles.optionControl}>
-              <input
-                type="text"
-                className={registrationStyles.labelInput}
-                value={config.subtext ?? ''}
-                onChange={event =>
-                  onChange({ ...config, subtext: optionalText(event.currentTarget.value) })
-                }
-              />
-            </div>
-          </label>
-        </div>
-      </DialogSection>
+        </FormCheckboxList>
+      </FormGroup>
+      <FormGroup label="Display" supplementaryLabel="(optional)" variant="simple">
+        <FormGrid>
+          <FormGrid.Row label="Due within (days)">
+            <NumberInput
+              min={0}
+              value={config.dueWithinDays ?? ''}
+              placeholder="Any"
+              style={{ width: '80px' }}
+              onChange={value => onChange({ ...config, dueWithinDays: value })}
+            />
+          </FormGrid.Row>
+          <FormGrid.Row label="Subtext">
+            <TextInput
+              value={config.subtext ?? ''}
+              style={{ width: '100%' }}
+              onChange={value => onChange({ ...config, subtext: optionalText(value ?? '') })}
+            />
+          </FormGrid.Row>
+        </FormGrid>
+      </FormGroup>
     </>
   );
 };

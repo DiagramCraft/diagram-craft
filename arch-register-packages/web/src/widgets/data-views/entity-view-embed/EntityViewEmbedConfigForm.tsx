@@ -2,7 +2,7 @@ import { useSavedViews } from '../../../hooks/useSavedViews';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { useMdxContext } from '../../../sections/markdown/MdxContext';
 import type { ConfigFormProps } from '../../shared/types';
-import { DialogSection } from '../../../sections/markdown/editor/BlockDialog';
+import { FormGroup } from '../../../components/FormGroup';
 import { SavedViewSelectField } from './SavedViewSelectField';
 import type { SavedViewEmbedWidgetConfig } from './types';
 
@@ -18,12 +18,12 @@ export const EntityViewEmbedConfigForm = ({ config, onChange }: Props) => {
   const adminViews = savedViews.filter(v => v.isAdminView);
 
   return (
-    <DialogSection label="View">
+    <FormGroup label="View" variant="simple">
       <SavedViewSelectField
         adminViews={adminViews}
         value={config.viewId}
         onChange={viewId => onChange({ viewId })}
       />
-    </DialogSection>
+    </FormGroup>
   );
 };
