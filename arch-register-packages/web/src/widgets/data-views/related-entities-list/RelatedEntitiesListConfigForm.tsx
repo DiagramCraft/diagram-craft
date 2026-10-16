@@ -10,8 +10,7 @@ type RelatedEntitiesListConfigFormProps = {
   onChange: (config: RelatedEntitiesListWidgetConfig) => void;
 };
 
-const clean = (value: string | undefined): string | undefined =>
-  value === '' ? undefined : value;
+const clean = (value: string | undefined): string | undefined => (value === '' ? undefined : value);
 
 export const RelatedEntitiesListConfigForm = ({
   config,

@@ -133,7 +133,9 @@ const QueryModeForm = ({ config, onChange }: AggregateStatConfigFormProps) => {
             <FormGrid.Row label="Field to count">
               <TextInput
                 value={config.distinctFieldId ?? ''}
-                onChange={value => onChange({ ...config, distinctFieldId: optionalText(value ?? '') })}
+                onChange={value =>
+                  onChange({ ...config, distinctFieldId: optionalText(value ?? '') })
+                }
                 placeholder="Field id, e.g. cost_centre"
                 style={{ width: '100%' }}
               />

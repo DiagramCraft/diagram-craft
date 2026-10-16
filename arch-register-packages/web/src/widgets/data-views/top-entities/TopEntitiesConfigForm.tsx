@@ -47,7 +47,11 @@ export const TopEntitiesConfigForm = ({ config, onChange }: TopEntitiesConfigFor
           }}
         />
       </FormGroup>
-      <FormGroup label="Sort by number of related records" supplementaryLabel="(optional)" variant="simple">
+      <FormGroup
+        label="Sort by number of related records"
+        supplementaryLabel="(optional)"
+        variant="simple"
+      >
         <Select.Root
           value={config.relationFieldName ?? ''}
           onChange={value =>
@@ -116,7 +120,9 @@ export const TopEntitiesConfigForm = ({ config, onChange }: TopEntitiesConfigFor
             <input
               type="checkbox"
               checked={config.showLink ?? true}
-              onChange={e => onChange({ ...config, showLink: e.target.checked ? undefined : false })}
+              onChange={e =>
+                onChange({ ...config, showLink: e.target.checked ? undefined : false })
+              }
             />
           </FormCheckboxList.Row>
           <FormCheckboxList.Row label="Share bars">

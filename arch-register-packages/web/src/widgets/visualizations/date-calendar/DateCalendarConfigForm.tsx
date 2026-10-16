@@ -59,7 +59,9 @@ const CaseSourceForm = ({ config, onChange }: DateCalendarConfigFormProps) => {
       <FormGroup label="Scope" supplementaryLabel="(optional)" variant="simple">
         <Select.Root
           value={cases.scope ?? 'workspace'}
-          onChange={value => patch({ scope: (value ?? 'workspace') as 'workspace' | 'mine' | 'late' })}
+          onChange={value =>
+            patch({ scope: (value ?? 'workspace') as 'workspace' | 'mine' | 'late' })
+          }
         >
           <Select.Item value="workspace">Workspace-wide</Select.Item>
           <Select.Item value="mine">Assigned to me</Select.Item>
