@@ -1,7 +1,8 @@
 import type { DashboardWidgetFrame } from '@arch-register/api-types/dashboardContract';
-import { DialogSection } from '../../../sections/markdown/editor/BlockDialog';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
+import { FormGroup } from '../../../components/FormGroup';
+import { FormCheckboxList } from '../../../components/FormCheckboxList';
 import { IconPicker } from '../../../components/IconPicker';
-import styles from '../../../sections/dashboard/WidgetConfigDialog.module.css';
 
 type Props = {
   frame: DashboardWidgetFrame;
@@ -17,31 +18,30 @@ export const WidgetFrameSettingsForm = ({
   defaultTitle,
   defaultShowFrame
 }: Props) => (
-  <div className={styles.options}>
-    <DialogSection label="Title">
-      <div className={styles.titleRow}>
-        <input
-          className={styles.labelInput}
-          value={frame.title ?? ''}
-          placeholder={defaultTitle}
-          onChange={e => onChange({ ...frame, title: e.target.value })}
-        />
-        <label className={styles.checkboxRow}>
+  <>
+    <FormGroup label="Title" variant="simple">
+      <TextInput
+        value={frame.title ?? ''}
+        placeholder={defaultTitle}
+        style={{ width: '100%' }}
+        onChange={value => onChange({ ...frame, title: value ?? '' })}
+      />
+      <FormCheckboxList>
+        <FormCheckboxList.Row label="Show frame">
           <input
             type="checkbox"
             checked={frame.showFrame ?? defaultShowFrame}
             onChange={e => onChange({ ...frame, showFrame: e.target.checked })}
           />
-          <span className={styles.optionLabel}>Show frame</span>
-        </label>
-      </div>
-    </DialogSection>
-    <DialogSection label="Icon">
+        </FormCheckboxList.Row>
+      </FormCheckboxList>
+    </FormGroup>
+    <FormGroup label="Icon" variant="simple">
       <IconPicker
         value={frame.icon}
         noneLabel="Default"
         onChange={icon => onChange({ ...frame, icon })}
       />
-    </DialogSection>
-  </div>
+    </FormGroup>
+  </>
 );

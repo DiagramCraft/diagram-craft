@@ -1,5 +1,6 @@
-import { DialogSection } from '../../../sections/markdown/editor/BlockDialog';
-import configFormStyles from '../../../sections/dashboard/WidgetConfigDialog.module.css';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
+import { FormGroup } from '../../../components/FormGroup';
+import { FormGrid } from '../../../components/FormGrid';
 import { DateRangeTimelineWidgetConfig } from './types';
 
 type DateRangeTimelineConfigFormProps = {
@@ -7,8 +8,8 @@ type DateRangeTimelineConfigFormProps = {
   onChange: (config: DateRangeTimelineWidgetConfig) => void;
 };
 
-const optionalText = (value: string): string | undefined =>
-  value.trim() === '' ? undefined : value;
+const optionalText = (value: string | undefined): string | undefined =>
+  (value ?? '').trim() === '' ? undefined : value;
 
 const TextOption = ({
   label,
@@ -21,18 +22,14 @@ const TextOption = ({
   placeholder?: string;
   onChange: (value: string | undefined) => void;
 }) => (
-  <label className={configFormStyles.optionRow}>
-    <span className={configFormStyles.optionLabel}>{label}</span>
-    <div className={configFormStyles.optionControl}>
-      <input
-        type="text"
-        className={configFormStyles.labelInput}
-        value={value ?? ''}
-        placeholder={placeholder}
-        onChange={e => onChange(optionalText(e.target.value))}
-      />
-    </div>
-  </label>
+  <FormGrid.Row label={label}>
+    <TextInput
+      value={value ?? ''}
+      placeholder={placeholder}
+      style={{ width: '100%' }}
+      onChange={v => onChange(optionalText(v))}
+    />
+  </FormGrid.Row>
 );
 
 export const DateRangeTimelineConfigForm = ({
@@ -40,35 +37,36 @@ export const DateRangeTimelineConfigForm = ({
   onChange
 }: DateRangeTimelineConfigFormProps) => (
   <>
-    <DialogSection label="Records (query)" required={config.entityQuery === undefined}>
-      <input
-        type="text"
-        className={configFormStyles.labelInput}
+    <FormGroup
+      label="Records (query)"
+      supplementaryLabel={config.entityQuery === undefined ? undefined : '(optional)'}
+      variant="simple"
+    >
+      <TextInput
         value={config.query ?? ''}
         placeholder='e.g. schema:"Contract"'
-        onChange={e => onChange({ ...config, query: e.target.value })}
+        style={{ width: '100%' }}
+        onChange={value => onChange({ ...config, query: value ?? '' })}
       />
-    </DialogSection>
-    <DialogSection label="Start field id" required>
-      <input
-        type="text"
-        className={configFormStyles.labelInput}
+    </FormGroup>
+    <FormGroup label="Start field id" variant="simple">
+      <TextInput
         value={config.startFieldId}
         placeholder="e.g. contract_start"
-        onChange={e => onChange({ ...config, startFieldId: e.target.value })}
+        style={{ width: '100%' }}
+        onChange={value => onChange({ ...config, startFieldId: value ?? '' })}
       />
-    </DialogSection>
-    <DialogSection label="End field id" required>
-      <input
-        type="text"
-        className={configFormStyles.labelInput}
+    </FormGroup>
+    <FormGroup label="End field id" variant="simple">
+      <TextInput
         value={config.endFieldId}
         placeholder="e.g. contract_end"
-        onChange={e => onChange({ ...config, endFieldId: e.target.value })}
+        style={{ width: '100%' }}
+        onChange={value => onChange({ ...config, endFieldId: value ?? '' })}
       />
-    </DialogSection>
-    <DialogSection label="Display" required={false}>
-      <div className={configFormStyles.options}>
+    </FormGroup>
+    <FormGroup label="Display" supplementaryLabel="(optional)" variant="simple">
+      <FormGrid>
         <TextOption
           label="Subtitle field id"
           value={config.sublabelFieldId}
@@ -91,7 +89,7 @@ export const DateRangeTimelineConfigForm = ({
           placeholder="Boolean field, e.g. auto_renew"
           onChange={markerWhenFieldId => onChange({ ...config, markerWhenFieldId })}
         />
-      </div>
-    </DialogSection>
+      </FormGrid>
+    </FormGroup>
   </>
 );

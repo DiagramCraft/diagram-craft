@@ -1,8 +1,11 @@
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
+import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { Select } from '@diagram-craft/app-components/Select';
 import { EntityFilterPanel, type EntityFilterValue } from '../../../components/EntityFilterPanel';
 import { getMetricSourceOptions } from '../../../sections/entities/components/mapMetricConfig';
-import { DialogSection } from '../../../sections/markdown/editor/BlockDialog';
+import { FormGroup } from '../../../components/FormGroup';
+import { FormGrid } from '../../../components/FormGrid';
+import { FormCheckboxList } from '../../../components/FormCheckboxList';
 import configFormStyles from '../../../sections/dashboard/WidgetConfigDialog.module.css';
 import { TopEntitiesWidgetConfig } from './types';
 
@@ -29,7 +32,7 @@ export const TopEntitiesConfigForm = ({ config, onChange }: TopEntitiesConfigFor
 
   return (
     <>
-      <DialogSection label="Entity type">
+      <FormGroup label="Entity type" variant="simple">
         <EntityFilterPanel
           value={filter}
           onChange={update => {
@@ -43,8 +46,8 @@ export const TopEntitiesConfigForm = ({ config, onChange }: TopEntitiesConfigFor
             });
           }}
         />
-      </DialogSection>
-      <DialogSection label="Sort by number of related records" required={false}>
+      </FormGroup>
+      <FormGroup label="Sort by number of related records" supplementaryLabel="(optional)" variant="simple">
         <Select.Root
           value={config.relationFieldName ?? ''}
           onChange={value =>
@@ -63,8 +66,8 @@ export const TopEntitiesConfigForm = ({ config, onChange }: TopEntitiesConfigFor
               </Select.Item>
             ))}
         </Select.Root>
-      </DialogSection>
-      <DialogSection label="Sort by field">
+      </FormGroup>
+      <FormGroup label="Sort by field" variant="simple">
         {fieldOptions.length === 0 ? (
           <div className={`${configFormStyles.hint} dim`}>
             {config.schema
@@ -86,71 +89,45 @@ export const TopEntitiesConfigForm = ({ config, onChange }: TopEntitiesConfigFor
             ))}
           </Select.Root>
         )}
-      </DialogSection>
-      <DialogSection label="Display" required={false}>
-        <div className={configFormStyles.options}>
-          <label className={configFormStyles.optionRow}>
-            <span className={configFormStyles.optionLabel}>Order</span>
-            <div className={configFormStyles.optionControl}>
-              <Select.Root
-                value={config.direction ?? 'desc'}
-                onChange={value => onChange({ ...config, direction: value as 'asc' | 'desc' })}
-              >
-                <Select.Item value="desc">Highest first</Select.Item>
-                <Select.Item value="asc">Lowest first</Select.Item>
-              </Select.Root>
-            </div>
-          </label>
-          <label className={configFormStyles.optionRow}>
-            <span className={configFormStyles.optionLabel}>Show</span>
-            <div className={configFormStyles.optionControl}>
-              <input
-                type="number"
-                min={1}
-                max={50}
-                className={configFormStyles.labelInput}
-                value={config.limit ?? 5}
-                onChange={e =>
-                  onChange({
-                    ...config,
-                    limit: Math.max(1, Number(e.target.value) || 5)
-                  })
-                }
-              />
-            </div>
-          </label>
-          <label className={configFormStyles.optionRow}>
-            <span className={configFormStyles.optionLabel}>Catalog link</span>
-            <div className={configFormStyles.optionControl}>
-              <input
-                type="checkbox"
-                checked={config.showLink ?? true}
-                onChange={e =>
-                  onChange({
-                    ...config,
-                    showLink: e.target.checked ? undefined : false
-                  })
-                }
-              />
-            </div>
-          </label>
-          <label className={configFormStyles.optionRow}>
-            <span className={configFormStyles.optionLabel}>Share bars</span>
-            <div className={configFormStyles.optionControl}>
-              <input
-                type="checkbox"
-                checked={config.showShareBar ?? false}
-                onChange={e =>
-                  onChange({
-                    ...config,
-                    showShareBar: e.target.checked || undefined
-                  })
-                }
-              />
-            </div>
-          </label>
-        </div>
-      </DialogSection>
+      </FormGroup>
+      <FormGroup label="Display" supplementaryLabel="(optional)" variant="simple">
+        <FormGrid>
+          <FormGrid.Row label="Order">
+            <Select.Root
+              value={config.direction ?? 'desc'}
+              onChange={value => onChange({ ...config, direction: value as 'asc' | 'desc' })}
+            >
+              <Select.Item value="desc">Highest first</Select.Item>
+              <Select.Item value="asc">Lowest first</Select.Item>
+            </Select.Root>
+          </FormGrid.Row>
+          <FormGrid.Row label="Show">
+            <NumberInput
+              min={1}
+              max={50}
+              value={config.limit ?? 5}
+              style={{ width: '80px' }}
+              onChange={value => onChange({ ...config, limit: Math.max(1, value || 5) })}
+            />
+          </FormGrid.Row>
+        </FormGrid>
+        <FormCheckboxList>
+          <FormCheckboxList.Row label="Catalog link">
+            <input
+              type="checkbox"
+              checked={config.showLink ?? true}
+              onChange={e => onChange({ ...config, showLink: e.target.checked ? undefined : false })}
+            />
+          </FormCheckboxList.Row>
+          <FormCheckboxList.Row label="Share bars">
+            <input
+              type="checkbox"
+              checked={config.showShareBar ?? false}
+              onChange={e => onChange({ ...config, showShareBar: e.target.checked || undefined })}
+            />
+          </FormCheckboxList.Row>
+        </FormCheckboxList>
+      </FormGroup>
     </>
   );
 };

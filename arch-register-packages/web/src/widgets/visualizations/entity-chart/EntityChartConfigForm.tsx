@@ -1,9 +1,9 @@
 import { Select } from '@diagram-craft/app-components/Select';
 import { EntityFilterPanel } from '../../../components/EntityFilterPanel';
-import { DialogSection } from '../../../sections/markdown/editor/BlockDialog';
+import { FormGroup } from '../../../components/FormGroup';
+import { FormGrid } from '../../../components/FormGrid';
 import type { ConfigFormProps } from '../../shared/types';
 import type { EntityChartWidgetConfig } from './types';
-import styles from './EntityChartConfigForm.module.css';
 
 const GROUP_BY_OPTIONS = [
   { value: 'lifecycle', label: 'Status' },
@@ -21,7 +21,7 @@ export const EntityChartConfigForm = ({
   onChange
 }: ConfigFormProps<EntityChartWidgetConfig>) => (
   <>
-    <DialogSection label="Filters">
+    <FormGroup label="Filters" variant="simple">
       <EntityFilterPanel
         value={{
           schemaId: config.schema ?? '',
@@ -37,51 +37,45 @@ export const EntityChartConfigForm = ({
           })
         }
       />
-    </DialogSection>
+    </FormGroup>
 
-    <DialogSection label="Chart settings">
-      <div className={styles.options}>
-        <label className={styles.optionRow}>
-          <span className={styles.optionLabel}>Group by</span>
-          <div className={styles.optionControl}>
-            <Select.Root
-              value={config.groupBy}
-              onChange={value =>
-                onChange({
-                  ...config,
-                  groupBy: (value as EntityChartWidgetConfig['groupBy']) ?? 'lifecycle'
-                })
-              }
-            >
-              {GROUP_BY_OPTIONS.map(option => (
-                <Select.Item key={option.value} value={option.value}>
-                  {option.label}
-                </Select.Item>
-              ))}
-            </Select.Root>
-          </div>
-        </label>
-        <label className={styles.optionRow}>
-          <span className={styles.optionLabel}>Chart type</span>
-          <div className={styles.optionControl}>
-            <Select.Root
-              value={config.chartType}
-              onChange={value =>
-                onChange({
-                  ...config,
-                  chartType: (value as EntityChartWidgetConfig['chartType']) ?? 'donut'
-                })
-              }
-            >
-              {CHART_TYPE_OPTIONS.map(option => (
-                <Select.Item key={option.value} value={option.value}>
-                  {option.label}
-                </Select.Item>
-              ))}
-            </Select.Root>
-          </div>
-        </label>
-      </div>
-    </DialogSection>
+    <FormGroup label="Chart settings" variant="simple">
+      <FormGrid>
+        <FormGrid.Row label="Group by">
+          <Select.Root
+            value={config.groupBy}
+            onChange={value =>
+              onChange({
+                ...config,
+                groupBy: (value as EntityChartWidgetConfig['groupBy']) ?? 'lifecycle'
+              })
+            }
+          >
+            {GROUP_BY_OPTIONS.map(option => (
+              <Select.Item key={option.value} value={option.value}>
+                {option.label}
+              </Select.Item>
+            ))}
+          </Select.Root>
+        </FormGrid.Row>
+        <FormGrid.Row label="Chart type">
+          <Select.Root
+            value={config.chartType}
+            onChange={value =>
+              onChange({
+                ...config,
+                chartType: (value as EntityChartWidgetConfig['chartType']) ?? 'donut'
+              })
+            }
+          >
+            {CHART_TYPE_OPTIONS.map(option => (
+              <Select.Item key={option.value} value={option.value}>
+                {option.label}
+              </Select.Item>
+            ))}
+          </Select.Root>
+        </FormGrid.Row>
+      </FormGrid>
+    </FormGroup>
   </>
 );

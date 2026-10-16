@@ -1,7 +1,8 @@
+import { Select } from '@diagram-craft/app-components/Select';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
-import { DialogSection } from '../../../sections/markdown/editor/BlockDialog';
+import { FormGroup } from '../../../components/FormGroup';
+import { FormCheckboxList } from '../../../components/FormCheckboxList';
 import type { RiskMatrixAxis, RiskMatrixWidgetConfig } from './RiskMatrixWidget';
-import styles from '../../../sections/dashboard/WidgetConfigDialog.module.css';
 
 type Props = {
   config: RiskMatrixWidgetConfig;
@@ -12,44 +13,41 @@ export const RiskMatrixConfigForm = ({ config, onChange }: Props) => {
   const { schemas } = useWorkspaceContext();
   return (
     <>
-      <DialogSection label="Risk entity type" required>
-        <select
-          className={styles.labelInput}
+      <FormGroup label="Risk entity type" variant="simple">
+        <Select.Root
           value={config.schemaName}
-          onChange={event => onChange({ ...config, schemaName: event.currentTarget.value })}
+          onChange={value => onChange({ ...config, schemaName: value ?? '' })}
         >
-          <option value="">Select an entity type…</option>
+          <Select.Item value="">Select an entity type…</Select.Item>
           {schemas.map(schema => (
-            <option key={schema.id} value={schema.name}>
+            <Select.Item key={schema.id} value={schema.name}>
               {schema.name}
-            </option>
+            </Select.Item>
           ))}
-        </select>
-      </DialogSection>
-      <DialogSection label="Initial axis" required={false}>
-        <select
-          className={styles.labelInput}
+        </Select.Root>
+      </FormGroup>
+      <FormGroup label="Initial axis" supplementaryLabel="(optional)" variant="simple">
+        <Select.Root
           value={config.axis ?? 'inherent'}
-          onChange={event =>
-            onChange({ ...config, axis: event.currentTarget.value as RiskMatrixAxis })
-          }
+          onChange={value => onChange({ ...config, axis: (value ?? 'inherent') as RiskMatrixAxis })}
         >
-          <option value="inherent">Inherent</option>
-          <option value="residual">Residual</option>
-        </select>
-      </DialogSection>
-      <DialogSection label="Closed risks" required={false}>
-        <label className={styles.checkboxRow}>
-          <input
-            type="checkbox"
-            checked={config.includeClosed ?? false}
-            onChange={event =>
-              onChange({ ...config, includeClosed: event.currentTarget.checked || undefined })
-            }
-          />
-          <span className={styles.optionLabel}>Include closed risks</span>
-        </label>
-      </DialogSection>
+          <Select.Item value="inherent">Inherent</Select.Item>
+          <Select.Item value="residual">Residual</Select.Item>
+        </Select.Root>
+      </FormGroup>
+      <FormGroup label="Closed risks" supplementaryLabel="(optional)" variant="simple">
+        <FormCheckboxList>
+          <FormCheckboxList.Row label="Include closed risks">
+            <input
+              type="checkbox"
+              checked={config.includeClosed ?? false}
+              onChange={event =>
+                onChange({ ...config, includeClosed: event.currentTarget.checked || undefined })
+              }
+            />
+          </FormCheckboxList.Row>
+        </FormCheckboxList>
+      </FormGroup>
     </>
   );
 };

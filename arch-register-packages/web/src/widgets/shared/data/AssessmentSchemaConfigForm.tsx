@@ -1,12 +1,14 @@
+import { Select } from '@diagram-craft/app-components/Select';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
-import { DialogSection } from '../../../sections/markdown/editor/BlockDialog';
+import { FormGroup } from '../../../components/FormGroup';
+import { FormGrid } from '../../../components/FormGrid';
 import {
   ASSESSMENT_STATUSES,
   ASSESSMENT_STATUS_LABEL,
   isAssessmentStatus
 } from './assessmentSummaryLogic';
 import type { EntityAssessmentStatus } from '../../../sections/entities/entityDrawer/entityAssessments';
-import styles from '../../../sections/dashboard/WidgetConfigDialog.module.css';
 
 type BaseConfig = { schemaName: string; label?: string };
 
@@ -31,55 +33,50 @@ export const AssessmentSchemaConfigForm = <
   const { schemas } = useWorkspaceContext();
   return (
     <>
-      <DialogSection label="Entity type" required>
-        <select
-          className={styles.labelInput}
+      <FormGroup label="Entity type" variant="simple">
+        <Select.Root
           value={config.schemaName}
-          onChange={event => onChange({ ...config, schemaName: event.currentTarget.value })}
+          onChange={value => onChange({ ...config, schemaName: value ?? '' })}
         >
-          <option value="">Select an entity type…</option>
+          <Select.Item value="">Select an entity type…</Select.Item>
           {schemas.map(schema => (
-            <option key={schema.id} value={schema.name}>
+            <Select.Item key={schema.id} value={schema.name}>
               {schema.name}
-            </option>
+            </Select.Item>
           ))}
-        </select>
-      </DialogSection>
-      <DialogSection label="Status" required={statusRequired}>
-        <select
-          className={styles.labelInput}
+        </Select.Root>
+      </FormGroup>
+      <FormGroup
+        label="Status"
+        supplementaryLabel={statusRequired ? undefined : '(optional)'}
+        variant="simple"
+      >
+        <Select.Root
           value={config.status ?? ''}
-          onChange={event => {
-            const value = event.currentTarget.value;
-            onChange({ ...config, status: isAssessmentStatus(value) ? value : undefined });
-          }}
+          onChange={value =>
+            onChange({ ...config, status: value && isAssessmentStatus(value) ? value : undefined })
+          }
         >
-          {!statusRequired && <option value="">All statuses</option>}
+          {!statusRequired && <Select.Item value="">All statuses</Select.Item>}
           {ASSESSMENT_STATUSES.map(status => (
-            <option key={status} value={status}>
+            <Select.Item key={status} value={status}>
               {ASSESSMENT_STATUS_LABEL[status]}
-            </option>
+            </Select.Item>
           ))}
-        </select>
-      </DialogSection>
-      <DialogSection label="Display" required={false}>
-        <div className={styles.options}>
-          <label className={styles.optionRow}>
-            <span className={styles.optionLabel}>Title</span>
-            <div className={styles.optionControl}>
-              <input
-                type="text"
-                className={styles.labelInput}
-                value={config.label ?? ''}
-                placeholder="Use the widget name"
-                onChange={event =>
-                  onChange({ ...config, label: optionalText(event.currentTarget.value) })
-                }
-              />
-            </div>
-          </label>
-        </div>
-      </DialogSection>
+        </Select.Root>
+      </FormGroup>
+      <FormGroup label="Display" supplementaryLabel="(optional)" variant="simple">
+        <FormGrid>
+          <FormGrid.Row label="Title">
+            <TextInput
+              value={config.label ?? ''}
+              placeholder="Use the widget name"
+              style={{ width: '100%' }}
+              onChange={value => onChange({ ...config, label: optionalText(value ?? '') })}
+            />
+          </FormGrid.Row>
+        </FormGrid>
+      </FormGroup>
     </>
   );
 };

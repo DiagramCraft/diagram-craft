@@ -2,10 +2,10 @@ import { type ConfigFormProps } from '../../shared/types';
 import { useState } from 'react';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { Button } from '@diagram-craft/app-components/Button';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { TbArrowDown, TbArrowUp, TbGripVertical, TbPlus, TbTrash } from 'react-icons/tb';
 import { TabContentsEditor } from '../../../sections/dashboard/TabContentsEditor';
 import { moveItem, resolveActiveTabId, createTab, type TabsWidgetConfig } from './tabsLogic';
-import formStyles from '../../../sections/dashboard/WidgetConfigDialog.module.css';
 import configFormStyles from './TabsConfigForm.module.css';
 
 type FormProps = ConfigFormProps<TabsWidgetConfig>;
@@ -56,13 +56,12 @@ export const TabsConfigForm = ({ config, onChange, context }: FormProps) => {
             >
               <TbGripVertical size={14} />
             </span>
-            <input
-              type="text"
-              className={formStyles.labelInput}
+            <TextInput
               value={tab.label}
               aria-label="Tab label"
+              style={{ flex: 1 }}
               onFocus={() => setSelectedId(tab.id)}
-              onChange={event => updateTab(tabIndex, { label: event.currentTarget.value })}
+              onChange={value => updateTab(tabIndex, { label: value ?? '' })}
             />
             <div className={configFormStyles.tabActions}>
               <Button

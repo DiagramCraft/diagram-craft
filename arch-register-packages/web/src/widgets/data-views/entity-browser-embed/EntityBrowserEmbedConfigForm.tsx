@@ -32,7 +32,8 @@ import {
   resolveMapViewConfig,
   resolveSort
 } from './EntityBrowserEmbedFieldResolution';
-import dialogStyles from '../../../sections/dashboard/WidgetConfigDialog.module.css';
+import { FormGroup } from '../../../components/FormGroup';
+import { FormGrid } from '../../../components/FormGrid';
 import styles from './EntityBrowserEmbedConfigForm.module.css';
 
 type Props = ConfigFormProps<EntityBrowserEmbedConfig>;
@@ -205,33 +206,33 @@ export const EntityBrowserEmbedConfigForm = ({ config, onChange }: Props) => {
 
   return (
     <div className={styles.body}>
-      <div className={styles.options}>
-        <label className={dialogStyles.optionRow}>
-          <span className={dialogStyles.optionLabel}>Max rows</span>
-          <NumberInput
-            value={config.limit ?? ''}
-            min={1}
-            step={1}
-            placeholder="All"
-            style={{ width: '80px' }}
-            onChange={value =>
-              onChange({
-                ...config,
-                limit: value !== undefined && value >= 1 ? Math.floor(value) : undefined
-              })
-            }
-          />
-        </label>
-        {(view === 'table' || view === 'cards') && (
-          <label className={dialogStyles.optionRow}>
-            <span className={dialogStyles.optionLabel}>Search &amp; pagination</span>
-            <Checkbox
-              value={config.interactive ?? false}
-              onChange={value => onChange({ ...config, interactive: value ? true : undefined })}
+      <FormGroup label="Options" supplementaryLabel="(optional)" variant="simple">
+        <FormGrid>
+          <FormGrid.Row label="Max rows">
+            <NumberInput
+              value={config.limit ?? ''}
+              min={1}
+              step={1}
+              placeholder="All"
+              style={{ width: '80px' }}
+              onChange={value =>
+                onChange({
+                  ...config,
+                  limit: value !== undefined && value >= 1 ? Math.floor(value) : undefined
+                })
+              }
             />
-          </label>
-        )}
-      </div>
+          </FormGrid.Row>
+          {(view === 'table' || view === 'cards') && (
+            <FormGrid.Row label="Search & pagination">
+              <Checkbox
+                value={config.interactive ?? false}
+                onChange={value => onChange({ ...config, interactive: value ? true : undefined })}
+              />
+            </FormGrid.Row>
+          )}
+        </FormGrid>
+      </FormGroup>
       <EntityBrowserEmbedAdvancedConfig config={config} onChange={onChange} />
       <EntityBrowserToolbar
         workspaceId={workspaceSlug}

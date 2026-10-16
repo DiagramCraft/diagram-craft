@@ -1,10 +1,12 @@
 import { Select } from '@diagram-craft/app-components/Select';
 import type { ConfigFormProps } from '../../shared/types';
 import { EntityFilterPanel, type EntityFilterValue } from '../../../components/EntityFilterPanel';
-import { DialogSection } from '../../../sections/markdown/editor/BlockDialog';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
+import { FormGroup } from '../../../components/FormGroup';
+import { FormGrid } from '../../../components/FormGrid';
+import { FormCheckboxList } from '../../../components/FormCheckboxList';
 import type { WidgetSurface } from '../../shared/types';
 import type { MetricType, StatMetricWidgetConfig } from './types';
-import styles from './MetricConfigForm.module.css';
 
 const METRIC_TYPE_OPTIONS: { value: MetricType; label: string; surfaces: WidgetSurface[] }[] = [
   { value: 'entity-count', label: 'Entity count', surfaces: ['workspace', 'project'] },
@@ -32,7 +34,7 @@ export const MetricConfigForm = ({ config, onChange, context }: Props) => {
 
   return (
     <>
-      <DialogSection label="Metric">
+      <FormGroup label="Metric" variant="simple">
         <Select.Root
           value={metricType}
           onChange={value => onChange({ ...config, metricType: value as MetricType })}
@@ -43,9 +45,9 @@ export const MetricConfigForm = ({ config, onChange, context }: Props) => {
             </Select.Item>
           ))}
         </Select.Root>
-      </DialogSection>
+      </FormGroup>
       {metricType === 'entity-count' && (
-        <DialogSection label="Filters" required={false}>
+        <FormGroup label="Filters" supplementaryLabel="(optional)" variant="simple">
           <EntityFilterPanel
             value={filter}
             onChange={update => {
@@ -58,37 +60,32 @@ export const MetricConfigForm = ({ config, onChange, context }: Props) => {
               });
             }}
           />
-        </DialogSection>
+        </FormGroup>
       )}
-      <DialogSection label="Display" required={false}>
-        <div className={styles.options}>
-          {/* On a dashboard the label is the widget title, set under Appearance. */}
-          {context.mode !== 'dashboard' && (
-            <label className={styles.optionRow}>
-              <span className={styles.optionLabel}>Label</span>
-              <div className={styles.optionControl}>
-                <input
-                  type="text"
-                  className={styles.labelInput}
-                  value={config.label ?? ''}
-                  onChange={e => onChange({ ...config, label: optionalText(e.target.value) })}
-                  placeholder="e.g. Services in production"
-                />
-              </div>
-            </label>
-          )}
-          <label className={styles.optionRow}>
-            <span className={styles.optionLabel}>Show link</span>
-            <div className={styles.optionControl}>
-              <input
-                type="checkbox"
-                checked={showLink}
-                onChange={e => onChange({ ...config, showLink: e.target.checked })}
+      <FormGroup label="Display" supplementaryLabel="(optional)" variant="simple">
+        {/* On a dashboard the label is the widget title, set under Appearance. */}
+        {context.mode !== 'dashboard' && (
+          <FormGrid>
+            <FormGrid.Row label="Label">
+              <TextInput
+                value={config.label ?? ''}
+                onChange={value => onChange({ ...config, label: optionalText(value ?? '') })}
+                placeholder="e.g. Services in production"
+                style={{ width: '100%' }}
               />
-            </div>
-          </label>
-        </div>
-      </DialogSection>
+            </FormGrid.Row>
+          </FormGrid>
+        )}
+        <FormCheckboxList>
+          <FormCheckboxList.Row label="Show link">
+            <input
+              type="checkbox"
+              checked={showLink}
+              onChange={e => onChange({ ...config, showLink: e.target.checked })}
+            />
+          </FormCheckboxList.Row>
+        </FormCheckboxList>
+      </FormGroup>
     </>
   );
 };

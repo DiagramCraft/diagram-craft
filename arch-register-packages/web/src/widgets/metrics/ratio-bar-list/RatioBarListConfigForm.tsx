@@ -1,6 +1,8 @@
+import { Select } from '@diagram-craft/app-components/Select';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
-import { DialogSection } from '../../../sections/markdown/editor/BlockDialog';
-import configFormStyles from '../../../sections/dashboard/WidgetConfigDialog.module.css';
+import { FormGroup } from '../../../components/FormGroup';
+import { FormGrid } from '../../../components/FormGrid';
 import { RatioBarListWidgetConfig } from './types';
 
 type RatioBarListConfigFormProps = {
@@ -12,90 +14,54 @@ export const RatioBarListConfigForm = ({ config, onChange }: RatioBarListConfigF
   const { schemas } = useWorkspaceContext();
   const schema = schemas.find(candidate => candidate.name === config.schemaName);
 
-  const textOption = (
-    label: string,
-    value: string,
-    onValue: (value: string) => void,
-    placeholder?: string
-  ) => (
-    <label className={configFormStyles.optionRow}>
-      <span className={configFormStyles.optionLabel}>{label}</span>
-      <div className={configFormStyles.optionControl}>
-        <input
-          type="text"
-          className={configFormStyles.labelInput}
-          value={value}
-          placeholder={placeholder}
-          onChange={event => onValue(event.currentTarget.value)}
-        />
-      </div>
-    </label>
+  const fieldSelect = (value: string, onValue: (value: string) => void) => (
+    <Select.Root value={value} onChange={v => onValue(v ?? '')} style={{ width: '100%' }}>
+      <Select.Item value="">Select a field…</Select.Item>
+      {(schema?.fields ?? []).map(field => (
+        <Select.Item key={field.id} value={field.id}>
+          {field.name}
+        </Select.Item>
+      ))}
+    </Select.Root>
   );
 
   return (
     <>
-      <DialogSection label="Entity type" required>
-        <select
-          className={configFormStyles.labelInput}
+      <FormGroup label="Entity type" variant="simple">
+        <Select.Root
           value={config.schemaName}
-          onChange={event => onChange({ ...config, schemaName: event.currentTarget.value })}
+          onChange={value => onChange({ ...config, schemaName: value ?? '' })}
         >
-          <option value="">Select an entity type…</option>
+          <Select.Item value="">Select an entity type…</Select.Item>
           {schemas.map(candidate => (
-            <option key={candidate.id} value={candidate.name}>
+            <Select.Item key={candidate.id} value={candidate.name}>
               {candidate.name}
-            </option>
+            </Select.Item>
           ))}
-        </select>
-      </DialogSection>
-      <DialogSection label="Bars" required>
-        <div className={configFormStyles.options}>
-          <label className={configFormStyles.optionRow}>
-            <span className={configFormStyles.optionLabel}>Group by</span>
-            <div className={configFormStyles.optionControl}>
-              <select
-                className={configFormStyles.labelInput}
-                value={config.groupByFieldId}
-                onChange={event =>
-                  onChange({ ...config, groupByFieldId: event.currentTarget.value })
-                }
-              >
-                <option value="">Select a field…</option>
-                {(schema?.fields ?? []).map(field => (
-                  <option key={field.id} value={field.id}>
-                    {field.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </label>
-          <label className={configFormStyles.optionRow}>
-            <span className={configFormStyles.optionLabel}>Filled when field</span>
-            <div className={configFormStyles.optionControl}>
-              <select
-                className={configFormStyles.labelInput}
-                value={config.numeratorFieldId}
-                onChange={event =>
-                  onChange({ ...config, numeratorFieldId: event.currentTarget.value })
-                }
-              >
-                <option value="">Select a field…</option>
-                {(schema?.fields ?? []).map(field => (
-                  <option key={field.id} value={field.id}>
-                    {field.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </label>
-          {textOption(
-            'Equals value',
-            config.numeratorValue,
-            value => onChange({ ...config, numeratorValue: value }),
-            'e.g. effective'
-          )}
-        </div>
-      </DialogSection>
+        </Select.Root>
+      </FormGroup>
+      <FormGroup label="Bars" variant="simple">
+        <FormGrid>
+          <FormGrid.Row label="Group by">
+            {fieldSelect(config.groupByFieldId, value =>
+              onChange({ ...config, groupByFieldId: value })
+            )}
+          </FormGrid.Row>
+          <FormGrid.Row label="Filled when field">
+            {fieldSelect(config.numeratorFieldId, value =>
+              onChange({ ...config, numeratorFieldId: value })
+            )}
+          </FormGrid.Row>
+          <FormGrid.Row label="Equals value">
+            <TextInput
+              value={config.numeratorValue}
+              placeholder="e.g. effective"
+              style={{ width: '100%' }}
+              onChange={value => onChange({ ...config, numeratorValue: value ?? '' })}
+            />
+          </FormGrid.Row>
+        </FormGrid>
+      </FormGroup>
     </>
   );
 };

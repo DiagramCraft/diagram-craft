@@ -1,5 +1,6 @@
-import { DialogSection } from '../../../sections/markdown/editor/BlockDialog';
-import configFormStyles from '../../../sections/dashboard/WidgetConfigDialog.module.css';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
+import { FormGroup } from '../../../components/FormGroup';
+import { FormGrid } from '../../../components/FormGrid';
 import { RelationPairsSourceFields } from './RelationPairsSourceFields';
 import { RelationPairsCoverageWidgetConfig } from './types';
 
@@ -15,8 +16,8 @@ export const RelationPairsCoverageConfigForm = ({
   return (
     <>
       <RelationPairsSourceFields config={config} onChange={onChange} />
-      <DialogSection label="Display" required={false}>
-        <div className={configFormStyles.options}>
+      <FormGroup label="Display" supplementaryLabel="(optional)" variant="simple">
+        <FormGrid>
           {(
             [
               ['consumerLabel', 'Consumer heading', 'Consumer'],
@@ -25,26 +26,17 @@ export const RelationPairsCoverageConfigForm = ({
               ['coverageLabel', 'Coverage heading', config.coverageRelationSchemaName]
             ] as const
           ).map(([key, label, placeholder]) => (
-            <label key={key} className={configFormStyles.optionRow}>
-              <span className={configFormStyles.optionLabel}>{label}</span>
-              <div className={configFormStyles.optionControl}>
-                <input
-                  type="text"
-                  className={configFormStyles.labelInput}
-                  value={config[key] ?? ''}
-                  placeholder={placeholder}
-                  onChange={event =>
-                    onChange({
-                      ...config,
-                      [key]: optionalText(event.currentTarget.value)
-                    })
-                  }
-                />
-              </div>
-            </label>
+            <FormGrid.Row key={key} label={label}>
+              <TextInput
+                value={config[key] ?? ''}
+                placeholder={placeholder}
+                style={{ width: '100%' }}
+                onChange={value => onChange({ ...config, [key]: optionalText(value ?? '') })}
+              />
+            </FormGrid.Row>
           ))}
-        </div>
-      </DialogSection>
+        </FormGrid>
+      </FormGroup>
     </>
   );
 };

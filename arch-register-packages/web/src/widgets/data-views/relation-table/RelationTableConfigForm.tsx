@@ -1,6 +1,5 @@
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
-import { DialogSection } from '../../../sections/markdown/editor/BlockDialog';
 import { RELATION_TABLE_META_COLUMNS } from './relationTableLogic';
 import { RelationTableWidgetConfig } from './types';
 import { FormGroup } from '../../../components/FormGroup';

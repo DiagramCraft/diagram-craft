@@ -1,8 +1,8 @@
 import { Select } from '@diagram-craft/app-components/Select';
 import { EntityFilterPanel } from '../../../components/EntityFilterPanel';
-import { DialogSection } from '../../../sections/markdown/editor/BlockDialog';
+import { FormGroup } from '../../../components/FormGroup';
+import { FormGrid } from '../../../components/FormGrid';
 import type { EntityTableWidgetConfig } from './types';
-import styles from './EntityTableConfigForm.module.css';
 
 export const LIMIT_OPTIONS = [
   { value: '10', label: '10 rows' },
@@ -28,7 +28,7 @@ export const EntityTableConfigForm = ({ config, onChange }: Props) => {
 
   return (
     <>
-      <DialogSection label="Filters" required={false}>
+      <FormGroup label="Filters" supplementaryLabel="(optional)" variant="simple">
         <EntityFilterPanel
           value={filter}
           onChange={update => {
@@ -41,26 +41,23 @@ export const EntityTableConfigForm = ({ config, onChange }: Props) => {
             });
           }}
         />
-      </DialogSection>
-      <DialogSection label="Options">
-        <div className={styles.options}>
-          <label className={styles.optionRow}>
-            <span className={styles.optionLabel}>Limit</span>
-            <div className={styles.optionControl}>
-              <Select.Root
-                value={limit}
-                onChange={value => onChange({ ...config, limit: Number(value ?? '10') })}
-              >
-                {LIMIT_OPTIONS.map(option => (
-                  <Select.Item key={option.value} value={option.value}>
-                    {option.label}
-                  </Select.Item>
-                ))}
-              </Select.Root>
-            </div>
-          </label>
-        </div>
-      </DialogSection>
+      </FormGroup>
+      <FormGroup label="Options" variant="simple">
+        <FormGrid>
+          <FormGrid.Row label="Limit">
+            <Select.Root
+              value={limit}
+              onChange={value => onChange({ ...config, limit: Number(value ?? '10') })}
+            >
+              {LIMIT_OPTIONS.map(option => (
+                <Select.Item key={option.value} value={option.value}>
+                  {option.label}
+                </Select.Item>
+              ))}
+            </Select.Root>
+          </FormGrid.Row>
+        </FormGrid>
+      </FormGroup>
     </>
   );
 };

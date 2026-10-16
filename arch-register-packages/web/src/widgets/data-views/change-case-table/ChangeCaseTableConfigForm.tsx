@@ -1,14 +1,16 @@
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { Select } from '@diagram-craft/app-components/Select';
 import { humanizeCaseKind } from '../../../utils/governanceCaseLabels';
-import { DialogSection } from '../../../sections/markdown/editor/BlockDialog';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
+import { FormGroup } from '../../../components/FormGroup';
+import { FormGrid } from '../../../components/FormGrid';
+import { FormCheckboxList } from '../../../components/FormCheckboxList';
 import { KNOWN_CASE_KINDS } from '../needs-attention/NeedsAttentionConfigForm';
 import { type NeedsAttentionSeverity } from '../needs-attention/needsAttentionQueue';
-import configFormStyles from '../../../sections/dashboard/WidgetConfigDialog.module.css';
 import { ChangeCaseTableConfig } from './types';
 
-const optionalText = (value: string): string | undefined =>
-  value.trim() === '' ? undefined : value;
+const optionalText = (value: string | undefined): string | undefined =>
+  (value ?? '').trim() === '' ? undefined : value;
 
 const SEVERITY_LABEL: Record<NeedsAttentionSeverity, string> = {
   none: 'None',
@@ -31,18 +33,14 @@ const TextOption = ({
   placeholder?: string;
   onChange: (value: string | undefined) => void;
 }) => (
-  <label className={configFormStyles.optionRow}>
-    <span className={configFormStyles.optionLabel}>{label}</span>
-    <div className={configFormStyles.optionControl}>
-      <input
-        type="text"
-        className={configFormStyles.labelInput}
-        value={value ?? ''}
-        placeholder={placeholder}
-        onChange={event => onChange(optionalText(event.currentTarget.value))}
-      />
-    </div>
-  </label>
+  <FormGrid.Row label={label}>
+    <TextInput
+      value={value ?? ''}
+      placeholder={placeholder}
+      style={{ width: '100%' }}
+      onChange={v => onChange(optionalText(v))}
+    />
+  </FormGrid.Row>
 );
 
 export const ChangeCaseTableConfigForm = ({ config, onChange }: ChangeCaseTableConfigFormProps) => {
@@ -58,38 +56,36 @@ export const ChangeCaseTableConfigForm = ({ config, onChange }: ChangeCaseTableC
 
   return (
     <>
-      <DialogSection label="Entity type" required>
-        <select
-          className={configFormStyles.labelInput}
+      <FormGroup label="Entity type" variant="simple">
+        <Select.Root
           value={config.schemaName}
-          onChange={event => onChange({ ...config, schemaName: event.currentTarget.value })}
+          onChange={value => onChange({ ...config, schemaName: value ?? '' })}
         >
-          <option value="">Select an entity type…</option>
+          <Select.Item value="">Select an entity type…</Select.Item>
           {schemas.map(schema => (
-            <option key={schema.id} value={schema.name}>
+            <Select.Item key={schema.id} value={schema.name}>
               {schema.name}
-            </option>
+            </Select.Item>
           ))}
-        </select>
-      </DialogSection>
-      <DialogSection label="Case kinds" required>
-        <div className={configFormStyles.options}>
+        </Select.Root>
+      </FormGroup>
+      <FormGroup label="Case kinds" variant="simple">
+        <FormCheckboxList>
           {[
             ...KNOWN_CASE_KINDS,
             ...config.caseKinds.filter(kind => !KNOWN_CASE_KINDS.includes(kind))
           ].map(kind => (
-            <label key={kind} className={configFormStyles.checkboxRow}>
+            <FormCheckboxList.Row key={kind} label={humanizeCaseKind(kind)}>
               <input
                 type="checkbox"
                 checked={config.caseKinds.includes(kind)}
                 onChange={event => toggleKind(kind, event.currentTarget.checked)}
               />
-              <span className={configFormStyles.optionLabel}>{humanizeCaseKind(kind)}</span>
-            </label>
+            </FormCheckboxList.Row>
           ))}
-        </div>
-      </DialogSection>
-      <DialogSection label="Priority" required={false}>
+        </FormCheckboxList>
+      </FormGroup>
+      <FormGroup label="Priority" supplementaryLabel="(optional)" variant="simple">
         <Select.Root
           value={config.severity}
           onChange={value =>
@@ -102,17 +98,17 @@ export const ChangeCaseTableConfigForm = ({ config, onChange }: ChangeCaseTableC
             </Select.Item>
           ))}
         </Select.Root>
-      </DialogSection>
-      <DialogSection label="Status filter" required={false}>
-        <div className={configFormStyles.options}>
+      </FormGroup>
+      <FormGroup label="Status filter" supplementaryLabel="(optional)" variant="simple">
+        <FormGrid>
           <TextOption
             label="Status"
             value={config.status}
             placeholder="open, completed, cancelled or $variable"
             onChange={status => onChange({ ...config, status })}
           />
-        </div>
-      </DialogSection>
+        </FormGrid>
+      </FormGroup>
     </>
   );
 };

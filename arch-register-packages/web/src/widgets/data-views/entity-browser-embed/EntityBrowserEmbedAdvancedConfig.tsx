@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { ADVANCED_CONFIG_KEYS, type EntityBrowserEmbedConfig } from './EntityBrowserEmbedCodec';
 import { isMapOverlayConfig } from '../../../sections/entities/components/mapOverlays';
 import styles from './EntityBrowserEmbedConfigForm.module.css';
@@ -55,16 +56,17 @@ export const EntityBrowserEmbedAdvancedConfig = ({ config, onChange }: Props) =>
   return (
     <details className={styles.advanced}>
       <summary>Advanced</summary>
-      <textarea
+      <TextArea
         className={styles.advancedJson}
         aria-label="Advanced widget configuration (JSON)"
         aria-invalid={!isValid}
         spellCheck={false}
         rows={6}
         value={text}
-        onChange={e => {
-          setText(e.target.value);
-          const advanced = parseAdvancedConfig(e.target.value);
+        onChange={value => {
+          const next = value ?? '';
+          setText(next);
+          const advanced = parseAdvancedConfig(next);
           if (advanced) onChange({ ...config, ...advanced });
         }}
       />

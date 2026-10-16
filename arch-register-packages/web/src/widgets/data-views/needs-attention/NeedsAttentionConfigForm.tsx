@@ -2,9 +2,13 @@ import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { useState } from 'react';
 import { Select } from '@diagram-craft/app-components/Select';
 import { humanizeCaseKind } from '../../../utils/governanceCaseLabels';
-import { DialogSection } from '../../../sections/markdown/editor/BlockDialog';
+import { NumberInput } from '@diagram-craft/app-components/NumberInput';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
+import { Button } from '@diagram-craft/app-components/Button';
+import { FormGroup } from '../../../components/FormGroup';
+import { FormGrid } from '../../../components/FormGrid';
+import { FormCheckboxList } from '../../../components/FormCheckboxList';
 import { type NeedsAttentionScope, type NeedsAttentionSeverity } from './needsAttentionQueue';
-import configFormStyles from '../../../sections/dashboard/WidgetConfigDialog.module.css';
 import { NeedsAttentionWidgetConfig } from './types';
 
 /** Case kinds with a real backing case model in this codebase — not an enum, just known ones to
@@ -49,7 +53,7 @@ export const NeedsAttentionConfigForm = ({ config, onChange }: NeedsAttentionCon
 
   return (
     <>
-      <DialogSection label="Entity type">
+      <FormGroup label="Entity type" variant="simple">
         <Select.Root
           value={config.schema}
           onChange={value => onChange({ ...config, schema: value ?? '' })}
@@ -61,50 +65,38 @@ export const NeedsAttentionConfigForm = ({ config, onChange }: NeedsAttentionCon
             </Select.Item>
           ))}
         </Select.Root>
-      </DialogSection>
-      <DialogSection label="Case kinds">
-        <div className={configFormStyles.options}>
-          {KNOWN_CASE_KINDS.map(kind => (
-            <label key={kind} className={configFormStyles.checkboxRow}>
+      </FormGroup>
+      <FormGroup label="Case kinds" variant="simple">
+        <FormCheckboxList>
+          {[...KNOWN_CASE_KINDS, ...otherKinds].map(kind => (
+            <FormCheckboxList.Row key={kind} label={humanizeCaseKind(kind)}>
               <input
                 type="checkbox"
                 checked={config.caseKinds.includes(kind)}
                 onChange={event => toggleKind(kind, event.currentTarget.checked)}
               />
-              <span className={configFormStyles.optionLabel}>{humanizeCaseKind(kind)}</span>
-            </label>
+            </FormCheckboxList.Row>
           ))}
-          {otherKinds.map(kind => (
-            <label key={kind} className={configFormStyles.checkboxRow}>
-              <input
-                type="checkbox"
-                checked
-                onChange={event => toggleKind(kind, event.currentTarget.checked)}
-              />
-              <span className={configFormStyles.optionLabel}>{humanizeCaseKind(kind)}</span>
-            </label>
-          ))}
-          <div className={configFormStyles.optionRow}>
-            <input
-              type="text"
-              className={configFormStyles.labelInput}
-              value={customKind}
-              placeholder="Other case kind…"
-              onChange={event => setCustomKind(event.currentTarget.value)}
-              onKeyDown={event => {
-                if (event.key === 'Enter') {
-                  event.preventDefault();
-                  addCustomKind();
-                }
-              }}
-            />
-            <button type="button" className={configFormStyles.labelInput} onClick={addCustomKind}>
-              Add
-            </button>
-          </div>
+        </FormCheckboxList>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <TextInput
+            value={customKind}
+            placeholder="Other case kind…"
+            style={{ flex: 1 }}
+            onChange={value => setCustomKind(value ?? '')}
+            onKeyDown={event => {
+              if (event.key === 'Enter') {
+                event.preventDefault();
+                addCustomKind();
+              }
+            }}
+          />
+          <Button variant="secondary" onClick={addCustomKind}>
+            Add
+          </Button>
         </div>
-      </DialogSection>
-      <DialogSection label="Scope" required={false}>
+      </FormGroup>
+      <FormGroup label="Scope" supplementaryLabel="(optional)" variant="simple">
         <Select.Root
           value={config.scope}
           onChange={value =>
@@ -120,8 +112,8 @@ export const NeedsAttentionConfigForm = ({ config, onChange }: NeedsAttentionCon
             </Select.Item>
           ))}
         </Select.Root>
-      </DialogSection>
-      <DialogSection label="Priority" required={false}>
+      </FormGroup>
+      <FormGroup label="Priority" supplementaryLabel="(optional)" variant="simple">
         <Select.Root
           value={config.severity}
           onChange={value =>
@@ -137,29 +129,20 @@ export const NeedsAttentionConfigForm = ({ config, onChange }: NeedsAttentionCon
             </Select.Item>
           ))}
         </Select.Root>
-      </DialogSection>
-      <DialogSection label="Display" required={false}>
-        <div className={configFormStyles.options}>
-          <label className={configFormStyles.optionRow}>
-            <span className={configFormStyles.optionLabel}>Show</span>
-            <div className={configFormStyles.optionControl}>
-              <input
-                type="number"
-                min={1}
-                max={20}
-                className={configFormStyles.labelInput}
-                value={config.limit}
-                onChange={event =>
-                  onChange({
-                    ...config,
-                    limit: Math.max(1, Number(event.currentTarget.value) || 8)
-                  })
-                }
-              />
-            </div>
-          </label>
-        </div>
-      </DialogSection>
+      </FormGroup>
+      <FormGroup label="Display" supplementaryLabel="(optional)" variant="simple">
+        <FormGrid>
+          <FormGrid.Row label="Show">
+            <NumberInput
+              min={1}
+              max={20}
+              value={config.limit}
+              style={{ width: '80px' }}
+              onChange={value => onChange({ ...config, limit: Math.max(1, value || 8) })}
+            />
+          </FormGrid.Row>
+        </FormGrid>
+      </FormGroup>
     </>
   );
 };

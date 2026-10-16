@@ -1,5 +1,7 @@
-import { DialogSection } from '../../../sections/markdown/editor/BlockDialog';
-import configFormStyles from '../../../sections/dashboard/WidgetConfigDialog.module.css';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
+import { FormGroup } from '../../../components/FormGroup';
+import { FormGrid } from '../../../components/FormGrid';
+import { FormCheckboxList } from '../../../components/FormCheckboxList';
 import { GroupedRollupTableWidgetConfig } from './types';
 
 type GroupedRollupTableConfigFormProps = {
@@ -7,8 +9,8 @@ type GroupedRollupTableConfigFormProps = {
   onChange: (config: GroupedRollupTableWidgetConfig) => void;
 };
 
-const optionalText = (value: string): string | undefined =>
-  value.trim() === '' ? undefined : value;
+const optionalText = (value: string | undefined): string | undefined =>
+  (value ?? '').trim() === '' ? undefined : value;
 
 const Toggle = ({
   label,
@@ -19,12 +21,9 @@ const Toggle = ({
   checked: boolean;
   onChange: (checked: boolean) => void;
 }) => (
-  <label className={configFormStyles.optionRow}>
-    <span className={configFormStyles.optionLabel}>{label}</span>
-    <div className={configFormStyles.optionControl}>
-      <input type="checkbox" checked={checked} onChange={e => onChange(e.target.checked)} />
-    </div>
-  </label>
+  <FormCheckboxList.Row label={label}>
+    <input type="checkbox" checked={checked} onChange={e => onChange(e.target.checked)} />
+  </FormCheckboxList.Row>
 );
 
 export const GroupedRollupTableConfigForm = ({
@@ -32,62 +31,50 @@ export const GroupedRollupTableConfigForm = ({
   onChange
 }: GroupedRollupTableConfigFormProps) => (
   <>
-    <DialogSection label="Records (query)" required>
-      <input
-        type="text"
-        className={configFormStyles.labelInput}
+    <FormGroup label="Records (query)" variant="simple">
+      <TextInput
         value={config.query ?? ''}
         placeholder='e.g. schema:"Vendor"'
-        onChange={e => onChange({ ...config, query: e.target.value })}
+        style={{ width: '100%' }}
+        onChange={value => onChange({ ...config, query: value ?? '' })}
       />
-    </DialogSection>
-    <DialogSection label="Sum field id" required>
-      <input
-        type="text"
-        className={configFormStyles.labelInput}
+    </FormGroup>
+    <FormGroup label="Sum field id" variant="simple">
+      <TextInput
         value={config.valueFieldId}
         placeholder="e.g. spend"
-        onChange={e => onChange({ ...config, valueFieldId: e.target.value })}
+        style={{ width: '100%' }}
+        onChange={value => onChange({ ...config, valueFieldId: value ?? '' })}
       />
-    </DialogSection>
-    <DialogSection label="Display" required={false}>
-      <div className={configFormStyles.options}>
-        <label className={configFormStyles.optionRow}>
-          <span className={configFormStyles.optionLabel}>Group by field id</span>
-          <div className={configFormStyles.optionControl}>
-            <input
-              type="text"
-              className={configFormStyles.labelInput}
-              value={config.groupFieldId ?? ''}
-              placeholder="Blank = one row per record"
-              onChange={e => onChange({ ...config, groupFieldId: optionalText(e.target.value) })}
-            />
-          </div>
-        </label>
-        <label className={configFormStyles.optionRow}>
-          <span className={configFormStyles.optionLabel}>Group column title</span>
-          <div className={configFormStyles.optionControl}>
-            <input
-              type="text"
-              className={configFormStyles.labelInput}
-              value={config.groupLabel ?? ''}
-              placeholder="Name"
-              onChange={e => onChange({ ...config, groupLabel: optionalText(e.target.value) })}
-            />
-          </div>
-        </label>
-        <label className={configFormStyles.optionRow}>
-          <span className={configFormStyles.optionLabel}>Value column title</span>
-          <div className={configFormStyles.optionControl}>
-            <input
-              type="text"
-              className={configFormStyles.labelInput}
-              value={config.valueLabel ?? ''}
-              placeholder="Total"
-              onChange={e => onChange({ ...config, valueLabel: optionalText(e.target.value) })}
-            />
-          </div>
-        </label>
+    </FormGroup>
+    <FormGroup label="Display" supplementaryLabel="(optional)" variant="simple">
+      <FormGrid>
+        <FormGrid.Row label="Group by field id">
+          <TextInput
+            value={config.groupFieldId ?? ''}
+            placeholder="Blank = one row per record"
+            style={{ width: '100%' }}
+            onChange={value => onChange({ ...config, groupFieldId: optionalText(value) })}
+          />
+        </FormGrid.Row>
+        <FormGrid.Row label="Group column title">
+          <TextInput
+            value={config.groupLabel ?? ''}
+            placeholder="Name"
+            style={{ width: '100%' }}
+            onChange={value => onChange({ ...config, groupLabel: optionalText(value) })}
+          />
+        </FormGrid.Row>
+        <FormGrid.Row label="Value column title">
+          <TextInput
+            value={config.valueLabel ?? ''}
+            placeholder="Total"
+            style={{ width: '100%' }}
+            onChange={value => onChange({ ...config, valueLabel: optionalText(value) })}
+          />
+        </FormGrid.Row>
+      </FormGrid>
+      <FormCheckboxList>
         <Toggle
           label="Bars"
           checked={config.showBar ?? false}
@@ -108,7 +95,7 @@ export const GroupedRollupTableConfigForm = ({
           checked={config.showTotal ?? true}
           onChange={checked => onChange({ ...config, showTotal: checked ? undefined : false })}
         />
-      </div>
-    </DialogSection>
+      </FormCheckboxList>
+    </FormGroup>
   </>
 );

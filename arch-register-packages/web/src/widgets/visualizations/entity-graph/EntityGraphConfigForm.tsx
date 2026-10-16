@@ -3,11 +3,11 @@ import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import type { ConfigFormProps } from '../../shared/types';
 import { Select } from '@diagram-craft/app-components/Select';
 import { EntityPicker } from '../../../components/EntityPicker';
-import { DialogSection } from '../../../sections/markdown/editor/BlockDialog';
+import { FormGroup } from '../../../components/FormGroup';
+import { FormGrid } from '../../../components/FormGrid';
 import { useEntity } from '../../../hooks/useEntities';
 import { normalizeEntityGraphDepth, normalizeEntityGraphDirection } from './types';
 import type { EntityGraphWidgetConfig } from './types';
-import styles from '../../../sections/dashboard/WidgetConfigDialog.module.css';
 
 type Props = ConfigFormProps<EntityGraphWidgetConfig>;
 
@@ -19,46 +19,40 @@ export const EntityGraphConfigForm = ({ config, onChange }: Props) => {
 
   return (
     <>
-      <DialogSection label="Entity">
+      <FormGroup label="Entity" variant="simple">
         <EntityPicker
           selectedEntityId={config.entityId}
           selectedEntity={entity}
           onSelectEntity={selected => onChange({ ...config, entityId: selected._publicId })}
           onClearEntity={() => onChange({ ...config, entityId: '' })}
         />
-      </DialogSection>
-      <DialogSection label="Options" required={false}>
-        <div className={styles.options}>
-          <label className={styles.optionRow}>
-            <span className={styles.optionLabel}>Depth</span>
-            <div className={styles.optionControl}>
-              <NumberInput
-                value={depth}
-                min={1}
-                max={3}
-                step={1}
-                onChange={value => onChange({ ...config, depth: normalizeEntityGraphDepth(value) })}
-                style={{ width: '64px' }}
-              />
-            </div>
-          </label>
-          <label className={styles.optionRow}>
-            <span className={styles.optionLabel}>Direction</span>
-            <div className={styles.optionControl}>
-              <Select.Root
-                value={direction}
-                onChange={value =>
-                  onChange({ ...config, direction: normalizeEntityGraphDirection(value) })
-                }
-              >
-                <Select.Item value="both">Both directions</Select.Item>
-                <Select.Item value="upstream">Upstream dependencies</Select.Item>
-                <Select.Item value="downstream">Downstream impact</Select.Item>
-              </Select.Root>
-            </div>
-          </label>
-        </div>
-      </DialogSection>
+      </FormGroup>
+      <FormGroup label="Options" supplementaryLabel="(optional)" variant="simple">
+        <FormGrid>
+          <FormGrid.Row label="Depth">
+            <NumberInput
+              value={depth}
+              min={1}
+              max={3}
+              step={1}
+              onChange={value => onChange({ ...config, depth: normalizeEntityGraphDepth(value) })}
+              style={{ width: '64px' }}
+            />
+          </FormGrid.Row>
+          <FormGrid.Row label="Direction">
+            <Select.Root
+              value={direction}
+              onChange={value =>
+                onChange({ ...config, direction: normalizeEntityGraphDirection(value) })
+              }
+            >
+              <Select.Item value="both">Both directions</Select.Item>
+              <Select.Item value="upstream">Upstream dependencies</Select.Item>
+              <Select.Item value="downstream">Downstream impact</Select.Item>
+            </Select.Root>
+          </FormGrid.Row>
+        </FormGrid>
+      </FormGroup>
     </>
   );
 };

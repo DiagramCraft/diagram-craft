@@ -1,5 +1,8 @@
-import { DialogSection } from '../../../sections/markdown/editor/BlockDialog';
-import configFormStyles from '../../../sections/dashboard/WidgetConfigDialog.module.css';
+import { NumberInput } from '@diagram-craft/app-components/NumberInput';
+import { TextArea } from '@diagram-craft/app-components/TextArea';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
+import { FormGroup } from '../../../components/FormGroup';
+import { FormGrid } from '../../../components/FormGrid';
 import { FieldMatrixWidgetConfig } from './types';
 
 type FieldMatrixConfigFormProps = {
@@ -7,8 +10,8 @@ type FieldMatrixConfigFormProps = {
   onChange: (config: FieldMatrixWidgetConfig) => void;
 };
 
-const optionalText = (value: string): string | undefined =>
-  value.trim() === '' ? undefined : value;
+const optionalText = (value: string | undefined): string | undefined =>
+  (value ?? '').trim() === '' ? undefined : value;
 
 const parseRows = (text: string): number[] =>
   text
@@ -19,87 +22,70 @@ const parseRows = (text: string): number[] =>
 
 export const FieldMatrixConfigForm = ({ config, onChange }: FieldMatrixConfigFormProps) => (
   <>
-    <DialogSection label="Records (query)" required>
-      <input
-        type="text"
-        className={configFormStyles.labelInput}
+    <FormGroup label="Records (query)" variant="simple">
+      <TextInput
         value={config.query ?? ''}
         placeholder='e.g. schema:"Vendor"'
-        onChange={e => onChange({ ...config, query: e.target.value })}
+        style={{ width: '100%' }}
+        onChange={value => onChange({ ...config, query: value ?? '' })}
       />
-    </DialogSection>
-    <DialogSection label="Row field id" required>
-      <input
-        type="text"
-        className={configFormStyles.labelInput}
+    </FormGroup>
+    <FormGroup label="Row field id" variant="simple">
+      <TextInput
         value={config.rowFieldId}
         placeholder="e.g. criticality"
-        onChange={e => onChange({ ...config, rowFieldId: e.target.value })}
+        style={{ width: '100%' }}
+        onChange={value => onChange({ ...config, rowFieldId: value ?? '' })}
       />
-    </DialogSection>
-    <DialogSection label="Row values, top to bottom" required>
-      <input
-        type="text"
-        className={configFormStyles.labelInput}
-        defaultValue={config.rows.join(', ')}
+    </FormGroup>
+    <FormGroup label="Row values, top to bottom" variant="simple">
+      <TextInput
+        value={config.rows.join(', ')}
         placeholder="e.g. 5, 4, 3, 2"
-        onBlur={e => onChange({ ...config, rows: parseRows(e.target.value) })}
+        style={{ width: '100%' }}
+        onBlur={e => onChange({ ...config, rows: parseRows(e.currentTarget.value) })}
       />
-    </DialogSection>
-    <DialogSection label="Column field id" required>
-      <input
-        type="text"
-        className={configFormStyles.labelInput}
+    </FormGroup>
+    <FormGroup label="Column field id" variant="simple">
+      <TextInput
         value={config.valueFieldId}
         placeholder="e.g. risk"
-        onChange={e => onChange({ ...config, valueFieldId: e.target.value })}
+        style={{ width: '100%' }}
+        onChange={value => onChange({ ...config, valueFieldId: value ?? '' })}
       />
-    </DialogSection>
-    <DialogSection label="Display" required={false}>
-      <div className={configFormStyles.options}>
-        <label className={configFormStyles.optionRow}>
-          <span className={configFormStyles.optionLabel}>Corner label</span>
-          <div className={configFormStyles.optionControl}>
-            <input
-              type="text"
-              className={configFormStyles.labelInput}
-              value={config.cornerLabel ?? ''}
-              onChange={e => onChange({ ...config, cornerLabel: optionalText(e.target.value) })}
-            />
-          </div>
-        </label>
-        <label className={configFormStyles.optionRow}>
-          <span className={configFormStyles.optionLabel}>Emphasise hot bands from row</span>
-          <div className={configFormStyles.optionControl}>
-            <input
-              type="number"
-              className={configFormStyles.labelInput}
-              value={config.hotRowMin ?? ''}
-              onChange={e =>
-                onChange({
-                  ...config,
-                  hotRowMin: e.target.value === '' ? undefined : Number(e.target.value)
-                })
-              }
-            />
-          </div>
-        </label>
-      </div>
-    </DialogSection>
-    <DialogSection label="Bands (JSON: label, min, tone, hot)" required>
-      <textarea
-        className={configFormStyles.labelInput}
+    </FormGroup>
+    <FormGroup label="Display" supplementaryLabel="(optional)" variant="simple">
+      <FormGrid>
+        <FormGrid.Row label="Corner label">
+          <TextInput
+            value={config.cornerLabel ?? ''}
+            style={{ width: '100%' }}
+            onChange={value => onChange({ ...config, cornerLabel: optionalText(value) })}
+          />
+        </FormGrid.Row>
+        <FormGrid.Row label="Emphasise hot bands from row">
+          <NumberInput
+            value={config.hotRowMin ?? ''}
+            style={{ width: '80px' }}
+            onChange={value => onChange({ ...config, hotRowMin: value })}
+          />
+        </FormGrid.Row>
+      </FormGrid>
+    </FormGroup>
+    <FormGroup label="Bands (JSON: label, min, tone, hot)" variant="simple">
+      <TextArea
         rows={6}
-        defaultValue={JSON.stringify(config.bands, null, 2)}
+        value={JSON.stringify(config.bands, null, 2)}
+        style={{ width: '100%' }}
         onBlur={e => {
           try {
-            const parsed = JSON.parse(e.target.value);
+            const parsed = JSON.parse(e.currentTarget.value);
             if (Array.isArray(parsed)) onChange({ ...config, bands: parsed });
           } catch {
             // Keep the previous bands until the text is valid JSON.
           }
         }}
       />
-    </DialogSection>
+    </FormGroup>
   </>
 );
