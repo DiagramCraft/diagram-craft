@@ -50,18 +50,18 @@ type AddEntityDialogProps = {
 };
 
 export const AddEntityDialog = ({
-                                  open,
-                                  onClose,
-                                  onCreated,
-                                  onDraftCreated,
-                                  draftMode = false,
-                                  referenceOptionsExtra,
-                                  workspaceId,
-                                  schemas,
-                                  lifecycleStates,
-                                  teams,
-                                  preselectedSchemaId
-                                }: AddEntityDialogProps) => {
+  open,
+  onClose,
+  onCreated,
+  onDraftCreated,
+  draftMode = false,
+  referenceOptionsExtra,
+  workspaceId,
+  schemas,
+  lifecycleStates,
+  teams,
+  preselectedSchemaId
+}: AddEntityDialogProps) => {
   const { canCreateTopLevelEntity, getFieldGroupAccess } = useWorkspaceAuthorization(workspaceId);
   const [schemaId, setSchemaId] = useState('');
   const [templateId, setTemplateId] = useState('');
@@ -343,7 +343,7 @@ export const AddEntityDialog = ({
           void handleSubmit();
         }}
       >
-        <button type="submit" hidden/>
+        <button type="submit" hidden />
         <div className={styles.schemaPickers}>
           {/* Schema picker */}
           <div data-testid="new-entity-type">
@@ -402,7 +402,7 @@ export const AddEntityDialog = ({
 
         <div className={styles.contentGrid}>
           {/* Schema-specific fields */}
-          <FormGroup variant="border" label="Properties" icon={<TbAdjustments size={12}/>}>
+          <FormGroup variant="border" label="Properties" icon={<TbAdjustments size={12} />}>
             {selectedSchema && (
               <div>
                 {selectedSchema.fields
@@ -438,7 +438,7 @@ export const AddEntityDialog = ({
           </FormGroup>
 
           {/* Metadata */}
-          <FormGroup variant="border" label="Metadata" icon={<TbInfoCircle size={11}/>}>
+          <FormGroup variant="border" label="Metadata" icon={<TbInfoCircle size={11} />}>
             <FormElement label="Description" required={false}>
               <TextArea
                 value={meta.description}

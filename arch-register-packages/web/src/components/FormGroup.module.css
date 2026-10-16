@@ -2,7 +2,7 @@
  * FormGroup - .cFormGroup
  * | Head - .eHead
  * |   | Icon - .eIcon
- * |   | Step - .eStep
+ * |   | Step - .eTextIcon
  * |   | Label - .eLabel
  * |   | Action - .eAction
  * | Body - .eBody
@@ -22,7 +22,7 @@
       flex-shrink: 0;
     }
 
-    .eStep {
+    .eTextIcon {
       width: 18px;
       height: 18px;
       display: inline-flex;
@@ -39,8 +39,13 @@
       font-size: 11px;
       font-weight: 600;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.025em;
       color: var(--base-fg-dim);
+    }
+
+    .eSupplementaryLabel {
+      font-weight: 300;
+      margin-left: 1ch;
     }
 
     .eAction {
@@ -49,14 +54,23 @@
       gap: 6px;
     }
   }
-  
+
   .eBody {
     display: flex;
     flex-direction: column;
     gap: 10px;
   }
 
-  &.isBorder {
+  &[data-variant="simple"] {
+    .eHead {
+      .eLabel {
+        color: var(--cmp-fg-disabled);
+        margin-bottom: 8px;
+      }
+    }
+  }
+
+  &[data-variant="border"] {
     --cmp-bg: var(--gray-2);
 
     background: var(--base-bg);
@@ -74,7 +88,7 @@
         color: var(--base-fg-dim);
       }
 
-      .eStep {
+      .eTextIcon {
         color: var(--base-fg-more-dim);
       }
 
@@ -84,7 +98,7 @@
     }
   }
 
-  &.isSection {
+  &[data-variant="section"] {
     padding: 11px 0;
 
     .eHead {
@@ -104,7 +118,7 @@
         color: var(--base-fg-dim);
       }
 
-      .eStep {
+      .eTextIcon {
         color: var(--base-fg-more-dim);
       }
 

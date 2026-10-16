@@ -1,8 +1,13 @@
+import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { DialogSection } from '../../../sections/markdown/editor/BlockDialog';
 import { RELATION_TABLE_META_COLUMNS } from './relationTableLogic';
-import configFormStyles from '../../../sections/dashboard/WidgetConfigDialog.module.css';
 import { RelationTableWidgetConfig } from './types';
+import { FormGroup } from '../../../components/FormGroup';
+import { FormCheckboxList } from '../../../components/FormCheckboxList';
+import { FormGrid } from '../../../components/FormGrid';
+import { Select } from '@diagram-craft/app-components/Select';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
 
 export const RelationTableConfigForm = ({
   config,
@@ -29,51 +34,45 @@ export const RelationTableConfigForm = ({
 
   return (
     <>
-      <DialogSection label="Relation type" required>
-        <select
-          className={configFormStyles.labelInput}
+      <FormGroup label="Relation type" variant={'simple'}>
+        <Select.Root
           value={config.relationSchemaName}
-          onChange={event =>
-            onChange({ ...config, relationSchemaName: event.currentTarget.value, fieldIds: [] })
-          }
+          onChange={value => onChange({ ...config, relationSchemaName: value ?? '', fieldIds: [] })}
         >
-          <option value="">Select a relation type…</option>
+          <Select.Item value="">Select a relation type…</Select.Item>
           {relationSchemas.map(candidate => (
-            <option key={candidate.id} value={candidate.name}>
+            <Select.Item key={candidate.id} value={candidate.name}>
               {candidate.name}
-            </option>
+            </Select.Item>
           ))}
-        </select>
-      </DialogSection>
-      <DialogSection label="Columns" required={false}>
-        <div className={configFormStyles.options}>
+        </Select.Root>
+      </FormGroup>
+      <FormGroup label="Columns" supplementaryLabel={'(optional)'} variant={'simple'}>
+        <FormCheckboxList>
           {options.map(option => (
-            <label key={option.id} className={configFormStyles.checkboxRow}>
+            <FormCheckboxList.Row key={option.id} label={option.label}>
               <input
                 type="checkbox"
                 checked={isSelected(option.id, option.label)}
                 onChange={() => toggle(option.id, option.label)}
               />
-              <span>{option.label}</span>
-            </label>
+            </FormCheckboxList.Row>
           ))}
-        </div>
-      </DialogSection>
-      <DialogSection label="Filter" required={false}>
-        <input
-          type="text"
-          className={configFormStyles.labelInput}
+        </FormCheckboxList>
+      </FormGroup>
+      <FormGroup label="Filter" supplementaryLabel={'(optional)'} variant={'simple'}>
+        <TextInput
           value={config.filter ?? ''}
           placeholder='e.g. data_classification in ("sensitive", "highly-sensitive")'
-          onChange={event => {
-            const value = event.currentTarget.value;
-            onChange({ ...config, filter: value.trim() === '' ? undefined : value });
-          }}
+          style={{ width: '100%' }}
+          onChange={value =>
+            onChange({ ...config, filter: value?.trim() === '' ? undefined : value })
+          }
         />
-      </DialogSection>
-      <DialogSection label="Display" required={false}>
-        <div className={configFormStyles.options}>
-          <label className={configFormStyles.checkboxRow}>
+      </FormGroup>
+      <FormGroup label="Display" supplementaryLabel={'(optional)'} variant={'simple'}>
+        <FormCheckboxList>
+          <FormCheckboxList.Row label={'Open a detail drawer when a row is clicked'}>
             <input
               type="checkbox"
               checked={config.rowDrawer === true}
@@ -81,28 +80,26 @@ export const RelationTableConfigForm = ({
                 onChange({ ...config, rowDrawer: event.currentTarget.checked || undefined })
               }
             />
-            <span>Open a detail drawer when a row is clicked</span>
-          </label>
-          <label className={configFormStyles.optionRow}>
-            <span className={configFormStyles.optionLabel}>Max rows</span>
-            <div className={configFormStyles.optionControl}>
-              <input
-                type="number"
+          </FormCheckboxList.Row>
+          <FormGrid>
+            <FormGrid.Row label={'Max rows'}>
+              <NumberInput
+                value={config.limit}
                 min={1}
                 max={500}
-                className={configFormStyles.labelInput}
-                value={config.limit}
-                onChange={event =>
+                step={1}
+                onChange={value =>
                   onChange({
                     ...config,
-                    limit: Math.max(1, Number(event.currentTarget.value) || 1)
+                    limit: Math.max(1, value ?? 1)
                   })
                 }
+                style={{ width: '80px' }}
               />
-            </div>
-          </label>
-        </div>
-      </DialogSection>
+            </FormGrid.Row>
+          </FormGrid>
+        </FormCheckboxList>
+      </FormGroup>
     </>
   );
 };

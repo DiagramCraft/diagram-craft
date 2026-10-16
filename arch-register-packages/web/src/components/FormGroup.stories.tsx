@@ -104,12 +104,7 @@ export const SectionWithIconAndAction: Story = {
   args: sectionArgs,
   render: ({ variant }) => (
     <div style={{ minWidth: 360 }}>
-      <FormGroup
-        variant={variant}
-        label="People"
-        icon={<TbUsers size={12} />}
-        action={action}
-      >
+      <FormGroup variant={variant} label="People" icon={<TbUsers size={12} />} action={action}>
         <FormElement label="Member" required>
           <TextInput placeholder="username" value="" onChange={() => {}} />
         </FormElement>
@@ -117,4 +112,3 @@ export const SectionWithIconAndAction: Story = {
     </div>
   )
 };
-
