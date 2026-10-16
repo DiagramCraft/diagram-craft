@@ -5,7 +5,8 @@ import {
   StoryProviders,
   WORKSPACE,
   dashboardWidget,
-  frameControls
+  frameControls,
+  configDialogStory
 } from '../../shared/mdx/StorybookHarness';
 import { entityKeys } from '../../../queries/entities';
 import { projectKeys } from '../../../queries/projectKeys';
@@ -67,3 +68,5 @@ export const WithFrame: Story = {
   ...EntityCount,
   args: { showFrame: true }
 };
+
+export const ConfigDialog = configDialogStory('Metric');

@@ -7,7 +7,8 @@ import {
   WORKSPACE,
   createStoryQueryClient,
   dashboardWidget,
-  frameControls
+  frameControls,
+  configDialogStory
 } from '../../shared/mdx/StorybookHarness';
 import { entityDetailQuery } from '../../../queries/entities';
 import { entityBlastRadiusAggregateQuery } from '../../../queries/entityTraversal';
@@ -169,3 +170,5 @@ export const WithFrame: Story = {
   ...GroupedByRelationField,
   args: { showFrame: true }
 };
+
+export const ConfigDialog = configDialogStory('blast-radius');

@@ -6,7 +6,9 @@ import {
   RouterProvider
 } from '@tanstack/react-router';
 import { CapabilityEvaluator, PermissionChecker } from '@arch-register/permissions';
-import { createContext, useContext, type ReactNode } from 'react';
+import { createContext, useContext, useState, type ReactNode } from 'react';
+import { Dialog, DialogContextProvider } from '@diagram-craft/app-components/Dialog';
+import { PortalContextProvider } from '@diagram-craft/app-components/PortalContext';
 import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
@@ -16,6 +18,10 @@ import {
   type WorkspaceAuthorizationSource
 } from '../../../auth/WorkspaceAuthorizationContext';
 import { DashboardGrid } from '../../../sections/dashboard/DashboardGrid';
+import { WidgetConfigDialog } from '../../../sections/dashboard/WidgetConfigDialog';
+import { DialogContent } from '../../../sections/markdown/editor/BlockDialog';
+import { getConfigDialogWidth } from '../configDialog';
+import { createDefaultConfig, getWidgetDefinition } from '../widgetRegistry';
 import { MdxContext } from '../../../sections/markdown/MdxContext';
 import { WorkspaceContext, type WorkspaceContextType } from '../../../layouts/WorkspaceContext';
 import { entityKeys } from '../../../queries/entities';
@@ -24,7 +30,13 @@ import { projectKeys } from '../../../queries/projectKeys';
 export const WORKSPACE = 'storybook-workspace';
 
 const schemas = [
-  { id: 'service', name: 'Service', icon: 'server', entity_count: 128, fields: [] }
+  {
+    id: 'service',
+    name: 'Service',
+    icon: 'server',
+    entity_count: 128,
+    fields: []
+  }
 ] as unknown as EntitySchema[];
 
 const lifecycleStates = [
@@ -132,9 +144,13 @@ export const StoryProviders = ({
     >
       <WorkspaceAuthorizationSourceContext.Provider value={storyAuthorizationSource}>
         <MdxContext.Provider value={{ workspaceSlug: WORKSPACE, projectId, renderMode: 'wiki' }}>
-          <StoryContentContext.Provider value={children}>
-            <RouterProvider router={storyRouter} />
-          </StoryContentContext.Provider>
+          <DialogContextProvider onDialogShow={() => {}} onDialogHide={() => {}}>
+            <PortalContextProvider>
+              <StoryContentContext.Provider value={children}>
+                <RouterProvider router={storyRouter} />
+              </StoryContentContext.Provider>
+            </PortalContextProvider>
+          </DialogContextProvider>
         </MdxContext.Provider>
       </WorkspaceAuthorizationSourceContext.Provider>
     </WorkspaceContext.Provider>
@@ -187,7 +203,10 @@ export const DashboardStory = ({ widgets }: { widgets: DashboardWidget[] }) => {
   const showFrame = useContext(WidgetFrameContext);
   return (
     <DashboardGrid
-      widgets={widgets.map(widget => ({ ...widget, frame: { ...widget.frame, showFrame } }))}
+      widgets={widgets.map(widget => ({
+        ...widget,
+        frame: { ...widget.frame, showFrame }
+      }))}
       canEdit={false}
       isEditing={false}
       onEditingChange={() => {}}
@@ -197,3 +216,93 @@ export const DashboardStory = ({ widgets }: { widgets: DashboardWidget[] }) => {
     />
   );
 };
+
+type ConfigStoryOptions = {
+  /** Config the form starts from; defaults to the widget's default config. */
+  config?: Record<string, unknown>;
+  client?: QueryClient;
+  schemas?: EntitySchema[];
+  relationSchemas?: RelationSchema[];
+};
+
+const useStoryDefinition = (type: string, config: Record<string, unknown> | undefined) => {
+  const definition = getWidgetDefinition(type);
+  if (!definition) throw new Error(`No widget "${type}" is registered`);
+  const [initial] = useState(
+    () => config ?? createDefaultConfig(definition, { workspaceSlug: WORKSPACE })
+  );
+  return { definition, initial };
+};
+
+/** The widget's config dialog, already open. Dashboard widgets get the dashboard dialog. */
+const ConfigDialogPreview = ({
+  type,
+  config
+}: {
+  type: string;
+  config?: Record<string, unknown>;
+}) => {
+  const { definition, initial } = useStoryDefinition(type, config);
+  const [open, setOpen] = useState(true);
+  const [value, setValue] = useState(initial);
+  const ConfigForm = definition.configForm;
+
+  return (
+    <>
+      <button type={'button'} onClick={() => setOpen(true)}>
+        Open dialog
+      </button>
+      {definition.dashboard ? (
+        <WidgetConfigDialog
+          widget={dashboardWidget('config-story', type, initial, 0, 0, 3, 8)}
+          open={open}
+          onClose={() => setOpen(false)}
+          onSave={() => setOpen(false)}
+        />
+      ) : (
+        ConfigForm && (
+          <Dialog
+            open={open}
+            onClose={() => setOpen(false)}
+            title={definition.name}
+            width={getConfigDialogWidth(definition.configDialog)}
+            buttons={[
+              {
+                label: 'Cancel',
+                type: 'cancel',
+                onClick: () => setOpen(false)
+              },
+              { label: 'Save', type: 'default', onClick: () => setOpen(false) }
+            ]}
+          >
+            <DialogContent>
+              <ConfigForm
+                config={value}
+                onChange={setValue}
+                context={{ mode: 'mdx', surface: 'workspace' }}
+              />
+            </DialogContent>
+          </Dialog>
+        )
+      )}
+    </>
+  );
+};
+
+/**
+ * `ConfigDialog` story for a widget: the dialog that hosts its config form, already open.
+ * Use as `export const ConfigDialog = configDialogStory('Metric');`.
+ */
+export const configDialogStory = (type: string, options: ConfigStoryOptions = {}) => ({
+  name: 'Config dialog',
+  parameters: { docs: { story: { inline: false, iframeHeight: 640 } } },
+  render: () => (
+    <StoryProviders
+      client={options.client}
+      schemas={options.schemas}
+      relationSchemas={options.relationSchemas}
+    >
+      <ConfigDialogPreview type={type} config={options.config} />
+    </StoryProviders>
+  )
+});

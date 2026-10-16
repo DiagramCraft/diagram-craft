@@ -6,7 +6,8 @@ import {
   WORKSPACE,
   createStoryQueryClient,
   dashboardWidget,
-  frameControls
+  frameControls,
+  configDialogStory
 } from '../../shared/mdx/StorybookHarness';
 
 const QUERY = 'schema:"Vendor"';
@@ -134,7 +135,12 @@ export const Minimal: Story = {
           dashboardWidget(
             'spend-minimal',
             'GroupedRollupTable',
-            { query: QUERY, groupFieldId: 'cost_centre', valueFieldId: 'spend', showTotal: false },
+            {
+              query: QUERY,
+              groupFieldId: 'cost_centre',
+              valueFieldId: 'spend',
+              showTotal: false
+            },
             0,
             0,
             6,
@@ -150,3 +156,5 @@ export const WithFrame: Story = {
   ...SpendByVendor,
   args: { showFrame: true }
 };
+
+export const ConfigDialog = configDialogStory('GroupedRollupTable');

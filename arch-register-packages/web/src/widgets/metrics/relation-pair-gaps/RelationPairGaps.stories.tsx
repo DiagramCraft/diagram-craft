@@ -8,7 +8,8 @@ import {
   WORKSPACE,
   createStoryQueryClient,
   dashboardWidget,
-  frameControls
+  frameControls,
+  configDialogStory
 } from '../../shared/mdx/StorybookHarness';
 import { relationKeys } from '../../../queries/relations';
 
@@ -129,3 +130,5 @@ export const WithFrame: Story = {
   ...Default,
   args: { showFrame: true }
 };
+
+export const ConfigDialog = configDialogStory('RelationPairGaps');

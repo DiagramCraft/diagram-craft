@@ -7,7 +7,8 @@ import {
   WORKSPACE,
   createStoryQueryClient,
   dashboardWidget,
-  frameControls
+  frameControls,
+  configDialogStory
 } from '../../shared/mdx/StorybookHarness';
 import { entityDetailQuery } from '../../../queries/entities';
 import { governanceCasesQuery } from '../../../queries/governance';
@@ -112,3 +113,5 @@ export const WithFrame: Story = {
   ...AwaitingDecision,
   args: { showFrame: true }
 };
+
+export const ConfigDialog = configDialogStory('CaseCount');

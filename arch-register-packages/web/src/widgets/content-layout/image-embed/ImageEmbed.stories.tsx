@@ -4,7 +4,8 @@ import { ImageEmbed } from './ImageEmbed';
 import {
   createStoryQueryClient,
   StoryProviders,
-  WORKSPACE
+  WORKSPACE,
+  configDialogStory
 } from '../../shared/mdx/StorybookHarness';
 import { projectFileKeys } from '../../../queries/content';
 
@@ -86,7 +87,12 @@ export const UnsupportedAttachment: Story = {
   render: () => (
     <StoryProviders client={storyQueryClient}>
       <ImageEmbed
-        config={{ fileId: attachmentId, alt: 'Architecture notes', size: '75', align: 'right' }}
+        config={{
+          fileId: attachmentId,
+          alt: 'Architecture notes',
+          size: '75',
+          align: 'right'
+        }}
       />
     </StoryProviders>
   )
@@ -99,7 +105,9 @@ export const WithImage: Story = {
       const url =
         typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
       if (url.includes('attachments%2Farchitecture-overview.svg')) {
-        return new Response(new Blob([imageSvg], { type: 'image/svg+xml' }), { status: 200 });
+        return new Response(new Blob([imageSvg], { type: 'image/svg+xml' }), {
+          status: 200
+        });
       }
       return originalFetch(input, init);
     };
@@ -121,3 +129,5 @@ export const WithImage: Story = {
     </StoryProviders>
   )
 };
+
+export const ConfigDialog = configDialogStory('ImageEmbed');

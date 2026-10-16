@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { frameControls } from '../../shared/mdx/StorybookHarness';
+import { configDialogStory, frameControls } from '../../shared/mdx/StorybookHarness';
 import { assessmentWidgetStory } from '../../shared/data/assessmentWidgetStoryFixtures';
 
 const meta = {
@@ -24,7 +24,11 @@ export const Active: Story = {
   render: () =>
     assessmentWidgetStory(
       'AssessmentCount',
-      { mode: 'active', label: 'Active assessments', subtext: 'currently open' },
+      {
+        mode: 'active',
+        label: 'Active assessments',
+        subtext: 'currently open'
+      },
       { w: 3, h: 8 }
     )
 };
@@ -33,7 +37,11 @@ export const Overdue: Story = {
   render: () =>
     assessmentWidgetStory(
       'AssessmentCount',
-      { mode: 'overdue', label: 'Overdue assessments', subtext: 'past the due date' },
+      {
+        mode: 'overdue',
+        label: 'Overdue assessments',
+        subtext: 'past the due date'
+      },
       { w: 3, h: 8 }
     )
 };
@@ -56,3 +64,5 @@ export const WithFrame: Story = {
   ...Active,
   args: { showFrame: true }
 };
+
+export const ConfigDialog = configDialogStory('AssessmentCount');

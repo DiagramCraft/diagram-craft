@@ -8,14 +8,21 @@ import {
   WORKSPACE,
   createStoryQueryClient,
   dashboardWidget,
-  frameControls
+  frameControls,
+  configDialogStory
 } from '../../shared/mdx/StorybookHarness';
 import { governanceCasesQuery } from '../../../queries/governance';
 import { entityDetailQuery } from '../../../queries/entities';
 
 const DATA_ENTITY_SCHEMA_ID = 'story-data-entity-schema';
 const schemas = [
-  { id: DATA_ENTITY_SCHEMA_ID, name: 'Data Entity', icon: 'database', entity_count: 3, fields: [] }
+  {
+    id: DATA_ENTITY_SCHEMA_ID,
+    name: 'Data Entity',
+    icon: 'database',
+    entity_count: 3,
+    fields: []
+  }
 ] as unknown as EntitySchema[];
 const casesQuery = { subjectType: 'entity' } as const;
 
@@ -114,3 +121,5 @@ export const WithFrame: Story = {
   ...Populated,
   args: { showFrame: true }
 };
+
+export const ConfigDialog = configDialogStory('ChangeCaseTable');

@@ -6,7 +6,8 @@ import {
   WORKSPACE,
   dashboardWidget,
   queryClient,
-  frameControls
+  frameControls,
+  configDialogStory
 } from '../../shared/mdx/StorybookHarness';
 import { entityKeys } from '../../../queries/entities';
 import { viewKeys } from '../../../queries/views';
@@ -60,7 +61,11 @@ const entities = [
 
 queryClient.setQueryData(viewKeys.list(WORKSPACE), [savedView]);
 queryClient.setQueryData(
-  entityKeys.list(WORKSPACE, { entityQuery: savedViewFilters, view: 'full', limit: 100 }),
+  entityKeys.list(WORKSPACE, {
+    entityQuery: savedViewFilters,
+    view: 'full',
+    limit: 100
+  }),
   { items: entities, total: entities.length }
 );
 
@@ -137,3 +142,5 @@ export const WithFrame: Story = {
   ...Default,
   args: { showFrame: true }
 };
+
+export const ConfigDialog = configDialogStory('EntityViewEmbed');

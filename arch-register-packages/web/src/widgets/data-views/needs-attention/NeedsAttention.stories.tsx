@@ -7,7 +7,8 @@ import {
   WORKSPACE,
   createStoryQueryClient,
   dashboardWidget,
-  frameControls
+  frameControls,
+  configDialogStory
 } from '../../shared/mdx/StorybookHarness';
 import { governanceCasesQuery } from '../../../queries/governance';
 import { entityDetailQuery } from '../../../queries/entities';
@@ -137,3 +138,5 @@ export const WithFrame: Story = {
   ...Populated,
   args: { showFrame: true }
 };
+
+export const ConfigDialog = configDialogStory('NeedsAttentionQueue');

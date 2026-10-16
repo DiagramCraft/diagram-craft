@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { frameControls } from '../../shared/mdx/StorybookHarness';
+import { configDialogStory, frameControls } from '../../shared/mdx/StorybookHarness';
 import { assessmentWidgetStory } from '../../shared/data/assessmentWidgetStoryFixtures';
 
 /** Assessment status stat widget; status is derived from each assessment's completed-entity rollup. */
@@ -27,7 +27,12 @@ export const Overdue: Story = {
   render: () =>
     assessmentWidgetStory(
       'AssessmentStatusStat',
-      { ...STAT, status: 'overdue', label: 'Overdue', subtextTemplate: 'past the scheduled date' },
+      {
+        ...STAT,
+        status: 'overdue',
+        label: 'Overdue',
+        subtextTemplate: 'past the scheduled date'
+      },
       { w: 3, h: 8 }
     )
 };
@@ -73,3 +78,5 @@ export const WithFrame: Story = {
   ...Overdue,
   args: { showFrame: true }
 };
+
+export const ConfigDialog = configDialogStory('AssessmentStatusStat');

@@ -6,7 +6,8 @@ import {
   WORKSPACE,
   createStoryQueryClient,
   dashboardWidget,
-  frameControls
+  frameControls,
+  configDialogStory
 } from '../../shared/mdx/StorybookHarness';
 import { entityKeys } from '../../../queries/entities';
 
@@ -79,7 +80,11 @@ export const ObjectivesByStatus: Story = {
           dashboardWidget(
             'objectives-by-status',
             'CountByField',
-            { schemaName: 'Objective', fieldId: 'status', label: 'Objectives by status' },
+            {
+              schemaName: 'Objective',
+              fieldId: 'status',
+              label: 'Objectives by status'
+            },
             0,
             0,
             6,
@@ -95,3 +100,5 @@ export const WithFrame: Story = {
   ...ObjectivesByStatus,
   args: { showFrame: true }
 };
+
+export const ConfigDialog = configDialogStory('CountByField');

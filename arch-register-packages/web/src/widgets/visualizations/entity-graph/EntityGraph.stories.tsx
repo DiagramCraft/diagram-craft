@@ -6,7 +6,8 @@ import {
   StoryProviders,
   WORKSPACE,
   dashboardWidget,
-  frameControls
+  frameControls,
+  configDialogStory
 } from '../../shared/mdx/StorybookHarness';
 import { entityKeys } from '../../../queries/entities';
 
@@ -48,7 +49,10 @@ const incomingRelation = {
 };
 
 const relationData = {
-  [rootEntityId]: { outgoing: [outgoingRelation], incoming: [incomingRelation] },
+  [rootEntityId]: {
+    outgoing: [outgoingRelation],
+    incoming: [incomingRelation]
+  },
   [dependencyEntityId]: { outgoing: [], incoming: [] },
   [platformEntityId]: { outgoing: [], incoming: [] }
 };
@@ -141,3 +145,5 @@ export const WithFrame: Story = {
   render: () => renderDashboard(18),
   args: { showFrame: true }
 };
+
+export const ConfigDialog = configDialogStory('EntityGraph');

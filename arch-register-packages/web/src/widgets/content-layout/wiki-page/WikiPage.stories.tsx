@@ -5,7 +5,8 @@ import {
   WORKSPACE,
   createStoryQueryClient,
   dashboardWidget,
-  frameControls
+  frameControls,
+  configDialogStory
 } from '../../shared/mdx/StorybookHarness';
 import { projectFileKeys } from '../../../queries/content';
 import { markdownContentKeys } from '../../../queries/markdownContent';
@@ -65,3 +66,5 @@ export const WithFrame: Story = {
   ...Default,
   args: { showFrame: true }
 };
+
+export const ConfigDialog = configDialogStory('wiki-page');
