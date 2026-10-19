@@ -104,7 +104,7 @@ export const RecordCounts: Story = {
 
 export const WithFrame: Story = {
   ...ContractCostByEndMonth,
-  args: { showFrame: true }
+  args: { frameStyle: 'header' }
 };
 
 export const ConfigDialog = configDialogStory('DateBucketChart');

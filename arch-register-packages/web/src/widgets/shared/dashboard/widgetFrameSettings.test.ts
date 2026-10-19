@@ -10,13 +10,27 @@ describe('resolveWidgetFrame', () => {
       title: undefined,
       iconName: undefined,
       showIcon: true,
-      showFrame: true,
+      style: 'header',
+      tint: undefined,
       padded: true
     });
   });
 
-  test('instance showFrame overrides the default', () => {
-    expect(resolveWidgetFrame(spec(), { showFrame: false }).showFrame).toBe(false);
+  test('instance style overrides the default', () => {
+    expect(resolveWidgetFrame(spec(), { style: 'frame' }).style).toBe('frame');
+  });
+
+  test('legacy showFrame maps to a style', () => {
+    expect(resolveWidgetFrame(spec(), { showFrame: false }).style).toBe('none');
+    expect(resolveWidgetFrame(spec(), { showFrame: true }).style).toBe('header');
+  });
+
+  test('style wins over legacy showFrame', () => {
+    expect(resolveWidgetFrame(spec(), { style: 'frame', showFrame: false }).style).toBe('frame');
+  });
+
+  test('tint is passed through', () => {
+    expect(resolveWidgetFrame(spec(), { tint: 'blue' }).tint).toBe('blue');
   });
 
   test('icon override enables icon even when spec hides it', () => {
@@ -35,10 +49,15 @@ describe('resolveWidgetFrame', () => {
 
 describe('normalizeFrame', () => {
   test('drops empty values', () => {
-    expect(normalizeFrame({ title: '', showFrame: undefined })).toBeUndefined();
-    expect(normalizeFrame({ title: 'A', showFrame: false })).toEqual({
+    expect(normalizeFrame({ title: '', style: undefined })).toBeUndefined();
+    expect(normalizeFrame({ title: 'A', style: 'none', tint: 'red' })).toEqual({
       title: 'A',
-      showFrame: false
+      style: 'none',
+      tint: 'red'
     });
+  });
+
+  test('migrates legacy showFrame to style', () => {
+    expect(normalizeFrame({ showFrame: false })).toEqual({ style: 'none' });
   });
 });

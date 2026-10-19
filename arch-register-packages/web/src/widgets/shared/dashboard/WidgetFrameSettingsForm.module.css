@@ -1,0 +1,26 @@
+.swatches {
+  display: flex;
+  gap: 6px;
+}
+
+.swatch {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border-radius: var(--r);
+  border: 1px solid var(--_swatch-border, var(--panel-border));
+  background: var(--_swatch, var(--panel-bg));
+  cursor: pointer;
+}
+
+.swatch[aria-pressed="true"] {
+  outline: 2px solid var(--accent-9);
+  outline-offset: 1px;
+}
+
+.swatch[data-tint="gray"] { --_swatch: var(--gray-3); --_swatch-border: var(--gray-6); }
+.swatch[data-tint="blue"] { --_swatch: var(--blue-3); --_swatch-border: var(--blue-6); }
+.swatch[data-tint="green"] { --_swatch: var(--green-3); --_swatch-border: var(--green-6); }
+.swatch[data-tint="amber"] { --_swatch: var(--amber-3); --_swatch-border: var(--amber-6); }
+.swatch[data-tint="red"] { --_swatch: var(--red-3); --_swatch-border: var(--red-6); }
+.swatch[data-tint="purple"] { --_swatch: var(--purple-3); --_swatch-border: var(--purple-6); }

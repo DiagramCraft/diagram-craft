@@ -103,5 +103,5 @@ export const Default: Story = {
 
 export const WithFrame: Story = {
   ...Default,
-  args: { showFrame: true }
+  args: { frameStyle: 'header' }
 };

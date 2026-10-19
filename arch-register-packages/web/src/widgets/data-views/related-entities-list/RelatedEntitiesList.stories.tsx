@@ -264,7 +264,7 @@ export const NoItemSelected: Story = {
 
 export const WithFrame: Story = {
   ...Outcomes,
-  args: { showFrame: true }
+  args: { frameStyle: 'header' }
 };
 
 export const ConfigDialog = configDialogStory('RelatedEntitiesList');

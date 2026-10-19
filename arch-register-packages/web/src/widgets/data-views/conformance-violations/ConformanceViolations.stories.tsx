@@ -169,7 +169,7 @@ export const NoAccess: Story = {
 
 export const WithFrame: Story = {
   ...WithGaps,
-  args: { showFrame: true }
+  args: { frameStyle: 'header' }
 };
 
 export const ConfigDialog = configDialogStory('ConformanceViolations');

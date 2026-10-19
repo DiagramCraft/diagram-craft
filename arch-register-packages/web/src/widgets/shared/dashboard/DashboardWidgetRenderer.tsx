@@ -22,12 +22,17 @@ export const DashboardWidgetRenderer = ({ widget, isEditing = false, onEdit, onR
   const sidebarVariables = useDashboardSidebarVariables();
   const parsedWidget = parseKnownDashboardWidget(widget);
   const knownWidget = parsedWidget
-    ? { ...parsedWidget, config: resolveConfigVariables(parsedWidget.config, sidebarVariables) }
+    ? {
+        ...parsedWidget,
+        config: resolveConfigVariables(parsedWidget.config, sidebarVariables)
+      }
     : null;
   const definition = knownWidget ? getWidgetDefinition(knownWidget.type, 'dashboard') : undefined;
   const dashboard = definition?.dashboard;
   const WidgetComponent = definition?.component;
   const frame = resolveWidgetFrame(dashboard, widget.frame);
+  // Edit mode always shows the header so the edit/remove controls are reachable
+  const variant = isEditing ? 'header' : frame.style;
 
   const TitleComponent = dashboard?.titleComponent;
   let defaultTitle: ReactNode = widget.type;
@@ -48,12 +53,13 @@ export const DashboardWidgetRenderer = ({ widget, isEditing = false, onEdit, onR
       icon={Icon && frame.showIcon && <Icon size={14} />}
       headerActions={HeaderActions && knownWidget && <HeaderActions config={knownWidget.config} />}
       padded={frame.padded}
-      bare={!frame.showFrame && !isEditing}
+      variant={variant}
+      tint={frame.tint}
       onEdit={onEdit}
       onRemove={onRemove}
     >
       {knownWidget && WidgetComponent ? (
-        <WidgetBodyTitleProvider value={!frame.showFrame && !isEditing ? frame.title : undefined}>
+        <WidgetBodyTitleProvider value={variant !== 'header' ? frame.title : undefined}>
           <WidgetComponent config={knownWidget.config} />
         </WidgetBodyTitleProvider>
       ) : (

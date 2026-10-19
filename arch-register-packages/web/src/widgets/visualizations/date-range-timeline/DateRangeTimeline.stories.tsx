@@ -87,7 +87,7 @@ export const ContractTerms: Story = {
 
 export const WithFrame: Story = {
   ...ContractTerms,
-  args: { showFrame: true }
+  args: { frameStyle: 'header' }
 };
 
 export const ConfigDialog = configDialogStory('DateRangeTimeline');

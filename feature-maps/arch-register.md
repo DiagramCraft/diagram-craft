@@ -128,8 +128,9 @@
           field.
           The home sidebar's Data model section groups schema links by schema category.
           Every widget shows a title bar (an icon and a title, separated from the widget's content by a divider). Any
-          widget's configuration dialog has an Appearance section to override the title, show or hide the frame
-          (each widget type has its own default), and pick an icon; the catalog's list panels also
+          widget's configuration dialog has an Appearance section to override the title, choose a frame style
+          (with header, frame only, or no frame), pick a background color (gray, blue, green, amber, red or purple,
+          adapted to light and dark mode), and pick an icon; the catalog's list panels also
           let users choose how many items to show. In
           edit mode, the per-widget edit and remove controls appear within the title bar rather than overlapping the
           content.

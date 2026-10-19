@@ -196,7 +196,7 @@ export const WithRowDrawer: Story = {
 
 export const WithFrame: Story = {
   ...RestrictedFlows,
-  args: { showFrame: true }
+  args: { frameStyle: 'header' }
 };
 
 export const ConfigDialog = configDialogStory('RelationTable');

@@ -90,7 +90,7 @@ type Story = StoryObj<typeof meta>;
 // An empty viewId is not a valid dashboard config, so this state only occurs in a wiki block and
 // is rendered bare, without a frame to toggle.
 export const NoView: Story = {
-  argTypes: { showFrame: { control: false } },
+  argTypes: { frameStyle: { control: false }, tint: { control: false } },
   render: () => (
     <StoryProviders>
       <EntityViewEmbed config={{ viewId: '' }} />
@@ -140,7 +140,7 @@ export const Default: Story = {
 
 export const WithFrame: Story = {
   ...Default,
-  args: { showFrame: true }
+  args: { frameStyle: 'header' }
 };
 
 export const ConfigDialog = configDialogStory('EntityViewEmbed');

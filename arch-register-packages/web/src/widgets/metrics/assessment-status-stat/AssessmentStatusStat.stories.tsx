@@ -76,7 +76,7 @@ export const UnknownSchema: Story = {
 
 export const WithFrame: Story = {
   ...Overdue,
-  args: { showFrame: true }
+  args: { frameStyle: 'header' }
 };
 
 export const ConfigDialog = configDialogStory('AssessmentStatusStat');

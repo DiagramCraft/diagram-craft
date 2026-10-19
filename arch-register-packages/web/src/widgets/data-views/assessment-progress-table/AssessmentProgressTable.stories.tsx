@@ -51,7 +51,7 @@ export const Empty: Story = {
 
 export const WithFrame: Story = {
   ...Default,
-  args: { showFrame: true }
+  args: { frameStyle: 'header' }
 };
 
 export const ConfigDialog = configDialogStory('AssessmentProgressTable');

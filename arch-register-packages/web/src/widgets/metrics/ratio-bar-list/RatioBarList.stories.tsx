@@ -110,7 +110,7 @@ export const DocumentedByTeam: Story = {
 
 export const WithFrame: Story = {
   ...DocumentedByTeam,
-  args: { showFrame: true }
+  args: { frameStyle: 'header' }
 };
 
 export const ConfigDialog = configDialogStory('RatioBarList');

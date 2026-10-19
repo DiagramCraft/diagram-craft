@@ -156,7 +156,7 @@ export const UnknownSchema: Story = {
 
 export const WithFrame: Story = {
   ...AllOperations,
-  args: { showFrame: true }
+  args: { frameStyle: 'header' }
 };
 
 export const ConfigDialog = configDialogStory('SpecItemsTable');

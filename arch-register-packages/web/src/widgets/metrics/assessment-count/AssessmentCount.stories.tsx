@@ -62,7 +62,7 @@ export const DueWithinMonth: Story = {
 
 export const WithFrame: Story = {
   ...Active,
-  args: { showFrame: true }
+  args: { frameStyle: 'header' }
 };
 
 export const ConfigDialog = configDialogStory('AssessmentCount');

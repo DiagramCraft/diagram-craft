@@ -147,7 +147,7 @@ export const WithFrame: Story = {
       />
     </StoryProviders>
   ),
-  args: { showFrame: true }
+  args: { frameStyle: 'header' }
 };
 
 export const ConfigDialog = configDialogStory('DocumentBrowserEmbed');

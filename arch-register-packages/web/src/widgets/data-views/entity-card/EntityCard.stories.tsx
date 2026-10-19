@@ -83,7 +83,7 @@ export const Wide: Story = {
 
 export const WithFrame: Story = {
   ...Wide,
-  args: { showFrame: true }
+  args: { frameStyle: 'header' }
 };
 
 export const ConfigDialog = configDialogStory('EntityCard');

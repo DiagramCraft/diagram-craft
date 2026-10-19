@@ -66,7 +66,7 @@ export const CompletenessPercent: Story = metricStory(
 
 export const WithFrame: Story = {
   ...EntityCount,
-  args: { showFrame: true }
+  args: { frameStyle: 'header' }
 };
 
 export const ConfigDialog = configDialogStory('Metric');
