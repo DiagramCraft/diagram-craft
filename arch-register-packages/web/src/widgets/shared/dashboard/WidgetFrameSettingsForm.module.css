@@ -18,9 +18,27 @@
   outline-offset: 1px;
 }
 
-.swatch[data-tint="gray"] { --_swatch: var(--gray-3); --_swatch-border: var(--gray-6); }
-.swatch[data-tint="blue"] { --_swatch: var(--blue-3); --_swatch-border: var(--blue-6); }
-.swatch[data-tint="green"] { --_swatch: var(--green-3); --_swatch-border: var(--green-6); }
-.swatch[data-tint="amber"] { --_swatch: var(--amber-3); --_swatch-border: var(--amber-6); }
-.swatch[data-tint="red"] { --_swatch: var(--red-3); --_swatch-border: var(--red-6); }
-.swatch[data-tint="purple"] { --_swatch: var(--purple-3); --_swatch-border: var(--purple-6); }
+.swatch[data-tint="gray"] {
+  --_swatch: var(--gray-3);
+  --_swatch-border: var(--gray-6);
+}
+.swatch[data-tint="blue"] {
+  --_swatch: var(--blue-3);
+  --_swatch-border: var(--blue-6);
+}
+.swatch[data-tint="green"] {
+  --_swatch: var(--green-3);
+  --_swatch-border: var(--green-6);
+}
+.swatch[data-tint="amber"] {
+  --_swatch: var(--amber-3);
+  --_swatch-border: var(--amber-6);
+}
+.swatch[data-tint="red"] {
+  --_swatch: var(--red-3);
+  --_swatch-border: var(--red-6);
+}
+.swatch[data-tint="purple"] {
+  --_swatch: var(--purple-3);
+  --_swatch-border: var(--purple-6);
+}
