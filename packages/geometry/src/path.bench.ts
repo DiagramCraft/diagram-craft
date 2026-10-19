@@ -1,4 +1,4 @@
-import { bench } from 'vitest';
+import { test } from 'vitest';
 
 import { Random } from '@diagram-craft/utils/random';
 import { PathListBuilder } from './pathListBuilder';
@@ -29,15 +29,13 @@ const dimension = 100;
 
 const opts = { time: 2000 };
 
-bench(
-  'intersection',
-  () => {
+test('intersection', async ({ bench }) => {
+  await bench('intersection', () => {
     for (let i = 0; i < 100; i++) {
       const p1 = randomPath(dimension);
       const p2 = randomPath(dimension);
 
       p1.intersections(p2);
     }
-  },
-  opts
-);
+  }).run(opts);
+});
