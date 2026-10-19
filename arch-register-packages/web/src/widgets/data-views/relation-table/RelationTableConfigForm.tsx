@@ -71,7 +71,7 @@ export const RelationTableConfigForm = ({
       </FormGroup>
       <FormGroup label="Display" supplementaryLabel={'(optional)'} variant={'simple'}>
         <FormCheckboxList>
-          <FormCheckboxList.Row label={'Open a detail drawer when a row is clicked'}>
+          <FormCheckboxList.Row label={'Open a drawer when a row is clicked'}>
             <input
               type="checkbox"
               checked={config.rowDrawer === true}
