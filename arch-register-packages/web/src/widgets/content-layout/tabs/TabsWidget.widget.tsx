@@ -21,7 +21,7 @@ export default defineWidget({
     defaultW: 12,
     defaultH: 24,
     surfaces: ['workspace', 'project'],
-    frame: { hideOutsideEdit: true, padded: false, showIcon: false }
+    frame: { padded: false, showIcon: false }
   },
   configDialog: { size: 'large' }
 });

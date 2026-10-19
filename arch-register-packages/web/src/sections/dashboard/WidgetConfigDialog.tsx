@@ -9,7 +9,7 @@ import { getWidgetDefinition, isValidComponentConfig } from '../../widgets/share
 import type { DashboardWidgetFrame } from '@arch-register/api-types/dashboardContract';
 import { WidgetFrameSettingsForm } from '../../widgets/shared/dashboard/WidgetFrameSettingsForm';
 import {
-  defaultShowFrame,
+  DEFAULT_SHOW_FRAME,
   normalizeFrame
 } from '../../widgets/shared/dashboard/widgetFrameSettings';
 import styles from './WidgetConfigDialog.module.css';
@@ -116,7 +116,7 @@ const WidgetConfigDialogContent = ({
                 frame={frame}
                 onChange={setFrame}
                 defaultTitle={spec.getTitle?.(config as never) ?? definition.name}
-                defaultShowFrame={defaultShowFrame(spec, config)}
+                defaultShowFrame={DEFAULT_SHOW_FRAME}
               />
             </DialogContent>
           </Tabs.Content>

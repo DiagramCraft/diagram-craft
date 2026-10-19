@@ -26,9 +26,7 @@ export const fieldMatrixWidgetConfigSchema = z
     /** Emphasise cells in `hot` bands for rows at or above this value. */
     hotRowMin: z.number().optional(),
     /** Corner label, e.g. "criticality ↓ / risk →". */
-    cornerLabel: z.string().optional(),
-    /** Show the widget frame (border, title) around the matrix; defaults to true. */
-    showFrame: z.boolean().optional()
+    cornerLabel: z.string().optional()
   })
   .refine(hasWidgetRecordSource, { message: 'Needs a query or an entity query' });
 

@@ -27,7 +27,7 @@ export const DashboardWidgetRenderer = ({ widget, isEditing = false, onEdit, onR
   const definition = knownWidget ? getWidgetDefinition(knownWidget.type, 'dashboard') : undefined;
   const dashboard = definition?.dashboard;
   const WidgetComponent = definition?.component;
-  const frame = resolveWidgetFrame(dashboard, widget.frame, knownWidget?.config ?? widget.config);
+  const frame = resolveWidgetFrame(dashboard, widget.frame);
 
   const TitleComponent = dashboard?.titleComponent;
   let defaultTitle: ReactNode = widget.type;

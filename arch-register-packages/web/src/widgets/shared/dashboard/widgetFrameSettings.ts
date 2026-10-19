@@ -12,25 +12,18 @@ export type ResolvedWidgetFrame = {
   padded: boolean;
 };
 
-/** Frame visibility the widget has when the instance does not override it. */
-export const defaultShowFrame = (
-  spec: DashboardWidgetSpec | undefined,
-  config: Record<string, unknown>
-): boolean => {
-  const hide = spec?.frame?.hideOutsideEdit;
-  return !(typeof hide === 'function' ? hide(config) : !!hide);
-};
+/** Frame visibility a widget has when the instance does not override it. */
+export const DEFAULT_SHOW_FRAME = true;
 
 /** Combines per-instance overrides with the defaults declared by the widget spec. */
 export const resolveWidgetFrame = (
   spec: DashboardWidgetSpec | undefined,
-  frame: DashboardWidgetFrame | undefined,
-  config: Record<string, unknown>
+  frame: DashboardWidgetFrame | undefined
 ): ResolvedWidgetFrame => ({
   title: frame?.title?.trim() ? frame.title : undefined,
   iconName: frame?.icon,
   showIcon: frame?.icon !== undefined || spec?.frame?.showIcon !== false,
-  showFrame: frame?.showFrame ?? defaultShowFrame(spec, config),
+  showFrame: frame?.showFrame ?? DEFAULT_SHOW_FRAME,
   padded: spec?.frame?.padded !== false
 });
 

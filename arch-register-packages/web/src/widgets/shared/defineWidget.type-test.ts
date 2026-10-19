@@ -129,8 +129,7 @@ defineWidget({
     defaultW: 1,
     defaultH: 1,
     surfaces: ['workspace'],
-    getTitle: config => config.name,
-    frame: { hideOutsideEdit: config => config.name === '' }
+    getTitle: config => config.name
   }
 });
 
