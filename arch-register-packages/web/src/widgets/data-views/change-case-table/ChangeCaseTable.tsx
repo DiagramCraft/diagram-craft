@@ -1,5 +1,4 @@
 import { useMemo } from 'react';
-import { useNavigate, useSearch } from '@tanstack/react-router';
 import { Chip } from '../../../components/Chip';
 import { Table } from '../../../components/table/Table';
 import { toneColor } from '../../../components/bandColor';
@@ -7,7 +6,6 @@ import { useDateTimeFormatPreference } from '../../../hooks/useDateTimeFormatPre
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { formatDate } from '../../../utils/dateFormat';
 import { caseKindLabel } from '../../../utils/governanceCaseLabels';
-import { GovernanceCaseDrawer } from '../../../sections/governance/GovernanceCaseDrawer';
 import { useEntityDrawer } from '../../../sections/entities/entityDrawer/useEntityDrawer';
 import { type NeedsAttentionPriority } from '../needs-attention/needsAttentionQueue';
 import { useEntityCaseRegister } from '../../shared/data/entityCaseRegister';
@@ -32,14 +30,12 @@ const PRIORITY_COLOR: Record<NeedsAttentionPriority, string | undefined> = {
  * A register of governance cases (any case kinds) against entities of one schema, in
  * every status. The status filter comes from `config.status`, which a
  * dashboard's `options` sidebar can drive. Rows open the shared
- * `GovernanceCaseDrawer` through the `caseId` search param, which this widget also hosts.
+ * `GovernanceCaseDrawer` through the workspace drawer stack.
  */
 export const ChangeCaseTableWidget = ({ config }: { config: ChangeCaseTableConfig }) => {
   const framed = useWidgetFramed();
   const { workspaceSlug, schemas } = useWorkspaceContext();
-  const navigate = useNavigate();
-  const { openEntityDrawer } = useEntityDrawer();
-  const search = useSearch({ strict: false }) as { caseId?: string };
+  const { openCaseDrawer } = useEntityDrawer();
   const dateTimeFormatPreference = useDateTimeFormatPreference();
 
   const status = isChangeCaseStatus(config.status) ? config.status : undefined;
@@ -48,11 +44,6 @@ export const ChangeCaseTableWidget = ({ config }: { config: ChangeCaseTableConfi
   const register = useEntityCaseRegister(workspaceSlug, { schemaId, caseKinds: config.caseKinds });
 
   const rows = useMemo(() => filterByStatus(register.rows, status), [register.rows, status]);
-
-  const patchCaseId = (caseId: string | undefined) =>
-    navigate({
-      search: (previous: Record<string, unknown>) => ({ ...previous, caseId })
-    } as Parameters<typeof navigate>[0]);
 
   if (schemaId == null) {
     return (
@@ -88,7 +79,7 @@ export const ChangeCaseTableWidget = ({ config }: { config: ChangeCaseTableConfi
             </Table.EmptyRow>
           ) : (
             rows.map(row => (
-              <Table.Row key={row.case.id} onClick={() => patchCaseId(row.case.id)}>
+              <Table.Row key={row.case.id} onClick={() => openCaseDrawer(row.case.id)}>
                 <Table.Cell>{caseKindLabel(row.case.caseKind, row.case.payload)}</Table.Cell>
                 <Table.NameCell title={row.entity._name} subtitle={row.entity._publicId} />
                 <Table.Cell className={row.requesterName == null ? 'dim' : undefined}>
@@ -113,19 +104,6 @@ export const ChangeCaseTableWidget = ({ config }: { config: ChangeCaseTableConfi
           )}
         </Table.Body>
       </Table.Root>
-
-      {search.caseId && (
-        <GovernanceCaseDrawer
-          workspaceSlug={workspaceSlug}
-          caseId={search.caseId}
-          entityNoun={config.schemaName.toLowerCase()}
-          onClose={() => patchCaseId(undefined)}
-          onOpenDataset={publicId => {
-            patchCaseId(undefined);
-            openEntityDrawer(publicId);
-          }}
-        />
-      )}
     </div>
   );
 };
